@@ -1,0 +1,90 @@
+<section class="hero">
+	<div class="wrap">
+		<div class="hero-grid">
+			<div>
+				<div class="status-row rise-in">
+					<span class="plate plate-advisory">{{k011}}</span>
+					<span class="plate plate-signal">{{k012}}</span>
+				</div>
+				<h1 class="rise-in">{{k013}}</h1>
+				<p class="lede rise-in">{{k014}}</p>
+
+				<div class="code rise-in">
+					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
+<span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="quickstart">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k016}}</p>
+
+				<div class="cta">
+					<a class="btn btn-primary" href="https://demo.dumbmonit.app">{{k017}}</a>
+					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit">{{k018}}</a>
+					<a class="btn btn-secondary" href="@@LINK:install/@@">{{k019}}</a>
+				</div>
+			</div>
+			<img class="mascot" src="@@ROOT@@assets/mascot.svg" alt="{{k174}}" width="280" height="320">
+		</div>
+
+		<figure class="hero-shot">
+			<div class="shot">
+				<picture>
+					<source srcset="@@ROOT@@assets/shots/wall-phone-dark.webp" media="(max-width: 599px) and (prefers-color-scheme: dark)" width="390" height="844">
+					<source srcset="@@ROOT@@assets/shots/wall-phone-light.webp" media="(max-width: 599px)" width="390" height="844">
+					<source srcset="@@ROOT@@assets/shots/wall-dark.webp" media="(prefers-color-scheme: dark)">
+					<img src="@@ROOT@@assets/shots/wall-light.webp" alt="{{k175}}" width="1440" height="670" fetchpriority="high">
+				</picture>
+			</div>
+			<figcaption>{{k020}}</figcaption>
+		</figure>
+	</div>
+</section>
+
+<div class="wrap">
+	<div class="notice" role="note">
+		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
+		<p>{{k021}}</p>
+	</div>
+</div>
+
+
+<section class="block" id="why" style="border-top:0">
+	<div class="wrap">
+		<ul class="cards cards-4">
+			<li class="card"><h2 class="card-h">{{hl1_t}}</h2><p>{{hl1_p}}</p></li>
+			<li class="card"><h2 class="card-h">{{hl2_t}}</h2><p>{{hl2_p}}</p></li>
+			<li class="card"><h2 class="card-h">{{hl3_t}}</h2><p>{{hl3_p}}</p></li>
+			<li class="card"><h2 class="card-h">{{hl4_t}}</h2><p>{{hl4_p}}</p></li>
+		</ul>
+		<p style="margin-top:28px"><a class="more" href="@@LINK:features/@@">{{hl_more}}</a></p>
+	</div>
+</section>
+
+<section class="block" id="devices">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{home_dev_h}}</h2>
+			<p>{{home_dev_p}}</p>
+		</div>
+		<ul class="cards cards-fam">
+@@FAMILY_CARDS@@
+		</ul>
+		<p style="margin-top:28px"><a class="btn btn-secondary" href="@@LINK:devices/@@">{{home_dev_all}}</a></p>
+	</div>
+</section>
+
+<section class="block" id="start">
+	<div class="wrap">
+		<div class="feedback">
+			<img src="@@ROOT@@assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
+			<div>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">{{home_cta_h}}</h2>
+				<p>{{home_cta_p}}</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="@@LINK:install/@@">{{nav_install}}</a>
+				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">{{k008}}</a>
+			</div>
+		</div>
+	</div>
+</section>

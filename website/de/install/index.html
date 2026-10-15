@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="de" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Installieren · DumbMonit</title>
+<meta name="description" content="DumbMonit in drei Schritten mit Docker Compose installieren, danach den Agenten auf den Servern einrichten. Ein Container, ein Volume.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/de/install/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Installieren · DumbMonit">
+<meta property="og:description" content="DumbMonit in drei Schritten mit Docker Compose installieren, danach den Agenten auf den Servern einrichten. Ein Container, ein Volume.">
+<meta property="og:url" content="https://dumbmonit.app/de/install/">
+<meta property="og:locale" content="de_DE">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: Ist alles in Ordnung? Antwort in einer Sekunde. Selbst gehostetes Monitoring in einem Container, neben dem Taubenmaskottchen.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Installieren · DumbMonit">
+<meta name="twitter:description" content="DumbMonit in drei Schritten mit Docker Compose installieren, danach den Agenten auf den Servern einrichten. Ein Container, ein Volume.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Installieren · DumbMonit","url":"https://dumbmonit.app/de/install/","inLanguage":"de","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Zum Inhalt springen</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="DumbMonit Startseite"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="Abschnitte">
+			<a href="../features/">Funktionen</a>
+			<a href="../devices/">Geräte</a>
+			<a href="./" aria-current="page">Installieren</a>
+			<a href="../community/">Doku und Community</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Sprache"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>DE</span></summary>
+				<ul>
+				<li><a href="../../install/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../fr/install/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="./" hreflang="de" lang="de" aria-current="true">Deutsch</a></li>
+				<li><a href="../../es/install/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../it/install/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../pt/install/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../pt-BR/install/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../ru/install/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../zh-Hans/install/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Live-Demo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1>DumbMonit installieren</h1>
+		<p class="lede">Ein Container, drei Schritte. Danach den Agenten auf den Servern einrichten.</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:24px">
+	<div class="wrap">
+		<ol class="steps">
+			<li>
+				<h2>Compose-Datei herunterladen</h2>
+				<p>Einen Ordner anlegen und die Datei holen. Sie entfernt bereits alle Capabilities und bindet das Dateisystem schreibgeschützt ein.</p>
+				<div class="code" style="max-width:none">
+					<pre id="s1"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml</code></pre>
+					<button class="copy" type="button" data-copied="Kopiert" data-copy="s1">Kopieren</button>
+				</div>
+			</li>
+			<li>
+				<h2>Starten</h2>
+				<p>Docker lädt das Image und startet DumbMonit zusammen mit seiner Zeitreihendatenbank.</p>
+				<div class="code" style="max-width:none">
+					<pre id="s2"><code><span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="Kopiert" data-copy="s2">Kopieren</button>
+				</div>
+			</li>
+			<li>
+				<h2>Das erste Konto anlegen</h2>
+				<p>Seite öffnen und den Administrator anlegen. Dann ein Gerät hinzufügen: Das Formular sagt, was dort vorzubereiten ist.</p>
+				<p class="code-note">Öffnen Sie danach <code>http://localhost:8080</code> und legen Sie das erste Konto an. Image für amd64 (arm64 folgt): <code>ghcr.io/laupernoe/dumbmonit</code>.</p>
+			</li>
+		</ol>
+
+		<div class="split" style="margin-top:72px">
+			<div>
+				<h2 class="h-sm">Was Sie brauchen</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li>Docker Engine mit dem Compose-Plugin.</li>
+					<li>Eine amd64-Maschine; arm64-Images pausieren vorerst.</li>
+					<li>Port 8080 frei oder ein anderer Port Ihrer Wahl.</li>
+					<li>Netzwerkzugriff auf die überwachten Geräte. Sie müssen den Server nicht erreichen, außer Agenten.</li>
+				</ul>
+			</div>
+			<div>
+				<h2 class="h-sm">Weiterführend</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li><a href="https://dumbmonit.readthedocs.io/de/latest/install/docker/">Vollständige Installationsanleitung</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/de/latest/install/first-device/">Das erste Gerät hinzufügen</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/de/latest/install/update/">Aktualisieren</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/de/latest/install/backup/">Sichern und wiederherstellen</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/de/latest/install/remote-site/">Entfernte Standorte</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>Danach den Agenten auf den Servern einrichten</h2>
+					<p>Eine kleine Binärdatei, die CPU, Speicher, Laufwerke, Netzwerk, Dienste und Laufzeit an den Server schickt, dazu Temperaturen, Lüfter, SMART und ZFS-Pools, wo der Rechner sie bereitstellt. Er ruft den Server an, nie umgekehrt: Am Rechner muss kein Port geöffnet werden.</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># die Oberfläche trägt das Token für Sie ein</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="Kopiert" data-copy="agent-cmd">Kopieren</button>
+				</div>
+				<p class="code-note">Für Windows wird unter <code>/install.ps1</code> ein PowerShell-Skript ausgeliefert. Den Agent gibt es auch als Image, <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
+				<p style="margin-top:16px"><a href="https://dumbmonit.readthedocs.io/de/latest/devices/agent/">Dokumentation des Agenten</a></p>
+			</div>
+			<ul class="os-list">
+				<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Unterstützt</span><span class="how">x86_64 und aarch64, systemd oder OpenRC. Docker-Container und Systemzustand (Updates, ausstehender Neustart, fehlgeschlagene Units).</span></li>
+				<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Unterstützt</span><span class="how">x86_64, als Windows-Dienst installiert. SMART über smartctl.</span></li>
+				<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Vorschau</span><span class="how">launchd, Apple Silicon und Intel; Binärdateien liegen jedem Release bei. Noch nicht auf echter Hardware gelaufen.</span></li>
+				<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Vorschau</span><span class="how">rc.d, x86_64, ZFS-Pools. Noch nicht auf echter Hardware gelaufen.</span></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. Das Maskottchen ist eine Taube.</p>
+		<nav aria-label="Fußzeile">
+			<a href="../features/">Funktionen</a>
+			<a href="../devices/">Geräte</a>
+			<a href="./">Installieren</a>
+			<a href="../community/">Doku und Community</a>
+			<a href="https://demo.dumbmonit.app">Live-Demo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/de/latest/">Dokumentation</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Releases</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Übersetzen</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Lizenz</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Sicherheit</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+
+</script>
+</body>
+</html>

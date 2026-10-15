@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ru" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Установка · DumbMonit</title>
+<meta name="description" content="Установите DumbMonit через Docker Compose за три шага, затем добавьте агент на серверы. Один контейнер, один том.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/ru/install/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/install/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/install/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/install/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/install/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/install/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/install/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/install/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/install/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/install/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/install/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Установка · DumbMonit">
+<meta property="og:description" content="Установите DumbMonit через Docker Compose за три шага, затем добавьте агент на серверы. Один контейнер, один том.">
+<meta property="og:url" content="https://dumbmonit.app/ru/install/">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: всё в порядке? Узнайте за одну секунду. Self-hosted мониторинг в одном контейнере, рядом с талисманом-голубем.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Установка · DumbMonit">
+<meta name="twitter:description" content="Установите DumbMonit через Docker Compose за три шага, затем добавьте агент на серверы. Один контейнер, один том.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Установка · DumbMonit","url":"https://dumbmonit.app/ru/install/","inLanguage":"ru","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Перейти к содержимому</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="Главная DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="Разделы">
+			<a href="../features/">Возможности</a>
+			<a href="../devices/">Устройства</a>
+			<a href="./" aria-current="page">Установка</a>
+			<a href="../community/">Документация и сообщество</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Язык"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>RU</span></summary>
+				<ul>
+				<li><a href="../../install/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../fr/install/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../de/install/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../es/install/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../it/install/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../pt/install/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../pt-BR/install/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="./" hreflang="ru" lang="ru" aria-current="true">Русский</a></li>
+				<li><a href="../../zh-Hans/install/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Живое демо</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1>Установка DumbMonit</h1>
+		<p class="lede">Один контейнер, три шага. Затем добавьте агент на серверы.</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:24px">
+	<div class="wrap">
+		<ol class="steps">
+			<li>
+				<h2>Скачайте файл Compose</h2>
+				<p>Создайте папку и скачайте файл. В нём уже отброшены все capabilities, а файловая система смонтирована только для чтения.</p>
+				<div class="code" style="max-width:none">
+					<pre id="s1"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
+<span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml</code></pre>
+					<button class="copy" type="button" data-copied="Скопировано" data-copy="s1">Копировать</button>
+				</div>
+			</li>
+			<li>
+				<h2>Запустите</h2>
+				<p>Docker скачает образ и запустит DumbMonit вместе с базой временных рядов.</p>
+				<div class="code" style="max-width:none">
+					<pre id="s2"><code><span class="prompt">$ </span>docker compose up -d</code></pre>
+					<button class="copy" type="button" data-copied="Скопировано" data-copy="s2">Копировать</button>
+				</div>
+			</li>
+			<li>
+				<h2>Создайте первую учётную запись</h2>
+				<p>Откройте страницу и создайте администратора. Затем добавьте устройство: форма подскажет, что на нём подготовить.</p>
+				<p class="code-note">Затем откройте <code>http://localhost:8080</code> и создайте первую учётную запись. Образ для amd64 (arm64 позже): <code>ghcr.io/laupernoe/dumbmonit</code>.</p>
+			</li>
+		</ol>
+
+		<div class="split" style="margin-top:72px">
+			<div>
+				<h2 class="h-sm">Что понадобится</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li>Docker Engine с плагином Compose.</li>
+					<li>Машина amd64; образы arm64 пока приостановлены.</li>
+					<li>Свободный порт 8080 или любой другой по вашему выбору.</li>
+					<li>Сетевой доступ к отслеживаемым устройствам. Им не нужно связываться с сервером, кроме агентов.</li>
+				</ul>
+			</div>
+			<div>
+				<h2 class="h-sm">Дальше</h2>
+				<ul class="facts" style="margin-top:20px">
+					<li><a href="https://dumbmonit.readthedocs.io/ru/latest/install/docker/">Полное руководство по установке</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/ru/latest/install/first-device/">Добавить первое устройство</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/ru/latest/install/update/">Обновление</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/ru/latest/install/backup/">Резервное копирование и восстановление</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/ru/latest/install/remote-site/">Удалённые площадки</a></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>Затем добавьте агент на серверы</h2>
+					<p>Небольшой бинарный файл, который отправляет на сервер данные о CPU, памяти, дисках, сети, службах и времени работы, а также о температурах, вентиляторах, SMART и пулах ZFS, если машина их предоставляет. Он сам обращается к серверу, а не наоборот: на машине не нужно открывать порты.</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># интерфейс подставит токен за вас</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="Скопировано" data-copy="agent-cmd">Копировать</button>
+				</div>
+				<p class="code-note">Для Windows по адресу <code>/install.ps1</code> отдаётся скрипт PowerShell. Агент также доступен как образ <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
+				<p style="margin-top:16px"><a href="https://dumbmonit.readthedocs.io/ru/latest/devices/agent/">Документация агента</a></p>
+			</div>
+			<ul class="os-list">
+				<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Поддерживается</span><span class="how">x86_64 и aarch64, systemd или OpenRC. Контейнеры Docker и состояние ОС (обновления, ожидающая перезагрузка, упавшие юниты).</span></li>
+				<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Поддерживается</span><span class="how">x86_64, устанавливается как служба Windows. SMART через smartctl.</span></li>
+				<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Предварительная версия</span><span class="how">launchd, Apple silicon и Intel; бинарные файлы прикладываются к каждому релизу. Пока не запускалось на реальном оборудовании.</span></li>
+				<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Предварительная версия</span><span class="how">rc.d, x86_64, пулы ZFS. Пока не запускалось на реальном оборудовании.</span></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. Талисман — голубь.</p>
+		<nav aria-label="Подвал">
+			<a href="../features/">Возможности</a>
+			<a href="../devices/">Устройства</a>
+			<a href="./">Установка</a>
+			<a href="../community/">Документация и сообщество</a>
+			<a href="https://demo.dumbmonit.app">Живое демо</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/ru/latest/">Документация</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Релизы</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Перевод</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Лицензия</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Безопасность</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+
+</script>
+</body>
+</html>

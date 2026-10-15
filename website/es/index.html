@@ -5,7 +5,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit: monitorización sencilla, del homelab a la pequeña empresa</title>
-<meta name="description" content="Monitorización autoalojada en un contenedor: más de 50 integraciones (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory), un agente, 22 canales de notificación, páginas de estado públicas, un servidor MCP y alertas discretas. Código abierto, Apache 2.0. Alpha.">
+<meta name="description" content="Monitorización autoalojada en un solo contenedor: 65 tipos de dispositivo (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory y más), un agente, 23 canales de notificación, páginas de estado públicas, un servidor MCP y alertas discretas. Código abierto, Apache 2.0.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -28,7 +28,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit: monitorización sencilla, del homelab a la pequeña empresa">
-<meta property="og:description" content="Un contenedor, una dirección IP que escribir, gráficos y alertas útiles en menos de un minuto. Más de 50 integraciones, 22 canales de notificación, páginas de estado. Código abierto, Apache 2.0. Alpha.">
+<meta property="og:description" content="Monitorización autoalojada en un solo contenedor: 65 tipos de dispositivo (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory y más), un agente, 23 canales de notificación, páginas de estado públicas, un servidor MCP y alertas discretas. Código abierto, Apache 2.0.">
 <meta property="og:url" content="https://dumbmonit.app/es/">
 <meta property="og:locale" content="es_ES">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
@@ -37,7 +37,7 @@
 <meta property="og:image:alt" content="DumbMonit: ¿Todo bien? Sábelo en un segundo. Monitorización autoalojada en un contenedor, con la paloma como mascota.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DumbMonit: monitorización sencilla, del homelab a la pequeña empresa">
-<meta name="twitter:description" content="Un contenedor, una dirección IP que escribir, gráficos y alertas útiles en menos de un minuto. Código abierto, Apache 2.0. Alpha.">
+<meta name="twitter:description" content="Monitorización autoalojada en un solo contenedor: 65 tipos de dispositivo (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory y más), un agente, 23 canales de notificación, páginas de estado públicas, un servidor MCP y alertas discretas. Código abierto, Apache 2.0.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/es/","inLanguage":"es","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -50,11 +50,10 @@
 	<div class="wrap">
 		<a class="brand" href="./" aria-label="Inicio de DumbMonit"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" aria-label="Secciones">
-			<a href="#watches">Qué vigila</a>
-			<a href="#alerting">Alertas</a>
-			<a href="#agent">Agente</a>
-			<a href="#compare">Comparativa</a>
-			<a href="#status">Estado</a>
+			<a href="features/">Funciones</a>
+			<a href="devices/">Dispositivos</a>
+			<a href="install/">Instalar</a>
+			<a href="community/">Docs y comunidad</a>
 		</nav>
 		<div class="actions">
 			<details class="lang">
@@ -63,7 +62,7 @@
 				<li><a href="../" hreflang="en" lang="en">English</a></li>
 				<li><a href="../fr/" hreflang="fr" lang="fr">Français</a></li>
 				<li><a href="../de/" hreflang="de" lang="de">Deutsch</a></li>
-				<li><a href="../es/" hreflang="es" lang="es" aria-current="true">Español</a></li>
+				<li><a href="./" hreflang="es" lang="es" aria-current="true">Español</a></li>
 				<li><a href="../it/" hreflang="it" lang="it">Italiano</a></li>
 				<li><a href="../pt/" hreflang="pt" lang="pt">Português</a></li>
 				<li><a href="../pt-BR/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
@@ -72,14 +71,12 @@
 				</ul>
 			</details>
 			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Demo en vivo</a>
-			<a class="btn btn-ghost btn-sm" href="https://dumbmonit.readthedocs.io/es/latest/">Docs</a>
-			<a class="btn btn-secondary btn-sm" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
 		</div>
 	</div>
 </header>
 
 <main id="main">
-
 <section class="hero">
 	<div class="wrap">
 		<div class="hero-grid">
@@ -102,7 +99,7 @@
 				<div class="cta">
 					<a class="btn btn-primary" href="https://demo.dumbmonit.app"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.9-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14Z"/></svg>Probar la demo en vivo</a>
 					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.42c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.05-.72.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.77 2.7 1.26 3.36.96.1-.75.4-1.26.73-1.55-2.55-.29-5.24-1.28-5.24-5.69 0-1.26.45-2.28 1.19-3.09-.12-.29-.52-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.59.23 2.76.11 3.05.74.81 1.19 1.83 1.19 3.09 0 4.42-2.7 5.39-5.26 5.68.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>Ver en GitHub</a>
-					<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/es/latest/install/docker/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>Leer la guía de instalación</a>
+					<a class="btn btn-secondary" href="install/"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4.5A1.5 1.5 0 0 1 5.5 3H20v15H5.5A1.5 1.5 0 0 0 4 19.5v-15Z"/><path d="M4 19.5A1.5 1.5 0 0 0 5.5 21H20v-3"/></svg>Leer la guía de instalación</a>
 				</div>
 			</div>
 			<img class="mascot" src="../assets/mascot.svg" alt="La paloma de DumbMonit, azul pizarra con ojos saltones y pico naranja" width="280" height="320">
@@ -129,278 +126,52 @@
 	</div>
 </div>
 
-<section class="block" id="watches" style="border-top:0">
+
+<section class="block" id="why" style="border-top:0">
 	<div class="wrap">
-		<div class="section-head">
-			<h2>Una sola forma de añadir cualquier cosa</h2>
-			<p>La lista de dispositivos (Monitores) muestra filas o mosaicos con iconos de producto. Elige un tipo de monitor entre más de cincuenta, lee el aviso que indica qué preparar en el dispositivo y rellena solo los campos que ese tipo necesita. Los perfiles SNMP se eligen a partir del <code>sysObjectID</code> del dispositivo; los valores por defecto hacen el resto.</p>
-		</div>
-
-		<div class="rack">
-			<div class="rack-group">
-				<h3>Red y cortafuegos</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">SNMP v1, v2c y v3</span><span class="what">Switches, routers, NAS, SAI, impresoras. Interfaces y errores, recursos del host, batería del SAI, consumibles de impresora; incluye siete perfiles que se aplican solos.</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">OPNsense <span class="plate plate-advisory">Solo instancia de prueba</span></span><span class="what">Gateways con tiempo de ida y vuelta y pérdidas, la tabla de estados de pf, túneles VPN, concesiones DHCP, CARP, actualizaciones pendientes. Clave de API de solo lectura.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Descubrimiento de red</span><span class="what">Barre un rango CIDR y añade de una vez todo lo que responde.</span></li>
-				</ul>
-			</div>
-
-			<div class="rack-group">
-				<h3>Servidores e hipervisores</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox VE</span><span class="what">Nodos, VM y contenedores, almacenamiento, HA, Ceph, ZFS, quórum del clúster y la antigüedad de la última copia de seguridad de cada invitado.</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Datacenter Manager <span class="plate plate-advisory">Solo instancia de prueba</span></span><span class="what">Qué clústeres y servidores de copias alcanza aún la consola, todo el parque en una sola página, tareas fallidas en cada sitio.</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Hardware de servidor (Redfish) <span class="plate plate-advisory">Solo maquetas de referencia</span></span><span class="what">Ventiladores, temperaturas frente a los umbrales del propio hardware, fuentes de alimentación y redundancia, discos, memoria, el registro de eventos. Probado con las maquetas de la DMTF, aún no con una placa iDRAC, iLO o Supermicro real.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Máquinas con el agente</span><span class="what">Linux y Windows, con macOS y FreeBSD en vista previa. <a href="#agent">Más abajo.</a></span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Active Directory</span><span class="what">Un dominio Windows por LDAP con una cuenta normal, sin privilegios: roles FSMO, grupos privilegiados y lo primero que busca una auditoría de dominio — cuentas kerberoastables, contraseña antigua de krbtgt, equipos sin LAPS.</span></li>
-				</ul>
-			</div>
-
-			<div class="rack-group">
-				<h3>Almacenamiento y copias de seguridad</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">Proxmox Backup Server</span><span class="what">Un calendario de copias de 30 días por máquina, tareas fallidas con sus registros, tareas de verificación y GC, previsión de llenado del datastore.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Synology DSM</span><span class="what">Volúmenes, pools, discos y SMART, temperatura, Hyper Backup y Active Backup for Business con la antigüedad del último éxito, además del estado de los paquetes Drive y Photos.</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">TrueNAS <span class="plate plate-advisory">Solo instancia de prueba</span></span><span class="what">El pool que perdió un disco y sigue sirviendo datos, con el disco señalado; scrubs, cuotas, snapshots, replicación, SMART.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Copias de Plakar</span><span class="what">Antigüedad y resultado del último snapshot por repositorio, a través del agente.</span></li>
-				</ul>
-			</div>
-
-			<div class="rack-group">
-				<h3>Servicios y aplicaciones</h3>
-				<ul class="faceplates">
-					<li><span class="led" aria-hidden="true"></span><span class="name">Comprobaciones de disponibilidad</span><span class="what">HTTP(S) con estado, palabra clave, ruta JSON y certificado; puerto TCP; registros DNS; ping; caducidad del certificado TLS; desfase y stratum de NTP. Barra de historial, tiempo de respuesta, disponibilidad.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Sesiones de aplicación</span><span class="what">SMTP, PostgreSQL, MySQL y MariaDB, MQTT y WebSocket: un inicio de sesión o handshake real, para que un «arriba pero te rechaza» no se dé por «arriba».</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Heartbeats</span><span class="what">Una tarea cron o un script de copia llama a una URL secreta; cuando deja de llamar, te enteras. Compatible con el push de Uptime Kuma.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Contenedores Docker</span><span class="what">Estado, salud, reinicios, antigüedad de la imagen y actualizaciones disponibles, a través del agente. Reinicio y actualización opcionales dentro de una ventana de mantenimiento.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Salud web y SEO</span><span class="what">Caída, error, página en blanco, texto esperado ausente, <code>noindex</code>, un <code>robots.txt</code> que lo bloquea todo, respuestas lentas y cambios de título, descripción o URL canónica (confirmados por dos comprobaciones seguidas). Se siguen las redirecciones, así que http a https no es una falsa alarma. También detecta una página que queda casi vacía, cambios en las etiquetas de idioma y en las redirecciones; cada comprobación se puede activar o desactivar y el número de confirmaciones es ajustable. Los sitios reciben una categoría (comercio electrónico, blog, aplicación web, escaparate) y una plataforma (WordPress, Shopify, Wix&hellip;). Pensado para cientos de sitios: las sondas se reparten a lo largo del intervalo y son discretas con cada dominio, y una importación CSV los ordena en carpetas.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Detección de cambios web</span><span class="what">Vigila una página, o un sitio entero rastreado desde su sitemap, por si cambia su texto visible: texto antes/después, un diff por líneas y, cuando es posible, capturas de pantalla.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">GitLab y Forgejo/Gitea</span><span class="what">Colas de Sidekiq, runners de CI/CD, tareas programadas y migraciones de base de datos en una forja Git autoalojada. Un token de acceso normal basta para comprobar que la instancia está activa.</span></li>
-					<li><span class="led" aria-hidden="true"></span><span class="name">Nginx y Apache</span><span class="what">Workers o conexiones activos/inactivos, tasas de peticiones y de bytes, mediante <code>stub_status</code> o <code>mod_status</code>. No hace falta cuenta.</span></li>
-					<li><span class="led led-advisory" aria-hidden="true"></span><span class="name">Proxmox Mail Gateway <span class="plate plate-advisory">Solo instancia de prueba</span></span><span class="what">Colas de Postfix y el mensaje atascado más antiguo, correo filtrado hoy, tamaños de cuarentena, antigüedad de las firmas de antivirus y antispam.</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="legend">
-			<span><span class="led" aria-hidden="true"></span>Usado en monitores reales</span>
-			<span><span class="plate plate-advisory">Solo instancia de prueba</span>Desarrollado y comprobado con una copia real del software instalada para la ocasión, aún sin semanas de uso en producción</span>
-		</div>
-		<p class="code-note" style="margin-top:14px">Cada tipo tiene su propia página en la <a href="https://dumbmonit.readthedocs.io/es/latest/devices/">documentación de monitores</a>, con lo que lee exactamente y qué preparar. Un tipo de monitor de demostración genera datos sin necesidad de hardware.</p>
-
-		<div class="gallery" style="margin-top:56px">
-			<figure class="wide">
-				<div class="shot">
-					<picture>
-						<source srcset="../assets/shots/add-device-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../assets/shots/add-device-light.webp" alt="Añadir un dispositivo: una cuadrícula de tipos (dispositivo SNMP, Proxmox VE, Proxmox Backup Server, Datacenter Manager, Mail Gateway, Synology DSM, TrueNAS, OPNsense) y un panel 'Qué preparar' a la derecha" width="1440" height="820" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Añadir un monitor: elige un tipo y el aviso de la derecha indica qué preparar.</figcaption>
-			</figure>
-			<figure>
-				<div class="shot">
-					<picture>
-						<source srcset="../assets/shots/proxmox-guests-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../assets/shots/proxmox-guests-light.webp" alt="Panel de invitados de Proxmox VE: cada VM y contenedor por nodo con estado, CPU, memoria, disco, red, tiempo de actividad, última copia de seguridad y estado de HA" width="1264" height="647" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Proxmox VE: cada invitado, su disco y su última copia de seguridad.</figcaption>
-			</figure>
-			<figure>
-				<div class="shot">
-					<picture>
-						<source srcset="../assets/shots/pbs-calendar-dark.webp" media="(prefers-color-scheme: dark)">
-						<img src="../assets/shots/pbs-calendar-light.webp" alt="Calendario de copias de Proxmox Backup Server: un punto por día y por máquina durante 30 días, con la antigüedad de la última copia" width="1264" height="700" loading="lazy">
-					</picture>
-				</div>
-				<figcaption>Proxmox Backup Server: la copia que dejó de ejecutarse, detectada antes del día de la restauración.</figcaption>
-			</figure>
-		</div>
-	</div>
-</section>
-
-<section class="block" id="alerting">
-	<div class="wrap">
-		<div class="split">
-			<div>
-				<div class="section-head" style="margin-bottom:32px">
-					<h2>Alertas sin ruido</h2>
-					<p>Las reglas útiles están activas nada más instalar. El esfuerzo se dedica a enviar menos mensajes, y mejores.</p>
-				</div>
-				<ul class="points">
-					<li><strong>Dependencias</strong><p>Declara un switch como padre de lo que cuelga de él. Cuando cae recibes una sola notificación, no treinta; las demás aparecen como «Suprimida por el padre».</p></li>
-					<li><strong>Agrupadas por host</strong><p>Un NAS cuya matriz se degrada envía un mensaje por ciclo, no uno por disco. Recordatorios, escalado, reconocimiento, posponer, ignorar por dispositivo y borrado del historial resuelto vienen incluidos.</p></li>
-					<li><strong>Líneas base que primero aprenden</strong><p>Detección de anomalías sin umbral que ajustar: 168 intervalos, uno por cada hora de la semana. Permanece en silencio durante sus primeros 14 días y solo muestra lo que habría disparado.</p></li>
-					<li><strong>Previsiones</strong><p>«Este sistema de archivos se llenará en cuatro días» aparece como previsión, aparte de lo que está roto ahora mismo.</p></li>
-					<li><strong>Mantenimiento y una política de notificaciones</strong><p>Ventanas puntuales o semanales, histéresis, retención de flapping, horas de silencio, agrupación y un tope por hora, para que una mala noche no se convierta en doscientas notificaciones.</p></li>
-				</ul>
-				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/es/latest/alerting/">Cómo funcionan las alertas</a></p>
-			</div>
-			<div>
-				<figure>
-					<div class="shot">
-						<picture>
-							<source srcset="../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
-							<img src="../assets/shots/alerts-light.webp" alt="Página de alertas: alertas activas agrupadas bajo su host, cada una con una placa de Advertencia o Aviso, Reconocer, Silenciar 1 h y Abrir monitor" width="1440" height="760" loading="lazy">
-						</picture>
-					</div>
-					<figcaption>Alertas agrupadas por host. Las severidades se leen como un servicio meteorológico: info, aviso, advertencia.</figcaption>
-				</figure>
-
-				<h3 style="margin-top:48px">22 canales de notificación</h3>
-				<p class="muted" style="margin-top:8px">Cada uno tiene un botón de prueba y una página de configuración en la <a href="https://dumbmonit.readthedocs.io/es/latest/notifications/">documentación</a>.</p>
-				<ul class="chips" aria-label="Canales de notificación">
-					<li>Discord</li><li>Slack</li><li>Microsoft Teams</li><li>Telegram</li><li>Matrix</li><li>Mattermost</li><li>Rocket.Chat</li><li>Google Chat</li><li>Zulip</li><li>ntfy</li><li>Gotify</li><li>Pushover</li><li>Pushbullet</li><li>Bark</li><li>Apprise</li><li>Home Assistant</li><li>Correo (SMTP)</li><li>Signal</li><li>Twilio SMS</li><li>PagerDuty</li><li>Opsgenie</li><li>Webhook</li>
-				</ul>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section class="block" id="agent">
-	<div class="wrap">
-		<div class="split flip">
-			<div>
-				<div class="section-head" style="margin-bottom:24px">
-					<h2>Un agente para lo que no habla SNMP</h2>
-					<p>Un binario pequeño que envía al servidor CPU, memoria, discos, red, servicios y tiempo de actividad, además de temperaturas, ventiladores, SMART y pools ZFS cuando la máquina los expone. Es él quien llama al servidor, nunca al revés: no hay que abrir ningún puerto en la máquina.</p>
-				</div>
-				<div class="code" style="max-width:none">
-					<pre id="agent-cmd"><code><span class="comment"># la interfaz rellena el token por ti</span>
-curl -sSL http://server:8080/install.sh | sh -s -- \
-  --token=dmon_xxx --url=http://server:8080</code></pre>
-					<button class="copy" type="button" data-copied="Copiado" data-copy="agent-cmd">Copiar</button>
-				</div>
-				<p class="code-note">Para Windows se sirve un script de PowerShell en <code>/install.ps1</code>. El agente también existe como imagen, <code>ghcr.io/laupernoe/dumbmonit-agent</code>.</p>
-			</div>
-			<div>
-				<ul class="os-list">
-					<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Compatible</span><span class="how">x86_64 y aarch64, systemd u OpenRC. Contenedores Docker y salud del SO (actualizaciones, reinicio pendiente, unidades fallidas).</span></li>
-					<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Compatible</span><span class="how">x86_64, instalado como servicio de Windows. SMART mediante smartctl.</span></li>
-					<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Vista previa</span><span class="how">launchd, Apple silicon e Intel; binarios adjuntos a cada versión. Aún no probado en hardware real.</span></li>
-					<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>Vista previa</span><span class="how">rc.d, x86_64, pools ZFS. Aún no probado en hardware real.</span></li>
-				</ul>
-				<ul class="points" style="margin-top:32px">
-					<li><strong>Sitios remotos, solo conexiones salientes</strong><p>En modo relay, un agente ejecuta las sondas del servidor (SNMP, Proxmox, HTTP…) desde su propia red — una segunda sede, la red de un cliente o un VPS tras NAT — sin nada entrante: ni VPN ni puertos que abrir. <a href="https://dumbmonit.readthedocs.io/es/latest/install/remote-site/">Monitorizar un sitio remoto</a></p></li>
-				</ul>
-			</div>
-		</div>
-	</div>
-</section>
-
-<section class="block" id="status">
-	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>Páginas de estado para quienes dependen de tus servicios</h2>
-				<p>Páginas públicas en <code>/s/&lt;name&gt;</code>: grupos de servicios con 90 días de historial diario, disponibilidad a 30 y 90 días, anuncios de incidentes y mantenimiento, suscriptores por correo con doble confirmación, RSS, badges para un README, una vista compacta para incrustar en una intranet, un calendario de 90 días y gráficos de tiempo de respuesta opcionales, y una escena opcional tras el banner: unas cincuenta para elegir, desde skylines de ciudades (Venecia, París, Tokio, Nueva York&hellip;) y maravillas del mundo hasta símbolos suizos (el Cervino, el Jet d&rsquo;Eau, Lucerna, Berna, Chillon). El cielo sigue el estado de tus servicios y cada escena reacciona a su manera cuando algo cae o se recupera. Las suizas llevan un reloj de estación al estilo SBB, un panel de alertas de láminas, fuegos artificiales el 1 de agosto, el caldero de la Escalade y nieve en invierno.</p>
-				<p>Solo salen del servidor las etiquetas que tú eliges. Los nombres, direcciones y tipos de los dispositivos nunca aparecen en la página, en un badge ni en un correo.</p>
-				<p><a href="https://dumbmonit.readthedocs.io/es/latest/using/status-pages/">Páginas de estado en la documentación</a></p>
-			</div>
-			<div>
-				<ul class="points">
-					<li><strong>Modo pared</strong><p>Solo el boletín, a pantalla completa, para un monitor en la sala: una escena viva (por defecto una azotea de París con la Torre Eiffel y las palomas de DumbMonit, u otra entre muchas) cuyo tiempo sigue tus alertas, un tema OLED para una pantalla encendida durante días y música de pared &mdash; Spotify Connect convierte la pantalla en un altavoz.</p></li>
-					<li><strong>Puntuación de seguridad</strong><p>Cada dispositivo compatible recibe una puntuación de 0 a 100 y una nota de la A a la F a partir de las comprobaciones de buenas prácticas del propio fabricante, al estilo PingCastle: categoría, severidad, evidencia, remediación y una página de Seguridad ordenada de peor a mejor.</p></li>
-					<li><strong>Cuentas</strong><p>Roles de administrador, operador (gestiona alertas, no cambia la configuración) y lector, segundo factor TOTP opcional, registro de auditoría y inicio de sesión único con OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), con la creación de cuentas desactivada por defecto.</p></li>
-					<li><strong>Se lleva bien con lo que ya usas</strong><p><code>/metrics</code>, <code>/federate</code> y un endpoint compatible con Prometheus permiten que un Grafana existente lea los datos de DumbMonit.</p></li>
-					<li><strong>API abierta y documentada</strong><p>Todas las rutas tras <code>/api/openapi.json</code> (OpenAPI 3.1): tokens con ámbito (<code>dmt_…</code>, de lectura o escritura) que pueden caducar, limitarse a una red y tienen límite de peticiones. <a href="https://dumbmonit.readthedocs.io/es/latest/reference/api/">Referencia de la API</a></p></li>
-					<li><strong>Un asistente por MCP</strong><p>27 herramientas para Claude Code, Claude Desktop, ChatGPT, VS Code o Cursor: leer estado, dispositivos, alertas, métricas y agentes; con un token de escritura también puede silenciar, reconocer, añadir un dispositivo o reiniciar un contenedor. Los secretos nunca salen. <a href="https://dumbmonit.readthedocs.io/es/latest/using/assistant/">Conectar un asistente</a></p></li>
-					<li><strong>En el móvil</strong><p>Consulta el estado, reconoce una alerta, inicia una ventana de mantenimiento. Se puede instalar en la pantalla de inicio y, a propósito, sin modo sin conexión: nunca muestra el estado de ayer.</p></li>
-				</ul>
-			</div>
-		</div>
-		<figure class="phone-shot" style="margin-top:48px; max-width:360px">
-			<div class="shot">
-				<picture>
-					<source srcset="../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
-					<img src="../assets/shots/wall-phone-light.webp" alt="El boletín en un móvil: la frase, los indicadores, la ventana de tiempo con la paloma y la primera alerta que te necesita" width="390" height="844" loading="lazy">
-				</picture>
-			</div>
-			<figcaption>El mismo boletín a ancho de móvil.</figcaption>
-		</figure>
-	</div>
-</section>
-
-<section class="block" id="footprint">
-	<div class="wrap">
-		<div class="section-head">
-			<h2>Tan pequeño que te olvidas de que está</h2>
-			<p>Un binario de Rust con la interfaz web integrada, la base de datos de series temporales VictoriaMetrics lanzada por ese mismo binario dentro de la misma imagen, y SQLite para la configuración. Sin contenedor de base de datos, sin cola de mensajes.</p>
-		</div>
-		<div class="readouts">
-			<div class="readout"><span class="fig">1</span><span class="label-tape">Contenedor, un volumen</span></div>
-			<div class="readout"><span class="fig">~130 MB</span><span class="label-tape">de RAM, medidos con 15 dispositivos</span></div>
-			<div class="readout"><span class="fig">1</span><span class="label-tape">Arquitectura: amd64 (arm64 más adelante)</span></div>
-			<div class="readout"><span class="fig">0</span><span class="label-tape">Capabilities necesarias</span></div>
-		</div>
-		<ul class="facts">
-			<li><span>La cifra de memoria es la del contenedor entero, base de datos de series temporales incluida, en una instancia pequeña. El presupuesto de caché de la base de datos es de 256 MB por defecto y puede ampliarse para cientos de hosts.</span></li>
-			<li><span>Se ejecuta como usuario no root sobre un sistema de archivos de solo lectura, sin ninguna capability. Los monitores de ping funcionan mediante un sysctl, no con <code>NET_RAW</code>.</span></li>
-			<li><span>Las redirecciones que siguen las sondas y los canales de notificación nunca salen del host configurado, un canal no puede apuntar al propio DumbMonit y las cabeceras de los webhooks se guardan como secretos cifrados.</span></li>
-			<li><span>Las credenciales se cifran en reposo (AES-256-GCM). Las copias de seguridad son un único archivo, cifrado con una frase de contraseña que tú eliges, restaurable en una instancia nueva tras una prueba en seco.</span></li>
-			<li><span>¿Ya tienes VictoriaMetrics? Apunta <code>DUMBMONIT_VM_URL</code> hacia ella y la integrada no se inicia.</span></li>
+		<ul class="cards cards-4">
+			<li class="card"><h2 class="card-h">Un contenedor, un minuto</h2><p>Un solo contenedor con un volumen y sin capabilities adicionales. Abra la página, cree una cuenta, añada un dispositivo: los gráficos y las alertas llegan solos.</p></li>
+			<li class="card"><h2 class="card-h">Alertas que no molestan</h2><p>Las reglas útiles están activas desde el principio. Dependencias, agrupación y referencias aprendidas convierten treinta mensajes en uno.</p></li>
+			<li class="card"><h2 class="card-h">65 tipos de dispositivo</h2><p>Switches, cortafuegos, hipervisores, NAS, sitios web, bases de datos y aplicaciones autoalojadas, cada uno leído como su fabricante prevé.</p></li>
+			<li class="card"><h2 class="card-h">Páginas de estado y pantalla mural</h2><p>Comparta una página de estado pública con sus usuarios, o muestre la vista de parte meteorológico en una pantalla de la sala.</p></li>
 		</ul>
+		<p style="margin-top:28px"><a class="more" href="features/">Ver todas las funciones</a></p>
 	</div>
 </section>
 
-<section class="block" id="compare">
+<section class="block" id="devices">
 	<div class="wrap">
 		<div class="section-head">
-			<h2>Cómo se compara</h2>
-			<p>DumbMonit es para quien vigila diez máquinas y tres switches. Las herramientas consolidadas son excelentes en lo suyo; aquí está dónde encaja mejor cada una.</p>
+			<h2>¿Qué puede vigilar?</h2>
+			<p>Elija una familia para ver qué se vigila, las reglas de alerta que incluye y qué preparar en el dispositivo.</p>
 		</div>
-		<div class="compare">
-			<article>
-				<h3>Zabbix</h3>
-				<p>Maduro, probado con miles de hosts, con una plantilla para casi todo, proxies distribuidos y versiones de soporte a largo plazo. También exige un servidor de base de datos, un front end web y tiempo para aprender ítems, triggers y plantillas.</p>
-				<p class="pick">Elige Zabbix para flotas grandes o si necesitas esa profundidad hoy. Elige DumbMonit si quieres la respuesta en un segundo y puedes vivir con menos integraciones y un proyecto joven.</p>
-			</article>
-			<article>
-				<h3>Prometheus y Grafana</h3>
-				<p>El estándar en métricas: un enorme ecosistema de exporters, PromQL y paneles para lo que sea, incluidas tus propias aplicaciones. La pila la montas y mantienes tú: Prometheus, Alertmanager, exporters, paneles y reglas.</p>
-				<p class="pick">DumbMonit trae ese montaje ya hecho y expone <code>/metrics</code>, <code>/federate</code> y un endpoint compatible con Prometheus, así que ambos pueden convivir.</p>
-			</article>
-			<article>
-				<h3>Uptime Kuma</h3>
-				<p>Un monitor de disponibilidad pulido y muy popular, con más tipos de monitor, más servicios de notificación y una comunidad mayor. Comprueba los servicios desde fuera; no lee los puertos de un switch, los invitados de un hipervisor ni los discos de un NAS.</p>
-				<p class="pick">DumbMonit incluye comprobaciones al estilo Kuma y heartbeats compatibles con push, junto a las métricas de los dispositivos. Si lo único que necesitas son comprobaciones de disponibilidad, Uptime Kuma es la opción más madura.</p>
-			</article>
-		</div>
+		<ul class="cards cards-fam">
+			<li class="card"><h3><a href="devices/servers/">Servidores y hardware</a></h3><p>Máquinas Linux, Windows, macOS y FreeBSD mediante el agente, hardware de servidor mediante su controlador de gestión, SAI y Active Directory.</p><p class="label-tape">4 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/network/">Equipos de red</a></h3><p>Switches, routers, puntos de acceso y VPN: cualquier dispositivo SNMP, MikroTik, UniFi, Tailscale y OpenVPN.</p><p class="label-tape">5 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/firewalls/">Cortafuegos</a></h3><p>OPNsense, pfSense, FortiGate y Sophos: puertas de enlace, túneles, interfaces, alta disponibilidad y licencias.</p><p class="label-tape">4 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/hypervisors/">Hipervisores y clústeres</a></h3><p>Proxmox, vSphere, XCP-ng, Nutanix y Kubernetes: hosts, invitados, almacenamiento y salud del clúster.</p><p class="label-tape">6 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/storage/">NAS y copias de seguridad</a></h3><p>Synology, TrueNAS, Unraid, Proxmox Backup Server y Veeam: discos, pools y la antigüedad de la última copia correcta.</p><p class="label-tape">5 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/checks/">Sitios web, certificados y comprobaciones</a></h3><p>Páginas web y API, puertos, DNS, ping, certificados TLS, servidores horarios, caducidad de dominios, heartbeats y cambios en sitios web.</p><p class="label-tape">11 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/proxies/">Servidores web y proxies inversos</a></h3><p>Traefik, Caddy, Nginx, Apache y Nginx Proxy Manager: backends, certificados y tasas de error.</p><p class="label-tape">5 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/apps/">Aplicaciones autoalojadas</a></h3><p>Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex, Home Assistant, GitLab y Forgejo.</p><p class="label-tape">8 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/mail/">DNS, correo y seguridad</a></h3><p>Pi-hole, AdGuard Home, CrowdSec, y los servidores y pasarelas de correo: SMTP, MDaemon, SecurityGateway y Proxmox Mail Gateway.</p><p class="label-tape">7 tipos de dispositivo</p></li>
+			<li class="card"><h3><a href="devices/data/">Bases de datos y observabilidad</a></h3><p>PostgreSQL, MySQL, MongoDB, Redis, RabbitMQ, MQTT y los servidores VictoriaMetrics, Loki y Graylog.</p><p class="label-tape">10 tipos de dispositivo</p></li>
+		</ul>
+		<p style="margin-top:28px"><a class="btn btn-secondary" href="devices/">Ver los 65 tipos de dispositivo</a></p>
 	</div>
 </section>
 
-<section class="block" id="open">
+<section class="block" id="start">
 	<div class="wrap">
-		<div class="split">
-			<div class="section-head" style="margin-bottom:0">
-				<h2>Código abierto, todo</h2>
-				<p>Apache 2.0, dependencias incluidas: la CI falla ante cualquier dependencia que no tenga una licencia aprobada por la OSI. Ninguna función se reserva para una edición de pago, porque no existe.</p>
-				<p>Este sitio no tiene analítica, ni cookies, ni peticiones a terceros.</p>
-			</div>
-			<div>
-				<h3>Lo que aún se mueve</h3>
-				<ul class="facts" style="margin-top:16px">
-					<li><span>La API HTTP no está congelada y el esquema de la base de datos sigue cambiando entre alphas.</span></li>
-					<li><span>OPNsense, TrueNAS, Proxmox Datacenter Manager y Mail Gateway necesitan informes de instalaciones reales y de larga duración. Redfish necesita un controlador de gestión real.</span></li>
-					<li><span>Los agentes de macOS y FreeBSD necesitan que alguien los ejecute en hardware real.</span></li>
-					<li><span>La interfaz está en inglés; el selector de idioma ya ofrece otros 8 (alemán, español, francés, italiano, portugués en dos variantes, ruso, chino simplificado), traducidos en parte (la documentación está disponible en los mismos idiomas), y <a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">las traducciones son bienvenidas por pull request</a>.</span></li>
-					<li><span>Lo que se construye después se decide en los <a href="https://github.com/laupernoe/dumbmonit/issues">issues de GitHub</a>, y el <a href="https://github.com/laupernoe/dumbmonit/blob/main/CHANGELOG.md">changelog</a> dice qué ha cambiado.</span></li>
-				</ul>
-			</div>
-		</div>
-
-		<div class="feedback" style="margin-top:64px">
+		<div class="feedback">
 			<img src="../assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
 			<div>
-				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">Cuéntanos qué falla</h2>
-				<p>Un dispositivo que lee mal, una alerta que te despertó sin motivo, una página que te confundió: cada informe mejora la siguiente alpha. Las peticiones de soporte para nuevos dispositivos también son bienvenidas.</p>
+				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">Listo en un minuto</h2>
+				<p>Tres comandos, o mire primero la demo en vivo.</p>
 			</div>
 			<div class="cta">
-				<a class="btn btn-primary" href="https://github.com/laupernoe/dumbmonit/issues/new/choose">Abrir un issue</a>
+				<a class="btn btn-primary" href="install/">Instalar</a>
 				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">Demo en vivo</a>
-				<a class="btn btn-secondary" href="https://dumbmonit.readthedocs.io/es/latest/">Documentación</a>
 			</div>
 		</div>
 	</div>
@@ -412,6 +183,10 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<p>DumbMonit, Apache 2.0. La mascota es una paloma.</p>
 		<nav aria-label="Pie de página">
+			<a href="features/">Funciones</a>
+			<a href="devices/">Dispositivos</a>
+			<a href="install/">Instalar</a>
+			<a href="community/">Docs y comunidad</a>
 			<a href="https://demo.dumbmonit.app">Demo en vivo</a>
 			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
 			<a href="https://dumbmonit.readthedocs.io/es/latest/">Documentación</a>
@@ -438,6 +213,7 @@ document.addEventListener('click', function (e) {
 	var d = document.querySelector('.lang[open]');
 	if (d && !d.contains(e.target)) d.removeAttribute('open');
 });
+
 </script>
 </body>
 </html>

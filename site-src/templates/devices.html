@@ -1,0 +1,30 @@
+<section class="page-head">
+	<div class="wrap">
+		<h1>{{dv_h1}}</h1>
+		<p class="lede">{{dv_lede}}</p>
+		<p class="code-note">{{dv_en_note}}</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:32px">
+	<div class="wrap">
+		<div class="filter">
+			<div class="search" id="dev-search" hidden>
+				<label for="dev-q" class="label-tape">{{dv_search}}</label>
+				<input id="dev-q" type="search" placeholder="{{dv_search_ph}}" autocomplete="off">
+			</div>
+			<nav aria-label="{{dv_filter}}">
+				<ul class="fam-chips" id="dev-fams">
+					<li><a href="#all" data-family="" aria-current="true">{{dv_all}}</a></li>
+@@FAMILY_CHIPS@@
+				</ul>
+			</nav>
+			<p class="muted" id="dev-count" role="status" aria-live="polite" data-tpl="{{dv_count}}" hidden></p>
+		</div>
+
+		<ul class="catalog" id="dev-list">
+@@CATALOG@@
+		</ul>
+		<p class="muted" id="dev-none" hidden>{{dv_none}}</p>
+	</div>
+</section>

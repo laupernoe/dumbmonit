@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="it" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DNS, posta e sicurezza · Dispositivi · DumbMonit</title>
+<meta name="description" content="Pi-hole, AdGuard Home, CrowdSec, e i server e gateway di posta: SMTP, MDaemon, SecurityGateway e Proxmox Mail Gateway.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/it/devices/mail/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/mail/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/mail/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/mail/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/mail/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/mail/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/mail/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/mail/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/mail/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/mail/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/mail/">
+<link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../../apple-touch-icon.png">
+<link rel="preload" href="../../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="DNS, posta e sicurezza · Dispositivi · DumbMonit">
+<meta property="og:description" content="Pi-hole, AdGuard Home, CrowdSec, e i server e gateway di posta: SMTP, MDaemon, SecurityGateway e Proxmox Mail Gateway.">
+<meta property="og:url" content="https://dumbmonit.app/it/devices/mail/">
+<meta property="og:locale" content="it_IT">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: va tutto bene? Lo sai in un secondo. Monitoraggio self-hosted in un container, con la mascotte piccione.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DNS, posta e sicurezza · Dispositivi · DumbMonit">
+<meta name="twitter:description" content="Pi-hole, AdGuard Home, CrowdSec, e i server e gateway di posta: SMTP, MDaemon, SecurityGateway e Proxmox Mail Gateway.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"DNS, posta e sicurezza · Dispositivi · DumbMonit","url":"https://dumbmonit.app/it/devices/mail/","inLanguage":"it","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Vai al contenuto</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="Home di DumbMonit"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="Sezioni">
+			<a href="../../features/">Funzionalità</a>
+			<a href="../" aria-current="page">Dispositivi</a>
+			<a href="../../install/">Installa</a>
+			<a href="../../community/">Doc e community</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Lingua"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>IT</span></summary>
+				<ul>
+				<li><a href="../../../devices/mail/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../../fr/devices/mail/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../../de/devices/mail/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../../es/devices/mail/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="./" hreflang="it" lang="it" aria-current="true">Italiano</a></li>
+				<li><a href="../../../pt/devices/mail/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../../pt-BR/devices/mail/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../../ru/devices/mail/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../../zh-Hans/devices/mail/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Demo dal vivo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">Dispositivi</a></p>
+		<h1>DNS, posta e sicurezza</h1>
+		<p class="lede">Pi-hole, AdGuard Home, CrowdSec, e i server e gateway di posta: SMTP, MDaemon, SecurityGateway e Proxmox Mail Gateway.</p>
+		<p class="code-note">Le descrizioni dei dispositivi e i testi delle regole di avviso sono in inglese, come nel prodotto. Le etichette della pagina seguono la tua lingua.</p>
+		<ul class="toc" aria-label="Tipi di dispositivo in questa pagina">
+			<li><a href="#pihole">Pi-hole</a></li>
+			<li><a href="#adguard">AdGuard Home</a></li>
+			<li><a href="#crowdsec">CrowdSec</a></li>
+			<li><a href="#smtp">Mail relay (SMTP)</a></li>
+			<li><a href="#mdaemon">MDaemon Email Server</a></li>
+			<li><a href="#securitygateway">SecurityGateway for Email Servers</a></li>
+			<li><a href="#pmg">Proxmox Mail Gateway</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="pihole">
+<header><h2>Pi-hole</h2><span class="label-tape">pihole</span></header>
+<p class="summary">The DNS ad blocker: blocking on or paused, queries and share blocked, blocklist age, upstream failures, updates and its own diagnosis messages.</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>Pi-hole v6 on a Raspberry Pi</li><li>Pi-hole in Docker</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>App password (recommended)</strong><span>Generated under Settings → Web interface / API in expert mode. It cannot change Pi-hole&#x27;s settings.</span></li></ul><p class="muted">Nessun account necessario.</p><p class="muted">Porta predefinita: <code>80</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Avviso</span><strong>Pi-hole blocking disabled</strong><span>Blocking is off, paused or failed. The hold lets a five-minute pause from the web interface go by.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Pi-hole blocklists stale</strong><span>The blocklists (gravity) have not been rebuilt for more than eight days: the weekly update fails.</span></li><li><span class="plate plate-info">Info</span><strong>Pi-hole update available</strong><span>A newer version is available: the image in Docker, core, web interface or FTL otherwise. Pi-hole checks once a day.</span></li><li><span class="plate plate-info">Info</span><strong>Pi-hole diagnosis messages</strong><span>Pi-hole lists messages on its diagnosis page: a blocklist that failed to download, a rate-limited client, an overloaded host.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Create an app password in Pi-hole</summary><ol class="setup-steps"><li><p>Pi-hole v6 or later is required: version 5 had no REST API. Pi-hole has no read-only account; the closest is an app password, which cannot change any setting.</p></li><li><p>In Pi-hole&#x27;s web interface, open Settings → Web interface / API and switch the page from Basic to Expert. Click Configure app password, copy the password shown, then click Enable new app password. Pi-hole shows it only once, and a new one replaces the previous one.</p></li><li><p>An app password stays read-only for settings as long as webserver.api.app_sudo is false, the default. Check it on the Pi-hole machine (in Docker, prefix the command with docker exec and the container name):</p><pre><code>pihole-FTL --config webserver.api.app_sudo</code></pre></li><li><p>In DumbMonit, enter the Pi-hole address, for example &quot;pi.hole&quot; or &quot;192.168.1.53&quot;, and paste the app password. For a Pi-hole whose web interface has no password, pick No password instead.</p></li><li><p>DumbMonit only reads. It never pauses blocking and never changes a list, and it keeps one API session open between checks instead of opening one per check: Pi-hole allows 16 sessions at a time.</p></li></ol><p class="warn"><strong>Attenzione.</strong> The app password still allows pausing blocking and editing lists through the API: keep it for DumbMonit only. Pi-hole serves plain HTTP on port 80, and the password crosses the network each time a session opens: across an untrusted network, use HTTPS on port 443.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/pihole/">Documentazione</a></p>
+</article>
+<article class="dev" id="adguard">
+<header><h2>AdGuard Home</h2><span class="label-tape">adguard</span></header>
+<p class="summary">The DNS filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates.</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>AdGuard Home</li><li>AdGuard Home on OpenWrt or a NAS</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>User name / password</strong><span>The dedicated user added to AdGuardHome.yaml, sent as HTTP basic authentication.</span></li></ul><p class="muted">Nessun account necessario.</p><p class="muted">Porta predefinita: <code>80</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">6</span></h3><ul class="rules"><li><span class="plate plate-advisory">Avviso</span><strong>AdGuard Home protection off</strong><span>Protection disabled, or paused and not back yet.</span></li><li><span class="plate plate-warning">Allarme</span><strong>AdGuard Home DNS not running</strong><span>The web interface answers but the DNS server is stopped.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>AdGuard Home upstream failing</strong><span>An upstream DNS server fails AdGuard Home&#x27;s own test, or stays silent 4 seconds.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>AdGuard Home filter lists stale</strong><span>The oldest update of an enabled filter list is more than three days old.</span></li><li><span class="plate plate-info">Info</span><strong>AdGuard Home update available</strong><span>A newer version is announced by AdGuard Home&#x27;s own version check; never fires when that check is disabled, as in the official Docker image.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Add a user for DumbMonit to AdGuard Home</summary><ol class="setup-steps"><li><p>AdGuard Home has no read-only account: every user listed in AdGuardHome.yaml can change every setting. Give DumbMonit a user of its own, so it can be removed without touching yours. First make a bcrypt hash of a long random password (htpasswd comes with the apache2-utils or httpd-tools package):</p><pre><code>htpasswd -B -C 10 -n -b dumbmonit &#x27;LONG-RANDOM-PASSWORD&#x27;</code></pre></li><li><p>Stop AdGuard Home, open AdGuardHome.yaml (next to the AdGuardHome binary, or in the conf folder of the Docker volume) and add this line under &quot;users:&quot;, at the same indentation as the &quot;- name:&quot; line already there. Replace HASH with what htpasswd printed after &quot;dumbmonit:&quot;. Start AdGuard Home again.</p><pre><code>- { name: dumbmonit, password: &quot;HASH&quot; }</code></pre></li><li><p>Check from the DumbMonit host that the user is accepted:</p><pre><code>curl -u dumbmonit http://adguard.lan/control/status</code></pre></li><li><p>In DumbMonit, enter the address of the AdGuard Home web interface, for example &quot;adguard.lan&quot; (port 80) or &quot;http://adguard.lan:3000&quot;, then the user dumbmonit and its password.</p></li><li><p>DumbMonit only reads the status, the statistics, the filter lists and the last version check. It never reads the query log. At every check it asks AdGuard Home to test each upstream DNS server, as the Test upstreams button does; untick Test upstream servers below to stop that.</p></li></ol><p class="warn"><strong>Attenzione.</strong> The dumbmonit user can change every setting, like any AdGuard Home user: keep its password to DumbMonit alone. It travels with every request, so across an untrusted network turn on HTTPS in Settings → Encryption settings. After five wrong passwords, AdGuard Home refuses the address for 15 minutes.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/adguard/">Documentazione</a></p>
+</article>
+<article class="dev" id="crowdsec">
+<header><h2>CrowdSec</h2><span class="label-tape">crowdsec</span></header>
+<p class="summary">The security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, Local API health.</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>CrowdSec on a Linux host</li><li>CrowdSec in Docker</li><li>CrowdSec on OPNsense or pfSense</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>Bouncer API key</strong><span>Also proves the Local API answers decision queries. A bouncer key can only read decisions.</span></li></ul><p class="muted">Nessun account necessario.</p><p class="muted">Porta predefinita: <code>6060</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">4</span></h3><ul class="rules"><li><span class="plate plate-warning">Allarme</span><strong>CrowdSec Local API down</strong><span>The Local API does not answer /health.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>CrowdSec bouncer stopped pulling</strong><span>A bouncer&#x27;s requests did not change in 30 minutes (changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])).</span></li><li><span class="plate plate-advisory">Avviso</span><strong>CrowdSec reads no logs</strong><span>Not a single log line read in six hours (increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])).</span></li><li><span class="plate plate-warning">Allarme</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Let DumbMonit read CrowdSec&#x27;s metrics</summary><ol class="setup-steps"><li><p>CrowdSec publishes its metrics on 127.0.0.1:6060 by default. Set listen_addr in the prometheus section of /etc/crowdsec/config.yaml to an address DumbMonit can reach, then restart CrowdSec. The official Docker image already listens on every interface.</p><pre><code>sudo sed -i &#x27;s/listen_addr: 127.0.0.1/listen_addr: 0.0.0.0/&#x27; /etc/crowdsec/config.yaml
+sudo systemctl restart crowdsec</code></pre></li><li><p>The metrics need no credential: they hold counts, bouncer and machine names and log file paths, never an IP address. Filter port 6060 so that only the DumbMonit host reaches it, and check that it answers.</p><pre><code>curl -s http://crowdsec.lan:6060/metrics | grep cs_info</code></pre></li><li><p>DumbMonit also checks /health of the Local API, on port 8080 of the same host: listen_uri in the api.server section must then be reachable too. Untick Check the Local API for a host that only runs an agent.</p></li><li><p>Optional: create a bouncer key for DumbMonit and paste it as Bouncer API key below. A bouncer key can only read decisions. DumbMonit asks for the decisions on 192.0.2.1, a documentation address, so the answer is always empty and the ban list is never downloaded.</p><pre><code>sudo cscli bouncers add dumbmonit</code></pre></li><li><p>In DumbMonit, enter the CrowdSec host, for example &quot;crowdsec.lan&quot;. Where the Local API and the agents run on different hosts, add each host: decisions, alerts and bouncers are counted where the Local API runs, log lines where each agent reads them.</p></li></ol><p class="warn"><strong>Attenzione.</strong> A bouncer that stops pulling keeps enforcing a frozen list: new attackers get through and nothing complains. DumbMonit warns when a bouncer&#x27;s requests stop for 30 minutes. It only knows bouncers that pulled at least once since CrowdSec last started.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/crowdsec/">Documentazione</a></p>
+</article>
+<article class="dev" id="smtp">
+<header><h2>Mail relay (SMTP)</h2><span class="label-tape">smtp</span></header>
+<p class="summary">A mail server greets, offers STARTTLS and accepts a login, like a real client.</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>Your provider&#x27;s SMTP relay</li><li>A local Postfix or msmtp</li><li>Proxmox Mail Gateway</li><li>The submission port of a mail server</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>Username / password</strong><span>Sent once the connection is encrypted, never before.</span></li></ul><p class="muted">Nessun account necessario.</p><p class="muted">Porta predefinita: <code>587</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-warning">Allarme</span><strong>Service down</strong><span>The service has not responded correctly for three minutes.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Service flapping</strong><span>The service changed state more than six times in thirty minutes (changes(dumbmonit_probe_success{probe!=&quot;push&quot;}[30m])).</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Slow service</strong><span>The service takes more than three seconds to respond; failed checks are left out.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Certificate expiring soon</strong><span>The certificate expires in less than fourteen days.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Certificate expired</strong><span>The certificate has expired.</span></li></ul></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Monitor a mail relay</summary><ol class="setup-steps"><li><p>In the address, write the mail server, and the port if it is not the usual one: &quot;smtp.example.com&quot; or &quot;smtp.example.com:2525&quot;.</p></li><li><p>Pick the encryption your relay uses: STARTTLS for the submission port 587, TLS for port 465, None for a relay on your own network listening on port 25.</p></li><li><p>To check that the relay still accepts your account, fill in the credential: the check then runs AUTH and reports a refused password as such, not as an outage.</p></li><li><p>Nothing is ever sent: the check stops after the greeting, the extensions and the optional login, then hangs up. No message enters the queue.</p></li><li><p>To be warned when an extension disappears, name it in &quot;Expected extension&quot;: a relay that stops advertising STARTTLS is a relay that would send your mail in clear text.</p></li></ol><p class="warn"><strong>Attenzione.</strong> An accepted session does not prove mail leaves. A relay that accepts everything and queues it forever answers perfectly here: watch the queues themselves for that.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/services/#smtp">Documentazione</a></p>
+</article>
+<article class="dev" id="mdaemon">
+<header><h2>MDaemon Email Server</h2><span class="label-tape">mdaemon</span></header>
+<p class="summary">SMTP, IMAP, POP3 and webmail answering, version, and the XML API.</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>MDaemon Email Server</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>XML API account</strong><span>Also reads the version through the XML API. Leave the credential empty to watch the mail services only.</span></li></ul><p class="muted">Nessun account necessario.</p><p class="muted">Porta predefinita: <code>25</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">6</span></h3><ul class="rules"><li><span class="plate plate-warning">Allarme</span><strong>MDaemon mail service down</strong><span>A watched mail service of the MDaemon server does not answer, or greets to refuse service. Only the services listed on the device have a series. The notification names the service and its port.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>MDaemon XML API not answering</strong><span>The XML API has stopped answering while the mail services still do: Remote Administration is probably stopped. Only a device with an account has the series.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>MDaemon mail queue growing</strong><span>The inbound, local or remote queue has grown by more than a hundred messages in two hours (delta(dumbmonit_mdaemon_queue_messages{queue=~&quot;inbound\|local\|remote&quot;}[2h])): MDaemon has stopped delivering from it. Read by the [agent](../devices/agent.md#windows-performance-counters) on the MDaemon server, so the alert is on the agent&#x27;s device.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>MDaemon Bad queue not empty</strong><span>Messages are waiting in the Bad queue: MDaemon could neither deliver nor bounce them, and they stay there until an administrator releases or deletes them.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>MDaemon Retry queue high</strong><span>More than fifty messages wait in the Retry queue: remote servers keep refusing mail temporarily.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Watch the mail services, and optionally the XML API</summary><ol class="setup-steps"><li><p>Nothing to install on the server. With no credential, DumbMonit connects to the mail ports from the outside and reads each greeting: SMTP (25), IMAP (143) and Webmail (3000) by default. Add POP3, MSA, the TLS ports or Remote Administration in the Services option, as a list such as this one.</p><pre><code>smtp,msa,imap,pop3,imaps,webmail</code></pre></li><li><p>To also read the version through the XML API, create a dedicated account in MDaemon, named for example as follows, with a long password used nowhere else. Give it the lowest level your MDaemon accepts for the XML API, and nothing more: DumbMonit only calls GetVersionInfo, which reads no mailbox and changes nothing.</p><pre><code>dumbmonit@example.com</code></pre></li><li><p>Since MDaemon 24, the XML API only answers the addresses it allows. Open Setup → XML API Service → Address Restrictions (Setup → XML API Management on MDaemon 26) and allow the address DumbMonit connects from.</p></li><li><p>Check from the DumbMonit host that the account reaches the API. The command asks for the password and prints an answer that starts with &lt;MDaemon&gt;&lt;API productversion=…&gt;.</p><pre><code>curl -k -u dumbmonit@example.com -H &#x27;Content-Type: text/xml&#x27; --data &#x27;&lt;MDaemon&gt;&lt;API&gt;&lt;Request version=&quot;20.0.0&quot; echo=&quot;0&quot; verbose=&quot;0&quot;&gt;&lt;Operation&gt;GetVersionInfo&lt;/Operation&gt;&lt;Parameters/&gt;&lt;/Request&gt;&lt;/API&gt;&lt;/MDaemon&gt;&#x27; https://mail.example.com:444/MdMgmtWS/</code></pre></li><li><p>In DumbMonit, enter the server address, for example &quot;mail.example.com&quot;, then the full email address of the account as user name, and its password. The XML API is reached on the Remote Administration HTTPS port, 444 by default.</p></li></ol><p class="warn"><strong>Attenzione.</strong> MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options. Mail queue sizes are not read by this device: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/mdaemon/">Documentazione</a></p>
+</article>
+<article class="dev" id="securitygateway">
+<header><h2>SecurityGateway for Email Servers</h2><span class="label-tape">securitygateway</span></header>
+<p class="summary">Mail gateway services answering, version, and the REST API performance counters (12.5 and later).</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>SecurityGateway for Email Servers</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>API key (12.5 and later)</strong><span>Also reads the version and the performance counters through the REST API. Leave the credential empty to watch the services only.</span></li></ul><p class="muted">Nessun account necessario.</p><p class="muted">Porta predefinita: <code>25</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">4</span></h3><ul class="rules"><li><span class="plate plate-warning">Allarme</span><strong>SecurityGateway service down</strong><span>A watched service of the gateway does not answer, or greets to refuse service.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>SecurityGateway API not answering</strong><span>The REST API has stopped answering while the services still do. Only a device with an API key has the series.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>SecurityGateway delivery queue growing</strong><span>The delivery queue has grown by more than a hundred messages in two hours (delta(dumbmonit_securitygateway_counter{counter=~&quot;.*(delivery_queue\|queued_for_delivery).*&quot;}[2h])): the mail server behind the gateway is probably refusing mail. The counter names come from the API as they are; if your version names the queue differently, adjust the matcher.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Watch the gateway services, and optionally the REST API</summary><ol class="setup-steps"><li><p>Nothing to install on the server. With no credential, DumbMonit connects to SMTP (25) and the web interface (4000) from the outside and reads the SMTP greeting. Change the list in the Services option, for example to check HTTPS instead of HTTP.</p><pre><code>smtp,web_https</code></pre></li><li><p>To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the device page, your version keeps them for the Global Administrator role, and the account needs that role instead.</p><pre><code>dumbmonit</code></pre></li><li><p>Sign in as that account and create a key under Setup/Users → Accounts → API Keys, with an expiry date. A key carries the rights of the account that creates it, which is why it must be created from this account and not from yours.</p></li><li><p>Restrict the account to the address DumbMonit connects from in its IP restrictions: API keys obey them too.</p></li><li><p>Check from the DumbMonit host that the key works. The command prints the API description, which also lists the counters DumbMonit reads.</p><pre><code>curl -k -H &#x27;Authorization: Bearer YOUR_KEY&#x27; https://sg.example.com:4443/api/v1/openapi</code></pre></li><li><p>In DumbMonit, enter the gateway address, for example &quot;sg.example.com&quot;, and paste the key. The API is reached on the web interface HTTPS port, 4443 by default, under /api/v1.</p></li></ol><p class="warn"><strong>Attenzione.</strong> SecurityGateway has no read-only role and no narrower key: the key can do everything its account can. Never create it from your own account, keep it only in DumbMonit and give it an expiry date. Versions before 12.5 have no REST API: leave the credential empty and DumbMonit checks the services only. The web interface often uses a self-signed certificate on 4443: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/securitygateway/">Documentazione</a></p>
+</article>
+<article class="dev" id="pmg">
+<header><h2>Proxmox Mail Gateway</h2><span class="label-tape">pmg</span></header>
+<p class="summary">Mail queues and stuck mail, spam and virus traffic, quarantine, signature age.</p>
+<p class="label-tape" style="margin-top:14px">Esempi</p><ul class="chips" style="margin-top:6px"><li>Proxmox Mail Gateway</li></ul>
+<div class="dev-grid">
+<section><h3>Cosa serve</h3><ul class="needs"><li><strong>Username / password (recommended)</strong><span>Opens a two-hour session, renewed automatically. Proxmox Mail Gateway does not issue API tokens: this is its normal way in.</span></li><li><strong>API token</strong><span>Only if your gateway offers API tokens: Proxmox Mail Gateway 9 and earlier do not create any. Use the username and password instead.</span></li></ul><p class="muted">Porta predefinita: <code>8006</code></p></section>
+<section><h3>Regole di avviso incluse <span class="label-tape">9</span></h3><ul class="rules"><li><span class="plate plate-advisory">Avviso</span><strong>Mail queue growing</strong><span>The deferred mail queue has grown by more than a hundred messages in two hours (delta(dumbmonit_pmg_queue_messages{queue=&quot;deferred&quot;}[2h])): the next hop is probably refusing mail. Growth rather than size, because a busy gateway always keeps a few dozen deferred.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Mail stuck in the queue</strong><span>A message has been waiting in a queue for more than four hours. The age is a lower bound — qshape reports brackets — so the rule fires late rather than early. The notification names the queue.</span></li><li><span class="plate plate-warning">Allarme</span><strong>Mail gateway service stopped</strong><span>A service the gateway needs to accept and filter mail is stopped. A unit that is not installed has no series and cannot fire.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Virus signatures out of date</strong><span>The ClamAV daily virus signatures are more than two days old: freshclam has stopped updating them and the gateway keeps filtering with last week&#x27;s list.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Spam rules out of date</strong><span>The SpamAssassin rules are more than eight days old. A channel that has never been updated has no date and no series.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Quarantine filling up</strong><span>The spam quarantine has taken in more than a thousand messages in six hours (delta(dumbmonit_pmg_quarantine_messages{kind=&quot;spam&quot;}[6h])): a campaign, or a rule that just put a legitimate domain in the bin.</span></li></ul><details class="more-rules"><summary>Mostra altre 3</summary><ul class="rules"><li><span class="plate plate-advisory">Avviso</span><strong>Mail gateway cluster degraded</strong><span>A gateway of the cluster is no longer in sync with the others: it filters with an out-of-date rule database. A standalone gateway has no series.</span></li><li><span class="plate plate-advisory">Avviso</span><strong>Mail gateway certificate expiring</strong><span>A certificate of the mail gateway expires in less than fourteen days.</span></li><li><span class="plate plate-info">Info</span><strong>Mail gateway updates pending</strong><span>More than twenty package updates are pending on the mail gateway.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Passaggi di configurazione: Create a read-only user in Proxmox Mail Gateway</summary><ol class="setup-steps"><li><p>In the web interface: Configuration → User Management → Users → Add. Name the account as follows, give it a long password used nowhere else, and tick Enabled.</p><pre><code>dumbmonit@pmg</code></pre></li><li><p>Set its Role to Audit. That is the exact read-only minimum for everything DumbMonit reads: node status, services, postfix queues, mail statistics, quarantine counts, ClamAV and SpamAssassin database age, cluster status, certificates, subscription and pending updates. Audit can change nothing, release nothing from quarantine and read no message.</p></li><li><p>Prefer a shell? The same account in one command, then set the password.</p><pre><code>pmgsh create /access/users --userid dumbmonit@pmg --role audit --enable 1 --comment &quot;DumbMonit monitoring&quot;</code></pre></li><li><p>In DumbMonit, enter the gateway address, for example &quot;mail.lan&quot; or &quot;mail.lan:8006&quot;, then this account&#x27;s user name (realm included) and password.</p></li><li><p>Proxmox Mail Gateway does not issue API tokens, unlike Proxmox VE and Proxmox Backup Server: the username and password are the way in. DumbMonit opens one two-hour session and renews it, rather than logging in on every measurement.</p></li></ol><p class="warn"><strong>Attenzione.</strong> Do not reuse the account you log in with: the Audit role above can only read, and cannot release a quarantined message or change a rule. Proxmox Mail Gateway also uses a self-signed certificate by default: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/it/latest/devices/pmg/">Documentazione</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">Altre famiglie</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../servers/">Server e hardware</a></li>
+			<li><a href="../network/">Apparati di rete</a></li>
+			<li><a href="../firewalls/">Firewall</a></li>
+			<li><a href="../hypervisors/">Hypervisor e cluster</a></li>
+			<li><a href="../storage/">NAS e backup</a></li>
+			<li><a href="../checks/">Siti web, certificati e controlli</a></li>
+			<li><a href="../proxies/">Server web e reverse proxy</a></li>
+			<li><a href="../apps/">Applicazioni self-hosted</a></li>
+			<li><a href="../data/">Database e osservabilità</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. La mascotte è un piccione.</p>
+		<nav aria-label="Piè di pagina">
+			<a href="../../features/">Funzionalità</a>
+			<a href="../">Dispositivi</a>
+			<a href="../../install/">Installa</a>
+			<a href="../../community/">Doc e community</a>
+			<a href="https://demo.dumbmonit.app">Demo dal vivo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/it/latest/">Documentazione</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Release</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Traduci</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Licenza</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Sicurezza</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+
+</script>
+</body>
+</html>

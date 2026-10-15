@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>虚拟化平台与集群 · 设备 · DumbMonit</title>
+<meta name="description" content="Proxmox、vSphere、XCP-ng、Nutanix 和 Kubernetes：主机、客户机、存储和集群健康。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/hypervisors/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/hypervisors/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/hypervisors/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/hypervisors/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/hypervisors/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/hypervisors/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/hypervisors/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/hypervisors/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/hypervisors/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/hypervisors/">
+<link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../../apple-touch-icon.png">
+<link rel="preload" href="../../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="虚拟化平台与集群 · 设备 · DumbMonit">
+<meta property="og:description" content="Proxmox、vSphere、XCP-ng、Nutanix 和 Kubernetes：主机、客户机、存储和集群健康。">
+<meta property="og:url" content="https://dumbmonit.app/zh-Hans/devices/hypervisors/">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit：一切正常吗？一秒钟就知道。一个容器里的自托管监控，旁边是吉祥物鸽子。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="虚拟化平台与集群 · 设备 · DumbMonit">
+<meta name="twitter:description" content="Proxmox、vSphere、XCP-ng、Nutanix 和 Kubernetes：主机、客户机、存储和集群健康。">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"虚拟化平台与集群 · 设备 · DumbMonit","url":"https://dumbmonit.app/zh-Hans/devices/hypervisors/","inLanguage":"zh-Hans","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="DumbMonit 首页"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="章节">
+			<a href="../../features/">功能</a>
+			<a href="../" aria-current="page">设备</a>
+			<a href="../../install/">安装</a>
+			<a href="../../community/">文档与社区</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="语言"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>中文</span></summary>
+				<ul>
+				<li><a href="../../../devices/hypervisors/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../../fr/devices/hypervisors/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../../de/devices/hypervisors/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../../es/devices/hypervisors/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../../it/devices/hypervisors/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../../pt/devices/hypervisors/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../../pt-BR/devices/hypervisors/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../../ru/devices/hypervisors/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="./" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">在线演示</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">设备</a></p>
+		<h1>虚拟化平台与集群</h1>
+		<p class="lede">Proxmox、vSphere、XCP-ng、Nutanix 和 Kubernetes：主机、客户机、存储和集群健康。</p>
+		<p class="code-note">设备描述和告警规则文本为英文，与产品一致。页面标签使用您的语言。</p>
+		<ul class="toc" aria-label="本页的设备类型">
+			<li><a href="#proxmox">Proxmox VE</a></li>
+			<li><a href="#pdm">Proxmox Datacenter Manager</a></li>
+			<li><a href="#vsphere">VMware vSphere</a></li>
+			<li><a href="#xcpng">XCP-ng / XenServer</a></li>
+			<li><a href="#nutanix">Nutanix AHV (Prism Central)</a></li>
+			<li><a href="#kubernetes">Kubernetes / k3s</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="proxmox">
+<header><h2>Proxmox VE</h2><span class="label-tape">proxmox</span></header>
+<p class="summary">Nodes, virtual machines, containers, storage and backups of a Proxmox server or cluster.</p>
+<p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>Proxmox server</li><li>Proxmox cluster</li></ul>
+<div class="dev-grid">
+<section><h3>您需要准备</h3><ul class="needs"><li><strong>API token (recommended)</strong><span>No expiry and no session opened: the right choice for monitoring.</span></li><li><strong>Username / password</strong><span>Opens a two-hour session, renewed automatically. Use it only if tokens are not an option.</span></li></ul><p class="muted">默认端口: <code>8006</code></p></section>
+<section><h3>内置告警规则 <span class="label-tape">32</span></h3><ul class="rules"><li><span class="plate plate-advisory">提示</span><strong>Backup too old</strong><span>No successful Proxmox VE backup for more than seven days.</span></li><li><span class="plate plate-advisory">提示</span><strong>VM or container stopped</strong><span>The guest was running within the last two hours and has been stopped for five minutes == 1).</span></li><li><span class="plate plate-advisory">提示</span><strong>VM or container CPU high</strong><span>A guest has used more than 90 % of its allocated cores for fifteen minutes. The notification names the guest, nextcloud (202).</span></li><li><span class="plate plate-advisory">提示</span><strong>VM or container memory high</strong><span>A guest has used more than 95 % of its memory for ten minutes.</span></li><li><span class="plate plate-advisory">提示</span><strong>VM or container disk almost full</strong><span>The root disk of a guest is more than 90 % full: containers always, VMs only when the QEMU guest agent reports usage.</span></li><li><span class="plate plate-advisory">提示</span><strong>Guest locked</strong><span>A VM or container has been locked for six hours: an interrupted backup or migration left the lock behind and no operation can run on the guest, not even the next backup.</span></li></ul><details class="more-rules"><summary>再显示 26 条</summary><ul class="rules"><li><span class="plate plate-info">信息</span><strong>Old snapshot</strong><span>The oldest snapshot of a guest is more than thirty days old.</span></li><li><span class="plate plate-warning">警告</span><strong>HA resource in error</strong><span>A Proxmox HA resource is in error or fenced.</span></li><li><span class="plate plate-warning">警告</span><strong>HA manager not reporting</strong><span>The HA local resource manager of a node has stopped writing its state: that node&#x27;s HA guests will be neither restarted nor relocated.</span></li><li><span class="plate plate-warning">警告</span><strong>Cluster lost quorum</strong><span>The Proxmox cluster is not quorate: guests can no longer be started.</span></li><li><span class="plate plate-warning">警告</span><strong>Proxmox node offline</strong><span>A cluster node is reported offline.</span></li><li><span class="plate plate-warning">警告</span><strong>Proxmox service down</strong><span>A core Proxmox daemon is not running on a node.</span></li><li><span class="plate plate-advisory">提示</span><strong>Node network interface down</strong><span>An interface set to start at boot is not up on a node. An interface brought up on demand is never reported.</span></li><li><span class="plate plate-advisory">提示</span><strong>Proxmox storage almost full</strong><span>A Proxmox storage is more than 85% full; &quot;Disk almost full&quot; takes over at 90%.</span></li><li><span class="plate plate-warning">警告</span><strong>Thin pool almost full</strong><span>An LVM thin pool is more than 90 % full: every guest stored on it goes read-only when it fills; clears below 88 %.</span></li><li><span class="plate plate-warning">警告</span><strong>Thin pool metadata almost full</strong><span>The metadata volume of an LVM thin pool is more than 80 % full. It is far smaller than the data volume and often saturates first, with the same consequence.</span></li><li><span class="plate plate-advisory">提示</span><strong>Proxmox disk wearing out</strong><span>An SSD or NVMe of a node has used more than 90 % of its rated life. The notification reads pve1 · /dev/nvme0n1.</span></li><li><span class="plate plate-warning">警告</span><strong>Proxmox disk SMART failure</strong><span>A disk of a node reports SMART health FAILED.</span></li><li><span class="plate plate-warning">警告</span><strong>Proxmox ZFS pool degraded</strong><span>A ZFS pool of a node is not ONLINE. The notification reads pve2 · tank.</span></li><li><span class="plate plate-warning">警告</span><strong>Backup job failed</strong><span>The last vzdump job on a node, or a scheduled backup job, failed.</span></li><li><span class="plate plate-advisory">提示</span><strong>Backup job excludes a disk</strong><span>A scheduled backup job skips a disk of one of the guests it covers: the job succeeds every night with that data missing. CD-ROM drives and cloudinit images are excluded by design and never counted.</span></li><li><span class="plate plate-warning">警告</span><strong>Replication failed</strong><span>A replication job reports an error or a non-zero fail count: the standby copy is stale.</span></li><li><span class="plate plate-warning">警告</span><strong>Ceph health error</strong><span>Ceph reports HEALTH_ERR.</span></li><li><span class="plate plate-advisory">提示</span><strong>Ceph health warning</strong><span>Ceph reports HEALTH_WARN for more than fifteen minutes.</span></li><li><span class="plate plate-warning">警告</span><strong>Ceph OSD down</strong><span>A Ceph OSD has been down for five minutes. The notification names the OSD and its host.</span></li><li><span class="plate plate-advisory">提示</span><strong>Ceph OSD nearly full</strong><span>A single Ceph OSD is more than 85 % full: writes stop when it reaches its limit, whatever the cluster average says; clears below 82 %.</span></li><li><span class="plate plate-advisory">提示</span><strong>Ceph pool almost full</strong><span>A Ceph pool is more than 85 % full; clears below 82 %.</span></li><li><span class="plate plate-info">信息</span><strong>Ceph noout flag left on</strong><span>The Ceph noout flag has been set for two hours: rebalancing is disabled, and the cluster reads healthy while its redundancy shrinks.</span></li><li><span class="plate plate-info">信息</span><strong>Proxmox updates pending</strong><span>More than twenty package updates are pending on a node.</span></li><li><span class="plate plate-advisory">提示</span><strong>Proxmox security updates pending</strong><span>At least one pending update comes from a security archive.</span></li><li><span class="plate plate-info">信息</span><strong>Proxmox packages changed</strong><span>The installed version of a Proxmox package changed between two probes — someone ran apt upgrade. Resolves by itself an hour later.</span></li><li><span class="plate plate-advisory">提示</span><strong>Node certificate expiring</strong><span>A Proxmox node certificate expires in less than fourteen days.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>设置步骤: Create a read-only user and token in Proxmox VE</summary><ol class="setup-steps"><li><p>Open a shell on any node (in the web UI: select the node, then Shell; or SSH) and create a user reserved for monitoring. It needs no password: the token is what logs in.</p><pre><code>pveum user add dumbmonit@pve --comment &quot;DumbMonit monitoring&quot;</code></pre></li><li><p>Create a role with only the privileges the collector uses: Sys.Audit (nodes, cluster, HA, disks and SMART, ZFS, certificates, package versions, subscription), Datastore.Audit (storages and backup archives), VM.Audit (VMs, containers, snapshots) and VM.GuestAgent.Audit (what the QEMU guest agent reads inside a VM: disk usage, operating system, IP addresses). None of them can change anything.</p><pre><code>pveum role add DumbMonit --privs &quot;Datastore.Audit Sys.Audit VM.Audit VM.GuestAgent.Audit&quot;</code></pre></li><li><p>Give the user that role on the whole cluster.</p><pre><code>pveum aclmod / -user dumbmonit@pve -role DumbMonit</code></pre></li><li><p>Create the user&#x27;s API token. Privilege separation is off, so the token simply inherits the user&#x27;s rights.</p><pre><code>pveum user token add dumbmonit@pve monitor --privsep 0</code></pre></li><li><p>The command prints a table with full-tokenid and value. Copy full-tokenid into DumbMonit&#x27;s Token ID field and value (the UUID) into its Secret field. The secret is shown once: if it is lost, remove the token and create a new one.</p><pre><code>dumbmonit@pve!monitor</code></pre></li><li><p>Optional, to count pending updates and pending security fixes: Proxmox guards that list with Sys.Modify. Grant it on /nodes only; without it the collector skips the list silently.</p><pre><code>pveum role add DumbMonitUpdates --privs Sys.Modify
+pveum aclmod /nodes -user dumbmonit@pve -role DumbMonitUpdates</code></pre></li><li><p>On an older Proxmox, VM.GuestAgent.Audit may not exist yet and the command above is refused with invalid privilege: the guest-agent calls are then covered by VM.Monitor, which Proxmox VE 9 removed in turn. Use whichever your version knows.</p><pre><code>pveum role add DumbMonit --privs &quot;Datastore.Audit Sys.Audit VM.Audit VM.Monitor&quot;</code></pre></li><li><p>Prefer the web UI? The same steps live under Datacenter → Permissions: Users, Roles, Add → User Permission, then API Tokens with &quot;Privilege Separation&quot; unticked.</p></li><li><p>In DumbMonit, enter the address of any node (port 8006 by default).</p></li></ol><p class="warn"><strong>注意.</strong> Do not reuse the account you log in with: a leaked token would then control the whole cluster. The DumbMonit role above can only read. Proxmox also uses a self-signed certificate by default: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/proxmox/">文档</a></p>
+</article>
+<article class="dev" id="pdm">
+<header><h2>Proxmox Datacenter Manager</h2><span class="label-tape">pdm</span></header>
+<p class="summary">The console over several clusters: which instances it reaches, their failed tasks, its health.</p>
+<p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>Proxmox Datacenter Manager</li></ul>
+<div class="dev-grid">
+<section><h3>您需要准备</h3><ul class="needs"><li><strong>API token (recommended)</strong><span>No expiry and no session opened: the right choice for monitoring.</span></li></ul><p class="muted">默认端口: <code>8443</code></p></section>
+<section><h3>内置告警规则 <span class="label-tape">6</span></h3><ul class="rules"><li><span class="plate plate-warning">警告</span><strong>Federated instance unreachable</strong><span>The datacenter console cannot reach one of the Proxmox VE clusters or backup servers it federates. The notification names the instance and its product.</span></li><li><span class="plate plate-info">信息</span><strong>Federated instance behind</strong><span>An instance runs an older version than another instance of the same product in the same estate. Compared between instances, never against what Proxmox publishes.</span></li><li><span class="plate plate-advisory">提示</span><strong>Task failed on a federated instance</strong><span>At least one task failed on a federated instance in the review window.</span></li><li><span class="plate plate-advisory">提示</span><strong>Datacenter console disk almost full</strong><span>The root filesystem of the datacenter console is more than 90 % full: full, the console stops recording what it collects.</span></li><li><span class="plate plate-advisory">提示</span><strong>Datacenter console certificate expiring</strong><span>A certificate of the datacenter console expires in less than fourteen days.</span></li><li><span class="plate plate-info">信息</span><strong>Datacenter console updates pending</strong><span>More than twenty package updates are pending on the datacenter console.</span></li></ul></section>
+</div>
+<details class="setup"><summary>设置步骤: Create a read-only user and token in Proxmox Datacenter Manager</summary><ol class="setup-steps"><li><p>In the console, open Configuration → Access Control → Users and click Add. Name the account as follows and leave the password empty: the token is what logs in.</p><pre><code>dumbmonit@pdm</code></pre></li><li><p>Still under Access Control, open API Tokens → Add, pick that user and name the token &quot;monitor&quot;. The console shows the secret once: copy it now.</p><pre><code>dumbmonit@pdm!monitor</code></pre></li><li><p>Give both the user and the token the Auditor role on / (the top of the tree, so the whole estate). Auditor carries System.Audit, Resource.Audit and Access.Audit, and can change nothing. A token never has more rights than its user, so the permission is granted twice: Permissions → Add → User Permission, then again with API Token Permission.</p></li><li><p>Copy the token id into DumbMonit&#x27;s Token ID field and the secret into its Secret field.</p></li><li><p>In DumbMonit, enter the console address, for example &quot;dc.lan&quot; or &quot;dc.lan:8443&quot;.</p></li></ol><p class="warn"><strong>注意.</strong> Do not reuse the account you log in with: a leaked token would then control every cluster the console federates at once. The Auditor role can only read. The console also uses a self-signed certificate by default: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options. Two items need more than Auditor and are simply skipped without it: the per-instance metric collection status, and the update summary of the federated instances.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/pdm/">文档</a></p>
+</article>
+<article class="dev" id="vsphere">
+<header><h2>VMware vSphere</h2><span class="label-tape">vsphere</span></header>
+<p class="summary">vCenter and ESXi hosts: hosts not responding or left in maintenance, VMs and their VMware Tools, datastores filling up, and the alarms vSphere raised.</p>
+<p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>vCenter Server</li><li>ESXi (standalone host)</li></ul>
+<div class="dev-grid">
+<section><h3>您需要准备</h3><ul class="needs"><li><strong>User name / password</strong><span>The dedicated user with the Read-only role. On a vCenter, include the domain.</span></li></ul><p class="muted">默认端口: <code>443</code></p></section>
+<section><h3>内置告警规则 <span class="label-tape">8</span></h3><ul class="rules"><li><span class="plate plate-warning">警告</span><strong>vSphere host not responding</strong><span>A vSphere host is not responding to vCenter. A host disconnected on purpose (1) does not fire.</span></li><li><span class="plate plate-warning">警告</span><strong>vSphere host health red</strong><span>vSphere reports a host&#x27;s overall health as red. Gray means unknown and does not fire.</span></li><li><span class="plate plate-info">信息</span><strong>vSphere host left in maintenance</strong><span>A vSphere host has been in maintenance mode for a day: its VMs were moved away and it may have been forgotten there.</span></li><li><span class="plate plate-advisory">提示</span><strong>vSphere datastore almost full</strong><span>A vSphere datastore is 90% full or more; clears below 85 %.</span></li><li><span class="plate plate-warning">警告</span><strong>vSphere datastore inaccessible</strong><span>A vSphere datastore is inaccessible: the VMs stored on it cannot run.</span></li><li><span class="plate plate-info">信息</span><strong>vSphere VM tools not running</strong><span>VMware Tools are installed but not running in a powered-on VM: the guest may be hung. VMs without Tools do not fire.</span></li></ul><details class="more-rules"><summary>再显示 2 条</summary><ul class="rules"><li><span class="plate plate-advisory">提示</span><strong>vSphere red alarm</strong><span>vSphere raised a red alarm that nobody acknowledged.</span></li><li><span class="plate plate-warning">警告</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>设置步骤: Create a read-only user in vSphere</summary><ol class="setup-steps"><li><p>On a vCenter: Administration → Single Sign On → Users and Groups → Users, domain vsphere.local → Add. Name the user as follows and give it a long random password.</p><pre><code>dumbmonit</code></pre></li><li><p>Still on the vCenter: Administration → Access Control → Global Permissions → Add. Pick that user, the Read-only role, and tick Propagate to children. Read-only sees every host, VM, datastore and alarm, and can change nothing.</p></li><li><p>On a standalone ESXi host instead: in the host client, Manage → Security &amp; users → Users → Add user, with the same name. Then Host → Actions → Permissions → Add user: pick it, the Read-only role, and tick Propagate to all children.</p></li><li><p>In DumbMonit, enter the address of the vCenter or of the host, for example &quot;vcenter.lan&quot; or &quot;esxi1.lan&quot;, with the user name as created: dumbmonit@vsphere.local on a vCenter, dumbmonit on a host. When a vCenter manages the hosts, add only the vCenter: it reports every host, VM and datastore.</p></li><li><p>DumbMonit only reads, through the vSphere Web Services API (/sdk). It never powers a VM on or off, never enters maintenance mode and never acknowledges an alarm.</p></li></ol><p class="warn"><strong>注意.</strong> Do not reuse the single sign-on domain account or the host&#x27;s built-in account: the Read-only role above is all DumbMonit needs. vCenter and ESXi use a self-signed certificate by default: enable &quot;Accept an unverifiable certificate&quot; unless the DumbMonit host trusts their certificate authority.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/vsphere/">文档</a></p>
+</article>
+<article class="dev" id="xcpng">
+<header><h2>XCP-ng / XenServer</h2><span class="label-tape">xcpng</span></header>
+<p class="summary">An XCP-ng or XenServer pool through XAPI: hosts disabled or offline, VMs and their power state, storage repositories filling up, and a high-availability pool that can no longer survive the host failures it is set to tolerate.</p>
+<p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>XCP-ng 8.2 and 8.3</li><li>XenServer / Citrix Hypervisor</li></ul>
+<div class="dev-grid">
+<section><h3>您需要准备</h3><ul class="needs"><li><strong>User name and password</strong><span>The dumbmonit account, registered on the pool as a subject with the read-only role.</span></li></ul><p class="muted">默认端口: <code>443</code></p></section>
+<section><h3>内置告警规则 <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-warning">警告</span><strong>XCP-ng host offline</strong><span>A host of the XCP-ng pool no longer answers the coordinator.</span></li><li><span class="plate plate-advisory">提示</span><strong>XCP-ng SR almost full</strong><span>An XCP-ng storage repository is more than 90% full.</span></li><li><span class="plate plate-warning">警告</span><strong>XCP-ng HA-protected VM down</strong><span>A VM protected by the pool&#x27;s high availability is halted.</span></li><li><span class="plate plate-advisory">提示</span><strong>XCP-ng pool HA overcommitted</strong><span>The pool no longer has a plan to survive the host failures it is set to tolerate.</span></li><li><span class="plate plate-warning">警告</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>设置步骤: Give DumbMonit a read-only XAPI account</summary><ol class="setup-steps"><li><p>XAPI only accepts accounts other than its built-in superuser once the pool uses external authentication. If the pool is already joined to Active Directory, create a dumbmonit account there and go to step 3.</p></li><li><p>Otherwise, create a local account with a long random password on every host of the pool, then turn on PAM authentication once, from the pool coordinator. Until a role is given, the account can call nothing.</p><pre><code>useradd -M -s /sbin/nologin dumbmonit
+passwd dumbmonit
+xe pool-enable-external-auth auth-type=PAM service-name=pam</code></pre></li><li><p>On the pool coordinator, register the account as a subject, then give that subject the built-in read-only role, with the UUID the first command prints.</p><pre><code>xe subject-add subject-name=dumbmonit
+xe subject-role-add uuid=SUBJECT_UUID role-name=read-only</code></pre></li><li><p>In DumbMonit, enter the address of the pool coordinator, for example &quot;xcp01.lan&quot;, with that user name and password. Add the pool once: the coordinator reports every host, VM and storage repository. A pool member answers with the coordinator&#x27;s address, which DumbMonit then follows.</p></li><li><p>DumbMonit only reads, through XAPI&#x27;s JSON-RPC interface (/jsonrpc): it never starts, stops or migrates a VM and never changes a storage repository or the pool&#x27;s high availability.</p></li></ol><p class="warn"><strong>注意.</strong> Never give DumbMonit the superuser password of the hosts: with the read-only role, a leaked password cannot change anything. XCP-ng and XenServer ship a self-signed certificate: enable &quot;Accept an unverifiable certificate&quot; unless the DumbMonit host trusts the certificate the pool presents.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/xcpng/">文档</a></p>
+</article>
+<article class="dev" id="nutanix">
+<header><h2>Nutanix AHV (Prism Central)</h2><span class="label-tape">nutanix</span></header>
+<p class="summary">Nutanix clusters through the v4 API of Prism Central: hosts degraded or in maintenance, AHV VMs and their power state, storage containers filling up, and unresolved alerts by severity.</p>
+<p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>Prism Central pc.2024.3 or later</li><li>AHV clusters</li></ul>
+<div class="dev-grid">
+<section><h3>您需要准备</h3><ul class="needs"><li><strong>User name and password</strong><span>The dumbmonit local user of Prism Central, with the Prism Viewer role.</span></li></ul><p class="muted">默认端口: <code>9440</code></p></section>
+<section><h3>内置告警规则 <span class="label-tape">4</span></h3><ul class="rules"><li><span class="plate plate-warning">警告</span><strong>Nutanix host degraded</strong><span>Prism reports a Nutanix host as degraded.</span></li><li><span class="plate plate-advisory">提示</span><strong>Nutanix storage container almost full</strong><span>A Nutanix storage container is more than 90% full.</span></li><li><span class="plate plate-warning">警告</span><strong>Nutanix critical alerts</strong><span>Prism Central reports one or more unresolved critical alerts.</span></li><li><span class="plate plate-warning">警告</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>设置步骤: Create a read-only user in Prism Central</summary><ol class="setup-steps"><li><p>In Prism Central, open Admin Center &gt; IAM &gt; Identities and add a local user with a long random password, named as follows.</p><pre><code>dumbmonit</code></pre></li><li><p>Under Admin Center &gt; IAM &gt; Authorization Policies, create a policy with the built-in Prism Viewer role, for all entities, and assign it to that user. Prism Viewer reads clusters, hosts, VMs, storage containers and alerts, and changes nothing.</p></li><li><p>In DumbMonit, enter the address of Prism Central, for example &quot;prism-central.lan&quot;, with that user name and password. One Prism Central reports every cluster registered to it.</p></li><li><p>DumbMonit only reads the v4 API (clustermgmt, vmm and monitoring, version 4.0): it never powers a VM on or off, never resolves an alert and never changes a storage container.</p></li></ol><p class="warn"><strong>注意.</strong> The v4 API is served by Prism Central pc.2024.3 or later; a cluster managed by Prism Element alone, or by an older Prism Central, is not supported. Prism Central ships a self-signed certificate: enable &quot;Accept an unverifiable certificate&quot; unless the DumbMonit host trusts its certificate authority.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/nutanix/">文档</a></p>
+</article>
+<article class="dev" id="kubernetes">
+<header><h2>Kubernetes / k3s</h2><span class="label-tape">kubernetes</span></header>
+<p class="summary">A cluster through its API: nodes not ready or under pressure, pods crash looping or stuck pending, workloads missing replicas, volume claims never bound.</p>
+<p class="label-tape" style="margin-top:14px">示例</p><ul class="chips" style="margin-top:6px"><li>k3s</li><li>kubeadm cluster</li><li>k0s</li><li>MicroK8s</li><li>Talos</li></ul>
+<div class="dev-grid">
+<section><h3>您需要准备</h3><ul class="needs"><li><strong>Service account token</strong><span>The token of the dumbmonit service account, read from its dumbmonit-token Secret.</span></li></ul><p class="muted">默认端口: <code>6443</code></p></section>
+<section><h3>内置告警规则 <span class="label-tape">8</span></h3><ul class="rules"><li><span class="plate plate-warning">警告</span><strong>Kubernetes node not ready</strong><span>A node is not Ready: its kubelet no longer reports, and its pods will be evicted.</span></li><li><span class="plate plate-advisory">提示</span><strong>Kubernetes node under pressure</strong><span>A node reports memory, disk or PID pressure.</span></li><li><span class="plate plate-warning">警告</span><strong>Kubernetes pod crash looping</strong><span>A container is in CrashLoopBackOff and still restarting: at least two restarts in 15 minutes (max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) and on (target, namespace, pod) increase_prometheus(dumbmonit_k8s_pod_restarts[15m]) &gt;= 2; the state disappears for a moment at each restart attempt). Containers killed by a node or runtime restart (exit 137, 143 or 255, not OOMKilled) do not count, so a reboot does not look like a crash loop.</span></li><li><span class="plate plate-advisory">提示</span><strong>Kubernetes pod stuck pending</strong><span>A pod has been Pending for fifteen minutes: no node can take it, or a volume or an image it needs does not come.</span></li><li><span class="plate plate-advisory">提示</span><strong>Kubernetes pod restarting</strong><span>A pod restarted more than five times in the last hour without being in CrashLoopBackOff (increase_prometheus(dumbmonit_k8s_pod_restarts[1h]) unless on (target, namespace, pod) max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) &gt; 0).</span></li><li><span class="plate plate-advisory">提示</span><strong>Kubernetes workload missing replicas</strong><span>A Deployment, StatefulSet or DaemonSet has fewer available replicas than it asks for.</span></li></ul><details class="more-rules"><summary>再显示 2 条</summary><ul class="rules"><li><span class="plate plate-advisory">提示</span><strong>Kubernetes volume claim pending</strong><span>A PersistentVolumeClaim that a pod needs, or that a provisioning error concerns, is still not bound.</span></li><li><span class="plate plate-warning">警告</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>设置步骤: Create a read-only service account for DumbMonit</summary><ol class="setup-steps"><li><p>Create a service account, a ClusterRole that can only get and list nodes, pods, workloads, volume claims and events, and bind them together. The role reads no Secret and no ConfigMap. On a k3s server, run each command as sudo k3s kubectl.</p><pre><code>kubectl create serviceaccount dumbmonit -n kube-system
+kubectl create clusterrole dumbmonit-read --verb=get,list --resource=nodes,pods,persistentvolumeclaims,events,deployments.apps,statefulsets.apps,daemonsets.apps
+kubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit</code></pre></li><li><p>Give it a token that does not expire: a Secret of type service-account-token, which Kubernetes fills in. Then print the token, and the cluster CA in base64.</p><pre><code>echo &#x27;{&quot;apiVersion&quot;:&quot;v1&quot;,&quot;kind&quot;:&quot;Secret&quot;,&quot;metadata&quot;:{&quot;name&quot;:&quot;dumbmonit-token&quot;,&quot;namespace&quot;:&quot;kube-system&quot;,&quot;annotations&quot;:{&quot;kubernetes.io/service-account.name&quot;:&quot;dumbmonit&quot;}},&quot;type&quot;:&quot;kubernetes.io/service-account-token&quot;}&#x27; | kubectl apply -f -
+kubectl -n kube-system get secret dumbmonit-token -o jsonpath=&#x27;{.data.token}&#x27; | base64 -d
+kubectl -n kube-system get secret dumbmonit-token -o jsonpath=&#x27;{.data.ca\.crt}&#x27;</code></pre></li><li><p>In DumbMonit, enter the address of the API server, for example &quot;https://k3s.lan:6443&quot;. Paste the token as Service account token and the base64 CA as Cluster CA certificate: only that CA is then trusted. One API server reports the whole cluster.</p></li></ol><p class="warn"><strong>注意.</strong> The API server&#x27;s certificate only lists its own names and addresses: an address it does not list fails verification. Use one it lists (a node IP address, or a name added with --tls-san on k3s), or tick Accept an unverifiable certificate.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/zh-cn/latest/devices/kubernetes/">文档</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">其他系列</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../servers/">服务器与硬件</a></li>
+			<li><a href="../network/">网络设备</a></li>
+			<li><a href="../firewalls/">防火墙</a></li>
+			<li><a href="../storage/">NAS 与备份</a></li>
+			<li><a href="../checks/">网站、证书与检查</a></li>
+			<li><a href="../proxies/">Web 服务器与反向代理</a></li>
+			<li><a href="../apps/">自托管应用</a></li>
+			<li><a href="../mail/">DNS、邮件与安全</a></li>
+			<li><a href="../data/">数据库与可观测性</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit，Apache 2.0。吉祥物是一只鸽子。</p>
+		<nav aria-label="页脚">
+			<a href="../../features/">功能</a>
+			<a href="../">设备</a>
+			<a href="../../install/">安装</a>
+			<a href="../../community/">文档与社区</a>
+			<a href="https://demo.dumbmonit.app">在线演示</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/">文档</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">版本发布</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">参与翻译</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">许可证</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">安全</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+
+</script>
+</body>
+</html>

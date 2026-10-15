@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="zh-Hans" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>功能 · DumbMonit</title>
+<meta name="description" content="感知依赖关系的告警、23 个通知渠道、公开状态页、墙面大屏、适用于 Linux、Windows、macOS 和 FreeBSD 的代理、邮件报告以及 MCP 服务器。开源。">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/zh-Hans/features/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/features/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/features/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/features/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/features/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/features/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/features/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/features/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/features/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/features/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/features/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="功能 · DumbMonit">
+<meta property="og:description" content="感知依赖关系的告警、23 个通知渠道、公开状态页、墙面大屏、适用于 Linux、Windows、macOS 和 FreeBSD 的代理、邮件报告以及 MCP 服务器。开源。">
+<meta property="og:url" content="https://dumbmonit.app/zh-Hans/features/">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit：一切正常吗？一秒钟就知道。一个容器里的自托管监控，旁边是吉祥物鸽子。">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="功能 · DumbMonit">
+<meta name="twitter:description" content="感知依赖关系的告警、23 个通知渠道、公开状态页、墙面大屏、适用于 Linux、Windows、macOS 和 FreeBSD 的代理、邮件报告以及 MCP 服务器。开源。">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"功能 · DumbMonit","url":"https://dumbmonit.app/zh-Hans/features/","inLanguage":"zh-Hans","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="DumbMonit 首页"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="章节">
+			<a href="./" aria-current="page">功能</a>
+			<a href="../devices/">设备</a>
+			<a href="../install/">安装</a>
+			<a href="../community/">文档与社区</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="语言"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>中文</span></summary>
+				<ul>
+				<li><a href="../../features/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../fr/features/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../de/features/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../es/features/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../it/features/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../pt/features/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../pt-BR/features/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../ru/features/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="./" hreflang="zh-Hans" lang="zh-Hans" aria-current="true">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">在线演示</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1>它能做的一切</h1>
+		<p class="lede">告警、状态页、代理等功能，全在一个容器里。每种设备上报的内容见“设备”页面。</p>
+		<ul class="toc" aria-label="本页内容">
+			<li><a href="#alerting">没有噪音的告警</a></li>
+			<li><a href="#notifications">23 个通知渠道</a></li>
+			<li><a href="#agent">为不支持 SNMP 的设备准备的代理</a></li>
+			<li><a href="#status">面向你的服务对象的状态页</a></li>
+			<li><a href="#wall">墙面模式</a></li>
+			<li><a href="#reports">邮件报告</a></li>
+			<li><a href="#topology">拓扑图</a></li>
+			<li><a href="#security">安全评分</a></li>
+			<li><a href="#api">API 与助手</a></li>
+			<li><a href="#languages">九种语言</a></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="alerting">
+	<div class="wrap">
+		<div class="split">
+			<div>
+				<div class="section-head" style="margin-bottom:32px">
+					<h2>没有噪音的告警</h2>
+					<p>安装后即启用有用的规则。工作重心在于发送更少、更有价值的消息。</p>
+				</div>
+				<ul class="points">
+					<li><strong>依赖关系</strong><p>把交换机声明为其下游设备的父级。它宕机时你只收到一条通知，而不是三十条；其余显示为“被上级抑制”。</p></li>
+					<li><strong>按主机分组</strong><p>阵列降级的 NAS 每个周期只发一条消息，而不是每块磁盘一条。提醒、升级、确认、暂停提醒、按设备忽略和清除已解决的历史，全部内置。</p></li>
+					<li><strong>先学习的基线</strong><p>无需调阈值的异常检测：168 个时段，对应一周中的每个小时。前 14 天保持静默，只显示它本来会触发什么。</p></li>
+					<li><strong>预报</strong><p>“该文件系统将在四天内写满”会作为预报列出，与当前已经出问题的内容分开。</p></li>
+					<li><strong>维护与通知策略</strong><p>一次性或每周的窗口、滞后、抖动保持、安静时段、批量发送和每小时上限，让糟糕的一夜不会变成两百条推送。</p></li>
+				</ul>
+				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/alerting/">告警如何工作</a></p>
+			</div>
+			<figure>
+				<div class="shot">
+					<picture>
+						<source srcset="../../assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="../../assets/shots/alerts-light.webp" alt="告警页面：按主机分组的触发中告警，每条带有 Warning 或 Advisory 标牌，以及 Ack、Silence 1 h 和 Open device" width="1440" height="760" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>按主机分组的告警。严重程度的读法像天气预报：信息、提示、警告。</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="notifications">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>23 个通知渠道</h2>
+			<p>每个渠道都有测试按钮，并在<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/notifications/">文档</a>中有配置页面。</p>
+		</div>
+		<ul class="chips" aria-label="通知渠道" style="margin-top:0">
+			<li>Discord</li>
+			<li>Slack</li>
+			<li>Telegram</li>
+			<li>Microsoft Teams</li>
+			<li>Matrix</li>
+			<li>Mattermost</li>
+			<li>Rocket.Chat</li>
+			<li>Google Chat</li>
+			<li>Zulip</li>
+			<li>ntfy</li>
+			<li>Gotify</li>
+			<li>Pushover</li>
+			<li>Pushbullet</li>
+			<li>Bark (iOS)</li>
+			<li>Web Push (browser, PWA)</li>
+			<li>Apprise</li>
+			<li>Home Assistant</li>
+			<li>Email (SMTP)</li>
+			<li>Signal</li>
+			<li>SMS via Twilio</li>
+			<li>PagerDuty</li>
+			<li>Opsgenie</li>
+			<li>Custom webhook</li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>为不支持 SNMP 的设备准备的代理</h2>
+					<p>一个小型二进制程序，把 CPU、内存、磁盘、网络、服务和运行时间推送到服务器，机器提供时还包括温度、风扇、SMART 和 ZFS 存储池。由它主动连接服务器，而不是反过来：机器上无需开放任何端口。</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># 界面会自动为你填入令牌</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="已复制" data-copy="agent-cmd">复制</button>
+				</div>
+				<p class="code-note">Windows 上可从 <code>/install.ps1</code> 获取 PowerShell 脚本。代理也提供镜像：<code>ghcr.io/laupernoe/dumbmonit-agent</code>。</p>
+			</div>
+			<div>
+				<ul class="os-list">
+					<li><span class="os">Linux</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>已支持</span><span class="how">x86_64 和 aarch64，systemd 或 OpenRC。Docker 容器和操作系统健康状况（更新、待重启、失败的单元）。</span></li>
+					<li><span class="os">Windows</span><span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>已支持</span><span class="how">x86_64，作为 Windows 服务安装。通过 smartctl 获取 SMART。</span></li>
+					<li><span class="os">macOS</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>预览版</span><span class="how">launchd，Apple silicon 和 Intel；二进制文件随每个版本发布。尚未在真实硬件上运行。</span></li>
+					<li><span class="os">FreeBSD</span><span class="plate plate-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.5v.01"/></svg>预览版</span><span class="how">rc.d，x86_64，ZFS 存储池。尚未在真实硬件上运行。</span></li>
+				</ul>
+				<ul class="points" style="margin-top:32px">
+					<li><strong>远程站点，仅出站连接</strong><p>在中继模式下，代理从自己所在的网络——第二个站点、客户的网络或 NAT 后的 VPS——运行服务器的探测（SNMP、Proxmox、HTTP…），无需任何入站连接：不用 VPN，也不用开放端口。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/remote-site/">监控远程站点</a></p></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="status">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>面向你的服务对象的状态页</h2>
+				<p>公开页面位于 <code>/s/&lt;name&gt;</code>：服务分组，含 90 天的每日历史、30 天和 90 天可用率、事件与维护公告、采用双重确认的电子邮件订阅者、RSS、可用于 README 的徽章、适合内网的精简嵌入，以及可选的 90 天日历和响应时间图表，还有横幅后可选的场景：约五十种可选，从城市天际线（威尼斯、巴黎、东京、纽约&hellip;）和世界奇观，到瑞士地标（马特洪峰、日内瓦大喷泉、卢塞恩、伯尔尼、西庸城堡）。天空随服务状态变化，每个场景在服务宕机或恢复时都有各自的反应。瑞士场景配有 SBB 风格的车站时钟、翻页式告警牌、8 月 1 日的烟花、日内瓦的“Escalade”汤锅庆典和冬季雪景。</p>
+				<p>只有你选择的标签会离开服务器。设备名称、地址和类型绝不会出现在页面、徽章或邮件中。</p>
+				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/status-pages/">文档中的状态页</a></p>
+			</div>
+			<ul class="points">
+				<li><strong>在手机上</strong><p>查看状态、确认告警、开启维护窗口。可安装到主屏幕，刻意不提供离线模式：它绝不会显示昨天的状态。</p></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="wall">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>墙面模式</h2>
+				<p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。</p>
+			</div>
+			<figure class="phone-shot" style="max-width:360px">
+				<div class="shot">
+					<picture>
+						<source srcset="../../assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="../../assets/shots/wall-phone-light.webp" alt="手机上的概览：句子、读数、带鸽子的天气窗口，以及第一条需要你处理的告警" width="390" height="844" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>同一份概览，手机宽度下的样子。</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="reports">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>邮件报告</h2>
+				<p>每周（或每天、每月）一封简短邮件，包含各分组的可用性、该时段的事件以及最不稳定的设备，无需任何人打开 DumbMonit。</p>
+				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/reports/">在文档中了解更多</a></p>
+			</div>
+			<div class="section-head" id="topology" style="margin-bottom:0">
+				<h2>拓扑图</h2>
+				<p>用 DumbMonit 已知的信息绘制整个基础设施的一张图：依赖关系、中继、虚拟化平台上的客户机和 LLDP 邻居。无需手工输入。</p>
+				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/topology/">在文档中了解更多</a></p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="security">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>安全评分</h2>
+				<p>每个受支持的设备都会根据厂商自身的最佳实践检查，获得 0–100 的分数和 A–F 的等级，类似 PingCastle：类别、严重程度、证据、修复建议，以及按最差优先排序的“安全”页面。</p>
+				<p>该评分仅供参考，不是审计：它只读取 DumbMonit 已经采集的数据，因此不能替代安全审查。</p>
+				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/security-score/">在文档中了解更多</a></p>
+			</div>
+			<ul class="points">
+				<li><strong>账户</strong><p>管理员、操作员（处理告警，不改配置）和查看者角色，可选的 TOTP 二次验证，审计日志，以及基于 OpenID Connect 的单点登录（Authentik、Authelia、Keycloak、Pocket ID…），默认关闭账户注册。</p></li>
+				<li><strong>与你正在运行的系统和平共处</strong><p><code>/metrics</code>、<code>/federate</code> 和兼容 Prometheus 的端点，让现有的 Grafana 可以读取 DumbMonit 的数据。</p></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="api">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>API 与助手</h2>
+		</div>
+		<ul class="points" style="max-width:48em">
+			<li><strong>开放且有文档的 API</strong><p>所有路由都列在 <code>/api/openapi.json</code>（OpenAPI 3.1）中：带作用域的令牌（<code>dmt_…</code>，只读或可写），可设置过期、限制网络来源，并有速率限制。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/reference/api/">API 参考</a></p></li>
+			<li><strong>通过 MCP 使用的助手</strong><p>面向 ChatGPT、VS Code 或 Cursor 的 27 个工具：读取状态、设备、告警、指标和代理；具有写权限的令牌还可以静音、确认告警、添加设备或重启容器。密钥绝不会返回。<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/assistant/">连接助手</a></p></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="languages">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>九种语言</h2>
+				<p>英语、法语、德语、西班牙语、意大利语、葡萄牙语（葡萄牙和巴西）、俄语和简体中文：界面、本网站和文档。部分翻译仍不完整。</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="../devices/">设备</a>
+				<a class="btn btn-secondary" href="../install/">安装</a>
+			</div>
+		</div>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit，Apache 2.0。吉祥物是一只鸽子。</p>
+		<nav aria-label="页脚">
+			<a href="./">功能</a>
+			<a href="../devices/">设备</a>
+			<a href="../install/">安装</a>
+			<a href="../community/">文档与社区</a>
+			<a href="https://demo.dumbmonit.app">在线演示</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/zh-cn/latest/">文档</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">版本发布</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">参与翻译</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">许可证</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">安全</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+
+</script>
+</body>
+</html>

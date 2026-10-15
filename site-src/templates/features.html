@@ -1,0 +1,188 @@
+<section class="page-head">
+	<div class="wrap">
+		<h1>{{f_h1}}</h1>
+		<p class="lede">{{f_lede}}</p>
+		<ul class="toc" aria-label="{{f_toc}}">
+			<li><a href="#alerting">{{k055}}</a></li>
+			<li><a href="#notifications">{{f_notif_h}}</a></li>
+			<li><a href="#agent">{{k093}}</a></li>
+			<li><a href="#status">{{k108}}</a></li>
+			<li><a href="#wall">{{k112}}</a></li>
+			<li><a href="#reports">{{f_rep_h}}</a></li>
+			<li><a href="#topology">{{f_topo_h}}</a></li>
+			<li><a href="#security">{{k114}}</a></li>
+			<li><a href="#api">{{f_api_h}}</a></li>
+			<li><a href="#languages">{{f_lang_h}}</a></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="alerting">
+	<div class="wrap">
+		<div class="split">
+			<div>
+				<div class="section-head" style="margin-bottom:32px">
+					<h2>{{k055}}</h2>
+					<p>{{k056}}</p>
+				</div>
+				<ul class="points">
+					<li><strong>{{k057}}</strong><p>{{k058}}</p></li>
+					<li><strong>{{k059}}</strong><p>{{k060}}</p></li>
+					<li><strong>{{k061}}</strong><p>{{k062}}</p></li>
+					<li><strong>{{k063}}</strong><p>{{k064}}</p></li>
+					<li><strong>{{k065}}</strong><p>{{k066}}</p></li>
+				</ul>
+				<p class="code-note" style="margin-top:24px">{{k067}}</p>
+			</div>
+			<figure>
+				<div class="shot">
+					<picture>
+						<source srcset="@@ROOT@@assets/shots/alerts-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="@@ROOT@@assets/shots/alerts-light.webp" alt="{{k179}}" width="1440" height="760" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>{{k068}}</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="notifications">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{f_notif_h}}</h2>
+			<p>{{k070}}</p>
+		</div>
+		<ul class="chips" aria-label="{{k180}}" style="margin-top:0">
+@@CHANNEL_CHIPS@@
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="agent">
+	<div class="wrap">
+		<div class="split flip">
+			<div>
+				<div class="section-head" style="margin-bottom:24px">
+					<h2>{{k093}}</h2>
+					<p>{{k094}}</p>
+				</div>
+				<div class="code" style="max-width:none">
+					<pre id="agent-cmd"><code><span class="comment"># {{k170}}</span>
+curl -sSL http://server:8080/install.sh | sh -s -- \
+  --token=dmon_xxx --url=http://server:8080</code></pre>
+					<button class="copy" type="button" data-copied="{{k171}}" data-copy="agent-cmd">{{k015}}</button>
+				</div>
+				<p class="code-note">{{k095}}</p>
+			</div>
+			<div>
+				<ul class="os-list">
+					<li><span class="os">{{k096}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k098}}</span></li>
+					<li><span class="os">{{k099}}</span><span class="plate plate-signal">{{k097}}</span><span class="how">{{k100}}</span></li>
+					<li><span class="os">{{k101}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k103}}</span></li>
+					<li><span class="os">{{k104}}</span><span class="plate plate-info">{{k102}}</span><span class="how">{{k105}}</span></li>
+				</ul>
+				<ul class="points" style="margin-top:32px">
+					<li><strong>{{k106}}</strong><p>{{k107}}</p></li>
+				</ul>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="status">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{k108}}</h2>
+				<p>{{k109}}</p>
+				<p>{{k110}}</p>
+				<p>{{k111}}</p>
+			</div>
+			<ul class="points">
+				<li><strong>{{k124}}</strong><p>{{k125}}</p></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="wall">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{k112}}</h2>
+				<p>{{k113}}</p>
+			</div>
+			<figure class="phone-shot" style="max-width:360px">
+				<div class="shot">
+					<picture>
+						<source srcset="@@ROOT@@assets/shots/wall-phone-dark.webp" media="(prefers-color-scheme: dark)">
+						<img src="@@ROOT@@assets/shots/wall-phone-light.webp" alt="{{k181}}" width="390" height="844" loading="lazy">
+					</picture>
+				</div>
+				<figcaption>{{k126}}</figcaption>
+			</figure>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="reports">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{f_rep_h}}</h2>
+				<p>{{f_rep_p}}</p>
+				<p><a href="@@DOCS@@using/reports/">{{f_more}}</a></p>
+			</div>
+			<div class="section-head" id="topology" style="margin-bottom:0">
+				<h2>{{f_topo_h}}</h2>
+				<p>{{f_topo_p}}</p>
+				<p><a href="@@DOCS@@using/topology/">{{f_more}}</a></p>
+			</div>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="security">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{k114}}</h2>
+				<p>{{k115}}</p>
+				<p>{{f_sec_note}}</p>
+				<p><a href="@@DOCS@@using/security-score/">{{f_more}}</a></p>
+			</div>
+			<ul class="points">
+				<li><strong>{{k116}}</strong><p>{{k117}}</p></li>
+				<li><strong>{{k118}}</strong><p>{{k119}}</p></li>
+			</ul>
+		</div>
+	</div>
+</section>
+
+<section class="block" id="api">
+	<div class="wrap">
+		<div class="section-head">
+			<h2>{{f_api_h}}</h2>
+		</div>
+		<ul class="points" style="max-width:48em">
+			<li><strong>{{k120}}</strong><p>{{k121}}</p></li>
+			<li><strong>{{k122}}</strong><p>{{k123}}</p></li>
+		</ul>
+	</div>
+</section>
+
+<section class="block" id="languages">
+	<div class="wrap">
+		<div class="split">
+			<div class="section-head" style="margin-bottom:0">
+				<h2>{{f_lang_h}}</h2>
+				<p>{{f_lang_p}}</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-primary" href="@@LINK:devices/@@">{{nav_devices}}</a>
+				<a class="btn btn-secondary" href="@@LINK:install/@@">{{nav_install}}</a>
+			</div>
+		</div>
+	</div>
+</section>

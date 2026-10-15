@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pare-feux · Appareils · DumbMonit</title>
+<meta name="description" content="OPNsense, pfSense, FortiGate et Sophos : passerelles, tunnels, interfaces, haute disponibilité et licences.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/fr/devices/firewalls/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/firewalls/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/firewalls/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/firewalls/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/firewalls/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/firewalls/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/firewalls/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/firewalls/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/firewalls/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/firewalls/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/firewalls/">
+<link rel="icon" href="../../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../../apple-touch-icon.png">
+<link rel="preload" href="../../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Pare-feux · Appareils · DumbMonit">
+<meta property="og:description" content="OPNsense, pfSense, FortiGate et Sophos : passerelles, tunnels, interfaces, haute disponibilité et licences.">
+<meta property="og:url" content="https://dumbmonit.app/fr/devices/firewalls/">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit : tout va bien ? Réponse en une seconde. Supervision auto-hébergée dans un conteneur, avec la mascotte pigeon.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pare-feux · Appareils · DumbMonit">
+<meta name="twitter:description" content="OPNsense, pfSense, FortiGate et Sophos : passerelles, tunnels, interfaces, haute disponibilité et licences.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Pare-feux · Appareils · DumbMonit","url":"https://dumbmonit.app/fr/devices/firewalls/","inLanguage":"fr","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Aller au contenu</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../../" aria-label="Accueil DumbMonit"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="Sections">
+			<a href="../../features/">Fonctionnalités</a>
+			<a href="../" aria-current="page">Appareils</a>
+			<a href="../../install/">Installer</a>
+			<a href="../../community/">Docs et communauté</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Langue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>FR</span></summary>
+				<ul>
+				<li><a href="../../../devices/firewalls/" hreflang="en" lang="en">English</a></li>
+				<li><a href="./" hreflang="fr" lang="fr" aria-current="true">Français</a></li>
+				<li><a href="../../../de/devices/firewalls/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../../es/devices/firewalls/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="../../../it/devices/firewalls/" hreflang="it" lang="it">Italiano</a></li>
+				<li><a href="../../../pt/devices/firewalls/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../../pt-BR/devices/firewalls/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../../ru/devices/firewalls/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../../zh-Hans/devices/firewalls/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Démo en ligne</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<p class="crumbs"><a href="../">Appareils</a></p>
+		<h1>Pare-feux</h1>
+		<p class="lede">OPNsense, pfSense, FortiGate et Sophos : passerelles, tunnels, interfaces, haute disponibilité et licences.</p>
+		<p class="code-note">Les descriptions des appareils et les textes des règles d'alerte sont en anglais, comme dans le produit. Les libellés de la page suivent votre langue.</p>
+		<ul class="toc" aria-label="Types d'appareils de cette page">
+			<li><a href="#opnsense">OPNsense</a></li>
+			<li><a href="#pfsense">pfSense</a></li>
+			<li><a href="#fortigate">FortiGate</a></li>
+			<li><a href="#sophos">Sophos Firewall</a></li>
+		</ul>
+	</div>
+</section>
+
+<div class="wrap devs">
+<article class="dev" id="opnsense">
+<header><h2>OPNsense</h2><span class="label-tape">opnsense</span></header>
+<p class="summary">Gateway latency and loss, VPN tunnels, DHCP leases, services and pending updates.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>OPNsense firewall</li><li>Home router</li><li>Multi-WAN edge</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>API key and secret</strong><span>The two lines of the file OPNsense downloads when the key is created.</span></li></ul><p class="muted">Port par défaut: <code>443</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">12</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>Internet gateway down</strong><span>dpinger no longer gets an answer from a gateway. On a multi-WAN firewall the traffic has already moved to another link, quietly. loss and delay are warnings, not failures, and do not fire this rule.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Gateway losing packets</strong><span>A gateway is losing more than a fifth of the packets sent to it: the link answers, badly. Clears below 10 %.</span></li><li><span class="plate plate-info">Info</span><strong>Gateway slow</strong><span>A gateway&#x27;s round-trip time has stayed above 300 ms. Three hundred milliseconds leaves a mobile backup link alone.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Firewall state table filling up</strong><span>pf is tracking more than 80 % of the connections it is allowed. Past the limit the firewall drops new connections with no other symptom.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Firewall network buffers exhausted</strong><span>More than 90 % of the FreeBSD network buffers are in use. A firewall that runs out stops forwarding with the CPU still idle.</span></li><li><span class="plate plate-advisory">Avis</span><strong>VPN tunnel down</strong><span>A configured VPN tunnel has had no session for ten minutes. A plugin that is not installed, or a connection that is disabled, has no series and cannot fire.</span></li></ul><details class="more-rules"><summary>Afficher 6 de plus</summary><ul class="rules"><li><span class="plate plate-advisory">Avis</span><strong>Firewall resolver stopped</strong><span>Unbound has stopped answering. The firewall still routes; the machines behind it no longer resolve. Turn this rule off if your firewall resolves with something else.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Firewall core service stopped</strong><span>dpinger, which watches the gateways, or configd, which runs everything else, is stopped. Only those two, because a service switched off on purpose is not a failure.</span></li><li><span class="plate plate-advisory">Avis</span><strong>Firewall too hot</strong><span>A sensor reads above 85 °C: the fanless box in the cupboard is about to start throttling. Clears at 78 °C.</span></li><li><span class="plate plate-info">Info</span><strong>Firewall left in CARP maintenance mode</strong><span>CARP has been left in persistent maintenance mode: this firewall handed its virtual addresses to its partner and will not take them back on its own.</span></li><li><span class="plate plate-info">Info</span><strong>Firewall reboot pending</strong><span>An update is installed but needs a reboot to take effect.</span></li><li><span class="plate plate-info">Info</span><strong>Firewall updates pending</strong><span>The firewall has packages waiting to be updated. It is the most exposed machine on the network.</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Create a read-only API key in OPNsense</summary><ol class="setup-steps"><li><p>In the web interface: System → Access → Groups → Add. Name the group as follows.</p><pre><code>dumbmonit</code></pre></li><li><p>Tick these privileges in the group, exactly as OPNsense names them: Lobby: Dashboard (system, memory, disks, temperatures, state table), System: Gateways, Status: Interfaces, Status: Services, System: Firmware, Interfaces: Virtual IPs: Status (CARP) and Services: Unbound (MVC). Then one per feature you run: Services: DHCP: Kea(v4) or Services: Dnsmasq DNS/DHCP: Settings for the leases, VPN: WireGuard: Status, Status: OpenVPN, Status: IPsec. A privilege you leave out costs exactly the metrics it carries, nothing else.</p></li><li><p>System → Access → Users → Add. Name the account as follows, let OPNsense generate a scrambled password (this account never logs in: it answers with its key), and make it a member of the dumbmonit group.</p><pre><code>dumbmonit</code></pre></li><li><p>Edit that user again and, under API keys, click +. OPNsense downloads a small text file with two lines, key= and secret=, and shows the secret only this once. Copy the key into DumbMonit&#x27;s API key field and the secret into its API secret field.</p></li><li><p>In DumbMonit, enter the firewall address, for example &quot;192.168.1.1&quot; or &quot;fw.lan:8443&quot;. The firewall is never asked to check for updates: DumbMonit reads the result of the check OPNsense runs on its own schedule, or that you start from System → Firmware.</p></li></ol><p class="warn"><strong>À savoir.</strong> Do not reuse the account you log in with: an API key is a password that never expires. OPNsense has no read-only variant of some privileges above: Status: Services also allows starting and stopping a service, System: Firmware also allows starting an update, and the Unbound, Kea and Dnsmasq privileges also cover their settings. DumbMonit only ever reads, but to limit what a leaked key could do, restrict the group&#x27;s source networks to the address of the DumbMonit host. Never grant All pages. OPNsense also ships with a self-signed certificate: if the connection is refused for that reason, tick &quot;Accept an unverifiable certificate&quot; in the options.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/opnsense/">Documentation</a></p>
+</article>
+<article class="dev" id="pfsense">
+<header><h2>pfSense</h2><span class="label-tape">pfsense</span></header>
+<p class="summary">A pfSense firewall through its REST API package: gateways down or losing packets, interfaces without link, stopped services, CPU, memory and disk.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>pfSense CE</li><li>pfSense Plus</li><li>Netgate appliance</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>REST API key</strong><span>The key created for the dumbmonit user: it carries only that user&#x27;s read privileges.</span></li></ul><p class="muted">Port par défaut: <code>443</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">7</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>pfSense gateway down</strong><span>A pfSense gateway is down: its monitor address no longer answers, and the traffic it carries stops or fails over.</span></li><li><span class="plate plate-advisory">Avis</span><strong>pfSense gateway losing packets</strong><span>A pfSense gateway loses more than 10 % of the probes to its monitor address: the line is degraded (dumbmonit_pfsense_gateway_loss_percent unless on (target, gateway) dumbmonit_pfsense_gateway_up == 0).</span></li><li><span class="plate plate-advisory">Avis</span><strong>pfSense gateway slow</strong><span>The round trip to a pfSense gateway&#x27;s monitor address has stayed above 500 ms for fifteen minutes.</span></li><li><span class="plate plate-advisory">Avis</span><strong>pfSense interface without link</strong><span>An enabled pfSense interface has no link: cable, switch port or network card.</span></li><li><span class="plate plate-advisory">Avis</span><strong>pfSense service stopped</strong><span>A pfSense service that is enabled is not running: DNS resolver, VPN, NTP….</span></li><li><span class="plate plate-advisory">Avis</span><strong>pfSense disk nearly full</strong><span>The pfSense disk is more than 90 % full: logs, reports and package updates stop being written.</span></li></ul><details class="more-rules"><summary>Afficher 1 de plus</summary><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Create a read-only REST API key for DumbMonit</summary><ol class="setup-steps"><li><p>Install the community REST API package (pfSense-pkg-RESTAPI, version 2) from Diagnostics &gt; Command Prompt or an SSH shell, with the file of the project&#x27;s releases page that matches your pfSense version (2.7.2 below). Then, under System &gt; REST API &gt; Settings, tick both BasicAuth and Key among the authentication methods.</p><pre><code>pkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/latest/download/pfSense-2.7.2-pkg-RESTAPI.pkg</code></pre></li><li><p>Under System &gt; User Manager, add a user named dumbmonit with a long random password. Under Effective Privileges, add only these REST API privileges: /api/v2/status/system GET, /api/v2/status/gateways GET, /api/v2/status/interfaces GET, /api/v2/status/services GET, /api/v2/system/version GET, plus /api/v2/system/restapi/version GET to hear about the package&#x27;s own updates. For the next step only, add /api/v2/auth/key POST as well.</p></li><li><p>Create the key as dumbmonit, from any machine that reaches pfSense: the key carries exactly that user&#x27;s privileges. Copy the key value of the answer, then remove the /api/v2/auth/key POST privilege again.</p><pre><code>curl -k -u dumbmonit -X POST -H &#x27;Content-Type: application/json&#x27; -d &#x27;{&quot;descr&quot;:&quot;DumbMonit&quot;}&#x27; https://pfsense.lan/api/v2/auth/key</code></pre></li><li><p>In DumbMonit, enter the address of pfSense, for example &quot;pfsense.lan&quot;, and paste the key as API key. pfSense ships a self-signed certificate: tick Accept an unverifiable certificate unless you replaced it.</p></li></ol><p class="warn"><strong>À savoir.</strong> The REST API does not say whether a pfSense update is available, only whether the package itself has one. The package is a community project, not part of pfSense: reinstall it after each pfSense upgrade.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/pfsense/">Documentation</a></p>
+</article>
+<article class="dev" id="fortigate">
+<header><h2>FortiGate</h2><span class="label-tape">fortigate</span></header>
+<p class="summary">A Fortinet firewall through the FortiOS REST API: IPsec tunnels down, interfaces without link, HA out of sync, memory near conserve mode, FortiGuard licences expiring.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>FortiGate 40F / 60F / 100F</li><li>FortiGate VM</li><li>FortiOS 7.x</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>API token</strong><span>The token of the dumbmonit REST API user, sent as a bearer token.</span></li></ul><p class="muted">Port par défaut: <code>443</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">9</span></h3><ul class="rules"><li><span class="plate plate-warning">Alerte</span><strong>FortiGate IPsec tunnel down</strong><span>No phase 2 of a FortiGate site-to-site IPsec tunnel is up: the site behind it is cut off.</span></li><li><span class="plate plate-advisory">Avis</span><strong>FortiGate interface without link</strong><span>An enabled FortiGate interface with an address has no link: cable, transceiver or the device in front.</span></li><li><span class="plate plate-advisory">Avis</span><strong>FortiGate HA out of sync</strong><span>The members of a FortiGate HA cluster no longer have the same configuration checksum: a failover would run another configuration.</span></li><li><span class="plate plate-warning">Alerte</span><strong>FortiGate HA member lost</strong><span>A FortiGate HA cluster has fewer members than in the last 24 hours: there is no standby any more (max_over_time(dumbmonit_fortigate_ha_members[1d]) - dumbmonit_fortigate_ha_members).</span></li><li><span class="plate plate-advisory">Avis</span><strong>FortiGate memory near conserve mode</strong><span>FortiGate memory has stayed above 85 % for ten minutes: at 88 % (by default) it enters conserve mode and stops inspecting new sessions.</span></li><li><span class="plate plate-advisory">Avis</span><strong>FortiGate CPU high</strong><span>FortiGate CPU has stayed above 90 % for fifteen minutes.</span></li></ul><details class="more-rules"><summary>Afficher 3 de plus</summary><ul class="rules"><li><span class="plate plate-advisory">Avis</span><strong>FortiGate licence expiring</strong><span>A FortiGuard or FortiCare licence of the FortiGate expires in less than 30 days, or has expired.</span></li><li><span class="plate plate-info">Info</span><strong>FortiGate firmware update</strong><span>FortiGuard offers a newer patch release of the FortiOS branch the FortiGate runs.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></details></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Create a read-only REST API user for DumbMonit</summary><ol class="setup-steps"><li><p>From the FortiGate CLI, create an access profile that can only read the system, network and VPN state, and nothing else.</p><pre><code>config system accprofile
+edit &quot;dumbmonit-ro&quot;
+set sysgrp read
+set netgrp read
+set vpngrp read
+set fwgrp none
+set loggrp none
+set utmgrp none
+set wanoptgrp none
+set wifi none
+next
+end</code></pre></li><li><p>Create the REST API user dumbmonit with that profile, trusting only the address of the DumbMonit server (replace 192.0.2.10), then generate its token: it is printed once.</p><pre><code>config system api-user
+edit &quot;dumbmonit&quot;
+set accprofile &quot;dumbmonit-ro&quot;
+set vdom &quot;root&quot;
+config trusthost
+edit 1
+set ipv4-trusthost 192.0.2.10 255.255.255.255
+next
+end
+next
+end
+execute api-user generate-key dumbmonit</code></pre></li><li><p>In DumbMonit, enter the address of the FortiGate, for example &quot;fw.lan&quot; (add the port if the administration interface does not listen on 443), and paste the token as API token. FortiGate ships a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.</p></li></ol><p class="warn"><strong>À savoir.</strong> An interface counts as down only when it is enabled, has an address and has no link: free ports are left alone. Firmware updates are those FortiGuard offers the FortiGate itself: without access to FortiGuard, none is reported.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/fortigate/">Documentation</a></p>
+</article>
+<article class="dev" id="sophos">
+<header><h2>Sophos Firewall</h2><span class="label-tape">sophos</span></header>
+<p class="summary">A Sophos Firewall (SFOS) through its XML API: the link of every interface in a zone, and which IPsec connections are activated. Its live tunnel, HA and licence state are not in that API.</p>
+<p class="label-tape" style="margin-top:14px">Exemples</p><ul class="chips" style="margin-top:6px"><li>Sophos XGS</li><li>Sophos Firewall virtual appliance</li><li>SFOS 19 to 21</li></ul>
+<div class="dev-grid">
+<section><h3>Ce qu&#x27;il faut</h3><ul class="needs"><li><strong>User name and password</strong><span>The dumbmonit user, whose device access profile is read-only everywhere.</span></li></ul><p class="muted">Port par défaut: <code>4444</code></p></section>
+<section><h3>Règles d&#x27;alerte livrées <span class="label-tape">2</span></h3><ul class="rules"><li><span class="plate plate-advisory">Avis</span><strong>Sophos interface without link</strong><span>A Sophos Firewall interface that is switched on and bound to a zone has no link.</span></li><li><span class="plate plate-warning">Alerte</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+</div>
+<details class="setup"><summary>Étapes de mise en place: Allow DumbMonit to read the Sophos Firewall XML API</summary><ol class="setup-steps"><li><p>Under Profiles &gt; Device access, add a profile named DumbMonit read-only and set every permission to Read-only.</p></li><li><p>Under Authentication &gt; Users, add a user named dumbmonit, of type Administrator, with that profile and a long random password.</p></li><li><p>Under Backup &amp; firmware &gt; API (Administration &gt; API access from SFOS 22), turn the API configuration on and add the address of the DumbMonit server to the allowed IP addresses.</p></li><li><p>In DumbMonit, enter the address of the firewall, for example &quot;sophos.lan&quot;, with the dumbmonit user name and password. The API listens on the administration port, 4444 by default, with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.</p></li></ol><p class="warn"><strong>À savoir.</strong> The XML API is a configuration API: it reports the link of each interface and whether each IPsec connection is activated, not whether the tunnel is up. High availability, licences and the firmware version are not in it.</p></details>
+<p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/fr/latest/devices/sophos/">Documentation</a></p>
+</article>
+</div>
+
+<section class="block">
+	<div class="wrap">
+		<h2 style="font-size:clamp(1.5rem,1.2rem + 1.2vw,2rem)">Autres familles</h2>
+		<ul class="fam-chips" style="margin-top:20px">
+			<li><a href="../servers/">Serveurs et matériel</a></li>
+			<li><a href="../network/">Équipements réseau</a></li>
+			<li><a href="../hypervisors/">Hyperviseurs et clusters</a></li>
+			<li><a href="../storage/">NAS et sauvegarde</a></li>
+			<li><a href="../checks/">Sites web, certificats et tests</a></li>
+			<li><a href="../proxies/">Serveurs web et reverse proxies</a></li>
+			<li><a href="../apps/">Applications auto-hébergées</a></li>
+			<li><a href="../mail/">DNS, messagerie et sécurité</a></li>
+			<li><a href="../data/">Bases de données et observabilité</a></li>
+		</ul>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. La mascotte est un pigeon.</p>
+		<nav aria-label="Pied de page">
+			<a href="../../features/">Fonctionnalités</a>
+			<a href="../">Appareils</a>
+			<a href="../../install/">Installer</a>
+			<a href="../../community/">Docs et communauté</a>
+			<a href="https://demo.dumbmonit.app">Démo en ligne</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/fr/latest/">Documentation</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Versions</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Traduire</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Licence</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Sécurité</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+
+</script>
+</body>
+</html>

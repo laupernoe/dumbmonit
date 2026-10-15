@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="it" dir="ltr">
+<head>
+<meta charset="utf-8">
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispositivi monitorabili · DumbMonit</title>
+<meta name="description" content="65 tipi di dispositivo in 10 famiglie: server, switch, firewall, hypervisor, NAS, siti web, database e app self-hosted. Cosa viene controllato, le regole di avviso incluse e cosa preparare.">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://dumbmonit.app/it/devices/">
+<link rel="alternate" hreflang="en" href="https://dumbmonit.app/devices/">
+<link rel="alternate" hreflang="fr" href="https://dumbmonit.app/fr/devices/">
+<link rel="alternate" hreflang="de" href="https://dumbmonit.app/de/devices/">
+<link rel="alternate" hreflang="es" href="https://dumbmonit.app/es/devices/">
+<link rel="alternate" hreflang="it" href="https://dumbmonit.app/it/devices/">
+<link rel="alternate" hreflang="pt" href="https://dumbmonit.app/pt/devices/">
+<link rel="alternate" hreflang="pt-BR" href="https://dumbmonit.app/pt-BR/devices/">
+<link rel="alternate" hreflang="ru" href="https://dumbmonit.app/ru/devices/">
+<link rel="alternate" hreflang="zh-Hans" href="https://dumbmonit.app/zh-Hans/devices/">
+<link rel="alternate" hreflang="x-default" href="https://dumbmonit.app/devices/">
+<link rel="icon" href="../../favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<link rel="preload" href="../../assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../../assets/site.css">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="DumbMonit">
+<meta property="og:title" content="Dispositivi monitorabili · DumbMonit">
+<meta property="og:description" content="65 tipi di dispositivo in 10 famiglie: server, switch, firewall, hypervisor, NAS, siti web, database e app self-hosted. Cosa viene controllato, le regole di avviso incluse e cosa preparare.">
+<meta property="og:url" content="https://dumbmonit.app/it/devices/">
+<meta property="og:locale" content="it_IT">
+<meta property="og:image" content="https://dumbmonit.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="DumbMonit: va tutto bene? Lo sai in un secondo. Monitoraggio self-hosted in un container, con la mascotte piccione.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Dispositivi monitorabili · DumbMonit">
+<meta name="twitter:description" content="65 tipi di dispositivo in 10 famiglie: server, switch, firewall, hypervisor, NAS, siti web, database e app self-hosted. Cosa viene controllato, le regole di avviso incluse e cosa preparare.">
+<meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","name":"Dispositivi monitorabili · DumbMonit","url":"https://dumbmonit.app/it/devices/","inLanguage":"it","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Vai al contenuto</a>
+
+<header class="topbar">
+	<div class="wrap">
+		<a class="brand" href="../" aria-label="Home di DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<nav class="nav" aria-label="Sezioni">
+			<a href="../features/">Funzionalità</a>
+			<a href="./" aria-current="page">Dispositivi</a>
+			<a href="../install/">Installa</a>
+			<a href="../community/">Doc e community</a>
+		</nav>
+		<div class="actions">
+			<details class="lang">
+				<summary aria-label="Lingua"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.6 2.7 3.9 5.7 3.9 9s-1.3 6.3-3.9 9c-2.6-2.7-3.9-5.7-3.9-9S9.4 5.7 12 3Z"/></svg><span>IT</span></summary>
+				<ul>
+				<li><a href="../../devices/" hreflang="en" lang="en">English</a></li>
+				<li><a href="../../fr/devices/" hreflang="fr" lang="fr">Français</a></li>
+				<li><a href="../../de/devices/" hreflang="de" lang="de">Deutsch</a></li>
+				<li><a href="../../es/devices/" hreflang="es" lang="es">Español</a></li>
+				<li><a href="./" hreflang="it" lang="it" aria-current="true">Italiano</a></li>
+				<li><a href="../../pt/devices/" hreflang="pt" lang="pt">Português</a></li>
+				<li><a href="../../pt-BR/devices/" hreflang="pt-BR" lang="pt-BR">Português (Brasil)</a></li>
+				<li><a href="../../ru/devices/" hreflang="ru" lang="ru">Русский</a></li>
+				<li><a href="../../zh-Hans/devices/" hreflang="zh-Hans" lang="zh-Hans">简体中文</a></li>
+				</ul>
+			</details>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">Demo dal vivo</a>
+			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+		</div>
+	</div>
+</header>
+
+<main id="main">
+<section class="page-head">
+	<div class="wrap">
+		<h1>Dispositivi monitorabili</h1>
+		<p class="lede">65 tipi di dispositivo in 10 famiglie. Ognuno è letto tramite la propria API, con un account di sola lettura dove il produttore lo offre. Scegli una famiglia per i dettagli.</p>
+		<p class="code-note">Le descrizioni dei dispositivi e i testi delle regole di avviso sono in inglese, come nel prodotto. Le etichette della pagina seguono la tua lingua.</p>
+	</div>
+</section>
+
+<section class="block" style="border-top:0;padding-top:32px">
+	<div class="wrap">
+		<div class="filter">
+			<div class="search" id="dev-search" hidden>
+				<label for="dev-q" class="label-tape">Cerca</label>
+				<input id="dev-q" type="search" placeholder="Nome o prodotto, ad esempio Synology" autocomplete="off">
+			</div>
+			<nav aria-label="Filtra per famiglia">
+				<ul class="fam-chips" id="dev-fams">
+					<li><a href="#all" data-family="" aria-current="true">Tutti</a></li>
+					<li><a href="servers/" data-family="servers">Server e hardware</a></li>
+					<li><a href="network/" data-family="network">Apparati di rete</a></li>
+					<li><a href="firewalls/" data-family="firewalls">Firewall</a></li>
+					<li><a href="hypervisors/" data-family="hypervisors">Hypervisor e cluster</a></li>
+					<li><a href="storage/" data-family="storage">NAS e backup</a></li>
+					<li><a href="checks/" data-family="checks">Siti web, certificati e controlli</a></li>
+					<li><a href="proxies/" data-family="proxies">Server web e reverse proxy</a></li>
+					<li><a href="apps/" data-family="apps">Applicazioni self-hosted</a></li>
+					<li><a href="mail/" data-family="mail">DNS, posta e sicurezza</a></li>
+					<li><a href="data/" data-family="data">Database e osservabilità</a></li>
+				</ul>
+			</nav>
+			<p class="muted" id="dev-count" role="status" aria-live="polite" data-tpl="{n} di 65 mostrati" hidden></p>
+		</div>
+
+		<ul class="catalog" id="dev-list">
+			<li data-family="servers" data-q="server with agent agent linux, windows, macos or freebsd: cpu, memory, disks, network, docker, services, backups. linux server windows server raspberry pi"><a class="dev-card" href="servers/#agent"><span class="name">Server with agent</span><span class="what">Linux, Windows, macOS or FreeBSD: CPU, memory, disks, network, Docker, services, backups.</span><span class="fam label-tape">Server e hardware</span></a></li>
+			<li data-family="servers" data-q="server hardware (redfish) redfish fans, temperatures, power supplies, drives and memory, read from the bmc (idrac, ilo…). supermicro bmc dell idrac hpe ilo lenovo xclarity controller asrock rack bmc"><a class="dev-card" href="servers/#redfish"><span class="name">Server hardware (Redfish)</span><span class="what">Fans, temperatures, power supplies, drives and memory, read from the BMC (iDRAC, iLO…).</span><span class="fam label-tape">Server e hardware</span></a></li>
+			<li data-family="servers" data-q="ups with nut nut ups served by network ups tools: on battery, low or worn-out battery, charge, runtime left, load and input voltage, for every ups the server publishes. synology or qnap nas with a usb ups raspberry pi running nut truenas ups service"><a class="dev-card" href="servers/#nut"><span class="name">UPS with NUT</span><span class="what">UPS served by Network UPS Tools: on battery, low or worn-out battery, charge, runtime left, load and input voltage, for every UPS the server publishes.</span><span class="fam label-tape">Server e hardware</span></a></li>
+			<li data-family="servers" data-q="active directory activedirectory a windows domain over ldap, read-only: domain controllers and fsmo roles, privileged group members, password policy, and security findings such as kerberos-roastable accounts, unconstrained delegation or an old krbtgt password. windows server domain controller samba ad domain controller"><a class="dev-card" href="servers/#activedirectory"><span class="name">Active Directory</span><span class="what">A Windows domain over LDAP, read-only: domain controllers and FSMO roles, privileged group members, password policy, and security findings such as Kerberos-roastable accounts, unconstrained delegation or an old krbtgt password.</span><span class="fam label-tape">Server e hardware</span></a></li>
+			<li data-family="network" data-q="snmp device snmp switches, routers, ups, printers, access points: anything that answers snmp. switch router nas ups printer"><a class="dev-card" href="network/#snmp"><span class="name">SNMP device</span><span class="what">Switches, routers, UPS, printers, access points: anything that answers SNMP.</span><span class="fam label-tape">Apparati di rete</span></a></li>
+			<li data-family="network" data-q="mikrotik routeros mikrotik routeros and routerboot versions behind, cpu, memory, temperatures, fans and power supplies, and errors and link losses on every interface. hap rb5009 ccr crs switch cloud hosted router"><a class="dev-card" href="network/#mikrotik"><span class="name">MikroTik RouterOS</span><span class="what">RouterOS and RouterBOOT versions behind, CPU, memory, temperatures, fans and power supplies, and errors and link losses on every interface.</span><span class="fam label-tape">Apparati di rete</span></a></li>
+			<li data-family="network" data-q="unifi network unifi the unifi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, wan and internet status, clients and alarms, and the last connection of the clients you mark as worth watching. unifi os console (dream machine, cloud gateway, cloud key) unifi network server (self-hosted)"><a class="dev-card" href="network/#unifi"><span class="name">UniFi Network</span><span class="what">The UniFi network and what it manages: gateways, switches and access points offline or waiting for adoption, firmware updates, WAN and Internet status, clients and alarms, and the last connection of the clients you mark as worth watching.</span><span class="fam label-tape">Apparati di rete</span></a></li>
+			<li data-family="network" data-q="tailscale tailscale the devices of a tailnet through the tailscale api: servers offline, node keys about to expire, devices awaiting approval, clients to update, and each device&#x27;s last connection. tailscale tailnet subnet routers exit nodes"><a class="dev-card" href="network/#tailscale"><span class="name">Tailscale</span><span class="what">The devices of a tailnet through the Tailscale API: servers offline, node keys about to expire, devices awaiting approval, clients to update, and each device&#x27;s last connection.</span><span class="fam label-tape">Apparati di rete</span></a></li>
+			<li data-family="network" data-q="openvpn server openvpn an openvpn server through its management interface: version, whether it reports itself connected, and every client currently in session with its addresses and traffic. openvpn access server a plain openvpn --server on linux pfsense or opnsense openvpn (management enabled)"><a class="dev-card" href="network/#openvpn"><span class="name">OpenVPN server</span><span class="what">An OpenVPN server through its management interface: version, whether it reports itself connected, and every client currently in session with its addresses and traffic.</span><span class="fam label-tape">Apparati di rete</span></a></li>
+			<li data-family="firewalls" data-q="opnsense opnsense gateway latency and loss, vpn tunnels, dhcp leases, services and pending updates. opnsense firewall home router multi-wan edge"><a class="dev-card" href="firewalls/#opnsense"><span class="name">OPNsense</span><span class="what">Gateway latency and loss, VPN tunnels, DHCP leases, services and pending updates.</span><span class="fam label-tape">Firewall</span></a></li>
+			<li data-family="firewalls" data-q="pfsense pfsense a pfsense firewall through its rest api package: gateways down or losing packets, interfaces without link, stopped services, cpu, memory and disk. pfsense ce pfsense plus netgate appliance"><a class="dev-card" href="firewalls/#pfsense"><span class="name">pfSense</span><span class="what">A pfSense firewall through its REST API package: gateways down or losing packets, interfaces without link, stopped services, CPU, memory and disk.</span><span class="fam label-tape">Firewall</span></a></li>
+			<li data-family="firewalls" data-q="fortigate fortigate a fortinet firewall through the fortios rest api: ipsec tunnels down, interfaces without link, ha out of sync, memory near conserve mode, fortiguard licences expiring. fortigate 40f / 60f / 100f fortigate vm fortios 7.x"><a class="dev-card" href="firewalls/#fortigate"><span class="name">FortiGate</span><span class="what">A Fortinet firewall through the FortiOS REST API: IPsec tunnels down, interfaces without link, HA out of sync, memory near conserve mode, FortiGuard licences expiring.</span><span class="fam label-tape">Firewall</span></a></li>
+			<li data-family="firewalls" data-q="sophos firewall sophos a sophos firewall (sfos) through its xml api: the link of every interface in a zone, and which ipsec connections are activated. its live tunnel, ha and licence state are not in that api. sophos xgs sophos firewall virtual appliance sfos 19 to 21"><a class="dev-card" href="firewalls/#sophos"><span class="name">Sophos Firewall</span><span class="what">A Sophos Firewall (SFOS) through its XML API: the link of every interface in a zone, and which IPsec connections are activated. Its live tunnel, HA and licence state are not in that API.</span><span class="fam label-tape">Firewall</span></a></li>
+			<li data-family="hypervisors" data-q="proxmox ve proxmox nodes, virtual machines, containers, storage and backups of a proxmox server or cluster. proxmox server proxmox cluster"><a class="dev-card" href="hypervisors/#proxmox"><span class="name">Proxmox VE</span><span class="what">Nodes, virtual machines, containers, storage and backups of a Proxmox server or cluster.</span><span class="fam label-tape">Hypervisor e cluster</span></a></li>
+			<li data-family="hypervisors" data-q="proxmox datacenter manager pdm the console over several clusters: which instances it reaches, their failed tasks, its health. proxmox datacenter manager"><a class="dev-card" href="hypervisors/#pdm"><span class="name">Proxmox Datacenter Manager</span><span class="what">The console over several clusters: which instances it reaches, their failed tasks, its health.</span><span class="fam label-tape">Hypervisor e cluster</span></a></li>
+			<li data-family="hypervisors" data-q="vmware vsphere vsphere vcenter and esxi hosts: hosts not responding or left in maintenance, vms and their vmware tools, datastores filling up, and the alarms vsphere raised. vcenter server esxi (standalone host)"><a class="dev-card" href="hypervisors/#vsphere"><span class="name">VMware vSphere</span><span class="what">vCenter and ESXi hosts: hosts not responding or left in maintenance, VMs and their VMware Tools, datastores filling up, and the alarms vSphere raised.</span><span class="fam label-tape">Hypervisor e cluster</span></a></li>
+			<li data-family="hypervisors" data-q="xcp-ng / xenserver xcpng an xcp-ng or xenserver pool through xapi: hosts disabled or offline, vms and their power state, storage repositories filling up, and a high-availability pool that can no longer survive the host failures it is set to tolerate. xcp-ng 8.2 and 8.3 xenserver / citrix hypervisor"><a class="dev-card" href="hypervisors/#xcpng"><span class="name">XCP-ng / XenServer</span><span class="what">An XCP-ng or XenServer pool through XAPI: hosts disabled or offline, VMs and their power state, storage repositories filling up, and a high-availability pool that can no longer survive the host failures it is set to tolerate.</span><span class="fam label-tape">Hypervisor e cluster</span></a></li>
+			<li data-family="hypervisors" data-q="nutanix ahv (prism central) nutanix nutanix clusters through the v4 api of prism central: hosts degraded or in maintenance, ahv vms and their power state, storage containers filling up, and unresolved alerts by severity. prism central pc.2024.3 or later ahv clusters"><a class="dev-card" href="hypervisors/#nutanix"><span class="name">Nutanix AHV (Prism Central)</span><span class="what">Nutanix clusters through the v4 API of Prism Central: hosts degraded or in maintenance, AHV VMs and their power state, storage containers filling up, and unresolved alerts by severity.</span><span class="fam label-tape">Hypervisor e cluster</span></a></li>
+			<li data-family="hypervisors" data-q="kubernetes / k3s kubernetes a cluster through its api: nodes not ready or under pressure, pods crash looping or stuck pending, workloads missing replicas, volume claims never bound. k3s kubeadm cluster k0s microk8s talos"><a class="dev-card" href="hypervisors/#kubernetes"><span class="name">Kubernetes / k3s</span><span class="what">A cluster through its API: nodes not ready or under pressure, pods crash looping or stuck pending, workloads missing replicas, volume claims never bound.</span><span class="fam label-tape">Hypervisor e cluster</span></a></li>
+			<li data-family="storage" data-q="synology dsm synology volumes, pools, disk health, temperature, hyper backup and active backup jobs, synology drive and photos. diskstation rackstation"><a class="dev-card" href="storage/#synology"><span class="name">Synology DSM</span><span class="what">Volumes, pools, disk health, temperature, Hyper Backup and Active Backup jobs, Synology Drive and Photos.</span><span class="fam label-tape">NAS e backup</span></a></li>
+			<li data-family="storage" data-q="truenas truenas pool health, the failing disk, scrubs, snapshots, replication and truenas&#x27;s own alerts. truenas scale truenas community edition"><a class="dev-card" href="storage/#truenas"><span class="name">TrueNAS</span><span class="what">Pool health, the failing disk, scrubs, snapshots, replication and TrueNAS&#x27;s own alerts.</span><span class="fam label-tape">NAS e backup</span></a></li>
+			<li data-family="storage" data-q="unraid unraid an unraid server through its graphql api: array stopped, disks disabled or with errors, parity checks, cache pool usage, containers that should be running. unraid 7 unraid 6.12 with unraid connect"><a class="dev-card" href="storage/#unraid"><span class="name">Unraid</span><span class="what">An Unraid server through its GraphQL API: array stopped, disks disabled or with errors, parity checks, cache pool usage, containers that should be running.</span><span class="fam label-tape">NAS e backup</span></a></li>
+			<li data-family="storage" data-q="proxmox backup server pbs backup freshness per machine, failed tasks, sync and verify jobs, datastore space. proxmox backup server"><a class="dev-card" href="storage/#pbs"><span class="name">Proxmox Backup Server</span><span class="what">Backup freshness per machine, failed tasks, sync and verify jobs, datastore space.</span><span class="fam label-tape">NAS e backup</span></a></li>
+			<li data-family="storage" data-q="veeam backup &amp; replication veeam a veeam backup server through its rest api: jobs whose last run failed, failed sessions of the last 24 hours, repositories filling up, license expiry. veeam backup &amp; replication 12 veeam backup &amp; replication 13 veeam community edition"><a class="dev-card" href="storage/#veeam"><span class="name">Veeam Backup &amp; Replication</span><span class="what">A Veeam backup server through its REST API: jobs whose last run failed, failed sessions of the last 24 hours, repositories filling up, license expiry.</span><span class="fam label-tape">NAS e backup</span></a></li>
+			<li data-family="checks" data-q="website or web api (http) http a page or api answers with the right status and content, over a valid certificate. website application health page rest api self-hosted service interface"><a class="dev-card" href="checks/#http"><span class="name">Website or web API (HTTP)</span><span class="what">A page or API answers with the right status and content, over a valid certificate.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="network port (tcp) tcp a port accepts connections: ssh, a file share, a game server, anything without its own probe. ssh smb or nfs share database game server network printer"><a class="dev-card" href="checks/#tcp"><span class="name">Network port (TCP)</span><span class="what">A port accepts connections: SSH, a file share, a game server, anything without its own probe.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="domain name (dns) dns a name resolves, and points to the address you expect. your domain name an internal name served by your pi-hole or adguard an mx record"><a class="dev-card" href="checks/#dns"><span class="name">Domain name (DNS)</span><span class="what">A name resolves, and points to the address you expect.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="reachable host (ping) ping a host answers icmp: response time and packet loss. home router or gateway wi-fi access point printer machine without agent or snmp remote host"><a class="dev-card" href="checks/#ping"><span class="name">Reachable host (ping)</span><span class="what">A host answers ICMP: response time and packet loss.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="tls certificate tls a certificate is valid on any tls port, with a warning well before it expires. mail server (imaps, smtps) reverse proxy ldaps directory mqtt broker administration interface"><a class="dev-card" href="checks/#tls"><span class="name">TLS certificate</span><span class="what">A certificate is valid on any TLS port, with a warning well before it expires.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="ntp time server ntp a time server answers sntp with a sane clock: offset, delay, stratum and leap indicator. a router or nas acting as a local time server an internal ntp server (chrony, ntpd) a public pool server used as a reference"><a class="dev-card" href="checks/#ntp"><span class="name">NTP time server</span><span class="what">A time server answers SNTP with a sane clock: offset, delay, stratum and leap indicator.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="websocket endpoint websocket completes the upgrade handshake, and can exchange a frame. the home assistant api a live dashboard a log stream an endpoint behind a reverse proxy"><a class="dev-card" href="checks/#websocket"><span class="name">WebSocket endpoint</span><span class="what">Completes the upgrade handshake, and can exchange a frame.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="heartbeat (push) push your cron job or backup script calls dumbmonit; when it goes quiet, you are told. nightly backup script cron job home assistant automation certificate renewal database dump"><a class="dev-card" href="checks/#push"><span class="name">Heartbeat (push)</span><span class="what">Your cron job or backup script calls DumbMonit; when it goes quiet, you are told.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="domain expiry domain a registered domain, read from its registry over rdap: days left before expiry, a hold that takes it out of the dns, a redemption period, and its registrar. example.com your company&#x27;s domain the domain of your mail server"><a class="dev-card" href="checks/#domain"><span class="name">Domain expiry</span><span class="what">A registered domain, read from its registry over RDAP: days left before expiry, a hold that takes it out of the DNS, a redemption period, and its registrar.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="website health &amp; seo website know when a website breaks, goes blank, drops out of search engines or changes its title, description or canonical address, for one site or hundreds. company website online shop customer sites you host landing pages blog or documentation"><a class="dev-card" href="checks/#website"><span class="name">Website health &amp; SEO</span><span class="what">Know when a website breaks, goes blank, drops out of search engines or changes its title, description or canonical address, for one site or hundreds.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="checks" data-q="website changes webchange be told when the content of a page, or of a whole site, changes, with a before/after view of each change. pricing or terms page documentation site supplier&#x27;s status or maintenance notice public announcement page your own site after a deployment"><a class="dev-card" href="checks/#webchange"><span class="name">Website changes</span><span class="what">Be told when the content of a page, or of a whole site, changes, with a before/after view of each change.</span><span class="fam label-tape">Siti web, certificati e controlli</span></a></li>
+			<li data-family="proxies" data-q="traefik traefik the reverse proxy: routers disabled by a configuration error, backend servers failing their health check, certificates that never arrive or are not renewed, and the share of 5xx answers. traefik in docker traefik on kubernetes traefik in front of self-hosted apps"><a class="dev-card" href="proxies/#traefik"><span class="name">Traefik</span><span class="what">The reverse proxy: routers disabled by a configuration error, backend servers failing their health check, certificates that never arrive or are not renewed, and the share of 5xx answers.</span><span class="fam label-tape">Server web e reverse proxy</span></a></li>
+			<li data-family="proxies" data-q="caddy caddy the web server and reverse proxy: upstreams failing their health checks, a configuration reload that failed, handler errors and the share of 5xx answers. caddy in docker caddy as a reverse proxy caddy on a linux host"><a class="dev-card" href="proxies/#caddy"><span class="name">Caddy</span><span class="what">The web server and reverse proxy: upstreams failing their health checks, a configuration reload that failed, handler errors and the share of 5xx answers.</span><span class="fam label-tape">Server web e reverse proxy</span></a></li>
+			<li data-family="proxies" data-q="nginx nginx the web server and reverse proxy: active and waiting connections, the accept/handled/request rates, and upstream health when the commercial nginx plus api is available. nginx in docker nginx as a reverse proxy nginx on a linux host"><a class="dev-card" href="proxies/#nginx"><span class="name">Nginx</span><span class="what">The web server and reverse proxy: active and waiting connections, the accept/handled/request rates, and upstream health when the commercial NGINX Plus API is available.</span><span class="fam label-tape">Server web e reverse proxy</span></a></li>
+			<li data-family="proxies" data-q="apache httpd apache the web server: busy and idle workers, the worker scoreboard by state, and request/byte rates when extendedstatus is on. apache in docker apache on a linux host a lamp stack"><a class="dev-card" href="proxies/#apache"><span class="name">Apache httpd</span><span class="what">The web server: busy and idle workers, the worker scoreboard by state, and request/byte rates when ExtendedStatus is on.</span><span class="fam label-tape">Server web e reverse proxy</span></a></li>
+			<li data-family="proxies" data-q="nginx proxy manager npm the proxy manager: hosts nginx refused to load, disabled hosts, and the certificates the hosts present, before let&#x27;s encrypt renewal failures turn into expired sites. nginx proxy manager in docker npm in front of self-hosted apps"><a class="dev-card" href="proxies/#npm"><span class="name">Nginx Proxy Manager</span><span class="what">The proxy manager: hosts nginx refused to load, disabled hosts, and the certificates the hosts present, before Let&#x27;s Encrypt renewal failures turn into expired sites.</span><span class="fam label-tape">Server web e reverse proxy</span></a></li>
+			<li data-family="apps" data-q="nextcloud nextcloud maintenance mode left on, a database upgrade waiting, nextcloud and app updates, active users, free space, php opcache. nextcloud server nextcloud aio nextcloud hub"><a class="dev-card" href="apps/#nextcloud"><span class="name">Nextcloud</span><span class="what">Maintenance mode left on, a database upgrade waiting, Nextcloud and app updates, active users, free space, PHP OPcache.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="immich immich job queues that stall or sit paused, updates, disk space, photo and video counts, each device&#x27;s last connection and last backup. immich"><a class="dev-card" href="apps/#immich"><span class="name">Immich</span><span class="what">Job queues that stall or sit paused, updates, disk space, photo and video counts, each device&#x27;s last connection and last backup.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="paperless-ngx paperless redis, celery, search index and classifier health, failed imports, updates, disk space, document count. paperless-ngx"><a class="dev-card" href="apps/#paperless"><span class="name">Paperless-ngx</span><span class="what">Redis, Celery, search index and classifier health, failed imports, updates, disk space, document count.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="jellyfin jellyfin scheduled tasks that fail (library scans), a restart waiting, broken plugins, active streams and transcodes. jellyfin"><a class="dev-card" href="apps/#jellyfin"><span class="name">Jellyfin</span><span class="what">Scheduled tasks that fail (library scans), a restart waiting, broken plugins, active streams and transcodes.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="plex media server plex active streams and transcodes, bandwidth, library scans, updates, read from the server itself. plex media server"><a class="dev-card" href="apps/#plex"><span class="name">Plex Media Server</span><span class="what">Active streams and transcodes, bandwidth, library scans, updates, read from the server itself.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="home assistant homeassistant the smart home behind the dashboard: integrations whose entities went unavailable, low batteries, updates waiting and open repairs, plus the last connection of the companion app&#x27;s phones and tablets. home assistant os home assistant container"><a class="dev-card" href="apps/#homeassistant"><span class="name">Home Assistant</span><span class="what">The smart home behind the dashboard: integrations whose entities went unavailable, low batteries, updates waiting and open repairs, plus the last connection of the companion app&#x27;s phones and tablets.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="gitlab (self-managed) gitlab readiness, sidekiq backlog, ci runners online or not, pending migrations, instance statistics, sign-up and two-factor settings, licence expiry. gitlab community edition gitlab enterprise edition"><a class="dev-card" href="apps/#gitlab"><span class="name">GitLab (self-managed)</span><span class="what">Readiness, Sidekiq backlog, CI runners online or not, pending migrations, instance statistics, sign-up and two-factor settings, licence expiry.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="apps" data-q="forgejo / gitea forgejo health check, repository, user and organisation counts, scheduled tasks running on time, actions runners online or not. forgejo gitea"><a class="dev-card" href="apps/#forgejo"><span class="name">Forgejo / Gitea</span><span class="what">Health check, repository, user and organisation counts, scheduled tasks running on time, Actions runners online or not.</span><span class="fam label-tape">Applicazioni self-hosted</span></a></li>
+			<li data-family="mail" data-q="pi-hole pihole the dns ad blocker: blocking on or paused, queries and share blocked, blocklist age, upstream failures, updates and its own diagnosis messages. pi-hole v6 on a raspberry pi pi-hole in docker"><a class="dev-card" href="mail/#pihole"><span class="name">Pi-hole</span><span class="what">The DNS ad blocker: blocking on or paused, queries and share blocked, blocklist age, upstream failures, updates and its own diagnosis messages.</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="mail" data-q="adguard home adguard the dns filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates. adguard home adguard home on openwrt or a nas"><a class="dev-card" href="mail/#adguard"><span class="name">AdGuard Home</span><span class="what">The DNS filter: protection on or paused, queries and blocks, filter lists that stopped updating, upstream servers that fail, updates.</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="mail" data-q="crowdsec crowdsec the security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, local api health. crowdsec on a linux host crowdsec in docker crowdsec on opnsense or pfsense"><a class="dev-card" href="mail/#crowdsec"><span class="name">CrowdSec</span><span class="what">The security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, Local API health.</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="mail" data-q="mail relay (smtp) smtp a mail server greets, offers starttls and accepts a login, like a real client. your provider&#x27;s smtp relay a local postfix or msmtp proxmox mail gateway the submission port of a mail server"><a class="dev-card" href="mail/#smtp"><span class="name">Mail relay (SMTP)</span><span class="what">A mail server greets, offers STARTTLS and accepts a login, like a real client.</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="mail" data-q="mdaemon email server mdaemon smtp, imap, pop3 and webmail answering, version, and the xml api. mdaemon email server"><a class="dev-card" href="mail/#mdaemon"><span class="name">MDaemon Email Server</span><span class="what">SMTP, IMAP, POP3 and webmail answering, version, and the XML API.</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="mail" data-q="securitygateway for email servers securitygateway mail gateway services answering, version, and the rest api performance counters (12.5 and later). securitygateway for email servers"><a class="dev-card" href="mail/#securitygateway"><span class="name">SecurityGateway for Email Servers</span><span class="what">Mail gateway services answering, version, and the REST API performance counters (12.5 and later).</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="mail" data-q="proxmox mail gateway pmg mail queues and stuck mail, spam and virus traffic, quarantine, signature age. proxmox mail gateway"><a class="dev-card" href="mail/#pmg"><span class="name">Proxmox Mail Gateway</span><span class="what">Mail queues and stuck mail, spam and virus traffic, quarantine, signature age.</span><span class="fam label-tape">DNS, posta e sicurezza</span></a></li>
+			<li data-family="data" data-q="postgresql database postgres logs in and runs a query: catches a database that is up but no longer answering. the database behind nextcloud or immich a home assistant recorder an application database a timescaledb instance"><a class="dev-card" href="data/#postgres"><span class="name">PostgreSQL database</span><span class="what">Logs in and runs a query: catches a database that is up but no longer answering.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="mysql or mariadb database mysql logs in and runs a query: catches a database that is up but no longer answering. the database behind a wordpress a nextcloud or a kimai an application database a mariadb in docker"><a class="dev-card" href="data/#mysql"><span class="name">MySQL or MariaDB database</span><span class="what">Logs in and runs a query: catches a database that is up but no longer answering.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="mongodb mongodb the document database itself: replica set members and lag, a missing primary, connections against the limit, wiredtiger cache and assertions. mongodb replica set standalone mongod the database behind unifi or rocket.chat"><a class="dev-card" href="data/#mongodb"><span class="name">MongoDB</span><span class="what">The document database itself: replica set members and lag, a missing primary, connections against the limit, WiredTiger cache and assertions.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="redis / valkey redis the in-memory store itself: memory against maxmemory, refused connections, replication link and lag, failed saves and keyspace size. redis valkey the cache behind nextcloud, immich or authentik"><a class="dev-card" href="data/#redis"><span class="name">Redis / Valkey</span><span class="what">The in-memory store itself: memory against maxmemory, refused connections, replication link and lag, failed saves and keyspace size.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="rabbitmq rabbitmq the message broker: memory and disk alarms that block publishers, stopped nodes and partitions, queues filling up with no consumer. rabbitmq single node rabbitmq cluster"><a class="dev-card" href="data/#rabbitmq"><span class="name">RabbitMQ</span><span class="what">The message broker: memory and disk alarms that block publishers, stopped nodes and partitions, queues filling up with no consumer.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="mqtt broker mqtt connects, subscribes to a topic, and can wait for a retained message. mosquitto the broker behind home assistant zigbee2mqtt esphome sensors"><a class="dev-card" href="data/#mqtt"><span class="name">MQTT broker</span><span class="what">Connects, subscribes to a topic, and can wait for a retained message.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="victoriametrics victoriametrics the time series database itself: ingestion, samples it refuses, disk headroom before it turns read-only, slow inserts and active series. victoriametrics single-node prometheus long-term storage"><a class="dev-card" href="data/#victoriametrics"><span class="name">VictoriaMetrics</span><span class="what">The time series database itself: ingestion, samples it refuses, disk headroom before it turns read-only, slow inserts and active series.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="victorialogs victorialogs the log database itself: lines ingested, lines it refuses, disk headroom before it turns read-only, errors. victorialogs single-node"><a class="dev-card" href="data/#victorialogs"><span class="name">VictoriaLogs</span><span class="what">The log database itself: lines ingested, lines it refuses, disk headroom before it turns read-only, errors.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="grafana loki loki the log server itself: readiness, log lines it refuses and why, chunks that fail to reach storage, write-ahead log disk, request errors. loki single binary loki simple scalable"><a class="dev-card" href="data/#loki"><span class="name">Grafana Loki</span><span class="what">The log server itself: readiness, log lines it refuses and why, chunks that fail to reach storage, write-ahead log disk, request errors.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+			<li data-family="data" data-q="graylog graylog the log server and its search cluster: processing, journal backlog, buffers, throughput in and out, opensearch health, failed inputs and indexing failures. graylog open graylog with opensearch"><a class="dev-card" href="data/#graylog"><span class="name">Graylog</span><span class="what">The log server and its search cluster: processing, journal backlog, buffers, throughput in and out, OpenSearch health, failed inputs and indexing failures.</span><span class="fam label-tape">Database e osservabilità</span></a></li>
+		</ul>
+		<p class="muted" id="dev-none" hidden>Nessun tipo di dispositivo corrisponde alla ricerca.</p>
+	</div>
+</section>
+
+</main>
+
+<footer>
+	<div class="wrap">
+		<p>DumbMonit, Apache 2.0. La mascotte è un piccione.</p>
+		<nav aria-label="Piè di pagina">
+			<a href="../features/">Funzionalità</a>
+			<a href="./">Dispositivi</a>
+			<a href="../install/">Installa</a>
+			<a href="../community/">Doc e community</a>
+			<a href="https://demo.dumbmonit.app">Demo dal vivo</a>
+			<a href="https://github.com/laupernoe/dumbmonit">GitHub</a>
+			<a href="https://dumbmonit.readthedocs.io/it/latest/">Documentazione</a>
+			<a href="https://github.com/laupernoe/dumbmonit/releases">Release</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md#translating-dumbmonit">Traduci</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/LICENSE">Licenza</a>
+			<a href="https://github.com/laupernoe/dumbmonit/blob/main/SECURITY.md">Sicurezza</a>
+		</nav>
+	</div>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(function (b) {
+	b.addEventListener('click', function () {
+		var text = document.getElementById(b.dataset.copy).innerText.replace(/^\$ /gm, '');
+		var label = b.textContent; var done = function () { b.textContent = b.dataset.copied; setTimeout(function () { b.textContent = label; }, 1600); };
+		if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, function () {});
+	});
+});
+document.querySelectorAll('.lang a').forEach(function (a) {
+	a.addEventListener('click', function () { try { localStorage.setItem('dm-lang', a.lang); } catch (e) {} });
+});
+document.addEventListener('click', function (e) {
+	var d = document.querySelector('.lang[open]');
+	if (d && !d.contains(e.target)) d.removeAttribute('open');
+});
+(function () {
+	var list = document.getElementById('dev-list');
+	if (!list) return;
+	var items = [].slice.call(list.children);
+	var q = document.getElementById('dev-q');
+	var chips = [].slice.call(document.querySelectorAll('#dev-fams a'));
+	var count = document.getElementById('dev-count');
+	var none = document.getElementById('dev-none');
+	var fam = '';
+	document.getElementById('dev-search').hidden = false;
+	function apply() {
+		var term = q.value.trim().toLowerCase(), n = 0;
+		items.forEach(function (li) {
+			var ok = (!fam || li.dataset.family === fam) && (!term || li.dataset.q.indexOf(term) > -1);
+			li.hidden = !ok;
+			if (ok) n++;
+		});
+		none.hidden = n > 0;
+		count.hidden = false;
+		count.textContent = count.dataset.tpl.replace('{n}', n);
+	}
+	chips.forEach(function (a) {
+		a.addEventListener('click', function (e) {
+			e.preventDefault();
+			fam = a.dataset.family;
+			chips.forEach(function (c) { c.removeAttribute('aria-current'); });
+			a.setAttribute('aria-current', 'true');
+			apply();
+		});
+	});
+	q.addEventListener('input', apply);
+})();
+</script>
+</body>
+</html>
