@@ -81,6 +81,7 @@ All notable changes to this project are documented here. The format follows
   still waiting to be written: they are flushed to VictoriaMetrics before it
   stops. Stopping while the embedded VictoriaMetrics waits to restart after a
   crash now returns at once instead of waiting for the full grace period.
+
 - **SNMP survives a lost packet.** Each request now gets a few seconds with up
   to two resends instead of one request lasting the whole probe, so a single
   dropped UDP datagram no longer marks a device down. An SNMPv1 device that
@@ -101,6 +102,7 @@ All notable changes to this project are documented here. The format follows
 - **Metrics API when VictoriaMetrics is down.** `/api/metrics/query` and
   `/api/metrics/query_range` answer 502 instead of 400 when the metrics
   database is unreachable or failing; 400 is kept for queries it rejects.
+
 - **Editing a user is all or nothing.** A password refused by
   `PUT /api/users/{id}` no longer leaves the role or display name changed.
 - **Editing one secret of a channel keeps the others.** Secrets are merged by
