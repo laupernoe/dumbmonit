@@ -3864,3 +3864,174 @@ export interface WebsiteChange {
 	before: string;
 	after: string;
 }
+
+// ---------------------------------------------------------------------------
+// Wall widgets (`crates/server/src/api/wall_widgets/`)
+
+/** A place for the weather, as the geocoding returned it. */
+export interface WallPlace {
+	name: string;
+	/** Region and country, to tell two places of the same name apart. */
+	region: string;
+	country_code: string;
+	latitude: number;
+	longitude: number;
+}
+
+export interface WallCryptoSettings {
+	enabled: boolean;
+	/** CoinGecko ids, in display order. */
+	coins: string[];
+	/** CoinGecko code, lower case (`usd`, `eur`…). */
+	currency: string;
+}
+
+export interface WallWeatherSettings {
+	enabled: boolean;
+	places: WallPlace[];
+	units: 'metric' | 'imperial';
+}
+
+export interface WallStocksSettings {
+	enabled: boolean;
+	symbols: string[];
+}
+
+export interface WallFxSettings {
+	enabled: boolean;
+	base: string;
+	currencies: string[];
+}
+
+export type WallCveSource = 'both' | 'nvd' | 'kev';
+
+export interface WallCveSettings {
+	enabled: boolean;
+	source: WallCveSource;
+	count: number;
+}
+
+/** `GET|PUT /api/wall/widgets/settings` (administrators). */
+export interface WallWidgetSettings {
+	rotate_seconds: number;
+	crypto: WallCryptoSettings;
+	weather: WallWeatherSettings;
+	stocks: WallStocksSettings;
+	fx: WallFxSettings;
+	cve: WallCveSettings;
+}
+
+/** What `GET` returns: the settings, and only whether each API key is set. */
+export interface WallWidgetSettingsView extends WallWidgetSettings {
+	has_finnhub_key: boolean;
+	has_coingecko_key: boolean;
+}
+
+/** `PUT` body. A key left out is kept; an empty string clears it. Never read back. */
+export interface WallWidgetSettingsPayload extends WallWidgetSettings {
+	secrets?: { finnhub?: string; coingecko?: string };
+}
+
+export interface WallCoinPreset {
+	id: string;
+	symbol: string;
+	name: string;
+}
+
+/** `GET /api/wall/widgets/catalog`. */
+export interface WallWidgetCatalog {
+	coins: WallCoinPreset[];
+	coin_currencies: string[];
+	fx_currencies: string[];
+}
+
+/** One widget on the wall: its data (fresh or a little old), when it was read, why the last read failed. */
+export interface WallSection<T> {
+	data: T | null;
+	/** UTC without suffix. */
+	updated: string | null;
+	error: string | null;
+	/** Waiting for an API key (stocks without a Finnhub key). */
+	needs_key: boolean;
+	/** The source to credit on the widget. */
+	source: string;
+	source_url: string;
+}
+
+export interface WallCoin {
+	id: string;
+	symbol: string;
+	name: string;
+	price: number;
+	/** Percent over 24 h. */
+	change_24h: number | null;
+}
+
+export interface WallCrypto {
+	/** Upper case: `EUR`. */
+	currency: string;
+	coins: WallCoin[];
+}
+
+/** The weather now in the chosen place, shown under the wall's clock. */
+export interface WallWeather {
+	name: string;
+	/** `°C` or `°F`. */
+	temperature_unit: string;
+	temperature: number;
+	/** WMO weather code. */
+	code: number;
+	is_day: boolean;
+}
+
+export interface WallQuote {
+	symbol: string;
+	price: number;
+	change: number | null;
+	change_pct: number | null;
+	/** UTC without suffix. */
+	at: string | null;
+}
+
+export interface WallStocks {
+	quotes: WallQuote[];
+	/** Symbols the source does not know. */
+	unknown: string[];
+}
+
+export interface WallRate {
+	code: string;
+	/** One unit of the base is worth `rate` units of `code`. */
+	rate: number;
+	/** The previous business day's rate. */
+	previous: number | null;
+}
+
+export interface WallFx {
+	base: string;
+	date: string;
+	rates: WallRate[];
+}
+
+export interface WallCve {
+	id: string;
+	title: string;
+	/** CVSS base score; null for a KEV entry the NVD list does not hold. */
+	score: number | null;
+	/** UTC without suffix. */
+	date: string;
+	/** In CISA's catalogue of exploited vulnerabilities. */
+	exploited: boolean;
+	ransomware: boolean;
+	link: string;
+}
+
+/** `GET /api/wall/widgets`: one section per widget turned on, `null` otherwise. */
+export interface WallWidgets {
+	rotate_seconds: number;
+	crypto: WallSection<WallCrypto> | null;
+	weather: WallSection<WallWeather> | null;
+	stocks: WallSection<WallStocks> | null;
+	fx: WallSection<WallFx> | null;
+	cve: WallSection<WallCve[]> | null;
+}

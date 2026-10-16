@@ -29,11 +29,28 @@ mur dans **Réglages → Actualités du mur**. Les deux sont désactivés par d�
   la colonne de droite sous l'horloge (ou au milieu de la scène), petite, moyenne
   ou grande. La vignette se réduit à la place disponible ; elle ne recouvre
   jamais l'état.
+- **Carrousel d'images.** Les derniers articles des mêmes flux qui portent une
+  image, un à la fois au milieu du mur, huit secondes chacun, en fondu, avec la
+  source, l'âge et le titre sur l'image. Si l'écran demande de *réduire les
+  animations*, les images se remplacent sans fondu.
 
 C'est le serveur qui lit les flux, pas le navigateur (un navigateur ne peut pas
 lire les flux d'autres sites). Il suit au plus trois redirections, refuse les
 adresses internes, abandonne après huit secondes ou 2 Mo par flux, et garde la
 réponse cinq minutes pour tous les murs. Il lit RSS 2.0, RSS 1.0 (RDF) et Atom.
+
+L'image d'un article vient du flux : la plus large des images `media:content`,
+une `media:thumbnail`, une pièce jointe image (`enclosure`, comme BFM TV), un
+`link rel="enclosure"` Atom, ou à défaut la première `<img>` du contenu de
+l'article (comme Korben). Quand le flux n'en a pas et que le carrousel est
+allumé, le serveur lit une fois le début de la page de l'article (512 Ko au
+plus, même garde-fou d'adresses) et prend son `og:image` ; la réponse est
+retenue, une page n'est lue qu'une fois. Le mur ne charge jamais d'image depuis
+le site d'actualité : le serveur la relaie à `/api/wall/news/image/<id>`,
+seulement pour les articles qu'il a publiés, 6 Mo au plus, et seulement si le
+fichier est vraiment une image PNG, JPEG, GIF, WebP ou AVIF (jamais de SVG).
+L'adresse de l'écran et ses cookies restent à la maison, et la politique de
+sécurité du mur n'autorise toujours que les images de DumbMonit.
 
 ### Choisir les sources
 
@@ -78,7 +95,97 @@ La politique de sécurité du mur n'autorise que les lecteurs YouTube
 
 `GET /api/wall/news` (ce que les murs interrogent), `GET|PUT
 /api/wall/news/settings` et `POST /api/wall/news/test` (admin), `GET
-/api/wall/news/presets`.
+/api/wall/news/presets`, `GET /api/wall/news/image/{id}` (l'image d'un article,
+relayée).
+
+## Widgets sur le mur
+
+Un administrateur peut ajouter des **widgets** au mur dans **Paramètres → Mur →
+Widgets du mur** : la météo, le cours de cryptomonnaies, d'actions, les taux de
+change et les dernières failles critiques. Chacun est désactivé par défaut et
+s'allume séparément.
+
+La **météo** reste simple : une icône et la température actuelle, pour une
+ville, juste sous l'heure. Ni prévisions ni détails. Un lecteur d'écran entend
+la ville, le temps qu'il fait et la température ; au survol, les mêmes mots et
+la source (Open-Meteo).
+
+Les autres widgets se partagent une carte dans la colonne de droite, sous
+l'horloge : un widget à la fois, chacun pendant le nombre de
+secondes choisi (20 par défaut), puis le suivant apparaît en fondu. Les longues
+listes sont coupées en pages de cinq. Des points sous la carte montrent où en
+est le tour. Si l'écran demande de *réduire les animations*, les cartes se
+remplacent sans fondu.
+
+Une hausse ou une baisse porte toujours une flèche et un signe (▲ +1,04 %,
+▼ −0,57 %), jamais seulement une couleur. Chaque carte cite sa source,
+discrètement, et dit de quand datent ses chiffres.
+
+| Widget | Ce qu'il montre | Source | Clé | Le serveur demande |
+|---|---|---|---|---|
+| Météo | Une icône et la température actuelle d'une ville, sous l'horloge | [Open-Meteo](https://open-meteo.com) (conditions actuelles et géocodage) | aucune | toutes les 15 min |
+| Crypto | Cours et variation sur 24 h de dix monnaies au plus, dans la devise choisie | API publique de [CoinGecko](https://www.coingecko.com) | aucune (clé Demo gratuite facultative) | chaque minute, un appel |
+| Actions | Dernier cours et variation du jour de dix symboles au plus | [Finnhub](https://finnhub.io) | **clé gratuite obligatoire** | toutes les 5 min, un appel par symbole |
+| Devises | Ce que coûte une unité (ou 100 d'une petite monnaie) dans la devise de base, et sa variation depuis la veille | [Frankfurter](https://frankfurter.dev) (taux de référence des banques centrales) | aucune | chaque heure |
+| Failles critiques | Les dernières CVE notées critiques (CVSS 9 ou plus) de la semaine et/ou les dernières entrées du catalogue de la CISA des failles activement exploitées, avec note et date | API 2.0 de la [NVD](https://nvd.nist.gov), [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | aucune | chaque heure |
+
+**Les sources et leurs conditions** (vérifiées en octobre 2026) :
+
+- **Open-Meteo** est gratuit sans clé pour un usage non commercial (jusqu'à
+  10 000 appels par jour) ; ses données sont sous CC BY 4.0.
+- L'API sans clé de **CoinGecko** partage une réserve d'environ 10 à 30 appels
+  par minute et par adresse, et n'est pas faite pour des interrogations
+  intensives ; DumbMonit demande une fois par minute pour tous les murs. Une
+  **clé Demo** gratuite (coingecko.com) donne à l'instance sa propre limite.
+- Les **actions** demandent une clé **Finnhub** gratuite : aucune source de
+  cours sans clé n'est à la fois fiable et autorisée (Stooq demande désormais
+  une clé, Yahoo interdit son API non documentée). L'offre gratuite couvre les
+  titres cotés aux États-Unis, 60 appels par minute ; les cours peuvent être
+  différés.
+- **Frankfurter** n'a ni clé ni quota ; les taux changent une fois par jour
+  ouvré.
+- La **NVD** accepte 5 requêtes par 30 secondes sans clé ; DumbMonit en fait
+  une par heure. *This product uses the NVD API but is not endorsed or
+  certified by the NVD.* Le catalogue **CISA KEV** est un fichier JSON public.
+
+**Tout passe par le serveur.** Aucun écran ne parle à ces services : ni son
+adresse ni les limites des services ne dépendent du nombre d'écrans. Chaque
+source a son cache. Quand une source tombe, la carte garde ses derniers chiffres
+jusqu'à six heures, marqués *Obsolète*, et le serveur attend une minute avant
+de redemander ; sans rien à montrer, la carte dit *Indisponible*. Un widget ne
+casse jamais le mur.
+
+**Les clés d'API ne reviennent jamais.** Elles sont chiffrées avec le secret de
+l'instance ; les réglages montrent seulement qu'une clé est enregistrée. En
+taper une nouvelle la remplace, **Supprimer la clé** l'efface.
+
+### Choisir ce qui s'affiche
+
+- **Météo :** tapez une ville et **Rechercher** (géocodage d'Open-Meteo, dans
+  votre langue), puis choisissez-la (en choisir une autre la remplace). Unités : métriques ou
+  impériales.
+- **Crypto :** cochez parmi les principales monnaies (BTC, ETH, SOL, XRP, BNB,
+  ADA, DOGE, TRX, TON, AVAX, DOT, LINK, LTC, XLM, XMR, USDT, USDC) ou ajoutez
+  n'importe laquelle par son identifiant CoinGecko (la fin de son adresse sur
+  coingecko.com, par exemple `avalanche-2`). Devise d'affichage : USD, EUR,
+  GBP, CHF, JPY et d'autres.
+- **Actions :** tapez les symboles, séparés par des virgules
+  (`AAPL, MSFT, NVDA`), et collez votre clé Finnhub.
+- **Devises :** choisissez la devise de base et jusqu'à dix autres parmi les
+  principales (USD, EUR, GBP, JPY, CHF, CNY, CAD, AUD…).
+- **Failles critiques :** *Les deux* (critiques et exploitées ; une CVE
+  exploitée déjà dans la liste de la NVD porte la marque *Exploitée*),
+  *Critiques* (NVD) ou *Activement exploitées* (CISA KEV), et combien en
+  montrer (1 à 10).
+
+### API
+
+`GET /api/wall/widgets` (ce que les murs interrogent chaque minute : une
+section par widget allumé, avec `data`, `updated`, `error`, `needs_key`,
+`source`), `GET|PUT /api/wall/widgets/settings` et
+`GET /api/wall/widgets/places?q=` (admin), `GET /api/wall/widgets/catalog`. Sur
+`PUT`, `secrets.finnhub` et `secrets.coingecko` enregistrent une clé, une chaîne
+vide l'efface, et les omettre les garde.
 
 ## Musique sur le mur
 

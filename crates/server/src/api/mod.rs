@@ -48,7 +48,9 @@ mod truenas;
 mod update;
 mod users;
 mod wall_news;
+mod wall_news_images;
 mod wall_news_presets;
+mod wall_widgets;
 mod webchange;
 mod webpush;
 mod website;
@@ -193,6 +195,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(music::routes())
         // Actualités du mur : bandeau de titres et vignette vidéo (`wall_news.rs`).
         .merge(wall_news::routes())
+        // Images des articles du mur, relayées par le serveur (`wall_news_images.rs`).
+        .merge(wall_news_images::routes())
+        // Widgets du mur : cryptos, météo, actions, devises, CVE (`wall_widgets/`).
+        .merge(wall_widgets::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
