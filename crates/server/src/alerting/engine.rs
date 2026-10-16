@@ -233,6 +233,9 @@ pub async fn evaluate_once(
 ) -> Result<EvalReport> {
     let rules = db::alerts::list_enabled_rules(pool).await?;
     if rules.is_empty() {
+        // Plus aucune règle : ce qui reste dans la table ne sera plus jamais
+        // évalué, la purge doit passer quand même.
+        db::alerts::purge_states(pool, now).await?;
         return Ok(EvalReport::default());
     }
 
@@ -585,6 +588,170 @@ mod tests {
             .expect("\"unreachable\" alert persisted");
         assert_eq!(injoignable.target_id, Some(1));
         assert_eq!(injoignable.state.notify_count, 1, "recorded despite the absence of a channel");
+
+        cleanup(&path, pool).await;
+    }
+
+    /// Monte une alerte « injoignable » en `firing` sur la cible 1, en deux cycles.
+    async fn firing_host_down(
+        pool: &SqlitePool,
+        cipher: &Cipher,
+    ) -> crate::alerting::cycle::StoredAlert {
+        let http = notify::http_client();
+        let source = FakeSource { answers: vec![("tlast_over_time".to_string(), 600.0)] };
+        evaluate_once(pool, cipher, &source, &http, at(0)).await.expect("first cycle");
+        evaluate_once(pool, cipher, &source, &http, at(60)).await.expect("second cycle");
+        db::alerts::list_active(pool)
+            .await
+            .expect("active alerts")
+            .into_iter()
+            .find(|alert| alert.rule_uid == RULE_HOST_DOWN)
+            .expect("firing alert")
+    }
+
+    async fn host_down_rule_id(pool: &SqlitePool) -> i64 {
+        db::alerts::list_rules(pool)
+            .await
+            .expect("rules")
+            .into_iter()
+            .find(|rule| rule.uid == RULE_HOST_DOWN)
+            .expect("built-in rule")
+            .id
+    }
+
+    /// Ce qu'un cycle parti avant un clic de l'utilisateur s'apprête à écrire.
+    fn in_flight(
+        stored: &crate::alerting::cycle::StoredAlert,
+    ) -> crate::alerting::group::AlertOutcome {
+        crate::alerting::group::AlertOutcome {
+            fingerprint: stored.fingerprint.clone(),
+            rule_uid: stored.rule_uid.clone(),
+            rule_name: "unreachable".to_string(),
+            target_id: stored.target_id,
+            target_name: "nas".to_string(),
+            series_key: stored.series_key.clone(),
+            labels: stored.labels.clone(),
+            state: stored.state.clone(),
+            severity: crate::alerting::model::Severity::Critical,
+            value: Some(600.0),
+            score: None,
+            unit: String::new(),
+            operator: ">".to_string(),
+            threshold: 0.0,
+            channels: Vec::new(),
+            repeat_interval: None,
+            escalate_after: None,
+            unacked_after: None,
+            just_transitioned: false,
+            recurred: false,
+            detail: None,
+        }
+    }
+
+    #[tokio::test]
+    async fn desactiver_une_regle_solde_ses_alertes_avec_une_trace() {
+        let (path, pool, cipher) = fixture().await;
+        let alert = firing_host_down(&pool, &cipher).await;
+
+        let id = host_down_rule_id(&pool).await;
+        assert!(db::alerts::set_rule_enabled(&pool, id, false).await.expect("disable"));
+
+        let states = db::alerts::load_states(&pool).await.expect("states");
+        assert!(
+            states.iter().all(|s| s.rule_uid != RULE_HOST_DOWN),
+            "a disabled rule must not leave alerts behind"
+        );
+        let (to_phase, reason): (String, String) = sqlx::query_as(
+            "SELECT to_phase, reason FROM alert_history WHERE fingerprint = ?
+             ORDER BY id DESC LIMIT 1",
+        )
+        .bind(&alert.fingerprint)
+        .fetch_one(&pool)
+        .await
+        .expect("history entry");
+        assert_eq!(to_phase, "resolved");
+        assert_eq!(reason, crate::alerting::cycle::DISABLED_RULE_REASON);
+
+        cleanup(&path, pool).await;
+    }
+
+    #[tokio::test]
+    async fn sans_regle_active_les_empreintes_restantes_sont_purgees() {
+        let (path, pool, cipher) = fixture().await;
+        firing_host_down(&pool, &cipher).await;
+        // Toutes les règles coupées d'un coup, sans passer par l'API.
+        sqlx::query("UPDATE alert_rules SET enabled = 0").execute(&pool).await.expect("disable");
+
+        let http = notify::http_client();
+        let source = FakeSource { answers: Vec::new() };
+        evaluate_once(&pool, &cipher, &source, &http, at(120)).await.expect("empty cycle");
+        assert!(db::alerts::load_states(&pool).await.expect("states").is_empty());
+
+        cleanup(&path, pool).await;
+    }
+
+    #[tokio::test]
+    async fn un_cycle_en_vol_ne_ressuscite_pas_les_alertes_d_une_cible_oubliee() {
+        let (path, pool, cipher) = fixture().await;
+        let alert = firing_host_down(&pool, &cipher).await;
+
+        // L'utilisateur supprime l'équipement pendant que le cycle calcule.
+        sqlx::query("UPDATE targets SET enabled = 0 WHERE id = 1")
+            .execute(&pool)
+            .await
+            .expect("disable target");
+        db::alerts::forget_target(&pool, 1, at(90)).await.expect("forget");
+        db::alerts::save_states(&pool, &[in_flight(&alert)]).await.expect("late save");
+
+        assert!(
+            db::alerts::load_states(&pool).await.expect("states").is_empty(),
+            "the late write must not bring the alert back"
+        );
+
+        cleanup(&path, pool).await;
+    }
+
+    #[tokio::test]
+    async fn un_cycle_en_vol_ne_ressuscite_pas_les_alertes_d_une_regle_desactivee() {
+        let (path, pool, cipher) = fixture().await;
+        let alert = firing_host_down(&pool, &cipher).await;
+
+        let id = host_down_rule_id(&pool).await;
+        db::alerts::set_rule_enabled(&pool, id, false).await.expect("disable");
+        db::alerts::save_states(&pool, &[in_flight(&alert)]).await.expect("late save");
+
+        let states = db::alerts::load_states(&pool).await.expect("states");
+        assert!(states.iter().all(|s| s.rule_uid != RULE_HOST_DOWN));
+
+        cleanup(&path, pool).await;
+    }
+
+    #[tokio::test]
+    async fn supprimer_une_regle_efface_ses_surcharges_par_equipement() {
+        let (path, pool, _cipher) = fixture().await;
+        let id: i64 = sqlx::query_scalar(
+            "INSERT INTO alert_rules (uid, name, kind, query, operator, threshold, severity)
+             VALUES ('disk_full', 'Disk full', 'threshold', 'q', '>', 90, 'warning')
+             RETURNING id",
+        )
+        .fetch_one(&pool)
+        .await
+        .expect("user rule");
+        sqlx::query(
+            "INSERT INTO rule_overrides (rule_uid, target_id, threshold) VALUES (?, 1, 99)",
+        )
+        .bind("disk_full")
+        .execute(&pool)
+        .await
+        .expect("override");
+
+        assert!(db::alerts::delete_rule(&pool, id).await.expect("delete"));
+        let left: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM rule_overrides WHERE rule_uid = 'disk_full'")
+                .fetch_one(&pool)
+                .await
+                .expect("count");
+        assert_eq!(left, 0, "a rule recreated under the same uid must start clean");
 
         cleanup(&path, pool).await;
     }

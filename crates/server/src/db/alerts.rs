@@ -14,7 +14,9 @@ use serde_json::Value;
 use sqlx::{Row, SqlitePool};
 
 use crate::alerting::baseline::{Bucket, SeriesBaseline};
-use crate::alerting::cycle::{BaselineStore, FORGOTTEN_TARGET_REASON, HistoryEntry, StoredAlert};
+use crate::alerting::cycle::{
+    BaselineStore, DISABLED_RULE_REASON, FORGOTTEN_TARGET_REASON, HistoryEntry, StoredAlert,
+};
 use crate::alerting::group::AlertOutcome;
 use crate::alerting::machine::{AlertState, Phase};
 use crate::alerting::model::{
@@ -214,11 +216,12 @@ pub async fn upsert_rule(pool: &SqlitePool, rule: &Rule) -> Result<i64> {
     Ok(row.try_get("id")?)
 }
 
-/// Supprime une règle et tout ce qui s'y rattache.
+/// Supprime une règle et tout ce qui s'y rattache, en une seule transaction.
 pub async fn delete_rule(pool: &SqlitePool, id: i64) -> Result<bool> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction de suppression")?;
     let uid: Option<String> = sqlx::query("SELECT uid FROM alert_rules WHERE id = ?")
         .bind(id)
-        .fetch_optional(pool)
+        .fetch_optional(&mut *tx)
         .await
         .context("lecture de la règle à supprimer")?
         .map(|row| row.try_get("uid"))
@@ -226,23 +229,89 @@ pub async fn delete_rule(pool: &SqlitePool, id: i64) -> Result<bool> {
 
     let Some(uid) = uid else { return Ok(false) };
 
-    sqlx::query("DELETE FROM alert_rules WHERE id = ?").bind(id).execute(pool).await?;
+    sqlx::query("DELETE FROM alert_rules WHERE id = ?").bind(id).execute(&mut *tx).await?;
     // Les états orphelins seraient purgés au cycle suivant, mais les laisser
     // traîner ferait apparaître des alertes fantômes dans l'interface entre-temps.
-    sqlx::query("DELETE FROM alert_state WHERE rule_uid = ?").bind(&uid).execute(pool).await?;
+    forget_rule_states(&mut tx, &uid, None).await?;
+    // Les surcharges par équipement n'ont pas de clé étrangère vers la règle : une
+    // règle recréée sous le même nom reprend le même uid et en hériterait.
+    sqlx::query("DELETE FROM rule_overrides WHERE rule_uid = ?")
+        .bind(&uid)
+        .execute(&mut *tx)
+        .await
+        .context("suppression des surcharges de la règle")?;
+    tx.commit().await.context("validation de la suppression de la règle")?;
     Ok(true)
 }
 
+/// Active ou désactive une règle.
+///
+/// Désactivée, la règle n'est plus évaluée : ses alertes resteraient figées dans
+/// l'interface, ou disparaîtraient à la purge sans laisser de trace. Elles sont
+/// donc soldées sur-le-champ, sans notification — l'utilisateur vient de dire
+/// que la règle ne compte plus —, les actives laissant une transition dans
+/// l'historique, comme pour une cible oubliée.
 pub async fn set_rule_enabled(pool: &SqlitePool, id: i64, enabled: bool) -> Result<bool> {
-    let result = sqlx::query(
-        "UPDATE alert_rules SET enabled = ?, updated_at = datetime('now') WHERE id = ?",
+    let mut tx = pool.begin().await.context("ouverture de la transaction d'activation")?;
+    let uid: Option<String> = sqlx::query(
+        "UPDATE alert_rules SET enabled = ?, updated_at = datetime('now') WHERE id = ?
+         RETURNING uid",
     )
     .bind(i64::from(enabled))
     .bind(id)
-    .execute(pool)
+    .fetch_optional(&mut *tx)
     .await
-    .context("activation de la règle")?;
-    Ok(result.rows_affected() > 0)
+    .context("activation de la règle")?
+    .map(|row| row.try_get("uid"))
+    .transpose()?;
+
+    let Some(uid) = uid else { return Ok(false) };
+    if !enabled {
+        forget_rule_states(&mut tx, &uid, Some((DISABLED_RULE_REASON, Utc::now()))).await?;
+    }
+    tx.commit().await.context("validation de l'activation")?;
+    Ok(true)
+}
+
+/// Efface les alertes d'une règle et les notifications qui les attendaient.
+/// Avec `history`, les alertes actives laissent d'abord une résolution muette
+/// dans l'historique.
+async fn forget_rule_states(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    uid: &str,
+    history: Option<(&str, DateTime<Utc>)>,
+) -> Result<()> {
+    if let Some((reason, now)) = history {
+        sqlx::query(
+            "INSERT INTO alert_history
+                 (fingerprint, rule_uid, target_id, from_phase, to_phase, severity, value,
+                  notified, reason, at)
+             SELECT fingerprint, rule_uid, target_id, phase, 'resolved', severity, value,
+                    0, ?, ?
+             FROM alert_state
+             WHERE rule_uid = ? AND phase IN ('pending', 'firing')",
+        )
+        .bind(reason)
+        .bind(to_sql(now))
+        .bind(uid)
+        .execute(&mut **tx)
+        .await
+        .context("journalisation des alertes de la règle")?;
+    }
+    sqlx::query(
+        "DELETE FROM notify_queue
+         WHERE fingerprint IN (SELECT fingerprint FROM alert_state WHERE rule_uid = ?)",
+    )
+    .bind(uid)
+    .execute(&mut **tx)
+    .await
+    .context("retrait des notifications en attente de la règle")?;
+    sqlx::query("DELETE FROM alert_state WHERE rule_uid = ?")
+        .bind(uid)
+        .execute(&mut **tx)
+        .await
+        .context("effacement des alertes de la règle")?;
+    Ok(())
 }
 
 // --------------------------------------------------------------------------
@@ -452,6 +521,24 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
         .await
         .context("écriture de l'état d'une alerte")?;
     }
+
+    // Le cycle a lu cibles et règles avant de calculer : si l'utilisateur a
+    // supprimé ou désactivé l'une d'elles entre-temps, l'écriture ci-dessus vient
+    // de recréer des lignes que `forget_target` ou `set_rule_enabled` avaient
+    // effacées — et le cycle suivant les « résoudrait » à grand bruit. La
+    // transaction tient maintenant le verrou d'écriture et voit donc l'état le
+    // plus récent : on retire ce qui n'a plus de cible ni de règle active.
+    sqlx::query(
+        "DELETE FROM alert_state
+         WHERE (target_id IS NOT NULL
+                AND NOT EXISTS (SELECT 1 FROM targets t
+                                WHERE t.id = alert_state.target_id AND t.enabled = 1))
+            OR NOT EXISTS (SELECT 1 FROM alert_rules r
+                           WHERE r.uid = alert_state.rule_uid AND r.enabled = 1)",
+    )
+    .execute(&mut *tx)
+    .await
+    .context("retrait des alertes d'une cible ou d'une règle retirée")?;
 
     tx.commit().await.context("validation de la transaction d'état")
 }

@@ -41,6 +41,13 @@ All notable changes to this project are documented here. The format follows
 - **Last hardcoded strings.** API error messages and hints, the error page and
   the quick-silence name follow the interface language, and absolute dates use
   the locale's format.
+- **Stale alerts.** Disabling a rule now clears its alerts at once (active ones
+  leave a silent "rule disabled" entry in the history) instead of leaving them
+  firing in the UI, or dropping them without a trace. An evaluation cycle
+  running while a monitor or rule was removed no longer brings its alerts back
+  (which then "resolved" with a notification). Deleting a rule also deletes its
+  per-monitor overrides, so a new rule with the same name no longer inherits
+  them.
 
 ### Fixed
 

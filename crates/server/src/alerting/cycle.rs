@@ -30,6 +30,10 @@ pub const UNKNOWN_TARGET: &str = "no device";
 /// cible a été supprimée ou désactivée : rien n'est notifié.
 pub const FORGOTTEN_TARGET_REASON: &str = "device removed or disabled";
 
+/// Raison consignée dans l'historique quand une règle désactivée solde ses
+/// alertes en cours.
+pub const DISABLED_RULE_REASON: &str = "rule disabled";
+
 /// Alerte telle qu'elle était en base au début du cycle.
 #[derive(Debug, Clone, PartialEq)]
 pub struct StoredAlert {
