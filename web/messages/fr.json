@@ -473,7 +473,7 @@
 	"api_error_unreachable": "Impossible de joindre le serveur DumbMonit. La connexion a échoué.",
 	"api_error_unreadable": "La réponse du serveur n’a pas pu être lue.",
 	"api_hint_conflict": "La requête est en conflit avec l’état actuel. Lisez le message ci-dessus, ajustez-la, puis réessayez.",
-	"api_hint_demo": "Installez DumbMonit sur votre propre machine pour ajouter des moniteurs, des règles et des canaux.",
+	"api_hint_demo": "Installez DumbMonit sur votre propre machine pour ajouter des surveillances, des règles et des canaux.",
 	"api_hint_forbidden": "Vous n’avez pas les droits suffisants pour cette action.",
 	"api_hint_invalid": "Corrigez les informations saisies, puis réessayez.",
 	"api_hint_network": "Vérifiez que le serveur DumbMonit est démarré et joignable, puis réessayez.",
