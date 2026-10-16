@@ -160,7 +160,9 @@ impl Victoria {
         if !response.status().is_success() {
             let status = response.status();
             let detail = response.text().await.unwrap_or_default();
-            bail!("query refused ({status}): {}", detail.trim());
+            return Err(
+                QueryRejected(format!("query refused ({status}): {}", detail.trim())).into()
+            );
         }
 
         let parsed: QueryResponse =
@@ -306,7 +308,9 @@ impl Victoria {
         if !response.status().is_success() {
             let status = response.status();
             let detail = response.text().await.unwrap_or_default();
-            bail!("query refused ({status}): {}", detail.trim());
+            return Err(
+                QueryRejected(format!("query refused ({status}): {}", detail.trim())).into()
+            );
         }
 
         let parsed: SeriesResponse =
@@ -346,7 +350,9 @@ impl Victoria {
         if !response.status().is_success() {
             let status = response.status();
             let detail = response.text().await.unwrap_or_default();
-            bail!("query refused ({status}): {}", detail.trim());
+            return Err(
+                QueryRejected(format!("query refused ({status}): {}", detail.trim())).into()
+            );
         }
 
         let parsed: InstantResponse =
@@ -354,6 +360,20 @@ impl Victoria {
         Ok(parsed.data.result)
     }
 }
+
+/// VictoriaMetrics a répondu, mais refuse la requête (MetricsQL invalide, plage
+/// refusée…) : la faute est celle de l'appelant, pas du backend. Une erreur de
+/// transport ou une réponse illisible n'en est pas une.
+#[derive(Debug)]
+pub struct QueryRejected(pub String);
+
+impl std::fmt::Display for QueryRejected {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl std::error::Error for QueryRejected {}
 
 /// Lit le corps d'une réponse en s'arrêtant net au-delà du plafond.
 ///
