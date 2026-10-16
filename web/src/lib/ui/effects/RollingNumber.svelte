@@ -7,7 +7,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import { fly } from 'svelte/transition';
-	import { reducedMotion } from '../motion';
+	import { calmMotion } from '../motion';
 
 	interface Props {
 		value: number;
@@ -28,7 +28,7 @@
 		});
 	});
 
-	const duration = () => (reducedMotion() ? 0 : 280);
+	const duration = () => (calmMotion() ? 0 : 280);
 </script>
 
 <span class={`tnum relative inline-grid overflow-hidden ${className}`} data-numeric>

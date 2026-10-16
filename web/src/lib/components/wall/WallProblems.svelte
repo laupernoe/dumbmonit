@@ -266,7 +266,7 @@
 			opacity: 0.5;
 		}
 	}
-	@media (prefers-reduced-motion: reduce) {
+	@media (prefers-reduced-motion: reduce), (max-width: 639px) {
 		.tile--warning .ring {
 			animation: none;
 			opacity: 0.35;

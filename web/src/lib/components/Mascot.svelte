@@ -138,7 +138,8 @@
 			transform: scaleY(0);
 		}
 	}
-	@media (prefers-reduced-motion: reduce) {
+	/* Phones hold the pigeon still too: no loop on a small screen. */
+	@media (prefers-reduced-motion: reduce), (max-width: 639px) {
 		.mascot-blink .lid {
 			animation: none;
 		}

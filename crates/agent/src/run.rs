@@ -108,6 +108,13 @@ pub struct Agent {
     /// de débit consomme de la bande passante, une vérification d'images
     /// interroge les registres).
     disabled_modules: BTreeSet<String>,
+    /// Taille maximale d'un lot. Part de [`MAX_BATCH_SAMPLES`] et se réduit de
+    /// moitié à chaque 413 : un mandataire au plafond de corps plus bas que le
+    /// serveur ne bouge pas, inutile de revenir buter dessus.
+    batch_limit: usize,
+    /// Vrai une fois signalé qu'un lot a été entièrement écarté par le serveur,
+    /// pour ne le dire qu'une fois par épisode.
+    all_refused: bool,
 }
 
 impl Agent {
@@ -150,6 +157,8 @@ impl Agent {
             binding,
             binding_refused: false,
             disabled_modules: BTreeSet::new(),
+            batch_limit: MAX_BATCH_SAMPLES,
+            all_refused: false,
             identity,
             client,
             config,
@@ -347,7 +356,7 @@ impl Agent {
 
     /// Envoie un lot prélevé dans le tampon.
     async fn flush(&mut self) -> FlushOutcome {
-        let samples = self.buffer.take(MAX_BATCH_SAMPLES);
+        let samples = self.buffer.take(self.batch_limit);
         if samples.is_empty() {
             return FlushOutcome::Idle;
         }
@@ -363,6 +372,7 @@ impl Agent {
                 self.backoff.reset();
                 self.binding_refused = false;
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
+                self.note_acceptance(count, ack.accepted);
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
                 self.adopt_disabled_modules(ack.disabled_modules);
@@ -372,6 +382,22 @@ impl Agent {
                 self.buffer.restore(batch.samples);
                 self.on_binding_refused(&message);
                 FlushOutcome::Failed(PushError::Forbidden(message))
+            }
+            Err(PushError::TooLarge(message)) => {
+                if count <= 1 {
+                    // Une mesure seule ne se coupe plus : la garder bloquerait
+                    // tout le tampon derrière elle.
+                    warn!(reason = message, "measurement too large for the server, dropped");
+                    return FlushOutcome::Sent { count };
+                }
+                self.buffer.restore(batch.samples);
+                self.batch_limit = (count / 2).max(1);
+                warn!(
+                    reason = message,
+                    batch_limit = self.batch_limit,
+                    "batch too large for the server or a proxy, sending smaller batches"
+                );
+                FlushOutcome::Failed(PushError::TooLarge(message))
             }
             Err(error) if error.is_retryable() => {
                 self.buffer.restore(batch.samples);
@@ -391,6 +417,28 @@ impl Agent {
                 FlushOutcome::Sent { count }
             }
         }
+    }
+
+    /// Signale un lot non vide dont le serveur n'a gardé aucune mesure.
+    ///
+    /// Le serveur écarte sans erreur les mesures hors de `[maintenant - 30 j,
+    /// maintenant + 1 h]` : une horloge déréglée sur la machine les fait toutes
+    /// disparaître, et rien ne le disait. Renvoie vrai si l'avertissement part.
+    fn note_acceptance(&mut self, sent: usize, accepted: usize) -> bool {
+        if sent == 0 || accepted > 0 {
+            self.all_refused = false;
+            return false;
+        }
+        if self.all_refused {
+            return false;
+        }
+        self.all_refused = true;
+        warn!(
+            sent,
+            "the server kept none of the measurements of this batch: check this machine's \
+             clock (timestamps more than 1 hour ahead or 30 days behind the server are discarded)"
+        );
+        true
     }
 
     /// Dernière tentative d'envoi avant de rendre la main au système.
@@ -425,15 +473,20 @@ impl Agent {
         info!("this machine is now bound to this agent installation");
     }
 
-    /// Le serveur ne reconnaît pas notre liaison.
+    /// Le serveur ne reconnaît pas notre liaison — ou quelqu'un a répondu 403.
     ///
-    /// On oublie le secret : le garder n'ouvre rien, et repartir sans lui est
-    /// exactement ce qu'il faut faire dès que quelqu'un aura cliqué « Allow
-    /// re-enrolment » dans l'interface. Les mesures restent en tampon
-    /// entre-temps, l'agent réessaie avec sa temporisation habituelle.
+    /// Le secret n'est oublié que sur le refus de liaison du serveur lui-même :
+    /// le garder n'ouvre rien, et repartir sans lui est ce qu'il faut faire dès
+    /// que quelqu'un aura cliqué « Allow re-enrolment » dans l'interface. Tout
+    /// autre 403 — mandataire inverse, pare-feu applicatif — ne dit rien de la
+    /// liaison : effacer le secret sur sa foi obligerait à réenrôler chaque
+    /// machine à la main. Les mesures restent en tampon dans les deux cas,
+    /// l'agent réessaie avec sa temporisation habituelle.
     fn on_binding_refused(&mut self, message: &str) {
-        self.binding.forget();
-        self.client.set_secret(None);
+        if message == dumbmonit_proto::BINDING_MISMATCH {
+            self.binding.forget();
+            self.client.set_secret(None);
+        }
         if self.binding_refused {
             debug!(reason = message, "still refused by the server");
             return;
@@ -657,7 +710,8 @@ mod tests {
 
         // Le serveur ne reconnaît plus la liaison : on l'oublie, on garde les
         // mesures, et le refus n'est signalé qu'une fois.
-        *answer.lock().unwrap() = (403, r#"{"error":"re-enrol me"}"#.to_string());
+        *answer.lock().unwrap() =
+            (403, serde_json::json!({ "error": dumbmonit_proto::BINDING_MISMATCH }).to_string());
         let samples = agent.collect().await;
         let count = samples.len();
         agent.buffer.push(samples);
@@ -666,6 +720,45 @@ mod tests {
         assert!(agent.binding_refused);
         assert!(!dir.path().join("agent-secret").exists());
         assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn a_403_that_is_not_the_binding_refusal_keeps_the_secret() {
+        // Un mandataire inverse ou un pare-feu applicatif répond 403 : rien ne
+        // dit que le serveur a oublié la liaison. Effacer le secret obligerait à
+        // réenrôler à la main toutes les machines du parc.
+        let dir = tempfile::tempdir().unwrap();
+        let answer = std::sync::Arc::new(std::sync::Mutex::new((200u16, ACK.to_string())));
+        let shared = answer.clone();
+        let (url, calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+
+        for body in [
+            "<html><body>403 Forbidden</body></html>".to_string(),
+            r#"{"error":"Request blocked by WAF"}"#.to_string(),
+            r#"{"error":"Operator or admin role required."}"#.to_string(),
+        ] {
+            *answer.lock().unwrap() = (403, body.clone());
+            let samples = agent.collect().await;
+            let count = samples.len();
+            agent.buffer.push(samples);
+            assert!(matches!(agent.flush().await, FlushOutcome::Failed(PushError::Forbidden(_))));
+            assert!(agent.buffer.len() >= count, "les mesures restent en tampon");
+            assert_eq!(
+                std::fs::read_to_string(dir.path().join("agent-secret")).unwrap().trim(),
+                "dmab_attribue",
+                "secret effacé sur un 403 étranger : {body}"
+            );
+        }
+        // Et il accompagne toujours les requêtes suivantes.
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        let last = calls.all().pop().expect("requête");
+        assert_eq!(last.header("x-dumbmonit-agent-secret"), Some("dmab_attribue"));
     }
 
     #[tokio::test]
@@ -680,6 +773,97 @@ mod tests {
         assert!(agent.buffer.is_empty(), "un lot refusé ne se réémet pas");
         assert!(matches!(agent.flush().await, FlushOutcome::Idle));
         assert_eq!(calls.all().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn a_proxy_error_without_the_server_envelope_keeps_the_backlog() {
+        // Un mandataire répond 404 pendant une maintenance : tout le retard
+        // accumulé doit survivre, et repartir une fois le chemin rétabli.
+        let dir = tempfile::tempdir().unwrap();
+        let answer = std::sync::Arc::new(std::sync::Mutex::new((
+            404u16,
+            "<html><body>404 Not Found</body></html>".to_string(),
+        )));
+        let shared = answer.clone();
+        let (url, _) = crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        let count = samples.len();
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert_eq!(agent.buffer.len(), count, "le retard ne doit pas être jeté");
+
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(agent.buffer.is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_batch_too_large_for_a_proxy_is_split_until_it_passes() {
+        // Le mandataire refuse tout corps de plus de 3 mesures.
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|req| {
+            let samples = req.body.matches("\"ts_ms\"").count();
+            if samples > 3 {
+                (413, "<html>413 Request Entity Too Large</html>".to_string())
+            } else {
+                (200, ACK.to_string())
+            }
+        })
+        .await;
+        let mut agent = agent_for(&url, &dir);
+        let samples: Vec<Sample> = (0..10)
+            .map(|i| Sample::new("cpu_usage_percent", 1.0, dumbmonit_proto::MetricKind::Gauge, i))
+            .collect();
+        agent.buffer.push(samples);
+
+        let mut rounds = 0;
+        while !agent.buffer.is_empty() {
+            rounds += 1;
+            assert!(rounds < 50, "le lot ne passe jamais");
+            agent.flush().await;
+        }
+        // Rien n'a été perdu : les dix mesures sont arrivées, par lots de 3 au plus.
+        let delivered: usize = calls
+            .all()
+            .iter()
+            .map(|req| req.body.matches("\"ts_ms\"").count())
+            .filter(|&n| n <= 3)
+            .sum();
+        assert_eq!(delivered, 10);
+        assert!(agent.batch_limit <= 3);
+    }
+
+    #[tokio::test]
+    async fn a_single_measurement_too_large_for_any_proxy_is_dropped() {
+        let dir = tempfile::tempdir().unwrap();
+        let (url, _) =
+            crate::testsupport::fake_http(|_| (413, "Request Entity Too Large".to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        agent.buffer.push(vec![Sample::new(
+            "cpu_usage_percent",
+            1.0,
+            dumbmonit_proto::MetricKind::Gauge,
+            1,
+        )]);
+        let mut rounds = 0;
+        while !agent.buffer.is_empty() {
+            rounds += 1;
+            assert!(rounds < 50, "une mesure seule ne doit pas bloquer le tampon");
+            agent.flush().await;
+        }
+    }
+
+    #[test]
+    fn a_batch_entirely_refused_is_reported_once_as_a_clock_problem() {
+        let mut agent = Agent::new(config()).expect("agent");
+        assert!(!agent.note_acceptance(10, 10));
+        assert!(!agent.note_acceptance(0, 0), "un lot vide ne dit rien");
+        assert!(agent.note_acceptance(10, 0), "tout refusé : on le dit");
+        assert!(!agent.note_acceptance(10, 0), "une seule fois");
+        assert!(!agent.note_acceptance(10, 10));
+        assert!(agent.note_acceptance(10, 0), "et de nouveau après un retour à la normale");
     }
 
     #[tokio::test]

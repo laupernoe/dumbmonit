@@ -20,7 +20,9 @@
 	let y = $state(0);
 	let on = $state(false);
 
+	// A finger has no hover: a tap must not light the card up and repaint it.
 	function move(e: PointerEvent) {
+		if (e.pointerType !== 'mouse') return;
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
 		x = e.clientX - rect.left;
 		y = e.clientY - rect.top;
@@ -32,7 +34,7 @@
 	{href}
 	class={`relative overflow-hidden ${className}`}
 	onpointermove={move}
-	onpointerenter={() => (on = true)}
+	onpointerenter={(e) => (on = e.pointerType === 'mouse')}
 	onpointerleave={() => (on = false)}
 	{...rest}
 >

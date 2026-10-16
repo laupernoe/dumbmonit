@@ -4,6 +4,7 @@
 	 * The canvas overlays the wrapper and ignores pointer events.
 	 */
 	import { onMount, type Snippet } from 'svelte';
+	import { calmMotion } from '../motion';
 
 	interface Props {
 		children: Snippet;
@@ -71,7 +72,7 @@
 
 	function burst(e: MouseEvent) {
 		if (!canvas || !host) return;
-		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+		if (calmMotion()) return;
 		const rect = host.getBoundingClientRect();
 		canvas.width = rect.width;
 		canvas.height = rect.height;

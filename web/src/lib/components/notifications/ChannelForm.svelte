@@ -6,7 +6,8 @@
 	 *
 	 * Secrets are never read back. On edit they show empty and are only sent
 	 * when typed again: the payload then omits `secrets` and the server keeps
-	 * what it has. Sending `secrets` replaces the whole set, and `{}` clears it.
+	 * what it has. Keys sent in `secrets` replace their stored value, keys left
+	 * out are kept, `null` clears one key and `{}` clears them all.
 	 */
 	import { untrack } from 'svelte';
 	import { ExternalLink, Search, ChevronLeft } from 'lucide-svelte';
@@ -242,6 +243,9 @@
 		for (const field of secretFields) {
 			const value = secrets[field.key];
 			if (!isBlank(value)) typed[field.key] = value.trim();
+			// The server merges secrets key by key: clearing must name every key
+			// it should drop, or the untyped ones would be kept.
+			else if (editing && clearSecrets) typed[field.key] = null;
 		}
 
 		const payload: ChannelPayload = {
@@ -259,7 +263,7 @@
 		};
 		// Rules: on create, always send `secrets` (possibly `{}`). On edit, send
 		// them only if something was typed or a clear was requested — an omitted
-		// `secrets` keeps the stored ones; `{}` clears them.
+		// `secrets` keeps the stored ones, an omitted key keeps its value.
 		if (!editing || clearSecrets || destinationChanged || Object.keys(typed).length > 0) payload.secrets = typed;
 		return payload;
 	}

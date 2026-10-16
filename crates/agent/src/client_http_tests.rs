@@ -59,6 +59,13 @@ async fn each_status_is_qualified_for_the_retry_decision() {
         (503, "maintenance", true),
         (400, r#"{"error":"empty batch"}"#, false),
         (422, "", false),
+        // Sans l'enveloppe d'erreur du serveur, un 400 ou un 404 vient d'un
+        // mandataire (chemin mal routé, maintenance) : le lot n'y est pour rien.
+        (400, "<html>400 Bad Request</html>", true),
+        (404, "<html>404 Not Found</html>", true),
+        (404, r#"{"error":"Unknown command."}"#, false),
+        // Trop gros pour un intermédiaire : à couper, pas à jeter.
+        (413, "<html>413 Request Entity Too Large</html>", true),
     ] {
         let reply = body.to_string();
         let (url, _) = fake_http(move |_| (status, reply.clone())).await;
@@ -67,10 +74,11 @@ async fn each_status_is_qualified_for_the_retry_decision() {
         match (status, &error) {
             (401, PushError::Unauthorized) => {}
             (403, PushError::Forbidden(message)) => assert_eq!(message, "Allow re-enrolment"),
-            (429 | 503, PushError::Transport(message)) => {
+            (400 | 404 | 429 | 503, PushError::Transport(message)) => {
                 assert!(message.starts_with(&format!("HTTP {status}")), "{message}")
             }
-            (400 | 422, PushError::Rejected { status: got, .. }) => assert_eq!(*got, status),
+            (413, PushError::TooLarge(_)) => {}
+            (400 | 404 | 422, PushError::Rejected { status: got, .. }) => assert_eq!(*got, status),
             other => panic!("qualification inattendue : {other:?}"),
         }
     }

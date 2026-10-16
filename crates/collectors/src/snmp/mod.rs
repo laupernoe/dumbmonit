@@ -52,6 +52,29 @@ static SYS_NAME: LazyLock<ObjectId> =
 /// requêtes, et il vaut mieux abandonner celle qui traîne que perdre le lot entier.
 const DEFAULT_REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
 
+/// Renvois accordés par défaut à une requête restée sans réponse.
+const DEFAULT_RETRIES: u32 = 1;
+
+/// Bornes du délai par requête déduit du budget d'une interrogation.
+const MIN_REQUEST_TIMEOUT: Duration = Duration::from_secs(1);
+const MAX_REQUEST_TIMEOUT: Duration = Duration::from_secs(3);
+
+/// Plafond des renvois d'une même requête.
+const MAX_RETRIES: u32 = 2;
+
+/// Découpe le budget global d'une interrogation en délai par requête et renvois.
+///
+/// Le délai par requête vaut le quart du budget, entre une et trois secondes : assez
+/// court pour qu'un datagramme perdu laisse le temps de renvoyer, assez long pour un
+/// agent lent. Les renvois — deux au plus — sont ceux que le budget peut absorber
+/// pour une même requête ; le délai global du registre reste le garde-fou final.
+pub fn request_timing(budget: Duration) -> (Duration, u32) {
+    let per_request = (budget / 4).clamp(MIN_REQUEST_TIMEOUT, MAX_REQUEST_TIMEOUT);
+    let attempts = (budget.as_millis() / per_request.as_millis().max(1)) as u32;
+    let retries = attempts.saturating_sub(1).min(MAX_RETRIES);
+    (per_request, retries)
+}
+
 /// Lit l'identité (`sysDescr`, `sysName`, `sysObjectID`) d'un équipement sans rien
 /// enregistrer : c'est le « tester la connexion » du formulaire d'ajout.
 ///
@@ -106,6 +129,7 @@ pub async fn identify(
 pub struct SnmpCollector {
     catalog: Arc<Catalog>,
     request_timeout: Duration,
+    retries: u32,
 }
 
 impl Default for SnmpCollector {
@@ -120,11 +144,20 @@ impl SnmpCollector {
         Self {
             catalog: profile::embedded_shared().clone(),
             request_timeout: DEFAULT_REQUEST_TIMEOUT,
+            retries: DEFAULT_RETRIES,
         }
     }
 
+    /// Fixe le délai d'un aller-retour, sans toucher au nombre de renvois.
     pub fn with_request_timeout(mut self, timeout: Duration) -> Self {
         self.request_timeout = timeout;
+        self
+    }
+
+    /// Règle délai par requête et renvois d'après le budget global d'une
+    /// interrogation (voir [`request_timing`]).
+    pub fn with_probe_budget(mut self, budget: Duration) -> Self {
+        (self.request_timeout, self.retries) = request_timing(budget);
         self
     }
 
@@ -148,6 +181,7 @@ impl SnmpCollector {
             CommunityVersion::from_tags(&target.tags),
         )
         .await
+        .map(|session| session.with_retries(self.retries))
     }
 
     /// Choisit un profil d'après l'identité annoncée par l'équipement.
@@ -240,7 +274,8 @@ impl Collector for SnmpCollector {
                     self.request_timeout,
                     CommunityVersion::V1,
                 )
-                .await?;
+                .await?
+                .with_retries(self.retries);
                 let profile = self.detect(&mut session).await?;
                 warn!(
                     target = target.id,
@@ -360,5 +395,17 @@ mod tests {
         });
         assert!(error.means_down(), "{error}");
         assert!(!error.to_string().contains("s3cr3t"), "la community a fuité : {error}");
+    }
+
+    #[test]
+    fn le_budget_se_decoupe_en_requetes_courtes_avec_renvois() {
+        let secs = Duration::from_secs;
+        assert_eq!(request_timing(secs(10)), (Duration::from_millis(2500), 2));
+        assert_eq!(request_timing(secs(30)), (secs(3), 2));
+        assert_eq!(request_timing(secs(2)), (secs(1), 1));
+        assert_eq!(request_timing(secs(1)), (secs(1), 0));
+        // Jamais un délai par requête égal au budget entier dès qu'il le permet.
+        let (per_request, retries) = request_timing(secs(10));
+        assert!(per_request * (retries + 1) <= secs(10));
     }
 }

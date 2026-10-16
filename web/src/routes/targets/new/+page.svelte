@@ -240,9 +240,10 @@
 
 <!-- Where am I: every level above the current one is a link. -->
 <nav aria-label={m.deviceform_new_breadcrumb()} class="mb-2">
-	<ol class="flex flex-wrap items-center gap-1 text-sm text-ink-2">
+	<!-- Phones: only the way back; the page title says where this is. -->
+	<ol class="flex flex-wrap items-center gap-1 text-sm text-ink-2 max-sm:[&>li:not(:first-child)]:hidden">
 		<li class="flex">
-			<a href="/targets" class="inline-flex items-center gap-1 rounded hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
+			<a href="/targets" class="inline-flex items-center gap-1 rounded max-sm:min-h-10 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
 				<ArrowLeft class="size-3.5" aria-hidden="true" />
 				{m.deviceform_new_devices()}
 			</a>
@@ -278,7 +279,7 @@
 {#if view === 'picker'}
 	<!-- The picker ------------------------------------------------------------ -->
 	<section aria-labelledby="step-type" class="min-w-0">
-		<h2 id="step-type" tabindex="-1" class="mb-4 text-lg font-semibold tracking-tight text-ink outline-none">{m.deviceform_new_step_title()}</h2>
+		<h2 id="step-type" tabindex="-1" class="mb-4 text-lg font-semibold tracking-tight text-ink outline-none max-sm:sr-only">{m.deviceform_new_step_title()}</h2>
 
 		{#if loading}
 			<div class="grid gap-2 sm:grid-cols-2">
@@ -369,7 +370,7 @@
 				</Panel>
 			{:else if selected}
 				<Panel>
-					<div class="-mx-5 -mt-4 mb-4 flex items-start justify-between gap-4 border-b border-line px-5 py-4">
+					<div class="-mx-5 -mt-4 mb-4 flex items-start justify-between gap-4 border-b border-line px-5 py-4 max-sm:-mx-4 max-sm:-mt-3 max-sm:mb-3 max-sm:px-4 max-sm:py-3">
 						<div class="flex min-w-0 items-start gap-3">
 							{#if SelectedIcon}
 								<span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-signal/30 bg-signal-soft text-signal-ink">
@@ -378,7 +379,7 @@
 							{/if}
 							<div class="min-w-0">
 								<h2 id="view-title" tabindex="-1" class="text-base font-semibold tracking-tight text-ink outline-none">{selectedLabel}</h2>
-								{#if selectedSummary}<p class="mt-0.5 text-sm text-ink-2">{selectedSummary}</p>{/if}
+								{#if selectedSummary}<p class="mt-0.5 text-sm text-ink-2 max-sm:hidden">{selectedSummary}</p>{/if}
 							</div>
 						</div>
 						<div class="hidden shrink-0 sm:block">{@render stamp()}</div>

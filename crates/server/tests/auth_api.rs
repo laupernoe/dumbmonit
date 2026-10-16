@@ -597,6 +597,30 @@ async fn admins_manage_accounts_and_the_last_admin_is_protected() {
 }
 
 #[tokio::test]
+async fn an_invalid_password_leaves_the_account_untouched() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let _ = app.viewer_cookie(&admin).await;
+    let users = app.get("/api/users", Some(&admin)).await.body;
+    let viewer = users.as_array().unwrap().iter().find(|u| u["username"] == "viewer").unwrap();
+    let id = viewer["id"].as_i64().unwrap();
+
+    let refused = app
+        .put(
+            &format!("/api/users/{id}"),
+            json!({ "display_name": "Changed", "role": "operator", "password": "short" }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(refused.status, StatusCode::BAD_REQUEST, "{}", refused.body);
+
+    let users = app.get("/api/users", Some(&admin)).await.body;
+    let viewer = users.as_array().unwrap().iter().find(|u| u["id"] == id).unwrap();
+    assert_eq!(viewer["role"], "viewer", "le rôle ne doit pas avoir bougé");
+    assert_ne!(viewer["display_name"], "Changed");
+}
+
+#[tokio::test]
 async fn disabling_or_deleting_an_account_closes_its_sessions() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
