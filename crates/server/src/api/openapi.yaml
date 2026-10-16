@@ -168,6 +168,11 @@ tags:
     description: >-
       Optional headlines (RSS/Atom, read by the server) and a live video tile
       on the wall display. Off by default.
+  - name: Wall widgets
+    description: >-
+      Optional widgets on the wall display (coins, weather, stocks, exchange
+      rates, critical CVEs), read by the server from public sources and
+      cached. Off by default. API keys never come back.
   - name: Wall music
     description: >-
       Music on the wall display: what plays on the connected Spotify account,
@@ -4503,6 +4508,162 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/news/image/{id}:
+    get:
+      operationId: getWallNewsImage
+      tags: [Wall news]
+      summary: An article's picture, relayed by the server
+      description: >-
+        Only pictures of articles currently published to the walls (the `image`
+        of a `WallNewsItem`). Read through the internal-address guard, at most
+        6 MB, and served only when it really is a PNG, JPEG, GIF, WebP or AVIF
+        image (never SVG). Cached in memory.
+      x-token-scope: read
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string, pattern: "^[0-9a-f]{32}$" }
+      responses:
+        "200":
+          description: The picture.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/gif: { schema: { type: string, format: binary } }
+            image/webp: { schema: { type: string, format: binary } }
+            image/avif: { schema: { type: string, format: binary } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502":
+          description: The picture could not be read, or is not an accepted image.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+  /api/wall/widgets:
+    get:
+      operationId: getWallWidgets
+      tags: [Wall widgets]
+      summary: The widgets' data for the walls
+      description: >-
+        One section per widget turned on (`null` otherwise). The server reads
+        the sources and caches them (coins 60 s, stocks 5 min, weather 15 min,
+        rates and CVEs 1 h); a source that fails keeps its last value for a few
+        hours, with `error` set. Walls poll it every minute.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The sections.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallWidgets" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/widgets/settings:
+    get:
+      operationId: getWallWidgetsSettings
+      tags: [Wall widgets]
+      summary: Wall widgets settings
+      x-token-scope: read
+      responses:
+        "200":
+          description: The settings (defaults while never saved), and whether API keys are set.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallWidgetsSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putWallWidgetsSettings
+      tags: [Wall widgets]
+      summary: Save the wall widgets settings
+      description: >-
+        An omitted field takes its default. `secrets` sets the optional API
+        keys: an omitted key is kept, an empty string clears it. Keys are
+        stored encrypted and never returned.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "#/components/schemas/WallWidgetsSettings" }
+                - type: object
+                  properties:
+                    secrets:
+                      type: object
+                      properties:
+                        finnhub: { type: string, maxLength: 200 }
+                        coingecko: { type: string, maxLength: 200, description: A CoinGecko Demo key. }
+      responses:
+        "200":
+          description: The settings as saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/WallWidgetsSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/widgets/catalog:
+    get:
+      operationId: getWallWidgetsCatalog
+      tags: [Wall widgets]
+      summary: Coins and currencies offered
+      x-token-scope: read
+      responses:
+        "200":
+          description: The coins (CoinGecko ids), their display currencies and the exchange-rate currencies.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [coins, coin_currencies, fx_currencies]
+                properties:
+                  coins:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, symbol, name]
+                      properties:
+                        id: { type: string }
+                        symbol: { type: string }
+                        name: { type: string }
+                  coin_currencies: { type: array, items: { type: string } }
+                  fx_currencies: { type: array, items: { type: string } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+  /api/wall/widgets/places:
+    get:
+      operationId: searchWallWidgetsPlaces
+      tags: [Wall widgets]
+      summary: Find a place for the weather (Open-Meteo geocoding)
+      x-token-scope: read
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 80 }
+        - name: lang
+          in: query
+          schema: { type: string, description: Two-letter language of the names. }
+      responses:
+        "200":
+          description: Up to eight places.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WallPlace" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502":
+          description: The geocoding service did not answer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
   /api/music/now:
     get:
       operationId: getWallMusic
@@ -7286,11 +7447,15 @@ components:
         link: { type: string }
         source: { type: string }
         published: { type: [string, "null"], description: UTC, without suffix. }
+        image:
+          type: [string, "null"]
+          description: The article's picture, relayed by the server (`/api/wall/news/image/{id}`).
     WallNews:
       type: object
-      required: [ticker, items, problems]
+      required: [ticker, gallery, items, problems]
       properties:
         ticker: { type: boolean }
+        gallery: { type: boolean, description: The picture carousel is on. }
         items:
           type: array
           items: { $ref: "#/components/schemas/WallNewsItem" }
@@ -7314,6 +7479,7 @@ components:
       required: [ticker, feeds, video, video_url, video_position, video_size]
       properties:
         ticker: { type: boolean }
+        gallery: { type: boolean, default: false, description: Articles with their picture, in rotation. }
         feeds:
           type: array
           maxItems: 8
@@ -7327,6 +7493,85 @@ components:
         video_url: { type: string }
         video_position: { type: string, enum: [right, center] }
         video_size: { type: string, enum: [small, medium, large] }
+    WallPlace:
+      type: object
+      required: [name, latitude, longitude]
+      properties:
+        name: { type: string }
+        region: { type: string }
+        country_code: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+    WallWidgetsSettings:
+      type: object
+      properties:
+        rotate_seconds: { type: integer, minimum: 5, maximum: 300, default: 20 }
+        crypto:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            coins: { type: array, maxItems: 10, items: { type: string }, description: CoinGecko ids. }
+            currency: { type: string, default: usd }
+        weather:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            places: { type: array, maxItems: 4, items: { $ref: "#/components/schemas/WallPlace" } }
+            units: { type: string, enum: [metric, imperial] }
+        stocks:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            symbols: { type: array, maxItems: 10, items: { type: string } }
+        fx:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            base: { type: string, default: EUR }
+            currencies: { type: array, maxItems: 10, items: { type: string } }
+        cve:
+          type: object
+          properties:
+            enabled: { type: boolean }
+            source: { type: string, enum: [both, nvd, kev] }
+            count: { type: integer, minimum: 1, maximum: 10 }
+        has_finnhub_key: { type: boolean, readOnly: true }
+        has_coingecko_key: { type: boolean, readOnly: true }
+    WallWidgetSection:
+      type: object
+      required: [updated, error, needs_key, source, source_url]
+      properties:
+        data: { description: "The widget's data; null when unavailable." }
+        updated: { type: [string, "null"], description: When the source was read (UTC, without suffix). }
+        error: { type: [string, "null"], description: Why the last read failed (the data may be older). }
+        needs_key: { type: boolean }
+        source: { type: string, description: The source to credit on the widget. }
+        source_url: { type: string }
+    WallWidgets:
+      type: object
+      required: [rotate_seconds]
+      properties:
+        rotate_seconds: { type: integer }
+        crypto:
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
+        weather:
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
+        stocks:
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
+        fx:
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
+        cve:
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
     WallNewsCountry:
       type: object
       required: [code, feeds, videos]

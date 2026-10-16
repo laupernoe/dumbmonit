@@ -214,6 +214,13 @@
 						</div>
 						<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving} />
 					</div>
+					<div class="flex items-start justify-between gap-4">
+						<div class="min-w-0">
+							<label for="news-gallery" class="text-sm font-semibold text-ink">{m.settings_news_gallery()}</label>
+							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_gallery_hint()}</p>
+						</div>
+						<Toggle id="news-gallery" bind:checked={form.gallery} disabled={saving} />
+					</div>
 
 					<div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_1fr]">
 						<Field label={m.settings_news_country()} for="news-country">
