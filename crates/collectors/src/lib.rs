@@ -62,6 +62,9 @@ use std::time::Duration;
 
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, apply_identity};
 
+/// Marge laissée à une sonde pour écrire son verdict après son propre délai.
+const PROBE_TIMEOUT_MARGIN: Duration = Duration::from_secs(2);
+
 pub use activedirectory::ActiveDirectoryCollector;
 pub use adguard::AdguardCollector;
 pub use apache::ApacheCollector;
@@ -299,6 +302,23 @@ impl Registry {
             .map_err(|_| ProbeError::Timeout(timeout))?
     }
 
+    /// Délai réellement appliqué à une cible : le délai global, relevé si la cible
+    /// déclare son propre `timeout_seconds` plus long (plus une marge).
+    ///
+    /// Sans cela, une sonde de disponibilité réglée à 30 s serait coupée par le
+    /// registre à 10 s : `Timeout`, aucun `probe_success = 0`, et l'équipement passe
+    /// pour « injoignable » au lieu d'être signalé en panne de service. Une valeur
+    /// absente, illisible ou hors de 1..=60 est ignorée (le collecteur la refusera).
+    pub fn deadline_for(target: &Target, timeout: Duration) -> Duration {
+        let own = target
+            .tags
+            .get("timeout_seconds")
+            .and_then(|raw| raw.trim().parse::<u64>().ok())
+            .filter(|seconds| (1..=60).contains(seconds))
+            .map(|seconds| Duration::from_secs(seconds) + PROBE_TIMEOUT_MARGIN);
+        own.map_or(timeout, |own| own.max(timeout))
+    }
+
     /// Interroge une cible avec le collecteur correspondant à son type, en
     /// appliquant le délai maximal et les étiquettes d'identité de la cible.
     ///
@@ -317,6 +337,7 @@ impl Registry {
             ))
         })?;
 
+        let timeout = Self::deadline_for(target, timeout);
         let mut samples = tokio::time::timeout(timeout, collector.probe(target))
             .await
             .map_err(|_| ProbeError::Timeout(timeout))??;
@@ -348,6 +369,64 @@ impl Registry {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Un collecteur qui dort plus longtemps que le délai global.
+    struct Lent;
+
+    #[async_trait::async_trait]
+    impl Collector for Lent {
+        fn kind(&self) -> &str {
+            "lent"
+        }
+
+        async fn probe(&self, _target: &Target) -> Result<Vec<Sample>, ProbeError> {
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            Ok(Vec::new())
+        }
+    }
+
+    fn cible_lente() -> Target {
+        Target {
+            id: 1,
+            name: "lent".into(),
+            address: "x".into(),
+            kind: "lent".into(),
+            profile_id: None,
+            parent_id: None,
+            interval: Duration::from_secs(60),
+            enabled: true,
+            tags: Default::default(),
+            credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
+        }
+    }
+
+    #[tokio::test]
+    async fn le_delai_propre_a_la_cible_releve_celui_du_registre() {
+        let mut registry = Registry::new();
+        registry.register(Arc::new(Lent));
+        let mut cible = cible_lente();
+        // Sans réglage : le délai global (100 ms) coupe la sonde.
+        let error = registry.probe(&cible, Duration::from_millis(100)).await.unwrap_err();
+        assert!(matches!(error, ProbeError::Timeout(_)));
+        // Avec `timeout_seconds` : la sonde va au bout.
+        cible.tags.insert("timeout_seconds".into(), "1".into());
+        registry.probe(&cible, Duration::from_millis(100)).await.expect("sonde terminée");
+    }
+
+    #[test]
+    fn le_delai_de_cible_hors_bornes_est_ignore() {
+        let mut cible = cible_lente();
+        let base = Duration::from_secs(10);
+        assert_eq!(Registry::deadline_for(&cible, base), base);
+        for raw in ["600", "0", "abc", "5"] {
+            cible.tags.insert("timeout_seconds".into(), raw.into());
+            assert_eq!(Registry::deadline_for(&cible, base), base, "{raw}");
+        }
+        cible.tags.insert("timeout_seconds".into(), "30".into());
+        assert_eq!(Registry::deadline_for(&cible, base), Duration::from_secs(32));
+    }
 
     /// Un collecteur dont le type est choisi à l'exécution.
     struct Runtime(String);
