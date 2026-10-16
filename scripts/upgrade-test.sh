@@ -244,23 +244,32 @@ if [ "$OK" = 1 ]; then
   python3 -I - "$WORK/before.json" "$WORK/after.json" <<'PY' || OK=0
 import json, sys
 before, after = (json.load(open(p)) for p in sys.argv[1:3])
-bad = 0
+# Renommages voulus des règles livrées : la mise à jour doit les appliquer,
+# ce ne sont pas des données abîmées.
+EXPECTED = {("rules", "name"): {"Device unreachable": "Monitor unreachable"}}
+total = 0
 for section, objs in before.items():
+    bad = 0
     if section == "page_items":
         for pid, items in objs.items():
             ok = after[section].get(pid) == items
             print(f"  [{'ok' if ok else 'KO'}] services de la page {pid}")
             if not ok: bad += 1; print(f"       avant {items}\n       après {after[section].get(pid)}")
+        total += bad
         continue
     for oid, fields in objs.items():
         now = after[section].get(oid)
         if now is None:
             print(f"  [KO] {section} #{oid} ({fields.get('name') or fields.get('username') or fields.get('slug')}) a disparu"); bad += 1
-        elif now != fields:
-            diff = {k: (fields[k], now.get(k)) for k in fields if fields[k] != now.get(k)}
-            print(f"  [KO] {section} #{oid} modifié (avant, après) : {diff}"); bad += 1
+        else:
+            diff = {k: (fields[k], now.get(k)) for k in fields
+                    if fields[k] != now.get(k)
+                    and EXPECTED.get((section, k), {}).get(fields[k]) != now.get(k)}
+            if diff:
+                print(f"  [KO] {section} #{oid} modifié (avant, après) : {diff}"); bad += 1
     print(f"  [{'ok' if not bad else 'KO'}] {section} : {len(objs)} objet(s) inchangé(s)" if not bad else f"  [KO] {section}")
-sys.exit(1 if bad else 0)
+    total += bad
+sys.exit(1 if total else 0)
 PY
 fi
 
