@@ -1,15 +1,23 @@
 # Governance
 
 DumbMonit is a small open source project with a benevolent-dictator model: one
-maintainer has the final say, and everyone is welcome to propose, discuss and
-contribute.
+lead maintainer has the final say, and everyone is welcome to propose, discuss
+and contribute.
 
 ## Roles
 
 - **Maintainer.** Reviews and merges pull requests, triages issues, cuts
   releases, handles security reports (see [SECURITY.md](SECURITY.md)) and owns
   the repository, the container registry and the documentation hosting.
-  Today this is [@laupernoe](https://github.com/laupernoe).
+  Today this is [@laupernoe](https://github.com/laupernoe), who also holds the
+  administrator rights on the GitHub repository.
+- **Collaborators.** Regular contributors who were given write access to the
+  repository. They review and merge pull requests (never their own without a
+  review or a green CI), triage issues, and take part in design discussions.
+  Today this is [@Theroxat](https://github.com/Theroxat), who has contributed
+  regularly since the project's early weeks. Collaborators do not have
+  administrator rights: the branch rulesets, release tags, secrets and
+  hosting accounts below stay with the lead maintainer.
 - **Contributors.** Anyone who opens an issue, sends a pull request, improves
   the documentation or adds a device profile or integration. See
   [CONTRIBUTING.md](CONTRIBUTING.md).
@@ -18,7 +26,9 @@ contribute.
 
 ## How decisions are made
 
-- Small changes: a pull request, reviewed by the maintainer.
+- Small changes: a pull request, reviewed by the maintainer or a collaborator.
+  `main` and `dev` are protected by rulesets: changes arrive by pull request
+  with the required CI checks green.
 - Larger changes (new component, API change, new dependency, anything touching
   authentication or secrets): open an issue first and discuss it there. The
   maintainer decides after the discussion and explains the decision in the
@@ -38,11 +48,19 @@ at first to what the work needs.
 
 ## Continuity
 
-The project currently has one maintainer. That is a risk, and we state it
-plainly. Continuity requires at least one other trusted person who can, if the
-maintainer is unavailable, merge and release, rotate credentials, and publish
-security advisories: access to the GitHub repository and organisation settings,
-the container registry (GHCR), the Read the Docs project
-and the domain names. No second person has that access yet. Finding one is part
-of the path described above; until then, the source code is Apache-2.0 licensed
-and can be forked by anyone if the project stops.
+Two people can now review and merge: the lead maintainer and one collaborator
+with write access. That covers day-to-day work (creating and closing issues,
+accepting changes) if the lead maintainer is unavailable.
+
+What is **not** yet covered is administration. Only the lead maintainer can
+change repository settings and rulesets, push `v*` release tags (reserved to
+repository administrators), manage the repository secrets and the signing
+identity of the release workflow, publish security advisories, and manage the
+container registry (GHCR), the Read the Docs project and the domain names. If
+the lead maintainer disappeared, a collaborator could keep merging fixes to
+`dev` but could not publish a release or an advisory until an administrator
+was added. Closing that gap means adding a second administrator of the
+repository and organisation, and a second owner of the Read the Docs project
+and of the domain names; it is the next step of the path described above.
+Until then, the source code is Apache-2.0 licensed and can be forked by anyone
+if the project stops.
