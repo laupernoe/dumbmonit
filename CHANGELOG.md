@@ -5,6 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **The map is a dependency mesh.** One node per monitor, with its icon and a
+  status badge; declared parents are arrows that shape the hierarchy, agent
+  services, hypervisor guests, relays and LLDP neighbours are lighter lines. A
+  monitor that is down stands out with everything it hides (suppressed).
+  Hovering a node lights up what it depends on and what depends on it; a click
+  opens its panel.
+- **Remote sites, found on their own.** Monitors behind a relay agent, on an
+  agent that declares a site, or with a `site` tag are drawn as islands joined
+  to the main site by a WAN link. No configuration needed.
+- **Folders only on request.** The map ignores folders unless **Group by
+  folder** is on (remembered in the browser); the folder and site filter is
+  gone. Export to SVG/PNG and printing are unchanged.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8
