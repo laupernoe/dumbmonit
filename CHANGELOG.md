@@ -41,6 +41,28 @@ All notable changes to this project are documented here. The format follows
 - **Last hardcoded strings.** API error messages and hints, the error page and
   the quick-silence name follow the interface language, and absolute dates use
   the locale's format.
+- **Stale alerts.** Disabling a rule now clears its alerts at once (active ones
+  leave a silent "rule disabled" entry in the history) instead of leaving them
+  firing in the UI, or dropping them without a trace. An evaluation cycle
+  running while a monitor or rule was removed no longer brings its alerts back
+  (which then "resolved" with a notification). Deleting a rule also deletes its
+  per-monitor overrides, so a new rule with the same name no longer inherits
+  them.
+- **Failed notifications.** A delivery refused for good (revoked webhook,
+  deleted bot, broken channel settings) is no longer resent every cycle: the
+  error is shown on the channel and the message dropped. Temporary failures
+  (timeout, 429, 5xx) are retried with a growing delay, from 1 minute up to
+  30 minutes.
+- **Agent backlog.** An error page from a reverse proxy (400 or 404 without
+  DumbMonit's error format, for instance during maintenance) no longer makes
+  the agent throw away its whole buffer: it keeps the measurements and
+  retries. A batch too large for a proxy (413) is split into smaller ones
+  instead of being lost. When the server keeps none of a batch's
+  measurements, the agent now warns that the machine's clock is probably off.
+- **Shutdown.** Stopping the container no longer loses the last measurements
+  still waiting to be written: they are flushed to VictoriaMetrics before it
+  stops. Stopping while the embedded VictoriaMetrics waits to restart after a
+  crash now returns at once instead of waiting for the full grace period.
 
 ### Fixed
 
