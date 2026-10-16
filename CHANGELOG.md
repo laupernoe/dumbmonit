@@ -53,6 +53,12 @@ All notable changes to this project are documented here. The format follows
   error is shown on the channel and the message dropped. Temporary failures
   (timeout, 429, 5xx) are retried with a growing delay, from 1 minute up to
   30 minutes.
+- **Agent backlog.** An error page from a reverse proxy (400 or 404 without
+  DumbMonit's error format, for instance during maintenance) no longer makes
+  the agent throw away its whole buffer: it keeps the measurements and
+  retries. A batch too large for a proxy (413) is split into smaller ones
+  instead of being lost. When the server keeps none of a batch's
+  measurements, the agent now warns that the machine's clock is probably off.
 
 ### Fixed
 
