@@ -93,6 +93,9 @@ Other automated checks, outside the pull request gate:
 - **CodeQL** code scanning (GitHub default setup).
 - **`security.yml`** (weekly and after each release): a Trivy scan of the
   published server and agent images, and the OpenSSF Scorecard.
+- **ClusterFuzzLite** (`fuzz.yml`) fuzzes the parsers that read outside input.
+- **Coverage** (`cargo llvm-cov`, job *Coverage* of `ci.yml`, on `main` and
+  `dev`): the line coverage of the Rust workspace goes to the job summary.
 - **Dependabot** opens pull requests for dependency and Actions updates.
 
 Run checks 1 to 5 locally before opening a PR; the sixth only matters if you
@@ -100,10 +103,17 @@ touched the `Dockerfile`.
 
 ## Test policy
 
+This is the project's formal, mandatory test policy; reviewers apply it to
+every pull request.
+
+- **Major new functionality MUST come with automated tests.** A feature, an integration,
+  a notification channel, an API route or a change of behaviour is not merged
+  without automated tests for it in the same pull request. A change without
+  tests that should have had some is sent back, not merged.
 - New behaviour comes with automated tests in the same pull request: unit tests
   next to the code, Rust integration tests under `crates/server/tests/` for
   anything with an API surface, `web/tests/*.test.mjs` for logic in the web UI.
-- Every bug fix comes with a regression test that fails without the fix. If a
+- Every bug fix SHOULD add a regression test that fails without the fix. If a
   fix cannot reasonably be tested, say why in the pull request.
 - Run them with `cargo test --all-features` (see above for Docker) and
   `npm test` in `web/`. A pull request is not merged while CI is red.
@@ -123,6 +133,13 @@ touched the `Dockerfile`.
   overflow at 390 px width and tap targets of at least 40 px;
   `prefers-reduced-motion` is respected.
 - **Secrets:** never return a secret from the API; never log one.
+
+These standards are enforced automatically where a free tool exists: CI fails
+a pull request on `cargo fmt --all --check`, on any `clippy` warning
+(`-D warnings`, all targets and features), on `svelte-check` and on
+`npm test` (which includes the translation check). Conventions no tool can see
+(French comments in Rust, token colours, `#lib/` imports) are checked in
+review.
 
 ## Developer Certificate of Origin
 

@@ -2,15 +2,13 @@
 	/**
 	 * Map — the whole infrastructure in one picture.
 	 *
-	 * Links come from `GET /api/topology` (declared parents, relays,
-	 * hypervisor guests, LLDP neighbours); states from the shared store, the
-	 * same ones the rack shows. Nothing is typed in here: a device with no
-	 * known link simply stands in its folder.
+	 * Links come from `GET /api/topology` (declared parents, agent services,
+	 * relays, hypervisor guests, LLDP neighbours), sites too; states from the
+	 * shared store, the same ones the rack shows. Nothing is typed in here.
 	 *
 	 * Three outputs of one layout: the interactive canvas (or the indented
-	 * list, the default on a phone), and the sheet — printed by the browser
-	 * (`@media print`, A4 or A3 landscape) and serialised by the SVG/PNG
-	 * exports.
+	 * list), and the sheet — printed by the browser (`@media print`, A4 or A3
+	 * landscape) and serialised by the SVG/PNG exports.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
@@ -18,28 +16,47 @@
 	import type { Topology } from '#lib/api/index.js';
 	import { displayState } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
-	import { Button, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton } from '#lib/ui/index.js';
+	import { Button, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton, Toggle } from '#lib/ui/index.js';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
 	import TopologyCanvas from '#lib/components/topology/TopologyCanvas.svelte';
 	import TopologyList from '#lib/components/topology/TopologyList.svelte';
 	import MapSheet from '#lib/components/topology/MapSheet.svelte';
 	import Legend from '#lib/components/topology/Legend.svelte';
-	import { buildForest, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
+	import { buildGraph, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
 	import { exportPng, exportSvg } from '#lib/components/topology/export.js';
 	import { Download, Network } from 'lucide-svelte';
 
 	type View = 'map' | 'list';
 
+	const GROUP_KEY = 'dumbmonit.map.byGroup';
+
 	let topology = $state<Topology | null>(null);
 	let loadError = $state<unknown>(null);
 	let exportError = $state<unknown>(null);
-	let scope = $state('');
 	let showGuests = $state(true);
-	let view = $state<View>(
-		typeof window !== 'undefined' && window.matchMedia?.('(max-width: 639px)').matches ? 'list' : 'map'
-	);
+	let view = $state<View>('map');
+	let selected = $state<string | null>(null);
 	let sheet = $state<SVGSVGElement | null>(null);
 	let printedAt = $state(new Date());
+
+	let byGroup = $state(
+		(() => {
+			try {
+				return localStorage.getItem(GROUP_KEY) === '1';
+			} catch {
+				return false;
+			}
+		})()
+	);
+
+	function setByGroup(value: boolean) {
+		byGroup = value;
+		try {
+			localStorage.setItem(GROUP_KEY, value ? '1' : '0');
+		} catch {
+			// A private window: the choice lasts for this visit.
+		}
+	}
 
 	async function load(signal?: AbortSignal) {
 		try {
@@ -77,6 +94,7 @@
 				kind: n.kind,
 				group: target?.group_name ?? n.group_name,
 				site: n.site,
+				siteSource: n.site_source ?? null,
 				state:
 					n.target_id === null
 						? n.running
@@ -89,42 +107,21 @@
 		})
 	);
 
-	const folders = $derived([...new Set(allNodes.map((n) => n.group).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'en')));
-	const sites = $derived([...new Set(allNodes.map((n) => n.site).filter((s): s is string => !!s))].sort((a, b) => a.localeCompare(b, 'en')));
 	const hasGuests = $derived(allNodes.some((n) => n.targetId === null));
+	const nodes = $derived(showGuests ? allNodes : allNodes.filter((n) => n.targetId !== null));
 
-	const nodes = $derived(
-		allNodes.filter((n) => {
-			if (!showGuests && n.targetId === null) return false;
-			if (scope.startsWith('f:')) return n.group === scope.slice(2);
-			if (scope.startsWith('s:')) return n.site === scope.slice(2);
-			return true;
-		})
-	);
-
-	const forest = $derived(buildForest(nodes, topology?.edges ?? []));
-	const layout = $derived(layoutMap(forest));
-	const groups = $derived(listRows(forest));
-
-	const scopeLabel = $derived(
-		scope.startsWith('f:')
-			? m.topology_filter_folder({ name: scope.slice(2) })
-			: scope.startsWith('s:')
-				? m.topology_filter_site({ name: scope.slice(2) })
-				: m.topology_filter_all()
-	);
-
-	const subtitle = $derived(
-		m.topology_print_subtitle({
-			scope: scopeLabel,
-			date: new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long', timeStyle: 'short' }).format(printedAt)
-		})
-	);
+	const graph = $derived(buildGraph(nodes, topology?.edges ?? []));
+	const layout = $derived(layoutMap(graph, { byGroup }));
+	const sections = $derived(listRows(graph));
+	const siteCount = $derived(sections.length - 1);
+	const firstDown = $derived(layout.nodes.find((p) => p.down)?.node.id ?? null);
 
 	const VIEWS = $derived([
 		{ id: 'map' as const, label: m.topology_view_map() },
 		{ id: 'list' as const, label: m.topology_view_list() }
 	]);
+
+	const subtitle = $derived(new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long', timeStyle: 'short' }).format(printedAt));
 
 	function filename(extension: string): string {
 		const day = new Date().toISOString().slice(0, 10);
@@ -155,6 +152,12 @@
 		pageRule = `@page { size: ${paper} landscape; margin: 10mm; } .topo-print svg { max-height: ${height}mm; }`;
 		await new Promise((resolve) => requestAnimationFrame(resolve));
 		window.print();
+	}
+
+	function showDown() {
+		if (!firstDown) return;
+		view = 'map';
+		selected = firstDown;
 	}
 
 	const loading = $derived(topology === null && loadError === null);
@@ -201,29 +204,33 @@
 		</EmptyState>
 	{:else}
 		<div class="mb-3 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-			<label class="min-w-0">
-				<span class="sr-only">{m.topology_filter_label()}</span>
-				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={scope}>
-					<option value="">{m.topology_filter_all()}</option>
-					{#each folders as folder (folder)}
-						<option value={`f:${folder}`}>{m.topology_filter_folder({ name: folder })}</option>
-					{/each}
-					{#each sites as site (site)}
-						<option value={`s:${site}`}>{m.topology_filter_site({ name: site })}</option>
-					{/each}
-				</select>
-			</label>
-			{#if hasGuests}
-				<label class="inline-flex min-h-10 items-center gap-2 text-sm text-ink-2">
-					<input type="checkbox" class="size-4 accent-[var(--c-signal)]" bind:checked={showGuests} />
-					{m.topology_guests_toggle()}
+			<div class="flex flex-wrap items-center gap-x-5 gap-y-1">
+				<label class="inline-flex min-h-10 items-center gap-2.5 text-sm text-ink-2">
+					<Toggle checked={byGroup} onchange={setByGroup} label={m.topology_group_toggle()} />
+					<span aria-hidden="true">{m.topology_group_toggle()}</span>
 				</label>
-			{/if}
-			<p class="flex flex-wrap gap-x-3 gap-y-1 text-sm text-ink-2 sm:ml-auto" aria-live="polite">
+				{#if hasGuests}
+					<label class="inline-flex min-h-10 items-center gap-2.5 text-sm text-ink-2">
+						<Toggle bind:checked={showGuests} label={m.topology_guests_toggle()} />
+						<span aria-hidden="true">{m.topology_guests_toggle()}</span>
+					</label>
+				{/if}
+			</div>
+			<p class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-2 sm:ml-auto" aria-live="polite">
 				<span>{m.topology_summary_devices({ count: layout.nodes.length })}</span>
-				<span class={forest.down.size > 0 ? 'font-semibold text-warning-ink' : ''}>{m.topology_summary_down({ count: forest.down.size })}</span>
-				<span class={forest.impacted.size > 0 ? 'font-semibold text-advisory-ink' : ''}>{m.topology_summary_impacted({ count: forest.impacted.size })}</span>
-				<span>{m.topology_summary_links({ count: forest.edges.length })}</span>
+				{#if siteCount > 0}<span>{m.topology_summary_sites({ count: siteCount })}</span>{/if}
+				{#if graph.down.size > 0}
+					<button
+						type="button"
+						class="-my-2 inline-flex min-h-10 items-center rounded-lg px-1.5 font-semibold text-warning-ink underline decoration-dotted underline-offset-4 hover:bg-warning-soft focus-visible:outline-2 focus-visible:outline-signal"
+						onclick={showDown}
+					>
+						{m.topology_summary_down({ count: graph.down.size })}
+					</button>
+				{:else}
+					<span>{m.topology_summary_down({ count: 0 })}</span>
+				{/if}
+				<span class={graph.impacted.size > 0 ? 'font-semibold text-advisory-ink' : ''}>{m.topology_summary_suppressed({ count: graph.impacted.size })}</span>
 			</p>
 			<Segmented options={VIEWS} value={view} onchange={(v) => (view = v)} label={m.topology_view_label()} />
 		</div>
@@ -231,7 +238,7 @@
 		{#if topology && !topology.metrics_available}
 			<p class="mb-3 rounded-lg border border-advisory/40 bg-advisory-soft px-3 py-2 text-sm text-advisory-ink">{m.topology_metrics_missing()}</p>
 		{/if}
-		{#if forest.edges.length === 0}
+		{#if graph.edges.length === 0}
 			<p class="mb-3 text-sm text-ink-2">{m.topology_no_links()}</p>
 		{/if}
 		{#if exportError}
@@ -239,11 +246,11 @@
 		{/if}
 
 		{#if view === 'map'}
-			<TopologyCanvas {layout} class="h-[68vh] min-h-[420px]" />
+			<TopologyCanvas {layout} {graph} bind:selected class="h-[72vh] min-h-[440px]" />
 		{:else}
-			<TopologyList {groups} />
+			<TopologyList {sections} />
 		{/if}
-		<Legend class="mt-3" />
+		<Legend wan={siteCount > 0} class="mt-3" />
 	{/if}
 </div>
 

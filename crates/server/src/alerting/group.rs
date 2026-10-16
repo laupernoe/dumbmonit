@@ -147,20 +147,21 @@ impl AlertOutcome {
 /// Décide si l'alerte doit notifier à ce cycle, et pourquoi.
 ///
 /// Les trois causes de mutisme — suppression par dépendance, silence de
-/// maintenance, apprentissage — sont vérifiées avant toute autre considération :
-/// elles priment sur les rappels comme sur l'escalade. L'acquittement vient
+/// maintenance, apprentissage — font taire tout ce qui annonce un problème en
+/// cours : elles priment sur les rappels comme sur l'escalade. Elles ne font
+/// pas taire la résolution d'une alerte déjà annoncée : sans elle, l'utilisateur
+/// garderait en tête un problème qui n'existe plus. L'acquittement vient
 /// ensuite : il ne fait taire que ce qui annonce un problème en cours (première
 /// annonce, rappel, escalade), jamais la résolution — qui, elle, ne passe pas
 /// par ici puisque la machine efface l'acquittement en résolvant.
 pub fn decide(outcome: &AlertOutcome, now: DateTime<Utc>) -> Option<NotifyReason> {
     let state = &outcome.state;
 
-    if state.suppressed || state.silenced || state.learning {
-        return None;
-    }
-
     match state.phase {
         Phase::Firing => {
+            if state.suppressed || state.silenced || state.learning {
+                return None;
+            }
             if state.is_acked(now) {
                 return None;
             }
@@ -182,10 +183,13 @@ pub fn decide(outcome: &AlertOutcome, now: DateTime<Utc>) -> Option<NotifyReason
                 return Some(NotifyReason::Escalation);
             }
 
-            // Relais vers le canal d'escalade : même lecture des horodatages,
-            // donc même garantie qu'il ne part qu'une fois.
+            // Relais vers le canal d'escalade : daté à part, et non par
+            // `last_notified_at`, pour qu'une première annonce tardive ou une
+            // escalade partie au même cycle ne le fasse pas passer pour envoyé.
+            // La politique le retient ensuite tant que la première annonce n'a
+            // pas assez d'ancienneté.
             if let Some(unacked_at) = outcome.unacked_at()
-                && last < unacked_at
+                && state.unacked_relayed_at.is_none_or(|relayed| relayed < unacked_at)
                 && now >= unacked_at
             {
                 return Some(NotifyReason::Unacked);
@@ -469,6 +473,31 @@ mod tests {
     }
 
     #[test]
+    fn la_resolution_d_une_alerte_annoncee_passe_malgre_suppression_silence_ou_apprentissage() {
+        for mutateur in [
+            |s: &mut AlertState| s.suppressed = true,
+            |s: &mut AlertState| s.silenced = true,
+            |s: &mut AlertState| s.learning = true,
+        ] {
+            let mut o = outcome("a", 1, "nas");
+            o.state.phase = Phase::Resolved;
+            o.state.resolved_at = Some(at(60));
+            o.state.last_notified_at = Some(at(0));
+            o.state.notify_count = 1;
+            mutateur(&mut o.state);
+            assert_eq!(
+                decide(&o, at(60)),
+                Some(NotifyReason::Resolved),
+                "the firing was announced: its end must be too"
+            );
+
+            // Jamais annoncée : la résolution reste muette, quelle que soit la cause.
+            o.state.notify_count = 0;
+            assert_eq!(decide(&o, at(60)), None);
+        }
+    }
+
+    #[test]
     fn une_alerte_acquittee_ne_rappelle_plus_jusqu_a_l_echeance() {
         let mut o = outcome("a", 1, "nas");
         o.state.notify_count = 1;
@@ -613,6 +642,7 @@ mod tests {
         assert_eq!(decide(&o, at(900)), Some(NotifyReason::Unacked));
         // Une fois parti, il ne se répète pas : un seul relais, jamais deux.
         o.state.last_notified_at = Some(at(900));
+        o.state.unacked_relayed_at = Some(at(900));
         assert_eq!(decide(&o, at(5_400)), None);
     }
 
@@ -671,6 +701,33 @@ mod tests {
         o.escalate_after = Some(Duration::from_secs(900));
         o.unacked_after = Some(Duration::from_secs(900));
         assert_eq!(decide(&o, at(900)), Some(NotifyReason::Escalation));
+    }
+
+    #[test]
+    fn le_relais_suit_l_escalade_au_cycle_d_apres() {
+        let mut o = outcome("a", 1, "nas");
+        o.state.notify_count = 1;
+        o.state.last_notified_at = Some(at(0));
+        o.repeat_interval = None;
+        o.escalate_after = Some(Duration::from_secs(900));
+        o.unacked_after = Some(Duration::from_secs(900));
+        assert_eq!(decide(&o, at(900)), Some(NotifyReason::Escalation));
+        // L'escalade est partie : le moteur a daté la notification.
+        o.state.last_notified_at = Some(at(900));
+        o.state.notify_count = 2;
+        assert_eq!(decide(&o, at(960)), Some(NotifyReason::Unacked), "the relay is not lost");
+    }
+
+    #[test]
+    fn un_relais_part_meme_si_la_premiere_annonce_a_suivi_le_delai() {
+        // Déclenchée à 0 pendant une maintenance : la première annonce ne part
+        // qu'à 2 000 s, bien après le délai de relais (900 s).
+        let mut o = outcome("a", 1, "nas");
+        o.state.notify_count = 1;
+        o.state.last_notified_at = Some(at(2_000));
+        o.repeat_interval = None;
+        o.unacked_after = Some(Duration::from_secs(900));
+        assert_eq!(decide(&o, at(2_060)), Some(NotifyReason::Unacked));
     }
 
     #[test]

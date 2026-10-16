@@ -5,14 +5,23 @@
 //!
 //! - `parent` : la dépendance déclarée (`parent_id`), celle qui sert à la
 //!   suppression des alertes ;
+//! - `service` : un service trouvé par un agent (`agent_service`), rattaché à
+//!   sa machine par `parent_id` lui aussi, mais qui n'est pas une dépendance
+//!   d'infrastructure : la carte le dessine autrement ;
 //! - `relay` : l'agent relais qui interroge l'équipement (`via_agent`) ;
 //! - `hypervisor` : un hyperviseur et ses invités, lus dans les dernières
 //!   mesures (Proxmox, XCP-ng, Nutanix, vSphere, libvirt de l'agent) ;
 //! - `lldp` : un voisin LLDP qu'un commutateur SNMP a vu sur un port.
 //!
-//! Un service trouvé par un agent (`agent_service`) est relié à sa machine par
-//! `parent` et prend son site ; il ne sert jamais de cible à un invité ou à un
-//! voisin, puisqu'il partage l'adresse de sa machine.
+//! Un service trouvé par un agent prend le site de sa machine ; il ne sert
+//! jamais de cible à un invité ou à un voisin, puisqu'il partage l'adresse de
+//! sa machine.
+//!
+//! Le site d'un nœud se trouve sans configuration, du plus explicite au plus
+//! déduit : l'étiquette `site` de la cible (sauf UniFi, où elle désigne le site
+//! du contrôleur), le site que déclare son agent ou son agent relais, puis le
+//! nom de l'agent relais qui l'interroge — un relais sert justement à joindre
+//! un réseau distant. Sans aucun de ces indices, le nœud est au site principal.
 //!
 //! Un invité ou un voisin n'est relié à un équipement surveillé que si son nom
 //! désigne une seule cible : un nom ambigu ne crée aucun lien plutôt qu'un lien
@@ -79,9 +88,10 @@ pub struct NodeView {
     pub kind: String,
     /// Dossier de la cible ; pour un invité, celui de son hyperviseur.
     pub group_name: String,
-    /// Site déclaré par l'agent relais (le sien, celui qui relaie la cible, ou
-    /// celui de la machine d'un service d'agent).
+    /// Site distant du nœud ; `None` pour le site principal.
     pub site: Option<String>,
+    /// D'où vient `site` : `tag`, `agent` ou `relay`.
+    pub site_source: Option<&'static str>,
     /// Invité seulement : la cible hyperviseur qui l'héberge.
     pub host_id: Option<TargetId>,
     /// Invité seulement : en marche à la dernière mesure.
@@ -93,7 +103,7 @@ pub struct EdgeView {
     /// Côté amont : parent, relais, hyperviseur, commutateur.
     pub from: String,
     pub to: String,
-    /// `parent`, `relay`, `hypervisor` ou `lldp`.
+    /// `parent`, `service`, `relay`, `hypervisor` ou `lldp`.
     pub source: &'static str,
 }
 
@@ -107,6 +117,8 @@ pub struct TargetRow {
     pub parent_id: Option<TargetId>,
     pub via_agent: Option<TargetId>,
     pub group_name: String,
+    /// Étiquette `site` de la cible, si elle en a une non vide.
+    pub site_tag: Option<String>,
 }
 
 /// Un invité lu dans les mesures d'un hyperviseur.
@@ -129,7 +141,8 @@ pub struct Neighbor {
 /// liste des équipements. Les adresses n'y figurent pas.
 pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
     let rows = sqlx::query(
-        "SELECT id, name, address, kind, parent_id, via_agent, group_name FROM targets ORDER BY id",
+        "SELECT id, name, address, kind, parent_id, via_agent, group_name, tags FROM targets
+         ORDER BY id",
     )
     .fetch_all(&state.pool)
     .await
@@ -145,6 +158,7 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
                 parent_id: row.try_get("parent_id")?,
                 via_agent: row.try_get("via_agent")?,
                 group_name: row.try_get("group_name")?,
+                site_tag: site_tag(&row.try_get::<String, _>("tags")?),
             })
         })
         .collect::<Result<Vec<_>, sqlx::Error>>()
@@ -175,6 +189,13 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
 
     let (nodes, edges) = build(&targets, &sites, &guests, &neighbors);
     Ok(Json(TopologyView { nodes, edges, metrics_available }))
+}
+
+/// L'étiquette `site` d'un objet JSON d'étiquettes, si elle est une chaîne non vide.
+pub fn site_tag(tags: &str) -> Option<String> {
+    let tags: serde_json::Value = serde_json::from_str(tags).ok()?;
+    let site = tags.get("site")?.as_str()?.trim();
+    (!site.is_empty()).then(|| site.to_string())
 }
 
 fn guests_query() -> String {
@@ -328,10 +349,24 @@ pub fn build(
     neighbors: &[Neighbor],
 ) -> (Vec<NodeView>, Vec<EdgeView>) {
     let by_id: HashMap<TargetId, &TargetRow> = targets.iter().map(|t| (t.id, t)).collect();
-    let site_of = |t: &TargetRow| -> Option<String> {
-        let own = |t: &TargetRow| {
-            sites.get(&t.id).or_else(|| t.via_agent.and_then(|relay| sites.get(&relay))).cloned()
-        };
+    // Agents qui relaient au moins une cible connue.
+    let relays: HashSet<TargetId> =
+        targets.iter().filter_map(|t| t.via_agent).filter(|r| by_id.contains_key(r)).collect();
+    // UniFi lit `site` comme le site du contrôleur, pas comme un lieu.
+    let tagged = |t: &TargetRow| t.site_tag.clone().filter(|_| t.kind != "unifi");
+    // Ce qu'une cible dit d'elle-même : étiquette, puis site déclaré par son agent.
+    let declared = |t: &TargetRow| -> Option<(String, &'static str)> {
+        tagged(t).map(|s| (s, "tag")).or_else(|| sites.get(&t.id).map(|s| (s.clone(), "agent")))
+    };
+    let own = |t: &TargetRow| -> Option<(String, &'static str)> {
+        declared(t)
+            .or_else(|| {
+                let relay = by_id.get(&t.via_agent?)?;
+                declared(relay).or_else(|| Some((relay.name.clone(), "relay")))
+            })
+            .or_else(|| relays.contains(&t.id).then(|| (t.name.clone(), "relay")))
+    };
+    let site_of = |t: &TargetRow| -> Option<(String, &'static str)> {
         own(t).or_else(|| {
             (t.kind == agent::modules::SERVICE_KIND)
                 .then(|| t.parent_id.and_then(|p| by_id.get(&p)).and_then(|h| own(h)))
@@ -340,15 +375,19 @@ pub fn build(
     };
     let mut nodes: Vec<NodeView> = targets
         .iter()
-        .map(|t| NodeView {
-            id: node_id(t.id),
-            target_id: Some(t.id),
-            name: t.name.clone(),
-            kind: t.kind.clone(),
-            group_name: t.group_name.clone(),
-            site: site_of(t),
-            host_id: None,
-            running: None,
+        .map(|t| {
+            let site = site_of(t);
+            NodeView {
+                id: node_id(t.id),
+                target_id: Some(t.id),
+                name: t.name.clone(),
+                kind: t.kind.clone(),
+                group_name: t.group_name.clone(),
+                site_source: site.as_ref().map(|(_, source)| *source),
+                site: site.map(|(name, _)| name),
+                host_id: None,
+                running: None,
+            }
         })
         .collect();
 
@@ -365,7 +404,8 @@ pub fn build(
 
     for t in targets {
         if let Some(parent) = t.parent_id.filter(|p| by_id.contains_key(p)) {
-            link(node_id(parent), node_id(t.id), "parent", &mut edges);
+            let source = if t.kind == agent::modules::SERVICE_KIND { "service" } else { "parent" };
+            link(node_id(parent), node_id(t.id), source, &mut edges);
         }
     }
     for t in targets {
@@ -388,13 +428,15 @@ pub fn build(
         }
         *count += 1;
         let id = format!("g{}:{}", guest.host, guest.name);
+        let site = site_of(host);
         nodes.push(NodeView {
             id: id.clone(),
             target_id: None,
             name: guest.name.clone(),
             kind: if guest.container { "container" } else { "vm" }.to_string(),
             group_name: host.group_name.clone(),
-            site: site_of(host),
+            site_source: site.as_ref().map(|(_, source)| *source),
+            site: site.map(|(name, _)| name),
             host_id: Some(host.id),
             running: Some(guest.running),
         });
@@ -426,6 +468,7 @@ mod tests {
             parent_id: None,
             via_agent: None,
             group_name: String::new(),
+            site_tag: None,
         }
     }
 
@@ -468,6 +511,8 @@ mod tests {
             vec![("t1", "t3", "parent"), ("t2", "t4", "parent"), ("t2", "t3", "relay")]
         );
         assert_eq!(nodes[2].site.as_deref(), Some("Annexe"), "le site du relais suit la cible");
+        assert_eq!(nodes[2].site_source, Some("agent"));
+        assert_eq!(nodes[0].site, None, "sans indice, le site principal");
         assert_eq!(nodes[0].group_name, "Bureau");
     }
 
@@ -488,8 +533,8 @@ mod tests {
         assert_eq!(
             sources(&edges),
             vec![
-                ("t2", "t3", "parent"),
-                ("t2", "t4", "parent"),
+                ("t2", "t3", "service"),
+                ("t2", "t4", "service"),
                 ("t1", "t2", "hypervisor"),
                 ("t4", "g4:vm-test", "hypervisor"),
             ]
@@ -497,6 +542,36 @@ mod tests {
         let site = |id: &str| nodes.iter().find(|n| n.id == id).and_then(|n| n.site.clone());
         assert_eq!(site("t3").as_deref(), Some("Annexe"), "le service prend le site de sa machine");
         assert_eq!(site("g4:vm-test").as_deref(), Some("Annexe"));
+    }
+
+    #[test]
+    fn le_site_se_deduit_du_relais_ou_de_letiquette() {
+        let relay = row(1, "relais-cave", "relais-cave", "agent");
+        let mut nas = row(2, "nas", "10.1.0.2", "synology");
+        nas.via_agent = Some(1);
+        let mut tagged = row(3, "camera", "10.2.0.3", "http");
+        tagged.site_tag = Some("Grenier".into());
+        let mut unifi = row(4, "unifi", "https://unifi", "unifi");
+        unifi.site_tag = Some("default".into());
+        let local = row(5, "routeur", "10.0.0.1", "snmp");
+        let (nodes, _) = build(&[relay, nas, tagged, unifi, local], &HashMap::new(), &[], &[]);
+        let site = |id: &str| {
+            let n = nodes.iter().find(|n| n.id == id).expect("nœud");
+            (n.site.as_deref(), n.site_source)
+        };
+        assert_eq!(site("t1"), (Some("relais-cave"), Some("relay")), "un relais est un site");
+        assert_eq!(site("t2"), (Some("relais-cave"), Some("relay")));
+        assert_eq!(site("t3"), (Some("Grenier"), Some("tag")));
+        assert_eq!(site("t4"), (None, None), "le site UniFi n'est pas un lieu");
+        assert_eq!(site("t5"), (None, None));
+    }
+
+    #[test]
+    fn letiquette_site_est_lue_dans_le_json() {
+        assert_eq!(site_tag(r#"{"site":" Cave ","port":"81"}"#).as_deref(), Some("Cave"));
+        assert_eq!(site_tag(r#"{"site":""}"#), None);
+        assert_eq!(site_tag("{}"), None);
+        assert_eq!(site_tag("pas du json"), None);
     }
 
     #[test]

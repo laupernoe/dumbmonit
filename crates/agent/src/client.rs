@@ -28,6 +28,9 @@ pub enum PushError {
     /// pendant que l'agent patiente — mais le message doit être rendu tel quel,
     /// c'est lui qui dit quoi faire.
     Forbidden(String),
+    /// Corps trop gros pour un intermédiaire (413). Le lot n'est pas fautif,
+    /// sa taille si : on le garde, et on réessaie par morceaux plus petits.
+    TooLarge(String),
     /// Le serveur a compris et refusé. Réessayer à l'identique est sans espoir.
     Rejected { status: u16, message: String },
 }
@@ -45,6 +48,9 @@ impl std::fmt::Display for PushError {
             Self::Transport(detail) => write!(f, "server unreachable: {detail}"),
             Self::Unauthorized => write!(f, "enrollment token rejected"),
             Self::Forbidden(message) => write!(f, "{message}"),
+            Self::TooLarge(message) => {
+                write!(f, "batch too large for the server or a proxy: {message}")
+            }
             Self::Rejected { status, message } => write!(f, "batch rejected ({status}): {message}"),
         }
     }
@@ -242,6 +248,7 @@ fn relay_url(base_url: &str, id: Option<i64>, key: &str) -> String {
 async fn rejection(response: reqwest::Response) -> PushError {
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
+    let from_server = server_error_message(&body).is_some();
     let message = extract_error_message(&body);
 
     match status.as_u16() {
@@ -252,6 +259,14 @@ async fn rejection(response: reqwest::Response) -> PushError {
         // 408, 429 et toute la famille 5xx traduisent un serveur momentanément
         // incapable de répondre : les mesures restent en tampon.
         408 | 429 | 500..=599 => PushError::Transport(format!("HTTP {status}: {message}")),
+        // 413 ne vient jamais du serveur avec son enveloppe : c'est un plafond de
+        // taille, le sien ou celui d'un mandataire. Le lot sera recoupé.
+        413 => PushError::TooLarge(message),
+        // Sans l'enveloppe `{"error": …}` du serveur, un 400 ou un 404 vient d'un
+        // intermédiaire — chemin mal routé, maintenance, filtrage. Le lot n'y
+        // est pour rien : jeter tout le retard sur cette foi serait une perte
+        // sèche. Les mesures restent en tampon, l'agent réessaie.
+        400 | 404 if !from_server => PushError::Transport(format!("HTTP {status}: {message}")),
         other => PushError::Rejected { status: other, message },
     }
 }
@@ -289,12 +304,19 @@ fn percent_encode(value: &str) -> String {
     out
 }
 
-/// Extrait le message du corps d'erreur `{"error": "..."}` renvoyé par l'API.
-fn extract_error_message(body: &str) -> String {
+/// Message du corps d'erreur `{"error": "..."}` renvoyé par l'API, si c'en est un.
+///
+/// Sa présence est ce qui distingue un refus du serveur DumbMonit d'une page
+/// d'erreur produite par un intermédiaire.
+fn server_error_message(body: &str) -> Option<String> {
     serde_json::from_str::<serde_json::Value>(body)
         .ok()
         .and_then(|value| value.get("error")?.as_str().map(str::to_string))
-        .unwrap_or_else(|| body.trim().chars().take(200).collect())
+}
+
+/// Message d'erreur à journaliser : celui du serveur, ou le début du corps brut.
+fn extract_error_message(body: &str) -> String {
+    server_error_message(body).unwrap_or_else(|| body.trim().chars().take(200).collect())
 }
 
 /// Retire le jeton d'un message avant qu'il n'atteigne les journaux.

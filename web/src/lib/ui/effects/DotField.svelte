@@ -5,7 +5,7 @@
 	 *
 	 * Svelte 5 port of the React Bits component (canvas 2D, no dependencies).
 	 * It fills its parent (`position: absolute; inset: 0`), so the parent must be
-	 * positioned. Under `prefers-reduced-motion` it draws the grid once and stops.
+	 * positioned. Under `prefers-reduced-motion`, and on phones, it draws the grid once and stops.
 	 */
 	import { onMount } from 'svelte';
 
@@ -50,7 +50,8 @@
 		const ctx = canvas.getContext('2d', { alpha: true });
 		if (!ctx) return;
 		const host = canvas.parentElement!;
-		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+		// Phones have no cursor to follow: the grid is drawn once, like under reduced motion.
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce), (max-width: 639px)');
 		const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
 		let dots: Dot[] = [];

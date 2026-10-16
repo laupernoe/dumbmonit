@@ -3,9 +3,10 @@
 	 * Text that resolves from scrambled glyphs to its final wording, left to
 	 * right. Used once per page, for the bulletin sentence. It re-runs when the
 	 * text changes so a status flip ("Clear" → "1 warning") is noticed.
-	 * Reduced motion shows the final text immediately.
+	 * Reduced motion, and phones, show the final text immediately.
 	 */
 	import { onMount } from 'svelte';
+	import { calmMotion } from '../motion';
 
 	interface Props {
 		text: string;
@@ -26,8 +27,7 @@
 
 	function run(target: string) {
 		if (timer) clearInterval(timer);
-		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-		if (reduced || !target) {
+		if (calmMotion() || !target) {
 			shown = target;
 			return;
 		}

@@ -307,7 +307,7 @@ export function quickSilencePayload(target: Target) {
 	const now = new Date();
 	const end = new Date(now.getTime() + 3600_000);
 	return {
-		name: `Quick silence · ${target.name}`,
+		name: m.alerts_quick_silence_name({ name: target.name }),
 		target_id: target.id,
 		schedule: {
 			kind: 'once' as const,

@@ -167,6 +167,9 @@ pub struct DeliveryReport {
     pub channel_name: String,
     /// `None` en cas de succès, sinon le message d'erreur déjà expurgé.
     pub error: Option<String>,
+    /// Vrai si réessayer plus tard a une chance d'aboutir (voir
+    /// [`NotifyError::is_transient`]) ; sans objet en cas de succès.
+    pub transient: bool,
 }
 
 impl DeliveryReport {
@@ -202,21 +205,22 @@ pub async fn deliver(
     config: &ChannelConfig,
     message: &Message,
 ) -> DeliveryReport {
-    let report = |error: Option<String>| DeliveryReport {
+    let report = |error: Option<String>, transient: bool| DeliveryReport {
         channel_id: config.id,
         channel_name: config.name.clone(),
         error,
+        transient,
     };
 
     if sending_disabled() {
-        return report(Some(DISABLED_MESSAGE.to_string()));
+        return report(Some(DISABLED_MESSAGE.to_string()), false);
     }
 
     let notifier = match build(http, config) {
         Ok(notifier) => notifier,
         Err(error) => {
             warn!(channel = %config.name, kind = %config.kind, %error, "channel misconfigured");
-            return report(Some(error.to_string()));
+            return report(Some(error.to_string()), error.is_transient());
         }
     };
 
@@ -224,7 +228,7 @@ pub async fn deliver(
     match notifier.send(&message).await {
         Ok(()) => {
             debug!(channel = %config.name, kind = %config.kind, "notification sent");
-            report(None)
+            report(None, false)
         }
         Err(error) => {
             // `error` est déjà expurgé par la couche transport ; l'interpoler ici est
@@ -236,7 +240,7 @@ pub async fn deliver(
                 %error,
                 "notification failed"
             );
-            report(Some(error.to_string()))
+            report(Some(error.to_string()), error.is_transient())
         }
     }
 }
@@ -253,22 +257,23 @@ pub async fn deliver_stored(
     if config.kind != webpush::KIND {
         return deliver(http, config, message).await;
     }
-    let report = |error: Option<String>| DeliveryReport {
+    let report = |error: Option<String>, transient: bool| DeliveryReport {
         channel_id: config.id,
         channel_name: config.name.clone(),
         error,
+        transient,
     };
     if sending_disabled() {
-        return report(Some(DISABLED_MESSAGE.to_string()));
+        return report(Some(DISABLED_MESSAGE.to_string()), false);
     }
     match webpush::deliver(store, config, message).await {
         Ok(outcome) => {
             debug!(channel = %config.name, delivered = outcome.delivered, "push notification sent");
-            report(None)
+            report(None, false)
         }
         Err(error) => {
             warn!(channel = %config.name, kind = %config.kind, %error, "notification failed");
-            report(Some(error.to_string()))
+            report(Some(error.to_string()), error.is_transient())
         }
     }
 }
@@ -362,6 +367,15 @@ mod tests {
         };
         assert!(matches!(erreur, NotifyError::UnknownKind(_)));
         assert!(!erreur.is_transient(), "retrying is pointless");
+    }
+
+    #[tokio::test]
+    async fn un_canal_mal_configure_donne_un_rapport_definitif() {
+        let http = http_client();
+        let report =
+            deliver(&http, &channel(1, "carrier-pigeon", true), &message::test_message("x")).await;
+        assert!(!report.is_success());
+        assert!(!report.transient, "a broken channel must not be requeued every cycle");
     }
 
     #[test]

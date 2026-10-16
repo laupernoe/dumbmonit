@@ -185,7 +185,8 @@ async fn probe_once(state: AppState, target: dumbmonit_proto::Target) {
 /// le verdict elle-même. Une sonde encore en vol n'est pas doublée — le relais
 /// est lent ou absent, empiler n'y changerait rien.
 fn delegate(state: &AppState, target: &dumbmonit_proto::Target, agent_id: TargetId, now: Instant) {
-    let timeout = state.config.probe_timeout;
+    // Même relèvement que `Registry::probe` pour le délai propre à la sonde.
+    let timeout = dumbmonit_collectors::Registry::deadline_for(target, state.config.probe_timeout);
     match state.relay().enqueue(
         agent_id,
         target.clone(),

@@ -288,14 +288,15 @@
 		secondary={sky.counts.devices === 0 ? undefined : { label: m.alerts_list_see_history(), href: '#history' }}
 	/>
 {:else}
-	<div class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
+	<!-- Phones: the counts already sit on the tab and the Overview; the controls are enough here. -->
+	<div class="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-3 max-sm:mb-2">
 		{#if activeCount === 0}
-			<p class="flex items-center gap-2 font-semibold text-ink">
+			<p class="flex items-center gap-2 font-semibold text-ink max-sm:hidden">
 				<CloudSun class="size-[1.125rem] text-signal-ink" aria-hidden="true" />
 				{m.alerts_list_known_only()}
 			</p>
 		{:else}
-			<p class="display text-[1.25rem] leading-tight text-ink">{sky.sentence}</p>
+			<p class="display text-[1.25rem] leading-tight text-ink max-sm:hidden">{sky.sentence}</p>
 		{/if}
 		<div class="flex items-center gap-2">
 			<div class="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group" aria-label={m.alerts_list_group_by()}>
@@ -303,7 +304,7 @@
 					<button
 						type="button"
 						aria-pressed={groupBy === id}
-						class={`inline-flex h-9 items-center rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${groupBy === id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+						class={`inline-flex h-10 items-center rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${groupBy === id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 						onclick={() => setGroupBy(id as GroupBy)}
 					>
 						{label}

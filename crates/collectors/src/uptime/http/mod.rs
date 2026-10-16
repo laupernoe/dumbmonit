@@ -199,13 +199,18 @@ async fn request(
             .request(method.clone(), url.clone())
             .timeout(remaining)
             .header(USER_AGENT, &options.user_agent);
-        for (name, value) in &options.headers {
-            builder = builder.header(name, value);
+        // Les en-têtes saisis (jeton, clé d'API…) ne quittent pas l'origine de la
+        // cible, comme l'identifiant : une redirection ne doit pas les divulguer.
+        let same_origin = same_origin(&url, &options.url);
+        if same_origin {
+            for (name, value) in &options.headers {
+                builder = builder.header(name, value);
+            }
         }
         if with_body && let Some(body) = &options.body {
             builder = builder.body(body.clone());
         }
-        if same_origin(&url, &options.url) {
+        if same_origin {
             builder = auth.apply(builder);
         }
 
@@ -715,6 +720,56 @@ mod tests {
         assert!(detail.contains("refused"), "{detail}");
         assert!(detail.contains("allow_private_targets"), "{detail}");
         assert_eq!(raison(&report.finish()).as_deref(), Some("connect"));
+    }
+
+    /// Les en-têtes saisis suivent une redirection vers la même origine, mais pas
+    /// vers une autre (ici un autre port de la boucle locale).
+    #[tokio::test]
+    async fn les_en_tetes_saisis_ne_suivent_pas_une_redirection_vers_une_autre_origine() {
+        use axum::extract::State;
+        use axum::http::HeaderMap;
+        use axum::response::Redirect;
+        use axum::routing::get;
+
+        type Vus = Arc<Mutex<Vec<bool>>>;
+        async fn ecoute(vus: Vus, router: axum::Router<Vus>) -> String {
+            let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+            let port = listener.local_addr().unwrap().port();
+            let router = router.with_state(vus);
+            tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
+            format!("http://127.0.0.1:{port}")
+        }
+        async fn page(State(vus): State<Vus>, headers: HeaderMap) -> &'static str {
+            vus.lock().unwrap().push(headers.contains_key("x-secret"));
+            "ok"
+        }
+
+        let vus_b: Vus = Arc::default();
+        let b = ecoute(vus_b.clone(), axum::Router::new().route("/page", get(page))).await;
+        let cible_b = format!("{b}/page");
+        let vus_a: Vus = Arc::default();
+        let routes_a = axum::Router::new()
+            .route("/page", get(page))
+            .route("/meme-origine", get(|| async { Redirect::to("/page") }))
+            .route("/autre-origine", get(move || async move { Redirect::to(&cible_b) }));
+        let a = ecoute(vus_a.clone(), routes_a).await;
+
+        let collector = HttpCollector::new();
+        let client = collector.client(false, true).unwrap();
+        for chemin in ["meme-origine", "autre-origine"] {
+            let target = cible(
+                "http",
+                &format!("{a}/{chemin}"),
+                &[("allow_private_targets", "true"), ("headers", "X-Secret: jeton")],
+            );
+            let options = Options::from_target(&target).unwrap();
+            let mut report = Report::new("http");
+            request(&mut report, &client, &options, &Credential::None, true, options.timeout)
+                .await
+                .unwrap();
+        }
+        assert_eq!(*vus_a.lock().unwrap(), vec![true], "même origine : l'en-tête est envoyé");
+        assert_eq!(*vus_b.lock().unwrap(), vec![false], "autre origine : l'en-tête est retenu");
     }
 
     #[test]

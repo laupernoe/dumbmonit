@@ -87,13 +87,7 @@ export const KIND_LABEL: Record<IncidentKind, string> = {
 	}
 };
 
-/** Tone of a day in the history bar, from its uptime. */
-export function dayTone(uptime: number | null): 'signal' | 'advisory' | 'warning' | 'ghost' {
-	if (uptime === null) return 'ghost';
-	if (uptime >= 99.5) return 'signal';
-	if (uptime >= 95) return 'advisory';
-	return 'warning';
-}
+export { dayTone } from './day-tone';
 
 /** Accents a page can pick, with the word the editor shows. */
 export const ACCENTS: { value: StatusPageAccent; label: string }[] = [

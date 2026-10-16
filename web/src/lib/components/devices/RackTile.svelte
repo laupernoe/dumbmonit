@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { viewport } from '#lib/stores/viewport.svelte.js';
 	/**
 	 * One monitor as a tile, for the tiles view of /targets: the same label
 	 * grid as a faceplate (product icon and kind, name, address, state plate,
@@ -34,14 +35,17 @@
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
+	// Phones: two small tiles a row — icon, name, LED and the state word.
+	// Address, grade, last seen and the sparkline stay on the device page.
+	const phone = $derived(viewport.phone);
 </script>
 
 <Spotlight
-	class={`faceplate flex h-full flex-col gap-3 p-4 ${shadowed ? 'opacity-60' : ''}`}
+	class={`faceplate flex h-full flex-col ${phone ? 'gap-2 p-3' : 'gap-3 p-4'} ${shadowed ? 'opacity-60' : ''}`}
 	data-interactive
 >
-	<div class="flex items-start gap-3">
-		<span class="flex size-9 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
+	<div class={`flex items-start ${phone ? 'gap-2' : 'gap-3'}`}>
+		<span class="flex size-9 max-sm:size-7 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
 			<KindIcon kind={target.kind} class="size-[1.125rem]" />
 		</span>
 		<div class="min-w-0 flex-1">
@@ -50,11 +54,14 @@
 				class="block truncate font-semibold text-ink after:absolute after:inset-0 after:rounded-[var(--radius-card)] after:content-[''] focus-visible:outline-none focus-visible:after:outline-2 focus-visible:after:-outline-offset-2 focus-visible:after:outline-signal"
 				aria-label={`${target.name}, ${STATE_LABEL[state]}`}
 			>{target.name}</a>
-			<span class="label-tape mt-0.5 block truncate !text-[0.625rem]">{kindLabel ?? target.kind}</span>
+			{#if !phone}
+				<span class="label-tape mt-0.5 block truncate !text-[0.625rem]">{kindLabel ?? target.kind}</span>
+			{/if}
 		</div>
 		<Led {tone} {blink} size="sm" class="mt-1.5" />
 	</div>
 
+	{#if !phone}
 	<div class="min-w-0 text-[0.8125rem] text-ink-2">
 		<p class="truncate" title={target.address}>{target.address}</p>
 		{#if parentName}
@@ -64,13 +71,14 @@
 			</p>
 		{/if}
 	</div>
+	{/if}
 
 	<div class="mt-auto flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
 		<Plate {tone} label={STATE_LABEL[state]} pulse={blink} />
-		{#if security?.grade}
+		{#if security?.grade && !phone}
 			<SecurityBadge quiet grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
 		{/if}
-		<p class="tnum min-w-0 flex-1 truncate text-[0.8125rem] text-ink-2" title={target.last_error ?? undefined}>
+		<p class="tnum min-w-0 flex-1 truncate text-[0.8125rem] text-ink-2 max-sm:hidden" title={target.last_error ?? undefined}>
 			{#if target.last_error}
 				<span class={target.error_kind === 'config' ? 'text-advisory-ink' : 'text-warning-ink'}>{target.last_error}</span>
 			{:else}
@@ -79,7 +87,9 @@
 		</p>
 	</div>
 
-	{#if sparkline && sparkline.length > 0}
+	{#if phone}
+		<!-- No display window on a phone tile. -->
+	{:else if sparkline && sparkline.length > 0}
 		<div class="rounded-md border border-line bg-canvas-deep/60 px-1 pt-1">
 			<Chart series={sparkline} compact height={30} tone={tone === 'warning' ? 'warning' : tone === 'advisory' ? 'advisory' : tone === 'ghost' ? 'ghost' : 'signal'} />
 		</div>

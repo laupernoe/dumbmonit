@@ -269,6 +269,64 @@ pub async fn set_disabled(pool: &SqlitePool, id: i64, disabled: bool) -> Result<
     Ok(())
 }
 
+/// Changements d'un compte appliqués d'un seul bloc.
+#[derive(Default)]
+pub struct AccountChanges<'a> {
+    pub display_name: Option<&'a str>,
+    pub role: Option<Role>,
+    pub password_hash: Option<&'a str>,
+    pub disabled: Option<bool>,
+    /// Ferme les sessions du compte dans la même transaction.
+    pub close_sessions: bool,
+}
+
+/// Applique tous les changements ou aucun : un échec en cours de route ne laisse
+/// pas un compte à moitié modifié.
+pub async fn apply_changes(pool: &SqlitePool, id: i64, changes: &AccountChanges<'_>) -> Result<()> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction")?;
+    if let Some(display_name) = changes.display_name {
+        sqlx::query("UPDATE users SET display_name = ? WHERE id = ?")
+            .bind(display_name)
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .context("mise à jour du nom affiché")?;
+    }
+    if let Some(role) = changes.role {
+        sqlx::query("UPDATE users SET role = ? WHERE id = ?")
+            .bind(role.as_str())
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .context("mise à jour du rôle")?;
+    }
+    if let Some(hash) = changes.password_hash {
+        sqlx::query("UPDATE users SET password_hash = ? WHERE id = ?")
+            .bind(hash)
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .context("mise à jour du mot de passe")?;
+    }
+    if let Some(disabled) = changes.disabled {
+        sqlx::query("UPDATE users SET disabled = ? WHERE id = ?")
+            .bind(i64::from(disabled))
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .context("activation ou désactivation du compte")?;
+    }
+    if changes.close_sessions {
+        sqlx::query("DELETE FROM auth_sessions WHERE user_id = ?")
+            .bind(id)
+            .execute(&mut *tx)
+            .await
+            .context("fermeture des sessions")?;
+    }
+    tx.commit().await.context("validation de la transaction")?;
+    Ok(())
+}
+
 /// Rattache un compte existant à son identité chez le fournisseur.
 pub async fn link_oidc(pool: &SqlitePool, id: i64, issuer: &str, subject: &str) -> Result<()> {
     sqlx::query("UPDATE users SET oidc_issuer = ?, oidc_subject = ? WHERE id = ?")

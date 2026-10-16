@@ -141,7 +141,7 @@ das in `deny.toml` mit Begründung ignoriert wird: Die Crate `rsa` prüft RS256-
   das GitHub-Code-Scanning (CodeQL) berichtet.
 - **Tests**: API-, Authentifizierungs-, Rollen-, CORS-, OIDC-, Guard- und Audit-Tests unter
   `crates/server/tests/`, Unit-Tests neben dem Code und Web-Tests unter `web/tests/`. Die mit
-  `cargo-llvm-cov` gemessene Rust-Zeilenabdeckung beträgt 87,9 %.
+  `cargo-llvm-cov` gemessene Rust-Zeilenabdeckung beträgt 91 %.
 - **Regressionsrichtlinie**: Eine Korrektur kommt mit einem Test, der ohne sie fehlschlägt
   (siehe die Testrichtlinie in `CONTRIBUTING.md`).
 - **Öffentliches Protokoll**: Sicherheitskorrekturen werden als Advisories veröffentlicht und in

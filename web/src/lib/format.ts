@@ -1,6 +1,7 @@
 /** Shared presentation helpers: dates, durations, states. */
 import type { Target } from '#lib/api/index.js';
 import { m } from '#lib/paraglide/messages.js';
+import { getLocale } from '#lib/paraglide/runtime.js';
 
 /**
  * Converts a server timestamp into a `Date`.
@@ -18,15 +19,23 @@ export function parseServerDate(value: string | null | undefined): Date | null {
 	return Number.isNaN(date.getTime()) ? null : date;
 }
 
-const dateTimeFormat = new Intl.DateTimeFormat('en-GB', {
-	dateStyle: 'medium',
-	timeStyle: 'short'
-});
+const dateTimeFormats = new Map<string, Intl.DateTimeFormat>();
+
+/** Formatter of the active UI locale, built once per locale. */
+function dateTimeFormat(): Intl.DateTimeFormat {
+	const locale = getLocale();
+	let format = dateTimeFormats.get(locale);
+	if (!format) {
+		format = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+		dateTimeFormats.set(locale, format);
+	}
+	return format;
+}
 
 /** Absolute date, in the browser's timezone. */
 export function formatDateTime(value: string | Date | null | undefined): string {
 	const date = value instanceof Date ? value : parseServerDate(value);
-	return date ? dateTimeFormat.format(date) : m.misc_never();
+	return date ? dateTimeFormat().format(date) : m.misc_never();
 }
 
 /** Relative duration: "3 min ago". */

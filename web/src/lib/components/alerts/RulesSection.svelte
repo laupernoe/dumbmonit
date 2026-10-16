@@ -445,7 +445,7 @@
 	{@const editing = editingId === rule.id}
 	{@const showQuery = shownQueryIds.has(rule.id)}
 	<div
-		class={`rise-in rounded-[var(--radius-card)] border bg-surface px-4 py-3 shadow-lift ${editing ? 'border-line-strong' : 'border-line'} ${rule.enabled || editing ? '' : 'opacity-70'}`}
+		class={`rise-in rounded-[var(--radius-card)] border bg-surface px-4 py-3 shadow-lift max-sm:[contain-intrinsic-size:auto_120px] max-sm:[content-visibility:auto] ${editing ? 'border-line-strong' : 'border-line'} ${rule.enabled || editing ? '' : 'opacity-70'}`}
 		style={`--rise-delay: ${Math.min(i, 10) * 30}ms`}
 	>
 		<div class="flex flex-wrap items-start gap-x-4 gap-y-3">

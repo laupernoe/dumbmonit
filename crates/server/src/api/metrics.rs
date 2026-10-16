@@ -61,6 +61,17 @@ pub struct SeriesView {
     pub values: Vec<(f64, String)>,
 }
 
+/// Un refus de VictoriaMetrics est une requête invalide (400) ; un backend
+/// injoignable, trop lent ou illisible est une panne côté serveur (502).
+fn backend_error(error: anyhow::Error) -> ApiError {
+    if error.downcast_ref::<crate::tsdb::QueryRejected>().is_some() {
+        ApiError::BadRequest(format!("{error:#}"))
+    } else {
+        tracing::warn!(%error, "VictoriaMetrics query failed");
+        ApiError::BadGateway("The metrics backend is not answering.".into())
+    }
+}
+
 pub async fn query_range(
     State(state): State<AppState>,
     Query(params): Query<RangeQuery>,
@@ -81,7 +92,7 @@ pub async fn query_range(
         .victoria
         .query_range(&params.query, params.start, params.end, step)
         .await
-        .map_err(|error| ApiError::BadRequest(format!("{error:#}")))?;
+        .map_err(backend_error)?;
 
     Ok(Json(
         series.into_iter().map(|s| SeriesView { metric: s.metric, values: s.values }).collect(),
@@ -99,11 +110,7 @@ pub async fn query(
 ) -> ApiResult<Json<Vec<SeriesView>>> {
     validate_query(&params.query)?;
 
-    let series = state
-        .victoria
-        .query_fresh(&params.query)
-        .await
-        .map_err(|error| ApiError::BadRequest(format!("{error:#}")))?;
+    let series = state.victoria.query_fresh(&params.query).await.map_err(backend_error)?;
 
     Ok(Json(
         series

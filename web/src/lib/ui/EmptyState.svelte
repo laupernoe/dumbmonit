@@ -25,11 +25,11 @@
 	let { title, description, icon: Icon, mascot, action, primary, secondary, tone = 'ghost', class: className = '' }: Props = $props();
 </script>
 
-<div class={`ghost-cell rise-in flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line px-6 py-12 text-center ${className}`}>
+<div class={`ghost-cell rise-in flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-dashed border-line px-6 py-12 text-center max-sm:px-4 max-sm:py-6 ${className}`}>
 	{#if mascot}
-		<Mascot mood={mascot} class="mb-4 size-[4.5rem]" />
+		<Mascot mood={mascot} class="mb-4 size-[4.5rem] max-sm:mb-2 max-sm:size-12" />
 	{:else if Icon}
-		<div class={`mb-4 flex size-12 items-center justify-center rounded-full border ${tone === 'signal' ? 'border-signal/30 bg-signal-soft text-signal-ink' : 'border-line bg-surface text-ink-3'}`}>
+		<div class={`mb-4 flex size-12 items-center max-sm:hidden justify-center rounded-full border ${tone === 'signal' ? 'border-signal/30 bg-signal-soft text-signal-ink' : 'border-line bg-surface text-ink-3'}`}>
 			<Icon class="size-5" aria-hidden="true" />
 		</div>
 	{/if}

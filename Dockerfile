@@ -14,7 +14,17 @@ COPY web/package.json web/package-lock.json* ./
 RUN npm ci
 COPY docs/ /src/docs/
 COPY web/ ./
+# Identifiant de version de l'application web (voir web/vite.config.ts) : le
+# commit, sinon sa date. Sans l'un ni l'autre, SvelteKit prend l'heure de la
+# construction et le résultat n'est plus reproductible.
+ARG DUMBMONIT_BUILD=""
+ARG SOURCE_DATE_EPOCH
 RUN npm run build
+
+# L'interface seule, pour comparer deux constructions (reproducible.yml) :
+#   docker buildx build --target web-dist --output type=local,dest=dist/web .
+FROM scratch AS web-dist
+COPY --from=web /src/web/build /
 
 # ---------------------------------------------------------------------------
 # Compilation du serveur en binaire statique musl.
@@ -23,6 +33,10 @@ FROM rust:1-alpine@sha256:0cce0a5e0e8ba67b455257a3a02a1d99005f382748789d64644600
 
 # musl-dev et gcc sont requis par libsqlite3-sys, qui compile SQLite depuis
 # ses sources ; cela évite toute dépendance système dans l'image finale.
+# Ils sont déjà dans l'image de base, épinglée par empreinte : `apk add` ne les
+# met pas à jour, et le compilateur C ne dépend donc pas du jour de la
+# construction. Seul `make` vient de l'index Alpine du moment ; c'est un outil
+# de construction, il n'entre pas dans le binaire.
 RUN apk add --no-cache musl-dev gcc make
 
 WORKDIR /build
@@ -78,6 +92,11 @@ RUN touch crates/proto/src/lib.rs crates/collectors/src/lib.rs crates/pack/src/l
 # image `scratch` n'a ni `mkdir` ni `chown` (voir l'étape finale).
 RUN mkdir -p /empty
 
+# Le serveur seul, pour comparer deux constructions (reproducible.yml) :
+#   docker buildx build --target server-dist --output type=local,dest=dist/server .
+FROM scratch AS server-dist
+COPY --from=builder /build/target/release/dumbmonit /dumbmonit
+
 # ---------------------------------------------------------------------------
 # Compilation croisée de l'agent, pour les quatre plateformes que le serveur sait
 # livrer sur /download/… (voir crates/server/src/api/agent_files.rs).
@@ -107,6 +126,13 @@ RUN rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal \
 # qui reste taillé pour le serveur.
 ENV CARGO_PROFILE_RELEASE_OPT_LEVEL=s \
     CARGO_PROFILE_RELEASE_LTO=fat
+
+# Construction reproductible : l'éditeur de liens de zig (lld) inscrit dans
+# l'en-tête PE de l'agent Windows l'heure de l'édition de liens, sauf si
+# SOURCE_DATE_EPOCH est posée. Valeur fixe, quel que soit l'appelant : deux
+# constructions du même commit donnent le même .exe (et tout autre outil qui
+# la lirait obtient la même date ; docs/development/reproducible-builds.md).
+ENV SOURCE_DATE_EPOCH=0
 
 # Parallélisme de cargo, à brider sur une machine partagée
 # (`--build-arg CARGO_BUILD_JOBS=4`). Sans valeur, la variable n'existe pas et

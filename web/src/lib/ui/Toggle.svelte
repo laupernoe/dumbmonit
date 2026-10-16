@@ -24,6 +24,6 @@
 	}}
 >
 	<span
-		class={`absolute left-0.5 size-[1.125rem] rounded-full bg-white shadow-sm transition-transform duration-200 ease-spring ${checked ? 'translate-x-5' : 'translate-x-0'}`}
+		class={`absolute left-0.5 size-[1.125rem] rounded-full bg-white shadow-sm transition-transform duration-200 ease-spring max-sm:duration-150 ${checked ? 'translate-x-5' : 'translate-x-0'}`}
 	></span>
 </button>

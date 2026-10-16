@@ -54,7 +54,10 @@ reqwest = { version = "0.13", default-features = false, features = [
 ipnet = "2"
 futures = "0.3"
 
-rust-embed = { version = "8", features = ["mime-guess"] }
+# `deterministic-timestamps` : sans lui, rust_embed inscrit dans le binaire la date
+# de modification de chaque fichier de `web/build`, et deux constructions du même
+# commit diffèrent (voir docs/development/reproducible-builds.md).
+rust-embed = { version = "8", features = ["mime-guess", "deterministic-timestamps"] }
 mime_guess = "2"
 
 # Mêmes choix que reqwest : rustls + ring, et racines TLS embarquées.

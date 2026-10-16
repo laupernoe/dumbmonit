@@ -47,6 +47,7 @@
 	import { formatRelative, type ProbeStatus } from '#lib/format.js';
 	import { loadProbeStatuses } from '#lib/metrics.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import { viewport } from '#lib/stores/viewport.svelte.js';
 	import { theme, type ThemePreference } from '#lib/stores/theme.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { Button, Plate, Skeleton, ErrorNotice } from '#lib/ui/index.js';
@@ -482,6 +483,8 @@
 
 	/** A hidden tab pauses the scene outright: nothing to look at, nothing to spend. */
 	let hidden = $state(typeof document !== 'undefined' && document.visibilityState !== 'visible');
+	// A wall on a phone is a glance, not a room screen: the scene holds still.
+	const sceneStill = $derived(hidden || viewport.phone);
 	$effect(() => {
 		const onVisibility = () => (hidden = document.visibilityState !== 'visible');
 		document.addEventListener('visibilitychange', onVisibility);
@@ -635,11 +638,11 @@
 				pulse={live.pulse}
 				problems={firstLoad ? 0 : sky.attention}
 				{startle}
-				paused={hidden}
+				paused={sceneStill}
 				focus={1360}
 			/>
 			{#if mood === 'storm' && !STORMLESS.has(activeCity)}
-				<WallStorm theme={sceneTheme} paused={hidden} />
+				<WallStorm theme={sceneTheme} paused={sceneStill} />
 			{/if}
 		</div>
 

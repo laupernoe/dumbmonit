@@ -17,6 +17,9 @@ pub enum ApiError {
     Conflict(String),
     /// Geste répété trop vite ; le message dit combien de temps attendre.
     TooManyRequests(String),
+    /// Un service dont dépend le geste (VictoriaMetrics…) ne répond pas ou
+    /// répond de façon inexploitable : ce n'est pas la faute de l'appelant.
+    BadGateway(String),
     Internal(anyhow::Error),
 }
 
@@ -32,6 +35,7 @@ impl ApiError {
             Self::Forbidden(why) => (StatusCode::FORBIDDEN, why),
             Self::Conflict(why) => (StatusCode::CONFLICT, why),
             Self::TooManyRequests(why) => (StatusCode::TOO_MANY_REQUESTS, why),
+            Self::BadGateway(why) => (StatusCode::BAD_GATEWAY, why),
             Self::Internal(error) => {
                 tracing::error!(?error, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.".to_string())

@@ -156,7 +156,7 @@ proveedor y nunca usa una clave privada.
 - **Pruebas**: pruebas de API, autenticación, roles, CORS, OIDC, protección y
   auditoría en `crates/server/tests/`, pruebas unitarias junto al código y
   pruebas web en `web/tests/`. La cobertura de líneas de Rust medida con
-  `cargo-llvm-cov` es del 87,9 %.
+  `cargo-llvm-cov` es del 91 %.
 - **Política de regresión**: una corrección incluye una prueba que falla sin
   ella (véase la política de pruebas en `CONTRIBUTING.md`).
 - **Registro público**: las correcciones de seguridad se publican como avisos y

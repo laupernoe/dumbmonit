@@ -267,10 +267,10 @@
 	{/snippet}
 </PageHeader>
 
-<!-- Segmented control; scrolls horizontally on narrow screens. -->
-<div class="mb-5 overflow-x-auto">
+<!-- Segmented control; on phones it spans the width and stays put while the list scrolls. -->
+<div class="mb-5 overflow-x-auto max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:-mx-4 max-sm:mb-3 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
 	<div
-		class="inline-flex gap-1 rounded-lg border border-line bg-surface-2 p-1"
+		class="inline-flex gap-1 rounded-lg border border-line bg-surface-2 p-1 max-sm:grid max-sm:w-full max-sm:grid-cols-4"
 		role="tablist"
 		aria-label={m.alerts_page_sections()}
 	>
@@ -283,7 +283,7 @@
 				aria-controls="alerts-panel"
 				tabindex={tab === item.id ? 0 : -1}
 				onkeydown={onTabKey}
-				class={`inline-flex items-center gap-1.5 min-h-10 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink px-3 py-1.5 text-sm font-medium whitespace-nowrap transition ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+				class={`inline-flex items-center gap-1.5 min-h-10 rounded-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink px-3 py-1.5 text-sm font-medium whitespace-nowrap transition max-sm:min-w-0 max-sm:justify-center max-sm:gap-1 max-sm:px-1 max-sm:text-[0.8125rem] ${tab === item.id ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
 				onclick={() => selectTab(item.id)}
 			>
 				{item.label}

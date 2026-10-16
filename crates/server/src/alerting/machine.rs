@@ -88,6 +88,10 @@ pub struct AlertState {
     pub last_eval_at: Option<DateTime<Utc>>,
     pub last_notified_at: Option<DateTime<Utc>>,
     pub notify_count: u32,
+    /// Dernier relais vers le canal d'escalade (alerte non acquittée). Distinct de
+    /// `last_notified_at` : une annonce tardive (maintenance, escalade de sévérité
+    /// au même cycle) ne doit pas passer pour le relais.
+    pub unacked_relayed_at: Option<DateTime<Utc>>,
     pub suppressed: bool,
     pub suppressed_by: Option<i64>,
     pub silenced: bool,
@@ -114,6 +118,7 @@ impl Default for AlertState {
             last_eval_at: None,
             last_notified_at: None,
             notify_count: 0,
+            unacked_relayed_at: None,
             suppressed: false,
             suppressed_by: None,
             silenced: false,
@@ -201,6 +206,7 @@ pub fn advance(
             if from != Phase::Ok {
                 next.last_notified_at = None;
                 next.notify_count = 0;
+                next.unacked_relayed_at = None;
             }
         }
         let transition = (from != next.phase).then_some(Transition { from, to: next.phase });
@@ -213,6 +219,17 @@ pub fn advance(
         _ => now,
     };
     next.condition_since = Some(since);
+
+    // La condition revient alors que l'alerte venait d'être résolue : c'est un
+    // nouvel épisode, qui doit s'annoncer comme une alerte neuve. Sans cette
+    // remise à zéro, `notify_count` hérité ferait taire le nouveau déclenchement.
+    if from == Phase::Resolved {
+        next.resolved_at = None;
+        next.firing_since = None;
+        next.last_notified_at = None;
+        next.notify_count = 0;
+        next.unacked_relayed_at = None;
+    }
 
     if from == Phase::Firing {
         // Déjà partie : rien à franchir, les rappels sont gérés ailleurs.
@@ -317,6 +334,37 @@ mod tests {
         assert_eq!(ok.notify_count, 0, "the next occurrence must notify afresh");
         assert_eq!(ok.last_notified_at, None);
         assert_eq!(transition, Some(Transition { from: Phase::Resolved, to: Phase::Ok }));
+    }
+
+    #[test]
+    fn une_condition_qui_revient_apres_resolution_renotifie_comme_une_alerte_neuve() {
+        // Déclenchée, annoncée, résolue (résolution annoncée), puis la condition
+        // revient au cycle suivant : sans remise à zéro, le retour serait muet.
+        for for_duration in [Duration::ZERO, FOR_5M] {
+            let (pending_or_firing, _) = advance(&AlertState::default(), true, t(0), for_duration);
+            let (firing, _) = advance(&pending_or_firing, true, t(300), for_duration);
+            assert_eq!(firing.phase, Phase::Firing);
+            let mut firing = firing;
+            firing.notify_count = 1;
+            firing.last_notified_at = Some(t(300));
+
+            let (mut resolved, _) = advance(&firing, false, t(360), for_duration);
+            assert_eq!(resolved.phase, Phase::Resolved);
+            resolved.notify_count = 2;
+            resolved.last_notified_at = Some(t(360));
+
+            let (back, transition) = advance(&resolved, true, t(420), for_duration);
+            assert_eq!(transition.map(|t| t.from), Some(Phase::Resolved));
+            assert_eq!(back.notify_count, 0, "the return must be announced afresh");
+            assert_eq!(back.last_notified_at, None);
+            assert_eq!(back.resolved_at, None);
+
+            let (refired, _) = advance(&back, true, t(720), for_duration);
+            assert_eq!(refired.phase, Phase::Firing);
+            assert_eq!(refired.notify_count, 0);
+            let expected_since = if for_duration.is_zero() { t(420) } else { t(720) };
+            assert_eq!(refired.firing_since, Some(expected_since), "a new episode, a new age");
+        }
     }
 
     #[test]

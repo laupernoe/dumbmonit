@@ -33,12 +33,13 @@
 	});
 </script>
 
-<div bind:this={root} class={`${inline ? 'flex items-center justify-between gap-4' : 'grid gap-1.5'} ${className}`}>
+<!-- Phones keep the help out of the way until the field is in use: it shows on focus. -->
+<div bind:this={root} class={`group/field ${inline ? 'flex items-center justify-between gap-4' : 'grid gap-1.5'} ${className}`}>
 	<div class={inline ? 'min-w-0' : ''}>
 		<label for={htmlFor} class="block text-sm font-semibold text-ink">
 			{label}{#if required}<span class="ml-0.5 text-warning" aria-hidden="true">*</span>{/if}
 		</label>
-		{#if inline && help}<p class="mt-0.5 text-[0.8125rem] text-ink-2">{help}</p>{/if}
+		{#if inline && help}<p class="mt-0.5 text-[0.8125rem] text-ink-2 max-sm:hidden max-sm:group-focus-within/field:block">{help}</p>{/if}
 	</div>
 	<div class={inline ? 'shrink-0' : 'contents'}>
 		{@render children()}
@@ -46,6 +47,6 @@
 	{#if !inline && error}
 		<p class="text-[0.8125rem] font-medium text-warning-ink" role="alert">{error}</p>
 	{:else if !inline && help}
-		<p class="text-[0.8125rem] text-ink-2">{help}</p>
+		<p class="text-[0.8125rem] text-ink-2 max-sm:hidden max-sm:group-focus-within/field:block">{help}</p>
 	{/if}
 </div>

@@ -81,6 +81,7 @@ nav:
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
       - Update: install/update.md
+      - Verify a release: install/verify.md
       - Run a demo instance: install/demo.md
   - Monitors:
       - Overview: devices/index.md
@@ -172,5 +173,6 @@ nav:
       - Architecture: development/architecture.md
       - Security model: development/security-model.md
       - Assurance case: development/assurance-case.md
+      - Reproducible builds: development/reproducible-builds.md
       - Roadmap: development/roadmap.md
   - FAQ: faq.md

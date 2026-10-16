@@ -9,7 +9,7 @@
 	 * under `prefers-reduced-motion`). Ids this build does not know are skipped.
 	 */
 	import { fade } from 'svelte/transition';
-	import { reducedMotion } from '#lib/ui/index.js';
+	import { calmMotion } from '#lib/ui/index.js';
 	import SceneDefs from './SceneDefs.svelte';
 	import { ROTATION_MS, SCENE_COMPONENTS, knownScenes } from './registry';
 
@@ -40,7 +40,7 @@
 	$effect(() => {
 		active = current;
 	});
-	const fadeMs = reducedMotion() ? 0 : 1200;
+	const fadeMs = calmMotion() ? 0 : 1200;
 
 	$effect(() => {
 		if (interval <= 0) return;
@@ -72,6 +72,12 @@
 	.backdrop {
 		z-index: 0;
 		isolation: isolate;
+	}
+	/* Phones: the scene is a still picture, every loop at its resting pose. */
+	@media (max-width: 639px) {
+		.backdrop :global(*) {
+			animation: none !important;
+		}
 	}
 	.fade {
 		position: absolute;

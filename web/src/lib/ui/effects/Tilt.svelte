@@ -8,7 +8,7 @@
 	 * decoration, nothing the reader needs to see move.
 	 */
 	import type { Snippet } from 'svelte';
-	import { reducedMotion } from '../motion';
+	import { calmMotion } from '../motion';
 
 	interface Props {
 		children: Snippet;
@@ -40,7 +40,7 @@
 	let hovering = $state(false);
 
 	function move(e: PointerEvent) {
-		if (!hovering || reducedMotion()) return;
+		if (!hovering || calmMotion()) return;
 		const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
 		if (rect.width === 0 || rect.height === 0) return;
 		const px = (e.clientX - rect.left) / rect.width - 0.5;
@@ -49,7 +49,7 @@
 		rotateY = px * 2 * maxTilt;
 	}
 	function enter() {
-		if (!reducedMotion()) hovering = true;
+		if (!calmMotion()) hovering = true;
 	}
 	function leave() {
 		hovering = false;

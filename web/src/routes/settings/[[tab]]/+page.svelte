@@ -194,11 +194,11 @@
 
 <PageHeader title={m['settings.page.title']()} />
 
-<!-- Phones and tablets: the search, then a strip of chips, one per tab. -->
-<div class="mb-5 lg:hidden">
+<!-- Tablets: the search, then a strip of chips, one per tab. Phones keep the strip only. -->
+<div class="mb-5 max-sm:hidden lg:hidden">
 	{@render searchBox('settings-search-mobile')}
 </div>
-<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m['settings.nav.aria_label']()}>
+<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md max-sm:mb-3 max-sm:bg-canvas max-sm:backdrop-blur-none sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m['settings.nav.aria_label']()}>
 	<ul bind:this={strip} class="flex gap-1.5 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 		{#each tabs as id (id)}
 			<li class="shrink-0">
@@ -239,7 +239,7 @@
 		</div>
 	</aside>
 
-	<div bind:this={column} class="grid min-w-0 content-start gap-6 [&_section[id]]:scroll-mt-20 sm:[&_section[id]]:scroll-mt-32 lg:[&_section[id]]:scroll-mt-20">
+	<div bind:this={column} class="grid min-w-0 content-start gap-6 max-sm:gap-3 [&_section[id]]:scroll-mt-20 sm:[&_section[id]]:scroll-mt-32 lg:[&_section[id]]:scroll-mt-20">
 		<h2 class="sr-only">{tabLabel(tab)}</h2>
 		{#key tab}
 			{#each SECTIONS[tab] as Section, i (i)}

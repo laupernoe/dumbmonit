@@ -43,6 +43,40 @@ unless you prefer not to be.
 
 This is a volunteer-maintained project; there is no bug bounty.
 
+## How a report is handled
+
+1. **Receipt.** The report arrives as a private draft security advisory. A
+   maintainer acknowledges it within 7 days.
+2. **Triage.** We reproduce the problem, decide whether it is a vulnerability,
+   rate its severity (CVSS) and tell the reporter, within 14 days.
+3. **Fix.** The fix is prepared privately, in the advisory's temporary private
+   fork when needed, and gets a regression test like any other fix. We may ask
+   the reporter to confirm that it solves the problem.
+4. **Release.** The fix is merged, a tagged release is published (a patch
+   release for the supported line) and the advisory is published with its
+   CVE or GHSA identifier, the affected and fixed versions, and the
+   credit below. The `CHANGELOG.md` and the release notes link to it.
+5. **After.** If the root cause points to a class of problem, we look for the
+   same pattern elsewhere in the code and add a check (test, lint or fuzz
+   target) so that it does not come back.
+
+If a report is not a vulnerability, we say why and, when it is still a
+worthwhile bug or hardening idea, suggest filing it as a public issue.
+
+## Credit
+
+Every reporter of a vulnerability we resolve is credited in the published
+advisory and in the release notes, with the name or handle they give us,
+unless they ask to stay anonymous. No vulnerability report has been resolved
+yet, so there is no credit to list; this section will name the reporters as
+they come.
+
+## Verifying releases
+
+Release binaries and images are signed and carry a build provenance, so you
+can check that they were built by this repository's release workflow. The
+steps are in [Verifying a release](https://dumbmonit.readthedocs.io/en/latest/install/verify/).
+
 ## Scope
 
 In scope, roughly in order of how much we care:

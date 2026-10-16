@@ -4,16 +4,16 @@
 	 * sliding pill that springs between items (the gooey nav, tamed). The
 	 * right-hand cluster holds the command palette, the documentation (Read the
 	 * Docs, new tab), the GitHub repository, wall mode, the theme and the
-	 * account menu (avatar). The version number lives in `VersionTag.svelte`, fixed at a
+	 * account menu (avatar). Phones get the four destinations only. The version number lives in `VersionTag.svelte`, fixed at a
 	 * page corner, not here: a nav is not the place for a build hash.
 	 */
 	import { page } from '$app/state';
 	import { untrack } from 'svelte';
 	import { scale } from 'svelte/transition';
-	import { Gauge, Server, BellRing, Settings2, Search, BookOpen, Tv, Ellipsis } from 'lucide-svelte';
+	import { Gauge, Server, BellRing, Settings2, Search, BookOpen, Tv } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { RollingNumber, bump, reducedMotion } from '#lib/ui/index.js';
+	import { RollingNumber, bump, calmMotion } from '#lib/ui/index.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import Logo from './Logo.svelte';
@@ -30,31 +30,6 @@
 		{ href: '/alerts', label: m.misc_nav_alerts(), icon: BellRing, exact: false, phone: true },
 		{ href: '/settings', label: m.misc_nav_settings(), icon: Settings2, exact: false, phone: true }
 	];
-
-	// Phones: the four destinations as tabs, and "More" (wall mode, the docs).
-	// A link marked `phone: false` would go under "More" too.
-	let moreOpen = $state(false);
-	let moreRoot = $state<HTMLLIElement | null>(null);
-	const moreActive = $derived(links().some((link) => !link.phone && isActive(link.href, link.exact)));
-	$effect(() => {
-		page.url.pathname;
-		moreOpen = false;
-	});
-	$effect(() => {
-		if (!moreOpen) return;
-		const onpointerdown = (event: PointerEvent) => {
-			if (moreRoot && !moreRoot.contains(event.target as Node)) moreOpen = false;
-		};
-		const onkeydown = (event: KeyboardEvent) => {
-			if (event.key === 'Escape') moreOpen = false;
-		};
-		document.addEventListener('pointerdown', onpointerdown);
-		document.addEventListener('keydown', onkeydown);
-		return () => {
-			document.removeEventListener('pointerdown', onpointerdown);
-			document.removeEventListener('keydown', onkeydown);
-		};
-	});
 
 	function isActive(href: string, exact: boolean): boolean {
 		const path = page.url.pathname;
@@ -94,7 +69,7 @@
 			lastBadge = next;
 		});
 	});
-	const badgeOut = () => ({ duration: reducedMotion() ? 0 : 220, start: 0.4 });
+	const badgeOut = () => ({ duration: calmMotion() ? 0 : 220, start: 0.4 });
 
 	// The pill follows the route, and also the badge: a count appearing next to
 	// "Alerts" shifts every item after it without changing the list's own size.
@@ -197,9 +172,13 @@
 	</div>
 </header>
 
-<!-- Phones: four destinations as thumb-reachable tabs, the rest under "More". -->
-<nav aria-label={m.misc_nav_main()} class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-md sm:hidden">
-	<ul class="grid grid-cols-[repeat(5,minmax(0,1fr))]">
+<!--
+	Phones: the four destinations as thumb-reachable tabs, nothing else. Wall
+	mode and the documentation sit at the foot of Settings. A solid bar: a
+	backdrop blur over a scrolling list costs a repaint every frame.
+-->
+<nav aria-label={m.misc_nav_main()} class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas pb-[env(safe-area-inset-bottom)] sm:hidden">
+	<ul class="grid grid-cols-4">
 		{#each links().filter((link) => link.phone) as link (link.href)}
 			{@const active = isActive(link.href, link.exact)}
 			<li class="min-w-0">
@@ -217,42 +196,5 @@
 				</a>
 			</li>
 		{/each}
-		<li class="relative min-w-0" bind:this={moreRoot}>
-			<button
-				type="button"
-				class={`flex h-14 w-full flex-col items-center justify-center gap-0.5 px-0.5 text-[0.6875rem] font-semibold ${moreActive || moreOpen ? 'text-signal-ink' : 'text-ink-3'}`}
-				aria-expanded={moreOpen}
-				aria-controls="nav-more"
-				onclick={() => (moreOpen = !moreOpen)}
-			>
-				<Ellipsis class="size-5" aria-hidden="true" />
-				<span>{m.misc_nav_more()}</span>
-			</button>
-			{#if moreOpen}
-				<ul id="nav-more" class="absolute right-2 bottom-full mb-2 w-56 rounded-[var(--radius-card)] border border-line bg-surface p-1.5 shadow-float">
-					{#each links().filter((link) => !link.phone) as link (link.href)}
-						{@const active = isActive(link.href, link.exact)}
-						<li>
-							<a href={link.href} aria-current={active ? 'page' : undefined} class={`flex h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-semibold hover:bg-surface-2 ${active ? 'text-signal-ink' : 'text-ink-2'}`}>
-								<link.icon class="size-4" aria-hidden="true" />
-								{link.label}
-							</a>
-						</li>
-					{/each}
-					<li>
-						<a href="/wall" class="flex h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-							<Tv class="size-4" aria-hidden="true" />
-							{m.misc_nav_wall()}
-						</a>
-					</li>
-					<li>
-						<a href={DOCS_URL} target="_blank" rel="noopener" class="flex h-11 items-center gap-2.5 rounded-lg px-3 text-sm font-semibold text-ink-2 hover:bg-surface-2">
-							<BookOpen class="size-4" aria-hidden="true" />
-							{m.misc_nav_docs()}
-						</a>
-					</li>
-				</ul>
-			{/if}
-		</li>
 	</ul>
 </nav>

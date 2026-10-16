@@ -62,7 +62,8 @@ l'état de ces cibles d'après `probe_success`.
 
 C'est aussi pourquoi chaque sonde a son propre délai (`timeout_seconds`, cinq
 secondes par défaut), plus court que `DUMBMONIT_PROBE_TIMEOUT_SECS` : interrompue par
-le registre, elle n'écrirait pas son zéro.
+le registre, elle n'écrirait pas son zéro. Un délai propre plus long (jusqu'à 60 s)
+relève donc le délai du registre pour cette cible (plus une marge de 2 s).
 
 ```
 # Taux de disponibilité sur trente jours, par cible :

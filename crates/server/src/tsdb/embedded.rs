@@ -17,7 +17,7 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, bail};
 use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::process::{Child, Command};
-use tokio::sync::Mutex;
+use tokio::sync::{Mutex, Notify};
 use tokio::task::JoinHandle;
 use tracing::{error, info, warn};
 
@@ -98,7 +98,12 @@ struct Shared {
     /// Positionné par [`EmbeddedVm::stop`] : la sortie suivante est attendue,
     /// pas une panne, et le superviseur ne relance pas.
     stopping: AtomicBool,
-    /// Identifiant du processus courant, pour lui envoyer un signal.
+    /// Réveille le superviseur pendant son délai de relance : un arrêt demandé à
+    /// ce moment n'a pas à attendre la fin du délai (jusqu'à trente secondes).
+    stop_requested: Notify,
+    /// Identifiant du processus courant, pour lui envoyer un signal. Remis à
+    /// `None` dès que le processus est sorti : un pid périmé peut avoir été
+    /// réattribué à un autre processus.
     pid: std::sync::Mutex<Option<u32>>,
     supervisor: Mutex<Option<JoinHandle<()>>>,
 }
@@ -122,6 +127,7 @@ impl EmbeddedVm {
         let shared = Arc::new(Shared {
             config,
             stopping: AtomicBool::new(false),
+            stop_requested: Notify::new(),
             pid: std::sync::Mutex::new(None),
             supervisor: Mutex::new(None),
         });
@@ -144,6 +150,8 @@ impl EmbeddedVm {
     /// Arrêt ordonné : SIGTERM, [`STOP_GRACE`] d'attente, puis SIGKILL.
     pub async fn stop(&self) {
         self.shared.stopping.store(true, Ordering::SeqCst);
+        // `notify_one` garde un permis si le superviseur n'attend pas encore.
+        self.shared.stop_requested.notify_one();
         let Some(supervisor) = self.shared.supervisor.lock().await.take() else { return };
 
         self.shared.signal(Signal::Term);
@@ -209,6 +217,7 @@ impl Shared {
         let mut started = Instant::now();
         loop {
             let exit = child.wait().await;
+            shared.clear_pid();
             if shared.stopping.load(Ordering::SeqCst) {
                 return;
             }
@@ -221,8 +230,7 @@ impl Shared {
                 }
                 Err(error) => error!(%error, ?delay, "cannot wait for VictoriaMetrics, restarting"),
             }
-            tokio::time::sleep(delay).await;
-            if shared.stopping.load(Ordering::SeqCst) {
+            if !shared.pause(delay).await {
                 return;
             }
             delay = (delay * 2).min(MAX_RESTART_DELAY);
@@ -235,12 +243,33 @@ impl Shared {
                 Err(error) => {
                     error!(%error, "cannot restart embedded VictoriaMetrics");
                     // Sans processus à attendre, on temporise avant de réessayer.
-                    tokio::time::sleep(delay).await;
+                    if !shared.pause(delay).await {
+                        return;
+                    }
                     continue;
                 }
             };
+            // Arrêt demandé pendant le lancement : `stop` n'a peut-être pas vu le
+            // nouveau pid, on lui envoie le signal nous-mêmes.
+            if shared.stopping.load(Ordering::SeqCst) {
+                shared.signal(Signal::Term);
+            }
             info!("embedded VictoriaMetrics restarted");
         }
+    }
+
+    /// Attend `delay`, ou moins si l'arrêt est demandé entre-temps. Renvoie
+    /// `false` quand le superviseur doit s'arrêter.
+    async fn pause(&self, delay: Duration) -> bool {
+        tokio::select! {
+            _ = tokio::time::sleep(delay) => {}
+            _ = self.stop_requested.notified() => {}
+        }
+        !self.stopping.load(Ordering::SeqCst)
+    }
+
+    fn clear_pid(&self) {
+        *self.pid.lock().unwrap_or_else(|e| e.into_inner()) = None;
     }
 
     fn signal(&self, signal: Signal) {
@@ -321,5 +350,55 @@ mod tests {
             ("warn", "slow disk\tdetails".to_string())
         );
         assert_eq!(split_log_line("free text"), ("info", "free text".to_string()));
+    }
+
+    /// Un arrêt demandé pendant le délai de relance doit rendre la main tout de
+    /// suite, et le pid du processus sorti ne doit plus être signalé.
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn stop_during_the_restart_delay_returns_at_once() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let dir = tempfile::tempdir().unwrap();
+        let binary = dir.path().join("fake-vm");
+        std::fs::write(&binary, "#!/bin/sh\nexit 1\n").unwrap();
+        std::fs::set_permissions(&binary, std::fs::Permissions::from_mode(0o755)).unwrap();
+
+        let shared = Arc::new(Shared {
+            config: EmbeddedConfig {
+                binary,
+                data_path: dir.path().join("data"),
+                listen: "127.0.0.1:0".into(),
+                retention: "1d".into(),
+                memory: "1MB".into(),
+                admin_key: "test".into(),
+            },
+            stopping: AtomicBool::new(false),
+            stop_requested: Notify::new(),
+            pid: std::sync::Mutex::new(None),
+            supervisor: Mutex::new(None),
+        });
+        let child = shared.spawn_child().unwrap();
+        let supervisor = tokio::spawn(Shared::supervise(shared.clone(), child));
+        *shared.supervisor.lock().await = Some(supervisor);
+
+        // Le faux binaire sort aussitôt : le pid doit être effacé, signe que le
+        // superviseur est entré dans son délai de relance.
+        tokio::time::timeout(Duration::from_secs(5), async {
+            while shared.pid.lock().unwrap().is_some() {
+                tokio::time::sleep(Duration::from_millis(5)).await;
+            }
+        })
+        .await
+        .expect("le pid du processus sorti n'a pas été effacé");
+
+        let vm = EmbeddedVm { shared };
+        let started = Instant::now();
+        vm.stop().await;
+        assert!(
+            started.elapsed() < Duration::from_millis(500),
+            "stop() a attendu la fin du délai de relance ({:?})",
+            started.elapsed()
+        );
     }
 }

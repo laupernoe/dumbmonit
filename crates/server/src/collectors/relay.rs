@@ -22,7 +22,7 @@ use tokio::sync::{Notify, oneshot};
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
-use crate::collectors::Registry;
+use crate::collectors::{MAX_BACKFILL_MS, MAX_SKEW_AHEAD_MS, Registry};
 use crate::db;
 use crate::state::AppState;
 
@@ -275,7 +275,12 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
                 // Une sonde de disponibilité réussie peut constater une panne.
                 let mut verdict = outcome.error.clone();
                 if error.is_none() {
-                    let samples = prepare(&state.collectors, &target, outcome.samples.clone());
+                    let samples = prepare(
+                        &state.collectors,
+                        &target,
+                        outcome.samples.clone(),
+                        chrono::Utc::now().timestamp_millis(),
+                    );
                     verdict = db::targets::service_failure(&samples);
                     debug!(
                         target = target.id,
@@ -318,11 +323,22 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
 /// Les étiquettes sont celles du registre du serveur, sans les options du type :
 /// les `tag_*` que l'agent relais a posés d'après ses propres règles sont retirés
 /// (`apply_identity`).
-pub fn prepare(registry: &Registry, target: &Target, samples: Vec<Sample>) -> Vec<Sample> {
+pub fn prepare(
+    registry: &Registry,
+    target: &Target,
+    samples: Vec<Sample>,
+    now_ms: i64,
+) -> Vec<Sample> {
     let base_labels = registry.base_labels(target);
+    let oldest = now_ms - MAX_BACKFILL_MS;
+    let newest = now_ms + MAX_SKEW_AHEAD_MS;
     samples
         .into_iter()
-        .filter(|sample| sample.value.is_finite())
+        // Même fenêtre que pour les agents en poussée : une horloge déréglée sur
+        // le relais écrirait dans un passé ou un futur arbitraire.
+        .filter(|sample| {
+            sample.value.is_finite() && sample.ts_ms >= oldest && sample.ts_ms <= newest
+        })
         .map(|mut sample| {
             apply_identity(&base_labels, &mut sample.labels);
             sample
@@ -478,7 +494,7 @@ mod tests {
                 .with_label("tag_port", "8443"),
             Sample::new("mauvais", f64::NAN, MetricKind::Gauge, 1_000),
         ];
-        let prepared = prepare(&Registry::new(), &target(7), samples);
+        let prepared = prepare(&Registry::new(), &target(7), samples, 1_000);
         assert_eq!(prepared.len(), 1);
         assert_eq!(prepared[0].labels.get("target").map(String::as_str), Some("7"));
         assert_eq!(prepared[0].labels.get("host").map(String::as_str), Some("cible-7"));
@@ -487,5 +503,20 @@ mod tests {
         // un `tag_*` que la cible n'a pas disparaît.
         assert_eq!(prepared[0].labels.get("exported_host").map(String::as_str), Some("usurpateur"));
         assert!(!prepared[0].labels.contains_key("tag_port"));
+    }
+
+    #[test]
+    fn relayed_samples_outside_the_accepted_time_window_are_dropped() {
+        let now = 10_000_000_000_000;
+        let samples = vec![
+            Sample::new("ok", 1.0, MetricKind::Gauge, now),
+            Sample::new("limite_basse", 1.0, MetricKind::Gauge, now - MAX_BACKFILL_MS),
+            Sample::new("trop_ancien", 1.0, MetricKind::Gauge, now - MAX_BACKFILL_MS - 1),
+            Sample::new("limite_haute", 1.0, MetricKind::Gauge, now + MAX_SKEW_AHEAD_MS),
+            Sample::new("futur", 1.0, MetricKind::Gauge, now + MAX_SKEW_AHEAD_MS + 1),
+        ];
+        let prepared = prepare(&Registry::new(), &target(7), samples, now);
+        let names: Vec<&str> = prepared.iter().map(|s| s.metric.as_str()).collect();
+        assert_eq!(names, ["ok", "limite_basse", "limite_haute"]);
     }
 }

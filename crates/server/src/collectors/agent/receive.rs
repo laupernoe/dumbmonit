@@ -18,16 +18,7 @@ use crate::tsdb::SampleSink;
 use super::modules::{self, Module};
 use super::store::RegisterError;
 use super::{store, token};
-
-/// Antériorité maximale d'un échantillon accepté.
-///
-/// Un agent rattrape au plus quelques heures de coupure. Au-delà, l'horloge de la
-/// machine est fausse, et écrire ces points polluerait durablement les graphes
-/// d'une période déjà passée.
-const MAX_BACKFILL_MS: i64 = 30 * 24 * 3_600 * 1_000;
-
-/// Avance maximale tolérée sur l'horloge du serveur.
-const MAX_SKEW_AHEAD_MS: i64 = 3_600 * 1_000;
+use crate::collectors::{MAX_BACKFILL_MS, MAX_SKEW_AHEAD_MS};
 
 #[derive(Debug)]
 pub enum IngestError {
@@ -45,11 +36,9 @@ pub enum IngestError {
 
 /// Ce que le serveur répond à un agent lié dont il ne reconnaît pas le secret.
 ///
-/// Écrit pour la personne qui lira les journaux de la machine, pas pour la
-/// machine : il faut qu'elle sache quoi faire sans ouvrir la documentation.
-pub const BINDING_MISMATCH: &str = "This machine is already enrolled and bound to another agent installation. \
-     If you reinstalled it, open its device page in DumbMonit and click \
-     'Allow re-enrolment', then restart the agent.";
+/// Défini dans `dumbmonit_proto` : l'agent le reconnaît pour décider d'oublier
+/// son secret, il doit donc être le même des deux côtés.
+pub use dumbmonit_proto::BINDING_MISMATCH;
 
 /// Ce que le serveur répond à une machine connue mais jamais liée à son agent
 /// (enrôlée avant la liaison). Même destinataire : la personne qui lit le journal.

@@ -245,7 +245,7 @@ fn map_transport(error: &reqwest::Error, path: &str, timeout: Duration) -> Probe
     if error.is_timeout() {
         return ProbeError::Timeout(timeout);
     }
-    if is_certificate_error(error) {
+    if crate::http::is_certificate_error(error) {
         return ProbeError::Config(
             "TLS certificate rejected: management controllers ship with a self-signed \
              certificate. Add the tag \"insecure_tls = true\" on the device to knowingly \
@@ -257,13 +257,6 @@ fn map_transport(error: &reqwest::Error, path: &str, timeout: Duration) -> Probe
         return ProbeError::Protocol(format!("Unreadable response from {path}"));
     }
     ProbeError::Unreachable(format!("{path}: {}", cause_chain(error)))
-}
-
-fn is_certificate_error(error: &reqwest::Error) -> bool {
-    let chain = cause_chain(error).to_lowercase();
-    ["certificate", "unknownissuer", "notvalidfor", "certexpired", "tls"]
-        .iter()
-        .any(|motif| chain.contains(motif))
 }
 
 fn cause_chain(error: &reqwest::Error) -> String {

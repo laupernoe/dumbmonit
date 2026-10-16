@@ -1222,6 +1222,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+        "502": { $ref: "#/components/responses/BadGateway" }
 
   /api/metrics/query_range:
     get:
@@ -1261,6 +1262,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+        "502": { $ref: "#/components/responses/BadGateway" }
 
   # ---------------------------------------------------------------- alertes
   /api/alerts:
@@ -1722,6 +1724,9 @@ paths:
       summary: Update a notification channel
       description: >-
         Omitting `secrets` keeps the stored ones; `"secrets": {}` clears them.
+        Otherwise secrets are merged by key: a key sent replaces its value, a
+        key left out is kept, and `null` or `""` clears it. Changing the kind
+        or the destination replaces the whole set instead.
         In `policy`, omitting `matcher` keeps the routing filter and
         `"matcher": null` clears it.
       x-token-scope: write
@@ -2709,13 +2714,17 @@ paths:
       description: |
         Nodes and links derived from what the server already knows, never typed in by hand.
         Each link carries its `source`: `parent` (declared dependency, the one alert
-        suppression follows), `relay` (the relay agent that polls the device), `hypervisor`
+        suppression follows), `service` (a service an agent found, hanging from its machine),
+        `relay` (the relay agent that polls the device), `hypervisor`
         (a hypervisor and its guests, from the latest Proxmox, XCP-ng, Nutanix, vSphere or
         libvirt metrics) and `lldp` (an LLDP neighbour seen by an SNMP switch). A pair of
         nodes is linked once, by the surest source. A guest or neighbour is linked to a
         monitored device only when its name designates exactly one device; a guest that
         matches none becomes its own node (`target_id` null), an unknown LLDP neighbour is
         left out. Addresses are not included. States are read from `GET /api/targets`.
+        A node's `site` is found without configuration: the device's `site` tag (except on
+        UniFi, where it names the controller site), else the site its agent or relay agent
+        declares, else the name of the relay agent that polls it (`site_source` says which).
       x-token-scope: read
       responses:
         "200":
@@ -4907,6 +4916,13 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    BadGateway:
+      description: >-
+        A service the server depends on (the metrics database) is unreachable,
+        too slow or answered with an error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
     Svg:
       description: An SVG badge, `Cache-Control public, max-age=60`.
       content:
@@ -5907,7 +5923,7 @@ components:
           type: [object, "null"]
           additionalProperties: true
           writeOnly: true
-          description: "Absent or `null` on `PUT` keeps the stored secrets; `{}` clears them."
+          description: "Absent or `null` on `PUT` keeps the stored secrets; `{}` clears them. Otherwise merged by key: a key sent replaces its value, a key left out is kept, `null` or `\"\"` clears it; a new kind or destination replaces the whole set."
         policy:
           type: [object, "null"]
           description: Each field optional; absent keeps the stored policy.
@@ -6357,7 +6373,11 @@ components:
         name: { type: string }
         kind: { type: string, description: "The device type; `vm` or `container` for a guest." }
         group_name: { type: string, description: Folder; a guest takes its hypervisor's. }
-        site: { type: [string, "null"], description: Site declared by the relay agent (its own, or the one that polls the device). }
+        site: { type: [string, "null"], description: "Remote site the node belongs to; null for the main site." }
+        site_source:
+          type: [string, "null"]
+          enum: [tag, agent, relay, null]
+          description: "Where `site` comes from: the `site` tag, the site an agent declares, or the relay agent that polls the device (its name)."
         host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
         running: { type: [boolean, "null"], description: Guest only, running at the last measurement. }
     TopologyEdge:
@@ -6366,7 +6386,7 @@ components:
       properties:
         from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
         to: { type: string }
-        source: { type: string, enum: [parent, relay, hypervisor, lldp] }
+        source: { type: string, enum: [parent, service, relay, hypervisor, lldp] }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]

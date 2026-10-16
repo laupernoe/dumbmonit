@@ -1,21 +1,20 @@
 <script lang="ts">
 	/**
-	 * The map as an indented list: the same trees, folder by folder. The
-	 * default on a phone, where a graph of a whole estate is unreadable, and
-	 * a full equivalent of the map for screen readers.
+	 * The map as an indented list: the same trees, site by site. A full
+	 * equivalent of the map for screen readers and for whoever prefers to read.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
 	import { Box, Monitor } from 'lucide-svelte';
-	import type { ListRow, NodeState } from './layout';
+	import type { ListRow, NodeState, SiteInfo } from './layout';
 	import { sourceShort } from './legend';
 
 	interface Props {
-		groups: { group: string; rows: ListRow[] }[];
+		sections: { site: SiteInfo; rows: ListRow[] }[];
 	}
 
-	let { groups }: Props = $props();
+	let { sections }: Props = $props();
 
 	function stateText(state: NodeState): string {
 		if (state === 'running') return m.topology_state_running();
@@ -30,10 +29,10 @@
 </script>
 
 <div class="flex flex-col gap-4" aria-label={m.topology_list_label()} role="region">
-	{#each groups as section (section.group)}
+	{#each sections as section (section.site.key)}
 		<section class="overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
 			<h2 class="border-b border-line bg-surface-2 px-4 py-2 text-xs font-bold tracking-wide text-ink-2 uppercase">
-				{section.group || m.devices_folders_none()}
+				{section.site.name ?? m.topology_site_main()}
 			</h2>
 			<ul>
 				{#each section.rows as row (row.node.id)}
@@ -63,7 +62,7 @@
 							{#if row.down}
 								<span class="shrink-0 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-bold text-warning-ink">{m.topology_legend_down()}</span>
 							{:else if row.impacted}
-								<span class="shrink-0 rounded-full border border-dashed border-advisory px-2 py-0.5 text-xs font-semibold text-advisory-ink">{m.topology_state_impacted()}</span>
+								<span class="shrink-0 rounded-full border border-dashed border-advisory px-2 py-0.5 text-xs font-semibold text-advisory-ink">{m.topology_state_suppressed()}</span>
 							{/if}
 						</svelte:element>
 					</li>

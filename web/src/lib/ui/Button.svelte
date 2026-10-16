@@ -34,7 +34,7 @@
 	}: Props = $props();
 
 	const base =
-		'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-[transform,box-shadow,background-color,border-color,color] duration-200 ease-out-expo disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-px';
+		'relative inline-flex select-none items-center justify-center gap-2 whitespace-nowrap rounded-lg font-semibold transition-[transform,box-shadow,background-color,border-color,color] duration-200 ease-out-expo max-sm:duration-100 disabled:cursor-not-allowed disabled:opacity-50 active:translate-y-px';
 	const sizes = {
 		sm: 'h-8 max-sm:h-10 px-3 text-[0.8125rem]',
 		md: 'h-10 px-4 text-sm',

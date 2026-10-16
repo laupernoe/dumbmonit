@@ -10,7 +10,7 @@
 	import type { Snippet } from 'svelte';
 	import { fly } from 'svelte/transition';
 	import { X } from 'lucide-svelte';
-	import { reducedMotion } from './motion';
+	import { reducedMotion, isPhone } from './motion';
 
 	interface Props {
 		/** "3 selected". */
@@ -55,7 +55,7 @@
 		if (event.key === 'Escape' && !event.defaultPrevented) onexit();
 	}
 
-	const enter = () => ({ y: 16, duration: reducedMotion() ? 0 : 220 });
+	const enter = () => ({ y: 16, duration: reducedMotion() ? 0 : isPhone() ? 140 : 220 });
 </script>
 
 <svelte:window {onkeydown} />

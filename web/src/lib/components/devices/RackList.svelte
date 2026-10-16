@@ -71,7 +71,7 @@
 
 	const LIST_CLASS: Record<RackView, string> = {
 		compact: 'flex flex-col divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-lift',
-		tiles: 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-3'
+		tiles: 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-3 max-sm:grid-cols-2 max-sm:gap-2'
 	};
 </script>
 

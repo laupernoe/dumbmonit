@@ -15,6 +15,7 @@
 ## Checklist
 
 - [ ] `cargo fmt --all --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test` pass (in the `dumbmonit-devenv` container is fine)
+- [ ] New functionality and bug fixes come with tests (a bug fix with a regression test that fails without the fix)
 - [ ] `npm run check` passes in `web/` (if the UI changed)
 - [ ] `web/src/lib/api/types.ts` still mirrors the Rust API structs (if the API changed)
 - [ ] New device kind or channel is described for the UI (`api/collectors.rs` / `notify/catalog.rs`) and documented in `docs/`

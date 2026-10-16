@@ -434,7 +434,7 @@ fn map_transport(error: &reqwest::Error, api: &str, timeout: Duration) -> ProbeE
     if error.is_timeout() {
         return ProbeError::Timeout(timeout);
     }
-    if is_certificate_error(error) {
+    if crate::http::is_certificate_error(error) {
         return ProbeError::Config(SELF_SIGNED_HINT.to_string());
     }
     if error.is_decode() {
@@ -449,18 +449,6 @@ pub const SELF_SIGNED_HINT: &str = "TLS certificate rejected: a Synology NAS pre
      \"insecure_tls = true\" on the device to knowingly accept it, install a \
      trusted certificate on the NAS (Let's Encrypt is built into DSM), or switch \
      the device to \"scheme = http\".";
-
-/// Vrai si l'échec vient de la validation du certificat.
-///
-/// `reqwest` range ces erreurs parmi les erreurs de connexion et n'expose pas de
-/// prédicat dédié : on inspecte donc la chaîne de causes, qui contient le libellé
-/// de `rustls`.
-fn is_certificate_error(error: &reqwest::Error) -> bool {
-    let chain = cause_chain(error).to_lowercase();
-    ["certificate", "certificat", "unknownissuer", "notvalidfor", "certexpired", "tls"]
-        .iter()
-        .any(|motif| chain.contains(motif))
-}
 
 fn cause_chain(error: &reqwest::Error) -> String {
     let mut message = error.to_string();

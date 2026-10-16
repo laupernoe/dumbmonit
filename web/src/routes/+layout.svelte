@@ -16,7 +16,7 @@
 	import Tour from '#lib/components/demo/Tour.svelte';
 	import WhatsNew from '#lib/components/WhatsNew.svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
-	import { reducedMotion } from '#lib/ui/index.js';
+	import { calmMotion } from '#lib/ui/index.js';
 	import { SHORTCUTS } from '#lib/palette/shortcuts.js';
 	import { createSequenceMatcher, isTypingTarget } from '#lib/palette/logic.js';
 	import { hostedStatusSlug } from '#lib/status-host.js';
@@ -142,7 +142,8 @@
 		// Wall mode covers the bars with its own overlay: a captured bar would
 		// float above it for the length of the fade.
 		if ([navigation.from, navigation.to].some((end) => end.url.pathname.startsWith('/wall'))) return;
-		if (reducedMotion()) return;
+		// Phones swap pages at once: a full-screen snapshot cross-fade costs more than it shows.
+		if (calmMotion()) return;
 		return new Promise<void>((resolve) => {
 			const transition = document.startViewTransition(async () => {
 				resolve();
@@ -187,7 +188,7 @@
 			<DemoBanner />
 		{/if}
 		<NavBar />
-		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-6 pb-24 sm:px-6 sm:pb-12">
+		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-12">
 			{@render children()}
 		</main>
 		{#if CommandPalette && !onWall}

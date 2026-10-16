@@ -21,8 +21,9 @@ use dumbmonit_proto::{ProbeError, Target};
 /// zéro, donc un taux de disponibilité faussement optimiste.
 pub const DEFAULT_TIMEOUT_SECONDS: u64 = 5;
 
-/// Borne haute du délai par sonde. Au-delà, le délai global du planificateur
-/// prendrait le dessus et le point d'indisponibilité serait perdu.
+/// Borne haute du délai par sonde. Le registre relève son propre délai jusqu'à cette
+/// valeur (`Registry::deadline_for`) ; au-delà, il ne le ferait plus et le point
+/// d'indisponibilité serait perdu.
 const MAX_TIMEOUT_SECONDS: u64 = 60;
 
 /// Valeur d'une étiquette, débarrassée de ses espaces, `None` si vide.
@@ -78,8 +79,7 @@ pub fn parse_timeout(target: &Target, key: &str) -> Result<Duration, ProbeError>
     if !(1..=MAX_TIMEOUT_SECONDS).contains(&seconds) {
         return Err(ProbeError::Config(format!(
             "\"{key}\" must be between 1 and {MAX_TIMEOUT_SECONDS} seconds; beyond that, \
-             the scheduler's global timeout would interrupt the probe before it could \
-             record the outage"
+             the probe could not be given enough time to record the outage"
         )));
     }
     Ok(Duration::from_secs(seconds))

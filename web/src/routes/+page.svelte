@@ -34,6 +34,7 @@
 	import { displayState, formatRelative } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import { ChevronDown } from 'lucide-svelte';
 	import { Button, EmptyState, Plate, Skeleton, ErrorNotice, DecryptText, ClickSpark, reducedMotion } from '#lib/ui/index.js';
 	import SkyScene, { type PigeonMood } from '#lib/components/overview/SkyScene.svelte';
 	import Briefing from '#lib/components/overview/Briefing.svelte';
@@ -45,6 +46,7 @@
 	import { readLastVisit, writeLastVisit } from '#lib/components/overview/lastVisit.js';
 	import NeedsYouCompact from '#lib/components/overview/NeedsYouCompact.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import { viewport } from '#lib/stores/viewport.svelte.js';
 
 	const DAY_MS = 24 * 3600 * 1000;
 	const HISTORY_DAYS = 7;
@@ -265,6 +267,11 @@
 	// many whole lines as its box holds, counting the rest. Phones keep the
 	// natural flow, with the list cut to a handful of lines.
 	const FIT_QUERY = '(min-width: 1024px) and (min-height: 560px)';
+	// Phones fit too, in their own way: no sky scene, the sentence, then "Needs
+	// you" cut to the lines the screen holds above the tab bar; the briefing and
+	// the week's figures wait behind one tap so nothing has to scroll.
+	const phone = $derived(viewport.phone);
+	let briefOpen = $state(false);
 	/** One compact line (h-14) and the gap between two. */
 	const ROW_PX = 56;
 	const GAP_PX = 6;
@@ -276,8 +283,12 @@
 	let fitHeight = $state(0);
 	let listHeight = $state(0);
 	const needsRows = $derived(
-		fit ? Math.max(1, Math.floor((listHeight + GAP_PX) / (ROW_PX + GAP_PX))) : PHONE_ROWS
+		fit || (phone && listHeight > 0)
+			? Math.max(1, Math.floor((listHeight + GAP_PX) / (ROW_PX + GAP_PX)))
+			: PHONE_ROWS
 	);
+	/** Phones hold the page to the window while the briefing is folded away. */
+	const phoneFit = $derived(phone && !briefOpen);
 	/** Problems still open (known ones, acked or snoozed, left out), for the heading's count. */
 	const needsCount = $derived(
 		sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row)).length
@@ -286,7 +297,7 @@
 	function measure() {
 		if (!root) return;
 		fit = window.matchMedia(FIT_QUERY).matches;
-		if (!fit) return;
+		if (!fit && !viewport.phone) return;
 		// Below the page: the main area's bottom padding and whatever the layout
 		// puts in the flow after it (the version tag).
 		// `main` is the layout column's flex-1, so the gap between their bottoms
@@ -300,7 +311,8 @@
 				: 0;
 		const top = root.getBoundingClientRect().top + window.scrollY;
 		// One pixel spare: fractional heights (the version tag) round the document up.
-		fitHeight = Math.max(0, Math.floor(window.innerHeight - top - below + RECLAIM_PX) - 1);
+		const reclaim = fit ? RECLAIM_PX : 0;
+		fitHeight = Math.max(0, Math.floor(window.innerHeight - top - below + reclaim) - 1);
 	}
 
 	$effect(() => {
@@ -328,7 +340,7 @@
 <div
 	bind:this={root}
 	class="flex min-w-0 flex-col gap-5 lg:gap-4"
-	style:height={fit && fitHeight > 0 ? `${fitHeight}px` : null}
+	style:height={(fit || phoneFit) && fitHeight > 0 ? `${fitHeight}px` : null}
 	style:margin-bottom={fit && fitHeight > 0 ? `-${RECLAIM_PX}px` : null}
 >
 	{#if pageError && targets.length === 0}
@@ -361,9 +373,13 @@
 		<!-- The sky, full width; the plate sits at the bottom of the band. -->
 		<section
 			data-tour="weather"
-			class="rise-in relative flex min-h-[140px] shrink-0 flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift sm:min-h-[200px] lg:h-[clamp(160px,25dvh,250px)] lg:min-h-0"
+			class={phone
+				? 'relative shrink-0'
+				: 'rise-in relative flex min-h-[140px] shrink-0 flex-col justify-end overflow-hidden rounded-[var(--radius-card)] border border-line shadow-lift sm:min-h-[200px] lg:h-[clamp(160px,25dvh,250px)] lg:min-h-0'}
 		>
-			<SkyScene {condition} mood={pigeon} playful frame={false} class="absolute inset-0 h-full w-full" />
+			{#if !phone}
+				<SkyScene {condition} mood={pigeon} playful frame={false} class="absolute inset-0 h-full w-full" />
+			{/if}
 
 			{#if !noDevices && !showGuide}
 				<!--
@@ -378,21 +394,23 @@
 			{/if}
 
 			<div
-				class="relative m-3 mt-10 rounded-lg bg-surface/85 px-4 py-3 shadow-lift backdrop-blur sm:m-5 sm:mt-20 sm:max-w-[680px] sm:px-5 sm:py-4 lg:mt-5"
+				class={phone
+					? 'relative'
+					: 'relative m-3 mt-10 rounded-lg bg-surface/85 px-4 py-3 shadow-lift backdrop-blur sm:m-5 sm:mt-20 sm:max-w-[680px] sm:px-5 sm:py-4 lg:mt-5'}
 			>
 				<DecryptText
 					tag="h1"
 					text={sky.sentence}
 					speed={16}
 					hold={2}
-					class="sky-sentence display text-[1.75rem] leading-[1.05] text-ink sm:text-[2.25rem] xl:text-[2.5rem]"
+					class="sky-sentence display text-[1.5rem] leading-[1.08] text-ink sm:text-[2.25rem] xl:text-[2.5rem]"
 				/>
 				{#if !noDevices}
 					<div class="mt-2 flex flex-wrap items-center gap-2">
 						{#each sky.plates as plate (plate.label)}
 							<Plate tone={plate.tone} label={plate.label} bare={plate.bare} />
 						{/each}
-						{#if checkedLabel}
+						{#if checkedLabel && !phone}
 							<span class="tnum text-[0.8125rem] text-ink-2">{m.overview_page_checked({ when: checkedLabel })}</span>
 						{/if}
 					</div>
@@ -434,9 +452,9 @@
 				</EmptyState>
 			</div>
 		{:else}
-			<div class="grid min-h-0 flex-1 grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-12">
+			<div class={phone ? 'flex min-h-0 flex-1 flex-col gap-4' : 'grid min-h-0 flex-1 grid-cols-1 gap-x-8 gap-y-6 lg:grid-cols-12'}>
 				<!-- Needs you: what to act on comes first. -->
-				<section class="rise-in flex min-h-0 min-w-0 flex-col lg:col-span-7" style={`--rise-delay: ${STAGGER_MS}ms`}>
+				<section class="rise-in flex min-h-0 min-w-0 flex-col max-sm:flex-1 lg:col-span-7" style={`--rise-delay: ${STAGGER_MS}ms`}>
 					<h2 class="mb-2 flex min-h-8 items-center gap-2 text-base font-semibold tracking-tight text-ink">
 						{m.overview_page_needs_you()}
 						{#if needsCount > 0}
@@ -444,15 +462,28 @@
 						{/if}
 					</h2>
 					<div class="min-h-0 flex-1" bind:clientHeight={listHeight}>
-						<NeedsYouCompact {sky} {checkedLabel} rows={needsRows} fill={fit} />
+						<NeedsYouCompact {sky} {checkedLabel} rows={needsRows} fill={fit || phoneFit} />
 					</div>
 				</section>
 
-				<div class="flex min-h-0 min-w-0 flex-col gap-6 lg:col-span-5 lg:gap-4">
+				{#if phone}
+					<!-- Phones: the briefing and the week's figures behind one tap. -->
+					<button
+						type="button"
+						class="-my-2 flex min-h-11 shrink-0 items-center justify-between gap-3 text-left text-[0.9375rem] font-semibold text-ink"
+						aria-expanded={briefOpen}
+						aria-controls="overview-brief"
+						onclick={() => (briefOpen = !briefOpen)}
+					>
+						{m.overview_page_since()}
+						<ChevronDown class={`size-4 shrink-0 text-ink-3 ${briefOpen ? 'rotate-180' : ''}`} aria-hidden="true" />
+					</button>
+				{/if}
+				<div id="overview-brief" class="flex min-h-0 min-w-0 flex-col gap-6 lg:col-span-5 lg:gap-4" hidden={phone && !briefOpen}>
 					<!-- Since you last looked -->
 					<section class="rise-in min-w-0" style={`--rise-delay: ${STAGGER_MS * 2}ms`}>
 						<div class="mb-2 flex min-h-8 items-center justify-between gap-3">
-							<h2 class="text-base font-semibold tracking-tight text-ink">{m.overview_page_since()}</h2>
+							<h2 class="text-base font-semibold tracking-tight text-ink max-sm:sr-only">{m.overview_page_since()}</h2>
 							<Button variant="ghost" size="sm" onclick={markRead} class="max-sm:!h-10">{m.overview_page_mark_read()}</Button>
 						</div>
 						<Briefing sentences={briefing} />
@@ -470,7 +501,7 @@
 				</div>
 			</div>
 
-			{#if !showGuide}
+			{#if !showGuide && !phone}
 				<div class="sm:hidden">
 					<ClickSpark>
 						<Button variant="primary" href="/targets/new" class="w-full">{m.overview_first_device_action()}</Button>

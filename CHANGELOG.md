@@ -5,6 +5,116 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.9.1 — 2026-10-16
+
+### Changed
+
+- **The map is a dependency mesh.** One node per monitor, with its icon and a
+  status badge; declared parents are arrows that shape the hierarchy, agent
+  services, hypervisor guests, relays and LLDP neighbours are lighter lines. A
+  monitor that is down stands out with everything it hides (suppressed).
+  Hovering a node lights up what it depends on and what depends on it; a click
+  opens its panel.
+- **Remote sites, found on their own.** Monitors behind a relay agent, on an
+  agent that declares a site, or with a `site` tag are drawn as islands joined
+  to the main site by a WAN link. No configuration needed.
+- **Folders only on request.** The map ignores folders unless **Group by
+  folder** is on (remembered in the browser); the folder and site filter is
+  gone. Export to SVG/PNG and printing are unchanged.
+- **Reproducible builds.** Two builds of the same commit now give bit-for-bit
+  identical binaries (server, Linux, Windows and FreeBSD agents), web UI files
+  and Docker images: the web UI version identifier is the commit instead of
+  the build time, embedded files carry no modification date, the Windows agent
+  gets a fixed link date, and the images are built with the commit date as
+  `SOURCE_DATE_EPOCH` (`rewrite-timestamp`). A new workflow builds every
+  change twice on two runners and fails on any difference. How to check a
+  release yourself:
+  [Reproducible builds](https://dumbmonit.readthedocs.io/en/latest/development/reproducible-builds/).
+- **Phones: minimal and still.** Under 640 px the Overview fits one screen,
+  lists scroll under a fixed toolbar, Tiles show two per row, decorative
+  animations (cascades, blurred titles, breathing lights, the animated sky) are
+  off, the bottom bar has four entries and field hints appear only while
+  typing. Nothing changes on a computer.
+
+### Fixed
+
+- **Status page and report availability** no longer forgets the days before a
+  monitor's labels changed (renamed, tags edited, or the upgrade to
+  0.1.0-alpha.7 that stopped copying type options such as `port` into `tag_*`
+  labels): every `dumbmonit_up` series of a device and every
+  `dumbmonit_probe_success` series of an HTTP/uptime monitor is now merged, so
+  those days show their real uptime instead of "no data" or a partial figure.
+  The response-time graph of the status page merges them the same way.
+- **Status page uptime bars** now come with a colour key (99.5% or more, 95 to
+  99.5%, under 95%, no data), so a day with some downtime is no longer read as
+  a day the service was down; the thresholds live in one place shared by the bars
+  and the key.
+- **Alert notifications.** An alert whose condition came back right after it
+  resolved fired again without telling anyone; it is now announced as a new
+  alert. A resolution is announced even when the alert has meanwhile been
+  suppressed by a parent or silenced, as long as its firing was announced. The
+  handoff to the escalation channel is no longer lost when the first
+  announcement left late (after a maintenance window) or when the severity
+  escalation fell due in the same cycle.
+- **Last hardcoded strings.** API error messages and hints, the error page and
+  the quick-silence name follow the interface language, and absolute dates use
+  the locale's format.
+- **Stale alerts.** Disabling a rule now clears its alerts at once (active ones
+  leave a silent "rule disabled" entry in the history) instead of leaving them
+  firing in the UI, or dropping them without a trace. An evaluation cycle
+  running while a monitor or rule was removed no longer brings its alerts back
+  (which then "resolved" with a notification). Deleting a rule also deletes its
+  per-monitor overrides, so a new rule with the same name no longer inherits
+  them.
+- **Failed notifications.** A delivery refused for good (revoked webhook,
+  deleted bot, broken channel settings) is no longer resent every cycle: the
+  error is shown on the channel and the message dropped. Temporary failures
+  (timeout, 429, 5xx) are retried with a growing delay, from 1 minute up to
+  30 minutes.
+- **Agent backlog.** An error page from a reverse proxy (400 or 404 without
+  DumbMonit's error format, for instance during maintenance) no longer makes
+  the agent throw away its whole buffer: it keeps the measurements and
+  retries. A batch too large for a proxy (413) is split into smaller ones
+  instead of being lost. When the server keeps none of a batch's
+  measurements, the agent now warns that the machine's clock is probably off.
+- **Shutdown.** Stopping the container no longer loses the last measurements
+  still waiting to be written: they are flushed to VictoriaMetrics before it
+  stops. Stopping while the embedded VictoriaMetrics waits to restart after a
+  crash now returns at once instead of waiting for the full grace period.
+
+- **SNMP survives a lost packet.** Each request now gets a few seconds with up
+  to two resends instead of one request lasting the whole probe, so a single
+  dropped UDP datagram no longer marks a device down. An SNMPv1 device that
+  does not know one of the requested values no longer loses the other values
+  of the batch.
+- **Uptime checks with a long timeout.** A check whose own timeout is longer
+  than `DUMBMONIT_PROBE_TIMEOUT_SECS` (up to 60 s) is no longer cut short and
+  reported as unreachable; it records its failure like any other check.
+- **Synology and certificate errors.** A Synology NAS whose system,
+  utilization and storage calls all fail is reported down (timeout) or
+  misconfigured (refused login) instead of up. On Proxmox VE, PBS, PDM, PMG,
+  Redfish and Synology, only a rejected certificate counts as a configuration
+  error: a host name containing `tls` or a handshake cut by a rebooting device
+  now raises the down alert.
+- **Relay agents with a wrong clock.** Values relayed with a timestamp more than
+  30 days old or more than an hour ahead are dropped, as they already were for
+  agents.
+- **Metrics API when VictoriaMetrics is down.** `/api/metrics/query` and
+  `/api/metrics/query_range` answer 502 instead of 400 when the metrics
+  database is unreachable or failing; 400 is kept for queries it rejects.
+
+- **Editing a user is all or nothing.** A password refused by
+  `PUT /api/users/{id}` no longer leaves the role or display name changed.
+- **Editing one secret of a channel keeps the others.** Secrets are merged by
+  key (Pushover's user key survives a new token). `"secrets": {}` still clears
+  them all, and a new kind or destination still asks for every secret again.
+- **HTTP probe headers stay with their target.** Custom headers (API keys,
+  tokens) are no longer sent to another origin on a redirect, like the
+  credential.
+- **Agents keep their binding on foreign 403s.** Only the server's own binding
+  refusal makes an agent forget its secret, not a 403 from a reverse proxy or a
+  firewall.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8

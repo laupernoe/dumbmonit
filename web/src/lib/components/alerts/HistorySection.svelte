@@ -333,9 +333,10 @@
 	{#if groups.length === 0}
 		<EmptyState icon={History} title={m.alerts_history_nomatch_title()} description={m.alerts_history_nomatch_description()} primary={{ label: m.devices_targets_clear_filters(), onclick: clearFilters }} />
 	{:else}
+		<!-- Phones skip laying out the days off screen (up to 200 entries): scrolling stays smooth. -->
 		<div class="space-y-6">
 			{#each groups as group, gi (group.key)}
-				<section aria-labelledby={`history-day-${group.key}`} class="rise-in" style={`--rise-delay: ${Math.min(gi, 6) * 40}ms`}>
+				<section aria-labelledby={`history-day-${group.key}`} class="rise-in max-sm:[contain-intrinsic-size:auto_480px] max-sm:[content-visibility:auto]" style={`--rise-delay: ${Math.min(gi, 6) * 40}ms`}>
 					<h3 id={`history-day-${group.key}`} class="label-tape mb-2 flex items-center gap-3">
 						{group.label}
 						<span class="h-px flex-1 bg-line" aria-hidden="true"></span>

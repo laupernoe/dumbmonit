@@ -41,7 +41,7 @@
 
 {#snippet swatch(value: ThemePreference)}
 	<!-- A miniature page: ground, a surface bar, a signal trace. -->
-	<span class="relative block h-12 w-full overflow-hidden rounded-lg border border-line" aria-hidden="true">
+	<span class="relative block h-12 w-full overflow-hidden rounded-lg border border-line max-sm:h-8" aria-hidden="true">
 		{#if value === 'auto'}
 			<span class="absolute inset-0" style:background={`linear-gradient(105deg, ${DAY.canvas} 50%, ${NIGHT.canvas} 50%)`}></span>
 			<span class="absolute top-2 left-2 h-2 w-[calc(50%-0.75rem)] rounded-sm" style:background={DAY.surface} style:border={`1px solid ${DAY.ink}22`}></span>
@@ -58,12 +58,13 @@
 {/snippet}
 
 <Panel id="appearance" title={m.settings_language_theme_title()} description={m.settings_language_theme_description()}>
-	<div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
+	<div class="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4 max-sm:mb-3 max-sm:flex-nowrap max-sm:pb-3">
 		<label for="settings-language" class="text-sm font-semibold text-ink">{m["settings.appearance.language_label"]()}</label>
-		<LanguageSelect id="settings-language" class="w-full sm:w-auto sm:min-w-56" />
+		<LanguageSelect id="settings-language" class="w-full max-sm:w-auto max-sm:min-w-0 max-sm:flex-1 sm:w-auto sm:min-w-56" />
 	</div>
 	<p class="mb-2 text-sm font-semibold text-ink">{m.settings_appearance_theme()}</p>
-	<div class="grid gap-2 sm:grid-cols-3" role="radiogroup" aria-label={m.settings_appearance_theme()}>
+	<!-- Phones: three small swatches side by side, the name under each. -->
+	<div class="grid gap-2 max-sm:grid-cols-3 sm:grid-cols-3" role="radiogroup" aria-label={m.settings_appearance_theme()}>
 		{#each OPTIONS as option, i (option.value)}
 			{@const selected = theme.preference === option.value}
 			{@const Icon = option.icon}
@@ -72,17 +73,17 @@
 				role="radio"
 				aria-checked={selected}
 				tabindex={selected ? 0 : -1}
-				class={`faceplate flex flex-col gap-3 p-3 text-left ${selected ? '!border-signal ring-2 ring-signal/30' : ''}`}
+				class={`faceplate flex flex-col gap-3 p-3 text-left max-sm:gap-2 max-sm:p-2 ${selected ? '!border-signal ring-2 ring-signal/30' : ''}`}
 				data-interactive
 				onclick={() => theme.set(option.value)}
 				onkeydown={(e) => onkeydown(e, i)}
 			>
 				{@render swatch(option.value)}
 				<span class="flex items-center gap-2">
-					<Icon class="size-4 shrink-0 text-ink-2" aria-hidden="true" />
+					<Icon class="size-4 shrink-0 text-ink-2 max-sm:hidden" aria-hidden="true" />
 					<span class="min-w-0 flex-1">
 						<span class="block text-sm font-semibold text-ink">{option.label()}</span>
-						<span class="block text-[0.8125rem] text-ink-2">{option.hint()}</span>
+						<span class="block text-[0.8125rem] text-ink-2 max-sm:hidden">{option.hint()}</span>
 					</span>
 					{#if selected}<Check class="size-4 shrink-0 text-signal-ink" aria-hidden="true" />{/if}
 				</span>

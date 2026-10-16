@@ -13,7 +13,7 @@ use crate::api::auth::UserView;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::AdminUser;
 use crate::auth::users::{self, NewUser, Role, User};
-use crate::auth::{AuthError, AuthResult, audit, oidc, password, session};
+use crate::auth::{AuthError, AuthResult, audit, oidc, password};
 use crate::state::AppState;
 
 #[derive(Deserialize)]
@@ -137,30 +137,27 @@ pub async fn update(
         return Err(AuthError::Conflict("You cannot disable your own account.".into()));
     }
 
-    if let Some(display_name) = &payload.display_name {
-        users::set_display_name(&state.pool, id, display_name.trim()).await?;
-    }
-    if let Some(role) = payload.role
-        && role != user.role
-    {
-        users::set_role(&state.pool, id, role).await?;
-    }
-    if let Some(password) = payload.password.filter(|password| !password.is_empty()) {
-        password::validate(&password)?;
-        let hash = password::hash(password).await?;
-        users::set_password_hash(&state.pool, id, &hash).await?;
-        // Un mot de passe remis par un administrateur ferme les sessions du compte :
-        // c'est le geste qu'on fait quand on croit le compte compromis.
-        session::delete_for_user(&state.pool, id, None).await?;
-    }
-    if let Some(disabled) = payload.disabled
-        && disabled != user.disabled
-    {
-        users::set_disabled(&state.pool, id, disabled).await?;
-        if disabled {
-            session::delete_for_user(&state.pool, id, None).await?;
+    // Tout ce qui peut être refusé l'est avant la première écriture : un mot de
+    // passe invalide ne doit pas laisser un rôle déjà changé.
+    let hash = match payload.password.filter(|password| !password.is_empty()) {
+        Some(password) => {
+            password::validate(&password)?;
+            Some(password::hash(password).await?)
         }
-    }
+        None => None,
+    };
+    let disabled = payload.disabled.filter(|disabled| *disabled != user.disabled);
+    let changes = users::AccountChanges {
+        display_name: payload.display_name.as_deref().map(str::trim),
+        role: payload.role.filter(|role| *role != user.role),
+        // Un mot de passe remis par un administrateur ferme les sessions du compte :
+        // c'est le geste qu'on fait quand on croit le compte compromis. Désactiver
+        // le compte les ferme aussi.
+        close_sessions: hash.is_some() || disabled == Some(true),
+        password_hash: hash.as_deref(),
+        disabled,
+    };
+    users::apply_changes(&state.pool, id, &changes).await?;
 
     let user = load(&state, id).await?;
     audit::record(&state.pool, Some(&me.username), "user.updated", Some(&user.username), ip).await;
