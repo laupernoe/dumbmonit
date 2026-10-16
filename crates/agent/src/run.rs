@@ -425,15 +425,20 @@ impl Agent {
         info!("this machine is now bound to this agent installation");
     }
 
-    /// Le serveur ne reconnaît pas notre liaison.
+    /// Le serveur ne reconnaît pas notre liaison — ou quelqu'un a répondu 403.
     ///
-    /// On oublie le secret : le garder n'ouvre rien, et repartir sans lui est
-    /// exactement ce qu'il faut faire dès que quelqu'un aura cliqué « Allow
-    /// re-enrolment » dans l'interface. Les mesures restent en tampon
-    /// entre-temps, l'agent réessaie avec sa temporisation habituelle.
+    /// Le secret n'est oublié que sur le refus de liaison du serveur lui-même :
+    /// le garder n'ouvre rien, et repartir sans lui est ce qu'il faut faire dès
+    /// que quelqu'un aura cliqué « Allow re-enrolment » dans l'interface. Tout
+    /// autre 403 — mandataire inverse, pare-feu applicatif — ne dit rien de la
+    /// liaison : effacer le secret sur sa foi obligerait à réenrôler chaque
+    /// machine à la main. Les mesures restent en tampon dans les deux cas,
+    /// l'agent réessaie avec sa temporisation habituelle.
     fn on_binding_refused(&mut self, message: &str) {
-        self.binding.forget();
-        self.client.set_secret(None);
+        if message == dumbmonit_proto::BINDING_MISMATCH {
+            self.binding.forget();
+            self.client.set_secret(None);
+        }
         if self.binding_refused {
             debug!(reason = message, "still refused by the server");
             return;
@@ -657,7 +662,8 @@ mod tests {
 
         // Le serveur ne reconnaît plus la liaison : on l'oublie, on garde les
         // mesures, et le refus n'est signalé qu'une fois.
-        *answer.lock().unwrap() = (403, r#"{"error":"re-enrol me"}"#.to_string());
+        *answer.lock().unwrap() =
+            (403, serde_json::json!({ "error": dumbmonit_proto::BINDING_MISMATCH }).to_string());
         let samples = agent.collect().await;
         let count = samples.len();
         agent.buffer.push(samples);
@@ -666,6 +672,45 @@ mod tests {
         assert!(agent.binding_refused);
         assert!(!dir.path().join("agent-secret").exists());
         assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn a_403_that_is_not_the_binding_refusal_keeps_the_secret() {
+        // Un mandataire inverse ou un pare-feu applicatif répond 403 : rien ne
+        // dit que le serveur a oublié la liaison. Effacer le secret obligerait à
+        // réenrôler à la main toutes les machines du parc.
+        let dir = tempfile::tempdir().unwrap();
+        let answer = std::sync::Arc::new(std::sync::Mutex::new((200u16, ACK.to_string())));
+        let shared = answer.clone();
+        let (url, calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+
+        for body in [
+            "<html><body>403 Forbidden</body></html>".to_string(),
+            r#"{"error":"Request blocked by WAF"}"#.to_string(),
+            r#"{"error":"Operator or admin role required."}"#.to_string(),
+        ] {
+            *answer.lock().unwrap() = (403, body.clone());
+            let samples = agent.collect().await;
+            let count = samples.len();
+            agent.buffer.push(samples);
+            assert!(matches!(agent.flush().await, FlushOutcome::Failed(PushError::Forbidden(_))));
+            assert!(agent.buffer.len() >= count, "les mesures restent en tampon");
+            assert_eq!(
+                std::fs::read_to_string(dir.path().join("agent-secret")).unwrap().trim(),
+                "dmab_attribue",
+                "secret effacé sur un 403 étranger : {body}"
+            );
+        }
+        // Et il accompagne toujours les requêtes suivantes.
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        let last = calls.all().pop().expect("requête");
+        assert_eq!(last.header("x-dumbmonit-agent-secret"), Some("dmab_attribue"));
     }
 
     #[tokio::test]

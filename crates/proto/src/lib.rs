@@ -27,8 +27,8 @@ pub use description::{
     Requirement, SetupDescription, Text,
 };
 pub use push::{
-    AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, INGEST_PATH, MAX_BATCH_SAMPLES,
-    PUSH_PROTOCOL_VERSION, PushAck, PushBatch, TOKEN_PREFIX,
+    AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH, INGEST_PATH,
+    MAX_BATCH_SAMPLES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, TOKEN_PREFIX,
 };
 pub use sample::{MetricKind, Sample};
 pub use target::{

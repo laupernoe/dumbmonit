@@ -332,6 +332,22 @@ impl ChannelPayload {
             }
         };
 
+        // Fusion clé par clé : les clés soumises remplacent, les clés absentes sont
+        // conservées. Elle n'a lieu que si la destination est inchangée : sinon les
+        // secrets soumis remplacent tout, et les anciens ne suivent pas. Un objet
+        // vide n'est pas fusionné : `"secrets": {}` reste l'effacement explicite
+        // promis par l'API.
+        let secrets = match (current, secrets) {
+            (Some(current), Some(submitted))
+                if current.kind == kind
+                    && submitted.as_object().is_some_and(|map| !map.is_empty())
+                    && !destination_changed(&kind, &current.settings, &settings) =>
+            {
+                Some(merge_secrets(&kind, &current.secrets, &submitted))
+            }
+            (_, submitted) => submitted,
+        };
+
         // Des secrets conservés ne partent jamais vers une destination qu'ils n'ont
         // pas connue : changer l'adresse du serveur, l'hôte SMTP ou le type du
         // canal sans les ressaisir permettrait à un porteur de jeton `write` de se
@@ -374,6 +390,30 @@ impl ChannelPayload {
             secrets,
         })
     }
+}
+
+/// Superpose les secrets soumis à ceux en base. Une chaîne vide ou `null` efface
+/// la clé ; seules les clés déclarées par le catalogue pour ce type sont gardées.
+fn merge_secrets(kind: &str, stored: &Value, submitted: &Value) -> Value {
+    let allowed = notify::catalog::secret_keys(kind);
+    let mut merged = stored.as_object().cloned().unwrap_or_default();
+    merged.retain(|key, _| allowed.contains(&key.as_str()));
+    for (key, value) in submitted.as_object().into_iter().flatten() {
+        if !allowed.contains(&key.as_str()) {
+            continue;
+        }
+        let cleared = match value {
+            Value::Null => true,
+            Value::String(text) => text.is_empty(),
+            _ => false,
+        };
+        if cleared {
+            merged.remove(key);
+        } else {
+            merged.insert(key.clone(), value.clone());
+        }
+    }
+    Value::Object(merged)
 }
 
 fn has_stored_secrets(secrets: &Value) -> bool {
@@ -653,5 +693,58 @@ mod tests {
             panic!("le renommage aurait dû être accepté");
         };
         assert!(draft.secrets.is_none(), "les secrets doivent rester en base");
+    }
+
+    fn pushover(secrets: Value) -> ChannelConfig {
+        ChannelConfig {
+            id: 1,
+            name: "ancien".to_string(),
+            kind: "pushover".to_string(),
+            enabled: true,
+            settings: json!({}),
+            secrets,
+        }
+    }
+
+    #[test]
+    fn un_secret_soumis_seul_conserve_les_autres() {
+        let current = pushover(json!({ "user_key": "utilisateur", "token": "ancien" }));
+        let Ok(draft) = payload("pushover", json!({}), Some(json!({ "token": "nouveau" })))
+            .validate(Some(&current))
+        else {
+            panic!("la modification aurait dû être acceptée");
+        };
+        assert_eq!(draft.secrets, Some(json!({ "user_key": "utilisateur", "token": "nouveau" })));
+    }
+
+    #[test]
+    fn une_chaine_vide_efface_la_cle_et_les_inconnues_sont_ignorees() {
+        let merged = merge_secrets(
+            "pushover",
+            &json!({ "user_key": "u", "token": "t", "obsolete": "x" }),
+            &json!({ "token": "", "inconnue": "y" }),
+        );
+        assert_eq!(merged, json!({ "user_key": "u" }));
+    }
+
+    #[test]
+    fn un_objet_vide_efface_toujours_les_secrets() {
+        // `"secrets": {}` est l'effacement explicite de l'API (et du bouton
+        // « effacer » de l'interface) : la fusion ne doit pas en faire un « tout
+        // garder ».
+        let current = ChannelConfig {
+            id: 1,
+            name: "ancien".to_string(),
+            kind: "ntfy".to_string(),
+            enabled: true,
+            settings: json!({ "topic": "alertes" }),
+            secrets: json!({ "token": "tk_ancien" }),
+        };
+        let Ok(draft) = payload("ntfy", json!({ "topic": "alertes" }), Some(json!({})))
+            .validate(Some(&current))
+        else {
+            panic!("l'effacement aurait dû être accepté");
+        };
+        assert_eq!(draft.secrets, Some(json!({})));
     }
 }
