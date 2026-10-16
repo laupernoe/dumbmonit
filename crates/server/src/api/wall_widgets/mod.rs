@@ -453,8 +453,7 @@ async fn weather_section(
     units: &str,
 ) -> Section<weather::WeatherData> {
     let imperial = units == "imperial";
-    let cache_key =
-        format!("{units}|{}:{:.4},{:.4}", place.name, place.latitude, place.longitude);
+    let cache_key = format!("{units}|{}:{:.4},{:.4}", place.name, place.latitude, place.longitude);
     let outcome =
         WEATHER.get(&cache_key, WEATHER_TTL, || weather::fetch(client, place, imperial)).await;
     Section::of(outcome, weather::SOURCE, weather::SOURCE_URL)

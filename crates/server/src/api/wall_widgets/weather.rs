@@ -140,7 +140,6 @@ pub async fn search(
     parse_places(&http::bytes(request, MAX_BYTES).await?)
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -158,7 +157,7 @@ mod tests {
     #[test]
     fn reads_the_current_weather() {
         let body = br#"{"latitude":46.5,"longitude":6.6,"timezone":"Europe/Zurich",
-            "current_units":{"temperature_2m":"°C"},
+            "current_units":{"temperature_2m":"C"},
             "current":{"time":"2026-10-16T16:30","interval":900,"temperature_2m":18.4,
                        "weather_code":3,"is_day":0}}"#;
         let data = parse(body, &place(), false).unwrap();
@@ -173,14 +172,19 @@ mod tests {
 
     #[test]
     fn errors_are_named() {
-        assert!(parse(br#"{"error":true,"reason":"Latitude must be in range"}"#, &place(), false).is_err());
+        assert!(
+            parse(br#"{"error":true,"reason":"Latitude must be in range"}"#, &place(), false)
+                .is_err()
+        );
         assert!(parse(br#"{"current":{"weather_code":1}}"#, &place(), false).is_err());
     }
 
     #[test]
     fn asks_for_the_current_conditions_only() {
         let url = url(&place(), true);
-        assert!(url.starts_with("https://api.open-meteo.com/v1/forecast?latitude=46.5160&longitude=6.6328"));
+        assert!(url.starts_with(
+            "https://api.open-meteo.com/v1/forecast?latitude=46.5160&longitude=6.6328"
+        ));
         assert!(url.contains("current=temperature_2m,weather_code,is_day"));
         assert!(url.contains("temperature_unit=fahrenheit"));
         assert!(!url.contains("hourly") && !url.contains("daily"));
