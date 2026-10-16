@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.9.1 — 2026-10-16
+
 ### Changed
 
 - **The map is a dependency mesh.** One node per monitor, with its icon and a
@@ -28,6 +30,11 @@ All notable changes to this project are documented here. The format follows
   change twice on two runners and fails on any difference. How to check a
   release yourself:
   [Reproducible builds](https://dumbmonit.readthedocs.io/en/latest/development/reproducible-builds/).
+- **Phones: minimal and still.** Under 640 px the Overview fits one screen,
+  lists scroll under a fixed toolbar, Tiles show two per row, decorative
+  animations (cascades, blurred titles, breathing lights, the animated sky) are
+  off, the bottom bar has four entries and field hints appear only while
+  typing. Nothing changes on a computer.
 
 ### Fixed
 
@@ -75,8 +82,6 @@ All notable changes to this project are documented here. The format follows
   stops. Stopping while the embedded VictoriaMetrics waits to restart after a
   crash now returns at once instead of waiting for the full grace period.
 
-### Fixed
-
 - **SNMP survives a lost packet.** Each request now gets a few seconds with up
   to two resends instead of one request lasting the whole probe, so a single
   dropped UDP datagram no longer marks a device down. An SNMPv1 device that
@@ -97,8 +102,6 @@ All notable changes to this project are documented here. The format follows
 - **Metrics API when VictoriaMetrics is down.** `/api/metrics/query` and
   `/api/metrics/query_range` answer 502 instead of 400 when the metrics
   database is unreachable or failing; 400 is kept for queries it rejects.
-
-### Fixed
 
 - **Editing a user is all or nothing.** A password refused by
   `PUT /api/users/{id}` no longer leaves the role or display name changed.
