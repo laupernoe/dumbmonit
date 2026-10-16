@@ -48,19 +48,22 @@ at first to what the work needs.
 
 ## Continuity
 
-Two people can now review and merge: the lead maintainer and one collaborator
-with write access. That covers day-to-day work (creating and closing issues,
-accepting changes) if the lead maintainer is unavailable.
+The project can continue within a week if the lead maintainer becomes
+unavailable. [@Theroxat](https://github.com/Theroxat) holds the access needed
+to do so:
 
-What is **not** yet covered is administration. Only the lead maintainer can
-change repository settings and rulesets, push `v*` release tags (reserved to
-repository administrators), manage the repository secrets and the signing
-identity of the release workflow, publish security advisories, and manage the
-container registry (GHCR), the Read the Docs project and the domain names. If
-the lead maintainer disappeared, a collaborator could keep merging fixes to
-`dev` but could not publish a release or an advisory until an administrator
-was added. Closing that gap means adding a second administrator of the
-repository and organisation, and a second owner of the Read the Docs project
-and of the domain names; it is the next step of the path described above.
-Until then, the source code is Apache-2.0 licensed and can be forked by anyone
-if the project stops.
+- **Repository:** collaborator with write access today (review, merge, issues,
+  pull requests), and designated
+  [GitHub account successor](https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-personal-account-on-github/managing-access-to-your-personal-repositories/maintaining-ownership-continuity-of-your-personal-accounts-repositories)
+  of the lead maintainer, which transfers ownership of the repository, its
+  settings, rulesets, secrets and security advisories.
+- **Container registry (GHCR):** the `dumbmonit` and `dumbmonit-agent`
+  packages inherit their access from the repository.
+- **Releases:** they are built and signed by GitHub Actions (keyless Sigstore
+  signing through the workflow's OIDC identity), so no personal key is needed
+  to publish a release; release tags are pushed by repository administrators.
+- **Documentation:** maintainer of the Read the Docs project.
+- **Domain names:** access to the DNS of `dumbmonit.app`.
+
+The source code is Apache-2.0 licensed and can be forked by anyone if the
+project stops.
