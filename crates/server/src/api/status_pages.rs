@@ -1190,6 +1190,26 @@ pub(crate) fn selector(ids: &[TargetId]) -> String {
     format!("target=~\"{}\"", joined.join("|"))
 }
 
+/// Part (en %) des sondes réussies de chaque cible sur `window`, décalée de
+/// `offset` (vide pour « maintenant »).
+///
+/// Comme pour `up` (voir [`presence_slots`]), une cible dont les étiquettes ont
+/// changé a plusieurs séries `probe_success` : la somme des succès sur le
+/// nombre de mesures, par cible, les compte toutes, chacune avec son poids.
+pub(crate) fn probe_uptime_query(sel: &str, window: &str, offset: &str) -> String {
+    let range = format!("dumbmonit_probe_success{{{sel}}}[{window}]{offset}");
+    format!(
+        "sum by (target) (sum_over_time({range})) / sum by (target) (count_over_time({range})) * 100"
+    )
+}
+
+/// Sondes échouées de chaque cible sur `window`, toutes séries confondues :
+/// nombre de mesures moins leur somme (1 par succès).
+fn probe_failed_query(sel: &str, window: &str) -> String {
+    let range = format!("dumbmonit_probe_success{{{sel}}}[{window}]");
+    format!("sum by (target) (count_over_time({range})) - sum by (target) (sum_over_time({range}))")
+}
+
 /// Tranches de cinq minutes vivantes (1) ou muettes (0) d'une cible qui n'émet
 /// que `up` en cas de succès, sur `window`.
 ///
@@ -1336,21 +1356,16 @@ async fn collect_metrics(
     if !probes.is_empty() {
         let sel = selector(&probes);
         let q_last = format!("last_over_time(dumbmonit_probe_success{{{sel}}}[{STATE_WINDOW}])");
-        let q_recent = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[1h]) * 100");
-        let q_day = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[24h]) * 100");
-        let q_week = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[7d]) * 100");
-        let q_month = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[30d]) * 100");
-        // Échecs du jour : nombre de mesures moins leur somme (1 par succès).
-        let q_failed = format!(
-            "count_over_time(dumbmonit_probe_success{{{sel}}}[1d]) \
-             - sum_over_time(dumbmonit_probe_success{{{sel}}}[1d])"
-        );
-        let q_quarter = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[90d]) * 100");
-        let q_history =
-            format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[{history_days}d]) * 100");
+        let q_recent = probe_uptime_query(&sel, "1h", "");
+        let q_day = probe_uptime_query(&sel, "24h", "");
+        let q_week = probe_uptime_query(&sel, "7d", "");
+        let q_month = probe_uptime_query(&sel, "30d", "");
+        let q_failed = probe_failed_query(&sel, "1d");
+        let q_quarter = probe_uptime_query(&sel, "90d", "");
+        let q_history = probe_uptime_query(&sel, &format!("{history_days}d"), "");
         let q_latency =
             format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[1h]) * 1000");
-        let q_daily = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[1d]) * 100");
+        let q_daily = probe_uptime_query(&sel, "1d", "");
         let result = tokio::try_join!(
             victoria.query(&q_last),
             victoria.query(&q_recent),
@@ -2025,6 +2040,24 @@ mod tests {
         assert_eq!(
             last_up_query(sel, "90d"),
             r#"max by (target) (tlast_over_time(dumbmonit_up{target=~"3|4"}[90d]))"#
+        );
+    }
+
+    #[test]
+    fn probe_queries_merge_every_series_of_a_target() {
+        // Même raison que pour `up` : un changement d'étiquettes ne doit pas
+        // effacer les jours d'avant. Succès et mesures sont sommés par cible.
+        let sel = r#"target=~"1|2""#;
+        assert_eq!(
+            probe_uptime_query(sel, "7d", ""),
+            "sum by (target) (sum_over_time(dumbmonit_probe_success{target=~\"1|2\"}[7d])) \
+             / sum by (target) (count_over_time(dumbmonit_probe_success{target=~\"1|2\"}[7d])) * 100"
+        );
+        assert!(probe_uptime_query(sel, "1d", " offset 1d").contains("[1d] offset 1d))"));
+        assert_eq!(
+            probe_failed_query(sel, "1d"),
+            "sum by (target) (count_over_time(dumbmonit_probe_success{target=~\"1|2\"}[1d])) \
+             - sum by (target) (sum_over_time(dumbmonit_probe_success{target=~\"1|2\"}[1d]))"
         );
     }
 

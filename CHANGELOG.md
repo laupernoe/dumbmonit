@@ -7,11 +7,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- **Status page and report availability of devices** no longer forgets the days
-  before a device's labels changed (renamed, tags edited, or the upgrade to
+- **Status page and report availability** no longer forgets the days before a
+  monitor's labels changed (renamed, tags edited, or the upgrade to
   0.1.0-alpha.7 that stopped copying type options such as `port` into `tag_*`
-  labels): every `dumbmonit_up` series of a device is now merged, so those days
-  show their real uptime instead of "no data".
+  labels): every `dumbmonit_up` series of a device and every
+  `dumbmonit_probe_success` series of an HTTP/uptime monitor is now merged, so
+  those days show their real uptime instead of "no data" or a partial figure.
 
 ## 0.9.0 — 2026-10-16
 
