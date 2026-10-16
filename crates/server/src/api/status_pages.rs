@@ -1210,6 +1210,16 @@ fn probe_failed_query(sel: &str, window: &str) -> String {
     format!("sum by (target) (count_over_time({range})) - sum by (target) (sum_over_time({range}))")
 }
 
+/// Temps de réponse moyen (ms) de chaque cible sur `window`, toutes séries
+/// confondues : après un changement d'étiquettes, l'ancienne série couvre les
+/// jours d'avant et la nouvelle ceux d'après ; sans `avg by (target)`, une seule
+/// était gardée et la courbe sur 7 jours perdait l'une des deux parties.
+fn latency_query(sel: &str, window: &str) -> String {
+    format!(
+        "avg by (target) (avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[{window}])) * 1000"
+    )
+}
+
 /// Tranches de cinq minutes vivantes (1) ou muettes (0) d'une cible qui n'émet
 /// que `up` en cas de succès, sur `window`.
 ///
@@ -1296,8 +1306,7 @@ async fn collect_latency(
     let end_ms = now.timestamp() * 1_000;
     let spans: [(i64, u64, &str); 2] = [(86_400, 900, "15m"), (7 * 86_400, 7_200, "2h")];
     for (index, (span, step, window)) in spans.into_iter().enumerate() {
-        let query =
-            format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[{window}]) * 1000");
+        let query = latency_query(&sel, window);
         match victoria.query_range(&query, end_ms - span * 1_000, end_ms, step).await {
             Ok(series) => {
                 for item in series {
@@ -1363,8 +1372,7 @@ async fn collect_metrics(
         let q_failed = probe_failed_query(&sel, "1d");
         let q_quarter = probe_uptime_query(&sel, "90d", "");
         let q_history = probe_uptime_query(&sel, &format!("{history_days}d"), "");
-        let q_latency =
-            format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[1h]) * 1000");
+        let q_latency = latency_query(&sel, "1h");
         let q_daily = probe_uptime_query(&sel, "1d", "");
         let result = tokio::try_join!(
             victoria.query(&q_last),
@@ -2058,6 +2066,15 @@ mod tests {
             probe_failed_query(sel, "1d"),
             "sum by (target) (count_over_time(dumbmonit_probe_success{target=~\"1|2\"}[1d])) \
              - sum by (target) (sum_over_time(dumbmonit_probe_success{target=~\"1|2\"}[1d]))"
+        );
+    }
+
+    #[test]
+    fn latency_query_merges_every_series_of_a_target() {
+        assert_eq!(
+            latency_query(r#"target=~"1|2""#, "2h"),
+            "avg by (target) (avg_over_time(dumbmonit_probe_duration_seconds{target=~\"1|2\"}[2h])) \
+             * 1000"
         );
     }
 

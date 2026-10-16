@@ -13,6 +13,7 @@ All notable changes to this project are documented here. The format follows
   labels): every `dumbmonit_up` series of a device and every
   `dumbmonit_probe_success` series of an HTTP/uptime monitor is now merged, so
   those days show their real uptime instead of "no data" or a partial figure.
+  The response-time graph of the status page merges them the same way.
 - **Status page uptime bars** now come with a colour key (99.5% or more, 95 to
   99.5%, under 95%, no data), so a day with some downtime is no longer read as
   a day the service was down; the thresholds live in one place shared by the bars
