@@ -6,6 +6,8 @@
  * messages, and a single place to change if the API evolves.
  */
 
+import { m } from '#lib/paraglide/messages.js';
+
 /** Normalised error, always carrying a message that can be displayed as is. */
 export class ApiError extends Error {
 	/** HTTP status, or 0 if the request never completed (network down, server off). */
@@ -26,30 +28,30 @@ export class ApiError extends Error {
 	/** Concrete advice shown to the user below the error message. */
 	get hint(): string {
 		if (this.status === 0) {
-			return 'Check that the DumbMonit server is running and reachable, then try again.';
+			return m.api_hint_network();
 		}
 		if (this.status === 401) {
-			return 'Your session has expired or the password is incorrect. Sign in again to continue.';
+			return m.api_hint_unauthorized();
 		}
 		if (this.demo) {
-			return 'Install DumbMonit on your own machine to add monitors, rules and channels.';
+			return m.api_hint_demo();
 		}
 		if (this.status === 403) {
-			return 'You do not have sufficient permissions for this action.';
+			return m.api_hint_forbidden();
 		}
 		if (this.status === 404) {
-			return 'The requested item no longer exists. Go back to the list to refresh it.';
+			return m.api_hint_not_found();
 		}
 		if (this.status === 429) {
-			return 'Too many failed attempts. Wait for the indicated delay before trying again.';
+			return m.api_hint_rate_limited();
 		}
 		if (this.status === 409) {
-			return 'The request conflicts with the current state. Read the message above, adjust it, then try again.';
+			return m.api_hint_conflict();
 		}
 		if (this.status >= 500) {
-			return 'The server ran into an error. Check its logs for details.';
+			return m.api_hint_server();
 		}
-		return 'Fix the information you entered, then try again.';
+		return m.api_hint_invalid();
 	}
 }
 
@@ -57,7 +59,7 @@ export class ApiError extends Error {
 export function toApiError(cause: unknown): ApiError {
 	if (cause instanceof ApiError) return cause;
 	if (cause instanceof Error) return new ApiError(cause.message, 0);
-	return new ApiError('An unexpected error occurred.', 0);
+	return new ApiError(m.api_error_unexpected(), 0);
 }
 
 interface RequestOptions {
@@ -129,7 +131,7 @@ export function setDemoRefusalHandler(handler: DemoRefusalHandler | null): void 
 
 /** Extracts the error message from the `{ "error": "..." }` body returned by the server. */
 async function readError(response: Response): Promise<{ message: string; demo: boolean }> {
-	const fallback = { message: `The server responded with ${response.status}.`, demo: false };
+	const fallback = { message: m.api_error_status({ status: response.status }), demo: false };
 	try {
 		const text = await response.text();
 		if (!text) return fallback;
@@ -178,7 +180,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 		// A cancelled request is not an outage: propagate it as is so the caller
 		// can ignore it silently.
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
-		throw new ApiError('Could not reach the DumbMonit server. The connection failed.', 0);
+		throw new ApiError(m.api_error_unreachable(), 0);
 	}
 
 	if (!response.ok) {
@@ -198,6 +200,6 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 	try {
 		return JSON.parse(text) as T;
 	} catch {
-		throw new ApiError('The server response could not be read.', response.status);
+		throw new ApiError(m.api_error_unreadable(), response.status);
 	}
 }

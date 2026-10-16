@@ -20,6 +20,19 @@ All notable changes to this project are documented here. The format follows
   folder** is on (remembered in the browser); the folder and site filter is
   gone. Export to SVG/PNG and printing are unchanged.
 
+### Fixed
+
+- **Alert notifications.** An alert whose condition came back right after it
+  resolved fired again without telling anyone; it is now announced as a new
+  alert. A resolution is announced even when the alert has meanwhile been
+  suppressed by a parent or silenced, as long as its firing was announced. The
+  handoff to the escalation channel is no longer lost when the first
+  announcement left late (after a maintenance window) or when the severity
+  escalation fell due in the same cycle.
+- **Last hardcoded strings.** API error messages and hints, the error page and
+  the quick-silence name follow the interface language, and absolute dates use
+  the locale's format.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8
