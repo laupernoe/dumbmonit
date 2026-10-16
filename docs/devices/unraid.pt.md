@@ -68,7 +68,7 @@ As [regras incorporadas](../alerting/rules.md#unraid) que se aplicam:
 - **Unraid container stopped**: um contentor definido para iniciar com o
   array não está em execução há dez minutos (Advisory).
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Array diz o que está mal numa frase, mostra a ocupação do array, a
 última verificação de paridade, os contentores e VMs em execução, depois

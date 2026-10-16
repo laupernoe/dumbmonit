@@ -30,9 +30,9 @@ Todas as métricas têm o prefixo `dumbmonit_plex_`.
 | `scrape_errors` | chamadas que falharam na última sondagem | |
 
 A [regra integrada](../alerting/rules.md#self-hosted-applications) que se
-aplica: Plex update available, além de Device unreachable.
+aplica: Plex update available, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Plex. Ele mostra o estado de atualização e se o servidor está

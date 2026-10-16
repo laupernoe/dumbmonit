@@ -1,10 +1,9 @@
 <script lang="ts">
 	import { m } from '#lib/paraglide/messages.js';
 	/**
-	 * The rack itself, in one of three layouts (`view.ts`): one faceplate per
-	 * row with children indented under their parent (entrance staggered 30 ms
-	 * apart, each LED flickering on just after its unit slides in), tiles in
-	 * a grid, or one dense line each. Ordering lives in `rack.ts`.
+	 * The rack itself, in one of two layouts (`view.ts`): one dense line each
+	 * with children indented under their parent, or tiles in a grid (entrance
+	 * staggered 30 ms apart). Ordering lives in `rack.ts`.
 	 *
 	 * `reorder`, when given, makes the row itself the drag surface — no
 	 * separate handle. Pointer-based (mouse and touch — HTML5 drag-and-drop
@@ -16,11 +15,10 @@
 	 * persistence lives one level up, in the page: this component only
 	 * reports its rows' elements and forwards pointer/keyboard events, and
 	 * draws the insertion line the page tells it to. The hit-testing is
-	 * vertical, so the page only passes `reorder` to the two list layouts.
+	 * vertical, so the page only passes `reorder` to the compact layout.
 	 */
-	import type { TargetId } from '#lib/api/index.js';
+	import type { SecurityGrade, TargetId } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
-	import Faceplate from '#lib/components/Faceplate.svelte';
 	import CompactRow from './CompactRow.svelte';
 	import RackTile from './RackTile.svelte';
 	import type { RackRow } from './rack';
@@ -47,22 +45,31 @@
 		registerRow: (id: TargetId, el: HTMLElement | null) => void;
 	}
 
+	/** Bulk-action selection: a checkbox per row, owned by the page. */
+	export interface RowSelection {
+		selected: Set<TargetId>;
+		toggle: (id: TargetId) => void;
+	}
+
 	interface Props {
 		rows: RackRow[];
 		sparklines: Map<TargetId, Serie[]>;
 		/** kind → human label, from the collectors list. */
 		kindLabels: Map<string, string>;
 		reorder?: ReorderControls | null;
-		/** Faceplates (default), tiles in a grid, or one dense line each. */
+		/** One dense line each (default) or tiles in a grid. */
 		layout?: RackView;
 		/** id → name, so a tile can say which unit it sits behind. */
 		names?: Map<TargetId, string>;
+		/** id → security grade, only for rated devices while the score is on. */
+		security?: Map<TargetId, { grade: SecurityGrade | null; score: number | null }>;
+		/** When given (admins), every row carries a checkbox. */
+		selection?: RowSelection | null;
 	}
 
-	let { rows, sparklines, kindLabels, reorder = null, layout = 'rows', names = new Map() }: Props = $props();
+	let { rows, sparklines, kindLabels, reorder = null, layout = 'compact', names = new Map(), security = new Map(), selection = null }: Props = $props();
 
 	const LIST_CLASS: Record<RackView, string> = {
-		rows: 'flex flex-col gap-2',
 		compact: 'flex flex-col divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-lift',
 		tiles: 'grid grid-cols-[repeat(auto-fill,minmax(min(100%,15rem),1fr))] gap-3'
 	};
@@ -82,8 +89,9 @@
 					kindLabel={kindLabels.get(row.target.kind)}
 					depth={row.depth}
 					shadowed={row.shadowed}
+					security={security.get(row.target.id) ?? null}
 				/>
-			{:else if layout === 'tiles'}
+			{:else}
 				<RackTile
 					target={row.target}
 					state={row.state}
@@ -91,16 +99,7 @@
 					sparkline={sparklines.get(row.target.id) ?? null}
 					parentName={row.target.parent_id !== null ? (names.get(row.target.parent_id) ?? null) : null}
 					shadowed={row.shadowed}
-				/>
-			{:else}
-				<Faceplate
-					target={row.target}
-					state={row.state}
-					kindLabel={kindLabels.get(row.target.kind)}
-					sparkline={sparklines.get(row.target.id) ?? null}
-					depth={row.depth}
-					shadowed={row.shadowed}
-					bootDelay={Math.min(i, 14) * 30 + 220}
+					security={security.get(row.target.id) ?? null}
 				/>
 			{/if}
 		{/snippet}
@@ -127,6 +126,21 @@
 				starts its own drag of the link a few pixels in, cancels the
 				pointer stream (`pointercancel`) and the row drag never begins.
 			-->
+			{#if selection}
+				<label
+					class={layout === 'tiles'
+						? 'absolute top-2 right-9 z-10 flex size-8 cursor-pointer items-center justify-center'
+						: 'flex w-9 shrink-0 cursor-pointer items-center justify-center'}
+				>
+					<input
+						type="checkbox"
+						class="size-5 shrink-0 accent-[var(--c-signal)]"
+						checked={selection.selected.has(id)}
+						onchange={() => selection.toggle(id)}
+						aria-label={m.devices_list_select_row({ name: row.target.name })}
+					/>
+				</label>
+			{/if}
 			{#if reorder}
 				<div
 					class={`min-w-0 flex-1 rounded-[inherit] ${isDragging ? 'opacity-40 cursor-grabbing [&_a]:cursor-grabbing' : 'cursor-grab [&_a]:cursor-grab'} ${isPicked ? 'ring-2 ring-signal ring-inset' : ''} ${layout === 'compact' ? '' : 'rounded-[var(--radius-card)]'}`}

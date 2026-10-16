@@ -1,11 +1,11 @@
 # Services : HTTP, TCP, DNS, ping, TLS, NTP, SMTP, SQL, MQTT, WebSocket
 
-Onze moniteurs surveillent des **services** plutôt que du matériel, à la
+Onze types de surveillance couvrent des **services** plutôt que du matériel, à la
 façon d'Uptime Kuma : une page web, un port, un nom DNS, un hôte, un
 certificat, un serveur de temps, un relais mail, une base de données, un
 courtier MQTT, un point de terminaison WebSocket. Chaque service obtient
 une barre d'historique, un temps de réponse et un pourcentage de
-disponibilité sur sa page d'appareil.
+disponibilité sur sa page de surveillance.
 
 Les cinq derniers vont plus loin que l'ouverture d'une connexion : ils
 démarrent une vraie session dans le propre protocole du service. C'est la
@@ -14,10 +14,41 @@ accepte toujours mon compte et répond à une requête ». NTP se trouve
 entre les deux : une seule requête et réponse, dans le propre protocole
 de NTP, assez pour lire l'horloge du serveur sans session.
 
+## Venir d'Uptime Kuma
+
+**Surveillances > ⋯ > Importer depuis Uptime Kuma**, aussi sur
+**Surveillances > Ajouter une surveillance** (administrateurs), lit le fichier de sauvegarde d'Uptime Kuma 1.x
+(**Réglages > Sauvegarde > Exporter**, un fichier `.json` de 4 Mo au plus).
+Uptime Kuma 2.x n'a plus d'export de sauvegarde : il n'y a donc rien à
+importer depuis cette version. Rien n'est créé avant que vous ayez vu l'aperçu :
+ce qui sera créé, et ce qui est ignoré avec la raison.
+
+| Uptime Kuma | DumbMonit |
+|---|---|
+| HTTP(s), HTTP(s) - Mot-clé, HTTP(s) - Requête JSON | [HTTP](#http) : codes acceptés, méthode, mot-clé (et son inverse), chemin JSON et valeur attendue, redirections, délai, erreurs TLS ignorées |
+| Ping | [Ping](#ping) |
+| Port TCP | [TCP](#tcp), sous la forme `hôte:port` |
+| DNS | [DNS](#dns) : type d'enregistrement et résolveur |
+| Push | [Battement de cœur](push.md), période attendue = l'intervalle de la surveillance. Il reçoit une **nouvelle** URL : mettez à jour la tâche qui l'appelle |
+| Groupe | Un dossier (les groupes imbriqués donnent `Groupe/Sous-groupe`) |
+| Étiquettes | Étiquettes de la surveillance : `nom=valeur`, ou `nom=true` pour une étiquette sans valeur |
+| En pause | Créé désactivé |
+
+Le nom et l'intervalle sont conservés (10 s au minimum). Tout le reste est
+ignoré et listé : Docker et les autres types sans équivalent, et les surveillances
+en mode inversé. Une surveillance déjà suivie (même type, même adresse) est ignorée
+aussi : on peut donc importer deux fois le même fichier sans risque.
+
+**Non importés :** les notifications (configurez vos canaux dans
+[Notifications](../notifications.md) ; l'aperçu indique combien le fichier en
+contenait), ainsi que les identifiants, en-têtes personnalisés et corps de
+requête, qui ne sont jamais lus par DumbMonit. Si un site surveillé demande une
+connexion ou un en-tête, ajoutez-le ensuite sur la surveillance.
+
 ## Comment fonctionne l'état d'un service
 
 Un service peut répondre et être en panne quand même : un `500`, un mot-
-clé manquant, un certificat expiré. Ces moniteurs écrivent donc un point
+clé manquant, un certificat expiré. Ces surveillances écrivent donc un point
 à chaque vérification, `probe_success` étant 1 ou 0, plutôt que de
 devenir silencieux comme un appareil matériel. C'est ce qui rend un
 pourcentage de disponibilité possible :
@@ -25,11 +56,11 @@ pourcentage de disponibilité possible :
 
 | Situation | Ce qui se passe |
 |---|---|
-| Option ou adresse invalide, sockets ICMP non autorisées (voir Ping) | Erreur de configuration : rien n'est écrit, la page de l'appareil montre l'erreur, aucune alerte « en panne ». |
+| Option ou adresse invalide, sockets ICMP non autorisées (voir Ping) | Erreur de configuration : rien n'est écrit, la page de la surveillance montre l'erreur, aucune alerte « en panne ». |
 | Connexion refusée, délai dépassé, TLS refusé, `500`, mot-clé absent, perte totale de paquets, mot de passe refusé, requête échouée | `probe_success = 0` : la panne est enregistrée, datée et comptée. |
 | Tout va bien | `probe_success = 1`. |
 
-Chaque moniteur a son propre délai (`timeout_seconds`, 5 s par défaut,
+Chaque surveillance a son propre délai (`timeout_seconds`, 5 s par défaut,
 60 s au plus), plus court que le `DUMBMONIT_PROBE_TIMEOUT_SECS` du
 serveur : interrompu par le planificateur, il ne pourrait pas écrire son
 zéro.
@@ -50,7 +81,7 @@ Toutes des jauges, toutes préfixées `dumbmonit_`, toutes étiquetées
 `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"` en
 plus de `target`, `host` et `tag_*`.
 
-| Métrique | Moniteurs | Signification |
+| Métrique | Surveillances | Signification |
 |---|---|---|
 | `probe_success` | tous | 1 si le service répond correctement, 0 sinon. |
 | `probe_duration_seconds` | tous | Durée totale de la vérification. |
@@ -58,6 +89,7 @@ plus de `target`, `host` et `tag_*`.
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
 | `probe_http_content_bytes` | http | Taille du corps. |
+| `probe_http_security_header{header}` | http | 0/1 par étiquette `header` (https seulement) : HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | tous sauf dns et ping | Établissement de connexion (connexion incluse pour les bases de données). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Négociation TLS seule. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Présence ; label `version`. |
@@ -460,7 +492,7 @@ l'automatisation qui le consomme, ou utilisez un battement de cœur.
 | `topic` | Topic | *(vide)* | Topic auquel la vérification s'abonne. Vide : elle se connecte seulement, ce qui vous dit déjà que le courtier est vivant et accepte votre compte. |
 | `expect_message` | Attendre un message retenu | `false` | Un message doit arriver sur ce topic avant le délai. Seuls les messages retenus arrivent tout de suite : un topic juste publié de temps en temps paraîtra silencieux. |
 | `expect` | Contenu attendu | *(vide)* | Texte que ce message doit contenir. Le remplir implique d'attendre un message. |
-| `client_id` | Identifiant client | *(dérivé)* | Nom annoncé au courtier. Le défaut dérive de l'appareil, deux vérifications ne se déconnectent donc jamais l'une l'autre. |
+| `client_id` | Identifiant client | *(dérivé)* | Nom annoncé au courtier. Le défaut dérive de la surveillance, deux vérifications ne se déconnectent donc jamais l'une l'autre. |
 | `server_name` | Nom de serveur (SNI) | *(l'hôte)* | Nom de domaine annoncé au courtier et vérifié dans le certificat. Réglez-le quand l'adresse est une IP. |
 | `insecure_tls` | Accepter un certificat non vérifiable | `false` | Une chaîne non vérifiable ne compte plus comme un échec : la date d'expiration est quand même enregistrée. |
 | `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |

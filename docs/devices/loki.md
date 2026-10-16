@@ -43,9 +43,9 @@ not have simply produces no series.
 
 The [built-in rules](../alerting/rules.md#log-and-metrics-servers) that apply:
 Loki not ready, Loki refusing log lines, Loki cannot flush to storage, Loki
-write-ahead log disk full, Loki request errors, plus Device unreachable.
+write-ahead log disk full, Loki request errors, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Loki. It says what is wrong in a sentence (readiness, lines refused in

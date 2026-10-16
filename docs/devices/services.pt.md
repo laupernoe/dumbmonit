@@ -4,7 +4,7 @@ Onze monitores vigiam **serviços** em vez de equipamento, ao estilo Uptime Kuma
 uma página web, uma porta, um nome DNS, um anfitrião, um certificado, um servidor
 de hora, um relay de correio, uma base de dados, um broker MQTT, um endpoint
 WebSocket. Cada serviço recebe uma barra de histórico, um tempo de resposta e uma
-percentagem de disponibilidade na página do seu dispositivo.
+percentagem de disponibilidade na página do seu monitor.
 
 Os últimos cinco vão além de abrir uma ligação: iniciam uma sessão real no
 protocolo próprio do serviço. É essa a diferença entre «a porta 5432 está aberta»
@@ -22,7 +22,7 @@ disponibilidade: `avg_over_time(dumbmonit_probe_success[30d])`.
 
 | Situação | O que acontece |
 |---|---|
-| Opção ou endereço inválido, sockets ICMP não permitidos (veja Ping) | Erro de configuração: nada é escrito, a página do dispositivo mostra o erro, sem alerta de «em baixo». |
+| Opção ou endereço inválido, sockets ICMP não permitidos (veja Ping) | Erro de configuração: nada é escrito, a página do monitor mostra o erro, sem alerta de «em baixo». |
 | Ligação recusada, tempo limite, TLS recusado, `500`, palavra-chave ausente, perda total de pacotes, palavra-passe recusada, consulta falhada | `probe_success = 0`: a falha é registada, datada e contada. |
 | Tudo bem | `probe_success = 1`. |
 
@@ -53,6 +53,7 @@ Todos gauges, todos com o prefixo `dumbmonit_`, todos com a etiqueta
 | `probe_http_status_code` | http, websocket | Código de estado obtido. |
 | `probe_http_first_byte_seconds` | http | Tempo até aos cabeçalhos da resposta. |
 | `probe_http_content_bytes` | http | Tamanho do corpo. |
+| `probe_http_security_header{header}` | http | 0/1 por etiqueta `header` (apenas https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | todos exceto dns e ping | Estabelecimento da ligação (início de sessão incluído para bases de dados). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Apenas a negociação TLS. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Presença; etiqueta `version`. |
@@ -518,7 +519,7 @@ heartbeat.
 | `topic` | Tópico | *(vazio)* | Tópico que a verificação subscreve. Vazio: apenas se liga, o que já lhe diz que o broker está vivo e aceita a sua conta. |
 | `expect_message` | Esperar uma mensagem retida | `false` | Uma mensagem tem de chegar nesse tópico antes do tempo limite. Só as mensagens retidas chegam logo: um tópico em que apenas se publica de vez em quando parecerá silencioso. |
 | `expect` | Conteúdo esperado | *(vazio)* | Texto que essa mensagem tem de conter. Preenchê-lo implica esperar uma mensagem. |
-| `client_id` | Identificador do cliente | *(derivado)* | Nome anunciado ao broker. A predefinição deriva do dispositivo, para que duas verificações nunca se desliguem uma à outra. |
+| `client_id` | Identificador do cliente | *(derivado)* | Nome anunciado ao broker. A predefinição deriva do monitor, para que duas verificações nunca se desliguem uma à outra. |
 | `server_name` | Nome do servidor (SNI) | *(o anfitrião)* | Nome de domínio anunciado ao broker e verificado no certificado. Defina-o quando o endereço é um IP. |
 | `insecure_tls` | Aceitar um certificado não verificável | `false` | Uma cadeia não verificável deixa de contar como falha: a data de expiração continua registada. |
 | `allow_private_targets` | Permitir alvos loopback e link-local | `false` | Veja «Endereços que as verificações recusam» abaixo. |

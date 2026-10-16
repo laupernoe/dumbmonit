@@ -1,22 +1,45 @@
 # Page Alertes
 
-![La page Alertes : ce qui a besoin de vous, les règles, la maintenance planifiée et l'historique](../assets/screenshots/alerts-light.png){ loading=lazy }
+![La page Alertes : ce qui se passe maintenant, la maintenance, l'historique et les règles](../assets/screenshots/alerts-light.png){ loading=lazy }
 
-Tout sur les alertes sur une page, derrière cinq onglets. L'onglet est dans
+Tout sur les alertes sur une page, derrière quatre onglets. L'onglet est dans
 l'URL (`/alerts#rules`), une vue est donc partageable par lien. **Planifier
 une maintenance**, en haut à droite, ouvre le formulaire pour une fenêtre
 depuis n'importe quel onglet.
 
 | Onglet | Ce qu'il contient |
 |---|---|
-| **Maintenant** | La liste en direct *À traiter*, groupée par appareil : plaque de gravité, raison, depuis quand, et *Acquitter*, *Repousser*, *Ignorer* et *Ouvrir l'appareil* sur chacune. Les alertes acquittées et repoussées se trouvent chacune dans leur propre groupe calme en bas. Le badge sur l'onglet, et sur Alertes dans la barre du haut, est le compte de ce qui a encore besoin de vous. |
-| **Planifiées** | Fenêtres de maintenance, *Active maintenant* ou *Planifiée*, ponctuelle, hebdomadaire ou mensuelle, chacune avec la prochaine occurrence. Voir [Fenêtres de maintenance](../alerting/maintenance.md). |
-| **Règles** | Chaque règle avec sa gravité, une marque *Intégrée* et, si un appareil l'ignore, *Ignorée sur N appareils* ; activer, modifier en place, supprimer les vôtres, créer une règle de seuil. Voir [Règles](../alerting/rules.md). |
-| **Notifications** | Où les alertes vous atteignent : les canaux et la politique de notification. Détails ci-dessous. |
-| **Historique** | Les 200 dernières transitions, chacune nommant l'appareil, la règle et ce qui s'est passé ; les résolues peuvent être effacées. |
+| **Maintenant** | La liste en direct des problèmes, une ligne chacun. Voir [La liste Maintenant](#the-now-list). Le badge sur l'onglet, et sur Alertes dans la barre du haut, est le compte de ce qui a encore besoin de vous. |
+| **Maintenance** | Fenêtres de maintenance, *Active maintenant* ou *Planifiée*, ponctuelle, hebdomadaire ou mensuelle, chacune avec la prochaine occurrence (`#scheduled`). Voir [Fenêtres de maintenance](../alerting/maintenance.md). |
+| **Historique** | Les 200 dernières transitions, chacune nommant la surveillance, la règle et ce qui s'est passé ; les résolues peuvent être effacées. |
+| **Règles** | Chaque règle avec sa gravité, une marque *Intégrée* et, si une surveillance l'ignore, *Ignorée sur N surveillances* ; activer, modifier en place, supprimer les vôtres, créer une règle de seuil. Voir [Règles](../alerting/rules.md). |
+
+Les canaux de notification et la politique de notification se trouvent sous
+**Réglages → Notifications et rapports** (voir [Notifications](#notifications)).
 
 Le même modèle de vérité alimente le bulletin de la vue d'ensemble et cette
 page, les deux s'accordent donc toujours sur ce qui a besoin de vous.
+
+## La liste Maintenant {#the-now-list}
+
+Une ligne par problème : icône d'état, ce qui ne va pas, quelle surveillance,
+la cause en une ligne, il y a combien de temps, avec **Acquitter** et
+**Ouvrir** sur la ligne. Les lignes sont groupées par gravité (Avertissement,
+Avis, Info, En montée, Supprimée par le parent) ou, avec le commutateur
+**Gravité | Surveillance**, par surveillance. Les groupes se replient ;
+*Supprimées*, *En pause* et *Écartées* (acquittées) démarrent repliées. Une
+règle qui se déclenche sur plusieurs séries de la même surveillance forme une
+seule ligne (« … et 7 autres »).
+
+Cliquez sur une ligne pour déplier ses détails : chaque série touchée, depuis
+quand, qui l'a acquittée, pourquoi elle est supprimée, avec **Ouvrir la
+surveillance**, **Mettre en sourdine** et **Jamais pour cette surveillance**.
+
+Sélectionner plusieurs lignes est un mode. Le bouton **Sélectionner**
+(opérateurs et administrateurs) affiche une case à cocher sur chaque ligne et
+une barre flottante en bas avec **Tout sélectionner**, **Acquitter**, **Lever
+l'acquittement**, **Ignorer pour cette surveillance** et **Terminé**. Échap quitte
+le mode.
 
 ## Se débarrasser d'une alerte {#getting-rid-of-an-alert}
 
@@ -39,18 +62,18 @@ peut pas le changer) :
   prétendre faire quoi que ce soit : 1 h, 8 h, 1 jour ou *jusqu'à
   résolution*. À la différence d'Acquitter, cela fonctionne en ouvrant une
   fenêtre de maintenance limitée aux labels exacts de cette seule alerte —
-  une règle sœur sur le même appareil continue de parler. La carte passe à
+  une règle sœur sur la même surveillance continue de parler. La carte passe à
   un groupe calme *Repoussées* montrant le temps restant, et propose
   **Ne plus repousser**. Les rappels se mettent en pause de la même façon
   qu'avec un acquittement.
 - **Ignorer** (« ne m'alerte plus jamais pour ça ») est pour une règle qui
-  n'aura jamais de sens sur cet appareil : cela désactive cette règle pour
-  cet appareil seul (une surcharge par appareil — voir
-  [Surcharges par appareil](../alerting/rules.md#per-device-overrides)) et
+  n'aura jamais de sens sur cette surveillance : cela désactive cette règle pour
+  cette surveillance seule (une surcharge par surveillance — voir
+  [Surcharges par surveillance](../alerting/rules.md#per-device-overrides)) et
   l'alerte disparaît pour de bon, immédiatement, pas juste rendue plus
   silencieuse. C'est réversible : **Arrêter d'ignorer** sur la page de
-  l'appareil, ou depuis la règle elle-même dans Alertes → Règles, où elle
-  lit *Ignorée sur N appareils*.
+  la surveillance, ou depuis la règle elle-même dans Alertes → Règles, où elle
+  lit *Ignorée sur N surveillances*.
 - **Effacer** est pour l'historique, pas pour une alerte active : une fois
   qu'une transition s'est résolue, *Effacer* (ou *Effacer tout ce qui est
   résolu*) la retire de la vue d'Historique par défaut. La ligne reste dans
@@ -64,11 +87,11 @@ tout.
 
 ## Notifications {#notifications}
 
-Les canaux et la politique vivent ici — sous Alertes, pas Réglages — parce
-qu'ils décident qui entend une alerte, ce qui est une affaire d'alerte. Deux
+Les canaux et la politique vivent sous **Réglages → Notifications et
+rapports** (`/settings/notifications`), suivis des [Rapports](reports.md). Deux
 panneaux :
 
-**Canaux.** La liste des canaux, chacun avec son type, *Activé* ou
+**Canaux de notification.** La liste des canaux, chacun avec son type, *Activé* ou
 *Désactivé*, la dernière fois qu'il a envoyé quelque chose, et sa dernière
 erreur s'il y en a. **Ajouter un canal** ouvre un formulaire construit depuis
 la description du type choisi par le serveur : réglages (visibles) et secrets
@@ -81,12 +104,12 @@ résumé).
 
 **Seulement certaines alertes.** Les mêmes Options de livraison contiennent
 le **filtre de routage** du canal : quelles alertes il veut, par étiquette
-d'appareil (`site=cellar`), par type d'appareil (`proxmox`), ou par règle.
+de surveillance (`site=cellar`), par type de surveillance (`proxmox`), ou par règle.
 Les conditions sur le même champ se lisent comme *ou*, des champs différents
 comme *et*, et une ligne *Sauf* gagne toujours. Sous l'éditeur, un aperçu
-liste lesquels de vos appareils le filtre sélectionne maintenant, et une
+liste lesquelles de vos surveillances le filtre sélectionne maintenant, et une
 phrase vous le redit en entier — *ce canal reçoit les avis et plus depuis
-les appareils étiquetés site=cellar, sauf les appareils étiquetés
+les surveillances étiquetées site=cellar, sauf les surveillances étiquetées
 role=lab*. Un canal sans filtre continue de tout recevoir, ce que fait
 chaque canal existant.
 
@@ -106,21 +129,20 @@ autre canal, une fois. Le délai compte depuis le moment où le premier message
 est réellement sorti, et acquitter l'alerte (ou sa résolution) arrête le
 saut. Voir [Politique de notification](../alerting/notifications.md).
 
-Liens : `/alerts#notifications` ouvre l'onglet, `/alerts#notifications-policy`
-défile jusqu'au panneau de politique. Les anciens liens Réglages
-(`/settings#notifications`, `/settings#notifications-policy`) redirigent ici.
+Les anciens liens (`/alerts#notifications`, `/alerts#notifications-policy`,
+`/settings#notifications`) redirigent ici.
 
 ## Opérateurs et lecteurs
 
 Un **opérateur** traite les alertes sans toucher à la configuration : il
-acquitte, repousse, ignore une règle pour un appareil, planifie ou supprime
+acquitte, repousse, ignore une règle pour une surveillance, planifie ou supprime
 des fenêtres de maintenance et efface l'historique résolu. Règles, canaux et
 politique de notification restent en lecture seule pour lui, marqués
 *Opérateur — la configuration est réservée aux administrateurs*. Ignorer est
-la seule surcharge par appareil qu'un opérateur peut faire ; les seuils
+la seule surcharge par surveillance qu'un opérateur peut faire ; les seuils
 restent une décision d'administrateur, et un *Ignorer* ou *Arrêter
 d'ignorer* d'un opérateur conserve tout seuil qu'un administrateur a réglé
-pour cet appareil.
+pour cette surveillance.
 
 Un lecteur voit chaque onglet mais aucun contrôle : la page affiche *Lecteur
 — lecture seule* là où un administrateur trouverait les boutons.

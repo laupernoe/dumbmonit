@@ -13,39 +13,39 @@ de la consola.
     datacenter manager real, pero todavía nadie la ha ejecutado durante
     semanas en un datacenter manager en producción. Dinos qué falla.
 
-## ¿Un dispositivo para todo el patrimonio, o uno por clúster? {#one-device-for-the-estate-or-one-device-per-cluster}
+## ¿Un monitor para todo el patrimonio, o uno por clúster? {#one-device-for-the-estate-or-one-device-per-cluster}
 
-Un dispositivo Datacenter Manager no sustituye a los dispositivos
+Un monitor Datacenter Manager no sustituye a los monitores
 [Proxmox VE](proxmox.md) y [Proxmox Backup Server](pbs.md). Responde a
 una pregunta distinta.
 
-| | Dispositivo Datacenter Manager | Un dispositivo por clúster y por servidor de copias |
+| | Monitor Datacenter Manager | Un monitor por clúster y por servidor de copias |
 |---|---|---|
-| Dispositivos a crear | uno | uno por clúster, uno por servidor de copias |
+| Monitores a crear | uno | uno por clúster, uno por servidor de copias |
 | Credenciales a gestionar | un token, en la consola | un token por instancia |
 | Carga en cada clúster | ninguna nuestra: leemos la propia caché de la consola | una sonda por intervalo, por clúster |
 | Qué obtienes | accesibilidad, versión, recuentos de invitados y nodos, totales de CPU, memoria y almacenamiento, tareas fallidas | todo eso más invitados uno por uno, snapshots, trabajos de copia, HA, Ceph, replicación, discos y SMART, pools ZFS, el calendario de copias de 30 días |
 | Qué no puedes obtener | series por invitado, detalle por datastore, discos, snapshots, logs de tarea | un total único de todo el patrimonio |
 | Fallo principal | la consola no puede alcanzar una instancia | el clúster no nos responde |
 
-**Nuestra recomendación.** Añade el dispositivo Datacenter Manager
+**Nuestra recomendación.** Añade el monitor Datacenter Manager
 cuando ya ejecutas una consola y quieres una página que diga si el
 patrimonio está completo — es la forma más económica de notar que un
 sitio remoto se cayó, y no le cuesta nada a los clústeres. Añade un
-dispositivo dedicado para cada clúster y servidor de copias que
+monitor dedicado para cada clúster y servidor de copias que
 realmente operas: ahí está la profundidad, y es lo que te dice *qué* VM
 se detuvo o *qué* copia falló. Los dos se superponen sin conflicto; una
-copia fallida entonces lanza una alerta desde el dispositivo PBS (con el
+copia fallida entonces lanza una alerta desde el monitor PBS (con el
 log de tarea) y una desde la consola (nombrando la instancia). Silencia
 la regla de tareas de la consola si lo encuentras redundante, o limítala
-a las instancias para las que no tienes dispositivo dedicado.
+a las instancias para las que no tienes monitor dedicado.
 
 Si no ejecutas ninguna consola en absoluto, no instales una solo para
-monitorizar: los dispositivos dedicados ven estrictamente más.
+monitorizar: los monitores dedicados ven estrictamente más.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
-Más allá de las gráficas genéricas, un dispositivo Datacenter Manager
+Más allá de las gráficas genéricas, un monitor Datacenter Manager
 muestra tres paneles, leídos de lo que guardó la sonda — abrir la
 página no consulta ni a la consola ni a los clústeres que gestiona:
 
@@ -64,7 +64,7 @@ página no consulta ni a la consola ni a los clústeres que gestiona:
   últimos 14 días, la más reciente primero, con la instancia en la que
   se ejecutó, el tipo de tarea, cuándo empezó, cuánto tardó y el mensaje
   de error. El propio log de la tarea permanece en la instancia: ábrelo
-  ahí, o añade ese clúster como su propio dispositivo, donde *Show log*
+  ahí, o añade ese clúster como su propio monitor, donde *Show log*
   lo obtiene.
 * **Console host** — la máquina que ejecuta la consola: CPU, memoria,
   sistema de archivos raíz, tiempo de actividad y kernel, sus
@@ -74,7 +74,7 @@ página no consulta ni a la consola ni a los clústeres que gestiona:
   lee nada de él y el panel lo indica, en lugar de mostrar ceros.
 
 El historial de tareas se guarda en SQLite (`pdm_task_history`, 19 días,
-como máximo 5000 tareas por dispositivo) así que la lista de fallos
+como máximo 5000 tareas por monitor) así que la lista de fallos
 sobrevive a los reinicios aunque cada sonda solo mire la ventana de
 tareas.
 
@@ -111,7 +111,7 @@ Los totales de almacenamiento cuentan cada nombre de almacenamiento una
 vez por instancia: un almacenamiento compartido por cinco nodos de un
 clúster se cuenta una vez, no cinco.
 
-Las reglas integradas que se aplican: Device unreachable, Federated
+Las reglas integradas que se aplican: Monitor unreachable, Federated
 instance unreachable, Federated instance behind, Task failed on a
 federated instance, Datacenter console disk almost full, Datacenter
 console certificate expiring, Datacenter console updates pending. Las
@@ -224,7 +224,7 @@ completa. El esquema `https` y el puerto 8443 se añaden si faltan.
 su propio inventario, refrescado por su propio bucle de recolección.
 Pedir datos frescos en cada sonda hace que la consola vuelva a llamar a
 cada clúster, encima de su ritmo normal — exactamente la carga que un
-único dispositivo de consola debería evitar. Sesenta segundos sigue
+único monitor de consola debería evitar. Sesenta segundos sigue
 siendo más fresco que el intervalo de sonda por defecto.
 
 ## Errores comunes {#common-errors}

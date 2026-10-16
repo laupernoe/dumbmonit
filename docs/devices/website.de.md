@@ -1,6 +1,6 @@
 # Website-Zustand & SEO {#website-health-seo}
 
-Überwachen Sie Websites in großer Zahl, ein Gerät pro Website: Lassen Sie sich melden, wenn eine
+Überwachen Sie Websites in großer Zahl, ein Monitor pro Website: Lassen Sie sich melden, wenn eine
 Website **ausfällt** (Fehler, nicht erreichbar, ungültiges Zertifikat, Weiterleitungsschleife),
 wenn ihre Seite **leer wird**, wenn sie **aus den Suchmaschinen fällt** (`noindex`, `robots.txt`
 sperrt alles) und wenn sich die von Google angezeigten Metadaten **ändern** (Titel,
@@ -14,7 +14,7 @@ Für den Inhalt einer Seite statt ihres Zustands siehe [Website-Änderungen](web
 1. Fügen Sie in die Adresse die zu prüfende Seite ein, meist die Startseite, mit oder ohne https://. Weiterleitungen werden verfolgt: http zu https und example.com zu www.example.com sind normal, nur eine Weiterleitungsschleife oder ein Umzug auf eine andere Adresse wird gemeldet.
 2. Tragen Sie optional unter „Erwarteter Text“ einen Satz ein, den die Seite immer zeigen muss, und passen Sie „Leere Seite unter“ an, wenn die Seite absichtlich kurz ist.
 3. Die erste Prüfung hält die Referenz fest: endgültige Adresse, Titel, Beschreibung, kanonische URL, Indexierungsregeln. Sie werden standardmäßig alle 6 Stunden erneut verglichen („Auf Änderungen prüfen alle“), während Verfügbarkeit bei jedem Abfrageintervall geprüft wird. Eine Änderung wird erst gemeldet, wenn zwei Prüfungen in Folge sie gesehen haben, sodass A/B-Tests und unzuverlässige Caches ruhig bleiben.
-4. Um viele Websites auf einmal hinzuzufügen, importieren Sie aus der Geräteliste eine CSV-Datei: Jede Website wird unter `Websites/<platform>` (WordPress, Shopify …) abgelegt, sofern Sie keinen Ordner angeben.
+4. Um viele Websites auf einmal hinzuzufügen, importieren Sie aus der Monitorliste eine CSV-Datei: Jede Website wird unter `Websites/<platform>` (WordPress, Shopify …) abgelegt, sofern Sie keinen Ordner angeben.
 
 !!! warning
     Gelesen wird nur, was der Server sendet: Eine vollständig per JavaScript gezeichnete Seite sieht hier leer aus. Setzen Sie „Leere Seite unter“ für eine solche Website auf 0.
@@ -66,7 +66,7 @@ somit ruhig. Werte werden unter Ignorieren von Abständen und Groß-/Kleinschrei
 Adressen ignorieren das Schema, ein führendes `www.`, einen abschließenden `/` und, mit
 **Query-Strings ignorieren** (standardmäßig an), URL-Parameter wie `?utm_source=…`.
 
-Eine bestätigte Änderung bleibt im Verlauf des Geräts erhalten (Feld, vorher, nachher, Datum),
+Eine bestätigte Änderung bleibt im Verlauf des Monitors erhalten (Feld, vorher, nachher, Datum),
 und ihr Gauge (`dumbmonit_website_title_changed` …) bleibt 24 Stunden auf 1. Die erste Prüfung
 hält nur die Referenz fest. Das Ändern der Adresse oder von **Query-Strings ignorieren** beginnt
 eine neue Referenz, statt eine Änderung zu melden.
@@ -105,7 +105,7 @@ Websites DumbMonit nicht für einen Angriff hält:
 Eine Website, deren vorherige Prüfung noch auf ihren Zug wartet, überspringt eine Runde, statt
 sich doppelt einzureihen. Viele Websites auf einer Domain mit kurzem Abfrageintervall werden
 daher seltener geprüft als verlangt: Erhöhen Sie das Intervall oder die Limits pro Domain, wenn
-die Geräteliste sie verspätet zeigt. Siehe [Konfiguration](../reference/configuration.md#server).
+die Monitorliste sie verspätet zeigt. Siehe [Konfiguration](../reference/configuration.md#server).
 
 ## Plattformerkennung {#platform-detection}
 
@@ -119,14 +119,14 @@ Drupal, Joomla, PrestaShop, Magento, Next.js, Nuxt, Gatsby, Hugo, Jekyll; alles 
 
 ## Eine Liste von Websites importieren (CSV) {#import-a-list-of-sites-csv}
 
-Aus der Geräteliste oder der Seite Gerät hinzufügen nimmt **Websites importieren (CSV)** eine
+Aus der Monitorliste oder der Seite Monitor hinzufügen nimmt **Websites importieren (CSV)** eine
 Datei oder eingefügten Text mit Kopfzeile und bis zu 1000 Zeilen:
 
 | Spalte | Erforderlich | Bedeutung |
 |---|---|---|
 | `url` | ja | Adresse der Website. |
-| `name` | nein | Gerätename; standardmäßig der Host. |
-| `folder` | nein | Ordner des Geräts; leer: `Websites/<platform>`, erkannt durch einmaliges Lesen der Website. |
+| `name` | nein | Monitorname; standardmäßig der Host. |
+| `folder` | nein | Ordner des Monitors; leer: `Websites/<platform>`, erkannt durch einmaliges Lesen der Website. |
 | `tags` | nein | `key=value;key=value`. |
 | `interval` | nein | Abfrageintervall. |
 | `expect_text` | nein | Wie die Option. |
@@ -148,6 +148,8 @@ Eine Vorschau zeigt jede Zeile und ihre Fehler, bevor etwas erstellt wird; eine 
 | `dumbmonit_website_status_code` | HTTP-Status der endgültigen Antwort. |
 | `dumbmonit_website_response_seconds` | Gesamtzeit, Weiterleitungen eingeschlossen. |
 | `dumbmonit_website_redirect_hops` | Verfolgte Weiterleitungen. |
+| `dumbmonit_website_https` | 1, wenn die endgültige Adresse https ist. |
+| `dumbmonit_website_security_header{header}` | 0/1 je Label `header` (nur https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform}` | Immer 1; das Label trägt die Plattform. |
 | `dumbmonit_website_text_chars` | Zeichen sichtbaren Texts (2xx-Antworten). |
 | `dumbmonit_website_blank` | 1, wenn dieser Text unter dem Schwellenwert liegt. |
@@ -162,7 +164,7 @@ Eine Vorschau zeigt jede Zeile und ihre Fehler, bevor etwas erstellt wird; eine 
 
 | Alarm | Wann | Schweregrad |
 |---|---|---|
-| Gerät nicht erreichbar | Keine Antwort, Zertifikat abgelehnt, Weiterleitungsschleife oder zu viele Weiterleitungen | kritisch |
+| Monitor nicht erreichbar | Keine Antwort, Zertifikat abgelehnt, Weiterleitungsschleife oder zu viele Weiterleitungen | kritisch |
 | Website ausgefallen | Die endgültige Antwort ist ein 4xx- oder 5xx-Fehler, 3 Minuten lang | kritisch |
 | Website-Seite leer | Sichtbarer Text unter dem Schwellenwert, 3 Minuten lang | kritisch |
 | Website erwarteter Text fehlt | Der erwartete Text fehlt, 3 Minuten lang | Warnung |

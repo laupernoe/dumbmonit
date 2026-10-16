@@ -10,11 +10,11 @@ salva.
 
 ![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Cada problema à esquerda traz o ícone de produto do seu dispositivo (as
-mesmas marcas das listas de dispositivos). A lista nunca ultrapassa seu
+Cada problema à esquerda traz o ícone de produto do seu monitor (as
+mesmas marcas das listas de monitores). A lista nunca ultrapassa seu
 espaço: em uma tela pequena, ou com muitos problemas, os cartões grandes
 encolhem para uma linha cada e depois se dobram em *E mais N*, em vez de
-se sobrepor aos dispositivos abaixo.
+se sobrepor aos monitores abaixo.
 
 ## Notícias na parede {#news-on-the-wall}
 

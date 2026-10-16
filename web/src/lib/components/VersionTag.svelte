@@ -25,7 +25,7 @@
 
 {#if version}
 	<a
-		href="/settings#about"
+		href="/settings/system#about"
 		class={`tnum rounded-md px-1.5 py-0.5 text-[0.6875rem] font-medium transition-opacity hover:text-ink-2 hover:opacity-100 ${inline ? 'text-ink-3' : 'mr-4 mb-3 hidden self-end text-ink-3/70 opacity-70 sm:mr-6 sm:block'}`}
 		title={version.build ? `Version ${version.number}, build ${version.build}` : `Version ${version.number}`}
 		>v{version.number}{#if version.build}<span class="font-mono"> · {version.build}</span>{/if}</a

@@ -693,9 +693,9 @@ fn osd_rank(name: &str) -> (i64, String) {
 async fn proxmox_target(state: &AppState, id: TargetId) -> Result<Target, ApiError> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if target.kind != "proxmox" {
-        return Err(ApiError::BadRequest("This device is not a Proxmox VE hypervisor.".into()));
+        return Err(ApiError::BadRequest("This monitor is not a Proxmox VE hypervisor.".into()));
     }
     Ok(target)
 }

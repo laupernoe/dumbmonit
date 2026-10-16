@@ -4,7 +4,7 @@ Two different things, for two different accidents.
 
 | | Encrypted bundle | Scheduled local backup |
 |---|---|---|
-| What it holds | The configuration: devices and their credentials, rules, channels, status pages, accounts, tokens. | The whole database, as one file, plus `secret.key`. |
+| What it holds | The configuration: monitors and their credentials, rules, channels, status pages, accounts, tokens. | The whole database, as one file, plus `secret.key`. |
 | Where it goes | Wherever you put it — it is encrypted with a passphrase you choose. | `/data/backups/`, inside the same volume. |
 | What it saves you from | A lost server, a move to new hardware, a fresh install. | The change you regret ten minutes later, an upgrade that went wrong. |
 | What it does not hold | Metrics history, alert state and history, the audit log, sessions. | Metrics history (`vm/`). |
@@ -12,7 +12,7 @@ Two different things, for two different accidents.
 Neither replaces an archive of the whole volume if you want the graphs back
 too; that is at the bottom of this page.
 
-!!! danger "`/data/secret.key` is what decrypts your device credentials"
+!!! danger "`/data/secret.key` is what decrypts your monitor credentials"
     SNMP communities, Proxmox tokens, SMTP passwords and heartbeat URLs are
     stored encrypted with a key derived from the instance secret. On first start
     DumbMonit writes it to `/data/secret.key` (or reads it from
@@ -21,7 +21,7 @@ too; that is at the bottom of this page.
     **A copy of the database without that file restores an instance that cannot
     talk to anything.** The server notices and refuses to start with an explicit
     message rather than failing on every probe — but the credentials are gone,
-    and every device has to be entered again.
+    and every monitor has to be entered again.
 
     The encrypted bundle is the one exception: its secrets are re-encrypted with
     your passphrase, so it restores onto a fresh instance that has its own,
@@ -53,15 +53,15 @@ recovery**: a bundle whose passphrase is lost is lost.
 
 !!! warning "The bundle holds every credential of this instance"
     Anyone with the file and the passphrase can read the password of every
-    device you monitor. Keep it where you keep passwords.
+    monitor you monitor. Keep it where you keep passwords.
 
 ### What is in it
 
 | Section | Contents |
 |---|---|
-| `targets` | Devices: name, kind, address, interval, options, parent, relay agent, and the credential. |
+| `targets` | Monitors: name, kind, address, interval, options, parent, relay agent, and the credential. |
 | `rules` | Alert rules, including built-in ones you have retuned or disabled. |
-| `rule_overrides` | Per-device thresholds and exclusions. |
+| `rule_overrides` | Per-monitor thresholds and exclusions. |
 | `channels` | Notification channels, their settings, their per-channel policy and their secrets. |
 | `notify_policy` | The global notification policy (grouping, hourly cap, flapping, public URL). |
 | `silences` | Maintenance windows. |
@@ -72,7 +72,7 @@ recovery**: a bundle whose passphrase is lost is lost.
 | `api_tokens` | API tokens, as hashes. Existing tokens keep working. |
 | `push_monitors` | Heartbeat tokens, so the URLs your cron jobs already call stay the same. |
 
-Devices are matched on **kind + address**, which is also the unique key of the
+Monitors are matched on **kind + address**, which is also the unique key of the
 table: importing the same bundle twice never creates a second copy of anything.
 
 ### Account passwords
@@ -108,7 +108,7 @@ somewhere that has never seen `secret.key`.
 3. Read the report. It says, section by section, what would be **created**, what
    would be **updated** because it differs from what is already here, and what is
    already identical — plus a note for anything it could not place, such as a
-   rule that pointed at a device the bundle does not contain.
+   rule that pointed at a monitor the bundle does not contain.
 4. Press **Restore for real**.
 
 Three rules the restore never breaks:
@@ -116,7 +116,7 @@ Three rules the restore never breaks:
 - **Nothing is ever deleted.** A restore makes what the bundle describes exist;
   anything the instance has in addition stays.
 - **Nothing is ever duplicated.** Every item is matched on its natural key —
-  kind + address for a device, `uid` for a rule, name for a channel, slug for a
+  kind + address for a monitor, `uid` for a rule, name for a channel, slug for a
   status page. Restoring the same bundle twice reports everything as already
   identical and writes nothing.
 - **Existing accounts are left alone.** An account whose username is already

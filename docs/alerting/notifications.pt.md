@@ -20,19 +20,19 @@ evaluate (hysteresis, per-device overrides)
 | Etapa | Onde é definida | Predefinição |
 |---|---|---|
 | Limiar de limpeza (histerese) | Editor de regra → *Clear below / above* | nenhum (CPU: 85%, disco: 88% nas regras incluídas) |
-| Substituições por dispositivo | Editor de regra → *Per-device overrides* | nenhuma |
-| Deteção de oscilação | Alerts → Notifications → Notification policy → More options | 4 alterações em 30 min, retenção de 30 min |
+| Substituições por monitor | Editor de regra → *Per-device overrides* | nenhuma |
+| Deteção de oscilação | Settings → Notifications & reports → Notification policy → More options | 4 alterações em 30 min, retenção de 30 min |
 | Severidade mínima | Canal → Delivery options → *Send* | tudo |
 | Avisar-me quando se resolve | Canal → Delivery options | ativado |
 | Intervalo mínimo por alerta | Canal → Delivery options | nenhum |
 | Horas de silêncio | Canal → Delivery options | desligado |
 | Filtro de encaminhamento (etiquetas, tipo, regra) | Canal → Delivery options → *Only some alerts* | desligado (o canal ouve tudo) |
-| Escalonamento se ninguém confirmar | Alerts → Notifications → Notification policy | desligado |
-| Janela de lote | Alerts → Notifications → Notification policy | 60 s |
-| Mensagens por canal por hora | Alerts → Notifications → Notification policy | 20 |
-| URL público (ligações diretas) | Alerts → Notifications → Notification policy, ou `DUMBMONIT_PUBLIC_URL` | vazio |
+| Escalonamento se ninguém confirmar | Settings → Notifications & reports → Notification policy | desligado |
+| Janela de lote | Settings → Notifications & reports → Notification policy | 60 s |
+| Mensagens por canal por hora | Settings → Notifications & reports → Notification policy | 20 |
+| URL público (ligações diretas) | Settings → Notifications & reports → Notification policy, ou `DUMBMONIT_PUBLIC_URL` | vazio |
 
-## Histerese e substituições por dispositivo {#hysteresis-and-per-device-overrides}
+## Histerese e substituições por monitor {#hysteresis-and-per-device-overrides}
 
 Uma regra que dispara acima de 90% e se limpa no momento em que o
 valor desce abaixo de 90% vai disparar e limpar-se toda a noite numa
@@ -42,15 +42,15 @@ regras «fires above») ou sobe acima dele (para regras «fires below»).
 O campo da API é `clear_threshold` na regra; o servidor recusa um
 limiar de limpeza do lado errado do limiar.
 
-Uma **substituição por dispositivo** altera o limiar ou limiar de
-limpeza de um dispositivo, ou desativa a regra para esse dispositivo,
+Uma **substituição por monitor** altera o limiar ou limiar de
+limpeza de um monitor, ou desativa a regra para esse monitor,
 sem duplicar a regra:
 
 ```
 PUT /api/alerts/rules/{id}/overrides/{target_id}
 { "threshold": 97, "clear_threshold": 95 }      # ou { "enabled": false }
 GET /api/alerts/rules/{id}/overrides
-GET /api/alerts/overrides?target_id=7           # toda substituição de um dispositivo
+GET /api/alerts/overrides?target_id=7           # toda substituição de um monitor
 DELETE /api/alerts/rules/{id}/overrides/{target_id}
 ```
 
@@ -64,8 +64,8 @@ ou se resolveu 4 vezes dentro de 30 minutos está *a oscilar*: um
 aviso sai («flapping: 4 changes in 30 min, notifications held for 30
 min») e nada mais sobre esse alerta é enviado até a retenção
 terminar. Uma resolução depois da retenção continua a ser anunciada.
-Ajuste-a ou desligue-a em Alerts → Notifications → Notification
-policy → More options (`flap_events`, `flap_window_secs`,
+Ajuste-a ou desligue-a em Settings → Notifications & reports →
+Notification policy → More options (`flap_events`, `flap_window_secs`,
 `flap_hold_secs`; `flap_events: 0` desativa-a).
 
 ## Opções de entrega por canal {#per-channel-delivery-options}
@@ -87,7 +87,7 @@ Cada canal decide o que ouve (`policy` na carga útil do canal):
   que dispara e se limpa durante as horas de silêncio só é mencionado
   nesse resumo como «resolved during quiet hours».
 - `matcher` — quais alertas o canal quer, por etiqueta, tipo de
-  dispositivo ou regra. Vazio (a predefinição, e o que todo canal
+  monitor ou regra. Vazio (a predefinição, e o que todo canal
   existente mantém) significa tudo.
 
 ```
@@ -104,7 +104,7 @@ null` limpa-as, e `"matcher": null` limpa o filtro de encaminhamento.
 
 ## Encaminhamento por etiqueta {#routing-by-tag}
 
-Os dispositivos transportam etiquetas (`site=cellar`, `role=storage`)
+Os monitores transportam etiquetas (`site=cellar`, `role=storage`)
 e um tipo (`snmp`, `proxmox`, `synology`, `agent`…). O **filtro de
 encaminhamento** de um canal diz quais alertas quer:
 
@@ -120,8 +120,8 @@ parênteses:
 
 | `field` | Corresponde a | Exemplo |
 |---|---|---|
-| `tag` | Uma etiqueta da própria página do dispositivo | `{"field":"tag","key":"site","value":"cellar"}` |
-| `kind` | O coletor que sonda o dispositivo | `{"field":"kind","value":"proxmox"}` |
+| `tag` | Uma etiqueta da própria página do monitor | `{"field":"tag","key":"site","value":"cellar"}` |
+| `kind` | O coletor que sonda o monitor | `{"field":"kind","value":"proxmox"}` |
 | `rule` | O `uid` da regra | `{"field":"rule","value":"disk_full"}` |
 
 Como as listas se lêem:
@@ -135,14 +135,14 @@ Como as listas se lêem:
   correspondeu.
 
 Por isso o exemplo acima lê-se, e a interface diz-o exatamente nestas
-palavras: *este canal recebe avisos e acima de dispositivos
-etiquetados site=cellar, exceto dispositivos etiquetados role=lab*.
+palavras: *este canal recebe avisos e acima de monitores
+etiquetados site=cellar, exceto monitores etiquetados role=lab*.
 
 Sob o editor, uma **pré-visualização** lista quais dos seus
-dispositivos atuais o filtro seleciona. Não é uma aproximação: o
+monitores atuais o filtro seleciona. Não é uma aproximação: o
 servidor executa o próprio filtro que o motor de alertagem executa,
-reduzido à parte que depende só do dispositivo. As condições de regra
-aplicam-se a alertas em vez de dispositivos, por isso a
+reduzido à parte que depende só do monitor. As condições de regra
+aplicam-se a alertas em vez de monitores, por isso a
 pré-visualização nomeia-as separadamente em vez de fingir contá-las.
 
 ```
@@ -205,16 +205,16 @@ fazem corretamente.
 ```
 
 - **Batch window** — alertas que disparam dentro da janela saem como
-  *uma* mensagem por canal, agrupados por dispositivo: «3 alerts on 2
-  devices» com uma secção por dispositivo; as resoluções vão junto
+  *uma* mensagem por canal, agrupados por monitor: «3 alerts on 2
+  devices» com uma secção por monitor; as resoluções vão junto
   («2 resolved»). `0` envia no ciclo seguinte. Um resumo lista no
   máximo 12 linhas, depois «…and N more alerts».
 - **Hourly cap** — uma vez um canal tenha recebido `max_per_hour`
   mensagens na última hora, os alertas seguintes esperam e chegam
   como um único resumo quando uma vaga liberta. `0` remove o limite.
 - **Canais de prevenção** (PagerDuty, Opsgenie) nunca são agrupados em
-  lote entre dispositivos: abrem e fecham um incidente por
-  dispositivo, por isso recebem uma mensagem por dispositivo sem
+  lote entre monitores: abrem e fecham um incidente por
+  monitor, por isso recebem uma mensagem por monitor sem
   esperar.
 
 As falhas de entrega mantêm as linhas em fila; o ciclo seguinte
@@ -236,15 +236,15 @@ Cada alerta é uma linha, a mesma em email, ntfy, chat e a variável
   emoji.
 - Uma regra que monitoriza várias séries nomeia a que disparou: a VM e
   o seu id, o ponto de montagem, a interface, o grupo de cópia de
-  segurança, o URL da sonda. As regras à escala do dispositivo
-  (inacessível) não nomeiam mais do que o dispositivo.
+  segurança, o URL da sonda. As regras à escala do monitor
+  (inacessível) não nomeiam mais do que o monitor.
 - O valor e o limiar são mostrados para regras medidas; uma regra
   tudo-ou-nada numa métrica 0/1 (com bateria, convidado parado) não
   repete «1 (threshold > 0)».
 
 ## Ligações diretas {#deep-links}
 
-Toda mensagem termina com uma ligação ao dispositivo
+Toda mensagem termina com uma ligação ao monitor
 (`{public_url}/targets/{id}`) quando um URL público é conhecido — o
 `public_url` da política, ou `DUMBMONIT_PUBLIC_URL`. Os webhooks
 personalizados também a recebem como a variável `{{link}}` a menos que
@@ -253,7 +253,7 @@ o seu próprio `base_url` esteja definido.
 Não há, de propósito, nenhuma ligação «silence for 1 h» nas mensagens:
 os serviços de chat obtêm toda ligação que mostram para construir uma
 pré-visualização, o que acionaria o silêncio no momento em que a
-mensagem é publicada. Silencie a partir da página do dispositivo ou da
+mensagem é publicada. Silencie a partir da página do monitor ou da
 página Alerts em vez disso.
 
 ## O que foi emprestado do Pulse, e o que não foi {#what-was-borrowed-from-pulse-and-what-was-not}

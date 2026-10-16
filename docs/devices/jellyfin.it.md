@@ -36,9 +36,9 @@ l'immagine), quindi non c'è alcuna metrica di aggiornamento.
 
 Le [regole integrate](../alerting/rules.md#self-hosted-applications) che si
 applicano: Jellyfin scheduled task failed, Jellyfin plugin broken, Jellyfin
-restart pending, più Device unreachable.
+restart pending, più Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non chiama mai Jellyfin. Indica prima cosa non va (task falliti,

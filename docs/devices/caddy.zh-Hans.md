@@ -38,9 +38,9 @@ Caddy 的管理 API 不是只读的:任何能访问它的人都可以加载一�
 
 适用的[内置规则](../alerting/rules.md#reverse-proxies-and-domains):
 Caddy 上游不健康、Caddy 配置重新加载失败、反向代理应答 5xx,
-以及设备不可达。
+以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询 Caddy。
 它会用一句话说明哪里出了问题(没有配置、重新加载失败、上游不

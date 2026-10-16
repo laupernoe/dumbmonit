@@ -5,7 +5,7 @@ Uptime Kuma: uma página web, uma porta, um nome DNS, um host, um
 certificado, um servidor de hora, um relay de e-mail, um banco de
 dados, um broker MQTT, um endpoint WebSocket. Cada serviço recebe uma
 barra de histórico, um tempo de resposta e uma porcentagem de
-disponibilidade em sua página de dispositivo.
+disponibilidade em sua página de monitor.
 
 Os últimos cinco vão além de abrir uma conexão: começam uma sessão real
 no próprio protocolo do serviço. Essa é a diferença entre "a porta 5432
@@ -25,7 +25,7 @@ que torna possível uma porcentagem de disponibilidade:
 
 | Situação | O que acontece |
 |---|---|
-| Opção ou endereço inválido, sockets ICMP não permitidos (veja Ping) | Erro de configuração: nada é escrito, a página do dispositivo mostra o erro, nenhum alerta de "fora do ar". |
+| Opção ou endereço inválido, sockets ICMP não permitidos (veja Ping) | Erro de configuração: nada é escrito, a página do monitor mostra o erro, nenhum alerta de "fora do ar". |
 | Conexão recusada, tempo esgotado, TLS recusado, `500`, palavra-chave ausente, perda total de pacotes, senha recusada, consulta falhada | `probe_success = 0`: a indisponibilidade é registrada, datada e contada. |
 | Tudo bem | `probe_success = 1`. |
 
@@ -57,6 +57,7 @@ além de `target`, `host` e `tag_*`.
 | `probe_http_status_code` | http, websocket | Código de status obtido. |
 | `probe_http_first_byte_seconds` | http | Tempo até os cabeçalhos de resposta. |
 | `probe_http_content_bytes` | http | Tamanho do corpo. |
+| `probe_http_security_header{header}` | http | 0/1 por rótulo `header` (somente https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | todos exceto dns e ping | Estabelecimento de conexão (login incluído para bancos de dados). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Negociação TLS apenas. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Presença; rótulo `version`. |
@@ -263,7 +264,7 @@ remoto.
 !!! warning
     Sem esse sysctl, a verificação não pode abrir um socket ICMP: ela
     reporta isso como um erro de configuração, não como uma falha de
-    host. Alguns dispositivos também ignoram pings de propósito:
+    host. Alguns monitores também ignoram pings de propósito:
     verifique isso antes de tirar conclusões.
 
 ```yaml
@@ -549,7 +550,7 @@ automação que a consome, ou use um heartbeat.
 | `topic` | Tópico | *(vazio)* | Tópico ao qual a verificação se inscreve. Vazio: só conecta, o que já diz que o broker está ativo e aceita sua conta. |
 | `expect_message` | Esperar uma mensagem retida | `false` | Uma mensagem precisa chegar nesse tópico antes do tempo limite. Só mensagens retidas chegam imediatamente: um tópico que é apenas publicado de tempos em tempos parecerá silencioso. |
 | `expect` | Conteúdo esperado | *(vazio)* | Texto que a mensagem precisa conter. Preenchê-lo implica esperar uma mensagem. |
-| `client_id` | Identificador de cliente | *(derivado)* | Nome anunciado ao broker. O padrão deriva do dispositivo, então duas verificações nunca se desconectam. |
+| `client_id` | Identificador de cliente | *(derivado)* | Nome anunciado ao broker. O padrão deriva do monitor, então duas verificações nunca se desconectam. |
 | `server_name` | Nome do servidor (SNI) | *(o host)* | Nome de domínio anunciado ao broker e verificado no certificado. Defina quando o endereço é um IP. |
 | `insecure_tls` | Aceitar um certificado não verificável | `false` | Uma cadeia não verificável não conta mais como falha: a data de expiração ainda é registrada. |
 | `allow_private_targets` | Permitir alvos de loopback e link-local | `false` | Veja "Endereços que as verificações recusam" abaixo. |
@@ -720,7 +721,7 @@ caracteres em uma mensagem de falha.
 | Uma verificação mostra um erro de configuração nomeando `allow_private_targets` | O endereço é loopback ou link-local. Veja "Endereços que as verificações recusam" acima. |
 | TCP fora do ar mesmo que `telnet host porta` funcione do seu laptop | O contêiner DumbMonit não consegue alcançar o host (rede Docker, firewall). Teste de dentro da rede do contêiner. |
 | DNS fora do ar com `reason="record"` | A resposta não contém todo valor listado em `expect`. |
-| Ping fora do ar com `reason="packet_loss"` | Perda acima de `loss_threshold_percent`; alguns dispositivos limitam a taxa de ICMP. |
+| Ping fora do ar com `reason="packet_loss"` | Perda acima de `loss_threshold_percent`; alguns monitores limitam a taxa de ICMP. |
 | DNS fora do ar com `reason="record"` mesmo que `expect` corresponda | `expect_mode` é `exact` e a resposta contém um valor extra, ou `forbid` correspondeu. |
 | SMTP fora do ar com `reason="protocol"` em `security = starttls` | O relay não anuncia STARTTLS nessa porta. Use `tls` para 465, `none` para um relay local simples. |
 | Uma verificação de banco de dados fora do ar com `reason="auth"` | A conta existe mas pode não conectar da máquina DumbMonit: verifique `pg_hba.conf`, ou a parte de host do usuário MySQL. |

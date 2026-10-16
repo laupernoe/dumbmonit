@@ -1,5 +1,6 @@
 //! Boucle de vie de l'agent : collecter, envoyer, recommencer.
 
+use std::collections::BTreeSet;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
@@ -101,6 +102,12 @@ pub struct Agent {
     /// Vrai une fois le refus de liaison signalé, pour ne le dire qu'une fois
     /// par panne plutôt qu'à chaque tentative.
     binding_refused: bool,
+    /// Modules décochés dans l'interface, tels que le dernier accusé de
+    /// réception les nomme : leur collecte est sautée. Le serveur écarte de
+    /// toute façon leurs mesures ; ne pas les lire épargne la machine (un test
+    /// de débit consomme de la bande passante, une vérification d'images
+    /// interroge les registres).
+    disabled_modules: BTreeSet<String>,
 }
 
 impl Agent {
@@ -142,6 +149,7 @@ impl Agent {
             relay: None,
             binding,
             binding_refused: false,
+            disabled_modules: BTreeSet::new(),
             identity,
             client,
             config,
@@ -153,30 +161,49 @@ impl Agent {
         let started = Instant::now();
         let mut snapshot = self.probe.read();
         snapshot.services = services::probe(&self.config.services).await;
-        if self.config.docker {
+        if self.config.docker && self.wants("docker") {
             snapshot.containers = self.docker.read().await;
             if let Some(inventory) = snapshot.containers.as_mut() {
                 self.check_updates(&mut inventory.detailed);
             }
         }
         snapshot.system_health = self.health.read().await;
-        snapshot.backups = self.plakar.read().await;
-        snapshot.backup_repos = self.backup_repos.read().await;
-        snapshot.wireguard = self.wireguard.read().await;
-        snapshot.ipsec = self.ipsec.read().await;
-        snapshot.speedtest = self.speedtest.read().await;
+        if self.wants("plakar") {
+            snapshot.backups = self.plakar.read().await;
+        }
+        if self.wants("backup_repos") {
+            snapshot.backup_repos = self.backup_repos.read().await;
+        }
+        if self.wants("wireguard") {
+            snapshot.wireguard = self.wireguard.read().await;
+        }
+        if self.wants("ipsec") {
+            snapshot.ipsec = self.ipsec.read().await;
+        }
+        let speedtest = self.wants("speedtest");
+        if speedtest {
+            snapshot.speedtest = self.speedtest.read().await;
+        }
         snapshot.sensors = self.sensors.read();
         snapshot.smart = self.smart.read().await;
-        snapshot.zfs = self.zfs.read().await;
-        snapshot.libvirt = self.libvirt.read().await;
+        if self.wants("zfs") {
+            snapshot.zfs = self.zfs.read().await;
+        }
+        if self.wants("libvirt") {
+            snapshot.libvirt = self.libvirt.read().await;
+        }
         snapshot.perf_counters = self.perf_counters.read();
 
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.
         let now_ms = chrono::Utc::now().timestamp_millis();
         let mut samples = snapshot.to_samples(now_ms);
-        samples
-            .extend(crate::collect::speedtest::threshold_samples(&self.config.speedtest, now_ms));
+        if speedtest {
+            samples.extend(crate::collect::speedtest::threshold_samples(
+                &self.config.speedtest,
+                now_ms,
+            ));
+        }
         samples.extend(agent_samples(
             started.elapsed(),
             self.buffer.len(),
@@ -184,6 +211,23 @@ impl Agent {
             now_ms,
         ));
         samples
+    }
+
+    /// Faux pour un module que l'utilisateur a décoché dans l'interface.
+    fn wants(&self, module: &str) -> bool {
+        !self.disabled_modules.contains(module)
+    }
+
+    /// Adopte la liste des modules décochés que le serveur vient de renvoyer.
+    fn adopt_disabled_modules(&mut self, disabled: Vec<String>) {
+        let disabled: BTreeSet<String> = disabled.into_iter().collect();
+        if disabled != self.disabled_modules {
+            info!(
+                modules = disabled.iter().map(String::as_str).collect::<Vec<_>>().join(","),
+                "modules switched off from the server"
+            );
+            self.disabled_modules = disabled;
+        }
     }
 
     /// Complète chaque conteneur avec le dernier verdict de mise à jour connu et
@@ -321,6 +365,7 @@ impl Agent {
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
+                self.adopt_disabled_modules(ack.disabled_modules);
                 FlushOutcome::Sent { count }
             }
             Err(PushError::Forbidden(message)) => {
@@ -484,6 +529,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_module_unticked_on_the_server_is_no_longer_collected() {
+        let mut config = config();
+        config.speedtest.min_download_bytes_per_second = Some(1_000_000.0);
+        let mut agent = Agent::new(config).expect("agent");
+        let threshold = |samples: &[Sample]| {
+            samples.iter().any(|s| s.metric == "agent_speedtest_download_min_bytes_per_second")
+        };
+        assert!(threshold(&agent.collect().await), "le seuil est publié tant que le module vit");
+
+        agent.adopt_disabled_modules(vec!["speedtest".into()]);
+        assert!(!agent.wants("speedtest"));
+        assert!(agent.wants("docker"), "les autres modules continuent");
+        assert!(!threshold(&agent.collect().await));
+
+        // Recoché : l'accusé suivant ne le nomme plus, la collecte reprend.
+        agent.adopt_disabled_modules(Vec::new());
+        assert!(threshold(&agent.collect().await));
+    }
+
+    #[tokio::test]
     async fn a_collection_cycle_produces_metrics_for_the_local_machine() {
         let mut agent = Agent::new(config()).expect("agent");
         let samples = agent.collect().await;
@@ -549,5 +614,131 @@ mod tests {
         assert_eq!(agent.backoff.attempts(), 0);
         agent.backoff.next_delay();
         assert_eq!(agent.backoff.attempts(), 1);
+    }
+
+    // ------------------------------------------------ contre un faux serveur
+
+    const ACK: &str = r#"{"target_id":3,"accepted":1,"interval_secs":60,
+        "agent_secret":"dmab_attribue","bound":true}"#;
+
+    /// Agent pointé sur le faux serveur, avec un secret de liaison jetable.
+    fn agent_for(url: &str, dir: &tempfile::TempDir) -> Agent {
+        let mut config = config();
+        config.server_url = url.to_string();
+        config.secret_path = dir.path().join("agent-secret");
+        Agent::new(config).expect("agent")
+    }
+
+    #[tokio::test]
+    async fn the_binding_secret_issued_by_the_server_is_kept_then_forgotten_on_refusal() {
+        let dir = tempfile::tempdir().unwrap();
+        let answer = std::sync::Arc::new(std::sync::Mutex::new((200u16, ACK.to_string())));
+        let shared = answer.clone();
+        let (url, calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        // Le secret est rangé sur disque, la période adoptée, le tampon vidé.
+        assert_eq!(
+            std::fs::read_to_string(dir.path().join("agent-secret")).unwrap().trim(),
+            "dmab_attribue"
+        );
+        assert_eq!(agent.interval, Duration::from_secs(60));
+        assert!(agent.buffer.is_empty());
+
+        // Au tour suivant, le secret accompagne le lot.
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+        agent.flush().await;
+        assert_eq!(calls.all()[1].header("x-dumbmonit-agent-secret"), Some("dmab_attribue"));
+
+        // Le serveur ne reconnaît plus la liaison : on l'oublie, on garde les
+        // mesures, et le refus n'est signalé qu'une fois.
+        *answer.lock().unwrap() = (403, r#"{"error":"re-enrol me"}"#.to_string());
+        let samples = agent.collect().await;
+        let count = samples.len();
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(PushError::Forbidden(_))));
+        assert_eq!(agent.buffer.len(), count);
+        assert!(agent.binding_refused);
+        assert!(!dir.path().join("agent-secret").exists());
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+    }
+
+    #[tokio::test]
+    async fn a_batch_the_server_rejects_is_dropped_rather_than_resent() {
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) =
+            crate::testsupport::fake_http(|_| (400, r#"{"error":"bad batch"}"#.to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(agent.buffer.is_empty(), "un lot refusé ne se réémet pas");
+        assert!(matches!(agent.flush().await, FlushOutcome::Idle));
+        assert_eq!(calls.all().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn run_once_reports_whether_the_server_accepted_the_batch() {
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|req| {
+            if req.path == "/api/ingest" { (200, ACK.to_string()) } else { (200, "[]".into()) }
+        })
+        .await;
+        let mut agent = agent_for(&url, &dir);
+        agent.config.commands = true;
+        agent.commands = CommandRunner::new(
+            true,
+            agent.client.clone(),
+            agent.identity.key(),
+            std::path::Path::new("/inexistant/docker.sock"),
+        );
+        agent.run_once().await.expect("lot accepté");
+        // Le lot part, puis l'agent demande s'il a des commandes à exécuter.
+        assert_eq!(calls.count("POST", "/api/ingest"), 1);
+        assert_eq!(calls.count("GET", "/api/agent/commands"), 1);
+
+        let dir = tempfile::tempdir().unwrap();
+        let (url, _) = crate::testsupport::fake_http(|_| (503, "down".to_string())).await;
+        let error = agent_for(&url, &dir).run_once().await.unwrap_err().to_string();
+        assert!(error.contains("503"), "{error}");
+    }
+
+    #[tokio::test]
+    async fn the_loop_collects_sends_and_flushes_before_stopping() {
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let agent = agent_for(&url, &dir);
+        let (trigger, shutdown) = crate::shutdown::channel();
+        // Premier cycle : une collecte immédiate puis son envoi, et l'arrêt
+        // est demandé dès que le lot est parti.
+        let stopper = async {
+            let started = std::time::Instant::now();
+            while calls.count("POST", "/api/ingest") == 0 {
+                assert!(started.elapsed() < Duration::from_secs(30), "aucun lot envoyé");
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            trigger.fire();
+        };
+        let (result, ()) = tokio::join!(agent.run(shutdown), stopper);
+        result.expect("sortie propre");
+    }
+
+    #[tokio::test]
+    async fn a_loop_that_cannot_reach_the_server_keeps_its_measurements_and_stops_anyway() {
+        let dir = tempfile::tempdir().unwrap();
+        let mut agent = agent_for("http://127.0.0.1:1", &dir);
+        agent.config.modules = Some(Default::default());
+        let (trigger, shutdown) = crate::shutdown::channel();
+        let stopper = async {
+            tokio::time::sleep(Duration::from_millis(1500)).await;
+            trigger.fire();
+        };
+        let (result, ()) = tokio::join!(agent.run(shutdown), stopper);
+        result.expect("sortie propre");
     }
 }

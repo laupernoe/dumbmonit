@@ -12,15 +12,15 @@ cabe en una página de intranet.
 
 Solo muestra lo que tú pones en ella: la etiqueta que le das a cada
 servicio, su estado, su disponibilidad y su tiempo de respuesta. Los
-nombres de dispositivo, direcciones, tipos e identificadores nunca
+nombres de monitor, direcciones, tipos e identificadores nunca
 salen del servidor — ni en la página, ni en un badge, ni en un correo.
 
 ## 1. Crear una página {#1-create-a-page}
 
-**Status** en la barra superior → **New page**. Esa página lista tus
+**Settings → Status pages** → **New page**. Esa página lista tus
 páginas de estado (abrir, editar, eliminar) con los anuncios bajo
-ellas; el editor se abre en su propia ruta (`/status/new`,
-`/status/<id>`). El renderizado público está en `/s/<address>`.
+ellas; el editor se abre en su propia ruta (`/settings/status/new`,
+`/settings/status/<id>`). El renderizado público está en `/s/<address>`.
 
 | Campo | Qué hace |
 | --- | --- |
@@ -32,9 +32,9 @@ ellas; el editor se abre en su propia ruta (`/status/new`,
 | **Simple mode** | Una página plana: sin escena, sin mascota, sin animación y sin huevos de pascua. Claro u oscuro sigue el sistema del visitante, con un interruptor en la cabecera; el ajuste Theme de la página se ignora. |
 | **Published** | Desactivado = borrador: la página, sus badges y su logo responden «not found» a los visitantes hasta que la activas. |
 
-Luego marca los dispositivos a mostrar. Para cada uno, define la
+Luego marca los monitores a mostrar. Para cada uno, define la
 **label** que leerán los visitantes (por defecto el nombre del
-dispositivo — puedes preferir «Website» a «nginx-front-01») y,
+monitor — puedes preferir «Website» a «nginx-front-01») y,
 opcionalmente, un **group** («Network», «Storage»). Los grupos se
 convierten en bloques en la página, en el orden en que organizas los
 servicios.
@@ -112,25 +112,25 @@ Cómo se decide el estado:
 
 | Estado | Significado |
 | --- | --- |
-| Operational | La última sonda tuvo éxito (sondas de disponibilidad), o el dispositivo reportó dentro de tres períodos de sondeo. |
+| Operational | La última sonda tuvo éxito (sondas de disponibilidad), o el monitor reportó dentro de tres períodos de sondeo. |
 | Degraded | Activo ahora, pero al menos una sonda falló en la última hora. |
-| Down | La última sonda falló, el dispositivo dejó de reportar, o su configuración tiene un error. |
-| Maintenance | Una ventana de mantenimiento está en curso y el servicio está caído: esperado, no una caída. O bien un anuncio en esta página, o una [ventana de mantenimiento](../alerting/maintenance.md) de alertas que cubre ese dispositivo. |
+| Down | La última sonda falló, el monitor dejó de reportar, o su configuración tiene un error. |
+| Maintenance | Una ventana de mantenimiento está en curso y el servicio está caído: esperado, no una caída. O bien un anuncio en esta página, o una [ventana de mantenimiento](../alerting/maintenance.md) de alertas que cubre ese monitor. |
 | No data | Nunca sondeado todavía, o desactivado. |
 
 La disponibilidad para sondas (`http`, `tcp`, `dns`, `ping`, `tls`,
 heartbeats) es la proporción de comprobaciones exitosas, de
 `dumbmonit_probe_success`; la caída de un día son sus comprobaciones
 fallidas multiplicadas por el intervalo de sonda. Para otros
-dispositivos (SNMP, agent, Proxmox…) es la proporción de franjas de
-cinco minutos en las que el dispositivo reportó al menos una vez
-(`dumbmonit_up`), contado desde la primera medición — un dispositivo
+monitores (SNMP, agent, Proxmox…) es la proporción de franjas de
+cinco minutos en las que el monitor reportó al menos una vez
+(`dumbmonit_up`), contado desde la primera medición — un monitor
 añadido ayer no está «caído» durante los 89 días anteriores — y la
 caída de un día son sus franjas silenciosas.
 
 ## 3. Anunciar incidentes y mantenimiento {#3-announce-incidents-and-maintenance}
 
-En la página **Status**, bajo la lista de páginas, **Incidents and
+En **Settings → Status pages**, bajo la lista de páginas, **Incidents and
 maintenance** → **New announcement** (también ++ctrl+k++ → *Announce
 an incident*).
 
@@ -147,11 +147,11 @@ an incident*).
   muestran como *Maintenance*.
 
 Una [ventana de mantenimiento programada en Alerts](../alerting/maintenance.md)
-hace lo mismo para el único dispositivo que cubre, sin un anuncio: ese
+hace lo mismo para el único monitor que cubre, sin un anuncio: ese
 servicio se lee *Maintenance* en lugar de rojo mientras la ventana
 está abierta, y el estado general de la página dice *Maintenance*
 cuando nada más está caído o degradado. Solo las ventanas que nombran
-un dispositivo se muestran así; el nombre y comentario de la ventana
+un monitor se muestran así; el nombre y comentario de la ventana
 permanecen privados.
 
 Un anuncio se muestra en una página o en **todas las páginas**.

@@ -135,10 +135,10 @@ wrote the change or have the right to submit it under that licence. Add a
 
 ## Security design
 
-DumbMonit holds the credentials of every device it watches, so changes are
+DumbMonit holds the credentials of every monitor it watches, so changes are
 reviewed with secure design principles in mind: least privilege, secure
 defaults, no secret ever returned by the API, vetted cryptography only, and
-untrusted input from devices and agents. The
+untrusted input from monitors and agents. The
 [security model](https://dumbmonit.readthedocs.io/en/latest/development/security-model/)
 lists the trust boundaries and where each countermeasure lives. Report
 vulnerabilities privately, as described in [SECURITY.md](SECURITY.md). The
@@ -161,18 +161,18 @@ secrets never round-trip through the API (omitting `credential` / `secrets` on a
 `effective_phase` the user reads, and the Docker build layers dependencies on
 dummy sources before the real ones.
 
-## Adding a collector (a new device kind)
+## Adding a collector (a new monitor kind)
 
 1. Implement the `Collector` trait from `crates/proto/src/collector.rs` in a new
    module under `crates/server/src/collectors/`. Look at `uptime/` (small) or
    `synology/` (an HTTP API with options) for a template.
 2. Return `ProbeError` carefully: `ProbeError::means_down()` decides whether a
-   failure counts as "device unreachable" (an alert) or a configuration error
+   failure counts as "monitor unreachable" (an alert) or a configuration error
    (shown in the UI, never notified).
 3. Describe the kind for the UI in `crates/server/src/api/collectors.rs`
    (`CollectorView`): label, examples, accepted credential types, the setup
    notice, and typed `options` (stored as `Target.tags[key]`). This is what
-   `GET /api/collectors` returns; the "Add a device" form is generated from it,
+   `GET /api/collectors` returns; the "Add a monitor" form is generated from it,
    so no UI change is needed.
 4. Register it in `crates/server/src/main.rs` (`registry.register(...)`). The
    scheduler and the API never know concrete types.
@@ -302,6 +302,16 @@ Releases are tagged from `main`, after `dev` has been merged into it.
 
 Before tagging `vX.Y.Z`:
 
+0. Check that the **Upgrade test** workflow is green on `main`. It starts the
+   last published release, creates a user, monitors of several kinds, a rule, a
+   silence, a channel and a status page, waits for metrics, then starts the
+   candidate image on the same `/data` volume and checks that health, login,
+   every object and the VictoriaMetrics history survived. Run it by hand
+   against any image with `scripts/upgrade-test.sh [IMAGE]` (needs docker,
+   curl and python3; default image `ghcr.io/laupernoe/dumbmonit:edge`;
+   `OLD_IMAGE=…` picks another starting point). A failure means an existing
+   install would lose data when updating: fix it before tagging.
+
 1. Move the `Unreleased` section of `CHANGELOG.md` under the new version and date.
 2. Add the release to `web/src/lib/whatsnew/releases.ts` (newest first): the
    version exactly as the server reports it (`0.9.0`, no `v`), the date
@@ -309,9 +319,29 @@ Before tagging `vX.Y.Z`:
    vX.Y.Z" window shown once after an update; a version missing from the file
    shows nothing. `WHATSNEW_REQUIRE=1 npm test` in `web/` fails if the
    `Cargo.toml` version has no entry.
-3. Bump the version in `Cargo.toml`, then tag `vX.Y.Z`; `release.yml` publishes
+3. Bump the version in `Cargo.toml`, run `python3 site-src/build.py` (the website
+   reads the version from `Cargo.toml`), then tag `vX.Y.Z`; `release.yml` publishes
    the images and the GitHub release, whose notes are that version's CHANGELOG
-   section; the window links to that release.
+   section; the window links to that release. The workflow refuses a tag
+   that does not match the `Cargo.toml` and `Cargo.lock` version.
+
+A pre-release tag (anything with a `-`, e.g. `v0.9.0-rc.1`) runs the same
+pipeline to try it out: the images get only `:0.9.0-rc.1` (never `:latest`,
+`:0.9`, `:0`), and the GitHub release is a **draft**, marked pre-release and
+never latest. Its notes are its own CHANGELOG section, else the `0.9.0` one,
+else `Unreleased`. Bump `Cargo.toml` (and `Cargo.lock`) to the pre-release
+version first; the website shows the version without its `-rc.N`, so
+`site-src/build.py` can be run or skipped.
+
+The draft carries every binary, checksum, signature and the provenance, but
+only maintainers see it: running servers never learn about it. Once
+published, every instance already on a pre-release (all `0.1.0-alpha.N`) is
+offered it as an update; stable instances never are. To publish it anyway,
+open the draft on the Releases page, check that **Set as a pre-release** is
+ticked and **Set as the latest release** is not, then **Publish release**; or
+`gh release edit v0.9.0-rc.1 --draft=false --prerelease --latest=false`. To
+drop it, delete the draft and the tag (`gh release delete v0.9.0-rc.1
+--cleanup-tag`); the `:0.9.0-rc.1` images stay on ghcr.io until deleted there.
 
 ## Licence
 

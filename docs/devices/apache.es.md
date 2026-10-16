@@ -31,7 +31,7 @@ tasas. Todo lo que está por debajo de `workers_busy`/`workers_idle` y
 estados son waiting, open_slot, starting, reading, sending, keepalive,
 dns_lookup, closing, logging, finishing e idle_cleanup.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Apache. Muestra workers ocupados y libres, el desglose del

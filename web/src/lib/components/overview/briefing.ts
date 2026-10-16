@@ -44,7 +44,7 @@ export interface Sentence {
 
 export const DAY_MS = 24 * 3600 * 1000;
 /** The briefing never runs longer than this: it is read, not studied. */
-export const MAX_SENTENCES = 5;
+export const MAX_SENTENCES = 3;
 
 /** Rules that voice an outage rather than a measurement: told as "unreachable". */
 export function isDownRule(uid: string, rule: AlertRule | undefined): boolean {
@@ -254,16 +254,14 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
 
   const out: Sentence[] = [];
 
-  // 1. The lead: the window and its totals. A first visit opens with the
-  // pigeon's introduction and reads the last 24 h instead.
-  const intro = firstTime ? m.overview_brief_intro() + " " : "";
+  // 1. The lead: the window and its totals. A first visit reads the last 24 h.
   const reporting = Math.max(0, targets.length - unreachable.length);
   if (!eventful) {
     const head = firstTime
       ? m.overview_brief_quiet_first()
       : m.overview_brief_quiet_away();
     out.push({
-      text: `${intro}${head} ${m.overview_brief_kept_reporting({ count: reporting })}`,
+      text: `${head} ${m.overview_brief_kept_reporting({ count: reporting })}`,
       tone: "signal",
     });
   } else {
@@ -283,45 +281,13 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
       ? m.overview_brief_head_first()
       : m.overview_brief_head_since({ when: whenLabel(since, now) });
     out.push({
-      text: `${intro}${m.overview_brief_lead({ head, parts: parts.join(", ") })}`,
+      text: `${m.overview_brief_lead({ head, parts: parts.join(", ") })}`,
       tone: worst,
     });
   }
 
-  // 2. Outages: devices unreachable right now, then the ones that came back.
-  const wholeTime: Target[] = [];
-  const wentDown: { target: Target; at: Date }[] = [];
-  for (const target of unreachable) {
-    const outage = outages.find((episode) => episode.targetId === target.id);
-    if (outage?.lastFiringAt)
-      wentDown.push({ target, at: outage.lastFiringAt });
-    else wholeTime.push(target);
-  }
-  const outageBits: string[] = [];
-  if (wholeTime.length > 0) {
-    const names = wholeTime.slice(0, 3).map((target) => target.name);
-    const more = wholeTime.length - names.length;
-    const subject =
-      more > 0
-        ? m.overview_brief_and_others({ names: joinNames(names), count: more })
-        : joinNames(names);
-    outageBits.push(
-      m.overview_brief_down_whole({ subject, count: wholeTime.length }),
-    );
-  }
-  for (const { target, at } of wentDown.slice(0, 2)) {
-    outageBits.push(
-      m.overview_brief_went_down({ name: target.name, when: whenLabel(at, now) }),
-    );
-  }
-  if (outageBits.length > 0) {
-    const first = wholeTime[0] ?? wentDown[0]?.target;
-    out.push({
-      text: outageBits.join(" "),
-      tone: "warning",
-      href: deviceHref(first?.id ?? null),
-    });
-  }
+  // 2. Outages that are over: devices that dropped out and came back. The
+  // ones still unreachable are not repeated here — "Needs you" shows them.
   const cameBack = outages.filter(
     (episode) =>
       episode.fired > 0 &&
@@ -357,19 +323,18 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
         b[1].reduce((sum, e) => sum + e.fired + e.resolved, 0) -
         a[1].reduce((sum, e) => sum + e.fired + e.resolved, 0),
     )
-    .map(([targetId, list]) => {
-      let tone: Tone = "signal";
+    .map(([targetId, list]): Sentence | null => {
+      const tone: Tone = "signal";
       const phrases = list
         .sort((a, b) => severityRank(a.severity) - severityRank(b.severity))
+        // Still firing is what "Needs you" lists: only what is over is told here.
+        .filter((episode) => episode.fired === 0 || !stillFiring(episode))
         .map((episode) => {
           const name = ruleName(episode.uid, rulesMap);
           if (episode.fired === 0) return m.overview_brief_phrase_resolved({ name });
-          if (stillFiring(episode)) {
-            tone = worse(tone, severityTone(episode.severity));
-            return m.overview_brief_phrase_still({ name, count: episode.fired });
-          }
           return m.overview_brief_phrase_fired_resolved({ name, count: episode.fired });
         });
+      if (phrases.length === 0) return null;
       return {
         text: m.overview_brief_on_device({
           device: deviceName(targetId),
@@ -378,7 +343,8 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
         tone,
         href: deviceHref(targetId),
       };
-    });
+    })
+    .filter((sentence): sentence is Sentence => sentence !== null);
 
   // 4. Whether anyone was told.
   let notice: Sentence | null = null;
@@ -397,7 +363,7 @@ export function buildBriefing(input: BriefingInput): Sentence[] {
       notice = {
         text: m.overview_brief_nothing_no_channel(),
         tone: "advisory",
-        href: "/alerts#notifications",
+        href: "/settings/notifications#notifications-channels",
       };
     } else if (channels.length === 1) {
       notice = {

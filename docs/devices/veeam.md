@@ -84,11 +84,11 @@ succeeded, so the most recent one per object is already "the last successful
 backup" — nothing is filtered on the result here. Veeam does not expose a
 "last connection" separate from the backup itself, so `last_seen_timestamp_seconds`
 and the `connection` signal are never published; a device shows
-`last_connection` as "—" on the device page's table. The device's `type` is
+`last_connection` as "—" on the monitor page's table. The device's `type` is
 Veeam's own platform name (`VSphere`, `WindowsPhysical`, `HyperV`…), shown as
 is.
 
-## The device page
+## The monitor page
 
 The Backups panel says what is wrong in a sentence, shows the failed jobs, the
 failed sessions of the last 24 hours, the running jobs and the license, then

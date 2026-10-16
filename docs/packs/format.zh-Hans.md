@@ -15,22 +15,22 @@ my-pack/
 | Key | Required | Meaning |
 |---|---|---|
 | `schema` | yes | 始终为 `1`。 |
-| `id` | yes | 小写字母、数字和单个破折号，以字母开头，最多 40 个字符：`shelly-plug`。设备类型变为 `pack.<id>`，度量前缀为 `dumbmonit_<id with underscores>_`。 |
+| `id` | yes | 小写字母、数字和单个破折号，以字母开头，最多 40 个字符：`shelly-plug`。监控项类型变为 `pack.<id>`，度量前缀为 `dumbmonit_<id with underscores>_`。 |
 | `version` | yes | [语义版本](https://semver.org) of the pack: `1.2.0`。 |
 | `requires` | no | 该 pack 适用的 DumbMonit 版本，作为 semver 要求：`">=0.2"`。超出范围的服务器拒绝该 pack。 |
-| `label` | yes | 设备类型列表中显示的名称。 |
+| `label` | yes | 监控项类型列表中显示的名称。 |
 | `summary` | no | 一句话：pack 监控什么。 |
 | `examples` | no | 它适用的产品，显示为提示。 |
 | `address_hint` | no | 地址字段的占位符：`192.168.1.50`。 |
 | `default_port` | no | 当地址没有端口时使用的端口。 |
-| `scheme` | no | `http`（默认）或 `https`；设备可以覆盖它。 |
-| `setup` | no | 设备表单旁边显示的通知：`title`、`steps`（列表；步骤中换行符后的内容显示为可复制的命令）、`warning`、`doc_url`。 |
+| `scheme` | no | `http`（默认）或 `https`；监控项可以覆盖它。 |
+| `setup` | no | 监控项表单旁边显示的通知：`title`、`steps`（列表；步骤中换行符后的内容显示为可复制的命令）、`warning`、`doc_url`。 |
 | `credentials` | no | 接受的凭证类型，按优先顺序：`none`、`api_token`、`username_password`。默认：`[none]`。一个条目可以是 `{kind, label, help}` 来重新表述表单。 |
-| `options` | no | 设备表单中显示的设置（下面）。 |
+| `options` | no | 监控项表单中显示的设置（下面）。 |
 
 ## Options {#options}
 
-Options 存储在设备上，由路径、标头和正文中的 `{{option.<key>}}` 读取，并由规则阈值读取。
+Options 存储在监控项上，由路径、标头和正文中的 `{{option.<key>}}` 读取，并由规则阈值读取。
 
 ```yaml
 options:
@@ -48,7 +48,7 @@ options:
 
 ## Sources {#sources}
 
-一个源是每次 poll 的一个请求，始终发送到设备自己的地址。
+一个源是每次 poll 的一个请求，始终发送到监控项自己的地址。
 
 ```yaml
 sources:
@@ -63,7 +63,7 @@ sources:
     auth: auto              # auto (default), none, bearer or basic
 ```
 
-- `path` 必须以单个 `/` 开头。请求 URL 是设备地址后跟路径；替换后必须保持相同的 scheme、host 和 port，否则请求被拒绝。Option 值在路径中是百分比编码的，所以一个值不能添加段或更改主机。
+- `path` 必须以单个 `/` 开头。请求 URL 是监控项地址后跟路径；替换后必须保持相同的 scheme、host 和 port，否则请求被拒绝。Option 值在路径中是百分比编码的，所以一个值不能添加段或更改主机。
 - `auth: auto` 将 `api_token` 凭证作为 `Authorization: Bearer …` 发送，`username_password` 凭证作为基本认证。`none` 隐式不发送任何内容，所以标头可以改为携带凭证：`X-Api-Key: "{{credential.token}}"`。`{{credential.token}}`、`{{credential.username}}` 和 `{{credential.password}}` 在**仅在标头中**被接受：从不在路径或正文中，这些最终会出现在日志中。
 - 重定向仅遵循相同的 scheme、host 和 port，最多三次。`401` 和 `403` 作为身份验证错误报告，其他非 2xx 状态作为协议错误。
 - 一个 poll 最多进行 16 个请求，每个响应最多读取 4 MiB。
@@ -152,11 +152,11 @@ rules:
 ```
 
 - `expr` 是 [MetricsQL](https://docs.victoriametrics.com/metricsql/)，必须使用 pack 的至少一个度量（按其完整名称）。它引用的任何其他 `dumbmonit_*` 名称也必须由 pack 产生（`dumbmonit_up` 除外）：一个 pack 不能对另一个类型的系列报警。
-- `{{option.x}}` 的 `threshold` 安装该选项的默认值，每个设备自己的该选项值变成其针对此规则的阈值（每次保存设备时重写的每设备覆盖）。
+- `{{option.x}}` 的 `threshold` 安装该选项的默认值，每个监控项自己的该选项值变成其针对此规则的阈值（每次保存监控项时重写的每监控项覆盖）。
 
 ## SNMP profiles {#snmp-profiles}
 
-一个 pack 可以带 SNMP profiles，写法完全像 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles) 中的内置 ones。它们加入 SNMP 目录，并像其他的一样由 `sysObjectID` 应用；它们不创建自己的设备类型。
+一个 pack 可以带 SNMP profiles，写法完全像 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles) 中的内置 ones。它们加入 SNMP 目录，并像其他的一样由 `sysObjectID` 应用；它们不创建自己的监控项类型。
 
 ```yaml
 snmp_profiles:
@@ -188,4 +188,4 @@ SNMP 目录在启动时读取：安装或更新带 SNMP profiles 的 pack 后重
 
 ## Fixtures and expected output {#fixtures-and-expected-output}
 
-`dumbmonit pack test <dir>` 读 `fixtures/<source id>.json`、`.txt` 或 `.prom`，运行与服务器相同的提取，并将结果与 `expected.prom` 比较：Prometheus 文本格式，排序，没有时间戳，没有服务器添加的设备标签（`target`、`host`、`tag_*`）。`--update` 从 fixtures 写 `expected.prom`；在提交前审查 diff。
+`dumbmonit pack test <dir>` 读 `fixtures/<source id>.json`、`.txt` 或 `.prom`，运行与服务器相同的提取，并将结果与 `expected.prom` 比较：Prometheus 文本格式，排序，没有时间戳，没有服务器添加的监控项标签（`target`、`host`、`tag_*`）。`--update` 从 fixtures 写 `expected.prom`；在提交前审查 diff。

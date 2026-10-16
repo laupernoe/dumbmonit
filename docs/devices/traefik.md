@@ -54,9 +54,9 @@ rule reports: only a router that is listed and disabled does.
 The [built-in rules](../alerting/rules.md#reverse-proxies-and-domains) that
 apply: Traefik router disabled, Traefik backend server down, Traefik service
 without a server, Traefik certificate not obtained, Proxy certificate not
-renewed, Reverse proxy answering 5xx, plus Device unreachable.
+renewed, Reverse proxy answering 5xx, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries Traefik. It says what is wrong in a sentence (disabled routers and

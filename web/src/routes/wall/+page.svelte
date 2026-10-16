@@ -602,6 +602,7 @@
 	 */
 	const DEVICES_MIN_PX = 104;
 	let leftRoom = $state(0);
+	let problemListed = $state(new Set<number>());
 	let wide = $state(false);
 	$effect(() => {
 		const query = window.matchMedia('(min-width: 1024px)');
@@ -681,8 +682,8 @@
 					</div>
 
 					<div class="mt-7 flex min-h-0 flex-1 flex-col gap-4 lg:mt-9" bind:clientHeight={leftRoom}>
-						<WallProblems {sky} {now} room={problemsRoom} />
-						<WallDevices {targets} {probes} {sky} />
+						<WallProblems {sky} {now} room={problemsRoom} bind:listed={problemListed} />
+						<WallDevices {targets} {probes} {sky} skip={problemListed} />
 					</div>
 				</div>
 			{/if}

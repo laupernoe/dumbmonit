@@ -5,7 +5,7 @@ que faz a diferença no uso diário é o que mantém o ruído baixo: supressão
 por dependência, agrupamento por host, janelas de manutenção, e uma linha
 de base que aprende antes de falar.
 
-![A página de alertas: o que precisa de você, as regras, manutenção programada e histórico](../assets/screenshots/alerts-light.png){ loading=lazy }
+![A página de alertas: o que está acontecendo agora, manutenção, histórico e as regras](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
 
@@ -16,7 +16,7 @@ regras armazenam os mesmos três níveis sob seus nomes de motor.
 |---|---|---|
 | Info | `info` | Vale a pena saber, nenhuma ação esperada. Usado pela regra de linha de base. |
 | Aviso | `warning` | Precisa de atenção em breve: CPU alta, disco quase cheio, serviço lento. |
-| Alerta | `critical` | Precisa de você agora: dispositivo inacessível, serviço fora do ar, verificação de backup falhou, certificado expirado. |
+| Alerta | `critical` | Precisa de você agora: monitor inacessível, serviço fora do ar, verificação de backup falhou, certificado expirado. |
 
 O escalonamento eleva a severidade de uma regra um nível depois de
 `escalate_after` se o alerta continuar disparando (Info → Aviso → Alerta;
@@ -33,7 +33,7 @@ Todo alerta é uma máquina de estados, avaliada a cada 30 segundos
 | `pending` | Acumulando | A condição é verdadeira mas a retenção da regra (`for`) ainda não decorreu. Nada é enviado. |
 | `firing` | Disparando | A condição se manteve por tempo suficiente. A primeira notificação sai, depois lembretes a cada `repeat_interval` (6 horas por padrão para a maioria das regras integradas), depois um escalonamento se configurado. |
 | `resolved` | Resolvido | De volta ao normal. Uma notificação de resolução é enviada apenas se o disparo havia sido anunciado. |
-| `suppressed` | Suprimido pelo pai | O alerta está disparando, mas um dispositivo pai, ou o próprio dispositivo, está inacessível: veja abaixo. |
+| `suppressed` | Suprimido pelo pai | O alerta está disparando, mas um monitor pai, ou o próprio monitor, está inacessível: veja abaixo. |
 
 `phase` é o estado do motor; `effective_phase` é o que você lê. Um alerta
 cujo `effective_phase` é `suppressed` mantém `phase = firing` por baixo,
@@ -44,39 +44,39 @@ Um alerta também pode ser **reconhecido** (`acked`, com `acked_by`,
 pausam até `acked_until`, a resolução ainda é notificada e limpa o
 reconhecimento. **Colocar em soneca** um alerta funciona da mesma forma por
 baixo, mas através de uma janela de manutenção restrita aos rótulos exatos
-daquele alerta (`silenced: true`), em vez do dispositivo inteiro: uma
-regra irmã no mesmo dispositivo continua falando. Veja
+daquele alerta (`silenced: true`), em vez do monitor inteiro: uma
+regra irmã no mesmo monitor continua falando. Veja
 [Se livrando de um alerta](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Supressão por dependência {#dependency-suppression}
 
-Qualquer dispositivo pode declarar um **dispositivo pai**. Quando um
-dispositivo está inacessível (a regra "Device unreachable" dispara nele),
+Qualquer monitor pode declarar um **monitor pai**. Quando um
+monitor está inacessível (a regra "Monitor unreachable" dispara nele),
 todo alerta em seus descendentes é marcado *Suprimido pelo pai* em vez de
 ser enviado: um switch que cai produz uma notificação, não trinta. O
 ancestral inacessível mais próximo é nomeado como a causa
 (`suppressed_by`), e a cadeia é seguida até 64 níveis.
 
-O mesmo vale para o próprio dispositivo inacessível: seus outros alertas
+O mesmo vale para o próprio monitor inacessível: seus outros alertas
 (disco cheio, CPU etc.) são suprimidos pela sua própria queda, com
-`suppressed_by` apontando o próprio dispositivo, já que seus valores estão
+`suppressed_by` apontando o próprio monitor, já que seus valores estão
 desatualizados e são apenas um sintoma da mesma falha. Só o alerta "Device
 unreachable" dele nunca é ocultado pela própria queda, então você é avisado
 uma vez.
 
-Defina o pai no formulário do dispositivo. Na página Dispositivos, os
+Defina o pai no formulário do monitor. Na página Monitores, os
 filhos se agrupam sob seu pai e escurecem quando ele está inacessível.
 
 Um [agente relay](../install/remote-site.md) conta como pai de todo
-dispositivo que sonda (*Alcançado através de* no formulário do
-dispositivo), além do pai definido explicitamente: quando o relay está
-inacessível, seus dispositivos são suprimidos com o relay nomeado como a
+monitor que sonda (*Alcançado através de* no formulário do
+monitor), além do pai definido explicitamente: quando o relay está
+inacessível, seus monitores são suprimidos com o relay nomeado como a
 causa. A distâncias iguais, o pai explícito vence.
 
 Um pai também conta como inacessível assim que sua própria sondagem o diz
-(o status *Tempo esgotado* / *Device unreachable* em sua página), sem
-esperar que seu alerta "Device unreachable" dispare: um agente que para de
-enviar leva seus dispositivos com ele um ou dois minutos antes de seu
+(o status *Tempo esgotado* / *Monitor unreachable* em sua página), sem
+esperar que seu alerta "Monitor unreachable" dispare: um agente que para de
+enviar leva seus monitores com ele um ou dois minutos antes de seu
 próprio alerta, e eles de outra forma notificariam primeiro cada um.
 
 ## Agrupamento, deduplicação, lembretes {#grouping-deduplication-reminders}
@@ -95,7 +95,7 @@ reconhecido).
 Um silêncio interrompe notificações sem parar a avaliação: no fim de uma
 janela, um alerta que ainda está ativo é notificado uma vez, em vez de
 "nascer" depois de duas horas de existência. Janelas são pontuais ou
-semanais, por dispositivo ou para toda a instância. Veja
+semanais, por monitor ou para toda a instância. Veja
 [Janelas de manutenção](maintenance.md).
 
 ## Aprendizado de linha de base {#baseline-learning}
@@ -124,7 +124,7 @@ datastore do PBS é um limite simples sobre a própria previsão do PBS.
 
 Regras integradas não têm canal associado, o que significa **todo canal
 ativado**. Uma regra que você edita pode nomear canais específicos. Canais
-são configurados em Alertas → Notificações; veja
+são configurados em Configurações → Notificações e relatórios; veja
 [Canais de notificação](../notifications.md).
 
 ## Notificações inteligentes {#smart-notifications}
@@ -136,18 +136,18 @@ inundado de mensagens. O caminho completo de um alerta, em ordem:
 1. **Avaliar** — limite, score de anomalia ou previsão, com a retenção da
    regra (`for`) e, quando definido, seu **limite de limpeza** (histerese:
    dispara acima de 90%, limpa só abaixo de 85%) e qualquer
-   **substituição por dispositivo**.
+   **substituição por monitor**.
 2. **Deduplicar** — uma impressão digital por (regra, série), com chave no
-   id do dispositivo (`target`) em vez de seu nome: renomear um dispositivo
+   id do monitor (`target`) em vez de seu nome: renomear um monitor
    ou editar suas tags não cria um segundo alerta, e uma série que resolve
    para a mesma chave duas vezes produz um alerta. Séries de um
-   dispositivo excluído ou pausado são descartadas: seus alertas se limpam
+   monitor excluído ou pausado são descartadas: seus alertas se limpam
    imediatamente, sem notificação, e o histórico registra
    `device removed or disabled`.
-3. **Suprimir por dependência** — descendentes de um dispositivo
+3. **Suprimir por dependência** — descendentes de um monitor
    inacessível permanecem quietos.
 4. **Silenciar** — janelas de manutenção silenciam o que cobrem.
-5. **Agrupar por dispositivo** — uma mensagem por dispositivo por ciclo,
+5. **Agrupar por monitor** — uma mensagem por monitor por ciclo,
    lembretes e escalonamento incluídos.
 6. **Retenção de oscilação** — uma impressão digital que dispara e limpa 4
    vezes em 30 minutos envia um único aviso de "oscilando", depois nada
@@ -160,13 +160,13 @@ inundado de mensagens. O caminho completo de um alerta, em ordem:
    alerta que limpa nesse meio tempo é apenas mencionado como "resolvido
    durante horas de silêncio").
 9. **Lotes** — alertas dentro da janela de lote (60 s por padrão) saem
-   como uma mensagem por canal: "3 alertas em 2 dispositivos, 1
+   como uma mensagem por canal: "3 alertas em 2 monitores, 1
    resolvido".
 10. **Limite por hora** — passado `max_per_hour` mensagens em um canal,
     alertas esperam e chegam como um resumo ("…e mais 7 alertas").
-11. **Enviar** — com um link "Abrir no DumbMonit" por dispositivo quando
+11. **Enviar** — com um link "Abrir no DumbMonit" por monitor quando
     uma URL pública é conhecida.
 
-Os passos 6 a 10 são configurados em Alertas → Notificações → Política de
-notificação (global) e em cada canal (Opções de entrega). Veja
+Os passos 6 a 10 são configurados em Configurações → Notificações e relatórios →
+Política de notificação (global) e em cada canal (Opções de entrega). Veja
 [Política de notificação](notifications.md).

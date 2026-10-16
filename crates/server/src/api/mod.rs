@@ -1,7 +1,8 @@
 mod activedirectory;
 mod agent_commands;
 mod agent_files;
-mod alerts;
+mod alert_actions;
+pub(crate) mod alerts;
 mod auth;
 mod backends;
 mod backup;
@@ -11,6 +12,7 @@ mod discovery;
 mod error;
 mod health;
 mod ingest;
+mod kuma_import;
 mod mcp;
 mod metrics;
 mod music;
@@ -32,12 +34,15 @@ mod redfish;
 mod relay;
 mod reports;
 mod security;
+mod self_monitoring;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
 mod synology;
+mod target_rules;
 mod targets;
 mod targets_import;
 mod tokens;
+mod topology;
 mod totp;
 mod truenas;
 mod update;
@@ -102,13 +107,20 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
         .route("/discovery", post(discovery::scan))
+        .route("/discovery/subnets", get(discovery::local_subnets))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))
+        .route("/targets/test", post(targets::test_connection))
         .route("/targets/reorder", post(targets::reorder))
         .route("/targets/import", post(targets_import::import))
+        .route(
+            "/targets/import/kuma",
+            post(kuma_import::import).layer(DefaultBodyLimit::max(kuma_import::MAX_BODY_BYTES)),
+        )
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))
+        .route("/targets/{id}/rules", get(target_rules::list))
         .route("/metrics/query", get(metrics::query))
         .route("/metrics/query_range", get(metrics::query_range))
         .route("/alerts", get(alerts::list_active))
@@ -135,6 +147,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(synology::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
         .merge(relay::ui_routes())
+        // Carte de topologie, construite à partir des liens connus (`topology.rs`).
+        .merge(topology::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
@@ -167,6 +181,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Auto-surveillance et battement de cœur sortant (`self_monitoring.rs`).
+        .merge(self_monitoring::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
         .merge(packs::routes())
         // Changements d'un site web : pages, diff et captures (`webchange.rs`).
@@ -232,6 +248,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         )
         // Pages de statut publiques : lecture seule, sans session, par conception.
         .merge(status_pages::public_routes())
+        // Liens d'action des notifications : le jeton signé est l'autorisation
+        // (`alert_actions.rs`).
+        .merge(alert_actions::public_routes())
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
         .merge(push::public_routes())

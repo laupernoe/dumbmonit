@@ -4,9 +4,7 @@ Monitoramento simples, do homelab à pequena empresa. Um contêiner, um endereç
 para digitar, gráficos e alertas úteis em menos de um minuto.
 
 !!! warning "Em desenvolvimento"
-    O DumbMonit está em desenvolvimento ativo; a imagem atual
-    (`ghcr.io/laupernoe/dumbmonit:latest`) é uma alfa para os primeiros testadores. Espere
-    arestas por aparar e mudanças incompatíveis até a primeira versão.
+    O DumbMonit está em desenvolvimento ativo; até a 1.0, a API HTTP e o modelo de dados ainda podem mudar entre versões menores (0.x). O changelog lista cada mudança.
 
 O DumbMonit lê a rede como um **boletim meteorológico**: a página inicial diz
 como está o céu em uma frase ("Céu limpo." ou "2 avisos, 1 inacessível.") e
@@ -18,7 +16,7 @@ janelas de manutenção são programadas.
 
 <div class="dm-links" markdown>
 <a href="install/docker/">Instalar<small>Docker Compose, primeira inicialização, backups</small></a>
-<a href="install/first-device/">Adicione seu primeiro dispositivo<small>SNMP, varredura de rede, o que acontece depois</small></a>
+<a href="install/first-device/">Adicione seu primeiro monitor<small>SNMP, varredura de rede, o que acontece depois</small></a>
 <a href="alerting/">Alertas<small>Regras integradas, silenciosas por construção</small></a>
 </div>
 
@@ -26,20 +24,20 @@ janelas de manutenção são programadas.
 
 | Fonte | O que você obtém |
 |---|---|
-| [SNMP v1 / v2c / v3](devices/snmp.md) | Switches, roteadores, NAS, nobreaks, impressoras. Cinco perfis acompanham o produto e são aplicados automaticamente a partir do `sysObjectID` do dispositivo. Uma varredura de rede adiciona de uma só vez tudo o que responder. |
+| [SNMP v1 / v2c / v3](devices/snmp.md) | Switches, roteadores, NAS, nobreaks, impressoras. Cinco perfis acompanham o produto e são aplicados automaticamente a partir do `sysObjectID` do monitor. Uma varredura de rede adiciona de uma só vez tudo o que responder. |
 | [Proxmox VE](devices/proxmox.md) | Nós, máquinas virtuais e contêineres, armazenamentos, quórum do cluster e a idade do último backup bem-sucedido de cada máquina. |
 | [Proxmox Backup Server](devices/pbs.md) | Uso do datastore e previsão de esgotamento, deduplicação, idade e verificação do último snapshot de cada máquina, tarefas com falha, coleta de lixo. |
 | [Synology DSM](devices/synology.md) | Volumes, discos e sua saúde SMART, temperatura, carga, por meio da API web do NAS. |
-| [Agente Linux, macOS, FreeBSD e Windows](devices/agent.md) | CPU, memória, discos, rede, serviços, contêineres e tempo de atividade de máquinas que não falam SNMP, além de temperaturas, saúde dos discos (SMART) e pools ZFS quando a máquina os expõe. Um comando para instalar, ou uma imagem Docker; no [modo relay](install/remote-site.md) ele sonda os dispositivos de um site remoto usando apenas conexões de saída. |
+| [Agente Linux, macOS, FreeBSD e Windows](devices/agent.md) | CPU, memória, discos, rede, serviços, contêineres e tempo de atividade de máquinas que não falam SNMP, além de temperaturas, saúde dos discos (SMART) e pools ZFS quando a máquina os expõe. Um comando para instalar, ou uma imagem Docker; no [modo relay](install/remote-site.md) ele sonda os monitores de um site remoto usando apenas conexões de saída. |
 | [Serviços](devices/services.md) | HTTP(S), porta TCP, DNS, ping e expiração de certificado TLS, no estilo Uptime Kuma, com barra de histórico e porcentagem de disponibilidade. |
-| [Pacotes de integração](packs/index.md) | Um tipo de dispositivo declarado em um único arquivo YAML — uma API HTTP ou uma página Prometheus `/metrics` no dispositivo — com suas próprias regras de alerta, instalado sem uma nova versão do servidor. |
+| [Pacotes de integração](packs/index.md) | Um tipo de monitor declarado em um único arquivo YAML — uma API HTTP ou uma página Prometheus `/metrics` no monitor — com suas próprias regras de alerta, instalado sem uma nova versão do servidor. |
 
 ## Converse com ele {#talk-to-it}
 
 - Um [assistente via MCP](using/assistant.md) — Claude Code, Claude Desktop,
   ChatGPT, VS Code, Cursor — com 27 ferramentas: um token `read` apenas observa (status,
-  dispositivos, alertas, métricas, agentes, contêineres…), um token `write` também pode agir
-  (silenciar, reconhecer, adicionar um dispositivo, reiniciar um contêiner, publicar um
+  monitores, alertas, métricas, agentes, contêineres…), um token `write` também pode agir
+  (silenciar, reconhecer, adicionar um monitor, reiniciar um contêiner, publicar um
   incidente na página de status). Os segredos nunca são retornados.
 - A [API HTTP](reference/api.md) por trás de tudo o que a interface faz, descrita em
   `/api/openapi.json` (OpenAPI 3.1). Os tokens (`dmt_…`) têm escopo de leitura ou

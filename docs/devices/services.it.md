@@ -4,7 +4,7 @@ Undici monitor osservano **servizi** piuttosto che attrezzature, nello stile di 
 pagina web, una porta, un nome DNS, un host, un certificato, un server orario, un
 relè di posta, un database, un broker MQTT, un endpoint WebSocket. Ogni servizio ottiene una
 barra della cronologia, un tempo di risposta e una percentuale di disponibilità sulla sua pagina
-del dispositivo.
+del monitor.
 
 Gli ultimi cinque vanno oltre l'apertura di una connessione: iniziano una vera sessione nel
 protocollo proprio del servizio. Questa è la differenza tra "la porta 5432 è aperta"
@@ -21,7 +21,7 @@ rende possibile una percentuale di disponibilità: `avg_over_time(dumbmonit_prob
 
 | Situazione | Cosa accade |
 |---|---|
-| Opzione o indirizzo non valido, socket ICMP non consentiti (vedi Ping) | Errore di configurazione: niente viene scritto, la pagina del dispositivo mostra l'errore, nessun avviso "giù". |
+| Opzione o indirizzo non valido, socket ICMP non consentiti (vedi Ping) | Errore di configurazione: niente viene scritto, la pagina del monitor mostra l'errore, nessun avviso "giù". |
 | Connessione rifiutata, timeout, TLS rifiutato, `500`, parola chiave assente, perdita totale di pacchetti, password rifiutata, query non riuscita | `probe_success = 0`: l'interruzione viene registrata, datata e contata. |
 | Tutto bene | `probe_success = 1`. |
 
@@ -52,6 +52,7 @@ a `target`, `host` e `tag_*`.
 | `probe_http_status_code` | http, websocket | Codice di stato ottenuto. |
 | `probe_http_first_byte_seconds` | http | Tempo alle intestazioni di risposta. |
 | `probe_http_content_bytes` | http | Dimensione del corpo. |
+| `probe_http_security_header{header}` | http | 0/1 per etichetta `header` (solo https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | tutti tranne dns e ping | Stabilimento della connessione (login incluso per i database). |
 | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Negoziazione TLS sola. |
 | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Presenza; etichetta `version`. |
@@ -512,7 +513,7 @@ data. Per la freschezza, osserva l'automazione che lo consuma, o usa un heartbea
 | `topic` | Topic | *(empty)* | Topic a cui il controllo si iscrive. Vuoto: si connette solo, il che già ti dice che il broker è vivo e accetta il tuo account. |
 | `expect_message` | Aspetta un messaggio conservato | `false` | Un messaggio deve arrivare su quel topic prima del timeout. Solo i messaggi conservati arrivano subito: un topic che è meramente pubblicato di tanto in tanto sembrerà silenzioso. |
 | `expect` | Contenuto previsto | *(empty)* | Testo che quel messaggio deve contenere. Compilarlo implica aspettare un messaggio. |
-| `client_id` | Identificatore del client | *(derived)* | Nome annunciato al broker. Il predefinito deriva dal dispositivo, quindi due controlli non si disconnettono mai l'uno l'altro. |
+| `client_id` | Identificatore del client | *(derived)* | Nome annunciato al broker. Il predefinito deriva dal monitor, quindi due controlli non si disconnettono mai l'uno l'altro. |
 | `server_name` | Nome del server (SNI) | *(the host)* | Nome di dominio annunciato al broker e controllato nel certificato. Impostalo quando l'indirizzo è un IP. |
 | `insecure_tls` | Accetta un certificato non verificabile | `false` | Una catena non verificabile non conta più come fallimento: la data di scadenza è ancora registrata. |
 | `allow_private_targets` | Consenti destinazioni loopback e link-local | `false` | Vedi "Indirizzi che i controlli rifiutano" sotto. |

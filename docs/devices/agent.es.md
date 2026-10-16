@@ -84,8 +84,8 @@ mano con tu propia cuenta no encontrará nada.
 Los contadores se envían en bruto, para que un reinicio del agente
 nunca produzca una tasa falsa; aplica `rate()` en las consultas.
 
-Las reglas integradas que se aplican: Device unreachable, High CPU,
-Unusual CPU. «Device unreachable» también funciona en agentes: el
+Las reglas integradas que se aplican: Monitor unreachable, High CPU,
+Unusual CPU. «Monitor unreachable» también funciona en agentes: el
 servidor comprueba la antigüedad del último lote recibido y declara la
 máquina silenciosa tras tres períodos perdidos (al menos 90 segundos).
 
@@ -128,13 +128,13 @@ Los pasos de abajo son los que muestra el aviso junto al formulario.
 No hay ninguna cuenta que crear en la máquina: el token de inscripción
 es el único secreto.
 
-1. Guarda el dispositivo en DumbMonit: un token de inscripción
+1. Guarda el monitor en DumbMonit: un token de inscripción
    (dmon_…) se muestra una vez, con el comando de instalación listo
    para copiar para Linux y para Windows. (Un token también se puede
    crear en **Settings → Agents**.)
 2. Ese token es la clave del agente para enviar sus mediciones a
    DumbMonit. No es una cuenta en la máquina: nada que crear ahí. Un
-   token creado desde el formulario de dispositivo es de un solo uso:
+   token creado desde el formulario de monitor es de un solo uso:
    inscribe esa única máquina y nada más. Para una flota, crea un
    token reutilizable en Settings → Agents.
 3. Ejecuta el comando de instalación en la máquina a monitorizar, con
@@ -145,7 +145,7 @@ es el único secreto.
    nombre de host. En ese primer lote el servidor le da al agente un
    secreto propio y lo guarda en `/etc/dumbmonit/agent-secret`,
    legible por nadie más: desde entonces, esa máquina es la única que
-   puede reportar bajo este dispositivo. ¿Perdiste el token?
+   puede reportar bajo este monitor. ¿Perdiste el token?
    Settings → Agents te permite revocarlo y crear otro.
 5. Docker: para ver los contenedores y permitir que DumbMonit los
    reinicie o actualice, el agente debe alcanzar el socket de Docker.
@@ -153,11 +153,11 @@ es el único secreto.
    agente bajo un usuario dedicado en su lugar, añade ese usuario al
    grupo «docker» y reinícialo. Las políticas de reinicio y
    auto-actualización entonces se definen por contenedor en la página
-   del dispositivo.
+   del monitor.
 
 Dos cosas vale la pena leer antes de desplegar esto a más de una
 máquina: [Vinculación](#binding-one-machine-one-agent), que es lo que
-hace que un dispositivo realmente pertenezca a una instalación de
+hace que un monitor realmente pertenezca a una instalación de
 agente, y [Un solo uso o flota](#single-use-or-fleet), que es la
 elección que haces al crear un token.
 
@@ -165,12 +165,19 @@ elección que haces al crear un token.
     usermod -aG docker dumbmonit
     ```
 
-6. Copias de seguridad Plakar: detectadas automáticamente — el panel
-   Backups aparece cuando se encuentra el binario plakar o un kloset
+6. Copias de seguridad Plakar: detectadas automáticamente — aparece
+   un monitor Plakar bajo la máquina cuando se encuentra el binario plakar o un kloset
    (~/.config/plakar/stores.yml de cada usuario, ~/.plakar,
    /var/lib/plakar), y no se muestra nada en caso contrario. Define
    «plakar_klosets» en agent.yaml para vigilar una lista fija, o
    «plakar: false» para desactivarlo.
+7. Los servicios que el agente encuentra (Docker, Plakar, restic/Borg, ZFS,
+   libvirt, WireGuard, IPsec, prueba de velocidad) se convierten cada uno en su
+   propio monitor bajo la máquina, con su propio estado y sus propias
+   alertas. El panel «Servicios encontrados por el agente» de la máquina lista lo
+   que se encontró y lo que no: desmarca un módulo para quitar su monitor,
+   márcalo para vigilarlo antes de que aparezca. Consulta
+   [Servicios encontrados por el agente](#services-found-by-the-agent).
 
 !!! note
     El agente contacta al servidor, nunca al revés: no se necesita
@@ -301,7 +308,7 @@ su checksum al lado, `<archivo>.sha256`, en formato `sha256sum`. Cada
 lleva los seis binarios y sus checksums, para máquinas que no pueden
 alcanzar el `/download/` del servidor o para instalar con `--bin`.
 
-Desde 0.1.0-alpha.9, cada binario de una versión también está firmado sin
+Desde 0.9.0, cada binario de una versión también está firmado sin
 claves (keyless) con [Sigstore](https://www.sigstore.dev/)
 (`<archivo>.sigstore.json`) y lleva una atestación de procedencia SLSA. Para
 comprobar que un binario fue compilado por el flujo de trabajo de publicación de
@@ -394,6 +401,93 @@ mueve la configuración a la nueva ruta
 instala `dumbmonit-agent` en su lugar. El antiguo token `ezym_…` sigue
 siendo válido, así que el comando mostrado al crear el token sigue
 funcionando; no hay que revocar nada primero.
+
+## Servicios encontrados por el agente {#services-found-by-the-agent}
+
+El monitor propio de la máquina muestra la máquina: CPU, memoria, sistemas
+de archivos, red, salud de los discos (SMART), sensores, salud del SO y los
+servicios que listas en `services`. Todo lo demás que el agente detecta es un
+**servicio**, y cada servicio que encuentra se convierte en un monitor
+propio, de tipo `agent_service`, archivado bajo la máquina:
+
+| Servicio | Sus métricas | Nombre del monitor |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Prueba de velocidad de Internet | `agent_speedtest_*` | `<machine> · Speed test` |
+
+El reparto se hace en el servidor, por nombre de métrica, así que funciona con
+cualquier versión del agente. Cada serie se escribe una sola vez, con `target`
+apuntando al monitor al que pertenece: las series de un servicio llevan el
+id del monitor del servicio, las de la máquina el id de la máquina. Nada se
+cuenta dos veces.
+
+Un monitor de servicio tiene su propio estado, alertas, reglas, excepciones
+de reglas y silencios. Está **inalcanzable** cuando el agente deja de reportarlo
+mientras la máquina sigue reportando (demonio Docker detenido, `wg` eliminado…),
+tras los mismos tres periodos perdidos que la propia máquina. Cuando la máquina
+se queda en silencio, sus servicios se muestran como ocultos detrás de ella
+(`suppressed`) en lugar de generar alertas propias. Un monitor de servicio
+nuevo empieza con las etiquetas de la máquina, así que los silencios y reglas
+basados en etiquetas siguen aplicándose.
+
+No hay nada que elegir antes de la instalación. Tras el primer reporte, la página
+de la máquina lista cada módulo en **Servicios encontrados por el agente**:
+
+- un servicio encontrado está marcado y enlaza a su monitor;
+- un servicio no encontrado está desmarcado; márcalo para crear igualmente su
+  monitor (permanece inalcanzable hasta que el agente lo reporte — útil para
+  que te avisen si falta un servicio del que dependes);
+- desmarca un servicio encontrado para eliminar su monitor y descartar sus
+  lecturas. El servidor se lo indica al agente en su siguiente confirmación, y el
+  agente deja de recolectarlo (un agente antiguo sigue recolectando, y el
+  servidor sigue descartando). Eliminar un monitor de servicio tiene el mismo
+  efecto. Márcalo de nuevo para recuperarlo.
+
+Eliminar la máquina elimina sus monitores de servicio. Las acciones y
+políticas de contenedores funcionan desde la página del monitor Docker; los
+comandos siguen yendo al agente de la máquina.
+
+Igual que en el aviso del monitor:
+
+1. No hay nada que añadir a mano: instala el agente en la máquina, y cada
+   servicio que encuentra se convierte en un monitor bajo esa máquina en su
+   primer reporte.
+2. Para dejar de vigilar un servicio, desmárcalo en el panel «Servicios
+   encontrados por el agente» de la máquina, o elimina su monitor: las
+   lecturas del agente para él se descartan entonces.
+
+!!! note
+    Si la máquina deja de reportar, sus servicios se muestran como ocultos detrás
+    de ella en lugar de generar alertas propias.
+
+### Actualizar una instalación existente {#upgrading-an-existing-installation}
+
+Nada que hacer. La primera vez que el agente reporta un servicio tras la
+actualización, el servidor crea su monitor y traslada a él lo que concernía a
+ese servicio en la máquina:
+
+- las excepciones de las reglas que leen las métricas del servicio se copian al
+  monitor del servicio;
+- las reglas limitadas a la máquina (selector `ids`) que leen las métricas del
+  servicio ahora seleccionan también el monitor del servicio;
+- los silencios (ventanas de mantenimiento) de la máquina se copian al
+  monitor del servicio;
+- las alertas en curso sobre las series del servicio se trasladan al monitor
+  del servicio con su nueva huella, para que no se resuelvan y vuelvan a
+  dispararse.
+
+El historial se queda donde se escribió: VictoriaMetrics no puede reetiquetar
+series existentes, así que las lecturas anteriores a la actualización permanecen
+bajo la máquina (caducan con la retención), y los gráficos del monitor del
+servicio empiezan en la actualización. Las líneas base de anomalías de las series
+trasladadas vuelven a empezar a aprender. El historial de alertas (alertas
+resueltas) también se queda con la máquina.
 
 ## Archivo de configuración {#configuration-file}
 
@@ -535,7 +629,7 @@ usable en un contenedor sin montar un archivo:
 | `DUMBMONIT_AGENT_CHECK_FAILED_UNITS` | `true` / `false`: unidades systemd fallidas (por defecto `true`) |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Tamaño del búfer de recuperación |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
-| `DUMBMONIT_AGENT_RELAY` | `true` para ejecutar, por el servidor, las sondas de los dispositivos asignados a este agente (consulta [Ejecutar el agente en Docker / en otra red](#run-the-agent-in-docker--on-another-network)) |
+| `DUMBMONIT_AGENT_RELAY` | `true` para ejecutar, por el servidor, las sondas de los monitores asignados a este agente (consulta [Ejecutar el agente en Docker / en otra red](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Etiqueta de sitio mostrada junto al agente cuando se ofrece como relay |
 
 ## Contadores de rendimiento de Windows {#windows-performance-counters}
@@ -599,7 +693,7 @@ MDaemon` (o cualquier otro nombre de objeto) en una línea de comandos.
 Instalado en un host Hyper-V — Windows Server con el rol Hyper-V, o
 Windows con Hyper-V activado — el agente encuentra el servicio `vmms`
 y lee los propios contadores de rendimiento de Hyper-V, sin nada que
-configurar. La página de dispositivo del agente entonces muestra un
+configurar. La página de monitor del agente entonces muestra un
 panel Hyper-V: cuántas máquinas virtuales reportan sanas, la carga
 real de CPU del host, la memoria que retiene cada VM en ejecución, y
 el caudal, latencia y errores de cada disco virtual.
@@ -666,13 +760,13 @@ Qué ve el contenedor, y qué montar:
 | Necesidad | Qué hacer | Por qué |
 |---|---|---|
 | CPU, memoria, carga, E/S de disco del host | Nada | `/proc/stat`, `/proc/meminfo`, `/proc/loadavg` y `/proc/diskstats` son de todo el host dentro de cualquier contenedor. |
-| Nombre de host | `DUMBMONIT_AGENT_HOSTNAME` | El hostname de un contenedor es un id aleatorio; el dispositivo se nombraría según él. |
+| Nombre de host | `DUMBMONIT_AGENT_HOSTNAME` | El hostname de un contenedor es un id aleatorio; el monitor se nombraría según él. |
 | Contenedores del host | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Opcional. Listas e inspecciones de solo lectura; las acciones Restart/Update lo necesitan en escritura y `DUMBMONIT_AGENT_COMMANDS=true`. Sin el socket, el agente simplemente no reporta ningún contenedor. |
 | Uso del sistema de archivos | `- /:/host:ro` (o los montajes que te importen) | El agente reporta los montajes visibles *dentro* del contenedor, bajo su ruta de contenedor. |
 | Contadores de red del host | `network_mode: host` | Las interfaces están en namespace: sin esto el agente ve un `veth`. |
 | Monitores de ping relayados a través de este agente | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP usa un socket de eco, permitido por este sysctl: sin capability. Ver [Ping ICMP sin capability](../install/docker.md#icmp-ping-without-a-capability). |
 | CA privada | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Servidor detrás de un proxy inverso interno, dispositivos con certificados autofirmados. |
-| Mantener la vinculación entre recreaciones | `- agent-state:/var/lib/dumbmonit-agent` y `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | El secreto de vinculación vive en el sistema de archivos del contenedor, que un `docker compose up --force-recreate` descarta. Sin el volumen, el agente vuelve sin vincular y alguien tiene que permitir la reinscripción desde la página de dispositivo cada vez. |
+| Mantener la vinculación entre recreaciones | `- agent-state:/var/lib/dumbmonit-agent` y `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | El secreto de vinculación vive en el sistema de archivos del contenedor, que un `docker compose up --force-recreate` descarta. Sin el volumen, el agente vuelve sin vincular y alguien tiene que permitir la reinscripción desde la página de monitor cada vez. |
 
 `pid: host` y `privileged: true` nunca son necesarios: el agente no
 recolecta ninguna métrica por proceso.
@@ -681,11 +775,11 @@ recolecta ninguna métrica por proceso.
 
 Un agente puede hacer más que vigilar su propia máquina. Con `relay:
 true` (o `DUMBMONIT_AGENT_RELAY=true`), el servidor **delega
-sondas** en él: los dispositivos cuyo ajuste *Reached through* nombra
+sondas** en él: los monitores cuyo ajuste *Reached through* nombra
 a este agente no son sondeados por el servidor sino por el agente,
 desde su propia red, con exactamente los mismos recolectores — SNMP,
 Proxmox VE, Proxmox Backup Server, Synology, HTTP, TCP, DNS, ping,
-TLS. Los resultados caen bajo el dispositivo como si el servidor lo
+TLS. Los resultados caen bajo el monitor como si el servidor lo
 hubiera sondeado: mismas métricas, mismo *last probe*, mismas
 alertas. Una oficina remota, un segundo homelab o la red de un
 cliente así aparecen en el único DumbMonit que ya tienes, sin VPN y
@@ -708,18 +802,18 @@ agente escribe el secreto en `/etc/dumbmonit/agent-secret` con modo
 petición a partir de entonces — mediciones, comandos de contenedor y
 sondas relayadas por igual. Desde entonces:
 
-- ninguna otra máquina puede enviar mediciones bajo este dispositivo,
+- ninguna otra máquina puede enviar mediciones bajo este monitor,
   ni reescribir su nombre de host y sistema operativo;
 - ninguna otra máquina puede obtener — y por tanto consumir — los
   comandos Restart y Update encolados para ella.
 
-La página del dispositivo muestra dónde está una máquina, bajo
+La página del monitor muestra dónde está una máquina, bajo
 **Agent → Binding**:
 
 | Estado | Qué significa | Qué hacer |
 |---|---|---|
 | **Bound** | El agente tiene un secreto propio. | Nada. |
-| **Not bound — re-enrol this host** | Un host inscrito antes de que existiera la vinculación, y que nunca se vinculó desde entonces. El servidor rechaza sus mediciones, comandos de contenedor y sondas relayadas. | Haz clic en **Allow re-enrolment** en la página del dispositivo, y luego reinicia el agente. Si el agente es anterior a la vinculación, vuelve a ejecutar primero el comando de instalación en el host. |
+| **Not bound — re-enrol this host** | Un host inscrito antes de que existiera la vinculación, y que nunca se vinculó desde entonces. El servidor rechaza sus mediciones, comandos de contenedor y sondas relayadas. | Haz clic en **Allow re-enrolment** en la página del monitor, y luego reinicia el agente. Si el agente es anterior a la vinculación, vuelve a ejecutar primero el comando de instalación en el host. |
 
 ### Hosts anteriores a la vinculación {#hosts-that-predate-binding}
 
@@ -744,7 +838,7 @@ Para traer de vuelta tal host:
 1. Si su agente es anterior a la vinculación, vuelve a ejecutar el
    comando de instalación en él (el binario del agente debe poder
    guardar un secreto de vinculación).
-2. Abre su página de dispositivo y haz clic en **Agent → Allow
+2. Abre su página de monitor y haz clic en **Agent → Allow
    re-enrolment**. Esto abre una ventana de una hora.
 3. Reinicia el agente, o espera a su siguiente reintento: ese lote
    vincula el host con un secreto nuevo y cierra la ventana. Un token
@@ -772,7 +866,7 @@ deliberado: una máquina que está vinculada permanece vinculada hasta
 que un humano dice lo contrario, de lo contrario la vinculación no
 protegería nada.
 
-La vía de vuelta está en la página del dispositivo: **Agent → Allow
+La vía de vuelta está en la página del monitor: **Agent → Allow
 re-enrolment**. Abre una ventana de una hora durante la cual un agente
 que presenta un token de inscripción válido vincula esa máquina de
 nuevo, con un secreto nuevo; el secreto antiguo deja de funcionar, y
@@ -794,7 +888,7 @@ WARN this agent is not recognised for this machine
 ## Tokens de inscripción {#enrolment-tokens}
 
 - Los tokens se crean en **Settings → Agents** o al añadir un
-  dispositivo de tipo agent. El servidor solo conserva una huella: el
+  monitor de tipo agent. El servidor solo conserva una huella: el
   token en claro se muestra una vez, en la respuesta de creación, con
   los dos comandos de instalación.
 - El agente lo envía como `Authorization: Bearer dmon_…` en `POST
@@ -805,7 +899,7 @@ WARN this agent is not recognised for this machine
   usa ese token en su próximo envío; las máquinas entonces se vuelven
   *unreachable* tras tres períodos perdidos. Vuelve a ejecutar el
   instalador con un token nuevo para volver a inscribirlas.
-- Las máquinas son dispositivos separados: revocar un token no las
+- Las máquinas son monitores separados: revocar un token no las
   elimina.
 
 ### Un solo uso o flota {#single-use-or-fleet}
@@ -854,9 +948,9 @@ tail -f /var/log/dumbmonit-agent.log   # registro del servicio (OpenRC)
 | El instalador se detiene con «no expected checksum» | El comando no tiene `--sha256` para esta plataforma: un comando antiguo, o un binario de macOS (no distribuido por el servidor). Copia un comando nuevo, o pasa `--sha256=<plataforma>-<arch>:<hex>` del `.sha256` de la versión. |
 | La máquina nunca aparece | El envío va a `/api/ingest` en la URL del comando de instalación; detrás de un proxy inverso, asegúrate de que se reenvía y que se permiten cuerpos de hasta 16 MB. |
 | *Unreachable* aunque el agente se ejecute | El token se revocó, o los envíos se rechazan. Comprueba `journalctl -u dumbmonit-agent`: el error se registra ahí. |
-| El registro dice «this agent is not recognised for this machine» | La máquina está vinculada a una instalación de agente cuyo secreto este agente no tiene — una reinstalación, o un contenedor recreado sin su volumen de estado. Abre la página del dispositivo y haz clic en **Allow re-enrolment**; consulta [Reinscripción tras una reinstalación](#re-enrolment-after-a-reinstall). |
-| El registro dice «this machine was enrolled before agent binding» | Un host que nunca se vinculó a su agente. Haz clic en **Allow re-enrolment** en su página de dispositivo, y luego reinicia el agente; consulta [Hosts anteriores a la vinculación](#hosts-that-predate-binding). |
-| El registro dice «this agent is too old to be bound to its machine» | El binario del agente no puede guardar un secreto de vinculación. Vuelve a ejecutar el comando de instalación en el host; si el dispositivo ya existe, haz clic primero en **Allow re-enrolment**. |
+| El registro dice «this agent is not recognised for this machine» | La máquina está vinculada a una instalación de agente cuyo secreto este agente no tiene — una reinstalación, o un contenedor recreado sin su volumen de estado. Abre la página del monitor y haz clic en **Allow re-enrolment**; consulta [Reinscripción tras una reinstalación](#re-enrolment-after-a-reinstall). |
+| El registro dice «this machine was enrolled before agent binding» | Un host que nunca se vinculó a su agente. Haz clic en **Allow re-enrolment** en su página de monitor, y luego reinicia el agente; consulta [Hosts anteriores a la vinculación](#hosts-that-predate-binding). |
+| El registro dice «this agent is too old to be bound to its machine» | El binario del agente no puede guardar un secreto de vinculación. Vuelve a ejecutar el comando de instalación en el host; si el monitor ya existe, haz clic primero en **Allow re-enrolment**. |
 | El registro dice «this enrollment token has already enrolled all the machines it was allowed to» | Se está reutilizando un token de un solo uso. Crea uno nuevo, o un token reutilizable en Settings → Agents. |
 | Windows | Las partes de servicio de Windows no se habían probado en la imagen de compilación del proyecto en el momento de escribir esto; reporta problemas en GitHub. |
 
@@ -867,7 +961,7 @@ defecto, y un usuario en el grupo `docker` o root —
 `usermod -aG docker dumbmonit`, y luego reinicia el agente), cada
 contenedor se convierte en un puñado de series, etiquetadas
 `container` e `image` (el `name:tag` que muestra `docker ps`). Si la
-página del dispositivo dice «No Docker on this machine» mientras
+página del monitor dice «No Docker on this machine» mientras
 Docker está instalado, eso es lo primero a comprobar.
 
 | Métrica | Significado |
@@ -895,7 +989,7 @@ repetido diariamente). La alerta nombra el contenedor.
 
 ### Acciones {#actions}
 
-En la página del dispositivo, cada contenedor tiene dos acciones y dos
+En la página del monitor, cada contenedor tiene dos acciones y dos
 interruptores. Las acciones viajan por un **canal de comandos**: el
 servidor encola el comando, el agente lo obtiene tras su siguiente
 lote (`GET /api/agent/commands`, mismo token de inscripción), lo
@@ -913,7 +1007,7 @@ siguiente acción en ese contenedor.
 
 El agente le dice al servidor, con cada lote, si acepta comandos.
 Cuando no lo hace — un agente más antiguo que el canal de comandos, o
-instalado con `commands: false` — la página del dispositivo lo indica
+instalado con `commands: false` — la página del monitor lo indica
 en lugar de mostrar Restart y Update, la API rechaza los comandos
 (`409`), y las políticas no encolan nada. Reinstala el agente con el
 instalador actual para activar las acciones.
@@ -948,14 +1042,14 @@ Una **política** por contenedor la evalúa el servidor cada minuto:
 - **Auto-update in maintenance windows** — un contenedor con una
   actualización disponible se actualiza automáticamente, pero solo
   mientras una ventana de mantenimiento (silencio) cubra el
-  dispositivo, como máximo una vez cada seis horas. Programa una en la
-  página Alerts, o silencia el dispositivo desde su página. Las
+  monitor, como máximo una vez cada seis horas. Programa una en la
+  página Alerts, o silencia el monitor desde su página. Las
   políticas por defecto podan la imagen antigua y solo en ventanas de
   mantenimiento.
 
 Dos lugares las definen:
 
-- la **franja Docker** bajo la cabecera del dispositivo: «28
+- la **franja Docker** bajo la cabecera del monitor: «28
   containers · 27 running · 3 updates available · policies: 2
   auto-restart, 0 auto-update», la última acción y su estado,
   **Manage containers** (abre la lista de abajo) y **Policies…**, una
@@ -1009,7 +1103,7 @@ ciclo hasta que encuentra algo, el agente busca el binario `plakar`
 Cuando no hay ningún binario, ningún kloset ni ningún rastro de
 Plakar (`~/.cache/plakar`), el agente no emite ninguna serie
 `backup_*` en absoluto, lo indica una vez a nivel `debug`, y la página
-del dispositivo no muestra ningún panel Backups — nada que configurar
+del monitor no muestra ningún panel Backups — nada que configurar
 en máquinas sin Plakar. Para omitir la detección por completo:
 
 ```yaml
@@ -1046,7 +1140,7 @@ cuando cambia). Dos gauges, emitidos solo una vez detectado Plakar,
 permiten a la interfaz distinguir los demás casos:
 `backup_plakar_present` (1 cuando el binario se ejecuta) y
 `backup_klosets_found` (número de klosets leídos). La página del
-dispositivo entonces dice «Plakar is installed but no kloset was
+monitor entonces dice «Plakar is installed but no kloset was
 found», o lista los klosets. Cuando existen klosets pero el binario
 no se ejecuta (un `PATH` de servicio sin `plakar`, típicamente), se
 listan como illegibles con una pista para definir `plakar_bin`, y el
@@ -1095,7 +1189,7 @@ no pueden activarse en una máquina sin Plakar.
 
 Reglas integradas: **Plakar backup too old** (advisory, sin snapshot
 durante más de dos días) y **Plakar backup failed** (warning). La
-página del dispositivo muestra un bloque por kloset — antigüedad de
+página del monitor muestra un bloque por kloset — antigüedad de
 la última copia, recuento de snapshots, tamaño, último estado — y una
 línea por fuente, con una pista «Backup too old» pasados dos días.
 
@@ -1220,7 +1314,7 @@ por varias máquinas.
 
 Reglas integradas: **restic/Borg backup too old** (sin snapshot
 durante más de 48 horas) y **restic/Borg repository unreachable**
-(durante 30 minutos). La página del dispositivo muestra un panel
+(durante 30 minutos). La página del monitor muestra un panel
 Backup repositories, una línea por repositorio.
 
 Para comprobar una declaración, ejecuta el agente una vez en primer
@@ -1277,7 +1371,7 @@ Define `PersistentKeepalive = 25` en los túneles que deben permanecer
 levantados (enlaces sitio a sitio, gateways remotos). N es el umbral
 de la regla: cámbialo en **Alerts → Rules**, o elimina la parte `and
 on (…)` de su consulta para vigilar cada peer. La página del
-dispositivo muestra un panel WireGuard con cada peer, el tiempo desde
+monitor muestra un panel WireGuard con cada peer, el tiempo desde
 su último handshake, su tráfico y su keepalive.
 
 ## Túneles IPsec {#ipsec-tunnels}
@@ -1311,7 +1405,7 @@ ipsec_bin: swanctl          # por defecto: en PATH
 
 La regla integrada **IPsec tunnel down** se activa cuando un túnel
 configurado no tiene ningún CHILD_SA instalado durante diez minutos. La
-página del dispositivo muestra un panel IPsec con cada túnel, activo o caído,
+página del monitor muestra un panel IPsec con cada túnel, activo o caído,
 su tráfico y el tiempo hasta su próximo rekey.
 
 ## Prueba de velocidad de Internet {#internet-speed-test}
@@ -1376,7 +1470,7 @@ low** e **Internet latency high** permanecen en silencio hasta que definas la
 que corresponda. Cada umbral se publica como su propia serie
 (`agent_speedtest_download_min_bytes_per_second`, etc.), que es con lo que las
 reglas integradas comparan la medición; cambia el umbral en `agent.yaml`, no
-en **Alerts → Rules**. La página del dispositivo muestra un panel de prueba de
+en **Alerts → Rules**. La página del monitor muestra un panel de prueba de
 velocidad con la última velocidad de descarga y de subida, la latencia, el
 jitter y hace cuánto se ejecutó la prueba.
 

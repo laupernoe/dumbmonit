@@ -12,6 +12,7 @@ le formulaire.
 - [Comment ça fonctionne](#how-it-works)
 - [Créer et tester un canal](#creating-and-testing-a-channel)
 - [Réglages ou secrets : la différence](#settings-or-secrets-the-difference)
+- [Acquitter ou mettre en pause depuis la notification](#acknowledge-or-snooze-from-the-notification)
 - [Le canal personnalisé](#the-custom-channel)
   - [Variables disponibles](#available-variables)
   - [Exemple 1 — une API JSON interne](#example-1--an-internal-json-api)
@@ -32,7 +33,7 @@ règles d'alerte choisissent lesquels notifier.
 
 Trois principes s'appliquent à chaque canal :
 
-1. **Les alertes sont groupées.** Un message par appareil et par cycle,
+1. **Les alertes sont groupées.** Un message par surveillance et par cycle,
    même si cinq disques se remplissent en même temps. Sans ça, vous
    coupriez les notifications en une semaine.
 2. **Un canal cassé n'en bloque jamais un autre.** L'échec est enregistré
@@ -47,8 +48,8 @@ Trois principes s'appliquent à chaque canal :
 
 ## Créer et tester un canal {#creating-and-testing-a-channel}
 
-1. Ouvrez **Alertes → Notifications → Ajouter un canal**
-   (`/alerts#notifications`).
+1. Ouvrez **Réglages → Notifications et rapports → Ajouter un canal**
+   (`/settings/notifications`).
 2. Donnez-lui un nom significatif (« Discord — famille », « SMS —
    astreinte »). C'est le nom que vous choisirez plus tard dans vos règles
    d'alerte.
@@ -84,6 +85,54 @@ que la page est ouverte.
 
 Les tableaux de la section [Canaux supportés](#supported-channels)
 disent, pour chaque canal, ce qui va où.
+
+---
+
+## Acquitter ou mettre en pause depuis la notification {#acknowledge-or-snooze-from-the-notification}
+
+Quand une URL publique est réglée (**Réglages → Notifications et rapports → Politique de
+notification**, ou `DUMBMONIT_PUBLIC_URL`), chaque message d'alerte porte deux
+actions :
+
+- **Acquitter** (« Acknowledge ») : plus de rappels jusqu'à la résolution de
+  l'alerte. La résolution reste annoncée.
+- **Pause 1 h** (« Snooze 1 h ») : plus de rappels pendant une heure ; ils
+  reprennent ensuite si l'alerte est toujours active. Une pause n'écourte jamais
+  un acquittement plus long.
+
+Leur présentation dépend du canal :
+
+| Canal | Présentées comme |
+|---|---|
+| ntfy, Telegram, Web Push | Boutons sous la notification |
+| Discord, Slack, courriel et tous les autres canaux | Liens en fin de message |
+| Webhook personnalisé | Liens dans `{{message}}`, et les variables `{{ack_url}}` / `{{snooze_url}}` |
+| PagerDuty, Opsgenie | Rien : acquittez dans le service lui-même |
+
+Telegram n'accepte de boutons que vers une adresse `https` avec un nom de domaine ;
+avec une adresse IP ou une URL en `http`, les actions restent des liens dans le
+texte. Web Push ne montre les boutons que sur les appareils des opérateurs et des
+administrateurs : un lecteur voit l'alerte, pas de quoi la faire taire.
+
+Un lien ouvre une courte page de confirmation dans DumbMonit : **rien ne se passe
+tant que vous n'appuyez pas sur le bouton**. Les messageries, applications de chat
+et antivirus ouvrent les liens pour construire un aperçu ; ils ne font que charger
+la page. Aucune connexion n'est nécessaire : le lien est l'autorisation, et
+seulement pour ce geste, sur les alertes de ce message (ce déclenchement-là : une
+alerte résolue puis redéclenchée n'est plus couverte par l'ancien lien), une seule fois, pendant
+24 heures. L'action est inscrite au journal d'audit, et l'alerte indique
+« acknowledged by via notification link ».
+
+La sécurité, en bref : chaque lien est signé avec une clé dérivée du secret
+d'instance (changer le secret invalide tous les liens), ne porte aucune session, et
+voyage après le `#` de l'adresse, que les navigateurs n'envoient jamais au serveur :
+il n'apparaît donc dans aucun journal d'accès ni de mandataire. Un lien forgé,
+altéré ou expiré reçoit la même réponse que n'importe quel lien invalide, et les
+tentatives répétées depuis une même adresse sont freinées.
+
+Désactivez **Acquitter et mettre en pause depuis les notifications** dans la
+politique de notification pour ne plus les ajouter ; cela invalide aussi les liens
+déjà envoyés. Vider l'URL publique a le même effet.
 
 ---
 
@@ -147,8 +196,8 @@ votre JSON normalement.
 | `{{message}}` | Corps en texte brut, une ligne par alerte | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | Le même corps en Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Nom de la règle d'alerte | `Disk full` |
-| `{{target}}` | Nom de l'appareil surveillé | `nas` |
-| `{{target_id}}` | Identifiant numérique de l'appareil | `42` |
+| `{{target}}` | Nom de la surveillance | `nas` |
+| `{{target_id}}` | Identifiant numérique de la surveillance | `42` |
 | `{{severity}}` | Gravité technique | `info`, `warning` ou `critical` |
 | `{{severity_fr}}` | Gravité comme un mot lisible | `information`, `avertissement`, `critique` |
 | `{{status}}` | Statut technique | `firing` ou `resolved` |
@@ -168,9 +217,11 @@ votre JSON normalement.
 | `{{color}}` | Couleur d'accent, sans dièse | `D98A00` |
 | `{{color_hex}}` | Couleur d'accent, avec dièse | `#D98A00` |
 | `{{emoji}}` | Pictogramme de statut | `🔴`, `⚠️`, `ℹ️` ou `✅` |
-| `{{link}}` | Lien vers l'appareil dans DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Lien vers la surveillance dans DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Toujours `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Le secret `token` du canal | *(votre jeton)* |
+| `{{ack_url}}` | Lien signé qui acquitte l'alerte jusqu'à sa résolution, vide si les [liens d'action](#acknowledge-or-snooze-from-the-notification) sont désactivés | `https://dumbmonit.home/alert-action#…` |
+| `{{snooze_url}}` | Lien signé qui met l'alerte en pause une heure, vide si les liens d'action sont désactivés | `https://dumbmonit.home/alert-action#…` |
 
 Deux remarques utiles :
 
@@ -619,7 +670,7 @@ les alertes même avec chaque onglet fermé.
   premier démarrage et stockée chiffrée ; la clé privée ne quitte jamais
   le serveur.
 
-Le titre de la notification est la gravité et l'appareil
+Le titre de la notification est la gravité et la surveillance
 (`Critical · nas01`), le corps un court résumé ; toucher ouvre la page
 **Alertes**. DumbMonit a besoin de HTTPS sortant vers les services de
 push (`fcm.googleapis.com`, `*.notify.windows.com`,

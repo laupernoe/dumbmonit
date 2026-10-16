@@ -38,7 +38,7 @@ nel log proprio di Immich.
 
 Le [regole integrate](../alerting/rules.md#self-hosted-applications) che si
 applicano: Immich jobs stalled, Immich queue paused, Immich storage almost
-full, Immich update available, più Device unreachable.
+full, Immich update available, più Monitor unreachable.
 
 ## Dispositivi
 

@@ -11,15 +11,15 @@ réponse dans un README ; une vue compacte tient dans une page intranet.
 
 Elle ne montre que ce que vous y mettez : le libellé que vous donnez à
 chaque service, son état, sa disponibilité et son temps de réponse. Noms
-d'appareil, adresses, types et identifiants ne quittent jamais le
+de surveillance, adresses, types et identifiants ne quittent jamais le
 serveur — ni dans la page, ni dans un badge, ni dans un email.
 
 ## 1. Créer une page
 
-**État** dans la barre du haut → **Nouvelle page**. Cette page liste vos
+**Réglages → Pages de statut** → **Nouvelle page**. Cette page liste vos
 pages d'état (ouvrir, modifier, supprimer) avec les annonces en
-dessous ; l'éditeur s'ouvre sur sa propre route (`/status/new`,
-`/status/<id>`). Le rendu public est à `/s/<adresse>`.
+dessous ; l'éditeur s'ouvre sur sa propre route (`/settings/status/new`,
+`/settings/status/<id>`). Le rendu public est à `/s/<adresse>`.
 
 | Champ | Ce qu'il fait |
 | --- | --- |
@@ -31,8 +31,8 @@ dessous ; l'éditeur s'ouvre sur sa propre route (`/status/new`,
 | **Mode simple** | Une page nue : pas de scène, pas de mascotte, pas d'animation et pas d'easter eggs. Clair ou sombre suit le système du visiteur, avec un interrupteur dans l'en-tête ; le réglage Thème de la page est ignoré. |
 | **Publiée** | Désactivé = brouillon : la page, ses badges et son logo répondent « not found » aux visiteurs jusqu'à ce que vous l'activiez. |
 
-Puis cochez les appareils à montrer. Pour chacun, réglez le **libellé**
-que les visiteurs liront (il vaut par défaut le nom de l'appareil — vous
+Puis cochez les surveillances à montrer. Pour chacune, réglez le **libellé**
+que les visiteurs liront (il vaut par défaut le nom de la surveillance — vous
 préférerez peut-être « Site web » à « nginx-front-01 ») et,
 optionnellement, un **groupe** (« Réseau », « Stockage »). Les groupes
 deviennent des blocs sur la page, dans l'ordre où vous arrangez les
@@ -113,25 +113,25 @@ Comment l'état est décidé :
 
 | État | Signification |
 | --- | --- |
-| Opérationnel | La dernière sonde a réussi (sondes de disponibilité), ou l'appareil a rapporté dans les trois dernières périodes de sondage. |
+| Opérationnel | La dernière sonde a réussi (sondes de disponibilité), ou la surveillance a rapporté dans les trois dernières périodes de sondage. |
 | Dégradé | Actif maintenant, mais au moins une sonde a échoué dans la dernière heure. |
-| En panne | La dernière sonde a échoué, l'appareil a arrêté de rapporter, ou sa configuration est en erreur. |
-| Maintenance | Une fenêtre de maintenance est en cours et le service est en panne : attendu, pas une panne. Soit une annonce sur cette page, soit une [fenêtre de maintenance](../alerting/maintenance.md) d'alerte couvrant cet appareil. |
+| En panne | La dernière sonde a échoué, la surveillance a arrêté de rapporter, ou sa configuration est en erreur. |
+| Maintenance | Une fenêtre de maintenance est en cours et le service est en panne : attendu, pas une panne. Soit une annonce sur cette page, soit une [fenêtre de maintenance](../alerting/maintenance.md) d'alerte couvrant cette surveillance. |
 | Aucune donnée | Jamais sondé encore, ou désactivé. |
 
 La disponibilité pour les sondes (`http`, `tcp`, `dns`, `ping`, `tls`,
 battements de cœur) est la part de vérifications réussies, depuis
 `dumbmonit_probe_success` ; l'indisponibilité d'un jour est ses
 vérifications échouées multipliées par l'intervalle de sonde. Pour les
-autres appareils (SNMP, agent, Proxmox…) c'est la part de créneaux de
-cinq minutes où l'appareil a rapporté au moins une fois
-(`dumbmonit_up`), comptée depuis la première mesure — un appareil ajouté
+autres surveillances (SNMP, agent, Proxmox…) c'est la part de créneaux de
+cinq minutes où la surveillance a rapporté au moins une fois
+(`dumbmonit_up`), comptée depuis la première mesure — une surveillance ajoutée
 hier n'est pas « en panne » pour les 89 jours avant ça — et
 l'indisponibilité d'un jour est ses créneaux silencieux.
 
 ## 3. Annoncer des incidents et des maintenances
 
-Sur la page **État**, sous la liste des pages, **Incidents et
+Sur **Réglages → Pages de statut**, sous la liste des pages, **Incidents et
 maintenance** → **Nouvelle annonce** (aussi ++ctrl+k++ → *Annoncer un
 incident*).
 
@@ -148,11 +148,10 @@ incident*).
   montrent comme *Maintenance*.
 
 Une [fenêtre de maintenance planifiée dans Alertes](../alerting/maintenance.md)
-fait la même chose pour le seul appareil qu'elle couvre, sans annonce :
+fait la même chose pour la seule surveillance qu'elle couvre, sans annonce :
 ce service lit *Maintenance* au lieu de rouge tandis que la fenêtre est
 ouverte, et l'état global de la page dit *Maintenance* quand rien
-d'autre n'est en panne ou dégradé. Seules les fenêtres qui nomment un
-appareil se montrent ainsi ; le nom et le commentaire de la fenêtre
+d'autre n'est en panne ou dégradé. Seules les fenêtres qui nomment une surveillance se montrent ainsi ; le nom et le commentaire de la fenêtre
 restent privés.
 
 Une annonce est montrée sur une page ou sur **toutes les pages**.

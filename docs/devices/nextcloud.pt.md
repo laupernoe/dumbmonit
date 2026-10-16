@@ -39,12 +39,12 @@ Todas as métricas têm o prefixo `dumbmonit_nextcloud_`.
 
 Enquanto o Nextcloud está em manutenção ou espera por uma atualização, a sua
 API responde 503: só `maintenance`, `needs_db_upgrade` e `version_info` são
-escritas então, e o dispositivo não é reportado como inacessível.
+escritas então, e o monitor não é reportado como inacessível.
 
 As [regras incorporadas](../alerting/rules.md#self-hosted-applications) que se
 aplicam: Nextcloud stuck in maintenance, Nextcloud database upgrade pending,
 Nextcloud update available, Nextcloud OPcache full, Nextcloud free space low,
-mais Device unreachable.
+mais Monitor unreachable.
 
 ## Tarefas em segundo plano (cron) {#background-jobs-cron}
 
@@ -83,7 +83,7 @@ evitar. Se o Nextcloud alguma vez expuser isto por OCS, o DumbMonit seguirá o
 mesmo padrão de [dispositivos de clientes](../alerting/rules.md) já usado para o
 Immich, o Proxmox Backup Server e o Veeam.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sonda guardou; abrir a página nunca
 chama o Nextcloud. Diz primeiro o que está errado (manutenção, atualização à

@@ -32,7 +32,7 @@ notificar.
 
 Três princípios aplicam-se a todos os canais:
 
-1. **Os alertas são agrupados.** Uma mensagem por dispositivo e por ciclo, mesmo
+1. **Os alertas são agrupados.** Uma mensagem por monitor e por ciclo, mesmo
    que cinco discos encham ao mesmo tempo. Sem isto, silenciaria as notificações
    numa semana.
 2. **Um canal avariado nunca bloqueia outro.** A falha fica registada na coluna
@@ -45,7 +45,7 @@ Três princípios aplicam-se a todos os canais:
 
 ## Criar e testar um canal {#creating-and-testing-a-channel}
 
-1. Abra **Alertas → Notificações → Adicionar canal** (`/alerts#notifications`).
+1. Abra **Settings → Notifications & reports → Add channel** (`/settings/notifications`).
 2. Dê-lhe um nome com significado («Discord — família», «SMS — piquete»). É o
    nome que escolherá mais tarde nas suas regras de alerta.
 3. Escolha o tipo de canal, depois preencha os campos descritos abaixo.
@@ -165,8 +165,8 @@ literais, pelo que pode escrever o seu JSON normalmente.
 | `{{message}}` | Corpo em texto simples, uma linha por alerta | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | O mesmo corpo em Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Nome da regra de alerta | `Disk full` |
-| `{{target}}` | Nome do dispositivo monitorizado | `nas` |
-| `{{target_id}}` | Identificador numérico do dispositivo | `42` |
+| `{{target}}` | Nome do monitor | `nas` |
+| `{{target_id}}` | Identificador numérico do monitor | `42` |
 | `{{severity}}` | Gravidade técnica | `info`, `warning` ou `critical` |
 | `{{severity_fr}}` | Gravidade como palavra legível | `information`, `avertissement`, `critique` |
 | `{{status}}` | Estado técnico | `firing` ou `resolved` |
@@ -186,7 +186,7 @@ literais, pelo que pode escrever o seu JSON normalmente.
 | `{{color}}` | Cor de destaque, sem cardinal | `D98A00` |
 | `{{color_hex}}` | Cor de destaque, com cardinal | `#D98A00` |
 | `{{emoji}}` | Pictograma do estado | `🔴`, `⚠️`, `ℹ️` ou `✅` |
-| `{{link}}` | Ligação para o dispositivo no DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Ligação para o monitor no DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Sempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | O segredo `token` do canal | *(o seu token)* |
 
@@ -610,7 +610,7 @@ app ou não) recebe os alertas mesmo com todos os separadores fechados.
 - **Segredos** — nenhum. O par de chaves VAPID do servidor é gerado no primeiro
   arranque e guardado cifrado; a chave privada nunca sai do servidor.
 
-O título da notificação é a gravidade e o dispositivo (`Critical · nas01`), o corpo
+O título da notificação é a gravidade e o monitor (`Critical · nas01`), o corpo
 um breve resumo; um toque abre a página de **Alertas**. O DumbMonit precisa de
 HTTPS de saída para os serviços push (`fcm.googleapis.com`,
 `*.notify.windows.com`, `updates.push.services.mozilla.com`, `*.push.apple.com`);

@@ -116,7 +116,12 @@ pub async fn run_once(state: &AppState) -> anyhow::Result<usize> {
         return Ok(0);
     }
 
-    let observations = observe(state).await?;
+    // Les séries des conteneurs portent l'appareil Docker de la machine ; les
+    // politiques et les commandes, la machine elle-même.
+    let hosts = super::modules::service_hosts(&state.pool).await?;
+    let docker_devices: BTreeMap<TargetId, TargetId> =
+        hosts.iter().map(|(child, host)| (*host, *child)).collect();
+    let observations = observe(state, &hosts).await?;
     let silences = db::alerts::list_silences(&state.pool).await?;
     let now = Utc::now();
     let mut queued = 0;
@@ -135,8 +140,12 @@ pub async fn run_once(state: &AppState) -> anyhow::Result<usize> {
         }
         let labels: BTreeMap<String, String> =
             [("container".to_string(), container.clone())].into_iter().collect();
-        let in_maintenance =
-            silence::first_match(&silences, now, Some(target_id), &labels).is_some();
+        // Un silence posé sur la machine ou sur son appareil Docker suspend
+        // les politiques de ses conteneurs.
+        let in_maintenance = [Some(target_id), docker_devices.get(&target_id).copied()]
+            .into_iter()
+            .flatten()
+            .any(|id| silence::first_match(&silences, now, Some(id), &labels).is_some());
 
         let pending_restart =
             commands::has_pending(&state.pool, target_id, CMD_CONTAINER_RESTART, &container)
@@ -180,9 +189,12 @@ pub async fn run_once(state: &AppState) -> anyhow::Result<usize> {
     Ok(queued)
 }
 
-/// Dernier état connu de chaque conteneur, toutes cibles confondues.
+/// Dernier état connu de chaque conteneur, toutes cibles confondues, rangé
+/// sous la machine qui exécute ses commandes (`hosts` : appareil de service →
+/// machine).
 async fn observe(
     state: &AppState,
+    hosts: &BTreeMap<TargetId, TargetId>,
 ) -> anyhow::Result<BTreeMap<(TargetId, String), ContainerObservation>> {
     let series =
         state.victoria.query(r#"{__name__=~"dumbmonit_container_(up|update_available)"}"#).await?;
@@ -195,6 +207,7 @@ async fn observe(
         ) else {
             continue;
         };
+        let target = hosts.get(&target).copied().unwrap_or(target);
         let value: f64 = serie.value.1.parse().unwrap_or(f64::NAN);
         let entry = observations.entry((target, container.clone())).or_insert_with(|| {
             ContainerObservation { name: container.clone(), up: true, update_available: false }

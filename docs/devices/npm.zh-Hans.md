@@ -24,9 +24,9 @@ nginx 拒绝的主机不被提供，网页界面仅将其显示为红点。
 
 `proxy_host` 是主机的第一个域名，或流的 `port 9000`。禁用的主机被计数，不被描述：禁用主机是有意的，其警报（如有）被解决。主机逐个描述到 500，最多读取 100 个证书。
 
-适用的[内置规则](../alerting/rules.md#reverse-proxies-and-domains)：Nginx Proxy Manager 主机离线、代理证书未更新、加上设备不可达。
+适用的[内置规则](../alerting/rules.md#reverse-proxies-and-domains)：Nginx Proxy Manager 主机离线、代理证书未更新、加上监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 面板上方读取探针存储的内容；打开页面从不查询 Nginx Proxy Manager。它用一句话说明问题所在（nginx 拒绝的主机及其原因、即将到期的证书、无法读取的证书），然后是代理主机、重定向、404 主机、流和禁用主机，然后是最快到期的证书在前。
 

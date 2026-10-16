@@ -8,16 +8,16 @@
 ## Встроенные правила
 
 Важность показана словом из интерфейса; значение API указано в скобках. Правило,
-метрику которого не производит ни одно устройство, не имеет рядов и никогда не
+метрику которого не производит ни один монитор, не имеет рядов и никогда не
 срабатывает, поэтому каждое правило ниже поставляется включённым на каждом
 экземпляре.
 
-### Каждое устройство
+### Каждый монитор
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
-| Device unreachable | Ни одного измерения не получено более трёх минут. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 с | 1 мин | Warning (`critical`) | 6 ч |
-| High CPU | Нагрузка CPU стабильно выше 90%, усреднённая по устройству по источникам SNMP, Proxmox и агента; сбрасывается ниже 85 %. | > 90 % | 10 мин | Advisory (`warning`), эскалируется через 1 ч | 6 ч |
+| Monitor unreachable | Ни одного измерения не получено более трёх минут. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 с | 1 мин | Warning (`critical`) | 6 ч |
+| High CPU | Нагрузка CPU стабильно выше 90%, усреднённая по монитору по источникам SNMP, Proxmox и агента; сбрасывается ниже 85 %. | > 90 % | 10 мин | Advisory (`warning`), эскалируется через 1 ч | 6 ч |
 | Unusual CPU | Нагрузка CPU заметно отличается от обычной для этого времени и дня недели (сезонная базовая линия). | score > 3.5 | 15 мин | Info (`info`) | 6 ч |
 | Disk almost full | Файловая система заполнена на 90% или более, по точке монтирования (SNMP, хранилища Proxmox и корневые файловые системы); сбрасывается ниже 88 %. | ≥ 90 % | 15 мин | Advisory (`warning`), эскалируется через 24 ч | 6 ч |
 | Filesystem almost full | При такой скорости файловая система заполнится в течение четырёх дней (`predict_linear` за 6 ч; только растущие файловые системы). | ≥ 100 % | 30 мин | Advisory (`warning`) | 6 ч |
@@ -33,7 +33,7 @@
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
-| Port accumulating errors | Сетевой порт зафиксировал более пятидесяти ошибок за последний час: обычно это неисправный кабель, грязное оптоволокно или несовпадение duplex (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; в течение первого часа нового устройства ничего не срабатывает, поэтому ошибки, подсчитанные до его добавления, не сообщаются как новые). | > 50 | 15 мин | Advisory (`warning`) | 24 ч |
+| Port accumulating errors | Сетевой порт зафиксировал более пятидесяти ошибок за последний час: обычно это неисправный кабель, грязное оптоволокно или несовпадение duplex (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; в течение первого часа нового монитора ничего не срабатывает, поэтому ошибки, подсчитанные до его добавления, не сообщаются как новые). | > 50 | 15 мин | Advisory (`warning`) | 24 ч |
 | Port flapping | Сетевой порт упал и снова поднялся более двух раз за тридцать минут (`changes_prometheus(dumbmonit_if_oper_status[30m])`). Порт, отключённый намеренно, не имеет ряда и никогда не срабатывает. | > 4 | 5 мин | Advisory (`warning`) | 1 ч |
 
 ### Аппаратное обеспечение сервера (Redfish) {#server-hardware-redfish}
@@ -54,7 +54,7 @@
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
 | Service down | Служба не отвечала корректно три минуты (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 мин | Warning (`critical`) | 30 мин |
-| Heartbeat missed | Задание не вышло на связь в течение ожидаемого интервала плюс льготного периода или само сообщило о сбое (`dumbmonit_probe_success{probe="push"} == bool 0`; задержка задаётся для каждого устройства, см. [Heartbeat](../devices/push.md)). | > 0 | 2 мин | Advisory (`warning`) | 6 ч |
+| Heartbeat missed | Задание не вышло на связь в течение ожидаемого интервала плюс льготного периода или само сообщило о сбое (`dumbmonit_probe_success{probe="push"} == bool 0`; задержка задаётся для каждого монитора, см. [Heartbeat](../devices/push.md)). | > 0 | 2 мин | Advisory (`warning`) | 6 ч |
 | Service flapping | Служба сменила состояние более шести раз за тридцать минут (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 мин | Advisory (`warning`) | 1 ч |
 | Slow service | Служба отвечает дольше трёх секунд; неудачные проверки не учитываются (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 с | 10 мин | Advisory (`warning`) | 6 ч |
 | Certificate expiring soon | Сертификат истекает менее чем через четырнадцать дней. | < 14 дн | 1 ч | Advisory (`warning`) | 24 ч |
@@ -229,13 +229,13 @@
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
-| MDaemon mail service down | Отслеживаемая почтовая служба сервера MDaemon не отвечает или приветствует лишь затем, чтобы отказать в обслуживании (`dumbmonit_mdaemon_service_up`). Ряд есть только у служб, перечисленных на устройстве. Уведомление называет службу и её порт. | < 1 | 5 мин | Warning (`critical`) | 6 ч |
-| MDaemon XML API not answering | XML API перестал отвечать, пока почтовые службы ещё отвечают (`dumbmonit_mdaemon_api_up`): вероятно, остановлено Remote Administration. Ряд есть только у устройства с учётной записью. | < 1 | 15 мин | Advisory (`warning`) | 12 ч |
-| MDaemon mail queue growing | Входящая, локальная или удалённая очередь выросла более чем на сто сообщений за два часа (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): MDaemon перестал доставлять из неё. Читается [агентом](../devices/agent.md#windows-performance-counters) на сервере MDaemon, поэтому оповещение относится к устройству агента. | > 100 | 15 мин | Advisory (`warning`) | 6 ч |
+| MDaemon mail service down | Отслеживаемая почтовая служба сервера MDaemon не отвечает или приветствует лишь затем, чтобы отказать в обслуживании (`dumbmonit_mdaemon_service_up`). Ряд есть только у служб, перечисленных на мониторе. Уведомление называет службу и её порт. | < 1 | 5 мин | Warning (`critical`) | 6 ч |
+| MDaemon XML API not answering | XML API перестал отвечать, пока почтовые службы ещё отвечают (`dumbmonit_mdaemon_api_up`): вероятно, остановлено Remote Administration. Ряд есть только у монитора с учётной записью. | < 1 | 15 мин | Advisory (`warning`) | 12 ч |
+| MDaemon mail queue growing | Входящая, локальная или удалённая очередь выросла более чем на сто сообщений за два часа (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): MDaemon перестал доставлять из неё. Читается [агентом](../devices/agent.md#windows-performance-counters) на сервере MDaemon, поэтому оповещение относится к монитору агента. | > 100 | 15 мин | Advisory (`warning`) | 6 ч |
 | MDaemon Bad queue not empty | В очереди Bad ждут сообщения (`dumbmonit_mdaemon_queue_messages{queue="bad"}`): MDaemon не смог ни доставить, ни вернуть их, и они остаются там, пока администратор не освободит или не удалит их. | > 0 | 30 мин | Advisory (`warning`) | 24 ч |
 | MDaemon Retry queue high | Более пятидесяти сообщений ждут в очереди Retry (`dumbmonit_mdaemon_queue_messages{queue="retry"}`): удалённые серверы продолжают временно отказывать в приёме почты. | > 50 | 1 ч | Advisory (`warning`) | 6 ч |
 | SecurityGateway service down | Отслеживаемая служба шлюза не отвечает или приветствует лишь затем, чтобы отказать в обслуживании (`dumbmonit_securitygateway_service_up`). | < 1 | 5 мин | Warning (`critical`) | 6 ч |
-| SecurityGateway API not answering | REST API перестал отвечать, пока службы ещё отвечают (`dumbmonit_securitygateway_api_up`). Ряд есть только у устройства с ключом API. | < 1 | 15 мин | Advisory (`warning`) | 12 ч |
+| SecurityGateway API not answering | REST API перестал отвечать, пока службы ещё отвечают (`dumbmonit_securitygateway_api_up`). Ряд есть только у монитора с ключом API. | < 1 | 15 мин | Advisory (`warning`) | 12 ч |
 | SecurityGateway delivery queue growing | Очередь доставки выросла более чем на сто сообщений за два часа (`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`): почтовый сервер за шлюзом, вероятно, отказывается принимать почту. Имена счётчиков берутся из API как есть; если ваша версия называет очередь иначе, поправьте matcher. | > 100 | 15 мин | Advisory (`warning`) | 6 ч |
 
 ### OPNsense
@@ -259,7 +259,7 @@
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
-| NAS pool degraded | ZFS больше не считает пул здоровым (`dumbmonit_truenas_pool_healthy`). Деградировавший пул всё ещё отдаёт свои данные, именно поэтому никто не замечает, пока не откажет следующий диск. Страница устройства называет диск. | < 1 | 5 мин | Warning (`critical`) | 6 ч |
+| NAS pool degraded | ZFS больше не считает пул здоровым (`dumbmonit_truenas_pool_healthy`). Деградировавший пул всё ещё отдаёт свои данные, именно поэтому никто не замечает, пока не откажет следующий диск. Страница монитора называет диск. | < 1 | 5 мин | Warning (`critical`) | 6 ч |
 | NAS disk errors | Диски пула сообщили об ошибках чтения, записи или контрольной суммы с момента последнего `zpool clear` (`dumbmonit_truenas_pool_device_errors`, один ряд на вид). | > 0 | 15 мин | Advisory (`warning`) | 24 ч |
 | NAS pool almost full | Пул заполнен более чем на 85 % (`dumbmonit_truenas_pool_used_percent`). ZFS замедляется задолго до заполнения. Сбрасывается при 80 %. | > 85 % | 30 мин | Advisory (`warning`), эскалируется через 7 дн | 24 ч |
 | NAS scrub found errors | Последний scrub пула нашёл повреждённые данные (`dumbmonit_truenas_pool_last_scrub_errors`). | > 0 | 5 мин | Warning (`critical`) | 24 ч |
@@ -270,7 +270,7 @@
 | NAS replication failed | Включённая задача репликации в состоянии ошибки (`dumbmonit_truenas_replication_error`): копия на другой стороне стареет. | > 0 | 10 мин | Advisory (`warning`) | 12 ч |
 | NAS snapshot task failed | Включённая задача периодических снимков в состоянии ошибки (`dumbmonit_truenas_snapshot_task_error`). | > 0 | 10 мин | Advisory (`warning`) | 12 ч |
 | NAS snapshots stale | Включённая задача периодических снимков не запускалась более восьми дней (`dumbmonit_truenas_snapshot_task_last_run_age_seconds`): задача, которая перестаёт запускаться, не завершается ошибкой, она просто замолкает. | > 8 дн | 1 ч | Advisory (`warning`) | 24 ч |
-| TrueNAS alert raised | Сам TrueNAS поднял оповещение уровня ERROR или выше (`dumbmonit_truenas_alerts`). Его собственная формулировка — на странице устройства. | > 0 | 10 мин | Advisory (`warning`) | 12 ч |
+| TrueNAS alert raised | Сам TrueNAS поднял оповещение уровня ERROR или выше (`dumbmonit_truenas_alerts`). Его собственная формулировка — на странице монитора. | > 0 | 10 мин | Advisory (`warning`) | 12 ч |
 | NAS service stopped | Служба, настроенная на запуск вместе с NAS, остановлена (`dumbmonit_truenas_service_running`). У намеренно выключенной службы ряда нет. | < 1 | 10 мин | Advisory (`warning`) | 6 ч |
 
 ### Synology DSM
@@ -295,7 +295,7 @@
 
 ### Серверы логов и метрик {#log-and-metrics-servers}
 
-VictoriaMetrics, VictoriaLogs, Loki и Graylog ([устройства](../devices/victoriametrics.md)). Счётчики проходят через `increase_prometheus`, поэтому сервер, добавленный с историей отклонённых данных, не срабатывает на первом же измерении.
+VictoriaMetrics, VictoriaLogs, Loki и Graylog ([мониторы](../devices/victoriametrics.md)). Счётчики проходят через `increase_prometheus`, поэтому сервер, добавленный с историей отклонённых данных, не срабатывает на первом же измерении.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -318,7 +318,7 @@ VictoriaMetrics, VictoriaLogs, Loki и Graylog ([устройства](../device
 
 ### Самостоятельно размещаемые приложения {#self-hosted-applications}
 
-Nextcloud, Immich, Paperless-ngx, Jellyfin и Plex ([устройства](../devices/nextcloud.md)). Они редко падают полностью: страница открывается, а синхронизация, миниатюры, импорт или сканирование библиотек остановились. Эти правила следят за такими состояниями; приложение, которое не отвечает вовсе, — это Device unreachable.
+Nextcloud, Immich, Paperless-ngx, Jellyfin и Plex ([мониторы](../devices/nextcloud.md)). Они редко падают полностью: страница открывается, а синхронизация, миниатюры, импорт или сканирование библиотек остановились. Эти правила следят за такими состояниями; приложение, которое не отвечает вовсе, — это Monitor unreachable.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -344,8 +344,8 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin и Plex ([устройства](../de
 
 ### Самостоятельно размещаемые forge {#self-hosted-forges}
 
-GitLab (self-managed) и Forgejo/Gitea ([устройства](../devices/gitlab.md)).
-Экземпляр, который не отвечает вовсе, — это Device unreachable; эти правила
+GitLab (self-managed) и Forgejo/Gitea ([мониторы](../devices/gitlab.md)).
+Экземпляр, который не отвечает вовсе, — это Monitor unreachable; эти правила
 следят за частями, которые продолжают отдавать страницы, тихо отставая, — Sidekiq,
 раннеры CI/CD, плановая задача, которая перестала запускаться.
 
@@ -360,7 +360,7 @@ GitLab (self-managed) и Forgejo/Gitea ([устройства](../devices/gitlab
 
 ### Клиентские устройства {#client-devices}
 
-Одно правило, общее для всех интеграций, отслеживающих подключающиеся и копирующиеся устройства — на сегодня это телефоны, планшеты и настольные компьютеры Immich ([устройства](../devices/immich.md)), копируемые машины Proxmox Backup Server, по одной на группу резервного копирования ([устройства](../devices/pbs.md)), и защищаемые компьютеры и ВМ Veeam, по одному на объект с точкой восстановления ([устройства](../devices/veeam.md)); со временем появятся другие. Каждая интеграция вычисляет отставание относительно окна устаревания своей цели (`device_stale_days`, по умолчанию 3 дня) и публикует его как `dumbmonit_client_device_stale_seconds` с метками `device`, `type`, `os`, `user`, `kind` и `signal` (`connection` или `backup`); затем это единственное правило срабатывает для любого из них, называя устройство в уведомлении. Synology Active Backup for Business отслеживает свои устройства отдельно, через механизм, учитывающий ритм (`synology_abb_device_*`), а не через это общее семейство — см. [Synology](../devices/synology.md).
+Одно правило, общее для всех интеграций, отслеживающих подключающиеся и копирующиеся устройства — на сегодня это телефоны, планшеты и настольные компьютеры Immich ([мониторы](../devices/immich.md)), копируемые машины Proxmox Backup Server, по одной на группу резервного копирования ([мониторы](../devices/pbs.md)), и защищаемые компьютеры и ВМ Veeam, по одному на объект с точкой восстановления ([мониторы](../devices/veeam.md)); со временем появятся другие. Каждая интеграция вычисляет отставание относительно окна устаревания своей цели (`device_stale_days`, по умолчанию 3 дня) и публикует его как `dumbmonit_client_device_stale_seconds` с метками `device`, `type`, `os`, `user`, `kind` и `signal` (`connection` или `backup`); затем это единственное правило срабатывает для любого из них, называя устройство в уведомлении. Synology Active Backup for Business отслеживает свои устройства отдельно, через механизм, учитывающий ритм (`synology_abb_device_*`), а не через это общее семейство — см. [Synology](../devices/synology.md).
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -379,7 +379,7 @@ GitLab (self-managed) и Forgejo/Gitea ([устройства](../devices/gitlab
 
 ### AdGuard Home
 
-DNS-фильтр ([устройство](../devices/adguard.md)). Показатели запросов и блокировок — суммы за собственное окно статистики AdGuard Home, а не счётчики: на них не построено ни одно правило.
+DNS-фильтр ([монитор](../devices/adguard.md)). Показатели запросов и блокировок — суммы за собственное окно статистики AdGuard Home, а не счётчики: на них не построено ни одно правило.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -408,7 +408,7 @@ DNS-фильтр ([устройство](../devices/adguard.md)). Показат
 
 ### MikroTik RouterOS
 
-Ряды несут метку `interface` или `sensor`, поэтому уведомление называет порт или датчик ([устройство](../devices/mikrotik.md)). Счётчики проходят через `increase_prometheus`: маршрутизатор, добавленный с годами ошибок за плечами, не срабатывает на первом же измерении.
+Ряды несут метку `interface` или `sensor`, поэтому уведомление называет порт или датчик ([монитор](../devices/mikrotik.md)). Счётчики проходят через `increase_prometheus`: маршрутизатор, добавленный с годами ошибок за плечами, не срабатывает на первом же измерении.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -424,7 +424,7 @@ DNS-фильтр ([устройство](../devices/adguard.md)). Показат
 
 ### UniFi Network
 
-[Страница устройства](../devices/unifi.md). Ряды устройств несут имя, модель и тип устройства, поэтому уведомление говорит «Living room AP». Устройство, ожидающее принятия, не имеет ряда `device_up` и никогда не считается офлайн.
+[Страница монитора](../devices/unifi.md). Ряды устройств несут имя, модель и тип устройства, поэтому уведомление говорит «Living room AP». Устройство, ожидающее принятия, не имеет ряда `device_up` и никогда не считается офлайн.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -438,20 +438,20 @@ DNS-фильтр ([устройство](../devices/adguard.md)). Показат
 
 ### Home Assistant
 
-[Страница устройства](../devices/homeassistant.md).
+[Страница монитора](../devices/homeassistant.md).
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
 | Home Assistant in recovery mode | Home Assistant запустился в режиме восстановления: его конфигурацию не удалось загрузить, и автоматизации не работают (`dumbmonit_homeassistant_recovery_mode`). | > 0 | 2 мин | Warning (`critical`) | 1 ч |
 | Home Assistant not running | Home Assistant отвечает, но не завершил запуск в течение десяти минут (`dumbmonit_homeassistant_running`). | < 1 | 10 мин | Advisory (`warning`) | 6 ч |
 | Home Assistant entities went unavailable | Недоступных сущностей как минимум на пять больше, чем час назад: остановилась интеграция, хаб или радио (`sum by (target) (dumbmonit_homeassistant_entities_unavailable) - sum by (target) (dumbmonit_homeassistant_entities_unavailable offset 1h)`). Считается прирост, а не общее число, которое в реальной установке никогда не равно нулю. | ≥ 5 | 10 мин | Advisory (`warning`) | 6 ч |
-| Home Assistant battery low | Батарея, о которой сообщает Home Assistant, разряжена (`dumbmonit_homeassistant_battery_low`, один ряд на батарею ниже порога устройства, по умолчанию 20%; его значение — уровень заряда). | ≥ 0 % | 30 мин | Info (`info`) | 3 дн |
+| Home Assistant battery low | Батарея, о которой сообщает Home Assistant, разряжена (`dumbmonit_homeassistant_battery_low`, один ряд на батарею ниже порога монитора, по умолчанию 20%; его значение — уровень заряда). | ≥ 0 % | 30 мин | Info (`info`) | 3 дн |
 | Home Assistant update available | У Home Assistant есть ожидающие обновления: core, операционная система, дополнения или прошивка устройств (`dumbmonit_homeassistant_updates_available`). | > 0 | 1 ч | Info (`info`) | 7 дн |
 | Home Assistant repair to address | В Home Assistant есть открытый ремонт с важностью error или critical (`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`). | > 0 | 15 мин | Advisory (`warning`) | 24 ч |
 
 ### VMware vSphere
 
-[Страница устройства](../devices/vsphere.md). Ряды хостов несут `esxi`, ряды ВМ — `vm`, ряды хранилищ данных — `datastore`, поэтому уведомление называет объект.
+[Страница монитора](../devices/vsphere.md). Ряды хостов несут `esxi`, ряды ВМ — `vm`, ряды хранилищ данных — `datastore`, поэтому уведомление называет объект.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -465,7 +465,7 @@ DNS-фильтр ([устройство](../devices/adguard.md)). Показат
 
 ### Базы данных, брокер сообщений и движок безопасности {#databases-message-broker-and-security-engine}
 
-Redis / Valkey, MongoDB, RabbitMQ и CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Счётчики проходят через `increase_prometheus` или `changes_prometheus`, поэтому ничего не срабатывает на первом измерении устройства.
+Redis / Valkey, MongoDB, RabbitMQ и CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Счётчики проходят через `increase_prometheus` или `changes_prometheus`, поэтому ничего не срабатывает на первом измерении монитора.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -513,7 +513,7 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 
 ### Изменения веб-сайтов {#website-changes}
 
-См. [Website changes](../devices/webchange.md). Страница устройства показывает каждое изменение до и после.
+См. [Website changes](../devices/webchange.md). Страница монитора показывает каждое изменение до и после.
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -538,7 +538,7 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 ### Active Directory
 
 См. [Active Directory](../devices/activedirectory.md). Контроллер домена,
-который опрашивает DumbMonit, охватывается правилом *Device unreachable*; прочие
+который опрашивает DumbMonit, охватывается правилом *Monitor unreachable*; прочие
 контроллеры домена — правилом *Domain controller unreachable* (метка `dc`).
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
@@ -664,7 +664,7 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 
 ### Оценка безопасности {#security-score}
 
-Вычисляется сервером каждые 15 минут для каждого устройства, чей тип имеет проверки безопасности, и сохраняется как `dumbmonit_security_score` (0–100). См. [Оценка безопасности](../using/security-score.md).
+Вычисляется сервером каждые 15 минут для каждого монитора, чей тип имеет проверки безопасности, и сохраняется как `dumbmonit_security_score` (0–100), только пока оценка безопасности включена в Настройках (по умолчанию выключена). См. [Оценка безопасности](../using/security-score.md).
 
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
@@ -676,8 +676,16 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 | Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
 |---|---|---|---|---|---|
 | DumbMonit backup did not run | Плановое локальное резервное копирование базы данных DumbMonit не запускалось более двух дней (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 дн | 1 ч | Advisory (`warning`) | 24 ч |
+| DumbMonit data volume almost full | На томе с `/data` свободно меньше 10 % (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 мин | Advisory (`warning`) | 24 ч |
+| DumbMonit metrics database restarting in a loop | Встроенный VictoriaMetrics перезапускался три раза или больше за 30 минут (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 мин | Warning (`critical`) | 6 ч |
+| DumbMonit scheduler stalled | Больше двух минут нет ни одного цикла планировщика: мониторы не опрашиваются (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 с | 5 мин | Warning (`critical`) | 6 ч |
+| DumbMonit polls running late | Мониторы остаются просроченными после каждого цикла (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 мин | Advisory (`warning`) | 24 ч |
+| DumbMonit metric writes failing | За последние 15 минут VictoriaMetrics отклонял пакеты или измерения терялись (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 мин | Advisory (`warning`) | 6 ч |
+| DumbMonit database growing fast | `dumbmonit.db` за сутки вырос более чем вдвое и превышает 100 МБ (`dumbmonit_instance_database_bytes`). | > 2× | 1 ч | Advisory (`warning`) | 24 ч |
 
-Каждое встроенное правило применяется ко всем устройствам и ко всем включённым каналам.
+Эти правила и исходящий heartbeat описаны в разделе [Watching DumbMonit itself](../install/self-monitoring.md).
+
+Каждое встроенное правило применяется ко всем мониторам и ко всем включённым каналам.
 
 ## Редактирование правила в интерфейсе
 
@@ -693,20 +701,20 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
   базовой линии показывают свои параметры обнаружения только для чтения;
 - **Delete**, только для ваших собственных правил.
 
-## Переопределения для устройства {#per-device-overrides}
+## Переопределения для монитора {#per-device-overrides}
 
-Правило можно настроить для одного устройства, не трогая само правило: другой
-порог, другой порог сброса или отключение только для этого устройства. В
+Правило можно настроить для одного монитора, не трогая само правило: другой
+порог, другой порог сброса или отключение только для этого монитора. В
 редакторе каждого правила есть панель **Per-device overrides**, чтобы добавить
 или убрать переопределение прямо там.
 
-Действие **Ignore** в один клик над оповещением (в списке *Needs you* или на
-странице устройства оповещения) — тот же механизм, записанный с `enabled: false`:
-устройство немедленно и обратимо перестаёт нести это правило. Страница
-устройства перечисляет игнорируемое с кнопкой **Stop ignoring**; само правило
+Действие **Ignore** в один клик над оповещением (на вкладке *Now* или на
+странице монитора оповещения) — тот же механизм, записанный с `enabled: false`:
+монитор немедленно и обратимо перестаёт нести это правило. Страница
+монитора перечисляет игнорируемое с кнопкой **Stop ignoring**; само правило
 показывает *Ignored on N devices* в Alerts → Rules, где та же панель
-переопределений для устройства убирает его. API см. в
-[Переопределениях для устройства](../reference/api.md#per-device-overrides).
+переопределений для монитора убирает его. API см. в
+[Переопределениях для монитора](../reference/api.md#per-device-overrides).
 
 ## Создание порогового правила
 
@@ -715,26 +723,26 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 | Поле | Значение |
 |---|---|
 | Name | Показывается в оповещениях и уведомлениях. |
-| Query | Выражение MetricsQL, вычисляемое для каждого устройства. Пример: `dumbmonit_cpu_usage_percent`. |
+| Query | Выражение MetricsQL, вычисляемое для каждого монитора. Пример: `dumbmonit_cpu_usage_percent`. |
 | Operator | `>`, `>=`, `<` или `<=`. |
 | Threshold | Число, с которым сравнивается результат запроса. |
 | Severity | Info, Advisory или Warning. |
 | Hold for | Секунды, в течение которых условие должно сохраняться до срабатывания. Ненулевая выдержка поглощает единичный плохой сэмпл. |
 
 Каждый ряд, возвращённый запросом, становится одним потенциальным оповещением,
-привязанным к устройству, названному его меткой `target`. Агрегируйте с помощью
-`avg by (target, host) (…)`, когда нужно одно оповещение на устройство, а не на
+привязанным к монитору, названному его меткой `target`. Агрегируйте с помощью
+`avg by (target, host) (…)`, когда нужно одно оповещение на монитор, а не на
 ядро или интерфейс. Идентичность оповещения игнорирует метки `host` и `tag_*`,
-если присутствует `target`, поэтому переименование устройства сохраняет его
+если присутствует `target`, поэтому переименование монитора сохраняет его
 оповещения; ряд, чей `target` не соответствует существующему включённому
-устройству, игнорируется.
+монитору, игнорируется.
 
 ## Язык запросов
 
 Запросы пишутся на [MetricsQL](https://docs.victoriametrics.com/metricsql/) —
 надмножестве PromQL от VictoriaMetrics. Метрики — это ряды `dumbmonit_*`,
 описанные в [справочнике метрик](../reference/metrics.md), и каждый ряд несёт
-метку `target` (id устройства) и метку `host` (его имя).
+метку `target` (id монитора) и метку `host` (его имя).
 
 Некоторые шаблоны, используемые встроенными правилами:
 

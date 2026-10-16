@@ -27,7 +27,7 @@ Tutte le metriche sono prefissate `dumbmonit_gitlab_`.
 | `pipelines_failed_recent`, `pipelines_pending` | pipeline fallite nella finestra di lookback, e pipeline in sospeso o in esecuzione ora — solo per i progetti elencati nell'opzione "Progetti osservati per la salute di CI" | `project` |
 | `scrape_errors` | chiamate solo amministratore che hanno fallito sull'ultima sonda (0 con le loro di un token ordinario mai tentate) | |
 
-Le [regole integrate](../alerting/rules.md#self-hosted-forges) che si applicano: Runner GitLab tutti offline, Backlog di Sidekiq GitLab elevato, Migrazioni GitLab in sospeso, Licenza GitLab in scadenza, più Dispositivo irraggiungibile. Un punteggio di sicurezza controlla le impostazioni two-factor e sign-up, e le migrazioni in sospeso: vedi [Aggiornamenti dei fornitori e altri controlli](../using/security-score.md).
+Le [regole integrate](../alerting/rules.md#self-hosted-forges) che si applicano: Runner GitLab tutti offline, Backlog di Sidekiq GitLab elevato, Migrazioni GitLab in sospeso, Licenza GitLab in scadenza, più Monitor irraggiungibile. Un punteggio di sicurezza controlla le impostazioni two-factor e sign-up, e le migrazioni in sospeso: vedi [Aggiornamenti dei fornitori e altri controlli](../using/security-score.md).
 
 ## Cosa non controlla
 
@@ -35,7 +35,7 @@ L'API REST propria di GitLab non ha un endpoint che dice "un rilascio di GitLab 
 
 La salute della pipeline di CI è letta solo per i progetti che elenca: l'API di GitLab non ha un endpoint a livello di istanza "tutte le pipeline fallite", solo uno per progetto.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina non chiama mai GitLab. Dice cosa è sbagliato per primo (un componente di prontezza che ha fallito, runner tutti offline, un grande backlog di Sidekiq), quindi la versione, quindi i conteggi dell'istanza e le impostazioni lette dall'API di amministrazione.
 

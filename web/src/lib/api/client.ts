@@ -32,7 +32,7 @@ export class ApiError extends Error {
 			return 'Your session has expired or the password is incorrect. Sign in again to continue.';
 		}
 		if (this.demo) {
-			return 'Install DumbMonit on your own machine to add devices, rules and channels.';
+			return 'Install DumbMonit on your own machine to add monitors, rules and channels.';
 		}
 		if (this.status === 403) {
 			return 'You do not have sufficient permissions for this action.';

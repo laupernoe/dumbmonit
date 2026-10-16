@@ -80,7 +80,7 @@ hand-started agent under your own account will find nothing.
 Counters are sent raw, so that a restart of the agent never produces a fake
 rate; apply `rate()` in queries.
 
-Built-in rules that apply: Device unreachable, High CPU, Unusual CPU. "Device
+Built-in rules that apply: Monitor unreachable, High CPU, Unusual CPU. "Monitor
 unreachable" works on agents too: the server checks the age of the last batch
 received and declares the machine silent after three missed periods (at least
 90 seconds).
@@ -119,12 +119,12 @@ critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 The steps below are the ones the notice next to the form shows. There is no
 account to create on the machine: the enrollment token is the only secret.
 
-1. Save the device in DumbMonit: an enrollment token (dmon_…) is shown once,
+1. Save the monitor in DumbMonit: an enrollment token (dmon_…) is shown once,
    with the install command ready to copy for Linux and for Windows. (A token
    can also be created in **Settings → Agents**.)
 2. That token is the agent's key to push its measurements to DumbMonit. It is
    not an account on the machine: nothing to create there. A token created from
-   the device form is single use: it enrols this one machine and nothing else.
+   the monitor form is single use: it enrols this one machine and nothing else.
    For a fleet, create a reusable token in Settings → Agents.
 3. Run the install command on the machine to monitor, with elevated rights
    (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads
@@ -132,17 +132,17 @@ account to create on the machine: the enrollment token is the only secret.
 4. The machine shows up on its own within a few seconds, named after its host
    name. On that first batch the server gives the agent a secret of its own and
    stores it in `/etc/dumbmonit/agent-secret`, readable by nobody else: from
-   then on, that machine is the only one that can report under this device.
+   then on, that machine is the only one that can report under this monitor.
    Lost the token? Settings → Agents lets you revoke it and create another.
 5. Docker: to see the containers and let DumbMonit restart or update them, the
    agent must reach the Docker socket. The service the installer registers
    already can; if you run the agent under a dedicated user instead, add that
    user to the "docker" group and restart it. Restart and auto-update policies
-   are then set per container on the device page.
+   are then set per container on the monitor page.
 
 Two things are worth reading before you roll this out to more than one
 machine: [Binding](#binding-one-machine-one-agent), which is what makes a
-device really belong to one agent installation, and
+monitor really belong to one agent installation, and
 [Single use or fleet](#single-use-or-fleet), which is the choice you make when
 you create a token.
 
@@ -150,11 +150,17 @@ you create a token.
     usermod -aG docker dumbmonit
     ```
 
-6. Plakar backups: detected automatically — the Backups panel appears when the
-   plakar binary or a kloset (~/.config/plakar/stores.yml of every user,
-   ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set
-   "plakar_klosets" in agent.yaml to watch a fixed list, or "plakar: false" to
-   opt out.
+6. Plakar backups: detected automatically — a Plakar monitor appears under the
+   machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of
+   every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown
+   otherwise. Set "plakar_klosets" in agent.yaml to watch a fixed list, or
+   "plakar: false" to opt out.
+7. Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt,
+   WireGuard, IPsec, speed test) each become their own monitor under the
+   machine, with their own status and alerts. The machine's "Services found by
+   the agent" panel lists what was found and what was not: untick a module to
+   drop its monitor, tick one to watch it before it shows up. See
+   [Services found by the agent](#services-found-by-the-agent).
 
 !!! note
     The agent contacts the server, never the other way round: no port needs to
@@ -277,7 +283,7 @@ format. Every [GitHub release](https://github.com/laupernoe/dumbmonit/releases/l
 carries all six binaries and their checksums, for machines that cannot reach
 the server's `/download/` or for installing with `--bin`.
 
-Since 0.1.0-alpha.9, every binary of a release is also signed keylessly with
+Since 0.9.0, every binary of a release is also signed keylessly with
 [Sigstore](https://www.sigstore.dev/) (`<file>.sigstore.json`) and comes with
 a SLSA provenance attestation. To check that a binary was built by this
 repository's release workflow:
@@ -366,6 +372,88 @@ and installs `dumbmonit-agent` in its place. The old `ezym_…` token stays
 valid, so the command shown when the token was created still works; nothing
 has to be revoked first.
 
+## Services found by the agent
+
+The machine's own monitor shows the machine: CPU, memory, filesystems, network,
+disk health (SMART), sensors, OS health and the services you list in
+`services`. Everything else the agent detects is a **service**, and each
+service it finds becomes a monitor of its own, of kind `agent_service`, filed
+under the machine:
+
+| Service | Its metrics | Monitor name |
+|---|---|---|
+| Docker | `container_*` | `<machine> · Docker` |
+| Plakar | `backup_*` | `<machine> · Plakar` |
+| restic / Borg | `agent_backup_repo_*` | `<machine> · restic/Borg` |
+| ZFS | `agent_zfs_*` | `<machine> · ZFS` |
+| KVM / libvirt | `agent_libvirt_*` | `<machine> · libvirt` |
+| WireGuard | `agent_wireguard_*` | `<machine> · WireGuard` |
+| IPsec | `agent_ipsec_*` | `<machine> · IPsec` |
+| Internet speed test | `agent_speedtest_*` | `<machine> · Speed test` |
+
+The split happens on the server, by metric name, so it works with every agent
+version. Each series is written once, with `target` set to the monitor it
+belongs to: the service's series carry the service monitor's id, the machine's
+series the machine's id. Nothing is counted twice.
+
+A service monitor has its own status, alerts, rules, rule overrides and
+silences. It is **unreachable** when the agent stops reporting it while the
+machine still reports (the Docker daemon stopped, `wg` removed…), after the
+same three missed periods as the machine itself. When the machine goes silent,
+its services are shown as hidden behind it (`suppressed`) instead of raising
+alerts of their own. A new service monitor starts with the machine's tags, so
+tag-based silences and rules keep applying.
+
+There is nothing to choose before the install. After the first report, the
+machine's page lists every module in **Services found by the agent**:
+
+- a found service is ticked and links to its monitor;
+- a service not found is unticked; tick it to create its monitor anyway (it
+  stays unreachable until the agent reports it — useful to be told when a
+  service you rely on is missing);
+- untick a found service to delete its monitor and drop its readings. The
+  server tells the agent in its next acknowledgement, and the agent stops
+  collecting it (an older agent keeps collecting, and the server keeps
+  dropping). Deleting a service monitor has the same effect. Tick it again to
+  bring it back.
+
+Deleting the machine deletes its service monitors. Container actions and
+policies work from the Docker monitor page; the commands still go to the
+machine's agent.
+
+The same as the monitor notice:
+
+1. There is nothing to add by hand: install the agent on the machine, and each
+   service it finds becomes a monitor under that machine on its first report.
+2. To stop watching a service, untick it in the machine's "Services found by
+   the agent" panel, or delete its monitor: the agent's readings for it are then
+   dropped.
+
+!!! note
+    If the machine stops reporting, its services are shown as hidden behind it
+    rather than raising alerts of their own.
+
+### Upgrading an existing installation
+
+Nothing to do. The first time the agent reports a service after the upgrade,
+the server creates its monitor and moves onto it what concerned that service on
+the machine:
+
+- rule overrides of the rules that read the service's metrics are copied to
+  the service monitor;
+- rules limited to the machine (`ids` selector) that read the service's
+  metrics now also select the service monitor;
+- the machine's silences (maintenance windows) are copied to the service
+  monitor;
+- alerts in progress on the service's series are moved to the service monitor
+  under their new fingerprint, so they do not resolve and fire again.
+
+The history stays where it was written: VictoriaMetrics cannot relabel
+existing series, so readings from before the upgrade remain under the machine
+(they age out with the retention), and the service monitor's charts start at
+the upgrade. Anomaly baselines of the moved series start learning again. The
+alert history (resolved alerts) also stays with the machine.
+
 ## Choosing the modules
 
 By default every optional module detects itself and reports what it finds:
@@ -377,9 +465,13 @@ and Hyper-V counter sets. To watch only some of them, list them:
 modules: [docker, plakar]
 ```
 
-or pick them in the enrolment screen (**Choose the modules**), which adds
+or pick them in the enrolment screen (**Choose the modules**, an advanced
+option: by default the install command asks nothing), which adds
 `--modules=docker,plakar` to the install command. Only the listed modules run;
-the others send no series, so they show no panel and raise no alert. CPU,
+the others send no series, so they get no monitor and raise no alert. To stop
+watching a service on a machine already enrolled, untick it in
+[Services found by the agent](#services-found-by-the-agent) instead: no need to
+touch `agent.yaml`. CPU,
 memory, filesystems, network and the machine's OS identity are always
 collected. `modules: []` (or `--modules=none`) keeps those only.
 
@@ -525,7 +617,7 @@ a container without mounting a file:
 | `DUMBMONIT_AGENT_CHECK_FAILED_UNITS` | `true` / `false`: failed systemd units (default `true`) |
 | `DUMBMONIT_AGENT_MAX_BUFFERED_SAMPLES` | Size of the catch-up buffer |
 | `DUMBMONIT_AGENT_LOG` | `trace`, `debug`, `info`, `warn`, `error` |
-| `DUMBMONIT_AGENT_RELAY` | `true` to run, for the server, the probes of the devices assigned to this agent (see [Run the agent in Docker / on another network](#run-the-agent-in-docker--on-another-network)) |
+| `DUMBMONIT_AGENT_RELAY` | `true` to run, for the server, the probes of the monitors assigned to this agent (see [Run the agent in Docker / on another network](#run-the-agent-in-docker--on-another-network)) |
 | `DUMBMONIT_AGENT_SITE` | Site label shown next to the agent when it is offered as a relay |
 
 ## Windows performance counters
@@ -583,7 +675,7 @@ other object name) in a command prompt.
 Installed on a Hyper-V host — Windows Server with the Hyper-V role, or
 Windows with Hyper-V enabled — the agent finds the `vmms` service and reads
 Hyper-V's own performance counters, with nothing to configure. The agent's
-device page then shows a Hyper-V panel: how many virtual machines report
+monitor page then shows a Hyper-V panel: how many virtual machines report
 healthy, the host's real CPU load, the memory each running VM holds, and the
 throughput, latency and errors of each virtual disk.
 
@@ -644,13 +736,13 @@ What the container sees, and what to mount:
 | Need | What to do | Why |
 |---|---|---|
 | CPU, memory, load, disk I/O of the host | Nothing | `/proc/stat`, `/proc/meminfo`, `/proc/loadavg` and `/proc/diskstats` are host-wide inside any container. |
-| Host name | `DUMBMONIT_AGENT_HOSTNAME` | A container's hostname is a random id; the device would be named after it. |
+| Host name | `DUMBMONIT_AGENT_HOSTNAME` | A container's hostname is a random id; the monitor would be named after it. |
 | Containers of the host | `- /var/run/docker.sock:/var/run/docker.sock:ro` | Optional. Read-only lists and inspects; Restart/Update actions need it writable and `DUMBMONIT_AGENT_COMMANDS=true`. Without the socket, the agent simply reports no containers. |
 | Filesystem usage | `- /:/host:ro` (or the mounts you care about) | The agent reports the mounts visible *inside* the container, under their container path. |
 | Host network counters | `network_mode: host` | Interfaces are namespaced: without it the agent sees one `veth`. |
 | Ping monitors relayed through this agent | `sysctls: net.ipv4.ping_group_range: "0 2147483647"` | ICMP uses an echo socket, which this sysctl allows: no capability needed. See [ICMP ping without a capability](../install/docker.md#icmp-ping-without-a-capability). |
-| Private CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Server behind an internal reverse proxy, devices with self-signed certificates. |
-| Keeping the binding across recreations | `- agent-state:/var/lib/dumbmonit-agent` and `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | The binding secret lives in the container's filesystem, which a `docker compose up --force-recreate` throws away. Without the volume, the agent comes back unbound and someone has to allow re-enrolment from the device page each time. |
+| Private CA | `- ./ca-bundle.crt:/etc/ssl/certs/ca-certificates.crt:ro` | Server behind an internal reverse proxy, monitors with self-signed certificates. |
+| Keeping the binding across recreations | `- agent-state:/var/lib/dumbmonit-agent` and `DUMBMONIT_AGENT_SECRET_FILE=/var/lib/dumbmonit-agent/agent-secret` | The binding secret lives in the container's filesystem, which a `docker compose up --force-recreate` throws away. Without the volume, the agent comes back unbound and someone has to allow re-enrolment from the monitor page each time. |
 
 `pid: host` and `privileged: true` are never needed: the agent collects no
 per-process metrics.
@@ -658,11 +750,11 @@ per-process metrics.
 ### Relay mode: monitor another site
 
 An agent can do more than watch its own machine. With `relay: true` (or
-`DUMBMONIT_AGENT_RELAY=true`), the server **delegates probes** to it: devices
+`DUMBMONIT_AGENT_RELAY=true`), the server **delegates probes** to it: monitors
 whose *Reached through* setting names this agent are not polled by the server
 but by the agent, from its own network, with exactly the same collectors —
 SNMP, Proxmox VE, Proxmox Backup Server, Synology, HTTP, TCP, DNS, ping, TLS.
-The results land under the device as if the server had polled it: same
+The results land under the monitor as if the server had polled it: same
 metrics, same *last probe*, same alerts. A remote office, a second homelab or
 a customer's network thus show up in the one DumbMonit you already have,
 without a VPN and with nothing to open on the remote side.
@@ -682,17 +774,17 @@ own. It keeps only a fingerprint; the agent writes the secret to
 `X-DumbMonit-Agent-Secret` header on every request afterwards — measurements,
 container commands and relayed probes alike. From then on:
 
-- no other machine can push measurements under this device, or rewrite its host
+- no other machine can push measurements under this monitor, or rewrite its host
   name and operating system;
 - no other machine can fetch — and therefore consume — the Restart and Update
   commands queued for it.
 
-The device page shows where a machine stands, under **Agent → Binding**:
+The monitor page shows where a machine stands, under **Agent → Binding**:
 
 | State | What it means | What to do |
 |---|---|---|
 | **Bound** | The agent holds a secret of its own. | Nothing. |
-| **Not bound — re-enrol this host** | A host enrolled before binding existed, and never bound since. The server refuses its measurements, container commands and relayed probes. | Click **Allow re-enrolment** on the device page, then restart the agent. If the agent predates binding, re-run the install command on the host first. |
+| **Not bound — re-enrol this host** | A host enrolled before binding existed, and never bound since. The server refuses its measurements, container commands and relayed probes. | Click **Allow re-enrolment** on the monitor page, then restart the agent. If the agent predates binding, re-run the install command on the host first. |
 
 ### Hosts that predate binding
 
@@ -712,7 +804,7 @@ To bring such a host back:
 
 1. If its agent predates binding, re-run the install command on it (the agent
    binary must be able to store a binding secret).
-2. Open its device page and click **Agent → Allow re-enrolment**. This opens a
+2. Open its monitor page and click **Agent → Allow re-enrolment**. This opens a
    one-hour window.
 3. Restart the agent, or wait for its next retry: that batch binds the host
    with a fresh secret and closes the window. A token other than the one that
@@ -737,7 +829,7 @@ server refuses its batches. That refusal is deliberate: a machine that is bound
 stays bound until a human says otherwise, otherwise the binding would protect
 nothing.
 
-The way back in is on the device page: **Agent → Allow re-enrolment**. It opens
+The way back in is on the monitor page: **Agent → Allow re-enrolment**. It opens
 a one-hour window during which an agent presenting a valid enrollment token
 binds that machine again, with a fresh secret; the old secret stops working,
 and the window closes as soon as it is used. The agent retries on its own in
@@ -755,7 +847,7 @@ WARN this agent is not recognised for this machine
 
 ## Enrolment tokens
 
-- Tokens are created in **Settings → Agents** or when adding a device of type
+- Tokens are created in **Settings → Agents** or when adding a monitor of type
   agent. The server keeps only a fingerprint: the clear token is shown once, in
   the creation response, with the two install commands.
 - The agent sends it as `Authorization: Bearer dmon_…` on `POST /api/ingest`.
@@ -764,7 +856,7 @@ WARN this agent is not recognised for this machine
   last use. **Revoke** stops every agent that uses that token at its next push;
   the machines then become *unreachable* after three missed periods. Re-run the
   installer with a new token to re-enrol them.
-- Machines are separate devices: revoking a token does not delete them.
+- Machines are separate monitors: revoking a token does not delete them.
 
 ### Single use or fleet
 
@@ -809,9 +901,9 @@ tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 | Installer stops with "no expected checksum" | The command has no `--sha256` for this platform: an old command, or a macOS binary (not shipped by the server). Copy a fresh command, or pass `--sha256=<platform>-<arch>:<hex>` from the release's `.sha256`. |
 | Machine never appears | The push goes to `/api/ingest` on the URL in the install command; behind a reverse proxy, make sure it is forwarded and that bodies up to 16 MB are allowed. |
 | *Unreachable* although the agent runs | The token was revoked, or the pushes are rejected. Check `journalctl -u dumbmonit-agent`: the error is logged there. |
-| Log says "this agent is not recognised for this machine" | The machine is bound to an agent installation whose secret this one does not have — a reinstall, or a container recreated without its state volume. Open the device page and click **Allow re-enrolment**; see [Re-enrolment after a reinstall](#re-enrolment-after-a-reinstall). |
-| Log says "this machine was enrolled before agent binding" | A host that never bound to its agent. Click **Allow re-enrolment** on its device page, then restart the agent; see [Hosts that predate binding](#hosts-that-predate-binding). |
-| Log says "this agent is too old to be bound to its machine" | The agent binary cannot store a binding secret. Re-run the install command on the host; if the device already exists, click **Allow re-enrolment** first. |
+| Log says "this agent is not recognised for this machine" | The machine is bound to an agent installation whose secret this one does not have — a reinstall, or a container recreated without its state volume. Open the monitor page and click **Allow re-enrolment**; see [Re-enrolment after a reinstall](#re-enrolment-after-a-reinstall). |
+| Log says "this machine was enrolled before agent binding" | A host that never bound to its agent. Click **Allow re-enrolment** on its monitor page, then restart the agent; see [Hosts that predate binding](#hosts-that-predate-binding). |
+| Log says "this agent is too old to be bound to its machine" | The agent binary cannot store a binding secret. Re-run the install command on the host; if the monitor already exists, click **Allow re-enrolment** first. |
 | Log says "this enrollment token has already enrolled all the machines it was allowed to" | A single-use token being reused. Create a new one, or a reusable token in Settings → Agents. |
 | Windows | The Windows service parts had not been exercised in the project's build image at the time of writing; report issues on GitHub. |
 
@@ -820,7 +912,7 @@ tail -f /var/log/dumbmonit-agent.log   # service log (OpenRC)
 When the agent can read the Docker socket (`docker: true`, the default, and a
 user in the `docker` group or root — `usermod -aG docker dumbmonit`, then
 restart the agent), every container becomes a handful of series, labelled
-`container` and `image` (the `name:tag` shown by `docker ps`). If the device
+`container` and `image` (the `name:tag` shown by `docker ps`). If the monitor
 page says "No Docker on this machine" while Docker is installed, that is the
 first thing to check.
 
@@ -848,7 +940,7 @@ container.
 
 ### Actions
 
-On the device page, each container has two actions and two switches. Actions
+On the monitor page, each container has two actions and two switches. Actions
 travel through a **command channel**: the server queues the command, the agent
 fetches it after its next batch (`GET /api/agent/commands`, same enrollment
 token), runs it, and reports the outcome (`queued → running → done | failed`),
@@ -863,7 +955,7 @@ the next action on that container.
 
 The agent tells the server, with every batch, whether it accepts commands.
 When it does not — an agent older than the command channel, or installed with
-`commands: false` — the device page says so instead of showing Restart and
+`commands: false` — the monitor page says so instead of showing Restart and
 Update, the API refuses the commands (`409`), and policies do not queue
 anything. Reinstall the agent with the current installer to enable actions.
 
@@ -891,13 +983,13 @@ A per-container **policy** is evaluated by the server every minute:
   automatically, at most once every ten minutes.
 - **Auto-update in maintenance windows** — a container with an update available
   is updated automatically, but only while a maintenance window (silence)
-  covers the device, at most once every six hours. Schedule one on the Alerts
-  page, or silence the device from its page. Policies default to pruning the
+  covers the monitor, at most once every six hours. Schedule one on the Alerts
+  page, or silence the monitor from its page. Policies default to pruning the
   old image and to maintenance windows only.
 
 Two places set them:
 
-- the **Docker strip** under the device header: "28 containers · 27 running ·
+- the **Docker strip** under the monitor header: "28 containers · 27 running ·
   3 updates available · policies: 2 auto-restart, 0 auto-update", the last
   action and its status, **Manage containers** (opens the list below) and
   **Policies…**, a table of every container with the two switches and an
@@ -941,7 +1033,7 @@ Plakar is **detected, never assumed**. At startup and then on every cycle
 until it finds something, the agent looks for the `plakar` binary (on `PATH`,
 or `plakar_bin`) and for klosets in the standard locations. When there is no
 binary, no kloset and no trace of Plakar (`~/.cache/plakar`), the agent emits
-no `backup_*` series at all, says so once at `debug` level, and the device
+no `backup_*` series at all, says so once at `debug` level, and the monitor
 page shows no Backups panel — nothing to configure on machines without Plakar.
 To skip the detection entirely:
 
@@ -973,7 +1065,7 @@ apart as `@name` and `<user>:@name`.
 The result is logged once at `info` (and again only when it changes). Two
 gauges, emitted only once Plakar is detected, let the interface tell the
 remaining cases apart: `backup_plakar_present` (1 when the binary runs) and
-`backup_klosets_found` (number of klosets read). The device page then says
+`backup_klosets_found` (number of klosets read). The monitor page then says
 "Plakar is installed but no kloset was found", or lists the klosets. When
 klosets exist but the binary does not run (a service `PATH` without `plakar`,
 typically), they are listed as unreadable with a hint to set `plakar_bin`, and
@@ -1030,7 +1122,7 @@ them exists while Plakar is not detected, so the built-in rules below cannot
 fire on a machine without Plakar.
 
 Built-in rules: **Plakar backup too old** (advisory, no snapshot for more than
-two days) and **Plakar backup failed** (warning). The device page shows one
+two days) and **Plakar backup failed** (warning). The monitor page shows one
 block per kloset — age of the last backup, snapshot count, size, last status —
 and one line per source, with a "Backup too old" hint past two days.
 
@@ -1145,7 +1237,7 @@ newest snapshot of each host and path set; the newest of them all is kept, so
 set `host` on a repository shared by several machines.
 
 Built-in rules: **restic/Borg backup too old** (no snapshot for more than 48
-hours) and **restic/Borg repository unreachable** (for 30 minutes). The device
+hours) and **restic/Borg repository unreachable** (for 30 minutes). The monitor
 page shows a Backup repositories panel, one line per repository.
 
 To check a declaration, run the agent once in the foreground and look for the
@@ -1196,7 +1288,7 @@ keepalive (a phone, a laptop) may idle for days with nothing broken, so it is
 left out. Set `PersistentKeepalive = 25` on the tunnels that must stay up
 (site-to-site links, remote gateways). N is the rule's threshold: change it in
 **Alerts → Rules**, or remove the `and on (…)` part of its query to watch
-every peer. The device page shows a WireGuard panel with each peer, the time
+every peer. The monitor page shows a WireGuard panel with each peer, the time
 since its last handshake, its traffic and its keepalive.
 
 ## IPsec tunnels
@@ -1227,7 +1319,7 @@ ipsec_bin: swanctl          # default: on PATH
 ```
 
 The built-in rule **IPsec tunnel down** fires when a configured tunnel has no
-installed CHILD_SA for ten minutes. The device page shows an IPsec panel with
+installed CHILD_SA for ten minutes. The monitor page shows an IPsec panel with
 each tunnel, up or down, its traffic and the time to its next rekey.
 
 ## Internet speed test
@@ -1288,7 +1380,7 @@ your line, so **Internet download rate low**, **Internet upload rate low** and
 Each threshold is published as its own series
 (`agent_speedtest_download_min_bytes_per_second`, and so on), which is what
 the built-in rules compare the measurement against; change the threshold in
-`agent.yaml`, not in **Alerts → Rules**. The device page shows a speed test
+`agent.yaml`, not in **Alerts → Rules**. The monitor page shows a speed test
 panel with the last download and upload rate, latency, jitter and how long ago
 the test ran.
 

@@ -1,22 +1,22 @@
 # Fenêtres de maintenance
 
 Une fenêtre de maintenance (un *silence* dans l'API) arrête les notifications
-pour un appareil, ou pour tout, pendant une période. L'évaluation continue en
+pour une surveillance, ou pour tout, pendant une période. L'évaluation continue en
 dessous : quand la fenêtre se termine, une alerte encore active est notifiée
 une fois, plutôt que d'apparaître de nulle part après deux heures.
 
 ## Où
 
-- **Alertes → Maintenance planifiée** : la liste des fenêtres, avec *Active
+- **Alertes → Maintenance** : la liste des fenêtres, avec *Active
   maintenant* ou *Planifiée*, et le formulaire pour en ajouter une.
-- **Page de l'appareil → Silence 1 h / Silence jusqu'à…** : une fenêtre
-  ponctuelle rapide pour tout l'appareil.
+- **Page de la surveillance → Silence 1 h / Silence jusqu'à…** : une fenêtre
+  ponctuelle rapide pour toute la surveillance.
 - ++ctrl+k++ → *Planifier une maintenance*.
 
-**Repousser**, sur une alerte dans la liste *À traiter* ou une page
-d'appareil, est une version plus petite du même mécanisme : une fenêtre
+**Repousser**, sur une alerte dans l'onglet *Maintenant* ou une page
+de surveillance, est une version plus petite du même mécanisme : une fenêtre
 ponctuelle limitée aux labels exacts de cette seule alerte plutôt qu'à tout
-l'appareil, pour qu'une règle sœur continue de parler. Elle apparaît ici
+la surveillance, pour qu'une règle sœur continue de parler. Elle apparaît ici
 aussi, nommée `Snooze · …`. Voir
 [Se débarrasser d'une alerte](../using/alerts.md#getting-rid-of-an-alert).
 
@@ -25,7 +25,7 @@ aussi, nommée `Snooze · …`. Voir
 | Champ | Signification |
 |---|---|
 | Nom | Affiché dans la liste et dans l'historique. |
-| Appareil | Laissez vide pour couvrir chaque appareil. |
+| Surveillance | Laissez vide pour couvrir chaque surveillance. |
 | Début, Fin | Heures absolues. La fenêtre inclut le début et exclut la fin. |
 | Commentaire | Optionnel. Pourquoi la fenêtre existe. |
 
@@ -85,7 +85,7 @@ exemple.
 Une fenêtre peut aussi être limitée par des correspondances exactes de labels
 (`matchers` dans l'API) : tous doivent correspondre aux labels de l'alerte,
 par exemple `tag_role = lab` et `__name__ = dumbmonit_up`. Une fenêtre sans
-appareil et sans filtre réduit au silence toute l'instance. Des fenêtres qui
+surveillance et sans filtre réduit au silence toute l'instance. Des fenêtres qui
 se chevauchent ne posent pas de problème ; la première qui couvre le moment
 explique le silence.
 
@@ -97,10 +97,10 @@ la transition avec `notified: false` et la raison. Désactiver une fenêtre
 
 ## Sur une page d'état publique
 
-Un appareil couvert par une fenêtre de maintenance est montré comme
+Une surveillance couverte par une fenêtre de maintenance est montrée comme
 **Maintenance** sur toute [page d'état](../using/status-pages.md) qui le
 liste, au lieu de rouge. Si rien d'autre sur la page n'est en panne ou
 dégradé, l'état global de la page lit aussi *Maintenance*. Seules les
-fenêtres qui nomment un appareil — ou dont les filtres sont des labels au
-niveau de l'appareil — se montrent ainsi ; une fenêtre limitée à une seule
+fenêtres qui nomment une surveillance — ou dont les filtres sont des labels au
+niveau de la surveillance — se montrent ainsi ; une fenêtre limitée à une seule
 métrique reste une affaire d'alerte.

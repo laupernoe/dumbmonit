@@ -23,6 +23,21 @@ pub struct Discord {
 }
 
 impl Discord {
+    /// Corps de l'encart : le texte, puis les liens d'action en Markdown (un
+    /// webhook Discord ordinaire ne peut pas porter de boutons de lien).
+    fn description(message: &Message) -> String {
+        let mut out = message.text.clone();
+        if !message.actions.is_empty() {
+            let links: Vec<String> = message
+                .actions
+                .iter()
+                .map(|link| format!("[{}]({})", link.label, link.url))
+                .collect();
+            out.push_str(&format!("\n{}", links.join(" · ")));
+        }
+        out
+    }
+
     pub fn new(http: reqwest::Client, channel: &ChannelConfig) -> Result<Self, NotifyError> {
         let webhook_url = channel.secret("webhook_url")?;
         http::check_url(webhook_url.expose(), "webhook_url")?;
@@ -48,12 +63,16 @@ impl Notifier for Discord {
         "discord"
     }
 
+    fn renders_actions(&self) -> bool {
+        true
+    }
+
     async fn send(&self, message: &Message) -> Result<(), NotifyError> {
         let body = json!({
             "username": "DumbMonit",
             "embeds": [{
                 "title": message.title,
-                "description": message.text,
+                "description": Self::description(message),
                 "color": message.color(),
                 "timestamp": message.at.to_rfc3339(),
             }]
@@ -76,6 +95,23 @@ pub struct Slack {
 }
 
 impl Slack {
+    /// Texte de la pièce jointe, liens d'action compris dans la syntaxe de
+    /// Slack (`<url|libellé>`). Des liens plutôt que des boutons : un bouton
+    /// de webhook entrant renvoie aussi un événement à une application Slack,
+    /// et sans application il s'affiche en erreur.
+    fn text(message: &Message) -> String {
+        let mut out = message.text.clone();
+        if !message.actions.is_empty() {
+            let links: Vec<String> = message
+                .actions
+                .iter()
+                .map(|link| format!("<{}|{}>", link.url, link.label))
+                .collect();
+            out.push_str(&format!("\n{}", links.join(" · ")));
+        }
+        out
+    }
+
     pub fn new(http: reqwest::Client, channel: &ChannelConfig) -> Result<Self, NotifyError> {
         let webhook_url = channel.secret("webhook_url")?;
         http::check_url(webhook_url.expose(), "webhook_url")?;
@@ -102,6 +138,10 @@ impl Notifier for Slack {
         "slack"
     }
 
+    fn renders_actions(&self) -> bool {
+        true
+    }
+
     async fn send(&self, message: &Message) -> Result<(), NotifyError> {
         let body = json!({
             "text": message.title,
@@ -109,7 +149,7 @@ impl Notifier for Slack {
                 // Slack attend une couleur hexadécimale, là où Discord veut un entier.
                 "color": format!("#{:06x}", message.color()),
                 "title": message.title,
-                "text": message.text,
+                "text": Self::text(message),
                 "ts": message.at.timestamp(),
             }]
         });
@@ -134,6 +174,21 @@ pub struct Ntfy {
 }
 
 impl Ntfy {
+    /// Boutons ntfy (`view` : ouvre la page de confirmation, jamais un appel
+    /// direct qui agirait sans confirmation). ntfy en accepte trois au plus.
+    fn actions(message: &Message) -> Option<Value> {
+        if message.actions.is_empty() {
+            return None;
+        }
+        let actions: Vec<Value> = message
+            .actions
+            .iter()
+            .take(3)
+            .map(|link| json!({"action": "view", "label": link.label, "url": link.url}))
+            .collect();
+        Some(Value::Array(actions))
+    }
+
     pub fn new(http: reqwest::Client, channel: &ChannelConfig) -> Result<Self, NotifyError> {
         let server_url =
             channel.setting_opt("server_url").unwrap_or_else(|| "https://ntfy.sh".to_string());
@@ -168,14 +223,21 @@ impl Notifier for Ntfy {
         "ntfy"
     }
 
+    fn renders_actions(&self) -> bool {
+        true
+    }
+
     async fn send(&self, message: &Message) -> Result<(), NotifyError> {
-        let body = json!({
+        let mut body = json!({
             "topic": self.topic,
             "title": message.title,
             "message": message.text,
             "priority": message.priority(),
             "tags": [if message.resolved { "white_check_mark" } else { "rotating_light" }],
         });
+        if let Some(actions) = Self::actions(message) {
+            body["actions"] = actions;
+        }
         // Le corps porte le sujet : on poste à la racine du serveur.
         let mut request = Request::post(&self.server_url).json(body).explain(Self::explain);
         if let Some(token) = &self.token {
@@ -300,7 +362,33 @@ impl Telegram {
                 out.push_str(&format!("\n• {}", escape(line)));
             }
         }
+        // Sans clavier (adresse que Telegram refuserait en bouton), les liens
+        // d'action restent dans le texte.
+        if Self::keyboard(message).is_none() && !message.actions.is_empty() {
+            let links: Vec<String> = message
+                .actions
+                .iter()
+                .map(|link| format!("<a href=\"{}\">{}</a>", escape(&link.url), link.label))
+                .collect();
+            out.push_str(&format!("\n{}", links.join(" · ")));
+        }
         out
+    }
+
+    /// Clavier en ligne : un bouton-lien par geste. Telegram refuse tout le
+    /// message si l'adresse d'un bouton ne lui plaît pas (adresse IP, nom sans
+    /// domaine, `localhost`) : seuls les noms de domaine en `https` y ont droit,
+    /// les autres restent des liens dans le texte.
+    fn keyboard(message: &Message) -> Option<Value> {
+        if message.actions.is_empty() || !message.actions.iter().all(|a| button_url_ok(&a.url)) {
+            return None;
+        }
+        let row: Vec<Value> = message
+            .actions
+            .iter()
+            .map(|link| json!({"text": link.label, "url": link.url}))
+            .collect();
+        Some(json!({"inline_keyboard": [row]}))
     }
 
     fn explain(status: u16, body: &str) -> Option<String> {
@@ -325,10 +413,22 @@ impl Telegram {
     }
 }
 
+/// Adresse acceptée par Telegram dans un bouton : `https`, nom de domaine
+/// avec un point, ni IP ni `localhost`.
+fn button_url_ok(url: &str) -> bool {
+    let Ok(parsed) = reqwest::Url::parse(url) else { return false };
+    let Some(host) = parsed.domain() else { return false };
+    parsed.scheme() == "https" && host.contains('.') && !host.ends_with(".localhost")
+}
+
 #[async_trait]
 impl Notifier for Telegram {
     fn kind(&self) -> &'static str {
         "telegram"
+    }
+
+    fn renders_actions(&self) -> bool {
+        true
     }
 
     async fn send(&self, message: &Message) -> Result<(), NotifyError> {
@@ -340,6 +440,9 @@ impl Notifier for Telegram {
         });
         if let Some(thread) = self.message_thread_id {
             body["message_thread_id"] = json!(thread);
+        }
+        if let Some(keyboard) = Self::keyboard(message) {
+            body["reply_markup"] = keyboard;
         }
         http::send(
             &self.http,
@@ -466,6 +569,53 @@ mod tests {
         assert_eq!(sujet(json!("")).unwrap().message_thread_id, None);
         assert_eq!(sujet(json!("11")).unwrap().chat_id, "-100123");
         assert!(matches!(sujet(json!("onze")), Err(NotifyError::Config(_))));
+    }
+
+    fn with_actions(base: &str) -> Message {
+        let mut message = crate::notify::message::sample_message(false);
+        let key = crate::notify::action_link::ActionKey::from_bytes([3; 32]);
+        message.actions = crate::notify::action_link::build(
+            &key,
+            base,
+            &["cpu@0000000000000001".into()],
+            chrono::Utc::now(),
+        );
+        message
+    }
+
+    #[test]
+    fn telegram_met_les_actions_en_boutons_sur_un_nom_de_domaine_https() {
+        let message = with_actions("https://monit.example.org");
+        let keyboard = Telegram::keyboard(&message).expect("buttons");
+        let row = &keyboard["inline_keyboard"][0];
+        assert_eq!(row[0]["text"], "Acknowledge");
+        assert!(
+            row[0]["url"].as_str().unwrap().starts_with("https://monit.example.org/alert-action#")
+        );
+        assert!(!Telegram::html(&message).contains("alert-action"), "no duplicate links");
+
+        for base in ["http://monit.example.org", "https://192.168.1.10:8080", "https://nas"] {
+            let message = with_actions(base);
+            assert!(Telegram::keyboard(&message).is_none(), "{base}");
+            assert!(Telegram::html(&message).contains("/alert-action#"), "{base}: links in text");
+        }
+    }
+
+    #[test]
+    fn ntfy_discord_et_slack_rendent_les_actions() {
+        let message = with_actions("https://monit.example.org");
+        let actions = Ntfy::actions(&message).unwrap();
+        assert_eq!(actions[0]["action"], "view");
+        assert_eq!(actions[1]["label"], "Snooze 1 h");
+        assert!(
+            Discord::description(&message).contains("[Acknowledge](https://monit.example.org/")
+        );
+        assert!(Slack::text(&message).contains("<https://monit.example.org/alert-action#"));
+
+        let plain = crate::notify::message::sample_message(false);
+        assert!(Ntfy::actions(&plain).is_none());
+        assert_eq!(Discord::description(&plain), plain.text);
+        assert_eq!(Slack::text(&plain), plain.text);
     }
 
     #[test]

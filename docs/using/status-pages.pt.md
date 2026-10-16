@@ -1,6 +1,6 @@
 # Páginas de estado {#status-pages}
 
-![A página Status: as suas páginas, e os anúncios sob elas](../assets/screenshots/status-light.png){ loading=lazy }
+![A página Status pages: as suas páginas, e os anúncios sob elas](../assets/screenshots/status-light.png){ loading=lazy }
 
 Uma página de estado é a face pública da sua monitorização: uma página
 que qualquer um pode abrir — sem iniciar sessão, sem cookie — que diz
@@ -12,14 +12,14 @@ numa página de intranet.
 
 Só mostra o que colocar nela: o rótulo que dá a cada serviço, o seu
 estado, a sua disponibilidade e o seu tempo de resposta. Os nomes,
-endereços, tipos e identificadores de dispositivo nunca saem do
+endereços, tipos e identificadores de monitor nunca saem do
 servidor — nem na página, nem num emblema, nem num email.
 
 ## 1. Criar uma página {#1-create-a-page}
 
-**Status** na barra superior → **New page**. Essa página lista as suas
+**Settings → Status pages** → **New page**. Essa página lista as suas
 páginas de estado (abrir, editar, eliminar) com os anúncios sob elas;
-o editor abre na sua própria rota (`/status/new`, `/status/<id>`). A
+o editor abre na sua própria rota (`/settings/status/new`, `/settings/status/<id>`). A
 representação pública está em `/s/<address>`.
 
 | Campo | O que faz |
@@ -32,9 +32,9 @@ representação pública está em `/s/<address>`.
 | **Simple mode** | Uma página simples: sem cenário, sem mascote, sem animação e sem easter eggs. Claro ou escuro segue o sistema do visitante, com um alternador no cabeçalho; a definição Theme da página é ignorada. |
 | **Published** | Desligado = rascunho: a página, os seus emblemas e o seu logo respondem «not found» aos visitantes até a ativar. |
 
-Depois marque os dispositivos a mostrar. Para cada um, defina o
+Depois marque os monitores a mostrar. Para cada um, defina o
 **rótulo** que os visitantes lêem (a predefinição é o nome do
-dispositivo — pode preferir «Website» a «nginx-front-01») e,
+monitor — pode preferir «Website» a «nginx-front-01») e,
 opcionalmente, um **grupo** («Network», «Storage»). Os grupos tornam-se
 blocos na página, pela ordem em que organiza os serviços.
 
@@ -109,26 +109,26 @@ Como o estado é decidido:
 
 | Estado | Significado |
 | --- | --- |
-| Operational | A última verificação teve sucesso (sondas de disponibilidade), ou o dispositivo reportou dentro de três períodos de sondagem. |
+| Operational | A última verificação teve sucesso (sondas de disponibilidade), ou o monitor reportou dentro de três períodos de sondagem. |
 | Degraded | Ativo agora, mas pelo menos uma verificação falhou na última hora. |
-| Down | A última verificação falhou, o dispositivo deixou de reportar, ou a sua configuração está em erro. |
-| Maintenance | Uma janela de manutenção está em curso e o serviço está em baixo: esperado, não uma indisponibilidade. Ou um anúncio nesta página, ou uma [janela de manutenção](../alerting/maintenance.md) de alertagem que cobre esse dispositivo. |
+| Down | A última verificação falhou, o monitor deixou de reportar, ou a sua configuração está em erro. |
+| Maintenance | Uma janela de manutenção está em curso e o serviço está em baixo: esperado, não uma indisponibilidade. Ou um anúncio nesta página, ou uma [janela de manutenção](../alerting/maintenance.md) de alertagem que cobre esse monitor. |
 | No data | Nunca verificado ainda, ou desativado. |
 
 A disponibilidade para sondas (`http`, `tcp`, `dns`, `ping`, `tls`,
 heartbeats) é a fração de verificações bem-sucedidas, a partir de
 `dumbmonit_probe_success`; a indisponibilidade de um dia são as suas
 verificações falhadas vezes o intervalo de verificação. Para outros
-dispositivos (SNMP, agente, Proxmox…) é a fração de intervalos de
-cinco minutos em que o dispositivo reportou pelo menos uma vez
+monitores (SNMP, agente, Proxmox…) é a fração de intervalos de
+cinco minutos em que o monitor reportou pelo menos uma vez
 (`dumbmonit_up`), contada a partir da primeira medição — um
-dispositivo adicionado ontem não está «em baixo» pelos 89 dias
+monitor adicionado ontem não está «em baixo» pelos 89 dias
 anteriores — e a indisponibilidade de um dia são os seus intervalos
 silenciosos.
 
 ## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
-Na página **Status**, sob a lista de páginas, **Incidents and
+Em **Settings → Status pages**, sob a lista de páginas, **Incidents and
 maintenance** → **New announcement** (também ++ctrl+k++ → *Announce an
 incident*).
 
@@ -145,11 +145,11 @@ incident*).
   como *Maintenance*.
 
 Uma [janela de manutenção agendada em Alerts](../alerting/maintenance.md)
-faz a mesma coisa para o único dispositivo que cobre, sem um anúncio:
+faz a mesma coisa para o único monitor que cobre, sem um anúncio:
 esse serviço lê-se *Maintenance* em vez de vermelho enquanto a janela
 está aberta, e o estado geral da página diz *Maintenance* quando nada
 mais está em baixo ou degradado. Só as janelas que nomeiam um
-dispositivo aparecem desta forma; o nome e o comentário da janela
+monitor aparecem desta forma; o nome e o comentário da janela
 permanecem privados.
 
 Um anúncio é mostrado numa página ou em **todas as páginas**.

@@ -21,6 +21,7 @@ Todas as métricas têm o prefixo `dumbmonit_synology_`.
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | por tarefa |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (veja abaixo) | `drive_team_folder_info`: `name` |
 | Synology Photos | `photos_installed` (veja abaixo) | |
+| Configurações de segurança | `update_available`, `admin_account_enabled`, `autoblock_enabled`, `firewall_enabled` (`0`/`1`; lidos a cada hora, só com conta de administrador, opcionais: ausentes se o DSM recusar) | |
 | Coleta | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Métricas do Active Backup for Business são a exceção: têm o prefixo
@@ -65,11 +66,11 @@ chamada de descoberta de API ou na conexão condena toda a sondagem.
       mais, então em um NAS recente essas duas séries simplesmente não
       existem — nada é inventado no lugar.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-![Um dispositivo Synology: visão geral, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
+![Um monitor Synology: visão geral, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-Um dispositivo Synology recebe seu próprio painel acima dos gráficos:
+Um monitor Synology recebe seu próprio painel acima dos gráficos:
 
 * **Visão geral** — CPU, memória (usada do total), temperatura e tempo
   de atividade, com o próprio veredito de armazenamento do DSM como uma
@@ -93,7 +94,7 @@ Um dispositivo Synology recebe seu próprio painel acima dos gráficos:
   veredito SMART, veredito de setor defeituoso do DSM, o contador de
   setores ilegíveis e, em um SSD, a vida restante como uma barra
   pequena;
-* **Active Backup for Business** — as tarefas, depois todo dispositivo
+* **Active Backup for Business** — as tarefas, depois todo monitor
   com backup com seu ritmo e uma faixa de trinta dias (veja abaixo).
 
 Tudo vem do que a sondagem armazenou: abrir a página nunca consulta o
@@ -132,10 +133,10 @@ faltando é silêncio, nunca uma sondagem falhada.
 | Métrica | Valor | Rótulos |
 |---|---|---|
 | `dumbmonit_abb_tasks` | Número de tarefas. | |
-| `dumbmonit_abb_task_last_status` | Última execução: `1` sucesso, `0` falha, `2` em execução, `-1` desconhecido (nunca rodou, cancelada, sem backup). Um sucesso *parcial* conta como falha: pelo menos um dispositivo não teve backup. | `task`, `task_id`, `source_type`, `result` |
+| `dumbmonit_abb_task_last_status` | Última execução: `1` sucesso, `0` falha, `2` em execução, `-1` desconhecido (nunca rodou, cancelada, sem backup). Um sucesso *parcial* conta como falha: pelo menos um monitor não teve backup. | `task`, `task_id`, `source_type`, `result` |
 | `dumbmonit_abb_task_last_success_seconds` | Idade da última execução bem sucedida de backup, em segundos. Ausente para uma tarefa que nunca teve sucesso. | `task`, `task_id`, `source_type` |
 | `dumbmonit_abb_task_enabled` | `1` se a tarefa tem uma programação e não está pausada, `0` se só roda manualmente. | `task`, `task_id`, `source_type` |
-| `dumbmonit_abb_task_device_count` | Dispositivos conectados à tarefa. | `task`, `task_id`, `source_type` |
+| `dumbmonit_abb_task_device_count` | Monitores conectados à tarefa. | `task`, `task_id`, `source_type` |
 
 `task` é o nome da tarefa como mostrado no ABB; `source_type` é `pc`,
 `vm`, `physical_server`, `file_server` ou `nas`; `result` é o resultado
@@ -155,35 +156,35 @@ Regras integradas sobre tarefas:
 | Active Backup too old | aviso | Nenhuma execução bem sucedida por mais de dois dias. |
 | Active Backup task disabled | info | A tarefa não tem programação, ou seu backup contínuo está pausado, por uma hora. |
 
-### Dispositivos e seu ritmo {#devices-and-their-rhythm}
+### Monitores e seu ritmo {#devices-and-their-rhythm}
 
 Uma regra no nível de tarefa é certa para um servidor e errada para um
 laptop: as pessoas não deixam seus laptops ligados, e "nenhum backup por
 24 horas" é segunda-feira de manhã para todo PC de escritório. O
-DumbMonit portanto também observa o ABB **dispositivo por dispositivo**,
-contra os próprios hábitos do dispositivo.
+DumbMonit portanto também observa o ABB **monitor por monitor**,
+contra os próprios hábitos do monitor.
 
-A cada sondagem, o coletor lê as execuções por dispositivo que o ABB
+A cada sondagem, o coletor lê as execuções por monitor que o ABB
 mantém (`SYNO.ActiveBackup.Overview` `list_device_transfer_size`, uma
-chamada para todos os dispositivos, só o que mudou desde a sondagem
+chamada para todos os monitores, só o que mudou desde a sondagem
 anterior) e as copia para seu próprio banco de dados — limitado a
 noventa dias por NAS — então o modelo sobrevive a um reinício sem
-reler um mês de histórico. Depois, para cada dispositivo, olha os
+reler um mês de histórico. Depois, para cada monitor, olha os
 últimos trinta dias.
 
 | Métrica | Valor | Rótulos |
 |---|---|---|
 | `dumbmonit_abb_device_state` | `0` ok, `1` idle, `2` aprendendo, `3` em execução, `4` atrasado, `5` falhando, `6` nunca. | `device`, `device_id`, `task`, `task_id`, `state` |
-| `dumbmonit_abb_device_overdue` | `1` enquanto o dispositivo está atrasado, `0` caso contrário. | `device`, `device_id`, `task`, `task_id` |
+| `dumbmonit_abb_device_overdue` | `1` enquanto o monitor está atrasado, `0` caso contrário. | `device`, `device_id`, `task`, `task_id` |
 | `dumbmonit_abb_device_consecutive_failures` | Tentativas falhadas em sequência desde o último sucesso (uma execução cancelada não conta como nenhum dos dois). | mesmos |
-| `dumbmonit_abb_device_last_success_seconds` | Idade da última execução bem sucedida deste dispositivo. Ausente se nunca teve sucesso. | mesmos |
+| `dumbmonit_abb_device_last_success_seconds` | Idade da última execução bem sucedida deste monitor. Ausente se nunca teve sucesso. | mesmos |
 | `dumbmonit_abb_device_typical_interval_seconds` | Intervalo mediano entre dois sucessos, dias de descanso excluídos. Ausente enquanto aprendendo. | mesmos |
 
 #### Como "atrasado" é julgado {#how-overdue-is-judged}
 
-Em palavras simples, para cada dispositivo:
+Em palavras simples, para cada monitor:
 
-1. **Em quais dias ele está?** Um dia da semana no qual o dispositivo
+1. **Em quais dias ele está?** Um dia da semana no qual o monitor
    tentou pelo menos um backup nos últimos trinta dias — com sucesso ou
    não; uma falha prova que a máquina estava ligada tanto quanto um
    sucesso — é um *dia ativo*. Uma vez que existem ao menos duas semanas
@@ -194,13 +195,13 @@ Em palavras simples, para cada dispositivo:
    consecutivos são coletados em *tempo ativo*: os dias de descanso
    completos que um intervalo contém não são contados (sexta à noite até
    segunda à noite é um dia de tempo ativo, não três). Sua mediana é o
-   *intervalo típico* do dispositivo; seu percentil 90 é como é "uma
+   *intervalo típico* do monitor; seu percentil 90 é como é "uma
    semana lenta".
 3. **Quanto tempo é permitido?** A tolerância é
    `max(1.5 × gap p90, 2 × intervalo típico, 36 h)`. Um desktop noturno
    recebe 48 h; uma máquina com backup a cada três dias recebe cerca de
    seis; ninguém recebe menos que um dia e meio. Enquanto existirem
-   menos de dois intervalos utilizáveis (um dispositivo adicionado essa
+   menos de dois intervalos utilizáveis (um monitor adicionado essa
    semana), a tolerância é 72 h — suficiente para atravessar um fim de
    semana sem um alarme falso.
 4. **Quanto tempo ativo passou?** O tempo desde o último sucesso, menos
@@ -221,14 +222,14 @@ nada; o mesmo laptop ainda silencioso na terça à noite dispara.
 
 Dias e horas são expressos no horário local do servidor (`TZ` do
 contêiner), que é onde a pessoa lendo a página vive. A página do
-dispositivo mostra, por dispositivo: o estado em uma palavra, o último
+monitor mostra, por monitor: o estado em uma palavra, o último
 sucesso e último resultado, o ritmo em palavras ("dias de semana, por
 volta das 20:00", "a cada ~3 dias, seg, qua, sex, por volta das 03:00",
 "ainda aprendendo (2 execuções em 30 dias)") e uma faixa de trinta dias
 — verde-água para um dia com sucesso, vermelho para uma falha, amarelo
 para uma execução cancelada, cinza para nenhuma execução.
 
-Regras integradas sobre dispositivos:
+Regras integradas sobre monitores:
 
 | Regra | Severidade | Dispara quando |
 |---|---|---|
@@ -253,8 +254,8 @@ Regras integradas sobre dispositivos:
     `list_device_transfer_size`, todos versão 1) e descobre seu caminho
     através de `SYNO.API.Info`. Um DSM cujas respostas diferem produz
     métricas faltando, nunca uma sondagem falhada; um ABB muito antigo
-    para oferecer a visão geral por dispositivo mantém suas métricas de
-    tarefa e simplesmente não tem ritmo de dispositivo.
+    para oferecer a visão geral por monitor mantém suas métricas de
+    tarefa e simplesmente não tem ritmo de monitor.
 
     A versão 1 é deliberada. O DSM 7.4 anuncia essas APIs como versões 1
     a 2, mas só a versão 1 carrega os métodos de leitura: pedidos na
@@ -281,13 +282,13 @@ instalado, nunca uma falha.
 
 !!! note "Por que as conexões são apenas uma contagem"
     A página "Client list" do console de administração mostra o nome do
-    dispositivo, usuário, tipo de aplicativo, status online, endereço IP
+    monitor, usuário, tipo de aplicativo, status online, endereço IP
     e localização de cada conexão, mas isso é uma descrição da página,
     não dos campos JSON da API: nem a Synology nem nenhum projeto da
     comunidade documenta o que `SYNO.SynologyDrive.Connection` realmente
-    nomeia seus campos. Em vez de adivinhar o nome de um dispositivo ou
+    nomeia seus campos. Em vez de adivinhar o nome de um monitor ou
     a data da última sincronização de uma chave não confirmada, o
-    DumbMonit publica apenas a contagem de conexões. Dispositivos
+    DumbMonit publica apenas a contagem de conexões. Monitores
     individuais se conectarão à mesma tabela de
     [dispositivos clientes](../alerting/rules.md) usada por Immich,
     Proxmox Backup Server e Veeam uma vez que essa forma seja confirmada
@@ -299,7 +300,7 @@ A opção `drive` (ativada por padrão) desliga toda a família.
 
 O Synology Photos entrega uma API de navegação bem documentada, mas nem
 a Synology nem as bibliotecas da comunidade expõem uma lista em nível
-de administração de dispositivos de backup móvel ou seu último backup —
+de administração de monitores de backup móvel ou seu último backup —
 o aplicativo móvel mostra seu próprio status de backup localmente, e
 nada o centraliza do lado do NAS através de uma API. O DumbMonit
 portanto só reporta que o pacote está instalado:
@@ -392,6 +393,6 @@ Endereço: `192.168.1.30`, `nas.lan` ou `nas.lan:5001`. Sem uma porta,
 | Erro de certificado | Certificado autoassinado: ative `insecure_tls`. Isso é um erro de configuração, nunca "inacessível": um NAS que responde não é mostrado como desligado. |
 | Nenhuma métrica de disco ou volume | A conta não está no grupo `administrators` (veja a nota acima). |
 | Nenhuma métrica `dumbmonit_abb_*`, `scrape_errors` em 1 | A conta não pode usar o Active Backup for Business: delegue o pacote a ela, ou desative a opção `abb`. Sem o pacote instalado não há erro nem métrica. |
-| Métricas de tarefa mas nenhuma linha de dispositivo na página | O NAS não anuncia `SYNO.ActiveBackup.Overview` (ABB mais antigo), ou o dispositivo é sondado através de um agente relay, que mantém o histórico em memória de seu lado: as métricas existem, o calendário não. |
+| Métricas de tarefa mas nenhuma linha de monitor na página | O NAS não anuncia `SYNO.ActiveBackup.Overview` (ABB mais antigo), ou o monitor é sondado através de um agente relay, que mantém o histórico em memória de seu lado: as métricas existem, o calendário não. |
 | Um laptop mostra "Atrasado" no dia depois de ser adicionado | Menos de três sucessos: o modelo ainda está aprendendo e permite 72 horas entre backups; se estabiliza uma vez que duas semanas de hábitos são conhecidas. |
 | Discos ligam a cada sondagem | O inventário de armazenamento desperta discos dormindo. Aumente o intervalo de verificação. |

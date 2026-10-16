@@ -1,23 +1,23 @@
 # Finestre di manutenzione {#maintenance-windows}
 
 Una finestra di manutenzione (un *silence* nell'API) interrompe le
-notifiche per un dispositivo, o per tutto, durante un periodo. La
+notifiche per un monitor, o per tutto, durante un periodo. La
 valutazione continua sotto: quando la finestra termina, un avviso ancora
 attivo viene notificato una volta, invece di apparire dal nulla dopo due
 ore.
 
 ## Dove {#where}
 
-- **Alerts → Scheduled maintenance**: l'elenco delle finestre, con *Active
+- **Alerts → Maintenance**: l'elenco delle finestre, con *Active
   now* o *Scheduled*, e il modulo per aggiungerne una.
-- **Pagina del dispositivo → Silence 1 h / Silence until…**: una finestra
-  puntuale rapida per l'intero dispositivo.
+- **Pagina del monitor → Silence 1 h / Silence until…**: una finestra
+  puntuale rapida per l'intero monitor.
 - ++ctrl+k++ → *Schedule maintenance*.
 
-**Snooze**, su un avviso nell'elenco *Needs you* o sulla pagina di un
-dispositivo, è una versione più piccola dello stesso meccanismo: una
+**Snooze**, su un avviso nella scheda *Now* o sulla pagina di un
+monitor, è una versione più piccola dello stesso meccanismo: una
 finestra puntuale limitata alle etichette esatte di quell'unico avviso
-invece che all'intero dispositivo, così una regola gemella continua a
+invece che all'intero monitor, così una regola gemella continua a
 parlare. Appare anche qui, chiamata `Snooze · …`. Vedi
 [Eliminare un avviso](../using/alerts.md#getting-rid-of-an-alert).
 
@@ -26,7 +26,7 @@ parlare. Appare anche qui, chiamata `Snooze · …`. Vedi
 | Campo | Significato |
 |---|---|
 | Name | Mostrato nell'elenco e nella cronologia. |
-| Device | Lascia vuoto per coprire ogni dispositivo. |
+| Device | Lascia vuoto per coprire ogni monitor. |
 | Start, End | Orari assoluti. La finestra include l'inizio ed esclude la fine. |
 | Comment | Opzionale. Perché la finestra esiste. |
 
@@ -84,7 +84,7 @@ non conosce viene rifiutato al salvataggio, con un esempio.
 Una finestra può anche essere limitata da corrispondenze esatte di
 etichette (`matchers` nell'API): tutte devono corrispondere alle etichette
 dell'avviso, per esempio `tag_role = lab` e `__name__ = dumbmonit_up`. Una
-finestra senza dispositivo e senza matcher silenzia l'intera istanza. Le
+finestra senza monitor e senza matcher silenzia l'intera istanza. Le
 finestre sovrapposte vanno bene; la prima che copre il momento spiega il
 silenzio.
 
@@ -96,10 +96,10 @@ finestra (`enabled: false`) la mantiene nell'elenco senza effetto.
 
 ## Su una pagina di stato pubblica {#on-a-public-status-page}
 
-Un dispositivo coperto da una finestra di manutenzione viene mostrato come
+Un monitor coperto da una finestra di manutenzione viene mostrato come
 **Maintenance** su qualsiasi [pagina di stato](../using/status-pages.md)
 che lo elenca, invece di rosso. Se nulla altro sulla pagina è inattivo o
 degradato, lo stato generale della pagina indica *Maintenance* anche lui.
-Solo le finestre che nominano un dispositivo — o i cui matcher sono
-etichette a livello di dispositivo — emergono in questo modo; una finestra
+Solo le finestre che nominano un monitor — o i cui matcher sono
+etichette a livello di monitor — emergono in questo modo; una finestra
 limitata a una singola metrica resta una questione di avvisi.

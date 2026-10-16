@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.9.0',
+		date: '2026-10-16',
+		highlights: [
+			{
+				title: 'Simpler Alerts and Monitors',
+				text: 'Alerts is a calm list, one line per problem with Ack and Open on it. What you watch is now called a monitor, and the Monitors page has one toolbar and a Select mode for bulk actions.'
+			},
+			{
+				title: 'Act on alerts from the notification',
+				text: 'Acknowledge or snooze from a button or a signed link in the message, on ntfy, Telegram, Web Push, Discord, Slack, e-mail and more.'
+			},
+			{
+				title: 'A monitor per service, and a map',
+				text: 'Docker, backups, ZFS, WireGuard and the like found by an agent each get their own status and alerts. The Map page draws parents, relays and VMs by itself.'
+			},
+			{
+				title: 'Who watches the watcher',
+				text: 'An outgoing heartbeat tells an outside service that DumbMonit is alive, new rules watch its own health, Docker shows the container as healthy, and a bind-mounted /data just works.'
+			},
+			{
+				title: 'Easier to start, more to monitor',
+				text: 'Import your Uptime Kuma monitors in one step, plus XCP-ng, Nutanix AHV, OpenVPN, KVM and IPsec, a speed test, and a security score you turn on only if you want it.'
+			}
+		]
+	},
+	{
 		version: '0.1.0-alpha.8',
 		date: '2026-10-14',
 		highlights: [

@@ -2,7 +2,7 @@
 
 Un cluster attraverso il suo server API: nodi che non sono Pronti o sotto pressione, pod che crashano in loop o bloccati in Pending, Deployment, StatefulSet e DaemonSet con replica mancanti, claim di volume che non si legano mai, e gli eventi di avvertenza dell'ultima ora.
 
-DumbMonit legge l'API con il token di un account di servizio dedicato legato a una ClusterRole di sola lettura: `get` e `list` su nodi, pod, carichi di lavoro, claim di volume persistente ed eventi, niente altro. Non scrive mai, e il ruolo non dà accesso a Secret o ConfigMap. Un dispositivo copre l'intero cluster, qualunque sia la distribuzione: k3s, kubeadm, k0s, MicroK8s, Talos, o un cluster gestito il cui API DumbMonit può raggiungere.
+DumbMonit legge l'API con il token di un account di servizio dedicato legato a una ClusterRole di sola lettura: `get` e `list` su nodi, pod, carichi di lavoro, claim di volume persistente ed eventi, niente altro. Non scrive mai, e il ruolo non dà accesso a Secret o ConfigMap. Un monitor copre l'intero cluster, qualunque sia la distribuzione: k3s, kubeadm, k0s, MicroK8s, Talos, o un cluster gestito il cui API DumbMonit può raggiungere.
 
 Ogni minuto DumbMonit legge otto collezioni, in parallelo: la versione, i nodi, i pod, i Deployment, StatefulSet e DaemonSet, i claim di volume persistente, e gli eventi di tipo `Warning` (filtrati dal server API). Le lunghe liste vengono lette in pagine di 500.
 
@@ -43,9 +43,9 @@ Le [regole integrate](../alerting/rules.md#kubernetes) che si applicano:
 - **Carico di lavoro Kubernetes con replica mancanti**: un Deployment, StatefulSet o DaemonSet con meno replica disponibili di quante chiede, per dieci minuti (Avviso, escalation dopo un'ora). Un aggiornamento graduale rimuove una replica mentre ne avvia un'altra; i dieci minuti la coprono.
 - **Claim di volume Kubernetes bloccato**: un claim bloccato per quindici minuti (Avviso).
 
-Più Dispositivo irraggiungibile, quando il server API smette di rispondere.
+Più Monitor irraggiungibile, quando il server API smette di rispondere.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello del Cluster dice cosa è sbagliato in una frase, quindi elenca i nodi (Pronto o no, pressione, cordoned, versione kubelet), i pod che hanno bisogno di attenzione (crash looping, in sospeso, bloccato, non pronto, con i loro riavvi), i carichi di lavoro con replica mancanti, i claim di volume bloccati, e gli eventi di avvertenza dell'ultima ora per motivo. Un cluster sano mostra i suoi conteggi e niente altro.
 
@@ -118,14 +118,14 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-Per controllare il ruolo prima di aggiungere il dispositivo, chiedi al server API cosa l'account può fare; il primo comando deve rispondere `yes`, il secondo `no`:
+Per controllare il ruolo prima di aggiungere il monitor, chiedi al server API cosa l'account può fare; il primo comando deve rispondere `yes`, il secondo `no`:
 
 ```
 kubectl auth can-i list pods --as=system:serviceaccount:kube-system:dumbmonit
 kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 ```
 
-Un token creato con `kubectl create token dumbmonit -n kube-system` funziona anche, ma scade (dopo un'ora per impostazione predefinita): il dispositivo allora fallisce con "Il server API ha rifiutato il token (401)". Il Secret sopra è la forma di lunga durata che Kubernetes documenta per questo uso. Per revocare l'accesso di DumbMonit, cancella il Secret, o l'account di servizio.
+Un token creato con `kubectl create token dumbmonit -n kube-system` funziona anche, ma scade (dopo un'ora per impostazione predefinita): il monitor allora fallisce con "Il server API ha rifiutato il token (401)". Il Secret sopra è la forma di lunga durata che Kubernetes documenta per questo uso. Per revocare l'accesso di DumbMonit, cancella il Secret, o l'account di servizio.
 
 ## Credenziali
 

@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit: monitoraggio semplice, dall&#x27;homelab alla piccola impresa</title>
-<meta name="description" content="Monitoraggio self-hosted in un solo container: 65 tipi di dispositivo (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
+<meta name="description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -30,7 +30,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit: monitoraggio semplice, dall&#x27;homelab alla piccola impresa">
-<meta property="og:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di dispositivo (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
+<meta property="og:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
 <meta property="og:url" content="https://dumbmonit.app/it/">
 <meta property="og:locale" content="it_IT">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
@@ -39,7 +39,7 @@
 <meta property="og:image:alt" content="DumbMonit: va tutto bene? Lo sai in un secondo. Monitoraggio self-hosted in un container, con la mascotte piccione.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DumbMonit: monitoraggio semplice, dall&#x27;homelab alla piccola impresa">
-<meta name="twitter:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di dispositivo (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
+<meta name="twitter:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/it/","inLanguage":"it","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
@@ -53,7 +53,7 @@
 		<a class="brand" href="./" aria-label="Home di DumbMonit"><img src="../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Sezioni">
 			<a href="features/">Funzionalità</a>
-			<a href="devices/">Dispositivi</a>
+			<a href="devices/">Monitor</a>
 			<a href="install/">Installa</a>
 			<a href="community/">Doc e community</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Demo dal vivo</a>
@@ -86,7 +86,7 @@
 		<div class="hero-grid">
 			<div>
 				<div class="status-row rise-in">
-					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>Alpha, per i primi tester</span>
+					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>Versione 0.9.0, prima della 1.0</span>
 					<span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Apache 2.0, nessuna edizione a pagamento</span>
 				</div>
 				<h1 class="rise-in">Va tutto bene? Lo sai in un&nbsp;secondo.</h1>
@@ -146,7 +146,7 @@
 <img src="../assets/shots/overview-light-1x.webp" srcset="../assets/shots/overview-light-1x.webp 1440w, ../assets/shots/overview-light.webp 2880w" sizes="(min-width: 1180px) 1100px, 100vw" alt="La panoramica della demo: la frase «2 avvisi, 1 allerta, 1 irraggiungibile, 5 in formazione.» su una finestra meteo piovosa, le targhette di stato, cosa è cambiato dall’ultima visita e gli avvisi che hanno bisogno di te" width="2880" height="1800" fetchpriority="high">
 </picture>
 			</div>
-			<figcaption>La panoramica della demo, con dispositivi fittizi e alcuni guasti attivati. In una giornata tranquilla la frase dice «Cielo sereno».</figcaption>
+			<figcaption>La panoramica della demo, con monitor fittizi e alcuni guasti attivati. In una giornata tranquilla la frase dice «Cielo sereno».</figcaption>
 		</figure>
 	</div>
 </section>
@@ -154,7 +154,7 @@
 <div class="wrap">
 	<div class="notice" role="note">
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
-		<p><strong>Questa è una alpha</strong> (la versione attuale è la 0.1.0-alpha.7). DumbMonit gira ogni giorno sulla rete del suo autore, ma l'API HTTP non è congelata, lo schema del database cambia ancora e non c'è ancora alcuna garanzia di aggiornamento tra modifiche di schema. Diverse integrazioni hanno incontrato solo istanze di test, non hardware di produzione vecchio di anni; sono indicate più sotto. Provalo e <a href="https://github.com/laupernoe/dumbmonit/issues">dicci cosa si rompe</a>.</p>
+		<p><strong>DumbMonit non ha ancora raggiunto la 1.0</strong> (la versione attuale è la 0.9.0). Gira ogni giorno sulla rete del suo autore, ma l'API HTTP e lo schema del database possono ancora cambiare tra versioni minori; il registro delle modifiche spiega come aggiornare. Diverse integrazioni hanno incontrato solo istanze di test, non hardware di produzione vecchio di anni; sono indicate più sotto. Provalo e <a href="https://github.com/laupernoe/dumbmonit/issues">dicci cosa si rompe</a>.</p>
 	</div>
 </div>
 
@@ -162,9 +162,9 @@
 <section class="block" id="why" style="border-top:0">
 	<div class="wrap">
 		<ul class="cards cards-4">
-			<li class="card"><h2 class="card-h">Un container, un minuto</h2><p>Un solo container con un volume e nessuna capability in più. Apri la pagina, crea un account, aggiungi un dispositivo: grafici e avvisi arrivano da soli.</p></li>
+			<li class="card"><h2 class="card-h">Un container, un minuto</h2><p>Un solo container con un volume e nessuna capability in più. Apri la pagina, crea un account, aggiungi un monitor: grafici e avvisi arrivano da soli.</p></li>
 			<li class="card"><h2 class="card-h">Avvisi che restano discreti</h2><p>Le regole utili sono attive fin dall'inizio. Dipendenze, raggruppamento e riferimenti appresi trasformano trenta messaggi in uno.</p></li>
-			<li class="card"><h2 class="card-h"><span class="num" data-n="65">65</span> tipi di dispositivo</h2><p>Switch, firewall, hypervisor, NAS, siti web, database e app self-hosted, ciascuno letto come previsto dal suo produttore.</p></li>
+			<li class="card"><h2 class="card-h"><span class="num" data-n="65">65</span> tipi di monitor</h2><p>Switch, firewall, hypervisor, NAS, siti web, database e app self-hosted, ciascuno letto come previsto dal suo produttore.</p></li>
 			<li class="card"><h2 class="card-h">Pagine di stato e schermo a parete</h2><p>Condividi una pagina di stato pubblica con i tuoi utenti, oppure mostra la vista bollettino meteo su uno schermo della stanza.</p></li>
 		</ul>
 		<p style="margin-top:28px"><a class="more" href="features/">Vedi tutte le funzionalità</a></p>
@@ -175,19 +175,19 @@
 	<div class="wrap">
 		<div class="section-head">
 			<h2>Cosa può controllare?</h2>
-			<p>Scegli una famiglia per vedere cosa viene controllato, le regole di avviso incluse e cosa preparare sul dispositivo.</p>
+			<p>Scegli una famiglia per vedere cosa viene controllato, le regole di avviso incluse e cosa preparare sul monitor.</p>
 		</div>
 		<ul class="cards cards-fam">
-			<li class="card"><h3><a href="devices/servers/">Server e hardware</a></h3><p>Macchine Linux, Windows, macOS e FreeBSD tramite l&#x27;agent, hardware dei server tramite il controller di gestione, UPS e Active Directory.</p><p class="label-tape"><span class="num" data-n="4">4</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/network/">Apparati di rete</a></h3><p>Switch, router, access point e VPN: qualsiasi dispositivo SNMP, MikroTik, UniFi, Tailscale e OpenVPN.</p><p class="label-tape"><span class="num" data-n="5">5</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/firewalls/">Firewall</a></h3><p>OPNsense, pfSense, FortiGate e Sophos: gateway, tunnel, interfacce, alta disponibilità e licenze.</p><p class="label-tape"><span class="num" data-n="4">4</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/hypervisors/">Hypervisor e cluster</a></h3><p>Proxmox, vSphere, XCP-ng, Nutanix e Kubernetes: host, guest, storage e stato del cluster.</p><p class="label-tape"><span class="num" data-n="6">6</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/storage/">NAS e backup</a></h3><p>Synology, TrueNAS, Unraid, Proxmox Backup Server e Veeam: dischi, pool e l&#x27;età dell&#x27;ultimo backup riuscito.</p><p class="label-tape"><span class="num" data-n="5">5</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/checks/">Siti web, certificati e controlli</a></h3><p>Pagine web e API, porte, DNS, ping, certificati TLS, server orari, scadenza dei domini, heartbeat e modifiche ai siti.</p><p class="label-tape"><span class="num" data-n="11">11</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/proxies/">Server web e reverse proxy</a></h3><p>Traefik, Caddy, Nginx, Apache e Nginx Proxy Manager: backend, certificati e tassi di errore.</p><p class="label-tape"><span class="num" data-n="5">5</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/apps/">Applicazioni self-hosted</a></h3><p>Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex, Home Assistant, GitLab e Forgejo.</p><p class="label-tape"><span class="num" data-n="8">8</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/mail/">DNS, posta e sicurezza</a></h3><p>Pi-hole, AdGuard Home, CrowdSec, e i server e gateway di posta: SMTP, MDaemon, SecurityGateway e Proxmox Mail Gateway.</p><p class="label-tape"><span class="num" data-n="7">7</span> tipi di dispositivo</p></li>
-			<li class="card"><h3><a href="devices/data/">Database e osservabilità</a></h3><p>PostgreSQL, MySQL, MongoDB, Redis, RabbitMQ, MQTT e i server VictoriaMetrics, Loki e Graylog.</p><p class="label-tape"><span class="num" data-n="10">10</span> tipi di dispositivo</p></li>
+			<li class="card"><h3><a href="devices/servers/">Server e hardware</a></h3><p>Macchine Linux, Windows, macOS e FreeBSD tramite l&#x27;agent, hardware dei server tramite il controller di gestione, UPS e Active Directory.</p><p class="label-tape"><span class="num" data-n="4">4</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/network/">Apparati di rete</a></h3><p>Switch, router, access point e VPN: qualsiasi dispositivo SNMP, MikroTik, UniFi, Tailscale e OpenVPN.</p><p class="label-tape"><span class="num" data-n="5">5</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/firewalls/">Firewall</a></h3><p>OPNsense, pfSense, FortiGate e Sophos: gateway, tunnel, interfacce, alta disponibilità e licenze.</p><p class="label-tape"><span class="num" data-n="4">4</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/hypervisors/">Hypervisor e cluster</a></h3><p>Proxmox, vSphere, XCP-ng, Nutanix e Kubernetes: host, guest, storage e stato del cluster.</p><p class="label-tape"><span class="num" data-n="6">6</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/storage/">NAS e backup</a></h3><p>Synology, TrueNAS, Unraid, Proxmox Backup Server e Veeam: dischi, pool e l&#x27;età dell&#x27;ultimo backup riuscito.</p><p class="label-tape"><span class="num" data-n="5">5</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/checks/">Siti web, certificati e controlli</a></h3><p>Pagine web e API, porte, DNS, ping, certificati TLS, server orari, scadenza dei domini, heartbeat e modifiche ai siti.</p><p class="label-tape"><span class="num" data-n="11">11</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/proxies/">Server web e reverse proxy</a></h3><p>Traefik, Caddy, Nginx, Apache e Nginx Proxy Manager: backend, certificati e tassi di errore.</p><p class="label-tape"><span class="num" data-n="5">5</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/apps/">Applicazioni self-hosted</a></h3><p>Nextcloud, Immich, Paperless-ngx, Jellyfin, Plex, Home Assistant, GitLab e Forgejo.</p><p class="label-tape"><span class="num" data-n="8">8</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/mail/">DNS, posta e sicurezza</a></h3><p>Pi-hole, AdGuard Home, CrowdSec, e i server e gateway di posta: SMTP, MDaemon, SecurityGateway e Proxmox Mail Gateway.</p><p class="label-tape"><span class="num" data-n="7">7</span> tipi di monitor</p></li>
+			<li class="card"><h3><a href="devices/data/">Database e osservabilità</a></h3><p>PostgreSQL, MySQL, MongoDB, Redis, RabbitMQ, MQTT e i server VictoriaMetrics, Loki e Graylog.</p><p class="label-tape"><span class="num" data-n="10">10</span> tipi di monitor</p></li>
 		</ul>
 		<figure class="home-device">
 			<div class="shot">
@@ -202,9 +202,9 @@
 <img src="../assets/shots/device-light-1x.webp" srcset="../assets/shots/device-light-1x.webp 1440w, ../assets/shots/device-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Un monitor Proxmox VE: il suo stato, i suoi avvisi e ogni nodo con CPU, memoria, file system root, aggiornamenti in sospeso, riavvii necessari e servizi fermi" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 			</div>
-			<figcaption>Una pagina per dispositivo: qui un cluster Proxmox, nodo per nodo, con ciò che richiede un riavvio o un aggiornamento.</figcaption>
+			<figcaption>Una pagina per monitor: qui un cluster Proxmox, nodo per nodo, con ciò che richiede un riavvio o un aggiornamento.</figcaption>
 		</figure>
-		<p style="margin-top:28px"><a class="btn btn-secondary" href="devices/">Sfoglia tutti i 65 tipi di dispositivo</a></p>
+		<p style="margin-top:28px"><a class="btn btn-secondary" href="devices/">Sfoglia tutti i 65 tipi di monitor</a></p>
 	</div>
 </section>
 
@@ -231,7 +231,7 @@
 		<p>DumbMonit, Apache 2.0. La mascotte è un piccione.</p>
 		<nav aria-label="Piè di pagina">
 			<a href="features/">Funzionalità</a>
-			<a href="devices/">Dispositivi</a>
+			<a href="devices/">Monitor</a>
 			<a href="install/">Installa</a>
 			<a href="community/">Doc e community</a>
 			<a href="https://demo.dumbmonit.app">Demo dal vivo</a>

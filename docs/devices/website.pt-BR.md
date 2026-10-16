@@ -1,6 +1,6 @@
 # Saúde e SEO do site {#website-health--seo}
 
-Monitore sites em massa, um dispositivo por site: seja informado quando um site **quebra**
+Monitore sites em massa, um monitor por site: seja informado quando um site **quebra**
 (erro, inacessível, certificado inválido, loop de redirecionamento), quando sua página **fica
 em branco**, quando ela **desaparece dos mecanismos de pesquisa** (`noindex`, `robots.txt`
 bloqueando tudo) e quando os metadados que o Google mostra **mudam** (título,
@@ -15,7 +15,7 @@ Para o conteúdo de uma página em vez de sua saúde, consulte
 1. No endereço, cole a página para verificar, geralmente a página inicial, com ou sem https://. Os redirecionamentos são seguidos: http para https e example.com para www.example.com são normais, apenas um loop de redirecionamento ou uma mudança para outro endereço é reportado.
 2. Opcionalmente, preencha "Texto esperado" com uma frase que a página deve sempre mostrar e ajuste "Página em branco abaixo" se a página for curta propositalmente.
 3. A primeira verificação registra a referência: endereço final, título, descrição, URL canônica, regras de indexação. Eles são comparados novamente a cada 6 horas por padrão ("Verificar mudanças a cada"), enquanto up/down é verificado em cada intervalo de polling. Uma mudança é reportada apenas depois que duas verificações consecutivas a viram, portanto testes A/B e caches instáveis ficam silenciosos.
-4. Para adicionar muitos sites de uma vez, importe um arquivo CSV da lista de dispositivos: cada site é classificado em `Websites/<plataforma>` (WordPress, Shopify…) a menos que você especifique uma pasta.
+4. Para adicionar muitos sites de uma vez, importe um arquivo CSV da lista de monitores: cada site é classificado em `Websites/<plataforma>` (WordPress, Shopify…) a menos que você especifique uma pasta.
 
 !!! warning
     Apenas o que o servidor envia é lido: uma página desenhada inteiramente por JavaScript parece em branco aqui. Reduza "Página em branco abaixo" para 0 para tal site.
@@ -67,7 +67,7 @@ espaçamento e maiúscula ignorados; endereços ignoram o esquema, um `www.` ini
 `/` final e, com **Ignorar strings de consulta** (ativado por padrão), parâmetros de URL
 como `?utm_source=…`.
 
-Uma mudança confirmada é mantida no histórico do dispositivo (campo, antes, depois,
+Uma mudança confirmada é mantida no histórico do monitor (campo, antes, depois,
 data), e seu medidor (`dumbmonit_website_title_changed`…) permanece em 1 por 24
 horas. A primeira verificação apenas registra a referência. Alterar o endereço ou
 **Ignorar strings de consulta** inicia uma nova referência em vez de relatar uma mudança.
@@ -107,7 +107,7 @@ não confunde o DumbMonit com um ataque:
 Um site cuja verificação anterior ainda aguarda sua vez pula uma rodada em vez
 de enfileirar duas vezes. Muitos sites em um domínio com um intervalo de polling curto
 são, portanto, verificados com menos frequência que solicitado: aumente o intervalo ou os
-limites por domínio, se a lista de dispositivos os mostrar atrasados. Consulte
+limites por domínio, se a lista de monitores os mostrar atrasados. Consulte
 [Configuração](../reference/configuration.md#server).
 
 ## Detecção de plataforma {#platform-detection}
@@ -123,14 +123,14 @@ Next.js, Nuxt, Gatsby, Hugo, Jekyll; qualquer outra coisa é **Outro**. A plataf
 
 ## Importar uma lista de sites (CSV) {#import-a-list-of-sites-csv}
 
-A partir da lista de dispositivos ou da página adicionar dispositivo, **Importar sites (CSV)** pega um
+A partir da lista de monitores ou da página adicionar monitor, **Importar sites (CSV)** pega um
 arquivo ou texto colado com uma linha de cabeçalho e até 1000 linhas:
 
 | Coluna | Obrigatória | Significado |
 |---|---|---|
 | `url` | sim | Endereço do site. |
-| `name` | não | Nome do dispositivo; o host por padrão. |
-| `folder` | não | Pasta do dispositivo; vazio: `Websites/<plataforma>`, detectado lendo o site uma vez. |
+| `name` | não | Nome do monitor; o host por padrão. |
+| `folder` | não | Pasta do monitor; vazio: `Websites/<plataforma>`, detectado lendo o site uma vez. |
 | `tags` | não | `key=value;key=value`. |
 | `interval` | não | Intervalo de polling. |
 | `expect_text` | não | Igual à opção. |
@@ -152,6 +152,8 @@ já monitorado (mesmo endereço final) é ignorado.
 | `dumbmonit_website_status_code` | Status HTTP da resposta final. |
 | `dumbmonit_website_response_seconds` | Tempo total, redirecionamentos incluídos. |
 | `dumbmonit_website_redirect_hops` | Redirecionamentos seguidos. |
+| `dumbmonit_website_https` | 1 quando o endereço final é https. |
+| `dumbmonit_website_security_header{header}` | 0/1 por rótulo `header` (somente https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform}` | Sempre 1; o rótulo leva a plataforma. |
 | `dumbmonit_website_text_chars` | Caracteres de texto visível (respostas 2xx). |
 | `dumbmonit_website_blank` | 1 quando esse texto está abaixo do limite. |
@@ -166,7 +168,7 @@ já monitorado (mesmo endereço final) é ignorado.
 
 | Alerta | Quando | Severidade |
 |---|---|---|
-| Dispositivo inacessível | Sem resposta, certificado recusado, loop de redirecionamento ou muitos redirecionamentos | crítico |
+| Monitor inacessível | Sem resposta, certificado recusado, loop de redirecionamento ou muitos redirecionamentos | crítico |
 | Site inativo | A resposta final é um erro 4xx ou 5xx, por 3 minutos | crítico |
 | Página do site em branco | Texto visível abaixo do limite, por 3 minutos | crítico |
 | Texto esperado do site ausente | O texto esperado está faltando, por 3 minutos | aviso |

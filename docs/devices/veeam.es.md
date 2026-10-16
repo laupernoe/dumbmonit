@@ -91,11 +91,11 @@ exitosa» — nada se filtra por resultado aquí. Veeam no expone una
 «última conexión» separada de la propia copia de seguridad, así que
 `last_seen_timestamp_seconds` y la señal `connection` nunca se publican;
 un dispositivo muestra `last_connection` como «—» en la tabla de la
-página del dispositivo. El `type` del dispositivo es el propio nombre de
+página del monitor. El `type` del dispositivo es el propio nombre de
 plataforma de Veeam (`VSphere`, `WindowsPhysical`, `HyperV`…), mostrado
 tal cual.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel Backups indica en una frase qué va mal, muestra los jobs
 fallidos, las sesiones fallidas de las últimas 24 horas, los jobs en

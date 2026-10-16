@@ -42,9 +42,9 @@ them at once; the node statistics lag by a few seconds.
 The [built-in rules](../alerting/rules.md#databases-message-broker-and-security-engine)
 that apply: RabbitMQ memory or disk alarm, RabbitMQ node down, RabbitMQ
 network partition, RabbitMQ queue without consumer, RabbitMQ queue
-unavailable, plus Device unreachable.
+unavailable, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries RabbitMQ. It says what is wrong in a sentence (alarms, nodes and

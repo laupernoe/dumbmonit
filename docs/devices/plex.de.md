@@ -31,9 +31,9 @@ Alle Metriken haben das Präfix `dumbmonit_plex_`.
 | `scrape_errors` | bei der letzten Abfrage fehlgeschlagene Aufrufe | |
 
 Die geltende [eingebaute Regel](../alerting/rules.md#self-hosted-applications):
-Plex update available, plus Device unreachable.
+Plex update available, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite ruft Plex nie auf. Es nennt den Update-Zustand und ob

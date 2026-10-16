@@ -71,7 +71,7 @@ Les [règles intégrées](../alerting/rules.md#unifi-network) qui
 s'appliquent : appareil UniFi hors ligne, Internet UniFi en panne, lien WAN
 UniFi en panne, CPU de passerelle UniFi élevé, appareil UniFi en attente
 d'adoption, mise à jour de firmware UniFi disponible, alarmes UniFi, plus
-Appareil inaccessible.
+Surveillance inaccessible.
 
 ## Appareils
 
@@ -97,7 +97,7 @@ sous [Appareils clients](../alerting/rules.md#client-devices) :
 | `last_seen_timestamp_seconds` | Dernière connexion, comme `/rest/user` la rapporte | `device`, `type` (`Wired`, `Wireless` ou `Unknown`), `os` (vide), `user` (vide), `kind` |
 | `stale_seconds` | Positif une fois qu'un client suivi a dépassé `device_stale_days` (3 par défaut) sans se connecter ; alimente la règle [Appareil client périmé](../alerting/rules.md#client-devices) | `device`, `type`, `os`, `user`, `kind`, `signal` (toujours `connection` : UniFi n'a pas de sauvegarde à rapporter) |
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais UniFi. Il dit d'abord ce qui ne va pas (appareils

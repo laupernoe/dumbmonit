@@ -4,9 +4,7 @@ Einfaches Monitoring vom Homelab bis zum kleinen Unternehmen. Ein Container, ein
 zum Eintippen, nützliche Diagramme und Alarme in weniger als einer Minute.
 
 !!! warning "In Entwicklung"
-    DumbMonit wird aktiv entwickelt; das aktuelle Image
-    (`ghcr.io/laupernoe/dumbmonit:latest`) ist eine Alpha-Version für frühe Tester. Bis zur
-    ersten Version ist mit Ecken und Kanten sowie inkompatiblen Änderungen zu rechnen.
+    DumbMonit wird aktiv entwickelt; bis 1.0 können sich die HTTP-API und das Datenmodell zwischen Minor-Versionen (0.x) noch ändern. Das Changelog listet jede Änderung auf.
 
 DumbMonit liest das Netzwerk wie einen **Wetterbericht**: Die Startseite fasst
 den Himmel in einem Satz zusammen („Clear skies." oder „2 advisories, 1 unreachable.") und
@@ -18,7 +16,7 @@ sind geplant.
 
 <div class="dm-links" markdown>
 <a href="install/docker/">Installation<small>Docker Compose, erster Start, Backups</small></a>
-<a href="install/first-device/">Erstes Gerät hinzufügen<small>SNMP, Netzwerk-Scan, wie es danach weitergeht</small></a>
+<a href="install/first-device/">Ersten Monitor hinzufügen<small>SNMP, Netzwerk-Scan, wie es danach weitergeht</small></a>
 <a href="alerting/">Alarmierung<small>Eingebaute Regeln, von Grund auf ruhig</small></a>
 </div>
 
@@ -30,16 +28,16 @@ sind geplant.
 | [Proxmox VE](devices/proxmox.md) | Nodes, virtuelle Maschinen und Container, Storages, Cluster-Quorum und das Alter des letzten erfolgreichen Backups pro Maschine. |
 | [Proxmox Backup Server](devices/pbs.md) | Datastore-Belegung und Füllstandsprognose, Deduplizierung, Alter und Verifizierung des letzten Snapshots jeder Maschine, fehlgeschlagene Tasks, Garbage Collection. |
 | [Synology DSM](devices/synology.md) | Volumes, Festplatten und ihr SMART-Zustand, Temperatur, Last, über die Web-API des NAS. |
-| [Agent für Linux, macOS, FreeBSD und Windows](devices/agent.md) | CPU, Arbeitsspeicher, Datenträger, Netzwerk, Dienste, Container und Uptime von Maschinen, die kein SNMP sprechen, dazu Temperaturen, Festplattenzustand (SMART) und ZFS-Pools, wo die Maschine sie bereitstellt. Ein Befehl zur Installation, oder ein Docker-Image; im [Relay-Modus](install/remote-site.md) prüft er die eigenen Geräte eines entfernten Standorts ausschließlich über ausgehende Verbindungen. |
+| [Agent für Linux, macOS, FreeBSD und Windows](devices/agent.md) | CPU, Arbeitsspeicher, Datenträger, Netzwerk, Dienste, Container und Uptime von Maschinen, die kein SNMP sprechen, dazu Temperaturen, Festplattenzustand (SMART) und ZFS-Pools, wo die Maschine sie bereitstellt. Ein Befehl zur Installation, oder ein Docker-Image; im [Relay-Modus](install/remote-site.md) prüft er die eigenen Monitore eines entfernten Standorts ausschließlich über ausgehende Verbindungen. |
 | [Dienste](devices/services.md) | HTTP(S), TCP-Port, DNS, Ping und Ablauf von TLS-Zertifikaten, im Stil von Uptime Kuma, mit Verlaufsbalken und Verfügbarkeit in Prozent. |
-| [Integrationspakete](packs/index.md) | Eine Geräteart, in einer einzigen YAML-Datei beschrieben — eine HTTP-API oder eine Prometheus-`/metrics`-Seite auf dem Gerät — mit eigenen Alarmregeln, installiert ohne Server-Release. |
+| [Integrationspakete](packs/index.md) | Eine Monitorart, in einer einzigen YAML-Datei beschrieben — eine HTTP-API oder eine Prometheus-`/metrics`-Seite auf dem Gerät — mit eigenen Alarmregeln, installiert ohne Server-Release. |
 
 ## Mit ihm sprechen {#talk-to-it}
 
 - Ein [Assistent über MCP](using/assistant.md) — Claude Code, Claude Desktop,
   ChatGPT, VS Code, Cursor — mit 27 Tools: Ein `read`-Token kann nur ansehen (Status,
-  Geräte, Alarme, Metriken, Agenten, Container …), ein `write`-Token kann auch handeln
-  (stummschalten, quittieren, ein Gerät hinzufügen, einen Container neu starten, einen
+  Monitore, Alarme, Metriken, Agenten, Container …), ein `write`-Token kann auch handeln
+  (stummschalten, quittieren, einen Monitor hinzufügen, einen Container neu starten, einen
   Vorfall auf der Statusseite veröffentlichen). Geheimnisse werden nie zurückgegeben.
 - Die [HTTP-API](reference/api.md) hinter allem, was die Oberfläche tut, beschrieben unter
   `/api/openapi.json` (OpenAPI 3.1). Tokens (`dmt_…`) sind auf Lesen oder

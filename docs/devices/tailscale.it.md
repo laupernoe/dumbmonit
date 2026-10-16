@@ -13,7 +13,7 @@ nulla. Un token di accesso API (`tskey-api-…`) funziona anch'esso, ma porta
 ogni diritto dell'utente che lo ha creato e scade dopo al massimo 90
 giorni.
 
-Questa è un'API internet: l'indirizzo del dispositivo è quello dell'API,
+Questa è un'API internet: l'indirizzo del monitor è quello dell'API,
 non quello di una macchina. DumbMonit richiede HTTPS in uscita verso
 `api.tailscale.com`; nulla nel tailnet viene contattato.
 

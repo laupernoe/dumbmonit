@@ -14,7 +14,7 @@ Priorities and timing can change; the board is a living plan, not a promise.
 - **Security fixes** are announced in the release notes and as GitHub security
   advisories, with their CVE or GHSA identifier.
 
-DumbMonit is an alpha: expect the API and the data model to keep evolving until
+DumbMonit is before 1.0: expect the API and the data model to keep evolving until
 a stable line is announced. See the
 [contributing guide](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
 and the

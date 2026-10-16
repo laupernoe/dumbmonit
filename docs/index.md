@@ -4,9 +4,7 @@ Simple monitoring from the homelab to the small business. One container, one IP 
 to type in, useful graphs and alerts in under a minute.
 
 !!! warning "Work in progress"
-    DumbMonit is under active development; the current image
-    (`ghcr.io/laupernoe/dumbmonit:latest`) is an alpha for early testers. Expect
-    rough edges and breaking changes until the first release.
+    DumbMonit is under active development; until 1.0 the HTTP API and the data model can still change between minor versions (0.x). The changelog lists every change.
 
 DumbMonit reads the network like a **weather bulletin**: the home page states
 the sky in one sentence ("Clear skies." or "2 advisories, 1 unreachable.") and
@@ -18,7 +16,7 @@ windows are scheduled.
 
 <div class="dm-links" markdown>
 <a href="install/docker/">Install<small>Docker Compose, first start, backups</small></a>
-<a href="install/first-device/">Add your first device<small>SNMP, network scan, what happens next</small></a>
+<a href="install/first-device/">Add your first monitor<small>SNMP, network scan, what happens next</small></a>
 <a href="alerting/">Alerting<small>Built-in rules, quiet by construction</small></a>
 </div>
 
@@ -30,16 +28,16 @@ windows are scheduled.
 | [Proxmox VE](devices/proxmox.md) | Nodes, virtual machines and containers, storages, cluster quorum, and the age of the last successful backup per machine. |
 | [Proxmox Backup Server](devices/pbs.md) | Datastore usage and fill-up forecast, deduplication, age and verification of each machine's last snapshot, failed tasks, garbage collection. |
 | [Synology DSM](devices/synology.md) | Volumes, disks and their SMART health, temperature, load, through the NAS web API. |
-| [Linux, macOS, FreeBSD and Windows agent](devices/agent.md) | CPU, memory, disks, network, services, containers and uptime of machines that do not speak SNMP, plus temperatures, disk health (SMART) and ZFS pools where the machine exposes them. One command to install, or a Docker image; in [relay mode](install/remote-site.md) it probes a remote site's own devices over outbound connections only. |
+| [Linux, macOS, FreeBSD and Windows agent](devices/agent.md) | CPU, memory, disks, network, services, containers and uptime of machines that do not speak SNMP, plus temperatures, disk health (SMART) and ZFS pools where the machine exposes them. One command to install, or a Docker image; in [relay mode](install/remote-site.md) it probes a remote site's own monitors over outbound connections only. |
 | [Services](devices/services.md) | HTTP(S), TCP port, DNS, ping and TLS certificate expiry, Uptime Kuma style, with a history bar and availability percentage. |
-| [Integration packs](packs/index.md) | A device kind declared in a single YAML file — an HTTP API or a Prometheus `/metrics` page on the device — with its own alert rules, installed without a server release. |
+| [Integration packs](packs/index.md) | A monitor kind declared in a single YAML file — an HTTP API or a Prometheus `/metrics` page on the monitor — with its own alert rules, installed without a server release. |
 
 ## Talk to it
 
 - An [assistant over MCP](using/assistant.md) — Claude Code, Claude Desktop,
   ChatGPT, VS Code, Cursor — with 27 tools: a `read` token only looks (status,
-  devices, alerts, metrics, agents, containers…), a `write` token can also act
-  (silence, acknowledge, add a device, restart a container, post a
+  monitors, alerts, metrics, agents, containers…), a `write` token can also act
+  (silence, acknowledge, add a monitor, restart a container, post a
   status-page incident). Secrets are never returned.
 - The [HTTP API](reference/api.md) behind everything the UI does, described at
   `/api/openapi.json` (OpenAPI 3.1). Tokens (`dmt_…`) are scoped read or

@@ -1,6 +1,6 @@
 # Páginas de status {#status-pages}
 
-![A página de Status: suas páginas, e os anúncios abaixo delas](../assets/screenshots/status-light.png){ loading=lazy }
+![A página Páginas de status: suas páginas, e os anúncios abaixo delas](../assets/screenshots/status-light.png){ loading=lazy }
 
 Uma página de status é a face pública do seu monitoramento: uma página
 que qualquer um pode abrir — sem login, sem cookie — que diz se seus
@@ -11,15 +11,15 @@ README; uma visão compacta cabe em uma página de intranet.
 
 Ela só mostra o que você coloca nela: o rótulo que você dá a cada
 serviço, seu estado, sua disponibilidade e seu tempo de resposta. Nomes
-de dispositivo, endereços, tipos e identificadores nunca saem do
+de monitor, endereços, tipos e identificadores nunca saem do
 servidor — não na página, não em um badge, não em um e-mail.
 
 ## 1. Criar uma página {#1-create-a-page}
 
-**Status** na barra superior → **Nova página**. Essa página lista suas
+**Configurações → Páginas de status** → **Nova página**. Essa página lista suas
 páginas de status (abrir, editar, excluir) com os anúncios abaixo
-delas; o editor abre em sua própria rota (`/status/new`,
-`/status/<id>`). A renderização pública está em `/s/<address>`.
+delas; o editor abre em sua própria rota (`/settings/status/new`,
+`/settings/status/<id>`). A renderização pública está em `/s/<address>`.
 
 | Campo | O que faz |
 | --- | --- |
@@ -31,8 +31,8 @@ delas; o editor abre em sua própria rota (`/status/new`,
 | **Modo simples** | Uma página simples: sem cenário, sem mascote, sem animação e sem easter eggs. Claro ou escuro segue o sistema do visitante, com um alternador no cabeçalho; a configuração de Tema da página é ignorada. |
 | **Publicada** | Desligado = rascunho: a página, seus badges e seu logo respondem "não encontrado" aos visitantes até você ativá-la. |
 
-Depois marque os dispositivos a mostrar. Para cada um, defina o
-**rótulo** que visitantes vão ler (o padrão é o nome do dispositivo —
+Depois marque os monitores a mostrar. Para cada um, defina o
+**rótulo** que visitantes vão ler (o padrão é o nome do monitor —
 você pode preferir "Site" a "nginx-front-01") e, opcionalmente, um
 **grupo** ("Rede", "Armazenamento"). Grupos se tornam blocos na página,
 na ordem em que você organiza os serviços.
@@ -110,25 +110,25 @@ Como o estado é decidido:
 
 | Estado | Significado |
 | --- | --- |
-| Operacional | A última sondagem teve sucesso (sondagens de disponibilidade), ou o dispositivo reportou dentro de três períodos de sondagem. |
+| Operacional | A última sondagem teve sucesso (sondagens de disponibilidade), ou o monitor reportou dentro de três períodos de sondagem. |
 | Degradado | Ativo agora, mas pelo menos uma sondagem falhou na última hora. |
-| Fora do ar | A última sondagem falhou, o dispositivo parou de reportar, ou sua configuração está com erro. |
-| Manutenção | Uma janela de manutenção está em andamento e o serviço está fora do ar: esperado, não uma indisponibilidade. Ou um anúncio nesta página, ou uma [janela de manutenção](../alerting/maintenance.md) de alerta cobrindo esse dispositivo. |
+| Fora do ar | A última sondagem falhou, o monitor parou de reportar, ou sua configuração está com erro. |
+| Manutenção | Uma janela de manutenção está em andamento e o serviço está fora do ar: esperado, não uma indisponibilidade. Ou um anúncio nesta página, ou uma [janela de manutenção](../alerting/maintenance.md) de alerta cobrindo esse monitor. |
 | Sem dados | Nunca sondado ainda, ou desativado. |
 
 Disponibilidade para sondagens (`http`, `tcp`, `dns`, `ping`, `tls`,
 heartbeats) é a parcela de verificações bem sucedidas, de
 `dumbmonit_probe_success`; a indisponibilidade de um dia é suas
 verificações falhadas vezes o intervalo de sondagem. Para outros
-dispositivos (SNMP, agent, Proxmox…) é a parcela de intervalos de cinco
-minutos em que o dispositivo reportou ao menos uma vez
-(`dumbmonit_up`), contado a partir da primeira medição — um dispositivo
+monitores (SNMP, agent, Proxmox…) é a parcela de intervalos de cinco
+minutos em que o monitor reportou ao menos uma vez
+(`dumbmonit_up`), contado a partir da primeira medição — um monitor
 adicionado ontem não está "fora do ar" pelos 89 dias anteriores a isso
 — e a indisponibilidade de um dia são seus intervalos silenciosos.
 
 ## 3. Anunciar incidentes e manutenção {#3-announce-incidents-and-maintenance}
 
-Na página **Status**, sob a lista de páginas, **Incidentes e
+Em **Configurações → Páginas de status**, sob a lista de páginas, **Incidentes e
 manutenção** → **Novo anúncio** (também ++ctrl+k++ → *Anunciar um
 incidente*).
 
@@ -145,10 +145,10 @@ incidente*).
   aparecem como *Manutenção*.
 
 Uma [janela de manutenção programada em Alertas](../alerting/maintenance.md)
-faz a mesma coisa para o dispositivo único que cobre, sem um anúncio:
+faz a mesma coisa para o monitor único que cobre, sem um anúncio:
 esse serviço lê *Manutenção* em vez de vermelho enquanto a janela está
 aberta, e o estado geral da página diz *Manutenção* quando nada mais
-está fora do ar ou degradado. Só janelas que nomeiam um dispositivo
+está fora do ar ou degradado. Só janelas que nomeiam um monitor
 aparecem desse jeito; o nome e comentário da janela permanecem
 privados.
 

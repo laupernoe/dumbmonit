@@ -114,7 +114,7 @@
 			<p class="mb-4 flex flex-wrap items-center gap-2 text-sm text-ink-2">
 				<Plate tone="advisory" label={m.settings_reports_no_channel_plate()} />
 				{m.settings_reports_no_channel_text()}
-				<a href="/alerts#notifications" class="font-semibold text-ink underline decoration-line underline-offset-2">{m.settings_reports_no_channel_link()}</a>
+				<a href="/settings/notifications#notifications-channels" class="font-semibold text-ink underline decoration-line underline-offset-2">{m.settings_reports_no_channel_link()}</a>
 			</p>
 		{/if}
 

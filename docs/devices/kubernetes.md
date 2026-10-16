@@ -8,7 +8,7 @@ of the last hour.
 DumbMonit reads the API with the token of a dedicated service account bound
 to a read-only ClusterRole: `get` and `list` on nodes, pods, workloads,
 persistent volume claims and events, nothing else. It never writes, and the
-role gives no access to Secrets or ConfigMaps. One device covers the whole
+role gives no access to Secrets or ConfigMaps. One monitor covers the whole
 cluster, whatever the distribution: k3s, kubeadm, k0s, MicroK8s, Talos, or a
 managed cluster whose API DumbMonit can reach.
 
@@ -78,9 +78,9 @@ The [built-in rules](../alerting/rules.md#kubernetes) that apply:
 - **Kubernetes volume claim pending**: a stuck claim for fifteen minutes
   (Advisory).
 
-Plus Device unreachable, when the API server stops answering.
+Plus Monitor unreachable, when the API server stops answering.
 
-## The device page
+## The monitor page
 
 The Cluster panel says what is wrong in a sentence, then lists the nodes (Ready
 or not, pressure, cordoned, kubelet version), the pods that need attention
@@ -160,7 +160,7 @@ metadata:
 type: kubernetes.io/service-account-token
 ```
 
-To check the role before adding the device, ask the API server what the
+To check the role before adding the monitor, ask the API server what the
 account may do; the first command must answer `yes`, the second `no`:
 
 ```
@@ -169,7 +169,7 @@ kubectl auth can-i list secrets --as=system:serviceaccount:kube-system:dumbmonit
 ```
 
 A token made with `kubectl create token dumbmonit -n kube-system` works too,
-but it expires (after one hour by default): the device then fails with "The
+but it expires (after one hour by default): the monitor then fails with "The
 API server refused the token (401)". The Secret above is the long-lived form
 Kubernetes documents for this use. To revoke DumbMonit's access, delete the
 Secret, or the service account.

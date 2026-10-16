@@ -44,7 +44,7 @@ error, Paperless migrations pending, Paperless task failed, Paperless
 storage almost full, Paperless update available, además de Device
 unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca llama a Paperless. Indica primero qué va mal (un componente en

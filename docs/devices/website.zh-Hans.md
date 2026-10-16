@@ -9,7 +9,7 @@
 1. 在地址栏中粘贴要检查的页面，通常是主页，带或不带https://都可以。重定向会被跟随：http到https和example.com到www.example.com是正常的，只有重定向循环或移到其他地址才会被报告。
 2. 可选地在"预期文本"中填写页面必须始终显示的短语，如果页面目的上比较短，调整"空白页面下方的字符数"。
 3. 第一次检查会记录参考数据：最终地址、标题、描述、规范URL、索引规则。只有当连续两次检查都发现变化时，才会报告变化，因此A/B测试和易变的缓存会保持安静。
-4. 要一次性添加许多网站，从设备列表导入CSV文件：每个网站都会归在 `Websites/<platform>` （WordPress、Shopify等），除非您指定其他文件夹。
+4. 要一次性添加许多网站，从监控项列表导入CSV文件：每个网站都会归在 `Websites/<platform>` （WordPress、Shopify等），除非您指定其他文件夹。
 
 !!! warning
     仅读取服务器发送的内容：完全由JavaScript绘制的页面在这里看起来是空白的。对于这样的网站，将"空白页面下方的字符数"设置为0。
@@ -30,7 +30,7 @@
 
 最终地址和元数据与参考进行比较。不同的值如果只看过一次是**待定的**；当下一次检查再次看到它时，它才成为变化。因此以两个版本（A/B测试）、犹豫的缓存或被截断的答案提供的页面保持安静。值的比较时忽略间距和大小写；地址忽略方案、前导 `www.`、末尾 `/` 和，使用**忽略查询字符串**（默认开启）时，URL参数如 `?utm_source=…`。
 
-确认的变化保留在设备的历史中（字段、之前、之后、日期），其仪表盘 （`dumbmonit_website_title_changed` 等）保持为1达24小时。第一次检查仅记录参考。改变地址或**忽略查询字符串**会开始一个新参考，而不是报告变化。
+确认的变化保留在监控项的历史中（字段、之前、之后、日期），其仪表盘 （`dumbmonit_website_title_changed` 等）保持为1达24小时。第一次检查仅记录参考。改变地址或**忽略查询字符串**会开始一个新参考，而不是报告变化。
 
 ## 选项 {#options}
 
@@ -49,13 +49,13 @@
 
 ## 导入网站列表（CSV） {#import-a-list-of-sites-csv}
 
-从设备列表或添加设备页面，**导入网站（CSV）**接受一个文件或最多有1000行的粘贴文本，其中包含标题行：
+从监控项列表或添加监控项页面，**导入网站（CSV）**接受一个文件或最多有1000行的粘贴文本，其中包含标题行：
 
 | 列 | 必需 | 含义 |
 |---|---|---|
 | `url` | 是 | 网站的地址。 |
-| `name` | 否 | 设备名称；默认为主机名。 |
-| `folder` | 否 | 设备的文件夹；空：`Websites/<platform>`，通过读取网站一次检测。 |
+| `name` | 否 | 监控项名称；默认为主机名。 |
+| `folder` | 否 | 监控项的文件夹；空：`Websites/<platform>`，通过读取网站一次检测。 |
 | `tags` | 否 | `key=value;key=value`。 |
 | `interval` | 否 | 轮询间隔。 |
 | `expect_text` | 否 | 与选项相同。 |
@@ -76,6 +76,8 @@ https://shop.example.org,Shop,Customers/Acme,,300s,Add to cart
 | `dumbmonit_website_status_code` | 最终答案的HTTP状态。 |
 | `dumbmonit_website_response_seconds` | 总时间，包括重定向。 |
 | `dumbmonit_website_redirect_hops` | 跟随的重定向。 |
+| `dumbmonit_website_https` | 最终地址为 https 时为1。 |
+| `dumbmonit_website_security_header{header}` | 每个 `header` 标签为0/1（仅 https）：HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors。 |
 | `dumbmonit_website_info{platform}` | 总为1；标签携带平台。 |
 | `dumbmonit_website_text_chars` | 可见文本的字符数（2xx答案）。 |
 | `dumbmonit_website_blank` | 当文本低于阈值时为1。 |
@@ -90,7 +92,7 @@ https://shop.example.org,Shop,Customers/Acme,,300s,Add to cart
 
 | 警报 | 何时 | 严重程度 |
 |---|---|---|
-| 设备无法到达 | 无答案、拒绝证书、重定向循环或太多重定向 | 严重 |
+| 监控项无法到达 | 无答案、拒绝证书、重定向循环或太多重定向 | 严重 |
 | 网站关闭 | 最终答案是4xx或5xx错误，持续3分钟 | 严重 |
 | 网站页面空白 | 可见文本低于阈值，持续3分钟 | 严重 |
 | 网站预期文本缺失 | 预期文本缺失，持续3分钟 | 警告 |

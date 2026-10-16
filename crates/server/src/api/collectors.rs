@@ -164,7 +164,7 @@ const fn cred_select(
 const NO_AUTH: CredentialView = CredentialView {
     kind: "none",
     label: "No authentication",
-    help: "Nothing is sent: the device answers without credentials.",
+    help: "Nothing is sent: the monitor answers without credentials.",
     fields: &[],
 };
 
@@ -945,7 +945,7 @@ const MQTT_OPTIONS: &[OptionView] = &[
     text(
         "client_id",
         "Client identifier",
-        "Name announced to the broker. The default derives from the device, so two checks never disconnect each other.",
+        "Name announced to the broker. The default derives from the monitor, so two checks never disconnect each other.",
         "dumbmonit-3",
         "",
     ),
@@ -3697,7 +3697,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Check from the DumbMonit host that the account reaches the API. The command asks for the password and prints an answer that starts with <MDaemon><API productversion=…>.\ncurl -k -u dumbmonit@example.com -H 'Content-Type: text/xml' --data '<MDaemon><API><Request version=\"20.0.0\" echo=\"0\" verbose=\"0\"><Operation>GetVersionInfo</Operation><Parameters/></Request></API></MDaemon>' https://mail.example.com:444/MdMgmtWS/",
                     "In DumbMonit, enter the server address, for example \"mail.example.com\", then the full email address of the account as user name, and its password. The XML API is reached on the Remote Administration HTTPS port, 444 by default.",
                 ],
-                warning: "MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick \"Accept an unverifiable certificate\" in the options. Mail queue sizes are not read by this device: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server.",
+                warning: "MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick \"Accept an unverifiable certificate\" in the options. Mail queue sizes are not read by this monitor: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server.",
                 doc_url: "https://help.mdaemon.com/mdaemon/en/xml-api-service.html",
             },
             options: MDAEMON_OPTIONS,
@@ -3715,7 +3715,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Watch the gateway services, and optionally the REST API",
                 steps: &[
                     "Nothing to install on the server. With no credential, DumbMonit connects to SMTP (25) and the web interface (4000) from the outside and reads the SMTP greeting. Change the list in the Services option, for example to check HTTPS instead of HTTP.\nsmtp,web_https",
-                    "To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the device page, your version keeps them for the Global Administrator role, and the account needs that role instead.\ndumbmonit",
+                    "To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the monitor page, your version keeps them for the Global Administrator role, and the account needs that role instead.\ndumbmonit",
                     "Sign in as that account and create a key under Setup/Users → Accounts → API Keys, with an expiry date. A key carries the rights of the account that creates it, which is why it must be created from this account and not from yours.",
                     "Restrict the account to the address DumbMonit connects from in its IP restrictions: API keys obey them too.",
                     "Check from the DumbMonit host that the key works. The command prints the API description, which also lists the counters DumbMonit reads.\ncurl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi",
@@ -3808,14 +3808,37 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             setup: Setup {
                 title: "Install the agent on the machine",
                 steps: &[
-                    "Save the device in DumbMonit: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.",
-                    "That token is the agent's key to push its measurements to DumbMonit. It is not an account on the machine: nothing to create there. A token created from the device form is single use: it enrols this one machine and nothing else. For a fleet, create a reusable token in Settings → Agents.",
+                    "Save the monitor in DumbMonit: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.",
+                    "That token is the agent's key to push its measurements to DumbMonit. It is not an account on the machine: nothing to create there. A token created from the monitor form is single use: it enrols this one machine and nothing else. For a fleet, create a reusable token in Settings → Agents.",
                     "Run the install command on the machine to monitor, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads the agent, writes the token into agent.yaml and starts the service.",
-                    "The machine shows up on its own within a few seconds, named after its host name. On that first batch the server gives the agent a secret of its own and stores it in /etc/dumbmonit/agent-secret, readable by nobody else: from then on, that machine is the only one that can report under this device. Lost the token? Settings → Agents lets you revoke it and create another.",
-                    "Docker: to see the containers and let DumbMonit restart or update them, the agent must reach the Docker socket. The service the installer registers already can; if you run the agent under a dedicated user instead, add that user to the \"docker\" group and restart it. Restart and auto-update policies are then set per container on the device page.\nusermod -aG docker dumbmonit",
-                    "Plakar backups: detected automatically — the Backups panel appears when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set \"plakar_klosets\" in agent.yaml to watch a fixed list, or \"plakar: false\" to opt out.",
+                    "The machine shows up on its own within a few seconds, named after its host name. On that first batch the server gives the agent a secret of its own and stores it in /etc/dumbmonit/agent-secret, readable by nobody else: from then on, that machine is the only one that can report under this monitor. Lost the token? Settings → Agents lets you revoke it and create another.",
+                    "Docker: to see the containers and let DumbMonit restart or update them, the agent must reach the Docker socket. The service the installer registers already can; if you run the agent under a dedicated user instead, add that user to the \"docker\" group and restart it. Restart and auto-update policies are then set per container on the monitor page.\nusermod -aG docker dumbmonit",
+                    "Plakar backups: detected automatically — a Plakar monitor appears under the machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set \"plakar_klosets\" in agent.yaml to watch a fixed list, or \"plakar: false\" to opt out.",
+                    "Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) each become their own monitor under the machine, with their own status and alerts. The machine's \"Services found by the agent\" panel lists what was found and what was not: untick a module to drop its monitor, tick one to watch it before it shows up.",
                 ],
                 warning: "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
+                doc_url: "",
+            },
+            options: &[],
+        },
+        // Un service détecté par un agent (Docker, ZFS…), rangé sous sa
+        // machine : il naît du premier lot qui le contient, jamais du formulaire.
+        "agent_service" => CollectorView {
+            kind: "agent_service",
+            label: "Service found by an agent",
+            summary: "Docker, backups, ZFS, VMs or tunnels found by the agent on a machine, each watched as its own device.",
+            examples: &["Docker", "ZFS pools", "WireGuard tunnels"],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "created by the agent",
+            default_port: 0,
+            setup: Setup {
+                title: "Created by the agent",
+                steps: &[
+                    "There is nothing to add by hand: install the agent on the machine, and each service it finds becomes a monitor under that machine on its first report.",
+                    "To stop watching a service, untick it in the machine's \"Services found by the agent\" panel, or delete its monitor: the agent's readings for it are then dropped.",
+                ],
+                warning: "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
                 doc_url: "",
             },
             options: &[],
@@ -4146,7 +4169,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 steps: &[
                     "In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set \"Scope\" to \"site\": every page under the same folder is followed, up to \"Max pages\".",
                     "Lines that change at every visit (a clock, a visitor counter, \"updated 5 minutes ago\") would be reported each time: list them in \"Ignore lines\" as regular expressions.",
-                    "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the \"Website changed\" alert tells you.",
+                    "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the monitor page; the \"Website changed\" alert tells you.",
                     "For a screenshot of each version, add a headless browser to your Compose file; the exact lines are in the documentation (Advanced options, \"Screenshots of website changes\").",
                 ],
                 warning: "Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either.",
@@ -4177,7 +4200,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
                     "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
                     "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.",
-                    "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<category> (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/<platform> (WordPress, Shopify…), unless you give a folder.",
+                    "To add many sites at once, import a CSV file from the monitor list: each site is filed under Websites/<category> (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/<platform> (WordPress, Shopify…), unless you give a folder.",
                 ],
                 warning: "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site.",
                 doc_url: "",
@@ -4206,10 +4229,10 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Make the job call in",
                 steps: &[
                     "In the address, write a short label for the job (\"nightly-backup\", \"certbot-renew\"): nothing is contacted, the label only has to be unique among your heartbeats.",
-                    "Set the expected interval to the job's schedule (\"24h\" for a nightly job, \"1h\" for an hourly one) and, if the schedule drifts, a wider grace period. Save the device.",
-                    "The device page shows the URL to call. Add it at the end of the job, so it is called only when the job succeeded:\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
+                    "Set the expected interval to the job's schedule (\"24h\" for a nightly job, \"1h\" for an hourly one) and, if the schedule drifts, a wider grace period. Save the monitor.",
+                    "The monitor page shows the URL to call. Add it at the end of the job, so it is called only when the job succeeded:\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
                     "A job that can tell when it failed may say so instead of staying silent: append ?status=down&msg=… to the URL, and the alert fires at once.",
-                    "Until the first call arrives the device shows \"Waiting\" and nothing is alerted. Lost or leaked URL? \"Regenerate\" on the device page issues a new one; the old one stops answering immediately.",
+                    "Until the first call arrives the monitor shows \"Waiting\" and nothing is alerted. Lost or leaked URL? \"Regenerate\" on the monitor page issues a new one; the old one stops answering immediately.",
                 ],
                 warning: "Call the URL at the end of the job, after the part that matters. A call placed at the top would report a success even when the backup itself failed.",
                 doc_url: "",
@@ -5277,6 +5300,7 @@ mod tests {
         "xcpng",
         "nutanix",
         "agent",
+        "agent_service",
         "http",
         "tcp",
         "dns",
@@ -5812,7 +5836,7 @@ mod tests {
             let obtenues: Vec<&str> = describe(kind).options.iter().map(|o| o.key).collect();
             assert_eq!(&obtenues, cles, "options de « {kind} »");
         }
-        for kind in ["snmp", "agent", "dummy"] {
+        for kind in ["snmp", "agent", "agent_service", "dummy"] {
             assert!(describe(kind).options.is_empty(), "« {kind} » ne lit aucune étiquette");
         }
     }
@@ -6379,6 +6403,7 @@ mod tests {
             ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
             ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
+            ("agent_service", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("webchange", include_str!("../../../../docs/devices/webchange.md")),
             ("website", include_str!("../../../../docs/devices/website.md")),

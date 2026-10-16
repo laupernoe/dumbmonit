@@ -32,6 +32,7 @@
 		type ContainerView
 	} from './api';
 	import { fleetFor } from './fleet.svelte';
+	import { agentHostOf } from '#lib/components/devices/agent/services.js';
 
 	interface Props {
 		target: Target;
@@ -44,7 +45,7 @@
 
 	// The list itself lives in the shared fleet: the summary strip under the
 	// header reads the same one, so both stay in step with a single poll.
-	const fleet = $derived(fleetFor(target.id));
+	const fleet = $derived(fleetFor(target.id, agentHostOf(target)));
 
 	/** Per container: an action in flight, an inline error, the result unfolded. */
 	let acting = $state<Record<string, boolean>>({});

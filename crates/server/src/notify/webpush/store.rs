@@ -40,6 +40,10 @@ pub struct Subscription {
     pub endpoint: String,
     pub p256dh: Vec<u8>,
     pub auth: Vec<u8>,
+    /// Le compte peut acquitter (opérateur ou administrateur) : seuls ses
+    /// appareils reçoivent les boutons d'action. Un lecteur voit l'alerte,
+    /// pas de quoi la faire taire.
+    pub can_act: bool,
 }
 
 /// Empreinte publique d'une adresse d'abonnement.
@@ -208,7 +212,7 @@ pub async fn recipients(
     audience: &Audience<'_>,
 ) -> Result<Vec<Subscription>> {
     let rows = sqlx::query(
-        "SELECT s.id, s.user_id, s.endpoint, s.p256dh_enc, s.auth_enc, u.username
+        "SELECT s.id, s.user_id, s.endpoint, s.p256dh_enc, s.auth_enc, u.username, u.role
          FROM webpush_subscriptions s JOIN users u ON u.id = s.user_id
          WHERE u.disabled = 0 ORDER BY s.id",
     )
@@ -239,7 +243,12 @@ pub async fn recipients(
             tracing::warn!(subscription = id, "push subscription keys unreadable, skipped");
             continue;
         };
-        out.push(Subscription { id, endpoint: row.try_get("endpoint")?, p256dh, auth });
+        let role: String = row.try_get("role")?;
+        let can_act = matches!(
+            crate::auth::users::Role::parse(&role),
+            Some(crate::auth::users::Role::Admin | crate::auth::users::Role::Operator)
+        );
+        out.push(Subscription { id, endpoint: row.try_get("endpoint")?, p256dh, auth, can_act });
     }
     Ok(out)
 }

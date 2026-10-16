@@ -53,7 +53,7 @@
 		<a class="brand" href="../" aria-label="DumbMonit 首页"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="章节">
 			<a href="../features/">功能</a>
-			<a href="../devices/">设备</a>
+			<a href="../devices/">监控项</a>
 			<a href="./" aria-current="page">安装</a>
 			<a href="../community/">文档与社区</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">在线演示</a>
@@ -110,7 +110,7 @@
 			</li>
 			<li>
 				<h2>创建第一个账户</h2>
-				<p>打开页面并创建管理员。然后添加设备：表单会说明需要在设备上准备什么。</p>
+				<p>打开页面并创建管理员。然后添加监控项：表单会说明需要在被监控系统上准备什么。</p>
 				<p class="code-note">然后打开 <code>http://localhost:8080</code> 并创建第一个账户。镜像支持 amd64（arm64 稍后提供）：<code>ghcr.io/laupernoe/dumbmonit</code>。</p>
 			</li>
 		</ol>
@@ -122,14 +122,14 @@
 					<li>带 Compose 插件的 Docker Engine。</li>
 					<li>一台 amd64 机器；arm64 镜像暂时搁置。</li>
 					<li>空闲的 8080 端口，或您选择的其他端口。</li>
-					<li>能访问被监控的设备的网络。除代理外，设备无需访问服务器。</li>
+					<li>能访问被监控系统的网络。除代理外，它们无需访问服务器。</li>
 				</ul>
 			</div>
 			<div>
 				<h2 class="h-sm">进一步了解</h2>
 				<ul class="facts" style="margin-top:20px">
 					<li><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/docker/">完整安装指南</a></li>
-					<li><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/first-device/">添加第一个设备</a></li>
+					<li><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/first-device/">添加第一个监控项</a></li>
 					<li><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/update/">更新</a></li>
 					<li><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/backup/">备份与恢复</a></li>
 					<li><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/install/remote-site/">远程站点</a></li>
@@ -173,7 +173,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<p>DumbMonit，Apache 2.0。吉祥物是一只鸽子。</p>
 		<nav aria-label="页脚">
 			<a href="../features/">功能</a>
-			<a href="../devices/">设备</a>
+			<a href="../devices/">监控项</a>
 			<a href="./">安装</a>
 			<a href="../community/">文档与社区</a>
 			<a href="https://demo.dumbmonit.app">在线演示</a>

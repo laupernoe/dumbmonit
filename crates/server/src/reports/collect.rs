@@ -531,7 +531,7 @@ mod tests {
 
     fn data(rows: &[HistoryRow]) -> ReportData {
         let incidents = build_incidents(rows);
-        let rules = HashMap::from([("rule-down".to_string(), "Device unreachable".to_string())]);
+        let rules = HashMap::from([("rule-down".to_string(), "Monitor unreachable".to_string())]);
         let uptime = HashMap::from([(1, 99.0), (2, 100.0), (3, 90.0)]);
         let previous = HashMap::from([(1, 98.0), (2, 100.0)]);
         assemble(Inputs {
@@ -572,7 +572,7 @@ mod tests {
         let report = data(&rows);
         assert_eq!(report.incidents.len(), 1);
         assert_eq!(report.incidents[0].device, "NAS");
-        assert_eq!(report.incidents[0].rule, "Device unreachable");
+        assert_eq!(report.incidents[0].rule, "Monitor unreachable");
         assert_eq!(report.previous_incident_count, 1);
         assert_eq!(report.downtime_secs, 3600);
     }

@@ -13,26 +13,26 @@ das **Fehlen** eines Aufrufs, das den Alarm auslöst.
 
 ## Wie es funktioniert
 
-Jedes Heartbeat-Gerät erhält eine URL der Form
+Jeder Heartbeat-Monitor erhält eine URL der Form
 `https://<Ihr DumbMonit>/api/push/<token>`. Das Token ist ein
 128-Bit-Zufallswert, zum Nachschlagen gehasht und zur Anzeige
-verschlüsselt gespeichert: Es wird auf der Geräteseite angezeigt, mit
-einem Kopier-Button, solange das Gerät existiert. Es ist absichtlich
+verschlüsselt gespeichert: Es wird auf der Monitorseite angezeigt, mit
+einem Kopier-Button, solange der Monitor existiert. Es ist absichtlich
 offen — keine Sitzung, kein API-Token, kein `X-Requested-With`-Header
 — weil eine `curl`-Zeile in einer Crontab nichts davon hat. Das Token
 zu besitzen erlaubt nur zu sagen "der Job lief".
 
-Bei jedem Scheduler-Durchlauf (das Intervall des Geräts, standardmäßig
+Bei jedem Scheduler-Durchlauf (das Intervall des Monitors, standardmäßig
 60 s) liest der Collector die Zeit des letzten Aufrufs und schreibt:
 
 | Situation | `probe_success` | Wirkung |
 |---|---|---|
-| Noch kein Aufruf empfangen | *(nichts geschrieben)* | Das Gerät zeigt **Waiting**. Kein Alarm: der Job ist noch nicht eingerichtet. |
+| Noch kein Aufruf empfangen | *(nichts geschrieben)* | Der Monitor zeigt **Waiting**. Kein Alarm: der Job ist noch nicht eingerichtet. |
 | Letzter Aufruf innerhalb des erwarteten Intervalls + Kulanz | `1` | **Reporting**. |
 | Letzter Aufruf älter als das erwartete Intervall + Kulanz | `0`, `reason="missed"` | **Down**; die Regel "Heartbeat missed" feuert nach zwei Minuten. |
 | Letzter Aufruf sagte `status=down` | `0`, `reason="reported_down"` | **Down** sofort, egal was die Uhr sagt. |
 
-Ein Aufruf wertet das Gerät auch sofort neu aus, daher löscht ein
+Ein Aufruf wertet den Monitor auch sofort neu aus, daher löscht ein
 wieder aufgenommener Job seinen Alarm, ohne auf den nächsten
 Scheduler-Durchlauf zu warten.
 
@@ -48,7 +48,7 @@ funktioniert auch.
 | Parameter | Bedeutung |
 |---|---|
 | `status` | `up` (Standard) oder `down`: der Job meldet selbst einen Fehlschlag. |
-| `msg` | Ein freies Erklärungswort, behalten (auf 500 Zeichen gekürzt) und auf der Geräteseite angezeigt. |
+| `msg` | Ein freies Erklärungswort, behalten (auf 500 Zeichen gekürzt) und auf der Monitorseite angezeigt. |
 
 Dies sind die Parameter des Push-Monitors von Uptime Kuma: Ein dafür
 geschriebenes Skript funktioniert unverändert.
@@ -63,8 +63,8 @@ Die Schritte unten sind die, die der Hinweis neben dem Formular zeigt.
 2. Setzen Sie das erwartete Intervall auf den Zeitplan des Jobs
    ("24h" für einen nächtlichen Job, "1h" für einen stündlichen) und,
    falls der Zeitplan abweicht, eine weitere Kulanzzeit. Speichern Sie
-   das Gerät.
-3. Die Geräteseite zeigt die aufzurufende URL. Fügen Sie sie am Ende
+   den Monitor.
+3. Die Monitorseite zeigt die aufzurufende URL. Fügen Sie sie am Ende
    des Jobs hinzu, sodass sie nur aufgerufen wird, wenn der Job
    gelang:
 
@@ -75,9 +75,9 @@ Die Schritte unten sind die, die der Hinweis neben dem Formular zeigt.
 4. Ein Job, der merken kann, dass er fehlgeschlagen ist, kann das
    sagen, statt still zu bleiben: Fügen Sie ?status=down&msg=… an die
    URL an, und der Alarm feuert sofort.
-5. Bis der erste Aufruf eintrifft, zeigt das Gerät "Waiting", und
+5. Bis der erste Aufruf eintrifft, zeigt der Monitor "Waiting", und
    nichts wird alarmiert. URL verloren oder durchgesickert?
-   "Regenerate" auf der Geräteseite stellt eine neue aus; die alte
+   "Regenerate" auf der Monitorseite stellt eine neue aus; die alte
    hört sofort auf zu antworten.
 
 !!! warning
@@ -154,7 +154,7 @@ Verfügbarkeit über dreißig Tage, wie für jeden Service-Monitor:
 
 Geltende eingebaute Regel: **Heartbeat missed** (Advisory, 2 Minuten).
 Die Regeln "Service down" und "Service flapping" überspringen
-Heartbeats, und "Device unreachable" feuert nie für sie: Der
+Heartbeats, und "Monitor unreachable" feuert nie für sie: Der
 Collector läuft immer, nur sein Urteil ändert sich.
 
 ## API

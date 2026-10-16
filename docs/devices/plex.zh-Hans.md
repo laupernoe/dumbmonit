@@ -28,9 +28,9 @@ Plex 不会发布其维护任务的结果("butler" 只给出计划安排)以及
 | `scrape_errors` | 上次探测中失败的调用 | |
 
 适用的[内置规则](../alerting/rules.md#self-hosted-applications):
-Plex 有可用更新,以及设备不可达。
+Plex 有可用更新,以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会调用 Plex。
 它会先给出更新状态以及服务器是否已被关联,然后是流、转码、

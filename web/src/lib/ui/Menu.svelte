@@ -16,6 +16,8 @@
 		children: Snippet<[{ close: () => void }]>;
 		label: string;
 		align?: 'left' | 'right';
+		/** Open above the trigger (in a bar pinned to the bottom of the screen). */
+		placement?: 'down' | 'up';
 		open?: boolean;
 		class?: string;
 	}
@@ -25,11 +27,62 @@
 		children,
 		label,
 		align = 'right',
+		placement = 'down',
 		open = $bindable(false),
 		class: className = ''
 	}: Props = $props();
 
 	let root = $state<HTMLDivElement | null>(null);
+	let panel = $state<HTMLDivElement | null>(null);
+
+	/** Gap between the trigger and the panel, and the panel and the screen edge, in px. */
+	const GAP = 4;
+	const EDGE = 8;
+
+	function place() {
+		if (!root || !panel) return;
+		const anchor = root.getBoundingClientRect();
+		const vw = document.documentElement.clientWidth;
+		const vh = window.innerHeight;
+		panel.style.maxHeight = '';
+		const { width, height } = panel.getBoundingClientRect();
+
+		const preferred = align === 'right' ? anchor.right - width : anchor.left;
+		const left = Math.max(EDGE, Math.min(preferred, vw - width - EDGE));
+
+		const below = vh - anchor.bottom - GAP - EDGE;
+		const above = anchor.top - GAP - EDGE;
+		const fitsBelow = height <= below;
+		const fitsAbove = height <= above;
+		// Requested side first; the other one only when it fits better.
+		const up =
+			placement === 'up'
+				? fitsAbove || (!fitsBelow && above >= below)
+				: !fitsBelow && (fitsAbove || above > below);
+		const room = Math.max(up ? above : below, 0);
+		if (height > room) panel.style.maxHeight = `${room}px`;
+		const top = up ? anchor.top - GAP - Math.min(height, room) : anchor.bottom + GAP;
+
+		panel.style.left = `${Math.round(left)}px`;
+		panel.style.top = `${Math.round(top)}px`;
+	}
+
+	$effect(() => {
+		const node = panel;
+		if (!open || !node) return;
+		// Top layer where supported; otherwise `fixed` still escapes `overflow` clipping.
+		if (typeof node.showPopover === 'function' && !node.matches(':popover-open')) node.showPopover();
+		place();
+		const resize = new ResizeObserver(place);
+		resize.observe(node);
+		window.addEventListener('resize', place);
+		window.addEventListener('scroll', place, { capture: true, passive: true });
+		return () => {
+			resize.disconnect();
+			window.removeEventListener('resize', place);
+			window.removeEventListener('scroll', place, { capture: true });
+		};
+	});
 
 	function toggle() {
 		open = !open;
@@ -62,9 +115,11 @@
 	{@render trigger({ toggle, open })}
 	{#if open}
 		<div
+			bind:this={panel}
+			popover="manual"
 			role="menu"
 			aria-label={label}
-			class={`absolute top-full z-30 mt-1 min-w-48 rounded-[var(--radius-card)] border border-line bg-surface-2 p-1.5 text-left shadow-float ${align === 'right' ? 'right-0' : 'left-0'}`}
+			class="fixed inset-auto z-30 m-0 min-w-48 max-w-[calc(100vw-1rem)] overflow-y-auto rounded-[var(--radius-card)] border border-line bg-surface-2 p-1.5 text-left text-ink shadow-float"
 		>
 			{@render children({ close })}
 		</div>

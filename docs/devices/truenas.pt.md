@@ -24,11 +24,11 @@ partilha fica montada, as cópias de segurança continuam a correr, a
 interface web de toda outra ferramenta continua verde — e o pool agora
 não tem nenhuma redundância restante. O segundo disco leva o pool.
 `truenas_pool_healthy` cai para 0 no primeiro, a regra **NAS pool
-degraded** dispara, e a página do dispositivo nomeia o disco.
+degraded** dispara, e a página do monitor nomeia o disco.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Além dos gráficos genéricos, um dispositivo TrueNAS mostra três painéis,
+Além dos gráficos genéricos, um monitor TrueNAS mostra três painéis,
 lidos do que a verificação guardou — abrir a página nunca consulta o
 próprio NAS:
 
@@ -105,7 +105,7 @@ Algumas coisas que o TrueNAS faz e que vale a pena conhecer:
   `smart/test/results` desapareceu na 25.10 e é então ignorado
   silenciosamente.
 
-As regras incorporadas que se aplicam: Device unreachable, NAS pool
+As regras incorporadas que se aplicam: Monitor unreachable, NAS pool
 degraded, NAS disk errors, NAS pool almost full, NAS scrub found errors,
 NAS scrub overdue, NAS disk failed its SMART test, NAS disk too hot, NAS
 dataset near its quota, NAS replication failed, NAS snapshot task failed,

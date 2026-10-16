@@ -4,7 +4,7 @@
 
 DumbMonit 每分钟向 `https://<协调器>/jsonrpc` 发送 JSON-RPC 调用：一次 `session.login_with_password`（会话在两次轮询之间保留，若池使其失效则重新打开一次），以及每个类各一次 `get_all_records`：`host`、`host_metrics`、`VM`、`VM_metrics`、`SR` 和 `pool`。不会更改任何内容：该账户拥有内置的 `read-only` 角色，XAPI 会在每次调用时强制执行。
 
-只需按协调器的地址添加一次池：它会报告所有主机、虚拟机和存储库。如果你输入的地址是池成员，它会以协调器的地址回应 `HOST_IS_SLAVE`；DumbMonit 会按相同的协议和端口跟随一次，因此更换协调器时无需编辑设备。
+只需按协调器的地址添加一次池：它会报告所有主机、虚拟机和存储库。如果你输入的地址是池成员，它会以协调器的地址回应 `HOST_IS_SLAVE`；DumbMonit 会按相同的协议和端口跟随一次，因此更换协调器时无需编辑监控项。
 
 !!! warning "仅依据厂商文档验证——尚未在真实系统上测试"
 

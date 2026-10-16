@@ -21,19 +21,19 @@ evaluate (hysteresis, per-device overrides)
 | Fase | Dove è impostata | Predefinito |
 |---|---|---|
 | Soglia di azzeramento (isteresi) | Editor regola → *Clear below / above* | nessuna (CPU: 85%, disco: 88% sulle regole fornite) |
-| Override per dispositivo | Editor regola → *Per-device overrides* | nessuno |
-| Rilevamento flapping | Alerts → Notifications → Notification policy → More options | 4 cambi in 30 min, attesa 30 min |
+| Override per monitor | Editor regola → *Per-device overrides* | nessuno |
+| Rilevamento flapping | Settings → Notifications & reports → Notification policy → More options | 4 cambi in 30 min, attesa 30 min |
 | Severità minima | Canale → Delivery options → *Send* | tutto |
 | Dimmi quando si risolve | Canale → Delivery options | attivo |
 | Intervallo minimo per avviso | Canale → Delivery options | nessuno |
 | Ore silenziose | Canale → Delivery options | disattivate |
 | Filtro di instradamento (tag, tipo, regola) | Canale → Delivery options → *Only some alerts* | disattivato (il canale sente tutto) |
-| Escalation se nessuno conferma | Alerts → Notifications → Notification policy | disattivata |
-| Finestra di batch | Alerts → Notifications → Notification policy | 60 s |
-| Messaggi per canale all'ora | Alerts → Notifications → Notification policy | 20 |
-| URL pubblico (deep link) | Alerts → Notifications → Notification policy, oppure `DUMBMONIT_PUBLIC_URL` | vuoto |
+| Escalation se nessuno conferma | Settings → Notifications & reports → Notification policy | disattivata |
+| Finestra di batch | Settings → Notifications & reports → Notification policy | 60 s |
+| Messaggi per canale all'ora | Settings → Notifications & reports → Notification policy | 20 |
+| URL pubblico (deep link) | Settings → Notifications & reports → Notification policy, oppure `DUMBMONIT_PUBLIC_URL` | vuoto |
 
-## Isteresi e override per dispositivo
+## Isteresi e override per monitor
 
 Una regola che si attiva sopra il 90% e si azzera nel momento in cui il
 valore scende sotto il 90% si attiverà e si azzererà per tutta la sera
@@ -44,15 +44,15 @@ sopra di essa (per regole che "si attivano sotto"). Il campo API è
 `clear_threshold` sulla regola; il server rifiuta una soglia di
 azzeramento sul lato errato della soglia.
 
-Un **override per dispositivo** cambia la soglia o la soglia di
-azzeramento di un dispositivo, oppure disattiva la regola per quel
-dispositivo, senza duplicare la regola:
+Un **override per monitor** cambia la soglia o la soglia di
+azzeramento di un monitor, oppure disattiva la regola per quel
+monitor, senza duplicare la regola:
 
 ```
 PUT /api/alerts/rules/{id}/overrides/{target_id}
 { "threshold": 97, "clear_threshold": 95 }      # oppure { "enabled": false }
 GET /api/alerts/rules/{id}/overrides
-GET /api/alerts/overrides?target_id=7           # ogni override di un dispositivo
+GET /api/alerts/overrides?target_id=7           # ogni override di un monitor
 DELETE /api/alerts/rules/{id}/overrides/{target_id}
 ```
 
@@ -66,7 +66,7 @@ o risolta 4 volte entro 30 minuti è *flapping*: un avviso esce
 ("flapping: 4 changes in 30 min, notifications held for 30 min") e nulla
 altro su quell'avviso viene inviato finché l'attesa non termina. Una
 risoluzione dopo l'attesa viene comunque annunciata. Regola o disattiva
-in Alerts → Notifications → Notification policy → More options
+in Settings → Notifications & reports → Notification policy → More options
 (`flap_events`, `flap_window_secs`, `flap_hold_secs`; `flap_events: 0`
 la disattiva).
 
@@ -89,7 +89,7 @@ Ogni canale decide cosa sente (`policy` nel payload del canale):
   …". Un avviso che si attiva e si azzera durante le ore silenziose
   viene menzionato in quel digest solo come "resolved during quiet
   hours".
-- `matcher` — quali avvisi il canale vuole, per tag, tipo di dispositivo
+- `matcher` — quali avvisi il canale vuole, per tag, tipo di monitor
   o regola. Vuoto (il predefinito, e ciò che ogni canale esistente
   mantiene) significa tutto.
 
@@ -108,7 +108,7 @@ di instradamento.
 
 ## Instradamento per tag
 
-I dispositivi portano tag (`site=cellar`, `role=storage`) e un tipo
+I monitor portano tag (`site=cellar`, `role=storage`) e un tipo
 (`snmp`, `proxmox`, `synology`, `agent`…). Il **filtro di
 instradamento** di un canale dice quali avvisi vuole:
 
@@ -124,8 +124,8 @@ nessuna parentesi:
 
 | `field` | Corrisponde su | Esempio |
 |---|---|---|
-| `tag` | Un tag della pagina propria del dispositivo | `{"field":"tag","key":"site","value":"cellar"}` |
-| `kind` | Il collector che sonda il dispositivo | `{"field":"kind","value":"proxmox"}` |
+| `tag` | Un tag della pagina propria del monitor | `{"field":"tag","key":"site","value":"cellar"}` |
+| `kind` | Il collector che sonda il monitor | `{"field":"kind","value":"proxmox"}` |
 | `rule` | L'`uid` della regola | `{"field":"rule","value":"disk_full"}` |
 
 Come si leggono gli elenchi:
@@ -139,14 +139,14 @@ Come si leggono gli elenchi:
 
 Quindi l'esempio sopra si legge, e l'interfaccia lo riassume con
 esattamente queste parole: *questo canale riceve advisory e superiori
-dai dispositivi taggati site=cellar, eccetto i dispositivi taggati
+dai monitor taggati site=cellar, eccetto i monitor taggati
 role=lab*.
 
-Sotto l'editor, un'**anteprima** elenca quali dei tuoi dispositivi
+Sotto l'editor, un'**anteprima** elenca quali dei tuoi monitor
 attuali il filtro seleziona. Non è un'approssimazione: il server esegue
 esattamente il filtro che il motore di alerting esegue, ridotto alla
-parte che dipende solo dal dispositivo. Le condizioni di regola si
-applicano agli avvisi invece che ai dispositivi, quindi l'anteprima le
+parte che dipende solo dal monitor. Le condizioni di regola si
+applicano agli avvisi invece che ai monitor, quindi l'anteprima le
 nomina separatamente invece di fingere di contarle.
 
 ```
@@ -210,8 +210,8 @@ che lo fanno correttamente.
 ```
 
 - **Batch window** — gli avvisi che si attivano entro la finestra
-  escono come *un* messaggio per canale, raggruppati per dispositivo:
-  "3 alerts on 2 devices" con una sezione per dispositivo; le
+  escono come *un* messaggio per canale, raggruppati per monitor:
+  "3 alerts on 2 devices" con una sezione per monitor; le
   risoluzioni viaggiano insieme ("2 resolved"). `0` invia al ciclo
   successivo. Un digest elenca al massimo 12 righe, poi "…and N more
   alerts".
@@ -219,8 +219,8 @@ che lo fanno correttamente.
   messaggi nell'ultima ora, gli avvisi successivi attendono e arrivano
   come un digest quando uno slot si libera. `0` rimuove il limite.
 - I **canali on-call** (PagerDuty, Opsgenie) non vengono mai raggruppati
-  tra dispositivi: apre e chiude un incidente per dispositivo, quindi
-  ricevono un messaggio per dispositivo senza attendere.
+  tra monitor: apre e chiude un incidente per monitor, quindi
+  ricevono un messaggio per monitor senza attendere.
 
 I fallimenti di consegna mantengono le righe in coda; il ciclo
 successivo ritenta.
@@ -241,15 +241,15 @@ Ogni avviso è una riga, la stessa in mail, ntfy, chat e la variabile
   emoji.
 - Una regola che osserva diverse serie nomina quella che si è attivata:
   la VM e il suo id, il punto di mount, l'interfaccia, il gruppo di
-  backup, l'URL della sonda. Le regole a livello di dispositivo
-  (irraggiungibile) non nominano nulla oltre al dispositivo.
+  backup, l'URL della sonda. Le regole a livello di monitor
+  (irraggiungibile) non nominano nulla oltre al monitor.
 - Il valore e la soglia vengono mostrati per le regole misurate; una
   regola tutto-o-nulla su una metrica 0/1 (a batteria, guest fermo) non
   ripete "1 (threshold > 0)".
 
 ## Deep link
 
-Ogni messaggio termina con un link al dispositivo
+Ogni messaggio termina con un link al monitor
 (`{public_url}/targets/{id}`) quando un URL pubblico è conosciuto —
 il `public_url` della politica, oppure `DUMBMONIT_PUBLIC_URL`. I
 webhook personalizzati lo ottengono anche come variabile `{{link}}` a
@@ -259,7 +259,7 @@ Non c'è deliberatamente alcun link "silence for 1 h" nei messaggi: i
 servizi di chat recuperano ogni link che mostrano per costruire
 un'anteprima, il che attiverebbe il silenzio nel momento in cui il
 messaggio viene pubblicato. Silenzia invece dalla pagina del
-dispositivo o dalla pagina Alerts.
+monitor o dalla pagina Alerts.
 
 ## Cosa è stato preso in prestito da Pulse, e cosa no
 

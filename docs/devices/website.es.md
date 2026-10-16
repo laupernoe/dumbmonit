@@ -1,6 +1,6 @@
 # Salud y SEO del sitio web
 
-Vigila sitios web en masa, un dispositivo por sitio: sé informado cuando un sitio **se rompe**
+Vigila sitios web en masa, un monitor por sitio: sé informado cuando un sitio **se rompe**
 (error, inalcanzable, certificado inválido, bucle de redirección), cuando su página **se queda en blanco**, cuando **cae de los motores de búsqueda** (`noindex`, `robots.txt`
 bloqueando todo) y cuando los metadatos que Google muestra **cambian** (título,
 descripción, URL canónica, dirección final). Cada sitio también se ordena por la
@@ -14,7 +14,7 @@ Para el contenido de una página en lugar de su salud, ver
 1. En la dirección, pega la página a verificar, generalmente la página de inicio, con o sin https://. Los redireccionamientos se siguen: http a https y example.com a www.example.com son normales, solo una redirección en bucle o un movimiento a otra dirección se reporta.
 2. Opcionalmente completa "Texto esperado" con una frase que la página siempre debe mostrar, y ajusta "Página en blanco debajo" si la página es corta a propósito.
 3. El primer control registra la referencia: dirección final, título, descripción, URL canónica, reglas de indexación. Un cambio se reporta solo una vez que **2 controles seguidos** (ajustable) lo han visto, por lo que las pruebas A/B y los cachés inestables permanecen silenciosos.
-4. Para agregar muchos sitios a la vez, importa un archivo CSV desde la lista de dispositivos: cada sitio se archiva bajo `Websites/<categoría>` (E-commerce, Blog… o la categoría que des) o, cuando la página no lo dice, bajo `Websites/<plataforma>` (WordPress, Shopify…), a menos que des una carpeta.
+4. Para agregar muchos sitios a la vez, importa un archivo CSV desde la lista de monitores: cada sitio se archiva bajo `Websites/<categoría>` (E-commerce, Blog… o la categoría que des) o, cuando la página no lo dice, bajo `Websites/<plataforma>` (WordPress, Shopify…), a menos que des una carpeta.
 
 !!! warning
     Solo se lee lo que el servidor envía: una página dibujada completamente por JavaScript se ve en blanco aquí. Baja "Página en blanco debajo" a 0 para tal sitio.
@@ -77,7 +77,7 @@ no se registra y no genera alertas; al reactivarlo, parte de una referencia nuev
 activado de forma predeterminada. Un campo que desaparece de la página (valor vacío) es un cambio
 como cualquier otro.
 
-Un cambio confirmado se mantiene en el historial del dispositivo (campo, antes, después,
+Un cambio confirmado se mantiene en el historial del monitor (campo, antes, después,
 fecha), y su indicador (`dumbmonit_website_title_changed`…) permanece en 1 durante 24
 horas. El primer control solo registra la referencia. Cambiar la dirección o
 **Ignorar cadenas de consulta** inicia una nueva referencia en lugar de reportar un cambio.
@@ -121,7 +121,7 @@ los sitios no confunda DumbMonit con un ataque:
 Un sitio cuyo control anterior sigue esperando su turno se salta una ronda en
 lugar de ponerse dos veces en cola. Muchos sitios de un mismo dominio con un
 intervalo corto se controlan, por tanto, menos a menudo de lo pedido: sube el
-intervalo, o los límites por dominio, si la lista de dispositivos los muestra
+intervalo, o los límites por dominio, si la lista de monitores los muestra
 con retraso. Consulta [Configuración](../reference/configuration.md#server).
 
 ## Detección de plataforma
@@ -151,18 +151,18 @@ columna CSV); si no, se adivina solo a partir de señales claras:
 Una plataforma generalista (WordPress, Drupal, Hugo…) sin otra señal no se adivina: el sitio se
 queda entonces bajo su plataforma (`Websites/WordPress`), y los de plataforma desconocida bajo
 `Websites/Other`. Ordénalos a mano con las columnas `folder` o `category`, o muévelos en la lista
-de dispositivos.
+de monitores.
 
 ## Importar una lista de sitios (CSV)
 
-Desde la lista de dispositivos o la página de agregar dispositivo, **Importar sitios web (CSV)** toma un
+Desde la lista de monitores o la página de agregar monitor, **Importar sitios web (CSV)** toma un
 archivo o texto pegado con una fila de encabezado y hasta 1000 filas:
 
 | Columna | Requerido | Significado |
 |---|---|---|
 | `url` | sí | Dirección del sitio. |
-| `name` | no | Nombre del dispositivo; el host de forma predeterminada. |
-| `folder` | no | Carpeta del dispositivo; vacío: `Websites/<categoría>` si hay categoría, si no `Websites/<plataforma>`, detectado leyendo el sitio una vez. |
+| `name` | no | Nombre del monitor; el host de forma predeterminada. |
+| `folder` | no | Carpeta del monitor; vacío: `Websites/<categoría>` si hay categoría, si no `Websites/<plataforma>`, detectado leyendo el sitio una vez. |
 | `category` | no | Texto libre (60 caracteres, sin `/`), guardado como la opción **Categoría**. Vacío: adivinada desde la página, ver [Categorías](#categories). |
 | `tags` | no | `key=value;key=value`. |
 | `interval` | no | Intervalo de sondeo. |
@@ -186,6 +186,8 @@ ya supervisado (misma dirección final) se omite.
 | `dumbmonit_website_status_code` | Estado HTTP de la respuesta final. |
 | `dumbmonit_website_response_seconds` | Tiempo total, redireccionamientos incluidos. |
 | `dumbmonit_website_redirect_hops` | Redireccionamientos seguidos. |
+| `dumbmonit_website_https` | 1 cuando la dirección final es https. |
+| `dumbmonit_website_security_header{header}` | 0/1 por etiqueta `header` (solo https): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `dumbmonit_website_info{platform,category}` | Siempre 1; las etiquetas llevan la plataforma y, si se conoce, la categoría. |
 | `dumbmonit_website_text_chars` | Caracteres de texto visible (respuestas 2xx). |
 | `dumbmonit_website_blank` | 1 cuando ese texto está por debajo del umbral. |
@@ -202,7 +204,7 @@ ya supervisado (misma dirección final) se omite.
 
 | Alerta | Cuándo | Severidad |
 |---|---|---|
-| Dispositivo inalcanzable | Sin respuesta, certificado rechazado, bucle de redirección o demasiados redireccionamientos | critical |
+| Monitor inalcanzable | Sin respuesta, certificado rechazado, bucle de redirección o demasiados redireccionamientos | critical |
 | Sitio web abajo | La respuesta final es un error 4xx o 5xx, durante 3 minutos | critical |
 | Página de sitio web en blanco | Texto visible por debajo del umbral, durante 3 minutos | critical |
 | Texto esperado de sitio web faltante | El texto esperado falta, durante 3 minutos | warning |

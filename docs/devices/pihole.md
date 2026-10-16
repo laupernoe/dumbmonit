@@ -42,9 +42,9 @@ numbers, and so does DumbMonit.
 
 The [built-in rules](../alerting/rules.md#pi-hole) that apply: Pi-hole
 blocking disabled, Pi-hole blocklists stale, Pi-hole update available, Pi-hole
-diagnosis messages, plus Device unreachable.
+diagnosis messages, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the check stored; opening the page never
 connects to Pi-hole. It shows whether blocking is on (and when a pause ends),

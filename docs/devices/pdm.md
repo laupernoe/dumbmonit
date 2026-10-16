@@ -11,37 +11,37 @@ the tasks that failed anywhere, and the console's own health.
     shapes come from a real datacenter manager, but nobody has yet run it for weeks on a
     live datacenter manager. Tell us what breaks.
 
-## One device for the estate, or one device per cluster?
+## One monitor for the estate, or one monitor per cluster?
 
-A Datacenter Manager device is not a replacement for [Proxmox VE](proxmox.md)
-and [Proxmox Backup Server](pbs.md) devices. It answers a different question.
+A Datacenter Manager monitor is not a replacement for [Proxmox VE](proxmox.md)
+and [Proxmox Backup Server](pbs.md) monitors. It answers a different question.
 
-| | Datacenter Manager device | One device per cluster and per backup server |
+| | Datacenter Manager monitor | One monitor per cluster and per backup server |
 |---|---|---|
-| Devices to create | one | one per cluster, one per backup server |
+| Monitors to create | one | one per cluster, one per backup server |
 | Credentials to manage | one token, on the console | one token per instance |
 | Load on each cluster | none of ours: we read the console's own cache | one probe per interval, per cluster |
 | What you get | reachability, version, guest and node counts, CPU, memory and storage totals, failed tasks | all of that plus guests one by one, snapshots, backup jobs, HA, Ceph, replication, disks and SMART, ZFS pools, the 30-day backup calendar |
 | What you cannot get | per-guest series, per-datastore detail, disks, snapshots, task logs | a single estate-wide total |
 | Headline failure | the console cannot reach an instance | the cluster does not answer us |
 
-**Our recommendation.** Add the Datacenter Manager device when you already run
+**Our recommendation.** Add the Datacenter Manager monitor when you already run
 a console and want one page that says whether the estate is whole — it is the
 cheapest way to notice that a remote site dropped off, and it costs the
-clusters nothing. Add a dedicated device for every cluster and backup server
+clusters nothing. Add a dedicated monitor for every cluster and backup server
 you actually operate: that is where the depth is, and it is what tells you
 *which* VM stopped or *which* backup failed. The two overlap without
-conflicting; a failed backup then raises one alert from the PBS device (with
+conflicting; a failed backup then raises one alert from the PBS monitor (with
 the task log) and one from the console (naming the instance). Silence the
 console's task rule if you find that redundant, or scope it to the instances
-you have no dedicated device for.
+you have no dedicated monitor for.
 
 If you do not run a console at all, do not install one just for monitoring:
-dedicated devices see strictly more.
+dedicated monitors see strictly more.
 
-## The device page
+## The monitor page
 
-Beyond the generic charts, a Datacenter Manager device shows three panels,
+Beyond the generic charts, a Datacenter Manager monitor shows three panels,
 read from what the probe stored — opening the page queries neither the console
 nor the clusters it manages:
 
@@ -57,7 +57,7 @@ nor the clusters it manages:
 * **Failures** — every task that failed across the estate in the last 14 days,
   newest first, with the instance it ran on, the kind of task, when it started,
   how long it took and the error message. The task log itself stays on the
-  instance: open it there, or add that cluster as its own device, where *Show
+  instance: open it there, or add that cluster as its own monitor, where *Show
   log* fetches it.
 * **Console host** — the machine that runs the console: CPU, memory, root
   filesystem, uptime and kernel, its certificates with the days left before
@@ -66,7 +66,7 @@ nor the clusters it manages:
   reads none of it and the panel says so, rather than showing zeros.
 
 Task history is kept in SQLite (`pdm_task_history`, 19 days, at most 5000 tasks
-per device) so the failure list survives restarts even though each probe only
+per monitor) so the failure list survives restarts even though each probe only
 looks at the task window.
 
 ## What it watches
@@ -99,7 +99,7 @@ unreachable instance never passes for up to date.
 Storage totals count each storage name once per instance: a storage shared by
 five nodes of a cluster is counted once, not five times.
 
-Built-in rules that apply: Device unreachable, Federated instance unreachable,
+Built-in rules that apply: Monitor unreachable, Federated instance unreachable,
 Federated instance behind, Task failed on a federated instance, Datacenter
 console disk almost full, Datacenter console certificate expiring, Datacenter
 console updates pending. Notifications name the instance concerned.
@@ -206,7 +206,7 @@ Address: `10.0.0.40`, `dc.lan`, `dc.lan:8443`, `[fd00::2]` or a full URL. The
 `max_age_seconds` is the one worth understanding. The console keeps its own
 inventory, refreshed by its own collection loop. Asking for fresh data on every
 probe makes the console call every cluster again, on top of its normal rhythm —
-exactly the load a single console device is supposed to avoid. Sixty seconds is
+exactly the load a single console monitor is supposed to avoid. Sixty seconds is
 still fresher than the default probe interval.
 
 ## Common errors

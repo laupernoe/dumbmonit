@@ -47,9 +47,9 @@ installation standard font tourner les deux.
 
 Les [règles intégrées](../alerting/rules.md#databases-message-broker-and-security-engine)
 qui s'appliquent : Local API CrowdSec en panne, bouncer CrowdSec arrêté de
-récupérer, CrowdSec ne lit aucun log, plus Appareil inaccessible.
+récupérer, CrowdSec ne lit aucun log, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais CrowdSec. Il dit ce qui ne va pas en une phrase

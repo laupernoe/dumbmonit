@@ -8,7 +8,7 @@ tests. Pour signaler une vulnérabilité, suivez la
 ## Ce qui est en jeu
 
 DumbMonit tourne dans votre réseau. Il conserve les identifiants nécessaires
-pour lire chaque équipement (communautés SNMP, jetons d'API, mots de passe), il
+pour lire chaque surveillance (communautés SNMP, jetons d'API, mots de passe), il
 reçoit les mesures des agents installés sur vos machines et il envoie des
 requêtes vers les adresses que vous configurez. Une compromission exposerait
 ces secrets et donnerait un point d'appui dans le réseau supervisé.
@@ -19,7 +19,7 @@ ces secrets et donnerait un point d'appui dans le réseau supervisé.
 |---|---|---|
 | Navigateur ou script vers `/api/*` | Admins, opérateurs et lecteurs | Authentifiés par cookie de session ou jeton d'API ; trois rôles limitent ce que chacun peut faire. |
 | Agent vers `/api/ingest` | Machines où vous avez installé un agent | Un jeton par machine ; un jeton qui fuite se révoque seul. |
-| Serveur vers équipements et services | Systèmes tiers | Non fiables : les réponses sont analysées avec prudence et les redirections restent sur le même hôte. |
+| Serveur vers surveillances et services | Systèmes tiers | Non fiables : les réponses sont analysées avec prudence et les redirections restent sur le même hôte. |
 | Serveur vers canaux de notification | Services externes | Identifiants chiffrés au repos, jamais renvoyés par l'API. |
 | Serveur vers VictoriaMetrics | Processus enfant en boucle locale, ou instance externe | L'instance embarquée n'a pas d'authentification et écoute en boucle locale ; une instance externe relève de l'opérateur. |
 | Volume `/data` et hôte | L'opérateur | De confiance. Un attaquant qui contrôle l'hôte ou le volume est hors périmètre. |
@@ -36,7 +36,7 @@ ces secrets et donnerait un point d'appui dans le réseau supervisé.
 - **Économie de mécanisme.** Un binaire, un fichier SQLite, un processus enfant
   en boucle locale, une seule entrée pour tous les clients : `/api/*`.
 - **Défauts sûrs.** Un contrôle de sécurité sans donnée est `unknown`, jamais
-  une réussite ; un équipement injoignable et une erreur de configuration sont
+  une réussite ; une surveillance injoignable et une erreur de configuration sont
   des états distincts.
 - **Médiation complète.** Un seul intergiciel d'authentification
   (`crates/server/src/auth/middleware.rs`) protège les routes de l'API.
@@ -65,7 +65,7 @@ ces secrets et donnerait un point d'appui dans le réseau supervisé.
 | Défauts d'identification et d'authentification | Limitation des essais par adresse client et par compte (`auth/rate_limit.rs`), double authentification facultative, OpenID Connect, un admin peut réinitialiser le second facteur d'un utilisateur et le déconnecter. |
 | Intégrité des logiciels et des données | Les installateurs d'agent vérifient le SHA-256 du binaire téléchargé ; les images publiées sont construites par la CI. |
 | Journalisation et surveillance | Un journal de sécurité des connexions et changements sensibles (`auth/audit.rs`). |
-| Falsification de requête côté serveur | Intégrations et canaux ne suivent les redirections que vers le même hôte : un équipement ne peut pas détourner une requête et sa clé d'API ailleurs. |
+| Falsification de requête côté serveur | Intégrations et canaux ne suivent les redirections que vers le même hôte : une surveillance ne peut pas détourner une requête et sa clé d'API ailleurs. |
 | Falsification de requête inter-sites | Une requête qui modifie l'état et s'appuie sur le cookie doit porter `X-Requested-With: DumbMonit` ou des métadonnées de même origine, sinon `403` ; les requêtes par jeton n'ont pas de cookie. |
 
 ## Vérification
@@ -83,7 +83,7 @@ l'argument de conception sûre et les preuves de chaque affirmation.
 ## Limites connues
 
 - Le serveur intégré parle en HTTP clair ; placez du TLS devant.
-- Les options d'équipement sont stockées en clair. Mettez les secrets dans les
+- Les options de surveillance sont stockées en clair. Mettez les secrets dans les
   champs d'identifiants.
 - Le VictoriaMetrics embarqué n'a pas d'authentification.
-- DumbMonit est en alpha ; les routes et les champs peuvent encore changer.
+- DumbMonit est avant la 1.0 ; les routes et les champs peuvent encore changer.

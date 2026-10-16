@@ -38,9 +38,9 @@ Manager, с именем хоста, который его использует.
 
 Применяются следующие [встроенные правила](../alerting/rules.md#reverse-proxies-and-domains):
 Nginx Proxy Manager host offline, Proxy certificate not renewed, а также
-Device unreachable.
+Monitor unreachable.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками читает то, что сохранил зонд; открытие страницы никогда не
 обращается к Nginx Proxy Manager. Она одним предложением сообщает, что не так

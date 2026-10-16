@@ -6,7 +6,7 @@ quello che mantiene basso il rumore: soppressione per dipendenza,
 raggruppamento per host, finestre di manutenzione, e una baseline che
 apprende prima di parlare.
 
-![La pagina Alerts: cosa richiede attenzione, le regole, la manutenzione pianificata e la cronologia](../assets/screenshots/alerts-light.png){ loading=lazy }
+![La pagina Alerts: cosa succede ora, la manutenzione, la cronologia e le regole](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severità {#severities}
 
@@ -17,7 +17,7 @@ regole memorizzano gli stessi tre livelli sotto i loro nomi del motore.
 |---|---|---|
 | Info | `info` | Da sapere, nessuna azione prevista. Usato dalla regola di baseline. |
 | Advisory | `warning` | Richiede attenzione a breve: CPU alta, disco quasi pieno, servizio lento. |
-| Warning | `critical` | Richiede attenzione ora: dispositivo irraggiungibile, servizio inattivo, verifica di backup fallita, certificato scaduto. |
+| Warning | `critical` | Richiede attenzione ora: monitor irraggiungibile, servizio inattivo, verifica di backup fallita, certificato scaduto. |
 
 L'escalation alza la severità di una regola di un gradino dopo
 `escalate_after` se l'avviso continua ad attivarsi (Info → Advisory →
@@ -34,7 +34,7 @@ Ogni avviso è una macchina a stati, valutata ogni 30 secondi
 | `pending` | Building up | La condizione è vera ma l'attesa della regola (`for`) non è ancora trascorsa. Nulla viene inviato. |
 | `firing` | Firing | La condizione è durata abbastanza. La prima notifica esce, poi ricordi ogni `repeat_interval` (6 ore per impostazione predefinita per la maggior parte delle regole integrate), poi un'escalation se configurata. |
 | `resolved` | Resolved | Tornato alla normalità. Una notifica di risoluzione viene inviata solo se l'attivazione era stata annunciata. |
-| `suppressed` | Suppressed by parent | L'avviso è attivo, ma un dispositivo genitore, o il dispositivo stesso, è irraggiungibile: vedi sotto. |
+| `suppressed` | Suppressed by parent | L'avviso è attivo, ma un monitor genitore, o il monitor stesso, è irraggiungibile: vedi sotto. |
 
 `phase` è lo stato del motore; `effective_phase` è ciò che leggi. Un
 avviso il cui `effective_phase` è `suppressed` mantiene `phase = firing`
@@ -47,41 +47,41 @@ escalation si fermano finché `acked_until`, la risoluzione viene comunque
 notificata e azzera la conferma. **Sospendere** un avviso funziona nello
 stesso modo sotto il cofano ma tramite una finestra di manutenzione
 limitata alle etichette esatte di quell'avviso (`silenced: true`), invece
-che all'intero dispositivo: una regola gemella sullo stesso dispositivo
+che all'intero monitor: una regola gemella sullo stesso monitor
 continua a parlare. Vedi
 [Eliminare un avviso](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Soppressione per dipendenza {#dependency-suppression}
 
-Qualsiasi dispositivo può dichiarare un **dispositivo genitore**. Quando
-un dispositivo è irraggiungibile (la regola "Device unreachable" si
+Qualsiasi monitor può dichiarare un **monitor genitore**. Quando
+un monitor è irraggiungibile (la regola "Monitor unreachable" si
 attiva su di esso), ogni avviso sui suoi discendenti viene contrassegnato
 *Suppressed by parent* invece di essere inviato: uno switch che si spegne
 produce una notifica, non trenta. L'antenato irraggiungibile più vicino
 viene nominato come causa (`suppressed_by`), e la catena viene seguita
 fino a 64 livelli.
 
-Lo stesso vale per il dispositivo irraggiungibile stesso: i suoi altri avvisi
+Lo stesso vale per il monitor irraggiungibile stesso: i suoi altri avvisi
 (disco pieno, CPU, ecc.) vengono soppressi dal suo stesso guasto, con
-`suppressed_by` che nomina il dispositivo stesso, perché i loro valori non sono
+`suppressed_by` che nomina il monitor stesso, perché i loro valori non sono
 più aggiornati e sono solo un sintomo dello stesso guasto. Solo il suo avviso
-"Device unreachable" non viene mai nascosto dal proprio guasto, quindi vieni
+"Monitor unreachable" non viene mai nascosto dal proprio guasto, quindi vieni
 avvisato una volta.
 
-Imposta il genitore nel modulo del dispositivo. Nella pagina Devices, i
+Imposta il genitore nel modulo del monitor. Nella pagina Devices, i
 figli si impilano sotto il loro genitore e si attenuano quando è
 irraggiungibile.
 
 Un [agent relay](../install/remote-site.md) conta come genitore di ogni
-dispositivo che sonda (*Reached through* nel modulo del dispositivo), in
+monitor che sonda (*Reached through* nel modulo del monitor), in
 aggiunta al genitore impostato esplicitamente: quando il relay è
-irraggiungibile, i suoi dispositivi vengono soppressi con il relay
+irraggiungibile, i suoi monitor vengono soppressi con il relay
 nominato come causa. A pari distanza, il genitore esplicito vince.
 
 Un genitore conta anche come irraggiungibile non appena la sua propria
-sonda lo dice (lo stato *Timed out* / *Device unreachable* sulla sua
-pagina), senza attendere che il suo avviso "Device unreachable" si
-attivi: un agent che smette di inviare porta con sé i suoi dispositivi un
+sonda lo dice (lo stato *Timed out* / *Monitor unreachable* sulla sua
+pagina), senza attendere che il suo avviso "Monitor unreachable" si
+attivi: un agent che smette di inviare porta con sé i suoi monitor un
 minuto o due prima del suo proprio avviso, e altrimenti ognuno di essi
 notificherebbe prima.
 
@@ -101,7 +101,7 @@ perché (apprendimento, soppresso, silenziato, confermato).
 Un silenzio interrompe le notifiche senza interrompere la valutazione:
 alla fine di una finestra, un avviso ancora attivo viene notificato una
 volta, invece di "nascere" dopo due ore di esistenza. Le finestre sono
-puntuali o settimanali, per dispositivo o per l'intera istanza. Vedi
+puntuali o settimanali, per monitor o per l'intera istanza. Vedi
 [Finestre di manutenzione](maintenance.md).
 
 ## Apprendimento della baseline {#baseline-learning}
@@ -131,7 +131,7 @@ PBS è una semplice soglia sulla previsione propria di PBS.
 
 Le regole integrate non hanno alcun canale collegato, il che significa
 **ogni canale abilitato**. Una regola che modifichi può nominare canali
-specifici. I canali vengono configurati in Alerts → Notifications; vedi
+specifici. I canali vengono configurati in Settings → Notifications & reports; vedi
 [Canali di notifica](../notifications.md).
 
 ## Notifiche intelligenti {#smart-notifications}
@@ -144,19 +144,19 @@ ordine:
 1. **Valutare** — soglia, punteggio di anomalia o previsione, con
    l'attesa della regola (`for`) e, quando impostata, la sua **soglia di
    azzeramento** (isteresi: si attiva sopra il 90%, si azzera solo sotto
-   l'85%) e qualsiasi **override per dispositivo**.
+   l'85%) e qualsiasi **override per monitor**.
 2. **Deduplicare** — un'impronta per (regola, serie), basata sull'id del
-   dispositivo (`target`) invece che sul suo nome: rinominare un
-   dispositivo o modificare i suoi tag non crea un secondo avviso, e una
+   monitor (`target`) invece che sul suo nome: rinominare un
+   monitor o modificare i suoi tag non crea un secondo avviso, e una
    serie che si risolve nella stessa chiave due volte produce un unico
-   avviso. Le serie di un dispositivo eliminato o messo in pausa vengono
+   avviso. Le serie di un monitor eliminato o messo in pausa vengono
    scartate: i loro avvisi si azzerano all'istante, senza alcuna
    notifica, e la cronologia registra `device removed or disabled`.
-3. **Sopprimere per dipendenza** — i discendenti di un dispositivo
+3. **Sopprimere per dipendenza** — i discendenti di un monitor
    irraggiungibile restano silenziosi.
 4. **Silenziare** — le finestre di manutenzione zittiscono ciò che
    coprono.
-5. **Raggruppare per dispositivo** — un messaggio per dispositivo per
+5. **Raggruppare per monitor** — un messaggio per monitor per
    ciclo, ricordi ed escalation inclusi.
 6. **Attesa di flapping** — un'impronta che si attiva e si azzera 4 volte
    in 30 minuti invia un unico avviso di "flapping", poi nulla per 30
@@ -173,9 +173,9 @@ ordine:
    alerts on 2 devices, 1 resolved".
 10. **Limite orario** — oltre `max_per_hour` messaggi su un canale, gli
     avvisi attendono e arrivano come un digest ("…and 7 more alerts").
-11. **Inviare** — con un link "Open in DumbMonit" per dispositivo quando
+11. **Inviare** — con un link "Open in DumbMonit" per monitor quando
     un URL pubblico è conosciuto.
 
-I passaggi 6 a 10 sono configurati in Alerts → Notifications →
+I passaggi 6 a 10 sono configurati in Settings → Notifications & reports →
 Notification policy (globale) e su ogni canale (Delivery options). Vedi
 [Politica di notifica](notifications.md).

@@ -4,7 +4,7 @@
 
 DumbMonit使用仅持有Veeam Backup Viewer角色的Windows账户登录（`/api/oauth2/token`上的OAuth2密码授予，端口9419），并在其十五分钟生命周期内保持令牌。每个调用都携带强制的`x-api-version`标头，默认为`1.1-rev0`：版本12.0附带的修订版本。
 
-作业状态（`/api/v1/jobs/states`）是所需的唯一读取。其他的——`/api/v1/serverInfo`、`/api/v1/sessions`（在过去24小时内创建）、`/api/v1/backupInfrastructure/repositories/states`、`/api/v1/license`和`/api/v1/restorePoints`（每个受保护对象的还原点，服务器范围内，最新优先）——在角色允许时读取。Veeam为Backup Administrator角色保留某些路由，许可证在当前版本中属于其中：那里的拒绝显示为"不可读"，而不是错误。一个太旧而不知道`/api/v1/restorePoints`的服务器——该路由出现在12.0之后——受到相同对待：无设备，无错误。
+作业状态（`/api/v1/jobs/states`）是所需的唯一读取。其他的——`/api/v1/serverInfo`、`/api/v1/sessions`（在过去24小时内创建）、`/api/v1/backupInfrastructure/repositories/states`、`/api/v1/license`和`/api/v1/restorePoints`（每个受保护对象的还原点，服务器范围内，最新优先）——在角色允许时读取。Veeam为Backup Administrator角色保留某些路由，许可证在当前版本中属于其中：那里的拒绝显示为"不可读"，而不是错误。一个太旧而不知道`/api/v1/restorePoints`的服务器——该路由出现在12.0之后——受到相同对待：无监控项，无错误。
 
 !!! warning "仅根据供应商文档验证——尚未在实际系统上测试"
 
@@ -37,7 +37,7 @@ DumbMonit使用仅持有Veeam Backup Viewer角色的Windows账户登录（`/api/
 - **Veeam作业以警告结束**（建议，每日提醒）。
 - **Veeam仓库几乎满**：超过90%持续30分钟（建议）。
 - **Veeam许可证过期**：剩余不足30天（建议，每日提醒）。仅当账户可以读取许可证时。
-- **客户端设备陈旧**：受保护的计算机或VM已超过`device_stale_days`而不成功备份（建议，每日提醒）；见下面[设备](#devices)。
+- **客户端设备陈旧**：受保护的计算机或VM已超过`device_stale_days`而不成功备份（建议，每日提醒）；见下面[监控项](#devices)。
 
 ## 设备 {#devices}
 
@@ -48,9 +48,9 @@ DumbMonit使用仅持有Veeam Backup Viewer角色的Windows账户登录（`/api/
 | `last_backup_timestamp_seconds` | 对象的最新还原点 | `device`、`type`、`os`、`user`、`kind` |
 | `stale_seconds` | 一旦对象超过`device_stale_days`（默认3）而不新还原点就为正数；驱动[客户端设备陈旧](../alerting/rules.md#client-devices)规则 | `device`、`type`、`os`、`user`、`kind`、`signal`（始终为`backup`） |
 
-**值得了解的限制**：一个作业作为一个组保护其对象（`jobs/states`仅给出计数，`objectsCount`）；每个对象日期来自`/api/v1/restorePoints`，在一个调用中为整个服务器读取。Veeam仅在备份至少部分成功后创建还原点，所以每个对象的最新点已经是"最后一次成功备份"——此处不在结果上过滤。Veeam不公开与备份本身分开的"最后连接"，所以`last_seen_timestamp_seconds`和`connection`信号从不发布；设备在设备页面的表中将`last_connection`显示为"——"。设备的`type`是Veeam自己的平台名称（`VSphere`、`WindowsPhysical`、`HyperV`…），按原样显示。
+**值得了解的限制**：一个作业作为一个组保护其对象（`jobs/states`仅给出计数，`objectsCount`）；每个对象日期来自`/api/v1/restorePoints`，在一个调用中为整个服务器读取。Veeam仅在备份至少部分成功后创建还原点，所以每个对象的最新点已经是"最后一次成功备份"——此处不在结果上过滤。Veeam不公开与备份本身分开的"最后连接"，所以`last_seen_timestamp_seconds`和`connection`信号从不发布；设备在监控项页面的表中将`last_connection`显示为"——"。设备的`type`是Veeam自己的平台名称（`VSphere`、`WindowsPhysical`、`HyperV`…），按原样显示。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 备份面板说明有什么问题，显示失败的作业、过去24小时内失败的会话、运行的作业和许可证，然后列出启用的作业——失败优先——及其类型和最后运行，以及仓库及其填充和可用空间。受保护设备的表（名称、平台、最后备份、状态）随后，来自上面的通用家族。
 
@@ -81,7 +81,7 @@ DumbMonit使用仅持有Veeam Backup Viewer角色的Windows账户登录（`/api/
 - **API版本**（`1.1-rev0`）：作为`x-api-version`发送。仅在服务器拒绝时更改；v13服务器记录`1.3-rev1`。
 - **接受无法验证的证书**：REST API自己的证书是自签名的。
 - **每个请求的超时**（15秒）。
-- **设备陈旧性**（`device_stale_days`，默认3天）：见上面[设备](#devices)。
+- **设备陈旧性**（`device_stale_days`，默认3天）：见上面[监控项](#devices)。
 
 ## 故障排除 {#troubleshooting}
 
@@ -93,4 +93,4 @@ DumbMonit使用仅持有Veeam Backup Viewer角色的Windows账户登录（`/api/
 
 许可证显示"不可读"：在当前版本中使用Viewer角色时预期；DumbMonit不请求更多。
 
-无设备或设备面板为空：`restore_points`读取"不可读"，可能是因为服务器比路由更旧（12.0之前的任何内容的较早修订）而不是角色问题——还原点是普通库存，不是仅管理员页面。
+无监控项或监控项面板为空：`restore_points`读取"不可读"，可能是因为服务器比路由更旧（12.0之前的任何内容的较早修订）而不是角色问题——还原点是普通库存，不是仅管理员页面。

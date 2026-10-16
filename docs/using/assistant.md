@@ -10,7 +10,7 @@ VS Code's agent call outside tools. Connect one, then ask it things like:
 - "How full is the backup server, and is it getting worse?"
 - "Post an update on the status page: the mail server is back."
 
-The assistant sees what the interface sees — devices, alerts, history,
+The assistant sees what the interface sees — monitors, alerts, history,
 metrics, agents, status pages — and uses the same words: *reporting*,
 *unreachable*, *waiting*, *advisory*, *warning*, *suppressed by parent*. It
 runs inside the server: nothing to install next to DumbMonit, and the tools
@@ -23,7 +23,7 @@ the assistant or the machine it runs on ("Claude on my laptop"), then choose:
 
 | Setting | Choices |
 | --- | --- |
-| **Scope** | **Read**: look — status, devices, alerts, history, metrics, rules, agents, status pages. It can never change anything. **Read and write**: also act — silence, acknowledge, probe, add a device, restart a container, post an incident… (the [write tools](#what-the-assistant-can-call)). |
+| **Scope** | **Read**: look — status, monitors, alerts, history, metrics, rules, agents, status pages. It can never change anything. **Read and write**: also act — silence, acknowledge, probe, add a monitor, restart a container, post an incident… (the [write tools](#what-the-assistant-can-call)). |
 | **Expires** | 30 days, 90 days (the default), 1 year or never. An expired token stops working; create a new one. |
 | **Allowed networks** | Optional. Addresses or CIDR ranges the token may be used from (`192.168.1.0/24, 10.8.0.5`). Empty: anywhere. |
 
@@ -155,29 +155,29 @@ running the others.
 
 | Tool | Scope | Does |
 | --- | --- | --- |
-| `get_status` | read | The bulletin, the answer to "is everything fine?": device counts, firing and building-up alerts, one sentence ("2 advisories, 1 unreachable."). |
-| `list_devices` | read | Devices and services with state, parent and tags; filter by substring or state. |
-| `get_device` | read | One device: configuration, state, active alerts, 24-hour CPU / memory / fullest-disk summary (availability and latency for a service check). |
+| `get_status` | read | The bulletin, the answer to "is everything fine?": monitor counts, firing and building-up alerts, one sentence ("2 advisories, 1 unreachable."). |
+| `list_devices` | read | Monitors and services with state, parent and tags; filter by substring or state. |
+| `get_device` | read | One monitor: configuration, state, active alerts, 24-hour CPU / memory / fullest-disk summary (availability and latency for a service check). |
 | `list_alerts` | read | Active alerts with severity words, since when, value, suppression, acknowledgement. |
-| `alert_history` | read | Alert transitions, most recent first (`since` or `hours`, optional device, limit). |
+| `alert_history` | read | Alert transitions, most recent first (`since` or `hours`, optional monitor, limit). |
 | `query_metrics` | read | A MetricsQL range query, at most 60 points per series. |
 | `list_silences` | read | Maintenance windows and whether they are active now. |
 | `list_rules` | read | Alert rules with kind, severity, threshold, enabled. |
-| `list_device_types` | read | The device types this server can monitor, with the options and credentials each one expects — what `add_device` needs. |
-| `list_agents` | read | Machines running the agent: OS, agent version, relay mode, site, devices relayed, last contact, binding. |
+| `list_device_types` | read | The monitor types this server can monitor, with the options and credentials each one expects — what `add_device` needs. |
+| `list_agents` | read | Machines running the agent: OS, agent version, relay mode, site, monitors relayed, last contact, binding. |
 | `list_containers` | read | The Docker containers of a machine running the agent: state, health, restarts, update available, last command. |
 | `list_heartbeats` | read | Heartbeat monitors: expected interval, last call, verdict (waiting, on time, missed, reported down). The secret URL is never shown. |
-| `list_status_pages` | read | Status pages, published or not, with their public path (`/s/<slug>`), the devices they show and their open incidents. |
+| `list_status_pages` | read | Status pages, published or not, with their public path (`/s/<slug>`), the monitors they show and their open incidents. |
 | `list_channels` | read | Notification channels: kind, enabled, last error, last message sent. Never their secrets. |
-| `list_packs` | read | Installed integration packs: version, device type, enabled, devices using it, errors. |
-| `silence_device` | write | A one-off maintenance window on a device, starting now (default 1 hour, at most a week). |
+| `list_packs` | read | Installed integration packs: version, monitor type, enabled, monitors using it, errors. |
+| `silence_device` | write | A one-off maintenance window on a monitor, starting now (default 1 hour, at most a week). |
 | `remove_silence` | write | Removes a maintenance window. |
-| `schedule_maintenance` | write | A one-off maintenance window at a given date, on one device or the whole instance, a week at most. |
+| `schedule_maintenance` | write | A one-off maintenance window at a given date, on one monitor or the whole instance, a week at most. |
 | `acknowledge_alert` | write | Acknowledges one alert by fingerprint for a number of hours (default 4): reminders pause, the resolution is still notified. `hours: 0` lifts it. |
-| `probe_device` | write | Probes a device immediately and reports what was measured. |
-| `set_device_enabled` | write | Enables or disables monitoring of a device. |
+| `probe_device` | write | Probes a monitor immediately and reports what was measured. |
+| `set_device_enabled` | write | Enables or disables monitoring of a monitor. |
 | `set_rule_enabled` | write | Enables or disables an alert rule. |
-| `add_device` | write | Adds a device: name, type, address, interval, parent, options, credentials, relay agent. |
+| `add_device` | write | Adds a monitor: name, type, address, interval, parent, options, credentials, relay agent. |
 | `discover_network` | write | Scans a network (CIDR, 4096 addresses at most) for SNMP devices and suggests a profile for each. |
 | `restart_container` | write | Asks a machine's agent to restart one of its containers. |
 | `test_channel` | write | Sends a test message through a notification channel. |
@@ -185,7 +185,7 @@ running the others.
 
 A read token calling a write tool gets a clear refusal as the tool result
 (`isError: true`); the assistant explains it and nothing changes. The same
-goes for anything the tool cannot do — an unknown device, an ambiguous name, a
+goes for anything the tool cannot do — an unknown monitor, an ambiguous name, a
 window longer than a week: the message says what to fix.
 
 ## Protocol details
@@ -216,7 +216,7 @@ which come before any JSON-RPC:
 | | `-32700`, `-32600` | Unreadable JSON; not a JSON-RPC 2.0 request (batches are not supported). |
 | `202` | — | A notification: accepted, no body. |
 
-A tool that runs but fails — missing scope, unknown device — is not a protocol
+A tool that runs but fails — missing scope, unknown monitor — is not a protocol
 error: it answers normally with `isError: true` and a sentence the assistant
 can relay.
 
@@ -224,7 +224,7 @@ can relay.
 
 - **A token is a password.** Anyone holding it reads everything the interface
   shows — and, with a write token, changes anything an administrator can
-  through the REST API (devices, rules, channels), accounts, tokens and backups
+  through the REST API (monitors, rules, channels), accounts, tokens and backups
   excepted. Keep it out of shared chats, screenshots and repositories. Revoke a
   token you are not sure about; create another one in a minute.
 - **Prefer read.** Most questions ("is everything fine?") need no write scope.
@@ -239,10 +239,10 @@ can relay.
 - **Bound to its creator.** A token stops working when the account that created
   it is disabled, loses its write power when that account is no longer an admin, and
   is revoked when that account is deleted.
-- **Nothing secret comes back.** The tools never return device credentials
+- **Nothing secret comes back.** The tools never return monitor credentials
   (only their kind), channel secrets, heartbeat URLs or tokens. `add_device`
   does take credentials in: they travel through your assistant's conversation,
-  and so through its provider. For a device with sensitive credentials, prefer
+  and so through its provider. For a monitor with sensitive credentials, prefer
   the web interface.
 - **Browsers and `Origin`.** A request that carries an `Origin` header (a
   browser-based client) is refused with `403` unless that origin is the

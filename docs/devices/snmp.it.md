@@ -27,7 +27,7 @@ dispositivo appare come un azzeramento del contatore, mai come un picco
 fittizio.
 
 Le [regole integrate](../alerting/rules.md) che si applicano ai dispositivi
-SNMP: Device unreachable, High CPU, Disk almost full, Filesystem almost full
+SNMP: Monitor unreachable, High CPU, Disk almost full, Filesystem almost full
 (forecast), UPS on battery, UPS battery low, Port accumulating errors, Port
 flapping, Unusual CPU (baseline).
 

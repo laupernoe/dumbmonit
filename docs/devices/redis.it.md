@@ -51,7 +51,7 @@ che si applicano: memoria Redis vicino a maxmemory, Redis rifiuta le connessioni
 link di replica Redis giù, replica Redis in ritardo, snapshot Redis non riuscito,
 scrittura file di sola aggiunta Redis non riuscita, più Device irraggiungibile.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina
 non interroga mai Redis. Dice cosa c'è che non va in una frase (replica, memoria
@@ -101,7 +101,7 @@ per un'autorità privata, abilita Accetta un certificato non verificabile.
 Una password rifiutata (`WRONGPASS`, `NOAUTH`, `NOPERM`) viene mostrata come un errore
 di credenziale e nessuno viene avvisato dell'errore stesso, ma DumbMonit allora non
 raccoglie niente: la regola Device irraggiungibile continua a salire, come per qualsiasi
-dispositivo che non può leggere, finché le credenziali non funzionano di nuovo. Redis
+monitor che non può leggere, finché le credenziali non funzionano di nuovo. Redis
 riavviato senza il suo utente ACL (utenti definiti con `ACL SETUSER` ma mai salvati)
 causa esattamente questo.
 

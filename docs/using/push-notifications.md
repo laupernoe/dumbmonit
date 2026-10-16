@@ -56,7 +56,7 @@ In Safari without installing, the section says **Install first**.
 
 ## Choose which alerts arrive
 
-In **Alerts → Notifications**, add a channel of type **Web Push**. With no
+In **Settings → Notifications & reports**, add a channel of type **Web Push**. With no
 setting, every subscribed device of every account receives it; list account
 names under **Accounts** to target some people only. The usual channel policy
 applies (minimum severity, quiet hours, routing filter…), so you can for

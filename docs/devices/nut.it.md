@@ -45,7 +45,7 @@ sulla batteria, Batteria UPS bassa, Batteria UPS deve essere sostituita, Carico 
 alto, Tempo di autonomia UPS breve, Dati UPS obsoleti, più Device irraggiungibile
 quando il server NUT stesso smette di rispondere.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina
 non si connette mai al server NUT. Una scheda per UPS: il suo stato a parole (sulla
@@ -96,10 +96,10 @@ Indirizzo: un nome host o IP (`nas.lan`), `host:port`, o la forma `ups@host`
 di `upsc`, di cui viene mantenuto solo l'host. Opzioni: porta (3493), l'UPS da
 osservare (tutti per impostazione predefinita) e il timeout per lo scambio (10 s).
 
-Una connessione rifiutata o nessuna risposta conta come il dispositivo irraggiungibile.
+Una connessione rifiutata o nessuna risposta conta come il monitor irraggiungibile.
 Quando la macchina che esegue il server NUT si spegne nell'interruzione che segnala
 (è spesso il suo upsmon primario), gli avvisi UPS vengono nascosti come soppressi mentre
-Device irraggiungibile si attiva per lo stesso dispositivo: leggi l'avviso Device irraggiungibile
+Device irraggiungibile si attiva per lo stesso monitor: leggi l'avviso Device irraggiungibile
 come il segno che il guasto di alimentazione ha vinto. Esegui il server NUT su una macchina
 che supera gli altri, o osserva l'UPS da un secondo server NUT. `ACCESS-DENIED` viene
 mostrato come un errore di credenziale, e un nome UPS che il server non pubblica come

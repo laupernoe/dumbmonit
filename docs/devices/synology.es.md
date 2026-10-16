@@ -22,6 +22,7 @@ Todas las métricas tienen el prefijo `dumbmonit_synology_`.
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | por tarea |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (ver abajo) | `drive_team_folder_info`: `name` |
 | Synology Photos | `photos_installed` (ver abajo) | |
+| Ajustes de seguridad | `update_available`, `admin_account_enabled`, `autoblock_enabled`, `firewall_enabled` (`0`/`1`; leídos cada hora, solo con cuenta de administrador, opcionales: ausentes si DSM los rechaza) | |
 | Recolección | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Las métricas de Active Backup for Business son la excepción: tienen el
@@ -67,11 +68,11 @@ sonda.
       devuelve, así que en un NAS reciente esas dos series simplemente
       no existen — nada se inventa en su lugar.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 ![Un dispositivo Synology: de un vistazo, volúmenes, discos y Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-Un dispositivo Synology obtiene su propio panel sobre las gráficas:
+Un monitor Synology obtiene su propio panel sobre las gráficas:
 
 * **At a glance** — CPU, memoria (usada del total), temperatura y
   tiempo de actividad, con el propio veredicto de almacenamiento de
@@ -224,7 +225,7 @@ nada; el mismo portátil todavía en silencio el martes por la noche sí.
 
 Los días y horas se expresan en la hora local del servidor (`TZ` del
 contenedor), que es donde vive la persona que lee la página. La página
-del dispositivo muestra, por dispositivo: el estado en una palabra, el
+del monitor muestra, por dispositivo: el estado en una palabra, el
 último éxito y último resultado, el ritmo en palabras («weekdays,
 around 20:00», «every ~3 days, on Mon, Wed, Fri, around 03:00», «still
 learning (2 runs in 30 days)») y una franja de treinta días — verde
@@ -401,6 +402,6 @@ usa 5001 por HTTPS y 5000 por HTTP.
 | Error de certificado | Certificado autofirmado: activa `insecure_tls`. Esto es un error de configuración, nunca «unreachable»: un NAS que responde no se muestra como apagado. |
 | Sin métricas de disco o volumen | La cuenta no está en el grupo `administrators` (ver la nota arriba). |
 | Sin métricas `dumbmonit_abb_*`, `scrape_errors` en 1 | La cuenta no puede usar Active Backup for Business: delégale el paquete, o desactiva la opción `abb`. Sin el paquete instalado no hay error ni métrica. |
-| Métricas de tarea pero sin filas de dispositivo en la página | El NAS no anuncia `SYNO.ActiveBackup.Overview` (ABB más antiguo), o el dispositivo se sondea a través de un agente relay, que mantiene el historial en memoria de su lado: las métricas existen, el calendario no. |
+| Métricas de tarea pero sin filas de dispositivo en la página | El NAS no anuncia `SYNO.ActiveBackup.Overview` (ABB más antiguo), o el monitor se sondea a través de un agente relay, que mantiene el historial en memoria de su lado: las métricas existen, el calendario no. |
 | Un portátil se muestra «Overdue» el día después de añadirlo | Menos de tres éxitos: el modelo todavía está aprendiendo y permite 72 horas entre copias; se estabiliza una vez que se conocen dos semanas de hábitos. |
 | Los discos giran en cada sonda | El inventario de almacenamiento despierta discos dormidos. Alarga el intervalo de comprobación. |

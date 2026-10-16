@@ -142,6 +142,36 @@ export interface TargetPayload {
 	credential?: Credential;
 }
 
+/**
+ * `POST /targets/test`: the form's payload (plus the edited device's `id`, so a
+ * blank credential reuses the stored one). Mirrors `TestPayload` in
+ * `api/targets.rs`.
+ */
+export type TargetTestRequest = TargetPayload & { id?: TargetId };
+
+/** Outcome of a probe that saves nothing. Mirrors `TestReport` in `api/targets.rs`. */
+export interface TargetTestReport {
+	ok: boolean;
+	/** The probe's own error message when `ok` is false. */
+	error: string | null;
+	/** True when the failure means "device down" rather than a wrong setting. */
+	unreachable: boolean;
+	sysname: string | null;
+	sysdescr: string | null;
+	profile_id: string | null;
+}
+
+/** Where a suggested scan network comes from. Mirrors `SubnetSource` in `api/discovery.rs`. */
+export type SubnetSource = 'config' | 'devices' | 'server';
+
+/** One suggested scan network. Mirrors `LocalSubnet` in `api/discovery.rs`. */
+export interface LocalSubnet {
+	cidr: string;
+	source: SubnetSource;
+	/** Server interface, `server` source only. */
+	interface?: string;
+}
+
 /** Result of an immediate probe — the main diagnostic tool. */
 export interface ProbeReport {
 	sample_count: number;
@@ -915,6 +945,9 @@ export interface ChannelKindInfo {
 	doc_url: string;
 	settings: ChannelField[];
 	secrets: ChannelField[];
+	/** How the channel shows Acknowledge / Snooze links: native buttons, links in the
+	 *  message, or not at all (services with their own acknowledgement). */
+	actions?: 'buttons' | 'links' | 'none' | string;
 }
 
 /** A channel as returned on read: never its secrets. */
@@ -1038,6 +1071,26 @@ export interface RebindWindow {
 	minutes: number;
 }
 
+/**
+ * A service the agent can detect on its machine (`GET /api/targets/{id}/agent/modules`).
+ * Each found one is its own `agent_service` device under the machine, with
+ * `profile_id` set to the module id.
+ */
+export interface AgentModule {
+	/** `docker`, `plakar`, `backup_repos`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest` — or one this build does not know. */
+	id: string;
+	/** Display name, for a module the UI has no translation for. */
+	label: string;
+	/** The agent has reported it on this machine. */
+	detected: boolean;
+	/** Ticked: a device exists (or will) for it. */
+	enabled: boolean;
+	/** Nobody ticked or unticked it: the device follows detection. */
+	automatic: boolean;
+	target_id: number | null;
+	last_seen_at: string | null;
+}
+
 // --- Notification policy ----------------------------------------------------
 
 /** Weekly quiet-hours window, same shape as a weekly maintenance schedule. */
@@ -1122,6 +1175,38 @@ export interface NotificationPolicy {
 	escalate_after_secs: number;
 	/** Channel told second. `null` = no escalation, whatever the delay. */
 	escalate_channel: number | null;
+	/** Acknowledge / Snooze links in notifications; only effective with a public URL.
+	 *  Switching it off also revokes the links already sent. */
+	action_links: boolean;
+}
+
+/** What a notification action link does (`/alert-action#<token>`). */
+export type AlertLinkAction = 'ack' | 'snooze';
+
+/** An alert named by an action link, reduced to what is needed to decide. */
+export interface AlertLinkTarget {
+	rule_name: string;
+	target_name: string | null;
+	severity: AlertSeverity;
+	acked: boolean;
+	acked_until: string | null;
+}
+
+/** `POST /api/public/alert-action/inspect`: what the link would do. */
+export interface AlertLinkView {
+	action: AlertLinkAction;
+	expires_at: string;
+	used: boolean;
+	/** The link's alerts that are still active. */
+	alerts: AlertLinkTarget[];
+}
+
+/** `POST /api/public/alert-action`: what the link did. */
+export interface AlertLinkResult {
+	action: AlertLinkAction;
+	until: string;
+	acked: number;
+	alerts: AlertLinkTarget[];
 }
 
 export type NotificationPolicyPayload = Partial<NotificationPolicy>;
@@ -1133,6 +1218,29 @@ export interface RuleOverride {
 	threshold: number | null;
 	clear_threshold: number | null;
 	enabled: boolean | null;
+}
+
+/** A rule that watches one device: it reads a metric the device has written. Mirrors `api/target_rules.rs`. */
+export interface TargetRule {
+	id: number;
+	uid: string;
+	name: string;
+	description: string;
+	severity: AlertSeverity;
+	/** Enabled for every device. */
+	enabled: boolean;
+	/** Turned off for this device (an override with `enabled: false`). */
+	ignored: boolean;
+	/** An administrator set a threshold for this device. */
+	custom_threshold: boolean;
+	/** Firing on this device right now. */
+	firing: boolean;
+}
+
+export interface TargetRules {
+	/** `no_data`: nothing written in the last 24 h; `unavailable`: the time-series store did not answer. */
+	status: 'ok' | 'no_data' | 'unavailable';
+	rules: TargetRule[];
 }
 
 export interface RuleOverridePayload {
@@ -1742,6 +1850,45 @@ export interface RelayAgent {
 	last_seen_at: string | null;
 	/** Devices reached through this agent. */
 	relayed: number;
+}
+
+// --- Topology map -------------------------------------------------------------
+
+/** Where a link of the map comes from. */
+export type TopologySource = 'parent' | 'relay' | 'hypervisor' | 'lldp';
+
+/** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
+export interface TopologyNode {
+	/** `t<id>` for a device, `g<host>:<name>` for an unmonitored guest. */
+	id: string;
+	/** The device; `null` for a guest. */
+	target_id: TargetId | null;
+	name: string;
+	/** The device kind; `vm` or `container` for a guest. */
+	kind: string;
+	/** Folder; a guest takes its hypervisor's. */
+	group_name: string;
+	/** Site declared by the relay agent (its own, or the one that polls the device). */
+	site: string | null;
+	/** Guest only: the hypervisor device. */
+	host_id: TargetId | null;
+	/** Guest only: running at the last measurement. */
+	running: boolean | null;
+}
+
+/** A link: `from` is upstream (parent, relay, hypervisor, switch). Mirrors `EdgeView`. */
+export interface TopologyEdge {
+	from: string;
+	to: string;
+	source: TopologySource;
+}
+
+/** `GET /api/topology`. Mirrors `TopologyView`. */
+export interface Topology {
+	nodes: TopologyNode[];
+	edges: TopologyEdge[];
+	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
+	metrics_available: boolean;
 }
 
 // --- Two-factor authentication (TOTP) and audit log ---------------------------
@@ -3400,12 +3547,24 @@ export interface SecurityCounts {
 	unknown: number;
 }
 
+/** How to raise the score on this kind of device. Mirrors `GuideView`. */
+export interface SecurityGuide {
+	/** Product name, e.g. "Proxmox VE", "Linux host". */
+	product: string;
+	/** Concrete steps, in the order to take them (English, server-provided). */
+	steps: string[];
+	/** The matching section of the "Security score" documentation page. */
+	doc_url: string;
+}
+
 /**
  * `GET /api/targets/{id}/security`: the security score of one device.
  * Mirrors `SecurityReport`. 404 only when the device itself does not exist;
  * a kind with no checks answers 200 with `supported: false`.
  */
 export interface SecurityReport {
+	/** `false`: the security score is turned off in Settings; nothing else is filled. */
+	enabled: boolean;
 	target_id: TargetId;
 	target_name: string;
 	kind: string;
@@ -3421,6 +3580,8 @@ export interface SecurityReport {
 	counts: SecurityCounts;
 	/** Sorted: fail (heaviest first), then pass, then unknown. */
 	checks: SecurityCheck[];
+	/** `null` when `supported` is false. */
+	guide: SecurityGuide | null;
 }
 
 /** One row of `GET /api/security/summary`. Mirrors `SecuritySummaryDevice`. */
@@ -3443,8 +3604,72 @@ export interface SecuritySummaryDevice {
  * worst first. Mirrors `SecuritySummary`.
  */
 export interface SecuritySummary {
+	/** `false`: the security score is turned off in Settings; `devices` is empty. */
+	enabled: boolean;
 	evaluated_at: string;
 	devices: SecuritySummaryDevice[];
+}
+
+/** `GET`/`PUT /api/security/settings`: the opt-in switch (off by default). */
+export interface SecuritySettings {
+	enabled: boolean;
+}
+
+/** One of the three conditions of a heartbeat. Mirrors `selfmon::Component`. */
+export interface SelfMonitoringComponent {
+	name: 'scheduler' | 'database' | 'victoria';
+	ok: boolean;
+	error?: string;
+}
+
+/** The last heartbeat attempted. Mirrors `selfmon::PingRecord`. */
+export interface HeartbeatPing {
+	/** UTC without suffix. */
+	at: string;
+	/** `withheld`: a component was down and nothing was sent. */
+	outcome: 'up' | 'fail' | 'withheld';
+	/** The call left and the service accepted it. */
+	ok: boolean;
+	error?: string;
+	failed: string[];
+}
+
+/** The outgoing heartbeat setting. The URL itself never comes back. Mirrors `HeartbeatView`. */
+export interface Heartbeat {
+	enabled: boolean;
+	interval_seconds: number;
+	send_fail: boolean;
+	has_url: boolean;
+	url_host: string | null;
+	last_ping: HeartbeatPing | null;
+}
+
+/** `PUT /api/self-monitoring/heartbeat`. `url` omitted keeps it, `''` clears it. */
+export interface HeartbeatUpdate {
+	enabled: boolean;
+	interval_seconds?: number;
+	send_fail?: boolean;
+	url?: string;
+}
+
+/** `POST /api/self-monitoring/heartbeat/test`. */
+export interface HeartbeatTestResult {
+	ok: boolean;
+	error: string | null;
+}
+
+/** `GET /api/self-monitoring`: health of DumbMonit itself. Mirrors `Overview`. */
+export interface SelfMonitoring {
+	status: 'ok' | 'degraded';
+	components: SelfMonitoringComponent[];
+	data_free_bytes: number | null;
+	data_total_bytes: number | null;
+	database_bytes: number;
+	vm_embedded: boolean;
+	vm_restarts: number;
+	scheduler_idle_seconds: number;
+	scheduler_backlog: number;
+	heartbeat: Heartbeat;
 }
 
 /**
@@ -3529,6 +3754,37 @@ export interface TargetImportReport {
 	skipped: number;
 	errors: number;
 	rows: TargetImportRow[];
+}
+
+/** One monitor of an Uptime Kuma backup. Mirrors `crates/server/src/api/kuma_import.rs`. */
+export interface KumaImportRow {
+	/** Position of the monitor in the file, from 1. */
+	row: number;
+	name: string;
+	/** Uptime Kuma monitor type. */
+	source_type: string;
+	/** Device type created; null when the monitor is skipped. */
+	kind: string | null;
+	address: string;
+	folder: string;
+	interval_secs: number | null;
+	/** Uptime Kuma tags as `key=value`. */
+	tags: string[];
+	status: TargetImportStatus;
+	/** Why it was skipped, or what is not imported (English, as served). */
+	message: string | null;
+	id: number | null;
+}
+
+/** Answer to `POST /api/targets/import/kuma`. */
+export interface KumaImportReport {
+	dry_run: boolean;
+	total: number;
+	created: number;
+	skipped: number;
+	errors: number;
+	notifications_ignored: number;
+	rows: KumaImportRow[];
 }
 
 // --- Website health & SEO (kind `website`) ----------------------------------

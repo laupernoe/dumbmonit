@@ -48,9 +48,9 @@ wandeln sie in Raten um.
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#databases-message-broker-and-security-engine):
 Redis-Speicher nahe maxmemory, Redis weist Verbindungen ab, Redis-Replikationsverbindung
 unterbrochen, Redis-Replikat im Rückstand, Redis-Snapshot fehlgeschlagen, Redis-Append-only-
-Datei-Schreibvorgang fehlgeschlagen, außerdem Gerät nicht erreichbar.
+Datei-Schreibvorgang fehlgeschlagen, außerdem Monitor nicht erreichbar.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
 fragt Redis nie ab. Es nennt in einem Satz, was nicht stimmt (Replikation, Speicher gegenüber
@@ -99,7 +99,7 @@ Sie Nicht prüfbares Zertifikat akzeptieren an.
 
 Ein abgelehntes Passwort (`WRONGPASS`, `NOAUTH`, `NOPERM`) wird als Zugangsdatenfehler angezeigt,
 und über den Fehler selbst wird niemand benachrichtigt, aber DumbMonit sammelt dann nichts mehr:
-Die Regel Gerät nicht erreichbar löst weiter aus, wie bei jedem Gerät, das es nicht lesen kann,
+Die Regel Monitor nicht erreichbar löst weiter aus, wie bei jedem Monitor, das es nicht lesen kann,
 bis die Zugangsdaten wieder funktionieren. Genau das verursacht ein Redis-Neustart ohne seinen
 ACL-Benutzer (mit `ACL SETUSER` definierte, aber nie gespeicherte Benutzer).
 

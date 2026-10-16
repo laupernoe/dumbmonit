@@ -57,15 +57,26 @@ self.addEventListener('push', (event) => {
 		renotify: Boolean(data.tag) && !data.resolved,
 		requireInteraction: data.severity === 'critical' && !data.resolved,
 		timestamp: typeof data.timestamp === 'number' ? data.timestamp : Date.now(),
-		data: { url: safePath(data.url) }
+		data: { url: safePath(data.url), actions: {} }
 	};
+	// Acknowledge / Snooze, sent only to accounts allowed to acknowledge. Each
+	// opens the confirmation page; nothing is done from the notification itself.
+	if (Array.isArray(data.actions)) {
+		const actions = data.actions
+			.filter((a) => a && typeof a.action === 'string' && typeof a.title === 'string')
+			.slice(0, 2);
+		options.actions = actions.map((a) => ({ action: a.action, title: a.title }));
+		for (const a of actions) options.data.actions[a.action] = safePath(a.url);
+	}
 	if (!options.tag) delete options.renotify;
 	event.waitUntil(self.registration.showNotification(title, options));
 });
 
 self.addEventListener('notificationclick', (event) => {
 	event.notification.close();
-	const path = safePath(event.notification.data && event.notification.data.url);
+	const data = event.notification.data || {};
+	const actionPath = event.action && data.actions ? data.actions[event.action] : undefined;
+	const path = safePath(actionPath || data.url);
 	const target = new URL(path, self.location.origin).href;
 	event.waitUntil(
 		(async () => {

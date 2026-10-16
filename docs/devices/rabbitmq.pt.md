@@ -43,9 +43,9 @@ atrasam-se alguns segundos.
 As [regras incorporadas](../alerting/rules.md#databases-message-broker-and-security-engine)
 que se aplicam: RabbitMQ memory or disk alarm, RabbitMQ node down, RabbitMQ
 network partition, RabbitMQ queue without consumer, RabbitMQ queue
-unavailable, mais Device unreachable.
+unavailable, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca consulta o RabbitMQ. Diz o que está mal numa frase (alarmes, nós e

@@ -1,287 +1,318 @@
-# Pontuação de segurança {#security-score}
+# Pontuação de segurança
 
-Todo dispositivo suportado recebe uma **pontuação de segurança** de 0
-a 100 e uma nota de **A** a **F**, no espírito do PingCastle ou do
-Microsoft Secure Score: uma lista de verificações extraídas das
-próprias orientações de boas práticas do fornecedor, cada uma a
-passar, a falhar ou não avaliada.
+A pontuação de segurança é uma classificação **opcional** de **A** a **F** (e
+uma pontuação de 0 a 100) mostrada junto dos monitores em que algumas
+verificações dizem algo útil: hosts Linux e Windows com o agente, Proxmox VE e
+Proxmox Backup Server, Synology, OPNsense, sites web e Active Directory. Os
+outros monitores não mostram nada.
 
-A pontuação aparece como um cartão **Security** na página do
-dispositivo, e na página **Security**, que lista todo dispositivo
-avaliado, o pior primeiro.
+!!! warning "Indicativa, não é uma auditoria"
+    A pontuação é **aproximada e não exaustiva**. Lê apenas o que o DumbMonit
+    já recolhe de um monitor e compara-o com um punhado de boas práticas do
+    fabricante. Uma classificação A não significa que um monitor seja
+    seguro, e uma verificação em falta não significa que a definição esteja
+    correta. Use-a como um convite a olhar com atenção e, quando for
+    importante, use uma verdadeira ferramenta de avaliação (PingCastle, Mozilla
+    HTTP Observatory, Lynis, o assistente de segurança do próprio fabricante…).
 
-## Como a pontuação é calculada {#how-the-score-is-computed}
+## Ativá-la
 
-O DumbMonit nunca pede nada extra ao dispositivo para calcular a
-pontuação. As verificações lêem os últimos valores que os coletores já
-registaram (olhando até 6 horas atrás), por isso uma pontuação não
-custa nada ao dispositivo e funciona offline a partir da última
-verificação.
+A pontuação está **desativada por predefinição**. Um administrador ativa-a em
+**Definições → Conta e segurança → Pontuação de segurança**. Depois de ativada:
 
-Cada verificação tem:
+- cada monitor pontuado recebe um pequeno **distintivo em forma de escudo**
+  com a sua letra na lista de monitores, e um distintivo **Security** com a
+  pontuação na sua página;
+- clicar no distintivo abre o **relatório** do monitor: o que falha, com a
+  evidência e a correção, o que passa, os passos para melhorar a pontuação
+  neste tipo de monitor e uma ligação para a secção correspondente abaixo.
 
-| Campo | Significado |
-|---|---|
-| Category | exposição, correção, autenticação, encriptação, cópia de segurança ou configuração |
-| Severity | critical, high, medium ou low — o seu peso na pontuação: 10, 6, 3, 1 |
-| Result | **pass**, **fail**, ou **unknown** quando os dados não são coletados |
-| Evidence | o que foi observado: `pve1: 3 security updates`, `Expires in 9 days`… |
-| Remediation | o que fazer, nos termos do fornecedor |
-| Vendor guidance | a página do fornecedor (ou padrão) em que a verificação se baseia |
+Desativá-la oculta os distintivos, pára o cálculo periódico e as séries
+`dumbmonit_security_score` deixam de ser escritas.
 
-**Score** = 100 × (peso das verificações a passar) ÷ (peso das
-verificações a passar + a falhar). **As verificações desconhecidas são
-mostradas mas nunca contadas**, nem a favor nem contra: uma pontuação
-não deve descer porque um token de monitorização não tem um
-privilégio, nem subir porque nada é conhecido. Um dispositivo cujas
-verificações são todas desconhecidas *não é avaliado*.
+!!! note "Atualização a partir da 0.1.0-alpha.8 ou anterior"
+    A pontuação estava antes sempre ativa, com a sua própria página
+    **Security**. Uma instalação que já monitorizava um monitor pontuável
+    mantém a pontuação ativada após a atualização; uma instalação nova começa
+    com ela desativada. O antigo endereço `/security` abre agora a definição.
 
-| Nota | Pontuação | Palavra |
+## Como a pontuação é calculada
+
+O DumbMonit nunca pede nada extra ao monitor para calcular a pontuação. As
+verificações leem os últimos valores que os coletores já registaram (olhando 6
+horas para trás), pelo que uma pontuação não custa nada ao monitor.
+
+Cada verificação tem uma categoria (exposição, correções, autenticação,
+cifragem, cópia de segurança, configuração), uma **severidade** que é o seu
+peso (critical 10, high 6, medium 3, low 1), um resultado (**passa**,
+**falha** ou **desconhecido** quando o dado não é recolhido), a evidência, a
+correção e uma ligação para a página do fabricante em que se baseia.
+
+**Pontuação** = 100 × (peso das verificações que passam) ÷ (peso das que
+passam + falham). **As verificações desconhecidas são mostradas mas nunca
+contadas**: uma pontuação não deve baixar porque a uma conta de monitorização
+falta um privilégio, nem subir porque nada se sabe. Um monitor cujas
+verificações são todas desconhecidas *não é pontuado*.
+
+| Classificação | Pontuação | Palavra |
 |---|---|---|
-| A | 90–100 | Strong |
-| B | 75–89 | Good |
-| C | 60–74 | Fair |
-| D | 40–59 | Weak |
-| F | 0–39 | Poor |
+| A | 90–100 | Forte |
+| B | 75–89 | Boa |
+| C | 60–74 | Razoável |
+| D | 40–59 | Fraca |
+| F | 0–39 | Má |
 
-**Uma verificação crítica falhada limita a nota a C**, qualquer que
-seja a pontuação: uma firewall que já não filtra, ou um firmware
-ativamente explorado deixado sem correção, não é compensado por dez
-definições menores boas. O cartão diz isso quando acontece.
+**Uma verificação crítica que falha limita a classificação a C**, seja qual
+for a pontuação.
 
-## Histórico e alertas {#history-and-alerts}
+## Histórico e alertas
 
-O servidor recalcula toda pontuação a cada 15 minutos e guarda-a como
-`dumbmonit_security_score{target="<id>"}` (e o número de verificações
-falhadas como `dumbmonit_security_checks_failed`), para que a possa
-representar em gráfico e alertar sobre ela como qualquer outra
-métrica. Duas regras incorporadas usam-na:
+Enquanto a pontuação está ativada, o servidor recalcula-a a cada 15 minutos e
+guarda-a como `dumbmonit_security_score{target="<id>"}` (e o número de
+verificações que falham como `dumbmonit_security_checks_failed`). Duas regras
+integradas usam-na: **Security score dropped** (10 pontos ou mais abaixo do
+melhor valor das últimas 24 horas) e **Security score low** (abaixo de 40).
+Veja [Regras de alerta](../alerting/rules.md#security-score).
 
-- **Security score dropped** — a pontuação caiu 10 pontos ou mais em
-  comparação com o seu melhor valor das últimas 24 horas: algo novo
-  está a falhar.
-- **Security score low** — a pontuação está abaixo de 40 (nota F).
-  Edite a regra para mover o limiar para a sua própria barra.
+## Verificações e como melhorá-las
 
-Ver [Regras de alerta](../alerting/rules.md#security-score).
+### Hosts Linux { #linux-hosts }
 
-## Verificações por tipo {#checks-per-kind}
+Máquinas com o agente. As verificações de SSH e da firewall precisam de um
+agente da mesma versão do servidor; com um agente mais antigo são
+desconhecidas.
 
-### Proxmox VE {#proxmox-ve}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Security updates installed | high | atualizações de segurança pendentes por nó (precisa de `Sys.Modify` no token, caso contrário desconhecido) |
-| Proxmox VE packages up to date | medium | pacotes Proxmox atualizáveis por nó |
-| Running the installed kernel | medium | kernel mais recente instalado do que em execução |
-| No test repository in use | medium | repositórios padrão ativados |
-| Package repositories correctly configured | medium | erros e avisos que o Proxmox VE levanta sobre os repositórios (por exemplo repositório enterprise sem subscrição) |
-| Enterprise repository subscription | low | estado de subscrição por nó |
-| Web interface certificate valid for 14+ days | medium | expiração do certificado do nó |
-| Every guest is in a backup job | high | convidados não selecionados por nenhuma tarefa de cópia de segurança |
-| Backup jobs succeed | high | último resultado de cada tarefa de cópia de segurança |
-
-Fontes: [System Software Updates](https://pve.proxmox.com/wiki/System_Software_Updates),
-[Package Repositories](https://pve.proxmox.com/wiki/Package_Repositories),
-[Certificate Management](https://pve.proxmox.com/wiki/Certificate_Management),
-[Backup and Restore](https://pve.proxmox.com/wiki/Backup_and_Restore).
-
-### Proxmox Backup Server {#proxmox-backup-server}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| System updates installed | high | atualizações pendentes (precisa de `Sys.Modify` em `/system`) |
-| Running the installed Backup Server version | medium | daemons ainda a correr a versão pré-atualização |
-| Verify job scheduled | high | número de tarefas de verificação |
-| Prune job scheduled | medium | número de tarefas de prune |
-| Backups copied elsewhere (sync or tape) | medium | tarefas de cópia de segurança sync e tape (regra 3-2-1) |
-| Garbage collection clean, no bad chunks | high | último resultado de GC e chunks corrompidos por datastore |
-| Certificate valid for 14+ days | medium | expiração do certificado |
-
-Fontes: [Maintenance tasks](https://pbs.proxmox.com/docs/maintenance.html),
-[Remotes and sync](https://pbs.proxmox.com/docs/managing-remotes.html),
-[Package repositories](https://pbs.proxmox.com/docs/package-repositories.html),
-[Certificate management](https://pbs.proxmox.com/docs/certificate-management.html).
-
-### Synology DSM {#synology-dsm}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| DSM 7 or later | high | versão do DSM |
-| Hyper Backup task configured | medium | número de tarefas Hyper Backup |
-| Hyper Backup tasks succeed | high | último resultado de cada tarefa |
-
-Fontes: [Product support status](https://www.synology.com/en-global/products/status),
-[How to add extra security to your Synology NAS](https://kb.synology.com/en-global/DSM/tutorial/How_to_add_extra_security_to_your_Synology_NAS).
-
-### OPNsense e pfSense {#opnsense-and-pfsense}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| OPNsense: firmware updates installed | high | atualizações de pacote pendentes (desconhecido até o OPNsense ter verificado atualizações) |
-| OPNsense: on the current major release series | medium | nova série maior disponível |
-| OPNsense: no reboot pending after an update | medium | reinício necessário |
-| OPNsense: packet filter enabled | **critical** | estado do `pf` |
-| pfSense: REST API package up to date | low | atualização do pacote REST API disponível |
-
-Fontes: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
-[OPNsense firewall](https://docs.opnsense.org/manual/firewall.html),
-[pfSense REST API](https://pfrest.org/).
-
-### UniFi {#unifi}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Device firmware up to date | high | marca de atualizável de cada dispositivo adotado |
-
-Fonte: [UniFi releases](https://community.ui.com/releases).
-
-### Monitores TLS e HTTPS {#tls-and-https-monitors}
-
-Para monitores `tls`, `http`, `smtp`, `mqtt` e `websocket` que negoceiam
-TLS. Um monitor em texto simples não tem cartão Security.
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Certificate valid for 14+ days | high | dias até à expiração |
-| Certificate chain trusted | high | verificação da cadeia |
-| TLS 1.3 negotiated | low | versão de protocolo negociada |
-
-Fontes: [Mozilla Server Side TLS](https://wiki.mozilla.org/Security/Server_Side_TLS),
-[NIST SP 800-52 Rev. 2](https://csrc.nist.gov/pubs/sp/800/52/r2/final),
-[Let's Encrypt integration guide](https://letsencrypt.org/docs/integration-guide/).
-
-### Servidores de hora NTP {#ntp-time-servers}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Server reports a synchronized clock | medium | stratum e indicador leap |
-| Clock offset within 100 ms | low | desvio medido |
-
-Um stratum de 16 (ou 0, um «kiss-o'-death») e um indicador leap
-«unsynchronized» ambos falham a primeira verificação independentemente
-do desvio: um servidor que nunca sincronizou não tem nada de confiança
-para oferecer. O limiar de 100 ms está fixo aqui e não segue a opção
-«Tolerated offset» por dispositivo, da mesma forma que a verificação de
-certificado avisa sempre a catorze dias independentemente das próprias
-definições de um monitor.
-
-Fonte: [RFC 5905](https://www.rfc-editor.org/rfc/rfc5905).
-
-### Nginx e Apache httpd {#nginx-and-apache-httpd}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Server header does not disclose the version | low | o cabeçalho de resposta `Server` capturado junto com a página de estado |
-
-Um cabeçalho que ainda nomeia o produto («nginx», «Apache») sem um
-número de versão passa: é isso que `server_tokens off` e
-`ServerTokens Prod` produzem, e um cabeçalho ausente também passa. Um
-cabeçalho como «nginx/1.25.3» ou «Apache/2.4.58 (Unix)» falha: diz a um
-scanner exatamente que CVEs tentar.
-
-Fontes: [Nginx core module reference](https://nginx.org/en/docs/http/ngx_http_core_module.html#server_tokens),
-[Apache core module reference](https://httpd.apache.org/docs/2.4/mod/core.html#servertokens).
-
-### Máquinas com o agente (e os seus contentores Docker) {#machines-with-the-agent-and-their-docker-containers}
-
-| Verificação | Severidade | Dados |
+| Verificação | Severidade | Dado |
 |---|---|---|
 | Security updates installed | high | atualizações de segurança pendentes (onde o gestor de pacotes as distingue) |
 | No pending updates | low | atualizações pendentes |
 | No reboot pending | medium | reinício necessário |
-| SELinux enforcing | medium | modo do SELinux (desconhecido onde o SELinux está ausente) |
-| Container images up to date | medium | imagem mais recente no registo (só em máquinas com contentores) |
-| No container image older than 180 days | low | idade da imagem (só em máquinas com contentores) |
+| SSH root login with a password refused | high | `PermitRootLogin` de `sshd -T` (`prohibit-password` passa) |
+| SSH accepts keys only | medium | `PasswordAuthentication`, e `KbdInteractiveAuthentication` com `UsePAM` |
+| Host firewall filters inbound traffic | high | uma cadeia input de nftables ou iptables que descarta ou rejeita |
+| SELinux enforcing | medium | modo do SELinux (desconhecido onde o SELinux não existe) |
+| Container images up to date | medium | imagem mais recente no registo (só com contentores) |
+| No container image older than 180 days | low | idade da imagem (só com contentores) |
 
-Fontes: [CIS Control 7 — Continuous Vulnerability Management](https://www.cisecurity.org/controls/continuous-vulnerability-management),
-[Red Hat — Using SELinux](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_selinux/index),
-[Docker build best practices](https://docs.docker.com/build/building/best-practices/#rebuild-your-images-often).
+Para a melhorar:
 
-### Atualizações de fornecedor para outras integrações {#vendor-updates-for-other-integrations}
+1. Instale as atualizações de segurança pendentes e depois ative as
+   atualizações de segurança automáticas: `unattended-upgrades` no Debian e no
+   Ubuntu, `dnf-automatic` no Fedora e no RHEL.
+2. Reinicie após atualizações do kernel ou de bibliotecas.
+3. Verifique se a sua chave SSH funciona e depois defina `PermitRootLogin no`,
+   `PasswordAuthentication no` e `KbdInteractiveAuthentication no` em
+   `/etc/ssh/sshd_config` e recarregue o sshd.
+4. Ative uma firewall de host que descarte o tráfego de entrada não solicitado:
+   `ufw enable` no Ubuntu, firewalld no Fedora e no RHEL, um conjunto de regras
+   nftables nos restantes.
+5. Mantenha o SELinux em enforcing onde a distribuição o inclui; obtenha
+   regularmente imagens de contentores mais recentes.
 
-Uma verificação de correção por produto, a partir da informação de
-atualização que cada coletor já lê:
+Fontes: [CIS Controls](https://www.cisecurity.org/controls),
+[sshd_config(5)](https://man.openbsd.org/sshd_config),
+[Red Hat — Using SELinux](https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/9/html/using_selinux/index).
 
-| Tipo | Verificação | Severidade |
+### Hosts Windows { #windows-hosts }
+
+Máquinas com o agente Windows, da mesma versão do servidor (lido do registo; um
+agente mais antigo não reporta nenhuma destas).
+
+| Verificação | Severidade | Dado |
 |---|---|---|
-| FortiGate | FortiOS patch installed | **critical** |
-| FortiGate | FortiGuard licences valid | high |
-| MikroTik | RouterOS up to date | high |
-| MikroTik | RouterBOOT firmware matches RouterOS | low |
-| Home Assistant | Home Assistant components up to date | medium |
-| Nextcloud | Nextcloud server up to date | high |
-| Nextcloud | Nextcloud apps up to date | medium |
-| AdGuard Home | AdGuard Home up to date | medium |
-| Pi-hole | Pi-hole up to date | medium |
-| Plex | Plex Media Server up to date | medium |
-| Paperless-ngx | Paperless-ngx up to date | medium |
-| Tailscale | Tailscale clients up to date | medium |
+| Windows Firewall on for every profile | high | perfis de domínio, privado e público (primeiro a política de grupo) |
+| No reboot pending | medium | Windows Update ou manutenção de componentes à espera de um reinício |
+| Remote Desktop requires Network Level Authentication | high | passa quando o Ambiente de Trabalho Remoto está desativado |
+| SMBv1 disabled | high | definição do servidor SMBv1 |
 
-### Active Directory {#active-directory}
+Para a melhorar:
 
-Um dispositivo Active Directory é avaliado a partir das descobertas
-estilo PingCastle do seu coletor: contas Kerberoastable, contas sem
-pré-autenticação Kerberos, delegação não restrita, idade da senha do
-`krbtgt`, tamanho de grupos privilegiados, cobertura LAPS, política de
-senhas, contas obsoletas. Cada descoberta é uma verificação que passa
-quando afeta zero objetos; a severidade que o coletor reporta é a
-usada. Descobertas ainda não reportadas são listadas como desconhecidas.
+1. Instale as atualizações do Windows (Definições → Windows Update) e reinicie
+   quando for pedido.
+2. Mantenha a Firewall do Windows Defender ativada nos perfis de domínio,
+   privado e público.
+3. Se o Ambiente de Trabalho Remoto estiver ativado, exija a autenticação ao
+   nível da rede (NLA) e aceda-lhe por uma VPN, nunca diretamente a partir da
+   internet.
+4. Remova o SMBv1: `Disable-WindowsOptionalFeature -Online -FeatureName SMB1Protocol`.
+
+Fontes: [Windows Firewall](https://learn.microsoft.com/en-us/windows/security/operating-system-security/network-security/windows-firewall/),
+[SMBv1](https://learn.microsoft.com/en-us/windows-server/storage/file-server/troubleshoot/detect-enable-and-disable-smbv1-v2-v3).
+
+### Proxmox VE { #proxmox-ve }
+
+| Verificação | Severidade | Dado |
+|---|---|---|
+| Security updates installed | high | atualizações de segurança pendentes por nó (precisa de `Sys.Modify` no token, senão desconhecida) |
+| Proxmox VE packages up to date | medium | pacotes Proxmox atualizáveis por nó |
+| Running the installed kernel | medium | kernel instalado mais recente do que o em execução |
+| No test repository in use | medium | repositórios standard ativados |
+| Package repositories correctly configured | medium | erros e avisos que o Proxmox VE levanta sobre os repositórios |
+| Enterprise repository subscription | low | estado da subscrição por nó |
+| Web interface certificate valid for 14+ days | medium | expiração do certificado do nó |
+| Every guest is in a backup job | high | convidados não selecionados por nenhuma tarefa de cópia |
+| Backup jobs succeed | high | último resultado de cada tarefa de cópia |
+
+Para a melhorar:
+
+1. Use um repositório a que tenha direito: enterprise com subscrição, caso
+   contrário `pve-no-subscription`; nunca `pvetest` num nó que importe.
+2. Instale as atualizações a partir do painel **Updates** do nó e depois
+   reinicie com o novo kernel.
+3. Ponha cada VM e contentor numa tarefa de cópia, idealmente para um Proxmox
+   Backup Server, e corrija qualquer tarefa que falhe.
+4. Substitua o certificado web autoassinado por um ACME.
+
+Fontes: [System Software Updates](https://pve.proxmox.com/wiki/System_Software_Updates),
+[Package Repositories](https://pve.proxmox.com/wiki/Package_Repositories),
+[Backup and Restore](https://pve.proxmox.com/wiki/Backup_and_Restore).
+
+### Proxmox Backup Server { #proxmox-backup-server }
+
+| Verificação | Severidade | Dado |
+|---|---|---|
+| System updates installed | high | atualizações pendentes (precisa de `Sys.Modify` em `/system`) |
+| Running the installed Backup Server version | medium | daemons que ainda executam a versão anterior à atualização |
+| Verify job scheduled | high | número de tarefas de verificação |
+| Prune job scheduled | medium | número de tarefas de prune |
+| Backups copied elsewhere (sync or tape) | medium | tarefas de sincronização e de cópia em fita (regra 3-2-1) |
+| Garbage collection clean, no bad chunks | high | último resultado do GC e chunks defeituosos por datastore |
+| Certificate valid for 14+ days | medium | expiração do certificado |
+
+Para a melhorar:
+
+1. Instale as atualizações e reinicie quando o kernel ou o `proxmox-backup`
+   mudaram.
+2. Agende uma tarefa de verificação e uma de prune em cada datastore.
+3. Mantenha uma cópia noutro local: uma tarefa de sincronização para um segundo
+   Backup Server, ou fita.
+4. Use um certificado ACME para a interface web.
+
+Fontes: [Maintenance tasks](https://pbs.proxmox.com/docs/maintenance.html),
+[Remotes and sync](https://pbs.proxmox.com/docs/managing-remotes.html).
+
+### Synology { #synology }
+
+| Verificação | Severidade | Dado |
+|---|---|---|
+| DSM 7 or later | high | versão do DSM |
+| DSM up to date | high | há uma atualização do DSM disponível (só conta de administrador) |
+| Built-in admin account disabled | medium | estado da conta `admin` (só conta de administrador) |
+| Auto Block enabled | medium | definição do Auto Block (só conta de administrador) |
+| DSM firewall enabled | medium | definição da firewall (só conta de administrador) |
+| Hyper Backup task configured | medium | número de tarefas do Hyper Backup |
+| Hyper Backup tasks succeed | high | último resultado de cada tarefa |
+
+As quatro definições são lidas uma vez por hora e só quando o DumbMonit inicia
+sessão com uma conta de administrador; com uma conta normal ficam
+desconhecidas e não contam. A verificação em dois passos e o redirecionamento
+para HTTPS não são lidos.
+
+Para a melhorar:
+
+1. Execute a última versão do DSM 7 para o seu modelo e deixe o DSM instalar
+   automaticamente as atualizações importantes (Painel de controlo →
+   Atualização e restauro).
+2. Desative a conta integrada `admin`; inicie sessão com um administrador
+   pessoal protegido por verificação em dois passos.
+3. Ative o Auto Block e a firewall (Painel de controlo → Segurança) e não
+   encaminhe portas do DSM para a internet: use uma VPN.
+4. Faça cópias com o Hyper Backup para outro dispositivo ou um destino na
+   nuvem e corrija qualquer tarefa que falhe: RAID e instantâneos não são
+   cópias de segurança.
+
+Fontes: [Product support status](https://www.synology.com/en-global/products/status),
+[How to add extra security to your Synology NAS](https://kb.synology.com/en-global/DSM/tutorial/How_to_add_extra_security_to_your_Synology_NAS).
+
+### OPNsense { #opnsense }
+
+| Verificação | Severidade | Dado |
+|---|---|---|
+| Firmware updates installed | high | atualizações de pacotes pendentes (desconhecida até o OPNsense ter procurado atualizações) |
+| On the current major release series | medium | nova série principal disponível |
+| No reboot pending after an update | medium | reinício necessário |
+| Packet filter enabled | **critical** | estado do `pf` |
+
+Para a melhorar:
+
+1. Procure atualizações em System → Firmware → Status, instale-as e reinicie
+   quando for pedido.
+2. Passe para a nova versão principal quando sair.
+3. Mantenha o filtro de pacotes ativado.
+4. Permita a interface web e o SSH apenas a partir da LAN ou de uma VPN, nunca
+   a partir da WAN.
+
+Fontes: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
+[OPNsense firewall](https://docs.opnsense.org/manual/firewall.html).
+
+### Sites web { #websites }
+
+Para os monitores **HTTP(S)** e **TLS** que negociam TLS, e para os
+monitores **Website health & SEO**. Um monitor HTTP simples não tem
+pontuação.
+
+| Verificação | Severidade | Dado |
+|---|---|---|
+| Certificate valid for 14+ days | high | dias até à expiração (monitores HTTP(S) e TLS) |
+| Certificate chain trusted | high | verificação da cadeia (monitores HTTP(S) e TLS) |
+| TLS 1.3 negotiated | low | versão do protocolo negociada (monitores HTTP(S) e TLS) |
+| Served over HTTPS | high | endereço final após redirecionamentos (Website health) |
+| Strict-Transport-Security header | medium | cabeçalho com um `max-age` superior a 0 |
+| X-Content-Type-Options: nosniff | low | valor do cabeçalho |
+| Protected against clickjacking | low | `X-Frame-Options` ou `frame-ancestors` da CSP |
+| Content-Security-Policy header | low | uma política aplicada (report-only não conta) |
+
+Os cabeçalhos só são lidos em respostas HTTPS.
+
+Para a melhorar:
+
+1. Sirva o site apenas por HTTPS e redirecione o HTTP simples para HTTPS.
+2. Automatize a renovação do certificado (ACME, p. ex. Let's Encrypt) e sirva a
+   cadeia completa.
+3. Adicione cabeçalhos de segurança no servidor web ou no proxy inverso:
+   `Strict-Transport-Security`, `X-Content-Type-Options: nosniff` e uma
+   `Content-Security-Policy` com `frame-ancestors`.
+4. Confronte com o [Mozilla HTTP Observatory](https://developer.mozilla.org/en-US/observatory),
+   que testa muito mais do que esta pontuação.
+
+Fontes: [Mozilla Server Side TLS](https://wiki.mozilla.org/Security/Server_Side_TLS),
+[MDN — HTTP headers](https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Headers).
+
+### Active Directory { #active-directory }
+
+Pontuado a partir dos achados ao estilo PingCastle do coletor do Active
+Directory: contas kerberoastable, contas sem pré-autenticação Kerberos,
+delegação sem restrições, idade da palavra-passe do `krbtgt`, tamanho dos
+grupos privilegiados, cobertura do LAPS, política de palavras-passe, contas
+obsoletas. Cada achado é uma verificação que passa quando diz respeito a zero
+objetos.
+
+Para a melhorar:
+
+1. Corrija primeiro os achados críticos e altos: são os caminhos habituais para
+   os Domain Admins.
+2. Se a palavra-passe do `krbtgt` for antiga, reponha-a duas vezes, com umas
+   horas de intervalo, e remova a delegação sem restrições dos computadores que
+   não sejam controladores de domínio.
+3. Passe os serviços que correm com contas de utilizador com SPN para contas de
+   serviço geridas de grupo (gMSA).
+4. Execute o [PingCastle](https://www.pingcastle.com/) para uma avaliação
+   completa.
 
 Fontes: [PingCastle health check rules](https://www.pingcastle.com/PingCastleFiles/ad_hc_rules_list.html),
-[Microsoft — unconstrained Kerberos delegation](https://learn.microsoft.com/en-us/defender-for-identity/security-assessment-unconstrained-kerberos),
-[Windows LAPS](https://learn.microsoft.com/en-us/windows-server/identity/laps/laps-overview),
-[Resetting the krbtgt password](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/manage/forest-recovery-guide/ad-forest-recovery-resetting-the-krbtgt-password).
+[Windows LAPS](https://learn.microsoft.com/en-us/windows-server/identity/laps/laps-overview).
 
-### GitLab {#gitlab}
+## Limites
 
-Lido a partir da API de administração, com um token de acesso pessoal
-de administrador; desconhecido com um comum.
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Two-factor authentication required | high | definição `require_two_factor_authentication` |
-| Public sign-up disabled | medium | definição `signup_enabled` |
-| Database migrations applied | medium | migrações pendentes depois de uma atualização |
-
-Fonte: [GitLab application settings API](https://docs.gitlab.com/ee/api/settings.html).
-
-### Forgejo e Gitea {#forgejo-and-gitea}
-
-| Verificação | Severidade | Dados |
-|---|---|---|
-| Scheduled tasks run on time | medium | tarefas cuja próxima execução já está vencida |
-
-Desconhecido sem um token de acesso de administrador do site: o
-Forgejo e o Gitea reservam a lista de tarefas agendadas à
-administração.
-
-Fonte: [Forgejo API](https://forgejo.org/docs/latest/user/api/).
-
-## Limites {#limits}
-
-A pontuação só reflete o que o DumbMonit pode ver. É um impulso para
-olhar, não uma auditoria, e uma nota A não significa que um
-dispositivo está seguro.
-
-Boas práticas que **não** são verificadas ainda porque os coletores não
-lêem os dados hoje:
-
-| Tipo | Não verificado (precisa de dados novos) |
-|---|---|
-| Proxmox VE | firewall de datacenter/nó ativada; autenticação de dois fatores em `root@pam` e outras contas de administrador |
-| Proxmox Backup Server | encriptação do lado do cliente das cópias de segurança (precisa de ler os manifestos de cópia de segurança) |
-| Synology DSM | verificação em 2 passos para administradores; conta `admin` predefinida desativada; bloqueio automático; firewall do DSM; redirecionamento HTTP para HTTPS; exposição QuickConnect; se uma atualização DSM mais recente está disponível |
-| OPNsense / pfSense | interface web ou SSH acessível pela WAN; credenciais predefinidas; atualizações do sistema pfSense (não da REST API) |
-| UniFi | SSH do dispositivo com credenciais predefinidas; definições do site |
-| Monitores TLS | TLS 1.0/1.1 ou conjuntos de cifras fracos ainda oferecidos — a verificação só negocia TLS 1.2 e 1.3, por isso um servidor limitado a versões mais antigas mostra-se como uma verificação falhada em vez disso |
-| Anfitriões de agente | estado da firewall do anfitrião; configuração SSH; estado do Windows Defender |
-| Docker | contentores em execução privilegiados, como root, ou com o socket Docker montado |
-
-Outros limites:
-
-- Uma verificação só é tão fresca quanto os seus dados: alguns
-  coletores relêem atualizações ou subscrições a cada poucas horas.
-- Os pesos são uma escolha de produto, a mesma para toda instalação.
-- Tipos sem nenhuma verificação não têm cartão Security e não aparecem
-  na página Security.
+- A pontuação reflete apenas o que o DumbMonit consegue ver; muitas boas
+  práticas não são verificadas porque nenhum coletor lê o dado: firewall e
+  autenticação de dois fatores do Proxmox, interface web do OPNsense exposta na
+  WAN, contentores Docker a correr com privilégios ou com o socket do Docker
+  montado, TLS 1.0/1.1 ainda oferecidos (a sonda só negoceia TLS 1.2 e 1.3), e
+  muitas mais.
+- Uma verificação é tão atual quanto os seus dados: alguns coletores só relêem
+  as atualizações de poucas em poucas horas.
+- Os pesos são uma escolha de produto, igual para todas as instalações.
+- Só os tipos acima são pontuados. Os outros (switches, impressoras, UniFi,
+  pfSense…) não mostram distintivo de propósito: duas ou três verificações
+  dariam uma classificação sem significado.

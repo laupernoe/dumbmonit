@@ -45,10 +45,10 @@ Registry-Ausfall nicht wie ein Domain-Problem aussieht.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#reverse-proxies-and-domains):
 Domain expiring (unter 30 Tagen), Domain about to expire (unter 7 Tagen
-oder abgelaufen), Domain on hold, Domain in redemption, plus Device
+oder abgelaufen), Domain on hold, Domain in redemption, plus Monitor
 unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt nie die Registry ab. Es zeigt das Ablaufdatum und
@@ -101,6 +101,6 @@ Keine: RDAP ist öffentlich.
 Adresse: die registrierte Domain (`example.com`); eine eingefügte URL wird
 auf ihren Hostnamen reduziert. Optionen: RDAP-Server (leer: über IANA
 gefunden), Aktualisierungsintervall (12 Stunden, von 1 bis 168) und
-Anfrage-Timeout (10 s). Das Prüfintervall des Geräts selbst kann auf seinem
+Anfrage-Timeout (10 s). Das Prüfintervall des Monitors selbst kann auf seinem
 Standard bleiben: Es berechnet nur die verbleibenden Tage zwischen zwei
 Anfragen an die Registry neu.

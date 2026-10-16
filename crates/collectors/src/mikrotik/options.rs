@@ -109,7 +109,7 @@ fn base_url(address: &str, scheme: &str, port: u16) -> Result<String, ProbeError
     // Une adresse copiée depuis la documentation se termine parfois par `/rest`.
     let address = address.strip_suffix("/rest").unwrap_or(address);
     if address.is_empty() {
-        return Err(ProbeError::Config("Device address is empty".to_string()));
+        return Err(ProbeError::Config("Monitor address is empty".to_string()));
     }
     if address.starts_with("https://") || address.starts_with("http://") {
         return Ok(address.to_string());

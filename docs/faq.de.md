@@ -20,24 +20,24 @@ docker compose up -d
 Jedes Konto und jede Sitzung wird beim Start entfernt, und die UI
 zeigt wieder `/setup`. Erstellen Sie den ersten Administrator, starten
 Sie dann die Zeile wieder und führen Sie `docker compose up -d` noch
-einmal aus. Geräte,
+einmal aus. Monitore,
 Regeln, Kanäle und die Single-Sign-On-Einstellungen bleiben unberührt.
 
-## Keine Daten nach dem Hinzufügen eines Geräts {#no-data-after-adding-a-device}
+## Keine Daten nach dem Hinzufügen eines Monitors {#no-data-after-adding-a-device}
 
 Geben Sie ihm eine Minute: Die erste Abfrage läuft im Intervall des
-Geräts (standardmäßig 60 s), und Schreibvorgänge erreichen
+Monitors (standardmäßig 60 s), und Schreibvorgänge erreichen
 VictoriaMetrics alle 5 Sekunden (`DUMBMONIT_FLUSH_INTERVAL_SECS`).
 Dann:
 
-1. Öffnen Sie die Geräteseite und klicken Sie auf **Probe now**. Es
+1. Öffnen Sie die Monitorseite und klicken Sie auf **Probe now**. Es
    meldet, wie viele Samples und Zeitreihen eine Abfrage erzeugt hat,
    oder den genauen Fehler.
 2. *Misconfigured* mit einem Fehler unter der Adresse ist ein
    Konfigurationsproblem: falsche Community oder Passwort, abgelehntes
    Zertifikat (aktivieren Sie "Accept an unverifiable certificate"),
    fehlende Fähigkeit. Es wird angezeigt, nicht alarmiert.
-3. *Unreachable* ohne Fehler bedeutet, dass das Gerät überhaupt nicht
+3. *Unreachable* ohne Fehler bedeutet, dass der Monitor überhaupt nicht
    geantwortet hat. Bei SNMP sieht eine falsche Community genau wie ein
    ausgeschaltetes Gerät aus, weil das Gerät sie nie beantwortet.
    Prüfen Sie die Community, dass SNMP aktiviert ist, und dass das
@@ -96,9 +96,9 @@ Warning. Siehe [Schweregrade](alerting/index.md#severities).
 
 ## Ein Alarm ist "Suppressed by parent"
 
-Das Gerät hat ein übergeordnetes Gerät, das nicht erreichbar ist,
+Der Monitor hat einen übergeordneten Monitor, der nicht erreichbar ist,
 daher werden seine eigenen Alarme zurückgehalten statt gesendet.
-Beheben Sie das übergeordnete Gerät; die Alarme des Kindes lösen sich
+Beheben Sie den übergeordneten Monitor; die Alarme des Kindes lösen sich
 oder feuern danach von selbst, ohne eine zweite Benachrichtigung.
 Siehe [Abhängigkeitsunterdrückung](alerting/index.md#dependency-suppression).
 
@@ -118,7 +118,7 @@ also mit anderen Tools teilen. `GET /api/health` meldet
 
 ## Muss DumbMonit aus dem Internet erreichbar sein?
 
-Nein. Es greift auf Geräte und Benachrichtigungsdienste zu; nichts
+Nein. Es greift auf Monitore und Benachrichtigungsdienste zu; nichts
 ruft zurück, außer Agents, die die URL des Servers erreichen müssen.
 Behalten Sie es in Ihrem LAN oder hinter einem VPN; wenn Sie es
 exponieren, nutzen Sie einen Reverse Proxy mit TLS und setzen Sie

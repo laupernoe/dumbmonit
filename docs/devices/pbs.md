@@ -5,11 +5,11 @@ their logs, scheduled jobs (sync, verify, prune, garbage collection),
 datastores, disks and ZFS pools, pending updates, the services and package
 versions of the server itself, and the tape tier when there is one.
 
-## The device page
+## The monitor page
 
-![A PBS device: failures, the 30-day backup calendar, jobs and health](../assets/screenshots/device-pbs-light.png){ loading=lazy }
+![A PBS monitor: failures, the 30-day backup calendar, jobs and health](../assets/screenshots/device-pbs-light.png){ loading=lazy }
 
-Beyond the generic charts, a PBS device shows six panels, read from what the
+Beyond the generic charts, a PBS monitor shows six panels, read from what the
 probe stored — opening the page never queries PBS itself:
 
 * **Failures** — every task that failed in the last 30 days (backup, sync,
@@ -54,7 +54,7 @@ The calendar splits days at the browser's local midnight. Its history comes
 from the task list: the first probe after a start reads the last 30 days
 (`/nodes/localhost/tasks?since=…&limit=5000`), later probes only the task
 window, and the server keeps the union in SQLite (`pbs_task_history`, 35 days,
-at most 10 000 tasks per device) so the calendar survives restarts.
+at most 10 000 tasks per monitor) so the calendar survives restarts.
 
 ## What it watches
 
@@ -138,11 +138,11 @@ protects a device.
 **Limit worth knowing**: PBS does not record a separate "connection" for a
 backed-up machine, only backups — `last_seen_timestamp_seconds` and the
 `connection` signal are never published here; a device shows `last_connection`
-as "—" on the device page's table. The device named in the alert is the guest
+as "—" on the monitor page's table. The device named in the alert is the guest
 name from the snapshot notes when PVE wrote one, otherwise `type/id`, same as
 the backup calendar.
 
-Built-in rules that apply: Device unreachable, PBS datastore almost full, PBS
+Built-in rules that apply: Monitor unreachable, PBS datastore almost full, PBS
 datastore filling up, PBS backup too old (per backup group: no new snapshot
 for two days — edit the rule's threshold for a longer window), PBS backup
 verification failed, PBS task failed, PBS garbage collection too old, PBS
@@ -310,7 +310,7 @@ The `https` scheme and port 8007 are added if missing.
 |---|---|
 | Certificate error | Self-signed certificate: install a trusted one (ACME is built into PBS) or enable `insecure_tls`. |
 | Authentication error | Secret pasted into Token ID (or the other way round), or the token has no `Audit` permission — most often because the role was granted to the token but not to the user that owns it, which does not fail: the calls succeed and return empty lists. Only `GET /version` failing condemns the whole probe; any other call failing is counted in `scrape_errors`. |
-| Everything reads empty but the device is up | The user is missing the ACL the token has, and PBS intersects the two: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` prints nothing. Grant every role to `dumbmonit@pbs` as well. |
+| Everything reads empty but the monitor is up | The user is missing the ACL the token has, and PBS intersects the two: `proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'` prints nothing. Grant every role to `dumbmonit@pbs` as well. |
 | No `node_updates_pending` series | The token lacks `Sys.Audit` on `/`: give it the `Audit` role on `/`, or set `updates` to `false` to stop asking. |
 | A sync job is missing | The token lacks `Remote.Audit` on the job's remote: add the `RemoteAudit` role on `/remote`. The job is not refused, it is simply absent from the list. |
 | No certificate expiry | The `certificates` option is off, which is the default: PBS requires `Sys.Modify` for that call, a write privilege. |

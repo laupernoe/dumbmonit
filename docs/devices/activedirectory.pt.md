@@ -16,7 +16,7 @@ DumbMonit nunca escreve no diretório, nunca lê um atributo de senha
 (do LAPS lê a data de expiração, nunca a senha) e nunca pede os
 direitos de replicação que exporiam segredos.
 
-Um dispositivo cobre todo o domínio: aponte-o para um controlador de
+Um monitor cobre todo o domínio: aponte-o para um controlador de
 domínio e o DumbMonit encontra os outros na partição de configuração.
 
 ## O que o LDAP pode e não pode dizer {#what-ldap-can-and-cannot-tell}
@@ -30,7 +30,7 @@ nele. Em particular:
   direito *Monitor active directory replication*. Sem ele, o painel
   diz *replication status not readable* em vez de adivinhar. Só a
   vista do controlador de domínio consultado é mostrada: para ver os
-  parceiros de outro, adicione-o como um segundo dispositivo.
+  parceiros de outro, adicione-o como um segundo monitor.
 - **Não visível via LDAP**: registos de eventos (inícios de sessão,
   bloqueios conforme acontecem, alterações de grupo como eventos),
   conteúdo de Group Policy, SYSVOL, zonas DNS, e os próprios hashes de
@@ -107,7 +107,7 @@ Operators, Print Operators e Backup Operators.
 
 As descobertas são factos brutos — quantos objetos, e quais — não uma
 pontuação; a [pontuação de segurança](../using/security-score.md) do
-dispositivo pesa-as. Cada uma tem um `id` estável, uma severidade na
+monitor pesa-as. Cada uma tem um `id` estável, uma severidade na
 escala da pontuação (low, medium, high, critical, mostrada na página
 como Info, Advisory e Warning), uma categoria, uma contagem e até
 vinte nomes de conta de amostra. Uma descoberta que foi examinada e
@@ -155,7 +155,7 @@ aplicam:
 
 - **Domain controller unreachable**: outro controlador de domínio do
   domínio deixa de responder na sua porta LDAP durante cinco minutos
-  (Warning). O consultado é coberto por *Device unreachable*.
+  (Warning). O consultado é coberto por *Monitor unreachable*.
 - **Active Directory bind failed**: o controlador de domínio recusa a
   conta de serviço — senha expirada, desativada ou bloqueada
   (Advisory).
@@ -167,7 +167,7 @@ aplicam:
   legível.
 - **krbtgt password older than 180 days** (Info).
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Active Directory mostra o domínio (níveis funcionais, o
 controlador de domínio consultado, desvio de relógio), os

@@ -63,7 +63,7 @@ name, or its MAC address when it has none), `mac`, `model` and `type`
 The [built-in rules](../alerting/rules.md#unifi-network) that apply: UniFi
 device offline, UniFi Internet down, UniFi WAN link down, UniFi gateway CPU
 high, UniFi device waiting for adoption, UniFi firmware update available,
-UniFi alarms, plus Device unreachable.
+UniFi alarms, plus Monitor unreachable.
 
 ## Devices
 
@@ -87,7 +87,7 @@ prefixed without `unifi`, documented in full under
 | `last_seen_timestamp_seconds` | Last connection, as `/rest/user` reports it | `device`, `type` (`Wired`, `Wireless` or `Unknown`), `os` (empty), `user` (empty), `kind` |
 | `stale_seconds` | Positive once a tracked client has gone past `device_stale_days` (3 by default) without connecting; drives the [Client device stale](../alerting/rules.md#client-devices) rule | `device`, `type`, `os`, `user`, `kind`, `signal` (always `connection`: UniFi has no backup to report) |
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries UniFi. It says what is wrong first (devices offline, Internet or a WAN

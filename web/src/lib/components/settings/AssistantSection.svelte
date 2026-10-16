@@ -26,6 +26,7 @@
 	} from '#lib/api/tokens.js';
 	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import { rovingIndex } from '#lib/ui/roving.js';
 	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 
 	const EXAMPLE_PROMPTS = [m.settings_assistant_prompt_fine(), m.settings_assistant_prompt_silence(), m.settings_assistant_prompt_night(), m.settings_assistant_prompt_backup()];
@@ -190,12 +191,11 @@
 	const curlRead = $derived(`curl -H "Authorization: ${bearer}" ${origin}/api/targets`);
 	const curlWrite = $derived(`curl -X POST -H "Authorization: ${bearer}" ${origin}/api/targets/1/probe`);
 
-	// Arrow keys move between tabs, as a tablist is expected to behave.
+	// Left/Right/Home/End move between tabs, as a tablist is expected to behave.
 	function onTabKey(event: KeyboardEvent) {
-		const index = CLIENTS.findIndex((c) => c.id === client);
-		if (event.key === 'ArrowRight') client = CLIENTS[(index + 1) % CLIENTS.length].id;
-		else if (event.key === 'ArrowLeft') client = CLIENTS[(index - 1 + CLIENTS.length) % CLIENTS.length].id;
-		else return;
+		const next = rovingIndex(event.key, CLIENTS.findIndex((c) => c.id === client), CLIENTS.length);
+		if (next === null) return;
+		client = CLIENTS[next].id;
 		event.preventDefault();
 		document.getElementById(`assistant-tab-${client}`)?.focus();
 	}

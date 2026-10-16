@@ -22,6 +22,7 @@ Todas as métricas têm o prefixo `dumbmonit_synology_`.
 | Hyper Backup | `backup_tasks`, `backup_running`, `backup_last_result`, `backup_last_run_age_seconds`, `backup_last_success_age_seconds`, `backup_next_run_in_seconds` | por tarefa |
 | Synology Drive | `drive_up`, `drive_team_folders`, `drive_team_folder_info`, `drive_connections` (ver abaixo) | `drive_team_folder_info`: `name` |
 | Synology Photos | `photos_installed` (ver abaixo) | |
+| Definições de segurança | `update_available`, `admin_account_enabled`, `autoblock_enabled`, `firewall_enabled` (`0`/`1`; lidos de hora a hora, só com conta de administrador, opcionais: ausentes se o DSM recusar) | |
 | Coleta | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 As métricas do Active Backup for Business são a excepção: têm o
@@ -68,11 +69,11 @@ verificação.
       devolve, por isso num NAS recente essas duas séries simplesmente
       não existem — nada é inventado no seu lugar.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-![Um dispositivo Synology: num olhar, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
+![Um monitor Synology: num olhar, volumes, discos e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-Um dispositivo Synology recebe o seu próprio painel acima dos
+Um monitor Synology recebe o seu próprio painel acima dos
 gráficos:
 
 * **At a glance** — CPU, memória (usada do total), temperatura e
@@ -385,6 +386,6 @@ Endereço: `192.168.1.30`, `nas.lan` ou `nas.lan:5001`. Sem porta, 5001
 | Erro de certificado | Certificado autoassinado: ative `insecure_tls`. Isto é um erro de configuração, nunca «inacessível»: um NAS que responde não se mostra como desligado. |
 | Nenhuma métrica de disco ou volume | A conta não está no grupo `administrators` (ver a nota acima). |
 | Nenhuma métrica `dumbmonit_abb_*`, `scrape_errors` em 1 | A conta não pode usar o Active Backup for Business: delegue-lhe o pacote, ou desative a opção `abb`. Sem o pacote instalado não há nenhum erro e nenhuma métrica. |
-| Métricas de tarefa mas nenhuma linha de dispositivo na página | O NAS não anuncia `SYNO.ActiveBackup.Overview` (ABB mais antigo), ou o dispositivo é sondado através de um agente relay, que mantém o histórico em memória do seu lado: as métricas existem, o calendário não. |
+| Métricas de tarefa mas nenhuma linha de monitor na página | O NAS não anuncia `SYNO.ActiveBackup.Overview` (ABB mais antigo), ou o monitor é sondado através de um agente relay, que mantém o histórico em memória do seu lado: as métricas existem, o calendário não. |
 | Um portátil mostra «Overdue» no dia seguinte a ser adicionado | Menos de três sucessos: o modelo ainda está a aprender e permite 72 horas entre cópias de segurança; estabiliza-se uma vez conhecidos duas semanas de hábitos. |
 | Os discos despertam em cada verificação | O inventário de armazenamento desperta discos em suspensão. Alargue o intervalo de verificação. |

@@ -96,7 +96,7 @@ fn base_url(address: &str, scheme: &str, port: u16) -> Result<String, ProbeError
         address = address.strip_suffix(suffix).unwrap_or(address).trim_end_matches('/');
     }
     if address.is_empty() {
-        return Err(ProbeError::Config("Device address is empty".to_string()));
+        return Err(ProbeError::Config("Monitor address is empty".to_string()));
     }
     if address.starts_with("https://") || address.starts_with("http://") {
         return Ok(address.to_string());

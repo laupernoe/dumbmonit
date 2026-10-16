@@ -15,7 +15,7 @@ todos los hosts, VMs y repositorios de almacenamiento. Si la dirección que
 introdujiste es la de un miembro del pool, este responde `HOST_IS_SLAVE` con la
 dirección del coordinador; DumbMonit la sigue una vez, con el mismo protocolo y
 puerto, de modo que un cambio de coordinador no te obliga a editar el
-dispositivo.
+monitor.
 
 !!! warning "Validado solo contra la documentación del fabricante — aún no probado en un sistema real"
 

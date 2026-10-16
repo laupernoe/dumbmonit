@@ -19,6 +19,7 @@
 //! à l'interface de traiter les deux mondes sans distinction.
 
 pub mod commands;
+pub mod modules;
 pub mod policy;
 mod receive;
 mod store;
@@ -30,6 +31,7 @@ use async_trait::async_trait;
 use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
 use sqlx::SqlitePool;
 
+pub use modules::AgentServiceCollector;
 pub use policy::spawn_policy_scheduler;
 pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, ingest};
 pub use store::{
@@ -90,6 +92,24 @@ fn staleness_deadline(interval: Duration) -> Duration {
     (interval * MISSED_INTERVALS).max(MIN_GRACE)
 }
 
+/// Durée lisible pour un message d'erreur : « 45 s », « 12 min », « 3 h 05 », « 10 d 21 h ».
+/// Deux unités au plus : au-delà, la seconde près n'apprend rien et change à chaque cycle.
+fn human_duration(duration: Duration) -> String {
+    let secs = duration.as_secs();
+    match secs {
+        0..=119 => format!("{secs} s"),
+        120..=7_199 => format!("{} min", secs / 60),
+        7_200..=172_799 => match (secs / 3600, secs % 3600 / 60) {
+            (hours, 0) => format!("{hours} h"),
+            (hours, minutes) => format!("{hours} h {minutes:02}"),
+        },
+        _ => match (secs / 86_400, secs % 86_400 / 3600) {
+            (days, 0) => format!("{days} d"),
+            (days, hours) => format!("{days} d {hours} h"),
+        },
+    }
+}
+
 #[async_trait]
 impl Collector for AgentCollector {
     fn kind(&self) -> &'static str {
@@ -114,9 +134,9 @@ impl Collector for AgentCollector {
 
         if age > deadline {
             return Err(ProbeError::Unreachable(format!(
-                "no measurement for {} s (limit {} s)",
-                age.as_secs(),
-                deadline.as_secs()
+                "no measurement for {} (limit {})",
+                human_duration(age),
+                human_duration(deadline)
             )));
         }
 
@@ -134,6 +154,16 @@ impl Collector for AgentCollector {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn durations_in_messages_are_human() {
+        let secs = |n| super::human_duration(std::time::Duration::from_secs(n));
+        assert_eq!(secs(90), "90 s");
+        assert_eq!(secs(600), "10 min");
+        assert_eq!(secs(3 * 3600 + 300), "3 h 05");
+        assert_eq!(secs(940_053), "10 d 21 h");
+        assert_eq!(secs(2 * 86_400), "2 d");
+    }
+
     use dumbmonit_proto::Credential;
 
     use super::*;

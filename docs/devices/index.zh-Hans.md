@@ -1,6 +1,6 @@
-# 设备类型 {#device-types}
+# 监控项类型 {#device-types}
 
-DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），即使是网页或 DNS 名称也是如此。每种类型都是服务器上的一个收集器；服务器向接口描述每种类型（`GET /api/collectors`），所以表单总是与这个版本能监视的东西相匹配。
+DumbMonit 把它监视的所有东西都称为*监控项*（API 说*目标*），即使是网页或 DNS 名称也是如此。每种类型都是服务器上的一个收集器；服务器向接口描述每种类型（`GET /api/collectors`），所以表单总是与这个版本能监视的东西相匹配。
 
 | 类型 | `kind` | 凭证 | 典型用途 |
 |---|---|---|---|
@@ -18,7 +18,7 @@ DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），�
 | [FortiGate](fortigate.md) | `fortigate` | REST API 令牌（仅读配置文件、受信主机） | 防火墙：IPsec 隧道、链接、HA 同步、保守模式、FortiGuard 许可证 |
 | [Sophos 防火墙](sophos.md) | `sophos` | 用户名/密码（仅读配置文件） | 防火墙：仅接口链接（XML API 不公开隧道、HA 或许可证状态） |
 | [OpenVPN 服务器](openvpn.md) | `openvpn` | 无，或管理密码 | 通过其管理接口的 OpenVPN 服务器：版本、状态、已连接的客户端 |
-| [UniFi 网络](unifi.md) | `unifi` | API 密钥或用户名/密码 | UniFi 控制台或自托管服务器：设备、WAN、客户端 |
+| [UniFi 网络](unifi.md) | `unifi` | API 密钥或用户名/密码 | UniFi 控制台或自托管服务器：监控项、WAN、客户端 |
 | [Home Assistant](homeassistant.md) | `homeassistant` | 长期有效的访问令牌 | 智能家居：不可用的实体、低电池、更新、修复 |
 | [TrueNAS](truenas.md) | `truenas` | API 密钥 | ZFS 存储服务器（SCALE、社区版） |
 | [Unraid](unraid.md) | `unraid` | API 密钥（查看者角色） | NAS：阵列、磁盘、奇偶校验检查、缓存池、容器、虚拟机 |
@@ -46,7 +46,7 @@ DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），�
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | 服务账户令牌（仅读 ClusterRole） | 集群：节点不就绪、pod 崩溃循环或待处理、工作负载缺少副本、卡住的卷声明 |
 | [Active Directory](activedirectory.md) | `activedirectory` | 用户名/密码（普通域用户） | Windows 域通过 LDAPS：域控制器和 FSMO 角色、特权组成员、密码策略、安全发现 |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | 用户名/密码（Veeam Backup Viewer） | 备份服务器：失败的任务、失败的会话、存储库填满、许可证 |
-| [Tailscale](tailscale.md) | `tailscale` | OAuth 客户端（devices:core:read）或 API 访问令牌 | Tailnet：服务器离线、节点密钥即将过期、设备等待批准 |
+| [Tailscale](tailscale.md) | `tailscale` | OAuth 客户端（devices:core:read）或 API 访问令牌 | Tailnet：服务器离线、节点密钥即将过期、监控项等待批准 |
 | [Nextcloud](nextcloud.md) | `nextcloud` | 监视令牌（NC-Token） | 文件同步：维护模式、待处理升级、更新、活跃用户、OPcache |
 | [Immich](immich.md) | `immich` | API 密钥 | 照片库：任务队列、更新、磁盘、照片计数 |
 | [Paperless-ngx](paperless.md) | `paperless` | API 令牌或用户名/密码 | 文档：Redis、Celery、索引、失败的导入、更新 |
@@ -69,18 +69,18 @@ DumbMonit 把它监视的所有东西都称为*设备*（API 说*目标*），�
 | [心跳](push.md) | `push` | 无（秘密 URL） | Cron 任务、备份脚本、必须调用的自动化 |
 | [网站变化](webchange.md) | `webchange` | 无 | 一个页面或整个网站：文本变化、新增和删除的页面、之前/之后带屏幕截图 |
 | [网站健康和 SEO](website.md) | `website` | 无 | 批量网站：掉线、空白页、重定向、noindex、robots.txt、标题/描述/规范变化、平台（CSV 导入） |
-| [演示设备](demo.md) | `dummy` | 无 | 无硬件的情况下探索 UI |
+| [演示监控项](demo.md) | `dummy` | 无 | 无硬件的情况下探索 UI |
 
-## 设备如何被读取 {#how-a-device-is-read}
+## 监控项如何被读取 {#how-a-device-is-read}
 
-调度程序在其自己的间隔（默认 60 秒，最小 10 秒）运行每个启用的设备，通过其类型的收集器，最多 `DUMBMONIT_MAX_CONCURRENT_PROBES` 个在途探测，以及每个探测硬超时 `DUMBMONIT_PROBE_TIMEOUT_SECS`。每个成功的探测写其样本加 `dumbmonit_up = 1`；失败的探测什么都不写，它是"设备不可达"规则检测的系列的沉默。设备页面在下一次探测时显示故障，但警报故意等待：在最后一个成功探测后约四分钟触发（三分钟的沉默，然后一分钟的保留期），所以单个丢失的探测永远不会激活任何人。
+调度程序在其自己的间隔（默认 60 秒，最小 10 秒）运行每个启用的监控项，通过其类型的收集器，最多 `DUMBMONIT_MAX_CONCURRENT_PROBES` 个在途探测，以及每个探测硬超时 `DUMBMONIT_PROBE_TIMEOUT_SECS`。每个成功的探测写其样本加 `dumbmonit_up = 1`；失败的探测什么都不写，它是"监控项不可达"规则检测的系列的沉默。监控项页面在下一次探测时显示故障，但警报故意等待：在最后一个成功探测后约四分钟触发（三分钟的沉默，然后一分钟的保留期），所以单个丢失的探测永远不会激活任何人。
 
-故障是分类的。不回应的设备是*不可达的*并引发警报。错误的社区、被拒绝的证书或缺少的能力是*配置错误*：它显示在设备页面上，用红色，带有原因，它不被通知。区别很重要：配置错误的设备不应在半夜唤醒任何人。
+故障是分类的。不回应的监控项是*不可达的*并引发警报。错误的社区、被拒绝的证书或缺少的能力是*配置错误*：它显示在监控项页面上，用红色，带有原因，它不被通知。区别很重要：配置错误的监控项不应在半夜唤醒任何人。
 
 ## 选项 {#options}
 
-一些类型从设备的标签中读取选项：API 端口、是否接受自签名证书、要监视哪些节点。表单在"更多选项"下为每个选项显示一个类型化字段，及其默认值和帮助文本。按类型的页面逐字列出它们。选项是设置，不是标签：它们不复制到系列上。自由标签（任何其他密钥）在每个系列上复制为 `tag_<key>` 标签，除了命名密钥的密钥（按单词匹配：`password`、`token`、`key`、`cert`、`secret`、`pass`、`private`、`pem` 等，所以 `primary_key` 被跳过但 `keyboard` 不是）和长于 256 个字符的值。永远不要在标签中放置密钥：使用凭证字段，这是加密的。
+一些类型从监控项的标签中读取选项：API 端口、是否接受自签名证书、要监视哪些节点。表单在"更多选项"下为每个选项显示一个类型化字段，及其默认值和帮助文本。按类型的页面逐字列出它们。选项是设置，不是标签：它们不复制到系列上。自由标签（任何其他密钥）在每个系列上复制为 `tag_<key>` 标签，除了命名密钥的密钥（按单词匹配：`password`、`token`、`key`、`cert`、`secret`、`pass`、`private`、`pem` 等，所以 `primary_key` 被跳过但 `keyboard` 不是）和长于 256 个字符的值。永远不要在标签中放置密钥：使用凭证字段，这是加密的。
 
-## 父设备 {#parent-devices}
+## 父监控项 {#parent-devices}
 
-任何设备都可以声明另一个设备为其父设备。当父设备不可达时，其子设备的警报被标记为*被父设备抑制*而不是被发送：交换机掉线产生一个通知，而不是三十个。在设备页面上，子设备堆叠在其父设备下，当它不可达时变暗。
+任何监控项都可以声明另一个监控项为其父监控项。当父监控项不可达时，其子监控项的警报被标记为*被父监控项抑制*而不是被发送：交换机掉线产生一个通知，而不是三十个。在监控项页面上，子监控项堆叠在其父监控项下，当它不可达时变暗。

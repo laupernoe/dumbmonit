@@ -39,11 +39,11 @@ async fn overview(
 ) -> ApiResult<Json<ObservabilityView>> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     let kind = target.kind.as_str();
     if !KINDS.contains(&kind) {
         return Err(ApiError::NotFound(format!(
-            "Device {id} is not a Redis, MongoDB, RabbitMQ or CrowdSec server."
+            "Monitor {id} is not a Redis, MongoDB, RabbitMQ or CrowdSec server."
         )));
     }
     let selector = format!(r#"{{__name__=~"dumbmonit_{kind}_.*", target="{id}"}}"#);
@@ -853,5 +853,233 @@ mod tests {
         assert!(bouncers.detail.contains("nginx") && !bouncers.detail.contains("firewall"));
         let reading = view.checks.iter().find(|c| c.label == "Log reading").unwrap();
         assert_eq!(reading.state, "warning");
+    }
+
+    fn check_of<'a>(view: &'a ObservabilityView, label: &str) -> &'a Check {
+        view.checks.iter().find(|c| c.label == label).unwrap_or_else(|| panic!("check {label}"))
+    }
+
+    fn figure_of(view: &ObservabilityView, label: &str) -> Option<f64> {
+        view.figures.iter().find(|f| f.label == label).and_then(|f| f.value)
+    }
+
+    #[test]
+    fn un_primaire_redis_en_bonne_sante_avec_ses_chiffres() {
+        let k = "redis";
+        let last = [
+            serie(k, "version_info", 1.0, &[("version", "7.4.1"), ("product", "redis")]),
+            serie(k, "role_info", 1.0, &[("role", "master")]),
+            serie(k, "connected_replicas", 2.0, &[]),
+            serie(k, "replica_online", 1.0, &[("replica", "10.0.0.2")]),
+            serie(k, "replica_lag_seconds", 1.0, &[("replica", "10.0.0.2")]),
+            serie(k, "replica_online", 1.0, &[("replica", "10.0.0.3")]),
+            serie(k, "memory_used_percent", 40.0, &[]),
+            serie(k, "memory_used_bytes", 4e8, &[]),
+            serie(k, "maxmemory_policy_info", 1.0, &[("policy", "allkeys-lru")]),
+            serie(k, "rdb_last_save_ok", 1.0, &[]),
+            serie(k, "aof_last_write_ok", 1.0, &[]),
+            serie(k, "keys", 150.0, &[]),
+            serie(k, "db_keys", 100.0, &[("db", "db1")]),
+            serie(k, "db_keys", 50.0, &[("db", "db0")]),
+            serie(k, "uptime_seconds", 86_400.0, &[]),
+        ];
+        let rates = [
+            serie(k, "keyspace_hits_total", 90.0, &[]),
+            serie(k, "keyspace_misses_total", 10.0, &[]),
+            serie(k, "commands_processed_total", 250.0, &[]),
+        ];
+        let view = build_view(k, &Series::new(k, &last, &rates, &[], &[]));
+        assert_eq!(view.state, "ok");
+        // Le produit « redis » ne préfixe pas la version.
+        assert_eq!(view.version.as_deref(), Some("7.4.1"));
+        assert!(check_of(&view, "Replication").detail.contains("2 replicas in sync"));
+        assert!(check_of(&view, "Memory").detail.contains("40%"));
+        assert!(check_of(&view, "Memory").detail.contains("allkeys-lru"));
+        assert_eq!(check_of(&view, "Persistence").state, "ok");
+        assert_eq!(figure_of(&view, "Hit ratio"), Some(90.0));
+        assert_eq!(figure_of(&view, "Commands"), Some(250.0));
+        // Les bases sont triées par nom.
+        let keyspace = view.breakdowns.iter().find(|b| b.title == "Keyspace").unwrap();
+        assert_eq!(keyspace.rows[0].label, "db0");
+        let replicas = view.breakdowns.iter().find(|b| b.title == "Replicas").unwrap();
+        assert_eq!(replicas.rows.len(), 2);
+        assert_eq!(replicas.rows[0].value, Some(1.0));
+        assert_eq!(replicas.rows[1].value, None, "pas de retard connu pour la seconde");
+    }
+
+    #[test]
+    fn redis_signale_replique_hors_ligne_retard_memoire_et_connexions_refusees() {
+        let k = "redis";
+        let base = |extra: Vec<InstantSeries>| {
+            let mut last = vec![
+                serie(k, "role_info", 1.0, &[("role", "master")]),
+                serie(k, "connected_replicas", 1.0, &[]),
+                serie(k, "replica_online", 1.0, &[("replica", "a")]),
+                serie(k, "memory_used_bytes", 1e6, &[]),
+            ];
+            last.extend(extra);
+            last
+        };
+
+        // Réplique en retard : simple avis.
+        let last = base(vec![serie(k, "replica_lag_seconds", 45.0, &[("replica", "a")])]);
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &[]));
+        assert_eq!(check_of(&view, "Replication").state, "advisory");
+        assert!(check_of(&view, "Replication").detail.contains("45 seconds"));
+        assert_eq!(view.state, "advisory");
+        // Sans maxmemory, la mémoire est dite illimitée.
+        assert!(check_of(&view, "Memory").detail.contains("No maxmemory"));
+
+        // Réplique hors ligne : alerte, nommée.
+        let mut last = base(vec![serie(k, "memory_used_percent", 95.0, &[])]);
+        last.push(serie(k, "replica_online", 0.0, &[("replica", "b")]));
+        let day = [serie(k, "rejected_connections_total", 3.0, &[])];
+        let view = build_view(k, &Series::new(k, &last, &[], &day, &[]));
+        assert_eq!(view.state, "warning");
+        assert!(check_of(&view, "Replication").detail.contains("b"));
+        assert_eq!(check_of(&view, "Memory").state, "warning");
+        assert!(check_of(&view, "Connections").detail.starts_with("3 connections refused"));
+
+        // L'écriture de l'AOF en échec s'ajoute à celle du snapshot.
+        let last = base(vec![
+            serie(k, "rdb_last_save_ok", 0.0, &[]),
+            serie(k, "aof_last_write_ok", 0.0, &[]),
+        ]);
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &[]));
+        let detail = &check_of(&view, "Persistence").detail;
+        assert!(detail.contains("BGSAVE") && detail.contains("append-only"), "{detail}");
+
+        // Une réplique liée à son primaire est simplement saine.
+        let last = [
+            serie(k, "role_info", 1.0, &[("role", "replica")]),
+            serie(k, "master_link_up", 1.0, &[]),
+        ];
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &[]));
+        assert_eq!(check_of(&view, "Replication").state, "ok");
+    }
+
+    #[test]
+    fn un_replica_set_mongodb_sain_et_ses_alertes_de_charge() {
+        let k = "mongodb";
+        let last = [
+            serie(k, "replset_primary_present", 1.0, &[]),
+            serie(k, "replset_info", 1.0, &[("set", "rs0")]),
+            serie(k, "role_info", 1.0, &[("role", "primary")]),
+            serie(k, "replset_member_state", 1.0, &[("member", "a:27017"), ("state", "primary")]),
+            serie(k, "replset_member_health", 1.0, &[("member", "a:27017")]),
+            serie(k, "connections_used_percent", 91.5, &[]),
+            serie(k, "wiredtiger_cache_dirty_percent", 2.0, &[]),
+            serie(k, "wiredtiger_cache_used_percent", 97.0, &[]),
+            serie(k, "connections_current", 12.0, &[]),
+        ];
+        let rates = [
+            serie(k, "operations_total", 30.0, &[("op", "query")]),
+            serie(k, "operations_total", 10.0, &[("op", "insert")]),
+        ];
+        let view = build_view(k, &Series::new(k, &last, &rates, &[], &[]));
+        assert!(check_of(&view, "Replica set").detail.contains("this member is primary"));
+        assert_eq!(check_of(&view, "Connections").state, "warning");
+        // Cache plein mais propre : avis, pas alerte.
+        assert_eq!(check_of(&view, "Cache").state, "advisory");
+        assert_eq!(figure_of(&view, "Connections"), Some(12.0));
+        let ops = view.breakdowns.iter().find(|b| b.title == "Operations").unwrap();
+        assert_eq!(ops.rows.len(), 2);
+
+        // Un secondaire en retard, puis un cache sale.
+        let last = [
+            serie(k, "replset_primary_present", 1.0, &[]),
+            serie(k, "replset_member_lag_seconds", 120.0, &[("member", "b:27017")]),
+            serie(k, "wiredtiger_cache_dirty_percent", 25.0, &[]),
+        ];
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &[]));
+        assert_eq!(check_of(&view, "Replica set").state, "advisory");
+        assert_eq!(check_of(&view, "Cache").state, "warning");
+
+        // Un membre injoignable passe avant le retard.
+        let last = [
+            serie(k, "replset_primary_present", 1.0, &[]),
+            serie(k, "replset_member_health", 0.0, &[("member", "c:27017")]),
+        ];
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &[]));
+        assert!(check_of(&view, "Replica set").detail.contains("c:27017"));
+    }
+
+    #[test]
+    fn rabbitmq_sain_puis_partition_noeud_arrete_et_file_arretee() {
+        let k = "rabbitmq";
+        let healthy = [
+            serie(k, "nodes", 2.0, &[]),
+            serie(k, "nodes_running", 2.0, &[]),
+            serie(k, "partitions", 0.0, &[]),
+            serie(k, "node_running", 1.0, &[("node", "rabbit@a")]),
+            serie(k, "node_memory_used_percent", 30.0, &[("node", "rabbit@a")]),
+            serie(k, "node_disk_free_bytes", 5e9, &[("node", "rabbit@a")]),
+            serie(k, "queue_running", 1.0, &[("vhost", "/"), ("queue", "q")]),
+        ];
+        let view = build_view(k, &Series::new(k, &healthy, &[], &[], &[]));
+        assert_eq!(view.state, "ok");
+        assert!(check_of(&view, "Alarms").detail.contains("No memory"));
+        assert!(check_of(&view, "Cluster").detail.contains("2 nodes running"));
+        let nodes = view.breakdowns.iter().find(|b| b.title == "Nodes").unwrap();
+        assert_eq!(nodes.rows[0].label, "rabbit@a memory");
+        assert_eq!(nodes.rows[1].value, Some(5e9));
+
+        let split = [
+            serie(k, "nodes", 2.0, &[]),
+            serie(k, "nodes_running", 2.0, &[]),
+            serie(k, "partitions", 1.0, &[]),
+            serie(k, "queue_running", 0.0, &[("vhost", "shop"), ("queue", "dead")]),
+        ];
+        let view = build_view(k, &Series::new(k, &split, &[], &[], &[]));
+        assert!(check_of(&view, "Cluster").detail.contains("partition"));
+        assert!(check_of(&view, "Queues").detail.contains("shop/dead"));
+
+        let down = [serie(k, "nodes", 3.0, &[]), serie(k, "nodes_running", 2.0, &[])];
+        let view = build_view(k, &Series::new(k, &down, &[], &[], &[]));
+        assert!(check_of(&view, "Cluster").detail.contains("2 of 3 nodes running"));
+    }
+
+    #[test]
+    fn crowdsec_sain_detaille_ses_decisions_et_ses_sources() {
+        let k = "crowdsec";
+        let last = [
+            serie(k, "lapi_up", 1.0, &[]),
+            serie(k, "lapi_decisions_ok", 1.0, &[]),
+            serie(k, "decisions", 8.0, &[]),
+            serie(k, "decisions_by_origin", 5.0, &[("origin", "CAPI")]),
+            serie(k, "decisions_by_origin", 3.0, &[("origin", "crowdsec")]),
+        ];
+        let day = [
+            serie(k, "lines_read_total", 1000.0, &[]),
+            serie(k, "lines_unparsed_total", 100.0, &[]),
+            serie(k, "source_lines_unparsed_total", 50.0, &[("source", "file:/var/log/auth.log")]),
+            serie(k, "source_lines_total", 200.0, &[("source", "file:/var/log/auth.log")]),
+        ];
+        let idle = [serie(k, "bouncer_requests_total", 20.0, &[("bouncer", "fw")])];
+        let view = build_view(k, &Series::new(k, &last, &[], &day, &idle));
+        assert_eq!(view.state, "ok");
+        assert!(check_of(&view, "Local API").detail.contains("decision queries"));
+        assert!(check_of(&view, "Bouncers").detail.contains("1 bouncer pulling"));
+        assert!(check_of(&view, "Log reading").detail.contains("10% not recognised"));
+        let sources = view.breakdowns.iter().find(|b| b.title == "Log sources").unwrap();
+        assert_eq!(sources.rows[0].value, Some(25.0));
+        assert!(view.breakdowns.iter().any(|b| b.title == "Decisions by origin"));
+
+        // LAPI muette.
+        let last = [serie(k, "lapi_up", 0.0, &[])];
+        let view = build_view(k, &Series::new(k, &last, &[], &[], &[]));
+        assert_eq!(view.state, "warning");
+        assert_eq!(check_of(&view, "Local API").state, "warning");
+    }
+
+    #[test]
+    fn les_petits_utilitaires_de_vue_formatent_proprement() {
+        assert_eq!(plural(1.0, "queue", "queues"), "1 queue");
+        assert_eq!(plural(2.4, "queue", "queues"), "2 queues");
+        let many: Vec<String> = ["a", "b", "c", "d", "e"].iter().map(|s| s.to_string()).collect();
+        assert_eq!(names(&many), "a, b, c and 2 more");
+        assert_eq!(names(&many[..2]), "a, b");
+        assert_eq!(capitalise("failed"), "Failed");
+        assert_eq!(capitalise(""), "");
     }
 }

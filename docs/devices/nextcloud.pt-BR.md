@@ -41,13 +41,13 @@ Todas as métricas têm o prefixo `dumbmonit_nextcloud_`.
 
 Enquanto o Nextcloud está em manutenção ou espera por uma atualização, sua
 API responde 503: apenas `maintenance`, `needs_db_upgrade` e
-`version_info` são escritos então, e o dispositivo não é reportado como
+`version_info` são escritos então, e o monitor não é reportado como
 inacessível.
 
 As [regras integradas](../alerting/rules.md#self-hosted-applications) que
 se aplicam: Nextcloud stuck in maintenance, Nextcloud database upgrade
 pending, Nextcloud update available, Nextcloud OPcache full, Nextcloud
-free space low, além de Device unreachable.
+free space low, além de Monitor unreachable.
 
 ## Jobs em segundo plano (cron) {#background-jobs-cron}
 
@@ -76,19 +76,19 @@ um token de API, e o único equivalente em nível de administrador é a linha
 de comando (`occ user:auth-tokens:list <user>`, uma conta por vez) — não
 algo que o token de monitoramento pode alcançar, e não algo que o
 DumbMonit pede a um administrador para colocar em um script de sondagem. A
-API `serverinfo` que o DumbMonit lê também não tem lista de dispositivos:
+API `serverinfo` que o DumbMonit lê também não tem lista de monitores:
 ela dá contagens de usuários ativos (`active_users`, acima), nunca quem ou
 o que eles são.
 
 Esta é uma limitação deliberada, não uma funcionalidade faltando: dar ao
-DumbMonit uma lista de dispositivos significaria expandir o token de
+DumbMonit uma lista de monitores significaria expandir o token de
 monitoramento para uma conta de administração completa, o que o resto
 desta página evita com cuidado. Se o Nextcloud algum dia expor isso via
 OCS, o DumbMonit seguirá o mesmo padrão de
 [dispositivos clientes](../alerting/rules.md) já usado para Immich, Proxmox
 Backup Server e Veeam.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Nextcloud. Ele diz primeiro o que está errado (manutenção,

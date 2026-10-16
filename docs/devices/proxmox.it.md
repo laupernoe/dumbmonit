@@ -3,12 +3,12 @@
 Hypervisor: nodi con i loro daemon e networking, macchine virtuali,
 contenitori, storage, pool thin LVM, backup, alta disponibilità, snapshot,
 replica, Ceph fino all'OSD, dischi fisici e pool ZFS, aggiornamenti
-in sospeso, modifiche ai pacchetti, subscription e certificati. Un dispositivo può coprire
+in sospeso, modifiche ai pacchetti, subscription e certificati. Un monitor può coprire
 un intero cluster.
 
 ## Il pannello dei nodi
 
-La pagina del dispositivo si apre su una scheda per nodo: CPU, memoria e file system
+La pagina del monitor si apre su una scheda per nodo: CPU, memoria e file system
 radice come tre misuratori, il tempo di attività e la versione `pve-manager` installata
 su quel nodo, poi solo ciò che non va — i daemon che non sono in esecuzione, le interfacce
 dichiarate all'avvio che non sono su — e il riempimento di ogni pool thin LVM e volume group.
@@ -121,7 +121,7 @@ semplicemente assenti; nient'altro cambia.
 
 ## Il pannello Ceph
 
-Una sezione **Ceph** appare sulla pagina del dispositivo solo quando il cluster effettivamente
+Una sezione **Ceph** appare sulla pagina del monitor solo quando il cluster effettivamente
 ha Ceph: salute e le parole dietro, capacità totale e usata, quanti OSD sono up e in, una
 tabella di OSD (host, classe di dispositivo, utilizzo, latenza di applica e commit) e una tabella
 di pool (utilizzo, dimensione e min size, gruppi di posizionamento rispetto al numero che
@@ -214,7 +214,7 @@ la stessa conseguenza — che è il motivo per cui i due livelli di riempimento 
 e regole separate.
 
 Le modifiche ai pacchetti vengono rilevate dal raccoglitore stesso: ricorda le
-versioni installate della sonda precedente (per dispositivo e nodo, in memoria —
+versioni installate della sonda precedente (per monitor e nodo, in memoria —
 un riavvio del server impara di nuovo senza segnalare). Solo un pacchetto presente in
 entrambe le sonde con una versione diversa conta; un pacchetto appena installato o rimosso non lo fa.
 
@@ -254,7 +254,7 @@ cluster, in una chiamata. Due cose lo rendono degno di avere.
   del disco o della memoria. Questo è il numero che spiega "tutto è lento"
   quando CPU e memoria entrambi sembrano buoni.
 * Viene letto con `history=1` dall'ultimo punto già visto, quindi ogni punto
-  tra due sonde viene ingerito al suo timestamp proprio. Un dispositivo sondato ogni
+  tra due sonde viene ingerito al suo timestamp proprio. Un monitor sondato ogni
   cinque minuti ottiene i suoi cinque punti uno-minuto invece di un singolo valore corrente.
 
 È **disattivato per impostazione predefinita**, e questo è un compromesso deliberato. Quelle serie parzialmente
@@ -424,13 +424,13 @@ mancanti.
 
 | Sintomo | Causa probabile |
 |---|---|
-| Errore certificato mostrato sul dispositivo | Certificato autofirmato. O installa un certificato attendibile (ACME è incorporato in Proxmox) o abilita `insecure_tls`. L'opzione non è mai abilitata implicitamente. |
+| Errore certificato mostrato sul monitor | Certificato autofirmato. O installa un certificato attendibile (ACME è incorporato in Proxmox) o abilita `insecure_tls`. L'opzione non è mai abilitata implicitamente. |
 | Errore di autenticazione | Secret incollato in Token ID (o viceversa), "Privilege Separation" lasciato spuntato (il token allora non ha diritti), o il ruolo `DumbMonit` non applicato su `/`. |
 | Backup age mancante per un guest | Nessun task `vzdump` nella finestra di lookback e nessun archivio trovato sugli storage; o `scan_backup_storage` disabilitato. |
 | Sonde lente | Uno storage di backup che impiega a lungo per elencare, o molti guest per inventario per snapshot. Disabilita `scan_backup_storage` o `scan_snapshots`, abbassa `max_snapshot_guests`, o alza `request_timeout_seconds`. |
 | `node_updates_pending` mancante | L'utente o il token manca di `Sys.Modify` su `/nodes`. Concedi il ruolo `DumbMonitUpdates` del passaggio 6, o ignora: `node_pve_packages_upgradable` e `node_reboot_required` copre i pacchetti Proxmox senza di esso. |
 | Nessuna percentuale di memoria per una VM | Proxmox VE 9 segnala, nell'inventario del cluster, la memoria che la VM occupa **sull'host** — overhead incluso, quindi regolarmente al di sopra della sua allocazione. Una percentuale calcolata da esso rimarrebbe al di sopra del 100% per sempre. La figura onesta viene dal driver del pallone all'interno del guest; una VM con bilanciamento disabilitato quindi mostra byte e nessuna percentuale. `guest_memory_host_bytes` è la figura sull'host. |
-| Nessuna capacità per lo storage di backup | Un datastore Proxmox Backup Server montato su PVE non segnala dimensione: PVE non lo legge. La pagina del dispositivo del datastore stesso lo ha. |
+| Nessuna capacità per lo storage di backup | Un datastore Proxmox Backup Server montato su PVE non segnala dimensione: PVE non lo legge. La pagina del monitor del datastore stesso lo ha. |
 | Utilizzo del disco vuoto ("solo dimensione") per una VM | La VM non ha agente guest QEMU (non abilitato nelle sue opzioni, o `qemu-guest-agent` non installato dentro), o il token manca di `VM.GuestAgent.Audit`. `guest_agent_enabled` e `guest_agent_running` dicono quale. I contenitori non ne hanno mai bisogno. |
 | Nessuna serie `node_disk_*` | Il token manca di `Sys.Audit` su `/` (il ruolo `DumbMonit` lo concede), o il nodo esegue dietro un controller RAID che nasconde SMART: `disks/list` allora segnala `UNKNOWN` e nessun `node_disk_smart_failed` viene pubblicato. |
 | `node_packages_changed` si attiva dopo il riavvio di un server | Non lo fa: la prima sonda dopo un riavvio solo impara le versioni. Un cambiamento viene segnalato solo tra due sonde consecutive dello stesso processo di server. |

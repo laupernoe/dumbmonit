@@ -1,4 +1,4 @@
-# Dispositivo SNMP {#snmp-device}
+# Monitor SNMP {#snmp-device}
 
 O tipo mais universal: quase todo equipamento de rede fala SNMP. Switches,
 roteadores, NAS, nobreaks e impressoras todos qualificam. SNMP v1, v2c e v3
@@ -25,8 +25,8 @@ Contadores (octetos de interface, páginas impressas) são armazenados em
 bruto: use `rate()` em uma consulta para obter uma vazão. Uma reinicialização
 do dispositivo aparece como um reset de contador, nunca como um pico falso.
 
-As [regras integradas](../alerting/rules.md) que se aplicam a dispositivos
-SNMP: Device unreachable, High CPU, Disk almost full, Filesystem almost full
+As [regras integradas](../alerting/rules.md) que se aplicam a monitores
+SNMP: Monitor unreachable, High CPU, Disk almost full, Filesystem almost full
 (forecast), UPS on battery, UPS battery low, Port accumulating errors, Port
 flapping, Unusual CPU (baseline).
 
@@ -94,5 +94,5 @@ em toda série como `tag_<key>`.
 | Nenhum tráfego de interface | O dispositivo não expõe os contadores de 64 bits `ifXTable`. |
 | Varredura vazia | A varredura tenta uma comunidade em cada endereço; dispositivos com outra comunidade ou apenas SNMP v3 não respondem. |
 
-Use **Sondar agora** na página do dispositivo: ela reporta o número de
+Use **Sondar agora** na página do monitor: ela reporta o número de
 amostras e os nomes de série produzidos por uma sondagem.

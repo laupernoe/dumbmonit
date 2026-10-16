@@ -45,9 +45,9 @@ no se parece a un problema del dominio.
 Las [reglas integradas](../alerting/rules.md#reverse-proxies-and-domains)
 que se aplican: Domain expiring (menos de 30 días), Domain about to expire
 (menos de 7 días o caducado), Domain on hold, Domain in redemption, además
-de Device unreachable.
+de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta el registro. Indica la fecha de caducidad y los días
@@ -100,5 +100,5 @@ Dirección: el dominio registrado (`example.com`); una URL pegada se reduce
 a su nombre de host. Opciones: RDAP server (vacío: se encuentra a través
 de la IANA), intervalo de actualización (12 horas, de 1 a 168) y tiempo de
 espera de la petición (10 s). El intervalo de comprobación del propio
-dispositivo puede quedarse en su valor por defecto: solo recalcula los días
+monitor puede quedarse en su valor por defecto: solo recalcula los días
 restantes entre dos consultas al registro.

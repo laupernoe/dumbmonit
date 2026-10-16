@@ -60,9 +60,9 @@ Las [reglas integradas](../alerting/rules.md#reverse-proxies-and-domains)
 que se aplican: Traefik router disabled, Traefik backend server down,
 Traefik service without a server, Traefik certificate not obtained,
 Proxy certificate not renewed, Reverse proxy answering 5xx, además de
-Device unreachable.
+Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Traefik. Indica en una frase qué va mal (routers

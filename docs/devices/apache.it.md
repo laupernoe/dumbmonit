@@ -30,7 +30,7 @@ sotto `workers_busy`/`workers_idle` e `scoreboard` richiede
 sono waiting, open_slot, starting, reading, sending, keepalive, dns_lookup,
 closing, logging, finishing e idle_cleanup.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non interroga mai Apache. Mostra worker occupati e inattivi, la

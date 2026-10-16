@@ -50,7 +50,7 @@ La [règle intégrée](../alerting/rules.md#sophos-firewall) qui s'applique :
 Pour les compteurs de trafic, ajoutez aussi le pare-feu comme
 [appareil SNMP](snmp.md) : SFOS répond à la MIB standard des interfaces.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Firewall dit si chaque interface d'une zone a son lien, puis liste
 ces interfaces et les connexions IPsec avec leur activation configurée,

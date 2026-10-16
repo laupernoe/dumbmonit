@@ -13,9 +13,9 @@ antispam, servicios, certificados y estado de clúster.
     pasarela de correo real, pero todavía nadie la ha ejecutado durante
     semanas en una pasarela en producción. Dinos qué falla.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
-Más allá de las gráficas genéricas, un dispositivo Proxmox Mail Gateway
+Más allá de las gráficas genéricas, un monitor Proxmox Mail Gateway
 muestra tres paneles, leídos de lo que guardó la sonda — abrir la
 página nunca consulta a la propia pasarela:
 
@@ -112,7 +112,7 @@ equivocada por cincuenta años. La misma regla se aplica en todas partes:
 un valor que la API no devuelve produce una métrica menos, nunca un cero
 fingiendo ser una medición.
 
-Las reglas integradas que se aplican: Device unreachable, Mail queue
+Las reglas integradas que se aplican: Monitor unreachable, Mail queue
 growing, Mail stuck in the queue, Mail gateway service stopped, Virus
 signatures out of date, Spam rules out of date, Quarantine filling up,
 Mail gateway cluster degraded, Mail gateway certificate expiring, Mail

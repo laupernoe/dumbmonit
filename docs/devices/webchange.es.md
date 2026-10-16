@@ -38,7 +38,7 @@ selectores simples, separados por comas: una etiqueta (`main`), un id
 
 ## Página o sitio {#page-or-site}
 
-**Page** (por defecto) lee la dirección del dispositivo y nada más.
+**Page** (por defecto) lee la dirección del monitor y nada más.
 También puede ser un documento de texto plano o JSON, comparado línea
 por línea.
 
@@ -74,19 +74,19 @@ segundo entre dos lotes, el `User-Agent` `DumbMonit/<version>`, un
 tiempo de espera de 15 segundos por petición y 5 MB leídos como máximo
 por página. Se detiene en **Max pages** (25 por defecto, 200 como
 máximo) o tras diez minutos. Cuando **Max pages** lo detuvo, la página del
-dispositivo indica cuántas páginas se encontraron, para que la parte no
+monitor indica cuántas páginas se encontraron, para que la parte no
 vigilada del sitio nunca sea una sorpresa. **User agent** reemplaza
 `DumbMonit/<version>` para un sitio que rechaza a los robots.
 
 ## Cómo funciona una comprobación {#how-a-check-works}
 
-El dispositivo se sondea como cualquier otro (cada minuto por defecto),
+El monitor se sondea como cualquier otro (cada minuto por defecto),
 pero las páginas solo se leen cada **Check every** minutos (60 por
 defecto, de 5 a 10080). Entre medias, el sondeo solo reporta el estado
 de la última comprobación: el sitio no se consulta cada minuto. Una
 comprobación se ejecuta en segundo plano; dos comprobaciones del mismo
-dispositivo nunca se superponen, y **Check now** en la página del
-dispositivo inicia una de inmediato.
+monitor nunca se superponen, y **Check now** en la página del
+monitor inicia una de inmediato.
 
 La primera comprobación solo registra la **referencia**: se lee y
 guarda cada página, nada se reporta. A partir de entonces, para cada
@@ -108,7 +108,7 @@ cada página que añade como nueva). Una actualización de DumbMonit que lea las
 páginas de otra forma hace lo mismo una vez.
 
 Cuando una comprobación encuentra el **mismo cambio en varias páginas** (las
-mismas líneas eliminadas y añadidas, como un banner), la página del dispositivo
+mismas líneas eliminadas y añadidas, como un banner), la página del monitor
 lo muestra una sola vez, con las páginas en que se produjo.
 
 ### Ignore lines {#ignore-lines}
@@ -127,9 +127,9 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Página de inicio inaccesible {#unreachable-start-page}
 
 Cuando la propia página de inicio no se puede leer (sin respuesta,
-conexión rechazada, tiempo de espera, HTTP 5xx), el dispositivo es
-**inaccesible**: el sondeo falla, y la regla «Device unreachable» se
-activa como para cualquier dispositivo. La página de inicio entonces se
+conexión rechazada, tiempo de espera, HTTP 5xx), el monitor es
+**inaccesible**: el sondeo falla, y la regla «Monitor unreachable» se
+activa como para cualquier monitor. La página de inicio entonces se
 reintenta en cada sondeo, así que su regreso se ve dentro de un minuto.
 Una página de inicio que rechaza el acceso (401, 403) se reporta como
 un problema de configuración, no como una caída. Los errores en otras
@@ -148,7 +148,7 @@ cambiada, nueva o eliminada), y la notificación nombra las páginas:
 «/pricing, /contact y 2 más». Mientras está activa, cada comprobación posterior
 que encuentra cambios se notifica de nuevo, con sus propias páginas, incluso
 sobre las mismas páginas; la alerta se resuelve en la primera comprobación que
-no encuentra nada nuevo. Sigue siendo una sola alerta por dispositivo todo el
+no encuentra nada nuevo. Sigue siendo una sola alerta por monitor todo el
 tiempo, así que reconocerla o posponerla desde la alerta cubre también las
 comprobaciones siguientes. Lee
 `dumbmonit_webchange_last_check_changes`; asígnala a un canal como
@@ -192,9 +192,9 @@ la dirección a la que resuelve el nombre de host).
 Una captura se toma solo cuando una página obtiene una nueva captura (la
 referencia, y cada cambio), nunca en una comprobación sin cambios: una
 ventana de 1366 × 900, la página completa hasta 5000 píxeles, como JPEG.
-La opción **Screenshots** las desactiva para un dispositivo. Sin
+La opción **Screenshots** las desactiva para un monitor. Sin
 navegador, o cuando no responde, la comparación de texto funciona igual
-y las capturas simplemente no tienen imagen; la página del dispositivo
+y las capturas simplemente no tienen imagen; la página del monitor
 lo indica.
 
 El navegador carga la página como lo haría un visitante, con sus
@@ -205,11 +205,11 @@ que es el HTML que envió el servidor.
 
 El texto de cada captura se guarda en la base de datos (1 MB como
 máximo por página); las capturas de pantalla son archivos bajo
-`/data/webchange/<id del dispositivo>/`. Por dispositivo, se conservan
+`/data/webchange/<id del monitor>/`. Por monitor, se conservan
 los últimos 500 cambios; una captura se conserva mientras sea la más
 reciente de una página o un cambio conservado la referencia, y todo lo
 demás, archivos incluidos, se elimina tras cada comprobación. Eliminar
-el dispositivo lo elimina todo.
+el monitor lo elimina todo.
 
 ## Vigilar un sitio web por cambios {#watch-a-website-for-changes}
 
@@ -225,7 +225,7 @@ Los pasos de abajo son los que muestra el aviso junto al formulario.
 3. La primera comprobación solo registra la referencia, nada se
    reporta. A partir de entonces, cada comprobación compara el texto
    visible página por página y guarda una copia antes/después de cada
-   cambio, mostrada en la página del dispositivo; la alerta «Website
+   cambio, mostrada en la página del monitor; la alerta «Website
    changed» te avisa.
 4. Para una captura de cada versión, añade un navegador sin interfaz a tu
    archivo Compose; las líneas exactas están en la documentación (Advanced

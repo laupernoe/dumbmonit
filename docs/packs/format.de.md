@@ -17,22 +17,22 @@ my-pack/
 | Schlüssel | Erforderlich | Bedeutung |
 |---|---|---|
 | `schema` | ja | Immer `1`. |
-| `id` | ja | Kleinbuchstaben, Ziffern und einzelne Bindestriche, beginnend mit einem Buchstaben, bis zu 40 Zeichen: `shelly-plug`. Die Geräteart wird `pack.<id>`, das Metrik-Präfix `dumbmonit_<id mit Unterstrichen>_`. |
+| `id` | ja | Kleinbuchstaben, Ziffern und einzelne Bindestriche, beginnend mit einem Buchstaben, bis zu 40 Zeichen: `shelly-plug`. Der Monitortyp wird `pack.<id>`, das Metrik-Präfix `dumbmonit_<id mit Unterstrichen>_`. |
 | `version` | ja | [Semantische Version](https://semver.org) des Pakets: `1.2.0`. |
 | `requires` | nein | DumbMonit-Versionen, mit denen das Paket funktioniert, als Semver-Anforderung: `">=0.2"`. Ein Server außerhalb des Bereichs lehnt das Paket ab. |
-| `label` | ja | In der Geräteartenliste angezeigter Name. |
+| `label` | ja | In der Monitortypenliste angezeigter Name. |
 | `summary` | nein | Ein Satz: was das Paket beobachtet. |
 | `examples` | nein | Produkte, für die es gilt, als Hinweise angezeigt. |
 | `address_hint` | nein | Platzhalter des Adressfelds: `192.168.1.50`. |
 | `default_port` | nein | Genutzter Port, wenn die Adresse keinen angibt. |
-| `scheme` | nein | `http` (Standard) oder `https`; das Gerät kann es überschreiben. |
-| `setup` | nein | Der neben dem Gerätedialog gezeigte Hinweis: `title`, `steps` (eine Liste; was einem Zeilenumbruch in einem Schritt folgt, wird als kopierbarer Befehl gezeigt), `warning`, `doc_url`. |
+| `scheme` | nein | `http` (Standard) oder `https`; der Monitor kann es überschreiben. |
+| `setup` | nein | Der neben dem Monitordialog gezeigte Hinweis: `title`, `steps` (eine Liste; was einem Zeilenumbruch in einem Schritt folgt, wird als kopierbarer Befehl gezeigt), `warning`, `doc_url`. |
 | `credentials` | nein | Akzeptierte Credential-Arten, in Präferenzreihenfolge: `none`, `api_token`, `username_password`. Standard: `[none]`. Ein Eintrag kann `{kind, label, help}` sein, um das Formular umzuformulieren. |
-| `options` | nein | Im Gerätedialog angezeigte Einstellungen (unten). |
+| `options` | nein | Im Monitordialog angezeigte Einstellungen (unten). |
 
 ## Optionen
 
-Optionen werden am Gerät gespeichert und mit `{{option.<key>}}` in
+Optionen werden am Monitor gespeichert und mit `{{option.<key>}}` in
 Pfaden, Headern und Bodies, und von Regel-Schwellenwerten gelesen.
 
 ```yaml
@@ -55,7 +55,7 @@ die es nicht neu deklarieren kann: `scheme`, `port`, `insecure_tls`,
 ## Quellen
 
 Eine Quelle ist ein Request pro Abfrage, immer an die eigene Adresse
-des Geräts gesendet.
+des Monitors gesendet.
 
 ```yaml
 sources:
@@ -71,7 +71,7 @@ sources:
 ```
 
 - `path` muss mit einem einzelnen `/` beginnen. Die Request-URL ist
-  die Adresse des Geräts gefolgt vom Pfad; nach der Ersetzung muss sie
+  die Adresse des Monitors gefolgt vom Pfad; nach der Ersetzung muss sie
   dasselbe Schema, denselben Host und Port behalten, sonst wird der
   Request abgelehnt. Options-Werte werden in Pfaden percent-codiert,
   sodass ein Wert kein Segment hinzufügen oder den Host ändern kann.
@@ -199,9 +199,9 @@ rules:
   ebenfalls vom Paket erzeugt werden (`dumbmonit_up` ausgenommen):
   Ein Paket kann nicht auf Zeitreihen einer anderen Art alarmieren.
 - Ein `threshold` von `{{option.x}}` installiert den Standardwert der
-  Option, und der eigene Wert jedes Geräts für diese Option wird
-  dessen Schwellenwert für diese Regel (eine gerätespezifische
-  Überschreibung, bei jedem Speichern des Geräts neu geschrieben).
+  Option, und der eigene Wert jedes Monitors für diese Option wird
+  dessen Schwellenwert für diese Regel (eine monitorspezifische
+  Überschreibung, bei jedem Speichern des Monitors neu geschrieben).
 
 ## SNMP-Profile
 
@@ -209,7 +209,7 @@ Ein Paket kann SNMP-Profile mitbringen, genauso geschrieben wie die
 eingebauten in
 [`profiles/`](https://github.com/laupernoe/dumbmonit/tree/main/profiles).
 Sie treten dem SNMP-Katalog bei und werden wie die anderen per
-`sysObjectID` angewendet; sie erstellen keine eigene Geräteart.
+`sysObjectID` angewendet; sie erstellen keinen eigenen Monitortyp.
 
 ```yaml
 snmp_profiles:
@@ -247,6 +247,6 @@ neu.
 `.txt` oder `.prom`, führt dieselbe Extraktion wie der Server aus,
 und vergleicht das Ergebnis mit `expected.prom`: das Prometheus-
 Textformat, sortiert, ohne Zeitstempel und ohne die vom Server
-hinzugefügten Gerätelabels (`target`, `host`, `tag_*`). `--update`
+hinzugefügten Monitor-Labels (`target`, `host`, `tag_*`). `--update`
 schreibt `expected.prom` aus den Fixtures; prüfen Sie den Diff, bevor
 Sie ihn committen.

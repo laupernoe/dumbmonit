@@ -23,6 +23,7 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	pdm: () => import('./pdm/PdmPanel.svelte'),
 	pmg: () => import('./pmg/PmgPanel.svelte'),
 	agent: () => import('./agent/AgentPanel.svelte'),
+	agent_service: () => import('./agent/AgentServicePanel.svelte'),
 	proxmox: () => import('./proxmox/ProxmoxPanel.svelte'),
 	synology: () => import('./synology/SynologyPanel.svelte'),
 	push: () => import('./push/PushPanel.svelte'),

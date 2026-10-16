@@ -2,11 +2,11 @@
 	/**
 	 * Command palette (Ctrl/⌘ K): jump to a page, run an action, open a device.
 	 *
-	 * One input, results in three groups (pages, actions, devices). Devices are
+	 * One input, results in groups (recent, pages, actions, devices). With an
+	 * empty query the last eight opened pages and devices come first. Devices are
 	 * fetched when the palette opens and cached for 30 s so a second opening is
-	 * instant. Matching is substring-per-word: every word of the query must
-	 * appear somewhere in the entry's name, address, kind or keywords; entries
-	 * whose name starts with the query rank first.
+	 * instant. Matching and ranking live in `#lib/palette/logic.ts`. Actions the
+	 * current role may not do are left out. ARIA: combobox input + listbox.
 	 */
 	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
@@ -31,7 +31,12 @@
 		Cpu,
 		RadioTower,
 		Bot,
-		KeyRound
+		KeyRound,
+		Network,
+		BellOff,
+		Keyboard,
+		LogOut,
+		Settings
 	} from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { listTargets, type Target, type TargetId } from '#lib/api/index.js';
@@ -39,11 +44,16 @@
 	import { loadProbeStatuses } from '#lib/metrics.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { theme } from '#lib/stores/theme.svelte.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import { queryWords, rank, pushRecent, loadRecents, saveRecents, shortcutKeys, type RecentItem } from '#lib/palette/logic.js';
+	import { ENTRY_SHORTCUT } from '#lib/palette/shortcuts.js';
+	import { searchIndex } from '#lib/components/settings/tabs.js';
 	import { Led } from '#lib/ui/index.js';
 	import { kindIcon } from '#lib/components/device-form/kinds.js';
 
-	type Group = 'pages' | 'actions' | 'devices';
+	type Group = 'recent' | 'pages' | 'actions' | 'devices';
 	const GROUP_LABEL: Record<Group, () => string> = {
+		recent: () => m.misc_palette_group_recent(),
 		pages: () => m.misc_palette_group_pages(),
 		actions: () => m.misc_palette_group_actions(),
 		devices: () => m.misc_palette_group_devices()
@@ -58,6 +68,10 @@
 		/** Extra words that match but are not shown. */
 		keywords?: string;
 		icon?: typeof LucideIcon;
+		/** Where the entry leads, when it is a page or a device (what recents remember). */
+		href?: string;
+		/** Admin-only action: left out for other roles. */
+		admin?: boolean;
 		/** Device entries carry a state LED instead of an icon. */
 		led?: { tone: 'signal' | 'advisory' | 'warning' | 'ghost'; label: string };
 		run: () => void;
@@ -67,31 +81,65 @@
 	const CACHE_MS = 30_000;
 
 	const go = (href: string) => () => void goto(href);
+	const storage = (): Storage | null => {
+		try {
+			return localStorage;
+		} catch {
+			return null;
+		}
+	};
 
 	// A function: labels follow the active language when the palette opens.
 	// Search keywords stay in English on purpose (they are matched, not shown).
-	const staticEntries = (): Entry[] => [
-		{ id: 'page:/', group: 'pages', label: m.misc_nav_overview(), keywords: 'home bulletin sky', icon: Gauge, run: go('/') },
-		{ id: 'page:/targets', group: 'pages', label: m.misc_nav_devices(), keywords: 'rack targets hosts', icon: Server, run: go('/targets') },
-		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: BellRing, run: go('/alerts') },
-		{ id: 'page:/alerts#notifications', group: 'pages', label: m.misc_palette_notifications(), detail: m.misc_palette_notifications_detail(), keywords: 'channels policy quiet hours alerts', icon: BellRing, run: go('/alerts#notifications') },
-		{ id: 'page:/security', group: 'pages', label: m.misc_nav_security(), detail: m.misc_palette_security_detail(), keywords: 'security score grade pingcastle secure score checks', icon: ShieldCheck, run: go('/security') },
-		{ id: 'page:/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, run: go('/status') },
-		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account password users sso agents tokens assistant appearance theme about', icon: Settings2, run: go('/settings') },
-		{ id: 'page:/wall', group: 'pages', label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, run: go('/wall') },
+	const staticEntries = (): Entry[] => ([
+		{ id: 'page:/', group: 'pages', label: m.misc_nav_overview(), keywords: 'home bulletin sky', icon: Gauge, href: '/', run: go('/') },
+		{ id: 'page:/targets', group: 'pages', label: m.misc_nav_devices(), keywords: 'rack targets hosts', icon: Server, href: '/targets', run: go('/targets') },
+		{ id: 'page:/map', group: 'pages', label: m.topology_title(), detail: m.topology_palette_detail(), keywords: 'map topology graph diagram network tree print export pdf', icon: Network, href: '/map', run: go('/map') },
+		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: BellRing, href: '/alerts', run: go('/alerts') },
+		{ id: 'page:/settings/notifications#notifications-channels', group: 'pages', label: m.misc_palette_notifications(), detail: m.misc_palette_notifications_detail(), keywords: 'channels policy quiet hours alerts', icon: BellRing, href: '/settings/notifications#notifications-channels', run: go('/settings/notifications#notifications-channels') },
+		{ id: 'page:/settings#security-score', group: 'pages', label: m.misc_palette_security_score(), detail: m.misc_palette_security_score_detail(), keywords: 'security score grade pingcastle secure score checks audit', icon: ShieldCheck, href: '/settings/monitoring#security-score', run: go('/settings/monitoring#security-score') },
+		{ id: 'page:/settings/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, href: '/settings/status', run: go('/settings/status') },
+		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance theme backup about', icon: Settings2, href: '/settings', run: go('/settings') },
+		{ id: 'page:/wall', group: 'pages', label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, href: '/wall', run: go('/wall') },
 		{ id: 'page:docs', group: 'pages', label: m.misc_palette_documentation(), keywords: 'docs help manual notifications channels', icon: BookOpen, run: () => window.open('https://dumbmonit.readthedocs.io/en/latest/', '_blank', 'noopener') },
-		{ id: 'action:add', group: 'actions', label: m.misc_palette_add_device(), keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
-		{ id: 'action:scan', group: 'actions', label: m.misc_palette_scan(), keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
-		{ id: 'action:agent', group: 'actions', label: m.misc_palette_agent(), detail: m.misc_palette_agent_detail(), keywords: 'agent install machine server linux windows macos freebsd docker containers services disks backups token enroll', icon: Cpu, run: go('/targets/new?kind=agent') },
-		{ id: 'action:relay', group: 'actions', label: m.misc_palette_relay(), detail: m.misc_palette_relay_detail(), keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network agent', icon: RadioTower, run: go('/targets/new?kind=agent&via=relay') },
-		{ id: 'action:mcp', group: 'actions', label: m.misc_palette_mcp(), detail: m.misc_palette_mcp_detail(), keywords: 'mcp ai assistant claude chatgpt cursor llm agent model context protocol', icon: Bot, run: go('/settings#assistant') },
-		{ id: 'action:api-token', group: 'actions', label: m.misc_palette_api_token(), detail: m.misc_palette_api_token_detail(), keywords: 'api token rest http key script automation bearer prometheus grafana federate scrape', icon: KeyRound, run: go('/settings#assistant') },
+		{ id: 'action:add', group: 'actions', admin: true, label: m.misc_palette_add_device(), keywords: 'new target create host', icon: Plus, run: go('/targets/new') },
+		{ id: 'action:scan', group: 'actions', admin: true, label: m.misc_palette_scan(), keywords: 'discover cidr snmp', icon: Radar, run: go('/targets/new?scan=1') },
+		{ id: 'action:agent', group: 'actions', admin: true, label: m.misc_palette_agent(), detail: m.misc_palette_agent_detail(), keywords: 'agent install machine server linux windows macos freebsd docker containers services disks backups token enroll', icon: Cpu, run: go('/targets/new?kind=agent') },
+		{ id: 'action:relay', group: 'actions', admin: true, label: m.misc_palette_relay(), detail: m.misc_palette_relay_detail(), keywords: 'relay remote site branch office second site client customer nat firewall vpn vps network agent', icon: RadioTower, run: go('/targets/new?kind=agent&via=relay') },
+		{ id: 'action:mcp', group: 'actions', admin: true, label: m.misc_palette_mcp(), detail: m.misc_palette_mcp_detail(), keywords: 'mcp ai assistant claude chatgpt cursor llm agent model context protocol', icon: Bot, run: go('/settings/system#assistant') },
+		{ id: 'action:api-token', group: 'actions', admin: true, label: m.misc_palette_api_token(), detail: m.misc_palette_api_token_detail(), keywords: 'api token rest http key script automation bearer prometheus grafana federate scrape', icon: KeyRound, run: go('/settings/system#assistant') },
 		{ id: 'action:maintenance', group: 'actions', label: m.misc_palette_maintenance(), keywords: 'silence window quiet', icon: CalendarClock, run: go('/alerts#scheduled') },
-		{ id: 'action:channel', group: 'actions', label: m.misc_palette_channel(), keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/alerts#notifications') },
-		{ id: 'action:status-page', group: 'actions', label: m.misc_palette_status_page(), keywords: 'public status page create', icon: Globe, run: go('/status/new') },
-		{ id: 'action:incident', group: 'actions', label: m.misc_palette_incident(), keywords: 'status page maintenance announcement outage', icon: Megaphone, run: go('/status#incidents') },
-		{ id: 'action:theme', group: 'actions', label: m.misc_palette_theme(), keywords: 'dark light night day', icon: SunMoon, run: () => theme.toggle() }
-	];
+		{ id: 'action:channel', group: 'actions', admin: true, label: m.misc_palette_channel(), keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/settings/notifications#notifications-channels') },
+		{ id: 'action:status-page', group: 'actions', admin: true, label: m.misc_palette_status_page(), keywords: 'public status page create', icon: Globe, run: go('/settings/status/new') },
+		{ id: 'action:incident', group: 'actions', admin: true, label: m.misc_palette_incident(), keywords: 'status page maintenance announcement outage', icon: Megaphone, run: go('/settings/status#incidents') },
+		...(auth.canOperate
+			? [{ id: 'action:silence', group: 'actions' as Group, label: m.misc_palette_silence(), keywords: 'mute quiet maintenance snooze pause alerts', icon: BellOff, run: go('/alerts#scheduled') }]
+			: []),
+		{ id: 'action:theme', group: 'actions', label: m.misc_palette_theme(), keywords: 'dark light night day', icon: SunMoon, run: () => theme.toggle() },
+		{ id: 'action:shortcuts', group: 'actions', label: m.misc_shortcuts_title(), keywords: 'help keys hotkeys keyboard', icon: Keyboard, run: () => palette.openHelp() },
+		...settingsSections(),
+		...(auth.canSignOut
+			? [{ id: 'action:logout', group: 'actions' as Group, label: m.misc_nav_sign_out(), keywords: 'logout log out sign off disconnect', icon: LogOut, run: () => void auth.logout() }]
+			: [])
+	] as Entry[]).filter((entry) => !entry.admin || auth.isAdmin);
+
+	// Settings sections a role can see, from the same index as the settings search
+	// (Team only on a protected instance for admins, reports and news for admins).
+	function settingsSections(): Entry[] {
+		const accounts = auth.available && auth.configured && auth.isAdmin;
+		return searchIndex()
+			.filter((entry) => entry.id !== 'security-score')
+			.filter((entry) => entry.tab !== 'team' || accounts)
+			.filter((entry) => auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'news'))
+			.map((entry) => ({
+				id: `action:settings-${entry.id}`,
+				group: 'actions' as Group,
+				label: m.misc_palette_settings_section({ section: entry.label }),
+				keywords: `settings preferences ${entry.keywords}`,
+				icon: Settings,
+				run: go(`/settings/${entry.tab}#${entry.id}`)
+			}));
+	}
 
 	let query = $state('');
 	let active = $state(0);
@@ -133,31 +181,41 @@
 				keywords: STATE_LABEL[state],
 				icon: kindIcon(target.kind),
 				led: { tone: STATE_TONE[state], label: STATE_LABEL[state] },
+				href: `/targets/${target.id}`,
 				run: go(`/targets/${target.id}`)
 			};
 		})
 	);
 
-	/** 2 = name starts with the query, 1 = every word found, 0 = no match. */
-	function score(entry: Entry, words: string[]): number {
-		if (words.length === 0) return 1;
-		const name = entry.label.toLowerCase();
-		const hay = `${name} ${entry.detail ?? ''} ${entry.keywords ?? ''}`.toLowerCase();
-		if (!words.every((word) => hay.includes(word))) return 0;
-		return name.startsWith(words[0]) ? 2 : 1;
-	}
+	let recents = $state<RecentItem[]>([]);
+
+	/** Recents resolved against what exists now: fresh labels, no deleted device, no page the role cannot see. */
+	const recentEntries = $derived.by<Entry[]>(() => {
+		const pages = new Map(staticEntries().map((entry) => [entry.id, entry]));
+		const devices = new Map(deviceEntries.map((entry) => [entry.id, entry]));
+		const out: Entry[] = [];
+		for (const item of recents) {
+			const live = item.kind === 'page' ? pages.get(item.id) : devices.get(item.id);
+			if (!live && (item.kind === 'page' || fetchedAt > 0)) continue;
+			out.push({
+				...(live ?? { label: item.label, icon: Server, run: go(item.href) }),
+				id: `recent:${item.id}`,
+				group: 'recent',
+				href: item.href
+			});
+		}
+		return out;
+	});
 
 	const results = $derived.by(() => {
-		const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+		const words = queryWords(query);
 		const groups: { name: Group; entries: Entry[] }[] = [];
+		if (words.length === 0 && recentEntries.length > 0) groups.push({ name: 'recent', entries: recentEntries });
 		for (const name of ['pages', 'actions', 'devices'] as Group[]) {
 			const pool = name === 'devices' ? deviceEntries : staticEntries().filter((entry) => entry.group === name);
-			const scored = pool
-				.map((entry) => ({ entry, score: score(entry, words) }))
-				.filter((item) => item.score > 0)
-				.sort((a, b) => b.score - a.score);
+			const ranked = rank(pool, words);
 			// Pages and actions are a short fixed list, all worth seeing; only devices are capped.
-			const entries = (name === 'devices' ? scored.slice(0, MAX_PER_GROUP) : scored).map((item) => item.entry);
+			const entries = name === 'devices' ? ranked.slice(0, MAX_PER_GROUP) : ranked;
 			if (entries.length > 0) groups.push({ name, entries });
 		}
 		return groups;
@@ -179,6 +237,7 @@
 		if (!palette.isOpen) return;
 		query = '';
 		active = 0;
+		recents = loadRecents(storage());
 		void loadDevices();
 		void tick().then(() => input?.focus());
 		const previous = document.body.style.overflow;
@@ -196,6 +255,17 @@
 	});
 
 	function run(entry: Entry) {
+		// Pages and devices are remembered (per browser); actions and the docs link are not.
+		const base = entry.id.replace(/^recent:/, '');
+		if (entry.href && (base.startsWith('page:') || base.startsWith('device:'))) {
+			const next = pushRecent(loadRecents(storage()), {
+				id: base,
+				label: entry.label,
+				href: entry.href,
+				kind: base.startsWith('page:') ? 'page' : 'device'
+			});
+			saveRecents(storage(), next);
+		}
 		palette.close();
 		entry.run();
 	}
@@ -356,6 +426,14 @@
 											<span class="block truncate text-[0.8125rem] text-ink-2">{entry.detail}</span>
 										{/if}
 									</span>
+									{#if ENTRY_SHORTCUT[entry.id.replace(/^recent:/, '')]}
+										{@const keys = shortcutKeys(ENTRY_SHORTCUT[entry.id.replace(/^recent:/, '')])}
+										<span class="flex shrink-0 items-center gap-1" role="img" aria-label={m.misc_palette_shortcut({ keys: keys.join(' ') })}>
+											{#each keys as key, i (i)}
+												<kbd class="palette-key !mr-0" aria-hidden="true">{key}</kbd>
+											{/each}
+										</span>
+									{/if}
 									{#if selected}
 										<CornerDownLeft class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 									{/if}
@@ -367,9 +445,9 @@
 			</div>
 
 			<div class="flex items-center gap-4 border-t border-line bg-canvas px-4 py-2 text-[0.75rem] text-ink-2">
-				<span><kbd class="palette-key">↑</kbd><kbd class="palette-key">↓</kbd> navigate</span>
-				<span><kbd class="palette-key">↵</kbd> open</span>
-				<span><kbd class="palette-key">esc</kbd> close</span>
+				<span><kbd class="palette-key">↑</kbd><kbd class="palette-key">↓</kbd> {m.misc_palette_hint_navigate()}</span>
+				<span><kbd class="palette-key">↵</kbd> {m.misc_palette_hint_open()}</span>
+				<span><kbd class="palette-key">esc</kbd> {m.misc_palette_hint_close()}</span>
 			</div>
 		</div>
 	</div>

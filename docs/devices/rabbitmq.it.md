@@ -44,9 +44,9 @@ secondo.
 Le [regole integrate](../alerting/rules.md#databases-message-broker-and-security-engine)
 che si applicano: RabbitMQ memory or disk alarm, RabbitMQ node down,
 RabbitMQ network partition, RabbitMQ queue without consumer, RabbitMQ queue
-unavailable, più Device unreachable.
+unavailable, più Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non interroga mai RabbitMQ. Indica cosa non va in una frase (allarmi,

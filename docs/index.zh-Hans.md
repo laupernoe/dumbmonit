@@ -4,9 +4,7 @@
 不到一分钟就能看到有用的图表和告警。
 
 !!! warning "开发中"
-    DumbMonit 正在积极开发中；当前镜像
-    （`ghcr.io/laupernoe/dumbmonit:latest`）是面向早期测试者的 alpha 版本。
-    在首个正式版发布之前，可能存在不完善之处和不兼容的变更。
+    DumbMonit 正在积极开发中；在 1.0 之前，HTTP API 和数据模型仍可能在次要版本（0.x）之间发生变化。变更日志列出了每一项变更。
 
 DumbMonit 像**天气预报**一样解读网络：首页用一句话说明
 当前的“天空”状况（“晴空万里。”或“2 条提示，1 台无法连接。”），
@@ -18,7 +16,7 @@ DumbMonit 像**天气预报**一样解读网络：首页用一句话说明
 
 <div class="dm-links" markdown>
 <a href="install/docker/">安装<small>Docker Compose、首次启动、备份</small></a>
-<a href="install/first-device/">添加第一台设备<small>SNMP、网络扫描、接下来会发生什么</small></a>
+<a href="install/first-device/">添加第一个监控项<small>SNMP、网络扫描、接下来会发生什么</small></a>
 <a href="alerting/">告警<small>内置规则，天生安静</small></a>
 </div>
 
@@ -26,20 +24,20 @@ DumbMonit 像**天气预报**一样解读网络：首页用一句话说明
 
 | 来源 | 你能得到什么 |
 |---|---|
-| [SNMP v1 / v2c / v3](devices/snmp.md) | 交换机、路由器、NAS、UPS、打印机。产品内置五个配置档案，并根据设备的 `sysObjectID` 自动应用。网络扫描可一次性添加所有有响应的设备。 |
+| [SNMP v1 / v2c / v3](devices/snmp.md) | 交换机、路由器、NAS、UPS、打印机。产品内置五个配置档案，并根据监控项的 `sysObjectID` 自动应用。网络扫描可一次性添加所有有响应的监控项。 |
 | [Proxmox VE](devices/proxmox.md) | 节点、虚拟机和容器、存储、集群法定人数，以及每台机器最近一次成功备份的时间。 |
 | [Proxmox Backup Server](devices/pbs.md) | 数据存储用量及容量耗尽预测、去重、每台机器最近一次快照的时间和校验情况、失败的任务、垃圾回收。 |
 | [Synology DSM](devices/synology.md) | 通过 NAS 的 Web API 获取存储卷、磁盘及其 SMART 健康状态、温度、负载。 |
-| [Linux、macOS、FreeBSD 和 Windows 代理](devices/agent.md) | 不支持 SNMP 的机器的 CPU、内存、磁盘、网络、服务、容器和运行时间，以及机器能提供的温度、磁盘健康状态（SMART）和 ZFS 存储池。一条命令即可安装，也可使用 Docker 镜像；在[中继模式](install/remote-site.md)下，它只通过出站连接探测远程站点自己的设备。 |
+| [Linux、macOS、FreeBSD 和 Windows 代理](devices/agent.md) | 不支持 SNMP 的机器的 CPU、内存、磁盘、网络、服务、容器和运行时间，以及机器能提供的温度、磁盘健康状态（SMART）和 ZFS 存储池。一条命令即可安装，也可使用 Docker 镜像；在[中继模式](install/remote-site.md)下，它只通过出站连接探测远程站点自己的监控项。 |
 | [服务](devices/services.md) | HTTP(S)、TCP 端口、DNS、ping 和 TLS 证书到期，Uptime Kuma 风格，带历史条和可用率百分比。 |
-| [集成包](packs/index.md) | 用单个 YAML 文件声明一种设备类型——设备上的 HTTP API 或 Prometheus `/metrics` 页面——并附带自己的告警规则，无需服务器发布新版本即可安装。 |
+| [集成包](packs/index.md) | 用单个 YAML 文件声明一种监控项类型——监控项上的 HTTP API 或 Prometheus `/metrics` 页面——并附带自己的告警规则，无需服务器发布新版本即可安装。 |
 
 ## 与它对话 {#talk-to-it}
 
 - 一个[基于 MCP 的助手](using/assistant.md)——Claude Code、Claude Desktop、
   ChatGPT、VS Code、Cursor——提供 27 个工具：`read` 令牌只能查看（状态、
-  设备、告警、指标、代理、容器……），`write` 令牌还能执行操作
-  （静默、确认、添加设备、重启容器、发布状态页事件）。
+  监控项、告警、指标、代理、容器……），`write` 令牌还能执行操作
+  （静默、确认、添加监控项、重启容器、发布状态页事件）。
   密钥绝不会被返回。
 - UI 所有操作背后的 [HTTP API](reference/api.md)，描述见
   `/api/openapi.json`（OpenAPI 3.1）。令牌（`dmt_…`）区分读写范围，

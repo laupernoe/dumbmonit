@@ -160,6 +160,8 @@ tags:
       evaluated on the data collectors already gather.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
+  - name: Self-monitoring
+    description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
     description: The built-in Model Context Protocol (MCP) server.
   - name: Wall news
@@ -795,6 +797,27 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/discovery/subnets:
+    get:
+      operationId: localSubnets
+      tags: [Discovery]
+      summary: Suggested networks for the scan form
+      description: >-
+        In order, `DUMBMONIT_SCAN_SUBNETS`, /24 networks of the private IPv4
+        addresses of monitored devices (most devices first), then the server's
+        connected networks (not when the server runs in a container, where they
+        are the container's own networks). Docker bridge ranges are excluded; the
+        list is empty when nothing reliable is known. Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Suggested IPv4 networks.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LocalSubnets" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -925,6 +948,81 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/targets/test:
+    post:
+      operationId: testTargetConnection
+      tags: [Devices]
+      summary: Probe a device once without saving it
+      description: >-
+        Reads the identity of an SNMP device once with the submitted address and
+        credentials and reports the result; nothing is stored. The device answers
+        with its `sysName` / `sysDescr`. A failed probe is a `200` with `ok: false`
+        and the probe's message. SNMP only (other kinds are a `400`), and not
+        available through a relay.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TargetTestRequest" }
+      responses:
+        "200":
+          description: The outcome of the probe.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TargetTestReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets/import/kuma:
+    post:
+      operationId: importKuma
+      tags: [Devices]
+      summary: Import monitors from an Uptime Kuma backup
+      description: >-
+        Body: the JSON file exported by Uptime Kuma 1.x (Settings, Backup,
+        Export; version 2 has no backup export), at most 4 MiB and 2000
+        monitors. `http`, `keyword` and `json-query` monitors become `http`
+        devices, `ping` becomes `ping`, `port` becomes `tcp`, `dns` becomes
+        `dns`, `push` becomes a `push` heartbeat (with a new URL); groups
+        become folders and tags become device tags. Other types, upside-down
+        monitors and devices already monitored are skipped with a reason.
+        Notifications, credentials, headers and request bodies are never
+        imported. With `dry_run=true` nothing is created and rows come back
+        with status `ok`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [monitorList]
+              properties:
+                version: { type: string }
+                notificationList: { type: array, items: { type: object } }
+                monitorList: { type: array, items: { type: object } }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "413": { description: The file is larger than 4 MiB. }
+
   /api/targets/reorder:
     post:
       operationId: reorderTargets
@@ -1051,6 +1149,52 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listTargetRules
+      tags: [Rules]
+      summary: Alert rules that watch a device
+      description: >-
+        The rules whose query reads a metric the device has written in the last
+        24 hours, with whether each is turned off for this device (a rule
+        override with `enabled: false`) and firing on it now.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The device's rules.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, rules]
+                properties:
+                  status:
+                    type: string
+                    enum: [ok, no_data, unavailable]
+                    description: >-
+                      `no_data`: nothing written in the last 24 hours;
+                      `unavailable`: VictoriaMetrics did not answer.
+                  rules:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, uid, name, description, severity, enabled, ignored, custom_threshold, firing]
+                      properties:
+                        id: { type: integer, format: int64 }
+                        uid: { type: string }
+                        name: { type: string }
+                        description: { type: string }
+                        severity: { type: string, enum: [info, warning, critical] }
+                        enabled: { type: boolean, description: Enabled for every device. }
+                        ignored: { type: boolean, description: Turned off for this device. }
+                        custom_threshold: { type: boolean, description: A threshold is set for this device. }
+                        firing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   # ---------------------------------------------------------------- mesures
   /api/metrics/query:
@@ -2388,6 +2532,63 @@ paths:
         "409": { $ref: "#/components/responses/Conflict" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/public/alert-action/inspect:
+    post:
+      operationId: inspectAlertAction
+      tags: [Public status]
+      summary: Describe a notification action link
+      description: |
+        Read-only: what the signed link from a notification would do (acknowledge, or snooze for one
+        hour) and which of its alerts are still active. Called by the `/alert-action#<token>` page,
+        which reads the token from the URL fragment so it never reaches a server log. Any refused
+        token (forged, altered, expired, or action links switched off) gets the same `404`; repeated
+        refusals from one client get `429`. Requires `X-Requested-With: DumbMonit`.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlertActionToken" }
+      responses:
+        "200":
+          description: What the link would do.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlertActionView" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/public/alert-action:
+    post:
+      operationId: executeAlertAction
+      tags: [Public status]
+      summary: Run a notification action link
+      description: |
+        Acknowledges the link's still-active alerts until they resolve (`ack`) or for one hour
+        (`snooze`, which never shortens a longer acknowledgement), as "via notification link", and
+        records it in the audit log. Each link works once (`409` afterwards) and for 24 hours. `404`
+        when the token is refused or none of its alerts is still active.
+        Requires `X-Requested-With: DumbMonit`.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AlertActionToken" }
+      responses:
+        "200":
+          description: Done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AlertActionResult" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
   /api/public/status/{slug}/confirm:
     parameters:
       - $ref: "#/components/parameters/Slug"
@@ -2500,6 +2701,31 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/topology:
+    get:
+      operationId: getTopology
+      tags: [Devices]
+      summary: Topology map of the monitored infrastructure
+      description: |
+        Nodes and links derived from what the server already knows, never typed in by hand.
+        Each link carries its `source`: `parent` (declared dependency, the one alert
+        suppression follows), `relay` (the relay agent that polls the device), `hypervisor`
+        (a hypervisor and its guests, from the latest Proxmox, XCP-ng, Nutanix, vSphere or
+        libvirt metrics) and `lldp` (an LLDP neighbour seen by an SNMP switch). A pair of
+        nodes is linked once, by the surest source. A guest or neighbour is linked to a
+        monitored device only when its name designates exactly one device; a guest that
+        matches none becomes its own node (`target_id` null), an unknown LLDP neighbour is
+        left out. Addresses are not included. States are read from `GET /api/targets`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The map.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Topology" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}/agent:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -2538,13 +2764,67 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/modules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listAgentModules
+      tags: [Agents]
+      summary: Services the agent can detect on this machine, found or not
+      description: "Each found service (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) is its own `agent_service` device under the machine. `404` when the device is not an `agent` device."
+      x-token-scope: read
+      responses:
+        "200":
+          description: Every known module, in a fixed order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentModule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/modules/{module}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: module
+        in: path
+        required: true
+        schema: { type: string }
+        description: Module id, such as `docker` or `zfs`.
+    put:
+      operationId: setAgentModule
+      tags: [Agents]
+      summary: Tick or untick a module
+      description: "Unticking deletes the service's device and drops its readings (the agent is told in its next acknowledgement and stops collecting it). Ticking creates the device, even before the agent finds the service."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: The module after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentModule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/containers:
     parameters:
       - $ref: "#/components/parameters/TargetId"
     get:
       operationId: listContainers
       tags: [Containers]
-      summary: Containers of an agent machine, from its last batch
+      summary: Containers of an agent machine (or its Docker device), from its last batch
       x-token-scope: read
       responses:
         "200":
@@ -3163,6 +3443,81 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  # ----------------------------------------------------- auto-surveillance
+  /api/self-monitoring:
+    get:
+      operationId: getSelfMonitoring
+      tags: [Self-monitoring]
+      summary: Health of DumbMonit itself and the heartbeat setting
+      description: >-
+        The three conditions of a heartbeat (scheduler running, database
+        answering, VictoriaMetrics reachable), the data volume, the database
+        size, restarts of the embedded VictoriaMetrics, and the heartbeat
+        setting. The heartbeat URL itself is never returned, only its host.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The current state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SelfMonitoring" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/self-monitoring/heartbeat:
+    put:
+      operationId: setHeartbeat
+      tags: [Self-monitoring]
+      summary: Configure the outgoing heartbeat
+      description: >-
+        `url` omitted keeps the stored URL, an empty string clears it. Turning
+        the heartbeat on needs a URL. The interval is 30 to 3600 seconds.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/HeartbeatUpdate" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Heartbeat" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/self-monitoring/heartbeat/test:
+    post:
+      operationId: testHeartbeat
+      tags: [Self-monitoring]
+      summary: Send one heartbeat now
+      description: >-
+        A plain "up" call to `url`, or to the stored URL when `url` is absent,
+        whatever the engine's health. Errors never quote the URL.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                url: { type: [string, "null"] }
+      responses:
+        "200":
+          description: Whether the service accepted the call.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/HeartbeatTestResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
   # --------------------------------------------------- panneaux par intégration
   /api/targets/{id}/proxmox/guests:
     parameters:
@@ -3765,7 +4120,9 @@ paths:
       description: >-
         Checks are evaluated on the last values the collectors recorded (6 h
         lookback). `unknown` checks are listed but excluded from the score. A
-        device kind without checks answers `supported: false`.
+        device kind without checks answers `supported: false`. While the score
+        is turned off (`/api/security/settings`), answers `enabled: false` and
+        nothing else, without querying the time-series database.
       x-token-scope: read
       responses:
         "200":
@@ -3783,6 +4140,7 @@ paths:
       operationId: getSecuritySummary
       tags: [Security]
       summary: Security score of every rated device, worst first
+      description: "While the score is turned off, answers `enabled: false` and no device."
       x-token-scope: read
       responses:
         "200":
@@ -3790,6 +4148,44 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/SecuritySummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/settings:
+    get:
+      operationId: getSecuritySettings
+      tags: [Security]
+      summary: Is the security score turned on
+      description: Off by default on a new installation.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The current setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecuritySettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setSecuritySettings
+      tags: [Security]
+      summary: Turn the security score on or off
+      description: >-
+        Off: no periodic computation, no `dumbmonit_security_score` series, and
+        the security reads answer `enabled: false`. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SecuritySettings" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SecuritySettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -4933,6 +5329,44 @@ components:
               sysobjectid: { type: [string, "null"] }
               suggested_profile: { type: [string, "null"] }
 
+    LocalSubnets:
+      type: object
+      required: [subnets]
+      properties:
+        subnets:
+          type: array
+          description: Suggested IPv4 networks, most reliable source first.
+          items:
+            type: object
+            required: [cidr, source]
+            properties:
+              cidr: { type: string, example: 192.168.1.0/24 }
+              source:
+                type: string
+                enum: [config, devices, server]
+              interface: { type: string, description: Server interface; `server` source only. }
+    TargetTestRequest:
+      description: A `TargetPayload`, plus the id of the device being edited.
+      allOf:
+        - $ref: "#/components/schemas/TargetPayload"
+        - type: object
+          properties:
+            id:
+              type: integer
+              format: int64
+              description: >-
+                When editing, reuses the stored credential if `credential` is
+                omitted (refused if the address or connection settings changed).
+    TargetTestReport:
+      type: object
+      required: [ok, unreachable]
+      properties:
+        ok: { type: boolean }
+        error: { type: [string, "null"], description: The probe error message. }
+        unreachable: { type: boolean, description: True when the failure means "device down". }
+        sysname: { type: [string, "null"] }
+        sysdescr: { type: [string, "null"] }
+        profile_id: { type: [string, "null"], description: Profile auto-detection would pick. }
     Onboarding:
       type: object
       required: [skipped, complete, dismissed, has_target, has_channel, notification_confirmed]
@@ -4983,6 +5417,33 @@ components:
     NullableServerTimestamp:
       type: [string, "null"]
       description: UTC timestamp without suffix (`2026-08-31 20:15:00`), or `null`.
+    KumaImportReport:
+      type: object
+      required: [dry_run, total, created, skipped, errors, notifications_ignored, rows]
+      properties:
+        dry_run: { type: boolean }
+        total: { type: integer }
+        created: { type: integer, description: Devices created (or that would be, in a dry run). }
+        skipped: { type: integer, description: Monitors ignored or already monitored. }
+        errors: { type: integer }
+        notifications_ignored: { type: integer, description: Notifications in the file, never imported. }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [row, name, source_type, address, folder, tags, status]
+            properties:
+              row: { type: integer, description: Position of the monitor in the file, from 1. }
+              name: { type: string }
+              source_type: { type: string, description: Uptime Kuma monitor type. }
+              kind: { type: [string, "null"], description: Device type created; null when skipped. }
+              address: { type: string }
+              folder: { type: string }
+              interval_secs: { type: [integer, "null"] }
+              tags: { type: array, items: { type: string }, description: Uptime Kuma tags as `key=value`. }
+              status: { type: string, enum: [ok, created, skipped, error] }
+              message: { type: [string, "null"], description: Why it was skipped, or what is not imported. }
+              id: { type: [integer, "null"], format: int64 }
     TargetImportReport:
       type: object
       required: [dry_run, total, created, skipped, errors, rows]
@@ -5388,12 +5849,16 @@ components:
         matcher: { $ref: "#/components/schemas/ChannelMatcher" }
     ChannelKind:
       type: object
-      required: [kind, label, summary, doc_url, settings, secrets]
+      required: [kind, label, summary, doc_url, settings, secrets, actions]
       properties:
         kind: { type: string }
         label: { type: string }
         summary: { type: string }
         doc_url: { type: string }
+        actions:
+          type: string
+          enum: [buttons, links, none]
+          description: "How the channel shows the Acknowledge / Snooze action links: native buttons, links in the message, or not at all."
         settings:
           type: array
           items: { $ref: "#/components/schemas/ChannelField" }
@@ -5499,7 +5964,7 @@ components:
         message: { type: string }
     NotifyPolicy:
       type: object
-      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel]
+      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel, action_links]
       properties:
         batch_window_secs: { type: integer, description: "0: send at once." }
         max_per_hour: { type: integer, description: "Per channel; 0: unlimited." }
@@ -5509,6 +5974,7 @@ components:
         public_url: { type: string, description: "Links in messages; empty: `DUMBMONIT_PUBLIC_URL`." }
         escalate_after_secs: { type: integer, description: "0: no escalation." }
         escalate_channel: { type: [integer, "null"], format: int64 }
+        action_links: { type: boolean, description: "Acknowledge / Snooze links in notifications; only effective with a public URL. Off also revokes links already sent." }
     NotifyPolicyUpdate:
       type: object
       properties:
@@ -5520,6 +5986,42 @@ components:
         public_url: { type: string }
         escalate_after_secs: { type: integer }
         escalate_channel: { type: [integer, "null"], format: int64 }
+        action_links: { type: boolean }
+    AlertActionToken:
+      type: object
+      required: [token]
+      properties:
+        token: { type: string, description: "The part after `#` in the link." }
+    AlertActionLinked:
+      type: object
+      required: [rule_name, target_name, severity, acked, acked_until]
+      properties:
+        rule_name: { type: string }
+        target_name: { type: [string, "null"] }
+        severity: { $ref: "#/components/schemas/Severity" }
+        acked: { type: boolean }
+        acked_until: { type: [string, "null"], format: date-time }
+    AlertActionView:
+      type: object
+      required: [action, expires_at, used, alerts]
+      properties:
+        action: { type: string, enum: [ack, snooze] }
+        expires_at: { type: string, format: date-time }
+        used: { type: boolean, description: "The link has already been used." }
+        alerts:
+          type: array
+          description: The link's alerts that are still active.
+          items: { $ref: "#/components/schemas/AlertActionLinked" }
+    AlertActionResult:
+      type: object
+      required: [action, until, acked, alerts]
+      properties:
+        action: { type: string, enum: [ack, snooze] }
+        until: { type: string, format: date-time }
+        acked: { type: integer, description: "Alerts acknowledged by this action." }
+        alerts:
+          type: array
+          items: { $ref: "#/components/schemas/AlertActionLinked" }
     MatchPreviewRequest:
       type: object
       required: [matcher]
@@ -5833,6 +6335,38 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+    Topology:
+      type: object
+      required: [nodes, edges, metrics_available]
+      properties:
+        nodes:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyNode" }
+        edges:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyEdge" }
+        metrics_available:
+          type: boolean
+          description: False when VictoriaMetrics did not answer; `hypervisor` and `lldp` links are then missing.
+    TopologyNode:
+      type: object
+      required: [id, name, kind, group_name]
+      properties:
+        id: { type: string, description: "`t<id>` for a device, `g<host>:<name>` for an unmonitored guest." }
+        target_id: { type: [integer, "null"], format: int64, description: The device; null for a guest. }
+        name: { type: string }
+        kind: { type: string, description: "The device type; `vm` or `container` for a guest." }
+        group_name: { type: string, description: Folder; a guest takes its hypervisor's. }
+        site: { type: [string, "null"], description: Site declared by the relay agent (its own, or the one that polls the device). }
+        host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
+        running: { type: [boolean, "null"], description: Guest only, running at the last measurement. }
+    TopologyEdge:
+      type: object
+      required: [from, to, source]
+      properties:
+        from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
+        to: { type: string }
+        source: { type: string, enum: [parent, relay, hypervisor, lldp] }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
@@ -5857,6 +6391,17 @@ components:
       properties:
         rebind_until: { type: string }
         minutes: { type: integer }
+    AgentModule:
+      type: object
+      required: [id, label, detected, enabled, automatic, target_id, last_seen_at]
+      properties:
+        id: { type: string, description: "`docker`, `plakar`, `backup_repos`, `zfs`, `libvirt`, `wireguard`, `ipsec`, `speedtest`." }
+        label: { type: string }
+        detected: { type: boolean, description: The agent has reported this service on this machine. }
+        enabled: { type: boolean, description: "Ticked: a device exists (or will) for this service." }
+        automatic: { type: boolean, description: Nobody ticked or unticked it; the device follows detection. }
+        target_id: { type: [integer, "null"], description: The service's device. }
+        last_seen_at: { type: [string, "null"], description: Last batch with readings of this service (UTC). }
     ContainerPolicy:
       type: object
       required: [auto_restart, auto_update, prune_old_image, only_in_maintenance]
@@ -6534,10 +7079,90 @@ components:
         evidence: { type: string }
         remediation: { type: string }
         reference: { type: string, format: uri, description: Vendor best-practice page. }
+    SecurityGuide:
+      type: object
+      description: How to raise the score on this kind of device.
+      required: [product, steps, doc_url]
+      properties:
+        product: { type: string, examples: [Proxmox VE, Linux host] }
+        steps: { type: array, items: { type: string }, description: Concrete steps, in order. }
+        doc_url: { type: string, format: uri, description: Matching section of the documentation. }
+    SelfMonitoringComponent:
+      type: object
+      required: [name, ok]
+      properties:
+        name: { type: string, enum: [scheduler, database, victoria] }
+        ok: { type: boolean }
+        error: { type: string }
+    HeartbeatPing:
+      type: object
+      required: [at, outcome, ok, failed]
+      properties:
+        at: { type: string, description: "UTC, without suffix." }
+        outcome:
+          type: string
+          enum: [up, fail, withheld]
+          description: "`withheld`: a component was down and nothing was sent."
+        ok: { type: boolean, description: The call left and the service accepted it. }
+        error: { type: string }
+        failed:
+          type: array
+          items: { type: string }
+    Heartbeat:
+      type: object
+      required: [enabled, interval_seconds, send_fail, has_url, url_host, last_ping]
+      properties:
+        enabled: { type: boolean }
+        interval_seconds: { type: integer, minimum: 30, maximum: 3600 }
+        send_fail: { type: boolean, description: Send a failure signal instead of staying silent. }
+        has_url: { type: boolean }
+        url_host: { type: [string, "null"] }
+        last_ping:
+          oneOf:
+            - { $ref: "#/components/schemas/HeartbeatPing" }
+            - { type: "null" }
+    HeartbeatUpdate:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+        interval_seconds: { type: integer, minimum: 30, maximum: 3600 }
+        send_fail: { type: boolean }
+        url: { type: string, description: "Omitted: kept. Empty: cleared." }
+    HeartbeatTestResult:
+      type: object
+      required: [ok, error]
+      properties:
+        ok: { type: boolean }
+        error: { type: [string, "null"] }
+    SelfMonitoring:
+      type: object
+      required: [status, components, data_free_bytes, data_total_bytes, database_bytes, vm_embedded, vm_restarts, scheduler_idle_seconds, scheduler_backlog, heartbeat]
+      properties:
+        status: { type: string, enum: [ok, degraded] }
+        components:
+          type: array
+          items: { $ref: "#/components/schemas/SelfMonitoringComponent" }
+        data_free_bytes: { type: [integer, "null"] }
+        data_total_bytes: { type: [integer, "null"] }
+        database_bytes: { type: integer }
+        vm_embedded: { type: boolean }
+        vm_restarts: { type: integer }
+        scheduler_idle_seconds: { type: integer }
+        scheduler_backlog: { type: integer }
+        heartbeat: { $ref: "#/components/schemas/Heartbeat" }
+    SecuritySettings:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
     SecurityReport:
       type: object
-      required: [target_id, target_name, kind, supported, score, grade, capped, evaluated_at, counts, checks]
+      required: [enabled, target_id, target_name, kind, supported, score, grade, capped, evaluated_at, counts, checks, guide]
       properties:
+        enabled:
+          type: boolean
+          description: "`false`: the score is turned off; `supported` is false and nothing else is filled."
         target_id: { type: integer }
         target_name: { type: string }
         kind: { type: string }
@@ -6558,10 +7183,15 @@ components:
           type: array
           description: Failing checks first (heaviest first), then passing, then unknown.
           items: { $ref: "#/components/schemas/SecurityCheck" }
+        guide:
+          oneOf:
+            - { $ref: "#/components/schemas/SecurityGuide" }
+            - { type: "null" }
     SecuritySummary:
       type: object
-      required: [evaluated_at, devices]
+      required: [enabled, evaluated_at, devices]
       properties:
+        enabled: { type: boolean, description: "`false`: the score is turned off, `devices` is empty." }
         evaluated_at: { type: string }
         devices:
           type: array

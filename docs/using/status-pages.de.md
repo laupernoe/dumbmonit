@@ -11,15 +11,15 @@ in ein README; eine kompakte Ansicht passt auf eine Intranet-Seite.
 
 Sie zeigt nur, was Sie darauf legen: das Label, das Sie jedem Dienst
 geben, seinen Zustand, seine Uptime und seine Antwortzeit.
-Gerätenamen, Adressen, Arten und Kennungen verlassen den Server nie
+Monitornamen, Adressen, Arten und Kennungen verlassen den Server nie
 — nicht auf der Seite, nicht in einem Badge, nicht in einer E-Mail.
 
 ## 1. Eine Seite erstellen
 
-**Status** in der oberen Leiste → **New page**. Diese Seite listet
+**Settings → Status pages** → **New page**. Diese Seite listet
 Ihre Statusseiten (öffnen, bearbeiten, löschen) mit den Ankündigungen
 darunter; der Editor öffnet sich auf seiner eigenen Route
-(`/status/new`, `/status/<id>`). Die öffentliche Darstellung liegt
+(`/settings/status/new`, `/settings/status/<id>`). Die öffentliche Darstellung liegt
 unter `/s/<address>`.
 
 | Feld | Was es tut |
@@ -32,9 +32,9 @@ unter `/s/<address>`.
 | **Simple mode** | Eine schlichte Seite: keine Scene, kein Mascot, keine Animation und keine Easter Eggs. Hell oder dunkel folgt dem System des Besuchers, mit einem Umschalter im Header; die Theme-Einstellung der Seite wird ignoriert. |
 | **Published** | Aus = Entwurf: Die Seite, ihre Badges und ihr Logo antworten Besuchern "not found", bis Sie es einschalten. |
 
-Kreuzen Sie dann die anzuzeigenden Geräte an. Für jedes setzen Sie
+Kreuzen Sie dann die anzuzeigenden Monitore an. Für jedes setzen Sie
 das **Label**, das Besucher lesen werden (standardmäßig der
-Gerätename — Sie bevorzugen vielleicht "Website" statt
+Monitorname — Sie bevorzugen vielleicht "Website" statt
 "nginx-front-01"), und optional eine **Group** ("Network",
 "Storage"). Gruppen werden zu Blöcken auf der Seite, in der
 Reihenfolge, in der Sie die Dienste anordnen.
@@ -114,25 +114,25 @@ Wie der Zustand entschieden wird:
 
 | Zustand | Bedeutung |
 | --- | --- |
-| Operational | Die letzte Abfrage gelang (Uptime-Abfragen), oder das Gerät meldete sich innerhalb von drei Abfrageperioden. |
+| Operational | Die letzte Abfrage gelang (Uptime-Abfragen), oder der Monitor meldete sich innerhalb von drei Abfrageperioden. |
 | Degraded | Jetzt up, aber mindestens eine Abfrage schlug innerhalb der letzten Stunde fehl. |
-| Down | Die letzte Abfrage schlug fehl, das Gerät hörte auf zu melden, oder seine Konfiguration ist fehlerhaft. |
-| Maintenance | Ein Wartungsfenster läuft, und der Dienst ist down: erwartet, kein Ausfall. Entweder eine Ankündigung auf dieser Seite, oder ein alarmierendes [Wartungsfenster](../alerting/maintenance.md), das dieses Gerät abdeckt. |
+| Down | Die letzte Abfrage schlug fehl, der Monitor hörte auf zu melden, oder seine Konfiguration ist fehlerhaft. |
+| Maintenance | Ein Wartungsfenster läuft, und der Dienst ist down: erwartet, kein Ausfall. Entweder eine Ankündigung auf dieser Seite, oder ein alarmierendes [Wartungsfenster](../alerting/maintenance.md), das diesen Monitor abdeckt. |
 | No data | Noch nie abgefragt, oder deaktiviert. |
 
 Uptime für Abfragen (`http`, `tcp`, `dns`, `ping`, `tls`,
 Heartbeats) ist der Anteil erfolgreicher Checks, aus
 `dumbmonit_probe_success`; der Ausfall eines Tages ist seine
-fehlgeschlagenen Checks mal dem Abfrageintervall. Für andere Geräte
+fehlgeschlagenen Checks mal dem Abfrageintervall. Für andere Monitore
 (SNMP, Agent, Proxmox…) ist es der Anteil der Fünf-Minuten-Slots, in
-denen das Gerät sich mindestens einmal meldete (`dumbmonit_up`),
-gezählt von der ersten Messung — ein gestern hinzugefügtes Gerät ist
+denen der Monitor sich mindestens einmal meldete (`dumbmonit_up`),
+gezählt von der ersten Messung — ein gestern hinzugefügter Monitor ist
 für die 89 Tage davor nicht "down" — und der Ausfall eines Tages ist
 seine stillen Slots.
 
 ## 3. Vorfälle und Wartung ankündigen
 
-Auf der **Status**-Seite, unter der Liste der Seiten, **Incidents
+Auf **Settings → Status pages**, unter der Liste der Seiten, **Incidents
 and maintenance** → **New announcement** (auch ++ctrl+k++ →
 *Announce an incident*).
 
@@ -149,10 +149,10 @@ and maintenance** → **New announcement** (auch ++ctrl+k++ →
   Dienste zeigen sich als *Maintenance*.
 
 Ein [in Alerts geplantes Wartungsfenster](../alerting/maintenance.md)
-tut dasselbe für das eine abgedeckte Gerät, ohne Ankündigung: Dieser
+tut dasselbe für den einen abgedeckten Monitor, ohne Ankündigung: Dieser
 Dienst liest sich *Maintenance* statt rot, während das Fenster offen
 ist, und der Gesamtzustand der Seite sagt *Maintenance*, wenn sonst
-nichts down oder degraded ist. Nur Fenster, die ein Gerät benennen,
+nichts down oder degraded ist. Nur Fenster, die ein Monitor benennen,
 zeigen sich so; der Name und Kommentar des Fensters bleiben privat.
 
 Eine Ankündigung wird auf einer Seite oder auf **allen Seiten**

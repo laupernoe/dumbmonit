@@ -168,7 +168,7 @@ impl TargetPayload {
         }
         if state.collectors.get(&self.kind).is_none() {
             return Err(ApiError::BadRequest(format!(
-                "Unknown device type \"{}\" (available: {})",
+                "Unknown monitor type \"{}\" (available: {})",
                 self.kind,
                 state.collectors.kinds().join(", ")
             )));
@@ -193,13 +193,13 @@ impl TargetPayload {
         if let (Some(id), Some(parent_id)) = (id, self.parent_id)
             && id == parent_id
         {
-            return Err(ApiError::BadRequest("A device cannot be its own parent.".into()));
+            return Err(ApiError::BadRequest("A monitor cannot be its own parent.".into()));
         }
         let via_agent = self.via_agent.flatten();
         if let (Some(id), Some(via_agent)) = (id, via_agent)
             && id == via_agent
         {
-            return Err(ApiError::BadRequest("A device cannot relay itself.".into()));
+            return Err(ApiError::BadRequest("A monitor cannot relay itself.".into()));
         }
         // Une machine à agent n'est jamais interrogée : ses mesures arrivent en
         // poussée, un relais n'aurait rien à faire.
@@ -428,6 +428,111 @@ fn check_secret_destination(
     Ok(())
 }
 
+/// Corps de `POST /api/targets/test` : le formulaire tel qu'il serait enregistré,
+/// plus l'identifiant de la cible en cours de modification (pour réutiliser son
+/// secret enregistré quand le champ est laissé vide).
+#[derive(Debug, Deserialize)]
+pub struct TestPayload {
+    #[serde(default)]
+    pub id: Option<TargetId>,
+    #[serde(flatten)]
+    pub target: TargetPayload,
+}
+
+/// Résultat d'un test de connexion. Un échec de sonde n'est pas une erreur HTTP :
+/// c'est précisément la réponse attendue, que le formulaire affiche telle quelle.
+#[derive(Debug, Serialize)]
+pub struct TestReport {
+    pub ok: bool,
+    /// Message de l'erreur de sonde (`ProbeError`), absent en cas de succès.
+    pub error: Option<String>,
+    /// Vrai si l'échec signifie « équipement injoignable » plutôt qu'une erreur
+    /// de réglage (communauté refusée, vue SNMP trop restreinte…).
+    pub unreachable: bool,
+    pub sysname: Option<String>,
+    pub sysdescr: Option<String>,
+    pub profile_id: Option<String>,
+}
+
+/// `POST /api/targets/test` — sonde une fois l'adresse et les identifiants saisis,
+/// sans rien enregistrer : lit l'identité d'un équipement SNMP.
+pub async fn test_connection(
+    State(state): State<AppState>,
+    Json(payload): Json<TestPayload>,
+) -> ApiResult<Json<TestReport>> {
+    let TestPayload { id, target: payload } = payload;
+    let mut input = payload.validate(&state, id)?;
+    // SNMP seulement : `identify` n'ouvre qu'une session jetable. D'autres collecteurs
+    // gardent une session en cache par identifiant de cible ; un essai avec des
+    // identifiants modifiés (ou l'identifiant 0 partagé par tous les brouillons)
+    // viendrait la remplacer pour l'équipement réel.
+    if input.kind != "snmp" {
+        return Err(ApiError::BadRequest(
+            "Only SNMP devices can be tested from the form: save the monitor, then use Probe now."
+                .into(),
+        ));
+    }
+    if input.via_agent.is_some() {
+        return Err(ApiError::BadRequest(
+            "A monitor behind a relay cannot be tested from the form: save it, then use Probe now."
+                .into(),
+        ));
+    }
+    // Secret laissé vide en modification : on réutilise celui qui est enregistré,
+    // sous la même garde que `update` (jamais vers une destination nouvelle).
+    let mut credential = input.credential.take();
+    if credential.is_none()
+        && let Some(id) = id
+    {
+        let before = load(&state, id).await?;
+        let relay_before = db::targets::relay_of(&state.pool, id).await?;
+        check_secret_destination(&before, relay_before, &input)?;
+        credential = Some(before.credential);
+    }
+    let target = Target {
+        id: id.unwrap_or(0),
+        name: input.name,
+        address: input.address,
+        kind: input.kind,
+        profile_id: input.profile_id,
+        parent_id: None,
+        interval: input.interval,
+        enabled: true,
+        tags: input.tags,
+        credential: credential.unwrap_or(Credential::None),
+        group_name: String::new(),
+        position: 0,
+    };
+    let timeout = state.config.probe_timeout;
+    // Une requête par tentative ne dispose que d'un tiers du budget : une v2c muette
+    // laisse ainsi le temps au repli v1 (et la v3 a deux échanges, découverte puis GET).
+    let outcome = match tokio::time::timeout(
+        timeout,
+        dumbmonit_collectors::snmp::identify(&target, timeout / 3),
+    )
+    .await
+    {
+        Ok(Ok((identity, profile_id))) => Ok(TestReport {
+            ok: true,
+            error: None,
+            unreachable: false,
+            sysname: identity.sysname,
+            sysdescr: identity.sysdescr,
+            profile_id,
+        }),
+        Ok(Err(error)) => Err(error),
+        Err(_) => Err(dumbmonit_proto::ProbeError::Timeout(timeout)),
+    };
+    Ok(Json(outcome.unwrap_or_else(|error| TestReport {
+        ok: false,
+        unreachable: error.means_down(),
+        error: Some(error.to_string()),
+        sysname: None,
+        sysdescr: None,
+        profile_id: None,
+    })))
+}
+
 #[derive(Debug, Deserialize)]
 pub struct ReorderPayload {
     /// Identifiants dans l'ordre d'affichage voulu. Seules les cibles listées
@@ -453,20 +558,35 @@ pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<StatusCode> {
+    // Les services qu'un agent a trouvés partent avec leur machine (la base
+    // les supprime d'elle-même) : leurs alertes et leurs séries aussi.
+    let services: Vec<TargetId> = crate::collectors::agent::modules::states(&state.pool, id)
+        .await?
+        .into_values()
+        .filter_map(|module| module.target_id)
+        .collect();
     if !db::targets::delete(&state.pool, id).await? {
         return Err(not_found(id));
     }
-    forget_alerts(&state, id).await;
-    // Les captures d'écran d'une surveillance de site sont des fichiers : la
-    // cascade de la base ne les atteint pas.
-    crate::webchange::store::forget_files(&state.config.data_dir, id).await;
-    spawn_series_deletion(state, id);
+    for gone in std::iter::once(id).chain(services) {
+        forget(&state, gone).await;
+    }
     Ok(StatusCode::NO_CONTENT)
 }
 
 /// Éteint sans bruit les alertes d'une cible qui vient d'être supprimée ou
 /// mise en pause. Un échec ne fait pas échouer la requête : le moteur d'alerting
 /// écarte de toute façon ces alertes à son prochain cycle.
+/// Ce qui reste d'une cible supprimée hors de sa ligne : alertes, captures,
+/// séries.
+pub(crate) async fn forget(state: &AppState, id: TargetId) {
+    forget_alerts(state, id).await;
+    // Les captures d'écran d'une surveillance de site sont des fichiers : la
+    // cascade de la base ne les atteint pas.
+    crate::webchange::store::forget_files(&state.config.data_dir, id).await;
+    spawn_series_deletion(state.clone(), id);
+}
+
 async fn forget_alerts(state: &AppState, id: TargetId) {
     match db::alerts::forget_target(&state.pool, id, chrono::Utc::now()).await {
         Ok(0) => {}
@@ -522,7 +642,7 @@ async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult
     match db::targets::get(&state.pool, &state.cipher, via_agent).await? {
         None => Err(ApiError::BadRequest(format!("Relay agent {via_agent} not found."))),
         Some(agent) if agent.kind != "agent" => Err(ApiError::BadRequest(format!(
-            "Device {via_agent} ({}) is not an agent: only an agent can relay probes.",
+            "Monitor {via_agent} ({}) is not an agent: only an agent can relay probes.",
             agent.name
         ))),
         Some(_) => Ok(()),
@@ -534,7 +654,7 @@ async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult
 fn check_pack_relay(input: &db::targets::TargetInput) -> ApiResult<()> {
     if input.via_agent.is_some() && dumbmonit_pack::id_from_kind(&input.kind).is_some() {
         return Err(ApiError::BadRequest(
-            "Devices of an integration pack are probed by the server itself: relay agents \
+            "Monitors of an integration pack are probed by the server itself: relay agents \
              cannot probe them yet."
                 .into(),
         ));
@@ -722,7 +842,7 @@ async fn load(state: &AppState, id: TargetId) -> ApiResult<Target> {
 }
 
 fn not_found(id: TargetId) -> ApiError {
-    ApiError::NotFound(format!("Device {id} not found."))
+    ApiError::NotFound(format!("Monitor {id} not found."))
 }
 
 /// La contrainte `UNIQUE (kind, address)` traduit une erreur d'utilisateur, pas une
@@ -730,7 +850,7 @@ fn not_found(id: TargetId) -> ApiError {
 fn duplicate_address_to_conflict(error: anyhow::Error) -> ApiError {
     let text = format!("{error:#}");
     if text.contains("UNIQUE constraint failed") {
-        ApiError::Conflict("A device with this type and address already exists.".into())
+        ApiError::Conflict("A monitor with this type and address already exists.".into())
     } else {
         ApiError::Internal(error)
     }

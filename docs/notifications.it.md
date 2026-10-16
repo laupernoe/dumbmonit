@@ -28,7 +28,7 @@ Un **canale** è una destinazione: un canale Discord, un numero di telefono, una
 
 Tre principi si applicano a ogni canale:
 
-1. **Gli avvisi sono raggruppati.** Un messaggio per dispositivo e per ciclo, anche se cinque dischi si riempiono contemporaneamente. Senza questo, silenzerai le notifiche entro una settimana.
+1. **Gli avvisi sono raggruppati.** Un messaggio per monitor e per ciclo, anche se cinque dischi si riempiono contemporaneamente. Senza questo, silenzerai le notifiche entro una settimana.
 2. **Un canale rotto non blocca mai un altro.** Il fallimento viene registrato nella colonna "ultimo errore" del canale, e la consegna continua agli altri.
 3. **Un servizio che non risponde viene abbandonato dopo 15 secondi.** Una notifica che arriva un minuto in ritardo non è più utile, e il ciclo di monitoraggio non deve attendere dietro un server irraggiungibile.
 
@@ -36,7 +36,7 @@ Tre principi si applicano a ogni canale:
 
 ## Creazione e test di un canale
 
-1. Apri **Avvisi → Notifiche → Aggiungi canale** (`/alerts#notifications`).
+1. Apri **Impostazioni → Notifiche e report → Aggiungi canale** (`/settings/notifications`).
 2. Dagli un nome significativo ("Discord — famiglia", "SMS — on-call"). Questo è il nome che sceglierai in seguito nelle tue regole di avviso.
 3. Scegli il tipo di canale, quindi compila i campi descritti di seguito.
 4. Salva, quindi fai clic su **Invia test**.
@@ -128,8 +128,8 @@ Una variabile viene scritta tra **doppie graffe**: `{{title}}`. Gli spazi attorn
 | `{{message}}` | Corpo in testo semplice, una riga per avviso | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | Lo stesso corpo in Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Nome della regola di avviso | `Disk full` |
-| `{{target}}` | Nome del dispositivo monitorato | `nas` |
-| `{{target_id}}` | Identificatore numerico del dispositivo | `42` |
+| `{{target}}` | Nome del monitor | `nas` |
+| `{{target_id}}` | Identificatore numerico del monitor | `42` |
 | `{{severity}}` | Gravità tecnica | `info`, `warning` o `critical` |
 | `{{severity_fr}}` | Gravità come parola leggibile | `information`, `avertissement`, `critique` |
 | `{{status}}` | Stato tecnico | `firing` o `resolved` |
@@ -149,7 +149,7 @@ Una variabile viene scritta tra **doppie graffe**: `{{title}}`. Gli spazi attorn
 | `{{color}}` | Colore di accento, senza hash | `D98A00` |
 | `{{color_hex}}` | Colore di accento, con hash | `#D98A00` |
 | `{{emoji}}` | Pittogramma di stato | `🔴`, `⚠️`, `ℹ️` o `✅` |
-| `{{link}}` | Collegamento al dispositivo in DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Collegamento al monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Sempre `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Il segreto `token` del canale | *(your token)* |
 
@@ -487,7 +487,7 @@ Notifiche native sui tuoi telefoni e computer, direttamente dal tuo DumbMonit, s
 - **Impostazioni** — `users` (facoltativa; un account per riga, vuota: ogni dispositivo iscritto di ogni account), `urgency` (`high` per impostazione predefinita, `normal` o `low`), `ttl` (secondi che il servizio push mantiene il messaggio per un dispositivo spento, predefinito `86400`), `contact` (indirizzo facoltativo `mailto:` o `https:` dato ai servizi push; vuoto: `DUMBMONIT_PUBLIC_URL` quando è HTTPS, altrimenti la pagina del progetto)
 - **Segreti** — nessuno. La coppia di chiavi VAPID del server viene generata al primo avvio e archiviata crittografata; la chiave privata non lascia mai il server.
 
-Il titolo della notifica è la gravità e il dispositivo (`Critical · nas01`), il corpo un breve riassunto; un tocco apre la pagina **Avvisi**. DumbMonit ha bisogno di HTTPS in uscita verso i servizi push (`fcm.googleapis.com`, `*.notify.windows.com`, `updates.push.services.mozilla.com`, `*.push.apple.com`); i messaggi sono crittografati end-to-end, questi servizi non possono leggerli. Un'iscrizione che il servizio push segnala come scomparsa (HTTP 404 o 410, ad esempio dopo la rimozione dell'app) viene eliminata automaticamente.
+Il titolo della notifica è la gravità e il monitor (`Critical · nas01`), il corpo un breve riassunto; un tocco apre la pagina **Avvisi**. DumbMonit ha bisogno di HTTPS in uscita verso i servizi push (`fcm.googleapis.com`, `*.notify.windows.com`, `updates.push.services.mozilla.com`, `*.push.apple.com`); i messaggi sono crittografati end-to-end, questi servizi non possono leggerli. Un'iscrizione che il servizio push segnala come scomparsa (HTTP 404 o 410, ad esempio dopo la rimozione dell'app) viene eliminata automaticamente.
 
 ### Apprise
 

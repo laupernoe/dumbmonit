@@ -32,6 +32,17 @@ SITE = "https://dumbmonit.app/"
 DOCS_HOST = "https://dumbmonit.readthedocs.io/"
 LASTMOD = "2026-10-15"
 
+
+def project_version():
+    """The workspace version, read from Cargo.toml: the site never carries a hard-coded release."""
+    m = re.search(r'^version\s*=\s*"([^"]+)"', (HERE.parent / "Cargo.toml").read_text(), re.M)
+    assert m, "no version in Cargo.toml"
+    # The site announces the release, not its candidates: 0.9.0-rc.1 shows as 0.9.0.
+    return re.sub(r"-rc\.\d+$", "", m.group(1))
+
+
+VERSION = project_version()
+
 # code, name in its own language, short label, Open Graph locale, Read the Docs language
 LANGS = [
     ("en", "English", "EN", "en_US", "en"),
@@ -464,6 +475,7 @@ def build_page(templates, svgs, strings, data, page, code):
     t_full = re.sub(r"\{\{(" + KEY + r")\}\}", lambda m: t[m.group(1)], t_full)
     t_full = re.sub(r"\[\[(svg\d+)\]\]", lambda m: svgs[m.group(1)], t_full)
     t_full = t_full.replace("@@DOCS@@", DOCS_HOST + docs_dir + "/latest/")
+    t_full = t_full.replace("@@VERSION@@", VERSION)
     t_full = re.sub(r"@@LINK:([^@]*)@@", lambda m: link(m.group(1)), t_full)
     t_full = re.sub(r'<h1 class="blur-in">([^<]*)</h1>', lambda m: '<h1 class="blur-in">' + blur_words(m.group(1), code) + "</h1>", t_full)
     t_full = t_full.replace('<script>\n\n</script>', "")
@@ -525,7 +537,7 @@ NOT_FOUND = """<!doctype html>
 	<p class="muted">Nothing lives at this address.</p>
 	<p style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
 		<a class="btn btn-primary" href="/">Back to DumbMonit</a>
-		<a class="btn btn-secondary" href="/devices/">Devices</a>
+		<a class="btn btn-secondary" href="/devices/">Monitors</a>
 		<a class="btn btn-secondary" href="/install/">Install</a>
 	</p>
 </main>

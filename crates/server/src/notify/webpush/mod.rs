@@ -170,6 +170,13 @@ impl Notifier for WebPush {
 /// qu'un écran verrouillé affiche. `url` est relative, `tag` regroupe les
 /// notifications d'une même alerte (la résolution remplace le déclenchement).
 pub fn payload(message: &Message) -> serde_json::Value {
+    payload_for(message, false)
+}
+
+/// Comme [`payload`], avec les boutons d'action quand `with_actions` (appareil
+/// d'un compte qui peut acquitter). Leurs adresses sont relatives : le
+/// service worker n'ouvre rien hors de l'instance.
+pub fn payload_for(message: &Message, with_actions: bool) -> serde_json::Value {
     let state = if message.resolved {
         "Resolved"
     } else {
@@ -185,7 +192,7 @@ pub fn payload(message: &Message) -> serde_json::Value {
     }
     let body: Vec<&str> =
         message.text.lines().map(str::trim).filter(|line| !line.is_empty()).take(4).collect();
-    json!({
+    let mut out = json!({
         "title": secret::truncate(&title, 120),
         "body": secret::truncate(&body.join("\n"), MAX_BODY_CHARS),
         "url": CLICK_URL,
@@ -193,7 +200,15 @@ pub fn payload(message: &Message) -> serde_json::Value {
         "severity": message.severity.as_str(),
         "resolved": message.resolved,
         "timestamp": message.at.timestamp_millis(),
-    })
+    });
+    if with_actions && !message.actions.is_empty() {
+        out["actions"] = message
+            .actions
+            .iter()
+            .map(|link| json!({"action": link.action.as_str(), "title": link.label, "url": link.path}))
+            .collect();
+    }
+    out
 }
 
 /// Bilan d'un envoi vers tous les appareils visés.
@@ -298,11 +313,13 @@ pub async fn send(
     let keys = vapid::load_or_create(store.pool, store.cipher).await.map_err(internal)?;
     let subscriptions =
         store::recipients(store.pool, store.cipher, audience).await.map_err(internal)?;
-    let body = payload(message).to_string();
+    let body = payload_for(message, false).to_string();
+    let body_with_actions = payload_for(message, true).to_string();
 
     let mut outcome = Outcome::default();
     for subscription in &subscriptions {
-        let delivery = send_one(http, &keys, subscription, settings, &body).await;
+        let body = if subscription.can_act { &body_with_actions } else { &body };
+        let delivery = send_one(http, &keys, subscription, settings, body).await;
         record(store.pool, subscription.id, &delivery, &mut outcome).await;
     }
     Ok(outcome)
@@ -454,6 +471,25 @@ mod tests {
     }
 
     #[test]
+    fn les_boutons_d_action_ne_partent_qu_aux_comptes_qui_peuvent_acquitter() {
+        let mut message = test_message("phone");
+        let key = crate::notify::action_link::ActionKey::from_bytes([5; 32]);
+        message.actions = crate::notify::action_link::build(
+            &key,
+            "https://monit.example.org",
+            &["cpu@1".into()],
+            chrono::Utc::now(),
+        );
+        assert!(payload_for(&message, false).get("actions").is_none());
+        assert!(payload(&message).get("actions").is_none());
+        let json = payload_for(&message, true);
+        assert_eq!(json["actions"][0]["action"], "ack");
+        assert_eq!(json["actions"][1]["action"], "snooze");
+        let url = json["actions"][0]["url"].as_str().unwrap();
+        assert!(url.starts_with("/alert-action#"), "relative: {url}");
+    }
+
+    #[test]
     fn les_codes_de_retour_sont_lus_comme_le_prevoit_la_rfc_8030() {
         assert_eq!(classify(201, ""), Delivery::Delivered);
         assert_eq!(classify(404, ""), Delivery::Gone);
@@ -507,6 +543,7 @@ mod tests {
         let recipients = store::recipients(&pool, &cipher, &Audience::Users(&[])).await.unwrap();
         assert_eq!(recipients.len(), 1);
         assert_eq!(recipients[0].auth, vec![1; 16]);
+        assert!(!recipients[0].can_act, "a viewer gets no action buttons");
         let stored: Vec<u8> = sqlx::query_scalar("SELECT auth_enc FROM webpush_subscriptions")
             .fetch_one(&pool)
             .await

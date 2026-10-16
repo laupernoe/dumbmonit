@@ -20,7 +20,7 @@
 })();
 </script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Websites, certificates and checks · Devices · DumbMonit</title>
+<title>Websites, certificates and checks · Monitors · DumbMonit</title>
 <meta name="description" content="Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
@@ -44,7 +44,7 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
-<meta property="og:title" content="Websites, certificates and checks · Devices · DumbMonit">
+<meta property="og:title" content="Websites, certificates and checks · Monitors · DumbMonit">
 <meta property="og:description" content="Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.">
 <meta property="og:url" content="https://dumbmonit.app/devices/checks/">
 <meta property="og:locale" content="en_US">
@@ -53,11 +53,11 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="DumbMonit: Is everything fine? Know in one second. Self-hosted monitoring in one container, next to the pigeon mascot.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Websites, certificates and checks · Devices · DumbMonit">
+<meta name="twitter:title" content="Websites, certificates and checks · Monitors · DumbMonit">
 <meta name="twitter:description" content="Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","name":"Websites, certificates and checks · Devices · DumbMonit","url":"https://dumbmonit.app/devices/checks/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+{"@context":"https://schema.org","@type":"WebPage","name":"Websites, certificates and checks · Monitors · DumbMonit","url":"https://dumbmonit.app/devices/checks/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
 </script>
 </head>
 <body>
@@ -68,7 +68,7 @@
 		<a class="brand" href="../../" aria-label="DumbMonit home"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Sections">
 			<a href="../../features/">Features</a>
-			<a href="../" aria-current="page">Devices</a>
+			<a href="../" aria-current="page">Monitors</a>
 			<a href="../../install/">Install</a>
 			<a href="../../community/">Docs and community</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Live demo</a>
@@ -98,11 +98,11 @@
 <main id="main">
 <section class="page-head">
 	<div class="wrap">
-		<p class="crumbs"><a href="../">Devices</a></p>
+		<p class="crumbs"><a href="../">Monitors</a></p>
 		<h1 class="blur-in"><span class="w" style="--i:0">Websites,</span> <span class="w" style="--i:1">certificates</span> <span class="w" style="--i:2">and</span> <span class="w" style="--i:3">checks</span></h1>
 		<p class="lede">Web pages and APIs, ports, DNS, ping, TLS certificates, time servers, domain expiry, heartbeats and website changes.</p>
-		<p class="code-note">Device descriptions and alert rule texts are in English, as in the product. The page labels follow your language.</p>
-		<ul class="toc" aria-label="Device types on this page">
+		<p class="code-note">Monitor descriptions and alert rule texts are in English, as in the product. The page labels follow your language.</p>
+		<ul class="toc" aria-label="Monitor types on this page">
 			<li><a href="#http">Website or web API (HTTP)</a></li>
 			<li><a href="#tcp">Network port (TCP)</a></li>
 			<li><a href="#dns">Domain name (DNS)</a></li>
@@ -213,7 +213,7 @@
 <p class="label-tape" style="margin-top:14px">Examples</p><ul class="chips" style="margin-top:6px"><li>example.com</li><li>Your company&#x27;s domain</li><li>The domain of your mail server</li></ul>
 <div class="dev-grid">
 <section><h3>What you need</h3><p class="muted">No account needed.</p></section>
-<section><h3>Built-in alert rules <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Advisory</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">Warning</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+<section><h3>Built-in alert rules <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Advisory</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">Warning</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">Warning</span><strong>Monitor unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
 </div>
 <details class="setup"><summary>Setup steps: Watch a domain&#x27;s registration</summary><ol class="setup-steps"><li><p>Enter the registered domain, for example &quot;example.com&quot;, not a name under it such as www.example.com, which the registry does not know. Nothing to set up and no credential: RDAP, the successor of WHOIS, is public.</p></li><li><p>DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default. Registries limit RDAP queries, and the expiry date changes once a year: a shorter Refresh interval gains nothing.</p></li><li><p>A few registries run RDAP without being listed by the IANA, those of .ch and .li for instance: set RDAP server to their address. An extension whose registry runs no public RDAP service cannot be watched.</p><pre><code>https://rdap.nic.ch/</code></pre></li><li><p>Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes.</p></li></ol><p class="warn"><strong>Heads-up.</strong> A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops, usually over an unpaid invoice or an unverified contact address. DumbMonit warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.</p></details>
 <p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/en/latest/devices/domain/">Documentation</a></p>
@@ -266,7 +266,7 @@
 		<p>DumbMonit, Apache 2.0. The mascot is a pigeon.</p>
 		<nav aria-label="Footer">
 			<a href="../../features/">Features</a>
-			<a href="../">Devices</a>
+			<a href="../">Monitors</a>
 			<a href="../../install/">Install</a>
 			<a href="../../community/">Docs and community</a>
 			<a href="https://demo.dumbmonit.app">Live demo</a>

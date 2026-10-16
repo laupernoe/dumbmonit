@@ -7,15 +7,15 @@ be edited and disabled, not deleted.
 ## Built-in rules
 
 Severities are shown with the UI word; the API value is in parentheses. A rule
-whose metric no device produces has no series and never fires, so every rule
+whose metric no monitor produces has no series and never fires, so every rule
 below is shipped enabled on every instance.
 
-### Every device
+### Every monitor
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| Device unreachable | No measurement received for more than three minutes. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 min | Warning (`critical`) | 6 h |
-| High CPU | CPU load sustained above 90%, averaged per device across SNMP, Proxmox and agent sources; clears below 85 %. | > 90 % | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
+| Monitor unreachable | No measurement received for more than three minutes. `bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))` | > 180 s | 1 min | Warning (`critical`) | 6 h |
+| High CPU | CPU load sustained above 90%, averaged per monitor across SNMP, Proxmox and agent sources; clears below 85 %. | > 90 % | 10 min | Advisory (`warning`), escalates after 1 h | 6 h |
 | Unusual CPU | CPU load noticeably different from the usual at this time and day of the week (seasonal baseline). | score > 3.5 | 15 min | Info (`info`) | 6 h |
 | Disk almost full | Filesystem 90% full or more, per mount point (SNMP, Proxmox storages and root filesystems); clears below 88 %. | ≥ 90 % | 15 min | Advisory (`warning`), escalates after 24 h | 6 h |
 | Filesystem almost full | At this rate, the filesystem will be full within four days (`predict_linear` over 6 h; rising filesystems only). | ≥ 100 % | 30 min | Advisory (`warning`) | 6 h |
@@ -31,7 +31,7 @@ below is shipped enabled on every instance.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| Port accumulating errors | A network port logged more than fifty errors in the last hour: usually a failing cable, a dirty fibre or a duplex mismatch (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; nothing fires during the first hour of a new device, so errors counted before it was added are not reported as new). | > 50 | 15 min | Advisory (`warning`) | 24 h |
+| Port accumulating errors | A network port logged more than fifty errors in the last hour: usually a failing cable, a dirty fibre or a duplex mismatch (`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`; nothing fires during the first hour of a new monitor, so errors counted before it was added are not reported as new). | > 50 | 15 min | Advisory (`warning`) | 24 h |
 | Port flapping | A network port went down and up again more than twice in thirty minutes (`changes_prometheus(dumbmonit_if_oper_status[30m])`). A port disabled on purpose has no series and never fires. | > 4 | 5 min | Advisory (`warning`) | 1 h |
 
 ### Server hardware (Redfish)
@@ -52,7 +52,7 @@ Health series are 0 (OK), 1 (Warning) or 2 (Critical). An empty slot (`Absent`) 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | Service down | The service has not responded correctly for three minutes (`dumbmonit_probe_success{probe!="push"} == bool 0`). | > 0 | 3 min | Warning (`critical`) | 30 min |
-| Heartbeat missed | The job has not called in within its expected interval plus grace period, or reported a failure itself (`dumbmonit_probe_success{probe="push"} == bool 0`; the delay is set per device, see [Heartbeat](../devices/push.md)). | > 0 | 2 min | Advisory (`warning`) | 6 h |
+| Heartbeat missed | The job has not called in within its expected interval plus grace period, or reported a failure itself (`dumbmonit_probe_success{probe="push"} == bool 0`; the delay is set per monitor, see [Heartbeat](../devices/push.md)). | > 0 | 2 min | Advisory (`warning`) | 6 h |
 | Service flapping | The service changed state more than six times in thirty minutes (`changes(dumbmonit_probe_success{probe!="push"}[30m])`). | > 6 | 5 min | Advisory (`warning`) | 1 h |
 | Slow service | The service takes more than three seconds to respond; failed checks are left out (`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`). | > 3 s | 10 min | Advisory (`warning`) | 6 h |
 | Certificate expiring soon | The certificate expires in less than fourteen days. | < 14 d | 1 h | Advisory (`warning`) | 24 h |
@@ -225,13 +225,13 @@ Reported by the agent; see [Agent](../devices/agent.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| MDaemon mail service down | A watched mail service of the MDaemon server does not answer, or greets to refuse service (`dumbmonit_mdaemon_service_up`). Only the services listed on the device have a series. The notification names the service and its port. | < 1 | 5 min | Warning (`critical`) | 6 h |
-| MDaemon XML API not answering | The XML API has stopped answering while the mail services still do (`dumbmonit_mdaemon_api_up`): Remote Administration is probably stopped. Only a device with an account has the series. | < 1 | 15 min | Advisory (`warning`) | 12 h |
-| MDaemon mail queue growing | The inbound, local or remote queue has grown by more than a hundred messages in two hours (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): MDaemon has stopped delivering from it. Read by the [agent](../devices/agent.md#windows-performance-counters) on the MDaemon server, so the alert is on the agent's device. | > 100 | 15 min | Advisory (`warning`) | 6 h |
+| MDaemon mail service down | A watched mail service of the MDaemon server does not answer, or greets to refuse service (`dumbmonit_mdaemon_service_up`). Only the services listed on the monitor have a series. The notification names the service and its port. | < 1 | 5 min | Warning (`critical`) | 6 h |
+| MDaemon XML API not answering | The XML API has stopped answering while the mail services still do (`dumbmonit_mdaemon_api_up`): Remote Administration is probably stopped. Only a monitor with an account has the series. | < 1 | 15 min | Advisory (`warning`) | 12 h |
+| MDaemon mail queue growing | The inbound, local or remote queue has grown by more than a hundred messages in two hours (`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`): MDaemon has stopped delivering from it. Read by the [agent](../devices/agent.md#windows-performance-counters) on the MDaemon server, so the alert is on the agent's monitor. | > 100 | 15 min | Advisory (`warning`) | 6 h |
 | MDaemon Bad queue not empty | Messages are waiting in the Bad queue (`dumbmonit_mdaemon_queue_messages{queue="bad"}`): MDaemon could neither deliver nor bounce them, and they stay there until an administrator releases or deletes them. | > 0 | 30 min | Advisory (`warning`) | 24 h |
 | MDaemon Retry queue high | More than fifty messages wait in the Retry queue (`dumbmonit_mdaemon_queue_messages{queue="retry"}`): remote servers keep refusing mail temporarily. | > 50 | 1 h | Advisory (`warning`) | 6 h |
 | SecurityGateway service down | A watched service of the gateway does not answer, or greets to refuse service (`dumbmonit_securitygateway_service_up`). | < 1 | 5 min | Warning (`critical`) | 6 h |
-| SecurityGateway API not answering | The REST API has stopped answering while the services still do (`dumbmonit_securitygateway_api_up`). Only a device with an API key has the series. | < 1 | 15 min | Advisory (`warning`) | 12 h |
+| SecurityGateway API not answering | The REST API has stopped answering while the services still do (`dumbmonit_securitygateway_api_up`). Only a monitor with an API key has the series. | < 1 | 15 min | Advisory (`warning`) | 12 h |
 | SecurityGateway delivery queue growing | The delivery queue has grown by more than a hundred messages in two hours (`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`): the mail server behind the gateway is probably refusing mail. The counter names come from the API as they are; if your version names the queue differently, adjust the matcher. | > 100 | 15 min | Advisory (`warning`) | 6 h |
 
 ### OPNsense
@@ -255,7 +255,7 @@ Reported by the agent; see [Agent](../devices/agent.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
-| NAS pool degraded | ZFS no longer calls a pool healthy (`dumbmonit_truenas_pool_healthy`). A degraded pool still serves its data, which is exactly why nobody notices until the next disk fails. The device page names the disk. | < 1 | 5 min | Warning (`critical`) | 6 h |
+| NAS pool degraded | ZFS no longer calls a pool healthy (`dumbmonit_truenas_pool_healthy`). A degraded pool still serves its data, which is exactly why nobody notices until the next disk fails. The monitor page names the disk. | < 1 | 5 min | Warning (`critical`) | 6 h |
 | NAS disk errors | Disks of a pool have reported read, write or checksum errors since the last `zpool clear` (`dumbmonit_truenas_pool_device_errors`, one series per kind). | > 0 | 15 min | Advisory (`warning`) | 24 h |
 | NAS pool almost full | A pool is more than 85 % full (`dumbmonit_truenas_pool_used_percent`). ZFS slows down well before it is full. Clears at 80 %. | > 85 % | 30 min | Advisory (`warning`), escalates after 7 d | 24 h |
 | NAS scrub found errors | The last scrub of a pool found damaged data (`dumbmonit_truenas_pool_last_scrub_errors`). | > 0 | 5 min | Warning (`critical`) | 24 h |
@@ -266,7 +266,7 @@ Reported by the agent; see [Agent](../devices/agent.md).
 | NAS replication failed | An enabled replication task is in error (`dumbmonit_truenas_replication_error`): the copy on the other side is getting older. | > 0 | 10 min | Advisory (`warning`) | 12 h |
 | NAS snapshot task failed | An enabled periodic snapshot task is in error (`dumbmonit_truenas_snapshot_task_error`). | > 0 | 10 min | Advisory (`warning`) | 12 h |
 | NAS snapshots stale | An enabled periodic snapshot task has not run for more than eight days (`dumbmonit_truenas_snapshot_task_last_run_age_seconds`): a task that stops running does not fail, it goes quiet. | > 8 d | 1 h | Advisory (`warning`) | 24 h |
-| TrueNAS alert raised | TrueNAS itself has raised an alert of level ERROR or above (`dumbmonit_truenas_alerts`). Its own sentence is on the device page. | > 0 | 10 min | Advisory (`warning`) | 12 h |
+| TrueNAS alert raised | TrueNAS itself has raised an alert of level ERROR or above (`dumbmonit_truenas_alerts`). Its own sentence is on the monitor page. | > 0 | 10 min | Advisory (`warning`) | 12 h |
 | NAS service stopped | A service set to start with the NAS is stopped (`dumbmonit_truenas_service_running`). A service switched off on purpose has no series. | < 1 | 10 min | Advisory (`warning`) | 6 h |
 
 ### Synology DSM
@@ -291,7 +291,7 @@ Reported by the agent; see [Agent](../devices/agent.md).
 
 ### Log and metrics servers
 
-VictoriaMetrics, VictoriaLogs, Loki and Graylog ([devices](../devices/victoriametrics.md)). Counters go through `increase_prometheus`, so a server added with a history of refused data does not fire on its first measurement.
+VictoriaMetrics, VictoriaLogs, Loki and Graylog ([monitors](../devices/victoriametrics.md)). Counters go through `increase_prometheus`, so a server added with a history of refused data does not fire on its first measurement.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -314,7 +314,7 @@ VictoriaMetrics, VictoriaLogs, Loki and Graylog ([devices](../devices/victoriame
 
 ### Self-hosted applications
 
-Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcloud.md)). They rarely fall over outright: the page opens while syncing, thumbnails, imports or library scans have stopped. These rules watch those states; an application that does not answer at all is Device unreachable.
+Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([monitors](../devices/nextcloud.md)). They rarely fall over outright: the page opens while syncing, thumbnails, imports or library scans have stopped. These rules watch those states; an application that does not answer at all is Monitor unreachable.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -340,8 +340,8 @@ Nextcloud, Immich, Paperless-ngx, Jellyfin and Plex ([devices](../devices/nextcl
 
 ### Self-hosted forges
 
-GitLab (self-managed) and Forgejo/Gitea ([devices](../devices/gitlab.md)). An
-instance that answers nothing at all is Device unreachable; these rules watch
+GitLab (self-managed) and Forgejo/Gitea ([monitors](../devices/gitlab.md)). An
+instance that answers nothing at all is Monitor unreachable; these rules watch
 the parts that keep serving pages while quietly falling behind — Sidekiq,
 CI/CD runners, a scheduled task that stopped running.
 
@@ -356,7 +356,7 @@ CI/CD runners, a scheduled task that stopped running.
 
 ### Client devices
 
-One rule, shared by every integration that tracks devices connecting and backing up — Immich's phones, tablets and desktops ([devices](../devices/immich.md)), Proxmox Backup Server's backed-up machines, one per backup group ([devices](../devices/pbs.md)), and Veeam's protected computers and VMs, one per object with a restore point ([devices](../devices/veeam.md)), today; more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the device in the notification. Synology Active Backup for Business tracks its own devices separately, through a rhythm-aware mechanism (`synology_abb_device_*`) rather than this generic family — see [Synology](../devices/synology.md).
+One rule, shared by every integration that tracks client devices connecting and backing up — Immich's phones, tablets and desktops ([monitors](../devices/immich.md)), Proxmox Backup Server's backed-up machines, one per backup group ([monitors](../devices/pbs.md)), and Veeam's protected computers and VMs, one per object with a restore point ([monitors](../devices/veeam.md)), today; more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the monitor in the notification. Synology Active Backup for Business tracks its own monitors separately, through a rhythm-aware mechanism (`synology_abb_device_*`) rather than this generic family — see [Synology](../devices/synology.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -375,7 +375,7 @@ One rule, shared by every integration that tracks devices connecting and backing
 
 ### AdGuard Home
 
-The DNS filter ([device](../devices/adguard.md)). Query and block figures are sums over AdGuard Home's own statistics window, not counters: no rule is built on them.
+The DNS filter ([monitor](../devices/adguard.md)). Query and block figures are sums over AdGuard Home's own statistics window, not counters: no rule is built on them.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -403,7 +403,7 @@ back. UPS read over SNMP are covered by the [UPS](#ups) rules above.
 
 ### MikroTik RouterOS
 
-Series carry the `interface` or `sensor` label, so a notification names the port or the sensor ([device](../devices/mikrotik.md)). Counters go through `increase_prometheus`: a router added with years of errors behind it does not fire on its first measurement.
+Series carry the `interface` or `sensor` label, so a notification names the port or the sensor ([monitor](../devices/mikrotik.md)). Counters go through `increase_prometheus`: a router added with years of errors behind it does not fire on its first measurement.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -419,7 +419,7 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 
 ### UniFi Network
 
-[Device page](../devices/unifi.md). Device series carry the device's name, model and type, so the notification says "Living room AP". A device waiting for adoption has no `device_up` series and never counts as offline.
+[Monitor page](../devices/unifi.md). Device series carry the device's name, model and type, so the notification says "Living room AP". A device waiting for adoption has no `device_up` series and never counts as offline.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -433,7 +433,7 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 
 ### Home Assistant
 
-[Device page](../devices/homeassistant.md).
+[Monitor page](../devices/homeassistant.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -446,7 +446,7 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 
 ### VMware vSphere
 
-[Device page](../devices/vsphere.md). Host series carry `esxi`, VM series `vm`, datastore series `datastore`, so the notification names the object.
+[Monitor page](../devices/vsphere.md). Host series carry `esxi`, VM series `vm`, datastore series `datastore`, so the notification names the object.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -460,7 +460,7 @@ Series carry the `interface` or `sensor` label, so a notification names the port
 
 ### Databases, message broker and security engine
 
-Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Counters go through `increase_prometheus` or `changes_prometheus`, so nothing fires on a device's first measurement.
+Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [MongoDB](../devices/mongodb.md), [RabbitMQ](../devices/rabbitmq.md), [CrowdSec](../devices/crowdsec.md)). Counters go through `increase_prometheus` or `changes_prometheus`, so nothing fires on a monitor's first measurement.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -508,7 +508,7 @@ Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devic
 
 ### Website changes
 
-See [Website changes](../devices/webchange.md). The device page shows each change before and after.
+See [Website changes](../devices/webchange.md). The monitor page shows each change before and after.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -532,7 +532,7 @@ with the node, or the namespace and the pod, workload or claim concerned.
 ### Active Directory
 
 See [Active Directory](../devices/activedirectory.md). The domain controller
-DumbMonit queries is covered by *Device unreachable*; the other domain
+DumbMonit queries is covered by *Monitor unreachable*; the other domain
 controllers of the domain by *Domain controller unreachable* (label `dc`).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
@@ -658,7 +658,7 @@ Reported by the Windows agent on a Hyper-V host; see [Agent](../devices/agent.md
 
 ### Security score
 
-Computed by the server every 15 minutes for every device whose kind has security checks, and stored as `dumbmonit_security_score` (0–100). See [Security score](../using/security-score.md).
+Computed by the server every 15 minutes for every monitor whose kind has security checks, and stored as `dumbmonit_security_score` (0–100), only while the security score is turned on in Settings (off by default). See [Security score](../using/security-score.md).
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
@@ -670,8 +670,16 @@ Computed by the server every 15 minutes for every device whose kind has security
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | DumbMonit backup did not run | The scheduled local backup of the DumbMonit database has not run for more than two days (`time() - dumbmonit_instance_backup_last_success_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 24 h |
+| DumbMonit data volume almost full | The volume that holds `/data` has less than 10% free space (`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`). | < 10 % | 15 min | Advisory (`warning`) | 24 h |
+| DumbMonit metrics database restarting in a loop | The embedded VictoriaMetrics was restarted three times or more in 30 minutes (`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`). | ≥ 3 | 1 min | Warning (`critical`) | 6 h |
+| DumbMonit scheduler stalled | No scheduling round for more than two minutes: monitors are no longer polled (`dumbmonit_instance_scheduler_lag_seconds`). | > 120 s | 5 min | Warning (`critical`) | 6 h |
+| DumbMonit polls running late | Monitors stay overdue after every scheduling round (`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| DumbMonit metric writes failing | Batches refused by VictoriaMetrics or samples dropped in the last 15 minutes (`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| DumbMonit database growing fast | `dumbmonit.db` more than doubled in a day and is over 100 MB (`dumbmonit_instance_database_bytes`). | > 2× | 1 h | Advisory (`warning`) | 24 h |
 
-Every built-in rule applies to all devices and to every enabled channel.
+These rules and the outgoing heartbeat are explained in [Watching DumbMonit itself](../install/self-monitoring.md).
+
+Every built-in rule applies to all monitors and to every enabled channel.
 
 ## Editing a rule in the UI
 
@@ -687,20 +695,27 @@ now. Each rule has:
   parameters read-only;
 - **Delete**, for your own rules only.
 
-## Per-device overrides
+## Per-monitor overrides {#per-device-overrides}
 
-A rule can be tuned for one device without touching the rule itself: a
+A rule can be tuned for one monitor without touching the rule itself: a
 different threshold, a different clear threshold, or turned off for that
-device alone. Each rule's editor has a **Per-device overrides** panel to add
+monitor alone. Each rule's editor has a **Per-monitor overrides** panel to add
 or remove one directly.
 
-The one-click **Ignore** action on an alert (in the *Needs you* list or the
-alert's device page) is the same mechanism, written with `enabled: false`:
-the device stops carrying that rule, immediately, reversibly. The device page
+The one-click **Ignore** action on an alert (in the *Now* tab or the
+alert's monitor page) is the same mechanism, written with `enabled: false`:
+the monitor stops carrying that rule, immediately, reversibly. The monitor page
 lists what it ignores, with **Stop ignoring**; the rule itself shows *Ignored
-on N devices* in Alerts → Rules, where the same per-device overrides panel
-removes it. See [Per-device overrides](../reference/api.md#per-device-overrides)
+on N monitors* in Alerts → Rules, where the same per-monitor overrides panel
+removes it. See [Per-monitor overrides](../reference/api.md#per-device-overrides)
 for the API.
+
+A monitor's **Edit** page also lists, under **Monitored alerts**, every rule
+that reads a metric the monitor has written in the last 24 hours: for an agent
+with Docker, the container rules; for a website monitor, the probe rules. Each
+has a switch, on by default. Turning one off writes the same `enabled: false`
+override when you save the form; the data is still collected and graphed. A
+monitor added a moment ago shows the list after its first checks.
 
 ## Creating a threshold rule
 
@@ -709,25 +724,25 @@ Click **New rule**. The form needs:
 | Field | Meaning |
 |---|---|
 | Name | Shown in alerts and notifications. |
-| Query | A MetricsQL expression, evaluated per device. Example: `dumbmonit_cpu_usage_percent`. |
+| Query | A MetricsQL expression, evaluated per monitor. Example: `dumbmonit_cpu_usage_percent`. |
 | Operator | `>`, `>=`, `<` or `<=`. |
 | Threshold | The number the query result is compared with. |
 | Severity | Info, Advisory or Warning. |
 | Hold for | Seconds the condition must last before firing. A non-zero hold absorbs an isolated bad sample. |
 
 Every series returned by the query becomes one potential alert, attached to the
-device named by its `target` label. Aggregate with `avg by (target, host) (…)`
-when you want one alert per device rather than one per core or per interface.
+monitor named by its `target` label. Aggregate with `avg by (target, host) (…)`
+when you want one alert per monitor rather than one per core or per interface.
 The alert's identity ignores the `host` and `tag_*` labels whenever `target` is
-present, so renaming a device keeps its alerts; a series whose `target` does
-not match an existing, enabled device is ignored.
+present, so renaming a monitor keeps its alerts; a series whose `target` does
+not match an existing, enabled monitor is ignored.
 
 ## The query language
 
 Queries are [MetricsQL](https://docs.victoriametrics.com/metricsql/), the
 PromQL superset of VictoriaMetrics. The metrics are the `dumbmonit_*` series
 described in the [metrics reference](../reference/metrics.md), and every series
-carries a `target` label (the device id) and a `host` label (its name).
+carries a `target` label (the monitor id) and a `host` label (its name).
 
 Some patterns used by the built-in rules:
 

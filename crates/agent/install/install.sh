@@ -570,8 +570,8 @@ RestartSec=10
 # écrire hors de son propre répertoire, ni obtenir de nouveaux privilèges.
 NoNewPrivileges=yes
 ProtectSystem=strict
-# Lecture seule, pas `yes` : la détection de Plakar lit les stores.yml rangés
-# dans les foyers (~/.config/plakar), et `yes` les rendait invisibles.
+# Lecture seule, pas « yes » : la détection de Plakar lit les stores.yml rangés
+# dans les foyers (~/.config/plakar), et « yes » les rendait invisibles.
 ProtectHome=read-only
 PrivateTmp=yes
 # Seul endroit inscriptible hors /tmp : le cache de Plakar

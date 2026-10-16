@@ -33,9 +33,9 @@ Jellyfin 不会检查自身的更新(这是软件包或镜像的职责),因此�
 
 适用的[内置规则](../alerting/rules.md#self-hosted-applications):
 Jellyfin 计划任务失败、Jellyfin 插件损坏、Jellyfin 重启等待中,
-以及设备不可达。
+以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会调用 Jellyfin。
 它会先说明出了什么问题(失败的任务、损坏的插件、等待中的重启),

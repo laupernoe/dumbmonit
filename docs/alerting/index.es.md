@@ -5,7 +5,7 @@ necesita ajustes. Lo que marca la diferencia en el uso diario es lo que
 mantiene bajo el ruido: supresión por dependencia, agrupación por host,
 ventanas de mantenimiento, y una referencia que aprende antes de hablar.
 
-![La página de alertas: qué requiere tu atención, las reglas, el mantenimiento programado y el historial](../assets/screenshots/alerts-light.png){ loading=lazy }
+![La página de alertas: qué ocurre ahora, el mantenimiento, el historial y las reglas](../assets/screenshots/alerts-light.png){ loading=lazy }
 
 ## Severidades {#severities}
 
@@ -17,7 +17,7 @@ motor.
 |---|---|---|
 | Info | `info` | Vale la pena saberlo, no se espera ninguna acción. Usado por la regla de referencia. |
 | Advisory | `warning` | Necesita atención pronto: CPU alta, disco casi lleno, servicio lento. |
-| Warning | `critical` | Te necesita ahora: dispositivo inaccesible, servicio caído, verificación de copia de seguridad fallida, certificado caducado. |
+| Warning | `critical` | Te necesita ahora: monitor inaccesible, servicio caído, verificación de copia de seguridad fallida, certificado caducado. |
 
 La escalada eleva la severidad de una regla un escalón tras
 `escalate_after` si la alerta sigue activa (Info → Advisory → Warning;
@@ -34,7 +34,7 @@ Cada alerta es una máquina de estados, evaluada cada 30 segundos
 | `pending` | Building up | La condición es verdadera pero el tiempo de espera de la regla (`for`) aún no ha transcurrido. No se envía nada. |
 | `firing` | Firing | La condición se ha mantenido el tiempo suficiente. Se envía la primera notificación, luego recordatorios cada `repeat_interval` (6 horas por defecto para la mayoría de reglas integradas), luego una escalada si está configurada. |
 | `resolved` | Resolved | Vuelta a la normalidad. Una notificación de resolución se envía solo si la activación había sido anunciada. |
-| `suppressed` | Suppressed by parent | La alerta está activa, pero un dispositivo padre, o el propio dispositivo, es inaccesible: consulta abajo. |
+| `suppressed` | Suppressed by parent | La alerta está activa, pero un monitor padre, o el propio monitor, es inaccesible: consulta abajo. |
 
 `phase` es el estado del motor; `effective_phase` es lo que lees. Una
 alerta cuyo `effective_phase` es `suppressed` conserva `phase = firing`
@@ -47,37 +47,37 @@ escaladas se pausan hasta `acked_until`, la resolución igual se
 notifica y borra la confirmación. **Aplazar** una alerta funciona igual
 por debajo pero a través de una ventana de mantenimiento limitada a las
 etiquetas exactas de esa alerta (`silenced: true`), en lugar de todo el
-dispositivo: una regla hermana en el mismo dispositivo sigue hablando.
+monitor: una regla hermana en el mismo monitor sigue hablando.
 Consulta [Deshacerse de una alerta](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Supresión por dependencia {#dependency-suppression}
 
-Cualquier dispositivo puede declarar un **dispositivo padre**. Cuando un
-dispositivo es inaccesible (la regla «Device unreachable» se activa en
+Cualquier monitor puede declarar un **monitor padre**. Cuando un
+monitor es inaccesible (la regla «Monitor unreachable» se activa en
 él), cada alerta en sus descendientes se marca *Suppressed by parent* en
 lugar de enviarse: un switch que se cae produce una notificación, no
 treinta. El ancestro inaccesible más cercano se nombra como la causa
 (`suppressed_by`), y la cadena se sigue hasta 64 niveles.
 
-Lo mismo vale para el propio dispositivo inaccesible: sus demás alertas
+Lo mismo vale para el propio monitor inaccesible: sus demás alertas
 (disco lleno, CPU, etc.) se suprimen por su propia caída, con `suppressed_by`
-nombrando al propio dispositivo, ya que sus valores están desactualizados y
-solo son un síntoma del mismo fallo. Solo su alerta «Device unreachable» nunca
+nombrando al propio monitor, ya que sus valores están desactualizados y
+solo son un síntoma del mismo fallo. Solo su alerta «Monitor unreachable» nunca
 se oculta por su propia caída, así que se te avisa una vez.
 
-Define el padre en el formulario del dispositivo. En la página Devices,
+Define el padre en el formulario del monitor. En la página Devices,
 los hijos se apilan bajo su padre y se atenúan cuando es inaccesible.
 
 Un [agente relay](../install/remote-site.md) cuenta como padre de cada
-dispositivo que sondea (*Reached through* en el formulario del
-dispositivo), además del padre definido explícitamente: cuando el relay
-es inaccesible, sus dispositivos se suprimen con el relay nombrado como
+monitor que sondea (*Reached through* en el formulario del
+monitor), además del padre definido explícitamente: cuando el relay
+es inaccesible, sus monitores se suprimen con el relay nombrado como
 la causa. A igual distancia, el padre explícito gana.
 
 Un padre también cuenta como inaccesible en cuanto su propia sonda lo
-indica (el estado *Timed out* / *Device unreachable* en su página), sin
-esperar a que su alerta «Device unreachable» se active: un agente que
-deja de enviar se lleva consigo a sus dispositivos un minuto o dos antes
+indica (el estado *Timed out* / *Monitor unreachable* en su página), sin
+esperar a que su alerta «Monitor unreachable» se active: un agente que
+deja de enviar se lleva consigo a sus monitores un minuto o dos antes
 de su propia alerta, y de otro modo cada uno notificaría primero.
 
 ## Agrupación, deduplicación, recordatorios {#grouping-deduplication-reminders}
@@ -96,7 +96,7 @@ confirmada).
 Un silencio detiene las notificaciones sin detener la evaluación: al
 final de una ventana, una alerta que todavía está activa se notifica
 una vez, en lugar de «nacer» tras dos horas de existencia. Las ventanas
-son puntuales o semanales, por dispositivo o para toda la instancia.
+son puntuales o semanales, por monitor o para toda la instancia.
 Consulta [Ventanas de mantenimiento](maintenance.md).
 
 ## Aprendizaje de referencia {#baseline-learning}
@@ -140,19 +140,19 @@ nadie reciba spam. El camino completo de una alerta, en orden:
    tiempo de espera de la regla (`for`) y, cuando se define, su
    **umbral de limpieza** (histéresis: activar por encima del 90 %,
    limpiar solo por debajo del 85 %) y cualquier **anulación por
-   dispositivo**.
+   monitor**.
 2. **Deduplicar** — una huella por (regla, serie), con clave en el id
-   del dispositivo (`target`) en lugar de su nombre: renombrar un
-   dispositivo o editar sus etiquetas no crea una segunda alerta, y una
+   del monitor (`target`) en lugar de su nombre: renombrar un
+   monitor o editar sus etiquetas no crea una segunda alerta, y una
    serie que resuelve a la misma clave dos veces produce una alerta.
-   Las series de un dispositivo eliminado o pausado se descartan: sus
+   Las series de un monitor eliminado o pausado se descartan: sus
    alertas se limpian de inmediato, sin ninguna notificación, y el
    historial registra `device removed or disabled`.
-3. **Suprimir por dependencia** — los descendientes de un dispositivo
+3. **Suprimir por dependencia** — los descendientes de un monitor
    inaccesible permanecen en silencio.
 4. **Silenciar** — las ventanas de mantenimiento silencian lo que
    cubren.
-5. **Agrupar por dispositivo** — un mensaje por dispositivo por ciclo,
+5. **Agrupar por monitor** — un mensaje por monitor por ciclo,
    recordatorios y escalada incluidos.
 6. **Retención de parpadeo** — una huella que se activa y limpia 4
    veces en 30 minutos envía un único aviso de «flapping», y luego
@@ -170,9 +170,9 @@ nadie reciba spam. El camino completo de una alerta, en orden:
 10. **Límite por hora** — más allá de `max_per_hour` mensajes en un
     canal, las alertas esperan y llegan como un resumen («…and 7 more
     alerts»).
-11. **Enviar** — con un enlace «Open in DumbMonit» por dispositivo
+11. **Enviar** — con un enlace «Open in DumbMonit» por monitor
     cuando se conoce una URL pública.
 
-Los pasos 6 a 10 se configuran en Alerts → Notifications → Notification
+Los pasos 6 a 10 se configuran en Settings → Notifications & reports → Notification
 policy (global) y en cada canal (Delivery options). Consulta [Política
 de notificación](notifications.md).

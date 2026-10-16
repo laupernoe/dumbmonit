@@ -92,11 +92,11 @@ est déjà « la dernière sauvegarde réussie » — rien n'est filtré sur le
 résultat ici. Veeam n'expose pas de « dernière connexion » séparée de la
 sauvegarde elle-même, donc `last_seen_timestamp_seconds` et le signal
 `connection` ne sont jamais publiés ; un appareil montre
-`last_connection` comme « — » dans le tableau de la page de l'appareil. Le
+`last_connection` comme « — » dans le tableau de la page de la surveillance. Le
 `type` de l'appareil est le propre nom de plateforme de Veeam (`VSphere`,
 `WindowsPhysical`, `HyperV`…), montré tel quel.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Backups dit ce qui ne va pas en une phrase, montre les jobs en
 échec, les sessions en échec des dernières 24 heures, les jobs en cours et

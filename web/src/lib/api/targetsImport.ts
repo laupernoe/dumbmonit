@@ -6,7 +6,7 @@
  * single JSON path (and its anti-CSRF header).
  */
 import { request } from './client';
-import type { TargetImportReport } from './types';
+import type { KumaImportReport, TargetImportReport } from './types';
 
 /** `dryRun` previews every row (including per-row errors) without creating anything. */
 export function importTargets(csv: string, dryRun: boolean): Promise<TargetImportReport> {
@@ -23,3 +23,15 @@ export const IMPORT_TEMPLATE_CSV =
 	'https://example.com,Example,Clients/Acme,env=prod;team=web,5m,Welcome,\n' +
 	'shop.example.org,,,,,,E-commerce\n' +
 	'blog.example.org,,,,,,\n';
+
+/** Largest backup accepted by the server; checked here first for a clear message. */
+export const KUMA_MAX_BYTES = 4 * 1024 * 1024;
+
+/** Import of an Uptime Kuma 1.x backup (the parsed JSON file). `dryRun` previews only. */
+export function importKuma(backup: unknown, dryRun: boolean): Promise<KumaImportReport> {
+	return request<KumaImportReport>('/targets/import/kuma', {
+		method: 'POST',
+		body: backup,
+		query: { dry_run: dryRun ? true : undefined }
+	});
+}

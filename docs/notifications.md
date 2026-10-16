@@ -12,6 +12,7 @@ token to copy, and what to type into the form.
 - [Creating and testing a channel](#creating-and-testing-a-channel)
 - [Settings or secrets: the difference](#settings-or-secrets-the-difference)
 - [Self-signed certificates](#self-signed-certificates)
+- [Acknowledge or snooze from the notification](#acknowledge-or-snooze-from-the-notification)
 - [The custom channel](#the-custom-channel)
   - [Available variables](#available-variables)
   - [Example 1 — an internal JSON API](#example-1--an-internal-json-api)
@@ -31,7 +32,7 @@ create as many as you want, and your alert rules choose which ones to notify.
 
 Three principles apply to every channel:
 
-1. **Alerts are grouped.** One message per device and per cycle, even if five disks
+1. **Alerts are grouped.** One message per monitor and per cycle, even if five disks
    fill up at the same time. Without this, you would mute notifications within a
    week.
 2. **A broken channel never blocks another one.** The failure is recorded in the
@@ -44,7 +45,7 @@ Three principles apply to every channel:
 
 ## Creating and testing a channel
 
-1. Open **Alerts → Notifications → Add channel** (`/alerts#notifications`).
+1. Open **Settings → Notifications & reports → Add channel** (`/settings/notifications`).
 2. Give it a meaningful name ("Discord — family", "SMS — on-call"). This is the
    name you will pick later in your alert rules.
 3. Choose the channel type, then fill in the fields described below.
@@ -94,6 +95,50 @@ certificate is the reason for a failure, the error shown for the channel names i
 
 ---
 
+## Acknowledge or snooze from the notification
+
+When a public URL is set (**Settings → Notifications & reports → Notification policy**, or
+`DUMBMONIT_PUBLIC_URL`), every alert message carries two actions:
+
+- **Acknowledge**: no more reminders until the alert resolves. The resolution is
+  still announced.
+- **Snooze 1 h**: no reminders for one hour; they resume afterwards if the alert is
+  still active. A snooze never shortens a longer acknowledgement.
+
+How they show up depends on the channel:
+
+| Channel | Shown as |
+|---|---|
+| ntfy, Telegram, Web Push | Buttons under the notification |
+| Discord, Slack, email and every other channel | Links at the end of the message |
+| Custom webhook | Links in `{{message}}`, and the `{{ack_url}}` / `{{snooze_url}}` variables |
+| PagerDuty, Opsgenie | Nothing: acknowledge in the service itself |
+
+Telegram only accepts buttons pointing to an `https` address with a domain name;
+with an IP address or a plain `http` URL, the actions stay as links in the text.
+Web Push only shows the buttons on devices of operators and admins: a viewer sees
+the alert, not a way to silence it.
+
+A link opens a short confirmation page in DumbMonit: **nothing happens until you
+press the button**. Mail clients, chat apps and antivirus scanners open links to
+build previews; they only load the page. No sign-in is needed: the link itself is
+the permission, and only for that gesture, on the alerts of that message (that firing: if an alert
+resolves and fires again, the old link no longer covers it), once, for
+24 hours. The action is recorded in the audit log, and the alert shows
+"acknowledged by via notification link".
+
+Security, in short: each link is signed with a key derived from the instance secret
+(changing the secret invalidates every link), carries no session, and travels after
+the `#` of the address, which browsers never send to a server, so it appears in no
+access or proxy log. A forged, altered or expired link gets the same answer as any
+other invalid link, and repeated attempts from one address are slowed down.
+
+Turn **Acknowledge and snooze from notifications** off in the notification policy
+to stop adding them; this also invalidates the links already sent. Clearing the
+public URL has the same effect.
+
+---
+
 ## The custom channel
 
 The **`webhook`** channel is DumbMonit's escape hatch. You describe the whole HTTP
@@ -122,9 +167,9 @@ payload that a script can use:
 }
 ```
 
-`link` points to the device page, built on the `public_url` of the
+`link` points to the monitor page, built on the `public_url` of the
 [notification policy](alerting/notifications.md) (or `DUMBMONIT_PUBLIC_URL`), or on the channel's
-`base_url`. A message about several devices, and the test message, link to
+`base_url`. A message about several monitors, and the test message, link to
 the instance itself. Without any public URL, `link` is `null`.
 
 ### Custom channel settings
@@ -165,8 +210,8 @@ write your JSON normally.
 | `{{message}}` | Plain-text body, one line per alert | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | The same body in Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Name of the alert rule | `Disk full` |
-| `{{target}}` | Name of the monitored device | `nas` |
-| `{{target_id}}` | Numeric identifier of the device | `42` |
+| `{{target}}` | Name of the monitor | `nas` |
+| `{{target_id}}` | Numeric identifier of the monitor | `42` |
 | `{{severity}}` | Technical severity | `info`, `warning` or `critical` |
 | `{{severity_fr}}` | Severity as a readable word | `information`, `avertissement`, `critique` |
 | `{{status}}` | Technical status | `firing` or `resolved` |
@@ -186,9 +231,11 @@ write your JSON normally.
 | `{{color}}` | Accent colour, without hash | `D98A00` |
 | `{{color_hex}}` | Accent colour, with hash | `#D98A00` |
 | `{{emoji}}` | Status pictogram | `🔴`, `⚠️`, `ℹ️` or `✅` |
-| `{{link}}` | Link to the device in DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Link to the monitor in DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Always `dumbmonit` | `dumbmonit` |
 | `{{token}}` | The channel's `token` secret | *(your token)* |
+| `{{ack_url}}` | Signed link that acknowledges the alert until it resolves, empty if [action links](#acknowledge-or-snooze-from-the-notification) are off | `https://dumbmonit.home/alert-action#…` |
+| `{{snooze_url}}` | Signed link that snoozes the alert for one hour, empty if action links are off | `https://dumbmonit.home/alert-action#…` |
 
 Two useful remarks:
 
@@ -605,7 +652,7 @@ DumbMonit, with no app to install and no third-party account: the browser
 - **Secrets** — none. The server's VAPID key pair is generated at first start
   and stored encrypted; the private key never leaves the server.
 
-The notification title is the severity and the device (`Critical · nas01`), the
+The notification title is the severity and the monitor (`Critical · nas01`), the
 body a short summary; a tap opens the **Alerts** page. DumbMonit needs outbound
 HTTPS to the push services (`fcm.googleapis.com`, `*.notify.windows.com`,
 `updates.push.services.mozilla.com`, `*.push.apple.com`); messages are

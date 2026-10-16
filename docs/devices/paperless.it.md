@@ -41,9 +41,9 @@ in `tasks_failed_window`, che copre ogni task.
 Le [regole integrate](../alerting/rules.md#self-hosted-applications) che si
 applicano: Paperless task queue down, Paperless index or sanity check error,
 Paperless migrations pending, Paperless task failed, Paperless storage
-almost full, Paperless update available, più Device unreachable.
+almost full, Paperless update available, più Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non chiama mai Paperless. Indica prima cosa non va (un componente in

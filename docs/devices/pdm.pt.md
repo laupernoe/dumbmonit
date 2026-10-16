@@ -12,39 +12,39 @@ tarefas que falharam em qualquer lugar, e a própria saúde da consola.
     datacenter manager real, mas ainda ninguém o executou durante
     semanas num datacenter manager em produção. Diga-nos o que falha.
 
-## Um dispositivo para o património, ou um dispositivo por cluster? {#one-device-for-the-estate-or-one-device-per-cluster}
+## Um monitor para o património, ou um monitor por cluster? {#one-device-for-the-estate-or-one-device-per-cluster}
 
-Um dispositivo Datacenter Manager não é um substituto para dispositivos
+Um monitor Datacenter Manager não é um substituto para monitores
 [Proxmox VE](proxmox.md) e [Proxmox Backup Server](pbs.md). Responde a
 uma pergunta diferente.
 
-| | Dispositivo Datacenter Manager | Um dispositivo por cluster e por servidor de cópias de segurança |
+| | Monitor Datacenter Manager | Um monitor por cluster e por servidor de cópias de segurança |
 |---|---|---|
-| Dispositivos a criar | um | um por cluster, um por servidor de cópias de segurança |
+| Monitores a criar | um | um por cluster, um por servidor de cópias de segurança |
 | Credenciais a gerir | um token, na consola | um token por instância |
 | Carga em cada cluster | nenhuma nossa: lemos a própria cache da consola | uma verificação por intervalo, por cluster |
 | O que obtém | acessibilidade, versão, contagens de convidados e nós, totais de CPU, memória e armazenamento, tarefas falhadas | tudo isso mais convidados um a um, snapshots, tarefas de cópia de segurança, HA, Ceph, replicação, discos e SMART, pools ZFS, o calendário de cópias de segurança de 30 dias |
 | O que não pode obter | séries por convidado, detalhe por datastore, discos, snapshots, registos de tarefa | um total único à escala do património |
 | Falha principal | a consola não consegue alcançar uma instância | o cluster não nos responde |
 
-**A nossa recomendação.** Adicione o dispositivo Datacenter Manager
+**A nossa recomendação.** Adicione o monitor Datacenter Manager
 quando já executa uma consola e quer uma página que diga se o património
 está completo — é a forma mais barata de notar que um site remoto caiu, e
-não custa nada aos clusters. Adicione um dispositivo dedicado para cada
+não custa nada aos clusters. Adicione um monitor dedicado para cada
 cluster e servidor de cópias de segurança que realmente opera: é aí que
 está a profundidade, e é isso que diz *qual* VM parou ou *qual* cópia de
 segurança falhou. Os dois sobrepõem-se sem entrar em conflito; uma cópia
-de segurança falhada gera então um alerta do dispositivo PBS (com o
+de segurança falhada gera então um alerta do monitor PBS (com o
 registo da tarefa) e um da consola (nomeando a instância). Silencie a
 regra de tarefas da consola se achar isso redundante, ou limite-a às
-instâncias para as quais não tem nenhum dispositivo dedicado.
+instâncias para as quais não tem nenhum monitor dedicado.
 
 Se não executa nenhuma consola de todo, não instale uma só para
-monitorização: os dispositivos dedicados veem estritamente mais.
+monitorização: os monitores dedicados veem estritamente mais.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Além dos gráficos genéricos, um dispositivo Datacenter Manager mostra
+Além dos gráficos genéricos, um monitor Datacenter Manager mostra
 três painéis, lidos do que a verificação guardou — abrir a página não
 consulta nem a consola nem os clusters que gere:
 
@@ -63,7 +63,7 @@ consulta nem a consola nem os clusters que gere:
   últimos 14 dias, a mais recente primeiro, com a instância em que
   correu, o tipo de tarefa, quando começou, quanto demorou e a mensagem
   de erro. O próprio registo da tarefa fica na instância: abra-o aí, ou
-  adicione esse cluster como o seu próprio dispositivo, onde *Show log* o
+  adicione esse cluster como o seu próprio monitor, onde *Show log* o
   obtém.
 * **Console host** — a máquina que executa a consola: CPU, memória,
   sistema de ficheiros raiz, tempo de atividade e kernel, os seus
@@ -73,7 +73,7 @@ consulta nem a consola nem os clusters que gere:
   painel diz isso, em vez de mostrar zeros.
 
 O histórico de tarefas é guardado em SQLite (`pdm_task_history`, 19
-dias, no máximo 5000 tarefas por dispositivo) para que a lista de falhas
+dias, no máximo 5000 tarefas por monitor) para que a lista de falhas
 sobreviva a reinícios ainda que cada verificação só olhe para a janela de
 tarefas.
 
@@ -110,7 +110,7 @@ Os totais de armazenamento contam cada nome de armazenamento uma vez por
 instância: um armazenamento partilhado por cinco nós de um cluster é
 contado uma vez, não cinco.
 
-As regras incorporadas que se aplicam: Device unreachable, Federated
+As regras incorporadas que se aplicam: Monitor unreachable, Federated
 instance unreachable, Federated instance behind, Task failed on a
 federated instance, Datacenter console disk almost full, Datacenter
 console certificate expiring, Datacenter console updates pending. As

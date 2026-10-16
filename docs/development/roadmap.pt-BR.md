@@ -14,7 +14,7 @@ Prioridades e prazos podem mudar; o quadro é um plano vivo, não uma promessa.
 - **Correções de segurança** são anunciadas nas notas de lançamento e como
   avisos de segurança do GitHub, com seu identificador CVE ou GHSA.
 
-O DumbMonit está em alfa: espere que a API e o modelo de dados continuem
+O DumbMonit está antes da 1.0: espere que a API e o modelo de dados continuem
 evoluindo até que uma linha estável seja anunciada. Veja o
 [guia de contribuição](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
 e a

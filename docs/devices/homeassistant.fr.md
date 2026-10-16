@@ -57,7 +57,7 @@ Les [règles intégrées](../alerting/rules.md#home-assistant) qui
 s'appliquent : Home Assistant en mode récupération, Home Assistant ne
 tourne pas, entités Home Assistant devenues indisponibles, batterie Home
 Assistant faible, mise à jour Home Assistant disponible, réparation Home
-Assistant à traiter, plus Appareil inaccessible.
+Assistant à traiter, plus Surveillance inaccessible.
 
 ## Appareils
 
@@ -84,7 +84,7 @@ rapport de batterie désactivé manque dans le tableau plutôt que d'être
 montré à tort. Le compte de l'appareil, quand il est connu, vient d'une
 entité `person.*` dont l'attribut `device_trackers` le nomme.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'interroge jamais Home Assistant. Il dit d'abord ce qui ne va pas

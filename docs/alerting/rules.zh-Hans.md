@@ -7,15 +7,15 @@
 ## 内置规则 {#built-in-rules}
 
 严重级别用 UI 词显示;API 值在括号中。一个规则
-其度量没有设备产生没有系列并永不触发,所以每个规则
+其度量没有监控项产生没有系列并永不触发,所以每个规则
 下面在每个实例上默认启用。
 
-### 每个设备 {#every-device}
+### 每个监控项 {#every-device}
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| 设备不可达 | 三分钟内没有收到测量。`time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 分钟 | 警告 (`critical`) | 6 小时 |
-| CPU 高 | CPU 负载维持在 90% 以上,跨 SNMP、Proxmox 和代理源平均每个设备;在 85% 下清除。 | > 90 % | 10 分钟 | 通知 (`warning`),1 小时后升级 | 6 小时 |
+| 监控项不可达 | 三分钟内没有收到测量。`time() - tlast_over_time(dumbmonit_up[7d])` | > 180 s | 1 分钟 | 警告 (`critical`) | 6 小时 |
+| CPU 高 | CPU 负载维持在 90% 以上,跨 SNMP、Proxmox 和代理源平均每个监控项;在 85% 下清除。 | > 90 % | 10 分钟 | 通知 (`warning`),1 小时后升级 | 6 小时 |
 | 异常 CPU | CPU 负载明显不同于通常在这个时间和星期几(季节基线)。 | 分数 > 3.5 | 15 分钟 | 信息 (`info`) | 6 小时 |
 | 磁盘即将满 | 文件系统 90% 或更多,每个挂载点(SNMP、Proxmox 存储和根文件系统);在 88% 下清除。 | ≥ 90 % | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
 | 文件系统即将满 | 按此速率,文件系统将在四天内满(`predict_linear`超过 6 小时;上升的文件系统仅)。 | ≥ 100 % | 30 分钟 | 通知 (`warning`) | 6 小时 |
@@ -31,7 +31,7 @@
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| 端口累积错误 | 网络端口在最后一小时内记录了超过 50 个错误:通常是故障电缆、脏纤维或双工不匹配(`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`;在新设备的第一小时内没有触发,所以在添加前计数的错误不被报告为新)。 | > 50 | 15 分钟 | 通知 (`warning`) | 24 小时 |
+| 端口累积错误 | 网络端口在最后一小时内记录了超过 50 个错误:通常是故障电缆、脏纤维或双工不匹配(`increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h])`;在新监控项的第一小时内没有触发,所以在添加前计数的错误不被报告为新)。 | > 50 | 15 分钟 | 通知 (`warning`) | 24 小时 |
 | 端口飘动 | 网络端口在 30 分钟内关闭和打开超过两次(`changes_prometheus(dumbmonit_if_oper_status[30m])`)。故意禁用的端口没有系列并永不触发。 | > 4 | 5 分钟 | 通知 (`warning`) | 1 小时 |
 
 ### 服务器硬件(Redfish) {#server-hardware-redfish}
@@ -52,7 +52,7 @@
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | 服务关闭 | 服务在三分钟内没有正确响应(`dumbmonit_probe_success{probe!="push"} == bool 0`)。 | > 0 | 3 分钟 | 警告 (`critical`) | 30 分钟 |
-| 心跳错过 | 工作在其预期间隔加宽限期内没有调用,或报告了故障本身(`dumbmonit_probe_success{probe="push"} == bool 0`;延迟按设备设置,见[心跳](../devices/push.md))。 | > 0 | 2 分钟 | 通知 (`warning`) | 6 小时 |
+| 心跳错过 | 工作在其预期间隔加宽限期内没有调用,或报告了故障本身(`dumbmonit_probe_success{probe="push"} == bool 0`;延迟按监控项设置,见[心跳](../devices/push.md))。 | > 0 | 2 分钟 | 通知 (`warning`) | 6 小时 |
 | 服务飘动 | 服务在 30 分钟内改变状态超过 6 次(`changes(dumbmonit_probe_success{probe!="push"}[30m])`)。 | > 6 | 5 分钟 | 通知 (`warning`) | 1 小时 |
 | 缓慢服务 | 服务需要超过三秒来响应;失败的检查不计入(`dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1`)。 | > 3 秒 | 10 分钟 | 通知 (`warning`) | 6 小时 |
 | 证书即将过期 | 证书在少于 14 天内过期。 | < 14 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
@@ -125,7 +125,7 @@
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | 磁盘 SMART 失败 | 磁盘自己的 SMART 自我评估报告其已失败(`dumbmonit_agent_disk_smart_ok == bool 0`)。更换它并检查备份。 | > 0 | 10 分钟 | 警告 (`critical`) | 24 小时 |
-| ZFS 池降级 | ZFS 池不再健康:设备缺失、故障或移除(`dumbmonit_agent_zfs_pool_health`:0 在线,1 降级,2 其他)。 | > 0 | 5 分钟 | 警告 (`critical`) | 6 小时 |
+| ZFS 池降级 | ZFS 池不再健康:监控项缺失、故障或移除(`dumbmonit_agent_zfs_pool_health`:0 在线,1 降级,2 其他)。 | > 0 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 | ZFS 清理发现错误 | 最后的 ZFS 清理在此池上发现了错误,或文件永久丢失(`dumbmonit_agent_zfs_pool_scrub_errors or dumbmonit_agent_zfs_pool_data_errors`)。池可以保持`ONLINE`。 | > 0 | 10 分钟 | 警告 (`critical`) | 24 小时 |
 | 温度超过临界 | 传感器超过其自己的硬件声明的临界温度(`dumbmonit_agent_sensor_temperature_celsius >= dumbmonit_agent_sensor_temperature_critical_celsius`);无固定值。 | > 0 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 
@@ -221,13 +221,13 @@
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| MDaemon 邮件服务关闭 | MDaemon 服务器的观察邮件服务不应答,或问候以拒绝服务(`dumbmonit_mdaemon_service_up`)。仅设备上列出的服务有系列。通知命名服务和其端口。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
-| MDaemon XML API 未应答 | XML API 已停止应答,而邮件服务仍做(`dumbmonit_mdaemon_api_up`):远程管理可能已停止。仅有账户的设备有系列。 | < 1 | 15 分钟 | 通知 (`warning`) | 12 小时 |
-| MDaemon 邮件队列增长 | 入站、本地或远程队列在两小时内增长超过一百条消息(`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`):MDaemon 已停止从其交付。由[代理](../devices/agent.md#windows-performance-counters)在 MDaemon 服务器上读取,所以告警在代理的设备上。 | > 100 | 15 分钟 | 通知 (`warning`) | 6 小时 |
+| MDaemon 邮件服务关闭 | MDaemon 服务器的观察邮件服务不应答,或问候以拒绝服务(`dumbmonit_mdaemon_service_up`)。仅监控项上列出的服务有系列。通知命名服务和其端口。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
+| MDaemon XML API 未应答 | XML API 已停止应答,而邮件服务仍做(`dumbmonit_mdaemon_api_up`):远程管理可能已停止。仅有账户的监控项有系列。 | < 1 | 15 分钟 | 通知 (`warning`) | 12 小时 |
+| MDaemon 邮件队列增长 | 入站、本地或远程队列在两小时内增长超过一百条消息(`delta(dumbmonit_mdaemon_queue_messages{queue=~"inbound\|local\|remote"}[2h])`):MDaemon 已停止从其交付。由[代理](../devices/agent.md#windows-performance-counters)在 MDaemon 服务器上读取,所以告警在代理的监控项上。 | > 100 | 15 分钟 | 通知 (`warning`) | 6 小时 |
 | MDaemon Bad 队列不为空 | 消息在 Bad 队列中等待(`dumbmonit_mdaemon_queue_messages{queue="bad"}`):MDaemon 既不能交付也不能退回它们,它们留在那里直到管理员释放或删除它们。 | > 0 | 30 分钟 | 通知 (`warning`) | 24 小时 |
 | MDaemon Retry 队列高 | 超过 50 条消息在 Retry 队列中等待(`dumbmonit_mdaemon_queue_messages{queue="retry"}`):远程服务器继续暂时拒绝邮件。 | > 50 | 1 小时 | 通知 (`warning`) | 6 小时 |
 | SecurityGateway 服务关闭 | 网关的观察服务不应答,或问候以拒绝服务(`dumbmonit_securitygateway_service_up`)。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
-| SecurityGateway API 未应答 | REST API 已停止应答,而服务仍做(`dumbmonit_securitygateway_api_up`)。仅有 API 密钥的设备有系列。 | < 1 | 15 分钟 | 通知 (`warning`) | 12 小时 |
+| SecurityGateway API 未应答 | REST API 已停止应答,而服务仍做(`dumbmonit_securitygateway_api_up`)。仅有 API 密钥的监控项有系列。 | < 1 | 15 分钟 | 通知 (`warning`) | 12 小时 |
 | SecurityGateway 交付队列增长 | 交付队列在两小时内增长超过一百条消息(`delta(dumbmonit_securitygateway_counter{counter=~".*(delivery_queue\|queued_for_delivery).*"}[2h])`):网关后的邮件服务器可能拒绝邮件。计数器名称来自 API 如它们是;如果你的版本命名队列不同,调整匹配器。 | > 100 | 15 分钟 | 通知 (`warning`) | 6 小时 |
 
 ### OPNsense {#opnsense}
@@ -251,7 +251,7 @@
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| NAS 池降级 | ZFS 不再称池为健康(`dumbmonit_truenas_pool_healthy`)。降级池仍然服务其数据,这正是为什么没有人注意直到下一个磁盘失败。设备页面命名磁盘。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
+| NAS 池降级 | ZFS 不再称池为健康(`dumbmonit_truenas_pool_healthy`)。降级池仍然服务其数据,这正是为什么没有人注意直到下一个磁盘失败。监控项页面命名磁盘。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 | NAS 磁盘错误 | 池的磁盘已报告读、写或校验和错误因最后的`zpool clear`(`dumbmonit_truenas_pool_device_errors`,每个类型一个系列)。 | > 0 | 15 分钟 | 通知 (`warning`) | 24 小时 |
 | NAS 池即将满 | 池超过 85% 满(`dumbmonit_truenas_pool_used_percent`)。ZFS 在满前减慢。在 80% 下清除。 | > 85 % | 30 分钟 | 通知 (`warning`),7 天后升级 | 24 小时 |
 | NAS 清理发现错误 | 池的最后清理发现了损坏数据(`dumbmonit_truenas_pool_last_scrub_errors`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 24 小时 |
@@ -262,7 +262,7 @@
 | NAS 复制失败 | 启用的复制任务处于错误(`dumbmonit_truenas_replication_error`):另一侧的副本在变旧。 | > 0 | 10 分钟 | 通知 (`warning`) | 12 小时 |
 | NAS 快照任务失败 | 启用的定期快照任务处于错误(`dumbmonit_truenas_snapshot_task_error`)。 | > 0 | 10 分钟 | 通知 (`warning`) | 12 小时 |
 | NAS 快照陈旧 | 启用的定期快照任务已 8 天未运行(`dumbmonit_truenas_snapshot_task_last_run_age_seconds`):停止运行的任务不失败,它变安静。 | > 8 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
-| TrueNAS 告警提升 | TrueNAS 本身已提升错误或以上级别的告警(`dumbmonit_truenas_alerts`)。其自己的句子在设备页面。 | > 0 | 10 分钟 | 通知 (`warning`) | 12 小时 |
+| TrueNAS 告警提升 | TrueNAS 本身已提升错误或以上级别的告警(`dumbmonit_truenas_alerts`)。其自己的句子在监控项页面。 | > 0 | 10 分钟 | 通知 (`warning`) | 12 小时 |
 | NAS 服务停止 | 设置为与 NAS 一起启动的服务已停止(`dumbmonit_truenas_service_running`)。故意关闭的服务没有系列。 | < 1 | 10 分钟 | 通知 (`warning`) | 6 小时 |
 
 ### Synology DSM {#synology-dsm}
@@ -279,15 +279,15 @@
 | Synology 卷即将满 | 卷已 90% 或更多(`dumbmonit_synology_volume_used_percent`);在 88% 下清除。 | ≥ 90 % | 15 分钟 | 通知 (`warning`),24 小时后升级 | 6 小时 |
 | Synology 温度高 | 磁盘在 55°C 以上,或 DSM 提升其自己的温度警告(`dumbmonit_synology_disk_temperature_celsius`、`dumbmonit_synology_temperature_warning`);在 52°C 下清除。 | > 55°C | 15 分钟 | 通知 (`warning`) | 6 小时 |
 | Synology 内存高 | NAS 的内存使用超过 95%(`dumbmonit_synology_memory_usage_percent`);在 90% 下清除。 | > 95 % | 15 分钟 | 通知 (`warning`) | 6 小时 |
-| Active Backup 任务失败 | Active Backup for Business 任务最后一次运行失败,或仅备份其设备的一部分(`dumbmonit_abb_task_last_status == bool 0`)。通知命名任务。 | > 0 | 10 分钟 | 警告 (`critical`) | 24 小时 |
+| Active Backup 任务失败 | Active Backup for Business 任务最后一次运行失败,或仅备份其监控项的一部分(`dumbmonit_abb_task_last_status == bool 0`)。通知命名任务。 | > 0 | 10 分钟 | 警告 (`critical`) | 24 小时 |
 | Active Backup 太旧 | 此任务没有成功的 Active Backup for Business 运行超过 2 天(`dumbmonit_abb_task_last_success_seconds`)。系列对从未成功的任务不存在;"Active Backup 任务失败"然后讲话。 | > 2 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
 | Active Backup 任务禁用 | 任务没有计划,或其连续备份已暂停(`dumbmonit_abb_task_enabled == bool 0`):它不会备份任何东西直到有人运行它。 | > 0 | 1 小时 | 信息 (`info`) | 7 天 |
-| Active Backup 设备逾期 | 设备已超过其自己节奏允许的更长时间没有成功的 Active Backup for Business 运行,不计闲日(`dumbmonit_abb_device_overdue`,见[Synology](../devices/synology.md#how-overdue-is-judged))。 | > 0 | 30 分钟 | 通知 (`warning`) | 24 小时 |
-| Active Backup 设备失败 | 设备的最后两次或更多尝试失败(`dumbmonit_abb_device_consecutive_failures`);取消的运行既不计数。 | ≥ 2 | 10 分钟 | 警告 (`critical`) | 24 小时 |
+| Active Backup 监控项逾期 | 监控项已超过其自己节奏允许的更长时间没有成功的 Active Backup for Business 运行,不计闲日(`dumbmonit_abb_device_overdue`,见[Synology](../devices/synology.md#how-overdue-is-judged))。 | > 0 | 30 分钟 | 通知 (`warning`) | 24 小时 |
+| Active Backup 监控项失败 | 监控项的最后两次或更多尝试失败(`dumbmonit_abb_device_consecutive_failures`);取消的运行既不计数。 | ≥ 2 | 10 分钟 | 警告 (`critical`) | 24 小时 |
 
 ### 日志和度量服务器 {#log-and-metrics-servers}
 
-VictoriaMetrics、VictoriaLogs、Loki 和 Graylog([设备](../devices/victoriametrics.md))。计数器通过`increase_prometheus`去,所以添加带拒绝数据历史的服务器不在其首次测量时触发。
+VictoriaMetrics、VictoriaLogs、Loki 和 Graylog([监控项](../devices/victoriametrics.md))。计数器通过`increase_prometheus`去,所以添加带拒绝数据历史的服务器不在其首次测量时触发。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -310,7 +310,7 @@ VictoriaMetrics、VictoriaLogs、Loki 和 Graylog([设备](../devices/victoriame
 
 ### 自托管应用 {#self-hosted-applications}
 
-Nextcloud、Immich、Paperless-ngx、Jellyfin 和 Plex([设备](../devices/nextcloud.md))。他们很少完全跌出:页面打开而同步、缩略图、导入或库扫描已停止。这些规则观察那些状态;完全不应答的应用是设备不可达。
+Nextcloud、Immich、Paperless-ngx、Jellyfin 和 Plex([监控项](../devices/nextcloud.md))。他们很少完全跌出:页面打开而同步、缩略图、导入或库扫描已停止。这些规则观察那些状态;完全不应答的应用是监控项不可达。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -336,8 +336,8 @@ Nextcloud、Immich、Paperless-ngx、Jellyfin 和 Plex([设备](../devices/nextc
 
 ### 自托管锻造 {#self-hosted-forges}
 
-GitLab(自管理)和 Forgejo/Gitea([设备](../devices/gitlab.md))。一个
-完全不应答任何东西的实例是设备不可达;这些规则观察
+GitLab(自管理)和 Forgejo/Gitea([监控项](../devices/gitlab.md))。一个
+完全不应答任何东西的实例是监控项不可达;这些规则观察
 保持提供页面同时静默落后的部分 — Sidekiq、
 CI/CD 运行者、一个停止运行的计划任务。
 
@@ -352,7 +352,7 @@ CI/CD 运行者、一个停止运行的计划任务。
 
 ### 客户端设备 {#client-devices}
 
-一个规则,由每个跟踪设备连接和备份的集成共享 — Immich 的电话、平板电脑和桌面([设备](../devices/immich.md))、Proxmox 备份服务器的备份机器、每个备份组一个([设备](../devices/pbs.md))以及 Veeam 的受保护计算机和 VM,每个带有还原点([设备](../devices/veeam.md))、现在;更多要来。每个集成计算其自己的目标过期窗口的间隙(`device_stale_days`,默认 3 天)并作为`dumbmonit_client_device_stale_seconds`发布它,标签`device`、`type`、`os`、`user`、`kind`和`signal`(`connection`或`backup`);这一个规则然后对任何它们触发,在通知中命名设备。Synology Active Backup for Business 通过节奏感知机制(`synology_abb_device_*`)而不是这个一般系列分别跟踪其自己的设备 — 见[Synology](../devices/synology.md)。
+一个规则,由每个跟踪监控项连接和备份的集成共享 — Immich 的电话、平板电脑和桌面([监控项](../devices/immich.md))、Proxmox 备份服务器的备份机器、每个备份组一个([监控项](../devices/pbs.md))以及 Veeam 的受保护计算机和 VM,每个带有还原点([监控项](../devices/veeam.md))、现在;更多要来。每个集成计算其自己的目标过期窗口的间隙(`device_stale_days`,默认 3 天)并作为`dumbmonit_client_device_stale_seconds`发布它,标签`device`、`type`、`os`、`user`、`kind`和`signal`(`connection`或`backup`);这一个规则然后对任何它们触发,在通知中命名监控项。Synology Active Backup for Business 通过节奏感知机制(`synology_abb_device_*`)而不是这个一般系列分别跟踪其自己的监控项 — 见[Synology](../devices/synology.md)。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -371,7 +371,7 @@ CI/CD 运行者、一个停止运行的计划任务。
 
 ### AdGuard Home {#adguard-home}
 
-DNS 过滤器([设备](../devices/adguard.md))。查询和阻止数字是 AdGuard Home 自己统计窗口上的总和,不是计数器:没有规则建立在它们上。
+DNS 过滤器([监控项](../devices/adguard.md))。查询和阻止数字是 AdGuard Home 自己统计窗口上的总和,不是计数器:没有规则建立在它们上。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -398,7 +398,7 @@ UPS 从[NUT 服务器](../devices/nut.md)读取。每个系列携带`ups`
 
 ### MikroTik RouterOS {#mikrotik-routeros}
 
-系列携带`interface`或`sensor`标签,所以通知命名端口或传感器([设备](../devices/mikrotik.md))。计数器通过`increase_prometheus`:一个添加带多年错误的路由器不在其首次测量时触发。
+系列携带`interface`或`sensor`标签,所以通知命名端口或传感器([监控项](../devices/mikrotik.md))。计数器通过`increase_prometheus`:一个添加带多年错误的路由器不在其首次测量时触发。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -414,35 +414,35 @@ UPS 从[NUT 服务器](../devices/nut.md)读取。每个系列携带`ups`
 
 ### UniFi 网络 {#unifi-network}
 
-[设备页面](../devices/unifi.md)。设备系列携带设备的名称、型号和类型,所以通知说"客厅 AP"。等待采纳的设备没有`device_up`系列并永不算作离线。
+[监控项页面](../devices/unifi.md)。监控项系列携带监控项的名称、型号和类型,所以通知说"客厅 AP"。等待采纳的监控项没有`device_up`系列并永不算作离线。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| UniFi 设备离线 | UniFi 设备由控制器采纳离线、隔离或未能采纳(`dumbmonit_unifi_device_up`)。 | < 1 | 5 分钟 | 通知 (`warning`),1 小时后升级 | 6 小时 |
+| UniFi 监控项离线 | UniFi 监控项由控制器采纳离线、隔离或未能采纳(`dumbmonit_unifi_device_up`)。 | < 1 | 5 分钟 | 通知 (`warning`),1 小时后升级 | 6 小时 |
 | UniFi 互联网关闭 | UniFi 网关报告没有互联网连接(`dumbmonit_unifi_internet_up`)。没有 UniFi 网关系列不存在规则保持沉默。 | < 1 | 3 分钟 | 警告 (`critical`) | 1 小时 |
 | UniFi WAN 链接关闭 | WAN UniFi 网关的链接关闭(`dumbmonit_unifi_wan_link_up`):带两个链接,冗余丧失而没什么看起来破损。禁用的端口没有系列。 | < 1 | 5 分钟 | 通知 (`warning`) | 6 小时 |
 | UniFi 网关 CPU 高 | UniFi 网关的处理器已在 90% 以上 15 分钟(`dumbmonit_unifi_device_cpu_percent{type="gateway"}`);在 80% 下清除。 | > 90 % | 15 分钟 | 通知 (`warning`) | 6 小时 |
-| UniFi 设备等待采纳 | 设备出现在网络并等待在 UniFi 中采纳(`dumbmonit_unifi_devices{state="pending"}`)。 | > 0 | 30 分钟 | 信息 (`info`) | 24 小时 |
-| UniFi 固件更新可用 | 固件更新对 UniFi 设备可用(`dumbmonit_unifi_devices_upgradable`)。 | > 0 | 1 小时 | 信息 (`info`) | 7 天 |
+| UniFi 监控项等待采纳 | 监控项出现在网络并等待在 UniFi 中采纳(`dumbmonit_unifi_devices{state="pending"}`)。 | > 0 | 30 分钟 | 信息 (`info`) | 24 小时 |
+| UniFi 固件更新可用 | 固件更新对 UniFi 监控项可用(`dumbmonit_unifi_devices_upgradable`)。 | > 0 | 1 小时 | 信息 (`info`) | 7 天 |
 | UniFi 告警 | UniFi 在最后 24 小时内记录了关键事件或提升告警(`dumbmonit_unifi_alarms`)。仅用视图唯一账户读取。 | > 0 | 5 分钟 | 通知 (`warning`) | 24 小时 |
 
 ### Home Assistant {#home-assistant}
 
 
-[设备页面](../devices/homeassistant.md)。
+[监控项页面](../devices/homeassistant.md)。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | Home Assistant 处于恢复模式 | Home Assistant 以恢复模式启动:无法加载其配置,自动化不运行(`dumbmonit_homeassistant_recovery_mode`)。 | > 0 | 2 分钟 | 警告 (`critical`) | 1 小时 |
 | Home Assistant 未运行 | Home Assistant 有响应,但十分钟内未完成启动(`dumbmonit_homeassistant_running`)。 | < 1 | 10 分钟 | 通知 (`warning`) | 6 小时 |
 | Home Assistant 实体变为不可用 | 不可用的实体比一小时前至少多五个:某个集成、网关或无线电停止了(`sum by (target) (dumbmonit_homeassistant_entities_unavailable) - sum by (target) (dumbmonit_homeassistant_entities_unavailable offset 1h)`)。计算的是增量而非总数,因为真实安装从不为零。 | ≥ 5 | 10 分钟 | 通知 (`warning`) | 6 小时 |
-| Home Assistant 电池电量低 | Home Assistant 报告的某个电池电量低(`dumbmonit_homeassistant_battery_low`,每个低于设备阈值(默认 20%)的电池一个系列;其值为电量)。 | ≥ 0 % | 30 分钟 | 信息 (`info`) | 3 天 |
-| Home Assistant 有可用更新 | Home Assistant 有待处理的更新:核心、操作系统、附加组件或设备固件(`dumbmonit_homeassistant_updates_available`)。 | > 0 | 1 小时 | 信息 (`info`) | 7 天 |
+| Home Assistant 电池电量低 | Home Assistant 报告的某个电池电量低(`dumbmonit_homeassistant_battery_low`,每个低于监控项阈值(默认 20%)的电池一个系列;其值为电量)。 | ≥ 0 % | 30 分钟 | 信息 (`info`) | 3 天 |
+| Home Assistant 有可用更新 | Home Assistant 有待处理的更新:核心、操作系统、附加组件或监控项固件(`dumbmonit_homeassistant_updates_available`)。 | > 0 | 1 小时 | 信息 (`info`) | 7 天 |
 | Home Assistant 有待处理的修复 | Home Assistant 有一个错误或严重级别的未处理修复(`dumbmonit_homeassistant_repair{severity=~"error\|critical"}`)。 | > 0 | 15 分钟 | 通知 (`warning`) | 24 小时 |
 
 ### VMware vSphere {#vmware-vsphere}
 
-[设备页面](../devices/vsphere.md)。主机系列携带 `esxi`,虚拟机系列携带 `vm`,数据存储系列携带 `datastore`,所以通知会指明对象。
+[监控项页面](../devices/vsphere.md)。主机系列携带 `esxi`,虚拟机系列携带 `vm`,数据存储系列携带 `datastore`,所以通知会指明对象。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -456,7 +456,7 @@ UPS 从[NUT 服务器](../devices/nut.md)读取。每个系列携带`ups`
 
 ### 数据库、消息代理和安全引擎 {#databases-message-broker-and-security-engine}
 
-Redis / Valkey、MongoDB、RabbitMQ 和 CrowdSec([Redis](../devices/redis.md)、[MongoDB](../devices/mongodb.md)、[RabbitMQ](../devices/rabbitmq.md)、[CrowdSec](../devices/crowdsec.md))。计数器经过 `increase_prometheus` 或 `changes_prometheus`,所以设备的首次测量不会触发任何规则。
+Redis / Valkey、MongoDB、RabbitMQ 和 CrowdSec([Redis](../devices/redis.md)、[MongoDB](../devices/mongodb.md)、[RabbitMQ](../devices/rabbitmq.md)、[CrowdSec](../devices/crowdsec.md))。计数器经过 `increase_prometheus` 或 `changes_prometheus`,所以监控项的首次测量不会触发任何规则。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -504,7 +504,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 
 ### 网站变化 {#website-changes}
 
-参见[网站变化](../devices/webchange.md)。设备页面显示每次变化前后的对比。
+参见[网站变化](../devices/webchange.md)。监控项页面显示每次变化前后的对比。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -526,7 +526,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 
 ### Active Directory {#active-directory}
 
-参见 [Active Directory](../devices/activedirectory.md)。DumbMonit 查询的域控制器由*设备不可达*覆盖;域中的其他域控制器由*域控制器不可达*覆盖(标签 `dc`)。
+参见 [Active Directory](../devices/activedirectory.md)。DumbMonit 查询的域控制器由*监控项不可达*覆盖;域中的其他域控制器由*域控制器不可达*覆盖(标签 `dc`)。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -577,14 +577,14 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 
 ### Tailscale {#tailscale}
 
-参见 [Tailscale](../devices/tailscale.md)。设备标有 `device`,即其 MagicDNS 名称的第一段。
+参见 [Tailscale](../devices/tailscale.md)。监控项标有 `device`,即其 MagicDNS 名称的第一段。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
-| Tailscale 设备离线 | 必须保持在线的 Tailscale 设备(默认为带标签的设备)已断开超过 15 分钟(`dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched > 0`)。 | > 15 分钟 | 5 分钟 | 通知 (`warning`) | 6 小时 |
-| Tailscale 节点密钥即将到期 | Tailscale 设备的节点密钥将在 14 天内到期:在有人重新登录之前它将离开 tailnet(`dumbmonit_tailscale_device_key_expiry_seconds`)。 | < 14 d | 1 小时 | 通知 (`warning`) | 1 天 |
-| Tailscale 设备等待批准 | 有设备加入 tailnet 并等待批准:如果在预期之内就批准,否则移除(`dumbmonit_tailscale_device_authorized`)。 | < 1 | 5 分钟 | 通知 (`warning`) | 1 天 |
-| Tailscale 客户端更新 | 必须保持在线的 Tailscale 设备运行的客户端有可用更新(`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`)。 | > 0 | 6 小时 | 信息 (`info`) | 7 天 |
+| Tailscale 监控项离线 | 必须保持在线的 Tailscale 监控项(默认为带标签的监控项)已断开超过 15 分钟(`dumbmonit_tailscale_device_offline_seconds and on (target, device) dumbmonit_tailscale_device_watched > 0`)。 | > 15 分钟 | 5 分钟 | 通知 (`warning`) | 6 小时 |
+| Tailscale 节点密钥即将到期 | Tailscale 监控项的节点密钥将在 14 天内到期:在有人重新登录之前它将离开 tailnet(`dumbmonit_tailscale_device_key_expiry_seconds`)。 | < 14 d | 1 小时 | 通知 (`warning`) | 1 天 |
+| Tailscale 监控项等待批准 | 有监控项加入 tailnet 并等待批准:如果在预期之内就批准,否则移除(`dumbmonit_tailscale_device_authorized`)。 | < 1 | 5 分钟 | 通知 (`warning`) | 1 天 |
+| Tailscale 客户端更新 | 必须保持在线的 Tailscale 监控项运行的客户端有可用更新(`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`)。 | > 0 | 6 小时 | 信息 (`info`) | 7 天 |
 
 ### FortiGate {#fortigate}
 
@@ -593,7 +593,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | FortiGate IPsec 隧道宕机 | FortiGate 站点到站点 IPsec 隧道的第 2 阶段全部未建立:其后的站点被切断(`dumbmonit_fortigate_ipsec_tunnel_up`)。 | < 1 | 5 分钟 | 警告 (`critical`) | 6 小时 |
-| FortiGate 接口无链路 | 已启用且有地址的 FortiGate 接口没有链路:网线、收发器或对端设备(`dumbmonit_fortigate_interface_down`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 6 小时 |
+| FortiGate 接口无链路 | 已启用且有地址的 FortiGate 接口没有链路:网线、收发器或对端监控项(`dumbmonit_fortigate_interface_down`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 6 小时 |
 | FortiGate HA 不同步 | FortiGate HA 集群的成员配置校验和不再相同:故障切换后将运行另一份配置(`dumbmonit_fortigate_ha_in_sync`)。 | < 1 | 15 分钟 | 通知 (`warning`) | 6 小时 |
 | FortiGate HA 成员丢失 | FortiGate HA 集群的成员比最近 24 小时少:不再有备用节点(`max_over_time(dumbmonit_fortigate_ha_members[1d]) - dumbmonit_fortigate_ha_members`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 6 小时 |
 | FortiGate 内存接近保守模式 | FortiGate 内存已连续十分钟超过 85 %:达到 88 %(默认)时进入保守模式,停止检查新会话(`dumbmonit_fortigate_memory_used_percent`)。 | > 85 % | 10 分钟 | 通知 (`warning`) | 6 小时 |
@@ -651,7 +651,7 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 
 ### 安全评分 {#security-score}
 
-服务器每 15 分钟为每个其类型带有安全检查的设备计算一次,并存储为 `dumbmonit_security_score`(0–100)。参见[安全评分](../using/security-score.md)。
+服务器每 15 分钟为每个其类型带有安全检查的监控项计算一次,并存储为 `dumbmonit_security_score`(0–100),仅当在设置中启用了安全评分时(默认关闭)。参见[安全评分](../using/security-score.md)。
 
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
@@ -663,8 +663,16 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 | 规则 | 什么 | 默认阈值 | 保持 | 严重级别 | 提醒 |
 |---|---|---|---|---|---|
 | DumbMonit 备份未运行 | DumbMonit 数据库的计划本地备份已超过两天未运行(`time() - dumbmonit_instance_backup_last_success_seconds`)。 | > 2 天 | 1 小时 | 通知 (`warning`) | 24 小时 |
+| DumbMonit 数据卷即将写满 | 存放 `/data` 的卷可用空间不足 10%(`100 * dumbmonit_instance_data_free_bytes / dumbmonit_instance_data_size_bytes`)。 | < 10 % | 15 分钟 | 通知 (`warning`) | 24 小时 |
+| DumbMonit 指标数据库循环重启 | 内置 VictoriaMetrics 在 30 分钟内重启了三次或更多(`increase_prometheus(dumbmonit_instance_vm_restarts_total[30m])`)。 | ≥ 3 | 1 分钟 | 警告 (`critical`) | 6 小时 |
+| DumbMonit 调度器停滞 | 超过两分钟没有完成调度轮次:监控项不再被轮询(`dumbmonit_instance_scheduler_lag_seconds`)。 | > 120 秒 | 5 分钟 | 警告 (`critical`) | 6 小时 |
+| DumbMonit 轮询滞后 | 每轮调度后仍有监控项逾期未轮询(`min_over_time(dumbmonit_instance_scheduler_backlog[15m])`)。 | > 0 | 15 分钟 | 通知 (`warning`) | 24 小时 |
+| DumbMonit 指标写入失败 | 最近 15 分钟内有批次被 VictoriaMetrics 拒绝或有测量值被丢弃(`dumbmonit_instance_sample_writes_failed_total`, `dumbmonit_instance_samples_dropped_total`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 6 小时 |
+| DumbMonit 数据库增长过快 | `dumbmonit.db` 一天内增长超过一倍且大于 100 MB(`dumbmonit_instance_database_bytes`)。 | > 2× | 1 小时 | 通知 (`warning`) | 24 小时 |
 
-每条内置规则都适用于所有设备和每个已启用的通道。
+这些规则和外发心跳的说明见 [Watching DumbMonit itself](../install/self-monitoring.md)。
+
+每条内置规则都适用于所有监控项和每个已启用的通道。
 
 ## 在界面中编辑规则 {#editing-a-rule-in-the-ui}
 
@@ -674,11 +682,11 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 - **编辑**,展开内联编辑器,可修改名称、描述、运算符、阈值、保持(`for`)、严重级别、提醒(`repeat every`)和升级(`escalate after`)。内置规则的查询可见但不可编辑;您自己规则的查询可以编辑。基线规则的检测参数为只读;
 - **删除**,仅适用于您自己的规则。
 
-## 按设备覆盖 {#per-device-overrides}
+## 按监控项覆盖 {#per-device-overrides}
 
-可以为单个设备调整规则而无需修改规则本身:不同的阈值、不同的清除阈值,或仅对该设备关闭。每条规则的编辑器都有**按设备覆盖**面板,可直接添加或移除。
+可以为单个监控项调整规则而无需修改规则本身:不同的阈值、不同的清除阈值,或仅对该监控项关闭。每条规则的编辑器都有**按监控项覆盖**面板,可直接添加或移除。
 
-告警上的一键**忽略**操作(在*需要您处理*列表或告警所在的设备页面中)是同一机制,以 `enabled: false` 写入:设备立即、可逆地不再携带该规则。设备页面列出它所忽略的内容,并带有**停止忽略**;规则本身在 告警 → 规则 中显示*已在 N 台设备上忽略*,同一个按设备覆盖面板可将其移除。API 参见[按设备覆盖](../reference/api.md#per-device-overrides)。
+告警上的一键**忽略**操作(在*当前*标签或告警所在的监控项页面中)是同一机制,以 `enabled: false` 写入:监控项立即、可逆地不再携带该规则。监控项页面列出它所忽略的内容,并带有**停止忽略**;规则本身在 告警 → 规则 中显示*已在 N 个监控项上忽略*,同一个按监控项覆盖面板可将其移除。API 参见[按监控项覆盖](../reference/api.md#per-device-overrides)。
 
 ## 创建阈值规则 {#creating-a-threshold-rule}
 
@@ -687,17 +695,17 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 | 字段 | 含义 |
 |---|---|
 | 名称 | 显示在告警和通知中。 |
-| 查询 | 按设备求值的 MetricsQL 表达式。示例:`dumbmonit_cpu_usage_percent`。 |
+| 查询 | 按监控项求值的 MetricsQL 表达式。示例:`dumbmonit_cpu_usage_percent`。 |
 | 运算符 | `>`、`>=`、`<` 或 `<=`。 |
 | 阈值 | 查询结果所比较的数字。 |
 | 严重级别 | 信息、通知或警告。 |
 | 保持时间 | 条件必须持续多少秒才触发。非零的保持时间可吸收孤立的坏样本。 |
 
-查询返回的每个系列都成为一个潜在告警,附加到其 `target` 标签所指的设备。若希望每台设备一个告警而不是每个核心或每个接口一个,请使用 `avg by (target, host) (…)` 聚合。只要存在 `target`,告警的标识就忽略 `host` 和 `tag_*` 标签,所以重命名设备会保留其告警;`target` 与现有已启用设备不匹配的系列会被忽略。
+查询返回的每个系列都成为一个潜在告警,附加到其 `target` 标签所指的监控项。若希望每个监控项一个告警而不是每个核心或每个接口一个,请使用 `avg by (target, host) (…)` 聚合。只要存在 `target`,告警的标识就忽略 `host` 和 `tag_*` 标签,所以重命名监控项会保留其告警;`target` 与现有已启用监控项不匹配的系列会被忽略。
 
 ## 查询语言 {#the-query-language}
 
-查询使用 [MetricsQL](https://docs.victoriametrics.com/metricsql/),即 VictoriaMetrics 的 PromQL 超集。指标是[指标参考](../reference/metrics.md)中描述的 `dumbmonit_*` 系列,每个系列都带有 `target` 标签(设备 id)和 `host` 标签(其名称)。
+查询使用 [MetricsQL](https://docs.victoriametrics.com/metricsql/),即 VictoriaMetrics 的 PromQL 超集。指标是[指标参考](../reference/metrics.md)中描述的 `dumbmonit_*` 系列,每个系列都带有 `target` 标签(监控项 id)和 `host` 标签(其名称)。
 
 内置规则使用的一些模式:
 

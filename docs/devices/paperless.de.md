@@ -42,9 +42,9 @@ werden, das jeden Task umfasst.
 Die geltenden [eingebauten Regeln](../alerting/rules.md#self-hosted-applications):
 Paperless task queue down, Paperless index or sanity check error,
 Paperless migrations pending, Paperless task failed, Paperless storage
-almost full, Paperless update available, plus Device unreachable.
+almost full, Paperless update available, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite ruft Paperless nie auf. Es sagt zuerst, was nicht

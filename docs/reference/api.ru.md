@@ -5,8 +5,8 @@
 обычный JSON поверх HTTP с аутентификацией по cookie сессии (веб-интерфейс) или
 по API-токену (всё остальное).
 
-!!! warning "Alpha"
-    DumbMonit находится в стадии alpha, как и его API: маршруты и поля ещё могут
+!!! warning "До версии 1.0"
+    DumbMonit находится в стадии до 1.0, как и его API: маршруты и поля ещё могут
     меняться. Версия API (см. ниже) меняется всякий раз, когда маршрут или поле
     удаляется либо переименовывается, так что клиент может это заметить.
 
@@ -20,7 +20,7 @@ GET /api/openapi.json
 ```
 
 Он публичный — не содержит ни секретов, ни адресов, ни сведений о ваших
-устройствах — и является исчерпывающим справочником: каждый маршрут, который
+мониторах — и является исчерпывающим справочником: каждый маршрут, который
 может вызвать клиент, его параметры, формы запроса и ответа, ответы с ошибками и
 необходимая область (расширение `x-token-scope` у каждой операции: `public`,
 `read`, `write` или `none` для маршрутов, которые токен не может вызывать никогда).
@@ -104,8 +104,8 @@ curl -b cookies.txt -X POST http://monit.lan:8080/api/targets \
 
 | | токен `read` | токен `write` |
 |---|---|---|
-| Любой `GET`, доступный учётной записи *viewer* (устройства, оповещения, метрики, правила, каналы без их секретов, страницы статуса…) | да | да |
-| `POST`, `PUT`, `DELETE`, доступные *администратору* (устройства, правила, silences, каналы, страницы статуса, packs, зонды, обнаружение…) | `403` | да |
+| Любой `GET`, доступный учётной записи *viewer* (мониторы, оповещения, метрики, правила, каналы без их секретов, страницы статуса…) | да | да |
+| `POST`, `PUT`, `DELETE`, доступные *администратору* (мониторы, правила, silences, каналы, страницы статуса, packs, зонды, обнаружение…) | `403` | да |
 | `/metrics`, `/federate`, `/prometheus/*` ([сбор метрик](metrics.md#scraping-dumbmonit)) | да | да |
 | Инструменты MCP на чтение / запись ([ассистенты](../using/assistant.md#what-the-assistant-can-call)) | только чтение | оба |
 | Учётные записи, сессии, двухфакторная аутентификация, SSO, журнал аудита (`/api/auth/*`, `/api/users/*`) | `403` | `403` |
@@ -262,7 +262,7 @@ JSON-RPC, со своими кодами ошибок.
 же чтения плюс операции записи по обработке оповещений, помеченные на этой
 странице как *operator* (и `x-roles: [admin, operator]` в документе OpenAPI):
 подтверждение (acknowledge), откладывание (snooze, окна обслуживания),
-игнорирование правила для устройства, очистка истории закрытых оповещений.
+игнорирование правила для монитора, очистка истории закрытых оповещений.
 Любая другая запись доступна только администратору и возвращает оператору `403`.
 
 | Метод | Маршрут | Auth | Назначение |
@@ -371,11 +371,11 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 только администратор, вошедший в веб-интерфейс. См.
 [Резервное копирование и восстановление](../install/backup.md).
 
-## Типы устройств
+## Типы мониторов
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/collectors` | Все виды устройств, которые этот сервер может мониторить: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) и `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Виды, добавленные [пакетом интеграции](../packs/index.md), перечисляются так же, как `pack.<id>`. |
+| `GET` | `/api/collectors` | Все виды мониторов, которые этот сервер может мониторить: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) и `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Виды, добавленные [пакетом интеграции](../packs/index.md), перечисляются так же, как `pack.<id>`. |
 
 ## Пакеты интеграций
 
@@ -384,25 +384,25 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/packs` | Установленные пакеты: `id`, `version`, `label`, `summary`, `kind` (`null` для пакета только с профилями SNMP), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uid), `snmp_profiles`, `targets` (использующие его устройства), `warnings` и `error`, когда сохранённый пакет больше не проходит проверку. |
+| `GET` | `/api/packs` | Установленные пакеты: `id`, `version`, `label`, `summary`, `kind` (`null` для пакета только с профилями SNMP), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uid), `snmp_profiles`, `targets` (использующие его мониторы), `warnings` и `error`, когда сохранённый пакет больше не проходит проверку. |
 | `GET` | `/api/packs/{id}` | Один пакет. |
 | `POST` | `/api/packs` | Установка или обновление. Тело: YAML (`application/yaml`, `text/plain`…) или `{"yaml": "…"}` в JSON. `201` при создании, `200` при обновлении или отсутствии изменений, с `outcome` (`created`, `updated`, `unchanged`), `pack`, `rules_added` и `restart_required` (профили SNMP). `400` перечисляет все ошибки проверки. |
-| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Зарегистрировать или отозвать тип устройства пакета; устройства, история и правила остаются. |
-| `DELETE` | `/api/packs/{id}` | Удаление вместе с его правилами. `409`, пока его используют устройства. |
+| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Зарегистрировать или отозвать тип монитора пакета; мониторы, история и правила остаются. |
+| `DELETE` | `/api/packs/{id}` | Удаление вместе с его правилами. `409`, пока его используют мониторы. |
 
-## Цели (устройства)
+## Цели (мониторы)
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/targets` | Список всех устройств. |
-| `POST` | `/api/targets` | Создать одно. `201` с устройством. Для SNMP определение профиля запускается в фоне. |
-| `GET` | `/api/targets/{id}` | Одно устройство. |
-| `PUT` | `/api/targets/{id}` | Заменить его. Если опустить `credential`, сохраняется прежний; если опустить `profile_id`, сохраняется определённый профиль (`""` очищает). Установка `enabled: false` очищает оповещения устройства без уведомлений. |
-| `DELETE` | `/api/targets/{id}` | `204`. Очищает оповещения устройства без уведомлений и удаляет его временные ряды из VictoriaMetrics (по возможности). |
+| `GET` | `/api/targets` | Список всех мониторов. |
+| `POST` | `/api/targets` | Создать одно. `201` с монитором. Для SNMP определение профиля запускается в фоне. |
+| `GET` | `/api/targets/{id}` | Один монитор. |
+| `PUT` | `/api/targets/{id}` | Заменить его. Если опустить `credential`, сохраняется прежний; если опустить `profile_id`, сохраняется определённый профиль (`""` очищает). Установка `enabled: false` очищает оповещения монитора без уведомлений. |
+| `DELETE` | `/api/targets/{id}` | `204`. Очищает оповещения монитора без уведомлений и удаляет его временные ряды из VictoriaMetrics (по возможности). |
 | `POST` | `/api/targets/{id}/probe` | Опросить сейчас: `{"sample_count": 42, "series": ["if_octets_in{host=\"Core switch\",ifname=\"eth0\"}", …]}` — ключи рядов в том виде, в каком их произвёл коллектор, без префикса `dumbmonit_`, который записывающий компонент добавляет на пути в VictoriaMetrics. |
 | `POST` | `/api/targets/{id}/discover` | Повторить определение профиля: `{"profile_id": "host-resources"}` или `null`. |
 
-Устройство в возвращаемом виде:
+Монитор в возвращаемом виде:
 
 ```json
 {
@@ -425,7 +425,7 @@ script-src 'self' 'nonce-<per response>'; frame-ancestors 'none'
 
 Сам секрет не возвращается никогда: `credential_kind` — это метка. Временные
 метки сервера указаны в UTC без суффикса. `error_kind` классифицирует
-`last_error`: `down` (устройство не ответило) или `config` (наша сторона —
+`last_error`: `down` (монитор не ответил) или `config` (наша сторона —
 учётные данные, адрес, параметр); именно это интерфейс показывает как
 *Unreachable* или *Misconfigured*; `null`, когда последний опрос прошёл успешно.
 
@@ -452,17 +452,17 @@ passphrase}` с `des`, `aes128`, `aes192` или `aes256`, необязател�
 `username_password` (`username`, `password`).
 `interval_secs` по умолчанию равен 60 и не может быть меньше 10. `name` — не
 более 200 символов, `address` — не более 253 (сверх этого `400`). `parent_id`
-должен указывать на существующее устройство (`400 Parent device N not found.`).
+должен указывать на существующий монитор (`400 Parent device N not found.`).
 Параметры типа помещаются в `tags` под своим ключом.
 
 `via_agent` называет [релейного агента](../install/remote-site.md), который
-опрашивает устройство из своей сети вместо сервера; `null` (по умолчанию)
-означает, что опрашивает сервер. Это должно быть устройство `agent` (иначе
-`400`), устройство не может ретранслировать само себя, а устройство `agent`
+опрашивает монитор из своей сети вместо сервера; `null` (по умолчанию)
+означает, что опрашивает сервер. Это должен быть монитор `agent` (иначе
+`400`), монитор не может ретранслировать сам себя, а монитор `agent`
 нельзя ретранслировать. При `PUT` *опущенный* `via_agent` сохраняет прежнее
 значение, как `profile_id` и `credential`; отправьте `null`, чтобы вернуться к
 прямому опросу. `POST
-/api/targets/{id}/probe` и `/discover` на устройстве за релеем идут через релей
+/api/targets/{id}/probe` и `/discover` на мониторе за релеем идут через релей
 и ждут его ответа (`409`, когда опрос уже выполняется, `400 Timed out: relay agent …`,
 когда он не отвечает).
 
@@ -511,7 +511,7 @@ passphrase}` с `des`, `aes128`, `aes192` или `aes256`, необязател�
 
 `complete` фиксируется и никогда не возвращается в false. Сервер устанавливает
 его, когда три шага завершены (выполнены или отклонены), а также при самом
-первом чтении экземпляра, у которого уже были устройство и канал, — поэтому
+первом чтении экземпляра, у которого уже были монитор и канал, — поэтому
 обновление уже работающего экземпляра никогда не показывает ему руководство
 первого запуска.
 
@@ -544,12 +544,12 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/metrics` | Состояние самого экземпляра в текстовом формате экспозиции Prometheus: планировщик, опросы, записи, оповещения, уведомления, агенты, база данных, VictoriaMetrics. Несколько десятков рядов, никогда по одному на устройство. |
+| `GET` | `/metrics` | Состояние самого экземпляра в текстовом формате экспозиции Prometheus: планировщик, опросы, записи, оповещения, уведомления, агенты, база данных, VictoriaMetrics. Несколько десятков рядов, никогда по одному на монитор. |
 | `GET` | `/federate` | Измерения в том же формате. `match[]` выбирает ряды (повторяемый, не более 10, по умолчанию `{__name__=~"dumbmonit_.*"}`), `max_lookback` расширяет окно, в котором ищется последняя точка (по умолчанию `5m`). `400` сверх 8 MiB, с указанием, что сузить. |
 | `GET`, `POST` | `/prometheus/api/v1/{route}` | Читающая половина API Prometheus, ретранслируемая в хранилище, чтобы Grafana могла использовать `http://…/prometheus` как источник данных Prometheus. Только `query`, `query_range`, `query_exemplars`, `series`, `labels`, `label/{name}/values`, `metadata` и `status/buildinfo`; всё остальное — `404`. |
 
 `DUMBMONIT_METRICS_PUBLIC=true` отдаёт все три без токена — только за
-брандмауэром, поскольку они содержат каждое измерение каждого устройства.
+брандмауэром, поскольку они содержат каждое измерение каждого монитора.
 
 ## Другие маршруты
 
@@ -559,9 +559,9 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | Метод | Маршрут | Область | Назначение |
 |---|---|---|---|
-| `POST` | `/api/targets/reorder` | write | Изменить порядок устройств. |
-| `GET` | `/api/targets/{id}/security` | read | Оценка безопасности, класс и проверки одного устройства. |
-| `GET` | `/api/security/summary` | read | Оценка безопасности каждого оценённого устройства, худшие первыми. |
+| `POST` | `/api/targets/reorder` | write | Изменить порядок мониторов. |
+| `GET` | `/api/targets/{id}/security` | read | Оценка безопасности, класс и проверки одного монитора. |
+| `GET` | `/api/security/summary` | read | Оценка безопасности каждого оценённого монитора, худшие первыми. |
 | `GET` | `/api/targets/{id}/webchange/pages` | read | Страницы, отслеживаемые наблюдением за сайтом. |
 | `GET` | `/api/targets/{id}/webchange/changes` | read | Изменения, найденные на отслеживаемом сайте, сначала новые. |
 | `GET` | `/api/targets/{id}/webchange/changes/{change_id}` | read | Одно изменение с обеими версиями и построчным diff. |
@@ -590,7 +590,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/alerts` | Активные оповещения (pending, firing, suppressed, недавно закрытые). Оповещения удалённых или приостановленных устройств не перечисляются никогда. |
+| `GET` | `/api/alerts` | Активные оповещения (pending, firing, suppressed, недавно закрытые). Оповещения удалённых или приостановленных мониторов не перечисляются никогда. |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Переходы между фазами. `since` — RFC 3339, по умолчанию последние семь дней; `limit` должен быть положительным. `dismissed` (по умолчанию `false`) исключает записи, очищенные двумя маршрутами ниже; очистка ничего не уничтожает, а лишь скрывает из вида по умолчанию. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Убирает одну запись `resolved` из вида истории по умолчанию. `204`. `404` для неизвестного id или ещё активного перехода. Operator; попадает в аудит. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Убирает сразу все ещё не очищенные записи `resolved` («Clear all resolved»). Возвращает `{"dismissed": <count>}`. Operator; попадает в аудит. |
@@ -703,20 +703,21 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 сохраняет окно на его местном часе при переходе на летнее/зимнее время;
 неизвестное имя зоны отклоняется.
 
-### Переопределения для отдельных устройств {#per-device-overrides}
+### Переопределения для отдельных мониторов {#per-device-overrides}
 
-Правило можно настроить для одного устройства, не меняя само правило.
+Правило можно настроить для одного монитора, не меняя само правило.
 `{"enabled": false}` — это то, что записывает действие **Ignore** интерфейса
-(на оповещении, странице устройства или правиле): устройство исключается из
+(на оповещении, странице монитора или правиле): монитор исключается из
 этого одного правила насовсем, но обратимо, без отключения правила для всех
 остальных.
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/alerts/overrides?target_id=4` | Все переопределения или переопределения одного устройства: `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
+| `GET` | `/api/alerts/overrides?target_id=4` | Все переопределения или переопределения одного монитора: `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
 | `GET` | `/api/alerts/rules/{id}/overrides` | Переопределения одного правила. |
-| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — каждое поле необязательно; `null` означает «как в правиле». Создаёт или заменяет. Operator может отправлять только `{"enabled": false}` (ignore); пороговые переопределения устройства, если они есть, сохраняются. |
+| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — каждое поле необязательно; `null` означает «как в правиле». Создаёт или заменяет. Operator может отправлять только `{"enabled": false}` (ignore); пороговые переопределения монитора, если они есть, сохраняются. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Для operator только снимает ignore: пороговые переопределения остаются. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Политика уведомлений
 
@@ -724,7 +725,7 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 |---|---|---|
 | `GET` | `/api/notify/policy` | Глобальная политика: `batch_window_secs` (0 = отправлять сразу), `max_per_hour` на канал (0 = без ограничений), `flap_events`, `flap_window_secs`, `flap_hold_secs` (0 = без обнаружения флаппинга), `public_url` (ссылки в сообщениях; пусто = `DUMBMONIT_PUBLIC_URL`), `escalate_after_secs` и `escalate_channel` (0 / `null` = без эскалации). |
 | `PUT` | `/api/notify/policy` | Те же поля, каждое необязательно: опущенное поле сохраняет значение. `"escalate_channel": null` отключает эскалацию. Возвращает политику. |
-| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → какие устройства выбирает фильтр маршрутизации канала: `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
+| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → какие мониторы выбирает фильтр маршрутизации канала: `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
 
 ## Каналы уведомлений
 
@@ -791,7 +792,7 @@ Bearer-токенам для изменений нужна область `write
 | `GET`, `PUT`, `DELETE` | `/api/status-pages/{id}/logo` | session / admin | Логотип страницы. `PUT` принимает `{"data": "<base64 или data: URL>"}`: PNG, JPEG или WebP, определяемые по содержимому, не более 256 KiB, всё остальное — `400`. `204`. `GET` — предпросмотр редактора (включая черновики). |
 | `GET` | `/api/status-pages/{id}/subscribers` | session | Подписчики по email: `id`, `page_id`, `email`, `confirmed_at` (`null`, пока ожидает), `created_at`. Их токены никогда не покидают сервер. |
 | `DELETE` | `/api/status-pages/{id}/subscribers/{subscriber}` | admin | Удаляет адрес. `204`. |
-| `PUT` | `/api/status-pages/{id}/items` | admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — полный упорядоченный список устройств, показываемых на странице. |
+| `PUT` | `/api/status-pages/{id}/items` | admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — полный упорядоченный список мониторов, показываемых на странице. |
 | `GET` | `/api/incidents` | session | Все инциденты с их обновлениями: `incident` (`id`, `page_id`, `title`, `kind`, `status`, `severity`, `starts_at`, `ends_at`, `created_at`, `updated_at`) и `updates`. |
 | `POST` | `/api/incidents` | admin | `{"title", "kind", "status", "severity", "page_id", "starts_at", "ends_at", "body"}` — `body` — первое обновление. `201`. |
 | `PUT` | `/api/incidents/{id}` | admin | Те же поля; опущенное поле сохраняет значение. |
@@ -818,7 +819,7 @@ Bearer-токенам для изменений нужна область `write
 | `POST` | `/api/agent/relay/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Результат делегированного опроса: `{"duration_ms", "error", "samples", "profile_id"}` (тела до 16 МБ). `204`; `404`, когда опрос истёк или принадлежит другому агенту. |
 | `GET` | `/api/agent/commands?key=…&wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Команды, поставленные в очередь для агента (перезапуск или обновление контейнера), удерживается до `wait` секунд, когда ничего не ожидает. Не предназначен для ручного вызова. Один `key` ничего не доказывает — он публичен, — поэтому привязанная машина должна также предъявить свой секрет привязки; иначе `403`, что и мешает одной машине забирать команды другой. |
 | `POST` | `/api/agent/commands/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Ход выполнения и результат команды, сообщаемые агентом. `result` усекается до последних 4 КБ, и в таком случае в начало добавляется `[truncated by the server, beginning dropped]`. |
-| `GET` | `/api/relays` | session | Все устройства-агенты как возможные релеи: `id`, `name`, `site`, `relay` (объявлено `relay: true`), `last_seen_at`, `relayed` (устройства, доступные через него). Сначала релеи, затем по имени. |
+| `GET` | `/api/relays` | session | Все мониторы-агенты как возможные релеи: `id`, `name`, `site`, `relay` (объявлено `relay: true`), `last_seen_at`, `relayed` (мониторы, доступные через него). Сначала релеи, затем по имени. |
 
 ```json
 {
@@ -830,21 +831,21 @@ Bearer-токенам для изменений нужна область `write
 }
 ```
 
-## Контейнеры и команды (устройства-агенты)
+## Контейнеры и команды (мониторы-агенты)
 
 Действия над контейнерами машины, на которой работает агент. Каждый маршрут
-отвечает `404`, если устройство не является целью `agent`.
+отвечает `404`, если монитор не является целью `agent`.
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/targets/{id}/agent` | Машина в том виде, как её последний раз описал агент: `hostname`, `os`, `os_version`, `arch`, `agent_version`, `commands_supported`, `relay`, `site`, `relayed` (устройства, доступные через этого агента), `last_seen_at`, `binding`, `bound`, `bound_at`, `rebind_until`. `404`, пока агент ничего не сообщил. `commands_supported` равно `true` только когда агент заявил, что получает команды (`commands: true`, значение по умолчанию у текущих агентов); более старый агент или агент с `commands: false` даёт `false`. `binding` — `bound`, `pending` (бинарный файл может быть привязан и будет привязан со следующим пакетом) или `unsupported` (агент старше привязки: переустановите его). |
+| `GET` | `/api/targets/{id}/agent` | Машина в том виде, как её последний раз описал агент: `hostname`, `os`, `os_version`, `arch`, `agent_version`, `commands_supported`, `relay`, `site`, `relayed` (мониторы, доступные через этого агента), `last_seen_at`, `binding`, `bound`, `bound_at`, `rebind_until`. `404`, пока агент ничего не сообщил. `commands_supported` равно `true` только когда агент заявил, что получает команды (`commands: true`, значение по умолчанию у текущих агентов); более старый агент или агент с `commands: false` даёт `false`. `binding` — `bound`, `pending` (бинарный файл может быть привязан и будет привязан со следующим пакетом) или `unsupported` (агент старше привязки: переустановите его). |
 | `POST` | `/api/targets/{id}/agent/rebind` | Admin. Открывает часовое окно, в течение которого эта машина может привязаться заново с действительным токеном регистрации — путь назад после переустановки, унёсшей секрет агента. `{"rebind_until", "minutes"}`. Окно закрывается, как только оно использовано, а старый секрет перестаёт работать. `404`, пока агент ничего не сообщил. |
 | `GET` | `/api/targets/{id}/containers` | Все контейнеры из последнего пакета: `name`, `image`, `up`, `health`, `restart_count`, `uptime_seconds`, `image_age_seconds`, `update_available`, `policy`, `last_command`. |
 | `PUT` | `/api/targets/{id}/containers/{name}/policy` | `{"auto_restart": bool, "auto_update": bool, "prune_old_image": bool, "only_in_maintenance": bool}`. Каждое поле необязательно: опущенное поле сохраняет своё значение. Возвращает полную политику. |
 | `POST` | `/api/targets/{id}/containers/{name}/restart` | Поставить перезапуск в очередь. `201` с командой. `404`, когда `name` нет в инвентаре агента; `409`, когда такая же команда уже в очереди или выполняется либо когда агент не может выполнять команды (см. `commands_supported`). |
 | `POST` | `/api/targets/{id}/containers/{name}/update` | Поставить обновление в очередь; необязательно `{"prune": bool}` (по умолчанию — из политики). Те же коды статуса, что и у перезапуска. |
 | `GET` | `/api/targets/{id}/commands` | Последние 20 команд, сначала новые: `id`, `kind` (`container.restart`, `container.update`), `args`, `status`, `requested_by` (пользователь или `policy`), `created_at`, `started_at`, `finished_at`, `result`. |
-| `DELETE` | `/api/targets/{id}/commands/{command_id}` | Отменить команду в очереди. `204`; `409`, как только агент её забрал или когда она уже закрыта; `404`, когда она не принадлежит этому устройству. |
+| `DELETE` | `/api/targets/{id}/commands/{command_id}` | Отменить команду в очереди. `204`; `409`, как только агент её забрал или когда она уже закрыта; `404`, когда она не принадлежит этому монитору. |
 
 `status` проходит `queued → running → done | failed`. Существуют ещё два
 конечных состояния: `cancelled` (человек отозвал команду) и `expired` (сервер
@@ -855,9 +856,9 @@ Bearer-токенам для изменений нужна область `write
 
 ## Гостевые системы Proxmox VE
 
-Строки панели **Guests** устройства Proxmox VE, собранные из последнего опроса в
+Строки панели **Guests** монитора Proxmox VE, собранные из последнего опроса в
 хранилище метрик (четыре мгновенных запроса, у гипервизора ничего не
-запрашивается). `404`, когда устройства не существует, `400`, когда оно не
+запрашивается). `404`, когда монитора не существует, `400`, когда он не
 является целью `proxmox`.
 
 | Метод | Маршрут | Назначение |
@@ -881,7 +882,7 @@ Bearer-токенам для изменений нужна область `write
 
 ## Узлы Proxmox VE и Ceph
 
-Разделы **Nodes** и **Ceph** той же страницы устройства, прочитанные из того же
+Разделы **Nodes** и **Ceph** той же страницы монитора, прочитанные из того же
 последнего опроса. Те же коды статуса, что и выше.
 
 | Метод | Маршрут | Назначение |
@@ -891,9 +892,9 @@ Bearer-токенам для изменений нужна область `write
 
 ## Proxmox Backup Server
 
-Панели устройства `pbs`, прочитанные из последнего опроса (у сервера ничего не
-запрашивается, кроме журнала задач). `404`, когда устройства не существует,
-`400`, когда оно не является целью `pbs`.
+Панели монитора `pbs`, прочитанные из последнего опроса (у сервера ничего не
+запрашивается, кроме журнала задач). `404`, когда монитора не существует,
+`400`, когда он не является целью `pbs`.
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
@@ -914,7 +915,7 @@ Bearer-токенам для изменений нужна область `write
 
 | Метод | Маршрут | Назначение |
 |---|---|---|
-| `GET` | `/api/targets/{id}/synology` | Обзор устройства `synology` по последнему опросу: `system` (модель, версия DSM, аптайм, температура, CPU, память), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) и `sampled_at`. `404`, когда устройства не существует, `400`, когда это не Synology. |
+| `GET` | `/api/targets/{id}/synology` | Обзор монитора `synology` по последнему опросу: `system` (модель, версия DSM, аптайм, температура, CPU, память), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) и `sampled_at`. `404`, когда монитора не существует, `400`, когда это не Synology. |
 | `GET` | `/api/targets/{id}/synology/abb` | Active Backup for Business: `tasks` и `devices` — по одному отчёту на защищаемое устройство с выученной периодичностью в `assessment` (`state`, `last_success_s`, `typical_interval_s`, счётчики за 30 дней). |
 
 ## Heartbeats (push-мониторы)
@@ -922,7 +923,7 @@ Bearer-токенам для изменений нужна область `write
 | Метод | Маршрут | Auth | Назначение |
 |---|---|---|---|
 | `GET` или `POST` | `/api/push/{token}` | none (токен) | Вызов, который задание делает при каждом запуске. Необязательно `?status=up\|down&msg=…` (совместимо с Uptime Kuma). `204` пустой при успехе, `404` для неизвестного токена, `400` для другого `status`, `429` с `Retry-After` сверх шестидесяти вызовов в минуту на токен. См. [Heartbeat](../devices/push.md). |
-| `GET` | `/api/targets/{id}/push` | session | Монитор устройства `push`: `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Создаётся при первом чтении. `400`, когда устройство не является heartbeat. |
+| `GET` | `/api/targets/{id}/push` | session | Монитор `push`: `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Создаётся при первом чтении. `400`, когда монитор не является heartbeat. |
 | `POST` | `/api/targets/{id}/push/regenerate` | admin | Новый токен; прежний URL с этого момента отвечает `404`. Тело то же, что при чтении. |
 
 ## Ассистенты (MCP)

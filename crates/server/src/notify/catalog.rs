@@ -60,6 +60,11 @@ pub struct KindInfo {
     pub doc_url: &'static str,
     pub settings: Vec<Field>,
     pub secrets: Vec<Field>,
+    /// Comment le canal présente les liens d'action signés (acquitter, mettre
+    /// en pause) : `buttons` (boutons natifs), `links` (liens dans le message)
+    /// ou `none` (le service a son propre acquittement, PagerDuty, Opsgenie).
+    /// Voir [`action_style`].
+    pub actions: &'static str,
 }
 
 /// Page de la documentation en ligne qui décrit chaque canal ; chaque `doc_url`
@@ -206,7 +211,7 @@ fn info(
     settings: Vec<Field>,
     secrets: Vec<Field>,
 ) -> KindInfo {
-    KindInfo { kind, label, summary, doc_url, settings, secrets }
+    KindInfo { kind, label, summary, doc_url, settings, secrets, actions: action_style(kind) }
 }
 
 // --------------------------------------------------------------------------
@@ -223,6 +228,19 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
         info.settings.push(insecure_tls_field());
     }
     Some(info)
+}
+
+/// Présentation des liens d'action d'un type de canal (voir [`KindInfo::actions`]).
+///
+/// `none` les retire du message ; `buttons` et `links` les laissent au
+/// notificateur, qui les rend lui-même ou les reçoit en fin de texte
+/// ([`super::Notifier::renders_actions`]).
+pub fn action_style(kind: &str) -> &'static str {
+    match kind {
+        "pagerduty" | "opsgenie" => "none",
+        "ntfy" | "telegram" | super::webpush::KIND => "buttons",
+        _ => "links",
+    }
 }
 
 /// Types de canaux dont le serveur est typiquement auto-hébergé, et qui acceptent
@@ -1186,7 +1204,7 @@ mod tests {
         let json = serde_json::to_value(all()).unwrap();
         let Value::Array(kinds) = json else { panic!("an array was expected") };
         let first = kinds.first().and_then(Value::as_object).expect("one object per kind");
-        for key in ["kind", "label", "summary", "doc_url", "settings", "secrets"] {
+        for key in ["kind", "label", "summary", "doc_url", "settings", "secrets", "actions"] {
             assert!(first.contains_key(key), "\"{key}\" missing from KindInfo");
         }
         let field: &Map<String, Value> =

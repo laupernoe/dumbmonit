@@ -398,3 +398,19 @@ export function writeFold(kind: string, open: boolean): void {
 		// Private mode or blocked storage: the fold simply does not persist.
 	}
 }
+
+/**
+ * The single value a family held over the whole window, or `undefined` when
+ * it moved (or has no data): a flat 0/1 check says nothing as a chart, one
+ * line of text does.
+ */
+export function steadyValue(group: DeviceMetricGroup): number | null | undefined {
+	let value: number | undefined;
+	for (const serie of group.series) {
+		for (const [, v] of serie.points) {
+			if (value === undefined) value = v;
+			else if (v !== value) return undefined;
+		}
+	}
+	return value ?? undefined;
+}

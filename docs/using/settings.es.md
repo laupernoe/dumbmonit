@@ -1,23 +1,33 @@
 # Settings
 
-![Settings: cuenta, usuarios, inicio de sesión único, agentes, asistente, apariencia, acerca de](../assets/screenshots/settings-light.png){ loading=lazy }
+![Settings: siete pestañas, aquí Mi cuenta con apariencia, cuenta y seguridad y notificaciones push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings contiene lo administrativo: tu cuenta, quién puede iniciar
-sesión y cómo, los tokens que dejan entrar a agentes y asistentes,
-hacer copia de seguridad de la instancia, el tema, y la salud del
-servidor. Una página, una sección por tema, con una barra de anclas en
-pantalla ancha y una franja de chips en un teléfono. Cada sección se
-puede enlazar (`/settings#agents`).
+Settings contiene lo administrativo: tu cuenta, quién puede iniciar sesión y cómo, los tokens que dejan entrar a agentes y asistentes, hacer copia de seguridad de la instancia, el tema, y la salud del servidor. Se divide en siete pestañas, cada una con su propia dirección. Una barra lateral en pantalla ancha, una franja de chips en un teléfono y un buscador sobre los nombres de las secciones ayudan a encontrar una sección.
 
-Dos cosas que solían vivir aquí se trasladaron, porque no son
-administración:
-
-| Buscas | Ahora en | Enlace antiguo |
+| Pestaña | Dirección | Qué contiene |
 |---|---|---|
-| Canales de notificación, horas de silencio, política de notificación | **Alerts → Notifications** ([Página de alertas](alerts.md#notifications)) | `/settings#notifications`, `/settings#notifications-policy` |
-| Páginas de estado y anuncios | **Status** ([Páginas de estado](status-pages.md)) | `/settings#status` |
+| Mi cuenta | `/settings/account` | Apariencia, Cuenta y seguridad (contraseña, dos factores, registro de seguridad), Notificaciones push |
+| Equipo y acceso | `/settings/team` | Usuarios, Inicio de sesión único |
+| Supervisión | `/settings/monitoring` | Agentes, Paquetes de integración, [Puntuación de seguridad](security-score.md) |
+| Notificaciones e informes | `/settings/notifications` | Canales, Política de notificaciones, Horas de silencio ([Canales de notificación](../notifications.md)), Informes |
+| Páginas de estado | `/settings/status` | Páginas de estado y anuncios ([Páginas de estado](status-pages.md)) |
+| Pantalla de pared | `/settings/wall` | Modo pared, Música de la pared, Noticias de la pared ([Modo pared](overview.md#wall-mode)) |
+| Sistema | `/settings/system` | Copia de seguridad, El propio DumbMonit, API y asistentes, Acerca de |
 
-Los enlaces antiguos todavía funcionan: redirigen al nuevo lugar.
+Cada sección conserva su ancla: `/settings#agents` redirige a `/settings/monitoring#agents`. Los enlaces antiguos (`/alerts#notifications`, `/status`) también redirigen al nuevo lugar.
+
+## Appearance
+
+Tres tarjetas, cada una previsualizando su propio tema: **System**
+(sigue a tu dispositivo y cambia con él), **Day** (el tema «papel de
+gráfica») y **Night** (el tema «radar»). La elección se guarda en el
+navegador. El interruptor de la cabecera y el *Toggle theme* de la
+paleta de comandos cambian entre día y noche.
+
+**Open wall mode** se sitúa al final de la sección: solo el boletín, a
+pantalla completa, para un monitor en la sala. ++esc++ lo abandona, y la
+paleta de comandos lo abre desde cualquier sitio — consulta [Modo
+pared](overview.md#wall-mode).
 
 ## Account & security {#account-security}
 
@@ -77,7 +87,7 @@ Notificaciones nativas en este teléfono u ordenador, incluso con
 DumbMonit cerrado: **Enable on this device**, luego **Send a test**.
 Cada cuenta gestiona sus propios dispositivos aquí (también los
 visores); qué alertas les llegan se define con un canal **Web Push** en
-Alerts → Notifications. El botón **i** resume los requisitos: HTTPS (o
+Settings → Notifications & reports. El botón **i** resume los requisitos: HTTPS (o
 localhost), instalación en pantalla de inicio en iPhone y iPad, y los
 dominios de servicio push que el servidor debe alcanzar. Guía completa:
 [Notificaciones push (PWA)](push-notifications.md).
@@ -86,7 +96,7 @@ dominios de servicio push que el servidor debe alcanzar. Guía completa:
 
 Solo administradores. Las cuentas que pueden iniciar sesión, y su rol:
 
-| Rol | Lee todo | Gestiona alertas (ack, snooze, ignore, ventanas de mantenimiento, limpiar historial) | Cambia la configuración (dispositivos, reglas, canales, páginas de estado, ajustes, copias de seguridad, tokens, cuentas) |
+| Rol | Lee todo | Gestiona alertas (ack, snooze, ignore, ventanas de mantenimiento, limpiar historial) | Cambia la configuración (monitores, reglas, canales, páginas de estado, ajustes, copias de seguridad, tokens, cuentas) |
 |---|---|---|---|
 | **Viewer** | sí | no | no |
 | **Operator** | sí | sí | no |
@@ -95,7 +105,7 @@ Solo administradores. Las cuentas que pueden iniciar sesión, y su rol:
 Un visor ve cada página con cada control que cambiaría algo oculto. Algunas cosas
 siguen siendo solo de administrador incluso para leerlas: los tokens de API y
 de agente, los correos de suscriptores de páginas de estado y las opciones de
-dispositivo que parecen secretos (una opción cuyo nombre contiene `key`,
+monitor que parecen secretos (una opción cuyo nombre contiene `key`,
 `token`, `password`…, las cabeceras extra de una comprobación HTTP, la
 contraseña de una dirección `https://user:pass@host`), que los no
 administradores leen como `***`. Un
@@ -201,37 +211,27 @@ si fue revocado. **Revoke** detiene cada agente que use ese token en su
 siguiente envío.
 
 Un token puede inscribir varias máquinas. Revocarlo no elimina los
-dispositivos. La lista de tokens, crear y revocar son para administradores;
+monitores. La lista de tokens, crear y revocar son para administradores;
 los visores y operadores ven la sección sin la lista.
 
-## API & assistants
+## Puntuación de seguridad {#security-score}
 
-Un tipo de token para ambos: clientes MCP y la [API REST](../reference/api.md).
-Nombra un token, elige su alcance y créalo — se muestra una vez. Un
-token **read** solo puede mirar; un token **read and write** también
-puede cambiar cosas — silenciar un dispositivo, ejecutar una sonda,
-añadir o editar dispositivos, reglas y canales — pero nunca cuentas,
-ajustes de inicio de sesión u otros tokens.
+En **Settings → Supervisión**, bajo los agentes: una puntuación de lo bien reforzadas que están la instancia y los equipos supervisados. Consulta [Puntuación de seguridad](security-score.md).
 
-Bajo **Connect**, tres pestañas contienen los fragmentos, rellenados
-con el token mientras sigue en pantalla: *Claude* (el comando `claude
-mcp add` y el bloque `claude_desktop_config.json`), *ChatGPT* (la URL
-del servidor MCP y la cabecera de autorización, con un aviso cuando
-esta página no se sirve por HTTPS — ChatGPT se conecta desde los
-servidores de OpenAI, así que la dirección debe ser accesible desde
-internet) y *Cursor / other*, la misma forma para cualquier cliente que
-hable Streamable HTTP con una cabecera bearer. **API access** muestra el
-mismo token en la API REST como un ejemplo `curl`, y señala las rutas
-que un Prometheus o un Grafana sondean con él. Consulta [Conectar un
-asistente](assistant.md) y [Sondear
-DumbMonit](../reference/metrics.md#scraping-dumbmonit).
+## Reports
+
+En **Settings → Notifications & reports**, bajo la política: correos
+periódicos de disponibilidad para el equipo. Elige semanal,
+diario o mensual, el día, hora y zona horaria, los destinatarios y el
+canal de correo, y luego **Send a preview** para ver el resultado. Solo
+administradores. Consulta [Informes por correo](reports.md).
 
 ## Backup
 
 Tres cosas, en el orden en que las encuentras.
 
 Un **aviso que no puedes pasar por alto**: `/data/secret.key` es lo que
-descifra las credenciales de dispositivo, y una copia de la base de
+descifra las credenciales de monitor, y una copia de la base de
 datos sin él restaura una instancia que no puede hablar con nada. La
 redacción cambia cuando el secreto viene de `DUMBMONIT_SECRET` en su
 lugar — entonces no hay ningún archivo que copiar, y es tu gestor de
@@ -258,30 +258,47 @@ antes de una actualización.
 Todo aquí es solo para administradores. Consulta [Copia de seguridad y
 restauración](../install/backup.md).
 
-## Reports
+## El propio DumbMonit {#self-monitoring}
 
-Correos periódicos de disponibilidad para el equipo: elige semanal,
-diario o mensual, el día, hora y zona horaria, los destinatarios y el
-canal de correo, y luego **Send a preview** para ver el resultado. Solo
-administradores. Consulta [Informes por correo](reports.md).
+El estado del motor en este momento — planificador, base de datos SQLite, base
+de métricas — con el espacio libre del volumen de datos, el tamaño de la base
+y, para el VictoriaMetrics integrado, cuántas veces se ha reiniciado. Unas
+reglas integradas ya le avisan cuando algo de esto falla.
 
-## Appearance
+Debajo, el **latido saliente**: una URL suya (Healthchecks.io, un monitor push
+de Uptime Kuma, Better Stack…) que DumbMonit llama a intervalos regulares, solo
+mientras está en buen estado, para que alguien desde fuera note cuando este
+equipo deja de responder. **Probar** envía una llamada al momento; **Señalar
+fallos** llama a la URL de fallo en lugar de callar. La URL se guarda cifrada y
+no se vuelve a mostrar, solo su host. Solo un administrador puede cambiarla.
+Véase [Watching DumbMonit itself](../install/self-monitoring.md).
 
-Tres tarjetas, cada una previsualizando su propio tema: **System**
-(sigue a tu dispositivo y cambia con él), **Day** (el tema «papel de
-gráfica») y **Night** (el tema «radar»). La elección se guarda en el
-navegador. El interruptor de la cabecera y el *Toggle theme* de la
-paleta de comandos cambian entre día y noche.
+## API & assistants
 
-**Open wall mode** se sitúa al final de la sección: solo el boletín, a
-pantalla completa, para un monitor en la sala. ++esc++ lo abandona, y la
-paleta de comandos lo abre desde cualquier sitio — consulta [Modo
-pared](overview.md#wall-mode).
+Un tipo de token para ambos: clientes MCP y la [API REST](../reference/api.md).
+Nombra un token, elige su alcance y créalo — se muestra una vez. Un
+token **read** solo puede mirar; un token **read and write** también
+puede cambiar cosas — silenciar un monitor, ejecutar una sonda,
+añadir o editar monitores, reglas y canales — pero nunca cuentas,
+ajustes de inicio de sesión u otros tokens.
+
+Bajo **Connect**, tres pestañas contienen los fragmentos, rellenados
+con el token mientras sigue en pantalla: *Claude* (el comando `claude
+mcp add` y el bloque `claude_desktop_config.json`), *ChatGPT* (la URL
+del servidor MCP y la cabecera de autorización, con un aviso cuando
+esta página no se sirve por HTTPS — ChatGPT se conecta desde los
+servidores de OpenAI, así que la dirección debe ser accesible desde
+internet) y *Cursor / other*, la misma forma para cualquier cliente que
+hable Streamable HTTP con una cabecera bearer. **API access** muestra el
+mismo token en la API REST como un ejemplo `curl`, y señala las rutas
+que un Prometheus o un Grafana sondean con él. Consulta [Conectar un
+asistente](assistant.md) y [Sondear
+DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 
 ## About
 
 Versión del servidor y la salud de sus dos almacenes, la base de datos
-(configuración de dispositivo e historial de alertas) y VictoriaMetrics
+(configuración de monitor e historial de alertas) y VictoriaMetrics
 (cada medición en las gráficas), tal como lo reporta `GET /api/health`
 y se refresca cada 15 segundos. Un almacén que deja de responder muestra
 un aviso con el error y qué comprobar. La sección también enlaza a esta
