@@ -21,6 +21,16 @@ const DEFAULT_INTERVAL_SECS: u64 = 30;
 /// fenêtre oubliée ouverte redevienne le trou qu'on vient de boucher.
 pub const REBIND_WINDOW_MINUTES: i64 = 60;
 
+/// Délai pendant lequel un secret remis mais jamais présenté peut être remis
+/// de nouveau, en minutes.
+///
+/// Couvre la perte de l'accusé de réception qui le portait : l'agent réessaie
+/// au plus toutes les cinq minutes, il a donc le temps de revenir. Au-delà, la
+/// machine est tenue pour liée et seule une fenêtre de reliaison la fait
+/// revenir — sans quoi une machine enrôlée puis éteinte resterait à prendre
+/// pour qui connaît sa clé.
+const UNCONFIRMED_REISSUE_MINUTES: i64 = 10;
+
 /// Ce qu'un jeton a le droit d'enrôler.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct TokenPolicy {
@@ -259,6 +269,9 @@ struct HostRow {
     token_id: Option<i64>,
     /// Vrai si une fenêtre de reliaison est ouverte et encore valide.
     rebind_open: bool,
+    /// Vrai si le secret remis n'a encore jamais été présenté, et qu'il l'a été
+    /// il y a moins de [`UNCONFIRMED_REISSUE_MINUTES`].
+    reissue_open: bool,
 }
 
 /// Retrouve la cible d'un agent, ou l'enregistre si elle n'existe pas encore.
@@ -362,6 +375,7 @@ async fn claim(
                 .is_some_and(|presented| presented == stored);
             if matches {
                 update_host(pool, target_id, identity).await?;
+                confirm_secret(pool, target_id).await?;
                 return Ok(Registration {
                     target_id,
                     created: false,
@@ -379,6 +393,31 @@ async fn claim(
                 bind_host(pool, target_id, &secret, token_id).await?;
                 update_host(pool, target_id, identity).await?;
                 tracing::info!(cible = target_id, "machine reliée pendant sa fenêtre de reliaison");
+                return Ok(Registration {
+                    target_id,
+                    created: false,
+                    issued_secret: Some(secret),
+                    bound: true,
+                });
+            }
+            // Accusé de réception perdu : l'agent n'a jamais reçu le secret
+            // qu'on lui a remis, et revient sans. Seulement juste après la
+            // remise, avec le jeton qui a lié la machine, et tant que ce secret
+            // n'a jamais servi — une machine active le présente dès son lot
+            // suivant, elle ne peut donc pas être reprise ainsi.
+            if presented_secret.is_none()
+                && host.reissue_open
+                && host.token_id == Some(token_id)
+                && identity.binding_supported
+            {
+                let secret = token::generate_secret();
+                reissue_secret(pool, target_id, &secret).await?;
+                update_host(pool, target_id, identity).await?;
+                tracing::info!(
+                    cible = target_id,
+                    hote = identity.hostname,
+                    "secret de liaison jamais présenté : remis de nouveau"
+                );
                 return Ok(Registration {
                     target_id,
                     created: false,
@@ -435,9 +474,12 @@ async fn find_host(pool: &SqlitePool, key: &str) -> Result<Option<HostRow>> {
     let row = sqlx::query(
         "SELECT target_id, secret_hash, token_id,
                 (rebind_until IS NOT NULL
-                 AND rebind_until > strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) AS rebind_open
+                 AND rebind_until > strftime('%Y-%m-%dT%H:%M:%SZ', 'now')) AS rebind_open,
+                (secret_confirmed = 0 AND bound_at IS NOT NULL
+                 AND bound_at > strftime('%Y-%m-%dT%H:%M:%SZ', 'now', ?)) AS reissue_open
          FROM agent_hosts WHERE agent_key = ?",
     )
+    .bind(format!("-{UNCONFIRMED_REISSUE_MINUTES} minutes"))
     .bind(key)
     .fetch_optional(pool)
     .await
@@ -448,6 +490,7 @@ async fn find_host(pool: &SqlitePool, key: &str) -> Result<Option<HostRow>> {
             secret_hash: row.try_get("secret_hash")?,
             token_id: row.try_get("token_id")?,
             rebind_open: row.try_get::<i64, _>("rebind_open")? != 0,
+            reissue_open: row.try_get::<i64, _>("reissue_open")? != 0,
         })
     })
     .transpose()
@@ -464,7 +507,7 @@ async fn bind_host(
     sqlx::query(
         "UPDATE agent_hosts
          SET secret_hash = ?, binding_supported = 1, rebind_until = NULL, token_id = ?,
-             bound_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+             secret_confirmed = 0, bound_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE target_id = ?",
     )
     .bind(token::fingerprint(secret))
@@ -473,6 +516,33 @@ async fn bind_host(
     .execute(pool)
     .await
     .context("binding the machine to its agent")?;
+    Ok(())
+}
+
+/// Remplace un secret remis mais jamais présenté.
+///
+/// `bound_at` ne bouge pas : le délai de grâce court depuis la première remise,
+/// et des demandes répétées ne doivent pas le prolonger indéfiniment.
+async fn reissue_secret(pool: &SqlitePool, target_id: TargetId, secret: &str) -> Result<()> {
+    sqlx::query("UPDATE agent_hosts SET secret_hash = ? WHERE target_id = ?")
+        .bind(token::fingerprint(secret))
+        .bind(target_id)
+        .execute(pool)
+        .await
+        .context("issuing the binding secret again")?;
+    Ok(())
+}
+
+/// Note que l'agent a présenté le secret remis : il l'a donc bien rangé, et
+/// plus aucun secret ne lui sera remis sans fenêtre de reliaison.
+async fn confirm_secret(pool: &SqlitePool, target_id: TargetId) -> Result<()> {
+    sqlx::query(
+        "UPDATE agent_hosts SET secret_confirmed = 1 WHERE target_id = ? AND secret_confirmed = 0",
+    )
+    .bind(target_id)
+    .execute(pool)
+    .await
+    .context("confirming the binding secret")?;
     Ok(())
 }
 
@@ -552,8 +622,8 @@ async fn insert_host(
         "INSERT INTO agent_hosts
              (target_id, agent_key, hostname, os, os_version, kernel_version, arch,
               agent_version, commands_enabled, relay, site, token_id,
-              secret_hash, binding_supported, bound_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              secret_hash, binding_supported, secret_confirmed, bound_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0,
                  CASE WHEN ? IS NULL THEN NULL
                       ELSE strftime('%Y-%m-%dT%H:%M:%SZ', 'now') END)",
     )
@@ -1037,6 +1107,95 @@ mod tests {
 
     // ------------------------------------------------------- liaison machine
 
+    /// Lot suivant de l'agent, porteur du secret qu'il vient de recevoir : c'est
+    /// ce qui prouve qu'il l'a bien rangé.
+    async fn confirm(
+        db: &TestDb,
+        identity: &AgentIdentity,
+        token_id: i64,
+        registration: &Registration,
+    ) {
+        let secret = registration.issued_secret.as_deref().expect("secret remis");
+        let again = register(&db.pool, &db.cipher, identity, token_id, Some(secret))
+            .await
+            .expect("le secret remis est accepté");
+        assert_eq!(again.issued_secret, None);
+    }
+
+    #[tokio::test]
+    async fn a_secret_lost_in_transit_is_issued_again_until_the_agent_uses_it() {
+        // L'accusé de réception qui portait le secret s'est perdu (coupure,
+        // délai dépassé) : l'agent revient sans secret. Tant qu'il n'a jamais
+        // présenté celui qu'on lui a remis, et peu après sa remise, on lui en
+        // remet un autre plutôt que de le refuser pour toujours.
+        let db = setup().await;
+        let token_id = token(&db, "parc").await;
+        let nas = identity("nas", Some("id-nas"));
+        let first = enrol(&db, &nas, token_id).await;
+        let lost = first.issued_secret.clone().expect("secret");
+
+        let again = register(&db.pool, &db.cipher, &nas, token_id, None)
+            .await
+            .expect("secret perdu en route : remis de nouveau");
+        let reissued = again.issued_secret.clone().expect("nouveau secret");
+        assert_ne!(reissued, lost, "le secret perdu ne vaut plus");
+        assert_eq!(again.target_id, first.target_id);
+        assert!(!again.created);
+
+        // Une seule machine, un seul enrôlement compté.
+        assert_eq!(db::targets::list(&db.pool, &db.cipher).await.unwrap().len(), 1);
+        let uses: i64 = sqlx::query("SELECT uses FROM agent_tokens WHERE id = ?")
+            .bind(token_id)
+            .fetch_one(&db.pool)
+            .await
+            .unwrap()
+            .try_get("uses")
+            .unwrap();
+        assert_eq!(uses, 1);
+
+        // L'ancien secret ne passe plus, le nouveau si — et dès lors la liaison
+        // est acquise : un retour sans secret est de nouveau refusé.
+        assert!(matches!(
+            register(&db.pool, &db.cipher, &nas, token_id, Some(&lost)).await,
+            Err(RegisterError::BindingMismatch)
+        ));
+        confirm(&db, &nas, token_id, &again).await;
+        assert!(matches!(
+            register(&db.pool, &db.cipher, &nas, token_id, None).await,
+            Err(RegisterError::BindingMismatch)
+        ));
+    }
+
+    #[tokio::test]
+    async fn an_unconfirmed_secret_is_not_issued_again_late_or_to_another_token() {
+        let db = setup().await;
+        let token_id = token(&db, "parc").await;
+        let other_token = token(&db, "autre").await;
+        let nas = identity("nas", Some("id-nas"));
+        enrol(&db, &nas, token_id).await;
+
+        // Un autre jeton ne récupère pas le secret d'une machine qu'il n'a pas
+        // fait entrer.
+        assert!(matches!(
+            register(&db.pool, &db.cipher, &nas, other_token, None).await,
+            Err(RegisterError::BindingMismatch)
+        ));
+
+        // Passé le délai de grâce, la machine est tenue pour liée : seule une
+        // fenêtre de reliaison ouverte à la main la fait revenir.
+        sqlx::query(
+            "UPDATE agent_hosts
+             SET bound_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 day')",
+        )
+        .execute(&db.pool)
+        .await
+        .unwrap();
+        assert!(matches!(
+            register(&db.pool, &db.cipher, &nas, token_id, None).await,
+            Err(RegisterError::BindingMismatch)
+        ));
+    }
+
     #[tokio::test]
     async fn a_first_contact_binds_the_machine_and_hands_back_its_secret() {
         let db = setup().await;
@@ -1064,6 +1223,7 @@ mod tests {
         let db = setup().await;
         let token_id = token(&db, "flotte").await;
         let victim = enrol(&db, &identity("nas", Some("id-nas")), token_id).await;
+        confirm(&db, &identity("nas", Some("id-nas")), token_id, &victim).await;
 
         // Sans secret : refusé.
         let error =
@@ -1226,6 +1386,7 @@ mod tests {
         let token_id = token(&db, "parc").await;
         let registration = enrol(&db, &identity("nas", Some("id-nas")), token_id).await;
         let old_secret = registration.issued_secret.clone().expect("secret");
+        confirm(&db, &identity("nas", Some("id-nas")), token_id, &registration).await;
 
         // Le disque a été refait : l'agent revient sans secret, et se fait jeter.
         assert!(matches!(
