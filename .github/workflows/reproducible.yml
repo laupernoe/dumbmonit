@@ -1,0 +1,207 @@
+name: Reproducible builds
+
+# Proves that the release build is repeatable: two runners build the same
+# commit independently (fresh BuildKit, no cache, different checkout paths) and
+# the results must be bit-for-bit identical:
+#   - the server binary, the four agent binaries and the web UI files;
+#   - the server and agent images: same OCI manifest digest (layers, config).
+# Two more builds of the macOS agent run on one macOS runner, in two different
+# directories with two different CARGO_HOME.
+# On a mismatch the job fails and uploads a diffoscope report.
+# How to check it yourself: docs/development/reproducible-builds.md.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "crates/**"
+      - "web/**"
+      - "profiles/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "Dockerfile"
+      - ".dockerignore"
+      - ".github/workflows/reproducible.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reproducible-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ${{ matrix.run }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    strategy:
+      matrix:
+        # Two independent builds; `path` only makes the checkouts differ.
+        include:
+          - run: a
+            path: a
+          - run: b
+            path: another/checkout/path
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: ${{ matrix.path }}
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build
+        working-directory: ${{ matrix.path }}
+        env:
+          OUT: ${{ github.workspace }}/out
+        run: |
+          set -eu
+          # Same inputs as release.yml: the commit and its date.
+          SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)
+          export SOURCE_DATE_EPOCH
+          set -- --build-arg "DUMBMONIT_BUILD=$GITHUB_SHA" --platform linux/amd64 \
+            --provenance=false --sbom=false
+          docker buildx build "$@" --no-cache \
+            --output "type=oci,dest=$OUT/image.tar,rewrite-timestamp=true" .
+          docker buildx build "$@" --target agent-image \
+            --output "type=oci,dest=$OUT/agent-image.tar,rewrite-timestamp=true" .
+          docker buildx build "$@" --target server-dist --output "type=local,dest=$OUT/server" .
+          docker buildx build "$@" --target agent-dist --output "type=local,dest=$OUT/agent" .
+          docker buildx build "$@" --target web-dist --output "type=local,dest=$OUT/web" .
+
+      - name: Checksums
+        working-directory: out
+        run: |
+          set -eu
+          find server agent web -type f -print0 | sort -z | xargs -0 sha256sum > files.sha256
+          for image in image agent-image; do
+            mkdir "$image"
+            tar -xf "$image.tar" -C "$image"
+            echo "$image $(jq -r '.manifests[].digest' "$image/index.json")"
+          done > images.txt
+          grep -v ' web/' files.sha256
+          cat images.txt
+
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: build-${{ matrix.run }}
+          path: |
+            out/files.sha256
+            out/images.txt
+            out/server
+            out/agent
+            out/web
+            out/image
+            out/agent-image
+          if-no-files-found: error
+          retention-days: 7
+
+  compare:
+    name: Compare
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: build-*
+
+      - name: Compare
+        id: compare
+        run: |
+          set -eu
+          {
+            echo "### Reproducible builds"
+            echo
+            echo '```'
+            grep -v ' web/' build-a/files.sha256
+            echo "web UI: $(grep -c ' web/' build-a/files.sha256) files"
+            cat build-a/images.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if diff -u build-a/files.sha256 build-b/files.sha256 &&
+             diff -u build-a/images.txt build-b/images.txt; then
+            echo "Both builds are bit-for-bit identical." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "**The two builds differ.** See the diffoscope artifact." >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::the two builds differ"
+            exit 1
+          fi
+
+      - name: Diffoscope
+        if: failure() && steps.compare.outcome == 'failure'
+        run: |
+          set -u
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends diffoscope-minimal >/dev/null
+          mkdir report
+          for dir in server agent web image agent-image; do
+            diffoscope --html "report/$dir.html" --text "report/$dir.txt" \
+              --max-report-size 50000000 "build-a/$dir" "build-b/$dir" || true
+          done
+          ls -l report
+
+      - if: failure() && steps.compare.outcome == 'failure'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: diffoscope
+          path: report
+          retention-days: 14
+
+  # The macOS agent is built on a macOS runner (release.yml), with the Xcode of
+  # that runner: built twice here, in two directories with two CARGO_HOME, with
+  # the same flags as the release.
+  macos:
+    name: macOS agent
+    runs-on: macos-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: a
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: another/checkout/path
+          persist-credentials: false
+
+      - run: |
+          rustup toolchain install 1.99.0 --profile minimal \
+            --target aarch64-apple-darwin --target x86_64-apple-darwin
+          rustup default 1.99.0
+          xcodebuild -version
+          ld -v 2>&1 | head -n 1
+
+      - name: Build twice
+        env:
+          CARGO_PROFILE_RELEASE_OPT_LEVEL: s
+          CARGO_PROFILE_RELEASE_LTO: fat
+        run: |
+          set -eu
+          for dir in a another/checkout/path; do
+            export CARGO_HOME="$RUNNER_TEMP/cargo-$(echo "$dir" | tr / -)"
+            # Same flags as release.yml.
+            export RUSTFLAGS="--remap-path-prefix=$CARGO_HOME=/cargo --remap-path-prefix=$PWD/$dir=/build -C link-arg=-Wl,-S"
+            (cd "$dir" && for target in aarch64-apple-darwin x86_64-apple-darwin; do
+              cargo build --release --locked -p dumbmonit-agent --target "$target"
+            done)
+          done
+          mkdir -p out/a out/b
+          for target in aarch64-apple-darwin x86_64-apple-darwin; do
+            cp "a/target/$target/release/dumbmonit-agent" "out/a/dumbmonit-agent-$target"
+            cp "another/checkout/path/target/$target/release/dumbmonit-agent" "out/b/dumbmonit-agent-$target"
+          done
+          (cd out/a && shasum -a 256 *) > a.sha256
+          (cd out/b && shasum -a 256 *) > b.sha256
+          cat a.sha256
+          { echo "### macOS agent"; echo; echo '```'; cat a.sha256; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+          diff -u a.sha256 b.sha256 || { echo "::error::the two macOS builds differ"; exit 1; }
+
+      - if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: macos-agent-builds
+          path: out
+          retention-days: 7
