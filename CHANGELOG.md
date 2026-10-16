@@ -32,8 +32,7 @@ All notable changes to this project are documented here. The format follows
   credential.
 - **Agents keep their binding on foreign 403s.** Only the server's own binding
   refusal makes an agent forget its secret, not a 403 from a reverse proxy or a
-  firewall. A secret lost in transit is issued again for ten minutes, until the
-  agent first presents it.
+  firewall.
 
 ## 0.9.0 — 2026-10-16
 
