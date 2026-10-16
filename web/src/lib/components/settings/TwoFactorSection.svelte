@@ -161,11 +161,11 @@
 </script>
 
 {#if canEnrol}
-	<div class="mt-6 border-t border-line pt-5" data-testid="two-factor">
+	<div class="mt-6 border-t border-line pt-5 max-sm:mt-4 max-sm:pt-4" data-testid="two-factor">
 		<div class="flex flex-wrap items-start justify-between gap-3">
 			<div>
 				<p class="text-sm font-semibold text-ink">{m.settings_2fa_title()}</p>
-				<p class="mt-0.5 max-w-prose text-[0.8125rem] text-ink-2">
+				<p class="mt-0.5 max-w-prose text-[0.8125rem] text-ink-2 max-sm:hidden">
 					{m.settings_2fa_intro()}
 				</p>
 			</div>

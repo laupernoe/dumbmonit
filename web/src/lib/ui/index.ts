@@ -17,7 +17,7 @@ export { default as RollingNumber } from './effects/RollingNumber.svelte';
 export { default as Tilt } from './effects/Tilt.svelte';
 export { default as BlurText } from './effects/BlurText.svelte';
 export { confetti } from './effects/confetti';
-export { reducedMotion, shake, bump } from './motion';
+export { reducedMotion, calmMotion, isPhone, PHONE_QUERY, shake, bump } from './motion';
 export { default as Confirm } from './Confirm.svelte';
 export { default as Menu } from './Menu.svelte';
 export { default as CopyBlock } from './CopyBlock.svelte';

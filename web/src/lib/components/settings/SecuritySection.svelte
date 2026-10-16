@@ -11,6 +11,7 @@
 	import { Button, ErrorNotice, Field, Panel, Plate } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import TwoFactorSection from './TwoFactorSection.svelte';
+	import { viewport } from '#lib/stores/viewport.svelte.js';
 
 	let current = $state('');
 	let next = $state('');
@@ -20,6 +21,9 @@
 	let saving = $state(false);
 	let changed = $state(false);
 	let signingOut = $state(false);
+	/** Phones fold the three password fields behind one button until asked. */
+	let formOpen = $state(false);
+	const folded = $derived(viewport.phone && !formOpen);
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -69,7 +73,12 @@
 			<p class="text-sm text-ink-2">{m.settings_security_oidc_note()}</p>
 		</div>
 	{:else}
-		<form class="grid max-w-md gap-4" onsubmit={submit} novalidate>
+		{#if folded}
+			<Button variant="secondary" aria-expanded="false" aria-controls="password-form" onclick={() => (formOpen = true)}>
+				{m.settings_security_change()}
+			</Button>
+		{/if}
+		<form id="password-form" class="grid max-w-md gap-4" hidden={folded} onsubmit={submit} novalidate>
 			<Field label={m.settings_security_current_label()} for="current-password" error={errors.current}>
 				<PasswordInput
 					id="current-password"
@@ -117,10 +126,10 @@
 	<TwoFactorSection />
 
 	{#if auth.available}
-		<div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5">
+		<div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 max-sm:mt-4 max-sm:pt-4">
 			<div>
 				<p class="text-sm font-semibold text-ink">{m.settings_security_session_title()}</p>
-				<p class="mt-0.5 text-[0.8125rem] text-ink-2">{m.settings_security_session_hint()}</p>
+				<p class="mt-0.5 text-[0.8125rem] text-ink-2 max-sm:hidden">{m.settings_security_session_hint()}</p>
 			</div>
 			<Button variant="secondary" loading={signingOut} onclick={() => void signOut()}>
 				<LogOut class="size-4" aria-hidden="true" />

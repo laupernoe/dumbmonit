@@ -4,10 +4,10 @@
 	 * settles. Svelte 5 port of the React Bits "BlurText" component (CSS
 	 * transitions only, no dependencies). For a page title's first paint —
 	 * once per distinct text, never on every re-render. Under
-	 * `prefers-reduced-motion` the text is simply there, already sharp.
+	 * `prefers-reduced-motion`, and on phones, the text is simply there, already sharp.
 	 */
 	import { onMount } from 'svelte';
-	import { reducedMotion } from '../motion';
+	import { calmMotion } from '../motion';
 
 	interface Props {
 		text: string;
@@ -21,12 +21,14 @@
 
 	const words = $derived(text.split(' '));
 
+	// Phones and reduced motion get the plain heading: no per-word layers at all.
+	const calm = calmMotion();
 	let settled = $state(false);
 	let last: string | null = null;
 
 	function run() {
 		settled = false;
-		if (reducedMotion()) {
+		if (calm) {
 			settled = true;
 			return;
 		}
@@ -44,14 +46,18 @@
 	});
 </script>
 
-<svelte:element this={tag} class={className} aria-label={text}>
-	<span aria-hidden="true">
-		{#each words as word, i (i)}<span
-				class="inline-block [transition:filter_480ms_var(--ease-out-expo),opacity_480ms_var(--ease-out-expo),transform_480ms_var(--ease-out-expo)]"
-				style:transition-delay={`${Math.min(i, 14) * stagger}ms`}
-				style:filter={settled ? 'blur(0)' : 'blur(10px)'}
-				style:opacity={settled ? 1 : 0}
-				style:transform={settled ? 'none' : 'translateY(0.35em)'}>{word}</span
-			>{i < words.length - 1 ? ' ' : ''}{/each}
-	</span>
-</svelte:element>
+{#if calm}
+	<svelte:element this={tag} class={className}>{text}</svelte:element>
+{:else}
+	<svelte:element this={tag} class={className} aria-label={text}>
+		<span aria-hidden="true">
+			{#each words as word, i (i)}<span
+					class="inline-block [transition:filter_480ms_var(--ease-out-expo),opacity_480ms_var(--ease-out-expo),transform_480ms_var(--ease-out-expo)]"
+					style:transition-delay={`${Math.min(i, 14) * stagger}ms`}
+					style:filter={settled ? 'blur(0)' : 'blur(10px)'}
+					style:opacity={settled ? 1 : 0}
+					style:transform={settled ? 'none' : 'translateY(0.35em)'}>{word}</span
+				>{i < words.length - 1 ? ' ' : ''}{/each}
+		</span>
+	</svelte:element>
+{/if}

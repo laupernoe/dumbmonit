@@ -91,6 +91,20 @@
 		animation-delay: var(--led-delay, 0ms), calc(var(--led-delay, 0ms) + 640ms);
 	}
 
+	/* Phones: the glow holds still and the unit is simply on; only a fault still blinks. */
+	@media (max-width: 639px) {
+		.led[data-mode='breathe']::after {
+			animation: none;
+			opacity: 0.45;
+		}
+		.led--boot {
+			animation: none;
+		}
+		.led--boot[data-mode='fault'] {
+			animation: led-fault 1.6s linear infinite;
+		}
+	}
+
 	@keyframes led-glow {
 		0%,
 		100% {

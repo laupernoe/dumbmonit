@@ -51,20 +51,21 @@
 						{/if}
 						<span class="truncate font-semibold text-ink">{silence.name}</span>
 					</div>
+					<!-- Phones: scope and the one date that matters (until / next), no separators, no comment. -->
 					<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8125rem] text-ink-2">
 						<span>{silenceScope(silence, targets)}</span>
-						<span class="text-ink-3" aria-hidden="true">·</span>
-						<span class="tnum">{scheduleLabel(silence.schedule)}</span>
+						<span class="text-ink-3 max-sm:hidden" aria-hidden="true">·</span>
+						<span class={`tnum ${silence.active_now && silence.active_until ? 'max-sm:hidden' : ''}`}>{scheduleLabel(silence.schedule)}</span>
 						{#if silence.active_now && silence.active_until}
-							<span class="text-ink-3" aria-hidden="true">·</span>
+							<span class="text-ink-3 max-sm:hidden" aria-hidden="true">·</span>
 							<span class="tnum">{m.alerts_silences_until({ when: formatDateTime(silence.active_until) })}</span>
 						{:else if silence.next_start_at}
-							<span class="text-ink-3" aria-hidden="true">·</span>
+							<span class="text-ink-3 max-sm:hidden" aria-hidden="true">·</span>
 							<span class="tnum">{m.alerts_silences_next({ when: formatDateTime(silence.next_start_at) })}</span>
 						{/if}
 					</div>
 					{#if silence.comment}
-						<p class="mt-1 text-[0.8125rem] text-ink-2">{silence.comment}</p>
+						<p class="mt-1 text-[0.8125rem] text-ink-2 max-sm:hidden">{silence.comment}</p>
 					{/if}
 				</div>
 				{#if auth.canOperate}

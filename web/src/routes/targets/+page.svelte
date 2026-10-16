@@ -892,7 +892,8 @@
 
 {#if !firstLoad && !pageError && targets.length > 0}
 	{@const itemClass = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface focus-visible:outline-2 focus-visible:outline-signal'}
-	<div class="mb-4 flex flex-wrap items-center gap-2">
+	<!-- Phones: the toolbar stays put while the list scrolls under it. -->
+	<div class="mb-4 flex flex-wrap items-center gap-2 max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:-mx-4 max-sm:mb-2 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
 		<label class="relative order-1 min-w-0 flex-1 sm:max-w-sm">
 			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
@@ -927,11 +928,12 @@
 				<Button
 					variant="ghost"
 					aria-pressed={selecting}
-					class={selecting ? 'bg-surface-2 text-ink' : ''}
+					aria-label={m.devices_list_select()}
+					class={`max-sm:w-10 max-sm:!px-0 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
 					onclick={() => (selecting ? stopSelecting() : (selecting = true))}
 				>
 					<ListChecks class="size-4" aria-hidden="true" />
-					{m.devices_list_select()}
+					<span class="max-sm:sr-only">{m.devices_list_select()}</span>
 				</Button>
 			{/if}
 			<Menu label={m.devices_targets_more()} align="right" bind:open={moreOpen}>
