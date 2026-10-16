@@ -1190,15 +1190,37 @@ pub(crate) fn selector(ids: &[TargetId]) -> String {
     format!("target=~\"{}\"", joined.join("|"))
 }
 
-/// Disponibilité d'une cible qui n'émet que `up` en cas de succès.
+/// Tranches de cinq minutes vivantes (1) ou muettes (0) d'une cible qui n'émet
+/// que `up` en cas de succès, sur `window`.
 ///
-/// `count_over_time` par tranche de cinq minutes dit si la cible a répondu au
-/// moins une fois dans la tranche ; `default 0` compte les tranches muettes
-/// comme des absences ; la moyenne donne la part de tranches vivantes.
-fn presence_query(sel: &str, window: &str) -> String {
+/// `count_over_time` par tranche dit si la cible a répondu au moins une fois ;
+/// `default 0` compte les tranches muettes comme des absences.
+///
+/// Une cible peut avoir plusieurs séries `up` : toute modification de ses
+/// étiquettes d'identité (nom, tags, ou en 0.1.0-alpha.7 les options du type
+/// retirées des `tag_*`) ouvre une nouvelle série et fige l'ancienne. Le
+/// `sum by (target)` les recoud en une seule ; sans lui, une seule des séries
+/// était retenue et l'historique d'avant le changement disparaissait.
+pub(crate) fn presence_slots(sel: &str, window: &str) -> String {
     format!(
-        "avg_over_time(((count_over_time(dumbmonit_up{{{sel}}}[5m]) > bool 0) default 0)[{window}:5m]) * 100"
+        "((sum by (target) (count_over_time(dumbmonit_up{{{sel}}}[5m])) > bool 0) default 0)[{window}:5m]"
     )
+}
+
+/// Part (en %) des tranches vivantes sur `window` (voir [`presence_slots`]).
+fn presence_query(sel: &str, window: &str) -> String {
+    format!("avg_over_time({}) * 100", presence_slots(sel, window))
+}
+
+/// Horodatage de la première mesure `up` de chaque cible, toutes séries
+/// confondues (voir [`presence_slots`]) : c'est le début de la couverture.
+pub(crate) fn first_up_query(sel: &str, window: &str) -> String {
+    format!("min by (target) (tfirst_over_time(dumbmonit_up{{{sel}}}[{window}]))")
+}
+
+/// Horodatage de la dernière mesure `up` de chaque cible, toutes séries confondues.
+fn last_up_query(sel: &str, window: &str) -> String {
+    format!("max by (target) (tlast_over_time(dumbmonit_up{{{sel}}}[{window}]))")
 }
 
 /// Ramène une mesure de présence à la part de la fenêtre réellement couverte
@@ -1386,8 +1408,8 @@ async fn collect_metrics(
 
     if !devices.is_empty() {
         let sel = selector(&devices);
-        let q_first = format!("tfirst_over_time(dumbmonit_up{{{sel}}}[90d])");
-        let q_last = format!("tlast_over_time(dumbmonit_up{{{sel}}}[90d])");
+        let q_first = first_up_query(&sel, "90d");
+        let q_last = last_up_query(&sel, "90d");
         let q_day = presence_query(&sel, "24h");
         let q_week = presence_query(&sel, "7d");
         let q_month = presence_query(&sel, "30d");
@@ -1981,6 +2003,29 @@ mod tests {
         assert_eq!(slugify("My Homelab"), "my-homelab");
         assert_eq!(slugify("  Réseau — maison  "), "r-seau-maison");
         assert_eq!(slugify("!!!"), "");
+    }
+
+    #[test]
+    fn device_queries_merge_every_series_of_a_target() {
+        // Un renommage ou un tag modifié ouvre une nouvelle série `up` : les
+        // requêtes doivent agréger par cible, sinon l'historique repart de zéro.
+        let sel = r#"target=~"3|4""#;
+        let presence = presence_query(sel, "1d");
+        assert!(
+            presence
+                .contains(r#"sum by (target) (count_over_time(dumbmonit_up{target=~"3|4"}[5m]))"#),
+            "{presence}"
+        );
+        assert!(presence.starts_with("avg_over_time(((sum by (target)"), "{presence}");
+        assert!(presence.ends_with("[1d:5m]) * 100"), "{presence}");
+        assert_eq!(
+            first_up_query(sel, "90d"),
+            r#"min by (target) (tfirst_over_time(dumbmonit_up{target=~"3|4"}[90d]))"#
+        );
+        assert_eq!(
+            last_up_query(sel, "90d"),
+            r#"max by (target) (tlast_over_time(dumbmonit_up{target=~"3|4"}[90d]))"#
+        );
     }
 
     #[test]
