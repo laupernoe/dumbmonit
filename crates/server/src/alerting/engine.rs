@@ -356,6 +356,19 @@ pub async fn evaluate_once(
         }
     }
     db::alerts::record_history(pool, &history, &plan.announced).await?;
+    // Relais d'escalade pris en charge : datés à part, pour qu'ils ne partent
+    // qu'une fois par épisode (voir `group::decide`).
+    let relayed: Vec<String> = outcome
+        .groups
+        .iter()
+        .flat_map(|group| group.items.iter())
+        .filter(|item| {
+            item.reason == crate::alerting::group::NotifyReason::Unacked
+                && plan.handled.contains(&item.fingerprint)
+        })
+        .map(|item| item.fingerprint.clone())
+        .collect();
+    db::alerts::mark_unacked_relayed(pool, &relayed, now).await?;
     // Tout ce que la politique a pris en charge — parti, en attente ou écarté —
     // est marqué : le cycle suivant ne doit pas le représenter.
     let fingerprints: Vec<String> = plan.handled.into_iter().collect();
@@ -572,6 +585,38 @@ mod tests {
             .expect("\"unreachable\" alert persisted");
         assert_eq!(injoignable.target_id, Some(1));
         assert_eq!(injoignable.state.notify_count, 1, "recorded despite the absence of a channel");
+
+        cleanup(&path, pool).await;
+    }
+
+    #[tokio::test]
+    async fn le_relais_d_escalade_est_date_et_survit_aux_cycles() {
+        let (path, pool, cipher) = fixture().await;
+        let http = notify::http_client();
+        let source = FakeSource { answers: vec![("tlast_over_time".to_string(), 600.0)] };
+
+        evaluate_once(&pool, &cipher, &source, &http, at(0)).await.expect("first cycle");
+        evaluate_once(&pool, &cipher, &source, &http, at(60)).await.expect("second cycle");
+        let fingerprint = db::alerts::list_active(&pool)
+            .await
+            .expect("active alerts")
+            .into_iter()
+            .find(|alert| alert.rule_uid == RULE_HOST_DOWN)
+            .expect("firing alert")
+            .fingerprint;
+
+        db::alerts::mark_unacked_relayed(&pool, std::slice::from_ref(&fingerprint), at(90))
+            .await
+            .expect("relay recorded");
+        // Le cycle suivant réécrit la ligne : le relais doit y rester.
+        evaluate_once(&pool, &cipher, &source, &http, at(120)).await.expect("third cycle");
+        let stored = db::alerts::load_states(&pool)
+            .await
+            .expect("states")
+            .into_iter()
+            .find(|alert| alert.fingerprint == fingerprint)
+            .expect("still stored");
+        assert_eq!(stored.state.unacked_relayed_at, Some(at(90)));
 
         cleanup(&path, pool).await;
     }
