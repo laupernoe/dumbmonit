@@ -243,7 +243,7 @@
 	<!-- Phones: only the way back; the page title says where this is. -->
 	<ol class="flex flex-wrap items-center gap-1 text-sm text-ink-2 max-sm:[&>li:not(:first-child)]:hidden">
 		<li class="flex">
-			<a href="/targets" class="inline-flex items-center gap-1 rounded hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
+			<a href="/targets" class="inline-flex items-center gap-1 rounded max-sm:min-h-10 hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal">
 				<ArrowLeft class="size-3.5" aria-hidden="true" />
 				{m.deviceform_new_devices()}
 			</a>
