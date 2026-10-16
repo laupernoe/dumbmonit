@@ -273,6 +273,15 @@ impl Collector for SynologyCollector {
             dsm.call::<model::StorageInfo>(API_STORAGE, VERSION_STORAGE, "load_info", &[]),
         );
 
+        // Si les trois appels de base échouent, la collecte n'a rien mesuré : renvoyer
+        // `Ok` avec `synology_up = 1` masquerait un NAS muet (délai dépassé) ou un
+        // compte sans droits (code 105). L'erreur est remontée telle quelle pour
+        // que `means_down()` tranche entre panne et configuration.
+        if system.is_err() && utilization.is_err() && storage.is_err() {
+            let errors = [system.err(), utilization.err(), storage.err()];
+            return Err(core_failure(errors.into_iter().flatten().collect()));
+        }
+
         // L'horloge du NAS sert de référence aux anciennetés de sauvegarde. Elle est
         // lue avant que la réponse ne soit consommée, et vaut `None` si l'état
         // système n'a pas pu être obtenu.
@@ -442,6 +451,18 @@ impl Collector for SynologyCollector {
         );
         Ok(Some(PROFILE_ID.to_string()))
     }
+}
+
+/// Choisit l'erreur à remonter quand tous les appels de base ont échoué : un refus
+/// d'authentification d'abord (c'est l'action à mener), puis une panne
+/// (`means_down`), sinon la première.
+fn core_failure(mut errors: Vec<ProbeError>) -> ProbeError {
+    let position = errors
+        .iter()
+        .position(|error| matches!(error, ProbeError::Auth(_)))
+        .or_else(|| errors.iter().position(ProbeError::means_down))
+        .unwrap_or(0);
+    errors.swap_remove(position)
 }
 
 /// Ce qu'une interrogation a réuni.
@@ -636,6 +657,24 @@ mod tests {
         assert_eq!(outcome.errors, 1, "l'échec est compté sans masquer le reste");
         assert_eq!(outcome.samples.len(), 2, "les deux points sains ont livré leurs mesures");
         assert!(outcome.samples.iter().any(|s| s.metric == "synology_temperature_celsius"));
+    }
+
+    #[test]
+    fn des_appels_de_base_tous_en_echec_remontent_lerreur_la_plus_parlante() {
+        let auth = core_failure(vec![
+            ProbeError::Protocol("illisible".into()),
+            ProbeError::Auth("code 105".into()),
+            ProbeError::Timeout(Duration::from_secs(3)),
+        ]);
+        assert!(matches!(auth, ProbeError::Auth(_)));
+        assert!(!auth.means_down(), "un refus est une erreur de configuration");
+
+        let panne = core_failure(vec![
+            ProbeError::Protocol("illisible".into()),
+            ProbeError::Timeout(Duration::from_secs(3)),
+            ProbeError::Protocol("autre".into()),
+        ]);
+        assert!(panne.means_down(), "{panne}");
     }
 
     #[test]

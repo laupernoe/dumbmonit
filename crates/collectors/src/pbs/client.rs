@@ -206,7 +206,7 @@ fn map_transport(error: &reqwest::Error, path: &str, timeout: Duration) -> Probe
     if error.is_timeout() {
         return ProbeError::Timeout(timeout);
     }
-    if is_certificate_error(error) {
+    if crate::http::is_certificate_error(error) {
         return ProbeError::Config(
             "TLS certificate rejected: a Proxmox Backup Server installation uses a \
              self-signed certificate by default. Add the tag \"insecure_tls = true\" on \
@@ -219,18 +219,6 @@ fn map_transport(error: &reqwest::Error, path: &str, timeout: Duration) -> Probe
         return ProbeError::Protocol(format!("Unreadable response from {path}"));
     }
     ProbeError::Unreachable(format!("{path}: {}", cause_chain(error)))
-}
-
-/// Vrai si l'échec vient de la validation du certificat.
-///
-/// `reqwest` range ces erreurs parmi les erreurs de connexion et n'expose pas de
-/// prédicat dédié : on inspecte donc la chaîne de causes, qui contient le libellé
-/// de `rustls`.
-fn is_certificate_error(error: &reqwest::Error) -> bool {
-    let chain = cause_chain(error).to_lowercase();
-    ["certificate", "certificat", "unknownissuer", "notvalidfor", "certexpired", "tls"]
-        .iter()
-        .any(|motif| chain.contains(motif))
 }
 
 fn cause_chain(error: &reqwest::Error) -> String {

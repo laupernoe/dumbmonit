@@ -26,6 +26,50 @@ pub const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 /// chaque fois, ce qui est la part la plus coûteuse d'une collecte Proxmox.
 const POOL_IDLE_TIMEOUT: Duration = Duration::from_secs(120);
 
+/// Vrai si l'échec de connexion vient de la validation du certificat présenté.
+///
+/// `reqwest` range ces erreurs parmi les erreurs de connexion et n'expose pas de
+/// prédicat dédié. On inspecte donc les *causes* (jamais le message de tête, qui
+/// reprend l'URL : un hôte nommé `pve-tls.lan` n'est pas un certificat refusé) et
+/// l'on ne retient que les libellés propres à la vérification de `rustls`. Une
+/// poignée de main coupée (`peer closed connection without sending TLS
+/// close_notify`, équipement qui redémarre) reste une panne de connexion.
+pub fn is_certificate_error(error: &reqwest::Error) -> bool {
+    certificate_in_chain(error)
+}
+
+/// Libellés de `rustls` (`InvalidCertificate`) et d'OpenSSL propres à un
+/// certificat refusé.
+const CERTIFICATE_MARKERS: [&str; 9] = [
+    "invalid peer certificate",
+    "invalid certificate",
+    "certificate verify failed",
+    "unknownissuer",
+    "notvalidforname",
+    "certexpired",
+    "certnotyetvalid",
+    "selfsigned",
+    "badsignature",
+];
+
+fn certificate_in_chain(error: &(dyn std::error::Error + 'static)) -> bool {
+    let mut cause = error.source();
+    while let Some(current) = cause {
+        if matches!(
+            current.downcast_ref::<rustls::Error>(),
+            Some(rustls::Error::InvalidCertificate(_))
+        ) {
+            return true;
+        }
+        let message = current.to_string().to_lowercase();
+        if CERTIFICATE_MARKERS.iter().any(|marker| message.contains(marker)) {
+            return true;
+        }
+        cause = current.source();
+    }
+    false
+}
+
 static VERIFIED: OnceLock<reqwest::Client> = OnceLock::new();
 static UNVERIFIED: OnceLock<reqwest::Client> = OnceLock::new();
 
@@ -189,5 +233,67 @@ mod tests {
         assert_eq!(response.status(), 302, "the cross-host redirect must not be followed");
         tokio::time::sleep(Duration::from_millis(100)).await;
         assert!(hit.try_recv().is_err(), "the redirect target must never be contacted");
+    }
+}
+
+#[cfg(test)]
+mod certificats {
+    use super::*;
+
+    /// Une erreur dont le message de tête (l'URL) ne doit jamais compter.
+    #[derive(Debug)]
+    struct Chaine(String, Option<Box<dyn std::error::Error + Send + Sync>>);
+
+    impl std::fmt::Display for Chaine {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            f.write_str(&self.0)
+        }
+    }
+
+    impl std::error::Error for Chaine {
+        fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+            self.1.as_ref().map(|e| e.as_ref() as &(dyn std::error::Error + 'static))
+        }
+    }
+
+    fn avec_cause(tete: &str, cause: &str) -> Chaine {
+        Chaine(tete.into(), Some(Box::new(std::io::Error::other(cause.to_string()))))
+    }
+
+    #[test]
+    fn un_certificat_refuse_est_reconnu() {
+        for cause in [
+            "invalid peer certificate: UnknownIssuer",
+            "invalid peer certificate: Expired",
+            "invalid peer certificate: NotValidForName",
+        ] {
+            let erreur = avec_cause("error sending request for url (https://pve.lan/)", cause);
+            assert!(certificate_in_chain(&erreur), "{cause}");
+        }
+        let rustls = Chaine(
+            "x".into(),
+            Some(Box::new(rustls::Error::InvalidCertificate(
+                rustls::CertificateError::UnknownIssuer,
+            ))),
+        );
+        assert!(certificate_in_chain(&rustls));
+    }
+
+    #[test]
+    fn le_mot_tls_dans_lurl_ou_une_poignee_de_main_coupee_ne_sont_pas_un_certificat() {
+        let url = avec_cause(
+            "error sending request for url (https://pve-tls.lan:8006/api2/json)",
+            "tcp connect error: Connection refused (os error 111)",
+        );
+        assert!(!certificate_in_chain(&url));
+
+        let coupee = avec_cause(
+            "error sending request for url (https://pve.lan:8006/)",
+            "peer closed connection without sending TLS close_notify",
+        );
+        assert!(!certificate_in_chain(&coupee));
+
+        let alerte = avec_cause("x", "received fatal alert: HandshakeFailure (tls)");
+        assert!(!certificate_in_chain(&alerte));
     }
 }
