@@ -93,11 +93,18 @@ The wall's content security policy lets the page frame only YouTube
 
 ## Widgets on the wall
 
-An admin can add **widgets** to the wall in **Settings → Wall display → Wall widgets**: the
-weather of a few places, crypto prices, stock quotes, exchange rates and the
+An admin can add **widgets** to the wall in **Settings → Wall display → Wall
+widgets**: the weather, crypto prices, stock quotes, exchange rates and the
 latest critical vulnerabilities. Each one is off by default and turned on on
-its own. They share one card in the right column, under the clock: one widget
-at a time, each held for the chosen number of seconds (20 by default), then the
+its own.
+
+The **weather** is kept simple: an icon and the temperature now, for one
+place, right under the clock. No forecast, no details. A screen reader hears
+the place, the sky and the temperature; hovering it shows the same words and
+the source (Open-Meteo).
+
+The other widgets share one card in the right column, under the clock: one
+widget at a time, each held for the chosen number of seconds (20 by default), then the
 next fades in. Long lists are split into pages of five. Dots under the card
 show where the round is. Under *reduced motion* the cards swap without fading.
 
@@ -106,7 +113,7 @@ only a colour. Every card names its source, discreetly, and how fresh it is.
 
 | Widget | What it shows | Source | Key | The server asks |
 |---|---|---|---|---|
-| Weather | Now, every three hours until +12 h, the next four days, for up to four places | [Open-Meteo](https://open-meteo.com) (forecast and geocoding) | none | every 15 min, one call for all places |
+| Weather | An icon and the temperature now, for one place, under the clock | [Open-Meteo](https://open-meteo.com) (current conditions and geocoding) | none | every 15 min |
 | Crypto | Price and 24-hour change of up to ten coins, in the chosen currency | [CoinGecko](https://www.coingecko.com) public API | none (optional free Demo key) | every minute, one call |
 | Stocks | Last price and change of the day of up to ten symbols | [Finnhub](https://finnhub.io) | **free key required** | every 5 min, one call per symbol |
 | Exchange rates | What one unit (or 100 of a small currency) costs in the base currency, and its change since the previous day | [Frankfurter](https://frankfurter.dev) (central bank reference rates) | none | every hour |
@@ -144,7 +151,8 @@ secret; Settings only shows whether one is saved. Typing a new one replaces it,
 ### Choosing what to show
 
 - **Weather:** type a city and press **Search** (Open-Meteo's geocoding, in
-  your language), then add up to four places. Units: metric or imperial.
+  your language), then choose the place (choosing another one replaces it).
+  Units: °C or °F.
 - **Crypto:** tick among the main coins (BTC, ETH, SOL, XRP, BNB, ADA, DOGE,
   TRX, TON, AVAX, DOT, LINK, LTC, XLM, XMR, USDT, USDC) or add any coin by its
   CoinGecko id (the last part of its address on coingecko.com, such as

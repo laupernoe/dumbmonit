@@ -6,7 +6,8 @@
 	 *
 	 * - coins (CoinGecko): pick among the main ones, or add any CoinGecko id;
 	 *   display currency; an optional free Demo key;
-	 * - weather (Open-Meteo): find a city, keep up to four; units;
+	 * - weather (Open-Meteo): find a city; the wall shows its icon and
+	 *   temperature under the clock; units;
 	 * - stocks (Finnhub): ticker symbols and the free key they need;
 	 * - exchange rates (Frankfurter): base currency and the ones to show;
 	 * - critical vulnerabilities (NVD, CISA KEV): which list, how many.
@@ -32,7 +33,6 @@
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
 
 	const MAX_COINS = 10;
-	const MAX_PLACES = 4;
 	const MAX_CURRENCIES = 10;
 
 	let loading = $state(true);
@@ -146,9 +146,11 @@
 	const samePlace = (a: WallPlace, b: WallPlace) =>
 		Math.abs(a.latitude - b.latitude) < 0.01 && Math.abs(a.longitude - b.longitude) < 0.01;
 
-	function addPlace(place: WallPlace) {
-		if (form.weather.places.length >= MAX_PLACES || form.weather.places.some((p) => samePlace(p, place))) return;
-		form.weather.places = [...form.weather.places, place];
+	/** One place: choosing another replaces it. */
+	function choosePlace(place: WallPlace) {
+		form.weather.places = [place];
+		found = null;
+		placeQuery = '';
 		notice = null;
 	}
 
@@ -316,8 +318,8 @@
 											variant="secondary"
 											size="sm"
 											class="min-h-10"
-											onclick={() => addPlace(place)}
-											disabled={form.weather.places.length >= MAX_PLACES || form.weather.places.some((p) => samePlace(p, place))}
+											onclick={() => choosePlace(place)}
+											disabled={form.weather.places.some((p) => samePlace(p, place))}
 											aria-label={m.settings_widgets_weather_add({ place: label })}
 										>
 											<Plus class="size-4" aria-hidden="true" />
@@ -349,9 +351,6 @@
 									</li>
 								{/each}
 							</ul>
-						{/if}
-						{#if form.weather.places.length >= MAX_PLACES}
-							<p class="mt-1 text-[0.8125rem] text-ink-2">{m.settings_widgets_weather_limit({ count: MAX_PLACES })}</p>
 						{/if}
 					</div>
 				</div>

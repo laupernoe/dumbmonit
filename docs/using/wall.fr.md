@@ -101,10 +101,17 @@ relayée).
 ## Widgets sur le mur
 
 Un administrateur peut ajouter des **widgets** au mur dans **Paramètres → Mur →
-Widgets du mur** : la météo de quelques villes, le cours de cryptomonnaies, d'actions,
-les taux de change et les dernières failles critiques. Chacun est désactivé par
-défaut et s'allume séparément. Ils se partagent une carte dans la colonne de
-droite, sous l'horloge : un widget à la fois, chacun pendant le nombre de
+Widgets du mur** : la météo, le cours de cryptomonnaies, d'actions, les taux de
+change et les dernières failles critiques. Chacun est désactivé par défaut et
+s'allume séparément.
+
+La **météo** reste simple : une icône et la température actuelle, pour une
+ville, juste sous l'heure. Ni prévisions ni détails. Un lecteur d'écran entend
+la ville, le temps qu'il fait et la température ; au survol, les mêmes mots et
+la source (Open-Meteo).
+
+Les autres widgets se partagent une carte dans la colonne de droite, sous
+l'horloge : un widget à la fois, chacun pendant le nombre de
 secondes choisi (20 par défaut), puis le suivant apparaît en fondu. Les longues
 listes sont coupées en pages de cinq. Des points sous la carte montrent où en
 est le tour. Si l'écran demande de *réduire les animations*, les cartes se
@@ -116,7 +123,7 @@ discrètement, et dit de quand datent ses chiffres.
 
 | Widget | Ce qu'il montre | Source | Clé | Le serveur demande |
 |---|---|---|---|---|
-| Météo | Maintenant, toutes les trois heures jusqu'à +12 h, les quatre jours suivants, pour quatre villes au plus | [Open-Meteo](https://open-meteo.com) (prévisions et géocodage) | aucune | toutes les 15 min, un appel pour toutes les villes |
+| Météo | Une icône et la température actuelle d'une ville, sous l'horloge | [Open-Meteo](https://open-meteo.com) (conditions actuelles et géocodage) | aucune | toutes les 15 min |
 | Crypto | Cours et variation sur 24 h de dix monnaies au plus, dans la devise choisie | API publique de [CoinGecko](https://www.coingecko.com) | aucune (clé Demo gratuite facultative) | chaque minute, un appel |
 | Actions | Dernier cours et variation du jour de dix symboles au plus | [Finnhub](https://finnhub.io) | **clé gratuite obligatoire** | toutes les 5 min, un appel par symbole |
 | Devises | Ce que coûte une unité (ou 100 d'une petite monnaie) dans la devise de base, et sa variation depuis la veille | [Frankfurter](https://frankfurter.dev) (taux de référence des banques centrales) | aucune | chaque heure |
@@ -155,7 +162,7 @@ taper une nouvelle la remplace, **Supprimer la clé** l'efface.
 ### Choisir ce qui s'affiche
 
 - **Météo :** tapez une ville et **Rechercher** (géocodage d'Open-Meteo, dans
-  votre langue), puis ajoutez jusqu'à quatre villes. Unités : métriques ou
+  votre langue), puis choisissez-la (en choisir une autre la remplace). Unités : métriques ou
   impériales.
 - **Crypto :** cochez parmi les principales monnaies (BTC, ETH, SOL, XRP, BNB,
   ADA, DOGE, TRX, TON, AVAX, DOT, LINK, LTC, XLM, XMR, USDT, USDC) ou ajoutez

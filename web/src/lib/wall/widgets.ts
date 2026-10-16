@@ -84,28 +84,13 @@ export function weatherKind(code: number): WeatherKind {
 	return 'cloudy';
 }
 
-/** `2026-10-16T19:00` (the place's own clock) as an hour in the reader's locale. */
-export function localHour(time: string, locale: string): string {
-	const date = new Date(`${time.slice(0, 16)}:00Z`);
-	if (Number.isNaN(date.getTime())) return time.slice(11, 16);
-	return date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' });
-}
-
-/** `2026-10-17` as a short weekday in the reader's locale. */
-export function weekday(date: string, locale: string): string {
-	const day = new Date(`${date.slice(0, 10)}T12:00:00Z`);
-	if (Number.isNaN(day.getTime())) return date;
-	return day.toLocaleDateString(locale, { weekday: 'short', timeZone: 'UTC' });
-}
-
+/** A temperature for across the room: whole degrees, `18°`. */
 export function roundTemperature(value: number): string {
 	return `${Math.round(value)}°`;
 }
 
 /** One card of the rotating deck. Long lists are split into pages. */
-export type WidgetCard =
-	| { key: string; kind: 'weather'; place: number }
-	| { key: string; kind: 'crypto' | 'stocks' | 'fx' | 'cve'; from: number; to: number; page: number; pages: number };
+export type WidgetCard = { key: string; kind: 'crypto' | 'stocks' | 'fx' | 'cve'; from: number; to: number; page: number; pages: number };
 
 /** Rows per card, so a page always fits the column and reads from the sofa. */
 export const ROWS_PER_CARD = { crypto: 5, stocks: 5, fx: 5, cve: 4 } as const;
@@ -122,18 +107,13 @@ function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number 
 }
 
 /**
- * The deck, in a fixed order: each place's weather, then coins, stocks, rates
- * and vulnerabilities. A widget turned on but unavailable still gets its card
+ * The deck, in a fixed order: coins, stocks, rates and vulnerabilities (the
+ * weather is not a card: it sits under the clock). A widget turned on but unavailable still gets its card
  * (it says so); a widget turned off gets none.
  */
 export function widgetCards(widgets: WallWidgets | null): WidgetCard[] {
 	if (!widgets) return [];
 	const cards: WidgetCard[] = [];
-	if (widgets.weather) {
-		const places = widgets.weather.data?.places.length ?? 0;
-		if (places === 0) cards.push({ key: 'weather:0', kind: 'weather', place: 0 });
-		for (let i = 0; i < places; i += 1) cards.push({ key: `weather:${i}`, kind: 'weather', place: i });
-	}
 	for (const kind of ['crypto', 'stocks', 'fx', 'cve'] as const) {
 		const rows = rowsOf(widgets, kind);
 		if (rows === null) continue;

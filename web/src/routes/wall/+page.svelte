@@ -86,6 +86,7 @@
 	import WallNewsVideo from '#lib/components/wall/WallNewsVideo.svelte';
 	import WallGallery from '#lib/components/wall/WallGallery.svelte';
 	import WallWidgets from '#lib/components/wall/WallWidgets.svelte';
+	import WallWeather from '#lib/components/wall/WallWeather.svelte';
 	import { getWallWidgets } from '#lib/api/wallWidgets.js';
 	import type { WallWidgets as WallWidgetsData } from '#lib/api/types.js';
 	import { parseMusicLink } from '#lib/wall/music.js';
@@ -140,7 +141,8 @@
 	// --- Widgets ----------------------------------------------------------------
 
 	/**
-	 * Coins, weather, stocks, rates and CVEs, off unless an admin turned them on.
+	 * Coins, stocks, rates and CVEs in a rotating card, and the weather now under
+	 * the clock; off unless an admin turned them on.
 	 * The server reads and caches every source (a minute for coins, an hour for
 	 * rates); the wall asks every minute while visible and keeps the last answer
 	 * when a read fails. An older server without the route: no more asking.
@@ -148,7 +150,7 @@
 	const WIDGETS_MS = 60_000;
 	let widgets = $state<WallWidgetsData | null>(null);
 	const hasWidgets = $derived(
-		!!widgets && !!(widgets.crypto || widgets.weather || widgets.stocks || widgets.fx || widgets.cve)
+		!!widgets && !!(widgets.crypto || widgets.stocks || widgets.fx || widgets.cve)
 	);
 
 	$effect(() => {
@@ -734,6 +736,7 @@
 
 			<div class="board-right">
 				<time class="clock display tnum" datetime={now.toISOString()}>{clock}</time>
+				{#if widgets?.weather}<WallWeather section={widgets.weather} />{/if}
 				<p class="date">{dateLabel}</p>
 				<p class="updated tnum" aria-live="off">
 					<span class="refresh" aria-hidden="true"><span style:transform="scaleX({progress})"></span></span>

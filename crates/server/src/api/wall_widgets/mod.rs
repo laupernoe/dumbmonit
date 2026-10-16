@@ -53,7 +53,8 @@ const FX_TTL: Duration = Duration::from_secs(3600);
 const CVE_TTL: Duration = Duration::from_secs(3600);
 
 const MAX_COINS: usize = 10;
-const MAX_PLACES: usize = 4;
+/// Une ville : le mur montre son temps sous l'horloge, rien de plus.
+const MAX_PLACES: usize = 1;
 const MAX_SYMBOLS: usize = 10;
 const MAX_CURRENCIES: usize = 10;
 const MAX_KEY_LEN: usize = 200;
@@ -276,7 +277,7 @@ pub fn validate(s: &mut WidgetSettings) -> Result<(), String> {
 
     let weather = &mut s.weather;
     if weather.places.len() > MAX_PLACES {
-        return Err(format!("At most {MAX_PLACES} places."));
+        return Err("Choose a single place.".into());
     }
     for place in &mut weather.places {
         place.name = place.name.trim().chars().take(80).collect();
@@ -445,22 +446,17 @@ async fn crypto_section(
     Section::of(outcome, coins::SOURCE, coins::SOURCE_URL)
 }
 
+/// La ville choisie (la première, s'il en reste plusieurs d'un ancien réglage).
 async fn weather_section(
     client: &reqwest::Client,
-    s: &WeatherSettings,
+    place: &weather::Place,
+    units: &str,
 ) -> Section<weather::WeatherData> {
-    let imperial = s.units == "imperial";
-    let cache_key = format!(
-        "{}|{}",
-        s.units,
-        s.places
-            .iter()
-            .map(|p| format!("{}:{:.4},{:.4}", p.name, p.latitude, p.longitude))
-            .collect::<Vec<_>>()
-            .join(";")
-    );
+    let imperial = units == "imperial";
+    let cache_key =
+        format!("{units}|{}:{:.4},{:.4}", place.name, place.latitude, place.longitude);
     let outcome =
-        WEATHER.get(&cache_key, WEATHER_TTL, || weather::fetch(client, &s.places, imperial)).await;
+        WEATHER.get(&cache_key, WEATHER_TTL, || weather::fetch(client, place, imperial)).await;
     Section::of(outcome, weather::SOURCE, weather::SOURCE_URL)
 }
 
@@ -551,10 +547,11 @@ async fn widgets(
             }
         },
         async {
-            if s.weather.enabled && !s.weather.places.is_empty() {
-                Some(weather_section(&client, &s.weather).await)
-            } else {
-                None
+            match s.weather.places.first() {
+                Some(place) if s.weather.enabled => {
+                    Some(weather_section(&client, place, &s.weather.units).await)
+                }
+                _ => None,
             }
         },
         async {

@@ -7,13 +7,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **Widgets on the wall.** Weather for up to four places (now, the next hours
-  and days, from Open-Meteo), crypto prices with their 24-hour change
+- **Widgets on the wall.** The weather now under the clock (an icon and the
+  temperature of one place, from Open-Meteo), crypto prices with their 24-hour change
   (CoinGecko), stock quotes with the change of the day (Finnhub, free key),
   exchange rates against a base currency (Frankfurter) and the latest critical
   vulnerabilities (NVD and the CISA catalogue of exploited ones). Each one is
-  turned on and set up in **Settings → Wall display → Wall widgets**; they take
-  turns in one card under the clock, fading from one to the next. Rises and
+  turned on and set up in **Settings → Wall display → Wall widgets**; all but
+  the weather take turns in one card under the clock, fading from one to the next. Rises and
   falls carry an arrow and a sign, every card names its source. The server
   reads and caches every source (a minute for coins, an hour for rates and
   CVEs), so no display talks to them; a source that fails keeps its last

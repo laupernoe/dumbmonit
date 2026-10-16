@@ -7516,7 +7516,7 @@ components:
           type: object
           properties:
             enabled: { type: boolean }
-            places: { type: array, maxItems: 4, items: { $ref: "#/components/schemas/WallPlace" } }
+            places: { type: array, maxItems: 1, items: { $ref: "#/components/schemas/WallPlace" }, description: "The one place whose weather shows under the clock." }
             units: { type: string, enum: [metric, imperial] }
         stocks:
           type: object

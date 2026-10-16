@@ -6,11 +6,9 @@ import {
 	formatPrice,
 	fxQuote,
 	isStale,
-	localHour,
 	nextCard,
 	trend,
 	weatherKind,
-	weekday,
 	widgetCards
 } from '../src/lib/wall/widgets.ts';
 
@@ -60,23 +58,18 @@ test('WMO codes map to a picture', () => {
 	assert.equal(weatherKind(99), 'storm');
 });
 
-test("a place's own hours and days", () => {
-	assert.equal(localHour('2026-10-16T19:00', 'en-GB'), '19:00');
-	assert.equal(weekday('2026-10-17', 'en'), 'Sat');
-});
-
-test('the deck: weather per place, long lists split in pages, off widgets absent', () => {
+test('the deck: no weather card, long lists split in pages, off widgets absent', () => {
 	assert.deepEqual(widgetCards(null), []);
 	const widgets = {
 		rotate_seconds: 20,
-		weather: section({ temperature_unit: '°C', wind_unit: 'km/h', places: [{}, {}] }),
+		weather: section({ name: 'Lausanne', temperature_unit: '°C', temperature: 18.4, code: 3, is_day: true }),
 		crypto: section({ currency: 'USD', coins: new Array(7).fill({}) }),
 		stocks: { ...section(null), needs_key: true },
 		fx: null,
 		cve: section(new Array(3).fill({}))
 	};
 	const keys = widgetCards(widgets).map((card) => card.key);
-	assert.deepEqual(keys, ['weather:0', 'weather:1', 'crypto:0', 'crypto:1', 'stocks:0', 'cve:0']);
+	assert.deepEqual(keys, ['crypto:0', 'crypto:1', 'stocks:0', 'cve:0']);
 	const crypto = widgetCards(widgets).filter((card) => card.kind === 'crypto');
 	assert.deepEqual(
 		crypto.map((card) => [card.from, card.to, card.page, card.pages]),

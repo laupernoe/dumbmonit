@@ -2,8 +2,9 @@
 	/**
 	 * The widgets deck of the wall: one card at a time, each held for the
 	 * seconds chosen in Settings, then the next fades in (no cascade, nothing
-	 * slides). Every place's weather, then coins, stocks, exchange rates and
-	 * critical vulnerabilities; long lists split into pages. All cards sit in
+	 * slides). Coins, stocks, exchange rates and critical vulnerabilities; long
+	 * lists split into pages. (The weather is not a card: it sits under the
+	 * clock, `WallWeather`.) All cards sit in
 	 * the same grid cell, so the deck keeps the height of its tallest card and
 	 * nothing around it jumps.
 	 *
@@ -13,7 +14,7 @@
 	 * Rises and falls carry an arrow and a sign, not only a colour.
 	 * Under `prefers-reduced-motion` the cards swap without fading.
 	 */
-	import { Bitcoin, ChartCandlestick, ArrowLeftRight, ShieldAlert, MapPin } from 'lucide-svelte';
+	import { Bitcoin, ChartCandlestick, ArrowLeftRight, ShieldAlert } from 'lucide-svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatRelative } from '#lib/format.js';
@@ -22,17 +23,11 @@
 		formatNumber,
 		formatPrice,
 		fxQuote,
-		localHour,
 		nextCard,
-		roundTemperature,
-		weatherKind,
-		weekday,
 		widgetCards,
-		type WeatherKind,
 		type WidgetCard
 	} from '#lib/wall/widgets.js';
 	import Trend from './widgets/Trend.svelte';
-	import WeatherIcon from './widgets/WeatherIcon.svelte';
 
 	interface Props {
 		widgets: WallWidgets;
@@ -60,21 +55,8 @@
 		return (widgets[card.kind] as WallSection<unknown> | null) ?? null;
 	}
 
-	const SKY: Record<WeatherKind, () => string> = {
-		clear: m.wall_widgets_sky_clear,
-		partly: m.wall_widgets_sky_partly,
-		cloudy: m.wall_widgets_sky_cloudy,
-		fog: m.wall_widgets_sky_fog,
-		drizzle: m.wall_widgets_sky_drizzle,
-		rain: m.wall_widgets_sky_rain,
-		snow: m.wall_widgets_sky_snow,
-		storm: m.wall_widgets_sky_storm
-	};
-
 	function title(card: WidgetCard): string {
 		switch (card.kind) {
-			case 'weather':
-				return m.wall_widgets_weather();
 			case 'crypto':
 				return m.wall_widgets_crypto();
 			case 'stocks':
@@ -112,14 +94,13 @@
 				>
 					<header class="head">
 						<span class="eyebrow">
-							{#if card.kind === 'weather'}<MapPin class="size-[1em]" aria-hidden="true" />
-							{:else if card.kind === 'crypto'}<Bitcoin class="size-[1em]" aria-hidden="true" />
+							{#if card.kind === 'crypto'}<Bitcoin class="size-[1em]" aria-hidden="true" />
 							{:else if card.kind === 'stocks'}<ChartCandlestick class="size-[1em]" aria-hidden="true" />
 							{:else if card.kind === 'fx'}<ArrowLeftRight class="size-[1em]" aria-hidden="true" />
 							{:else}<ShieldAlert class="size-[1em]" aria-hidden="true" />{/if}
 							{title(card)}
 						</span>
-						{#if card.kind !== 'weather' && card.pages > 1}
+						{#if card.pages > 1}
 							<span class="page tnum">{m.wall_widgets_page({ page: card.page + 1, pages: card.pages })}</span>
 						{/if}
 					</header>
@@ -128,46 +109,6 @@
 						<p class="unavailable">{m.wall_widgets_needs_key()}</p>
 					{:else if !section.data}
 						<p class="unavailable">{m.wall_widgets_unavailable()}</p>
-					{:else if card.kind === 'weather' && widgets.weather?.data}
-						{@const data = widgets.weather.data}
-						{@const place = data.places[card.place]}
-						{#if place}
-							<div class="weather">
-								<div class="now">
-									<WeatherIcon code={place.now.code} isDay={place.now.is_day} class="now-icon" />
-									<div class="min-w-0">
-										<p class="place">{place.name}</p>
-										<p class="now-line">
-											<span class="temp tnum">{roundTemperature(place.now.temperature)}</span>
-											<span class="sky">{SKY[weatherKind(place.now.code)]()}</span>
-										</p>
-										{#if place.now.feels_like !== null}
-											<p class="detail tnum">{m.wall_widgets_feels_like({ temperature: roundTemperature(place.now.feels_like) })}</p>
-										{/if}
-									</div>
-								</div>
-								<ul class="hours">
-									{#each place.hours as hour (hour.time)}
-										<li>
-											<span class="label tnum">{localHour(hour.time, locale)}</span>
-											<WeatherIcon code={hour.code} isDay={hour.is_day} class="small-icon" />
-											<span class="value tnum">{roundTemperature(hour.temperature)}</span>
-											<span class="sr-only">{SKY[weatherKind(hour.code)]()}</span>
-										</li>
-									{/each}
-								</ul>
-								<ul class="days">
-									{#each place.days as day (day.date)}
-										<li>
-											<span class="label">{weekday(day.date, locale)}</span>
-											<WeatherIcon code={day.code} class="small-icon" />
-											<span class="value tnum">{roundTemperature(day.max)} <span class="low">{roundTemperature(day.min)}</span></span>
-											<span class="sr-only">{SKY[weatherKind(day.code)]()}</span>
-										</li>
-									{/each}
-								</ul>
-							</div>
-						{/if}
 					{:else if card.kind === 'crypto' && widgets.crypto?.data}
 						{@const data = widgets.crypto.data}
 						<ul class="rows">
@@ -371,87 +312,6 @@
 		font-weight: 600;
 	}
 
-	/* Weather */
-	.weather {
-		display: flex;
-		flex-direction: column;
-		gap: 0.875rem;
-	}
-	.now {
-		display: flex;
-		align-items: center;
-		gap: 1rem;
-	}
-	.now :global(.now-icon) {
-		width: 4rem;
-		height: 4rem;
-		flex-shrink: 0;
-		color: var(--c-ink);
-	}
-	.place {
-		font-size: 1.125rem;
-		font-weight: 700;
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-	.now-line {
-		display: flex;
-		align-items: baseline;
-		flex-wrap: wrap;
-		gap: 0.25rem 0.75rem;
-	}
-	.temp {
-		font-size: 3rem;
-		font-weight: 750;
-		line-height: 1;
-	}
-	.sky {
-		font-size: 1.125rem;
-		font-weight: 600;
-		color: var(--c-ink-2);
-	}
-	.detail {
-		font-size: 0.9375rem;
-		color: var(--c-ink-2);
-	}
-	.hours,
-	.days {
-		display: grid;
-		grid-template-columns: repeat(4, minmax(0, 1fr));
-		gap: 0.5rem;
-	}
-	.days {
-		padding-top: 0.75rem;
-		border-top: 1px solid var(--c-line);
-	}
-	.hours li,
-	.days li {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 0.25rem;
-	}
-	.hours :global(.small-icon),
-	.days :global(.small-icon) {
-		width: 1.75rem;
-		height: 1.75rem;
-	}
-	.label {
-		font-size: 0.875rem;
-		font-weight: 600;
-		color: var(--c-ink-2);
-		text-transform: capitalize;
-	}
-	.value {
-		font-size: 1.125rem;
-		font-weight: 700;
-	}
-	.low {
-		font-weight: 500;
-		color: var(--c-ink-2);
-	}
-
 	/* Vulnerabilities */
 	.cves {
 		display: flex;
@@ -539,9 +399,6 @@
 		.row {
 			font-size: 1.5rem;
 			grid-template-columns: minmax(0, 1fr) auto 7.5rem;
-		}
-		.temp {
-			font-size: 3.75rem;
 		}
 		.cve-head {
 			font-size: 1.125rem;

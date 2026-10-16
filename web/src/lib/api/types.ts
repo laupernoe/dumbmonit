@@ -3973,45 +3973,15 @@ export interface WallCrypto {
 	coins: WallCoin[];
 }
 
-export interface WallWeatherNow {
+/** The weather now in the chosen place, shown under the wall's clock. */
+export interface WallWeather {
+	name: string;
+	/** `°C` or `°F`. */
+	temperature_unit: string;
 	temperature: number;
-	feels_like: number | null;
 	/** WMO weather code. */
 	code: number;
 	is_day: boolean;
-	wind: number | null;
-}
-
-export interface WallWeatherHour {
-	/** The place's local time, `2026-10-16T19:00`. */
-	time: string;
-	temperature: number;
-	code: number;
-	is_day: boolean;
-	precipitation: number | null;
-}
-
-export interface WallWeatherDay {
-	/** The place's local date, `2026-10-17`. */
-	date: string;
-	code: number;
-	max: number;
-	min: number;
-	precipitation: number | null;
-}
-
-export interface WallPlaceWeather {
-	name: string;
-	region: string;
-	now: WallWeatherNow;
-	hours: WallWeatherHour[];
-	days: WallWeatherDay[];
-}
-
-export interface WallWeather {
-	temperature_unit: string;
-	wind_unit: string;
-	places: WallPlaceWeather[];
 }
 
 export interface WallQuote {
