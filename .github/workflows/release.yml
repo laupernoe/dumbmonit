@@ -247,14 +247,16 @@ jobs:
       # parfois lente, la taille prime sur la vitesse de compilation.
       # Les chemins de la machine (dépôt, CARGO_HOME) sont remplacés par des
       # chemins fixes dans le binaire : il ne dépend pas de l'endroit où il est
-      # construit (vérifié par reproducible.yml, mêmes options).
+      # construit (vérifié par reproducible.yml, mêmes options). `-Wl,-S` : sans
+      # informations de débogage (chemins des fichiers objets), l'identifiant
+      # LC_UUID que calcule ld ne dépend plus du dossier de construction.
       - name: Build
         env:
           CARGO_PROFILE_RELEASE_OPT_LEVEL: s
           CARGO_PROFILE_RELEASE_LTO: fat
         run: |
           set -eu
-          export RUSTFLAGS="--remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build"
+          export RUSTFLAGS="--remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build -C link-arg=-Wl,-S"
           xcodebuild -version
           mkdir -p dist
           for target in aarch64-apple-darwin x86_64-apple-darwin; do

@@ -183,7 +183,7 @@ jobs:
           for dir in a another/checkout/path; do
             export CARGO_HOME="$RUNNER_TEMP/cargo-$(echo "$dir" | tr / -)"
             # Same flags as release.yml.
-            export RUSTFLAGS="--remap-path-prefix=$CARGO_HOME=/cargo --remap-path-prefix=$PWD/$dir=/build"
+            export RUSTFLAGS="--remap-path-prefix=$CARGO_HOME=/cargo --remap-path-prefix=$PWD/$dir=/build -C link-arg=-Wl,-S"
             (cd "$dir" && for target in aarch64-apple-darwin x86_64-apple-darwin; do
               cargo build --release --locked -p dumbmonit-agent --target "$target"
             done)
