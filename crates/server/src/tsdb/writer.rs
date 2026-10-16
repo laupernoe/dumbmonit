@@ -36,11 +36,12 @@ const CHANNEL_CAPACITY: usize = 1024;
 #[derive(Clone)]
 pub struct SampleSink {
     tx: mpsc::Sender<Vec<Sample>>,
-    /// Demandes de vidage immédiat, acquittées une fois l'envoi tenté. Les clones
+    /// Demandes de vidage immédiat, acquittées une fois l'envoi tenté (vrai si le
+    /// tampon a bien été écrit). Les clones
     /// du point d'entrée vivent dans l'état partagé des tâches de fond : la
     /// fermeture du canal principal n'arrive donc jamais avant l'arrêt du runtime,
     /// et ne peut pas servir de signal d'arrêt.
-    flush_tx: mpsc::Sender<oneshot::Sender<()>>,
+    flush_tx: mpsc::Sender<oneshot::Sender<bool>>,
 }
 
 impl SampleSink {
@@ -73,11 +74,12 @@ impl SampleSink {
     /// Vide le tampon tout de suite et attend que l'envoi ait été tenté, au plus
     /// `timeout`. Appelée à l'arrêt du serveur, avant celui de VictoriaMetrics :
     /// sans elle, la fin du runtime annule la tâche d'écriture et les échantillons
-    /// encore en tampon sont perdus. Renvoie `false` si l'acquittement n'est pas
-    /// arrivé à temps (tâche disparue ou VictoriaMetrics trop lent).
+    /// encore en tampon sont perdus. Renvoie `false` si le tampon n'a pas été
+    /// écrit à temps (tâche disparue, VictoriaMetrics trop lent ou en échec).
     pub async fn flush(&self, timeout: Duration) -> bool {
         let (ack, done) = oneshot::channel();
-        let attempt = async { self.flush_tx.send(ack).await.is_ok() && done.await.is_ok() };
+        let attempt =
+            async { self.flush_tx.send(ack).await.is_ok() && matches!(done.await, Ok(true)) };
         tokio::time::timeout(timeout, attempt).await.unwrap_or(false)
     }
 }
@@ -94,7 +96,7 @@ pub fn spawn_writer_with(
     flush_size: usize,
 ) -> SampleSink {
     let (tx, mut rx) = mpsc::channel::<Vec<Sample>>(CHANNEL_CAPACITY);
-    let (flush_tx, mut flush_rx) = mpsc::channel::<oneshot::Sender<()>>(4);
+    let (flush_tx, mut flush_rx) = mpsc::channel::<oneshot::Sender<bool>>(4);
     let flush_at = flush_size.max(1);
 
     tokio::spawn(async move {
@@ -128,7 +130,7 @@ pub fn spawn_writer_with(
                     let pending = buffer.len();
                     flush(&victoria, &mut buffer).await;
                     info!(pending, left = buffer.len(), "write buffer flushed on request");
-                    let _ = ack.send(());
+                    let _ = ack.send(buffer.is_empty());
                 }
                 _ = ticker.tick() => flush(&victoria, &mut buffer).await,
             }
@@ -244,6 +246,24 @@ mod tests {
 
         assert!(sink.flush(Duration::from_secs(5)).await, "vidage non acquitté");
         assert!(received.load(Ordering::SeqCst) >= 1, "aucun échantillon reçu");
+    }
+
+    /// Un vidage que VictoriaMetrics refuse n'est pas confirmé : l'arrêt doit
+    /// pouvoir dire que des échantillons sont perdus.
+    #[tokio::test]
+    async fn a_failed_flush_is_not_confirmed() {
+        let app = axum::Router::new().route(
+            "/api/v1/import/prometheus",
+            axum::routing::post(|| async { axum::http::StatusCode::SERVICE_UNAVAILABLE }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let victoria = Victoria::new(format!("http://{address}")).unwrap();
+        let sink = spawn_writer_with(victoria, Duration::from_secs(3600), DEFAULT_FLUSH_SIZE);
+        sink.send(batch()).await;
+        assert!(!sink.flush(Duration::from_secs(5)).await, "a refused write was confirmed");
     }
 
     /// Sans tâche d'écriture pour répondre, le vidage rend la main à l'échéance.

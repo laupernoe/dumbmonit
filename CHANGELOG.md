@@ -59,6 +59,10 @@ All notable changes to this project are documented here. The format follows
   retries. A batch too large for a proxy (413) is split into smaller ones
   instead of being lost. When the server keeps none of a batch's
   measurements, the agent now warns that the machine's clock is probably off.
+- **Shutdown.** Stopping the container no longer loses the last measurements
+  still waiting to be written: they are flushed to VictoriaMetrics before it
+  stops. Stopping while the embedded VictoriaMetrics waits to restart after a
+  crash now returns at once instead of waiting for the full grace period.
 
 ### Fixed
 

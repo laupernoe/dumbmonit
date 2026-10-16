@@ -246,7 +246,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     // la tâche d'écriture serait sinon annulée avec le runtime, et les derniers
     // échantillons perdus à chaque arrêt du conteneur.
     if !final_sink.flush(FINAL_FLUSH_TIMEOUT).await {
-        warn!(timeout = ?FINAL_FLUSH_TIMEOUT, "final write flush not confirmed");
+        warn!(timeout = ?FINAL_FLUSH_TIMEOUT, "final write flush failed or timed out, samples lost");
     }
     if let Some(vm) = embedded_vm {
         vm.stop().await;
