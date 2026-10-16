@@ -3864,3 +3864,89 @@ export interface WebsiteChange {
 	before: string;
 	after: string;
 }
+
+// --- DNS blocklists (crates/server/src/api/blacklist.rs) -----------------------
+// Mail server reputation (`mail_blacklist`) and IP range blocklist
+// (`ip_blacklist`), rebuilt from the last `dumbmonit_blacklist_*` series. The
+// lookup and delisting links come from the collector's catalogue.
+
+export type BlacklistCheckState = 'listed' | 'clean' | 'unknown' | 'refused' | 'not_applicable';
+
+export interface BlacklistList {
+	id: string;
+	name: string;
+	zone: string;
+	subject: 'ip' | 'domain';
+	/** A listing there blocks a large share of mail (Spamhaus, Barracuda, SpamCop). */
+	major: boolean;
+	checked: number;
+	listed: number;
+	unknown: number;
+}
+
+export interface BlacklistCheck {
+	list: string;
+	list_name: string;
+	major: boolean;
+	/** The address or domain asked about. */
+	subject: string;
+	state: BlacklistCheckState;
+	codes: string[];
+	meaning: string | null;
+	/** TXT reason of a listing, or why a list gave no answer. */
+	reason: string | null;
+	/** Only for a listing. */
+	lookup_url: string | null;
+	delist_url: string | null;
+}
+
+export interface BlacklistAddress {
+	address: string;
+	/** `input`, `mx`, `domain` or `extra`. */
+	source: string;
+	mx: string | null;
+	ptr: string | null;
+	/** The reverse DNS name resolves back to the address; `null` without an answer. */
+	fcrdns: boolean | null;
+}
+
+export interface BlacklistAuth {
+	mx_hosts: number | null;
+	spf_records: number | null;
+	dmarc_records: number | null;
+	dmarc_policy: string | null;
+}
+
+export interface BlacklistProviderLink {
+	/** `postmaster`, `guidelines`, `contact`, `snds`, `delist_m365`, `hub`; an unknown kind shows its URL. */
+	kind: string;
+	url: string;
+}
+
+export interface BlacklistProvider {
+	id: string;
+	name: string;
+	links: BlacklistProviderLink[];
+}
+
+export interface BlacklistOverview {
+	kind: string;
+	/** Unix seconds of the last probe; `null` before the first one. */
+	sampled_at: number | null;
+	scan_running: boolean;
+	scan_age_seconds: number | null;
+	scan_duration_seconds: number | null;
+	addresses_checked: number | null;
+	addresses_listed: number | null;
+	listed_lists: number | null;
+	listed_major_lists: number | null;
+	unknown_checks: number | null;
+	domain_listed: boolean | null;
+	lists: BlacklistList[];
+	/** Listings and unanswered checks first. */
+	checks: BlacklistCheck[];
+	addresses: BlacklistAddress[];
+	auth: BlacklistAuth | null;
+	/** Mailbox providers without a public blocklist; empty for an IP range. */
+	providers: BlacklistProvider[];
+}

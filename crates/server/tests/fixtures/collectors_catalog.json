@@ -1869,6 +1869,113 @@
     ]
   },
   {
+    "kind": "ip_blacklist",
+    "label": "IP range blocklist",
+    "summary": "Every address of a public IPv4 range, up to a /24, checked against the major DNS blocklists: how many are listed, on which lists, and the delisting page of each.",
+    "examples": [
+      "Your office's public addresses",
+      "The /24 your servers send from",
+      "A hosting provider's block"
+    ],
+    "credential_types": [
+      "none",
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No key",
+        "help": "The public blocklist servers, queried through a resolver of your own.",
+        "fields": []
+      },
+      {
+        "kind": "api_token",
+        "label": "Spamhaus DQS key",
+        "help": "Free for low, non-commercial volumes: Spamhaus then answers through any resolver.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "DQS key",
+            "help": "The key shown in your Spamhaus account. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "198.51.100.0/24",
+    "default_port": 0,
+    "setup": {
+      "title": "Check a public IP range against the blocklists",
+      "steps": [
+        "Enter an IPv4 address or a CIDR range up to /24, for example \"198.51.100.0/24\" (256 addresses). A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation.",
+        "Use a recursive resolver of your own, as for Mail server reputation: Spamhaus refuses public resolvers, or paste a free Spamhaus DQS key as the credential. A /24 takes close to two thousand queries, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.",
+        "The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each."
+      ],
+      "warning": "Spamhaus PBL lists end-user ranges that should not send mail directly (home connections, dynamic pools): a listing there is a policy, not an abuse report, and only matters for an address that runs a mail server.",
+      "doc_url": "https://www.spamhaus.org/blocklists/zen-blocklist/"
+    },
+    "options": [
+      {
+        "key": "resolver",
+        "label": "Resolver",
+        "help": "IP address of the recursive resolver to query, port optional. Empty: the system resolver. Spamhaus refuses public resolvers (8.8.8.8, 1.1.1.1, 9.9.9.9) and those that forward to them.",
+        "placeholder": "10.0.0.53",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "lists",
+        "label": "Lists",
+        "help": "Blocklists to query, by identifier, separated by commas. Empty: all of them (spamhaus_zen, barracuda, spamcop, mailspike, uceprotect_1, psbl, spamrats, spamhaus_dbl, surbl, uribl).",
+        "placeholder": "spamhaus_zen, barracuda, spamcop",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "refresh_hours",
+        "label": "Refresh interval (hours)",
+        "help": "How often the blocklists are asked, from 1 to 168. In between, the last result is shown again at every check.",
+        "placeholder": "6",
+        "default": "6",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "queries_per_second",
+        "label": "Queries per second",
+        "help": "Pace of the queries, from 1 to 50. Blocklists ban resolvers that sweep them.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "query_timeout_seconds",
+        "label": "Timeout per query (seconds)",
+        "help": "From 1 to 30. A blocklist that does not answer in time is shown as unknown, never as clean.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "jellyfin",
     "label": "Jellyfin",
     "summary": "Scheduled tasks that fail (library scans), a restart waiting, broken plugins, active streams and transcodes.",
@@ -2179,6 +2286,126 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "10",
         "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "mail_blacklist",
+    "label": "Mail server reputation",
+    "summary": "A mail domain's MX, or a mail server's public address, checked against the major DNS blocklists (Spamhaus, Barracuda, SpamCop…), with reverse DNS, SPF and DMARC, and the delisting page of every list that lists it.",
+    "examples": [
+      "Your company's mail domain",
+      "The public address of a mail server",
+      "An outgoing relay"
+    ],
+    "credential_types": [
+      "none",
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No key",
+        "help": "The public blocklist servers, queried through a resolver of your own.",
+        "fields": []
+      },
+      {
+        "kind": "api_token",
+        "label": "Spamhaus DQS key",
+        "help": "Free for low, non-commercial volumes: Spamhaus then answers through any resolver.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "DQS key",
+            "help": "The key shown in your Spamhaus account. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "example.com",
+    "default_port": 0,
+    "setup": {
+      "title": "Check a mail server against the blocklists",
+      "steps": [
+        "Enter the domain you send mail for, for example \"example.com\": DumbMonit checks the addresses of its MX and of the domain itself. Or enter the public IP address the server sends from. If mail leaves through a relay that is not an MX, add its address under Extra addresses.",
+        "Use a recursive resolver of your own. Spamhaus refuses queries that arrive through public resolvers (Google, Cloudflare, Quad9) or through a resolver that forwards to them, and other lists limit them: an Unbound that resolves from the root servers is enough. Set its address under Resolver if it is not the system resolver.",
+        "Or create a free Spamhaus Data Query Service account (non-commercial use, low volume) and paste its key as the credential: Spamhaus then answers through any resolver.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
+        "To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.",
+        "Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page."
+      ],
+      "warning": "An answer Spamhaus refused (127.255.255.254, a public resolver) is shown as a configuration error, never as a listing, and a blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.",
+      "doc_url": "https://www.spamhaus.org/blocklists/zen-blocklist/"
+    },
+    "options": [
+      {
+        "key": "resolver",
+        "label": "Resolver",
+        "help": "IP address of the recursive resolver to query, port optional. Empty: the system resolver. Spamhaus refuses public resolvers (8.8.8.8, 1.1.1.1, 9.9.9.9) and those that forward to them.",
+        "placeholder": "10.0.0.53",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "lists",
+        "label": "Lists",
+        "help": "Blocklists to query, by identifier, separated by commas. Empty: all of them (spamhaus_zen, barracuda, spamcop, mailspike, uceprotect_1, psbl, spamrats, spamhaus_dbl, surbl, uribl).",
+        "placeholder": "spamhaus_zen, barracuda, spamcop",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "extra_addresses",
+        "label": "Extra addresses",
+        "help": "Sending addresses to check as well, separated by commas: an outgoing relay that is not an MX.",
+        "placeholder": "198.51.100.25",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "refresh_hours",
+        "label": "Refresh interval (hours)",
+        "help": "How often the blocklists are asked, from 1 to 168. In between, the last result is shown again at every check.",
+        "placeholder": "6",
+        "default": "6",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "queries_per_second",
+        "label": "Queries per second",
+        "help": "Pace of the queries, from 1 to 50. Blocklists ban resolvers that sweep them.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "query_timeout_seconds",
+        "label": "Timeout per query (seconds)",
+        "help": "From 1 to 30. A blocklist that does not answer in time is shown as unknown, never as clean.",
+        "placeholder": "5",
+        "default": "5",
         "required": false,
         "input": "number",
         "choices": [],
