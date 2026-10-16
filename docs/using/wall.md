@@ -26,11 +26,27 @@ An admin can add **headlines** and a **live channel** to the wall in
 - **Live video.** A muted live channel in a tile, in the right column under the
   clock (or in the middle of the scene), small, medium or large. The tile
   shrinks to the room left; it never covers the status.
+- **Picture carousel.** The latest articles of the same feeds that carry a
+  picture, one at a time in the middle of the wall, each for eight seconds,
+  cross-fading, with the source, age and headline over the picture. Under
+  *reduced motion* the pictures swap without fading.
 
 The server reads the feeds, not the browser (browsers cannot read other sites'
 feeds). It follows at most three redirects, refuses internal addresses, gives up
 after eight seconds or 2 MB per feed, and caches the answer for five minutes
 for every wall. It reads RSS 2.0, RSS 1.0 (RDF) and Atom.
+
+An article's picture is taken from the feed: the widest `media:content` image,
+a `media:thumbnail`, an image `enclosure` (BFM TV), an Atom
+`link rel="enclosure"`, or else the first `<img>` of the article's content
+(Korben). When the feed has none and the carousel is on, the server reads the
+start of the article's page once (512 KB at most, same address guard) and
+takes its `og:image`; the answer is remembered, so a page is read only once.
+The wall never loads a picture from the news site: the server relays it at
+`/api/wall/news/image/<id>`, only for articles it published, at most 6 MB,
+and only when the file really is a PNG, JPEG, GIF, WebP or AVIF image (never
+SVG). The display's address and cookies stay home, and the wall's content
+security policy still allows images from DumbMonit alone.
 
 ### Choosing sources
 
@@ -72,7 +88,91 @@ The wall's content security policy lets the page frame only YouTube
 ### API
 
 `GET /api/wall/news` (what walls poll), `GET|PUT /api/wall/news/settings` and
-`POST /api/wall/news/test` (admin), `GET /api/wall/news/presets`.
+`POST /api/wall/news/test` (admin), `GET /api/wall/news/presets`,
+`GET /api/wall/news/image/{id}` (an article's picture, relayed).
+
+## Widgets on the wall
+
+An admin can add **widgets** to the wall in **Settings → Wall display → Wall
+widgets**: the weather, crypto prices, stock quotes, exchange rates and the
+latest critical vulnerabilities. Each one is off by default and turned on on
+its own.
+
+The **weather** is kept simple: an icon and the temperature now, for one
+place, right under the clock. No forecast, no details. A screen reader hears
+the place, the sky and the temperature; hovering it shows the same words and
+the source (Open-Meteo).
+
+The other widgets share one card in the right column, under the clock: one
+widget at a time, each held for the chosen number of seconds (20 by default), then the
+next fades in. Long lists are split into pages of five. Dots under the card
+show where the round is. Under *reduced motion* the cards swap without fading.
+
+Rises and falls always carry an arrow and a sign (▲ +1.04 %, ▼ −0.57 %), not
+only a colour. Every card names its source, discreetly, and how fresh it is.
+
+| Widget | What it shows | Source | Key | The server asks |
+|---|---|---|---|---|
+| Weather | An icon and the temperature now, for one place, under the clock | [Open-Meteo](https://open-meteo.com) (current conditions and geocoding) | none | every 15 min |
+| Crypto | Price and 24-hour change of up to ten coins, in the chosen currency | [CoinGecko](https://www.coingecko.com) public API | none (optional free Demo key) | every minute, one call |
+| Stocks | Last price and change of the day of up to ten symbols | [Finnhub](https://finnhub.io) | **free key required** | every 5 min, one call per symbol |
+| Exchange rates | What one unit (or 100 of a small currency) costs in the base currency, and its change since the previous day | [Frankfurter](https://frankfurter.dev) (central bank reference rates) | none | every hour |
+| Critical vulnerabilities | The latest CVEs rated critical (CVSS 9 or more) this week and/or the latest entries of CISA's catalogue of actively exploited vulnerabilities, with score and date | [NVD](https://nvd.nist.gov) API 2.0, [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | none | every hour |
+
+**The sources and their terms** (checked October 2026):
+
+- **Open-Meteo** is free without a key for non-commercial use (up to 10,000
+  calls a day) and its data is under CC BY 4.0.
+- **CoinGecko**'s keyless API shares a pool of roughly 10 to 30 calls a minute
+  per address and is not meant for heavy polling; DumbMonit asks once a minute
+  for every wall. A free **Demo key** (coingecko.com) gives the instance a rate
+  limit of its own.
+- **Stocks** need a free **Finnhub** key: no keyless source of quotes is both
+  reliable and allowed (Stooq now asks for a key, Yahoo forbids its
+  undocumented API). The free plan covers US-listed stocks and allows 60 calls
+  a minute; quotes may be delayed.
+- **Frankfurter** has no key and no quota; the rates change once per business
+  day.
+- **NVD** allows 5 requests per 30 seconds without a key; DumbMonit makes one
+  an hour. *This product uses the NVD API but is not endorsed or certified by
+  the NVD.* The **CISA KEV** catalogue is a public JSON file.
+
+**Everything goes through the server.** No display talks to these services:
+neither its address nor the services' limits depend on the number of screens.
+Each source has its own cache. When a source fails, the card keeps its last
+figures for up to six hours, marked *Out of date*, and the server waits a
+minute before asking again; with nothing to show, the card says
+*Unavailable*. A wall never breaks because of a widget.
+
+**API keys never come back.** They are stored encrypted with the instance
+secret; Settings only shows whether one is saved. Typing a new one replaces it,
+**Remove the key** clears it.
+
+### Choosing what to show
+
+- **Weather:** type a city and press **Search** (Open-Meteo's geocoding, in
+  your language), then choose the place (choosing another one replaces it).
+  Units: °C or °F.
+- **Crypto:** tick among the main coins (BTC, ETH, SOL, XRP, BNB, ADA, DOGE,
+  TRX, TON, AVAX, DOT, LINK, LTC, XLM, XMR, USDT, USDC) or add any coin by its
+  CoinGecko id (the last part of its address on coingecko.com, such as
+  `avalanche-2`). Display currency: USD, EUR, GBP, CHF, JPY and others.
+- **Stocks:** type the ticker symbols, separated by commas (`AAPL, MSFT, NVDA`),
+  and paste your Finnhub key.
+- **Exchange rates:** pick the base currency and up to ten others among the
+  main ones (USD, EUR, GBP, JPY, CHF, CNY, CAD, AUD…).
+- **Critical vulnerabilities:** *Both* (critical and exploited, an exploited
+  CVE already in the NVD list is tagged *Exploited*), *Critical* (NVD) or
+  *Actively exploited* (CISA KEV), and how many to show (1 to 10).
+
+### API
+
+`GET /api/wall/widgets` (what walls poll every minute: one section per widget
+turned on, with `data`, `updated`, `error`, `needs_key`, `source`),
+`GET|PUT /api/wall/widgets/settings` and `GET /api/wall/widgets/places?q=`
+(admin), `GET /api/wall/widgets/catalog`. On `PUT`, `secrets.finnhub` and
+`secrets.coingecko` set a key, an empty string clears it, and leaving them out
+keeps them.
 
 ## Music on the wall
 
