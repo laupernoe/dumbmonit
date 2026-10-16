@@ -116,6 +116,6 @@ VictoriaMetrics)。CSP 允许内联样式(`style-src 'unsafe-inline'`),这会削
   以及 OpenSSF Scorecard,每周一次,并在每次 `:edge` 发布之后运行。结果显示在仓库的 Security
   选项卡中,GitHub 代码扫描(CodeQL)的报告也在那里。
 - **测试**:`crates/server/tests/` 下的 API、身份验证、角色、CORS、OIDC、防护和审计测试,代码旁的
-  单元测试,以及 `web/tests/` 下的 Web 测试。使用 `cargo-llvm-cov` 测得的 Rust 行覆盖率为 87.9 %。
+  单元测试,以及 `web/tests/` 下的 Web 测试。使用 `cargo-llvm-cov` 测得的 Rust 行覆盖率为 91 %。
 - **回归策略**:每个修复都附带一个没有该修复就会失败的测试(参见 `CONTRIBUTING.md` 中的测试策略)。
 - **公开记录**:安全修复以公告形式发布,并列在发行说明中。

@@ -143,7 +143,7 @@ private key.
   GitHub code scanning (CodeQL) reports as well.
 - **Tests**: API, authentication, role, CORS, OIDC, guard and audit tests under
   `crates/server/tests/`, unit tests next to the code, and web tests under
-  `web/tests/`. Rust line coverage measured with `cargo-llvm-cov` is 87.9 %.
+  `web/tests/`. Rust line coverage measured with `cargo-llvm-cov` is 91 %.
 - **Regression policy**: a fix comes with a test that fails without it
   (see the Test policy in `CONTRIBUTING.md`).
 - **Public record**: security fixes are published as advisories and listed in

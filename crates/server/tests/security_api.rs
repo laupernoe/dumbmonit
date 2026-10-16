@@ -539,6 +539,19 @@ async fn oversized_metric_queries_are_refused_before_reaching_the_database() {
 }
 
 #[tokio::test]
+async fn an_unreachable_metrics_backend_is_a_bad_gateway_not_a_bad_request() {
+    let app = TestApp::configured().await;
+    let cookie = app.admin_cookie().await;
+
+    let reply = app.get("/api/metrics/query?query=up", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::BAD_GATEWAY, "{}", reply.body);
+    let reply = app
+        .get("/api/metrics/query_range?query=up&start=0&end=3600000&step=60", Some(&cookie))
+        .await;
+    assert_eq!(reply.status, StatusCode::BAD_GATEWAY, "{}", reply.body);
+}
+
+#[tokio::test]
 async fn a_plain_http_identity_provider_needs_an_explicit_opt_in() {
     let app = TestApp::configured().await;
     let cookie = app.admin_cookie().await;

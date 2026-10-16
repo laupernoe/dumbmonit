@@ -25,7 +25,14 @@ export default defineConfig({
 				strict: false
 			}),
 			// Aucune page n'est pré-rendue par défaut : tout dépend de l'API au runtime.
-			prerender: { entries: [] }
+			prerender: { entries: [] },
+			// Identifiant de version de l'application (`_app/version.json`, recopié dans
+			// le JavaScript). Par défaut SvelteKit prend l'heure de la construction, et
+			// deux constructions du même commit ne sont plus identiques : le Dockerfile
+			// passe le commit (`DUMBMONIT_BUILD`) ou sa date (`SOURCE_DATE_EPOCH`).
+			version: {
+				name: env?.DUMBMONIT_BUILD || env?.SOURCE_DATE_EPOCH || Date.now().toString()
+			}
 		}),
 		// i18n : compile messages/{locale}.json en fonctions ES tree-shakées
 		// (src/lib/paraglide, généré — jamais commité). Pas de routage par URL :

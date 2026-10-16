@@ -967,7 +967,9 @@ export interface Channel {
  * Body of `POST /api/notify/channels` and `PUT /api/notify/channels/{id}`.
  *
  * Omitting `secrets` on an update keeps the stored secrets; `{}` explicitly
- * clears them.
+ * clears them. Otherwise keys are merged: a key sent replaces its value, a key
+ * left out is kept, and `null` or `""` clears it. A change of kind or
+ * destination replaces the whole set instead.
  */
 export interface ChannelPayload {
 	name: string;
@@ -1855,7 +1857,10 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'relay' | 'hypervisor' | 'lldp';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'lldp';
+
+/** Where a node's site comes from: its `site` tag, an agent's declaration, or the relay agent that polls it. */
+export type TopologySiteSource = 'tag' | 'agent' | 'relay';
 
 /** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
 export interface TopologyNode {
@@ -1868,8 +1873,9 @@ export interface TopologyNode {
 	kind: string;
 	/** Folder; a guest takes its hypervisor's. */
 	group_name: string;
-	/** Site declared by the relay agent (its own, or the one that polls the device). */
+	/** Remote site the node belongs to; `null` for the main site. */
 	site: string | null;
+	site_source: TopologySiteSource | null;
 	/** Guest only: the hypervisor device. */
 	host_id: TargetId | null;
 	/** Guest only: running at the last measurement. */

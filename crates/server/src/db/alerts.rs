@@ -338,7 +338,7 @@ pub async fn load_states(pool: &SqlitePool) -> Result<Vec<StoredAlert>> {
         "SELECT fingerprint, rule_uid, target_id, series_key, labels, phase, suppressed,
                 suppressed_by, silenced, learning, value, score, condition_since,
                 firing_since, last_eval_at, last_notified_at, notify_count, resolved_at,
-                acked_until, acked_by, ack_note
+                unacked_relayed_at, acked_until, acked_by, ack_note
          FROM alert_state",
     )
     .fetch_all(pool)
@@ -363,6 +363,7 @@ pub async fn load_states(pool: &SqlitePool) -> Result<Vec<StoredAlert>> {
                     last_eval_at: from_sql(row.try_get("last_eval_at")?),
                     last_notified_at: from_sql(row.try_get("last_notified_at")?),
                     notify_count: row.try_get::<i64, _>("notify_count")?.max(0) as u32,
+                    unacked_relayed_at: from_sql(row.try_get("unacked_relayed_at")?),
                     suppressed: row.try_get::<i64, _>("suppressed")? != 0,
                     suppressed_by: row.try_get("suppressed_by")?,
                     silenced: row.try_get::<i64, _>("silenced")? != 0,
@@ -400,8 +401,8 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
                  (fingerprint, rule_uid, target_id, series_key, labels, phase, suppressed,
                   suppressed_by, silenced, learning, severity, value, score, condition_since,
                   firing_since, last_eval_at, last_notified_at, notify_count, resolved_at,
-                  acked_until, acked_by, ack_note)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  unacked_relayed_at, acked_until, acked_by, ack_note)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(fingerprint) DO UPDATE SET
                  rule_uid = excluded.rule_uid, target_id = excluded.target_id,
                  series_key = excluded.series_key, labels = excluded.labels,
@@ -413,6 +414,7 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
                  firing_since = excluded.firing_since, last_eval_at = excluded.last_eval_at,
                  last_notified_at = excluded.last_notified_at,
                  notify_count = excluded.notify_count, resolved_at = excluded.resolved_at,
+                 unacked_relayed_at = excluded.unacked_relayed_at,
                  acked_until = CASE WHEN excluded.phase IN ('pending', 'firing')
                                      AND alert_state.acked_until > excluded.last_eval_at
                                     THEN alert_state.acked_until END,
@@ -442,6 +444,7 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
         .bind(alert.state.last_notified_at.map(to_sql))
         .bind(i64::from(alert.state.notify_count))
         .bind(alert.state.resolved_at.map(to_sql))
+        .bind(alert.state.unacked_relayed_at.map(to_sql))
         .bind(alert.state.acked_until.map(to_sql))
         .bind(&alert.state.acked_by)
         .bind(&alert.state.ack_note)
@@ -503,6 +506,28 @@ pub async fn mark_notified(
     tx.commit().await.context("enregistrement des notifications envoyées")
 }
 
+/// Consigne le relais vers le canal d'escalade pour des empreintes : c'est ce
+/// qui garantit qu'il ne part qu'une fois par épisode.
+pub async fn mark_unacked_relayed(
+    pool: &SqlitePool,
+    fingerprints: &[String],
+    now: DateTime<Utc>,
+) -> Result<()> {
+    if fingerprints.is_empty() {
+        return Ok(());
+    }
+    let stamp = to_sql(now);
+    let mut tx = pool.begin().await?;
+    for fingerprint in fingerprints {
+        sqlx::query("UPDATE alert_state SET unacked_relayed_at = ? WHERE fingerprint = ?")
+            .bind(&stamp)
+            .bind(fingerprint)
+            .execute(&mut *tx)
+            .await?;
+    }
+    tx.commit().await.context("enregistrement des relais d'escalade")
+}
+
 /// Supprime les empreintes que le cycle n'a ni évaluées ni gelées.
 pub async fn purge_states(pool: &SqlitePool, cycle_start: DateTime<Utc>) -> Result<u64> {
     let result = sqlx::query("DELETE FROM alert_state WHERE last_eval_at < ?")
@@ -518,7 +543,7 @@ pub async fn purge_states(pool: &SqlitePool, cycle_start: DateTime<Utc>) -> Resu
 const ACTIVE_ALERT_COLUMNS: &str = "fingerprint, rule_uid, target_id, series_key, labels, phase, \
      suppressed, suppressed_by, silenced, learning, value, score, condition_since, \
      firing_since, last_eval_at, last_notified_at, notify_count, resolved_at, \
-     acked_until, acked_by, ack_note";
+     unacked_relayed_at, acked_until, acked_by, ack_note";
 
 fn row_to_stored_alert(row: &sqlx::sqlite::SqliteRow) -> Result<StoredAlert> {
     let labels: String = row.try_get("labels")?;
@@ -537,6 +562,7 @@ fn row_to_stored_alert(row: &sqlx::sqlite::SqliteRow) -> Result<StoredAlert> {
             last_eval_at: from_sql(row.try_get("last_eval_at")?),
             last_notified_at: from_sql(row.try_get("last_notified_at")?),
             notify_count: row.try_get::<i64, _>("notify_count")?.max(0) as u32,
+            unacked_relayed_at: from_sql(row.try_get("unacked_relayed_at")?),
             suppressed: row.try_get::<i64, _>("suppressed")? != 0,
             suppressed_by: row.try_get("suppressed_by")?,
             silenced: row.try_get::<i64, _>("silenced")? != 0,

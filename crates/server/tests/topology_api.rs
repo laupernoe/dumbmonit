@@ -135,7 +135,8 @@ async fn sans_mesures_la_carte_garde_les_liens_declares() {
     create(
         &app,
         &admin,
-        json!({ "name": "nas", "address": "10.0.0.5", "kind": "dummy", "parent_id": parent }),
+        json!({ "name": "nas", "address": "10.0.0.5", "kind": "dummy", "parent_id": parent,
+                "tags": { "site": "Cave" } }),
     )
     .await;
 
@@ -143,6 +144,10 @@ async fn sans_mesures_la_carte_garde_les_liens_declares() {
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["metrics_available"], false);
     assert_eq!(edges(&reply.body), vec![("t1".into(), "t2".into(), "parent".into())]);
+    let nodes = reply.body["nodes"].as_array().expect("nodes");
+    assert_eq!(nodes[0]["site"], Value::Null, "sans indice, le site principal");
+    assert_eq!(nodes[1]["site"], "Cave", "l'étiquette site place le nœud");
+    assert_eq!(nodes[1]["site_source"], "tag");
 }
 
 #[tokio::test]
