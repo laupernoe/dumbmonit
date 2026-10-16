@@ -82,6 +82,16 @@ pub struct Session {
     retries: u32,
     /// Vrai si l'équipement ne connaît pas GETBULK et impose le repli sur GETNEXT.
     getnext_only: bool,
+    /// De quoi rouvrir la socket : point de terminaison, identifiant, version.
+    endpoint: String,
+    credential: Credential,
+    version: CommunityVersion,
+    /// Vrai après une requête restée sans réponse ou une réponse d'un autre
+    /// identifiant. Une réponse tardive peut alors encore arriver sur la socket :
+    /// `snmp2` la lirait à la place de la suivante et, comme il avance son
+    /// identifiant à chaque réception, la session resterait décalée d'un cran pour
+    /// toujours. La socket est donc rouverte avant le prochain envoi.
+    stale: bool,
 }
 
 impl Session {
@@ -249,9 +259,9 @@ impl Session {
     /// Sont renvoyées les requêtes restées sans réponse dans le délai, et celles dont
     /// la réponse portait un autre identifiant : c'est la réponse tardive à une
     /// tentative précédente, arrivée après l'abandon de celle-ci. Toute autre erreur
-    /// remonte telle quelle. `snmp2` n'incrémente l'identifiant de requête qu'à
-    /// réception : un renvoi après expiration réutilise donc le même, et la réponse
-    /// tardive au premier envoi reste valable pour le second.
+    /// remonte telle quelle. Chaque renvoi part d'une socket neuve (voir le
+    /// champ `stale`) : une réponse tardive à la tentative abandonnée tombe sur
+    /// un port fermé au lieu de décaler toutes les requêtes suivantes.
     async fn exchange(&mut self, request: Request<'_>) -> Result<Reply, ProbeError> {
         let converted: Vec<snmp2::Oid<'static>> = match request {
             Request::Get(oids) => oids.iter().map(ObjectId::to_snmp).collect::<Result<_, _>>()?,
@@ -263,6 +273,9 @@ impl Session {
         let mut attempt = 0u32;
         loop {
             attempt += 1;
+            if self.stale {
+                self.reconnect().await?;
+            }
             let inner = &mut self.inner;
             // La réponse emprunte les tampons de la session : elle est recopiée
             // aussitôt, pour que la boucle puisse renvoyer la requête.
@@ -289,11 +302,24 @@ impl Session {
                 Ok(Err(error)) => return Err(map_snmp_error(error)),
                 Err(_) => ProbeError::Timeout(timeout),
             };
+            self.stale = true;
             if attempt > self.retries {
                 return Err(retryable);
             }
             debug!(attempt, error = %retryable, "requête SNMP sans réponse exploitable, renvoi");
         }
+    }
+
+    /// Remplace la socket, et pour v3 refait la découverte du moteur.
+    async fn reconnect(&mut self) -> Result<(), ProbeError> {
+        let (mut inner, _) =
+            Box::pin(connect(&self.endpoint, &self.credential, self.version)).await?;
+        with_timeout(self.request_timeout, inner.init(), &self.endpoint)
+            .await?
+            .map_err(map_snmp_error)?;
+        self.inner = inner;
+        self.stale = false;
+        Ok(())
     }
 }
 
@@ -343,7 +369,16 @@ async fn open_inner(
     // opération vide.
     with_timeout(request_timeout, inner.init(), &endpoint).await?.map_err(map_snmp_error)?;
 
-    Ok(Session { inner, request_timeout, retries: 0, getnext_only })
+    Ok(Session {
+        inner,
+        request_timeout,
+        retries: 0,
+        getnext_only,
+        endpoint,
+        credential: credential.clone(),
+        version,
+        stale: false,
+    })
 }
 
 /// Établit la socket et renvoie la session déjà placée sur le tas.
@@ -802,6 +837,29 @@ mod tests {
             session.get_many(&[oid("1.3.6.1.2.1.1.3.0")]).await
         });
         assert_eq!(values.unwrap(), vec![(oid("1.3.6.1.2.1.1.3.0"), SnmpValue::Integer(7))]);
+    }
+
+    #[test]
+    fn une_reponse_tardive_ne_decale_pas_les_requetes_suivantes() {
+        use super::super::testutil::{FakeAgent, block_on_large_stack};
+        let (first, second) = block_on_large_stack(async {
+            // La première réponse arrive après l'abandon de la requête (300 ms) mais
+            // avant la requête suivante : sans socket neuve, elle serait lue à la
+            // place de la réponse suivante, et la session resterait décalée d'un cran.
+            let agent = FakeAgent::spawn_late(
+                vec![("1.3.6.1.2.1.1.3.0", 7), ("1.3.6.1.2.1.1.7.0", 72)],
+                1,
+                Duration::from_millis(400),
+            )
+            .await;
+            let mut session = session_v1(&agent, 2).await;
+            let first = session.get_many(&[oid("1.3.6.1.2.1.1.3.0")]).await;
+            tokio::time::sleep(Duration::from_millis(300)).await;
+            let second = session.get_many(&[oid("1.3.6.1.2.1.1.7.0")]).await;
+            (first, second)
+        });
+        assert_eq!(first.unwrap(), vec![(oid("1.3.6.1.2.1.1.3.0"), SnmpValue::Integer(7))]);
+        assert_eq!(second.unwrap(), vec![(oid("1.3.6.1.2.1.1.7.0"), SnmpValue::Integer(72))]);
     }
 
     #[test]

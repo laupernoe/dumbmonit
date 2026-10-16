@@ -40,11 +40,31 @@ pub struct FakeAgent {
 
 impl FakeAgent {
     pub async fn spawn(known: Vec<(&str, i64)>, drop_first: usize) -> Self {
+        Self::spawn_with(known, drop_first, 0, std::time::Duration::ZERO).await
+    }
+
+    /// Comme [`FakeAgent::spawn`], mais les `late_first` premières réponses partent
+    /// avec `delay` de retard au lieu d'être perdues : l'agent lent dont la réponse
+    /// arrive après l'abandon de la requête.
+    pub async fn spawn_late(
+        known: Vec<(&str, i64)>,
+        late_first: usize,
+        delay: std::time::Duration,
+    ) -> Self {
+        Self::spawn_with(known, 0, late_first, delay).await
+    }
+
+    async fn spawn_with(
+        known: Vec<(&str, i64)>,
+        drop_first: usize,
+        late_first: usize,
+        delay: std::time::Duration,
+    ) -> Self {
         use std::sync::atomic::Ordering;
 
         let known: std::collections::BTreeMap<super::oid::ObjectId, i64> =
             known.into_iter().map(|(oid, value)| (oid.parse().unwrap(), value)).collect();
-        let socket = tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap();
+        let socket = std::sync::Arc::new(tokio::net::UdpSocket::bind("127.0.0.1:0").await.unwrap());
         let address = socket.local_addr().unwrap().to_string();
         let requests = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
         let counter = requests.clone();
@@ -90,7 +110,15 @@ impl FakeAgent {
                     &[tlv(0x02, &integer(0)), tlv(0x04, request.community), tlv(0xa2, &pdu)]
                         .concat(),
                 );
-                let _ = socket.send_to(&message, peer).await;
+                if seen < drop_first + late_first {
+                    let socket = socket.clone();
+                    tokio::spawn(async move {
+                        tokio::time::sleep(delay).await;
+                        let _ = socket.send_to(&message, peer).await;
+                    });
+                } else {
+                    let _ = socket.send_to(&message, peer).await;
+                }
             }
         });
         Self { address, requests }
