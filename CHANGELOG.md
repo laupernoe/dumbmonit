@@ -48,6 +48,11 @@ All notable changes to this project are documented here. The format follows
   (which then "resolved" with a notification). Deleting a rule also deletes its
   per-monitor overrides, so a new rule with the same name no longer inherits
   them.
+- **Failed notifications.** A delivery refused for good (revoked webhook,
+  deleted bot, broken channel settings) is no longer resent every cycle: the
+  error is shown on the channel and the message dropped. Temporary failures
+  (timeout, 429, 5xx) are retried with a growing delay, from 1 minute up to
+  30 minutes.
 
 ### Fixed
 

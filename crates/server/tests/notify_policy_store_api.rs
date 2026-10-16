@@ -264,6 +264,13 @@ async fn un_envoi_reussi_vide_la_file_et_se_consigne_un_echec_la_remet() {
     store::requeue(&pool, &[queued(chan, "fp-a", now)], window, delay).await.unwrap();
     let ledger = store::load_ledger(&pool, now, TimeDelta::hours(1)).await.unwrap();
     assert!(ledger.queue[0].queued_at >= now - window + delay - TimeDelta::seconds(5));
+
+    // Une ligne d'heures calmes déjà libérée repasse en regroupement : sinon elle
+    // repartirait à chaque cycle et le délai de reprise ne servirait à rien.
+    let quiet = QueuedItem { hold: Hold::Quiet, ..queued(chan, "fp-a", now) };
+    store::requeue(&pool, &[quiet], window, delay).await.unwrap();
+    let ledger = store::load_ledger(&pool, now, TimeDelta::hours(1)).await.unwrap();
+    assert_eq!(ledger.queue[0].hold, Hold::Batch);
 }
 
 #[test]

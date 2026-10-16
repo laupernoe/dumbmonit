@@ -367,7 +367,16 @@ pub async fn requeue(
     for item in items {
         let mut retry = item.clone();
         let due = Utc::now() - window + delay;
-        retry.queued_at = if delay.is_zero() { retry.queued_at.min(due) } else { due };
+        if delay.is_zero() {
+            retry.queued_at = retry.queued_at.min(due);
+        } else {
+            retry.queued_at = due;
+            // Une ligne d'heures calmes repartirait à chaque cycle une fois les
+            // heures calmes passées (et entraînerait les autres lignes du canal) :
+            // le délai de reprise n'aurait plus d'effet. Elle a déjà été libérée,
+            // elle retourne donc dans la fenêtre de regroupement.
+            retry.hold = Hold::Batch;
+        }
         upsert_queued(&mut tx, &retry).await?;
     }
     tx.commit().await.context("requeueing after a failed delivery")
