@@ -323,13 +323,51 @@ pub async fn record_sent(
     tx.commit().await.context("recording a sent notification")
 }
 
-/// Après un envoi raté : ce qui devait partir retourne en file, daté d'assez
-/// loin pour repartir au cycle suivant sans attendre une nouvelle fenêtre.
-pub async fn requeue(pool: &SqlitePool, items: &[QueuedItem], window: TimeDelta) -> Result<()> {
+/// Délai de base, en secondes, avant de retenter un envoi en échec transitoire.
+const RETRY_BASE_SECS: i64 = 60;
+/// Plafond du délai entre deux tentatives.
+const RETRY_CAP_SECS: i64 = 30 * 60;
+
+/// Échecs transitoires consécutifs par canal, en mémoire : un redémarrage
+/// repart d'un délai minimal, ce qui reste sans danger.
+static RETRY_FAILURES: std::sync::Mutex<Option<HashMap<i64, u32>>> = std::sync::Mutex::new(None);
+
+/// Délai avant la prochaine tentative : exponentiel, plafonné.
+pub fn retry_delay(failures: u32) -> TimeDelta {
+    let exponent = failures.saturating_sub(1).min(16);
+    TimeDelta::seconds((RETRY_BASE_SECS << exponent).min(RETRY_CAP_SECS))
+}
+
+/// Compte un échec transitoire de plus sur ce canal et renvoie le total.
+pub fn note_failure(channel_id: i64) -> u32 {
+    let mut guard = RETRY_FAILURES.lock().unwrap_or_else(|e| e.into_inner());
+    let count = guard.get_or_insert_default().entry(channel_id).or_insert(0);
+    *count = count.saturating_add(1);
+    *count
+}
+
+/// Remet à zéro le compteur d'un canal (succès, ou erreur définitive).
+pub fn reset_failures(channel_id: i64) {
+    let mut guard = RETRY_FAILURES.lock().unwrap_or_else(|e| e.into_inner());
+    if let Some(map) = guard.as_mut() {
+        map.remove(&channel_id);
+    }
+}
+
+/// Après un envoi raté (transitoire) : ce qui devait partir retourne en file,
+/// daté pour repartir après `delay` (0 : dès le cycle suivant, sans attendre
+/// une nouvelle fenêtre).
+pub async fn requeue(
+    pool: &SqlitePool,
+    items: &[QueuedItem],
+    window: TimeDelta,
+    delay: TimeDelta,
+) -> Result<()> {
     let mut tx = pool.begin().await?;
     for item in items {
         let mut retry = item.clone();
-        retry.queued_at = retry.queued_at.min(Utc::now() - window);
+        let due = Utc::now() - window + delay;
+        retry.queued_at = if delay.is_zero() { retry.queued_at.min(due) } else { due };
         upsert_queued(&mut tx, &retry).await?;
     }
     tx.commit().await.context("requeueing after a failed delivery")

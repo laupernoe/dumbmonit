@@ -270,8 +270,12 @@ pub async fn test(
 
     // Le résultat est consigné comme celui d'un envoi réel : c'est ce que
     // l'interface affiche à côté du canal, et un test doit y laisser sa trace.
-    let report =
-        DeliveryReport { channel_id: id, channel_name: config.name.clone(), error: error.clone() };
+    let report = DeliveryReport {
+        channel_id: id,
+        channel_name: config.name.clone(),
+        error: error.clone(),
+        transient: result.as_ref().err().is_some_and(notify::NotifyError::is_transient),
+    };
     db::alerts::record_delivery(&state.pool, &report, Utc::now()).await?;
 
     match error {

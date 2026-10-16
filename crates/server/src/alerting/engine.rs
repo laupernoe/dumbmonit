@@ -418,6 +418,7 @@ async fn send_outgoing(
         stats().notification(&config.kind, !delivery.is_success());
         if delivery.is_success() {
             report.notifications_sent += 1;
+            policy_store::reset_failures(config.id);
             if let Err(error) =
                 policy_store::record_sent(pool, out.channel_id, &out.queue_ids, &out.sent, now)
                     .await
@@ -426,8 +427,17 @@ async fn send_outgoing(
             }
         } else {
             report.notifications_failed += 1;
-            if let Err(error) = policy_store::requeue(pool, &out.retry, window).await {
-                warn!(?error, "failed notification not requeued");
+            // Une erreur définitive (webhook révoqué, bot supprimé) est consignée par
+            // `record_delivery` puis abandonnée : la réémettre à chaque cycle ne
+            // ferait que risquer un 429 et noyer le canal une fois réparé.
+            if delivery.transient {
+                let delay = policy_store::retry_delay(policy_store::note_failure(config.id));
+                if let Err(error) = policy_store::requeue(pool, &out.retry, window, delay).await {
+                    warn!(?error, "failed notification not requeued");
+                }
+            } else {
+                policy_store::reset_failures(config.id);
+                warn!(channel = %config.name, "permanent delivery error, notification dropped");
             }
         }
         if let Err(error) = db::alerts::record_delivery(pool, &delivery, now).await {

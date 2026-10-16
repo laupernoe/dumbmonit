@@ -254,10 +254,24 @@ async fn un_envoi_reussi_vide_la_file_et_se_consigne_un_echec_la_remet() {
 
     // Envoi raté : les lignes reviennent, datées assez loin pour repartir tout de suite.
     let window = TimeDelta::minutes(2);
-    store::requeue(&pool, &[queued(chan, "fp-a", now)], window).await.unwrap();
+    store::requeue(&pool, &[queued(chan, "fp-a", now)], window, TimeDelta::zero()).await.unwrap();
     let ledger = store::load_ledger(&pool, now, TimeDelta::hours(1)).await.unwrap();
     assert_eq!(ledger.queue.len(), 1);
     assert!(ledger.queue[0].queued_at <= now - window + TimeDelta::seconds(5));
+
+    // Avec un délai de recul, la ligne ne repart pas avant l'échéance.
+    let delay = TimeDelta::minutes(4);
+    store::requeue(&pool, &[queued(chan, "fp-a", now)], window, delay).await.unwrap();
+    let ledger = store::load_ledger(&pool, now, TimeDelta::hours(1)).await.unwrap();
+    assert!(ledger.queue[0].queued_at >= now - window + delay - TimeDelta::seconds(5));
+}
+
+#[test]
+fn le_delai_de_reprise_double_puis_plafonne() {
+    assert_eq!(store::retry_delay(1), TimeDelta::seconds(60));
+    assert_eq!(store::retry_delay(2), TimeDelta::seconds(120));
+    assert_eq!(store::retry_delay(3), TimeDelta::seconds(240));
+    assert_eq!(store::retry_delay(50), TimeDelta::minutes(30));
 }
 
 #[tokio::test]
