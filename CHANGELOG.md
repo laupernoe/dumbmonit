@@ -42,6 +42,29 @@ All notable changes to this project are documented here. The format follows
   the quick-silence name follow the interface language, and absolute dates use
   the locale's format.
 
+### Fixed
+
+- **SNMP survives a lost packet.** Each request now gets a few seconds with up
+  to two resends instead of one request lasting the whole probe, so a single
+  dropped UDP datagram no longer marks a device down. An SNMPv1 device that
+  does not know one of the requested values no longer loses the other values
+  of the batch.
+- **Uptime checks with a long timeout.** A check whose own timeout is longer
+  than `DUMBMONIT_PROBE_TIMEOUT_SECS` (up to 60 s) is no longer cut short and
+  reported as unreachable; it records its failure like any other check.
+- **Synology and certificate errors.** A Synology NAS whose system,
+  utilization and storage calls all fail is reported down (timeout) or
+  misconfigured (refused login) instead of up. On Proxmox VE, PBS, PDM, PMG,
+  Redfish and Synology, only a rejected certificate counts as a configuration
+  error: a host name containing `tls` or a handshake cut by a rebooting device
+  now raises the down alert.
+- **Relay agents with a wrong clock.** Values relayed with a timestamp more than
+  30 days old or more than an hour ahead are dropped, as they already were for
+  agents.
+- **Metrics API when VictoriaMetrics is down.** `/api/metrics/query` and
+  `/api/metrics/query_range` answer 502 instead of 400 when the metrics
+  database is unreachable or failing; 400 is kept for queries it rejects.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8
