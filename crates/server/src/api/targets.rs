@@ -809,7 +809,8 @@ async fn probe_through_relay(
     target: Target,
     agent_id: TargetId,
 ) -> ApiResult<Json<ProbeReport>> {
-    let timeout = state.config.probe_timeout;
+    // Même relèvement que pour la sonde planifiée (`scheduler::delegate`).
+    let timeout = dumbmonit_collectors::Registry::deadline_for(&target, state.config.probe_timeout);
     let deadline = relay::deadline_for(timeout);
     let receiver = state
         .relay()

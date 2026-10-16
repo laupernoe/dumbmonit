@@ -60,10 +60,10 @@ use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
+use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, apply_identity};
+
 /// Marge laissée à une sonde pour écrire son verdict après son propre délai.
 const PROBE_TIMEOUT_MARGIN: Duration = Duration::from_secs(2);
-
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, apply_identity};
 
 pub use activedirectory::ActiveDirectoryCollector;
 pub use adguard::AdguardCollector;
