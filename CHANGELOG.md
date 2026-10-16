@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- **Status page uptime bars** now come with a colour key (99.5% or more, 95 to
+  99.5%, under 95%, no data), so a day with some downtime is no longer read as
+  a day the service was down; the thresholds live in one place shared by the bars
+  and the key.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8

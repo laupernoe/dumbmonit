@@ -24,6 +24,7 @@
 	import IncidentCard from '#lib/components/status/IncidentCard.svelte';
 	import StatusUpdates from '#lib/components/status/StatusUpdates.svelte';
 	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
+	import UptimeLegend from '#lib/components/status/UptimeLegend.svelte';
 	import ServiceRow from '#lib/components/status/ServiceRow.svelte';
 	import StatusMascot from '#lib/components/status/StatusMascot.svelte';
 	import { useSceneLive } from '#lib/scene/live.svelte.js';
@@ -229,6 +230,9 @@
 				<h2 id="services" class="text-base font-semibold tracking-tight text-ink">{m.status_public_services()}</h2>
 				<p class="text-[0.8125rem] text-ink-2">{m.status_public_uptime_last({ days })}</p>
 			</div>
+			{#if serviceCount > 0}
+				<div class="mt-1.5"><UptimeLegend /></div>
+			{/if}
 			{#if serviceCount === 0}
 				<EmptyState class="mt-3" icon={Megaphone} title={m.status_public_no_service_title()} description={m.status_public_no_service_description()} />
 			{:else}
