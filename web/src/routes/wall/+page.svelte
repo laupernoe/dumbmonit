@@ -84,6 +84,11 @@
 	import { getWallNews, type WallNews } from '#lib/api/wallNews.js';
 	import WallNewsTicker from '#lib/components/wall/WallNewsTicker.svelte';
 	import WallNewsVideo from '#lib/components/wall/WallNewsVideo.svelte';
+	import WallGallery from '#lib/components/wall/WallGallery.svelte';
+	import WallWidgets from '#lib/components/wall/WallWidgets.svelte';
+	import WallWeather from '#lib/components/wall/WallWeather.svelte';
+	import { getWallWidgets } from '#lib/api/wallWidgets.js';
+	import type { WallWidgets as WallWidgetsData } from '#lib/api/types.js';
 	import { parseMusicLink } from '#lib/wall/music.js';
 	import { cardVisible, displaySpeakerName, pickPlaying } from '#lib/wall/spotify.js';
 	import { WallSpeaker } from '#lib/wall/speaker.svelte.js';
@@ -110,6 +115,8 @@
 	let news = $state<WallNews | null>(null);
 	const headlines = $derived(news?.ticker ? news.items : []);
 	const newsVideo = $derived(news?.video ?? null);
+	/** The pictures carousel: the same feeds, the articles that carry a picture. */
+	const gallery = $derived(news?.gallery ? news.items.filter((item) => item.image) : []);
 
 	$effect(() => {
 		const controller = new AbortController();
@@ -123,6 +130,42 @@
 				}
 			}
 			if (!controller.signal.aborted) timer = setTimeout(poll, NEWS_MS);
+		};
+		void poll();
+		return () => {
+			controller.abort();
+			clearTimeout(timer);
+		};
+	});
+
+	// --- Widgets ----------------------------------------------------------------
+
+	/**
+	 * Coins, stocks, rates and CVEs in a rotating card, and the weather now under
+	 * the clock; off unless an admin turned them on.
+	 * The server reads and caches every source (a minute for coins, an hour for
+	 * rates); the wall asks every minute while visible and keeps the last answer
+	 * when a read fails. An older server without the route: no more asking.
+	 */
+	const WIDGETS_MS = 60_000;
+	let widgets = $state<WallWidgetsData | null>(null);
+	const hasWidgets = $derived(
+		!!widgets && !!(widgets.crypto || widgets.stocks || widgets.fx || widgets.cve)
+	);
+
+	$effect(() => {
+		const controller = new AbortController();
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		const poll = async () => {
+			if (document.visibilityState === 'visible') {
+				try {
+					widgets = await getWallWidgets(controller.signal);
+				} catch (cause) {
+					if (cause instanceof DOMException && cause.name === 'AbortError') return;
+					if (cause instanceof ApiError && cause.missing) return;
+				}
+			}
+			if (!controller.signal.aborted) timer = setTimeout(poll, WIDGETS_MS);
 		};
 		void poll();
 		return () => {
@@ -693,6 +736,7 @@
 
 			<div class="board-right">
 				<time class="clock display tnum" datetime={now.toISOString()}>{clock}</time>
+				{#if widgets?.weather}<WallWeather section={widgets.weather} />{/if}
 				<p class="date">{dateLabel}</p>
 				<p class="updated tnum" aria-live="off">
 					<span class="refresh" aria-hidden="true"><span style:transform="scaleX({progress})"></span></span>
@@ -723,10 +767,19 @@
 				{#if newsVideo?.position === 'right'}
 					<div class="news-video-slot"><WallNewsVideo video={newsVideo} /></div>
 				{/if}
+
+				{#if hasWidgets && widgets}
+					<div class="widgets-slot"><WallWidgets {widgets} {now} paused={hidden} /></div>
+				{/if}
 			</div>
 
-			{#if newsVideo?.position === 'center'}
-				<div class="board-center"><WallNewsVideo video={newsVideo} /></div>
+			{#if newsVideo?.position === 'center' || gallery.length > 0}
+				<div class="board-center">
+					{#if newsVideo?.position === 'center'}<WallNewsVideo video={newsVideo} />{/if}
+					{#if gallery.length > 0}
+						<div class="gallery-slot"><WallGallery items={gallery} {now} paused={hidden} /></div>
+					{/if}
+				</div>
 			{/if}
 		</div>
 
@@ -879,9 +932,24 @@
 		z-index: 12;
 	}
 	.news-video-slot,
-	.board-center {
+	.board-center,
+	.widgets-slot {
 		width: 100%;
 		margin-top: 1.25rem;
+	}
+	.widgets-slot {
+		display: flex;
+		justify-content: flex-end;
+	}
+	.board-center {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+	.gallery-slot {
+		display: flex;
+		justify-content: center;
+		width: 100%;
 	}
 	.music-slot {
 		position: relative;
@@ -966,9 +1034,16 @@
 			grid-column: 2;
 			grid-row: 1;
 			display: flex;
+			flex-direction: column;
+			justify-content: flex-end;
 			min-width: 0;
 			min-height: 0;
 			margin-top: 0;
+		}
+		/* The deck keeps its height; the live tile above shrinks to make room. */
+		.widgets-slot {
+			flex: 0 0 auto;
+			margin-top: 1.25rem;
 		}
 		.music-slot :global(.music-dock) {
 			justify-content: flex-end;
