@@ -40,7 +40,7 @@ Todas as métricas têm o prefixo `dumbmonit_forgejo_`.
 
 As [regras integradas](../alerting/rules.md#self-hosted-forges) que se
 aplicam: Forgejo/Gitea runners all offline, Forgejo/Gitea scheduled task
-overdue, além de Device unreachable. Uma pontuação de segurança verifica as
+overdue, além de Monitor unreachable. Uma pontuação de segurança verifica as
 tarefas agendadas: veja
 [Atualizações de fornecedor e outras verificações](../using/security-score.md).
 
@@ -53,7 +53,7 @@ configurações de cadastro ou de dois fatores do GitLab, nem um indicador
 próprio de "atualização disponível" — compare a versão acima com as
 [notas de lançamento](https://forgejo.org/releases/) do projeto manualmente.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca chama o Forgejo ou o Gitea. Ele diz primeiro o que está errado (a

@@ -12,7 +12,7 @@ Fenster von jedem Tab aus.
 | **Now** | Die Live-Liste der Probleme, eine Zeile je Problem. Siehe [Die Now-Liste](#the-now-list). Das Badge auf dem Tab, und auf Alerts in der oberen Leiste, ist die Anzahl dessen, was noch Ihre Aufmerksamkeit braucht. |
 | **Maintenance** | Wartungsfenster, *Active now* oder *Scheduled*, einmalig, wöchentlich oder monatlich, jeweils mit dem nächsten Vorkommen (`#scheduled`). Siehe [Wartungsfenster](../alerting/maintenance.md). |
 | **History** | Die letzten 200 Übergänge, jeder mit Monitor, Regel und dem Geschehenen; behobene können gelöscht werden. |
-| **Rules** | Jede Regel mit ihrem Schweregrad, einer *Built-in*-Markierung und, falls ein Monitor sie ignoriert, *Ignored on N devices*; aktivieren, inline bearbeiten, eigene löschen, eine Schwellenwertregel erstellen. Siehe [Regeln](../alerting/rules.md). |
+| **Rules** | Jede Regel mit ihrem Schweregrad, einer *Built-in*-Markierung und, falls ein Monitor sie ignoriert, *Ignored on N monitors*; aktivieren, inline bearbeiten, eigene löschen, eine Schwellenwertregel erstellen. Siehe [Regeln](../alerting/rules.md). |
 
 Benachrichtigungskanäle und die Benachrichtigungsrichtlinie finden Sie unter
 **Settings → Notifications & reports** (siehe [Notifications](#notifications)).
@@ -63,18 +63,18 @@ nicht ändern):
   behaupten, Sie würden etwas dagegen tun: 1 h, 8 h, 1 Tag oder *until
   resolved*. Anders als Ack funktioniert es, indem ein auf genau die
   Labels dieses einen Alarms begrenztes Wartungsfenster geöffnet wird —
-  eine Schwesterregel auf demselben Gerät spricht weiter. Die Karte
+  eine Schwesterregel auf demselben Monitor spricht weiter. Die Karte
   wandert in eine ruhige *Snoozed*-Gruppe, die die verbleibende Zeit
   zeigt, und bietet **Unsnooze**. Erinnerungen pausieren genauso wie
   bei einer Bestätigung.
 - **Ignore** ("benachrichtige mich dazu nie wieder") ist für eine
-  Regel, die auf diesem Gerät nie Sinn ergeben wird: Es deaktiviert
-  diese Regel für genau dieses Gerät (eine gerätespezifische
+  Regel, die auf diesem Monitor nie Sinn ergeben wird: Es deaktiviert
+  diese Regel für genau diesen Monitor (eine monitorspezifische
   Überschreibung — siehe
-  [Gerätespezifische Überschreibungen](../alerting/rules.md#per-device-overrides)),
+  [Monitorspezifische Überschreibungen](../alerting/rules.md#per-device-overrides)),
   und der Alarm verschwindet endgültig, sofort, nicht nur leiser. Es
-  ist reversibel: **Stop ignoring** auf der Geräteseite, oder von der
-  Regel selbst unter Alerts → Rules, wo sie sich *Ignored on N devices*
+  ist reversibel: **Stop ignoring** auf der Monitorseite, oder von der
+  Regel selbst unter Alerts → Rules, wo sie sich *Ignored on N monitors*
   liest.
 - **Clear** ist für die Historie, nicht für einen lebenden Alarm:
   Sobald ein Übergang sich gelöst hat, entfernt *Clear* (oder *Clear
@@ -106,13 +106,13 @@ durch, der Rest wartet auf eine Zusammenfassung).
 
 **Only some alerts.** Dieselben Delivery options halten den
 **Routing-Filter** des Kanals: welche Alarme er möchte, nach
-Geräte-Tag (`site=cellar`), nach Geräteart (`proxmox`), oder nach
+Monitor-Tag (`site=cellar`), nach Monitortyp (`proxmox`), oder nach
 Regel. Bedingungen auf demselben Feld lesen sich als *oder*,
 unterschiedliche Felder als *und*, und eine *Except*-Zeile gewinnt
-immer. Unter dem Editor listet eine Vorschau auf, welche Ihrer Geräte
+immer. Unter dem Editor listet eine Vorschau auf, welche Ihrer Monitore
 der Filter jetzt gerade auswählt, und ein Satz gibt das Ganze zurück —
-*this channel receives advisories and above from devices tagged
-site=cellar, except devices tagged role=lab*. Ein Kanal ohne Filter
+*this channel receives advisories and above from monitors tagged
+site=cellar, except monitors tagged role=lab*. Ein Kanal ohne Filter
 empfängt weiterhin alles, was jeder bestehende Kanal tut.
 
 Das Bearbeiten eines Kanals und das Leerlassen des Secrets behält das
@@ -139,14 +139,14 @@ weiter.
 ## Operatoren und Viewer {#operators-and-viewers}
 
 Ein **Operator** bearbeitet Alarme, ohne die Konfiguration anzurühren:
-Er bestätigt, schaltet stumm, ignoriert eine Regel für ein Gerät,
+Er bestätigt, schaltet stumm, ignoriert eine Regel für einen Monitor,
 plant oder löscht Wartungsfenster und löscht behobene Historie. Regeln,
 Kanäle und die Benachrichtigungsrichtlinie bleiben für ihn nur-lesend,
 markiert *Operator — config is admin only*. Ignorieren ist die einzige
-gerätespezifische Überschreibung, die ein Operator vornehmen kann;
+monitorspezifische Überschreibung, die ein Operator vornehmen kann;
 Schwellenwerte bleiben Sache eines Admins, und das *Ignore* oder *Stop
-ignoring* eines Operators behält jeden von einem Admin für dieses
-Gerät gesetzten Schwellenwert.
+ignoring* eines Operators behält jeden von einem Admin für diesen
+Monitor gesetzten Schwellenwert.
 
 Ein Viewer sieht jeden Tab, aber keine Kontrolle: Die Seite zeigt
 *Viewer — read only*, wo ein Admin die Schaltflächen fände.

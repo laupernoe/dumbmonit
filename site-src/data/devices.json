@@ -16,7 +16,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 0,
@@ -39,13 +39,13 @@
    },
    "rules": [
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     },
     {
      "name": "High CPU",
-     "description": "CPU load sustained above 90%, averaged per device across SNMP, Proxmox and agent sources; clears below 85 %.",
+     "description": "CPU load sustained above 90%, averaged per monitor across SNMP, Proxmox and agent sources; clears below 85 %.",
      "severity": "advisory"
     },
     {
@@ -174,7 +174,7 @@
      "severity": "warning"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -233,7 +233,7 @@
      "severity": "warning"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -301,7 +301,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -352,7 +352,7 @@
    "rules": [
     {
      "name": "High CPU",
-     "description": "CPU load sustained above 90%, averaged per device across SNMP, Proxmox and agent sources; clears below 85 %.",
+     "description": "CPU load sustained above 90%, averaged per monitor across SNMP, Proxmox and agent sources; clears below 85 %.",
      "severity": "advisory"
     },
     {
@@ -382,7 +382,7 @@
     },
     {
      "name": "Port accumulating errors",
-     "description": "A network port logged more than fifty errors in the last hour: usually a failing cable, a dirty fibre or a duplex mismatch (increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h]); nothing fires during the first hour of a new device, so errors counted before it was added are not reported as new).",
+     "description": "A network port logged more than fifty errors in the last hour: usually a failing cable, a dirty fibre or a duplex mismatch (increase_prometheus(dumbmonit_if_errors_in[1h]) + increase_prometheus(dumbmonit_if_errors_out[1h]); nothing fires during the first hour of a new monitor, so errors counted before it was added are not reported as new).",
      "severity": "advisory"
     },
     {
@@ -391,7 +391,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -441,7 +441,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -522,7 +522,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -587,7 +587,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -634,7 +634,7 @@
    },
    "rules": [
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -804,7 +804,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -885,7 +885,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -932,7 +932,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -1281,7 +1281,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -1343,7 +1343,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -1399,7 +1399,7 @@
      "severity": "warning"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -1477,7 +1477,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -1633,7 +1633,7 @@
    "rules": [
     {
      "name": "NAS pool degraded",
-     "description": "ZFS no longer calls a pool healthy. A degraded pool still serves its data, which is exactly why nobody notices until the next disk fails. The device page names the disk.",
+     "description": "ZFS no longer calls a pool healthy. A degraded pool still serves its data, which is exactly why nobody notices until the next disk fails. The monitor page names the disk.",
      "severity": "warning"
     },
     {
@@ -1688,7 +1688,7 @@
     },
     {
      "name": "TrueNAS alert raised",
-     "description": "TrueNAS itself has raised an alert of level ERROR or above. Its own sentence is on the device page.",
+     "description": "TrueNAS itself has raised an alert of level ERROR or above. Its own sentence is on the monitor page.",
      "severity": "advisory"
     },
     {
@@ -1772,7 +1772,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -1987,7 +1987,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2010,7 +2010,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -2085,7 +2085,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 0,
@@ -2137,7 +2137,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 53,
@@ -2191,7 +2191,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 0,
@@ -2245,7 +2245,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 443,
@@ -2298,7 +2298,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 123,
@@ -2352,7 +2352,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -2427,7 +2427,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 0,
@@ -2470,7 +2470,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 0,
@@ -2510,7 +2510,7 @@
      "severity": "warning"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2534,7 +2534,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 443,
@@ -2583,7 +2583,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 443,
@@ -2680,7 +2680,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2743,7 +2743,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2790,7 +2790,7 @@
    },
    "rules": [
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2838,7 +2838,7 @@
    },
    "rules": [
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2889,7 +2889,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -2956,7 +2956,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3016,7 +3016,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3091,7 +3091,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3146,7 +3146,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3196,7 +3196,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3267,7 +3267,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3328,7 +3328,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3378,7 +3378,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3445,7 +3445,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3517,7 +3517,7 @@
      "severity": "info"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3580,7 +3580,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3603,7 +3603,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -3696,17 +3696,17 @@
    "rules": [
     {
      "name": "MDaemon mail service down",
-     "description": "A watched mail service of the MDaemon server does not answer, or greets to refuse service. Only the services listed on the device have a series. The notification names the service and its port.",
+     "description": "A watched mail service of the MDaemon server does not answer, or greets to refuse service. Only the services listed on the monitor have a series. The notification names the service and its port.",
      "severity": "warning"
     },
     {
      "name": "MDaemon XML API not answering",
-     "description": "The XML API has stopped answering while the mail services still do: Remote Administration is probably stopped. Only a device with an account has the series.",
+     "description": "The XML API has stopped answering while the mail services still do: Remote Administration is probably stopped. Only a monitor with an account has the series.",
      "severity": "advisory"
     },
     {
      "name": "MDaemon mail queue growing",
-     "description": "The inbound, local or remote queue has grown by more than a hundred messages in two hours (delta(dumbmonit_mdaemon_queue_messages{queue=~\"inbound\\|local\\|remote\"}[2h])): MDaemon has stopped delivering from it. Read by the [agent](../devices/agent.md#windows-performance-counters) on the MDaemon server, so the alert is on the agent's device.",
+     "description": "The inbound, local or remote queue has grown by more than a hundred messages in two hours (delta(dumbmonit_mdaemon_queue_messages{queue=~\"inbound\\|local\\|remote\"}[2h])): MDaemon has stopped delivering from it. Read by the [agent](../devices/agent.md#windows-performance-counters) on the MDaemon server, so the alert is on the agent's monitor.",
      "severity": "advisory"
     },
     {
@@ -3720,7 +3720,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -3773,7 +3773,7 @@
     },
     {
      "name": "SecurityGateway API not answering",
-     "description": "The REST API has stopped answering while the services still do. Only a device with an API key has the series.",
+     "description": "The REST API has stopped answering while the services still do. Only a monitor with an API key has the series.",
      "severity": "advisory"
     },
     {
@@ -3782,7 +3782,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4003,7 +4003,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 27017,
@@ -4053,7 +4053,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4085,7 +4085,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     }
    ],
    "default_port": 6379,
@@ -4136,7 +4136,7 @@
      "severity": "warning"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4202,7 +4202,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4225,7 +4225,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -4282,7 +4282,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -4337,7 +4337,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4357,7 +4357,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -4412,7 +4412,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4433,7 +4433,7 @@
     {
      "kind": "none",
      "label": "No authentication",
-     "help": "Nothing is sent: the device answers without credentials."
+     "help": "Nothing is sent: the monitor answers without credentials."
     },
     {
      "kind": "username_password",
@@ -4488,7 +4488,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }
@@ -4565,7 +4565,7 @@
      "severity": "advisory"
     },
     {
-     "name": "Device unreachable",
+     "name": "Monitor unreachable",
      "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
      "severity": "warning"
     }

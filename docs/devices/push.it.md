@@ -13,27 +13,27 @@ di una chiamata che genera l'avviso.
 
 ## Come funziona
 
-Ogni dispositivo heartbeat riceve un URL della forma
+Ogni monitor heartbeat riceve un URL della forma
 `https://<il tuo DumbMonit>/api/push/<token>`. Il token è un valore casuale
 a 128 bit, memorizzato come hash per la ricerca e cifrato per la
-visualizzazione: viene mostrato sulla pagina del dispositivo, con un
-pulsante per copiarlo, per tutto il tempo che il dispositivo esiste. È
+visualizzazione: viene mostrato sulla pagina del monitor, con un
+pulsante per copiarlo, per tutto il tempo che il monitor esiste. È
 deliberatamente aperto — nessuna sessione, nessun token API, nessun header
 `X-Requested-With` — perché una riga `curl` in un crontab non ha nulla di
 tutto ciò. Avere il token permette solo di dire "il job è stato eseguito".
 
-A ogni passaggio dello scheduler (l'intervallo del dispositivo, 60 s per
+A ogni passaggio dello scheduler (l'intervallo del monitor, 60 s per
 impostazione predefinita) il collector legge l'orario dell'ultima chiamata
 e scrive:
 
 | Situazione | `probe_success` | Effetto |
 |---|---|---|
-| Nessuna chiamata ancora ricevuta | *(nulla scritto)* | Il dispositivo mostra **Waiting**. Nessun avviso: il job non è ancora attivo. |
+| Nessuna chiamata ancora ricevuta | *(nulla scritto)* | Il monitor mostra **Waiting**. Nessun avviso: il job non è ancora attivo. |
 | Ultima chiamata entro l'intervallo atteso + grazia | `1` | **Reporting**. |
 | Ultima chiamata più vecchia dell'intervallo atteso + grazia | `0`, `reason="missed"` | **Down**; la regola "Heartbeat missed" si attiva dopo due minuti. |
 | L'ultima chiamata ha detto `status=down` | `0`, `reason="reported_down"` | **Down** all'istante, qualunque cosa dica l'orologio. |
 
-Una chiamata ri-valuta anche immediatamente il dispositivo, così un job che
+Una chiamata ri-valuta anche immediatamente il monitor, così un job che
 riprende elimina il suo avviso senza attendere il prossimo passaggio dello
 scheduler.
 
@@ -48,7 +48,7 @@ accettati; `HEAD` funziona anche.
 | Parametro | Significato |
 |---|---|
 | `status` | `up` (predefinito) o `down`: il job segnala da solo un fallimento. |
-| `msg` | Una parola libera di spiegazione, conservata (troncata a 500 caratteri) e mostrata sulla pagina del dispositivo. |
+| `msg` | Una parola libera di spiegazione, conservata (troncata a 500 caratteri) e mostrata sulla pagina del monitor. |
 
 Questi sono i parametri del monitor push di Uptime Kuma: uno script
 scritto per esso funziona senza modifiche.
@@ -62,8 +62,8 @@ I passaggi seguenti sono quelli mostrati dalla nota accanto al modulo.
    unica tra i tuoi heartbeat.
 2. Imposta l'intervallo atteso sulla pianificazione del job ("24h" per un
    job notturno, "1h" per uno orario) e, se la pianificazione varia, un
-   periodo di grazia più ampio. Salva il dispositivo.
-3. La pagina del dispositivo mostra l'URL da chiamare. Aggiungilo alla fine
+   periodo di grazia più ampio. Salva il monitor.
+3. La pagina del monitor mostra l'URL da chiamare. Aggiungilo alla fine
    del job, così viene chiamato solo quando il job è riuscito:
 
     ```
@@ -73,9 +73,9 @@ I passaggi seguenti sono quelli mostrati dalla nota accanto al modulo.
 4. Un job che sa quando è fallito può segnalarlo invece di restare
    silenzioso: aggiungi ?status=down&msg=… all'URL, e l'avviso si attiva
    all'istante.
-5. Finché la prima chiamata non arriva il dispositivo mostra "Waiting" e
+5. Finché la prima chiamata non arriva il monitor mostra "Waiting" e
    nulla viene avvisato. URL perso o compromesso? "Regenerate" sulla pagina
-   del dispositivo emette uno nuovo; il vecchio smette di rispondere
+   del monitor emette uno nuovo; il vecchio smette di rispondere
    immediatamente.
 
 !!! warning
@@ -150,7 +150,7 @@ Disponibilità su trenta giorni, come per qualsiasi monitor di servizio:
 
 Regola integrata che si applica: **Heartbeat missed** (advisory, 2 minuti).
 Le regole "Service down" e "Service flapping" saltano gli heartbeat, e
-"Device unreachable" non si attiva mai per loro: il collector funziona
+"Monitor unreachable" non si attiva mai per loro: il collector funziona
 sempre, solo il suo verdetto cambia.
 
 ## API

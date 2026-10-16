@@ -168,7 +168,7 @@ impl TargetPayload {
         }
         if state.collectors.get(&self.kind).is_none() {
             return Err(ApiError::BadRequest(format!(
-                "Unknown device type \"{}\" (available: {})",
+                "Unknown monitor type \"{}\" (available: {})",
                 self.kind,
                 state.collectors.kinds().join(", ")
             )));
@@ -193,13 +193,13 @@ impl TargetPayload {
         if let (Some(id), Some(parent_id)) = (id, self.parent_id)
             && id == parent_id
         {
-            return Err(ApiError::BadRequest("A device cannot be its own parent.".into()));
+            return Err(ApiError::BadRequest("A monitor cannot be its own parent.".into()));
         }
         let via_agent = self.via_agent.flatten();
         if let (Some(id), Some(via_agent)) = (id, via_agent)
             && id == via_agent
         {
-            return Err(ApiError::BadRequest("A device cannot relay itself.".into()));
+            return Err(ApiError::BadRequest("A monitor cannot relay itself.".into()));
         }
         // Une machine à agent n'est jamais interrogée : ses mesures arrivent en
         // poussée, un relais n'aurait rien à faire.
@@ -468,13 +468,13 @@ pub async fn test_connection(
     // viendrait la remplacer pour l'équipement réel.
     if input.kind != "snmp" {
         return Err(ApiError::BadRequest(
-            "Only SNMP devices can be tested from the form: save the device, then use Probe now."
+            "Only SNMP devices can be tested from the form: save the monitor, then use Probe now."
                 .into(),
         ));
     }
     if input.via_agent.is_some() {
         return Err(ApiError::BadRequest(
-            "A device behind a relay cannot be tested from the form: save it, then use Probe now."
+            "A monitor behind a relay cannot be tested from the form: save it, then use Probe now."
                 .into(),
         ));
     }
@@ -642,7 +642,7 @@ async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult
     match db::targets::get(&state.pool, &state.cipher, via_agent).await? {
         None => Err(ApiError::BadRequest(format!("Relay agent {via_agent} not found."))),
         Some(agent) if agent.kind != "agent" => Err(ApiError::BadRequest(format!(
-            "Device {via_agent} ({}) is not an agent: only an agent can relay probes.",
+            "Monitor {via_agent} ({}) is not an agent: only an agent can relay probes.",
             agent.name
         ))),
         Some(_) => Ok(()),
@@ -654,7 +654,7 @@ async fn check_relay(state: &AppState, via_agent: Option<TargetId>) -> ApiResult
 fn check_pack_relay(input: &db::targets::TargetInput) -> ApiResult<()> {
     if input.via_agent.is_some() && dumbmonit_pack::id_from_kind(&input.kind).is_some() {
         return Err(ApiError::BadRequest(
-            "Devices of an integration pack are probed by the server itself: relay agents \
+            "Monitors of an integration pack are probed by the server itself: relay agents \
              cannot probe them yet."
                 .into(),
         ));
@@ -842,7 +842,7 @@ async fn load(state: &AppState, id: TargetId) -> ApiResult<Target> {
 }
 
 fn not_found(id: TargetId) -> ApiError {
-    ApiError::NotFound(format!("Device {id} not found."))
+    ApiError::NotFound(format!("Monitor {id} not found."))
 }
 
 /// La contrainte `UNIQUE (kind, address)` traduit une erreur d'utilisateur, pas une
@@ -850,7 +850,7 @@ fn not_found(id: TargetId) -> ApiError {
 fn duplicate_address_to_conflict(error: anyhow::Error) -> ApiError {
     let text = format!("{error:#}");
     if text.contains("UNIQUE constraint failed") {
-        ApiError::Conflict("A device with this type and address already exists.".into())
+        ApiError::Conflict("A monitor with this type and address already exists.".into())
     } else {
         ApiError::Internal(error)
     }

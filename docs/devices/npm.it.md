@@ -41,7 +41,7 @@ Le [regole incorporate](../alerting/rules.md#reverse-proxies-and-domains) che
 si applicano: Nginx Proxy Manager host offline, Certificato proxy non rinnovato, più
 Device irraggiungibile.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina
 non interroga mai Nginx Proxy Manager. Dice cosa c'è che non va in una frase (host

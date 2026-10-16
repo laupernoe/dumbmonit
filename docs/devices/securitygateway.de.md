@@ -46,8 +46,8 @@ manche davon ändern sich nur einmal pro Minute.
 **Ein teilweiser Ausfall ist weiterhin eine erfolgreiche Prüfung.**
 Ein gestoppter Dienst gibt für diesen Dienst `service_up 0`, und die
 anderen werden weiterhin gemessen. Nur wenn kein Dienst und keine API
-überhaupt antwortet, ist das Gerät *unreachable*. Ein abgelehnter Key
-ist ein Konfigurationsfehler, auf der Geräteseite angezeigt und nicht
+überhaupt antwortet, ist der Monitor *unreachable*. Ein abgelehnter Key
+ist ein Konfigurationsfehler, auf der Monitorseite angezeigt und nicht
 benachrichtigt.
 
 **Was nicht gelesen wird.** Die Lizenz und ihr Ablauf, der
@@ -59,11 +59,11 @@ und listen Sie den Dienst in seiner `services`-Einstellung.
 
 Die geltenden [eingebauten Regeln](../alerting/rules.md#mdaemon-and-securitygateway):
 SecurityGateway service down, SecurityGateway API not answering,
-SecurityGateway delivery queue growing, plus Device unreachable.
+SecurityGateway delivery queue growing, plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
-Ein SecurityGateway-Gerät zeigt ein **Mail services**-Panel über den
+Ein SecurityGateway-Monitor zeigt ein **Mail services**-Panel über den
 Diagrammen, aus der letzten gespeicherten Messung gelesen: Das Öffnen
 der Seite verbindet sich nie mit dem Gateway. Es listet jeden
 beobachteten Dienst mit seinem Port, einem Wort und einer Farbe
@@ -85,7 +85,7 @@ API-Key jeden Leistungszähler mit seinem neuesten Wert.
    oder später benötigt. Erstellen Sie ein wie folgt benanntes
    dediziertes Konto, mit einem nirgendwo sonst genutzten langen
    Passwort, und geben Sie ihm die Rolle Domain Administrator. Bleiben
-   die Zähler auf der Geräteseite leer, hält Ihre Version sie für die
+   die Zähler auf der Monitorseite leer, hält Ihre Version sie für die
    Rolle Global Administrator vor, und das Konto braucht diese Rolle
    stattdessen.
 

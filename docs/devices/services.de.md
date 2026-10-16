@@ -3,7 +3,7 @@
 Elf Monitore überwachen **Dienste** statt Geräte, im Stil von Uptime Kuma: eine Webseite, einen
 Port, einen DNS-Namen, einen Host, ein Zertifikat, einen Zeitserver, ein Mail-Relay, eine
 Datenbank, einen MQTT-Broker, einen WebSocket-Endpunkt. Jeder Dienst erhält auf seiner
-Geräteseite einen Verlaufsbalken, eine Antwortzeit und einen Verfügbarkeitsprozentwert.
+Monitorseite einen Verlaufsbalken, eine Antwortzeit und einen Verfügbarkeitsprozentwert.
 
 Die letzten fünf gehen über das Öffnen einer Verbindung hinaus: Sie beginnen eine echte Sitzung
 im eigenen Protokoll des Dienstes. Das ist der Unterschied zwischen „Port 5432 ist offen“ und
@@ -20,7 +20,7 @@ Verfügbarkeitsprozentwert: `avg_over_time(dumbmonit_probe_success[30d])`.
 
 | Situation | Was passiert |
 |---|---|
-| Ungültige Option oder Adresse, ICMP-Sockets nicht erlaubt (siehe Ping) | Konfigurationsfehler: Es wird nichts geschrieben, die Geräteseite zeigt den Fehler, kein Alarm „ausgefallen“. |
+| Ungültige Option oder Adresse, ICMP-Sockets nicht erlaubt (siehe Ping) | Konfigurationsfehler: Es wird nichts geschrieben, die Monitorseite zeigt den Fehler, kein Alarm „ausgefallen“. |
 | Verbindung abgelehnt, Timeout, TLS abgelehnt, `500`, Schlüsselwort fehlt, totaler Paketverlust, Passwort abgelehnt, Abfrage fehlgeschlagen | `probe_success = 0`: Der Ausfall wird aufgezeichnet, datiert und gezählt. |
 | Alles in Ordnung | `probe_success = 1`. |
 
@@ -500,7 +500,7 @@ verwenden Sie einen Heartbeat.
 | `topic` | Topic | *(leer)* | Topic, das die Prüfung abonniert. Leer: Sie verbindet nur, was bereits sagt, dass der Broker lebt und Ihr Konto akzeptiert. |
 | `expect_message` | Retained Message erwarten | `false` | Vor dem Timeout muss auf diesem Topic eine Nachricht eintreffen. Nur Retained Messages treffen sofort ein: Ein Topic, auf das nur von Zeit zu Zeit veröffentlicht wird, wirkt stumm. |
 | `expect` | Erwarteter Inhalt | *(leer)* | Text, den diese Nachricht enthalten muss. Das Ausfüllen impliziert, eine Nachricht zu erwarten. |
-| `client_id` | Client-Kennung | *(abgeleitet)* | Dem Broker angekündigter Name. Der Standard wird vom Gerät abgeleitet, sodass zwei Prüfungen einander nie trennen. |
+| `client_id` | Client-Kennung | *(abgeleitet)* | Dem Broker angekündigter Name. Der Standard wird vom Monitor abgeleitet, sodass zwei Prüfungen einander nie trennen. |
 | `server_name` | Servername (SNI) | *(der Host)* | Dem Broker angekündigter und im Zertifikat geprüfter Domainname. Setzen Sie ihn, wenn die Adresse eine IP ist. |
 | `insecure_tls` | Nicht prüfbares Zertifikat akzeptieren | `false` | Eine nicht prüfbare Kette zählt nicht mehr als Fehler: Das Ablaufdatum wird weiterhin aufgezeichnet. |
 | `allow_private_targets` | Loopback- und Link-Local-Ziele erlauben | `false` | Siehe „Adressen, die die Prüfungen ablehnen“ unten. |

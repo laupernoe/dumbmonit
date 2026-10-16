@@ -8,7 +8,7 @@ uma vulnerabilidade, siga a
 ## O que está em jogo
 
 O DumbMonit corre dentro da sua rede. Guarda as credenciais de que precisa para
-ler cada dispositivo (comunidades SNMP, tokens de API, palavras-passe), recebe
+ler cada monitor (comunidades SNMP, tokens de API, palavras-passe), recebe
 medições dos agentes nas suas máquinas e envia pedidos para endereços que
 configura. Um comprometimento exporia esses segredos e daria a um atacante um
 ponto de apoio na rede monitorizada.
@@ -19,7 +19,7 @@ ponto de apoio na rede monitorizada.
 |---|---|---|
 | Navegador ou script para `/api/*` | Administradores, operadores e leitores | Autenticado por um cookie de sessão ou por um token de API; três funções limitam o que cada um pode fazer. |
 | Agente para `/api/ingest` | Máquinas onde instalou um agente | Um token por máquina; um token divulgado pode ser revogado isoladamente. |
-| Servidor para dispositivos e serviços | Sistemas de terceiros | Sem confiança: as respostas são analisadas de forma defensiva e os redirecionamentos ficam no mesmo anfitrião. |
+| Servidor para monitores e serviços | Sistemas de terceiros | Sem confiança: as respostas são analisadas de forma defensiva e os redirecionamentos ficam no mesmo anfitrião. |
 | Servidor para canais de notificação | Serviços externos | As credenciais são cifradas em repouso e nunca devolvidas pela API. |
 | Servidor para VictoriaMetrics | Um processo filho em loopback, ou uma instância externa | O embutido não tem autenticação e escuta em loopback; uma instância externa é da responsabilidade do operador. |
 | Volume `/data` e anfitrião | O operador | Confiável. Um atacante que controle o anfitrião ou o volume está fora do âmbito. |
@@ -38,7 +38,7 @@ ponto de apoio na rede monitorizada.
 - **Economia de mecanismo.** Um binário, um ficheiro SQLite, um processo filho em
   loopback e uma única porta de entrada para todos os clientes: `/api/*`.
 - **Predefinições à prova de falha.** Uma verificação de segurança cujos dados
-  faltam é `unknown`, nunca uma aprovação; um dispositivo inacessível e um erro
+  faltam é `unknown`, nunca uma aprovação; um monitor inacessível e um erro
   de configuração são estados diferentes.
 - **Mediação completa.** Um único middleware de autenticação
   (`crates/server/src/auth/middleware.rs`) protege as rotas da API.
@@ -67,7 +67,7 @@ ponto de apoio na rede monitorizada.
 | Falhas de identificação e autenticação | Limite de tentativas de início de sessão por endereço de cliente e por conta (`auth/rate_limit.rs`), autenticação de dois fatores opcional, OpenID Connect, um administrador pode repor o segundo fator de um utilizador e terminar-lhe as sessões. |
 | Integridade do software e dos dados | Os instaladores do agente verificam o SHA-256 do binário descarregado; as imagens de versão são construídas pela CI. |
 | Registo e monitorização | Um registo de segurança dos inícios de sessão e das alterações sensíveis (`auth/audit.rs`). |
-| Server-side request forgery | As integrações e os canais de notificação só seguem redirecionamentos para o mesmo anfitrião, para que um dispositivo não possa reencaminhar um pedido e a sua chave de API para outro lado. |
+| Server-side request forgery | As integrações e os canais de notificação só seguem redirecionamentos para o mesmo anfitrião, para que um monitor não possa reencaminhar um pedido e a sua chave de API para outro lado. |
 | Cross-site request forgery | Os pedidos que alteram estado e dependem do cookie têm de levar `X-Requested-With: DumbMonit` ou metadados de fetch do mesmo domínio, caso contrário `403`; os pedidos autenticados por token não levam cookie. |
 
 ## Verificação
@@ -86,7 +86,7 @@ afirmação.
 ## Limites conhecidos
 
 - O servidor integrado fala HTTP simples; coloque TLS à sua frente.
-- As opções dos dispositivos são guardadas sem cifragem. Ponha os segredos nos
+- As opções dos monitores são guardadas sem cifragem. Ponha os segredos nos
   campos de credenciais.
 - O VictoriaMetrics embutido não tem autenticação.
-- O DumbMonit está em alfa; as rotas e os campos ainda podem mudar.
+- O DumbMonit está antes da 1.0; as rotas e os campos ainda podem mudar.

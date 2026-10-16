@@ -1,21 +1,32 @@
 # Configurações {#settings}
 
-![Configurações: conta, usuários, login único, agentes, assistente, aparência, sobre](../assets/screenshots/settings-light.png){ loading=lazy }
+![Configurações: sete abas, aqui Minha conta com aparência, conta e segurança e notificações push](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Configurações mantém o que é administrativo: sua conta, quem pode entrar e
-como, os tokens que permitem agentes e assistentes entrarem, fazer backup
-da instância, o tema, e a saúde do servidor. Uma página, uma seção por
-tópico, com uma trilha de âncoras em uma tela larga e uma faixa de chips em
-um celular. Cada seção pode ser compartilhada por link (`/settings#agents`).
+Configurações mantém o que é administrativo: sua conta, quem pode entrar e como, os tokens que permitem agentes e assistentes entrarem, fazer backup da instância, o tema, e a saúde do servidor. Está dividida em sete abas, cada uma com seu próprio endereço. Uma trilha lateral em tela larga, uma faixa de chips em um celular e uma busca sobre os nomes das seções ajudam a encontrar uma seção.
 
-Duas seções cuidam do lado público e de saída do DumbMonit:
-
-| Procurando por | Onde | Link |
+| Aba | Endereço | O que contém |
 |---|---|---|
-| Canais de notificação, horas de silêncio, política de notificação, relatórios | **Configurações → Notificações e relatórios** ([Canais de notificação](../notifications.md)) | `/settings/notifications` |
-| Páginas de status e anúncios | **Configurações → Páginas de status** ([Páginas de status](status-pages.md)) | `/settings/status` |
+| Minha conta | `/settings/account` | Aparência, Conta e segurança (senha, dois fatores, registro de segurança), Notificações push |
+| Equipe e acesso | `/settings/team` | Usuários, Login único |
+| Monitoramento | `/settings/monitoring` | Agentes, Pacotes de integração, [Pontuação de segurança](security-score.md) |
+| Notificações e relatórios | `/settings/notifications` | Canais, Política de notificações, Horário de silêncio ([Canais de notificação](../notifications.md)), Relatórios |
+| Páginas de status | `/settings/status` | Páginas de status e anúncios ([Páginas de status](status-pages.md)) |
+| Tela de parede | `/settings/wall` | Modo parede, Música da parede, Notícias do mural ([Modo parede](overview.md#wall-mode)) |
+| Sistema | `/settings/system` | Backup, O próprio DumbMonit, API e assistentes, Sobre |
 
-Os links antigos (`/alerts#notifications`, `/status`) redirecionam para o novo lugar.
+Cada seção mantém sua âncora: `/settings#agents` redireciona para `/settings/monitoring#agents`. Os links antigos (`/alerts#notifications`, `/status`) também redirecionam para o novo lugar.
+
+## Aparência {#appearance}
+
+Três blocos, cada um pré-visualizando seu próprio tema: **Sistema** (segue
+seu monitor e muda com ele), **Dia** (o tema "papel de gráfico") e
+**Noite** (o tema "radar"). A escolha é armazenada no navegador. O
+alternador no cabeçalho e o *Alternar tema* da paleta de comandos mudam
+entre dia e noite.
+
+**Abrir modo parede** fica na parte inferior da seção: o boletim apenas,
+em tela cheia, para um monitor na sala. ++esc++ o deixa, e a paleta de
+comandos o abre de qualquer lugar — veja [Modo parede](overview.md#wall-mode).
 
 ## Conta e segurança {#account--security}
 
@@ -66,8 +77,8 @@ conta, com o endereço do cliente. Ele mantém as últimas 5.000 entradas.
 ## Notificações push {#push-notifications}
 
 Notificações nativas neste celular ou computador, mesmo com o DumbMonit
-fechado: **Ativar neste dispositivo**, depois **Enviar um teste**. Cada
-conta gerencia seus próprios dispositivos aqui (visualizadores também);
+fechado: **Ativar neste monitor**, depois **Enviar um teste**. Cada
+conta gerencia seus próprios monitores aqui (visualizadores também);
 quais alertas chegam até eles é definido por um canal **Web Push** em
 Configurações → Notificações e relatórios. O botão **i** resume os requisitos: HTTPS (ou
 localhost), instalação na Tela de Início no iPhone e iPad, e os domínios
@@ -78,7 +89,7 @@ de serviço de push que o servidor precisa alcançar. Guia completo:
 
 Apenas administradores. As contas que podem entrar, e seu papel:
 
-| Papel | Lê tudo | Lida com alertas (reconhecer, soneca, ignorar, janelas de manutenção, limpar histórico) | Altera a configuração (dispositivos, regras, canais, páginas de status, configurações, backups, tokens, contas) |
+| Papel | Lê tudo | Lida com alertas (reconhecer, soneca, ignorar, janelas de manutenção, limpar histórico) | Altera a configuração (monitores, regras, canais, páginas de status, configurações, backups, tokens, contas) |
 |---|---|---|---|
 | **Visualizador** | sim | não | não |
 | **Operador** | sim | sim | não |
@@ -181,36 +192,27 @@ manualmente. A lista mostra o prefixo de cada token, data de criação,
 token em seu próximo envio.
 
 Um token pode cadastrar várias máquinas. Revogá-lo não exclui os
-dispositivos. Visualizadores veem a lista e a seção lê *Visualizador —
+monitores. Visualizadores veem a lista e a seção lê *Visualizador —
 somente leitura*; criar e revogar são para administradores.
 
-## API e assistentes {#api--assistants}
+## Pontuação de segurança {#security-score}
 
-Um tipo de token para ambos: clientes MCP e a [API REST](../reference/api.md).
-Nomeie um token, escolha seu escopo e crie-o — é mostrado uma vez. Um
-token **read** só pode olhar; um token **read and write** também pode
-alterar coisas — silenciar um dispositivo, executar uma sondagem,
-adicionar ou editar dispositivos, regras e canais — mas nunca contas,
-configurações de login ou outros tokens.
+Em **Configurações → Monitoramento**, abaixo dos agentes: uma pontuação de quão bem protegidos estão a instância e os hosts monitorados. Veja [Pontuação de segurança](security-score.md).
 
-Sob **Conectar**, três abas mantêm os trechos, preenchidos com o token
-enquanto ainda está na tela: *Claude* (o comando `claude mcp add` e o
-bloco `claude_desktop_config.json`), *ChatGPT* (a URL do servidor MCP e o
-cabeçalho de autorização, com um aviso quando esta página não é servida
-via HTTPS — o ChatGPT se conecta dos servidores da OpenAI, então o
-endereço precisa ser acessível pela internet) e *Cursor / outro*, a mesma
-forma para qualquer cliente que fala Streamable HTTP com um cabeçalho
-bearer. **Acesso à API** mostra o mesmo token na API REST como um exemplo
-`curl`, e aponta para as rotas que um Prometheus ou um Grafana coletam com
-ele. Veja [Conectar um assistente](assistant.md) e
-[Coletando do DumbMonit](../reference/metrics.md#scraping-dumbmonit).
+## Relatórios {#reports}
+
+Em **Configurações → Notificações e relatórios**, abaixo da política: e-mails
+periódicos de disponibilidade para a equipe. Escolha semanal,
+diário ou mensal, o dia, hora e fuso horário, os destinatários e o canal
+de e-mail, depois **Enviar pré-visualização** para ver o resultado.
+Restrito a administradores. Veja [Relatórios por e-mail](reports.md).
 
 ## Backup {#backup}
 
 Três coisas, na ordem em que você as encontra.
 
 Um **aviso que você não pode perder**: `/data/secret.key` é o que
-descriptografa credenciais de dispositivo, e uma cópia do banco de dados
+descriptografa credenciais de monitor, e uma cópia do banco de dados
 sem ele restaura uma instância que não pode falar com nada. O texto muda
 quando o segredo vem de `DUMBMONIT_SECRET` em vez disso — não há então
 nenhum arquivo para copiar, e é seu gerenciador de senhas que precisa
@@ -251,30 +253,31 @@ criptografada e nunca mais é exibida, apenas o host. Somente administradores
 podem alterá-la. Veja
 [Watching DumbMonit itself](../install/self-monitoring.md).
 
-## Relatórios {#reports}
+## API e assistentes {#api--assistants}
 
-Em **Configurações → Notificações e relatórios**, abaixo da política: e-mails
-periódicos de disponibilidade para a equipe. Escolha semanal,
-diário ou mensal, o dia, hora e fuso horário, os destinatários e o canal
-de e-mail, depois **Enviar pré-visualização** para ver o resultado.
-Restrito a administradores. Veja [Relatórios por e-mail](reports.md).
+Um tipo de token para ambos: clientes MCP e a [API REST](../reference/api.md).
+Nomeie um token, escolha seu escopo e crie-o — é mostrado uma vez. Um
+token **read** só pode olhar; um token **read and write** também pode
+alterar coisas — silenciar um monitor, executar uma sondagem,
+adicionar ou editar monitores, regras e canais — mas nunca contas,
+configurações de login ou outros tokens.
 
-## Aparência {#appearance}
-
-Três blocos, cada um pré-visualizando seu próprio tema: **Sistema** (segue
-seu dispositivo e muda com ele), **Dia** (o tema "papel de gráfico") e
-**Noite** (o tema "radar"). A escolha é armazenada no navegador. O
-alternador no cabeçalho e o *Alternar tema* da paleta de comandos mudam
-entre dia e noite.
-
-**Abrir modo parede** fica na parte inferior da seção: o boletim apenas,
-em tela cheia, para um monitor na sala. ++esc++ o deixa, e a paleta de
-comandos o abre de qualquer lugar — veja [Modo parede](overview.md#wall-mode).
+Sob **Conectar**, três abas mantêm os trechos, preenchidos com o token
+enquanto ainda está na tela: *Claude* (o comando `claude mcp add` e o
+bloco `claude_desktop_config.json`), *ChatGPT* (a URL do servidor MCP e o
+cabeçalho de autorização, com um aviso quando esta página não é servida
+via HTTPS — o ChatGPT se conecta dos servidores da OpenAI, então o
+endereço precisa ser acessível pela internet) e *Cursor / outro*, a mesma
+forma para qualquer cliente que fala Streamable HTTP com um cabeçalho
+bearer. **Acesso à API** mostra o mesmo token na API REST como um exemplo
+`curl`, e aponta para as rotas que um Prometheus ou um Grafana coletam com
+ele. Veja [Conectar um assistente](assistant.md) e
+[Coletando do DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 
 ## Sobre {#about}
 
 Versão do servidor e a saúde de seus dois armazenamentos, o banco de dados
-(configuração de dispositivo e histórico de alertas) e o VictoriaMetrics
+(configuração de monitor e histórico de alertas) e o VictoriaMetrics
 (toda medição nos gráficos), como reportado por `GET /api/health` e
 atualizado a cada 15 segundos. Um armazenamento que para de responder
 mostra um aviso com o erro e o que verificar. A seção também liga para

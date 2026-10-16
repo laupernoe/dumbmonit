@@ -13,7 +13,7 @@ pub enum ProbeError {
     #[error("Timed out after {0:?}")]
     Timeout(std::time::Duration),
 
-    #[error("Device unreachable: {0}")]
+    #[error("Monitor unreachable: {0}")]
     Unreachable(String),
 
     #[error("Authentication refused: {0}")]

@@ -73,7 +73,7 @@ DumbMonit 每分钟读取三个必需页面——`/api/v2/monitor/system/status`
 - **FortiGate 固件更新**:有补丁版本可用(信息级别,每周
   提醒)。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 Firewall 面板会用一句话说明哪里出了问题,显示 CPU、内存、会话数
 和 HA 状态,然后列出 IPsec 隧道(宕机的排在最前)、无链路的

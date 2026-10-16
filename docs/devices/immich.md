@@ -35,7 +35,7 @@ Recent Immich versions drop failed jobs from the queue once they are logged, so
 
 The [built-in rules](../alerting/rules.md#self-hosted-applications) that apply:
 Immich jobs stalled, Immich queue paused, Immich storage almost full, Immich
-update available, plus Device unreachable.
+update available, plus Monitor unreachable.
 
 ## Devices
 
@@ -60,10 +60,10 @@ not catch a single device going silent while another keeps uploading. Only
 `last_seen_timestamp_seconds` — the last time each device's session was
 active — is genuinely per device.
 
-The device page's table shows these figures for every device, with a status
+The monitor page's table shows these figures for every device, with a status
 of OK or Stale.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 calls Immich. It says what is wrong first (queues stuck, queues paused,

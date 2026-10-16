@@ -47,9 +47,9 @@ dominio.
 Le [regole integrate](../alerting/rules.md#reverse-proxies-and-domains) che
 si applicano: Domain expiring (sotto i 30 giorni), Domain about to expire
 (sotto i 7 giorni o scaduto), Domain on hold, Domain in redemption, più
-Device unreachable.
+Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non interroga mai il registry. Indica la data di scadenza e i giorni
@@ -85,6 +85,6 @@ Nessuna: RDAP è pubblico.
 Indirizzo: il dominio registrato (`example.com`); un URL incollato viene
 ridotto al suo nome host. Opzioni: Server RDAP (vuoto: trovato tramite
 IANA), intervallo di aggiornamento (12 ore, da 1 a 168) e timeout della
-richiesta (10 s). L'intervallo di controllo del dispositivo stesso può
+richiesta (10 s). L'intervallo di controllo del monitor stesso può
 restare al suo valore predefinito: ricalcola solo i giorni rimanenti tra due
 interrogazioni al registry.

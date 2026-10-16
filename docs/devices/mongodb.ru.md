@@ -48,9 +48,9 @@ WiredTiger «грязные», запросам приходится самим 
 Применимые [встроенные правила](../alerting/rules.md#databases-message-broker-and-security-engine):
 MongoDB replica set without primary, MongoDB member unreachable,
 MongoDB replication lag, MongoDB connections near the limit, MongoDB cache
-under pressure, MongoDB internal errors, а также Device unreachable.
+under pressure, MongoDB internal errors, а также Monitor unreachable.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками показывает то, что сохранил опрос; открытие страницы
 никогда не обращается к MongoDB. Она одной фразой говорит, что не так (набор

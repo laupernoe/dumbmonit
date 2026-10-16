@@ -46,9 +46,9 @@ familia que un componente no tiene simplemente no produce ninguna serie.
 Las [reglas integradas](../alerting/rules.md#log-and-metrics-servers) que
 se aplican: Loki not ready, Loki refusing log lines, Loki cannot flush to
 storage, Loki write-ahead log disk full, Loki request errors, además de
-Device unreachable.
+Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel sobre las gráficas lee lo que guardó la sonda; abrir la página
 nunca consulta Loki. Indica en una frase qué va mal (disponibilidad,

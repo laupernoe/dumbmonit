@@ -16,15 +16,15 @@ destinatários.
 | Seção | Conteúdo |
 | --- | --- |
 | **Resumo** | Disponibilidade geral do período, o número de incidentes, e a variação em relação ao período anterior. |
-| **Disponibilidade por grupo** | Uma linha por grupo, depois por dispositivo (no máximo os 40 menos disponíveis), calculada da mesma forma que nas [páginas de status](status-pages.md): sondagens pela taxa de sucesso, hosts e dispositivos por quão frequentemente reportaram. Dispositivos sem histórico são mostrados como "sem dados" em vez de 100%. |
-| **Incidentes** | Quando cada um começou, quanto tempo durou (ou que ainda está em aberto) e em qual dispositivo. Até 25. Alertas informativos são deixados de fora. |
-| **Dispositivos menos estáveis** | Os cinco dispositivos com a menor disponibilidade ou o maior número de incidentes. |
+| **Disponibilidade por grupo** | Uma linha por grupo, depois por monitor (no máximo os 40 menos disponíveis), calculada da mesma forma que nas [páginas de status](status-pages.md): sondagens pela taxa de sucesso, hosts e monitores por quão frequentemente reportaram. Monitores sem histórico são mostrados como "sem dados" em vez de 100%. |
+| **Incidentes** | Quando cada um começou, quanto tempo durou (ou que ainda está em aberto) e em qual monitor. Até 25. Alertas informativos são deixados de fora. |
+| **Monitores menos estáveis** | Os cinco monitores com a menor disponibilidade ou o maior número de incidentes. |
 | **Comparação** | Disponibilidade e número de incidentes em relação ao período de mesma duração imediatamente anterior. |
 
 O e-mail é feito de tabelas HTML simples com estilos inline e sem nenhuma
 imagem remota, então é renderizado da mesma forma em qualquer lugar e nada é
 buscado quando é aberto. Uma versão em texto é enviada junto. Todo nome de
-dispositivo e mensagem é escapado.
+monitor e mensagem é escapado.
 
 ## Configurações {#settings}
 

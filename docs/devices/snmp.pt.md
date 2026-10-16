@@ -27,7 +27,7 @@ dispositivo mostra-se como uma reposição do contador, nunca como um pico
 falso.
 
 As [regras incorporadas](../alerting/rules.md) que se aplicam a dispositivos
-SNMP: Device unreachable, High CPU, Disk almost full, Filesystem almost full
+SNMP: Monitor unreachable, High CPU, Disk almost full, Filesystem almost full
 (forecast), UPS on battery, UPS battery low, Port accumulating errors, Port
 flapping, Unusual CPU (baseline).
 
@@ -95,5 +95,5 @@ copiadas em cada série como `tag_<key>`.
 | Sem tráfego de interface | O dispositivo não expõe os contadores de 64 bits `ifXTable`. |
 | Análise vazia | A análise tenta uma comunidade em cada endereço; dispositivos com outra comunidade ou só SNMP v3 não respondem. |
 
-Use **Probe now** na página do dispositivo: reporta o número de amostras e os
+Use **Probe now** na página do monitor: reporta o número de amostras e os
 nomes de série produzidos por uma verificação.

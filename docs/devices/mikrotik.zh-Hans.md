@@ -52,9 +52,9 @@ MikroTik 很少直接损坏;它会老化。某个 RouterOS 发行版不再是其
 适用的[内置规则](../alerting/rules.md#mikrotik-routeros):
 MikroTik CPU 过高、内存过高、存储即将用尽、温度过高、电源或
 风扇故障、接口错误累积、链路抖动、RouterOS 有可用更新以及固件
-升级待处理,以及设备不可达。
+升级待处理,以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会连接到路由器。
 它显示 RouterOS 版本以及是否有更新版本可用、RouterBOOT 固件、

@@ -81,7 +81,7 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#fortigate):
 - **FortiGate firmware update**: eine Patch-Version wird angeboten
   (Info, wöchentlich erinnert).
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Firewall-Panel sagt in einem Satz, was nicht stimmt, zeigt CPU,
 Speicher, Sitzungen und den HA-Zustand, listet dann die IPsec-Tunnel

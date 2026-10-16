@@ -21,11 +21,11 @@ A mirror or RAIDZ vdev that loses a disk keeps serving the data. The share stays
 mounted, backups keep running, the web interface of every other tool stays
 green — and the pool now has no redundancy left. The second disk takes the pool.
 `truenas_pool_healthy` drops to 0 on the first one, the **NAS pool degraded**
-rule fires, and the device page names the disk.
+rule fires, and the monitor page names the disk.
 
-## The device page
+## The monitor page
 
-Beyond the generic charts, a TrueNAS device shows three panels, read from what
+Beyond the generic charts, a TrueNAS monitor shows three panels, read from what
 the probe stored — opening the page never queries the NAS itself:
 
 * **Pools and disks** — each pool with its state in a word, ZFS's own sentence
@@ -90,7 +90,7 @@ A few things TrueNAS does that are worth knowing:
   `pool/snapshot` in 25.10 and both are tried; `smart/test/results` disappeared
   in 25.10 and is then skipped in silence.
 
-Built-in rules that apply: Device unreachable, NAS pool degraded, NAS disk
+Built-in rules that apply: Monitor unreachable, NAS pool degraded, NAS disk
 errors, NAS pool almost full, NAS scrub found errors, NAS scrub overdue, NAS disk
 failed its SMART test, NAS disk too hot, NAS dataset near its quota, NAS
 replication failed, NAS snapshot task failed, NAS snapshots stale, TrueNAS alert

@@ -10,11 +10,11 @@ un tema para esa pantalla sin tocar tu preferencia guardada.
 
 ![Modo pared](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Cada problema de la izquierda lleva el icono de producto de su dispositivo (las
-mismas marcas que en las listas de dispositivos). La lista nunca desborda su
+Cada problema de la izquierda lleva el icono de producto de su monitor (las
+mismas marcas que en las listas de monitores). La lista nunca desborda su
 espacio: en una pantalla pequeña, o con muchos problemas, los recuadros grandes
 se reducen a una línea cada uno y luego se pliegan en *Y N más*, en lugar de
-solaparse con los dispositivos de abajo.
+solaparse con los monitores de abajo.
 
 ## Noticias en la pared {#news-on-the-wall}
 

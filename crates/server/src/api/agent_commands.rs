@@ -376,9 +376,9 @@ fn to_view(
 async fn agent_target(state: &AppState, id: TargetId) -> ApiResult<dumbmonit_proto::Target> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     if target.kind != "agent" {
-        return Err(ApiError::NotFound(format!("Device {id} has no agent.")));
+        return Err(ApiError::NotFound(format!("Monitor {id} has no agent.")));
     }
     Ok(target)
 }
@@ -395,7 +395,7 @@ struct DockerTargets {
 async fn docker_targets(state: &AppState, id: TargetId) -> ApiResult<DockerTargets> {
     let target = db::targets::get(&state.pool, &state.cipher, id)
         .await?
-        .ok_or_else(|| ApiError::NotFound(format!("Device {id} not found.")))?;
+        .ok_or_else(|| ApiError::NotFound(format!("Monitor {id} not found.")))?;
     match target.kind.as_str() {
         "agent" => {
             let child = modules::states(&state.pool, id)
@@ -406,9 +406,9 @@ async fn docker_targets(state: &AppState, id: TargetId) -> ApiResult<DockerTarge
         }
         modules::SERVICE_KIND => match modules::owner(&state.pool, id).await? {
             Some((host, module)) if module == "docker" => Ok(DockerTargets { host, metrics: id }),
-            _ => Err(ApiError::NotFound(format!("Device {id} is not a Docker service."))),
+            _ => Err(ApiError::NotFound(format!("Monitor {id} is not a Docker service."))),
         },
-        _ => Err(ApiError::NotFound(format!("Device {id} has no agent."))),
+        _ => Err(ApiError::NotFound(format!("Monitor {id} has no agent."))),
     }
 }
 

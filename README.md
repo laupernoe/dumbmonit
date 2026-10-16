@@ -16,11 +16,9 @@ One container, one IP address to type in, useful graphs and alerts in under a mi
 
 **[Live demo](https://demo.dumbmonit.app)** · **[Website](https://dumbmonit.app)** · **[Documentation](https://dumbmonit.readthedocs.io/en/latest/)**
 
-<img src=".github/assets/screenshots/overview-dark.png" alt="DumbMonit overview: the bulletin sentence, counters, the weather window and the list of things that need you" width="900">
+<img src=".github/assets/screenshots/overview-light.png" alt="DumbMonit overview: the bulletin sentence, counters, the weather window and the list of things that need you" width="900">
 
 </div>
-
-> **Alpha for early testers.** Expect rough edges and breaking changes. See [Status](#status).
 
 For people who watch ten machines and three switches and do not want to run Zabbix or assemble Prometheus + Grafana + Alertmanager.
 
@@ -71,7 +69,7 @@ Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://g
 
 ## Status
 
-**Alpha.** It runs daily on the author's own network, but the HTTP API is not frozen, the database schema still moves, and some integrations have only met test instances.
+**Version 0.9.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
 Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
 ## License

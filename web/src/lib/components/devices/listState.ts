@@ -8,7 +8,7 @@ import type { Target, TargetId } from '#lib/api/index.js';
 import type { TargetState } from '#lib/format.js';
 // Explicit extensions: also loaded straight by Node (`npm test`).
 import { RANK, type RackRow } from './rack.ts';
-import { RACK_VIEWS, type RackView } from './view.ts';
+import { asRackView, type RackView } from './view.ts';
 
 export type Segment = 'all' | 'attention' | 'reporting' | 'disabled';
 export const SEGMENTS: readonly Segment[] = ['all', 'attention', 'reporting', 'disabled'];
@@ -44,7 +44,8 @@ export function parseListQuery(params: {
 		tags: params.getAll('tag').filter((t) => t.includes('=')),
 		sort: (SORT_KEYS as readonly (string | null)[]).includes(sort) ? (sort as SortKey) : 'default',
 		dir: params.get('dir') === 'desc' ? 'desc' : 'asc',
-		view: (RACK_VIEWS as readonly (string | null)[]).includes(view) ? (view as RackView) : null
+		// `?view=rows` (retired layout) opens compact, the default.
+		view: asRackView(view)
 	};
 }
 

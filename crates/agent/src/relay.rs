@@ -279,7 +279,7 @@ mod tests {
         let error = outcome.error.expect("échec attendu");
         // Le préfixe est ce que le serveur lit pour classer l'échec.
         assert!(
-            error.starts_with("Device unreachable") || error.starts_with("Timed out"),
+            error.starts_with("Monitor unreachable") || error.starts_with("Timed out"),
             "{error}"
         );
     }

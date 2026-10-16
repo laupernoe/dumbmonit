@@ -14,9 +14,9 @@ CARP 以及待处理的更新。
     隧道:这些部分依据的是 OPNsense 的源码,而不是观测到的实际
     应答。如果有任何问题,请告诉我们。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
-除了通用图表之外,一台 OPNsense 设备还会显示三个面板,读取自
+除了通用图表之外,一个 OPNsense 监控项还会显示三个面板,读取自
 探测存储的数据——打开该页面从不会查询防火墙本身:
 
 * **WAN 与网关**——每个带有网关的接口当前的公网地址,然后是每个
@@ -79,7 +79,7 @@ DumbMonit 会区分这两种情况,在一次检查运行之前,它只会发布
 | 接口 | `interface_up`, `interface_bytes_in/out`, `interface_packets_in/out`, `interface_errors_in/out`, `interface_drops`, `interface_collisions`(计数器,原始值存储)、`interface_address_info`(当前地址,以标签形式) | `interface`, `device`,最后一项还带 `address` |
 | 防火墙 | `pf_states`, `pf_state_limit`, `pf_states_used_percent` | |
 | DHCP | `dhcp_leases`, `dhcp_leases_active` | `backend`(`kea`、`isc`、`dnsmasq`) |
-| VPN | `vpn_tunnel_up`, `vpn_peers_total`, `vpn_peers_connected`(WireGuard:三分钟内有握手)、`vpn_handshake_age_seconds`(WireGuard,最近一个对端;从未有任何对端连接过时不存在)、`vpn_bytes_in/out`, `vpn_tunnels_down` | `kind`(`wireguard`、`openvpn`、`ipsec`)、`tunnel`(WireGuard 的设备名 `wg0`,或 IPsec 和 OpenVPN 的描述) |
+| VPN | `vpn_tunnel_up`, `vpn_peers_total`, `vpn_peers_connected`(WireGuard:三分钟内有握手)、`vpn_handshake_age_seconds`(WireGuard,最近一个对端;从未有任何对端连接过时不存在)、`vpn_bytes_in/out`, `vpn_tunnels_down` | `kind`(`wireguard`、`openvpn`、`ipsec`)、`tunnel`(WireGuard 的监控项名 `wg0`,或 IPsec 和 OpenVPN 的描述) |
 | 解析器 | `unbound_running`, `unbound_queries`(计数器)、`unbound_cache_hit_percent` | |
 | 服务 | `service_running`(1 或 0,防火墙列出的每个服务对应一条序列) | `service` |
 | CARP | `carp_enabled`, `carp_maintenance_mode`, `carp_vip_master`(不属于某个对的防火墙上全部不存在) | `interface`, `vhid`, `address` |
@@ -102,7 +102,7 @@ WireGuard、OpenVPN、IPsec、Unbound 和 Kea 都是插件。没有安装
 某个插件的防火墙会应答 `404`,这既不算采集错误也不算认证错误:
 只是少一个指标,界面上也不会显示任何内容。
 
-适用的内置规则:设备不可达、互联网网关宕机、网关丢包、网关
+适用的内置规则:监控项不可达、互联网网关宕机、网关丢包、网关
 缓慢、防火墙状态表接近满、防火墙网络缓冲区耗尽、VPN 隧道中断、
 防火墙解析器已停止、防火墙核心服务已停止、防火墙过热、防火墙
 遗留在 CARP 维护模式中、防火墙重启待处理、防火墙更新待处理。

@@ -20,27 +20,27 @@ em `environment:` do serviço no `docker-compose.yml` e execute
 
 Toda conta e toda sessão são removidas no arranque e a interface mostra
 `/setup` de novo. Crie o primeiro administrador, depois inicie de novo sem
-a linha (remova-a do `docker-compose.yml` e execute `docker compose up -d`). Os dispositivos, regras, canais e as
+a linha (remova-a do `docker-compose.yml` e execute `docker compose up -d`). Os monitores, regras, canais e as
 definições de sign-on único não são tocados.
 
-## Sem dados depois de adicionar um dispositivo {#no-data-after-adding-a-device}
+## Sem dados depois de adicionar um monitor {#no-data-after-adding-a-device}
 
-Dê-lhe um minuto: a primeira verificação corre no intervalo do dispositivo
+Dê-lhe um minuto: a primeira verificação corre no intervalo do monitor
 (60 s por predefinição) e as escritas chegam à VictoriaMetrics a cada 5
 segundos (`DUMBMONIT_FLUSH_INTERVAL_SECS`). Depois:
 
-1. Abra a página do dispositivo e clique em **Probe now**. Reporta quantas
+1. Abra a página do monitor e clique em **Probe now**. Reporta quantas
    amostras e séries uma verificação produziu, ou o erro exato.
 2. *Misconfigured* com um erro sob o endereço é um problema de
    configuração: comunidade ou senha errada, certificado recusado (ative
    «Accept an unverifiable certificate»), capacidade em falta. É mostrado,
    não alertado.
-3. *Unreachable* sem erro significa que o dispositivo não respondeu de
-   todo. Para SNMP, uma comunidade errada parece exatamente um dispositivo
-   desligado, porque o dispositivo nunca lhe responde. Verifique a
-   comunidade, que o SNMP está ativado, e que o dispositivo permite o
+3. *Unreachable* sem erro significa que o monitor não respondeu de
+   todo. Para SNMP, uma comunidade errada parece exatamente um monitor
+   desligado, porque o monitor nunca lhe responde. Verifique a
+   comunidade, que o SNMP está ativado, e que o monitor permite o
    endereço do servidor.
-4. Verifique que o contentor consegue alcançar o dispositivo: redes
+4. Verifique que o contentor consegue alcançar o monitor: redes
    Docker e firewalls são os culpados habituais.
 
 ## O ping diz «erro de configuração» {#ping-says-configuration-error}
@@ -92,7 +92,7 @@ Warning. Ver [Severidades](alerting/index.md#severities).
 
 ## Um alerta está «Suppressed by parent» {#an-alert-is-suppressed-by-parent}
 
-O dispositivo tem um dispositivo pai inacessível, por isso os seus
+O monitor tem um monitor pai inacessível, por isso os seus
 próprios alertas são retidos em vez de enviados. Resolva o pai; os
 alertas do filho resolvem-se ou disparam por si só depois disso sem uma
 segunda notificação. Ver
@@ -115,7 +115,7 @@ mudança.
 
 ## O DumbMonit precisa de estar acessível a partir da internet? {#does-dumbmonit-need-to-be-reachable-from-the-internet}
 
-Não. Alcança dispositivos e serviços de notificação; nada chama de
+Não. Alcança monitores e serviços de notificação; nada chama de
 volta, exceto os agentes, que precisam de alcançar o URL do servidor.
 Mantenha-o na sua LAN ou atrás de uma VPN; se o expuser, use um proxy
 inverso com TLS e defina `DUMBMONIT_COOKIE_SECURE=1`.

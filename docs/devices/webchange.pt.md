@@ -37,7 +37,7 @@ Descendentes (`main p`) e outros combinadores não são suportados.
 
 ## Página ou site {#page-or-site}
 
-**Page** (a predefinição) lê o endereço do dispositivo e nada mais. Pode
+**Page** (a predefinição) lê o endereço do monitor e nada mais. Pode
 também ser um documento de texto simples ou JSON, comparado linha a
 linha.
 
@@ -72,19 +72,19 @@ O rastreio é educado: no máximo dois pedidos de cada vez, meio segundo
 entre dois lotes, o `User-Agent` `DumbMonit/<versão>`, um tempo limite de
 15 segundos por pedido e no máximo 5 MB lidos por página. Para em **Max
 pages** (25 por predefinição, 200 no máximo) ou depois de dez minutos. Quando
-**Max pages** o parou, a página do dispositivo diz quantas páginas foram
+**Max pages** o parou, a página do monitor diz quantas páginas foram
 encontradas, para que a parte não monitorizada do site nunca seja uma
 surpresa. **User agent** substitui `DumbMonit/<versão>` para um site que
 afasta robôs.
 
 ## Como funciona uma verificação {#how-a-check-works}
 
-O dispositivo é sondado como qualquer outro (a cada minuto por
+O monitor é sondado como qualquer outro (a cada minuto por
 predefinição), mas as páginas só são lidas a cada **Check every** minutos
 (60 por predefinição, de 5 a 10080). Entretanto, a sondagem só reporta o
 estado da última verificação: o site não é atingido a cada minuto. Uma
 verificação corre em segundo plano; duas verificações do mesmo
-dispositivo nunca se sobrepõem, e **Check now** na página do dispositivo
+monitor nunca se sobrepõem, e **Check now** na página do monitor
 inicia uma de imediato.
 
 A primeira verificação só regista a **referência**: toda página é lida e
@@ -107,7 +107,7 @@ páginas de forma diferente faz o mesmo uma vez.
 
 Quando uma verificação encontra a **mesma alteração em várias páginas** (as
 mesmas linhas removidas e acrescentadas, como um banner), a página do
-dispositivo mostra-a uma só vez, com as páginas em que foi feita.
+monitor mostra-a uma só vez, com as páginas em que foi feita.
 
 ### Linhas a ignorar {#ignore-lines}
 
@@ -125,9 +125,9 @@ Updated \d+ minutes ago|Visitors: \d+|© \d{4}
 ### Página inicial inacessível {#unreachable-start-page}
 
 Quando a própria página inicial não pode ser lida (sem resposta, ligação
-recusada, tempo limite, HTTP 5xx), o dispositivo está **inacessível**: a
-sondagem falha, e a regra «Device unreachable» dispara como para
-qualquer dispositivo. A página inicial é então tentada de novo em cada
+recusada, tempo limite, HTTP 5xx), o monitor está **inacessível**: a
+sondagem falha, e a regra «Monitor unreachable» dispara como para
+qualquer monitor. A página inicial é então tentada de novo em cada
 sondagem, por isso o seu retorno é visto dentro de um minuto. Uma página
 inicial que recusa o acesso (401, 403) é reportada como um problema de
 configuração, não como uma indisponibilidade. Erros noutras páginas do
@@ -147,7 +147,7 @@ dispara depois de uma verificação que encontrou pelo menos uma alteração
 seguinte que encontra alterações é notificada de novo, com as suas próprias
 páginas, mesmo nas mesmas páginas; o alerta resolve-se na primeira
 verificação que não encontra nada de novo. Continua a ser um só alerta por
-dispositivo, por isso reconhecê-lo ou suspendê-lo a partir do alerta cobre
+monitor, por isso reconhecê-lo ou suspendê-lo a partir do alerta cobre
 também as verificações seguintes. Lê
 `dumbmonit_webchange_last_check_changes`; associe-a a um canal como
 qualquer outra regra, ou suba a sua severidade, em **Alerts → Rules**.
@@ -190,10 +190,10 @@ endereço para o qual o nome de anfitrião resolve).
 Uma captura de ecrã só é feita quando uma página recebe um novo
 instantâneo (a referência, e cada alteração), nunca numa verificação sem
 alterações: uma janela de 1366 × 900, a página completa até 5000 pixels,
-como JPEG. A opção **Screenshots** desliga-as para um dispositivo. Sem um
+como JPEG. A opção **Screenshots** desliga-as para um monitor. Sem um
 navegador, ou quando não responde, a comparação de texto funciona da
 mesma forma e os instantâneos simplesmente não têm imagem; a página do
-dispositivo diz isso.
+monitor diz isso.
 
 O navegador carrega a página como um visitante o faria, com os seus
 scripts: o que mostra pode diferir do texto que o DumbMonit comparou, que
@@ -203,11 +203,11 @@ scripts: o que mostra pode diferir do texto que o DumbMonit comparou, que
 
 O texto de cada instantâneo é guardado na base de dados (1 MB no máximo
 por página); as capturas de ecrã são ficheiros sob
-`/data/webchange/<id do dispositivo>/`. Por dispositivo, as últimas 500
+`/data/webchange/<id do monitor>/`. Por monitor, as últimas 500
 alterações são guardadas; um instantâneo é guardado enquanto for o mais
 recente de uma página ou uma alteração guardada se referir a ele, e tudo
 o resto, ficheiros incluídos, é removido depois de cada verificação.
-Eliminar o dispositivo remove tudo.
+Eliminar o monitor remove tudo.
 
 ## Monitorizar um site para alterações {#watch-a-website-for-changes}
 
@@ -215,7 +215,7 @@ Os passos abaixo são os que o aviso junto ao formulário mostra.
 
 1. No endereço, cole a página a monitorizar, com http:// ou https://. Para monitorizar um site inteiro ou uma das suas secções, cole a sua página inicial e defina «Scope» para «site»: toda página sob a mesma pasta é seguida, até «Max pages».
 2. Linhas que mudam a cada visita (um relógio, um contador de visitantes, «atualizado há 5 minutos») seriam reportadas cada vez: liste-as em «Ignore lines» como expressões regulares.
-3. A primeira verificação só regista a referência, nada é reportado. A partir daí, cada verificação compara o texto visível página por página e guarda uma cópia antes/depois de cada alteração, mostrada na página do dispositivo; o alerta «Website changed» avisa-o.
+3. A primeira verificação só regista a referência, nada é reportado. A partir daí, cada verificação compara o texto visível página por página e guarda uma cópia antes/depois de cada alteração, mostrada na página do monitor; o alerta «Website changed» avisa-o.
 4. Para uma captura de ecrã de cada versão, acrescente um navegador headless ao seu ficheiro Compose; as linhas exatas estão na documentação (Advanced options, «Screenshots of website changes»). Ver [Screenshots of website changes](../install/docker.md#website-screenshots).
 
 !!! warning

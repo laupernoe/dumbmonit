@@ -65,11 +65,11 @@ quante della prima pagina servita dal controller sono Critical o Warning.
 Le [regole integrate](../alerting/rules.md#server-hardware-redfish) che si
 applicano: Server fan failed, Server temperature above critical, Power
 supply redundancy lost, Power supply failed, Drive failure predicted,
-Server health critical, più Device unreachable.
+Server health critical, più Monitor unreachable.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
-Un dispositivo Redfish ottiene un proprio pannello sulla sua pagina, sopra
+Un monitor Redfish ottiene un proprio pannello sulla sua pagina, sopra
 i grafici, letto da ciò che l'ultima sonda ha memorizzato: aprire la pagina
 non interroga mai il controller. Risponde, in questo ordine:
 

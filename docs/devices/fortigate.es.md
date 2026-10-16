@@ -79,7 +79,7 @@ Las [reglas integradas](../alerting/rules.md#fortigate) que se aplican:
 - **FortiGate firmware update**: se ofrece una versión de parche (Info,
   recordado semanalmente).
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
 El panel Firewall indica en una frase qué va mal, muestra CPU, memoria,
 sesiones y el estado HA, luego lista los túneles IPsec (los caídos

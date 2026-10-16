@@ -19,7 +19,7 @@ DumbMonit 使用一个持有内置**Reader**角色的专用用户读取 Graylog
 
 所有指标都以 `dumbmonit_graylog_` 为前缀。日志队列、缓冲区和
 吞吐量指的都是**DumbMonit 所连接的那个节点**的数据:在 Graylog
-集群中,请把每个节点都作为独立设备添加。
+集群中,请把每个节点都作为独立监控项添加。
 
 | 指标 | 含义 | 标签 |
 |---|---|---|
@@ -41,15 +41,15 @@ DumbMonit 使用一个持有内置**Reader**角色的专用用户读取 Graylog
 | `scrape_errors` | 上次探测中失败的调用 | |
 
 搜索集群是通过 Graylog 读取的,因此不需要单独添加 OpenSearch 或
-Elasticsearch 设备来了解它是否为绿色状态;当 Graylog 完全无法
+Elasticsearch 监控项来了解它是否为绿色状态;当 Graylog 完全无法
 连接它时,`indexer_status` 为 3。
 
 适用的[内置规则](../alerting/rules.md#log-and-metrics-servers):
 Graylog 未处理消息、Graylog 搜索集群宕机、Graylog 搜索集群黄色
 状态、Graylog 日志队列积压、Graylog 输入失败、Graylog 索引失败,
-以及设备不可达。
+以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会查询 Graylog。
 它会用一句话说明哪里出了问题(处理状态、搜索集群、日志队列积压、

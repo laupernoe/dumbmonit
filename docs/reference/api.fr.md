@@ -5,8 +5,8 @@ vos propres scripts, tableaux de bord et assistants : il n'y a pas de moitié
 privée. C'est du JSON simple sur HTTP, authentifié par un cookie de session
 (l'UI web) ou par un jeton d'API (tout le reste).
 
-!!! warning "Alpha"
-    DumbMonit est en alpha et son API aussi : routes et champs peuvent
+!!! warning "Avant la 1.0"
+    DumbMonit est avant la 1.0 et son API aussi : routes et champs peuvent
     encore changer. La version d'API (ci-dessous) change chaque fois qu'une
     route ou un champ est supprimé ou renommé, pour qu'un client puisse le
     savoir.
@@ -21,7 +21,7 @@ GET /api/openapi.json
 ```
 
 Il est public — il ne porte aucun secret, aucune adresse et rien sur vos
-appareils — et c'est la référence exhaustive : chaque route qu'un client
+surveillances — et c'est la référence exhaustive : chaque route qu'un client
 peut appeler, ses paramètres, les formes de requête et de réponse, les
 réponses d'erreur et la portée dont elle a besoin (l'extension
 `x-token-scope` sur chaque opération : `public`, `read`, `write`, ou `none`
@@ -108,8 +108,8 @@ de portée de chaque jeton.
 
 | | Jeton `read` | Jeton `write` |
 |---|---|---|
-| Chaque `GET` qu'un compte *lecteur* peut faire (appareils, alertes, métriques, règles, canaux sans leurs secrets, pages d'état…) | oui | oui |
-| `POST`, `PUT`, `DELETE` qu'un *administrateur* peut faire (appareils, règles, silences, canaux, pages d'état, packs, sondes, découverte…) | `403` | oui |
+| Chaque `GET` qu'un compte *lecteur* peut faire (surveillances, alertes, métriques, règles, canaux sans leurs secrets, pages d'état…) | oui | oui |
+| `POST`, `PUT`, `DELETE` qu'un *administrateur* peut faire (surveillances, règles, silences, canaux, pages d'état, packs, sondes, découverte…) | `403` | oui |
 | `/metrics`, `/federate`, `/prometheus/*` ([sonder](metrics.md#scraping-dumbmonit)) | oui | oui |
 | Outils MCP de lecture / d'écriture ([assistants](../using/assistant.md#what-the-assistant-can-call)) | lecture seule | les deux |
 | Comptes, sessions, double authentification, SSO, journal d'audit (`/api/auth/*`, `/api/users/*`) | `403` | `403` |
@@ -279,7 +279,7 @@ cookie de session, jamais un jeton.
 mêmes lectures plus les écritures de traitement d'alerte marquées
 *opérateur* sur cette page (et `x-roles: [admin, operator]` dans le
 document OpenAPI) : acquitter, repousser (fenêtres de maintenance),
-ignorer une règle pour un appareil, effacer l'historique résolu. Chaque
+ignorer une règle pour une surveillance, effacer l'historique résolu. Chaque
 autre écriture est réservée aux administrateurs et répond `403` à un
 opérateur.
 
@@ -391,11 +391,11 @@ de passe, ces routes refusent donc les jetons d'API avec une explication :
 seul un administrateur connecté à l'interface web en obtient un. Voir
 [Sauvegarde et restauration](../install/backup.md).
 
-## Types d'appareil
+## Types de surveillance
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/collectors` | Chaque type d'appareil que ce serveur peut surveiller : `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) et `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Les types apportés par un [pack d'intégration](../packs/index.md) sont listés de la même façon, comme `pack.<id>`. |
+| `GET` | `/api/collectors` | Chaque type de surveillance que ce serveur peut surveiller : `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) et `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Les types apportés par un [pack d'intégration](../packs/index.md) sont listés de la même façon, comme `pack.<id>`. |
 
 ## Packs d'intégration
 
@@ -404,26 +404,26 @@ Session admin ou jeton d'API (portée `write` pour les changements). Voir
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/packs` | Packs installés : `id`, `version`, `label`, `summary`, `kind` (`null` pour un pack avec seulement des profils SNMP), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uids), `snmp_profiles`, `targets` (appareils qui l'utilisent), `warnings`, et `error` quand le pack enregistré ne passe plus la validation. |
+| `GET` | `/api/packs` | Packs installés : `id`, `version`, `label`, `summary`, `kind` (`null` pour un pack avec seulement des profils SNMP), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uids), `snmp_profiles`, `targets` (surveillances qui l'utilisent), `warnings`, et `error` quand le pack enregistré ne passe plus la validation. |
 | `GET` | `/api/packs/{id}` | Un pack. |
 | `POST` | `/api/packs` | Installer ou mettre à jour. Corps : le YAML (`application/yaml`, `text/plain`…) ou `{"yaml": "…"}` en JSON. `201` quand créé, `200` quand mis à jour ou inchangé, avec `outcome` (`created`, `updated`, `unchanged`), `pack`, `rules_added` et `restart_required` (profils SNMP). `400` liste chaque erreur de validation. |
-| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Enregistrer ou retirer le type d'appareil du pack ; appareils, historique et règles restent. |
-| `DELETE` | `/api/packs/{id}` | Désinstaller, avec ses règles. `409` tant que des appareils l'utilisent. |
+| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Enregistrer ou retirer le type de surveillance du pack ; surveillances, historique et règles restent. |
+| `DELETE` | `/api/packs/{id}` | Désinstaller, avec ses règles. `409` tant que des surveillances l'utilisent. |
 
-## Targets (appareils)
+## Targets (surveillances)
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/targets` | Liste chaque appareil. |
-| `POST` | `/api/targets` | En créer un. `201` avec l'appareil. La détection de profil démarre en arrière-plan pour SNMP. |
-| `POST` | `/api/targets/import/kuma` | Importe des moniteurs depuis une sauvegarde d'Uptime Kuma 1.x (le fichier JSON en corps, 4 Mio au plus). `?dry_run=true` pour un aperçu. Voir [Services](../devices/services.md#venir-duptime-kuma). |
-| `GET` | `/api/targets/{id}` | Un appareil. |
-| `PUT` | `/api/targets/{id}` | Le remplacer. Omettre `credential` garde celui enregistré ; omettre `profile_id` garde le profil détecté (`""` l'efface). Régler `enabled: false` efface les alertes de l'appareil sans notifier. |
-| `DELETE` | `/api/targets/{id}` | `204`. Efface les alertes de l'appareil sans notifier et supprime ses séries temporelles de VictoriaMetrics (au mieux). |
+| `GET` | `/api/targets` | Liste chaque surveillance. |
+| `POST` | `/api/targets` | En créer une. `201` avec la surveillance. La détection de profil démarre en arrière-plan pour SNMP. |
+| `POST` | `/api/targets/import/kuma` | Importe des surveillances depuis une sauvegarde d'Uptime Kuma 1.x (le fichier JSON en corps, 4 Mio au plus). `?dry_run=true` pour un aperçu. Voir [Services](../devices/services.md#venir-duptime-kuma). |
+| `GET` | `/api/targets/{id}` | Une surveillance. |
+| `PUT` | `/api/targets/{id}` | Le remplacer. Omettre `credential` garde celui enregistré ; omettre `profile_id` garde le profil détecté (`""` l'efface). Régler `enabled: false` efface les alertes de la surveillance sans notifier. |
+| `DELETE` | `/api/targets/{id}` | `204`. Efface les alertes de la surveillance sans notifier et supprime ses séries temporelles de VictoriaMetrics (au mieux). |
 | `POST` | `/api/targets/{id}/probe` | Sonder maintenant : `{"sample_count": 42, "series": ["if_octets_in{host=\"Core switch\",ifname=\"eth0\"}", …]}` — les clés de série comme le collecteur les a produites, sans le préfixe `dumbmonit_` que l'écrivain ajoute en chemin vers VictoriaMetrics. |
 | `POST` | `/api/targets/{id}/discover` | Relancer la détection de profil : `{"profile_id": "host-resources"}` ou `null`. |
 
-Un appareil tel que renvoyé :
+Une surveillance telle que renvoyée :
 
 ```json
 {
@@ -446,7 +446,7 @@ Un appareil tel que renvoyé :
 
 Le secret lui-même n'est jamais renvoyé : `credential_kind` est un label.
 Les horodatages serveur sont en UTC sans suffixe. `error_kind` classe
-`last_error` : `down` (l'appareil n'a pas répondu) ou `config` (de notre
+`last_error` : `down` (la surveillance n'a pas répondu) ou `config` (de notre
 côté — identifiants, adresse, option), ce que l'UI montre comme
 *Inaccessible* ou *Mal configuré* ; `null` quand la dernière sonde a
 réussi.
@@ -474,18 +474,17 @@ Formes d'identifiant (`type`) : `none` ; `snmp_community` (`community`) ;
 pour Proxmox VE et PBS) ; `username_password` (`username`, `password`).
 `interval_secs` vaut 60 par défaut et ne peut pas descendre sous 10.
 `name` fait 200 caractères au plus et `address` 253 au plus (`400`
-au-delà). `parent_id` doit nommer un appareil existant
+au-delà). `parent_id` doit nommer une surveillance existante
 (`400 Parent device N not found.`). Les options de type vont dans `tags`
 sous leur clé.
 
 `via_agent` nomme l'[agent relais](../install/remote-site.md) qui sonde
-l'appareil depuis son propre réseau plutôt que le serveur ; `null` (le
-défaut) signifie que le serveur le sonde. Il doit être un appareil
-`agent` (`400` sinon), un appareil ne peut pas se relayer lui-même, et un
-appareil `agent` ne peut pas être relayé. Sur `PUT`, un `via_agent`
+la surveillance depuis son propre réseau plutôt que le serveur ; `null` (le
+défaut) signifie que le serveur la sonde. Il doit être une surveillance
+`agent` (`400` sinon), une surveillance ne peut pas se relayer elle-même, et une surveillance `agent` ne peut pas être relayée. Sur `PUT`, un `via_agent`
 *omis* garde la valeur enregistrée, comme `profile_id` et `credential` ;
 envoyez `null` pour revenir à la sonde directe. `POST
-/api/targets/{id}/probe` et `/discover` sur un appareil relayé passent
+/api/targets/{id}/probe` et `/discover` sur une surveillance relayée passent
 par le relais et attendent sa réponse (`409` quand une sonde est déjà en
 vol, `400 Timed out: relay agent …` quand il ne répond pas).
 
@@ -535,7 +534,7 @@ juste créé non.
 
 `complete` est verrouillé et ne revient jamais à false. Le serveur le
 règle quand les trois étapes sont réglées (faites, ou passées), et aussi à
-la toute première lecture d'une instance qui avait déjà un appareil et un
+la toute première lecture d'une instance qui avait déjà une surveillance et un
 canal — mettre à jour une instance établie ne lui montre donc jamais un
 guide de premier démarrage.
 
@@ -570,19 +569,19 @@ et n'en a besoin d'aucun — ces routes ne font que lire. Voir la
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/metrics` | Santé de l'instance elle-même au format texte Prometheus : planificateur, sondes, écritures, alertes, notifications, agents, base de données, VictoriaMetrics. Quelques dizaines de séries, jamais une par appareil. |
+| `GET` | `/metrics` | Santé de l'instance elle-même au format texte Prometheus : planificateur, sondes, écritures, alertes, notifications, agents, base de données, VictoriaMetrics. Quelques dizaines de séries, jamais une par surveillance. |
 | `GET` | `/federate` | Les mesures, dans le même format. `match[]` sélectionne des séries (répétable, 10 au plus, `{__name__=~"dumbmonit_.*"}` par défaut), `max_lookback` élargit la fenêtre dans laquelle le dernier point est cherché (`5m` par défaut). `400` au-delà de 8 Mio, avec quoi restreindre. |
 | `GET`, `POST` | `/prometheus/api/v1/{route}` | La moitié lecture de l'API Prometheus, relayée vers le magasin, pour que Grafana puisse utiliser `http://…/prometheus` comme source de données Prometheus. Seulement `query`, `query_range`, `query_exemplars`, `series`, `labels`, `label/{name}/values`, `metadata` et `status/buildinfo` ; tout le reste est `404`. |
 
 `DUMBMONIT_METRICS_PUBLIC=true` sert les trois sans jeton — seulement
 derrière un pare-feu, puisqu'elles portent chaque mesure de chaque
-appareil.
+surveillance.
 
 ## Alertes
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/alerts` | Alertes actives (en construction, actives, supprimées, résolues récemment). Les alertes d'appareils supprimés ou en pause ne sont jamais listées. |
+| `GET` | `/api/alerts` | Alertes actives (en construction, actives, supprimées, résolues récemment). Les alertes de surveillances supprimées ou en pause ne sont jamais listées. |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Transitions de phase. `since` est en RFC 3339, défaut les sept derniers jours ; `limit` doit être positif. `dismissed` (défaut `false`) exclut les entrées effacées avec les deux routes ci-dessous ; rien n'est jamais détruit par un effacement, seulement caché de la vue par défaut. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Efface une entrée `resolved` de la vue d'historique par défaut. `204`. `404` sur un id inconnu ou une transition encore active. Opérateur ; audité. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Efface chaque entrée `resolved` pas encore effacée d'un coup (« Effacer tout ce qui est résolu »). Renvoie `{"dismissed": <count>}`. Opérateur ; audité. |
@@ -629,7 +628,7 @@ ou pourquoi rien n'a été envoyé : `learning: would have fired`,
 `acked` est vrai tant que `acked_until` est dans le futur : rappels et
 escalades se mettent en pause, la résolution est quand même notifiée et
 efface l'acquittement. Un `target_id` qui n'existe plus est montré comme
-« (appareil supprimé) » par l'UI.
+« (surveillance supprimée) » par l'UI.
 
 ### Règles
 
@@ -698,21 +697,21 @@ calendrier récurrent, `timezone` (un nom IANA) gagne sur
 à travers les changements d'heure d'été ; un nom de fuseau inconnu est
 refusé.
 
-### Surcharges par appareil {#per-device-overrides}
+### Surcharges par surveillance {#per-device-overrides}
 
-Une règle peut être ajustée pour un appareil sans toucher la règle
+Une règle peut être ajustée pour une surveillance sans toucher la règle
 elle-même. `{"enabled": false}` est ce que l'action **Ignorer** de l'UI
-(sur l'alerte, la page d'appareil ou la règle) écrit : l'appareil est
+(sur l'alerte, la page de surveillance ou la règle) écrit : la surveillance est
 retiré de cette seule règle pour de bon, réversiblement, sans désactiver
 la règle pour personne d'autre.
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/alerts/overrides?target_id=4` | Chaque surcharge, ou celles d'un appareil : `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
+| `GET` | `/api/alerts/overrides?target_id=4` | Chaque surcharge, ou celles d'une surveillance : `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
 | `GET` | `/api/alerts/rules/{id}/overrides` | Les surcharges d'une règle. |
-| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — chaque champ optionnel ; `null` signifie « comme la règle ». Crée ou remplace. Un opérateur ne peut envoyer que `{"enabled": false}` (ignorer) ; les surcharges de seuil de l'appareil, s'il y en a, sont gardées. |
+| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — chaque champ optionnel ; `null` signifie « comme la règle ». Crée ou remplace. Un opérateur ne peut envoyer que `{"enabled": false}` (ignorer) ; les surcharges de seuil de la surveillance, s'il y en a, sont gardées. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Pour un opérateur, ne lève que l'ignorer : les surcharges de seuil restent. |
-| `GET` | `/api/targets/{id}/rules` | Les règles qui surveillent un appareil : celles dont la requête lit une métrique qu'il a écrite ces dernières 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
+| `GET` | `/api/targets/{id}/rules` | Les règles qui surveillent une surveillance : celles dont la requête lit une métrique qu'elle a écrite ces dernières 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Politique de notification
 
@@ -720,7 +719,7 @@ la règle pour personne d'autre.
 |---|---|---|
 | `GET` | `/api/notify/policy` | La politique globale : `batch_window_secs` (0 = envoyer tout de suite), `max_per_hour` par canal (0 = illimité), `flap_events`, `flap_window_secs`, `flap_hold_secs` (0 = pas de détection de flapping), `public_url` (liens dans les messages ; vide = `DUMBMONIT_PUBLIC_URL`), `escalate_after_secs` et `escalate_channel` (0 / `null` = pas d'escalade). |
 | `PUT` | `/api/notify/policy` | Mêmes champs, chacun optionnel : un champ omis garde sa valeur. `"escalate_channel": null` désactive l'escalade. Renvoie la politique. |
-| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → quels appareils un filtre de routage de canal sélectionne : `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
+| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → quelles surveillances un filtre de routage de canal sélectionne : `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
 
 ## Canaux de notification
 
@@ -788,7 +787,7 @@ changements. Voir [Rapports par email](../using/reports.md).
 | `GET`, `PUT`, `DELETE` | `/api/status-pages/{id}/logo` | session / admin | Le logo de la page. `PUT` prend `{"data": "<base64 ou URL data:>"}` : PNG, JPEG ou WebP reconnu par son contenu, 256 Kio au plus, autre chose `400`. `204`. `GET` est l'aperçu de l'éditeur (brouillons inclus). |
 | `GET` | `/api/status-pages/{id}/subscribers` | session | Abonnés email : `id`, `page_id`, `email`, `confirmed_at` (`null` tant qu'en attente), `created_at`. Leurs jetons ne quittent jamais le serveur. |
 | `DELETE` | `/api/status-pages/{id}/subscribers/{subscriber}` | admin | Retire une adresse. `204`. |
-| `PUT` | `/api/status-pages/{id}/items` | admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — la liste complète et ordonnée des appareils montrés sur la page. |
+| `PUT` | `/api/status-pages/{id}/items` | admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — la liste complète et ordonnée des surveillances montrées sur la page. |
 | `GET` | `/api/incidents` | session | Chaque incident avec ses mises à jour : `incident` (`id`, `page_id`, `title`, `kind`, `status`, `severity`, `starts_at`, `ends_at`, `created_at`, `updated_at`) et `updates`. |
 | `POST` | `/api/incidents` | admin | `{"title", "kind", "status", "severity", "page_id", "starts_at", "ends_at", "body"}` — `body` est la première mise à jour. `201`. |
 | `PUT` | `/api/incidents/{id}` | admin | Mêmes champs ; un champ omis garde sa valeur. |
@@ -815,7 +814,7 @@ changements. Voir [Rapports par email](../using/reports.md).
 | `POST` | `/api/agent/relay/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Résultat d'une sonde déléguée : `{"duration_ms", "error", "samples", "profile_id"}` (corps jusqu'à 16 Mo). `204` ; `404` quand la sonde a expiré ou appartient à un autre agent. |
 | `GET` | `/api/agent/commands?key=…&wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Commandes en file pour un agent (redémarrage ou mise à jour de conteneur), retenue jusqu'à `wait` secondes quand rien n'est en attente. Pas destiné à être appelé à la main. `key` seule ne prouve rien — elle est publique — une machine liée doit donc aussi présenter son secret de liaison ; `403` sinon, ce qui empêche une machine de prendre les commandes d'une autre. |
 | `POST` | `/api/agent/commands/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Progrès et résultat d'une commande, rapporté par l'agent. `result` est tronqué aux derniers 4 Ko, avec `[truncated by the server, beginning dropped]` au début quand ça arrive. |
-| `GET` | `/api/relays` | session | Chaque appareil agent comme relais possible : `id`, `name`, `site`, `relay` (déclaré `relay: true`), `last_seen_at`, `relayed` (appareils atteints via lui). Les relais d'abord, puis par nom. |
+| `GET` | `/api/relays` | session | Chaque surveillance agent comme relais possible : `id`, `name`, `site`, `relay` (déclaré `relay: true`), `last_seen_at`, `relayed` (surveillances atteintes via lui). Les relais d'abord, puis par nom. |
 
 ```json
 {
@@ -827,21 +826,21 @@ changements. Voir [Rapports par email](../using/reports.md).
 }
 ```
 
-## Conteneurs et commandes (appareils agent)
+## Conteneurs et commandes (surveillances agent)
 
 Actions sur les conteneurs d'une machine qui fait tourner l'agent. Chaque
-route répond `404` quand l'appareil n'est pas une target `agent`.
+route répond `404` quand la surveillance n'est pas une target `agent`.
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/targets/{id}/agent` | La machine telle que son agent l'a décrite pour la dernière fois : `hostname`, `os`, `os_version`, `arch`, `agent_version`, `commands_supported`, `relay`, `site`, `relayed` (appareils atteints via cet agent), `last_seen_at`, `binding`, `bound`, `bound_at`, `rebind_until`. `404` jusqu'à ce qu'un agent ait rapporté. `commands_supported` est `true` seulement quand l'agent a déclaré qu'il récupère des commandes (`commands: true`, le défaut des agents actuels) ; un agent plus ancien ou un avec `commands: false` donne `false`. `binding` est `bound`, `pending` (le binaire peut être lié et le sera à son prochain lot) ou `unsupported` (un agent plus ancien que la liaison : réinstallez-le). |
+| `GET` | `/api/targets/{id}/agent` | La machine telle que son agent l'a décrite pour la dernière fois : `hostname`, `os`, `os_version`, `arch`, `agent_version`, `commands_supported`, `relay`, `site`, `relayed` (surveillances atteintes via cet agent), `last_seen_at`, `binding`, `bound`, `bound_at`, `rebind_until`. `404` jusqu'à ce qu'un agent ait rapporté. `commands_supported` est `true` seulement quand l'agent a déclaré qu'il récupère des commandes (`commands: true`, le défaut des agents actuels) ; un agent plus ancien ou un avec `commands: false` donne `false`. `binding` est `bound`, `pending` (le binaire peut être lié et le sera à son prochain lot) ou `unsupported` (un agent plus ancien que la liaison : réinstallez-le). |
 | `POST` | `/api/targets/{id}/agent/rebind` | Admin. Ouvre une fenêtre d'une heure pendant laquelle cette machine peut se lier à nouveau avec un jeton d'enrôlement valide — le chemin de retour après qu'une réinstallation a emporté le secret de l'agent. `{"rebind_until", "minutes"}`. La fenêtre se ferme dès qu'elle est utilisée, et l'ancien secret arrête de fonctionner. `404` jusqu'à ce qu'un agent ait rapporté. |
 | `GET` | `/api/targets/{id}/containers` | Chaque conteneur du dernier lot : `name`, `image`, `up`, `health`, `restart_count`, `uptime_seconds`, `image_age_seconds`, `update_available`, `policy`, `last_command`. |
 | `PUT` | `/api/targets/{id}/containers/{name}/policy` | `{"auto_restart": bool, "auto_update": bool, "prune_old_image": bool, "only_in_maintenance": bool}`. Chaque champ est optionnel : un champ omis garde sa valeur enregistrée. Renvoie la politique complète. |
 | `POST` | `/api/targets/{id}/containers/{name}/restart` | Met en file un redémarrage. `201` avec la commande. `404` quand `name` n'est pas dans l'inventaire de l'agent ; `409` quand la même commande est déjà en file ou en cours, ou quand l'agent ne peut pas lancer de commandes (voir `commands_supported`). |
 | `POST` | `/api/targets/{id}/containers/{name}/update` | Met en file une mise à jour ; `{"prune": bool}` optionnel (vaut par défaut la politique). Mêmes codes de statut que restart. |
 | `GET` | `/api/targets/{id}/commands` | Les 20 dernières commandes, les plus récentes d'abord : `id`, `kind` (`container.restart`, `container.update`), `args`, `status`, `requested_by` (un utilisateur, ou `policy`), `created_at`, `started_at`, `finished_at`, `result`. |
-| `DELETE` | `/api/targets/{id}/commands/{command_id}` | Annule une commande en file. `204` ; `409` une fois que l'agent l'a récupérée ou quand elle est déjà terminée ; `404` quand elle n'appartient pas à cet appareil. |
+| `DELETE` | `/api/targets/{id}/commands/{command_id}` | Annule une commande en file. `204` ; `409` une fois que l'agent l'a récupérée ou quand elle est déjà terminée ; `404` quand elle n'appartient pas à cette surveillance. |
 
 `status` passe par `queued → running → done | failed`. Deux autres états
 finaux existent : `cancelled` (une personne a retiré la commande) et
@@ -853,9 +852,9 @@ bloque jamais une nouvelle plus longtemps que ça.
 
 ## Invités Proxmox VE
 
-Les lignes du panneau **Invités** d'un appareil Proxmox VE, assemblées
+Les lignes du panneau **Invités** d'une surveillance Proxmox VE, assemblées
 depuis la dernière sonde dans le magasin de métriques (quatre requêtes
-instantanées, rien demandé à l'hyperviseur). `404` quand l'appareil
+instantanées, rien demandé à l'hyperviseur). `404` quand la surveillance
 n'existe pas, `400` quand ce n'est pas une target `proxmox`.
 
 | Méthode | Route | Objet |
@@ -879,7 +878,7 @@ n'existe pas, `400` quand ce n'est pas une target `proxmox`.
 
 ## Nœuds et Ceph de Proxmox VE
 
-Les sections **Nœuds** et **Ceph** de la même page d'appareil, lues depuis
+Les sections **Nœuds** et **Ceph** de la même page de surveillance, lues depuis
 la même dernière sonde. Mêmes codes de statut que ci-dessus.
 
 | Méthode | Route | Objet |
@@ -889,8 +888,8 @@ la même dernière sonde. Mêmes codes de statut que ci-dessus.
 
 ## Proxmox Backup Server
 
-Les panneaux d'un appareil `pbs`, lus depuis la dernière sonde (rien
-demandé au serveur sauf le journal de tâche). `404` quand l'appareil
+Les panneaux d'une surveillance `pbs`, lus depuis la dernière sonde (rien
+demandé au serveur sauf le journal de tâche). `404` quand la surveillance
 n'existe pas, `400` quand ce n'est pas une target `pbs`.
 
 | Méthode | Route | Objet |
@@ -912,15 +911,15 @@ n'existe pas, `400` quand ce n'est pas une target `pbs`.
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/targets/{id}/synology` | Vue d'ensemble d'un appareil `synology` depuis la dernière sonde : `system` (modèle, version DSM, uptime, température, CPU, mémoire), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) et `sampled_at`. `404` quand l'appareil n'existe pas, `400` quand ce n'est pas un Synology. |
+| `GET` | `/api/targets/{id}/synology` | Vue d'ensemble d'une surveillance `synology` depuis la dernière sonde : `system` (modèle, version DSM, uptime, température, CPU, mémoire), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) et `sampled_at`. `404` quand la surveillance n'existe pas, `400` quand ce n'est pas un Synology. |
 | `GET` | `/api/targets/{id}/synology/abb` | Active Backup for Business : `tasks`, et `devices` — un rapport par appareil protégé avec sa cadence apprise dans `assessment` (`state`, `last_success_s`, `typical_interval_s`, compteurs sur 30 jours). |
 
-## Battements de cœur (moniteurs push)
+## Battements de cœur (surveillances push)
 
 | Méthode | Route | Auth | Objet |
 |---|---|---|---|
 | `GET` ou `POST` | `/api/push/{token}` | aucune (le jeton) | L'appel qu'une tâche fait chaque fois qu'elle tourne. `?status=up\|down&msg=…` optionnel (compatible Uptime Kuma). `204` vide sur succès, `404` pour un jeton inconnu, `400` pour un autre `status`, `429` avec `Retry-After` au-delà de soixante appels par minute par jeton. Voir [Battement de cœur](../devices/push.md). |
-| `GET` | `/api/targets/{id}/push` | session | Le moniteur d'un appareil `push` : `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Créé à la première lecture. `400` quand l'appareil n'est pas un battement de cœur. |
+| `GET` | `/api/targets/{id}/push` | session | Le détail d'une surveillance `push` : `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Créé à la première lecture. `400` quand la surveillance n'est pas un battement de cœur. |
 | `POST` | `/api/targets/{id}/push/regenerate` | admin | Nouveau jeton ; l'URL précédente répond `404` à partir de là. Même corps que la lecture. |
 
 ## Assistants (MCP)

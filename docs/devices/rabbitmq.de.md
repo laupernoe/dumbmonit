@@ -46,9 +46,9 @@ dahinter.
 Die geltenden [eingebauten Regeln](../alerting/rules.md#databases-message-broker-and-security-engine):
 RabbitMQ memory or disk alarm, RabbitMQ node down, RabbitMQ network
 partition, RabbitMQ queue without consumer, RabbitMQ queue unavailable,
-plus Device unreachable.
+plus Monitor unreachable.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt RabbitMQ nie ab. Es sagt in einem Satz, was nicht

@@ -2,9 +2,12 @@
 	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	/**
-	 * Devices — the rack.
+	 * Monitors — the list.
 	 *
-	 * Every device is a 1U faceplate, children stacked under their parent.
+	 * One sober toolbar (search, Filter, Compact/Tiles, Select, More, Add);
+	 * the filters, the sort and the tags fold behind "Filter", the map, a new
+	 * folder and the two imports behind "More". Children are listed under
+	 * their parent, in folders.
 	 * Targets and probe states come from the shared store (polled app-wide by
 	 * the root layout, see `alertsStore`); this page only adds the sparklines,
 	 * from one batched query refreshed every 30 s.
@@ -29,6 +32,8 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
+	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
+	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -60,7 +65,23 @@
 		rootOf,
 		worstState
 	} from '#lib/components/devices/folders.js';
-	import { ArrowUpDown, ChevronRight, FolderInput, FolderPlus, ListChecks, Network, Plus, Power, PowerOff, Search, Trash2 } from 'lucide-svelte';
+	import {
+		ArrowUpDown,
+		ChevronRight,
+		Ellipsis,
+		FileUp,
+		FolderInput,
+		FolderPlus,
+		ListChecks,
+		Network,
+		Plus,
+		Power,
+		PowerOff,
+		Search,
+		SlidersHorizontal,
+		Trash2,
+		Upload
+	} from 'lucide-svelte';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
@@ -86,7 +107,7 @@
 	let sort = $state<SortKey>(initial.sort);
 	let sortDir = $state<SortDir>(initial.dir);
 
-	/** Rows, tiles or compact: remembered per viewer in this browser; the URL wins when it names one. */
+	/** Compact or tiles: remembered per viewer in this browser; the URL wins when it names one. */
 	let view = $state<RackView>(initial.view ?? loadRackView());
 	function setView(next: RackView) {
 		view = next;
@@ -102,7 +123,7 @@
 			tags: tagFilter,
 			sort,
 			dir: sortDir,
-			view: view === 'rows' ? null : view
+			view: view === 'compact' ? null : view
 		})
 	);
 	// Writes still in flight: when one lands, the URL differs from a newer
@@ -148,10 +169,11 @@
 		});
 	});
 
-	/** Kinds offered by the filter: the server's list, plus any kind a device already uses. */
+	/** Kinds offered by the filter: only those a monitor uses (plus the one in the URL), never an empty choice. */
 	const kinds = $derived.by(() => {
-		const seen = new Map<string, string>(kindLabels);
-		for (const target of targets) if (!seen.has(target.kind)) seen.set(target.kind, target.kind);
+		const seen = new Map<string, string>();
+		for (const target of targets) seen.set(target.kind, kindLabels.get(target.kind) ?? target.kind);
+		if (kind && !seen.has(kind)) seen.set(kind, kindLabels.get(kind) ?? kind);
 		return [...seen].sort((a, b) => a[1].localeCompare(b[1], 'en'));
 	});
 
@@ -219,8 +241,11 @@
 		search.trim() !== '' || segment !== 'all' || kind !== '' || tagFilter.length > 0
 	);
 	const sorted = $derived(sort !== 'default');
-	/** Reordering hit-tests rows top to bottom: offered in the two list layouts only, on the unfiltered rack order. */
-	const canReorder = $derived(auth.isAdmin && !filtered && !sorted && view !== 'tiles');
+	/** What "Filter" hides that is not at its default: the count on the button. */
+	const activeFilters = $derived((segment !== 'all' ? 1 : 0) + (kind ? 1 : 0) + tagFilter.length + (sorted ? 1 : 0));
+	let filtersOpen = $state(false);
+	/** Reordering hit-tests rows top to bottom: offered in the compact layout only, on the unfiltered rack order. */
+	const canReorder = $derived(auth.isAdmin && !filtered && !sorted && view === 'compact');
 	// Disabled devices leave the rack proper for a collapsible section at the bottom.
 	const split = $derived(splitDisabled(targets, stateOf));
 	const activeVisible = $derived(new Set([...visible].filter((id) => split.active.has(id))));
@@ -268,6 +293,22 @@
 		segment = 'all';
 		kind = '';
 		tagFilter = [];
+		sort = 'default';
+		sortDir = 'asc';
+	}
+
+	// "More": the map, a new folder and the imports, out of the toolbar. The
+	// import dialogs are the ones /targets/new shows, opened from a menu item;
+	// focus goes back to the "More" button when they close.
+	let moreOpen = $state(false);
+	let moreMode = $state<'items' | 'folder'>('items');
+	let moreButton = $state<HTMLButtonElement | null>(null);
+	let importCsv = $state<ImportWebsites | null>(null);
+	let importKuma = $state<ImportKuma | null>(null);
+	function openImport(dialog: { show: () => void } | null) {
+		moreOpen = false;
+		moreButton?.focus();
+		dialog?.show();
 	}
 
 	const sortOptions = $derived<{ id: SortKey; label: string }[]>(
@@ -294,7 +335,7 @@
 		collapsedFolders = next;
 	}
 
-	// "Create folder" in the toolbar: an in-app inline name field, never
+	// "Create folder" in the "More" menu: an in-app inline name field, never
 	// `window.prompt`.
 	let newFolderDraft = $state('');
 	let newFolderInput = $state<HTMLInputElement | null>(null);
@@ -404,7 +445,7 @@
 		if (rows.length > 0) void bulkSetGroup(rows, '');
 	}
 
-	/** "Create folder" in the toolbar: an empty folder with nowhere to drop a
+	/** "Create folder" in the "More" menu: an empty folder with nowhere to drop a
 	 *  device yet, until the user drags one in (there is no server-side
 	 *  folder entity to create — see `pendingEmptyFolders` above). */
 	function createFolder(name: string) {
@@ -837,81 +878,22 @@
 
 <svelte:head><title>{m.devices_targets_page_title()}</title></svelte:head>
 
-<PageHeader title={m.devices_targets_title()} description={m.devices_targets_description()}>
+<PageHeader title={m.devices_targets_title()}>
 	{#snippet actions()}
-		{#if targets.length > 0}
-			<Button variant="ghost" href="/map">
-				<Network class="size-4" aria-hidden="true" />
-				{m.topology_open()}
+		<!-- Loading or failed: the toolbar is not there yet, the add button still is. The empty state carries its own. -->
+		{#if auth.isAdmin && (firstLoad || pageError)}
+			<Button variant="primary" href="/targets/new">
+				<Plus class="size-4" aria-hidden="true" />
+				{m.devices_targets_add()}
 			</Button>
-		{/if}
-		{#if auth.isAdmin && targets.length > 0}
-			<Menu label={m.devices_targets_create_folder_menu()} align="right">
-				{#snippet trigger({ toggle, open })}
-					<Button
-						variant="ghost"
-						aria-haspopup="menu"
-						aria-expanded={open}
-						onclick={() => {
-							toggle();
-							newFolderDraft = '';
-							queueMicrotask(() => newFolderInput?.focus());
-						}}
-					>
-						<FolderPlus class="size-4" aria-hidden="true" />
-						{m.devices_targets_create_folder()}
-					</Button>
-				{/snippet}
-				{#snippet children({ close })}
-					<form
-						class="flex items-center gap-1 p-0.5"
-						onsubmit={(e) => {
-							e.preventDefault();
-							createFolder(newFolderDraft);
-							newFolderDraft = '';
-							close();
-						}}
-					>
-						<input
-							bind:this={newFolderInput}
-							bind:value={newFolderDraft}
-							class="input !h-10 min-w-0 flex-1 text-[0.8125rem]"
-							placeholder={m.devices_targets_folder_placeholder()}
-							maxlength="80"
-							aria-label={m.devices_targets_folder_aria()}
-							onkeydown={(e) => {
-								if (e.key === 'Escape') {
-									e.preventDefault();
-									close();
-								}
-							}}
-						/>
-						<button
-							type="submit"
-							class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50"
-							disabled={!newFolderDraft.trim()}
-						>
-							{m.devices_targets_folder_create()}
-						</button>
-					</form>
-				{/snippet}
-			</Menu>
-		{/if}
-		<!-- The empty state carries the primary itself: one primary per view. Viewers cannot add. -->
-		{#if auth.isAdmin && (firstLoad || pageError || targets.length > 0)}
-			<ClickSpark>
-				<Button variant="primary" href="/targets/new">
-					<Plus class="size-4" aria-hidden="true" />
-					{m.devices_targets_add()}
-				</Button>
-			</ClickSpark>
 		{/if}
 	{/snippet}
 </PageHeader>
 
 {#if !firstLoad && !pageError && targets.length > 0}
-	<div class="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-		<label class="relative min-w-0 flex-1 lg:max-w-sm lg:min-w-56">
+	{@const itemClass = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface focus-visible:outline-2 focus-visible:outline-signal'}
+	<div class="mb-4 flex flex-wrap items-center gap-2">
+		<label class="relative order-1 min-w-0 flex-1 sm:max-w-sm">
 			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
 			<input
@@ -922,76 +904,209 @@
 				autocomplete="off"
 			/>
 		</label>
-		<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} class="max-sm:w-full max-sm:flex-wrap" />
-		<div class="flex min-w-0 flex-wrap items-center justify-between gap-3 lg:contents">
-			<label class="min-w-0 max-sm:w-full">
-				<span class="sr-only">{m.devices_targets_filter_kind()}</span>
-				<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm max-sm:!w-full" bind:value={kind}>
-					<option value="">{m.devices_targets_all_kinds()}</option>
-					{#each kinds as [value, label] (value)}
-						<option {value}>{label}</option>
-					{/each}
-				</select>
-			</label>
-			<div class="flex items-center gap-1">
-				<label class="min-w-0">
-					<span class="sr-only">{m.devices_list_sort_label()}</span>
-					<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={sort}>
-						{#each sortOptions as option (option.id)}
-							<option value={option.id}>{option.id === 'default' ? option.label : `${m.devices_list_sort_label()}: ${option.label}`}</option>
+
+		<div class="order-3 flex w-full min-w-0 items-center gap-2 sm:order-2 sm:w-auto sm:flex-1">
+			<Button
+				variant="secondary"
+				data-filter-toggle
+				aria-expanded={filtersOpen}
+				aria-controls="monitors-filters"
+				aria-label={activeFilters > 0 ? m.devices_targets_filter_aria({ count: activeFilters }) : undefined}
+				class={filtersOpen ? '!border-ink-3 bg-surface-2' : ''}
+				onclick={() => (filtersOpen = !filtersOpen)}
+			>
+				<SlidersHorizontal class="size-4" aria-hidden="true" />
+				{m.devices_targets_filter()}
+				{#if activeFilters > 0}
+					<span class="tnum -mr-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-ink px-1.5 text-[0.6875rem] text-surface">{activeFilters}</span>
+				{/if}
+			</Button>
+			<ViewSwitcher value={view} onchange={setView} />
+			<span class="flex-1" aria-hidden="true"></span>
+			{#if auth.isAdmin}
+				<Button
+					variant="ghost"
+					aria-pressed={selecting}
+					class={selecting ? 'bg-surface-2 text-ink' : ''}
+					onclick={() => (selecting ? stopSelecting() : (selecting = true))}
+				>
+					<ListChecks class="size-4" aria-hidden="true" />
+					{m.devices_list_select()}
+				</Button>
+			{/if}
+			<Menu label={m.devices_targets_more()} align="right" bind:open={moreOpen}>
+				{#snippet trigger({ toggle, open })}
+					<button
+						bind:this={moreButton}
+						type="button"
+						data-more-toggle
+						class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-signal"
+						aria-haspopup="menu"
+						aria-expanded={open}
+						aria-label={m.devices_targets_more()}
+						title={m.devices_targets_more()}
+						onclick={() => {
+							moreMode = 'items';
+							newFolderDraft = '';
+							toggle();
+						}}
+					>
+						<Ellipsis class="size-5" aria-hidden="true" />
+					</button>
+				{/snippet}
+				{#snippet children({ close })}
+					{#if moreMode === 'folder'}
+						<form
+							class="flex w-64 max-w-[calc(100vw-2rem)] items-center gap-1 p-0.5"
+							onsubmit={(e) => {
+								e.preventDefault();
+								createFolder(newFolderDraft);
+								newFolderDraft = '';
+								close();
+							}}
+						>
+							<input
+								bind:this={newFolderInput}
+								bind:value={newFolderDraft}
+								class="input !h-10 min-w-0 flex-1 text-[0.8125rem]"
+								placeholder={m.devices_targets_folder_placeholder()}
+								maxlength="80"
+								aria-label={m.devices_targets_folder_aria()}
+								onkeydown={(e) => {
+									if (e.key === 'Escape') {
+										e.preventDefault();
+										close();
+									}
+								}}
+							/>
+							<button
+								type="submit"
+								class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50"
+								disabled={!newFolderDraft.trim()}
+							>
+								{m.devices_targets_folder_create()}
+							</button>
+						</form>
+					{:else}
+						<a href="/map" role="menuitem" class={itemClass} onclick={close}>
+							<Network class="size-4 text-ink-3" aria-hidden="true" />
+							{m.topology_open()}
+						</a>
+						{#if auth.isAdmin}
+							<button
+								type="button"
+								role="menuitem"
+								class={itemClass}
+								onclick={() => {
+									moreMode = 'folder';
+									queueMicrotask(() => newFolderInput?.focus());
+								}}
+							>
+								<FolderPlus class="size-4 text-ink-3" aria-hidden="true" />
+								{m.devices_targets_create_folder()}
+							</button>
+							<div class="my-1 border-t border-line" role="separator"></div>
+							<button type="button" role="menuitem" class={itemClass} onclick={() => openImport(importCsv)}>
+								<FileUp class="size-4 text-ink-3" aria-hidden="true" />
+								{m.devices_import_open()}
+							</button>
+							<button type="button" role="menuitem" class={itemClass} onclick={() => openImport(importKuma)}>
+								<Upload class="size-4 text-ink-3" aria-hidden="true" />
+								{m.devices_kuma_open()}
+							</button>
+						{/if}
+					{/if}
+				{/snippet}
+			</Menu>
+		</div>
+
+		{#if auth.isAdmin}
+			<ClickSpark class="order-2 sm:order-3">
+				<Button variant="primary" href="/targets/new" class="max-sm:w-10 max-sm:!px-0" aria-label={m.devices_targets_add()}>
+					<Plus class="size-4" aria-hidden="true" />
+					<span class="max-sm:sr-only">{m.devices_targets_add()}</span>
+				</Button>
+			</ClickSpark>
+		{/if}
+	</div>
+
+	{#if filtersOpen}
+		<section
+			id="monitors-filters"
+			aria-label={m.devices_targets_filter_panel()}
+			class="mb-4 flex flex-col gap-4 rounded-[var(--radius-card)] border border-line bg-surface p-4"
+		>
+			<div class="flex flex-col gap-1.5">
+				<span class="label-tape">{m.devices_list_sort_status()}</span>
+				<Segmented options={segments} value={segment} onchange={(v) => (segment = v)} label={m.devices_targets_filter_state()} class="self-start max-sm:w-full max-sm:flex-wrap" />
+			</div>
+			<div class="flex flex-wrap gap-4">
+				<label class="flex min-w-0 flex-col gap-1.5 max-sm:w-full">
+					<span class="label-tape">{m.devices_list_sort_kind()}</span>
+					<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm max-sm:!w-full" bind:value={kind} aria-label={m.devices_targets_filter_kind()}>
+						<option value="">{m.devices_targets_all_kinds()}</option>
+						{#each kinds as [value, label] (value)}
+							<option {value}>{label}</option>
 						{/each}
 					</select>
 				</label>
-				{#if sorted}
-					<button
-						type="button"
-						class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-ink-2 hover:bg-surface-2 hover:text-ink"
-						aria-pressed={sortDir === 'desc'}
-						aria-label={m.devices_list_sort_reverse()}
-						title={m.devices_list_sort_reverse()}
-						onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}
-					>
-						<ArrowUpDown class="size-4" aria-hidden="true" />
-					</button>
-				{/if}
+				<div class="flex min-w-0 flex-col gap-1.5">
+					<label class="label-tape" for="monitors-sort">{m.devices_list_sort_label()}</label>
+					<div class="flex items-center gap-1">
+						<select id="monitors-sort" class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm" bind:value={sort}>
+							{#each sortOptions as option (option.id)}
+								<option value={option.id}>{option.label}</option>
+							{/each}
+						</select>
+						{#if sorted}
+							<button
+								type="button"
+								class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-line text-ink-2 hover:bg-surface-2 hover:text-ink"
+								aria-pressed={sortDir === 'desc'}
+								aria-label={m.devices_list_sort_reverse()}
+								title={m.devices_list_sort_reverse()}
+								onclick={() => (sortDir = sortDir === 'asc' ? 'desc' : 'asc')}
+							>
+								<ArrowUpDown class="size-4" aria-hidden="true" />
+							</button>
+						{/if}
+					</div>
+				</div>
 			</div>
-			<div class="flex items-center gap-2 lg:ml-auto">
-				{#if auth.isAdmin}
-					<Button
-						size="sm"
-						variant="ghost"
-						aria-pressed={selecting}
-						class={`!h-10 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
-						onclick={() => (selecting ? stopSelecting() : (selecting = true))}
-					>
-						<ListChecks class="size-4" aria-hidden="true" />
-						{m.devices_list_select()}
-					</Button>
-				{/if}
-				<ViewSwitcher value={view} onchange={setView} />
-			</div>
-		</div>
-	</div>
-	{#if tagChips.length > 0 || tagFilter.length > 0}
-		<div class="mb-4 flex flex-wrap items-center gap-1.5" role="group" aria-label={m.devices_targets_filter_tags()}>
-			{#each [...new Set([...tagFilter, ...tagChips.map(([tag]) => tag)])] as tag (tag)}
-				{@const active = tagFilter.includes(tag)}
-				<button
-					type="button"
-					aria-pressed={active}
-					onclick={() => toggleTag(tag)}
-					class="inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[0.8125rem] {active
-						? 'border-ink bg-ink text-surface'
-						: 'border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink'}"
-				>
-					<span class="break-all">{tag}</span>
-					<span class="tnum opacity-70">{tagChips.find(([t]) => t === tag)?.[1] ?? 0}</span>
-				</button>
-			{/each}
-		</div>
+			{#if tagChips.length > 0 || tagFilter.length > 0}
+				<div class="flex flex-col gap-1.5">
+					<span class="label-tape">{m.devices_targets_filter_tags_label()}</span>
+					<div class="flex flex-wrap items-center gap-1.5" role="group" aria-label={m.devices_targets_filter_tags()}>
+						{#each [...new Set([...tagFilter, ...tagChips.map(([tag]) => tag)])] as tag (tag)}
+							{@const active = tagFilter.includes(tag)}
+							<button
+								type="button"
+								aria-pressed={active}
+								onclick={() => toggleTag(tag)}
+								class="inline-flex min-h-10 items-center gap-1.5 rounded-full border px-3 text-[0.8125rem] {active
+									? 'border-ink bg-ink text-surface'
+									: 'border-line bg-surface text-ink-2 hover:border-ink-3 hover:text-ink'}"
+							>
+								<span class="break-all">{tag}</span>
+								<span class="tnum opacity-70">{tagChips.find(([t]) => t === tag)?.[1] ?? 0}</span>
+							</button>
+						{/each}
+					</div>
+				</div>
+			{/if}
+			{#if activeFilters > 0}
+				<div>
+					<Button variant="ghost" class="-ml-3" onclick={clearFilters}>{m.devices_targets_clear_filters()}</Button>
+				</div>
+			{/if}
+		</section>
 	{/if}
 {/if}
 
+{#if auth.isAdmin}
+	<ImportWebsites bind:this={importCsv} trigger={false} ondone={() => void alertsStore.refresh()} />
+	<ImportKuma bind:this={importKuma} trigger={false} ondone={() => void alertsStore.refresh()} />
+{/if}
 {#if actionError}
 	<div class="mb-3"><ErrorNotice error={actionError} title={m.devices_targets_err_save()} /></div>
 {/if}
@@ -1038,14 +1153,17 @@
 	</EmptyState>
 {:else}
 	<p class="sr-only" aria-live="polite">{m.devices_targets_shown({ shown: totalRows, total: targets.length })}</p>
-	{#if filtered}
-		<p class="mb-2 text-[0.8125rem] text-ink-2">
-			<span class="tnum">{m.devices_targets_shown({ shown: totalRows, total: targets.length })}</span>
-			<button type="button" class="ml-1 inline-flex min-h-10 items-center text-ink-2 underline hover:text-ink" onclick={clearFilters}>{m.devices_targets_clear_filters()}</button>
+	{#if filtered || (sorted && auth.isAdmin)}
+		<!-- One quiet line: what the filters leave, and why dragging is off while sorted. -->
+		<p class="mb-2 flex flex-wrap items-center gap-x-3 text-[0.8125rem] text-ink-2">
+			{#if filtered}
+				<span class="tnum">{m.devices_targets_shown({ shown: totalRows, total: targets.length })}</span>
+			{/if}
+			{#if sorted && auth.isAdmin}
+				<span class="text-ink-3">{m.devices_list_sort_no_reorder()}</span>
+			{/if}
+			<button type="button" class="inline-flex min-h-10 items-center text-ink-2 underline hover:text-ink" onclick={clearFilters}>{m.devices_targets_clear_filters()}</button>
 		</p>
-	{/if}
-	{#if sorted && auth.isAdmin}
-		<p class="mb-2 text-[0.8125rem] text-ink-3">{m.devices_list_sort_no_reorder()}</p>
 	{/if}
 	{#if selection}
 		<SelectionBar

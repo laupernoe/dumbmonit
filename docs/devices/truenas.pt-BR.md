@@ -24,11 +24,11 @@ compartilhamento permanece montado, backups continuam rodando, a
 interface web de toda outra ferramenta permanece verde — e o pool agora
 não tem redundância alguma. O segundo disco leva o pool.
 `truenas_pool_healthy` cai para 0 no primeiro, a regra **NAS pool
-degraded** dispara, e a página do dispositivo nomeia o disco.
+degraded** dispara, e a página do monitor nomeia o disco.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
-Além dos gráficos genéricos, um dispositivo TrueNAS mostra três painéis,
+Além dos gráficos genéricos, um monitor TrueNAS mostra três painéis,
 lidos do que a sondagem armazenou — abrir a página nunca consulta o
 próprio NAS:
 
@@ -58,7 +58,7 @@ Todas as métricas têm o prefixo `dumbmonit_truenas_`.
 | Identidade | `version_info` (a versão, sem o prefixo `TrueNAS-SCALE-` que versões antigas colocavam na frente) | `version` |
 | Máquina | `uptime_seconds`, `load1/5/15`, `memory_total_bytes`, `cpu_count` | |
 | Pools | `pool_healthy` (o próprio veredito do ZFS: 0 em `DEGRADED` como em `FAULTED`), `pool_warning` (resilvering, recursos não ativados), `pool_status_info`, `pool_size/allocated/free_bytes`, `pool_used_percent`, `pool_fragmentation_percent` | `pool`, e `status` para a série info |
-| Dispositivos do pool | `pool_device_errors` (acumulado desde o último `zpool clear`), `pool_devices_unhealthy` (ambos ausentes quando o pool não pode ser aberto) | `pool`, `kind` (`read`, `write`, `checksum`) |
+| Monitores do pool | `pool_device_errors` (acumulado desde o último `zpool clear`), `pool_devices_unhealthy` (ambos ausentes quando o pool não pode ser aberto) | `pool`, `kind` (`read`, `write`, `checksum`) |
 | Scrubs | `pool_scan_running`, `pool_scan_percent` (só enquanto em execução), `pool_last_scrub_age_seconds`, `pool_last_scrub_errors`, `pool_scrub_threshold_days` | `pool`, `function` (`SCRUB`, `RESILVER`) |
 | Datasets | `dataset_used_bytes`, `dataset_available_bytes`, `dataset_quota_bytes` e `dataset_quota_used_percent` (ausente sem uma cota), `dataset_snapshots`, `dataset_snapshot_age_seconds` (idade do último snapshot feito por uma tarefa periódica que cobre o dataset; ausente quando nenhuma o faz), `dataset_locked` (apenas datasets criptografados) | `dataset`, `pool` |
 | Snapshots | `snapshots` (total) | |
@@ -77,7 +77,7 @@ Algumas coisas que o TrueNAS faz e vale a pena conhecer:
   `pool_last_scrub_age_seconds` fica ausente em vez de errada.
 * **Um pool que não pode ser aberto** — exportado, ou com muitos discos
   faltando — ainda aparece, sem layout e sem tamanhos. Seu
-  `pool_healthy` é 0; as séries de dispositivo e tamanho ficam ausentes
+  `pool_healthy` é 0; as séries de monitor e tamanho ficam ausentes
   em vez de zero.
 * **Uma cota não definida não é uma cota de zero.** O TrueNAS responde
   `parsed: null` para "sem cota" e o DumbMonit não publica série de cota
@@ -104,7 +104,7 @@ Algumas coisas que o TrueNAS faz e vale a pena conhecer:
   `smart/test/results` desapareceu na 25.10 e é então pulado em
   silêncio.
 
-Regras integradas que se aplicam: Device unreachable, NAS pool degraded,
+Regras integradas que se aplicam: Monitor unreachable, NAS pool degraded,
 NAS disk errors, NAS pool almost full, NAS scrub found errors, NAS scrub
 overdue, NAS disk failed its SMART test, NAS disk too hot, NAS dataset
 near its quota, NAS replication failed, NAS snapshot task failed, NAS

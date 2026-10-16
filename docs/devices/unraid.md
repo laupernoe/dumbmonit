@@ -65,7 +65,7 @@ The [built-in rules](../alerting/rules.md#unraid) that apply:
 - **Unraid container stopped**: a container set to start with the array has
   not been running for ten minutes (Advisory).
 
-## The device page
+## The monitor page
 
 The Array panel says what is wrong in a sentence, shows the array fill, the
 last parity check, the running containers and VMs, then lists every disk —

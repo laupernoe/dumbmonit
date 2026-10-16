@@ -57,7 +57,7 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#home-assistant):
 Home Assistant in recovery mode, Home Assistant not running, Home
 Assistant entities went unavailable, Home Assistant battery low, Home
 Assistant update available, Home Assistant repair to address, plus
-Device unreachable.
+Monitor unreachable.
 
 ## Geräte
 
@@ -86,7 +86,7 @@ Akku-Meldung in der Tabelle, statt falsch angezeigt zu werden. Das
 Konto des Geräts, wenn bekannt, kommt von einer `person.*`-Entität,
 deren `device_trackers`-Attribut es benennt.
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Panel über den Diagrammen liest, was die Abfrage gespeichert hat; das
 Öffnen der Seite fragt Home Assistant nie ab. Es sagt zuerst, was

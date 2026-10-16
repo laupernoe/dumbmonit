@@ -4,7 +4,7 @@ O próprio banco de dados de séries temporais e o banco de dados de logs: se
 aceitam o que lhes é enviado, quanto disco resta antes de parar de aceitar
 qualquer coisa, e o que recusam.
 
-Dois tipos de dispositivo compartilham esta página, porque os dois produtos
+Dois tipos de monitor compartilham esta página, porque os dois produtos
 compartilham seus fundamentos: `victoriametrics` para um VictoriaMetrics de
 nó único, e `victorialogs` para um VictoriaLogs de nó único. Ambos publicam
 sua própria saúde em `/health` e `/metrics`, na porta de sua API; o
@@ -62,9 +62,9 @@ ativas. Esse é o limite que a documentação do VictoriaMetrics dá.
 As [regras integradas](../alerting/rules.md#log-and-metrics-servers) que se
 aplicam: Metrics or log storage read-only, Metrics or log storage almost
 read-only, Metrics or log server unhealthy, Metrics or log data refused,
-VictoriaMetrics slow inserts, além de Device unreachable.
+VictoriaMetrics slow inserts, além de Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a sondagem armazenou; abrir a página
 nunca consulta o servidor. Ele diz, nesta ordem:

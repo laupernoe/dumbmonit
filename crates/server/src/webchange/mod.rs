@@ -28,7 +28,7 @@
 //!
 //! - La page de départ injoignable (réseau, délai, 5xx) : `probe` échoue avec
 //!   une erreur « hors service », la série `up` s'interrompt et la règle
-//!   « Device unreachable » parle, comme pour tout équipement.
+//!   « Monitor unreachable » parle, comme pour tout équipement.
 //! - Un changement : la règle livrée `webchange_detected` lit
 //!   `webchange_last_check_changes`, le nombre de changements trouvés par la
 //!   dernière vérification. Elle se déclenche après une vérification qui en a

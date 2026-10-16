@@ -3,11 +3,11 @@
 Hypervisor: Knoten mit ihren Daemons und ihrem Netzwerk, virtuelle Maschinen, Container,
 Storages, LVM-Thin-Pools, Backups, Hochverfügbarkeit, Snapshots, Replikation, Ceph bis hinunter
 zum OSD, physische Platten und ZFS-Pools, ausstehende Updates, Paketänderungen, Subscription und
-Zertifikate. Ein Gerät kann einen ganzen Cluster abdecken.
+Zertifikate. Ein Monitor kann einen ganzen Cluster abdecken.
 
 ## Das Knoten-Panel {#the-nodes-panel}
 
-Die Geräteseite öffnet mit einer Karte pro Knoten: CPU, Speicher und Root-Dateisystem als drei
+Die Monitorseite öffnet mit einer Karte pro Knoten: CPU, Speicher und Root-Dateisystem als drei
 Anzeigen, die Laufzeit und die auf diesem Knoten installierte Version von `pve-manager`, dann nur
 das, was nicht stimmt — die nicht laufenden Daemons, die beim Booten deklarierten, aber nicht
 aktiven Schnittstellen — und der Füllstand jedes LVM-Thin-Pools und jeder Volume Group. Ein
@@ -123,7 +123,7 @@ sonst ändert sich nichts.
 
 ## Das Ceph-Panel {#the-ceph-panel}
 
-Ein Abschnitt **Ceph** erscheint auf der Geräteseite nur, wenn der Cluster tatsächlich Ceph hat:
+Ein Abschnitt **Ceph** erscheint auf der Monitorseite nur, wenn der Cluster tatsächlich Ceph hat:
 Zustand und die Worte dahinter, Gesamt- und genutzte Kapazität, wie viele OSDs up und in sind,
 eine Tabelle der OSDs (Host, Geräteklasse, Nutzung, Apply- und Commit-Latenz) und eine Tabelle der
 Pools (Nutzung, Size und Min Size, Placement Groups gegenüber der Zahl, die der Autoscaler
@@ -214,7 +214,7 @@ einem eigenen, weit kleineren Volume und sind oft zuerst gesättigt, mit genau d
 deshalb sind die beiden Füllstände getrennte Serien und getrennte Regeln.
 
 Paketänderungen werden vom Collector selbst erkannt: Er merkt sich die installierten Versionen
-der vorherigen Prüfung (pro Gerät und Knoten, im Speicher — ein Serverneustart lernt neu, ohne
+der vorherigen Prüfung (pro Monitor und Knoten, im Speicher — ein Serverneustart lernt neu, ohne
 etwas zu melden). Nur ein in beiden Prüfungen vorhandenes Paket mit abweichender Version zählt;
 ein neu installiertes oder entferntes nicht.
 
@@ -230,7 +230,7 @@ Platinentemperaturen sind nicht verfügbar: Die Proxmox-VE-API stellt keine Sens
 die eigene SMART-Temperatur der Platten. Installieren Sie den DumbMonit-Agenten auf dem Knoten,
 wenn Sie mehr brauchen.
 
-Zutreffende integrierte Regeln: Gerät nicht erreichbar, CPU hoch, Platte fast voll, Dateisystem
+Zutreffende integrierte Regeln: Monitor nicht erreichbar, CPU hoch, Platte fast voll, Dateisystem
 fast voll (Prognose), Backup zu alt, Ungewöhnliche CPU, VM oder Container gestoppt, VM- oder
 Container-CPU hoch, VM- oder Container-Speicher hoch, VM- oder Container-Platte fast voll,
 HA-Ressource im Fehler, Cluster hat Quorum verloren, Knoten offline, Storage fast voll,
@@ -253,7 +253,7 @@ Dinge machen ihn wertvoll.
   Zahl, die „alles ist langsam“ erklärt, wenn CPU und Speicher beide unauffällig aussehen.
 * Er wird mit `history=1` ab dem letzten bereits gesehenen Punkt gelesen, sodass jeder Punkt
   zwischen zwei Prüfungen mit seinem eigenen Zeitstempel aufgenommen wird. Ein alle fünf Minuten
-  geprüftes Gerät erhält seine fünf Ein-Minuten-Punkte statt eines einzigen aktuellen Werts.
+  geprüfter Monitor erhält seine fünf Ein-Minuten-Punkte statt eines einzigen aktuellen Werts.
 
 Er ist **standardmäßig aus**, und das ist ein bewusster Kompromiss. Diese Serien wiederholen
 teilweise solche, die der Rest der Erfassung bereits unter besseren Namen erzeugt, sodass das
@@ -403,13 +403,13 @@ Adresse: `10.0.0.10`, `pve.lan`, `pve.lan:8006`, `[fd00::1]` oder eine vollstän
 
 | Symptom | Wahrscheinliche Ursache |
 |---|---|
-| Am Gerät angezeigter Zertifikatsfehler | Selbstsigniertes Zertifikat. Installieren Sie entweder ein vertrauenswürdiges Zertifikat (ACME ist in Proxmox eingebaut) oder aktivieren Sie `insecure_tls`. Die Option wird nie implizit aktiviert. |
+| Am Monitor angezeigter Zertifikatsfehler | Selbstsigniertes Zertifikat. Installieren Sie entweder ein vertrauenswürdiges Zertifikat (ACME ist in Proxmox eingebaut) oder aktivieren Sie `insecure_tls`. Die Option wird nie implizit aktiviert. |
 | Authentifizierungsfehler | Secret in die Token-ID eingefügt (oder umgekehrt), „Privilege Separation“ angehakt gelassen (das Token hat dann keine Rechte) oder die Rolle `DumbMonit` nicht auf `/` angewendet. |
 | Backup-Alter für einen Gast fehlt | Kein `vzdump`-Task im Rückblickfenster und kein Archiv auf den Storages gefunden; oder `scan_backup_storage` deaktiviert. |
 | Langsame Prüfungen | Ein Backup-Storage, dessen Auflistung lange dauert, oder viele Gäste, deren Snapshots zu inventarisieren sind. Deaktivieren Sie `scan_backup_storage` oder `scan_snapshots`, senken Sie `max_snapshot_guests` oder erhöhen Sie `request_timeout_seconds`. |
 | `node_updates_pending` fehlt | Dem Benutzer oder Token fehlt `Sys.Modify` auf `/nodes`. Gewähren Sie die Rolle `DumbMonitUpdates` aus Schritt 6 oder ignorieren Sie es: `node_pve_packages_upgradable` und `node_reboot_required` decken die Proxmox-Pakete auch ohne ab. |
 | Kein Speicher-Prozentwert für eine VM | Proxmox VE 9 meldet im Cluster-Inventar den Speicher, den die VM **auf dem Host** belegt — Overhead eingeschlossen, daher regelmäßig über ihrer Zuweisung. Ein daraus berechneter Prozentwert läge ewig über 100 %. Die ehrliche Zahl stammt vom Balloon-Treiber im Gast; eine VM mit deaktiviertem Ballooning zeigt daher Bytes und keinen Prozentwert. `guest_memory_host_bytes` ist die Zahl der Host-Seite. |
-| Keine Kapazität für das Backup-Storage | Ein auf PVE eingehängter Proxmox-Backup-Server-Datastore meldet keine Größe: PVE liest sie nicht. Die eigene Geräteseite des Datastores hat sie. |
+| Keine Kapazität für das Backup-Storage | Ein auf PVE eingehängter Proxmox-Backup-Server-Datastore meldet keine Größe: PVE liest sie nicht. Die eigene Monitorseite des Datastores hat sie. |
 | Plattennutzung leer („nur Größe“) bei einer VM | Die VM hat keinen QEMU-Gast-Agenten (nicht in ihren Optionen aktiviert oder `qemu-guest-agent` innen nicht installiert), oder dem Token fehlt `VM.GuestAgent.Audit`. `guest_agent_enabled` und `guest_agent_running` sagen, was zutrifft. Container brauchen ihn nie. |
 | Keine Serien `node_disk_*` | Dem Token fehlt `Sys.Audit` auf `/` (die Rolle `DumbMonit` gewährt es), oder der Knoten läuft hinter einem RAID-Controller, der SMART verbirgt: `disks/list` meldet dann `UNKNOWN`, und es wird kein `node_disk_smart_failed` veröffentlicht. |
 | `node_packages_changed` löst nach einem Serverneustart aus | Tut es nicht: Die erste Prüfung nach einem Neustart lernt nur die Versionen. Eine Änderung wird nur zwischen zwei aufeinanderfolgenden Prüfungen desselben Serverprozesses gemeldet. |

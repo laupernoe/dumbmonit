@@ -5,7 +5,7 @@
 <script>document.documentElement.classList.add('js')</script>
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Сайты, сертификаты и проверки · Устройства · DumbMonit</title>
+<title>Сайты, сертификаты и проверки · Мониторы · DumbMonit</title>
 <meta name="description" content="Веб-страницы и API, порты, DNS, ping, TLS-сертификаты, серверы времени, срок действия доменов, heartbeat и изменения сайтов.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
@@ -29,7 +29,7 @@
 
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
-<meta property="og:title" content="Сайты, сертификаты и проверки · Устройства · DumbMonit">
+<meta property="og:title" content="Сайты, сертификаты и проверки · Мониторы · DumbMonit">
 <meta property="og:description" content="Веб-страницы и API, порты, DNS, ping, TLS-сертификаты, серверы времени, срок действия доменов, heartbeat и изменения сайтов.">
 <meta property="og:url" content="https://dumbmonit.app/ru/devices/checks/">
 <meta property="og:locale" content="ru_RU">
@@ -38,11 +38,11 @@
 <meta property="og:image:height" content="630">
 <meta property="og:image:alt" content="DumbMonit: всё в порядке? Узнайте за одну секунду. Self-hosted мониторинг в одном контейнере, рядом с талисманом-голубем.">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Сайты, сертификаты и проверки · Устройства · DumbMonit">
+<meta name="twitter:title" content="Сайты, сертификаты и проверки · Мониторы · DumbMonit">
 <meta name="twitter:description" content="Веб-страницы и API, порты, DNS, ping, TLS-сертификаты, серверы времени, срок действия доменов, heartbeat и изменения сайтов.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"WebPage","name":"Сайты, сертификаты и проверки · Устройства · DumbMonit","url":"https://dumbmonit.app/ru/devices/checks/","inLanguage":"ru","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
+{"@context":"https://schema.org","@type":"WebPage","name":"Сайты, сертификаты и проверки · Мониторы · DumbMonit","url":"https://dumbmonit.app/ru/devices/checks/","inLanguage":"ru","isPartOf":{"@type":"WebSite","name":"DumbMonit","url":"https://dumbmonit.app/"}}
 </script>
 </head>
 <body>
@@ -53,7 +53,7 @@
 		<a class="brand" href="../../" aria-label="Главная DumbMonit"><img src="../../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Разделы">
 			<a href="../../features/">Возможности</a>
-			<a href="../" aria-current="page">Устройства</a>
+			<a href="../" aria-current="page">Мониторы</a>
 			<a href="../../install/">Установка</a>
 			<a href="../../community/">Документация и сообщество</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Живое демо</a>
@@ -83,11 +83,11 @@
 <main id="main">
 <section class="page-head">
 	<div class="wrap">
-		<p class="crumbs"><a href="../">Устройства</a></p>
+		<p class="crumbs"><a href="../">Мониторы</a></p>
 		<h1 class="blur-in"><span class="w" style="--i:0">Сайты,</span> <span class="w" style="--i:1">сертификаты</span> <span class="w" style="--i:2">и</span> <span class="w" style="--i:3">проверки</span></h1>
 		<p class="lede">Веб-страницы и API, порты, DNS, ping, TLS-сертификаты, серверы времени, срок действия доменов, heartbeat и изменения сайтов.</p>
-		<p class="code-note">Описания устройств и тексты правил оповещений на английском, как в самом продукте. Подписи на странице соответствуют вашему языку.</p>
-		<ul class="toc" aria-label="Типы устройств на этой странице">
+		<p class="code-note">Описания мониторов и тексты правил оповещений на английском, как в самом продукте. Подписи на странице соответствуют вашему языку.</p>
+		<ul class="toc" aria-label="Типы мониторов на этой странице">
 			<li><a href="#http">Website or web API (HTTP)</a></li>
 			<li><a href="#tcp">Network port (TCP)</a></li>
 			<li><a href="#dns">Domain name (DNS)</a></li>
@@ -198,7 +198,7 @@
 <p class="label-tape" style="margin-top:14px">Примеры</p><ul class="chips" style="margin-top:6px"><li>example.com</li><li>Your company&#x27;s domain</li><li>The domain of your mail server</li></ul>
 <div class="dev-grid">
 <section><h3>Что понадобится</h3><p class="muted">Учётная запись не нужна.</p></section>
-<section><h3>Встроенные правила оповещений <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Device unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
+<section><h3>Встроенные правила оповещений <span class="label-tape">5</span></h3><ul class="rules"><li><span class="plate plate-advisory">Предупреждение</span><strong>Domain expiring</strong><span>The domain expires in less than 30 days.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Domain about to expire</strong><span>The domain expires in less than 7 days, or has expired.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Domain on hold</strong><span>The registry put the domain in clientHold or serverHold: it is out of the DNS.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Domain in redemption</strong><span>The domain is in redemptionPeriod, pendingDelete or pendingRestore: it has expired.</span></li><li><span class="plate plate-warning">Тревога</span><strong>Monitor unreachable</strong><span>No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))</span></li></ul></section>
 </div>
 <details class="setup"><summary>Шаги настройки: Watch a domain&#x27;s registration</summary><ol class="setup-steps"><li><p>Enter the registered domain, for example &quot;example.com&quot;, not a name under it such as www.example.com, which the registry does not know. Nothing to set up and no credential: RDAP, the successor of WHOIS, is public.</p></li><li><p>DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default. Registries limit RDAP queries, and the expiry date changes once a year: a shorter Refresh interval gains nothing.</p></li><li><p>A few registries run RDAP without being listed by the IANA, those of .ch and .li for instance: set RDAP server to their address. An extension whose registry runs no public RDAP service cannot be watched.</p><pre><code>https://rdap.nic.ch/</code></pre></li><li><p>Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes.</p></li></ol><p class="warn"><strong>Обратите внимание.</strong> A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops, usually over an unpaid invoice or an unverified contact address. DumbMonit warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.</p></details>
 <p class="dev-doc"><a class="btn btn-secondary btn-sm" href="https://dumbmonit.readthedocs.io/ru/latest/devices/domain/">Документация</a></p>
@@ -251,7 +251,7 @@
 		<p>DumbMonit, Apache 2.0. Талисман — голубь.</p>
 		<nav aria-label="Подвал">
 			<a href="../../features/">Возможности</a>
-			<a href="../">Устройства</a>
+			<a href="../">Мониторы</a>
 			<a href="../../install/">Установка</a>
 			<a href="../../community/">Документация и сообщество</a>
 			<a href="https://demo.dumbmonit.app">Живое демо</a>

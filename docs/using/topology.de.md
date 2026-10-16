@@ -8,8 +8,8 @@ wird von Hand eingegeben: Jede Verbindung stammt aus dem, was DumbMonit bereits 
 
 | Verbindung | Quelle | Darstellung |
 |---|---|---|
-| Hängt ab von | Das an einem Monitor gesetzte **übergeordnete Gerät**, dem auch die Alarmunterdrückung folgt. | durchgezogen |
-| Über ein Relay erreicht | Der **Relay-Agent**, der ein Gerät an einem entfernten Standort abfragt. | lange Striche |
+| Hängt ab von | Der an einem Monitor gesetzte **übergeordnete Monitor**, dem auch die Alarmunterdrückung folgt. | durchgezogen |
+| Über ein Relay erreicht | Der **Relay-Agent**, der einen Monitor an einem entfernten Standort abfragt. | lange Striche |
 | Auf einem Hypervisor | Die Gäste, die Proxmox VE, XCP-ng, Nutanix, vSphere oder das libvirt-Modul eines Linux-Agenten in den letzten 30 Minuten gemeldet haben. | kurze Striche |
 | Verkabelt mit (LLDP) | Ein **LLDP-Nachbar**, den ein SNMP-Switch an einem Port sieht (Profil `ethernet-switch`). | Punkte |
 
@@ -24,8 +24,8 @@ Monitor ohne bekannte Verbindung steht einfach in seinem Ordner.
 
 - Vorgelagertes links, Abhängiges rechts; ein Abschnitt pro Ordner.
 - Jedes Kästchen zeigt Typsymbol, Namen und Zustand in Worten. Ein
-  **ausgefallenes** Gerät hat einen dicken Rahmen und ein `!`; was dahinter liegt
-  (über übergeordnetes Gerät, Relay oder Hypervisor), ist als **Betroffen** mit
+  **ausgefallener** Monitor hat einen dicken Rahmen und ein `!`; was dahinter liegt
+  (über übergeordneten Monitor, Relay oder Hypervisor), ist als **Betroffen** mit
   gestricheltem Rahmen markiert: seine Alarme werden unterdrückt.
 - Ein Klick öffnet den Monitor; das Kästchen eines Gasts öffnet seinen Hypervisor.
 - Ziehen zum Verschieben, Mausrad oder Zwei-Finger-Geste zum Zoomen, Pfeiltasten,

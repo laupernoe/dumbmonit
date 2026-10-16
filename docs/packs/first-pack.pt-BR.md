@@ -8,9 +8,9 @@ alerta quando ela sobreaquece.
 Você precisa do Docker, e de uma tomada Shelly em sua rede ou da resposta
 capturada abaixo.
 
-## 1. Veja o que o dispositivo responde {#1-look-at-what-the-device-answers}
+## 1. Veja o que o monitor responde {#1-look-at-what-the-device-answers}
 
-Dispositivos de segunda geração da Shelly descrevem um relé com uma
+Monitores de segunda geração da Shelly descrevem um relé com uma
 chamada:
 
 ```bash
@@ -32,7 +32,7 @@ curl http://192.168.1.50/rpc/Switch.GetStatus?id=0
 
 Salve esta resposta como `shelly-plug/fixtures/status.json`: é a fixture
 contra a qual o pacote será testado, então você pode trabalhar sem o
-dispositivo à mão.
+monitor à mão.
 
 ## 2. O cabeçalho {#2-the-header}
 
@@ -50,13 +50,13 @@ default_port: 80
 credentials: [none]
 ```
 
-O `id` decide dois nomes: o tipo de dispositivo `pack.shelly-plug`, e o
+O `id` decide dois nomes: o tipo de monitor `pack.shelly-plug`, e o
 prefixo de métrica `dumbmonit_shelly_plug_`.
 
 ## 3. Uma fonte {#3-one-source}
 
 Uma fonte é uma requisição, sempre para o próprio endereço do
-dispositivo:
+monitor:
 
 ```yaml
 options:
@@ -73,7 +73,7 @@ sources:
 ```
 
 `{{option.switch_id}}` é substituído pela própria configuração do
-dispositivo, mostrada no formulário do dispositivo como **Switch
+monitor, mostrada no formulário do monitor como **Switch
 channel**. O nome do arquivo da fixture, `status.json`, corresponde ao
 `id` da fonte.
 
@@ -180,7 +180,7 @@ curl -H 'Authorization: Bearer dmt_…' -H 'Content-Type: application/yaml' \
   --data-binary @shelly-plug/pack.yaml http://localhost:8080/api/packs
 ```
 
-Abra **Dispositivos → Adicionar dispositivo**: *Shelly plug (Gen2+)* está
+Abra **Monitores → Adicionar monitor**: *Shelly plug (Gen2+)* está
 na lista. Adicione sua tomada com seu endereço; a primeira sondagem vem
 em menos de um minuto, e a regra *Shelly plug overheating* está em
 **Alertas → Regras**.

@@ -4,7 +4,7 @@ Zwei verschiedene Dinge, für zwei verschiedene Unglücksfälle.
 
 | | Verschlüsseltes Bündel | Geplantes lokales Backup |
 |---|---|---|
-| Was es hält | Die Konfiguration: Geräte und ihre Zugangsdaten, Regeln, Kanäle, Statusseiten, Konten, Tokens. | Die gesamte Datenbank, als eine Datei, plus `secret.key`. |
+| Was es hält | Die Konfiguration: Monitore und ihre Zugangsdaten, Regeln, Kanäle, Statusseiten, Konten, Tokens. | Die gesamte Datenbank, als eine Datei, plus `secret.key`. |
 | Wohin es geht | Wohin auch immer Sie es legen — verschlüsselt mit einer von Ihnen gewählten Passphrase. | `/data/backups/`, innerhalb desselben Volumes. |
 | Wovor es Sie bewahrt | Ein verlorener Server, ein Umzug auf neue Hardware, eine frische Installation. | Die Änderung, die Sie zehn Minuten später bereuen, ein schiefgegangenes Upgrade. |
 | Was es nicht hält | Metrikhistorie, Alarmzustand und -historie, das Audit-Log, Sitzungen. | Metrikhistorie (`vm/`). |
@@ -12,7 +12,7 @@ Zwei verschiedene Dinge, für zwei verschiedene Unglücksfälle.
 Keines ersetzt ein Archiv des gesamten Volumes, wenn Sie auch die
 Diagramme zurückwollen; das steht unten auf dieser Seite.
 
-!!! danger "`/data/secret.key` ist, was Ihre Gerätezugangsdaten entschlüsselt"
+!!! danger "`/data/secret.key` ist, was Ihre Monitor-Zugangsdaten entschlüsselt"
     SNMP-Communities, Proxmox-Tokens, SMTP-Passwörter und
     Heartbeat-URLs werden mit einem vom Instanz-Secret abgeleiteten
     Schlüssel verschlüsselt gespeichert. Beim ersten Start schreibt
@@ -23,7 +23,7 @@ Diagramme zurückwollen; das steht unten auf dieser Seite.
     wieder her, die mit nichts sprechen kann.** Der Server bemerkt
     das und verweigert den Start mit einer expliziten Meldung, statt
     bei jeder Abfrage zu scheitern — aber die Zugangsdaten sind weg,
-    und jedes Gerät muss neu eingegeben werden.
+    und jeder Monitor muss neu eingegeben werden.
 
     Das verschlüsselte Bündel ist die eine Ausnahme: seine Secrets
     werden mit Ihrer Passphrase neu verschlüsselt, sodass es auf
@@ -59,16 +59,16 @@ Bündel, dessen Passphrase verloren ist, ist verloren.
 
 !!! warning "Das Bündel hält jedes Credential dieser Instanz"
     Jeder mit der Datei und der Passphrase kann das Passwort jedes
-    von Ihnen überwachten Geräts lesen. Bewahren Sie es auf, wo Sie
+    von Ihnen überwachten Monitors lesen. Bewahren Sie es auf, wo Sie
     Passwörter aufbewahren.
 
 ### Was drin ist
 
 | Abschnitt | Inhalt |
 |---|---|
-| `targets` | Geräte: Name, Art, Adresse, Intervall, Optionen, übergeordnetes Gerät, Relay-Agent, und das Credential. |
+| `targets` | Monitore: Name, Art, Adresse, Intervall, Optionen, übergeordneter Monitor, Relay-Agent, und das Credential. |
 | `rules` | Alarmregeln, einschließlich eingebauter, die Sie angepasst oder deaktiviert haben. |
-| `rule_overrides` | Gerätespezifische Schwellenwerte und Ausschlüsse. |
+| `rule_overrides` | Monitorspezifische Schwellenwerte und Ausschlüsse. |
 | `channels` | Benachrichtigungskanäle, ihre Einstellungen, ihre Pro-Kanal-Richtlinie und ihre Secrets. |
 | `notify_policy` | Die globale Benachrichtigungsrichtlinie (Gruppierung, Stundenlimit, Flattern, öffentliche URL). |
 | `silences` | Wartungsfenster. |
@@ -79,7 +79,7 @@ Bündel, dessen Passphrase verloren ist, ist verloren.
 | `api_tokens` | API-Tokens, als Hashes. Bestehende Tokens funktionieren weiter. |
 | `push_monitors` | Heartbeat-Tokens, sodass die URLs, die Ihre Cron-Jobs schon aufrufen, gleich bleiben. |
 
-Geräte werden nach **Art + Adresse** abgeglichen, was auch der
+Monitore werden nach **Art + Adresse** abgeglichen, was auch der
 eindeutige Schlüssel der Tabelle ist: Das zweimalige Importieren
 desselben Bündels erstellt nie eine zweite Kopie von irgendetwas.
 
@@ -123,7 +123,7 @@ wurde.
    **erstellt** würde, was **aktualisiert** würde, weil es vom
    bereits Vorhandenen abweicht, und was bereits identisch ist — plus
    eine Notiz für alles, was nicht platziert werden konnte, etwa eine
-   Regel, die auf ein Gerät zeigte, das das Bündel nicht enthält.
+   Regel, die auf einen Monitor zeigte, den das Bündel nicht enthält.
 4. Drücken Sie **Restore for real**.
 
 Drei Regeln, die die Wiederherstellung nie bricht:
@@ -132,7 +132,7 @@ Drei Regeln, die die Wiederherstellung nie bricht:
   existieren, was das Bündel beschreibt; alles, was die Instanz
   zusätzlich hat, bleibt.
 - **Nichts wird je dupliziert.** Jedes Element wird über seinen
-  natürlichen Schlüssel abgeglichen — Art + Adresse für ein Gerät,
+  natürlichen Schlüssel abgeglichen — Art + Adresse für einen Monitor,
   `uid` für eine Regel, Name für einen Kanal, Slug für eine
   Statusseite. Dasselbe Bündel zweimal wiederherzustellen meldet
   alles als bereits identisch und schreibt nichts.

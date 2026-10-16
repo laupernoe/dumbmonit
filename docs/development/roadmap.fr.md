@@ -15,7 +15,7 @@ une promesse.
 - **Les correctifs de sécurité** sont annoncés dans les notes de version et
   comme avis de sécurité GitHub, avec leur identifiant CVE ou GHSA.
 
-DumbMonit est en alpha : attendez-vous à ce que l'API et le modèle de données
+DumbMonit est avant la 1.0 : attendez-vous à ce que l'API et le modèle de données
 évoluent encore jusqu'à l'annonce d'une version stable. Voir le
 [guide de contribution](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md)
 et la

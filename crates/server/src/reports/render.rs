@@ -246,7 +246,7 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
     out.push_str(&stat_cell(
         "Downtime",
         &duration(TimeDelta::seconds(data.downtime_secs)),
-        "total across devices",
+        "total across monitors",
         "#111827",
     ));
     out.push_str("</tr></table></td></tr>");
@@ -262,7 +262,7 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
     // Dossiers.
     if data.groups.len() > 1 || data.groups.first().is_some_and(|g| g.name != UNGROUPED) {
         heading(&mut out, "Availability by group");
-        table_open(&mut out, &["Group", "Devices", "Availability", "Previous"]);
+        table_open(&mut out, &["Group", "Monitors", "Availability", "Previous"]);
         for group in &data.groups {
             out.push_str("<tr>");
             cell(&mut out, &esc(&group.name));
@@ -276,11 +276,11 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
 
     // Équipements instables.
     let unstable = data.unstable();
-    heading(&mut out, "Least stable devices");
+    heading(&mut out, "Least stable monitors");
     if unstable.is_empty() {
-        note(&mut out, "No device had an incident in this period.");
+        note(&mut out, "No monitor had an incident in this period.");
     } else {
-        table_open(&mut out, &["Device", "Incidents", "Downtime"]);
+        table_open(&mut out, &["Monitor", "Incidents", "Downtime"]);
         for device in unstable {
             out.push_str("<tr>");
             cell(&mut out, &esc(&device.name));
@@ -296,7 +296,7 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
     if data.incidents.is_empty() {
         note(&mut out, "No incident in this period.");
     } else {
-        table_open(&mut out, &["Device", "Started", "Duration", "Severity", "Rule"]);
+        table_open(&mut out, &["Monitor", "Started", "Duration", "Severity", "Rule"]);
         for incident in data.incidents.iter().take(MAX_INCIDENT_ROWS) {
             let state = match incident.ended {
                 None => " (ongoing)",
@@ -331,11 +331,11 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
     }
 
     // Disponibilité par équipement.
-    heading(&mut out, "Availability by device");
+    heading(&mut out, "Availability by monitor");
     if data.devices.is_empty() {
-        note(&mut out, "No device is being monitored.");
+        note(&mut out, "No monitor is being monitored.");
     } else {
-        table_open(&mut out, &["Device", "Availability", "Previous", "Change"]);
+        table_open(&mut out, &["Monitor", "Availability", "Previous", "Change"]);
         for device in data.devices.iter().take(MAX_DEVICE_ROWS) {
             out.push_str("<tr>");
             cell(&mut out, &esc(&device.name));
@@ -349,7 +349,7 @@ fn html(data: &ReportData, tz: Tz, preview: bool) -> String {
             note(
                 &mut out,
                 &format!(
-                    "{} more device(s) not listed; the best-performing ones are left out.",
+                    "{} more monitor(s) not listed; the best-performing ones are left out.",
                     data.devices.len() - MAX_DEVICE_ROWS
                 ),
             );
@@ -412,7 +412,7 @@ fn text(data: &ReportData, tz: Tz, preview: bool) -> String {
         for group in &data.groups {
             let _ = writeln!(
                 out,
-                "- {}: {} (previous {}, {} device(s))",
+                "- {}: {} (previous {}, {} monitor(s))",
                 one_line(&group.name),
                 pct(group.uptime),
                 pct(group.previous_uptime),

@@ -6,16 +6,16 @@ DumbMonit 以单个容器运行：`dumbmonit` 服务器（采集、API、
 数据库中。一个卷 `/data` 保存数据库、实例密钥和
 时间序列。
 
-!!! note "Alpha 镜像"
-    `ghcr.io/laupernoe/dumbmonit:latest` 是最近一次打标签的 alpha 构建（amd64；
-    arm64 镜像暂时停止发布）；`:edge` 跟随 `main` 上的最新提交。若要从源码运行，
+!!! note "镜像标签"
+    `ghcr.io/laupernoe/dumbmonit:latest` 是最近一次打标签的发布版本（amd64；
+    arm64 镜像暂时停止发布）；`:edge` 跟随 `dev` 上的最新提交。若要从源码运行，
     `docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
     --build` 会在本地构建同一个镜像（第一次约需十分钟；只需要 Docker）。
 
 ## 前提条件 {#prerequisites}
 
 - 带有 Compose 插件的 Docker Engine（`docker compose version` 可正常运行）。
-- 一台能够访问你要监控的设备的机器。设备不需要能访问
+- 一个能够访问你要监控的监控项的机器。监控项不需要能访问
   这台机器，[代理](../devices/agent.md)除外，它们会通过 HTTP 将
   测量数据推送到服务器。
 - 主机上的 `8080` 端口空闲，或者使用你选择的其他端口（[见下文](#advanced-options)）。
@@ -33,11 +33,21 @@ services:
       - "8080:8080"
     volumes:
       - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
     restart: unless-stopped
     stop_grace_period: 30s
     read_only: true
     tmpfs: [/tmp]
+    # Starts as root only to give /data to user 65532 (or PUID/PGID), then
+    # drops root for good: a host directory works as it is. Remove `user` and
+    # `cap_add` to run as 65532 from the start (the files must belong to it).
+    user: "0:0"
     cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]
     security_opt: ["no-new-privileges:true"]
     sysctls:
       net.ipv4.ping_group_range: "0 2147483647"
@@ -53,8 +63,8 @@ volumes:
 docker compose up -d
 ```
 
-会拉取已发布的镜像；只读文件系统、被移除的 capability 以及 `ping_group_range`
-sysctl 的作用，参见[以非 root 用户运行](#runs-as-a-non-root-user)和
+会拉取已发布的镜像；只读文件系统、capability、`PUID`/`PGID` 以及 `ping_group_range`
+sysctl 的作用，参见[权限与数据目录](#permissions)和
 [无需 capability 的 ICMP ping](#icmp-ping-without-a-capability)。各项选项（端口、
 密钥、保留期、外部 VictoriaMetrics、截图）都是
 [由你自己添加的环境变量](#advanced-options)。
@@ -106,7 +116,7 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 
 ![登录界面](../assets/screenshots/login-light.png){ loading=lazy }
 
-然后添加你的第一台设备：参见[添加第一台设备](first-device.md)。
+然后添加你的第一个监控项：参见[添加第一个监控项](first-device.md)。
 
 ## 环境变量 {#environment-variables}
 
@@ -116,12 +126,13 @@ docker compose logs dumbmonit | grep -A1 "setup code"
 | 变量 | 默认值 | 作用 |
 |---|---|---|
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | 容器内的监听地址。 |
+| `PUID` / `PGID` | `65532` | 配合 `user: "0:0"` 时：服务器运行时使用的用户和组，也是 `/data` 中文件的所有者（[详情](#permissions)）。`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 同样有效。 |
 | `DUMBMONIT_DATA_DIR` | `/data` | SQLite 数据库（`dumbmonit.db`）、实例密钥（`secret.key`）以及内嵌 VictoriaMetrics 的数据（`vm/`）。 |
 | `DUMBMONIT_VM_URL` | *（未设置）* | 外部 VictoriaMetrics 的 URL。设置后不会启动内嵌的那个。 |
 | `DUMBMONIT_VM_RETENTION` | `12` | 内嵌 VictoriaMetrics 的保留期：以月为单位，或 `30d`、`2y`。 |
 | `DUMBMONIT_VM_MEMORY` | `256MB` | 内嵌 VictoriaMetrics 缓存的内存预算。 |
 | `DUMBMONIT_VM_LISTEN` | `127.0.0.1:8428` | 内嵌 VictoriaMetrics 的监听地址，位于容器内部。 |
-| `DUMBMONIT_SECRET` | *（自动生成）* | 用于加密设备凭据和令牌的实例密钥。 |
+| `DUMBMONIT_SECRET` | *（自动生成）* | 用于加密监控项凭据和令牌的实例密钥。 |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | 并发探测数，所有采集器合计。 |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | 单次探测的最长持续时间。 |
 | `DUMBMONIT_FLUSH_INTERVAL_SECS` | `5` | 写入 VictoriaMetrics 的周期。 |
@@ -145,8 +156,8 @@ SNMP 团体名、密码和 API 令牌使用 AES-256-GCM 加密，密钥
 （位于 `dumbmonit-data` 卷内）中生成该密钥。
 
 !!! danger "请将 `secret.key` 与数据库一起备份"
-    没有它，设备凭据将无法恢复：单独恢复数据库
-    得到的实例无法与任何设备通信。服务器会在启动时检测到
+    没有它，监控项凭据将无法恢复：单独恢复数据库
+    得到的实例无法与任何监控项通信。服务器会在启动时检测到
     密钥缺失或已更改，并给出明确的提示后拒绝继续运行，
     而不是在每次探测时悄悄失败。计划备份
     会为你复制它——参见[备份与恢复](backup.md)。
@@ -169,21 +180,11 @@ docker compose up -d
     如果升级出了问题，你就从它来恢复。参见
     [备份与恢复](backup.md)。
 
-### 从 0.1.0-alpha.1 升级 {#from-010-alpha1}
+### 绑定挂载 {#from-cap-drop-all}
 
-自 0.1.0-alpha.2 起，容器以用户 65532 而不是 root 运行。由
-alpha.1 创建的卷仍然属于 root，服务器会拒绝
-启动（`/data is not writable by the server`）。请一次性移交该卷的所有权：
-
-```bash
-docker compose down
-docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-docker compose up -d
-```
-
-或者保持文件原样，让容器以其所有者身份运行，在 `docker-compose.yml`
-的服务下设置
-`user: "0:0"`（或绑定挂载所属的 uid）。
+现有的 `docker-compose.yml` 无需修改即可继续使用：镜像仍以用户 65532 运行。新文件增加了
+`user: "0:0"` 和一行 `cap_add`，使主机目录无需准备即可使用（[权限](#permissions)）；
+如果想改用绑定挂载，请复制这两行。
 
 ### 从 EzyMonit 以及双容器部署升级 {#from-ezymonit-and-from-the-two-container-setup}
 
@@ -232,13 +233,13 @@ docker compose up -d
 
 | 路径 | 内容 |
 |---|---|
-| `dumbmonit.db` | 设备、规则、渠道、告警状态、会话。 |
+| `dumbmonit.db` | 监控项、规则、渠道、告警状态、会话。 |
 | `secret.key` | 实例密钥。 |
 | `backups/` | 计划的本地备份：数据库和密钥的副本，默认每天一次，保留七份。 |
 | `vm/` | VictoriaMetrics 时间序列（默认保留 12 个月）。 |
 
 DumbMonit 会按计划备份自己的数据库，也可以将整个
-配置——设备、凭据、规则、渠道——导出为一个用你自选的密码短语
+配置——监控项、凭据、规则、渠道——导出为一个用你自选的密码短语
 加密的文件，并可恢复到全新的实例上。
 两者都在**[备份与恢复](backup.md)**中介绍，其中还包括升级前该做什么，
 以及那条值得读两遍的关于 `secret.key` 的规则。
@@ -271,7 +272,7 @@ docker compose start
       - "8099:8080"
 ```
 
-**自己的密钥**，代替 `/data/secret.key` 中生成的那个。它用于加密设备凭据：
+**自己的密钥**，代替 `/data/secret.key` 中生成的那个。它用于加密监控项凭据：
 丢失它意味着要重新输入每一个凭据。
 
 ```yaml
@@ -279,7 +280,7 @@ docker compose start
       DUMBMONIT_SECRET: replace-me-with-32-random-characters
 ```
 
-内嵌 VictoriaMetrics 的**保留期与内存**（月数，或 `30d` / `2y`；几十台设备的
+内嵌 VictoriaMetrics 的**保留期与内存**（月数，或 `30d` / `2y`；几十个监控项的
 homelab 用 256 MB 就够）：
 
 ```yaml
@@ -296,7 +297,7 @@ homelab 用 256 MB 就够）：
 ```
 
 **忘记密码。** 添加下面这一行，运行 `docker compose up -d`，在界面中重新创建
-第一个管理员（设备、规则和渠道都会保留），然后删除这一行，再运行一次
+第一个管理员（监控项、规则和渠道都会保留），然后删除这一行，再运行一次
 `docker compose up -d`：
 
 ```yaml
@@ -329,7 +330,7 @@ services:
 - `shm_size: 256m`：Chromium 在 `/dev/shm` 中渲染，Docker 默认的 64 MB 对于长页面太小。
 - 任何以 `--remote-debugging-port` 启动的 Chromium 都可以；这里使用的镜像是 `chromedp/headless-shell`。
 
-没有浏览器时，其余功能照常工作（文本比较、告警、前后对照副本）；快照只是没有图像。只要服务器连不上浏览器，网站变更设备的表单就会显示一条包含这些行的提示。
+没有浏览器时，其余功能照常工作（文本比较、告警、前后对照副本）；快照只是没有图像。只要服务器连不上浏览器，网站变更监控项的表单就会显示一条包含这些行的提示。
 如果重启后提示仍然存在，请检查 `docker compose logs browser`，确认 `DUMBMONIT_BROWSER_URL` 中的主机名就是服务名，并且两个服务在同一个 Compose 项目中。
 
 ## 反向代理 {#reverse-proxy}
@@ -374,32 +375,60 @@ cookie 只通过 HTTPS 发送。纯 HTTP 部署中不要设置它：
     使用它：请确保 `/install.sh`、`/install.ps1`、`/download/…` 和 `/api/ingest`
     能通过反向代理。
 
-## 以非 root 用户运行 {#runs-as-a-non-root-user}
+## 权限与数据目录 {#permissions}
 
-容器以用户 `65532:65532` 运行服务器（使用数字形式：`scratch`
-镜像中没有 `/etc/passwd`），丢弃所有 capability，启用 `no-new-privileges`
-并使用只读的根文件系统；`/data`（卷）和 `/tmp`（tmpfs）
-是仅有的可写路径。这一切都已包含在上面的 Compose 文件中。
+服务器从不以 root 运行。镜像默认以用户 `65532:65532` 运行，Docker 创建的命名卷本来就属于该用户。
 
-由 Docker 在首次启动时创建的命名卷会从镜像继承 `/data` 的所有者：
-无需任何操作。有两种情况需要执行一条命令：
+而绑定挂载（`./dumbmonit:/data`）会保留主机目录的所有者，由 Docker 创建时通常是 root。
+这就是上面的 Compose 文件以 root 启动容器（`user: "0:0"`）的原因。服务器只在极短的
+一瞬间保持 root：在打开数据库、启动 VictoriaMetrics 或监听网络之前，它把 `/data` 移交给
+`65532:65532`（只处理属于他人的条目，不跟随符号链接），永久放弃 root，并确认无法再取回。
+`cap_add` 中的四个 capability 仅用于这一步，之后一个也不剩。`no-new-privileges` 和只读根
+文件系统保持开启：`/data` 和 `/tmp` 是仅有的可写路径。
 
-- **由早期版本创建的卷**（服务器过去以 root 运行，
-  因此文件属于 root）。请在栈停止时一次性移交所有权：
+**选择所有者：`PUID` 和 `PGID`。** 使用 `user: "0:0"` 时，指定服务器运行所用的 uid 和 gid；
+启动时文件会被移交给它们：
 
-  ```bash
-  docker compose stop
-  docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
-  docker compose up -d
-  ```
+```yaml
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+```
 
-  否则的症状是容器立即退出，并显示
-  `creating directory /data … Permission denied`（或 `unable to open database
-  file`）。
+`DUMBMONIT_PUID` / `DUMBMONIT_PGID` 同样有效，且优先。`0` 会被拒绝。在 Unraid 上，
+`PUID=99` 和 `PGID=100` 与 `appdata` 的常见所有者一致。没有 `user: "0:0"` 时，
+`PUID`/`PGID` 会被忽略。
 
-- **绑定挂载**（`./data:/data`）会保留主机目录的所有权。
-  要么执行 `chown -R 65532:65532 ./data`，要么让容器以该目录的
-  所有者身份运行：在服务下设置 `user: "1000:1000"`，任何 uid 都可以。
+**没有 `user: "0:0"` 时**（普通的 `docker run -v ./data:/data`，或 `--user 1000:1000`），
+不会更改任何所有者，`/data` 必须已经可写。否则服务器会停止，并先建议使用 `--user 0:0`，
+然后建议在主机上对绑定挂载执行 `sudo chown -R 65532:65532 ./data`，对命名卷则执行：
+
+```bash
+docker run --rm -v dumbmonit-data:/data alpine chown -R 65532:65532 /data
+```
+
+### SELinux 与 Podman {#selinux-and-podman}
+
+在 SELinux 处于 enforcing 模式的主机上（Fedora、RHEL、CentOS Stream、
+AlmaLinux 等），绑定挂载在带有容器标签之前会被拒绝访问，即使容器内是 root 也
+一样。请在卷后加上 `:Z`；如果其他容器共用该目录，则加 `:z`：
+
+```yaml
+    volumes:
+      - ./dumbmonit:/data:Z
+```
+
+否则服务器会停止，并显示 `the host enforces SELinux and the volume has
+no container label`。命名卷由 Docker 负责打标签，无需额外操作。
+
+无 root 的 Podman 的工作方式相同，需加上 `--user 0:0`。容器内的 root 就是主机上你自己的用户，而绑定
+挂载中的文件归容器内的 uid 65532 所有，主机上显示为你的某个 sub-uid（按常见的
+`/etc/subuid` 为 `165531`）。可用 `podman unshare ls -l ./dumbmonit` 查看。若想让
+文件改为归你自己的 uid 所有，请以你自己的身份运行容器；这样不会更改任何所有者：
+
+```bash
+podman run --userns keep-id --user "$(id -u):$(id -g)" -v ./dumbmonit:/data:Z …
+```
 
 ## 无需 capability 的 ICMP ping {#icmp-ping-without-a-capability}
 
@@ -419,12 +448,12 @@ services:
 主机上不会有任何改变。Docker 20.10 及更高版本会自行在每个
 容器中设置此范围；显式写出这几行是为了让它在较旧的引擎和
 Podman 上同样生效。没有它时，检查会报告配置错误（显示在
-设备上，不会发送通知），而绝不会误报“主机宕机”。使用 `docker run` 时，请传入
-`--sysctl net.ipv4.ping_group_range="0 2147483647"`。 只要服务器无法打开 ICMP 套接字，ping 设备的表单就会显示一条包含这些行的提示。
+监控项上，不会发送通知），而绝不会误报“主机宕机”。使用 `docker run` 时，请传入
+`--sysctl net.ipv4.ping_group_range="0 2147483647"`。 只要服务器无法打开 ICMP 套接字，ping 监控项的表单就会显示一条包含这些行的提示。
 
 ## 无硬件测试 {#testing-without-hardware}
 
-添加一台[演示设备](../devices/demo.md)：它无需任何准备就能产生模拟
+添加一个[演示监控项](../devices/demo.md)：它无需任何准备就能产生模拟
 测量数据，因此可以立即试用图表、规则和通知。若要获得真实的 SNMP 数据，
 运行 Docker 的这台机器通常就足够了——在上面安装
 `snmpd`（`apt install snmpd`，在 `/etc/snmp/snmpd.conf` 中允许 Docker

@@ -14,40 +14,40 @@ console.
     pendant des semaines sur un datacenter manager en fonctionnement.
     Dites-nous ce qui casse.
 
-## Un appareil pour le parc, ou un appareil par cluster ?
+## Une surveillance pour le parc, ou une surveillance par cluster ?
 
-Un appareil Datacenter Manager ne remplace pas les appareils
+Une surveillance Datacenter Manager ne remplace pas les surveillances
 [Proxmox VE](proxmox.md) et [Proxmox Backup Server](pbs.md). Il répond à
 une question différente.
 
-| | Appareil Datacenter Manager | Un appareil par cluster et par serveur de sauvegarde |
+| | Surveillance Datacenter Manager | Une surveillance par cluster et par serveur de sauvegarde |
 |---|---|---|
-| Appareils à créer | un | un par cluster, un par serveur de sauvegarde |
+| Surveillances à créer | un | un par cluster, un par serveur de sauvegarde |
 | Identifiants à gérer | un jeton, sur la console | un jeton par instance |
 | Charge sur chaque cluster | aucune de notre part : nous lisons le propre cache de la console | une sonde par intervalle, par cluster |
 | Ce que vous obtenez | accessibilité, version, compteurs d'invités et de nœuds, totaux de CPU, mémoire et stockage, tâches en échec | tout cela plus les invités un par un, snapshots, jobs de sauvegarde, HA, Ceph, réplication, disques et SMART, pools ZFS, le calendrier de sauvegarde sur 30 jours |
 | Ce que vous ne pouvez pas obtenir | séries par invité, détail par datastore, disques, snapshots, journaux de tâche | un total unique à l'échelle du parc |
 | Panne principale | la console ne peut pas atteindre une instance | le cluster ne nous répond pas |
 
-**Notre recommandation.** Ajoutez l'appareil Datacenter Manager quand vous
+**Notre recommandation.** Ajoutez la surveillance Datacenter Manager quand vous
 faites déjà tourner une console et voulez une page qui dit si le parc est
 complet — c'est la façon la moins coûteuse de remarquer qu'un site
-distant a disparu, et ça ne coûte rien aux clusters. Ajoutez un appareil
-dédié pour chaque cluster et serveur de sauvegarde que vous exploitez
+distant a disparu, et ça ne coûte rien aux clusters. Ajoutez une surveillance
+dédiée pour chaque cluster et serveur de sauvegarde que vous exploitez
 réellement : c'est là que se trouve la profondeur, et c'est ce qui vous
 dit *quelle* VM s'est arrêtée ou *quelle* sauvegarde a échoué. Les deux se
 recoupent sans entrer en conflit ; une sauvegarde en échec lève alors une
-alerte depuis l'appareil PBS (avec le journal de tâche) et une depuis la
+alerte depuis la surveillance PBS (avec le journal de tâche) et une depuis la
 console (nommant l'instance). Réduisez au silence la règle de tâche de la
 console si vous trouvez ça redondant, ou limitez-la aux instances pour
-lesquelles vous n'avez pas d'appareil dédié.
+lesquelles vous n'avez pas de surveillance dédiée.
 
 Si vous ne faites pas tourner de console du tout, n'en installez pas une
-juste pour la surveillance : les appareils dédiés voient strictement plus.
+juste pour la surveillance : les surveillances dédiées voient strictement plus.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Au-delà des graphiques génériques, un appareil Datacenter Manager montre
+Au-delà des graphiques génériques, une surveillance Datacenter Manager montre
 trois panneaux, lus depuis ce que la sonde a stocké — ouvrir la page
 n'interroge ni la console ni les clusters qu'elle gère :
 
@@ -67,7 +67,7 @@ n'interroge ni la console ni les clusters qu'elle gère :
   elle a tourné, le type de tâche, quand elle a commencé, combien de
   temps elle a pris et le message d'erreur. Le journal de tâche lui-même
   reste sur l'instance : ouvrez-le là, ou ajoutez ce cluster comme son
-  propre appareil, où *Montrer le journal* le récupère.
+  propre surveillance, où *Montrer le journal* le récupère.
 * **Hôte de la console** — la machine qui fait tourner la console : CPU,
   mémoire, système de fichiers racine, uptime et noyau, ses certificats
   avec les jours restants avant expiration, les paquets en attente d'une
@@ -76,7 +76,7 @@ n'interroge ni la console ni les clusters qu'elle gère :
   dit, plutôt que de montrer des zéros.
 
 L'historique des tâches est gardé dans SQLite (`pdm_task_history`, 19
-jours, 5000 tâches au plus par appareil) pour que la liste d'échecs
+jours, 5000 tâches au plus par surveillance) pour que la liste d'échecs
 survive aux redémarrages même si chaque sonde ne regarde que la fenêtre de
 tâches.
 
@@ -113,7 +113,7 @@ Les totaux de stockage comptent chaque nom de stockage une fois par
 instance : un stockage partagé par cinq nœuds d'un cluster est compté une
 fois, pas cinq.
 
-Règles intégrées qui s'appliquent : Appareil inaccessible, instance
+Règles intégrées qui s'appliquent : Surveillance inaccessible, instance
 fédérée inaccessible, instance fédérée en retard, tâche en échec sur une
 instance fédérée, disque de console de datacenter presque plein,
 certificat de console de datacenter arrivant à expiration, mises à jour
@@ -212,7 +212,7 @@ complète. Le schéma `https` et le port 8443 sont ajoutés s'ils manquent.
 garde son propre inventaire, rafraîchi par sa propre boucle de collecte.
 Demander des données fraîches à chaque sonde fait que la console appelle à
 nouveau chaque cluster, en plus de son rythme normal — exactement la
-charge qu'un appareil console unique est censé éviter. Soixante secondes
+charge qu'une surveillance console unique est censée éviter. Soixante secondes
 reste plus frais que l'intervalle de sonde par défaut.
 
 ## Erreurs courantes

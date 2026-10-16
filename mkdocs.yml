@@ -76,13 +76,13 @@ nav:
   - Live demo: https://demo.dumbmonit.app
   - Install:
       - Docker: install/docker.md
-      - Add your first device: install/first-device.md
+      - Add your first monitor: install/first-device.md
       - Monitor a remote site: install/remote-site.md
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
       - Update: install/update.md
       - Run a demo instance: install/demo.md
-  - Devices:
+  - Monitors:
       - Overview: devices/index.md
       - SNMP: devices/snmp.md
       - Proxmox VE: devices/proxmox.md
@@ -138,7 +138,7 @@ nav:
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
       - Website health & SEO: devices/website.md
-      - Demo device: devices/demo.md
+      - Demo monitor: devices/demo.md
   - Integrations:
       - Website banner: integrations/website-banner.md
   - Integration packs:
@@ -154,7 +154,7 @@ nav:
   - Using DumbMonit:
       - Overview page: using/overview.md
       - Wall mode and music: using/wall.md
-      - Devices page: using/devices.md
+      - Monitors page: using/devices.md
       - Topology map: using/topology.md
       - Security score: using/security-score.md
       - Alerts page: using/alerts.md

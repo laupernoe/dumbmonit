@@ -13,7 +13,7 @@ changer. Un jeton d'accès d'API (`tskey-api-…`) fonctionne aussi, mais il
 porte tous les droits de l'utilisateur qui l'a créé et expire après 90 jours
 au plus.
 
-C'est une API Internet : l'adresse de l'appareil est celle de l'API, pas
+C'est une API Internet : l'adresse de la surveillance est celle de l'API, pas
 celle d'une machine. DumbMonit a besoin de HTTPS sortant vers
 `api.tailscale.com` ; rien dans le tailnet n'est contacté.
 
@@ -79,7 +79,7 @@ garder en ligne** ci-dessus, qui ne déclenche une alerte que pour les
 appareils surveillés passant hors ligne. Augmentez la **péremption
 d'appareil** pour un tailnet avec des appareils qui se déplacent.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau Tailnet dit ce qui ne va pas en une phrase, montre les appareils
 en ligne, les appareils surveillés hors ligne, les mises à jour disponibles

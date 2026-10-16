@@ -1,6 +1,6 @@
-# Tipos de dispositivo {#device-types}
+# Tipos de monitor {#device-types}
 
-O DumbMonit chama *dispositivo* a tudo o que monitoriza (a API diz *target*),
+O DumbMonit chama *monitor* a tudo o que monitoriza (a API diz *target*),
 mesmo quando é uma página web ou um nome DNS. Cada tipo é um coletor no
 servidor; o servidor descreve cada tipo à interface (`GET /api/collectors`),
 pelo que o formulário corresponde sempre ao que esta versão pode monitorizar.
@@ -72,31 +72,31 @@ pelo que o formulário corresponde sempre ao que esta versão pode monitorizar.
 | [Heartbeat](push.md) | `push` | nenhuma (URL secreto) | Tarefa cron, script de cópia de segurança, automação que tem de se anunciar |
 | [Alterações em sites](webchange.md) | `webchange` | nenhuma | Uma página ou um site inteiro: alterações de texto, páginas novas e removidas, antes/depois com capturas de ecrã |
 | [Saúde e SEO de sites](website.md) | `website` | nenhuma | Sites em massa: em baixo, página em branco, redirecionamentos, noindex, robots.txt, alterações de título/descrição/canónico, plataforma (importação CSV) |
-| [Dispositivo de demonstração](demo.md) | `dummy` | nenhuma | Explorar a interface sem hardware |
+| [Monitor de demonstração](demo.md) | `dummy` | nenhuma | Explorar a interface sem hardware |
 
-## Como um dispositivo é lido {#how-a-device-is-read}
+## Como um monitor é lido {#how-a-device-is-read}
 
-O agendador executa cada dispositivo ativado no seu próprio intervalo
+O agendador executa cada monitor ativado no seu próprio intervalo
 (predefinição 60 s, mínimo 10 s) através do coletor do seu tipo, com no máximo
 `DUMBMONIT_MAX_CONCURRENT_PROBES` sondas em curso e um tempo limite rígido de
 `DUMBMONIT_PROBE_TIMEOUT_SECS` por sonda. Cada sonda bem-sucedida escreve as
 suas amostras mais `dumbmonit_up = 1`; uma sonda falhada não escreve nada, e é
-o silêncio da série que a regra «Dispositivo inacessível» deteta. A página do
-dispositivo mostra a falha na sonda seguinte, mas o alerta espera de propósito:
+o silêncio da série que a regra «Monitor inacessível» deteta. A página do
+monitor mostra a falha na sonda seguinte, mas o alerta espera de propósito:
 dispara cerca de quatro minutos após a última sonda bem-sucedida (três minutos
 de silêncio, depois uma espera de um minuto), pelo que uma única sonda perdida
 nunca acorda ninguém.
 
-As falhas são classificadas. Um dispositivo que não responde está
+As falhas são classificadas. Um monitor que não responde está
 *inacessível* e levanta um alerta. Uma community errada, um certificado
 recusado ou uma capacidade em falta é um *erro de configuração*: é mostrado na
-página do dispositivo, a vermelho, com o motivo, e não é notificado. A
-distinção importa: um dispositivo mal configurado não deve acordar ninguém de
+página do monitor, a vermelho, com o motivo, e não é notificado. A
+distinção importa: um monitor mal configurado não deve acordar ninguém de
 noite.
 
 ## Opções {#options}
 
-Alguns tipos lêem opções das etiquetas do dispositivo: a porta da API, se
+Alguns tipos lêem opções das etiquetas do monitor: a porta da API, se
 aceita um certificado autoassinado, que nós monitorizar. O formulário mostra um
 campo tipado por opção em **Mais opções**, com a sua predefinição e texto de
 ajuda. As páginas de cada tipo listam-nas textualmente. As opções são
@@ -108,10 +108,10 @@ que `primary_key` é ignorada mas `keyboard` não) e valores com mais de 256
 caracteres. Nunca ponha um segredo numa etiqueta de qualquer forma: use o campo
 de credencial, que é cifrado.
 
-## Dispositivos pai {#parent-devices}
+## Monitores pai {#parent-devices}
 
-Qualquer dispositivo pode declarar outro como seu pai. Quando o pai está
+Qualquer monitor pode declarar outro como seu pai. Quando o pai está
 inacessível, os alertas dos seus descendentes são marcados *Suprimido pelo pai*
 em vez de serem enviados: um comutador que cai produz uma notificação, não
-trinta. Na página Dispositivos, os filhos empilham-se sob o pai e esbatem-se
+trinta. Na página Monitores, os filhos empilham-se sob o pai e esbatem-se
 quando este está inacessível.

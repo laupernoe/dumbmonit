@@ -54,9 +54,9 @@ and the update rule never fires.
 The [built-in rules](../alerting/rules.md#mikrotik-routeros) that apply:
 MikroTik CPU high, memory high, storage almost full, temperature high, power
 supply or fan failed, interface accumulating errors, link flapping, RouterOS
-update available and firmware upgrade pending, plus Device unreachable.
+update available and firmware upgrade pending, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page
 never connects to the router. It shows the RouterOS version and whether a

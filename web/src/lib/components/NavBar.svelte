@@ -165,12 +165,11 @@
 				href={DOCS_URL}
 				target="_blank"
 				rel="noopener"
-				class="inline-flex h-9 items-center gap-1.5 rounded-lg px-2.5 text-[0.8125rem] font-semibold text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
+				class="inline-flex size-10 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"
 				title={m.misc_nav_docs_title()}
+				aria-label={m.misc_nav_docs_sr()}
 			>
 				<BookOpen class="size-4" aria-hidden="true" />
-				<span class="hidden lg:inline">{m.misc_nav_docs()}</span>
-				<span class="sr-only lg:hidden">{m.misc_nav_docs_sr()}</span>
 			</a>
 			<a
 				href={GITHUB_URL}

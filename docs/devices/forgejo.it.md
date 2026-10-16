@@ -24,13 +24,13 @@ Tutte le metriche sono prefissate `dumbmonit_forgejo_`.
 | `runner_offline` | valore 1 per runner offline (al massimo 32) | `runner` |
 | `scrape_errors` | chiamate solo amministratore che hanno fallito sull'ultima sonda (0 con le loro di un token ordinario mai tentate) | |
 
-Le [regole integrate](../alerting/rules.md#self-hosted-forges) che si applicano: Runner Forgejo/Gitea tutti offline, Compito pianificato Forgejo/Gitea scaduto, più Dispositivo irraggiungibile. Un punteggio di sicurezza controlla i compiti pianificati: vedi [Aggiornamenti dei fornitori e altri controlli](../using/security-score.md).
+Le [regole integrate](../alerting/rules.md#self-hosted-forges) che si applicano: Runner Forgejo/Gitea tutti offline, Compito pianificato Forgejo/Gitea scaduto, più Monitor irraggiungibile. Un punteggio di sicurezza controlla i compiti pianificati: vedi [Aggiornamenti dei fornitori e altri controlli](../using/security-score.md).
 
 ## Cosa non controlla
 
 Forgejo e Gitea non hanno un ruolo amministratore di sola lettura: ogni chiamata riservata a "admin" ha bisogno di un account con pieni diritti, non un delegato limitato di scope. La loro API inoltre non ha equivalente alle impostazioni di sign-up o two-factor di GitLab, né un flag "aggiornamento disponibile" auto-segnalato — confronta la versione sopra contro le [note di rilascio](https://forgejo.org/releases/) del progetto a mano.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la pagina non chiama mai Forgejo o Gitea. Dice cosa è sbagliato per primo (il controllo di salute che fallisce, i runner tutti offline, un compito pianificato scaduto), quindi la versione, quindi i conteggi di repository, account e organizzazione.
 

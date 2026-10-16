@@ -110,8 +110,8 @@ Optionen-Parsing, Alarm-Zustandsmaschine, Stummschaltungen) werden vor Ort ohne 
 1. Implementieren Sie `Collector` aus `crates/proto/src/collector.rs`: `kind()`,
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` und optional `discover()` für die
    Profilerkennung. Geben Sie die `ProbeError`-Varianten wahrheitsgemäß zurück: `means_down()`
-   entscheidet, ob ein Fehler als „Gerät ausgefallen“ (alarmiert) oder als Konfigurationsfehler
-   (am Gerät angezeigt, nicht benachrichtigt) zählt.
+   entscheidet, ob ein Fehler als „Monitor ausgefallen“ (alarmiert) oder als Konfigurationsfehler
+   (am Monitor angezeigt, nicht benachrichtigt) zählt.
 2. Lesen Sie Ihre Optionen aus `Target::tags` in einer `options.rs`, mit Standardwerten.
 3. Registrieren Sie ihn in `crates/server/src/main.rs` mit `registry.register(...)`. Scheduler
    und API kennen nie konkrete Typen.

@@ -10,11 +10,11 @@ sans toucher votre préférence enregistrée.
 
 ![Mode mur](../assets/screenshots/wall-light.png){ loading=lazy }
 
-Chaque problème, à gauche, porte l'icône du produit de son équipement (les
-mêmes marques que dans les listes d'équipements). La liste ne déborde jamais de
+Chaque problème, à gauche, porte l'icône du produit de sa surveillance (les
+mêmes marques que dans les listes de surveillances). La liste ne déborde jamais de
 sa place : sur un petit écran, ou avec beaucoup de problèmes, les grandes
 tuiles se réduisent à une ligne chacune, puis se replient en *Et N de plus*,
-au lieu de recouvrir les équipements en dessous.
+au lieu de recouvrir les surveillances en dessous.
 
 ## Actualités sur le mur
 

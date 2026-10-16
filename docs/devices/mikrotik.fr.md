@@ -60,9 +60,9 @@ Les [règles intégrées](../alerting/rules.md#mikrotik-routeros) qui
 s'appliquent : CPU MikroTik élevé, mémoire élevée, stockage presque plein,
 température élevée, alimentation ou ventilateur en échec, interface
 accumulant des erreurs, lien instable, mise à jour RouterOS disponible et
-mise à jour de firmware en attente, plus Appareil inaccessible.
+mise à jour de firmware en attente, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page ne se connecte jamais au routeur. Il montre la version de RouterOS et

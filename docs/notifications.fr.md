@@ -33,7 +33,7 @@ règles d'alerte choisissent lesquels notifier.
 
 Trois principes s'appliquent à chaque canal :
 
-1. **Les alertes sont groupées.** Un message par appareil et par cycle,
+1. **Les alertes sont groupées.** Un message par surveillance et par cycle,
    même si cinq disques se remplissent en même temps. Sans ça, vous
    coupriez les notifications en une semaine.
 2. **Un canal cassé n'en bloque jamais un autre.** L'échec est enregistré
@@ -196,8 +196,8 @@ votre JSON normalement.
 | `{{message}}` | Corps en texte brut, une ligne par alerte | `⚠️ Warning · Disk full — /data — 95 % (threshold > 90 %)` |
 | `{{message_markdown}}` | Le même corps en Markdown | `**nas — Disk full**\n• ⚠️ …` |
 | `{{rule}}` | Nom de la règle d'alerte | `Disk full` |
-| `{{target}}` | Nom de l'appareil surveillé | `nas` |
-| `{{target_id}}` | Identifiant numérique de l'appareil | `42` |
+| `{{target}}` | Nom de la surveillance | `nas` |
+| `{{target_id}}` | Identifiant numérique de la surveillance | `42` |
 | `{{severity}}` | Gravité technique | `info`, `warning` ou `critical` |
 | `{{severity_fr}}` | Gravité comme un mot lisible | `information`, `avertissement`, `critique` |
 | `{{status}}` | Statut technique | `firing` ou `resolved` |
@@ -217,7 +217,7 @@ votre JSON normalement.
 | `{{color}}` | Couleur d'accent, sans dièse | `D98A00` |
 | `{{color_hex}}` | Couleur d'accent, avec dièse | `#D98A00` |
 | `{{emoji}}` | Pictogramme de statut | `🔴`, `⚠️`, `ℹ️` ou `✅` |
-| `{{link}}` | Lien vers l'appareil dans DumbMonit | `https://dumbmonit.home/targets/42` |
+| `{{link}}` | Lien vers la surveillance dans DumbMonit | `https://dumbmonit.home/targets/42` |
 | `{{source}}` | Toujours `dumbmonit` | `dumbmonit` |
 | `{{token}}` | Le secret `token` du canal | *(votre jeton)* |
 | `{{ack_url}}` | Lien signé qui acquitte l'alerte jusqu'à sa résolution, vide si les [liens d'action](#acknowledge-or-snooze-from-the-notification) sont désactivés | `https://dumbmonit.home/alert-action#…` |
@@ -670,7 +670,7 @@ les alertes même avec chaque onglet fermé.
   premier démarrage et stockée chiffrée ; la clé privée ne quitte jamais
   le serveur.
 
-Le titre de la notification est la gravité et l'appareil
+Le titre de la notification est la gravité et la surveillance
 (`Critical · nas01`), le corps un court résumé ; toucher ouvre la page
 **Alertes**. DumbMonit a besoin de HTTPS sortant vers les services de
 push (`fcm.googleapis.com`, `*.notify.windows.com`,

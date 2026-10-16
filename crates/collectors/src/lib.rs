@@ -239,7 +239,7 @@ impl Registry {
     pub fn register_runtime(&self, collector: Arc<dyn Collector>) -> Result<(), String> {
         let kind: Arc<str> = Arc::from(collector.kind());
         if self.collectors.contains_key(&kind) {
-            return Err(format!("\"{kind}\" is a built-in device type"));
+            return Err(format!("\"{kind}\" is a built-in monitor type"));
         }
         self.runtime_write().insert(kind, collector);
         Ok(())

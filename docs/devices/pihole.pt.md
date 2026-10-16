@@ -44,9 +44,9 @@ versão, e o DumbMonit faz o mesmo.
 
 As [regras incorporadas](../alerting/rules.md#pi-hole) que se aplicam:
 Pi-hole blocking disabled, Pi-hole blocklists stale, Pi-hole update
-available, Pi-hole diagnosis messages, mais Device unreachable.
+available, Pi-hole diagnosis messages, mais Monitor unreachable.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel acima dos gráficos lê o que a verificação guardou; abrir a página
 nunca liga ao Pi-hole. Mostra se o bloqueio está ativo (e quando termina uma

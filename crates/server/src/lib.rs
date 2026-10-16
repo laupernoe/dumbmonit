@@ -13,9 +13,12 @@ pub mod config;
 pub mod crypto;
 pub mod db;
 pub mod demo;
+pub mod healthcheck;
 pub mod music;
 pub mod notify;
 pub mod packs;
+#[cfg(unix)]
+pub mod privileges;
 pub mod reports;
 pub mod scheduler;
 pub mod security;

@@ -13,26 +13,26 @@ de uma chamada que gera o alerta.
 
 ## Como funciona {#how-it-works}
 
-Cada dispositivo heartbeat recebe um URL da forma
+Cada monitor heartbeat recebe um URL da forma
 `https://<o seu DumbMonit>/api/push/<token>`. O token é um valor aleatório
 de 128 bits, guardado com hash para procura e encriptado para exibição: é
-mostrado na página do dispositivo, com um botão de cópia, enquanto o
-dispositivo existir. É deliberadamente aberto — sem sessão, sem token de
+mostrado na página do monitor, com um botão de cópia, enquanto o
+monitor existir. É deliberadamente aberto — sem sessão, sem token de
 API, sem cabeçalho `X-Requested-With` — porque uma linha `curl` numa
 crontab não tem nada disso. Ter o token só permite dizer «a tarefa
 correu».
 
-A cada passagem do escalonador (o intervalo do dispositivo, 60 s por
+A cada passagem do escalonador (o intervalo do monitor, 60 s por
 predefinição) o coletor lê a hora da última chamada e escreve:
 
 | Situação | `probe_success` | Efeito |
 |---|---|---|
-| Nenhuma chamada recebida ainda | *(nada escrito)* | O dispositivo mostra **Waiting**. Nenhum alerta: a tarefa ainda não está em funcionamento. |
+| Nenhuma chamada recebida ainda | *(nada escrito)* | O monitor mostra **Waiting**. Nenhum alerta: a tarefa ainda não está em funcionamento. |
 | Última chamada dentro do intervalo esperado + margem | `1` | **Reporting**. |
 | Última chamada mais antiga do que o intervalo esperado + margem | `0`, `reason="missed"` | **Down**; a regra «Heartbeat missed» dispara depois de dois minutos. |
 | A última chamada disse `status=down` | `0`, `reason="reported_down"` | **Down** de imediato, seja o que for que o relógio diga. |
 
-Uma chamada também reavalia o dispositivo imediatamente, por isso uma
+Uma chamada também reavalia o monitor imediatamente, por isso uma
 tarefa que retoma limpa o seu alerta sem esperar pela próxima passagem do
 escalonador.
 
@@ -47,7 +47,7 @@ aceites; `HEAD` também funciona.
 | Parâmetro | Significado |
 |---|---|
 | `status` | `up` (predefinição) ou `down`: a própria tarefa reporta uma falha. |
-| `msg` | Uma palavra livre de explicação, guardada (truncada a 500 caracteres) e mostrada na página do dispositivo. |
+| `msg` | Uma palavra livre de explicação, guardada (truncada a 500 caracteres) e mostrada na página do monitor. |
 
 Estes são os parâmetros do monitor push do Uptime Kuma: um script escrito
 para ele funciona sem alterações.
@@ -61,8 +61,8 @@ Os passos abaixo são os que o aviso junto ao formulário mostra.
    os seus heartbeats.
 2. Defina o intervalo esperado para o calendário da tarefa («24h» para
    uma tarefa noturna, «1h» para uma horária) e, se o calendário derivar,
-   um período de margem mais largo. Guarde o dispositivo.
-3. A página do dispositivo mostra o URL a chamar. Adicione-o no fim da
+   um período de margem mais largo. Guarde o monitor.
+3. A página do monitor mostra o URL a chamar. Adicione-o no fim da
    tarefa, para que só seja chamado quando a tarefa tiver sucesso:
 
     ```
@@ -72,8 +72,8 @@ Os passos abaixo são os que o aviso junto ao formulário mostra.
 4. Uma tarefa que consegue saber quando falhou pode dizê-lo em vez de
    ficar silenciosa: acrescente ?status=down&msg=… ao URL, e o alerta
    dispara de imediato.
-5. Até a primeira chamada chegar, o dispositivo mostra «Waiting» e nada é
-   alertado. URL perdido ou exposto? «Regenerate» na página do dispositivo
+5. Até a primeira chamada chegar, o monitor mostra «Waiting» e nada é
+   alertado. URL perdido ou exposto? «Regenerate» na página do monitor
    emite um novo; o antigo deixa de responder de imediato.
 
 !!! warning
@@ -148,7 +148,7 @@ serviço: `avg_over_time(dumbmonit_probe_success{probe="push"}[30d])`.
 
 Regra incorporada que se aplica: **Heartbeat missed** (advisory, 2
 minutos). As regras «Service down» e «Service flapping» ignoram
-heartbeats, e «Device unreachable» nunca dispara para eles: o coletor
+heartbeats, e «Monitor unreachable» nunca dispara para eles: o coletor
 corre sempre, só o seu veredicto muda.
 
 ## API {#api}

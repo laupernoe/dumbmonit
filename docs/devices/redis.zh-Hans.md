@@ -34,9 +34,9 @@ DumbMonit 打开一个连接，发送 `AUTH`，然后 `INFO`，并关闭它。�
 | `master_link_up`、`master_last_io_seconds`、`master_link_down_seconds`、`master_sync_in_progress` | 在副本上：它的链接到主副本 | |
 | `uptime_seconds`、`cluster_enabled` | | |
 
-[内置规则](../alerting/rules.md#databases-message-broker-and-security-engine)应用：Redis 内存近 maxmemory、Redis 拒绝连接、Redis 复制链接关闭、Redis 副本延迟、Redis 快照失败、Redis 仅追加文件写入失败，加设备无法访问。
+[内置规则](../alerting/rules.md#databases-message-broker-and-security-engine)应用：Redis 内存近 maxmemory、Redis 拒绝连接、Redis 复制链接关闭、Redis 副本延迟、Redis 快照失败、Redis 仅追加文件写入失败，加监控项无法访问。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 面板在图表上方读取探针存储的内容；打开页面从不查询 Redis。它在一个句子中说什么是错误（复制、内存对抗 `maxmemory` 和在限制应用的策略、持久性、拒绝的连接），然后是键、内存、客户、每秒命令、命中比、最后 24 小时驱逐的键和正常运行时间，然后是每个数据库的键和每个副本的延迟。
 
@@ -73,6 +73,6 @@ DumbMonit 打开一个连接，发送 `AUTH`，然后 `INFO`，并关闭它。�
 
 地址：主机名或 IP（`cache.lan`）、`host:port`，或连接字符串（`redis://cache.lan:6380`；端口后的任何东西被忽略，凭据写在其中从不使用）。选项：端口（6379）、TLS（关闭）、证书检查以及整个检查的超时（10 s）。启用 TLS，证书被检查对抗 DumbMonit 内置的公共当局；对于私有当局，勾选接受不可验证的证书。
 
-拒绝的密码（`WRONGPASS`、`NOAUTH`、`NOPERM`）被显示为凭据错误，没有人被通知关于错误本身，但 DumbMonit 然后收集零：设备无法访问规则保持触发，如对任何设备它不能读取，直到凭据再次工作。Redis 重启时没有其 ACL 用户（用 `ACL SETUSER` 定义但从不保存的用户）导致正好这个。
+拒绝的密码（`WRONGPASS`、`NOAUTH`、`NOPERM`）被显示为凭据错误，没有人被通知关于错误本身，但 DumbMonit 然后收集零：监控项无法访问规则保持触发，如对任何监控项它不能读取，直到凭据再次工作。Redis 重启时没有其 ACL 用户（用 `ACL SETUSER` 定义但从不保存的用户）导致正好这个。
 
 在 Redis Sentinel 或 Cluster 部署中，添加您想要看到的每个服务器：每个报告其自己的内存、客户和持久性，主副本报告它的副本。Sentinel 本身未被覆盖。

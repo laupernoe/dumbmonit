@@ -77,7 +77,7 @@ que só gera alerta para dispositivos observados ficando offline. Aumente
 **Desatualização de dispositivo** para uma tailnet com dispositivos que
 circulam.
 
-## A página do dispositivo {#the-device-page}
+## A página do monitor {#the-device-page}
 
 O painel Tailnet diz o que está errado em uma frase, mostra os dispositivos
 online, os dispositivos observados offline, as atualizações disponíveis e

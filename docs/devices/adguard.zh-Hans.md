@@ -59,10 +59,10 @@ AdGuard Home 等待其上游超时时间的两倍(默认 20 秒);DumbMonit
 
 适用的[内置规则](../alerting/rules.md#adguard-home):AdGuard
 Home 保护已关闭、AdGuard Home DNS 未运行、AdGuard Home 上游失效、
-AdGuard Home 过滤列表过期、AdGuard Home 有可用更新,以及设备
+AdGuard Home 过滤列表过期、AdGuard Home 有可用更新,以及监控项
 不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取探测存储的数据;打开该页面从不会连接到
 AdGuard Home。它说明保护和 DNS 服务器是否开启(以及暂停何时

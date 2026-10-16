@@ -1,6 +1,6 @@
-# Device types
+# Monitor types
 
-DumbMonit calls everything it watches a *device* (the API says *target*), even
+DumbMonit calls everything it watches a *monitor* (the API says *target*), even
 when it is a web page or a DNS name. Each type is a collector on the server; the
 server describes every type to the interface (`GET /api/collectors`), so the
 form always matches what this version can monitor.
@@ -72,29 +72,29 @@ form always matches what this version can monitor.
 | [Heartbeat](push.md) | `push` | none (secret URL) | Cron job, backup script, automation that must call in |
 | [Website changes](webchange.md) | `webchange` | none | A page or a whole site: text changes, new and removed pages, before/after with screenshots |
 | [Website health & SEO](website.md) | `website` | none | Sites in bulk: down, blank page, redirects, noindex, robots.txt, title/description/canonical changes, platform (CSV import) |
-| [Demo device](demo.md) | `dummy` | none | Explore the UI without hardware |
+| [Demo monitor](demo.md) | `dummy` | none | Explore the UI without hardware |
 
-## How a device is read
+## How a monitor is read
 
-The scheduler runs every enabled device on its own interval (default 60 s,
+The scheduler runs every enabled monitor on its own interval (default 60 s,
 minimum 10 s) through the collector for its kind, with at most
 `DUMBMONIT_MAX_CONCURRENT_PROBES` probes in flight and a hard timeout of
 `DUMBMONIT_PROBE_TIMEOUT_SECS` per probe. Each successful probe writes its
 samples plus `dumbmonit_up = 1`; a failed probe writes nothing, and it is the
-silence of the series that the "Device unreachable" rule detects. The device
+silence of the series that the "Monitor unreachable" rule detects. The monitor
 page shows the failure at the next probe, but the alert waits on purpose: it
 fires about four minutes after the last successful probe (three minutes of
 silence, then a one-minute hold), so a single lost probe never pages anyone.
 
-Failures are classified. A device that does not answer is *unreachable* and
+Failures are classified. A monitor that does not answer is *unreachable* and
 raises an alert. A wrong community, a refused certificate or a missing
-capability is a *configuration error*: it is shown on the device page, in red,
+capability is a *configuration error*: it is shown on the monitor page, in red,
 with the reason, and it is not notified. The distinction matters: a misconfigured
-device should not wake anyone up at night.
+monitor should not wake anyone up at night.
 
 ## Options
 
-Some types read options from the device's tags: the API port, whether to accept
+Some types read options from the monitor's tags: the API port, whether to accept
 a self-signed certificate, which nodes to monitor. The form shows a typed field
 per option under **More options**, with its default and help text. The per-kind
 pages list them verbatim. Options are settings, not labels: they are not copied
@@ -104,10 +104,10 @@ on the series. Free tags (any other key) are copied on every series as
 but `keyboard` is not) and values longer than 256 characters. Never put a secret in
 a tag anyway: use the credential field, which is encrypted.
 
-## Parent devices
+## Parent monitors
 
-Any device can declare another one as its parent. When the parent is
+Any monitor can declare another one as its parent. When the parent is
 unreachable, alerts from its descendants are marked *Suppressed by parent*
 instead of being sent: a switch going down produces one notification, not
-thirty. On the Devices page, children stack under their parent and dim when it
+thirty. On the Monitors page, children stack under their parent and dim when it
 is unreachable.

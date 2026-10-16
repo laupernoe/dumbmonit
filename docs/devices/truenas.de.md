@@ -25,11 +25,11 @@ Daten weiter. Die Freigabe bleibt eingehängt, Backups laufen weiter,
 die Web-Oberfläche jedes anderen Tools bleibt grün — und der Pool hat
 nun keine Redundanz mehr. Die zweite Platte nimmt den Pool mit.
 `truenas_pool_healthy` fällt auf 0 bei der ersten, die Regel **NAS
-pool degraded** feuert, und die Geräteseite benennt die Platte.
+pool degraded** feuert, und die Monitorseite benennt die Platte.
 
-## Die Geräteseite
+## Die Monitorseite
 
-Über die generischen Diagramme hinaus zeigt ein TrueNAS-Gerät drei
+Über die generischen Diagramme hinaus zeigt ein TrueNAS-Monitor drei
 Panels, aus dem gelesen, was die Abfrage gespeichert hat — das Öffnen
 der Seite fragt das NAS selbst nie ab:
 
@@ -109,7 +109,7 @@ Ein paar Dinge, die TrueNAS tut und wissenswert sind:
   versucht; `smart/test/results` verschwand in 25.10 und wird dann
   still übersprungen.
 
-Geltende eingebaute Regeln: Device unreachable, NAS pool degraded,
+Geltende eingebaute Regeln: Monitor unreachable, NAS pool degraded,
 NAS disk errors, NAS pool almost full, NAS scrub found errors, NAS
 scrub overdue, NAS disk failed its SMART test, NAS disk too hot, NAS
 dataset near its quota, NAS replication failed, NAS snapshot task

@@ -31,9 +31,9 @@ Toutes les métriques sont préfixées `dumbmonit_plex_`.
 | `scrape_errors` | appels qui ont échoué à la dernière sonde | |
 
 La [règle intégrée](../alerting/rules.md#self-hosted-applications) qui
-s'applique : mise à jour Plex disponible, plus Appareil inaccessible.
+s'applique : mise à jour Plex disponible, plus Surveillance inaccessible.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais Plex. Il donne l'état de mise à jour et si le serveur

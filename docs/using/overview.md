@@ -9,7 +9,7 @@ drill down on demand.
 
 The band at the top is a weather bulletin for your network. One sentence states
 the sky: "Clear skies." when nothing needs you, otherwise a count of what does
-("9 advisories, 1 unreachable."). Under it, plates count devices reporting and
+("9 advisories, 1 unreachable."). Under it, plates count monitors reporting and
 unreachable, with the time of the last check, and three readouts: **Reporting**,
 **Needs you**, **Forecasts**.
 
@@ -17,38 +17,38 @@ The weather window on the right follows the network: clear, cloudy, overcast or
 storm, depending on how many alerts are firing and how severe they are, with the
 pigeon flying across. Under `prefers-reduced-motion`, everything is still.
 
-The single primary action of the page is **Add a device**.
+The single primary action of the page is **Add a monitor**.
 
 ## The first-run guide
 
 On a new instance, the page under the bulletin is not empty: it is a three-step
-guide — add a device, connect a way to be told, check a message arrives. Each
+guide — add a monitor, connect a way to be told, check a message arrives. Each
 step is one click, each can be waved off on its own, and **Skip the guide** puts
 all three away. The choice is stored on the instance, so a second browser does
 not start the guide over. See
-[Add your first device](../install/first-device.md#the-three-first-steps).
+[Add your first monitor](../install/first-device.md#the-three-first-steps).
 
 ## Needs you
 
-The list of what needs you now, most severe first: unreachable devices, then
-firing alerts by severity. Each row names the rule, the device, the current
+The list of what needs you now, most severe first: unreachable monitors, then
+firing alerts by severity. Each row names the rule, the monitor, the current
 value, how long it has been going on, and whether it groups several series
-("×4" for four filesystems on the same device). Four actions: **Ack**
+("×4" for four filesystems on the same monitor). Four actions: **Ack**
 (acknowledge this alert for 1 h, 4 h, 24 h or until resolved — reminders
 pause, the resolution is still notified), **Snooze** (hide just this alert
 for 1 h, 8 h, 1 day or until resolved), **Ignore** (stop this rule from ever
-alerting on this device again, reversibly), and **Open device**.
+alerting on this monitor again, reversibly), and **Open monitor**.
 
 Acknowledged and snoozed alerts move to their own quieter group under the
 list and leave the *Needs you* count. An ignored alert disappears outright —
-it is not "known", it is turned off for that device. See
+it is not "known", it is turned off for that monitor. See
 [Getting rid of an alert](alerts.md#getting-rid-of-an-alert).
 
-## Devices summary
+## Monitors summary
 
-One line: how many devices, how many reporting, how many unreachable, and a
-link to the full Devices page. The overview never lists devices: the rack lives
-on [Devices](devices.md).
+One line: how many monitors, how many reporting, how many unreachable, and a
+link to the full Monitors page. The overview never lists monitors: the rack lives
+on [Monitors](devices.md).
 
 ## Forecasts and last 24 hours
 
@@ -89,9 +89,9 @@ input, results in three groups.
 
 | Group | Entries |
 |---|---|
-| Pages | Overview, Devices, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
-| Actions | Add a device, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident, Toggle theme |
-| Devices | Every device, with its state LED; ++enter++ opens it |
+| Pages | Overview, Monitors, Alerts, Notifications, Status pages, Settings, Wall mode, Documentation |
+| Actions | Add a monitor, Scan my network, Schedule maintenance, Add notification channel, New status page, Announce an incident, Toggle theme |
+| Monitors | Every monitor, with its state LED; ++enter++ opens it |
 
 ## Navigation
 
@@ -101,7 +101,7 @@ becomes a bottom tab bar with those four tabs and **More**, which holds wall
 mode and the documentation.
 
 - **Overview** — the bulletin: is everything fine, and what needs you.
-- **Monitors** — the rack; every source you monitor. See [Devices page](devices.md).
+- **Monitors** — the rack; every source you monitor. See [Monitors page](devices.md).
 - **Alerts** — what is firing, maintenance windows, history and the rules.
   See [Alerts page](alerts.md).
 - **Settings** — your account, users and single sign-on, agent and assistant

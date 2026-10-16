@@ -42,9 +42,9 @@ Pi-hole 出问题时很少表现出来:DNS 仍会继续应答。拦截被暂停"
 
 适用的[内置规则](../alerting/rules.md#pi-hole):Pi-hole 拦截已
 禁用、Pi-hole 黑名单过期、Pi-hole 有可用更新、Pi-hole 诊断消息,
-以及设备不可达。
+以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
 图表上方的面板读取检查存储的数据;打开该页面从不会连接到
 Pi-hole。它显示拦截是否开启(以及暂停何时结束)、过去 24 小时内

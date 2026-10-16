@@ -68,11 +68,11 @@ l'intera sonda.
       più, quindi su un NAS recente quelle due serie semplicemente non
       esistono — nulla viene inventato al loro posto.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
-![Un dispositivo Synology: a colpo d'occhio, volumi, dischi e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
+![Un monitor Synology: a colpo d'occhio, volumi, dischi e Active Backup](../assets/screenshots/device-synology-light.png){ loading=lazy }
 
-Un dispositivo Synology ottiene un proprio pannello sopra i grafici:
+Un monitor Synology ottiene un proprio pannello sopra i grafici:
 
 * **At a glance** — CPU, memoria (usata del totale), temperatura e
   uptime, con il verdetto di storage proprio di DSM come targhetta
@@ -380,6 +380,6 @@ porta, viene usata 5001 su HTTPS e 5000 su HTTP.
 | Errore di certificato | Certificato autofirmato: abilita `insecure_tls`. Questo è un errore di configurazione, mai "unreachable": un NAS che risponde non viene mostrato come spento. |
 | Nessuna metrica di disco o volume | L'account non è nel gruppo `administrators` (vedi la nota sopra). |
 | Nessuna metrica `dumbmonit_abb_*`, `scrape_errors` a 1 | L'account non può usare Active Backup for Business: delegagli il pacchetto, oppure disattiva l'opzione `abb`. Senza il pacchetto installato non c'è né errore né metrica. |
-| Metriche di task ma nessuna riga di dispositivo sulla pagina | Il NAS non pubblicizza `SYNO.ActiveBackup.Overview` (ABB più vecchio), oppure il dispositivo viene sondato tramite un agent relay, che mantiene la cronologia in memoria sul suo lato: le metriche esistono, il calendario no. |
+| Metriche di task ma nessuna riga di monitor sulla pagina | Il NAS non pubblicizza `SYNO.ActiveBackup.Overview` (ABB più vecchio), oppure il monitor viene sondato tramite un agent relay, che mantiene la cronologia in memoria sul suo lato: le metriche esistono, il calendario no. |
 | Un laptop mostra "Overdue" il giorno dopo essere stato aggiunto | Meno di tre successi: il modello sta ancora apprendendo e consente 72 ore tra i backup; si stabilizza una volta conosciute due settimane di abitudini. |
 | I dischi si risvegliano a ogni sonda | L'inventario di storage risveglia i dischi in sospensione. Allunga l'intervallo di controllo. |

@@ -37,13 +37,13 @@ Alle Metriken haben das Präfix `dumbmonit_nextcloud_`.
 | `fpm_active_processes`, `fpm_total_processes`, `fpm_listen_queue`, `fpm_max_children_reached`, `fpm_slow_requests` | PHP-FPM-Pool, wenn Nextcloud hinter PHP-FPM läuft (die `-fpm`-Images, AIO) | |
 
 Solange sich Nextcloud in Wartung befindet oder auf ein Upgrade wartet, antwortet seine API mit
-503: Dann werden nur `maintenance`, `needs_db_upgrade` und `version_info` geschrieben, und das
-Gerät wird nicht als nicht erreichbar gemeldet.
+503: Dann werden nur `maintenance`, `needs_db_upgrade` und `version_info` geschrieben, und der
+Monitor wird nicht als nicht erreichbar gemeldet.
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#self-hosted-applications):
 Nextcloud im Wartungsmodus festgehangen, Nextcloud-Datenbank-Upgrade ausstehend,
 Nextcloud-Update verfügbar, Nextcloud-OPcache voll, Nextcloud-freier Platz knapp, außerdem
-Gerät nicht erreichbar.
+Monitor nicht erreichbar.
 
 ## Hintergrundjobs (Cron) {#background-jobs-cron}
 
@@ -78,7 +78,7 @@ Rest dieser Seite ausdrücklich vermeidet. Sollte Nextcloud dies je über OCS be
 DumbMonit dem bereits für Immich, Proxmox Backup Server und Veeam verwendeten Muster der
 [Client-Geräte](../alerting/rules.md) folgen.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite ruft
 Nextcloud nie auf. Es nennt zuerst, was nicht stimmt (Wartung, wartendes Upgrade, OPcache voll

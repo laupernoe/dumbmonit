@@ -53,7 +53,7 @@
 		<a class="brand" href="../" aria-label="Главная DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Разделы">
 			<a href="./" aria-current="page">Возможности</a>
-			<a href="../devices/">Устройства</a>
+			<a href="../devices/">Мониторы</a>
 			<a href="../install/">Установка</a>
 			<a href="../community/">Документация и сообщество</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Живое демо</a>
@@ -84,7 +84,7 @@
 <section class="page-head">
 	<div class="wrap">
 		<h1 class="blur-in"><span class="w" style="--i:0">Всё,</span> <span class="w" style="--i:1">что</span> <span class="w" style="--i:2">он</span> <span class="w" style="--i:3">умеет</span></h1>
-		<p class="lede">Оповещения, страницы статуса, агенты и всё остальное в одном контейнере. Что сообщает каждый тип устройств, описано на страницах «Устройства».</p>
+		<p class="lede">Оповещения, страницы статуса, агенты и всё остальное в одном контейнере. Что сообщает каждый тип мониторов, описано на страницах «Мониторы».</p>
 		<ul class="toc" aria-label="На этой странице">
 			<li><a href="#alerting">Оповещения без шума</a></li>
 			<li><a href="#notifications"><span class="num" data-n="23">23</span> каналов уведомлений</a></li>
@@ -110,7 +110,7 @@
 				</div>
 				<ul class="points">
 					<li><strong>Зависимости</strong><p>Назначьте коммутатор родителем всего, что за ним находится. Когда он падает, вы получаете одно уведомление, а не тридцать; остальные помечаются «Подавлено родителем».</p></li>
-					<li><strong>Группировка по хосту</strong><p>NAS с деградирующим массивом присылает одно сообщение за цикл, а не по одному на каждый диск. Напоминания, эскалация, подтверждение, откладывание, игнорирование по устройству и очистка закрытой истории — всё встроено.</p></li>
+					<li><strong>Группировка по хосту</strong><p>NAS с деградирующим массивом присылает одно сообщение за цикл, а не по одному на каждый диск. Напоминания, эскалация, подтверждение, откладывание, игнорирование по монитору и очистка закрытой истории — всё встроено.</p></li>
 					<li><strong>Базовые уровни, которые сначала учатся</strong><p>Обнаружение аномалий без порогов для настройки: 168 интервалов, по одному на каждый час недели. Первые 14 дней оно молчит и лишь показывает, что сработало бы.</p></li>
 					<li><strong>Прогнозы</strong><p>«Эта файловая система заполнится в течение четырёх дней» выводится как прогноз, отдельно от того, что сломано прямо сейчас.</p></li>
 					<li><strong>Обслуживание и политика уведомлений</strong><p>Разовые или еженедельные окна, гистерезис, удержание при флаппинге, тихие часы, пакетная отправка и почасовой лимит, чтобы плохая ночь не превратилась в двести пушей.</p></li>
@@ -127,7 +127,7 @@
 <source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.avif" width="780" height="1688">
 <source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.webp" width="780" height="1688">
 <source type="image/avif" srcset="../../assets/shots/alerts-light-1x.avif 1440w, ../../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
-<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Страница оповещений: текущие оповещения, сгруппированные по устройствам, у каждого табличка «Недоступен», «Предупреждение», «Уведомление» или «Назревает», «Подтвердить» и «Открыть монитор»" width="2880" height="1800" loading="lazy" decoding="async">
+<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Страница оповещений: текущие оповещения, сгруппированные по мониторам, у каждого табличка «Недоступен», «Предупреждение», «Уведомление» или «Назревает», «Подтвердить» и «Открыть монитор»" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 				</div>
 				<figcaption>Оповещения, сгруппированные по хосту. Уровни читаются как в метеослужбе: info, advisory, warning.</figcaption>
@@ -207,7 +207,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Страницы статуса для тех, кому вы служите</h2>
 				<p>Публичные страницы по адресу <code>/s/&lt;name&gt;</code>: группы сервисов с 90 днями ежедневной истории, доступностью за 30 и 90 дней, объявлениями об инцидентах и обслуживании, подписчиками по электронной почте с двойным подтверждением, RSS, бейджами для README, компактным встраиваемым блоком для интранета, необязательным 90-дневным календарём и графиками времени ответа, а также необязательной сценой за баннером: на выбор около пятидесяти — от городских панорам (Венеция, Париж, Токио, Нью-Йорк&hellip;) и чудес света до швейцарских достопримечательностей (Маттерхорн, Жё-д&rsquo;О, Люцерн, Берн, Шильон). Небо следует состоянию ваших сервисов, и каждая сцена по-своему реагирует, когда что-то падает или возвращается. Швейцарские сцены украшены вокзальными часами в стиле SBB, табло с поворотными лопастями для оповещений, фейерверками 1 августа, котлом Эскалады и зимним снегом.</p>
-				<p>С сервера уходят только выбранные вами подписи. Имена устройств, адреса и типы никогда не появляются на странице, в бейдже или в письме.</p>
+				<p>С сервера уходят только выбранные вами подписи. Имена мониторов, адреса и типы никогда не появляются на странице, в бейдже или в письме.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/ru/latest/using/status-pages/">Страницы статуса в документации</a></p>
 			</div>
 			<div>
@@ -250,7 +250,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 <source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.avif" width="780" height="1688">
 <source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.webp" width="780" height="1688">
 <source type="image/avif" srcset="../../assets/shots/wall-light-1x.avif 1440w, ../../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
-<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Настенный режим: «4 проблемы» крупным шрифтом, список оповещений, отвечающие устройства, часы и дождливая парижская крыша с голубями" width="2880" height="1800" loading="lazy" decoding="async">
+<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Настенный режим: «4 проблемы» крупным шрифтом, список оповещений, отвечающие мониторы, часы и дождливая парижская крыша с голубями" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 			</div>
 			<figcaption>Настенный режим на мониторе в комнате: погода над парижской крышей следует за вашими оповещениями.</figcaption>
@@ -263,7 +263,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Отчёты по почте</h2>
-				<p>Короткое письмо раз в неделю (или в день, или в месяц) с доступностью по группам, инцидентами периода и наименее стабильными устройствами, которое приходит без того, чтобы кто-то открывал DumbMonit.</p>
+				<p>Короткое письмо раз в неделю (или в день, или в месяц) с доступностью по группам, инцидентами периода и наименее стабильными мониторами, которое приходит без того, чтобы кто-то открывал DumbMonit.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/ru/latest/using/reports/">Подробнее в документации</a></p>
 			</div>
 			<div class="section-head" id="topology" style="margin-bottom:0">
@@ -280,7 +280,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Оценка безопасности</h2>
-				<p>Каждое поддерживаемое устройство получает оценку 0–100 и класс A–F по собственным проверкам лучших практик производителя, в духе PingCastle: категория, серьёзность, свидетельства, способ устранения и страница «Безопасность» с худшим сверху.</p>
+				<p>Каждый поддерживаемый монитор получает оценку 0–100 и класс A–F по собственным проверкам лучших практик производителя, в духе PingCastle: категория, серьёзность, свидетельства, способ устранения и страница «Безопасность» с худшим сверху.</p>
 				<p>Оценка служит ориентиром, а не аудитом: она читает только то, что DumbMonit уже собирает, и потому не заменяет проверку безопасности.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/ru/latest/using/security-score/">Подробнее в документации</a></p>
 			</div>
@@ -299,7 +299,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		</div>
 		<ul class="points" style="max-width:48em">
 			<li><strong>Открытый документированный API</strong><p>Каждый маршрут описан в <code>/api/openapi.json</code> (OpenAPI 3.1): токены с ограниченной областью (<code>dmt_…</code>, чтение или запись), которые могут истекать, быть привязаны к сети и имеют ограничение частоты запросов. <a href="https://dumbmonit.readthedocs.io/ru/latest/reference/api/">Справочник API</a></p></li>
-			<li><strong>Ассистент через MCP</strong><p>27 инструментов для ChatGPT, VS Code или Cursor: чтение статуса, устройств, оповещений, метрик и агентов; токен с правом записи также позволяет заглушать и подтверждать оповещения, добавлять устройство или перезапускать контейнер. Секреты никогда не возвращаются. <a href="https://dumbmonit.readthedocs.io/ru/latest/using/assistant/">Подключить ассистента</a></p></li>
+			<li><strong>Ассистент через MCP</strong><p>27 инструментов для ChatGPT, VS Code или Cursor: чтение статуса, мониторов, оповещений, метрик и агентов; токен с правом записи также позволяет заглушать и подтверждать оповещения, добавлять монитор или перезапускать контейнер. Секреты никогда не возвращаются. <a href="https://dumbmonit.readthedocs.io/ru/latest/using/assistant/">Подключить ассистента</a></p></li>
 		</ul>
 	</div>
 </section>
@@ -312,7 +312,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>Английский, французский, немецкий, испанский, итальянский, португальский (Португалия и Бразилия), русский и упрощённый китайский: интерфейс, этот сайт и документация. Некоторые переводы пока неполные.</p>
 			</div>
 			<div class="cta">
-				<a class="btn btn-primary" href="../devices/">Устройства</a>
+				<a class="btn btn-primary" href="../devices/">Мониторы</a>
 				<a class="btn btn-secondary" href="../install/">Установка</a>
 			</div>
 		</div>
@@ -326,7 +326,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<p>DumbMonit, Apache 2.0. Талисман — голубь.</p>
 		<nav aria-label="Подвал">
 			<a href="./">Возможности</a>
-			<a href="../devices/">Устройства</a>
+			<a href="../devices/">Мониторы</a>
 			<a href="../install/">Установка</a>
 			<a href="../community/">Документация и сообщество</a>
 			<a href="https://demo.dumbmonit.app">Живое демо</a>

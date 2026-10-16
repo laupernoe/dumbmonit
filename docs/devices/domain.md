@@ -42,9 +42,9 @@ at 0, so a registry outage does not look like a domain problem.
 
 The [built-in rules](../alerting/rules.md#reverse-proxies-and-domains) that
 apply: Domain expiring (under 30 days), Domain about to expire (under 7 days or
-expired), Domain on hold, Domain in redemption, plus Device unreachable.
+expired), Domain on hold, Domain in redemption, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries the registry. It says the expiry date and the days left, the status
@@ -79,5 +79,5 @@ None: RDAP is public.
 Address: the registered domain (`example.com`); a pasted URL is reduced to its
 host name. Options: RDAP server (empty: found through IANA), Refresh interval
 (12 hours, from 1 to 168) and request timeout (10 s). The check interval of
-the device itself can stay at its default: it only recomputes the days left
+the monitor itself can stay at its default: it only recomputes the days left
 between two queries to the registry.

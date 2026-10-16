@@ -52,9 +52,9 @@ regola segnala: solo un router che è elencato e disabilitato lo fa.
 Le [regole integrate](../alerting/rules.md#reverse-proxies-and-domains) che
 si applicano: router Traefik disabilitato, server backend Traefik inattivo, servizio Traefik
 senza server, certificato Traefik non ottenuto, certificato proxy non
-rinnovato, reverse proxy che risponde 5xx, più dispositivo irraggiungibile.
+rinnovato, reverse proxy che risponde 5xx, più monitor irraggiungibile.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge quello che la sonda ha memorizzato; aprire la pagina non
 interroga mai Traefik. Dice cosa è sbagliato in una frase (router disabilitati e

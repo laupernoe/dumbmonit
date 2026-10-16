@@ -13,7 +13,7 @@ Connectez-en un, puis demandez-lui des choses comme :
 - « Poste une mise à jour sur la page d'état : le serveur mail est de
   retour. »
 
-L'assistant voit ce que l'interface voit — appareils, alertes,
+L'assistant voit ce que l'interface voit — surveillances, alertes,
 historique, métriques, agents, pages d'état — et utilise les mêmes
 mots : *actif*, *inaccessible*, *en attente*, *avis*, *avertissement*,
 *supprimée par le parent*. Il tourne dans le serveur : rien à installer
@@ -27,7 +27,7 @@ mon portable »), puis choisissez :
 
 | Réglage | Choix |
 | --- | --- |
-| **Portée** | **Lecture** : regarder — statut, appareils, alertes, historique, métriques, règles, agents, pages d'état. Il ne peut jamais rien changer. **Lecture et écriture** : aussi agir — mettre en silence, acquitter, sonder, ajouter un appareil, redémarrer un conteneur, poster un incident… (les [outils d'écriture](#what-the-assistant-can-call)). |
+| **Portée** | **Lecture** : regarder — statut, surveillances, alertes, historique, métriques, règles, agents, pages d'état. Il ne peut jamais rien changer. **Lecture et écriture** : aussi agir — mettre en silence, acquitter, sonder, ajouter une surveillance, redémarrer un conteneur, poster un incident… (les [outils d'écriture](#what-the-assistant-can-call)). |
 | **Expire** | 30 jours, 90 jours (le défaut), 1 an ou jamais. Un jeton expiré arrête de fonctionner ; créez-en un nouveau. |
 | **Réseaux autorisés** | Optionnel. Adresses ou plages CIDR depuis lesquelles le jeton peut être utilisé (`192.168.1.0/24, 10.8.0.5`). Vide : n'importe où. |
 
@@ -165,29 +165,29 @@ ne font que regarder et vous demander avant de lancer les autres.
 
 | Outil | Portée | Fait |
 | --- | --- | --- |
-| `get_status` | read | Le bulletin, la réponse à « est-ce que tout va bien ? » : compteurs d'appareils, alertes actives et en construction, une phrase (« 2 avis, 1 inaccessible. »). |
-| `list_devices` | read | Appareils et services avec état, parent et étiquettes ; filtre par sous-chaîne ou état. |
-| `get_device` | read | Un appareil : configuration, état, alertes actives, résumé CPU / mémoire / disque le plus plein sur 24 heures (disponibilité et latence pour une vérification de service). |
+| `get_status` | read | Le bulletin, la réponse à « est-ce que tout va bien ? » : compteurs de surveillances, alertes actives et en construction, une phrase (« 2 avis, 1 inaccessible. »). |
+| `list_devices` | read | Surveillances et services avec état, parent et étiquettes ; filtre par sous-chaîne ou état. |
+| `get_device` | read | Une surveillance : configuration, état, alertes actives, résumé CPU / mémoire / disque le plus plein sur 24 heures (disponibilité et latence pour une vérification de service). |
 | `list_alerts` | read | Alertes actives avec les mots de gravité, depuis quand, valeur, suppression, acquittement. |
-| `alert_history` | read | Transitions d'alerte, les plus récentes d'abord (`since` ou `hours`, appareil optionnel, limite). |
+| `alert_history` | read | Transitions d'alerte, les plus récentes d'abord (`since` ou `hours`, surveillance optionnelle, limite). |
 | `query_metrics` | read | Une requête de plage MetricsQL, 60 points au plus par série. |
 | `list_silences` | read | Fenêtres de maintenance et si elles sont actives maintenant. |
 | `list_rules` | read | Règles d'alerte avec type, gravité, seuil, activé. |
-| `list_device_types` | read | Les types d'appareil que ce serveur peut surveiller, avec les options et identifiants que chacun attend — ce dont `add_device` a besoin. |
-| `list_agents` | read | Machines faisant tourner l'agent : OS, version d'agent, mode relais, site, appareils relayés, dernier contact, liaison. |
+| `list_device_types` | read | Les types de surveillance que ce serveur peut surveiller, avec les options et identifiants que chacun attend — ce dont `add_device` a besoin. |
+| `list_agents` | read | Machines faisant tourner l'agent : OS, version d'agent, mode relais, site, surveillances relayées, dernier contact, liaison. |
 | `list_containers` | read | Les conteneurs Docker d'une machine faisant tourner l'agent : état, santé, redémarrages, mise à jour disponible, dernière commande. |
-| `list_heartbeats` | read | Moniteurs battement de cœur : intervalle attendu, dernier appel, verdict (en attente, à l'heure, manqué, rapporté en panne). L'URL secrète n'est jamais montrée. |
-| `list_status_pages` | read | Pages d'état, publiées ou non, avec leur chemin public (`/s/<slug>`), les appareils qu'elles montrent et leurs incidents ouverts. |
+| `list_heartbeats` | read | Surveillances battement de cœur : intervalle attendu, dernier appel, verdict (en attente, à l'heure, manqué, rapporté en panne). L'URL secrète n'est jamais montrée. |
+| `list_status_pages` | read | Pages d'état, publiées ou non, avec leur chemin public (`/s/<slug>`), les surveillances qu'elles montrent et leurs incidents ouverts. |
 | `list_channels` | read | Canaux de notification : type, activé, dernière erreur, dernier message envoyé. Jamais leurs secrets. |
-| `list_packs` | read | Packs d'intégration installés : version, type d'appareil, activé, appareils qui l'utilisent, erreurs. |
-| `silence_device` | write | Une fenêtre de maintenance ponctuelle sur un appareil, commençant maintenant (1 heure par défaut, une semaine au plus). |
+| `list_packs` | read | Packs d'intégration installés : version, type de surveillance, activé, surveillances qui l'utilisent, erreurs. |
+| `silence_device` | write | Une fenêtre de maintenance ponctuelle sur une surveillance, commençant maintenant (1 heure par défaut, une semaine au plus). |
 | `remove_silence` | write | Retire une fenêtre de maintenance. |
-| `schedule_maintenance` | write | Une fenêtre de maintenance ponctuelle à une date donnée, sur un appareil ou toute l'instance, une semaine au plus. |
+| `schedule_maintenance` | write | Une fenêtre de maintenance ponctuelle à une date donnée, sur une surveillance ou toute l'instance, une semaine au plus. |
 | `acknowledge_alert` | write | Acquitte une alerte par empreinte pour un nombre d'heures (4 par défaut) : les rappels se mettent en pause, la résolution est quand même notifiée. `hours: 0` l'enlève. |
-| `probe_device` | write | Sonde un appareil immédiatement et rapporte ce qui a été mesuré. |
-| `set_device_enabled` | write | Active ou désactive la surveillance d'un appareil. |
+| `probe_device` | write | Sonde une surveillance immédiatement et rapporte ce qui a été mesuré. |
+| `set_device_enabled` | write | Active ou désactive les vérifications d'une surveillance. |
 | `set_rule_enabled` | write | Active ou désactive une règle d'alerte. |
-| `add_device` | write | Ajoute un appareil : nom, type, adresse, intervalle, parent, options, identifiants, agent relais. |
+| `add_device` | write | Ajoute une surveillance : nom, type, adresse, intervalle, parent, options, identifiants, agent relais. |
 | `discover_network` | write | Scanne un réseau (CIDR, 4096 adresses au plus) pour des appareils SNMP et suggère un profil pour chacun. |
 | `restart_container` | write | Demande à l'agent d'une machine de redémarrer un de ses conteneurs. |
 | `test_channel` | write | Envoie un message de test via un canal de notification. |
@@ -196,7 +196,7 @@ ne font que regarder et vous demander avant de lancer les autres.
 Un jeton de lecture qui appelle un outil d'écriture obtient un refus
 clair comme résultat de l'outil (`isError: true`) ; l'assistant
 l'explique et rien ne change. C'est pareil pour tout ce que l'outil ne
-peut pas faire — un appareil inconnu, un nom ambigu, une fenêtre plus
+peut pas faire — une surveillance inconnue, un nom ambigu, une fenêtre plus
 longue qu'une semaine : le message dit quoi corriger.
 
 ## Détails du protocole {#protocol-details}
@@ -231,7 +231,7 @@ JSON-RPC :
 | | `-32700`, `-32600` | JSON illisible ; pas une requête JSON-RPC 2.0 (les lots ne sont pas supportés). |
 | `202` | — | Une notification : acceptée, pas de corps. |
 
-Un outil qui tourne mais échoue — portée manquante, appareil inconnu —
+Un outil qui tourne mais échoue — portée manquante, surveillance inconnue —
 n'est pas une erreur de protocole : il répond normalement avec
 `isError: true` et une phrase que l'assistant peut relayer.
 
@@ -239,7 +239,7 @@ n'est pas une erreur de protocole : il répond normalement avec
 
 - **Un jeton est un mot de passe.** Quiconque le détient lit tout ce que
   l'interface montre — et, avec un jeton d'écriture, change tout ce
-  qu'un administrateur peut via l'API REST (appareils, règles, canaux),
+  qu'un administrateur peut via l'API REST (surveillances, règles, canaux),
   comptes, jetons et sauvegardes exceptés. Gardez-le hors des chats
   partagés, captures d'écran et dépôts. Révoquez un jeton dont vous
   n'êtes pas sûr ; créez-en un autre en une minute.
@@ -260,10 +260,10 @@ n'est pas une erreur de protocole : il répond normalement avec
   compte n'est plus administrateur, et est révoqué quand ce compte est
   supprimé.
 - **Rien de secret ne revient.** Les outils ne renvoient jamais les
-  identifiants d'appareil (seulement leur type), les secrets de canal,
+  identifiants de surveillance (seulement leur type), les secrets de canal,
   les URL de battement de cœur ou les jetons. `add_device` prend bien
   des identifiants en entrée : ils voyagent dans la conversation de
-  votre assistant, et donc chez son fournisseur. Pour un appareil avec
+  votre assistant, et donc chez son fournisseur. Pour une surveillance avec
   des identifiants sensibles, préférez l'interface web.
 - **Navigateurs et `Origin`.** Une requête qui porte un en-tête
   `Origin` (un client basé navigateur) est refusée avec `403` sauf si

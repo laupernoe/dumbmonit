@@ -117,8 +117,8 @@ avvisi, silenziamenti) sono testati sul posto senza rete.
    `probe(&Target) -> Result<Vec<Sample>, ProbeError>` e, facoltativamente,
    `discover()` per il rilevamento dei profili. Restituisci le varianti di
    `ProbeError` in modo veritiero: `means_down()` decide se un errore conta come
-   "dispositivo non raggiungibile" (con avviso) o come errore di configurazione
-   (mostrato sul dispositivo, non notificato).
+   "monitor non raggiungibile" (con avviso) o come errore di configurazione
+   (mostrato sul monitor, non notificato).
 2. Leggi le tue opzioni da `Target::tags` in un `options.rs`, con valori predefiniti.
 3. Registralo in `crates/server/src/main.rs` con `registry.register(...)`.
    Lo scheduler e l'API non conoscono mai i tipi concreti.

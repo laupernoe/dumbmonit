@@ -43,7 +43,7 @@ Toutes les métriques sont préfixées `dumbmonit_gitlab_`.
 Les [règles intégrées](../alerting/rules.md#self-hosted-forges) qui
 s'appliquent : runners GitLab tous hors ligne, retard Sidekiq GitLab élevé,
 migrations GitLab en attente, licence GitLab arrivant à expiration, plus
-Appareil inaccessible. Un score de sécurité vérifie les réglages de double
+Surveillance inaccessible. Un score de sécurité vérifie les réglages de double
 authentification et d'inscription, et les migrations en attente : voir
 [Mises à jour fournisseur et autres contrôles](../using/security-score.md).
 
@@ -61,7 +61,7 @@ La santé des pipelines CI n'est lue que pour les projets que vous listez :
 l'API de GitLab n'a pas de point de terminaison « tous les pipelines en
 échec » à l'échelle de l'instance, seulement un par projet.
 
-## La page de l'appareil
+## La page de la surveillance
 
 Le panneau au-dessus des graphiques lit ce que la sonde a stocké ; ouvrir la
 page n'appelle jamais GitLab. Il dit d'abord ce qui ne va pas (un composant

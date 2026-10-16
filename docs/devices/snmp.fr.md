@@ -27,7 +27,7 @@ d'appareil se montre comme une remise à zéro de compteur, jamais comme un pic
 factice.
 
 Les [règles intégrées](../alerting/rules.md) qui s'appliquent aux appareils
-SNMP : Appareil inaccessible, CPU élevé, Disque presque plein, Système de
+SNMP : Surveillance inaccessible, CPU élevé, Disque presque plein, Système de
 fichiers presque plein (prévision), Onduleur sur batterie, Batterie
 d'onduleur faible, Port accumulant des erreurs, Port instable, CPU inhabituel
 (référence).

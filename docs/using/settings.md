@@ -1,21 +1,31 @@
 # Settings
 
-![Settings: account, users, single sign-on, agents, assistant, appearance, about](../assets/screenshots/settings-light.png){ loading=lazy }
+![Settings: seven tabs, here My account with appearance, account & security and push notifications](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Settings holds what is administrative: your account, who can sign in and
-how, the tokens that let agents and assistants in, backing the instance up,
-the theme, and the server's health. One page, one section per topic, with a rail of anchors on a
-wide screen and a strip of chips on a phone. Each section is linkable
-(`/settings#agents`).
+Settings holds what is administrative: your account, who can sign in and how, the tokens that let agents and assistants in, backing the instance up, the theme, and the server's health. It is split into seven tabs, each with its own address. A rail on a wide screen, a strip of chips on a phone and a search box over the section names help you find a section.
 
-Two sections hold the public and outgoing side of DumbMonit:
-
-| Looking for | Where | Link |
+| Tab | Address | What it holds |
 |---|---|---|
-| Notification channels, quiet hours, notification policy, reports | **Settings → Notifications & reports** ([Notification channels](../notifications.md)) | `/settings/notifications` |
-| Status pages and announcements | **Settings → Status pages** ([Status pages](status-pages.md)) | `/settings/status` |
+| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications |
+| Team & access | `/settings/team` | Users, Single sign-on |
+| Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
+| Notifications & reports | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)), Reports |
+| Status pages | `/settings/status` | Status pages and announcements ([Status pages](status-pages.md)) |
+| Wall display | `/settings/wall` | Wall mode, Wall music, Wall news ([Wall mode](overview.md#wall-mode)) |
+| System | `/settings/system` | Backup, DumbMonit itself, API & assistants, About |
 
-The old links (`/alerts#notifications`, `/status`) forward to the new place.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`, `/status`) forward to the new place too.
+
+## Appearance
+
+Three tiles, each previewing its own theme: **System** (follows your device and
+switches with it), **Day** (the "chart paper" theme) and **Night** (the
+"radar" theme). The choice is stored in the browser. The header's toggle and
+the command palette's *Toggle theme* switch between day and night.
+
+**Open wall mode** sits at the bottom of the section: the bulletin alone, full
+screen, for a monitor in the room. ++esc++ leaves it, and the command palette
+opens it from anywhere — see [Wall mode](overview.md#wall-mode).
 
 ## Account & security
 
@@ -74,7 +84,7 @@ push service domains the server must reach. Full guide:
 
 Admins only. The accounts that can sign in, and their role:
 
-| Role | Reads everything | Handles alerts (ack, snooze, ignore, maintenance windows, clear history) | Changes configuration (devices, rules, channels, status pages, settings, backups, tokens, accounts) |
+| Role | Reads everything | Handles alerts (ack, snooze, ignore, maintenance windows, clear history) | Changes configuration (monitors, rules, channels, status pages, settings, backups, tokens, accounts) |
 |---|---|---|---|
 | **Viewer** | yes | no | no |
 | **Operator** | yes | yes | no |
@@ -82,7 +92,7 @@ Admins only. The accounts that can sign in, and their role:
 
 A viewer sees every page with every control that would change something
 hidden. A few things stay admin only even to read: API and agent tokens,
-status page subscriber emails, and device options that look like secrets
+status page subscriber emails, and monitor options that look like secrets
 (an option whose name contains `key`, `token`, `password`…, the extra headers
 of an HTTP check, the password of a `https://user:pass@host` address), which
 non-admins read as `***`. An operator is the on-call role: the alert controls are there, the
@@ -169,34 +179,25 @@ listed below the commands, to compare by hand. The list shows each token's prefi
 and whether it was revoked. **Revoke** stops every agent using that token at
 its next push.
 
-One token can enrol several machines. Revoking it does not delete the devices.
+One token can enrol several machines. Revoking it does not delete the monitors.
 The token list, creating and revoking are for admins; viewers and operators
 see the section without the list.
 
-## API & assistants
+## Security score {#security-score}
 
-One kind of token for both: MCP clients and the
-[REST API](../reference/api.md). Name a token, pick its scope and create it —
-it is shown once. A **read** token can only look; a **read and write** token
-can also change things — silence a device, run a probe, add or edit devices,
-rules and channels — but never accounts, sign-in settings or other tokens.
+In **Settings → Monitoring**, below the agents: a score for how well the instance and its monitored hosts are hardened. See [Security score](security-score.md).
 
-Under **Connect**, three tabs hold the snippets, filled with the token while
-it is still on screen: *Claude* (the `claude mcp add` command and the
-`claude_desktop_config.json` block), *ChatGPT* (the MCP server URL and the
-authorization header, with a warning when this page is not served over HTTPS —
-ChatGPT connects from OpenAI's servers, so the address must be reachable from
-the internet) and *Cursor / other*, the same shape for any client that speaks
-Streamable HTTP with a bearer header. **API access** shows the same token on
-the REST API as a `curl` example, and points at the routes a Prometheus or a
-Grafana scrapes with it. See [Connect an assistant](assistant.md) and
-[Scraping DumbMonit](../reference/metrics.md#scraping-dumbmonit).
+## Reports
+
+In **Settings → Notifications & reports**, below the policy: periodic availability emails for the team. Pick weekly, daily or monthly, the
+day, hour and timezone, the recipients and the email channel, then **Send a
+preview** to see the result. Admin-only. See [Email reports](reports.md).
 
 ## Backup
 
 Three things, in the order you meet them.
 
-A **warning you cannot miss**: `/data/secret.key` is what decrypts device
+A **warning you cannot miss**: `/data/secret.key` is what decrypts monitor
 credentials, and a copy of the database without it restores an instance that
 cannot talk to anything. The wording changes when the secret comes from
 `DUMBMONIT_SECRET` instead — there is then no file to copy, and it is your
@@ -234,26 +235,28 @@ failure URL instead of staying silent. The URL is stored encrypted and never
 shown again, only its host. Changing it is admin-only. See
 [Watching DumbMonit itself](../install/self-monitoring.md).
 
-## Reports
+## API & assistants
 
-In **Settings → Notifications & reports**, below the policy: periodic availability emails for the team. Pick weekly, daily or monthly, the
-day, hour and timezone, the recipients and the email channel, then **Send a
-preview** to see the result. Admin-only. See [Email reports](reports.md).
+One kind of token for both: MCP clients and the
+[REST API](../reference/api.md). Name a token, pick its scope and create it —
+it is shown once. A **read** token can only look; a **read and write** token
+can also change things — silence a monitor, run a probe, add or edit monitors,
+rules and channels — but never accounts, sign-in settings or other tokens.
 
-## Appearance
-
-Three tiles, each previewing its own theme: **System** (follows your device and
-switches with it), **Day** (the "chart paper" theme) and **Night** (the
-"radar" theme). The choice is stored in the browser. The header's toggle and
-the command palette's *Toggle theme* switch between day and night.
-
-**Open wall mode** sits at the bottom of the section: the bulletin alone, full
-screen, for a monitor in the room. ++esc++ leaves it, and the command palette
-opens it from anywhere — see [Wall mode](overview.md#wall-mode).
+Under **Connect**, three tabs hold the snippets, filled with the token while
+it is still on screen: *Claude* (the `claude mcp add` command and the
+`claude_desktop_config.json` block), *ChatGPT* (the MCP server URL and the
+authorization header, with a warning when this page is not served over HTTPS —
+ChatGPT connects from OpenAI's servers, so the address must be reachable from
+the internet) and *Cursor / other*, the same shape for any client that speaks
+Streamable HTTP with a bearer header. **API access** shows the same token on
+the REST API as a `curl` example, and points at the routes a Prometheus or a
+Grafana scrapes with it. See [Connect an assistant](assistant.md) and
+[Scraping DumbMonit](../reference/metrics.md#scraping-dumbmonit).
 
 ## About
 
-Version of the server and the health of its two stores, the database (device
+Version of the server and the health of its two stores, the database (monitor
 setup and alert history) and VictoriaMetrics (every measurement in the
 charts), as reported by `GET /api/health` and refreshed every 15 seconds. A
 store that stops answering shows a warning with the error and what to check.

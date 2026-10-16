@@ -57,9 +57,9 @@ All metrics are prefixed `dumbmonit_vsphere_`. Health values follow vSphere's
 The [built-in rules](../alerting/rules.md#vmware-vsphere) that apply: vSphere
 host not responding, vSphere host health red, vSphere host left in
 maintenance, vSphere datastore almost full, vSphere datastore inaccessible,
-vSphere VM tools not running, vSphere red alarm, plus Device unreachable.
+vSphere VM tools not running, vSphere red alarm, plus Monitor unreachable.
 
-## The device page
+## The monitor page
 
 The panel above the charts reads what the probe stored; opening the page never
 queries vSphere. It says what is wrong first (hosts not responding, red

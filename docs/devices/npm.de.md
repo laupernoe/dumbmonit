@@ -36,10 +36,10 @@ Alarm, falls vorhanden, löst sich auf. Hosts werden bis zu 500 einzeln beschrie
 Prüfung werden höchstens 100 Zertifikate gelesen.
 
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#reverse-proxies-and-domains):
-Nginx-Proxy-Manager-Host offline, Proxy-Zertifikat nicht erneuert, außerdem Gerät nicht
+Nginx-Proxy-Manager-Host offline, Proxy-Zertifikat nicht erneuert, außerdem Monitor nicht
 erreichbar.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
 fragt Nginx Proxy Manager nie ab. Es nennt in einem Satz, was nicht stimmt (von nginx

@@ -1,21 +1,31 @@
 # Einstellungen {#settings}
 
-![Einstellungen: Konto, Benutzer, Single Sign-On, Agenten, Assistent, Darstellung, Info](../assets/screenshots/settings-light.png){ loading=lazy }
+![Einstellungen: sieben Tabs, hier Mein Konto mit Darstellung, Konto und Sicherheit und Push-Benachrichtigungen](../assets/screenshots/settings-light.png){ loading=lazy }
 
-Die Einstellungen enthalten das Administrative: Ihr Konto, wer sich wie anmelden kann, die
-Tokens, die Agenten und Assistenten hereinlassen, die Sicherung der Instanz, das Theme und den
-Zustand des Servers. Eine Seite, ein Abschnitt pro Thema, mit einer Leiste von Ankern auf einem
-breiten Bildschirm und einem Streifen von Chips auf einem Smartphone. Jeder Abschnitt ist
-verlinkbar (`/settings#agents`).
+Die Einstellungen enthalten das Administrative: Ihr Konto, wer sich wie anmelden kann, die Tokens, die Agenten und Assistenten hereinlassen, die Sicherung der Instanz, das Theme und den Zustand des Servers. Sie sind in sieben Tabs gegliedert, jeder mit eigener Adresse. Eine Leiste auf breitem Bildschirm, ein Streifen von Chips auf dem Smartphone und ein Suchfeld über die Abschnittsnamen helfen beim Finden eines Abschnitts.
 
-Zwei Abschnitte tragen die öffentliche und ausgehende Seite von DumbMonit:
-
-| Gesucht | Wo | Link |
+| Tab | Adresse | Inhalt |
 |---|---|---|
-| Benachrichtigungskanäle, Ruhezeiten, Benachrichtigungsrichtlinie, Berichte | **Einstellungen → Benachrichtigungen & Berichte** ([Benachrichtigungskanäle](../notifications.md)) | `/settings/notifications` |
-| Statusseiten und Ankündigungen | **Einstellungen → Statusseiten** ([Statusseiten](status-pages.md)) | `/settings/status` |
+| Mein Konto | `/settings/account` | Darstellung, Konto und Sicherheit (Passwort, Zwei-Faktor, Sicherheitsprotokoll), Push-Benachrichtigungen |
+| Team & Zugang | `/settings/team` | Benutzer, Single Sign-on |
+| Überwachung | `/settings/monitoring` | Agenten, Integrationspakete, [Sicherheitsbewertung](security-score.md) |
+| Benachrichtigungen & Berichte | `/settings/notifications` | Kanäle, Benachrichtigungsrichtlinie, Ruhezeiten ([Benachrichtigungskanäle](../notifications.md)), Berichte |
+| Statusseiten | `/settings/status` | Statusseiten und Ankündigungen ([Statusseiten](status-pages.md)) |
+| Wandanzeige | `/settings/wall` | Wandmodus, Wandmusik, Wandnachrichten ([Wandmodus](overview.md#wall-mode)) |
+| System | `/settings/system` | Sicherung, DumbMonit selbst, API und Assistenten, Info |
 
-Die alten Links (`/alerts#notifications`, `/status`) leiten an die neue Stelle weiter.
+Jeder Abschnitt behält seinen Anker: `/settings#agents` leitet an `/settings/monitoring#agents` weiter. Die alten Links (`/alerts#notifications`, `/status`) leiten ebenfalls an die neue Stelle weiter.
+
+## Darstellung {#appearance}
+
+Drei Kacheln, jede mit Vorschau ihres eigenen Themes: **System** (folgt Ihrem Gerät und wechselt
+mit ihm), **Tag** (das Theme „Diagrammpapier“) und **Nacht** (das Theme „Radar“). Die Wahl wird im
+Browser gespeichert. Der Umschalter im Header und *Theme wechseln* der Befehlspalette schalten
+zwischen Tag und Nacht um.
+
+**Wandmodus öffnen** steht am Ende des Abschnitts: der Bericht allein, im Vollbild, für einen
+Monitor im Raum. ++esc++ verlässt ihn, und die Befehlspalette öffnet ihn von überall — siehe
+[Wandmodus](overview.md#wall-mode).
 
 ## Konto & Sicherheit {#account-security}
 
@@ -72,7 +82,7 @@ Push-Dienste, die der Server erreichen muss. Vollständige Anleitung:
 
 Nur Admins. Die Konten, die sich anmelden können, und ihre Rolle:
 
-| Rolle | Liest alles | Bearbeitet Alarme (bestätigen, zurückstellen, ignorieren, Wartungsfenster, Verlauf löschen) | Ändert die Konfiguration (Geräte, Regeln, Kanäle, Statusseiten, Einstellungen, Sicherungen, Tokens, Konten) |
+| Rolle | Liest alles | Bearbeitet Alarme (bestätigen, zurückstellen, ignorieren, Wartungsfenster, Verlauf löschen) | Ändert die Konfiguration (Monitore, Regeln, Kanäle, Statusseiten, Einstellungen, Sicherungen, Tokens, Konten) |
 |---|---|---|---|
 | **Betrachter** | ja | nein | nein |
 | **Operator** | ja | ja | nein |
@@ -80,7 +90,7 @@ Nur Admins. Die Konten, die sich anmelden können, und ihre Rolle:
 
 Ein Betrachter sieht jede Seite, wobei jedes Bedienelement, das etwas ändern würde, verborgen ist.
 Einiges bleibt selbst zum Lesen Admins vorbehalten: API- und Agent-Tokens, E-Mail-Adressen der
-Abonnenten von Statusseiten und Geräteoptionen, die wie Geheimnisse aussehen (eine Option, deren
+Abonnenten von Statusseiten und Monitoroptionen, die wie Geheimnisse aussehen (eine Option, deren
 Name `key`, `token`, `password` … enthält, die zusätzlichen Header einer HTTP-Prüfung, das
 Passwort einer Adresse `https://user:pass@host`), die Nicht-Admins als `***` lesen. Ein Operator
 ist die Bereitschaftsrolle: Die Alarmsteuerung ist da, die Konfigurationsbildschirme lesen
@@ -164,34 +174,26 @@ Befehlen. Die Liste zeigt für jedes Token sein Präfix, Erstellungsdatum, letzt
 es widerrufen wurde. **Widerrufen** stoppt jeden Agenten, der dieses Token verwendet, bei seinem
 nächsten Push.
 
-Ein Token kann mehrere Rechner anmelden. Das Widerrufen löscht die Geräte nicht. Die Tokenliste,
+Ein Token kann mehrere Rechner anmelden. Das Widerrufen löscht die Monitore nicht. Die Tokenliste,
 Erstellen und Widerrufen sind Admins vorbehalten; Betrachter und Operatoren sehen den Abschnitt
 ohne die Liste.
 
-## API & Assistenten {#api-assistants}
+## Sicherheitsbewertung {#security-score}
 
-Eine Art Token für beides: MCP-Clients und die [REST-API](../reference/api.md). Benennen Sie ein
-Token, wählen Sie seinen Umfang und erstellen Sie es — es wird einmalig angezeigt. Ein
-**Lese**-Token kann nur ansehen; ein **Lese- und Schreib**-Token kann auch etwas ändern — ein
-Gerät stummschalten, eine Prüfung ausführen, Geräte, Regeln und Kanäle hinzufügen oder bearbeiten
-—, aber nie Konten, Anmeldeeinstellungen oder andere Tokens.
+In **Einstellungen → Überwachung**, unter den Agenten: eine Bewertung, wie gut die Instanz und die überwachten Hosts abgesichert sind. Siehe [Sicherheitsbewertung](security-score.md).
 
-Unter **Verbinden** enthalten drei Tabs die Snippets, mit dem Token befüllt, solange es noch auf
-dem Bildschirm steht: *Claude* (der Befehl `claude mcp add` und der Block für
-`claude_desktop_config.json`), *ChatGPT* (die URL des MCP-Servers und der Authorization-Header,
-mit einer Warnung, wenn diese Seite nicht über HTTPS ausgeliefert wird — ChatGPT verbindet sich
-von den Servern von OpenAI aus, daher muss die Adresse aus dem Internet erreichbar sein) und
-*Cursor / andere*, dieselbe Form für jeden Client, der Streamable HTTP mit Bearer-Header spricht.
-**API-Zugriff** zeigt dasselbe Token an der REST-API als `curl`-Beispiel und verweist auf die
-Routen, die ein Prometheus oder Grafana damit abfragt. Siehe [Einen Assistenten
-verbinden](assistant.md) und [DumbMonit abfragen](../reference/metrics.md#scraping-dumbmonit).
+## Berichte {#reports}
+
+Unter **Einstellungen → Benachrichtigungen & Berichte**, unterhalb der Richtlinie: periodische Verfügbarkeits-E-Mails für das Team. Wählen Sie wöchentlich, täglich oder monatlich,
+den Tag, die Uhrzeit und die Zeitzone, die Empfänger und den E-Mail-Kanal, dann **Vorschau
+senden**, um das Ergebnis zu sehen. Nur Admins. Siehe [E-Mail-Berichte](reports.md).
 
 ## Sicherung {#backup}
 
 Drei Dinge, in der Reihenfolge, in der Sie ihnen begegnen.
 
 Eine **Warnung, die Sie nicht übersehen können**: `/data/secret.key` entschlüsselt die
-Gerätezugangsdaten, und eine Kopie der Datenbank ohne sie stellt eine Instanz wieder her, die mit
+Monitor-Zugangsdaten, und eine Kopie der Datenbank ohne sie stellt eine Instanz wieder her, die mit
 nichts sprechen kann. Der Wortlaut ändert sich, wenn das Geheimnis stattdessen aus
 `DUMBMONIT_SECRET` kommt — dann gibt es keine Datei zu kopieren, und Ihr Passwortmanager muss es
 halten.
@@ -228,26 +230,27 @@ Fehler-URL auf, statt zu schweigen. Die URL wird verschlüsselt gespeichert und
 nie wieder angezeigt, nur ihr Host. Ändern dürfen nur Administratoren. Siehe
 [Watching DumbMonit itself](../install/self-monitoring.md).
 
-## Berichte {#reports}
+## API & Assistenten {#api-assistants}
 
-Unter **Einstellungen → Benachrichtigungen & Berichte**, unterhalb der Richtlinie: periodische Verfügbarkeits-E-Mails für das Team. Wählen Sie wöchentlich, täglich oder monatlich,
-den Tag, die Uhrzeit und die Zeitzone, die Empfänger und den E-Mail-Kanal, dann **Vorschau
-senden**, um das Ergebnis zu sehen. Nur Admins. Siehe [E-Mail-Berichte](reports.md).
+Eine Art Token für beides: MCP-Clients und die [REST-API](../reference/api.md). Benennen Sie ein
+Token, wählen Sie seinen Umfang und erstellen Sie es — es wird einmalig angezeigt. Ein
+**Lese**-Token kann nur ansehen; ein **Lese- und Schreib**-Token kann auch etwas ändern — einen
+Monitor stummschalten, eine Prüfung ausführen, Monitore, Regeln und Kanäle hinzufügen oder bearbeiten
+—, aber nie Konten, Anmeldeeinstellungen oder andere Tokens.
 
-## Darstellung {#appearance}
-
-Drei Kacheln, jede mit Vorschau ihres eigenen Themes: **System** (folgt Ihrem Gerät und wechselt
-mit ihm), **Tag** (das Theme „Diagrammpapier“) und **Nacht** (das Theme „Radar“). Die Wahl wird im
-Browser gespeichert. Der Umschalter im Header und *Theme wechseln* der Befehlspalette schalten
-zwischen Tag und Nacht um.
-
-**Wandmodus öffnen** steht am Ende des Abschnitts: der Bericht allein, im Vollbild, für einen
-Monitor im Raum. ++esc++ verlässt ihn, und die Befehlspalette öffnet ihn von überall — siehe
-[Wandmodus](overview.md#wall-mode).
+Unter **Verbinden** enthalten drei Tabs die Snippets, mit dem Token befüllt, solange es noch auf
+dem Bildschirm steht: *Claude* (der Befehl `claude mcp add` und der Block für
+`claude_desktop_config.json`), *ChatGPT* (die URL des MCP-Servers und der Authorization-Header,
+mit einer Warnung, wenn diese Seite nicht über HTTPS ausgeliefert wird — ChatGPT verbindet sich
+von den Servern von OpenAI aus, daher muss die Adresse aus dem Internet erreichbar sein) und
+*Cursor / andere*, dieselbe Form für jeden Client, der Streamable HTTP mit Bearer-Header spricht.
+**API-Zugriff** zeigt dasselbe Token an der REST-API als `curl`-Beispiel und verweist auf die
+Routen, die ein Prometheus oder Grafana damit abfragt. Siehe [Einen Assistenten
+verbinden](assistant.md) und [DumbMonit abfragen](../reference/metrics.md#scraping-dumbmonit).
 
 ## Info {#about}
 
-Version des Servers und Zustand seiner beiden Speicher, der Datenbank (Geräteeinrichtung und
+Version des Servers und Zustand seiner beiden Speicher, der Datenbank (Monitoreinrichtung und
 Alarmverlauf) und VictoriaMetrics (jede Messung in den Diagrammen), wie von `GET /api/health`
 gemeldet und alle 15 Sekunden aktualisiert. Ein Speicher, der nicht mehr antwortet, zeigt eine
 Warnung mit dem Fehler und dem, was zu prüfen ist. Der Abschnitt verlinkt außerdem diese

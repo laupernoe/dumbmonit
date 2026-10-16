@@ -1,15 +1,15 @@
 # Pontuação de segurança
 
 A pontuação de segurança é uma classificação **opcional** de **A** a **F** (e
-uma pontuação de 0 a 100) mostrada junto dos dispositivos em que algumas
+uma pontuação de 0 a 100) mostrada junto dos monitores em que algumas
 verificações dizem algo útil: hosts Linux e Windows com o agente, Proxmox VE e
 Proxmox Backup Server, Synology, OPNsense, sites web e Active Directory. Os
-outros dispositivos não mostram nada.
+outros monitores não mostram nada.
 
 !!! warning "Indicativa, não é uma auditoria"
     A pontuação é **aproximada e não exaustiva**. Lê apenas o que o DumbMonit
-    já recolhe de um dispositivo e compara-o com um punhado de boas práticas do
-    fabricante. Uma classificação A não significa que um dispositivo seja
+    já recolhe de um monitor e compara-o com um punhado de boas práticas do
+    fabricante. Uma classificação A não significa que um monitor seja
     seguro, e uma verificação em falta não significa que a definição esteja
     correta. Use-a como um convite a olhar com atenção e, quando for
     importante, use uma verdadeira ferramenta de avaliação (PingCastle, Mozilla
@@ -20,27 +20,27 @@ outros dispositivos não mostram nada.
 A pontuação está **desativada por predefinição**. Um administrador ativa-a em
 **Definições → Conta e segurança → Pontuação de segurança**. Depois de ativada:
 
-- cada dispositivo pontuado recebe um pequeno **distintivo em forma de escudo**
-  com a sua letra na lista de dispositivos, e um distintivo **Security** com a
+- cada monitor pontuado recebe um pequeno **distintivo em forma de escudo**
+  com a sua letra na lista de monitores, e um distintivo **Security** com a
   pontuação na sua página;
-- clicar no distintivo abre o **relatório** do dispositivo: o que falha, com a
+- clicar no distintivo abre o **relatório** do monitor: o que falha, com a
   evidência e a correção, o que passa, os passos para melhorar a pontuação
-  neste tipo de dispositivo e uma ligação para a secção correspondente abaixo.
+  neste tipo de monitor e uma ligação para a secção correspondente abaixo.
 
 Desativá-la oculta os distintivos, pára o cálculo periódico e as séries
 `dumbmonit_security_score` deixam de ser escritas.
 
 !!! note "Atualização a partir da 0.1.0-alpha.8 ou anterior"
     A pontuação estava antes sempre ativa, com a sua própria página
-    **Security**. Uma instalação que já monitorizava um dispositivo pontuável
+    **Security**. Uma instalação que já monitorizava um monitor pontuável
     mantém a pontuação ativada após a atualização; uma instalação nova começa
     com ela desativada. O antigo endereço `/security` abre agora a definição.
 
 ## Como a pontuação é calculada
 
-O DumbMonit nunca pede nada extra ao dispositivo para calcular a pontuação. As
+O DumbMonit nunca pede nada extra ao monitor para calcular a pontuação. As
 verificações leem os últimos valores que os coletores já registaram (olhando 6
-horas para trás), pelo que uma pontuação não custa nada ao dispositivo.
+horas para trás), pelo que uma pontuação não custa nada ao monitor.
 
 Cada verificação tem uma categoria (exposição, correções, autenticação,
 cifragem, cópia de segurança, configuração), uma **severidade** que é o seu
@@ -51,7 +51,7 @@ correção e uma ligação para a página do fabricante em que se baseia.
 **Pontuação** = 100 × (peso das verificações que passam) ÷ (peso das que
 passam + falham). **As verificações desconhecidas são mostradas mas nunca
 contadas**: uma pontuação não deve baixar porque a uma conta de monitorização
-falta um privilégio, nem subir porque nada se sabe. Um dispositivo cujas
+falta um privilégio, nem subir porque nada se sabe. Um monitor cujas
 verificações são todas desconhecidas *não é pontuado*.
 
 | Classificação | Pontuação | Palavra |
@@ -248,7 +248,7 @@ Fontes: [OPNsense updates](https://docs.opnsense.org/manual/updates.html),
 ### Sites web { #websites }
 
 Para os monitores **HTTP(S)** e **TLS** que negociam TLS, e para os
-dispositivos **Website health & SEO**. Um monitor HTTP simples não tem
+monitores **Website health & SEO**. Um monitor HTTP simples não tem
 pontuação.
 
 | Verificação | Severidade | Dado |

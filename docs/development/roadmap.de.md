@@ -13,7 +13,7 @@ können sich ändern; das Board ist ein lebendiger Plan, kein Versprechen.
 - **Sicherheitskorrekturen** werden in den Release-Notes und als GitHub-Security-Advisories
   mit ihrer CVE- oder GHSA-Kennung angekündigt.
 
-DumbMonit befindet sich in der Alpha-Phase: Rechnen Sie damit, dass sich API und Datenmodell
+DumbMonit befindet sich vor 1.0: Rechnen Sie damit, dass sich API und Datenmodell
 weiterentwickeln, bis eine stabile Linie angekündigt wird. Zum Mitmachen siehe den
 [Contributing-Leitfaden](https://github.com/laupernoe/dumbmonit/blob/main/CONTRIBUTING.md) und
 die [Governance](https://github.com/laupernoe/dumbmonit/blob/main/GOVERNANCE.md).

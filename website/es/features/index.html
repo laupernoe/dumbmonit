@@ -53,7 +53,7 @@
 		<a class="brand" href="../" aria-label="Inicio de DumbMonit"><img src="../../favicon.svg" alt="" width="30" height="30">DumbMonit</a>
 		<nav class="nav" id="site-nav" aria-label="Secciones">
 			<a href="./" aria-current="page">Funciones</a>
-			<a href="../devices/">Dispositivos</a>
+			<a href="../devices/">Monitores</a>
 			<a href="../install/">Instalar</a>
 			<a href="../community/">Docs y comunidad</a>
 			<a class="nav-extra" href="https://demo.dumbmonit.app">Demo en vivo</a>
@@ -84,7 +84,7 @@
 <section class="page-head">
 	<div class="wrap">
 		<h1 class="blur-in"><span class="w" style="--i:0">Todo</span> <span class="w" style="--i:1">lo</span> <span class="w" style="--i:2">que</span> <span class="w" style="--i:3">hace</span></h1>
-		<p class="lede">Alertas, páginas de estado, agentes y más, en un solo contenedor. Lo que informa cada tipo de dispositivo está en las páginas de Dispositivos.</p>
+		<p class="lede">Alertas, páginas de estado, agentes y más, en un solo contenedor. Lo que informa cada tipo de monitor está en las páginas de Monitores.</p>
 		<ul class="toc" aria-label="En esta página">
 			<li><a href="#alerting">Alertas sin ruido</a></li>
 			<li><a href="#notifications"><span class="num" data-n="23">23</span> canales de notificación</a></li>
@@ -110,7 +110,7 @@
 				</div>
 				<ul class="points">
 					<li><strong>Dependencias</strong><p>Declara un switch como padre de lo que cuelga de él. Cuando cae recibes una sola notificación, no treinta; las demás aparecen como «Suprimida por el padre».</p></li>
-					<li><strong>Agrupadas por host</strong><p>Un NAS cuya matriz se degrada envía un mensaje por ciclo, no uno por disco. Recordatorios, escalado, reconocimiento, posponer, ignorar por dispositivo y borrado del historial resuelto vienen incluidos.</p></li>
+					<li><strong>Agrupadas por host</strong><p>Un NAS cuya matriz se degrada envía un mensaje por ciclo, no uno por disco. Recordatorios, escalado, reconocimiento, posponer, ignorar por monitor y borrado del historial resuelto vienen incluidos.</p></li>
 					<li><strong>Líneas base que primero aprenden</strong><p>Detección de anomalías sin umbral que ajustar: 168 intervalos, uno por cada hora de la semana. Permanece en silencio durante sus primeros 14 días y solo muestra lo que habría disparado.</p></li>
 					<li><strong>Previsiones</strong><p>«Este sistema de archivos se llenará en cuatro días» aparece como previsión, aparte de lo que está roto ahora mismo.</p></li>
 					<li><strong>Mantenimiento y una política de notificaciones</strong><p>Ventanas puntuales o semanales, histéresis, retención de flapping, horas de silencio, agrupación y un tope por hora, para que una mala noche no se convierta en doscientas notificaciones.</p></li>
@@ -127,7 +127,7 @@
 <source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.avif" width="780" height="1688">
 <source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/alerts-phone-light.webp" width="780" height="1688">
 <source type="image/avif" srcset="../../assets/shots/alerts-light-1x.avif 1440w, ../../assets/shots/alerts-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
-<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Página de alertas: alertas en curso agrupadas por dispositivo, cada una con una placa Inaccesible, Aviso grave, Aviso o En formación, Confirmar y Abrir monitor" width="2880" height="1800" loading="lazy" decoding="async">
+<img src="../../assets/shots/alerts-light-1x.webp" srcset="../../assets/shots/alerts-light-1x.webp 1440w, ../../assets/shots/alerts-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Página de alertas: alertas en curso agrupadas por monitor, cada una con una placa Inaccesible, Aviso grave, Aviso o En formación, Confirmar y Abrir monitor" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 				</div>
 				<figcaption>Alertas agrupadas por host. Las severidades se leen como un servicio meteorológico: info, aviso, advertencia.</figcaption>
@@ -207,7 +207,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Páginas de estado para quienes dependen de tus servicios</h2>
 				<p>Páginas públicas en <code>/s/&lt;name&gt;</code>: grupos de servicios con 90 días de historial diario, disponibilidad a 30 y 90 días, anuncios de incidentes y mantenimiento, suscriptores por correo con doble confirmación, RSS, badges para un README, una vista compacta para incrustar en una intranet, un calendario de 90 días y gráficos de tiempo de respuesta opcionales, y una escena opcional tras el banner: unas cincuenta para elegir, desde skylines de ciudades (Venecia, París, Tokio, Nueva York&hellip;) y maravillas del mundo hasta símbolos suizos (el Cervino, el Jet d&rsquo;Eau, Lucerna, Berna, Chillon). El cielo sigue el estado de tus servicios y cada escena reacciona a su manera cuando algo cae o se recupera. Las suizas llevan un reloj de estación al estilo SBB, un panel de alertas de láminas, fuegos artificiales el 1 de agosto, el caldero de la Escalade y nieve en invierno.</p>
-				<p>Solo salen del servidor las etiquetas que tú eliges. Los nombres, direcciones y tipos de los dispositivos nunca aparecen en la página, en un badge ni en un correo.</p>
+				<p>Solo salen del servidor las etiquetas que tú eliges. Los nombres, direcciones y tipos de los monitores nunca aparecen en la página, en un badge ni en un correo.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/es/latest/using/status-pages/">Páginas de estado en la documentación</a></p>
 			</div>
 			<div>
@@ -250,7 +250,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 <source type="image/avif" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.avif" width="780" height="1688">
 <source type="image/webp" media="(max-width: 599px)" srcset="../../assets/shots/wall-phone-light.webp" width="780" height="1688">
 <source type="image/avif" srcset="../../assets/shots/wall-light-1x.avif 1440w, ../../assets/shots/wall-light.avif 2880w" sizes="(min-width: 980px) 640px, 100vw" width="2880" height="1800">
-<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Modo pared: «4 problemas» en grande, la lista de alertas, los dispositivos que responden, un reloj y un tejado de París bajo la lluvia con las palomas" width="2880" height="1800" loading="lazy" decoding="async">
+<img src="../../assets/shots/wall-light-1x.webp" srcset="../../assets/shots/wall-light-1x.webp 1440w, ../../assets/shots/wall-light.webp 2880w" sizes="(min-width: 980px) 640px, 100vw" alt="Modo pared: «4 problemas» en grande, la lista de alertas, los monitores que responden, un reloj y un tejado de París bajo la lluvia con las palomas" width="2880" height="1800" loading="lazy" decoding="async">
 </picture>
 			</div>
 			<figcaption>El modo pared en una pantalla de sala: el tiempo sobre el tejado de París sigue tus alertas.</figcaption>
@@ -263,7 +263,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Informes por correo</h2>
-				<p>Un breve correo semanal (o diario, o mensual) con la disponibilidad por grupo, los incidentes del periodo y los dispositivos menos estables, enviado sin que nadie abra DumbMonit.</p>
+				<p>Un breve correo semanal (o diario, o mensual) con la disponibilidad por grupo, los incidentes del periodo y los monitores menos estables, enviado sin que nadie abra DumbMonit.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/es/latest/using/reports/">Más en la documentación</a></p>
 			</div>
 			<div class="section-head" id="topology" style="margin-bottom:0">
@@ -280,7 +280,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<div class="split">
 			<div class="section-head" style="margin-bottom:0">
 				<h2>Puntuación de seguridad</h2>
-				<p>Cada dispositivo compatible recibe una puntuación de 0 a 100 y una nota de la A a la F a partir de las comprobaciones de buenas prácticas del propio fabricante, al estilo PingCastle: categoría, severidad, evidencia, remediación y una página de Seguridad ordenada de peor a mejor.</p>
+				<p>Cada monitor compatible recibe una puntuación de 0 a 100 y una nota de la A a la F a partir de las comprobaciones de buenas prácticas del propio fabricante, al estilo PingCastle: categoría, severidad, evidencia, remediación y una página de Seguridad ordenada de peor a mejor.</p>
 				<p>La puntuación es una guía, no una auditoría: solo lee lo que DumbMonit ya recopila, así que nunca sustituye una revisión de seguridad.</p>
 				<p><a href="https://dumbmonit.readthedocs.io/es/latest/using/security-score/">Más en la documentación</a></p>
 			</div>
@@ -299,7 +299,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		</div>
 		<ul class="points" style="max-width:48em">
 			<li><strong>API abierta y documentada</strong><p>Todas las rutas tras <code>/api/openapi.json</code> (OpenAPI 3.1): tokens con ámbito (<code>dmt_…</code>, de lectura o escritura) que pueden caducar, limitarse a una red y tienen límite de peticiones. <a href="https://dumbmonit.readthedocs.io/es/latest/reference/api/">Referencia de la API</a></p></li>
-			<li><strong>Un asistente por MCP</strong><p>27 herramientas para ChatGPT, VS Code o Cursor: leer estado, dispositivos, alertas, métricas y agentes; con un token de escritura también puede silenciar, reconocer, añadir un dispositivo o reiniciar un contenedor. Los secretos nunca salen. <a href="https://dumbmonit.readthedocs.io/es/latest/using/assistant/">Conectar un asistente</a></p></li>
+			<li><strong>Un asistente por MCP</strong><p>27 herramientas para ChatGPT, VS Code o Cursor: leer estado, monitores, alertas, métricas y agentes; con un token de escritura también puede silenciar, reconocer, añadir un monitor o reiniciar un contenedor. Los secretos nunca salen. <a href="https://dumbmonit.readthedocs.io/es/latest/using/assistant/">Conectar un asistente</a></p></li>
 		</ul>
 	</div>
 </section>
@@ -312,7 +312,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p>Inglés, francés, alemán, español, italiano, portugués (Portugal y Brasil), ruso y chino simplificado: la interfaz, este sitio y la documentación. Algunas traducciones aún son parciales.</p>
 			</div>
 			<div class="cta">
-				<a class="btn btn-primary" href="../devices/">Dispositivos</a>
+				<a class="btn btn-primary" href="../devices/">Monitores</a>
 				<a class="btn btn-secondary" href="../install/">Instalar</a>
 			</div>
 		</div>
@@ -326,7 +326,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 		<p>DumbMonit, Apache 2.0. La mascota es una paloma.</p>
 		<nav aria-label="Pie de página">
 			<a href="./">Funciones</a>
-			<a href="../devices/">Dispositivos</a>
+			<a href="../devices/">Monitores</a>
 			<a href="../install/">Instalar</a>
 			<a href="../community/">Docs y comunidad</a>
 			<a href="https://demo.dumbmonit.app">Demo en vivo</a>

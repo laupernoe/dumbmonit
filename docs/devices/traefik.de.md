@@ -53,9 +53,9 @@ aufgelisteter und deaktivierter Router tut das.
 Die zutreffenden [integrierten Regeln](../alerting/rules.md#reverse-proxies-and-domains):
 Traefik-Router deaktiviert, Traefik-Backend-Server ausgefallen, Traefik-Service ohne Server,
 Traefik-Zertifikat nicht erhalten, Proxy-Zertifikat nicht erneuert, Reverse-Proxy antwortet mit
-5xx, außerdem Gerät nicht erreichbar.
+5xx, außerdem Monitor nicht erreichbar.
 
-## Die Geräteseite {#the-device-page}
+## Die Monitorseite {#the-device-page}
 
 Das Panel über den Diagrammen liest, was die Prüfung gespeichert hat; das Öffnen der Seite
 fragt Traefik nie ab. Es nennt in einem Satz, was nicht stimmt (deaktivierte Router und der

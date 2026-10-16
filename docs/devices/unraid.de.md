@@ -71,7 +71,7 @@ Die geltenden [eingebauten Regeln](../alerting/rules.md#unraid):
 - **Unraid container stopped**: ein zum Start mit dem Array
   vorgesehener Container läuft seit zehn Minuten nicht (Advisory).
 
-## Die Geräteseite
+## Die Monitorseite
 
 Das Array-Panel sagt in einem Satz, was nicht stimmt, zeigt den
 Array-Füllstand, die letzte Paritätsprüfung, die laufenden Container

@@ -37,20 +37,19 @@ Toutes les métriques sont préfixées `dumbmonit_mdaemon_`.
 **Une panne partielle reste une vérification réussie.** Un service arrêté
 donne `service_up 0` pour ce service et les autres sont toujours mesurés.
 C'est seulement quand aucun service et aucune API ne répondent du tout que
-l'appareil est *inaccessible*.
+la surveillance est *inaccessible*.
 
 **Un compte refusé est une erreur de configuration, pas une panne.** Un
 mauvais mot de passe, une adresse que l'API XML n'autorise pas, ou un
-mauvais port sont affichés sur la page de l'appareil avec la raison et ne
+mauvais port sont affichés sur la page de la surveillance avec la raison et ne
 sont pas notifiés.
 
-**Les files viennent de l'agent, pas de cet appareil.** MDaemon publie la
+**Les files viennent de l'agent, pas de cette surveillance.** MDaemon publie la
 taille de ses files (inbound, local, remote, retry, bad, holding,
 quarantine), ses compteurs de session, ses statistiques de message et son
 uptime comme compteurs de performance Windows, dans l'objet nommé MDaemon,
 et dans son propre Queue and Statistics Manager. Aucune documentation
-publiée de MDaemon ne décrit un appel d'API XML qui les renvoie, cet
-appareil n'en devine donc pas un : l'[agent](agent.md), installé sur le
+publiée de MDaemon ne décrit un appel d'API XML qui les renvoie, cette surveillance n'en devine donc pas un : l'[agent](agent.md), installé sur le
 serveur MDaemon, lit les compteurs de performance à la place. Voir
 [Files de mail via l'agent](#mail-queues-through-the-agent). La licence et
 l'espace disque du stockage de mail ne sont exposés par aucune interface
@@ -61,12 +60,12 @@ service Windows.
 
 Les [règles intégrées](../alerting/rules.md#mdaemon-and-securitygateway)
 qui s'appliquent : service mail MDaemon arrêté, API XML MDaemon ne répond
-pas, plus Appareil inaccessible ; avec l'agent, file de mail MDaemon qui
+pas, plus Surveillance inaccessible ; avec l'agent, file de mail MDaemon qui
 grandit, file Bad MDaemon non vide et file Retry MDaemon élevée.
 
-## La page de l'appareil
+## La page de la surveillance
 
-Un appareil MDaemon montre un panneau **Services mail** au-dessus des
+Une surveillance MDaemon montre un panneau **Services mail** au-dessus des
 graphiques, lu depuis la dernière mesure stockée : ouvrir la page ne se
 connecte jamais au serveur. Il liste chaque service surveillé avec son
 port, un mot et une couleur (Répond, Arrêté), et son temps de réponse ;
@@ -90,15 +89,13 @@ même panneau apparaît sur la propre page de l'agent.
    activé ou désactivé, réglez `mdaemon: true` ou `mdaemon: false` dans
    `agent.yaml`.
 2. Les files apparaissent sur la page de l'agent. Pour aussi les montrer
-   sur cet appareil MDaemon, DumbMonit cherche l'agent sur la même
-   machine : l'agent réglé comme parent de cet appareil, ou l'agent relais
+   sur cette surveillance MDaemon, DumbMonit cherche l'agent sur la même
+   machine : l'agent réglé comme parent de cette surveillance, ou l'agent relais
    qui le sonde, ou l'agent dont le nom d'hôte correspond à l'adresse de
-   cet appareil (`mail` pour `mail.example.com`), ou, quand il y a un
-   appareil MDaemon et un agent rapportant les compteurs MDaemon, cet
-   agent. Si aucun ne correspond, modifiez cet appareil et choisissez
-   l'agent comme son **Appareil parent** : l'agent et MDaemon partagent la
-   machine, donc quand l'agent devient silencieux les alertes de cet
-   appareil sont aussi retenues.
+   cette surveillance (`mail` pour `mail.example.com`), ou, quand il y a une surveillance MDaemon et un agent rapportant les compteurs MDaemon, cet
+   agent. Si aucun ne correspond, modifiez cette surveillance et choisissez
+   l'agent comme sa **Surveillance parente** : l'agent et MDaemon partagent la
+   machine, donc quand l'agent devient silencieux les alertes de cette surveillance sont aussi retenues.
 
 Les séries appartiennent à l'agent, avec son label `target`. Toutes sont
 préfixées `dumbmonit_mdaemon_` :
@@ -151,7 +148,7 @@ pour en lire un que le préréglage n'a pas, listez-le sous
 5. Dans DumbMonit, saisissez l'adresse du serveur, par exemple « mail.example.com », puis l'adresse email complète du compte comme nom d'utilisateur, et son mot de passe. L'API XML est atteinte sur le port HTTPS de Remote Administration, 444 par défaut.
 
 !!! warning
-    MDaemon n'a pas de rôle en lecture seule pour l'API XML : ne réutilisez jamais votre propre compte, et gardez ce mot de passe hors de tout autre outil. Dynamic Screening peut bloquer une adresse après des connexions échouées répétées, donc un mauvais mot de passe ici peut faire bloquer l'hôte DumbMonit : testez d'abord avec la commande ci-dessus. Remote Administration utilise souvent un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Les tailles de file mail ne sont pas lues par cet appareil : MDaemon ne les publie que comme compteurs de performance Windows, que l'agent DumbMonit lit quand il est installé sur le serveur mail.
+    MDaemon n'a pas de rôle en lecture seule pour l'API XML : ne réutilisez jamais votre propre compte, et gardez ce mot de passe hors de tout autre outil. Dynamic Screening peut bloquer une adresse après des connexions échouées répétées, donc un mauvais mot de passe ici peut faire bloquer l'hôte DumbMonit : testez d'abord avec la commande ci-dessus. Remote Administration utilise souvent un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Les tailles de file mail ne sont pas lues par cette surveillance : MDaemon ne les publie que comme compteurs de performance Windows, que l'agent DumbMonit lit quand il est installé sur le serveur mail.
 
 L'API XML est servie par le serveur web de Remote Administration : port
 1000 en HTTP et 444 en HTTPS par défaut, sur `/MdMgmtWS/`, ou par IIS quand
@@ -182,5 +179,5 @@ Adresse : le nom d'hôte ou l'IP du serveur, par exemple
 
 Les ports TLS (`smtps`, `pop3s`, `imaps`, `remote_admin_https`) sont
 vérifiés par connexion seulement. Pour surveiller l'expiration de leurs
-certificats, ajoutez un appareil
+certificats, ajoutez une surveillance
 [Certificat TLS](services.md#tls) pour chacun.

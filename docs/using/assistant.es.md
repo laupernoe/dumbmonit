@@ -12,7 +12,7 @@ externas. Conecta uno, y luego pregúntale cosas como:
 - «Publica una actualización en la página de estado: el servidor de
   correo ha vuelto.»
 
-El asistente ve lo que ve la interfaz — dispositivos, alertas,
+El asistente ve lo que ve la interfaz — monitores, alertas,
 historial, métricas, agentes, páginas de estado — y usa las mismas
 palabras: *reporting*, *unreachable*, *waiting*, *advisory*,
 *warning*, *suppressed by parent*. Se ejecuta dentro del servidor: nada
@@ -27,7 +27,7 @@ my laptop»), y luego elige:
 
 | Ajuste | Opciones |
 | --- | --- |
-| **Scope** | **Read**: mirar — estado, dispositivos, alertas, historial, métricas, reglas, agentes, páginas de estado. Nunca puede cambiar nada. **Read and write**: también actuar — silenciar, confirmar, sondear, añadir un dispositivo, reiniciar un contenedor, publicar un incidente… (las [herramientas de escritura](#what-the-assistant-can-call)). |
+| **Scope** | **Read**: mirar — estado, monitores, alertas, historial, métricas, reglas, agentes, páginas de estado. Nunca puede cambiar nada. **Read and write**: también actuar — silenciar, confirmar, sondear, añadir un monitor, reiniciar un contenedor, publicar un incidente… (las [herramientas de escritura](#what-the-assistant-can-call)). |
 | **Expires** | 30 días, 90 días (lo por defecto), 1 año o nunca. Un token caducado deja de funcionar; crea uno nuevo. |
 | **Allowed networks** | Opcional. Direcciones o rangos CIDR desde los que se puede usar el token (`192.168.1.0/24, 10.8.0.5`). Vacío: desde cualquier sitio. |
 
@@ -167,29 +167,29 @@ ejecutar las demás.
 
 | Herramienta | Alcance | Hace |
 | --- | --- | --- |
-| `get_status` | read | El boletín, la respuesta a «¿todo va bien?»: recuentos de dispositivo, alertas activas y acumulándose, una frase («2 advisories, 1 unreachable.»). |
-| `list_devices` | read | Dispositivos y servicios con estado, padre y etiquetas; filtra por subcadena o estado. |
-| `get_device` | read | Un dispositivo: configuración, estado, alertas activas, resumen de 24 horas de CPU / memoria / disco más lleno (disponibilidad y latencia para una comprobación de servicio). |
+| `get_status` | read | El boletín, la respuesta a «¿todo va bien?»: recuentos de monitor, alertas activas y acumulándose, una frase («2 advisories, 1 unreachable.»). |
+| `list_devices` | read | Monitores y servicios con estado, padre y etiquetas; filtra por subcadena o estado. |
+| `get_device` | read | Un monitor: configuración, estado, alertas activas, resumen de 24 horas de CPU / memoria / disco más lleno (disponibilidad y latencia para una comprobación de servicio). |
 | `list_alerts` | read | Alertas activas con palabras de severidad, desde cuándo, valor, supresión, confirmación. |
-| `alert_history` | read | Transiciones de alerta, las más recientes primero (`since` o `hours`, dispositivo opcional, límite). |
+| `alert_history` | read | Transiciones de alerta, las más recientes primero (`since` o `hours`, monitor opcional, límite). |
 | `query_metrics` | read | Una consulta de rango MetricsQL, como máximo 60 puntos por serie. |
 | `list_silences` | read | Ventanas de mantenimiento y si están activas ahora. |
 | `list_rules` | read | Reglas de alerta con tipo, severidad, umbral, activada. |
-| `list_device_types` | read | Los tipos de dispositivo que puede monitorizar este servidor, con las opciones y credenciales que espera cada uno — lo que necesita `add_device`. |
-| `list_agents` | read | Máquinas que ejecutan el agente: SO, versión del agente, modo relay, sitio, dispositivos relayados, último contacto, enlace. |
+| `list_device_types` | read | Los tipos de monitor que puede monitorizar este servidor, con las opciones y credenciales que espera cada uno — lo que necesita `add_device`. |
+| `list_agents` | read | Máquinas que ejecutan el agente: SO, versión del agente, modo relay, sitio, monitores relayados, último contacto, enlace. |
 | `list_containers` | read | Los contenedores Docker de una máquina que ejecuta el agente: estado, salud, reinicios, actualización disponible, último comando. |
 | `list_heartbeats` | read | Monitores heartbeat: intervalo esperado, última llamada, veredicto (waiting, on time, missed, reported down). La URL secreta nunca se muestra. |
-| `list_status_pages` | read | Páginas de estado, publicadas o no, con su ruta pública (`/s/<slug>`), los dispositivos que muestran y sus incidentes abiertos. |
+| `list_status_pages` | read | Páginas de estado, publicadas o no, con su ruta pública (`/s/<slug>`), los monitores que muestran y sus incidentes abiertos. |
 | `list_channels` | read | Canales de notificación: tipo, activado, último error, último mensaje enviado. Nunca sus secretos. |
-| `list_packs` | read | Packs de integración instalados: versión, tipo de dispositivo, activado, dispositivos que lo usan, errores. |
-| `silence_device` | write | Una ventana de mantenimiento puntual en un dispositivo, empezando ahora (1 hora por defecto, como máximo una semana). |
+| `list_packs` | read | Packs de integración instalados: versión, tipo de monitor, activado, monitores que lo usan, errores. |
+| `silence_device` | write | Una ventana de mantenimiento puntual en un monitor, empezando ahora (1 hora por defecto, como máximo una semana). |
 | `remove_silence` | write | Elimina una ventana de mantenimiento. |
-| `schedule_maintenance` | write | Una ventana de mantenimiento puntual en una fecha dada, en un dispositivo o toda la instancia, una semana como máximo. |
+| `schedule_maintenance` | write | Una ventana de mantenimiento puntual en una fecha dada, en un monitor o toda la instancia, una semana como máximo. |
 | `acknowledge_alert` | write | Confirma una alerta por huella durante un número de horas (4 por defecto): los recordatorios se pausan, la resolución igual se notifica. `hours: 0` la levanta. |
-| `probe_device` | write | Sondea un dispositivo de inmediato y reporta qué se midió. |
-| `set_device_enabled` | write | Activa o desactiva la monitorización de un dispositivo. |
+| `probe_device` | write | Sondea un monitor de inmediato y reporta qué se midió. |
+| `set_device_enabled` | write | Activa o desactiva la monitorización de un monitor. |
 | `set_rule_enabled` | write | Activa o desactiva una regla de alerta. |
-| `add_device` | write | Añade un dispositivo: nombre, tipo, dirección, intervalo, padre, opciones, credenciales, agente relay. |
+| `add_device` | write | Añade un monitor: nombre, tipo, dirección, intervalo, padre, opciones, credenciales, agente relay. |
 | `discover_network` | write | Escanea una red (CIDR, 4096 direcciones como máximo) buscando dispositivos SNMP y sugiere un perfil para cada uno. |
 | `restart_container` | write | Pide al agente de una máquina que reinicie uno de sus contenedores. |
 | `test_channel` | write | Envía un mensaje de prueba a través de un canal de notificación. |
@@ -198,7 +198,7 @@ ejecutar las demás.
 Un token de lectura que llama a una herramienta de escritura recibe un
 rechazo claro como resultado de la herramienta (`isError: true`); el
 asistente lo explica y nada cambia. Lo mismo vale para cualquier cosa
-que la herramienta no pueda hacer — un dispositivo desconocido, un
+que la herramienta no pueda hacer — un monitor desconocido, un
 nombre ambiguo, una ventana más larga que una semana: el mensaje dice
 qué corregir.
 
@@ -232,7 +232,7 @@ token](#security-notes), que vienen antes de cualquier JSON-RPC:
 | `202` | — | Una notificación: aceptada, sin cuerpo. |
 
 Una herramienta que se ejecuta pero falla — alcance faltante,
-dispositivo desconocido — no es un error de protocolo: responde
+monitor desconocido — no es un error de protocolo: responde
 normalmente con `isError: true` y una frase que el asistente puede
 transmitir.
 
@@ -241,7 +241,7 @@ transmitir.
 - **Un token es una contraseña.** Quien lo tenga lee todo lo que
   muestra la interfaz — y, con un token de escritura, cambia cualquier
   cosa que pueda un administrador a través de la API REST
-  (dispositivos, reglas, canales), cuentas, tokens y copias de
+  (monitores, reglas, canales), cuentas, tokens y copias de
   seguridad aparte. Manténlo fuera de chats compartidos, capturas de
   pantalla y repositorios. Revoca un token del que no estés seguro;
   crea otro en un minuto.
@@ -261,10 +261,10 @@ transmitir.
   esa cuenta ya no es administradora, y se revoca cuando esa cuenta se
   elimina.
 - **Nada secreto vuelve.** Las herramientas nunca devuelven
-  credenciales de dispositivo (solo su tipo), secretos de canal, URLs
+  credenciales de monitor (solo su tipo), secretos de canal, URLs
   de heartbeat ni tokens. `add_device` sí recibe credenciales: viajan
   a través de la conversación de tu asistente, y por tanto a través de
-  su proveedor. Para un dispositivo con credenciales sensibles,
+  su proveedor. Para un monitor con credenciales sensibles,
   prefiere la interfaz web.
 - **Navegadores y `Origin`.** Una petición que lleva una cabecera
   `Origin` (un cliente basado en navegador) se rechaza con `403` a

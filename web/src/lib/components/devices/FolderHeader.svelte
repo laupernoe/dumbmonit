@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { m } from '#lib/paraglide/messages.js';
 	/**
-	 * Header of one folder section on /targets: collapse toggle, device count,
-	 * worst status in the folder (so trouble is visible even collapsed), and —
-	 * while a device is being dragged — a drop target that moves it here.
+	 * Header of one folder section on /targets: a plain line, no panel — the
+	 * collapse toggle, the name, the device count and, only when something in
+	 * the folder is not reporting, its worst state (so trouble stays visible
+	 * even collapsed). While a device is being dragged it becomes a drop
+	 * target that moves it here.
 	 *
 	 * Folder actions are entirely in-app: double-click (or the "⋯" menu)
 	 * renames in place, and delete asks with the same two-step inline
@@ -12,7 +14,7 @@
 	import type { TargetState } from '#lib/format.js';
 	import { STATE_LABEL, STATE_TONE } from '#lib/format.js';
 	import { Confirm, Menu, Plate } from '#lib/ui/index.js';
-	import { ChevronDown, EllipsisVertical, FolderOpen, GripVertical } from 'lucide-svelte';
+	import { ChevronDown, EllipsisVertical } from 'lucide-svelte';
 
 	interface Props {
 		label: string;
@@ -85,16 +87,15 @@
 	// list — which otherwise paints (and catches pointer events) above it,
 	// being later in the document. Lift the header while it is open.
 	let actionsOpen = $state(false);
+	/** All reporting: nothing to say beyond the count. */
+	const quiet = $derived(count > 0 && STATE_TONE[worst] === 'signal');
 </script>
 
 <div
 	bind:this={el}
-	class={`relative flex items-center gap-2 rounded-[var(--radius-card)] border px-3 py-2 transition-colors ${dropHover ? 'border-signal bg-signal-soft' : dropActive ? 'border-dashed border-line-strong' : 'border-line bg-surface-2'}`}
+	class={`relative flex items-center gap-2 rounded-lg border pr-1 pl-1 transition-colors ${dropHover ? 'border-signal bg-signal-soft' : dropActive ? 'border-dashed border-line-strong' : 'border-transparent'}`}
 	style={actionsOpen ? 'z-index: 40;' : undefined}
 >
-	{#if dropActive}
-		<GripVertical class="size-3.5 shrink-0 text-ink-3" aria-hidden="true" />
-	{/if}
 	<button
 		type="button"
 		class="flex min-h-10 min-w-0 flex-1 items-center gap-2 text-left"
@@ -105,13 +106,12 @@
 		aria-expanded={!collapsed}
 	>
 		<ChevronDown class={`size-4 shrink-0 text-ink-2 transition-transform duration-200 ${collapsed ? '-rotate-90' : ''}`} aria-hidden="true" />
-		<FolderOpen class="size-4 shrink-0 text-ink-3" aria-hidden="true" />
 		{#if renaming}
 			<span class="sr-only">{m.devices_folder_renaming()}</span>
 		{:else}
-			<span class="min-w-0 break-words font-semibold text-ink" title={label}>{label}</span>
+			<span class="min-w-0 text-sm font-semibold break-words text-ink" title={label}>{label}</span>
 		{/if}
-		<span class="tnum text-[0.8125rem] text-ink-2">{count}</span>
+		<span class="tnum text-[0.8125rem] text-ink-3">{count}</span>
 	</button>
 
 	{#if renaming}
@@ -135,14 +135,18 @@
 		/>
 	{/if}
 
-	<Plate tone={STATE_TONE[worst]} label={count > 0 ? STATE_LABEL[worst] : m.devices_folder_empty()} size="sm" />
+	{#if count === 0}
+		<span class="text-[0.8125rem] text-ink-3">{m.devices_folder_empty()}</span>
+	{:else if !quiet}
+		<Plate tone={STATE_TONE[worst]} label={STATE_LABEL[worst]} size="sm" />
+	{/if}
 
 	{#if canManage && !renaming}
 		<Menu label={m.devices_folder_actions({ name: label })} align="right" bind:open={actionsOpen}>
 			{#snippet trigger({ toggle, open })}
 				<button
 					type="button"
-					class="-my-2 rounded-md p-3 sm:p-2.5 sm:-my-1.5 text-ink-3 hover:bg-surface-2 hover:text-ink"
+					class="inline-flex size-10 items-center justify-center rounded-md text-ink-3 hover:bg-surface-2 hover:text-ink"
 					onclick={toggle}
 					aria-haspopup="menu"
 					aria-expanded={open}

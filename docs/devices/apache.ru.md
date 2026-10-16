@@ -29,7 +29,7 @@ DumbMonit читает встроенный `mod_status` Apache, запраши�
 состояния — waiting, open_slot, starting, reading, sending, keepalive,
 dns_lookup, closing, logging, finishing и idle_cleanup.
 
-## Страница устройства
+## Страница монитора
 
 Панель над графиками читает то, что сохранила проверка; открытие страницы
 никогда не запрашивает Apache. Она показывает занятые и свободные воркеры,

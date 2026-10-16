@@ -68,11 +68,11 @@ controlador son Critical o Warning.
 Las [reglas integradas](../alerting/rules.md#server-hardware-redfish)
 que se aplican: Server fan failed, Server temperature above critical,
 Power supply redundancy lost, Power supply failed, Drive failure
-predicted, Server health critical, además de Device unreachable.
+predicted, Server health critical, además de Monitor unreachable.
 
-## La página del dispositivo {#the-device-page}
+## La página del monitor {#the-device-page}
 
-Un dispositivo Redfish obtiene su propio panel en su página, sobre las
+Un monitor Redfish obtiene su propio panel en su página, sobre las
 gráficas, leído de lo que guardó la última sonda: abrir la página nunca
 consulta al controlador. Responde, en este orden:
 
@@ -156,7 +156,7 @@ desconocido se lee «—», nunca 0.
     de gestión también vienen con un certificado autofirmado: si la
     conexión se rechaza por ese motivo, marca «Accept an unverifiable
     certificate» en las opciones. Un controlador responde lento y una
-    lectura completa toma varias peticiones: si el dispositivo reporta
+    lectura completa toma varias peticiones: si el monitor reporta
     tiempos de espera agotados, eleva DUMBMONIT_PROBE_TIMEOUT_SECS en el
     servidor.
 

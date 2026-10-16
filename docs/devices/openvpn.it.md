@@ -31,11 +31,11 @@ riconnessione dietro NAT e moltiplicherebbe le serie per nulla. Al massimo 256
 client ricevono ciascuno una serie dettagliata; `clients_connected` resta
 esatto oltre tale limite.
 
-Regole integrate che si applicano: **Dispositivo irraggiungibile**, quando la
+Regole integrate che si applicano: **Monitor irraggiungibile**, quando la
 connessione di gestione stessa non può essere stabilita o la password viene
 rifiutata.
 
-## La pagina del dispositivo
+## La pagina del monitor
 
 Il pannello sopra i grafici legge ciò che la sonda ha memorizzato; aprire la
 pagina non si connette mai alla management interface. Mostra la versione del

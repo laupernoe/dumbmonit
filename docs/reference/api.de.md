@@ -5,8 +5,8 @@ Skripten, Dashboards und Assistenten offen: Es gibt keine private Hälfte. Es is
 über HTTP, authentifiziert durch ein Sitzungscookie (die Web-Oberfläche) oder durch ein API-Token
 (alles andere).
 
-!!! warning "Alpha"
-    DumbMonit ist eine Alpha, und seine API ebenso: Routen und Felder können sich noch ändern.
+!!! warning "Vor 1.0"
+    DumbMonit befindet sich vor 1.0, und seine API ebenso: Routen und Felder können sich noch ändern.
     Die API-Version (unten) ändert sich, sobald eine Route oder ein Feld entfernt oder umbenannt
     wird, sodass ein Client es erkennen kann.
 
@@ -19,7 +19,7 @@ Jede Instanz beschreibt ihre eigene API in einem
 GET /api/openapi.json
 ```
 
-Es ist öffentlich — es enthält kein Geheimnis, keine Adresse und nichts über Ihre Geräte — und es
+Es ist öffentlich — es enthält kein Geheimnis, keine Adresse und nichts über Ihre Monitore — und es
 ist die erschöpfende Referenz: jede Route, die ein Client aufrufen kann, ihre Parameter,
 Anfrage- und Antwortformen, Fehlerantworten und der benötigte Scope (die Erweiterung
 `x-token-scope` an jeder Operation: `public`, `read`, `write` oder `none` für Routen, die ein
@@ -99,8 +99,8 @@ Administrator mit seinem eigenen Konto tut, bleibt außerhalb der Reichweite jed
 
 | | `read`-Token | `write`-Token |
 |---|---|---|
-| Jedes `GET`, das ein *Betrachter*-Konto ausführen kann (Geräte, Alarme, Metriken, Regeln, Kanäle ohne ihre Geheimnisse, Statusseiten …) | ja | ja |
-| `POST`, `PUT`, `DELETE`, die ein *Administrator* ausführen kann (Geräte, Regeln, Stummschaltungen, Kanäle, Statusseiten, Packs, Prüfungen, Discovery …) | `403` | ja |
+| Jedes `GET`, das ein *Betrachter*-Konto ausführen kann (Monitore, Alarme, Metriken, Regeln, Kanäle ohne ihre Geheimnisse, Statusseiten …) | ja | ja |
+| `POST`, `PUT`, `DELETE`, die ein *Administrator* ausführen kann (Monitore, Regeln, Stummschaltungen, Kanäle, Statusseiten, Packs, Prüfungen, Discovery …) | `403` | ja |
 | `/metrics`, `/federate`, `/prometheus/*` ([Scraping](metrics.md#scraping-dumbmonit)) | ja | ja |
 | MCP-Lese-/Schreibwerkzeuge ([Assistenten](../using/assistant.md#what-the-assistant-can-call)) | nur Lesen | beide |
 | Konten, Sitzungen, Zwei-Faktor, SSO, Audit-Log (`/api/auth/*`, `/api/users/*`) | `403` | `403` |
@@ -253,7 +253,7 @@ oder ein `write`-Token; *nur Sitzung* ein Sitzungscookie, nie ein Token.
 **Rollen.** Ein Konto `viewer` führt jedes `GET` aus. Ein `operator` führt dieselben Lesezugriffe
 plus die auf dieser Seite als *Operator* markierten Schreibvorgänge zur Alarmbearbeitung aus (und
 `x-roles: [admin, operator]` im OpenAPI-Dokument): bestätigen, zurückstellen (Wartungsfenster), eine
-Regel für ein Gerät ignorieren, aufgelösten Verlauf löschen. Jeder andere Schreibvorgang ist
+Regel für einen Monitor ignorieren, aufgelösten Verlauf löschen. Jeder andere Schreibvorgang ist
 Admins vorbehalten und antwortet einem Operator mit `403`.
 
 | Methode | Route | Auth | Zweck |
@@ -356,11 +356,11 @@ Ein Bundle trägt jede Zugangsdaten der Instanz, mit der Passphrase neu verschl�
 diese Routen API-Tokens mit einer Erklärung ab: Nur ein in der Web-Oberfläche angemeldeter
 Administrator erhält eines. Siehe [Sicherung und Wiederherstellung](../install/backup.md).
 
-## Gerätetypen {#device-types}
+## Monitortypen {#device-types}
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/collectors` | Jede Geräteart, die dieser Server überwachen kann: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) und `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Von einem [Integrationspaket](../packs/index.md) mitgebrachte Arten werden genauso aufgeführt, als `pack.<id>`. |
+| `GET` | `/api/collectors` | Jeder Monitortyp, die dieser Server überwachen kann: `kind`, `label`, `summary`, `examples`, `credential_types`, `address_hint`, `default_port`, `setup` (`title`, `steps`, `warning`, `doc_url`) und `options` (`key`, `label`, `help`, `placeholder`, `default`, `required`, `input`, `choices`). Von einem [Integrationspaket](../packs/index.md) mitgebrachte Arten werden genauso aufgeführt, als `pack.<id>`. |
 
 ## Integrationspakete {#integration-packs}
 
@@ -369,25 +369,25 @@ Admin-Sitzung oder API-Token (Scope `write` für Änderungen). Siehe
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/packs` | Installierte Pakete: `id`, `version`, `label`, `summary`, `kind` (`null` für ein Paket nur mit SNMP-Profilen), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uids), `snmp_profiles`, `targets` (Geräte, die es verwenden), `warnings` und `error`, wenn das gespeicherte Paket die Validierung nicht mehr besteht. |
+| `GET` | `/api/packs` | Installierte Pakete: `id`, `version`, `label`, `summary`, `kind` (`null` für ein Paket nur mit SNMP-Profilen), `enabled`, `installed_at`, `sha256`, `metrics`, `rules` (uids), `snmp_profiles`, `targets` (Monitore, die es verwenden), `warnings` und `error`, wenn das gespeicherte Paket die Validierung nicht mehr besteht. |
 | `GET` | `/api/packs/{id}` | Ein Paket. |
 | `POST` | `/api/packs` | Installieren oder aktualisieren. Body: das YAML (`application/yaml`, `text/plain` …) oder `{"yaml": "…"}` in JSON. `201` bei Erstellung, `200` bei Aktualisierung oder Unverändert, mit `outcome` (`created`, `updated`, `unchanged`), `pack`, `rules_added` und `restart_required` (SNMP-Profile). `400` listet jeden Validierungsfehler auf. |
-| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Den Gerätetyp des Pakets registrieren oder zurückziehen; Geräte, Verlauf und Regeln bleiben. |
-| `DELETE` | `/api/packs/{id}` | Deinstallieren, samt seinen Regeln. `409`, solange Geräte es verwenden. |
+| `PUT` | `/api/packs/{id}/enable`, `/api/packs/{id}/disable` | Den Monitortyp des Pakets registrieren oder zurückziehen; Monitore, Verlauf und Regeln bleiben. |
+| `DELETE` | `/api/packs/{id}` | Deinstallieren, samt seinen Regeln. `409`, solange Monitore es verwenden. |
 
-## Ziele (Geräte) {#targets-devices}
+## Ziele (Monitore) {#targets-devices}
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/targets` | Jedes Gerät auflisten. |
-| `POST` | `/api/targets` | Eines erstellen. `201` mit dem Gerät. Die Profilerkennung startet bei SNMP im Hintergrund. |
-| `GET` | `/api/targets/{id}` | Ein Gerät. |
-| `PUT` | `/api/targets/{id}` | Es ersetzen. Das Weglassen von `credential` behält die gespeicherten; das Weglassen von `profile_id` behält das erkannte Profil (`""` löscht es). `enabled: false` zu setzen löscht die Alarme des Geräts ohne Benachrichtigung. |
-| `DELETE` | `/api/targets/{id}` | `204`. Löscht die Alarme des Geräts ohne Benachrichtigung und seine Zeitreihen aus VictoriaMetrics (nach bestem Bemühen). |
+| `GET` | `/api/targets` | Jeden Monitor auflisten. |
+| `POST` | `/api/targets` | Eines erstellen. `201` mit dem Monitor. Die Profilerkennung startet bei SNMP im Hintergrund. |
+| `GET` | `/api/targets/{id}` | Ein Monitor. |
+| `PUT` | `/api/targets/{id}` | Es ersetzen. Das Weglassen von `credential` behält die gespeicherten; das Weglassen von `profile_id` behält das erkannte Profil (`""` löscht es). `enabled: false` zu setzen löscht die Alarme des Monitors ohne Benachrichtigung. |
+| `DELETE` | `/api/targets/{id}` | `204`. Löscht die Alarme des Monitors ohne Benachrichtigung und seine Zeitreihen aus VictoriaMetrics (nach bestem Bemühen). |
 | `POST` | `/api/targets/{id}/probe` | Jetzt prüfen: `{"sample_count": 42, "series": ["if_octets_in{host=\"Core switch\",ifname=\"eth0\"}", …]}` — die Serienschlüssel, wie der Collector sie erzeugt hat, ohne das Präfix `dumbmonit_`, das der Writer auf dem Weg zu VictoriaMetrics hinzufügt. |
 | `POST` | `/api/targets/{id}/discover` | Profilerkennung erneut ausführen: `{"profile_id": "host-resources"}` oder `null`. |
 
-Ein Gerät, wie zurückgegeben:
+Ein Monitor, wie zurückgegeben:
 
 ```json
 {
@@ -409,7 +409,7 @@ Ein Gerät, wie zurückgegeben:
 ```
 
 Das Geheimnis selbst wird nie zurückgegeben: `credential_kind` ist ein Label. Server-Zeitstempel
-sind UTC ohne Suffix. `error_kind` klassifiziert `last_error`: `down` (das Gerät hat nicht
+sind UTC ohne Suffix. `error_kind` klassifiziert `last_error`: `down` (der Monitor hat nicht
 geantwortet) oder `config` (unsere Seite — Zugangsdaten, Adresse, Option), was die Oberfläche als
 *Nicht erreichbar* oder *Falsch konfiguriert* zeigt; `null`, wenn die letzte Prüfung erfolgreich
 war.
@@ -435,15 +435,15 @@ optional `context`); `api_token` (`token` oder die beiden Hälften `token_id` un
 Server für Proxmox VE und PBS zu `user@realm!name=secret` zusammenfügt); `username_password`
 (`username`, `password`). `interval_secs` ist standardmäßig 60 und darf nicht unter 10 gehen.
 `name` hat höchstens 200 Zeichen und `address` höchstens 253 (`400` darüber hinaus). `parent_id`
-muss ein existierendes Gerät nennen (`400 Parent device N not found.`). Typoptionen kommen unter
+muss einen existierenden Monitor nennen (`400 Parent device N not found.`). Typoptionen kommen unter
 ihrem Schlüssel in `tags`.
 
-`via_agent` nennt den [Relay-Agenten](../install/remote-site.md), der das Gerät aus seinem eigenen
+`via_agent` nennt den [Relay-Agenten](../install/remote-site.md), der den Monitor aus seinem eigenen
 Netzwerk statt vom Server prüft; `null` (der Standard) bedeutet, dass der Server es prüft. Es muss
-ein Gerät vom Typ `agent` sein (sonst `400`), ein Gerät kann sich nicht selbst weiterleiten, und ein
-`agent`-Gerät kann nicht weitergeleitet werden. Bei `PUT` behält ein *fehlendes* `via_agent` den
+ein Monitor vom Typ `agent` sein (sonst `400`), ein Monitor kann sich nicht selbst weiterleiten, und ein
+`agent`-Monitor kann nicht weitergeleitet werden. Bei `PUT` behält ein *fehlendes* `via_agent` den
 gespeicherten Wert, wie `profile_id` und `credential`; senden Sie `null`, um zur direkten Prüfung
-zurückzukehren. `POST /api/targets/{id}/probe` und `/discover` auf einem weitergeleiteten Gerät
+zurückzukehren. `POST /api/targets/{id}/probe` und `/discover` auf einem weitergeleiteten Monitor
 laufen über das Relay und warten auf dessen Antwort (`409`, wenn bereits eine Prüfung läuft,
 `400 Timed out: relay agent …`, wenn es nicht antwortet).
 
@@ -491,7 +491,7 @@ Testnachricht zählt, ein nur erstellter Kanal nicht.
 
 `complete` rastet ein und wird nie wieder falsch. Der Server setzt es, wenn die drei Schritte
 erledigt sind (getan oder beiseitegelegt), und auch beim allerersten Lesen einer Instanz, die
-bereits ein Gerät und einen Kanal hatte — sodass ein Upgrade einer etablierten Instanz ihr nie eine
+bereits einen Monitor und einen Kanal hatte — sodass ein Upgrade einer etablierten Instanz ihr nie eine
 Anleitung zum ersten Start zeigt.
 
 ## Metriken {#metrics}
@@ -523,12 +523,12 @@ Grafana-Datenquelle.
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/metrics` | Zustand der Instanz selbst im Prometheus-Textformat: Scheduler, Prüfungen, Schreibvorgänge, Alarmierung, Benachrichtigungen, Agenten, Datenbank, VictoriaMetrics. Einige Dutzend Serien, nie eine pro Gerät. |
+| `GET` | `/metrics` | Zustand der Instanz selbst im Prometheus-Textformat: Scheduler, Prüfungen, Schreibvorgänge, Alarmierung, Benachrichtigungen, Agenten, Datenbank, VictoriaMetrics. Einige Dutzend Serien, nie eine pro Monitor. |
 | `GET` | `/federate` | Die Messungen, im selben Format. `match[]` wählt Serien aus (wiederholbar, höchstens 10, standardmäßig `{__name__=~"dumbmonit_.*"}`), `max_lookback` erweitert das Fenster, in dem der letzte Punkt gesucht wird (standardmäßig `5m`). `400` über 8 MiB, mit dem, was einzuschränken ist. |
 | `GET`, `POST` | `/prometheus/api/v1/{route}` | Die Lesehälfte der Prometheus-API, an den Speicher weitergereicht, sodass Grafana `http://…/prometheus` als Prometheus-Datenquelle verwenden kann. Nur `query`, `query_range`, `query_exemplars`, `series`, `labels`, `label/{name}/values`, `metadata` und `status/buildinfo`; alles andere ist `404`. |
 
 `DUMBMONIT_METRICS_PUBLIC=true` liefert die drei ohne Token aus — nur hinter einer Firewall, da sie
-jede Messung jedes Geräts tragen.
+jede Messung jedes Monitors tragen.
 
 ## Weitere Routen {#further-routes}
 
@@ -538,9 +538,9 @@ akzeptiert wird (nur Sitzung).
 
 | Methode | Route | Scope | Zweck |
 |---|---|---|---|
-| `POST` | `/api/targets/reorder` | write | Geräte neu ordnen. |
-| `GET` | `/api/targets/{id}/security` | read | Sicherheitswert, Note und Prüfungen eines Geräts. |
-| `GET` | `/api/security/summary` | read | Sicherheitswert jedes bewerteten Geräts, das schlechteste zuerst. |
+| `POST` | `/api/targets/reorder` | write | Monitore neu ordnen. |
+| `GET` | `/api/targets/{id}/security` | read | Sicherheitswert, Note und Prüfungen eines Monitors. |
+| `GET` | `/api/security/summary` | read | Sicherheitswert jedes bewerteten Monitors, der schlechteste zuerst. |
 | `GET` | `/api/targets/{id}/webchange/pages` | read | Von einer Website-Überwachung verfolgte Seiten. |
 | `GET` | `/api/targets/{id}/webchange/changes` | read | Auf einer überwachten Website gefundene Änderungen, neueste zuerst. |
 | `GET` | `/api/targets/{id}/webchange/changes/{change_id}` | read | Eine Änderung, mit beiden Versionen und dem Zeilen-Diff. |
@@ -569,7 +569,7 @@ akzeptiert wird (nur Sitzung).
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/alerts` | Aktive Alarme (ausstehend, auslösend, unterdrückt, kürzlich aufgelöst). Alarme gelöschter oder pausierter Geräte werden nie aufgeführt. |
+| `GET` | `/api/alerts` | Aktive Alarme (ausstehend, auslösend, unterdrückt, kürzlich aufgelöst). Alarme gelöschter oder pausierter Monitore werden nie aufgeführt. |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Phasenübergänge. `since` ist RFC 3339, standardmäßig die letzten sieben Tage; `limit` muss positiv sein. `dismissed` (Standard `false`) schließt mit den beiden folgenden Routen gelöschte Einträge aus; durch ein Löschen wird nie etwas zerstört, nur aus der Standardansicht verborgen. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Löscht einen Eintrag `resolved` aus der Standard-Verlaufsansicht. `204`. `404` bei unbekannter ID oder einem noch aktiven Übergang. Operator; auditiert. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Löscht jeden noch nicht gelöschten Eintrag `resolved` auf einmal („Alle aufgelösten löschen“). Liefert `{"dismissed": <count>}`. Operator; auditiert. |
@@ -613,8 +613,8 @@ Ein Verlaufseintrag hat `id`, `fingerprint`, `rule_uid`, `target_id`, `from_phas
 `acknowledged by admin`, `device removed or disabled`), `at` und `dismissed` (aus der aktiven Ansicht
 gelöscht; die Zeile selbst bleibt erhalten). `acked` ist wahr, solange `acked_until` in der Zukunft
 liegt: Erinnerungen und Eskalationen pausieren, die Auflösung wird weiterhin benachrichtigt und hebt
-die Bestätigung auf. Ein `target_id`, das nicht mehr existiert, zeigt die Oberfläche als „(gelöschtes
-Gerät)“.
+die Bestätigung auf. Ein `target_id`, das nicht mehr existiert, zeigt die Oberfläche als „(gelöschter
+Monitor)“.
 
 ### Regeln {#rules}
 
@@ -678,20 +678,20 @@ monatlichen `days`); Minuten gelten seit lokaler Mitternacht (0–1439). Bei ein
 Zeitplan hat `timezone` (ein IANA-Name) Vorrang vor `utc_offset_minutes` und hält ein Fenster über
 Sommerzeitwechsel hinweg zur lokalen Uhrzeit; ein unbekannter Zonenname wird abgelehnt.
 
-### Überschreibungen pro Gerät {#per-device-overrides}
+### Überschreibungen pro Monitor {#per-device-overrides}
 
-Eine Regel lässt sich für ein Gerät anpassen, ohne die Regel selbst anzufassen. `{"enabled": false}`
-ist das, was die Aktion **Ignorieren** der Oberfläche (am Alarm, auf der Geräteseite oder an der
-Regel) schreibt: Das Gerät wird aus genau dieser Regel dauerhaft, aber umkehrbar entfernt, ohne die
+Eine Regel lässt sich für einen Monitor anpassen, ohne die Regel selbst anzufassen. `{"enabled": false}`
+ist das, was die Aktion **Ignorieren** der Oberfläche (am Alarm, auf der Monitorseite oder an der
+Regel) schreibt: Der Monitor wird aus genau dieser Regel dauerhaft, aber umkehrbar entfernt, ohne die
 Regel für jemand anderen zu deaktivieren.
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/alerts/overrides?target_id=4` | Jede Überschreibung oder die eines Geräts: `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
+| `GET` | `/api/alerts/overrides?target_id=4` | Jede Überschreibung oder die eines Monitors: `rule_uid`, `target_id`, `threshold`, `clear_threshold`, `enabled`. |
 | `GET` | `/api/alerts/rules/{id}/overrides` | Die Überschreibungen einer Regel. |
-| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — jedes Feld optional; `null` bedeutet „wie die Regel“. Erstellt oder ersetzt. Ein Operator darf nur `{"enabled": false}` senden (ignorieren); die Schwellenüberschreibungen des Geräts, falls vorhanden, bleiben erhalten. |
+| `PUT` | `/api/alerts/rules/{id}/overrides/{target_id}` | `{"threshold": 95, "clear_threshold": 90, "enabled": true}` — jedes Feld optional; `null` bedeutet „wie die Regel“. Erstellt oder ersetzt. Ein Operator darf nur `{"enabled": false}` senden (ignorieren); die Schwellenüberschreibungen des Monitors, falls vorhanden, bleiben erhalten. |
 | `DELETE` | `/api/alerts/rules/{id}/overrides/{target_id}` | `204`. Für einen Operator hebt es nur das Ignorieren auf: Schwellenüberschreibungen bleiben. |
-| `GET` | `/api/targets/{id}/rules` | The rules that watch a device: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
+| `GET` | `/api/targets/{id}/rules` | The rules that watch a monitor: those whose query reads a metric it wrote in the last 24 h. `{"status": "ok" \| "no_data" \| "unavailable", "rules": [{id, uid, name, description, severity, enabled, ignored, custom_threshold, firing}]}`. |
 
 ## Benachrichtigungsrichtlinie {#notification-policy}
 
@@ -699,7 +699,7 @@ Regel für jemand anderen zu deaktivieren.
 |---|---|---|
 | `GET` | `/api/notify/policy` | Die globale Richtlinie: `batch_window_secs` (0 = sofort senden), `max_per_hour` pro Kanal (0 = unbegrenzt), `flap_events`, `flap_window_secs`, `flap_hold_secs` (0 = keine Flatter-Erkennung), `public_url` (Links in Nachrichten; leer = `DUMBMONIT_PUBLIC_URL`), `escalate_after_secs` und `escalate_channel` (0 / `null` = keine Eskalation). |
 | `PUT` | `/api/notify/policy` | Dieselben Felder, jedes optional: Ein fehlendes Feld behält seinen Wert. `"escalate_channel": null` schaltet die Eskalation aus. Liefert die Richtlinie. |
-| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → welche Geräte ein Routing-Filter eines Kanals auswählt: `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
+| `POST` | `/api/notify/match-preview` | `{"matcher": {…}}` → welche Monitore ein Routing-Filter eines Kanals auswählt: `devices` (`id`, `name`, `kind`, `tags`, `matched`), `matched`, `total`, `rules`, `excluded_rules`. |
 
 ## Benachrichtigungskanäle {#notification-channels}
 
@@ -765,7 +765,7 @@ für Änderungen den Scope `write`. Siehe [E-Mail-Berichte](../using/reports.md)
 | `GET`, `PUT`, `DELETE` | `/api/status-pages/{id}/logo` | Sitzung / Admin | Das Logo der Seite. `PUT` nimmt `{"data": "<base64 or data: URL>"}`: PNG, JPEG oder WebP, am Inhalt erkannt, höchstens 256 KiB, alles andere `400`. `204`. `GET` ist die Vorschau des Editors (Entwürfe eingeschlossen). |
 | `GET` | `/api/status-pages/{id}/subscribers` | Sitzung | E-Mail-Abonnenten: `id`, `page_id`, `email`, `confirmed_at` (`null`, solange ausstehend), `created_at`. Ihre Tokens verlassen den Server nie. |
 | `DELETE` | `/api/status-pages/{id}/subscribers/{subscriber}` | Admin | Entfernt eine Adresse. `204`. |
-| `PUT` | `/api/status-pages/{id}/items` | Admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — die vollständige geordnete Liste der auf der Seite gezeigten Geräte. |
+| `PUT` | `/api/status-pages/{id}/items` | Admin | `[{"target_id": 4, "label": "NAS", "group_name": "Storage"}, …]` — die vollständige geordnete Liste der auf der Seite gezeigten Monitore. |
 | `GET` | `/api/incidents` | Sitzung | Jeder Vorfall mit seinen Updates: `incident` (`id`, `page_id`, `title`, `kind`, `status`, `severity`, `starts_at`, `ends_at`, `created_at`, `updated_at`) und `updates`. |
 | `POST` | `/api/incidents` | Admin | `{"title", "kind", "status", "severity", "page_id", "starts_at", "ends_at", "body"}` — `body` ist das erste Update. `201`. |
 | `PUT` | `/api/incidents/{id}` | Admin | Dieselben Felder; ein fehlendes Feld behält seinen Wert. |
@@ -792,7 +792,7 @@ für Änderungen den Scope `write`. Siehe [E-Mail-Berichte](../using/reports.md)
 | `POST` | `/api/agent/relay/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Ergebnis einer delegierten Prüfung: `{"duration_ms", "error", "samples", "profile_id"}` (Bodies bis 16 MB). `204`; `404`, wenn die Prüfung abgelaufen ist oder zu einem anderen Agenten gehört. |
 | `GET` | `/api/agent/commands?key=…&wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Für einen Agenten eingereihte Befehle (Container-Neustart oder -Update), bis zu `wait` Sekunden gehalten, wenn nichts aussteht. Nicht zum manuellen Aufruf gedacht. `key` allein beweist nichts — er ist öffentlich —, daher muss ein gebundener Rechner zusätzlich sein Bindungsgeheimnis vorlegen; sonst `403`, was verhindert, dass ein Rechner die Befehle eines anderen nimmt. |
 | `POST` | `/api/agent/commands/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | Fortschritt und Ergebnis eines Befehls, vom Agenten gemeldet. `result` wird auf die letzten 4 KB gekürzt, mit `[truncated by the server, beginning dropped]` am Anfang, wenn das geschieht. |
-| `GET` | `/api/relays` | Sitzung | Jedes Agent-Gerät als mögliches Relay: `id`, `name`, `site`, `relay` (als `relay: true` deklariert), `last_seen_at`, `relayed` (darüber erreichte Geräte). Relays zuerst, dann nach Name. |
+| `GET` | `/api/relays` | Sitzung | Jeder Agent-Monitor als mögliches Relay: `id`, `name`, `site`, `relay` (als `relay: true` deklariert), `last_seen_at`, `relayed` (darüber erreichte Monitore). Relays zuerst, dann nach Name. |
 
 ```json
 {
@@ -804,21 +804,21 @@ für Änderungen den Scope `write`. Siehe [E-Mail-Berichte](../using/reports.md)
 }
 ```
 
-## Container und Befehle (Agent-Geräte) {#containers-and-commands-agent-devices}
+## Container und Befehle (Agent-Monitore) {#containers-and-commands-agent-devices}
 
 Aktionen auf den Containern eines Rechners, auf dem der Agent läuft. Jede Route antwortet `404`,
-wenn das Gerät kein Ziel vom Typ `agent` ist.
+wenn der Monitor kein Ziel vom Typ `agent` ist.
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/targets/{id}/agent` | Der Rechner, wie sein Agent ihn zuletzt beschrieben hat: `hostname`, `os`, `os_version`, `arch`, `agent_version`, `commands_supported`, `relay`, `site`, `relayed` (über diesen Agenten erreichte Geräte), `last_seen_at`, `binding`, `bound`, `bound_at`, `rebind_until`. `404`, bis ein Agent gemeldet hat. `commands_supported` ist nur `true`, wenn der Agent erklärt hat, dass er Befehle abruft (`commands: true`, der Standard aktueller Agenten); ein älterer Agent oder einer mit `commands: false` ergibt `false`. `binding` ist `bound`, `pending` (das Binary kann gebunden werden und wird es bei seinem nächsten Batch) oder `unsupported` (ein Agent, der älter als die Bindung ist: neu installieren). |
+| `GET` | `/api/targets/{id}/agent` | Der Rechner, wie sein Agent ihn zuletzt beschrieben hat: `hostname`, `os`, `os_version`, `arch`, `agent_version`, `commands_supported`, `relay`, `site`, `relayed` (über diesen Agenten erreichte Monitore), `last_seen_at`, `binding`, `bound`, `bound_at`, `rebind_until`. `404`, bis ein Agent gemeldet hat. `commands_supported` ist nur `true`, wenn der Agent erklärt hat, dass er Befehle abruft (`commands: true`, der Standard aktueller Agenten); ein älterer Agent oder einer mit `commands: false` ergibt `false`. `binding` ist `bound`, `pending` (das Binary kann gebunden werden und wird es bei seinem nächsten Batch) oder `unsupported` (ein Agent, der älter als die Bindung ist: neu installieren). |
 | `POST` | `/api/targets/{id}/agent/rebind` | Admin. Öffnet ein einstündiges Fenster, in dem sich dieser Rechner mit einem gültigen Enrollment-Token erneut binden kann — der Weg zurück, nachdem eine Neuinstallation das Geheimnis des Agenten mitgenommen hat. `{"rebind_until", "minutes"}`. Das Fenster schließt sich, sobald es genutzt wird, und das alte Geheimnis funktioniert nicht mehr. `404`, bis ein Agent gemeldet hat. |
 | `GET` | `/api/targets/{id}/containers` | Jeder Container aus dem letzten Batch: `name`, `image`, `up`, `health`, `restart_count`, `uptime_seconds`, `image_age_seconds`, `update_available`, `policy`, `last_command`. |
 | `PUT` | `/api/targets/{id}/containers/{name}/policy` | `{"auto_restart": bool, "auto_update": bool, "prune_old_image": bool, "only_in_maintenance": bool}`. Jedes Feld ist optional: Ein fehlendes Feld behält seinen gespeicherten Wert. Liefert die vollständige Richtlinie. |
 | `POST` | `/api/targets/{id}/containers/{name}/restart` | Einen Neustart einreihen. `201` mit dem Befehl. `404`, wenn `name` nicht im Inventar des Agenten steht; `409`, wenn derselbe Befehl bereits eingereiht ist oder läuft oder wenn der Agent keine Befehle ausführen kann (siehe `commands_supported`). |
 | `POST` | `/api/targets/{id}/containers/{name}/update` | Ein Update einreihen; optional `{"prune": bool}` (standardmäßig die Richtlinie). Dieselben Statuscodes wie beim Neustart. |
 | `GET` | `/api/targets/{id}/commands` | Die letzten 20 Befehle, neueste zuerst: `id`, `kind` (`container.restart`, `container.update`), `args`, `status`, `requested_by` (ein Benutzer oder `policy`), `created_at`, `started_at`, `finished_at`, `result`. |
-| `DELETE` | `/api/targets/{id}/commands/{command_id}` | Einen eingereihten Befehl abbrechen. `204`; `409`, sobald der Agent ihn aufgenommen hat oder wenn er bereits abgeschlossen ist; `404`, wenn er nicht zu diesem Gerät gehört. |
+| `DELETE` | `/api/targets/{id}/commands/{command_id}` | Einen eingereihten Befehl abbrechen. `204`; `409`, sobald der Agent ihn aufgenommen hat oder wenn er bereits abgeschlossen ist; `404`, wenn er nicht zu diesem Monitor gehört. |
 
 `status` geht `queued → running → done | failed`. Zwei weitere Endzustände existieren: `cancelled` (eine
 Person hat den Befehl zurückgezogen) und `expired` (der Server hat nach zehn Minuten aufgegeben, weil
@@ -828,9 +828,9 @@ Befehl blockiert einen neuen nie länger als das.
 
 ## Proxmox-VE-Gäste {#proxmox-ve-guests}
 
-Die Zeilen des Panels **Gäste** eines Proxmox-VE-Geräts, aus der letzten Prüfung im Metrikspeicher
-zusammengesetzt (vier Sofortabfragen, vom Hypervisor wird nichts abgefragt). `404`, wenn das Gerät
-nicht existiert, `400`, wenn es kein Ziel vom Typ `proxmox` ist.
+Die Zeilen des Panels **Gäste** eines Proxmox-VE-Monitors, aus der letzten Prüfung im Metrikspeicher
+zusammengesetzt (vier Sofortabfragen, vom Hypervisor wird nichts abgefragt). `404`, wenn der Monitor
+nicht existiert, `400`, wenn er kein Ziel vom Typ `proxmox` ist.
 
 | Methode | Route | Zweck |
 |---|---|---|
@@ -853,7 +853,7 @@ nicht existiert, `400`, wenn es kein Ziel vom Typ `proxmox` ist.
 
 ## Proxmox-VE-Knoten und Ceph {#proxmox-ve-nodes-and-ceph}
 
-Die Abschnitte **Knoten** und **Ceph** derselben Geräteseite, aus derselben letzten Prüfung gelesen.
+Die Abschnitte **Knoten** und **Ceph** derselben Monitorseite, aus derselben letzten Prüfung gelesen.
 Dieselben Statuscodes wie oben.
 
 | Methode | Route | Zweck |
@@ -863,8 +863,8 @@ Dieselben Statuscodes wie oben.
 
 ## Proxmox Backup Server {#proxmox-backup-server}
 
-Die Panels eines Geräts `pbs`, aus der letzten Prüfung gelesen (vom Server wird nur das Tasklog
-abgefragt). `404`, wenn das Gerät nicht existiert, `400`, wenn es kein Ziel vom Typ `pbs` ist.
+Die Panels eines Monitors `pbs`, aus der letzten Prüfung gelesen (vom Server wird nur das Tasklog
+abgefragt). `404`, wenn der Monitor nicht existiert, `400`, wenn er kein Ziel vom Typ `pbs` ist.
 
 | Methode | Route | Zweck |
 |---|---|---|
@@ -885,7 +885,7 @@ abgefragt). `404`, wenn das Gerät nicht existiert, `400`, wenn es kein Ziel vom
 
 | Methode | Route | Zweck |
 |---|---|---|
-| `GET` | `/api/targets/{id}/synology` | Übersicht eines Geräts `synology` aus der letzten Prüfung: `system` (Modell, DSM-Version, Laufzeit, Temperatur, CPU, Speicher), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) und `sampled_at`. `404`, wenn das Gerät nicht existiert, `400`, wenn es kein Synology ist. |
+| `GET` | `/api/targets/{id}/synology` | Übersicht eines Monitors `synology` aus der letzten Prüfung: `system` (Modell, DSM-Version, Laufzeit, Temperatur, CPU, Speicher), `volumes` (`name`, `fs_type`, `raid_type`, `status`, `severity`, `total_bytes`, `used_bytes`), `disks` (`model`, `serial`, `kind`, `ssd`, `status`, `smart_status`, `temperature_celsius`, `size_bytes`, `remaining_life_percent`, …) und `sampled_at`. `404`, wenn der Monitor nicht existiert, `400`, wenn es kein Synology ist. |
 | `GET` | `/api/targets/{id}/synology/abb` | Active Backup for Business: `tasks` und `devices` — ein Bericht pro geschütztem Gerät mit seinem gelernten Rhythmus in `assessment` (`state`, `last_success_s`, `typical_interval_s`, 30-Tage-Zahlen). |
 
 ## Heartbeats (Push-Monitore) {#heartbeats-push-monitors}
@@ -893,7 +893,7 @@ abgefragt). `404`, wenn das Gerät nicht existiert, `400`, wenn es kein Ziel vom
 | Methode | Route | Auth | Zweck |
 |---|---|---|---|
 | `GET` oder `POST` | `/api/push/{token}` | keine (das Token) | Der Aufruf, den ein Job bei jedem Lauf macht. Optional `?status=up\|down&msg=…` (Uptime-Kuma-kompatibel). `204` leer bei Erfolg, `404` bei unbekanntem Token, `400` bei einem anderen `status`, `429` mit `Retry-After` über sechzig Aufrufe pro Minute und Token hinaus. Siehe [Heartbeat](../devices/push.md). |
-| `GET` | `/api/targets/{id}/push` | Sitzung | Der Monitor eines Geräts `push`: `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Beim ersten Lesen erstellt. `400`, wenn das Gerät kein Heartbeat ist. |
+| `GET` | `/api/targets/{id}/push` | Sitzung | Der Heartbeat-Zustand eines Monitors `push`: `token`, `path` (`/api/push/<token>`), `last_seen_at`, `last_seen_age_secs`, `last_status`, `last_message`, `received_total`, `expected_interval_secs`, `grace_secs`, `settings_error`, `verdict` (`waiting`, `on_time`, `missed`, `reported_down`). Beim ersten Lesen erstellt. `400`, wenn der Monitor kein Heartbeat ist. |
 | `POST` | `/api/targets/{id}/push/regenerate` | Admin | Neues Token; die vorherige URL antwortet ab da `404`. Derselbe Body wie beim Lesen. |
 
 ## Assistenten (MCP) {#assistants-mcp}

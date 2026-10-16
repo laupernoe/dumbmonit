@@ -3,7 +3,7 @@
 Eleven monitors watch **services** rather than equipment, Uptime Kuma style: a
 web page, a port, a DNS name, a host, a certificate, a time server, a mail
 relay, a database, an MQTT broker, a WebSocket endpoint. Each service gets a
-history bar, a response time and an availability percentage on its device
+history bar, a response time and an availability percentage on its monitor
 page.
 
 The last five go further than opening a connection: they begin a real session in
@@ -14,8 +14,8 @@ read the server's clock without a session.
 
 ## Coming from Uptime Kuma
 
-**Monitors > Add a monitor > Import from Uptime Kuma** (administrators) reads the
-backup file of Uptime Kuma 1.x (**Settings > Backup > Export**, a `.json` file of
+**Monitors > ⋯ > Import from Uptime Kuma**, also on **Monitors > Add a
+monitor** (administrators), reads the backup file of Uptime Kuma 1.x (**Settings > Backup > Export**, a `.json` file of
 at most 4 MB). Uptime Kuma 2.x no longer has a backup export, so there is no
 file to import from it. Nothing is created before you have seen the preview:
 what will be created, and what is skipped with the reason.
@@ -28,19 +28,19 @@ what will be created, and what is skipped with the reason.
 | DNS | [DNS](#dns): record type and resolver |
 | Push | [Heartbeat](push.md), expected interval = the monitor's interval. It gets a **new** push URL: update the job that calls it |
 | Group | A folder (nested groups become `Group/Subgroup`) |
-| Tags | Device tags: `name=value`, or `name=true` for a tag without a value |
+| Tags | Monitor tags: `name=value`, or `name=true` for a tag without a value |
 | Paused | Created disabled |
 
 The name and interval are kept (10 s minimum). Everything else is skipped and
 listed: Docker and the other types without an equivalent, and monitors in
-upside-down mode. A device already monitored (same type and address) is skipped
+upside-down mode. An entry already monitored (same type and address) is skipped
 too, so the same file can be imported twice safely.
 
 **Not imported:** notifications (set up your channels in
 [Notifications](../notifications.md); the preview tells you how many the file
 held), and credentials, custom headers and request bodies, which are never
 read into DumbMonit. If a monitored site needs a login or a header, add it on the
-device afterwards.
+monitor afterwards.
 
 ## How service state works
 
@@ -51,7 +51,7 @@ makes an availability percentage possible: `avg_over_time(dumbmonit_probe_succes
 
 | Situation | What happens |
 |---|---|
-| Invalid option or address, ICMP sockets not allowed (see Ping) | Configuration error: nothing is written, the device page shows the error, no "down" alert. |
+| Invalid option or address, ICMP sockets not allowed (see Ping) | Configuration error: nothing is written, the monitor page shows the error, no "down" alert. |
 | Connection refused, timeout, TLS refused, `500`, keyword absent, total packet loss, password refused, query failed | `probe_success = 0`: the outage is recorded, dated and counted. |
 | All good | `probe_success = 1`. |
 
@@ -544,7 +544,7 @@ For freshness, watch the automation that consumes it, or use a heartbeat.
 | `topic` | Topic | *(empty)* | Topic the check subscribes to. Empty: it only connects, which already tells you the broker is alive and accepts your account. |
 | `expect_message` | Expect a retained message | `false` | A message must arrive on that topic before the timeout. Only retained messages arrive right away: a topic that is merely published to from time to time will look silent. |
 | `expect` | Expected content | *(empty)* | Text that message must contain. Filling it in implies expecting a message. |
-| `client_id` | Client identifier | *(derived)* | Name announced to the broker. The default derives from the device, so two checks never disconnect each other. |
+| `client_id` | Client identifier | *(derived)* | Name announced to the broker. The default derives from the monitor, so two checks never disconnect each other. |
 | `server_name` | Server name (SNI) | *(the host)* | Domain name announced to the broker and checked in the certificate. Set it when the address is an IP. |
 | `insecure_tls` | Accept an unverifiable certificate | `false` | An unverifiable chain no longer counts as a failure: the expiry date is still recorded. |
 | `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |

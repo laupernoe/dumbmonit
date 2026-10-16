@@ -39,8 +39,8 @@ SecurityGateway 12.5 或更高版本上,其 REST API 公布的版本和性能
 
 **部分故障仍算作一次成功的检查。** 某个服务停止会让该服务的
 `service_up` 为 0,其他服务仍会被正常测量。只有当没有任何服务、
-API 也完全没有应答时,该设备才算*不可达*。密钥被拒绝属于配置
-错误,会显示在设备页面上,不会发送通知。
+API 也完全没有应答时,该监控项才算*不可达*。密钥被拒绝属于配置
+错误,会显示在监控项页面上,不会发送通知。
 
 **不会读取的内容。** 许可证及其到期时间、磁盘空间和控制台的
 消息统计,都未在 REST API 的已发布文档中描述。要监控
@@ -49,11 +49,11 @@ SecurityGateway Windows 服务本身以及服务器的磁盘,请在服务器上
 
 适用的[内置规则](../alerting/rules.md#mdaemon-and-securitygateway):
 SecurityGateway 服务宕机、SecurityGateway API 未应答、
-SecurityGateway 投递队列增长,以及设备不可达。
+SecurityGateway 投递队列增长,以及监控项不可达。
 
-## 设备页面 {#the-device-page}
+## 监控项页面 {#the-device-page}
 
-SecurityGateway 设备在图表上方会显示一个**邮件服务**面板,读取
+SecurityGateway 监控项在图表上方会显示一个**邮件服务**面板,读取
 自上次存储的测量数据:打开该页面从不会连接到网关。它列出每个被
 监控的服务及其端口、一个状态词和一种颜色(应答中、已宕机)以及
 其响应时间、版本,以及在配置了 API 密钥时,每个性能计数器的
@@ -67,7 +67,7 @@ SecurityGateway 设备在图表上方会显示一个**邮件服务**面板,读�
     smtp,web_https
     ```
 
-2. 若要同时读取性能计数器,需要 SecurityGateway 12.5 或更高版本。创建一个按如下方式命名的专用账户,使用一个不在任何其他地方使用的较长密码,并赋予它 Domain Administrator 角色。如果设备页面上的计数器仍为空,说明你的版本把它们保留给 Global Administrator 角色,该账户需要改用那个角色。
+2. 若要同时读取性能计数器,需要 SecurityGateway 12.5 或更高版本。创建一个按如下方式命名的专用账户,使用一个不在任何其他地方使用的较长密码,并赋予它 Domain Administrator 角色。如果监控项页面上的计数器仍为空,说明你的版本把它们保留给 Global Administrator 角色,该账户需要改用那个角色。
 
     ```
     dumbmonit
