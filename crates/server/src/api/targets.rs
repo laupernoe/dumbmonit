@@ -822,7 +822,12 @@ async fn probe_through_relay(
             None => {
                 // Les mesures sont déjà rangées par le compte rendu ; on ne fait
                 // que les décrire à l'appelant.
-                let prepared = relay::prepare(&state.collectors, &target, outcome.samples);
+                let prepared = relay::prepare(
+                    &state.collectors,
+                    &target,
+                    outcome.samples,
+                    chrono::Utc::now().timestamp_millis(),
+                );
                 Ok(Json(ProbeReport {
                     sample_count: prepared.len(),
                     series: prepared.iter().map(|s| s.series_key()).collect(),

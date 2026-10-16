@@ -22,6 +22,16 @@ pub mod relay;
 pub mod synology_history;
 pub mod truenas_history;
 
+/// Antériorité maximale d'un échantillon accepté.
+///
+/// Un agent rattrape au plus quelques heures de coupure. Au-delà, l'horloge de la
+/// machine est fausse, et écrire ces points polluerait durablement les graphes
+/// d'une période déjà passée.
+pub(crate) const MAX_BACKFILL_MS: i64 = 30 * 24 * 3_600 * 1_000;
+
+/// Avance maximale tolérée sur l'horloge du serveur.
+pub(crate) const MAX_SKEW_AHEAD_MS: i64 = 3_600 * 1_000;
+
 pub use dumbmonit_collectors::{ActiveDirectoryCollector, activedirectory};
 pub use dumbmonit_collectors::{
     AdguardCollector, MikrotikCollector, NutCollector, PiholeCollector, adguard, mikrotik, nut,
