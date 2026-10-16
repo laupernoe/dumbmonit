@@ -1222,6 +1222,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+        "502": { $ref: "#/components/responses/BadGateway" }
 
   /api/metrics/query_range:
     get:
@@ -1261,6 +1262,7 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
+        "502": { $ref: "#/components/responses/BadGateway" }
 
   # ---------------------------------------------------------------- alertes
   /api/alerts:
@@ -4904,6 +4906,13 @@ components:
         RateLimit-Limit: { $ref: "#/components/headers/RateLimitLimit" }
         RateLimit-Remaining: { $ref: "#/components/headers/RateLimitRemaining" }
         RateLimit-Reset: { $ref: "#/components/headers/RateLimitReset" }
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    BadGateway:
+      description: >-
+        A service the server depends on (the metrics database) is unreachable,
+        too slow or answered with an error.
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }

@@ -158,11 +158,7 @@ impl Victoria {
             .context("interrogation de VictoriaMetrics")?;
 
         if !response.status().is_success() {
-            let status = response.status();
-            let detail = response.text().await.unwrap_or_default();
-            return Err(
-                QueryRejected(format!("query refused ({status}): {}", detail.trim())).into()
-            );
+            return Err(refusal(response).await);
         }
 
         let parsed: QueryResponse =
@@ -306,11 +302,7 @@ impl Victoria {
             .context("interrogation de VictoriaMetrics")?;
 
         if !response.status().is_success() {
-            let status = response.status();
-            let detail = response.text().await.unwrap_or_default();
-            return Err(
-                QueryRejected(format!("query refused ({status}): {}", detail.trim())).into()
-            );
+            return Err(refusal(response).await);
         }
 
         let parsed: SeriesResponse =
@@ -348,17 +340,23 @@ impl Victoria {
             .context("interrogation de VictoriaMetrics")?;
 
         if !response.status().is_success() {
-            let status = response.status();
-            let detail = response.text().await.unwrap_or_default();
-            return Err(
-                QueryRejected(format!("query refused ({status}): {}", detail.trim())).into()
-            );
+            return Err(refusal(response).await);
         }
 
         let parsed: InstantResponse =
             response.json().await.context("unreadable VictoriaMetrics response")?;
         Ok(parsed.data.result)
     }
+}
+
+/// Erreur d'une réponse non 2xx de VictoriaMetrics. Seul un 4xx est un refus de
+/// la requête ([`QueryRejected`]) : un 5xx (surcharge, requête trop longue côté
+/// serveur, stockage indisponible) est une panne du backend, pas de l'appelant.
+async fn refusal(response: reqwest::Response) -> anyhow::Error {
+    let status = response.status();
+    let detail = response.text().await.unwrap_or_default();
+    let message = format!("query refused ({status}): {}", detail.trim());
+    if status.is_client_error() { QueryRejected(message).into() } else { anyhow::anyhow!(message) }
 }
 
 /// VictoriaMetrics a répondu, mais refuse la requête (MetricsQL invalide, plage
@@ -538,6 +536,21 @@ mod tests {
     #[test]
     fn the_fresh_latency_offset_is_accepted_by_victoriametrics() {
         assert_eq!(FRESH_LATENCY_OFFSET, "1ms");
+    }
+
+    /// Un 4xx est la faute de la requête ; un 5xx (VictoriaMetrics surchargé)
+    /// est une panne du backend et ne doit pas finir en 400.
+    #[tokio::test]
+    async fn only_a_client_error_from_victoriametrics_is_a_rejected_query() {
+        let reply = |status: u16| {
+            reqwest::Response::from(
+                axum::http::Response::builder().status(status).body("détail").unwrap(),
+            )
+        };
+        let rejected = refusal(reply(422)).await;
+        assert!(rejected.downcast_ref::<QueryRejected>().is_some(), "{rejected:#}");
+        let overloaded = refusal(reply(503)).await;
+        assert!(overloaded.downcast_ref::<QueryRejected>().is_none(), "{overloaded:#}");
     }
 
     /// Un segment reste un segment : ni `..`, ni `%2e%2e`, ni `?` ne sortent
