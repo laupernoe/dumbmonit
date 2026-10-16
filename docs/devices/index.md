@@ -46,6 +46,8 @@ form always matches what this version can monitor.
 | [Apache httpd](apache.md) | `apache` | none, or basic auth | Web server: busy/idle workers, scoreboard by state, request and byte rates |
 | [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |
 | [Domain expiry](domain.md) | `domain` | none | Registered domain over RDAP: days before expiry, hold, redemption period, registrar |
+| [Mail server reputation](mail_blacklist.md) | `mail_blacklist` | none, or Spamhaus DQS key | Mail domain or server address against the DNS blocklists (Spamhaus, Barracuda, SpamCop…), reverse DNS, SPF, DMARC, delisting links |
+| [IP range blocklist](ip_blacklist.md) | `ip_blacklist` | none, or Spamhaus DQS key | Every address of a public IPv4 range up to /24 against the DNS blocklists, with delisting links |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
 | [Active Directory](activedirectory.md) | `activedirectory` | username/password (plain domain user) | Windows domain over LDAPS: domain controllers and FSMO roles, privileged group members, password policy, security findings |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | username/password (Veeam Backup Viewer) | Backup server: failed jobs, failed sessions, repositories filling up, license |
