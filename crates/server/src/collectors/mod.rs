@@ -96,7 +96,7 @@ pub fn builtin(
 
     let mut registry = Registry::remote(config.probe_timeout);
 
-    let snmp = SnmpCollector::new().with_request_timeout(config.probe_timeout);
+    let snmp = SnmpCollector::new().with_probe_budget(config.probe_timeout);
     let snmp = match crate::packs::snmp_catalog(snmp.catalog(), packs) {
         Some(catalog) => snmp.with_catalog(Arc::new(catalog)),
         None => snmp,

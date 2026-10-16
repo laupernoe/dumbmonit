@@ -144,7 +144,7 @@ impl Registry {
     /// ni celui des agents (qui lisent la base du serveur).
     pub fn remote(request_timeout: Duration) -> Self {
         let mut registry = Self::new();
-        registry.register(Arc::new(SnmpCollector::new().with_request_timeout(request_timeout)));
+        registry.register(Arc::new(SnmpCollector::new().with_probe_budget(request_timeout)));
         registry.register(Arc::new(ProxmoxCollector::new()));
         registry.register(Arc::new(PbsCollector::new()));
         registry.register(Arc::new(PmgCollector::new()));
