@@ -5,6 +5,29 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Mail server reputation** (`mail_blacklist`). Enter a mail domain or a
+  server's public address: DumbMonit checks the addresses of its MX and of
+  the domain against Spamhaus ZEN, Barracuda, SpamCop, Mailspike,
+  UCEPROTECT Level 1, PSBL and SpamRATS, and the domain against Spamhaus DBL,
+  SURBL and URIBL. Every listing shows the list's code, its reason and a
+  direct link to its lookup and removal page. Gmail, Outlook.com and Yahoo
+  publish no list that can be queried: the monitor checks what they weigh
+  instead (reverse DNS that resolves back, SPF, DMARC) and links to their
+  sender tools.
+- **IP range blocklist** (`ip_blacklist`). Every address of a public IPv4
+  range up to a /24, against the same address lists, with the number of
+  listed addresses and a removal link for each listing. Larger ranges and
+  IPv6 ranges are refused with a clear message.
+- Both are asked every 6 hours by default, at 10 queries per second, in the
+  background. A Spamhaus refusal (public resolver, `127.255.255.254`) is a
+  configuration error, never a listing, and a list that does not answer is
+  unknown, never clean; an optional Spamhaus DQS key (stored encrypted)
+  lifts the refusal. Four built-in rules: listed on a major blocklist
+  (critical), listed on another blocklist, reverse DNS mismatch, SPF or
+  DMARC missing.
+
 ## 0.9.1 — 2026-10-16
 
 ### Changed

@@ -552,6 +552,17 @@ Les séries portent `router`, `service`, `server`, `upstream`, `host` ou
 | Domaine en rachat | Le domaine est en `redemptionPeriod`, `pendingDelete` ou `pendingRestore` : il a expiré (`dumbmonit_domain_redemption`). | > 0 | 30 min | Avertissement (`critical`) | 12 h |
 | Réponse DNS changée | La réponse d'une vérification DNS avec *Alerter quand la réponse change* diffère de la précédente (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Se résout d'elle-même une heure plus tard. | > 0 | 1 min | Avis (`warning`) | 24 h |
 
+### Listes noires DNS {#dns-blocklists}
+
+[Réputation du serveur mail](../devices/mail_blacklist.md) et [liste noire d'une plage d'IP](../devices/ip_blacklist.md). Les listes ne sont interrogées que toutes les 6 heures ; le dernier résultat est réécrit à chaque sonde, d'où un maintien court. La page du moniteur donne le lien de retrait de chaque inscription.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Listé sur une liste noire majeure | Une adresse ou le domaine figure sur Spamhaus (ZEN ou DBL), Barracuda ou SpamCop : une grande part de son courrier est refusée (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Avertissement (`critical`) | 24 h |
+| Listé sur une liste noire | Une adresse ou le domaine figure sur une liste plus modeste : Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL ou URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Avis (`warning`) | 24 h |
+| DNS inverse du serveur mail incohérent | Une adresse du serveur mail n'a pas de DNS inverse, ou son nom ne revient pas vers elle : Gmail, Outlook.com et Yahoo refusent ou classent ce courrier en indésirable (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 min | Avis (`warning`) | 24 h |
+| SPF ou DMARC absent | Le domaine n'a pas d'enregistrement SPF (ou en a plusieurs), ou pas d'enregistrement DMARC : Gmail et Yahoo exigent les deux des envois en nombre (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 min | Avis (`warning`) | 24 h |
+
 ### Changements de site web {#website-changes}
 
 Voir [Changements de site web](../devices/webchange.md). La page de

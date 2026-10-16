@@ -123,6 +123,8 @@ nav:
       - Apache httpd: devices/apache.md
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
+      - Mail server reputation: devices/mail_blacklist.md
+      - IP range blocklist: devices/ip_blacklist.md
       - Kubernetes / k3s: devices/kubernetes.md
       - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
