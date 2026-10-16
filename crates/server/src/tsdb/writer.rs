@@ -6,8 +6,8 @@
 use std::time::Duration;
 
 use dumbmonit_proto::Sample;
-use tokio::sync::mpsc;
-use tracing::{debug, error, warn};
+use tokio::sync::{mpsc, oneshot};
+use tracing::{debug, error, info, warn};
 
 use super::Victoria;
 use crate::stats::stats;
@@ -36,6 +36,11 @@ const CHANNEL_CAPACITY: usize = 1024;
 #[derive(Clone)]
 pub struct SampleSink {
     tx: mpsc::Sender<Vec<Sample>>,
+    /// Demandes de vidage immédiat, acquittées une fois l'envoi tenté. Les clones
+    /// du point d'entrée vivent dans l'état partagé des tâches de fond : la
+    /// fermeture du canal principal n'arrive donc jamais avant l'arrêt du runtime,
+    /// et ne peut pas servir de signal d'arrêt.
+    flush_tx: mpsc::Sender<oneshot::Sender<()>>,
 }
 
 impl SampleSink {
@@ -64,6 +69,17 @@ impl SampleSink {
             }
         }
     }
+
+    /// Vide le tampon tout de suite et attend que l'envoi ait été tenté, au plus
+    /// `timeout`. Appelée à l'arrêt du serveur, avant celui de VictoriaMetrics :
+    /// sans elle, la fin du runtime annule la tâche d'écriture et les échantillons
+    /// encore en tampon sont perdus. Renvoie `false` si l'acquittement n'est pas
+    /// arrivé à temps (tâche disparue ou VictoriaMetrics trop lent).
+    pub async fn flush(&self, timeout: Duration) -> bool {
+        let (ack, done) = oneshot::channel();
+        let attempt = async { self.flush_tx.send(ack).await.is_ok() && done.await.is_ok() };
+        tokio::time::timeout(timeout, attempt).await.unwrap_or(false)
+    }
 }
 
 /// Démarre la tâche d'écriture et renvoie le point d'entrée à distribuer.
@@ -78,6 +94,7 @@ pub fn spawn_writer_with(
     flush_size: usize,
 ) -> SampleSink {
     let (tx, mut rx) = mpsc::channel::<Vec<Sample>>(CHANNEL_CAPACITY);
+    let (flush_tx, mut flush_rx) = mpsc::channel::<oneshot::Sender<()>>(4);
     let flush_at = flush_size.max(1);
 
     tokio::spawn(async move {
@@ -103,12 +120,22 @@ pub fn spawn_writer_with(
                         }
                     }
                 }
+                Some(ack) = flush_rx.recv() => {
+                    // Les lots déjà déposés font partie du vidage demandé.
+                    while let Ok(samples) = rx.try_recv() {
+                        buffer.extend(samples);
+                    }
+                    let pending = buffer.len();
+                    flush(&victoria, &mut buffer).await;
+                    info!(pending, left = buffer.len(), "write buffer flushed on request");
+                    let _ = ack.send(());
+                }
                 _ = ticker.tick() => flush(&victoria, &mut buffer).await,
             }
         }
     });
 
-    SampleSink { tx }
+    SampleSink { tx, flush_tx }
 }
 
 async fn flush(victoria: &Victoria, buffer: &mut Vec<Sample>) {
@@ -155,7 +182,8 @@ mod tests {
     #[tokio::test]
     async fn send_drops_without_blocking_when_the_buffer_is_full() {
         let (tx, _rx) = mpsc::channel::<Vec<Sample>>(1);
-        let sink = SampleSink { tx };
+        let (flush_tx, _flush_rx) = mpsc::channel(1);
+        let sink = SampleSink { tx, flush_tx };
 
         // Premier lot : il prend l'unique place, personne ne le vide derrière.
         sink.send(batch()).await;
@@ -174,11 +202,56 @@ mod tests {
     async fn send_drops_without_blocking_when_the_buffer_is_closed() {
         let (tx, rx) = mpsc::channel::<Vec<Sample>>(4);
         drop(rx);
-        let sink = SampleSink { tx };
+        let (flush_tx, _flush_rx) = mpsc::channel(1);
+        let sink = SampleSink { tx, flush_tx };
         let before = stats().snapshot().samples_dropped;
 
         let result = tokio::time::timeout(Duration::from_millis(200), sink.send(batch())).await;
         assert!(result.is_ok(), "send() a attendu alors que le canal était fermé");
         assert_eq!(stats().snapshot().samples_dropped, before + 1);
+    }
+
+    /// L'arrêt du serveur ne ferme jamais le canal (des clones restent dans
+    /// l'état partagé) : seul un vidage explicite garantit que le tampon atteint
+    /// VictoriaMetrics avant l'arrêt du runtime. Échéance d'une heure : seul le
+    /// vidage demandé peut avoir envoyé le lot.
+    #[tokio::test]
+    async fn flush_writes_the_buffer_while_other_clones_are_alive() {
+        use std::sync::Arc;
+        use std::sync::atomic::{AtomicUsize, Ordering};
+
+        let received = Arc::new(AtomicUsize::new(0));
+        let counter = received.clone();
+        let app = axum::Router::new().route(
+            "/api/v1/import/prometheus",
+            axum::routing::post(move |body: String| {
+                let counter = counter.clone();
+                async move {
+                    counter.fetch_add(body.lines().count(), Ordering::SeqCst);
+                    axum::http::StatusCode::NO_CONTENT
+                }
+            }),
+        );
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let address = listener.local_addr().unwrap();
+        tokio::spawn(async move { axum::serve(listener, app).await.unwrap() });
+
+        let victoria = Victoria::new(format!("http://{address}")).unwrap();
+        let sink = spawn_writer_with(victoria, Duration::from_secs(3600), DEFAULT_FLUSH_SIZE);
+        // Un clone qui survit, comme celui de l'état partagé des tâches de fond.
+        let _held = sink.clone();
+        sink.send(batch()).await;
+
+        assert!(sink.flush(Duration::from_secs(5)).await, "vidage non acquitté");
+        assert!(received.load(Ordering::SeqCst) >= 1, "aucun échantillon reçu");
+    }
+
+    /// Sans tâche d'écriture pour répondre, le vidage rend la main à l'échéance.
+    #[tokio::test]
+    async fn flush_gives_up_after_the_timeout() {
+        let (tx, _rx) = mpsc::channel::<Vec<Sample>>(1);
+        let (flush_tx, _flush_rx) = mpsc::channel(1);
+        let sink = SampleSink { tx, flush_tx };
+        assert!(!sink.flush(Duration::from_millis(50)).await);
     }
 }

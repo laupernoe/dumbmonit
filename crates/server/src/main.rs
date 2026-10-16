@@ -63,6 +63,10 @@ type Startup = dumbmonit_server::privileges::Startup;
 #[cfg(not(unix))]
 type Startup = ();
 
+/// Attente maximale du vidage final du tampon d'écriture : assez pour un lot
+/// complet, bien en deçà du délai de grâce laissé au conteneur pour s'arrêter.
+const FINAL_FLUSH_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(5);
+
 async fn run(mut config: Config, startup: Startup) -> Result<()> {
     tokio::fs::create_dir_all(&config.data_dir)
         .await
@@ -204,6 +208,9 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     dumbmonit_server::notify::guard::protect_config(&config).await;
 
     let bind = config.bind;
+    // Gardé pour le vidage final : les clones de l'état partagé restent tenus par
+    // les tâches de fond jusqu'à la fin du runtime.
+    let final_sink = sink.clone();
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
 
     scheduler::spawn(state.clone());
@@ -235,8 +242,12 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     .await
     .context("HTTP server error")?;
 
-    // VictoriaMetrics s'arrête après nous : les derniers lots du tampon d'écriture
-    // ont ainsi une chance d'être acceptés.
+    // Vidage explicite du tampon d'écriture, avant l'arrêt de VictoriaMetrics :
+    // la tâche d'écriture serait sinon annulée avec le runtime, et les derniers
+    // échantillons perdus à chaque arrêt du conteneur.
+    if !final_sink.flush(FINAL_FLUSH_TIMEOUT).await {
+        warn!(timeout = ?FINAL_FLUSH_TIMEOUT, "final write flush not confirmed");
+    }
     if let Some(vm) = embedded_vm {
         vm.stop().await;
     }
