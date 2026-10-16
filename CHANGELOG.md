@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- **Alert notifications.** An alert whose condition came back right after it
+  resolved fired again without telling anyone; it is now announced as a new
+  alert. A resolution is announced even when the alert has meanwhile been
+  suppressed by a parent or silenced, as long as its firing was announced. The
+  handoff to the escalation channel is no longer lost when the first
+  announcement left late (after a maintenance window) or when the severity
+  escalation fell due in the same cycle.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8
