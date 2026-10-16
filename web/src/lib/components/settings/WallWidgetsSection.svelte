@@ -261,7 +261,7 @@
 		{:else}
 			<div class="space-y-6">
 				<Field label={m.settings_widgets_rotate()} for="widgets-rotate" help={m.settings_widgets_rotate_help()}>
-					<input id="widgets-rotate" type="number" class="input w-32" min="5" max="300" step="1" bind:value={form.rotate_seconds} />
+					<input id="widgets-rotate" type="number" class="input max-w-32" min="5" max="300" step="1" bind:value={form.rotate_seconds} />
 				</Field>
 
 				<!-- Weather -->
@@ -270,7 +270,7 @@
 						get: () => form.weather.enabled,
 						set: (v) => (form.weather.enabled = v)
 					})}
-					<div class="grid gap-4 sm:grid-cols-[1fr_14rem]">
+					<div class="grid gap-4 sm:grid-cols-[1fr_14rem] items-start">
 						<Field label={m.settings_widgets_weather_search()} for="widgets-place">
 							<div class="flex gap-2">
 								<input
@@ -367,14 +367,14 @@
 						<ul class="flex flex-wrap gap-2">
 							{#each catalog.coins as coin (coin.id)}
 								{@const on = form.crypto.coins.includes(coin.id)}
-								{@render chip(on, saving || (!on && coinsFull), `${coin.symbol} · ${coin.name}`, () => toggleCoin(coin.id))}
+								{@render chip(on, saving || (!on && coinsFull), coin.symbol === coin.name ? coin.symbol : `${coin.symbol} · ${coin.name}`, () => toggleCoin(coin.id))}
 							{/each}
 							{#each customCoins as id (id)}
 								{@render chip(true, saving, id, () => toggleCoin(id))}
 							{/each}
 						</ul>
 					</fieldset>
-					<div class="grid gap-4 sm:grid-cols-2">
+					<div class="grid gap-4 sm:grid-cols-2 items-start">
 						<Field label={m.settings_widgets_crypto_custom()} for="widgets-coin" help={m.settings_widgets_crypto_custom_help()}>
 							<div class="flex gap-2">
 								<input id="widgets-coin" type="text" class="input min-w-0 flex-1 font-mono" maxlength="60" autocomplete="off" placeholder="avalanche-2" bind:value={customCoin} />
@@ -427,7 +427,7 @@
 						get: () => form.fx.enabled,
 						set: (v) => (form.fx.enabled = v)
 					})}
-					<div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_1fr]">
+					<div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_1fr] items-start">
 						<Field label={m.settings_widgets_fx_base()} for="widgets-fx-base">
 							<select id="widgets-fx-base" class="input" bind:value={form.fx.base}>
 								{#each catalog.fx_currencies as code (code)}
@@ -453,7 +453,7 @@
 						get: () => form.cve.enabled,
 						set: (v) => (form.cve.enabled = v)
 					})}
-					<div class="grid gap-4 sm:grid-cols-[1fr_10rem]">
+					<div class="grid gap-4 sm:grid-cols-[1fr_10rem] items-start">
 						<Field label={m.settings_widgets_cve_source()} for="widgets-cve-source">
 							<select id="widgets-cve-source" class="input" bind:value={form.cve.source}>
 								<option value="both">{m.settings_widgets_cve_source_both()}</option>

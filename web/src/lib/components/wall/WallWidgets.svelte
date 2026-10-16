@@ -358,6 +358,7 @@
 		color: var(--c-ink-2);
 	}
 	.foot {
+		margin-top: auto;
 		display: flex;
 		flex-wrap: wrap;
 		justify-content: space-between;
@@ -510,11 +511,16 @@
 	}
 
 	/* Where the deck is in its round. */
+	/* On a pill of its own: legible over any scene. */
 	.dots {
 		display: flex;
 		justify-content: center;
 		gap: 0.375rem;
-		margin-top: 0.5rem;
+		width: fit-content;
+		margin: 0.5rem auto 0;
+		padding: 0.375rem 0.625rem;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--c-surface) 85%, transparent);
 	}
 	.dots li {
 		width: 0.375rem;

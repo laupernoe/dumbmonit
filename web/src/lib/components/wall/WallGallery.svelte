@@ -68,10 +68,10 @@
 					</figcaption>
 				</figure>
 			{/each}
+			{#if pictures.length > 1}
+				<p class="count tnum" aria-hidden="true">{m.wall_gallery_count({ index: active + 1, count: pictures.length })}</p>
+			{/if}
 		</div>
-		{#if pictures.length > 1}
-			<p class="count tnum" aria-hidden="true">{m.wall_gallery_count({ index: active + 1, count: pictures.length })}</p>
-		{/if}
 	</section>
 {/if}
 
@@ -81,6 +81,7 @@
 		max-width: 40rem;
 	}
 	.frame {
+		position: relative;
 		display: grid;
 		aspect-ratio: 16 / 9;
 		overflow: hidden;
@@ -150,11 +151,18 @@
 		-webkit-box-orient: vertical;
 		overflow: hidden;
 	}
+	/* Over the picture, top right, on a dark pill like the caption. */
 	.count {
-		margin-top: 0.375rem;
-		text-align: right;
+		position: absolute;
+		top: 0.75rem;
+		right: 0.75rem;
+		z-index: 1;
+		padding: 0.125rem 0.5rem;
+		border-radius: 999px;
+		background: rgb(0 0 0 / 0.6);
+		color: #fff;
 		font-size: 0.75rem;
-		color: var(--c-ink-2);
+		font-weight: 600;
 	}
 	@media (min-width: 1024px) {
 		.title {
