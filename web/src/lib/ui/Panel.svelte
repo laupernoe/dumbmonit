@@ -21,15 +21,15 @@
 
 <section {id} class={`rounded-[var(--radius-card)] border border-line bg-surface shadow-lift ${className}`}>
 	{#if title || aside}
-		<header class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-5 py-4">
+		<header class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 border-b border-line px-4 py-3 sm:px-5 sm:py-4">
 			<div class="min-w-[min(100%,14rem)] flex-1">
 				{#if title}<h2 class="text-base font-semibold tracking-tight text-ink">{title}</h2>{/if}
-				{#if description}<p class="mt-0.5 text-sm text-ink-2">{description}</p>{/if}
+				{#if description}<p class="mt-0.5 text-sm text-ink-2 max-sm:hidden">{description}</p>{/if}
 			</div>
 			{#if aside}<div class="flex max-w-full shrink-0 flex-wrap items-center gap-x-3">{@render aside()}</div>{/if}
 		</header>
 	{/if}
-	<div class={padded ? 'px-5 py-4' : ''}>
+	<div class={padded ? 'px-4 py-3 sm:px-5 sm:py-4' : ''}>
 		{@render children()}
 	</div>
 </section>

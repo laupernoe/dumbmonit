@@ -439,6 +439,32 @@ textarea.input {
 	}
 }
 
+/* ---------------------------------------------------------------------------
+   Phones: a screen read in a glance, on a small GPU. No entrance cascades, no
+   hover lift (there is no hover), no decorative loops; what is left is short
+   feedback on a single element. The effects components ask `calmMotion()`.
+   --------------------------------------------------------------------------- */
+@media (max-width: 639px) {
+	.rise-in {
+		animation: none;
+	}
+	.faceplate {
+		transition: none;
+	}
+	.faceplate:where(a, button, [data-interactive]):hover {
+		transform: none;
+		box-shadow: var(--shadow-lift);
+		border-color: var(--c-line);
+	}
+	.faceplate:where(a, button, [data-interactive]):active {
+		transform: none;
+		background-color: var(--c-surface-2);
+	}
+	.animate-pulse {
+		animation: none;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.check-draw :where(path, polyline, circle) {
 		stroke-dashoffset: 0;

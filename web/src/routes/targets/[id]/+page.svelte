@@ -537,7 +537,7 @@
 
 <svelte:head><title>{m.devices_target_page_title({ name: target?.name ?? m.devices_target_title_fallback() })}</title></svelte:head>
 
-<nav class="mb-4 text-sm">
+<nav class="mb-4 text-sm max-sm:-mt-1 max-sm:mb-1">
 	<a href="/targets" class="inline-flex min-h-10 items-center gap-1 text-ink-2 hover:text-ink hover:underline sm:min-h-0">{m.devices_target_back()}</a>
 </nav>
 
@@ -559,12 +559,12 @@
 	</div>
 {:else}
 	<!-- Header band: the device's own faceplate, larger. -->
-	<section class="faceplate rise-in overflow-x-clip px-5 py-5 sm:px-6" aria-labelledby="device-name">
-		<div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+	<section class="faceplate rise-in overflow-x-clip px-5 py-5 max-sm:px-4 max-sm:py-4 sm:px-6" aria-labelledby="device-name">
+		<div class="flex flex-col gap-5 max-sm:gap-3 lg:flex-row lg:items-start lg:justify-between">
 			<div class="flex min-w-0 gap-4">
 				<Led {tone} {blink} size="lg" class="mt-2.5" label={STATE_LABEL[stateNow]} />
 				<div class="min-w-0 flex-1">
-					<h1 id="device-name" class="display text-3xl break-words text-ink sm:text-4xl">{target.name}</h1>
+					<h1 id="device-name" class="display text-3xl break-words text-ink max-sm:text-2xl sm:text-4xl">{target.name}</h1>
 					<div class="mt-2.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-ink-2">
 						<span class="inline-flex items-center gap-1.5">
 							<KindIcon kind={target.kind} class="size-4 text-ink-2" />

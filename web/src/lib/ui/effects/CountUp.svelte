@@ -2,9 +2,10 @@
 	/**
 	 * Animated number: counts from the previous value to the new one with an
 	 * exponential ease-out. Tabular figures so the width never jitters.
-	 * Under `prefers-reduced-motion` the value simply swaps.
+	 * Under `prefers-reduced-motion`, and on phones, the value simply swaps.
 	 */
 	import { onMount } from 'svelte';
+	import { calmMotion } from '../motion';
 
 	interface Props {
 		value: number;
@@ -20,8 +21,8 @@
 	let shown = $state(0);
 	let raf: number | null = null;
 	let mounted = false;
-	const reduced = () =>
-		typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	// Phones and reduced motion: the figure simply swaps.
+	const reduced = () => calmMotion();
 
 	function animateTo(target: number) {
 		if (raf) cancelAnimationFrame(raf);
