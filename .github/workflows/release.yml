@@ -76,6 +76,13 @@ jobs:
           test "$tag" = "$cargo" || { echo "::error::tag $GITHUB_REF_NAME but Cargo.toml says $cargo"; exit 1; }
           test "$tag" = "$lock" || { echo "::error::tag $GITHUB_REF_NAME but Cargo.lock says $lock"; exit 1; }
 
+      # Reproducible builds (docs/development/reproducible-builds.md): every
+      # timestamp BuildKit writes (image config, history, file dates in the
+      # layers with `rewrite-timestamp=true`) is the commit date, not the
+      # date of the build. Buildx passes it on as a build argument.
+      - name: Commit date
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
+
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
 
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
@@ -99,17 +106,23 @@ jobs:
           # forced `latest=true` would still apply: both are spelled out.)
           flavor: |
             latest=${{ env.STABLE_RELEASE }}
+          # `created` is the commit date (the default is the time of the build).
           labels: |
             org.opencontainers.image.title=DumbMonit
             org.opencontainers.image.description=Dumb-simple monitoring from the homelab to the small business
             org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
+          annotations: |
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
 
       - id: push
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           platforms: linux/amd64
-          push: true
+          # `push=true` as an output, so that the file dates in the layers can
+          # be rewritten to SOURCE_DATE_EPOCH (`rewrite-timestamp`).
+          outputs: type=image,push=true,rewrite-timestamp=true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
@@ -175,6 +188,9 @@ jobs:
             org.opencontainers.image.title=DumbMonit agent
             org.opencontainers.image.description=DumbMonit agent, for Docker hosts and remote sites (relay mode)
             org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
+          annotations: |
+            org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
 
       # Same Dockerfile, second target: the layers above are reused from cache.
       - id: agent-push
@@ -183,7 +199,7 @@ jobs:
           context: .
           target: agent-image
           platforms: linux/amd64
-          push: true
+          outputs: type=image,push=true,rewrite-timestamp=true
           tags: ${{ steps.agent-meta.outputs.tags }}
           labels: ${{ steps.agent-meta.outputs.labels }}
           annotations: ${{ steps.agent-meta.outputs.annotations }}
@@ -229,12 +245,17 @@ jobs:
 
       # Mêmes réglages que le Dockerfile : l'agent se télécharge sur une liaison
       # parfois lente, la taille prime sur la vitesse de compilation.
+      # Les chemins de la machine (dépôt, CARGO_HOME) sont remplacés par des
+      # chemins fixes dans le binaire : il ne dépend pas de l'endroit où il est
+      # construit (vérifié par reproducible.yml, mêmes options).
       - name: Build
         env:
           CARGO_PROFILE_RELEASE_OPT_LEVEL: s
           CARGO_PROFILE_RELEASE_LTO: fat
         run: |
           set -eu
+          export RUSTFLAGS="--remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build"
+          xcodebuild -version
           mkdir -p dist
           for target in aarch64-apple-darwin x86_64-apple-darwin; do
             cargo build --release --locked -p dumbmonit-agent --target "$target"

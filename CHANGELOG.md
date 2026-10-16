@@ -19,6 +19,15 @@ All notable changes to this project are documented here. The format follows
 - **Folders only on request.** The map ignores folders unless **Group by
   folder** is on (remembered in the browser); the folder and site filter is
   gone. Export to SVG/PNG and printing are unchanged.
+- **Reproducible builds.** Two builds of the same commit now give bit-for-bit
+  identical binaries (server, Linux, Windows and FreeBSD agents), web UI files
+  and Docker images: the web UI version identifier is the commit instead of
+  the build time, embedded files carry no modification date, the Windows agent
+  gets a fixed link date, and the images are built with the commit date as
+  `SOURCE_DATE_EPOCH` (`rewrite-timestamp`). A new workflow builds every
+  change twice on two runners and fails on any difference. How to check a
+  release yourself:
+  [Reproducible builds](https://dumbmonit.readthedocs.io/en/latest/development/reproducible-builds/).
 
 ## 0.9.0 — 2026-10-16
 
