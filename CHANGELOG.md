@@ -31,6 +31,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Status page and report availability** no longer forgets the days before a
+  monitor's labels changed (renamed, tags edited, or the upgrade to
+  0.1.0-alpha.7 that stopped copying type options such as `port` into `tag_*`
+  labels): every `dumbmonit_up` series of a device and every
+  `dumbmonit_probe_success` series of an HTTP/uptime monitor is now merged, so
+  those days show their real uptime instead of "no data" or a partial figure.
+  The response-time graph of the status page merges them the same way.
+- **Status page uptime bars** now come with a colour key (99.5% or more, 95 to
+  99.5%, under 95%, no data), so a day with some downtime is no longer read as
+  a day the service was down; the thresholds live in one place shared by the bars
+  and the key.
 - **Alert notifications.** An alert whose condition came back right after it
   resolved fired again without telling anyone; it is now announced as a new
   alert. A resolution is announced even when the alert has meanwhile been

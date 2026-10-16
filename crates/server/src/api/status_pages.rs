@@ -1190,15 +1190,67 @@ pub(crate) fn selector(ids: &[TargetId]) -> String {
     format!("target=~\"{}\"", joined.join("|"))
 }
 
-/// Disponibilité d'une cible qui n'émet que `up` en cas de succès.
+/// Part (en %) des sondes réussies de chaque cible sur `window`, décalée de
+/// `offset` (vide pour « maintenant »).
 ///
-/// `count_over_time` par tranche de cinq minutes dit si la cible a répondu au
-/// moins une fois dans la tranche ; `default 0` compte les tranches muettes
-/// comme des absences ; la moyenne donne la part de tranches vivantes.
-fn presence_query(sel: &str, window: &str) -> String {
+/// Comme pour `up` (voir [`presence_slots`]), une cible dont les étiquettes ont
+/// changé a plusieurs séries `probe_success` : la somme des succès sur le
+/// nombre de mesures, par cible, les compte toutes, chacune avec son poids.
+pub(crate) fn probe_uptime_query(sel: &str, window: &str, offset: &str) -> String {
+    let range = format!("dumbmonit_probe_success{{{sel}}}[{window}]{offset}");
     format!(
-        "avg_over_time(((count_over_time(dumbmonit_up{{{sel}}}[5m]) > bool 0) default 0)[{window}:5m]) * 100"
+        "sum by (target) (sum_over_time({range})) / sum by (target) (count_over_time({range})) * 100"
     )
+}
+
+/// Sondes échouées de chaque cible sur `window`, toutes séries confondues :
+/// nombre de mesures moins leur somme (1 par succès).
+fn probe_failed_query(sel: &str, window: &str) -> String {
+    let range = format!("dumbmonit_probe_success{{{sel}}}[{window}]");
+    format!("sum by (target) (count_over_time({range})) - sum by (target) (sum_over_time({range}))")
+}
+
+/// Temps de réponse moyen (ms) de chaque cible sur `window`, toutes séries
+/// confondues : après un changement d'étiquettes, l'ancienne série couvre les
+/// jours d'avant et la nouvelle ceux d'après ; sans `avg by (target)`, une seule
+/// était gardée et la courbe sur 7 jours perdait l'une des deux parties.
+fn latency_query(sel: &str, window: &str) -> String {
+    format!(
+        "avg by (target) (avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[{window}])) * 1000"
+    )
+}
+
+/// Tranches de cinq minutes vivantes (1) ou muettes (0) d'une cible qui n'émet
+/// que `up` en cas de succès, sur `window`.
+///
+/// `count_over_time` par tranche dit si la cible a répondu au moins une fois ;
+/// `default 0` compte les tranches muettes comme des absences.
+///
+/// Une cible peut avoir plusieurs séries `up` : toute modification de ses
+/// étiquettes d'identité (nom, tags, ou en 0.1.0-alpha.7 les options du type
+/// retirées des `tag_*`) ouvre une nouvelle série et fige l'ancienne. Le
+/// `sum by (target)` les recoud en une seule ; sans lui, une seule des séries
+/// était retenue et l'historique d'avant le changement disparaissait.
+pub(crate) fn presence_slots(sel: &str, window: &str) -> String {
+    format!(
+        "((sum by (target) (count_over_time(dumbmonit_up{{{sel}}}[5m])) > bool 0) default 0)[{window}:5m]"
+    )
+}
+
+/// Part (en %) des tranches vivantes sur `window` (voir [`presence_slots`]).
+fn presence_query(sel: &str, window: &str) -> String {
+    format!("avg_over_time({}) * 100", presence_slots(sel, window))
+}
+
+/// Horodatage de la première mesure `up` de chaque cible, toutes séries
+/// confondues (voir [`presence_slots`]) : c'est le début de la couverture.
+pub(crate) fn first_up_query(sel: &str, window: &str) -> String {
+    format!("min by (target) (tfirst_over_time(dumbmonit_up{{{sel}}}[{window}]))")
+}
+
+/// Horodatage de la dernière mesure `up` de chaque cible, toutes séries confondues.
+fn last_up_query(sel: &str, window: &str) -> String {
+    format!("max by (target) (tlast_over_time(dumbmonit_up{{{sel}}}[{window}]))")
 }
 
 /// Ramène une mesure de présence à la part de la fenêtre réellement couverte
@@ -1254,8 +1306,7 @@ async fn collect_latency(
     let end_ms = now.timestamp() * 1_000;
     let spans: [(i64, u64, &str); 2] = [(86_400, 900, "15m"), (7 * 86_400, 7_200, "2h")];
     for (index, (span, step, window)) in spans.into_iter().enumerate() {
-        let query =
-            format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[{window}]) * 1000");
+        let query = latency_query(&sel, window);
         match victoria.query_range(&query, end_ms - span * 1_000, end_ms, step).await {
             Ok(series) => {
                 for item in series {
@@ -1314,21 +1365,15 @@ async fn collect_metrics(
     if !probes.is_empty() {
         let sel = selector(&probes);
         let q_last = format!("last_over_time(dumbmonit_probe_success{{{sel}}}[{STATE_WINDOW}])");
-        let q_recent = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[1h]) * 100");
-        let q_day = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[24h]) * 100");
-        let q_week = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[7d]) * 100");
-        let q_month = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[30d]) * 100");
-        // Échecs du jour : nombre de mesures moins leur somme (1 par succès).
-        let q_failed = format!(
-            "count_over_time(dumbmonit_probe_success{{{sel}}}[1d]) \
-             - sum_over_time(dumbmonit_probe_success{{{sel}}}[1d])"
-        );
-        let q_quarter = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[90d]) * 100");
-        let q_history =
-            format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[{history_days}d]) * 100");
-        let q_latency =
-            format!("avg_over_time(dumbmonit_probe_duration_seconds{{{sel}}}[1h]) * 1000");
-        let q_daily = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[1d]) * 100");
+        let q_recent = probe_uptime_query(&sel, "1h", "");
+        let q_day = probe_uptime_query(&sel, "24h", "");
+        let q_week = probe_uptime_query(&sel, "7d", "");
+        let q_month = probe_uptime_query(&sel, "30d", "");
+        let q_failed = probe_failed_query(&sel, "1d");
+        let q_quarter = probe_uptime_query(&sel, "90d", "");
+        let q_history = probe_uptime_query(&sel, &format!("{history_days}d"), "");
+        let q_latency = latency_query(&sel, "1h");
+        let q_daily = probe_uptime_query(&sel, "1d", "");
         let result = tokio::try_join!(
             victoria.query(&q_last),
             victoria.query(&q_recent),
@@ -1386,8 +1431,8 @@ async fn collect_metrics(
 
     if !devices.is_empty() {
         let sel = selector(&devices);
-        let q_first = format!("tfirst_over_time(dumbmonit_up{{{sel}}}[90d])");
-        let q_last = format!("tlast_over_time(dumbmonit_up{{{sel}}}[90d])");
+        let q_first = first_up_query(&sel, "90d");
+        let q_last = last_up_query(&sel, "90d");
         let q_day = presence_query(&sel, "24h");
         let q_week = presence_query(&sel, "7d");
         let q_month = presence_query(&sel, "30d");
@@ -1981,6 +2026,56 @@ mod tests {
         assert_eq!(slugify("My Homelab"), "my-homelab");
         assert_eq!(slugify("  Réseau — maison  "), "r-seau-maison");
         assert_eq!(slugify("!!!"), "");
+    }
+
+    #[test]
+    fn device_queries_merge_every_series_of_a_target() {
+        // Un renommage ou un tag modifié ouvre une nouvelle série `up` : les
+        // requêtes doivent agréger par cible, sinon l'historique repart de zéro.
+        let sel = r#"target=~"3|4""#;
+        let presence = presence_query(sel, "1d");
+        assert!(
+            presence
+                .contains(r#"sum by (target) (count_over_time(dumbmonit_up{target=~"3|4"}[5m]))"#),
+            "{presence}"
+        );
+        assert!(presence.starts_with("avg_over_time(((sum by (target)"), "{presence}");
+        assert!(presence.ends_with("[1d:5m]) * 100"), "{presence}");
+        assert_eq!(
+            first_up_query(sel, "90d"),
+            r#"min by (target) (tfirst_over_time(dumbmonit_up{target=~"3|4"}[90d]))"#
+        );
+        assert_eq!(
+            last_up_query(sel, "90d"),
+            r#"max by (target) (tlast_over_time(dumbmonit_up{target=~"3|4"}[90d]))"#
+        );
+    }
+
+    #[test]
+    fn probe_queries_merge_every_series_of_a_target() {
+        // Même raison que pour `up` : un changement d'étiquettes ne doit pas
+        // effacer les jours d'avant. Succès et mesures sont sommés par cible.
+        let sel = r#"target=~"1|2""#;
+        assert_eq!(
+            probe_uptime_query(sel, "7d", ""),
+            "sum by (target) (sum_over_time(dumbmonit_probe_success{target=~\"1|2\"}[7d])) \
+             / sum by (target) (count_over_time(dumbmonit_probe_success{target=~\"1|2\"}[7d])) * 100"
+        );
+        assert!(probe_uptime_query(sel, "1d", " offset 1d").contains("[1d] offset 1d))"));
+        assert_eq!(
+            probe_failed_query(sel, "1d"),
+            "sum by (target) (count_over_time(dumbmonit_probe_success{target=~\"1|2\"}[1d])) \
+             - sum by (target) (sum_over_time(dumbmonit_probe_success{target=~\"1|2\"}[1d]))"
+        );
+    }
+
+    #[test]
+    fn latency_query_merges_every_series_of_a_target() {
+        assert_eq!(
+            latency_query(r#"target=~"1|2""#, "2h"),
+            "avg by (target) (avg_over_time(dumbmonit_probe_duration_seconds{target=~\"1|2\"}[2h])) \
+             * 1000"
+        );
     }
 
     #[test]

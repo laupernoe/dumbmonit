@@ -13,7 +13,9 @@ use chrono::{DateTime, SecondsFormat, TimeDelta, Utc};
 use dumbmonit_proto::{Target, TargetId};
 use sqlx::Row;
 
-use crate::api::status_pages::{PROBE_KINDS, instant_map, rescale, selector};
+use crate::api::status_pages::{
+    PROBE_KINDS, first_up_query, instant_map, presence_slots, probe_uptime_query, rescale, selector,
+};
 use crate::db;
 use crate::reports::schedule::{Frequency, Period};
 use crate::state::AppState;
@@ -340,10 +342,9 @@ async fn uptimes(
 
     if !probes.is_empty() {
         let sel = selector(&probes);
-        let now_q = format!("avg_over_time(dumbmonit_probe_success{{{sel}}}[{span}s]) * 100");
-        let prev_q = format!(
-            "avg_over_time(dumbmonit_probe_success{{{sel}}}[{span}s] offset {span}s) * 100"
-        );
+        let window = format!("{span}s");
+        let now_q = probe_uptime_query(&sel, &window, "");
+        let prev_q = probe_uptime_query(&sel, &window, &format!(" offset {span}s"));
         match tokio::try_join!(state.victoria.query(&now_q), state.victoria.query(&prev_q)) {
             Ok((a, b)) => {
                 current.extend(instant_map(a));
@@ -358,12 +359,10 @@ async fn uptimes(
 
     if !devices.is_empty() {
         let sel = selector(&devices);
-        let presence = format!(
-            "((count_over_time(dumbmonit_up{{{sel}}}[5m]) > bool 0) default 0)[{span}s:5m]"
-        );
+        let presence = presence_slots(&sel, &format!("{span}s"));
         let now_q = format!("avg_over_time({presence}) * 100");
         let prev_q = format!("avg_over_time({presence} offset {span}s) * 100");
-        let first_q = format!("tfirst_over_time(dumbmonit_up{{{sel}}}[{}s])", span * 2);
+        let first_q = first_up_query(&sel, &format!("{}s", span * 2));
         match tokio::try_join!(
             state.victoria.query(&now_q),
             state.victoria.query(&prev_q),
