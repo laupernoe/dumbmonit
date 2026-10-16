@@ -967,7 +967,9 @@ export interface Channel {
  * Body of `POST /api/notify/channels` and `PUT /api/notify/channels/{id}`.
  *
  * Omitting `secrets` on an update keeps the stored secrets; `{}` explicitly
- * clears them.
+ * clears them. Otherwise keys are merged: a key sent replaces its value, a key
+ * left out is kept, and `null` or `""` clears it. A change of kind or
+ * destination replaces the whole set instead.
  */
 export interface ChannelPayload {
 	name: string;

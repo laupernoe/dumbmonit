@@ -1722,6 +1722,9 @@ paths:
       summary: Update a notification channel
       description: >-
         Omitting `secrets` keeps the stored ones; `"secrets": {}` clears them.
+        Otherwise secrets are merged by key: a key sent replaces its value, a
+        key left out is kept, and `null` or `""` clears it. Changing the kind
+        or the destination replaces the whole set instead.
         In `policy`, omitting `matcher` keeps the routing filter and
         `"matcher": null` clears it.
       x-token-scope: write
@@ -5911,7 +5914,7 @@ components:
           type: [object, "null"]
           additionalProperties: true
           writeOnly: true
-          description: "Absent or `null` on `PUT` keeps the stored secrets; `{}` clears them."
+          description: "Absent or `null` on `PUT` keeps the stored secrets; `{}` clears them. Otherwise merged by key: a key sent replaces its value, a key left out is kept, `null` or `\"\"` clears it; a new kind or destination replaces the whole set."
         policy:
           type: [object, "null"]
           description: Each field optional; absent keeps the stored policy.

@@ -334,10 +334,13 @@ impl ChannelPayload {
 
         // Fusion clé par clé : les clés soumises remplacent, les clés absentes sont
         // conservées. Elle n'a lieu que si la destination est inchangée : sinon les
-        // secrets soumis remplacent tout, et les anciens ne suivent pas.
+        // secrets soumis remplacent tout, et les anciens ne suivent pas. Un objet
+        // vide n'est pas fusionné : `"secrets": {}` reste l'effacement explicite
+        // promis par l'API.
         let secrets = match (current, secrets) {
             (Some(current), Some(submitted))
                 if current.kind == kind
+                    && submitted.as_object().is_some_and(|map| !map.is_empty())
                     && !destination_changed(&kind, &current.settings, &settings) =>
             {
                 Some(merge_secrets(&kind, &current.secrets, &submitted))
@@ -722,5 +725,26 @@ mod tests {
             &json!({ "token": "", "inconnue": "y" }),
         );
         assert_eq!(merged, json!({ "user_key": "u" }));
+    }
+
+    #[test]
+    fn un_objet_vide_efface_toujours_les_secrets() {
+        // `"secrets": {}` est l'effacement explicite de l'API (et du bouton
+        // « effacer » de l'interface) : la fusion ne doit pas en faire un « tout
+        // garder ».
+        let current = ChannelConfig {
+            id: 1,
+            name: "ancien".to_string(),
+            kind: "ntfy".to_string(),
+            enabled: true,
+            settings: json!({ "topic": "alertes" }),
+            secrets: json!({ "token": "tk_ancien" }),
+        };
+        let Ok(draft) = payload("ntfy", json!({ "topic": "alertes" }), Some(json!({})))
+            .validate(Some(&current))
+        else {
+            panic!("l'effacement aurait dû être accepté");
+        };
+        assert_eq!(draft.secrets, Some(json!({})));
     }
 }
