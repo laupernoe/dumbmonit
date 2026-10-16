@@ -20,6 +20,21 @@ All notable changes to this project are documented here. The format follows
   folder** is on (remembered in the browser); the folder and site filter is
   gone. Export to SVG/PNG and printing are unchanged.
 
+### Fixed
+
+- **Editing a user is all or nothing.** A password refused by
+  `PUT /api/users/{id}` no longer leaves the role or display name changed.
+- **Editing one secret of a channel keeps the others.** Secrets are merged by
+  key (Pushover's user key survives a new token). `"secrets": {}` still clears
+  them all, and a new kind or destination still asks for every secret again.
+- **HTTP probe headers stay with their target.** Custom headers (API keys,
+  tokens) are no longer sent to another origin on a redirect, like the
+  credential.
+- **Agents keep their binding on foreign 403s.** Only the server's own binding
+  refusal makes an agent forget its secret, not a 403 from a reverse proxy or a
+  firewall. A secret lost in transit is issued again for ten minutes, until the
+  agent first presents it.
+
 ## 0.9.0 — 2026-10-16
 
 ### Upgrading from 0.1.0-alpha.8

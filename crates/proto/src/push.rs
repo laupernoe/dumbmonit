@@ -61,6 +61,10 @@ pub const AGENT_SECRET_HEADER: &str = "x-dumbmonit-agent-secret";
 ///
 /// Écrit pour la personne qui lira les journaux de la machine, pas pour la
 /// machine : il faut qu'elle sache quoi faire sans ouvrir la documentation.
+///
+/// Le texte fait partie du protocole : les agents déjà déployés le comparent
+/// octet par octet. Le modifier ferait d'un vrai refus un « 403 étranger » pour
+/// eux, et ils garderaient un secret mort au lieu de se relier.
 pub const BINDING_MISMATCH: &str = "This machine is already enrolled and bound to another agent installation. \
      If you reinstalled it, open its device page in DumbMonit and click \
      'Allow re-enrolment', then restart the agent.";

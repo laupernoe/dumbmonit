@@ -845,6 +845,17 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
+The agent forgets its secret only on that exact refusal. Any other `403`, for
+instance from a reverse proxy or a web application firewall in front of
+DumbMonit, is logged and retried with the secret kept.
+
+If the response that carried a new secret is lost on the way (timeout,
+connection reset), the agent comes back without one. For ten minutes after the
+secret was issued, and as long as the agent has never presented it, the server
+hands a fresh one to an agent using the token that bound the machine. The
+agent's next batch presents it and closes that grace period; past it, only
+**Allow re-enrolment** brings the machine back.
+
 ## Enrolment tokens
 
 - Tokens are created in **Settings → Agents** or when adding a monitor of type
