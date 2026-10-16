@@ -51,6 +51,20 @@ pub const AGENT_SECRET_PREFIX: &str = "dmab_";
 /// existent pour établir.
 pub const AGENT_SECRET_HEADER: &str = "x-dumbmonit-agent-secret";
 
+/// Refus opposé par le serveur à un agent dont il ne reconnaît pas le secret
+/// de liaison (réponse 403, corps `{"error": …}`).
+///
+/// Partagé avec l'agent : c'est le seul refus après lequel il doit oublier son
+/// secret. Un 403 venu d'ailleurs — mandataire inverse, pare-feu applicatif —
+/// ne dit rien de la liaison, et effacer le secret sur sa seule foi obligerait
+/// à réenrôler à la main chaque machine du parc.
+///
+/// Écrit pour la personne qui lira les journaux de la machine, pas pour la
+/// machine : il faut qu'elle sache quoi faire sans ouvrir la documentation.
+pub const BINDING_MISMATCH: &str = "This machine is already enrolled and bound to another agent installation. \
+     If you reinstalled it, open its device page in DumbMonit and click \
+     'Allow re-enrolment', then restart the agent.";
+
 /// Ce que la machine surveillée déclare d'elle-même.
 ///
 /// C'est cette identité qui permet l'enregistrement automatique : un agent qui
