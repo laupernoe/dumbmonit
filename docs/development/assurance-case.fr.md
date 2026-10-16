@@ -155,7 +155,7 @@ privée.
 - **Tests** : tests d'API, d'authentification, de rôles, de CORS, d'OIDC, de
   garde et d'audit sous `crates/server/tests/`, tests unitaires à côté du code,
   et tests web sous `web/tests/`. La couverture de lignes Rust mesurée avec
-  `cargo-llvm-cov` est de 87,9 %.
+  `cargo-llvm-cov` est de 91 %.
 - **Politique de régression** : un correctif s'accompagne d'un test qui échoue
   sans lui (voir la politique de tests dans `CONTRIBUTING.md`).
 - **Trace publique** : les correctifs de sécurité sont publiés sous forme d'avis
