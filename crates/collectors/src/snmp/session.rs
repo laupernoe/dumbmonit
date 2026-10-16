@@ -76,6 +76,10 @@ pub struct Session {
     /// requête UDP pendante jusqu'à l'expiration du délai global, et le walk en
     /// cours perdrait tout ce qu'il avait déjà collecté.
     request_timeout: Duration,
+    /// Nombre de renvois d'une requête restée sans réponse. UDP ne garantit rien :
+    /// sans renvoi, un seul datagramme perdu au milieu d'un walk ferait passer
+    /// l'équipement pour éteint et jetterait tout ce qui avait déjà été lu.
+    retries: u32,
     /// Vrai si l'équipement ne connaît pas GETBULK et impose le repli sur GETNEXT.
     getnext_only: bool,
 }
@@ -96,6 +100,12 @@ impl Session {
         Box::pin(open_inner(address, credential, request_timeout, version)).await
     }
 
+    /// Fixe le nombre de renvois d'une requête restée sans réponse.
+    pub fn with_retries(mut self, retries: u32) -> Self {
+        self.retries = retries;
+        self
+    }
+
     /// Lit plusieurs instances, en groupant les requêtes.
     ///
     /// Les varbinds absentes de la réponse sont simplement omises : un agent qui ne
@@ -104,28 +114,39 @@ impl Session {
         let mut collected = Vec::with_capacity(oids.len());
 
         for chunk in oids.chunks(MAX_GET_BATCH) {
-            let converted: Vec<snmp2::Oid<'static>> =
-                chunk.iter().map(ObjectId::to_snmp).collect::<Result<_, _>>()?;
-            let borrowed: Vec<&snmp2::Oid<'static>> = converted.iter().collect();
-
-            let timeout = self.request_timeout;
-            let pdu = match with_timeout(timeout, self.inner.get_many(&borrowed), "").await? {
-                Ok(pdu) => pdu,
-                // Une erreur d'authentification v3 en cours de session signifie que le
-                // contexte de sécurité a expiré ; on la remonte telle quelle.
-                Err(error) => return Err(map_snmp_error(error)),
-            };
-            if pdu.error_status != snmp2::snmp::ERRSTATUS_NOERROR {
-                debug!(status = pdu.error_status, "GET refusé par l'agent");
-                continue;
-            }
-            for (oid, value) in pdu.varbinds {
-                let Some(oid) = ObjectId::from_snmp(&oid) else { continue };
-                let Some(value) = SnmpValue::from_wire(&value) else { continue };
-                if value.is_absent() {
+            let mut remaining: Vec<ObjectId> = chunk.to_vec();
+            // Chaque tour retire au moins un OID : la boucle est bornée par la taille
+            // du lot, quel que soit le comportement de l'agent.
+            while !remaining.is_empty() {
+                let reply = self.exchange(Request::Get(&remaining)).await?;
+                if reply.error_status == snmp2::snmp::ERRSTATUS_NOERROR {
+                    collected.extend(present(reply.varbinds));
+                    break;
+                }
+                // Un agent SNMPv1 ne sait pas répondre « absent » varbind par varbind :
+                // un seul OID inconnu fait refuser tout le lot (`noSuchName`), avec la
+                // position fautive dans `error_index`. On retire celui-là et on
+                // redemande le reste.
+                let index = reply.error_index as usize;
+                if reply.error_status == snmp2::snmp::ERRSTATUS_NOSUCHNAME
+                    && (1..=remaining.len()).contains(&index)
+                {
+                    debug!(oid = %remaining[index - 1], "OID inconnu de l'agent, retiré du lot");
+                    remaining.remove(index - 1);
                     continue;
                 }
-                collected.push((oid, value));
+                // Refus sans désignation exploitable : on se rabat sur une lecture
+                // OID par OID, pour ne perdre que ceux que l'agent refuse vraiment.
+                debug!(status = reply.error_status, "GET groupé refusé, lecture unitaire");
+                if remaining.len() > 1 {
+                    for oid in &remaining {
+                        let reply = self.exchange(Request::Get(std::slice::from_ref(oid))).await?;
+                        if reply.error_status == snmp2::snmp::ERRSTATUS_NOERROR {
+                            collected.extend(present(reply.varbinds));
+                        }
+                    }
+                }
+                break;
             }
         }
         Ok(collected)
@@ -207,31 +228,104 @@ impl Session {
         &mut self,
         cursor: &ObjectId,
     ) -> Result<Option<Vec<Varbind>>, ProbeError> {
-        let converted = cursor.to_snmp()?;
-        let timeout = self.request_timeout;
-        let pdu = with_timeout(timeout, self.inner.getbulk(&[&converted], 0, MAX_REPETITIONS), "")
-            .await?
-            .map_err(map_snmp_error)?;
-
-        if pdu.error_status != snmp2::snmp::ERRSTATUS_NOERROR {
+        let reply = self.exchange(Request::GetBulk(cursor)).await?;
+        if reply.error_status != snmp2::snmp::ERRSTATUS_NOERROR {
             return Ok(None);
         }
-        Ok(Some(copy_varbinds(pdu.varbinds)))
+        Ok(Some(reply.varbinds))
     }
 
     async fn getnext_once(&mut self, cursor: &ObjectId) -> Result<Vec<Varbind>, ProbeError> {
-        let converted = cursor.to_snmp()?;
-        let timeout = self.request_timeout;
-        let pdu = with_timeout(timeout, self.inner.getnext(&converted), "")
-            .await?
-            .map_err(map_snmp_error)?;
-
-        if pdu.error_status != snmp2::snmp::ERRSTATUS_NOERROR {
+        let reply = self.exchange(Request::GetNext(cursor)).await?;
+        if reply.error_status != snmp2::snmp::ERRSTATUS_NOERROR {
             // `noSuchName` est la façon dont SNMPv1 annonce la fin de la MIB.
             return Ok(Vec::new());
         }
-        Ok(copy_varbinds(pdu.varbinds))
+        Ok(reply.varbinds)
     }
+
+    /// Un aller-retour, renvoyé tant qu'il reste des tentatives.
+    ///
+    /// Sont renvoyées les requêtes restées sans réponse dans le délai, et celles dont
+    /// la réponse portait un autre identifiant : c'est la réponse tardive à une
+    /// tentative précédente, arrivée après l'abandon de celle-ci. Toute autre erreur
+    /// remonte telle quelle. `snmp2` n'incrémente l'identifiant de requête qu'à
+    /// réception : un renvoi après expiration réutilise donc le même, et la réponse
+    /// tardive au premier envoi reste valable pour le second.
+    async fn exchange(&mut self, request: Request<'_>) -> Result<Reply, ProbeError> {
+        let converted: Vec<snmp2::Oid<'static>> = match request {
+            Request::Get(oids) => oids.iter().map(ObjectId::to_snmp).collect::<Result<_, _>>()?,
+            Request::GetNext(cursor) | Request::GetBulk(cursor) => vec![cursor.to_snmp()?],
+        };
+        let borrowed: Vec<&snmp2::Oid<'static>> = converted.iter().collect();
+        let timeout = self.request_timeout;
+
+        let mut attempt = 0u32;
+        loop {
+            attempt += 1;
+            let inner = &mut self.inner;
+            // La réponse emprunte les tampons de la session : elle est recopiée
+            // aussitôt, pour que la boucle puisse renvoyer la requête.
+            let outcome = match request {
+                Request::Get(_) => tokio::time::timeout(timeout, inner.get_many(&borrowed))
+                    .await
+                    .map(|r| r.map(Reply::from)),
+                Request::GetNext(_) => tokio::time::timeout(timeout, inner.getnext(borrowed[0]))
+                    .await
+                    .map(|r| r.map(Reply::from)),
+                Request::GetBulk(_) => {
+                    tokio::time::timeout(timeout, inner.getbulk(&borrowed, 0, MAX_REPETITIONS))
+                        .await
+                        .map(|r| r.map(Reply::from))
+                }
+            };
+            let retryable = match outcome {
+                Ok(Ok(reply)) => return Ok(reply),
+                Ok(Err(snmp2::Error::RequestIdMismatch)) => {
+                    ProbeError::Protocol(snmp2::Error::RequestIdMismatch.to_string())
+                }
+                // Une erreur d'authentification v3 en cours de session signifie que le
+                // contexte de sécurité a expiré ; on la remonte telle quelle.
+                Ok(Err(error)) => return Err(map_snmp_error(error)),
+                Err(_) => ProbeError::Timeout(timeout),
+            };
+            if attempt > self.retries {
+                return Err(retryable);
+            }
+            debug!(attempt, error = %retryable, "requête SNMP sans réponse exploitable, renvoi");
+        }
+    }
+}
+
+/// Requête élémentaire, telle que [`Session::exchange`] sait la renvoyer.
+#[derive(Clone, Copy)]
+enum Request<'a> {
+    Get(&'a [ObjectId]),
+    GetNext(&'a ObjectId),
+    GetBulk(&'a ObjectId),
+}
+
+/// Réponse recopiée hors des tampons de la session.
+struct Reply {
+    error_status: u32,
+    error_index: u32,
+    varbinds: Vec<Varbind>,
+}
+
+impl From<snmp2::Pdu<'_>> for Reply {
+    fn from(pdu: snmp2::Pdu<'_>) -> Self {
+        Self {
+            error_status: pdu.error_status,
+            error_index: pdu.error_index,
+            varbinds: copy_varbinds(pdu.varbinds),
+        }
+    }
+}
+
+/// Les varbinds porteuses d'une valeur : `noSuchObject`, `noSuchInstance` et
+/// `endOfMibView` sont écartées.
+fn present(varbinds: Vec<Varbind>) -> impl Iterator<Item = Varbind> {
+    varbinds.into_iter().filter(|(_, value)| !value.is_absent())
 }
 
 /// Corps de [`Session::open`], isolé pour que sa future soit placée sur le tas.
@@ -249,7 +343,7 @@ async fn open_inner(
     // opération vide.
     with_timeout(request_timeout, inner.init(), &endpoint).await?.map_err(map_snmp_error)?;
 
-    Ok(Session { inner, request_timeout, getnext_only })
+    Ok(Session { inner, request_timeout, retries: 0, getnext_only })
 }
 
 /// Établit la socket et renvoie la session déjà placée sur le tas.
@@ -650,5 +744,74 @@ mod tests {
         assert!(!map_snmp_error(snmp2::Error::CommunityMismatch).means_down());
         assert!(!map_snmp_error(snmp2::Error::AsnParse).means_down());
         assert!(matches!(map_snmp_error(snmp2::Error::CommunityMismatch), ProbeError::Auth(_)));
+    }
+
+    /// Ouvre une session v1 vers l'agent factice.
+    async fn session_v1(agent: &super::super::testutil::FakeAgent, retries: u32) -> Session {
+        let credential = Credential::SnmpCommunity { community: "public".to_string() };
+        Session::open(&agent.address, &credential, Duration::from_millis(300), CommunityVersion::V1)
+            .await
+            .unwrap()
+            .with_retries(retries)
+    }
+
+    #[test]
+    fn un_oid_inconnu_en_v1_ne_fait_pas_perdre_le_reste_du_lot() {
+        use super::super::testutil::{FakeAgent, block_on_large_stack};
+        let (values, requests) = block_on_large_stack(async {
+            let agent =
+                FakeAgent::spawn(vec![("1.3.6.1.2.1.1.3.0", 42), ("1.3.6.1.2.1.1.7.0", 72)], 0)
+                    .await;
+            let mut session = session_v1(&agent, 0).await;
+            let oids =
+                [oid("1.3.6.1.2.1.1.3.0"), oid("1.3.6.1.2.1.1.4.0"), oid("1.3.6.1.2.1.1.7.0")];
+            let values = session.get_many(&oids).await.unwrap();
+            (values, agent.requests.load(std::sync::atomic::Ordering::SeqCst))
+        });
+        assert_eq!(
+            values,
+            vec![
+                (oid("1.3.6.1.2.1.1.3.0"), SnmpValue::Integer(42)),
+                (oid("1.3.6.1.2.1.1.7.0"), SnmpValue::Integer(72)),
+            ]
+        );
+        // Un premier GET refusé, puis le lot amputé de l'OID fautif.
+        assert_eq!(requests, 2);
+    }
+
+    #[test]
+    fn un_lot_entierement_inconnu_se_termine_sans_boucler() {
+        use super::super::testutil::{FakeAgent, block_on_large_stack};
+        let (values, requests) = block_on_large_stack(async {
+            let agent = FakeAgent::spawn(vec![], 0).await;
+            let mut session = session_v1(&agent, 0).await;
+            let oids = [oid("1.3.6.1.2.1.1.3.0"), oid("1.3.6.1.2.1.1.4.0")];
+            let values = session.get_many(&oids).await.unwrap();
+            (values, agent.requests.load(std::sync::atomic::Ordering::SeqCst))
+        });
+        assert!(values.is_empty());
+        assert_eq!(requests, 2);
+    }
+
+    #[test]
+    fn un_datagramme_perdu_est_renvoye_au_lieu_de_conclure_a_une_panne() {
+        use super::super::testutil::{FakeAgent, block_on_large_stack};
+        let values = block_on_large_stack(async {
+            let agent = FakeAgent::spawn(vec![("1.3.6.1.2.1.1.3.0", 7)], 1).await;
+            let mut session = session_v1(&agent, 1).await;
+            session.get_many(&[oid("1.3.6.1.2.1.1.3.0")]).await
+        });
+        assert_eq!(values.unwrap(), vec![(oid("1.3.6.1.2.1.1.3.0"), SnmpValue::Integer(7))]);
+    }
+
+    #[test]
+    fn sans_renvoi_un_datagramme_perdu_reste_un_delai_depasse() {
+        use super::super::testutil::{FakeAgent, block_on_large_stack};
+        let error = block_on_large_stack(async {
+            let agent = FakeAgent::spawn(vec![("1.3.6.1.2.1.1.3.0", 7)], 1).await;
+            let mut session = session_v1(&agent, 0).await;
+            session.get_many(&[oid("1.3.6.1.2.1.1.3.0")]).await.unwrap_err()
+        });
+        assert!(matches!(error, ProbeError::Timeout(_)), "{error}");
     }
 }
