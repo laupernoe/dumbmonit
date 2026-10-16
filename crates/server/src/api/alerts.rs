@@ -555,6 +555,11 @@ pub async fn update_rule(
 
     let mut rule = payload.validate(&state, Some(&current), &existing).await?;
     rule.id = db::alerts::upsert_rule(&state.pool, &rule).await?;
+    // Désactiver par l'édition doit solder les alertes comme le bouton dédié,
+    // sinon elles disparaîtraient au cycle suivant sans trace dans l'historique.
+    if current.enabled && !rule.enabled {
+        db::alerts::set_rule_enabled(&state.pool, rule.id, false).await?;
+    }
     Ok(Json(view_with_overrides(&state.pool, rule).await?))
 }
 

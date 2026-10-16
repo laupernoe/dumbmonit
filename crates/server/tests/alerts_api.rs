@@ -344,6 +344,60 @@ async fn a_builtin_rule_cannot_be_deleted_but_can_be_tuned() {
 }
 
 #[tokio::test]
+async fn disabling_a_rule_through_an_update_clears_its_alerts_with_a_trace() {
+    let app = setup().await;
+    let nas = app.create_target("nas", "10.0.0.7").await;
+    db::alerts::save_states(
+        &app.pool,
+        &[TestApp::firing_alert("cpu_high@0000000000000001", Some(nas), "nas")],
+    )
+    .await
+    .expect("state saved");
+
+    let (_, rules) = app.request("GET", "/api/alerts/rules", None).await;
+    let rule = rules
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|rule| rule["uid"] == json!("cpu_high"))
+        .cloned()
+        .expect("built-in cpu_high rule");
+    let id = rule["id"].as_i64().unwrap();
+    let (status, body) = app
+        .request(
+            "PUT",
+            &format!("/api/alerts/rules/{id}"),
+            Some(json!({
+                "uid": rule["uid"],
+                "name": rule["name"],
+                "query": rule["query"],
+                "operator": rule["operator"],
+                "threshold": rule["threshold"],
+                "severity": rule["severity"],
+                "enabled": false
+            })),
+        )
+        .await;
+    assert_eq!(status, StatusCode::OK, "update refused: {body}");
+    assert_eq!(body["enabled"], json!(false));
+
+    let left: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM alert_state WHERE rule_uid = ?")
+        .bind("cpu_high")
+        .fetch_one(&app.pool)
+        .await
+        .unwrap();
+    assert_eq!(left, 0, "a rule disabled by an update must not leave alerts behind");
+    let reason: String = sqlx::query_scalar(
+        "SELECT reason FROM alert_history WHERE fingerprint = ? ORDER BY id DESC LIMIT 1",
+    )
+    .bind("cpu_high@0000000000000001")
+    .fetch_one(&app.pool)
+    .await
+    .expect("history entry");
+    assert_eq!(reason, dumbmonit_server::alerting::cycle::DISABLED_RULE_REASON);
+}
+
+#[tokio::test]
 async fn invalid_rule_input_is_rejected_with_an_explanation() {
     let app = setup().await;
     let base = json!({ "name": "Trial", "query": "up", "operator": ">", "threshold": 1.0 });
