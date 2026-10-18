@@ -43,6 +43,8 @@ DumbMonit chiama tutto quello che controlla un *monitor* (l'API dice *target*), 
 | [Apache httpd](apache.md) | `apache` | nessuno, o basic auth | Server web: worker occupati/inattivi, scoreboard per stato, tassi di richiesta e byte |
 | [Nginx Proxy Manager](npm.md) | `npm` | e-mail utente e password (vista sola) | Gestore proxy: host che nginx ha rifiutato, host disabilitati, certificati serviti |
 | [Scadenza del dominio](domain.md) | `domain` | nessuno | Dominio registrato su RDAP: giorni prima della scadenza, sospensione, periodo di redenzione, registrar |
+| [Reputazione del server di posta](mail_blacklist.md) | `mail_blacklist` | nessuna, o chiave Spamhaus DQS | Dominio di posta o indirizzo del server rispetto alle blocklist DNS (Spamhaus, Barracuda, SpamCop…), DNS inverso, SPF, DMARC, link di rimozione |
+| [Blacklist di un intervallo IP](ip_blacklist.md) | `ip_blacklist` | nessuna, o chiave Spamhaus DQS | Ogni indirizzo di un intervallo IPv4 pubblico fino a /24 rispetto alle blocklist DNS, con link di rimozione |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | token dell'account di servizio (ClusterRole di sola lettura) | Cluster: nodi non pronti, pod che crashano in loop o in sospeso, carichi di lavoro con replica mancanti, claim di volume bloccati |
 | [Active Directory](activedirectory.md) | `activedirectory` | nome utente/password (utente del dominio semplice) | Dominio Windows su LDAPS: controller di dominio e ruoli FSMO, membri di gruppo privilegiati, politica password, scoperte di sicurezza |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | nome utente/password (Visualizzatore di backup Veeam) | Server di backup: lavori falliti, sessioni fallite, repository che si riempiono, licenza |

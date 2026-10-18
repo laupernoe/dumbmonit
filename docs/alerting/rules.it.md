@@ -511,6 +511,17 @@ Traefik, Caddy, Nginx Proxy Manager e registrazioni di domini ([Traefik](../devi
 | Dominio in redemption | Il dominio è in `redemptionPeriod`, `pendingDelete` o `pendingRestore`: è scaduto (`dumbmonit_domain_redemption`). | > 0 | 30 min | Avvertenza (`critical`) | 12 h |
 | Risposta DNS cambiata | La risposta di un controllo DNS con *Avvisa quando la risposta cambia* differisce da quella precedente (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Si risolve da sola un'ora dopo. | > 0 | 1 min | Avviso (`warning`) | 24 h |
 
+### Blocklist DNS {#dns-blocklists}
+
+[Reputazione del server di posta](../devices/mail_blacklist.md) e [Blacklist di un intervallo IP](../devices/ip_blacklist.md). Le liste vengono interrogate solo ogni 6 ore; l'ultimo risultato viene riscritto a ogni sonda, da qui il mantenimento breve. La pagina del monitor rimanda alla pagina di rimozione di ogni inserimento.
+
+| Regola | Cosa | Soglia predefinita | Mantenimento | Gravità | Promemoria |
+|---|---|---|---|---|---|
+| Presente in una blocklist principale | Un indirizzo o il dominio è su Spamhaus (ZEN o DBL), Barracuda o SpamCop: una larga parte della sua posta viene rifiutata (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Avvertenza (`critical`) | 24 h |
+| Presente in una blocklist | Un indirizzo o il dominio è su una lista minore: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL o URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Avviso (`warning`) | 24 h |
+| DNS inverso del server di posta non coerente | Un indirizzo del server di posta non ha DNS inverso, oppure il suo nome non risolve di nuovo verso di esso: Gmail, Outlook.com e Yahoo rifiutano o declassano tale posta (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 min | Avviso (`warning`) | 24 h |
+| SPF o DMARC mancante | Il dominio non ha un record SPF (o ne ha diversi), oppure non ha un record DMARC: Gmail e Yahoo richiedono entrambi ai mittenti in massa (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 min | Avviso (`warning`) | 24 h |
+
 ### Modifiche ai siti web {#website-changes}
 
 Vedi [Modifiche ai siti web](../devices/webchange.md). La pagina del monitor mostra ogni modifica prima e dopo.

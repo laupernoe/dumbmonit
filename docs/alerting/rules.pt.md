@@ -555,6 +555,17 @@ Traefik, Caddy, Nginx Proxy Manager e registos de domínio ([Traefik](../devices
 | Domain in redemption | O domínio está em `redemptionPeriod`, `pendingDelete` ou `pendingRestore`: expirou (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
 | DNS answer changed | A resposta de uma verificação DNS com *Alert when the answer changes* difere da anterior (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolve-se por si só uma hora depois. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
+### Listas de bloqueio DNS {#dns-blocklists}
+
+[Reputação do servidor de correio](../devices/mail_blacklist.md) e [Lista de bloqueio de intervalo de IP](../devices/ip_blacklist.md). As listas só são consultadas de 6 em 6 horas; o último resultado é escrito de novo a cada sondagem, daí a retenção curta. A página do monitor liga à página de remoção de cada listagem.
+
+| Regra | O quê | Limiar predefinido | Retenção | Severidade | Lembrete |
+|---|---|---|---|---|---|
+| Listed on a major blocklist | Um endereço ou o domínio está no Spamhaus (ZEN ou DBL), Barracuda ou SpamCop: uma grande parte do seu correio é recusada (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Warning (`critical`) | 24 h |
+| Listed on a blocklist | Um endereço ou o domínio está numa lista menor: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL ou URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| Mail server reverse DNS mismatch | Um endereço do servidor de correio não tem DNS inverso, ou o seu nome não resolve de volta para ele: o Gmail, o Outlook.com e o Yahoo recusam ou enviam para lixo esse correio (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| SPF or DMARC missing | O domínio não tem registo SPF (ou tem vários), ou não tem registo DMARC: o Gmail e o Yahoo exigem ambos aos remetentes em massa (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+
 ### Alterações de site {#website-changes}
 
 Ver [Alterações de site](../devices/webchange.md). A página do

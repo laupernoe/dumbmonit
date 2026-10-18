@@ -46,6 +46,8 @@ diese Version überwachen kann.
 | [Apache httpd](apache.md) | `apache` | keine, oder Basic Auth | Webserver: beschäftigte/freie Worker, Scoreboard nach Zustand, Anfrage- und Byte-Raten |
 | [Nginx Proxy Manager](npm.md) | `npm` | E-Mail und Passwort des Benutzers (nur Ansicht) | Proxy-Manager: von nginx abgelehnte Hosts, deaktivierte Hosts, ausgelieferte Zertifikate |
 | [Domain-Ablauf](domain.md) | `domain` | keine | Registrierte Domain über RDAP: Tage bis zum Ablauf, Hold, Redemption-Phase, Registrar |
+| [Reputation des Mailservers](mail_blacklist.md) | `mail_blacklist` | keine, oder Spamhaus-DQS-Schlüssel | Maildomain oder Serveradresse gegen die DNS-Blocklisten (Spamhaus, Barracuda, SpamCop…), Reverse-DNS, SPF, DMARC, Links zur Entfernung |
+| [Blockliste für IP-Bereiche](ip_blacklist.md) | `ip_blacklist` | keine, oder Spamhaus-DQS-Schlüssel | Jede Adresse eines öffentlichen IPv4-Bereichs bis /24 gegen die DNS-Blocklisten, mit Links zur Entfernung |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | Service-Account-Token (Nur-Lese-ClusterRole) | Cluster: nicht bereite Knoten, Pods in Crash-Schleife oder Pending, Workloads mit fehlenden Replikas, festhängende Volume Claims |
 | [Active Directory](activedirectory.md) | `activedirectory` | Benutzername/Passwort (einfacher Domänenbenutzer) | Windows-Domäne über LDAPS: Domänencontroller und FSMO-Rollen, Mitglieder privilegierter Gruppen, Kennwortrichtlinie, Sicherheitsbefunde |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | Benutzername/Passwort (Veeam Backup Viewer) | Backup-Server: fehlgeschlagene Jobs, fehlgeschlagene Sitzungen, sich füllende Repositories, Lizenz |
