@@ -51,6 +51,11 @@ export function formatPrice(value: number, currency: string, locale: string): st
 	}
 }
 
+/** An exchange rate: two decimals, up to four below ten (`0.94`, `0.9421`, `188.70`). */
+export function formatRate(value: number, locale: string): string {
+	return new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: value < 10 ? 4 : 2 }).format(value);
+}
+
 export function formatNumber(value: number, locale: string): string {
 	const { min, max } = priceDigits(value);
 	return new Intl.NumberFormat(locale, { minimumFractionDigits: min, maximumFractionDigits: max }).format(value);
@@ -89,18 +94,21 @@ export function roundTemperature(value: number): string {
 	return `${Math.round(value)}°`;
 }
 
-/** One card of the rotating deck. Long lists are split into pages. */
+/**
+ * One card of the right rail. Coins and exchange rates are not cards: they
+ * live in the market bar (`marketItems`). Long lists are split into pages.
+ */
 export type WidgetCard = {
 	key: string;
-	kind: 'crypto' | 'stocks' | 'fx' | 'cve' | 'claude' | 'openai';
+	kind: 'cve' | 'claude' | 'openai' | 'stocks';
 	from: number;
 	to: number;
 	page: number;
 	pages: number;
 };
 
-/** Rows per card, so a page always fits the column and reads from the sofa. */
-export const ROWS_PER_CARD = { crypto: 5, stocks: 5, fx: 5, cve: 4, claude: 3, openai: 3 } as const;
+/** Rows per card, so a card always fits the rail and reads from the sofa. */
+export const ROWS_PER_CARD = { cve: 5, claude: 4, openai: 4, stocks: 5 } as const;
 
 /** A dollar amount: cents under a hundred dollars, whole dollars above. */
 export function formatUsd(value: number, locale: string): string {
@@ -118,36 +126,138 @@ export function formatTokens(value: number, locale: string): string {
 	return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
 }
 
-function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number | null {
+/** Rows a card would show; 0 when the widget has nothing to show on a wall. */
+function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number {
 	const section = widgets[kind];
-	if (!section) return null;
-	const data = section.data;
-	if (!data) return 0;
-	if (kind === 'crypto') return (data as { coins: unknown[] }).coins.length;
-	if (kind === 'stocks') return (data as { quotes: unknown[] }).quotes.length;
-	if (kind === 'fx') return (data as { rates: unknown[] }).rates.length;
-	if (kind === 'claude' || kind === 'openai') return (data as { people: unknown[] | null }).people?.length ?? 0;
-	return (data as unknown[]).length;
+	// Not configured, waiting for a key or failing with nothing to show: no card at all.
+	if (!section || section.needs_key || !section.data) return 0;
+	if (kind === 'stocks') return (section.data as { quotes: unknown[] }).quotes.length;
+	if (kind === 'claude' || kind === 'openai') return Math.max(1, (section.data as { people: unknown[] | null }).people?.length ?? 0);
+	return (section.data as unknown[]).length;
 }
 
 /**
- * The deck, in a fixed order: coins, stocks, rates, vulnerabilities, then Claude and OpenAI usage (the
- * weather is not a card: it sits under the clock). A widget turned on but unavailable still gets its card
- * (it says so); a widget turned off gets none.
+ * The rail's cards, in a fixed order: critical vulnerabilities, Claude and OpenAI usage, stocks. Only
+ * widgets that are turned on and have something to show get a card: never a "key required" card on a wall.
  */
 export function widgetCards(widgets: WallWidgets | null): WidgetCard[] {
 	if (!widgets) return [];
 	const cards: WidgetCard[] = [];
-	for (const kind of ['crypto', 'stocks', 'fx', 'cve', 'claude', 'openai'] as const) {
+	for (const kind of ['cve', 'claude', 'openai', 'stocks'] as const) {
 		const rows = rowsOf(widgets, kind);
-		if (rows === null) continue;
+		if (rows === 0) continue;
 		const size = ROWS_PER_CARD[kind];
-		const pages = Math.max(1, Math.ceil(rows / size));
+		const pages = Math.ceil(rows / size);
 		for (let page = 0; page < pages; page += 1) {
 			cards.push({ key: `${kind}:${page}`, kind, from: page * size, to: Math.min(rows, (page + 1) * size), page, pages });
 		}
 	}
 	return cards;
+}
+
+/** One figure of the market bar: a coin or an exchange rate. */
+export type MarketItem = {
+	key: string;
+	group: 'crypto' | 'fx';
+	/** `BTC`, `EUR`, `100 JPY`. */
+	symbol: string;
+	price: number;
+	/** The currency `price` is written in. */
+	currency: string;
+	/** Percent. */
+	change: number | null;
+};
+
+/** The market bar's figures: coins first, then the world's currencies against the base. */
+export function marketItems(widgets: WallWidgets | null): MarketItem[] {
+	const items: MarketItem[] = [];
+	const crypto = widgets?.crypto;
+	if (crypto && !crypto.needs_key && crypto.data) {
+		for (const coin of crypto.data.coins) {
+			items.push({ key: `c:${coin.id}`, group: 'crypto', symbol: coin.symbol.toUpperCase(), price: coin.price, currency: crypto.data.currency, change: coin.change_24h });
+		}
+	}
+	const fx = widgets?.fx;
+	if (fx && !fx.needs_key && fx.data) {
+		for (const rate of fx.data.rates) {
+			const quote = fxQuote(rate.rate, rate.previous);
+			items.push({ key: `f:${rate.code}`, group: 'fx', symbol: quote.per === 1 ? rate.code : `${quote.per} ${rate.code}`, price: quote.value, currency: fx.data.base, change: quote.change });
+		}
+	}
+	return items;
+}
+
+/**
+ * Greedy pages for a column: how many cards fit under each other in `avail`
+ * pixels. Order is kept; a card taller than the room still gets a page of its own.
+ */
+export function packColumn(heights: number[], avail: number, gap: number): number[][] {
+	const pages: number[][] = [];
+	let used = 0;
+	for (let i = 0; i < heights.length; i += 1) {
+		const page = pages[pages.length - 1];
+		if (page && used + gap + heights[i] <= avail) {
+			page.push(i);
+			used += gap + heights[i];
+		} else {
+			pages.push([i]);
+			used = heights[i];
+		}
+	}
+	return pages;
+}
+
+/**
+ * Greedy pages for a row: items side by side in `avail` pixels, a group's
+ * label written wherever a page starts or the group changes. Order is kept;
+ * an item wider than the room still gets a page of its own.
+ */
+export function packRow(widths: number[], groups: string[], labels: Record<string, number>, avail: number, gap: number): number[][] {
+	const pages: number[][] = [];
+	let used = 0;
+	for (let i = 0; i < widths.length; i += 1) {
+		const page = pages[pages.length - 1];
+		const prev = page ? groups[page[page.length - 1]] : null;
+		const extra = prev === groups[i] ? 0 : (labels[groups[i]] ?? 0) + gap;
+		if (page && used + gap + extra + widths[i] <= avail) {
+			page.push(i);
+			used += gap + extra + widths[i];
+		} else {
+			pages.push([i]);
+			used = (labels[groups[i]] ?? 0) + gap + widths[i];
+		}
+	}
+	return pages;
+}
+
+/** How much a page may grow (to fill the rail) or must shrink (to fit it). */
+export function fitScale(content: number, avail: number, min = 0.7, max = 1.2): number {
+	if (!(content > 0) || !(avail > 0)) return 1;
+	return Math.min(max, Math.max(min, avail / content));
+}
+
+/**
+ * Initials for a person's badge: one letter from each of the first two parts
+ * of a name (`Ada Lovelace`, `ada.lovelace@x.io` give `AL`), two from a single one.
+ */
+export function initialsOf(name: string): string {
+	const parts = name.split(/[\s._@+-]+/u).filter(Boolean);
+	if (parts.length === 0) return '?';
+	const letters = parts.length > 1 ? [parts[0], parts[1]].map((part) => Array.from(part)[0]) : Array.from(parts[0]).slice(0, 2);
+	return letters.join('').toLocaleUpperCase();
+}
+
+/**
+ * A hue (0-359) derived from a name: the same on every display and every day.
+ * The badge is dark enough for white initials at every hue (see `PersonBadge`).
+ */
+export function hueOf(name: string): number {
+	let hash = 2166136261;
+	for (const char of name.trim().toLowerCase()) {
+		hash ^= char.codePointAt(0) ?? 0;
+		hash = Math.imul(hash, 16777619) >>> 0;
+	}
+	return hash % 360;
 }
 
 /** The next card's index; keeps a valid index when the deck shrinks. */

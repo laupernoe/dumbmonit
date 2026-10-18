@@ -6233,6 +6233,8 @@
 	"wall_gallery_aria": "新闻图片",
 	"wall_gallery_count": "第 {index} 张，共 {count} 张",
 	"wall_load_error": "无法加载墙屏",
+	"wall_market_aria": "市场",
+	"wall_market_vs": "对 {base}",
 	"wall_music_admin_only": "只有管理员可以更改。",
 	"wall_music_button": "音乐",
 	"wall_music_cancel": "取消",
