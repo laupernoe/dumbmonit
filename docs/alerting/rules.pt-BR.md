@@ -559,6 +559,17 @@ Séries carregam `router`, `service`, `server`, `upstream`, `host` ou
 | Domain in redemption | O domínio está em `redemptionPeriod`, `pendingDelete` ou `pendingRestore`: já expirou (`dumbmonit_domain_redemption`). | > 0 | 30 min | Alerta (`critical`) | 12 h |
 | DNS answer changed | A resposta de uma verificação DNS com *Alertar quando a resposta mudar* difere da anterior (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolve por conta própria uma hora depois. | > 0 | 1 min | Aviso (`warning`) | 24 h |
 
+### Listas de bloqueio DNS {#dns-blocklists}
+
+[Reputação do servidor de e-mail](../devices/mail_blacklist.md) e [lista de bloqueio de faixa de IP](../devices/ip_blacklist.md). As listas só são consultadas a cada 6 horas; o último resultado é gravado de novo a cada sondagem, daí a retenção curta. A página do monitor traz o link da página de remoção de cada listagem.
+
+| Regra | O que é | Limite padrão | Retenção | Severidade | Lembrete |
+|---|---|---|---|---|---|
+| Listed on a major blocklist | Um endereço ou o domínio está no Spamhaus (ZEN ou DBL), Barracuda ou SpamCop: boa parte do seu e-mail é recusada (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Alerta (`critical`) | 24 h |
+| Listed on a blocklist | Um endereço ou o domínio está em uma lista menor: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL ou URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Aviso (`warning`) | 24 h |
+| Mail server reverse DNS mismatch | Um endereço do servidor de e-mail não tem DNS reverso, ou seu nome não resolve de volta para ele: Gmail, Outlook.com e Yahoo recusam ou mandam para o spam esse e-mail (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 min | Aviso (`warning`) | 24 h |
+| SPF or DMARC missing | O domínio não tem registro SPF (ou tem vários), ou não tem registro DMARC: Gmail e Yahoo exigem ambos de remetentes em massa (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 min | Aviso (`warning`) | 24 h |
+
 ### Mudanças no site {#website-changes}
 
 Veja [Mudanças no site](../devices/webchange.md). A página do monitor

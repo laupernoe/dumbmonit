@@ -764,6 +764,10 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
+O agente só esquece o seu segredo nesta recusa exata. Qualquer outro `403`, por
+exemplo de um proxy inverso ou de uma firewall de aplicações web à frente do
+DumbMonit, fica registado no log e é repetido mantendo o segredo.
+
 ## Tokens de registo {#enrolment-tokens}
 
 - Os tokens são criados em **Definições → Agentes** ou ao adicionar um monitor
