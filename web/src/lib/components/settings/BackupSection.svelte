@@ -392,7 +392,7 @@
 						</div>
 
 						<div class="mt-3 overflow-x-auto">
-							<table class="w-full min-w-[26rem] text-sm">
+							<table class="table-stack w-full text-sm [--stack-inset:0] sm:min-w-[26rem]">
 								<thead>
 									<tr class="text-left text-ink-3">
 										<th class="py-1 font-medium">{m.settings_backup_col_section()}</th>
@@ -405,9 +405,9 @@
 									{#each report.sections.filter((s) => s.created + s.updated + s.skipped > 0) as section (section.section)}
 										<tr class="border-t border-line">
 											<td class="py-1 text-ink">{section.section.replace(/_/g, ' ')}</td>
-											<td class="tnum py-1 text-right text-ink-2">{section.created}</td>
-											<td class="tnum py-1 text-right text-ink-2">{section.updated}</td>
-											<td class="tnum py-1 text-right text-ink-3">{section.skipped}</td>
+											<td class="tnum py-1 text-right text-ink-2" data-label={m.settings_backup_col_created()}>{section.created}</td>
+											<td class="tnum py-1 text-right text-ink-2" data-label={m.settings_backup_col_updated()}>{section.updated}</td>
+											<td class="tnum py-1 text-right text-ink-3" data-label={m.settings_backup_col_unchanged()}>{section.skipped}</td>
 										</tr>
 									{/each}
 								</tbody>
