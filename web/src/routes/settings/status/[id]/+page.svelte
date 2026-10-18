@@ -95,15 +95,15 @@
 		<Skeleton class="h-48 w-full" />
 	</div>
 {:else}
-	<!-- Same width as the other Settings pages; the share and subscriber panels sit beside the form on wide screens. -->
-	<div class="rise-in grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_21rem]">
+	<!-- Full width of the Settings area; the share and subscriber panels sit side by side below the form. -->
+	<div class="rise-in grid gap-4">
 		<Panel>
 			{#key id}
 				<PageForm page={current} {targets} {channels} {onsaved} {oncancel} />
 			{/key}
 		</Panel>
 		{#if current}
-			<div class="grid min-w-0 gap-4 lg:sticky lg:top-20">
+			<div class="grid items-start gap-4 lg:grid-cols-2">
 				<SharePanel page={current} />
 				{#if current.subscribe_channel_id !== null}
 					<SubscribersPanel page={current} />

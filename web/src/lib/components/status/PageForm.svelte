@@ -182,6 +182,7 @@
 		'inline-flex size-10 items-center justify-center rounded-md text-ink-2 hover:bg-surface-2 hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink';
 
 	// Folded sections: closed unless something inside needs the reader (an error).
+	let editOpen = $state(false);
 	let openLook = $state(false);
 	let openScene = $state(false);
 	let openConnect = $state(false);
@@ -458,7 +459,8 @@
 	</div>
 {/snippet}
 
-<form class="grid gap-4" onsubmit={submit} novalidate>
+<form class="grid gap-5 lg:grid-cols-2 lg:items-start" onsubmit={submit} novalidate>
+	<div class="grid gap-4">
 	<!-- Basics -->
 	<div class="grid items-start gap-4 sm:grid-cols-2">
 		<Field label={m.status_form_title()} for="{idPrefix}-title" error={titleError} required>
@@ -496,7 +498,7 @@
 	<Field label={m.status_form_description()} for="{idPrefix}-description">
 		<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder={m.status_form_description_placeholder()} title={m.status_form_description_help()} disabled={saving} />
 	</Field>
-	<div class="grid grid-cols-2 items-end gap-4 sm:grid-cols-3">
+	<div class="grid grid-cols-2 items-end gap-4">
 		<Field label={m.status_form_theme()} for="{idPrefix}-theme">
 			<select id="{idPrefix}-theme" class="input" bind:value={theme} disabled={saving}>
 				<option value="auto">{m.status_form_theme_auto()}</option>
@@ -513,7 +515,7 @@
 				</select>
 			</Field>
 		</div>
-		<div class="col-span-2 flex min-h-10 items-center justify-between gap-3 rounded-lg border border-line px-3 sm:col-span-1">
+		<div class="col-span-2 flex min-h-10 items-center justify-between gap-3 rounded-lg border border-line px-3">
 			<div class="min-w-0">
 				<label for="{idPrefix}-published" class="block text-sm font-semibold text-ink">{m.status_form_published()}</label>
 				<p class="text-[0.75rem] text-ink-2">{published ? m.status_form_published_on() : m.status_form_published_off()}</p>
@@ -522,8 +524,10 @@
 		</div>
 	</div>
 
-	<!-- Services -->
-	<fieldset class="grid gap-2" disabled={saving}>
+	</div>
+
+	<!-- Services: a closed combobox; what is picked shows as chips, the rename/reorder list is folded -->
+	<fieldset class="grid content-start gap-2" disabled={saving}>
 		<legend class="mb-1 text-sm font-semibold text-ink">{m.status_form_services()}</legend>
 		{#if sortedTargets.length === 0}
 			<p class="ghost-cell rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-ink-2">{m.status_form_services_empty()}</p>
@@ -541,47 +545,71 @@
 				ungroupedLabel={m.status_form_services_no_folder()}
 				summary={order.length > 0 ? m.status_form_services_count({ count: order.length }) : ''}
 			/>
-			<p class="text-[0.8125rem] text-ink-2">{m.status_form_services_help()}</p>
-			{#if order.length > 0}
-				<ol class="max-h-[26rem] divide-y divide-line overflow-y-auto rounded-[var(--radius-card)] border border-line">
-					{#each order as id, index (id)}
+			{#if order.length === 0}
+				<p class="text-[0.8125rem] text-ink-2">{m.status_form_services_none()}</p>
+			{:else}
+				<ul class="flex max-h-[4.5rem] flex-wrap gap-1.5 overflow-hidden" aria-label={m.status_form_services()}>
+					{#each order as id (id)}
 						{@const target = targetById.get(id)}
-						{@const pick = picks.get(id)}
-						{#if target && pick}
-							<li class="grid gap-2 px-3 py-2 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
-								<div class="flex min-w-0 items-center gap-2 text-sm text-ink">
-									<span class="w-5 shrink-0 text-right text-[0.75rem] tabular-nums text-ink-3">{index + 1}</span>
-									<span class="min-w-0 truncate">{target.name}</span>
-									<span class="shrink-0 text-[0.75rem] text-ink-3">{target.kind}</span>
-								</div>
-								<input
-									type="text"
-									class="input"
-									value={pick.label}
-									oninput={(event) => setPick(id, { label: event.currentTarget.value })}
-									placeholder={target.name}
-									maxlength="80"
-									aria-label={m.status_form_pick_label_aria({ name: target.name })}
-								/>
-								<input
-									type="text"
-									class="input"
-									value={pick.group}
-									oninput={(event) => setPick(id, { group: event.currentTarget.value })}
-									placeholder={m.status_form_pick_group()}
-									maxlength="60"
-									list="{idPrefix}-groups"
-									aria-label={m.status_form_pick_group_aria({ name: target.name })}
-								/>
-								<div class="flex justify-end">
-									<button type="button" class={ICON_BTN} onclick={() => move(id, -1)} disabled={index === 0} aria-label={m.status_form_pick_up_aria({ name: target.name })} title={m.status_form_up()}><ArrowUp class="size-4" aria-hidden="true" /></button>
-									<button type="button" class={ICON_BTN} onclick={() => move(id, 1)} disabled={index === order.length - 1} aria-label={m.status_form_pick_down_aria({ name: target.name })} title={m.status_form_down()}><ArrowDown class="size-4" aria-hidden="true" /></button>
-									<button type="button" class={ICON_BTN} onclick={() => toggle(target, false)} aria-label={m.status_form_pick_remove_aria({ name: target.name })}><X class="size-4" aria-hidden="true" /></button>
-								</div>
+						{#if target}
+							<li class="inline-flex min-h-8 max-w-full items-center gap-1 rounded-full border border-line bg-surface-2 py-0.5 pr-0.5 pl-3 text-[0.8125rem] text-ink">
+								<span class="truncate">{picks.get(id)?.label || target.name}</span>
+								<button type="button" class="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-ink-2 hover:bg-surface hover:text-ink focus-visible:outline-2 focus-visible:outline-ink" onclick={() => toggle(target, false)} aria-label={m.status_form_pick_remove_aria({ name: target.name })}><X class="size-3.5" aria-hidden="true" /></button>
 							</li>
 						{/if}
 					{/each}
-				</ol>
+				</ul>
+				<button
+					type="button"
+					class="inline-flex min-h-10 items-center gap-1.5 justify-self-start rounded-md px-1 text-sm font-semibold text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+					aria-expanded={editOpen}
+					aria-controls="{idPrefix}-edit"
+					onclick={() => (editOpen = !editOpen)}
+				>
+					<ChevronRight class={`size-4 transition-transform ${editOpen ? 'rotate-90' : ''}`} aria-hidden="true" />
+					{m.status_form_services_edit()}
+				</button>
+				{#if editOpen}
+					<ol id="{idPrefix}-edit" class="max-h-[26rem] divide-y divide-line overflow-y-auto rounded-[var(--radius-card)] border border-line">
+						{#each order as id, index (id)}
+							{@const target = targetById.get(id)}
+							{@const pick = picks.get(id)}
+							{#if target && pick}
+								<li class="grid gap-2 px-3 py-2 xl:grid-cols-[minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-center">
+									<div class="flex min-w-0 items-center gap-2 text-sm text-ink">
+										<span class="w-5 shrink-0 text-right text-[0.75rem] tabular-nums text-ink-3">{index + 1}</span>
+										<span class="min-w-0 truncate">{target.name}</span>
+										<span class="shrink-0 text-[0.75rem] text-ink-3">{target.kind}</span>
+									</div>
+									<input
+										type="text"
+										class="input"
+										value={pick.label}
+										oninput={(event) => setPick(id, { label: event.currentTarget.value })}
+										placeholder={target.name}
+										maxlength="80"
+										aria-label={m.status_form_pick_label_aria({ name: target.name })}
+									/>
+									<input
+										type="text"
+										class="input"
+										value={pick.group}
+										oninput={(event) => setPick(id, { group: event.currentTarget.value })}
+										placeholder={m.status_form_pick_group()}
+										maxlength="60"
+										list="{idPrefix}-groups"
+										aria-label={m.status_form_pick_group_aria({ name: target.name })}
+									/>
+									<div class="flex justify-end">
+										<button type="button" class={ICON_BTN} onclick={() => move(id, -1)} disabled={index === 0} aria-label={m.status_form_pick_up_aria({ name: target.name })} title={m.status_form_up()}><ArrowUp class="size-4" aria-hidden="true" /></button>
+										<button type="button" class={ICON_BTN} onclick={() => move(id, 1)} disabled={index === order.length - 1} aria-label={m.status_form_pick_down_aria({ name: target.name })} title={m.status_form_down()}><ArrowDown class="size-4" aria-hidden="true" /></button>
+										<button type="button" class={ICON_BTN} onclick={() => toggle(target, false)} aria-label={m.status_form_pick_remove_aria({ name: target.name })}><X class="size-4" aria-hidden="true" /></button>
+									</div>
+								</li>
+							{/if}
+						{/each}
+					</ol>
+				{/if}
 				<datalist id="{idPrefix}-groups">
 					{#each groupsSeen as group (group)}<option value={group}></option>{/each}
 				</datalist>
@@ -589,18 +617,18 @@
 		{/if}
 	</fieldset>
 
-	<!-- Folded options -->
-	<div class="grid gap-2">
+	<!-- Folded options: side by side on wide screens -->
+	<div class="grid items-start gap-2 lg:col-span-2 lg:grid-cols-3">
 		{@render fold(m.status_form_look(), lookSummary, openLook, (v) => (openLook = v), lookBody)}
 		{@render fold(m.status_form_scene(), sceneSummary, openScene, (v) => (openScene = v), sceneBody)}
 		{@render fold(m.status_form_section_connect(), connectSummary, openConnect, (v) => (openConnect = v), connectBody)}
 	</div>
 
 	{#if error}
-		<ErrorNotice {error} title={page ? m.status_form_save_error() : m.status_form_create_error()} />
+		<ErrorNotice class="lg:col-span-2" {error} title={page ? m.status_form_save_error() : m.status_form_create_error()} />
 	{/if}
 
-	<div class="flex flex-wrap items-center gap-2">
+	<div class="flex flex-wrap items-center gap-2 lg:col-span-2">
 		<Button type="submit" variant="primary" loading={saving}>
 			<Check class="size-4" aria-hidden="true" />
 			{page ? m.status_form_save() : m.status_form_create()}
