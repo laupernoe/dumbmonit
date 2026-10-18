@@ -29,6 +29,7 @@
 		formatUsd,
 		nextCard,
 		packColumn,
+		rowsThatFit,
 		widgetCards,
 		type WidgetCard
 	} from '#lib/wall/widgets.js';
@@ -50,24 +51,22 @@
 	const DOTS = 26;
 
 	const locale = $derived(getLocale());
-	const cards = $derived(widgetCards(widgets));
-
 	let room = $state(0);
-	let heights = $state<number[]>([]);
-	/** Little height to share (a 720p screen): the cards drop their small print. */
-	const tight = $derived(room > 0 && room < 170);
-	const measured = $derived(room > 0 && cards.length > 0 && cards.every((_, i) => (heights[i] ?? 0) > 0));
+	const cards = $derived(widgetCards(widgets, rowsThatFit(room)));
+	let heights = $state<Record<string, number>>({});
+	const measured = $derived(room > 0 && cards.length > 0 && cards.every((card) => (heights[card.key] ?? 0) > 0));
 
 	const pages = $derived.by(() => {
 		if (!measured) return [cards.map((_, i) => i)];
-		const all = packColumn(heights.slice(0, cards.length), room, GAP);
-		return all.length > 1 ? packColumn(heights.slice(0, cards.length), room - DOTS, GAP) : all;
+		const sizes = cards.map((card) => heights[card.key]);
+		const all = packColumn(sizes, room, GAP);
+		return all.length > 1 ? packColumn(sizes, room - DOTS, GAP) : all;
 	});
 	const roomForCards = $derived(room - (pages.length > 1 ? DOTS : 0));
 	const scales = $derived(
 		pages.map((page) => {
 			if (!measured) return 1;
-			const content = page.reduce((sum, i) => sum + heights[i], 0) + GAP * (page.length - 1);
+			const content = page.reduce((sum, i) => sum + heights[cards[i].key], 0) + GAP * (page.length - 1);
 			return fitScale(content, roomForCards);
 		})
 	);
@@ -225,9 +224,9 @@
 	<section class="deck" aria-label={m.wall_widgets_aria()} aria-roledescription={m.wall_widgets_carousel()}>
 		<div class="room" bind:clientHeight={room}>
 			<!-- Each card at its natural size, unseen: what the pages are cut from. -->
-			<div class="probe" class:tight aria-hidden="true" inert>
+			<div class="probe" aria-hidden="true" inert>
 				{#each cards as card, i (card.key)}
-					<article class="card" bind:clientHeight={heights[i]}>{@render cardBody(card)}</article>
+					<article class="card" bind:clientHeight={heights[card.key]}>{@render cardBody(card)}</article>
 				{/each}
 			</div>
 
@@ -237,7 +236,6 @@
 					<div
 						class="page-cards"
 						class:page-cards--shown={shown}
-						class:tight
 						style:--k={scales[p]}
 						aria-hidden={shown ? undefined : 'true'}
 						inert={!shown}
@@ -493,15 +491,6 @@
 		line-clamp: 1;
 		-webkit-box-orient: vertical;
 		overflow: hidden;
-	}
-
-	.tight .foot,
-	.tight .cve-title {
-		display: none;
-	}
-	.tight .card {
-		gap: 0.3em;
-		padding: 0.55em 0.9em 0.5em;
 	}
 
 	/* Where the rail is in its round. */

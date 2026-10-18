@@ -13,6 +13,7 @@ import {
 	marketItems,
 	packColumn,
 	packRow,
+	rowsThatFit,
 	isStale,
 	nextCard,
 	trend,
@@ -134,9 +135,19 @@ test('packing a row: a group label is paid at each page start and group change',
 test('scale: grows when there is room, shrinks to fit, within bounds', () => {
 	assert.equal(fitScale(100, 110), 1.1);
 	assert.equal(fitScale(100, 500), 1.2);
-	assert.equal(fitScale(100, 50), 0.7);
+	assert.equal(fitScale(100, 50), 0.75);
 	assert.equal(fitScale(0, 50), 1);
 	assert.equal(fitScale(100, 0), 1);
+});
+
+test('a short rail cuts long lists in more pages', () => {
+	assert.equal(rowsThatFit(0), Infinity);
+	assert.equal(rowsThatFit(240), 4);
+	assert.equal(rowsThatFit(190), 2);
+	assert.equal(rowsThatFit(60), 1);
+	const cve = { rotate_seconds: 20, cve: section(new Array(5).fill({})) };
+	assert.equal(widgetCards(cve, 2).length, 3);
+	assert.equal(widgetCards(cve).length, 1);
 });
 
 test('badges: initials and a stable hue from the name', () => {

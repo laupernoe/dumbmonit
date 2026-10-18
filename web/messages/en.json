@@ -5084,6 +5084,7 @@
 	"settings_news_testing": "Reading the feed…",
 	"settings_news_ticker": "Headline ticker",
 	"settings_news_ticker_hint": "A band with the latest headlines, refreshed every five minutes.",
+	"settings_news_ticker_off_gallery": "Off while the picture carousel is on.",
 	"settings_news_title": "Wall news",
 	"settings_news_video": "Live video",
 	"settings_news_video_channel": "Channel",

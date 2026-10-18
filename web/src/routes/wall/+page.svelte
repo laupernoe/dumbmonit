@@ -1021,8 +1021,14 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 			text-align: right;
 			padding-top: 2.25rem;
 			min-height: 0;
-			/* The cards stop above the pigeons' heads. */
-			margin-bottom: 4.5vh;
+			/* The rail stops above the pigeons' heads (about 74% of the screen height). */
+			margin-bottom: max(
+				0px,
+				calc(
+					26vh / var(--zoom, 1) - var(--bottom-h, 0px) -
+						(100vh / var(--zoom, 1) - var(--bottom-h, 0px)) * 0.125
+				)
+			);
 		}
 		.headline {
 			font-size: clamp(4rem, 5vw, 6rem);
@@ -1145,12 +1151,16 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 		}
 	}
 	/* A short screen (720p): the rail trims its spacing so the cards keep their room. */
-	@media (min-width: 1024px) and (max-height: 820px) {
-		.has-bottom .board {
-			padding-bottom: calc(var(--bottom-h) + (100vh / var(--zoom, 1) - var(--bottom-h)) * 0.07);
+	@media (min-width: 1024px) and (max-height: 940px) {
+		.updated {
+			display: none;
 		}
-		.board-right {
-			margin-bottom: 1vh;
+		.gallery-slot :global(.frame) {
+			aspect-ratio: 3.4 / 1;
+		}
+		.gallery-slot :global(.title) {
+			-webkit-line-clamp: 1;
+			line-clamp: 1;
 		}
 		.date {
 			font-size: 1.25rem;

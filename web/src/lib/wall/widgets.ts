@@ -140,13 +140,13 @@ function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number 
  * The rail's cards, in a fixed order: critical vulnerabilities, Claude and OpenAI usage, stocks. Only
  * widgets that are turned on and have something to show get a card: never a "key required" card on a wall.
  */
-export function widgetCards(widgets: WallWidgets | null): WidgetCard[] {
+export function widgetCards(widgets: WallWidgets | null, maxRows = Infinity): WidgetCard[] {
 	if (!widgets) return [];
 	const cards: WidgetCard[] = [];
 	for (const kind of ['cve', 'claude', 'openai', 'stocks'] as const) {
 		const rows = rowsOf(widgets, kind);
 		if (rows === 0) continue;
-		const size = ROWS_PER_CARD[kind];
+		const size = Math.max(1, Math.min(ROWS_PER_CARD[kind], maxRows));
 		const pages = Math.ceil(rows / size);
 		for (let page = 0; page < pages; page += 1) {
 			cards.push({ key: `${kind}:${page}`, kind, from: page * size, to: Math.min(rows, (page + 1) * size), page, pages });
@@ -230,8 +230,17 @@ export function packRow(widths: number[], groups: string[], labels: Record<strin
 	return pages;
 }
 
+/**
+ * How many rows a card may show in a rail `room` pixels high (about 44 px a row, 60 for the title and
+ * the source line): on a short screen, a long list is cut in more pages instead of being clipped.
+ */
+export function rowsThatFit(room: number): number {
+	if (!(room > 0)) return Infinity;
+	return Math.max(1, Math.floor((room - 60) / 44));
+}
+
 /** How much a page may grow (to fill the rail) or must shrink (to fit it). */
-export function fitScale(content: number, avail: number, min = 0.7, max = 1.2): number {
+export function fitScale(content: number, avail: number, min = 0.75, max = 1.2): number {
 	if (!(content > 0) || !(avail > 0)) return 1;
 	return Math.min(max, Math.max(min, avail / content));
 }

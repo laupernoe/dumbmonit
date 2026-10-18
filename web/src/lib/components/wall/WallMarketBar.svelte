@@ -31,18 +31,18 @@
 	const fxBase = $derived(widgets.fx?.data?.base ?? '');
 
 	let width = $state(0);
-	let widths = $state<number[]>([]);
+	let widths = $state<Record<string, number>>({});
 	let labelWidths = $state<Record<string, number>>({});
 	const measured = $derived(
-		width > 0 && items.length > 0 && items.every((_, i) => (widths[i] ?? 0) > 0) && Object.values(labelWidths).every((w) => w > 0)
+		width > 0 && items.length > 0 && items.every((item) => (widths[item.key] ?? 0) > 0) && Object.values(labelWidths).every((w) => w > 0)
 	);
 
 	const pages = $derived.by(() => {
 		if (!measured) return [items.map((_, i) => i)];
 		// A page keeps a little room for the page dots.
 		const room = width - 8;
-		const all = packRow(widths.slice(0, items.length), items.map((item) => item.group), labelWidths, room, GAP);
-		return all.length > 1 ? packRow(widths.slice(0, items.length), items.map((item) => item.group), labelWidths, room - 44, GAP) : all;
+		const all = packRow(items.map((item) => widths[item.key]), items.map((item) => item.group), labelWidths, room, GAP);
+		return all.length > 1 ? packRow(items.map((item) => widths[item.key]), items.map((item) => item.group), labelWidths, room - 44, GAP) : all;
 	});
 
 	let index = $state(0);
@@ -79,7 +79,7 @@
 					{/if}
 				{/each}
 				{#each items as item, i (item.key)}
-					<span class="probe-fig" bind:clientWidth={widths[i]}>
+					<span class="probe-fig" bind:clientWidth={widths[item.key]}>
 						<ul>{@render figure(i)}</ul>
 					</span>
 				{/each}
