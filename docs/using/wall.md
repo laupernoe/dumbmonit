@@ -95,7 +95,8 @@ The wall's content security policy lets the page frame only YouTube
 
 An admin can add **widgets** to the wall in **Settings → Wall display → Wall
 widgets**: the weather, crypto prices, stock quotes, exchange rates and the
-latest critical vulnerabilities. Each one is off by default and turned on on
+latest critical vulnerabilities, and the cost and tokens of your Claude and
+OpenAI API accounts. Each one is off by default and turned on on
 its own.
 
 The **weather** is kept simple: an icon and the temperature now, for one
@@ -118,6 +119,7 @@ only a colour. Every card names its source, discreetly, and how fresh it is.
 | Stocks | Last price and change of the day of up to ten symbols | [Finnhub](https://finnhub.io) | **free key required** | every 5 min, one call per symbol |
 | Exchange rates | What one unit (or 100 of a small currency) costs in the base currency, and its change since the previous day | [Frankfurter](https://frankfurter.dev) (central bank reference rates) | none | every hour |
 | Critical vulnerabilities | The latest CVEs rated critical (CVSS 9 or more) this week and/or the latest entries of CISA's catalogue of actively exploited vulnerabilities, with score and date | [NVD](https://nvd.nist.gov) API 2.0, [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | none | every hour |
+| Claude / OpenAI usage | Cost in USD and tokens over a period, optionally the biggest users | Anthropic Usage and Cost Admin API, OpenAI organization Usage and Costs API | **admin key required** (see below) | every 15 min |
 
 **The sources and their terms** (checked October 2026):
 
@@ -165,14 +167,50 @@ secret; Settings only shows whether one is saved. Typing a new one replaces it,
   CVE already in the NVD list is tagged *Exploited*), *Critical* (NVD) or
   *Actively exploited* (CISA KEV), and how many to show (1 to 10).
 
+### AI usage: Claude and OpenAI
+
+Two more cards show what your **organization's API accounts** cost and consume:
+the cost in US dollars and the input and output tokens over a period (*today*,
+*the last 7 days* or *the current month*, in UTC), and, if you tick **Show the
+biggest users**, who used the most tokens. Each provider is turned on on its
+own with its **admin key** (stored encrypted, never shown again). The server
+reads the providers every 15 minutes: these APIs are not real time, and usually
+lag by a few minutes.
+
+What the providers really allow:
+
+| | Claude (Anthropic) | ChatGPT (OpenAI API) |
+|---|---|---|
+| Endpoints | `/v1/organizations/cost_report`, `/v1/organizations/usage_report/messages` (header `anthropic-version: 2023-06-01`) | `/v1/organization/costs`, `/v1/organization/usage/completions` |
+| Key | **Admin API key** `sk-ant-admin…`, organizations only (a personal account has none), created in the Claude Console by an organization admin | **Admin key** of an organization, created by an owner |
+| Total cost | exact, in USD | exact, in USD |
+| Tokens | input (cache included) and output | input (cache included) and output, of text requests (Chat Completions, Responses) |
+| Cost by person | **no**: only by workspace or line item | **no**: only by project or line item |
+| Tokens by person | by account (`account_id`) or API key (`api_key_id`) | by user (`user_id`, empty for traffic that uses an API key) or API key (`api_key_id`) |
+
+**The APIs return identifiers, not names.** In **Names**, map each identifier
+(an account or API key id, as the provider shows it in its console or in the
+API) to the name the wall shows. An identifier without a name appears
+shortened, and usage the API attributes to no key or account appears as
+*Unattributed*. Costs are never split by person: the wall says so under the
+list, and the per-person list ranks tokens only.
+
+**What is not covered.** Consumer subscriptions (Claude Pro and Max, ChatGPT
+Plus) and their weekly limits have **no official API**: they cannot be read,
+and DumbMonit does not guess them. An OpenAI
+usage figure counts text completions; the cost covers everything billed
+(images, audio, embeddings…), so tokens and cost are not always proportional.
+
 ### API
 
 `GET /api/wall/widgets` (what walls poll every minute: one section per widget
 turned on, with `data`, `updated`, `error`, `needs_key`, `source`),
 `GET|PUT /api/wall/widgets/settings` and `GET /api/wall/widgets/places?q=`
 (admin), `GET /api/wall/widgets/catalog`. On `PUT`, `secrets.finnhub` and
-`secrets.coingecko` set a key, an empty string clears it, and leaving them out
-keeps them.
+`secrets.coingecko`, `secrets.anthropic` and `secrets.openai` set a key, an
+empty string clears it, and leaving them out keeps them. The Claude and OpenAI
+sections of `GET /api/wall/widgets` carry `cost_usd`, `input_tokens`,
+`output_tokens` and, with *Show the biggest users*, a `people` list.
 
 ## Music on the wall
 

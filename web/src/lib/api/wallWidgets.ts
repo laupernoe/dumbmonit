@@ -19,7 +19,13 @@ export const DEFAULT_WIDGET_SETTINGS: WallWidgetSettings = {
 	weather: { enabled: false, places: [], units: 'metric' },
 	stocks: { enabled: false, symbols: [] },
 	fx: { enabled: false, base: 'EUR', currencies: ['USD', 'GBP', 'CHF', 'JPY', 'CNY'] },
-	cve: { enabled: false, source: 'both', count: 5 }
+	cve: { enabled: false, source: 'both', count: 5 },
+	ai: {
+		period: 'week',
+		by_person: false,
+		claude: { enabled: false, people: [] },
+		openai: { enabled: false, people: [] }
+	}
 };
 
 /** What the wall polls every minute. */

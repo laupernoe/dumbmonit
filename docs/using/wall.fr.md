@@ -102,7 +102,8 @@ relayée).
 
 Un administrateur peut ajouter des **widgets** au mur dans **Paramètres → Mur →
 Widgets du mur** : la météo, le cours de cryptomonnaies, d'actions, les taux de
-change et les dernières failles critiques. Chacun est désactivé par défaut et
+change, les dernières failles critiques, et le coût et les jetons de vos comptes
+API Claude et OpenAI. Chacun est désactivé par défaut et
 s'allume séparément.
 
 La **météo** reste simple : une icône et la température actuelle, pour une
@@ -178,14 +179,53 @@ taper une nouvelle la remplace, **Supprimer la clé** l'efface.
   *Critiques* (NVD) ou *Activement exploitées* (CISA KEV), et combien en
   montrer (1 à 10).
 
+### Consommation d'IA : Claude et OpenAI
+
+Deux cartes de plus montrent ce que coûtent et consomment les **comptes API de
+votre organisation** : le coût en dollars américains et les jetons d'entrée et
+de sortie sur une période (*aujourd'hui*, *les 7 derniers jours* ou *le mois en
+cours*, en UTC) et, si vous cochez **Afficher les plus gros utilisateurs**, qui
+a consommé le plus de jetons. Chaque fournisseur s'allume séparément avec sa
+**clé admin** (stockée chiffrée, jamais réaffichée). Le serveur lit les
+fournisseurs toutes les 15 minutes : ces API ne sont pas en temps réel et
+accusent en général quelques minutes de retard.
+
+Ce que les fournisseurs permettent vraiment :
+
+| | Claude (Anthropic) | ChatGPT (API OpenAI) |
+|---|---|---|
+| Points d'accès | `/v1/organizations/cost_report`, `/v1/organizations/usage_report/messages` (en-tête `anthropic-version: 2023-06-01`) | `/v1/organization/costs`, `/v1/organization/usage/completions` |
+| Clé | **Clé Admin API** `sk-ant-admin…`, réservée aux organisations (un compte personnel n'en a pas), créée dans la Claude Console par un administrateur de l'organisation | **Clé admin** d'une organisation, créée par un propriétaire |
+| Coût total | exact, en USD | exact, en USD |
+| Jetons | entrée (cache compris) et sortie | entrée (cache compris) et sortie, des requêtes texte (Chat Completions, Responses) |
+| Coût par personne | **non** : seulement par workspace ou ligne de facturation | **non** : seulement par projet ou ligne de facturation |
+| Jetons par personne | par compte (`account_id`) ou clé d'API (`api_key_id`) | par utilisateur (`user_id`, vide pour le trafic qui passe par une clé d'API) ou clé d'API (`api_key_id`) |
+
+**Les API renvoient des identifiants, pas des noms.** Dans **Noms**, associez
+chaque identifiant (un compte ou une clé d'API, tel que le fournisseur
+l'affiche dans sa console ou son API) au nom que le mur affiche. Un
+identifiant sans nom apparaît abrégé, et l'usage que l'API n'attribue à aucune
+clé ni aucun compte apparaît comme *Non attribué*. Les coûts ne sont jamais
+répartis par personne : le mur le dit sous la liste, qui classe les jetons
+seulement.
+
+**Ce qui n'est pas couvert.** Les abonnements grand public (Claude Pro et Max,
+ChatGPT Plus) et leurs limites hebdomadaires n'ont **aucune API officielle** :
+ils ne peuvent pas être lus et DumbMonit ne les devine pas. Côté OpenAI, les jetons comptent les requêtes
+texte, alors que le coût couvre tout ce qui est facturé (images, audio,
+embeddings…) : jetons et coût ne sont donc pas toujours proportionnels.
+
 ### API
 
 `GET /api/wall/widgets` (ce que les murs interrogent chaque minute : une
 section par widget allumé, avec `data`, `updated`, `error`, `needs_key`,
 `source`), `GET|PUT /api/wall/widgets/settings` et
 `GET /api/wall/widgets/places?q=` (admin), `GET /api/wall/widgets/catalog`. Sur
-`PUT`, `secrets.finnhub` et `secrets.coingecko` enregistrent une clé, une chaîne
-vide l'efface, et les omettre les garde.
+`PUT`, `secrets.finnhub`, `secrets.coingecko`, `secrets.anthropic` et
+`secrets.openai` enregistrent une clé, une chaîne vide l'efface, et les omettre
+les garde. Les sections Claude et OpenAI de `GET /api/wall/widgets` portent
+`cost_usd`, `input_tokens`, `output_tokens` et, avec *Afficher les plus gros
+utilisateurs*, une liste `people`.
 
 ## Musique sur le mur
 

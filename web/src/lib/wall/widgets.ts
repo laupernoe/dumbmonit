@@ -90,10 +90,33 @@ export function roundTemperature(value: number): string {
 }
 
 /** One card of the rotating deck. Long lists are split into pages. */
-export type WidgetCard = { key: string; kind: 'crypto' | 'stocks' | 'fx' | 'cve'; from: number; to: number; page: number; pages: number };
+export type WidgetCard = {
+	key: string;
+	kind: 'crypto' | 'stocks' | 'fx' | 'cve' | 'claude' | 'openai';
+	from: number;
+	to: number;
+	page: number;
+	pages: number;
+};
 
 /** Rows per card, so a page always fits the column and reads from the sofa. */
-export const ROWS_PER_CARD = { crypto: 5, stocks: 5, fx: 5, cve: 4 } as const;
+export const ROWS_PER_CARD = { crypto: 5, stocks: 5, fx: 5, cve: 4, claude: 3, openai: 3 } as const;
+
+/** A dollar amount: cents under a hundred dollars, whole dollars above. */
+export function formatUsd(value: number, locale: string): string {
+	const digits = Math.abs(value) >= 100 ? 0 : 2;
+	return new Intl.NumberFormat(locale, {
+		style: 'currency',
+		currency: 'USD',
+		minimumFractionDigits: digits,
+		maximumFractionDigits: digits
+	}).format(value);
+}
+
+/** Token counts for across the room: `1.2M`, `340K`, `980`. */
+export function formatTokens(value: number, locale: string): string {
+	return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
+}
 
 function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number | null {
 	const section = widgets[kind];
@@ -103,18 +126,19 @@ function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number 
 	if (kind === 'crypto') return (data as { coins: unknown[] }).coins.length;
 	if (kind === 'stocks') return (data as { quotes: unknown[] }).quotes.length;
 	if (kind === 'fx') return (data as { rates: unknown[] }).rates.length;
+	if (kind === 'claude' || kind === 'openai') return (data as { people: unknown[] | null }).people?.length ?? 0;
 	return (data as unknown[]).length;
 }
 
 /**
- * The deck, in a fixed order: coins, stocks, rates and vulnerabilities (the
+ * The deck, in a fixed order: coins, stocks, rates, vulnerabilities, then Claude and OpenAI usage (the
  * weather is not a card: it sits under the clock). A widget turned on but unavailable still gets its card
  * (it says so); a widget turned off gets none.
  */
 export function widgetCards(widgets: WallWidgets | null): WidgetCard[] {
 	if (!widgets) return [];
 	const cards: WidgetCard[] = [];
-	for (const kind of ['crypto', 'stocks', 'fx', 'cve'] as const) {
+	for (const kind of ['crypto', 'stocks', 'fx', 'cve', 'claude', 'openai'] as const) {
 		const rows = rowsOf(widgets, kind);
 		if (rows === null) continue;
 		const size = ROWS_PER_CARD[kind];

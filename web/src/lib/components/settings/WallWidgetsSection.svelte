@@ -10,7 +10,9 @@
 	 *   temperature under the clock; units;
 	 * - stocks (Finnhub): ticker symbols and the free key they need;
 	 * - exchange rates (Frankfurter): base currency and the ones to show;
-	 * - critical vulnerabilities (NVD, CISA KEV): which list, how many.
+	 * - critical vulnerabilities (NVD, CISA KEV): which list, how many;
+	 * - AI usage (Claude, OpenAI organization admin APIs): admin key of each,
+	 *   period, optional "biggest users" with names for the ids the APIs return.
 	 *
 	 * The server reads every source and caches it; nothing here talks to them
 	 * except the city search, which also goes through the server. API keys are
@@ -34,6 +36,7 @@
 
 	const MAX_COINS = 10;
 	const MAX_CURRENCIES = 10;
+	const MAX_PEOPLE = 30;
 
 	let loading = $state(true);
 	let error = $state<unknown>(null);
@@ -46,12 +49,16 @@
 	let catalog = $state<WallWidgetCatalog>({ coins: [], coin_currencies: [], fx_currencies: [] });
 	let hasFinnhub = $state(false);
 	let hasCoingecko = $state(false);
+	let hasAnthropic = $state(false);
+	let hasOpenai = $state(false);
 	/** Keys typed in this visit; `null` keeps the saved one, `''` clears it. */
 	let finnhubKey = $state<string | null>(null);
 	let coingeckoKey = $state<string | null>(null);
+	let anthropicKey = $state<string | null>(null);
+	let openaiKey = $state<string | null>(null);
 	let symbolsText = $state('');
 
-	const tracker = useDirtyTracker(() => ({ form, symbolsText, finnhubKey, coingeckoKey }));
+	const tracker = useDirtyTracker(() => ({ form, symbolsText, finnhubKey, coingeckoKey, anthropicKey, openaiKey }));
 
 	let customCoin = $state('');
 	let placeQuery = $state('');
@@ -66,11 +73,14 @@
 			weather: saved.weather,
 			stocks: saved.stocks,
 			fx: saved.fx,
-			cve: saved.cve
+			cve: saved.cve,
+			ai: saved.ai
 		});
 		symbolsText = saved.stocks.symbols.join(', ');
 		finnhubKey = null;
 		coingeckoKey = null;
+		anthropicKey = null;
+		openaiKey = null;
 	}
 
 	async function load(signal?: AbortSignal) {
@@ -81,6 +91,8 @@
 			adopt(saved);
 			hasFinnhub = saved.has_finnhub_key;
 			hasCoingecko = saved.has_coingecko_key;
+			hasAnthropic = saved.has_anthropic_key;
+			hasOpenai = saved.has_openai_key;
 			catalog = offered;
 			tracker.markClean();
 		} catch (cause) {
@@ -168,6 +180,18 @@
 			: [...form.fx.currencies, code];
 	}
 
+	// --- AI usage
+
+	function addPerson(kind: 'claude' | 'openai') {
+		const list = form.ai[kind].people;
+		if (list.length >= MAX_PEOPLE) return;
+		form.ai[kind].people = [...list, { id: '', name: '' }];
+	}
+
+	function removePerson(kind: 'claude' | 'openai', index: number) {
+		form.ai[kind].people = form.ai[kind].people.filter((_, i) => i !== index);
+	}
+
 	// --- Save
 
 	async function save() {
@@ -184,15 +208,19 @@
 					.filter(Boolean)
 			}
 		};
-		const secrets: { finnhub?: string; coingecko?: string } = {};
+		const secrets: { finnhub?: string; coingecko?: string; anthropic?: string; openai?: string } = {};
 		if (finnhubKey !== null) secrets.finnhub = finnhubKey.trim();
 		if (coingeckoKey !== null) secrets.coingecko = coingeckoKey.trim();
+		if (anthropicKey !== null) secrets.anthropic = anthropicKey.trim();
+		if (openaiKey !== null) secrets.openai = openaiKey.trim();
 		if (Object.keys(secrets).length) payload.secrets = secrets;
 		try {
 			const saved = await saveWidgetSettings(payload);
 			adopt(saved);
 			hasFinnhub = saved.has_finnhub_key;
 			hasCoingecko = saved.has_coingecko_key;
+			hasAnthropic = saved.has_anthropic_key;
+			hasOpenai = saved.has_openai_key;
 			tracker.markClean();
 			notice = m.settings_widgets_saved();
 		} catch (cause) {
@@ -252,6 +280,51 @@
 			{/if}
 		</p>
 	</Field>
+{/snippet}
+
+{#snippet people(kind: 'claude' | 'openai')}
+	<div class="space-y-2">
+		<p class="text-sm font-medium text-ink">{m.settings_widgets_ai_people()}</p>
+		<p class="text-[0.8125rem] text-ink-2">{m.settings_widgets_ai_people_help()}</p>
+		<ul class="space-y-2">
+			{#each form.ai[kind].people as person, i (i)}
+				<li class="flex flex-wrap items-center gap-2">
+					<input
+						type="text"
+						class="input min-w-0 flex-[2] font-mono"
+						autocomplete="off"
+						spellcheck="false"
+						maxlength="100"
+						aria-label={m.settings_widgets_ai_person_id()}
+						placeholder={m.settings_widgets_ai_person_id()}
+						bind:value={person.id}
+					/>
+					<input
+						type="text"
+						class="input min-w-0 flex-1"
+						autocomplete="off"
+						maxlength="40"
+						aria-label={m.settings_widgets_ai_person_name()}
+						placeholder={m.settings_widgets_ai_person_name()}
+						bind:value={person.name}
+					/>
+					<button
+						type="button"
+						class="grid size-10 shrink-0 place-items-center rounded-lg text-ink-2 hover:text-ink"
+						aria-label={m.settings_widgets_remove({ name: person.name || person.id })}
+						onclick={() => removePerson(kind, i)}
+						disabled={saving}
+					>
+						<X class="size-4" aria-hidden="true" />
+					</button>
+				</li>
+			{/each}
+		</ul>
+		<Button variant="secondary" size="sm" onclick={() => addPerson(kind)} disabled={saving || form.ai[kind].people.length >= MAX_PEOPLE}>
+			<Plus class="size-4" aria-hidden="true" />
+			{m.settings_widgets_ai_person_add()}
+		</Button>
+	</div>
 {/snippet}
 
 {#if !missing}
@@ -463,6 +536,57 @@
 						<Field label={m.settings_widgets_cve_count()} for="widgets-cve-count">
 							<input id="widgets-cve-count" type="number" class="input" min="1" max="10" step="1" bind:value={form.cve.count} />
 						</Field>
+					</div>
+				</div>
+
+				<!-- AI usage -->
+				<div class="space-y-4 border-t border-line pt-5">
+					<div class="min-w-0">
+						<h3 class="text-sm font-semibold text-ink">{m.settings_widgets_ai()}</h3>
+						<p class="text-[0.8125rem] text-ink-2">{m.settings_widgets_ai_hint()}</p>
+					</div>
+					<Field label={m.settings_widgets_ai_period()} for="widgets-ai-period">
+						<select id="widgets-ai-period" class="input max-w-64" bind:value={form.ai.period}>
+							<option value="today">{m.wall_widgets_ai_today()}</option>
+							<option value="week">{m.wall_widgets_ai_week()}</option>
+							<option value="month">{m.wall_widgets_ai_month()}</option>
+						</select>
+					</Field>
+					{@render header('widgets-ai-by-person', m.settings_widgets_ai_by_person(), m.settings_widgets_ai_by_person_help(), {
+						get: () => form.ai.by_person,
+						set: (v) => (form.ai.by_person = v)
+					})}
+
+					<div class="space-y-4 rounded-lg border border-line p-4">
+						{@render header('widgets-ai-claude', m.settings_widgets_ai_claude(), m.settings_widgets_ai_claude_hint(), {
+							get: () => form.ai.claude.enabled,
+							set: (v) => (form.ai.claude.enabled = v)
+						})}
+						{@render secret(
+							'widgets-anthropic',
+							m.settings_widgets_ai_claude_key(),
+							m.settings_widgets_ai_claude_key_help(),
+							hasAnthropic,
+							anthropicKey,
+							(v) => (anthropicKey = v)
+						)}
+						{#if form.ai.by_person}{@render people('claude')}{/if}
+					</div>
+
+					<div class="space-y-4 rounded-lg border border-line p-4">
+						{@render header('widgets-ai-openai', m.settings_widgets_ai_openai(), m.settings_widgets_ai_openai_hint(), {
+							get: () => form.ai.openai.enabled,
+							set: (v) => (form.ai.openai.enabled = v)
+						})}
+						{@render secret(
+							'widgets-openai',
+							m.settings_widgets_ai_openai_key(),
+							m.settings_widgets_ai_openai_key_help(),
+							hasOpenai,
+							openaiKey,
+							(v) => (openaiKey = v)
+						)}
+						{#if form.ai.by_person}{@render people('openai')}{/if}
 					</div>
 				</div>
 

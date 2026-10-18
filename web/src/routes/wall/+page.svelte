@@ -150,7 +150,7 @@
 	const WIDGETS_MS = 60_000;
 	let widgets = $state<WallWidgetsData | null>(null);
 	const hasWidgets = $derived(
-		!!widgets && !!(widgets.crypto || widgets.stocks || widgets.fx || widgets.cve)
+		!!widgets && !!(widgets.crypto || widgets.stocks || widgets.fx || widgets.cve || widgets.claude || widgets.openai)
 	);
 
 	$effect(() => {
