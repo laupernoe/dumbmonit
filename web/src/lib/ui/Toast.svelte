@@ -31,7 +31,7 @@
 <div
 	role="status"
 	aria-live="polite"
-	class="fixed inset-x-4 bottom-4 z-40 flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface-2 px-4 py-2.5 shadow-float sm:inset-x-auto sm:right-4 sm:left-auto sm:max-w-sm"
+	class="fixed inset-x-4 bottom-[calc(var(--tabbar-h)+0.75rem+var(--safe-bottom))] z-40 sm:bottom-4 flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-surface-2 px-4 py-2.5 shadow-float sm:inset-x-auto sm:right-4 sm:left-auto sm:max-w-sm"
 >
 	<span class="text-[0.8125rem] font-medium text-ink">{message}</span>
 	{#if actionLabel}
