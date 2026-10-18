@@ -15,10 +15,12 @@
 //! « indisponible » ; jamais un mur cassé.
 //!
 //! Les réglages vivent dans la table `settings` (clé `wall.widgets`) ; les clés
-//! d'API facultatives (Finnhub, CoinGecko) y sont chiffrées sous leur propre
-//! clé et ne reviennent jamais : `has_*_key` seulement. Tout est éteint par
-//! défaut.
+//! d'API (Finnhub, CoinGecko, clés admin Anthropic et OpenAI) y sont chiffrées
+//! sous leur propre clé et ne reviennent jamais : `has_*_key` seulement. Tout
+//! est éteint par défaut. La consommation d'IA ([`ai`]) se lit sur les API
+//! d'administration des deux fournisseurs, en cache quinze minutes.
 
+mod ai;
 mod cache;
 mod coins;
 mod cve;
@@ -45,12 +47,18 @@ use cache::{Cache, Outcome};
 const SETTINGS_KEY: &str = "wall.widgets";
 const FINNHUB_KEY: &str = "wall.widgets.finnhub_key";
 const COINGECKO_KEY: &str = "wall.widgets.coingecko_key";
+const ANTHROPIC_KEY: &str = "wall.widgets.anthropic_admin_key";
+const OPENAI_KEY: &str = "wall.widgets.openai_admin_key";
+/// Les clés admin d'Anthropic commencent ainsi (les clés ordinaires, non).
+const ANTHROPIC_ADMIN_PREFIX: &str = "sk-ant-admin";
 
 const CRYPTO_TTL: Duration = Duration::from_secs(60);
 const WEATHER_TTL: Duration = Duration::from_secs(15 * 60);
 const STOCKS_TTL: Duration = Duration::from_secs(5 * 60);
 const FX_TTL: Duration = Duration::from_secs(3600);
 const CVE_TTL: Duration = Duration::from_secs(3600);
+/// Ces API ne sont pas en temps réel : un quart d'heure suffit.
+const AI_TTL: Duration = Duration::from_secs(15 * 60);
 
 const MAX_COINS: usize = 10;
 /// Une ville : le mur montre son temps sous l'horloge, rien de plus.
@@ -145,6 +153,37 @@ impl Default for CveSettings {
     }
 }
 
+/// Un fournisseur d'IA : allumé ou non, et les noms des identifiants que son
+/// API renvoie (comptes, clés d'API).
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AiProviderSettings {
+    pub enabled: bool,
+    pub people: Vec<ai::Person>,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct AiSettings {
+    /// `today`, `week` (7 jours) ou `month` (mois en cours), en UTC.
+    pub period: String,
+    /// Les plus gros consommateurs en plus du total.
+    pub by_person: bool,
+    pub claude: AiProviderSettings,
+    pub openai: AiProviderSettings,
+}
+
+impl Default for AiSettings {
+    fn default() -> Self {
+        Self {
+            period: "week".into(),
+            by_person: false,
+            claude: AiProviderSettings::default(),
+            openai: AiProviderSettings::default(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct WidgetSettings {
@@ -155,6 +194,7 @@ pub struct WidgetSettings {
     pub stocks: StocksSettings,
     pub fx: FxSettings,
     pub cve: CveSettings,
+    pub ai: AiSettings,
 }
 
 impl Default for WidgetSettings {
@@ -166,6 +206,7 @@ impl Default for WidgetSettings {
             stocks: StocksSettings::default(),
             fx: FxSettings::default(),
             cve: CveSettings::default(),
+            ai: AiSettings::default(),
         }
     }
 }
@@ -177,6 +218,8 @@ pub struct SettingsView {
     pub settings: WidgetSettings,
     pub has_finnhub_key: bool,
     pub has_coingecko_key: bool,
+    pub has_anthropic_key: bool,
+    pub has_openai_key: bool,
 }
 
 /// Clés d'API reçues : absente, inchangée ; chaîne vide, effacée.
@@ -184,6 +227,10 @@ pub struct SettingsView {
 pub struct SecretsInput {
     pub finnhub: Option<String>,
     pub coingecko: Option<String>,
+    /// Clé Admin API d'Anthropic (`sk-ant-admin…`).
+    pub anthropic: Option<String>,
+    /// Clé admin d'organisation OpenAI.
+    pub openai: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -213,6 +260,8 @@ async fn view(state: &AppState, settings: WidgetSettings) -> SettingsView {
         settings,
         has_finnhub_key: secret(state, FINNHUB_KEY).await.is_some(),
         has_coingecko_key: secret(state, COINGECKO_KEY).await.is_some(),
+        has_anthropic_key: secret(state, ANTHROPIC_KEY).await.is_some(),
+        has_openai_key: secret(state, OPENAI_KEY).await.is_some(),
     }
 }
 
@@ -232,12 +281,21 @@ async fn put_settings(
     let mut settings = payload.settings;
     validate(&mut settings).map_err(ApiError::BadRequest)?;
     if let Some(secrets) = payload.secrets {
-        for (key, value) in [(FINNHUB_KEY, secrets.finnhub), (COINGECKO_KEY, secrets.coingecko)] {
+        for (key, value) in [
+            (FINNHUB_KEY, secrets.finnhub),
+            (COINGECKO_KEY, secrets.coingecko),
+            (ANTHROPIC_KEY, secrets.anthropic),
+            (OPENAI_KEY, secrets.openai),
+        ] {
             let Some(value) = value.map(|v| v.trim().to_string()) else { continue };
             if value.is_empty() {
                 settings::delete(&state.pool, key).await?;
             } else if value.len() > MAX_KEY_LEN || value.chars().any(|c| c.is_control()) {
                 return Err(ApiError::BadRequest("That API key does not look valid.".into()));
+            } else if key == ANTHROPIC_KEY && !value.starts_with(ANTHROPIC_ADMIN_PREFIX) {
+                return Err(ApiError::BadRequest(
+                    "That is not an Anthropic Admin API key (it starts with sk-ant-admin).".into(),
+                ));
             } else {
                 settings::set_secret(&state.pool, &state.cipher, key, &value).await?;
             }
@@ -335,6 +393,12 @@ pub fn validate(s: &mut WidgetSettings) -> Result<(), String> {
     if !(1..=10).contains(&s.cve.count) {
         return Err("Show between 1 and 10 vulnerabilities.".into());
     }
+
+    if !ai::PERIODS.contains(&s.ai.period.as_str()) {
+        return Err("Unknown period for AI usage.".into());
+    }
+    ai::clean_people(&mut s.ai.claude.people)?;
+    ai::clean_people(&mut s.ai.openai.people)?;
     Ok(())
 }
 
@@ -419,6 +483,8 @@ pub struct WallWidgets {
     pub stocks: Option<Section<stocks::StocksData>>,
     pub fx: Option<Section<fx::FxData>>,
     pub cve: Option<Section<Vec<cve::CveItem>>>,
+    pub claude: Option<Section<ai::Usage>>,
+    pub openai: Option<Section<ai::Usage>>,
 }
 
 static CRYPTO: LazyLock<Cache<coins::CryptoData>> = LazyLock::new(Cache::default);
@@ -427,6 +493,8 @@ static STOCKS: LazyLock<Cache<stocks::StocksData>> = LazyLock::new(Cache::defaul
 static FX: LazyLock<Cache<fx::FxData>> = LazyLock::new(Cache::default);
 static NVD: LazyLock<Cache<Vec<cve::CveItem>>> = LazyLock::new(Cache::default);
 static KEV: LazyLock<Cache<Vec<cve::CveItem>>> = LazyLock::new(Cache::default);
+static CLAUDE_USAGE: LazyLock<Cache<ai::Raw>> = LazyLock::new(Cache::default);
+static OPENAI_USAGE: LazyLock<Cache<ai::Raw>> = LazyLock::new(Cache::default);
 
 /// Une empreinte courte d'une clé d'API : le cache change avec elle sans la
 /// garder en clair.
@@ -517,6 +585,43 @@ async fn cve_section(client: &reqwest::Client, s: &CveSettings) -> Section<Vec<c
     Section::of(Outcome { value: data, fetched: updated, error }, source, source_url)
 }
 
+/// Une consommation d'IA. Le cache garde la lecture brute (par période, jour et
+/// regroupement) ; les noms saisis s'appliquent après, sans rappeler l'API.
+async fn ai_section(
+    provider: ai::Provider,
+    client: &reqwest::Client,
+    s: &AiSettings,
+    people: &[ai::Person],
+    key: Option<String>,
+) -> Section<ai::Usage> {
+    let (source, source_url) = provider.source();
+    let Some(key) = key else {
+        return Section {
+            data: None,
+            updated: None,
+            error: Some("An admin API key is needed for AI usage.".into()),
+            needs_key: true,
+            source,
+            source_url,
+        };
+    };
+    let from = ai::period_start(&s.period, ai::today());
+    let cache = match provider {
+        ai::Provider::Claude => &CLAUDE_USAGE,
+        ai::Provider::OpenAi => &OPENAI_USAGE,
+    };
+    let cache_key = format!("{}|{from}|{}|{}", s.period, s.by_person, fingerprint(Some(&key)));
+    let outcome = cache
+        .get(&cache_key, AI_TTL, || ai::fetch(provider, client, &key, from, s.by_person))
+        .await;
+    let outcome = Outcome {
+        value: outcome.value.map(|raw| raw.finish(&s.period, from, people, s.by_person)),
+        fetched: outcome.fetched,
+        error: outcome.error,
+    };
+    Section::of(outcome, source, source_url)
+}
+
 async fn widgets(
     State(state): State<AppState>,
     Identity(_): Identity,
@@ -529,15 +634,19 @@ async fn widgets(
         stocks: None,
         fx: None,
         cve: None,
+        claude: None,
+        openai: None,
     };
     let any = s.crypto.enabled || s.weather.enabled || s.stocks.enabled || s.fx.enabled;
-    if !any && !s.cve.enabled {
+    if !any && !s.cve.enabled && !s.ai.claude.enabled && !s.ai.openai.enabled {
         return Ok(Json(reply));
     }
     let client = http::client().map_err(ApiError::BadGateway)?;
     let finnhub = if s.stocks.enabled { secret(&state, FINNHUB_KEY).await } else { None };
     let coingecko = if s.crypto.enabled { secret(&state, COINGECKO_KEY).await } else { None };
-    let (crypto, weather, stocks, fx, cve) = tokio::join!(
+    let anthropic = if s.ai.claude.enabled { secret(&state, ANTHROPIC_KEY).await } else { None };
+    let openai = if s.ai.openai.enabled { secret(&state, OPENAI_KEY).await } else { None };
+    let (crypto, weather, stocks, fx, cve, claude, openai) = tokio::join!(
         async {
             if s.crypto.enabled && !s.crypto.coins.is_empty() {
                 Some(crypto_section(&client, &s.crypto, coingecko).await)
@@ -568,12 +677,30 @@ async fn widgets(
             }
         },
         async { if s.cve.enabled { Some(cve_section(&client, &s.cve).await) } else { None } },
+        async {
+            if s.ai.claude.enabled {
+                let people = &s.ai.claude.people;
+                Some(ai_section(ai::Provider::Claude, &client, &s.ai, people, anthropic).await)
+            } else {
+                None
+            }
+        },
+        async {
+            if s.ai.openai.enabled {
+                let people = &s.ai.openai.people;
+                Some(ai_section(ai::Provider::OpenAi, &client, &s.ai, people, openai).await)
+            } else {
+                None
+            }
+        },
     );
     reply.crypto = crypto;
     reply.weather = weather;
     reply.stocks = stocks;
     reply.fx = fx;
     reply.cve = cve;
+    reply.claude = claude;
+    reply.openai = openai;
     Ok(Json(reply))
 }
 
@@ -618,6 +745,12 @@ mod tests {
         assert!(bad(|s| s.fx.base = "XXX".into()).contains("base"));
         assert!(bad(|s| s.cve.source = "rss".into()).contains("source"));
         assert!(bad(|s| s.cve.count = 0).contains("between"));
+        assert!(bad(|s| s.ai.period = "year".into()).contains("period"));
+        assert!(
+            bad(|s| s.ai.openai.people =
+                vec![ai::Person { id: "user-1".into(), name: String::new() }])
+            .contains("identifier and a name")
+        );
         assert!(
             bad(|s| s.weather.places = vec![weather::Place {
                 name: "Nowhere".into(),
