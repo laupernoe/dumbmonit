@@ -6518,5 +6518,6 @@
 	"whatsnew_dialog_notes": "Vollständige Versionshinweise",
 	"whatsnew_dialog_ok": "Verstanden",
 	"whatsnew_dialog_title": "Neu in v{version}",
-	"whatsnew_dialog_updated": "Aktualisiert · {date}"
+	"whatsnew_dialog_updated": "Aktualisiert · {date}",
+	"settings_widgets_ai_key_howto": "So erhalten Sie einen Admin-Schlüssel"
 }

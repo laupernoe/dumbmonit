@@ -6674,5 +6674,6 @@
 	"whatsnew_dialog_notes": "Полные примечания к выпуску",
 	"whatsnew_dialog_ok": "Понятно",
 	"whatsnew_dialog_title": "Что нового в v{version}",
-	"whatsnew_dialog_updated": "Обновлено · {date}"
+	"whatsnew_dialog_updated": "Обновлено · {date}",
+	"settings_widgets_ai_key_howto": "Как получить админ-ключ"
 }

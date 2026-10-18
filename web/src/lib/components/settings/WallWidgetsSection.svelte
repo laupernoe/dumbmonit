@@ -22,6 +22,7 @@
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { ApiError } from '#lib/api/index.js';
+	import { wallDocsUrl } from '#lib/docs.js';
 	import type { WallPlace, WallWidgetCatalog, WallWidgetSettings, WallWidgetSettingsPayload } from '#lib/api/types.js';
 	import {
 		DEFAULT_WIDGET_SETTINGS,
@@ -254,7 +255,7 @@
 	</li>
 {/snippet}
 
-{#snippet secret(id: string, label: string, help: string, saved: boolean, value: string | null, set: (v: string | null) => void)}
+{#snippet secret(id: string, label: string, help: string, saved: boolean, value: string | null, set: (v: string | null) => void, docAnchor?: string)}
 	<Field {label} for={id} {help}>
 		<div class="flex flex-wrap items-center gap-2">
 			<input
@@ -279,6 +280,14 @@
 				{m.settings_widgets_key_saved()}
 			{/if}
 		</p>
+		{#if docAnchor}
+			<a
+				class="mt-1 inline-flex min-h-10 items-center text-sm text-ink-2 underline decoration-line underline-offset-2 hover:text-ink"
+				href={wallDocsUrl(docAnchor)}
+				target="_blank"
+				rel="noreferrer">{m.settings_widgets_ai_key_howto()}</a
+			>
+		{/if}
 	</Field>
 {/snippet}
 
@@ -568,7 +577,8 @@
 							m.settings_widgets_ai_claude_key_help(),
 							hasAnthropic,
 							anthropicKey,
-							(v) => (anthropicKey = v)
+							(v) => (anthropicKey = v),
+			'ai-admin-key-claude'
 						)}
 						{#if form.ai.by_person}{@render people('claude')}{/if}
 					</div>
@@ -584,7 +594,8 @@
 							m.settings_widgets_ai_openai_key_help(),
 							hasOpenai,
 							openaiKey,
-							(v) => (openaiKey = v)
+							(v) => (openaiKey = v),
+			'ai-admin-key-openai'
 						)}
 						{#if form.ai.by_person}{@render people('openai')}{/if}
 					</div>
