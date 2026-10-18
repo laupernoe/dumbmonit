@@ -6419,5 +6419,6 @@
 	"whatsnew_dialog_notes": "完整发行说明",
 	"whatsnew_dialog_ok": "知道了",
 	"whatsnew_dialog_title": "v{version} 新功能",
-	"whatsnew_dialog_updated": "更新于 · {date}"
+	"whatsnew_dialog_updated": "更新于 · {date}",
+	"settings_widgets_ai_key_howto": "如何获取管理员密钥"
 }

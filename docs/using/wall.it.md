@@ -100,6 +100,26 @@ Deezer.
 /api/wall/news/settings` e `POST /api/wall/news/test` (admin), `GET
 /api/wall/news/presets`.
 
+## Widget sul wall
+
+### Come ottenere una chiave admin {#ai-admin-keys}
+
+Entrambi i fornitori richiedono una **chiave admin**, diversa dalla solita chiave API. Legge solo consumi e costi dell'organizzazione. Tienila segreta: incollala in **Settings → Wall display → Wall widgets** e DumbMonit la conserva cifrata.
+
+#### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Accedi alla [Claude Console](https://platform.claude.com/settings/admin-keys) come membro con il ruolo **admin** di una **organizzazione** (un account personale non può crearne una; crea prima un'organizzazione in Settings → Organization).
+2. Apri la [pagina Admin keys](https://platform.claude.com/settings/admin-keys), fai clic su **Create admin key**, assegna un nome e una scadenza.
+3. Copia subito il segreto (`sk-ant-admin01-…`): viene mostrato una sola volta.
+
+#### OpenAI {#ai-admin-key-openai}
+
+1. Accedi alla [piattaforma OpenAI](https://platform.openai.com/settings/organization/admin-keys) come **owner** dell'organizzazione.
+2. Apri la [pagina Admin keys](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) e fai clic su **Create new admin key**; basta il permesso *Read only*.
+3. Copia subito la chiave: viene mostrata una sola volta.
+
+Gli abbonamenti individuali (Claude Pro e Max, ChatGPT Plus) **non hanno un'API di utilizzo**: non possono comparire sul wall.
+
 ## Musica sul wall
 
 Il wall può anche riprodurre musica e mostrare cosa sta suonando, così
