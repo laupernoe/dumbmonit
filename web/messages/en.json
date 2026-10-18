@@ -6518,5 +6518,6 @@
 	"whatsnew_dialog_notes": "Full release notes",
 	"whatsnew_dialog_ok": "Got it",
 	"whatsnew_dialog_title": "What's new in v{version}",
-	"whatsnew_dialog_updated": "Updated · {date}"
+	"whatsnew_dialog_updated": "Updated · {date}",
+	"settings_widgets_ai_key_howto": "How to get an admin key"
 }

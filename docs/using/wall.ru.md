@@ -170,6 +170,24 @@
   CVE, уже входящая в список NVD, помечается *Эксплуатируется*), *Критические*
   (NVD) или *Активно эксплуатируемые* (CISA KEV), и сколько показывать (от 1 до 10).
 
+#### Как получить админ-ключ {#ai-admin-keys}
+
+Оба провайдера требуют **админ-ключ**, а не обычный API-ключ. Он только читает расход и затраты организации. Храните его в секрете: вставьте в **Settings → Wall display → Wall widgets**, DumbMonit хранит его в зашифрованном виде.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Войдите в [Claude Console](https://platform.claude.com/settings/admin-keys) как участник с ролью **admin** в **организации** (личный аккаунт не может создать ключ; сначала создайте организацию в Settings → Organization).
+2. Откройте [страницу Admin keys](https://platform.claude.com/settings/admin-keys), нажмите **Create admin key**, задайте имя и срок действия.
+3. Сразу скопируйте секрет (`sk-ant-admin01-…`): он показывается только один раз.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Войдите на [платформу OpenAI](https://platform.openai.com/settings/organization/admin-keys) как **владелец** (owner) организации.
+2. Откройте [страницу Admin keys](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) и нажмите **Create new admin key**; достаточно прав *Read only*.
+3. Сразу скопируйте ключ: он показывается только один раз.
+
+У индивидуальных подписок (Claude Pro и Max, ChatGPT Plus) **нет API использования**: на стене их показать нельзя.
+
 ### API
 
 `GET /api/wall/widgets` (его опрашивают стены каждую минуту: по одной секции на

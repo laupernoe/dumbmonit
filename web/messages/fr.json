@@ -6518,5 +6518,6 @@
 	"whatsnew_dialog_notes": "Notes de version complètes",
 	"whatsnew_dialog_ok": "Compris",
 	"whatsnew_dialog_title": "Nouveautés de la v{version}",
-	"whatsnew_dialog_updated": "Mis à jour · {date}"
+	"whatsnew_dialog_updated": "Mis à jour · {date}",
+	"settings_widgets_ai_key_howto": "Comment obtenir une clé admin"
 }

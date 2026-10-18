@@ -201,6 +201,24 @@ and DumbMonit does not guess them. An OpenAI
 usage figure counts text completions; the cost covers everything billed
 (images, audio, embeddings…), so tokens and cost are not always proportional.
 
+#### How to get an admin key {#ai-admin-keys}
+
+Both providers ask for an **admin key**, which is not the usual API key. It only reads the organization's usage and costs. Keep it secret: paste it into **Settings → Wall display → Wall widgets** and DumbMonit stores it encrypted.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Sign in to the [Claude Console](https://platform.claude.com/settings/admin-keys) as a member with the **admin** role of an **organization** (a personal account cannot create one; set up an organization first under Settings → Organization).
+2. Open the [Admin keys page](https://platform.claude.com/settings/admin-keys), click **Create admin key**, name it and choose an expiration.
+3. Copy the secret (`sk-ant-admin01-…`) right away: it is shown only once.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Sign in to the [OpenAI platform](https://platform.openai.com/settings/organization/admin-keys) as an **owner** of the organization.
+2. Open the [Admin keys page](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) and click **Create new admin key**; *Read only* permissions are enough.
+3. Copy the key right away: it is shown only once.
+
+Individual subscriptions (Claude Pro and Max, ChatGPT Plus) have **no usage API**: they cannot be shown on the wall.
+
 ### API
 
 `GET /api/wall/widgets` (what walls poll every minute: one section per widget
