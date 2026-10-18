@@ -139,18 +139,6 @@
 			query = '';
 		}
 	}
-
-	// Phones: keep the current chip in view inside the strip.
-	let strip = $state<HTMLUListElement | null>(null);
-	$effect(() => {
-		if (!strip) return;
-		const chip = strip.querySelector<HTMLElement>(`[data-tab="${tab}"]`);
-		if (!chip) return;
-		const left = chip.offsetLeft - 16;
-		const right = chip.offsetLeft + chip.offsetWidth + 16;
-		if (left < strip.scrollLeft) strip.scrollTo({ left });
-		else if (right > strip.scrollLeft + strip.clientWidth) strip.scrollTo({ left: right - strip.clientWidth });
-	});
 </script>
 
 <svelte:head><title>{tabLabel(tab)} · {m['settings.page.title']()} · DumbMonit</title></svelte:head>
@@ -195,18 +183,30 @@
 
 <PageHeader title={m['settings.page.title']()} />
 
-<!-- Tablets: the search, then a strip of chips, one per tab. Phones keep the strip only. -->
+<!-- Tablets: the search, then wrapping chips, one per tab. Phones: a native select, never a scroller. -->
 <div class="mb-5 max-sm:hidden lg:hidden">
 	{@render searchBox('settings-search-mobile')}
 </div>
 <nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md max-sm:mb-3 max-sm:bg-canvas max-sm:backdrop-blur-none sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m['settings.nav.aria_label']()}>
-	<ul bind:this={strip} class="flex gap-1.5 overflow-x-auto py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+	<div class="py-2 sm:hidden">
+		<select
+			aria-label={m['settings.nav.aria_label']()}
+			value={tab}
+			onchange={(e) => goto(`/settings/${e.currentTarget.value}`)}
+			class="h-11 w-full min-w-0 rounded-lg border border-line-strong bg-surface px-3 text-sm font-semibold text-ink"
+		>
+			{#each tabs as id (id)}
+				<option value={id}>{tabLabel(id)}</option>
+			{/each}
+		</select>
+	</div>
+	<ul class="flex flex-wrap gap-1.5 py-2 max-sm:hidden">
 		{#each tabs as id (id)}
-			<li class="shrink-0">
+			<li class="min-w-0">
 				<a
 					href="/settings/{id}"
 					data-tab={id}
-					class={`inline-flex h-10 items-center rounded-full border px-3.5 text-[0.8125rem] font-semibold whitespace-nowrap transition-colors ${tab === id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
+					class={`inline-flex h-10 items-center rounded-full border px-3.5 text-[0.8125rem] font-semibold transition-colors ${tab === id ? 'border-line-strong bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'}`}
 					aria-current={tab === id ? 'page' : undefined}
 				>
 					{tabLabel(id)}
