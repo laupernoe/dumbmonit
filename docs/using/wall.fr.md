@@ -30,7 +30,7 @@ mur dans **Réglages → Actualités du mur**. Les deux sont désactivés par d�
   ou grande. La vignette se réduit à la place disponible ; elle ne recouvre
   jamais l'état.
 - **Carrousel d'images.** Les derniers articles des mêmes flux qui portent une
-  image, un à la fois au milieu du mur, huit secondes chacun, en fondu, avec la
+  image, un à la fois dans la colonne de droite sous l'horloge, huit secondes chacun, en fondu, avec la
   source, l'âge et le titre sur l'image. Si l'écran demande de *réduire les
   animations*, les images se remplacent sans fondu.
 

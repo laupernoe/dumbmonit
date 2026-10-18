@@ -5063,7 +5063,7 @@
 	"settings_news_custom_url": "RSS- oder Atom-Adresse",
 	"settings_news_description": "Schlagzeilen am unteren Rand der Wand und ein Live-Kanal in einer Kachel. Standardmäßig aus. Die Feeds liest dieser Server, nie der Browser.",
 	"settings_news_gallery": "Bilderkarussell",
-	"settings_news_gallery_hint": "Die neuesten Artikel dieser Feeds mit ihrem Bild, nacheinander, in der Mitte der Wand. Die Bilder laufen über den Server, nie direkt von der Nachrichtenseite.",
+	"settings_news_gallery_hint": "Die neuesten Artikel dieser Feeds mit ihrem Bild, nacheinander, in der rechten Spalte der Wand. Die Bilder laufen über den Server, nie direkt von der Nachrichtenseite.",
 	"settings_news_limit": "Höchstens {count} Feeds.",
 	"settings_news_none": "Noch kein Feed. Wählen Sie oben eine Quelle aus oder fügen Sie eine eigene hinzu.",
 	"settings_news_position": "Position",

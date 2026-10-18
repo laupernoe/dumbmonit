@@ -31,7 +31,7 @@ per impostazione predefinita.
   colonna destra sotto l'orologio (o al centro della scena), piccolo, medio o
   grande. Il riquadro si adatta allo spazio rimasto; non copre mai lo stato.
 - **Carosello di immagini.** Gli ultimi articoli degli stessi feed che portano
-  un'immagine, uno alla volta al centro del wall, ciascuno per otto secondi, in
+  un'immagine, uno alla volta nella colonna di destra, sotto l'orologio, ciascuno per otto secondi, in
   dissolvenza incrociata, con la fonte, l'età e il titolo sopra l'immagine. Con
   il *movimento ridotto* attivo, le immagini si alternano senza dissolvenza.
 
