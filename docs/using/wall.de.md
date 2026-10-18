@@ -30,7 +30,7 @@ und einen **Live-Kanal** hinzufügen. Beides ist standardmäßig aus.
   unter der Uhr (oder in der Mitte der Szene), klein, mittel oder groß. Die
   Kachel schrumpft auf den verbleibenden Platz; sie verdeckt nie den Status.
 - **Bilderkarussell.** Die neuesten Artikel derselben Feeds, die ein Bild
-  tragen, einer nach dem anderen in der Mitte der Wall, je acht Sekunden lang,
+  tragen, einer nach dem anderen in der rechten Spalte unter der Uhr, je acht Sekunden lang,
   überblendend, mit Quelle, Alter und Schlagzeile über dem Bild. Bei *reduzierter
   Bewegung* wechseln die Bilder ohne Überblendung.
 

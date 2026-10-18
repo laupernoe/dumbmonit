@@ -29,7 +29,7 @@ parede em **Configurações → Notícias do mural**. Ambos vêm desativados.
   direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
   cartão encolhe para o espaço que sobra; nunca cobre o status.
 - **Carrossel de imagens.** Os artigos mais recentes dos mesmos feeds que
-  trazem uma imagem, um de cada vez no meio da parede, cada um por oito
+  trazem uma imagem, um de cada vez na coluna da direita, sob o relógio, cada um por oito
   segundos, com transição suave, e com a fonte, a idade e a manchete sobre a
   imagem. Com *movimento reduzido*, as imagens trocam sem transição.
 

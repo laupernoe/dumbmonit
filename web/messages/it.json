@@ -5063,7 +5063,7 @@
 	"settings_news_custom_url": "Indirizzo RSS o Atom",
 	"settings_news_description": "I titoli lungo il bordo inferiore della parete e un canale in diretta in un riquadro. Disattivato per impostazione predefinita. I feed li legge questo server, mai il browser.",
 	"settings_news_gallery": "Carosello di immagini",
-	"settings_news_gallery_hint": "Gli ultimi articoli di questi feed con la loro immagine, uno dopo l’altro, al centro della parete. Le immagini passano dal server, mai direttamente dal sito di notizie.",
+	"settings_news_gallery_hint": "Gli ultimi articoli di questi feed con la loro immagine, uno dopo l’altro, nella colonna di destra della parete. Le immagini passano dal server, mai direttamente dal sito di notizie.",
 	"settings_news_limit": "Al massimo {count} feed.",
 	"settings_news_none": "Nessun feed per ora. Seleziona una fonte qui sopra o aggiungi la tua.",
 	"settings_news_position": "Posizione",

@@ -27,7 +27,7 @@ An admin can add **headlines** and a **live channel** to the wall in
   clock (or in the middle of the scene), small, medium or large. The tile
   shrinks to the room left; it never covers the status.
 - **Picture carousel.** The latest articles of the same feeds that carry a
-  picture, one at a time in the middle of the wall, each for eight seconds,
+  picture, one at a time in the right column under the clock, each for eight seconds,
   cross-fading, with the source, age and headline over the picture. Under
   *reduced motion* the pictures swap without fading.
 

@@ -5063,7 +5063,7 @@
 	"settings_news_custom_url": "RSS or Atom address",
 	"settings_news_description": "Headlines along the bottom of the wall and a live channel in a tile. Off by default. This server reads the feeds, never the browser.",
 	"settings_news_gallery": "Picture carousel",
-	"settings_news_gallery_hint": "The latest articles of these feeds with their picture, one after the other, in the middle of the wall. Pictures come through the server, never straight from the news site.",
+	"settings_news_gallery_hint": "The latest articles of these feeds with their picture, one after the other, in the right column of the wall. Pictures come through the server, never straight from the news site.",
 	"settings_news_limit": "At most {count} feeds.",
 	"settings_news_none": "No feed yet. Tick a source above or add your own.",
 	"settings_news_position": "Position",
