@@ -31,6 +31,7 @@ evaluate (hysteresis, per-monitor overrides)
 | Batch window | Settings → Notifications & reports → Notification policy | 60 s |
 | Messages per channel per hour | Settings → Notifications & reports → Notification policy | 20 |
 | Public URL (deep links) | Settings → Notifications & reports → Notification policy, or `DUMBMONIT_PUBLIC_URL` | empty |
+| Recoveries during a silence or maintenance window | Settings → Notifications & reports → Notification policy | not sent |
 | Acknowledge / Snooze links in messages | Settings → Notifications & reports → Notification policy | on (needs a public URL) |
 
 ## Hysteresis and per-monitor overrides

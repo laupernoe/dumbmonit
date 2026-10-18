@@ -836,6 +836,10 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
+L'agent n'oublie son secret que sur ce refus exact. Tout autre `403`, par
+exemple celui d'un reverse proxy ou d'un pare-feu applicatif placé devant
+DumbMonit, est journalisé et réessayé en conservant le secret.
+
 ## Jetons d'enrôlement
 
 - Les jetons sont créés dans **Réglages → Agents** ou en ajoutant une surveillance de type agent. Le serveur ne garde qu'une empreinte : le jeton

@@ -121,7 +121,7 @@
 
 			{#if ceph.osds.length > 0}
 				<div class="overflow-x-auto">
-					<table class="w-full min-w-[40rem] border-collapse text-sm">
+					<table class="table-stack w-full border-collapse text-sm [--stack-inset:0] sm:min-w-[40rem]">
 						<caption class="sr-only">{m.devicesb_proxmox_ceph_osds_caption()}</caption>
 						<thead>
 							<tr class="border-b border-line text-left text-[0.75rem] uppercase tracking-wide text-ink-3">
@@ -145,9 +145,9 @@
 											<Plate tone={state.tone} label={state.word} bare size="sm" />
 										</span>
 									</td>
-									<td class="py-2 pr-3 text-ink-2">{osd.host || '—'}</td>
-									<td class="py-2 pr-3 text-ink-2">{osd.device_class || '—'}</td>
-									<td class="py-2 pr-3">
+									<td class="py-2 pr-3 text-ink-2" data-label={m.devicesb_proxmox_ceph_th_host()}>{osd.host || '—'}</td>
+									<td class="py-2 pr-3 text-ink-2" data-label={m.devicesb_proxmox_ceph_th_class()}>{osd.device_class || '—'}</td>
+									<td class="py-2 pr-3" data-label={m.devicesb_proxmox_ceph_th_usage()}>
 										{#if osd.used_percent !== null}
 											<div class="flex min-w-[8rem] flex-col gap-1">
 												<span class="tnum whitespace-nowrap text-ink">{formatPercent(osd.used_percent)}<span class="text-ink-3">{' '}{m.devicesb_proxmox_ceph_of_total({ total: formatBytes(osd.total_bytes) })}</span></span>
@@ -159,8 +159,8 @@
 											<span class="text-ink-3">—</span>
 										{/if}
 									</td>
-									<td class={`tnum py-2 pr-3 text-right ${latencyTone(osd.apply_latency_ms)}`}>{osd.apply_latency_ms === null ? '—' : `${Math.round(osd.apply_latency_ms)} ms`}</td>
-									<td class={`tnum py-2 text-right ${latencyTone(osd.commit_latency_ms)}`}>{osd.commit_latency_ms === null ? '—' : `${Math.round(osd.commit_latency_ms)} ms`}</td>
+									<td class={`tnum py-2 pr-3 text-right ${latencyTone(osd.apply_latency_ms)}`} data-label={m.devicesb_proxmox_ceph_th_apply()}>{osd.apply_latency_ms === null ? '—' : `${Math.round(osd.apply_latency_ms)} ms`}</td>
+									<td class={`tnum py-2 text-right ${latencyTone(osd.commit_latency_ms)}`} data-label={m.devicesb_proxmox_ceph_th_commit()}>{osd.commit_latency_ms === null ? '—' : `${Math.round(osd.commit_latency_ms)} ms`}</td>
 								</tr>
 							{/each}
 						</tbody>
@@ -170,7 +170,7 @@
 
 			{#if ceph.pools.length > 0}
 				<div class="overflow-x-auto">
-					<table class="w-full min-w-[34rem] border-collapse text-sm">
+					<table class="table-stack w-full border-collapse text-sm [--stack-inset:0] sm:min-w-[34rem]">
 						<caption class="sr-only">{m.devicesb_proxmox_ceph_pools_caption()}</caption>
 						<thead>
 							<tr class="border-b border-line text-left text-[0.75rem] uppercase tracking-wide text-ink-3">
@@ -186,17 +186,19 @@
 								{@const tone = fillTone(pool.used_percent, 85, 75)}
 								<tr class="border-t border-line/60">
 									<td class="py-2 pr-3 font-semibold text-ink">{pool.name}</td>
-									<td class={`tnum py-2 pr-3 ${tone === 'warning' ? 'text-warning-ink' : tone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`}>
-										{formatPercent(pool.used_percent)}<span class="text-ink-3">{' '}· {formatBytes(pool.used_bytes)}</span>
+									<td class={`tnum py-2 pr-3 ${tone === 'warning' ? 'text-warning-ink' : tone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`} data-label={m.devicesb_proxmox_ceph_th_used()}>
+										<span>{formatPercent(pool.used_percent)}<span class="text-ink-3">{' '}· {formatBytes(pool.used_bytes)}</span></span>
 									</td>
-									<td class="tnum py-2 pr-3 text-right text-ink-2">{pool.size === null ? '—' : `${pool.size}`}<span class="text-ink-3">{pool.min_size === null ? '' : ` ${m.devicesb_proxmox_ceph_min_size({ min: pool.min_size })}`}</span></td>
-									<td class="tnum py-2 pr-3 text-right text-ink-2">
-										{pool.pg_num === null ? '—' : pool.pg_num}
-										{#if pool.pg_num_optimal !== null && pool.pg_num !== null && pool.pg_num_optimal !== pool.pg_num}
-											<span class="text-advisory-ink"> → {pool.pg_num_optimal}</span>
-										{/if}
+									<td class="tnum py-2 pr-3 text-right text-ink-2" data-label={m.devicesb_proxmox_ceph_th_replicas()}><span>{pool.size === null ? '—' : `${pool.size}`}<span class="text-ink-3">{pool.min_size === null ? '' : ` ${m.devicesb_proxmox_ceph_min_size({ min: pool.min_size })}`}</span></span></td>
+									<td class="tnum py-2 pr-3 text-right text-ink-2" data-label={m.devicesb_proxmox_ceph_th_pgs()}>
+										<span>
+											{pool.pg_num === null ? '—' : pool.pg_num}
+											{#if pool.pg_num_optimal !== null && pool.pg_num !== null && pool.pg_num_optimal !== pool.pg_num}
+												<span class="text-advisory-ink"> → {pool.pg_num_optimal}</span>
+											{/if}
+										</span>
 									</td>
-									<td class="py-2 text-right text-ink-2">{pool.autoscale ?? '—'}</td>
+									<td class="py-2 text-right text-ink-2" data-label={m.devicesb_proxmox_ceph_th_autoscale()}>{pool.autoscale ?? '—'}</td>
 								</tr>
 							{/each}
 						</tbody>

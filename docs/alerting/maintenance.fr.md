@@ -95,6 +95,22 @@ L'alerte garde sa phase et montre `silenced: true` ; l'historique enregistre
 la transition avec `notified: false` et la raison. Désactiver une fenêtre
 (`enabled: false`) la garde dans la liste sans effet.
 
+## Retours à la normale pendant une fenêtre
+
+Une fenêtre fait taire les annonces de problème. Par défaut, elle fait aussi
+taire le message de *retour à la normale* : une alerte annoncée qui se résout
+pendant qu'une fenêtre la couvre n'envoie rien, et rien n'est envoyé en retard
+à la fin de la fenêtre. L'historique de l'alerte enregistre quand même la
+résolution (`notified: false`, raison `maintenance window`) : la chronologie
+reste juste, seule la notification est omise.
+
+Pour être prévenu des retours à la normale même pendant une maintenance,
+activez **Envoyer aussi les retours à la normale pendant un silence ou une
+maintenance** dans Réglages → Notifications et rapports → Politique de
+notification, ou passez `resolutions_during_silence` à `send` avec
+`PUT /api/notify/policy` (`suppress` par défaut). Le réglage est global et
+s'applique à tous les silences et fenêtres.
+
 ## Sur une page d'état publique
 
 Une surveillance couverte par une fenêtre de maintenance est montrée comme

@@ -28,12 +28,29 @@ parede em **Settings → Wall news**. Ambos vêm desativados por predefinição.
 - **Vídeo em direto.** Um canal em direto sem som, num mosaico, na coluna
   direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
   mosaico encolhe para o espaço que sobra; nunca tapa o estado.
+- **Carrossel de imagens.** Os últimos artigos dos mesmos feeds que trazem uma
+  imagem, um de cada vez no meio da parede, cada um durante oito segundos, com
+  fusão gradual, com a fonte, a idade e o título sobre a imagem. Com *reduced
+  motion*, as imagens trocam sem fusão.
 
 É o servidor que lê os feeds, não o navegador (os navegadores não podem ler
 os feeds de outros sites). Segue no máximo três redirecionamentos, recusa
 endereços internos, desiste ao fim de oito segundos ou 2 MB por feed, e
 guarda a resposta em cache durante cinco minutos para todas as paredes. Lê
 RSS 2.0, RSS 1.0 (RDF) e Atom.
+
+A imagem de um artigo é tirada do feed: a imagem `media:content` mais larga,
+um `media:thumbnail`, um `enclosure` de imagem (BFM TV), um Atom `link
+rel="enclosure"`, ou então o primeiro `<img>` do conteúdo do artigo (Korben).
+Quando o feed não tem nenhuma e o carrossel está ativo, o servidor lê uma vez o
+início da página do artigo (512 KB no máximo, com a mesma proteção de
+endereços) e usa o seu `og:image`; a resposta fica memorizada, pelo que uma
+página só é lida uma vez. A parede nunca carrega uma imagem do site de
+notícias: o servidor retransmite-a em `/api/wall/news/image/<id>`, só para
+artigos que ele próprio publicou, com 6 MB no máximo, e só quando o ficheiro é
+mesmo uma imagem PNG, JPEG, GIF, WebP ou AVIF (nunca SVG). O endereço e os
+cookies do ecrã ficam em casa, e a política de segurança de conteúdo da parede
+continua a permitir imagens apenas do DumbMonit.
 
 ### Escolher as fontes {#choosing-sources}
 
@@ -79,7 +96,96 @@ Deezer.
 
 `GET /api/wall/news` (o que as paredes consultam), `GET|PUT
 /api/wall/news/settings` e `POST /api/wall/news/test` (admin), `GET
-/api/wall/news/presets`.
+/api/wall/news/presets`, `GET /api/wall/news/image/{id}` (a imagem de um
+artigo, retransmitida).
+
+## Widgets na parede {#widgets-on-the-wall}
+
+Um administrador pode acrescentar **widgets** à parede em **Settings → Wall
+display → Wall widgets**: o tempo, preços de criptomoedas, cotações de ações,
+taxas de câmbio e as últimas vulnerabilidades críticas. Cada um vem desativado
+por predefinição e ativa-se por si só.
+
+O **tempo** é mantido simples: um ícone e a temperatura atual, para um só
+local, mesmo sob o relógio. Sem previsão, sem detalhes. Um leitor de ecrã ouve
+o local, o céu e a temperatura; ao passar o rato por cima mostra as mesmas
+palavras e a fonte (Open-Meteo).
+
+Os outros widgets partilham um cartão na coluna direita, sob o relógio: um
+widget de cada vez, cada um mantido durante o número de segundos escolhido (20
+por predefinição), depois surge o seguinte com fusão gradual. As listas longas
+são divididas em páginas de cinco. Pontos sob o cartão mostram onde vai a
+ronda. Com *reduced motion*, os cartões trocam sem fusão.
+
+As subidas e descidas levam sempre uma seta e um sinal (▲ +1.04 %, ▼ −0.57 %),
+e não apenas uma cor. Cada cartão indica a sua fonte, discretamente, e quão
+recente é.
+
+| Widget | O que mostra | Fonte | Chave | O servidor consulta |
+|---|---|---|---|---|
+| Tempo | Um ícone e a temperatura atual, para um local, sob o relógio | [Open-Meteo](https://open-meteo.com) (condições atuais e geocodificação) | nenhuma | a cada 15 min |
+| Cripto | Preço e variação em 24 horas de até dez moedas, na moeda escolhida | API pública da [CoinGecko](https://www.coingecko.com) | nenhuma (chave Demo gratuita opcional) | a cada minuto, uma chamada |
+| Ações | Último preço e variação do dia de até dez símbolos | [Finnhub](https://finnhub.io) | **chave gratuita obrigatória** | a cada 5 min, uma chamada por símbolo |
+| Taxas de câmbio | Quanto custa uma unidade (ou 100 de uma moeda pequena) na moeda base, e a sua variação desde o dia anterior | [Frankfurter](https://frankfurter.dev) (taxas de referência dos bancos centrais) | nenhuma | a cada hora |
+| Vulnerabilidades críticas | Os últimos CVE classificados como críticos (CVSS 9 ou mais) esta semana e/ou as últimas entradas do catálogo da CISA de vulnerabilidades ativamente exploradas, com pontuação e data | API 2.0 do [NVD](https://nvd.nist.gov), [CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | nenhuma | a cada hora |
+
+**As fontes e os seus termos** (verificados em outubro de 2026):
+
+- A **Open-Meteo** é gratuita sem chave para uso não comercial (até 10 000
+  chamadas por dia) e os seus dados estão sob CC BY 4.0.
+- A API sem chave da **CoinGecko** partilha um conjunto de cerca de 10 a 30
+  chamadas por minuto por endereço e não se destina a consultas intensivas; o
+  DumbMonit consulta uma vez por minuto para todas as paredes. Uma **chave
+  Demo** gratuita (coingecko.com) dá à instância um limite de taxa próprio.
+- As **ações** precisam de uma chave gratuita da **Finnhub**: nenhuma fonte de
+  cotações sem chave é simultaneamente fiável e permitida (a Stooq passou a
+  pedir uma chave, a Yahoo proíbe a sua API não documentada). O plano gratuito
+  cobre ações cotadas nos EUA e permite 60 chamadas por minuto; as cotações
+  podem ter atraso.
+- A **Frankfurter** não tem chave nem quota; as taxas mudam uma vez por dia
+  útil.
+- O **NVD** permite 5 pedidos por 30 segundos sem chave; o DumbMonit faz um por
+  hora. *This product uses the NVD API but is not endorsed or certified by the
+  NVD.* O catálogo **CISA KEV** é um ficheiro JSON público.
+
+**Tudo passa pelo servidor.** Nenhum ecrã fala com estes serviços: nem o seu
+endereço nem os limites dos serviços dependem do número de ecrãs. Cada fonte
+tem a sua própria cache. Quando uma fonte falha, o cartão mantém os últimos
+valores até seis horas, marcados *Out of date*, e o servidor espera um minuto
+antes de voltar a perguntar; sem nada para mostrar, o cartão diz
+*Unavailable*. Uma parede nunca se estraga por causa de um widget.
+
+**As chaves de API nunca voltam.** Ficam guardadas cifradas com o segredo da
+instância; as Definições só mostram se há uma guardada. Escrever uma nova
+substitui-a, **Remove the key** apaga-a.
+
+### Escolher o que mostrar {#choosing-what-to-show}
+
+- **Tempo:** escreva uma cidade e prima **Search** (geocodificação da
+  Open-Meteo, no seu idioma), depois escolha o local (escolher outro
+  substitui-o). Unidades: °C ou °F.
+- **Cripto:** marque entre as moedas principais (BTC, ETH, SOL, XRP, BNB, ADA,
+  DOGE, TRX, TON, AVAX, DOT, LINK, LTC, XLM, XMR, USDT, USDC) ou acrescente
+  qualquer moeda pelo seu id da CoinGecko (a última parte do seu endereço em
+  coingecko.com, como `avalanche-2`). Moeda de apresentação: USD, EUR, GBP,
+  CHF, JPY e outras.
+- **Ações:** escreva os símbolos, separados por vírgulas (`AAPL, MSFT, NVDA`),
+  e cole a sua chave da Finnhub.
+- **Taxas de câmbio:** escolha a moeda base e até dez outras entre as
+  principais (USD, EUR, GBP, JPY, CHF, CNY, CAD, AUD…).
+- **Vulnerabilidades críticas:** *Both* (críticas e exploradas; um CVE
+  explorado que já esteja na lista do NVD leva a etiqueta *Exploited*),
+  *Critical* (NVD) ou *Actively exploited* (CISA KEV), e quantas mostrar (1 a
+  10).
+
+### API {#widgets-api}
+
+`GET /api/wall/widgets` (o que as paredes consultam a cada minuto: uma secção
+por widget ativado, com `data`, `updated`, `error`, `needs_key`, `source`),
+`GET|PUT /api/wall/widgets/settings` e `GET /api/wall/widgets/places?q=`
+(admin), `GET /api/wall/widgets/catalog`. No `PUT`, `secrets.finnhub` e
+`secrets.coingecko` definem uma chave, uma cadeia vazia apaga-a, e omiti-las
+mantém-nas.
 
 ## Música na parede {#music-on-the-wall}
 

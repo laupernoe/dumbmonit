@@ -17,6 +17,8 @@ export type VideoSize = 'small' | 'medium' | 'large';
 /** `GET|PUT /api/wall/news/settings` (administrators). */
 export interface NewsSettings {
 	ticker: boolean;
+	/** Articles with their picture, in rotation on the wall (same feeds). */
+	gallery: boolean;
 	feeds: NewsFeed[];
 	video: boolean;
 	/** The link as pasted: YouTube, Dailymotion or Twitch. */
@@ -31,6 +33,8 @@ export interface NewsItem {
 	source: string;
 	/** UTC without suffix; null when the feed does not date the article. */
 	published: string | null;
+	/** The article's picture, relayed by the server (`/api/wall/news/image/<id>`); null without one. */
+	image: string | null;
 }
 
 export interface NewsVideo {
@@ -43,6 +47,8 @@ export interface NewsVideo {
 /** `GET /api/wall/news`: what the wall polls every five minutes. */
 export interface WallNews {
 	ticker: boolean;
+	/** The picture carousel is on. */
+	gallery: boolean;
 	items: NewsItem[];
 	/** Feeds that did not answer, with why. */
 	problems: { feed: string; message: string }[];
@@ -65,6 +71,7 @@ export interface FeedTest {
 
 export const DEFAULT_NEWS_SETTINGS: NewsSettings = {
 	ticker: false,
+	gallery: false,
 	feeds: [],
 	video: false,
 	video_url: '',

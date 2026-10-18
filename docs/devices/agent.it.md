@@ -838,6 +838,10 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
+L'agente dimentica il suo secret solo su quel rifiuto esatto. Qualsiasi altro
+`403`, per esempio da un reverse proxy o da un web application firewall davanti
+a DumbMonit, viene registrato nel log e ritentato mantenendo il secret.
+
 ## Token di registrazione
 
 - I token vengono creati in **Impostazioni → Agent** o quando si aggiunge un

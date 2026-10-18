@@ -44,7 +44,7 @@
 	</p>
 {:else}
 	<div class="overflow-x-auto">
-		<table class="w-full min-w-[40rem] text-sm">
+		<table class="table-stack w-full text-sm [--stack-inset:1.25rem] sm:min-w-[40rem]">
 			<thead>
 				<tr class="border-b border-line text-left text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">
 					<th class="px-5 py-2 font-semibold">{m.devicesb_pbs_jobs_col_job()}</th>
@@ -64,13 +64,15 @@
 							{#if job.comment}<p class="text-[0.75rem] text-ink-3">{job.comment}</p>{/if}
 							{#if job.retention}<p class="tnum text-[0.75rem] text-ink-3">{m.devicesb_pbs_jobs_keeps({ retention: job.retention })}</p>{/if}
 						</td>
-						<td class="px-3 py-2.5 align-top text-ink-2 break-all">{place(job)}</td>
-						<td class="tnum px-3 py-2.5 align-top font-mono text-[0.8125rem] text-ink-2">{job.schedule ?? '—'}</td>
-						<td class="tnum px-3 py-2.5 align-top text-ink-2" title={formatUnix(job.last_run_end)}>{formatAgo(job.last_run_end)}</td>
-						<td class="tnum px-3 py-2.5 align-top text-ink-2" title={job.next_run === null ? '' : formatUnix(job.next_run)}>{nextRun(job)}</td>
-						<td class="px-5 py-2.5 align-top">
-							<Plate tone={plate.tone} label={plate.label} />
-							{#if job.error}<p class="mt-1 max-w-xs text-[0.8125rem] text-warning-ink break-words">{job.error}</p>{/if}
+						<td class="px-3 py-2.5 align-top text-ink-2 break-all" data-label={m.devicesb_pbs_jobs_col_datastore()}>{place(job)}</td>
+						<td class="tnum px-3 py-2.5 align-top font-mono text-[0.8125rem] text-ink-2" data-label={m.devicesb_pbs_jobs_col_schedule()}>{job.schedule ?? '—'}</td>
+						<td class="tnum px-3 py-2.5 align-top text-ink-2" title={formatUnix(job.last_run_end)} data-label={m.devicesb_pbs_jobs_col_last_run()}>{formatAgo(job.last_run_end)}</td>
+						<td class="tnum px-3 py-2.5 align-top text-ink-2" title={job.next_run === null ? '' : formatUnix(job.next_run)} data-label={m.devicesb_pbs_jobs_col_next_run()}>{nextRun(job)}</td>
+						<td class="px-5 py-2.5 align-top" data-label={m.devicesb_pbs_jobs_col_status()}>
+							<div>
+								<Plate tone={plate.tone} label={plate.label} />
+								{#if job.error}<p class="mt-1 max-w-xs text-[0.8125rem] text-warning-ink break-words">{job.error}</p>{/if}
+							</div>
 						</td>
 					</tr>
 				{/each}

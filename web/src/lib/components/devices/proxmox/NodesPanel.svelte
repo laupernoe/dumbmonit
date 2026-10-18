@@ -215,7 +215,7 @@
 
 					{#if node.thin_pools.length > 0 || node.volume_groups.length > 0}
 						<div class="mt-3 overflow-x-auto">
-						<table class="w-full min-w-[20rem] border-collapse text-[0.8125rem]">
+						<table class="table-stack w-full border-collapse text-[0.8125rem] [--stack-inset:0] sm:min-w-[20rem]">
 							<thead>
 								<tr class="text-left text-[0.7rem] uppercase tracking-wide text-ink-3">
 									<th scope="col" class="py-1 font-semibold">{m.devicesb_proxmox_nodes_th_storage()}</th>
@@ -233,9 +233,9 @@
 											{pool.vg}/{pool.name}
 											<span class="text-ink-3"> {m.devicesb_proxmox_nodes_thin_pool()}</span>
 										</td>
-										<td class="tnum py-1 text-right text-ink-2">{formatBytes(pool.size_bytes)}</td>
-										<td class={`tnum py-1 text-right ${dataTone === 'warning' ? 'text-warning-ink' : dataTone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`}>{formatPercent(pool.used_percent)}</td>
-										<td class={`tnum py-1 text-right ${metaTone === 'warning' ? 'text-warning-ink' : metaTone === 'advisory' ? 'text-advisory-ink' : 'text-ink-2'}`}>{formatPercent(pool.metadata_used_percent)}</td>
+										<td class="tnum py-1 text-right text-ink-2" data-label={m.devicesb_proxmox_nodes_th_size()}>{formatBytes(pool.size_bytes)}</td>
+										<td class={`tnum py-1 text-right ${dataTone === 'warning' ? 'text-warning-ink' : dataTone === 'advisory' ? 'text-advisory-ink' : 'text-ink'}`} data-label={m.devicesb_proxmox_nodes_th_used()}>{formatPercent(pool.used_percent)}</td>
+										<td class={`tnum py-1 text-right ${metaTone === 'warning' ? 'text-warning-ink' : metaTone === 'advisory' ? 'text-advisory-ink' : 'text-ink-2'}`} data-label={m.devicesb_proxmox_nodes_th_metadata()}>{formatPercent(pool.metadata_used_percent)}</td>
 									</tr>
 								{/each}
 								{#each node.volume_groups as group (group.name)}
@@ -244,15 +244,15 @@
 											{group.name}
 											<span class="text-ink-3">{m.devicesb_proxmox_nodes_volume_group()}</span>
 										</td>
-										<td class="tnum py-1 text-right text-ink-2">{formatBytes(group.size_bytes)}</td>
+										<td class="tnum py-1 text-right text-ink-2" data-label={m.devicesb_proxmox_nodes_th_size()}>{formatBytes(group.size_bytes)}</td>
 										<!--
 											Sans teinte : un groupe de volumes entièrement distribué à ses
 											volumes logiques est l'état normal d'une installation Proxmox, et
 											le peindre en rouge ferait crier un nœud parfaitement sain. Ce qui
 											sature vraiment, c'est le pool fin au-dessus — lui est teinté.
 										-->
-										<td class="tnum py-1 text-right text-ink">{formatPercent(group.used_percent)}</td>
-										<td class="py-1 text-right text-ink-3">—</td>
+										<td class="tnum py-1 text-right text-ink" data-label={m.devicesb_proxmox_nodes_th_used()}>{formatPercent(group.used_percent)}</td>
+										<td class="py-1 text-right text-ink-3" data-stack-hide>—</td>
 									</tr>
 								{/each}
 							</tbody>

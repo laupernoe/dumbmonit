@@ -569,6 +569,17 @@ Las series llevan `router`, `service`, `server`, `upstream`, `proxy_host` o
 | Domain in redemption | El dominio está en `redemptionPeriod`, `pendingDelete` o `pendingRestore`: ha caducado (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
 | DNS answer changed | La respuesta de una comprobación DNS con *Alert when the answer changes* difiere de la anterior (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Se resuelve por sí misma una hora después. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
+### Listas de bloqueo DNS {#dns-blocklists}
+
+[Reputación del servidor de correo](../devices/mail_blacklist.md) y [Lista de bloqueo de un rango de IP](../devices/ip_blacklist.md). Las listas solo se consultan cada 6 horas; el último resultado se vuelve a escribir en cada sondeo, de ahí la espera corta. La página del monitor enlaza con la página de retirada de cada inclusión.
+
+| Regla | Qué | Umbral por defecto | Espera | Severidad | Recordatorio |
+|---|---|---|---|---|---|
+| Listed on a major blocklist | Una dirección o el dominio está en Spamhaus (ZEN o DBL), Barracuda o SpamCop: una gran parte de su correo es rechazada (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Warning (`critical`) | 24 h |
+| Listed on a blocklist | Una dirección o el dominio está en una lista menor: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL o URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| Mail server reverse DNS mismatch | Una dirección del servidor de correo no tiene DNS inverso, o su nombre no resuelve de vuelta a ella: Gmail, Outlook.com y Yahoo rechazan o mandan a spam ese correo (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| SPF or DMARC missing | El dominio no tiene registro SPF (o tiene varios), o no tiene registro DMARC: Gmail y Yahoo exigen ambos a los remitentes masivos (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+
 ### Cambios en sitios web {#website-changes}
 
 Consulta [Cambios en sitios web](../devices/webchange.md). La página

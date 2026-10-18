@@ -5,6 +5,76 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.10.0 — 2026-10-18
+
+### Added
+
+- **Mail server reputation** (`mail_blacklist`). Enter a mail domain or a
+  server's public address: DumbMonit checks the addresses of its MX and of
+  the domain against Spamhaus ZEN, Barracuda, SpamCop, Mailspike,
+  UCEPROTECT Level 1, PSBL and SpamRATS, and the domain against Spamhaus DBL,
+  SURBL and URIBL. Every listing shows the list's code, its reason and a
+  direct link to its lookup and removal page. Gmail, Outlook.com and Yahoo
+  publish no list that can be queried: the monitor checks what they weigh
+  instead (reverse DNS that resolves back, SPF, DMARC) and links to their
+  sender tools.
+- **IP range blocklist** (`ip_blacklist`). Every address of a public IPv4
+  range up to a /24, against the same address lists, with the number of
+  listed addresses and a removal link for each listing. Larger ranges and
+  IPv6 ranges are refused with a clear message.
+- Both are asked every 6 hours by default, at 10 queries per second, in the
+  background. A Spamhaus refusal (public resolver, `127.255.255.254`) is a
+  configuration error, never a listing, and a list that does not answer is
+  unknown, never clean; an optional Spamhaus DQS key (stored encrypted)
+  lifts the refusal. Four built-in rules: listed on a major blocklist
+  (critical), listed on another blocklist, reverse DNS mismatch, SPF or
+  DMARC missing.
+
+- **Widgets on the wall.** The weather now under the clock (an icon and the
+  temperature of one place, from Open-Meteo), crypto prices with their 24-hour change
+  (CoinGecko), stock quotes with the change of the day (Finnhub, free key),
+  exchange rates against a base currency (Frankfurter) and the latest critical
+  vulnerabilities (NVD and the CISA catalogue of exploited ones). Each one is
+  turned on and set up in **Settings → Wall display → Wall widgets**; all but
+  the weather take turns in one card under the clock, fading from one to the next. Rises and
+  falls carry an arrow and a sign, every card names its source. The server
+  reads and caches every source (a minute for coins, an hour for rates and
+  CVEs), so no display talks to them; a source that fails keeps its last
+  figures for a while, then the card says *Unavailable*. API keys are stored
+  encrypted and never shown again.
+- **Claude and OpenAI usage on the wall.** Two more widget cards show the
+  cost in US dollars and the input and output tokens of your organization's
+  API accounts over today, the last 7 days or the current month, optionally
+  with the biggest users by tokens and the names you give to the account and
+  API key identifiers the APIs return. Read from Anthropic's Usage and Cost
+  Admin API (`sk-ant-admin…` key, organizations only) and OpenAI's
+  organization Usage and Costs API (admin key), every 15 minutes, with the keys
+  stored encrypted and never shown again. Neither provider splits costs by
+  person, so the per-person list ranks tokens only; Claude Pro/Max and ChatGPT
+  Plus subscriptions and their weekly limits have no official API and are not
+  covered.
+- **News pictures in rotation.** **Picture carousel** in **Wall news** shows
+  the latest articles of the feeds with their picture (taken from the feed,
+  or from the article's `og:image` when the feed has none), one at a time in
+  the middle of the wall. Pictures are relayed by the server, only real
+  PNG/JPEG/GIF/WebP/AVIF images up to 6 MB.
+
+### Changed
+
+- **Recoveries stay quiet during a silence or maintenance window.** An alert
+  that resolves while a silence covers it no longer sends a recovery message
+  (and none is sent late once the silence ends); the resolution still shows
+  in the alert history, with its reason. A new switch in **Settings →
+  Notifications & reports → Notification policy** (`resolutions_during_silence`:
+  `suppress`, the default, or `send`) brings the previous behaviour back.
+
+### Fixed
+
+- **No sideways scrolling on phones.** Settings sections become a picker,
+  tabs, filters and segmented controls wrap, and wide tables (Proxmox guests,
+  nodes and Ceph, PBS jobs and datastores, Home Assistant, backups, two-factor
+  codes) turn into stacked cards below 640 px.
+
 ## 0.9.1 — 2026-10-16
 
 ### Changed
