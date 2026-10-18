@@ -30,12 +30,29 @@ per impostazione predefinita.
 - **Video in diretta.** Un canale in diretta senza audio in un riquadro, nella
   colonna destra sotto l'orologio (o al centro della scena), piccolo, medio o
   grande. Il riquadro si adatta allo spazio rimasto; non copre mai lo stato.
+- **Carosello di immagini.** Gli ultimi articoli degli stessi feed che portano
+  un'immagine, uno alla volta al centro del wall, ciascuno per otto secondi, in
+  dissolvenza incrociata, con la fonte, l'età e il titolo sopra l'immagine. Con
+  il *movimento ridotto* attivo, le immagini si alternano senza dissolvenza.
 
 È il server a leggere i feed, non il browser (i browser non possono leggere i
 feed di altri siti). Segue al massimo tre redirect, rifiuta gli indirizzi
 interni, rinuncia dopo otto secondi o 2 MB per feed, e mette in cache la
 risposta per cinque minuti per tutti i wall. Legge RSS 2.0, RSS 1.0 (RDF) e
 Atom.
+
+L'immagine di un articolo viene presa dal feed: l'immagine `media:content` più
+larga, un `media:thumbnail`, un `enclosure` di tipo immagine (BFM TV), un
+`link rel="enclosure"` Atom, oppure il primo `<img>` del contenuto
+dell'articolo (Korben). Quando il feed non ne ha e il carosello è attivo, il
+server legge una sola volta l'inizio della pagina dell'articolo (512 KB al
+massimo, stessa protezione degli indirizzi) e ne prende l'`og:image`; la
+risposta viene ricordata, quindi una pagina viene letta una sola volta. Il wall
+non carica mai un'immagine dal sito di notizie: il server la ritrasmette a
+`/api/wall/news/image/<id>`, solo per gli articoli che ha pubblicato, al
+massimo 6 MB, e solo quando il file è davvero un'immagine PNG, JPEG, GIF, WebP
+o AVIF (mai SVG). L'indirizzo e i cookie del display restano a casa, e la
+content security policy del wall consente ancora immagini solo da DumbMonit.
 
 ### Scegliere le fonti
 

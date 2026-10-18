@@ -43,6 +43,8 @@ DumbMonit 把它监视的所有东西都称为*监控项*（API 说*目标*）�
 | [Apache httpd](apache.md) | `apache` | 无，或基本身份验证 | Web 服务器：繁忙/空闲工作程序、记分板按状态、请求和字节率 |
 | [Nginx 代理管理器](npm.md) | `npm` | 用户电子邮件和密码（仅查看） | 代理管理器：nginx 拒绝的主机、禁用的主机、提供的证书 |
 | [域名过期](domain.md) | `domain` | 无 | 通过 RDAP 的注册域名：过期前天数、保留、赎回期、注册商 |
+| [邮件服务器信誉](mail_blacklist.md) | `mail_blacklist` | 无,或 Spamhaus DQS 密钥 | 邮件域名或服务器地址对照 DNS 黑名单(Spamhaus、Barracuda、SpamCop……)、反向 DNS、SPF、DMARC、移除链接 |
+| [IP 段黑名单](ip_blacklist.md) | `ip_blacklist` | 无,或 Spamhaus DQS 密钥 | 公网 IPv4 段(最大 /24)中的每个地址对照 DNS 黑名单,并附移除链接 |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | 服务账户令牌（仅读 ClusterRole） | 集群：节点不就绪、pod 崩溃循环或待处理、工作负载缺少副本、卡住的卷声明 |
 | [Active Directory](activedirectory.md) | `activedirectory` | 用户名/密码（普通域用户） | Windows 域通过 LDAPS：域控制器和 FSMO 角色、特权组成员、密码策略、安全发现 |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | 用户名/密码（Veeam Backup Viewer） | 备份服务器：失败的任务、失败的会话、存储库填满、许可证 |

@@ -24,11 +24,24 @@
 - **直播视频。** 一个静音的直播频道显示在图块中,位于右栏的时钟
   下方(或场景中央),可选小、中、大。该图块会缩小到剩余的空间;
   它绝不会盖住状态。
+- **图片轮播。** 同样这些订阅源中带有图片的最新文章,一次一篇显示在
+  大屏中央,每篇八秒,交叉淡入淡出,图片上叠加来源、时间和标题。启用
+  *减少动态效果*时,图片直接切换,不做淡入淡出。
 
 读取订阅源的是服务器,而不是浏览器(浏览器无法读取其他站点的
 订阅源)。服务器最多跟随三次重定向,拒绝内部地址,每个订阅源在
 八秒或 2 MB 后放弃,并将应答缓存五分钟,供所有大屏共用。它支持
 RSS 2.0、RSS 1.0(RDF)和 Atom。
+
+文章的图片取自订阅源:最宽的 `media:content` 图片、`media:thumbnail`、
+图片类型的 `enclosure`(BFM TV)、Atom 的 `link rel="enclosure"`,或者
+文章内容中的第一个 `<img>`(Korben)。当订阅源没有图片且轮播已开启
+时,服务器会读取文章页面的开头一次(最多 512 KB,同样有地址防护)并
+取其 `og:image`;结果会被记住,因此每个页面只读取一次。大屏从不直接
+从新闻站点加载图片:由服务器在 `/api/wall/news/image/<id>` 中转,
+只限它发布过的文章,最大 6 MB,并且仅当文件确实是 PNG、JPEG、GIF、
+WebP 或 AVIF 图片时(绝不包括 SVG)。显示器的地址和 Cookie 不会外泄,
+大屏的内容安全策略仍然只允许来自 DumbMonit 的图片。
 
 ### 选择来源 {#choosing-sources}
 
@@ -70,7 +83,84 @@ Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
 ### API {#news-api}
 
 `GET /api/wall/news`(大屏轮询的接口)、`GET|PUT /api/wall/news/settings`
-和 `POST /api/wall/news/test`(管理员),以及 `GET /api/wall/news/presets`。
+和 `POST /api/wall/news/test`(管理员),`GET /api/wall/news/presets`,
+以及 `GET /api/wall/news/image/{id}`(中转的文章图片)。
+
+## 大屏上的小组件 {#widgets-on-the-wall}
+
+管理员可以在**设置 → 大屏显示 → 大屏小组件**中为大屏添加**小组件**:
+天气、加密货币价格、股票行情、汇率和最新的严重漏洞。每一个默认都
+是关闭的,需要单独开启。
+
+**天气**保持简洁:只显示一个图标和当前温度,针对一个地点,就在时钟
+正下方。没有预报,没有细节。屏幕阅读器会朗读地点、天空状况和温度;
+悬停时会显示同样的文字以及来源(Open-Meteo)。
+
+其他小组件共用右栏时钟下方的一张卡片:一次一个小组件,每个停留所
+选的秒数(默认 20 秒),然后下一个淡入。较长的列表会拆成每页五项。
+卡片下方的圆点表示轮播进行到哪里。启用*减少动态效果*时,卡片直接
+切换,不做淡入淡出。
+
+涨跌始终带有箭头和符号(▲ +1.04 %,▼ −0.57 %),而不仅仅依靠颜色。
+每张卡片都会低调地注明来源及数据的新鲜程度。
+
+| 小组件 | 显示内容 | 来源 | 密钥 | 服务器请求频率 |
+|---|---|---|---|---|
+| 天气 | 一个地点当前的图标和温度,显示在时钟下方 | [Open-Meteo](https://open-meteo.com)(当前状况和地理编码) | 无 | 每 15 分钟 |
+| 加密货币 | 最多十种币的价格及 24 小时涨跌,以所选货币计价 | [CoinGecko](https://www.coingecko.com) 公共 API | 无(可选的免费 Demo 密钥) | 每分钟一次调用 |
+| 股票 | 最多十个代码的最新价格和当日涨跌 | [Finnhub](https://finnhub.io) | **需要免费密钥** | 每 5 分钟,每个代码一次调用 |
+| 汇率 | 一个单位(小面额货币为 100 个单位)折合基准货币多少,以及相对前一天的变化 | [Frankfurter](https://frankfurter.dev)(央行参考汇率) | 无 | 每小时 |
+| 严重漏洞 | 本周评级为严重(CVSS 9 或以上)的最新 CVE,和/或 CISA 已被积极利用漏洞目录中的最新条目,附带评分和日期 | [NVD](https://nvd.nist.gov) API 2.0、[CISA KEV](https://www.cisa.gov/known-exploited-vulnerabilities-catalog) | 无 | 每小时 |
+
+**来源及其条款**(2026 年 10 月核查):
+
+- **Open-Meteo** 对非商业用途免费且无需密钥(每天最多 10,000 次调用),
+  其数据采用 CC BY 4.0 许可。
+- **CoinGecko** 的免密钥 API 在每个地址上共享大约每分钟 10 到 30 次
+  调用的额度,不适合高频轮询;DumbMonit 对所有大屏每分钟只请求一次。
+  免费的 **Demo 密钥**(coingecko.com)可为该实例提供独立的速率限制。
+- **股票**需要一个免费的 **Finnhub** 密钥:没有任何免密钥的行情来源
+  既可靠又被允许(Stooq 现在要求密钥,Yahoo 禁止使用其未公开的
+  API)。免费套餐涵盖美国上市股票,允许每分钟 60 次调用;行情可能
+  有延迟。
+- **Frankfurter** 无需密钥也没有配额;汇率每个工作日更新一次。
+- **NVD** 在没有密钥时允许每 30 秒 5 次请求;DumbMonit 每小时只发出
+  一次。*本产品使用 NVD API,但未获得 NVD 的认可或认证。* **CISA
+  KEV** 目录是一个公开的 JSON 文件。
+
+**一切都经过服务器。** 没有任何显示器会直接访问这些服务:无论是它的
+地址,还是这些服务的限额,都不取决于屏幕的数量。每个来源都有自己的
+缓存。当某个来源失败时,卡片会保留其上一次的数字最多六小时,并标注
+*已过期*,服务器会等待一分钟再重新请求;如果没有任何内容可显示,卡片
+会显示*不可用*。大屏绝不会因为某个小组件而出问题。
+
+**API 密钥绝不会回传。** 它们用实例密钥加密保存;设置中只显示是否已
+保存。输入新密钥会替换它,**移除密钥**会清除它。
+
+### 选择显示内容 {#choosing-what-to-show}
+
+- **天气:**输入城市名并点击**搜索**(Open-Meteo 的地理编码,使用你的
+  语言),然后选择地点(选择另一个会替换它)。单位:°C 或 °F。
+- **加密货币:**在主要币种(BTC、ETH、SOL、XRP、BNB、ADA、DOGE、TRX、
+  TON、AVAX、DOT、LINK、LTC、XLM、XMR、USDT、USDC)中勾选,或按
+  CoinGecko 的 id 添加任意币种(即 coingecko.com 上其地址的最后一部分,
+  例如 `avalanche-2`)。显示货币:USD、EUR、GBP、CHF、JPY 等。
+- **股票:**输入股票代码,以逗号分隔(`AAPL, MSFT, NVDA`),并粘贴你的
+  Finnhub 密钥。
+- **汇率:**选择基准货币,以及主要货币中最多十种其他货币(USD、EUR、
+  GBP、JPY、CHF、CNY、CAD、AUD……)。
+- **严重漏洞:***两者*(严重且已被利用;已在 NVD 列表中的被利用 CVE 会
+  标注*已被利用*)、*严重*(NVD)或*已被积极利用*(CISA KEV),以及
+  显示的数量(1 到 10)。
+
+### API {#widgets-api}
+
+`GET /api/wall/widgets`(大屏每分钟轮询的接口:每个已开启的小组件对应
+一个部分,含 `data`、`updated`、`error`、`needs_key`、`source`)、
+`GET|PUT /api/wall/widgets/settings` 和 `GET /api/wall/widgets/places?q=`
+(管理员),以及 `GET /api/wall/widgets/catalog`。在 `PUT` 中,
+`secrets.finnhub` 和 `secrets.coingecko` 用于设置密钥,空字符串会清除
+密钥,省略则保持不变。
 
 ## 大屏上的音乐 {#music-on-the-wall}
 

@@ -885,6 +885,10 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
+El agente olvida su secreto solo ante esa negativa exacta. Cualquier otro
+`403`, por ejemplo de un proxy inverso o de un cortafuegos de aplicaciones web
+delante de DumbMonit, se registra y se reintenta conservando el secreto.
+
 ## Tokens de inscripción {#enrolment-tokens}
 
 - Los tokens se crean en **Settings → Agents** o al añadir un

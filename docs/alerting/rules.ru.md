@@ -511,6 +511,17 @@ Traefik, Caddy, Nginx Proxy Manager и регистрации доменов ([T
 | Domain in redemption | Домен в состоянии `redemptionPeriod`, `pendingDelete` или `pendingRestore`: он истёк (`dumbmonit_domain_redemption`). | > 0 | 30 мин | Warning (`critical`) | 12 ч |
 | DNS answer changed | Ответ DNS-проверки с *Alert when the answer changes* отличается от предыдущего (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Разрешается само через час. | > 0 | 1 мин | Advisory (`warning`) | 24 ч |
 
+### Чёрные списки DNS {#dns-blocklists}
+
+[Репутация почтового сервера](../devices/mail_blacklist.md) и [чёрные списки для диапазона IP](../devices/ip_blacklist.md). Списки опрашиваются только раз в 6 часов; последний результат записывается заново при каждой проверке, поэтому выдержка короткая. Страница монитора даёт ссылку на удаление для каждой записи.
+
+| Правило | Что | Порог по умолчанию | Выдержка | Важность | Напоминание |
+|---|---|---|---|---|---|
+| Listed on a major blocklist | Адрес или домен числится в Spamhaus (ZEN или DBL), Barracuda или SpamCop: значительная часть его почты отклоняется (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 мин | Warning (`critical`) | 24 ч |
+| Listed on a blocklist | Адрес или домен числится в менее крупном списке: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL или URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 мин | Advisory (`warning`) | 24 ч |
+| Mail server reverse DNS mismatch | У адреса почтового сервера нет обратного DNS, или его имя не разрешается обратно в него: Gmail, Outlook.com и Yahoo отклоняют такую почту или отправляют её в спам (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 мин | Advisory (`warning`) | 24 ч |
+| SPF or DMARC missing | У домена нет записи SPF (или их несколько) либо нет записи DMARC: Gmail и Yahoo требуют обе от массовых отправителей (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 мин | Advisory (`warning`) | 24 ч |
+
 ### Изменения веб-сайтов {#website-changes}
 
 См. [Website changes](../devices/webchange.md). Страница монитора показывает каждое изменение до и после.
