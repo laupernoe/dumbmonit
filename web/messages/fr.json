@@ -4017,6 +4017,8 @@
 	"notifications_policy_quiet": "silence {days} {start}–{end}",
 	"notifications_policy_saved": "Enregistré",
 	"notifications_policy_send_now": "Envoyer immédiatement",
+	"notifications_policy_silence_resolutions": "Envoyer aussi les retours à la normale pendant un silence ou une maintenance",
+	"notifications_policy_silence_resolutions_help": "Désactivé par défaut : quand une alerte se résout alors qu'un silence ou une fenêtre de maintenance la couvre, aucun message de retour à la normale n'est envoyé. La résolution reste visible dans l'historique de l'alerte. Activez cette option pour être prévenu même pendant une maintenance.",
 	"notifications_policy_that_channel": "ce canal",
 	"notifications_policy_title": "Politique de notification",
 	"notifications_policy_url": "URL publique",

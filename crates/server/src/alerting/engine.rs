@@ -281,6 +281,7 @@ pub async fn evaluate_once(
             silences,
             overrides,
             unacked_after: global.escalation().map(|(after, _)| after.to_std().unwrap_or_default()),
+            resolutions_during_silence: global.resolutions_during_silence,
             occurrences,
         },
         &mut baselines,

@@ -4017,6 +4017,8 @@
 	"notifications_policy_quiet": "Ruhezeit {days} {start}–{end}",
 	"notifications_policy_saved": "Gespeichert",
 	"notifications_policy_send_now": "Sofort senden",
+	"notifications_policy_silence_resolutions": "Auch Wiederherstellungen während einer Stummschaltung oder eines Wartungsfensters senden",
+	"notifications_policy_silence_resolutions_help": "Standardmäßig aus: Wird eine Warnung aufgelöst, während eine Stummschaltung oder ein Wartungsfenster sie abdeckt, wird keine Wiederherstellungsmeldung gesendet. Die Auflösung bleibt im Verlauf der Warnung sichtbar. Aktivieren, um auch während der Wartung benachrichtigt zu werden.",
 	"notifications_policy_that_channel": "diesen Kanal",
 	"notifications_policy_title": "Benachrichtigungsrichtlinie",
 	"notifications_policy_url": "Öffentliche URL",

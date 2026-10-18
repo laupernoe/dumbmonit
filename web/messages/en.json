@@ -4017,6 +4017,8 @@
 	"notifications_policy_quiet": "quiet {days} {start}–{end}",
 	"notifications_policy_saved": "Saved",
 	"notifications_policy_send_now": "Send right away",
+	"notifications_policy_silence_resolutions": "Also send recoveries during a silence or maintenance window",
+	"notifications_policy_silence_resolutions_help": "Off by default: when an alert resolves while a silence or maintenance window covers it, no recovery message is sent. The resolution still appears in the alert history. Turn this on to be told about recoveries even during maintenance.",
 	"notifications_policy_that_channel": "that channel",
 	"notifications_policy_title": "Notification policy",
 	"notifications_policy_url": "Public URL",
