@@ -465,6 +465,88 @@ textarea.input {
 	}
 }
 
+/* ---------------------------------------------------------------------------
+   Wide tables on phones: never a horizontal scroll. Below `sm`, a
+   `<table class="table-stack">` turns each body row into a stacked card: a cell
+   with `data-label="…"` shows its column name beside the value, a cell without
+   one (the row's title, an action, a full-width detail row) takes the whole
+   width (keep a labelled cell's content in one element so it stays in the
+   value column), `data-stack-hide` drops a cell the card already shows elsewhere. The
+   header row stays for screen readers; `data-stack-sort` on the `<thead>` keeps
+   it visible as a wrapping row of sort buttons; `--stack-inset` sets the cards'
+   side padding (0 for a table that already sits in a padded box). Unlayered on purpose: it must
+   win over the cells' Tailwind padding, alignment and min-width utilities.
+   --------------------------------------------------------------------------- */
+@media (max-width: 639px) {
+	table.table-stack,
+	.table-stack > tbody {
+		display: block;
+		width: 100%;
+		min-width: 0;
+	}
+	.table-stack > thead:not([data-stack-sort]) {
+		display: block;
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	.table-stack > thead[data-stack-sort],
+	.table-stack > thead[data-stack-sort] > tr {
+		display: flex;
+		flex-wrap: wrap;
+		column-gap: 0.75rem;
+		padding-inline: var(--stack-inset, 0.75rem);
+	}
+	.table-stack > thead[data-stack-sort] > tr > th {
+		display: block;
+		padding: 0;
+		width: auto;
+	}
+	.table-stack > thead[data-stack-sort] [data-stack-hide] {
+		display: none;
+	}
+	.table-stack > tbody > tr {
+		display: block;
+		padding: 0.5rem var(--stack-inset, 0.75rem);
+	}
+	.table-stack > tbody > tr > :where(td, th):not(.hidden, [data-stack-hide]) {
+		display: block;
+		width: auto;
+		max-width: none;
+		padding: 0.125rem 0;
+		text-align: start;
+		overflow-wrap: anywhere;
+	}
+	.table-stack > tbody > tr > [data-label]:not(.hidden, [data-stack-hide]) {
+		display: grid;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+		align-items: baseline;
+		column-gap: 0.75rem;
+		white-space: normal;
+	}
+	.table-stack > tbody > tr > [data-label]::before {
+		content: attr(data-label);
+		/* The label column spans every line the value needs. */
+		grid-row: span 9;
+		font-family: var(--font-sans);
+		font-size: 0.75rem;
+		font-weight: 500;
+		letter-spacing: normal;
+		text-transform: none;
+		color: var(--c-ink-3);
+	}
+	/* Inline values (a plate, a figure) keep their own width; blocks such as a meter fill the column. */
+	.table-stack > tbody > tr > [data-label] > span {
+		justify-self: start;
+	}
+	.table-stack > tbody > tr > [data-stack-hide] {
+		display: none;
+	}
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.check-draw :where(path, polyline, circle) {
 		stroke-dashoffset: 0;

@@ -278,7 +278,7 @@
 					<h3 class="text-sm font-semibold text-ink">{m.devices_ha_by_domain()}</h3>
 					{#if problemDomains.length > 0}
 						<div class="mt-2 overflow-x-auto">
-						<table class="w-full text-sm">
+						<table class="table-stack w-full text-sm [--stack-inset:0]">
 							<thead>
 								<tr class="text-left text-[0.75rem] text-ink-3">
 									<th class="py-1 font-normal">{m.devices_ha_col_domain()}</th>
@@ -291,9 +291,9 @@
 								{#each problemDomains as d (d.name)}
 									<tr class="border-t border-line">
 										<td class="py-1 text-ink">{d.name}</td>
-										<td class="py-1 text-right text-ink-2">{formatCount(d.total)}</td>
-										<td class="py-1 text-right {d.unavailable > 0 ? 'text-warning-ink' : 'text-ink-2'}">{formatCount(d.unavailable)}</td>
-										<td class="py-1 text-right {d.unknown > 0 ? 'text-advisory-ink' : 'text-ink-2'}">{formatCount(d.unknown)}</td>
+										<td class="py-1 text-right text-ink-2" data-label={m.devices_ha_col_entities()}>{formatCount(d.total)}</td>
+										<td class="py-1 text-right {d.unavailable > 0 ? 'text-warning-ink' : 'text-ink-2'}" data-label={m.devices_ha_col_unavailable()}>{formatCount(d.unavailable)}</td>
+										<td class="py-1 text-right {d.unknown > 0 ? 'text-advisory-ink' : 'text-ink-2'}" data-label={m.devices_ha_col_unknown()}>{formatCount(d.unknown)}</td>
 									</tr>
 								{/each}
 							</tbody>
