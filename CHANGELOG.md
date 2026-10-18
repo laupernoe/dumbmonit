@@ -40,6 +40,17 @@ All notable changes to this project are documented here. The format follows
   CVEs), so no display talks to them; a source that fails keeps its last
   figures for a while, then the card says *Unavailable*. API keys are stored
   encrypted and never shown again.
+- **Claude and OpenAI usage on the wall.** Two more widget cards show the
+  cost in US dollars and the input and output tokens of your organization's
+  API accounts over today, the last 7 days or the current month, optionally
+  with the biggest users by tokens and the names you give to the account and
+  API key identifiers the APIs return. Read from Anthropic's Usage and Cost
+  Admin API (`sk-ant-admin…` key, organizations only) and OpenAI's
+  organization Usage and Costs API (admin key), every 15 minutes, with the keys
+  stored encrypted and never shown again. Neither provider splits costs by
+  person, so the per-person list ranks tokens only; Claude Pro/Max and ChatGPT
+  Plus subscriptions and their weekly limits have no official API and are not
+  covered.
 - **News pictures in rotation.** **Picture carousel** in **Wall news** shows
   the latest articles of the feeds with their picture (taken from the feed,
   or from the article's `og:image` when the feed has none), one at a time in

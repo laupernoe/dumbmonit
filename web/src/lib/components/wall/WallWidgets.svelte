@@ -2,7 +2,8 @@
 	/**
 	 * The widgets deck of the wall: one card at a time, each held for the
 	 * seconds chosen in Settings, then the next fades in (no cascade, nothing
-	 * slides). Coins, stocks, exchange rates and critical vulnerabilities; long
+	 * slides). Coins, stocks, exchange rates, critical vulnerabilities and
+	 * Claude / OpenAI usage; long
 	 * lists split into pages. (The weather is not a card: it sits under the
 	 * clock, `WallWeather`.) All cards sit in
 	 * the same grid cell, so the deck keeps the height of its tallest card and
@@ -14,14 +15,16 @@
 	 * Rises and falls carry an arrow and a sign, not only a colour.
 	 * Under `prefers-reduced-motion` the cards swap without fading.
 	 */
-	import { Bitcoin, ChartCandlestick, ArrowLeftRight, ShieldAlert } from 'lucide-svelte';
+	import { Bitcoin, ChartCandlestick, ArrowLeftRight, ShieldAlert, Sparkles, Bot } from 'lucide-svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatRelative } from '#lib/format.js';
-	import type { WallWidgets, WallSection } from '#lib/api/types.js';
+	import type { WallAiPeriod, WallAiUsage, WallWidgets, WallSection } from '#lib/api/types.js';
 	import {
 		formatNumber,
 		formatPrice,
+		formatTokens,
+		formatUsd,
 		fxQuote,
 		nextCard,
 		widgetCards,
@@ -65,6 +68,21 @@
 				return m.wall_widgets_fx();
 			case 'cve':
 				return m.wall_widgets_cve();
+			case 'claude':
+				return m.wall_widgets_claude();
+			case 'openai':
+				return m.wall_widgets_openai();
+		}
+	}
+
+	function periodLabel(period: WallAiPeriod): string {
+		switch (period) {
+			case 'today':
+				return m.wall_widgets_ai_today();
+			case 'month':
+				return m.wall_widgets_ai_month();
+			default:
+				return m.wall_widgets_ai_week();
 		}
 	}
 
@@ -97,6 +115,8 @@
 							{#if card.kind === 'crypto'}<Bitcoin class="size-[1em]" aria-hidden="true" />
 							{:else if card.kind === 'stocks'}<ChartCandlestick class="size-[1em]" aria-hidden="true" />
 							{:else if card.kind === 'fx'}<ArrowLeftRight class="size-[1em]" aria-hidden="true" />
+							{:else if card.kind === 'claude'}<Sparkles class="size-[1em]" aria-hidden="true" />
+							{:else if card.kind === 'openai'}<Bot class="size-[1em]" aria-hidden="true" />
 							{:else}<ShieldAlert class="size-[1em]" aria-hidden="true" />{/if}
 							{title(card)}
 						</span>
@@ -106,7 +126,9 @@
 					</header>
 
 					{#if !section || (!section.data && section.needs_key)}
-						<p class="unavailable">{m.wall_widgets_needs_key()}</p>
+						<p class="unavailable">
+							{card.kind === 'claude' || card.kind === 'openai' ? m.wall_widgets_ai_needs_key() : m.wall_widgets_needs_key()}
+						</p>
 					{:else if !section.data}
 						<p class="unavailable">{m.wall_widgets_unavailable()}</p>
 					{:else if card.kind === 'crypto' && widgets.crypto?.data}
@@ -152,6 +174,40 @@
 							{/each}
 						</ul>
 						<p class="note">{m.wall_widgets_fx_note({ base: data.base, date: shortDate(`${data.date}T12:00:00`) })}</p>
+					{:else if card.kind === 'claude' || card.kind === 'openai'}
+						{@const usage = section.data as WallAiUsage}
+						<p class="ai-period">{periodLabel(usage.period)}</p>
+						<div class="ai-total">
+							<span class="ai-cost tnum">{formatUsd(usage.cost_usd, locale)}</span>
+							<dl class="ai-tokens tnum">
+								<div>
+									<dt>{m.wall_widgets_ai_input()}</dt>
+									<dd>{formatTokens(usage.input_tokens, locale)}</dd>
+								</div>
+								<div>
+									<dt>{m.wall_widgets_ai_output()}</dt>
+									<dd>{formatTokens(usage.output_tokens, locale)}</dd>
+								</div>
+							</dl>
+						</div>
+						{#if usage.people && usage.people.length > 0}
+							<p class="ai-people">{m.wall_widgets_ai_people()}</p>
+							<ul class="rows">
+								{#each usage.people.slice(card.from, card.to) as person, i (`${card.from + i}`)}
+									<li class="row row--ai">
+										<span class="name"><b>{person.name ?? m.wall_widgets_ai_unattributed()}</b></span>
+										<span
+											class="price tnum"
+											title={`${m.wall_widgets_ai_input()} ${formatTokens(person.input_tokens, locale)} · ${m.wall_widgets_ai_output()} ${formatTokens(person.output_tokens, locale)}`}
+										>
+											{m.wall_widgets_ai_tokens({ count: formatTokens(person.input_tokens + person.output_tokens, locale) })}
+										</span>
+									</li>
+								{/each}
+							</ul>
+							<p class="note">{m.wall_widgets_ai_people_note()}</p>
+						{/if}
+						<p class="note">{m.wall_widgets_ai_note()}</p>
 					{:else if card.kind === 'cve' && widgets.cve?.data}
 						{@const items = widgets.cve.data}
 						{#if items.length === 0}
@@ -312,6 +368,48 @@
 		font-weight: 600;
 	}
 
+	/* AI usage */
+	.ai-period {
+		margin-top: -0.25rem;
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--c-ink-2);
+	}
+	.ai-total {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0.25rem 1.25rem;
+	}
+	.ai-cost {
+		font-size: 2.5rem;
+		font-weight: 750;
+		line-height: 1.1;
+	}
+	.ai-tokens {
+		display: flex;
+		gap: 1.25rem;
+	}
+	.ai-tokens dt {
+		font-size: 0.8125rem;
+		color: var(--c-ink-2);
+	}
+	.ai-tokens dd {
+		font-size: 1.375rem;
+		font-weight: 650;
+	}
+	.ai-people {
+		font-size: 0.8125rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--c-ink-2);
+	}
+	.row.row--ai {
+		grid-template-columns: minmax(0, 1fr) auto;
+	}
+
 	/* Vulnerabilities */
 	.cves {
 		display: flex;
@@ -399,6 +497,12 @@
 		.row {
 			font-size: 1.5rem;
 			grid-template-columns: minmax(0, 1fr) auto 7.5rem;
+		}
+		.ai-cost {
+			font-size: 3rem;
+		}
+		.ai-tokens dd {
+			font-size: 1.625rem;
 		}
 		.cve-head {
 			font-size: 1.125rem;

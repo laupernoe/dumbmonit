@@ -4,6 +4,8 @@ import assert from 'node:assert/strict';
 import {
 	formatPercent,
 	formatPrice,
+	formatTokens,
+	formatUsd,
 	fxQuote,
 	isStale,
 	nextCard,
@@ -88,4 +90,36 @@ test('stale data is noticed', () => {
 	assert.equal(isStale('2026-10-16T12:00:00', now, 60_000), true);
 	assert.equal(isStale('2026-10-16T12:09:30', now, 60_000), false);
 	assert.equal(isStale(null, now, 60_000), false);
+});
+
+test('AI usage: dollars and compact tokens', () => {
+	assert.equal(formatUsd(12.345, 'en'), '$12.35');
+	assert.equal(formatUsd(1234.5, 'en'), '$1,235');
+	assert.equal(formatTokens(980, 'en'), '980');
+	assert.equal(formatTokens(1_200_000, 'en'), '1.2M');
+	assert.equal(formatTokens(340_000, 'en'), '340K');
+});
+
+test('AI cards: a total card, then one page per three people', () => {
+	const usage = (people) => section({ period: 'week', from: '2026-10-12', cost_usd: 4, input_tokens: 10, output_tokens: 5, people });
+	const widgets = {
+		rotate_seconds: 20,
+		claude: usage(new Array(7).fill({})),
+		openai: usage(null)
+	};
+	const cards = widgetCards(widgets);
+	assert.deepEqual(
+		cards.map((card) => card.key),
+		['claude:0', 'claude:1', 'claude:2', 'openai:0']
+	);
+	assert.deepEqual(
+		cards.filter((card) => card.kind === 'claude').map((card) => [card.from, card.to]),
+		[
+			[0, 3],
+			[3, 6],
+			[6, 7]
+		]
+	);
+	// A provider turned on without a key still has its card.
+	assert.deepEqual(widgetCards({ rotate_seconds: 20, openai: { ...section(null), needs_key: true } }).map((c) => c.key), ['openai:0']);
 });
