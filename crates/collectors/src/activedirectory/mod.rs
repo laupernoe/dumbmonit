@@ -56,6 +56,7 @@ pub mod view;
 
 pub use analysis::severity_counts;
 pub use options::{DEFAULT_INVENTORY_MINUTES, DEFAULT_REQUEST_TIMEOUT_SECONDS, DEFAULT_STALE_DAYS};
+pub use tls::ldap_client_config;
 pub use view::{
     ConnectionView, DcView, DomainView, Finding, FindingSeverity, FsmoView, InventoryView,
     MemberView, NeighborView, PolicyView, PrivilegedGroupView, ProbeObserver, ProbeView,
