@@ -29,7 +29,7 @@ parede em **Settings → Wall news**. Ambos vêm desativados por predefinição.
   direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
   mosaico encolhe para o espaço que sobra; nunca tapa o estado.
 - **Carrossel de imagens.** Os últimos artigos dos mesmos feeds que trazem uma
-  imagem, um de cada vez no meio da parede, cada um durante oito segundos, com
+  imagem, um de cada vez na coluna da direita, sob o relógio, cada um durante oito segundos, com
   fusão gradual, com a fonte, a idade e o título sobre a imagem. Com *reduced
   motion*, as imagens trocam sem fusão.
 

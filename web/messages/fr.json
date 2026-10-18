@@ -5063,7 +5063,7 @@
 	"settings_news_custom_url": "Adresse RSS ou Atom",
 	"settings_news_description": "Les titres en bas du mur et une chaîne en direct dans une vignette. Désactivé par défaut. C’est ce serveur qui lit les flux, jamais le navigateur.",
 	"settings_news_gallery": "Carrousel d’images",
-	"settings_news_gallery_hint": "Les derniers articles de ces flux avec leur image, l’un après l’autre, au milieu du mur. Les images passent par le serveur, jamais directement depuis le site d’actualités.",
+	"settings_news_gallery_hint": "Les derniers articles de ces flux avec leur image, l’un après l’autre, dans la colonne de droite du mur. Les images passent par le serveur, jamais directement depuis le site d’actualités.",
 	"settings_news_limit": "{count} flux au maximum.",
 	"settings_news_none": "Aucun flux pour l’instant. Cochez une source ci-dessus ou ajoutez la vôtre.",
 	"settings_news_position": "Position",

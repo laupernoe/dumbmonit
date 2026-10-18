@@ -4978,7 +4978,7 @@
 	"settings_news_custom_url": "RSS 或 Atom 地址",
 	"settings_news_description": "在墙屏底部显示新闻标题，并以小窗显示直播频道。默认关闭。订阅源由本服务器读取，而不是浏览器。",
 	"settings_news_gallery": "图片轮播",
-	"settings_news_gallery_hint": "这些订阅源的最新文章及其配图，依次显示在墙屏中央。图片经由服务器获取，绝不直接来自新闻网站。",
+	"settings_news_gallery_hint": "这些订阅源的最新文章及其配图，依次显示在墙屏右侧栏。图片经由服务器获取，绝不直接来自新闻网站。",
 	"settings_news_limit": "最多 {count} 个订阅源。",
 	"settings_news_none": "还没有订阅源。请勾选上方的来源，或添加自己的订阅源。",
 	"settings_news_position": "位置",

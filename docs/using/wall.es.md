@@ -29,7 +29,7 @@ en **Ajustes → Noticias del mural**. Ambos están desactivados por defecto.
   columna derecha bajo el reloj (o en medio de la escena), pequeño, mediano o
   grande. El recuadro se reduce al espacio disponible; nunca tapa el estado.
 - **Carrusel de imágenes.** Los últimos artículos de los mismos feeds que llevan
-  una imagen, uno a la vez en medio de la pared, cada uno durante ocho segundos,
+  una imagen, uno a la vez en la columna derecha, bajo el reloj, cada uno durante ocho segundos,
   con fundido encadenado, con la fuente, la antigüedad y el titular sobre la
   imagen. Con *reducir movimiento* activado, las imágenes cambian sin fundido.
 

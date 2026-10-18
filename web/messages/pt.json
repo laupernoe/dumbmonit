@@ -5063,7 +5063,7 @@
 	"settings_news_custom_url": "Endereço RSS ou Atom",
 	"settings_news_description": "Títulos na parte inferior da parede e um canal em direto num mosaico. Desativado por predefinição. Os feeds são lidos por este servidor, nunca pelo navegador.",
 	"settings_news_gallery": "Carrossel de imagens",
-	"settings_news_gallery_hint": "Os artigos mais recentes destes feeds com a respetiva imagem, um a seguir ao outro, no meio da parede. As imagens passam pelo servidor, nunca diretamente do site de notícias.",
+	"settings_news_gallery_hint": "Os artigos mais recentes destes feeds com a respetiva imagem, um a seguir ao outro, na coluna da direita da parede. As imagens passam pelo servidor, nunca diretamente do site de notícias.",
 	"settings_news_limit": "No máximo {count} feeds.",
 	"settings_news_none": "Ainda sem feeds. Assinale uma fonte acima ou adicione a sua.",
 	"settings_news_position": "Posição",
