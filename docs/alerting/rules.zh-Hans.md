@@ -502,6 +502,17 @@ Traefik、Caddy、Nginx Proxy Manager 和域名注册([Traefik](../devices/traef
 | 域名处于赎回期 | 域名处于 `redemptionPeriod`、`pendingDelete` 或 `pendingRestore`:它已过期(`dumbmonit_domain_redemption`)。 | > 0 | 30 分钟 | 警告 (`critical`) | 12 小时 |
 | DNS 应答已变化 | 启用*应答变化时告警*的 DNS 检查,其应答与之前不同(`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`)。一小时后自行解决。 | > 0 | 1 分钟 | 通知 (`warning`) | 24 小时 |
 
+### DNS 黑名单 {#dns-blocklists}
+
+[邮件服务器信誉](../devices/mail_blacklist.md)和[IP 段黑名单](../devices/ip_blacklist.md)。这些名单只每 6 小时查询一次;每次探测都会重新写入最近一次的结果,因此保持时间很短。监控项页面会给出每条收录记录的移除页面链接。
+
+| 规则 | 内容 | 默认阈值 | 保持 | 严重程度 | 提醒 |
+|---|---|---|---|---|---|
+| 被列入主要黑名单 | 某个地址或域名位于 Spamhaus(ZEN 或 DBL)、Barracuda 或 SpamCop:其大部分邮件会被拒收(`dumbmonit_blacklist_listed_major_lists`)。 | > 0 | 5 分钟 | 警告 (`critical`) | 24 小时 |
+| 被列入黑名单 | 某个地址或域名位于规模较小的名单:Mailspike、UCEPROTECT、PSBL、SpamRATS、SURBL 或 URIBL(`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 24 小时 |
+| 邮件服务器反向 DNS 不一致 | 邮件服务器的某个地址没有反向 DNS,或其名称无法解析回该地址:Gmail、Outlook.com 和 Yahoo 会拒收此类邮件或将其归入垃圾邮件(`dumbmonit_blacklist_ptr_ok == bool 0`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 24 小时 |
+| 缺少 SPF 或 DMARC | 域名没有 SPF 记录(或有多条),或没有 DMARC 记录:Gmail 和 Yahoo 要求批量发件人两者都具备(`dumbmonit_blacklist_mail_auth_missing`)。 | > 0 | 5 分钟 | 通知 (`warning`) | 24 小时 |
+
 ### 网站变化 {#website-changes}
 
 参见[网站变化](../devices/webchange.md)。监控项页面显示每次变化前后的对比。

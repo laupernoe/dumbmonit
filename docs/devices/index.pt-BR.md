@@ -47,6 +47,8 @@ versão pode monitorar.
 | [Apache httpd](apache.md) | `apache` | nenhuma, ou autenticação básica | Servidor web: workers ocupados/ociosos, placar por estado, taxas de requisição e bytes |
 | [Nginx Proxy Manager](npm.md) | `npm` | e-mail e senha do usuário (somente visualização) | Gerenciador de proxy: hosts que o nginx recusou, hosts desativados, certificados servidos |
 | [Expiração de domínio](domain.md) | `domain` | nenhuma | Domínio registrado via RDAP: dias antes da expiração, retenção, período de resgate, registrador |
+| [Reputação do servidor de e-mail](mail_blacklist.md) | `mail_blacklist` | nenhuma, ou chave Spamhaus DQS | Domínio de e-mail ou endereço de servidor contra as listas de bloqueio DNS (Spamhaus, Barracuda, SpamCop…), DNS reverso, SPF, DMARC, links de remoção |
+| [Lista de bloqueio de faixa de IP](ip_blacklist.md) | `ip_blacklist` | nenhuma, ou chave Spamhaus DQS | Cada endereço de uma faixa IPv4 pública de até /24 contra as listas de bloqueio DNS, com links de remoção |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | token de conta de serviço (ClusterRole somente leitura) | Cluster: nós não prontos, pods em crash loop ou pendentes, workloads sem réplicas, reivindicações de volume travadas |
 | [Active Directory](activedirectory.md) | `activedirectory` | usuário/senha (usuário de domínio simples) | Domínio Windows via LDAPS: controladores de domínio e papéis FSMO, membros de grupos privilegiados, política de senha, achados de segurança |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | usuário/senha (Veeam Backup Viewer) | Servidor de backup: jobs com falha, sessões com falha, repositórios enchendo, licença |

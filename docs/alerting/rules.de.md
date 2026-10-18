@@ -507,6 +507,17 @@ Traefik, Caddy, Nginx Proxy Manager und Domainregistrierungen ([Traefik](../devi
 | Domain in der Redemption-Phase | Die Domain ist in `redemptionPeriod`, `pendingDelete` oder `pendingRestore`: Sie ist abgelaufen (`dumbmonit_domain_redemption`). | > 0 | 30 Min. | Warnung (`critical`) | 12 h |
 | DNS-Antwort geändert | Die Antwort einer DNS-Prüfung mit *Alarm bei Änderung der Antwort* weicht von der davor ab (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Löst sich eine Stunde später von selbst auf. | > 0 | 1 Min. | Hinweis (`warning`) | 24 h |
 
+### DNS-Blocklisten {#dns-blocklists}
+
+[Reputation des Mailservers](../devices/mail_blacklist.md) und [Blockliste für IP-Bereiche](../devices/ip_blacklist.md). Die Listen werden nur alle 6 Stunden abgefragt; das letzte Ergebnis wird bei jeder Prüfung neu geschrieben, daher die kurze Haltezeit. Die Monitorseite verlinkt die Entfernungsseite jedes Eintrags.
+
+| Regel | Was | Standardschwelle | Haltezeit | Schweregrad | Erinnerung |
+|---|---|---|---|---|---|
+| Auf einer großen Blockliste geführt | Eine Adresse oder die Domain steht bei Spamhaus (ZEN oder DBL), Barracuda oder SpamCop: Ein großer Teil ihrer Mails wird abgelehnt (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 Min. | Warnung (`critical`) | 24 h |
+| Auf einer Blockliste geführt | Eine Adresse oder die Domain steht auf einer kleineren Liste: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL oder URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 Min. | Hinweis (`warning`) | 24 h |
+| Reverse-DNS des Mailservers passt nicht | Eine Adresse des Mailservers hat kein Reverse-DNS, oder sein Name löst nicht auf sie zurück: Gmail, Outlook.com und Yahoo lehnen solche Mails ab oder sortieren sie als Junk aus (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 Min. | Hinweis (`warning`) | 24 h |
+| SPF oder DMARC fehlt | Die Domain hat keinen SPF-Eintrag (oder mehrere) oder keinen DMARC-Eintrag: Gmail und Yahoo verlangen beides von Massenversendern (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 Min. | Hinweis (`warning`) | 24 h |
+
 ### Website-Änderungen {#website-changes}
 
 Siehe [Website-Änderungen](../devices/webchange.md). Die Monitorseite zeigt jede Änderung vorher und nachher.
