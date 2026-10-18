@@ -863,15 +863,26 @@
 	$effect(() => {
 		const controller = new AbortController();
 		void loadKinds(controller.signal);
-		void load(controller.signal);
 		void loadSecurity(controller.signal);
-		const timer = setInterval(() => void load(controller.signal), 30_000);
 		// Scores move slowly (recomputed every 15 min server-side).
 		const securityTimer = setInterval(() => void loadSecurity(controller.signal), 120_000);
 		return () => {
 			controller.abort();
-			clearInterval(timer);
 			clearInterval(securityTimer);
+		};
+	});
+
+	// Sparklines are drawn by the tiles only: the compact list (the default)
+	// never shows them, so it does not pay for a range query over every
+	// device's series every 30 s — several megabytes with a few hundred devices.
+	$effect(() => {
+		if (view !== 'tiles') return;
+		const controller = new AbortController();
+		void load(controller.signal);
+		const timer = setInterval(() => void load(controller.signal), 30_000);
+		return () => {
+			controller.abort();
+			clearInterval(timer);
 		};
 	});
 </script>
