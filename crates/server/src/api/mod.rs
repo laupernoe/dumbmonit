@@ -6,6 +6,7 @@ pub(crate) mod alerts;
 mod auth;
 mod backends;
 mod backup;
+mod blacklist;
 mod channels;
 mod collectors;
 mod discovery;
@@ -179,6 +180,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(backends::routes())
         // Proxys inverses et enregistrement d'un domaine (`proxies.rs`).
         .merge(proxies::routes())
+        // Listes noires DNS : serveur mail et plage d'adresses (`blacklist.rs`).
+        .merge(blacklist::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
