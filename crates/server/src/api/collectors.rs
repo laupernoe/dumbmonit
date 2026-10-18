@@ -3155,6 +3155,88 @@ const DOMAIN_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Pas de clé : les serveurs publics des listes, par un résolveur à soi.
+const BLOCKLIST_NO_KEY: CredentialView = CredentialView {
+    kind: "none",
+    label: "No key",
+    help: "The public blocklist servers, queried through a resolver of your own.",
+    fields: &[],
+};
+
+/// Clé du Data Query Service de Spamhaus (`collectors/blacklist/options.rs`).
+const SPAMHAUS_DQS: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Spamhaus DQS key",
+    help: "Free for low, non-commercial volumes: Spamhaus then answers through any resolver.",
+    fields: &[cred_secret(
+        "token",
+        "DQS key",
+        "The key shown in your Spamhaus account. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const BLOCKLIST_RESOLVER: OptionView = text(
+    "resolver",
+    "Resolver",
+    "IP address of the recursive resolver to query, port optional. Empty: the system resolver. Spamhaus refuses public resolvers (8.8.8.8, 1.1.1.1, 9.9.9.9) and those that forward to them.",
+    "10.0.0.53",
+    "",
+);
+
+const BLOCKLIST_LISTS: OptionView = text(
+    "lists",
+    "Lists",
+    "Blocklists to query, by identifier, separated by commas. Empty: all of them (spamhaus_zen, barracuda, spamcop, mailspike, uceprotect_1, psbl, spamrats, spamhaus_dbl, surbl, uribl).",
+    "spamhaus_zen, barracuda, spamcop",
+    "",
+);
+
+const BLOCKLIST_REFRESH: OptionView = number(
+    "refresh_hours",
+    "Refresh interval (hours)",
+    "How often the blocklists are asked, from 1 to 168. In between, the last result is shown again at every check.",
+    "6",
+    "6",
+);
+
+const BLOCKLIST_RATE: OptionView = number(
+    "queries_per_second",
+    "Queries per second",
+    "Pace of the queries, from 1 to 50. Blocklists ban resolvers that sweep them.",
+    "10",
+    "10",
+);
+
+const BLOCKLIST_TIMEOUT: OptionView = number(
+    "query_timeout_seconds",
+    "Timeout per query (seconds)",
+    "From 1 to 30. A blocklist that does not answer in time is shown as unknown, never as clean.",
+    "5",
+    "5",
+);
+
+/// Options lues par `collectors/blacklist` pour un serveur mail.
+const MAIL_BLACKLIST_OPTIONS: &[OptionView] = &[
+    BLOCKLIST_RESOLVER,
+    BLOCKLIST_LISTS,
+    text(
+        "extra_addresses",
+        "Extra addresses",
+        "Sending addresses to check as well, separated by commas: an outgoing relay that is not an MX.",
+        "198.51.100.25",
+        "",
+    ),
+    BLOCKLIST_REFRESH,
+    BLOCKLIST_RATE,
+    BLOCKLIST_TIMEOUT,
+];
+
+/// Options lues par `collectors/blacklist` pour une plage d'adresses.
+const IP_BLACKLIST_OPTIONS: &[OptionView] =
+    &[BLOCKLIST_RESOLVER, BLOCKLIST_LISTS, BLOCKLIST_REFRESH, BLOCKLIST_RATE, BLOCKLIST_TIMEOUT];
+
 /// Délai par requête des équipements commerciaux lus par leur API
 /// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`, défaut de
 /// `selfhosted/options.rs`).
@@ -4950,6 +5032,59 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: DOMAIN_OPTIONS,
         },
+        "mail_blacklist" => CollectorView {
+            kind: "mail_blacklist",
+            label: "Mail server reputation",
+            summary: "A mail domain's MX, or a mail server's public address, checked against the major DNS blocklists (Spamhaus, Barracuda, SpamCop…), with reverse DNS, SPF and DMARC, and the delisting page of every list that lists it.",
+            examples: &[
+                "Your company's mail domain",
+                "The public address of a mail server",
+                "An outgoing relay",
+            ],
+            credential_types: &["none", "api_token"],
+            credentials: &[BLOCKLIST_NO_KEY, SPAMHAUS_DQS],
+            address_hint: "example.com",
+            // Un nom ou une adresse, pas un service : aucun port.
+            default_port: 0,
+            setup: Setup {
+                title: "Check a mail server against the blocklists",
+                steps: &[
+                    "Enter the domain you send mail for, for example \"example.com\": DumbMonit checks the addresses of its MX and of the domain itself. Or enter the public IP address the server sends from. If mail leaves through a relay that is not an MX, add its address under Extra addresses.",
+                    "Use a recursive resolver of your own. Spamhaus refuses queries that arrive through public resolvers (Google, Cloudflare, Quad9) or through a resolver that forwards to them, and other lists limit them: an Unbound that resolves from the root servers is enough. Set its address under Resolver if it is not the system resolver.",
+                    "Or create a free Spamhaus Data Query Service account (non-commercial use, low volume) and paste its key as the credential: Spamhaus then answers through any resolver.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
+                    "To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.",
+                    "Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page.",
+                ],
+                warning: "An answer Spamhaus refused (127.255.255.254, a public resolver) is shown as a configuration error, never as a listing, and a blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.",
+                doc_url: "https://www.spamhaus.org/blocklists/zen-blocklist/",
+            },
+            options: MAIL_BLACKLIST_OPTIONS,
+        },
+        "ip_blacklist" => CollectorView {
+            kind: "ip_blacklist",
+            label: "IP range blocklist",
+            summary: "Every address of a public IPv4 range, up to a /24, checked against the major DNS blocklists: how many are listed, on which lists, and the delisting page of each.",
+            examples: &[
+                "Your office's public addresses",
+                "The /24 your servers send from",
+                "A hosting provider's block",
+            ],
+            credential_types: &["none", "api_token"],
+            credentials: &[BLOCKLIST_NO_KEY, SPAMHAUS_DQS],
+            address_hint: "198.51.100.0/24",
+            default_port: 0,
+            setup: Setup {
+                title: "Check a public IP range against the blocklists",
+                steps: &[
+                    "Enter an IPv4 address or a CIDR range up to /24, for example \"198.51.100.0/24\" (256 addresses). A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation.",
+                    "Use a recursive resolver of your own, as for Mail server reputation: Spamhaus refuses public resolvers, or paste a free Spamhaus DQS key as the credential. A /24 takes close to two thousand queries, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.",
+                    "The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each.",
+                ],
+                warning: "Spamhaus PBL lists end-user ranges that should not send mail directly (home connections, dynamic pools): a listing there is a policy, not an abuse report, and only matters for an address that runs a mail server.",
+                doc_url: "https://www.spamhaus.org/blocklists/zen-blocklist/",
+            },
+            options: IP_BLACKLIST_OPTIONS,
+        },
         "kubernetes" => CollectorView {
             kind: "kubernetes",
             label: "Kubernetes / k3s",
@@ -5288,6 +5423,8 @@ mod tests {
         "apache",
         "npm",
         "domain",
+        "mail_blacklist",
+        "ip_blacklist",
         "kubernetes",
         "activedirectory",
         "pfsense",
@@ -5804,6 +5941,27 @@ mod tests {
             ),
             ("domain", &["rdap_server", "refresh_hours", "request_timeout_seconds"]),
             (
+                "mail_blacklist",
+                &[
+                    "resolver",
+                    "lists",
+                    "extra_addresses",
+                    "refresh_hours",
+                    "queries_per_second",
+                    "query_timeout_seconds",
+                ],
+            ),
+            (
+                "ip_blacklist",
+                &[
+                    "resolver",
+                    "lists",
+                    "refresh_hours",
+                    "queries_per_second",
+                    "query_timeout_seconds",
+                ],
+            ),
+            (
                 "kubernetes",
                 &[
                     "port",
@@ -6146,6 +6304,19 @@ mod tests {
             defaut("domain", "request_timeout_seconds"),
             domain::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string()
         );
+        // `collectors/blacklist/options.rs`.
+        for kind in ["mail_blacklist", "ip_blacklist"] {
+            use dumbmonit_collectors::blacklist as bl;
+            assert_eq!(defaut(kind, "refresh_hours"), bl::DEFAULT_REFRESH_HOURS.to_string());
+            assert_eq!(
+                defaut(kind, "queries_per_second"),
+                bl::DEFAULT_QUERIES_PER_SECOND.to_string()
+            );
+            assert_eq!(
+                defaut(kind, "query_timeout_seconds"),
+                bl::DEFAULT_QUERY_TIMEOUT_SECONDS.to_string()
+            );
+        }
         assert_eq!(defaut("dns", "alert_on_change"), "false");
         // `collectors/nginx/mod.rs`.
         assert_eq!(defaut("nginx", "status_path"), nginx::DEFAULT_STATUS_PATH);
@@ -6392,6 +6563,8 @@ mod tests {
             ("apache", include_str!("../../../../docs/devices/apache.md")),
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),
+            ("mail_blacklist", include_str!("../../../../docs/devices/mail_blacklist.md")),
+            ("ip_blacklist", include_str!("../../../../docs/devices/ip_blacklist.md")),
             ("kubernetes", include_str!("../../../../docs/devices/kubernetes.md")),
             ("activedirectory", include_str!("../../../../docs/devices/activedirectory.md")),
             ("pfsense", include_str!("../../../../docs/devices/pfsense.md")),

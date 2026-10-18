@@ -4085,6 +4085,25 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/blacklist:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getBlacklistOverview
+      tags: [Integrations]
+      summary: Blocklist check of a mail server or an IP range
+      x-token-scope: read
+      responses:
+        "200":
+          description: The last check, per list and per address, with delisting links.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/BlacklistOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/synology:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -7222,6 +7241,26 @@ components:
         checks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         figures: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         breakdowns: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    BlacklistOverview:
+      type: object
+      additionalProperties: true
+      properties:
+        kind: { type: string }
+        sampled_at: { type: [number, "null"] }
+        scan_running: { type: boolean }
+        scan_age_seconds: { type: [number, "null"] }
+        scan_duration_seconds: { type: [number, "null"] }
+        addresses_checked: { type: [number, "null"] }
+        addresses_listed: { type: [number, "null"] }
+        listed_lists: { type: [number, "null"] }
+        listed_major_lists: { type: [number, "null"] }
+        unknown_checks: { type: [number, "null"] }
+        domain_listed: { type: [boolean, "null"] }
+        lists: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        checks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        addresses: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+        auth: { type: [object, "null"], additionalProperties: true }
+        providers: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
     SynologyOverview:
       type: object
       additionalProperties: true
