@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.10.0 — 2026-10-18
+
 ### Added
 
 - **Mail server reputation** (`mail_blacklist`). Enter a mail domain or a
@@ -65,6 +67,13 @@ All notable changes to this project are documented here. The format follows
   in the alert history, with its reason. A new switch in **Settings →
   Notifications & reports → Notification policy** (`resolutions_during_silence`:
   `suppress`, the default, or `send`) brings the previous behaviour back.
+
+### Fixed
+
+- **No sideways scrolling on phones.** Settings sections become a picker,
+  tabs, filters and segmented controls wrap, and wide tables (Proxmox guests,
+  nodes and Ceph, PBS jobs and datastores, Home Assistant, backups, two-factor
+  codes) turn into stacked cards below 640 px.
 
 ## 0.9.1 — 2026-10-16
 
