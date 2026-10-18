@@ -88,6 +88,21 @@ The alert keeps its phase and shows `silenced: true`; the history records the
 transition with `notified: false` and the reason. Disabling a window
 (`enabled: false`) keeps it in the list without effect.
 
+## Recoveries during a window
+
+A window silences announcements of problems. By default it silences the
+*recovery* message too: an alert that was announced and then resolves while a
+window covers it sends nothing, and nothing is sent late once the window ends.
+The alert's history still records the resolution (`notified: false`, reason
+`maintenance window`), so the timeline stays accurate; only the notification is
+skipped.
+
+To be told about recoveries even during maintenance, turn on **Also send
+recoveries during a silence or maintenance window** in Settings → Notifications
+& reports → Notification policy, or set `resolutions_during_silence` to `send`
+with `PUT /api/notify/policy` (`suppress` is the default). The setting is
+global and applies to every silence and window.
+
 ## On a public status page
 
 A monitor covered by a maintenance window is shown as **Maintenance** on any

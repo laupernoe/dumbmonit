@@ -1180,6 +1180,9 @@ export interface NotificationPolicy {
 	/** Acknowledge / Snooze links in notifications; only effective with a public URL.
 	 *  Switching it off also revokes the links already sent. */
 	action_links: boolean;
+	/** Recovery of an announced alert while a silence or maintenance window covers it:
+	 *  `suppress` (default) sends nothing, `send` notifies anyway. */
+	resolutions_during_silence: 'suppress' | 'send';
 }
 
 /** What a notification action link does (`/alert-action#<token>`). */

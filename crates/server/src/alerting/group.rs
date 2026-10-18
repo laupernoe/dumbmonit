@@ -150,7 +150,10 @@ impl AlertOutcome {
 /// maintenance, apprentissage — font taire tout ce qui annonce un problème en
 /// cours : elles priment sur les rappels comme sur l'escalade. Elles ne font
 /// pas taire la résolution d'une alerte déjà annoncée : sans elle, l'utilisateur
-/// garderait en tête un problème qui n'existe plus. L'acquittement vient
+/// garderait en tête un problème qui n'existe plus. Seule exception, voulue : le
+/// réglage `resolutions_during_silence = suppress` (défaut), que `plan_cycle`
+/// applique en datant la résolution comme déjà prise en charge — `decide` ne la
+/// voit alors plus. L'acquittement vient
 /// ensuite : il ne fait taire que ce qui annonce un problème en cours (première
 /// annonce, rappel, escalade), jamais la résolution — qui, elle, ne passe pas
 /// par ici puisque la machine efface l'acquittement en résolvant.

@@ -18,6 +18,7 @@ use crate::alerting::machine::{self, AlertState, Phase, Transition};
 use crate::alerting::model::{
     self, Rule, TARGET_ADDRESS_LABELS, TARGET_ID_LABELS, TARGET_NAME_LABELS, TargetId, TargetNode,
 };
+use crate::alerting::notify_policy::ResolutionsDuringSilence;
 use crate::alerting::overrides::{Effective, OverrideIndex, RuleOverride};
 use crate::alerting::silence::Silence;
 use crate::alerting::source::SeriesPoint;
@@ -110,6 +111,8 @@ pub struct CycleInput {
     /// acquittement, l'alerte part aussi sur le canal d'escalade. `None` quand
     /// l'instance n'en a pas configuré, et c'est le cas par défaut.
     pub unacked_after: Option<std::time::Duration>,
+    /// Sort des résolutions survenues sous silence ou maintenance.
+    pub resolutions_during_silence: ResolutionsDuringSilence,
     /// Faits nouveaux survenus sur une alerte qui reste active, par règle
     /// (`uid`) et par cible : voir [`Occurrence`].
     pub occurrences: HashMap<(String, TargetId), Occurrence>,
@@ -566,6 +569,18 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
         .is_some()
         {
             entry.state.silenced = true;
+
+            // Résolution tue par le réglage : on la date comme prise en charge
+            // pour que `group::decide` ne la rejoue pas à la fin du silence. La
+            // transition reste dans l'historique, avec sa raison.
+            if input.resolutions_during_silence == ResolutionsDuringSilence::Suppress
+                && entry.state.phase == Phase::Resolved
+                && entry.state.notify_count > 0
+                && let Some(resolved_at) = entry.state.resolved_at
+                && entry.state.last_notified_at.is_none_or(|last| last < resolved_at)
+            {
+                entry.state.last_notified_at = Some(resolved_at);
+            }
         }
 
         if let Some(transition) = &entry.transition {
@@ -812,6 +827,7 @@ mod tests {
             previous,
             silences: Vec::new(),
             unacked_after: None,
+            resolutions_during_silence: ResolutionsDuringSilence::default(),
             overrides: Vec::new(),
             occurrences: HashMap::new(),
         }
@@ -1238,6 +1254,77 @@ mod tests {
         );
         assert_eq!(apres.groups.len(), 1);
         assert_eq!(apres.alerts[0].state.firing_since, Some(at(0)), "the age is kept");
+    }
+
+    /// Annonce une alerte à t=0, puis la fait se résoudre à t=60, avec ou sans
+    /// silence couvrant ce moment-là. Renvoie le cycle de résolution et celui qui
+    /// suit la fin du silence.
+    fn resolution_scenario(
+        mode: ResolutionsDuringSilence,
+        silenced_at_resolution: bool,
+    ) -> (CycleOutcome, CycleOutcome) {
+        let cpu = rule("cpu_high", RuleKind::Threshold, 90.0, 0);
+        let silence = Silence {
+            id: 1,
+            name: "maintenance".to_string(),
+            comment: String::new(),
+            target_id: Some(1),
+            matchers: BTreeMap::new(),
+            schedule: Schedule::Once { starts_at: at(30), ends_at: at(300) },
+            enabled: true,
+        };
+        let mut baselines = BaselineStore::default();
+        let observe = |value: f64| {
+            vec![RuleObservations { rule: cpu.clone(), series: Some(vec![point(1, value)]) }]
+        };
+
+        let mut cycle1 = input(at(0), observe(95.0), vec![node(1, None)], Vec::new());
+        cycle1.resolutions_during_silence = mode;
+        let announced = plan_cycle(cycle1, &mut baselines);
+        assert_eq!(announced.groups.len(), 1, "the problem is announced");
+        let mut stored = to_stored(&announced);
+        mark_notified(&mut stored, &announced, at(0));
+
+        let mut cycle2 = input(at(60), observe(10.0), vec![node(1, None)], stored);
+        cycle2.resolutions_during_silence = mode;
+        if silenced_at_resolution {
+            cycle2.silences = vec![silence.clone()];
+        }
+        let resolved = plan_cycle(cycle2, &mut baselines);
+        assert_eq!(resolved.alerts[0].state.silenced, silenced_at_resolution);
+        assert_eq!(resolved.history.len(), 1, "the transition is always recorded");
+
+        let mut stored = to_stored(&resolved);
+        mark_notified(&mut stored, &resolved, at(60));
+        let mut cycle3 = input(at(400), observe(10.0), vec![node(1, None)], stored);
+        cycle3.resolutions_during_silence = mode;
+        let after = plan_cycle(cycle3, &mut baselines);
+        (resolved, after)
+    }
+
+    #[test]
+    fn une_resolution_sous_silence_est_tue_par_defaut_et_jamais_rejouee() {
+        let (resolved, after) = resolution_scenario(ResolutionsDuringSilence::Suppress, true);
+        assert!(resolved.groups.is_empty(), "no recovery message during the silence");
+        assert_eq!(resolved.history[0].transition.to, Phase::Resolved);
+        assert_eq!(resolved.history[0].reason, "maintenance window", "history says why");
+        assert!(after.groups.is_empty(), "and none once the silence is over");
+    }
+
+    #[test]
+    fn une_resolution_sous_silence_part_si_le_reglage_le_demande() {
+        let (resolved, _) = resolution_scenario(ResolutionsDuringSilence::Send, true);
+        assert_eq!(resolved.groups.len(), 1);
+        assert_eq!(resolved.groups[0].items[0].reason, NotifyReason::Resolved);
+    }
+
+    #[test]
+    fn une_resolution_hors_silence_part_dans_les_deux_modes() {
+        for mode in [ResolutionsDuringSilence::Suppress, ResolutionsDuringSilence::Send] {
+            let (resolved, _) = resolution_scenario(mode, false);
+            assert_eq!(resolved.groups.len(), 1, "{mode:?}");
+            assert_eq!(resolved.groups[0].items[0].reason, NotifyReason::Resolved);
+        }
     }
 
     /// Un silence posé avec les étiquettes exactes d'une série (le « snooze »
