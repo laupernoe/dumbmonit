@@ -30,6 +30,11 @@
 					choice === 'dark' ||
 					(choice !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 				if (dark) document.documentElement.classList.add('dark');
+				// iOS standalone: translucent bars always draw a white clock, which
+				// vanishes on the light canvas. Light theme: dark text (`default`).
+				// Read at launch, so a theme change applies on the next start.
+				var bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+				if (bar) bar.setAttribute('content', dark ? 'black-translucent' : 'default');
 			} catch (e) {
 				/* localStorage unavailable: stay on the light theme. */
 			}
