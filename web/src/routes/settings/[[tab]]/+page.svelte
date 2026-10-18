@@ -187,7 +187,7 @@
 <div class="mb-5 max-sm:hidden lg:hidden">
 	{@render searchBox('settings-search-mobile')}
 </div>
-<nav class="sticky top-0 z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md max-sm:mb-3 max-sm:bg-canvas max-sm:backdrop-blur-none sm:top-14 sm:-mx-6 sm:px-6 lg:hidden" aria-label={m['settings.nav.aria_label']()}>
+<nav class="sticky top-[var(--safe-top)] z-20 -mx-4 mb-5 border-b border-line bg-canvas/90 px-4 backdrop-blur-md max-sm:mb-3 max-sm:bg-canvas max-sm:backdrop-blur-none sm:top-[calc(3.5rem+var(--safe-top))] sm:-mx-6 sm:px-6 lg:hidden" aria-label={m['settings.nav.aria_label']()}>
 	<div class="py-2 sm:hidden">
 		<select
 			aria-label={m['settings.nav.aria_label']()}
