@@ -268,9 +268,9 @@
 </PageHeader>
 
 <!-- Segmented control; on phones it spans the width and stays put while the list scrolls. -->
-<div class="mb-5 overflow-x-auto max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:-mx-4 max-sm:mb-3 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
+<div class="mb-5 max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:-mx-4 max-sm:mb-3 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
 	<div
-		class="inline-flex gap-1 rounded-lg border border-line bg-surface-2 p-1 max-sm:grid max-sm:w-full max-sm:grid-cols-4"
+		class="inline-flex max-w-full flex-wrap gap-1 rounded-lg border border-line bg-surface-2 p-1 max-sm:grid max-sm:w-full max-sm:grid-cols-4"
 		role="tablist"
 		aria-label={m.alerts_page_sections()}
 	>
