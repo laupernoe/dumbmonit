@@ -89,7 +89,7 @@ impl Collector for PingCollector {
             report.gauge("icmp_rtt_max_seconds", max);
         }
 
-        if burst.loss_ratio() > options.loss_threshold {
+        if burst.fails(options.loss_threshold) {
             report.fail(
                 Failure::PacketLoss,
                 format!(
