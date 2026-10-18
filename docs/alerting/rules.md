@@ -506,6 +506,17 @@ Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devic
 | Domain in redemption | The domain is in `redemptionPeriod`, `pendingDelete` or `pendingRestore`: it has expired (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
 | DNS answer changed | The answer of a DNS check with *Alert when the answer changes* differs from the one before (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolves by itself an hour later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
+### DNS blocklists
+
+[Mail server reputation](../devices/mail_blacklist.md) and [IP range blocklist](../devices/ip_blacklist.md). The lists are only asked every 6 hours; the last result is written again at every probe, hence the short hold. The monitor page links to the removal page of every listing.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Listed on a major blocklist | An address or the domain is on Spamhaus (ZEN or DBL), Barracuda or SpamCop: a large share of its mail is refused (`dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Warning (`critical`) | 24 h |
+| Listed on a blocklist | An address or the domain is on a smaller list: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL or URIBL (`dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| Mail server reverse DNS mismatch | An address of the mail server has no reverse DNS, or its name does not resolve back to it: Gmail, Outlook.com and Yahoo refuse or junk such mail (`dumbmonit_blacklist_ptr_ok == bool 0`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+| SPF or DMARC missing | The domain has no SPF record (or several), or no DMARC record: Gmail and Yahoo require both from bulk senders (`dumbmonit_blacklist_mail_auth_missing`). | > 0 | 5 min | Advisory (`warning`) | 24 h |
+
 ### Website changes
 
 See [Website changes](../devices/webchange.md). The monitor page shows each change before and after.

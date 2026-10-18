@@ -46,6 +46,8 @@ DumbMonit называет *монитором* (в API — *target*) всё, з
 | [Apache httpd](apache.md) | `apache` | нет, или basic auth | Веб-сервер: занятые/свободные воркеры, scoreboard по состояниям, скорости запросов и байтов |
 | [Nginx Proxy Manager](npm.md) | `npm` | email и пароль пользователя (только просмотр) | Менеджер прокси: хосты, отклонённые nginx, отключённые хосты, выдаваемые сертификаты |
 | [Domain expiry](domain.md) | `domain` | нет | Зарегистрированный домен через RDAP: дни до истечения, hold, redemption period, регистратор |
+| [Репутация почтового сервера](mail_blacklist.md) | `mail_blacklist` | нет, или ключ DQS Spamhaus | Почтовый домен или адрес сервера против чёрных списков DNS (Spamhaus, Barracuda, SpamCop…), обратный DNS, SPF, DMARC, ссылки на удаление |
+| [Чёрные списки для диапазона IP](ip_blacklist.md) | `ip_blacklist` | нет, или ключ DQS Spamhaus | Каждый адрес публичного диапазона IPv4 до /24 против чёрных списков DNS, со ссылками на удаление |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | токен service account (ClusterRole только для чтения) | Кластер: узлы not ready, поды в crash loop или pending, рабочие нагрузки без реплик, зависшие запросы томов |
 | [Active Directory](activedirectory.md) | `activedirectory` | имя пользователя/пароль (обычный доменный пользователь) | Домен Windows через LDAPS: контроллеры домена и роли FSMO, члены привилегированных групп, политика паролей, находки безопасности |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | имя пользователя/пароль (Veeam Backup Viewer) | Сервер резервного копирования: неудачные задания, неудачные сессии, переполняющиеся репозитории, лицензия |

@@ -799,6 +799,10 @@ WARN this agent is not recognised for this machine
      click 'Allow re-enrolment', then restart the agent.
 ```
 
+Der Agent vergisst sein Geheimnis nur bei genau dieser Ablehnung. Jedes andere `403`,
+etwa von einem Reverse-Proxy oder einer Web Application Firewall vor DumbMonit, wird
+protokolliert und mit behaltenem Geheimnis wiederholt.
+
 ## Enrollment-Tokens {#enrolment-tokens}
 
 - Tokens werden unter **Einstellungen → Agenten** oder beim Hinzufügen eines Monitors vom Typ Agent

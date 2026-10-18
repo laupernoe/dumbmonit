@@ -69,7 +69,7 @@
 			</p>
 		{:else}
 			<div class="mt-1 overflow-x-auto">
-				<table class="w-full min-w-[40rem] text-sm">
+				<table class="table-stack w-full text-sm [--stack-inset:1rem] sm:min-w-[40rem]">
 					<thead>
 						<tr
 							class="border-b border-line text-left text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase"
@@ -90,28 +90,32 @@
 									<p class="font-semibold text-ink">{job.id}</p>
 									{#if job.comment}<p class="text-[0.75rem] text-ink-3">{job.comment}</p>{/if}
 								</td>
-								<td class="px-3 py-2.5 align-top break-all text-ink-2">
+								<td class="px-3 py-2.5 align-top break-all text-ink-2" data-label={m.devicesb_pbs_tape_col_source()}>
 									{job.datastore}{job.namespace ? ` / ${job.namespace}` : ''}
 								</td>
-								<td class="px-3 py-2.5 align-top text-ink-2">
-									{job.pool ?? '—'}{job.drive ? ` · ${job.drive}` : ''}
-									{#if job.next_media_label}
-										<p class="text-[0.75rem] text-ink-3">{m.devicesb_pbs_tape_next_tape({ label: job.next_media_label })}</p>
-									{/if}
+								<td class="px-3 py-2.5 align-top text-ink-2" data-label={m.devicesb_pbs_tape_col_pool_drive()}>
+									<div>
+										{job.pool ?? '—'}{job.drive ? ` · ${job.drive}` : ''}
+										{#if job.next_media_label}
+											<p class="text-[0.75rem] text-ink-3">{m.devicesb_pbs_tape_next_tape({ label: job.next_media_label })}</p>
+										{/if}
+									</div>
 								</td>
-								<td class="tnum px-3 py-2.5 align-top text-ink-2" title={formatUnix(job.last_run_end)}>
+								<td class="tnum px-3 py-2.5 align-top text-ink-2" title={formatUnix(job.last_run_end)} data-label={m.devicesb_pbs_jobs_col_last_run()}>
 									{formatAgo(job.last_run_end)}
 								</td>
-								<td class="tnum px-3 py-2.5 align-top text-ink-2">
+								<td class="tnum px-3 py-2.5 align-top text-ink-2" data-label={m.devicesb_pbs_jobs_col_next_run()}>
 									{job.next_run === null ? (job.schedule ?? '—') : formatAgo(job.next_run)}
 								</td>
-								<td class="px-5 py-2.5 align-top">
-									<Plate tone={plate.tone} label={plate.label} />
-									{#if isSuccess(job.last_run_state) === false}
-										<p class="mt-1 max-w-xs text-[0.8125rem] break-words text-warning-ink">
-											{job.last_run_state?.replace(/^TASK ERROR:\s*/i, '')}
-										</p>
-									{/if}
+								<td class="px-5 py-2.5 align-top" data-label={m.devicesb_pbs_jobs_col_status()}>
+									<div>
+										<Plate tone={plate.tone} label={plate.label} />
+										{#if isSuccess(job.last_run_state) === false}
+											<p class="mt-1 max-w-xs text-[0.8125rem] break-words text-warning-ink">
+												{job.last_run_state?.replace(/^TASK ERROR:\s*/i, '')}
+											</p>
+										{/if}
+									</div>
 								</td>
 							</tr>
 						{/each}

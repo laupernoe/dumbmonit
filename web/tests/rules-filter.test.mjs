@@ -120,3 +120,11 @@ test('a disabled or non-builtin rule is always relevant, regardless of kind', ()
 	});
 	assert.equal(isRelevant(customRedis, new Set(), KNOWN_KINDS), true);
 });
+
+test('both blocklist checks own the dumbmonit_blacklist_ rules', () => {
+	const kinds = [...KNOWN_KINDS, 'mail_blacklist', 'ip_blacklist'];
+	const major = rule({ uid: 'blacklist_listed_major', query: 'dumbmonit_blacklist_listed_major_lists' });
+	assert.deepEqual(ruleKinds(major, kinds).sort(), ['ip_blacklist', 'mail_blacklist']);
+	assert.equal(isRelevant(major, new Set(['ip_blacklist']), kinds), true);
+	assert.equal(isRelevant(major, new Set(['redis']), kinds), false);
+});

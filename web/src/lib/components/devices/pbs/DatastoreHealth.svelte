@@ -275,7 +275,7 @@
 								</p>
 								{#if state.smart.attributes.length > 0}
 									<div class="mt-1 overflow-x-auto">
-										<table class="tnum w-full min-w-[28rem] text-[0.75rem]">
+										<table class="table-stack tnum w-full text-[0.75rem] [--stack-inset:0] sm:min-w-[28rem]">
 											<thead>
 												<tr class="text-left text-ink-3">
 													<th class="py-1 pr-3 font-semibold">{m.devicesb_pbs_ds_smart_col_id()}</th>
@@ -288,20 +288,20 @@
 											</thead>
 											<tbody>
 												{#each state.smart.attributes as attribute, i (attribute.id ?? i)}
-													<tr class="text-ink-2">
-														<td class="py-0.5 pr-3">{attribute.id ?? '—'}</td>
-														<td class="py-0.5 pr-3 text-ink">{attribute.name ?? '—'}</td>
-														<td class="py-0.5 pr-3">{attribute.normalized ?? '—'}</td>
-														<td class="py-0.5 pr-3">{attribute.worst ?? '—'}</td>
-														<td class="py-0.5 pr-3">{attribute.threshold ?? '—'}</td>
-														<td class="py-0.5">{attribute.raw ?? '—'}</td>
+													<tr class="text-ink-2 max-sm:border-t max-sm:border-line/60 max-sm:first:border-t-0">
+														<td class="py-0.5 pr-3" data-label={m.devicesb_pbs_ds_smart_col_id()}>{attribute.id ?? '—'}</td>
+														<td class="py-0.5 pr-3 text-ink" data-label={m.devicesb_pbs_ds_smart_col_attribute()}>{attribute.name ?? '—'}</td>
+														<td class="py-0.5 pr-3" data-label={m.devicesb_pbs_ds_smart_col_value()}>{attribute.normalized ?? '—'}</td>
+														<td class="py-0.5 pr-3" data-label={m.devicesb_pbs_ds_smart_col_worst()}>{attribute.worst ?? '—'}</td>
+														<td class="py-0.5 pr-3" data-label={m.devicesb_pbs_ds_smart_col_threshold()}>{attribute.threshold ?? '—'}</td>
+														<td class="py-0.5" data-label={m.devicesb_pbs_ds_smart_col_raw()}>{attribute.raw ?? '—'}</td>
 													</tr>
 												{/each}
 											</tbody>
 										</table>
 									</div>
 								{:else if state.smart.text}
-									<pre class="mt-1 max-h-72 overflow-auto font-mono text-[0.75rem] leading-relaxed whitespace-pre-wrap text-ink">{state.smart.text}</pre>
+									<pre class="mt-1 max-h-72 overflow-auto font-mono text-[0.75rem] leading-relaxed whitespace-pre-wrap [overflow-wrap:anywhere] text-ink">{state.smart.text}</pre>
 								{:else}
 									<p class="mt-1 text-[0.8125rem] text-ink-3">{m.devicesb_pbs_ds_smart_none()}</p>
 								{/if}

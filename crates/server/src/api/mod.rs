@@ -6,6 +6,7 @@ pub(crate) mod alerts;
 mod auth;
 mod backends;
 mod backup;
+mod blacklist;
 mod channels;
 mod collectors;
 mod discovery;
@@ -48,7 +49,9 @@ mod truenas;
 mod update;
 mod users;
 mod wall_news;
+mod wall_news_images;
 mod wall_news_presets;
+mod wall_widgets;
 mod webchange;
 mod webpush;
 mod website;
@@ -177,6 +180,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(backends::routes())
         // Proxys inverses et enregistrement d'un domaine (`proxies.rs`).
         .merge(proxies::routes())
+        // Listes noires DNS : serveur mail et plage d'adresses (`blacklist.rs`).
+        .merge(blacklist::routes())
         // Moniteurs en poussée : jeton d'une cible et sa régénération (`push.rs`).
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
@@ -193,6 +198,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(music::routes())
         // Actualités du mur : bandeau de titres et vignette vidéo (`wall_news.rs`).
         .merge(wall_news::routes())
+        // Images des articles du mur, relayées par le serveur (`wall_news_images.rs`).
+        .merge(wall_news_images::routes())
+        // Widgets du mur : cryptos, météo, actions, devises, CVE (`wall_widgets/`).
+        .merge(wall_widgets::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).

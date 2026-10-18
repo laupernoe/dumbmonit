@@ -67,7 +67,7 @@ const ATTENTION: Record<NodeState, number> = {
 
 const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'openwrt', 'fortigate']);
 /** Checks of one endpoint rather than of a machine (kept here: this module imports nothing at run time). */
-const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'webchange', 'smtp', 'agent_service']);
+const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'mail_blacklist', 'ip_blacklist', 'webchange', 'smtp', 'agent_service']);
 const PLATFORM_KINDS = new Set(['proxmox', 'pdm', 'xcpng', 'nutanix', 'vsphere', 'kubernetes', 'truenas', 'synology', 'pbs', 'redfish', 'nut', 'libvirt']);
 
 /** Where a device sits in a network diagram: gear first, then platforms, machines, services. */

@@ -9,6 +9,14 @@
 //!   (`wall_news_presets.rs`).
 //! - `POST /api/wall/news/test` : lit un flux saisi et montre son premier titre.
 //!
+//! - `GET /api/wall/news/image/{id}` : l'image d'un article, relayée par le
+//!   serveur (`wall_news_images.rs`) — un écran ne parle jamais au site d'actualité.
+//!
+//! Le carrousel d'images (`gallery`) lit les mêmes flux que le bandeau ; l'image
+//! d'un article vient du flux (`media:content`, `media:thumbnail`, `enclosure`,
+//! première `<img>` du contenu) et, à défaut, de la balise `og:image` de sa page,
+//! lue avec les mêmes garde-fous et retenue longtemps.
+//!
 //! Tout est éteint par défaut. Les réglages vivent dans la table `settings`
 //! (clé `wall.news`).
 
@@ -67,6 +75,9 @@ pub struct Feed {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct NewsSettings {
     pub ticker: bool,
+    /// Carrousel des articles avec leur image, sur les mêmes flux.
+    #[serde(default)]
+    pub gallery: bool,
     pub feeds: Vec<Feed>,
     pub video: bool,
     /// Lien saisi (YouTube, Dailymotion, Twitch), tel que l'administrateur l'a collé.
@@ -81,6 +92,7 @@ impl Default for NewsSettings {
     fn default() -> Self {
         Self {
             ticker: false,
+            gallery: false,
             feeds: Vec::new(),
             video: false,
             video_url: String::new(),
@@ -240,6 +252,12 @@ pub struct NewsItem {
     pub source: String,
     /// UTC sans suffixe ; absent quand le flux ne date pas l'article.
     pub published: Option<String>,
+    /// Adresse relayée par le serveur (`/api/wall/news/image/<id>`), jamais
+    /// celle du site : l'écran ne charge rien d'ailleurs.
+    pub image: Option<String>,
+    /// L'adresse d'origine de l'image, connue du serveur seul.
+    #[serde(skip)]
+    pub image_src: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -258,6 +276,7 @@ pub struct VideoView {
 #[derive(Debug, Serialize)]
 pub struct WallNews {
     pub ticker: bool,
+    pub gallery: bool,
     pub items: Vec<NewsItem>,
     pub problems: Vec<FeedProblem>,
     pub video: Option<VideoView>,
@@ -265,6 +284,7 @@ pub struct WallNews {
 
 struct Cached {
     feeds: Vec<Feed>,
+    pages: bool,
     at: Instant,
     ttl: Duration,
     items: Vec<NewsItem>,
@@ -285,24 +305,35 @@ async fn news(State(state): State<AppState>, Identity(_): Identity) -> ApiResult
             size: settings.video_size.clone(),
         }
     });
-    let (items, problems) = if settings.ticker && !settings.feeds.is_empty() {
-        headlines(&settings.feeds).await
+    let wanted = settings.ticker || settings.gallery;
+    let (items, problems) = if wanted && !settings.feeds.is_empty() {
+        headlines(&settings.feeds, settings.gallery).await
     } else {
         (Vec::new(), Vec::new())
     };
     let problems =
         problems.into_iter().map(|(feed, message)| FeedProblem { feed, message }).collect();
-    Ok(Json(WallNews { ticker: settings.ticker, items, problems, video }))
+    Ok(Json(WallNews {
+        ticker: settings.ticker,
+        gallery: settings.gallery,
+        items,
+        problems,
+        video,
+    }))
 }
 
 type Headlines = (Vec<NewsItem>, Vec<(String, String)>);
 
 /// Les titres des flux, depuis le cache s'il est frais. Le verrou reste pris
 /// pendant la lecture : cent murs qui se réveillent ensemble ne font qu'un tour.
-async fn headlines(feeds: &[Feed]) -> Headlines {
+///
+/// `pages` : le carrousel est allumé, les articles sans image dans le flux
+/// sont complétés par l'`og:image` de leur page (quelques-uns par tour).
+async fn headlines(feeds: &[Feed], pages: bool) -> Headlines {
     let mut slot = cache().lock().await;
     if let Some(hit) = slot.as_ref()
         && hit.feeds == feeds
+        && hit.pages == pages
         && hit.at.elapsed() < hit.ttl
     {
         return (hit.items.clone(), hit.problems.clone());
@@ -331,10 +362,15 @@ async fn headlines(feeds: &[Feed]) -> Headlines {
             Err(message) => problems.push((url, message)),
         }
     }
-    let items = merge(items);
+    let mut items = merge(items);
+    if pages {
+        super::wall_news_images::complete_from_pages(&client, &mut items).await;
+    }
+    super::wall_news_images::publish(&mut items).await;
     let ttl = if items.is_empty() { CACHE_TTL_FAILED } else { CACHE_TTL };
     *slot = Some(Cached {
         feeds: feeds.to_vec(),
+        pages,
         at: Instant::now(),
         ttl,
         items: items.clone(),
@@ -395,7 +431,7 @@ async fn test_feed(
     }))
 }
 
-fn client() -> Result<reqwest::Client, String> {
+pub(super) fn client() -> Result<reqwest::Client, String> {
     // Les noms sont vérifiés par le résolveur au moment de la connexion ; une
     // redirection vers une adresse littérale ne passe pas par lui.
     let redirects = reqwest::redirect::Policy::custom(|attempt| {
@@ -455,7 +491,7 @@ async fn fetch(client: &reqwest::Client, feed: &Feed) -> Result<Vec<NewsItem>, S
     parse(&text, &source)
 }
 
-fn describe(error: reqwest::Error) -> String {
+pub(super) fn describe(error: reqwest::Error) -> String {
     if error.is_timeout() {
         return "no answer in time".into();
     }
@@ -470,7 +506,7 @@ fn describe(error: reqwest::Error) -> String {
     truncate(&text, 160)
 }
 
-fn truncate(text: &str, max: usize) -> String {
+pub(super) fn truncate(text: &str, max: usize) -> String {
     if text.chars().count() <= max {
         return text.to_string();
     }
@@ -525,7 +561,15 @@ pub(super) fn parse(xml: &str, source: &str) -> Result<Vec<NewsItem>, String> {
             .iter()
             .find_map(|tag| child_text(node, tag))
             .and_then(|text| when(&text));
-        items.push(NewsItem { title, link, source: source.to_string(), published });
+        let image_src = super::wall_news_images::item_image(node, &link);
+        items.push(NewsItem {
+            title,
+            link,
+            source: source.to_string(),
+            published,
+            image: None,
+            image_src,
+        });
     }
     items.sort_by(|a, b| b.published.cmp(&a.published));
     items.truncate(PER_FEED);
@@ -646,6 +690,8 @@ mod tests {
             link: link.into(),
             source: "s".into(),
             published: published.map(str::to_string),
+            image: None,
+            image_src: None,
         };
         let merged = merge(vec![
             item("https://a/1", None),

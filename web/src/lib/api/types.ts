@@ -1180,6 +1180,9 @@ export interface NotificationPolicy {
 	/** Acknowledge / Snooze links in notifications; only effective with a public URL.
 	 *  Switching it off also revokes the links already sent. */
 	action_links: boolean;
+	/** Recovery of an announced alert while a silence or maintenance window covers it:
+	 *  `suppress` (default) sends nothing, `send` notifies anyway. */
+	resolutions_during_silence: 'suppress' | 'send';
 }
 
 /** What a notification action link does (`/alert-action#<token>`). */
@@ -3863,4 +3866,309 @@ export interface WebsiteChange {
 	field: string;
 	before: string;
 	after: string;
+}
+
+// --- DNS blocklists (crates/server/src/api/blacklist.rs) -----------------------
+// Mail server reputation (`mail_blacklist`) and IP range blocklist
+// (`ip_blacklist`), rebuilt from the last `dumbmonit_blacklist_*` series. The
+// lookup and delisting links come from the collector's catalogue.
+
+export type BlacklistCheckState = 'listed' | 'clean' | 'unknown' | 'refused' | 'not_applicable';
+
+export interface BlacklistList {
+	id: string;
+	name: string;
+	zone: string;
+	subject: 'ip' | 'domain';
+	/** A listing there blocks a large share of mail (Spamhaus, Barracuda, SpamCop). */
+	major: boolean;
+	checked: number;
+	listed: number;
+	unknown: number;
+}
+
+export interface BlacklistCheck {
+	list: string;
+	list_name: string;
+	major: boolean;
+	/** The address or domain asked about. */
+	subject: string;
+	state: BlacklistCheckState;
+	codes: string[];
+	meaning: string | null;
+	/** TXT reason of a listing, or why a list gave no answer. */
+	reason: string | null;
+	/** Only for a listing. */
+	lookup_url: string | null;
+	delist_url: string | null;
+}
+
+export interface BlacklistAddress {
+	address: string;
+	/** `input`, `mx`, `domain` or `extra`. */
+	source: string;
+	mx: string | null;
+	ptr: string | null;
+	/** The reverse DNS name resolves back to the address; `null` without an answer. */
+	fcrdns: boolean | null;
+}
+
+export interface BlacklistAuth {
+	mx_hosts: number | null;
+	spf_records: number | null;
+	dmarc_records: number | null;
+	dmarc_policy: string | null;
+}
+
+export interface BlacklistProviderLink {
+	/** `postmaster`, `guidelines`, `contact`, `snds`, `delist_m365`, `hub`; an unknown kind shows its URL. */
+	kind: string;
+	url: string;
+}
+
+export interface BlacklistProvider {
+	id: string;
+	name: string;
+	links: BlacklistProviderLink[];
+}
+
+export interface BlacklistOverview {
+	kind: string;
+	/** Unix seconds of the last probe; `null` before the first one. */
+	sampled_at: number | null;
+	scan_running: boolean;
+	scan_age_seconds: number | null;
+	scan_duration_seconds: number | null;
+	addresses_checked: number | null;
+	addresses_listed: number | null;
+	listed_lists: number | null;
+	listed_major_lists: number | null;
+	unknown_checks: number | null;
+	domain_listed: boolean | null;
+	lists: BlacklistList[];
+	/** Listings and unanswered checks first. */
+	checks: BlacklistCheck[];
+	addresses: BlacklistAddress[];
+	auth: BlacklistAuth | null;
+	/** Mailbox providers without a public blocklist; empty for an IP range. */
+	providers: BlacklistProvider[];
+}
+
+// ---------------------------------------------------------------------------
+// Wall widgets (`crates/server/src/api/wall_widgets/`)
+
+/** A place for the weather, as the geocoding returned it. */
+export interface WallPlace {
+	name: string;
+	/** Region and country, to tell two places of the same name apart. */
+	region: string;
+	country_code: string;
+	latitude: number;
+	longitude: number;
+}
+
+export interface WallCryptoSettings {
+	enabled: boolean;
+	/** CoinGecko ids, in display order. */
+	coins: string[];
+	/** CoinGecko code, lower case (`usd`, `eur`…). */
+	currency: string;
+}
+
+export interface WallWeatherSettings {
+	enabled: boolean;
+	places: WallPlace[];
+	units: 'metric' | 'imperial';
+}
+
+export interface WallStocksSettings {
+	enabled: boolean;
+	symbols: string[];
+}
+
+export interface WallFxSettings {
+	enabled: boolean;
+	base: string;
+	currencies: string[];
+}
+
+export type WallCveSource = 'both' | 'nvd' | 'kev';
+
+export interface WallCveSettings {
+	enabled: boolean;
+	source: WallCveSource;
+	count: number;
+}
+
+/** A display name for an identifier the provider's API returns (account, API key). */
+export interface WallAiPerson {
+	id: string;
+	name: string;
+}
+
+export interface WallAiProviderSettings {
+	enabled: boolean;
+	people: WallAiPerson[];
+}
+
+export type WallAiPeriod = 'today' | 'week' | 'month';
+
+export interface WallAiSettings {
+	period: WallAiPeriod;
+	by_person: boolean;
+	claude: WallAiProviderSettings;
+	openai: WallAiProviderSettings;
+}
+
+/** `GET|PUT /api/wall/widgets/settings` (administrators). */
+export interface WallWidgetSettings {
+	rotate_seconds: number;
+	crypto: WallCryptoSettings;
+	weather: WallWeatherSettings;
+	stocks: WallStocksSettings;
+	fx: WallFxSettings;
+	cve: WallCveSettings;
+	ai: WallAiSettings;
+}
+
+/** What `GET` returns: the settings, and only whether each API key is set. */
+export interface WallWidgetSettingsView extends WallWidgetSettings {
+	has_finnhub_key: boolean;
+	has_coingecko_key: boolean;
+	has_anthropic_key: boolean;
+	has_openai_key: boolean;
+}
+
+/** `PUT` body. A key left out is kept; an empty string clears it. Never read back. */
+export interface WallWidgetSettingsPayload extends WallWidgetSettings {
+	secrets?: { finnhub?: string; coingecko?: string; anthropic?: string; openai?: string };
+}
+
+export interface WallCoinPreset {
+	id: string;
+	symbol: string;
+	name: string;
+}
+
+/** `GET /api/wall/widgets/catalog`. */
+export interface WallWidgetCatalog {
+	coins: WallCoinPreset[];
+	coin_currencies: string[];
+	fx_currencies: string[];
+}
+
+/** One widget on the wall: its data (fresh or a little old), when it was read, why the last read failed. */
+export interface WallSection<T> {
+	data: T | null;
+	/** UTC without suffix. */
+	updated: string | null;
+	error: string | null;
+	/** Waiting for an API key (stocks without a Finnhub key). */
+	needs_key: boolean;
+	/** The source to credit on the widget. */
+	source: string;
+	source_url: string;
+}
+
+export interface WallCoin {
+	id: string;
+	symbol: string;
+	name: string;
+	price: number;
+	/** Percent over 24 h. */
+	change_24h: number | null;
+}
+
+export interface WallCrypto {
+	/** Upper case: `EUR`. */
+	currency: string;
+	coins: WallCoin[];
+}
+
+/** The weather now in the chosen place, shown under the wall's clock. */
+export interface WallWeather {
+	name: string;
+	/** `°C` or `°F`. */
+	temperature_unit: string;
+	temperature: number;
+	/** WMO weather code. */
+	code: number;
+	is_day: boolean;
+}
+
+export interface WallQuote {
+	symbol: string;
+	price: number;
+	change: number | null;
+	change_pct: number | null;
+	/** UTC without suffix. */
+	at: string | null;
+}
+
+export interface WallStocks {
+	quotes: WallQuote[];
+	/** Symbols the source does not know. */
+	unknown: string[];
+}
+
+export interface WallRate {
+	code: string;
+	/** One unit of the base is worth `rate` units of `code`. */
+	rate: number;
+	/** The previous business day's rate. */
+	previous: number | null;
+}
+
+export interface WallFx {
+	base: string;
+	date: string;
+	rates: WallRate[];
+}
+
+export interface WallCve {
+	id: string;
+	title: string;
+	/** CVSS base score; null for a KEV entry the NVD list does not hold. */
+	score: number | null;
+	/** UTC without suffix. */
+	date: string;
+	/** In CISA's catalogue of exploited vulnerabilities. */
+	exploited: boolean;
+	ransomware: boolean;
+	link: string;
+}
+
+/** One of the biggest consumers of a provider, by tokens (costs are not broken down by person). */
+export interface WallAiPersonUsage {
+	/** A configured name, else the shortened identifier; null when the API attributes it to no key or account. */
+	name: string | null;
+	mapped: boolean;
+	input_tokens: number;
+	output_tokens: number;
+}
+
+/** Claude or OpenAI usage over a period. */
+export interface WallAiUsage {
+	period: WallAiPeriod;
+	/** First day, UTC `YYYY-MM-DD`. */
+	from: string;
+	/** Total cost in US dollars. */
+	cost_usd: number;
+	/** Input tokens, cache included. */
+	input_tokens: number;
+	output_tokens: number;
+	/** Null unless "by person" is on. */
+	people: WallAiPersonUsage[] | null;
+}
+
+/** `GET /api/wall/widgets`: one section per widget turned on, `null` otherwise. */
+export interface WallWidgets {
+	rotate_seconds: number;
+	crypto: WallSection<WallCrypto> | null;
+	weather: WallSection<WallWeather> | null;
+	stocks: WallSection<WallStocks> | null;
+	fx: WallSection<WallFx> | null;
+	cve: WallSection<WallCve[]> | null;
+	claude: WallSection<WallAiUsage> | null;
+	openai: WallSection<WallAiUsage> | null;
 }

@@ -40,7 +40,10 @@ function kindPattern(kind: string): RegExp {
 const KIND_METRIC_ALIASES: Record<string, string[]> = {
 	kubernetes: ['k8s'],
 	// Synology's Active Backup for Business rules (`dumbmonit_abb_…`).
-	synology: ['abb']
+	synology: ['abb'],
+	// Both blocklist checks publish `dumbmonit_blacklist_…`.
+	mail_blacklist: ['blacklist'],
+	ip_blacklist: ['blacklist']
 };
 
 function matchKinds(text: string, knownKinds: string[]): Set<string> {

@@ -4901,6 +4901,50 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(12 * 3600)),
             ..base("domain_redemption", "Domain in redemption", RuleKind::Threshold, "dumbmonit_domain_redemption")
         },
+        // --- Listes noires DNS (`collectors/blacklist`) ---
+        // Un passage n'a lieu que toutes les six heures et son résultat est
+        // réécrit à chaque sonde : la durée minimale ne sert qu'à laisser passer
+        // une sonde isolée.
+        Rule {
+            description: "An address or the domain is listed on a major blocklist (Spamhaus, Barracuda or SpamCop): a large share of its mail is refused. The monitor page links to the delisting page."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("blacklist_listed_major", "Listed on a major blocklist", RuleKind::Threshold, "dumbmonit_blacklist_listed_major_lists")
+        },
+        Rule {
+            description: "An address or the domain is listed on a smaller blocklist (Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL or URIBL): some receivers refuse its mail."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("blacklist_listed_minor", "Listed on a blocklist", RuleKind::Threshold, "dumbmonit_blacklist_listed_lists - dumbmonit_blacklist_listed_major_lists")
+        },
+        Rule {
+            description: "The reverse DNS of a mail server address is missing, or names a host that does not resolve back to it: Gmail, Outlook.com and Yahoo reject or junk such mail."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("blacklist_reverse_dns", "Mail server reverse DNS mismatch", RuleKind::Threshold, "dumbmonit_blacklist_ptr_ok == bool 0")
+        },
+        Rule {
+            description: "The mail domain has no SPF record (or several), or no DMARC record: Gmail and Yahoo require both from bulk senders."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base("blacklist_mail_auth_missing", "SPF or DMARC missing", RuleKind::Threshold, "dumbmonit_blacklist_mail_auth_missing")
+        },
         // Réponse DNS modifiée (`uptime/dns`, option `alert_on_change`) :
         // l'empreinte ne change que si l'ensemble des valeurs change, et
         // `changes_prometheus` ne compte pas la première valeur d'une série
@@ -6828,6 +6872,11 @@ mod tests {
             "dumbmonit_domain_expiry_days",
             "dumbmonit_domain_on_hold",
             "dumbmonit_domain_redemption",
+            // Listes noires DNS (`collectors/blacklist/scan.rs`).
+            "dumbmonit_blacklist_listed_lists",
+            "dumbmonit_blacklist_listed_major_lists",
+            "dumbmonit_blacklist_ptr_ok",
+            "dumbmonit_blacklist_mail_auth_missing",
             // Sonde DNS, option `alert_on_change` (`uptime/dns`).
             "dumbmonit_probe_dns_answer_fingerprint",
             // Changements d'un site web (`webchange`).
