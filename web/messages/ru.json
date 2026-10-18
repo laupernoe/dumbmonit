@@ -6485,6 +6485,8 @@
 	"wall_gallery_aria": "Картинки из новостей",
 	"wall_gallery_count": "{index} из {count}",
 	"wall_load_error": "Не удалось загрузить стену",
+	"wall_market_aria": "Рынки",
+	"wall_market_vs": "к {base}",
 	"wall_music_admin_only": "Изменить это может только администратор.",
 	"wall_music_button": "Музыка",
 	"wall_music_cancel": "Отмена",

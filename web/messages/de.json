@@ -6331,6 +6331,8 @@
 	"wall_gallery_aria": "Bilder aus den Nachrichten",
 	"wall_gallery_count": "{index} von {count}",
 	"wall_load_error": "Wand konnte nicht geladen werden",
+	"wall_market_aria": "Märkte",
+	"wall_market_vs": "gg. {base}",
 	"wall_music_admin_only": "Nur ein Admin kann das ändern.",
 	"wall_music_button": "Musik",
 	"wall_music_cancel": "Abbrechen",

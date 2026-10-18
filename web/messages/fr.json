@@ -6331,6 +6331,8 @@
 	"wall_gallery_aria": "Images de l’actualité",
 	"wall_gallery_count": "{index} sur {count}",
 	"wall_load_error": "Impossible de charger le mur",
+	"wall_market_aria": "Marchés",
+	"wall_market_vs": "vs {base}",
 	"wall_music_admin_only": "Seul un administrateur peut le modifier.",
 	"wall_music_button": "Musique",
 	"wall_music_cancel": "Annuler",

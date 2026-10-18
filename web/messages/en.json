@@ -6331,6 +6331,8 @@
 	"wall_gallery_aria": "Pictures from the news",
 	"wall_gallery_count": "{index} of {count}",
 	"wall_load_error": "Could not load the wall",
+	"wall_market_aria": "Markets",
+	"wall_market_vs": "vs {base}",
 	"wall_music_admin_only": "Only an admin can change it.",
 	"wall_music_button": "Music",
 	"wall_music_cancel": "Cancel",
