@@ -5084,6 +5084,7 @@
 	"settings_news_testing": "Feed wird gelesen…",
 	"settings_news_ticker": "Schlagzeilen-Ticker",
 	"settings_news_ticker_hint": "Ein Band mit den neuesten Schlagzeilen, alle fünf Minuten aktualisiert.",
+	"settings_news_ticker_off_gallery": "Deaktiviert, solange das Bilderkarussell aktiv ist.",
 	"settings_news_title": "Wandnachrichten",
 	"settings_news_video": "Livevideo",
 	"settings_news_video_channel": "Kanal",

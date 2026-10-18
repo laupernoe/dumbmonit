@@ -4999,6 +4999,7 @@
 	"settings_news_testing": "正在读取订阅源…",
 	"settings_news_ticker": "标题滚动条",
 	"settings_news_ticker_hint": "显示最新标题的横条，每五分钟刷新一次。",
+	"settings_news_ticker_off_gallery": "图片轮播开启时不可用。",
 	"settings_news_title": "墙屏新闻",
 	"settings_news_video": "直播视频",
 	"settings_news_video_channel": "频道",

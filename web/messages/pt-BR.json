@@ -5084,6 +5084,7 @@
 	"settings_news_testing": "Lendo o feed…",
 	"settings_news_ticker": "Faixa de manchetes",
 	"settings_news_ticker_hint": "Uma faixa com as últimas manchetes, atualizada a cada cinco minutos.",
+	"settings_news_ticker_off_gallery": "Desativado enquanto o carrossel de imagens estiver ativo.",
 	"settings_news_title": "Notícias do mural",
 	"settings_news_video": "Vídeo ao vivo",
 	"settings_news_video_channel": "Canal",

@@ -5212,6 +5212,7 @@
 	"settings_news_testing": "Чтение ленты…",
 	"settings_news_ticker": "Бегущая строка заголовков",
 	"settings_news_ticker_hint": "Полоса с последними заголовками, обновляется каждые пять минут.",
+	"settings_news_ticker_off_gallery": "Отключено, пока включена карусель изображений.",
 	"settings_news_title": "Новости на стене",
 	"settings_news_video": "Прямой эфир",
 	"settings_news_video_channel": "Канал",
