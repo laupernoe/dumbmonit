@@ -269,7 +269,7 @@
 						<p class="mt-2 text-[0.8125rem] text-ink-2">{m.settings_2fa_log_empty()}</p>
 					{:else}
 						<div class="mt-2 overflow-x-auto rounded-lg border border-line">
-							<table class="w-full text-[0.8125rem]">
+							<table class="table-stack w-full text-[0.8125rem]">
 								<thead class="bg-surface-2 text-left text-ink-2">
 									<tr>
 										<th class="px-3 py-2 font-semibold">{m.settings_2fa_col_when()}</th>
@@ -283,12 +283,12 @@
 									{#each audit as entry (entry.id)}
 										<tr class="border-t border-line">
 											<td class="tnum px-3 py-1.5 whitespace-nowrap text-ink-2">{formatDateTime(entry.at)}</td>
-											<td class="px-3 py-1.5">
+											<td class="px-3 py-1.5" data-label={m.settings_2fa_col_event()}>
 												<Plate size="sm" tone={failing(entry.action) ? 'warning' : 'ghost'} label={ACTION_LABEL[entry.action]?.() ?? entry.action} />
 											</td>
-											<td class="px-3 py-1.5 font-mono">{entry.actor ?? '—'}</td>
-											<td class="px-3 py-1.5 font-mono">{entry.subject ?? '—'}</td>
-											<td class="tnum px-3 py-1.5 font-mono text-ink-2">{entry.ip ?? '—'}</td>
+											<td class="px-3 py-1.5 font-mono" data-label={m.settings_2fa_col_who()}>{entry.actor ?? '—'}</td>
+											<td class="px-3 py-1.5 font-mono" data-label={m.settings_2fa_col_subject()}>{entry.subject ?? '—'}</td>
+											<td class="tnum px-3 py-1.5 font-mono text-ink-2" data-label={m.settings_2fa_col_from()}>{entry.ip ?? '—'}</td>
 										</tr>
 									{/each}
 								</tbody>

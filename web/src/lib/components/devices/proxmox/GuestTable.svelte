@@ -366,8 +366,8 @@
 		<p class="px-5 py-4 text-sm text-ink-2">{m.devicesb_proxmox_guests_no_match()}</p>
 	{:else}
 		<div class="overflow-x-auto">
-			<table class="w-full min-w-[56rem] border-collapse text-sm">
-				<thead>
+			<table class="table-stack w-full border-collapse text-sm sm:min-w-[56rem]">
+				<thead data-stack-sort>
 					<tr class="border-b border-line text-[0.75rem] uppercase tracking-wide text-ink-3">
 						{#each COLUMNS as column (column.key)}
 							{@const active = sortKey === column.key}
@@ -380,7 +380,7 @@
 								</button>
 							</th>
 						{/each}
-						<th scope="col" class="px-3 py-2 pr-5 text-right font-semibold">{m.devicesb_proxmox_guests_col_ha()}</th>
+						<th scope="col" class="px-3 py-2 pr-5 text-right font-semibold" data-stack-hide>{m.devicesb_proxmox_guests_col_ha()}</th>
 					</tr>
 				</thead>
 				{#each groups as [node, rows] (node)}
@@ -420,7 +420,7 @@
 											</span>
 										</button>
 									</td>
-									<td class="px-3 py-2 align-middle">
+									<td class="px-3 py-2 align-middle" data-label={m.devicesb_proxmox_guests_col_cpu()}>
 										{#if g.cpu_percent !== null}
 											{@const tone = fillTone(g.cpu_percent)}
 											<div class="flex flex-col gap-1">
@@ -433,7 +433,7 @@
 											<span class="text-ink-3">—{#if g.cpu_count !== null}<span class="text-[0.75rem]">{' '}· {g.cpu_count === 1 ? m.devicesb_proxmox_guests_cores_one({ count: g.cpu_count }) : m.devicesb_proxmox_guests_cores_other({ count: g.cpu_count })}</span>{/if}</span>
 										{/if}
 									</td>
-									<td class="px-3 py-2 align-middle">
+									<td class="px-3 py-2 align-middle" data-label={m.devicesb_proxmox_guests_col_memory()}>
 										{#if g.memory_used_bytes !== null && g.memory_total_bytes !== null}
 											{@const tone = fillTone(g.memory_percent)}
 											{@const overhead = hostOverhead(g)}
@@ -455,7 +455,7 @@
 											<span class="tnum whitespace-nowrap text-ink-3">{g.memory_total_bytes !== null ? `— / ${formatBytes(g.memory_total_bytes)}` : '—'}</span>
 										{/if}
 									</td>
-									<td class="px-3 py-2 align-middle">
+									<td class="px-3 py-2 align-middle" data-label={m.devicesb_proxmox_guests_col_disk()}>
 										{#if g.disk_used_bytes !== null && g.disk_total_bytes !== null}
 											{@const tone = fillTone(g.disk_percent)}
 											<div class="flex flex-col gap-1">
@@ -471,18 +471,18 @@
 											</div>
 										{/if}
 									</td>
-									<td class="tnum whitespace-nowrap px-3 py-2 text-right align-middle text-ink-2">
+									<td class="tnum whitespace-nowrap px-3 py-2 text-right align-middle text-ink-2" data-label={m.devicesb_proxmox_guests_col_network()}>
 										{#if g.network_in_bps !== null || g.network_out_bps !== null}
-											↓ {formatRate(g.network_in_bps, 'B/s')}<br />↑ {formatRate(g.network_out_bps, 'B/s')}
+											<span>↓ {formatRate(g.network_in_bps, 'B/s')}<br />↑ {formatRate(g.network_out_bps, 'B/s')}</span>
 										{:else}
 											—
 										{/if}
 									</td>
-									<td class="tnum whitespace-nowrap px-3 py-2 text-right align-middle text-ink-2">
+									<td class="tnum whitespace-nowrap px-3 py-2 text-right align-middle text-ink-2" data-label={m.devicesb_proxmox_guests_col_uptime()}>
 										{g.uptime_seconds !== null ? formatDuration(g.uptime_seconds) : '—'}
 									</td>
-									<td class={`tnum whitespace-nowrap px-3 py-2 text-right align-middle ${BACKUP_TONE[backup.tone]}`}>{backup.text}</td>
-									<td class="whitespace-nowrap px-3 py-2 pr-5 text-right align-middle">
+									<td class={`tnum whitespace-nowrap px-3 py-2 text-right align-middle ${BACKUP_TONE[backup.tone]}`} data-label={m.devicesb_proxmox_guests_col_backup()}>{backup.text}</td>
+									<td class="whitespace-nowrap px-3 py-2 pr-5 text-right align-middle" data-label={m.devicesb_proxmox_guests_col_ha()}>
 										{#if g.ha_state}
 											<Plate tone={haTone(g.ha_state)} label={g.ha_state} bare size="sm" />
 										{:else}
