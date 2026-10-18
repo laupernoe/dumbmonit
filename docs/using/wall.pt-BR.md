@@ -177,6 +177,24 @@ nova a substitui, **Remover a chave** a apaga.
   *Críticas* (NVD) ou *Ativamente exploradas* (CISA KEV), e quantas mostrar
   (de 1 a 10).
 
+#### Como obter uma chave de administrador {#ai-admin-keys}
+
+Os dois provedores pedem uma **chave de administrador**, diferente da chave de API habitual. Ela serve apenas para ler o consumo e os custos da organização. Mantenha-a em segredo: cole-a em **Settings → Wall display → Wall widgets** e o DumbMonit a guarda criptografada.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Entre no [Claude Console](https://platform.claude.com/settings/admin-keys) como membro com a função **admin** de uma **organização** (uma conta pessoal não pode criar uma; crie primeiro uma organização em Settings → Organization).
+2. Abra a [página Admin keys](https://platform.claude.com/settings/admin-keys), clique em **Create admin key**, dê um nome e escolha uma expiração.
+3. Copie imediatamente o segredo (`sk-ant-admin01-…`): ele só é mostrado uma vez.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Entre na [plataforma OpenAI](https://platform.openai.com/settings/organization/admin-keys) como **proprietário** (owner) da organização.
+2. Abra a [página Admin keys](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) e clique em **Create new admin key**; a permissão *Read only* basta.
+3. Copie imediatamente a chave: ela só é mostrada uma vez.
+
+As assinaturas individuais (Claude Pro e Max, ChatGPT Plus) **não têm API de uso**: não podem aparecer na parede.
+
 ### API {#widgets-api}
 
 `GET /api/wall/widgets` (o que as paredes consultam a cada minuto: uma seção

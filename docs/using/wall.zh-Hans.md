@@ -153,6 +153,24 @@ Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
   标注*已被利用*)、*严重*(NVD)或*已被积极利用*(CISA KEV),以及
   显示的数量(1 到 10)。
 
+#### 如何获取管理员密钥 {#ai-admin-keys}
+
+两家提供商都需要**管理员密钥**，它不同于普通的 API 密钥，只用于读取组织的用量和费用。请妥善保管：把它粘贴到 **Settings → Wall display → Wall widgets**，DumbMonit 会加密存储。
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. 以组织的 **admin** 角色成员身份登录 [Claude Console](https://platform.claude.com/settings/admin-keys)（个人账户无法创建；请先在 Settings → Organization 中创建组织）。
+2. 打开 [Admin keys 页面](https://platform.claude.com/settings/admin-keys)，点击 **Create admin key**，填写名称并选择有效期。
+3. 立即复制密钥（`sk-ant-admin01-…`）：它只显示一次。
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. 以组织**所有者**（owner）身份登录 [OpenAI 平台](https://platform.openai.com/settings/organization/admin-keys)。
+2. 打开 [Admin keys 页面](https://platform.openai.com/settings/organization/admin-keys)（Organization settings → Admin keys），点击 **Create new admin key**；*Read only* 权限即可。
+3. 立即复制密钥：它只显示一次。
+
+个人订阅（Claude Pro 和 Max、ChatGPT Plus）**没有用量 API**，无法显示在大屏上。
+
 ### API {#widgets-api}
 
 `GET /api/wall/widgets`(大屏每分钟轮询的接口:每个已开启的小组件对应

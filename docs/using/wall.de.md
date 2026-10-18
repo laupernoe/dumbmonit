@@ -179,6 +179,24 @@ ist. Ein neu eingegebener ersetzt ihn, **Schlüssel entfernen** löscht ihn.
   markiert), *Kritisch* (NVD) oder *Aktiv ausgenutzt* (CISA KEV), und wie viele
   gezeigt werden (1 bis 10).
 
+#### So erhalten Sie einen Admin-Schlüssel {#ai-admin-keys}
+
+Beide Anbieter verlangen einen **Admin-Schlüssel**, nicht den üblichen API-Schlüssel. Er liest nur Nutzung und Kosten der Organisation. Halten Sie ihn geheim: Fügen Sie ihn unter **Settings → Wall display → Wall widgets** ein, DumbMonit speichert ihn verschlüsselt.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Melden Sie sich in der [Claude Console](https://platform.claude.com/settings/admin-keys) als Mitglied mit der Rolle **admin** einer **Organisation** an (ein persönliches Konto kann keinen erstellen; richten Sie zuerst unter Settings → Organization eine Organisation ein).
+2. Öffnen Sie die [Seite Admin keys](https://platform.claude.com/settings/admin-keys), klicken Sie auf **Create admin key**, vergeben Sie einen Namen und ein Ablaufdatum.
+3. Kopieren Sie das Geheimnis (`sk-ant-admin01-…`) sofort: Es wird nur einmal angezeigt.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Melden Sie sich bei der [OpenAI-Plattform](https://platform.openai.com/settings/organization/admin-keys) als **Owner** der Organisation an.
+2. Öffnen Sie die [Seite Admin keys](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) und klicken Sie auf **Create new admin key**; die Berechtigung *Read only* genügt.
+3. Kopieren Sie den Schlüssel sofort: Er wird nur einmal angezeigt.
+
+Einzelabonnements (Claude Pro und Max, ChatGPT Plus) haben **keine Nutzungs-API**: Sie können nicht auf der Wall erscheinen.
+
 ### API
 
 `GET /api/wall/widgets` (was die Walls jede Minute abfragen: ein Abschnitt pro
