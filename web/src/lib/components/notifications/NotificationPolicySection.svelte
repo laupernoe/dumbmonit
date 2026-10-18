@@ -40,6 +40,7 @@
 			flapHold = current.flap_hold_secs;
 			publicUrl = current.public_url;
 			actionLinks = current.action_links;
+			silenceRecoveries = current.resolutions_during_silence === 'send';
 			escalateAfter = current.escalate_channel === null ? 0 : current.escalate_after_secs;
 			escalateChannel = current.escalate_channel === null ? '' : String(current.escalate_channel);
 		} catch (cause) {
@@ -80,6 +81,7 @@
 	let flapHold = $state(1800);
 	let publicUrl = $state('');
 	let actionLinks = $state(true);
+	let silenceRecoveries = $state(false);
 	let escalateAfter = $state(0);
 	let escalateChannel = $state('');
 	let showMore = $state(false);
@@ -124,6 +126,7 @@
 			flapHold !== policy.flap_hold_secs ||
 			publicUrl.trim() !== policy.public_url ||
 			actionLinks !== policy.action_links ||
+			silenceRecoveries !== (policy.resolutions_during_silence === 'send') ||
 			escalateAfter !== (policy.escalate_channel === null ? 0 : policy.escalate_after_secs) ||
 			escalateChannel !== (policy.escalate_channel === null ? '' : String(policy.escalate_channel))
 		);
@@ -166,11 +169,13 @@
 				flap_hold_secs: flapHold,
 				public_url: url,
 				action_links: actionLinks,
+				resolutions_during_silence: silenceRecoveries ? 'send' : 'suppress',
 				escalate_after_secs: escalating ? escalateAfter : 0,
 				escalate_channel: escalating ? Number(escalateChannel) : null
 			});
 			publicUrl = policy.public_url;
 			actionLinks = policy.action_links;
+			silenceRecoveries = policy.resolutions_during_silence === 'send';
 			escalateAfter = policy.escalate_channel === null ? 0 : policy.escalate_after_secs;
 			escalateChannel = policy.escalate_channel === null ? '' : String(policy.escalate_channel);
 			saved = true;
@@ -262,6 +267,10 @@
 					<p class="text-[0.8125rem] text-ink-2">{m.notifications_policy_actions_needs_url()}</p>
 				{/if}
 			</div>
+
+			<Field label={m.notifications_policy_silence_resolutions()} for="policy-silence-resolutions" inline help={m.notifications_policy_silence_resolutions_help()}>
+				<Toggle id="policy-silence-resolutions" bind:checked={silenceRecoveries} disabled={saving || !auth.isAdmin} label={m.notifications_policy_silence_resolutions()} />
+			</Field>
 
 			<div class="grid gap-2">
 				<div class="grid gap-4 sm:grid-cols-2">

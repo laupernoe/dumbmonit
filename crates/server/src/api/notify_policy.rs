@@ -14,7 +14,7 @@ use serde::{Deserialize, Deserializer, Serialize};
 use serde_json::Value;
 
 use crate::alerting::matcher::MatchContext;
-use crate::alerting::notify_policy::GlobalPolicy;
+use crate::alerting::notify_policy::{GlobalPolicy, ResolutionsDuringSilence};
 use crate::api::{ApiError, ApiResult, alerts, channels};
 use crate::db;
 use crate::notify::policy_store;
@@ -57,6 +57,7 @@ pub struct PolicyPayload {
     #[serde(deserialize_with = "present")]
     pub escalate_channel: Option<Value>,
     pub action_links: Option<bool>,
+    pub resolutions_during_silence: Option<ResolutionsDuringSilence>,
 }
 
 fn present<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Option<Value>, D::Error> {
@@ -248,6 +249,9 @@ impl PolicyPayload {
             )?,
             escalate_channel,
             action_links: self.action_links.unwrap_or(current.action_links),
+            resolutions_during_silence: self
+                .resolutions_during_silence
+                .unwrap_or(current.resolutions_during_silence),
         })
     }
 }
@@ -274,6 +278,26 @@ mod tests {
         };
         assert_eq!(policy.batch_window_secs, 0);
         assert_eq!(policy.max_per_hour, 5);
+    }
+
+    #[test]
+    fn la_resolution_sous_silence_se_regle_et_se_conserve() {
+        assert_eq!(
+            GlobalPolicy::default().resolutions_during_silence,
+            ResolutionsDuringSilence::Suppress,
+            "silenced by default"
+        );
+        let payload: PolicyPayload =
+            serde_json::from_str(r#"{"resolutions_during_silence":"send"}"#).unwrap();
+        let Ok(policy) = payload.apply_to(GlobalPolicy::default()) else {
+            panic!("\"send\" should be accepted");
+        };
+        assert_eq!(policy.resolutions_during_silence, ResolutionsDuringSilence::Send);
+        let kept = PolicyPayload::default().apply_to(policy).ok().unwrap();
+        assert_eq!(kept.resolutions_during_silence, ResolutionsDuringSilence::Send);
+        assert!(
+            serde_json::from_str::<PolicyPayload>(r#"{"resolutions_during_silence":"x"}"#).is_err()
+        );
     }
 
     #[test]

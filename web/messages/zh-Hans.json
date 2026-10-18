@@ -3969,6 +3969,8 @@
 	"notifications_policy_quiet": "静音 {days} {start}–{end}",
 	"notifications_policy_saved": "已保存",
 	"notifications_policy_send_now": "立即发送",
+	"notifications_policy_silence_resolutions": "在静默或维护窗口期间也发送恢复通知",
+	"notifications_policy_silence_resolutions_help": "默认关闭：当告警在静默或维护窗口覆盖期间恢复时，不会发送恢复消息。恢复记录仍会显示在告警历史中。开启后，即使在维护期间也会收到恢复通知。",
 	"notifications_policy_that_channel": "该渠道",
 	"notifications_policy_title": "通知策略",
 	"notifications_policy_url": "公开 URL",
