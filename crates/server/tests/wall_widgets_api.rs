@@ -114,3 +114,78 @@ async fn le_relais_d_images_ne_sert_que_les_images_publiees() {
     let reply = app.get("/api/wall/news", Some(&viewer)).await;
     assert_eq!(reply.body["gallery"], false);
 }
+
+#[tokio::test]
+async fn la_consommation_d_ia_garde_ses_cles_admin_secretes_et_ses_noms() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let viewer = app.viewer_cookie(&admin).await;
+
+    let reply = app.get("/api/wall/widgets/settings", Some(&admin)).await;
+    assert_eq!(reply.body["ai"]["period"], "week");
+    assert_eq!(reply.body["ai"]["by_person"], false);
+    assert_eq!(reply.body["ai"]["claude"]["enabled"], false);
+    assert_eq!(reply.body["has_anthropic_key"], false);
+    assert_eq!(reply.body["has_openai_key"], false);
+
+    // Une clé ordinaire n'est pas une clé admin Anthropic.
+    let body = json!({ "secrets": { "anthropic": "sk-ant-api03-ordinary" } });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+    assert!(reply.body["error"].as_str().unwrap().contains("sk-ant-admin"));
+
+    let body = json!({
+        "ai": {
+            "period": "month",
+            "by_person": true,
+            "claude": {
+                "enabled": true,
+                "people": [{ "id": " user_01ABC ", "name": " Alice " }]
+            },
+            "openai": { "enabled": true, "people": [] }
+        },
+        "secrets": { "anthropic": "sk-ant-admin01-secret", "openai": "sk-admin-secret" }
+    });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["has_anthropic_key"], true);
+    assert_eq!(reply.body["has_openai_key"], true);
+    assert_eq!(
+        reply.body["ai"]["claude"]["people"],
+        json!([{ "id": "user_01ABC", "name": "Alice" }])
+    );
+    let text = reply.body.to_string();
+    assert!(!text.contains("sk-ant-admin01-secret") && !text.contains("sk-admin-secret"), "{text}");
+
+    // Sans `secrets`, les clés restent ; chaîne vide, effacée.
+    let reply = app.put("/api/wall/widgets/settings", json!({}), Some(&admin)).await;
+    assert_eq!(reply.body["has_anthropic_key"], true);
+    let body = json!({ "secrets": { "openai": "" } });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.body["has_openai_key"], false);
+    assert_eq!(reply.body["has_anthropic_key"], true);
+    // Les réglages omis reprennent leur défaut : éteint.
+    assert_eq!(reply.body["ai"]["claude"]["enabled"], false);
+
+    for (body, expected) in [
+        (json!({ "ai": { "period": "year" } }), "period"),
+        (json!({ "ai": { "claude": { "people": [{ "id": "x", "name": "" }] } } }), "name"),
+    ] {
+        let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+        assert!(reply.body["error"].as_str().unwrap().contains(expected), "{}", reply.body);
+    }
+
+    // OpenAI allumé sans clé : la carte le dit, sans appeler personne.
+    let body = json!({
+        "ai": { "openai": { "enabled": true, "people": [] } },
+        "secrets": { "openai": "" }
+    });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let reply = app.get("/api/wall/widgets", Some(&viewer)).await;
+    assert_eq!(reply.body["openai"]["needs_key"], true, "{}", reply.body);
+    assert!(reply.body["openai"]["data"].is_null());
+    assert_eq!(reply.body["openai"]["source"], "OpenAI");
+    assert!(reply.body["claude"].is_null(), "éteint par l'enregistrement précédent");
+}

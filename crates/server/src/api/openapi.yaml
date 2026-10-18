@@ -4568,7 +4568,7 @@ paths:
       description: >-
         One section per widget turned on (`null` otherwise). The server reads
         the sources and caches them (coins 60 s, stocks 5 min, weather 15 min,
-        rates and CVEs 1 h); a source that fails keeps its last value for a few
+        rates and CVEs 1 h, AI usage 15 min); a source that fails keeps its last value for a few
         hours, with `error` set. Walls poll it every minute.
       x-token-scope: read
       responses:
@@ -4616,6 +4616,8 @@ paths:
                       properties:
                         finnhub: { type: string, maxLength: 200 }
                         coingecko: { type: string, maxLength: 200, description: A CoinGecko Demo key. }
+                        anthropic: { type: string, maxLength: 200, description: "An Anthropic Admin API key (sk-ant-admin…), organizations only." }
+                        openai: { type: string, maxLength: 200, description: An OpenAI organization admin key. }
       responses:
         "200":
           description: The settings as saved.
@@ -7575,7 +7577,54 @@ components:
             source: { type: string, enum: [both, nvd, kev] }
             count: { type: integer, minimum: 1, maximum: 10 }
         has_finnhub_key: { type: boolean, readOnly: true }
+        ai:
+          type: object
+          description: >-
+            AI usage cards (Claude, OpenAI), read from the providers'
+            organization admin APIs. Consumer subscriptions (Claude Pro/Max,
+            ChatGPT Plus) have no official API and are not covered.
+          properties:
+            period: { type: string, enum: [today, week, month], default: week, description: "UTC; week = the last 7 days, month = the current month." }
+            by_person: { type: boolean, description: "Also list the biggest consumers (tokens only; the providers do not break costs down by person)." }
+            claude: { $ref: "#/components/schemas/WallAiProvider" }
+            openai: { $ref: "#/components/schemas/WallAiProvider" }
         has_coingecko_key: { type: boolean, readOnly: true }
+        has_anthropic_key: { type: boolean, readOnly: true }
+        has_openai_key: { type: boolean, readOnly: true }
+    WallAiProvider:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        people:
+          type: array
+          maxItems: 30
+          description: Display names for the identifiers the provider's API returns (Anthropic account or API key ids, OpenAI user or API key ids).
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id: { type: string, maxLength: 100 }
+              name: { type: string, maxLength: 40 }
+    WallAiUsage:
+      type: object
+      required: [period, from, cost_usd, input_tokens, output_tokens]
+      properties:
+        period: { type: string, enum: [today, week, month] }
+        from: { type: string, description: First day (UTC, YYYY-MM-DD). }
+        cost_usd: { type: number, description: Total cost in US dollars. }
+        input_tokens: { type: integer, description: Input tokens, cache included. }
+        output_tokens: { type: integer }
+        people:
+          type: [array, "null"]
+          description: Biggest consumers by tokens; null unless `by_person` is on.
+          items:
+            type: object
+            required: [name, mapped, input_tokens, output_tokens]
+            properties:
+              name: { type: [string, "null"], description: "A configured name, else the shortened identifier; null when the API attributes the usage to no key or account." }
+              mapped: { type: boolean }
+              input_tokens: { type: integer }
+              output_tokens: { type: integer }
     WallWidgetSection:
       type: object
       required: [updated, error, needs_key, source, source_url]
@@ -7608,6 +7657,16 @@ components:
             - { $ref: "#/components/schemas/WallWidgetSection" }
             - { type: "null" }
         cve:
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
+        claude:
+          description: "Claude (Anthropic) usage; `data` is a WallAiUsage. Null when off."
+          oneOf:
+            - { $ref: "#/components/schemas/WallWidgetSection" }
+            - { type: "null" }
+        openai:
+          description: "OpenAI usage; `data` is a WallAiUsage. Null when off."
           oneOf:
             - { $ref: "#/components/schemas/WallWidgetSection" }
             - { type: "null" }

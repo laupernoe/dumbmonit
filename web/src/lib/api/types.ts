@@ -3997,6 +3997,26 @@ export interface WallCveSettings {
 	count: number;
 }
 
+/** A display name for an identifier the provider's API returns (account, API key). */
+export interface WallAiPerson {
+	id: string;
+	name: string;
+}
+
+export interface WallAiProviderSettings {
+	enabled: boolean;
+	people: WallAiPerson[];
+}
+
+export type WallAiPeriod = 'today' | 'week' | 'month';
+
+export interface WallAiSettings {
+	period: WallAiPeriod;
+	by_person: boolean;
+	claude: WallAiProviderSettings;
+	openai: WallAiProviderSettings;
+}
+
 /** `GET|PUT /api/wall/widgets/settings` (administrators). */
 export interface WallWidgetSettings {
 	rotate_seconds: number;
@@ -4005,17 +4025,20 @@ export interface WallWidgetSettings {
 	stocks: WallStocksSettings;
 	fx: WallFxSettings;
 	cve: WallCveSettings;
+	ai: WallAiSettings;
 }
 
 /** What `GET` returns: the settings, and only whether each API key is set. */
 export interface WallWidgetSettingsView extends WallWidgetSettings {
 	has_finnhub_key: boolean;
 	has_coingecko_key: boolean;
+	has_anthropic_key: boolean;
+	has_openai_key: boolean;
 }
 
 /** `PUT` body. A key left out is kept; an empty string clears it. Never read back. */
 export interface WallWidgetSettingsPayload extends WallWidgetSettings {
-	secrets?: { finnhub?: string; coingecko?: string };
+	secrets?: { finnhub?: string; coingecko?: string; anthropic?: string; openai?: string };
 }
 
 export interface WallCoinPreset {
@@ -4112,6 +4135,29 @@ export interface WallCve {
 	link: string;
 }
 
+/** One of the biggest consumers of a provider, by tokens (costs are not broken down by person). */
+export interface WallAiPersonUsage {
+	/** A configured name, else the shortened identifier; null when the API attributes it to no key or account. */
+	name: string | null;
+	mapped: boolean;
+	input_tokens: number;
+	output_tokens: number;
+}
+
+/** Claude or OpenAI usage over a period. */
+export interface WallAiUsage {
+	period: WallAiPeriod;
+	/** First day, UTC `YYYY-MM-DD`. */
+	from: string;
+	/** Total cost in US dollars. */
+	cost_usd: number;
+	/** Input tokens, cache included. */
+	input_tokens: number;
+	output_tokens: number;
+	/** Null unless "by person" is on. */
+	people: WallAiPersonUsage[] | null;
+}
+
 /** `GET /api/wall/widgets`: one section per widget turned on, `null` otherwise. */
 export interface WallWidgets {
 	rotate_seconds: number;
@@ -4120,4 +4166,6 @@ export interface WallWidgets {
 	stocks: WallSection<WallStocks> | null;
 	fx: WallSection<WallFx> | null;
 	cve: WallSection<WallCve[]> | null;
+	claude: WallSection<WallAiUsage> | null;
+	openai: WallSection<WallAiUsage> | null;
 }
