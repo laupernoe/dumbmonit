@@ -663,7 +663,7 @@
 <svelte:head><title>{m.wall_page_title()}</title></svelte:head>
 <svelte:window onkeydown={onKeydown} />
 
-<div class="wall fixed inset-0 z-40 bg-canvas text-ink" data-wall-theme={oledActive ? 'oled' : undefined}>
+<div class="wall fixed inset-0 z-[60] box-border bg-canvas pt-[var(--safe-top)] pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] text-ink" data-wall-theme={oledActive ? 'oled' : undefined}>
 	<!--
 		Everything lives in this stage. On OLED it is nudged a few pixels every
 		few minutes (burn-in care), scene included: nothing stays lit in one spot.

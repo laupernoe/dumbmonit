@@ -61,7 +61,7 @@
 <svelte:window {onkeydown} />
 
 <div
-	class="pointer-events-none fixed inset-x-0 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] z-40 flex justify-center px-4 sm:bottom-6"
+	class="pointer-events-none fixed inset-x-0 bottom-[calc(var(--tabbar-h)+0.75rem+var(--safe-bottom))] z-40 flex justify-center px-4 sm:bottom-6"
 	transition:fly={enter()}
 >
 	<div
