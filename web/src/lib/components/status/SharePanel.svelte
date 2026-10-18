@@ -69,7 +69,7 @@
 		{/if}
 	{/snippet}
 	<div class="grid gap-4">
-		<div class="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+		<div class="grid gap-3 sm:grid-cols-3">
 			<Field label={m.status_share_badge()} for="share-kind">
 				<select id="share-kind" class="input" bind:value={kind}>
 					{#each KINDS() as option (option.value)}<option value={option.value}>{option.label}</option>{/each}
