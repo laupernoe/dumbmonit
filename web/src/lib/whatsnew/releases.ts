@@ -21,6 +21,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.10.0',
+		date: '2026-10-18',
+		highlights: [
+			{
+				title: 'A wall that tells you more',
+				text: 'The weather under the clock, and cards in rotation for crypto prices, stocks, exchange rates, the latest critical CVEs and your Claude and OpenAI usage, plus news pictures from your RSS feeds.'
+			},
+			{
+				title: 'Is your mail server blocklisted?',
+				text: 'Two new monitors check a mail domain or a public IP range against Spamhaus, Barracuda, SpamCop and more, with reverse DNS, SPF and DMARC, and the delisting page of every list that lists you.'
+			},
+			{
+				title: 'Quieter maintenance',
+				text: 'An alert that recovers during a silence or a maintenance window no longer sends a notification; a switch in Settings brings it back.'
+			},
+			{
+				title: 'Made for phones',
+				text: 'The Overview fits one screen, lists scroll under a fixed toolbar, wide tables become cards and nothing scrolls sideways any more.'
+			}
+		]
+	},
+	{
 		version: '0.9.0',
 		date: '2026-10-16',
 		highlights: [
