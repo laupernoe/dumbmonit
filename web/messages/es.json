@@ -4017,6 +4017,8 @@
 	"notifications_policy_quiet": "silencio {days} {start}–{end}",
 	"notifications_policy_saved": "Guardado",
 	"notifications_policy_send_now": "Enviar de inmediato",
+	"notifications_policy_silence_resolutions": "Enviar también las recuperaciones durante un silencio o una ventana de mantenimiento",
+	"notifications_policy_silence_resolutions_help": "Desactivado por defecto: cuando una alerta se resuelve mientras un silencio o una ventana de mantenimiento la cubre, no se envía ningún mensaje de recuperación. La resolución sigue apareciendo en el historial de la alerta. Actívalo para recibir avisos incluso durante el mantenimiento.",
 	"notifications_policy_that_channel": "ese canal",
 	"notifications_policy_title": "Política de notificaciones",
 	"notifications_policy_url": "URL pública",

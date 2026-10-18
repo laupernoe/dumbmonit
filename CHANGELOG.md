@@ -46,6 +46,15 @@ All notable changes to this project are documented here. The format follows
   the middle of the wall. Pictures are relayed by the server, only real
   PNG/JPEG/GIF/WebP/AVIF images up to 6 MB.
 
+### Changed
+
+- **Recoveries stay quiet during a silence or maintenance window.** An alert
+  that resolves while a silence covers it no longer sends a recovery message
+  (and none is sent late once the silence ends); the resolution still shows
+  in the alert history, with its reason. A new switch in **Settings →
+  Notifications & reports → Notification policy** (`resolutions_during_silence`:
+  `suppress`, the default, or `send`) brings the previous behaviour back.
+
 ## 0.9.1 — 2026-10-16
 
 ### Changed

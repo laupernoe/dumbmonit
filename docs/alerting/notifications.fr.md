@@ -32,6 +32,7 @@ s'appliquent dès la sortie de boîte.
 | Fenêtre de regroupement | Réglages → Notifications et rapports → Politique de notification | 60 s |
 | Messages par canal par heure | Réglages → Notifications et rapports → Politique de notification | 20 |
 | URL publique (liens profonds) | Réglages → Notifications et rapports → Politique de notification, ou `DUMBMONIT_PUBLIC_URL` | vide |
+| Retours à la normale pendant un silence ou une maintenance | Réglages → Notifications et rapports → Politique de notification | non envoyés |
 | Liens Acquitter / Pause dans les messages | Réglages → Notifications et rapports → Politique de notification | activés (si une URL publique est connue) |
 
 ## Hystérésis et surcharges par surveillance

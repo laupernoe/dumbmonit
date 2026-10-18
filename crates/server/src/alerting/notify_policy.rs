@@ -82,6 +82,29 @@ pub struct GlobalPolicy {
     /// déjà envoyés.
     #[serde(default = "default_true")]
     pub action_links: bool,
+    /// Sort d'une résolution survenue pendant un silence ou une fenêtre de
+    /// maintenance (voir [`ResolutionsDuringSilence`]).
+    #[serde(default)]
+    pub resolutions_during_silence: ResolutionsDuringSilence,
+}
+
+/// Que faire de la résolution d'une alerte déjà annoncée quand un silence ou une
+/// fenêtre de maintenance couvre l'alerte à ce moment-là.
+///
+/// Réglage global `notify.resolutions_during_silence`. Les silences font taire
+/// les annonces de problème dans tous les cas ; ce réglage ne concerne que le
+/// « retour à la normale ».
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ResolutionsDuringSilence {
+    /// Défaut : la résolution est tue, comme le reste, pour ne pas inonder une
+    /// maintenance de « tout va bien ». Elle reste dans l'historique de l'alerte
+    /// (avec la raison « maintenance window »), et n'est jamais rejouée à la fin
+    /// du silence.
+    #[default]
+    Suppress,
+    /// La résolution part malgré le silence.
+    Send,
 }
 
 fn default_true() -> bool {
@@ -100,6 +123,7 @@ impl Default for GlobalPolicy {
             escalate_after_secs: 0,
             escalate_channel: None,
             action_links: true,
+            resolutions_during_silence: ResolutionsDuringSilence::default(),
         }
     }
 }

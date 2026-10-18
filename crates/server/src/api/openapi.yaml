@@ -6160,7 +6160,7 @@ components:
         message: { type: string }
     NotifyPolicy:
       type: object
-      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel, action_links]
+      required: [batch_window_secs, max_per_hour, flap_events, flap_window_secs, flap_hold_secs, public_url, escalate_after_secs, escalate_channel, action_links, resolutions_during_silence]
       properties:
         batch_window_secs: { type: integer, description: "0: send at once." }
         max_per_hour: { type: integer, description: "Per channel; 0: unlimited." }
@@ -6171,6 +6171,7 @@ components:
         escalate_after_secs: { type: integer, description: "0: no escalation." }
         escalate_channel: { type: [integer, "null"], format: int64 }
         action_links: { type: boolean, description: "Acknowledge / Snooze links in notifications; only effective with a public URL. Off also revokes links already sent." }
+        resolutions_during_silence: { type: string, enum: [suppress, send], description: "Recovery message for an announced alert that resolves while a silence or maintenance window covers it. `suppress` (default): none is sent; the resolution stays in the alert history. `send`: it is sent anyway." }
     NotifyPolicyUpdate:
       type: object
       properties:
@@ -6183,6 +6184,7 @@ components:
         escalate_after_secs: { type: integer }
         escalate_channel: { type: [integer, "null"], format: int64 }
         action_links: { type: boolean }
+        resolutions_during_silence: { type: string, enum: [suppress, send] }
     AlertActionToken:
       type: object
       required: [token]

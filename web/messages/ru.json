@@ -4071,6 +4071,8 @@
 	"notifications_policy_quiet": "тишина {days} {start}–{end}",
 	"notifications_policy_saved": "Сохранено",
 	"notifications_policy_send_now": "Отправлять сразу",
+	"notifications_policy_silence_resolutions": "Отправлять уведомления о восстановлении во время тишины или окна обслуживания",
+	"notifications_policy_silence_resolutions_help": "По умолчанию выключено: если оповещение разрешается, пока его покрывает тишина или окно обслуживания, сообщение о восстановлении не отправляется. Разрешение остаётся в истории оповещения. Включите, чтобы получать уведомления даже во время обслуживания.",
 	"notifications_policy_that_channel": "этот канал",
 	"notifications_policy_title": "Политика уведомлений",
 	"notifications_policy_url": "Публичный URL",

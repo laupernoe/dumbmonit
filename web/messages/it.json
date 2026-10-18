@@ -4017,6 +4017,8 @@
 	"notifications_policy_quiet": "silenzio {days} {start}–{end}",
 	"notifications_policy_saved": "Salvato",
 	"notifications_policy_send_now": "Invia subito",
+	"notifications_policy_silence_resolutions": "Invia anche i ripristini durante un silenzio o una finestra di manutenzione",
+	"notifications_policy_silence_resolutions_help": "Disattivato per impostazione predefinita: quando un avviso si risolve mentre un silenzio o una finestra di manutenzione lo copre, non viene inviato alcun messaggio di ripristino. La risoluzione resta visibile nella cronologia dell'avviso. Attivalo per essere avvisato anche durante la manutenzione.",
 	"notifications_policy_that_channel": "quel canale",
 	"notifications_policy_title": "Policy di notifica",
 	"notifications_policy_url": "URL pubblico",
