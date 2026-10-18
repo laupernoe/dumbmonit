@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Security
+
+- Updated `rustls` to 0.23.46 in the fuzzing workspace lockfile
+  (RUSTSEC-2026-0346, -0347, -0348, -0349). The shipped binaries and images
+  already used 0.23.46.
+
 ## 0.10.0 — 2026-10-18
 
 ### Added
