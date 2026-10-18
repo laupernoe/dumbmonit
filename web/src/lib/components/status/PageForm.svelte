@@ -8,8 +8,8 @@
 	 * the public, group them. Saves the page, its logo, then its services.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { untrack } from 'svelte';
-	import { Check, X } from 'lucide-svelte';
+	import { untrack, type Snippet } from 'svelte';
+	import { ArrowDown, ArrowUp, Check, ChevronRight, X } from 'lucide-svelte';
 	import {
 		createStatusPage,
 		deleteStatusPageLogo,
@@ -26,7 +26,7 @@
 		type StatusPageTheme,
 		type Target
 	} from '#lib/api/index.js';
-	import { Button, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
+	import { Button, Combobox, ErrorNotice, Field, Toggle, type ComboOption } from '#lib/ui/index.js';
 	import { ACCENTS, accentClass, slugify } from './words';
 	import DomainField from './DomainField.svelte';
 	import SceneDefs from './scenes/SceneDefs.svelte';
@@ -127,13 +127,6 @@
 	const sceneShown = $derived(sceneMatches.slice(scenePage * SCENES_PER_PAGE, (scenePage + 1) * SCENES_PER_PAGE));
 	const chosenScenes = $derived(scenes.flatMap((id) => SCENE_CHOICES.filter((c) => c.value === id)));
 
-	// Services: a search box once the list is long.
-	let serviceQuery = $state('');
-	const shownTargets = $derived.by(() => {
-		const q = serviceQuery.trim().toLowerCase();
-		return q ? sortedTargets.filter((t) => `${t.name} ${t.kind}`.toLowerCase().includes(q)) : sortedTargets;
-	});
-
 	function toggleScene(id: string, on: boolean) {
 		scenes = on ? [...scenes.filter((s) => s !== id), id] : scenes.filter((s) => s !== id);
 	}
@@ -181,6 +174,25 @@
 	const groupsSeen = $derived([...new Set([...picks.values()].map((p) => p.group).filter(Boolean))]);
 	const targetById = $derived(new Map(targets.map((t) => [t.id, t])));
 	const sortedTargets = $derived([...targets].sort((a, b) => a.name.localeCompare(b.name)));
+	// Offered to the combobox: filtered on name, type and folder, grouped by folder.
+	const serviceOptions = $derived<ComboOption[]>(
+		sortedTargets.map((t) => ({ value: String(t.id), label: t.name, hint: t.kind, group: t.group_name }))
+	);
+	const ICON_BTN =
+		'inline-flex size-10 items-center justify-center rounded-md text-ink-2 hover:bg-surface-2 hover:text-ink disabled:opacity-40 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ink';
+
+	// Folded sections: closed unless something inside needs the reader (an error).
+	let openLook = $state(false);
+	let openScene = $state(false);
+	let openConnect = $state(false);
+	const accentLabel = $derived(ACCENTS.find((a) => a.value === accent)?.label ?? '');
+	const lookSummary = $derived(
+		[accentLabel, (hasStoredLogo && !removeLogo) || pendingLogo ? m.status_form_logo() : '', simple ? m.status_form_simple() : '']
+			.filter(Boolean)
+			.join(' · ')
+	);
+	const sceneSummary = $derived(simple ? m.status_form_simple() : chosenScenes.length ? chosenScenes.map((c) => c.label).join(', ') : m.status_form_scene_none());
+	const connectSummary = $derived([subscribeChannel !== null ? m.status_form_subscribers() : '', domain.trim()].filter(Boolean).join(' · '));
 
 	let titleError = $state<string | null>(null);
 	let slugError = $state<string | null>(null);
@@ -202,6 +214,8 @@
 		const host = domain.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
 		domainError =
 			host === '' || /^[a-z0-9.-]+$/i.test(host) ? null : m.status_form_domain_rule();
+		if (homepageError) openLook = true;
+		if (domainError) openConnect = true;
 		if (titleError || slugError || homepageError || domainError) return;
 
 		saving = true;
@@ -245,6 +259,7 @@
 			const api = toApiError(cause);
 			if ((api.status === 400 || api.status === 409) && /domain|host name|IP address|punycode|DumbMonit itself/i.test(api.message)) {
 				domainError = api.message;
+				openConnect = true;
 			} else {
 				error = cause;
 			}
@@ -256,132 +271,84 @@
 	const idPrefix = $derived(page ? `sp-${page.id}` : 'sp-new');
 </script>
 
-<form class="grid gap-4" onsubmit={submit} novalidate>
-	<div class="grid gap-4 sm:grid-cols-2">
-		<Field label={m.status_form_title()} for="{idPrefix}-title" error={titleError} required>
-			<input
-				id="{idPrefix}-title"
-				type="text"
-				class="input"
-				bind:value={title}
-				oninput={onTitleInput}
-				placeholder={m.status_form_title_placeholder()}
-				maxlength="120"
-				disabled={saving}
-				aria-invalid={titleError ? 'true' : undefined}
-			/>
-		</Field>
-		<Field label={m.status_form_address()} for="{idPrefix}-slug" error={slugError} help={slug ? m.status_form_address_url({ url: `/s/${slug}` }) : m.status_form_address_help()} required>
-			<input
-				id="{idPrefix}-slug"
-				type="text"
-				class="input font-mono"
-				bind:value={slug}
-				oninput={() => {
-					slugTouched = true;
-					slugError = null;
-				}}
-				placeholder="home-lab"
-				maxlength="40"
-				autocomplete="off"
-				spellcheck="false"
-				disabled={saving}
-				aria-invalid={slugError ? 'true' : undefined}
-			/>
-		</Field>
-	</div>
-	<Field label={m.status_form_description()} for="{idPrefix}-description" help={m.status_form_description_help()}>
-		<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder={m.status_form_description_placeholder()} disabled={saving} />
-	</Field>
-	<div class="grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)]">
-		<Field label={m.status_form_theme()} for="{idPrefix}-theme">
-			<select id="{idPrefix}-theme" class="input" bind:value={theme} disabled={saving}>
-				<option value="auto">{m.status_form_theme_auto()}</option>
-				<option value="light">{m.status_form_theme_day()}</option>
-				<option value="dark">{m.status_form_theme_night()}</option>
-			</select>
-		</Field>
-		<Field label={m.status_form_history()} for="{idPrefix}-days" help={m.status_form_history_help()}>
-			<select id="{idPrefix}-days" class="input" bind:value={showDays} disabled={saving}>
-				{#each HISTORY_CHOICES as choice (choice)}
-					<option value={choice}>{m.status_share_days({ days: choice })}</option>
-				{/each}
-			</select>
-		</Field>
-		<Field label={m.status_form_published()} for="{idPrefix}-published" inline class="sm:items-start" help={published ? m.status_form_published_on() : m.status_form_published_off()}>
-			<Toggle id="{idPrefix}-published" bind:checked={published} disabled={saving} label={m.status_form_published()} />
-		</Field>
-	</div>
+<!-- A folded section: a summary line says what is set, the details open on demand. -->
+{#snippet fold(title: string, summary: string, isOpen: boolean, toggleOpen: (v: boolean) => void, body: Snippet)}
+	<details class="group rounded-lg border border-line" open={isOpen} ontoggle={(e) => toggleOpen(e.currentTarget.open)}>
+		<summary class="flex min-h-11 cursor-pointer list-none items-center gap-3 rounded-lg px-3 py-2 hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink [&::-webkit-details-marker]:hidden">
+			<ChevronRight class="size-4 shrink-0 text-ink-2 transition-transform group-open:rotate-90" aria-hidden="true" />
+			<span class="text-sm font-semibold text-ink">{title}</span>
+			<span class="min-w-0 flex-1 truncate text-right text-[0.8125rem] text-ink-2">{summary}</span>
+		</summary>
+		<div class="grid gap-4 border-t border-line px-3 py-4">{@render body()}</div>
+	</details>
+{/snippet}
 
-	<!-- Look -->
-	<fieldset class="grid gap-4" disabled={saving}>
-		<legend class="text-sm font-semibold text-ink">{m.status_form_look()}</legend>
-		<div class="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start">
-			<div class="grid gap-2">
-				<span class="text-sm text-ink" id="{idPrefix}-logo-label">{m.status_form_logo()}</span>
-				<div class="flex items-center gap-3">
-					<div class="flex size-16 items-center justify-center overflow-hidden rounded-lg border border-dashed border-line-strong bg-canvas-deep">
-						{#if logoPreview}
-							<img src={logoPreview} alt={m.status_form_logo_preview()} class="size-full object-contain" />
-						{:else}
-							<span class="text-[0.6875rem] text-ink-3">{m.status_form_logo_none()}</span>
-						{/if}
-					</div>
-					<div class="grid gap-1.5">
-						<label class="inline-flex cursor-pointer items-center rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink hover:bg-surface-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink">
-							{logoPreview ? m.status_form_logo_replace() : m.status_form_logo_upload()}
-							<input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" onchange={pickLogo} aria-labelledby="{idPrefix}-logo-label" />
-						</label>
-						{#if logoPreview}
-							<Button variant="ghost" size="sm" onclick={dropLogo}>{m.status_form_logo_remove()}</Button>
-						{/if}
-					</div>
+{#snippet lookBody()}
+	<fieldset class="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-start" disabled={saving}>
+		<legend class="sr-only">{m.status_form_look()}</legend>
+		<div class="grid gap-2">
+			<span class="text-sm font-semibold text-ink" id="{idPrefix}-logo-label">{m.status_form_logo()}</span>
+			<div class="flex items-center gap-3" title={m.status_form_logo_help()}>
+				<div class="flex size-14 items-center justify-center overflow-hidden rounded-lg border border-dashed border-line-strong bg-canvas-deep">
+					{#if logoPreview}
+						<img src={logoPreview} alt={m.status_form_logo_preview()} class="size-full object-contain" />
+					{:else}
+						<span class="text-[0.6875rem] text-ink-3">{m.status_form_logo_none()}</span>
+					{/if}
 				</div>
-				<p class="text-[0.8125rem] text-ink-2">{m.status_form_logo_help()}</p>
-				{#if logoError}<p class="text-[0.8125rem] text-warning-ink" role="alert">{logoError}</p>{/if}
+				<div class="flex flex-wrap items-center gap-1.5">
+					<label class="inline-flex min-h-10 cursor-pointer items-center rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink hover:bg-surface-2 focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink">
+						{logoPreview ? m.status_form_logo_replace() : m.status_form_logo_upload()}
+						<input type="file" accept="image/png,image/jpeg,image/webp" class="sr-only" onchange={pickLogo} aria-labelledby="{idPrefix}-logo-label" />
+					</label>
+					{#if logoPreview}
+						<Button variant="ghost" size="sm" onclick={dropLogo}>{m.status_form_logo_remove()}</Button>
+					{/if}
+				</div>
 			</div>
-			<div class="grid gap-4">
-				<div class="grid gap-2">
-					<span class="text-sm text-ink" id="{idPrefix}-accent-label">{m.status_form_accent()}</span>
-					<div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="{idPrefix}-accent-label">
-						{#each ACCENTS as option (option.value)}
-							<label class={`inline-flex cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm ${accent === option.value ? 'border-ink bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'} ${accentClass(option.value)}`}>
-								<input type="radio" class="sr-only" name="{idPrefix}-accent" value={option.value} bind:group={accent} />
-								<span class="size-3.5 rounded-full bg-accent" aria-hidden="true"></span>
-								{option.label}
-							</label>
-						{/each}
-					</div>
-					<p class="text-[0.8125rem] text-ink-2">{m.status_form_accent_help()}</p>
-				</div>
-				<Field label={m.status_form_homepage()} for="{idPrefix}-homepage" error={homepageError} help={m.status_form_homepage_help()}>
-					<input id="{idPrefix}-homepage" type="url" class="input" bind:value={homepageUrl} maxlength="300" placeholder="https://example.org" disabled={saving} oninput={() => (homepageError = null)} />
-				</Field>
+			{#if logoError}<p class="text-[0.8125rem] text-warning-ink" role="alert">{logoError}</p>{/if}
+		</div>
+		<div class="grid gap-2">
+			<span class="text-sm font-semibold text-ink" id="{idPrefix}-accent-label">{m.status_form_accent()}</span>
+			<div class="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="{idPrefix}-accent-label" title={m.status_form_accent_help()}>
+				{#each ACCENTS as option (option.value)}
+					<label class={`inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-ink ${accent === option.value ? 'border-ink bg-surface-2 text-ink' : 'border-line text-ink-2 hover:text-ink'} ${accentClass(option.value)}`}>
+						<input type="radio" class="sr-only" name="{idPrefix}-accent" value={option.value} bind:group={accent} />
+						<span class="size-3.5 rounded-full bg-accent" aria-hidden="true"></span>
+						{option.label}
+					</label>
+				{/each}
 			</div>
 		</div>
-		<Field label={m.status_form_footer()} for="{idPrefix}-footer" help={m.status_form_footer_help()}>
-			<textarea id="{idPrefix}-footer" class="input min-h-16" bind:value={footerText} maxlength="280" rows="2" disabled={saving}></textarea>
-		</Field>
 	</fieldset>
+	<div class="grid gap-4 sm:grid-cols-2">
+		<Field label={m.status_form_homepage()} for="{idPrefix}-homepage" error={homepageError} help={m.status_form_homepage_help()}>
+			<input id="{idPrefix}-homepage" type="url" class="input" bind:value={homepageUrl} maxlength="300" placeholder="https://example.org" disabled={saving} oninput={() => (homepageError = null)} />
+		</Field>
+		<Field label={m.status_form_footer()} for="{idPrefix}-footer" help={m.status_form_footer_help()}>
+			<textarea id="{idPrefix}-footer" class="input min-h-10" bind:value={footerText} maxlength="280" rows="1" disabled={saving}></textarea>
+		</Field>
+	</div>
+	<div class="grid gap-x-6 gap-y-3 sm:grid-cols-3">
+		{#each [{ key: 'simple', label: m.status_form_simple(), help: m.status_form_simple_help() }, { key: 'calendar', label: m.status_form_calendar(), help: m.status_form_calendar_help() }, { key: 'latency', label: m.status_form_latency(), help: m.status_form_latency_help() }] as opt (opt.key)}
+			<div class="flex min-h-10 items-center justify-between gap-3" title={opt.help}>
+				<label for="{idPrefix}-{opt.key}" class="min-w-0 text-sm text-ink">{opt.label}</label>
+				{#if opt.key === 'simple'}
+					<Toggle id="{idPrefix}-simple" bind:checked={simple} disabled={saving} label={opt.label} />
+				{:else if opt.key === 'calendar'}
+					<Toggle id="{idPrefix}-calendar" bind:checked={showCalendar} disabled={saving} label={opt.label} />
+				{:else}
+					<Toggle id="{idPrefix}-latency" bind:checked={showLatency} disabled={saving} label={opt.label} />
+				{/if}
+			</div>
+		{/each}
+	</div>
+{/snippet}
 
-	<Field label={m.status_form_simple()} for="{idPrefix}-simple" inline help={m.status_form_simple_help()}>
-		<Toggle id="{idPrefix}-simple" bind:checked={simple} disabled={saving} label={m.status_form_simple()} />
-	</Field>
-
-	<Field label={m.status_form_calendar()} for="{idPrefix}-calendar" inline help={m.status_form_calendar_help()}>
-		<Toggle id="{idPrefix}-calendar" bind:checked={showCalendar} disabled={saving} label={m.status_form_calendar()} />
-	</Field>
-
-	<Field label={m.status_form_latency()} for="{idPrefix}-latency" inline help={m.status_form_latency_help()}>
-		<Toggle id="{idPrefix}-latency" bind:checked={showLatency} disabled={saving} label={m.status_form_latency()} />
-	</Field>
-
-	<!-- Scene -->
+{#snippet sceneBody()}
 	<fieldset class="grid gap-3" disabled={saving || simple}>
-		<legend class="text-sm font-semibold text-ink">{m.status_form_scene()}</legend>
-		<p class="text-[0.8125rem] text-ink-2">
-			{m.status_form_scene_help()}
-		</p>
+		<legend class="sr-only">{m.status_form_scene()}</legend>
+		<p class="text-[0.8125rem] text-ink-2">{m.status_form_scene_help()}</p>
 		<SceneDefs />
 		<div class="flex flex-wrap items-center gap-3">
 			{#if chosenScenes.length === 0}
@@ -389,8 +356,8 @@
 			{/if}
 			{#each chosenScenes as choice, index (choice.value)}
 				{@const Preview = SCENE_COMPONENTS[choice.value]}
-				<span class="grid w-32 gap-1 rounded-lg border border-ink bg-surface-2 p-1.5">
-					<span class="relative block h-16 overflow-hidden rounded-md border border-line" aria-hidden="true"><Preview /></span>
+				<span class="grid w-28 gap-1 rounded-lg border border-ink bg-surface-2 p-1.5">
+					<span class="relative block h-12 overflow-hidden rounded-md border border-line" aria-hidden="true"><Preview /></span>
 					<span class="flex items-center justify-between gap-1 px-0.5 text-sm text-ink">
 						<span class="truncate">{choice.label}</span>
 						{#if chosenScenes.length > 1}<span class="text-[0.6875rem] font-semibold text-ink-2">{index + 1}</span>{/if}
@@ -458,78 +425,140 @@
 			</Field>
 		{/if}
 	</fieldset>
+{/snippet}
 
-	<!-- Email subscription -->
-	<Field
-		label={m.status_form_subscribers()}
-		for="{idPrefix}-subscribe"
-		help={smtpChannels.length === 0 ? m.status_form_subscribers_no_channel() : m.status_form_subscribers_help()}
-	>
-		<select
-			id="{idPrefix}-subscribe"
-			class="input"
-			value={subscribeChannel === null ? '' : String(subscribeChannel)}
-			onchange={(event) => (subscribeChannel = event.currentTarget.value === '' ? null : Number(event.currentTarget.value))}
-			disabled={saving || (smtpChannels.length === 0 && subscribeChannel === null)}
+{#snippet connectBody()}
+	<div class="grid items-start gap-4 sm:grid-cols-2">
+		<Field
+			label={m.status_form_subscribers()}
+			for="{idPrefix}-subscribe"
+			help={smtpChannels.length === 0 ? m.status_form_subscribers_no_channel() : m.status_form_subscribers_help()}
 		>
-			<option value="">{m.status_form_subscribers_off()}</option>
-			{#each smtpChannels as channel (channel.id)}
-				<option value={String(channel.id)}>{channel.enabled ? m.status_form_subscribers_via({ name: channel.name }) : m.status_form_subscribers_via_disabled({ name: channel.name })}</option>
-			{/each}
-		</select>
+			<select
+				id="{idPrefix}-subscribe"
+				class="input"
+				value={subscribeChannel === null ? '' : String(subscribeChannel)}
+				onchange={(event) => (subscribeChannel = event.currentTarget.value === '' ? null : Number(event.currentTarget.value))}
+				disabled={saving || (smtpChannels.length === 0 && subscribeChannel === null)}
+			>
+				<option value="">{m.status_form_subscribers_off()}</option>
+				{#each smtpChannels as channel (channel.id)}
+					<option value={String(channel.id)}>{channel.enabled ? m.status_form_subscribers_via({ name: channel.name }) : m.status_form_subscribers_via_disabled({ name: channel.name })}</option>
+				{/each}
+			</select>
+		</Field>
+		<DomainField
+			id="{idPrefix}-domain"
+			bind:value={domain}
+			saved={initial?.domain ?? null}
+			error={domainError}
+			disabled={saving}
+			oninput={() => (domainError = null)}
+		/>
+	</div>
+{/snippet}
+
+<form class="grid gap-4" onsubmit={submit} novalidate>
+	<!-- Basics -->
+	<div class="grid items-start gap-4 sm:grid-cols-2">
+		<Field label={m.status_form_title()} for="{idPrefix}-title" error={titleError} required>
+			<input
+				id="{idPrefix}-title"
+				type="text"
+				class="input"
+				bind:value={title}
+				oninput={onTitleInput}
+				placeholder={m.status_form_title_placeholder()}
+				maxlength="120"
+				disabled={saving}
+				aria-invalid={titleError ? 'true' : undefined}
+			/>
+		</Field>
+		<Field label={m.status_form_address()} for="{idPrefix}-slug" error={slugError} help={slug ? m.status_form_address_url({ url: `/s/${slug}` }) : m.status_form_address_help()} required>
+			<input
+				id="{idPrefix}-slug"
+				type="text"
+				class="input font-mono"
+				bind:value={slug}
+				oninput={() => {
+					slugTouched = true;
+					slugError = null;
+				}}
+				placeholder="home-lab"
+				maxlength="40"
+				autocomplete="off"
+				spellcheck="false"
+				disabled={saving}
+				aria-invalid={slugError ? 'true' : undefined}
+			/>
+		</Field>
+	</div>
+	<Field label={m.status_form_description()} for="{idPrefix}-description">
+		<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder={m.status_form_description_placeholder()} title={m.status_form_description_help()} disabled={saving} />
 	</Field>
+	<div class="grid grid-cols-2 items-end gap-4 sm:grid-cols-3">
+		<Field label={m.status_form_theme()} for="{idPrefix}-theme">
+			<select id="{idPrefix}-theme" class="input" bind:value={theme} disabled={saving}>
+				<option value="auto">{m.status_form_theme_auto()}</option>
+				<option value="light">{m.status_form_theme_day()}</option>
+				<option value="dark">{m.status_form_theme_night()}</option>
+			</select>
+		</Field>
+		<div title={m.status_form_history_help()}>
+			<Field label={m.status_form_history()} for="{idPrefix}-days">
+				<select id="{idPrefix}-days" class="input" bind:value={showDays} disabled={saving}>
+					{#each HISTORY_CHOICES as choice (choice)}
+						<option value={choice}>{m.status_share_days({ days: choice })}</option>
+					{/each}
+				</select>
+			</Field>
+		</div>
+		<div class="col-span-2 flex min-h-10 items-center justify-between gap-3 rounded-lg border border-line px-3 sm:col-span-1">
+			<div class="min-w-0">
+				<label for="{idPrefix}-published" class="block text-sm font-semibold text-ink">{m.status_form_published()}</label>
+				<p class="text-[0.75rem] text-ink-2">{published ? m.status_form_published_on() : m.status_form_published_off()}</p>
+			</div>
+			<Toggle id="{idPrefix}-published" bind:checked={published} disabled={saving} label={m.status_form_published()} />
+		</div>
+	</div>
 
-	<!-- Public domain -->
-	<DomainField
-		id="{idPrefix}-domain"
-		bind:value={domain}
-		saved={initial?.domain ?? null}
-		error={domainError}
-		disabled={saving}
-		oninput={() => (domainError = null)}
-	/>
-
-	<!-- Service picker -->
+	<!-- Services -->
 	<fieldset class="grid gap-2" disabled={saving}>
-		<legend class="text-sm font-semibold text-ink">{m.status_form_services()}</legend>
-		<p class="text-[0.8125rem] text-ink-2">{m.status_form_services_help()}</p>
+		<legend class="mb-1 text-sm font-semibold text-ink">{m.status_form_services()}</legend>
 		{#if sortedTargets.length === 0}
 			<p class="ghost-cell rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-ink-2">{m.status_form_services_empty()}</p>
 		{:else}
-			{#if sortedTargets.length > 8}
-				<input
-					type="search"
-					class="input"
-					bind:value={serviceQuery}
-					placeholder={m.status_form_services_search()}
-					aria-label={m.status_form_services_search()}
-					autocomplete="off"
-				/>
-			{/if}
-			<ul class="divide-y divide-line rounded-[var(--radius-card)] border border-line" role="list">
-				{#each shownTargets as target (target.id)}
-					{@const pick = picks.get(target.id)}
-					<li class="px-3 py-2.5">
-						<div class="flex items-center gap-3">
-							<input
-								id="{idPrefix}-pick-{target.id}"
-								type="checkbox"
-								class="size-4 shrink-0 accent-signal"
-								checked={pick !== undefined}
-								onchange={(event) => toggle(target, event.currentTarget.checked)}
-							/>
-							<label for="{idPrefix}-pick-{target.id}" class="min-w-0 flex-1 truncate text-sm text-ink">
-								{target.name}
-								<span class="text-ink-3">· {target.kind}</span>
-							</label>
-						</div>
-						{#if pick}
-							<div class="mt-2 grid gap-2 pl-7 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
+			<Combobox
+				id="{idPrefix}-services"
+				options={serviceOptions}
+				selected={order.map(String)}
+				ontoggle={(value, on) => {
+					const target = targetById.get(Number(value));
+					if (target) toggle(target, on);
+				}}
+				label={m.status_form_services_search()}
+				emptyText={m.status_form_services_no_match()}
+				ungroupedLabel={m.status_form_services_no_folder()}
+				summary={order.length > 0 ? m.status_form_services_count({ count: order.length }) : ''}
+			/>
+			<p class="text-[0.8125rem] text-ink-2">{m.status_form_services_help()}</p>
+			{#if order.length > 0}
+				<ol class="max-h-[26rem] divide-y divide-line overflow-y-auto rounded-[var(--radius-card)] border border-line">
+					{#each order as id, index (id)}
+						{@const target = targetById.get(id)}
+						{@const pick = picks.get(id)}
+						{#if target && pick}
+							<li class="grid gap-2 px-3 py-2 sm:grid-cols-[minmax(0,0.9fr)_minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-center">
+								<div class="flex min-w-0 items-center gap-2 text-sm text-ink">
+									<span class="w-5 shrink-0 text-right text-[0.75rem] tabular-nums text-ink-3">{index + 1}</span>
+									<span class="min-w-0 truncate">{target.name}</span>
+									<span class="shrink-0 text-[0.75rem] text-ink-3">{target.kind}</span>
+								</div>
 								<input
 									type="text"
 									class="input"
 									value={pick.label}
-									oninput={(event) => setPick(target.id, { label: event.currentTarget.value })}
+									oninput={(event) => setPick(id, { label: event.currentTarget.value })}
 									placeholder={target.name}
 									maxlength="80"
 									aria-label={m.status_form_pick_label_aria({ name: target.name })}
@@ -538,33 +567,34 @@
 									type="text"
 									class="input"
 									value={pick.group}
-									oninput={(event) => setPick(target.id, { group: event.currentTarget.value })}
+									oninput={(event) => setPick(id, { group: event.currentTarget.value })}
 									placeholder={m.status_form_pick_group()}
 									maxlength="60"
 									list="{idPrefix}-groups"
 									aria-label={m.status_form_pick_group_aria({ name: target.name })}
 								/>
-								<div class="flex gap-1">
-									<Button variant="ghost" size="sm" onclick={() => move(target.id, -1)} disabled={order.indexOf(target.id) <= 0}>{m.status_form_up()}</Button>
-									<Button variant="ghost" size="sm" onclick={() => move(target.id, 1)} disabled={order.indexOf(target.id) >= order.length - 1}>{m.status_form_down()}</Button>
+								<div class="flex justify-end">
+									<button type="button" class={ICON_BTN} onclick={() => move(id, -1)} disabled={index === 0} aria-label={m.status_form_pick_up_aria({ name: target.name })} title={m.status_form_up()}><ArrowUp class="size-4" aria-hidden="true" /></button>
+									<button type="button" class={ICON_BTN} onclick={() => move(id, 1)} disabled={index === order.length - 1} aria-label={m.status_form_pick_down_aria({ name: target.name })} title={m.status_form_down()}><ArrowDown class="size-4" aria-hidden="true" /></button>
+									<button type="button" class={ICON_BTN} onclick={() => toggle(target, false)} aria-label={m.status_form_pick_remove_aria({ name: target.name })}><X class="size-4" aria-hidden="true" /></button>
 								</div>
-							</div>
+							</li>
 						{/if}
-					</li>
-				{:else}
-					<li class="px-3 py-4 text-center text-sm text-ink-2">{m.status_form_services_no_match()}</li>
-				{/each}
-			</ul>
-			<datalist id="{idPrefix}-groups">
-				{#each groupsSeen as group (group)}<option value={group}></option>{/each}
-			</datalist>
-			{#if order.length > 0}
-				<p class="text-[0.8125rem] text-ink-2">
-					{m.status_form_order({ names: order.map((id) => picks.get(id)?.label || targetById.get(id)?.name || id).join(', ') })}
-				</p>
+					{/each}
+				</ol>
+				<datalist id="{idPrefix}-groups">
+					{#each groupsSeen as group (group)}<option value={group}></option>{/each}
+				</datalist>
 			{/if}
 		{/if}
 	</fieldset>
+
+	<!-- Folded options -->
+	<div class="grid gap-2">
+		{@render fold(m.status_form_look(), lookSummary, openLook, (v) => (openLook = v), lookBody)}
+		{@render fold(m.status_form_scene(), sceneSummary, openScene, (v) => (openScene = v), sceneBody)}
+		{@render fold(m.status_form_section_connect(), connectSummary, openConnect, (v) => (openConnect = v), connectBody)}
+	</div>
 
 	{#if error}
 		<ErrorNotice {error} title={page ? m.status_form_save_error() : m.status_form_create_error()} />
