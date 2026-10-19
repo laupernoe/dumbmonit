@@ -1,0 +1,8 @@
+# source: https://github.com/cockpit-project/cockpit/blob/main/src/ws/cockpithandlers.c cockpit_handler_ping (body "{ \"service\": \"cockpit\" }", Content-Type application/json, Access-Control-Allow-Origin *)
+# RECONSTRUCTED from the source. Path: GET /ping (HTTPS 9090)
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+Content-Length: 25
+
+{ "service": "cockpit" }

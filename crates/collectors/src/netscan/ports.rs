@@ -31,7 +31,8 @@ pub const STANDARD_TCP: &[u16] = &[
     8291,  // MikroTik Winbox
     8443,  // HTTPS alternatif / PDM / UniFi
     8728,  // MikroTik API
-    9000,  // Portainer / Graylog
+    9000,  // Portainer / Graylog / MinIO / RustFS
+    9001,  // Console MinIO / RustFS
     9090,  // Prometheus / Cockpit
     9100,  // JetDirect (imprimantes)
     9443,  // Portainer (HTTPS)
