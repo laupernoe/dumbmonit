@@ -1185,6 +1185,22 @@
 	"devices_agentmodules_title": "Servizi trovati dall'agente",
 	"devices_agentmodules_toggle": "Monitora {name}",
 	"devices_agentmodules_waiting": "In attesa dell'agente",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} avviso attivo",
+				"countPlural=other": "{count} avvisi attivi"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} in corso, {acked} confermati, {suppressed} nascosti da un genitore offline",
 	"devices_appliance_attention": "Richiede attenzione",
 	"devices_appliance_err_title": "Impossibile caricare: {name}",
 	"devices_appliance_healthy": "Integro",
@@ -5742,6 +5758,7 @@
 	"settings_widgets_ai_claude_key": "Chiave Admin API di Anthropic",
 	"settings_widgets_ai_claude_key_help": "Inizia con sk-ant-admin. Le chiavi admin esistono solo per le organizzazioni e vengono create nella Claude Console da un amministratore dell’organizzazione. Salvata cifrata, non viene mai mostrata di nuovo.",
 	"settings_widgets_ai_hint": "Costo e token degli account API di Claude e OpenAI della tua organizzazione, letti ogni 15 minuti dalle loro API di amministrazione. Gli abbonamenti consumer (Claude Pro e Max, ChatGPT Plus) e i loro limiti settimanali non hanno un’API ufficiale e non possono essere mostrati.",
+	"settings_widgets_ai_key_howto": "Come ottenere una chiave admin",
 	"settings_widgets_ai_openai": "ChatGPT (API OpenAI)",
 	"settings_widgets_ai_openai_hint": "Costo e token dell’uso dell’API di OpenAI dell’organizzazione.",
 	"settings_widgets_ai_openai_key": "Chiave admin di OpenAI",
@@ -6611,6 +6628,5 @@
 	"whatsnew_dialog_notes": "Note di rilascio complete",
 	"whatsnew_dialog_ok": "Ho capito",
 	"whatsnew_dialog_title": "Novità della v{version}",
-	"whatsnew_dialog_updated": "Aggiornato · {date}",
-	"settings_widgets_ai_key_howto": "Come ottenere una chiave admin"
+	"whatsnew_dialog_updated": "Aggiornato · {date}"
 }

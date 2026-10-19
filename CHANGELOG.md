@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Alert bell on monitors.** In the Compact and Tiles views of Monitors, and
+  in a monitor's page header, a small bell with a count shows how many alerts
+  are active on it (nothing at 0). Firing alerts use the warning tone,
+  acknowledged ones a quiet outline, and alerts masked by an offline parent a
+  crossed-out bell; a click opens the alerts section of the monitor. Counted
+  from the alert list already loaded, in one pass.
 - **LDAP / Active Directory sign-in.** People sign in on the usual sign-in
   screen with their directory username and password: DumbMonit binds a
   service account, finds the user with a filter (the username is escaped per

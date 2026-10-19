@@ -1185,6 +1185,22 @@
 	"devices_agentmodules_title": "Serviços encontrados pelo agente",
 	"devices_agentmodules_toggle": "Monitorar {name}",
 	"devices_agentmodules_waiting": "Aguardando o agente",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta ativo",
+				"countPlural=other": "{count} alertas ativos"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} em andamento, {acked} reconhecidos, {suppressed} ocultos por um pai offline",
 	"devices_appliance_attention": "Requer atenção",
 	"devices_appliance_err_title": "Não foi possível carregar: {name}",
 	"devices_appliance_healthy": "Saudável",
@@ -5742,6 +5758,7 @@
 	"settings_widgets_ai_claude_key": "Chave Admin API da Anthropic",
 	"settings_widgets_ai_claude_key_help": "Começa com sk-ant-admin. As chaves de administrador só existem para organizações e são criadas no Claude Console por um administrador da organização. Armazenada criptografada, nunca exibida novamente.",
 	"settings_widgets_ai_hint": "Custo e tokens das contas de API do Claude e da OpenAI da sua organização, lidos a cada 15 minutos nas APIs de administração. As assinaturas para consumidores (Claude Pro e Max, ChatGPT Plus) e seus limites semanais não têm API oficial e não podem ser exibidas.",
+	"settings_widgets_ai_key_howto": "Como obter uma chave de administrador",
 	"settings_widgets_ai_openai": "ChatGPT (API da OpenAI)",
 	"settings_widgets_ai_openai_hint": "Custo e tokens do uso da API da OpenAI pela organização.",
 	"settings_widgets_ai_openai_key": "Chave de administrador da OpenAI",
@@ -6611,6 +6628,5 @@
 	"whatsnew_dialog_notes": "Notas de versão completas",
 	"whatsnew_dialog_ok": "Entendi",
 	"whatsnew_dialog_title": "Novidades da v{version}",
-	"whatsnew_dialog_updated": "Atualizado · {date}",
-	"settings_widgets_ai_key_howto": "Como obter uma chave de administrador"
+	"whatsnew_dialog_updated": "Atualizado · {date}"
 }

@@ -1185,6 +1185,22 @@
 	"devices_agentmodules_title": "Servicios encontrados por el agente",
 	"devices_agentmodules_toggle": "Vigilar {name}",
 	"devices_agentmodules_waiting": "Esperando al agente",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta activa",
+				"countPlural=other": "{count} alertas activas"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} en curso, {acked} reconocidas, {suppressed} ocultas por un padre sin conexión",
 	"devices_appliance_attention": "Requiere atención",
 	"devices_appliance_err_title": "No se pudo cargar: {name}",
 	"devices_appliance_healthy": "Correcto",
@@ -5742,6 +5758,7 @@
 	"settings_widgets_ai_claude_key": "Clave Admin API de Anthropic",
 	"settings_widgets_ai_claude_key_help": "Empieza por sk-ant-admin. Las claves de administrador solo existen para organizaciones y las crea un administrador de la organización en la Claude Console. Se guarda cifrada y no se vuelve a mostrar.",
 	"settings_widgets_ai_hint": "Coste y tokens de las cuentas de API de Claude y OpenAI de su organización, leídos cada 15 minutos en sus API de administración. Las suscripciones para particulares (Claude Pro y Max, ChatGPT Plus) y sus límites semanales no tienen API oficial y no se pueden mostrar.",
+	"settings_widgets_ai_key_howto": "Cómo obtener una clave de administrador",
 	"settings_widgets_ai_openai": "ChatGPT (API de OpenAI)",
 	"settings_widgets_ai_openai_hint": "Coste y tokens del uso de la API de OpenAI de la organización.",
 	"settings_widgets_ai_openai_key": "Clave de administrador de OpenAI",
@@ -6611,6 +6628,5 @@
 	"whatsnew_dialog_notes": "Notas de la versión completas",
 	"whatsnew_dialog_ok": "Entendido",
 	"whatsnew_dialog_title": "Novedades de la v{version}",
-	"whatsnew_dialog_updated": "Actualizado · {date}",
-	"settings_widgets_ai_key_howto": "Cómo obtener una clave de administrador"
+	"whatsnew_dialog_updated": "Actualizado · {date}"
 }

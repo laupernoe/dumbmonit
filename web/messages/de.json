@@ -1185,6 +1185,22 @@
 	"devices_agentmodules_title": "Vom Agenten gefundene Dienste",
 	"devices_agentmodules_toggle": "{name} überwachen",
 	"devices_agentmodules_waiting": "Wartet auf den Agenten",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} aktive Warnung",
+				"countPlural=other": "{count} aktive Warnungen"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} aktiv, {acked} bestätigt, {suppressed} durch ein Eltergerät offline verdeckt",
 	"devices_appliance_attention": "Benötigt Aufmerksamkeit",
 	"devices_appliance_err_title": "{name} konnte nicht geladen werden",
 	"devices_appliance_healthy": "In Ordnung",
@@ -5742,6 +5758,7 @@
 	"settings_widgets_ai_claude_key": "Anthropic-Admin-API-Schlüssel",
 	"settings_widgets_ai_claude_key_help": "Beginnt mit sk-ant-admin. Admin-Schlüssel gibt es nur für Organisationen; ein Organisations-Admin erstellt sie in der Claude Console. Verschlüsselt gespeichert, nie wieder angezeigt.",
 	"settings_widgets_ai_hint": "Kosten und Tokens der Claude- und OpenAI-API-Konten Ihrer Organisation, alle 15 Minuten über deren Admin-APIs gelesen. Verbraucher-Abos (Claude Pro und Max, ChatGPT Plus) und ihre Wochenlimits haben keine offizielle API und lassen sich nicht anzeigen.",
+	"settings_widgets_ai_key_howto": "So erhalten Sie einen Admin-Schlüssel",
 	"settings_widgets_ai_openai": "ChatGPT (OpenAI-API)",
 	"settings_widgets_ai_openai_hint": "Kosten und Tokens der OpenAI-API-Nutzung der Organisation.",
 	"settings_widgets_ai_openai_key": "OpenAI-Admin-Schlüssel",
@@ -6611,6 +6628,5 @@
 	"whatsnew_dialog_notes": "Vollständige Versionshinweise",
 	"whatsnew_dialog_ok": "Verstanden",
 	"whatsnew_dialog_title": "Neu in v{version}",
-	"whatsnew_dialog_updated": "Aktualisiert · {date}",
-	"settings_widgets_ai_key_howto": "So erhalten Sie einen Admin-Schlüssel"
+	"whatsnew_dialog_updated": "Aktualisiert · {date}"
 }
