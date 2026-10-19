@@ -1,0 +1,12 @@
+# source: https://github.com/pi-hole/FTL/blob/master/src/api/docs/content/specs/auth.yaml (GET /auth, security: [] allowed; examples login_failed L~520: valid false, totp false, sid null, csrf null, validity -1, message) ; web title: https://github.com/pi-hole/web/blob/master/scripts/lua/header.lp L70 ("Pi-hole <hostname>") ; default extra headers: https://github.com/pi-hole/FTL/blob/master/src/config/config.c L1120-L1123
+# RECONSTRUCTED from the OpenAPI examples. Path: GET /api/auth (no credential -> 401 when a password is set, 200 with valid:true when none is needed)
+HTTP/1.1 401 Unauthorized
+Content-Type: application/json
+Content-Length: 118
+X-DNS-Prefetch-Control: off
+X-Frame-Options: DENY
+X-XSS-Protection: 0
+X-Content-Type-Options: nosniff
+Referrer-Policy: strict-origin-when-cross-origin
+
+{"session":{"valid":false,"totp":false,"sid":null,"csrf":null,"validity":-1,"message":"no SID provided"},"took":0.000142}

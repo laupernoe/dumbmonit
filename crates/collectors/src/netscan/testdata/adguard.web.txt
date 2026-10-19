@@ -1,0 +1,30 @@
+# source: https://github.com/AdguardTeam/AdGuardHome/blob/master/client/public/login.html (title "Login" L13, mask-icon color="#67B279" L10) ; client/public/index.html L14 (title "AdGuard Home") ; internal/home/authhttp.go L309-L331 (/login.* is served without a session)
+# Copied from the real client/public/login.html (verbatim apart from whitespace); headers RECONSTRUCTED. Path: GET /login.html
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Accept-Ranges: bytes
+Last-Modified: Mon, 05 Oct 2026 09:00:00 GMT
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 1214
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+        <meta name="google" content="notranslate">
+        <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon-180x180.png" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <link rel="mask-icon" href="assets/safari-pinned-tab.svg" color="#67B279">
+        <link rel="icon" type="image/png" href="assets/favicon.png" sizes="48x48">
+        <title>Login</title>
+    </head>
+    <body>
+        <noscript>
+            You need to enable JavaScript to run this app.
+        </noscript>
+        <div id="root"></div>
+    </body>
+</html>

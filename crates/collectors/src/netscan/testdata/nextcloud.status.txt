@@ -1,0 +1,10 @@
+# source: https://github.com/nextcloud/server/blob/master/status.php L28-L40 (keys), L44-L45 (CORS + application/json) ; real body in crates/collectors/src/selfhosted/testdata/nextcloud_35.0.1/status.json
+# Body copied from repo testdata; headers reconstructed (Apache in front). Path: GET /status.php
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Server: Apache/2.4.62 (Debian)
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+Content-Length: 169
+
+{"installed":true,"maintenance":false,"needsDbUpgrade":false,"version":"35.0.1.1","versionstring":"35.0.1","edition":"","productname":"Nextcloud","extendedSupport":false}

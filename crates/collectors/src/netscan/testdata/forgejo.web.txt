@@ -1,0 +1,29 @@
+# source: https://codeberg.org/forgejo/forgejo/src/branch/forgejo/templates/base/head.tmpl (L6 title with AppDisplayName, L10 keywords) ; templates/base/footer_content.tmpl L3-L5 (href https://forgejo.org) ; modules/setting/ui.go L153 (default keywords "git,forge,forgejo") ; modules/setting/server.go L147 (default APP_NAME "Forgejo: Beyond coding. We Forge.") ; Makefile L89-L103 (version suffix +gitea-1.22.0)
+# RECONSTRUCTED from the templates (condensed). Path: GET /
+HTTP/1.1 200 OK
+Cache-Control: max-age=0, private, must-revalidate, no-transform
+Content-Type: text/html; charset=utf-8
+X-Frame-Options: SAMEORIGIN
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+
+<!DOCTYPE html>
+<html lang="en-US" data-theme="forgejo-auto">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Forgejo: Beyond coding. We Forge.</title>
+	<link rel="manifest" href="/assets/site-manifest.json">
+	<meta name="author" content="Forgejo – Beyond coding. We forge.">
+	<meta name="description" content="Forgejo is a lightweight software forge.">
+	<meta name="keywords" content="git,forge,forgejo">
+	<meta name="referrer" content="same-origin">
+	<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+	<footer class="page-footer" role="group" aria-label="Footer">
+		<div class="left-links" role="contentinfo" aria-label="About software">
+			<a target="_blank" rel="noopener noreferrer" href="https://forgejo.org">Powered by Forgejo</a>
+			Version: 11.0.3+gitea-1.22.0
+		</div>
+	</footer>
+</body>
+</html>

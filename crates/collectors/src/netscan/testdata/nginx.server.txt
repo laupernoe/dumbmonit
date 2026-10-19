@@ -1,0 +1,22 @@
+# source: https://github.com/nginx/nginx/blob/master/src/http/ngx_http_header_filter_module.c L50-L52 ("Server: nginx" / "Server: " NGINX_VER), L469 (server_tokens off -> bare "nginx") ; https://github.com/rapid7/recog/blob/main/xml/http_servers.xml L1552 (^nginx$), L1561 (^nginx/?([\d.]+)?)
+# RECONSTRUCTED (stock Debian welcome page, condensed). Path: GET /
+HTTP/1.1 200 OK
+Server: nginx/1.26.2
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Type: text/html
+Content-Length: 615
+Last-Modified: Tue, 08 Oct 2026 08:00:00 GMT
+Connection: keep-alive
+ETag: "67048000-267"
+Accept-Ranges: bytes
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>Welcome to nginx!</title>
+</head>
+<body>
+<h1>Welcome to nginx!</h1>
+<p>If you see this page, the nginx web server is successfully installed and working.</p>
+</body>
+</html>

@@ -156,6 +156,7 @@ nav:
       - Notification channels: notifications.md
   - Using DumbMonit:
       - Overview page: using/overview.md
+      - Network discovery: using/discovery.md
       - Wall mode and music: using/wall.md
       - Monitors page: using/devices.md
       - Topology map: using/topology.md

@@ -1,0 +1,9 @@
+# source: https://github.com/caddyserver/caddy/blob/master/modules/caddyhttp/server.go L593-L594 (ServerHeader = "Caddy"), L679-L681 (h["Server"] = serverHeader) ; https://github.com/rapid7/recog/blob/main/xml/http_servers.xml L4587 (^Caddy$)
+# RECONSTRUCTED. Any Caddy-served site (kind null: nothing to monitor beyond HTTP). Path: GET /
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Server: Caddy
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 29
+
+<html><body>Hello</body></html>
