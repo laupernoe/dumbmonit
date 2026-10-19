@@ -4456,7 +4456,7 @@ export type DiscoveryConfidence = 'high' | 'medium' | 'low';
 export interface DiscoveryJobRequest {
 	cidr: string;
 	/** Id of the relay agent that scans, `null` for the server itself. */
-	agent_id: string | null;
+	agent_id: number | null;
 	/** Secret: sent, never returned. */
 	snmp_community?: string;
 	depth: DiscoveryDepth;
@@ -4465,7 +4465,7 @@ export interface DiscoveryJobRequest {
 export interface DiscoveryJobSummary {
 	id: string;
 	cidr: string;
-	agent_id: string | null;
+	agent_id: number | null;
 	agent_name: string | null;
 	status: DiscoveryJobStatus;
 	started_at: string;
