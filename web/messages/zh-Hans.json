@@ -6653,6 +6653,34 @@
 	"whatsnew_dialog_ok": "知道了",
 	"whatsnew_dialog_title": "v{version} 新功能",
 	"whatsnew_dialog_updated": "更新于 · {date}",
+	"worldmap_cluster_label": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个相近位置：{members}"
+			}
+		}
+	],
+	"worldmap_cluster_name": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个位置"
+			}
+		}
+	],
 	"worldmap_detail_back": "返回所有位置",
 	"worldmap_detail_empty": "此位置还没有监控。",
 	"worldmap_edit_locations": "编辑位置",

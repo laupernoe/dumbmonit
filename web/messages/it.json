@@ -6753,6 +6753,36 @@
 	"whatsnew_dialog_ok": "Ho capito",
 	"whatsnew_dialog_title": "Novità della v{version}",
 	"whatsnew_dialog_updated": "Aggiornato · {date}",
+	"worldmap_cluster_label": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} sede vicina: {members}",
+				"countPlural=other": "{count} sedi vicine: {members}"
+			}
+		}
+	],
+	"worldmap_cluster_name": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} sede",
+				"countPlural=other": "{count} sedi"
+			}
+		}
+	],
 	"worldmap_detail_back": "Torna a tutte le sedi",
 	"worldmap_detail_empty": "Ancora nessun monitor in questa sede.",
 	"worldmap_edit_locations": "Modifica le sedi",

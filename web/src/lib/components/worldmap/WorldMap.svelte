@@ -32,6 +32,7 @@
 	import type { Basemap } from '#lib/api/types.js';
 	import { loadLeaflet, type LeafletModule, type World } from '#lib/map/leaflet.js';
 	import { wrapLongitude } from '#lib/map/aggregate.js';
+	import { clusterByDistance } from '#lib/map/cluster.js';
 
 	interface Props {
 		pins: WorldPin[];
@@ -45,10 +46,12 @@
 		label: string;
 		/** Frame the pins once they arrive (default); off, the map keeps the view it was given. */
 		fit?: boolean;
+		/** Pins too close on screen become one group pin (count, worst state); recomputed at each zoom. */
+		cluster?: boolean;
 		class?: string;
 	}
 
-	let { pins, basemap, selected = null, onselect, onpick, onready, label, fit = true, class: className = '' }: Props = $props();
+	let { pins, basemap, selected = null, onselect, onpick, onready, label, fit = true, cluster = false, class: className = '' }: Props = $props();
 
 	let element = $state<HTMLDivElement | null>(null);
 	let map = $state<Leaflet.Map | null>(null);
@@ -142,12 +145,14 @@
 		pick: '<circle cx="8" cy="8" r="2.5"/>'
 	};
 
-	function pinHtml(pin: WorldPin, active: boolean): string {
+	function pinHtml(pin: WorldPin, active: boolean, group = false): string {
 		const count = pin.count ? `<span class="wm-pin__count">${escapeHtml(pin.count)}</span>` : '';
-		return `<span class="wm-pin__body" data-verdict="${pin.verdict}" data-active="${active}"><svg viewBox="0 0 16 16" aria-hidden="true" class="wm-pin__glyph">${GLYPH[pin.verdict]}</svg>${count}</span><span class="wm-pin__name">${escapeHtml(pin.name)}</span>`;
+		return `<span class="wm-pin__body" data-verdict="${pin.verdict}" data-active="${active}" data-group="${group}"><svg viewBox="0 0 16 16" aria-hidden="true" class="wm-pin__glyph">${GLYPH[pin.verdict]}</svg>${count}</span><span class="wm-pin__name">${escapeHtml(pin.name)}</span>`;
 	}
 
 	// Pins.
+	let shownPins: WorldPin[] = [];
+	let shownActive: string | null = null;
 	$effect(() => {
 		const current = map;
 		const layer = pinLayer;
@@ -155,37 +160,124 @@
 		const active = selected;
 		if (!current || !layer || !lib) return;
 		untrack(() => {
-			layer.clearLayers();
-			drawn = [];
-			for (const pin of list) {
-				const marker = lib!.marker([pin.latitude, pin.longitude], {
-					icon: lib!.divIcon({ className: 'wm-pin', html: pinHtml(pin, pin.id === active), iconSize: undefined }),
-					keyboard: pin.verdict !== 'pick',
-					title: pin.label,
-					alt: pin.label,
-					riseOnHover: true,
-					zIndexOffset: pin.verdict === 'down' ? 1000 : pin.verdict === 'warn' ? 500 : 0,
-					interactive: pin.verdict !== 'pick'
-				});
-				marker.on('click', () => onselect?.(pin.id));
-				marker.on('add', () => {
-					const icon = marker.getElement();
-					if (!icon) return;
-					icon.setAttribute('role', 'button');
-					icon.setAttribute('aria-label', pin.label);
-					if (pin.id === active) icon.setAttribute('aria-pressed', 'true');
-				});
-				marker.addTo(layer);
-				drawn.push({ marker, pin, active: pin.id === active });
-			}
+			shownPins = list;
+			shownActive = active;
 			if (fit && !fitted && list.length > 0) {
 				fitted = true;
 				if (list.length === 1) current.setView([list[0].latitude, list[0].longitude], Math.min(current.getMaxZoom(), 4), { animate: false });
 				else current.fitBounds(lib!.latLngBounds(list.map((p) => [p.latitude, p.longitude])), { padding: [48, 48], maxZoom: 6, animate: false });
 			}
-			declutter();
+			draw();
 		});
 	});
+
+	/** Distance under which two pins merge: about the width of a lens. */
+	const CLUSTER_PX = 44;
+
+	function addMarker(pin: WorldPin, active: boolean, group: WorldPin[] | null) {
+		const layer = pinLayer!;
+		const marker = lib!.marker([pin.latitude, pin.longitude], {
+			icon: lib!.divIcon({ className: 'wm-pin', html: pinHtml(pin, active, group !== null), iconSize: undefined }),
+			keyboard: pin.verdict !== 'pick',
+			title: pin.label,
+			alt: pin.label,
+			riseOnHover: true,
+			zIndexOffset: (group ? 2000 : 0) + (pin.verdict === 'down' ? 1000 : pin.verdict === 'warn' ? 500 : 0),
+			interactive: pin.verdict !== 'pick'
+		});
+		marker.on('click', () => (group ? openGroup(group) : onselect?.(pin.id)));
+		marker.on('add', () => {
+			const icon = marker.getElement();
+			if (!icon) return;
+			icon.setAttribute('role', 'button');
+			icon.setAttribute('aria-label', pin.label);
+			if (active) icon.setAttribute('aria-pressed', 'true');
+		});
+		marker.addTo(layer);
+		drawn.push({ marker, pin, active });
+	}
+
+	/** Draws the pins, grouping those too close on screen when asked to. */
+	function draw() {
+		const current = map;
+		const layer = pinLayer;
+		if (!current || !layer || !lib) return;
+		layer.clearLayers();
+		drawn = [];
+		const list = shownPins;
+		const byId = new Map(list.map((p) => [p.id, p]));
+		const groups = cluster
+			? clusterByDistance(
+					list
+						.filter((p) => p.verdict !== 'pick')
+						.map((p) => {
+							const at = current.latLngToContainerPoint([p.latitude, p.longitude]);
+							return { id: p.id, x: at.x, y: at.y, rank: RANK[p.verdict] };
+						}),
+					CLUSTER_PX
+				)
+			: list.filter((p) => p.verdict !== 'pick').map((p) => [p.id]);
+		for (const pin of list.filter((p) => p.verdict === 'pick')) addMarker(pin, false, null);
+		for (const ids of groups) {
+			const members = ids.map((id) => byId.get(id)!);
+			if (members.length === 1) {
+				addMarker(members[0], members[0].id === shownActive, null);
+				continue;
+			}
+			// The group sits on its worst member and takes its state.
+			const seed = members[0];
+			const latitude = members.reduce((sum, p) => sum + p.latitude, 0) / members.length;
+			const longitude = members.reduce((sum, p) => sum + p.longitude, 0) / members.length;
+			const count = members.length;
+			addMarker(
+				{
+					id: `group:${ids.join(',')}`,
+					latitude,
+					longitude,
+					name: m.worldmap_cluster_name({ count }),
+					verdict: seed.verdict,
+					count: String(count),
+					label: m.worldmap_cluster_label({ count, members: members.map((p) => p.label).join('; ') })
+				},
+				members.some((p) => p.id === shownActive),
+				members
+			);
+		}
+		declutter();
+	}
+
+	/**
+	 * A click on a group zooms in until it comes apart; when it cannot (same
+	 * spot, or the deepest zoom), it lists its locations in a popup.
+	 */
+	function openGroup(members: WorldPin[]) {
+		const current = map;
+		if (!current || !lib) return;
+		const bounds = lib.latLngBounds(members.map((p) => [p.latitude, p.longitude]));
+		const target = Math.min(current.getMaxZoom(), current.getBoundsZoom(bounds.pad(0.5)));
+		if (target > current.getZoom()) {
+			current.fitBounds(bounds.pad(0.5), { maxZoom: target, animate: true });
+			return;
+		}
+		const list = document.createElement('ul');
+		list.className = 'wm-group';
+		for (const pin of members) {
+			const item = document.createElement('li');
+			const button = document.createElement('button');
+			button.type = 'button';
+			button.className = 'wm-group__item';
+			button.dataset.verdict = pin.verdict;
+			button.textContent = pin.label;
+			button.addEventListener('click', () => {
+				current.closePopup();
+				onselect?.(pin.id);
+			});
+			item.append(button);
+			list.append(item);
+		}
+		lib.popup({ closeButton: true, autoPan: true, className: 'wm-popup' }).setLatLng(bounds.getCenter()).setContent(list).openOn(current);
+		list.querySelector('button')?.focus();
+	}
 
 	/** Pins drawn, for the name decluttering below. */
 	let drawn: { marker: Leaflet.Marker; pin: WorldPin; active: boolean }[] = [];
@@ -222,11 +314,12 @@
 	$effect(() => {
 		const current = map;
 		if (!current) return;
-		current.on('zoomend', declutter);
-		current.on('resize', declutter);
+		const again = () => (cluster ? draw() : declutter());
+		current.on('zoomend', again);
+		current.on('resize', again);
 		return () => {
-			current.off('zoomend', declutter);
-			current.off('resize', declutter);
+			current.off('zoomend', again);
+			current.off('resize', again);
 		};
 	});
 
@@ -352,6 +445,54 @@
 		height: 1.5rem;
 		margin-top: 0.5rem;
 		padding: 0;
+	}
+	/* A group: a second ring, so it never reads as a single location. */
+	.wm :global(.wm-pin__body[data-group='true']) {
+		box-shadow:
+			0 0 0 3px var(--c-surface),
+			0 0 0 5px color-mix(in srgb, var(--pin) 55%, transparent),
+			0 2px 6px rgb(0 0 0 / 0.18);
+	}
+	.wm :global(.wm-popup .leaflet-popup-content-wrapper),
+	.wm :global(.wm-popup .leaflet-popup-tip) {
+		background: var(--c-surface);
+		color: var(--c-ink);
+	}
+	.wm :global(.wm-popup .leaflet-popup-content) {
+		margin: 0.5rem;
+	}
+	.wm :global(.wm-group) {
+		display: flex;
+		flex-direction: column;
+		gap: 0.125rem;
+		max-height: 14rem;
+		overflow-y: auto;
+	}
+	.wm :global(.wm-group__item) {
+		display: block;
+		width: 100%;
+		min-height: 2.5rem;
+		padding: 0.25rem 0.5rem;
+		border-radius: 0.5rem;
+		text-align: left;
+		font: inherit;
+		font-size: 0.8125rem;
+		color: var(--c-ink);
+		border-left: 3px solid var(--c-ink-3);
+	}
+	.wm :global(.wm-group__item[data-verdict='down']) {
+		border-left-color: var(--c-warning);
+	}
+	.wm :global(.wm-group__item[data-verdict='warn']) {
+		border-left-color: var(--c-advisory);
+	}
+	.wm :global(.wm-group__item[data-verdict='ok']) {
+		border-left-color: var(--c-signal);
+	}
+	.wm :global(.wm-group__item:hover),
+	.wm :global(.wm-group__item:focus-visible) {
+		background: var(--c-surface-2);
+		outline: none;
 	}
 	.wm :global(.wm-pin__body[data-active='true']) {
 		box-shadow:
