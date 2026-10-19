@@ -11,92 +11,73 @@ sans toucher votre préférence enregistrée.
 ![Mode mur](../assets/screenshots/wall-light.png){ loading=lazy }
 
 Chaque problème, à gauche, porte l'icône du produit de sa surveillance (les
-mêmes marques que dans les listes de surveillances). La liste ne déborde jamais de
-sa place : sur un petit écran, ou avec beaucoup de problèmes, les grandes
-tuiles se réduisent à une ligne chacune, puis se replient en *Et N de plus*,
-au lieu de recouvrir les surveillances en dessous.
+mêmes marques que dans les listes de surveillances). Ce qui est en panne vient
+d'abord, puis les avertissements, puis ce que masque un parent, puis ce qui est
+en sourdine ou acquitté ; les problèmes identiques se regroupent en une ligne
+avec un compte (*×5*). La liste ne déborde jamais de sa place : sur un petit
+écran, ou avec beaucoup de problèmes, les grandes tuiles se réduisent à une
+ligne chacune, les problèmes masqués et en sourdine se résument en une ligne,
+et seulement ensuite le reste se replie en *N autres problèmes*, au lieu de
+recouvrir les surveillances en dessous. Les pigeons, l'horloge et les panneaux
+de la scène s'effacent dès qu'ils passeraient sous le texte.
 
 ## Actualités sur le mur
 
-Un administrateur peut ajouter des **titres** et une **chaîne en direct** au
-mur dans **Réglages → Actualités du mur**. Les deux sont désactivés par défaut.
+Un administrateur peut ajouter des **titres** au mur dans **Réglages →
+Actualités du mur**. Ils sont désactivés par défaut.
 
-- **Bandeau de titres.** Une bande en bas du mur fait défiler les derniers
-  titres, chacun avec sa source et son âge, et se rafraîchit toutes les cinq
-  minutes. Si le système de l'écran demande de *réduire les animations*, rien ne
-  défile : un titre à la fois apparaît et disparaît en fondu.
-- **Vidéo en direct.** Une chaîne en direct, sans le son, dans une vignette, dans
-  la colonne de droite sous l'horloge (ou au milieu de la scène), petite, moyenne
-  ou grande. La vignette se réduit à la place disponible ; elle ne recouvre
-  jamais l'état.
-- **Carrousel d'images.** Les derniers articles des mêmes flux qui portent une
-  image, un à la fois dans la colonne de droite sous l'horloge, huit secondes chacun, en fondu, avec la
-  source, l'âge et le titre sur l'image. Si l'écran demande de *réduire les
-  animations*, les images se remplacent sans fondu.
+Les derniers titres des flux choisis, en texte seul, chacun avec sa source,
+rafraîchis toutes les cinq minutes. Ils se placent là où la disposition du mur
+les range (la colonne de droite par défaut, voir [Disposition](#disposition)) :
+autant qu'il en tient, deux lignes au plus chacun, immobiles, sans défilement ni
+tour de rôle. Dans une barre, un titre tient sur une ligne.
 
 C'est le serveur qui lit les flux, pas le navigateur (un navigateur ne peut pas
 lire les flux d'autres sites). Il suit au plus trois redirections, refuse les
 adresses internes, abandonne après huit secondes ou 2 Mo par flux, et garde la
 réponse cinq minutes pour tous les murs. Il lit RSS 2.0, RSS 1.0 (RDF) et Atom.
 
-L'image d'un article vient du flux : la plus large des images `media:content`,
-une `media:thumbnail`, une pièce jointe image (`enclosure`, comme BFM TV), un
-`link rel="enclosure"` Atom, ou à défaut la première `<img>` du contenu de
-l'article (comme Korben). Quand le flux n'en a pas et que le carrousel est
-allumé, le serveur lit une fois le début de la page de l'article (512 Ko au
-plus, même garde-fou d'adresses) et prend son `og:image` ; la réponse est
-retenue, une page n'est lue qu'une fois. Le mur ne charge jamais d'image depuis
-le site d'actualité : le serveur la relaie à `/api/wall/news/image/<id>`,
-seulement pour les articles qu'il a publiés, 6 Mo au plus, et seulement si le
-fichier est vraiment une image PNG, JPEG, GIF, WebP ou AVIF (jamais de SVG).
-L'adresse de l'écran et ses cookies restent à la maison, et la politique de
-sécurité du mur n'autorise toujours que les images de DumbMonit.
-
 ### Choisir les sources
 
 Choisissez un **pays** (présélectionné d'après la région et la langue de votre
-navigateur), puis cochez ses sources : huit flux au plus en tout. Pour un autre
+navigateur), ou les groupes **Tech** et **IA** (sources en anglais), puis cochez
+ses sources : huit flux au plus en tout. Pour un autre
 flux, collez son adresse RSS ou Atom sous **Ajouter un flux personnalisé** et
 appuyez sur **Tester** : DumbMonit le lit pour de vrai et montre le dernier titre
 avant l'ajout.
 
-Pour la vidéo, choisissez une chaîne du pays ou **Un autre lien…** et collez une
-adresse YouTube, Dailymotion ou Twitch ordinaire (une vidéo, un direct, ou la
-page `/live` d'une chaîne YouTube) ; DumbMonit la convertit en lecteur
-intégrable. Seuls ces trois lecteurs peuvent être affichés. Un direct n'est
-proposé que lorsque la chaîne en a un officiel et stable.
-
-| Pays | Titres | Vidéo en direct |
-|---|---|---|
-| France | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
-| Suisse | RTS Info, SRF News, Le Temps, NZZ | aucune |
-| Belgique | RTBF, VRT NWS, La DH | aucune |
-| Allemagne | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
-| Royaume-Uni | BBC News, The Guardian | Sky News |
-| États-Unis | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
-| Canada | Radio-Canada, CBC News | CBC News |
-| Espagne | RTVE, 20minutos, El País, El Mundo | aucune |
-| Italie | ANSA, RaiNews | aucune |
-| Portugal | RTP Notícias, Público | aucune |
-| Brésil | G1, Folha de S.Paulo | CNN Brasil |
-| Russie | Interfax, Meduza, Kommersant | aucune |
-| Chine | CGTN, South China Morning Post, Xinhua | CGTN |
-| International | Deutsche Welle, France 24, BBC News (monde) | DW News, France 24 English, Euronews English |
+| Pays | Titres |
+|---|---|
+| France | BFM TV, franceinfo, Le Monde, France 24, Korben, Next, Numerama |
+| Suisse | RTS Info, SRF News, Le Temps, NZZ |
+| Belgique | RTBF, VRT NWS, La DH |
+| Allemagne | Tagesschau, ZDFheute, Spiegel, Deutsche Welle, heise online, Golem |
+| Royaume-Uni | BBC News, The Guardian |
+| États-Unis | NPR, PBS NewsHour, CBS News, The New York Times |
+| Canada | Radio-Canada, CBC News |
+| Espagne | RTVE, 20minutos, El País, El Mundo, Xataka |
+| Italie | ANSA, RaiNews, Punto Informatico |
+| Portugal | RTP Notícias, Público |
+| Brésil | G1, Folha de S.Paulo, Tecnoblog |
+| Russie | Interfax, Meduza, Kommersant, Habr |
+| Chine | CGTN, South China Morning Post, Xinhua |
+| Tech (en anglais) | Hacker News, Ars Technica, The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters |
+| IA (en anglais) | OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR, NVIDIA, AWS Machine Learning |
+| International | Deutsche Welle, France 24, BBC News (monde) |
 
 Le flux de BFM TV est `https://www.bfmtv.com/rss/news-24-7/`. La liste a été
 vérifiée à sa rédaction ; un site peut déplacer son flux à tout moment, le
-bandeau l'ignore alors simplement. **Testez** le remplaçant et ajoutez-le comme
+mur l'ignore alors simplement. **Testez** le remplaçant et ajoutez-le comme
 flux personnalisé.
 
-La politique de sécurité du mur n'autorise que les lecteurs YouTube
-(`youtube-nocookie.com`), Dailymotion, Twitch, Spotify et Deezer dans un cadre.
+Les images et la vignette vidéo en direct des versions précédentes ont été
+retirées ; un mur réglé avec elles ne les affiche simplement plus.
 
 ### API
 
 `GET /api/wall/news` (ce que les murs interrogent), `GET|PUT
 /api/wall/news/settings` et `POST /api/wall/news/test` (admin), `GET
-/api/wall/news/presets`, `GET /api/wall/news/image/{id}` (l'image d'un article,
-relayée).
+/api/wall/news/presets`.
 
 ## Widgets sur le mur
 
@@ -106,25 +87,42 @@ change, les dernières failles critiques, et le coût et les jetons de vos compt
 API Claude et OpenAI. Chacun est désactivé par défaut et
 s'allume séparément.
 
-La **météo** reste simple : une icône et la température actuelle, pour une
-ville, juste sous l'heure. Ni prévisions ni détails. Un lecteur d'écran entend
-la ville, le temps qu'il fait et la température ; au survol, les mêmes mots et
-la source (Open-Meteo).
+La **météo** reste simple : une icône, la température actuelle et la ville.
+Ni prévisions ni détails. Un lecteur d'écran entend la ville, le temps qu'il
+fait et la température.
 
-Les autres widgets se partagent une carte dans la colonne de droite, sous
-l'horloge : un widget à la fois, chacun pendant le nombre de
-secondes choisi (20 par défaut), puis le suivant apparaît en fondu. Les longues
-listes sont coupées en pages de cinq. Des points sous la carte montrent où en
-est le tour. Si l'écran demande de *réduire les animations*, les cartes se
-remplacent sans fondu.
+Tous les widgets allumés s'affichent **en même temps**, petits et immobiles :
+rien ne tourne, rien ne défile. Ils parlent plus bas que les surveillances
+(texte plus petit, encre secondaire) : les problèmes restent la raison d'être
+du mur. Quand une zone manque de place, ses widgets en montrent moins au lieu
+de tourner : d'abord la forme courte (sans pourcentages ni étiquettes), puis
+moins d'éléments, avec un discret *+N* pour le reste.
+
+### Disposition
+
+Dans **Paramètres → Widgets du mur → Disposition**, chaque widget (titres
+compris) se range dans l'une de quatre zones, dans l'ordre choisi :
+
+- **Barre du haut** : une fine ligne en haut du mur ;
+- **Barre du bas** : une fine ligne en bas, comme une barre d'état ;
+- **Colonne de droite** : des cartes légères sous l'horloge ;
+- **Masqué**.
+
+Changez la zone d'un widget avec son menu, et sa place dans la zone avec les
+flèches haut et bas (au clavier aussi). Par défaut, la météo, les titres et
+les vulnérabilités sont dans la colonne de droite, les cours et la
+consommation d'IA dans la barre du bas. Ranger un widget ne l'allume pas : un
+widget éteint n'apparaît nulle part, et la disposition l'indique d'un
+*Désactivé*. La disposition est enregistrée sur le serveur et vaut pour tous
+les murs.
 
 Une hausse ou une baisse porte toujours une flèche et un signe (▲ +1,04 %,
-▼ −0,57 %), jamais seulement une couleur. Chaque carte cite sa source,
-discrètement, et dit de quand datent ses chiffres.
+▼ −0,57 %), jamais seulement une couleur. Au survol, un widget cite sa
+source ; une carte de la colonne de droite signale des chiffres périmés.
 
 | Widget | Ce qu'il montre | Source | Clé | Le serveur demande |
 |---|---|---|---|---|
-| Météo | Une icône et la température actuelle d'une ville, sous l'horloge | [Open-Meteo](https://open-meteo.com) (conditions actuelles et géocodage) | aucune | toutes les 15 min |
+| Météo | Une icône et la température actuelle d'une ville | [Open-Meteo](https://open-meteo.com) (conditions actuelles et géocodage) | aucune | toutes les 15 min |
 | Crypto | Cours et variation sur 24 h de dix monnaies au plus, dans la devise choisie | API publique de [CoinGecko](https://www.coingecko.com) | aucune (clé Demo gratuite facultative) | chaque minute, un appel |
 | Actions | Dernier cours et variation du jour de dix symboles au plus | [Finnhub](https://finnhub.io) | **clé gratuite obligatoire** | toutes les 5 min, un appel par symbole |
 | Devises | Ce que coûte une unité (ou 100 d'une petite monnaie) dans la devise de base, et sa variation depuis la veille | [Frankfurter](https://frankfurter.dev) (taux de référence des banques centrales) | aucune | chaque heure |
@@ -235,13 +233,14 @@ Les abonnements individuels (Claude Pro et Max, ChatGPT Plus) n'ont **aucune API
 
 ### API
 
-`GET /api/wall/widgets` (ce que les murs interrogent chaque minute : une
-section par widget allumé, avec `data`, `updated`, `error`, `needs_key`,
-`source`), `GET|PUT /api/wall/widgets/settings` et
+`GET /api/wall/widgets` (ce que les murs interrogent chaque minute : la
+disposition `layout`, et une section par widget allumé, avec `data`,
+`updated`, `error`, `needs_key`, `source`), `GET|PUT /api/wall/widgets/settings` et
 `GET /api/wall/widgets/places?q=` (admin), `GET /api/wall/widgets/catalog`. Sur
 `PUT`, `secrets.finnhub`, `secrets.coingecko`, `secrets.anthropic` et
 `secrets.openai` enregistrent une clé, une chaîne vide l'efface, et les omettre
-les garde. Les sections Claude et OpenAI de `GET /api/wall/widgets` portent
+les garde ; `layout` prend les listes `top`, `bottom`, `right` et `hidden` (un
+identifiant inconnu est écarté, un widget absent retrouve sa zone par défaut). Les sections Claude et OpenAI de `GET /api/wall/widgets` portent
 `cost_usd`, `input_tokens`, `output_tokens` et, avec *Afficher les plus gros
 utilisateurs*, une liste `people`.
 

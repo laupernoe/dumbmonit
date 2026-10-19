@@ -280,7 +280,7 @@
 				{/each}
 
 				<!-- chalkboard: low on the right wall, clear of the clock and the cards -->
-				<g transform="translate(600 350)">
+				<g data-wall-prop transform="translate(600 350)">
 					<rect x="840" y="196" width="280" height="130" rx="8" fill="var(--board)" stroke="var(--wood)" stroke-width="10" />
 					{#if trouble}
 						<text x="980" y="276" text-anchor="middle" font-size={sign.length > 14 ? 30 : 40} font-weight="700" font-family="'Comic Sans MS', 'Marker Felt', system-ui, sans-serif" fill="var(--chalk)">{sign}</text>

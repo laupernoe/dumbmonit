@@ -58,6 +58,7 @@
 
 <svg
 	viewBox="-100 -280 480 600"
+	data-wall-prop={flap ? undefined : true}
 	class="pigeon {flap ? 'pigeon--flap' : ''} {eyes === 'closed' ? 'pigeon--asleep' : ''} {tip ? 'pigeon--tip' : ''} {className}"
 	style:--blink-offset="{blinkOffset}s"
 	aria-hidden="true"

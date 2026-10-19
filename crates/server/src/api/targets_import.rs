@@ -214,6 +214,7 @@ pub async fn import(
             enabled: None,
             tags,
             group_name: Some(Some(folder)),
+            location_id: None,
             credential: None,
         };
         let input = match payload.validate(&state, None) {

@@ -166,8 +166,8 @@ tags:
     description: The built-in Model Context Protocol (MCP) server.
   - name: Wall news
     description: >-
-      Optional headlines (RSS/Atom, read by the server) and a live video tile
-      on the wall display. Off by default.
+      Optional headlines (RSS/Atom, read by the server) on the wall display.
+      Off by default.
   - name: Wall widgets
     description: >-
       Optional widgets on the wall display (coins, weather, stocks, exchange
@@ -2861,6 +2861,196 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/locations:
+    get:
+      operationId: listLocations
+      tags: [Devices]
+      summary: Locations of the world map, with the devices each one gathers
+      description: |
+        A device finds its location from the most explicit to the most deduced: its
+        assignment (`location_id` on the device), then the location that stands for its
+        remote site (the site the topology map deduces: `site` tag, agent, relay agent),
+        then the location marked `main_site` when it has no remote site. Each member says
+        which (`source`). `sites` lists the remote sites the topology knows, `unplaced`
+        the devices no location gathers. States are read from `GET /api/targets`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Locations, known sites and unplaced devices.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Locations" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createLocation
+      tags: [Devices]
+      summary: Create a location
+      description: Marking it `main_site` takes the mark from any other location.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationInput" }
+      responses:
+        "201":
+          description: The location (no members yet).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/locations/assign:
+    post:
+      operationId: assignLocation
+      tags: [Devices]
+      summary: Place devices at a location, or take them off
+      description: >-
+        Sets `location_id` on every listed device; `null` removes the assignment, and the
+        device falls back on its site. Unknown device ids are skipped.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [location_id, target_ids]
+              properties:
+                location_id: { type: [integer, "null"], format: int64 }
+                target_ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 5000
+                  items: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: How many devices were updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updated]
+                properties:
+                  updated: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/locations/geocode:
+    get:
+      operationId: geocodeLocation
+      tags: [Devices]
+      summary: Find a place for a location (Open-Meteo geocoding)
+      description: Administrators only. The server asks Open-Meteo; the browser never does.
+      x-token-scope: read
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 80 }
+        - name: lang
+          in: query
+          schema: { type: string, description: Two-letter language of the names. }
+      responses:
+        "200":
+          description: Up to eight places.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WallPlace" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502":
+          description: The geocoding service did not answer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/locations/basemap:
+    get:
+      operationId: getBasemap
+      tags: [Devices]
+      summary: Background of the world map
+      x-token-scope: read
+      responses:
+        "200":
+          description: The basemap; `offline` when never set.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Basemap" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putBasemap
+      tags: [Devices]
+      summary: Choose the background of the world map
+      description: |
+        `offline` (default): the Natural Earth outlines built into the interface, no request
+        leaves the browser. `osm`: OpenStreetMap tiles (address and attribution are set by
+        the server). `custom`: a `{z}/{x}/{y}` tile address on a plain host (no `{s}`), with
+        its attribution. The tile origin is added to the interface's `img-src` policy.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Basemap" }
+      responses:
+        "200":
+          description: The basemap as saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Basemap" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/locations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: updateLocation
+      tags: [Devices]
+      summary: Edit a location
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationInput" }
+      responses:
+        "200":
+          description: The location (members are read with `GET /api/locations`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteLocation
+      tags: [Devices]
+      summary: Delete a location
+      description: Its devices stay, without a location.
+      x-token-scope: write
+      responses:
+        "204": { description: Location deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/agent:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -4030,6 +4220,75 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/opnsense/live:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getOpnsenseLive
+      tags: [Integrations]
+      summary: OPNsense — live map of blocked and passed connections
+      description: |
+        The last fifteen minutes of the firewall log, reduced on the server to countries, rules
+        and ports: no IP address is ever returned. Only with the monitor's `live_map` option;
+        the first read starts polling `/api/diagnostics/firewall/log` on the firewall every five
+        seconds, which stops a minute after the last read. `after` returns only the events
+        numbered above it in `recent` (pass back `seq`). Countries come from a local copy of
+        DB-IP's IP to Country Lite (CC BY 4.0); private ranges are `local`.
+      x-token-scope: read
+      parameters:
+        - name: after
+          in: query
+          schema: { type: integer, minimum: 0 }
+      responses:
+        "200":
+          description: The window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpnsenseLive" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/geoip:
+    get:
+      operationId: getGeoip
+      tags: [Integrations]
+      summary: IP to country database used by the live map
+      x-token-scope: read
+      responses:
+        "200":
+          description: State of the database.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeoipStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putGeoip
+      tags: [Integrations]
+      summary: Turn IP geolocation on or off
+      description: Off, nothing is downloaded and every country is `unknown`.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: State of the database.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeoipStatus" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}/truenas/storage:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -4557,15 +4816,15 @@ paths:
     get:
       operationId: getWallNews
       tags: [Wall news]
-      summary: Headlines and live video for the walls
+      summary: Headlines for the walls
       description: >-
         The latest headlines of the configured RSS/Atom feeds (read by the
-        server, cached five minutes) and the embeddable address of the live
-        video. Both are off by default. Walls poll it every five minutes.
+        server, cached five minutes). Off by default. Walls poll it every five
+        minutes.
       x-token-scope: read
       responses:
         "200":
-          description: Headlines, feed problems and the video tile.
+          description: Headlines and feed problems.
           content:
             application/json:
               schema: { $ref: "#/components/schemas/WallNews" }
@@ -4590,8 +4849,9 @@ paths:
       tags: [Wall news]
       summary: Save the wall news settings
       description: >-
-        At most eight feeds (http or https). `video_url` must be a YouTube,
-        Dailymotion or Twitch link the server can turn into a player address.
+        At most eight feeds (http or https). Fields of the former pictures
+        (`gallery`) and live video (`video`, `video_url`…) are accepted and
+        ignored.
       x-token-scope: write
       requestBody:
         required: true
@@ -4648,39 +4908,6 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
-  /api/wall/news/image/{id}:
-    get:
-      operationId: getWallNewsImage
-      tags: [Wall news]
-      summary: An article's picture, relayed by the server
-      description: >-
-        Only pictures of articles currently published to the walls (the `image`
-        of a `WallNewsItem`). Read through the internal-address guard, at most
-        6 MB, and served only when it really is a PNG, JPEG, GIF, WebP or AVIF
-        image (never SVG). Cached in memory.
-      x-token-scope: read
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema: { type: string, pattern: "^[0-9a-f]{32}$" }
-      responses:
-        "200":
-          description: The picture.
-          content:
-            image/png: { schema: { type: string, format: binary } }
-            image/jpeg: { schema: { type: string, format: binary } }
-            image/gif: { schema: { type: string, format: binary } }
-            image/webp: { schema: { type: string, format: binary } }
-            image/avif: { schema: { type: string, format: binary } }
-        "401": { $ref: "#/components/responses/Unauthorized" }
-        "403": { $ref: "#/components/responses/Forbidden" }
-        "404": { $ref: "#/components/responses/NotFound" }
-        "502":
-          description: The picture could not be read, or is not an accepted image.
-          content:
-            application/json:
-              schema: { $ref: "#/components/schemas/Error" }
   /api/wall/widgets:
     get:
       operationId: getWallWidgets
@@ -5851,6 +6078,7 @@ components:
         credential_kind: { type: string, description: A label — the secret itself is never returned. }
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
+        location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
         last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
         last_error: { type: [string, "null"] }
         error_kind:
@@ -5928,6 +6156,7 @@ components:
           description: Type options go here under their key.
           additionalProperties: { type: string }
         group_name: { type: [string, "null"], description: "Flat folder shown on `/targets`. Empty or `null`: no folder. Absent on `PUT` keeps the folder." }
+        location_id: { type: [integer, "null"], format: int64, description: "Location on the world map; `null`: none. Absent on `PUT` keeps the assignment." }
         credential:
           $ref: "#/components/schemas/CredentialInput"
           description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'
@@ -6780,6 +7009,136 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+    Locations:
+      type: object
+      required: [locations, sites, unplaced]
+      properties:
+        locations:
+          type: array
+          items: { $ref: "#/components/schemas/Location" }
+        sites:
+          type: array
+          items: { type: string }
+          description: Remote sites the topology map knows, sorted.
+        unplaced:
+          type: array
+          items: { type: integer, format: int64 }
+          description: Devices no location gathers.
+    Location:
+      type: object
+      required: [id, name, address, latitude, longitude, site, main_site, members]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        address: { type: string, description: Free text, shown only. }
+        latitude: { type: number }
+        longitude: { type: number }
+        site: { type: string, description: "Topology site this location stands for (case-insensitive); empty: none." }
+        main_site: { type: boolean, description: Gathers the devices with no remote site. At most one location. }
+        members:
+          type: array
+          items:
+            type: object
+            required: [target_id, source]
+            properties:
+              target_id: { type: integer, format: int64 }
+              source:
+                type: string
+                enum: [assigned, site, main]
+    LocationInput:
+      type: object
+      required: [name, latitude, longitude]
+      properties:
+        name: { type: string, maxLength: 80 }
+        address: { type: string, maxLength: 200 }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        site: { type: string, maxLength: 80 }
+        main_site: { type: boolean }
+    Basemap:
+      type: object
+      required: [mode]
+      properties:
+        mode: { type: string, enum: [offline, osm, custom] }
+        url: { type: string, description: "Tile address with `{z}`, `{x}`, `{y}`; set by the server for `osm`, empty for `offline`." }
+        attribution: { type: string, maxLength: 200 }
+    GeoipStatus:
+      type: object
+      required: [enabled, state, ranges, source, source_url]
+      properties:
+        enabled: { type: boolean }
+        state: { type: string, enum: [ready, loading, missing, failed, disabled] }
+        month: { type: [string, "null"], description: "Month of the loaded database (`2026-10`)." }
+        ranges: { type: integer }
+        error: { type: [string, "null"] }
+        source: { type: string }
+        source_url: { type: string, description: Link the attribution must carry (CC BY 4.0). }
+    OpnsenseLiveTally:
+      type: object
+      required: [blocked, passed, other]
+      properties:
+        blocked: { type: integer }
+        passed: { type: integer }
+        other: { type: integer }
+    OpnsenseLive:
+      type: object
+      required: [enabled, relayed, window_secs, totals, countries, rules, ports, recent, seq, geoip]
+      properties:
+        enabled: { type: boolean, description: False while the `live_map` option is off. }
+        relayed: { type: boolean, description: Polled through a relay agent; the server cannot read the log. }
+        window_secs: { type: integer }
+        polled_at: { type: [integer, "null"], description: Unix seconds. }
+        error: { type: [string, "null"], description: Why the last read of the log failed. }
+        totals: { $ref: "#/components/schemas/OpnsenseLiveTally" }
+        countries:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/OpnsenseLiveTally"
+              - type: object
+                required: [code]
+                properties:
+                  code: { type: string, description: "ISO 3166-1 alpha-2, `local` or `unknown`." }
+        rules:
+          type: array
+          items:
+            type: object
+            required: [rule, action, count]
+            properties:
+              rule: { type: string }
+              action: { type: string, enum: [block, pass, other] }
+              count: { type: integer }
+        ports:
+          type: array
+          items:
+            type: object
+            required: [proto, port, count]
+            properties:
+              proto: { type: string }
+              port: { type: integer }
+              count: { type: integer }
+        recent:
+          type: array
+          items:
+            type: object
+            required: [seq, at, action, outbound, country, proto, rule]
+            properties:
+              seq: { type: integer }
+              at: { type: integer }
+              action: { type: string, enum: [block, pass, other] }
+              outbound: { type: boolean }
+              country: { type: string }
+              proto: { type: string }
+              port: { type: [integer, "null"] }
+              rule: { type: string }
+        seq: { type: integer }
+        firewall:
+          type: [object, "null"]
+          properties:
+            name: { type: string }
+            latitude: { type: number }
+            longitude: { type: number }
+        geoip: { $ref: "#/components/schemas/GeoipStatus" }
     Topology:
       type: object
       required: [nodes, edges, metrics_available]
@@ -7735,15 +8094,11 @@ components:
         link: { type: string }
         source: { type: string }
         published: { type: [string, "null"], description: UTC, without suffix. }
-        image:
-          type: [string, "null"]
-          description: The article's picture, relayed by the server (`/api/wall/news/image/{id}`).
     WallNews:
       type: object
-      required: [ticker, gallery, items, problems]
+      required: [ticker, items, problems]
       properties:
         ticker: { type: boolean }
-        gallery: { type: boolean, description: The picture carousel is on. }
         items:
           type: array
           items: { $ref: "#/components/schemas/WallNewsItem" }
@@ -7755,19 +8110,11 @@ components:
             properties:
               feed: { type: string }
               message: { type: string }
-        video:
-          type: [object, "null"]
-          required: [embed_url, position, size]
-          properties:
-            embed_url: { type: string, description: A fixed https player origin. }
-            position: { type: string, enum: [right, center] }
-            size: { type: string, enum: [small, medium, large] }
     WallNewsSettings:
       type: object
-      required: [ticker, feeds, video, video_url, video_position, video_size]
+      required: [ticker, feeds]
       properties:
         ticker: { type: boolean }
-        gallery: { type: boolean, default: false, description: Articles with their picture, in rotation. }
         feeds:
           type: array
           maxItems: 8
@@ -7777,10 +8124,6 @@ components:
             properties:
               url: { type: string }
               label: { type: string, maxLength: 40 }
-        video: { type: boolean }
-        video_url: { type: string }
-        video_position: { type: string, enum: [right, center] }
-        video_size: { type: string, enum: [small, medium, large] }
     WallPlace:
       type: object
       required: [name, latitude, longitude]
@@ -7793,7 +8136,7 @@ components:
     WallWidgetsSettings:
       type: object
       properties:
-        rotate_seconds: { type: integer, minimum: 5, maximum: 300, default: 20 }
+        layout: { $ref: "#/components/schemas/WallLayout" }
         crypto:
           type: object
           properties:
@@ -7884,9 +8227,9 @@ components:
         source_url: { type: string }
     WallWidgets:
       type: object
-      required: [rotate_seconds]
+      required: [layout]
       properties:
-        rotate_seconds: { type: integer }
+        layout: { $ref: "#/components/schemas/WallLayout" }
         crypto:
           oneOf:
             - { $ref: "#/components/schemas/WallWidgetSection" }
@@ -7919,9 +8262,9 @@ components:
             - { type: "null" }
     WallNewsCountry:
       type: object
-      required: [code, feeds, videos]
+      required: [code, feeds]
       properties:
-        code: { type: string, description: ISO 3166-1 alpha-2, or INT. }
+        code: { type: string, description: ISO 3166-1 alpha-2, TECH or AI (themed groups), or INT. }
         feeds:
           type: array
           items:
@@ -7930,14 +8273,19 @@ components:
             properties:
               label: { type: string }
               url: { type: string }
-        videos:
-          type: array
-          items:
-            type: object
-            required: [label, url]
-            properties:
-              label: { type: string }
-              url: { type: string }
+    WallLayout:
+      type: object
+      description: >-
+        Where each wall widget goes (weather, news, cve, crypto, stocks, fx,
+        claude, openai), in order. Unknown or repeated ids are dropped; a
+        widget missing from every zone goes to its default one (weather, news
+        and cve on the right, the others in the bottom bar). Placing a widget
+        does not turn it on.
+      properties:
+        top: { type: array, items: { type: string } }
+        bottom: { type: array, items: { type: string } }
+        right: { type: array, items: { type: string } }
+        hidden: { type: array, items: { type: string } }
     WallNewsTest:
       type: object
       required: [ok, count]

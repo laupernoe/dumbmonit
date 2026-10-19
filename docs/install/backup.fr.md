@@ -76,6 +76,7 @@ récupération** : un paquet dont la phrase de passe est perdue est perdu.
 | `agent_tokens` | Jetons d'enrôlement d'agent, comme des hashs. Les agents installés continuent d'envoyer après une restauration. |
 | `api_tokens` | Jetons d'API, comme des hashs. Les jetons existants continuent de fonctionner. |
 | `push_monitors` | Jetons de battement de cœur, pour que les URL que vos tâches cron appellent déjà restent les mêmes. |
+| `locations` | Emplacements de la carte du monde (nom, adresse, endroit, site, site principal) ; chaque moniteur garde son emplacement. |
 
 Les surveillances sont retrouvées par **type + adresse**, qui est aussi la
 clé unique de la table : importer le même paquet deux fois ne crée

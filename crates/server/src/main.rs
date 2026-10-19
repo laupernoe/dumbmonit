@@ -101,6 +101,9 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         warn!(?error, "webhook headers could not be moved to secrets");
     }
     info!(database = %config.database_path().display(), "database ready");
+    // Le fond de carte en ligne, s'il y en a un, entre dans la politique de
+    // sécurité de l'interface.
+    dumbmonit_server::api::locations::load_basemap(&pool).await;
     // Paire VAPID des notifications Web Push : générée au premier démarrage,
     // chiffrée en base. Un échec ici n'empêche pas de surveiller : il sera
     // retenté à la première demande de l'interface.
