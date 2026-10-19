@@ -33,7 +33,7 @@ Jeder Alarm ist eine Zustandsmaschine, die alle 30 Sekunden ausgewertet wird
 | `pending` | Baut sich auf | Die Bedingung ist wahr, aber die Haltezeit der Regel (`for`) ist noch nicht abgelaufen. Es wird nichts gesendet. |
 | `firing` | Feuert | Die Bedingung hat lange genug angehalten. Die erste Benachrichtigung geht raus, danach Erinnerungen alle `repeat_interval` (standardmäßig 6 Stunden für die meisten eingebauten Regeln), dann eine Eskalation, falls konfiguriert. |
 | `resolved` | Behoben | Zurück zum Normalzustand. Eine Behoben-Benachrichtigung wird nur gesendet, wenn das Feuern zuvor gemeldet wurde. |
-| `suppressed` | Durch übergeordneten Monitor unterdrückt | Der Alarm feuert, aber ein übergeordneter Monitor oder der Monitor selbst ist nicht erreichbar: siehe unten. |
+| `suppressed` | Durch übergeordneten Monitor unterdrückt | Der Alarm feuert, aber ein übergeordneter Monitor ist ausgefallen oder der Monitor selbst ist nicht erreichbar: siehe unten. |
 
 `phase` ist der Zustand der Engine; `effective_phase` ist das, was Sie lesen.
 Ein Alarm, dessen `effective_phase` gleich `suppressed` ist, behält darunter
@@ -51,15 +51,29 @@ Siehe [Einen Alarm loswerden](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Abhängigkeitsunterdrückung {#dependency-suppression}
 
-Jeder Monitor kann ein **übergeordneter Monitor** angeben. Wenn ein Monitor nicht
-erreichbar ist (die Regel „Monitor unreachable“ feuert darauf), wird jeder
-Alarm auf seinen Nachkommen als *Durch übergeordneten Monitor unterdrückt*
-markiert, statt gesendet zu werden: ein ausfallender Switch erzeugt eine
-Benachrichtigung, nicht dreißig. Der nächstgelegene nicht erreichbare
-Vorfahre wird als Ursache genannt (`suppressed_by`), und die Kette wird bis
-zu 64 Ebenen verfolgt.
+Jeder Monitor kann ein **übergeordneter Monitor** angeben. Wenn ein Monitor
+ausgefallen ist, wird jeder Alarm auf seinen Nachkommen als *Durch
+übergeordneten Monitor unterdrückt* markiert, statt gesendet zu werden: ein
+ausfallender Switch erzeugt eine Benachrichtigung, nicht dreißig. Der
+nächstgelegene ausgefallene Vorfahre wird als Ursache genannt
+(`suppressed_by`), und die Kette wird bis zu 64 Ebenen verfolgt.
 
-Dasselbe gilt für den nicht erreichbaren Monitor selbst: Seine übrigen Alarme
+Ein Monitor gilt als ausgefallen, wenn einer dieser Alarme auf ihm feuert,
+gleich aus welchem Grund:
+
+- **Monitor unreachable**: gar keine Messung (ein SNMP-Gerät, das nicht mehr
+  antwortet, ein Agent, der nicht mehr pusht);
+- **Dienst ausgefallen**: seine Verfügbarkeitsprüfung läuft, schlägt aber fehl
+  (ein Ping mit 100 % Verlust, eine HTTP-Prüfung mit Fehler oder
+  Zeitüberschreitung, ein geschlossener TCP-Port usw.).
+
+Eine einfache Warnung auf dem übergeordneten Monitor (Festplatte voll, hohe CPU,
+langsamer Dienst, ein bald ablaufendes Zertifikat) verbirgt nichts: Das Gerät
+antwortet weiterhin, und alles dahinter ebenfalls. Der übergeordnete Monitor
+behält seinen eigenen Alarm und seine Benachrichtigung; sobald er sich erholt,
+feuern die Kinder, die noch ausgefallen sind, und benachrichtigen von selbst.
+
+Dasselbe gilt für einen nicht erreichbaren Monitor selbst: Seine übrigen Alarme
 (Festplatte voll, CPU usw.) werden durch seinen eigenen Ausfall unterdrückt,
 wobei `suppressed_by` den Monitor selbst nennt, denn ihre Werte sind veraltet
 und nur ein Symptom desselben Ausfalls. Nur sein Alarm „Monitor unreachable“
@@ -68,20 +82,22 @@ werden.
 
 Der übergeordnete Monitor wird im Monitordialog gesetzt. Auf der Monitorseite
 stapeln sich Kinder unter ihrem Elternteil und werden abgedunkelt, wenn
-dieser nicht erreichbar ist.
+dieser ausgefallen ist.
 
 Ein [Relay-Agent](../install/remote-site.md) zählt als übergeordneter Monitor
 jedes Monitors, den er abfragt (*Erreicht über* im Monitordialog), zusätzlich
-zu einem explizit gesetzten Elternteil: Ist das Relay nicht erreichbar,
+zu einem explizit gesetzten Elternteil: Ist das Relay ausgefallen,
 werden seine Monitore unterdrückt, wobei das Relay als Ursache genannt wird.
 Bei gleichem Abstand gewinnt der explizit gesetzte übergeordnete Monitor.
 
-Ein übergeordneter Monitor gilt auch dann als nicht erreichbar, sobald seine
-eigene Abfrage das meldet (der Status *Zeitüberschreitung* / *Monitor nicht
-erreichbar* auf seiner Seite), ohne auf das Feuern seiner eigenen „Monitor
-unreachable“-Regel zu warten: Ein Agent, der aufhört zu pushen, zieht seine
-Monitore ein bis zwei Minuten vor seinem eigenen Alarm mit sich, und diese
-würden sonst jeweils zuerst benachrichtigen.
+Ein übergeordneter Monitor gilt auch dann als ausgefallen, sobald seine
+eigene Abfrage das meldet (der Status *Zeitüberschreitung*, *Monitor nicht
+erreichbar* oder *Dienst ausgefallen* auf seiner Seite), ohne auf das Feuern
+seines eigenen Alarms zu warten: Ein Agent, der aufhört zu pushen, zieht seine
+Monitore ein bis zwei Minuten vor seinem eigenen Alarm mit sich, und ein Switch,
+dessen Ping gerade fehlgeschlagen ist, verbirgt seine Kinder, bevor die
+Wartezeit von „Dienst ausgefallen“ abgelaufen ist; diese würden sonst jeweils
+zuerst benachrichtigen.
 
 ## Gruppierung, Deduplizierung, Erinnerungen {#grouping-deduplication-reminders}
 
@@ -154,8 +170,8 @@ Reihenfolge:
    werden verworfen: ihre Alarme werden sofort gelöscht, ohne
    Benachrichtigung, und die Historie vermerkt `device removed or
    disabled`.
-3. **Durch Abhängigkeit unterdrücken** — Nachkommen eines nicht
-   erreichbaren Monitors bleiben still.
+3. **Durch Abhängigkeit unterdrücken** — Nachkommen eines ausgefallenen
+   Monitors bleiben still.
 4. **Stummschalten** — Wartungsfenster dämpfen, was sie abdecken.
 5. **Nach Monitor gruppieren** — eine Nachricht pro Monitor und Zyklus,
    Erinnerungen und Eskalation eingefaltet.

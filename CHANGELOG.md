@@ -5,6 +5,70 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.11.0 — 2026-10-19
+
+### Added
+
+- **Alert bell on monitors.** In the Compact and Tiles views of Monitors, and
+  in a monitor's page header, a small bell with a count shows how many alerts
+  are active on it (nothing at 0). Firing alerts use the warning tone,
+  acknowledged ones a quiet outline, and alerts masked by an offline parent a
+  crossed-out bell; a click opens the alerts section of the monitor. Counted
+  from the alert list already loaded, in one pass.
+- **Choose the blocklists of a mail server or IP range monitor.** The form
+  lists every blocklist as a checklist (name, addresses or domains, major or
+  not, short description) with the major ones ticked on a new monitor, and a
+  **Custom lists** field adds your own DNSBL zones (validated: a real domain
+  name, not an IP address, no duplicate; address or domain type; major or
+  not). Only the ticked and custom lists are queried, and the monitor page
+  shows exactly those. Monitors created earlier keep querying every list.
+  The option form gained two generic input types, `checklist` and `rows`,
+  described by `GET /api/collectors`. The monitor page also links to
+  MXToolbox's public blocklist lookup for the monitored address or domain.
+- **LDAP / Active Directory sign-in.** People sign in on the usual sign-in
+  screen with their directory username and password: DumbMonit binds a
+  service account, finds the user with a filter (the username is escaped per
+  RFC 4515), then binds as that entry with the typed password. Accounts are
+  created at the first sign-in; admin, operator and viewer groups (from
+  `memberOf` or a group search) give the role, and an account whose user left
+  every listed group is disabled at its next sign-in. `ldaps://` or StartTLS,
+  certificate verified by default with an optional CA certificate; plain
+  `ldap://` only with `DUMBMONIT_LDAP_ALLOW_PLAIN`. Usernames with a local
+  password never go to the directory, so the local admin still signs in when
+  it is down. Settings → Team & access, with Active Directory and OpenLDAP
+  presets and a **Test connection** button (service bind and test user
+  lookup); `DUMBMONIT_LDAP_*` variables apply while nothing is saved. The
+  service account password is stored encrypted and never returned.
+
+### Changed
+
+- **Blocklist monitors: no API key needed, and a Spamhaus refusal no longer
+  hides everything.** The form now says that no key is required (the default
+  choice is "No key (recommended)"): lists are queried through the server's
+  DNS resolver, and only Spamhaus can refuse a public one. The Spamhaus DQS
+  key is optional. When Spamhaus refuses the resolver, the monitor page says
+  "Spamhaus refuses this resolver" and the other lists keep their results;
+  the configuration error is now raised only when no other list answered.
+- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
+- **A parent that is down hides its children, whatever the cause.** Dependency
+  suppression used to start only when the parent was unreachable (no
+  measurement, or a probe timeout). A parent whose availability check fails —
+  a switch watched by ping with 100 % loss, a failing HTTP check — now hides
+  its descendants too: one *Service down* alert, the children shown as
+  *Suppressed by parent*. A plain warning on the parent (disk, CPU) still hides
+  nothing. The history reason now reads `suppressed: device N down`.
+- **HTTP compression.** API responses and the web interface are now served
+  with brotli or gzip when the browser accepts it (`Vary: Accept-Encoding`),
+  which cuts the first page load and the JSON payloads by a large factor.
+  Responses under 1 KB, images, event streams and file downloads (agent
+  binaries, backups) are left as they are.
+
+### Security
+
+- Updated `rustls` to 0.23.46 in the fuzzing workspace lockfile
+  (RUSTSEC-2026-0346, -0347, -0348, -0349). The shipped binaries and images
+  already used 0.23.46.
+
 ## 0.10.0 — 2026-10-18
 
 ### Added

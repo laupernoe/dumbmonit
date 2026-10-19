@@ -23,8 +23,8 @@ pub use credential::{
     Credential, SnmpV3Auth, SnmpV3AuthProtocol, SnmpV3Privacy, SnmpV3PrivacyProtocol,
 };
 pub use description::{
-    CredentialDescription, CredentialFieldDescription, KindDescription, OptionDescription,
-    Requirement, SetupDescription, Text,
+    CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
+    OptionDescription, OptionItem, Requirement, SetupDescription, Text,
 };
 pub use push::{
     AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH, INGEST_PATH,

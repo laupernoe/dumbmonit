@@ -13,6 +13,7 @@
 	import type { PublicDayBucket } from '#lib/api/index.js';
 	import { formatPercent } from '#lib/format.js';
 	import { dayTone, formatDowntime } from './words';
+	import { formatUtcDay } from './utc-day';
 
 	interface Props {
 		history: PublicDayBucket[];
@@ -38,9 +39,7 @@
 
 	// The bucket dates are UTC days: show them as such, without a time.
 	function formatDay(date: string): string {
-		const dateFormat = new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-		const parsed = new Date(`${date}T00:00:00Z`);
-		return Number.isNaN(parsed.getTime()) ? date : dateFormat.format(parsed);
+		return formatUtcDay(date, getLocale());
 	}
 
 	function describe(day: PublicDayBucket): string {

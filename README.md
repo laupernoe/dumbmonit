@@ -12,7 +12,7 @@ One container, one IP address to type in, useful graphs and alerts in under a mi
 [![Documentation](https://readthedocs.org/projects/dumbmonit/badge/?version=latest)](https://dumbmonit.readthedocs.io/en/latest/)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/15486/badge)](https://www.bestpractices.dev/projects/15486)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/laupernoe/dumbmonit/badge)](https://scorecard.dev/viewer/?uri=github.com/laupernoe/dumbmonit)
-[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 **[Live demo](https://demo.dumbmonit.app)** · **[Website](https://dumbmonit.app)** · **[Documentation](https://dumbmonit.readthedocs.io/en/latest/)**
 
@@ -24,7 +24,7 @@ For people who watch ten machines and three switches and do not want to run Zabb
 
 - **The one-second answer.** The home screen reads like a weather bulletin: "Clear skies." or "1 unreachable, 4 building up."
 - **One way to add anything.** Pick a type, read what to prepare on the device, fill the few fields that matter. SNMP profiles are detected on their own.
-- **Quiet by default.** Useful rules on from the start, one notification instead of thirty when a switch goes down. 100 % open source (Apache 2.0), no paid edition.
+- **Quiet by default.** Useful rules on from the start, one notification instead of thirty when a switch goes down. 100 % open source (MIT), no paid edition. **DumbMonit is 100 % free and will stay free**: no paid version, no feature held back.
 
 ## Quick start
 
@@ -74,4 +74,6 @@ Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
 ## License
 
-Apache 2.0, see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE). DumbMonit is free and will stay free.
+
+DumbMonit is provided "as is", without warranty of any kind. The author and contributors accept no liability for any damage, undetected failure or unsent alert; validating it in your own environment is up to you.

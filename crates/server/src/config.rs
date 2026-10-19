@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 
+use crate::auth::ldap::LdapEnv;
 use crate::auth::oidc::OidcEnv;
 
 /// Configuration du serveur, entièrement pilotée par variables d'environnement —
@@ -118,6 +119,14 @@ pub struct Config {
     /// Connexion OpenID Connect décrite par l'environnement (`DUMBMONIT_OIDC_*`,
     /// `DUMBMONIT_PUBLIC_URL`). Un réglage enregistré depuis l'interface l'emporte.
     pub oidc: OidcEnv,
+    /// Annuaire LDAP / Active Directory décrit par l'environnement
+    /// (`DUMBMONIT_LDAP_*`). Un réglage enregistré depuis l'interface l'emporte.
+    pub ldap: LdapEnv,
+    /// Accepte un annuaire en `ldap://` sans StartTLS (`DUMBMONIT_LDAP_ALLOW_PLAIN`).
+    ///
+    /// Les mots de passe des utilisateurs passeraient en clair sur le réseau ;
+    /// ce n'est acceptable que pour un annuaire de test.
+    pub ldap_allow_plain: bool,
     /// Chromium sans interface qui fait les captures d'écran de la
     /// surveillance des sites (`DUMBMONIT_BROWSER_URL`, `http://browser:9222`).
     /// `None` : pas de capture, la comparaison de texte fonctionne seule.
@@ -219,6 +228,8 @@ impl Config {
             ),
             backup_keep: env_parsed::<usize>("DUMBMONIT_BACKUP_KEEP", "7")?.clamp(1, 365),
             oidc: OidcEnv::from_env(),
+            ldap: LdapEnv::from_env(),
+            ldap_allow_plain: env_flag("DUMBMONIT_LDAP_ALLOW_PLAIN"),
             browser_url: env_var("DUMBMONIT_BROWSER_URL")
                 .map(|url| url.trim().trim_end_matches('/').to_string())
                 .filter(|url| !url.is_empty()),

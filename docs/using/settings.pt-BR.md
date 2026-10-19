@@ -281,4 +281,4 @@ Versão do servidor e a saúde de seus dois armazenamentos, o banco de dados
 (toda medição nos gráficos), como reportado por `GET /api/health` e
 atualizado a cada 15 segundos. Um armazenamento que para de responder
 mostra um aviso com o erro e o que verificar. A seção também liga para
-esta documentação e nomeia a licença, Apache 2.0.
+esta documentação e nomeia a licença, MIT.

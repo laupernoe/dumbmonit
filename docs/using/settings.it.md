@@ -282,4 +282,4 @@ Versione del server e stato di salute dei suoi due archivi, il database
 misura nei grafici), come riportato da `GET /api/health` e aggiornato ogni 15
 secondi. Un archivio che smette di rispondere mostra un avviso con l'errore e
 cosa controllare. La sezione rimanda anche a questa documentazione e indica la
-licenza, Apache 2.0.
+licenza, MIT.

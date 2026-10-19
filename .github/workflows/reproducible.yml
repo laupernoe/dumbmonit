@@ -11,9 +11,10 @@ name: Reproducible builds
 # How to check it yourself: docs/development/reproducible-builds.md.
 
 on:
+  # Deux builds complets par exécution : trop lent pour chaque PR. On le vérifie
+  # sur dev et main après fusion, et chaque semaine.
   push:
-    branches: [main]
-  pull_request:
+    branches: [dev, main]
     paths:
       - "crates/**"
       - "web/**"
@@ -23,6 +24,8 @@ on:
       - "Dockerfile"
       - ".dockerignore"
       - ".github/workflows/reproducible.yml"
+  schedule:
+    - cron: "41 4 * * 1"
   workflow_dispatch:
 
 permissions:

@@ -110,7 +110,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=DumbMonit
             org.opencontainers.image.description=Dumb-simple monitoring from the homelab to the small business
-            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.licenses=MIT
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
           annotations: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
@@ -187,7 +187,7 @@ jobs:
           labels: |
             org.opencontainers.image.title=DumbMonit agent
             org.opencontainers.image.description=DumbMonit agent, for Docker hosts and remote sites (relay mode)
-            org.opencontainers.image.licenses=Apache-2.0
+            org.opencontainers.image.licenses=MIT
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
           annotations: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}

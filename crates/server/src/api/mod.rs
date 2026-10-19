@@ -14,6 +14,7 @@ mod error;
 mod health;
 mod ingest;
 mod kuma_import;
+mod ldap;
 mod mcp;
 mod metrics;
 mod music;
@@ -63,11 +64,13 @@ pub use openapi::API_VERSION;
 use std::sync::Arc;
 
 use axum::extract::{DefaultBodyLimit, Request};
-use axum::http::HeaderValue;
+use axum::http::{Extensions, HeaderMap, HeaderValue, StatusCode, Version, header};
 use axum::middleware::Next;
 use axum::response::Response;
 use axum::routing::{delete, get, post, put};
 use axum::{Extension, Router, middleware};
+use tower_http::compression::predicate::{NotForContentType, Predicate, SizeAbove};
+use tower_http::compression::{CompressionLayer, CompressionLevel};
 use tower_http::trace::TraceLayer;
 
 use crate::auth::AuthState;
@@ -106,6 +109,11 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             get(oidc::get_config).put(oidc::put_config).delete(oidc::delete_config),
         )
         .route("/auth/oidc/test", post(oidc::test))
+        .route(
+            "/auth/ldap/config",
+            get(ldap::get_config).put(ldap::put_config).delete(ldap::delete_config),
+        )
+        .route("/auth/ldap/test", post(ldap::test))
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
@@ -316,6 +324,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // que ses refus les portent aussi.
         .layer(middleware::from_fn_with_state(state.clone(), crate::status_host::guard))
         .layer(middleware::from_fn(security_headers))
+        // Compression gzip/brotli selon `Accept-Encoding` (et `Vary` en retour).
+        .layer(compression_layer())
         // Le span ne porte que le chemin : la chaîne de requête d'une route peut
         // contenir un code d'autorisation OIDC ou un jeton — rien de tout cela
         // n'a sa place dans un journal, même en `debug`.
@@ -327,6 +337,38 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             )
         }))
         .with_state(state)
+}
+
+/// Compression des réponses (brotli ou gzip, au choix du client).
+///
+/// Niveau 4 : brotli au niveau par défaut (11) est trop lent pour compresser à
+/// chaque requête les ~800 Ko du front ; à 4 il reste nettement plus petit que
+/// gzip pour un coût comparable. Ne sont pas compressés :
+/// - les réponses de moins de 1 Ko (l'en-tête coûte plus que le gain) ;
+/// - les images (le relais des images du mur, le logo : déjà compressées) — le
+///   SVG, lui, est du texte et l'est ;
+/// - les flux d'évènements (SSE) et gRPC, qu'il ne faut pas tamponner ;
+/// - les téléchargements (binaires de l'agent, sauvegardes) : fichiers déjà
+///   compacts ou chiffrés, dont l'empreinte et la taille annoncée comptent.
+///
+/// BREACH : la compression ne devient exploitable que si une réponse mêle un
+/// secret et une entrée de l'attaquant. Le seul jeton anti-CSRF est la valeur
+/// fixe de l'en-tête `X-Requested-With`, jamais dans un corps ; la session est
+/// un cookie, et les secrets (jetons d'API, codes) ne sont renvoyés qu'une fois,
+/// à la création, sans rien refléter de la requête. Rien à exclure de plus.
+pub fn compression_layer() -> CompressionLayer<impl Predicate> {
+    let predicate = SizeAbove::new(1024)
+        .and(NotForContentType::GRPC)
+        .and(NotForContentType::IMAGES)
+        .and(NotForContentType::SSE)
+        .and(NotForContentType::const_new("application/octet-stream"))
+        .and(|_: StatusCode, _: Version, headers: &HeaderMap, _: &Extensions| {
+            !headers
+                .get(header::CONTENT_DISPOSITION)
+                .and_then(|value| value.to_str().ok())
+                .is_some_and(|value| value.trim_start().starts_with("attachment"))
+        });
+    CompressionLayer::new().quality(CompressionLevel::Precise(4)).compress_when(predicate)
 }
 
 /// Chemin tel qu'il peut figurer dans un journal : le jeton d'un heartbeat
@@ -540,5 +582,61 @@ mod tests {
         assert_ne!(first, second);
         // Le nonce doit tenir dans un en-tête HTTP tel quel.
         assert!(HeaderValue::from_str(&format!("{CSP_BASE}; script-src 'nonce-{first}'")).is_ok());
+    }
+
+    /// Réponse d'un mini-routeur sous la couche de compression, telle que la
+    /// verrait un client qui annonce `accept`.
+    async fn compressed(
+        content_type: &'static str,
+        disposition: Option<&'static str>,
+        size: usize,
+        accept: &str,
+    ) -> Response {
+        use tower::ServiceExt;
+        // `fallback` et non une route : le test d'`openapi` lit ce fichier pour
+        // y relever les routes déclarées.
+        let app = Router::new()
+            .fallback(get(move || async move {
+                let mut response = Response::new(axum::body::Body::from("abcd".repeat(size / 4)));
+                let headers = response.headers_mut();
+                headers.insert(header::CONTENT_TYPE, HeaderValue::from_static(content_type));
+                if let Some(value) = disposition {
+                    headers.insert(header::CONTENT_DISPOSITION, HeaderValue::from_static(value));
+                }
+                response
+            }))
+            .layer(compression_layer());
+        let request = Request::builder()
+            .uri("/")
+            .header(header::ACCEPT_ENCODING, accept)
+            .body(axum::body::Body::empty())
+            .unwrap();
+        app.oneshot(request).await.unwrap()
+    }
+
+    fn encoding(response: &Response) -> Option<&str> {
+        response.headers().get(header::CONTENT_ENCODING).and_then(|v| v.to_str().ok())
+    }
+
+    #[tokio::test]
+    async fn text_is_compressed_with_the_clients_preferred_codec() {
+        let gzip = compressed("application/json", None, 8192, "gzip").await;
+        assert_eq!(encoding(&gzip), Some("gzip"));
+        assert_eq!(gzip.headers().get(header::VARY).unwrap(), "accept-encoding");
+        let brotli = compressed("application/json", None, 8192, "br, gzip").await;
+        assert_eq!(encoding(&brotli), Some("br"));
+        assert_eq!(encoding(&compressed("application/json", None, 8192, "identity").await), None);
+    }
+
+    #[tokio::test]
+    async fn small_images_streams_and_downloads_are_left_alone() {
+        assert_eq!(encoding(&compressed("application/json", None, 512, "gzip").await), None);
+        for kind in ["image/webp", "image/jpeg", "text/event-stream", "application/octet-stream"] {
+            assert_eq!(encoding(&compressed(kind, None, 8192, "gzip, br").await), None, "{kind}");
+        }
+        let attachment =
+            compressed("application/json", Some("attachment; filename=\"b.json\""), 8192, "gzip")
+                .await;
+        assert_eq!(encoding(&attachment), None);
     }
 }

@@ -41,6 +41,25 @@ configuration file to mount.
 | `DUMBMONIT_OIDC_GROUPS_CLAIM` | `groups` | Token claim listing the user's groups. |
 | `DUMBMONIT_OIDC_ADMIN_GROUPS` | *(empty)* | Comma-separated groups whose members become administrators. |
 | `DUMBMONIT_OIDC_OPERATOR_GROUPS` | *(empty)* | Comma-separated groups whose other members become operators. See [Single sign-on](../using/settings.md#single-sign-on). |
+| `DUMBMONIT_LDAP_URL` | *(unset)* | LDAP / Active Directory server, `ldaps://host:636` or `ldap://host:389` (with `DUMBMONIT_LDAP_STARTTLS=1`). Like the other `DUMBMONIT_LDAP_*` variables, read only while no LDAP settings are saved in the interface. See [LDAP / Active Directory](../using/ldap.md). |
+| `DUMBMONIT_LDAP_STARTTLS` | *(off)* | `1` to upgrade an `ldap://` connection with StartTLS. |
+| `DUMBMONIT_LDAP_TLS_VERIFY` | `true` | `false` to accept a server certificate that cannot be verified. The connection stays encrypted, but anyone on the path could pose as the directory. |
+| `DUMBMONIT_LDAP_CA_CERT` | *(unset)* | PEM of the authority that issued the server certificate; when set, only it is trusted. |
+| `DUMBMONIT_LDAP_BIND_DN` | *(unset)* | Service account used to search users. Empty: anonymous search. |
+| `DUMBMONIT_LDAP_BIND_PASSWORD` | *(unset)* | Its password. |
+| `DUMBMONIT_LDAP_BASE_DN` | *(unset)* | Where users are searched. Required with the URL. |
+| `DUMBMONIT_LDAP_USER_FILTER` | `(&(objectClass=user)(sAMAccountName={username}))` | User search filter; `{username}` is the typed username, escaped (RFC 4515). |
+| `DUMBMONIT_LDAP_USERNAME_ATTRIBUTE` | `sAMAccountName` | Attribute that gives the DumbMonit username. |
+| `DUMBMONIT_LDAP_DISPLAY_NAME_ATTRIBUTE` | `displayName` | Attribute that gives the display name. |
+| `DUMBMONIT_LDAP_EMAIL_ATTRIBUTE` | `mail` | Display name fallback. |
+| `DUMBMONIT_LDAP_GROUP_MODE` | `memberof` | `memberof` (the user's `memberOf` attribute) or `search` (a group search). |
+| `DUMBMONIT_LDAP_GROUP_BASE_DN` | *(base DN)* | Where groups are searched, in `search` mode. |
+| `DUMBMONIT_LDAP_GROUP_FILTER` | `(&(objectClass=groupOfNames)(member={dn}))` | Group search filter; `{dn}` is the user's DN, `{username}` the username. |
+| `DUMBMONIT_LDAP_ADMIN_GROUPS` | *(empty)* | Groups (name or DN) whose members become admins, separated by `;`. |
+| `DUMBMONIT_LDAP_OPERATOR_GROUPS` | *(empty)* | Groups whose other members become operators. |
+| `DUMBMONIT_LDAP_VIEWER_GROUPS` | *(empty)* | Groups whose other members become viewers. Once any of the three lists is set, only members of a listed group can sign in. |
+| `DUMBMONIT_LDAP_TIMEOUT_SECONDS` | `5` | Timeout of each LDAP operation, 1 to 30. |
+| `DUMBMONIT_LDAP_ALLOW_PLAIN` | *(off)* | `1` to accept `ldap://` without StartTLS. Off, it is refused: every password would cross the network in clear text. Only for a test directory. |
 | `DUMBMONIT_METRICS_PUBLIC` | *(off)* | `1` to serve `/metrics`, `/federate` and `/prometheus/api/v1/…` without an API token. Anyone who can reach the port then reads every measurement of every monitor and the state of the instance; only set it where something else already restricts access to the port. See [Metrics](metrics.md#scraping-dumbmonit). |
 | `DUMBMONIT_ALERT_INTERVAL_SECS` | `30` | Alert evaluation period. Values below 10 are raised to 10. |
 | `DUMBMONIT_ALERT_HISTORY_DAYS` | `90` | Retention of alert history, in days. |

@@ -32,7 +32,7 @@ Every alert is a state machine, evaluated every 30 seconds
 | `pending` | Building up | The condition is true but the rule's hold (`for`) has not elapsed yet. Nothing is sent. |
 | `firing` | Firing | The condition has held long enough. The first notification goes out, then reminders every `repeat_interval` (6 hours by default for most built-in rules), then an escalation if configured. |
 | `resolved` | Resolved | Back to normal. A resolution notification is sent only if the firing had been announced. |
-| `suppressed` | Suppressed by parent | The alert is firing, but a parent monitor, or the monitor itself, is unreachable: see below. |
+| `suppressed` | Suppressed by parent | The alert is firing, but a parent monitor is down, or the monitor itself is unreachable: see below. |
 
 `phase` is the engine's state; `effective_phase` is what you read. An alert
 whose `effective_phase` is `suppressed` keeps `phase = firing` underneath, so it
@@ -48,32 +48,45 @@ See [Getting rid of an alert](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Dependency suppression
 
-Any monitor can declare a **parent monitor**. When a monitor is unreachable
-(the "Monitor unreachable" rule fires on it), every alert on its descendants is
-marked *Suppressed by parent* instead of being sent: a switch going down
-produces one notification, not thirty. The nearest unreachable ancestor is
-named as the cause (`suppressed_by`), and the chain is followed up to 64
-levels.
+Any monitor can declare a **parent monitor**. When a monitor is down, every
+alert on its descendants is marked *Suppressed by parent* instead of being
+sent: a switch going down produces one notification, not thirty. The nearest
+ancestor that is down is named as the cause (`suppressed_by`), and the chain
+is followed up to 64 levels.
 
-The same applies to the unreachable monitor itself: its other alerts (disk
+A monitor is down when one of these alerts fires on it, whatever the cause:
+
+- **Monitor unreachable**: no measurement at all (an SNMP device that stopped
+  answering, an agent that stopped pushing);
+- **Service down**: its availability check runs but fails (a ping with 100 %
+  loss, an HTTP check that errors or times out, a closed TCP port, and so on).
+
+A plain warning on the parent (disk full, high CPU, slow service, a
+certificate about to expire) does not hide anything: the device still
+answers, and so does what sits behind it. The parent keeps its own alert and
+its notification; when it recovers, the children that are still down fire
+and are notified on their own.
+
+The same applies to an unreachable monitor itself: its other alerts (disk
 full, CPU, and so on) are suppressed by its own outage, with `suppressed_by`
 naming the monitor itself, since their readings are stale and they are only a
 symptom of the same failure. Its "Monitor unreachable" alert is the only one
 never hidden by its own outage, so you are still told once.
 
 Set the parent on the monitor form. On the Monitors page, children stack under
-their parent and dim when it is unreachable.
+their parent and dim when it is down.
 
 A [relay agent](../install/remote-site.md) counts as a parent of every monitor
 it probes (*Reached through* on the monitor form), in addition to the parent
-set explicitly: when the relay is unreachable, its monitors are suppressed with
+set explicitly: when the relay is down, its monitors are suppressed with
 the relay named as the cause. At equal distance, the explicit parent wins.
 
-A parent also counts as unreachable as soon as its own probe says so (the
-*Timed out* / *Monitor unreachable* status on its page), without waiting for
-its "Monitor unreachable" alert to fire: an agent that stops pushing takes
-its monitors with it a minute or two before its own alert, and they would
-otherwise each notify first.
+A parent also counts as down as soon as its own probe says so (the
+*Timed out*, *Monitor unreachable* or *Service down* status on its page),
+without waiting for its alert to fire: an agent that stops pushing takes its
+monitors with it a minute or two before its own alert, and a switch whose
+ping just failed hides its children before its "Service down" hold has
+elapsed; they would otherwise each notify first.
 
 ## Grouping, deduplication, reminders
 
@@ -135,7 +148,7 @@ gets spammed. The full path of one alert, in order:
    the same key twice yields one alert. Series of a monitor that was deleted
    or paused are dropped: their alerts clear at once, without any
    notification, and the history records `device removed or disabled`.
-3. **Suppress by dependency** — descendants of an unreachable monitor stay
+3. **Suppress by dependency** — descendants of a monitor that is down stay
    quiet.
 4. **Silence** — maintenance windows mute what they cover.
 5. **Group by monitor** — one message per monitor per cycle, reminders and

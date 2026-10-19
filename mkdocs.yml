@@ -17,7 +17,7 @@ validation:
     anchors: warn
     absolute_links: warn
     unrecognized_links: warn
-copyright: Apache 2.0 — DumbMonit
+copyright: MIT — DumbMonit
 
 theme:
   name: material
@@ -164,6 +164,7 @@ nav:
       - Status pages: using/status-pages.md
       - Email reports: using/reports.md
       - Settings: using/settings.md
+      - LDAP / Active Directory: using/ldap.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md
   - Reference:

@@ -29,6 +29,7 @@
 	import { getSecuritySummary } from '#lib/api/security.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
+	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
@@ -85,6 +86,8 @@
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
+	/** One pass over the shared alert list, not a request per monitor. */
+	const alertCounts = $derived(countAlertsByTarget(alertsStore.alerts));
 	let sparklines = $state<Map<TargetId, Serie[]>>(new Map());
 	/** Security badges: empty while the score is off in Settings, or for unrated kinds. */
 	let security = $state<Map<TargetId, { grade: SecurityGrade | null; score: number | null }>>(new Map());
@@ -863,15 +866,26 @@
 	$effect(() => {
 		const controller = new AbortController();
 		void loadKinds(controller.signal);
-		void load(controller.signal);
 		void loadSecurity(controller.signal);
-		const timer = setInterval(() => void load(controller.signal), 30_000);
 		// Scores move slowly (recomputed every 15 min server-side).
 		const securityTimer = setInterval(() => void loadSecurity(controller.signal), 120_000);
 		return () => {
 			controller.abort();
-			clearInterval(timer);
 			clearInterval(securityTimer);
+		};
+	});
+
+	// Sparklines are drawn by the tiles only: the compact list (the default)
+	// never shows them, so it does not pay for a range query over every
+	// device's series every 30 s — several megabytes with a few hundred devices.
+	$effect(() => {
+		if (view !== 'tiles') return;
+		const controller = new AbortController();
+		void load(controller.signal);
+		const timer = setInterval(() => void load(controller.signal), 30_000);
+		return () => {
+			controller.abort();
+			clearInterval(timer);
 		};
 	});
 </script>
@@ -893,7 +907,7 @@
 {#if !firstLoad && !pageError && targets.length > 0}
 	{@const itemClass = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface focus-visible:outline-2 focus-visible:outline-signal'}
 	<!-- Phones: the toolbar stays put while the list scrolls under it. -->
-	<div class="mb-4 flex flex-wrap items-center gap-2 max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:-mx-4 max-sm:mb-2 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
+	<div class="mb-4 flex flex-wrap items-center gap-2 max-sm:sticky max-sm:top-[var(--safe-top)] max-sm:z-20 max-sm:-mx-4 max-sm:mb-2 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
 		<label class="relative order-1 min-w-0 flex-1 sm:max-w-sm">
 			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
@@ -1270,6 +1284,7 @@
 					layout={view}
 					{names}
 					{security}
+					{alertCounts}
 					{selection}
 				/>
 			{/if}
@@ -1290,7 +1305,7 @@
 					</button>
 				{/if}
 				{#if disabledExpanded}
-					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {selection} />
+					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {alertCounts} {selection} />
 				{/if}
 			</section>
 		{/if}

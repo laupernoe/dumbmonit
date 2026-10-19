@@ -22,16 +22,26 @@ use super::options::Options;
 use crate::uptime::tls::handshake::provider;
 
 pub fn client_config(options: &Options) -> Result<Arc<ClientConfig>, ProbeError> {
+    ldap_client_config(options.ca_cert.as_deref(), options.insecure_tls)
+}
+
+/// La même configuration, hors de toute cible : la connexion des utilisateurs
+/// par LDAP (côté serveur) la partage avec la sonde, pour qu'une autorité
+/// collée se lise et soit crue de la même façon aux deux endroits.
+pub fn ldap_client_config(
+    ca_cert: Option<&str>,
+    insecure_tls: bool,
+) -> Result<Arc<ClientConfig>, ProbeError> {
     let builder = ClientConfig::builder_with_provider(provider())
         .with_safe_default_protocol_versions()
         .map_err(|error| ProbeError::Config(format!("invalid TLS configuration: {error}")))?;
-    let config = if options.insecure_tls {
+    let config = if insecure_tls {
         builder
             .dangerous()
             .with_custom_certificate_verifier(Arc::new(NoVerification))
             .with_no_client_auth()
     } else {
-        builder.with_root_certificates(roots(options.ca_cert.as_deref())?).with_no_client_auth()
+        builder.with_root_certificates(roots(ca_cert)?).with_no_client_auth()
     };
     Ok(Arc::new(config))
 }

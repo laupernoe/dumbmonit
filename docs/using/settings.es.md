@@ -302,4 +302,4 @@ Versión del servidor y la salud de sus dos almacenes, la base de datos
 (cada medición en las gráficas), tal como lo reporta `GET /api/health`
 y se refresca cada 15 segundos. Un almacén que deja de responder muestra
 un aviso con el error y qué comprobar. La sección también enlaza a esta
-documentación y nombra la licencia, Apache 2.0.
+documentación y nombra la licencia, MIT.
