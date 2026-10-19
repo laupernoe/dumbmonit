@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.13.0 — 2026-10-19
+
 ### Added
 
 - **Network discovery (all products, not just SNMP).** A scan first looks for
@@ -36,6 +38,10 @@ All notable changes to this project are documented here. The format follows
   and vendors and scans the server's own LAN without a relay. Linux only; the
   embedded VictoriaMetrics stays bound to the loopback. See the new
   **Network discovery** documentation page.
+### Changed
+
+- **Status page settings** use the full width and are grouped into clearer
+  sections.
 
 ## 0.12.0 — 2026-10-19
 
