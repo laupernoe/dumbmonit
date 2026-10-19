@@ -16,7 +16,7 @@ fi
 
 sha=$(git rev-parse HEAD)
 source=https://github.com/laupernoe/dumbmonit
-labels="--label org.opencontainers.image.source=$source --label org.opencontainers.image.revision=$sha --label org.opencontainers.image.licenses=Apache-2.0"
+labels="--label org.opencontainers.image.source=$source --label org.opencontainers.image.revision=$sha --label org.opencontainers.image.licenses=MIT"
 
 # shellcheck disable=SC2086 # $labels holds several arguments on purpose.
 docker build --platform linux/amd64 --build-arg DUMBMONIT_BUILD="$sha" $labels \

@@ -449,7 +449,7 @@ def build_page(templates, svgs, strings, data, page, code):
         jsonld = json.dumps({
             "@context": "https://schema.org", "@type": "SoftwareApplication", "name": "DumbMonit",
             "applicationCategory": "DeveloperApplication", "operatingSystem": "Linux (Docker), amd64",
-            "license": "https://www.apache.org/licenses/LICENSE-2.0", "url": url, "inLanguage": code,
+            "license": "https://opensource.org/license/mit", "url": url, "inLanguage": code,
             "codeRepository": "https://github.com/laupernoe/dumbmonit",
             "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
         }, separators=(",", ":"))

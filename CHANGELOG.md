@@ -41,7 +41,7 @@ All notable changes to this project are documented here. The format follows
   key is optional. When Spamhaus refuses the resolver, the monitor page says
   "Spamhaus refuses this resolver" and the other lists keep their results;
   the configuration error is now raised only when no other list answered.
-
+- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
 - **A parent that is down hides its children, whatever the cause.** Dependency
   suppression used to start only when the parent was unreachable (no
   measurement, or a probe timeout). A parent whose availability check fails —

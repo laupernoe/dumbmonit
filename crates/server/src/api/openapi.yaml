@@ -91,8 +91,8 @@ info:
 
     Full guide: <https://dumbmonit.readthedocs.io/en/latest/reference/api/>
   license:
-    name: Apache 2.0
-    identifier: Apache-2.0
+    name: MIT
+    identifier: MIT
   contact:
     name: DumbMonit
     url: https://github.com/laupernoe/dumbmonit
