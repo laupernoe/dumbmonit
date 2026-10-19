@@ -92,7 +92,8 @@ Vedi [Severità](alerting/index.md#severities).
 
 ## Un avviso è "Suppressed by parent"
 
-Il monitor ha un monitor genitore irraggiungibile, quindi i suoi
+Il monitor ha un monitor genitore fuori servizio (irraggiungibile, o con il controllo di
+disponibilità che fallisce), quindi i suoi
 propri avvisi vengono trattenuti invece che inviati. Risolvi il genitore;
 gli avvisi del figlio si risolvono o si attivano da soli in seguito senza
 una seconda notifica. Vedi

@@ -34,7 +34,7 @@ Ogni avviso è una macchina a stati, valutata ogni 30 secondi
 | `pending` | Building up | La condizione è vera ma l'attesa della regola (`for`) non è ancora trascorsa. Nulla viene inviato. |
 | `firing` | Firing | La condizione è durata abbastanza. La prima notifica esce, poi ricordi ogni `repeat_interval` (6 ore per impostazione predefinita per la maggior parte delle regole integrate), poi un'escalation se configurata. |
 | `resolved` | Resolved | Tornato alla normalità. Una notifica di risoluzione viene inviata solo se l'attivazione era stata annunciata. |
-| `suppressed` | Suppressed by parent | L'avviso è attivo, ma un monitor genitore, o il monitor stesso, è irraggiungibile: vedi sotto. |
+| `suppressed` | Suppressed by parent | L'avviso è attivo, ma un monitor genitore è fuori servizio, o il monitor stesso è irraggiungibile: vedi sotto. |
 
 `phase` è lo stato del motore; `effective_phase` è ciò che leggi. Un
 avviso il cui `effective_phase` è `suppressed` mantiene `phase = firing`
@@ -53,15 +53,29 @@ continua a parlare. Vedi
 
 ## Soppressione per dipendenza {#dependency-suppression}
 
-Qualsiasi monitor può dichiarare un **monitor genitore**. Quando
-un monitor è irraggiungibile (la regola "Monitor unreachable" si
-attiva su di esso), ogni avviso sui suoi discendenti viene contrassegnato
+Qualsiasi monitor può dichiarare un **monitor genitore**. Quando un monitor è
+fuori servizio, ogni avviso sui suoi discendenti viene contrassegnato
 *Suppressed by parent* invece di essere inviato: uno switch che si spegne
-produce una notifica, non trenta. L'antenato irraggiungibile più vicino
-viene nominato come causa (`suppressed_by`), e la catena viene seguita
-fino a 64 livelli.
+produce una notifica, non trenta. L'antenato fuori servizio più vicino viene
+nominato come causa (`suppressed_by`), e la catena viene seguita fino a 64
+livelli.
 
-Lo stesso vale per il monitor irraggiungibile stesso: i suoi altri avvisi
+Un monitor è fuori servizio quando uno di questi avvisi si attiva su di esso,
+qualunque ne sia la causa:
+
+- **Monitor unreachable**: nessuna misura in assoluto (un dispositivo SNMP che
+  ha smesso di rispondere, un agent che ha smesso di inviare);
+- **Servizio non disponibile**: il suo controllo di disponibilità viene eseguito
+  ma fallisce (un ping con il 100 % di perdita, un controllo HTTP che dà errore
+  o va in timeout, una porta TCP chiusa e così via).
+
+Un semplice avvertimento sul genitore (disco pieno, CPU alta, servizio lento,
+un certificato in scadenza) non nasconde nulla: il dispositivo risponde ancora,
+e anche ciò che sta dietro. Il genitore mantiene il proprio avviso e la propria
+notifica; quando si riprende, i figli ancora fuori servizio si attivano e
+notificano da soli.
+
+Lo stesso vale per un monitor irraggiungibile stesso: i suoi altri avvisi
 (disco pieno, CPU, ecc.) vengono soppressi dal suo stesso guasto, con
 `suppressed_by` che nomina il monitor stesso, perché i loro valori non sono
 più aggiornati e sono solo un sintomo dello stesso guasto. Solo il suo avviso
@@ -70,20 +84,21 @@ avvisato una volta.
 
 Imposta il genitore nel modulo del monitor. Nella pagina Devices, i
 figli si impilano sotto il loro genitore e si attenuano quando è
-irraggiungibile.
+fuori servizio.
 
 Un [agent relay](../install/remote-site.md) conta come genitore di ogni
 monitor che sonda (*Reached through* nel modulo del monitor), in
 aggiunta al genitore impostato esplicitamente: quando il relay è
-irraggiungibile, i suoi monitor vengono soppressi con il relay
+fuori servizio, i suoi monitor vengono soppressi con il relay
 nominato come causa. A pari distanza, il genitore esplicito vince.
 
-Un genitore conta anche come irraggiungibile non appena la sua propria
-sonda lo dice (lo stato *Timed out* / *Monitor unreachable* sulla sua
-pagina), senza attendere che il suo avviso "Monitor unreachable" si
+Un genitore conta anche come fuori servizio non appena la sua propria
+sonda lo dice (lo stato *Timed out*, *Monitor unreachable* o *Servizio non
+disponibile* sulla sua pagina), senza attendere che il suo avviso si
 attivi: un agent che smette di inviare porta con sé i suoi monitor un
-minuto o due prima del suo proprio avviso, e altrimenti ognuno di essi
-notificherebbe prima.
+minuto o due prima del suo proprio avviso, e uno switch il cui ping è appena
+fallito nasconde i suoi figli prima che l'attesa di "Servizio non disponibile"
+sia trascorsa; altrimenti ognuno di essi notificherebbe prima.
 
 ## Raggruppamento, deduplicazione, ricordi {#grouping-deduplication-reminders}
 
@@ -153,7 +168,7 @@ ordine:
    scartate: i loro avvisi si azzerano all'istante, senza alcuna
    notifica, e la cronologia registra `device removed or disabled`.
 3. **Sopprimere per dipendenza** — i discendenti di un monitor
-   irraggiungibile restano silenziosi.
+   fuori servizio restano silenziosi.
 4. **Silenziare** — le finestre di manutenzione zittiscono ciò che
    coprono.
 5. **Raggruppare per monitor** — un messaggio per monitor per

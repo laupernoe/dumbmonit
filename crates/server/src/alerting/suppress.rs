@@ -90,10 +90,24 @@ impl Topology {
     }
 }
 
+/// Cibles en panne à ce cycle, vues sous les deux angles dont la suppression a
+/// besoin.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct Outages {
+    /// Injoignables : plus aucune mesure (`host_down`) ou dernière sonde en délai
+    /// dépassé. Leurs propres alertes secondaires sont étouffées avec elles.
+    pub unreachable: HashSet<TargetId>,
+    /// Indisponibles pour quelque raison que ce soit : les injoignables, plus les
+    /// cibles dont une sonde de disponibilité échoue (`service_down`, ping à
+    /// 100 % de perte, HTTP en erreur…). C'est l'ensemble qui masque les
+    /// descendants.
+    pub down: HashSet<TargetId>,
+}
+
 /// Raison pour laquelle une alerte ne notifie pas.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Suppression {
-    /// Un ancêtre est injoignable.
+    /// Un ancêtre est en panne (injoignable ou sonde de disponibilité en échec).
     AncestorDown(TargetId),
     /// La cible elle-même est injoignable : ses autres alertes ne sont que le
     /// symptôme de la même panne, et leurs valeurs sont de toute façon périmées.
@@ -111,6 +125,11 @@ impl Suppression {
 
 /// Décide si une alerte doit être supprimée.
 ///
+/// Un ancêtre présent dans `outages.down` masque la cible, quelle que soit la
+/// règle. La cible elle-même n'étouffe ses propres alertes que si elle est
+/// injoignable — un service qui répond mal n'a pas de raison de faire taire,
+/// disons, son certificat qui expire.
+///
 /// `is_host_down_rule` évite l'auto-suppression : l'alerte « équipement
 /// injoignable » d'une cible ne peut pas être étouffée par le fait que cette cible
 /// soit injoignable, sans quoi plus personne ne serait jamais prévenu.
@@ -118,14 +137,14 @@ pub fn suppression_for(
     topology: &Topology,
     target: Option<TargetId>,
     is_host_down_rule: bool,
-    down: &HashSet<TargetId>,
+    outages: &Outages,
 ) -> Option<Suppression> {
     let target = target?;
 
-    if let Some(ancestor) = topology.first_ancestor_down(target, down) {
+    if let Some(ancestor) = topology.first_ancestor_down(target, &outages.down) {
         return Some(Suppression::AncestorDown(ancestor));
     }
-    if !is_host_down_rule && down.contains(&target) {
+    if !is_host_down_rule && outages.unreachable.contains(&target) {
         return Some(Suppression::SelfDown);
     }
     None
@@ -148,6 +167,7 @@ mod tests {
             tags: BTreeMap::new(),
             enabled: true,
             unreachable: false,
+            service_down: false,
         }
     }
 
@@ -158,6 +178,16 @@ mod tests {
 
     fn down(ids: &[TargetId]) -> HashSet<TargetId> {
         ids.iter().copied().collect()
+    }
+
+    /// Cibles injoignables : elles sont aussi, par définition, en panne.
+    fn unreachable(ids: &[TargetId]) -> Outages {
+        Outages { unreachable: down(ids), down: down(ids) }
+    }
+
+    /// Cibles dont une sonde de disponibilité échoue, mais qui écrivent encore.
+    fn service_down(ids: &[TargetId]) -> Outages {
+        Outages { unreachable: HashSet::new(), down: down(ids) }
     }
 
     #[test]
@@ -235,7 +265,7 @@ mod tests {
     fn une_cible_injoignable_etouffe_ses_propres_alertes_secondaires() {
         let topology = chaine();
         assert_eq!(
-            suppression_for(&topology, Some(3), false, &down(&[3])),
+            suppression_for(&topology, Some(3), false, &unreachable(&[3])),
             Some(Suppression::SelfDown)
         );
     }
@@ -243,16 +273,36 @@ mod tests {
     #[test]
     fn l_alerte_injoignable_elle_meme_n_est_jamais_etouffee() {
         let topology = chaine();
-        assert_eq!(suppression_for(&topology, Some(3), true, &down(&[3])), None);
+        assert_eq!(suppression_for(&topology, Some(3), true, &unreachable(&[3])), None);
         // Mais elle l'est si c'est le parent qui est tombé : une seule notification.
         assert_eq!(
-            suppression_for(&topology, Some(3), true, &down(&[2, 3])),
+            suppression_for(&topology, Some(3), true, &unreachable(&[2, 3])),
             Some(Suppression::AncestorDown(2))
         );
     }
 
     #[test]
     fn une_serie_sans_cible_n_est_pas_supprimable() {
-        assert_eq!(suppression_for(&chaine(), None, false, &down(&[1, 2, 3])), None);
+        assert_eq!(suppression_for(&chaine(), None, false, &unreachable(&[1, 2, 3])), None);
+    }
+
+    #[test]
+    fn un_parent_dont_le_service_tombe_masque_ses_enfants() {
+        let topology = chaine();
+        // Le switch(2) ne répond plus au ping mais écrit encore ses points.
+        assert_eq!(
+            suppression_for(&topology, Some(3), false, &service_down(&[2])),
+            Some(Suppression::AncestorDown(2))
+        );
+        // Grand-parent en échec : toute la descendance suit.
+        assert_eq!(
+            suppression_for(&topology, Some(4), false, &service_down(&[1])),
+            Some(Suppression::AncestorDown(1))
+        );
+    }
+
+    #[test]
+    fn un_service_en_echec_n_etouffe_pas_les_autres_alertes_de_sa_cible() {
+        assert_eq!(suppression_for(&chaine(), Some(2), false, &service_down(&[2])), None);
     }
 }

@@ -83,7 +83,7 @@ Warning(警告)。参见[严重级别](alerting/index.md#severities)。
 
 ## 某条告警显示"Suppressed by parent" {#an-alert-is-suppressed-by-parent}
 
-该监控项有一个不可达的父监控项,因此它自己的告警会被暂留而不发送。
+该监控项有一个宕机(不可达,或其可用性检查失败)的父监控项,因此它自己的告警会被暂留而不发送。
 修复父监控项之后,子监控项的告警会自行解决或触发,不会产生第二次
 通知。参见[依赖抑制](alerting/index.md#dependency-suppression)。
 
