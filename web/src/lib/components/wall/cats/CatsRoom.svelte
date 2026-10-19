@@ -123,7 +123,7 @@
 		<g stroke="var(--tile)" stroke-width="2"><path d="M-2000 448H3200M-2000 492H3200M-2000 536H3200" /><path d="M60 448L0 540M200 448L170 540M340 448L330 540M480 448L480 540M620 448L630 540M760 448L790 540M900 448L950 540M1040 448L1110 540M-80 448L-200 540M-220 448L-340 540" /></g>
 		<!-- chemin de câbles au plafond -->
 		<rect x="-2000" y="62" width="5200" height="12" fill="var(--rack2)" stroke="var(--ink)" stroke-width="2" />
-		<g class="sign" style="--sl:{signLen}px">
+		<g class="sign" data-wall-prop style="--sl:{signLen}px">
 			<path d="M262 74V108M366 74V108" stroke="var(--ink)" stroke-width="2" />
 			{#if sign}
 				<rect x="236" y="108" width="156" height="40" rx="3" fill="var(--paper)" stroke="var(--ink)" stroke-width="2.4" />

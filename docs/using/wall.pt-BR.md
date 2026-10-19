@@ -11,46 +11,31 @@ salva.
 ![Modo parede](../assets/screenshots/wall-light.png){ loading=lazy }
 
 Cada problema à esquerda traz o ícone de produto do seu monitor (as
-mesmas marcas das listas de monitores). A lista nunca ultrapassa seu
-espaço: em uma tela pequena, ou com muitos problemas, os cartões grandes
-encolhem para uma linha cada e depois se dobram em *E mais N*, em vez de
-se sobrepor aos monitores abaixo.
+mesmas marcas das listas de monitores). O que está fora do ar vem primeiro,
+depois os avisos, depois o que um pai mascara, depois o que está silenciado ou
+reconhecido; problemas idênticos se juntam em uma linha com uma contagem
+(*×5*). A lista nunca ultrapassa seu espaço: em uma tela pequena, ou com muitos
+problemas, os cartões grandes encolhem para uma linha cada, os problemas
+mascarados e silenciados são resumidos em uma linha, e só então o resto se dobra
+em *N problemas a mais*, em vez de se sobrepor aos monitores abaixo. Os pombos,
+o relógio e os painéis da cena saem do caminho assim que ficariam sob o texto.
 
 ## Notícias na parede {#news-on-the-wall}
 
-Um administrador pode adicionar **manchetes** e um **canal ao vivo** à
-parede em **Configurações → Notícias do mural**. Ambos vêm desativados.
+Um administrador pode adicionar **manchetes** à parede em **Configurações →
+Notícias do mural**. Elas vêm desativadas.
 
-- **Faixa de manchetes.** Uma faixa na parte inferior da parede rola as
-  manchetes mais recentes, cada uma com sua fonte e idade, e é atualizada a
-  cada cinco minutos. Com *movimento reduzido* ativado no sistema da tela,
-  nada desliza: uma manchete por vez aparece e some suavemente.
-- **Vídeo ao vivo.** Um canal ao vivo sem som em um cartão, na coluna da
-  direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
-  cartão encolhe para o espaço que sobra; nunca cobre o status.
-- **Carrossel de imagens.** Os artigos mais recentes dos mesmos feeds que
-  trazem uma imagem, um de cada vez na coluna da direita, sob o relógio, cada um por oito
-  segundos, com transição suave, e com a fonte, a idade e a manchete sobre a
-  imagem. Com *movimento reduzido*, as imagens trocam sem transição.
+As manchetes mais recentes dos feeds escolhidos, só texto, cada uma com sua
+fonte, atualizadas a cada cinco minutos. Ficam onde a disposição da parede as
+coloca (a coluna da direita por padrão, veja [Disposição](#layout)): quantas
+couberem, com duas linhas no máximo cada uma, paradas, sem rolar nem se revezar.
+Em uma barra, uma manchete fica em uma só linha.
 
 Quem lê os feeds é o servidor, não o navegador (navegadores não podem ler
 feeds de outros sites). Ele segue no máximo três redirecionamentos, recusa
 endereços internos, desiste após oito segundos ou 2 MB por feed e guarda a
 resposta em cache por cinco minutos para todas as paredes. Lê RSS 2.0,
 RSS 1.0 (RDF) e Atom.
-
-A imagem de um artigo vem do feed: a maior imagem `media:content`, um
-`media:thumbnail`, um `enclosure` de imagem (BFM TV), um `link rel="enclosure"`
-do Atom ou, na falta, o primeiro `<img>` do conteúdo do artigo (Korben).
-Quando o feed não tem nenhuma e o carrossel está ativado, o servidor lê uma
-vez o início da página do artigo (512 KB no máximo, com a mesma proteção de
-endereços) e pega seu `og:image`; a resposta é guardada, então uma página é
-lida uma única vez. A parede nunca carrega uma imagem do site de notícias: o
-servidor a retransmite em `/api/wall/news/image/<id>`, só para artigos que ele
-publicou, com no máximo 6 MB, e somente quando o arquivo é realmente uma
-imagem PNG, JPEG, GIF, WebP ou AVIF (nunca SVG). O endereço e os cookies da
-tela ficam em casa, e a política de segurança de conteúdo da parede continua
-permitindo imagens apenas do DumbMonit.
 
 ### Escolher as fontes {#choosing-sources}
 
@@ -60,44 +45,36 @@ qualquer outro feed, cole o endereço RSS ou Atom dele em **Adicionar um feed
 personalizado** e pressione **Testar**: o DumbMonit o lê de verdade e mostra a
 manchete mais recente antes de você adicioná-lo.
 
-Para o vídeo, escolha um dos canais do país ou **Outro link…** e cole um
-endereço normal do YouTube, Dailymotion ou Twitch (um vídeo, uma live ou a
-página `/live` de um canal do YouTube); o DumbMonit o converte no player
-incorporável. Só esses três players podem ser exibidos. Uma live é oferecida
-como predefinição apenas quando o canal tem uma oficial e estável.
-
-| País | Manchetes | Vídeo ao vivo |
-|---|---|---|
-| França | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
-| Suíça | RTS Info, SRF News, Le Temps, NZZ | nenhum |
-| Bélgica | RTBF, VRT NWS, La DH | nenhum |
-| Alemanha | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
-| Reino Unido | BBC News, The Guardian | Sky News |
-| Estados Unidos | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
-| Canadá | Radio-Canada, CBC News | CBC News |
-| Espanha | RTVE, 20minutos, El País, El Mundo | nenhum |
-| Itália | ANSA, RaiNews | nenhum |
-| Portugal | RTP Notícias, Público | nenhum |
-| Brasil | G1, Folha de S.Paulo | CNN Brasil |
-| Rússia | Interfax, Meduza, Kommersant | nenhum |
-| China | CGTN, South China Morning Post, Xinhua | CGTN |
-| Internacional | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+| País | Manchetes |
+|---|---|
+| França | BFM TV, franceinfo, Le Monde, France 24 |
+| Suíça | RTS Info, SRF News, Le Temps, NZZ |
+| Bélgica | RTBF, VRT NWS, La DH |
+| Alemanha | Tagesschau, ZDFheute, Spiegel, Deutsche Welle |
+| Reino Unido | BBC News, The Guardian |
+| Estados Unidos | NPR, PBS NewsHour, CBS News, The New York Times |
+| Canadá | Radio-Canada, CBC News |
+| Espanha | RTVE, 20minutos, El País, El Mundo |
+| Itália | ANSA, RaiNews |
+| Portugal | RTP Notícias, Público |
+| Brasil | G1, Folha de S.Paulo |
+| Rússia | Interfax, Meduza, Kommersant |
+| China | CGTN, South China Morning Post, Xinhua |
+| Internacional | Deutsche Welle, France 24, BBC News (world) |
 
 O feed da BFM TV é `https://www.bfmtv.com/rss/news-24-7/`. A lista foi
 verificada quando foi escrita; um site pode mudar seu feed a qualquer
-momento, e então a faixa simplesmente o ignora. Use **Testar** no substituto
+momento, e então a parede simplesmente o ignora. Use **Testar** no substituto
 e adicione-o como feed personalizado.
 
-A política de segurança de conteúdo da parede só deixa a página incorporar
-players do YouTube (`youtube-nocookie.com`), Dailymotion, Twitch, Spotify e
-Deezer.
+As imagens e o cartão de vídeo ao vivo de versões anteriores foram removidos;
+uma parede salva com eles simplesmente deixa de exibi-los.
 
 ### API {#api}
 
 `GET /api/wall/news` (o que as paredes consultam), `GET|PUT
 /api/wall/news/settings` e `POST /api/wall/news/test` (admin),
-`GET /api/wall/news/presets`,
-`GET /api/wall/news/image/{id}` (a imagem de um artigo, retransmitida).
+`GET /api/wall/news/presets`.
 
 ## Widgets na parede {#widgets-on-the-wall}
 
@@ -106,23 +83,41 @@ Exibição do mural → Widgets do mural**: o tempo, preços de criptomoedas,
 cotações de ações, taxas de câmbio e as últimas vulnerabilidades críticas.
 Cada um vem desativado e é ativado separadamente.
 
-O **tempo** é simples: um ícone e a temperatura atual, para um lugar,
-logo abaixo do relógio. Sem previsão, sem detalhes. Um leitor de tela lê o
-lugar, o céu e a temperatura; passar o mouse mostra as mesmas palavras e a
-fonte (Open-Meteo).
+O **tempo** é simples: um ícone, a temperatura atual e o lugar. Sem previsão,
+sem detalhes. Um leitor de tela lê o lugar, o céu e a temperatura.
 
-Os outros widgets dividem um cartão na coluna da direita, sob o relógio: um
-widget por vez, cada um mantido pelo número de segundos escolhido (20 por
-padrão), e então o próximo aparece suavemente. Listas longas são divididas em
-páginas de cinco. Pontos sob o cartão mostram onde a rodada está. Com
-*movimento reduzido*, os cartões trocam sem transição.
+Todos os widgets ativados são exibidos **ao mesmo tempo**, pequenos e parados:
+nada se reveza, nada rola. Os widgets falam mais baixo que os monitores (texto
+menor, tinta secundária): os problemas continuam sendo a razão de ser da parede.
+Quando uma zona fica sem espaço, seus widgets mostram menos em vez de se
+revezar: primeiro a forma curta (sem porcentagens nem rótulos), depois menos
+entradas, com um discreto *+N* para o resto.
+
+### Disposição {#layout}
+
+Em **Configurações → Exibição do mural → Widgets do mural → Disposição**, cada
+widget (as manchetes incluídas) vai para uma de quatro zonas, na ordem que você
+escolher:
+
+- **Barra superior**: uma linha fina no alto da parede;
+- **Barra inferior**: uma linha fina na parte de baixo, como uma barra de status;
+- **Coluna da direita**: cartões leves sob o relógio;
+- **Oculto**.
+
+Mude a zona de um widget pelo menu dele, e o lugar dele dentro da zona com as
+setas para cima e para baixo (também pelo teclado). Por padrão, o tempo, as
+manchetes e as vulnerabilidades ficam na coluna da direita, e os preços e o uso
+de IA na barra inferior. Colocar um widget não o ativa: um desativado não aparece
+em lugar nenhum, e a disposição indica isso com *Desativado* ao lado. A
+disposição é salva no servidor e vale para todas as paredes.
 
 Altas e quedas sempre trazem uma seta e um sinal (▲ +1.04 %, ▼ −0.57 %), não
-apenas uma cor. Cada cartão cita sua fonte, discretamente, e quão recente ele é.
+apenas uma cor. Ao passar o mouse, um widget cita sua fonte; um cartão da coluna
+da direita informa quando seus dados estão desatualizados.
 
 | Widget | O que mostra | Fonte | Chave | O servidor consulta |
 |---|---|---|---|---|
-| Tempo | Um ícone e a temperatura atual, para um lugar, sob o relógio | [Open-Meteo](https://open-meteo.com) (condições atuais e geocodificação) | nenhuma | a cada 15 min |
+| Tempo | Um ícone e a temperatura atual, para um lugar | [Open-Meteo](https://open-meteo.com) (condições atuais e geocodificação) | nenhuma | a cada 15 min |
 | Cripto | Preço e variação em 24 horas de até dez moedas, na moeda escolhida | API pública do [CoinGecko](https://www.coingecko.com) | nenhuma (chave Demo gratuita opcional) | a cada minuto, uma chamada |
 | Ações | Último preço e variação do dia de até dez símbolos | [Finnhub](https://finnhub.io) | **chave gratuita obrigatória** | a cada 5 min, uma chamada por símbolo |
 | Taxas de câmbio | Quanto custa uma unidade (ou 100 de uma moeda pequena) na moeda base, e sua variação desde o dia anterior | [Frankfurter](https://frankfurter.dev) (taxas de referência dos bancos centrais) | nenhuma | a cada hora |
@@ -197,12 +192,15 @@ As assinaturas individuais (Claude Pro e Max, ChatGPT Plus) **não têm API de u
 
 ### API {#widgets-api}
 
-`GET /api/wall/widgets` (o que as paredes consultam a cada minuto: uma seção
-por widget ativado, com `data`, `updated`, `error`, `needs_key`, `source`),
+`GET /api/wall/widgets` (o que as paredes consultam a cada minuto: a disposição
+`layout` e uma seção por widget ativado, com `data`, `updated`, `error`,
+`needs_key`, `source`),
 `GET|PUT /api/wall/widgets/settings` e `GET /api/wall/widgets/places?q=`
 (admin), `GET /api/wall/widgets/catalog`. No `PUT`, `secrets.finnhub` e
 `secrets.coingecko` definem uma chave, uma string vazia a apaga, e omiti-los
-as mantém.
+as mantém; `layout` aceita as listas `top`, `bottom`, `right` e `hidden` (um
+identificador desconhecido é descartado, um widget ausente volta à sua zona
+padrão).
 
 ## Música na parede {#music-on-the-wall}
 
