@@ -64,6 +64,7 @@ pub fn base_config(dir: &std::path::Path) -> Config {
     config.data_dir = dir.to_path_buf();
     config.victoria_url = Some(UNREACHABLE_VICTORIA.to_string());
     config.oidc = Default::default();
+    config.ldap = Default::default();
     config.setup_code = Some(SETUP_CODE.to_string());
     config
 }

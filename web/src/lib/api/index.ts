@@ -30,6 +30,9 @@ import type {
 	CreatedAgentToken,
 	AuthStatus,
 	CreateUserPayload,
+	LdapConfig,
+	LdapConfigPayload,
+	LdapTestReport,
 	OidcConfig,
 	OidcConfigPayload,
 	OidcTestReport,
@@ -455,12 +458,13 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			authenticated: Boolean(status?.authenticated),
 			user: status?.user ?? null,
 			oidc: status?.oidc ?? NO_OIDC,
+			ldap: { enabled: Boolean(status?.ldap?.enabled) },
 			demo: Boolean(status?.demo)
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, demo: false };
 		}
 		throw cause;
 	}
@@ -558,6 +562,30 @@ export function clearOidcConfig(): Promise<OidcConfig> {
 /** Runs discovery against `issuer` (or the saved one) and reports the endpoints found. */
 export function testOidcDiscovery(issuer?: string): Promise<OidcTestReport> {
 	return request<OidcTestReport>('/auth/oidc/test', { method: 'POST', body: { issuer } });
+}
+
+// --- LDAP / Active Directory (admin only) ------------------------------------
+
+export function getLdapConfig(signal?: AbortSignal): Promise<LdapConfig> {
+	return request<LdapConfig>('/auth/ldap/config', { signal });
+}
+
+export function saveLdapConfig(payload: LdapConfigPayload): Promise<LdapConfig> {
+	return request<LdapConfig>('/auth/ldap/config', { method: 'PUT', body: payload });
+}
+
+/** Forgets the saved settings: environment variables apply again, or LDAP turns off. */
+export function clearLdapConfig(): Promise<LdapConfig> {
+	return request<LdapConfig>('/auth/ldap/config', { method: 'DELETE' });
+}
+
+/**
+ * Connects, binds the service account and, with `username`, looks that user up.
+ * `config` is the form as typed; the stored password is only reused by the
+ * server for the URL and bind DN it was saved for.
+ */
+export function testLdapConnection(config?: LdapConfigPayload, username?: string): Promise<LdapTestReport> {
+	return request<LdapTestReport>('/auth/ldap/test', { method: 'POST', body: { config, username } });
 }
 
 // --- Notification channels --------------------------------------------------

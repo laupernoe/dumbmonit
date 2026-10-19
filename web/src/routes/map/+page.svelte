@@ -10,6 +10,7 @@
 	 * list), and the sheet — printed by the browser (`@media print`, A4 or A3
 	 * landscape) and serialised by the SVG/PNG exports.
 	 */
+	import { flushSync, tick } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { getTopology } from '#lib/api/topology.js';
@@ -37,6 +38,33 @@
 	let view = $state<View>('map');
 	let selected = $state<string | null>(null);
 	let sheet = $state<SVGSVGElement | null>(null);
+	/**
+	 * The sheet is a second full drawing of the map (every node and link
+	 * again): kept out of the DOM until something needs it — an export, a
+	 * print from the menu or from the browser (Ctrl+P) — it would otherwise
+	 * double the page's nodes for nothing, which shows with hundreds of devices.
+	 */
+	let sheetWanted = $state(false);
+
+	/** Mounts the sheet and waits until it is in the DOM. */
+	async function mountSheet() {
+		sheetWanted = true;
+		await tick();
+	}
+
+	$effect(() => {
+		// A print started from the browser itself: `beforeprint` runs just
+		// before the page is laid out for paper, so the sheet is mounted
+		// synchronously; `afterprint` takes it out again.
+		const before = () => flushSync(() => (sheetWanted = true));
+		const after = () => (sheetWanted = false);
+		window.addEventListener('beforeprint', before);
+		window.addEventListener('afterprint', after);
+		return () => {
+			window.removeEventListener('beforeprint', before);
+			window.removeEventListener('afterprint', after);
+		};
+	});
 	let printedAt = $state(new Date());
 
 	let byGroup = $state(
@@ -131,15 +159,17 @@
 	async function run(action: 'svg' | 'png') {
 		printedAt = new Date();
 		exportError = null;
-		// Let the sheet pick up the fresh date before it is serialised.
-		await Promise.resolve();
+		// Let the sheet mount and pick up the fresh date before it is serialised.
+		await mountSheet();
 		await new Promise((resolve) => requestAnimationFrame(resolve));
-		if (!sheet) return;
 		try {
+			if (!sheet) return;
 			if (action === 'svg') exportSvg(sheet, filename('svg'));
 			else await exportPng(sheet, filename('png'));
 		} catch (error) {
 			exportError = error;
+		} finally {
+			sheetWanted = false;
 		}
 	}
 
@@ -150,6 +180,7 @@
 		// Landscape page height minus the 10 mm margins, minus a little slack.
 		const height = paper === 'A4' ? 186 : 273;
 		pageRule = `@page { size: ${paper} landscape; margin: 10mm; } .topo-print svg { max-height: ${height}mm; }`;
+		await mountSheet();
 		await new Promise((resolve) => requestAnimationFrame(resolve));
 		window.print();
 	}
@@ -254,8 +285,8 @@
 	{/if}
 </div>
 
-{#if layout.nodes.length > 0}
-	<!-- The sheet: hidden on screen, the only thing printed, and the source of the exports. -->
+{#if sheetWanted && layout.nodes.length > 0}
+	<!-- The sheet: hidden on screen, the only thing printed, and the source of the exports. Mounted on demand (`sheetWanted`). -->
 	<div class="topo-print hidden print:block" aria-hidden="true">
 		<MapSheet {layout} title={m.topology_print_title()} {subtitle} bind:element={sheet} class="block h-auto w-full" />
 	</div>

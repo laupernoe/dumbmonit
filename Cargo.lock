@@ -946,6 +946,7 @@ dependencies = [
  "http-body-util",
  "ipnet",
  "jsonwebtoken",
+ "ldap3",
  "lettre",
  "libc",
  "mime_guess",

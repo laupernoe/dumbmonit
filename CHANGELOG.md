@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **LDAP / Active Directory sign-in.** People sign in on the usual sign-in
+  screen with their directory username and password: DumbMonit binds a
+  service account, finds the user with a filter (the username is escaped per
+  RFC 4515), then binds as that entry with the typed password. Accounts are
+  created at the first sign-in; admin, operator and viewer groups (from
+  `memberOf` or a group search) give the role, and an account whose user left
+  every listed group is disabled at its next sign-in. `ldaps://` or StartTLS,
+  certificate verified by default with an optional CA certificate; plain
+  `ldap://` only with `DUMBMONIT_LDAP_ALLOW_PLAIN`. Usernames with a local
+  password never go to the directory, so the local admin still signs in when
+  it is down. Settings → Team & access, with Active Directory and OpenLDAP
+  presets and a **Test connection** button (service bind and test user
+  lookup); `DUMBMONIT_LDAP_*` variables apply while nothing is saved. The
+  service account password is stored encrypted and never returned.
+
 ### Changed
 
 - **A parent that is down hides its children, whatever the cause.** Dependency
