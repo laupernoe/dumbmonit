@@ -53,6 +53,9 @@ pub struct TargetView {
     /// Rang manuel (drag, Haut/Bas), départagé par l'interface seulement entre
     /// cibles de même état et de même dossier.
     pub position: i64,
+    /// Emplacement affecté sur la carte du monde ; `None` : aucun (la cible
+    /// peut s'y trouver quand même par son site, voir `api/locations.rs`).
+    pub location_id: Option<i64>,
     pub last_probe_at: Option<String>,
     pub last_error: Option<String>,
     /// Nature de `last_error` : `down` (équipement injoignable) ou `config`
@@ -94,6 +97,7 @@ impl TargetView {
             credential_kind: target.credential.kind_label().to_string(),
             group_name: target.group_name,
             position: target.position,
+            location_id: None,
             last_probe_at,
             last_error,
             error_kind,
@@ -132,6 +136,10 @@ pub struct TargetPayload {
     /// pas sortir la cible de son dossier en la modifiant.
     #[serde(default, deserialize_with = "deserialize_present")]
     pub group_name: Option<Option<String>>,
+    /// Emplacement de la carte du monde ; `null` : aucun. Absent lors d'une
+    /// modification : conserver l'affectation, comme pour `group_name`.
+    #[serde(default, deserialize_with = "deserialize_present")]
+    pub location_id: Option<Option<i64>>,
     /// Absent lors d'une modification signifie « conserver le secret enregistré ».
     ///
     /// Renommer une cible ou changer sa période est bien plus fréquent que changer
@@ -249,13 +257,15 @@ pub async fn list(
 ) -> ApiResult<Json<Vec<TargetView>>> {
     let targets = db::targets::list(&state.pool, &state.cipher).await?;
     let mut statuses = db::targets::statuses(&state.pool).await?;
+    let places = super::locations::assignments(&state.pool).await?;
     let admin = who.is_admin();
     Ok(Json(
         targets
             .into_iter()
             .map(|target| {
                 let status = statuses.remove(&target.id);
-                TargetView::new(target, status).for_reader(admin)
+                let location = places.get(&target.id).copied();
+                TargetView::new(target, status).at(location).for_reader(admin)
             })
             .collect(),
     ))
@@ -268,13 +278,19 @@ pub async fn get_one(
 ) -> ApiResult<Json<TargetView>> {
     let target = load(&state, id).await?;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
-    Ok(Json(TargetView::new(target, status).for_reader(who.is_admin())))
+    let location = super::locations::location_of(&state.pool, id).await?;
+    Ok(Json(TargetView::new(target, status).at(location).for_reader(who.is_admin())))
 }
 
 /// Valeur substituée à ce qui ressemble à un secret, pour qui n'administre pas.
 pub const REDACTED: &str = "***";
 
 impl TargetView {
+    fn at(mut self, location: Option<i64>) -> Self {
+        self.location_id = location;
+        self
+    }
+
     /// Version de la vue destinée à un lecteur : les options dont la clé nomme
     /// un secret (`api_key`, `password`…), les en-têtes d'un moniteur HTTP (un
     /// `Authorization` s'y glisse vite) et le mot de passe d'une adresse
@@ -330,13 +346,18 @@ pub async fn create(
     State(state): State<AppState>,
     Json(payload): Json<TargetPayload>,
 ) -> ApiResult<(StatusCode, Json<TargetView>)> {
+    let location = payload.location_id.flatten();
     let input = payload.validate(&state, None)?;
+    super::locations::check_location(&state.pool, location).await?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
     check_pack_relay(&input)?;
     let id = db::targets::create(&state.pool, &state.cipher, &input)
         .await
         .map_err(duplicate_address_to_conflict)?;
+    if location.is_some() {
+        super::locations::set_location(&state.pool, &[id], location).await?;
+    }
     let target = load(&state, id).await?;
     crate::packs::apply_thresholds(&state.pool, &target).await;
 
@@ -349,7 +370,7 @@ pub async fn create(
     // Le relais fait partie du statut, pas de la cible : sans lui, la réponse
     // dirait `via_agent: null` alors qu'il vient d'être enregistré.
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
-    Ok((StatusCode::CREATED, Json(TargetView::new(target, status))))
+    Ok((StatusCode::CREATED, Json(TargetView::new(target, status).at(location))))
 }
 
 pub async fn update(
@@ -360,7 +381,11 @@ pub async fn update(
     let keep_profile = payload.profile_id.is_none();
     let keep_relay = payload.via_agent.is_none();
     let keep_group = payload.group_name.is_none();
+    let new_location = payload.location_id;
     let mut input = payload.validate(&state, Some(id))?;
+    if let Some(location) = new_location {
+        super::locations::check_location(&state.pool, location).await?;
+    }
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
     let before = load(&state, id).await?;
@@ -382,6 +407,9 @@ pub async fn update(
     if !updated {
         return Err(not_found(id));
     }
+    if let Some(location) = new_location {
+        super::locations::set_location(&state.pool, &[id], location).await?;
+    }
     // Mettre en pause promet « ne lève aucune alerte » : ce qui était en cours
     // s'éteint tout de suite, sans notification.
     if before.enabled && !input.enabled {
@@ -390,7 +418,8 @@ pub async fn update(
     let target = load(&state, id).await?;
     crate::packs::apply_thresholds(&state.pool, &target).await;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
-    Ok(Json(TargetView::new(target, status)))
+    let location = super::locations::location_of(&state.pool, id).await?;
+    Ok(Json(TargetView::new(target, status).at(location)))
 }
 
 /// Étiquettes qui changent l'endroit (ou la manière) dont le secret est envoyé.

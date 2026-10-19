@@ -88,7 +88,7 @@
 	});
 </script>
 
-<header class="vt-nav-top sticky top-0 z-30 hidden border-b border-line bg-canvas/85 backdrop-blur-md sm:block">
+<header class="vt-nav-top sticky top-0 z-30 hidden border-b pt-[var(--safe-top)] border-line bg-canvas/85 backdrop-blur-md sm:block">
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
 		<div class="flex shrink-0 items-center gap-2">
 			<a href="/" class="flex items-center gap-2.5" aria-label={m.misc_nav_home()}>
@@ -177,7 +177,7 @@
 	mode and the documentation sit at the foot of Settings. A solid bar: a
 	backdrop blur over a scrolling list costs a repaint every frame.
 -->
-<nav aria-label={m.misc_nav_main()} class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas pb-[env(safe-area-inset-bottom)] sm:hidden">
+<nav aria-label={m.misc_nav_main()} class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] sm:hidden">
 	<ul class="grid grid-cols-4">
 		{#each links().filter((link) => link.phone) as link (link.href)}
 			{@const active = isActive(link.href, link.exact)}

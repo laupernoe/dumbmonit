@@ -100,7 +100,7 @@
 		if (password) {
 			const problem = validatePassword(password);
 			if (problem) found.password = problem;
-		} else if (!auth.oidc.enabled) {
+		} else if (!auth.oidc.enabled && !auth.ldap.enabled) {
 			found.password = m.settings_users_err_password();
 		}
 		draftErrors = found;
@@ -260,7 +260,9 @@
 						error={draftErrors.password}
 						help={auth.oidc.enabled
 							? m.settings_users_password_help_sso({ min: PASSWORD_MIN_LENGTH, provider: auth.oidc.provider_name })
-							: m.settings_users_password_help({ min: PASSWORD_MIN_LENGTH })}
+							: auth.ldap.enabled
+								? m.settings_users_password_help_ldap({ min: PASSWORD_MIN_LENGTH })
+								: m.settings_users_password_help({ min: PASSWORD_MIN_LENGTH })}
 					>
 						<div class="flex gap-2">
 							<PasswordInput
@@ -342,7 +344,12 @@
 										<span class="text-sm text-ink-2">{user.username}</span>
 									{/if}
 									<Plate tone={user.role === 'admin' ? 'signal' : user.role === 'operator' ? 'info' : 'ghost'} bare label={ROLE_LABELS[user.role]?.() ?? user.role} />
-									<Plate tone="info" bare label={user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : m.settings_users_auth_password()} title={user.auth === 'oidc' ? m.settings_users_auth_sso_title() : m.settings_users_auth_password_title()} />
+									<Plate
+										tone="info"
+										bare
+										label={user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : user.auth === 'ldap' ? 'LDAP' : m.settings_users_auth_password()}
+										title={user.auth === 'oidc' ? m.settings_users_auth_sso_title() : user.auth === 'ldap' ? m.settings_users_auth_ldap_title() : m.settings_users_auth_password_title()}
+									/>
 									{#if user.totp_enabled}<Plate tone="signal" bare label="2FA" title={m.settings_users_2fa_title()} />{/if}
 									{#if user.disabled}<Plate tone="muted" label={m.settings_users_disabled()} />{/if}
 									{#if me}<span class="text-[0.75rem] font-semibold text-ink-3">{m.settings_users_you()}</span>{/if}
@@ -392,7 +399,7 @@
 									label={m.settings_users_reset_password()}
 									for={`edit-password-${user.id}`}
 									error={editPasswordError}
-									help={user.auth === 'oidc' ? m.settings_users_reset_help_sso() : m.settings_users_reset_help()}
+									help={user.auth === 'oidc' ? m.settings_users_reset_help_sso() : user.auth === 'ldap' ? m.settings_users_reset_help_ldap() : m.settings_users_reset_help()}
 									class="sm:col-span-2"
 								>
 									<div class="flex gap-2">

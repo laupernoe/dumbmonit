@@ -125,6 +125,14 @@ pub async fn run(
     seed_notifications(pool).await?;
     seed_status_page(pool, &targets).await?;
     seed_alert_history(pool, &targets).await?;
+    // Un emplacement, le site principal : la carte du monde et la carte en
+    // direct du pare-feu ont de quoi se dessiner.
+    sqlx::query(
+        "INSERT INTO locations (name, address, latitude, longitude, main_site)
+         VALUES ('Home', 'Lausanne, Switzerland', 46.5197, 6.6323, 1)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(Seeded { agent_token, agent_secret, targets })
 }

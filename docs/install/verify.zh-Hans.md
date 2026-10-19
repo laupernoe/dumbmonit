@@ -22,6 +22,10 @@ cosign verify-blob dumbmonit-agent-linux-x86_64 \
 
 # or, with the GitHub CLI (checks the provenance attestation)
 gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+
+# or against the provenance attached to the release
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+  --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 成功运行会打印工作流身份和标签。如果失败,请不要安装该文件,并
@@ -44,6 +48,19 @@ docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
 
 如果你希望所运行的内容恰好就是你所验证的内容,请在 Compose 文件中按
 摘要固定镜像。
+
+## 事后签名 {#signed-afterwards}
+
+0.9.0 之前的版本（`v0.1.0-alpha.N`），以及发布工作流本身未签名的文件（例如 `provenance.json`），其 `<文件>.sigstore.json` 来自一个单独、手动运行的工作流（`.github/workflows/sign-releases.yml`）。该签名只表明该工作流运行时文件已在发布中，并不表明它是从该标签构建的：请用该工作流的身份进行验证，并将文件与旁边的 `.sha256` 比对。
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+```
+
+这些版本没有构建来源证明：`gh attestation verify` 不适用于它们。
 
 ## 版本标签 {#version-tags}
 

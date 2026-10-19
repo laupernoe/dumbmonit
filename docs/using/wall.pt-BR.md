@@ -29,7 +29,7 @@ parede em **Configurações → Notícias do mural**. Ambos vêm desativados.
   direita sob o relógio (ou no meio da cena), pequeno, médio ou grande. O
   cartão encolhe para o espaço que sobra; nunca cobre o status.
 - **Carrossel de imagens.** Os artigos mais recentes dos mesmos feeds que
-  trazem uma imagem, um de cada vez no meio da parede, cada um por oito
+  trazem uma imagem, um de cada vez na coluna da direita, sob o relógio, cada um por oito
   segundos, com transição suave, e com a fonte, a idade e a manchete sobre a
   imagem. Com *movimento reduzido*, as imagens trocam sem transição.
 
@@ -176,6 +176,24 @@ nova a substitui, **Remover a chave** a apaga.
   explorada que já está na lista do NVD recebe a marca *Explorada*),
   *Críticas* (NVD) ou *Ativamente exploradas* (CISA KEV), e quantas mostrar
   (de 1 a 10).
+
+#### Como obter uma chave de administrador {#ai-admin-keys}
+
+Os dois provedores pedem uma **chave de administrador**, diferente da chave de API habitual. Ela serve apenas para ler o consumo e os custos da organização. Mantenha-a em segredo: cole-a em **Settings → Wall display → Wall widgets** e o DumbMonit a guarda criptografada.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Entre no [Claude Console](https://platform.claude.com/settings/admin-keys) como membro com a função **admin** de uma **organização** (uma conta pessoal não pode criar uma; crie primeiro uma organização em Settings → Organization).
+2. Abra a [página Admin keys](https://platform.claude.com/settings/admin-keys), clique em **Create admin key**, dê um nome e escolha uma expiração.
+3. Copie imediatamente o segredo (`sk-ant-admin01-…`): ele só é mostrado uma vez.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Entre na [plataforma OpenAI](https://platform.openai.com/settings/organization/admin-keys) como **proprietário** (owner) da organização.
+2. Abra a [página Admin keys](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) e clique em **Create new admin key**; a permissão *Read only* basta.
+3. Copie imediatamente a chave: ela só é mostrada uma vez.
+
+As assinaturas individuais (Claude Pro e Max, ChatGPT Plus) **não têm API de uso**: não podem aparecer na parede.
 
 ### API {#widgets-api}
 

@@ -349,6 +349,10 @@ pub async fn list_target_nodes(pool: &SqlitePool) -> Result<Vec<TargetNode>> {
                 // rien du présent : elle ne peut pas étouffer ses descendants.
                 unreachable: enabled
                     && last_error.as_deref().is_some_and(crate::db::targets::error_means_down),
+                service_down: enabled
+                    && last_error
+                        .as_deref()
+                        .is_some_and(crate::db::targets::error_means_service_down),
             })
         })
         .collect()
@@ -1230,6 +1234,7 @@ mod tests {
         let broken = crate::db::targets::create(&pool, &cipher, &input("broken")).await.unwrap();
         let paused = crate::db::targets::create(&pool, &cipher, &input("paused")).await.unwrap();
         let fine = crate::db::targets::create(&pool, &cipher, &input("fine")).await.unwrap();
+        let failing = crate::db::targets::create(&pool, &cipher, &input("failing")).await.unwrap();
 
         let down = "Monitor unreachable: no measurement for 120 s (limit 90 s)";
         crate::db::targets::record_probe(&pool, silent, Some(down)).await.unwrap();
@@ -1237,6 +1242,8 @@ mod tests {
         crate::db::targets::record_probe(&pool, paused, Some(down)).await.unwrap();
         crate::db::targets::set_enabled(&pool, paused, false).await.unwrap();
         crate::db::targets::record_probe(&pool, fine, None).await.unwrap();
+        let failed = "Service down: the icmp check failed (timeout)";
+        crate::db::targets::record_probe(&pool, failing, Some(failed)).await.unwrap();
 
         let nodes = list_target_nodes(&pool).await.unwrap();
         let unreachable = |id: TargetId| nodes.iter().find(|n| n.id == id).unwrap().unreachable;
@@ -1244,5 +1251,11 @@ mod tests {
         assert!(!unreachable(broken), "une erreur de configuration n'est pas une panne");
         assert!(!unreachable(paused), "une cible en pause garde un verdict périmé");
         assert!(!unreachable(fine));
+
+        // Une sonde de disponibilité en échec : en panne, mais pas injoignable.
+        let service_down = |id: TargetId| nodes.iter().find(|n| n.id == id).unwrap().service_down;
+        assert!(service_down(failing), "un ping sans réponse, c'est une panne");
+        assert!(!unreachable(failing), "la cible n'étouffe pas ses propres alertes");
+        assert!(![silent, broken, paused, fine].into_iter().any(service_down));
     }
 }

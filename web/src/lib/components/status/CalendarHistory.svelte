@@ -13,6 +13,7 @@
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import type { PublicCalendarDay, PublicCalendarState } from '#lib/api/index.js';
 	import { formatPercent } from '#lib/format.js';
+	import { formatUtcDay } from './utc-day';
 
 	interface Props {
 		days: PublicCalendarDay[];
@@ -41,9 +42,7 @@
 	}
 
 	function formatDay(date: string): string {
-		const parsed = new Date(`${date}T00:00:00Z`);
-		if (Number.isNaN(parsed.getTime())) return date;
-		return new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(parsed);
+		return formatUtcDay(date, getLocale());
 	}
 
 	function describe(day: PublicCalendarDay): string {

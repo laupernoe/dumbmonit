@@ -47,6 +47,16 @@ impl OpnsenseClient {
             .ok_or_else(|| ProbeError::Protocol(format!("Empty response from {path}")))
     }
 
+    /// Comme [`Self::get`], mais un corps vide — rien à dire — donne la valeur
+    /// par défaut (une liste vide). Un 403 reste une erreur d'authentification :
+    /// l'appelant a besoin de ce droit-là.
+    pub async fn get_or_empty<T: DeserializeOwned + Default>(
+        &self,
+        path: &str,
+    ) -> Result<T, ProbeError> {
+        Ok(self.fetch(path, Verb::Get, false).await?.unwrap_or_default())
+    }
+
     /// Comme [`Self::get`], mais un 403 — le droit manque — et un 404 — le
     /// module n'est pas installé sur ce pare-feu — donnent `Ok(None)`, et
     /// plusieurs orthographes d'un même chemin sont essayées dans l'ordre.

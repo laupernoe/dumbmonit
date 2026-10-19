@@ -197,6 +197,12 @@ réglé » comme activé ; le panneau Connexion unique dit maintenant quand
 ce défaut s'applique. Une valeur que vous avez enregistrée explicitement
 est gardée telle quelle.
 
+## LDAP / Active Directory
+
+Administrateurs seulement. Connexion avec les identifiants et mots de passe de
+l'annuaire sur l'écran habituel, rôles tirés des groupes, comptes créés à la
+première connexion. Voir [LDAP / Active Directory](ldap.md).
+
 ## Agents
 
 Jetons d'enrôlement pour l'[agent Linux, macOS, FreeBSD et
@@ -305,4 +311,4 @@ Version du serveur et santé de ses deux magasins, la base de données
 (chaque mesure dans les graphiques), comme rapporté par `GET /api/health`
 et rafraîchi toutes les 15 secondes. Un magasin qui arrête de répondre
 montre un avertissement avec l'erreur et quoi vérifier. La section pointe
-aussi vers cette documentation et nomme la licence, Apache 2.0.
+aussi vers cette documentation et nomme la licence, MIT.

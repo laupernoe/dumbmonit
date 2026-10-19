@@ -91,6 +91,45 @@ pub struct OptionDescription {
     /// présenter sous quelques titres plutôt qu'en une seule colonne.
     #[serde(default)]
     pub group: Text,
+    /// `checklist` : les cases à cocher. La valeur est la liste des `value` cochées,
+    /// séparées par des virgules ; `-` quand aucune ne l'est ; absente : tout est
+    /// coché. `default` (même format) est ce qu'un nouveau moniteur coche d'emblée.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub items: Vec<OptionItem>,
+    /// `rows` : les colonnes d'une ligne que l'on ajoute à volonté. La valeur est
+    /// un tableau JSON d'objets `{clé de colonne: valeur}`.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub columns: Vec<OptionColumn>,
+}
+
+/// Une case à cocher d'un réglage `checklist`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OptionItem {
+    pub value: Text,
+    pub label: Text,
+    /// Une phrase qui dit à quoi sert l'entrée.
+    pub help: Text,
+    /// Courtes mentions affichées à côté du nom (type, importance…).
+    pub badges: Vec<Text>,
+}
+
+/// Une colonne d'un réglage `rows`.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct OptionColumn {
+    pub key: Text,
+    pub label: Text,
+    pub placeholder: Text,
+    /// `text`, `select` ou `boolean`.
+    pub input: Text,
+    /// Valeurs proposées quand `input == "select"` ; la première est le défaut.
+    pub choices: Vec<Text>,
+    /// Expression régulière (syntaxe JavaScript) que le texte saisi doit vérifier ;
+    /// vide : aucune vérification côté interface.
+    pub pattern: Text,
+    /// Message affiché quand `pattern` n'est pas vérifié.
+    pub invalid: Text,
+    /// Deux lignes ne peuvent avoir la même valeur dans cette colonne.
+    pub unique: bool,
 }
 
 /// Une forme d'identifiant acceptée (le `type` de `credential`), et ses champs.

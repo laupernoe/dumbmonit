@@ -86,6 +86,8 @@
 	import WallNewsVideo from '#lib/components/wall/WallNewsVideo.svelte';
 	import WallGallery from '#lib/components/wall/WallGallery.svelte';
 	import WallWidgets from '#lib/components/wall/WallWidgets.svelte';
+import WallMarketBar from '#lib/components/wall/WallMarketBar.svelte';
+import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 	import WallWeather from '#lib/components/wall/WallWeather.svelte';
 	import { getWallWidgets } from '#lib/api/wallWidgets.js';
 	import type { WallWidgets as WallWidgetsData } from '#lib/api/types.js';
@@ -113,7 +115,9 @@
 	 */
 	const NEWS_MS = 5 * 60_000;
 	let news = $state<WallNews | null>(null);
-	const headlines = $derived(news?.ticker ? news.items : []);
+	/** The carousel wins the bottom of the wall: with it on, no headline band. */
+	const carouselOn = $derived(!!news?.gallery);
+	const headlines = $derived(news?.ticker && !carouselOn ? news.items : []);
 	const newsVideo = $derived(news?.video ?? null);
 	/** The pictures carousel: the same feeds, the articles that carry a picture. */
 	const gallery = $derived(news?.gallery ? news.items.filter((item) => item.image) : []);
@@ -149,8 +153,16 @@
 	 */
 	const WIDGETS_MS = 60_000;
 	let widgets = $state<WallWidgetsData | null>(null);
-	const hasWidgets = $derived(
-		!!widgets && !!(widgets.crypto || widgets.stocks || widgets.fx || widgets.cve || widgets.claude || widgets.openai)
+	/** The rail's cards: only widgets that are on and have something to show. */
+	const railCards = $derived(widgetCards(widgets));
+	const hasMarket = $derived(marketItems(widgets).length > 0);
+	/**
+	 * Where the market bar goes: along the bottom, unless the headline band
+	 * (carousel off, feeds on) takes the bottom, then under the tools at the top.
+	 */
+	const marketAt = $derived<'top' | 'bottom' | null>(!hasMarket ? null : headlines.length > 0 ? 'top' : 'bottom');
+	const bottomBar = $derived<'news' | 'market' | null>(
+		headlines.length > 0 ? 'news' : marketAt === 'bottom' ? 'market' : null
 	);
 
 	$effect(() => {
@@ -641,6 +653,9 @@
 
 	const firstLoad = $derived(loading && targets.length === 0);
 
+	/** Nothing but the clock on the right: the rail slims down and the problems take the room. */
+	const leanRail = $derived(railCards.length === 0 && gallery.length === 0 && newsVideo?.position !== 'right');
+
 	/**
 	 * From 1024 px the board is a fixed-height column: the problems get what the
 	 * devices below do not need (two rows of chips are always kept). Below, the
@@ -663,14 +678,18 @@
 <svelte:head><title>{m.wall_page_title()}</title></svelte:head>
 <svelte:window onkeydown={onKeydown} />
 
-<div class="wall fixed inset-0 z-40 bg-canvas text-ink" data-wall-theme={oledActive ? 'oled' : undefined}>
+<div class="wall fixed inset-0 z-[60] box-border bg-canvas pt-[var(--safe-top)] pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] text-ink" data-wall-theme={oledActive ? 'oled' : undefined}>
 	<!--
 		Everything lives in this stage. On OLED it is nudged a few pixels every
 		few minutes (burn-in care), scene included: nothing stays lit in one spot.
 	-->
 	<div
 		class="wall-stage relative h-full"
-		class:has-news={headlines.length > 0}
+		class:has-bottom={bottomBar !== null}
+		class:has-top-bar={marketAt === 'top'}
+		class:lean={leanRail}
+		style:--bottom-h={bottomBar === 'news' ? 'calc(var(--news-h, 2.75rem) / var(--zoom, 1))' : bottomBar === 'market' ? 'var(--market-h, 3.25rem)' : '0px'}
+		style:--bottom-px={bottomBar === 'news' ? 'var(--news-h, 2.75rem)' : bottomBar === 'market' ? 'calc(var(--market-h, 3.25rem) * var(--zoom, 1))' : '0px'}
 		style:transform={oledActive ? `translate(${oledShift[0]}px, ${oledShift[1]}px)` : undefined}
 	>
 		<div class="scene-box">
@@ -768,23 +787,27 @@
 					<div class="news-video-slot"><WallNewsVideo video={newsVideo} /></div>
 				{/if}
 
-				{#if hasWidgets && widgets}
+				{#if gallery.length > 0}
+					<div class="gallery-slot"><WallGallery items={gallery} {now} paused={hidden} /></div>
+				{/if}
+
+				{#if railCards.length > 0 && widgets}
 					<div class="widgets-slot"><WallWidgets {widgets} {now} paused={hidden} /></div>
 				{/if}
 			</div>
 
-			{#if newsVideo?.position === 'center' || gallery.length > 0}
-				<div class="board-center">
-					{#if newsVideo?.position === 'center'}<WallNewsVideo video={newsVideo} />{/if}
-					{#if gallery.length > 0}
-						<div class="gallery-slot"><WallGallery items={gallery} {now} paused={hidden} /></div>
-					{/if}
-				</div>
+			{#if newsVideo?.position === 'center'}
+				<div class="board-center"><WallNewsVideo video={newsVideo} /></div>
 			{/if}
 		</div>
 
 		{#if headlines.length > 0}
 			<div class="news-band"><WallNewsTicker items={headlines} {now} paused={hidden} /></div>
+		{/if}
+
+		<!-- Static market bar: along the bottom, or under the tools when the headlines take the bottom. -->
+		{#if marketAt && widgets}
+			<div class="market-slot market-slot--{marketAt}"><WallMarketBar {widgets} paused={hidden} edge={marketAt} /></div>
 		{/if}
 
 		<!-- Tools, top right; Music and Theme show on hover, focus or touch. -->
@@ -925,31 +948,35 @@
 		transform-origin: left;
 		transition: transform 1s linear;
 	}
-	/* The headline band: stuck to the bottom of the visible wall, above the scene. */
-	.news-band {
+	/* The headline band and the market bar: stuck to the bottom of the visible wall, above the scene. */
+	.news-band,
+	.market-slot--bottom {
 		position: sticky;
 		bottom: 0;
 		z-index: 12;
 	}
+	/* Under the tools, over the scene band. */
+	.market-slot--top {
+		position: absolute;
+		top: 3.75rem;
+		inset-inline: 0;
+		z-index: 12;
+	}
 	.news-video-slot,
 	.board-center,
+	.gallery-slot,
 	.widgets-slot {
 		width: 100%;
 		margin-top: 1.25rem;
 	}
 	.widgets-slot {
 		display: flex;
-		justify-content: flex-end;
+		flex-direction: column;
 	}
 	.board-center {
 		display: flex;
 		flex-direction: column;
 		gap: 1.25rem;
-	}
-	.gallery-slot {
-		display: flex;
-		justify-content: center;
-		width: 100%;
 	}
 	.music-slot {
 		position: relative;
@@ -975,7 +1002,7 @@
 			position: absolute;
 			inset: 0;
 			display: grid;
-			grid-template-columns: minmax(0, 42rem) minmax(0, 1fr) minmax(0, 30rem);
+			grid-template-columns: minmax(0, 42rem) minmax(0, 1fr) minmax(0, 32rem);
 			gap: 2rem;
 			/* The bottom eighth stays the pigeons' parapet. */
 			padding: 3.25rem 3.5rem 12.5vh;
@@ -984,12 +1011,24 @@
 			grid-column: 1;
 			min-height: 0;
 		}
+		/* Nothing but the clock on the right: the rail slims down, the problems get the room. */
+		.lean .board {
+			grid-template-columns: minmax(0, 46rem) minmax(0, 1fr) minmax(0, 22rem);
+		}
 		.board-right {
 			grid-column: 3;
 			align-items: flex-end;
 			text-align: right;
 			padding-top: 2.25rem;
 			min-height: 0;
+			/* The rail stops above the pigeons' heads (about 74% of the screen height). */
+			margin-bottom: max(
+				0px,
+				calc(
+					26vh / var(--zoom, 1) - var(--bottom-h, 0px) -
+						(100vh / var(--zoom, 1) - var(--bottom-h, 0px)) * 0.125
+				)
+			);
 		}
 		.headline {
 			font-size: clamp(4rem, 5vw, 6rem);
@@ -1014,20 +1053,46 @@
 			height: 11.5rem;
 			margin-top: 2rem;
 		}
-		.news-band {
+		.news-band,
+		.market-slot {
 			position: absolute;
 			inset-inline: 0;
+		}
+		.news-band,
+		.market-slot--bottom {
 			bottom: 0;
 		}
-		/* With headlines, the pigeons' parapet and the board both clear the band. */
-		.has-news .board {
-			padding-bottom: calc(12.5vh + var(--news-h, 2.75rem));
+		.market-slot--top {
+			top: 4rem;
+		}
+		/*
+		 * A bottom bar (headlines, or the market) takes its own strip: the scene
+		 * ends above it, so the parapet and its pigeons are never covered, and
+		 * the board clears it.
+		 */
+		.scene-box {
+			bottom: var(--bottom-px, 0px);
+		}
+		.has-bottom .board {
+			padding-bottom: calc(var(--bottom-h) + (100vh / var(--zoom, 1) - var(--bottom-h)) * 0.125);
+		}
+		/* A top bar sits under the tools: everything below it starts lower. */
+		.has-top-bar .board {
+			padding-top: calc(4rem + var(--market-h, 3.25rem) + 1.25rem);
+		}
+		.has-top-bar .board-right {
+			padding-top: 0;
 		}
 		/* The live tile takes what the right column leaves, and shrinks to it. */
 		.news-video-slot {
 			display: flex;
 			flex: 1 1 0;
 			min-height: 0;
+			margin-top: 1rem;
+		}
+		/* The small photo keeps its shape; the cards below share what is left. */
+		.gallery-slot {
+			flex: 0 0 auto;
 			margin-top: 1rem;
 		}
 		.board-center {
@@ -1040,10 +1105,11 @@
 			min-height: 0;
 			margin-top: 0;
 		}
-		/* The deck keeps its height; the live tile above shrinks to make room. */
+		/* The cards take what is left of the rail, cut into pages by their measured height. */
 		.widgets-slot {
-			flex: 0 0 auto;
-			margin-top: 1.25rem;
+			flex: 1 1 0;
+			min-height: 0;
+			margin-top: 0.875rem;
 		}
 		.music-slot :global(.music-dock) {
 			justify-content: flex-end;
@@ -1056,21 +1122,56 @@
 			gap: 1.5rem;
 			padding-inline: 2.5rem;
 		}
+		.lean .board {
+			grid-template-columns: minmax(0, 36rem) minmax(0, 1fr) minmax(0, 18rem);
+		}
 		.clock {
 			font-size: 4.5rem;
 		}
 	}
 	/* A 4K panel read from the same sofa: the board grows with the screen. */
 	@media (min-width: 2400px) {
+		.wall-stage {
+			--zoom: 1.33;
+		}
 		.board,
-		.wall-tools {
+		.wall-tools,
+		.market-slot {
 			zoom: 1.33;
 		}
 	}
 	@media (min-width: 3200px) {
+		.wall-stage {
+			--zoom: 2;
+		}
 		.board,
-		.wall-tools {
+		.wall-tools,
+		.market-slot {
 			zoom: 2;
+		}
+	}
+	/* A short screen (720p): the rail trims its spacing so the cards keep their room. */
+	@media (min-width: 1024px) and (max-height: 940px) {
+		.updated {
+			display: none;
+		}
+		.gallery-slot :global(.frame) {
+			aspect-ratio: 3.4 / 1;
+		}
+		.gallery-slot :global(.title) {
+			-webkit-line-clamp: 1;
+			line-clamp: 1;
+		}
+		.date {
+			font-size: 1.25rem;
+			margin-top: 0.125rem;
+		}
+		.updated {
+			margin-top: 0.25rem;
+		}
+		.gallery-slot,
+		.widgets-slot {
+			margin-top: 0.625rem;
 		}
 	}
 

@@ -1,8 +1,11 @@
 name: Security
 
 # Weekly and after every publication of :edge: scans the published server and
-# agent images for known CVEs (Trivy). Results land in the repository's
-# Security tab. The OpenSSF Scorecard has its own workflow (scorecard.yml).
+# agent images for known CVEs (Trivy), and every lockfile of the repository
+# (Cargo.lock, fuzz/Cargo.lock, web/package-lock.json, docs/requirements.txt)
+# against OSV, the database the OpenSSF Scorecard "Vulnerabilities" check
+# reads. Results land in the repository's Security tab. The Scorecard has its
+# own workflow (scorecard.yml).
 
 on:
   schedule:
@@ -43,3 +46,27 @@ jobs:
         with:
           sarif_file: trivy-${{ matrix.name }}.sarif
           category: trivy-${{ matrix.name }}
+
+  osv:
+    name: Lockfile scan (OSV)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      # The default branch (main) on a schedule or after a release, as the
+      # Scorecard sees it; the branch it is started from by hand.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      # A known vulnerability fails the job (exit 1) once the SARIF is
+      # written. Exceptions with a reason go in osv-scanner.toml.
+      - name: Scan
+        run: |
+          docker run --rm -v "$PWD:/src" -w /src \
+            ghcr.io/google/osv-scanner:v2.7.0@sha256:4f3b7e2c64b9d38a5febc5a7e4a3dfef1d1362f726dea7a2ef4762b46469fcd0 \
+            --recursive --format sarif --output-file /src/osv.sarif /src
+      - uses: github/codeql-action/upload-sarif@24c54180a607b1449ed407dd24f251e4e9147c8d # v4.38.3
+        if: always() && hashFiles('osv.sarif') != ''
+        with:
+          sarif_file: osv.sarif
+          category: osv-lockfiles

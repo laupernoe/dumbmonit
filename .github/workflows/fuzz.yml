@@ -1,21 +1,14 @@
 name: Fuzzing
 
 # ClusterFuzzLite runs the cargo-fuzz targets of fuzz/ (built by
-# .clusterfuzzlite/build.sh) against the parsers that read outside input:
-#   - pull requests: every target, 5 minutes in all (picking only the targets
-#     a change touches would need coverage reports, which are not produced);
-#   - push to main or dev, and weekly: every target, 5 minutes in all, corpus kept
-#     between runs as a workflow artifact.
+# .clusterfuzzlite/build.sh) against the parsers that read outside input, on
+# every push to main or dev that touches them, weekly and on demand: every
+# target, 5 minutes in all, corpus kept between runs as a workflow artifact.
+# Not on pull requests: ~20 minutes for a check that is not required, and a
+# crash found after the merge still fails dev before any release.
 # A crash fails the job and leaves the reproducer as an artifact.
 
 on:
-  pull_request:
-    paths:
-      - "crates/**"
-      - "fuzz/**"
-      - ".clusterfuzzlite/**"
-      - "Cargo.lock"
-      - ".github/workflows/fuzz.yml"
   push:
     branches: [main, dev]
     paths:
@@ -55,5 +48,5 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           fuzz-seconds: 300
-          mode: ${{ github.event_name == 'pull_request' && 'code-change' || 'batch' }}
+          mode: batch
           sanitizer: address

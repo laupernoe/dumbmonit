@@ -3,6 +3,15 @@ name: CodeQL
 # Static analysis (SAST) on every pull request (to dev and main) and on every
 # push to dev/main, so that each merged change carries a CodeQL check run
 # (what the OpenSSF Scorecard SAST check looks for).
+#
+# Compromise for pull requests: the workflow always runs (no `paths:` filter,
+# or a PR without CodeQL check run would lower the Scorecard SAST score), and
+# the `actions` analysis (~30 s) always uploads, which gives every PR its
+# "CodeQL" check run. The Rust analysis (~10 min) and the JavaScript/TypeScript
+# one only analyse when the PR touches their files; otherwise their job
+# succeeds without analysing, and code scanning may warn that a configuration
+# of the base branch is missing on that PR. Pushes to dev and main, and the
+# weekly run, analyse all three languages.
 
 on:
   push:
@@ -17,8 +26,39 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      rust: ${{ github.event_name != 'pull_request' || steps.filter.outputs.rust == 'true' }}
+      javascript-typescript: ${{ github.event_name != 'pull_request' || steps.filter.outputs.js == 'true' }}
+    steps:
+      - id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            rust:
+              - "**/*.rs"
+              - "**/Cargo.toml"
+              - "Cargo.lock"
+              - ".github/workflows/codeql.yml"
+            js:
+              - "**/*.js"
+              - "**/*.mjs"
+              - "**/*.cjs"
+              - "**/*.ts"
+              - "**/*.svelte"
+              - "**/*.html"
+              - "**/package*.json"
+              - ".github/workflows/codeql.yml"
+
   analyze:
     name: Analyze (${{ matrix.language }})
+    needs: changes
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -28,14 +68,22 @@ jobs:
       fail-fast: false
       matrix:
         language: [rust, javascript-typescript, actions]
+    env:
+      RUN: ${{ matrix.language == 'actions' || needs.changes.outputs[matrix.language] == 'true' }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Nothing to analyse
+        if: env.RUN != 'true'
+        run: echo "No ${{ matrix.language }} change in this pull request." >> "$GITHUB_STEP_SUMMARY"
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+      - if: env.RUN == 'true'
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           languages: ${{ matrix.language }}
           build-mode: none
-      - uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
+      - if: env.RUN == 'true'
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.39.0
         with:
           category: /language:${{ matrix.language }}

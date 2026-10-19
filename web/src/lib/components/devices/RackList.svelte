@@ -19,6 +19,7 @@
 	 */
 	import type { SecurityGrade, TargetId } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
+	import type { TargetAlertCounts } from '#lib/alerts-attention.js';
 	import CompactRow from './CompactRow.svelte';
 	import RackTile from './RackTile.svelte';
 	import type { RackRow } from './rack';
@@ -63,11 +64,13 @@
 		names?: Map<TargetId, string>;
 		/** id → security grade, only for rated devices while the score is on. */
 		security?: Map<TargetId, { grade: SecurityGrade | null; score: number | null }>;
+		/** id → active alert counts, for the bell on each monitor. */
+		alertCounts?: Map<TargetId, TargetAlertCounts>;
 		/** When given (admins), every row carries a checkbox. */
 		selection?: RowSelection | null;
 	}
 
-	let { rows, sparklines, kindLabels, reorder = null, layout = 'compact', names = new Map(), security = new Map(), selection = null }: Props = $props();
+	let { rows, sparklines, kindLabels, reorder = null, layout = 'compact', names = new Map(), security = new Map(), alertCounts = new Map(), selection = null }: Props = $props();
 
 	const LIST_CLASS: Record<RackView, string> = {
 		compact: 'flex flex-col divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-lift',
@@ -90,6 +93,7 @@
 					depth={row.depth}
 					shadowed={row.shadowed}
 					security={security.get(row.target.id) ?? null}
+					alerts={alertCounts.get(row.target.id)}
 				/>
 			{:else}
 				<RackTile
@@ -100,11 +104,18 @@
 					parentName={row.target.parent_id !== null ? (names.get(row.target.parent_id) ?? null) : null}
 					shadowed={row.shadowed}
 					security={security.get(row.target.id) ?? null}
+					alerts={alertCounts.get(row.target.id)}
 				/>
 			{/if}
 		{/snippet}
+		<!--
+			Compact lines off screen skip layout and paint (`content-visibility`),
+			holding their last measured height: each line is its own size
+			container, and with hundreds of devices laying them all out on load
+			cost more than building them.
+		-->
 		<li
-			class={`relative flex min-w-0 items-stretch gap-1.5 first:rounded-t-[inherit] last:rounded-b-[inherit] ${layout === 'compact' ? 'overflow-hidden' : 'rise-in'}`}
+			class={`relative flex min-w-0 items-stretch gap-1.5 first:rounded-t-[inherit] last:rounded-b-[inherit] ${layout === 'compact' ? 'overflow-hidden [content-visibility:auto] [contain-intrinsic-block-size:auto_2.75rem]' : 'rise-in'}`}
 			style="--rise-delay: {Math.min(i, 14) * 30}ms;"
 			{@attach (node) => {
 				reorder?.registerRow(id, node);

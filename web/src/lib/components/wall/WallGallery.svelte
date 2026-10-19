@@ -69,6 +69,8 @@
 				</figure>
 			{/each}
 			{#if pictures.length > 1}
+				<!-- Time left on this picture; a still bar under reduced motion (see below). -->
+				{#key active}<span class="bar" aria-hidden="true"></span>{/key}
 				<p class="count tnum" aria-hidden="true">{m.wall_gallery_count({ index: active + 1, count: pictures.length })}</p>
 			{/if}
 		</div>
@@ -78,12 +80,11 @@
 <style>
 	.gallery {
 		width: 100%;
-		max-width: 40rem;
 	}
 	.frame {
 		position: relative;
 		display: grid;
-		aspect-ratio: 16 / 9;
+		aspect-ratio: 2.4 / 1;
 		overflow: hidden;
 		border-radius: var(--radius-card);
 		border: 2px solid var(--c-line-strong);
@@ -123,7 +124,7 @@
 		display: flex;
 		flex-direction: column;
 		gap: 0.375rem;
-		padding: 3rem 1.25rem 1rem;
+		padding: 2.5rem 1rem 0.9rem;
 		background: linear-gradient(to top, rgb(0 0 0 / 0.82), rgb(0 0 0 / 0.55) 55%, transparent);
 		color: #fff;
 	}
@@ -142,9 +143,9 @@
 		opacity: 0.85;
 	}
 	.title {
-		font-size: 1.375rem;
+		font-size: 1.125rem;
 		font-weight: 700;
-		line-height: 1.2;
+		line-height: 1.15;
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		line-clamp: 2;
@@ -164,12 +165,35 @@
 		font-size: 0.75rem;
 		font-weight: 600;
 	}
+	.bar {
+		position: absolute;
+		left: 0;
+		bottom: 0;
+		z-index: 1;
+		height: 3px;
+		width: 100%;
+		background: var(--c-signal);
+		transform-origin: left;
+		animation: tick 8s linear forwards;
+	}
+	@keyframes tick {
+		from {
+			transform: scaleX(0);
+		}
+		to {
+			transform: scaleX(1);
+		}
+	}
 	@media (min-width: 1024px) {
 		.title {
-			font-size: 1.625rem;
+			font-size: 1.25rem;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {
+		.bar {
+			animation: none;
+			display: none;
+		}
 		.slide,
 		.slide--shown {
 			transition: none;

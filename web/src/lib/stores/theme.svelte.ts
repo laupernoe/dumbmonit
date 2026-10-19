@@ -69,6 +69,9 @@ class Theme {
 	apply() {
 		if (!browser) return;
 		document.documentElement.classList.toggle('dark', this.resolved === 'dark');
+		document
+			.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+			?.setAttribute('content', this.resolved === 'dark' ? 'black-translucent' : 'default');
 	}
 
 	set(preference: ThemePreference) {

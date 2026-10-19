@@ -110,10 +110,10 @@
 				</div>
 				<ul class="points">
 					<li><strong>Dépendances</strong><p>Déclarez un commutateur comme parent de ce qui se trouve derrière. S’il tombe, vous recevez une seule notification, pas trente ; les autres affichent « Supprimée par le parent ».</p></li>
-					<li><strong>Regroupées par hôte</strong><p>Un NAS dont la grappe se dégrade envoie un message par cycle, pas un par disque. Rappels, escalade, acquittement, report, exclusion par surveillance et effacement de l’historique résolu sont tous intégrés.</p></li>
+					<li><strong>Regroupées par hôte</strong><p>Un NAS dont la grappe se dégrade envoie un message par cycle, pas un par disque. Rappels, escalade, acquittement, report, exclusion par surveillance et effacement de l’historique résolu sont tous intégrés. Une cloche sur chaque surveillance compte ses alertes actives.</p></li>
 					<li><strong>Des références qui apprennent d’abord</strong><p>Détection d’anomalies sans seuil à régler : 168 tranches, une par heure de la semaine. Elle reste silencieuse pendant ses 14 premiers jours et montre seulement ce qu’elle aurait déclenché.</p></li>
 					<li><strong>Prévisions</strong><p>« Ce système de fichiers sera plein dans quatre jours » est listé comme une prévision, à part de ce qui est en panne maintenant.</p></li>
-					<li><strong>Maintenance et politique de notification</strong><p>Fenêtres ponctuelles ou hebdomadaires, hystérésis, maintien anti-flapping, heures calmes, regroupement et plafond horaire, pour qu’une mauvaise nuit ne devienne pas deux cents notifications.</p></li>
+					<li><strong>Maintenance, silences et politique de notification</strong><p>Fenêtres ponctuelles ou hebdomadaires, hystérésis, maintien anti-flapping, heures calmes, regroupement et plafond horaire, pour qu’une mauvaise nuit ne devienne pas deux cents notifications.</p></li>
 				</ul>
 				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/fr/latest/alerting/">Comment fonctionnent les alertes</a></p>
 			</div>
@@ -238,7 +238,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<div class="section-head">
 			<h2>Mode mur</h2>
-			<p>Le bulletin seul, en plein écran, pour un moniteur de salle : une scène vivante (toit parisien avec la tour Eiffel et les pigeons DumbMonit par défaut, ou l’une de nombreuses autres) dont la météo suit vos alertes, un thème OLED pour un écran allumé des jours durant, et la musique du mur &mdash; Spotify Connect transforme l’écran en enceinte.</p>
+			<p>Le bulletin seul, en plein écran, pour un moniteur de salle : une scène vivante (toit parisien avec la tour Eiffel et les pigeons DumbMonit par défaut, ou l’une de nombreuses autres) dont la météo suit vos alertes, un thème OLED pour un écran allumé des jours durant, et la musique du mur &mdash; Spotify Connect transforme l’écran en enceinte. Widgets optionnels : météo, cours des cryptomonnaies, cotations boursières, taux de change, CVE critiques, actualités RSS avec images, et consommation des API Claude et OpenAI.</p>
 		</div>
 		<figure>
 			<div class="shot">
@@ -285,7 +285,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p><a href="https://dumbmonit.readthedocs.io/fr/latest/using/security-score/">En savoir plus dans la documentation</a></p>
 			</div>
 			<ul class="points">
-				<li><strong>Comptes</strong><p>Rôles administrateur, opérateur (traite les alertes, ne modifie aucune configuration) et lecteur, second facteur TOTP optionnel, journal d’audit, et authentification unique via OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), création de compte désactivée par défaut.</p></li>
+				<li><strong>Comptes</strong><p>Rôles administrateur, opérateur (traite les alertes, ne modifie aucune configuration) et lecteur, second facteur TOTP optionnel, journal d’audit, et authentification unique via OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), connexion LDAP ou Active Directory, création de compte désactivée par défaut.</p></li>
 				<li><strong>S’entend bien avec ce que vous faites tourner</strong><p><code>/metrics</code>, <code>/federate</code> et un point d’accès compatible Prometheus permettent à un Grafana existant de lire les données de DumbMonit.</p></li>
 			</ul>
 		</div>
@@ -323,7 +323,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 
 <footer>
 	<div class="wrap">
-		<p>DumbMonit, Apache 2.0. La mascotte est un pigeon.</p>
+		<p>DumbMonit, MIT. La mascotte est un pigeon.</p>
 		<nav aria-label="Pied de page">
 			<a href="./">Fonctionnalités</a>
 			<a href="../devices/">Surveillances</a>

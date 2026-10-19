@@ -211,8 +211,13 @@
 						<div class="min-w-0">
 							<label for="news-ticker" class="text-sm font-semibold text-ink">{m.settings_news_ticker()}</label>
 							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_ticker_hint()}</p>
+							{#if form.gallery}
+								<p id="news-ticker-off" class="mt-1 text-[0.8125rem] font-medium text-advisory-ink">{m.settings_news_ticker_off_gallery()}</p>
+							{/if}
 						</div>
-						<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving} />
+						<div class:opacity-50={form.gallery} title={form.gallery ? m.settings_news_ticker_off_gallery() : undefined}>
+							<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving || form.gallery} />
+						</div>
 					</div>
 					<div class="flex items-start justify-between gap-4">
 						<div class="min-w-0">

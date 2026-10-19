@@ -27,7 +27,7 @@ An admin can add **headlines** and a **live channel** to the wall in
   clock (or in the middle of the scene), small, medium or large. The tile
   shrinks to the room left; it never covers the status.
 - **Picture carousel.** The latest articles of the same feeds that carry a
-  picture, one at a time in the middle of the wall, each for eight seconds,
+  picture, one at a time in the right column under the clock, each for eight seconds,
   cross-fading, with the source, age and headline over the picture. Under
   *reduced motion* the pictures swap without fading.
 
@@ -200,6 +200,24 @@ Plus) and their weekly limits have **no official API**: they cannot be read,
 and DumbMonit does not guess them. An OpenAI
 usage figure counts text completions; the cost covers everything billed
 (images, audio, embeddings…), so tokens and cost are not always proportional.
+
+#### How to get an admin key {#ai-admin-keys}
+
+Both providers ask for an **admin key**, which is not the usual API key. It only reads the organization's usage and costs. Keep it secret: paste it into **Settings → Wall display → Wall widgets** and DumbMonit stores it encrypted.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Sign in to the [Claude Console](https://platform.claude.com/settings/admin-keys) as a member with the **admin** role of an **organization** (a personal account cannot create one; set up an organization first under Settings → Organization).
+2. Open the [Admin keys page](https://platform.claude.com/settings/admin-keys), click **Create admin key**, name it and choose an expiration.
+3. Copy the secret (`sk-ant-admin01-…`) right away: it is shown only once.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Sign in to the [OpenAI platform](https://platform.openai.com/settings/organization/admin-keys) as an **owner** of the organization.
+2. Open the [Admin keys page](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) and click **Create new admin key**; *Read only* permissions are enough.
+3. Copy the key right away: it is shown only once.
+
+Individual subscriptions (Claude Pro and Max, ChatGPT Plus) have **no usage API**: they cannot be shown on the wall.
 
 ### API
 

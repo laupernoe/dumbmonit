@@ -29,6 +29,7 @@
 	import { getSecuritySummary } from '#lib/api/security.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
+	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
@@ -80,11 +81,16 @@
 		Search,
 		SlidersHorizontal,
 		Trash2,
-		Upload
+		Upload,
+		MapPin
 	} from 'lucide-svelte';
+	import { assignLocation, listLocations } from '#lib/api/locations.js';
+	import type { MapLocation } from '#lib/api/types.js';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
+	/** One pass over the shared alert list, not a request per monitor. */
+	const alertCounts = $derived(countAlertsByTarget(alertsStore.alerts));
 	let sparklines = $state<Map<TargetId, Serie[]>>(new Map());
 	/** Security badges: empty while the score is off in Settings, or for unrated kinds. */
 	let security = $state<Map<TargetId, { grade: SecurityGrade | null; score: number | null }>>(new Map());
@@ -543,6 +549,33 @@
 		);
 	const bulkDelete = () => bulk(selectedTargets, (t) => deleteTarget(t.id));
 
+	// Locations of the world map, offered in bulk once selecting starts.
+	let bulkLocations = $state<MapLocation[]>([]);
+	$effect(() => {
+		if (!selecting) return;
+		const controller = new AbortController();
+		listLocations(controller.signal)
+			.then((found) => (bulkLocations = found.locations))
+			.catch(() => (bulkLocations = []));
+		return () => controller.abort();
+	});
+	/** One request for the whole selection: the server places them all at once. */
+	async function bulkPlace(location: number | null) {
+		const subjects = selectedTargets;
+		if (bulkBusy || subjects.length === 0) return;
+		bulkBusy = true;
+		bulkReport = null;
+		try {
+			await assignLocation(location, subjects.map((t) => t.id));
+			await alertsStore.refresh();
+			selected = new Set();
+		} catch (error) {
+			bulkReport = { failed: subjects.map((t) => ({ name: t.name, error })), total: subjects.length };
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
 	async function persistOrder(order: TargetId[]) {
 		const prev = new Map(positionOverride);
 		const next = new Map(positionOverride);
@@ -863,15 +896,26 @@
 	$effect(() => {
 		const controller = new AbortController();
 		void loadKinds(controller.signal);
-		void load(controller.signal);
 		void loadSecurity(controller.signal);
-		const timer = setInterval(() => void load(controller.signal), 30_000);
 		// Scores move slowly (recomputed every 15 min server-side).
 		const securityTimer = setInterval(() => void loadSecurity(controller.signal), 120_000);
 		return () => {
 			controller.abort();
-			clearInterval(timer);
 			clearInterval(securityTimer);
+		};
+	});
+
+	// Sparklines are drawn by the tiles only: the compact list (the default)
+	// never shows them, so it does not pay for a range query over every
+	// device's series every 30 s — several megabytes with a few hundred devices.
+	$effect(() => {
+		if (view !== 'tiles') return;
+		const controller = new AbortController();
+		void load(controller.signal);
+		const timer = setInterval(() => void load(controller.signal), 30_000);
+		return () => {
+			controller.abort();
+			clearInterval(timer);
 		};
 	});
 </script>
@@ -893,7 +937,7 @@
 {#if !firstLoad && !pageError && targets.length > 0}
 	{@const itemClass = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface focus-visible:outline-2 focus-visible:outline-signal'}
 	<!-- Phones: the toolbar stays put while the list scrolls under it. -->
-	<div class="mb-4 flex flex-wrap items-center gap-2 max-sm:sticky max-sm:top-0 max-sm:z-20 max-sm:-mx-4 max-sm:mb-2 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
+	<div class="mb-4 flex flex-wrap items-center gap-2 max-sm:sticky max-sm:top-[var(--safe-top)] max-sm:z-20 max-sm:-mx-4 max-sm:mb-2 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
 		<label class="relative order-1 min-w-0 flex-1 sm:max-w-sm">
 			<span class="sr-only">{m.devices_targets_search_label()}</span>
 			<Search class="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-ink-3" aria-hidden="true" />
@@ -1227,6 +1271,32 @@
 					</form>
 				{/snippet}
 			</Menu>
+			{#if bulkLocations.length > 0}
+				<Menu label={m.devices_list_bulk_location()} align="left" placement="up">
+					{#snippet trigger({ toggle, open })}
+						<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} aria-haspopup="menu" aria-expanded={open} onclick={toggle}>
+							<MapPin class="size-4" aria-hidden="true" />
+							{m.devices_list_bulk_location()}
+						</Button>
+					{/snippet}
+					{#snippet children({ close })}
+						<ul class="flex max-h-72 min-w-48 flex-col gap-0.5 overflow-y-auto">
+							<li>
+								<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkPlace(null); }}>
+									{m.devices_list_bulk_location_auto()}
+								</button>
+							</li>
+							{#each bulkLocations as location (location.id)}
+								<li>
+									<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkPlace(location.id); }}>
+										{location.name}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/snippet}
+				</Menu>
+			{/if}
 			<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy || selectedTargets.length === 0} onconfirm={bulkDelete}>
 				<Trash2 class="size-4" aria-hidden="true" />
 				{m.devices_list_bulk_delete()}
@@ -1270,6 +1340,7 @@
 					layout={view}
 					{names}
 					{security}
+					{alertCounts}
 					{selection}
 				/>
 			{/if}
@@ -1290,7 +1361,7 @@
 					</button>
 				{/if}
 				{#if disabledExpanded}
-					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {selection} />
+					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {alertCounts} {selection} />
 				{/if}
 			</section>
 		{/if}

@@ -198,6 +198,45 @@ fonctionne donc des deux côtés du renommage.
 | `carp` | Surveiller CARP | `true` | Lit les adresses virtuelles d'une paire haute disponibilité, et le mode maintenance persistant. |
 | `firmware` | Surveiller les mises à jour | `true` | Lit le résultat de la dernière vérification de mise à jour du pare-feu et si un redémarrage est en attente. |
 | `temperature` | Lire les capteurs de température | `true` | Lit les capteurs CPU et carte que le pare-feu expose. |
+| `live_map` | Carte en direct du pare-feu | `false` | Montre d'où viennent, par pays, les connexions que vos règles bloquent ou laissent passer. Demande `Diagnostics: Logs: Firewall: Live View`. |
+
+## Carte en direct
+
+Avec l'option `live_map`, la page du moniteur gagne un panneau **Carte en
+direct** : d'où viennent les connexions que vos règles bloquent ou laissent
+passer, sur une carte du monde, sur les quinze dernières minutes — un disque par
+pays (en pointillés quand l'essentiel est bloqué), de courts arcs qui filent
+vers le pare-feu à mesure que les connexions arrivent, et les pays, règles et
+ports les plus fréquents.
+
+- **En lecture seule, à la demande.** Le serveur lit
+  `GET /api/diagnostics/firewall/log` toutes les cinq secondes, seulement tant
+  que quelqu'un a le panneau ouvert, et s'arrête une minute après. Le navigateur
+  ne parle jamais au pare-feu. Donnez au groupe de l'utilisateur d'API le droit
+  **Diagnostics: Logs: Firewall: Live View** (lecture seule).
+- **Aucune adresse ne quitte le serveur.** Chaque ligne du journal est aussitôt
+  réduite à son pays, son port, son protocole, sa règle et son action ; les
+  adresses ne sont ni stockées ni envoyées au navigateur. Quinze minutes restent
+  en mémoire (20 000 évènements au plus), rien n'est écrit en base ni dans
+  VictoriaMetrics.
+- **Les pays viennent d'une base locale.** Le serveur télécharge la base
+  gratuite [IP to Country Lite](https://db-ip.com/db/download/ip-to-country-lite)
+  de DB-IP (CC BY 4.0, sans compte) la première fois qu'une carte en direct en a
+  besoin, la range dans `/data/geoip/` et la remplace quand elle a plus d'un
+  mois. Les recherches sont locales : aucune adresse n'est envoyée à un service.
+  Les plages privées, de bouclage, de lien local et CGNAT sont regroupées en
+  **Réseau local**. Le panneau cite *IP Geolocation by DB-IP*, comme le demande
+  la licence. La base se désactive dans **Réglages → Surveillance →
+  Emplacements → Géolocalisation IP** : plus rien n'est téléchargé, et les pays
+  apparaissent comme inconnus.
+- **Les arcs ont besoin d'un emplacement.** Placez le pare-feu sur la
+  [carte du monde](../using/world-map.md) (à la main, par son site, ou avec le
+  site principal) ; sans emplacement, les disques sont tout de même dessinés.
+- **Animation.** Quand le système demande de *réduire les animations*, les arcs
+  qui filent sont omis ; les disques et les arcs fixes des pays les plus actifs
+  restent.
+- Un pare-feu interrogé par un agent relais n'a pas de carte en direct : le
+  serveur ne joint pas son journal.
 
 ## Erreurs courantes
 
