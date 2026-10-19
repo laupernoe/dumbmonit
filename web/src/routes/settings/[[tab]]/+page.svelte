@@ -34,6 +34,7 @@
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
+	import LdapSection from '#lib/components/settings/LdapSection.svelte';
 	import AgentsSection from '#lib/components/settings/AgentsSection.svelte';
 	import AssistantSection from '#lib/components/settings/AssistantSection.svelte';
 	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
@@ -71,7 +72,7 @@
 	/** The sections of each tab, top to bottom. */
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
 		account: [AppearanceSection, SecuritySection, PushSection],
-		team: [UsersSection, SsoSection],
+		team: [UsersSection, SsoSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection],
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],

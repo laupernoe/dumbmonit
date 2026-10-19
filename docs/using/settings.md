@@ -168,6 +168,12 @@ environment-only setups without `DUMBMONIT_OIDC_AUTO_CREATE`. Earlier releases
 treated "never set" as on; the Single sign-on panel now says when this
 default applies. A value you saved explicitly is kept as it is.
 
+## LDAP / Active Directory
+
+Admins only. Sign-in with directory usernames and passwords on the usual
+sign-in screen, roles from the directory groups, accounts created at the first
+sign-in. See [LDAP / Active Directory](ldap.md).
+
 ## Agents
 
 Enrollment tokens for the [Linux, macOS, FreeBSD and Windows agent](../devices/agent.md).
