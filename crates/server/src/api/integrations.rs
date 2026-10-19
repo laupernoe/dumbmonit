@@ -22,7 +22,9 @@ const PLUGIN_DIR: &str = "dumbmonit-status-banner";
 const PLUGIN_FILES: &[(&str, &[u8])] = &[
     (
         "dumbmonit-status-banner.php",
-        include_bytes!("../../../../integrations/wordpress/dumbmonit-status-banner/dumbmonit-status-banner.php"),
+        include_bytes!(
+            "../../../../integrations/wordpress/dumbmonit-status-banner/dumbmonit-status-banner.php"
+        ),
     ),
     (
         "uninstall.php",
@@ -34,7 +36,9 @@ const PLUGIN_FILES: &[(&str, &[u8])] = &[
     ),
     (
         "languages/dumbmonit-status-banner.pot",
-        include_bytes!("../../../../integrations/wordpress/dumbmonit-status-banner/languages/dumbmonit-status-banner.pot"),
+        include_bytes!(
+            "../../../../integrations/wordpress/dumbmonit-status-banner/languages/dumbmonit-status-banner.pot"
+        ),
     ),
 ];
 
