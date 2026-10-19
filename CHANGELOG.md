@@ -22,6 +22,14 @@ All notable changes to this project are documented here. The format follows
   lookup); `DUMBMONIT_LDAP_*` variables apply while nothing is saved. The
   service account password is stored encrypted and never returned.
 
+### Changed
+
+- **HTTP compression.** API responses and the web interface are now served
+  with brotli or gzip when the browser accepts it (`Vary: Accept-Encoding`),
+  which cuts the first page load and the JSON payloads by a large factor.
+  Responses under 1 KB, images, event streams and file downloads (agent
+  binaries, backups) are left as they are.
+
 ### Security
 
 - Updated `rustls` to 0.23.46 in the fuzzing workspace lockfile
