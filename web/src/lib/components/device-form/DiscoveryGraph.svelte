@@ -44,8 +44,8 @@
 				class="absolute flex flex-col items-center justify-center rounded-full border border-signal/40 bg-signal-soft text-signal-ink"
 				style={`left:${layout.hub.x - layout.hub.r}px;top:${layout.hub.y - layout.hub.r}px;width:${layout.hub.r * 2}px;height:${layout.hub.r * 2}px`}
 			>
-				<Network class="size-5" aria-hidden="true" />
-				<span class="max-w-full truncate px-1 font-mono text-[0.6875rem] font-semibold">{cidr}</span>
+				<Network class="size-6" aria-hidden="true" />
+				<span class="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap font-mono text-xs font-semibold text-signal-ink">{cidr}</span>
 			</div>
 
 			{#each layout.nodes as node, i (node.ip)}
