@@ -99,6 +99,45 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Wall mode: widgets all at once, where you put them, in a quieter voice.**
+  The headline ticker, the scrolling market bar, the picture carousel and the
+  rotating widget panels are gone: every widget turned on (weather,
+  headlines, critical vulnerabilities, coins, stocks, exchange rates, Claude
+  and OpenAI usage) shows at once, small and still, in one of four zones
+  chosen in **Settings → Wall widgets → Layout**: a thin **top bar**, a thin
+  **bottom bar** (like a status bar), the **right column** under the clock,
+  or **hidden**, in the order you choose (a menu and up/down buttons, keyboard
+  included). The layout is saved on the server (`layout` in
+  `/api/wall/widgets/settings` and `/api/wall/widgets`), with a sensible
+  default: weather, headlines and vulnerabilities on the right, prices and AI
+  usage in the bottom bar. When a zone runs out of room, its widgets show less
+  instead of rotating: short forms first, then fewer entries with a discreet
+  "+N". Widgets use smaller type and the second ink, so the monitors stay what
+  the wall is for; headlines and vulnerabilities are text only, two lines at
+  most each. A widget that waits for its API key (stocks, AI usage) no longer
+  shows on the wall: Settings says so instead. The "Seconds per panel" setting
+  is gone (a saved value is ignored).
+- **Wall mode: every problem readable, nothing overlapping.** The board now
+  uses the whole height of the screen, and the problem list gets the height
+  the devices below leave it, measured on every resize. What is down comes
+  first, then warnings, then what a parent masks, then what is snoozed or
+  acknowledged; identical lines fold into one (`lab-immich · Client device
+  stale ×5`), and long probe errors are said short (`No data for 15 d`,
+  `Agent silent for 3.2 d`) on two lines at most. When the room runs out the
+  list steps down (tiles, then rows, then the quiet ones summed up on one
+  line such as "2 suppressed by parent · 5 snoozed", then one line of cause)
+  and only then says "N more problems" instead of hiding them. The scene's
+  props (the pigeons and their sign, the station clock, the split-flap board,
+  the chalkboards) are hidden whenever they would sit under the board's words
+  or past the edge of the screen. The problem tiles are smaller and calmer
+  (no breathing ring), leaving the room to the list.
+- **Wall news presets: Tech and AI sources.** Two new groups in Settings →
+  Wall news, in English and without any key: Tech (Hacker News, Ars Technica,
+  The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters) and AI
+  (OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR,
+  NVIDIA, AWS Machine Learning), plus national tech sites for France (Korben,
+  Next, Numerama), Germany (heise online, Golem), Spain (Xataka), Italy (Punto
+  Informatico), Brazil (Tecnoblog) and Russia (Habr).
 - **Blocklist monitors: no API key needed, and a Spamhaus refusal no longer
   hides everything.** The form now says that no key is required (the default
   choice is "No key (recommended)"): lists are queried through the server's
@@ -119,6 +158,16 @@ All notable changes to this project are documented here. The format follows
   which cuts the first page load and the JSON payloads by a large factor.
   Responses under 1 KB, images, event streams and file downloads (agent
   binaries, backups) are left as they are.
+
+### Removed
+
+- **Wall mode: the live news video and the news pictures.** The muted live
+  channel tile (YouTube, Dailymotion or Twitch) and its settings are removed,
+  along with the channel presets and the Dailymotion and Twitch players in the
+  wall's content security policy. The news pictures are removed too, with the
+  **Pictures** setting and the picture relay `GET /api/wall/news/image/{id}`:
+  headlines are text only. A wall saved with either simply no longer shows
+  them; old clients sending those fields get them ignored.
 
 ### Security
 

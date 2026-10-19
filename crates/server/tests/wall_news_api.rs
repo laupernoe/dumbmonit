@@ -1,4 +1,4 @@
-//! Actualités du mode mur : réglages validés, vidéo intégrée, titres lus par le
+//! Actualités du mode mur : réglages validés, titres lus par le
 //! serveur (jamais vers une adresse interne), lecture d'essai d'un flux.
 
 mod common;
@@ -8,10 +8,7 @@ use common::TestApp;
 use serde_json::json;
 
 fn settings(feeds: serde_json::Value) -> serde_json::Value {
-    json!({
-        "ticker": true, "feeds": feeds, "video": false,
-        "video_url": "", "video_position": "right", "video_size": "medium"
-    })
+    json!({ "ticker": true, "feeds": feeds })
 }
 
 #[tokio::test]
@@ -24,7 +21,7 @@ async fn les_reglages_sont_reserves_aux_administrateurs_et_valides() {
     let reply = app.get("/api/wall/news/settings", Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.body["ticker"], false);
-    assert_eq!(reply.body["video_position"], "right");
+    assert!(reply.body.get("video").is_none(), "{}", reply.body);
 
     let reply = app.get("/api/wall/news/settings", Some(&viewer)).await;
     assert_eq!(reply.status, StatusCode::FORBIDDEN);
@@ -55,27 +52,6 @@ async fn les_reglages_sont_reserves_aux_administrateurs_et_valides() {
         (settings(json!(feeds)), "At most 8 feeds"),
         (settings(json!([{ "url": "ftp://ex.fr/rss" }])), "not an http(s) address"),
         (settings(json!([{ "url": too_long }])), "too long"),
-        (
-            json!({ "ticker": false, "feeds": [], "video": true, "video_url": "",
-                    "video_position": "right", "video_size": "medium" }),
-            "Paste the video's link",
-        ),
-        (
-            json!({ "ticker": false, "feeds": [], "video": false,
-                    "video_url": "https://example.org/live",
-                    "video_position": "right", "video_size": "medium" }),
-            "YouTube, Dailymotion or Twitch",
-        ),
-        (
-            json!({ "ticker": false, "feeds": [], "video": false, "video_url": "",
-                    "video_position": "bottom", "video_size": "medium" }),
-            "Unknown video position",
-        ),
-        (
-            json!({ "ticker": false, "feeds": [], "video": false, "video_url": "",
-                    "video_position": "right", "video_size": "huge" }),
-            "Unknown video size",
-        ),
     ] {
         let reply = app.put("/api/wall/news/settings", body, Some(&admin)).await;
         assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{expected}: {}", reply.body);
@@ -84,21 +60,22 @@ async fn les_reglages_sont_reserves_aux_administrateurs_et_valides() {
 }
 
 #[tokio::test]
-async fn le_mur_recoit_la_video_integree_et_les_flux_en_panne_sont_nommes() {
+async fn le_mur_recoit_les_titres_et_les_flux_en_panne_sont_nommes() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
     let viewer = app.viewer_cookie(&admin).await;
 
-    // Rien de réglé : ni bandeau ni vidéo.
+    // Rien de réglé : pas de titres.
     let reply = app.get("/api/wall/news", Some(&viewer)).await;
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.body["ticker"], false);
-    assert!(reply.body["video"].is_null());
+    assert!(reply.body.get("video").is_none());
     assert!(reply.body["items"].as_array().unwrap().is_empty());
 
     let body = json!({
         "ticker": true,
         "feeds": [{ "url": "http://127.0.0.1:1/rss", "label": "Interne" }],
+        // Un ancien client qui envoie encore la vidéo retirée : ignorée en silence.
         "video": true, "video_url": "https://youtu.be/dQw4w9WgXcQ",
         "video_position": "center", "video_size": "large"
     });
@@ -107,16 +84,7 @@ async fn le_mur_recoit_la_video_integree_et_les_flux_en_panne_sont_nommes() {
 
     let reply = app.get("/api/wall/news", Some(&viewer)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(reply.body["video"]["position"], "center");
-    assert_eq!(reply.body["video"]["size"], "large");
-    assert!(
-        reply.body["video"]["embed_url"]
-            .as_str()
-            .unwrap()
-            .starts_with("https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ"),
-        "{}",
-        reply.body
-    );
+    assert!(reply.body.get("video").is_none(), "{}", reply.body);
     // Le serveur ne va pas lire une adresse interne : le flux est signalé en panne.
     assert!(reply.body["items"].as_array().unwrap().is_empty());
     let problems = reply.body["problems"].as_array().unwrap();

@@ -10,38 +10,24 @@
 ![大屏模式](../assets/screenshots/wall-light.png){ loading=lazy }
 
 左侧的每个问题都带有其监控项的产品图标(与监控项列表中的标记相同)。
-列表永远不会超出自己的空间:在小屏幕上,或问题很多时,大图块会
-缩成每项一行,然后折叠为*另有 N 项*,而不是与下方的监控项重叠。
+故障的排在最前,其次是警告,然后是被上级监控项屏蔽的,最后是已静音或已确认的;
+相同的问题会合并为一行并带计数(*×5*)。列表永远不会超出自己的空间:在小屏幕上,
+或问题很多时,大图块会缩成每项一行,被屏蔽和已静音的问题汇总为一行,
+然后其余部分才折叠为*另有 N 个问题*,而不是与下方的监控项重叠。场景中的鸽子、
+时钟和看板一旦会落到文字下方,就会让开。
 
 ## 大屏上的新闻 {#news-on-the-wall}
 
-管理员可以在**设置 → 墙面新闻**中为大屏添加**头条新闻**和一个
-**直播频道**。两者默认都是关闭的。
+管理员可以在**设置 → 墙面新闻**中为大屏添加**头条新闻**。默认是关闭的。
 
-- **头条滚动条。** 大屏底部的一条横带会滚动显示最新的头条,每条
-  都带有来源和时间,每五分钟刷新一次。如果显示监控项的系统启用了
-  *减少动态效果*,则不会滑动:一次只淡入淡出一条头条。
-- **直播视频。** 一个静音的直播频道显示在图块中,位于右栏的时钟
-  下方(或场景中央),可选小、中、大。该图块会缩小到剩余的空间;
-  它绝不会盖住状态。
-- **图片轮播。** 同样这些订阅源中带有图片的最新文章,一次一篇显示在
-  右侧栏时钟下方,每篇八秒,交叉淡入淡出,图片上叠加来源、时间和标题。启用
-  *减少动态效果*时,图片直接切换,不做淡入淡出。
+所选订阅源的最新头条,仅文本,每条带有来源,每五分钟刷新一次。它们摆放在大屏
+布局安排的位置(默认在右栏,见[布局](#layout)):能放下多少就显示多少,每条最多
+两行,保持静止,不滚动,也不轮流切换。在栏条中,一条头条只占一行。
 
 读取订阅源的是服务器,而不是浏览器(浏览器无法读取其他站点的
 订阅源)。服务器最多跟随三次重定向,拒绝内部地址,每个订阅源在
 八秒或 2 MB 后放弃,并将应答缓存五分钟,供所有大屏共用。它支持
 RSS 2.0、RSS 1.0(RDF)和 Atom。
-
-文章的图片取自订阅源:最宽的 `media:content` 图片、`media:thumbnail`、
-图片类型的 `enclosure`(BFM TV)、Atom 的 `link rel="enclosure"`,或者
-文章内容中的第一个 `<img>`(Korben)。当订阅源没有图片且轮播已开启
-时,服务器会读取文章页面的开头一次(最多 512 KB,同样有地址防护)并
-取其 `og:image`;结果会被记住,因此每个页面只读取一次。大屏从不直接
-从新闻站点加载图片:由服务器在 `/api/wall/news/image/<id>` 中转,
-只限它发布过的文章,最大 6 MB,并且仅当文件确实是 PNG、JPEG、GIF、
-WebP 或 AVIF 图片时(绝不包括 SVG)。显示器的地址和 Cookie 不会外泄,
-大屏的内容安全策略仍然只允许来自 DumbMonit 的图片。
 
 ### 选择来源 {#choosing-sources}
 
@@ -50,41 +36,33 @@ WebP 或 AVIF 图片时(绝不包括 SVG)。显示器的地址和 Cookie 不会�
 **添加自定义订阅源**下粘贴其 RSS 或 Atom 地址并点击**测试**:
 DumbMonit 会真正读取它,并在你添加之前显示最新的一条头条。
 
-对于视频,可以选择该国家/地区的某个频道,或选择**其他链接…**并
-粘贴一个普通的 YouTube、Dailymotion 或 Twitch 地址(视频、直播,
-或 YouTube 频道的 `/live` 页面);DumbMonit 会把它转换为可嵌入的
-播放器。只能显示这三种播放器。只有当频道有稳定的官方直播时,才
-会作为预设提供。
-
-| 国家/地区 | 头条新闻 | 直播视频 |
-|---|---|---|
-| 法国 | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
-| 瑞士 | RTS Info, SRF News, Le Temps, NZZ | 无 |
-| 比利时 | RTBF, VRT NWS, La DH | 无 |
-| 德国 | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
-| 英国 | BBC News, The Guardian | Sky News |
-| 美国 | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
-| 加拿大 | Radio-Canada, CBC News | CBC News |
-| 西班牙 | RTVE, 20minutos, El País, El Mundo | 无 |
-| 意大利 | ANSA, RaiNews | 无 |
-| 葡萄牙 | RTP Notícias, Público | 无 |
-| 巴西 | G1, Folha de S.Paulo | CNN Brasil |
-| 俄罗斯 | Interfax, Meduza, Kommersant | 无 |
-| 中国 | CGTN, South China Morning Post, Xinhua | CGTN |
-| 国际 | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+| 国家/地区 | 头条新闻 |
+|---|---|
+| 法国 | BFM TV, franceinfo, Le Monde, France 24 |
+| 瑞士 | RTS Info, SRF News, Le Temps, NZZ |
+| 比利时 | RTBF, VRT NWS, La DH |
+| 德国 | Tagesschau, ZDFheute, Spiegel, Deutsche Welle |
+| 英国 | BBC News, The Guardian |
+| 美国 | NPR, PBS NewsHour, CBS News, The New York Times |
+| 加拿大 | Radio-Canada, CBC News |
+| 西班牙 | RTVE, 20minutos, El País, El Mundo |
+| 意大利 | ANSA, RaiNews |
+| 葡萄牙 | RTP Notícias, Público |
+| 巴西 | G1, Folha de S.Paulo |
+| 俄罗斯 | Interfax, Meduza, Kommersant |
+| 中国 | CGTN, South China Morning Post, Xinhua |
+| 国际 | Deutsche Welle, France 24, BBC News (world) |
 
 BFM TV 的订阅源是 `https://www.bfmtv.com/rss/news-24-7/`。该列表在编写时
-经过检查;站点随时可能更换其订阅源,届时滚动条会直接跳过它。请
+经过检查;站点随时可能更换其订阅源,届时大屏会直接跳过它。请
 **测试**替代的地址,并将其作为自定义订阅源添加。
 
-大屏的内容安全策略只允许页面嵌入 YouTube(`youtube-nocookie.com`)、
-Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
+早期版本的图片和直播视频图块已被移除;保存过它们的大屏只是不再显示它们。
 
 ### API {#news-api}
 
 `GET /api/wall/news`(大屏轮询的接口)、`GET|PUT /api/wall/news/settings`
-和 `POST /api/wall/news/test`(管理员),`GET /api/wall/news/presets`,
-以及 `GET /api/wall/news/image/{id}`(中转的文章图片)。
+和 `POST /api/wall/news/test`(管理员),`GET /api/wall/news/presets`。
 
 ## 大屏上的小组件 {#widgets-on-the-wall}
 
@@ -92,21 +70,35 @@ Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
 天气、加密货币价格、股票行情、汇率和最新的严重漏洞。每一个默认都
 是关闭的,需要单独开启。
 
-**天气**保持简洁:只显示一个图标和当前温度,针对一个地点,就在时钟
-正下方。没有预报,没有细节。屏幕阅读器会朗读地点、天空状况和温度;
-悬停时会显示同样的文字以及来源(Open-Meteo)。
+**天气**保持简洁:只显示一个图标、当前温度和地点。没有预报,没有细节。
+屏幕阅读器会朗读地点、天空状况和温度。
 
-其他小组件共用右栏时钟下方的一张卡片:一次一个小组件,每个停留所
-选的秒数(默认 20 秒),然后下一个淡入。较长的列表会拆成每页五项。
-卡片下方的圆点表示轮播进行到哪里。启用*减少动态效果*时,卡片直接
-切换,不做淡入淡出。
+所有已开启的小组件会**同时**显示,小巧而静止:不轮流切换,也不滚动。
+小组件的声音比监控项更轻(字号更小、使用次要墨色):问题仍是大屏存在的意义。
+当某个区域空间不足时,其中的小组件会显示得更少,而不是轮流切换:先用简短形式
+(不带百分比和标签),再减少条目数,并用一个低调的 *+N* 表示其余部分。
+
+### 布局 {#layout}
+
+在**设置 → 大屏显示 → 大屏小组件 → 布局**中,每个小组件(包括头条新闻)
+都放入四个区域之一,顺序由你决定:
+
+- **顶栏**:大屏顶部的一条细线;
+- **底栏**:大屏底部的一条细线,像状态栏一样;
+- **右栏**:时钟下方的轻量卡片;
+- **隐藏**。
+
+通过小组件的菜单更改它所在的区域,用向上和向下箭头(也可用键盘)更改它在区域内的
+位置。默认情况下,天气、头条新闻和漏洞在右栏,价格和 AI 用量在底栏。放置一个
+小组件并不会开启它:已关闭的小组件不会显示在任何位置,布局中会在它旁边标注
+*已关闭*。布局保存在服务器上,适用于所有大屏。
 
 涨跌始终带有箭头和符号(▲ +1.04 %,▼ −0.57 %),而不仅仅依靠颜色。
-每张卡片都会低调地注明来源及数据的新鲜程度。
+悬停时,小组件会注明其来源;右栏中的卡片会提示其数据已过期。
 
 | 小组件 | 显示内容 | 来源 | 密钥 | 服务器请求频率 |
 |---|---|---|---|---|
-| 天气 | 一个地点当前的图标和温度,显示在时钟下方 | [Open-Meteo](https://open-meteo.com)(当前状况和地理编码) | 无 | 每 15 分钟 |
+| 天气 | 一个地点当前的图标和温度 | [Open-Meteo](https://open-meteo.com)(当前状况和地理编码) | 无 | 每 15 分钟 |
 | 加密货币 | 最多十种币的价格及 24 小时涨跌,以所选货币计价 | [CoinGecko](https://www.coingecko.com) 公共 API | 无(可选的免费 Demo 密钥) | 每分钟一次调用 |
 | 股票 | 最多十个代码的最新价格和当日涨跌 | [Finnhub](https://finnhub.io) | **需要免费密钥** | 每 5 分钟,每个代码一次调用 |
 | 汇率 | 一个单位(小面额货币为 100 个单位)折合基准货币多少,以及相对前一天的变化 | [Frankfurter](https://frankfurter.dev)(央行参考汇率) | 无 | 每小时 |
@@ -173,12 +165,13 @@ Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
 
 ### API {#widgets-api}
 
-`GET /api/wall/widgets`(大屏每分钟轮询的接口:每个已开启的小组件对应
-一个部分,含 `data`、`updated`、`error`、`needs_key`、`source`)、
+`GET /api/wall/widgets`(大屏每分钟轮询的接口:布局 `layout`,以及每个已开启的
+小组件对应一个部分,含 `data`、`updated`、`error`、`needs_key`、`source`)、
 `GET|PUT /api/wall/widgets/settings` 和 `GET /api/wall/widgets/places?q=`
 (管理员),以及 `GET /api/wall/widgets/catalog`。在 `PUT` 中,
 `secrets.finnhub` 和 `secrets.coingecko` 用于设置密钥,空字符串会清除
-密钥,省略则保持不变。
+密钥,省略则保持不变;`layout` 接受列表 `top`、`bottom`、`right` 和
+`hidden`(未知的标识会被丢弃,缺失的小组件回到其默认区域)。
 
 ## 大屏上的音乐 {#music-on-the-wall}
 

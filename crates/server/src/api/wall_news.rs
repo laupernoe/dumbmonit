@@ -1,7 +1,7 @@
-//! Actualités du mode mur : bandeau de titres (flux RSS/Atom) et vignette vidéo.
+//! Actualités du mode mur : titres des flux RSS/Atom, en texte seul.
 //!
 //! - `GET /api/wall/news` : ce que le mur interroge toutes les cinq minutes — les
-//!   titres des flux réglés et l'adresse d'intégration de la vidéo. Le navigateur
+//!   titres des flux réglés. Le navigateur
 //!   ne peut pas lire un flux tiers (CORS) : c'est le serveur qui le fait, avec le
 //!   garde-fou des adresses internes, un délai, une taille maximale et un cache.
 //! - `GET|PUT /api/wall/news/settings` : les réglages (administrateurs).
@@ -9,13 +9,8 @@
 //!   (`wall_news_presets.rs`).
 //! - `POST /api/wall/news/test` : lit un flux saisi et montre son premier titre.
 //!
-//! - `GET /api/wall/news/image/{id}` : l'image d'un article, relayée par le
-//!   serveur (`wall_news_images.rs`) — un écran ne parle jamais au site d'actualité.
-//!
-//! Le carrousel d'images (`gallery`) lit les mêmes flux que le bandeau ; l'image
-//! d'un article vient du flux (`media:content`, `media:thumbnail`, `enclosure`,
-//! première `<img>` du contenu) et, à défaut, de la balise `og:image` de sa page,
-//! lue avec les mêmes garde-fous et retenue longtemps.
+//! Les images des articles ne sont plus montrées : les anciens réglages
+//! (`gallery`, la vidéo en direct) sont ignorés à la lecture.
 //!
 //! Tout est éteint par défaut. Les réglages vivent dans la table `settings`
 //! (clé `wall.news`).
@@ -72,34 +67,13 @@ pub struct Feed {
     pub label: String,
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 pub struct NewsSettings {
     pub ticker: bool,
-    /// Carrousel des articles avec leur image, sur les mêmes flux.
-    #[serde(default)]
-    pub gallery: bool,
     pub feeds: Vec<Feed>,
-    pub video: bool,
-    /// Lien saisi (YouTube, Dailymotion, Twitch), tel que l'administrateur l'a collé.
-    pub video_url: String,
-    /// `right` (colonne de droite) ou `center` (au milieu, au-dessus du bandeau).
-    pub video_position: String,
-    /// `small`, `medium` ou `large`.
-    pub video_size: String,
-}
-
-impl Default for NewsSettings {
-    fn default() -> Self {
-        Self {
-            ticker: false,
-            gallery: false,
-            feeds: Vec::new(),
-            video: false,
-            video_url: String::new(),
-            video_position: "right".into(),
-            video_size: "medium".into(),
-        }
-    }
+    // Les anciens champs des images (`gallery`) et de la vidéo en direct
+    // (`video`, `video_url`…), retirées, sont ignorés à la lecture : serde laisse
+    // passer les champs inconnus.
 }
 
 async fn load(state: &AppState) -> anyhow::Result<NewsSettings> {
@@ -143,104 +117,12 @@ fn validate(settings: &mut NewsSettings) -> Result<(), String> {
         feed_url(&feed.url)
             .ok_or_else(|| format!("\"{}\" is not an http(s) address.", truncate(&feed.url, 60)))?;
     }
-    settings.video_url = settings.video_url.trim().to_string();
-    if settings.video_url.len() > MAX_URL_LEN {
-        return Err("The video address is too long.".into());
-    }
-    if !settings.video_url.is_empty() && embed_url(&settings.video_url).is_none() {
-        return Err("Use a YouTube, Dailymotion or Twitch link (video, live or channel).".into());
-    }
-    if settings.video && settings.video_url.is_empty() {
-        return Err("Paste the video's link, or turn the video off.".into());
-    }
-    if !matches!(settings.video_position.as_str(), "right" | "center") {
-        return Err("Unknown video position.".into());
-    }
-    if !matches!(settings.video_size.as_str(), "small" | "medium" | "large") {
-        return Err("Unknown video size.".into());
-    }
     Ok(())
 }
 
 pub(super) fn feed_url(text: &str) -> Option<Url> {
     let url = Url::parse(text).ok()?;
     (matches!(url.scheme(), "http" | "https") && url.host_str().is_some()).then_some(url)
-}
-
-// ------------------------------------------------------------- vidéo intégrée
-
-fn is_id(text: &str, len: std::ops::RangeInclusive<usize>) -> bool {
-    len.contains(&text.len())
-        && text.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
-}
-
-fn youtube_video(id: &str) -> Option<String> {
-    is_id(id, 11..=11).then(|| {
-        format!("https://www.youtube-nocookie.com/embed/{id}?autoplay=1&mute=1&rel=0&playsinline=1")
-    })
-}
-
-fn youtube_channel(id: &str) -> Option<String> {
-    (id.starts_with("UC") && is_id(id, 24..=24)).then(|| {
-        format!(
-            "https://www.youtube-nocookie.com/embed/live_stream?channel={id}\
-             &autoplay=1&mute=1&rel=0&playsinline=1"
-        )
-    })
-}
-
-fn dailymotion(id: &str) -> Option<String> {
-    let valid = (4..=12).contains(&id.len())
-        && id.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit());
-    valid.then(|| format!("https://www.dailymotion.com/embed/video/{id}?autoplay=1&mute=1"))
-}
-
-/// Twitch exige le domaine qui encadre le lecteur (`parent`) : c'est l'interface
-/// qui l'ajoute, elle seule le connaît.
-fn twitch(channel: &str) -> Option<String> {
-    let valid = (3..=25).contains(&channel.len())
-        && channel.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'_')
-        && !matches!(channel, "videos" | "directory" | "downloads" | "settings");
-    valid.then(|| {
-        format!(
-            "https://player.twitch.tv/?channel={}&muted=true&autoplay=true",
-            channel.to_ascii_lowercase()
-        )
-    })
-}
-
-/// Transforme un lien de page YouTube, Dailymotion ou Twitch en adresse
-/// d'intégration (`https`, origine fixe, identifiant validé), ou `None`. La
-/// politique de sécurité du mur n'encadre que ces origines (`api/mod.rs`).
-pub fn embed_url(input: &str) -> Option<String> {
-    let url = Url::parse(input.trim()).ok()?;
-    if !matches!(url.scheme(), "http" | "https") {
-        return None;
-    }
-    let host = url.host_str()?.to_ascii_lowercase();
-    let host = host.strip_prefix("www.").or_else(|| host.strip_prefix("m.")).unwrap_or(&host);
-    let segments: Vec<&str> = url.path_segments()?.filter(|s| !s.is_empty()).collect();
-    let query =
-        |name: &str| url.query_pairs().find(|(k, _)| k == name).map(|(_, v)| v.into_owned());
-    match host {
-        "youtu.be" => youtube_video(segments.first()?),
-        "youtube.com" | "youtube-nocookie.com" => match segments.as_slice() {
-            ["watch"] => youtube_video(&query("v")?),
-            ["embed", "live_stream"] => youtube_channel(&query("channel")?),
-            ["live" | "embed" | "shorts" | "v", id] => youtube_video(id),
-            ["channel", id] | ["channel", id, "live"] => youtube_channel(id),
-            _ => None,
-        },
-        "dai.ly" => dailymotion(segments.first()?),
-        "dailymotion.com" | "geo.dailymotion.com" => match segments.as_slice() {
-            ["video", id] | ["embed", "video", id] => dailymotion(id.split('_').next()?),
-            ["player.html"] => dailymotion(&query("video")?),
-            _ => None,
-        },
-        "twitch.tv" => twitch(segments.first()?),
-        "player.twitch.tv" => twitch(&query("channel")?),
-        _ => None,
-    }
 }
 
 // --------------------------------------------------------------------- titres
@@ -252,12 +134,6 @@ pub struct NewsItem {
     pub source: String,
     /// UTC sans suffixe ; absent quand le flux ne date pas l'article.
     pub published: Option<String>,
-    /// Adresse relayée par le serveur (`/api/wall/news/image/<id>`), jamais
-    /// celle du site : l'écran ne charge rien d'ailleurs.
-    pub image: Option<String>,
-    /// L'adresse d'origine de l'image, connue du serveur seul.
-    #[serde(skip)]
-    pub image_src: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -267,24 +143,14 @@ pub struct FeedProblem {
 }
 
 #[derive(Debug, Serialize)]
-pub struct VideoView {
-    pub embed_url: String,
-    pub position: String,
-    pub size: String,
-}
-
-#[derive(Debug, Serialize)]
 pub struct WallNews {
     pub ticker: bool,
-    pub gallery: bool,
     pub items: Vec<NewsItem>,
     pub problems: Vec<FeedProblem>,
-    pub video: Option<VideoView>,
 }
 
 struct Cached {
     feeds: Vec<Feed>,
-    pages: bool,
     at: Instant,
     ttl: Duration,
     items: Vec<NewsItem>,
@@ -298,42 +164,24 @@ fn cache() -> &'static Mutex<Option<Cached>> {
 
 async fn news(State(state): State<AppState>, Identity(_): Identity) -> ApiResult<Json<WallNews>> {
     let settings = load(&state).await?;
-    let video = settings.video.then(|| embed_url(&settings.video_url)).flatten().map(|embed_url| {
-        VideoView {
-            embed_url,
-            position: settings.video_position.clone(),
-            size: settings.video_size.clone(),
-        }
-    });
-    let wanted = settings.ticker || settings.gallery;
-    let (items, problems) = if wanted && !settings.feeds.is_empty() {
-        headlines(&settings.feeds, settings.gallery).await
+    let (items, problems) = if settings.ticker && !settings.feeds.is_empty() {
+        headlines(&settings.feeds).await
     } else {
         (Vec::new(), Vec::new())
     };
     let problems =
         problems.into_iter().map(|(feed, message)| FeedProblem { feed, message }).collect();
-    Ok(Json(WallNews {
-        ticker: settings.ticker,
-        gallery: settings.gallery,
-        items,
-        problems,
-        video,
-    }))
+    Ok(Json(WallNews { ticker: settings.ticker, items, problems }))
 }
 
 type Headlines = (Vec<NewsItem>, Vec<(String, String)>);
 
 /// Les titres des flux, depuis le cache s'il est frais. Le verrou reste pris
 /// pendant la lecture : cent murs qui se réveillent ensemble ne font qu'un tour.
-///
-/// `pages` : le carrousel est allumé, les articles sans image dans le flux
-/// sont complétés par l'`og:image` de leur page (quelques-uns par tour).
-async fn headlines(feeds: &[Feed], pages: bool) -> Headlines {
+async fn headlines(feeds: &[Feed]) -> Headlines {
     let mut slot = cache().lock().await;
     if let Some(hit) = slot.as_ref()
         && hit.feeds == feeds
-        && hit.pages == pages
         && hit.at.elapsed() < hit.ttl
     {
         return (hit.items.clone(), hit.problems.clone());
@@ -362,15 +210,10 @@ async fn headlines(feeds: &[Feed], pages: bool) -> Headlines {
             Err(message) => problems.push((url, message)),
         }
     }
-    let mut items = merge(items);
-    if pages {
-        super::wall_news_images::complete_from_pages(&client, &mut items).await;
-    }
-    super::wall_news_images::publish(&mut items).await;
+    let items = merge(items);
     let ttl = if items.is_empty() { CACHE_TTL_FAILED } else { CACHE_TTL };
     *slot = Some(Cached {
         feeds: feeds.to_vec(),
-        pages,
         at: Instant::now(),
         ttl,
         items: items.clone(),
@@ -561,15 +404,7 @@ pub(super) fn parse(xml: &str, source: &str) -> Result<Vec<NewsItem>, String> {
             .iter()
             .find_map(|tag| child_text(node, tag))
             .and_then(|text| when(&text));
-        let image_src = super::wall_news_images::item_image(node, &link);
-        items.push(NewsItem {
-            title,
-            link,
-            source: source.to_string(),
-            published,
-            image: None,
-            image_src,
-        });
+        items.push(NewsItem { title, link, source: source.to_string(), published });
     }
     items.sort_by(|a, b| b.published.cmp(&a.published));
     items.truncate(PER_FEED);
@@ -613,52 +448,32 @@ mod tests {
     }
 
     #[test]
+    fn articles_without_a_picture_are_still_articles() {
+        // Comme Hugging Face : titre, date et lien, rien d'autre.
+        let xml = r#"<rss version="2.0"><channel><item><title>Scaling Indic Pretraining</title>
+            <pubDate>Fri, 16 Oct 2026 01:44:47 GMT</pubDate><link>https://huggingface.co/blog/x</link>
+            <guid isPermaLink="false">https://huggingface.co/blog/x</guid></item></channel></rss>"#;
+        let items = parse(xml, "Hugging Face").unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].published.as_deref(), Some("2026-10-16T01:44:47"));
+        // Comme heise : Atom, un lien sans `rel`, du HTML dans le contenu.
+        let atom = r#"<feed xmlns="http://www.w3.org/2005/Atom"><entry>
+            <title type="html"><![CDATA[PwnEscape]]></title><id>http://heise.de/-1</id>
+            <updated>2026-10-19T11:03:00+02:00</updated>
+            <link href="https://www.heise.de/news/a.html?wt_mc=rss"/>
+            <content type="html"><![CDATA[<p><a href="https://www.heise.de/news/a.html"><img src="https://www.heise.de/scale/geometry/450/tux.png" class="webfeedsFeaturedVisual" alt="Tux" /></a></p>]]></content>
+            </entry></feed>"#;
+        let items = parse(atom, "heise").unwrap();
+        assert_eq!(items[0].link, "https://www.heise.de/news/a.html?wt_mc=rss");
+        assert_eq!(items[0].title, "PwnEscape");
+    }
+
+    #[test]
     fn refuses_html_and_unsafe_links() {
         assert!(parse("<html><body/></html>", "x").is_err());
         assert!(parse("pas du xml", "x").is_err());
         let xml = r#"<rss><channel><item><title>T</title><link>javascript:alert(1)</link></item></channel></rss>"#;
         assert!(parse(xml, "x").unwrap().is_empty());
-    }
-
-    #[test]
-    fn embeds_only_known_players() {
-        let yt = "https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&rel=0&playsinline=1";
-        for link in [
-            "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-            "https://youtu.be/dQw4w9WgXcQ?t=3",
-            "https://www.youtube.com/live/dQw4w9WgXcQ",
-            "https://www.youtube.com/embed/dQw4w9WgXcQ",
-        ] {
-            assert_eq!(embed_url(link).as_deref(), Some(yt), "{link}");
-        }
-        let channel = format!("UC{}", "a".repeat(22));
-        let live = embed_url(&format!("https://www.youtube.com/channel/{channel}/live")).unwrap();
-        assert!(live.starts_with("https://www.youtube-nocookie.com/embed/live_stream?channel=UC"));
-        let live2 =
-            embed_url(&format!("https://www.youtube.com/embed/live_stream?channel={channel}"))
-                .unwrap();
-        assert_eq!(live, live2);
-        assert!(
-            embed_url("https://www.dailymotion.com/video/x8abcd")
-                .unwrap()
-                .starts_with("https://www.dailymotion.com/embed/video/x8abcd?")
-        );
-        assert_eq!(
-            embed_url("https://www.twitch.tv/Some_Channel").as_deref(),
-            Some("https://player.twitch.tv/?channel=some_channel&muted=true&autoplay=true")
-        );
-        for bad in [
-            "https://evil.example/watch?v=dQw4w9WgXcQ",
-            "https://www.youtube.com/watch?v=short",
-            "https://www.youtube.com/watch?v=dQw4w9WgXcQ%22%3E",
-            "javascript:alert(1)",
-            "https://www.youtube.com.evil.example/watch?v=dQw4w9WgXcQ",
-            "https://www.twitch.tv/videos",
-            "https://www.twitch.tv/a&parent=evil",
-            "",
-        ] {
-            assert_eq!(embed_url(bad), None, "{bad}");
-        }
     }
 
     #[test]
@@ -669,18 +484,24 @@ mod tests {
                 url: " https://www.bfmtv.com/rss/news-24-7/ ".into(),
                 label: "".into(),
             }],
-            ..Default::default()
         };
         assert!(validate(&mut ok).is_ok());
         assert_eq!(ok.feeds[0].url, "https://www.bfmtv.com/rss/news-24-7/");
         let mut bad = ok.clone();
         bad.feeds[0].url = "ftp://x".into();
         assert!(validate(&mut bad).is_err());
-        let mut video = ok.clone();
-        video.video = true;
-        assert!(validate(&mut video).is_err());
-        video.video_url = "https://example.org/live".into();
-        assert!(validate(&mut video).is_err());
+    }
+
+    #[test]
+    fn old_video_and_picture_settings_are_ignored() {
+        // La vidéo en direct et les images ont été retirées : un réglage
+        // enregistré avant se lit toujours, ses champs sont simplement oubliés.
+        let stored = r#"{"ticker":true,"gallery":true,"feeds":[],"video":true,
+            "video_url":"https://youtu.be/dQw4w9WgXcQ","video_position":"right","video_size":"large"}"#;
+        let settings: NewsSettings = serde_json::from_str(stored).unwrap();
+        assert!(settings.ticker);
+        let saved = serde_json::to_string(&settings).unwrap();
+        assert!(!saved.contains("video") && !saved.contains("gallery"), "{saved}");
     }
 
     #[test]
@@ -690,8 +511,6 @@ mod tests {
             link: link.into(),
             source: "s".into(),
             published: published.map(str::to_string),
-            image: None,
-            image_src: None,
         };
         let merged = merge(vec![
             item("https://a/1", None),

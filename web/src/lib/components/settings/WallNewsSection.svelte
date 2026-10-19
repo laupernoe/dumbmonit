@@ -1,13 +1,10 @@
 <script lang="ts">
 	/**
-	 * Settings → Wall news (admins). Off by default. Two independent parts:
-	 *
-	 * - the headline ticker: pick a country, tick its sources (the presets are
-	 *   served by the server, each feed checked by hand), and/or add any RSS or
-	 *   Atom address — "Test" reads it for real and shows the first headline;
-	 * - the live tile: a country's official channel, or any YouTube,
-	 *   Dailymotion or Twitch link (the server turns a normal address into the
-	 *   embed). Position and size of the tile.
+	 * Settings → Wall news (admins). Off by default. Pick a country (or the
+	 * Tech and AI groups), tick its sources (the presets are served by the
+	 * server, each feed checked by hand), and/or add any RSS or Atom address —
+	 * "Test" reads it for real and shows the first headline. Headlines are
+	 * text only; where they go on the wall is chosen under Wall widgets.
 	 *
 	 * The server reads the feeds (CORS, address guard, size and time limits,
 	 * five-minute cache); nothing here talks to a news site.
@@ -32,7 +29,6 @@
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
 
 	const MAX_FEEDS = 8;
-	const CUSTOM = '__custom';
 
 	let loading = $state(true);
 	let error = $state<unknown>(null);
@@ -45,8 +41,7 @@
 	let countries = $state<NewsCountry[]>([]);
 	let country = $state('INT');
 
-	// Unsaved edits: the saved form (choosing a video channel writes `form.video_url`;
-	// the draft feed fields are not saved state).
+	// Unsaved edits: the saved form (the draft feed fields are not saved state).
 	const tracker = useDirtyTracker(() => form);
 
 	let customUrl = $state('');
@@ -54,9 +49,6 @@
 	let testing = $state(false);
 	let test = $state<FeedTest | null>(null);
 	let testError = $state<string | null>(null);
-
-	/** The channel select: a preset's address, `CUSTOM`, or empty. */
-	let channel = $state('');
 
 	/** Locale → likely country, when the browser gives no region. */
 	const LOCALE_COUNTRY: Record<string, string> = {
@@ -82,6 +74,8 @@
 
 	function countryName(code: string): string {
 		if (code === 'INT') return m.settings_news_country_international();
+		if (code === 'TECH') return m.settings_news_country_tech();
+		if (code === 'AI') return m.settings_news_country_ai();
 		try {
 			return new Intl.DisplayNames([getLocale()], { type: 'region' }).of(code) ?? code;
 		} catch {
@@ -89,25 +83,21 @@
 		}
 	}
 
+	/** Countries by name, then the themed groups (Tech, AI), then International. */
+	const rank = (code: string) => (code === 'INT' ? 2 : code === 'TECH' || code === 'AI' ? 1 : 0);
 	const sortedCountries = $derived(
-		[...countries].sort((a, b) => {
-			if (a.code === 'INT') return 1;
-			if (b.code === 'INT') return -1;
-			return countryName(a.code).localeCompare(countryName(b.code), getLocale());
-		})
+		[...countries].sort((a, b) => rank(a.code) - rank(b.code) || countryName(a.code).localeCompare(countryName(b.code), getLocale()))
 	);
 	const current = $derived(countries.find((c) => c.code === country) ?? null);
-	const allVideos = $derived(countries.flatMap((c) => c.videos));
 
 	async function load(signal?: AbortSignal) {
 		loading = true;
 		error = null;
 		try {
 			const [saved, presets] = await Promise.all([getNewsSettings(signal), getNewsPresets(signal)]);
-			form = { ...saved, feeds: saved.feeds.map((feed) => ({ ...feed })) };
+			form = { ticker: saved.ticker, feeds: saved.feeds.map((feed) => ({ ...feed })) };
 			countries = presets;
 			country = guessCountry(new Set(presets.map((c) => c.code)));
-			channel = !saved.video_url ? '' : allVideos.some((v) => v.url === saved.video_url) ? saved.video_url : CUSTOM;
 			tracker.markClean();
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
@@ -165,13 +155,6 @@
 		notice = null;
 	}
 
-	function chooseChannel(value: string) {
-		channel = value;
-		notice = null;
-		if (value !== CUSTOM) form.video_url = value;
-		else if (allVideos.some((v) => v.url === form.video_url)) form.video_url = '';
-	}
-
 	async function save() {
 		saving = true;
 		problem = null;
@@ -205,26 +188,14 @@
 			<ErrorNotice {error} onretry={() => void load()} />
 		{:else}
 			<div class="space-y-6">
-				<!-- Headline ticker -->
+				<!-- Headlines -->
 				<div class="space-y-4">
 					<div class="flex items-start justify-between gap-4">
 						<div class="min-w-0">
 							<label for="news-ticker" class="text-sm font-semibold text-ink">{m.settings_news_ticker()}</label>
 							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_ticker_hint()}</p>
-							{#if form.gallery}
-								<p id="news-ticker-off" class="mt-1 text-[0.8125rem] font-medium text-advisory-ink">{m.settings_news_ticker_off_gallery()}</p>
-							{/if}
 						</div>
-						<div class:opacity-50={form.gallery} title={form.gallery ? m.settings_news_ticker_off_gallery() : undefined}>
-							<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving || form.gallery} />
-						</div>
-					</div>
-					<div class="flex items-start justify-between gap-4">
-						<div class="min-w-0">
-							<label for="news-gallery" class="text-sm font-semibold text-ink">{m.settings_news_gallery()}</label>
-							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_gallery_hint()}</p>
-						</div>
-						<Toggle id="news-gallery" bind:checked={form.gallery} disabled={saving} />
+						<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving} />
 					</div>
 
 					<div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_1fr]">
@@ -329,61 +300,6 @@
 								{/each}
 							</ul>
 						{/if}
-					</div>
-				</div>
-
-				<!-- Live video -->
-				<div class="space-y-4 border-t border-line pt-5">
-					<div class="flex items-start justify-between gap-4">
-						<div class="min-w-0">
-							<label for="news-video" class="text-sm font-semibold text-ink">{m.settings_news_video()}</label>
-							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_video_hint()}</p>
-						</div>
-						<Toggle id="news-video" bind:checked={form.video} disabled={saving} />
-					</div>
-
-					<div class="grid gap-4 sm:grid-cols-2">
-						<Field label={m.settings_news_video_channel()} for="news-channel">
-							<select id="news-channel" class="input" value={channel} onchange={(e) => chooseChannel(e.currentTarget.value)}>
-								<option value="">{m.settings_news_video_choose()}</option>
-								{#each current?.videos ?? [] as video (video.url)}
-									<option value={video.url}>{video.label}</option>
-								{/each}
-								{#if channel && channel !== CUSTOM && !(current?.videos ?? []).some((v) => v.url === channel)}
-									<option value={channel}>{allVideos.find((v) => v.url === channel)?.label ?? channel}</option>
-								{/if}
-								<option value={CUSTOM}>{m.settings_news_video_custom()}</option>
-							</select>
-						</Field>
-						{#if channel === CUSTOM}
-							<Field label={m.settings_news_video_url()} for="news-video-url" help={m.settings_news_video_url_help()}>
-								<input
-									id="news-video-url"
-									type="url"
-									class="input font-mono"
-									placeholder="https://www.youtube.com/watch?v=…"
-									bind:value={form.video_url}
-									maxlength="500"
-									autocomplete="off"
-								/>
-							</Field>
-						{/if}
-					</div>
-
-					<div class="grid gap-4 sm:grid-cols-2">
-						<Field label={m.settings_news_position()} for="news-position">
-							<select id="news-position" class="input" bind:value={form.video_position}>
-								<option value="right">{m.settings_news_position_right()}</option>
-								<option value="center">{m.settings_news_position_center()}</option>
-							</select>
-						</Field>
-						<Field label={m.settings_news_size()} for="news-size">
-							<select id="news-size" class="input" bind:value={form.video_size}>
-								<option value="small">{m.settings_news_size_small()}</option>
-								<option value="medium">{m.settings_news_size_medium()}</option>
-								<option value="large">{m.settings_news_size_large()}</option>
-							</select>
-						</Field>
 					</div>
 				</div>
 

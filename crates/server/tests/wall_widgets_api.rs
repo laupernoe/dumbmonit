@@ -1,6 +1,6 @@
 //! Widgets du mode mur : réglages réservés aux administrateurs et validés, clés
-//! d'API qui ne reviennent jamais, sections éteintes par défaut, et relais
-//! d'images des actualités fermé à toute adresse non publiée.
+//! d'API qui ne reviennent jamais, sections éteintes par défaut, et disposition
+//! des widgets.
 
 mod common;
 
@@ -18,7 +18,7 @@ async fn les_reglages_sont_valides_et_les_cles_ne_reviennent_jamais() {
     let reply = app.get("/api/wall/widgets/settings", Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["crypto"]["enabled"], false);
-    assert_eq!(reply.body["rotate_seconds"], 20);
+    assert_eq!(reply.body["layout"]["right"], json!(["weather", "news", "cve"]));
     assert_eq!(reply.body["has_finnhub_key"], false);
 
     let reply = app.get("/api/wall/widgets/settings", Some(&viewer)).await;
@@ -48,7 +48,6 @@ async fn les_reglages_sont_valides_et_les_cles_ne_reviennent_jamais() {
     assert_eq!(reply.body["has_finnhub_key"], false);
 
     for (body, expected) in [
-        (json!({ "rotate_seconds": 1 }), "seconds"),
         (json!({ "crypto": { "enabled": true, "coins": [] } }), "at least one coin"),
         (json!({ "crypto": { "coins": ["bit coin"] } }), "CoinGecko"),
         (json!({ "weather": { "enabled": true, "places": [] } }), "at least one place"),
@@ -95,24 +94,29 @@ async fn le_mur_ne_recoit_que_les_widgets_allumes() {
 }
 
 #[tokio::test]
-async fn le_relais_d_images_ne_sert_que_les_images_publiees() {
+async fn la_disposition_est_enregistree_et_rendue_au_mur() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
     let viewer = app.viewer_cookie(&admin).await;
 
-    let reply = app.get("/api/wall/news/image/not-an-id", Some(&viewer)).await;
-    assert_eq!(reply.status, StatusCode::NOT_FOUND);
-    let unknown = "0123456789abcdef0123456789abcdef";
-    let reply = app.get(&format!("/api/wall/news/image/{unknown}"), Some(&viewer)).await;
-    assert_eq!(reply.status, StatusCode::NOT_FOUND);
-    let reply = app.get(&format!("/api/wall/news/image/{unknown}"), None).await;
-    assert_eq!(reply.status, StatusCode::UNAUTHORIZED);
+    // Un widget inconnu (l'ancienne vidéo) et un doublon sont écartés en
+    // silence ; les widgets absents retrouvent leur zone par défaut.
+    let body = json!({ "layout": {
+        "top": ["fx", "video", "crypto"],
+        "bottom": ["fx"],
+        "hidden": ["cve"]
+    } });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["layout"]["top"], json!(["fx", "crypto"]));
+    assert_eq!(reply.body["layout"]["hidden"], json!(["cve"]));
+    assert_eq!(reply.body["layout"]["right"], json!(["weather", "news"]));
+    assert_eq!(reply.body["layout"]["bottom"], json!(["stocks", "claude", "openai"]));
 
-    // Le carrousel s'allume avec les actualités, éteint par défaut.
-    let reply = app.get("/api/wall/news/settings", Some(&admin)).await;
-    assert_eq!(reply.body["gallery"], false);
-    let reply = app.get("/api/wall/news", Some(&viewer)).await;
-    assert_eq!(reply.body["gallery"], false);
+    let reply = app.get("/api/wall/widgets", Some(&viewer)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["layout"]["top"], json!(["fx", "crypto"]));
+    assert!(reply.body.get("rotate_seconds").is_none(), "{}", reply.body);
 }
 
 #[tokio::test]
