@@ -8,11 +8,11 @@
 //!   `SERVFAIL`, réponse hors de `127.0.0.0/8`) ne veut **pas** dire absent :
 //!   la liste est marquée inconnue pour ce sujet ;
 //! * un code de refus (Spamhaus `127.255.255.252/254/255`, URIBL et SURBL
-//!   `127.0.0.1`) n'est jamais une inscription. Un refus de Spamhaus — presque
-//!   toujours un résolveur public — fait échouer la vérification en erreur de
-//!   configuration ([`ProbeError::Config`], qui n'alerte pas) : sans elle, le
-//!   résultat le plus important manque. Celui d'une autre liste la laisse
-//!   inconnue ;
+//!   `127.0.0.1`) n'est jamais une inscription : la liste reste inconnue
+//!   (état `refused`, avec sa cause). Un refus de Spamhaus — presque toujours
+//!   un résolveur public — ne fait échouer la vérification en erreur de
+//!   configuration ([`ProbeError::Config`], qui n'alerte pas) que si aucune
+//!   autre liste n'a répondu ; sinon les autres listes gardent leur résultat ;
 //! * les listes limitent le débit et bannissent les balayages : les questions
 //!   partent à `queries_per_second` (10 par défaut), huit au plus en vol, et un
 //!   passage n'est refait que toutes les `refresh_hours` (6 par défaut).
@@ -27,7 +27,8 @@
 //! | Étiquette | Défaut | Rôle |
 //! |---|---|---|
 //! | `resolver` | système | Résolveur récursif à interroger, `10.0.0.53` ou `10.0.0.53:5353`. |
-//! | `lists` | toutes | Identifiants des listes, séparés par des virgules. |
+//! | `lists` | toutes | Identifiants des listes du catalogue, séparés par des virgules ; `-` : aucune. |
+//! | `custom_lists` | — | Zones DNSBL ajoutées, JSON `[{"zone", "subject": "ip"\|"domain", "major"}]`. |
 //! | `extra_addresses` | — | `mail_blacklist` : adresses d'envoi à vérifier en plus. |
 //! | `refresh_hours` | `6` | Intervalle entre deux passages (1 à 168). |
 //! | `queries_per_second` | `10` | Débit des questions (1 à 50). |
@@ -81,24 +82,32 @@ fn hickory(settings: &Settings) -> Result<Arc<dyn Dns>, ProbeError> {
     Ok(Arc::new(HickoryDns::new(settings.resolver, settings.query_timeout)?))
 }
 
-/// Ce qui ne doit pas passer pour un résultat : un refus de Spamhaus, ou un
-/// résolveur qui n'a répondu à rien.
+/// Ce qui ne doit pas passer pour un résultat : un résolveur qui n'a rien
+/// répondu d'utilisable.
+///
+/// Un refus de Spamhaus (résolveur public) ne fait échouer le passage que s'il
+/// ne reste **aucune** liste qui ait répondu : sinon les autres listes gardent
+/// leur résultat, et le refus est montré liste par liste (état `refused`, avec
+/// sa cause) plutôt que de tout masquer.
 pub fn conclude(outcomes: &[Outcome]) -> Result<(), ProbeError> {
-    if let Some((list, why)) = outcomes.iter().find_map(|o| match &o.verdict {
-        Verdict::Refused(why) if o.list.dqs_zone.is_some() => Some((o.list, why)),
-        _ => None,
-    }) {
-        return Err(ProbeError::Config(format!(
-            "{why}. {} results would be wrong, so none are shown. Set Resolver to a recursive \
-             resolver of your own (Unbound, Knot Resolver, BIND, PowerDNS Recursor: one that \
-             resolves from the root servers, not one that forwards to 8.8.8.8 or 1.1.1.1), or \
-             enter a free Spamhaus DQS key as the credential, or remove spamhaus_zen and \
-             spamhaus_dbl from Lists.",
-            list.name
-        )));
-    }
     let asked: Vec<&Outcome> =
         outcomes.iter().filter(|o| o.verdict != Verdict::NotApplicable).collect();
+    let answered =
+        asked.iter().any(|o| matches!(o.verdict, Verdict::Clean | Verdict::Listed { .. }));
+    if !answered
+        && let Some(why) = asked.iter().find_map(|o| match &o.verdict {
+            Verdict::Refused(why) if o.list.dqs_zone.is_some() => Some(why),
+            _ => None,
+        })
+    {
+        return Err(ProbeError::Config(format!(
+            "{why}. No other selected list gave an answer, so there is no result yet. Set \
+             Resolver to a recursive resolver of your own (Unbound, Knot Resolver, BIND, \
+             PowerDNS Recursor: one that resolves from the root servers, not one that forwards \
+             to 8.8.8.8 or 1.1.1.1), or enter a free Spamhaus DQS key as the credential, or \
+             tick other lists."
+        )));
+    }
     if !asked.is_empty() && asked.iter().all(|o| matches!(o.verdict, Verdict::Unknown(_))) {
         let detail = match &asked[0].verdict {
             Verdict::Unknown(detail) => detail.clone(),

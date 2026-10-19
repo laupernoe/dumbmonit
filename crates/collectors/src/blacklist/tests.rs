@@ -103,17 +103,81 @@ async fn un_domaine_avec_mx_est_verifie_adresse_par_adresse() {
 }
 
 #[tokio::test]
-async fn un_refus_de_spamhaus_est_une_erreur_de_configuration() {
+async fn un_refus_de_spamhaus_laisse_les_autres_listes_repondre() {
     let dns = mail_zone();
     dns.answer("1.8.8.8.zen.spamhaus.org.", Qtype::A, &["127.255.255.254"]);
     let collector = MailBlacklistCollector::with_dns(factory(&dns));
-    let error =
-        collector.probe(&cible("mail_blacklist", "example.com", &[FAST])).await.unwrap_err();
+    let samples = collector.probe(&cible("mail_blacklist", "example.com", &[FAST])).await.unwrap();
+
+    // Spamhaus est refusé pour cette adresse, jamais « inscrit »...
+    let refused =
+        find(&samples, "blacklist_check", &[("list", "spamhaus_zen"), ("subject", "8.8.8.1")])
+            .unwrap();
+    assert_eq!(refused.labels["state"], "refused");
+    assert_eq!(refused.value, -2.0);
+    assert!(refused.labels["reason"].contains("public or open resolver"));
+    assert_eq!(value(&samples, "blacklist_list_listed", &[("list", "spamhaus_zen")]), 0.0);
+    assert_eq!(value(&samples, "blacklist_list_unknown", &[("list", "spamhaus_zen")]), 1.0);
+    // ... et SpamCop garde son inscription.
+    let spamcop =
+        find(&samples, "blacklist_check", &[("list", "spamcop"), ("subject", "8.8.8.1")]).unwrap();
+    assert_eq!(spamcop.labels["state"], "listed");
+    assert_eq!(value(&samples, "blacklist_listed_major_lists", &[]), 1.0);
+}
+
+#[tokio::test]
+async fn un_refus_de_spamhaus_sans_autre_reponse_est_une_erreur_de_configuration() {
+    let dns = mail_zone();
+    dns.answer("1.8.8.8.zen.spamhaus.org.", Qtype::A, &["127.255.255.254"]);
+    let collector = MailBlacklistCollector::with_dns(factory(&dns));
+    let tags = [FAST, ("lists", "spamhaus_zen")];
+    let error = collector.probe(&cible("mail_blacklist", "8.8.8.1", &tags)).await.unwrap_err();
     assert!(
         matches!(error, ProbeError::Config(ref m) if m.contains("public") && m.contains("DQS")),
         "{error}"
     );
     assert!(!error.means_down());
+}
+
+#[tokio::test]
+async fn seules_les_listes_choisies_et_personnalisees_sont_interrogees() {
+    let dns = Arc::new(FakeDns::default());
+    dns.answer("2.8.8.8.bl.spamcop.net.", Qtype::A, &["127.0.0.2"]);
+    dns.answer("2.8.8.8.dnsbl.example.org.", Qtype::A, &["127.0.0.9"]);
+    let collector = IpBlacklistCollector::with_dns(factory(&dns));
+    let custom = r#"[{"zone":"dnsbl.example.org","subject":"ip","major":true},
+        {"zone":"rhs.example.org","subject":"domain"}]"#;
+    let tags = [FAST, ("lists", "spamcop"), ("custom_lists", custom)];
+    let samples = collector.probe(&cible("ip_blacklist", "8.8.8.2", &tags)).await.unwrap();
+
+    // Une liste du catalogue + une personnalisée d'adresses ; la zone de domaines
+    // ne s'applique pas à une plage, et rien d'autre n'est demandé.
+    assert_eq!(dns.queries.load(Ordering::SeqCst), 2 + 2, "A et motif TXT des deux inscriptions");
+    assert!(find(&samples, "blacklist_list_checked", &[("list", "spamhaus_zen")]).is_none());
+    let info = find(&samples, "blacklist_list_info", &[("list", "custom:dnsbl.example.org")]);
+    let info = info.unwrap();
+    assert_eq!(info.labels["subject"], "ip");
+    assert_eq!(info.labels["major"], "true");
+    assert_eq!(
+        value(&samples, "blacklist_list_listed", &[("list", "custom:dnsbl.example.org")]),
+        1.0
+    );
+    let hit = find(&samples, "blacklist_check", &[("list", "custom:dnsbl.example.org")]).unwrap();
+    assert_eq!(hit.labels["state"], "listed");
+    assert_eq!(
+        value(&samples, "blacklist_listed_major_lists", &[]),
+        2.0,
+        "SpamCop et la liste personnalisée"
+    );
+}
+
+#[tokio::test]
+async fn sans_reglage_un_moniteur_garde_toutes_les_listes() {
+    let dns = Arc::new(FakeDns::default());
+    let collector = IpBlacklistCollector::with_dns(factory(&dns));
+    let samples = collector.probe(&cible("ip_blacklist", "8.8.8.2", &[FAST])).await.unwrap();
+    let asked = samples.iter().filter(|s| s.metric == "blacklist_list_checked").count();
+    assert_eq!(asked, 7, "les sept listes d'adresses du catalogue");
 }
 
 #[tokio::test]

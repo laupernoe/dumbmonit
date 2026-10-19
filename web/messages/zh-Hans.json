@@ -496,7 +496,7 @@
 	"app_ui_tone_muted": "已抑制",
 	"app_ui_tone_signal": "正常上报",
 	"app_ui_tone_warning": "警告",
-	"auth_footer": "DumbMonit · 开源，Apache 2.0",
+	"auth_footer": "DumbMonit · 开源，MIT",
 	"auth_login_back": "返回密码登录",
 	"auth_login_code_label": "验证码",
 	"auth_login_code_required": "请输入验证器应用中的验证码。",
@@ -911,9 +911,17 @@
 	"deviceform_new_unavailable_title": "此服务器未提供监控项类型列表",
 	"deviceform_new_unknown_kind": "此服务器没有名为 {kind} 的监控项类型。请从下方选择一个。",
 	"deviceform_new_web_page": "网页",
+	"deviceform_options_checklist_all": "全选",
+	"deviceform_options_checklist_count": "已选 {checked}/{total}",
+	"deviceform_options_checklist_none": "全不选",
 	"deviceform_options_default": "默认",
 	"deviceform_options_default_value": "默认（{value}）",
 	"deviceform_options_more_settings": "更多设置",
+	"deviceform_options_rows_add": "添加",
+	"deviceform_options_rows_duplicate": "此值已在列表中。",
+	"deviceform_options_rows_empty": "尚未添加任何内容。",
+	"deviceform_options_rows_invalid": "此值无效。",
+	"deviceform_options_rows_remove": "删除此行",
 	"deviceform_picker_group_label": "要监控什么",
 	"deviceform_picker_more": "其他全部",
 	"deviceform_picker_no_match": "没有与“{query}”匹配的内容。",
@@ -1161,6 +1169,21 @@
 	"devices_agentmodules_title": "代理发现的服务",
 	"devices_agentmodules_toggle": "监控 {name}",
 	"devices_agentmodules_waiting": "等待代理",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条活动告警"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} 条触发中，{acked} 条已确认，{suppressed} 条因父设备离线而被屏蔽",
 	"devices_appliance_attention": "需要关注",
 	"devices_appliance_err_title": "无法加载：{name}",
 	"devices_appliance_healthy": "正常",
@@ -1821,11 +1844,15 @@
 	"devicesb_blacklist_link_postmaster": "Postmaster Tools",
 	"devicesb_blacklist_link_snds": "SNDS（地址信誉）",
 	"devicesb_blacklist_list_counts": "{checked} 个中有 {listed} 个被列入",
+	"devicesb_blacklist_list_custom": "自定义",
 	"devicesb_blacklist_list_major": "主要",
-	"devicesb_blacklist_lists_note": "每个黑名单，以及它列入了多少个被检查的地址或域名。",
+	"devicesb_blacklist_list_type_domain": "域名",
+	"devicesb_blacklist_list_type_ip": "IP 地址",
+	"devicesb_blacklist_lists_note": "实际查询的黑名单，以及每个黑名单列入了多少个被检查的地址或域名。",
 	"devicesb_blacklist_lists_title": "按名单",
 	"devicesb_blacklist_loading": "正在加载黑名单检查",
 	"devicesb_blacklist_lookup": "查询",
+	"devicesb_blacklist_mxtoolbox": "也在 MXToolbox 上检查",
 	"devicesb_blacklist_providers_note": "它们不公开可查询的黑名单：DumbMonit 不会查询它们。影响其决定的因素已在上方检查；如果它们仍拒收您的邮件，请使用其发件人工具。",
 	"devicesb_blacklist_providers_title": "Gmail、Outlook.com、Yahoo",
 	"devicesb_blacklist_reverse_mismatch": "不一致",
@@ -1839,6 +1866,8 @@
 	"devicesb_blacklist_source_extra": "附加地址",
 	"devicesb_blacklist_source_input": "输入的地址",
 	"devicesb_blacklist_source_mx": "MX {host}",
+	"devicesb_blacklist_spamhaus_refused": "Spamhaus 拒绝此解析器",
+	"devicesb_blacklist_spamhaus_refused_hint": "Spamhaus 不会通过 Google、Cloudflare 等公共解析器，或转发给它们的解析器作答。其他黑名单仍可正常使用。请在监控设置的“解析器”中填写您自己的解析器，或输入免费的 Spamhaus DQS 密钥。",
 	"devicesb_blacklist_state_clean": "未列入",
 	"devicesb_blacklist_state_incomplete": "不完整",
 	"devicesb_blacklist_state_listed": "已列入",
@@ -4688,7 +4717,7 @@
 	"settings_about_database_role": "监控项配置和告警历史。",
 	"settings_about_docs": "文档 →",
 	"settings_about_error_title": "无法连接到服务器",
-	"settings_about_license": "开源，Apache 2.0。",
+	"settings_about_license": "开源，MIT。",
 	"settings_about_reporting": "正常上报",
 	"settings_about_title": "关于",
 	"settings_about_unreachable": "组件无法访问。",

@@ -22,6 +22,42 @@ All notable changes to this project are documented here. The format follows
   Map rendering by Leaflet (BSD-2-Clause). New routes under `/api/locations`;
   monitors gain `location_id`.
 
+### Security
+
+- **Every release file is signed.** The release workflow now signs every file
+  it attaches, `provenance.json` included, not only the agent binaries. A new
+  manual workflow, `sign-releases.yml`, adds a Sigstore keyless signature to
+  the files of past releases that have none (0.1.0-alpha.N and earlier
+  `provenance.json`), under its own identity; [Verifying a
+  release](docs/install/verify.md) explains how to check both, and how to
+  check the build provenance against the `.intoto.jsonl` attached to the
+  release.
+- **Every lockfile is scanned against OSV.** The weekly security workflow also
+  runs osv-scanner over `Cargo.lock`, `fuzz/Cargo.lock`,
+  `web/package-lock.json` and `docs/requirements.txt`, the files the OpenSSF
+  Scorecard checks, so that a lockfile `cargo deny` does not read (like the
+  fuzzing one fixed in 0.11.0) cannot keep a known vulnerability unnoticed.
+
+## 0.11.0 — 2026-10-19
+
+### Added
+
+- **Alert bell on monitors.** In the Compact and Tiles views of Monitors, and
+  in a monitor's page header, a small bell with a count shows how many alerts
+  are active on it (nothing at 0). Firing alerts use the warning tone,
+  acknowledged ones a quiet outline, and alerts masked by an offline parent a
+  crossed-out bell; a click opens the alerts section of the monitor. Counted
+  from the alert list already loaded, in one pass.
+- **Choose the blocklists of a mail server or IP range monitor.** The form
+  lists every blocklist as a checklist (name, addresses or domains, major or
+  not, short description) with the major ones ticked on a new monitor, and a
+  **Custom lists** field adds your own DNSBL zones (validated: a real domain
+  name, not an IP address, no duplicate; address or domain type; major or
+  not). Only the ticked and custom lists are queried, and the monitor page
+  shows exactly those. Monitors created earlier keep querying every list.
+  The option form gained two generic input types, `checklist` and `rows`,
+  described by `GET /api/collectors`. The monitor page also links to
+  MXToolbox's public blocklist lookup for the monitored address or domain.
 - **LDAP / Active Directory sign-in.** People sign in on the usual sign-in
   screen with their directory username and password: DumbMonit binds a
   service account, finds the user with a filter (the username is escaped per
@@ -39,6 +75,14 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Blocklist monitors: no API key needed, and a Spamhaus refusal no longer
+  hides everything.** The form now says that no key is required (the default
+  choice is "No key (recommended)"): lists are queried through the server's
+  DNS resolver, and only Spamhaus can refuse a public one. The Spamhaus DQS
+  key is optional. When Spamhaus refuses the resolver, the monitor page says
+  "Spamhaus refuses this resolver" and the other lists keep their results;
+  the configuration error is now raised only when no other list answered.
+- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
 - **A parent that is down hides its children, whatever the cause.** Dependency
   suppression used to start only when the parent was unreachable (no
   measurement, or a probe timeout). A parent whose availability check fails —
