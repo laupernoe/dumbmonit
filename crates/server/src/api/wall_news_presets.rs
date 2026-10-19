@@ -1,10 +1,14 @@
 //! Sources d'actualités proposées par pays pour le mode mur.
 //!
-//! Des données, pas de la logique : chaque flux a été relu à la main le
-//! 14/10/2026 (HTTP 200, document RSS/Atom lisible, articles présents) et chaque
-//! direct YouTube vérifié « en cours » par son identifiant de chaîne. Un flux qui
-//! cesserait de répondre n'est pas un bogue du serveur : l'administrateur voit
-//! l'erreur dans ses réglages et peut en saisir un autre (« flux personnalisé »).
+//! Des données, pas de la logique : chaque flux a été relu à la main (le
+//! 14/10/2026, les flux tech et IA le 19/10/2026 : HTTP 200, document RSS/Atom
+//! lisible, articles présents) et chaque direct YouTube vérifié « en cours » par
+//! son identifiant de chaîne. Un flux qui cesserait de répondre n'est pas un
+//! bogue du serveur : l'administrateur voit l'erreur dans ses réglages et peut
+//! en saisir un autre (« flux personnalisé »).
+//!
+//! Deux groupes thématiques, `TECH` et `AI` (sources en anglais, publiques, sans
+//! clé), s'ajoutent aux pays ; les pays reçoivent aussi leurs sites tech.
 //!
 //! Les directs s'intègrent par chaîne (`embed/live_stream?channel=UC…`), donc
 //! suivent le direct courant de la chaîne sans qu'on ait à connaître la vidéo.
@@ -28,7 +32,8 @@ pub struct VideoPreset {
 
 #[derive(Serialize)]
 pub struct Country {
-    /// Code ISO 3166-1 alpha-2, ou `INT` pour les sources internationales.
+    /// Code ISO 3166-1 alpha-2, `TECH` ou `AI` pour les groupes thématiques,
+    /// `INT` pour les sources internationales.
     pub code: &'static str,
     pub feeds: &'static [FeedPreset],
     pub videos: &'static [VideoPreset],
@@ -50,6 +55,9 @@ pub static COUNTRIES: &[Country] = &[
             feed("franceinfo", "https://www.francetvinfo.fr/titres.rss"),
             feed("Le Monde", "https://www.lemonde.fr/rss/une.xml"),
             feed("France 24", "https://www.france24.com/fr/rss"),
+            feed("Korben", "https://korben.info/feed"),
+            feed("Next", "https://next.ink/feed/"),
+            feed("Numerama", "https://www.numerama.com/feed/"),
         ],
         videos: &[
             live("BFM TV", "https://www.youtube.com/channel/UCXwDLMDV86ldKoFVc_g8P0g/live"),
@@ -84,6 +92,8 @@ pub static COUNTRIES: &[Country] = &[
             feed("ZDFheute", "https://www.zdf.de/rss/zdf/nachrichten"),
             feed("Spiegel", "https://www.spiegel.de/schlagzeilen/index.rss"),
             feed("Deutsche Welle", "https://rss.dw.com/rdf/rss-de-all"),
+            feed("heise online", "https://www.heise.de/rss/heise-atom.xml"),
+            feed("Golem", "https://rss.golem.de/rss.php?feed=RSS2.0"),
         ],
         videos: &[live("DW News", "https://www.youtube.com/channel/UCknLrEdhRCp1aegoMqRaCZg/live")],
     },
@@ -129,6 +139,7 @@ pub static COUNTRIES: &[Country] = &[
             feed("20minutos", "https://www.20minutos.es/rss/"),
             feed("El País", "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"),
             feed("El Mundo", "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml"),
+            feed("Xataka", "https://www.xataka.com/feedburner.xml"),
         ],
         videos: &[],
     },
@@ -137,6 +148,7 @@ pub static COUNTRIES: &[Country] = &[
         feeds: &[
             feed("ANSA", "https://www.ansa.it/sito/ansait_rss.xml"),
             feed("RaiNews", "https://www.rainews.it/rss/tutti"),
+            feed("Punto Informatico", "https://www.punto-informatico.it/feed/"),
         ],
         videos: &[],
     },
@@ -153,6 +165,7 @@ pub static COUNTRIES: &[Country] = &[
         feeds: &[
             feed("G1", "https://g1.globo.com/rss/g1/"),
             feed("Folha de S.Paulo", "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"),
+            feed("Tecnoblog", "https://tecnoblog.net/feed/"),
         ],
         videos: &[live(
             "CNN Brasil",
@@ -165,6 +178,7 @@ pub static COUNTRIES: &[Country] = &[
             feed("Interfax", "https://www.interfax.ru/rss.asp"),
             feed("Meduza", "https://meduza.io/rss/all"),
             feed("Kommersant", "https://www.kommersant.ru/RSS/main.xml"),
+            feed("Habr", "https://habr.com/ru/rss/all/all/"),
         ],
         videos: &[],
     },
@@ -176,6 +190,39 @@ pub static COUNTRIES: &[Country] = &[
             feed("Xinhua", "http://www.xinhuanet.com/english/rss/worldrss.xml"),
         ],
         videos: &[live("CGTN", "https://www.youtube.com/channel/UCgrNz-aDmcr2uuto8_DL2jg/live")],
+    },
+    // Technologie, en anglais : des sites publics qui tiennent un flux depuis des années.
+    Country {
+        code: "TECH",
+        feeds: &[
+            feed("Hacker News", "https://hnrss.org/frontpage"),
+            feed("Ars Technica", "https://feeds.arstechnica.com/arstechnica/index"),
+            feed("The Verge", "https://www.theverge.com/rss/index.xml"),
+            feed("TechCrunch", "https://techcrunch.com/feed/"),
+            feed("Wired", "https://www.wired.com/feed/rss"),
+            feed("The Register", "https://www.theregister.com/headlines.atom"),
+            feed("Engadget", "https://www.engadget.com/rss.xml"),
+            feed("Lobsters", "https://lobste.rs/rss"),
+        ],
+        videos: &[],
+    },
+    // Intelligence artificielle, en anglais : laboratoires, blogs et presse spécialisée.
+    Country {
+        code: "AI",
+        feeds: &[
+            feed("OpenAI", "https://openai.com/news/rss.xml"),
+            feed("Google AI", "https://blog.google/technology/ai/rss/"),
+            feed("Hugging Face", "https://huggingface.co/blog/feed.xml"),
+            feed(
+                "MIT Technology Review",
+                "https://www.technologyreview.com/topic/artificial-intelligence/feed",
+            ),
+            feed("Simon Willison", "https://simonwillison.net/atom/everything/"),
+            feed("BAIR", "https://bair.berkeley.edu/blog/feed.xml"),
+            feed("NVIDIA", "https://blogs.nvidia.com/feed/"),
+            feed("AWS Machine Learning", "https://aws.amazon.com/blogs/machine-learning/feed/"),
+        ],
+        videos: &[],
     },
     Country {
         code: "INT",

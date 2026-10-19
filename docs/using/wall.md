@@ -16,20 +16,22 @@ with many problems, the big tiles shrink to one line each, then fold into
 
 ## News on the wall
 
-An admin can add **headlines** and a **live channel** to the wall in
-**Settings → Wall news**. Both are off by default.
+An admin can add **headlines** (with or without their pictures) and a **live
+channel** to the wall in **Settings → Wall news**. Everything is off by default.
 
-- **Headline ticker.** A band along the bottom of the wall scrolls the latest
-  headlines, each with its source and age, and refreshes every five minutes. With
-  *reduced motion* enabled in the display's system, nothing slides: one
-  headline at a time fades in and out.
+- **Headlines.** The latest headlines of the chosen feeds, each with its source
+  and age, a few at a time on a still panel in the right column under the
+  clock, refreshed every five minutes. Nothing scrolls: the panel stays for the
+  seconds chosen under *Wall widgets* (20 by default), then the next one takes
+  its place with a short fade (none under *reduced motion*). The headlines
+  share the panel with the widgets, in turn.
+- **Pictures.** An article that comes with a picture shows it on a panel of its
+  own, the column's width, with the source, age and headline over the picture;
+  the others stay headlines, so a feed without pictures still shows, and a
+  picture that does not load sends its article back to the headlines.
 - **Live video.** A muted live channel in a tile, in the right column under the
   clock (or in the middle of the scene), small, medium or large. The tile
   shrinks to the room left; it never covers the status.
-- **Picture carousel.** The latest articles of the same feeds that carry a
-  picture, one at a time in the right column under the clock, each for eight seconds,
-  cross-fading, with the source, age and headline over the picture. Under
-  *reduced motion* the pictures swap without fading.
 
 The server reads the feeds, not the browser (browsers cannot read other sites'
 feeds). It follows at most three redirects, refuses internal addresses, gives up
@@ -39,7 +41,7 @@ for every wall. It reads RSS 2.0, RSS 1.0 (RDF) and Atom.
 An article's picture is taken from the feed: the widest `media:content` image,
 a `media:thumbnail`, an image `enclosure` (BFM TV), an Atom
 `link rel="enclosure"`, or else the first `<img>` of the article's content
-(Korben). When the feed has none and the carousel is on, the server reads the
+(Korben). When the feed has none and pictures are on, the server reads the
 start of the article's page once (512 KB at most, same address guard) and
 takes its `og:image`; the answer is remembered, so a page is read only once.
 The wall never loads a picture from the news site: the server relays it at
@@ -50,8 +52,9 @@ security policy still allows images from DumbMonit alone.
 
 ### Choosing sources
 
-Pick a **country** (preselected from your browser's region and language), then
-tick its sources: up to eight feeds in all. To use any other feed, paste its RSS
+Pick a **country** (preselected from your browser's region and language), or
+the **Tech** and **AI** groups (English-language sources), then tick its
+sources: up to eight feeds in all. To use any other feed, paste its RSS
 or Atom address under **Add a custom feed** and press **Test**: DumbMonit reads
 it for real and shows the latest headline before you add it.
 
@@ -63,23 +66,25 @@ channel has a stable official one.
 
 | Country | Headlines | Live video |
 |---|---|---|
-| France | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| France | BFM TV, franceinfo, Le Monde, France 24, Korben, Next, Numerama | BFM TV, franceinfo, France 24, Euronews |
 | Switzerland | RTS Info, SRF News, Le Temps, NZZ | none |
 | Belgium | RTBF, VRT NWS, La DH | none |
-| Germany | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Germany | Tagesschau, ZDFheute, Spiegel, Deutsche Welle, heise online, Golem | DW News |
 | United Kingdom | BBC News, The Guardian | Sky News |
 | United States | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
 | Canada | Radio-Canada, CBC News | CBC News |
-| Spain | RTVE, 20minutos, El País, El Mundo | none |
-| Italy | ANSA, RaiNews | none |
+| Spain | RTVE, 20minutos, El País, El Mundo, Xataka | none |
+| Italy | ANSA, RaiNews, Punto Informatico | none |
 | Portugal | RTP Notícias, Público | none |
-| Brazil | G1, Folha de S.Paulo | CNN Brasil |
-| Russia | Interfax, Meduza, Kommersant | none |
+| Brazil | G1, Folha de S.Paulo, Tecnoblog | CNN Brasil |
+| Russia | Interfax, Meduza, Kommersant, Habr | none |
 | China | CGTN, South China Morning Post, Xinhua | CGTN |
+| Tech (in English) | Hacker News, Ars Technica, The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters | none |
+| AI (in English) | OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR, NVIDIA, AWS Machine Learning | none |
 | International | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
 
 The BFM TV feed is `https://www.bfmtv.com/rss/news-24-7/`. The list was checked
-when it was written; a site can move its feed at any time, and then the ticker
+when it was written; a site can move its feed at any time, and then the wall
 simply skips it. **Test** the replacement and add it as a custom feed.
 
 The wall's content security policy lets the page frame only YouTube
@@ -104,10 +109,12 @@ place, right under the clock. No forecast, no details. A screen reader hears
 the place, the sky and the temperature; hovering it shows the same words and
 the source (Open-Meteo).
 
-The other widgets share one card in the right column, under the clock: one
-widget at a time, each held for the chosen number of seconds (20 by default), then the
-next fades in. Long lists are split into pages of five. Dots under the card
-show where the round is. Under *reduced motion* the cards swap without fading.
+The other widgets take turns on the panel in the right column, under the
+clock, with the headlines and pictures when the news is on: one panel at a
+time, still for the chosen number of seconds (20 by default), then the next
+one with a short fade (none under *reduced motion*). A long list is cut into
+pages of the rows that fit the panel's height, so no row is ever half shown,
+and nothing scrolls.
 
 Rises and falls always carry an arrow and a sign (▲ +1.04 %, ▼ −0.57 %), not
 only a colour. Every card names its source, discreetly, and how fresh it is.

@@ -613,6 +613,31 @@ mod tests {
     }
 
     #[test]
+    fn articles_without_a_picture_are_still_articles() {
+        // Comme Hugging Face : titre, date et lien, rien d'autre.
+        let xml = r#"<rss version="2.0"><channel><item><title>Scaling Indic Pretraining</title>
+            <pubDate>Fri, 16 Oct 2026 01:44:47 GMT</pubDate><link>https://huggingface.co/blog/x</link>
+            <guid isPermaLink="false">https://huggingface.co/blog/x</guid></item></channel></rss>"#;
+        let items = parse(xml, "Hugging Face").unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0].image_src, None);
+        assert_eq!(items[0].published.as_deref(), Some("2026-10-16T01:44:47"));
+        // Comme heise : Atom, un lien sans `rel`, l'image dans le contenu HTML.
+        let atom = r#"<feed xmlns="http://www.w3.org/2005/Atom"><entry>
+            <title type="html"><![CDATA[PwnEscape]]></title><id>http://heise.de/-1</id>
+            <updated>2026-10-19T11:03:00+02:00</updated>
+            <link href="https://www.heise.de/news/a.html?wt_mc=rss"/>
+            <content type="html"><![CDATA[<p><a href="https://www.heise.de/news/a.html"><img src="https://www.heise.de/scale/geometry/450/tux.png" class="webfeedsFeaturedVisual" alt="Tux" /></a></p>]]></content>
+            </entry></feed>"#;
+        let items = parse(atom, "heise").unwrap();
+        assert_eq!(items[0].link, "https://www.heise.de/news/a.html?wt_mc=rss");
+        assert_eq!(
+            items[0].image_src.as_deref(),
+            Some("https://www.heise.de/scale/geometry/450/tux.png")
+        );
+    }
+
+    #[test]
     fn refuses_html_and_unsafe_links() {
         assert!(parse("<html><body/></html>", "x").is_err());
         assert!(parse("pas du xml", "x").is_err());
