@@ -1,0 +1,46 @@
+# source: request GET /ui/  (GET / only answers "302 Location: <scheme>://<host>/ui/", see nginx.conf.mako "location / { rewrite ^.* $scheme://$http_host/ui/ redirect; }")
+# source: headers from https://raw.githubusercontent.com/truenas/middleware/master/src/middlewared/middlewared/etc_files/local/nginx/nginx.conf.mako (location = /ui/: Cache-Control, Clear-Site-Data, Etag = system_version, Expires 0, security_headers; server_tokens off)
+# source: body = https://raw.githubusercontent.com/truenas/webui/master/src/index.html (source index; the served file additionally gets hashed <script>/<link> tags injected by the Angular build)
+# note: reconstructed from templates, not a live capture. Etag value format "TrueNAS-<ver>" from system.version (SCALE <=24.04: "TrueNAS-SCALE-<ver>").
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Content-Type: text/html
+Content-Length: 2400
+Last-Modified: Tue, 14 Oct 2026 08:00:00 GMT
+Connection: keep-alive
+Cache-Control: no-store, no-cache, must-revalidate, max-age=0
+Clear-Site-Data: "cache"
+Etag: TrueNAS-25.10.0
+Expires: 0
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+X-Content-Type-Options: nosniff
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin
+X-Frame-Options: SAMEORIGIN
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="-1">
+  <meta http-equiv="CACHE-CONTROL" content="NO-CACHE">
+  <script nomodule="" src="assets/scripts/ie-support/ie-polyfills.min.js"></script>
+  <title id="main-page-title"></title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/favicons/apple-touch-icon.png">
+  <link rel="manifest" href="assets/favicons/site.webmanifest">
+  <meta name="robots" content="noindex">
+</head>
+<body class="ix-dark">
+  <ix-root>
+    <div style="display: flex; align-items: center; justify-content: center; height: 100vh; height: 100dvh;">
+      <div style="width: 100px; animation: loading 2s linear infinite; opacity: 0.3;">
+        <svg fill="var(--fg1)" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 62 49"></svg>
+      </div>
+    </div>
+  </ix-root>
+</body>
+</html>

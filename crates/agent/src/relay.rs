@@ -118,6 +118,18 @@ impl RelayRunner {
 
     /// Exécute une sonde dans sa propre tâche, sous le plafond de concurrence.
     fn spawn(&self, command: AgentCommand) {
+        // Un balayage de découverte n'est pas une sonde : il ne compte pas dans
+        // le plafond des sondes (il porte sa propre concurrence interne) et rend
+        // compte sur sa route dédiée, au fil de l'eau.
+        if command.kind == dumbmonit_proto::CMD_DISCOVERY_SCAN {
+            let client = self.client.clone();
+            let key = self.key.clone();
+            let registry = self.registry.clone();
+            tokio::spawn(async move {
+                discovery::run(&client, &key, &registry, &command).await;
+            });
+            return;
+        }
         let client = self.client.clone();
         let key = self.key.clone();
         let registry = self.registry.clone();
@@ -130,6 +142,101 @@ impl RelayRunner {
                 warn!(id, %error, "cannot report the probe outcome");
             }
         });
+    }
+}
+
+/// Exécution d'un balayage de découverte confié à cet agent relais.
+mod discovery {
+    use std::sync::Arc;
+
+    use dumbmonit_collectors::Registry;
+    use dumbmonit_collectors::netscan::{self, Cancel, ScanConfig, ScanUpdate};
+    use dumbmonit_proto::{AgentCommand, DiscoveryReport, DiscoveryScanJob, ScanProgress};
+    use tracing::{debug, info, warn};
+
+    use crate::client::PushClient;
+
+    /// Mène le balayage et en rend compte au serveur au fil de l'eau. Jamais de
+    /// panique : une commande illisible devient un compte rendu d'erreur.
+    pub async fn run(client: &PushClient, key: &str, registry: &Registry, command: &AgentCommand) {
+        let id = command.id;
+        let job = match DiscoveryScanJob::from_command(command) {
+            Ok(job) => job,
+            Err(error) => {
+                let _ = client
+                    .report_discovery(key, id, &failed(error))
+                    .await
+                    .map_err(|error| warn!(id, %error, "cannot report the discovery failure"));
+                return;
+            }
+        };
+        info!(id, cidr = %job.cidr, "relayed discovery scan started");
+
+        let fingerprints = Arc::new(registry.fingerprints());
+        let config = ScanConfig {
+            depth: job.depth,
+            community: job.snmp_community.clone().unwrap_or_else(|| "public".to_string()),
+            ..ScanConfig::default()
+        };
+        let cancel = Cancel::new();
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<ScanUpdate>(256);
+        let scan = {
+            let config = config.clone();
+            let cancel = cancel.clone();
+            let cidr = job.cidr.clone();
+            tokio::spawn(
+                async move { netscan::scan(&cidr, &config, fingerprints, tx, cancel).await },
+            )
+        };
+
+        let mut latest = ScanProgress::default();
+        let mut since_progress = 0u32;
+        while let Some(update) = rx.recv().await {
+            let report = match update {
+                ScanUpdate::Host(host) => {
+                    DiscoveryReport { progress: latest, hosts: vec![host], ..Default::default() }
+                }
+                ScanUpdate::Progress(progress) => {
+                    latest = progress;
+                    since_progress += 1;
+                    // Un point d'avancement de temps en temps : assez pour animer
+                    // la barre, pas au point de marteler le serveur.
+                    if since_progress < 24 {
+                        continue;
+                    }
+                    since_progress = 0;
+                    DiscoveryReport { progress, ..Default::default() }
+                }
+            };
+            match client.report_discovery(key, id, &report).await {
+                Ok(true) => {}
+                Ok(false) => {
+                    debug!(id, "server cancelled the discovery scan");
+                    cancel.cancel();
+                    break;
+                }
+                Err(error) => warn!(id, %error, "cannot report discovery progress"),
+            }
+        }
+
+        // Vide ce qui reste dans le canal après une annulation, pour que la tâche
+        // de balayage se termine proprement.
+        while rx.recv().await.is_some() {}
+        let error = match scan.await {
+            Ok(Ok(_)) => None,
+            Ok(Err(error)) => Some(error.to_string()),
+            Err(_) => Some("the discovery scan stopped unexpectedly".to_string()),
+        };
+        let final_report =
+            DiscoveryReport { progress: latest, finished: true, error, ..Default::default() };
+        if let Err(error) = client.report_discovery(key, id, &final_report).await {
+            warn!(id, %error, "cannot report the discovery completion");
+        }
+        info!(id, "relayed discovery scan done");
+    }
+
+    fn failed(error: String) -> DiscoveryReport {
+        DiscoveryReport { finished: true, error: Some(error), ..Default::default() }
     }
 }
 

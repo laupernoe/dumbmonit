@@ -24,6 +24,7 @@ pub mod kubernetes;
 pub mod mdaemon;
 pub mod mikrotik;
 pub mod mongodb;
+pub mod netscan;
 pub mod nginx;
 pub mod npm;
 pub mod nut;
@@ -276,6 +277,20 @@ impl Registry {
         kinds.extend(self.runtime_read().keys().cloned());
         kinds.sort_unstable();
         kinds
+    }
+
+    /// Les empreintes de découverte de tous les collecteurs enregistrés, plus
+    /// les empreintes génériques (SSH, HTTP, SNMP, ports typiques). C'est ce que
+    /// le moteur [`netscan`] évalue : aucun produit n'est connu ailleurs.
+    pub fn fingerprints(&self) -> Vec<dumbmonit_proto::Fingerprint> {
+        let mut all = netscan::all_fingerprints();
+        for collector in self.collectors.values() {
+            all.extend(collector.fingerprints());
+        }
+        for collector in self.runtime_read().values() {
+            all.extend(collector.fingerprints());
+        }
+        all
     }
 
     // Un verrou empoisonné ne protège qu'une table de pointeurs, toujours

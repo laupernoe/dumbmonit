@@ -1,0 +1,14 @@
+# source: https://github.com/moby/moby/blob/master/daemon/server/middleware/version.go L69-L71 (Server/Api-Version/Ostype on every route) ; https://github.com/moby/moby/blob/master/daemon/server/router/system/system_routes.go L35-L52 (pingHandler writes "OK") ; https://docs.docker.com/reference/api/engine/version/v1.47/#tag/System/operation/SystemPing
+# RECONSTRUCTED from the code. Path: GET /_ping (plain http, port 2375)
+HTTP/1.1 200 OK
+Api-Version: 1.47
+Cache-Control: no-cache, no-store, must-revalidate
+Content-Type: text/plain; charset=utf-8
+Ostype: linux
+Pragma: no-cache
+Server: Docker/27.3.1 (linux)
+Swarm: inactive
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 2
+
+OK

@@ -1,0 +1,24 @@
+# source: nuclei-templates http/exposed-panels/fortinet/fortios-management-panel.yaml (GET /login?redir=/ng, status 200, header contains `APSCOOKIE_`, body contains `<html class="main-app">`, `<f-icon class="fa-warning` and `</f-icon>`)
+# source: Server header from rapid7/recog xml/http_servers.xml (xxxxxxxx-xxxxx)
+# note: PARTLY RECONSTRUCTED: the three body strings and the APSCOOKIE_ cookie-name prefix are real (from the nuclei matcher); everything else is approximate (closed source). The cookie suffix (port number) and attributes are invented.
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Server: xxxxxxxx-xxxxx
+Set-Cookie: APSCOOKIE_1234567890="Era_0%3D%3D"; path=/; secure; HttpOnly
+Content-Type: text/html; charset=utf-8
+Content-Length: 1800
+Connection: close
+X-Frame-Options: SAMEORIGIN
+
+<!DOCTYPE html>
+<html class="main-app">
+<head>
+<meta charset="utf-8">
+<title>FortiGate</title>
+<base href="/ng/">
+</head>
+<body>
+<app-root></app-root>
+<noscript><f-icon class="fa-warning"></f-icon> JavaScript is required.</noscript>
+</body>
+</html>

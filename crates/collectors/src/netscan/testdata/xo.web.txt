@@ -1,0 +1,10 @@
+# source: https://raw.githubusercontent.com/vatesfr/xen-orchestra/master/packages/xo-web/src/index.pug (title "Xen Orchestra"; body: "JavaScript is required for Xen Orchestra!"; index.css, modules.css, assets/manifest.webmanifest)
+# source: nuclei-templates http/exposed-panels/xen-orchestra-panel.yaml (GET /signin, status 200, body contains `<title>Xen Orchestra</title>`)
+# note: compiled from the pug template by hand (reconstructed); headers approximate (xo-server, Koa/Node). Whether GET / (vs /signin) returns the same shell was not verified.
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 1100
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Connection: keep-alive
+
+<!DOCTYPE html><html class="no-js" dir="ltr" lang="en"><head><meta charset="utf-8"><meta http-equiv="x-ua-compatible" content="ie=edge,chrome=1"><script>!function(d){d.className=d.className.replace(/\bno-js\b/,'js')}(document.documentElement)</script><style>.no-js .visible-js,.js .hidden-js{display:none}</style><meta name="viewport" content="width=device-width, initial-scale=1"><title>Xen Orchestra</title><link rel="stylesheet" href="index.css"><link rel="stylesheet" href="modules.css"><link rel="shortcut icon" href="favicon.ico"><link rel="manifest" href="assets/manifest.webmanifest"><style>html, body, #xo-app { height: 100% }</style></head><body><div id="xo-app"><div style="display: flex; height: 100%"><div style="margin: auto"><h1 class="hidden-js text-danger">JavaScript is required for Xen Orchestra!</h1><h1 class="visible-js text-muted"><img src="assets/loading.svg"></h1></div></div></div><script src="index.js"></script></body></html>

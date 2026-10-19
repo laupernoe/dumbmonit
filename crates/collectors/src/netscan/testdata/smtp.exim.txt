@@ -1,0 +1,2 @@
+# source: recog smtp_banners.xml l.350 ('foo.bar ESMTP Exim 4.91 Thu, 29 Apr 2021 ...')
+220 mail.example.lan ESMTP Exim 4.96 Mon, 19 Oct 2026 10:00:00 +0200\r\n

@@ -20,7 +20,7 @@ serde_json.workspace = true
 thiserror.workspace = true
 # Sans `rt-multi-thread` : l'agent relais tourne sur un exécuteur mono-thread,
 # les collecteurs n'ont besoin que des primitives réseau et de temps.
-tokio = { version = "1", default-features = false, features = ["rt", "macros", "net", "time", "sync", "io-util"] }
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "net", "time", "sync", "io-util", "fs"] }
 tracing.workspace = true
 
 # Les racines TLS sont lues dans le magasin système. L'image finale embarque le

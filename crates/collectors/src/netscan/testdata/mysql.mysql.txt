@@ -1,0 +1,5 @@
+# source: https://github.com/mysql/mysql-server/blob/trunk/sql/auth/sql_authentication.cc ('*end++ = protocol_version;' then server_version NUL-terminated) ; nmap-service-probes line 2256-2258 (^.\0\0\0\x0a(8\.[-_~.+\w]+)\0)
+# RECONSTRUCTED packet (random scramble bytes are fake)
+# Packet layout (sql/auth/sql_authentication.cc send_server_handshake_packet; MariaDB sql/sql_acl.cc): 3-byte LE length, 1-byte sequence id (00), then payload: 0x0a (protocol 10), server_version NUL-terminated, 4-byte thread id, 8 bytes scramble, 00, capabilities...
+# hex: 4a 00 00 00 0a 38 2e 30 2e 33 36 00 08 00 00 00 41 31 62 32 43 33 64 34 00 ff ff ff 02 00 ff df 15 00 00 00 00 00 00 00 00 00 00 65 35 46 36 67 37 48 38 69 39 4a 30 00 63 61 63 68 69 6e 67 5f 73 68 61 32 5f 70 61 73 73 77 6f 72 64 00
+# readable: J....8.0.36.....A1b2C3d4...................e5F6g7H8i9J0.caching_sha2_password.

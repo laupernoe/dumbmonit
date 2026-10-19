@@ -8,6 +8,7 @@ mod collector;
 mod command;
 mod credential;
 mod description;
+mod discovery;
 pub mod env;
 mod push;
 mod sample;
@@ -25,6 +26,12 @@ pub use credential::{
 pub use description::{
     CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
     OptionDescription, OptionItem, Requirement, SetupDescription, Text,
+};
+pub use discovery::{
+    AddressForm, CMD_DISCOVERY_SCAN, Confidence, DISCOVERY_REPORT_PATH, DiscoveredHost,
+    DiscoveredService, DiscoveryReport, DiscoveryScanJob, Fingerprint, FingerprintProbe, HttpMatch,
+    MAX_DISCOVERY_HOSTS, PrefillSpec, PrefillValue, ScanDepth, ScanPhase, ScanProgress, Transport,
+    VersionRule,
 };
 pub use push::{
     AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH, INGEST_PATH,

@@ -1,0 +1,33 @@
+# source: https://git.proxmox.com/?p=proxmox-datacenter-manager.git;a=blob_plain;f=ui/index.hbs;hb=HEAD (template, NodeName=pdm1)
+# note: reconstructed; headers approximate (hyper, no Server header); not a live capture
+HTTP/1.1 200 OK
+content-type: text/html; charset=utf-8
+cache-control: max-age=0
+content-length: 1500
+date: Mon, 19 Oct 2026 10:00:00 GMT
+
+<!DOCTYPE html>
+<html>
+   <head>
+     <meta http-equiv="Content-type" content="text/html; charset=utf-8"/>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+     <link rel="icon" href="/images/favicon.svg" type="image/svg+xml">
+     <link href="/fontawesome/css/font-awesome.css" rel="stylesheet">
+     <title>pdm1 - Proxmox Datacenter Manager</title>
+     <script type="text/javascript">
+       Proxmox = {
+           Setup: { auth_cookie_name: 'PDMAuthCookie' },
+           NodeName: "pdm1",
+           UserName: "",
+           CSRFPreventionToken: "",
+       };
+    </script>
+     <link rel="preload" href="/js/pdm-ui_bg.wasm.gz" as="fetch" type="application/wasm" crossorigin="">
+     <link rel="modulepreload" href="/js/pdm-ui_bundle.js"></head>
+   </head>
+   <body>
+       <script type="module">
+            import init from '/js/pdm-ui_bundle.js';
+       </script>
+   </body>
+</html>

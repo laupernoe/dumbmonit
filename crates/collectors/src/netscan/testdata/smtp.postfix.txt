@@ -1,0 +1,2 @@
+# source: recog smtp_banners.xml l.978-1002 ('foo.bar ESMTP Postfix (Ubuntu)')
+220 mail.example.lan ESMTP Postfix (Debian/GNU)\r\n

@@ -1,0 +1,39 @@
+# source: https://git.proxmox.com/?p=proxmox-backup.git;a=blob_plain;f=www/index.hbs;hb=HEAD (template, NodeName=pbs1)
+# source: https://git.proxmox.com/?p=proxmox.git;a=blob_plain;f=proxmox-rest-server/src/rest.rs;hb=HEAD (hyper-based; no Server header is set in the rest server crate)
+# note: reconstructed; headers approximate (no Server header); not a live capture
+HTTP/1.1 200 OK
+content-type: text/html; charset=utf-8
+cache-control: max-age=0
+content-length: 3100
+date: Mon, 19 Oct 2026 10:00:00 GMT
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pbs1 - Proxmox Backup Server</title>
+    <link rel="icon" sizes="128x128" href="/images/logo-128.png" />
+    <link rel="stylesheet" type="text/css" href="/extjs/theme-crisp/resources/theme-crisp-all.css" />
+    <link rel="stylesheet" type="text/css" href="/css/ext6-pbs.css" />
+    <script type="text/javascript" src="/extjs/ext-all.js"></script>
+    <script type="text/javascript">
+    Proxmox = {
+	Setup: { auth_cookie_name: 'PBSAuthCookie' },
+	NodeName: "pbs1",
+	UserName: "",
+	defaultLang: "",
+	CSRFPreventionToken: "",
+	consentText: "",
+    };
+    </script>
+    <script type="text/javascript" src="/widgettoolkit/proxmoxlib.js"></script>
+    <script type="text/javascript" src="/extjs/locale/locale-en.js"></script>
+    <script type="text/javascript" src="/js/proxmox-backup-gui.js"></script>
+  </head>
+  <body>
+    <!-- Fields required for history management -->
+    <form id="history-form" class="x-hidden">
+    <input type="hidden" id="x-history-field"/>
+    </form>
+  </body>
+</html>

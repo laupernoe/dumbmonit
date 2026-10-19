@@ -1,0 +1,24 @@
+# source: https://gitlab.com/gitlab-org/gitlab/-/blob/master/app/views/devise/sessions/new.html.haml (page_title "Sign in") ; app/views/layouts/_head.html.haml L17 (%title= page_title(site_name)) ; https://github.com/rapid7/recog/blob/main/xml/html_title.xml L2653-L2659 ("Sign in · GitLab") ; recog http_cookies.xml L337-L342 (_gitlab_session)
+# RECONSTRUCTED (condensed) ; the title and cookie name are the documented values. Path: GET /users/sign_in
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Type: text/html; charset=utf-8
+Cache-Control: max-age=0, private, must-revalidate
+Set-Cookie: _gitlab_session=032d024e9c2445b595e68255da9e6835; path=/; expires=Mon, 19 Oct 2026 17:00:00 GMT; HttpOnly
+X-Frame-Options: SAMEORIGIN
+
+<!DOCTYPE html>
+<html class="gl-system" lang="en">
+<head prefix="og: http://ogp.me/ns#">
+<meta charset="utf-8">
+<meta content="IE=edge" http-equiv="X-UA-Compatible">
+<meta content="width=device-width, initial-scale=1" name="viewport">
+<title>Sign in · GitLab</title>
+<meta content="GitLab Community Edition" name="description">
+<meta content="GitLab" property="og:site_name">
+</head>
+<body class="ui-indigo gl-browser-chrome" data-page="sessions:new">
+<div class="js-non-oauth-login"></div>
+</body>
+</html>

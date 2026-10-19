@@ -21,6 +21,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.13.0',
+		date: '2026-10-19',
+		highlights: [
+			{
+				title: 'Discover everything on your network',
+				text: 'Scan my network now finds every device that answers and recognises over sixty products — Proxmox, NAS, firewalls, Home Assistant, Immich and more — shown as a map of addresses and their services.'
+			},
+			{
+				title: 'Add in one click',
+				text: 'Add on a discovered service opens the monitor form already filled in: only the credentials are left to type.'
+			},
+			{
+				title: 'Scan remote sites',
+				text: 'Pick a relay agent in Scan from and it scans the network it sits on, results streaming back as they come.'
+			},
+			{
+				title: 'Clearer status page settings',
+				text: 'The settings of a status page use the full width and are grouped into clearer sections.'
+			}
+		]
+	},
+	{
 		version: '0.12.0',
 		date: '2026-10-19',
 		highlights: [

@@ -4444,3 +4444,62 @@ export interface WallWidgets {
 	claude: WallSection<WallAiUsage> | null;
 	openai: WallSection<WallAiUsage> | null;
 }
+
+// --- Multi-product network discovery -----------------------------------------
+// Mirrors `api/discovery.rs` (jobs). Dates are UTC without suffix.
+
+export type DiscoveryJobStatus = 'running' | 'done' | 'failed' | 'cancelled';
+export type DiscoveryPhase = 'sweep' | 'fingerprint' | 'done';
+export type DiscoveryDepth = 'standard' | 'extended';
+export type DiscoveryConfidence = 'high' | 'medium' | 'low';
+
+export interface DiscoveryJobRequest {
+	cidr: string;
+	/** Id of the relay agent that scans, `null` for the server itself. */
+	agent_id: number | null;
+	/** Secret: sent, never returned. */
+	snmp_community?: string;
+	depth: DiscoveryDepth;
+}
+
+export interface DiscoveryJobSummary {
+	id: string;
+	cidr: string;
+	agent_id: number | null;
+	agent_name: string | null;
+	status: DiscoveryJobStatus;
+	started_at: string;
+	finished_at: string | null;
+	hosts_found: number;
+}
+
+export interface DiscoveredService {
+	port: number;
+	protocol: 'tcp' | 'udp';
+	/** Readable product label: "Proxmox VE", "SSH", "HTTP". */
+	product: string;
+	/** Collector kind that monitors this product, `null` when none does. */
+	kind: string | null;
+	version: string | null;
+	confidence: DiscoveryConfidence;
+	tls: boolean;
+	detail: string | null;
+	/** Existing target already pointing at this ip(+port). */
+	monitored_target_id: string | null;
+	/** Fields to pre-fill in the target form for `kind`; never a secret. */
+	prefill: Record<string, unknown> | null;
+}
+
+export interface DiscoveredHost {
+	ip: string;
+	hostname: string | null;
+	mac: string | null;
+	vendor: string | null;
+	services: DiscoveredService[];
+}
+
+export interface DiscoveryJob extends DiscoveryJobSummary {
+	progress: { phase: DiscoveryPhase; probed: number; total: number };
+	error: string | null;
+	hosts: DiscoveredHost[];
+}

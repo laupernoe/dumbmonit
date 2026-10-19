@@ -5,6 +5,44 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.13.0 — 2026-10-19
+
+### Added
+
+- **Network discovery (all products, not just SNMP).** A scan first looks for
+  live hosts with an ICMP ping (the unprivileged ping socket the ping monitor
+  already uses, plus the kernel neighbour table when readable; skipped silently
+  if ICMP is not allowed), so a host that answers the ping but exposes no known
+  port is still listed. It then sweeps about thirty common ports plus SNMP
+  (empty community means `public`) on every address of a network, then fingerprints
+  what answers with a single anonymous request per port — HTTP (Server header,
+  title, body, TLS certificate, never verified), TCP banner, or SNMP
+  `sysObjectID`/`sysDescr` — and never tries to authenticate. One host can carry
+  several services. Fingerprints are declared in a catalog keyed by monitor
+  kind, so each result opens the Add-monitor form pre-filled with the right type,
+  address and port; a service already monitored is marked as such. Over sixty
+  products are recognised (Proxmox VE/PBS/PMG/PDM, Synology DSM, TrueNAS,
+  OPNsense, pfSense, UniFi, Home Assistant, Portainer, Docker, Immich, Jellyfin,
+  Plex, Nextcloud, GitLab, Forgejo/Gitea, Paperless, Pi-hole, AdGuard, Traefik,
+  Caddy, NPM, CrowdSec, RabbitMQ, Graylog, Loki, VictoriaMetrics/Logs, Grafana,
+  Prometheus, FortiGate, Sophos, MikroTik, Redfish BMC, vSphere/ESXi, XCP-ng,
+  Nutanix, Veeam, Cockpit, MinIO, RustFS, DumbMonit itself, printers, databases,
+  SSH, generic HTTP/SNMP, …). The engine
+  lives in the shared collectors crate, so a relay agent can run the same scan
+  on a remote site and stream results back; an agent too old to understand the
+  command fails the job with a clear message. New admin API under
+  `/api/discovery/jobs` (in-memory, last twenty, SNMP community never logged nor
+  returned); the SNMP-only `POST /api/discovery` stays for compatibility.
+- **Host network mode.** A new optional `docker-compose.host.yml` runs the
+  container on the host's network so discovery reads neighbours' MAC addresses
+  and vendors and scans the server's own LAN without a relay. Linux only; the
+  embedded VictoriaMetrics stays bound to the loopback. See the new
+  **Network discovery** documentation page.
+### Changed
+
+- **Status page settings** use the full width and are grouped into clearer
+  sections.
+
 ## 0.12.0 — 2026-10-19
 
 ### Added
@@ -47,6 +85,22 @@ All notable changes to this project are documented here. The format follows
   PHP snippets already filled in with your server address and the page slug
   (with a Copy button), and downloads the WordPress plugin as a ready-to-upload
   `.zip` (`GET /api/integrations/wordpress.zip`, also `banner.php`).
+
+### Changed
+
+- **Status page settings, reorganised.** The page now reads top to bottom in
+  full-width sections, each with a one-line explanation: **Page** (title,
+  address, published, description, theme, history), **Services** (a search
+  box to add them, and the list as visitors will see it, with the public name,
+  group and order editable in place), **Appearance** (logo, accent, link,
+  footer, the scene and what the page shows, nothing folded away) and
+  **Subscribers and domain**. The Save bar sticks to the bottom of the screen
+  while something is unsaved, says so, and the browser asks before leaving.
+  **Show it elsewhere** gathers the badge, the embed and the website banner
+  behind tabs: each says when to use it, keeps its options on the left and
+  shows a single block of code on the right, with a live preview of the badge
+  and the embed. The embed's colours and history bars are now options instead
+  of query strings to add by hand.
 
 ### Security
 
