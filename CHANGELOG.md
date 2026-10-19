@@ -5,6 +5,22 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Security
+
+- **Every release file is signed.** The release workflow now signs every file
+  it attaches, `provenance.json` included, not only the agent binaries. A new
+  manual workflow, `sign-releases.yml`, adds a Sigstore keyless signature to
+  the files of past releases that have none (0.1.0-alpha.N and earlier
+  `provenance.json`), under its own identity; [Verifying a
+  release](docs/install/verify.md) explains how to check both, and how to
+  check the build provenance against the `.intoto.jsonl` attached to the
+  release.
+- **Every lockfile is scanned against OSV.** The weekly security workflow also
+  runs osv-scanner over `Cargo.lock`, `fuzz/Cargo.lock`,
+  `web/package-lock.json` and `docs/requirements.txt`, the files the OpenSSF
+  Scorecard checks, so that a lockfile `cargo deny` does not read (like the
+  fuzzing one fixed in 0.11.0) cannot keep a known vulnerability unnoticed.
+
 ## 0.11.0 — 2026-10-19
 
 ### Added
