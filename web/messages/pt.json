@@ -999,7 +999,7 @@
 	"deviceform_scan_add": "Adicionar",
 	"deviceform_scan_add_aria": "Adicionar {product} ({kind}) em {ip}",
 	"deviceform_scan_cancel": "Cancelar análise",
-	"deviceform_scan_community_help": "Opcional. Testada em dispositivos SNMP; deixe vazio para ignorar o SNMP.",
+	"deviceform_scan_community_help": "Opcional. Testada em dispositivos SNMP; vazio = “public”.",
 	"deviceform_scan_depth_extended": "Alargada",
 	"deviceform_scan_depth_help_extended": "Mais portas e sondas. Mais lento e mais visível na rede.",
 	"deviceform_scan_depth_help_standard": "Portas comuns e páginas conhecidas. Rápido.",

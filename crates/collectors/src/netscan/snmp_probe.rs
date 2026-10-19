@@ -23,6 +23,11 @@ pub struct SnmpIdentity {
 /// Identifie un agent SNMP sur UDP 161. `None` si rien ne répond (community
 /// refusée ou pas d'agent) : c'est le cas normal, sans erreur ni journal.
 pub async fn identify(ip: IpAddr, community: &str, timeout: Duration) -> Option<SnmpIdentity> {
+    // Community vide : on essaie `public`, le défaut que suggère l'interface.
+    let community = match community.trim() {
+        "" => "public",
+        other => other,
+    };
     let target = Target {
         id: 0,
         name: String::new(),

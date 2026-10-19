@@ -2,12 +2,18 @@
 
 Network discovery finds what is on a network for you, so you add monitors by
 picking from a list instead of typing addresses one by one. You give it a
-network in CIDR notation (`192.168.1.0/24`); it opens a short list of common
+network in CIDR notation (`192.168.1.0/24`); it first looks for live hosts with
+a ping (and the neighbour table when readable), opens a short list of common
 ports on every address, then makes **one anonymous request** to each open port
 to recognise the product behind it. It never tries to log in.
 
 One host can carry several services: a Proxmox node that also answers SSH and
-SNMP shows all three, each with the DumbMonit monitor type that fits.
+SNMP shows all three, each with the DumbMonit monitor type that fits. A host
+that answers the ping but exposes no recognised service is still listed, with
+"No service identified". The ping needs ICMP to be allowed to the container (the
+`ping_group_range` setting of the bundled compose files, or `NET_RAW` in host
+mode); without it the scan carries on and relies on ports and the neighbour
+table alone.
 
 ## Running a scan
 
@@ -28,7 +34,7 @@ version when it is readable without logging in, and a button that opens the
 only enter the credentials. If a monitor already points at that address, it is
 shown as "already monitored" instead.
 
-The SNMP community you give is a secret: it is sent to the devices being
+The SNMP community you give is a secret (empty means `public`): it is sent to the devices being
 probed, never written to a log and never returned by the API.
 
 ## Remote sites

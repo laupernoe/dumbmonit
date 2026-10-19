@@ -359,6 +359,50 @@ fn http_products() -> Vec<Fingerprint> {
             .body("Prometheus")
             .body("is Healthy.")
             .prefill(host_prefill()),
+        // --- Administration, stockage objet, DumbMonit ---
+        // Cockpit : /ping répond `{ "service": "cockpit" }` (cockpithandlers.c).
+        Fingerprint::http("cockpit.ping", "Cockpit", &[9090], "/ping")
+            .status(200)
+            .body("\"service\": \"cockpit\"")
+            .prefill(host_prefill()),
+        // Page de connexion de Cockpit : titre « Loading... » tant que le script
+        // de connexion n'a pas tourné, plus ses ressources caractéristiques.
+        Fingerprint::http("cockpit.login", "Cockpit", &[9090], "/")
+            .status(200)
+            .title("Loading...")
+            .body("cockpit/static/login.js")
+            .confidence(Confidence::Medium)
+            .prefill(host_prefill()),
+        // DumbMonit lui-même : /api/health est ouvert et répond toujours 200.
+        // Le moniteur HTTP convient (URL de la page de santé).
+        Fingerprint::http("dumbmonit.health", "DumbMonit", &[8080, 80, 443], "/api/health")
+            .status(200)
+            .body("\"status\":")
+            .body("\"victoria\":{")
+            .body("\"demo\":")
+            .version_json("/version")
+            .kind("http")
+            .prefill(
+                PrefillSpec::url("/api/health").tag("insecure_tls", PrefillValue::InsecureTls),
+            ),
+        // RustFS : /health publie `service: rustfs…` (health.rs) ; il imite aussi
+        // les sondes MinIO mais n'envoie pas d'en-tête `Server: MinIO`.
+        Fingerprint::http("rustfs.health", "RustFS", &[9000, 9001], "/health")
+            .status(200)
+            .body("\"service\":\"rustfs")
+            .body("\"status\":")
+            .version_json("/version")
+            .prefill(host_prefill()),
+        // MinIO : l'en-tête `Server: MinIO` accompagne toute réponse S3.
+        Fingerprint::http("minio.live", "MinIO", &[9000], "/minio/health/live")
+            .status(200)
+            .header("server", "MinIO")
+            .prefill(host_prefill()),
+        Fingerprint::http("minio.console", "MinIO Console", &[9001], "/")
+            .status(200)
+            .title("MinIO Console")
+            .confidence(Confidence::Medium)
+            .prefill(host_prefill()),
         // nginx / apache génériques : utiles comme indice, confiance moyenne.
         Fingerprint::http("nginx.server", "nginx", &[80, 443, 8080, 8443], "/")
             .header("server", "nginx")
