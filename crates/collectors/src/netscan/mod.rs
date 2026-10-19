@@ -1,6 +1,7 @@
 //! Moteur de découverte réseau, partagé par le serveur et l'agent relais.
 //!
-//! Deux passes : un balayage TCP connect d'une liste de ports courants (plus
+//! Trois temps : une détection des hôtes vivants par ping ICMP (si le système
+//! l'autorise) et par la table ARP, un balayage TCP connect d'une liste de ports courants (plus
 //! SNMP en UDP), puis une empreinte anonyme sur chaque port ouvert (requête
 //! HTTP sans vérifier le certificat, bannière, identification SNMP). Jamais de
 //! tentative d'authentification. La reconnaissance est pilotée par les
@@ -15,6 +16,7 @@
 mod arp;
 mod catalog;
 mod match_engine;
+mod ping;
 mod ports;
 mod probe;
 #[cfg(test)]
@@ -50,6 +52,8 @@ pub struct ScanConfig {
     pub banner_timeout: Duration,
     /// Délai d'une identification SNMP.
     pub snmp_timeout: Duration,
+    /// Délai d'attente d'un écho ICMP.
+    pub ping_timeout: Duration,
     /// Connexions simultanées, tous hôtes confondus.
     pub concurrency: usize,
 }
@@ -62,6 +66,7 @@ impl Default for ScanConfig {
             connect_timeout: Duration::from_millis(700),
             banner_timeout: Duration::from_millis(400),
             snmp_timeout: Duration::from_millis(900),
+            ping_timeout: Duration::from_millis(600),
             concurrency: 256,
         }
     }
@@ -71,7 +76,7 @@ impl Default for ScanConfig {
 #[derive(Debug, Clone)]
 pub enum ScanUpdate {
     Progress(ScanProgress),
-    /// Un hôte dont au moins un service a été reconnu (ou dont la MAC est connue).
+    /// Un hôte vivant : service reconnu, MAC connue ou réponse au ping.
     Host(DiscoveredHost),
 }
 
@@ -126,7 +131,6 @@ pub async fn scan(
     let hosts = hosts_of(cidr)?;
     let total = hosts.len();
     let tcp = Arc::new(tcp_ports(config.depth, &fingerprints));
-    let arp = ArpTable::load().await;
     info!(%cidr, hosts = total, ports = tcp.len(), "network discovery started");
 
     let permits = Arc::new(Semaphore::new(config.concurrency.max(1)));
@@ -137,8 +141,15 @@ pub async fn scan(
         .send(ScanUpdate::Progress(ScanProgress { phase: ScanPhase::Sweep, probed: 0, total }))
         .await;
 
+    // Hôtes vivants : ping d'abord (il réveille aussi la table ARP du noyau, lue
+    // ensuite). Sans ICMP permis, l'ensemble est vide et on continue.
+    let alive = Arc::new(ping::sweep(&hosts, config.ping_timeout, 128, &cancel).await);
+    let arp = ArpTable::load().await;
+    debug!(alive = alive.len(), "ping sweep done");
+
     let mut tasks = Vec::with_capacity(total);
     for ip in hosts {
+        let alive = alive.clone();
         let permits = permits.clone();
         let tcp = tcp.clone();
         let config = config.clone();
@@ -164,7 +175,7 @@ pub async fn scan(
                 }))
                 .await;
 
-            if services.is_empty() && mac.is_none() {
+            if services.is_empty() && mac.is_none() && !alive.contains(&ip) {
                 return None;
             }
             let vendor = mac.as_deref().and_then(vendor).map(str::to_string);
@@ -376,6 +387,7 @@ mod tests {
             connect_timeout: Duration::from_millis(60),
             banner_timeout: Duration::from_millis(30),
             snmp_timeout: Duration::from_millis(60),
+            ping_timeout: Duration::from_millis(60),
             ..ScanConfig::default()
         };
         let fingerprints = Arc::new(generic_fingerprints());

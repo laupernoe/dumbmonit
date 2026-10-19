@@ -139,6 +139,12 @@ fn http_samples_are_recognised() {
         ("prometheus.healthy.txt", "prometheus.healthy", false),
         ("nginx.server.txt", "nginx.server", false),
         ("apache.server.txt", "apache.server", false),
+        ("cockpit.ping.txt", "cockpit.ping", true),
+        ("cockpit.login.txt", "cockpit.login", true),
+        ("dumbmonit.health.txt", "dumbmonit.health", false),
+        ("rustfs.health.txt", "rustfs.health", false),
+        ("minio.live.txt", "minio.live", false),
+        ("minio.console.txt", "minio.console", false),
     ];
     let missed: Vec<&str> =
         cases.iter().filter(|(file, id, tls)| !http_matches(file, id, *tls)).map(|c| c.1).collect();
@@ -167,6 +173,35 @@ fn version_is_extracted_from_a_real_response() {
     let evidence = PortEvidence { tls: true, cert: None, banner: None, http };
     let service = match_engine::eval_tcp(&fp, "10.0.0.1", 443, &evidence).unwrap();
     assert!(service.version.is_some(), "version TrueNAS attendue");
+}
+
+#[test]
+fn object_stores_are_told_apart() {
+    // Le RustFS ne passe pas pour MinIO, ni l'inverse.
+    let probe = |file: &str, id: &str| {
+        let fp = fingerprint(id);
+        let FingerprintProbe::Http { path, .. } = &fp.probe else { unreachable!() };
+        let mut http = HashMap::new();
+        http.insert(path.clone(), http_of(file));
+        let evidence = PortEvidence { tls: false, cert: None, banner: None, http };
+        match_engine::eval_tcp(&fp, "10.0.0.1", 9000, &evidence).is_some()
+    };
+    assert!(!probe("rustfs.health.txt", "minio.live"));
+    assert!(!probe("minio.live.txt", "rustfs.health"));
+    assert!(!probe("minio.live.txt", "dumbmonit.health"));
+    assert!(!probe("rustfs.health.txt", "dumbmonit.health"));
+}
+
+#[test]
+fn dumbmonit_version_and_kind_are_extracted() {
+    let fp = fingerprint("dumbmonit.health");
+    let FingerprintProbe::Http { path, .. } = &fp.probe else { unreachable!() };
+    let mut http = HashMap::new();
+    http.insert(path.clone(), http_of("dumbmonit.health.txt"));
+    let evidence = PortEvidence { tls: false, cert: None, banner: None, http };
+    let service = match_engine::eval_tcp(&fp, "10.0.0.1", 8080, &evidence).unwrap();
+    assert_eq!(service.version.as_deref(), Some("0.12.0"));
+    assert_eq!(service.kind.as_deref(), Some("http"));
 }
 
 #[test]

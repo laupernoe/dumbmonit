@@ -1,0 +1,8 @@
+# source: https://github.com/rustfs/rustfs/blob/main/rustfs/src/server/health.rs build_health_payload (status, service "rustfs"/"rustfs-endpoint", timestamp, version = CARGO_PKG_VERSION, no ready on liveness) ; rustfs/src/server/prefix.rs (HEALTH_PREFIX /health, public unless RUSTFS_HEALTH_ENDPOINT_ENABLE=false, MinIO aliases /minio/health/live) ; S3 port 9000, console port 9001
+# RECONSTRUCTED from the Rust source (values invented, no Server header documented). Path: GET /health
+HTTP/1.1 200 OK
+content-type: application/json
+content-length: 111
+date: Mon, 19 Oct 2026 15:00:00 GMT
+
+{"status":"ok","service":"rustfs-endpoint","timestamp":"2026-10-19T15:00:00.000000000+00:00[UTC]","version":"1.0.0"}

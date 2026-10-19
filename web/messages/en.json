@@ -999,7 +999,7 @@
 	"deviceform_scan_add": "Add",
 	"deviceform_scan_add_aria": "Add {product} ({kind}) at {ip}",
 	"deviceform_scan_cancel": "Cancel scan",
-	"deviceform_scan_community_help": "Optional. Tried on SNMP devices; leave empty to skip SNMP.",
+	"deviceform_scan_community_help": "Optional. Tried on SNMP devices; empty means “public”.",
 	"deviceform_scan_depth_extended": "Extended",
 	"deviceform_scan_depth_help_extended": "More ports and probes. Slower, and more visible on the network.",
 	"deviceform_scan_depth_help_standard": "Common ports and well-known pages. Quick.",

@@ -3,13 +3,18 @@
 La découverte réseau trouve pour vous ce qui se trouve sur un réseau : vous
 ajoutez des moniteurs en choisissant dans une liste au lieu de saisir les
 adresses une à une. Vous donnez un réseau en notation CIDR (`192.168.1.0/24`) ;
-elle ouvre une courte liste de ports courants sur chaque adresse, puis fait
+elle cherche d'abord les hôtes vivants par un ping (et la table des voisins
+quand elle est lisible), ouvre une courte liste de ports courants sur chaque adresse, puis fait
 **une seule requête anonyme** vers chaque port ouvert pour reconnaître le
 produit derrière. Elle ne tente jamais de s'authentifier.
 
 Un même hôte peut porter plusieurs services : un nœud Proxmox qui répond aussi
 en SSH et en SNMP les montre tous les trois, chacun avec le type de moniteur
-DumbMonit qui convient.
+DumbMonit qui convient. Un hôte qui répond au ping mais n'expose aucun service
+reconnu est quand même listé, avec « Aucun service identifié ». Le ping exige
+que l'ICMP soit permis au conteneur (le réglage `ping_group_range` des fichiers
+compose fournis, ou `NET_RAW` en mode hôte) ; sans lui, le balayage continue
+avec les seuls ports et la table des voisins.
 
 ## Lancer un balayage
 
@@ -31,7 +36,7 @@ qui ouvre le formulaire **Ajouter un moniteur** déjà rempli avec le bon type,
 l'adresse et le port — vous n'avez plus qu'à saisir les identifiants. Si un
 moniteur pointe déjà sur cette adresse, il est signalé « déjà surveillé ».
 
-La community SNMP que vous donnez est un secret : elle est envoyée aux
+La community SNMP que vous donnez est un secret (vide = `public`) : elle est envoyée aux
 équipements sondés, jamais écrite dans un journal ni renvoyée par l'API.
 
 ## Sites distants

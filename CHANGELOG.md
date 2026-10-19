@@ -7,8 +7,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **Network discovery (all products, not just SNMP).** A scan now sweeps about
-  thirty common ports plus SNMP on every address of a network, then fingerprints
+- **Network discovery (all products, not just SNMP).** A scan first looks for
+  live hosts with an ICMP ping (the unprivileged ping socket the ping monitor
+  already uses, plus the kernel neighbour table when readable; skipped silently
+  if ICMP is not allowed), so a host that answers the ping but exposes no known
+  port is still listed. It then sweeps about thirty common ports plus SNMP
+  (empty community means `public`) on every address of a network, then fingerprints
   what answers with a single anonymous request per port — HTTP (Server header,
   title, body, TLS certificate, never verified), TCP banner, or SNMP
   `sysObjectID`/`sysDescr` — and never tries to authenticate. One host can carry
@@ -20,7 +24,8 @@ All notable changes to this project are documented here. The format follows
   Plex, Nextcloud, GitLab, Forgejo/Gitea, Paperless, Pi-hole, AdGuard, Traefik,
   Caddy, NPM, CrowdSec, RabbitMQ, Graylog, Loki, VictoriaMetrics/Logs, Grafana,
   Prometheus, FortiGate, Sophos, MikroTik, Redfish BMC, vSphere/ESXi, XCP-ng,
-  Nutanix, Veeam, printers, databases, SSH, generic HTTP/SNMP, …). The engine
+  Nutanix, Veeam, Cockpit, MinIO, RustFS, DumbMonit itself, printers, databases,
+  SSH, generic HTTP/SNMP, …). The engine
   lives in the shared collectors crate, so a relay agent can run the same scan
   on a remote site and stream results back; an agent too old to understand the
   command fails the job with a clear message. New admin API under

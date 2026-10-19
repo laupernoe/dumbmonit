@@ -1011,7 +1011,7 @@
 	"deviceform_scan_add": "Добавить",
 	"deviceform_scan_add_aria": "Добавить {product} ({kind}) на {ip}",
 	"deviceform_scan_cancel": "Отменить сканирование",
-	"deviceform_scan_community_help": "Необязательно. Проверяется на SNMP-устройствах; оставьте пустым, чтобы пропустить SNMP.",
+	"deviceform_scan_community_help": "Необязательно. Проверяется на SNMP-устройствах; пусто = «public».",
 	"deviceform_scan_depth_extended": "Расширенная",
 	"deviceform_scan_depth_help_extended": "Больше портов и проб. Медленнее и заметнее в сети.",
 	"deviceform_scan_depth_help_standard": "Типичные порты и известные страницы. Быстро.",

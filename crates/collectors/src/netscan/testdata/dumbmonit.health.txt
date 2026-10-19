@@ -1,0 +1,8 @@
+# source: crates/server/src/api/health.rs (struct Health: status, version, build?, database{ok}, victoria{ok,embedded}, demo ; route GET /api/health, open, always 200 ; axum Json = compact)
+# RECONSTRUCTED from the struct (values invented). Path: GET /api/health (default port 8080)
+HTTP/1.1 200 OK
+content-type: application/json
+content-length: 118
+date: Mon, 19 Oct 2026 15:00:00 GMT
+
+{"status":"ok","version":"0.12.0","build":"ac15a8d","database":{"ok":true},"victoria":{"ok":true,"embedded":true},"demo":false}

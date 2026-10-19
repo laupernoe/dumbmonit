@@ -1,0 +1,12 @@
+# source: https://github.com/minio/minio/blob/master/cmd/api-headers.go setCommonHeaders (Server header on every S3 response; value "MinIO") ; cmd/healthcheck-handler.go (liveness /minio/health/live answers 200 with an empty body, 503 + x-minio-server-status when not ready)
+# RECONSTRUCTED from the source and from what a MinIO server sends (values invented). Path: GET /minio/health/live (S3 port 9000)
+HTTP/1.1 200 OK
+Accept-Ranges: bytes
+Content-Length: 0
+Server: MinIO
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Vary: Origin
+X-Amz-Request-Id: 18A1B2C3D4E5F607
+X-Content-Type-Options: nosniff
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+
