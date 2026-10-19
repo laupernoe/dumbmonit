@@ -124,13 +124,3 @@ export function formatDowntime(minutes: number | null | undefined): string {
 		? m.status_words_downtime_hours({ hours })
 		: m.status_words_downtime_hours_minutes({ hours, minutes: String(rest).padStart(2, '0') });
 }
-
-/** Derives a URL slug from a title, the same way the server does. */
-export function slugify(title: string): string {
-	return title
-		.toLowerCase()
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, 40)
-		.replace(/-+$/g, '');
-}
