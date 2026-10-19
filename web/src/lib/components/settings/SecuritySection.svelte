@@ -67,6 +67,11 @@
 <Panel id="security" title={m.settings_security_title()} description={auth.user ? m.settings_security_description_user({ username: auth.user.username }) : m.settings_security_description()}>
 	{#if !auth.available}
 		<Plate tone="info" size="md" label={m.settings_security_no_protection()} />
+	{:else if auth.user?.auth === 'ldap'}
+		<div class="flex flex-wrap items-center gap-3">
+			<Plate tone="info" size="md" label={m.settings_security_managed_by({ provider: 'LDAP' })} />
+			<p class="text-sm text-ink-2">{m.settings_security_ldap_note()}</p>
+		</div>
 	{:else if auth.user?.auth === 'oidc'}
 		<div class="flex flex-wrap items-center gap-3">
 			<Plate tone="info" size="md" label={m.settings_security_managed_by({ provider: auth.oidc.provider_name || m.settings_security_default_provider() })} />

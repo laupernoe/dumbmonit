@@ -283,7 +283,7 @@
 			{/if}
 
 			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
-				<Field label={m.auth_login_username()} for="username" error={usernameError}>
+				<Field label={m.auth_login_username()} for="username" error={usernameError} help={auth.ldap.enabled ? m.auth_login_username_ldap_help() : undefined}>
 					<!-- svelte-ignore a11y_autofocus -->
 					<input
 						id="username"

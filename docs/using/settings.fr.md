@@ -197,6 +197,12 @@ réglé » comme activé ; le panneau Connexion unique dit maintenant quand
 ce défaut s'applique. Une valeur que vous avez enregistrée explicitement
 est gardée telle quelle.
 
+## LDAP / Active Directory
+
+Administrateurs seulement. Connexion avec les identifiants et mots de passe de
+l'annuaire sur l'écran habituel, rôles tirés des groupes, comptes créés à la
+première connexion. Voir [LDAP / Active Directory](ldap.md).
+
 ## Agents
 
 Jetons d'enrôlement pour l'[agent Linux, macOS, FreeBSD et
