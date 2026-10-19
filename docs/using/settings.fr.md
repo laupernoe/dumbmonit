@@ -311,4 +311,4 @@ Version du serveur et santé de ses deux magasins, la base de données
 (chaque mesure dans les graphiques), comme rapporté par `GET /api/health`
 et rafraîchi toutes les 15 secondes. Un magasin qui arrête de répondre
 montre un avertissement avec l'erreur et quoi vérifier. La section pointe
-aussi vers cette documentation et nomme la licence, Apache 2.0.
+aussi vers cette documentation et nomme la licence, MIT.
