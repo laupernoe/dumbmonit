@@ -1158,6 +1158,21 @@
 	"devices_agentmodules_title": "代理发现的服务",
 	"devices_agentmodules_toggle": "监控 {name}",
 	"devices_agentmodules_waiting": "等待代理",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条活动告警"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} 条触发中，{acked} 条已确认，{suppressed} 条因父设备离线而被屏蔽",
 	"devices_appliance_attention": "需要关注",
 	"devices_appliance_err_title": "无法加载：{name}",
 	"devices_appliance_healthy": "正常",
@@ -5649,6 +5664,7 @@
 	"settings_widgets_ai_claude_key": "Anthropic Admin API 密钥",
 	"settings_widgets_ai_claude_key_help": "以 sk-ant-admin 开头。管理员密钥仅限组织使用，由组织管理员在 Claude Console 中创建。加密存储，不会再次显示。",
 	"settings_widgets_ai_hint": "您组织的 Claude 与 OpenAI API 账户的费用和令牌用量，每 15 分钟通过其管理 API 读取。个人订阅（Claude Pro 和 Max、ChatGPT Plus）及其每周额度没有官方 API，无法显示。",
+	"settings_widgets_ai_key_howto": "如何获取管理员密钥",
 	"settings_widgets_ai_openai": "ChatGPT（OpenAI API）",
 	"settings_widgets_ai_openai_hint": "组织使用 OpenAI API 的费用和令牌用量。",
 	"settings_widgets_ai_openai_key": "OpenAI 管理员密钥",
@@ -6512,6 +6528,5 @@
 	"whatsnew_dialog_notes": "完整发行说明",
 	"whatsnew_dialog_ok": "知道了",
 	"whatsnew_dialog_title": "v{version} 新功能",
-	"whatsnew_dialog_updated": "更新于 · {date}",
-	"settings_widgets_ai_key_howto": "如何获取管理员密钥"
+	"whatsnew_dialog_updated": "更新于 · {date}"
 }

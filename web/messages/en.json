@@ -1185,6 +1185,22 @@
 	"devices_agentmodules_title": "Services found by the agent",
 	"devices_agentmodules_toggle": "Watch {name}",
 	"devices_agentmodules_waiting": "Waiting for the agent",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} active alert",
+				"countPlural=other": "{count} active alerts"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} firing, {acked} acknowledged, {suppressed} masked by an offline parent",
 	"devices_appliance_attention": "Needs attention",
 	"devices_appliance_err_title": "Could not load the {name}",
 	"devices_appliance_healthy": "Healthy",
@@ -5742,6 +5758,7 @@
 	"settings_widgets_ai_claude_key": "Anthropic Admin API key",
 	"settings_widgets_ai_claude_key_help": "Starts with sk-ant-admin. Admin keys exist only for organizations and are created in the Claude Console by an organization admin. Stored encrypted, never shown again.",
 	"settings_widgets_ai_hint": "Cost and tokens of your organization’s Claude and OpenAI API accounts, read from their admin APIs every 15 minutes. Consumer subscriptions (Claude Pro and Max, ChatGPT Plus) and their weekly limits have no official API and cannot be shown.",
+	"settings_widgets_ai_key_howto": "How to get an admin key",
 	"settings_widgets_ai_openai": "ChatGPT (OpenAI API)",
 	"settings_widgets_ai_openai_hint": "Cost and tokens of the organization’s OpenAI API usage.",
 	"settings_widgets_ai_openai_key": "OpenAI admin key",
@@ -6611,6 +6628,5 @@
 	"whatsnew_dialog_notes": "Full release notes",
 	"whatsnew_dialog_ok": "Got it",
 	"whatsnew_dialog_title": "What's new in v{version}",
-	"whatsnew_dialog_updated": "Updated · {date}",
-	"settings_widgets_ai_key_howto": "How to get an admin key"
+	"whatsnew_dialog_updated": "Updated · {date}"
 }
