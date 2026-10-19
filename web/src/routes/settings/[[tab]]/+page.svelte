@@ -32,6 +32,7 @@
 	} from '#lib/components/settings/tabs.js';
 	import SecuritySection from '#lib/components/settings/SecuritySection.svelte';
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
+	import LocationsSection from '#lib/components/settings/LocationsSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import LdapSection from '#lib/components/settings/LdapSection.svelte';
@@ -73,7 +74,7 @@
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
 		account: [AppearanceSection, SecuritySection, PushSection],
 		team: [UsersSection, SsoSection, LdapSection],
-		monitoring: [AgentsSection, PacksSection, SecurityScoreSection],
+		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallNewsSection, WallWidgetsSection] : [])],
@@ -126,7 +127,7 @@
 	let query = $state('');
 	const results = $derived(
 		searchSettings(searchIndex(), query).filter(
-			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'news' && entry.id !== 'widgets'))
+			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'news' && entry.id !== 'widgets' && entry.id !== 'locations'))
 		)
 	);
 	const href = (entry: { tab: SettingsTab; id: string }) => `/settings/${entry.tab}#${entry.id}`;

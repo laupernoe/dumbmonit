@@ -19,6 +19,7 @@
     "@sveltejs/kit": "^3.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
     "@tailwindcss/vite": "^4.0.0",
+    "@types/leaflet": "^1.9.22",
     "simple-icons": "^16.35.0",
     "svelte": "^5.57.2",
     "svelte-check": "^4.7.5",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "leaflet": "^1.9.4",
     "lucide-svelte": "^1.0.1",
     "qrcode-generator": "^2.0.4",
     "uplot": "^1.6.32"

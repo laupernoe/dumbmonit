@@ -847,6 +847,9 @@
 	"deviceform_form_folder_placeholder": "Aucun dossier",
 	"deviceform_form_interval_help": "Fréquence à laquelle DumbMonit interroge cette surveillance.",
 	"deviceform_form_interval_label": "Intervalle de vérification",
+	"deviceform_form_location_auto": "Automatique (d'après son site)",
+	"deviceform_form_location_help": "Sa place sur la carte du monde. Automatique : d'après son site, ou le site principal.",
+	"deviceform_form_location_label": "Emplacement",
 	"deviceform_form_more_options": "Plus d’options",
 	"deviceform_form_more_settings": "Plus de réglages {label}",
 	"deviceform_form_name_help": "Tel qu’il apparaît dans les listes et les alertes.",
@@ -1416,6 +1419,8 @@
 	"devices_list_bulk_enable": "Activer",
 	"devices_list_bulk_folder_apply": "Déplacer",
 	"devices_list_bulk_folder_placeholder": "Nom du nouveau dossier",
+	"devices_list_bulk_location": "Placer à",
+	"devices_list_bulk_location_auto": "Automatique (d'après leur site)",
 	"devices_list_bulk_move": "Déplacer vers un dossier",
 	"devices_list_bulk_no_folder": "Aucun dossier",
 	"devices_list_bulk_partial_names": "Échec : {names}",
@@ -3400,6 +3405,58 @@
 	"kinds_label_webchange": "Modifications d’un site web",
 	"kinds_label_website": "Santé et SEO du site web",
 	"kinds_label_websocket": "Point de terminaison WebSocket",
+	"locations_add": "Ajouter un emplacement",
+	"locations_address": "Adresse",
+	"locations_address_help": "Texte libre, affiché sur la carte. Facultatif.",
+	"locations_badge_main": "Site principal",
+	"locations_badge_site": "Site {site}",
+	"locations_basemap_attribution": "Attribution",
+	"locations_basemap_attribution_help": "Affichée dans le coin de la carte, comme l'exige la licence des tuiles.",
+	"locations_basemap_custom": "Votre serveur de tuiles",
+	"locations_basemap_custom_hint": "Toute adresse de tuiles {z}/{x}/{y} sur un seul hôte (un serveur auto-hébergé, un fournisseur avec sa clé dans l'adresse), avec son attribution.",
+	"locations_basemap_offline": "Contours intégrés (hors ligne)",
+	"locations_basemap_offline_hint": "Contours des pays Natural Earth, livrés avec DumbMonit : la carte ne contacte aucun serveur. Par défaut.",
+	"locations_basemap_osm": "Tuiles OpenStreetMap",
+	"locations_basemap_osm_hint": "Rues et villes. Chaque navigateur qui ouvre la carte charge les tuiles depuis tile.openstreetmap.org (l'adresse de votre instance part en référent, comme le demande leur politique d'usage) ; « © OpenStreetMap contributors » est affiché. Convient à un usage ponctuel, pas à un mur ouvert toute la journée sur de nombreux écrans.",
+	"locations_basemap_save": "Enregistrer le fond",
+	"locations_basemap_saved": "Enregistré.",
+	"locations_basemap_title": "Fond de carte",
+	"locations_basemap_url": "Adresse des tuiles",
+	"locations_basemap_url_help": "Avec {z}, {x} et {y} ; un seul hôte, pas de {s}.",
+	"locations_cancel": "Annuler",
+	"locations_delete": "Supprimer",
+	"locations_delete_confirm": "Supprimer ? Ses moniteurs restent.",
+	"locations_description": "Où se trouvent vos moniteurs, pour la carte du monde (Carte → Monde).",
+	"locations_edit": "Modifier",
+	"locations_edit_named": "Modifier {name}",
+	"locations_edit_title": "Modifier {name}",
+	"locations_err_basemap": "Le fond de carte n'a pas été enregistré",
+	"locations_err_delete": "L'emplacement n'a pas été supprimé",
+	"locations_err_load": "Impossible de charger les emplacements",
+	"locations_err_name": "Donnez un nom à l'emplacement.",
+	"locations_err_save": "L'emplacement n'a pas été enregistré",
+	"locations_err_spot": "Choisissez un endroit : un lieu trouvé, des coordonnées (latitude de −90 à 90, longitude de −180 à 180) ou un clic sur la carte.",
+	"locations_latitude": "Latitude",
+	"locations_longitude": "Longitude",
+	"locations_main": "Site principal",
+	"locations_main_help": "Réunit tous les moniteurs sans site distant. Un seul emplacement au plus.",
+	"locations_name": "Nom",
+	"locations_new_title": "Nouvel emplacement",
+	"locations_none": "Aucun emplacement. Ajoutez-en un : un emplacement qui tient lieu d'un site de la topologie, ou le site principal, réunit ses moniteurs tout seul.",
+	"locations_none_found": "Aucun lieu de ce nom.",
+	"locations_pick_help": "Ou cliquez sur la carte, à l'endroit de l'emplacement.",
+	"locations_pick_here": "Endroit choisi",
+	"locations_pick_label": "Carte pour choisir l'endroit de l'emplacement",
+	"locations_save": "Enregistrer l'emplacement",
+	"locations_search": "Chercher un lieu",
+	"locations_search_find": "Chercher",
+	"locations_search_help": "Une ville ou un village. Le serveur interroge le géocodage d’Open-Meteo ; vous pouvez aussi saisir des coordonnées ou cliquer sur la carte.",
+	"locations_searching": "Recherche…",
+	"locations_site": "Tient lieu du site",
+	"locations_site_help": "Chaque moniteur de ce site de la topologie (étiquette site, agent ou relais) arrive ici, sauf s'il est placé ailleurs à la main.",
+	"locations_site_none": "Aucun",
+	"locations_title": "Emplacements",
+	"locations_use_place": "Utiliser {place}",
 	"metrics_title_website_blank": "Page vide",
 	"metrics_title_website_canonical_changed": "Canonique modifiée",
 	"metrics_title_website_description_changed": "Description modifiée",
@@ -5443,6 +5500,7 @@
 	"settings_search_kw_assistant": "api jeton mcp ia assistant claude chatgpt",
 	"settings_search_kw_backup": "sauvegarde exporter restaurer configuration",
 	"settings_search_kw_incidents": "incident annonce maintenance panne publique",
+	"settings_search_kw_locations": "carte du monde sites lieux coordonnées openstreetmap tuiles",
 	"settings_search_kw_music": "musique spotify enceinte mur",
 	"settings_search_kw_news": "actualités titres rss flux mur",
 	"settings_search_kw_notifications": "canaux discord e-mail courriel ntfy telegram heures de silence page de statut",
@@ -5742,6 +5800,7 @@
 	"settings_widgets_ai_claude_key": "Clé Admin API Anthropic",
 	"settings_widgets_ai_claude_key_help": "Commence par sk-ant-admin. Les clés admin n’existent que pour les organisations et sont créées dans la Claude Console par un administrateur de l’organisation. Stockée chiffrée, jamais réaffichée.",
 	"settings_widgets_ai_hint": "Coût et jetons des comptes API Claude et OpenAI de votre organisation, lus toutes les 15 minutes sur leurs API d’administration. Les abonnements grand public (Claude Pro et Max, ChatGPT Plus) et leurs limites hebdomadaires n’ont aucune API officielle : ils ne peuvent pas être affichés.",
+	"settings_widgets_ai_key_howto": "Comment obtenir une clé admin",
 	"settings_widgets_ai_openai": "ChatGPT (API OpenAI)",
 	"settings_widgets_ai_openai_hint": "Coût et jetons de l’usage de l’API OpenAI de l’organisation.",
 	"settings_widgets_ai_openai_key": "Clé admin OpenAI",
@@ -6612,5 +6671,53 @@
 	"whatsnew_dialog_ok": "Compris",
 	"whatsnew_dialog_title": "Nouveautés de la v{version}",
 	"whatsnew_dialog_updated": "Mis à jour · {date}",
-	"settings_widgets_ai_key_howto": "Comment obtenir une clé admin"
+	"worldmap_detail_back": "Retour à tous les emplacements",
+	"worldmap_detail_empty": "Aucun moniteur à cet emplacement pour l'instant.",
+	"worldmap_edit_locations": "Modifier les emplacements",
+	"worldmap_empty_action": "Ajouter un emplacement",
+	"worldmap_empty_body": "Ajoutez vos sites dans Réglages → Surveillance → Emplacements : chacun devient une pastille qui montre l’état de ses moniteurs.",
+	"worldmap_empty_title": "Aucun emplacement pour l'instant",
+	"worldmap_err_load": "Impossible de charger les emplacements",
+	"worldmap_list_title": "Emplacements",
+	"worldmap_map_failed": "La carte n'a pas pu être chargée. Rechargez la page pour réessayer.",
+	"worldmap_map_label": "Carte du monde des emplacements",
+	"worldmap_monitors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} moniteur",
+				"countPlural=other": "{count} moniteurs"
+			}
+		}
+	],
+	"worldmap_pin_label": "{name} : {verdict}, {monitors}",
+	"worldmap_source_main": "site principal",
+	"worldmap_source_site": "par le site {site}",
+	"worldmap_unplaced": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} moniteur n'a pas d'emplacement.",
+				"countPlural=other": "{count} moniteurs n'ont pas d'emplacement."
+			}
+		}
+	],
+	"worldmap_verdict_down": "En panne",
+	"worldmap_verdict_empty": "Aucun moniteur",
+	"worldmap_verdict_idle": "Non sondé",
+	"worldmap_verdict_ok": "Tout fonctionne",
+	"worldmap_verdict_warn": "À vérifier",
+	"worldmap_view_world": "Monde"
 }

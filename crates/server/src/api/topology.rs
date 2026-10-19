@@ -140,6 +140,32 @@ pub struct Neighbor {
 /// `GET /api/topology` : lecture seule, ouverte à tous les rôles comme la
 /// liste des équipements. Les adresses n'y figurent pas.
 pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
+    let targets = load_targets(&state).await?;
+    let sites = agent_sites(&state).await?;
+
+    let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
+    let (guests, neighbors, metrics_available) = if targets.is_empty() {
+        (Vec::new(), Vec::new(), true)
+    } else {
+        let guests = state.victoria.query(&guests_query()).await;
+        let neighbors = state.victoria.query(&lldp_query()).await;
+        let available = guests.is_ok() && neighbors.is_ok();
+        if let Err(error) = guests.as_ref().and(neighbors.as_ref()) {
+            warn!(%error, "topologie : mesures illisibles, liens hyperviseur et LLDP omis");
+        }
+        (
+            guests.map(|s| parse_guests(&s, &ids)).unwrap_or_default(),
+            neighbors.map(|s| parse_neighbors(&s, &ids)).unwrap_or_default(),
+            available,
+        )
+    };
+
+    let (nodes, edges) = build(&targets, &sites, &guests, &neighbors);
+    Ok(Json(TopologyView { nodes, edges, metrics_available }))
+}
+
+/// Les cibles telles que la carte les lit.
+async fn load_targets(state: &AppState) -> ApiResult<Vec<TargetRow>> {
     let rows = sqlx::query(
         "SELECT id, name, address, kind, parent_id, via_agent, group_name, tags FROM targets
          ORDER BY id",
@@ -163,32 +189,26 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
         })
         .collect::<Result<Vec<_>, sqlx::Error>>()
         .map_err(anyhow::Error::from)?;
+    Ok(targets)
+}
 
-    let sites: HashMap<TargetId, String> = agent::list_hosts(&state.pool)
+/// Le site que déclare chaque machine à agent.
+async fn agent_sites(state: &AppState) -> ApiResult<HashMap<TargetId, String>> {
+    Ok(agent::list_hosts(&state.pool)
         .await?
         .into_iter()
         .filter_map(|(id, _, info)| info.site.filter(|s| !s.trim().is_empty()).map(|s| (id, s)))
-        .collect();
+        .collect())
+}
 
-    let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
-    let (guests, neighbors, metrics_available) = if targets.is_empty() {
-        (Vec::new(), Vec::new(), true)
-    } else {
-        let guests = state.victoria.query(&guests_query()).await;
-        let neighbors = state.victoria.query(&lldp_query()).await;
-        let available = guests.is_ok() && neighbors.is_ok();
-        if let Err(error) = guests.as_ref().and(neighbors.as_ref()) {
-            warn!(%error, "topologie : mesures illisibles, liens hyperviseur et LLDP omis");
-        }
-        (
-            guests.map(|s| parse_guests(&s, &ids)).unwrap_or_default(),
-            neighbors.map(|s| parse_neighbors(&s, &ids)).unwrap_or_default(),
-            available,
-        )
-    };
-
-    let (nodes, edges) = build(&targets, &sites, &guests, &neighbors);
-    Ok(Json(TopologyView { nodes, edges, metrics_available }))
+/// Le site distant de chaque cible (`None` : site principal), déduit comme sur
+/// la carte de topologie, sans lire les mesures : les invités et les voisins
+/// n'y changent rien. Sert aux emplacements de la carte du monde.
+pub async fn target_sites(state: &AppState) -> ApiResult<HashMap<TargetId, Option<String>>> {
+    let targets = load_targets(state).await?;
+    let sites = agent_sites(state).await?;
+    let (nodes, _) = build(&targets, &sites, &[], &[]);
+    Ok(nodes.into_iter().filter_map(|n| n.target_id.map(|id| (id, n.site))).collect())
 }
 
 /// L'étiquette `site` d'un objet JSON d'étiquettes, si elle est une chaîne non vide.

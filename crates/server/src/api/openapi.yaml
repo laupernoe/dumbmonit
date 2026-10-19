@@ -2823,6 +2823,196 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/locations:
+    get:
+      operationId: listLocations
+      tags: [Devices]
+      summary: Locations of the world map, with the devices each one gathers
+      description: |
+        A device finds its location from the most explicit to the most deduced: its
+        assignment (`location_id` on the device), then the location that stands for its
+        remote site (the site the topology map deduces: `site` tag, agent, relay agent),
+        then the location marked `main_site` when it has no remote site. Each member says
+        which (`source`). `sites` lists the remote sites the topology knows, `unplaced`
+        the devices no location gathers. States are read from `GET /api/targets`.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Locations, known sites and unplaced devices.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Locations" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createLocation
+      tags: [Devices]
+      summary: Create a location
+      description: Marking it `main_site` takes the mark from any other location.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationInput" }
+      responses:
+        "201":
+          description: The location (no members yet).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/locations/assign:
+    post:
+      operationId: assignLocation
+      tags: [Devices]
+      summary: Place devices at a location, or take them off
+      description: >-
+        Sets `location_id` on every listed device; `null` removes the assignment, and the
+        device falls back on its site. Unknown device ids are skipped.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [location_id, target_ids]
+              properties:
+                location_id: { type: [integer, "null"], format: int64 }
+                target_ids:
+                  type: array
+                  minItems: 1
+                  maxItems: 5000
+                  items: { type: integer, format: int64 }
+      responses:
+        "200":
+          description: How many devices were updated.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updated]
+                properties:
+                  updated: { type: integer }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/locations/geocode:
+    get:
+      operationId: geocodeLocation
+      tags: [Devices]
+      summary: Find a place for a location (Open-Meteo geocoding)
+      description: Administrators only. The server asks Open-Meteo; the browser never does.
+      x-token-scope: read
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string, minLength: 2, maxLength: 80 }
+        - name: lang
+          in: query
+          schema: { type: string, description: Two-letter language of the names. }
+      responses:
+        "200":
+          description: Up to eight places.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/WallPlace" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502":
+          description: The geocoding service did not answer.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+
+  /api/locations/basemap:
+    get:
+      operationId: getBasemap
+      tags: [Devices]
+      summary: Background of the world map
+      x-token-scope: read
+      responses:
+        "200":
+          description: The basemap; `offline` when never set.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Basemap" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putBasemap
+      tags: [Devices]
+      summary: Choose the background of the world map
+      description: |
+        `offline` (default): the Natural Earth outlines built into the interface, no request
+        leaves the browser. `osm`: OpenStreetMap tiles (address and attribution are set by
+        the server). `custom`: a `{z}/{x}/{y}` tile address on a plain host (no `{s}`), with
+        its attribution. The tile origin is added to the interface's `img-src` policy.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/Basemap" }
+      responses:
+        "200":
+          description: The basemap as saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Basemap" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/locations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: updateLocation
+      tags: [Devices]
+      summary: Edit a location
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LocationInput" }
+      responses:
+        "200":
+          description: The location (members are read with `GET /api/locations`).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Location" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteLocation
+      tags: [Devices]
+      summary: Delete a location
+      description: Its devices stay, without a location.
+      x-token-scope: write
+      responses:
+        "204": { description: Location deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/agent:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -5789,6 +5979,7 @@ components:
         credential_kind: { type: string, description: A label — the secret itself is never returned. }
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
+        location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
         last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
         last_error: { type: [string, "null"] }
         error_kind:
@@ -5866,6 +6057,7 @@ components:
           description: Type options go here under their key.
           additionalProperties: { type: string }
         group_name: { type: [string, "null"], description: "Flat folder shown on `/targets`. Empty or `null`: no folder. Absent on `PUT` keeps the folder." }
+        location_id: { type: [integer, "null"], format: int64, description: "Location on the world map; `null`: none. Absent on `PUT` keeps the assignment." }
         credential:
           $ref: "#/components/schemas/CredentialInput"
           description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'
@@ -6718,6 +6910,59 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+    Locations:
+      type: object
+      required: [locations, sites, unplaced]
+      properties:
+        locations:
+          type: array
+          items: { $ref: "#/components/schemas/Location" }
+        sites:
+          type: array
+          items: { type: string }
+          description: Remote sites the topology map knows, sorted.
+        unplaced:
+          type: array
+          items: { type: integer, format: int64 }
+          description: Devices no location gathers.
+    Location:
+      type: object
+      required: [id, name, address, latitude, longitude, site, main_site, members]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        address: { type: string, description: Free text, shown only. }
+        latitude: { type: number }
+        longitude: { type: number }
+        site: { type: string, description: "Topology site this location stands for (case-insensitive); empty: none." }
+        main_site: { type: boolean, description: Gathers the devices with no remote site. At most one location. }
+        members:
+          type: array
+          items:
+            type: object
+            required: [target_id, source]
+            properties:
+              target_id: { type: integer, format: int64 }
+              source:
+                type: string
+                enum: [assigned, site, main]
+    LocationInput:
+      type: object
+      required: [name, latitude, longitude]
+      properties:
+        name: { type: string, maxLength: 80 }
+        address: { type: string, maxLength: 200 }
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        site: { type: string, maxLength: 80 }
+        main_site: { type: boolean }
+    Basemap:
+      type: object
+      required: [mode]
+      properties:
+        mode: { type: string, enum: [offline, osm, custom] }
+        url: { type: string, description: "Tile address with `{z}`, `{x}`, `{y}`; set by the server for `osm`, empty for `offline`." }
+        attribution: { type: string, maxLength: 200 }
     Topology:
       type: object
       required: [nodes, edges, metrics_available]
