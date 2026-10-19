@@ -21,6 +21,20 @@ All notable changes to this project are documented here. The format follows
   their attribution; only their host is added to the interface's `img-src`.
   Map rendering by Leaflet (BSD-2-Clause). New routes under `/api/locations`;
   monitors gain `location_id`.
+- **OPNsense live map.** With the new `live_map` option, the firewall's page
+  shows where the connections its rules block or pass come from: a disc per
+  country, short arcs travelling to the firewall's location as connections
+  arrive (left out under *reduce motion*), and the busiest countries, rules
+  and ports over the last fifteen minutes. The server reads the firewall log
+  (`/api/diagnostics/firewall/log`, privilege *Diagnostics: Logs: Firewall:
+  Live View*, read-only) every five seconds only while someone looks, keeps
+  the window in memory and reduces every line to country, port, rule and
+  action at once: no address is stored or sent to the browser. Countries come
+  from DB-IP's IP to Country Lite (CC BY 4.0, no account), downloaded by the
+  server and refreshed monthly, looked up locally; private ranges count as
+  *Local network*. IP geolocation can be turned off in Settings → Monitoring →
+  Locations. New routes `GET /api/targets/{id}/opnsense/live` and
+  `GET|PUT /api/geoip`.
 - **Website banner in the status page settings.** At the bottom of a status
   page's settings, a "Status banner for your website" section announces the
   banner for third-party sites, links to its documentation, offers the HTML and

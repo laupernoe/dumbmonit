@@ -977,6 +977,7 @@ dependencies = [
  "dumbmonit-collectors",
  "dumbmonit-pack",
  "dumbmonit-proto",
+ "flate2",
  "futures",
  "hex",
  "hmac 0.13.0",

@@ -4220,6 +4220,75 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/opnsense/live:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getOpnsenseLive
+      tags: [Integrations]
+      summary: OPNsense — live map of blocked and passed connections
+      description: |
+        The last fifteen minutes of the firewall log, reduced on the server to countries, rules
+        and ports: no IP address is ever returned. Only with the monitor's `live_map` option;
+        the first read starts polling `/api/diagnostics/firewall/log` on the firewall every five
+        seconds, which stops a minute after the last read. `after` returns only the events
+        numbered above it in `recent` (pass back `seq`). Countries come from a local copy of
+        DB-IP's IP to Country Lite (CC BY 4.0); private ranges are `local`.
+      x-token-scope: read
+      parameters:
+        - name: after
+          in: query
+          schema: { type: integer, minimum: 0 }
+      responses:
+        "200":
+          description: The window.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OpnsenseLive" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/geoip:
+    get:
+      operationId: getGeoip
+      tags: [Integrations]
+      summary: IP to country database used by the live map
+      x-token-scope: read
+      responses:
+        "200":
+          description: State of the database.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeoipStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putGeoip
+      tags: [Integrations]
+      summary: Turn IP geolocation on or off
+      description: Off, nothing is downloaded and every country is `unknown`.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+      responses:
+        "200":
+          description: State of the database.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeoipStatus" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}/truenas/storage:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -7025,6 +7094,83 @@ components:
         mode: { type: string, enum: [offline, osm, custom] }
         url: { type: string, description: "Tile address with `{z}`, `{x}`, `{y}`; set by the server for `osm`, empty for `offline`." }
         attribution: { type: string, maxLength: 200 }
+    GeoipStatus:
+      type: object
+      required: [enabled, state, ranges, source, source_url]
+      properties:
+        enabled: { type: boolean }
+        state: { type: string, enum: [ready, loading, missing, failed, disabled] }
+        month: { type: [string, "null"], description: "Month of the loaded database (`2026-10`)." }
+        ranges: { type: integer }
+        error: { type: [string, "null"] }
+        source: { type: string }
+        source_url: { type: string, description: Link the attribution must carry (CC BY 4.0). }
+    OpnsenseLiveTally:
+      type: object
+      required: [blocked, passed, other]
+      properties:
+        blocked: { type: integer }
+        passed: { type: integer }
+        other: { type: integer }
+    OpnsenseLive:
+      type: object
+      required: [enabled, relayed, window_secs, totals, countries, rules, ports, recent, seq, geoip]
+      properties:
+        enabled: { type: boolean, description: False while the `live_map` option is off. }
+        relayed: { type: boolean, description: Polled through a relay agent; the server cannot read the log. }
+        window_secs: { type: integer }
+        polled_at: { type: [integer, "null"], description: Unix seconds. }
+        error: { type: [string, "null"], description: Why the last read of the log failed. }
+        totals: { $ref: "#/components/schemas/OpnsenseLiveTally" }
+        countries:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/OpnsenseLiveTally"
+              - type: object
+                required: [code]
+                properties:
+                  code: { type: string, description: "ISO 3166-1 alpha-2, `local` or `unknown`." }
+        rules:
+          type: array
+          items:
+            type: object
+            required: [rule, action, count]
+            properties:
+              rule: { type: string }
+              action: { type: string, enum: [block, pass, other] }
+              count: { type: integer }
+        ports:
+          type: array
+          items:
+            type: object
+            required: [proto, port, count]
+            properties:
+              proto: { type: string }
+              port: { type: integer }
+              count: { type: integer }
+        recent:
+          type: array
+          items:
+            type: object
+            required: [seq, at, action, outbound, country, proto, rule]
+            properties:
+              seq: { type: integer }
+              at: { type: integer }
+              action: { type: string, enum: [block, pass, other] }
+              outbound: { type: boolean }
+              country: { type: string }
+              proto: { type: string }
+              port: { type: [integer, "null"] }
+              rule: { type: string }
+        seq: { type: integer }
+        firewall:
+          type: [object, "null"]
+          properties:
+            name: { type: string }
+            latitude: { type: number }
+            longitude: { type: number }
+        geoip: { $ref: "#/components/schemas/GeoipStatus" }
     Topology:
       type: object
       required: [nodes, edges, metrics_available]
