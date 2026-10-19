@@ -10,7 +10,10 @@
 	 * and stated plainly on top of it, for across the room: the headline
 	 * ("All good" / "2 problems") with its icon, the problems as big tiles,
 	 * every device as a small tile (problems first), the clock and the date,
-	 * and what is playing.
+	 * and what is playing. The widgets (weather, headlines, vulnerabilities,
+	 * coins, stocks, rates, AI usage) sit where the admin put them — a thin bar
+	 * at the top or the bottom, or the right column under the clock — all at
+	 * once, small and still (`WallZone`): nothing turns, nothing scrolls.
 	 *
 	 * Same truth as the Overview (`readSky` over targets, probes, alerts and
 	 * rules), refreshed every 20 s; the screen is kept awake; Escape or "Exit"
@@ -82,13 +85,8 @@
 	} from '#lib/components/wall/wallTheme.js';
 	import { getWallMusic, playOnWall, stopWallLink, type WallMusic } from '#lib/api/music.js';
 	import { getWallNews, type WallNews } from '#lib/api/wallNews.js';
-	import WallNewsTicker from '#lib/components/wall/WallNewsTicker.svelte';
-	import WallNewsVideo from '#lib/components/wall/WallNewsVideo.svelte';
-	import WallGallery from '#lib/components/wall/WallGallery.svelte';
-	import WallWidgets from '#lib/components/wall/WallWidgets.svelte';
-import WallMarketBar from '#lib/components/wall/WallMarketBar.svelte';
-import { marketItems, widgetCards } from '#lib/wall/widgets.js';
-	import WallWeather from '#lib/components/wall/WallWeather.svelte';
+	import WallZone from '#lib/components/wall/WallZone.svelte';
+	import { resolveLayout, type WallWidgetId } from '#lib/wall/layout.js';
 	import { getWallWidgets } from '#lib/api/wallWidgets.js';
 	import type { WallWidgets as WallWidgetsData } from '#lib/api/types.js';
 	import { parseMusicLink } from '#lib/wall/music.js';
@@ -109,18 +107,13 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 	// --- News -------------------------------------------------------------------
 
 	/**
-	 * Headlines and the live tile, off unless an admin turned them on in Settings.
-	 * The server reads the feeds and caches them for five minutes; the wall asks
-	 * as often, only while visible, and keeps the last answer when a read fails.
+	 * Headlines, text only, off unless an admin turned them on in Settings. The server reads the feeds and caches them for five
+	 * minutes; the wall asks as often, only while visible, and keeps the last
+	 * answer when a read fails.
 	 */
 	const NEWS_MS = 5 * 60_000;
 	let news = $state<WallNews | null>(null);
-	/** The carousel wins the bottom of the wall: with it on, no headline band. */
-	const carouselOn = $derived(!!news?.gallery);
-	const headlines = $derived(news?.ticker && !carouselOn ? news.items : []);
-	const newsVideo = $derived(news?.video ?? null);
-	/** The pictures carousel: the same feeds, the articles that carry a picture. */
-	const gallery = $derived(news?.gallery ? news.items.filter((item) => item.image) : []);
+	const headlines = $derived(news && news.ticker ? news.items : []);
 
 	$effect(() => {
 		const controller = new AbortController();
@@ -145,25 +138,22 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 	// --- Widgets ----------------------------------------------------------------
 
 	/**
-	 * Coins, stocks, rates and CVEs in a rotating card, and the weather now under
-	 * the clock; off unless an admin turned them on.
+	 * Coins, rates, stocks, CVEs and AI usage as panels of the right rail, and
+	 * the weather now under the clock; off unless an admin turned them on.
 	 * The server reads and caches every source (a minute for coins, an hour for
 	 * rates); the wall asks every minute while visible and keeps the last answer
 	 * when a read fails. An older server without the route: no more asking.
 	 */
 	const WIDGETS_MS = 60_000;
 	let widgets = $state<WallWidgetsData | null>(null);
-	/** The rail's cards: only widgets that are on and have something to show. */
-	const railCards = $derived(widgetCards(widgets));
-	const hasMarket = $derived(marketItems(widgets).length > 0);
-	/**
-	 * Where the market bar goes: along the bottom, unless the headline band
-	 * (carousel off, feeds on) takes the bottom, then under the tools at the top.
-	 */
-	const marketAt = $derived<'top' | 'bottom' | null>(!hasMarket ? null : headlines.length > 0 ? 'top' : 'bottom');
-	const bottomBar = $derived<'news' | 'market' | null>(
-		headlines.length > 0 ? 'news' : marketAt === 'bottom' ? 'market' : null
-	);
+	/** Where each widget goes (Settings → Wall widgets → Layout); only those with something to show. */
+	const layout = $derived(resolveLayout(widgets?.layout));
+	function shows(id: WallWidgetId): boolean {
+		return id === 'news' ? headlines.length > 0 : !!widgets?.[id]?.data;
+	}
+	const topIds = $derived(layout.top.filter(shows));
+	const bottomIds = $derived(layout.bottom.filter(shows));
+	const rightIds = $derived(layout.right.filter(shows));
 
 	$effect(() => {
 		const controller = new AbortController();
@@ -654,14 +644,15 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 	const firstLoad = $derived(loading && targets.length === 0);
 
 	/** Nothing but the clock on the right: the rail slims down and the problems take the room. */
-	const leanRail = $derived(railCards.length === 0 && gallery.length === 0 && newsVideo?.position !== 'right');
+	const leanRail = $derived(rightIds.length === 0);
 
 	/**
 	 * From 1024 px the board is a fixed-height column: the problems get what the
-	 * devices below do not need (two rows of chips are always kept). Below, the
-	 * page scrolls and nothing is capped.
+	 * devices below do not need. One row of chips is always kept, and the
+	 * devices whose problem did not fit come first in it. Below, the page
+	 * scrolls and nothing is capped.
 	 */
-	const DEVICES_MIN_PX = 104;
+	const DEVICES_MIN_PX = 56;
 	let leftRoom = $state(0);
 	let problemListed = $state(new Set<number>());
 	let wide = $state(false);
@@ -673,6 +664,76 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 		return () => query.removeEventListener('change', sync);
 	});
 	const problemsRoom = $derived(wide && leftRoom > 0 ? Math.max(120, leftRoom - DEVICES_MIN_PX - 16) : Infinity);
+
+	/**
+	 * The scene's props (the pigeons and their sign, the station clock, the
+	 * split-flap board, a chalkboard) never sit under the board's words nor
+	 * past the screen's edge: each one that would (`data-wall-prop` against
+	 * every `data-wall-info` box) is hidden. Checked on resize and every few
+	 * seconds; a prop hidden stays hidden until the board itself changes, so
+	 * a pigeon strolling along the parapet does not blink in and out.
+	 */
+	let stage = $state<HTMLElement | null>(null);
+	/** What a prop actually paints: an `<svg>` box is its whole viewBox, its shapes are smaller. */
+	function paintedRect(el: Element): { left: number; top: number; right: number; bottom: number; width: number; height: number } {
+		if (!(el instanceof SVGSVGElement)) return el.getBoundingClientRect();
+		let left = Infinity;
+		let top = Infinity;
+		let right = -Infinity;
+		let bottom = -Infinity;
+		for (const child of el.children) {
+			const r = child.getBoundingClientRect();
+			if (r.width === 0 && r.height === 0) continue;
+			left = Math.min(left, r.left);
+			top = Math.min(top, r.top);
+			right = Math.max(right, r.right);
+			bottom = Math.max(bottom, r.bottom);
+		}
+		if (left === Infinity) return el.getBoundingClientRect();
+		return { left, top, right, bottom, width: right - left, height: bottom - top };
+	}
+	$effect(() => {
+		const root = stage;
+		if (!root) return;
+		let layout = '';
+		const fit = () => {
+			const screen = root.getBoundingClientRect();
+			// On a 4K panel the board is zoomed; browsers before the standard CSS
+			// zoom give its boxes unzoomed, so they are scaled back to the screen
+			// (the board covers the whole stage: its width tells the factor).
+			const board = root.querySelector(':scope > .board')?.getBoundingClientRect();
+			const k = board && board.width > 0 ? screen.width / board.width : 1;
+			const infos = Array.from(root.querySelectorAll('[data-wall-info]'))
+				.map((el) => {
+					const r = el.getBoundingClientRect();
+					return { left: r.left * k, top: r.top * k, right: r.right * k, bottom: r.bottom * k, width: r.width * k, height: r.height * k };
+				})
+				.filter((rect) => rect.width > 0 && rect.height > 0);
+			const next = infos.map((r) => `${Math.round(r.left)},${Math.round(r.top)},${Math.round(r.width)},${Math.round(r.height)}`).join('|') + `@${Math.round(screen.width)}x${Math.round(screen.height)}`;
+			const sticky = next === layout;
+			layout = next;
+			const gap = 4;
+			for (const prop of root.querySelectorAll('[data-wall-prop]')) {
+				const r = paintedRect(prop);
+				if (r.width === 0 && r.height === 0) continue;
+				const cut = r.left < screen.left - 1 || r.right > screen.right + 1 || r.top < screen.top - 1 || r.bottom > screen.bottom + 1;
+				const covered = infos.some(
+					(i) => r.left < i.right + gap && r.right > i.left - gap && r.top < i.bottom + gap && r.bottom > i.top - gap
+				);
+				prop.toggleAttribute('data-wall-prop-off', cut || covered || (sticky && prop.hasAttribute('data-wall-prop-off')));
+			}
+		};
+		// After the first paint, then on every resize and every few seconds.
+		const first = requestAnimationFrame(fit);
+		const timer = setInterval(fit, 2500);
+		const observer = new ResizeObserver(() => fit());
+		observer.observe(root);
+		return () => {
+			cancelAnimationFrame(first);
+			clearInterval(timer);
+			observer.disconnect();
+		};
+	});
 </script>
 
 <svelte:head><title>{m.wall_page_title()}</title></svelte:head>
@@ -685,11 +746,8 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 	-->
 	<div
 		class="wall-stage relative h-full"
-		class:has-bottom={bottomBar !== null}
-		class:has-top-bar={marketAt === 'top'}
 		class:lean={leanRail}
-		style:--bottom-h={bottomBar === 'news' ? 'calc(var(--news-h, 2.75rem) / var(--zoom, 1))' : bottomBar === 'market' ? 'var(--market-h, 3.25rem)' : '0px'}
-		style:--bottom-px={bottomBar === 'news' ? 'var(--news-h, 2.75rem)' : bottomBar === 'market' ? 'calc(var(--market-h, 3.25rem) * var(--zoom, 1))' : '0px'}
+		bind:this={stage}
 		style:transform={oledActive ? `translate(${oledShift[0]}px, ${oledShift[1]}px)` : undefined}
 	>
 		<div class="scene-box">
@@ -733,20 +791,20 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 				</div>
 			{:else}
 				<div class="board-left">
-					<header class="flex items-center gap-4 lg:gap-6">
+					<header class="flex items-center gap-4 lg:gap-6" data-wall-info>
 						<span class="status-mark status-mark--{status.tone}" aria-hidden="true">
 							<StatusIcon class="size-1/2" strokeWidth={2.4} />
 						</span>
 						<h1 class="headline display min-w-0" aria-live="polite">{status.text}</h1>
 					</header>
-					<p class="sentence mt-3 lg:mt-4">{sky.sentence}</p>
-					<div class="plates mt-4 flex flex-wrap items-center gap-2.5">
+					<p class="sentence mt-3 lg:mt-4" data-wall-info>{sky.sentence}</p>
+					<div class="plates mt-4 flex flex-wrap items-center gap-2.5" data-wall-info>
 						{#each sky.plates as plate (plate.label)}
 							<Plate tone={plate.tone} label={plate.label} bare={plate.bare} size="md" />
 						{/each}
 					</div>
 
-					<div class="mt-7 flex min-h-0 flex-1 flex-col gap-4 lg:mt-9" bind:clientHeight={leftRoom}>
+					<div class="board-list mt-7 flex min-h-0 flex-1 flex-col gap-4 lg:mt-9" bind:clientHeight={leftRoom}>
 						<WallProblems {sky} {now} room={problemsRoom} bind:listed={problemListed} />
 						<WallDevices {targets} {probes} {sky} skip={problemListed} />
 					</div>
@@ -754,10 +812,9 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 			{/if}
 
 			<div class="board-right">
-				<time class="clock display tnum" datetime={now.toISOString()}>{clock}</time>
-				{#if widgets?.weather}<WallWeather section={widgets.weather} />{/if}
-				<p class="date">{dateLabel}</p>
-				<p class="updated tnum" aria-live="off">
+				<time class="clock display tnum" datetime={now.toISOString()} data-wall-info>{clock}</time>
+				<p class="date" data-wall-info>{dateLabel}</p>
+				<p class="updated tnum" aria-live="off" data-wall-info>
 					<span class="refresh" aria-hidden="true"><span style:transform="scaleX({progress})"></span></span>
 					{updatedLabel}
 				</p>
@@ -766,7 +823,7 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 				{/if}
 
 				{#if musicVisible}
-					<div class="music-slot">
+					<div class="music-slot" data-wall-info>
 						<MusicDock
 							playing={shownPlaying}
 							{speakerName}
@@ -783,35 +840,25 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 					</div>
 				{/if}
 
-				{#if newsVideo?.position === 'right'}
-					<div class="news-video-slot"><WallNewsVideo video={newsVideo} /></div>
-				{/if}
-
-				{#if gallery.length > 0}
-					<div class="gallery-slot"><WallGallery items={gallery} {now} paused={hidden} /></div>
-				{/if}
-
-				{#if railCards.length > 0 && widgets}
-					<div class="widgets-slot"><WallWidgets {widgets} {now} paused={hidden} /></div>
+				{#if rightIds.length > 0}
+					<WallZone ids={rightIds} variant="column" {widgets} news={headlines} {now} fit={wide} class="right-zone" />
 				{/if}
 			</div>
 
-			{#if newsVideo?.position === 'center'}
-				<div class="board-center"><WallNewsVideo video={newsVideo} /></div>
+			{#if topIds.length > 0}
+				<div class="wall-bar wall-bar--top" data-wall-info>
+					<WallZone ids={topIds} variant="bar" {widgets} news={headlines} {now} fit={wide} />
+				</div>
+			{/if}
+			{#if bottomIds.length > 0}
+				<div class="wall-bar wall-bar--bottom" data-wall-info>
+					<WallZone ids={bottomIds} variant="bar" {widgets} news={headlines} {now} fit={wide} />
+				</div>
 			{/if}
 		</div>
 
-		{#if headlines.length > 0}
-			<div class="news-band"><WallNewsTicker items={headlines} {now} paused={hidden} /></div>
-		{/if}
-
-		<!-- Static market bar: along the bottom, or under the tools when the headlines take the bottom. -->
-		{#if marketAt && widgets}
-			<div class="market-slot market-slot--{marketAt}"><WallMarketBar {widgets} paused={hidden} edge={marketAt} /></div>
-		{/if}
-
 		<!-- Tools, top right; Music and Theme show on hover, focus or touch. -->
-		<div class="wall-tools absolute top-3 right-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end rounded-xl bg-surface/85 p-1 shadow-lift lg:top-4 lg:right-4">
+		<div data-wall-info class="wall-tools absolute top-3 right-3 z-10 flex max-w-[calc(100vw-1.5rem)] flex-wrap items-center justify-end rounded-xl bg-surface/85 p-1 shadow-lift lg:top-4 lg:right-4">
 			<WallThemeControl
 				value={wallTheme}
 				forced={forcedWallTheme}
@@ -932,7 +979,7 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 		font-size: 0.9375rem;
 		color: var(--c-ink-2);
 	}
-	/* Fills up to the next refresh: a quiet second hand for the data. */
+	/* Fills up to the next refresh, one step a second: a quiet second hand for the data. */
 	.refresh {
 		position: relative;
 		width: 3rem;
@@ -946,37 +993,22 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 		inset: 0;
 		background: var(--c-signal);
 		transform-origin: left;
-		transition: transform 1s linear;
 	}
-	/* The headline band and the market bar: stuck to the bottom of the visible wall, above the scene. */
-	.news-band,
-	.market-slot--bottom {
-		position: sticky;
-		bottom: 0;
-		z-index: 12;
-	}
-	/* Under the tools, over the scene band. */
-	.market-slot--top {
-		position: absolute;
-		top: 3.75rem;
-		inset-inline: 0;
-		z-index: 12;
-	}
-	.news-video-slot,
-	.board-center,
-	.gallery-slot,
-	.widgets-slot {
+	/* The widgets: a quieter voice than the monitors (see `WallWidget`). */
+	.board-right :global(.right-zone) {
 		width: 100%;
 		margin-top: 1.25rem;
+		--w-size: 1rem;
 	}
-	.widgets-slot {
-		display: flex;
-		flex-direction: column;
+	.wall-bar {
+		min-width: 0;
+		padding: 0.5rem 1rem;
+		border-radius: 12px;
+		background: color-mix(in srgb, var(--c-surface) 72%, transparent);
+		--w-size: 0.9375rem;
 	}
-	.board-center {
-		display: flex;
-		flex-direction: column;
-		gap: 1.25rem;
+	.wall-bar--top {
+		order: -1;
 	}
 	.music-slot {
 		position: relative;
@@ -1002,14 +1034,27 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 			position: absolute;
 			inset: 0;
 			display: grid;
-			grid-template-columns: minmax(0, 42rem) minmax(0, 1fr) minmax(0, 32rem);
-			gap: 2rem;
-			/* The bottom eighth stays the pigeons' parapet. */
-			padding: 3.25rem 3.5rem 12.5vh;
+			grid-template-columns: minmax(0, 38rem) minmax(0, 1fr) minmax(0, 30rem);
+			/* A bar on top, the board, a bar at the bottom: each bar only when it has widgets. */
+			grid-template-rows: auto minmax(0, 1fr) auto;
+			gap: 0 2rem;
+			/* Top to bottom: the scene's props give way to the words, never the reverse. */
+			padding: 3.25rem 3.5rem 2.5rem;
 		}
 		.board-left {
 			grid-column: 1;
+			grid-row: 2;
 			min-height: 0;
+		}
+		.wall-bar--top {
+			grid-column: 1 / 3;
+			grid-row: 1;
+			margin-bottom: 1.25rem;
+		}
+		.wall-bar--bottom {
+			grid-column: 1 / -1;
+			grid-row: 3;
+			margin-top: 1.25rem;
 		}
 		/* Nothing but the clock on the right: the rail slims down, the problems get the room. */
 		.lean .board {
@@ -1017,18 +1062,11 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 		}
 		.board-right {
 			grid-column: 3;
+			grid-row: 1 / 3;
 			align-items: flex-end;
 			text-align: right;
 			padding-top: 2.25rem;
 			min-height: 0;
-			/* The rail stops above the pigeons' heads (about 74% of the screen height). */
-			margin-bottom: max(
-				0px,
-				calc(
-					26vh / var(--zoom, 1) - var(--bottom-h, 0px) -
-						(100vh / var(--zoom, 1) - var(--bottom-h, 0px)) * 0.125
-				)
-			);
 		}
 		.headline {
 			font-size: clamp(4rem, 5vw, 6rem);
@@ -1053,63 +1091,10 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 			height: 11.5rem;
 			margin-top: 2rem;
 		}
-		.news-band,
-		.market-slot {
-			position: absolute;
-			inset-inline: 0;
-		}
-		.news-band,
-		.market-slot--bottom {
-			bottom: 0;
-		}
-		.market-slot--top {
-			top: 4rem;
-		}
-		/*
-		 * A bottom bar (headlines, or the market) takes its own strip: the scene
-		 * ends above it, so the parapet and its pigeons are never covered, and
-		 * the board clears it.
-		 */
-		.scene-box {
-			bottom: var(--bottom-px, 0px);
-		}
-		.has-bottom .board {
-			padding-bottom: calc(var(--bottom-h) + (100vh / var(--zoom, 1) - var(--bottom-h)) * 0.125);
-		}
-		/* A top bar sits under the tools: everything below it starts lower. */
-		.has-top-bar .board {
-			padding-top: calc(4rem + var(--market-h, 3.25rem) + 1.25rem);
-		}
-		.has-top-bar .board-right {
-			padding-top: 0;
-		}
-		/* The live tile takes what the right column leaves, and shrinks to it. */
-		.news-video-slot {
-			display: flex;
+		/* The right column's widgets take what the clock and the music leave, and fit in it. */
+		.board-right :global(.right-zone) {
 			flex: 1 1 0;
 			min-height: 0;
-			margin-top: 1rem;
-		}
-		/* The small photo keeps its shape; the cards below share what is left. */
-		.gallery-slot {
-			flex: 0 0 auto;
-			margin-top: 1rem;
-		}
-		.board-center {
-			grid-column: 2;
-			grid-row: 1;
-			display: flex;
-			flex-direction: column;
-			justify-content: flex-end;
-			min-width: 0;
-			min-height: 0;
-			margin-top: 0;
-		}
-		/* The cards take what is left of the rail, cut into pages by their measured height. */
-		.widgets-slot {
-			flex: 1 1 0;
-			min-height: 0;
-			margin-top: 0.875rem;
 		}
 		.music-slot :global(.music-dock) {
 			justify-content: flex-end;
@@ -1135,8 +1120,7 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 			--zoom: 1.33;
 		}
 		.board,
-		.wall-tools,
-		.market-slot {
+		.wall-tools {
 			zoom: 1.33;
 		}
 	}
@@ -1145,22 +1129,14 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 			--zoom: 2;
 		}
 		.board,
-		.wall-tools,
-		.market-slot {
+		.wall-tools {
 			zoom: 2;
 		}
 	}
-	/* A short screen (720p): the rail trims its spacing so the cards keep their room. */
+	/* A short screen (720p): the rail trims its spacing so the panels keep their room. */
 	@media (min-width: 1024px) and (max-height: 940px) {
 		.updated {
 			display: none;
-		}
-		.gallery-slot :global(.frame) {
-			aspect-ratio: 3.4 / 1;
-		}
-		.gallery-slot :global(.title) {
-			-webkit-line-clamp: 1;
-			line-clamp: 1;
 		}
 		.date {
 			font-size: 1.25rem;
@@ -1169,9 +1145,29 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 		.updated {
 			margin-top: 0.25rem;
 		}
-		.gallery-slot,
-		.widgets-slot {
+		.board-right :global(.right-zone) {
+			margin-top: 0.75rem;
+		}
+		/* The headline gives the problems their room: smaller type, tighter spacing. */
+		.board {
+			padding-top: 2.25rem;
+		}
+		.headline {
+			font-size: clamp(3rem, 4vw, 4rem);
+		}
+		.status-mark {
+			width: clamp(3rem, 3.6vw, 4rem);
+		}
+		.sentence {
+			font-size: 1.25rem;
+			margin-top: 0.5rem;
+		}
+		.plates {
 			margin-top: 0.625rem;
+			gap: 0.375rem;
+		}
+		.board-list {
+			margin-top: 1.25rem;
 		}
 	}
 
@@ -1226,11 +1222,15 @@ import { marketItems, widgetCards } from '#lib/wall/widgets.js';
 	}
 	@media (prefers-reduced-motion: reduce) {
 		.wall-stage,
-		.refresh span,
 		.wall :global(.music-toggle),
 		.wall :global(.theme-toggle) {
 			transition: none;
 		}
+	}
+
+	/* A prop of the scene that would sit under the board's words, or past the screen's edge. */
+	.wall :global([data-wall-prop-off]) {
+		visibility: hidden;
 	}
 
 	/* Optional night dimming on OLED: a plain black veil, opacity only. */

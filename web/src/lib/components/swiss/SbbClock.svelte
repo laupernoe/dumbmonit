@@ -49,6 +49,7 @@
 	const HOUR_BARS = Array.from({ length: 12 }, (_, i) => i);
 </script>
 
+<g data-wall-prop>
 {#if ground != null}
 	<rect x={x - r * 0.06} y={y} width={r * 0.12} height={Math.max(0, ground - y)} fill="#3d424b" />
 {/if}
@@ -80,4 +81,5 @@
 		<circle cy="-66" r="10" fill="var(--sbb-red, #eb0000)" />
 	</g>
 	<circle r="5" fill="var(--sbb-red, #eb0000)" />
+</g>
 </g>
