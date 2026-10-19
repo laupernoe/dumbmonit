@@ -110,6 +110,24 @@ test('seed: host becomes the address, known options become tags, the rest is ign
 	assert.deepEqual(seed.tags, { tls: 'true', realm: 'pam' });
 });
 
+test('seed: the server shape { address, name, tags } fills the form; nested tags win over flat keys', () => {
+	const collector = { default_port: 443, options: [{ key: 'insecure_tls' }, { key: 'scheme' }] };
+	const prefill = cleanPrefill({
+		address: 'https://10.0.0.7:8443/ui',
+		name: 'nas.lan',
+		tags: { port: '8443', insecure_tls: 'true', scheme: 'https', password: 'no', deep: { a: 1 } }
+	});
+	assert.deepEqual(prefill.tags, { port: '8443', insecure_tls: 'true', scheme: 'https' });
+	const seed = seedFromPrefill(prefill, collector);
+	assert.equal(seed.address, 'https://10.0.0.7:8443/ui');
+	assert.equal(seed.name, 'nas.lan');
+	assert.deepEqual(seed.tags, { port: '8443', insecure_tls: 'true', scheme: 'https' });
+	assert.equal(seedFromPrefill({ port: 1, tags: { port: '2' } }, { default_port: 9, options: [] }).tags.port, '2');
+	// The shape survives the URL round trip.
+	const params = new URL(addUrl('x', prefill), 'http://x').searchParams;
+	assert.deepEqual(readPrefill(params), prefill);
+});
+
 test('seed: a non-default port is kept; a kind with a scheme option gets http(s) from tls', () => {
 	const seed = seedFromPrefill({ host: 'h', port: 9000, tls: false }, { default_port: 80, options: [{ key: 'scheme' }] });
 	assert.deepEqual(seed.tags, { port: '9000', scheme: 'http' });

@@ -12,7 +12,15 @@ const ROUTING_TAGS = ['port', 'scheme', 'tls', 'insecure_tls', 'path', 'base_pat
 const ADDRESS_KEYS = ['address', 'host', 'hostname', 'ip'];
 const SECRETISH = /pass|secret|token|key|credential|community/i;
 
-export type Prefill = Record<string, string | number | boolean>;
+type Scalar = string | number | boolean;
+/**
+ * The server's shape is `{ address, name, tags: { port, scheme, insecure_tls… } }`;
+ * flat keys (`host`, `port`, `tls`…) are accepted too.
+ */
+export type Prefill = Record<string, Scalar | Record<string, Scalar>>;
+
+const isScalar = (value: unknown): value is Scalar =>
+	typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
 
 /** Keeps the scalar, non-secret entries of a server-provided object. */
 export function cleanPrefill(raw: unknown): Prefill {
@@ -20,7 +28,12 @@ export function cleanPrefill(raw: unknown): Prefill {
 	if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
 	for (const [key, value] of Object.entries(raw)) {
 		if (SECRETISH.test(key)) continue;
-		if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') out[key] = value;
+		if (isScalar(value)) out[key] = value;
+		else if (key === 'tags' && value && typeof value === 'object' && !Array.isArray(value)) {
+			const tags: Record<string, Scalar> = {};
+			for (const [tag, v] of Object.entries(value)) if (isScalar(v) && !SECRETISH.test(tag)) tags[tag] = v;
+			if (Object.keys(tags).length > 0) out.tags = tags;
+		}
 	}
 	return out;
 }
@@ -63,22 +76,26 @@ export function seedFromPrefill(
 	const seed: FormSeed = { name: '', address: '', tags: {} };
 	if (!prefill) return seed;
 	const optionKeys = new Set(collector.options.map((o) => o.key));
+	// Nested `tags` win over flat keys of the same name.
+	const { tags: nested, ...flat } = prefill;
+	const fields: Record<string, Scalar> = { ...(flat as Record<string, Scalar>) };
+	if (nested && typeof nested === 'object') Object.assign(fields, nested);
 	for (const key of ADDRESS_KEYS) {
-		if (key in prefill) {
-			seed.address = String(prefill[key]).trim();
+		if (key in fields) {
+			seed.address = String(fields[key]).trim();
 			break;
 		}
 	}
-	if (typeof prefill.name === 'string') seed.name = prefill.name.trim();
-	for (const [key, value] of Object.entries(prefill)) {
+	if (typeof fields.name === 'string') seed.name = fields.name.trim();
+	for (const [key, value] of Object.entries(fields)) {
 		if (key === 'name' || ADDRESS_KEYS.includes(key)) continue;
 		if (!optionKeys.has(key) && !ROUTING_TAGS.includes(key)) continue;
 		if (key === 'port' && Number(value) === collector.default_port && !optionKeys.has('port')) continue;
 		seed.tags[key] = String(value);
 	}
 	// A kind that picks http/https through `scheme` rather than a `tls` flag.
-	if ('tls' in prefill && !optionKeys.has('tls') && optionKeys.has('scheme') && !('scheme' in prefill)) {
-		seed.tags.scheme = prefill.tls === true || prefill.tls === 'true' ? 'https' : 'http';
+	if ('tls' in fields && !optionKeys.has('tls') && optionKeys.has('scheme') && !('scheme' in fields)) {
+		seed.tags.scheme = fields.tls === true || fields.tls === 'true' ? 'https' : 'http';
 		delete seed.tags.tls;
 	}
 	return seed;
