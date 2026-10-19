@@ -6753,6 +6753,36 @@
 	"whatsnew_dialog_ok": "Compris",
 	"whatsnew_dialog_title": "Nouveautés de la v{version}",
 	"whatsnew_dialog_updated": "Mis à jour · {date}",
+	"worldmap_cluster_label": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} emplacement proche : {members}",
+				"countPlural=other": "{count} emplacements proches : {members}"
+			}
+		}
+	],
+	"worldmap_cluster_name": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} emplacement",
+				"countPlural=other": "{count} emplacements"
+			}
+		}
+	],
 	"worldmap_detail_back": "Retour à tous les emplacements",
 	"worldmap_detail_empty": "Aucun moniteur à cet emplacement pour l'instant.",
 	"worldmap_edit_locations": "Modifier les emplacements",

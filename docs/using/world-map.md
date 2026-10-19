@@ -17,6 +17,8 @@ A pin tells its state three ways, never by colour alone:
 The figure on the pin is the number of monitors, or *problems / total* when
 something is wrong (`2/5`).
 
+Locations too close to tell apart at the current zoom are drawn as one **group pin**: a double ring, the number of locations, and the state of the worst of them (glyph and colour). Click it to zoom in until it comes apart; when it cannot (same spot, deepest zoom), it lists its locations. Groups are recomputed at each zoom.
+
 ## Locations
 
 Locations are set in **Settings → Monitoring → Locations** (administrators). A

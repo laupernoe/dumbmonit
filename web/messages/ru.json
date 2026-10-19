@@ -6911,6 +6911,40 @@
 	"whatsnew_dialog_ok": "Понятно",
 	"whatsnew_dialog_title": "Что нового в v{version}",
 	"whatsnew_dialog_updated": "Обновлено · {date}",
+	"worldmap_cluster_label": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} близкая площадка: {members}",
+				"countPlural=few": "{count} близкие площадки: {members}",
+				"countPlural=many": "{count} близких площадок: {members}",
+				"countPlural=other": "{count} близкой площадки: {members}"
+			}
+		}
+	],
+	"worldmap_cluster_name": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} площадка",
+				"countPlural=few": "{count} площадки",
+				"countPlural=many": "{count} площадок",
+				"countPlural=other": "{count} площадки"
+			}
+		}
+	],
 	"worldmap_detail_back": "Назад ко всем площадкам",
 	"worldmap_detail_empty": "На этой площадке пока нет мониторов.",
 	"worldmap_edit_locations": "Изменить площадки",
