@@ -8,6 +8,8 @@ demandiez à l'afficher quand même (« Tous les systèmes sont opérationnels �
 Trois façons de l'ajouter, de la plus simple à la plus contrôlée. Des fichiers
 prêts à copier se trouvent dans le dossier `integrations/` du dépôt.
 
+Dans DumbMonit, ouvrez les réglages de la page d'état (Pages d'état, Modifier) : la section **Bandeau d'état pour votre site web**, tout en bas, propose les extraits HTML et PHP déjà remplis avec un bouton Copier, un lien vers cette page et un bouton pour télécharger le plugin WordPress en `.zip`, prêt à téléverser.
+
 ## Extrait HTML
 
 Collez ceci avant `</body>`, avec l'adresse de votre serveur et celle de la page :

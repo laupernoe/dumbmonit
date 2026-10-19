@@ -1,6 +1,6 @@
 # DumbMonit {#dumbmonit}
 
-Monitorização simples, do homelab à pequena empresa. Um contentor, um endereço IP
+Monitorização simples, do homelab à média empresa. Um contentor, um endereço IP
 para escrever, gráficos úteis e alertas em menos de um minuto.
 
 !!! warning "Trabalho em curso"

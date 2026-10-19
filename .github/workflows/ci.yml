@@ -1,5 +1,16 @@
 name: CI
 
+# Pull requests only run the checks that the change can break (see `changes`):
+# a web-only PR does not compile Rust, a Rust-only PR does not wait for the web
+# checks. The three required checks (`Rust`, `Web UI`, `Licences and advisories`,
+# see the repository rulesets) always run and always report a status: when the
+# change does not concern them their steps are skipped and the job succeeds.
+# They never skip the job itself, so a failure of `changes` fails them too.
+# Pushes to dev and main run everything.
+#
+# The Docker image build left this workflow: upgrade.yml builds both images on
+# every push to dev and main (and release.yml pushes them), never on PRs.
+
 on:
   push:
     branches: [main, dev]
@@ -17,35 +28,95 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # paths-filter lists the files of the PR through the API.
+      pull-requests: read
+    outputs:
+      rust: ${{ github.event_name != 'pull_request' || steps.filter.outputs.rust == 'true' }}
+      web: ${{ github.event_name != 'pull_request' || steps.filter.outputs.web == 'true' }}
+      deps: ${{ github.event_name != 'pull_request' || steps.filter.outputs.deps == 'true' }}
+    steps:
+      - id: filter
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        with:
+          filters: |
+            rust:
+              - "crates/**"
+              - "Cargo.toml"
+              - "Cargo.lock"
+              - "profiles/**"
+              - "rustfmt.toml"
+              - ".github/workflows/ci.yml"
+            web:
+              - "web/**"
+              - ".github/workflows/ci.yml"
+            deps:
+              - "Cargo.lock"
+              - "**/Cargo.toml"
+              - "deny.toml"
+              - "web/package-lock.json"
+              - ".github/workflows/ci.yml"
+
   rust:
     name: Rust
+    needs: changes
+    # Runs even when `changes` failed, to fail rather than be skipped (a
+    # skipped required check counts as passed).
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    env:
+      RUN: ${{ needs.changes.outputs.rust }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - name: Changed paths known
+        if: needs.changes.result != 'success'
+        run: exit 1
+      - name: Nothing to check
+        if: env.RUN != 'true'
+        run: echo "No Rust change in this pull request." >> "$GITHUB_STEP_SUMMARY"
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # The server embeds web/build at compile time (rust_embed): without it
       # the crate does not compile at all. Build the real interface rather than
       # a placeholder, so the tests that serve pages see what users get.
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - if: env.RUN == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - run: npm ci && npm run build
+      - if: env.RUN == 'true'
+        run: npm ci && npm run build
         working-directory: web
-      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+      - if: env.RUN == 'true'
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
-      - run: cargo fmt --all --check
-      - run: cargo clippy --all-targets --all-features -- -D warnings
-      - run: cargo test --all-features
+      # Saved on pushes to dev and main only: a PR reads the cache of its base
+      # branch (and of main), its own would only evict theirs from the 10 GB the
+      # repository gets. main always has a warm one for the dev -> main PR.
+      - if: env.RUN == 'true'
+        uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          save-if: ${{ github.event_name == 'push' }}
+      - if: env.RUN == 'true'
+        run: cargo fmt --all --check
+      - if: env.RUN == 'true'
+        run: cargo clippy --all-targets --all-features -- -D warnings
+      - if: env.RUN == 'true'
+        run: cargo test --all-features
 
-  # Test coverage of the Rust workspace, on pushes to main and dev only: the percentage goes to
-  # the job summary, the lcov report to a workflow artifact. No third-party
-  # service sees the code.
+  # Test coverage of the Rust workspace, on pushes to dev only (main receives
+  # the same code through a PR, and its cache stays for the release): the
+  # percentage goes to the job summary, the lcov report to a workflow artifact.
+  # No third-party service sees the code.
   coverage:
     name: Coverage
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -59,7 +130,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
         with:
           components: llvm-tools-preview
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       - uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
         with:
           tool: cargo-llvm-cov@0.9.1
@@ -97,62 +168,69 @@ jobs:
 
   licences:
     name: Licences and advisories
+    needs: changes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    env:
+      RUN: ${{ needs.changes.outputs.deps }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
-      - uses: taiki-e/install-action@5d880190e41a7608c29a5c91c6b5d24561d53850 # cargo-deny
+      - name: Changed paths known
+        if: needs.changes.result != 'success'
+        run: exit 1
+      # New advisories are still caught: every push to dev and main runs it.
+      - name: Nothing to check
+        if: env.RUN != 'true'
+        run: echo "No dependency change in this pull request." >> "$GITHUB_STEP_SUMMARY"
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: env.RUN == 'true'
+        uses: dtolnay/rust-toolchain@89b12181fb390509a0842a86cc55eeb8eb928c1d # stable
+      - if: env.RUN == 'true'
+        uses: taiki-e/install-action@5d880190e41a7608c29a5c91c6b5d24561d53850 # cargo-deny
       # Enforces the "100 % open source" promise: a dependency under a licence
       # that is not in deny.toml fails the build instead of being discovered
       # after publication.
-      - run: cargo deny check licenses bans
+      - if: env.RUN == 'true'
+        run: cargo deny check licenses bans
       # RustSec advisories: a vulnerable dependency fails the build until it is
       # updated or explicitly ignored in deny.toml with a reason.
-      - run: cargo deny check advisories
+      - if: env.RUN == 'true'
+        run: cargo deny check advisories
 
   web:
     name: Web UI
+    needs: changes
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
+    env:
+      RUN: ${{ needs.changes.outputs.web }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+      - name: Changed paths known
+        if: needs.changes.result != 'success'
+        run: exit 1
+      - name: Nothing to check
+        if: env.RUN != 'true'
+        run: echo "No web change in this pull request." >> "$GITHUB_STEP_SUMMARY"
+      - if: env.RUN == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - if: env.RUN == 'true'
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - run: npm ci
-      - run: npm run check
-      - run: npm test
-      - run: npm run build
-
-  image:
-    timeout-minutes: 60
-    name: Docker image (build only)
-    runs-on: ubuntu-latest
-    needs: [rust, web]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4
-      # Same Dockerfile as release.yml, never pushed: this only proves the
-      # build still works. amd64 only: arm64 runs under QEMU and takes hours;
-      # release.yml builds both architectures when publishing.
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          platforms: linux/amd64
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      # The agent image (ghcr.io/laupernoe/dumbmonit-agent) is a second target of
-      # the same Dockerfile; it reuses the layers just built.
-      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          target: agent-image
-          platforms: linux/amd64
-          push: false
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - if: env.RUN == 'true'
+        working-directory: web
+        run: npm ci
+      - if: env.RUN == 'true'
+        working-directory: web
+        run: npm run i18n:check
+      - if: env.RUN == 'true'
+        working-directory: web
+        run: npm run check
+      - if: env.RUN == 'true'
+        working-directory: web
+        run: npm test
+      - if: env.RUN == 'true'
+        working-directory: web
+        run: npm run build

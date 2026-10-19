@@ -1,0 +1,94 @@
+name: Sign past releases
+
+# Run by hand only. Adds a Sigstore keyless signature (`<file>.sigstore.json`)
+# to every file of existing GitHub releases that has none yet: releases
+# published before release.yml signed its binaries (0.1.0-alpha.N), and files
+# release.yml never signed (`provenance.json`). Files that already have a
+# `.sigstore.json` are left alone, so running it twice changes nothing.
+#
+# The signing identity is this workflow, not release.yml: such a signature
+# says "this file was on the release when sign-releases.yml ran", not "built
+# by release.yml from the tag". docs/install/verify.md gives both identities.
+# It never adds a build provenance: one made now would describe a build that
+# did not happen here.
+#
+# Each file is checked against its `.sha256` when the release has one, before
+# it is signed.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: Release tags to sign, separated by spaces
+        required: true
+        default: v0.11.0 v0.10.0 v0.9.1 v0.9.0 v0.1.0-alpha.8
+
+permissions:
+  contents: read
+
+# One run at a time: two runs would upload the same bundles concurrently.
+concurrency:
+  group: sign-releases
+  cancel-in-progress: false
+
+jobs:
+  sign:
+    name: Sign the release files
+    # Only from the repository's own long-lived branches: the identity in the
+    # certificate is `sign-releases.yml@refs/heads/<branch>`.
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      # Download the release files and attach the signatures.
+      contents: write
+      # Sigstore keyless signing (OIDC).
+      id-token: write
+    steps:
+      - uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+        with:
+          cosign-release: v3.1.3
+
+      - name: Sign and attach
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAGS: ${{ inputs.tags }}
+        run: |
+          set -eu
+          for tag in $TAGS; do
+            case "$tag" in
+              v[0-9]*) ;;
+              *) echo "::error::not a release tag: $tag"; exit 1 ;;
+            esac
+            echo "::group::$tag"
+            dir="work/$tag"
+            mkdir -p "$dir"
+            gh release view "$tag" --json assets --jq '.assets[].name' > "$dir.assets"
+            gh release download "$tag" --dir "$dir"
+            signed=0
+            (
+              cd "$dir"
+              for file in *; do
+                case "$file" in
+                  *.sha256|*.sigstore.json|*.sigstore|*.sig|*.pem|*.asc|*.minisig|*.intoto.jsonl) continue ;;
+                esac
+                if grep -qxF "$file.sigstore.json" "../$tag.assets"; then
+                  echo "already signed: $file"
+                  continue
+                fi
+                if [ -f "$file.sha256" ]; then
+                  sha256sum -c "$file.sha256"
+                fi
+                cosign sign-blob --yes --bundle "$file.sigstore.json" "$file"
+                echo "$file.sigstore.json" >> ../new-bundles
+              done
+            )
+            if [ -s "work/new-bundles" ]; then
+              signed=$(wc -l < work/new-bundles)
+              (cd "$dir" && xargs -r gh release upload "$tag" < ../new-bundles)
+              rm work/new-bundles
+            fi
+            echo "$tag: $signed new signature(s)" | tee -a "$GITHUB_STEP_SUMMARY"
+            echo "::endgroup::"
+          done

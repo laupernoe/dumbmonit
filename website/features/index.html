@@ -125,10 +125,10 @@
 				</div>
 				<ul class="points">
 					<li><strong>Dependencies</strong><p>Declare a switch as the parent of what sits behind it. When it goes down you get one notification, not thirty; the others read “Suppressed by parent”.</p></li>
-					<li><strong>Grouped by host</strong><p>A NAS whose array degrades sends one message per cycle, not one per disk. Reminders, escalation, acknowledgement, snooze, per-monitor ignore and clearing resolved history are all built in.</p></li>
+					<li><strong>Grouped by host</strong><p>A NAS whose array degrades sends one message per cycle, not one per disk. Reminders, escalation, acknowledgement, snooze, per-monitor ignore and clearing resolved history are all built in. A bell on each monitor counts its active alerts.</p></li>
 					<li><strong>Baselines that learn first</strong><p>Anomaly detection with no threshold to tune: 168 buckets, one per hour of the week. It stays silent for its first 14 days and only shows what it would have fired.</p></li>
 					<li><strong>Forecasts</strong><p>“This filesystem will be full within four days” is listed as a forecast, apart from what is broken right now.</p></li>
-					<li><strong>Maintenance and a notification policy</strong><p>One-off or weekly windows, hysteresis, flap hold, quiet hours, batching and an hourly cap, so a bad night does not become two hundred pushes.</p></li>
+					<li><strong>Maintenance, silences and a notification policy</strong><p>One-off or weekly windows, hysteresis, flap hold, quiet hours, batching and an hourly cap, so a bad night does not become two hundred pushes.</p></li>
 				</ul>
 				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/en/latest/alerting/">How alerting works</a></p>
 			</div>
@@ -253,7 +253,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<div class="section-head">
 			<h2>Wall mode</h2>
-			<p>The bulletin alone, full screen, for a room monitor: a living scene (Paris rooftop with the Eiffel Tower and the DumbMonit pigeons by default, or one of many others) whose weather follows your alerts, an OLED theme for a screen left on for days, and wall music &mdash; Spotify Connect turns the screen into a speaker.</p>
+			<p>The bulletin alone, full screen, for a room monitor: a living scene (Paris rooftop with the Eiffel Tower and the DumbMonit pigeons by default, or one of many others) whose weather follows your alerts, an OLED theme for a screen left on for days, and wall music &mdash; Spotify Connect turns the screen into a speaker. Optional widgets: weather, crypto prices, stock quotes, exchange rates, critical CVEs, RSS news with pictures, and Claude and OpenAI API usage.</p>
 		</div>
 		<figure>
 			<div class="shot">
@@ -300,7 +300,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p><a href="https://dumbmonit.readthedocs.io/en/latest/using/security-score/">Read more in the documentation</a></p>
 			</div>
 			<ul class="points">
-				<li><strong>Accounts</strong><p>Admin, operator (handles alerts, changes no configuration) and viewer roles, optional TOTP second factor, an audit log, and single sign-on over OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), account creation off by default.</p></li>
+				<li><strong>Accounts</strong><p>Admin, operator (handles alerts, changes no configuration) and viewer roles, optional TOTP second factor, an audit log, and single sign-on over OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), sign-in with LDAP or Active Directory, account creation off by default.</p></li>
 				<li><strong>Plays well with what you run</strong><p><code>/metrics</code>, <code>/federate</code> and a Prometheus-compatible endpoint let an existing Grafana read DumbMonit's data.</p></li>
 			</ul>
 		</div>

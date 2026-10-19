@@ -8,6 +8,8 @@ everything is fine the banner stays hidden, unless you ask for it to be shown
 Three ways to add it, from simplest to most controlled. Ready-to-copy files are
 in the `integrations/` folder of the repository.
 
+In DumbMonit, open the status page's settings (Status pages, Edit): the **Status banner for your website** section at the very bottom has the ready-filled HTML and PHP snippets with a Copy button, a link to this page, and a button to download the WordPress plugin as a `.zip` ready to upload.
+
 ## HTML snippet
 
 Paste this before `</body>`, with your server address and the page's address:
