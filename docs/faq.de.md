@@ -96,8 +96,8 @@ Warning. Siehe [Schweregrade](alerting/index.md#severities).
 
 ## Ein Alarm ist "Suppressed by parent"
 
-Der Monitor hat einen übergeordneten Monitor, der nicht erreichbar ist,
-daher werden seine eigenen Alarme zurückgehalten statt gesendet.
+Der Monitor hat einen übergeordneten Monitor, der ausgefallen ist (nicht erreichbar oder mit fehlschlagender
+Verfügbarkeitsprüfung), daher werden seine eigenen Alarme zurückgehalten statt gesendet.
 Beheben Sie den übergeordneten Monitor; die Alarme des Kindes lösen sich
 oder feuern danach von selbst, ohne eine zweite Benachrichtigung.
 Siehe [Abhängigkeitsunterdrückung](alerting/index.md#dependency-suppression).

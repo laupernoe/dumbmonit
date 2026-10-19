@@ -86,8 +86,8 @@ displays them with the weather bulletin's words: Info, Advisory, Warning. See
 
 ## An alert is "Suppressed by parent"
 
-The monitor has a parent monitor that is unreachable, so its own alerts are held
-back rather than sent. Fix the parent; the child's alerts resolve or fire on
+The monitor has a parent monitor that is down (unreachable, or its availability
+check is failing), so its own alerts are held back rather than sent. Fix the parent; the child's alerts resolve or fire on
 their own afterwards without a second notification. See
 [Dependency suppression](alerting/index.md#dependency-suppression).
 

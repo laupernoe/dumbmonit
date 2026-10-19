@@ -18,6 +18,13 @@ pub type TargetId = i64;
 /// suppression par dépendance.
 pub const RULE_HOST_DOWN: &str = "host_down";
 
+/// `uid` de la règle « service en panne » : une sonde de disponibilité (ping,
+/// HTTP, TCP, DNS…) qui tourne mais échoue (`probe_success = 0`).
+///
+/// La cible écrit encore des points, `host_down` ne part donc jamais pour elle ;
+/// elle n'en est pas moins indisponible, et ses descendants avec elle.
+pub const RULE_SERVICE_DOWN: &str = "service_down";
+
 /// Étiquettes candidates pour rattacher une série à une cible, par ordre de
 /// confiance décroissante.
 ///
@@ -270,6 +277,20 @@ impl Rule {
     pub fn is_host_down(&self) -> bool {
         self.uid == RULE_HOST_DOWN
     }
+
+    /// La règle dit « cette cible est indisponible », quelle qu'en soit la
+    /// cause : plus aucune mesure (`host_down`) ou sonde de disponibilité en
+    /// échec (`service_down`, un ping à 100 % de perte compris).
+    ///
+    /// C'est ce qui fait d'un parent la cause racine de la panne de ses
+    /// descendants. Un simple avertissement (disque plein, processeur, service
+    /// lent, certificat) n'en fait pas partie : l'équipement répond, ce qui est
+    /// derrière lui aussi. Les règles des collecteurs qui parlent d'un composant
+    /// interne (« Proxmox service down », un membre MongoDB injoignable…) n'en
+    /// font pas partie non plus : la cible elle-même reste joignable.
+    pub fn means_target_down(&self) -> bool {
+        self.uid == RULE_HOST_DOWN || self.uid == RULE_SERVICE_DOWN
+    }
 }
 
 /// Vue minimale d'une cible, suffisante pour l'alerting.
@@ -303,6 +324,13 @@ pub struct TargetNode {
     /// équipements ne répondent plus, sans attendre que sa propre alerte parte.
     #[serde(default)]
     pub unreachable: bool,
+    /// Le dernier résultat de sonde enregistré dit « Service down » : la sonde de
+    /// disponibilité a tourné et échoué. Comme `unreachable`, ce verdict tombe
+    /// avant l'alerte `service_down` (qui attend sa durée de confirmation) et
+    /// suffit pour masquer les descendants ; contrairement à lui, il n'étouffe pas
+    /// les autres alertes de la cible elle-même.
+    #[serde(default)]
+    pub service_down: bool,
 }
 
 /// Empreinte stable d'une alerte : règle + série.
@@ -400,6 +428,7 @@ mod tests {
             tags: tags.iter().map(|(k, v)| ((*k).to_string(), (*v).to_string())).collect(),
             enabled: true,
             unreachable: false,
+            service_down: false,
         }
     }
 

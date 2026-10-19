@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **A parent that is down hides its children, whatever the cause.** Dependency
+  suppression used to start only when the parent was unreachable (no
+  measurement, or a probe timeout). A parent whose availability check fails —
+  a switch watched by ping with 100 % loss, a failing HTTP check — now hides
+  its descendants too: one *Service down* alert, the children shown as
+  *Suppressed by parent*. A plain warning on the parent (disk, CPU) still hides
+  nothing. The history reason now reads `suppressed: device N down`.
+
 ### Security
 
 - Updated `rustls` to 0.23.46 in the fuzzing workspace lockfile

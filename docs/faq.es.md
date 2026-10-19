@@ -92,7 +92,8 @@ Advisory, Warning. Consulta
 
 ## Una alerta está «Suppressed by parent» {#an-alert-is-suppressed-by-parent}
 
-El monitor tiene un monitor padre que es inaccesible, así que sus
+El monitor tiene un monitor padre que está caído (inaccesible, o con su comprobación de
+disponibilidad fallando), así que sus
 propias alertas se retienen en lugar de enviarse. Arregla el padre; las
 alertas del hijo se resuelven o se activan por su cuenta después, sin una
 segunda notificación. Consulta [Supresión por
