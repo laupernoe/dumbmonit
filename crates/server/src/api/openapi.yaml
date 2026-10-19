@@ -215,6 +215,7 @@ paths:
             application/zip:
               schema: { type: string, format: binary }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/integrations/banner.php:
     get:
@@ -233,6 +234,7 @@ paths:
             text/x-php:
               schema: { type: string }
         "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/update:
     get:
