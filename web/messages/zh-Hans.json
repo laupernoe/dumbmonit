@@ -820,6 +820,9 @@
 	"deviceform_form_folder_placeholder": "无文件夹",
 	"deviceform_form_interval_help": "DumbMonit 读取此监控项的频率。",
 	"deviceform_form_interval_label": "检查间隔",
+	"deviceform_form_location_auto": "自动（根据站点）",
+	"deviceform_form_location_help": "在世界地图上的位置。自动：根据其站点或主站点。",
+	"deviceform_form_location_label": "位置",
 	"deviceform_form_more_options": "更多选项",
 	"deviceform_form_more_settings": "更多 {label} 设置",
 	"deviceform_form_name_help": "在列表和告警中显示的名称。",
@@ -1412,6 +1415,8 @@
 	"devices_list_bulk_enable": "启用",
 	"devices_list_bulk_folder_apply": "移动",
 	"devices_list_bulk_folder_placeholder": "新文件夹名称",
+	"devices_list_bulk_location": "放置到",
+	"devices_list_bulk_location_auto": "自动（根据站点）",
 	"devices_list_bulk_move": "移至文件夹",
 	"devices_list_bulk_no_folder": "无文件夹",
 	"devices_list_bulk_partial_names": "失败：{names}",
@@ -3402,6 +3407,58 @@
 	"kinds_label_webchange": "网站更改",
 	"kinds_label_website": "网站健康与 SEO",
 	"kinds_label_websocket": "WebSocket 端点",
+	"locations_add": "添加位置",
+	"locations_address": "地址",
+	"locations_address_help": "自由文本，显示在地图上。可选。",
+	"locations_badge_main": "主站点",
+	"locations_badge_site": "站点 {site}",
+	"locations_basemap_attribution": "署名",
+	"locations_basemap_attribution_help": "按瓦片许可要求显示在地图角落。",
+	"locations_basemap_custom": "自有瓦片服务器",
+	"locations_basemap_custom_hint": "任何单一主机上的 {z}/{x}/{y} 瓦片地址（自建服务器，或地址中带密钥的服务商），并附上署名。",
+	"locations_basemap_offline": "内置轮廓（离线）",
+	"locations_basemap_offline_hint": "DumbMonit 自带的 Natural Earth 国家轮廓：地图不连接任何服务器。默认选项。",
+	"locations_basemap_osm": "OpenStreetMap 瓦片",
+	"locations_basemap_osm_hint": "街道和城镇。每个打开地图的浏览器都会从 tile.openstreetmap.org 加载瓦片（按其使用政策要求，会发送您实例的地址作为来源）；显示“© OpenStreetMap contributors”。适合偶尔使用，不适合整天在多块屏幕上打开的大屏。",
+	"locations_basemap_save": "保存底图",
+	"locations_basemap_saved": "已保存。",
+	"locations_basemap_title": "地图底图",
+	"locations_basemap_url": "瓦片地址",
+	"locations_basemap_url_help": "包含 {z}、{x} 和 {y}；单一主机，不含 {s}。",
+	"locations_cancel": "取消",
+	"locations_delete": "删除",
+	"locations_delete_confirm": "删除？其监控会保留。",
+	"locations_description": "监控所在的位置，用于世界地图（地图 → 世界）。",
+	"locations_edit": "编辑",
+	"locations_edit_named": "编辑 {name}",
+	"locations_edit_title": "编辑 {name}",
+	"locations_err_basemap": "底图未保存",
+	"locations_err_delete": "位置未删除",
+	"locations_err_load": "无法加载位置",
+	"locations_err_name": "请为位置命名。",
+	"locations_err_save": "位置未保存",
+	"locations_err_spot": "请选择位置：搜索到的地点、坐标（纬度 −90 至 90，经度 −180 至 180）或在地图上点击。",
+	"locations_latitude": "纬度",
+	"locations_longitude": "经度",
+	"locations_main": "主站点",
+	"locations_main_help": "汇集所有没有远程站点的监控。最多一个位置。",
+	"locations_name": "名称",
+	"locations_new_title": "新位置",
+	"locations_none": "还没有位置。添加一个：对应拓扑站点的位置或主站点会自动汇集其监控。",
+	"locations_none_found": "没有该名称的地点。",
+	"locations_pick_help": "或在地图上点击该位置所在处。",
+	"locations_pick_here": "已选位置",
+	"locations_pick_label": "用于选择位置的地图",
+	"locations_save": "保存位置",
+	"locations_search": "查找地点",
+	"locations_search_find": "查找",
+	"locations_search_help": "城市或村镇。服务器会查询 Open-Meteo 地理编码；也可以输入坐标或点击地图。",
+	"locations_searching": "正在查找…",
+	"locations_site": "对应站点",
+	"locations_site_help": "该拓扑站点（site 标签、代理或中继）的每个监控都会落在这里，除非手动放到别处。",
+	"locations_site_none": "无",
+	"locations_title": "位置",
+	"locations_use_place": "使用 {place}",
 	"metrics_title_website_blank": "空白页面",
 	"metrics_title_website_canonical_changed": "规范链接已更改",
 	"metrics_title_website_description_changed": "描述已更改",
@@ -5379,6 +5436,7 @@
 	"settings_search_kw_assistant": "api 令牌 mcp ai 助手 claude chatgpt",
 	"settings_search_kw_backup": "备份 导出 恢复 配置",
 	"settings_search_kw_incidents": "事件 公告 维护 故障 公开",
+	"settings_search_kw_locations": "世界地图 站点 地点 坐标 openstreetmap 瓦片",
 	"settings_search_kw_music": "音乐 spotify 音箱 墙屏",
 	"settings_search_kw_news": "新闻 标题 rss 订阅 墙屏",
 	"settings_search_kw_notifications": "渠道 discord 邮件 ntfy telegram 免打扰 状态页",
@@ -6557,5 +6615,52 @@
 	"whatsnew_dialog_notes": "完整发行说明",
 	"whatsnew_dialog_ok": "知道了",
 	"whatsnew_dialog_title": "v{version} 新功能",
-	"whatsnew_dialog_updated": "更新于 · {date}"
+	"whatsnew_dialog_updated": "更新于 · {date}",
+	"worldmap_detail_back": "返回所有位置",
+	"worldmap_detail_empty": "此位置还没有监控。",
+	"worldmap_edit_locations": "编辑位置",
+	"worldmap_empty_action": "添加位置",
+	"worldmap_empty_body": "在 设置 → 监控 → 位置 中添加站点：每个站点都会成为一个显示其监控状态的标记。",
+	"worldmap_empty_title": "还没有位置",
+	"worldmap_err_load": "无法加载位置",
+	"worldmap_list_title": "位置",
+	"worldmap_map_failed": "地图无法加载。请刷新页面重试。",
+	"worldmap_map_label": "位置世界地图",
+	"worldmap_monitors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个监控"
+			}
+		}
+	],
+	"worldmap_pin_label": "{name}：{verdict}，{monitors}",
+	"worldmap_source_main": "主站点",
+	"worldmap_source_site": "通过站点 {site}",
+	"worldmap_unplaced": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个监控没有位置。"
+			}
+		}
+	],
+	"worldmap_verdict_down": "宕机",
+	"worldmap_verdict_empty": "无监控",
+	"worldmap_verdict_idle": "未探测",
+	"worldmap_verdict_ok": "全部正常",
+	"worldmap_verdict_warn": "需要检查",
+	"worldmap_view_world": "世界"
 }

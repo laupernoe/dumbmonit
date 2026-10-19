@@ -7,6 +7,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **World map of locations.** Map → **World** shows one pin per location with
+  the state of its monitors (colour, glyph and figure, never colour alone) and
+  the same locations listed worst first; a click lists the location's monitors.
+  Locations are set in Settings → Monitoring → Locations: a name, an address,
+  and a spot found by a place search (Open-Meteo geocoding, asked by the
+  server), typed as coordinates or clicked on the map. A monitor is placed by
+  hand (its form, or **Place at** in the Select mode of the Monitors list), or
+  through its topology site when a location stands for that site, or at the
+  location marked *main site* when it has no remote site. The background is
+  built in by default (Natural Earth outlines, public domain): the map contacts
+  no server. OpenStreetMap tiles or your own tile server are an option, with
+  their attribution; only their host is added to the interface's `img-src`.
+  Map rendering by Leaflet (BSD-2-Clause). New routes under `/api/locations`;
+  monitors gain `location_id`.
 - **Website banner in the status page settings.** At the bottom of a status
   page's settings, a "Status banner for your website" section announces the
   banner for third-party sites, links to its documentation, offers the HTML and

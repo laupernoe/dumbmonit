@@ -64,7 +64,29 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         api_tokens: api_tokens(pool).await?,
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
+        locations: locations(pool).await?,
     })
+}
+
+async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {
+    let rows = sqlx::query(
+        "SELECT name, address, latitude, longitude, site, main_site FROM locations ORDER BY id",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des emplacements")?;
+    rows.iter()
+        .map(|row| {
+            Ok(BundleLocation {
+                name: row.try_get("name")?,
+                address: row.try_get("address")?,
+                latitude: row.try_get("latitude")?,
+                longitude: row.try_get("longitude")?,
+                site: row.try_get("site")?,
+                main_site: row.try_get::<i64, _>("main_site")? != 0,
+            })
+        })
+        .collect()
 }
 
 async fn packs(pool: &SqlitePool) -> Result<Vec<BundlePack>> {
@@ -110,7 +132,8 @@ async fn targets(
 ) -> Result<Vec<BundleTarget>> {
     let rows = sqlx::query(
         "SELECT id, name, address, kind, profile_id, parent_id, via_agent, interval_secs,
-                enabled, tags, credential_enc, group_name, position
+                enabled, tags, credential_enc, group_name, position,
+                (SELECT l.name FROM locations l WHERE l.id = targets.location_id) AS location
          FROM targets ORDER BY id",
     )
     .fetch_all(pool)
@@ -150,6 +173,7 @@ async fn targets(
             credential,
             group_name: row.try_get("group_name")?,
             position: row.try_get("position")?,
+            location: row.try_get("location")?,
         });
     }
     Ok(out)
