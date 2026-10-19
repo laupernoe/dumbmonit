@@ -126,7 +126,7 @@
 	const ink = $derived(level === 2 ? '#ff6b5e' : level === 1 ? '#ffb23d' : '#ffd84d');
 </script>
 
-<g class="board" transform="translate({x} {y})" style:--ink={ink}>
+<g class="board" data-wall-prop transform="translate({x} {y})" style:--ink={ink}>
 	{#if ground != null}
 		<g fill="#4a4f58">
 			<rect x={w * 0.14} y={height} width={cw * 0.35} height={Math.max(0, ground - y - height)} />

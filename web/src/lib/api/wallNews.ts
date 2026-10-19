@@ -1,6 +1,5 @@
 /**
- * News on the wall: the headline ticker (RSS/Atom feeds read by the server) and
- * the live video tile. Mirrors `crates/server/src/api/wall_news.rs` and its
+ * News on the wall: headlines of RSS/Atom feeds, read by the server. Mirrors `crates/server/src/api/wall_news.rs` and its
  * presets. Off by default.
  */
 import { request } from './client';
@@ -11,20 +10,10 @@ export interface NewsFeed {
 	label: string;
 }
 
-export type VideoPosition = 'right' | 'center';
-export type VideoSize = 'small' | 'medium' | 'large';
-
 /** `GET|PUT /api/wall/news/settings` (administrators). */
 export interface NewsSettings {
 	ticker: boolean;
-	/** Articles with their picture, in rotation on the wall (same feeds). */
-	gallery: boolean;
 	feeds: NewsFeed[];
-	video: boolean;
-	/** The link as pasted: YouTube, Dailymotion or Twitch. */
-	video_url: string;
-	video_position: VideoPosition;
-	video_size: VideoSize;
 }
 
 export interface NewsItem {
@@ -33,33 +22,20 @@ export interface NewsItem {
 	source: string;
 	/** UTC without suffix; null when the feed does not date the article. */
 	published: string | null;
-	/** The article's picture, relayed by the server (`/api/wall/news/image/<id>`); null without one. */
-	image: string | null;
-}
-
-export interface NewsVideo {
-	/** Always on a fixed https origin the CSP allows. Twitch needs `parent` added by the page. */
-	embed_url: string;
-	position: VideoPosition;
-	size: VideoSize;
 }
 
 /** `GET /api/wall/news`: what the wall polls every five minutes. */
 export interface WallNews {
 	ticker: boolean;
-	/** The picture carousel is on. */
-	gallery: boolean;
 	items: NewsItem[];
 	/** Feeds that did not answer, with why. */
 	problems: { feed: string; message: string }[];
-	video: NewsVideo | null;
 }
 
 export interface NewsCountry {
 	/** ISO 3166-1 alpha-2, or `INT` for international sources. */
 	code: string;
 	feeds: { label: string; url: string }[];
-	videos: { label: string; url: string }[];
 }
 
 export interface FeedTest {
@@ -71,12 +47,7 @@ export interface FeedTest {
 
 export const DEFAULT_NEWS_SETTINGS: NewsSettings = {
 	ticker: false,
-	gallery: false,
-	feeds: [],
-	video: false,
-	video_url: '',
-	video_position: 'right',
-	video_size: 'medium'
+	feeds: []
 };
 
 export function getWallNews(signal?: AbortSignal): Promise<WallNews> {

@@ -11,46 +11,31 @@ für diese Anzeige, ohne Ihre gespeicherte Präferenz zu berühren.
 ![Wall-Modus](../assets/screenshots/wall-light.png){ loading=lazy }
 
 Jedes Problem links trägt das Produktsymbol seines Monitors (dieselben Zeichen wie
-in den Monitorlisten). Die Liste wächst nie über ihren Platz hinaus: Auf einem
-kleinen Bildschirm oder bei vielen Problemen schrumpfen die großen Kacheln auf
-je eine Zeile und fassen sich dann zu *Und N weitere* zusammen, statt die
-darunterliegenden Monitore zu überdecken.
+in den Monitorlisten). Was ausgefallen ist, steht zuerst, dann Warnungen, dann
+was ein übergeordneter Monitor verdeckt, dann was stummgeschaltet oder quittiert
+ist; gleiche Probleme werden zu einer Zeile mit Zähler (*×5*) zusammengefasst.
+Die Liste wächst nie über ihren Platz hinaus: Auf einem kleinen Bildschirm oder
+bei vielen Problemen schrumpfen die großen Kacheln auf je eine Zeile, die
+verdeckten und stummgeschalteten werden in einer Zeile zusammengefasst, und erst
+dann faltet sich der Rest zu *N weitere Probleme*, statt die darunterliegenden
+Monitore zu überdecken. Die Tauben, die Uhr und die Tafeln der Szene weichen
+aus, sobald sie unter dem Text lägen.
 
 ## Nachrichten an der Wand
 
 Ein Admin kann der Wall unter **Settings → Wall-Nachrichten** **Schlagzeilen**
-und einen **Live-Kanal** hinzufügen. Beides ist standardmäßig aus.
+hinzufügen. Sie sind standardmäßig aus.
 
-- **Schlagzeilen-Ticker.** Ein Band am unteren Rand der Wall lässt die
-  neuesten Schlagzeilen durchlaufen, jeweils mit Quelle und Alter, und
-  aktualisiert sich alle fünf Minuten. Ist im System der Anzeige *reduzierte
-  Bewegung* aktiviert, gleitet nichts: Eine Schlagzeile nach der anderen blendet
-  ein und aus.
-- **Live-Video.** Ein stummer Live-Kanal in einer Kachel, in der rechten Spalte
-  unter der Uhr (oder in der Mitte der Szene), klein, mittel oder groß. Die
-  Kachel schrumpft auf den verbleibenden Platz; sie verdeckt nie den Status.
-- **Bilderkarussell.** Die neuesten Artikel derselben Feeds, die ein Bild
-  tragen, einer nach dem anderen in der rechten Spalte unter der Uhr, je acht Sekunden lang,
-  überblendend, mit Quelle, Alter und Schlagzeile über dem Bild. Bei *reduzierter
-  Bewegung* wechseln die Bilder ohne Überblendung.
+Die neuesten Schlagzeilen der gewählten Feeds, nur Text, jeweils mit Quelle,
+alle fünf Minuten aktualisiert. Sie stehen dort, wohin das Layout der Wall sie
+legt (standardmäßig die rechte Spalte, siehe [Layout](#layout)): so viele, wie
+passen, jeweils höchstens zwei Zeilen, unbewegt, ohne Scrollen und ohne Wechsel.
+In einer Leiste bleibt eine Schlagzeile auf einer Zeile.
 
 Der Server liest die Feeds, nicht der Browser (Browser können die Feeds anderer
 Sites nicht lesen). Er folgt höchstens drei Weiterleitungen, lehnt interne
 Adressen ab, gibt nach acht Sekunden oder 2 MB pro Feed auf und hält die Antwort
 fünf Minuten für alle Walls im Cache. Er liest RSS 2.0, RSS 1.0 (RDF) und Atom.
-
-Das Bild eines Artikels stammt aus dem Feed: das breiteste `media:content`-Bild,
-ein `media:thumbnail`, ein Bild-`enclosure` (BFM TV), ein Atom-
-`link rel="enclosure"` oder sonst das erste `<img>` im Inhalt des Artikels
-(Korben). Hat der Feed keines und ist das Karussell an, liest der Server einmal
-den Anfang der Artikelseite (höchstens 512 KB, derselbe Adresswächter) und
-nimmt ihr `og:image`; die Antwort wird gemerkt, eine Seite wird also nur einmal
-gelesen. Die Wall lädt nie ein Bild von der Nachrichtenseite: Der Server
-reicht es unter `/api/wall/news/image/<id>` weiter, nur für Artikel, die er
-veröffentlicht hat, höchstens 6 MB, und nur wenn die Datei wirklich ein PNG-,
-JPEG-, GIF-, WebP- oder AVIF-Bild ist (nie SVG). Adresse und Cookies der Anzeige
-bleiben zu Hause, und die Content Security Policy der Wall erlaubt weiterhin
-nur Bilder von DumbMonit selbst.
 
 ### Quellen wählen
 
@@ -61,43 +46,35 @@ Atom-Adresse unter **Eigenen Feed hinzufügen** ein und drücken Sie **Testen**:
 DumbMonit liest ihn wirklich und zeigt die neueste Schlagzeile, bevor Sie ihn
 hinzufügen.
 
-Für das Video wählen Sie einen der Kanäle des Landes oder **Anderer Link…** und
-fügen eine normale YouTube-, Dailymotion- oder Twitch-Adresse ein (ein Video,
-ein Live oder die `/live`-Seite eines YouTube-Kanals); DumbMonit wandelt sie in
-den einbettbaren Player um. Nur diese drei Player können gezeigt werden. Ein
-Live wird nur dann als Voreinstellung angeboten, wenn der Kanal einen stabilen
-offiziellen hat.
-
-| Land | Schlagzeilen | Live-Video |
-|---|---|---|
-| Frankreich | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
-| Schweiz | RTS Info, SRF News, Le Temps, NZZ | keine |
-| Belgien | RTBF, VRT NWS, La DH | keine |
-| Deutschland | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
-| Vereinigtes Königreich | BBC News, The Guardian | Sky News |
-| Vereinigte Staaten | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
-| Kanada | Radio-Canada, CBC News | CBC News |
-| Spanien | RTVE, 20minutos, El País, El Mundo | keine |
-| Italien | ANSA, RaiNews | keine |
-| Portugal | RTP Notícias, Público | keine |
-| Brasilien | G1, Folha de S.Paulo | CNN Brasil |
-| Russland | Interfax, Meduza, Kommersant | keine |
-| China | CGTN, South China Morning Post, Xinhua | CGTN |
-| International | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+| Land | Schlagzeilen |
+|---|---|
+| Frankreich | BFM TV, franceinfo, Le Monde, France 24 |
+| Schweiz | RTS Info, SRF News, Le Temps, NZZ |
+| Belgien | RTBF, VRT NWS, La DH |
+| Deutschland | Tagesschau, ZDFheute, Spiegel, Deutsche Welle |
+| Vereinigtes Königreich | BBC News, The Guardian |
+| Vereinigte Staaten | NPR, PBS NewsHour, CBS News, The New York Times |
+| Kanada | Radio-Canada, CBC News |
+| Spanien | RTVE, 20minutos, El País, El Mundo |
+| Italien | ANSA, RaiNews |
+| Portugal | RTP Notícias, Público |
+| Brasilien | G1, Folha de S.Paulo |
+| Russland | Interfax, Meduza, Kommersant |
+| China | CGTN, South China Morning Post, Xinhua |
+| International | Deutsche Welle, France 24, BBC News (world) |
 
 Der Feed von BFM TV ist `https://www.bfmtv.com/rss/news-24-7/`. Die Liste wurde
 bei ihrer Erstellung geprüft; eine Site kann ihren Feed jederzeit verschieben,
-und dann überspringt der Ticker ihn einfach. **Testen** Sie den Ersatz und
+und dann überspringt die Wall ihn einfach. **Testen** Sie den Ersatz und
 fügen Sie ihn als eigenen Feed hinzu.
 
-Die Content Security Policy der Wall erlaubt der Seite nur Player von YouTube
-(`youtube-nocookie.com`), Dailymotion, Twitch, Spotify und Deezer einzubetten.
+Die Bilder und die Live-Video-Kachel früherer Versionen wurden entfernt; eine
+Wall, die mit ihnen gespeichert wurde, zeigt sie einfach nicht mehr.
 
 ### API
 
 `GET /api/wall/news` (was die Walls abfragen), `GET|PUT /api/wall/news/settings`
-und `POST /api/wall/news/test` (Admin), `GET /api/wall/news/presets`,
-`GET /api/wall/news/image/{id}` (das Bild eines Artikels, weitergereicht).
+und `POST /api/wall/news/test` (Admin), `GET /api/wall/news/presets`.
 
 ## Widgets an der Wand
 
@@ -106,24 +83,43 @@ Ein Admin kann der Wall unter **Einstellungen → Wandanzeige → Wand-Widgets**
 die neuesten kritischen Schwachstellen. Jedes ist standardmäßig aus und wird
 einzeln eingeschaltet.
 
-Das **Wetter** bleibt schlicht: ein Symbol und die aktuelle Temperatur für
-einen Ort, direkt unter der Uhr. Keine Vorhersage, keine Details. Ein
-Screenreader liest den Ort, den Himmel und die Temperatur vor; beim Darüberfahren
-erscheinen dieselben Worte und die Quelle (Open-Meteo).
+Das **Wetter** bleibt schlicht: ein Symbol, die aktuelle Temperatur und der Ort.
+Keine Vorhersage, keine Details. Ein Screenreader liest den Ort, den Himmel und
+die Temperatur vor.
 
-Die anderen Widgets teilen sich eine Karte in der rechten Spalte, unter der
-Uhr: jeweils ein Widget, gehalten für die gewählte Zahl Sekunden (standardmäßig
-20), dann blendet das nächste ein. Lange Listen werden in Seiten zu fünf
-geteilt. Punkte unter der Karte zeigen, wo die Runde steht. Bei *reduzierter
-Bewegung* wechseln die Karten ohne Überblendung.
+Jedes eingeschaltete Widget wird **gleichzeitig** gezeigt, klein und unbewegt:
+nichts wechselt, nichts scrollt. Die Widgets sprechen leiser als die Monitore
+(kleinere Schrift, zweite Tintenfarbe): Die Probleme bleiben der Zweck der Wall.
+Wenn einer Zone der Platz ausgeht, zeigen ihre Widgets weniger, statt zu
+wechseln: zuerst die Kurzform (ohne Prozente, ohne Beschriftungen), dann weniger
+Einträge mit einem dezenten *+N* für den Rest.
+
+### Layout
+
+Unter **Einstellungen → Wandanzeige → Wand-Widgets → Layout** kommt jedes Widget
+(die Schlagzeilen eingeschlossen) in eine von vier Zonen, in der von Ihnen
+gewählten Reihenfolge:
+
+- **Obere Leiste**: eine dünne Zeile am oberen Rand der Wall;
+- **Untere Leiste**: eine dünne Zeile am unteren Rand, wie eine Statusleiste;
+- **Rechte Spalte**: leichte Karten unter der Uhr;
+- **Ausgeblendet**.
+
+Ändern Sie die Zone eines Widgets über sein Menü und seinen Platz in der Zone mit
+den Pfeilen nach oben und unten (auch per Tastatur). Standardmäßig stehen das
+Wetter, die Schlagzeilen und die Schwachstellen in der rechten Spalte, die Kurse
+und die KI-Nutzung in der unteren Leiste. Ein Widget zu platzieren schaltet es
+nicht ein: Ein ausgeschaltetes erscheint nirgends, und das Layout vermerkt es
+mit *Aus*. Das Layout wird auf dem Server gespeichert und gilt für jede Wall.
 
 Anstiege und Rückgänge tragen immer einen Pfeil und ein Vorzeichen (▲ +1,04 %,
-▼ −0,57 %), nicht nur eine Farbe. Jede Karte nennt dezent ihre Quelle und wie
-aktuell sie ist.
+▼ −0,57 %), nicht nur eine Farbe. Beim Darüberfahren nennt ein Widget seine
+Quelle; eine Karte in der rechten Spalte zeigt an, wenn ihre Daten veraltet
+sind.
 
 | Widget | Was es zeigt | Quelle | Schlüssel | Der Server fragt |
 |---|---|---|---|---|
-| Wetter | Ein Symbol und die aktuelle Temperatur für einen Ort, unter der Uhr | [Open-Meteo](https://open-meteo.com) (aktuelle Bedingungen und Geocoding) | keiner | alle 15 Min. |
+| Wetter | Ein Symbol und die aktuelle Temperatur für einen Ort | [Open-Meteo](https://open-meteo.com) (aktuelle Bedingungen und Geocoding) | keiner | alle 15 Min. |
 | Krypto | Preis und 24-Stunden-Änderung von bis zu zehn Coins, in der gewählten Währung | öffentliche API von [CoinGecko](https://www.coingecko.com) | keiner (optionaler kostenloser Demo-Schlüssel) | jede Minute, ein Aufruf |
 | Aktien | Letzter Kurs und Tagesänderung von bis zu zehn Symbolen | [Finnhub](https://finnhub.io) | **kostenloser Schlüssel erforderlich** | alle 5 Min., ein Aufruf pro Symbol |
 | Wechselkurse | Was eine Einheit (oder 100 einer kleinen Währung) in der Basiswährung kostet, und ihre Änderung seit dem Vortag | [Frankfurter](https://frankfurter.dev) (Referenzkurse der Zentralbank) | keiner | jede Stunde |
@@ -199,12 +195,15 @@ Einzelabonnements (Claude Pro und Max, ChatGPT Plus) haben **keine Nutzungs-API*
 
 ### API
 
-`GET /api/wall/widgets` (was die Walls jede Minute abfragen: ein Abschnitt pro
-eingeschaltetem Widget, mit `data`, `updated`, `error`, `needs_key`, `source`),
+`GET /api/wall/widgets` (was die Walls jede Minute abfragen: das `layout` und ein
+Abschnitt pro eingeschaltetem Widget, mit `data`, `updated`, `error`,
+`needs_key`, `source`),
 `GET|PUT /api/wall/widgets/settings` und `GET /api/wall/widgets/places?q=`
 (Admin), `GET /api/wall/widgets/catalog`. Bei `PUT` setzen `secrets.finnhub` und
 `secrets.coingecko` einen Schlüssel, ein leerer String löscht ihn, und weggelassen
-bleiben sie erhalten.
+bleiben sie erhalten; `layout` nimmt die Listen `top`, `bottom`, `right` und
+`hidden` (unbekannte IDs werden verworfen, fehlende kommen in ihre
+Standardzone).
 
 ## Musik an der Wand
 

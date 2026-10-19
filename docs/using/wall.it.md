@@ -11,48 +11,32 @@ toccare la tua preferenza salvata.
 ![Modalità Wall](../assets/screenshots/wall-light.png){ loading=lazy }
 
 Ogni problema a sinistra porta l'icona del prodotto del suo monitor (gli
-stessi simboli degli elenchi dei monitor). L'elenco non esce mai dal suo
-spazio: su uno schermo piccolo, o con molti problemi, i grandi riquadri si
-riducono a una riga ciascuno, poi si raccolgono in *E altri N*, invece di
-sovrapporsi ai monitor sottostanti.
+stessi simboli degli elenchi dei monitor). Ciò che è giù viene per primo, poi
+gli avvisi, poi ciò che un genitore maschera, poi ciò che è in pausa o
+riconosciuto; i problemi identici si raccolgono in una riga con un conteggio
+(*×5*). L'elenco non esce mai dal suo spazio: su uno schermo piccolo, o con
+molti problemi, i grandi riquadri si riducono a una riga ciascuno, i problemi
+mascherati e in pausa si riassumono in una riga, e solo dopo il resto si
+raccoglie in *N altri problemi*, invece di sovrapporsi ai monitor sottostanti.
+I piccioni, l'orologio e i pannelli della scena si scansano non appena
+finirebbero sotto il testo.
 
 ## Notizie sul wall
 
-Un amministratore può aggiungere al wall dei **titoli** e un **canale in
-diretta** in **Impostazioni → Notizie del wall**. Entrambi sono disattivati
-per impostazione predefinita.
+Un amministratore può aggiungere al wall dei **titoli** in **Impostazioni →
+Notizie del wall**. Sono disattivati per impostazione predefinita.
 
-- **Banda dei titoli.** Una fascia lungo il bordo inferiore del wall fa
-  scorrere gli ultimi titoli, ciascuno con la sua fonte e la sua età, e si
-  aggiorna ogni cinque minuti. Con il *movimento ridotto* attivo nel sistema
-  del display, nulla scorre: un titolo alla volta compare e svanisce in
-  dissolvenza.
-- **Video in diretta.** Un canale in diretta senza audio in un riquadro, nella
-  colonna destra sotto l'orologio (o al centro della scena), piccolo, medio o
-  grande. Il riquadro si adatta allo spazio rimasto; non copre mai lo stato.
-- **Carosello di immagini.** Gli ultimi articoli degli stessi feed che portano
-  un'immagine, uno alla volta nella colonna di destra, sotto l'orologio, ciascuno per otto secondi, in
-  dissolvenza incrociata, con la fonte, l'età e il titolo sopra l'immagine. Con
-  il *movimento ridotto* attivo, le immagini si alternano senza dissolvenza.
+Gli ultimi titoli dei feed scelti, solo testo, ciascuno con la sua fonte,
+aggiornati ogni cinque minuti. Stanno dove li mette la disposizione del wall
+(per impostazione predefinita la colonna destra): quanti ne entrano, al massimo
+due righe ciascuno, fermi, senza scorrimento né turni. In una barra, un titolo
+sta su una riga.
 
 È il server a leggere i feed, non il browser (i browser non possono leggere i
 feed di altri siti). Segue al massimo tre redirect, rifiuta gli indirizzi
 interni, rinuncia dopo otto secondi o 2 MB per feed, e mette in cache la
 risposta per cinque minuti per tutti i wall. Legge RSS 2.0, RSS 1.0 (RDF) e
 Atom.
-
-L'immagine di un articolo viene presa dal feed: l'immagine `media:content` più
-larga, un `media:thumbnail`, un `enclosure` di tipo immagine (BFM TV), un
-`link rel="enclosure"` Atom, oppure il primo `<img>` del contenuto
-dell'articolo (Korben). Quando il feed non ne ha e il carosello è attivo, il
-server legge una sola volta l'inizio della pagina dell'articolo (512 KB al
-massimo, stessa protezione degli indirizzi) e ne prende l'`og:image`; la
-risposta viene ricordata, quindi una pagina viene letta una sola volta. Il wall
-non carica mai un'immagine dal sito di notizie: il server la ritrasmette a
-`/api/wall/news/image/<id>`, solo per gli articoli che ha pubblicato, al
-massimo 6 MB, e solo quando il file è davvero un'immagine PNG, JPEG, GIF, WebP
-o AVIF (mai SVG). L'indirizzo e i cookie del display restano a casa, e la
-content security policy del wall consente ancora immagini solo da DumbMonit.
 
 ### Scegliere le fonti
 
@@ -62,37 +46,30 @@ altro feed, incolla il suo indirizzo RSS o Atom sotto **Aggiungi un feed
 personalizzato** e premi **Prova**: DumbMonit lo legge davvero e mostra
 l'ultimo titolo prima che tu lo aggiunga.
 
-Per il video, scegli uno dei canali del paese oppure **Un altro link…** e
-incolla un normale indirizzo YouTube, Dailymotion o Twitch (un video, una
-diretta, o la pagina `/live` di un canale YouTube); DumbMonit lo converte nel
-player incorporabile. Si possono mostrare solo questi tre player. Una diretta
-viene proposta come preset solo quando il canale ne ha una ufficiale e stabile.
-
-| Paese | Titoli | Video in diretta |
-|---|---|---|
-| Francia | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
-| Svizzera | RTS Info, SRF News, Le Temps, NZZ | nessuno |
-| Belgio | RTBF, VRT NWS, La DH | nessuno |
-| Germania | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
-| Regno Unito | BBC News, The Guardian | Sky News |
-| Stati Uniti | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
-| Canada | Radio-Canada, CBC News | CBC News |
-| Spagna | RTVE, 20minutos, El País, El Mundo | nessuno |
-| Italia | ANSA, RaiNews | nessuno |
-| Portogallo | RTP Notícias, Público | nessuno |
-| Brasile | G1, Folha de S.Paulo | CNN Brasil |
-| Russia | Interfax, Meduza, Kommersant | nessuno |
-| Cina | CGTN, South China Morning Post, Xinhua | CGTN |
-| Internazionale | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+| Paese | Titoli |
+|---|---|
+| Francia | BFM TV, franceinfo, Le Monde, France 24 |
+| Svizzera | RTS Info, SRF News, Le Temps, NZZ |
+| Belgio | RTBF, VRT NWS, La DH |
+| Germania | Tagesschau, ZDFheute, Spiegel, Deutsche Welle |
+| Regno Unito | BBC News, The Guardian |
+| Stati Uniti | NPR, PBS NewsHour, CBS News, The New York Times |
+| Canada | Radio-Canada, CBC News |
+| Spagna | RTVE, 20minutos, El País, El Mundo |
+| Italia | ANSA, RaiNews |
+| Portogallo | RTP Notícias, Público |
+| Brasile | G1, Folha de S.Paulo |
+| Russia | Interfax, Meduza, Kommersant |
+| Cina | CGTN, South China Morning Post, Xinhua |
+| Internazionale | Deutsche Welle, France 24, BBC News (world) |
 
 Il feed di BFM TV è `https://www.bfmtv.com/rss/news-24-7/`. L'elenco è stato
 verificato al momento della stesura; un sito può spostare il proprio feed in
-qualsiasi momento, e allora la banda lo salta semplicemente. Usa **Prova** per
+qualsiasi momento, e allora il wall lo salta semplicemente. Usa **Prova** per
 il sostituto e aggiungilo come feed personalizzato.
 
-La content security policy del wall consente alla pagina di incorporare solo i
-player di YouTube (`youtube-nocookie.com`), Dailymotion, Twitch, Spotify e
-Deezer.
+Le immagini e il riquadro del video in diretta delle versioni precedenti sono
+stati rimossi; un wall salvato con essi semplicemente non li mostra più.
 
 ### API
 

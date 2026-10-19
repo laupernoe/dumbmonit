@@ -330,9 +330,7 @@ async fn responses_carry_the_protection_headers_except_on_status_pages() {
                 "https://open.spotify.com",
                 "https://widget.deezer.com",
                 "https://www.youtube-nocookie.com",
-                "https://sdk.scdn.co",
-                "https://www.dailymotion.com",
-                "https://player.twitch.tv"
+                "https://sdk.scdn.co"
             ],
             "{uri} : {csp}"
         );
