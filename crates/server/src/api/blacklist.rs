@@ -64,6 +64,8 @@ pub struct ListRow {
     /// `ip` ou `domain`.
     pub subject: &'static str,
     pub major: bool,
+    /// Ajoutée par l'utilisateur (absente du catalogue).
+    pub custom: bool,
     pub checked: f64,
     pub listed: f64,
     pub unknown: f64,
@@ -81,6 +83,8 @@ pub struct CheckRow {
     pub meaning: Option<String>,
     /// Motif `TXT` d'une inscription, ou cause d'une réponse manquante.
     pub reason: Option<String>,
+    /// Spamhaus refuse ce résolveur (public ou qui y transfère).
+    pub public_resolver_refused: bool,
     pub lookup_url: Option<String>,
     pub delist_url: Option<String>,
 }
@@ -182,6 +186,11 @@ fn per_list(points: &[Point], name: &str, list: &str) -> Option<f64> {
     named(points, name).find(|(l, _)| l.get("list").map(String::as_str) == Some(list)).map(|p| p.1)
 }
 
+/// Rang d'une liste : l'ordre du catalogue, puis les listes personnalisées.
+fn list_rank(id: &str) -> usize {
+    lists::LISTS.iter().position(|l| l.id == id).unwrap_or(usize::MAX)
+}
+
 pub fn build_view(kind: &str, (points, sampled_at): &(Vec<Point>, Option<f64>)) -> BlacklistView {
     let mut view = BlacklistView { kind: kind.to_string(), ..Default::default() };
     if points.is_empty() {
@@ -199,19 +208,38 @@ pub fn build_view(kind: &str, (points, sampled_at): &(Vec<Point>, Option<f64>)) 
     view.unknown_checks = one(points, "unknown_checks");
     view.domain_listed = one(points, "domain_listed").map(|v| v >= 1.0);
 
-    for list in lists::LISTS {
-        let Some(checked) = per_list(points, "list_checked", list.id) else { continue };
+    // Les listes réellement interrogées : celles du catalogue, et les listes
+    // personnalisées que seules les séries `list_info` décrivent.
+    for (labels, checked) in named(points, "list_checked") {
+        let Some(id) = label(labels, "list") else { continue };
+        let known = lists::by_id(&id);
+        let info =
+            named(points, "list_info").find(|(l, _)| label(l, "list").as_deref() == Some(&id));
+        let from_info = |key: &str| info.and_then(|(l, _)| label(l, key));
         view.lists.push(ListRow {
-            id: list.id.to_string(),
-            name: list.name.to_string(),
-            zone: list.zone.to_string(),
-            subject: if list.subject == Subject::Ip { "ip" } else { "domain" },
-            major: list.major,
-            checked,
-            listed: per_list(points, "list_listed", list.id).unwrap_or(0.0),
-            unknown: per_list(points, "list_unknown", list.id).unwrap_or(0.0),
+            name: known
+                .map(|l| l.name.to_string())
+                .or_else(|| from_info("name"))
+                .unwrap_or_else(|| id.clone()),
+            zone: known
+                .map(|l| l.zone.to_string())
+                .or_else(|| from_info("zone"))
+                .unwrap_or_default(),
+            subject: match known.map(|l| l.subject) {
+                Some(Subject::Domain) => "domain",
+                Some(Subject::Ip) => "ip",
+                None if from_info("subject").as_deref() == Some("domain") => "domain",
+                None => "ip",
+            },
+            major: known.map_or_else(|| from_info("major").as_deref() == Some("true"), |l| l.major),
+            custom: known.is_none(),
+            checked: *checked,
+            listed: per_list(points, "list_listed", &id).unwrap_or(0.0),
+            unknown: per_list(points, "list_unknown", &id).unwrap_or(0.0),
+            id,
         });
     }
+    view.lists.sort_by_key(|row| (list_rank(&row.id), row.id.clone()));
 
     for (labels, _) in named(points, "check") {
         let (Some(id), Some(subject)) = (label(labels, "list"), label(labels, "subject")) else {
@@ -229,6 +257,8 @@ pub fn build_view(kind: &str, (points, sampled_at): &(Vec<Point>, Option<f64>)) 
                 .map(|c| c.split(',').map(str::to_string).collect())
                 .unwrap_or_default(),
             meaning: label(labels, "meaning"),
+            public_resolver_refused: state == "refused"
+                && label(labels, "reason").as_deref() == Some(lists::PUBLIC_RESOLVER_REFUSAL),
             reason: label(labels, "reason"),
             list: id,
             subject,
@@ -241,7 +271,7 @@ pub fn build_view(kind: &str, (points, sampled_at): &(Vec<Point>, Option<f64>)) 
         "clean" => 2,
         _ => 3,
     };
-    let order = |id: &str| lists::LISTS.iter().position(|l| l.id == id).unwrap_or(usize::MAX);
+    let order = list_rank;
     view.checks.sort_by(|a, b| {
         rank(&a.state)
             .cmp(&rank(&b.state))
@@ -371,5 +401,65 @@ mod tests {
         assert_eq!(view.auth.as_ref().unwrap().spf_records, Some(0.0));
         assert_eq!(view.providers.len(), 3);
         assert!(build_view("ip_blacklist", &latest(&last, &at)).providers.is_empty());
+    }
+
+    #[test]
+    fn les_listes_personnalisees_et_le_refus_de_spamhaus_sont_montres() {
+        let now = 1_790_812_800.0;
+        let custom = "custom:dnsbl.example.org";
+        let series = [
+            serie("list_checked", 1.0, now, &[("list", custom)]),
+            serie(
+                "list_info",
+                1.0,
+                now,
+                &[
+                    ("list", custom),
+                    ("name", "dnsbl.example.org"),
+                    ("zone", "dnsbl.example.org"),
+                    ("subject", "ip"),
+                    ("major", "true"),
+                ],
+            ),
+            serie("list_listed", 1.0, now, &[("list", custom)]),
+            serie("list_checked", 1.0, now, &[("list", "spamhaus_zen")]),
+            serie("list_unknown", 1.0, now, &[("list", "spamhaus_zen")]),
+            serie(
+                "check",
+                -2.0,
+                now,
+                &[
+                    ("list", "spamhaus_zen"),
+                    ("subject", "8.8.8.1"),
+                    ("state", "refused"),
+                    ("reason", lists::PUBLIC_RESOLVER_REFUSAL),
+                ],
+            ),
+            serie(
+                "check",
+                1.0,
+                now,
+                &[("list", custom), ("subject", "8.8.8.1"), ("state", "listed")],
+            ),
+        ];
+        let (last, at): (Vec<InstantSeries>, Vec<InstantSeries>) = series.into_iter().unzip();
+        let view = build_view("ip_blacklist", &latest(&last, &at));
+
+        // Le catalogue d'abord, puis la liste personnalisée décrite par ses séries.
+        let ids: Vec<&str> = view.lists.iter().map(|l| l.id.as_str()).collect();
+        assert_eq!(ids, ["spamhaus_zen", custom]);
+        let row = &view.lists[1];
+        assert!(row.custom && row.major && row.subject == "ip");
+        assert_eq!(
+            (row.name.as_str(), row.zone.as_str()),
+            ("dnsbl.example.org", "dnsbl.example.org")
+        );
+        assert!(!view.lists[0].custom);
+
+        let refused = view.checks.iter().find(|c| c.list == "spamhaus_zen").unwrap();
+        assert!(refused.public_resolver_refused);
+        let listed = view.checks.iter().find(|c| c.list == custom).unwrap();
+        assert!(!listed.public_resolver_refused);
+        assert_eq!(listed.lookup_url, None, "pas de page connue pour une liste inconnue");
     }
 }

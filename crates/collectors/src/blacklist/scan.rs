@@ -79,6 +79,18 @@ impl Scan {
                 self.outcomes.iter().filter(|o| o.list.id == list.id).collect();
             let applicable = mine.iter().filter(|o| o.verdict != Verdict::NotApplicable).count();
             let labelled = |sample: Sample| sample.with_label("list", list.id);
+            // Ce que la page montre d'une liste, y compris une liste personnalisée
+            // que le catalogue ne connaît pas.
+            out.push(labelled(
+                gauge("blacklist_list_info", 1.0)
+                    .with_label("name", list.name)
+                    .with_label("zone", list.zone)
+                    .with_label(
+                        "subject",
+                        if list.subject == Subject::Ip { "ip" } else { "domain" },
+                    )
+                    .with_label("major", if list.major { "true" } else { "false" }),
+            ));
             out.push(labelled(gauge("blacklist_list_checked", count(applicable))));
             out.push(labelled(gauge(
                 "blacklist_list_listed",

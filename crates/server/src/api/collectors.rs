@@ -23,8 +23,8 @@
 use axum::Json;
 use axum::extract::State;
 use dumbmonit_proto::{
-    CredentialDescription, CredentialFieldDescription, KindDescription, OptionDescription,
-    Requirement, SetupDescription, Text,
+    CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
+    OptionDescription, OptionItem, Requirement, SetupDescription, Text,
 };
 
 use crate::state::AppState;
@@ -93,6 +93,19 @@ pub struct OptionView {
     /// Sous-titre regroupant ce réglage avec d'autres dans « Plus d'options » ;
     /// vide par défaut (voir [`grouped`]).
     pub group: &'static str,
+    /// Cases d'un réglage `checklist`, construites à l'appel (le catalogue d'un
+    /// collecteur vit dans son crate, pas ici).
+    pub items: fn() -> Vec<OptionItem>,
+    /// Colonnes d'un réglage `rows`.
+    pub columns: fn() -> Vec<OptionColumn>,
+}
+
+fn no_items() -> Vec<OptionItem> {
+    Vec::new()
+}
+
+fn no_columns() -> Vec<OptionColumn> {
+    Vec::new()
 }
 
 /// Range un réglage sous un sous-titre, dans la zone « Plus d'options » d'un
@@ -472,6 +485,8 @@ const fn text(
         input: "text",
         choices: &[],
         group: "",
+        items: no_items,
+        columns: no_columns,
     }
 }
 
@@ -493,6 +508,8 @@ const fn number(
         input: "number",
         choices: &[],
         group: "",
+        items: no_items,
+        columns: no_columns,
     }
 }
 
@@ -514,6 +531,8 @@ const fn boolean(
         input: "boolean",
         choices: &[],
         group: "",
+        items: no_items,
+        columns: no_columns,
     }
 }
 
@@ -535,6 +554,8 @@ const fn select(
         input: "select",
         choices,
         group: "",
+        items: no_items,
+        columns: no_columns,
     }
 }
 
@@ -3155,19 +3176,19 @@ const DOMAIN_OPTIONS: &[OptionView] = &[
     ),
 ];
 
-/// Pas de clé : les serveurs publics des listes, par un résolveur à soi.
+/// Pas de clé : le choix par défaut, et le bon pour presque tout le monde.
 const BLOCKLIST_NO_KEY: CredentialView = CredentialView {
     kind: "none",
-    label: "No key",
-    help: "The public blocklist servers, queried through a resolver of your own.",
+    label: "No key (recommended)",
+    help: "No key is needed. The blocklists are queried through this server's DNS resolver, or the one set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9…): the monitor then says \"Spamhaus refuses this resolver\" and every other list keeps working.",
     fields: &[],
 };
 
 /// Clé du Data Query Service de Spamhaus (`collectors/blacklist/options.rs`).
 const SPAMHAUS_DQS: CredentialView = CredentialView {
     kind: "api_token",
-    label: "Spamhaus DQS key",
-    help: "Free for low, non-commercial volumes: Spamhaus then answers through any resolver.",
+    label: "Spamhaus DQS key (optional)",
+    help: "Only useful if Spamhaus refuses your resolver. A free Spamhaus Data Query Service key (low, non-commercial volumes) makes Spamhaus answer through any resolver, public ones included. It changes nothing for the other lists.",
     fields: &[cred_secret(
         "token",
         "DQS key",
@@ -3180,18 +3201,87 @@ const SPAMHAUS_DQS: CredentialView = CredentialView {
 const BLOCKLIST_RESOLVER: OptionView = text(
     "resolver",
     "Resolver",
-    "IP address of the recursive resolver to query, port optional. Empty: the system resolver. Spamhaus refuses public resolvers (8.8.8.8, 1.1.1.1, 9.9.9.9) and those that forward to them.",
+    "IP address of the recursive resolver to query, port optional. Empty: the system resolver, which is fine. Spamhaus alone refuses public resolvers (8.8.8.8, 1.1.1.1, 9.9.9.9) and those that forward to them; the other lists do not mind.",
     "10.0.0.53",
     "",
 );
 
-const BLOCKLIST_LISTS: OptionView = text(
-    "lists",
-    "Lists",
-    "Blocklists to query, by identifier, separated by commas. Empty: all of them (spamhaus_zen, barracuda, spamcop, mailspike, uceprotect_1, psbl, spamrats, spamhaus_dbl, surbl, uribl).",
-    "spamhaus_zen, barracuda, spamcop",
-    "",
-);
+/// Les majeures du catalogue, cochées d'emblée sur un nouveau moniteur (un test
+/// vérifie l'accord avec `lists::LISTS`).
+const BLOCKLIST_MAJOR_LISTS: &str = "spamhaus_zen,barracuda,spamcop,spamhaus_dbl";
+
+/// Les cases du catalogue : nom, type de sujet, importance et description.
+fn blocklist_items() -> Vec<OptionItem> {
+    use dumbmonit_collectors::blacklist::lists::{LISTS, Subject};
+    LISTS
+        .iter()
+        .map(|list| OptionItem {
+            value: list.id.into(),
+            label: list.name.into(),
+            help: list.description.into(),
+            badges: vec![
+                if list.subject == Subject::Ip { "IP address" } else { "Domain" }.into(),
+                if list.major { "Major" } else { "Minor" }.into(),
+            ],
+        })
+        .collect()
+}
+
+const BLOCKLIST_LISTS: OptionView = OptionView {
+    key: "lists",
+    label: "Blocklists",
+    help: "The lists to query. Major lists are the ones whose listing blocks a large share of mail and raises the critical alert; the others are shown as a warning. IP lists check addresses, domain lists check the mail domain (Mail server reputation only).",
+    placeholder: "",
+    default: BLOCKLIST_MAJOR_LISTS,
+    required: false,
+    input: "checklist",
+    choices: &[],
+    group: "",
+    items: blocklist_items,
+    columns: no_columns,
+};
+
+fn blocklist_custom_columns() -> Vec<OptionColumn> {
+    vec![
+        OptionColumn {
+            key: "zone".into(),
+            label: "DNS zone".into(),
+            placeholder: "dnsbl.example.org".into(),
+            input: "text".into(),
+            pattern: r"^[a-z0-9_]([a-z0-9_-]{0,61}[a-z0-9_])?(\.[a-z0-9_]([a-z0-9_-]{0,61}[a-z0-9_])?)*\.[a-z0-9-]*[a-z][a-z0-9-]*$".into(),
+            invalid: "Enter a DNS zone name such as dnsbl.example.org, not an IP address.".into(),
+            unique: true,
+            ..OptionColumn::default()
+        },
+        OptionColumn {
+            key: "subject".into(),
+            label: "Type".into(),
+            input: "select".into(),
+            choices: vec!["ip".into(), "domain".into()],
+            ..OptionColumn::default()
+        },
+        OptionColumn {
+            key: "major".into(),
+            label: "Major".into(),
+            input: "boolean".into(),
+            ..OptionColumn::default()
+        },
+    ]
+}
+
+const BLOCKLIST_CUSTOM_LISTS: OptionView = OptionView {
+    key: "custom_lists",
+    label: "Custom lists",
+    help: "Your own DNSBL zones, queried in addition to the ticked ones, at most 20. Type ip: the zone is asked about each address (1.2.0.192.zone); type domain: about the mail domain. Tick Major if a listing there should raise the critical alert.",
+    placeholder: "",
+    default: "",
+    required: false,
+    input: "rows",
+    choices: &[],
+    group: "",
+    items: no_items,
+    columns: blocklist_custom_columns,
+};
 
 const BLOCKLIST_REFRESH: OptionView = number(
     "refresh_hours",
@@ -3221,6 +3311,7 @@ const BLOCKLIST_TIMEOUT: OptionView = number(
 const MAIL_BLACKLIST_OPTIONS: &[OptionView] = &[
     BLOCKLIST_RESOLVER,
     BLOCKLIST_LISTS,
+    BLOCKLIST_CUSTOM_LISTS,
     text(
         "extra_addresses",
         "Extra addresses",
@@ -3234,8 +3325,14 @@ const MAIL_BLACKLIST_OPTIONS: &[OptionView] = &[
 ];
 
 /// Options lues par `collectors/blacklist` pour une plage d'adresses.
-const IP_BLACKLIST_OPTIONS: &[OptionView] =
-    &[BLOCKLIST_RESOLVER, BLOCKLIST_LISTS, BLOCKLIST_REFRESH, BLOCKLIST_RATE, BLOCKLIST_TIMEOUT];
+const IP_BLACKLIST_OPTIONS: &[OptionView] = &[
+    BLOCKLIST_RESOLVER,
+    BLOCKLIST_LISTS,
+    BLOCKLIST_CUSTOM_LISTS,
+    BLOCKLIST_REFRESH,
+    BLOCKLIST_RATE,
+    BLOCKLIST_TIMEOUT,
+];
 
 /// Délai par requête des équipements commerciaux lus par leur API
 /// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`, défaut de
@@ -5035,7 +5132,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "mail_blacklist" => CollectorView {
             kind: "mail_blacklist",
             label: "Mail server reputation",
-            summary: "A mail domain's MX, or a mail server's public address, checked against the major DNS blocklists (Spamhaus, Barracuda, SpamCop…), with reverse DNS, SPF and DMARC, and the delisting page of every list that lists it.",
+            summary: "A mail domain's MX, or a mail server's public address, checked against the major DNS blocklists (Spamhaus, Barracuda, SpamCop…) or the ones you pick, with reverse DNS, SPF and DMARC, and the delisting page of every list that lists it. No API key needed.",
             examples: &[
                 "Your company's mail domain",
                 "The public address of a mail server",
@@ -5050,12 +5147,13 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Check a mail server against the blocklists",
                 steps: &[
                     "Enter the domain you send mail for, for example \"example.com\": DumbMonit checks the addresses of its MX and of the domain itself. Or enter the public IP address the server sends from. If mail leaves through a relay that is not an MX, add its address under Extra addresses.",
-                    "Use a recursive resolver of your own. Spamhaus refuses queries that arrive through public resolvers (Google, Cloudflare, Quad9) or through a resolver that forwards to them, and other lists limit them: an Unbound that resolves from the root servers is enough. Set its address under Resolver if it is not the system resolver.",
-                    "Or create a free Spamhaus Data Query Service account (non-commercial use, low volume) and paste its key as the credential: Spamhaus then answers through any resolver.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
+                    "No API key is needed: leave the credential on No key. Without one, the blocklists are queried through this server's DNS resolver, or through the one you set under Resolver.",
+                    "Tick the blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list you use under Custom lists.",
+                    "Only Spamhaus can refuse a query, and only when the resolver is a public one (Google, Cloudflare, Quad9) or forwards to one. The monitor then shows \"Spamhaus refuses this resolver\" and every other list keeps working. To get Spamhaus too, set Resolver to a recursive resolver of your own (an Unbound that resolves from the root servers is enough), or choose the optional Spamhaus DQS key as the credential: a free account (non-commercial use, low volume) whose key makes Spamhaus answer through any resolver.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
                     "To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.",
                     "Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page.",
                 ],
-                warning: "An answer Spamhaus refused (127.255.255.254, a public resolver) is shown as a configuration error, never as a listing, and a blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.",
+                warning: "An answer Spamhaus refused (127.255.255.254, a public resolver) is never shown as a listing: that list is marked refused and the others keep their result. Only when no other list answers does the monitor report a configuration error. A blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.",
                 doc_url: "https://www.spamhaus.org/blocklists/zen-blocklist/",
             },
             options: MAIL_BLACKLIST_OPTIONS,
@@ -5063,7 +5161,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "ip_blacklist" => CollectorView {
             kind: "ip_blacklist",
             label: "IP range blocklist",
-            summary: "Every address of a public IPv4 range, up to a /24, checked against the major DNS blocklists: how many are listed, on which lists, and the delisting page of each.",
+            summary: "Every address of a public IPv4 range, up to a /24, checked against the major DNS blocklists, or the ones you pick: how many are listed, on which lists, and the delisting page of each. No API key needed.",
             examples: &[
                 "Your office's public addresses",
                 "The /24 your servers send from",
@@ -5077,7 +5175,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Check a public IP range against the blocklists",
                 steps: &[
                     "Enter an IPv4 address or a CIDR range up to /24, for example \"198.51.100.0/24\" (256 addresses). A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation.",
-                    "Use a recursive resolver of your own, as for Mail server reputation: Spamhaus refuses public resolvers, or paste a free Spamhaus DQS key as the credential. A /24 takes close to two thousand queries, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.",
+                    "No API key is needed: leave the credential on No key. The blocklists are queried through this server's DNS resolver, or through the one you set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9): the monitor then shows \"Spamhaus refuses this resolver\" and the other lists keep working. For Spamhaus too, use a recursive resolver of your own, or the optional free Spamhaus DQS key.",
+                    "Tick the address blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list under Custom lists. A /24 takes close to two thousand queries with every address list ticked, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.",
                     "The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each.",
                 ],
                 warning: "Spamhaus PBL lists end-user ranges that should not send mail directly (home connections, dynamic pools): a listing there is a policy, not an abuse report, and only matters for an address that runs a mail server.",
@@ -5345,6 +5444,8 @@ impl OptionView {
             input: self.input.into(),
             choices: texts(self.choices),
             group: self.group.into(),
+            items: (self.items)(),
+            columns: (self.columns)(),
         }
     }
 }
@@ -5945,6 +6046,7 @@ mod tests {
                 &[
                     "resolver",
                     "lists",
+                    "custom_lists",
                     "extra_addresses",
                     "refresh_hours",
                     "queries_per_second",
@@ -5956,6 +6058,7 @@ mod tests {
                 &[
                     "resolver",
                     "lists",
+                    "custom_lists",
                     "refresh_hours",
                     "queries_per_second",
                     "query_timeout_seconds",
@@ -6026,6 +6129,19 @@ mod tests {
                         option.default
                     ),
                     "text" => assert!(option.choices.is_empty(), "{contexte} : choix sur un texte"),
+                    "checklist" => {
+                        let items = (option.items)();
+                        assert!(!items.is_empty(), "{contexte} : cases à cocher sans entrée");
+                        for value in option.default.split(',').filter(|v| !v.is_empty()) {
+                            assert!(
+                                items.iter().any(|i| i.value == value),
+                                "{contexte} : le défaut « {value} » n'est pas une case"
+                            );
+                        }
+                    }
+                    "rows" => {
+                        assert!(!(option.columns)().is_empty(), "{contexte} : lignes sans colonne")
+                    }
                     other => panic!("{contexte} : type de champ inconnu « {other} »"),
                 }
             }
@@ -6605,6 +6721,39 @@ mod tests {
             }
             let warning = flatten(view.setup.warning);
             assert!(flat.contains(&warning), "docs/devices/{kind}.md ne reprend pas : {warning}");
+        }
+    }
+
+    /// Le formulaire des listes noires : une case par liste du catalogue, les
+    /// majeures cochées d'emblée, « sans clé » proposé en premier, et des
+    /// colonnes dont la clé est celle que lit `blacklist/lists.rs`.
+    #[test]
+    fn le_formulaire_des_listes_noires_suit_le_catalogue() {
+        use dumbmonit_collectors::blacklist::lists;
+        for kind in ["mail_blacklist", "ip_blacklist"] {
+            let view = describe(kind);
+            assert_eq!(view.credential_types[0], "none", "sans clé d'abord");
+            assert!(view.credentials[0].label.contains("recommended"));
+            assert!(view.setup.steps.iter().any(|s| s.contains("No API key is needed")));
+            let option = |key: &str| view.options.iter().find(|o| o.key == key).unwrap();
+
+            let checklist = option("lists").description();
+            assert_eq!(checklist.input, "checklist");
+            assert_eq!(checklist.items.len(), lists::LISTS.len());
+            for (item, list) in checklist.items.iter().zip(lists::LISTS) {
+                assert_eq!(item.value, list.id);
+                assert!(!item.help.is_empty() && item.badges.len() == 2, "{}", list.id);
+            }
+            let majors: Vec<&str> = lists::LISTS.iter().filter(|l| l.major).map(|l| l.id).collect();
+            assert_eq!(checklist.default, majors.join(","), "majeures cochées d'emblée");
+
+            let rows = option("custom_lists").description();
+            assert_eq!(rows.input, "rows");
+            let keys: Vec<&str> = rows.columns.iter().map(|c| &*c.key).collect();
+            assert_eq!(keys, ["zone", "subject", "major"]);
+            // Le motif accepte une zone, refuse une adresse IP.
+            let zone = rows.columns[0].pattern.to_string();
+            assert!(zone.starts_with('^') && zone.ends_with('$') && rows.columns[0].unique);
         }
     }
 

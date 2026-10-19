@@ -6,6 +6,11 @@ Barracuda, SpamCop and a few smaller ones. For every list that lists an
 address, the monitor page gives the list's answer code, its published reason
 and a direct link to its lookup and removal page.
 
+**No API key is needed.** Leave the credential on "No key (recommended)": the
+lists are queried through the server's DNS resolver, or through the resolver
+you set under **Resolver**. Only Spamhaus can refuse, and only when that
+resolver is a public one; see [Resolvers, refusals and timeouts](#resolvers-refusals-and-timeouts).
+
 Enter a domain (`example.com`) and DumbMonit checks the addresses of its MX
 hosts (A and AAAA records), the addresses of the domain itself, and any
 **Extra addresses** you add (an outgoing relay that is not an MX). The domain
@@ -38,9 +43,11 @@ guessed. The monitor page links to:
 ## The blocklists
 
 Checked on 16 October 2026. SORBS closed in June 2024 and is not queried.
-Each list is asked an `A` record under its zone; a list is identified by the
-id in the first column, which the **Lists** option takes to restrict the
-check.
+Each list is asked an `A` record under its zone. The form shows them as a
+checklist named **Blocklists** (name, whether it checks addresses or the
+domain, major or not, and a short description); the **major** ones are ticked
+on a new monitor. The id in the first column is what the `lists` option
+stores, and what the API and the metrics call the list.
 
 | Id | List | Zone | Checks | IPv6 | Major | Use and removal |
 |---|---|---|---|---|---|---|
@@ -60,6 +67,23 @@ an advisory one. IPv6 addresses of the MX are checked against Spamhaus ZEN
 only, the one list here that answers for IPv6; the others show them as not
 covered.
 
+### Your own lists
+
+Under **Custom lists**, at the end of the checklist, add the DNSBL zones of
+any other list you use or run yourself (for example `dnsbl.example.org`).
+Each one has a **Type**: `ip` (the zone is asked about each address, as
+`1.2.0.192.dnsbl.example.org`) or `domain` (about the mail domain), and a
+**Major** switch for a list whose listing should raise the critical alert.
+The zone must be a valid domain name, not an IP address, and cannot repeat
+another zone or one of the lists above; at most 20 custom lists. Any
+`127.x.x.x` answer counts as listed; `NXDOMAIN` as clean.
+
+The monitor queries exactly the ticked lists plus the custom ones. A monitor
+created before these options existed has no setting and keeps querying every
+list above. The `lists` option holds the ticked ids separated by commas (`-`
+when none is ticked) and `custom_lists` a JSON array such as
+`[{"zone": "dnsbl.example.org", "subject": "ip", "major": false}]`.
+
 ## Resolvers, refusals and timeouts
 
 The lists are queried through DNS, and how they answer depends on **which
@@ -70,9 +94,11 @@ resolver asks**:
   them, or through resolvers without an attributable reverse DNS. It then
   answers `127.255.255.254` instead of `NXDOMAIN` (`127.255.255.255` when a
   resolver sends too many queries, `127.255.255.252` for a malformed query or
-  a wrong DQS key). These look like listings and are not: DumbMonit shows the
-  check as a **configuration error**, never as "listed", and sends no outage
-  alert.
+  a wrong DQS key). These look like listings and are not: DumbMonit marks
+  the Spamhaus list as **refused** ("Spamhaus refuses this resolver" on the
+  monitor page), never as "listed", and the other lists keep their results.
+  Only when no other selected list answered does the monitor show a
+  **configuration error** (which sends no outage alert) instead of a result.
 - **URIBL and SURBL answer `127.0.0.1`** to resolvers they refuse. That list
   is then shown as "Refused" (unknown), not as a listing.
 - **A list that does not answer in time is unknown, never clean.** Only
@@ -85,9 +111,10 @@ resolver), and set its address under **Resolver** if it is not the system
 resolver. Pi-hole or AdGuard Home in front of Unbound works; in front of
 `1.1.1.1` it does not.
 
-Or create a free [Spamhaus Data Query Service](https://www.spamhaus.com/data-access/free-data-query-service/)
+Or, only if you want Spamhaus too and cannot change the resolver, create a
+free [Spamhaus Data Query Service](https://www.spamhaus.com/data-access/free-data-query-service/)
 account (non-commercial use, low volume) and enter its key as the
-credential: Spamhaus is then asked under `<key>.zen.dq.spamhaus.net` and
+credential ("Spamhaus DQS key (optional)"): Spamhaus is then asked under `<key>.zen.dq.spamhaus.net` and
 `<key>.dbl.dq.spamhaus.net`, which answer through any resolver. The key is
 stored encrypted and never shown again.
 
@@ -106,20 +133,22 @@ result is an error is retried after ten minutes.
 
 1. Enter the domain you send mail for, for example "example.com": DumbMonit checks the addresses of its MX and of the domain itself. Or enter the public IP address the server sends from. If mail leaves through a relay that is not an MX, add its address under Extra addresses.
 
-2. Use a recursive resolver of your own. Spamhaus refuses queries that arrive through public resolvers (Google, Cloudflare, Quad9) or through a resolver that forwards to them, and other lists limit them: an Unbound that resolves from the root servers is enough. Set its address under Resolver if it is not the system resolver.
+2. No API key is needed: leave the credential on No key. Without one, the blocklists are queried through this server's DNS resolver, or through the one you set under Resolver.
 
-3. Or create a free Spamhaus Data Query Service account (non-commercial use, low volume) and paste its key as the credential: Spamhaus then answers through any resolver.
+3. Tick the blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list you use under Custom lists.
+
+4. Only Spamhaus can refuse a query, and only when the resolver is a public one (Google, Cloudflare, Quad9) or forwards to one. The monitor then shows "Spamhaus refuses this resolver" and every other list keeps working. To get Spamhaus too, set Resolver to a recursive resolver of your own (an Unbound that resolves from the root servers is enough), or choose the optional Spamhaus DQS key as the credential: a free account (non-commercial use, low volume) whose key makes Spamhaus answer through any resolver.
 
     ```
     https://www.spamhaus.com/data-access/free-data-query-service/
     ```
 
-4. To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.
+5. To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.
 
-5. Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page.
+6. Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page.
 
 !!! warning
-    An answer Spamhaus refused (127.255.255.254, a public resolver) is shown as a configuration error, never as a listing, and a blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.
+    An answer Spamhaus refused (127.255.255.254, a public resolver) is never shown as a listing: that list is marked refused and the others keep their result. Only when no other list answers does the monitor report a configuration error. A blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.
 
 ## What it watches
 
@@ -135,6 +164,7 @@ All metrics are prefixed `dumbmonit_blacklist_`.
 | `unknown_checks` | checks without an answer (timeout, refusal) | |
 | `check` | one series per address (or domain) and list: 1 listed, 0 clean, −1 no answer, −2 refused, −3 not covered | `list`, `subject`, `state`, `code`, `meaning`, `reason` |
 | `list_checked`, `list_listed`, `list_unknown` | per list: subjects asked, listed, without answer | `list` |
+| `list_info` | value 1, one per list actually queried (custom ones included): what the monitor page shows | `list`, `name`, `zone`, `subject`, `major` |
 | `address_info` | value 1, where each address comes from | `address`, `source` (`mx`, `domain`, `input`, `extra`), `mx` |
 | `ptr_ok` | 1 when the reverse DNS resolves back to the address | `address`, `ptr` |
 | `mx_hosts` | MX hosts of the domain | |
@@ -152,17 +182,24 @@ answers none of the queries.
 ## The monitor page
 
 The panel reads what the probe stored; opening the page never queries a
-blocklist. It shows the counts, then each list with how many subjects it
-lists, then every result with the list's code, its published reason and
+blocklist. It shows the counts, then the lists actually queried (the ticked
+ones and your custom ones, each with how many subjects it lists, and
+"Spamhaus refuses this resolver" when that is the case), then every result with the list's code, its published reason and
 links to its lookup and removal pages, then the reverse DNS of each address,
 SPF and DMARC, and the sender tools of Gmail, Outlook.com and Yahoo.
 
+The page also has an **Also check on MXToolbox** link. It opens the public
+blocklist lookup of mxtoolbox.com in a new tab for the monitored address or
+domain; DumbMonit does not call their API.
+
 ## Credentials
 
-None, or a Spamhaus DQS key (see above).
+None needed ("No key (recommended)", the default), or optionally a Spamhaus
+DQS key (see above), which only matters for Spamhaus.
 
 Address: a domain (`example.com`) or a public IP address. Options: Resolver,
-Lists (all by default), Extra addresses, Refresh interval (6 hours, from 1
+Blocklists (the major ones ticked on a new monitor; all of them for a monitor
+created before), Custom lists, Extra addresses, Refresh interval (6 hours, from 1
 to 168), Queries per second (10, from 1 to 50) and Timeout per query (5 s,
 from 1 to 30). Private addresses are never checked: blocklists only know the
 public Internet. `127.0.0.2` is accepted as the test address.
