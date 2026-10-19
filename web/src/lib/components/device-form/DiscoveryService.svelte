@@ -30,17 +30,18 @@
 </script>
 
 <div
-	class={`flex min-w-0 items-center gap-2.5 ${compact ? 'h-[3.25rem] px-3' : 'min-h-14 px-4 py-2 max-sm:min-h-[3.5rem]'} ${low ? 'border-l-2 border-dashed border-line-strong' : ''}`}
+	class={`flex min-w-0 items-center gap-2.5 ${compact ? 'h-[3.75rem] px-3' : 'min-h-14 px-4 py-2 max-sm:min-h-[3.5rem]'} ${low ? 'border-l-2 border-dashed border-line-strong' : ''}`}
 	data-confidence={service.confidence}
 >
 	<span class={`flex size-8 shrink-0 items-center justify-center rounded-lg border ${service.kind ? 'border-signal/30 bg-signal-soft text-signal-ink' : 'border-line bg-surface-2 text-ink-2'}`}>
 		{#if service.kind}<KindIcon kind={service.kind} class="size-4" />{:else}<CircleDot class="size-4" aria-hidden="true" />{/if}
 	</span>
 	<div class="min-w-0 flex-1">
-		<p class={`truncate text-sm font-semibold ${low ? 'text-ink-2' : 'text-ink'}`} title={service.detail ?? undefined}>
-			{service.product}{#if service.version}<span class="ml-1 font-normal text-ink-2">{service.version}</span>{/if}
+		<p class={`break-words text-sm font-semibold leading-tight ${low ? 'text-ink-2' : 'text-ink'}`} title={service.detail ?? undefined}>
+			{service.product}
 		</p>
 		<p class="flex min-w-0 items-center gap-1.5 truncate font-mono text-[0.75rem] text-ink-2">
+			{#if service.version}<span class="truncate font-sans text-ink">{service.version} ·</span>{/if}
 			<span class="tnum">{portText}</span>
 			{#if service.tls}<Lock class="size-3 shrink-0" aria-label={m.deviceform_scan_tls()} />{/if}
 			{#if low}<span class="font-sans italic">· {m.deviceform_scan_uncertain()}</span>{/if}

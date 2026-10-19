@@ -35,6 +35,15 @@ test('layout: no card overlaps another, the hub or the edges, whatever the servi
 	}
 });
 
+test('layout: a typical scan is one balanced ring, compact, with no long lone edge', () => {
+	const items = [3, 2, 1, 3, 1, 2, 1, 0].map((rows, i) => ({ ip: `10.0.0.${i + 1}`, rows }));
+	const layout = layoutGraph(items);
+	const dist = layout.nodes.map((n) => Math.hypot((n.cx - layout.hub.x) / 1.25, n.cy - layout.hub.y));
+	assert.ok(Math.max(...dist) - Math.min(...dist) < 1, 'all cards on the same ring');
+	assert.ok(layout.height < 1100, `height ${layout.height}`);
+	for (const n of layout.nodes) assert.ok(n.x >= 31 && n.y >= 31 && n.x + n.w <= layout.width - 31 && n.y + n.h <= layout.height - 31);
+});
+
 test('layout: empty input still gives a drawable hub', () => {
 	const layout = layoutGraph([]);
 	assert.equal(layout.nodes.length, 0);

@@ -8,13 +8,18 @@
  */
 import type { DiscoveredHost, DiscoveredService } from '../../api/types';
 
-export const CARD_W = 248;
+export const CARD_W = 320;
 export const HEADER_H = 46;
-export const ROW_H = 52;
+export const ROW_H = 60;
 export const EMPTY_ROW_H = 30;
-const GAP = 28;
-const MARGIN = 24;
+const GAP = 24;
+const MARGIN = 32;
 const HUB_R = 44;
+/** Room kept under the hub for the CIDR label. */
+const HUB_LABEL_W = 170;
+const HUB_LABEL_H = 26;
+const RING_MAX = 10;
+const ELLIPSE = 1.25;
 
 export interface GraphNode {
 	ip: string;
@@ -67,42 +72,72 @@ export function sortServices(services: DiscoveredService[]): DiscoveredService[]
 	);
 }
 
+interface Rect {
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+}
+
+const touches = (a: Rect, b: Rect, gap: number) =>
+	a.x < b.x + b.w + gap && b.x < a.x + a.w + gap && a.y < b.y + b.h + gap && b.y < a.y + a.h + gap;
+
+/**
+ * Cards sit on regular, slightly elliptical rings (cards are wider than tall)
+ * around the hub. Ten or fewer addresses make one ring; more are split over
+ * several, the outer ones carrying more. Each ring is the tightest one whose
+ * cards clear each other, the hub (and its label) and the rings inside it,
+ * so the picture stays compact and nothing overlaps.
+ */
 export function layoutGraph(items: { ip: string; rows: number }[]): GraphLayout {
 	const n = items.length;
-	if (n === 0) {
-		const size = 2 * (HUB_R + MARGIN);
-		return { width: size, height: size, hub: { x: size / 2, y: size / 2, r: HUB_R }, nodes: [] };
-	}
-	const tallest = Math.max(...items.map((i) => cardHeight(i.rows)));
-	// Every card fits in a circle of diameter `d`; circles that do not touch
-	// cannot overlap, so rings are `d` apart and neighbours on a ring are `d` apart.
-	const d = Math.hypot(CARD_W, tallest) + GAP;
+	// The hub and the CIDR written under it, as one obstacle.
+	const hubBox: Rect = { x: -HUB_LABEL_W / 2, y: -HUB_R, w: HUB_LABEL_W, h: 2 * HUB_R + HUB_LABEL_H };
+	const placed: Rect[] = [hubBox];
 	const centres: { ip: string; x: number; y: number; h: number }[] = [];
-	let placed = 0;
-	let ring = 0;
-	while (placed < n) {
-		const radius = HUB_R + d / 2 + 16 + d * ring;
-		const capacity = Math.max(1, Math.floor(Math.PI / Math.asin(Math.min(1, d / (2 * radius)))));
-		const count = Math.min(capacity, n - placed);
-		// Odd rings turn by half a step so neighbouring rings do not line up.
-		const offset = -Math.PI / 2 + (ring % 2 ? Math.PI / count : 0);
-		for (let k = 0; k < count; k++) {
-			const angle = offset + (2 * Math.PI * k) / count;
-			const item = items[placed + k]!;
-			centres.push({
-				ip: item.ip,
-				x: radius * Math.cos(angle),
-				y: radius * Math.sin(angle),
-				h: cardHeight(item.rows)
+
+	const rings = Math.max(1, Math.ceil(n / RING_MAX));
+	const weight = Array.from({ length: rings }, (_, i) => i + 1);
+	const totalWeight = weight.reduce((a, b) => a + b, 0);
+	const counts = weight.map((w) => Math.max(1, Math.floor((n * w) / totalWeight)));
+	// Hand the rounding leftovers to the outer rings.
+	let spare = n - counts.reduce((a, b) => a + b, 0);
+	for (let i = rings - 1; spare > 0; i = (i - 1 + rings) % rings, spare--) counts[i]!++;
+
+	let start = 0;
+	let radius = HUB_R + 40;
+	for (let ring = 0; ring < rings && start < n; ring++) {
+		const group = items.slice(start, start + counts[ring]!);
+		start += group.length;
+		const offset = -Math.PI / 2 + (ring % 2 || group.length % 2 === 0 ? Math.PI / group.length : 0);
+		for (let s = radius; ; s += 6) {
+			const trial = group.map((item, k) => {
+				const angle = offset + (2 * Math.PI * k) / group.length;
+				const h = cardHeight(item.rows);
+				const cx = s * ELLIPSE * Math.cos(angle);
+				const cy = s * Math.sin(angle);
+				return { item, cx, cy, h, rect: { x: cx - CARD_W / 2, y: cy - h / 2, w: CARD_W, h } };
 			});
+			const clear = trial.every(
+				(a, i) =>
+					placed.every((p) => !touches(a.rect, p, GAP)) &&
+					trial.slice(i + 1).every((b) => !touches(a.rect, b.rect, GAP))
+			);
+			if (!clear) continue;
+			for (const t of trial) {
+				centres.push({ ip: t.item.ip, x: t.cx, y: t.cy, h: t.h });
+				placed.push(t.rect);
+			}
+			radius = s;
+			break;
 		}
-		placed += count;
-		ring++;
 	}
-	const minX = Math.min(...centres.map((c) => c.x - CARD_W / 2), -HUB_R);
-	const maxX = Math.max(...centres.map((c) => c.x + CARD_W / 2), HUB_R);
-	const minY = Math.min(...centres.map((c) => c.y - c.h / 2), -HUB_R);
-	const maxY = Math.max(...centres.map((c) => c.y + c.h / 2), HUB_R);
+
+	const all = placed;
+	const minX = Math.min(...all.map((r) => r.x));
+	const maxX = Math.max(...all.map((r) => r.x + r.w));
+	const minY = Math.min(...all.map((r) => r.y));
+	const maxY = Math.max(...all.map((r) => r.y + r.h));
 	const dx = MARGIN - minX;
 	const dy = MARGIN - minY;
 	return {
