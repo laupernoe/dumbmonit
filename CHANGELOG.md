@@ -31,6 +31,11 @@ All notable changes to this project are documented here. The format follows
   its descendants too: one *Service down* alert, the children shown as
   *Suppressed by parent*. A plain warning on the parent (disk, CPU) still hides
   nothing. The history reason now reads `suppressed: device N down`.
+- **HTTP compression.** API responses and the web interface are now served
+  with brotli or gzip when the browser accepts it (`Vary: Accept-Encoding`),
+  which cuts the first page load and the JSON payloads by a large factor.
+  Responses under 1 KB, images, event streams and file downloads (agent
+  binaries, backups) are left as they are.
 
 ### Security
 
