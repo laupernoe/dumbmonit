@@ -52,6 +52,63 @@ const ROUTES: &[(&[&str], &str)] = &[
     (&["core/firmware/status"], capture!("firmware_status.json")),
 ];
 
+/// Ce que le journal d'un pare-feu exposé voit passer : des balayages de ports
+/// venus de partout, bloqués, et quelques connexions autorisées vers le
+/// mandataire inverse. Des adresses publiques connues pour leurs balayages, de
+/// quoi donner des pays à la carte en direct.
+const SCANNERS: &[(&str, u16, &str)] = &[
+    ("185.220.101.34", 22, "tcp"),
+    ("45.155.205.13", 5060, "udp"),
+    ("61.177.172.140", 22, "tcp"),
+    ("218.92.0.112", 23, "tcp"),
+    ("89.248.165.52", 3389, "tcp"),
+    ("5.188.206.14", 445, "tcp"),
+    ("177.54.144.21", 8080, "tcp"),
+    ("103.145.13.6", 1433, "tcp"),
+    ("162.142.125.9", 443, "tcp"),
+    ("193.163.125.40", 6379, "tcp"),
+    ("80.82.77.139", 9200, "tcp"),
+    ("2001:470:1:332::8", 22, "tcp"),
+];
+const VISITORS: &[(&str, u16)] = &[
+    ("2a02:1210:5c00::1d", 443),
+    ("83.76.12.40", 443),
+    ("92.104.33.7", 51820),
+    ("86.247.110.21", 443),
+];
+
+/// Quelques lignes neuves à chaque lecture, la plus récente d'abord, au
+/// format de `read_log.py`.
+fn firewall_log(now: i64) -> String {
+    let count = 2 + rand::random::<u32>() % 7;
+    let lines: Vec<Value> = (0..count)
+        .map(|i| {
+            let at = chrono::DateTime::from_timestamp(now - i64::from(i), 0).unwrap_or_default();
+            let digest = hex::encode(rand::random::<[u8; 16]>());
+            let roll = rand::random::<u32>() % 10;
+            let (src, port, proto, action, label) = if roll < 7 {
+                let (ip, port, proto) = SCANNERS[rand::random::<u32>() as usize % SCANNERS.len()];
+                (ip, port, proto, "block", "Default deny / state violation rule")
+            } else {
+                let (ip, port) = VISITORS[rand::random::<u32>() as usize % VISITORS.len()];
+                let label =
+                    if port == 443 { "Allow HTTPS to reverse proxy" } else { "Allow WireGuard" };
+                (ip, port, if port == 443 { "tcp" } else { "udp" }, "pass", label)
+            };
+            serde_json::json!({
+                "action": action, "dir": "in", "interface": "igb0", "reason": "match",
+                "ipversion": if src.contains(':') { "6" } else { "4" },
+                "protoname": proto, "src": src, "dst": "203.0.113.7",
+                "srcport": (40000 + rand::random::<u16>() % 20000).to_string(),
+                "dstport": port.to_string(), "label": label,
+                "rid": hex::encode(rand::random::<[u8; 16]>()),
+                "__timestamp__": at.to_rfc3339(), "__host__": "fw.home.arpa", "__digest__": digest,
+            })
+        })
+        .collect();
+    Value::Array(lines).to_string()
+}
+
 pub(super) fn router() -> Router {
     Router::new().fallback(handle)
 }
@@ -59,6 +116,9 @@ pub(super) fn router() -> Router {
 async fn handle(uri: Uri) -> Response {
     let path = uri.path().trim_start_matches("/api/").trim_start_matches("diagnostics/");
     let path = path.trim_end_matches('/');
+    if path == "firewall/log" {
+        return json(StatusCode::OK, firewall_log(now_s()));
+    }
     let Some((_, body)) = ROUTES.iter().find(|(paths, _)| paths.contains(&path)) else {
         return json(StatusCode::NOT_FOUND, "{\"errorMessage\": \"Endpoint not found\"}".into());
     };

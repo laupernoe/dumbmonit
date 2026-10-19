@@ -1905,6 +1905,12 @@ const OPNSENSE_OPTIONS: &[OptionView] = &[
         "Reads the CPU and board sensors the firewall exposes. A machine without sensors reports none, which is not an error.",
         true,
     ),
+    boolean(
+        "live_map",
+        "Live firewall map",
+        "Shows on the device page where the connections your rules block or pass come from, by country. Reads the firewall log every few seconds, only while someone is looking, and keeps fifteen minutes in memory; no address is stored or shown, and countries are found in a local database. Needs the privilege Diagnostics: Logs: Firewall: Live View.",
+        false,
+    ),
 ];
 
 /// Options lues par `collectors/truenas/options.rs`.
@@ -5758,6 +5764,7 @@ mod tests {
                     "carp",
                     "firmware",
                     "temperature",
+                    "live_map",
                 ],
             ),
             ("push", &["expected_interval", "grace"]),

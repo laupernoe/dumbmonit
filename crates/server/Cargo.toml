@@ -52,6 +52,8 @@ reqwest = { version = "0.13", default-features = false, features = [
 # Les collecteurs réseau (SNMP, sondes de disponibilité, clients Proxmox/PBS/DSM)
 # vivent dans `dumbmonit-collectors`, avec leurs dépendances.
 ipnet = "2"
+# Base IP → pays de DB-IP, livrée gzippée (`geoip.rs`).
+flate2 = "1.1"
 futures = "0.3"
 
 # `deterministic-timestamps` : sans lui, rust_embed inscrit dans le binaire la date

@@ -3994,6 +3994,17 @@
         "input": "boolean",
         "choices": [],
         "group": ""
+      },
+      {
+        "key": "live_map",
+        "label": "Live firewall map",
+        "help": "Shows on the device page where the connections your rules block or pass come from, by country. Reads the firewall log every few seconds, only while someone is looking, and keeps fifteen minutes in memory; no address is stored or shown, and countries are found in a local database. Needs the privilege Diagnostics: Logs: Firewall: Live View.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
       }
     ]
   },
