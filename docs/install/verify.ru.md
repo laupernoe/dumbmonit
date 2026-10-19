@@ -23,6 +23,10 @@ cosign verify-blob dumbmonit-agent-linux-x86_64 \
 
 # or, with the GitHub CLI (checks the provenance attestation)
 gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+
+# or against the provenance attached to the release
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+  --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 Успешный запуск выводит личность рабочего процесса и тег. Если проверка
@@ -46,6 +50,19 @@ docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
 
 Закрепите образ по дайджесту в файле Compose, если хотите, чтобы запускалось
 именно то, что вы проверили.
+
+## Подписанные позже {#signed-afterwards}
+
+Версии до 0.9.0 (`v0.1.0-alpha.N`) и файлы, которые workflow публикации не подписал сам (например, `provenance.json`), получают свой `<файл>.sigstore.json` от отдельного workflow, запускаемого вручную (`.github/workflows/sign-releases.yml`). Его подпись говорит лишь о том, что файл был в релизе в момент запуска этого workflow, а не о том, что он собран из тега: проверяйте её по идентичности этого workflow и сверяйте файл с соседним `.sha256`.
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+```
+
+У этих версий нет provenance сборки: `gh attestation verify` к ним не применяется.
 
 ## Теги версий
 
