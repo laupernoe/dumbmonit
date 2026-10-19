@@ -1,0 +1,10 @@
+# source: https://github.com/immich-app/immich/blob/main/server/src/controllers/server.controller.ts L66-L75 (@Get('ping') @Authenticated({ public: true })) ; https://github.com/immich-app/immich/blob/main/server/src/services/server.service.ts L84-L86 (ping returns { res: 'pong' })
+# RECONSTRUCTED (Express/Nest JSON, content-length computed). Path: GET /api/server/ping
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Content-Type: application/json; charset=utf-8
+Content-Length: 14
+ETag: W/"e-3pbUvsCVKqxvQl2Y9tB6bX2q1VY"
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+
+{"res":"pong"}

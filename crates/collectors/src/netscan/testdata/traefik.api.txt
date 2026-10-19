@@ -1,0 +1,8 @@
+# source: https://github.com/traefik/traefik/blob/master/pkg/version/version.go L39 (route GET /api/version), L43-L50 (struct Version, Codename, startDate) ; https://github.com/traefik/traefik/blob/master/pkg/api/handler.go L135 (version.Handler{}.Append(apiRouter)) ; body shape identical to crates/collectors/src/traefik/testdata/version.json
+# Body copied from repo testdata (compacted); headers RECONSTRUCTED. Path: GET /api/version (port 8080 with api.insecure=true, or any router bound to api@internal)
+HTTP/1.1 200 OK
+Content-Type: application/json
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 87
+
+{"Version":"3.7.13","Codename":"langres","startDate":"2026-09-30T22:46:10.376225751Z"}

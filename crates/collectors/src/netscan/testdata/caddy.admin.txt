@@ -1,0 +1,9 @@
+# source: https://github.com/caddyserver/caddy/blob/master/admin.go L264 (route /config/), L1027-L1062 (handleConfig: Content-Type application/json + Etag = makeEtag L1015-L1017 -> "\"<path> <hex>\""), L942-L952 (checkHost: 403 "host not allowed: <Host>"), L930-L932 (APIError rendered as JSON {"error":...})
+# RECONSTRUCTED from the code (variant A, Host header accepted, e.g. probing 127.0.0.1:2019 from the same host / Host allowed). Path: GET /config/
+HTTP/1.1 200 OK
+Content-Type: application/json
+Etag: "/config/ 0b6f1f1e1d4c8e7a"
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 118
+
+{"apps":{"http":{"servers":{"srv0":{"listen":[":443"],"routes":[{"handle":[{"handler":"static_response","body":"ok"}]}]}}}}}

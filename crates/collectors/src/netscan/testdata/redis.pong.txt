@@ -1,0 +1,3 @@
+# source: https://github.com/redis/redis/blob/unstable/src/server.c l.2233 (shared.pong = "+PONG\r\n"); PING is not NO_AUTH (src/commands/ping.json has no NO_AUTH flag) so this means no password
+# probe sent: PING\r\n
++PONG\r\n

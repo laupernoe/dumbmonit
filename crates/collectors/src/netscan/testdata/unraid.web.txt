@@ -1,0 +1,63 @@
+# source: request GET /login . Body from https://raw.githubusercontent.com/unraid/webgui/master/emhttp/plugins/dynamix/include/.login.php (title l.228 "<NAME>/Login", form l.582-590, cookie/JS message l.~610, lost-root-password link)
+# source: routing from https://raw.githubusercontent.com/unraid/webgui/master/etc/rc.d/rc.nginx (location = / -> 302 /$START_PAGE, location /login -> login.php, 401 -> 302 /login)
+# note: reconstructed from the code (CSS/SVG abridged), not a live capture; headers approximate (Server: nginx, CSP frame-ancestors from rc.nginx)
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Content-Type: text/html; charset=UTF-8
+Connection: keep-alive
+Content-Security-Policy: frame-ancestors 'self' https://connect.myunraid.net/
+Set-Cookie: unraid_0123456789abcdef0123456789abcdef=deleted; expires=Thu, 01-Jan-1970 00:00:01 GMT; Max-Age=0; path=/
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="robots" content="noindex, nofollow">
+    <meta http-equiv="Content-Security-Policy" content="block-all-mixed-content">
+    <meta name="referrer" content="same-origin">
+    <title>Tower/Login</title>
+    <link type="text/css" rel="stylesheet" href="/webGui/styles/default-cases.css?v=1760868000">
+    <link type="image/png" rel="shortcut icon" href="/webGui/images/green-on.png">
+</head>
+<body>
+    <section id="login" class="shadow">
+        <div class="logo angle">
+            <div class="wordmark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 222.4 39" class="Nav__logo--white"><path fill="#ffffff" d="M146.7 29.5H135l-3 9h-6.5z"></path></svg></div>
+        </div>
+        <div class="content">
+            <h1>Tower</h1>
+            <h2>Media server</h2>
+            <div class="case"><span class='case-Tower'></span></div>
+            <div class="form">
+                <form action="/login" method="POST">
+                    <p>
+                        <input name="username" type="text" placeholder="Username" autocapitalize="none" autocomplete="off" spellcheck="false" autofocus required>
+                        <input name="password" type="password" placeholder="Password" required>
+                    </p>
+                    <p>
+                        <button type="submit" class="button button--small">Login</button>
+                    </p>
+                </form>
+            </div>
+            <a href="https://docs.unraid.net/go/lost-root-password/" target="_blank">Password recovery</a>
+        </div>
+    </section>
+    <script type="text/javascript">
+        document.cookie = "cookietest=1";
+        cookieEnabled = document.cookie.indexOf("cookietest=") != -1;
+        document.cookie = "cookietest=1; expires=Thu, 01-Jan-1970 00:00:01 GMT";
+        if (!cookieEnabled) {
+            errorElement.textContent = "Please enable cookies to use the Unraid webGUI";
+        }
+    </script>
+</body>
+</html>

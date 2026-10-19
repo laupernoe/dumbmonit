@@ -1,0 +1,9 @@
+# source: https://github.com/Graylog2/graylog2-server/blob/master/graylog2-server/src/main/java/org/graylog2/rest/resources/HelloWorldResource.java L39 (@Path("/")), L50-L62 (GET, no auth annotation, tagline string) ; .../rest/models/HelloWorldResponse.java L26-L36 (cluster_id, node_id, version, tagline) ; version format "7.1.9+002c047" from crates/collectors/src/observability/testdata/graylog_7.1.9/system.json
+# RECONSTRUCTED from the resource (ids invented). Path: GET /api/
+HTTP/1.1 200 OK
+Content-Type: application/json
+X-Graylog-Node-ID: 5b0f1c2e-8a4d-4e6b-9c3f-2d7a1e9b4c60
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 262
+
+{"cluster_id":"a1d2e3f4-0b1c-4d5e-8f90-123456789abc","node_id":"5b0f1c2e-8a4d-4e6b-9c3f-2d7a1e9b4c60","version":"7.1.9+002c047","tagline":"Manage your logs in the dark and have lasers going and make it look like you're from space!"}

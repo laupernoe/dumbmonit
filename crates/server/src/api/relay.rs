@@ -41,7 +41,12 @@ pub struct KeyQuery {
 }
 
 pub fn agent_routes() -> Router<AppState> {
-    Router::new().route("/agent/relay", get(pending)).route("/agent/relay/{id}", post(report))
+    Router::new()
+        .route("/agent/relay", get(pending))
+        // Attention à l'ordre : la route fixe du compte rendu de découverte
+        // d'abord, pour qu'elle ne soit pas happée par `{id}`.
+        .route("/agent/relay/discovery/{id}", post(discovery_report))
+        .route("/agent/relay/{id}", post(report))
 }
 
 /// Vérifie le jeton, le secret de liaison et la clé ; renvoie la cible de l'agent.
@@ -68,8 +73,16 @@ async fn pending(
     Query(query): Query<KeyQuery>,
 ) -> Result<Json<Vec<AgentCommand>>, Rejection> {
     let (token_id, agent_id) = authenticate(&state, &headers, &query.key).await?;
-    let hold = query.wait.map_or(HOLD, |secs| Duration::from_secs(secs).min(HOLD));
-    let jobs = state.relay().take(agent_id, hold).await;
+    // Les balayages de découverte confiés à cet agent passent par le même
+    // canal ; servis sans attente (ils sont prêts dès la création).
+    let mut discovery = state.discovery().take_commands(agent_id);
+    let hold = if discovery.is_empty() {
+        query.wait.map_or(HOLD, |secs| Duration::from_secs(secs).min(HOLD))
+    } else {
+        Duration::ZERO
+    };
+    let mut jobs = state.relay().take(agent_id, hold).await;
+    jobs.append(&mut discovery);
     agent::touch_token(&state.pool, token_id).await?;
     Ok(Json(jobs))
 }
@@ -88,12 +101,40 @@ async fn report(
 ) -> Result<StatusCode, Rejection> {
     let (_, agent_id) = authenticate(&state, &headers, &query.key).await?;
     let Some(job) = state.relay().complete(agent_id, id) else {
+        // Pas une sonde connue : peut-être un agent trop ancien à qui on a confié
+        // un balayage de découverte et qui l'a rendu en erreur sur cette route
+        // au lieu de la route dédiée. On fait alors échouer le balayage avec un
+        // message clair plutôt que de l'attendre jusqu'à son échéance.
+        if state.discovery().fail_too_old(agent_id, id) {
+            return Ok(StatusCode::NO_CONTENT);
+        }
         // Échue entre-temps, ou jamais confiée à cet agent : le résultat est
         // simplement ignoré, la prochaine interrogation repartira normalement.
         return Err(Rejection::not_found("Probe not found for this machine (expired?)."));
     };
     relay::settle(&state, job, JobResult::Done(outcome)).await;
     Ok(StatusCode::NO_CONTENT)
+}
+
+/// `POST /api/agent/relay/discovery/{id}?key=…` : compte rendu progressif d'un
+/// balayage de découverte confié à cet agent relais.
+///
+/// `204` : continuer. `410 Gone` : le balayage a été annulé ou n'existe plus,
+/// l'agent doit s'arrêter.
+async fn discovery_report(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Path(id): Path<i64>,
+    Query(query): Query<KeyQuery>,
+    Json(mut report): Json<dumbmonit_proto::DiscoveryReport>,
+) -> Result<StatusCode, Rejection> {
+    let (_, agent_id) = authenticate(&state, &headers, &query.key).await?;
+    crate::api::discovery::annotate_agent_hosts(&state, &mut report.hosts).await;
+    if state.discovery().apply_report(agent_id, id, report) {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(Rejection::gone("This discovery scan is no longer running."))
+    }
 }
 
 // ---------------------------------------------------------------- UI side

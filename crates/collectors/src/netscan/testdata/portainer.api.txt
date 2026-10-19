@@ -1,0 +1,8 @@
+# source: https://github.com/portainer/portainer/blob/develop/api/http/handler/system/handler.go L57 (public route /system/status) ; .../system/status.go (systemStatus, "Access policy: public") ; https://github.com/portainer/portainer/blob/develop/api/portainer.go L1377-L1381 (Status{Version,InstanceID})
+# RECONSTRUCTED from the Go struct (field names exact, values invented). Path: GET /api/system/status (HTTPS 9443, HTTP 9000)
+HTTP/1.1 200 OK
+Content-Type: application/json; charset=utf-8
+Content-Length: 76
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+
+{"Version":"2.33.1","InstanceID":"299ab403-70a8-4c05-92f7-bf7a994d50df"}

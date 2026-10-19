@@ -1,0 +1,27 @@
+# source: request GET /redfish/v1/ (service root, no auth). Spec reference: Redfish DSP0266 (root is the only unauthenticated resource) as quoted by https://pubs.lenovo.com/xcc2-restapi/authentication_methods and https://servermanagementportal.ext.hpe.com/docs/references_and_material/blogposts/why_is_redfish_different/why_is_redfish_different_part1.md ; crates/collectors/src/redfish/client.rs service_root() ("publique selon la spécification")
+# source: body shape from https://pubs.lenovo.com/xcc2-restapi/service_root_get (Name "Root Service", "@odata.type": "#ServiceRoot.v1_13_0.ServiceRoot", Links.Sessions, /redfish/v1/UpdateService ...) and the HPE doc (Oem.Hpe.Moniker.PRODGEN for iLO 5)
+# note: RECONSTRUCTED (generic BMC, Dell-like Oem block is from memory and NOT source-verified); headers approximate.
+HTTP/1.1 200 OK
+Content-Type: application/json;charset=utf-8
+OData-Version: 4.0
+Content-Length: 1500
+Cache-Control: no-cache
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+
+{
+  "@odata.context": "/redfish/v1/$metadata#ServiceRoot.ServiceRoot",
+  "@odata.id": "/redfish/v1",
+  "@odata.type": "#ServiceRoot.v1_13_0.ServiceRoot",
+  "Id": "RootService",
+  "Name": "Root Service",
+  "RedfishVersion": "1.17.0",
+  "UUID": "4c4c4544-0000-0000-0000-000000000000",
+  "Vendor": "Dell",
+  "Product": "Integrated Dell Remote Access Controller",
+  "Systems": {"@odata.id": "/redfish/v1/Systems"},
+  "Chassis": {"@odata.id": "/redfish/v1/Chassis"},
+  "Managers": {"@odata.id": "/redfish/v1/Managers"},
+  "SessionService": {"@odata.id": "/redfish/v1/SessionService"},
+  "Links": {"Sessions": {"@odata.id": "/redfish/v1/SessionService/Sessions"}},
+  "Oem": {"Dell": {"@odata.type": "#DellServiceRoot.v1_0_0.ServiceRootSummary", "IsBranded": 0, "ManagerMACAddress": "00:00:00:00:00:00"}}
+}

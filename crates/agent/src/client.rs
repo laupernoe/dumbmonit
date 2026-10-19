@@ -233,6 +233,38 @@ impl PushClient {
         }
         Err(rejection(response).await)
     }
+
+    /// Compte rendu progressif d'un balayage de découverte confié à cet agent.
+    /// Rend `false` quand le serveur a répondu `410 Gone` : le balayage a été
+    /// annulé, l'agent doit s'arrêter.
+    pub async fn report_discovery(
+        &self,
+        key: &str,
+        id: i64,
+        report: &dumbmonit_proto::DiscoveryReport,
+    ) -> Result<bool, PushError> {
+        let response = self
+            .identified(
+                self.http.post(discovery_url(&self.base_url, id, key)).bearer_auth(&self.token),
+            )
+            .json(report)
+            .send()
+            .await
+            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
+        if response.status() == reqwest::StatusCode::GONE {
+            return Ok(false);
+        }
+        if response.status().is_success() {
+            return Ok(true);
+        }
+        Err(rejection(response).await)
+    }
+}
+
+/// URL du compte rendu d'un balayage de découverte.
+fn discovery_url(base_url: &str, id: i64, key: &str) -> String {
+    let key = percent_encode(key);
+    format!("{base_url}{}/{id}?key={key}", dumbmonit_proto::DISCOVERY_REPORT_PATH)
 }
 
 /// URL des sondes déléguées, ou du compte rendu de l'une d'elles.
