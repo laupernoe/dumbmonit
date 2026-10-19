@@ -1,6 +1,6 @@
 # DumbMonit {#dumbmonit}
 
-Une supervision simple, du homelab à la petite entreprise. Un conteneur, une adresse IP
+Une supervision simple, du homelab à l’entreprise de taille moyenne. Un conteneur, une adresse IP
 à saisir, des graphiques et des alertes utiles en moins d'une minute.
 
 !!! warning "Travaux en cours"

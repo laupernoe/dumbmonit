@@ -34,7 +34,7 @@ FAMILIES = [
     ("checks", ["http", "tcp", "dns", "ping", "tls", "ntp", "websocket", "push", "domain", "website", "webchange"]),
     ("proxies", ["traefik", "caddy", "nginx", "apache", "npm"]),
     ("apps", ["nextcloud", "immich", "paperless", "jellyfin", "plex", "homeassistant", "gitlab", "forgejo"]),
-    ("mail", ["pihole", "adguard", "crowdsec", "smtp", "mdaemon", "securitygateway", "pmg"]),
+    ("mail", ["pihole", "adguard", "crowdsec", "smtp", "mdaemon", "securitygateway", "pmg", "mail_blacklist", "ip_blacklist"]),
     ("data", ["postgres", "mysql", "mongodb", "redis", "rabbitmq", "mqtt", "victoriametrics", "victorialogs", "loki", "graylog"]),
 ]
 # Not shown: a test entry of the catalogue, the demo monitor, and the services an agent
@@ -94,7 +94,7 @@ def parse_index():
     """{kind: {page, anchor, typical, credential}} from the table of docs/devices/index.md."""
     out = {}
     for line in (ROOT / "docs/devices/index.md").read_text().splitlines():
-        m = re.match(r"\|\s*\[[^\]]+\]\(([a-z0-9_-]+)\.md(#[^)]*)?\)\s*\|\s*`([a-z]+)`\s*\|([^|]*)\|(.*)\|\s*$", line)
+        m = re.match(r"\|\s*\[[^\]]+\]\(([a-z0-9_-]+)\.md(#[^)]*)?\)\s*\|\s*`([a-z_]+)`\s*\|([^|]*)\|(.*)\|\s*$", line)
         if m:
             page, anchor, kind, cred, typical = m.groups()
             typical = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", typical).strip()

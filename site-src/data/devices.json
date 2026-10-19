@@ -23,13 +23,13 @@
    "setup": {
     "title": "Install the agent on the machine",
     "steps": [
-     "Save the device in DumbMonit: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.",
-     "That token is the agent's key to push its measurements to DumbMonit. It is not an account on the machine: nothing to create there. A token created from the device form is single use: it enrols this one machine and nothing else. For a fleet, create a reusable token in Settings → Agents.",
+     "Save the monitor in DumbMonit: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.",
+     "That token is the agent's key to push its measurements to DumbMonit. It is not an account on the machine: nothing to create there. A token created from the monitor form is single use: it enrols this one machine and nothing else. For a fleet, create a reusable token in Settings → Agents.",
      "Run the install command on the machine to monitor, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads the agent, writes the token into agent.yaml and starts the service.",
-     "The machine shows up on its own within a few seconds, named after its host name. On that first batch the server gives the agent a secret of its own and stores it in /etc/dumbmonit/agent-secret, readable by nobody else: from then on, that machine is the only one that can report under this device. Lost the token? Settings → Agents lets you revoke it and create another.",
-     "Docker: to see the containers and let DumbMonit restart or update them, the agent must reach the Docker socket. The service the installer registers already can; if you run the agent under a dedicated user instead, add that user to the \"docker\" group and restart it. Restart and auto-update policies are then set per container on the device page.\nusermod -aG docker dumbmonit",
-     "Plakar backups: detected automatically — a Plakar device appears under the machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set \"plakar_klosets\" in agent.yaml to watch a fixed list, or \"plakar: false\" to opt out.",
-     "Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) each become their own device under the machine, with their own status and alerts. The machine's \"Services found by the agent\" panel lists what was found and what was not: untick a module to drop its device, tick one to watch it before it shows up."
+     "The machine shows up on its own within a few seconds, named after its host name. On that first batch the server gives the agent a secret of its own and stores it in /etc/dumbmonit/agent-secret, readable by nobody else: from then on, that machine is the only one that can report under this monitor. Lost the token? Settings → Agents lets you revoke it and create another.",
+     "Docker: to see the containers and let DumbMonit restart or update them, the agent must reach the Docker socket. The service the installer registers already can; if you run the agent under a dedicated user instead, add that user to the \"docker\" group and restart it. Restart and auto-update policies are then set per container on the monitor page.\nusermod -aG docker dumbmonit",
+     "Plakar backups: detected automatically — a Plakar monitor appears under the machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown otherwise. Set \"plakar_klosets\" in agent.yaml to watch a fixed list, or \"plakar: false\" to opt out.",
+     "Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, speed test) each become their own monitor under the machine, with their own status and alerts. The machine's \"Services found by the agent\" panel lists what was found and what was not: untick a module to drop its monitor, tick one to watch it before it shows up."
     ],
     "warning": "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine."
    },
@@ -2435,10 +2435,10 @@
     "title": "Make the job call in",
     "steps": [
      "In the address, write a short label for the job (\"nightly-backup\", \"certbot-renew\"): nothing is contacted, the label only has to be unique among your heartbeats.",
-     "Set the expected interval to the job's schedule (\"24h\" for a nightly job, \"1h\" for an hourly one) and, if the schedule drifts, a wider grace period. Save the device.",
-     "The device page shows the URL to call. Add it at the end of the job, so it is called only when the job succeeded:\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
+     "Set the expected interval to the job's schedule (\"24h\" for a nightly job, \"1h\" for an hourly one) and, if the schedule drifts, a wider grace period. Save the monitor.",
+     "The monitor page shows the URL to call. Add it at the end of the job, so it is called only when the job succeeded:\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
      "A job that can tell when it failed may say so instead of staying silent: append ?status=down&msg=… to the URL, and the alert fires at once.",
-     "Until the first call arrives the device shows \"Waiting\" and nothing is alerted. Lost or leaked URL? \"Regenerate\" on the device page issues a new one; the old one stops answering immediately."
+     "Until the first call arrives the monitor shows \"Waiting\" and nothing is alerted. Lost or leaked URL? \"Regenerate\" on the monitor page issues a new one; the old one stops answering immediately."
     ],
     "warning": "Call the URL at the end of the job, after the part that matters. A call placed at the top would report a success even when the backup itself failed."
    },
@@ -2544,7 +2544,7 @@
      "In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.",
      "Optionally fill in \"Expected text\" with a phrase the page must always show, and adjust \"Blank page below\" if the page is short on purpose.",
      "The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default (\"Check for changes every\"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.",
-     "To add many sites at once, import a CSV file from the device list: each site is filed under Websites/<category> (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/<platform> (WordPress, Shopify…), unless you give a folder."
+     "To add many sites at once, import a CSV file from the monitor list: each site is filed under Websites/<category> (E-commerce, Blog… or the category you give) or, when the page does not say, Websites/<platform> (WordPress, Shopify…), unless you give a folder."
     ],
     "warning": "Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower \"Blank page below\" to 0 for such a site."
    },
@@ -2592,7 +2592,7 @@
     "steps": [
      "In the address, paste the page to watch, with http:// or https://. To watch a whole site or one of its sections, paste its start page and set \"Scope\" to \"site\": every page under the same folder is followed, up to \"Max pages\".",
      "Lines that change at every visit (a clock, a visitor counter, \"updated 5 minutes ago\") would be reported each time: list them in \"Ignore lines\" as regular expressions.",
-     "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the device page; the \"Website changed\" alert tells you.",
+     "The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the monitor page; the \"Website changed\" alert tells you.",
      "For a screenshot of each version, add a headless browser to your Compose file; the exact lines are in the documentation (Advanced options, \"Screenshots of website changes\")."
     ],
     "warning": "Only the text the server sends is compared: a page drawn entirely by JavaScript shows little or nothing to the check. Pages behind a login are not reachable either."
@@ -3687,7 +3687,7 @@
      "Check from the DumbMonit host that the account reaches the API. The command asks for the password and prints an answer that starts with <MDaemon><API productversion=…>.\ncurl -k -u dumbmonit@example.com -H 'Content-Type: text/xml' --data '<MDaemon><API><Request version=\"20.0.0\" echo=\"0\" verbose=\"0\"><Operation>GetVersionInfo</Operation><Parameters/></Request></API></MDaemon>' https://mail.example.com:444/MdMgmtWS/",
      "In DumbMonit, enter the server address, for example \"mail.example.com\", then the full email address of the account as user name, and its password. The XML API is reached on the Remote Administration HTTPS port, 444 by default."
     ],
-    "warning": "MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick \"Accept an unverifiable certificate\" in the options. Mail queue sizes are not read by this device: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server."
+    "warning": "MDaemon has no read-only role for the XML API: never reuse your own account, and keep this password out of any other tool. Dynamic Screening can block an address after repeated failed logins, so a wrong password here can get the DumbMonit host blocked: test with the command above first. Remote Administration often uses a self-signed certificate: if the connection is refused for that reason, tick \"Accept an unverifiable certificate\" in the options. Mail queue sizes are not read by this monitor: MDaemon publishes them only as Windows performance counters, which the DumbMonit agent reads when it is installed on the mail server."
    },
    "doc": {
     "page": "mdaemon",
@@ -3753,7 +3753,7 @@
     "title": "Watch the gateway services, and optionally the REST API",
     "steps": [
      "Nothing to install on the server. With no credential, DumbMonit connects to SMTP (25) and the web interface (4000) from the outside and reads the SMTP greeting. Change the list in the Services option, for example to check HTTPS instead of HTTP.\nsmtp,web_https",
-     "To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the device page, your version keeps them for the Global Administrator role, and the account needs that role instead.\ndumbmonit",
+     "To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the monitor page, your version keeps them for the Global Administrator role, and the account needs that role instead.\ndumbmonit",
      "Sign in as that account and create a key under Setup/Users → Accounts → API Keys, with an expiry date. A key carries the rights of the account that creates it, which is why it must be created from this account and not from yours.",
      "Restrict the account to the address DumbMonit connects from in its IP restrictions: API keys obey them too.",
      "Check from the DumbMonit host that the key works. The command prints the API description, which also lists the counters DumbMonit reads.\ncurl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi",
@@ -3871,6 +3871,132 @@
      "name": "Mail gateway updates pending",
      "description": "More than twenty package updates are pending on the mail gateway.",
      "severity": "info"
+    }
+   ]
+  },
+  {
+   "kind": "mail_blacklist",
+   "label": "Mail server reputation",
+   "family": "mail",
+   "summary": "A mail domain's MX, or a mail server's public address, checked against the major DNS blocklists (Spamhaus, Barracuda, SpamCop…) or the ones you pick, with reverse DNS, SPF and DMARC, and the delisting page of every list that lists it. No API key needed.",
+   "examples": [
+    "Your company's mail domain",
+    "The public address of a mail server",
+    "An outgoing relay"
+   ],
+   "typical": "Mail domain or server address against the DNS blocklists (Spamhaus, Barracuda, SpamCop…), reverse DNS, SPF, DMARC, delisting links",
+   "credential": "none, or Spamhaus DQS key",
+   "credentials": [
+    {
+     "kind": "none",
+     "label": "No key (recommended)",
+     "help": "No key is needed. The blocklists are queried through this server's DNS resolver, or the one set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9…): the monitor then says \"Spamhaus refuses this resolver\" and every other list keeps working."
+    },
+    {
+     "kind": "api_token",
+     "label": "Spamhaus DQS key (optional)",
+     "help": "Only useful if Spamhaus refuses your resolver. A free Spamhaus Data Query Service key (low, non-commercial volumes) makes Spamhaus answer through any resolver, public ones included. It changes nothing for the other lists."
+    }
+   ],
+   "default_port": 0,
+   "setup": {
+    "title": "Check a mail server against the blocklists",
+    "steps": [
+     "Enter the domain you send mail for, for example \"example.com\": DumbMonit checks the addresses of its MX and of the domain itself. Or enter the public IP address the server sends from. If mail leaves through a relay that is not an MX, add its address under Extra addresses.",
+     "No API key is needed: leave the credential on No key. Without one, the blocklists are queried through this server's DNS resolver, or through the one you set under Resolver.",
+     "Tick the blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list you use under Custom lists.",
+     "Only Spamhaus can refuse a query, and only when the resolver is a public one (Google, Cloudflare, Quad9) or forwards to one. The monitor then shows \"Spamhaus refuses this resolver\" and every other list keeps working. To get Spamhaus too, set Resolver to a recursive resolver of your own (an Unbound that resolves from the root servers is enough), or choose the optional Spamhaus DQS key as the credential: a free account (non-commercial use, low volume) whose key makes Spamhaus answer through any resolver.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
+     "To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.",
+     "Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page."
+    ],
+    "warning": "An answer Spamhaus refused (127.255.255.254, a public resolver) is never shown as a listing: that list is marked refused and the others keep their result. Only when no other list answers does the monitor report a configuration error. A blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned."
+   },
+   "doc": {
+    "page": "mail_blacklist",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Listed on a major blocklist",
+     "description": "An address or the domain is on Spamhaus (ZEN or DBL), Barracuda or SpamCop: a large share of its mail is refused.",
+     "severity": "warning"
+    },
+    {
+     "name": "Listed on a blocklist",
+     "description": "An address or the domain is on a smaller list: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL or URIBL.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Mail server reverse DNS mismatch",
+     "description": "An address of the mail server has no reverse DNS, or its name does not resolve back to it: Gmail, Outlook.com and Yahoo refuse or junk such mail.",
+     "severity": "advisory"
+    },
+    {
+     "name": "SPF or DMARC missing",
+     "description": "The domain has no SPF record (or several), or no DMARC record: Gmail and Yahoo require both from bulk senders.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "ip_blacklist",
+   "label": "IP range blocklist",
+   "family": "mail",
+   "summary": "Every address of a public IPv4 range, up to a /24, checked against the major DNS blocklists, or the ones you pick: how many are listed, on which lists, and the delisting page of each. No API key needed.",
+   "examples": [
+    "Your office's public addresses",
+    "The /24 your servers send from",
+    "A hosting provider's block"
+   ],
+   "typical": "Every address of a public IPv4 range up to /24 against the DNS blocklists, with delisting links",
+   "credential": "none, or Spamhaus DQS key",
+   "credentials": [
+    {
+     "kind": "none",
+     "label": "No key (recommended)",
+     "help": "No key is needed. The blocklists are queried through this server's DNS resolver, or the one set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9…): the monitor then says \"Spamhaus refuses this resolver\" and every other list keeps working."
+    },
+    {
+     "kind": "api_token",
+     "label": "Spamhaus DQS key (optional)",
+     "help": "Only useful if Spamhaus refuses your resolver. A free Spamhaus Data Query Service key (low, non-commercial volumes) makes Spamhaus answer through any resolver, public ones included. It changes nothing for the other lists."
+    }
+   ],
+   "default_port": 0,
+   "setup": {
+    "title": "Check a public IP range against the blocklists",
+    "steps": [
+     "Enter an IPv4 address or a CIDR range up to /24, for example \"198.51.100.0/24\" (256 addresses). A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation.",
+     "No API key is needed: leave the credential on No key. The blocklists are queried through this server's DNS resolver, or through the one you set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9): the monitor then shows \"Spamhaus refuses this resolver\" and the other lists keep working. For Spamhaus too, use a recursive resolver of your own, or the optional free Spamhaus DQS key.",
+     "Tick the address blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list under Custom lists. A /24 takes close to two thousand queries with every address list ticked, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.",
+     "The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each."
+    ],
+    "warning": "Spamhaus PBL lists end-user ranges that should not send mail directly (home connections, dynamic pools): a listing there is a policy, not an abuse report, and only matters for an address that runs a mail server."
+   },
+   "doc": {
+    "page": "ip_blacklist",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Listed on a major blocklist",
+     "description": "An address or the domain is on Spamhaus (ZEN or DBL), Barracuda or SpamCop: a large share of its mail is refused.",
+     "severity": "warning"
+    },
+    {
+     "name": "Listed on a blocklist",
+     "description": "An address or the domain is on a smaller list: Mailspike, UCEPROTECT, PSBL, SpamRATS, SURBL or URIBL.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
     }
    ]
   },
@@ -4670,7 +4796,9 @@
     "smtp",
     "mdaemon",
     "securitygateway",
-    "pmg"
+    "pmg",
+    "mail_blacklist",
+    "ip_blacklist"
    ]
   },
   {
