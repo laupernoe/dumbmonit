@@ -87,6 +87,10 @@ async fn run(state: AppState) -> anyhow::Result<()> {
             relay::settle(&state, job, JobResult::Expired).await;
         }
 
+        // Un balayage de découverte confié à un agent relais resté muet trop
+        // longtemps est abandonné avec un message clair.
+        state.discovery().expire_silent();
+
         for target in &targets {
             let due = next_run
                 .entry(target.id)

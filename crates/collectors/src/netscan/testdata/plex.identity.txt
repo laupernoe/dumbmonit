@@ -1,0 +1,10 @@
+# source: https://www.plexopedia.com/plex-media-server/api/server/identity/ (XML example, "does not require a Plex token") ; JSON variant in crates/collectors/src/selfhosted/testdata/plex_1.43.4/identity.json
+# Plex is closed source: body is the documented XML with the version of the repo testdata; headers RECONSTRUCTED. Path: GET /identity (no Accept header -> XML)
+HTTP/1.1 200 OK
+Content-Type: text/xml;charset=utf-8
+Content-Length: 163
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+
+<?xml version="1.0" encoding="UTF-8"?>
+<MediaContainer size="0" claimed="1" machineIdentifier="0123456789abcdef0123456789abcdef01234567" version="1.43.4.10903-e5521bd8c">
+</MediaContainer>

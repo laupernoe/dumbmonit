@@ -1,0 +1,18 @@
+# source: nuclei-templates http/exposed-panels/unifi-os-panel.yaml (GET /login, status 200, body contains `<title>UniFi OS</title>` OR `UNIFI_OS_MANIFEST`)
+# note: PARTLY RECONSTRUCTED: the two matched strings are real; the rest of the SPA shell and headers are approximate (closed source). Not verified that GET / (instead of /login) returns the same shell.
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 2100
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Connection: keep-alive
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>UniFi OS</title>
+<script>window.UNIFI_OS_MANIFEST = {"version":"4.2.8","assets":["/assets/app.js"]};</script>
+</head>
+<body><div id="root"></div></body>
+</html>

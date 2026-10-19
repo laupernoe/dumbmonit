@@ -1,0 +1,10 @@
+# source: https://github.com/AdguardTeam/AdGuardHome/blob/master/internal/home/controlinstall.go L29-L54 (getAddrsResponse: interfaces, version, web_port, dns_port) ; internal/home/authhttp.go L323 (/control/install/get_addresses is a public path) ; internal/aghhttp/json.go L104 (Server header = UserAgent()) ; internal/aghhttp/aghhttp.go L55-L59 ("AdGuardHome/<version>")
+# RECONSTRUCTED (interfaces trimmed). Path: GET /control/install/get_addresses (only exists before the first-run wizard is completed)
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: *
+Content-Type: application/json
+Server: AdGuardHome/v0.107.79
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 229
+
+{"interfaces":{"eth0":{"name":"eth0","mtu":1500,"hardware_address":"02:42:ac:11:00:02","flags":"up|broadcast|multicast","ip_addresses":["172.17.0.2"],"gateway_ip":""}},"version":"v0.107.79","web_port":3000,"dns_port":53}

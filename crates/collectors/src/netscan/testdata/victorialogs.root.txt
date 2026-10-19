@@ -1,0 +1,9 @@
+# source: https://github.com/VictoriaMetrics/VictoriaLogs/blob/master/app/victoria-logs/main.go L81-L94 ("<h2>VictoriaLogs</h2></br>" + "Version %s<br>" + endpoints select/vmui, metrics, flags) ; lib/httpserver (VictoriaMetrics repo) L377-L378 X-Server-Hostname
+# RECONSTRUCTED from the Fprintf calls. Path: GET /
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+X-Server-Hostname: vl-1
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 400
+
+<h2>VictoriaLogs</h2></br>Version victoria-logs-20260918-101200-tags-v1.52.0-0-g5d6e7f80<br>See docs at <a href='https://docs.victoriametrics.com/victorialogs/'>https://docs.victoriametrics.com/victorialogs/</a></br>Useful endpoints:</br><a href="select/vmui">select/vmui</a> - Web UI for VictoriaLogs</br><a href="metrics">metrics</a> - available service metrics</br><a href="flags">flags</a> - command-line flags</br>

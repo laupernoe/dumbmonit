@@ -1,0 +1,54 @@
+# Host network mode — for network discovery with MAC addresses.
+#
+# Use this file ON ITS OWN (not merged with docker-compose.yml), because host
+# mode is incompatible with the `ports` and the `sysctls` of the default file:
+#
+#   docker compose -f docker-compose.host.yml up -d
+#
+# What it adds: the container shares the host's network stack, so discovery sees
+# the real layer-2 segment and can read neighbours' MAC addresses (and their
+# vendor) from the host ARP cache. It also lets you scan the LAN the server is on
+# without a relay agent.
+#
+# Caveats:
+#   - Linux only. `network_mode: host` is a no-op on Docker Desktop (macOS,
+#     Windows): the container still runs in a VM, so no host L2, no MAC.
+#   - A port sweep looks like a scan to an IDS/IPS. Only scan networks you own,
+#     and keep the prefix small (the API refuses anything wider than a /22).
+#   - The web UI is now on the host's port 8080 directly (no port mapping).
+#   - The embedded VictoriaMetrics keeps its default loopback binding
+#     (127.0.0.1:8428) and is therefore NOT exposed on the LAN. Do not set
+#     DUMBMONIT_VM_LISTEN to 0.0.0.0 here: in host mode that would publish an
+#     unauthenticated admin API to the whole network.
+
+name: dumbmonit
+
+services:
+  dumbmonit:
+    image: ghcr.io/laupernoe/dumbmonit:latest
+    network_mode: host
+    # No `ports:` — forbidden in host mode (the UI is reachable on host :8080).
+    # No `sysctls: net.ipv4.ping_group_range` — forbidden in host mode; ICMP
+    # monitors instead rely on CAP_NET_RAW below.
+    volumes:
+      - dumbmonit-data:/data
+      # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
+      # - ./dumbmonit:/data:Z
+    # environment:
+    #   PUID: "1000"   # owner of the files in /data (default 65532)
+    #   PGID: "1000"
+    restart: unless-stopped
+    stop_grace_period: 30s
+    read_only: true
+    tmpfs: [/tmp]
+    # Starts as root only to give /data to user 65532 (or PUID/PGID), then drops
+    # root for good. CAP_NET_RAW replaces the ping_group_range sysctl so ICMP
+    # monitors keep working in host mode.
+    user: "0:0"
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID, NET_RAW]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  dumbmonit-data:
+    name: dumbmonit-data

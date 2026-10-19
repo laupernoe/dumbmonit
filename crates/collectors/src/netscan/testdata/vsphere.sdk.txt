@@ -1,0 +1,22 @@
+# source: request GET /sdk/vimServiceVersions.xml (anonymous). Documented at https://docs.vmware.com/en/VMware-vSphere/8.0/vsphere-web-services-programming-guide/GUID-75B9897E-551B-4C08-B382-A616A007A07D.html ("accessible at https://server_hostname/sdk/vimServiceVersions.xml"), fetched without credentials by govmomi: https://raw.githubusercontent.com/vmware/govmomi/main/vim25/soap/client.go UseServiceVersion() (plain c.Get)
+# source: XML layout from the govmomi simulator https://raw.githubusercontent.com/vmware/govmomi/main/simulator/simulator.go ServiceVersions() (namespaces/namespace/name urn:vim25/version/priorVersions)
+# note: RECONSTRUCTED from the simulator layout; real servers list more priorVersions. Headers approximate.
+HTTP/1.1 200 OK
+Content-Type: text/xml
+Content-Length: 330
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+
+<?xml version="1.0" encoding="UTF-8" ?>
+<namespaces version="1.0">
+  <namespace>
+    <name>urn:vim25</name>
+    <version>8.0.3.0</version>
+    <priorVersions>
+      <version>8.0.2.0</version>
+      <version>8.0.1.0</version>
+      <version>8.0.0.1</version>
+      <version>8.0</version>
+      <version>7.0.3.2</version>
+    </priorVersions>
+  </namespace>
+</namespaces>

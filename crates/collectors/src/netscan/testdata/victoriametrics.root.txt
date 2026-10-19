@@ -1,0 +1,9 @@
+# source: https://github.com/VictoriaMetrics/VictoriaMetrics/blob/master/app/victoria-metrics/main.go L166-L175 ("<h2>Single-node VictoriaMetrics</h2></br>" + "Version %s<br>") ; lib/httpserver/httpserver.go L377-L378 (X-Server-Hostname header) ; version string style from crates/collectors/src/observability/testdata/victoriametrics_1.152.0.prom
+# RECONSTRUCTED from the Fprintf calls (WriteAPIHelp links condensed). Path: GET /
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+X-Server-Hostname: vm-1
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 540
+
+<h2>Single-node VictoriaMetrics</h2></br>Version victoria-metrics-20260918-101200-tags-v1.152.0-0-g1a2b3c4d<br>See docs at <a href='https://docs.victoriametrics.com/'>https://docs.victoriametrics.com/</a></br>Useful endpoints:</br><a href="vmui">vmui</a> - Web UI</br><a href="targets">targets</a> - status for scrape targets</br><a href="metrics">metrics</a> - available service metrics</br><a href="flags">flags</a> - command-line flags</br>

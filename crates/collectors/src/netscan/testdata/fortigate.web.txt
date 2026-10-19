@@ -1,0 +1,18 @@
+# source: matcher of projectdiscovery/nuclei-templates http/exposed-panels/fortinet/fortinet-fortigate-panel.yaml (GET {{BaseURL}} -> status 200 and body contains `top.location="/remote/login";`; ETag regex `"<x>-<8 hex release timestamp>"`)
+# source: Server header value "xxxxxxxx-xxxxx" from rapid7/recog xml/http_servers.xml (pattern ^xxxxxxxx-xxxxx$, "Fortinet - device unknown", FortiOS) and nuclei fortios-panel.yaml (matches header `Server: xxxxxxxx-xxxxx`)
+# note: PARTLY RECONSTRUCTED. Matched strings are real; the surrounding minimal body, Content-Type and the security headers are approximate (closed source).
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Server: xxxxxxxx-xxxxx
+Content-Type: text/html; charset=utf-8
+ETag: "5c-68e3b8f1"
+Content-Length: 92
+Connection: close
+X-Frame-Options: SAMEORIGIN
+Content-Security-Policy: frame-ancestors 'self'
+X-XSS-Protection: 1; mode=block
+Strict-Transport-Security: max-age=31536000
+
+<html><script type="text/javascript">
+top.location="/remote/login";
+</script></html>

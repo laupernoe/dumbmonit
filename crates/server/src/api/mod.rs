@@ -121,6 +121,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/collectors", get(collectors::list))
         .route("/discovery", post(discovery::scan))
         .route("/discovery/subnets", get(discovery::local_subnets))
+        .route("/discovery/jobs", get(discovery::list_jobs).post(discovery::create_job))
+        .route("/discovery/jobs/{id}", get(discovery::get_job).delete(discovery::cancel_job))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))
         .route("/targets/test", post(targets::test_connection))

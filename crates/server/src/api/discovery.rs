@@ -369,3 +369,211 @@ eth1\t0000140A\t00000000\t0001\t0\t0\t0\t0000FFFF\t0\t0\t0
         assert!(rendered.contains("<redacted>"), "{rendered}");
     }
 }
+
+// ---------------------------------------------------------- découverte v2
+
+use axum::extract::Path;
+use axum::http::StatusCode;
+use dumbmonit_collectors::netscan::{self, Cancel, ScanConfig, ScanUpdate};
+use dumbmonit_proto::{DiscoveredHost, DiscoveryScanJob, ScanDepth, ScanProgress};
+
+use crate::collectors::discovery::{self, CreateError, Job, JobSummary};
+
+/// Corps de `POST /api/discovery/jobs`.
+#[derive(Deserialize)]
+pub struct JobRequest {
+    pub cidr: String,
+    /// Agent relais qui exécute le balayage ; `None` = le serveur.
+    #[serde(default)]
+    pub agent_id: Option<dumbmonit_proto::TargetId>,
+    /// Community SNMP (secret, jamais renvoyée).
+    #[serde(default)]
+    pub snmp_community: Option<String>,
+    #[serde(default)]
+    pub depth: ScanDepth,
+}
+
+/// La community ne doit pas fuir dans une trace de requête.
+impl std::fmt::Debug for JobRequest {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("JobRequest")
+            .field("cidr", &self.cidr)
+            .field("agent_id", &self.agent_id)
+            .field("snmp_community", &self.snmp_community.as_ref().map(|_| "<redacted>"))
+            .field("depth", &self.depth)
+            .finish()
+    }
+}
+
+#[derive(Serialize)]
+pub struct JobCreated {
+    pub id: String,
+}
+
+#[derive(Serialize)]
+pub struct JobList {
+    pub jobs: Vec<JobSummary>,
+}
+
+/// `POST /api/discovery/jobs` — lance un balayage. Admin seulement.
+pub async fn create_job(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+    Json(request): Json<JobRequest>,
+) -> ApiResult<(StatusCode, Json<JobCreated>)> {
+    // Garde-fou : réseau lisible et borné à 1024 adresses (/22).
+    let hosts = netscan::hosts_of(&request.cidr).map_err(|error| match error {
+        netscan::ScanError::BadCidr(cidr) => {
+            ApiError::BadRequest(format!("Invalid network \"{cidr}\"."))
+        }
+        netscan::ScanError::TooLarge(max) => ApiError::BadRequest(format!(
+            "Network too large: {max} addresses at most. Choose a narrower prefix (/22)."
+        )),
+    })?;
+
+    let community = request.snmp_community.clone().unwrap_or_else(|| "public".to_string());
+
+    let id = match request.agent_id {
+        Some(agent_id) => {
+            let name = relay_agent_name(&state, agent_id).await?;
+            let job = DiscoveryScanJob {
+                cidr: request.cidr.clone(),
+                snmp_community: Some(community),
+                depth: request.depth,
+            };
+            let id = state
+                .discovery()
+                .start_agent(agent_id, name.clone(), request.cidr.clone(), job)
+                .map_err(busy)?;
+            discovery::log_started(&request.cidr, Some(&name));
+            id
+        }
+        None => {
+            let id =
+                state.discovery().start_local(request.cidr.clone(), hosts.len()).map_err(busy)?;
+            discovery::log_started(&request.cidr, None);
+            spawn_local_scan(
+                state.clone(),
+                id.clone(),
+                request.cidr.clone(),
+                community,
+                request.depth,
+            );
+            id
+        }
+    };
+    Ok((StatusCode::ACCEPTED, Json(JobCreated { id })))
+}
+
+fn busy(_: CreateError) -> ApiError {
+    ApiError::Conflict("A discovery scan is already running for this target.".to_string())
+}
+
+/// Nom d'un agent relais existant. 404 sinon.
+async fn relay_agent_name(state: &AppState, agent_id: i64) -> Result<String, ApiError> {
+    let hosts = crate::collectors::agent::list_hosts(&state.pool).await?;
+    hosts
+        .into_iter()
+        .find(|(id, _, _)| *id == agent_id)
+        .map(|(_, name, _)| name)
+        .ok_or_else(|| ApiError::NotFound("Unknown relay agent.".to_string()))
+}
+
+/// Lance le balayage dans une tâche de fond, met à jour le job au fil de l'eau.
+fn spawn_local_scan(
+    state: AppState,
+    id: String,
+    cidr: String,
+    community: String,
+    depth: ScanDepth,
+) {
+    let cancel = Cancel::new();
+    state.discovery().set_cancel(&id, cancel.clone());
+    tokio::spawn(async move {
+        let fingerprints = std::sync::Arc::new(state.collectors.fingerprints());
+        let config = ScanConfig { depth, community, ..ScanConfig::default() };
+        let targets = existing_targets(&state).await;
+        let (tx, mut rx) = tokio::sync::mpsc::channel::<ScanUpdate>(256);
+        let scan = {
+            let config = config.clone();
+            let cancel = cancel.clone();
+            let cidr = cidr.clone();
+            tokio::spawn(
+                async move { netscan::scan(&cidr, &config, fingerprints, tx, cancel).await },
+            )
+        };
+
+        let mut last = ScanProgress::default();
+        while let Some(update) = rx.recv().await {
+            match update {
+                ScanUpdate::Progress(progress) => {
+                    last = progress;
+                    state.discovery().update_local(&id, progress, None);
+                }
+                ScanUpdate::Host(mut host) => {
+                    discovery::annotate_host(&mut host, &targets);
+                    state.discovery().update_local(&id, last, Some(host));
+                }
+            }
+        }
+        match scan.await {
+            Ok(Ok(_)) => state.discovery().finish_local(&id, None),
+            Ok(Err(error)) => state.discovery().finish_local(&id, Some(error.to_string())),
+            Err(_) => state
+                .discovery()
+                .finish_local(&id, Some("the discovery scan stopped unexpectedly".to_string())),
+        }
+    });
+}
+
+/// Les cibles existantes, en couples `(id, adresse)`, pour rapprocher un service
+/// découvert d'une cible déjà surveillée.
+async fn existing_targets(state: &AppState) -> Vec<(dumbmonit_proto::TargetId, String)> {
+    match crate::db::targets::list(&state.pool, &state.cipher).await {
+        Ok(targets) => targets.into_iter().map(|t| (t.id, t.address)).collect(),
+        Err(error) => {
+            tracing::warn!(?error, "cannot list targets to annotate discovery results");
+            Vec::new()
+        }
+    }
+}
+
+/// `GET /api/discovery/jobs` — les vingt derniers balayages. Admin seulement.
+pub async fn list_jobs(_: AdminIdentity, State(state): State<AppState>) -> Json<JobList> {
+    Json(JobList { jobs: state.discovery().list() })
+}
+
+/// `GET /api/discovery/jobs/{id}` — un balayage complet. Admin seulement.
+pub async fn get_job(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResult<Json<Job>> {
+    state
+        .discovery()
+        .get(&id)
+        .map(Json)
+        .ok_or_else(|| ApiError::NotFound("Unknown discovery scan.".to_string()))
+}
+
+/// `DELETE /api/discovery/jobs/{id}` — annule un balayage. Admin seulement.
+pub async fn cancel_job(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+    Path(id): Path<String>,
+) -> ApiResult<StatusCode> {
+    if state.discovery().cancel(&id) {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(ApiError::NotFound("Unknown discovery scan.".to_string()))
+    }
+}
+
+/// Annote un lot d'hôtes rapporté par un agent relais, puis les range dans le
+/// job. Utilisé par le gestionnaire du canal relais (`api/relay.rs`).
+pub async fn annotate_agent_hosts(state: &AppState, hosts: &mut [DiscoveredHost]) {
+    let targets = existing_targets(state).await;
+    for host in hosts {
+        discovery::annotate_host(host, &targets);
+    }
+}

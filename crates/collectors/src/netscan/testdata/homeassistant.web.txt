@@ -1,0 +1,28 @@
+# source: https://github.com/home-assistant/frontend/blob/dev/src/html/index.html.template (title L4, meta L12-L21) ; https://github.com/home-assistant/core/blob/dev/homeassistant/components/frontend/__init__.py (IndexView L570+, text/html L676)
+# RECONSTRUCTED from the real template (condensed); Server header is the aiohttp default (https://github.com/aio-libs/aiohttp/blob/master/aiohttp/http.py L62-L64)
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Content-Length: 6150
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Server: Python/3.13 aiohttp/3.12.0
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Home Assistant</title>
+    <meta charset="utf-8" />
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+    <link rel="icon" href="/static/icons/favicon.ico" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, viewport-fit=cover, initial-scale=1" />
+    <meta name="apple-itunes-app" content="app-id=1099568401" />
+    <meta name="apple-mobile-web-app-title" content="Home Assistant">
+    <meta name="application-name" content="Home Assistant">
+    <meta name="theme-color" content="#03a9f4" />
+  </head>
+  <body>
+    <div id="ha-launch-screen">
+      <img class="ha-logo" src="/static/images/home-assistant-logo-loading.svg" alt="Home Assistant">
+    </div>
+    <home-assistant></home-assistant>
+  </body>
+</html>

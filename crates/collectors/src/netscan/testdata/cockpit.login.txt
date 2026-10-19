@@ -1,0 +1,25 @@
+# source: https://github.com/cockpit-project/cockpit/blob/main/pkg/static/login.html (<title>Loading...</title>, script cockpit/static/login.js, h1#brand) ; src/ws/cockpithandlers.c cockpit_handler_login_html (status 200, Content-Type text/html, Content-Security-Policy, Set-Cookie, no-cache) ; served over HTTPS on 9090 with a self-signed certificate
+# RECONSTRUCTED from the source (header values invented, body truncated to the head). Path: GET /
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Security-Policy: default-src 'self' 'unsafe-inline'; connect-src 'self' https://192.168.1.9:9090 wss://192.168.1.9:9090; form-action 'self'; base-uri 'self'; object-src 'none'; font-src 'self' data:; img-src 'self' data:
+Set-Cookie: cockpit=deleted; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; Secure; HttpOnly
+Cache-Control: no-cache, no-store
+Content-Length: 330
+
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Loading...</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex" />
+  <script type="text/javascript" src="cockpit/static/login.js"></script>
+  <link href="cockpit/static/login.css" type="text/css" rel="stylesheet" />
+</head>
+
+<body class="login-pf">
+  <div class="container" id="main">
+    <div class="container-body">
+      <h1 id="brand" class="hide-before"></h1>
