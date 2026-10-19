@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.11.0',
+		date: '2026-10-19',
+		highlights: [
+			{
+				title: 'Sign in with LDAP or Active Directory',
+				text: 'People sign in with their directory account on the usual sign-in page; groups map to DumbMonit roles.'
+			},
+			{
+				title: 'Pick your blocklists',
+				text: 'Mail server and IP range monitors need no API key: tick the lists to query, add your own DNSBL zones, and open MXToolbox for a second opinion.'
+			},
+			{
+				title: 'Alerts at a glance',
+				text: 'A bell with the number of active alerts now shows on each monitor, in the Monitors views and on the monitor page.'
+			},
+			{
+				title: 'A down parent hides its children',
+				text: 'When a switch or a host is down, whatever the cause, you get one alert instead of one per device behind it.'
+			},
+			{
+				title: 'Now MIT-licensed',
+				text: 'DumbMonit moves from Apache-2.0 to the MIT license. It is free and will stay free.'
+			}
+		]
+	},
+	{
 		version: '0.10.0',
 		date: '2026-10-18',
 		highlights: [
