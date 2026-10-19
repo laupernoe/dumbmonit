@@ -530,23 +530,36 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
         }
     }
 
-    // Ensemble des cibles hors ligne, déduit du cycle courant : la suppression est
-    // ainsi cohérente avec ce qu'on s'apprête à notifier, et non avec le cycle
-    // précédent. S'y ajoutent les cibles que le serveur a déjà déclarées
-    // injoignables à leur dernière sonde : un parent (ou un relais) dont l'alerte
-    // `host_down` n'est pas encore partie explique quand même la panne de ses
-    // descendants — sans cela, un relais muet ferait notifier chacun de ses
-    // équipements un cycle ou deux avant lui, le serveur tolérant plusieurs
-    // périodes de silence d'un agent avant de cesser d'écrire son `up`.
-    let mut down: HashSet<TargetId> = evaluated
-        .iter()
-        .filter(|entry| {
-            input.observations[entry.rule_index].rule.is_host_down()
-                && entry.state.phase == Phase::Firing
-        })
-        .filter_map(|entry| entry.target_id)
-        .collect();
-    down.extend(input.targets.iter().filter(|t| t.unreachable).map(|t| t.id));
+    // Cibles en panne, déduites du cycle courant : la suppression est ainsi
+    // cohérente avec ce qu'on s'apprête à notifier, et non avec le cycle
+    // précédent. S'y ajoutent les cibles que le serveur a déjà déclarées en panne
+    // à leur dernière sonde : un parent (ou un relais) dont l'alerte n'est pas
+    // encore partie explique quand même la panne de ses descendants — sans cela,
+    // un relais muet ferait notifier chacun de ses équipements un cycle ou deux
+    // avant lui, le serveur tolérant plusieurs périodes de silence d'un agent
+    // avant de cesser d'écrire son `up`, et un switch surveillé par ping verrait
+    // ses enfants sonner avant que sa propre confirmation ne soit écoulée.
+    //
+    // Deux ensembles : les injoignables (plus de mesure, délai dépassé), qui
+    // étouffent aussi leurs propres alertes secondaires, et toutes les cibles en
+    // panne quelle qu'en soit la cause — sonde de disponibilité en échec
+    // comprise —, qui masquent leurs descendants.
+    let firing_on = |down_rule: fn(&Rule) -> bool| -> HashSet<TargetId> {
+        evaluated
+            .iter()
+            .filter(|entry| {
+                down_rule(&input.observations[entry.rule_index].rule)
+                    && entry.state.phase == Phase::Firing
+            })
+            .filter_map(|entry| entry.target_id)
+            .collect()
+    };
+    let mut unreachable = firing_on(Rule::is_host_down);
+    unreachable.extend(input.targets.iter().filter(|t| t.unreachable).map(|t| t.id));
+    let mut down = firing_on(Rule::means_target_down);
+    down.extend(unreachable.iter().copied());
+    down.extend(input.targets.iter().filter(|t| t.service_down).map(|t| t.id));
+    let outages = suppress::Outages { unreachable, down };
 
     let mut alerts = Vec::with_capacity(evaluated.len());
 
@@ -554,7 +567,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
         let rule = &input.observations[entry.rule_index].rule;
 
         if let Some(suppression) =
-            suppress::suppression_for(&topology, entry.target_id, rule.is_host_down(), &down)
+            suppress::suppression_for(&topology, entry.target_id, rule.is_host_down(), &outages)
         {
             entry.state.suppressed = true;
             entry.state.suppressed_by = entry.target_id.map(|target| suppression.culprit(target));
@@ -641,7 +654,7 @@ fn history_reason(state: &AlertState, now: DateTime<Utc>) -> String {
         "learning: would have fired".to_string()
     } else if state.suppressed {
         match state.suppressed_by {
-            Some(culprit) => format!("suppressed: device {culprit} unreachable"),
+            Some(culprit) => format!("suppressed: device {culprit} down"),
             None => "suppressed by dependency".to_string(),
         }
     } else if state.silenced {
@@ -779,6 +792,7 @@ mod tests {
             tags: BTreeMap::new(),
             enabled: true,
             unreachable: false,
+            service_down: false,
         }
     }
 
@@ -1143,6 +1157,181 @@ mod tests {
         let relay = outcome.alerts.iter().find(|a| a.target_id == Some(9)).expect("relay");
         assert_eq!(relay.state.phase, Phase::Ok);
         assert!(!relay.state.suppressed);
+    }
+
+    /// Switch(1) surveillé par ping, cent équipements derrière lui, eux aussi
+    /// surveillés par ping. `service_down` vaut 1 quand la sonde échoue.
+    fn switch_et_cent_enfants() -> Vec<TargetNode> {
+        let mut targets = vec![node(1, None)];
+        targets.extend((100..200).map(|id| node(id, Some(1))));
+        targets
+    }
+
+    fn service_down_obs(failing: &[TargetId], healthy: &[TargetId]) -> RuleObservations {
+        let mut series: Vec<SeriesPoint> = failing.iter().map(|&id| point(id, 1.0)).collect();
+        series.extend(healthy.iter().map(|&id| point(id, 0.0)));
+        RuleObservations {
+            rule: rule(model::RULE_SERVICE_DOWN, RuleKind::Threshold, 0.0, 0),
+            series: Some(series),
+        }
+    }
+
+    #[test]
+    fn un_switch_dont_le_ping_tombe_masque_ses_cent_enfants() {
+        let children: Vec<TargetId> = (100..200).collect();
+        let mut failing = vec![1];
+        failing.extend(&children);
+        let mut baselines = BaselineStore::default();
+
+        let outcome = plan_cycle(
+            input(at(0), vec![service_down_obs(&failing, &[])], switch_et_cent_enfants(), vec![]),
+            &mut baselines,
+        );
+
+        let phase =
+            |p: EffectivePhase| outcome.alerts.iter().filter(|a| a.effective_phase() == p).count();
+        assert_eq!(phase(EffectivePhase::Firing), 1, "only the switch fires");
+        assert_eq!(phase(EffectivePhase::Suppressed), 100, "every child is hidden");
+        let switch = outcome.alerts.iter().find(|a| a.target_id == Some(1)).expect("switch");
+        assert!(!switch.state.suppressed, "the parent keeps its own alert");
+        assert!(
+            outcome
+                .alerts
+                .iter()
+                .filter(|a| a.target_id != Some(1))
+                .all(|a| a.state.suppressed_by == Some(1)),
+            "the switch is named as the cause"
+        );
+        assert_eq!(outcome.groups.len(), 1, "a single notification");
+        assert_eq!(outcome.groups[0].target_name, "device-1");
+    }
+
+    #[test]
+    fn un_simple_avertissement_du_parent_ne_masque_pas_ses_enfants() {
+        let cpu = rule("cpu_high", RuleKind::Threshold, 90.0, 0);
+        let disk = rule("disk_almost_full", RuleKind::Threshold, 90.0, 0);
+        let mut baselines = BaselineStore::default();
+
+        let outcome = plan_cycle(
+            input(
+                at(0),
+                vec![
+                    // Le switch souffre mais répond : processeur et disque au plafond,
+                    // sa sonde de disponibilité réussit.
+                    RuleObservations { rule: cpu, series: Some(vec![point(1, 99.0)]) },
+                    RuleObservations { rule: disk, series: Some(vec![point(1, 95.0)]) },
+                    service_down_obs(&[100, 101], &[1]),
+                ],
+                switch_et_cent_enfants(),
+                Vec::new(),
+            ),
+            &mut baselines,
+        );
+
+        assert!(outcome.alerts.iter().all(|a| !a.state.suppressed), "nothing is hidden");
+        let notified: HashSet<&str> =
+            outcome.groups.iter().map(|g| g.target_name.as_str()).collect();
+        assert_eq!(notified, HashSet::from(["device-1", "device-100", "device-101"]));
+    }
+
+    #[test]
+    fn au_retour_du_parent_les_enfants_encore_en_panne_sont_notifies() {
+        let mut baselines = BaselineStore::default();
+        let targets = vec![node(1, None), node(2, Some(1)), node(3, Some(1))];
+
+        let cycle1 = plan_cycle(
+            input(at(0), vec![service_down_obs(&[1, 2, 3], &[])], targets.clone(), Vec::new()),
+            &mut baselines,
+        );
+        assert_eq!(cycle1.groups.len(), 1, "only the parent");
+        let mut stored = to_stored(&cycle1);
+        mark_notified(&mut stored, &cycle1, at(0));
+
+        // Le switch revient ; le nas(2) est toujours muet, le serveur(3) aussi
+        // revenu.
+        let cycle2 = plan_cycle(
+            input(at(60), vec![service_down_obs(&[2], &[1, 3])], targets, stored),
+            &mut baselines,
+        );
+        let by_target = |id: TargetId| {
+            cycle2.alerts.iter().find(|a| a.target_id == Some(id)).expect("alert").clone()
+        };
+        assert_eq!(by_target(1).state.phase, Phase::Resolved);
+        let nas = by_target(2);
+        assert_eq!(nas.effective_phase(), EffectivePhase::Firing, "no longer hidden");
+        assert_eq!(nas.state.suppressed_by, None);
+        // Le serveur, jamais annoncé, se résout sans bruit.
+        assert_eq!(by_target(3).state.phase, Phase::Resolved);
+
+        let mut notified: Vec<(&str, NotifyReason)> = cycle2
+            .groups
+            .iter()
+            .flat_map(|g| g.items.iter().map(move |i| (g.target_name.as_str(), i.reason)))
+            .collect();
+        notified.sort_by_key(|(name, _)| *name);
+        assert_eq!(
+            notified,
+            vec![("device-1", NotifyReason::Resolved), ("device-2", NotifyReason::Firing)],
+            "the parent's recovery, and the child that is still down"
+        );
+    }
+
+    #[test]
+    fn la_panne_de_service_d_un_grand_parent_masque_toute_la_descendance() {
+        // box(1) → switch(2) → nas(3), et nas(4) directement sous un switch(5)
+        // sain, lui-même sous la box.
+        let targets = vec![
+            node(1, None),
+            node(2, Some(1)),
+            node(3, Some(2)),
+            node(5, Some(1)),
+            node(4, Some(5)),
+        ];
+        let mut baselines = BaselineStore::default();
+
+        let outcome = plan_cycle(
+            input(at(0), vec![service_down_obs(&[1, 2, 3, 4], &[5])], targets, Vec::new()),
+            &mut baselines,
+        );
+
+        let culprit = |id: TargetId| {
+            let alert = outcome.alerts.iter().find(|a| a.target_id == Some(id)).expect("alert");
+            alert.state.suppressed.then_some(alert.state.suppressed_by).flatten()
+        };
+        assert_eq!(culprit(1), None, "the root cause is told");
+        assert_eq!(culprit(2), Some(1));
+        assert_eq!(culprit(3), Some(2), "the nearest ancestor that is down");
+        assert_eq!(culprit(4), Some(1), "a healthy middle link does not break the chain");
+        assert_eq!(outcome.groups.len(), 1);
+        assert_eq!(outcome.groups[0].target_name, "device-1");
+    }
+
+    #[test]
+    fn un_parent_dont_la_sonde_echoue_masque_ses_enfants_avant_sa_propre_alerte() {
+        // Le switch(1) vient d'échouer : `last_error` dit « Service down », mais
+        // sa règle attend encore sa confirmation. L'enfant, lui, part tout de suite.
+        let mut switch = node(1, None);
+        switch.service_down = true;
+        let mut slow = service_down_obs(&[1], &[]);
+        slow.rule.for_duration = Duration::from_secs(180);
+        let child = RuleObservations {
+            rule: rule("child_down", RuleKind::Threshold, 0.0, 0),
+            series: Some(vec![point(2, 1.0)]),
+        };
+        let mut baselines = BaselineStore::default();
+
+        let outcome = plan_cycle(
+            input(at(0), vec![slow, child], vec![switch, node(2, Some(1))], Vec::new()),
+            &mut baselines,
+        );
+
+        let switch = outcome.alerts.iter().find(|a| a.target_id == Some(1)).expect("switch");
+        assert_eq!(switch.state.phase, Phase::Pending);
+        assert!(!switch.state.suppressed, "its own verdict does not hide the switch");
+        let child = outcome.alerts.iter().find(|a| a.target_id == Some(2)).expect("child");
+        assert_eq!(child.effective_phase(), EffectivePhase::Suppressed);
+        assert_eq!(child.state.suppressed_by, Some(1));
+        assert!(outcome.groups.is_empty());
     }
 
     #[test]
@@ -1798,7 +1987,7 @@ mod tests {
             .iter()
             .find(|entry| entry.target_id == Some(2))
             .expect("logged transition");
-        assert!(supprimee.reason.contains("unreachable"), "reason: {}", supprimee.reason);
+        assert_eq!(supprimee.reason, "suppressed: device 1 down");
     }
 
     #[test]

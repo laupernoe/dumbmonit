@@ -33,7 +33,7 @@ Chaque alerte est une machine à états, évaluée toutes les 30 secondes
 | `pending` | En construction | La condition est vraie mais le délai de maintien de la règle (`for`) ne s'est pas encore écoulé. Rien n'est envoyé. |
 | `firing` | Active | La condition a tenu assez longtemps. La première notification sort, puis des rappels toutes les `repeat_interval` (6 heures par défaut pour la plupart des règles intégrées), puis une escalade si configurée. |
 | `resolved` | Résolue | Retour à la normale. Une notification de résolution n'est envoyée que si l'activation avait été annoncée. |
-| `suppressed` | Supprimée par le parent | L'alerte est active, mais une surveillance parente, ou la surveillance elle-même, est inaccessible : voir ci-dessous. |
+| `suppressed` | Supprimée par le parent | L'alerte est active, mais une surveillance parente est en panne, ou la surveillance elle-même est inaccessible : voir ci-dessous. |
 
 `phase` est l'état du moteur ; `effective_phase` est ce que vous lisez. Une
 alerte dont `effective_phase` est `suppressed` garde `phase = firing` en
@@ -50,14 +50,28 @@ la surveillance : une règle sœur sur la même surveillance continue de parler.
 
 ## Suppression par dépendance {#dependency-suppression}
 
-N'importe quelle surveillance peut déclarer une **surveillance parente**. Quand une surveillance est inaccessible (la règle « Surveillance inaccessible » se déclenche
-sur lui), chaque alerte sur ses descendants est marquée *Supprimée par le
-parent* plutôt qu'envoyée : un commutateur qui tombe produit une
-notification, pas trente. L'ancêtre inaccessible le plus proche est nommé
-comme la cause (`suppressed_by`), et la chaîne est suivie jusqu'à 64
-niveaux.
+N'importe quelle surveillance peut déclarer une **surveillance parente**. Quand
+une surveillance est en panne, chaque alerte sur ses descendants est marquée
+*Supprimée par le parent* plutôt qu'envoyée : un commutateur qui tombe produit
+une notification, pas trente. L'ancêtre en panne le plus proche est nommé comme
+la cause (`suppressed_by`), et la chaîne est suivie jusqu'à 64 niveaux.
 
-Il en va de même pour la surveillance inaccessible elle-même : ses autres alertes
+Une surveillance est en panne quand l'une de ces alertes se déclenche sur elle,
+quelle qu'en soit la cause :
+
+- **Surveillance inaccessible** : aucune mesure du tout (un équipement SNMP qui
+  ne répond plus, un agent qui n'envoie plus) ;
+- **Service en panne** : sa vérification de disponibilité tourne mais échoue
+  (un ping avec 100 % de perte, une vérification HTTP en erreur ou en délai
+  dépassé, un port TCP fermé, etc.).
+
+Un simple avertissement sur le parent (disque plein, CPU élevé, service lent,
+certificat bientôt expiré) ne masque rien : l'équipement répond toujours, et ce
+qui se trouve derrière aussi. Le parent garde sa propre alerte et sa
+notification ; à son rétablissement, les enfants encore en panne se déclenchent
+et sont notifiés par eux-mêmes.
+
+Il en va de même pour une surveillance inaccessible elle-même : ses autres alertes
 (disque plein, CPU, etc.) sont supprimées par sa propre panne, avec
 `suppressed_by` qui le désigne lui-même, car leurs valeurs ne sont plus à jour
 et elles ne sont qu'un symptôme de la même panne. Seule son alerte « Surveillance
@@ -65,20 +79,21 @@ inaccessible » n'est jamais masquée par sa propre panne : vous êtes donc
 prévenu une fois.
 
 Réglez le parent dans le formulaire de la surveillance. Sur la page Surveillances,
-les enfants s'empilent sous leur parent et s'atténuent quand il est
-inaccessible.
+les enfants s'empilent sous leur parent et s'atténuent quand il est en panne.
 
 Un [agent relais](../install/remote-site.md) compte comme un parent de
 chaque surveillance qu'il sonde (*Atteint via* dans le formulaire de surveillance),
-en plus du parent réglé explicitement : quand le relais est inaccessible,
+en plus du parent réglé explicitement : quand le relais est en panne,
 ses surveillances sont supprimées avec le relais nommé comme la cause. À
 distance égale, le parent explicite gagne.
 
-Un parent compte aussi comme inaccessible dès que sa propre sonde le dit
-(le statut *Délai dépassé* / *Surveillance inaccessible* sur sa page), sans
-attendre que sa propre alerte « Surveillance inaccessible » se déclenche : un
-agent qui arrête d'envoyer emporte ses surveillances avec lui une minute ou
-deux avant sa propre alerte, et ils notifieraient chacun en premier sinon.
+Un parent compte aussi comme en panne dès que sa propre sonde le dit
+(le statut *Délai dépassé*, *Surveillance inaccessible* ou *Service en panne* sur
+sa page), sans attendre que son alerte se déclenche : un agent qui arrête
+d'envoyer emporte ses surveillances avec lui une minute ou deux avant sa propre
+alerte, et un commutateur dont le ping vient d'échouer masque ses enfants avant
+la fin de l'attente de « Service en panne » ; ils notifieraient chacun en
+premier sinon.
 
 ## Groupement, déduplication, rappels
 
@@ -149,7 +164,7 @@ personne ne soit spammé. Le chemin complet d'une alerte, dans l'ordre :
    se résolvent sur le champ, sans aucune notification, et l'historique
    enregistre `surveillance supprimée ou désactivée`.
 3. **Supprimer par dépendance** — les descendants d'une surveillance
-   inaccessible restent silencieux.
+   en panne restent silencieux.
 4. **Réduire au silence** — les fenêtres de maintenance réduisent au
    silence ce qu'elles couvrent.
 5. **Grouper par surveillance** — un message par surveillance par cycle, rappels

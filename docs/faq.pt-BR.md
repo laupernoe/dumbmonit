@@ -90,7 +90,8 @@ Veja [Severidades](alerting/index.md#severities).
 
 ## Um alerta está "Suprimido pelo pai" {#an-alert-is-suppressed-by-parent}
 
-O monitor tem um monitor pai inacessível, então seus próprios
+O monitor tem um monitor pai fora do ar (inacessível, ou com a verificação de
+disponibilidade falhando), então seus próprios
 alertas são retidos em vez de enviados. Corrija o pai; os alertas do filho
 se resolvem ou disparam por conta própria depois, sem uma segunda
 notificação. Veja

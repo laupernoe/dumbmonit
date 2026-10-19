@@ -24,6 +24,13 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **A parent that is down hides its children, whatever the cause.** Dependency
+  suppression used to start only when the parent was unreachable (no
+  measurement, or a probe timeout). A parent whose availability check fails —
+  a switch watched by ping with 100 % loss, a failing HTTP check — now hides
+  its descendants too: one *Service down* alert, the children shown as
+  *Suppressed by parent*. A plain warning on the parent (disk, CPU) still hides
+  nothing. The history reason now reads `suppressed: device N down`.
 - **HTTP compression.** API responses and the web interface are now served
   with brotli or gzip when the browser accepts it (`Vary: Accept-Encoding`),
   which cuts the first page load and the JSON payloads by a large factor.
