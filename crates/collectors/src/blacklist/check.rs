@@ -186,10 +186,14 @@ pub async fn run(
         .collect()
         .await;
     // Ordre stable : celui du catalogue, puis celui des sujets.
-    let rank = |list: &List| super::lists::LISTS.iter().position(|l| l.id == list.id);
+    // Les listes personnalisées viennent après le catalogue, dans l'ordre alphabétique.
+    let rank = |list: &List| {
+        super::lists::LISTS.iter().position(|l| l.id == list.id).unwrap_or(usize::MAX)
+    };
     outcomes.sort_by(|a, b| {
         rank(a.list)
             .cmp(&rank(b.list))
+            .then_with(|| a.list.id.cmp(b.list.id))
             .then_with(|| a.subject.to_string().cmp(&b.subject.to_string()))
     });
     outcomes

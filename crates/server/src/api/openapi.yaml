@@ -21,7 +21,7 @@ openapi: 3.1.0
 info:
   title: DumbMonit HTTP API
   version: "0.1"
-  summary: Monitoring from the homelab to the small business — the API the web UI uses, open to scripts and assistants.
+  summary: Monitoring from homelabs to mid-sized companies — the API the web UI uses, open to scripts and assistants.
   description: |
     Everything the DumbMonit web interface does goes through this API. It is an
     **alpha**: routes and fields may still change between releases. The
@@ -91,8 +91,8 @@ info:
 
     Full guide: <https://dumbmonit.readthedocs.io/en/latest/reference/api/>
   license:
-    name: Apache 2.0
-    identifier: Apache-2.0
+    name: MIT
+    identifier: MIT
   contact:
     name: DumbMonit
     url: https://github.com/laupernoe/dumbmonit
@@ -5854,6 +5854,30 @@ components:
           type: array
           items: { type: string }
         group: { type: string, description: "Sub-heading under \"More options\"; empty: the UI falls back to a generic key-prefix heuristic." }
+        items:
+          type: array
+          description: "Tick boxes of an `input: checklist` option. The tag holds the ticked `value`s separated by commas, `-` when none is ticked; absent means all are ticked. `default` is what a new monitor ticks."
+          items:
+            type: object
+            properties:
+              value: { type: string }
+              label: { type: string }
+              help: { type: string }
+              badges: { type: array, items: { type: string } }
+        columns:
+          type: array
+          description: "Columns of an `input: rows` option. The tag holds a JSON array of objects keyed by column `key`."
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              placeholder: { type: string }
+              input: { type: string, enum: [text, select, boolean] }
+              choices: { type: array, items: { type: string } }
+              pattern: { type: string, description: "JavaScript regular expression the text must match; empty: none." }
+              invalid: { type: string, description: Message shown when `pattern` does not match. }
+              unique: { type: boolean }
     CredentialDescription:
       type: object
       properties:

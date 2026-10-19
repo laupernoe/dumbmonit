@@ -23,6 +23,10 @@ cosign verify-blob dumbmonit-agent-linux-x86_64 \
 
 # or, with the GitHub CLI (checks the provenance attestation)
 gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+
+# or against the provenance attached to the release
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+  --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 Ein erfolgreicher Lauf gibt die Workflow-Identität und den Tag aus. Schlägt er
@@ -46,6 +50,19 @@ docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
 
 Fixieren Sie ein Image in Ihrer Compose-Datei per Digest, wenn das, was Sie
 überprüft haben, genau das sein soll, was läuft.
+
+## Nachträglich signiert {#signed-afterwards}
+
+Releases vor 0.9.0 (`v0.1.0-alpha.N`) und Dateien, die der Release-Workflow nicht selbst signiert hat (etwa `provenance.json`), erhalten ihre `<Datei>.sigstore.json` von einem eigenen, von Hand gestarteten Workflow (`.github/workflows/sign-releases.yml`). Seine Signatur besagt nur, dass die Datei zum Zeitpunkt dieses Laufs im Release lag, nicht, dass sie aus dem Tag gebaut wurde: Prüfen Sie sie gegen die Identität dieses Workflows und vergleichen Sie die Datei mit der zugehörigen `.sha256`.
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+```
+
+Diese Releases haben keine Build-Provenance: `gh attestation verify` gilt für sie nicht.
 
 ## Versions-Tags {#version-tags}
 

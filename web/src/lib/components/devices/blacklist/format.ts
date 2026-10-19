@@ -51,6 +51,17 @@ export function checkWord(check: BlacklistCheck): string {
 	}
 }
 
+/**
+ * MXToolbox's public blocklist lookup for an address or a domain. A plain
+ * link: DumbMonit never calls their API. `null` for anything that is not a
+ * single host (a CIDR range).
+ */
+export function mxtoolboxUrl(subject: string): string | null {
+	const host = subject.trim().replace(/^\[|\]$/g, '');
+	if (!host || host.includes('/') || /\s/.test(host)) return null;
+	return `https://mxtoolbox.com/SuperTool.aspx?action=${encodeURIComponent(`blacklist:${host}`)}&run=toolpage`;
+}
+
 /** Reverse DNS of a sending address, and whether it resolves back (FCrDNS). */
 export function reverseVerdict(address: BlacklistAddress): Verdict {
 	if (address.fcrdns === true) return { tone: 'signal', word: m.devicesb_blacklist_reverse_ok() };

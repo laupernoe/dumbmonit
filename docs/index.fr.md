@@ -1,6 +1,6 @@
 # DumbMonit {#dumbmonit}
 
-Une supervision simple, du homelab à la petite entreprise. Un conteneur, une adresse IP
+Une supervision simple, du homelab à l’entreprise de taille moyenne. Un conteneur, une adresse IP
 à saisir, des graphiques et des alertes utiles en moins d'une minute.
 
 !!! warning "Travaux en cours"
@@ -61,5 +61,7 @@ n'y a pas de conteneur de base de données. Un VictoriaMetrics externe peut êtr
     variables `EZYMONIT_*` et les jetons d'agent `ezym_` sont toujours acceptés. Voir
     [Mise à jour](install/docker.md#upgrading).
 
-DumbMonit est 100 % open source sous licence Apache 2.0, dépendances
-comprises : aucune fonctionnalité n'est réservée à une édition payante.
+DumbMonit est 100 % open source sous licence MIT, dépendances
+comprises : aucune fonctionnalité n'est réservée à une édition payante. DumbMonit est gratuit et le restera.
+
+DumbMonit est fourni « en l'état », sans garantie d'aucune sorte. L'auteur et les contributeurs déclinent toute responsabilité pour tout dommage, toute panne non détectée ou toute alerte non envoyée ; c'est à vous de le valider dans votre environnement.
