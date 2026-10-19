@@ -1,8 +1,9 @@
 <script lang="ts">
 	/**
-	 * Settings → Wall widgets (admins). Off by default. Five independent
-	 * widgets, each with its toggle and its few choices, and the seconds each
-	 * stays on the wall before the next:
+	 * Settings → Wall widgets (admins). Off by default. Independent widgets,
+	 * each with its toggle and its few choices, and the wall's layout: which
+	 * zone each widget sits in (top bar, bottom bar, right column, hidden), in
+	 * what order (`WallLayoutEditor`). Every widget turned on shows at once:
 	 *
 	 * - coins (CoinGecko): pick among the main ones, or add any CoinGecko id;
 	 *   display currency; an optional free Demo key;
@@ -33,6 +34,8 @@
 	} from '#lib/api/wallWidgets.js';
 	import { Button, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
 	import UnsavedBadge from './UnsavedBadge.svelte';
+	import WallLayoutEditor from './WallLayoutEditor.svelte';
+	import { resolveLayout } from '#lib/wall/layout.js';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
 
 	const MAX_COINS = 10;
@@ -67,15 +70,22 @@
 	let found = $state<WallPlace[] | null>(null);
 	let searchError = $state<string | null>(null);
 
+	/** On, off, or on but without the API key it needs: then it stays off the wall. */
+	function keyed(on: boolean, saved: boolean, typed: string | null): 'on' | 'off' | 'key' {
+		if (!on) return 'off';
+		const hasKey = typed === null ? saved : typed.trim() !== '';
+		return hasKey ? 'on' : 'key';
+	}
+
 	function adopt(saved: WallWidgetSettings) {
 		form = structuredClone({
-			rotate_seconds: saved.rotate_seconds,
 			crypto: saved.crypto,
 			weather: saved.weather,
 			stocks: saved.stocks,
 			fx: saved.fx,
 			cve: saved.cve,
-			ai: saved.ai
+			ai: saved.ai,
+			layout: resolveLayout(saved.layout)
 		});
 		symbolsText = saved.stocks.symbols.join(', ');
 		finnhubKey = null;
@@ -291,6 +301,12 @@
 	</Field>
 {/snippet}
 
+{#snippet missingKey(state: 'on' | 'off' | 'key')}
+	{#if state === 'key'}
+		<p class="text-[0.8125rem] text-warning-ink" role="status">{m.settings_widgets_key_missing()}</p>
+	{/if}
+{/snippet}
+
 {#snippet people(kind: 'claude' | 'openai')}
 	<div class="space-y-2">
 		<p class="text-sm font-medium text-ink">{m.settings_widgets_ai_people()}</p>
@@ -344,12 +360,8 @@
 			<ErrorNotice {error} onretry={() => void load()} />
 		{:else}
 			<div class="space-y-6">
-				<Field label={m.settings_widgets_rotate()} for="widgets-rotate" help={m.settings_widgets_rotate_help()}>
-					<input id="widgets-rotate" type="number" class="input max-w-32" min="5" max="300" step="1" bind:value={form.rotate_seconds} />
-				</Field>
-
 				<!-- Weather -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<div class="space-y-4">
 					{@render header('widgets-weather', m.settings_widgets_weather(), m.settings_widgets_weather_hint(), {
 						get: () => form.weather.enabled,
 						set: (v) => (form.weather.enabled = v)
@@ -500,6 +512,7 @@
 						finnhubKey,
 						(v) => (finnhubKey = v)
 					)}
+					{@render missingKey(keyed(form.stocks.enabled, hasFinnhub, finnhubKey))}
 				</div>
 
 				<!-- Exchange rates -->
@@ -580,6 +593,7 @@
 							(v) => (anthropicKey = v),
 			'ai-admin-key-claude'
 						)}
+						{@render missingKey(keyed(form.ai.claude.enabled, hasAnthropic, anthropicKey))}
 						{#if form.ai.by_person}{@render people('claude')}{/if}
 					</div>
 
@@ -597,8 +611,30 @@
 							(v) => (openaiKey = v),
 			'ai-admin-key-openai'
 						)}
+						{@render missingKey(keyed(form.ai.openai.enabled, hasOpenai, openaiKey))}
 						{#if form.ai.by_person}{@render people('openai')}{/if}
 					</div>
+				</div>
+
+				<!-- Layout -->
+				<div class="space-y-3 border-t border-line pt-5">
+					<div class="min-w-0">
+						<h3 class="text-sm font-semibold text-ink">{m.settings_widgets_layout()}</h3>
+						<p class="text-[0.8125rem] text-ink-2">{m.settings_widgets_layout_hint()}</p>
+					</div>
+					<WallLayoutEditor
+						bind:layout={form.layout}
+						disabled={saving}
+						states={{
+							weather: form.weather.enabled ? 'on' : 'off',
+							crypto: form.crypto.enabled ? 'on' : 'off',
+							stocks: keyed(form.stocks.enabled, hasFinnhub, finnhubKey),
+							fx: form.fx.enabled ? 'on' : 'off',
+							cve: form.cve.enabled ? 'on' : 'off',
+							claude: keyed(form.ai.claude.enabled, hasAnthropic, anthropicKey),
+							openai: keyed(form.ai.openai.enabled, hasOpenai, openaiKey)
+						}}
+					/>
 				</div>
 
 				<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">

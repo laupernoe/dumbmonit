@@ -10,45 +10,30 @@ display without touching your saved preference.
 ![Wall mode](../assets/screenshots/wall-light.png){ loading=lazy }
 
 Every problem on the left wears the product icon of its monitor (the same marks
-as the monitor lists). The list never outgrows its space: on a small screen, or
-with many problems, the big tiles shrink to one line each, then fold into
-*And N more*, instead of overlapping the monitors below.
+as the monitor lists). What is down comes first, then warnings, then what a
+parent masks, then what is snoozed or acknowledged; identical problems fold into
+one line with a count (*×5*). The list never outgrows its space: on a small
+screen, or with many problems, the big tiles shrink to one line each, the
+masked and snoozed ones are summed up on one line, and only then does the rest
+fold into *N more problems*, instead of overlapping the monitors below. The
+scene's pigeons, clock and boards step aside whenever they would sit under the
+text.
 
 ## News on the wall
 
-An admin can add **headlines** (with or without their pictures) and a **live
-channel** to the wall in **Settings → Wall news**. Everything is off by default.
+An admin can add **headlines** to the wall in **Settings → Wall news**. They
+are off by default.
 
-- **Headlines.** The latest headlines of the chosen feeds, each with its source
-  and age, a few at a time on a still panel in the right column under the
-  clock, refreshed every five minutes. Nothing scrolls: the panel stays for the
-  seconds chosen under *Wall widgets* (20 by default), then the next one takes
-  its place with a short fade (none under *reduced motion*). The headlines
-  share the panel with the widgets, in turn.
-- **Pictures.** An article that comes with a picture shows it on a panel of its
-  own, the column's width, with the source, age and headline over the picture;
-  the others stay headlines, so a feed without pictures still shows, and a
-  picture that does not load sends its article back to the headlines.
-- **Live video.** A muted live channel in a tile, in the right column under the
-  clock (or in the middle of the scene), small, medium or large. The tile
-  shrinks to the room left; it never covers the status.
+The latest headlines of the chosen feeds, text only, each with its source,
+refreshed every five minutes. They sit where the wall's layout puts them (the
+right column by default, see [Layout](#layout)): as many as fit, two lines at
+most each, still, nothing scrolling or taking turns. In a bar, a headline keeps
+to one line.
 
 The server reads the feeds, not the browser (browsers cannot read other sites'
 feeds). It follows at most three redirects, refuses internal addresses, gives up
 after eight seconds or 2 MB per feed, and caches the answer for five minutes
 for every wall. It reads RSS 2.0, RSS 1.0 (RDF) and Atom.
-
-An article's picture is taken from the feed: the widest `media:content` image,
-a `media:thumbnail`, an image `enclosure` (BFM TV), an Atom
-`link rel="enclosure"`, or else the first `<img>` of the article's content
-(Korben). When the feed has none and pictures are on, the server reads the
-start of the article's page once (512 KB at most, same address guard) and
-takes its `og:image`; the answer is remembered, so a page is read only once.
-The wall never loads a picture from the news site: the server relays it at
-`/api/wall/news/image/<id>`, only for articles it published, at most 6 MB,
-and only when the file really is a PNG, JPEG, GIF, WebP or AVIF image (never
-SVG). The display's address and cookies stay home, and the wall's content
-security policy still allows images from DumbMonit alone.
 
 ### Choosing sources
 
@@ -58,43 +43,36 @@ sources: up to eight feeds in all. To use any other feed, paste its RSS
 or Atom address under **Add a custom feed** and press **Test**: DumbMonit reads
 it for real and shows the latest headline before you add it.
 
-For the video, pick one of the country's channels or **Another link…** and paste
-a normal YouTube, Dailymotion or Twitch address (a video, a live, or a YouTube
-channel's `/live` page); DumbMonit converts it into the embeddable player. Only
-these three players can be shown. A live is offered as a preset only when the
-channel has a stable official one.
-
-| Country | Headlines | Live video |
-|---|---|---|
-| France | BFM TV, franceinfo, Le Monde, France 24, Korben, Next, Numerama | BFM TV, franceinfo, France 24, Euronews |
-| Switzerland | RTS Info, SRF News, Le Temps, NZZ | none |
-| Belgium | RTBF, VRT NWS, La DH | none |
-| Germany | Tagesschau, ZDFheute, Spiegel, Deutsche Welle, heise online, Golem | DW News |
-| United Kingdom | BBC News, The Guardian | Sky News |
-| United States | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
-| Canada | Radio-Canada, CBC News | CBC News |
-| Spain | RTVE, 20minutos, El País, El Mundo, Xataka | none |
-| Italy | ANSA, RaiNews, Punto Informatico | none |
-| Portugal | RTP Notícias, Público | none |
-| Brazil | G1, Folha de S.Paulo, Tecnoblog | CNN Brasil |
-| Russia | Interfax, Meduza, Kommersant, Habr | none |
-| China | CGTN, South China Morning Post, Xinhua | CGTN |
-| Tech (in English) | Hacker News, Ars Technica, The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters | none |
-| AI (in English) | OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR, NVIDIA, AWS Machine Learning | none |
-| International | Deutsche Welle, France 24, BBC News (world) | DW News, France 24 English, Euronews English |
+| Country | Headlines |
+|---|---|
+| France | BFM TV, franceinfo, Le Monde, France 24, Korben, Next, Numerama |
+| Switzerland | RTS Info, SRF News, Le Temps, NZZ |
+| Belgium | RTBF, VRT NWS, La DH |
+| Germany | Tagesschau, ZDFheute, Spiegel, Deutsche Welle, heise online, Golem |
+| United Kingdom | BBC News, The Guardian |
+| United States | NPR, PBS NewsHour, CBS News, The New York Times |
+| Canada | Radio-Canada, CBC News |
+| Spain | RTVE, 20minutos, El País, El Mundo, Xataka |
+| Italy | ANSA, RaiNews, Punto Informatico |
+| Portugal | RTP Notícias, Público |
+| Brazil | G1, Folha de S.Paulo, Tecnoblog |
+| Russia | Interfax, Meduza, Kommersant, Habr |
+| China | CGTN, South China Morning Post, Xinhua |
+| Tech (in English) | Hacker News, Ars Technica, The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters |
+| AI (in English) | OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR, NVIDIA, AWS Machine Learning |
+| International | Deutsche Welle, France 24, BBC News (world) |
 
 The BFM TV feed is `https://www.bfmtv.com/rss/news-24-7/`. The list was checked
 when it was written; a site can move its feed at any time, and then the wall
 simply skips it. **Test** the replacement and add it as a custom feed.
 
-The wall's content security policy lets the page frame only YouTube
-(`youtube-nocookie.com`), Dailymotion, Twitch, Spotify and Deezer players.
+The pictures and the live video tile of earlier versions have been removed; a
+wall saved with them simply no longer shows them.
 
 ### API
 
 `GET /api/wall/news` (what walls poll), `GET|PUT /api/wall/news/settings` and
-`POST /api/wall/news/test` (admin), `GET /api/wall/news/presets`,
-`GET /api/wall/news/image/{id}` (an article's picture, relayed).
+`POST /api/wall/news/test` (admin), `GET /api/wall/news/presets`.
 
 ## Widgets on the wall
 
@@ -104,24 +82,41 @@ latest critical vulnerabilities, and the cost and tokens of your Claude and
 OpenAI API accounts. Each one is off by default and turned on on
 its own.
 
-The **weather** is kept simple: an icon and the temperature now, for one
-place, right under the clock. No forecast, no details. A screen reader hears
-the place, the sky and the temperature; hovering it shows the same words and
-the source (Open-Meteo).
+The **weather** is kept simple: an icon, the temperature now and the place.
+No forecast, no details. A screen reader hears the place, the sky and the
+temperature.
 
-The other widgets take turns on the panel in the right column, under the
-clock, with the headlines and pictures when the news is on: one panel at a
-time, still for the chosen number of seconds (20 by default), then the next
-one with a short fade (none under *reduced motion*). A long list is cut into
-pages of the rows that fit the panel's height, so no row is ever half shown,
-and nothing scrolls.
+Every widget turned on shows **at once**, small and still: nothing takes
+turns, nothing scrolls. The widgets speak in a quieter voice than the
+monitors (smaller type, second ink): the problems stay what the wall is for.
+When a zone runs out of room, its widgets show less rather than rotate: first
+the short form (no percentages, no tags), then fewer entries with a discreet
+*+N* for the rest.
+
+### Layout
+
+Under **Settings → Wall widgets → Layout**, each widget (the headlines
+included) goes in one of four zones, in the order you choose:
+
+- **Top bar**: one thin line across the top of the wall;
+- **Bottom bar**: one thin line along the bottom, like a status bar;
+- **Right column**: light cards under the clock;
+- **Hidden**.
+
+Change a widget's zone with its menu, and its place within the zone with the
+up and down arrows (keyboard included). By default the weather, the headlines
+and the vulnerabilities sit in the right column and the prices and AI usage in
+the bottom bar. Placing a widget does not turn it on: one that is off shows
+nowhere, and the layout says *Off* next to it. The layout is saved on the
+server and applies to every wall.
 
 Rises and falls always carry an arrow and a sign (▲ +1.04 %, ▼ −0.57 %), not
-only a colour. Every card names its source, discreetly, and how fresh it is.
+only a colour. Hovering a widget names its source; a card in the right column
+says when its data is out of date.
 
 | Widget | What it shows | Source | Key | The server asks |
 |---|---|---|---|---|
-| Weather | An icon and the temperature now, for one place, under the clock | [Open-Meteo](https://open-meteo.com) (current conditions and geocoding) | none | every 15 min |
+| Weather | An icon and the temperature now, for one place | [Open-Meteo](https://open-meteo.com) (current conditions and geocoding) | none | every 15 min |
 | Crypto | Price and 24-hour change of up to ten coins, in the chosen currency | [CoinGecko](https://www.coingecko.com) public API | none (optional free Demo key) | every minute, one call |
 | Stocks | Last price and change of the day of up to ten symbols | [Finnhub](https://finnhub.io) | **free key required** | every 5 min, one call per symbol |
 | Exchange rates | What one unit (or 100 of a small currency) costs in the base currency, and its change since the previous day | [Frankfurter](https://frankfurter.dev) (central bank reference rates) | none | every hour |
@@ -228,12 +223,15 @@ Individual subscriptions (Claude Pro and Max, ChatGPT Plus) have **no usage API*
 
 ### API
 
-`GET /api/wall/widgets` (what walls poll every minute: one section per widget
-turned on, with `data`, `updated`, `error`, `needs_key`, `source`),
+`GET /api/wall/widgets` (what walls poll every minute: the `layout`, and one
+section per widget turned on, with `data`, `updated`, `error`, `needs_key`,
+`source`),
 `GET|PUT /api/wall/widgets/settings` and `GET /api/wall/widgets/places?q=`
 (admin), `GET /api/wall/widgets/catalog`. On `PUT`, `secrets.finnhub` and
 `secrets.coingecko`, `secrets.anthropic` and `secrets.openai` set a key, an
-empty string clears it, and leaving them out keeps them. The Claude and OpenAI
+empty string clears it, and leaving them out keeps them; `layout` takes the
+lists `top`, `bottom`, `right` and `hidden` (unknown ids are dropped, missing
+ones go to their default zone). The Claude and OpenAI
 sections of `GET /api/wall/widgets` carry `cost_usd`, `input_tokens`,
 `output_tokens` and, with *Show the biggest users*, a `people` list.
 

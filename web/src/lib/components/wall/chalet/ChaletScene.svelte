@@ -241,7 +241,7 @@
 
 				<!-- chalkboard with the number of problems -->
 				{#if sign}
-					<g transform="translate(330 500) rotate(-2)">
+					<g data-wall-prop transform="translate(330 500) rotate(-2)">
 						<line x1="40" y1="0" x2="130" y2="-50" stroke="var(--beam)" stroke-width="3" /><line x1="270" y1="0" x2="180" y2="-50" stroke="var(--beam)" stroke-width="3" />
 						<rect x="0" y="0" width="310" height="120" rx="6" fill="#26332f" stroke="var(--beam)" stroke-width="10" />
 						<text x="155" y="74" text-anchor="middle" font-family="'Segoe Print', 'Bradley Hand', cursive" font-size={signSize * 0.8} fill="#f1efe6" opacity=".9">{sign}</text>

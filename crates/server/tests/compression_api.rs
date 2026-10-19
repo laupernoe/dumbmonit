@@ -1,5 +1,5 @@
 //! Compression HTTP du routeur complet : le JSON de l'API est compressé quand
-//! le client l'accepte, jamais autrement. Les exclusions (images du mur, flux,
+//! le client l'accepte, jamais autrement. Les exclusions (images, flux,
 //! téléchargements, petites réponses) sont testées dans `api/mod.rs`.
 
 mod common;

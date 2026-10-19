@@ -1,3 +1,7 @@
+import type { WallLayout } from '../wall/layout';
+
+export type { WallLayout };
+
 /**
  * Types of the DumbMonit server API contract.
  *
@@ -4175,13 +4179,14 @@ export interface WallAiSettings {
 
 /** `GET|PUT /api/wall/widgets/settings` (administrators). */
 export interface WallWidgetSettings {
-	rotate_seconds: number;
 	crypto: WallCryptoSettings;
 	weather: WallWeatherSettings;
 	stocks: WallStocksSettings;
 	fx: WallFxSettings;
 	cve: WallCveSettings;
 	ai: WallAiSettings;
+	/** Where each widget goes on the wall (`wall/layout.ts`); always complete when read. */
+	layout: WallLayout;
 }
 
 /** What `GET` returns: the settings, and only whether each API key is set. */
@@ -4316,7 +4321,7 @@ export interface WallAiUsage {
 
 /** `GET /api/wall/widgets`: one section per widget turned on, `null` otherwise. */
 export interface WallWidgets {
-	rotate_seconds: number;
+	layout: WallLayout;
 	crypto: WallSection<WallCrypto> | null;
 	weather: WallSection<WallWeather> | null;
 	stocks: WallSection<WallStocks> | null;

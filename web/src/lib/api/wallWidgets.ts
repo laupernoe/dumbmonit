@@ -4,6 +4,7 @@
  * Types live in `types.ts`. Off by default.
  */
 import { request } from './client';
+import { DEFAULT_LAYOUT } from '../wall/layout';
 import type {
 	WallPlace,
 	WallWidgetCatalog,
@@ -14,7 +15,6 @@ import type {
 } from './types';
 
 export const DEFAULT_WIDGET_SETTINGS: WallWidgetSettings = {
-	rotate_seconds: 20,
 	crypto: { enabled: false, coins: ['bitcoin', 'ethereum', 'solana'], currency: 'usd' },
 	weather: { enabled: false, places: [], units: 'metric' },
 	stocks: { enabled: false, symbols: [] },
@@ -25,7 +25,8 @@ export const DEFAULT_WIDGET_SETTINGS: WallWidgetSettings = {
 		by_person: false,
 		claude: { enabled: false, people: [] },
 		openai: { enabled: false, people: [] }
-	}
+	},
+	layout: DEFAULT_LAYOUT
 };
 
 /** What the wall polls every minute. */
