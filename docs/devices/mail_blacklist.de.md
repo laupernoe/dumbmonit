@@ -6,6 +6,11 @@ Barracuda, SpamCop und einige kleinere. Für jede Liste, die eine Adresse führt
 nennt die Monitorseite den Antwortcode der Liste, ihren veröffentlichten Grund und
 einen direkten Link zu ihrer Abfrage- und Entfernungsseite.
 
+**Kein API-Schlüssel nötig.** Lassen Sie die Zugangsdaten auf „No key (recommended)“:
+Die Listen werden über den DNS-Resolver des Servers abgefragt oder über den
+Resolver, den Sie unter **Resolver** eintragen. Nur Spamhaus kann ablehnen, und nur,
+wenn dieser Resolver ein öffentlicher ist; siehe [Resolver, Ablehnungen und Zeitüberschreitungen](#resolvers-refusals-and-timeouts).
+
 Geben Sie eine Domain ein (`example.com`), und DumbMonit prüft die Adressen ihrer
 MX-Hosts (A- und AAAA-Einträge), die Adressen der Domain selbst und alle
 **Zusätzlichen Adressen**, die Sie ergänzen (ein ausgehendes Relay, das kein MX
@@ -40,9 +45,11 @@ lässt sich nicht erraten. Die Monitorseite verlinkt:
 ## Die Blocklisten {#the-blocklists}
 
 Geprüft am 16. Oktober 2026. SORBS wurde im Juni 2024 eingestellt und wird nicht
-abgefragt. Jede Liste wird nach einem `A`-Eintrag unter ihrer Zone gefragt; eine
-Liste wird durch die Id in der ersten Spalte bezeichnet, die die Option **Lists**
-annimmt, um die Prüfung einzuschränken.
+abgefragt. Jede Liste wird nach einem `A`-Eintrag unter ihrer Zone gefragt. Das
+Formular zeigt sie als Checkliste namens **Blocklists** (Name, ob sie Adressen oder
+die Domain prüft, groß oder nicht, und eine kurze Beschreibung); die **großen**
+Listen sind bei einem neuen Monitor angekreuzt. Die Id in der ersten Spalte ist das,
+was die Option `lists` speichert und wie API und Metriken die Liste nennen.
 
 | Id | Liste | Zone | Prüft | IPv6 | Groß | Nutzung und Entfernung |
 |---|---|---|---|---|---|---|
@@ -62,6 +69,23 @@ den anderen Listen einen Hinweis-Alarm. IPv6-Adressen des MX werden nur gegen
 Spamhaus ZEN geprüft, die einzige Liste hier, die für IPv6 antwortet; bei den
 anderen erscheinen sie als nicht abgedeckt.
 
+### Eigene Listen {#your-own-lists}
+
+Fügen Sie unter **Custom lists** am Ende der Checkliste die DNSBL-Zonen jeder
+anderen Liste hinzu, die Sie nutzen oder selbst betreiben (zum Beispiel
+`dnsbl.example.org`). Jede hat einen **Type**: `ip` (die Zone wird zu jeder Adresse
+gefragt, als `1.2.0.192.dnsbl.example.org`) oder `domain` (zur Mail-Domain) und einen
+Schalter **Major** für eine Liste, deren Eintrag den kritischen Alarm auslösen soll.
+Die Zone muss ein gültiger Domainname sein, keine IP-Adresse, und darf keine andere
+Zone und keine der obigen Listen wiederholen; höchstens 20 eigene Listen. Jede
+Antwort `127.x.x.x` zählt als gelistet, `NXDOMAIN` als sauber.
+
+Der Monitor fragt genau die angekreuzten Listen plus die eigenen. Ein Monitor, der
+vor diesen Optionen angelegt wurde, hat keine Einstellung und fragt weiter jede
+obige Liste. Die Option `lists` enthält die angekreuzten Ids durch Kommas getrennt
+(`-`, wenn keine angekreuzt ist) und `custom_lists` ein JSON-Array wie
+`[{"zone": "dnsbl.example.org", "subject": "ip", "major": false}]`.
+
 ## Resolver, Ablehnungen und Zeitüberschreitungen {#resolvers-refusals-and-timeouts}
 
 Die Listen werden über DNS abgefragt, und wie sie antworten, hängt davon ab,
@@ -73,8 +97,11 @@ Die Listen werden über DNS abgefragt, und wie sie antworten, hängt davon ab,
   `127.255.255.254` statt `NXDOMAIN` (`127.255.255.255`, wenn ein Resolver zu
   viele Anfragen sendet, `127.255.255.252` bei einer fehlerhaften Anfrage oder
   einem falschen DQS-Schlüssel). Das sieht aus wie ein Eintrag und ist keiner:
-  DumbMonit zeigt die Prüfung als **Konfigurationsfehler**, nie als „gelistet“,
-  und sendet keinen Ausfallalarm.
+  DumbMonit markiert die Spamhaus-Liste als **abgelehnt** („Spamhaus refuses this
+  resolver“ auf der Monitorseite), nie als „gelistet“, und die anderen Listen
+  behalten ihre Ergebnisse. Nur wenn keine andere ausgewählte Liste geantwortet hat,
+  zeigt der Monitor statt eines Ergebnisses einen **Konfigurationsfehler** (der
+  keinen Ausfallalarm sendet).
 - **URIBL und SURBL antworten `127.0.0.1`** auf Resolver, die sie ablehnen. Diese
   Liste erscheint dann als „Abgelehnt“ (unbekannt), nicht als Eintrag.
 - **Eine Liste, die nicht rechtzeitig antwortet, ist unbekannt, nie sauber.** Nur
@@ -88,11 +115,13 @@ BIND oder PowerDNS Recursor, die ab den Root-Servern auflösen (nicht an einen
 **Resolver** ein, wenn er nicht der System-Resolver ist. Pi-hole oder AdGuard Home
 vor Unbound funktioniert; vor `1.1.1.1` nicht.
 
-Oder legen Sie ein kostenloses Konto beim [Spamhaus Data Query Service](https://www.spamhaus.com/data-access/free-data-query-service/)
+Oder, nur wenn Sie auch Spamhaus wollen und den Resolver nicht ändern können, legen
+Sie ein kostenloses Konto beim [Spamhaus Data Query Service](https://www.spamhaus.com/data-access/free-data-query-service/)
 an (nichtkommerzielle Nutzung, geringes Volumen) und tragen Sie seinen Schlüssel
-als Zugangsdaten ein: Spamhaus wird dann unter `<key>.zen.dq.spamhaus.net` und
-`<key>.dbl.dq.spamhaus.net` gefragt, die über jeden Resolver antworten. Der
-Schlüssel wird verschlüsselt gespeichert und nie wieder angezeigt.
+als Zugangsdaten ein („Spamhaus DQS key (optional)“): Spamhaus wird dann unter
+`<key>.zen.dq.spamhaus.net` und `<key>.dbl.dq.spamhaus.net` gefragt, die über jeden
+Resolver antworten. Der Schlüssel wird verschlüsselt gespeichert und nie wieder
+angezeigt.
 
 ## Tempo {#pace}
 
@@ -110,20 +139,22 @@ Ergebnis wird nach zehn Minuten wiederholt.
 
 1. Geben Sie die Domain ein, für die Sie Mail versenden, zum Beispiel „example.com“: DumbMonit prüft die Adressen ihres MX und der Domain selbst. Oder geben Sie die öffentliche IP-Adresse ein, von der der Server sendet. Verlässt Mail das Netz über ein Relay, das kein MX ist, ergänzen Sie dessen Adresse unter Extra addresses.
 
-2. Nutzen Sie einen eigenen rekursiven Resolver. Spamhaus lehnt Anfragen ab, die über öffentliche Resolver (Google, Cloudflare, Quad9) oder über einen Resolver kommen, der an sie weiterleitet, und andere Listen begrenzen sie: Ein Unbound, das ab den Root-Servern auflöst, genügt. Tragen Sie seine Adresse unter Resolver ein, wenn er nicht der System-Resolver ist.
+2. Kein API-Schlüssel nötig: Lassen Sie die Zugangsdaten auf „No key“. Ohne Schlüssel werden die Blocklisten über den DNS-Resolver dieses Servers abgefragt oder über den, den Sie unter Resolver eintragen.
 
-3. Oder legen Sie ein kostenloses Konto beim Spamhaus Data Query Service an (nichtkommerzielle Nutzung, geringes Volumen) und fügen Sie seinen Schlüssel als Zugangsdaten ein: Spamhaus antwortet dann über jeden Resolver.
+3. Kreuzen Sie unter Blocklists die abzufragenden Blocklisten an (die großen sind standardmäßig angekreuzt) und ergänzen Sie unter Custom lists die DNSBL-Zonen jeder anderen Liste, die Sie nutzen.
+
+4. Nur Spamhaus kann eine Anfrage ablehnen, und nur, wenn der Resolver ein öffentlicher ist (Google, Cloudflare, Quad9) oder an einen weiterleitet. Der Monitor zeigt dann „Spamhaus refuses this resolver“, und jede andere Liste arbeitet weiter. Um auch Spamhaus zu bekommen, setzen Sie Resolver auf einen eigenen rekursiven Resolver (ein Unbound, das ab den Root-Servern auflöst, genügt) oder wählen Sie als Zugangsdaten den optionalen Spamhaus-DQS-Schlüssel: ein kostenloses Konto (nichtkommerzielle Nutzung, geringes Volumen), dessen Schlüssel Spamhaus über jeden Resolver antworten lässt.
 
     ```
     https://www.spamhaus.com/data-access/free-data-query-service/
     ```
 
-4. Um die Einrichtung zu prüfen, fügen Sie einen Monitor für 127.0.0.2 hinzu, die Testadresse, die jede Blockliste führt: Jede sollte sie als gelistet zeigen.
+5. Um die Einrichtung zu prüfen, fügen Sie einen Monitor für 127.0.0.2 hinzu, die Testadresse, die jede Blockliste führt: Jede sollte sie als gelistet zeigen.
 
-5. Gmail, Outlook.com und Yahoo veröffentlichen keine abfragbare Blockliste. DumbMonit prüft stattdessen, was sie gewichten (ein Reverse-DNS, das auf die Adresse zurückführt, SPF- und DMARC-Einträge), und verlinkt auf der Monitorseite ihre Absenderwerkzeuge.
+6. Gmail, Outlook.com und Yahoo veröffentlichen keine abfragbare Blockliste. DumbMonit prüft stattdessen, was sie gewichten (ein Reverse-DNS, das auf die Adresse zurückführt, SPF- und DMARC-Einträge), und verlinkt auf der Monitorseite ihre Absenderwerkzeuge.
 
 !!! warning
-    Eine von Spamhaus abgelehnte Antwort (127.255.255.254, ein öffentlicher Resolver) erscheint als Konfigurationsfehler, nie als Eintrag, und eine Blockliste, die nicht antwortet, als unbekannt, nie als sauber. Die Listen werden standardmäßig alle 6 Stunden gefragt: Häufigeres Fragen bringt nichts und führt zur Sperrung von Resolvern.
+    Eine von Spamhaus abgelehnte Antwort (127.255.255.254, ein öffentlicher Resolver) erscheint nie als Eintrag: Diese Liste wird als abgelehnt markiert, und die anderen behalten ihr Ergebnis. Nur wenn keine andere Liste antwortet, meldet der Monitor einen Konfigurationsfehler. Eine Blockliste, die nicht antwortet, erscheint als unbekannt, nie als sauber. Die Listen werden standardmäßig alle 6 Stunden gefragt: Häufigeres Fragen bringt nichts und führt zur Sperrung von Resolvern.
 
 ## Was beobachtet wird {#what-it-watches}
 
@@ -139,6 +170,7 @@ Alle Metriken tragen das Präfix `dumbmonit_blacklist_`.
 | `unknown_checks` | Prüfungen ohne Antwort (Zeitüberschreitung, Ablehnung) | |
 | `check` | eine Reihe pro Adresse (oder Domain) und Liste: 1 gelistet, 0 sauber, −1 keine Antwort, −2 abgelehnt, −3 nicht abgedeckt | `list`, `subject`, `state`, `code`, `meaning`, `reason` |
 | `list_checked`, `list_listed`, `list_unknown` | pro Liste: gefragte Objekte, gelistete, ohne Antwort | `list` |
+| `list_info` | Wert 1, eine Reihe pro tatsächlich abgefragter Liste (auch eigene): was die Monitorseite zeigt | `list`, `name`, `zone`, `subject`, `major` |
 | `address_info` | Wert 1, woher jede Adresse stammt | `address`, `source` (`mx`, `domain`, `input`, `extra`), `mx` |
 | `ptr_ok` | 1, wenn das Reverse-DNS auf die Adresse zurückauflöst | `address`, `ptr` |
 | `mx_hosts` | MX-Hosts der Domain | |
@@ -156,18 +188,25 @@ der Resolver keine der Anfragen beantwortet.
 ## Die Monitorseite {#the-monitor-page}
 
 Das Panel liest, was die Prüfung gespeichert hat; das Öffnen der Seite fragt nie
-eine Blockliste ab. Es zeigt die Zähler, dann jede Liste mit der Zahl der von ihr
-geführten Objekte, dann jedes Ergebnis mit dem Code der Liste, ihrem
-veröffentlichten Grund und Links zu ihren Abfrage- und Entfernungsseiten, dann das
-Reverse-DNS jeder Adresse, SPF und DMARC sowie die Absenderwerkzeuge von Gmail,
-Outlook.com und Yahoo.
+eine Blockliste ab. Es zeigt die Zähler, dann die tatsächlich abgefragten Listen (die
+angekreuzten und Ihre eigenen, jede mit der Zahl der von ihr geführten Objekte und
+„Spamhaus refuses this resolver“, wenn das zutrifft), dann jedes Ergebnis mit dem
+Code der Liste, ihrem veröffentlichten Grund und Links zu ihren Abfrage- und
+Entfernungsseiten, dann das Reverse-DNS jeder Adresse, SPF und DMARC sowie die
+Absenderwerkzeuge von Gmail, Outlook.com und Yahoo.
+
+Die Seite hat außerdem einen Link **Also check on MXToolbox**. Er öffnet in einem
+neuen Tab die öffentliche Blocklist-Abfrage von mxtoolbox.com für die überwachte
+Adresse oder Domain; DumbMonit ruft deren API nicht auf.
 
 ## Zugangsdaten {#credentials}
 
-Keine, oder ein Spamhaus-DQS-Schlüssel (siehe oben).
+Keine nötig („No key (recommended)“, die Vorgabe), oder optional ein
+Spamhaus-DQS-Schlüssel (siehe oben), der nur für Spamhaus eine Rolle spielt.
 
 Adresse: eine Domain (`example.com`) oder eine öffentliche IP-Adresse. Optionen:
-Resolver, Lists (standardmäßig alle), Extra addresses, Refresh interval (6 Stunden,
+Resolver, Blocklists (die großen sind bei einem neuen Monitor angekreuzt, bei einem
+früher angelegten alle), Custom lists, Extra addresses, Refresh interval (6 Stunden,
 von 1 bis 168), Queries per second (10, von 1 bis 50) und Timeout per query (5 s,
 von 1 bis 30). Private Adressen werden nie geprüft: Blocklisten kennen nur das
 öffentliche Internet. `127.0.0.2` wird als Testadresse akzeptiert.

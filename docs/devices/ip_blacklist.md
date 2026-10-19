@@ -29,10 +29,17 @@ range.
 ## Resolvers and pace
 
 The same rules as for [Mail server reputation](mail_blacklist.md#resolvers-refusals-and-timeouts)
-apply. Spamhaus refuses public resolvers: its refusal (`127.255.255.254`) is
-shown as a configuration error, never as a listing. A list that does not
-answer is unknown, never clean. Use a recursive resolver of your own, or a
-free Spamhaus DQS key as the credential.
+apply. **No API key is needed.** Spamhaus alone refuses public resolvers: its
+refusal (`127.255.255.254`) is never shown as a listing, the monitor page says
+"Spamhaus refuses this resolver" and the other lists keep their results. A
+list that does not answer is unknown, never clean. For Spamhaus too, use a
+recursive resolver of your own, or the optional free Spamhaus DQS key as the
+credential.
+
+The lists are the ones ticked under **Blocklists** (the major address lists
+by default) plus your own zones under **Custom lists**; see
+[Your own lists](mail_blacklist.md#your-own-lists). Domain lists do not apply
+to a range.
 
 A /24 takes close to two thousand queries. They are sent at **Queries per
 second** (10 by default), eight at most in flight, and the whole range is
@@ -44,9 +51,11 @@ minutes and runs in the background.
 
 1. Enter an IPv4 address or a CIDR range up to /24, for example "198.51.100.0/24" (256 addresses). A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation.
 
-2. Use a recursive resolver of your own, as for Mail server reputation: Spamhaus refuses public resolvers, or paste a free Spamhaus DQS key as the credential. A /24 takes close to two thousand queries, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.
+2. No API key is needed: leave the credential on No key. The blocklists are queried through this server's DNS resolver, or through the one you set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9): the monitor then shows "Spamhaus refuses this resolver" and the other lists keep working. For Spamhaus too, use a recursive resolver of your own, or the optional free Spamhaus DQS key.
 
-3. The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each.
+3. Tick the address blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list under Custom lists. A /24 takes close to two thousand queries with every address list ticked, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.
+
+4. The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each.
 
 !!! warning
     Spamhaus PBL lists end-user ranges that should not send mail directly (home connections, dynamic pools): a listing there is a policy, not an abuse report, and only matters for an address that runs a mail server.
@@ -62,10 +71,14 @@ and `list_unknown` count every address per list.
 The [built-in rules](../alerting/rules.md#dns-blocklists) that apply: Listed
 on a major blocklist and Listed on a blocklist.
 
+The monitor page has an **Also check on MXToolbox** link: for a range, next to
+each listed address, it opens the public blocklist lookup of mxtoolbox.com in
+a new tab. DumbMonit does not call their API.
+
 ## Credentials
 
-None, or a Spamhaus DQS key.
+None needed (the default), or optionally a Spamhaus DQS key.
 
 Address: an IPv4 address or a CIDR range up to /24. Options: Resolver,
-Lists (all the address lists by default), Refresh interval (6 hours),
+Blocklists (the major ones ticked on a new monitor), Custom lists, Refresh interval (6 hours),
 Queries per second (10) and Timeout per query (5 s).
