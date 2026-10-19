@@ -1193,6 +1193,22 @@
 	"devices_agentmodules_title": "Services trouvés par l’agent",
 	"devices_agentmodules_toggle": "Surveiller {name}",
 	"devices_agentmodules_waiting": "En attente de l’agent",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerte active",
+				"countPlural=other": "{count} alertes actives"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} en cours, {acked} acquittée(s), {suppressed} masquée(s) par un parent hors ligne",
 	"devices_appliance_attention": "À surveiller",
 	"devices_appliance_err_title": "Impossible de charger : {name}",
 	"devices_appliance_healthy": "En bon état",

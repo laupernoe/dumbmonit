@@ -1166,6 +1166,21 @@
 	"devices_agentmodules_title": "代理发现的服务",
 	"devices_agentmodules_toggle": "监控 {name}",
 	"devices_agentmodules_waiting": "等待代理",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条活动告警"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} 条触发中，{acked} 条已确认，{suppressed} 条因父设备离线而被屏蔽",
 	"devices_appliance_attention": "需要关注",
 	"devices_appliance_err_title": "无法加载：{name}",
 	"devices_appliance_healthy": "正常",
