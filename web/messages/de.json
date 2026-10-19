@@ -847,6 +847,9 @@
 	"deviceform_form_folder_placeholder": "Kein Ordner",
 	"deviceform_form_interval_help": "Wie oft DumbMonit diesen Monitor ausliest.",
 	"deviceform_form_interval_label": "Prüfintervall",
+	"deviceform_form_location_auto": "Automatisch (nach Standort)",
+	"deviceform_form_location_help": "Seine Position auf der Weltkarte. Automatisch: nach seinem Standort oder dem Hauptstandort.",
+	"deviceform_form_location_label": "Standort",
 	"deviceform_form_more_options": "Weitere Optionen",
 	"deviceform_form_more_settings": "Weitere {label}-Einstellungen",
 	"deviceform_form_name_help": "So erscheint es in Listen und Warnungen.",
@@ -1440,6 +1443,8 @@
 	"devices_list_bulk_enable": "Aktivieren",
 	"devices_list_bulk_folder_apply": "Verschieben",
 	"devices_list_bulk_folder_placeholder": "Name des neuen Ordners",
+	"devices_list_bulk_location": "Platzieren in",
+	"devices_list_bulk_location_auto": "Automatisch (nach Standort)",
 	"devices_list_bulk_move": "In Ordner verschieben",
 	"devices_list_bulk_no_folder": "Kein Ordner",
 	"devices_list_bulk_partial_names": "Fehlgeschlagen: {names}",
@@ -3430,6 +3435,58 @@
 	"kinds_label_webchange": "Website-Änderungen",
 	"kinds_label_website": "Website-Zustand und SEO",
 	"kinds_label_websocket": "WebSocket-Endpunkt",
+	"locations_add": "Standort hinzufügen",
+	"locations_address": "Adresse",
+	"locations_address_help": "Freitext, auf der Karte angezeigt. Optional.",
+	"locations_badge_main": "Hauptstandort",
+	"locations_badge_site": "Standort {site}",
+	"locations_basemap_attribution": "Namensnennung",
+	"locations_basemap_attribution_help": "Wird in der Kartenecke angezeigt, wie es die Lizenz der Kacheln verlangt.",
+	"locations_basemap_custom": "Eigener Kachelserver",
+	"locations_basemap_custom_hint": "Jede {z}/{x}/{y}-Kacheladresse auf einem Host (ein selbst gehosteter Server, ein Anbieter mit Schlüssel in der Adresse), mit Namensnennung.",
+	"locations_basemap_offline": "Integrierte Umrisse (offline)",
+	"locations_basemap_offline_hint": "Ländergrenzen von Natural Earth, mit DumbMonit ausgeliefert: Die Karte kontaktiert keinen Server. Standard.",
+	"locations_basemap_osm": "OpenStreetMap-Kacheln",
+	"locations_basemap_osm_hint": "Straßen und Orte. Jeder Browser, der die Karte öffnet, lädt Kacheln von tile.openstreetmap.org (die Adresse Ihrer Instanz wird als Referrer gesendet, wie es deren Nutzungsrichtlinie verlangt); „© OpenStreetMap contributors“ wird angezeigt. Für gelegentliche Nutzung geeignet, nicht für eine Wand, die den ganzen Tag auf vielen Bildschirmen läuft.",
+	"locations_basemap_save": "Hintergrund speichern",
+	"locations_basemap_saved": "Gespeichert.",
+	"locations_basemap_title": "Kartenhintergrund",
+	"locations_basemap_url": "Kacheladresse",
+	"locations_basemap_url_help": "Mit {z}, {x} und {y}; ein Host, kein {s}.",
+	"locations_cancel": "Abbrechen",
+	"locations_delete": "Löschen",
+	"locations_delete_confirm": "Löschen? Die Monitore bleiben.",
+	"locations_description": "Wo Ihre Monitore stehen, für die Weltkarte (Karte → Welt).",
+	"locations_edit": "Bearbeiten",
+	"locations_edit_named": "{name} bearbeiten",
+	"locations_edit_title": "{name} bearbeiten",
+	"locations_err_basemap": "Der Hintergrund wurde nicht gespeichert",
+	"locations_err_delete": "Der Standort wurde nicht gelöscht",
+	"locations_err_load": "Standorte konnten nicht geladen werden",
+	"locations_err_name": "Geben Sie dem Standort einen Namen.",
+	"locations_err_save": "Der Standort wurde nicht gespeichert",
+	"locations_err_spot": "Wählen Sie eine Position: einen gefundenen Ort, Koordinaten (Breite −90 bis 90, Länge −180 bis 180) oder einen Klick auf die Karte.",
+	"locations_latitude": "Breitengrad",
+	"locations_longitude": "Längengrad",
+	"locations_main": "Hauptstandort",
+	"locations_main_help": "Sammelt alle Monitore ohne entfernten Standort. Höchstens ein Standort.",
+	"locations_name": "Name",
+	"locations_new_title": "Neuer Standort",
+	"locations_none": "Noch kein Standort. Fügen Sie einen hinzu: Ein Standort, der für einen Topologie-Standort steht, oder der Hauptstandort sammelt seine Monitore von selbst.",
+	"locations_none_found": "Kein Ort mit diesem Namen.",
+	"locations_pick_help": "Oder klicken Sie auf der Karte an die Stelle des Standorts.",
+	"locations_pick_here": "Gewählte Position",
+	"locations_pick_label": "Karte zur Wahl der Position des Standorts",
+	"locations_save": "Standort speichern",
+	"locations_search": "Ort suchen",
+	"locations_search_find": "Suchen",
+	"locations_search_help": "Eine Stadt oder ein Dorf. Der Server fragt die Geokodierung von Open-Meteo; Sie können auch Koordinaten eingeben oder auf die Karte klicken.",
+	"locations_searching": "Suche…",
+	"locations_site": "Steht für Standort",
+	"locations_site_help": "Jeder Monitor dieses Topologie-Standorts (site-Tag, Agent oder Relay) landet hier, außer er wurde von Hand anders platziert.",
+	"locations_site_none": "Keiner",
+	"locations_title": "Standorte",
+	"locations_use_place": "{place} verwenden",
 	"metrics_title_website_blank": "Leere Seite",
 	"metrics_title_website_canonical_changed": "Canonical geändert",
 	"metrics_title_website_description_changed": "Beschreibung geändert",
@@ -5473,6 +5530,7 @@
 	"settings_search_kw_assistant": "api Token mcp KI Assistent claude chatgpt",
 	"settings_search_kw_backup": "Sicherung exportieren wiederherstellen Konfiguration",
 	"settings_search_kw_incidents": "Vorfall Ankündigung Wartung Ausfall öffentlich",
+	"settings_search_kw_locations": "weltkarte standorte orte koordinaten openstreetmap kacheln",
 	"settings_search_kw_music": "Musik spotify Lautsprecher Wand",
 	"settings_search_kw_news": "Nachrichten Schlagzeilen rss Feeds Wand",
 	"settings_search_kw_notifications": "Kanäle discord E-Mail ntfy telegram Ruhezeiten Statusseite",
@@ -6657,5 +6715,54 @@
 	"whatsnew_dialog_notes": "Vollständige Versionshinweise",
 	"whatsnew_dialog_ok": "Verstanden",
 	"whatsnew_dialog_title": "Neu in v{version}",
-	"whatsnew_dialog_updated": "Aktualisiert · {date}"
+	"whatsnew_dialog_updated": "Aktualisiert · {date}",
+	"worldmap_detail_back": "Zurück zu allen Standorten",
+	"worldmap_detail_empty": "Noch kein Monitor an diesem Standort.",
+	"worldmap_edit_locations": "Standorte bearbeiten",
+	"worldmap_empty_action": "Standort hinzufügen",
+	"worldmap_empty_body": "Fügen Sie Ihre Standorte unter Einstellungen → Überwachung → Standorte hinzu: Jeder wird zu einer Markierung mit dem Zustand seiner Monitore.",
+	"worldmap_empty_title": "Noch kein Standort",
+	"worldmap_err_load": "Standorte konnten nicht geladen werden",
+	"worldmap_list_title": "Standorte",
+	"worldmap_map_failed": "Die Karte konnte nicht geladen werden. Laden Sie die Seite neu, um es erneut zu versuchen.",
+	"worldmap_map_label": "Weltkarte der Standorte",
+	"worldmap_monitors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Monitor",
+				"countPlural=other": "{count} Monitore"
+			}
+		}
+	],
+	"worldmap_pin_label": "{name}: {verdict}, {monitors}",
+	"worldmap_source_main": "Hauptstandort",
+	"worldmap_source_site": "über Standort {site}",
+	"worldmap_unplaced": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Monitor hat keinen Standort.",
+				"countPlural=other": "{count} Monitore haben keinen Standort."
+			}
+		}
+	],
+	"worldmap_verdict_down": "Ausgefallen",
+	"worldmap_verdict_empty": "Kein Monitor",
+	"worldmap_verdict_idle": "Nicht abgefragt",
+	"worldmap_verdict_ok": "Alles in Ordnung",
+	"worldmap_verdict_warn": "Prüfen",
+	"worldmap_view_world": "Welt"
 }

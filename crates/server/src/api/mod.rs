@@ -16,6 +16,7 @@ mod ingest;
 mod integrations;
 mod kuma_import;
 mod ldap;
+pub mod locations;
 mod mcp;
 mod metrics;
 mod music;
@@ -161,6 +162,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).
         .merge(topology::routes())
+        // Emplacements et carte du monde (`locations.rs`).
+        .merge(locations::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
@@ -503,8 +506,11 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
         }
         false => {
             headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
+            // Les tuiles de la carte du monde, quand un fond en ligne est
+            // choisi : une seule origine, validée à l'enregistrement.
+            let tiles = locations::tile_origin().map(|o| format!(" {o}")).unwrap_or_default();
             format!(
-                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}; \
+                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}{tiles}; \
                  frame-src {CSP_MUSIC_FRAME_SRC}; \
                  script-src 'self' 'nonce-{nonce}' {CSP_MUSIC_SCRIPT_SRC}; \
                  frame-ancestors 'none'"

@@ -29,6 +29,8 @@ mod http;
 mod stocks;
 mod weather;
 
+pub(crate) use weather::Place;
+
 use std::sync::LazyLock;
 use std::time::Duration;
 
@@ -431,19 +433,22 @@ async fn places(
     AdminIdentity(_): AdminIdentity,
     Query(query): Query<PlaceQuery>,
 ) -> ApiResult<Json<Vec<weather::Place>>> {
-    let q = query.q.trim();
+    Ok(Json(search_places(&query.q, query.lang.as_deref()).await?))
+}
+
+/// Recherche de lieu par le géocodage d'Open-Meteo, partagée avec les
+/// emplacements de la carte du monde (`api/locations.rs`).
+pub(crate) async fn search_places(q: &str, lang: Option<&str>) -> ApiResult<Vec<Place>> {
+    let q = q.trim();
     if !(2..=80).contains(&q.chars().count()) {
         return Err(ApiError::BadRequest("Type at least two letters.".into()));
     }
-    let lang = query
-        .lang
-        .as_deref()
+    let lang = lang
         .map(|l| l.split(['-', '_']).next().unwrap_or("en").to_ascii_lowercase())
         .filter(|l| l.len() == 2 && l.bytes().all(|b| b.is_ascii_lowercase()))
         .unwrap_or_else(|| "en".into());
     let client = http::client().map_err(ApiError::BadGateway)?;
-    let found = weather::search(&client, q, &lang).await.map_err(ApiError::BadGateway)?;
-    Ok(Json(found))
+    weather::search(&client, q, &lang).await.map_err(ApiError::BadGateway)
 }
 
 // ------------------------------------------------------------------- le mur
