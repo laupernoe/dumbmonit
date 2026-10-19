@@ -8,6 +8,8 @@ ausdrücklich („Alle Systeme laufen“).
 Drei Wege, es einzubinden, vom einfachsten bis zum am besten kontrollierbaren. Kopierfertige
 Dateien liegen im Ordner `integrations/` des Repositorys.
 
+In DumbMonit öffnen Sie die Einstellungen der Statusseite (Statusseiten, Bearbeiten): Der Abschnitt **Statusbanner für Ihre Website** ganz unten enthält die fertig ausgefüllten HTML- und PHP-Snippets mit Kopieren-Schaltfläche, einen Link zu dieser Seite und eine Schaltfläche zum Herunterladen des WordPress-Plugins als `.zip` zum direkten Hochladen.
+
 ## HTML-Snippet {#html-snippet}
 
 Fügen Sie dies vor `</body>` ein, mit Ihrer Serveradresse und der Adresse der Seite:

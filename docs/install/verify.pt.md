@@ -25,6 +25,10 @@ cosign verify-blob dumbmonit-agent-linux-x86_64 \
 
 # or, with the GitHub CLI (checks the provenance attestation)
 gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit
+
+# or against the provenance attached to the release
+gh attestation verify dumbmonit-agent-linux-x86_64 -R laupernoe/dumbmonit \
+  --bundle dumbmonit-agent.intoto.jsonl
 ```
 
 Uma execução bem-sucedida imprime a identidade do fluxo de trabalho e a
@@ -48,6 +52,19 @@ docker buildx imagetools inspect ghcr.io/laupernoe/dumbmonit:0.9.0 \
 
 Fixe uma imagem pelo digest no seu ficheiro Compose se quiser que o que
 verificou seja exatamente o que corre.
+
+## Assinados posteriormente {#signed-afterwards}
+
+As versões anteriores à 0.9.0 (`v0.1.0-alpha.N`), e os ficheiros que o workflow de publicação não assinou ele próprio (como `provenance.json`), recebem o seu `<ficheiro>.sigstore.json` de um workflow separado, executado manualmente (`.github/workflows/sign-releases.yml`). A sua assinatura diz apenas que o ficheiro estava na versão quando esse workflow correu, não que foi compilado a partir da tag: verifique-a com a identidade desse workflow e compare o ficheiro com o `.sha256` que o acompanha.
+
+```sh
+cosign verify-blob dumbmonit-agent-linux-x86_64 \
+  --bundle dumbmonit-agent-linux-x86_64.sigstore.json \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  --certificate-identity-regexp '^https://github.com/laupernoe/dumbmonit/\.github/workflows/sign-releases\.yml@refs/heads/(main|dev)$'
+```
+
+Estas versões não têm proveniência de compilação: `gh attestation verify` não se aplica a elas.
 
 ## Etiquetas de versão {#version-tags}
 
