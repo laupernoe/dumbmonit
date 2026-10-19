@@ -81,8 +81,11 @@
 		Search,
 		SlidersHorizontal,
 		Trash2,
-		Upload
+		Upload,
+		MapPin
 	} from 'lucide-svelte';
+	import { assignLocation, listLocations } from '#lib/api/locations.js';
+	import type { MapLocation } from '#lib/api/types.js';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
@@ -545,6 +548,33 @@
 			(t) => updateTarget(t.id, targetToPayload(t, { group_name: group }))
 		);
 	const bulkDelete = () => bulk(selectedTargets, (t) => deleteTarget(t.id));
+
+	// Locations of the world map, offered in bulk once selecting starts.
+	let bulkLocations = $state<MapLocation[]>([]);
+	$effect(() => {
+		if (!selecting) return;
+		const controller = new AbortController();
+		listLocations(controller.signal)
+			.then((found) => (bulkLocations = found.locations))
+			.catch(() => (bulkLocations = []));
+		return () => controller.abort();
+	});
+	/** One request for the whole selection: the server places them all at once. */
+	async function bulkPlace(location: number | null) {
+		const subjects = selectedTargets;
+		if (bulkBusy || subjects.length === 0) return;
+		bulkBusy = true;
+		bulkReport = null;
+		try {
+			await assignLocation(location, subjects.map((t) => t.id));
+			await alertsStore.refresh();
+			selected = new Set();
+		} catch (error) {
+			bulkReport = { failed: subjects.map((t) => ({ name: t.name, error })), total: subjects.length };
+		} finally {
+			bulkBusy = false;
+		}
+	}
 
 	async function persistOrder(order: TargetId[]) {
 		const prev = new Map(positionOverride);
@@ -1241,6 +1271,32 @@
 					</form>
 				{/snippet}
 			</Menu>
+			{#if bulkLocations.length > 0}
+				<Menu label={m.devices_list_bulk_location()} align="left" placement="up">
+					{#snippet trigger({ toggle, open })}
+						<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} aria-haspopup="menu" aria-expanded={open} onclick={toggle}>
+							<MapPin class="size-4" aria-hidden="true" />
+							{m.devices_list_bulk_location()}
+						</Button>
+					{/snippet}
+					{#snippet children({ close })}
+						<ul class="flex max-h-72 min-w-48 flex-col gap-0.5 overflow-y-auto">
+							<li>
+								<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkPlace(null); }}>
+									{m.devices_list_bulk_location_auto()}
+								</button>
+							</li>
+							{#each bulkLocations as location (location.id)}
+								<li>
+									<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkPlace(location.id); }}>
+										{location.name}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/snippet}
+				</Menu>
+			{/if}
 			<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy || selectedTargets.length === 0} onconfirm={bulkDelete}>
 				<Trash2 class="size-4" aria-hidden="true" />
 				{m.devices_list_bulk_delete()}

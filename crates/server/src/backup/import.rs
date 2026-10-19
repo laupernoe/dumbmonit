@@ -117,6 +117,7 @@ pub async fn restore(
     report.push(restore_targets(&mut tx, cipher, bundle).await?);
 
     let refs = target_ids(&mut tx).await?;
+    report.push(restore_locations(&mut tx, bundle, &refs).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
     let channels = channel_ids(&mut tx).await?;
@@ -1417,6 +1418,90 @@ async fn restore_push_monitors(
 /// autre version que celui qui a écrit le lot. Un paquet identique (même
 /// empreinte) est laissé tel quel ; un paquet différent remplace l'installé,
 /// son état activé ou non compris. Les règles viennent de la section `rules`.
+/// Emplacements, par nom (sans casse) : identique, laissé ; différent, mis à
+/// jour. Puis les affectations des équipements du lot, qui ne comptent pas
+/// comme des changements de la section : elles suivent les équipements.
+async fn restore_locations(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("locations");
+    for entry in &bundle.locations {
+        let name = entry.name.trim();
+        let valid = !name.is_empty()
+            && entry.latitude.is_finite()
+            && (-90.0..=90.0).contains(&entry.latitude)
+            && entry.longitude.is_finite()
+            && (-180.0..=180.0).contains(&entry.longitude);
+        if !valid {
+            report.skipped += 1;
+            report.notes.push(format!("location \"{name}\" has no valid name or coordinates"));
+            continue;
+        }
+        let existing = sqlx::query(
+            "SELECT id, address, latitude, longitude, site, main_site FROM locations
+             WHERE name = ? COLLATE NOCASE",
+        )
+        .bind(name)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche de l'emplacement")?;
+        if let Some(row) = &existing
+            && row.try_get::<String, _>("address")? == entry.address
+            && row.try_get::<f64, _>("latitude")? == entry.latitude
+            && row.try_get::<f64, _>("longitude")? == entry.longitude
+            && row.try_get::<String, _>("site")? == entry.site
+            && (row.try_get::<i64, _>("main_site")? != 0) == entry.main_site
+        {
+            report.skipped += 1;
+            continue;
+        }
+        if entry.main_site {
+            sqlx::query("UPDATE locations SET main_site = 0 WHERE name != ? COLLATE NOCASE")
+                .bind(name)
+                .execute(&mut **tx)
+                .await
+                .context("site principal")?;
+        }
+        let result = sqlx::query(
+            "INSERT INTO locations (name, address, latitude, longitude, site, main_site)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT(name) DO UPDATE SET address = excluded.address,
+                 latitude = excluded.latitude, longitude = excluded.longitude,
+                 site = excluded.site, main_site = excluded.main_site",
+        )
+        .bind(name)
+        .bind(&entry.address)
+        .bind(entry.latitude)
+        .bind(entry.longitude)
+        .bind(&entry.site)
+        .bind(entry.main_site)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) if existing.is_some() => report.count(RestoreOutcome::Updated),
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused(&format!("location \"{name}\""), &error.into()),
+        }
+    }
+    for target in &bundle.targets {
+        let Some(location) = target.location.as_deref() else { continue };
+        let Some(id) = refs.get(&target_ref(&target.kind, &target.address)) else { continue };
+        sqlx::query(
+            "UPDATE targets SET location_id =
+                 (SELECT id FROM locations WHERE name = ? COLLATE NOCASE)
+             WHERE id = ?",
+        )
+        .bind(location)
+        .bind(id)
+        .execute(&mut **tx)
+        .await
+        .context("emplacement d'un équipement")?;
+    }
+    Ok(report)
+}
+
 async fn restore_packs(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Result<SectionReport> {
     let mut report = SectionReport::new("packs");
     for entry in &bundle.packs {

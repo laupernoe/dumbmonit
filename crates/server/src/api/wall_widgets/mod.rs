@@ -14,6 +14,9 @@
 //! laisse sa dernière valeur à l'écran quelques heures, puis le widget dit
 //! « indisponible » ; jamais un mur cassé.
 //!
+//! La disposition du mur ([`layout`]) — quel widget dans quelle zone, dans quel
+//! ordre — est rangée avec eux et revient avec les données du mur.
+//!
 //! Les réglages vivent dans la table `settings` (clé `wall.widgets`) ; les clés
 //! d'API (Finnhub, CoinGecko, clés admin Anthropic et OpenAI) y sont chiffrées
 //! sous leur propre clé et ne reviennent jamais : `has_*_key` seulement. Tout
@@ -26,8 +29,11 @@ mod coins;
 mod cve;
 mod fx;
 mod http;
+pub mod layout;
 mod stocks;
 mod weather;
+
+pub(crate) use weather::Place;
 
 use std::sync::LazyLock;
 use std::time::Duration;
@@ -187,26 +193,26 @@ impl Default for AiSettings {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct WidgetSettings {
-    /// Secondes passées sur chaque widget avant le suivant.
-    pub rotate_seconds: u32,
+    // L'ancien `rotate_seconds` (les widgets tournaient) est ignoré à la lecture.
     pub crypto: CryptoSettings,
     pub weather: WeatherSettings,
     pub stocks: StocksSettings,
     pub fx: FxSettings,
     pub cve: CveSettings,
     pub ai: AiSettings,
+    pub layout: layout::Layout,
 }
 
 impl Default for WidgetSettings {
     fn default() -> Self {
         Self {
-            rotate_seconds: 20,
             crypto: CryptoSettings::default(),
             weather: WeatherSettings::default(),
             stocks: StocksSettings::default(),
             fx: FxSettings::default(),
             cve: CveSettings::default(),
             ai: AiSettings::default(),
+            layout: layout::Layout::default().resolve(),
         }
     }
 }
@@ -242,7 +248,9 @@ pub struct SettingsInput {
 }
 
 async fn load(state: &AppState) -> anyhow::Result<WidgetSettings> {
-    Ok(settings::get(&state.pool, SETTINGS_KEY).await?.unwrap_or_default())
+    let mut s: WidgetSettings = settings::get(&state.pool, SETTINGS_KEY).await?.unwrap_or_default();
+    s.layout = std::mem::take(&mut s.layout).resolve();
+    Ok(s)
 }
 
 async fn secret(state: &AppState, key: &str) -> Option<String> {
@@ -312,9 +320,7 @@ fn dedupe(values: &mut Vec<String>) {
 
 /// Nettoie et valide les réglages reçus.
 pub fn validate(s: &mut WidgetSettings) -> Result<(), String> {
-    if !(5..=300).contains(&s.rotate_seconds) {
-        return Err("Each widget stays between 5 and 300 seconds.".into());
-    }
+    s.layout = std::mem::take(&mut s.layout).resolve();
 
     let crypto = &mut s.crypto;
     crypto.coins.iter_mut().for_each(|c| *c = c.trim().to_ascii_lowercase());
@@ -431,19 +437,22 @@ async fn places(
     AdminIdentity(_): AdminIdentity,
     Query(query): Query<PlaceQuery>,
 ) -> ApiResult<Json<Vec<weather::Place>>> {
-    let q = query.q.trim();
+    Ok(Json(search_places(&query.q, query.lang.as_deref()).await?))
+}
+
+/// Recherche de lieu par le géocodage d'Open-Meteo, partagée avec les
+/// emplacements de la carte du monde (`api/locations.rs`).
+pub(crate) async fn search_places(q: &str, lang: Option<&str>) -> ApiResult<Vec<Place>> {
+    let q = q.trim();
     if !(2..=80).contains(&q.chars().count()) {
         return Err(ApiError::BadRequest("Type at least two letters.".into()));
     }
-    let lang = query
-        .lang
-        .as_deref()
+    let lang = lang
         .map(|l| l.split(['-', '_']).next().unwrap_or("en").to_ascii_lowercase())
         .filter(|l| l.len() == 2 && l.bytes().all(|b| b.is_ascii_lowercase()))
         .unwrap_or_else(|| "en".into());
     let client = http::client().map_err(ApiError::BadGateway)?;
-    let found = weather::search(&client, q, &lang).await.map_err(ApiError::BadGateway)?;
-    Ok(Json(found))
+    weather::search(&client, q, &lang).await.map_err(ApiError::BadGateway)
 }
 
 // ------------------------------------------------------------------- le mur
@@ -477,7 +486,8 @@ impl<T> Section<T> {
 
 #[derive(Debug, Serialize)]
 pub struct WallWidgets {
-    pub rotate_seconds: u32,
+    /// Où va chaque widget, toujours complète (voir [`layout`]).
+    pub layout: layout::Layout,
     pub crypto: Option<Section<coins::CryptoData>>,
     pub weather: Option<Section<weather::WeatherData>>,
     pub stocks: Option<Section<stocks::StocksData>>,
@@ -628,7 +638,7 @@ async fn widgets(
 ) -> ApiResult<Json<WallWidgets>> {
     let s = load(&state).await?;
     let mut reply = WallWidgets {
-        rotate_seconds: s.rotate_seconds,
+        layout: s.layout.clone(),
         crypto: None,
         weather: None,
         stocks: None,
@@ -736,7 +746,6 @@ mod tests {
             change(&mut s);
             validate(&mut s).unwrap_err()
         };
-        assert!(bad(|s| s.rotate_seconds = 2).contains("seconds"));
         assert!(bad(|s| s.crypto.coins = vec!["a&b".into()]).contains("CoinGecko"));
         assert!(bad(|s| s.crypto.currency = "xyz".into()).contains("currency"));
         assert!(bad(|s| s.weather.enabled = true).contains("place"));
@@ -761,6 +770,16 @@ mod tests {
             }])
             .contains("coordinates")
         );
+    }
+
+    #[test]
+    fn old_settings_still_read_and_get_a_full_layout() {
+        let stored = r#"{"rotate_seconds":20,"crypto":{"enabled":true,"coins":["bitcoin"],"currency":"usd"}}"#;
+        let mut s: WidgetSettings = serde_json::from_str(stored).unwrap();
+        validate(&mut s).unwrap();
+        assert!(s.crypto.enabled);
+        assert_eq!(s.layout, layout::Layout::default().resolve());
+        assert!(!serde_json::to_string(&s).unwrap().contains("rotate_seconds"));
     }
 
     #[test]

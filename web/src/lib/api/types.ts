@@ -1,3 +1,7 @@
+import type { WallLayout } from '../wall/layout';
+
+export type { WallLayout };
+
 /**
  * Types of the DumbMonit server API contract.
  *
@@ -120,6 +124,8 @@ export interface Target {
 	group_name: string;
 	/** Manual rank, tiebreaking only within the same state and folder. */
 	position: number;
+	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
+	location_id: LocationId | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
@@ -139,6 +145,8 @@ export interface TargetPayload {
 	tags?: Record<string, string>;
 	/** Flat folder shown on `/targets`. Absent or empty: no folder. */
 	group_name?: string;
+	/** Location on the world map; `null`: none. Absent on edit keeps it. */
+	location_id?: LocationId | null;
 	credential?: Credential;
 }
 
@@ -2047,6 +2055,116 @@ export interface Topology {
 	edges: TopologyEdge[];
 	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
 	metrics_available: boolean;
+}
+
+// --- World map locations (`api/locations.rs`) ---------------------------------
+
+export type LocationId = number;
+
+/** How a device came to a location: its assignment, its site, or the main site. */
+export type LocationSource = 'assigned' | 'site' | 'main';
+
+export interface LocationMember {
+	target_id: TargetId;
+	source: LocationSource;
+}
+
+/** One location. Mirrors `LocationView`. */
+export interface MapLocation {
+	id: LocationId;
+	name: string;
+	/** Free text, shown only. */
+	address: string;
+	latitude: number;
+	longitude: number;
+	/** Topology site this location stands for; empty: none. */
+	site: string;
+	/** Gathers the devices with no remote site. */
+	main_site: boolean;
+	members: LocationMember[];
+}
+
+/** `GET /api/locations`. Mirrors `LocationsView`. */
+export interface Locations {
+	locations: MapLocation[];
+	/** Remote sites the topology map knows. */
+	sites: string[];
+	/** Devices no location gathers. */
+	unplaced: TargetId[];
+}
+
+/** Body of `POST /api/locations` and `PUT /api/locations/{id}`. */
+export interface LocationPayload {
+	name: string;
+	address: string;
+	latitude: number;
+	longitude: number;
+	site: string;
+	main_site: boolean;
+}
+
+export type BasemapMode = 'offline' | 'osm' | 'custom';
+
+/** `GET|PUT /api/locations/basemap`. Mirrors `Basemap`. */
+export interface Basemap {
+	mode: BasemapMode;
+	url: string;
+	attribution: string;
+}
+
+// --- OPNsense live map (`api/opnsense_live.rs`) and IP geolocation ------------
+
+/** `GET|PUT /api/geoip`. Mirrors `GeoStatus`. */
+export interface GeoipStatus {
+	enabled: boolean;
+	state: 'ready' | 'loading' | 'missing' | 'failed' | 'disabled';
+	/** Month of the loaded database (`2026-10`). */
+	month: string | null;
+	ranges: number;
+	error: string | null;
+	source: string;
+	source_url: string;
+}
+
+export interface OpnsenseLiveTally {
+	blocked: number;
+	passed: number;
+	other: number;
+}
+
+/** One connection, reduced: never an address. Mirrors `LiveEvent`. */
+export interface OpnsenseLiveEvent {
+	seq: number;
+	/** Unix seconds. */
+	at: number;
+	action: 'block' | 'pass' | 'other';
+	/** From the local network out. */
+	outbound: boolean;
+	/** `CH`, `local` or `unknown`. */
+	country: string;
+	proto: string;
+	port: number | null;
+	rule: string;
+}
+
+/** `GET /api/targets/{id}/opnsense/live`. Mirrors `LiveView`. */
+export interface OpnsenseLive {
+	/** False while the monitor's `live_map` option is off. */
+	enabled: boolean;
+	/** Polled through a relay agent: the server cannot read the log itself. */
+	relayed: boolean;
+	window_secs: number;
+	polled_at: number | null;
+	error: string | null;
+	totals: OpnsenseLiveTally;
+	countries: (OpnsenseLiveTally & { code: string })[];
+	rules: { rule: string; action: 'block' | 'pass' | 'other'; count: number }[];
+	ports: { proto: string; port: number; count: number }[];
+	recent: OpnsenseLiveEvent[];
+	seq: number;
+	/** Where the firewall sits on the world map, when it has a location. */
+	firewall: { name: string; latitude: number; longitude: number } | null;
+	geoip: GeoipStatus;
 }
 
 // --- Two-factor authentication (TOTP) and audit log ---------------------------
@@ -4175,13 +4293,14 @@ export interface WallAiSettings {
 
 /** `GET|PUT /api/wall/widgets/settings` (administrators). */
 export interface WallWidgetSettings {
-	rotate_seconds: number;
 	crypto: WallCryptoSettings;
 	weather: WallWeatherSettings;
 	stocks: WallStocksSettings;
 	fx: WallFxSettings;
 	cve: WallCveSettings;
 	ai: WallAiSettings;
+	/** Where each widget goes on the wall (`wall/layout.ts`); always complete when read. */
+	layout: WallLayout;
 }
 
 /** What `GET` returns: the settings, and only whether each API key is set. */
@@ -4316,7 +4435,7 @@ export interface WallAiUsage {
 
 /** `GET /api/wall/widgets`: one section per widget turned on, `null` otherwise. */
 export interface WallWidgets {
-	rotate_seconds: number;
+	layout: WallLayout;
 	crypto: WallSection<WallCrypto> | null;
 	weather: WallSection<WallWeather> | null;
 	stocks: WallSection<WallStocks> | null;

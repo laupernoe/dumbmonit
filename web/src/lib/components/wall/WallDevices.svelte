@@ -89,6 +89,11 @@
 	});
 	const shown = $derived(fits === Infinity ? chips : chips.slice(0, fits));
 	const more = $derived(chips.length - shown.length);
+	/** Hidden chips in trouble: the count never says "all reporting" when some are not. */
+	const moreTrouble = $derived(chips.slice(shown.length).filter((chip) => chip.tone !== 'signal').length);
+	const moreText = $derived(
+		moreTrouble > 0 ? m.wall_devices_more_trouble({ count: more, trouble: moreTrouble }) : m.wall_devices_more({ count: more })
+	);
 
 	const ICON = {
 		warning: AlertTriangle,
@@ -100,7 +105,7 @@
 </script>
 
 <div class="relative min-h-0 flex-1 overflow-hidden" bind:this={box} bind:clientHeight={boxH}>
-	<ul class="devices" class:devices--dense={dense} aria-label={m.wall_devices_aria()}>
+	<ul class="devices" class:devices--dense={dense} aria-label={m.wall_devices_aria()} data-wall-info>
 		{#each shown as chip (chip.id)}
 			{@const Icon = ICON[chip.tone]}
 			<li class="min-w-0" class:wide={chip.word !== null && chip.tone !== 'ghost'} data-chip>
@@ -116,7 +121,7 @@
 			</li>
 		{/each}
 		{#if more > 0}
-			<li class="more min-w-0"><span class="chip chip--more whitespace-nowrap">{m.wall_devices_more({ count: more })}</span></li>
+			<li class="more min-w-0"><span class="chip chip--more" title={moreText}><span class="min-w-0 truncate">{moreText}</span></span></li>
 		{/if}
 	</ul>
 </div>
@@ -131,8 +136,7 @@
 	}
 	/* A device in trouble takes two cells: its name and its state both fit. */
 	@media (min-width: 640px) {
-		.wide,
-		.more {
+		.wide {
 			grid-column: span 2;
 		}
 	}

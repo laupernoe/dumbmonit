@@ -16,6 +16,7 @@ mod ingest;
 mod integrations;
 mod kuma_import;
 mod ldap;
+pub mod locations;
 mod mcp;
 mod metrics;
 mod music;
@@ -25,6 +26,7 @@ mod oidc;
 mod onboarding;
 mod openapi;
 mod opnsense;
+mod opnsense_live;
 mod packs;
 mod pbs;
 mod pdm;
@@ -51,7 +53,6 @@ mod truenas;
 mod update;
 mod users;
 mod wall_news;
-mod wall_news_images;
 mod wall_news_presets;
 mod wall_widgets;
 mod webchange;
@@ -161,6 +162,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).
         .merge(topology::routes())
+        // Emplacements et carte du monde (`locations.rs`).
+        .merge(locations::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
@@ -177,6 +180,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(pmg::routes())
         // Passerelles, trafic et santé d'un pare-feu OPNsense (`opnsense.rs`).
         .merge(opnsense::routes())
+        // Carte en direct du pare-feu et base IP → pays (`opnsense_live.rs`).
+        .merge(opnsense_live::routes())
         // Pools, protection des données et santé d'un NAS TrueNAS (`truenas.rs`).
         .merge(truenas::routes())
         // Domaine Active Directory : contrôleurs, groupes privilégiés, constats (`activedirectory.rs`).
@@ -207,8 +212,6 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(music::routes())
         // Actualités du mur : bandeau de titres et vignette vidéo (`wall_news.rs`).
         .merge(wall_news::routes())
-        // Images des articles du mur, relayées par le serveur (`wall_news_images.rs`).
-        .merge(wall_news_images::routes())
         // Widgets du mur : cryptos, météo, actions, devises, CVE (`wall_widgets/`).
         .merge(wall_widgets::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
@@ -348,7 +351,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
 /// chaque requête les ~800 Ko du front ; à 4 il reste nettement plus petit que
 /// gzip pour un coût comparable. Ne sont pas compressés :
 /// - les réponses de moins de 1 Ko (l'en-tête coûte plus que le gain) ;
-/// - les images (le relais des images du mur, le logo : déjà compressées) — le
+/// - les images (le logo : déjà compressées) — le
 ///   SVG, lui, est du texte et l'est ;
 /// - les flux d'évènements (SSE) et gRPC, qu'il ne faut pas tamponner ;
 /// - les téléchargements (binaires de l'agent, sauvegardes) : fichiers déjà
@@ -434,9 +437,6 @@ const CSP_IMG_SRC: &str = "img-src 'self' data:";
 ///   parent : l'interface reconstruit chaque adresse à partir d'un identifiant
 ///   validé, et la politique garantit qu'aucune autre origine ne peut être
 ///   encadrée, même si ce contrôle était contourné.
-/// - Les actualités du mur y ajoutent leur vidéo en direct (`wall_news.rs`) : YouTube
-///   (déjà ci-dessus, sans cookies), Dailymotion et Twitch, par leurs seules
-///   adresses d'intégration.
 /// - `script-src` : le script du SDK, et lui seul — le chemin complet, pas
 ///   l'origine. Il ne fait aucune requête depuis la page : il crée l'iframe
 ///   ci-dessus et lui parle par `postMessage`.
@@ -446,8 +446,7 @@ const CSP_IMG_SRC: &str = "img-src 'self' data:";
 /// Rien en `connect-src` ni en `media-src` : c'est le serveur qui parle à l'API
 /// Spotify, et l'audio est joué dans l'iframe du SDK, sous sa propre politique.
 const CSP_MUSIC_FRAME_SRC: &str = "https://open.spotify.com https://widget.deezer.com \
-     https://www.youtube-nocookie.com https://sdk.scdn.co \
-     https://www.dailymotion.com https://player.twitch.tv";
+     https://www.youtube-nocookie.com https://sdk.scdn.co";
 const CSP_MUSIC_SCRIPT_SRC: &str = "https://sdk.scdn.co/spotify-player.js";
 const CSP_MUSIC_IMG_SRC: &str = "https://i.scdn.co";
 
@@ -503,8 +502,11 @@ async fn security_headers(mut request: Request, next: Next) -> Response {
         }
         false => {
             headers.insert("x-frame-options", HeaderValue::from_static("DENY"));
+            // Les tuiles de la carte du monde, quand un fond en ligne est
+            // choisi : une seule origine, validée à l'enregistrement.
+            let tiles = locations::tile_origin().map(|o| format!(" {o}")).unwrap_or_default();
             format!(
-                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}; \
+                "{CSP_BASE}; {CSP_IMG_SRC} {CSP_MUSIC_IMG_SRC}{tiles}; \
                  frame-src {CSP_MUSIC_FRAME_SRC}; \
                  script-src 'self' 'nonce-{nonce}' {CSP_MUSIC_SCRIPT_SRC}; \
                  frame-ancestors 'none'"
@@ -547,9 +549,7 @@ mod tests {
                 "https://open.spotify.com",
                 "https://widget.deezer.com",
                 "https://www.youtube-nocookie.com",
-                "https://sdk.scdn.co",
-                "https://www.dailymotion.com",
-                "https://player.twitch.tv"
+                "https://sdk.scdn.co"
             ]
         );
         // Un seul script tiers, désigné par son chemin complet.
