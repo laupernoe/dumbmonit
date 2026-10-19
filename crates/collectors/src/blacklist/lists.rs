@@ -52,6 +52,8 @@ pub struct List {
     /// Liste « majeure » : une inscription bloque une part notable du courrier
     /// et déclenche l'alerte critique.
     pub major: bool,
+    /// Une phrase (anglais, comme le catalogue du formulaire) : à quoi sert la liste.
+    pub description: &'static str,
     /// Page de consultation ; `{ip}` ou `{domain}` y est remplacé.
     pub lookup_url: &'static str,
     /// Page de demande de suppression ; mêmes jokers.
@@ -128,6 +130,10 @@ pub fn reverse_v6(ip: Ipv6Addr) -> String {
     nibbles.join(".")
 }
 
+/// Le refus de Spamhaus pour un résolveur public : l'interface le reconnaît à ce
+/// texte pour afficher son propre message.
+pub const PUBLIC_RESOLVER_REFUSAL: &str = "Spamhaus answered 127.255.255.254: it refuses queries sent through a public or open resolver (Google, Cloudflare, Quad9, a resolver that forwards to them, or one without an attributable reverse DNS)";
+
 /// Codes d'erreur communs aux zones Spamhaus (`127.255.255.0/24`).
 fn spamhaus_error(code: Ipv4Addr) -> Option<Code> {
     let [a, b, c, d] = code.octets();
@@ -137,7 +143,7 @@ fn spamhaus_error(code: Ipv4Addr) -> Option<Code> {
     Some(Code::Refused(
         match d {
             252 => "Spamhaus answered 127.255.255.252: the query was malformed (wrong zone name, or an invalid DQS key)",
-            254 => "Spamhaus answered 127.255.255.254: it refuses queries sent through a public or open resolver (Google, Cloudflare, Quad9, a resolver that forwards to them, or one without an attributable reverse DNS)",
+            254 => PUBLIC_RESOLVER_REFUSAL,
             255 => "Spamhaus answered 127.255.255.255: this resolver sent too many queries",
             _ => "Spamhaus answered an error code from 127.255.255.0/24",
         }
@@ -244,6 +250,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: true,
         major: true,
+        description: "The reference list for mail servers: spam sources, exploited machines and ranges that should not send mail directly.",
         lookup_url: "https://check.spamhaus.org/query/ip/{ip}",
         delist_url: "https://check.spamhaus.org/query/ip/{ip}",
         interpret: zen,
@@ -256,6 +263,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: false,
         major: true,
+        description: "Reputation list of Barracuda appliances, used by many company mail gateways.",
         lookup_url: "https://www.barracudacentral.org/lookups/lookup-reputation",
         delist_url: "https://www.barracudacentral.org/rbl/removal-request",
         interpret: plain,
@@ -268,6 +276,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: false,
         major: true,
+        description: "Addresses reported by SpamCop users; entries expire by themselves after a day or two.",
         lookup_url: "https://www.spamcop.net/bl.shtml?{ip}",
         delist_url: "https://www.spamcop.net/bl.shtml?{ip}",
         interpret: plain,
@@ -280,6 +289,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: false,
         major: false,
+        description: "Reputation by sending behaviour; a listing there alone rarely blocks mail.",
         lookup_url: "https://mailspike.io/ip_verify",
         delist_url: "https://mailspike.io/ip_verify",
         interpret: plain,
@@ -292,6 +302,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: false,
         major: false,
+        description: "Single addresses seen sending spam; strict, and often contested.",
         lookup_url: "https://www.uceprotect.net/en/rblcheck.php?ipr={ip}",
         delist_url: "https://www.uceprotect.net/en/rblcheck.php?ipr={ip}",
         interpret: plain,
@@ -304,6 +315,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: false,
         major: false,
+        description: "Passive Spam Block List: addresses seen sending to spam traps.",
         lookup_url: "https://psbl.org/listing?ip={ip}",
         delist_url: "https://psbl.org/listing?ip={ip}",
         interpret: plain,
@@ -316,6 +328,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Ip,
         ipv6: false,
         major: false,
+        description: "Dynamic ranges, addresses without reverse DNS and spam sources.",
         lookup_url: "https://www.spamrats.com/bl?{ip}",
         delist_url: "https://www.spamrats.com/removal.php",
         interpret: spamrats,
@@ -328,6 +341,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Domain,
         ipv6: false,
         major: true,
+        description: "Domains used in spam, phishing and malware.",
         lookup_url: "https://check.spamhaus.org/query/domain/{domain}",
         delist_url: "https://check.spamhaus.org/query/domain/{domain}",
         interpret: dbl,
@@ -340,6 +354,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Domain,
         ipv6: false,
         major: false,
+        description: "Domains seen in spam links, phishing and malware.",
         lookup_url: "https://www.surbl.org/surbl-analysis",
         delist_url: "https://www.surbl.org/surbl-analysis",
         interpret: surbl,
@@ -352,6 +367,7 @@ pub static LISTS: &[List] = &[
         subject: Subject::Domain,
         ipv6: false,
         major: false,
+        description: "Domains advertised in spam messages.",
         lookup_url: "https://lookup.uribl.com/?domain={domain}",
         delist_url: "https://admin.uribl.com/",
         interpret: uribl,
@@ -366,6 +382,120 @@ pub fn by_id(id: &str) -> Option<&'static List> {
 /// Les identifiants connus, séparés par des virgules (messages d'erreur).
 pub fn ids() -> String {
     LISTS.iter().map(|list| list.id).collect::<Vec<_>>().join(", ")
+}
+
+/// Préfixe de l'identifiant d'une liste ajoutée par l'utilisateur.
+pub const CUSTOM_PREFIX: &str = "custom:";
+/// Zones personnalisées au plus, pour borner le nombre de questions.
+pub const MAX_CUSTOM: usize = 20;
+
+/// Une liste ajoutée par l'utilisateur, telle qu'elle se saisit.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Deserialize)]
+pub struct CustomSpec {
+    pub zone: String,
+    /// `ip` (défaut) ou `domain`.
+    #[serde(default)]
+    pub subject: String,
+    #[serde(default)]
+    pub major: bool,
+}
+
+/// Une zone DNSBL valide : nom de domaine en minuscules, sans point final,
+/// au moins deux étiquettes, jamais une adresse IP. Rend la forme normalisée.
+pub fn normalize_zone(raw: &str) -> Result<String, String> {
+    let zone = raw.trim().trim_end_matches('.').to_ascii_lowercase();
+    if zone.is_empty() {
+        return Err("a custom list needs a zone name".to_string());
+    }
+    if zone.parse::<std::net::IpAddr>().is_ok() {
+        return Err(format!("\"{raw}\" is an IP address: enter the DNS zone of the list"));
+    }
+    // Le sujet (adresse inversée, jusqu'à 63 caractères pour un nom) se place devant.
+    if zone.len() > 180 {
+        return Err(format!("\"{raw}\" is too long for a DNS zone"));
+    }
+    let labels: Vec<&str> = zone.split('.').collect();
+    let valid_label = |l: &&str| {
+        (1..=63).contains(&l.len())
+            && l.bytes().all(|b| b.is_ascii_alphanumeric() || b == b'-' || b == b'_')
+            && !l.starts_with('-')
+            && !l.ends_with('-')
+    };
+    if labels.len() < 2 || !labels.iter().all(valid_label) {
+        return Err(format!(
+            "\"{raw}\" is not a valid DNS zone name (for example dnsbl.example.org)"
+        ));
+    }
+    // Un dernier élément sans lettre (`1.2.3.4`, `10.0`) n'est pas un domaine.
+    if !labels.last().is_some_and(|tld| tld.bytes().any(|b| b.is_ascii_alphabetic())) {
+        return Err(format!("\"{raw}\" is not a valid DNS zone name"));
+    }
+    Ok(zone)
+}
+
+/// Les listes personnalisées d'une saisie JSON (`[{"zone": "...", "subject":
+/// "ip", "major": false}]`). Vide si la saisie est vide.
+pub fn parse_custom(raw: &str) -> Result<Vec<&'static List>, String> {
+    let raw = raw.trim();
+    if raw.is_empty() {
+        return Ok(Vec::new());
+    }
+    let specs: Vec<CustomSpec> = serde_json::from_str(raw).map_err(|e| {
+        format!("\"custom_lists\" expects a JSON list of {{zone, subject, major}}: {e}")
+    })?;
+    if specs.len() > MAX_CUSTOM {
+        return Err(format!("at most {MAX_CUSTOM} custom lists, got {}", specs.len()));
+    }
+    let mut chosen: Vec<&'static List> = Vec::new();
+    for spec in &specs {
+        let zone = normalize_zone(&spec.zone)?;
+        let subject = match spec.subject.trim() {
+            "" | "ip" => Subject::Ip,
+            "domain" => Subject::Domain,
+            other => {
+                return Err(format!(
+                    "the type of custom list {zone} must be \"ip\" or \"domain\", got \"{other}\""
+                ));
+            }
+        };
+        if LISTS.iter().any(|l| l.zone == zone || l.dqs_zone == Some(zone.as_str()))
+            || chosen.iter().any(|l| l.zone == zone)
+        {
+            return Err(format!("the list {zone} is already there; remove the duplicate"));
+        }
+        chosen.push(custom(&zone, subject, spec.major));
+    }
+    Ok(chosen)
+}
+
+/// Les listes personnalisées déjà créées : une même saisie rend toujours le
+/// même objet, si bien que la mémoire ne croît qu'avec le nombre de
+/// définitions distinctes (le catalogue est `'static`, une liste aussi).
+static CUSTOM: std::sync::Mutex<Vec<&'static List>> = std::sync::Mutex::new(Vec::new());
+
+fn custom(zone: &str, subject: Subject, major: bool) -> &'static List {
+    let mut known = CUSTOM.lock().unwrap_or_else(|p| p.into_inner());
+    if let Some(list) =
+        known.iter().find(|l| l.zone == zone && l.subject == subject && l.major == major)
+    {
+        return list;
+    }
+    let zone: &'static str = Box::leak(zone.to_string().into_boxed_str());
+    let list: &'static List = Box::leak(Box::new(List {
+        id: Box::leak(format!("{CUSTOM_PREFIX}{zone}").into_boxed_str()),
+        name: zone,
+        zone,
+        dqs_zone: None,
+        subject,
+        ipv6: false,
+        major,
+        description: "Custom list",
+        lookup_url: "",
+        delist_url: "",
+        interpret: plain,
+    }));
+    known.push(list);
+    list
 }
 
 /// Une grande messagerie sans liste DNS publique : ce qu'elle propose aux
@@ -486,5 +616,40 @@ mod tests {
         for provider in PROVIDERS {
             assert!(provider.links.iter().all(|(_, url)| url.starts_with("https://")));
         }
+    }
+
+    #[test]
+    fn zones_personnalisees_valides_et_invalides() {
+        assert_eq!(normalize_zone(" DNSBL.Example.ORG. ").unwrap(), "dnsbl.example.org");
+        assert_eq!(normalize_zone("a-b.c_d.example.co.uk").unwrap(), "a-b.c_d.example.co.uk");
+        for bad in [
+            "",
+            "example",
+            "192.0.2.1",
+            "2001:db8::1",
+            "1.2.3.4",
+            "a..b.org",
+            "-a.example.org",
+            "a-.example.org",
+            "a b.example.org",
+            "a/b.example.org",
+        ] {
+            assert!(normalize_zone(bad).is_err(), "{bad}");
+        }
+        assert!(normalize_zone(&format!("{}.example.org", "a".repeat(64))).is_err());
+    }
+
+    #[test]
+    fn une_liste_personnalisee_se_construit_une_seule_fois() {
+        let one = parse_custom(r#"[{"zone":"x.example.org","subject":"ip"}]"#).unwrap();
+        let two = parse_custom(r#"[{"zone":"X.example.org.","major":false}]"#).unwrap();
+        assert!(std::ptr::eq(one[0], two[0]), "la même saisie rend le même objet");
+        assert_eq!(one[0].id, "custom:x.example.org");
+        assert_eq!(
+            one[0].query_name(&Target::V4("192.0.2.1".parse().unwrap()), None).as_deref(),
+            Some("1.2.0.192.x.example.org.")
+        );
+        assert_eq!(one[0].query_name(&Target::Domain("a.test".into()), None), None);
+        assert_eq!(parse_custom("  ").unwrap().len(), 0);
     }
 }

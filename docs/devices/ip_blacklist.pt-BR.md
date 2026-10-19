@@ -30,10 +30,17 @@ rigoroso pode estender à faixa inteira.
 ## Resolvedores e ritmo {#resolvers-and-pace}
 
 Aplicam-se as mesmas regras de [Reputação do servidor de e-mail](mail_blacklist.md#resolvers-refusals-and-timeouts).
-O Spamhaus recusa resolvedores públicos: a recusa dele (`127.255.255.254`) é
-mostrada como erro de configuração, nunca como listagem. Uma lista que não
-responde é desconhecida, nunca limpa. Use um resolvedor recursivo seu, ou uma
-chave Spamhaus DQS gratuita como credencial.
+**Nenhuma chave de API é necessária.** Só o Spamhaus recusa resolvedores públicos: a
+recusa dele (`127.255.255.254`) nunca é mostrada como listagem, a página do monitor
+diz "O Spamhaus recusa este resolvedor" e as outras listas mantêm seus resultados.
+Uma lista que não responde é desconhecida, nunca limpa. Para o Spamhaus também, use
+um resolvedor recursivo seu, ou a chave Spamhaus DQS gratuita e opcional como
+credencial.
+
+As listas são as marcadas em **Listas de bloqueio** (por padrão as principais listas
+de endereços) mais suas próprias zonas em **Listas personalizadas**; veja
+[Suas próprias listas](mail_blacklist.md#your-own-lists). As listas de domínios não
+se aplicam a uma faixa.
 
 Um /24 leva perto de duas mil consultas. Elas são enviadas em **Consultas por
 segundo** (10 por padrão), no máximo oito em andamento, e a faixa inteira é
@@ -45,9 +52,11 @@ primeira verificação de uma faixa leva alguns minutos e roda em segundo plano.
 
 1. Informe um endereço IPv4 ou uma faixa CIDR até /24, por exemplo "198.51.100.0/24" (256 endereços). Uma faixa maior é recusada: divida-a em vários monitores /24. Faixas IPv6 são recusadas, já que só o Spamhaus responde para IPv6: verifique um único endereço IPv6 com Reputação do servidor de e-mail.
 
-2. Use um resolvedor recursivo seu, como em Reputação do servidor de e-mail: o Spamhaus recusa resolvedores públicos, ou cole uma chave Spamhaus DQS gratuita como credencial. Um /24 leva perto de duas mil consultas, enviadas a 10 por segundo e repetidas a cada 6 horas por padrão: mantenha esse ritmo, as listas de bloqueio banem resolvedores que as varrem.
+2. Nenhuma chave de API é necessária: deixe a credencial em Sem chave. As listas de bloqueio são consultadas pelo resolvedor DNS deste servidor, ou pelo que você definir em Resolvedor. Só o Spamhaus pode recusar, e só quando esse resolvedor é público (Google, Cloudflare, Quad9): o monitor mostra então "O Spamhaus recusa este resolvedor" e as outras listas continuam funcionando. Para o Spamhaus também, use um resolvedor recursivo seu, ou a chave Spamhaus DQS gratuita e opcional.
 
-3. A primeira verificação de uma faixa leva alguns minutos: a página do monitor diz que ela está em andamento e depois mostra quantos endereços estão listados, em quais listas, e um link de remoção para cada um.
+3. Marque em Listas de bloqueio as listas de endereços a consultar (as principais vêm marcadas por padrão) e adicione em Listas personalizadas as zonas DNSBL de qualquer outra lista. Um /24 leva perto de duas mil consultas com todas as listas de endereços marcadas, enviadas a 10 por segundo e repetidas a cada 6 horas por padrão: mantenha esse ritmo, as listas de bloqueio banem os resolvedores que as varrem.
+
+4. A primeira verificação de uma faixa leva alguns minutos: a página do monitor diz que ela está em andamento e depois mostra quantos endereços estão listados, em quais listas, e um link de remoção para cada um.
 
 !!! warning
     O Spamhaus PBL lista faixas de usuários finais que não deveriam enviar e-mail diretamente (conexões residenciais, pools dinâmicos): uma listagem ali é uma política, não uma denúncia de abuso, e só importa para um endereço que roda um servidor de e-mail.
@@ -63,10 +72,15 @@ está listado ou que uma lista não respondeu; `list_checked`, `list_listed` e
 As [regras integradas](../alerting/rules.md#dns-blocklists) que se aplicam:
 Listed on a major blocklist e Listed on a blocklist.
 
+A página do monitor tem um link **Verificar também no MXToolbox**: para uma faixa,
+ao lado de cada endereço listado, ele abre em uma nova aba a consulta pública de
+listas de bloqueio do mxtoolbox.com. O DumbMonit não chama a API deles.
+
 ## Credenciais {#credentials}
 
-Nenhuma, ou uma chave Spamhaus DQS.
+Nenhuma necessária (o padrão), ou opcionalmente uma chave Spamhaus DQS.
 
-Endereço: um endereço IPv4 ou uma faixa CIDR até /24. Opções: Resolvedor,
-Listas (todas as listas de endereços por padrão), Intervalo de atualização
-(6 horas), Consultas por segundo (10) e Timeout por consulta (5 s).
+Endereço: um endereço IPv4 ou uma faixa CIDR até /24. Opções: Resolvedor, Listas de
+bloqueio (as principais marcadas em um monitor novo), Listas personalizadas,
+Intervalo de atualização (6 horas), Consultas por segundo (10) e Timeout por
+consulta (5 s).
