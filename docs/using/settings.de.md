@@ -254,4 +254,4 @@ Version des Servers und Zustand seiner beiden Speicher, der Datenbank (Monitorei
 Alarmverlauf) und VictoriaMetrics (jede Messung in den Diagrammen), wie von `GET /api/health`
 gemeldet und alle 15 Sekunden aktualisiert. Ein Speicher, der nicht mehr antwortet, zeigt eine
 Warnung mit dem Fehler und dem, was zu prüfen ist. Der Abschnitt verlinkt außerdem diese
-Dokumentation und nennt die Lizenz, Apache 2.0.
+Dokumentation und nennt die Lizenz, MIT.
