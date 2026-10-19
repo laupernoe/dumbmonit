@@ -16,7 +16,7 @@ use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{Authenticated, CurrentSession, current_session};
 use crate::auth::rate_limit::Key;
 use crate::auth::users::{self, Role, User};
-use crate::auth::{AuthError, AuthResult, AuthState, audit, cookie, oidc, password, session};
+use crate::auth::{AuthError, AuthResult, AuthState, audit, cookie, ldap, oidc, password, session};
 use crate::state::AppState;
 
 /// Un compte, tel que l'interface le voit. Jamais d'empreinte de mot de passe.
@@ -26,7 +26,7 @@ pub struct UserView {
     pub username: String,
     pub display_name: String,
     pub role: Role,
-    /// « password » ou « oidc » : la façon dont ce compte se connecte.
+    /// « password », « ldap » ou « oidc » : la façon dont ce compte se connecte.
     pub auth: &'static str,
     pub disabled: bool,
     /// Second facteur actif sur ce compte.
@@ -59,6 +59,13 @@ pub struct OidcStatus {
     pub login_url: &'static str,
 }
 
+/// Ce que l'écran de connexion a besoin de savoir de l'annuaire : seulement
+/// s'il est actif, pour le dire à côté du formulaire.
+#[derive(Debug, Serialize)]
+pub struct LdapStatus {
+    pub enabled: bool,
+}
+
 /// État de l'authentification, tel que l'interface le lit au chargement.
 ///
 /// `configured: false` signifie « instance vierge » : l'interface propose alors la
@@ -70,6 +77,7 @@ pub struct StatusView {
     #[serde(skip_serializing_if = "Option::is_none")]
     user: Option<UserView>,
     oidc: OidcStatus,
+    ldap: LdapStatus,
     /// Mode démonstration publique : l'écran de connexion propose le compte
     /// `demo`, et toute écriture sera refusée (voir `crate::demo`).
     demo: bool,
@@ -161,6 +169,7 @@ pub async fn status(
         None
     };
     let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
+    let directory = ldap::resolve(&state.pool, &state.cipher, &state.config.ldap).await?;
     Ok(Json(StatusView {
         configured,
         authenticated: user.is_some(),
@@ -170,6 +179,7 @@ pub async fn status(
             provider_name: resolved.config.provider_name,
             login_url: "/api/auth/oidc/start",
         },
+        ldap: LdapStatus { enabled: directory.config.enabled() },
         demo: state.config.demo,
     }))
 }
@@ -264,6 +274,27 @@ pub async fn login(
         None => users::sole_password_user(&state.pool).await?,
     };
 
+    // Un identifiant sans mot de passe local va à l'annuaire, s'il y en a un.
+    // Un compte local, lui, ne le consulte jamais : l'administrateur local reste
+    // une issue de secours quand l'annuaire est en panne ou mal configuré.
+    if let Some(username) = username
+        && user.as_ref().is_none_or(|user| user.password_hash.is_none())
+    {
+        let directory = ldap::resolve(&state.pool, &state.cipher, &state.config.ldap).await?;
+        if directory.config.enabled() {
+            return ldap_login(
+                &state,
+                &auth,
+                &directory.config,
+                username,
+                &payload.password,
+                keys,
+                ip,
+            )
+            .await;
+        }
+    }
+
     // Un compte absent, désactivé ou sans mot de passe est traité comme un mot de
     // passe faux, coût Argon2id compris : rien à apprendre en comparant les
     // réponses, ni leurs durées.
@@ -296,6 +327,63 @@ pub async fn login(
     auth.limiter().lock().await.record_success(&keys);
 
     open_session(&state, &auth, &user, ip).await
+}
+
+/// Connexion par l'annuaire : l'identifiant et le mot de passe sont vérifiés
+/// par une liaison LDAP, puis le compte est créé ou mis à jour.
+///
+/// Toutes les issues négatives donnent la même réponse que pour un compte
+/// local — « identifiant ou mot de passe incorrect » — et la raison exacte va
+/// au journal. Une panne de l'annuaire n'est pas comptée comme une tentative :
+/// elle ne prouve rien sur le mot de passe, et la compter enfermerait dehors
+/// des utilisateurs qui n'y sont pour rien.
+async fn ldap_login(
+    state: &AppState,
+    auth: &AuthState,
+    config: &ldap::LdapConfig,
+    username: &str,
+    password: &str,
+    keys: Vec<Key>,
+    ip: Option<std::net::IpAddr>,
+) -> AuthResult<Response> {
+    let refuse = |reason: &str| {
+        tracing::warn!(user = username, reason, "LDAP login refused");
+        AuthError::Unauthorized("Wrong username or password.".into())
+    };
+    let verdict =
+        ldap::client::authenticate(config, state.config.ldap_allow_plain, username, password).await;
+    let entry = match verdict {
+        Ok(ldap::client::Verdict::Accepted(entry)) => entry,
+        Ok(ldap::client::Verdict::Rejected(rejection)) => {
+            auth.limiter().lock().await.record_failure(&keys, Instant::now());
+            audit::record(&state.pool, Some(username), "login.failed", None, ip).await;
+            return Err(refuse(rejection.as_str()));
+        }
+        Err(error) => {
+            tracing::error!(user = username, error = %error, "LDAP directory error during login");
+            audit::record(&state.pool, Some(username), "login.failed", None, ip).await;
+            return Err(AuthError::Unauthorized("Wrong username or password.".into()));
+        }
+    };
+    let user = match ldap::login::provision(&state.pool, config, &entry).await? {
+        Ok(user) => user,
+        Err(denied) => {
+            // Le mot de passe était bon : l'ardoise n'est pas noircie, mais
+            // l'accès est refusé avec la même réponse.
+            audit::record(&state.pool, Some(username), "login.failed", None, ip).await;
+            return Err(refuse(denied.as_str()));
+        }
+    };
+    if user.totp_enabled && user.totp_secret.is_some() {
+        // Comme pour un compte local : l'ardoise n'est effacée qu'une fois le
+        // code accepté.
+        let pending = auth.pending_totp().lock().await.start(user.id, Instant::now());
+        return Ok(
+            Json(serde_json::json!({ "totp_required": true, "pending": pending })).into_response()
+        );
+    }
+    auth.limiter().lock().await.record_success(&keys);
+    open_session(state, auth, &user, ip).await
 }
 
 /// Ouvre la session d'un compte dont l'identité vient d'être établie et pose le

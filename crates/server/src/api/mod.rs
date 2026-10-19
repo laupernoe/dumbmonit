@@ -14,6 +14,7 @@ mod error;
 mod health;
 mod ingest;
 mod kuma_import;
+mod ldap;
 mod mcp;
 mod metrics;
 mod music;
@@ -106,6 +107,11 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             get(oidc::get_config).put(oidc::put_config).delete(oidc::delete_config),
         )
         .route("/auth/oidc/test", post(oidc::test))
+        .route(
+            "/auth/ldap/config",
+            get(ldap::get_config).put(ldap::put_config).delete(ldap::delete_config),
+        )
+        .route("/auth/ldap/test", post(ldap::test))
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))

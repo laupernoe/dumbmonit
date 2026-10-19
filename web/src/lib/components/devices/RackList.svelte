@@ -103,8 +103,14 @@
 				/>
 			{/if}
 		{/snippet}
+		<!--
+			Compact lines off screen skip layout and paint (`content-visibility`),
+			holding their last measured height: each line is its own size
+			container, and with hundreds of devices laying them all out on load
+			cost more than building them.
+		-->
 		<li
-			class={`relative flex min-w-0 items-stretch gap-1.5 first:rounded-t-[inherit] last:rounded-b-[inherit] ${layout === 'compact' ? 'overflow-hidden' : 'rise-in'}`}
+			class={`relative flex min-w-0 items-stretch gap-1.5 first:rounded-t-[inherit] last:rounded-b-[inherit] ${layout === 'compact' ? 'overflow-hidden [content-visibility:auto] [contain-intrinsic-block-size:auto_2.75rem]' : 'rise-in'}`}
 			style="--rise-delay: {Math.min(i, 14) * 30}ms;"
 			{@attach (node) => {
 				reorder?.registerRow(id, node);
