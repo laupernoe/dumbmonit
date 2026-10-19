@@ -120,6 +120,8 @@ export interface Target {
 	group_name: string;
 	/** Manual rank, tiebreaking only within the same state and folder. */
 	position: number;
+	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
+	location_id: LocationId | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
@@ -139,6 +141,8 @@ export interface TargetPayload {
 	tags?: Record<string, string>;
 	/** Flat folder shown on `/targets`. Absent or empty: no folder. */
 	group_name?: string;
+	/** Location on the world map; `null`: none. Absent on edit keeps it. */
+	location_id?: LocationId | null;
 	credential?: Credential;
 }
 
@@ -1986,6 +1990,61 @@ export interface Topology {
 	edges: TopologyEdge[];
 	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
 	metrics_available: boolean;
+}
+
+// --- World map locations (`api/locations.rs`) ---------------------------------
+
+export type LocationId = number;
+
+/** How a device came to a location: its assignment, its site, or the main site. */
+export type LocationSource = 'assigned' | 'site' | 'main';
+
+export interface LocationMember {
+	target_id: TargetId;
+	source: LocationSource;
+}
+
+/** One location. Mirrors `LocationView`. */
+export interface MapLocation {
+	id: LocationId;
+	name: string;
+	/** Free text, shown only. */
+	address: string;
+	latitude: number;
+	longitude: number;
+	/** Topology site this location stands for; empty: none. */
+	site: string;
+	/** Gathers the devices with no remote site. */
+	main_site: boolean;
+	members: LocationMember[];
+}
+
+/** `GET /api/locations`. Mirrors `LocationsView`. */
+export interface Locations {
+	locations: MapLocation[];
+	/** Remote sites the topology map knows. */
+	sites: string[];
+	/** Devices no location gathers. */
+	unplaced: TargetId[];
+}
+
+/** Body of `POST /api/locations` and `PUT /api/locations/{id}`. */
+export interface LocationPayload {
+	name: string;
+	address: string;
+	latitude: number;
+	longitude: number;
+	site: string;
+	main_site: boolean;
+}
+
+export type BasemapMode = 'offline' | 'osm' | 'custom';
+
+/** `GET|PUT /api/locations/basemap`. Mirrors `Basemap`. */
+export interface Basemap {
+	mode: BasemapMode;
+	url: string;
+	attribution: string;
 }
 
 // --- Two-factor authentication (TOTP) and audit log ---------------------------

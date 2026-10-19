@@ -847,6 +847,9 @@
 	"deviceform_form_folder_placeholder": "Nessuna cartella",
 	"deviceform_form_interval_help": "Ogni quanto DumbMonit legge questo monitor.",
 	"deviceform_form_interval_label": "Intervallo di controllo",
+	"deviceform_form_location_auto": "Automatico (dal suo sito)",
+	"deviceform_form_location_help": "La sua posizione sulla mappa del mondo. Automatico: dal suo sito o dalla sede principale.",
+	"deviceform_form_location_label": "Sede",
 	"deviceform_form_more_options": "Altre opzioni",
 	"deviceform_form_more_settings": "Altre impostazioni di {label}",
 	"deviceform_form_name_help": "Come appare negli elenchi e negli avvisi.",
@@ -1416,6 +1419,8 @@
 	"devices_list_bulk_enable": "Attiva",
 	"devices_list_bulk_folder_apply": "Sposta",
 	"devices_list_bulk_folder_placeholder": "Nome della nuova cartella",
+	"devices_list_bulk_location": "Posiziona in",
+	"devices_list_bulk_location_auto": "Automatico (dal loro sito)",
 	"devices_list_bulk_move": "Sposta in una cartella",
 	"devices_list_bulk_no_folder": "Nessuna cartella",
 	"devices_list_bulk_partial_names": "Non riusciti: {names}",
@@ -3400,6 +3405,58 @@
 	"kinds_label_webchange": "Modifiche di un sito web",
 	"kinds_label_website": "Stato e SEO del sito web",
 	"kinds_label_websocket": "Endpoint WebSocket",
+	"locations_add": "Aggiungi una sede",
+	"locations_address": "Indirizzo",
+	"locations_address_help": "Testo libero, mostrato sulla mappa. Facoltativo.",
+	"locations_badge_main": "Sede principale",
+	"locations_badge_site": "Sito {site}",
+	"locations_basemap_attribution": "Attribuzione",
+	"locations_basemap_attribution_help": "Mostrata nell'angolo della mappa, come richiede la licenza delle tile.",
+	"locations_basemap_custom": "Il tuo server di tile",
+	"locations_basemap_custom_hint": "Qualsiasi indirizzo di tile {z}/{x}/{y} su un solo host (un server self-hosted, un fornitore con la chiave nell'indirizzo), con la sua attribuzione.",
+	"locations_basemap_offline": "Contorni integrati (offline)",
+	"locations_basemap_offline_hint": "Contorni dei paesi Natural Earth, inclusi in DumbMonit: la mappa non contatta alcun server. Predefinito.",
+	"locations_basemap_osm": "Tile OpenStreetMap",
+	"locations_basemap_osm_hint": "Strade e città. Ogni browser che apre la mappa carica le tile da tile.openstreetmap.org (l'indirizzo della tua istanza viene inviato come referrer, come chiede la loro politica d'uso); viene mostrato «© OpenStreetMap contributors». Adatto a un uso occasionale, non a un muro aperto tutto il giorno su molti schermi.",
+	"locations_basemap_save": "Salva sfondo",
+	"locations_basemap_saved": "Salvato.",
+	"locations_basemap_title": "Sfondo della mappa",
+	"locations_basemap_url": "Indirizzo delle tile",
+	"locations_basemap_url_help": "Con {z}, {x} e {y}; un solo host, niente {s}.",
+	"locations_cancel": "Annulla",
+	"locations_delete": "Elimina",
+	"locations_delete_confirm": "Eliminare? I suoi monitor restano.",
+	"locations_description": "Dove si trovano i tuoi monitor, per la mappa del mondo (Mappa → Mondo).",
+	"locations_edit": "Modifica",
+	"locations_edit_named": "Modifica {name}",
+	"locations_edit_title": "Modifica {name}",
+	"locations_err_basemap": "Lo sfondo non è stato salvato",
+	"locations_err_delete": "La sede non è stata eliminata",
+	"locations_err_load": "Impossibile caricare le sedi",
+	"locations_err_name": "Dai un nome alla sede.",
+	"locations_err_save": "La sede non è stata salvata",
+	"locations_err_spot": "Scegli un punto: un luogo trovato, coordinate (latitudine da −90 a 90, longitudine da −180 a 180) o un clic sulla mappa.",
+	"locations_latitude": "Latitudine",
+	"locations_longitude": "Longitudine",
+	"locations_main": "Sede principale",
+	"locations_main_help": "Raccoglie tutti i monitor senza sito remoto. Al massimo una sede.",
+	"locations_name": "Nome",
+	"locations_new_title": "Nuova sede",
+	"locations_none": "Ancora nessuna sede. Aggiungine una: una sede che rappresenta un sito della topologia, o la sede principale, raccoglie da sola i suoi monitor.",
+	"locations_none_found": "Nessun luogo con questo nome.",
+	"locations_pick_help": "Oppure fai clic sulla mappa nel punto della sede.",
+	"locations_pick_here": "Punto scelto",
+	"locations_pick_label": "Mappa per scegliere il punto della sede",
+	"locations_save": "Salva sede",
+	"locations_search": "Cerca un luogo",
+	"locations_search_find": "Cerca",
+	"locations_search_help": "Una città o un paese. Il server interroga la geocodifica di Open-Meteo; puoi anche digitare le coordinate o fare clic sulla mappa.",
+	"locations_searching": "Ricerca…",
+	"locations_site": "Rappresenta il sito",
+	"locations_site_help": "Ogni monitor di questo sito della topologia (tag site, agente o relay) finisce qui, salvo se posizionato altrove a mano.",
+	"locations_site_none": "Nessuno",
+	"locations_title": "Sedi",
+	"locations_use_place": "Usa {place}",
 	"metrics_title_website_blank": "Pagina vuota",
 	"metrics_title_website_canonical_changed": "Canonical modificato",
 	"metrics_title_website_description_changed": "Descrizione modificata",
@@ -5443,6 +5500,7 @@
 	"settings_search_kw_assistant": "api token mcp ia assistente claude chatgpt",
 	"settings_search_kw_backup": "backup esportare ripristinare configurazione",
 	"settings_search_kw_incidents": "incidente annuncio manutenzione disservizio pubblico",
+	"settings_search_kw_locations": "mappa del mondo siti luoghi coordinate openstreetmap tile",
 	"settings_search_kw_music": "musica spotify altoparlante parete",
 	"settings_search_kw_news": "notizie titoli rss feed parete",
 	"settings_search_kw_notifications": "canali discord email ntfy telegram ore di silenzio pagina di stato",
@@ -5742,6 +5800,7 @@
 	"settings_widgets_ai_claude_key": "Chiave Admin API di Anthropic",
 	"settings_widgets_ai_claude_key_help": "Inizia con sk-ant-admin. Le chiavi admin esistono solo per le organizzazioni e vengono create nella Claude Console da un amministratore dell’organizzazione. Salvata cifrata, non viene mai mostrata di nuovo.",
 	"settings_widgets_ai_hint": "Costo e token degli account API di Claude e OpenAI della tua organizzazione, letti ogni 15 minuti dalle loro API di amministrazione. Gli abbonamenti consumer (Claude Pro e Max, ChatGPT Plus) e i loro limiti settimanali non hanno un’API ufficiale e non possono essere mostrati.",
+	"settings_widgets_ai_key_howto": "Come ottenere una chiave admin",
 	"settings_widgets_ai_openai": "ChatGPT (API OpenAI)",
 	"settings_widgets_ai_openai_hint": "Costo e token dell’uso dell’API di OpenAI dell’organizzazione.",
 	"settings_widgets_ai_openai_key": "Chiave admin di OpenAI",
@@ -6612,5 +6671,53 @@
 	"whatsnew_dialog_ok": "Ho capito",
 	"whatsnew_dialog_title": "Novità della v{version}",
 	"whatsnew_dialog_updated": "Aggiornato · {date}",
-	"settings_widgets_ai_key_howto": "Come ottenere una chiave admin"
+	"worldmap_detail_back": "Torna a tutte le sedi",
+	"worldmap_detail_empty": "Ancora nessun monitor in questa sede.",
+	"worldmap_edit_locations": "Modifica le sedi",
+	"worldmap_empty_action": "Aggiungi una sede",
+	"worldmap_empty_body": "Aggiungi le tue sedi in Impostazioni → Monitoraggio → Sedi: ognuna diventa un segnaposto con lo stato dei suoi monitor.",
+	"worldmap_empty_title": "Ancora nessuna sede",
+	"worldmap_err_load": "Impossibile caricare le sedi",
+	"worldmap_list_title": "Sedi",
+	"worldmap_map_failed": "Impossibile caricare la mappa. Ricarica la pagina per riprovare.",
+	"worldmap_map_label": "Mappa del mondo delle sedi",
+	"worldmap_monitors": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} monitor",
+				"countPlural=other": "{count} monitor"
+			}
+		}
+	],
+	"worldmap_pin_label": "{name}: {verdict}, {monitors}",
+	"worldmap_source_main": "sede principale",
+	"worldmap_source_site": "tramite il sito {site}",
+	"worldmap_unplaced": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} monitor non ha una sede.",
+				"countPlural=other": "{count} monitor non hanno una sede."
+			}
+		}
+	],
+	"worldmap_verdict_down": "Non attivo",
+	"worldmap_verdict_empty": "Nessun monitor",
+	"worldmap_verdict_idle": "Non interrogato",
+	"worldmap_verdict_ok": "Tutto attivo",
+	"worldmap_verdict_warn": "Da controllare",
+	"worldmap_view_world": "Mondo"
 }
