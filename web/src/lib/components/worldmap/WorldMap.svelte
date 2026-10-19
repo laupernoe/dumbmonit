@@ -43,10 +43,12 @@
 		onready?: (map: Leaflet.Map, L: LeafletModule, world: World) => void;
 		/** Accessible name of the map region. */
 		label: string;
+		/** Frame the pins once they arrive (default); off, the map keeps the view it was given. */
+		fit?: boolean;
 		class?: string;
 	}
 
-	let { pins, basemap, selected = null, onselect, onpick, onready, label, class: className = '' }: Props = $props();
+	let { pins, basemap, selected = null, onselect, onpick, onready, label, fit = true, class: className = '' }: Props = $props();
 
 	let element = $state<HTMLDivElement | null>(null);
 	let map = $state<Leaflet.Map | null>(null);
@@ -176,7 +178,7 @@
 				marker.addTo(layer);
 				drawn.push({ marker, pin, active: pin.id === active });
 			}
-			if (!fitted && list.length > 0) {
+			if (fit && !fitted && list.length > 0) {
 				fitted = true;
 				if (list.length === 1) current.setView([list[0].latitude, list[0].longitude], Math.min(current.getMaxZoom(), 4), { animate: false });
 				else current.fitBounds(lib!.latLngBounds(list.map((p) => [p.latitude, p.longitude])), { padding: [48, 48], maxZoom: 6, animate: false });

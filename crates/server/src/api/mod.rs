@@ -26,6 +26,7 @@ mod oidc;
 mod onboarding;
 mod openapi;
 mod opnsense;
+mod opnsense_live;
 mod packs;
 mod pbs;
 mod pdm;
@@ -180,6 +181,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(pmg::routes())
         // Passerelles, trafic et santé d'un pare-feu OPNsense (`opnsense.rs`).
         .merge(opnsense::routes())
+        // Carte en direct du pare-feu et base IP → pays (`opnsense_live.rs`).
+        .merge(opnsense_live::routes())
         // Pools, protection des données et santé d'un NAS TrueNAS (`truenas.rs`).
         .merge(truenas::routes())
         // Domaine Active Directory : contrôleurs, groupes privilégiés, constats (`activedirectory.rs`).

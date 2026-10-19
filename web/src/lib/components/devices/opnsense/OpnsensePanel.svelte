@@ -15,6 +15,7 @@
 	import FirewallHealth from './FirewallHealth.svelte';
 	import TrafficTable from './TrafficTable.svelte';
 	import WanGateways from './WanGateways.svelte';
+	import LiveMap from './LiveMap.svelte';
 	import { formatAgo, formatCount, formatUnix } from './format';
 
 	interface Props {
@@ -108,6 +109,8 @@
 				wanAddresses={gateways?.wan_addresses ?? []}
 			/>
 		</Panel>
+
+		<LiveMap {target} />
 
 		<Panel
 			title={m.devicesb_opnsense_panel_traffic_title()}

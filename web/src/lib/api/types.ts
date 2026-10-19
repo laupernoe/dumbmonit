@@ -2108,6 +2108,61 @@ export interface Basemap {
 	attribution: string;
 }
 
+// --- OPNsense live map (`api/opnsense_live.rs`) and IP geolocation ------------
+
+/** `GET|PUT /api/geoip`. Mirrors `GeoStatus`. */
+export interface GeoipStatus {
+	enabled: boolean;
+	state: 'ready' | 'loading' | 'missing' | 'failed' | 'disabled';
+	/** Month of the loaded database (`2026-10`). */
+	month: string | null;
+	ranges: number;
+	error: string | null;
+	source: string;
+	source_url: string;
+}
+
+export interface OpnsenseLiveTally {
+	blocked: number;
+	passed: number;
+	other: number;
+}
+
+/** One connection, reduced: never an address. Mirrors `LiveEvent`. */
+export interface OpnsenseLiveEvent {
+	seq: number;
+	/** Unix seconds. */
+	at: number;
+	action: 'block' | 'pass' | 'other';
+	/** From the local network out. */
+	outbound: boolean;
+	/** `CH`, `local` or `unknown`. */
+	country: string;
+	proto: string;
+	port: number | null;
+	rule: string;
+}
+
+/** `GET /api/targets/{id}/opnsense/live`. Mirrors `LiveView`. */
+export interface OpnsenseLive {
+	/** False while the monitor's `live_map` option is off. */
+	enabled: boolean;
+	/** Polled through a relay agent: the server cannot read the log itself. */
+	relayed: boolean;
+	window_secs: number;
+	polled_at: number | null;
+	error: string | null;
+	totals: OpnsenseLiveTally;
+	countries: (OpnsenseLiveTally & { code: string })[];
+	rules: { rule: string; action: 'block' | 'pass' | 'other'; count: number }[];
+	ports: { proto: string; port: number; count: number }[];
+	recent: OpnsenseLiveEvent[];
+	seq: number;
+	/** Where the firewall sits on the world map, when it has a location. */
+	firewall: { name: string; latitude: number; longitude: number } | null;
+	geoip: GeoipStatus;
+}
+
 // --- Two-factor authentication (TOTP) and audit log ---------------------------
 
 /** Outcome of `POST /auth/login`: either the session is open, or a second step is needed. */

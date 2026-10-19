@@ -201,6 +201,40 @@ on either side of the rename.
 | `carp` | Watch CARP | `true` | Reads the virtual addresses of a high-availability pair, and persistent maintenance mode. |
 | `firmware` | Watch for updates | `true` | Reads the result of the firewall's last update check and whether a reboot is pending. |
 | `temperature` | Read the temperature sensors | `true` | Reads the CPU and board sensors the firewall exposes. |
+| `live_map` | Live firewall map | `false` | Shows where the connections your rules block or pass come from, by country. Needs `Diagnostics: Logs: Firewall: Live View`. |
+
+## Live map
+
+With the `live_map` option on, the monitor page gets a **Live map** panel: where
+the connections your rules block or pass come from, on a world map, over the
+last fifteen minutes — a disc per country (dashed when most of it was blocked),
+short arcs travelling to the firewall as connections arrive, and the countries,
+rules and ports that come up most.
+
+- **Read-only, on demand.** The server reads `GET /api/diagnostics/firewall/log`
+  every five seconds, only while someone has the panel open, and stops a minute
+  after. The browser never talks to the firewall. Give the API user's group the
+  privilege **Diagnostics: Logs: Firewall: Live View** (read-only).
+- **No address leaves the server.** Each log line is reduced at once to its
+  country, port, protocol, rule and action; addresses are neither stored nor
+  sent to the browser. Fifteen minutes stay in memory (20 000 events at most),
+  nothing is written to the database or to VictoriaMetrics.
+- **Countries from a local database.** The server downloads DB-IP's free
+  [IP to Country Lite](https://db-ip.com/db/download/ip-to-country-lite)
+  (CC BY 4.0, no account) the first time a live map needs it, keeps it in
+  `/data/geoip/`, and replaces it when it is more than a month old. Lookups are
+  local: no address is sent to any service. Private, loopback, link-local and
+  CGNAT ranges are grouped as **Local network**. The panel credits
+  *IP Geolocation by DB-IP*, as the licence asks. Turn the database off in
+  **Settings → Monitoring → Locations → IP geolocation**: nothing is downloaded,
+  and countries show as unknown.
+- **Arcs need a location.** Place the firewall on the [world map](../using/world-map.md)
+  (by hand, through its site, or as part of the main site); without one the
+  discs are still drawn.
+- **Motion.** With *reduce motion* set in the system, the travelling arcs are
+  left out; the discs and the steady arcs of the busiest countries remain.
+- A firewall polled through a relay agent has no live map: the server cannot
+  reach its log.
 
 ## Common errors
 
