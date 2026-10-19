@@ -7,7 +7,18 @@ name: Release
 #   - every tag vX.Y.Z     -> :X.Y.Z, :X.Y, :X and :latest
 #   - every pre-release tag (with a `-`, e.g. v0.9.0-rc.1)
 #                          -> :X.Y.Z-rc.N only: never :latest, :X.Y, :X or :edge
-# CI (ci.yml) builds the same images without pushing, on every push and PR.
+# upgrade.yml builds the same images without pushing, on every push to dev and
+# main; a tag is only published once that workflow is green on main for the
+# tagged commit (job `upgrade-gate`).
+#
+# Speed: on a tag nearly nothing is compiled. upgrade.yml, on the push to main
+# of the same commit, built the images with the same inputs and left the
+# BuildKit cache in main's scope, which a tag can read (scopes `server` and
+# `agent`, one per image so that they do not overwrite each other's index):
+# the server and the four agents of the Dockerfile come out of that cache, which
+# is keyed by content (sources, Cargo.lock, Dockerfile, base images, commit and
+# commit date as build arguments). agent-macos.yml does the same for macOS with
+# its own content key. Only dev writes caches here; a tag only reads them.
 #
 # It also delivers the agent as native binaries: Linux x86_64/aarch64 (static
 # musl), Windows x86_64 and FreeBSD x86_64 from the Dockerfile's `agent-dist`
@@ -47,8 +58,59 @@ concurrency:
   cancel-in-progress: ${{ github.ref == 'refs/heads/dev' }}
 
 jobs:
+  # A tag is never published before the upgrade test has passed on the very
+  # commit it points to: the run of upgrade.yml for the push of that commit to
+  # main. Still running: waited for. Missing (commit never pushed to main) or
+  # failed: the release stops here, nothing is pushed. A failed run that is
+  # re-run and passes unblocks a re-run of this workflow. A push to dev passes
+  # straight through.
+  upgrade-gate:
+    name: Upgrade test passed on main
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      contents: read
+      # Read the runs of upgrade.yml.
+      actions: read
+    steps:
+      - name: Not a release
+        if: env.RELEASE_TAG != 'true'
+        run: echo "Push to dev, no release gate."
+      - name: Wait for the upgrade test of this commit on main
+        if: env.RELEASE_TAG == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          url="repos/$GITHUB_REPOSITORY/actions/workflows/upgrade.yml/runs?head_sha=$GITHUB_SHA&event=push&branch=main&per_page=1"
+          # Up to 10 minutes for the run to appear, then as long as it runs.
+          for attempt in $(seq 1 160); do
+            run=$(gh api "$url" --jq '.workflow_runs[0] // empty | "\(.status) \(.conclusion) \(.html_url)"')
+            if [ -z "$run" ]; then
+              if [ "$attempt" -gt 20 ]; then
+                echo "::error::no Upgrade test run on main for $GITHUB_SHA: tag a commit of main, after its push"
+                exit 1
+              fi
+            else
+              read -r status conclusion link <<< "$run"
+              echo "upgrade test: $status $conclusion $link"
+              if [ "$status" = completed ]; then
+                if [ "$conclusion" = success ]; then
+                  echo "Upgrade test passed on main for this commit: $link" >> "$GITHUB_STEP_SUMMARY"
+                  exit 0
+                fi
+                echo "::error::the Upgrade test of $GITHUB_SHA on main ended in $conclusion: $link"
+                exit 1
+              fi
+            fi
+            sleep 30
+          done
+          echo "::error::the Upgrade test of $GITHUB_SHA on main did not finish in time"
+          exit 1
+
   image:
     name: Build and push image
+    needs: upgrade-gate
     runs-on: ubuntu-latest
     timeout-minutes: 300
     permissions:
@@ -127,8 +189,12 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           annotations: ${{ steps.meta.outputs.annotations }}
           build-args: DUMBMONIT_BUILD=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          # Same scopes as upgrade.yml. A tag reads main's cache (left by the
+          # push of the same commit to main) and writes none.
+          cache-from: |
+            type=gha,scope=server
+            type=gha,scope=agent
+          cache-to: ${{ github.ref == 'refs/heads/dev' && 'type=gha,scope=server,mode=max,ignore-error=true' || '' }}
           # SBOM (SPDX) and full SLSA provenance, attached to the image index
           # by BuildKit: `docker buildx imagetools inspect <image> --format
           # '{{ json .SBOM }}'` (or `.Provenance`).
@@ -153,7 +219,9 @@ jobs:
           target: agent-dist
           platforms: linux/amd64
           outputs: type=local,dest=dist
-          cache-from: type=gha
+          cache-from: |
+            type=gha,scope=server
+            type=gha,scope=agent
 
       # Same format as the checksums the server serves on /download/<name>.sha256:
       # `sha256sum -c` and `shasum -a 256 -c` both read it.
@@ -203,8 +271,10 @@ jobs:
           tags: ${{ steps.agent-meta.outputs.tags }}
           labels: ${{ steps.agent-meta.outputs.labels }}
           annotations: ${{ steps.agent-meta.outputs.annotations }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            type=gha,scope=agent
+            type=gha,scope=server
+          cache-to: ${{ github.ref == 'refs/heads/dev' && 'type=gha,scope=agent,mode=max,ignore-error=true' || '' }}
           # SBOM (SPDX) and full SLSA provenance, attached to the image index
           # by BuildKit: `docker buildx imagetools inspect <image> --format
           # '{{ json .SBOM }}'` (or `.Provenance`).
@@ -219,67 +289,13 @@ jobs:
           create-storage-record: false
 
   # ---------------------------------------------------------------------------
-  # Agent macOS.
-  #
-  # Il ne peut pas sortir de l'image : compiler pour macOS exige le SDK d'Apple,
-  # que sa licence interdit de redistribuer, et aucun conteneur ne peut donc le
-  # construire légalement. Il est donc construit ici, sur un vrai exécuteur
-  # macOS, et attaché à la publication (job `github-release`) — c'est là que le
-  # serveur renvoie quand on lui demande `/download/dumbmonit-agent-macos-…`.
-  #
-  # Les deux architectures sont livrées séparément plutôt qu'en binaire
-  # universel : l'agent se télécharge par un script qui connaît déjà la sienne.
+  # Agent macOS : construit sur un exécuteur macOS (le SDK d'Apple ne peut pas
+  # entrer dans une image), ou repris tel quel d'une construction identique
+  # antérieure — voir agent-macos.yml, qui explique la clé de contenu.
   # ---------------------------------------------------------------------------
   macos-agent:
-    name: Build the macOS agent
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      # Même version que l'étape `agent` du Dockerfile : l'agent livré ne doit
-      # pas dépendre de la date de construction, ni de la plateforme.
-      - run: |
-          rustup toolchain install 1.99.0 --profile minimal \
-            --target aarch64-apple-darwin --target x86_64-apple-darwin
-          rustup default 1.99.0
-
-      # Mêmes réglages que le Dockerfile : l'agent se télécharge sur une liaison
-      # parfois lente, la taille prime sur la vitesse de compilation.
-      # Les chemins de la machine (dépôt, CARGO_HOME) sont remplacés par des
-      # chemins fixes dans le binaire : il ne dépend pas de l'endroit où il est
-      # construit (vérifié par reproducible.yml, mêmes options). `-Wl,-S` : sans
-      # informations de débogage (chemins des fichiers objets), l'identifiant
-      # LC_UUID que calcule ld ne dépend plus du dossier de construction.
-      - name: Build
-        env:
-          CARGO_PROFILE_RELEASE_OPT_LEVEL: s
-          CARGO_PROFILE_RELEASE_LTO: fat
-        run: |
-          set -eu
-          export RUSTFLAGS="--remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build -C link-arg=-Wl,-S"
-          xcodebuild -version
-          mkdir -p dist
-          for target in aarch64-apple-darwin x86_64-apple-darwin; do
-            cargo build --release --locked -p dumbmonit-agent --target "$target"
-          done
-          cp target/aarch64-apple-darwin/release/dumbmonit-agent dist/dumbmonit-agent-macos-aarch64
-          cp target/x86_64-apple-darwin/release/dumbmonit-agent  dist/dumbmonit-agent-macos-x86_64
-          # Même format que les empreintes servies par le serveur : `sha256sum -c`
-          # et `shasum -a 256 -c` les lisent toutes les deux.
-          cd dist
-          for binary in dumbmonit-agent-macos-*; do
-            shasum -a 256 "$binary" > "$binary.sha256"
-          done
-          ls -l
-
-      # Sur dev, l'artefact garde l'agent macOS de la version de développement ;
-      # sur une étiquette, c'est aussi ce que `github-release` attache.
-      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
-        with:
-          name: dumbmonit-agent-macos
-          path: dist/*
-          if-no-files-found: error
-          retention-days: 30
+    name: macOS agent
+    uses: ./.github/workflows/agent-macos.yml
 
   # ---------------------------------------------------------------------------
   # Publication GitHub d'une version : tous les binaires de l'agent et leurs
