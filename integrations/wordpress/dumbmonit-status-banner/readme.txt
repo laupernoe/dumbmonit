@@ -5,8 +5,8 @@ Requires at least: 5.8
 Tested up to: 6.8
 Requires PHP: 7.4
 Stable tag: 1.1.0
-License: Apache-2.0
-License URI: https://www.apache.org/licenses/LICENSE-2.0
+License: MIT
+License URI: https://opensource.org/license/mit
 
 Shows a banner on your site when services on your DumbMonit status page are down.
 

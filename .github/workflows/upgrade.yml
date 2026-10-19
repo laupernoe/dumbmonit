@@ -2,12 +2,20 @@ name: Upgrade test
 
 # Starts the last published release, fills it with data, then starts the image
 # built from this commit on the same /data volume (scripts/upgrade-test.sh).
-# Not a required check: it is a release gate, see "Releasing" in CONTRIBUTING.md.
+# Also the "does the Dockerfile still build" check: both images (server and
+# agent) are built here on every push to dev and main, never on pull requests.
+#
+# Not a required check of the PRs, but a release gate: release.yml refuses to
+# publish a tag whose commit has no green run of this workflow on main.
+#
+# On main it also keeps the BuildKit cache warm for the release: a tag can only
+# read the caches of main (the default branch) and its own, and this build uses
+# the very same inputs as release.yml (commit, commit date), so the tag build
+# finds every layer, the server and the four agents included, already built.
 on:
   push:
     branches: [main, dev]
-  pull_request:
-    branches: [main]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -23,9 +31,13 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # Same build arguments as release.yml: same cache keys.
+      - name: Commit date
+        run: echo "SOURCE_DATE_EPOCH=$(git log -1 --pretty=%ct)" >> "$GITHUB_ENV"
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-      # Same Dockerfile and gha cache as the "Docker image (build only)" job in
-      # ci.yml, so the layers are reused. Loaded locally, never pushed.
+      # One cache scope per image: two builds exporting to the same scope
+      # overwrite each other's index. On dev release.yml writes the cache, here
+      # it is only read; on main this is the only image build, it writes it.
       - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
         with:
           context: .
@@ -33,7 +45,22 @@ jobs:
           load: true
           push: false
           tags: dumbmonit-candidate:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: DUMBMONIT_BUILD=${{ github.sha }}
+          cache-from: |
+            type=gha,scope=server
+            type=gha,scope=agent
+          cache-to: ${{ github.ref == 'refs/heads/main' && 'type=gha,scope=server,mode=max,ignore-error=true' || '' }}
+      # The agent image (ghcr.io/laupernoe/dumbmonit-agent) is a second target of
+      # the same Dockerfile; it reuses the layers just built.
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          target: agent-image
+          platforms: linux/amd64
+          push: false
+          cache-from: |
+            type=gha,scope=agent
+            type=gha,scope=server
+          cache-to: ${{ github.ref == 'refs/heads/main' && 'type=gha,scope=agent,mode=max,ignore-error=true' || '' }}
       - name: Upgrade test (latest release -> this commit)
         run: scripts/upgrade-test.sh dumbmonit-candidate:ci

@@ -110,10 +110,10 @@
 				</div>
 				<ul class="points">
 					<li><strong>Abhängigkeiten</strong><p>Legen Sie einen Switch als übergeordneten Monitor von allem fest, was dahinter hängt. Fällt er aus, erhalten Sie eine Benachrichtigung, nicht dreißig; die anderen zeigen „Vom übergeordneten Monitor unterdrückt“.</p></li>
-					<li><strong>Nach Host gruppiert</strong><p>Ein NAS, dessen Array degradiert, sendet eine Nachricht pro Zyklus, nicht eine pro Platte. Erinnerungen, Eskalation, Bestätigung, Snooze, Ignorieren pro Monitor und das Löschen gelöster Historie sind alle eingebaut.</p></li>
+					<li><strong>Nach Host gruppiert</strong><p>Ein NAS, dessen Array degradiert, sendet eine Nachricht pro Zyklus, nicht eine pro Platte. Erinnerungen, Eskalation, Bestätigung, Snooze, Ignorieren pro Monitor und das Löschen gelöster Historie sind alle eingebaut. Eine Glocke an jedem Monitor zählt seine aktiven Alarme.</p></li>
 					<li><strong>Baselines, die zuerst lernen</strong><p>Anomalieerkennung ohne Schwellwert zum Einstellen: 168 Zeitfenster, eines pro Stunde der Woche. In den ersten 14 Tagen bleibt sie still und zeigt nur, was sie ausgelöst hätte.</p></li>
 					<li><strong>Prognosen</strong><p>„Dieses Dateisystem ist in vier Tagen voll“ wird als Prognose aufgeführt, getrennt von dem, was jetzt kaputt ist.</p></li>
-					<li><strong>Wartung und Benachrichtigungsrichtlinie</strong><p>Einmalige oder wöchentliche Fenster, Hysterese, Flap-Haltezeit, Ruhezeiten, Bündelung und eine Obergrenze pro Stunde, damit aus einer schlechten Nacht keine zweihundert Pushes werden.</p></li>
+					<li><strong>Wartung, Stummschaltungen und Benachrichtigungsrichtlinie</strong><p>Einmalige oder wöchentliche Fenster, Hysterese, Flap-Haltezeit, Ruhezeiten, Bündelung und eine Obergrenze pro Stunde, damit aus einer schlechten Nacht keine zweihundert Pushes werden.</p></li>
 				</ul>
 				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/de/latest/alerting/">So funktionieren Alarme</a></p>
 			</div>
@@ -238,7 +238,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<div class="section-head">
 			<h2>Wall-Modus</h2>
-			<p>Das Bulletin allein, im Vollbild, für einen Raummonitor: eine lebendige Szene (standardmäßig ein Pariser Hausdach mit Eiffelturm und den DumbMonit-Tauben, oder eine von vielen anderen), deren Wetter Ihren Alarmen folgt, ein OLED-Theme für einen tagelang eingeschalteten Bildschirm und Wall-Musik &mdash; Spotify Connect macht den Bildschirm zum Lautsprecher.</p>
+			<p>Das Bulletin allein, im Vollbild, für einen Raummonitor: eine lebendige Szene (standardmäßig ein Pariser Hausdach mit Eiffelturm und den DumbMonit-Tauben, oder eine von vielen anderen), deren Wetter Ihren Alarmen folgt, ein OLED-Theme für einen tagelang eingeschalteten Bildschirm und Wall-Musik &mdash; Spotify Connect macht den Bildschirm zum Lautsprecher. Optionale Widgets: Wetter, Kryptokurse, Aktienkurse, Wechselkurse, kritische CVEs, RSS-Nachrichten mit Bildern und die API-Nutzung von Claude und OpenAI.</p>
 		</div>
 		<figure>
 			<div class="shot">
@@ -285,7 +285,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p><a href="https://dumbmonit.readthedocs.io/de/latest/using/security-score/">Mehr in der Dokumentation</a></p>
 			</div>
 			<ul class="points">
-				<li><strong>Konten</strong><p>Rollen Administrator, Operator (bearbeitet Alarme, ändert keine Konfiguration) und Betrachter, optionaler TOTP-Zweitfaktor, ein Audit-Log und Single Sign-on über OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID …), Kontoerstellung standardmäßig aus.</p></li>
+				<li><strong>Konten</strong><p>Rollen Administrator, Operator (bearbeitet Alarme, ändert keine Konfiguration) und Betrachter, optionaler TOTP-Zweitfaktor, ein Audit-Log und Single Sign-on über OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID …), Anmeldung über LDAP oder Active Directory, Kontoerstellung standardmäßig aus.</p></li>
 				<li><strong>Verträgt sich mit dem, was Sie betreiben</strong><p><code>/metrics</code>, <code>/federate</code> und ein Prometheus-kompatibler Endpunkt lassen ein vorhandenes Grafana die Daten von DumbMonit lesen.</p></li>
 			</ul>
 		</div>
@@ -323,7 +323,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 
 <footer>
 	<div class="wrap">
-		<p>DumbMonit, Apache 2.0. Das Maskottchen ist eine Taube.</p>
+		<p>DumbMonit, MIT. Das Maskottchen ist eine Taube.</p>
 		<nav aria-label="Fußzeile">
 			<a href="./">Funktionen</a>
 			<a href="../devices/">Monitore</a>

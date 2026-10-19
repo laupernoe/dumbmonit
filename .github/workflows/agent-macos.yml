@@ -1,0 +1,130 @@
+name: macOS agent
+
+# Builds the macOS agent (arm64 and x86_64), or reuses the binaries of an
+# earlier build of the very same inputs. Called by release.yml (push to dev,
+# tags); also runs on its own on every push to main, so that the binaries of
+# the commit about to be tagged are already in main's cache, the only one a tag
+# can read: the tag then attaches them without compiling (~11 min saved).
+#
+# Why reusing is safe: the build is reproducible bit for bit (reproducible.yml
+# builds it twice and compares), so the same inputs give the same files. The
+# key covers every input: the sources the agent compiles (agent, proto,
+# collectors, SNMP profiles), the workspace manifest (which also holds the
+# version the agent reports, `CARGO_PKG_VERSION`, and the release profile),
+# Cargo.lock, this file (toolchain version, flags) and the Xcode version. No
+# commit hash is compiled into the agent. Two consecutive releases never share
+# binaries (the version differs); dev pushes that leave the agent alone do, and
+# so does a tag with the main push of the same commit.
+#
+# Not compiled here, and so not in the key: the server, crates/pack, web/.
+
+# Il ne peut pas sortir de l'image : compiler pour macOS exige le SDK d'Apple,
+# que sa licence interdit de redistribuer, et aucun conteneur ne peut donc le
+# construire légalement. Il est donc construit sur un vrai exécuteur macOS, et
+# attaché à la publication (job `github-release` de release.yml) — c'est là que
+# le serveur renvoie quand on lui demande `/download/dumbmonit-agent-macos-…`.
+#
+# Les deux architectures sont livrées séparément plutôt qu'en binaire
+# universel : l'agent se télécharge par un script qui connaît déjà la sienne.
+
+on:
+  workflow_call:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build the macOS agent
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Cache key
+        id: key
+        env:
+          SOURCES: >-
+            ${{ hashFiles('crates/agent/**', 'crates/proto/**', 'crates/collectors/**',
+            'profiles/**', 'Cargo.toml', 'Cargo.lock', '.github/workflows/agent-macos.yml') }}
+        run: |
+          set -eu
+          xcode=$(xcodebuild -version | shasum -a 256 | cut -c1-16)
+          xcodebuild -version
+          echo "key=agent-macos-$SOURCES-xcode-$xcode" >> "$GITHUB_OUTPUT"
+
+      - id: cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: dist
+          key: ${{ steps.key.outputs.key }}
+
+      # The cache only carries what an earlier run computed: the checksums it
+      # wrote with the binaries must still match.
+      - name: Check the reused binaries
+        if: steps.cache.outputs.cache-hit == 'true'
+        run: |
+          set -eu
+          cd dist
+          ls -l
+          for arch in aarch64 x86_64; do
+            test -s "dumbmonit-agent-macos-$arch" || { echo "::error::missing $arch"; exit 1; }
+          done
+          shasum -a 256 -c ./*.sha256
+          echo "Reused the macOS agent of an identical earlier build (\`${{ steps.key.outputs.key }}\`)." >> "$GITHUB_STEP_SUMMARY"
+
+      # Même version que l'étape `agent` du Dockerfile : l'agent livré ne doit
+      # pas dépendre de la date de construction, ni de la plateforme.
+      - if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          rustup toolchain install 1.99.0 --profile minimal \
+            --target aarch64-apple-darwin --target x86_64-apple-darwin
+          rustup default 1.99.0
+
+      # Mêmes réglages que le Dockerfile : l'agent se télécharge sur une liaison
+      # parfois lente, la taille prime sur la vitesse de compilation.
+      # Les chemins de la machine (dépôt, CARGO_HOME) sont remplacés par des
+      # chemins fixes dans le binaire : il ne dépend pas de l'endroit où il est
+      # construit (vérifié par reproducible.yml, mêmes options). `-Wl,-S` : sans
+      # informations de débogage (chemins des fichiers objets), l'identifiant
+      # LC_UUID que calcule ld ne dépend plus du dossier de construction.
+      - name: Build
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          CARGO_PROFILE_RELEASE_OPT_LEVEL: s
+          CARGO_PROFILE_RELEASE_LTO: fat
+        run: |
+          set -eu
+          export RUSTFLAGS="--remap-path-prefix=${CARGO_HOME:-$HOME/.cargo}=/cargo --remap-path-prefix=$PWD=/build -C link-arg=-Wl,-S"
+          mkdir -p dist
+          for target in aarch64-apple-darwin x86_64-apple-darwin; do
+            cargo build --release --locked -p dumbmonit-agent --target "$target"
+          done
+          cp target/aarch64-apple-darwin/release/dumbmonit-agent dist/dumbmonit-agent-macos-aarch64
+          cp target/x86_64-apple-darwin/release/dumbmonit-agent  dist/dumbmonit-agent-macos-x86_64
+          # Même format que les empreintes servies par le serveur : `sha256sum -c`
+          # et `shasum -a 256 -c` les lisent toutes les deux.
+          cd dist
+          for binary in dumbmonit-agent-macos-*; do
+            shasum -a 256 "$binary" > "$binary.sha256"
+          done
+          ls -l
+
+      # Saved from dev and main only (a tag reads main's): never from a tag,
+      # whose cache no later run could read.
+      - if: steps.cache.outputs.cache-hit != 'true' && startsWith(github.ref, 'refs/heads/')
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: dist
+          key: ${{ steps.key.outputs.key }}
+
+      # Sur dev, l'artefact garde l'agent macOS de la version de développement ;
+      # sur une étiquette, c'est aussi ce que `github-release` attache.
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
+        with:
+          name: dumbmonit-agent-macos
+          path: dist/*
+          if-no-files-found: error
+          retention-days: 30

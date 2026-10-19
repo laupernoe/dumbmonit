@@ -29,6 +29,7 @@
 	import { getSecuritySummary } from '#lib/api/security.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
 	import type { Serie } from '#lib/components/Chart.svelte';
+	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
@@ -88,6 +89,8 @@
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
+	/** One pass over the shared alert list, not a request per monitor. */
+	const alertCounts = $derived(countAlertsByTarget(alertsStore.alerts));
 	let sparklines = $state<Map<TargetId, Serie[]>>(new Map());
 	/** Security badges: empty while the score is off in Settings, or for unrated kinds. */
 	let security = $state<Map<TargetId, { grade: SecurityGrade | null; score: number | null }>>(new Map());
@@ -1337,6 +1340,7 @@
 					layout={view}
 					{names}
 					{security}
+					{alertCounts}
 					{selection}
 				/>
 			{/if}
@@ -1357,7 +1361,7 @@
 					</button>
 				{/if}
 				{#if disabledExpanded}
-					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {selection} />
+					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {alertCounts} {selection} />
 				{/if}
 			</section>
 		{/if}
