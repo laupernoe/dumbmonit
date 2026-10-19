@@ -1,0 +1,10 @@
+# source: https://github.com/pi-hole/AdminLTE/blob/v5.21/api_FTL.php L18-L20 (if isset($_GET['version']) { $data['version'] = 3; }, no $auth check) ; api.php L208 (require 'api_FTL.php') ; title: scripts/pi-hole/php/header.php L23 ("Pi-hole - <hostname>")
+# RECONSTRUCTED (PHP json_encode output, lighttpd front). Path: GET /admin/api.php?version
+HTTP/1.1 200 OK
+Content-type: application/json
+Access-Control-Allow-Origin: *
+Content-Length: 13
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Server: lighttpd/1.4.69
+
+{"version":3}

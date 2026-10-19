@@ -5,6 +5,33 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Network discovery (all products, not just SNMP).** A scan now sweeps about
+  thirty common ports plus SNMP on every address of a network, then fingerprints
+  what answers with a single anonymous request per port — HTTP (Server header,
+  title, body, TLS certificate, never verified), TCP banner, or SNMP
+  `sysObjectID`/`sysDescr` — and never tries to authenticate. One host can carry
+  several services. Fingerprints are declared in a catalog keyed by monitor
+  kind, so each result opens the Add-monitor form pre-filled with the right type,
+  address and port; a service already monitored is marked as such. Over sixty
+  products are recognised (Proxmox VE/PBS/PMG/PDM, Synology DSM, TrueNAS,
+  OPNsense, pfSense, UniFi, Home Assistant, Portainer, Docker, Immich, Jellyfin,
+  Plex, Nextcloud, GitLab, Forgejo/Gitea, Paperless, Pi-hole, AdGuard, Traefik,
+  Caddy, NPM, CrowdSec, RabbitMQ, Graylog, Loki, VictoriaMetrics/Logs, Grafana,
+  Prometheus, FortiGate, Sophos, MikroTik, Redfish BMC, vSphere/ESXi, XCP-ng,
+  Nutanix, Veeam, printers, databases, SSH, generic HTTP/SNMP, …). The engine
+  lives in the shared collectors crate, so a relay agent can run the same scan
+  on a remote site and stream results back; an agent too old to understand the
+  command fails the job with a clear message. New admin API under
+  `/api/discovery/jobs` (in-memory, last twenty, SNMP community never logged nor
+  returned); the SNMP-only `POST /api/discovery` stays for compatibility.
+- **Host network mode.** A new optional `docker-compose.host.yml` runs the
+  container on the host's network so discovery reads neighbours' MAC addresses
+  and vendors and scans the server's own LAN without a relay. Linux only; the
+  embedded VictoriaMetrics stays bound to the loopback. See the new
+  **Network discovery** documentation page.
+
 ## 0.12.0 — 2026-10-19
 
 ### Added

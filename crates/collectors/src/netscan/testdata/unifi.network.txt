@@ -1,0 +1,8 @@
+# source: https://ubntwiki.com/products/software/UniFi-controller/api (table "Controller Endpoints": `status` GET "Returns some very basic server information - This appears to be the only endpoint that can be reached without an authentication", example {"data":[],"meta":{"rc":"ok","server_version":"5.7.23","up":true,"uuid":"0e727580-..."}})
+# note: PARTLY RECONSTRUCTED: JSON body is the documented shape (version bumped to a recent-looking value, uuid anonymised); HTTP headers are approximate (UniFi Network Application = Spring/Tomcat on 8443, no verified Server header). Behaviour of /status on the very latest 9.x releases not re-verified.
+HTTP/1.1 200
+Content-Type: application/json;charset=UTF-8
+Content-Length: 120
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+
+{"meta":{"rc":"ok","up":true,"server_version":"9.0.114","uuid":"00000000-1111-2222-3333-444444444444"},"data":[]}

@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 
-use crate::{KindDescription, Sample, Target};
+use crate::{Fingerprint, KindDescription, Sample, Target};
 
 /// Ce qui peut mal se passer pendant une interrogation.
 ///
@@ -55,6 +55,14 @@ pub trait Collector: Send + Sync {
     /// y remplace `kind` par [`Collector::kind`].
     fn description(&self) -> Option<KindDescription> {
         None
+    }
+
+    /// Empreintes qui permettent à la découverte réseau de reconnaître ce
+    /// produit sans s'authentifier (voir `discovery.rs`). Vide par défaut : un
+    /// type qu'on ne sait pas reconnaître de l'extérieur n'apparaît simplement
+    /// pas dans les résultats.
+    fn fingerprints(&self) -> Vec<Fingerprint> {
+        Vec::new()
     }
 
     /// Interroge la cible et renvoie ses mesures.

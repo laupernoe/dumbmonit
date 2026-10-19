@@ -1,0 +1,22 @@
+# source: https://httpd.apache.org/docs/2.4/mod/core.html#servertokens (default "Full": Apache/2.4.x (OS) modules ; Debian/Ubuntu packages ship ServerTokens OS -> "Apache/2.4.58 (Ubuntu)") ; https://github.com/rapid7/recog/blob/main/xml/http_servers.xml L184 (^Apache(?:-AdvancedExtranetServer)?(?:/([012][\d.]*)\s*(.*))?$)
+# RECONSTRUCTED (Ubuntu default page, condensed). Path: GET /
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Server: Apache/2.4.58 (Ubuntu)
+Last-Modified: Tue, 08 Oct 2026 08:00:00 GMT
+ETag: "29af-5e8f0a1b2c3d4"
+Accept-Ranges: bytes
+Content-Length: 10671
+Vary: Accept-Encoding
+Content-Type: text/html
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Apache2 Ubuntu Default Page: It works</title>
+  </head>
+  <body>
+    <div class="main_page"><h1>Apache2 Default Page</h1></div>
+  </body>
+</html>

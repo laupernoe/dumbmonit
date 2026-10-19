@@ -1,0 +1,35 @@
+# source: https://git.proxmox.com/?p=pmg-gui.git;a=blob_plain;f=pmg-index.html.tt;hb=HEAD (template, nodename=pmg1)
+# source: https://git.proxmox.com/?p=pmg-api.git;a=blob_plain;f=src/PMG/Service/pmgproxy.pm;hb=HEAD (renders pmg-index.html.tt; PMG reuses PVE::APIServer::AnyEvent -> Server: pve-api-daemon/3.0)
+# note: reconstructed; not a live capture
+HTTP/1.1 200 OK
+Cache-Control: max-age=0
+Connection: close
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Pragma: no-cache
+Server: pve-api-daemon/3.0
+Content-Length: 3900
+Content-Type: text/html; charset=utf-8
+Expires: Mon, 19 Oct 2026 10:00:00 GMT
+
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>pmg1 - Proxmox Mail Gateway</title>
+    <link rel="icon" sizes="128x128" href="/pve2/images/logo-128.png" />
+    <link rel="stylesheet" type="text/css" href="/pve2/css/ext6-pmg.css?ver=9.0.2" />
+    <script type="text/javascript" src="/pve2/ext6/ext-all.js"></script>
+    <script type="text/javascript">
+      Proxmox = {
+        Setup: { auth_cookie_name: 'PMGAuthCookie' },
+        NodeName: 'pmg1',
+        UserName: '',
+        CSRFPreventionToken: 'null',
+        ConsentText: ''
+      };
+    </script>
+    <script type="text/javascript" src="/proxmoxlib.js?ver=4.0.5"></script>
+    <script type="text/javascript" src="/pmg/js/pmgmanagerlib.js?ver=9.0.2"></script>
+  </head>
+  <body></body>
+</html>

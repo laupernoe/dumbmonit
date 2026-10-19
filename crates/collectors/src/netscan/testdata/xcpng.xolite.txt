@@ -1,0 +1,24 @@
+# source: https://raw.githubusercontent.com/vatesfr/xen-orchestra/master/@xen-orchestra/lite/index.html (source index.html: <title>XO Lite</title>, <div id="root">); nuclei-templates http/exposed-panels/xcp-ng-xo-lite-panel.yaml (GET /, status 200, body contains `<title>XO Lite</title>`)
+# source: XO Lite ships by default on the host from XCP-ng 8.3 (Vates reply, https://xcp-ng.org/forum/post/70287)
+# note: the body is the real source index.html; the production build injects hashed asset tags and the headers are approximate (XCP-ng host nginx).
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: text/html
+Content-Length: 1200
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Connection: keep-alive
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>XO Lite</title>
+    <script type="module" crossorigin src="/assets/index-AbCdEf12.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>

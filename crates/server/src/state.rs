@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use sqlx::SqlitePool;
 
 use crate::collectors::Registry;
+use crate::collectors::discovery::Discovery;
 use crate::collectors::relay::RelayHub;
 use crate::config::Config;
 use crate::crypto::Cipher;
@@ -12,7 +13,7 @@ use crate::tsdb::{SampleSink, Victoria};
 
 /// État partagé par tous les gestionnaires HTTP et par le planificateur.
 #[derive(Clone)]
-pub struct AppState(Arc<Inner>, Arc<RelayHub>, Arc<Cooldowns>);
+pub struct AppState(Arc<Inner>, Arc<RelayHub>, Arc<Cooldowns>, Arc<Discovery>);
 
 pub struct Inner {
     pub config: Config,
@@ -25,7 +26,12 @@ pub struct Inner {
 
 impl AppState {
     pub fn new(inner: Inner) -> Self {
-        Self(Arc::new(inner), Arc::new(RelayHub::new()), Arc::new(Cooldowns::default()))
+        Self(
+            Arc::new(inner),
+            Arc::new(RelayHub::new()),
+            Arc::new(Cooldowns::default()),
+            Arc::new(Discovery::new()),
+        )
     }
 
     /// Sondes déléguées aux agents relais. Construite avec l'état plutôt que
@@ -39,6 +45,12 @@ impl AppState {
     /// test Web Push…). Propres à l'instance, comme le relais.
     pub fn cooldowns(&self) -> &Cooldowns {
         &self.2
+    }
+
+    /// Balayages de découverte réseau en cours ou récents. En mémoire, propre à
+    /// l'instance, comme le relais.
+    pub fn discovery(&self) -> &Arc<Discovery> {
+        &self.3
     }
 }
 

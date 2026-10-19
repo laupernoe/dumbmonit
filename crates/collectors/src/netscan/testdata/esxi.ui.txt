@@ -1,0 +1,22 @@
+# source: nuclei-templates http/exposed-panels/esxi-system.yaml (GET /ui/#/login -> request path /ui/, status 200, body contains `ng-app="esxUiApp"`)
+# source: https://www.thomas-krenn.com/de/wiki/VMware_HTML5_Host_Client_für_ESXi_standalone_Hosts (Host Client login page served under /ui/)
+# note: PARTLY RECONSTRUCTED: only `ng-app="esxUiApp"` is a verified string. The title text, other markup and headers are approximate (ESXi Host Client is closed source; the exact <title> was not verified, do NOT match on it).
+HTTP/1.1 200 OK
+Content-Type: text/html
+Content-Length: 4100
+Cache-Control: no-cache
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Connection: keep-alive
+
+<!DOCTYPE html>
+<html ng-app="esxUiApp" ng-controller="MainController">
+<head>
+<meta charset="utf-8">
+<title>ESXi Host Client</title>
+<link rel="stylesheet" href="css/esxui.css">
+<script src="scripts/esxui.js"></script>
+</head>
+<body>
+<div ui-view></div>
+</body>
+</html>

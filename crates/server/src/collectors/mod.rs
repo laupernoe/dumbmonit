@@ -13,6 +13,7 @@
 
 pub mod activedirectory_history;
 pub mod agent;
+pub mod discovery;
 pub mod opnsense_history;
 pub mod pbs_history;
 pub mod pdm_history;

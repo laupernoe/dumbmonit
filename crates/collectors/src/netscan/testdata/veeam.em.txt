@@ -1,0 +1,23 @@
+# source: nuclei-templates http/exposed-panels/veeam-backup-manager-login.yaml (GET /login.aspx, status 200, body contains `Veeam Backup Enterprise Manager : Login`; version extractor `login.bundle.js?v=<ver>`)
+# note: PARTLY RECONSTRUCTED: the title text and the login.bundle.js?v= pattern are real (nuclei); headers (IIS/ASP.NET) and other markup approximate. This is Enterprise Manager (default port 9443), NOT the B&R REST API on 9419 (that one has no verified anonymous marker).
+HTTP/1.1 200 OK
+Cache-Control: private
+Content-Type: text/html; charset=utf-8
+Server: Microsoft-IIS/10.0
+X-Powered-By: ASP.NET
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Content-Length: 2600
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Veeam Backup Enterprise Manager : Login</title>
+<script src="/login.bundle.js?v=12.3.0.310"></script>
+</head>
+<body>
+<form id="loginForm" method="post" action="/login.aspx">
+<input type="text" name="username"><input type="password" name="password">
+</form>
+</body>
+</html>

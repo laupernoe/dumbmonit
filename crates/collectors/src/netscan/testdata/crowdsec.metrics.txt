@@ -1,0 +1,17 @@
+# source: crates/collectors/src/crowdsec/testdata/crowdsec_1.7.0.prom (real /metrics scrape; cs_info at line 46) ; https://github.com/crowdsecurity/crowdsec/blob/master/cmd/crowdsec/metrics.go L92 (http.Handle("/metrics", ...promhttp.Handler()) on prometheus.listen_port, default 6060) ; promhttp sorts families alphabetically so cs_* come before go_*
+# Excerpt of the real scrape, headers RECONSTRUCTED (promhttp default). Path: GET /metrics
+HTTP/1.1 200 OK
+Content-Type: text/plain; version=0.0.4; charset=utf-8; escaping=underscores
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Transfer-Encoding: chunked
+
+# HELP cs_active_decisions Number of active decisions.
+# TYPE cs_active_decisions gauge
+cs_active_decisions{action="ban",origin="crowdsec",reason="crowdsecurity/ssh-bf"} 1
+cs_active_decisions{action="ban",origin="crowdsec",reason="crowdsecurity/ssh-bf_user-enum"} 1
+cs_active_decisions{action="ban",origin="crowdsec",reason="crowdsecurity/ssh-slow-bf"} 1
+# HELP cs_info Information about Crowdsec.
+# TYPE cs_info gauge
+cs_info{version="v1.7.0-c3036e21"} 0
+# HELP go_gc_duration_seconds A summary of the pause duration of garbage collection cycles.
+# TYPE go_gc_duration_seconds summary

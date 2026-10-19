@@ -1,0 +1,4 @@
+# source: https://github.com/networkupstools/nut/blob/master/server/netmisc.c (net_ver: sendback(client, "Network UPS Tools upsd %s - %s%s%s\n", UPS_VERSION, PACKAGE_URL ...)); command table server/netcmds.h l.51 { "VER", net_ver, 0 } (no login needed); docs/net-protocol.txt l.692
+# probe sent: VER\n
+# RECONSTRUCTED from the format string
+Network UPS Tools upsd 2.8.2 - https://www.networkupstools.org/\n
