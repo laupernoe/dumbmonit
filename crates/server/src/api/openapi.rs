@@ -109,6 +109,7 @@ mod tests {
         "/api/agent/commands/{id}",
         "/api/agent/relay",
         "/api/agent/relay/{id}",
+        "/api/agent/relay/discovery/{id}",
         "/api/auth/oidc/start",
         "/api/auth/oidc/callback",
         "/api/music/spotify/callback",

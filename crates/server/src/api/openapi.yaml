@@ -944,6 +944,97 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/discovery/jobs:
+    get:
+      operationId: listDiscoveryJobs
+      tags: [Discovery]
+      summary: The last discovery scans
+      description: >-
+        The twenty most recent scans, kept in memory only (lost on restart, by
+        design). Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Recent scans.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [jobs]
+                properties:
+                  jobs:
+                    type: array
+                    items: { $ref: "#/components/schemas/DiscoveryJobSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: startDiscoveryJob
+      tags: [Discovery]
+      summary: Start a network discovery scan
+      description: >-
+        Sweeps common ports and SNMP on every address of a network (at most 1024,
+        a /22), then fingerprints what answers — without ever authenticating. A
+        scan with `agent_id` is run by that relay agent on its own network; an
+        agent too old to understand the command fails the job with a clear
+        message. The SNMP community is a secret, never logged nor returned.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DiscoveryJobRequest" }
+      responses:
+        "202":
+          description: The scan has been queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409":
+          description: A scan is already running for this target.
+
+  /api/discovery/jobs/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getDiscoveryJob
+      tags: [Discovery]
+      summary: A discovery scan, hosts included
+      description: >-
+        The hosts fill in as the scan progresses; the UI polls every two seconds.
+        Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/DiscoveryJob" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: cancelDiscoveryJob
+      tags: [Discovery]
+      summary: Cancel a discovery scan
+      x-token-scope: write
+      responses:
+        "204": { description: Cancelled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -5999,6 +6090,74 @@ components:
               sysobjectid: { type: [string, "null"] }
               suggested_profile: { type: [string, "null"] }
 
+    DiscoveryJobRequest:
+      type: object
+      required: [cidr]
+      properties:
+        cidr: { type: string, examples: ["192.168.1.0/24"] }
+        agent_id:
+          type: [integer, "null"]
+          format: int64
+          description: Relay agent that runs the scan; null means the server itself.
+        snmp_community: { type: string, default: public, writeOnly: true }
+        depth: { type: string, enum: [standard, extended], default: standard }
+    DiscoveryJobSummary:
+      type: object
+      required: [id, cidr, agent_id, agent_name, status, started_at, finished_at, hosts_found]
+      properties:
+        id: { type: string }
+        cidr: { type: string }
+        agent_id: { type: [integer, "null"], format: int64 }
+        agent_name: { type: [string, "null"] }
+        status: { type: string, enum: [running, done, failed, cancelled] }
+        started_at: { type: string }
+        finished_at: { type: [string, "null"] }
+        hosts_found: { type: integer }
+    DiscoveryJob:
+      allOf:
+        - $ref: "#/components/schemas/DiscoveryJobSummary"
+        - type: object
+          required: [progress, error, hosts]
+          properties:
+            error: { type: [string, "null"] }
+            progress:
+              type: object
+              required: [phase, probed, total]
+              properties:
+                phase: { type: string, enum: [sweep, fingerprint, done] }
+                probed: { type: integer }
+                total: { type: integer }
+            hosts:
+              type: array
+              items: { $ref: "#/components/schemas/DiscoveredHost" }
+    DiscoveredHost:
+      type: object
+      required: [ip, hostname, mac, vendor, services]
+      properties:
+        ip: { type: string }
+        hostname: { type: [string, "null"], description: Reverse DNS. }
+        mac: { type: [string, "null"], description: Only on the same L2 segment (host network). }
+        vendor: { type: [string, "null"] }
+        services:
+          type: array
+          items: { $ref: "#/components/schemas/DiscoveredService" }
+    DiscoveredService:
+      type: object
+      required: [port, protocol, product, kind, version, confidence, tls, detail, monitored_target_id, prefill]
+      properties:
+        port: { type: integer }
+        protocol: { type: string, enum: [tcp, udp] }
+        product: { type: string, description: Readable label, e.g. "Proxmox VE". }
+        kind: { type: [string, "null"], description: Matching DumbMonit collector kind. }
+        version: { type: [string, "null"] }
+        confidence: { type: string, enum: [high, medium, low] }
+        tls: { type: boolean }
+        detail: { type: [string, "null"] }
+        monitored_target_id: { type: [string, "null"], description: Existing target already pointing at this address. }
+        prefill:
+          type: [object, "null"]
+          additionalProperties: true
+          description: Fields to pre-fill in the target form for `kind`; never a secret.
     LocalSubnets:
       type: object
       required: [subnets]

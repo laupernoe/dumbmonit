@@ -1,0 +1,29 @@
+# source: https://github.com/go-gitea/gitea/blob/main/templates/base/head.tmpl L6 (title), L10 (keywords meta) ; templates/base/footer_content.tmpl L3-L5 (about.gitea.com + "Powered by Gitea") ; modules/setting/ui.go L154 (default keywords "go,git,self-hosted,gitea") ; modules/setting/server.go L149 (default APP_NAME "Gitea: Git with a cup of tea")
+# RECONSTRUCTED from the templates (condensed). Path: GET /
+HTTP/1.1 200 OK
+Cache-Control: max-age=0, private, must-revalidate, no-transform
+Content-Type: text/html; charset=utf-8
+X-Frame-Options: SAMEORIGIN
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+
+<!DOCTYPE html>
+<html lang="en-US" data-theme="gitea-auto">
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Gitea: Git with a cup of tea</title>
+	<link rel="manifest" href="/assets/site-manifest.json">
+	<meta name="author" content="Gitea - Git with a cup of tea">
+	<meta name="description" content="Gitea (Git with a cup of tea) is a painless self-hosted Git service written in Go">
+	<meta name="keywords" content="go,git,self-hosted,gitea">
+	<meta name="referrer" content="same-origin">
+	<link rel="icon" href="/assets/img/favicon.svg" type="image/svg+xml">
+</head>
+<body>
+	<footer class="page-footer">
+		<div class="left-links" role="contentinfo">
+			<a target="_blank" href="https://about.gitea.com">Powered by Gitea</a>
+			Version: 1.24.0
+		</div>
+	</footer>
+</body>
+</html>

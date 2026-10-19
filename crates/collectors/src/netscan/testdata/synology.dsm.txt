@@ -1,0 +1,13 @@
+# source: request GET /webapi/query.cgi?api=SYNO.API.Info&version=1&method=query&query=SYNO.API.Auth (anonymous, no session)
+# source: body entry for SYNO.API.Auth copied from the real DSM 7.4.1 capture in this repo: crates/collectors/src/synology/testdata/dsm74/api-info.json (pseudonymised, DS918+), narrowed to the requested API as DSM does for query=<name>
+# note: HTTP headers reconstructed (nginx front end), body = real structure
+HTTP/1.1 200 OK
+Server: nginx
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Content-Type: application/json; charset="UTF-8"
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: no-store
+X-Content-Type-Options: nosniff
+
+{"data":{"SYNO.API.Auth":{"maxVersion":7,"minVersion":1,"path":"entry.cgi"}},"success":true}

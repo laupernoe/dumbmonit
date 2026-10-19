@@ -1,0 +1,29 @@
+# source: matcher of projectdiscovery/nuclei-templates http/exposed-panels/sophos-fw-version-detect.yaml (GET /webconsole/webpages/login.jsp, status 200, body contains `<title>Sophos</title>` or `uiLangToHTMLLangAttributeValueMapping`; version regex `href="/themes/lite1/css/typography.css?version=<ver>"`)
+# source: path/port confirmed by https://www.tenable.com/security/research/tra-2017-11 (admin login at https://<fw>:4444/webconsole/webpages/login.jsp, user portal /userportal/webpages/myaccount/login.jsp) and https://docs.sophos.com/nsg/sophos-firewall/20.0/api/system/administration/adminsettings/operations/webadminsettings.html (HTTPS port 4444 default)
+# note: PARTLY RECONSTRUCTED: matched strings (title, uiLangToHTMLLangAttributeValueMapping, typography.css?version=) are real; headers and the rest of the page are approximate (closed source). Version string "SFOS 20.0.2 MR-2-Build378" style is only a guess for the css query value.
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Content-Type: text/html;charset=UTF-8
+Content-Length: 5400
+Connection: close
+Cache-Control: no-cache, no-store
+Pragma: no-cache
+X-Frame-Options: SAMEORIGIN
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Sophos</title>
+<link rel="stylesheet" href="/themes/lite1/css/typography.css?version=2002mr2build378">
+<script type="text/javascript">
+var uiLangToHTMLLangAttributeValueMapping = {"en":"en","fr":"fr","de":"de"};
+</script>
+</head>
+<body class="login">
+<form name="loginform" method="post" action="/webconsole/Controller">
+<input type="text" name="username" id="username">
+<input type="password" name="password" id="password">
+</form>
+</body>
+</html>

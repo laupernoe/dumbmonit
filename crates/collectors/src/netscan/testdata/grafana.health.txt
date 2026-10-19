@@ -1,0 +1,16 @@
+# source: https://github.com/grafana/grafana/blob/main/pkg/api/http_server.go L784-L790 (healthResponse json: database, version, commit, enterpriseCommit, apiserver), L800-L818 (apiHealthHandler, version/commit omitted when Anonymous.HideVersion) ; https://grafana.com/docs/grafana/latest/developers/http_api/other/#health-api ; page title: public/views/index.html L13 (<title>[[.AppTitle]]</title>, "Grafana") ; recog html_title.xml L1986 (^Grafana$)
+# RECONSTRUCTED from the struct (values invented). Path: GET /api/health
+HTTP/1.1 200 OK
+Cache-Control: no-store
+Content-Type: application/json; charset=UTF-8
+X-Content-Type-Options: nosniff
+X-Frame-Options: deny
+X-Xss-Protection: 1; mode=block
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Length: 92
+
+{
+  "commit": "a1b2c3d4e5f6",
+  "database": "ok",
+  "version": "12.2.1"
+}

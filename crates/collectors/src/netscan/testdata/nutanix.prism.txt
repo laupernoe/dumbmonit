@@ -1,0 +1,19 @@
+# source: nuclei-templates http/exposed-panels/nutanix-web-console-login.yaml (GET /console/, status 200, body contains `<title>Nutanix Web Console</title>`); Prism Central v4 API port 9440 from crates/server/src/api/collectors.rs (nutanix default_port 9440)
+# note: PARTLY RECONSTRUCTED: only the <title> is a verified string; remaining markup and headers are approximate (closed source).
+HTTP/1.1 200 OK
+Content-Type: text/html;charset=UTF-8
+Content-Length: 3000
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Connection: keep-alive
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Nutanix Web Console</title>
+<link rel="shortcut icon" href="/console/images/favicon.ico">
+</head>
+<body>
+<div id="app"></div>
+</body>
+</html>

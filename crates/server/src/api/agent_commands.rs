@@ -54,6 +54,11 @@ impl Rejection {
         Self { status: StatusCode::NOT_FOUND, message: message.to_string() }
     }
 
+    /// La ressource a existé mais n'est plus : un balayage annulé, par exemple.
+    pub fn gone(message: &str) -> Self {
+        Self { status: StatusCode::GONE, message: message.to_string() }
+    }
+
     /// Refus opposé à une machine qui se réclame de l'identité d'une autre.
     pub fn not_this_machine() -> Self {
         Self { status: StatusCode::FORBIDDEN, message: agent::BINDING_MISMATCH.to_string() }

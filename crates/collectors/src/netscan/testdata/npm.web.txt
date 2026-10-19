@@ -1,0 +1,30 @@
+# source: https://github.com/NginxProxyManager/nginx-proxy-manager/blob/develop/frontend/index.html L6 (<title>Nginx Proxy Manager</title>) ; backend/routes/main.js L28-L40 (GET /api -> {"status":"OK","setup":..,"version":{major,minor,revision}}) ; docker/rootfs/etc/nginx/nginx.conf L28 (server_tokens off) ; JSON body copied from crates/collectors/src/npm/testdata/root.json
+# Page: condensed from the real frontend/index.html; headers RECONSTRUCTED (OpenResty, tokens off). Path: GET /
+HTTP/1.1 200 OK
+Server: openresty
+Date: Mon, 19 Oct 2026 15:00:00 GMT
+Content-Type: text/html; charset=utf-8
+Content-Length: 1500
+Accept-Ranges: bytes
+
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Nginx Proxy Manager</title>
+		<meta name="description" content="Manage Nginx hosts with a simple, powerful interface" />
+		<link rel="preload" href="/images/logo-no-text.svg" as="image" type="image/svg+xml" fetchPriority="high">
+		<link rel="manifest" href="/images/favicon/site.webmanifest" />
+		<link rel="shortcut icon" href="/images/favicon/favicon.ico" />
+	</head>
+	<body>
+		<div id="root"></div>
+	</body>
+</html>
+
+# --- alternative request, GET /api/ (same product) ---
+# HTTP/1.1 200 OK
+# Content-Type: application/json; charset=utf-8
+#
+# {"status":"OK","setup":true,"version":{"major":2,"minor":16,"revision":0}}
