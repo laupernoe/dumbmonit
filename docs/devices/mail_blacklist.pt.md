@@ -6,6 +6,11 @@ entregue: Spamhaus, Barracuda, SpamCop e algumas mais pequenas. Por cada lista
 que lista um endereço, a página do monitor dá o código de resposta da lista, o
 motivo publicado e uma ligação direta para a sua página de consulta e remoção.
 
+**Não é preciso nenhuma chave de API.** Deixe a credencial em «No key (recommended)»:
+as listas são consultadas através do resolvedor DNS do servidor, ou do resolvedor
+que definir em **Resolver**. Só a Spamhaus pode recusar, e só quando esse
+resolvedor é público; veja [Resolvedores, recusas e tempos limite](#resolvers-refusals-and-timeouts).
+
 Introduza um domínio (`example.com`) e o DumbMonit verifica os endereços dos
 seus anfitriões MX (registos A e AAAA), os endereços do próprio domínio, e
 quaisquer **Extra addresses** que acrescente (um relay de saída que não é um
@@ -40,9 +45,11 @@ pode ser adivinhado. A página do monitor liga a:
 ## As listas de bloqueio {#the-blocklists}
 
 Verificadas a 16 de outubro de 2026. A SORBS fechou em junho de 2024 e não é
-consultada. A cada lista é pedido um registo `A` sob a sua zona; uma lista é
-identificada pelo id da primeira coluna, que a opção **Lists** aceita para
-restringir a verificação.
+consultada. A cada lista é pedido um registo `A` sob a sua zona. O formulário
+mostra-as como uma lista de caixas chamada **Blocklists** (nome, se verifica
+endereços ou o domínio, principal ou não, e uma breve descrição); as listas
+**principais** vêm marcadas num monitor novo. O id da primeira coluna é o que a
+opção `lists` guarda e o nome que a API e as métricas dão à lista.
 
 | Id | Lista | Zona | Verifica | IPv6 | Principal | Uso e remoção |
 |---|---|---|---|---|---|---|
@@ -62,6 +69,23 @@ outras listas, um alerta de aviso. Os endereços IPv6 do MX são verificados
 apenas contra a Spamhaus ZEN, a única lista aqui que responde para IPv6; as
 outras mostram-nos como não cobertos.
 
+### As suas próprias listas {#your-own-lists}
+
+Em **Custom lists**, no fim da lista de caixas, acrescente as zonas DNSBL de
+qualquer outra lista que use ou que gira você (por exemplo `dnsbl.example.org`).
+Cada uma tem um **Type**: `ip` (a zona é consultada por cada endereço, como
+`1.2.0.192.dnsbl.example.org`) ou `domain` (pelo domínio de correio), e um
+interruptor **Major** para uma lista cuja listagem deva disparar o alerta crítico.
+A zona tem de ser um nome de domínio válido, não um endereço IP, e não pode repetir
+outra zona nem uma das listas acima; no máximo 20 listas próprias. Qualquer
+resposta `127.x.x.x` conta como listado; `NXDOMAIN`, como limpo.
+
+O monitor consulta exatamente as listas marcadas mais as suas. Um monitor criado
+antes destas opções não tem nenhuma definição e continua a consultar todas as
+listas acima. A opção `lists` guarda os ids marcados separados por vírgulas (`-`
+quando nenhum está marcado) e `custom_lists` uma matriz JSON como
+`[{"zone": "dnsbl.example.org", "subject": "ip", "major": false}]`.
+
 ## Resolvedores, recusas e tempos limite {#resolvers-refusals-and-timeouts}
 
 As listas são consultadas por DNS, e a forma como respondem depende de **que
@@ -73,8 +97,11 @@ resolvedor pergunta**:
   `127.255.255.254` em vez de `NXDOMAIN` (`127.255.255.255` quando um
   resolvedor envia demasiadas consultas, `127.255.255.252` para uma consulta
   malformada ou uma chave DQS errada). Isto parece listagens e não é: o
-  DumbMonit mostra a verificação como **erro de configuração**, nunca como
-  «listado», e não envia alerta de indisponibilidade.
+  DumbMonit marca a lista Spamhaus como **recusada** («Spamhaus refuses this
+  resolver» na página do monitor), nunca como «listado», e as outras listas
+  mantêm os seus resultados. Só quando nenhuma outra lista selecionada respondeu é
+  que o monitor mostra um **erro de configuração** (que não envia alerta de
+  indisponibilidade) em vez de um resultado.
 - **A URIBL e a SURBL respondem `127.0.0.1`** aos resolvedores que recusam.
   Essa lista é então mostrada como «Refused» (desconhecida), não como
   listagem.
@@ -89,11 +116,12 @@ para um resolvedor público), e defina o seu endereço em **Resolver** se não
 for o resolvedor do sistema. Pi-hole ou AdGuard Home à frente do Unbound
 funciona; à frente de `1.1.1.1` não.
 
-Ou crie uma conta gratuita do [Spamhaus Data Query Service](https://www.spamhaus.com/data-access/free-data-query-service/)
-(uso não comercial, baixo volume) e introduza a sua chave como credencial: a
-Spamhaus é então consultada em `<key>.zen.dq.spamhaus.net` e
-`<key>.dbl.dq.spamhaus.net`, que respondem através de qualquer resolvedor. A
-chave é guardada cifrada e nunca é mostrada de novo.
+Ou, só se quiser também a Spamhaus e não puder mudar de resolvedor, crie uma conta
+gratuita do [Spamhaus Data Query Service](https://www.spamhaus.com/data-access/free-data-query-service/)
+(uso não comercial, baixo volume) e introduza a sua chave como credencial («Spamhaus
+DQS key (optional)»): a Spamhaus é então consultada em `<key>.zen.dq.spamhaus.net` e
+`<key>.dbl.dq.spamhaus.net`, que respondem através de qualquer resolvedor. A chave
+é guardada cifrada e nunca é mostrada de novo.
 
 ## Ritmo {#pace}
 
@@ -112,20 +140,22 @@ minutos.
 
 1. Introduza o domínio para o qual envia correio, por exemplo "example.com": o DumbMonit verifica os endereços do seu MX e do próprio domínio. Ou introduza o endereço IP público de onde o servidor envia. Se o correio sai por um relay que não é um MX, acrescente o seu endereço em Extra addresses.
 
-2. Use um resolvedor recursivo seu. A Spamhaus recusa consultas que chegam por resolvedores públicos (Google, Cloudflare, Quad9) ou por um resolvedor que reencaminha para eles, e outras listas limitam-nas: um Unbound que resolva a partir dos servidores raiz chega. Defina o seu endereço em Resolver se não for o resolvedor do sistema.
+2. Não é preciso nenhuma chave de API: deixe a credencial em No key. Sem chave, as listas de bloqueio são consultadas através do resolvedor DNS deste servidor, ou do que definir em Resolver.
 
-3. Ou crie uma conta gratuita do Spamhaus Data Query Service (uso não comercial, baixo volume) e cole a sua chave como credencial: a Spamhaus responde então através de qualquer resolvedor.
+3. Marque em Blocklists as listas de bloqueio a consultar (as principais vêm marcadas por predefinição) e acrescente em Custom lists as zonas DNSBL de qualquer outra lista que use.
+
+4. Só a Spamhaus pode recusar uma consulta, e só quando o resolvedor é público (Google, Cloudflare, Quad9) ou reencaminha para um deles. O monitor mostra então «Spamhaus refuses this resolver» e todas as outras listas continuam a funcionar. Para ter também a Spamhaus, defina Resolver para um resolvedor recursivo seu (basta um Unbound a resolver a partir dos servidores raiz) ou escolha como credencial a chave Spamhaus DQS opcional: uma conta gratuita (uso não comercial, baixo volume) cuja chave faz a Spamhaus responder através de qualquer resolvedor.
 
     ```
     https://www.spamhaus.com/data-access/free-data-query-service/
     ```
 
-4. Para verificar a configuração, acrescente um monitor para 127.0.0.2, o endereço de teste que todas as listas de bloqueio listam: cada uma deve mostrá-lo como listado.
+5. Para verificar a configuração, acrescente um monitor para 127.0.0.2, o endereço de teste que toda a lista de bloqueio lista: cada uma deve mostrá-lo como listado.
 
-5. O Gmail, o Outlook.com e o Yahoo não publicam nenhuma lista de bloqueio que possa ser consultada. O DumbMonit verifica antes o que eles ponderam (um DNS inverso que aponta de volta para o endereço, registos SPF e DMARC) e liga às suas ferramentas para remetentes na página do monitor.
+6. O Gmail, o Outlook.com e o Yahoo não publicam nenhuma lista de bloqueio que possa ser consultada. O DumbMonit verifica em vez disso o que eles ponderam (um DNS inverso que aponta de volta para o endereço, registos SPF e DMARC) e liga às suas ferramentas para remetentes na página do monitor.
 
 !!! warning
-    Uma resposta que a Spamhaus recusou (127.255.255.254, um resolvedor público) é mostrada como erro de configuração, nunca como listagem, e uma lista de bloqueio que não responde é mostrada como desconhecida, nunca como limpa. As listas são consultadas de 6 em 6 horas por predefinição: perguntar com mais frequência não ganha nada e leva ao banimento dos resolvedores.
+    Uma resposta que a Spamhaus recusou (127.255.255.254, um resolvedor público) nunca é mostrada como listagem: essa lista fica marcada como recusada e as outras mantêm o seu resultado. Só quando nenhuma outra lista responde é que o monitor indica um erro de configuração. Uma lista de bloqueio que não responde é mostrada como desconhecida, nunca como limpa. As listas são consultadas de 6 em 6 horas por predefinição: perguntar mais vezes não traz nada e leva a que os resolvedores sejam banidos.
 
 ## O que monitoriza {#what-it-watches}
 
@@ -141,6 +171,7 @@ Todas as métricas têm o prefixo `dumbmonit_blacklist_`.
 | `unknown_checks` | verificações sem resposta (tempo limite, recusa) | |
 | `check` | uma série por endereço (ou domínio) e lista: 1 listado, 0 limpo, −1 sem resposta, −2 recusado, −3 não coberto | `list`, `subject`, `state`, `code`, `meaning`, `reason` |
 | `list_checked`, `list_listed`, `list_unknown` | por lista: sujeitos consultados, listados, sem resposta | `list` |
+| `list_info` | valor 1, uma por lista realmente consultada (incluindo as suas): o que a página do monitor mostra | `list`, `name`, `zone`, `subject`, `major` |
 | `address_info` | valor 1, de onde vem cada endereço | `address`, `source` (`mx`, `domain`, `input`, `extra`), `mx` |
 | `ptr_ok` | 1 quando o DNS inverso resolve de volta para o endereço | `address`, `ptr` |
 | `mx_hosts` | anfitriões MX do domínio | |
@@ -158,19 +189,25 @@ não responde a nenhuma das consultas.
 ## A página do monitor {#the-monitor-page}
 
 O painel lê o que a sondagem guardou; abrir a página nunca consulta uma lista
-de bloqueio. Mostra as contagens, depois cada lista com quantos sujeitos lista,
-depois cada resultado com o código da lista, o motivo publicado e ligações
-para as suas páginas de consulta e remoção, depois o DNS inverso de cada
-endereço, SPF e DMARC, e as ferramentas para remetentes do Gmail, Outlook.com
-e Yahoo.
+de bloqueio. Mostra as contagens, depois as listas realmente consultadas (as
+marcadas e as suas, cada uma com quantos sujeitos lista e «Spamhaus refuses this
+resolver» quando é o caso), depois cada resultado com o código da lista, o motivo
+publicado e ligações para as suas páginas de consulta e remoção, depois o DNS
+inverso de cada endereço, SPF e DMARC, e as ferramentas para remetentes do Gmail,
+Outlook.com e Yahoo.
+
+A página tem também uma ligação **Also check on MXToolbox**. Abre num novo separador
+a consulta pública de listas de bloqueio de mxtoolbox.com para o endereço ou o
+domínio monitorizado; o DumbMonit não chama a API deles.
 
 ## Credenciais {#credentials}
 
-Nenhuma, ou uma chave Spamhaus DQS (veja acima).
+Nenhuma necessária («No key (recommended)», a predefinição), ou opcionalmente
+uma chave Spamhaus DQS (veja acima), que só conta para a Spamhaus.
 
 Endereço: um domínio (`example.com`) ou um endereço IP público. Opções:
-Resolver, Lists (todas por predefinição), Extra addresses, Refresh interval (6
-horas, de 1 a 168), Queries per second (10, de 1 a 50) e Timeout per query (5
-s, de 1 a 30). Os endereços privados nunca são verificados: as listas de
-bloqueio só conhecem a Internet pública. `127.0.0.2` é aceite como endereço de
-teste.
+Resolver, Blocklists (as principais marcadas num monitor novo; todas num criado
+antes), Custom lists, Extra addresses, Refresh interval (6 horas, de 1 a 168),
+Queries per second (10, de 1 a 50) e Timeout per query (5 s, de 1 a 30). Os
+endereços privados nunca são verificados: as listas de bloqueio só conhecem a
+Internet pública. `127.0.0.2` é aceite como endereço de teste.
