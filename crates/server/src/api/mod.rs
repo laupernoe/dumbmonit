@@ -13,6 +13,7 @@ mod discovery;
 mod error;
 mod health;
 mod ingest;
+mod integrations;
 mod kuma_import;
 mod ldap;
 pub mod locations;
@@ -217,6 +218,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(security::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
         .merge(webpush::routes())
+        // Fichiers du bandeau pour sites tiers : plugin WordPress, aide PHP (`integrations.rs`).
+        .merge(integrations::routes())
         // Mise à jour guidée : dernière version publiée (`update.rs`).
         .merge(update::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
