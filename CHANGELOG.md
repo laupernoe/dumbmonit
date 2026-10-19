@@ -46,6 +46,22 @@ All notable changes to this project are documented here. The format follows
   (with a Copy button), and downloads the WordPress plugin as a ready-to-upload
   `.zip` (`GET /api/integrations/wordpress.zip`, also `banner.php`).
 
+### Changed
+
+- **Status page settings, reorganised.** The page now reads top to bottom in
+  full-width sections, each with a one-line explanation: **Page** (title,
+  address, published, description, theme, history), **Services** (a search
+  box to add them, and the list as visitors will see it, with the public name,
+  group and order editable in place), **Appearance** (logo, accent, link,
+  footer, the scene and what the page shows, nothing folded away) and
+  **Subscribers and domain**. The Save bar sticks to the bottom of the screen
+  while something is unsaved, says so, and the browser asks before leaving.
+  **Show it elsewhere** gathers the badge, the embed and the website banner
+  behind tabs: each says when to use it, keeps its options on the left and
+  shows a single block of code on the right, with a live preview of the badge
+  and the embed. The embed's colours and history bars are now options instead
+  of query strings to add by hand.
+
 ### Security
 
 - **Every release file is signed.** The release workflow now signs every file
