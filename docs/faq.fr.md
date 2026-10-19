@@ -90,8 +90,8 @@ affiche avec les mots du bulletin météo : Info, Avis, Avertissement. Voir
 
 ## Une alerte est « Supprimée par le parent »
 
-La surveillance a une surveillance parente qui est inaccessible, ses propres alertes
-sont donc retenues plutôt qu'envoyées. Corrigez le parent ; les alertes de
+La surveillance a une surveillance parente qui est en panne (inaccessible, ou dont la vérification de disponibilité
+échoue), ses propres alertes sont donc retenues plutôt qu'envoyées. Corrigez le parent ; les alertes de
 l'enfant se résolvent ou se déclenchent ensuite d'elles-mêmes sans une
 seconde notification. Voir
 [Suppression par dépendance](alerting/index.md#dependency-suppression).

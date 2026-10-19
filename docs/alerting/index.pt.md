@@ -33,7 +33,7 @@ Todo alerta é uma máquina de estados, avaliada a cada 30 segundos
 | `pending` | Building up | A condição é verdadeira mas a retenção da regra (`for`) ainda não passou. Nada é enviado. |
 | `firing` | Firing | A condição manteve-se o tempo suficiente. A primeira notificação sai, depois lembretes a cada `repeat_interval` (6 horas por predefinição para a maioria das regras incorporadas), depois um escalonamento se configurado. |
 | `resolved` | Resolved | De volta ao normal. Uma notificação de resolução só é enviada se o disparo tivesse sido anunciado. |
-| `suppressed` | Suppressed by parent | O alerta está ativo, mas um monitor pai, ou o próprio monitor, está inacessível: ver abaixo. |
+| `suppressed` | Suppressed by parent | O alerta está ativo, mas um monitor pai está em baixo, ou o próprio monitor está inacessível: ver abaixo. |
 
 `phase` é o estado do motor; `effective_phase` é o que lê. Um alerta
 cujo `effective_phase` é `suppressed` mantém `phase = firing` por
@@ -50,35 +50,49 @@ falar. Ver [Livrar-se de um alerta](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Supressão por dependência {#dependency-suppression}
 
-Qualquer monitor pode declarar um **monitor pai**. Quando um
-monitor está inacessível (a regra «Monitor unreachable» dispara
-nele), todo alerta nos seus descendentes é marcado *Suppressed by
-parent* em vez de ser enviado: um comutador a cair produz uma
-notificação, não trinta. O ancestral inacessível mais próximo é
-nomeado como a causa (`suppressed_by`), e a cadeia é seguida até 64
-níveis.
+Qualquer monitor pode declarar um **monitor pai**. Quando um monitor está em
+baixo, todo alerta nos seus descendentes é marcado *Suppressed by parent* em
+vez de ser enviado: um comutador a cair produz uma notificação, não trinta. O
+ancestral em baixo mais próximo é nomeado como a causa (`suppressed_by`), e a
+cadeia é seguida até 64 níveis.
 
-O mesmo se aplica ao próprio monitor inacessível: os seus outros alertas
+Um monitor está em baixo quando um destes alertas dispara nele, seja qual for a
+causa:
+
+- **Monitor unreachable**: nenhuma medição de todo (um dispositivo SNMP que
+  deixou de responder, um agente que deixou de enviar);
+- **Service down**: a sua verificação de disponibilidade corre mas falha (um
+  ping com 100 % de perda, uma verificação HTTP que dá erro ou excede o tempo,
+  uma porta TCP fechada, e assim por diante).
+
+Um simples aviso no pai (disco cheio, CPU alta, serviço lento, um certificado
+prestes a expirar) não oculta nada: o dispositivo continua a responder, e o que
+está por trás também. O pai mantém o seu próprio alerta e a sua notificação;
+quando recupera, os filhos que continuam em baixo disparam e são notificados
+por si próprios.
+
+O mesmo se aplica a um monitor inacessível em si: os seus outros alertas
 (disco cheio, CPU, etc.) são suprimidos pela sua própria falha, com
 `suppressed_by` a indicar o próprio monitor, pois os seus valores estão
 desatualizados e são apenas um sintoma da mesma falha. Só o seu alerta «Device
 unreachable» nunca é ocultado pela própria falha, pelo que é avisado uma vez.
 
 Defina o pai no formulário do monitor. Na página Devices, os
-filhos empilham-se sob o seu pai e esbatem-se quando está inacessível.
+filhos empilham-se sob o seu pai e esbatem-se quando está em baixo.
 
 Um [agente relay](../install/remote-site.md) conta como pai de todo
 monitor que sonda (*Reached through* no formulário do monitor),
-além do pai definido explicitamente: quando o relay está inacessível,
+além do pai definido explicitamente: quando o relay está em baixo,
 os seus monitores são suprimidos com o relay nomeado como a causa.
 A distâncias iguais, o pai explícito ganha.
 
-Um pai também conta como inacessível assim que a sua própria
-verificação o diz (o estado *Timed out* / *Monitor unreachable* na sua
-página), sem esperar que o seu alerta «Monitor unreachable» dispare: um
+Um pai também conta como em baixo assim que a sua própria
+verificação o diz (o estado *Timed out*, *Monitor unreachable* ou *Service
+down* na sua página), sem esperar que o seu alerta dispare: um
 agente que deixa de enviar leva os seus monitores consigo um ou dois
-minutos antes do seu próprio alerta, e caso contrário cada um
-notificaria primeiro.
+minutos antes do seu próprio alerta, e um comutador cujo ping acabou de falhar
+oculta os seus filhos antes de a espera de «Service down» terminar; caso
+contrário cada um notificaria primeiro.
 
 ## Agrupamento, deduplicação, lembretes {#grouping-deduplication-reminders}
 
@@ -150,7 +164,7 @@ ordem:
    descartadas: os seus alertas limpam-se de imediato, sem nenhuma
    notificação, e o histórico regista `device removed or disabled`.
 3. **Suprimir por dependência** — os descendentes de um monitor
-   inacessível ficam silenciosos.
+   em baixo ficam silenciosos.
 4. **Silenciar** — as janelas de manutenção silenciam o que cobrem.
 5. **Agrupar por monitor** — uma mensagem por monitor por
    ciclo, lembretes e escalonamento incluídos.
