@@ -30,7 +30,7 @@ mur dans **Réglages → Actualités du mur**. Les deux sont désactivés par d�
   ou grande. La vignette se réduit à la place disponible ; elle ne recouvre
   jamais l'état.
 - **Carrousel d'images.** Les derniers articles des mêmes flux qui portent une
-  image, un à la fois au milieu du mur, huit secondes chacun, en fondu, avec la
+  image, un à la fois dans la colonne de droite sous l'horloge, huit secondes chacun, en fondu, avec la
   source, l'âge et le titre sur l'image. Si l'écran demande de *réduire les
   animations*, les images se remplacent sans fondu.
 
@@ -214,6 +214,24 @@ ChatGPT Plus) et leurs limites hebdomadaires n'ont **aucune API officielle** :
 ils ne peuvent pas être lus et DumbMonit ne les devine pas. Côté OpenAI, les jetons comptent les requêtes
 texte, alors que le coût couvre tout ce qui est facturé (images, audio,
 embeddings…) : jetons et coût ne sont donc pas toujours proportionnels.
+
+#### Comment obtenir une clé admin {#ai-admin-keys}
+
+Les deux fournisseurs demandent une **clé admin**, différente de la clé d'API habituelle. Elle ne sert qu'à lire la consommation et les coûts de l'organisation. Gardez-la secrète : collez-la dans **Settings → Wall display → Wall widgets**, DumbMonit la stocke chiffrée.
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. Connectez-vous à la [Claude Console](https://platform.claude.com/settings/admin-keys) avec un membre au rôle **admin** d'une **organisation** (un compte personnel ne peut pas en créer ; créez d'abord une organisation dans Settings → Organization).
+2. Ouvrez la [page Admin keys](https://platform.claude.com/settings/admin-keys), cliquez sur **Create admin key**, nommez-la et choisissez une expiration.
+3. Copiez tout de suite le secret (`sk-ant-admin01-…`) : il n'est affiché qu'une fois.
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. Connectez-vous à la [plateforme OpenAI](https://platform.openai.com/settings/organization/admin-keys) en tant que **propriétaire** de l'organisation.
+2. Ouvrez la [page Admin keys](https://platform.openai.com/settings/organization/admin-keys) (Organization settings → Admin keys) et cliquez sur **Create new admin key** ; les droits *Read only* suffisent.
+3. Copiez tout de suite la clé : elle n'est affichée qu'une fois.
+
+Les abonnements individuels (Claude Pro et Max, ChatGPT Plus) n'ont **aucune API d'usage** : ils ne peuvent pas apparaître sur le mur.
 
 ### API
 

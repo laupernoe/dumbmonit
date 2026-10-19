@@ -167,7 +167,9 @@
 	<title>DumbMonit</title>
 </svelte:head>
 
-<div class="flex min-h-full flex-col">
+<div class="flex min-h-dvh flex-col pr-[var(--safe-right)] pl-[var(--safe-left)] max-sm:pt-[var(--safe-top)]">
+	<!-- Opaque strip under the status bar: pages scroll beneath it, never behind the clock. -->
+	<div class="pointer-events-none fixed inset-x-0 top-0 z-[45] h-[var(--safe-top)] bg-canvas" aria-hidden="true"></div>
 	{#if statusHost}
 		{#if page.url.pathname === '/'}
 			<PublicStatusPage slug={statusHost} />
@@ -188,7 +190,7 @@
 			<DemoBanner />
 		{/if}
 		<NavBar />
-		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-3 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 sm:pb-12">
+		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-3 pb-[calc(var(--tabbar-h)+1rem+var(--safe-bottom))] sm:px-6 sm:pt-6 sm:pb-12">
 			{@render children()}
 		</main>
 		{#if CommandPalette && !onWall}

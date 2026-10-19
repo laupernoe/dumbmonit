@@ -21,7 +21,7 @@ crates/server    le binaire
   notify/        22 canaux de notification, décrits à l'interface Web par notify/catalog.rs
   crypto.rs      AES-256-GCM pour les identifiants/jetons, clé dérivée de /data/secret.key ou DUMBMONIT_SECRET
 crates/agent     Agent Linux/macOS/FreeBSD/Windows ; install/ détient install.sh/.ps1 servi par le serveur
-web/             SvelteKit (runes Svelte 5, Tailwind 4, uPlot), adaptateur-statique repli SPA, ssr=false
+web/             SvelteKit (runes Svelte 5, Tailwind 4, uPlot, Leaflet), adaptateur-statique repli SPA, ssr=false
 profiles/        Profils de collection SNMP, auto-appliqués par sysObjectID
 docs/            cette documentation (MkDocs, publiée sur Read the Docs)
 \`\`\`

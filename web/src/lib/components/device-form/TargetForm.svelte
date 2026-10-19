@@ -29,10 +29,13 @@
 	import { knownFolders } from '#lib/components/devices/folders.js';
 	import { groupOptions } from './option-groups';
 	import { listRelays } from '#lib/api/relay.js';
+	import { listLocations } from '#lib/api/locations.js';
+	import type { MapLocation } from '#lib/api/types.js';
 	import type { RelayAgent } from '#lib/api/types.js';
 	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import CredentialFields from './CredentialFields.svelte';
 	import OptionsFields from './OptionsFields.svelte';
+	import { firstRowError, parseRows, rowErrors, seedChecklists } from './option-values';
 	import TagsEditor from './TagsEditor.svelte';
 	import RequirementNotice from './RequirementNotice.svelte';
 	import MonitoredRules from './MonitoredRules.svelte';
@@ -75,8 +78,25 @@
 	let viaAgent = $state<number | null>(untrack(() => target?.via_agent ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
 	let groupName = $state(untrack(() => target?.group_name ?? ''));
+	let locationId = $state<number | null>(untrack(() => target?.location_id ?? null));
+	/** Locations of the world map; the field only shows once there is one. */
+	let locations = $state<MapLocation[]>([]);
+	$effect(() => {
+		const controller = new AbortController();
+		listLocations(controller.signal)
+			.then((found) => (locations = found.locations))
+			.catch(() => {
+				// No locations to offer: the field stays hidden, the form still works.
+			});
+		return () => controller.abort();
+	});
 	const folderChoices = $derived(knownFolders(targets));
-	let tags = $state<Record<string, string>>(untrack(() => ({ ...(target?.tags ?? {}) })));
+	// A new device ticks what the server describes as the default of each checklist
+	// (the major blocklists, say); an existing one keeps what it has, and no tag
+	// there means every box.
+	let tags = $state<Record<string, string>>(
+		untrack(() => (target ? { ...target.tags } : seedChecklists(collector.options, {})))
+	);
 	let credential = $state<CredentialView>(initialCredential);
 	// "public" is the factory community of nearly every device: pre-filled on add.
 	let draft = $state<CredentialDraft>(
@@ -108,6 +128,7 @@
 					target.interval_secs !== DEFAULT_INTERVAL ||
 					!target.enabled ||
 					target.group_name !== '' ||
+					(target.location_id ?? null) !== null ||
 					Object.keys(target.tags).some((key) => !collector.options.some((o) => o.key === key)))
 		)
 	);
@@ -160,6 +181,16 @@
 	const optionErrors = $derived.by(() => {
 		const errors: Record<string, string> = {};
 		for (const option of options) {
+			if (option.input === 'rows') {
+				const problem = firstRowError(
+					rowErrors(option, parseRows(option, tags[option.key]), {
+						invalid: m.deviceform_options_rows_invalid(),
+						duplicate: m.deviceform_options_rows_duplicate()
+					})
+				);
+				// Shown line by line under the rows; here it only keeps the form from being sent.
+				if (problem) errors[option.key] = problem;
+			}
 			if (!option.required) continue;
 			if ((tags[option.key] ?? '').trim() || option.default.trim()) continue;
 			errors[option.key] = m.deviceform_form_option_required({ label: option.label });
@@ -234,6 +265,7 @@
 			interval_secs: intervalSecs,
 			enabled,
 			group_name: groupName.trim(),
+			location_id: locationId,
 			// No empty tag: a blank setting means "server default".
 			tags: Object.fromEntries(Object.entries(tags).filter(([, v]) => v.trim()))
 		};
@@ -470,6 +502,17 @@
 						{#each folderChoices as choice (choice)}<option value={choice}></option>{/each}
 					</datalist>
 				</Field>
+
+				{#if locations.length > 0 || locationId !== null}
+					<Field label={m.deviceform_form_location_label()} for="target-location" help={m.deviceform_form_location_help()}>
+						<select id="target-location" class="input" bind:value={locationId}>
+							<option value={null}>{m.deviceform_form_location_auto()}</option>
+							{#each locations as location (location.id)}
+								<option value={location.id}>{location.name}</option>
+							{/each}
+						</select>
+					</Field>
+				{/if}
 
 				<Field
 					label={m.deviceform_form_parent_label()}

@@ -143,7 +143,7 @@ review.
 
 ## Developer Certificate of Origin
 
-Contributions are accepted under the project licence (Apache-2.0) and must be
+Contributions are accepted under the project licence (MIT) and must be
 signed off to certify the
 [Developer Certificate of Origin](https://developercertificate.org/): that you
 wrote the change or have the right to submit it under that licence. Add a
@@ -167,7 +167,7 @@ release notes list every fixed vulnerability with its CVE or GHSA identifier.
 crates/proto     shared types: Sample, Target, Credential, trait Collector (+ ProbeError)
 crates/server    the binary — api/, auth/, collectors/, scheduler.rs, tsdb/, db/, alerting/, notify/
 crates/agent     Linux/Windows agent; install/ holds install.sh and install.ps1
-web/             SvelteKit UI (Svelte 5 runes, Tailwind 4, uPlot)
+web/             SvelteKit UI (Svelte 5 runes, Tailwind 4, uPlot, Leaflet)
 profiles/        SNMP collection profiles (YAML), auto-applied by sysObjectID
 docs/            user documentation (MkDocs, published on Read the Docs)
 ```
@@ -363,4 +363,4 @@ drop it, delete the draft and the tag (`gh release delete v0.9.0-rc.1
 ## Licence
 
 By contributing you agree that your contribution is licensed under the
-[Apache License 2.0](LICENSE), like the rest of the project.
+[MIT License](LICENSE), like the rest of the project.

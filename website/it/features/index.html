@@ -110,10 +110,10 @@
 				</div>
 				<ul class="points">
 					<li><strong>Dipendenze</strong><p>Dichiara uno switch come genitore di ciò che gli sta dietro. Quando va giù ricevi una sola notifica, non trenta; gli altri compaiono come «Soppresso dal genitore».</p></li>
-					<li><strong>Raggruppati per host</strong><p>Un NAS con l'array degradato invia un messaggio per ciclo, non uno per disco. Promemoria, escalation, conferma, posticipo, esclusione per monitor e pulizia della cronologia risolta sono tutti integrati.</p></li>
+					<li><strong>Raggruppati per host</strong><p>Un NAS con l'array degradato invia un messaggio per ciclo, non uno per disco. Promemoria, escalation, conferma, posticipo, esclusione per monitor e pulizia della cronologia risolta sono tutti integrati. Una campanella su ogni monitor conta i suoi avvisi attivi.</p></li>
 					<li><strong>Baseline che prima imparano</strong><p>Rilevamento delle anomalie senza soglie da regolare: 168 intervalli, uno per ogni ora della settimana. Resta in silenzio per i primi 14 giorni e mostra soltanto ciò che sarebbe scattato.</p></li>
 					<li><strong>Previsioni</strong><p>«Questo filesystem si riempirà entro quattro giorni» è elencato come previsione, separato da ciò che è guasto in questo momento.</p></li>
-					<li><strong>Manutenzione e una policy di notifica</strong><p>Finestre singole o settimanali, isteresi, trattenimento del flapping, orari di silenzio, raggruppamento e un tetto orario, così una brutta notte non diventa duecento notifiche.</p></li>
+					<li><strong>Manutenzione, silenzi e una policy di notifica</strong><p>Finestre singole o settimanali, isteresi, trattenimento del flapping, orari di silenzio, raggruppamento e un tetto orario, così una brutta notte non diventa duecento notifiche.</p></li>
 				</ul>
 				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/it/latest/alerting/">Come funzionano gli avvisi</a></p>
 			</div>
@@ -238,7 +238,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<div class="section-head">
 			<h2>Modalità parete</h2>
-			<p>Solo il bollettino, a schermo intero, per un monitor nella stanza: una scena viva (di default un tetto di Parigi con la Torre Eiffel e i piccioni di DumbMonit, o una tra tante altre) il cui meteo segue i tuoi avvisi, un tema OLED per uno schermo lasciato acceso per giorni e musica a parete &mdash; Spotify Connect trasforma lo schermo in un altoparlante.</p>
+			<p>Solo il bollettino, a schermo intero, per un monitor nella stanza: una scena viva (di default un tetto di Parigi con la Torre Eiffel e i piccioni di DumbMonit, o una tra tante altre) il cui meteo segue i tuoi avvisi, un tema OLED per uno schermo lasciato acceso per giorni e musica a parete &mdash; Spotify Connect trasforma lo schermo in un altoparlante. Widget opzionali: meteo, prezzi delle criptovalute, quotazioni azionarie, tassi di cambio, CVE critiche, notizie RSS con immagini e utilizzo delle API di Claude e OpenAI.</p>
 		</div>
 		<figure>
 			<div class="shot">
@@ -285,7 +285,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p><a href="https://dumbmonit.readthedocs.io/it/latest/using/security-score/">Approfondisci nella documentazione</a></p>
 			</div>
 			<ul class="points">
-				<li><strong>Account</strong><p>Ruoli amministratore, operatore (gestisce gli avvisi, non modifica la configurazione) e lettore, secondo fattore TOTP opzionale, registro di audit e single sign-on tramite OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), con la creazione di account disattivata di default.</p></li>
+				<li><strong>Account</strong><p>Ruoli amministratore, operatore (gestisce gli avvisi, non modifica la configurazione) e lettore, secondo fattore TOTP opzionale, registro di audit e single sign-on tramite OpenID Connect (Authentik, Authelia, Keycloak, Pocket ID…), accesso con LDAP o Active Directory, con la creazione di account disattivata di default.</p></li>
 				<li><strong>Si integra bene con ciò che usi già</strong><p><code>/metrics</code>, <code>/federate</code> e un endpoint compatibile con Prometheus permettono a un Grafana esistente di leggere i dati di DumbMonit.</p></li>
 			</ul>
 		</div>
@@ -323,7 +323,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 
 <footer>
 	<div class="wrap">
-		<p>DumbMonit, Apache 2.0. La mascotte è un piccione.</p>
+		<p>DumbMonit, MIT. La mascotte è un piccione.</p>
 		<nav aria-label="Piè di pagina">
 			<a href="./">Funzionalità</a>
 			<a href="../devices/">Monitor</a>

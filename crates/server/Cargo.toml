@@ -35,7 +35,7 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros", "net", "tim
 tracing.workspace = true
 
 axum = "0.8"
-tower-http = { version = "0.7", features = ["trace", "compression-gzip"] }
+tower-http = { version = "0.7", features = ["trace", "compression-gzip", "compression-br"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 
 sqlx = { version = "0.9", default-features = false, features = [
@@ -52,6 +52,8 @@ reqwest = { version = "0.13", default-features = false, features = [
 # Les collecteurs réseau (SNMP, sondes de disponibilité, clients Proxmox/PBS/DSM)
 # vivent dans `dumbmonit-collectors`, avec leurs dépendances.
 ipnet = "2"
+# Base IP → pays de DB-IP, livrée gzippée (`geoip.rs`).
+flate2 = "1.1"
 futures = "0.3"
 
 # `deterministic-timestamps` : sans lui, rust_embed inscrit dans le binaire la date
@@ -86,6 +88,11 @@ subtle = "2.6"
 jsonwebtoken = { version = "11", default-features = false, features = ["use_pem", "aws_lc_rs"] }
 # Encodage base64url du défi PKCE.
 base64 = "0.23"
+# Connexion des utilisateurs par un annuaire LDAP / Active Directory
+# (`auth::ldap`). Le même client que la sonde Active Directory (MIT/Apache-2.0,
+# Rust pur), TLS par rustls avec `ring` : configuration TLS construite par
+# `dumbmonit-collectors`, aucune bibliothèque C.
+ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ring"] }
 
 # Surveillance des changements de sites (`webchange`) : expressions d'exclusion
 # saisies par l'utilisateur, plans de site XML, et le protocole DevTools d'un

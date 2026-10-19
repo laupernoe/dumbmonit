@@ -5,6 +5,127 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **World map of locations.** Map → **World** shows one pin per location with
+  the state of its monitors (colour, glyph and figure, never colour alone) and
+  the same locations listed worst first; a click lists the location's monitors.
+  Locations are set in Settings → Monitoring → Locations: a name, an address,
+  and a spot found by a place search (Open-Meteo geocoding, asked by the
+  server), typed as coordinates or clicked on the map. A monitor is placed by
+  hand (its form, or **Place at** in the Select mode of the Monitors list), or
+  through its topology site when a location stands for that site, or at the
+  location marked *main site* when it has no remote site. The background is
+  built in by default (Natural Earth outlines, public domain): the map contacts
+  no server. OpenStreetMap tiles or your own tile server are an option, with
+  their attribution; only their host is added to the interface's `img-src`.
+  Map rendering by Leaflet (BSD-2-Clause). New routes under `/api/locations`;
+  monitors gain `location_id`.
+- **Grouped pins on the world map.** Locations too close to tell apart at the
+  current zoom become one pin with their count and the state of the worst of
+  them; a click zooms in until they come apart, or lists them. Recomputed at
+  each zoom, by distance on screen, with no extra library.
+- **OPNsense live map.** With the new `live_map` option, the firewall's page
+  shows where the connections its rules block or pass come from: a disc per
+  country, short arcs travelling to the firewall's location as connections
+  arrive (left out under *reduce motion*), and the busiest countries, rules
+  and ports over the last fifteen minutes. The server reads the firewall log
+  (`/api/diagnostics/firewall/log`, privilege *Diagnostics: Logs: Firewall:
+  Live View*, read-only) every five seconds only while someone looks, keeps
+  the window in memory and reduces every line to country, port, rule and
+  action at once: no address is stored or sent to the browser. Countries come
+  from DB-IP's IP to Country Lite (CC BY 4.0, no account), downloaded by the
+  server and refreshed monthly, looked up locally; private ranges count as
+  *Local network*. IP geolocation can be turned off in Settings → Monitoring →
+  Locations. New routes `GET /api/targets/{id}/opnsense/live` and
+  `GET|PUT /api/geoip`.
+- **Website banner in the status page settings.** At the bottom of a status
+  page's settings, a "Status banner for your website" section announces the
+  banner for third-party sites, links to its documentation, offers the HTML and
+  PHP snippets already filled in with your server address and the page slug
+  (with a Copy button), and downloads the WordPress plugin as a ready-to-upload
+  `.zip` (`GET /api/integrations/wordpress.zip`, also `banner.php`).
+
+### Security
+
+- **Every release file is signed.** The release workflow now signs every file
+  it attaches, `provenance.json` included, not only the agent binaries. A new
+  manual workflow, `sign-releases.yml`, adds a Sigstore keyless signature to
+  the files of past releases that have none (0.1.0-alpha.N and earlier
+  `provenance.json`), under its own identity; [Verifying a
+  release](docs/install/verify.md) explains how to check both, and how to
+  check the build provenance against the `.intoto.jsonl` attached to the
+  release.
+- **Every lockfile is scanned against OSV.** The weekly security workflow also
+  runs osv-scanner over `Cargo.lock`, `fuzz/Cargo.lock`,
+  `web/package-lock.json` and `docs/requirements.txt`, the files the OpenSSF
+  Scorecard checks, so that a lockfile `cargo deny` does not read (like the
+  fuzzing one fixed in 0.11.0) cannot keep a known vulnerability unnoticed.
+
+## 0.11.0 — 2026-10-19
+
+### Added
+
+- **Alert bell on monitors.** In the Compact and Tiles views of Monitors, and
+  in a monitor's page header, a small bell with a count shows how many alerts
+  are active on it (nothing at 0). Firing alerts use the warning tone,
+  acknowledged ones a quiet outline, and alerts masked by an offline parent a
+  crossed-out bell; a click opens the alerts section of the monitor. Counted
+  from the alert list already loaded, in one pass.
+- **Choose the blocklists of a mail server or IP range monitor.** The form
+  lists every blocklist as a checklist (name, addresses or domains, major or
+  not, short description) with the major ones ticked on a new monitor, and a
+  **Custom lists** field adds your own DNSBL zones (validated: a real domain
+  name, not an IP address, no duplicate; address or domain type; major or
+  not). Only the ticked and custom lists are queried, and the monitor page
+  shows exactly those. Monitors created earlier keep querying every list.
+  The option form gained two generic input types, `checklist` and `rows`,
+  described by `GET /api/collectors`. The monitor page also links to
+  MXToolbox's public blocklist lookup for the monitored address or domain.
+- **LDAP / Active Directory sign-in.** People sign in on the usual sign-in
+  screen with their directory username and password: DumbMonit binds a
+  service account, finds the user with a filter (the username is escaped per
+  RFC 4515), then binds as that entry with the typed password. Accounts are
+  created at the first sign-in; admin, operator and viewer groups (from
+  `memberOf` or a group search) give the role, and an account whose user left
+  every listed group is disabled at its next sign-in. `ldaps://` or StartTLS,
+  certificate verified by default with an optional CA certificate; plain
+  `ldap://` only with `DUMBMONIT_LDAP_ALLOW_PLAIN`. Usernames with a local
+  password never go to the directory, so the local admin still signs in when
+  it is down. Settings → Team & access, with Active Directory and OpenLDAP
+  presets and a **Test connection** button (service bind and test user
+  lookup); `DUMBMONIT_LDAP_*` variables apply while nothing is saved. The
+  service account password is stored encrypted and never returned.
+
+### Changed
+
+- **Blocklist monitors: no API key needed, and a Spamhaus refusal no longer
+  hides everything.** The form now says that no key is required (the default
+  choice is "No key (recommended)"): lists are queried through the server's
+  DNS resolver, and only Spamhaus can refuse a public one. The Spamhaus DQS
+  key is optional. When Spamhaus refuses the resolver, the monitor page says
+  "Spamhaus refuses this resolver" and the other lists keep their results;
+  the configuration error is now raised only when no other list answered.
+- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
+- **A parent that is down hides its children, whatever the cause.** Dependency
+  suppression used to start only when the parent was unreachable (no
+  measurement, or a probe timeout). A parent whose availability check fails —
+  a switch watched by ping with 100 % loss, a failing HTTP check — now hides
+  its descendants too: one *Service down* alert, the children shown as
+  *Suppressed by parent*. A plain warning on the parent (disk, CPU) still hides
+  nothing. The history reason now reads `suppressed: device N down`.
+- **HTTP compression.** API responses and the web interface are now served
+  with brotli or gzip when the browser accepts it (`Vary: Accept-Encoding`),
+  which cuts the first page load and the JSON payloads by a large factor.
+  Responses under 1 KB, images, event streams and file downloads (agent
+  binaries, backups) are left as they are.
+
+### Security
+
+- Updated `rustls` to 0.23.46 in the fuzzing workspace lockfile
+  (RUSTSEC-2026-0346, -0347, -0348, -0349). The shipped binaries and images
+  already used 0.23.46.
+
 ## 0.10.0 — 2026-10-18
 
 ### Added

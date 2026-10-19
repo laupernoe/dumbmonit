@@ -22,6 +22,9 @@
 //! * **Le trafic ne sort jamais.** Aucune règle, aucun état de connexion, aucune
 //!   adresse de client, aucun nom de machine n'est lu. Les baux DHCP sont
 //!   comptés, jamais listés ; les sessions VPN sont comptées, jamais nommées.
+//!   Seule exception, explicite : la carte en direct ([`firewall_log`]), lue
+//!   seulement si l'option `live_map` est allumée, et que le serveur réduit
+//!   aussitôt au pays, sans garder ni montrer une adresse.
 //! * **La cardinalité est bornée.** Soixante-quatre séries au plus par famille :
 //!   passerelles, interfaces, services, tunnels, partitions, sondes.
 //! * **Un greffon absent ne fait pas de bruit.** WireGuard, OpenVPN, IPsec,
@@ -76,6 +79,7 @@
 #[cfg(test)]
 mod capture;
 mod client;
+pub mod firewall_log;
 mod metrics;
 mod model;
 mod options;

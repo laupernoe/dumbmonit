@@ -3,7 +3,7 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-		<meta name="description" content="DumbMonit — simple monitoring from the homelab to the small business" />
+		<meta name="description" content="DumbMonit — simple monitoring from homelabs to mid-sized companies" />
 		<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)" />
 		<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
@@ -30,6 +30,11 @@
 					choice === 'dark' ||
 					(choice !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
 				if (dark) document.documentElement.classList.add('dark');
+				// iOS standalone: translucent bars always draw a white clock, which
+				// vanishes on the light canvas. Light theme: dark text (`default`).
+				// Read at launch, so a theme change applies on the next start.
+				var bar = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+				if (bar) bar.setAttribute('content', dark ? 'black-translucent' : 'default');
 			} catch (e) {
 				/* localStorage unavailable: stay on the light theme. */
 			}

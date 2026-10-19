@@ -25,7 +25,7 @@
   下方(或场景中央),可选小、中、大。该图块会缩小到剩余的空间;
   它绝不会盖住状态。
 - **图片轮播。** 同样这些订阅源中带有图片的最新文章,一次一篇显示在
-  大屏中央,每篇八秒,交叉淡入淡出,图片上叠加来源、时间和标题。启用
+  右侧栏时钟下方,每篇八秒,交叉淡入淡出,图片上叠加来源、时间和标题。启用
   *减少动态效果*时,图片直接切换,不做淡入淡出。
 
 读取订阅源的是服务器,而不是浏览器(浏览器无法读取其他站点的
@@ -152,6 +152,24 @@ Dailymotion、Twitch、Spotify 和 Deezer 的播放器。
 - **严重漏洞:***两者*(严重且已被利用;已在 NVD 列表中的被利用 CVE 会
   标注*已被利用*)、*严重*(NVD)或*已被积极利用*(CISA KEV),以及
   显示的数量(1 到 10)。
+
+#### 如何获取管理员密钥 {#ai-admin-keys}
+
+两家提供商都需要**管理员密钥**，它不同于普通的 API 密钥，只用于读取组织的用量和费用。请妥善保管：把它粘贴到 **Settings → Wall display → Wall widgets**，DumbMonit 会加密存储。
+
+##### Claude (Anthropic) {#ai-admin-key-claude}
+
+1. 以组织的 **admin** 角色成员身份登录 [Claude Console](https://platform.claude.com/settings/admin-keys)（个人账户无法创建；请先在 Settings → Organization 中创建组织）。
+2. 打开 [Admin keys 页面](https://platform.claude.com/settings/admin-keys)，点击 **Create admin key**，填写名称并选择有效期。
+3. 立即复制密钥（`sk-ant-admin01-…`）：它只显示一次。
+
+##### OpenAI {#ai-admin-key-openai}
+
+1. 以组织**所有者**（owner）身份登录 [OpenAI 平台](https://platform.openai.com/settings/organization/admin-keys)。
+2. 打开 [Admin keys 页面](https://platform.openai.com/settings/organization/admin-keys)（Organization settings → Admin keys），点击 **Create new admin key**；*Read only* 权限即可。
+3. 立即复制密钥：它只显示一次。
+
+个人订阅（Claude Pro 和 Max、ChatGPT Plus）**没有用量 API**，无法显示在大屏上。
 
 ### API {#widgets-api}
 

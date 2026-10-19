@@ -120,6 +120,8 @@ export interface Target {
 	group_name: string;
 	/** Manual rank, tiebreaking only within the same state and folder. */
 	position: number;
+	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
+	location_id: LocationId | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
@@ -139,6 +141,8 @@ export interface TargetPayload {
 	tags?: Record<string, string>;
 	/** Flat folder shown on `/targets`. Absent or empty: no folder. */
 	group_name?: string;
+	/** Location on the world map; `null`: none. Absent on edit keeps it. */
+	location_id?: LocationId | null;
 	credential?: Credential;
 }
 
@@ -544,7 +548,34 @@ export interface CollectorRequirement {
 }
 
 /** Input shapes a collector option can ask for. */
-export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select';
+export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select' | 'checklist' | 'rows';
+
+/** One tick box of a `checklist` option. */
+export interface CollectorOptionItem {
+	/** What the tag stores. */
+	value: string;
+	label: string;
+	/** One sentence saying what the entry is for. */
+	help: string;
+	/** Short mentions shown beside the name (type, importance…). */
+	badges: string[];
+}
+
+/** One column of a `rows` option. */
+export interface CollectorOptionColumn {
+	key: string;
+	label: string;
+	placeholder: string;
+	input: 'text' | 'select' | 'boolean';
+	/** Values offered when `input === 'select'`; the first is the default. */
+	choices: string[];
+	/** JavaScript regular expression the text must match; empty: none. */
+	pattern: string;
+	/** Shown when `pattern` does not match. */
+	invalid: string;
+	/** Two rows cannot hold the same value here. */
+	unique: boolean;
+}
 
 /**
  * Setting specific to a device type, described by the server.
@@ -568,6 +599,14 @@ export interface CollectorOption {
 	choices: string[];
 	/** Sub-heading grouping this setting under "More options". Empty: the UI falls back to a generic key-prefix heuristic. */
 	group: string;
+	/**
+	 * Tick boxes when `input === 'checklist'`. The tag holds the ticked values
+	 * separated by commas, `-` when none is ticked; absent means all of them.
+	 * `default` is what a new device ticks.
+	 */
+	items: CollectorOptionItem[];
+	/** Columns when `input === 'rows'`. The tag holds a JSON array of `{column key: value}`. */
+	columns: CollectorOptionColumn[];
 }
 
 /**
@@ -647,7 +686,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 	};
 }
 
-const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select'];
+const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select', 'checklist', 'rows'];
 
 /**
  * Fills in an option so that it is always displayable.
@@ -657,9 +696,33 @@ const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boole
  * server will be able to read.
  */
 function normalizeOption(raw: Partial<CollectorOption> & { key: string }): CollectorOption {
-	const input = OPTION_INPUTS.includes(raw.input as CollectorOptionInput)
-		? (raw.input as CollectorOptionInput)
-		: 'text';
+	const items: CollectorOptionItem[] = Array.isArray(raw.items)
+		? raw.items
+				.filter((item) => item && typeof item.value === 'string' && item.value.trim())
+				.map((item) => ({
+					value: item.value.trim(),
+					label: item.label?.trim() || item.value.trim(),
+					help: item.help?.trim() ?? '',
+					badges: Array.isArray(item.badges) ? item.badges.filter((b) => typeof b === 'string' && b.trim()) : []
+				}))
+		: [];
+	const columns: CollectorOptionColumn[] = Array.isArray(raw.columns)
+		? raw.columns
+				.filter((column) => column && typeof column.key === 'string' && column.key.trim())
+				.map((column) => ({
+					key: column.key.trim(),
+					label: column.label?.trim() || column.key.trim(),
+					placeholder: column.placeholder?.trim() ?? '',
+					input: column.input === 'select' || column.input === 'boolean' ? column.input : 'text',
+					choices: Array.isArray(column.choices) ? column.choices.filter((c) => typeof c === 'string') : [],
+					pattern: column.pattern?.trim() ?? '',
+					invalid: column.invalid?.trim() ?? '',
+					unique: Boolean(column.unique)
+				}))
+		: [];
+	let input = OPTION_INPUTS.includes(raw.input as CollectorOptionInput) ? (raw.input as CollectorOptionInput) : 'text';
+	// A checklist with nothing to tick, or rows without columns, cannot be shown: plain text instead.
+	if ((input === 'checklist' && items.length === 0) || (input === 'rows' && columns.length === 0)) input = 'text';
 	return {
 		key: raw.key.trim(),
 		label: raw.label?.trim() || raw.key.trim(),
@@ -669,7 +732,9 @@ function normalizeOption(raw: Partial<CollectorOption> & { key: string }): Colle
 		required: Boolean(raw.required),
 		input,
 		choices: Array.isArray(raw.choices) ? raw.choices.filter((c) => typeof c === 'string') : [],
-		group: raw.group?.trim() ?? ''
+		group: raw.group?.trim() ?? '',
+		items,
+		columns
 	};
 }
 
@@ -776,8 +841,8 @@ function fallbackCredentialView(kind: string): CredentialView {
 /** `operator` handles alerts (ack, ignore, snooze) but changes no configuration. */
 export type Role = 'admin' | 'operator' | 'viewer';
 
-/** How an account signs in: with a local password, or through the identity provider. */
-export type AuthMethod = 'password' | 'oidc';
+/** How an account signs in: a local password, the LDAP / AD directory, or the identity provider. */
+export type AuthMethod = 'password' | 'ldap' | 'oidc';
 
 /** An account, as returned by `/api/users` and `/api/auth/me`. Never carries a hash. */
 export interface User {
@@ -802,6 +867,11 @@ export interface OidcStatus {
 	login_url: string;
 }
 
+/** What the sign-in screen needs to know about the directory, without a session. */
+export interface LdapStatus {
+	enabled: boolean;
+}
+
 /** Raw response of `GET /api/auth/status`. */
 export interface AuthStatus {
 	/** True as soon as an account exists on the instance. */
@@ -811,6 +881,8 @@ export interface AuthStatus {
 	/** The signed-in account, when `authenticated`. */
 	user?: User;
 	oidc?: OidcStatus;
+	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
+	ldap?: LdapStatus;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
 }
@@ -891,6 +963,86 @@ export interface OidcTestReport {
 	discovery?: OidcDiscovery;
 }
 
+/** Where a user's groups come from: the `memberOf` attribute, or a group search. */
+export type LdapGroupMode = 'memberof' | 'search';
+
+/** `GET /api/auth/ldap/config` — the service account password never comes back. */
+export interface LdapConfig {
+	source: OidcSource;
+	enabled: boolean;
+	/** True when `DUMBMONIT_LDAP_*` variables describe a directory (used when nothing is saved). */
+	env_available: boolean;
+	/** `DUMBMONIT_LDAP_ALLOW_PLAIN` is set: `ldap://` without StartTLS is accepted. */
+	allow_plain: boolean;
+	url: string;
+	starttls: boolean;
+	tls_verify: boolean;
+	ca_cert: string;
+	bind_dn: string;
+	has_bind_password: boolean;
+	base_dn: string;
+	/** Contains `{username}`, escaped by the server (RFC 4515). */
+	user_filter: string;
+	username_attribute: string;
+	display_name_attribute: string;
+	email_attribute: string;
+	group_mode: LdapGroupMode;
+	group_base_dn: string;
+	/** Contains `{dn}` and/or `{username}`. */
+	group_filter: string;
+	admin_groups: string[];
+	operator_groups: string[];
+	/** Once any group list is filled, only members of a listed group can sign in. */
+	viewer_groups: string[];
+	timeout_seconds: number;
+}
+
+/** `PUT /api/auth/ldap/config` — an empty `bind_password` keeps the stored one (same URL and bind DN). */
+export interface LdapConfigPayload {
+	url: string;
+	starttls: boolean;
+	tls_verify: boolean;
+	ca_cert: string;
+	bind_dn: string;
+	bind_password?: string;
+	base_dn: string;
+	user_filter: string;
+	username_attribute: string;
+	display_name_attribute: string;
+	email_attribute: string;
+	group_mode: LdapGroupMode;
+	group_base_dn: string;
+	group_filter: string;
+	admin_groups: string[];
+	operator_groups: string[];
+	viewer_groups: string[];
+	timeout_seconds: number;
+}
+
+/** One step of `POST /api/auth/ldap/test`. `detail` is server text (English). */
+export interface LdapTestStep {
+	step: 'connect' | 'service_bind' | 'user_search' | 'groups';
+	ok: boolean;
+	detail: string;
+	elapsed_ms: number;
+}
+
+export interface LdapTestReport {
+	ok: boolean;
+	steps: LdapTestStep[];
+	/** The test user as the directory describes it, and what DumbMonit would do with it. */
+	user?: {
+		dn: string;
+		username: string;
+		display_name: string;
+		email: string | null;
+		groups: string[];
+		/** Role at the next sign-in; `null` when access would be refused. */
+		role: Role | null;
+		allowed: boolean;
+	};
+}
+
 /**
  * Authentication state as handled by the interface.
  *
@@ -904,6 +1056,7 @@ export interface AuthState {
 	authenticated: boolean;
 	user: User | null;
 	oidc: OidcStatus;
+	ldap: LdapStatus;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
 }
@@ -1898,6 +2051,116 @@ export interface Topology {
 	edges: TopologyEdge[];
 	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
 	metrics_available: boolean;
+}
+
+// --- World map locations (`api/locations.rs`) ---------------------------------
+
+export type LocationId = number;
+
+/** How a device came to a location: its assignment, its site, or the main site. */
+export type LocationSource = 'assigned' | 'site' | 'main';
+
+export interface LocationMember {
+	target_id: TargetId;
+	source: LocationSource;
+}
+
+/** One location. Mirrors `LocationView`. */
+export interface MapLocation {
+	id: LocationId;
+	name: string;
+	/** Free text, shown only. */
+	address: string;
+	latitude: number;
+	longitude: number;
+	/** Topology site this location stands for; empty: none. */
+	site: string;
+	/** Gathers the devices with no remote site. */
+	main_site: boolean;
+	members: LocationMember[];
+}
+
+/** `GET /api/locations`. Mirrors `LocationsView`. */
+export interface Locations {
+	locations: MapLocation[];
+	/** Remote sites the topology map knows. */
+	sites: string[];
+	/** Devices no location gathers. */
+	unplaced: TargetId[];
+}
+
+/** Body of `POST /api/locations` and `PUT /api/locations/{id}`. */
+export interface LocationPayload {
+	name: string;
+	address: string;
+	latitude: number;
+	longitude: number;
+	site: string;
+	main_site: boolean;
+}
+
+export type BasemapMode = 'offline' | 'osm' | 'custom';
+
+/** `GET|PUT /api/locations/basemap`. Mirrors `Basemap`. */
+export interface Basemap {
+	mode: BasemapMode;
+	url: string;
+	attribution: string;
+}
+
+// --- OPNsense live map (`api/opnsense_live.rs`) and IP geolocation ------------
+
+/** `GET|PUT /api/geoip`. Mirrors `GeoStatus`. */
+export interface GeoipStatus {
+	enabled: boolean;
+	state: 'ready' | 'loading' | 'missing' | 'failed' | 'disabled';
+	/** Month of the loaded database (`2026-10`). */
+	month: string | null;
+	ranges: number;
+	error: string | null;
+	source: string;
+	source_url: string;
+}
+
+export interface OpnsenseLiveTally {
+	blocked: number;
+	passed: number;
+	other: number;
+}
+
+/** One connection, reduced: never an address. Mirrors `LiveEvent`. */
+export interface OpnsenseLiveEvent {
+	seq: number;
+	/** Unix seconds. */
+	at: number;
+	action: 'block' | 'pass' | 'other';
+	/** From the local network out. */
+	outbound: boolean;
+	/** `CH`, `local` or `unknown`. */
+	country: string;
+	proto: string;
+	port: number | null;
+	rule: string;
+}
+
+/** `GET /api/targets/{id}/opnsense/live`. Mirrors `LiveView`. */
+export interface OpnsenseLive {
+	/** False while the monitor's `live_map` option is off. */
+	enabled: boolean;
+	/** Polled through a relay agent: the server cannot read the log itself. */
+	relayed: boolean;
+	window_secs: number;
+	polled_at: number | null;
+	error: string | null;
+	totals: OpnsenseLiveTally;
+	countries: (OpnsenseLiveTally & { code: string })[];
+	rules: { rule: string; action: 'block' | 'pass' | 'other'; count: number }[];
+	ports: { proto: string; port: number; count: number }[];
+	recent: OpnsenseLiveEvent[];
+	seq: number;
+	/** Where the firewall sits on the world map, when it has a location. */
+	firewall: { name: string; latitude: number; longitude: number } | null;
+	geoip: GeoipStatus;
 }
 
 // --- Two-factor authentication (TOTP) and audit log ---------------------------
@@ -3882,6 +4145,8 @@ export interface BlacklistList {
 	subject: 'ip' | 'domain';
 	/** A listing there blocks a large share of mail (Spamhaus, Barracuda, SpamCop). */
 	major: boolean;
+	/** Added by the user: absent from the built-in catalogue. */
+	custom: boolean;
 	checked: number;
 	listed: number;
 	unknown: number;
@@ -3898,6 +4163,8 @@ export interface BlacklistCheck {
 	meaning: string | null;
 	/** TXT reason of a listing, or why a list gave no answer. */
 	reason: string | null;
+	/** Spamhaus refused the question because the resolver is a public one (or forwards to one). */
+	public_resolver_refused: boolean;
 	/** Only for a listing. */
 	lookup_url: string | null;
 	delist_url: string | null;

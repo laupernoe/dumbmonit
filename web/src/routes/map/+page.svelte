@@ -9,7 +9,14 @@
 	 * Three outputs of one layout: the interactive canvas (or the indented
 	 * list), and the sheet — printed by the browser (`@media print`, A4 or A3
 	 * landscape) and serialised by the SVG/PNG exports.
+	 *
+	 * The "World" view (`?view=world`) is another picture of the same estate:
+	 * locations on a world map (`WorldView`), each with the state of its
+	 * monitors.
 	 */
+	import { flushSync, tick } from 'svelte';
+	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { getTopology } from '#lib/api/topology.js';
@@ -24,9 +31,10 @@
 	import Legend from '#lib/components/topology/Legend.svelte';
 	import { buildGraph, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
 	import { exportPng, exportSvg } from '#lib/components/topology/export.js';
+	import WorldView from '#lib/components/worldmap/WorldView.svelte';
 	import { Download, Network } from 'lucide-svelte';
 
-	type View = 'map' | 'list';
+	type View = 'map' | 'list' | 'world';
 
 	const GROUP_KEY = 'dumbmonit.map.byGroup';
 
@@ -34,9 +42,51 @@
 	let loadError = $state<unknown>(null);
 	let exportError = $state<unknown>(null);
 	let showGuests = $state(true);
-	let view = $state<View>('map');
+	const VIEW_IDS: readonly View[] = ['map', 'list', 'world'];
+	let view = $state<View>(
+		(() => {
+			const asked = page.url.searchParams.get('view');
+			return VIEW_IDS.includes(asked as View) ? (asked as View) : 'map';
+		})()
+	);
+
+	/** The view lives in the address, so a link (or the wall) can open the world map. */
+	function setView(next: View) {
+		view = next;
+		const url = new URL(page.url);
+		if (next === 'map') url.searchParams.delete('view');
+		else url.searchParams.set('view', next);
+		replaceState(url, {});
+	}
 	let selected = $state<string | null>(null);
 	let sheet = $state<SVGSVGElement | null>(null);
+	/**
+	 * The sheet is a second full drawing of the map (every node and link
+	 * again): kept out of the DOM until something needs it — an export, a
+	 * print from the menu or from the browser (Ctrl+P) — it would otherwise
+	 * double the page's nodes for nothing, which shows with hundreds of devices.
+	 */
+	let sheetWanted = $state(false);
+
+	/** Mounts the sheet and waits until it is in the DOM. */
+	async function mountSheet() {
+		sheetWanted = true;
+		await tick();
+	}
+
+	$effect(() => {
+		// A print started from the browser itself: `beforeprint` runs just
+		// before the page is laid out for paper, so the sheet is mounted
+		// synchronously; `afterprint` takes it out again.
+		const before = () => flushSync(() => (sheetWanted = true));
+		const after = () => (sheetWanted = false);
+		window.addEventListener('beforeprint', before);
+		window.addEventListener('afterprint', after);
+		return () => {
+			window.removeEventListener('beforeprint', before);
+			window.removeEventListener('afterprint', after);
+		};
+	});
 	let printedAt = $state(new Date());
 
 	let byGroup = $state(
@@ -118,7 +168,8 @@
 
 	const VIEWS = $derived([
 		{ id: 'map' as const, label: m.topology_view_map() },
-		{ id: 'list' as const, label: m.topology_view_list() }
+		{ id: 'list' as const, label: m.topology_view_list() },
+		{ id: 'world' as const, label: m.worldmap_view_world() }
 	]);
 
 	const subtitle = $derived(new Intl.DateTimeFormat(getLocale(), { dateStyle: 'long', timeStyle: 'short' }).format(printedAt));
@@ -131,15 +182,17 @@
 	async function run(action: 'svg' | 'png') {
 		printedAt = new Date();
 		exportError = null;
-		// Let the sheet pick up the fresh date before it is serialised.
-		await Promise.resolve();
+		// Let the sheet mount and pick up the fresh date before it is serialised.
+		await mountSheet();
 		await new Promise((resolve) => requestAnimationFrame(resolve));
-		if (!sheet) return;
 		try {
+			if (!sheet) return;
 			if (action === 'svg') exportSvg(sheet, filename('svg'));
 			else await exportPng(sheet, filename('png'));
 		} catch (error) {
 			exportError = error;
+		} finally {
+			sheetWanted = false;
 		}
 	}
 
@@ -150,13 +203,14 @@
 		// Landscape page height minus the 10 mm margins, minus a little slack.
 		const height = paper === 'A4' ? 186 : 273;
 		pageRule = `@page { size: ${paper} landscape; margin: 10mm; } .topo-print svg { max-height: ${height}mm; }`;
+		await mountSheet();
 		await new Promise((resolve) => requestAnimationFrame(resolve));
 		window.print();
 	}
 
 	function showDown() {
 		if (!firstDown) return;
-		view = 'map';
+		setView('map');
 		selected = firstDown;
 	}
 
@@ -172,7 +226,7 @@
 <div class="topo-screen print:hidden">
 	<PageHeader title={m.topology_title()} description={m.topology_description()}>
 		{#snippet actions()}
-			{#if layout.nodes.length > 0}
+			{#if layout.nodes.length > 0 && view !== 'world'}
 				<Menu label={m.topology_export()} align="right">
 					{#snippet trigger({ toggle, open })}
 						<Button variant="secondary" aria-haspopup="menu" aria-expanded={open} onclick={toggle}>
@@ -192,7 +246,12 @@
 		{/snippet}
 	</PageHeader>
 
-	{#if loadError && !topology}
+	{#if view === 'world'}
+		<div class="mb-3 flex justify-end">
+			<Segmented options={VIEWS} value={view} onchange={setView} label={m.topology_view_label()} />
+		</div>
+		<WorldView />
+	{:else if loadError && !topology}
 		<ErrorNotice error={loadError} title={m.topology_err_load()} />
 	{:else if loading}
 		<Skeleton class="h-[60vh] w-full rounded-[var(--radius-card)]" />
@@ -200,6 +259,7 @@
 		<EmptyState icon={Network} title={m.topology_empty_title()} description={m.topology_empty_body()}>
 			{#snippet action()}
 				<Button variant="primary" href="/targets/new">{m.devices_targets_add()}</Button>
+				<Button variant="secondary" onclick={() => setView('world')}>{m.worldmap_view_world()}</Button>
 			{/snippet}
 		</EmptyState>
 	{:else}
@@ -232,7 +292,7 @@
 				{/if}
 				<span class={graph.impacted.size > 0 ? 'font-semibold text-advisory-ink' : ''}>{m.topology_summary_suppressed({ count: graph.impacted.size })}</span>
 			</p>
-			<Segmented options={VIEWS} value={view} onchange={(v) => (view = v)} label={m.topology_view_label()} />
+			<Segmented options={VIEWS} value={view} onchange={setView} label={m.topology_view_label()} />
 		</div>
 
 		{#if topology && !topology.metrics_available}
@@ -254,8 +314,8 @@
 	{/if}
 </div>
 
-{#if layout.nodes.length > 0}
-	<!-- The sheet: hidden on screen, the only thing printed, and the source of the exports. -->
+{#if sheetWanted && layout.nodes.length > 0}
+	<!-- The sheet: hidden on screen, the only thing printed, and the source of the exports. Mounted on demand (`sheetWanted`). -->
 	<div class="topo-print hidden print:block" aria-hidden="true">
 		<MapSheet {layout} title={m.topology_print_title()} {subtitle} bind:element={sheet} class="block h-auto w-full" />
 	</div>

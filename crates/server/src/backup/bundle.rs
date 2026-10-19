@@ -143,6 +143,9 @@ pub struct Bundle {
     /// restauré sans son paquet ne serait plus interrogé.
     #[serde(default)]
     pub packs: Vec<BundlePack>,
+    /// Emplacements de la carte du monde (migration 0059).
+    #[serde(default)]
+    pub locations: Vec<BundleLocation>,
 }
 
 impl Bundle {
@@ -162,6 +165,7 @@ impl Bundle {
             ("api_tokens".to_string(), self.api_tokens.len()),
             ("push_monitors".to_string(), self.push_monitors.len()),
             ("packs".to_string(), self.packs.len()),
+            ("locations".to_string(), self.locations.len()),
         ])
     }
 }
@@ -206,6 +210,23 @@ pub struct BundleTarget {
     /// hauteur plutôt que dans un ordre inventé.
     #[serde(default)]
     pub position: i64,
+    /// Nom de l'emplacement affecté (migration 0059) ; `None` : aucun.
+    #[serde(default)]
+    pub location: Option<String>,
+}
+
+/// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleLocation {
+    pub name: String,
+    #[serde(default)]
+    pub address: String,
+    pub latitude: f64,
+    pub longitude: f64,
+    #[serde(default)]
+    pub site: String,
+    #[serde(default)]
+    pub main_site: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -615,6 +636,7 @@ mod tests {
                 credential: Some(serde_json::json!({"type": "snmp_v2c", "community": "s3cret"})),
                 group_name: "Rack A".to_string(),
                 position: 3,
+                location: None,
             }],
             ..Bundle::default()
         }
