@@ -8,6 +8,8 @@ pidas que se muestre siempre («All systems operational»).
 Tres formas de añadirlo, de la más simple a la más controlada. Los archivos
 listos para copiar están en la carpeta `integrations/` del repositorio.
 
+En DumbMonit, abre los ajustes de la página de estado (Páginas de estado, Editar): la sección **Banner de estado para tu sitio web**, al final del todo, ofrece los fragmentos HTML y PHP ya rellenados con un botón Copiar, un enlace a esta página y un botón para descargar el plugin de WordPress en `.zip`, listo para subir.
+
 ## Fragmento HTML {#html-snippet}
 
 Pega esto antes de `</body>`, con la dirección de tu servidor y la dirección
