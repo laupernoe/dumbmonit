@@ -8,6 +8,8 @@ seja mostrado («Todos os sistemas operacionais»).
 Há três formas de o adicionar, da mais simples à mais controlada. Os ficheiros
 prontos a copiar estão na pasta `integrations/` do repositório.
 
+No DumbMonit, abra as definições da página de estado (Páginas de estado, Editar): a secção **Faixa de estado para o seu site**, no fim, tem os excertos HTML e PHP já preenchidos com um botão Copiar, uma ligação para esta página e um botão para transferir o plugin WordPress em `.zip`, pronto a carregar.
+
 ## Excerto HTML {#html-snippet}
 
 Cole isto antes de `</body>`, com o endereço do seu servidor e o endereço da página:
