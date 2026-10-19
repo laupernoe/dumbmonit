@@ -58,6 +58,8 @@
 	import UptimeBar from '#lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '#lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '#lib/components/devices/FoldSection.svelte';
+	import AlertBell from '#lib/components/devices/AlertBell.svelte';
+	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import SecurityBadge from '#lib/components/devices/SecurityBadge.svelte';
 	import SecurityReport from '#lib/components/devices/SecurityReport.svelte';
 	import { getTargetSecurity } from '#lib/api/security.js';
@@ -301,6 +303,8 @@
 	// --- Alerts on this device -----------------------------------------------
 
 	let alerts = $state<Alert[]>([]);
+	/** Bell in the header: this monitor's active alerts, counted like the list does. */
+	const headerAlertCounts = $derived(countAlertsByTarget(alerts).get(id));
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
 	let refreshKey = $state(0);
 	/** The alert story has nothing to tell (never fired, nothing ignored). */
@@ -623,6 +627,7 @@
 								class="-my-2"
 							/>
 						{/if}
+						<AlertBell targetId={id} counts={headerAlertCounts} class="-my-2" />
 						<p class="tnum min-w-0 text-sm text-ink-2" title={formatDateTime(target.last_probe_at)}>
 							{#if target.last_error}
 								<span class={`break-words ${target.error_kind === 'config' ? 'text-advisory-ink' : 'text-warning-ink'}`}>{target.last_error}</span>

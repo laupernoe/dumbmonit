@@ -35,6 +35,7 @@
 	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import CredentialFields from './CredentialFields.svelte';
 	import OptionsFields from './OptionsFields.svelte';
+	import { firstRowError, parseRows, rowErrors, seedChecklists } from './option-values';
 	import TagsEditor from './TagsEditor.svelte';
 	import RequirementNotice from './RequirementNotice.svelte';
 	import MonitoredRules from './MonitoredRules.svelte';
@@ -90,7 +91,12 @@
 		return () => controller.abort();
 	});
 	const folderChoices = $derived(knownFolders(targets));
-	let tags = $state<Record<string, string>>(untrack(() => ({ ...(target?.tags ?? {}) })));
+	// A new device ticks what the server describes as the default of each checklist
+	// (the major blocklists, say); an existing one keeps what it has, and no tag
+	// there means every box.
+	let tags = $state<Record<string, string>>(
+		untrack(() => (target ? { ...target.tags } : seedChecklists(collector.options, {})))
+	);
 	let credential = $state<CredentialView>(initialCredential);
 	// "public" is the factory community of nearly every device: pre-filled on add.
 	let draft = $state<CredentialDraft>(
@@ -175,6 +181,16 @@
 	const optionErrors = $derived.by(() => {
 		const errors: Record<string, string> = {};
 		for (const option of options) {
+			if (option.input === 'rows') {
+				const problem = firstRowError(
+					rowErrors(option, parseRows(option, tags[option.key]), {
+						invalid: m.deviceform_options_rows_invalid(),
+						duplicate: m.deviceform_options_rows_duplicate()
+					})
+				);
+				// Shown line by line under the rows; here it only keeps the form from being sent.
+				if (problem) errors[option.key] = problem;
+			}
 			if (!option.required) continue;
 			if ((tags[option.key] ?? '').trim() || option.default.trim()) continue;
 			errors[option.key] = m.deviceform_form_option_required({ label: option.label });

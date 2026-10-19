@@ -29,6 +29,7 @@
 	import { Button, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import { ACCENTS, accentClass, slugify } from './words';
 	import DomainField from './DomainField.svelte';
+	import WebsiteBanner from './WebsiteBanner.svelte';
 	import SceneDefs from './scenes/SceneDefs.svelte';
 	import { SCENE_CHOICES, SCENE_COMPONENTS, SCENE_ROTATIONS } from './scenes/registry';
 
@@ -580,4 +581,6 @@
 			{m.status_incidents_cancel()}
 		</Button>
 	</div>
+
+	<WebsiteBanner {slug} {published} />
 </form>

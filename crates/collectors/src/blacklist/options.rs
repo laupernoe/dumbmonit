@@ -61,7 +61,7 @@ impl Settings {
             query_timeout: Duration::from_secs(u64::from(timeout)),
             refresh: Duration::from_secs(u64::from(refresh) * 3600),
             queries_per_second,
-            lists: selected(tags::tag(target, "lists"))?,
+            lists: selected(tags::tag(target, "lists"), tags::tag(target, "custom_lists"))?,
             dqs_key,
             extra: tags::tag(target, "extra_addresses")
                 .map(addresses)
@@ -103,22 +103,33 @@ fn resolver(raw: &str) -> Result<SocketAddr, ProbeError> {
     })
 }
 
-fn selected(raw: Option<&str>) -> Result<Vec<&'static List>, ProbeError> {
-    let Some(raw) = raw else { return Ok(lists::LISTS.iter().collect()) };
-    let wanted = tags::split_list(raw);
-    for id in &wanted {
-        if lists::by_id(id).is_none() {
-            return Err(ProbeError::Config(format!(
-                "unknown blocklist \"{id}\" in Lists; known lists: {}",
-                lists::ids()
-            )));
+/// Les listes à interroger : celles du catalogue que `lists` retient (toutes
+/// sans réglage, aucune pour `-`), suivies des listes personnalisées.
+fn selected(raw: Option<&str>, custom: Option<&str>) -> Result<Vec<&'static List>, ProbeError> {
+    let mut chosen: Vec<&'static List> = match raw.map(str::trim) {
+        None | Some("") => lists::LISTS.iter().collect(),
+        // Le formulaire écrit `-` quand plus aucune liste du catalogue n'est cochée.
+        Some("-") => Vec::new(),
+        Some(raw) => {
+            let wanted = tags::split_list(raw);
+            for id in &wanted {
+                if lists::by_id(id).is_none() {
+                    return Err(ProbeError::Config(format!(
+                        "unknown blocklist \"{id}\" in Lists; known lists: {}",
+                        lists::ids()
+                    )));
+                }
+            }
+            lists::LISTS.iter().filter(|list| wanted.iter().any(|id| id == list.id)).collect()
         }
-    }
-    let chosen: Vec<&'static List> =
-        lists::LISTS.iter().filter(|list| wanted.iter().any(|id| id == list.id)).collect();
+    };
+    let extra = lists::parse_custom(custom.unwrap_or_default())
+        .map_err(|why| ProbeError::Config(format!("Custom lists: {why}")))?;
+    chosen.extend(extra);
     if chosen.is_empty() {
         return Err(ProbeError::Config(format!(
-            "Lists names no blocklist; known lists: {}",
+            "No blocklist is selected: tick at least one list or add a custom list; known \
+             lists: {}",
             lists::ids()
         )));
     }
@@ -198,6 +209,52 @@ mod tests {
         ] {
             let error = Settings::from_target(&cible("mail_blacklist", "x", &tags)).unwrap_err();
             assert!(matches!(error, ProbeError::Config(_)), "{tags:?}");
+        }
+    }
+
+    #[test]
+    fn les_listes_choisies_et_les_listes_personnalisees() {
+        let settings = |tags: &[(&str, &str)]| {
+            Settings::from_target(&cible("mail_blacklist", "example.com", tags))
+        };
+        let ids = |s: &Settings| s.lists.iter().map(|l| l.id.to_string()).collect::<Vec<_>>();
+
+        // Sans réglage : tout le catalogue (compatibilité des moniteurs existants).
+        assert_eq!(settings(&[]).unwrap().lists.len(), lists::LISTS.len());
+        // Une sélection, dans l'ordre du catalogue, puis les listes personnalisées.
+        let custom = r#"[{"zone":"DNSBL.Example.org.","subject":"domain","major":true},
+            {"zone":"ip.example.net"}]"#;
+        let chosen = settings(&[("lists", "spamcop,spamhaus_zen"), ("custom_lists", custom)]);
+        let chosen = chosen.unwrap();
+        assert_eq!(
+            ids(&chosen),
+            ["spamhaus_zen", "spamcop", "custom:dnsbl.example.org", "custom:ip.example.net"]
+        );
+        let domain = chosen.lists_for(Subject::Domain).collect::<Vec<_>>();
+        assert_eq!(domain.len(), 1);
+        assert!(domain[0].major && domain[0].zone == "dnsbl.example.org");
+        let ip = chosen.lists_for(Subject::Ip).map(|l| l.id).collect::<Vec<_>>();
+        assert_eq!(ip, ["spamhaus_zen", "spamcop", "custom:ip.example.net"]);
+
+        // `-` : aucune liste du catalogue, seulement les personnalisées.
+        let only = settings(&[("lists", "-"), ("custom_lists", r#"[{"zone":"a.example.org"}]"#)]);
+        assert_eq!(ids(&only.unwrap()), ["custom:a.example.org"]);
+        // Rien du tout : erreur de configuration.
+        assert!(matches!(settings(&[("lists", "-")]), Err(ProbeError::Config(_))));
+
+        // Un format invalide, une adresse IP, un doublon, un type inconnu.
+        for bad in [
+            "not json",
+            r#"[{"zone":"192.0.2.1"}]"#,
+            r#"[{"zone":"nodot"}]"#,
+            r#"[{"zone":"bad_.-example.org "}]"#,
+            r#"[{"zone":"1.2.3.4"}]"#,
+            r#"[{"zone":"a.example.org"},{"zone":"A.example.org."}]"#,
+            r#"[{"zone":"zen.spamhaus.org"}]"#,
+            r#"[{"zone":"a.example.org","subject":"url"}]"#,
+        ] {
+            let error = settings(&[("custom_lists", bad)]).unwrap_err();
+            assert!(matches!(error, ProbeError::Config(_)), "{bad}");
         }
     }
 

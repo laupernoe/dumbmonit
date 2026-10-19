@@ -11,3 +11,9 @@ export function wallDocsUrl(anchor: string): string {
 	const locale = getLocale();
 	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/latest/using/wall/#${anchor}`;
 }
+
+/** Page "Website banner" of the documentation, in the language of the UI. */
+export function websiteBannerDocsUrl(): string {
+	const locale = getLocale();
+	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/latest/integrations/website-banner/`;
+}
