@@ -168,10 +168,18 @@ export async function loadTargetSparkline(
 }
 
 /**
- * Loads the sparkline of every dashboard device in a single query.
+ * The sparklines' query: one series per device (`limitk … by (target)`, a
+ * MetricsQL function whose choice stays the same from one call to the next),
+ * never every series of every device — a few hundred devices carry thousands
+ * of series, and only one per device is drawn.
+ */
+export const SPARKLINE_QUERY = 'limitk(1, {__name__=~"dumbmonit_.+", target!=""}) by (target)';
+
+/**
+ * Loads the sparkline of every device in a single query.
  *
  * One query per card would be simpler to write, but would cost N round trips
- * when the home page loads. Everything is requested at once instead, and the
+ * when the page loads. Everything is requested at once instead, and the
  * series are split per target thanks to the `target` label.
  */
 export async function loadSparklines(
@@ -182,7 +190,7 @@ export async function loadSparklines(
 	const start = end - rangeSeconds * 1000;
 	const series = await queryRange(
 		{
-			query: '{__name__=~"dumbmonit_.+"}',
+			query: SPARKLINE_QUERY,
 			start,
 			end,
 			// A sparkline only needs about sixty points.

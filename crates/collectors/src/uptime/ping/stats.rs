@@ -47,6 +47,18 @@ impl Burst {
         f64::from(self.sent - self.received()) / f64::from(self.sent)
     }
 
+    /// La salve vaut-elle une indisponibilité, pour un seuil de perte donné
+    /// (entre 0 et 1) ?
+    ///
+    /// Une perte totale est toujours un échec, quel que soit le seuil : avec le
+    /// seuil par défaut (100 %), une comparaison stricte seule ne serait jamais
+    /// vraie, et un hôte éteint passerait pour joignable — lent, puisque la sonde
+    /// a attendu chaque écho jusqu'au bout. Au-dessous, la perte doit dépasser
+    /// le seuil.
+    pub fn fails(&self, loss_threshold: f64) -> bool {
+        self.received() == 0 || self.loss_ratio() > loss_threshold
+    }
+
     /// Moyenne des temps d'aller-retour, `None` si rien n'est revenu.
     pub fn mean_rtt(&self) -> Option<f64> {
         if self.rtt_seconds.is_empty() {
@@ -132,6 +144,24 @@ mod tests {
     #[test]
     fn aucun_paquet_envoye_compte_comme_perte_totale() {
         assert!((Burst::default().loss_ratio() - 1.0).abs() < 1e-12);
+    }
+
+    #[test]
+    fn une_perte_totale_est_un_echec_meme_avec_le_seuil_par_defaut() {
+        // Seuil par défaut : 100 %. Un hôte éteint ne doit pas passer pour joignable.
+        assert!(burst(4, &[]).fails(1.0));
+        assert!(Burst::default().fails(1.0));
+        assert!(burst(4, &[]).fails(0.25));
+    }
+
+    #[test]
+    fn une_perte_partielle_echoue_seulement_au_dela_du_seuil() {
+        let moitie = burst(4, &[10, 30]);
+        assert!(!moitie.fails(1.0), "le défaut ne compte que la perte totale");
+        assert!(!moitie.fails(0.5), "« au-delà » : 50 % ne dépasse pas 50 %");
+        assert!(moitie.fails(0.25));
+        assert!(!burst(4, &[10, 20, 30, 40]).fails(0.0));
+        assert!(burst(4, &[10, 20, 30]).fails(0.0));
     }
 
     /// Le test le plus utile du module : sans ce message, l'utilisateur croit à
