@@ -14,7 +14,8 @@
 //!
 //! Avec `DUMBMONIT_TEST_LDAP_CA_FILE` (l'autorité que l'image génère,
 //! `/container/service/slapd/assets/certs/ca.crt`) et une URL dont le nom
-//! d'hôte est celui du certificat (`--hostname ldap.example.org`), le test
+//! d'hôte est celui du certificat (`--hostname ldap.example.org`, et
+//! `-e LDAP_TLS_VERIFY_CLIENT=never` : l'image exige sinon un certificat client), le test
 //! vérifie aussi StartTLS, et LDAPS avec `DUMBMONIT_TEST_LDAP_LDAPS_URL`.
 //!
 //! Le test peuple lui-même l'annuaire (unités `ou=dm-people` et `ou=dm-groups`,
