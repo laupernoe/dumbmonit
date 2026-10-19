@@ -1,6 +1,6 @@
 # DumbMonit
 
-Simple monitoring from the homelab to the small business. One container, one IP address
+Simple monitoring from homelabs to mid-sized companies. One container, one IP address
 to type in, useful graphs and alerts in under a minute.
 
 !!! warning "Work in progress"

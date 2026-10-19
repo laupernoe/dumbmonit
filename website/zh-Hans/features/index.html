@@ -110,10 +110,10 @@
 				</div>
 				<ul class="points">
 					<li><strong>依赖关系</strong><p>把交换机声明为其下游监控项的父级。它宕机时你只收到一条通知，而不是三十条；其余显示为“被上级抑制”。</p></li>
-					<li><strong>按主机分组</strong><p>阵列降级的 NAS 每个周期只发一条消息，而不是每块磁盘一条。提醒、升级、确认、暂停提醒、按监控项忽略和清除已解决的历史，全部内置。</p></li>
+					<li><strong>按主机分组</strong><p>阵列降级的 NAS 每个周期只发一条消息，而不是每块磁盘一条。提醒、升级、确认、暂停提醒、按监控项忽略和清除已解决的历史，全部内置。每个监控项上的铃铛会显示其活动告警的数量。</p></li>
 					<li><strong>先学习的基线</strong><p>无需调阈值的异常检测：168 个时段，对应一周中的每个小时。前 14 天保持静默，只显示它本来会触发什么。</p></li>
 					<li><strong>预报</strong><p>“该文件系统将在四天内写满”会作为预报列出，与当前已经出问题的内容分开。</p></li>
-					<li><strong>维护与通知策略</strong><p>一次性或每周的窗口、滞后、抖动保持、安静时段、批量发送和每小时上限，让糟糕的一夜不会变成两百条推送。</p></li>
+					<li><strong>维护、静默与通知策略</strong><p>一次性或每周的窗口、滞后、抖动保持、安静时段、批量发送和每小时上限，让糟糕的一夜不会变成两百条推送。</p></li>
 				</ul>
 				<p class="code-note" style="margin-top:24px"><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/alerting/">告警如何工作</a></p>
 			</div>
@@ -238,7 +238,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 	<div class="wrap">
 		<div class="section-head">
 			<h2>墙面模式</h2>
-			<p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。</p>
+			<p>只显示概览，全屏，适合房间里的显示器：一幅动态场景（默认是有埃菲尔铁塔和 DumbMonit 鸽子的巴黎屋顶，也可选其他许多场景），其天气随告警变化；为长时间开着的屏幕准备的 OLED 主题；以及墙面音乐 &mdash; Spotify Connect 能把屏幕变成音箱。可选小组件：天气、加密货币价格、股票行情、汇率、严重 CVE、带图片的 RSS 新闻，以及 Claude 和 OpenAI 的 API 用量。</p>
 		</div>
 		<figure>
 			<div class="shot">
@@ -285,7 +285,7 @@ curl -sSL http://server:8080/install.sh | sh -s -- \
 				<p><a href="https://dumbmonit.readthedocs.io/zh-cn/latest/using/security-score/">在文档中了解更多</a></p>
 			</div>
 			<ul class="points">
-				<li><strong>账户</strong><p>管理员、操作员（处理告警，不改配置）和查看者角色，可选的 TOTP 二次验证，审计日志，以及基于 OpenID Connect 的单点登录（Authentik、Authelia、Keycloak、Pocket ID…），默认关闭账户注册。</p></li>
+				<li><strong>账户</strong><p>管理员、操作员（处理告警，不改配置）和查看者角色，可选的 TOTP 二次验证，审计日志，以及基于 OpenID Connect 的单点登录（Authentik、Authelia、Keycloak、Pocket ID…），通过 LDAP 或 Active Directory 登录，默认关闭账户注册。</p></li>
 				<li><strong>与你正在运行的系统和平共处</strong><p><code>/metrics</code>、<code>/federate</code> 和兼容 Prometheus 的端点，让现有的 Grafana 可以读取 DumbMonit 的数据。</p></li>
 			</ul>
 		</div>
