@@ -6753,6 +6753,36 @@
 	"whatsnew_dialog_ok": "Entendido",
 	"whatsnew_dialog_title": "Novedades de la v{version}",
 	"whatsnew_dialog_updated": "Actualizado · {date}",
+	"worldmap_cluster_label": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ubicación cercana: {members}",
+				"countPlural=other": "{count} ubicaciones cercanas: {members}"
+			}
+		}
+	],
+	"worldmap_cluster_name": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ubicación",
+				"countPlural=other": "{count} ubicaciones"
+			}
+		}
+	],
 	"worldmap_detail_back": "Volver a todas las ubicaciones",
 	"worldmap_detail_empty": "Aún no hay monitores en esta ubicación.",
 	"worldmap_edit_locations": "Editar ubicaciones",

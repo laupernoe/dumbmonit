@@ -2,6 +2,30 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { parseCoordinates, pinCount, sortByVerdict, tally, verdict, wrapLongitude } from '../src/lib/map/aggregate.ts';
+import { clusterByDistance } from '../src/lib/map/cluster.ts';
+
+test('pins close on screen form one group seeded by the worst', () => {
+	const groups = clusterByDistance(
+		[
+			{ id: 'lausanne', x: 100, y: 100, rank: 2 },
+			{ id: 'geneva', x: 80, y: 110, rank: 0 },
+			{ id: 'bern', x: 130, y: 90, rank: 2 },
+			{ id: 'newyork', x: 400, y: 300, rank: 2 }
+		],
+		44
+	);
+	assert.deepEqual(groups, [['geneva', 'lausanne'], ['bern'], ['newyork']], 'bern is 52 px from geneva: on its own');
+});
+
+test('nothing groups when the pins are apart, and a zoom changes the answer', () => {
+	const at = (scale) => [
+		{ id: 'a', x: 0, y: 0, rank: 1 },
+		{ id: 'b', x: 10 * scale, y: 0, rank: 1 }
+	];
+	assert.deepEqual(clusterByDistance(at(1), 44), [['a', 'b']]);
+	assert.deepEqual(clusterByDistance(at(8), 44), [['a'], ['b']]);
+	assert.deepEqual(clusterByDistance([], 44), []);
+});
 
 test('a location is as bad as its worst monitor', () => {
 	assert.equal(verdict(tally([])), 'empty');

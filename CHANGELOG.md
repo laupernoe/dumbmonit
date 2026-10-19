@@ -21,6 +21,10 @@ All notable changes to this project are documented here. The format follows
   their attribution; only their host is added to the interface's `img-src`.
   Map rendering by Leaflet (BSD-2-Clause). New routes under `/api/locations`;
   monitors gain `location_id`.
+- **Grouped pins on the world map.** Locations too close to tell apart at the
+  current zoom become one pin with their count and the state of the worst of
+  them; a click zooms in until they come apart, or lists them. Recomputed at
+  each zoom, by distance on screen, with no extra library.
 - **OPNsense live map.** With the new `live_map` option, the firewall's page
   shows where the connections its rules block or pass come from: a disc per
   country, short arcs travelling to the firewall's location as connections
