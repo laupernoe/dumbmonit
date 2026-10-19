@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Website banner in the status page settings.** At the bottom of a status
+  page's settings, a "Status banner for your website" section announces the
+  banner for third-party sites, links to its documentation, offers the HTML and
+  PHP snippets already filled in with your server address and the page slug
+  (with a Copy button), and downloads the WordPress plugin as a ready-to-upload
+  `.zip` (`GET /api/integrations/wordpress.zip`, also `banner.php`).
+
 ### Security
 
 - **Every release file is signed.** The release workflow now signs every file

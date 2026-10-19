@@ -73,6 +73,8 @@ COPY crates/pack crates/pack
 COPY crates/server crates/server
 COPY crates/agent/install crates/agent/install
 COPY profiles profiles
+# Fichiers du bandeau pour sites tiers, incorporés au binaire (`api/integrations.rs`).
+COPY integrations integrations
 # L'interface est incorporée au binaire à la compilation : elle doit être présente
 # avant `cargo build`, sinon `rust_embed` produit un serveur sans interface.
 COPY --from=web /src/web/build web/build

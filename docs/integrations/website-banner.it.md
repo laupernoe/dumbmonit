@@ -8,6 +8,8 @@ chieda di mostrarlo ("Tutti i sistemi operativi").
 Tre modi per aggiungerlo, dal più semplice al più controllato. I file pronti da
 copiare si trovano nella cartella `integrations/` del repository.
 
+In DumbMonit apri le impostazioni della pagina di stato (Pagine di stato, Modifica): la sezione **Banner di stato per il tuo sito web**, in fondo, offre gli snippet HTML e PHP già compilati con un pulsante Copia, un link a questa pagina e un pulsante per scaricare il plugin WordPress in `.zip`, pronto da caricare.
+
 ## Snippet HTML
 
 Incolla questo prima di `</body>`, con l'indirizzo del tuo server e quello della pagina:
