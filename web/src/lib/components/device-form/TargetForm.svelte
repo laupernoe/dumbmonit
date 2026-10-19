@@ -51,6 +51,7 @@
 	} from './credentials';
 	import { DEFAULT_INTERVAL, INTERVALS, SNMP_KIND, suggestName } from './kinds';
 	import { firstReason, identitySummary, testBlocker } from './test-connection';
+	import { seedFromPrefill, type Prefill } from './discovery-prefill';
 
 	interface Props {
 		collector: CollectorInfo;
@@ -60,9 +61,14 @@
 		targets?: Target[];
 		onsaved: (target: Target) => void;
 		cancelHref: string;
+		/** Add only: values found by the network scan (address, name, settings). Never a secret. */
+		prefill?: Prefill | null;
 	}
 
-	let { collector, target, targets = [], onsaved, cancelHref }: Props = $props();
+	let { collector, target, targets = [], onsaved, cancelHref, prefill = null }: Props = $props();
+
+	// The scan's findings, folded into this kind's fields. Seeds once, like the rest.
+	const seed = untrack(() => seedFromPrefill(target ? null : prefill, collector));
 
 	const editing = $derived(target !== undefined);
 	/** The credential families this kind accepts, field by field, from the server. */
@@ -71,8 +77,8 @@
 	// --- Seed once from the target -------------------------------------------
 	const initialCredential: CredentialView = untrack(() => initialView(collector.credentials, target?.credential_kind));
 
-	let name = $state(untrack(() => target?.name ?? ''));
-	let address = $state(untrack(() => target?.address ?? ''));
+	let name = $state(untrack(() => target?.name ?? seed.name));
+	let address = $state(untrack(() => target?.address ?? seed.address));
 	let intervalSecs = $state(untrack(() => target?.interval_secs ?? DEFAULT_INTERVAL));
 	let parentId = $state<number | null>(untrack(() => target?.parent_id ?? null));
 	let viaAgent = $state<number | null>(untrack(() => target?.via_agent ?? null));
@@ -95,7 +101,7 @@
 	// (the major blocklists, say); an existing one keeps what it has, and no tag
 	// there means every box.
 	let tags = $state<Record<string, string>>(
-		untrack(() => (target ? { ...target.tags } : seedChecklists(collector.options, {})))
+		untrack(() => (target ? { ...target.tags } : seedChecklists(collector.options, seed.tags)))
 	);
 	let credential = $state<CredentialView>(initialCredential);
 	// "public" is the factory community of nearly every device: pre-filled on add.
@@ -122,14 +128,15 @@
 	let more = $state(
 		untrack(
 			() =>
-				!!target &&
+				(!target && collector.options.some((o, i) => !(o.required || i < 3) && o.key in seed.tags)) ||
+				(!!target &&
 				(target.parent_id !== null ||
 					target.via_agent !== null ||
 					target.interval_secs !== DEFAULT_INTERVAL ||
 					!target.enabled ||
 					target.group_name !== '' ||
 					(target.location_id ?? null) !== null ||
-					Object.keys(target.tags).some((key) => !collector.options.some((o) => o.key === key)))
+					Object.keys(target.tags).some((key) => !collector.options.some((o) => o.key === key))))
 		)
 	);
 

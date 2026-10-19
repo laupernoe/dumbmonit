@@ -28,6 +28,7 @@
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
+	import { readPrefill } from '#lib/components/device-form/discovery-prefill.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
@@ -73,6 +74,8 @@
 	// --- Where we are: read from the URL only --------------------------------
 	const params = $derived(page.url.searchParams);
 	const requestedKind = $derived(params.get('kind'));
+	/** Values from the network scan (`?prefill=`), for the kind's form only. */
+	const prefill = $derived(readPrefill(params));
 	const selected = $derived(collectors.find((c) => c.kind === requestedKind) ?? null);
 	/** `?scan=1` opens the network scan: the first-run guide and the command palette link to it. */
 	const scanning = $derived(!requestedKind && params.get('scan') === '1');
@@ -396,8 +399,14 @@
 								<AgentEnroll cancelHref="/targets" relay={relaying} />
 							{/key}
 						{:else}
+							{#if prefill}
+								<p class="mb-5 rounded-lg border border-signal/30 bg-signal-soft px-3.5 py-2.5 text-sm text-ink">
+									{m.deviceform_new_prefilled()}
+								</p>
+							{/if}
 							<TargetForm
 								collector={selected}
+								{prefill}
 								{targets}
 								cancelHref="/targets"
 								onsaved={(saved) =>
