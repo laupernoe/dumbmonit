@@ -1,10 +1,9 @@
 /**
- * Pure helpers for the wall widgets: which cards to show and in what order,
- * rises and falls (never by colour alone: an arrow and a sign), prices and
- * rates formatted for across the room, and WMO weather codes. No Svelte, no
- * Paraglide: tested by `tests/wall-widgets.test.mjs`.
+ * Pure helpers for the wall widgets: rises and falls (never by colour alone:
+ * an arrow and a sign), prices and rates formatted for across the room, WMO
+ * weather codes, people's badges. Which panels show, and in what order, is
+ * `panels.ts`. No Svelte, no Paraglide: tested by `tests/wall-widgets.test.mjs`.
  */
-import type { WallWidgets } from '../api/types';
 
 export type Trend = 'up' | 'down' | 'flat';
 
@@ -94,22 +93,6 @@ export function roundTemperature(value: number): string {
 	return `${Math.round(value)}°`;
 }
 
-/**
- * One card of the right rail. Coins and exchange rates are not cards: they
- * live in the market bar (`marketItems`). Long lists are split into pages.
- */
-export type WidgetCard = {
-	key: string;
-	kind: 'cve' | 'claude' | 'openai' | 'stocks';
-	from: number;
-	to: number;
-	page: number;
-	pages: number;
-};
-
-/** Rows per card, so a card always fits the rail and reads from the sofa. */
-export const ROWS_PER_CARD = { cve: 5, claude: 4, openai: 4, stocks: 5 } as const;
-
 /** A dollar amount: cents under a hundred dollars, whole dollars above. */
 export function formatUsd(value: number, locale: string): string {
 	const digits = Math.abs(value) >= 100 ? 0 : 2;
@@ -124,125 +107,6 @@ export function formatUsd(value: number, locale: string): string {
 /** Token counts for across the room: `1.2M`, `340K`, `980`. */
 export function formatTokens(value: number, locale: string): string {
 	return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value);
-}
-
-/** Rows a card would show; 0 when the widget has nothing to show on a wall. */
-function rowsOf(widgets: WallWidgets, kind: keyof typeof ROWS_PER_CARD): number {
-	const section = widgets[kind];
-	// Not configured, waiting for a key or failing with nothing to show: no card at all.
-	if (!section || section.needs_key || !section.data) return 0;
-	if (kind === 'stocks') return (section.data as { quotes: unknown[] }).quotes.length;
-	if (kind === 'claude' || kind === 'openai') return Math.max(1, (section.data as { people: unknown[] | null }).people?.length ?? 0);
-	return (section.data as unknown[]).length;
-}
-
-/**
- * The rail's cards, in a fixed order: critical vulnerabilities, Claude and OpenAI usage, stocks. Only
- * widgets that are turned on and have something to show get a card: never a "key required" card on a wall.
- */
-export function widgetCards(widgets: WallWidgets | null, maxRows = Infinity): WidgetCard[] {
-	if (!widgets) return [];
-	const cards: WidgetCard[] = [];
-	for (const kind of ['cve', 'claude', 'openai', 'stocks'] as const) {
-		const rows = rowsOf(widgets, kind);
-		if (rows === 0) continue;
-		const size = Math.max(1, Math.min(ROWS_PER_CARD[kind], maxRows));
-		const pages = Math.ceil(rows / size);
-		for (let page = 0; page < pages; page += 1) {
-			cards.push({ key: `${kind}:${page}`, kind, from: page * size, to: Math.min(rows, (page + 1) * size), page, pages });
-		}
-	}
-	return cards;
-}
-
-/** One figure of the market bar: a coin or an exchange rate. */
-export type MarketItem = {
-	key: string;
-	group: 'crypto' | 'fx';
-	/** `BTC`, `EUR`, `100 JPY`. */
-	symbol: string;
-	price: number;
-	/** The currency `price` is written in. */
-	currency: string;
-	/** Percent. */
-	change: number | null;
-};
-
-/** The market bar's figures: coins first, then the world's currencies against the base. */
-export function marketItems(widgets: WallWidgets | null): MarketItem[] {
-	const items: MarketItem[] = [];
-	const crypto = widgets?.crypto;
-	if (crypto && !crypto.needs_key && crypto.data) {
-		for (const coin of crypto.data.coins) {
-			items.push({ key: `c:${coin.id}`, group: 'crypto', symbol: coin.symbol.toUpperCase(), price: coin.price, currency: crypto.data.currency, change: coin.change_24h });
-		}
-	}
-	const fx = widgets?.fx;
-	if (fx && !fx.needs_key && fx.data) {
-		for (const rate of fx.data.rates) {
-			const quote = fxQuote(rate.rate, rate.previous);
-			items.push({ key: `f:${rate.code}`, group: 'fx', symbol: quote.per === 1 ? rate.code : `${quote.per} ${rate.code}`, price: quote.value, currency: fx.data.base, change: quote.change });
-		}
-	}
-	return items;
-}
-
-/**
- * Greedy pages for a column: how many cards fit under each other in `avail`
- * pixels. Order is kept; a card taller than the room still gets a page of its own.
- */
-export function packColumn(heights: number[], avail: number, gap: number): number[][] {
-	const pages: number[][] = [];
-	let used = 0;
-	for (let i = 0; i < heights.length; i += 1) {
-		const page = pages[pages.length - 1];
-		if (page && used + gap + heights[i] <= avail) {
-			page.push(i);
-			used += gap + heights[i];
-		} else {
-			pages.push([i]);
-			used = heights[i];
-		}
-	}
-	return pages;
-}
-
-/**
- * Greedy pages for a row: items side by side in `avail` pixels, a group's
- * label written wherever a page starts or the group changes. Order is kept;
- * an item wider than the room still gets a page of its own.
- */
-export function packRow(widths: number[], groups: string[], labels: Record<string, number>, avail: number, gap: number): number[][] {
-	const pages: number[][] = [];
-	let used = 0;
-	for (let i = 0; i < widths.length; i += 1) {
-		const page = pages[pages.length - 1];
-		const prev = page ? groups[page[page.length - 1]] : null;
-		const extra = prev === groups[i] ? 0 : (labels[groups[i]] ?? 0) + gap;
-		if (page && used + gap + extra + widths[i] <= avail) {
-			page.push(i);
-			used += gap + extra + widths[i];
-		} else {
-			pages.push([i]);
-			used = (labels[groups[i]] ?? 0) + gap + widths[i];
-		}
-	}
-	return pages;
-}
-
-/**
- * How many rows a card may show in a rail `room` pixels high (about 44 px a row, 60 for the title and
- * the source line): on a short screen, a long list is cut in more pages instead of being clipped.
- */
-export function rowsThatFit(room: number): number {
-	if (!(room > 0)) return Infinity;
-	return Math.max(1, Math.floor((room - 60) / 44));
-}
-
-/** How much a page may grow (to fill the rail) or must shrink (to fit it). */
-export function fitScale(content: number, avail: number, min = 0.75, max = 1.2): number {
-	if (!(content > 0) || !(avail > 0)) return 1;
-	return Math.min(max, Math.max(min, avail / content));
 }
 
 /**
@@ -267,12 +131,6 @@ export function hueOf(name: string): number {
 		hash = Math.imul(hash, 16777619) >>> 0;
 	}
 	return hash % 360;
-}
-
-/** The next card's index; keeps a valid index when the deck shrinks. */
-export function nextCard(index: number, count: number): number {
-	if (count <= 0) return 0;
-	return (index + 1) % count;
 }
 
 /** True when a section's data is older than three times its usual refresh. */

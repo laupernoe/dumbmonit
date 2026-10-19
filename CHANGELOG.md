@@ -34,6 +34,28 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
+- **Wall mode: still panels instead of animations.** The headline ticker, the
+  scrolling market bar, the picture carousel and the rotating widget deck are
+  replaced by one panel under the clock that shows a page of headlines, an
+  article's picture, or a widget's card (coins, exchange rates, stocks,
+  critical vulnerabilities, Claude or OpenAI usage), still for the seconds
+  chosen in Settings → Wall widgets, then the next one with a short fade (none
+  under *reduced motion*). Nothing scrolls, no animation runs between two
+  panels, and a long list is cut into pages of the rows that fit the panel, so
+  the wall stays clean at 720p, 1080p and 4K, with the monitors keeping their
+  room. With **pictures** on, an article without a picture (or whose picture
+  does not load) is still shown as a headline: pictures never hide a feed, and
+  the headlines no longer switch off when pictures are on. The server also
+  finds more pictures in feeds: real `<img>` elements in Atom `xhtml` content,
+  lazy-loading `data-src` / `srcset` attributes, and typeless `enclosure`s with
+  an image extension.
+- **Wall news presets: Tech and AI sources.** Two new groups in Settings →
+  Wall news, in English and without any key: Tech (Hacker News, Ars Technica,
+  The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters) and AI
+  (OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR,
+  NVIDIA, AWS Machine Learning), plus national tech sites for France (Korben,
+  Next, Numerama), Germany (heise online, Golem), Spain (Xataka), Italy (Punto
+  Informatico), Brazil (Tecnoblog) and Russia (Habr).
 - **Blocklist monitors: no API key needed, and a Spamhaus refusal no longer
   hides everything.** The form now says that no key is required (the default
   choice is "No key (recommended)"): lists are queried through the server's

@@ -2,9 +2,11 @@
 	/**
 	 * Settings → Wall news (admins). Off by default. Two independent parts:
 	 *
-	 * - the headline ticker: pick a country, tick its sources (the presets are
-	 *   served by the server, each feed checked by hand), and/or add any RSS or
-	 *   Atom address — "Test" reads it for real and shows the first headline;
+	 * - the headlines: pick a country (or the Tech and AI groups), tick its
+	 *   sources (the presets are served by the server, each feed checked by
+	 *   hand), and/or add any RSS or Atom address — "Test" reads it for real and
+	 *   shows the first headline. With pictures on, an article that has one
+	 *   shows it on its own panel; the others stay headlines;
 	 * - the live tile: a country's official channel, or any YouTube,
 	 *   Dailymotion or Twitch link (the server turns a normal address into the
 	 *   embed). Position and size of the tile.
@@ -82,6 +84,8 @@
 
 	function countryName(code: string): string {
 		if (code === 'INT') return m.settings_news_country_international();
+		if (code === 'TECH') return m.settings_news_country_tech();
+		if (code === 'AI') return m.settings_news_country_ai();
 		try {
 			return new Intl.DisplayNames([getLocale()], { type: 'region' }).of(code) ?? code;
 		} catch {
@@ -89,12 +93,10 @@
 		}
 	}
 
+	/** Countries by name, then the themed groups (Tech, AI), then International. */
+	const rank = (code: string) => (code === 'INT' ? 2 : code === 'TECH' || code === 'AI' ? 1 : 0);
 	const sortedCountries = $derived(
-		[...countries].sort((a, b) => {
-			if (a.code === 'INT') return 1;
-			if (b.code === 'INT') return -1;
-			return countryName(a.code).localeCompare(countryName(b.code), getLocale());
-		})
+		[...countries].sort((a, b) => rank(a.code) - rank(b.code) || countryName(a.code).localeCompare(countryName(b.code), getLocale()))
 	);
 	const current = $derived(countries.find((c) => c.code === country) ?? null);
 	const allVideos = $derived(countries.flatMap((c) => c.videos));
@@ -104,7 +106,8 @@
 		error = null;
 		try {
 			const [saved, presets] = await Promise.all([getNewsSettings(signal), getNewsPresets(signal)]);
-			form = { ...saved, feeds: saved.feeds.map((feed) => ({ ...feed })) };
+			// Pictures are a way of showing the headlines: a wall saved with pictures alone shows them too.
+			form = { ...saved, ticker: saved.ticker || saved.gallery, feeds: saved.feeds.map((feed) => ({ ...feed })) };
 			countries = presets;
 			country = guessCountry(new Set(presets.map((c) => c.code)));
 			channel = !saved.video_url ? '' : allVideos.some((v) => v.url === saved.video_url) ? saved.video_url : CUSTOM;
@@ -205,26 +208,21 @@
 			<ErrorNotice {error} onretry={() => void load()} />
 		{:else}
 			<div class="space-y-6">
-				<!-- Headline ticker -->
+				<!-- Headlines, and their pictures -->
 				<div class="space-y-4">
 					<div class="flex items-start justify-between gap-4">
 						<div class="min-w-0">
 							<label for="news-ticker" class="text-sm font-semibold text-ink">{m.settings_news_ticker()}</label>
 							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_ticker_hint()}</p>
-							{#if form.gallery}
-								<p id="news-ticker-off" class="mt-1 text-[0.8125rem] font-medium text-advisory-ink">{m.settings_news_ticker_off_gallery()}</p>
-							{/if}
 						</div>
-						<div class:opacity-50={form.gallery} title={form.gallery ? m.settings_news_ticker_off_gallery() : undefined}>
-							<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving || form.gallery} />
-						</div>
+						<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving} />
 					</div>
-					<div class="flex items-start justify-between gap-4">
+					<div class="flex items-start justify-between gap-4" class:opacity-50={!form.ticker}>
 						<div class="min-w-0">
 							<label for="news-gallery" class="text-sm font-semibold text-ink">{m.settings_news_gallery()}</label>
 							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_gallery_hint()}</p>
 						</div>
-						<Toggle id="news-gallery" bind:checked={form.gallery} disabled={saving} />
+						<Toggle id="news-gallery" bind:checked={form.gallery} disabled={saving || !form.ticker} />
 					</div>
 
 					<div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_1fr]">

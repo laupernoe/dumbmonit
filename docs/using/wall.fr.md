@@ -18,21 +18,26 @@ au lieu de recouvrir les surveillances en dessous.
 
 ## Actualités sur le mur
 
-Un administrateur peut ajouter des **titres** et une **chaîne en direct** au
-mur dans **Réglages → Actualités du mur**. Les deux sont désactivés par défaut.
+Un administrateur peut ajouter des **titres** (avec ou sans leurs images) et
+une **chaîne en direct** au mur dans **Réglages → Actualités du mur**. Tout est
+désactivé par défaut.
 
-- **Bandeau de titres.** Une bande en bas du mur fait défiler les derniers
-  titres, chacun avec sa source et son âge, et se rafraîchit toutes les cinq
-  minutes. Si le système de l'écran demande de *réduire les animations*, rien ne
-  défile : un titre à la fois apparaît et disparaît en fondu.
+- **Titres.** Les derniers titres des flux choisis, chacun avec sa source et
+  son âge, quelques-uns à la fois sur un panneau fixe dans la colonne de droite
+  sous l'horloge, rafraîchis toutes les cinq minutes. Rien ne défile : le
+  panneau reste le nombre de secondes choisi dans *Widgets du mur* (20 par
+  défaut), puis le suivant prend sa place avec un court fondu (aucun si l'écran
+  demande de *réduire les animations*). Les titres partagent le panneau avec les
+  widgets, à tour de rôle.
+- **Images.** Un article accompagné d'une image l'affiche sur un panneau à lui,
+  sur toute la largeur de la colonne, avec la source, l'âge et le titre sur
+  l'image ; les autres restent des titres, donc un flux sans images s'affiche
+  quand même, et une image qui ne se charge pas renvoie son article parmi les
+  titres.
 - **Vidéo en direct.** Une chaîne en direct, sans le son, dans une vignette, dans
   la colonne de droite sous l'horloge (ou au milieu de la scène), petite, moyenne
   ou grande. La vignette se réduit à la place disponible ; elle ne recouvre
   jamais l'état.
-- **Carrousel d'images.** Les derniers articles des mêmes flux qui portent une
-  image, un à la fois dans la colonne de droite sous l'horloge, huit secondes chacun, en fondu, avec la
-  source, l'âge et le titre sur l'image. Si l'écran demande de *réduire les
-  animations*, les images se remplacent sans fondu.
 
 C'est le serveur qui lit les flux, pas le navigateur (un navigateur ne peut pas
 lire les flux d'autres sites). Il suit au plus trois redirections, refuse les
@@ -42,8 +47,8 @@ réponse cinq minutes pour tous les murs. Il lit RSS 2.0, RSS 1.0 (RDF) et Atom.
 L'image d'un article vient du flux : la plus large des images `media:content`,
 une `media:thumbnail`, une pièce jointe image (`enclosure`, comme BFM TV), un
 `link rel="enclosure"` Atom, ou à défaut la première `<img>` du contenu de
-l'article (comme Korben). Quand le flux n'en a pas et que le carrousel est
-allumé, le serveur lit une fois le début de la page de l'article (512 Ko au
+l'article (comme Korben). Quand le flux n'en a pas et que les images sont
+allumées, le serveur lit une fois le début de la page de l'article (512 Ko au
 plus, même garde-fou d'adresses) et prend son `og:image` ; la réponse est
 retenue, une page n'est lue qu'une fois. Le mur ne charge jamais d'image depuis
 le site d'actualité : le serveur la relaie à `/api/wall/news/image/<id>`,
@@ -55,7 +60,8 @@ sécurité du mur n'autorise toujours que les images de DumbMonit.
 ### Choisir les sources
 
 Choisissez un **pays** (présélectionné d'après la région et la langue de votre
-navigateur), puis cochez ses sources : huit flux au plus en tout. Pour un autre
+navigateur), ou les groupes **Tech** et **IA** (sources en anglais), puis cochez
+ses sources : huit flux au plus en tout. Pour un autre
 flux, collez son adresse RSS ou Atom sous **Ajouter un flux personnalisé** et
 appuyez sur **Tester** : DumbMonit le lit pour de vrai et montre le dernier titre
 avant l'ajout.
@@ -68,24 +74,26 @@ proposé que lorsque la chaîne en a un officiel et stable.
 
 | Pays | Titres | Vidéo en direct |
 |---|---|---|
-| France | BFM TV, franceinfo, Le Monde, France 24 | BFM TV, franceinfo, France 24, Euronews |
+| France | BFM TV, franceinfo, Le Monde, France 24, Korben, Next, Numerama | BFM TV, franceinfo, France 24, Euronews |
 | Suisse | RTS Info, SRF News, Le Temps, NZZ | aucune |
 | Belgique | RTBF, VRT NWS, La DH | aucune |
-| Allemagne | Tagesschau, ZDFheute, Spiegel, Deutsche Welle | DW News |
+| Allemagne | Tagesschau, ZDFheute, Spiegel, Deutsche Welle, heise online, Golem | DW News |
 | Royaume-Uni | BBC News, The Guardian | Sky News |
 | États-Unis | NPR, PBS NewsHour, CBS News, The New York Times | ABC News Live |
 | Canada | Radio-Canada, CBC News | CBC News |
-| Espagne | RTVE, 20minutos, El País, El Mundo | aucune |
-| Italie | ANSA, RaiNews | aucune |
+| Espagne | RTVE, 20minutos, El País, El Mundo, Xataka | aucune |
+| Italie | ANSA, RaiNews, Punto Informatico | aucune |
 | Portugal | RTP Notícias, Público | aucune |
-| Brésil | G1, Folha de S.Paulo | CNN Brasil |
-| Russie | Interfax, Meduza, Kommersant | aucune |
+| Brésil | G1, Folha de S.Paulo, Tecnoblog | CNN Brasil |
+| Russie | Interfax, Meduza, Kommersant, Habr | aucune |
 | Chine | CGTN, South China Morning Post, Xinhua | CGTN |
+| Tech (en anglais) | Hacker News, Ars Technica, The Verge, TechCrunch, Wired, The Register, Engadget, Lobsters | aucune |
+| IA (en anglais) | OpenAI, Google AI, Hugging Face, MIT Technology Review, Simon Willison, BAIR, NVIDIA, AWS Machine Learning | aucune |
 | International | Deutsche Welle, France 24, BBC News (monde) | DW News, France 24 English, Euronews English |
 
 Le flux de BFM TV est `https://www.bfmtv.com/rss/news-24-7/`. La liste a été
 vérifiée à sa rédaction ; un site peut déplacer son flux à tout moment, le
-bandeau l'ignore alors simplement. **Testez** le remplaçant et ajoutez-le comme
+mur l'ignore alors simplement. **Testez** le remplaçant et ajoutez-le comme
 flux personnalisé.
 
 La politique de sécurité du mur n'autorise que les lecteurs YouTube
@@ -111,12 +119,13 @@ ville, juste sous l'heure. Ni prévisions ni détails. Un lecteur d'écran enten
 la ville, le temps qu'il fait et la température ; au survol, les mêmes mots et
 la source (Open-Meteo).
 
-Les autres widgets se partagent une carte dans la colonne de droite, sous
-l'horloge : un widget à la fois, chacun pendant le nombre de
-secondes choisi (20 par défaut), puis le suivant apparaît en fondu. Les longues
-listes sont coupées en pages de cinq. Des points sous la carte montrent où en
-est le tour. Si l'écran demande de *réduire les animations*, les cartes se
-remplacent sans fondu.
+Les autres widgets se relaient sur le panneau de la colonne de droite, sous
+l'horloge, avec les titres et les images quand les actualités sont allumées :
+un panneau à la fois, fixe pendant le nombre de secondes choisi (20 par
+défaut), puis le suivant avec un court fondu (aucun si l'écran demande de
+*réduire les animations*). Une longue liste est coupée en pages selon les
+lignes qui tiennent dans la hauteur du panneau : jamais une ligne à moitié
+visible, et rien ne défile.
 
 Une hausse ou une baisse porte toujours une flèche et un signe (▲ +1,04 %,
 ▼ −0,57 %), jamais seulement une couleur. Chaque carte cite sa source,

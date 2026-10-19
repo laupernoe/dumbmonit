@@ -2,8 +2,11 @@
 //! page de l'article), puis relayées par le serveur.
 //!
 //! - [`item_image`] lit l'image d'un article dans son flux : `media:content`
-//!   (la plus large), `media:thumbnail`, `enclosure` d'un type image, lien Atom
-//!   `rel="enclosure"`, et en dernier lieu la première `<img>` du contenu.
+//!   (la plus large), `media:thumbnail`, `enclosure` d'un type image (ou d'une
+//!   extension d'image), lien Atom `rel="enclosure"`, et en dernier lieu la
+//!   première `<img>` du contenu — un vrai élément (Atom `type="xhtml"`) ou du
+//!   HTML échappé, `src` ou ses variantes paresseuses (`data-src`, `srcset`).
+//!   Un article sans image reste un article : le mur l'affiche en texte.
 //! - [`complete_from_pages`] complète les articles qui n'en ont pas avec
 //!   l'`og:image` (ou `twitter:image`) de leur page : quelques pages par tour,
 //!   lues avec le garde-fou des adresses internes, 512 Kio au plus, et le
@@ -79,15 +82,47 @@ fn resolve(raw: &str, base: &str) -> Option<String> {
     (matches!(url.scheme(), "http" | "https") && url.host_str().is_some()).then(|| url.to_string())
 }
 
-fn first_img(html: &str) -> Option<String> {
+/// Les pixels de suivi, les émoticônes et les SVG (que le relais refuse) ne
+/// font pas une illustration.
+fn is_decoration(src: &str) -> bool {
+    let lower = src.to_ascii_lowercase();
+    let path = lower.split(['?', '#']).next().unwrap_or(&lower);
+    lower.contains("feeds.feedburner.com")
+        || lower.contains("/emoji/")
+        || lower.contains("/wp-includes/")
+        || path.ends_with(".svg")
+}
+
+/// Les adresses d'images d'un fragment HTML, dans l'ordre du texte : le `src`
+/// de chaque `<img>`, puis ses variantes « paresseuses » (`data-src`, `srcset`)
+/// qu'un site met à la place d'un vrai `src` (dont le `data:` de remplissage
+/// est écarté par [`resolve`]).
+fn html_images(html: &str) -> Vec<String> {
     static IMG: OnceLock<Regex> = OnceLock::new();
-    let re = IMG.get_or_init(|| {
-        Regex::new(r#"(?is)<img\b[^>]*?\bsrc\s*=\s*["']([^"']+)["']"#).expect("expression valide")
+    static ATTR: OnceLock<Regex> = OnceLock::new();
+    let img = IMG.get_or_init(|| Regex::new(r"(?is)<img\b([^>]*)>").expect("expression valide"));
+    let attr = ATTR.get_or_init(|| {
+        Regex::new(
+            r#"(?is)\b(src|data-src|data-lazy-src|data-original|srcset|data-srcset)\s*=\s*(?:"([^"]*)"|'([^']*)')"#,
+        )
+        .expect("expression valide")
     });
-    re.captures_iter(html)
-        .map(|c| c[1].to_string())
-        // Les pixels de suivi et les émoticônes ne font pas une illustration.
-        .find(|src| !src.contains("feeds.feedburner.com") && !src.contains("/emoji/"))
+    let mut out = Vec::new();
+    for tag in img.captures_iter(html) {
+        for c in attr.captures_iter(&tag[1]) {
+            let value = c.get(2).or_else(|| c.get(3)).map_or("", |m| m.as_str());
+            // `srcset` : la première adresse, avant son descripteur de taille.
+            let value = if c[1].to_ascii_lowercase().ends_with("srcset") {
+                value.split(',').next().unwrap_or("").split_whitespace().next().unwrap_or("")
+            } else {
+                value.trim()
+            };
+            if !value.is_empty() && !is_decoration(value) {
+                out.push(value.to_string());
+            }
+        }
+    }
+    out
 }
 
 /// L'image d'un article de flux RSS ou Atom, adresse d'origine absolue.
@@ -124,13 +159,21 @@ pub fn item_image(node: roxmltree::Node, link: &str) -> Option<String> {
     if let Some((_, url)) = best {
         return Some(url);
     }
-    // 2. Pièce jointe image (RSS `enclosure`, Atom `link rel="enclosure"`).
+    // 2. Pièce jointe image (RSS `enclosure`, Atom `link rel="enclosure"`) :
+    //    un type `image/*` annoncé, ou, sans type, une extension d'image.
     for child in node.children().filter(|n| n.is_element()) {
         let name = child.tag_name().name();
-        let image_type = child.attribute("type").is_some_and(|t| t.starts_with("image/"));
+        let kind = child.attribute("type");
+        let image = |url: Option<&str>| {
+            kind.is_some_and(|t| t.starts_with("image/"))
+                || (kind.is_none() && url.is_some_and(looks_like_image))
+        };
         let url = match name {
-            "enclosure" if image_type => child.attribute("url"),
-            "link" if child.attribute("rel") == Some("enclosure") && image_type => {
+            "enclosure" if image(child.attribute("url")) => child.attribute("url"),
+            "link"
+                if child.attribute("rel") == Some("enclosure")
+                    && image(child.attribute("href")) =>
+            {
                 child.attribute("href")
             }
             _ => None,
@@ -139,11 +182,18 @@ pub fn item_image(node: roxmltree::Node, link: &str) -> Option<String> {
             return Some(url);
         }
     }
-    // 3. La première image du contenu HTML.
+    // 3. La première image du contenu : un vrai élément `<img>` (Atom
+    //    `type="xhtml"`), sinon le HTML échappé ou en CDATA.
     for wanted in ["encoded", "content", "description", "summary"] {
         for child in node.children().filter(|n| n.is_element() && n.tag_name().name() == wanted) {
+            let elements = child
+                .descendants()
+                .filter(|n| n.is_element() && n.tag_name().name() == "img")
+                .filter_map(|img| img.attribute("src").map(str::to_string))
+                .filter(|src| !is_decoration(src));
             let html: String = child.descendants().filter_map(|n| n.text()).collect();
-            if let Some(url) = first_img(&html).and_then(|src| resolve(&src, link)) {
+            let mut candidates = elements.chain(html_images(&html));
+            if let Some(url) = candidates.find_map(|src| resolve(&src, link)) {
                 return Some(url);
             }
         }
@@ -453,6 +503,48 @@ mod tests {
         let escaped = r#"<rss><channel><item><title>T</title>
             <description>&lt;img src="https://ex.fr/c.png"&gt; texte</description></item></channel></rss>"#;
         assert_eq!(first_item_image(escaped).as_deref(), Some("https://ex.fr/c.png"));
+    }
+
+    #[test]
+    fn atom_xhtml_content_has_real_img_elements() {
+        let xml = r#"<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>T</title>
+            <link rel="alternate" href="https://ex.fr/a"/>
+            <content type="xhtml"><div xmlns="http://www.w3.org/1999/xhtml"><p>Texte</p>
+            <img src="/emoji/smile.png" alt=""/><img src="https://cdn.ex.fr/photo.jpg" alt=""/></div></content>
+            </entry></feed>"#;
+        assert_eq!(first_item_image(xml).as_deref(), Some("https://cdn.ex.fr/photo.jpg"));
+    }
+
+    #[test]
+    fn lazy_images_skip_the_placeholder() {
+        // WordPress et consorts : un `src` de remplissage, la vraie adresse à côté.
+        let xml = r#"<rss><channel><item><title>T</title>
+            <description>&lt;img src="data:image/gif;base64,R0lGOD" data-src="https://cdn.ex.fr/lazy.webp" alt=""&gt;</description>
+            </item></channel></rss>"#;
+        assert_eq!(first_item_image(xml).as_deref(), Some("https://cdn.ex.fr/lazy.webp"));
+        let srcset = r#"<rss><channel><item><title>T</title>
+            <description>&lt;img srcset="/i/a-400.jpg 400w, /i/a-800.jpg 800w" sizes="100vw"&gt;</description>
+            </item></channel></rss>"#;
+        assert_eq!(first_item_image(srcset).as_deref(), Some("https://ex.fr/i/a-400.jpg"));
+    }
+
+    #[test]
+    fn enclosure_without_type_by_extension() {
+        let xml = r#"<rss><channel><item><title>T</title>
+            <enclosure url="https://cdn.ex.fr/a.JPG?w=800" length="12345"/></item></channel></rss>"#;
+        assert_eq!(first_item_image(xml).as_deref(), Some("https://cdn.ex.fr/a.JPG?w=800"));
+        let other = r#"<rss><channel><item><title>T</title>
+            <enclosure url="https://cdn.ex.fr/a.pdf"/></item></channel></rss>"#;
+        assert_eq!(first_item_image(other), None);
+    }
+
+    #[test]
+    fn decorations_are_not_illustrations() {
+        let xml = r#"<rss><channel><item><title>T</title>
+            <description>&lt;img src="https://ex.fr/wp-includes/images/smilies/x.png"&gt;
+            &lt;img src="https://ex.fr/logo.svg"&gt; &lt;img src="https://feeds.feedburner.com/~r/x/~4/y"&gt;</description>
+            </item></channel></rss>"#;
+        assert_eq!(first_item_image(xml), None);
     }
 
     #[test]
