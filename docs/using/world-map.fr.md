@@ -18,6 +18,8 @@ Une pastille dit son état de trois façons, jamais par la seule couleur :
 Le chiffre sur la pastille est le nombre de moniteurs, ou *problèmes / total*
 quand quelque chose ne va pas (`2/5`).
 
+Les emplacements trop proches pour être distingués au zoom courant forment une **pastille de groupe** : un double anneau, le nombre d'emplacements, et l'état du pire d'entre eux (symbole et couleur). Un clic zoome jusqu'à ce qu'ils se séparent ; quand ce n'est pas possible (même endroit, zoom maximal), il liste ses emplacements. Les groupes sont recalculés à chaque zoom.
+
 ## Emplacements
 
 Les emplacements se règlent dans **Réglages → Surveillance → Emplacements**

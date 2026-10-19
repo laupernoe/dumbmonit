@@ -143,7 +143,7 @@
 	</EmptyState>
 {:else}
 	<div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_20rem]">
-		<WorldMap {pins} {basemap} {selected} onselect={(id) => (selected = selected === id ? null : id)} label={m.worldmap_map_label()} class="h-[60vh] min-h-[360px] lg:h-[72vh]" />
+		<WorldMap {pins} {basemap} {selected} cluster onselect={(id) => (selected = selected === id ? null : id)} label={m.worldmap_map_label()} class="h-[60vh] min-h-[360px] lg:h-[72vh]" />
 
 		<section class="flex min-h-0 flex-col overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface shadow-lift lg:h-[72vh]" aria-live="polite">
 			{#if current}
