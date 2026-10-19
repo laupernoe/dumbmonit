@@ -14,6 +14,8 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import SecurityBadge from './SecurityBadge.svelte';
+	import AlertBell from './AlertBell.svelte';
+	import type { TargetAlertCounts } from '#lib/alerts-attention.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
 
 	interface Props {
@@ -24,9 +26,11 @@
 		shadowed?: boolean;
 		/** Security grade, when the score is on and this kind is rated. */
 		security?: { grade: SecurityGrade | null; score: number | null } | null;
+		/** Active alerts of this monitor; the bell is absent without any. */
+		alerts?: TargetAlertCounts;
 	}
 
-	let { target, state, kindLabel, depth = 0, shadowed = false, security = null }: Props = $props();
+	let { target, state, kindLabel, depth = 0, shadowed = false, security = null, alerts }: Props = $props();
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
@@ -64,5 +68,6 @@
 			<SecurityBadge quiet grade={security.grade} score={security.score} href={`/targets/${target.id}#security`} class="relative z-[1] -my-2" />
 		</span>
 	{/if}
+	<AlertBell targetId={target.id} counts={alerts} class="-my-2" />
 	<Plate {tone} label={STATE_LABEL[state]} pulse={blink} class="shrink-0" />
 </div>

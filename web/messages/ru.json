@@ -1205,6 +1205,24 @@
 	"devices_agentmodules_title": "Службы, найденные агентом",
 	"devices_agentmodules_toggle": "Отслеживать {name}",
 	"devices_agentmodules_waiting": "Ожидание агента",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} активное оповещение",
+				"countPlural=few": "{count} активных оповещения",
+				"countPlural=many": "{count} активных оповещений",
+				"countPlural=other": "{count} активных оповещений"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} активных, {acked} подтверждённых, {suppressed} скрыто недоступным родителем",
 	"devices_appliance_attention": "Требует внимания",
 	"devices_appliance_err_title": "Не удалось загрузить: {name}",
 	"devices_appliance_healthy": "В порядке",

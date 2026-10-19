@@ -1193,6 +1193,22 @@
 	"devices_agentmodules_title": "Servizi trovati dall'agente",
 	"devices_agentmodules_toggle": "Monitora {name}",
 	"devices_agentmodules_waiting": "In attesa dell'agente",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} avviso attivo",
+				"countPlural=other": "{count} avvisi attivi"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} in corso, {acked} confermati, {suppressed} nascosti da un genitore offline",
 	"devices_appliance_attention": "Richiede attenzione",
 	"devices_appliance_err_title": "Impossibile caricare: {name}",
 	"devices_appliance_healthy": "Integro",

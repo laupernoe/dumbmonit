@@ -1193,6 +1193,22 @@
 	"devices_agentmodules_title": "Services found by the agent",
 	"devices_agentmodules_toggle": "Watch {name}",
 	"devices_agentmodules_waiting": "Waiting for the agent",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} active alert",
+				"countPlural=other": "{count} active alerts"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} firing, {acked} acknowledged, {suppressed} masked by an offline parent",
 	"devices_appliance_attention": "Needs attention",
 	"devices_appliance_err_title": "Could not load the {name}",
 	"devices_appliance_healthy": "Healthy",

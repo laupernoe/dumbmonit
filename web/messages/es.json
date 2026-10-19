@@ -1193,6 +1193,22 @@
 	"devices_agentmodules_title": "Servicios encontrados por el agente",
 	"devices_agentmodules_toggle": "Vigilar {name}",
 	"devices_agentmodules_waiting": "Esperando al agente",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta activa",
+				"countPlural=other": "{count} alertas activas"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} en curso, {acked} reconocidas, {suppressed} ocultas por un padre sin conexión",
 	"devices_appliance_attention": "Requiere atención",
 	"devices_appliance_err_title": "No se pudo cargar: {name}",
 	"devices_appliance_healthy": "Correcto",

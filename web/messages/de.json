@@ -1193,6 +1193,22 @@
 	"devices_agentmodules_title": "Vom Agenten gefundene Dienste",
 	"devices_agentmodules_toggle": "{name} überwachen",
 	"devices_agentmodules_waiting": "Wartet auf den Agenten",
+	"devices_alertbell_aria": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} aktive Warnung",
+				"countPlural=other": "{count} aktive Warnungen"
+			}
+		}
+	],
+	"devices_alertbell_detail": "{firing} aktiv, {acked} bestätigt, {suppressed} durch ein Eltergerät offline verdeckt",
 	"devices_appliance_attention": "Benötigt Aufmerksamkeit",
 	"devices_appliance_err_title": "{name} konnte nicht geladen werden",
 	"devices_appliance_healthy": "In Ordnung",
