@@ -8,6 +8,8 @@ tudo está bem, o banner fica oculto, a menos que você peça para ele ser exibi
 Três maneiras de adicioná-lo, da mais simples à mais controlada. Arquivos prontos para copiar estão
 na pasta `integrations/` do repositório.
 
+No DumbMonit, abra as configurações da página de status (Páginas de status, Editar): a seção **Faixa de status para o seu site**, no final, traz os trechos HTML e PHP já preenchidos com um botão Copiar, um link para esta página e um botão para baixar o plugin WordPress em `.zip`, pronto para enviar.
+
 ## Snippet HTML {#html-snippet}
 
 Cole isto antes de `</body>`, com o endereço do seu servidor e o endereço da página:
