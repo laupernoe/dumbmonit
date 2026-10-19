@@ -134,7 +134,7 @@
 		try {
 			const { id } = await startDiscoveryJob({
 				cidr: cidr.trim(),
-				agent_id: agentId || null,
+				agent_id: agentId ? Number(agentId) : null,
 				depth,
 				...(community.trim() ? { snmp_community: community.trim() } : {})
 			});
