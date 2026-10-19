@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.12.0',
+		date: '2026-10-19',
+		highlights: [
+			{
+				title: 'Your sites on a world map',
+				text: 'Create locations in Settings, place your monitors there, and see the state of every site at a glance in Map → World. Nearby sites group together.'
+			},
+			{
+				title: 'OPNsense live map',
+				text: 'Turn on the live map of an OPNsense monitor to see where blocked and passed connections come from over the last 15 minutes, with top countries, rules and ports.'
+			},
+			{
+				title: 'A calmer, clearer wall',
+				text: 'No more carousels or tickers: problems stay readable whatever their number, and widgets sit in small, quiet bars you arrange yourself in Settings.'
+			},
+			{
+				title: 'Status banner for your website',
+				text: 'At the bottom of a status page’s settings: ready-to-copy HTML and PHP snippets and a one-click WordPress plugin download.'
+			},
+			{
+				title: 'Signed releases',
+				text: 'Every file of a release now comes with a signature you can check.'
+			}
+		]
+	},
+	{
 		version: '0.11.0',
 		date: '2026-10-19',
 		highlights: [
