@@ -171,7 +171,7 @@ jobs:
           # `created` is the commit date (the default is the time of the build).
           labels: |
             org.opencontainers.image.title=DumbMonit
-            org.opencontainers.image.description=Dumb-simple monitoring from the homelab to the small business
+            org.opencontainers.image.description=Dumb-simple monitoring from homelabs to mid-sized companies
             org.opencontainers.image.licenses=MIT
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
           annotations: |
