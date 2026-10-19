@@ -1,53 +1,166 @@
 <script lang="ts">
 	import { m } from '#lib/paraglide/messages.js';
 	/**
-	 * Scan my network: find SNMP devices on a CIDR and add the ticked ones.
-	 *
-	 * Adds are sequential so one failure never blocks the others; each row shows
-	 * its own outcome. Rows already monitored are greyed out.
+	 * Scan my network, multi-product. The server runs a scan as a background
+	 * job; this screen starts it, polls it every 2 s (results appear as they
+	 * are found), can cancel it, and keeps the latest jobs one click away.
+	 * Found services with a matching collector open the add form pre-filled.
 	 */
 	import { onMount } from 'svelte';
-	import { Radar } from 'lucide-svelte';
-	import { ApiError, createTarget, localSubnets, type DiscoveredDevice, type LocalSubnet, type SubnetSource } from '#lib/api/index.js';
-	import { Button, ClickSpark, EmptyState, ErrorNotice, Field, Plate, Skeleton } from '#lib/ui/index.js';
-	import { scanNetwork } from './discovery';
+	import { LayoutList, Network, Radar, Square } from 'lucide-svelte';
+	import { ApiError, localSubnets, type LocalSubnet, type SubnetSource } from '#lib/api/index.js';
+	import { cancelDiscoveryJob, getDiscoveryJob, listDiscoveryJobs, startDiscoveryJob } from '#lib/api/discovery.js';
+	import { listRelays } from '#lib/api/relay.js';
+	import type { DiscoveryDepth, DiscoveryJob, DiscoveryJobStatus, DiscoveryJobSummary, DiscoveryPhase, RelayAgent } from '#lib/api/types.js';
+	import { formatRelative } from '#lib/format.js';
+	import { Button, EmptyState, ErrorNotice, Field, Plate, Toggle, type Tone } from '#lib/ui/index.js';
+	import { PHONE_QUERY } from '#lib/ui/index.js';
+	import DiscoveryGraph from './DiscoveryGraph.svelte';
+	import DiscoveryList from './DiscoveryList.svelte';
+	import { filterHosts, percent, stats } from './discovery-graph';
 	import { defaultSubnet, usableSubnets } from './test-connection';
-	import { DEFAULT_INTERVAL, SNMP_KIND } from './kinds';
 
-	type RowState = { status: 'idle' } | { status: 'adding' } | { status: 'added' } | { status: 'failed'; message: string };
+	const POLL_MS = 2000;
 
 	let cidr = $state('');
-	/** Networks the server sits on: the first pre-fills the field, the rest are shortcuts. */
 	let subnets = $state<LocalSubnet[]>([]);
 	let prefilled = $state<LocalSubnet | null>(null);
-	let community = $state('public');
-	let scanning = $state(false);
-	let scanError = $state<unknown>(null);
+	let relays = $state<RelayAgent[]>([]);
+	let agentId = $state('');
+	let community = $state('');
+	let depth = $state<DiscoveryDepth>('standard');
+
+	let job = $state<DiscoveryJob | null>(null);
+	let history = $state<DiscoveryJobSummary[]>([]);
+	let starting = $state(false);
+	let cancelling = $state(false);
+	let startError = $state<unknown>(null);
+	let pollError = $state<unknown>(null);
 	let unavailable = $state(false);
-	let scanned = $state(false);
-	let scannedCount = $state<number | null>(null);
-	let devices = $state<DiscoveredDevice[]>([]);
-	let selection = $state<Set<string>>(new Set());
-	let rows = $state<Record<string, RowState>>({});
-	let adding = $state(false);
-	let controller: AbortController | null = null;
+
+	let onlyRecognised = $state(false);
+	let chosenView = $state<'graph' | 'list' | null>(null);
+	let phone = $state(false);
+	/** The graph needs room: lists by default under 640px, unless the user chose. */
+	const view = $derived(chosenView ?? (phone ? 'list' : 'graph'));
+
+	let pollTimer: ReturnType<typeof setTimeout> | undefined;
+	let pollController: AbortController | null = null;
+	let alive = true;
 
 	onMount(() => {
+		const query = window.matchMedia(PHONE_QUERY);
+		phone = query.matches;
+		const onChange = () => (phone = query.matches);
+		query.addEventListener('change', onChange);
 		const controller = new AbortController();
 		localSubnets(controller.signal)
 			.then((list) => {
 				subnets = usableSubnets(list);
-				// Only an empty field is filled: never overwrite what was typed meanwhile.
 				const fill = defaultSubnet(cidr, subnets);
 				if (fill) {
 					cidr = fill;
 					prefilled = subnets[0] ?? null;
 				}
 			})
-			// Optional hint: a refusal or an old server just leaves the field empty.
 			.catch(() => {});
-		return () => controller.abort();
+		listRelays(controller.signal)
+			.then((list) => (relays = list.filter((r) => r.relay)))
+			.catch(() => {});
+		void refreshHistory(controller.signal, true);
+		return () => {
+			alive = false;
+			query.removeEventListener('change', onChange);
+			controller.abort();
+			stopPolling();
+		};
 	});
+
+	async function refreshHistory(signal?: AbortSignal, resume = false) {
+		try {
+			history = await listDiscoveryJobs(signal);
+			// Back on this screen (after adding a service, say): show the scan that
+			// still runs, else the latest one, so the results are not lost.
+			if (resume && !job) {
+				const latest = history.find((j) => j.status === 'running') ?? history[0];
+				if (latest) void follow(latest.id);
+			}
+		} catch (cause) {
+			if (cause instanceof DOMException && cause.name === 'AbortError') return;
+			if (cause instanceof ApiError && cause.missing) unavailable = true;
+		}
+	}
+
+	function stopPolling() {
+		clearTimeout(pollTimer);
+		pollController?.abort();
+		pollController = null;
+	}
+
+	/** Shows a job and, while it runs, refreshes it every 2 s. */
+	async function follow(id: string) {
+		stopPolling();
+		const controller = new AbortController();
+		pollController = controller;
+		pollError = null;
+		const tick = async () => {
+			try {
+				const next = await getDiscoveryJob(id, controller.signal);
+				if (controller.signal.aborted || !alive) return;
+				job = next;
+				if (next.status === 'running') {
+					pollTimer = setTimeout(tick, POLL_MS);
+				} else {
+					void refreshHistory();
+				}
+			} catch (cause) {
+				if (controller.signal.aborted || (cause instanceof DOMException && cause.name === 'AbortError')) return;
+				pollError = cause;
+				// A hiccup must not lose a running scan: retry unless the job is gone.
+				if (!(cause instanceof ApiError && cause.missing)) pollTimer = setTimeout(tick, POLL_MS * 2);
+			}
+		};
+		await tick();
+	}
+
+	const cidrValid = $derived(/^\s*[0-9a-f:.]+\/\d{1,3}\s*$/i.test(cidr));
+	const running = $derived(job?.status === 'running');
+
+	async function start(event?: SubmitEvent) {
+		event?.preventDefault();
+		if (!cidrValid || starting || running) return;
+		starting = true;
+		startError = null;
+		try {
+			const { id } = await startDiscoveryJob({
+				cidr: cidr.trim(),
+				agent_id: agentId ? Number(agentId) : null,
+				depth,
+				...(community.trim() ? { snmp_community: community.trim() } : {})
+			});
+			job = null;
+			await follow(id);
+			void refreshHistory();
+		} catch (cause) {
+			if (cause instanceof ApiError && cause.missing) unavailable = true;
+			else startError = cause;
+		} finally {
+			starting = false;
+		}
+	}
+
+	async function cancel() {
+		if (!job || cancelling) return;
+		cancelling = true;
+		try {
+			await cancelDiscoveryJob(job.id);
+			await follow(job.id);
+		} catch (cause) {
+			pollError = cause;
+		} finally {
+			cancelling = false;
+		}
+	}
 
 	const sourceLabel = (source: SubnetSource) =>
 		source === 'config'
@@ -63,220 +176,179 @@
 					? m.deviceform_discovery_range_prefilled_devices()
 					: m.deviceform_discovery_range_prefilled_server();
 		}
-		// Nothing suggested: say what to type rather than guess a network.
-		return subnets.length === 0 ? m.deviceform_discovery_range_hint() : m.deviceform_discovery_range_help();
+		return subnets.length === 0 ? m.deviceform_discovery_range_hint() : m.deviceform_scan_range_help();
 	});
 
-	const selectable = $derived(devices.filter((d) => !d.already_added && rows[d.address]?.status !== 'added'));
-	const selectedCount = $derived(selectable.filter((d) => selection.has(d.address)).length);
-	const addedCount = $derived(Object.values(rows).filter((r) => r.status === 'added').length);
-	const failedCount = $derived(Object.values(rows).filter((r) => r.status === 'failed').length);
-	const cidrValid = $derived(/^\s*[0-9a-f:.]+\/\d{1,3}\s*$/i.test(cidr));
+	const STATUS: Record<DiscoveryJobStatus, { tone: Tone; label: () => string }> = {
+		running: { tone: 'info', label: () => m.deviceform_scan_status_running() },
+		done: { tone: 'signal', label: () => m.deviceform_scan_status_done() },
+		failed: { tone: 'warning', label: () => m.deviceform_scan_status_failed() },
+		cancelled: { tone: 'ghost', label: () => m.deviceform_scan_status_cancelled() }
+	};
+	const phaseLabel = (phase: DiscoveryPhase) =>
+		phase === 'sweep'
+			? m.deviceform_scan_phase_sweep()
+			: phase === 'fingerprint'
+				? m.deviceform_scan_phase_fingerprint()
+				: m.deviceform_scan_phase_done();
 
-	async function scan(event?: SubmitEvent) {
-		event?.preventDefault();
-		if (!cidrValid || scanning) return;
-		controller?.abort();
-		controller = new AbortController();
-		scanning = true;
-		scanError = null;
-		unavailable = false;
-		rows = {};
-		try {
-			const result = await scanNetwork(cidr, community, controller.signal);
-			devices = result.devices;
-			scannedCount = result.scanned;
-			// Everything new is ticked: in a homelab you usually want all of it,
-			// and unticking is faster than ticking one by one.
-			selection = new Set(devices.filter((d) => !d.already_added).map((d) => d.address));
-			scanned = true;
-		} catch (cause) {
-			if (cause instanceof DOMException && cause.name === 'AbortError') return;
-			if (cause instanceof ApiError && cause.missing) unavailable = true;
-			else scanError = cause;
-		} finally {
-			scanning = false;
-		}
-	}
-
-	function toggle(address: string) {
-		const next = new Set(selection);
-		if (next.has(address)) next.delete(address);
-		else next.add(address);
-		selection = next;
-	}
-
-	function toggleAll() {
-		selection = selectedCount === selectable.length ? new Set() : new Set(selectable.map((d) => d.address));
-	}
-
-	async function addSelected() {
-		if (selectedCount === 0 || adding) return;
-		adding = true;
-		for (const device of selectable) {
-			if (!selection.has(device.address)) continue;
-			rows = { ...rows, [device.address]: { status: 'adding' } };
-			try {
-				await createTarget({
-					name: device.name ?? device.sysname ?? device.address,
-					address: device.address,
-					kind: device.kind ?? SNMP_KIND,
-					profile_id: device.profile_id ?? null,
-					parent_id: null,
-					interval_secs: DEFAULT_INTERVAL,
-					enabled: true,
-					tags: {},
-					credential: { type: 'snmp_community', community: community.trim() || 'public' }
-				});
-				rows = { ...rows, [device.address]: { status: 'added' } };
-			} catch (cause) {
-				const message = cause instanceof Error ? cause.message : m.deviceform_discovery_unknown_error();
-				rows = { ...rows, [device.address]: { status: 'failed', message } };
-			}
-		}
-		adding = false;
-	}
+	const shownHosts = $derived(job ? filterHosts(job.hosts, onlyRecognised) : []);
+	const totals = $derived(stats(job?.hosts ?? []));
+	const pct = $derived(job ? percent(job.progress.probed, job.progress.total) : 0);
 </script>
 
 <div class="grid gap-5">
-	<form onsubmit={scan} class="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,12rem)_auto] sm:items-end">
-		<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={helpText}>
-			<input
-				id="scan-cidr"
-				class="input font-mono text-[0.8125rem]"
-				type="text"
-				inputmode="decimal"
-				placeholder="192.168.1.0/24"
-				autocomplete="off"
-				bind:value={cidr}
-			/>
-		</Field>
-		<Field label={m.deviceform_discovery_community_label()} for="scan-community" help={m.deviceform_discovery_community_help()}>
-			<input id="scan-community" class="input" type="text" autocomplete="off" bind:value={community} placeholder="public" />
-		</Field>
-		<div class="sm:pb-[1.625rem]">
-			<Button type="submit" variant="secondary" loading={scanning} disabled={!cidrValid} class="w-full sm:w-auto">
+	<form onsubmit={start} class="grid gap-4">
+		<div class="grid gap-4 sm:grid-cols-2">
+			<Field label={m.deviceform_discovery_range_label()} for="scan-cidr" help={helpText}>
+				<input id="scan-cidr" class="input font-mono text-[0.8125rem]" type="text" inputmode="decimal" placeholder="192.168.1.0/24" autocomplete="off" bind:value={cidr} />
+			</Field>
+			<Field label={m.deviceform_scan_from_label()} for="scan-from" help={m.deviceform_scan_from_help()}>
+				<select id="scan-from" class="input" bind:value={agentId}>
+					<option value="">{m.deviceform_scan_from_server()}</option>
+					{#each relays as relay (relay.id)}
+						<option value={String(relay.id)}>{relay.site ? m.deviceform_form_relay_site({ name: relay.name, site: relay.site }) : relay.name}</option>
+					{/each}
+				</select>
+			</Field>
+		</div>
+
+		{#if subnets.length > 1}
+			<div class="flex flex-wrap items-center gap-2" role="group" aria-label={m.deviceform_discovery_suggestions_label()}>
+				<span class="text-[0.8125rem] text-ink-2">{m.deviceform_discovery_suggestions_label()}</span>
+				{#each subnets as subnet (subnet.cidr)}
+					<Button size="sm" variant={cidr.trim() === subnet.cidr ? 'secondary' : 'ghost'} onclick={() => (cidr = subnet.cidr)}>
+						<span class="font-mono">{subnet.cidr}</span>
+						<span class="text-ink-2">{sourceLabel(subnet.source)}</span>
+					</Button>
+				{/each}
+			</div>
+		{/if}
+
+		<div class="grid gap-4 sm:grid-cols-2 sm:items-start">
+			<Field label={m.deviceform_discovery_community_label()} for="scan-community" help={m.deviceform_scan_community_help()}>
+				<input id="scan-community" class="input" type="text" autocomplete="off" bind:value={community} placeholder="public" />
+			</Field>
+			<fieldset class="grid gap-1.5">
+				<legend class="mb-1.5 text-sm font-semibold text-ink">{m.deviceform_scan_depth_label()}</legend>
+				<div class="grid grid-cols-2 gap-2">
+					{#each [['standard', m.deviceform_scan_depth_standard()], ['extended', m.deviceform_scan_depth_extended()]] as const as [value, label] (value)}
+						<label class={`flex min-h-10 cursor-pointer items-center justify-center rounded-lg border px-3 text-sm font-semibold transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-signal ${depth === value ? 'border-signal/50 bg-signal-soft text-signal-ink' : 'border-line bg-surface text-ink-2 hover:text-ink'}`}>
+							<input type="radio" name="scan-depth" class="sr-only" {value} bind:group={depth} />
+							{label}
+						</label>
+					{/each}
+				</div>
+				<p class="text-[0.8125rem] text-ink-2 max-sm:hidden">{depth === 'standard' ? m.deviceform_scan_depth_help_standard() : m.deviceform_scan_depth_help_extended()}</p>
+			</fieldset>
+		</div>
+
+		<div class="flex flex-wrap items-center gap-2">
+			<Button type="submit" variant="primary" loading={starting} disabled={!cidrValid || running} class="max-sm:w-full">
 				<Radar class="size-4" aria-hidden="true" />
-				{scanning ? m.deviceform_discovery_scanning() : m.deviceform_discovery_scan()}
+				{m.deviceform_scan_start()}
 			</Button>
+			{#if running}
+				<Button variant="secondary" loading={cancelling} onclick={cancel} class="max-sm:w-full">
+					<Square class="size-4" aria-hidden="true" />
+					{m.deviceform_scan_cancel()}
+				</Button>
+			{/if}
 		</div>
 	</form>
 
-	{#if subnets.length > 1}
-		<div class="flex flex-wrap items-center gap-2" role="group" aria-label={m.deviceform_discovery_suggestions_label()}>
-			<span class="text-[0.8125rem] text-ink-2">{m.deviceform_discovery_suggestions_label()}</span>
-			{#each subnets as subnet (subnet.cidr)}
-				<Button size="sm" variant={cidr.trim() === subnet.cidr ? 'secondary' : 'ghost'} onclick={() => (cidr = subnet.cidr)}>
-					<span class="font-mono">{subnet.cidr}</span>
-					<span class="text-ink-2">{sourceLabel(subnet.source)}</span>
-				</Button>
-			{/each}
-		</div>
-	{/if}
-
 	<div aria-live="polite" class="grid gap-4">
-		{#if scanning}
-			<p class="text-sm text-ink-2">{m.deviceform_discovery_scanning_note({ cidr: cidr.trim() })}</p>
-			<div class="grid gap-2">
-				<Skeleton class="h-14 w-full" rows={3} />
-			</div>
-		{:else if unavailable}
-			<EmptyState
-				title={m.deviceform_discovery_unavailable_title()}
-				description={m.deviceform_discovery_unavailable_desc()}
-			/>
-		{:else if scanError}
-			<ErrorNotice error={scanError} title={m.deviceform_discovery_failed_title()} onretry={() => void scan()} />
-		{:else if scanned && devices.length === 0}
-			<EmptyState
-				title={m.deviceform_discovery_none_title({ cidr: cidr.trim() })}
-				description={m.deviceform_discovery_none_desc()}
-			/>
-		{:else if devices.length > 0}
-			<div class="flex flex-wrap items-center justify-between gap-2">
-				<p class="text-sm text-ink-2">
-					<span class="tnum">{m.deviceform_discovery_found({ count: devices.length })}</span>{#if scannedCount !== null}
-						<span class="tnum"> · {m.deviceform_discovery_probed({ count: scannedCount })}</span>{/if}
-				</p>
-				{#if selectable.length > 1}
-					<Button size="sm" variant="ghost" onclick={toggleAll} disabled={adding}>
-						{selectedCount === selectable.length ? m.deviceform_discovery_untick_all() : m.deviceform_discovery_tick_all()}
-					</Button>
-				{/if}
-			</div>
-
-			<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
-				{#each devices as device (device.address)}
-					{@const row = rows[device.address] ?? { status: 'idle' }}
-					{@const done = device.already_added || row.status === 'added'}
-					<li class={`flex items-center gap-3 px-4 py-3 ${done ? 'ghost-cell' : ''}`}>
-						<label class="-m-3 flex shrink-0 cursor-pointer items-center p-3">
-							<input
-								type="checkbox"
-								class="size-5 shrink-0 accent-[var(--c-signal)]"
-								checked={!done && selection.has(device.address)}
-								disabled={done || adding}
-								onchange={() => toggle(device.address)}
-								aria-label={m.deviceform_discovery_add_aria({ name: device.name ?? device.sysname ?? device.address })}
-							/>
-						</label>
-						<div class="min-w-0 flex-1">
-							<p class={`truncate text-sm font-semibold ${done ? 'text-ink-2' : 'text-ink'}`}>
-								{device.name ?? device.sysname ?? device.address}
-							</p>
-							<p class="truncate font-mono text-[0.75rem] text-ink-2">
-								<span class="tnum">{device.address}</span>{#if device.description}{' '}· {device.description}{/if}
-							</p>
-						</div>
-						<div class="flex shrink-0 items-center gap-2">
-							{#if device.profile_id}
-								<Plate tone="ghost" bare label={device.profile_id} class="hidden sm:inline-flex" />
-							{/if}
-							{#if device.already_added}
-								<Plate tone="ghost" label={m.deviceform_discovery_already()} />
-							{:else if row.status === 'adding'}
-								<Plate tone="info" label={m.deviceform_discovery_adding()} pulse />
-							{:else if row.status === 'added'}
-								<Plate tone="signal" label={m.deviceform_discovery_added()} />
-							{:else if row.status === 'failed'}
-								<Plate tone="warning" label={m.deviceform_discovery_failed()} title={row.message} />
-							{/if}
-						</div>
-					</li>
-					{#if row.status === 'failed'}
-						<li class="bg-warning-soft px-4 py-2 text-[0.8125rem] text-warning-ink">
-							<span class="font-mono">{device.address}</span> — {row.message}
-						</li>
-					{/if}
-				{/each}
-			</ul>
-
-			{#if addedCount > 0 && !adding}
-				<p class="text-sm text-ink" role="status">
-					{#if failedCount > 0}
-						{m.deviceform_discovery_added_failed_note({ count: addedCount, failed: failedCount })}
-					{:else}
-						{m.deviceform_discovery_added_note({ count: addedCount })}
-					{/if}
-				</p>
+		{#if unavailable}
+			<EmptyState title={m.deviceform_discovery_unavailable_title()} description={m.deviceform_discovery_unavailable_desc()} />
+		{:else}
+			{#if startError}
+				<ErrorNotice error={startError} title={m.deviceform_discovery_failed_title()} />
+			{/if}
+			{#if pollError}
+				<ErrorNotice error={pollError} title={m.deviceform_scan_poll_error()} />
 			{/if}
 
-			<div class="flex flex-wrap items-center gap-2">
-				{#if selectable.length > 0}
-					<ClickSpark>
-						<Button variant="primary" loading={adding} disabled={selectedCount === 0} onclick={addSelected}>
-							{m.deviceform_discovery_add_n({ count: selectedCount })}
-						</Button>
-					</ClickSpark>
+			{#if job}
+				{@const status = STATUS[job.status]}
+				<div class="grid gap-3 rounded-[var(--radius-card)] border border-line bg-surface px-4 py-3">
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<p class="min-w-0 truncate text-sm text-ink">
+							<span class="font-mono font-semibold">{job.cidr}</span>
+							<span class="text-ink-2"> · {job.agent_name ?? m.deviceform_scan_from_server()}</span>
+						</p>
+						<Plate tone={status.tone} label={status.label()} pulse={running} />
+					</div>
+					{#if running || job.progress.total > 0}
+						<div class="grid gap-1.5">
+							<div class="h-2 overflow-hidden rounded-full bg-ghost" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={pct} aria-label={phaseLabel(job.progress.phase)}>
+								<div class="h-full rounded-full bg-signal transition-[width] duration-500 ease-out" style={`width:${pct}%`}></div>
+							</div>
+							<p class="flex flex-wrap justify-between gap-x-3 text-[0.8125rem] text-ink-2">
+								<span>{phaseLabel(job.progress.phase)}</span>
+								<span class="tnum">{m.deviceform_scan_progress({ probed: job.progress.probed, total: job.progress.total })}</span>
+							</p>
+						</div>
+					{/if}
+					{#if job.error}
+						<p class="rounded-lg border border-warning/35 bg-warning-soft px-3 py-2 text-sm text-warning-ink" role="alert">{job.error}</p>
+					{/if}
+				</div>
+
+				{#if job.hosts.length > 0}
+					<div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+						<p class="tnum text-sm text-ink-2">
+							{m.deviceform_scan_stat_hosts({ count: totals.hosts })} · {m.deviceform_scan_stat_services({ count: totals.services })} · {m.deviceform_scan_stat_recognised({ count: totals.recognised })}
+						</p>
+						<div class="flex flex-wrap items-center gap-3">
+							<span class="flex min-h-10 items-center gap-2 text-sm text-ink">
+								<Toggle id="scan-only-recognised" label={m.deviceform_scan_only_recognised()} bind:checked={onlyRecognised} />
+								<label for="scan-only-recognised" class="cursor-pointer">{m.deviceform_scan_only_recognised()}</label>
+							</span>
+							<div class="flex gap-1" role="group" aria-label={m.deviceform_scan_view_label()}>
+								<Button size="sm" variant={view === 'graph' ? 'secondary' : 'ghost'} aria-pressed={view === 'graph'} onclick={() => (chosenView = 'graph')}>
+									<Network class="size-4" aria-hidden="true" />
+									{m.deviceform_scan_view_graph()}
+								</Button>
+								<Button size="sm" variant={view === 'list' ? 'secondary' : 'ghost'} aria-pressed={view === 'list'} onclick={() => (chosenView = 'list')}>
+									<LayoutList class="size-4" aria-hidden="true" />
+									{m.deviceform_scan_view_list()}
+								</Button>
+							</div>
+						</div>
+					</div>
+
+					{#if shownHosts.length === 0}
+						<EmptyState title={m.deviceform_scan_filtered_title()} description={m.deviceform_scan_filtered_desc()} />
+					{:else if view === 'graph'}
+						<DiscoveryGraph hosts={shownHosts} cidr={job.cidr} />
+					{:else}
+						<DiscoveryList hosts={shownHosts} />
+					{/if}
+				{:else if !running && job.status !== 'failed'}
+					<EmptyState title={m.deviceform_discovery_none_title({ cidr: job.cidr })} description={m.deviceform_scan_none_desc()} />
 				{/if}
-				{#if addedCount > 0}
-					<Button variant={selectable.length > 0 ? 'ghost' : 'secondary'} href="/targets">{m.deviceform_discovery_see_devices()}</Button>
-				{/if}
-			</div>
-		{:else}
-			<p class="text-sm leading-relaxed text-ink-2">
-				{m.deviceform_discovery_intro()}
-			</p>
+			{:else}
+				<p class="text-sm leading-relaxed text-ink-2">{m.deviceform_scan_intro()}</p>
+			{/if}
 		{/if}
 	</div>
+
+	{#if history.length > 0}
+		<section aria-labelledby="scan-history" class="grid gap-2">
+			<h3 id="scan-history" class="text-sm font-semibold text-ink">{m.deviceform_scan_history()}</h3>
+			<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line bg-surface">
+				{#each history as past (past.id)}
+					{@const status = STATUS[past.status]}
+					<li class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 max-sm:py-2.5">
+						<div class="min-w-0 flex-1">
+							<p class="truncate text-sm text-ink"><span class="font-mono font-semibold">{past.cidr}</span> <span class="text-ink-2">· {past.agent_name ?? m.deviceform_scan_from_server()}</span></p>
+							<p class="text-[0.75rem] text-ink-2"><span class="tnum">{m.deviceform_scan_stat_hosts({ count: past.hosts_found })}</span> · {formatRelative(past.started_at)}</p>
+						</div>
+						<Plate tone={status.tone} label={status.label()} />
+						<Button size="sm" variant="ghost" aria-current={job?.id === past.id} onclick={() => follow(past.id)}>{m.deviceform_scan_history_show()}</Button>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
 </div>
