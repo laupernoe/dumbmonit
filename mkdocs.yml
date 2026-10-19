@@ -17,7 +17,7 @@ validation:
     anchors: warn
     absolute_links: warn
     unrecognized_links: warn
-copyright: Apache 2.0 — DumbMonit
+copyright: MIT — DumbMonit
 
 theme:
   name: material
