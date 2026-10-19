@@ -65,5 +65,5 @@ to do so:
 - **Documentation:** maintainer of the Read the Docs project.
 - **Domain names:** access to the DNS of `dumbmonit.app`.
 
-The source code is Apache-2.0 licensed and can be forked by anyone if the
+The source code is MIT licensed and can be forked by anyone if the
 project stops.

@@ -244,7 +244,7 @@
 		aria-describedby="tour-body"
 		tabindex="-1"
 		{onkeydown}
-		class="tour-card fixed inset-x-0 bottom-0 z-[62] rounded-t-[var(--radius-card)] border border-line bg-surface p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] text-ink shadow-float outline-none sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[24rem] sm:rounded-[var(--radius-card)] sm:pb-5"
+		class="tour-card fixed inset-x-0 bottom-0 z-[62] rounded-t-[var(--radius-card)] border border-line bg-surface p-5 pb-[calc(1.25rem+var(--safe-bottom))] text-ink shadow-float outline-none sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[24rem] sm:rounded-[var(--radius-card)] sm:pb-5"
 	>
 		<div class="flex items-start justify-between gap-3">
 			<p class="tnum text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase">

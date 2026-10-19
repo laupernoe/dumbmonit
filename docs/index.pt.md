@@ -62,5 +62,7 @@ Não há contentor de base de dados. Pode usar-se um VictoriaMetrics externo
     antigas variáveis `EZYMONIT_*` e os tokens de agente `ezym_` continuam a ser
     aceites. Veja [Atualização](install/docker.md#upgrading).
 
-O DumbMonit é 100% código aberto sob a licença Apache 2.0, dependências
-incluídas: nenhuma funcionalidade é reservada a uma edição paga.
+O DumbMonit é 100% código aberto sob a licença MIT, dependências
+incluídas: nenhuma funcionalidade é reservada a uma edição paga. O DumbMonit é gratuito e continuará a ser.
+
+O DumbMonit é fornecido «tal como está», sem garantia de qualquer tipo. O autor e os contribuidores declinam qualquer responsabilidade por danos, falhas não detetadas ou alertas não enviados; validá-lo no seu ambiente cabe a si.

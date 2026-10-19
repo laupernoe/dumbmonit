@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit：从家庭实验室到小型企业，极简的监控</title>
-<meta name="description" content="单个容器中的自托管监控：65 种监控项类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。">
+<meta name="description" content="单个容器中的自托管监控：65 种监控项类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，MIT。">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -30,7 +30,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit：从家庭实验室到小型企业，极简的监控">
-<meta property="og:description" content="单个容器中的自托管监控：65 种监控项类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。">
+<meta property="og:description" content="单个容器中的自托管监控：65 种监控项类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，MIT。">
 <meta property="og:url" content="https://dumbmonit.app/zh-Hans/">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
@@ -39,10 +39,10 @@
 <meta property="og:image:alt" content="DumbMonit：一切正常吗？一秒钟就知道。一个容器里的自托管监控，旁边是吉祥物鸽子。">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DumbMonit：从家庭实验室到小型企业，极简的监控">
-<meta name="twitter:description" content="单个容器中的自托管监控：65 种监控项类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，Apache 2.0。">
+<meta name="twitter:description" content="单个容器中的自托管监控：65 种监控项类型（SNMP、Proxmox、Synology、TrueNAS、OPNsense、Active Directory 等）、代理、23 个通知渠道、公开状态页、MCP 服务器和安静的告警。开源，MIT。">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/zh-Hans/","inLanguage":"zh-Hans","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://opensource.org/license/mit","url":"https://dumbmonit.app/zh-Hans/","inLanguage":"zh-Hans","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
 </head>
 <body>
@@ -86,8 +86,8 @@
 		<div class="hero-grid">
 			<div>
 				<div class="status-row rise-in">
-					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>版本 0.10.0，1.0 之前</span>
-					<span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Apache 2.0，没有付费版</span>
+					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>版本 0.11.0，1.0 之前</span>
+					<span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>MIT，没有付费版</span>
 				</div>
 				<h1 class="rise-in">一切正常吗？一秒钟就知道。</h1>
 				<p class="lede rise-in">极简的自托管监控，从家庭实验室到小型企业。一个容器，输入一个 IP 地址，不到一分钟就能看到有用的图表和告警。</p>
@@ -154,7 +154,7 @@
 <div class="wrap">
 	<div class="notice" role="note">
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
-		<p><strong>DumbMonit 尚未到 1.0</strong>（当前发布版为 0.10.0）。它每天都在作者自己的网络中运行，但 HTTP API 和数据库结构在次版本之间仍可能变化；更新方法见更新日志。部分集成只在测试实例上验证过，没有经过多年的生产硬件考验，下文已作标注。欢迎试用，并<a href="https://github.com/laupernoe/dumbmonit/issues">告诉我们哪里出了问题</a>。</p>
+		<p><strong>DumbMonit 尚未到 1.0</strong>（当前发布版为 0.11.0）。它每天都在作者自己的网络中运行，但 HTTP API 和数据库结构在次版本之间仍可能变化；更新方法见更新日志。部分集成只在测试实例上验证过，没有经过多年的生产硬件考验，下文已作标注。欢迎试用，并<a href="https://github.com/laupernoe/dumbmonit/issues">告诉我们哪里出了问题</a>。</p>
 	</div>
 </div>
 
@@ -228,7 +228,7 @@
 
 <footer>
 	<div class="wrap">
-		<p>DumbMonit，Apache 2.0。吉祥物是一只鸽子。</p>
+		<p>DumbMonit，MIT。吉祥物是一只鸽子。</p>
 		<nav aria-label="页脚">
 			<a href="features/">功能</a>
 			<a href="devices/">监控项</a>

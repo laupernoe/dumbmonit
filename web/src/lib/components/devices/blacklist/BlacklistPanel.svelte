@@ -16,7 +16,7 @@
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatSpan, formatUnix } from '../pbs/format';
 	import { m } from '#lib/paraglide/messages.js';
-	import { authVerdict, checkTone, checkWord, linkLabel, overallVerdict, reverseVerdict, sourceLabel } from './format';
+	import { authVerdict, mxtoolboxUrl, checkTone, checkWord, linkLabel, overallVerdict, reverseVerdict, sourceLabel } from './format';
 
 	interface Props {
 		target: Target;
@@ -57,16 +57,37 @@
 	const hasResult = $derived(view !== null && view.addresses_checked !== null);
 	const overall = $derived(view ? overallVerdict(view) : null);
 	/** A range only stores listings and unanswered checks; a mail server stores them all. */
-	const details = $derived((view?.checks ?? []).filter((c: BlacklistCheck) => c.state !== 'not_applicable'));
+	/**
+	 * A list Spamhaus refused because of the resolver is told once, on its list
+	 * row, rather than on every address of a range.
+	 */
+	const details = $derived(
+		(view?.checks ?? []).filter((c: BlacklistCheck) => c.state !== 'not_applicable' && !c.public_resolver_refused)
+	);
+	const resolverRefused = $derived(
+		new Set((view?.checks ?? []).filter((c: BlacklistCheck) => c.public_resolver_refused).map((c: BlacklistCheck) => c.list))
+	);
 	const listTone = (list: BlacklistList): Tone =>
-		list.listed > 0 ? (list.major ? 'warning' : 'advisory') : list.unknown > 0 ? 'ghost' : 'signal';
+		list.listed > 0
+			? list.major
+				? 'warning'
+				: 'advisory'
+			: resolverRefused.has(list.id)
+				? 'advisory'
+				: list.unknown > 0
+					? 'ghost'
+					: 'signal';
 	const listWord = (list: BlacklistList): string =>
 		list.listed > 0
 			? m.devicesb_blacklist_state_listed()
-			: list.unknown > 0
-				? m.devicesb_blacklist_state_unknown()
-				: m.devicesb_blacklist_state_clean();
+			: resolverRefused.has(list.id)
+				? m.devicesb_blacklist_spamhaus_refused()
+				: list.unknown > 0
+					? m.devicesb_blacklist_state_unknown()
+					: m.devicesb_blacklist_state_clean();
 	const reverse = (address: BlacklistAddress) => reverseVerdict(address);
+	/** The monitored address or domain; none for a CIDR range (listed addresses carry their own link). */
+	const mxtoolbox = $derived(mxtoolboxUrl(target.address));
 </script>
 
 {#if error}
@@ -124,6 +145,13 @@
 					{/if}
 				</div>
 			{/if}
+			{#if mxtoolbox}
+				<p class="border-t border-line px-4 py-1 sm:px-5">
+					<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={mxtoolbox} target="_blank" rel="noopener noreferrer">
+						{m.devicesb_blacklist_mxtoolbox()}<ExternalLink class="size-3.5" aria-hidden="true" />
+					</a>
+				</p>
+			{/if}
 		</Panel>
 
 		{#if hasResult && view.lists.length > 0}
@@ -136,7 +164,13 @@
 								{#if list.major}
 									<span class="ml-1.5 text-[0.75rem] text-ink-3">{m.devicesb_blacklist_list_major()}</span>
 								{/if}
-								<span class="block truncate font-mono text-[0.75rem] text-ink-3" title={list.zone}>{list.zone}</span>
+								{#if list.custom}
+									<span class="ml-1.5 text-[0.75rem] text-ink-3">{m.devicesb_blacklist_list_custom()}</span>
+								{/if}
+								<span class="block truncate text-[0.75rem] text-ink-3">
+									<span class="font-mono" title={list.zone}>{list.zone}</span>
+									· {list.subject === 'ip' ? m.devicesb_blacklist_list_type_ip() : m.devicesb_blacklist_list_type_domain()}
+								</span>
 							</span>
 							<span class="tnum text-[0.8125rem] text-ink-2">
 								{m.devicesb_blacklist_list_counts({ listed: String(list.listed), checked: String(list.checked) })}
@@ -145,6 +179,12 @@
 						</li>
 					{/each}
 				</ul>
+				{#if resolverRefused.size > 0}
+					<p class="border-t border-line px-4 py-3 text-[0.8125rem] text-ink-2 sm:px-5" role="note">
+						<span class="font-semibold text-ink">{m.devicesb_blacklist_spamhaus_refused()}.</span>
+						{m.devicesb_blacklist_spamhaus_refused_hint()}
+					</p>
+				{/if}
 			</Panel>
 		{/if}
 
@@ -169,6 +209,11 @@
 								</div>
 								{#if check.reason}
 									<p class="text-[0.8125rem] break-words text-ink-2">{check.reason}</p>
+								{/if}
+								{#if check.state === 'listed' && !mxtoolbox && mxtoolboxUrl(check.subject)}
+									<a class="inline-flex min-h-10 items-center gap-1 text-sm text-info-ink underline-offset-2 hover:underline" href={mxtoolboxUrl(check.subject) ?? ''} target="_blank" rel="noopener noreferrer">
+										{m.devicesb_blacklist_mxtoolbox()}<ExternalLink class="size-3.5" aria-hidden="true" />
+									</a>
 								{/if}
 								{#if check.lookup_url || check.delist_url}
 									<div class="flex flex-wrap gap-x-4">

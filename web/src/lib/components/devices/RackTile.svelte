@@ -17,6 +17,8 @@
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { CornerDownRight } from 'lucide-svelte';
 	import SecurityBadge from './SecurityBadge.svelte';
+	import AlertBell from './AlertBell.svelte';
+	import type { TargetAlertCounts } from '#lib/alerts-attention.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
 
 	interface Props {
@@ -29,9 +31,11 @@
 		shadowed?: boolean;
 		/** Security grade, when the score is on and this kind is rated. */
 		security?: { grade: SecurityGrade | null; score: number | null } | null;
+		/** Active alerts of this monitor; the bell is absent without any. */
+		alerts?: TargetAlertCounts;
 	}
 
-	let { target, state, kindLabel, sparkline = null, parentName = null, shadowed = false, security = null }: Props = $props();
+	let { target, state, kindLabel, sparkline = null, parentName = null, shadowed = false, security = null, alerts }: Props = $props();
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
@@ -58,6 +62,7 @@
 				<span class="label-tape mt-0.5 block truncate !text-[0.625rem]">{kindLabel ?? target.kind}</span>
 			{/if}
 		</div>
+		<AlertBell targetId={target.id} counts={alerts} class="-my-1.5 max-sm:-mx-1" />
 		<Led {tone} {blink} size="sm" class="mt-1.5" />
 	</div>
 

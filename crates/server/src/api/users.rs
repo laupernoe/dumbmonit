@@ -13,7 +13,7 @@ use crate::api::auth::UserView;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::AdminUser;
 use crate::auth::users::{self, NewUser, Role, User};
-use crate::auth::{AuthError, AuthResult, audit, oidc, password};
+use crate::auth::{AuthError, AuthResult, audit, ldap, oidc, password};
 use crate::state::AppState;
 
 #[derive(Deserialize)]
@@ -82,10 +82,13 @@ pub async fn create(
             Some(password::hash(password).await?)
         }
         None => {
-            let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
-            if !resolved.config.enabled() {
+            // Sans mot de passe, le compte attend sa première connexion SSO ou
+            // LDAP : l'un des deux doit être actif.
+            let sso = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
+            let directory = ldap::resolve(&state.pool, &state.cipher, &state.config.ldap).await?;
+            if !sso.config.enabled() && !directory.config.enabled() {
                 return Err(AuthError::Invalid(
-                    "Set a password: single sign-on is not enabled, so this user could not sign in otherwise."
+                    "Set a password: neither single sign-on nor LDAP is enabled, so this user could not sign in otherwise."
                         .into(),
                 ));
             }

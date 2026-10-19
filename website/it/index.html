@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>DumbMonit: monitoraggio semplice, dall&#x27;homelab alla piccola impresa</title>
-<meta name="description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
+<meta name="description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, MIT.">
 <meta name="color-scheme" content="light dark">
 <meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
@@ -30,7 +30,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="DumbMonit">
 <meta property="og:title" content="DumbMonit: monitoraggio semplice, dall&#x27;homelab alla piccola impresa">
-<meta property="og:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
+<meta property="og:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, MIT.">
 <meta property="og:url" content="https://dumbmonit.app/it/">
 <meta property="og:locale" content="it_IT">
 <meta property="og:image" content="https://dumbmonit.app/assets/og.png">
@@ -39,10 +39,10 @@
 <meta property="og:image:alt" content="DumbMonit: va tutto bene? Lo sai in un secondo. Monitoraggio self-hosted in un container, con la mascotte piccione.">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DumbMonit: monitoraggio semplice, dall&#x27;homelab alla piccola impresa">
-<meta name="twitter:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, Apache 2.0.">
+<meta name="twitter:description" content="Monitoraggio self-hosted in un solo container: 65 tipi di monitor (SNMP, Proxmox, Synology, TrueNAS, OPNsense, Active Directory e altri), un agent, 23 canali di notifica, pagine di stato pubbliche, un server MCP e avvisi discreti. Open source, MIT.">
 <meta name="twitter:image" content="https://dumbmonit.app/assets/og.png">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://www.apache.org/licenses/LICENSE-2.0","url":"https://dumbmonit.app/it/","inLanguage":"it","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"DumbMonit","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (Docker), amd64","license":"https://opensource.org/license/mit","url":"https://dumbmonit.app/it/","inLanguage":"it","codeRepository":"https://github.com/laupernoe/dumbmonit","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"}}
 </script>
 </head>
 <body>
@@ -86,8 +86,8 @@
 		<div class="hero-grid">
 			<div>
 				<div class="status-row rise-in">
-					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>Versione 0.10.0, prima della 1.0</span>
-					<span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>Apache 2.0, nessuna edizione a pagamento</span>
+					<span class="plate plate-advisory"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16.5v.01"/></svg>Versione 0.11.0, prima della 1.0</span>
+					<span class="plate plate-signal"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>MIT, nessuna edizione a pagamento</span>
 				</div>
 				<h1 class="rise-in">Va tutto bene? Lo sai in un&nbsp;secondo.</h1>
 				<p class="lede rise-in">Monitoraggio self-hosted semplice, dall'homelab alla piccola impresa. Un container, un indirizzo IP da digitare, grafici e avvisi utili in meno di un minuto.</p>
@@ -154,7 +154,7 @@
 <div class="wrap">
 	<div class="notice" role="note">
 		<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 2.4 17.5A2 2 0 0 0 4.1 20.5h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 16.5v.01"/></svg>
-		<p><strong>DumbMonit non ha ancora raggiunto la 1.0</strong> (la versione attuale è la 0.10.0). Gira ogni giorno sulla rete del suo autore, ma l'API HTTP e lo schema del database possono ancora cambiare tra versioni minori; il registro delle modifiche spiega come aggiornare. Diverse integrazioni hanno incontrato solo istanze di test, non hardware di produzione vecchio di anni; sono indicate più sotto. Provalo e <a href="https://github.com/laupernoe/dumbmonit/issues">dicci cosa si rompe</a>.</p>
+		<p><strong>DumbMonit non ha ancora raggiunto la 1.0</strong> (la versione attuale è la 0.11.0). Gira ogni giorno sulla rete del suo autore, ma l'API HTTP e lo schema del database possono ancora cambiare tra versioni minori; il registro delle modifiche spiega come aggiornare. Diverse integrazioni hanno incontrato solo istanze di test, non hardware di produzione vecchio di anni; sono indicate più sotto. Provalo e <a href="https://github.com/laupernoe/dumbmonit/issues">dicci cosa si rompe</a>.</p>
 	</div>
 </div>
 
@@ -228,7 +228,7 @@
 
 <footer>
 	<div class="wrap">
-		<p>DumbMonit, Apache 2.0. La mascotte è un piccione.</p>
+		<p>DumbMonit, MIT. La mascotte è un piccione.</p>
 		<nav aria-label="Piè di pagina">
 			<a href="features/">Funzionalità</a>
 			<a href="devices/">Monitor</a>

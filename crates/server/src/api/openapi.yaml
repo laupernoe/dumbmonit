@@ -91,8 +91,8 @@ info:
 
     Full guide: <https://dumbmonit.readthedocs.io/en/latest/reference/api/>
   license:
-    name: Apache 2.0
-    identifier: Apache-2.0
+    name: MIT
+    identifier: MIT
   contact:
     name: DumbMonit
     url: https://github.com/laupernoe/dumbmonit
@@ -591,6 +591,89 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/OidcTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/ldap/config:
+    get:
+      operationId: getLdapConfig
+      tags: [Accounts]
+      summary: LDAP / Active Directory settings
+      description: Administrator session only. The service account password is never returned (`has_bind_password`).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The effective settings and where they come from.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LdapConfig" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putLdapConfig
+      tags: [Accounts]
+      summary: Store LDAP / Active Directory settings
+      description: >-
+        An absent or empty `bind_password` keeps the stored one, as long as the
+        server URL and bind DN are unchanged. An empty `bind_dn` (anonymous
+        search) clears it. A plain `ldap://` URL without StartTLS is refused
+        unless `DUMBMONIT_LDAP_ALLOW_PLAIN` is set.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LdapConfigUpdate" }
+      responses:
+        "200":
+          description: The new effective settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LdapConfig" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: deleteLdapConfig
+      tags: [Accounts]
+      summary: Forget the stored LDAP settings
+      description: Environment variables (`DUMBMONIT_LDAP_*`), if any, apply again.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The effective settings once the stored ones are gone.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LdapConfig" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/ldap/test:
+    post:
+      operationId: testLdap
+      tags: [Accounts]
+      summary: Test the directory connection
+      description: >-
+        Connects, binds the service account and, when `username` is given,
+        searches that user and its groups. No user password is asked or tried.
+        The stored service password is only used for the server URL and bind
+        DN it was saved for.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LdapTestRequest" }
+      responses:
+        "200":
+          description: A step-by-step diagnostic.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LdapTestReport" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -5173,7 +5256,7 @@ components:
         username: { type: string }
         display_name: { type: string }
         role: { $ref: "#/components/schemas/Role" }
-        auth: { type: string, enum: [password, oidc] }
+        auth: { type: string, enum: [password, ldap, oidc] }
         disabled: { type: boolean }
         totp_enabled: { type: boolean }
         created_at: { type: string }
@@ -5192,6 +5275,11 @@ components:
             enabled: { type: boolean }
             provider_name: { type: string }
             login_url: { type: string }
+        ldap:
+          type: object
+          required: [enabled]
+          properties:
+            enabled: { type: boolean, description: Usernames without a local password are checked against the directory. }
         demo: { type: boolean }
     SetupRequest:
       type: object
@@ -5321,6 +5409,101 @@ components:
         ok: { type: boolean }
         error: { type: string }
         discovery: { type: object, additionalProperties: true }
+    LdapGroupMode:
+      type: string
+      enum: [memberof, search]
+      description: "`memberof`: the user's `memberOf` attribute. `search`: a group search with `group_filter`."
+    LdapConfig:
+      type: object
+      properties:
+        source: { type: string, enum: [settings, env, none] }
+        enabled: { type: boolean }
+        env_available: { type: boolean }
+        allow_plain: { type: boolean, description: "`DUMBMONIT_LDAP_ALLOW_PLAIN` is set: `ldap://` without StartTLS is accepted." }
+        url: { type: string, description: "`ldaps://host:636` or `ldap://host:389`." }
+        starttls: { type: boolean }
+        tls_verify: { type: boolean }
+        ca_cert: { type: string, description: PEM of the authority that issued the server certificate. }
+        bind_dn: { type: string }
+        has_bind_password: { type: boolean }
+        base_dn: { type: string }
+        user_filter: { type: string, description: "Contains `{username}`, escaped per RFC 4515." }
+        username_attribute: { type: string }
+        display_name_attribute: { type: string }
+        email_attribute: { type: string }
+        group_mode: { $ref: "#/components/schemas/LdapGroupMode" }
+        group_base_dn: { type: string }
+        group_filter: { type: string, description: "Contains `{dn}` and/or `{username}`." }
+        admin_groups:
+          type: array
+          items: { type: string }
+        operator_groups:
+          type: array
+          items: { type: string }
+        viewer_groups:
+          type: array
+          items: { type: string }
+          description: Once any group list is filled, only members of a listed group can sign in.
+        timeout_seconds: { type: integer }
+    LdapConfigUpdate:
+      type: object
+      properties:
+        url: { type: string }
+        starttls: { type: boolean }
+        tls_verify: { type: boolean, default: true }
+        ca_cert: { type: string }
+        bind_dn: { type: string }
+        bind_password: { type: [string, "null"], writeOnly: true, description: Absent or empty keeps the stored one. }
+        base_dn: { type: string }
+        user_filter: { type: string }
+        username_attribute: { type: string }
+        display_name_attribute: { type: string }
+        email_attribute: { type: string }
+        group_mode: { $ref: "#/components/schemas/LdapGroupMode" }
+        group_base_dn: { type: string }
+        group_filter: { type: string }
+        admin_groups:
+          type: array
+          items: { type: string }
+        operator_groups:
+          type: array
+          items: { type: string }
+        viewer_groups:
+          type: array
+          items: { type: string }
+        timeout_seconds: { type: integer, minimum: 1, maximum: 30, default: 5 }
+    LdapTestRequest:
+      type: object
+      properties:
+        config: { $ref: "#/components/schemas/LdapConfigUpdate" }
+        username: { type: string, description: User to search; its password is never asked. }
+    LdapTestReport:
+      type: object
+      required: [ok, steps]
+      properties:
+        ok: { type: boolean }
+        steps:
+          type: array
+          items:
+            type: object
+            required: [step, ok, detail, elapsed_ms]
+            properties:
+              step: { type: string, enum: [connect, service_bind, user_search, groups] }
+              ok: { type: boolean }
+              detail: { type: string }
+              elapsed_ms: { type: integer }
+        user:
+          type: object
+          properties:
+            dn: { type: string }
+            username: { type: string }
+            display_name: { type: string }
+            email: { type: [string, "null"] }
+            groups:
+              type: array
+              items: { type: string }
+            role: { oneOf: [{ $ref: "#/components/schemas/Role" }, { type: "null" }] }
+            allowed: { type: boolean }
     UserCreate:
       type: object
       required: [username, role]
@@ -5481,6 +5664,30 @@ components:
           type: array
           items: { type: string }
         group: { type: string, description: "Sub-heading under \"More options\"; empty: the UI falls back to a generic key-prefix heuristic." }
+        items:
+          type: array
+          description: "Tick boxes of an `input: checklist` option. The tag holds the ticked `value`s separated by commas, `-` when none is ticked; absent means all are ticked. `default` is what a new monitor ticks."
+          items:
+            type: object
+            properties:
+              value: { type: string }
+              label: { type: string }
+              help: { type: string }
+              badges: { type: array, items: { type: string } }
+        columns:
+          type: array
+          description: "Columns of an `input: rows` option. The tag holds a JSON array of objects keyed by column `key`."
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              placeholder: { type: string }
+              input: { type: string, enum: [text, select, boolean] }
+              choices: { type: array, items: { type: string } }
+              pattern: { type: string, description: "JavaScript regular expression the text must match; empty: none." }
+              invalid: { type: string, description: Message shown when `pattern` does not match. }
+              unique: { type: boolean }
     CredentialDescription:
       type: object
       properties:

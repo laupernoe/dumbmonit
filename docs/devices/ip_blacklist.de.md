@@ -31,10 +31,17 @@ Empfänger auf den ganzen Bereich ausdehnen kann.
 ## Resolver und Tempo {#resolvers-and-pace}
 
 Es gelten dieselben Regeln wie bei [Reputation des Mailservers](mail_blacklist.md#resolvers-refusals-and-timeouts).
-Spamhaus lehnt öffentliche Resolver ab: Seine Ablehnung (`127.255.255.254`) erscheint
-als Konfigurationsfehler, nie als Eintrag. Eine Liste, die nicht antwortet, ist
-unbekannt, nie sauber. Nutzen Sie einen eigenen rekursiven Resolver oder einen
-kostenlosen Spamhaus-DQS-Schlüssel als Zugangsdaten.
+**Kein API-Schlüssel nötig.** Nur Spamhaus lehnt öffentliche Resolver ab: Seine
+Ablehnung (`127.255.255.254`) erscheint nie als Eintrag, die Monitorseite sagt
+„Spamhaus refuses this resolver“, und die anderen Listen behalten ihre Ergebnisse.
+Eine Liste, die nicht antwortet, ist unbekannt, nie sauber. Auch für Spamhaus
+nutzen Sie einen eigenen rekursiven Resolver oder den optionalen kostenlosen
+Spamhaus-DQS-Schlüssel als Zugangsdaten.
+
+Die Listen sind die unter **Blocklists** angekreuzten (standardmäßig die großen
+Adresslisten) plus Ihre eigenen Zonen unter **Custom lists**; siehe
+[Eigene Listen](mail_blacklist.md#your-own-lists). Domain-Listen gelten nicht für
+einen Bereich.
 
 Ein /24 braucht fast zweitausend Anfragen. Sie werden mit **Queries per second**
 (standardmäßig 10) gesendet, höchstens acht gleichzeitig, und der ganze Bereich wird
@@ -46,9 +53,11 @@ Bereichs dauert einige Minuten und läuft im Hintergrund.
 
 1. Geben Sie eine IPv4-Adresse oder einen CIDR-Bereich bis /24 ein, zum Beispiel „198.51.100.0/24“ (256 Adressen). Ein größerer Bereich wird abgelehnt: Teilen Sie ihn in mehrere /24-Monitore. IPv6-Bereiche werden abgelehnt, da nur Spamhaus für IPv6 antwortet: Prüfen Sie eine einzelne IPv6-Adresse mit Reputation des Mailservers.
 
-2. Nutzen Sie einen eigenen rekursiven Resolver, wie bei Reputation des Mailservers: Spamhaus lehnt öffentliche Resolver ab, oder fügen Sie einen kostenlosen Spamhaus-DQS-Schlüssel als Zugangsdaten ein. Ein /24 braucht fast zweitausend Anfragen, gesendet mit 10 pro Sekunde und standardmäßig alle 6 Stunden wiederholt: Halten Sie dieses Tempo, Blocklisten sperren Resolver, die sie durchkämmen.
+2. Kein API-Schlüssel nötig: Lassen Sie die Zugangsdaten auf „No key“. Die Blocklisten werden über den DNS-Resolver dieses Servers abgefragt oder über den, den Sie unter Resolver eintragen. Nur Spamhaus kann ablehnen, und nur, wenn dieser Resolver ein öffentlicher ist (Google, Cloudflare, Quad9): Der Monitor zeigt dann „Spamhaus refuses this resolver“, und die anderen Listen arbeiten weiter. Auch für Spamhaus nutzen Sie einen eigenen rekursiven Resolver oder den optionalen kostenlosen Spamhaus-DQS-Schlüssel.
 
-3. Die erste Prüfung eines Bereichs dauert einige Minuten: Die Monitorseite sagt, dass sie läuft, und zeigt dann, wie viele Adressen gelistet sind, auf welchen Listen, und für jede einen Link zur Entfernung.
+3. Kreuzen Sie unter Blocklists die abzufragenden Adress-Blocklisten an (die großen sind standardmäßig angekreuzt) und ergänzen Sie unter Custom lists die DNSBL-Zonen jeder anderen Liste. Ein /24 braucht mit allen angekreuzten Adresslisten fast zweitausend Anfragen, gesendet mit 10 pro Sekunde und standardmäßig alle 6 Stunden wiederholt: Halten Sie dieses Tempo, Blocklisten sperren Resolver, die sie durchkämmen.
+
+4. Die erste Prüfung eines Bereichs dauert einige Minuten: Die Monitorseite sagt, dass sie läuft, und zeigt dann, wie viele Adressen gelistet sind, auf welchen Listen, und für jede einen Link zur Entfernung.
 
 !!! warning
     Die Spamhaus PBL führt Endnutzer-Bereiche, die nicht direkt Mail senden sollten (Heimanschlüsse, dynamische Pools): Ein Eintrag dort ist eine Richtlinie, keine Missbrauchsmeldung, und zählt nur für eine Adresse, die einen Mailserver betreibt.
@@ -64,10 +73,14 @@ gelistet ist oder auf die eine Liste nicht geantwortet hat; `list_checked`,
 Die [integrierten Regeln](../alerting/rules.md#dns-blocklists), die greifen: Auf
 einer großen Blockliste geführt und Auf einer Blockliste geführt.
 
+Die Monitorseite hat einen Link **Also check on MXToolbox**: Bei einem Bereich öffnet
+er neben jeder gelisteten Adresse in einem neuen Tab die öffentliche
+Blocklist-Abfrage von mxtoolbox.com. DumbMonit ruft deren API nicht auf.
+
 ## Zugangsdaten {#credentials}
 
-Keine, oder ein Spamhaus-DQS-Schlüssel.
+Keine nötig (die Vorgabe), oder optional ein Spamhaus-DQS-Schlüssel.
 
-Adresse: eine IPv4-Adresse oder ein CIDR-Bereich bis /24. Optionen: Resolver, Lists
-(standardmäßig alle Adresslisten), Refresh interval (6 Stunden), Queries per second
-(10) und Timeout per query (5 s).
+Adresse: eine IPv4-Adresse oder ein CIDR-Bereich bis /24. Optionen: Resolver,
+Blocklists (die großen sind bei einem neuen Monitor angekreuzt), Custom lists,
+Refresh interval (6 Stunden), Queries per second (10) und Timeout per query (5 s).

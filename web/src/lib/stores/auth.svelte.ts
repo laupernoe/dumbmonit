@@ -17,6 +17,7 @@ import {
 	logout as apiLogout,
 	setUnauthorizedHandler,
 	setupAccount as apiSetupAccount,
+	type LdapStatus,
 	type OidcStatus,
 	type User
 } from '#lib/api/index.js';
@@ -92,6 +93,8 @@ class AuthStore {
 	user = $state<User | null>(null);
 	/** Single sign-on availability, read without a session for the sign-in screen. */
 	oidc = $state<OidcStatus>({ enabled: false, provider_name: 'SSO', login_url: '/api/auth/oidc/start' });
+	/** LDAP / Active Directory sign-in through the same form. */
+	ldap = $state<LdapStatus>({ enabled: false });
 	/** Public demo mode: read-only instance, sign in with demo / demo. */
 	demo = $state(false);
 	/** Error preventing us from knowing the session state (server unreachable). */
@@ -160,6 +163,7 @@ class AuthStore {
 			this.authenticated = state.authenticated;
 			this.user = state.user;
 			this.oidc = state.oidc;
+			this.ldap = state.ldap;
 			this.demo = state.demo;
 			this.error = null;
 		} catch (cause) {

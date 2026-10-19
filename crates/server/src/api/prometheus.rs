@@ -339,7 +339,7 @@ fn render(snapshot: &Snapshot, alerts: &AlertCounts, agents: (u64, u64), health:
     out.metric(
         "dumbmonit_alerts_suppressed",
         "gauge",
-        "Alerts hidden because the device sits behind an unreachable parent.",
+        "Alerts hidden because the device sits behind a parent that is down.",
     );
     out.value(alerts.suppressed as f64);
 
