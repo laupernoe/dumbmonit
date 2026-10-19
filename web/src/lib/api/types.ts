@@ -544,7 +544,34 @@ export interface CollectorRequirement {
 }
 
 /** Input shapes a collector option can ask for. */
-export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select';
+export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select' | 'checklist' | 'rows';
+
+/** One tick box of a `checklist` option. */
+export interface CollectorOptionItem {
+	/** What the tag stores. */
+	value: string;
+	label: string;
+	/** One sentence saying what the entry is for. */
+	help: string;
+	/** Short mentions shown beside the name (type, importance…). */
+	badges: string[];
+}
+
+/** One column of a `rows` option. */
+export interface CollectorOptionColumn {
+	key: string;
+	label: string;
+	placeholder: string;
+	input: 'text' | 'select' | 'boolean';
+	/** Values offered when `input === 'select'`; the first is the default. */
+	choices: string[];
+	/** JavaScript regular expression the text must match; empty: none. */
+	pattern: string;
+	/** Shown when `pattern` does not match. */
+	invalid: string;
+	/** Two rows cannot hold the same value here. */
+	unique: boolean;
+}
 
 /**
  * Setting specific to a device type, described by the server.
@@ -568,6 +595,14 @@ export interface CollectorOption {
 	choices: string[];
 	/** Sub-heading grouping this setting under "More options". Empty: the UI falls back to a generic key-prefix heuristic. */
 	group: string;
+	/**
+	 * Tick boxes when `input === 'checklist'`. The tag holds the ticked values
+	 * separated by commas, `-` when none is ticked; absent means all of them.
+	 * `default` is what a new device ticks.
+	 */
+	items: CollectorOptionItem[];
+	/** Columns when `input === 'rows'`. The tag holds a JSON array of `{column key: value}`. */
+	columns: CollectorOptionColumn[];
 }
 
 /**
@@ -647,7 +682,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 	};
 }
 
-const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select'];
+const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select', 'checklist', 'rows'];
 
 /**
  * Fills in an option so that it is always displayable.
@@ -657,9 +692,33 @@ const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boole
  * server will be able to read.
  */
 function normalizeOption(raw: Partial<CollectorOption> & { key: string }): CollectorOption {
-	const input = OPTION_INPUTS.includes(raw.input as CollectorOptionInput)
-		? (raw.input as CollectorOptionInput)
-		: 'text';
+	const items: CollectorOptionItem[] = Array.isArray(raw.items)
+		? raw.items
+				.filter((item) => item && typeof item.value === 'string' && item.value.trim())
+				.map((item) => ({
+					value: item.value.trim(),
+					label: item.label?.trim() || item.value.trim(),
+					help: item.help?.trim() ?? '',
+					badges: Array.isArray(item.badges) ? item.badges.filter((b) => typeof b === 'string' && b.trim()) : []
+				}))
+		: [];
+	const columns: CollectorOptionColumn[] = Array.isArray(raw.columns)
+		? raw.columns
+				.filter((column) => column && typeof column.key === 'string' && column.key.trim())
+				.map((column) => ({
+					key: column.key.trim(),
+					label: column.label?.trim() || column.key.trim(),
+					placeholder: column.placeholder?.trim() ?? '',
+					input: column.input === 'select' || column.input === 'boolean' ? column.input : 'text',
+					choices: Array.isArray(column.choices) ? column.choices.filter((c) => typeof c === 'string') : [],
+					pattern: column.pattern?.trim() ?? '',
+					invalid: column.invalid?.trim() ?? '',
+					unique: Boolean(column.unique)
+				}))
+		: [];
+	let input = OPTION_INPUTS.includes(raw.input as CollectorOptionInput) ? (raw.input as CollectorOptionInput) : 'text';
+	// A checklist with nothing to tick, or rows without columns, cannot be shown: plain text instead.
+	if ((input === 'checklist' && items.length === 0) || (input === 'rows' && columns.length === 0)) input = 'text';
 	return {
 		key: raw.key.trim(),
 		label: raw.label?.trim() || raw.key.trim(),
@@ -669,7 +728,9 @@ function normalizeOption(raw: Partial<CollectorOption> & { key: string }): Colle
 		required: Boolean(raw.required),
 		input,
 		choices: Array.isArray(raw.choices) ? raw.choices.filter((c) => typeof c === 'string') : [],
-		group: raw.group?.trim() ?? ''
+		group: raw.group?.trim() ?? '',
+		items,
+		columns
 	};
 }
 
@@ -3970,6 +4031,8 @@ export interface BlacklistList {
 	subject: 'ip' | 'domain';
 	/** A listing there blocks a large share of mail (Spamhaus, Barracuda, SpamCop). */
 	major: boolean;
+	/** Added by the user: absent from the built-in catalogue. */
+	custom: boolean;
 	checked: number;
 	listed: number;
 	unknown: number;
@@ -3986,6 +4049,8 @@ export interface BlacklistCheck {
 	meaning: string | null;
 	/** TXT reason of a listing, or why a list gave no answer. */
 	reason: string | null;
+	/** Spamhaus refused the question because the resolver is a public one (or forwards to one). */
+	public_resolver_refused: boolean;
 	/** Only for a listing. */
 	lookup_url: string | null;
 	delist_url: string | null;
