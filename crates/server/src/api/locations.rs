@@ -202,6 +202,20 @@ pub fn resolve(
     (members, unplaced)
 }
 
+/// L'emplacement où se trouve une cible (affectation, site ou site
+/// principal), s'il y en a un : la carte en direct d'un pare-feu y ancre ses arcs.
+pub async fn location_for(state: &AppState, id: TargetId) -> ApiResult<Option<LocationRow>> {
+    let locations = load(&state.pool).await?;
+    if locations.is_empty() {
+        return Ok(None);
+    }
+    let site = super::topology::target_sites(state).await?.remove(&id).flatten();
+    let placement =
+        Placement { target_id: id, assigned: location_of(&state.pool, id).await?, site };
+    let (members, _) = resolve(&locations, &[placement]);
+    Ok(members.keys().next().and_then(|found| locations.into_iter().find(|l| l.id == *found)))
+}
+
 /// `GET /api/locations` — lecture, ouverte à tous les rôles comme la carte.
 async fn list(State(state): State<AppState>) -> ApiResult<Json<LocationsView>> {
     let locations = load(&state.pool).await?;

@@ -283,7 +283,7 @@
 
 				{#if system.disks.length > 0}
 					<ul class="flex flex-col gap-2">
-						{#each system.disks as disk (disk.device)}
+						{#each system.disks as disk (`${disk.device}|${disk.mountpoint}`)}
 							{@const used =
 								reading(disk.used_percent) ??
 								percentOf(reading(disk.used_bytes), reading(disk.total_bytes))}

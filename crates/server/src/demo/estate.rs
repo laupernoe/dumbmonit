@@ -110,7 +110,7 @@ pub async fn start() -> anyhow::Result<Estate> {
                 name: "fw.home.arpa",
                 kind: "opnsense",
                 address: "http://fw.home.arpa".into(),
-                tags: vec![("scheme", "http".into())],
+                tags: vec![("scheme", "http".into()), ("live_map", "true".into())],
                 credential: Credential::UsernamePassword {
                     username: "demonstration-key".into(),
                     password: "demonstration-secret".into(),

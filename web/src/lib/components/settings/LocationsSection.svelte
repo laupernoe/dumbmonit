@@ -26,6 +26,46 @@
 	import { Button, Confirm, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
 	import WorldMap, { type WorldPin } from '#lib/components/worldmap/WorldMap.svelte';
 	import { MapPin, Pencil, Plus, Search } from 'lucide-svelte';
+	import { getGeoip, setGeoip } from '#lib/api/opnsense.js';
+	import type { GeoipStatus } from '#lib/api/types.js';
+
+	// --- IP geolocation (firewall live map) -----------------------------------
+	let geoip = $state<GeoipStatus | null>(null);
+	let geoipError = $state<unknown>(null);
+	let geoipBusy = $state(false);
+	$effect(() => {
+		const controller = new AbortController();
+		getGeoip(controller.signal)
+			.then((status) => (geoip = status))
+			.catch(() => {});
+		return () => controller.abort();
+	});
+	async function toggleGeoip(on: boolean) {
+		geoipBusy = true;
+		geoipError = null;
+		try {
+			geoip = await setGeoip(on);
+		} catch (error) {
+			geoipError = error;
+		} finally {
+			geoipBusy = false;
+		}
+	}
+	const geoipState = $derived.by(() => {
+		if (!geoip) return '';
+		switch (geoip.state) {
+			case 'ready':
+				return m.locations_geoip_ready({ month: geoip.month ?? '' });
+			case 'loading':
+				return m.locations_geoip_loading();
+			case 'failed':
+				return m.locations_geoip_failed({ error: geoip.error ?? '' });
+			case 'missing':
+				return m.locations_geoip_missing();
+			default:
+				return m.locations_geoip_off();
+		}
+	});
 
 	let data = $state<Locations | null>(null);
 	let loadError = $state<unknown>(null);
@@ -400,6 +440,19 @@
 					{#if basemapSaved && !basemapDirty}<span class="text-sm text-signal-ink" role="status">{m.locations_basemap_saved()}</span>{/if}
 				</div>
 			</div>
+
+			{#if geoip}
+				<div class="space-y-2 border-t border-line pt-5">
+					<Field label={m.locations_geoip_title()} for="geoip-enabled" inline help={m.locations_geoip_help()}>
+						<Toggle id="geoip-enabled" checked={geoip.enabled} disabled={geoipBusy} onchange={(on) => void toggleGeoip(on)} label={m.locations_geoip_title()} />
+					</Field>
+					<p class="text-[0.8125rem] text-ink-2" role="status">
+						{geoipState}
+						{#if geoip.enabled}· <a href={geoip.source_url} rel="noopener noreferrer" target="_blank" class="underline decoration-dotted underline-offset-2 hover:text-ink">IP Geolocation by DB-IP</a>{/if}
+					</p>
+					{#if geoipError}<ErrorNotice error={geoipError} title={m.locations_geoip_err()} />{/if}
+				</div>
+			{/if}
 		</div>
 	{/if}
 </Panel>
