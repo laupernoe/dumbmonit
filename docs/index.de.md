@@ -1,6 +1,6 @@
 # DumbMonit {#dumbmonit}
 
-Einfaches Monitoring vom Homelab bis zum kleinen Unternehmen. Ein Container, eine IP-Adresse
+Einfaches Monitoring vom Homelab bis zum mittelständischen Unternehmen. Ein Container, eine IP-Adresse
 zum Eintippen, nützliche Diagramme und Alarme in weniger als einer Minute.
 
 !!! warning "In Entwicklung"
