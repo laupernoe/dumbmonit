@@ -14,6 +14,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import SecurityBadge from './SecurityBadge.svelte';
+	import SiteBadge from './SiteBadge.svelte';
 	import AlertBell from './AlertBell.svelte';
 	import type { TargetAlertCounts } from '#lib/alerts-attention.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
@@ -22,6 +23,8 @@
 		target: Target;
 		state: TargetState;
 		kindLabel?: string;
+		/** Name of the location this monitor sits at; no badge without one. */
+		site?: string | null;
 		depth?: number;
 		shadowed?: boolean;
 		/** Security grade, when the score is on and this kind is rated. */
@@ -30,7 +33,7 @@
 		alerts?: TargetAlertCounts;
 	}
 
-	let { target, state, kindLabel, depth = 0, shadowed = false, security = null, alerts }: Props = $props();
+	let { target, state, kindLabel, site = null, depth = 0, shadowed = false, security = null, alerts }: Props = $props();
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
@@ -52,6 +55,9 @@
 				aria-label={`${target.name}, ${STATE_LABEL[state]}`}
 			>{target.name}</a>
 			<span class="label-tape hidden shrink-0 !text-[0.625rem] text-ink-3 @md:inline">{kindLabel ?? target.kind}</span>
+			{#if site}
+				<SiteBadge name={site} class="max-w-[7rem] shrink @md:max-w-[10rem]" />
+			{/if}
 		</span>
 		<span class="hidden min-w-0 truncate text-[0.8125rem] text-ink-2 @lg:block" title={target.address}>{target.address}</span>
 		<span class="tnum hidden min-w-0 truncate text-[0.8125rem] text-ink-2 @lg:block" title={target.last_error ?? undefined}>

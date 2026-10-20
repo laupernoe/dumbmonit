@@ -38,23 +38,29 @@ export interface Health {
 export type SnmpV3AuthProtocol = 'md5' | 'sha1' | 'sha224' | 'sha256' | 'sha384' | 'sha512';
 export type SnmpV3PrivacyProtocol = 'des' | 'aes128' | 'aes192' | 'aes256';
 
+/**
+ * A credential as sent on create or edit. Mirrors `CredentialInput` in
+ * `crates/proto/src/credential.rs`: on `PUT`, a secret left out (community,
+ * passphrase, token `secret`, `password`) keeps the saved one as long as the
+ * user name or token ID it belongs to is unchanged.
+ */
 export type Credential =
 	| { type: 'none' }
-	| { type: 'snmp_community'; community: string }
+	| { type: 'snmp_community'; community?: string }
 	| {
 			type: 'snmp_v3';
 			username: string;
-			auth?: { protocol: SnmpV3AuthProtocol; passphrase: string } | null;
-			privacy?: { protocol: SnmpV3PrivacyProtocol; passphrase: string } | null;
+			auth?: { protocol: SnmpV3AuthProtocol; passphrase?: string } | null;
+			privacy?: { protocol: SnmpV3PrivacyProtocol; passphrase?: string } | null;
 			context?: string | null;
 	  }
-	| { type: 'api_token'; token: string }
+	| { type: 'api_token'; token?: string }
 	/**
 	 * A Proxmox VE / PBS token in the two pieces the product shows: the server
 	 * assembles `token_id=secret` and stores the combined form.
 	 */
-	| { type: 'api_token'; token_id: string; secret: string }
-	| { type: 'username_password'; username: string; password: string }
+	| { type: 'api_token'; token_id: string; secret?: string }
+	| { type: 'username_password'; username: string; password?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -105,7 +111,8 @@ export interface CredentialView {
  * A target as returned on read.
  *
  * `credential_kind` is a human label ("SNMP community"). The secret itself is
- * never exposed by the API, by design.
+ * never exposed by the API, by design: only whether one is saved
+ * (`has_secret`) and the non-secret parts (`credential_public`).
  */
 export interface Target {
 	id: TargetId;
@@ -120,6 +127,14 @@ export interface Target {
 	enabled: boolean;
 	tags: Record<string, string>;
 	credential_kind: string;
+	/** A secret is saved: leaving its field blank on edit keeps it. */
+	has_secret: boolean;
+	/**
+	 * Non-secret parts of the credential under the form's field keys
+	 * (`username`, `token_id`, `auth_protocol`, `privacy_protocol`, `context`).
+	 * Never a secret; empty for a reader.
+	 */
+	credential_public: Record<string, string>;
 	/** Flat folder shown on `/targets`. Empty: no folder. */
 	group_name: string;
 	/** Manual rank, tiebreaking only within the same state and folder. */

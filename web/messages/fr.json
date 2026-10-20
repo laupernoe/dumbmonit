@@ -653,13 +653,16 @@
 	"demo_tour_s8_title": "Mode mural",
 	"deviceform_checksums_summary": "Sommes de contrôle des binaires (SHA-256) — l’installateur y compare le téléchargement",
 	"deviceform_cred_auth_label": "Authentification",
-	"deviceform_cred_keep": "Laissez vide pour conserver les identifiants enregistrés.",
 	"deviceform_cred_no_auth": "Aucune authentification",
 	"deviceform_cred_none": "Rien n’est envoyé à l’appareil : il répond sans identifiants.",
 	"deviceform_cred_note_paste": "Valeur collée nettoyée : espaces, guillemets ou retours à la ligne autour ont été retirés.",
 	"deviceform_cred_note_token": "C’était le jeton complet : la partie après « = » a été déplacée dans Secret.",
 	"deviceform_cred_required": "{label} est obligatoire.",
 	"deviceform_cred_token_format": "Attendu : user@realm!name, exactement comme Proxmox l’affiche.",
+	"deviceform_cred_saved_keep": "Enregistré. Laissez vide pour le conserver.",
+	"deviceform_cred_reenter_identity": "Saisissez-le à nouveau : celui qui est enregistré correspond à l'ancienne valeur de « {label} ».",
+	"deviceform_cred_reenter_destination": "Saisissez-le à nouveau : un secret enregistré n'est jamais envoyé vers une adresse ou une connexion modifiée.",
+	"deviceform_cred_choice_none": "Aucun",
 	"deviceform_discovery_add_aria": "Ajouter {name}",
 	"deviceform_discovery_add_n": [
 		{
@@ -7029,5 +7032,10 @@
 	"worldmap_verdict_idle": "Non sondé",
 	"worldmap_verdict_ok": "Tout fonctionne",
 	"worldmap_verdict_warn": "À vérifier",
-	"worldmap_view_world": "Monde"
+	"worldmap_view_world": "Monde",
+	"devices_targets_filter_site_label": "Site",
+	"devices_targets_filter_site": "Filtrer par site",
+	"devices_targets_all_sites": "Tous les sites",
+	"devices_targets_no_site": "Sans site",
+	"devices_site_badge_aria": "Site : {name}"
 }
