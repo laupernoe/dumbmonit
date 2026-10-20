@@ -7,6 +7,59 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **"Network ports to open" in every setup guide.** Each guide opens with the
+  ports to allow, with the direction spelled out (from the DumbMonit server or
+  its relay agent to the device; for the agent, the other way round) and the
+  ports only an option needs marked optional. The device pages of the
+  documentation start with the same table.
+- **A quiet note when an optional feature is skipped for a missing permission.**
+  On Proxmox VE, Proxmox Backup Server and Proxmox Datacenter Manager, a 403 on
+  an optional call (guest agent, pending updates, certificate expiry, update
+  summary...) no longer vanishes silently: the monitor page says which feature
+  was skipped and which permission the token lacks. It never raises an alert.
+
+### Fixed
+
+- **Editing a monitor no longer loses or seems to lose its credentials.** The
+  edit form now shows the saved non-secret parts (Proxmox token ID, user name,
+  SNMP v3 user and protocols), returned by the API as `credential_public` with
+  `has_secret`; a saved secret shows as dots ("Saved. Leave empty to keep it").
+  A secret field left blank is now left out of the request and the server keeps
+  the saved one, as long as the user name or token ID it belongs to and the
+  address are unchanged; otherwise the form asks to type it again. This fixes
+  a real loss: editing an SNMP v3 monitor and retyping only the authentication
+  passphrase erased the privacy passphrase. Secret fields also no longer invite
+  the browser to autofill the DumbMonit sign-in into them. SNMP v3 gains an
+  explicit "None" privacy choice to turn encryption off. Secrets are still never
+  returned by any response.
+### Added
+
+- **Wall widgets: a screen model to arrange them, News folded in, a Text
+  widget.** Settings → Wall widgets now shows a 16:9 model of the wall (top bar,
+  right column under the clock, bottom bar, a tray for hidden widgets) where
+  widgets are dragged and dropped with a mouse or a finger, or selected and moved
+  with the arrow keys and *Move to* buttons; what is dropped is what `/wall`
+  shows, and *Reset to default* restores the default layout (on a phone the model
+  is an ordered list). The News feeds are now the settings of the *News* widget
+  in the same list, saved with the others; nothing to redo, the configured feeds
+  are kept. The new *Text* widget shows a short free message (plain text, 200
+  characters) wherever it is placed.
+- **Import Uptime Kuma 1.x and 2.x from `kuma.db`.** Uptime Kuma 2 dropped its
+  JSON backup, so the import now also reads the SQLite database
+  (`docker cp uptime-kuma:/app/data/kuma.db .`): upload it, preview the monitors
+  sorted by type and folder, tick the ones to import (those already monitored are
+  flagged) and import them in one click, with the same mapping as the JSON
+  backup. The file is read once in read-only mode from a temporary copy (at most
+  512 MB) that is deleted afterwards. Uptime Kuma 2 on MariaDB is not supported.
+  New endpoint `POST /api/targets/import/kuma-db`, and `rows=` on both Kuma
+  import endpoints. See
+  [Coming from Uptime Kuma](docs/devices/services.md#coming-from-uptime-kuma).
+
+### Changed
+
+- **Add a monitor:** the import buttons (Uptime Kuma, websites CSV) moved from the
+  top of the page to a new **Import** category at the bottom, beside
+  **Everything else**.
 - **Relay mode is switched from the UI.** An agent's page has a *Relay for a
   remote site* switch and a site field: the server sends the setting to the
   agent in its next acknowledgement and the agent turns relay mode on or off on

@@ -12,6 +12,15 @@ attribué, ou les adresses depuis lesquelles vos serveurs envoient : la
 machine compromise d'un voisin vaut une inscription qu'un destinataire plus
 strict peut étendre à toute la plage.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 53 | UDP | Requêtes DNS vers les listes noires (port par défaut) |
+| 53 | TCP | Requêtes DNS trop grosses pour UDP (port par défaut) |
+
 ## Limites {#limits}
 
 - **Un /24 au plus par moniteur.** Une plage plus grande est refusée avec un

@@ -4,6 +4,15 @@ The message broker: memory and disk alarms, stopped nodes and network
 partitions, queues that fill up with nobody reading them, queues that are no
 longer running, and the flow of messages.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 15672 | TCP | Management API (HTTP, default) |
+| 15671 | TCP | Only if the API is served over TLS (HTTPS, default) |
+
 DumbMonit reads the management API with a user tagged `monitoring` that has
 empty permissions: it sees the state of the nodes, the alarms and the queues,
 and cannot publish, consume, read a message or change anything. One node

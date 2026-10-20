@@ -6,6 +6,14 @@ les expose, températures, santé de disque, pools ZFS et machines
 virtuelles KVM — puis **envoie**
 ses relevés au serveur DumbMonit via HTTP.
 
+## Ports réseau à ouvrir
+
+De l'agent vers le serveur DumbMonit :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8080 | TCP | Relevés et commandes (port par défaut, 443 derrière un proxy TLS) |
+
 La direction est délibérée : l'agent appelle le serveur, jamais l'inverse.
 Il traverse NAT et pare-feux domestiques, et ne demande d'ouvrir **aucun
 port** sur la machine surveillée.

@@ -4,6 +4,15 @@ La base de séries temporelles et la base de logs elles-mêmes : si elles
 acceptent ce qu'on leur envoie, combien de disque reste avant qu'elles
 n'acceptent plus rien, et ce qu'elles refusent.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8428 | TCP | API HTTP de VictoriaMetrics (par défaut) |
+| 9428 | TCP | API HTTP de VictoriaLogs (par défaut) |
+
 Deux types de surveillance partagent cette page, parce que les deux produits
 partagent leurs fondations : `victoriametrics` pour un VictoriaMetrics
 mono-nœud, et `victorialogs` pour un VictoriaLogs mono-nœud. Les deux

@@ -5,6 +5,14 @@ serveurs backend qui échouent leur contrôle de santé, certificats qu'un
 resolver n'a jamais obtenus ou qui ne sont pas renouvelés, et la part de
 réponses 5xx.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8080 | TCP | API et métriques (HTTP, par défaut) |
+
 DumbMonit lit l'API de Traefik, qui ne fait que lire : `/api/overview`,
 `/api/http/routers`, `/api/http/services`, `/api/certificates` (servi par
 Traefik 3.7) et `/api/version`. Quand les métriques Prometheus de Traefik

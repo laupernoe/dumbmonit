@@ -52,6 +52,7 @@
 			widgets?.stocks?.data?.quotes.length,
 			widgets?.fx?.data?.rates.length,
 			widgets?.cve?.data?.length,
+			widgets?.text,
 			widgets?.claude?.data?.people?.length,
 			widgets?.openai?.data?.people?.length,
 			[widgets?.weather, widgets?.crypto, widgets?.stocks, widgets?.fx, widgets?.cve, widgets?.claude, widgets?.openai]

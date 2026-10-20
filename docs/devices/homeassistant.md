@@ -5,6 +5,14 @@ recovery mode, entities that are unavailable or unknown by domain, low
 batteries, updates waiting (core, operating system, add-ons, device firmware)
 and the open repairs.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8123 | TCP | Web UI, REST and WebSocket API (HTTP, default) |
+
 DumbMonit reads Home Assistant's REST API with the long-lived access token of a
 dedicated user **without administrator rights**, and the list of repairs over
 the WebSocket API. It never calls a service, never fires an event and never

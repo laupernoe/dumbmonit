@@ -18,6 +18,14 @@ adresse de contact jamais vérifiée : chaque site et boîte mail en dessous
 s'arrête net. Un domaine en `redemptionPeriod` ou `pendingDelete` a déjà
 expiré et sera libéré à moins d'être restauré, à prix.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | Requête RDAP au registre et à l'IANA (HTTPS) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_domain_`.

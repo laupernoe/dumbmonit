@@ -15,10 +15,29 @@ read the server's clock without a session.
 ## Coming from Uptime Kuma
 
 **Monitors > ⋯ > Import from Uptime Kuma**, also on **Monitors > Add a
-monitor** (administrators), reads the backup file of Uptime Kuma 1.x (**Settings > Backup > Export**, a `.json` file of
-at most 4 MB). Uptime Kuma 2.x no longer has a backup export, so there is no
-file to import from it. Nothing is created before you have seen the preview:
-what will be created, and what is skipped with the reason.
+monitor > Import** (administrators), reads the database of Uptime Kuma 1.x or
+2.x, or the JSON backup of 1.x. Nothing is created before you have seen the
+preview: what will be created, and what is skipped with the reason. Tick the
+monitors you want, then import them in one click.
+
+Uptime Kuma 2.x has no backup export any more, so export its database instead:
+stop the container (so the file is complete), then copy `kuma.db` out of the
+data folder and choose it in the dialog.
+
+```bash
+docker stop uptime-kuma
+docker cp uptime-kuma:/app/data/kuma.db .
+docker start uptime-kuma
+```
+
+- The file is uploaded, read once in read-only mode from a temporary copy that
+  is never attached to DumbMonit's own database, and deleted straight away. It
+  can be up to 512 MB (it holds the whole heartbeat history); only monitors,
+  groups, tags, intervals and the number of notifications are read from it.
+- Uptime Kuma 2 installed on **MariaDB** is not supported: only the SQLite file
+  `kuma.db` can be imported.
+- The JSON backup of 1.x (**Settings > Backup > Export**, at most 4 MB) still
+  works, with the same preview.
 
 | Uptime Kuma | DumbMonit |
 |---|---|
@@ -124,6 +143,15 @@ right status code, the right content, and a valid certificate. Examples: a
 website, an application health page, a REST API, a self-hosted service
 interface.
 
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Web page or API over HTTPS (default port) |
+| 80 | TCP | Only with an http:// address (default port) |
+
 ### Setup
 
 1. In the address, paste the full URL of the page to monitor.
@@ -173,6 +201,10 @@ Credentials: none, username / password (basic authentication) or API token
 **Network port (TCP)** — checks that a port accepts connections: SSH, database,
 file share, game server, network printer.
 
+### Network ports to open
+
+The port is the one you write in the address or in the "Port" option; there is no default. From the DumbMonit server (or its relay agent) to the device, open that TCP port.
+
 ### Setup
 
 1. In the address, write the host and the port separated by a colon: "nas.home.lan:22", or "[fd00::1]:445" for IPv6.
@@ -197,6 +229,15 @@ Only the opening of the connection is tested: no data is sent to the service, so
 **Domain name (DNS)** — checks that a name resolves, and that it points to the
 right address. Examples: your domain name, an internal name served by your
 Pi-hole or AdGuard, an MX record.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 53 | UDP | DNS query (default port) |
+| 53 | TCP | DNS query too large for UDP (default port) |
 
 ### Setup
 
@@ -265,6 +306,10 @@ time: leave the option off for those, or query one fixed resolver.
 and packet loss. Examples: home router or gateway, Wi-Fi access point, printer,
 machine without agent or SNMP, remote host.
 
+### Network ports to open
+
+Ping uses ICMP echo, which has no port: allow ICMP echo request and reply from the DumbMonit server (or its relay agent) to the device.
+
 ### Setup
 
 1. In the address, write the host name or IP address: "192.168.1.1" or "router.home.lan".
@@ -304,6 +349,14 @@ host does the same, and a raw socket (`NET_RAW`, root) works too.
 expires, on any encrypted port. Examples: mail server (IMAPS, SMTPS), reverse
 proxy, LDAPS directory, MQTT broker, administration interface.
 
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | TLS handshake (default port, the one in the address) |
+
 ### Setup
 
 1. In the address, write the host and the port of the encrypted service: "mail.example.com:993" (443 if omitted).
@@ -331,6 +384,16 @@ verdict of the verification is in `probe_ssl_cert_valid`.
 | `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
 
 ## SMTP
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 587 | TCP | Submission with STARTTLS (default) |
+| 465 | TCP | Only with TLS encryption (SMTPS) |
+| 25 | TCP | Only with no encryption (relay on port 25) |
 
 **Mail relay (SMTP)** — opens a real session on a mail server: greeting, EHLO,
 STARTTLS, and the login if you give one. Examples: your provider's SMTP relay,
@@ -399,6 +462,14 @@ recipient filtering, SPF or DKIM.
 
 ## PostgreSQL
 
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 5432 | TCP | PostgreSQL (default port) |
+
 **PostgreSQL database** — connects, authenticates and runs one query: the signal
 for a database that is up but no longer answering. Examples: the database behind
 Nextcloud or Immich, a Home Assistant recorder, an application database, a
@@ -456,6 +527,14 @@ the number it returns becomes `probe_sql_value`, a chart you can alert on.
 
 ## MySQL and MariaDB
 
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 3306 | TCP | MySQL or MariaDB (default port) |
+
 **MySQL or MariaDB database** — connects, authenticates and runs one query: the
 signal for a database that is up but no longer answering. Examples: the database
 behind a WordPress, a Nextcloud or a Kimai, an application database, a MariaDB
@@ -507,6 +586,15 @@ The default query is SELECT 1, which reads no table: nothing else has to be gran
 | `timeout` | The connection or the query did not finish in time — the "up but slow" case. |
 
 ## MQTT
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 1883 | TCP | MQTT (default port) |
+| 8883 | TCP | Only with the Encrypted connection option (MQTT over TLS, default) |
 
 **MQTT broker** — connects to the broker, subscribes to a topic, and can wait
 for a retained message. Examples: Mosquitto, the broker behind Home Assistant,
@@ -567,6 +655,15 @@ For freshness, watch the automation that consumes it, or use a heartbeat.
 
 ## WebSocket
 
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | WSS (default) |
+| 80 | TCP | Only with a ws:// address |
+
 **WebSocket endpoint** — runs the upgrade handshake, and can send a frame and
 wait for one: a different failure from a plain HTTP page. Examples: the Home
 Assistant API, a live dashboard, a log stream, an endpoint behind a reverse
@@ -620,6 +717,14 @@ the opening request) or a token (sent as `Authorization: Bearer`).
 offset, round-trip delay, stratum and leap indicator. Examples: a router or
 NAS acting as a local time server, an internal NTP server (chrony, ntpd), a
 public pool server used as a reference.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 123 | UDP | NTP request (default port) |
 
 ### Setup
 

@@ -5,6 +5,16 @@ tourne, ce qu'il a répondu et bloqué, si ses listes de filtres se mettent
 encore à jour, si ses serveurs amont répondent, et si une version plus
 récente est sortie.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | Interface web et API (HTTP, par défaut) |
+| 3000 | TCP | Seulement si l'interface web reste sur le port 3000, celui du premier démarrage |
+| 443 | TCP | Seulement avec l'option de schéma https |
+
 Un filtre DNS cassé n'a pas l'air cassé. Les pages continuent de s'ouvrir,
 avec leurs publicités. Les pannes habituelles sont silencieuses : protection
 mise en pause « pour une heure » depuis l'application téléphone et jamais

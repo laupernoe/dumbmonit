@@ -17,6 +17,7 @@
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { CornerDownRight } from 'lucide-svelte';
 	import SecurityBadge from './SecurityBadge.svelte';
+	import SiteBadge from './SiteBadge.svelte';
 	import AlertBell from './AlertBell.svelte';
 	import type { TargetAlertCounts } from '#lib/alerts-attention.js';
 	import type { SecurityGrade } from '#lib/api/index.js';
@@ -25,6 +26,8 @@
 		target: Target;
 		state: TargetState;
 		kindLabel?: string;
+		/** Name of the location this monitor sits at; no badge without one. */
+		site?: string | null;
 		sparkline?: Serie[] | null;
 		/** Name of the unit this one sits behind, when it is a child. */
 		parentName?: string | null;
@@ -35,7 +38,7 @@
 		alerts?: TargetAlertCounts;
 	}
 
-	let { target, state, kindLabel, sparkline = null, parentName = null, shadowed = false, security = null, alerts }: Props = $props();
+	let { target, state, kindLabel, site = null, sparkline = null, parentName = null, shadowed = false, security = null, alerts }: Props = $props();
 
 	const tone = $derived(STATE_TONE[state]);
 	const blink = $derived(state === 'offline' || state === 'down');
@@ -60,6 +63,9 @@
 			>{target.name}</a>
 			{#if !phone}
 				<span class="label-tape mt-0.5 block truncate !text-[0.625rem]">{kindLabel ?? target.kind}</span>
+			{/if}
+			{#if site}
+				<SiteBadge name={site} class="mt-0.5 max-w-full" />
 			{/if}
 		</div>
 		<AlertBell targetId={target.id} counts={alerts} class="-my-1.5 max-sm:-mx-1" />

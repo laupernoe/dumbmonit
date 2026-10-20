@@ -19,6 +19,15 @@ un MX). Le domaine passe aussi devant les listes de domaines. Saisissez une
 adresse IP et seule cette adresse est vérifiée. Pour surveiller toute une
 plage d'adresses, utilisez la [liste noire d'une plage d'IP](ip_blacklist.md).
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 53 | UDP | Requêtes DNS vers les listes noires (port par défaut) |
+| 53 | TCP | Requêtes DNS trop grosses pour UDP (port par défaut) |
+
 ## Gmail, Outlook.com et Yahoo {#gmail-outlookcom-and-yahoo}
 
 Les grandes messageries ne publient **aucune liste interrogeable** : ce

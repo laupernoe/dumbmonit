@@ -28,6 +28,14 @@ l'API aussi.
     `Disconnected`) vient de cette documentation et de retours de la
     communauté. Dites-nous ce qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 4444 | TCP | API d'administration (HTTPS, par défaut) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_sophos_`.

@@ -4,6 +4,15 @@ The web server and reverse proxy: active and waiting connections, the
 accept/handled/request rates, and upstream health when the commercial NGINX
 Plus API is available.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Status page (HTTP, default) |
+| 443 | TCP | Only if the status page is served over HTTPS |
+
 DumbMonit reads Nginx's built-in `stub_status` module, a handful of plain-text
 counters, with no API and no account needed on a correctly filtered network.
 When the commercial NGINX Plus is installed, DumbMonit can also read its JSON

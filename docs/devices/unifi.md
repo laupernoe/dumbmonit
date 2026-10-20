@@ -15,6 +15,15 @@ Clients roam to the next access point, the network keeps working, and the
 coverage hole or the lost uplink is only noticed days later. The same goes for
 a second WAN link that went down: nothing breaks until the first one fails too.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 8443 | TCP | Only with a self-hosted UniFi Network Server |
+
 ## Two ways in
 
 | Credential | API used | What it reads |

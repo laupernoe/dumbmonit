@@ -20,6 +20,14 @@ server it manages (see [SNMP](snmp.md#server-management-controllers-bmc)).
     but it has not yet been run against a real Supermicro, iDRAC or iLO for
     weeks. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Redfish API (HTTPS, default) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_redfish_`. Health series are **0 (OK),

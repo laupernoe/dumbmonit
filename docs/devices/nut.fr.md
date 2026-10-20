@@ -12,6 +12,14 @@ chaque série porte le nom de son onduleur.
 Pour un onduleur avec sa propre carte réseau, le type [appareil SNMP](snmp.md)
 lit à la place la MIB standard UPS-MIB.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 3493 | TCP | upsd (par défaut) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_nut_` et portent le label

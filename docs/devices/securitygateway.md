@@ -4,6 +4,17 @@ The services of a SecurityGateway mail gateway, checked from the outside, and
 on SecurityGateway 12.5 or later, the version and the performance counters its
 REST API publishes: delivery queue, quarantine, SMTP sessions.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 25 | TCP | SMTP check (default) |
+| 4000 | TCP | Web interface check (default) |
+| 4443 | TCP | Only with an API key (HTTPS, default) or web_https in the Services option |
+| 465 | TCP | Only with smtps in the Services option |
+
 !!! warning "Validated against the documentation only"
 
     This integration was built from MDaemon Technologies' published

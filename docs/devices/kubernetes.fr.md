@@ -6,6 +6,14 @@ StatefulSets et DaemonSets avec des répliques manquantes, demandes de
 volume qui ne sont jamais liées, et les événements d'avertissement de la
 dernière heure.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 6443 | TCP | Serveur d'API (HTTPS, par défaut) |
+
 DumbMonit lit l'API avec le jeton d'un compte de service dédié lié à un
 ClusterRole en lecture seule : `get` et `list` sur les nœuds, pods,
 workloads, demandes de volume persistant et événements, rien d'autre. Il

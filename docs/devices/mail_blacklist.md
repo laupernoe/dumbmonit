@@ -18,6 +18,15 @@ is also checked against the domain blocklists. Enter an IP address and only
 that address is checked. To watch a whole range of addresses, use
 [IP range blocklist](ip_blacklist.md).
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 53 | UDP | DNS lookups of the blocklists (default port) |
+| 53 | TCP | DNS lookups too large for UDP (default port) |
+
 ## Gmail, Outlook.com and Yahoo
 
 The large mailbox providers publish **no blocklist that can be queried**: what
