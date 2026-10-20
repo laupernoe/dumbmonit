@@ -16,6 +16,24 @@ All notable changes to this project are documented here. The format follows
   `setup.permissions` too.
 ### Added
 
+- **Dismiss an alert in one click.** Every alert now leads with a **Dismiss**
+  button — in the alert list, an alert's details and a monitor's panel — with
+  no duration to pick and no confirmation, only a toast with **Undo**. A
+  dismissed alert leaves the active list, the overview, the wall and every
+  counter, and nothing more is sent for it (no reminder, no escalation, no
+  resolution message) for as long as the condition lasts. The dismissal belongs
+  to that occurrence: once the condition clears, a later return is a new alert,
+  notified as usual. Its resolution stays in the history as "dismissed by …",
+  and a **Dismissed** view lists the ones still active, to restore a mistake.
+  Acknowledge and Snooze stay available in the alert's **…** menu.
+  Notifications carry a **Dismiss** link first (`{{dismiss_url}}` for custom
+  webhooks), the API gains `POST`/`DELETE /api/alerts/{fingerprint}/dismiss`
+  and `GET /api/alerts?dismissed=true`, and assistants a `dismiss_alert` tool.
+
+### Changed
+
+- The folded group of acknowledged alerts in the Now list is called
+  *Acknowledged* (it read *Dismissed*).
 - **Active Directory: DNS servers option.** When the DumbMonit host's DNS does
   not know the domain, fill *DNS servers* with the IPs of the servers that do:
   every name lookup of the monitor (the controller you entered, the other

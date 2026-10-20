@@ -411,7 +411,8 @@ pub async fn load_states(pool: &SqlitePool) -> Result<Vec<StoredAlert>> {
         "SELECT fingerprint, rule_uid, target_id, series_key, labels, phase, suppressed,
                 suppressed_by, silenced, learning, value, score, condition_since,
                 firing_since, last_eval_at, last_notified_at, notify_count, resolved_at,
-                unacked_relayed_at, acked_until, acked_by, ack_note
+                unacked_relayed_at, acked_until, acked_by, ack_note, dismissed_at,
+                dismissed_by
          FROM alert_state",
     )
     .fetch_all(pool)
@@ -446,6 +447,8 @@ pub async fn load_states(pool: &SqlitePool) -> Result<Vec<StoredAlert>> {
                     acked_until: from_sql(row.try_get("acked_until")?),
                     acked_by: row.try_get("acked_by")?,
                     ack_note: row.try_get("ack_note")?,
+                    dismissed_at: from_sql(row.try_get("dismissed_at")?),
+                    dismissed_by: row.try_get("dismissed_by")?,
                 },
             })
         })
@@ -456,9 +459,9 @@ pub async fn load_states(pool: &SqlitePool) -> Result<Vec<StoredAlert>> {
 /// laisse jamais la moitié des alertes dans l'état d'avant et l'autre dans celui
 /// d'après.
 ///
-/// L'acquittement est la seule donnée de la ligne que le cycle ne réécrit pas :
-/// il est posé par l'API, entre deux cycles, et un cycle parti avant le clic
-/// l'écraserait avec l'état d'avant. Sur une ligne existante, le cycle ne fait
+/// L'acquittement et l'écartement sont les seules données de la ligne que le
+/// cycle ne réécrit pas : ils sont posés par l'API, entre deux cycles, et un
+/// cycle parti avant le clic les écraserait avec l'état d'avant. Sur une ligne existante, le cycle ne fait
 /// que l'effacer — quand l'alerte n'est plus active, ou quand l'échéance est
 /// passée — ; une ligne neuve reprend ce qu'il porte en mémoire (le cas d'une
 /// alerte reprise sous une nouvelle empreinte).
@@ -474,8 +477,9 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
                  (fingerprint, rule_uid, target_id, series_key, labels, phase, suppressed,
                   suppressed_by, silenced, learning, severity, value, score, condition_since,
                   firing_since, last_eval_at, last_notified_at, notify_count, resolved_at,
-                  unacked_relayed_at, acked_until, acked_by, ack_note)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  unacked_relayed_at, acked_until, acked_by, ack_note, dismissed_at,
+                  dismissed_by)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
              ON CONFLICT(fingerprint) DO UPDATE SET
                  rule_uid = excluded.rule_uid, target_id = excluded.target_id,
                  series_key = excluded.series_key, labels = excluded.labels,
@@ -496,7 +500,11 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
                                  THEN alert_state.acked_by END,
                  ack_note = CASE WHEN excluded.phase IN ('pending', 'firing')
                                   AND alert_state.acked_until > excluded.last_eval_at
-                                 THEN alert_state.ack_note END",
+                                 THEN alert_state.ack_note END,
+                 dismissed_at = CASE WHEN excluded.phase IN ('pending', 'firing')
+                                     THEN alert_state.dismissed_at END,
+                 dismissed_by = CASE WHEN excluded.phase IN ('pending', 'firing')
+                                     THEN alert_state.dismissed_by END",
         )
         .bind(&alert.fingerprint)
         .bind(&alert.rule_uid)
@@ -521,6 +529,8 @@ pub async fn save_states(pool: &SqlitePool, alerts: &[AlertOutcome]) -> Result<(
         .bind(alert.state.acked_until.map(to_sql))
         .bind(&alert.state.acked_by)
         .bind(&alert.state.ack_note)
+        .bind(alert.state.dismissed_at.map(to_sql))
+        .bind(&alert.state.dismissed_by)
         .execute(&mut *tx)
         .await
         .context("écriture de l'état d'une alerte")?;
@@ -634,7 +644,7 @@ pub async fn purge_states(pool: &SqlitePool, cycle_start: DateTime<Utc>) -> Resu
 const ACTIVE_ALERT_COLUMNS: &str = "fingerprint, rule_uid, target_id, series_key, labels, phase, \
      suppressed, suppressed_by, silenced, learning, value, score, condition_since, \
      firing_since, last_eval_at, last_notified_at, notify_count, resolved_at, \
-     unacked_relayed_at, acked_until, acked_by, ack_note";
+     unacked_relayed_at, acked_until, acked_by, ack_note, dismissed_at, dismissed_by";
 
 fn row_to_stored_alert(row: &sqlx::sqlite::SqliteRow) -> Result<StoredAlert> {
     let labels: String = row.try_get("labels")?;
@@ -663,6 +673,8 @@ fn row_to_stored_alert(row: &sqlx::sqlite::SqliteRow) -> Result<StoredAlert> {
             acked_until: from_sql(row.try_get("acked_until")?),
             acked_by: row.try_get("acked_by")?,
             ack_note: row.try_get("ack_note")?,
+            dismissed_at: from_sql(row.try_get("dismissed_at")?),
+            dismissed_by: row.try_get("dismissed_by")?,
         },
     })
 }
@@ -726,6 +738,44 @@ pub async fn set_ack(pool: &SqlitePool, fingerprint: &str, ack: Option<&Ack>) ->
             .context("retrait des notifications en attente de l'alerte acquittée")?;
     }
     tx.commit().await.context("validation de l'acquittement")?;
+    Ok(true)
+}
+
+/// Écarte (« j'ai compris ») ou rétablit une alerte active.
+///
+/// `by` à `None` annule l'écartement. Renvoie `false` si l'empreinte est
+/// inconnue ou n'est plus active. En écartant, toutes les lignes de cette
+/// alerte retenues dans la file de notification sont retirées : rien ne doit
+/// plus partir pour cette occurrence, pas même dans un résumé groupé.
+pub async fn set_dismiss(
+    pool: &SqlitePool,
+    fingerprint: &str,
+    by: Option<&str>,
+    now: DateTime<Utc>,
+) -> Result<bool> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction d'écartement")?;
+    let updated = sqlx::query(
+        "UPDATE alert_state SET dismissed_at = ?, dismissed_by = ?
+         WHERE fingerprint = ? AND phase IN ('pending', 'firing')",
+    )
+    .bind(by.map(|_| to_sql(now)))
+    .bind(by)
+    .bind(fingerprint)
+    .execute(&mut *tx)
+    .await
+    .context("écartement de l'alerte")?
+    .rows_affected();
+    if updated == 0 {
+        return Ok(false);
+    }
+    if by.is_some() {
+        sqlx::query("DELETE FROM notify_queue WHERE fingerprint = ?")
+            .bind(fingerprint)
+            .execute(&mut *tx)
+            .await
+            .context("retrait des notifications en attente de l'alerte écartée")?;
+    }
+    tx.commit().await.context("validation de l'écartement")?;
     Ok(true)
 }
 

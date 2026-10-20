@@ -334,6 +334,16 @@ export interface Alert {
 	/** Account that acknowledged, or `token:name` for an API token. */
 	acked_by: string | null;
 	ack_note: string | null;
+	/**
+	 * True once someone dismissed this occurrence: it left every list and
+	 * count and nothing is sent for it. If the condition clears and comes
+	 * back, that is a new alert. Only `GET /alerts?dismissed=true` returns these.
+	 */
+	dismissed: boolean;
+	/** UTC, no suffix (`parseServerDate`). */
+	dismissed_at: string | null;
+	/** Account that dismissed, or `token:name` for an API token. */
+	dismissed_by: string | null;
 	value: number | null;
 	score: number | null;
 	condition_since: string | null;
@@ -1350,7 +1360,7 @@ export interface NotificationPolicy {
 }
 
 /** What a notification action link does (`/alert-action#<token>`). */
-export type AlertLinkAction = 'ack' | 'snooze';
+export type AlertLinkAction = 'ack' | 'snooze' | 'dismiss';
 
 /** An alert named by an action link, reduced to what is needed to decide. */
 export interface AlertLinkTarget {
@@ -1359,6 +1369,7 @@ export interface AlertLinkTarget {
 	severity: AlertSeverity;
 	acked: boolean;
 	acked_until: string | null;
+	dismissed: boolean;
 }
 
 /** `POST /api/public/alert-action/inspect`: what the link would do. */
@@ -1373,8 +1384,11 @@ export interface AlertLinkView {
 /** `POST /api/public/alert-action`: what the link did. */
 export interface AlertLinkResult {
 	action: AlertLinkAction;
+	/** The instant of the gesture (a dismissal) or the end of the ack / snooze. */
 	until: string;
 	acked: number;
+	/** Alerts dismissed by the link (`acked` is 0 then). */
+	dismissed: number;
 	alerts: AlertLinkTarget[];
 }
 
