@@ -220,6 +220,32 @@ bind.
 - **LDAP channel binding** (`LdapEnforceChannelBinding`) concerns NTLM and
   Kerberos binds over TLS; the simple bind DumbMonit uses is unaffected.
 
+## DNS
+
+Domain controllers are reached by name (the certificate carries it), and the
+domain's other controllers are found by name too. If the DNS server of the
+DumbMonit host does not know the domain, there are two fixes:
+
+- **DNS servers** option: enter the IP addresses of the DNS servers that know
+  the domain, for example `10.0.0.10, 10.0.0.11`. Every lookup of this monitor
+  (the controller you entered, the other controllers, *Check every domain
+  controller*) then goes through them only, over UDP and then TCP. The
+  connection still uses the name for the certificate check. Empty keeps the
+  system resolver. A relay agent does the same on its own side.
+- Or give the whole container those servers, with `dns:` in
+  `docker-compose.yml`:
+
+```yaml
+services:
+  dumbmonit:
+    dns:
+      - 10.0.0.10
+      - 10.0.0.11
+```
+
+If a name is unknown to the servers, the error says so:
+`dc01.corp.local did not resolve through 10.0.0.10`.
+
 ## Credentials
 
 | Field | Value |
@@ -239,6 +265,7 @@ unauthenticated bind without checking anything.
 | CA certificate (`ca_cert`) | | PEM of the authority that issued the domain controllers' certificates |
 | Accept an unverifiable certificate (`insecure_tls`) | off | |
 | Allow plain LDAP (`allow_plaintext`) | off | required for `plain` |
+| DNS servers (`dns_servers`) | empty | IPs of the DNS servers used for every lookup of this monitor; empty = system DNS |
 | Check every domain controller (`check_all_dcs`) | on | TCP connection to the LDAP port of each domain controller |
 | Inactive user after (`stale_days_users`) | 90 | days |
 | Inactive computer after (`stale_days_computers`) | 90 | days |
@@ -257,7 +284,7 @@ unauthenticated bind without checking anything.
 - **The domain controller requires a protected connection**: LDAP signing is
   enforced; switch to LDAPS or StartTLS.
 - **A domain controller shows as unresolved**: its name does not resolve
-  from the DumbMonit host. Point DumbMonit's DNS at the domain's DNS servers,
+  from the DumbMonit host. Fill the *DNS servers* option with the domain's DNS servers (see DNS above),
   or untick *Check every domain controller*. Unresolved names never raise an
   alert.
 - **Replication status not readable**: grant *Monitor active directory
