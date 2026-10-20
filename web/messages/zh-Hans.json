@@ -6849,5 +6849,10 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界"
+	"worldmap_view_world": "世界",
+	"devices_targets_filter_site_label": "站点",
+	"devices_targets_filter_site": "按站点筛选",
+	"devices_targets_all_sites": "所有站点",
+	"devices_targets_no_site": "无站点",
+	"devices_site_badge_aria": "站点：{name}"
 }
