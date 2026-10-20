@@ -56,7 +56,10 @@ pub fn matches(expected: &str, given: &str) -> bool {
 
 /// Affiche le code dans le journal, bien en vue.
 pub fn announce(code: &str) {
+    // Console seulement : ni les fichiers de `/data/logs` ni les destinations
+    // de journaux ne reçoivent le code (`logs::CONSOLE_ONLY_TARGET`).
     tracing::warn!(
+        target: crate::logs::CONSOLE_ONLY_TARGET,
         "\n\n  ============================================================\n  \
          First-run setup code: {code}\n  \
          Enter it on the setup page to create the admin account.\n  \

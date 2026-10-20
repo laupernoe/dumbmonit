@@ -160,6 +160,8 @@ tags:
       evaluated on the data collectors already gather.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
+  - name: Logs
+    description: Server logs kept on disk, their export, and shipping to a log service. Session only.
   - name: Self-monitoring
     description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
@@ -3911,6 +3913,205 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   # ------------------------------------------------------------ sauvegarde
+  /api/logs:
+    get:
+      operationId: getLogs
+      tags: [Logs]
+      summary: Server log files kept on disk, retention and size cap
+      description: Administrator session only. Files are daily (UTC) JSON lines in `/data/logs`; past days are gzip-compressed.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Local log storage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogsOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/settings:
+    put:
+      operationId: putLogsSettings
+      tags: [Logs]
+      summary: Change the retention (days) and the total size cap (MB)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogsSettingsRequest" }
+      responses:
+        "200":
+          description: Local log storage, with the new settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogsOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/export:
+    get:
+      operationId: exportLogs
+      tags: [Logs]
+      summary: Download the last N days of server logs as a .tar.gz archive
+      description: >-
+        Streamed. The archive holds one file per day (`.log` for today, `.log.gz`
+        before) and `audit.jsonl`, the audit log entries of the period.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - $ref: "#/components/parameters/LogDays"
+      responses:
+        "200":
+          description: The archive, as an attachment.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+          content:
+            application/gzip:
+              schema: { type: string, format: binary }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/export/estimate:
+    get:
+      operationId: estimateLogsExport
+      tags: [Logs]
+      summary: Estimated size of the archive for N days, before downloading it
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - $ref: "#/components/parameters/LogDays"
+      responses:
+        "200":
+          description: Period, number of files and estimated compressed size.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogsEstimate" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/kinds:
+    get:
+      operationId: listLogDestinationKinds
+      tags: [Logs]
+      summary: Log destination types and the fields each one asks for
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The catalog, in menu order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LogDestinationKind" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/destinations:
+    get:
+      operationId: listLogDestinations
+      tags: [Logs]
+      summary: Log destinations, with their delivery counters
+      description: Secrets are never returned, only `has_secret`.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The destinations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LogDestination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createLogDestination
+      tags: [Logs]
+      summary: Add a log destination
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogDestinationRequest" }
+      responses:
+        "201":
+          description: The destination.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogDestination" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/destinations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateLogDestination
+      tags: [Logs]
+      summary: Change a log destination
+      description: >-
+        `secrets` omitted or `null` keeps the stored secrets, `{}` clears them.
+        Changing the address (or the type) of a destination that has a secret
+        requires sending the secrets again.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogDestinationRequest" }
+      responses:
+        "200":
+          description: The destination.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogDestination" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteLogDestination
+      tags: [Logs]
+      summary: Remove a log destination
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/logs/destinations/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: testLogDestination
+      tags: [Logs]
+      summary: Send one test record to a log destination, now
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Whether the record was accepted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChannelTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/backup:
     get:
       operationId: getBackupStatus
@@ -5584,6 +5785,11 @@ components:
         also carry `X-Requested-With: DumbMonit`.
 
   parameters:
+    LogDays:
+      name: days
+      in: query
+      description: Number of days, today included, from 1 to the retention.
+      schema: { type: integer, minimum: 1, default: 1 }
     Id:
       name: id
       in: path
@@ -7835,6 +8041,95 @@ components:
         restart_required: { type: boolean, description: SNMP profiles take effect after a restart. }
 
     # ------------------------------------------------------------- sauvegarde
+    LogsOverview:
+      type: object
+      required: [directory, retention_days, max_total_mb, total_bytes, days_available, files, writer]
+      properties:
+        directory: { type: string, examples: ["/data/logs"] }
+        retention_days: { type: integer, minimum: 1, maximum: 365 }
+        max_total_mb: { type: integer, minimum: 16, maximum: 102400 }
+        total_bytes: { type: integer }
+        oldest_day: { type: [string, "null"], format: date }
+        days_available: { type: integer }
+        files:
+          type: array
+          description: Newest first.
+          items:
+            type: object
+            properties:
+              day: { type: string, format: date }
+              bytes: { type: integer }
+              compressed: { type: boolean }
+        writer:
+          type: object
+          properties:
+            active: { type: boolean }
+            dropped:
+              type: integer
+              description: Records lost before reaching the disk (writer lagging, or the size cap reached).
+    LogsSettingsRequest:
+      type: object
+      properties:
+        retention_days: { type: integer, minimum: 1, maximum: 365 }
+        max_total_mb: { type: integer, minimum: 16, maximum: 102400 }
+    LogsEstimate:
+      type: object
+      required: [days, from, to, files, bytes]
+      properties:
+        days: { type: integer }
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        files: { type: integer }
+        bytes: { type: integer, description: Estimated size of the .tar.gz archive. }
+    LogDestinationKind:
+      type: object
+      required: [kind, label, summary, doc_url, settings, secrets]
+      properties:
+        kind: { type: string, examples: [gelf, victorialogs, loki, elasticsearch, syslog] }
+        label: { type: string }
+        summary: { type: string }
+        doc_url: { type: string, format: uri }
+        settings:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelField" }
+        secrets:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelField" }
+    LogDestinationRequest:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string, maxLength: 100 }
+        kind: { type: string }
+        enabled: { type: boolean, default: true }
+        min_level: { type: string, enum: [error, warn, info, debug], default: info }
+        settings: { type: object, additionalProperties: true }
+        secrets:
+          type: [object, "null"]
+          additionalProperties: { type: string }
+          description: Omitted or null keeps the stored secrets; `{}` clears them.
+    LogDestination:
+      type: object
+      required: [id, name, kind, enabled, min_level, settings, has_secret, stats]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        kind: { type: string }
+        enabled: { type: boolean }
+        min_level: { type: string, enum: [error, warn, info, debug] }
+        settings: { type: object, additionalProperties: true }
+        has_secret: { type: boolean }
+        stats:
+          type: object
+          description: Counters since the server started.
+          properties:
+            sent: { type: integer }
+            dropped: { type: integer, description: Records lost (queue full or batch refused). }
+            failed_batches: { type: integer }
+            queued: { type: integer }
+            last_error: { type: [string, "null"] }
+            last_error_at: { type: [string, "null"], description: UTC, without suffix. }
+            last_success_at: { type: [string, "null"], description: UTC, without suffix. }
     BackupStatus:
       type: object
       required: [bundle_version, min_passphrase_length, contents, secret_source, secret_path, schedule]
