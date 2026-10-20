@@ -1,8 +1,8 @@
-//! Liens d'action signés : acquitter ou mettre en pause une alerte depuis la
-//! notification elle-même, sans ouvrir de session.
+//! Liens d'action signés : écarter, acquitter ou mettre en pause une alerte
+//! depuis la notification elle-même, sans ouvrir de session.
 //!
 //! Un lien est une capacité, pas une identité : il ne vaut que pour un geste
-//! (`ack` ou `snooze`), sur les alertes qu'il nomme, pendant [`TTL`], une seule
+//! (`dismiss`, `ack` ou `snooze`), sur les alertes qu'il nomme, pendant [`TTL`], une seule
 //! fois. Il est signé par HMAC-SHA256 avec une sous-clé du secret d'instance
 //! ([`crate::crypto::Cipher::subkey`]) : rien à stocker pour l'émettre, et
 //! changer le secret les révoque tous.
@@ -67,15 +67,21 @@ pub enum Action {
     Ack,
     /// Acquitte une heure : les rappels reprennent ensuite.
     Snooze,
+    /// « J'ai compris » : l'occurrence sort des vues actives et ne notifie
+    /// plus rien, résolution comprise. La suivante alertera.
+    Dismiss,
 }
 
 impl Action {
-    pub const ALL: [Action; 2] = [Action::Ack, Action::Snooze];
+    /// Dans l'ordre des boutons : le geste simple d'abord — c'est aussi celui
+    /// qu'un navigateur garde quand il n'affiche que deux boutons (Web Push).
+    pub const ALL: [Action; 3] = [Action::Dismiss, Action::Ack, Action::Snooze];
 
     fn code(self) -> u8 {
         match self {
             Self::Ack => 1,
             Self::Snooze => 2,
+            Self::Dismiss => 3,
         }
     }
 
@@ -83,6 +89,7 @@ impl Action {
         match code {
             1 => Some(Self::Ack),
             2 => Some(Self::Snooze),
+            3 => Some(Self::Dismiss),
             _ => None,
         }
     }
@@ -91,6 +98,7 @@ impl Action {
         match self {
             Self::Ack => "ack",
             Self::Snooze => "snooze",
+            Self::Dismiss => "dismiss",
         }
     }
 
@@ -99,14 +107,17 @@ impl Action {
         match self {
             Self::Ack => "Acknowledge",
             Self::Snooze => "Snooze 1 h",
+            Self::Dismiss => "Dismiss",
         }
     }
 
-    /// Durée de l'acquittement posé.
+    /// Durée de l'acquittement posé ; nulle pour un écartement, qui n'a pas
+    /// d'échéance — il dure autant que l'occurrence.
     pub fn duration(self) -> TimeDelta {
         match self {
             Self::Ack => TimeDelta::seconds(crate::api::alerts::MAX_ACK_SECS),
             Self::Snooze => SNOOZE,
+            Self::Dismiss => TimeDelta::zero(),
         }
     }
 }
@@ -416,7 +427,8 @@ mod tests {
     #[test]
     fn every_link_has_its_own_nonce() {
         let links = build(&key(), "https://monit.lan/", &["a@1".into()], now());
-        assert_eq!(links.len(), 2);
+        assert_eq!(links.len(), 3);
+        assert_eq!(links[0].action, Action::Dismiss, "the simple gesture comes first");
         assert!(links[0].url.starts_with("https://monit.lan/alert-action#"));
         assert!(links[0].path.starts_with("/alert-action#"));
         let nonces: Vec<_> = links
@@ -424,6 +436,7 @@ mod tests {
             .map(|link| key().verify(link.path.split_once('#').unwrap().1, now()).unwrap().nonce)
             .collect();
         assert_ne!(nonces[0], nonces[1]);
+        assert_ne!(nonces[1], nonces[2]);
     }
 
     #[test]
