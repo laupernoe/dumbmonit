@@ -581,12 +581,14 @@ surveillance.
 
 | Méthode | Route | Objet |
 |---|---|---|
-| `GET` | `/api/alerts` | Alertes actives (en construction, actives, supprimées, résolues récemment). Les alertes de surveillances supprimées ou en pause ne sont jamais listées. |
+| `GET` | `/api/alerts` | Alertes actives (en construction, actives, supprimées, résolues récemment). Les alertes de surveillances supprimées ou en pause ne sont jamais listées. `?target_id=` ne garde que les alertes d'une surveillance. Les alertes écartées sont exclues ; `?dismissed=true` ne liste qu'elles (`dismissed`, `dismissed_at`, `dismissed_by`). |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Transitions de phase. `since` est en RFC 3339, défaut les sept derniers jours ; `limit` doit être positif. `dismissed` (défaut `false`) exclut les entrées effacées avec les deux routes ci-dessous ; rien n'est jamais détruit par un effacement, seulement caché de la vue par défaut. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Efface une entrée `resolved` de la vue d'historique par défaut. `204`. `404` sur un id inconnu ou une transition encore active. Opérateur ; audité. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Efface chaque entrée `resolved` pas encore effacée d'un coup (« Effacer tout ce qui est résolu »). Renvoie `{"dismissed": <count>}`. Opérateur ; audité. |
 | `POST` | `/api/alerts/{fingerprint}/ack` | Acquitter : `{"duration_secs": 14400, "note": "…"}` ou `{"until": "2026-09-22T18:00:00Z"}` (l'un des deux ; aucun des deux signifie 4 heures, 30 jours au plus). `{"until": null}` le lève. Renvoie l'alerte. Opérateur ; audité. |
 | `DELETE` | `/api/alerts/{fingerprint}/ack` | Lever l'acquittement. Renvoie l'alerte. Opérateur. |
+| `POST` | `/api/alerts/{fingerprint}/dismiss` | Écarter (« j'ai compris ») : l'occurrence en cours quitte les alertes actives et plus rien ne part, résolution comprise, jusqu'à ce que la condition retombe. Sans corps. Renvoie l'alerte. `404` si elle n'est plus active. Opérateur ; audité. |
+| `DELETE` | `/api/alerts/{fingerprint}/dismiss` | Rétablir une alerte écartée. Renvoie l'alerte. Opérateur ; audité. |
 
 Une alerte active :
 
@@ -935,13 +937,13 @@ et jamais avec une session.
 | `GET`, `DELETE` | `/api/mcp` | public | `405` avec `Allow: POST` — il n'y a pas de flux envoyé par le serveur ni de session à terminer ; le corps dit seulement ce qu'est ce point de terminaison. |
 
 `tools` est la seule capacité — pas de resources, pas de prompts, pas
-d'OAuth. Des 27 outils, un jeton `read` peut appeler les 15 qui ne font
+d'OAuth. Des 28 outils, un jeton `read` peut appeler les 15 qui ne font
 que lire (`get_status`, `list_devices`, `get_device`, `list_alerts`,
 `alert_history`, `query_metrics`, `list_silences`, `list_rules`,
 `list_device_types`, `list_agents`, `list_containers`,
 `list_heartbeats`, `list_status_pages`, `list_channels`, `list_packs`) ;
-les 12 qui changent quelque chose (`silence_device`, `remove_silence`,
-`acknowledge_alert`, `probe_device`, `set_device_enabled`,
+les 13 qui changent quelque chose (`silence_device`, `remove_silence`,
+`acknowledge_alert`, `dismiss_alert`, `probe_device`, `set_device_enabled`,
 `set_rule_enabled`, `add_device`, `discover_network`,
 `schedule_maintenance`, `restart_container`, `test_channel`,
 `post_incident`) ont besoin d'un jeton `write`. Les outils appellent le

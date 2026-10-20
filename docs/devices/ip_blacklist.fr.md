@@ -50,16 +50,24 @@ vérification d'une plage prend quelques minutes et tourne en tâche de fond.
 
 ## Vérifier une plage d'IP publiques auprès des listes noires {#check-a-public-ip-range-against-the-blocklists}
 
-1. Saisissez une adresse IPv4 ou une plage CIDR jusqu'à /24, par exemple « 198.51.100.0/24 » (256 adresses). Une plage plus grande est refusée : découpez-la en plusieurs moniteurs /24. Les plages IPv6 sont refusées, seul Spamhaus répondant pour l'IPv6 : vérifiez une adresse IPv6 isolée avec la réputation du serveur mail.
+1. Saisissez une adresse IPv4 ou une plage CIDR jusqu'à /24, par exemple « 198.51.100.0/24 ».
 
-2. Aucune clé d'API n'est nécessaire : laissez l'identifiant sur No key. Les listes noires sont interrogées par le résolveur DNS de ce serveur, ou par celui que vous indiquez dans Resolver. Seul Spamhaus peut refuser, et seulement quand ce résolveur est public (Google, Cloudflare, Quad9) : le moniteur affiche alors « Spamhaus refuses this resolver » et les autres listes continuent de fonctionner. Pour Spamhaus aussi, utilisez un résolveur récursif à vous, ou la clé DQS gratuite et facultative de Spamhaus.
+2. Aucune clé d'API n'est nécessaire : laissez l'identifiant sur No key.
 
-3. Cochez les listes noires d'adresses à interroger sous Blocklists (les majeures sont cochées par défaut) et ajoutez sous Custom lists les zones DNSBL de toute autre liste. Un /24 demande près de deux mille questions avec toutes les listes d'adresses cochées, envoyées à 10 par seconde et répétées toutes les 6 heures par défaut : gardez cette cadence, les listes bannissent les résolveurs qui les balaient.
+3. Cochez les listes noires d'adresses à interroger sous Blocklists, et ajoutez toute autre zone DNSBL sous Custom lists.
 
-4. La première vérification d'une plage prend quelques minutes : la page du moniteur indique qu'elle tourne, puis montre combien d'adresses sont inscrites, sur quelles listes, et un lien de retrait pour chacune.
+4. Si le moniteur affiche « Spamhaus refuses this resolver », réglez « Resolver » sur votre propre résolveur récursif, ou choisissez la clé Spamhaus DQS gratuite comme identifiant.
+
+    ```
+    https://www.spamhaus.com/data-access/free-data-query-service/
+    ```
 
 !!! warning
-    La PBL de Spamhaus inscrit les plages d'abonnés qui ne devraient pas envoyer de courrier directement (connexions résidentielles, pools dynamiques) : y figurer relève d'une politique, pas d'un signalement d'abus, et ne compte que pour une adresse qui fait tourner un serveur mail.
+    Spamhaus PBL liste des plages d'utilisateurs finaux qui ne devraient pas envoyer de courrier directement : une inscription n'a d'importance que pour une adresse qui héberge un serveur mail.
+
+Une plage plus grande est refusée : découpez-la en plusieurs moniteurs /24. Les plages IPv6 sont refusées, seul Spamhaus répondant pour l'IPv6 : vérifiez une adresse IPv6 isolée avec la réputation du serveur mail. Les listes noires sont interrogées via le résolveur DNS de ce serveur, ou via celui que vous réglez sous Resolver. Un /24 demande près de deux mille requêtes avec toutes les listes d'adresses cochées, envoyées à raison de 10 par seconde et répétées toutes les 6 heures par défaut : gardez ce rythme, les listes noires bannissent les résolveurs qui les balaient. La première vérification d'une plage prend quelques minutes : la page du moniteur indique qu'elle est en cours, puis montre combien d'adresses sont listées, sur quelles listes, et un lien de retrait pour chacune.
+
+Documentation de l'éditeur : https://www.spamhaus.org/blocklists/zen-blocklist/
 
 ## Ce qu'il surveille {#what-it-watches}
 

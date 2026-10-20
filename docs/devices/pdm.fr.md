@@ -122,33 +122,53 @@ concernée.
 
 ## Ce qu'il faut préparer dans Proxmox Datacenter Manager
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
-Le principe : un utilisateur réservé à la surveillance, un jeton avec un
-rôle en lecture seule — jamais le compte avec lequel vous vous connectez.
-
-1. Dans la console, ouvrez Configuration → Access Control → Users et cliquez sur Add. Nommez le compte comme suit et laissez le mot de passe vide : le jeton est ce qui se connecte.
+1. Ouvrez Configuration → Access Control → Users → Add, saisissez le nom d'utilisateur dumbmonit avec le realm pdm et sans mot de passe, puis cliquez sur Add.
 
     ```
     dumbmonit@pdm
     ```
 
-2. Toujours sous Access Control, ouvrez API Tokens → Add, choisissez cet utilisateur et nommez le jeton « monitor ». La console montre le secret une fois : copiez-le maintenant.
+2. Ouvrez Configuration → Access Control → API Tokens → Add, choisissez cet utilisateur et nommez le jeton monitor. Copiez maintenant le Secret, il n'est affiché qu'une seule fois.
 
     ```
     dumbmonit@pdm!monitor
     ```
 
-3. Donnez à la fois à l'utilisateur et au jeton le rôle `Auditor` sur `/` (le haut de l'arbre, donc tout le parc). `Auditor` porte `System.Audit`, `Resource.Audit` et `Access.Audit`, et ne peut rien changer. Un jeton n'a jamais plus de droits que son utilisateur, la permission est donc accordée deux fois : Permissions → Add → User Permission, puis à nouveau avec API Token Permission.
-4. Copiez l'id du jeton dans le champ Token ID de DumbMonit et le secret dans son champ Secret.
-5. Dans DumbMonit, saisissez l'adresse de la console, par exemple « dc.lan » ou « dc.lan:8443 ».
+3. Ouvrez Configuration → Access Control → Permissions → Add → User Permission : chemin /, utilisateur dumbmonit@pdm, rôle Auditor.
+
+4. Ajoutez une seconde permission avec Add → API Token Permission : chemin /, jeton dumbmonit@pdm!monitor, rôle Auditor. Un jeton a ses propres permissions, il faut donc les deux.
+
+5. Dans DumbMonit, saisissez l'adresse de la console (par exemple dc.lan:8443), le Token ID et le Secret.
+
+### Droits requis
+
+- **Auditor sur /** : Lecture seule : instances, tâches, santé de la console
+- **Resource.Modify sur /resource (facultatif)** : Seulement pour le résumé des mises à jour des instances
 
 !!! warning
-    Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton qui fuit contrôlerait alors chaque cluster que la console fédère à la fois. Le rôle `Auditor` ne peut que lire. La console utilise aussi un certificat autosigné par défaut : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Deux éléments ont besoin de plus qu'`Auditor` et sont simplement ignorés sans ça : le statut de collecte de métriques par instance, et le résumé de mise à jour des instances fédérées.
+    La console utilise par défaut un certificat autosigné : cochez « Accepter un certificat non vérifiable » dans les options si la connexion est refusée.
 
-Vous préférez la ligne de commande ?
-`proxmox-datacenter-manager-admin` gère les remotes, pas les
-utilisateurs ; créez le compte, le jeton et les deux permissions dans
-l'interface web.
+Documentation de l'éditeur : [Proxmox Datacenter Manager access control](https://pdm.proxmox.com/docs/access-control.html)
+
+### Pourquoi ces droits
+
+Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton
+divulgué contrôlerait d'un coup tous les clusters que la console fédère. Le
+rôle `Auditor` ne sait que lire.
+
+* `Auditor` sur `/` (le haut de l'arbre, donc tout le parc) porte
+  `System.Audit`, `Resource.Audit` et `Access.Audit`, et ne peut rien
+  modifier.
+* Un jeton n'a jamais plus de droits que son utilisateur, et ses permissions
+  sont calculées à partir des entrées d'ACL qui portent son propre identifiant :
+  la permission est donc accordée deux fois, à l'utilisateur et au jeton.
+* Deux éléments demandent plus qu'`Auditor` et sont simplement ignorés sans
+  lui : l'état de collecte des métriques par instance, et le résumé des mises à
+  jour des instances fédérées.
+
+Vous préférez la ligne de commande ? `proxmox-datacenter-manager-admin` gère
+les remotes, pas les utilisateurs ; créez le compte, le jeton et les deux
+permissions dans l'interface web.
 
 ## Identifiants
 

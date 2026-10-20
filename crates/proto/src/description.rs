@@ -69,7 +69,14 @@ pub struct SetupDescription {
     pub title: Text,
     /// Une phrase par étape ; ce qui suit un saut de ligne est à copier tel quel.
     pub steps: Vec<Text>,
+    /// Droits, rôles ou permissions à donner au compte de supervision, un par
+    /// entrée : la première ligne est le droit (affiché en gras), la suivante,
+    /// facultative, dit en quelques mots à quoi il sert. Absent du JSON quand le
+    /// type n'en demande aucun.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub permissions: Vec<Text>,
     pub warning: Text,
+    /// Lien « Guide complet » : la page de la documentation, ou le lien d'un paquet.
     pub doc_url: Text,
 }
 

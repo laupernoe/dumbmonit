@@ -334,6 +334,16 @@ export interface Alert {
 	/** Account that acknowledged, or `token:name` for an API token. */
 	acked_by: string | null;
 	ack_note: string | null;
+	/**
+	 * True once someone dismissed this occurrence: it left every list and
+	 * count and nothing is sent for it. If the condition clears and comes
+	 * back, that is a new alert. Only `GET /alerts?dismissed=true` returns these.
+	 */
+	dismissed: boolean;
+	/** UTC, no suffix (`parseServerDate`). */
+	dismissed_at: string | null;
+	/** Account that dismissed, or `token:name` for an API token. */
+	dismissed_by: string | null;
 	value: number | null;
 	score: number | null;
 	condition_since: string | null;
@@ -528,6 +538,12 @@ export interface DiscoveryResult {
 export interface CollectorSetup {
 	title: string;
 	steps: string[];
+	/**
+	 * Rights, roles or permissions to give the monitoring account, one per entry:
+	 * the first line is the right (shown in bold), the optional second line says
+	 * what it is for. The server omits the field when a type needs none.
+	 */
+	permissions?: string[];
 	warning: string;
 	doc_url: string;
 }
@@ -647,7 +663,7 @@ export interface CollectorInfo {
  * `|| ''` in components.
  */
 export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string }): CollectorInfo {
-	const setup = raw.setup ?? { title: '', steps: [], warning: '', doc_url: '' };
+	const setup = raw.setup ?? { title: '', steps: [], permissions: [], warning: '', doc_url: '' };
 	const options = Array.isArray(raw.options) ? raw.options : [];
 	const credential_types = Array.isArray(raw.credential_types)
 		? raw.credential_types.filter((t) => typeof t === 'string')
@@ -671,6 +687,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 		setup: {
 			title: setup.title?.trim() ?? '',
 			steps: Array.isArray(setup.steps) ? setup.steps.filter((s) => s.trim()) : [],
+			permissions: Array.isArray(setup.permissions) ? setup.permissions.filter((s) => s.trim()) : [],
 			warning: setup.warning?.trim() ?? '',
 			doc_url: setup.doc_url?.trim() ?? ''
 		},
@@ -1361,7 +1378,7 @@ export interface NotificationPolicy {
 }
 
 /** What a notification action link does (`/alert-action#<token>`). */
-export type AlertLinkAction = 'ack' | 'snooze';
+export type AlertLinkAction = 'ack' | 'snooze' | 'dismiss';
 
 /** An alert named by an action link, reduced to what is needed to decide. */
 export interface AlertLinkTarget {
@@ -1370,6 +1387,7 @@ export interface AlertLinkTarget {
 	severity: AlertSeverity;
 	acked: boolean;
 	acked_until: string | null;
+	dismissed: boolean;
 }
 
 /** `POST /api/public/alert-action/inspect`: what the link would do. */
@@ -1384,8 +1402,11 @@ export interface AlertLinkView {
 /** `POST /api/public/alert-action`: what the link did. */
 export interface AlertLinkResult {
 	action: AlertLinkAction;
+	/** The instant of the gesture (a dismissal) or the end of the ack / snooze. */
 	until: string;
 	acked: number;
+	/** Alerts dismissed by the link (`acked` is 0 then). */
+	dismissed: number;
 	alerts: AlertLinkTarget[];
 }
 

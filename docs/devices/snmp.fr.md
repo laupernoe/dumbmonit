@@ -58,19 +58,16 @@ disques du serveur sont lus via [Redfish](redfish.md) à la place.
 
 ## Ce qu'il faut préparer sur l'appareil
 
-1. Ouvrez l'interface d'administration de l'appareil.
-2. Cherchez la section SNMP, souvent sous « Network », « Services » ou
-   « Administration ».
-3. Activez SNMP v2c et notez la communauté en lecture seule (« public » par
-   défaut sur beaucoup d'appareils).
-4. Si l'appareil filtre par adresse, autorisez l'adresse du serveur
-   DumbMonit.
-5. Revenez dans DumbMonit, saisissez l'adresse et la communauté : le reste est
-   détecté automatiquement.
+1. Ouvrez l'interface web de l'appareil et trouvez ses réglages SNMP, souvent sous Réseau, Services ou Administration.
+
+2. Activez SNMP v2c et notez la communauté en lecture seule (public sur beaucoup d'appareils).
+
+3. Si l'appareil filtre par adresse, autorisez l'adresse de ce serveur.
+
+4. Dans DumbMonit, saisissez l'adresse et la communauté : le reste est détecté automatiquement.
 
 !!! warning
-    Une communauté n'est pas chiffrée sur le réseau. Sur un réseau partagé,
-    préférez SNMP v3, qui authentifie et chiffre.
+    Une communauté n'est pas chiffrée sur le réseau : sur un réseau partagé, préférez SNMP v3, qui authentifie et chiffre.
 
 ## Identifiants
 

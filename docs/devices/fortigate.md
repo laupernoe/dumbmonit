@@ -83,7 +83,41 @@ an available patch release.
 
 ## Create a read-only REST API user for DumbMonit
 
-1. From the FortiGate CLI, create an access profile that can only read the system, network and VPN state, and nothing else.
+1. System → Admin Profiles → Create New: name the profile as follows and set the access permissions listed below, everything else None.
+
+    ```
+    dumbmonit-ro
+    ```
+
+2. System → Administrators → Create New → REST API Admin: name it as follows and pick that profile.
+
+    ```
+    dumbmonit
+    ```
+
+3. Under Trusted Hosts, enter the DumbMonit server's address with a /32 mask: FortiGate refuses 0.0.0.0/0.
+
+4. Click OK: FortiGate shows the API token once. Copy it.
+
+5. In DumbMonit, enter the FortiGate address (fw.lan) and paste the token as API token.
+
+### Required permissions
+
+- **System: Read** — System status, resources, HA, licences, firmware
+- **Network: Read** — Interface configuration
+- **VPN: Read** — IPsec tunnels
+- **Every other permission: None** — Nothing else is needed
+
+!!! warning
+    FortiGate ships a self-signed certificate: tick "Accept an unverifiable certificate" unless you installed your own.
+
+Vendor documentation: https://docs.fortinet.com/document/fortigate/7.4.0/administration-guide/399023/rest-api-administrator
+
+### Notes
+
+- From FortiOS 7.4, only an administrator holding the super profile can create
+  a REST API admin, in the GUI as in the CLI.
+- Prefer the CLI? The same user, with the same token:
 
     ```
     config system accprofile
@@ -98,11 +132,6 @@ an available patch release.
     set wifi none
     next
     end
-    ```
-
-2. Create the REST API user dumbmonit with that profile, trusting only the address of the DumbMonit server (replace 192.0.2.10), then generate its token: it is printed once.
-
-    ```
     config system api-user
     edit "dumbmonit"
     set accprofile "dumbmonit-ro"
@@ -117,10 +146,10 @@ an available patch release.
     execute api-user generate-key dumbmonit
     ```
 
-3. In DumbMonit, enter the address of the FortiGate, for example "fw.lan" (add the port if the administration interface does not listen on 443), and paste the token as API token. FortiGate ships a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.
-
-!!! warning
-    An interface counts as down only when it is enabled, has an address and has no link: free ports are left alone. Firmware updates are those FortiGuard offers the FortiGate itself: without access to FortiGuard, none is reported.
+- An interface counts as down only when it is enabled, has an address and has
+  no link: free ports are left alone.
+- Firmware updates are those FortiGuard offers the FortiGate itself: without
+  access to FortiGuard, none is reported.
 
 ## Credentials
 

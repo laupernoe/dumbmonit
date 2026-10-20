@@ -174,6 +174,7 @@ running the others.
 | `remove_silence` | write | Removes a maintenance window. |
 | `schedule_maintenance` | write | A one-off maintenance window at a given date, on one monitor or the whole instance, a week at most. |
 | `acknowledge_alert` | write | Acknowledges one alert by fingerprint for a number of hours (default 4): reminders pause, the resolution is still notified. `hours: 0` lifts it. |
+| `dismiss_alert` | write | Dismisses one alert by fingerprint ("got it"): hidden from the active alerts and silent, resolution included, until the condition clears; a later return alerts again. `undo: true` restores it. |
 | `probe_device` | write | Probes a monitor immediately and reports what was measured. |
 | `set_device_enabled` | write | Enables or disables monitoring of a monitor. |
 | `set_rule_enabled` | write | Enables or disables an alert rule. |
