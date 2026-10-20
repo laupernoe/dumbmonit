@@ -58,23 +58,33 @@ cache, internal errors), then the connections, operations per second, cache
 used, resident memory, queued operations and uptime, then the state and lag of
 each replica set member and the operations per second by type.
 
-## Create a MongoDB account with the clusterMonitor role
+## Create a read-only MongoDB account
 
-1. In mongosh, logged in with a user allowed to create users, create an account with the built-in clusterMonitor role only. It reads server and replication status, and no document of any database.
+1. In mongosh, create the account with the clusterMonitor role.
 
     ```
     use admin
     db.createUser({user: "dumbmonit", pwd: passwordPrompt(), roles: [{role: "clusterMonitor", db: "admin"}]})
     ```
 
-2. DumbMonit logs in with SCRAM-SHA-256, the default for accounts created on MongoDB 4.0 and later. If you created the account in another database than admin, set Authentication database below.
+2. In DumbMonit, enter the address of one mongod, for example db1.lan:27018, then the user and its password.
 
-3. In DumbMonit, enter the address of one mongod, for example "db1.lan" or "db1.lan:27018". In a replica set, add every member: each reports its own connections and cache, and any of them reports the state and lag of all members. If the server requires TLS, tick TLS below.
+3. In a replica set, add every member as its own monitor.
 
-4. DumbMonit only runs serverStatus and replSetGetStatus. It never lists a collection and never reads a document.
+4. Tick TLS if the server requires it.
+
+### Required permissions
+
+- **clusterMonitor (built-in role)**: Read server and replica set status
 
 !!! warning
-    A mongodb+srv:// address is not resolved: enter the host of each member instead. MongoDB older than 3.6 and mongos routers are not supported.
+    A mongodb+srv:// address is not resolved (enter each member's host), and MongoDB older than 3.6 and mongos routers are not supported.
+
+### Why these permissions
+
+clusterMonitor is read-only: DumbMonit only runs serverStatus and replSetGetStatus. It never lists a collection and never reads a document. DumbMonit logs in with SCRAM-SHA-256, the default for accounts created on MongoDB 4.0 and later. If you created the account in another database than admin, set Authentication database in the form. In a replica set each member reports its own connections and cache, and any of them reports the state and lag of all members.
+
+Vendor documentation: https://www.mongodb.com/docs/manual/reference/built-in-roles/#mongodb-authrole-clusterMonitor
 
 ## Credentials
 

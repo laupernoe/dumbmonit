@@ -65,20 +65,35 @@ the instance counts and the settings read from the administration API.
 
 ## Create a personal access token on an administrator account
 
-1. Create a personal access token on an administrator account: avatar → Edit profile → Access tokens → Add new token. Name it as follows, set an expiration date you are comfortable renewing, and tick the read_api scope only: it reads the whole API and writes nothing.
+1. On an administrator account, open avatar → Edit profile → Access → Personal access tokens → Generate token → Legacy token.
+
+2. Name it as follows, set an expiry date you can renew, and tick only the scope listed below.
 
     ```
     dumbmonit
     ```
 
-2. Sidekiq queues, CI runners, pending migrations, instance statistics, the sign-up and two-factor settings and the licence are each read from an administrator-only endpoint: GitLab has no finer delegation for them. A token from an ordinary account still works; only the version is then read, and the rest is skipped without failing the probe.
+3. Generate the token and copy it: GitLab shows it only once.
 
-3. In DumbMonit, enter the address you open GitLab with, for example "gitlab.example.com" (HTTPS on 443) or "https://git.example.com" behind a reverse proxy, and paste the token.
+4. In DumbMonit, enter GitLab's address and paste the token.
 
-4. To also watch CI pipelines, list the numeric project IDs (shown on each project's overview page, under its name) in the "Projects watched for CI health" option, comma-separated.
+5. To watch CI pipelines, list the numeric project IDs (shown on each project's page) in the Projects watched for CI health option.
+
+### Required permissions
+
+- **read_api**: Token scope: reads the whole API, writes nothing
+- **Administrator account**: Sidekiq, runners, migrations, statistics, settings and licence need it
+
+Vendor documentation: <https://docs.gitlab.com/ee/api/rest/>
+
+### Why these permissions
+
+`read_api` reads the whole API and writes nothing. Sidekiq queues, CI runners, pending migrations, instance statistics, the sign-up and two-factor settings and the licence are each read from an administrator-only endpoint: GitLab has no finer delegation for them. A token from an ordinary account still works; only the version is then read, and the rest is skipped without failing the probe.
+
+On an older GitLab, the token page is avatar → Edit profile → Access tokens → Add new token. Set an expiration date you are comfortable renewing, and revoke the token if it ever leaks.
 
 !!! warning
-    A personal access token on an administrator account can read everything the account can read, even with the read_api scope: GitLab has no read-only administrator role. Dedicate a bot account to it rather than reusing your own, and revoke the token if it ever leaks.
+    GitLab has no read-only administrator role, so the token can read everything its account can: use a dedicated bot account, not your own.
 
 ### Readiness check
 

@@ -80,21 +80,39 @@ sauvegarde, statut).
 
 ## Créer une clé d'API en lecture seule dans Immich
 
-1. Connectez-vous à Immich avec un compte qui peut ouvrir Administration : Immich ne laisse que ces comptes lire les compteurs de photos et les files de tâches. Ouvrez Account Settings → API Keys → New API Key, nommez-la comme suit, et cochez ces huit permissions : les cinq premières pour les files de tâches, les compteurs et la version, les trois dernières pour lister les appareils du compte et leur dernière connexion et sauvegarde.
+1. Dans Immich, ouvrez Account Settings → API Keys → New API Key et nommez-la comme suit.
 
     ```
     dumbmonit
-    server.about server.versionCheck server.storage server.statistics queue.read session.read asset.read user.read
     ```
 
-2. Copiez la clé maintenant : Immich ne la montre qu'une fois. Elle lit ces huit pages et rien d'autre : aucune photo, aucun album, aucun réglage. Si votre Immich n'offre pas queue.read, cochez job.read à la place.
+2. Cochez les droits listés ci-dessous, créez la clé et copiez-la : Immich ne la montre qu'une fois.
 
-3. Une clé créée par un compte ordinaire fonctionne aussi : version, mises à jour, espace disque et appareils sont lus, les compteurs de photos et les files de tâches sont ignorés.
+3. Dans DumbMonit, saisissez l'adresse d'Immich et collez la clé.
 
-4. Dans DumbMonit, saisissez l'adresse d'Immich, par exemple « immich.lan » (port 2283) ou « https://photos.example.com » derrière un reverse proxy, et collez la clé.
+### Droits requis
+
+- **server.about** : Version
+- **server.versionCheck** : Mise à jour disponible
+- **server.storage** : Espace disque
+- **server.statistics** : Nombre de photos et de vidéos
+- **queue.read** : Files de tâches (job.read sur un Immich ancien)
+- **session.read** : Appareils et dernière connexion
+- **asset.read** : Dernière sauvegarde
+- **user.read** : Le compte propriétaire de la clé
+
+Documentation de l'éditeur : <https://immich.app/docs/api/>
+
+### Pourquoi ces droits
+
+La clé lit ces huit pages et rien d'autre : aucune photo, aucun album, aucun réglage. Une clé créée par un compte ordinaire fonctionne aussi : la version, les mises à jour, l'espace disque et les appareils sont lus, les décomptes de photos et les files de tâches sont ignorés. Si votre Immich ne propose pas `queue.read`, cochez `job.read` à la place.
+
+Une file en pause s'oublie facilement : les nouvelles photos n'ont ni miniature, ni métadonnées, ni visages, et Immich ne le dit que sur sa page Jobs. DumbMonit prévient quand des tâches attendent dans une file qui n'est pas en pause et ne fait rien tourner.
+
+`session.read`, `asset.read` et `user.read` listent tous les appareils du compte propriétaire de la clé (ses téléphones, tablettes et navigateurs) avec la dernière connexion de chacun. L'API d'Immich n'enregistre pas quel appareil a envoyé une photo donnée : la « dernière sauvegarde » est donc le dernier envoi de toute la bibliothèque, affiché identique pour tous les appareils. Si un seul appareil cesse de sauvegarder alors que les autres continuent, sa connexion apparaîtra périmée mais la sauvegarde partagée paraîtra toujours fraîche.
 
 !!! warning
-    Une file en pause est facile à oublier : les nouvelles photos n'ont pas de vignette, pas de métadonnées et pas de visage, et Immich ne le dit que sur sa page Jobs. DumbMonit avertit quand des tâches attendent dans une file qui n'est pas en pause et qui n'exécute rien. session.read, asset.read et user.read listent chaque appareil du compte qui possède la clé — ses téléphones, tablettes et navigateurs — avec la dernière connexion de chacun. L'API d'Immich n'enregistre pas quel appareil a envoyé une photo donnée, donc « dernière sauvegarde » est l'envoi le plus récent de toute la bibliothèque, montré pareil pour chaque appareil : si un seul appareil arrête de sauvegarder pendant que les autres continuent, sa connexion se montrera périmée mais le chiffre de sauvegarde partagé paraîtra quand même frais.
+    Créez la clé depuis un compte qui peut ouvrir Administration, sinon les décomptes de photos et les files de tâches sont ignorés ; la « dernière sauvegarde » est le dernier envoi de toute la bibliothèque, identique pour chaque appareil.
 
 Ce que chaque permission ouvre : `server.about` la version
 (`/api/server/about`), `server.versionCheck` la dernière release connue

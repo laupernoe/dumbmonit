@@ -61,20 +61,36 @@ Les [règles intégrées](../alerting/rules.md#nutanix) qui s'appliquent :
 
 ## Créer un utilisateur en lecture seule dans Prism Central
 
-1. Dans Prism Central, ouvrez Admin Center > IAM > Identities et ajoutez un utilisateur local avec un long mot de passe aléatoire, nommé comme suit.
+1. Dans Prism Central, ouvrez Admin Center → IAM → Identities et ajoutez un utilisateur local avec un long mot de passe aléatoire.
 
     ```
     dumbmonit
     ```
 
-2. Sous Admin Center > IAM > Authorization Policies, créez une politique avec le rôle intégré Prism Viewer, pour toutes les entités, et attribuez-la à cet utilisateur. Prism Viewer lit les clusters, hôtes, VM, conteneurs de stockage et alertes, et ne modifie rien.
+2. Ouvrez Admin Center → IAM → Authorization Policies et créez une politique avec le rôle Prism Viewer, pour toutes les entités, attribuée à cet utilisateur.
 
-3. Dans DumbMonit, saisissez l'adresse de Prism Central, par exemple « prism-central.lan », avec ce nom d'utilisateur et ce mot de passe. Un seul Prism Central rapporte tous les clusters qui y sont enregistrés.
+3. Dans DumbMonit, saisissez l'adresse de Prism Central (par exemple prism-central.lan) avec ce nom d'utilisateur et ce mot de passe.
 
-4. DumbMonit ne fait que lire l'API v4 (clustermgmt, vmm et monitoring, version 4.0) : il n'allume ni n'éteint jamais une VM, ne résout jamais une alerte et ne modifie jamais un conteneur de stockage.
+### Droits requis
+
+- **Prism Viewer, toutes les entités** : Voit clusters, hôtes, VM, conteneurs de stockage, alertes
 
 !!! warning
-    L'API v4 est servie par Prism Central pc.2024.3 ou plus récent ; un cluster géré par Prism Element seul, ou par un Prism Central plus ancien, n'est pas pris en charge. Prism Central fournit un certificat autosigné : cochez « Accepter un certificat non vérifiable » sauf si l'hôte DumbMonit fait confiance à son autorité de certification.
+    Demande Prism Central pc.2024.3 ou plus récent (API v4) ; Prism Element seul n'est pas pris en charge. Prism Central utilise un certificat autosigné : activez « Accepter un certificat non vérifiable » sauf si DumbMonit lui fait confiance.
+
+Documentation de l'éditeur : [Nutanix developer portal](https://developers.nutanix.com/)
+
+### Pourquoi ces droits
+
+`Prism Viewer` lit les clusters, hôtes, VM, conteneurs de stockage et alertes,
+et ne modifie rien. Un seul Prism Central remonte tous les clusters qui lui
+sont rattachés.
+
+L'API v4 est servie par Prism Central pc.2024.3 ou plus récent ; un cluster
+géré par Prism Element seul, ou par un Prism Central plus ancien, n'est pas
+pris en charge. DumbMonit ne lit que l'API v4 (clustermgmt, vmm et monitoring,
+version 4.0) : il n'allume ni n'éteint jamais une VM, ne résout jamais une
+alerte et ne modifie jamais un conteneur de stockage.
 
 ## Identifiants
 

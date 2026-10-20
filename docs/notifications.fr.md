@@ -91,9 +91,14 @@ disent, pour chaque canal, ce qui va où.
 ## Acquitter ou mettre en pause depuis la notification {#acknowledge-or-snooze-from-the-notification}
 
 Quand une URL publique est réglée (**Réglages → Notifications et rapports → Politique de
-notification**, ou `DUMBMONIT_PUBLIC_URL`), chaque message d'alerte porte deux
+notification**, ou `DUMBMONIT_PUBLIC_URL`), chaque message d'alerte porte trois
 actions :
 
+- **Écarter** (« Dismiss ») : « j'ai compris ». L'alerte quitte la liste active et
+  plus rien ne part pour elle, pas même sa résolution, jusqu'à ce que la condition
+  retombe ; si elle revient plus tard, elle alerte à nouveau. Elle vient en premier :
+  c'est elle qui reste là où seuls deux boutons tiennent (Web Push dans la plupart
+  des navigateurs).
 - **Acquitter** (« Acknowledge ») : plus de rappels jusqu'à la résolution de
   l'alerte. La résolution reste annoncée.
 - **Pause 1 h** (« Snooze 1 h ») : plus de rappels pendant une heure ; ils
@@ -106,7 +111,7 @@ Leur présentation dépend du canal :
 |---|---|
 | ntfy, Telegram, Web Push | Boutons sous la notification |
 | Discord, Slack, courriel et tous les autres canaux | Liens en fin de message |
-| Webhook personnalisé | Liens dans `{{message}}`, et les variables `{{ack_url}}` / `{{snooze_url}}` |
+| Webhook personnalisé | Liens dans `{{message}}`, et les variables `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` |
 | PagerDuty, Opsgenie | Rien : acquittez dans le service lui-même |
 
 Telegram n'accepte de boutons que vers une adresse `https` avec un nom de domaine ;
@@ -121,7 +126,7 @@ la page. Aucune connexion n'est nécessaire : le lien est l'autorisation, et
 seulement pour ce geste, sur les alertes de ce message (ce déclenchement-là : une
 alerte résolue puis redéclenchée n'est plus couverte par l'ancien lien), une seule fois, pendant
 24 heures. L'action est inscrite au journal d'audit, et l'alerte indique
-« acknowledged by via notification link ».
+« acknowledged by via notification link » (ou « dismissed by via notification link »).
 
 La sécurité, en bref : chaque lien est signé avec une clé dérivée du secret
 d'instance (changer le secret invalide tous les liens), ne porte aucune session, et
@@ -222,6 +227,7 @@ votre JSON normalement.
 | `{{token}}` | Le secret `token` du canal | *(votre jeton)* |
 | `{{ack_url}}` | Lien signé qui acquitte l'alerte jusqu'à sa résolution, vide si les [liens d'action](#acknowledge-or-snooze-from-the-notification) sont désactivés | `https://dumbmonit.home/alert-action#…` |
 | `{{snooze_url}}` | Lien signé qui met l'alerte en pause une heure, vide si les liens d'action sont désactivés | `https://dumbmonit.home/alert-action#…` |
+| `{{dismiss_url}}` | Lien signé qui écarte l'alerte (masquée et muette jusqu'à sa résolution), vide si les liens d'action sont désactivés | `https://dumbmonit.home/alert-action#…` |
 
 Deux remarques utiles :
 

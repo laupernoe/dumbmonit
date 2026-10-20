@@ -483,8 +483,9 @@ mod tests {
         assert!(payload_for(&message, false).get("actions").is_none());
         assert!(payload(&message).get("actions").is_none());
         let json = payload_for(&message, true);
-        assert_eq!(json["actions"][0]["action"], "ack");
-        assert_eq!(json["actions"][1]["action"], "snooze");
+        assert_eq!(json["actions"][0]["action"], "dismiss");
+        assert_eq!(json["actions"][1]["action"], "ack");
+        assert_eq!(json["actions"][2]["action"], "snooze");
         let url = json["actions"][0]["url"].as_str().unwrap();
         assert!(url.starts_with("/alert-action#"), "relative: {url}");
     }

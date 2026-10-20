@@ -90,25 +90,29 @@ platform (database, PHP).
 
 ## Give Nextcloud a monitoring token
 
-1. Nextcloud's serverinfo app, shipped and enabled with Nextcloud, answers to a monitoring token that opens its statistics and nothing else: no file, no user, no share. On the Nextcloud server, set a long random token and print it back. Run occ as the web server user; in Docker, put docker exec -u www-data and the container name in front.
+1. On the Nextcloud server, set a random token with occ as the web server user (in Docker: docker exec -u www-data, then the container name).
 
     ```
     php occ config:app:set serverinfo token --value "$(openssl rand -hex 32)"
     php occ config:app:get serverinfo token
     ```
 
-2. If occ says serverinfo is disabled, enable it first. Right after the token is set, Nextcloud may refuse the very first read (401) before it takes effect: DumbMonit retries once after two seconds, so a brand-new target does not show a spurious "token refused" error.
+2. If occ says serverinfo is disabled, enable the Monitoring app: profile menu → Apps → Monitoring → Enable.
 
-    ```
-    php occ app:enable serverinfo
-    ```
+3. In DumbMonit, enter the address you open Nextcloud with and paste the token.
 
-3. In DumbMonit, enter the address you open Nextcloud with, for example "cloud.example.com" (HTTPS on 443) or "http://10.0.0.5:8080", and paste the token. The host must be one of Nextcloud's trusted domains, or Nextcloud refuses the request.
+Vendor documentation: <https://github.com/nextcloud/serverinfo#api>
 
-4. DumbMonit reads status.php and the serverinfo statistics only. It never opens a file, never lists users and never changes a setting, and the token cannot log in anywhere.
+### Why a token, and why occ
+
+Nextcloud's serverinfo app answers to a monitoring token that opens its statistics and nothing else: no file, no user, no share, and the token cannot log in anywhere. The Monitoring app documents no screen to set that token, so occ is the way to set it. DumbMonit reads `status.php` and the serverinfo statistics only: it never opens a file, never lists users and never changes a setting.
+
+Right after the token is set, Nextcloud may refuse the very first read (401) before it takes effect: DumbMonit retries once after two seconds, so a brand-new target does not show a spurious "token refused" error. If you prefer the command line to enable the app, `php occ app:enable serverinfo` does the same as the Apps page.
+
+The address must be one of Nextcloud's trusted domains (`trusted_domains` in `config.php`).
 
 !!! warning
-    Nextcloud does not tell the token when background jobs (cron) last ran: only an account with every right on the instance can read that. To be told when cron stops, add a Heartbeat in DumbMonit and call its URL at the end of the cron line, as the documentation shows.
+    Use an address listed in Nextcloud's trusted domains, or Nextcloud refuses the request.
 
 With Nextcloud AIO, run occ in the `nextcloud-aio-nextcloud` container:
 `docker exec -u www-data nextcloud-aio-nextcloud php occ …`. Why not a

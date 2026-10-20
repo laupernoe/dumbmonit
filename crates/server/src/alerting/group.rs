@@ -165,7 +165,9 @@ pub fn decide(outcome: &AlertOutcome, now: DateTime<Utc>) -> Option<NotifyReason
             if state.suppressed || state.silenced || state.learning {
                 return None;
             }
-            if state.is_acked(now) {
+            // Écartée (« j'ai compris ») : plus rien pour cette occurrence, ni
+            // première annonce, ni rappel, ni escalade, ni relais.
+            if state.is_acked(now) || state.is_dismissed() {
                 return None;
             }
             if state.notify_count == 0 {
@@ -515,6 +517,27 @@ mod tests {
         assert_eq!(decide(&o, at(14_400)), Some(NotifyReason::Escalation));
         o.state.last_notified_at = Some(at(14_400));
         assert_eq!(decide(&o, at(18_000)), Some(NotifyReason::Reminder));
+    }
+
+    #[test]
+    fn une_alerte_ecartee_ne_dit_plus_rien_tant_qu_elle_dure() {
+        let mut o = outcome("a", 1, "nas");
+        o.state.dismissed_at = Some(at(10));
+        o.state.dismissed_by = Some("admin".to_string());
+        assert_eq!(decide(&o, at(10)), None, "dismissed before the first announcement");
+
+        o.state.notify_count = 1;
+        o.state.last_notified_at = Some(at(0));
+        o.escalate_after = Some(Duration::from_secs(1800));
+        o.unacked_after = Some(Duration::from_secs(900));
+        o.recurred = true;
+        for now in [900, 1800, 3600, 7 * 86_400] {
+            assert_eq!(decide(&o, at(now)), None, "nothing at {now}");
+        }
+        // Rétablie (« Undo ») : elle reparle.
+        o.state.dismissed_at = None;
+        o.state.dismissed_by = None;
+        assert_eq!(decide(&o, at(3600)), Some(NotifyReason::Recurrence));
     }
 
     #[test]
