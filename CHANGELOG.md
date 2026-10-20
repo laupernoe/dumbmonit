@@ -5,6 +5,20 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- **Editing a monitor no longer loses or seems to lose its credentials.** The
+  edit form now shows the saved non-secret parts (Proxmox token ID, user name,
+  SNMP v3 user and protocols), returned by the API as `credential_public` with
+  `has_secret`; a saved secret shows as dots ("Saved. Leave empty to keep it").
+  A secret field left blank is now left out of the request and the server keeps
+  the saved one, as long as the user name or token ID it belongs to and the
+  address are unchanged; otherwise the form asks to type it again. This fixes
+  a real loss: editing an SNMP v3 monitor and retyping only the authentication
+  passphrase erased the privacy passphrase. Secret fields also no longer invite
+  the browser to autofill the DumbMonit sign-in into them. SNMP v3 gains an
+  explicit "None" privacy choice to turn encryption off. Secrets are still never
+  returned by any response.
 ### Added
 
 - **Import Uptime Kuma 1.x and 2.x from `kuma.db`.** Uptime Kuma 2 dropped its

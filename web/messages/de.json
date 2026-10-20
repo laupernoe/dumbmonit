@@ -653,13 +653,16 @@
 	"demo_tour_s8_title": "Wandmodus",
 	"deviceform_checksums_summary": "Prüfsummen der Binärdateien (SHA-256) – der Installer prüft den Download dagegen",
 	"deviceform_cred_auth_label": "Authentifizierung",
-	"deviceform_cred_keep": "Leer lassen, um die gespeicherten Zugangsdaten zu behalten.",
 	"deviceform_cred_no_auth": "Keine Authentifizierung",
 	"deviceform_cred_none": "Es wird nichts an den Monitor gesendet: Er antwortet ohne Zugangsdaten.",
 	"deviceform_cred_note_paste": "Eingefügten Wert bereinigt: Umgebende Leerzeichen, Anführungszeichen oder Zeilenumbrüche wurden entfernt.",
 	"deviceform_cred_note_token": "Das war das ganze Token: Der Teil nach „=“ wurde nach Secret verschoben.",
 	"deviceform_cred_required": "{label} ist erforderlich.",
 	"deviceform_cred_token_format": "Erwartet wird user@realm!name, genau so, wie Proxmox es anzeigt.",
+	"deviceform_cred_saved_keep": "Gespeichert. Leer lassen, um es zu behalten.",
+	"deviceform_cred_reenter_identity": "Erneut eingeben: Der gespeicherte Wert gehört zum vorherigen Wert von „{label}“.",
+	"deviceform_cred_reenter_destination": "Erneut eingeben: Ein gespeichertes Geheimnis wird nie an eine geänderte Adresse oder Verbindung gesendet.",
+	"deviceform_cred_choice_none": "Keine",
 	"deviceform_discovery_add_aria": "{name} hinzufügen",
 	"deviceform_discovery_add_n": [
 		{

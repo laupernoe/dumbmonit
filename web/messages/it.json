@@ -653,13 +653,16 @@
 	"demo_tour_s8_title": "Modalità parete",
 	"deviceform_checksums_summary": "Checksum dei binari (SHA-256): l'installer verifica il download con questi valori",
 	"deviceform_cred_auth_label": "Autenticazione",
-	"deviceform_cred_keep": "Lascia vuoto per mantenere le credenziali salvate.",
 	"deviceform_cred_no_auth": "Nessuna autenticazione",
 	"deviceform_cred_none": "Al monitor non viene inviato nulla: risponde senza credenziali.",
 	"deviceform_cred_note_paste": "Valore incollato ripulito: spazi, virgolette o a capo ai bordi sono stati rimossi.",
 	"deviceform_cred_note_token": "Era il token completo: la parte dopo \"=\" è stata spostata in Segreto.",
 	"deviceform_cred_required": "{label} è obbligatorio.",
 	"deviceform_cred_token_format": "Formato atteso: user@realm!name, esattamente come lo mostra Proxmox.",
+	"deviceform_cred_saved_keep": "Salvato. Lascia vuoto per mantenerlo.",
+	"deviceform_cred_reenter_identity": "Inseriscilo di nuovo: quello salvato corrisponde al valore precedente di «{label}».",
+	"deviceform_cred_reenter_destination": "Inseriscilo di nuovo: un segreto salvato non viene mai inviato a un indirizzo o a una connessione modificati.",
+	"deviceform_cred_choice_none": "Nessuno",
 	"deviceform_discovery_add_aria": "Aggiungi {name}",
 	"deviceform_discovery_add_n": [
 		{

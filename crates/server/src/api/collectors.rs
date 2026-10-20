@@ -220,8 +220,9 @@ const SNMP_V3: CredentialView = CredentialView {
         cred_select(
             "privacy_protocol",
             "Privacy protocol",
-            "Encryption of the SNMP traffic. Ignored when the privacy passphrase is empty.",
-            &["aes128", "aes192", "aes256", "des"],
+            "Encryption of the SNMP traffic. \"none\", or a blank passphrase on a new monitor, \
+             means authentication without encryption.",
+            &["aes128", "aes192", "aes256", "des", "none"],
         ),
         cred_secret(
             "privacy_passphrase",
