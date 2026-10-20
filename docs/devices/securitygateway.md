@@ -64,32 +64,46 @@ every performance counter with its latest value.
 
 ## Watch the gateway services, and optionally the REST API
 
-1. Nothing to install on the server. With no credential, DumbMonit connects to SMTP (25) and the web interface (4000) from the outside and reads the SMTP greeting. Change the list in the Services option, for example to check HTTPS instead of HTTP.
-
-    ```
-    smtp,web_https
-    ```
-
-2. To also read the performance counters, SecurityGateway 12.5 or later is needed. Create a dedicated account named as follows, with a long password used nowhere else, and give it the Domain Administrator role. If the counters stay empty on the monitor page, your version keeps them for the Global Administrator role, and the account needs that role instead.
+1. In SecurityGateway 12.5 or later, open Setup/Users → Accounts → Administrators → New and create the account below, with a long unique password.
 
     ```
     dumbmonit
     ```
 
-3. Sign in as that account and create a key under Setup/Users → Accounts → API Keys, with an expiry date. A key carries the rights of the account that creates it, which is why it must be created from this account and not from yours.
+2. Give the account the role listed below, and restrict it to the DumbMonit address in IP Restriction Options.
 
-4. Restrict the account to the address DumbMonit connects from in its IP restrictions: API keys obey them too.
+3. Sign in as that account, open Setup/Users → Accounts → API Keys and create a key with an expiry date.
 
-5. Check from the DumbMonit host that the key works. The command prints the API description, which also lists the counters DumbMonit reads.
+4. In DumbMonit, enter the gateway address and paste the key.
+
+5. To check more ports than SMTP and the web interface, set the Services option to a list like this one.
 
     ```
-    curl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi
+    smtp,web_https
     ```
 
-6. In DumbMonit, enter the gateway address, for example "sg.example.com", and paste the key. The API is reached on the web interface HTTPS port, 4443 by default, under /api/v1.
+### Required permissions
+
+- **Domain Administrator**: Use Global Administrator if the counters stay empty
+
+Vendor documentation: <https://help.mdaemon.com/SecurityGateway/en/api_keys.html>
+
+### Good to know
+
+Nothing to install on the server. With no credential, DumbMonit connects to SMTP (25) and the web interface (4000) from the outside and reads the SMTP greeting. Versions before 12.5 have no REST API: leave the credential empty and DumbMonit checks the services only.
+
+The role is Domain Administrator; if the counters stay empty on the monitor page, your version keeps them for the Global Administrator role, and the account needs that role instead. A key carries the rights of the account that creates it, which is why it must be created from the dedicated account and not from yours. API keys obey the account's IP restrictions.
+
+The API is reached on the web interface HTTPS port, 4443 by default, under `/api/v1`. To check from the DumbMonit host that the key works, run the command below: it prints the API description, which also lists the counters DumbMonit reads.
+
+```
+curl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi
+```
+
+The web interface often uses a self-signed certificate on 4443: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options.
 
 !!! warning
-    SecurityGateway has no read-only role and no narrower key: the key can do everything its account can. Never create it from your own account, keep it only in DumbMonit and give it an expiry date. Versions before 12.5 have no REST API: leave the credential empty and DumbMonit checks the services only. The web interface often uses a self-signed certificate on 4443: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options.
+    SecurityGateway has no read-only role or narrower key: create the key from the dedicated account, never your own, and give it an expiry date.
 
 ## Credentials
 

@@ -215,24 +215,17 @@ la surveillance retire tout cela.
 Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
 
 1. Dans l'adresse, collez la page à surveiller, avec http:// ou https://.
-   Pour surveiller tout un site ou une de ses sections, collez sa page de
-   départ et réglez « Portée » sur « site » : chaque page sous le même
-   dossier est suivie, jusqu'à « Pages maximum ».
-2. Les lignes qui changent à chaque visite (une horloge, un compteur de
-   visiteurs, « mis à jour il y a 5 minutes ») seraient rapportées chaque
-   fois : listez-les dans « Ignorer les lignes » comme expressions
-   régulières.
-3. La première vérification n'enregistre que la référence, rien n'est
-   rapporté. À partir de là, chaque vérification compare le texte visible
-   page par page et garde une copie avant/après de chaque changement,
-   montrée sur la page de la surveillance ; l'alerte « Site web changé » vous
-   le dit.
-4. Pour une capture d'écran de chaque version, ajoutez un service de
-   navigateur headless à votre fichier Compose et pointez DumbMonit vers lui,
-   comme montré sous [Captures d'écran](#screenshots).
+
+2. Pour suivre un site entier ou une section, réglez « Portée » sur « site ».
+
+3. Listez les lignes qui changent à chaque visite (une horloge, un compteur) dans « Ignorer les lignes », sous forme d'expressions régulières.
+
+4. Pour une capture d'écran de chaque version, suivez la section « Captures d'écran » de cette page.
 
 !!! warning
-    Seul le texte envoyé par le serveur est comparé : une page dessinée entièrement par JavaScript montre peu ou rien à la vérification. Les pages derrière une connexion ne sont pas accessibles non plus.
+    Seul le texte envoyé par le serveur est comparé : les pages dessinées par JavaScript ou derrière une connexion ne sont pas suivies.
+
+Avec la portée « site », toutes les pages sous le même dossier sont suivies, jusqu'à « Pages maximum ». La première vérification enregistre seulement la référence, rien n'est signalé. Ensuite, chaque vérification compare le texte visible page par page et garde une copie avant/après de chaque changement, affichée sur la page de la surveillance ; l'alerte « Website changed » vous prévient.
 
 Identifiants : aucun. Les vérifications tournent toujours sur le serveur
 DumbMonit : une surveillance de site web ne peut pas passer par un agent

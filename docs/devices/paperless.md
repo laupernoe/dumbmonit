@@ -49,27 +49,39 @@ failed tasks and disk space, then each component and the failed tasks by name.
 
 ## Create a read-only user in Paperless-ngx
 
-1. Create a user named as follows, with a long random password, no superuser or staff status, and three view permissions only: tasks, system monitoring and global statistics. With the API and your own account, the two commands below create it and print its token.
+1. In Paperless-ngx, open Settings → Users & Groups → Add user and name it as follows, with a long random password.
 
     ```
     dumbmonit
-    curl -u YOUR_USER -H 'Content-Type: application/json' -X POST https://paperless.example.com/api/users/ -d '{"username":"dumbmonit","password":"CHANGE-ME","user_permissions":["view_paperlesstask","view_system_monitoring","view_global_statistics"]}'
-    curl -X POST https://paperless.example.com/api/token/ -d 'username=dumbmonit&password=CHANGE-ME'
     ```
 
-2. In the web interface instead: Users & Groups → Add user, then in its permissions tick View on the PaperlessTask, SystemMonitoring and GlobalStatistics rows only. Log in as that user once, open My Profile and generate its API token.
+2. Leave Superuser and Staff off, and give it only the permissions listed below.
 
-3. This user reads no document at all: global statistics give the counts, system monitoring gives the health of the database, Redis, Celery and the index, and tasks show the failed ones. On Paperless-ngx 2.x, where the last two permissions do not exist, health and counts are skipped and the rest is read.
+3. Log in as that user, open the user menu → My Profile and generate its API token (circular arrow button).
 
-4. In DumbMonit, enter the address, for example "paperless.lan" (port 8000) or "https://paperless.example.com" behind a reverse proxy, and paste the token.
+4. In DumbMonit, enter Paperless-ngx's address and paste the token.
+
+### Required permissions
+
+- **View on PaperlessTask**: Failed imports
+- **View on SystemMonitoring**: Health of database, Redis, Celery and index
+- **View on GlobalStatistics**: Document counts
+
+Vendor documentation: <https://docs.paperless-ngx.com/api/>
+
+### Why these permissions
+
+This user reads no document at all: global statistics give the counts, system monitoring gives the health of the database, Redis, Celery and the index, and tasks show the failed ones. On Paperless-ngx 2.x, where SystemMonitoring and GlobalStatistics do not exist, health and counts are skipped and the rest is read. Asking for the system status can take several seconds while Redis is down: Paperless waits for it before answering.
+
+To create the user through the API instead of the web interface, replace `CHANGE-ME` with a long random password and `YOUR_USER` with an account allowed to manage users (curl asks for its password):
+
+```
+curl -u YOUR_USER -H 'Content-Type: application/json' -X POST https://paperless.example.com/api/users/ -d '{"username":"dumbmonit","password":"CHANGE-ME","user_permissions":["view_paperlesstask","view_system_monitoring","view_global_statistics"]}'
+curl -X POST https://paperless.example.com/api/token/ -d 'username=dumbmonit&password=CHANGE-ME'
+```
 
 !!! warning
     When Redis or Celery stops, Paperless keeps serving its pages and documents, but nothing new is imported, from the consume folder or from mail, until someone looks. DumbMonit alerts on both.
-
-Replace `CHANGE-ME` with a long random password before running the commands,
-and `YOUR_USER` with an account allowed to manage users (curl asks for its
-password). Asking for the system status can take several seconds while Redis is
-down: Paperless waits for it before answering.
 
 ## Credentials
 

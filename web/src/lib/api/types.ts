@@ -528,6 +528,12 @@ export interface DiscoveryResult {
 export interface CollectorSetup {
 	title: string;
 	steps: string[];
+	/**
+	 * Rights, roles or permissions to give the monitoring account, one per entry:
+	 * the first line is the right (shown in bold), the optional second line says
+	 * what it is for. The server omits the field when a type needs none.
+	 */
+	permissions?: string[];
 	warning: string;
 	doc_url: string;
 }
@@ -647,7 +653,7 @@ export interface CollectorInfo {
  * `|| ''` in components.
  */
 export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string }): CollectorInfo {
-	const setup = raw.setup ?? { title: '', steps: [], warning: '', doc_url: '' };
+	const setup = raw.setup ?? { title: '', steps: [], permissions: [], warning: '', doc_url: '' };
 	const options = Array.isArray(raw.options) ? raw.options : [];
 	const credential_types = Array.isArray(raw.credential_types)
 		? raw.credential_types.filter((t) => typeof t === 'string')
@@ -671,6 +677,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 		setup: {
 			title: setup.title?.trim() ?? '',
 			steps: Array.isArray(setup.steps) ? setup.steps.filter((s) => s.trim()) : [],
+			permissions: Array.isArray(setup.permissions) ? setup.permissions.filter((s) => s.trim()) : [],
 			warning: setup.warning?.trim() ?? '',
 			doc_url: setup.doc_url?.trim() ?? ''
 		},

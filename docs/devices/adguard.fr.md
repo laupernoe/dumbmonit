@@ -80,39 +80,43 @@ filtres avec leurs règles et dernière mise à jour.
 
 ## Ajouter un utilisateur pour DumbMonit dans AdGuard Home
 
-1. AdGuard Home n'a pas de compte en lecture seule : chaque utilisateur listé dans AdGuardHome.yaml peut changer chaque réglage. Donnez à DumbMonit un utilisateur qui lui est propre, pour qu'il puisse être supprimé sans toucher au vôtre. Faites d'abord un hash bcrypt d'un mot de passe long et aléatoire (htpasswd vient avec le paquet apache2-utils ou httpd-tools) :
+1. Générez un hash bcrypt d'un long mot de passe aléatoire (htpasswd vient avec apache2-utils ou httpd-tools).
 
     ```
     htpasswd -B -C 10 -n -b dumbmonit 'LONG-RANDOM-PASSWORD'
     ```
 
-2. Arrêtez AdGuard Home, ouvrez AdGuardHome.yaml (à côté du binaire AdGuardHome, ou dans le dossier conf du volume Docker) et ajoutez cette ligne sous "users:", à la même indentation que la ligne "- name:" déjà là. Remplacez HASH par ce que htpasswd a affiché après "dumbmonit:". Redémarrez AdGuard Home.
+2. Arrêtez AdGuard Home, ajoutez cette ligne sous users: dans AdGuardHome.yaml en remplaçant HASH par le hash affiché, puis redémarrez-le.
 
     ```
     - { name: dumbmonit, password: "HASH" }
     ```
 
-    La section lit alors :
+3. Dans DumbMonit, saisissez l'adresse de l'interface web d'AdGuard Home, puis l'utilisateur dumbmonit et son mot de passe.
 
-    ```yaml
-    users:
-      - { name: dumbmonit, password: "$2y$10$…" }
-      - name: yourname
-        password: $2a$10$…
-    ```
+Documentation de l'éditeur : <https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#password-reset>
 
-3. Vérifiez depuis l'hôte DumbMonit que l'utilisateur est accepté :
+### Pourquoi un utilisateur à part
 
-    ```
-    curl -u dumbmonit http://adguard.lan/control/status
-    ```
+AdGuard Home n'a ni compte en lecture seule ni écran de gestion des utilisateurs : tout utilisateur listé dans AdGuardHome.yaml peut changer tous les réglages. Donnez à DumbMonit un utilisateur à lui, pour pouvoir le retirer sans toucher au vôtre. AdGuardHome.yaml se trouve à côté du binaire AdGuardHome, ou dans le dossier conf du volume Docker. Ajoutez la ligne sous `users:`, à la même indentation que la ligne `- name:` déjà présente, et remplacez `HASH` par ce que htpasswd a affiché après `dumbmonit:`. La section se lit alors :
 
-4. Dans DumbMonit, saisissez l'adresse de l'interface web d'AdGuard Home, par exemple « adguard.lan » (port 80) ou « http://adguard.lan:3000 », puis l'utilisateur dumbmonit et son mot de passe.
+```yaml
+users:
+  - { name: dumbmonit, password: "$2y$10$…" }
+  - name: yourname
+    password: $2a$10$…
+```
 
-5. DumbMonit ne lit que le statut, les statistiques, les listes de filtres et la dernière vérification de version. Il ne lit jamais le journal de requêtes. À chaque vérification, il demande à AdGuard Home de tester chaque serveur DNS amont, comme le fait le bouton Test upstreams ; décochez Tester les serveurs amont ci-dessous pour arrêter cela.
+Pour vérifier depuis l'hôte DumbMonit que l'utilisateur est accepté :
+
+```
+curl -u dumbmonit http://adguard.lan/control/status
+```
+
+DumbMonit lit seulement l'état, les statistiques, les listes de filtres et la dernière vérification de version. Il ne lit jamais le journal des requêtes. À chaque vérification, il demande à AdGuard Home de tester chaque serveur DNS amont, comme le bouton Test upstreams ; décochez Test upstream servers dans les options pour l'arrêter. Après cinq mauvais mots de passe, AdGuard Home refuse l'adresse pendant 15 minutes.
 
 !!! warning
-    L'utilisateur dumbmonit peut changer chaque réglage, comme tout utilisateur AdGuard Home : gardez son mot de passe pour DumbMonit seul. Il voyage avec chaque requête, donc sur un réseau non sûr activez HTTPS dans Settings → Encryption settings. Après cinq mots de passe incorrects, AdGuard Home refuse l'adresse pendant 15 minutes.
+    AdGuard Home n'a pas d'utilisateur en lecture seule, donc dumbmonit peut changer tous les réglages : gardez son mot de passe pour DumbMonit seul, et activez HTTPS dans Settings → Encryption settings sur un réseau non fiable.
 
 AdGuard Home doit être arrêté pendant que vous éditez le fichier : il
 réécrit AdGuardHome.yaml chaque fois qu'un réglage change, et perdrait une
