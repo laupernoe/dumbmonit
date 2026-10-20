@@ -4503,3 +4503,80 @@ export interface DiscoveryJob extends DiscoveryJobSummary {
 	error: string | null;
 	hosts: DiscoveredHost[];
 }
+
+// --- Server logs (Settings → System → Logs) -----------------------------------
+
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+
+export interface LogFile {
+	/** Day, `YYYY-MM-DD`. */
+	day: string;
+	bytes: number;
+	compressed: boolean;
+}
+
+/** Local log files and the disk writer. Mirrors `GET /api/logs`. */
+export interface LogsInfo {
+	directory: string;
+	retention_days: number;
+	max_total_mb: number;
+	total_bytes: number;
+	oldest_day: string | null;
+	days_available: number;
+	files: LogFile[];
+	writer: { active: boolean; dropped: number };
+}
+
+export interface LogsSettingsUpdate {
+	retention_days?: number;
+	max_total_mb?: number;
+}
+
+export interface LogExportEstimate {
+	days: number;
+	from: string;
+	to: string;
+	files: number;
+	/** Estimated size of the downloaded .tar.gz. */
+	bytes: number;
+}
+
+/** Same shape as a channel kind, without delivery actions. */
+export type LogKindInfo = Omit<ChannelKindInfo, 'actions'>;
+
+export interface LogDestinationStats {
+	sent: number;
+	dropped: number;
+	failed_batches: number;
+	queued: number;
+	last_error: string | null;
+	last_error_at: string | null;
+	last_success_at: string | null;
+}
+
+/** A destination as returned on read: never its secrets. */
+export interface LogDestination {
+	id: number;
+	name: string;
+	kind: string;
+	enabled: boolean;
+	min_level: LogLevel;
+	settings: Record<string, unknown>;
+	has_secret: boolean;
+	stats: LogDestinationStats | null;
+}
+
+export interface LogDestinationPayload {
+	name: string;
+	kind: string;
+	enabled: boolean;
+	min_level: LogLevel;
+	settings: Record<string, unknown>;
+	/** Omitted = keep the stored secrets, `{}` = clear them. */
+	secrets?: Record<string, unknown>;
+}
+
+export interface LogTestResult {
+	ok: boolean;
+	message: string;
+}
