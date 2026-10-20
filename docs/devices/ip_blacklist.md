@@ -12,6 +12,15 @@ you, or the addresses your servers send from: a neighbour's compromised
 machine gets a listing that a stricter receiver may extend to the whole
 range.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 53 | UDP | DNS lookups of the blocklists (default port) |
+| 53 | TCP | DNS lookups too large for UDP (default port) |
+
 ## Limits
 
 - **At most a /24 per monitor.** A larger range is refused with a message

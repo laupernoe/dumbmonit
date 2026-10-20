@@ -6,6 +6,14 @@ verify, prune, ramasse-miettes), datastores, disques et pools ZFS, mises
 à jour en attente, les services et versions de paquet du serveur
 lui-même, et le niveau bande quand il y en a un.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8007 | TCP | API (HTTPS, par défaut) |
+
 ## La page de la surveillance
 
 ![Une surveillance PBS : échecs, le calendrier de sauvegarde sur 30 jours, jobs et santé](../assets/screenshots/device-pbs-light.png){ loading=lazy }
@@ -91,6 +99,7 @@ Toutes les métriques sont préfixées `dumbmonit_pbs_`.
 | Services (option `services`, un appel) | `node_service_active` (1 en cours, 0 non), `node_service_enabled` (absent pour une unité `static`, qu'une autre unité entraîne et qui n'est donc ni activée ni désactivée), `node_services_total` | `service`, `expected` (`"1"` pour `proxmox-backup`, `proxmox-backup-proxy` et `proxmox-backup-banner`, les unités dont le serveur ne peut pas se passer ; chaque autre unité obtient quand même sa série, avec `expected="0"`, et ne déclenche jamais d'alerte) |
 | Certificat (option `certificates`, désactivée par défaut) | `node_certificate_expires_seconds`, négatif une fois expiré | `certificate` (le nom de fichier), `issuer` |
 | Contrôle de trafic (option `traffic_control`) | `traffic_rate_in_bytes`, `traffic_rate_out_bytes` (mesuré à l'instant de la sonde), `traffic_limit_in_bytes`, `traffic_limit_out_bytes` (le plafond configuré, analysé depuis les chaînes décimales de PBS comme `100 MB` ; absent quand cette direction est sans plafond, plutôt qu'un zéro qui se lirait comme « tout est bloqué »), `traffic_rules_total` | `rule` |
+| Options sautées | `feature_skipped_info` : 1 tant qu'un appel facultatif est refusé (403) faute de droit, absente sinon. La page du moniteur l'affiche en note discrète qui nomme le droit ; ce n'est ni une erreur de sonde ni une alerte | `feature`, `privilege` |
 | Limites et collection | `backup_groups_total`, `backup_groups_dropped`, `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Une tâche qui se termine en `WARNINGS: n` compte comme réussie. Les

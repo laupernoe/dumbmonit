@@ -2384,6 +2384,21 @@ async fn list_device_types(state: &AppState, args: &Args) -> ToolResult {
                 text.push_str(&format!("\n{}. {}", index + 1, step.replace('\n', " — ")));
             }
         }
+        if !kind.setup.ports.is_empty() {
+            text.push_str("\nNetwork ports to open:");
+            for port in &kind.setup.ports {
+                let way = if port.direction == "to_server" {
+                    "device/agent to DumbMonit"
+                } else {
+                    "DumbMonit to device"
+                };
+                let optional = if port.optional { ", optional" } else { "" };
+                text.push_str(&format!(
+                    "\n- {}/{} ({way}{optional}): {}",
+                    port.port, port.protocol, port.purpose
+                ));
+            }
+        }
         if !kind.setup.permissions.is_empty() {
             text.push_str("\nRequired permissions:");
             for permission in &kind.setup.permissions {

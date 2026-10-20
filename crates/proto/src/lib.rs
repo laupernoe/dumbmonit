@@ -25,7 +25,7 @@ pub use credential::{
 };
 pub use description::{
     CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
-    OptionDescription, OptionItem, Requirement, SetupDescription, Text,
+    OptionDescription, OptionItem, PortDescription, Requirement, SetupDescription, Text,
 };
 pub use discovery::{
     AddressForm, CMD_DISCOVERY_SCAN, Confidence, DISCOVERY_REPORT_PATH, DiscoveredHost,

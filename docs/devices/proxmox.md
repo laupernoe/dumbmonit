@@ -6,6 +6,14 @@ replication, Ceph down to the OSD, physical disks and ZFS pools, pending
 updates, package changes, subscription and certificates. One monitor can cover
 a whole cluster.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8006 | TCP | API (HTTPS, default) |
+
 ## The nodes panel
 
 The monitor page opens on one card per node: CPU, memory and root filesystem as
@@ -184,6 +192,7 @@ All metrics are prefixed `dumbmonit_proxmox_`.
 | Subscription and repositories | `node_subscription_active`, `node_subscription_info` (+ `status`: `active`, `notfound`, `expired`…, `level`, `next_due`); `node_repository_errors` (unreadable sources files), `node_repository_warnings` (Proxmox's own warnings: enterprise repository without subscription, test repository), `node_repository_enabled` (+ `repo`: `enterprise`, `no-subscription`, `test`, `ceph-*`) | `node` |
 | Certificates | `node_certificate_expiry_days` (negative once expired) | `node`, `filename`, `subject` |
 | RRD stream (off by default) | `node_rrd_<metric>`, `guest_rrd_<metric>`, `storage_rrd_<metric>` — every measurement Proxmox's own metric servers receive, under its own name (see `metrics_export` below) | `node`; guests: `vmid`, `type`; storages: `node`, `storage` |
+| Skipped options | `feature_skipped_info`: 1 while an optional call is refused (403) for lack of a privilege, absent otherwise. The monitor page shows it as a discreet note naming the privilege; it is neither a probe error nor an alert | `feature`, `privilege` |
 | Collection | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 The backup age per machine answers the most expensive failure of a homelab: the

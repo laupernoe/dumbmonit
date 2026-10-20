@@ -6,6 +6,15 @@ Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
 disk that heats up or whose SMART status degrades announces a failure long
 before a volume falls over.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 5001 | TCP | DSM API (HTTPS, default) |
+| 5000 | TCP | Only with the HTTP protocol option |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_synology_`.

@@ -4,6 +4,14 @@ The console that federates several Proxmox VE clusters and Proxmox Backup
 Server instances: which instances it reaches, the whole estate at a glance,
 the tasks that failed anywhere, and the console's own health.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8443 | TCP | API (HTTPS, default) |
+
 !!! warning "Tested against a test instance only"
 
     This integration was built and verified against a Proxmox Datacenter Manager 1.1 installed for
@@ -82,6 +90,7 @@ All metrics are prefixed `dumbmonit_pdm_`.
 | Console host | `node_cpu_percent`, `node_cpu_count`, `node_iowait_percent`, `node_load1`, `node_memory_used_bytes`, `node_memory_total_bytes`, `node_memory_used_percent`, `node_swap_used_bytes`, `node_swap_total_bytes`, `node_rootfs_used_bytes`, `node_rootfs_total_bytes`, `node_rootfs_percent`, `node_uptime_seconds`, `node_kernel_info`, `node_updates_pending`, `version_info` | |
 | Console certificates | `node_certificate_expiry_days` (negative once expired) | `file` (`proxy.pem`) |
 | Subscription | `subscription_active` (label `status`), `subscription_active_nodes`, `subscription_total_nodes` | |
+| Skipped options | `feature_skipped_info`: 1 while an optional call is refused (403) for lack of a privilege, absent otherwise. The monitor page shows it as a discreet note naming the privilege; it is neither a probe error nor an alert | `feature`, `privilege` |
 | Collection | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 A task that ends in `WARNINGS: n` counts as successful. Only `GET /version`

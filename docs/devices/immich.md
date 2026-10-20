@@ -5,6 +5,15 @@ paused, updates, the disk that holds the library, how many photos and videos
 it holds, and — for every phone, tablet and desktop signed in to the account —
 its last connection and last backup.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 2283 | TCP | API (HTTP, default) |
+| 443 | TCP | Only with the https scheme behind a reverse proxy |
+
 DumbMonit reads Immich's API with an **API key limited to eight read
 permissions**. The key cannot see a photo, an album or a person, and cannot
 change anything.

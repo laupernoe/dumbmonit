@@ -14,6 +14,15 @@ follows when asked, at the next reboot), a redundant power supply that died
 without anyone noticing, a port that keeps logging errors or losing its link.
 That is what this page watches, along with the load.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | REST API (HTTPS, default) |
+| 80 | TCP | Only with the HTTP protocol option |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_mikrotik_`. Totals are counters: charts

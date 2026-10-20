@@ -4,6 +4,15 @@ Le gestionnaire de proxy : les hôtes dont nginx a refusé la configuration, les
 hôtes désactivés, et les certificats que les hôtes présentent, avant qu'un
 échec de renouvellement Let's Encrypt ne tourne en site expiré.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 81 | TCP | API d'administration (HTTP, par défaut) |
+| 443 | TCP | Seulement avec la vérification des certificats (port HTTPS des hôtes, par défaut) |
+
 DumbMonit se connecte à l'API REST de Nginx Proxy Manager (`/api`, sur le port
 de son interface web, 81) avec un utilisateur qui lui est propre, puis lit les
 hôtes proxy, les hôtes de redirection, les hôtes 404 (appelés dead hosts dans

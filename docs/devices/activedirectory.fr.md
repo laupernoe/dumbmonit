@@ -21,6 +21,17 @@ Une seule surveillance couvre tout le domaine : pointez-la vers un contrôleur
 de domaine et DumbMonit trouve les autres dans la partition de
 configuration.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 636 | TCP | LDAPS (par défaut), aussi vers les autres contrôleurs de domaine |
+| 389 | TCP | Seulement avec l'option StartTLS ou LDAP en clair |
+| 53 | UDP | Seulement avec l'option des serveurs DNS |
+| 53 | TCP | Seulement avec l'option des serveurs DNS |
+
 ## Ce que LDAP peut et ne peut pas dire
 
 LDAP montre l'annuaire comme il est, pas les journaux de ce qui s'y est

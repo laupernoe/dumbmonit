@@ -4,6 +4,14 @@ The reverse proxy: routers disabled by a configuration error, backend servers
 failing their health check, certificates that a resolver never obtained or
 that are not renewed, and the share of 5xx answers.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8080 | TCP | API and metrics (HTTP, default) |
+
 DumbMonit reads Traefik's API, which only reads: `/api/overview`,
 `/api/http/routers`, `/api/http/services`, `/api/certificates` (served by
 Traefik 3.7) and `/api/version`. When Traefik's Prometheus metrics are served on the

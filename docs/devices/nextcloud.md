@@ -4,6 +4,15 @@ Whether Nextcloud is serving or stuck: maintenance mode left on, a database
 upgrade waiting after an update, Nextcloud and app updates, active users, free
 space for the data directory, the database size, and PHP's OPcache.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 80 | TCP | Only with the http scheme option |
+
 DumbMonit reads the public `status.php` and the statistics of the
 **serverinfo** app, which ships with Nextcloud, with a **monitoring token**
 (`NC-Token`). The token opens those statistics and nothing else: it cannot log
