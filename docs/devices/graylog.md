@@ -60,27 +60,41 @@ notifications.
 
 ## Create a read-only user and token in Graylog
 
-1. In Graylog: System → Users and Teams → Create user. Name the user as follows, give it a long random password, and assign the Reader role only. Reader can read the node status, journal, buffers, throughput, inputs and search cluster health, and no message at all as long as no stream is shared with it.
+1. Open System → Users and Teams → Create user, name it as follows, give it a long random password and assign the Reader role only.
 
     ```
     dumbmonit
     ```
 
-2. Open that user's Edit tokens page, create a token named after DumbMonit and copy it now: Graylog shows it only once.
-
-3. Optional: Graylog's own notifications (an input that failed to start, disk watermarks, a journal almost full) need one more permission, notifications:read, which no built-in role grants on its own. With an account allowed to manage roles, create a role holding only that permission and give it to the dumbmonit user. Without it, notifications are skipped and nothing else changes.
+2. Open that user's Edit tokens page, create a token named after DumbMonit and copy it: Graylog shows it only once.
+3. Optional, for Graylog's own notifications: with an account that can manage roles, create a role holding only notifications:read and give it to the dumbmonit user.
 
     ```
     curl -u YOUR_USER -H 'X-Requested-By: cli' -H 'Content-Type: application/json' -X POST https://graylog.lan/api/roles -d '{"name":"DumbMonit Notifications","description":"Read system notifications","permissions":["notifications:read"],"read_only":false}'
     curl -u YOUR_USER -H 'X-Requested-By: cli' -X PUT 'https://graylog.lan/api/roles/DumbMonit%20Notifications/members/dumbmonit'
     ```
 
-4. In DumbMonit, enter the address of the Graylog node, for example "graylog.lan" (port 9000) or "https://graylog.lan" behind a reverse proxy, and paste the token. In a Graylog cluster, add each node: journal, buffers and throughput are per node.
+4. In DumbMonit, enter the Graylog node address (for example graylog.lan, port 9000) and paste the token. In a cluster, add each node.
 
-5. DumbMonit only reads. It never searches messages, never starts or stops an input and never acknowledges a notification.
+### Required permissions
+
+- **Reader (built-in role)** — Node status, journal, buffers, throughput, inputs, search cluster health
+- **notifications:read** — Optional: Graylog's own notifications
 
 !!! warning
-    Do not reuse the account you log in with: a leaked token carries every right of its user, while the Reader role above can change nothing. Graylog serves plain HTTP unless you configured TLS, and the token travels with every request: across an untrusted network, put Graylog behind HTTPS.
+    Do not reuse your own account: a leaked token carries every right of its user. Graylog serves plain HTTP unless TLS is configured: across an untrusted network, put it behind HTTPS.
+
+Vendor documentation: [Manage users in Graylog](https://go2docs.graylog.org/current/setting_up_graylog/manage_users.htm).
+
+### Why these permissions
+
+Reader can read the node status, journal, buffers, throughput, inputs and search
+cluster health, and no message at all as long as no stream is shared with it.
+`notifications:read` is needed for Graylog's own notifications (an input that
+failed to start, disk watermarks, a journal almost full); no built-in role
+grants it on its own. Without it, notifications are skipped and nothing else
+changes. DumbMonit only reads: it never searches messages, never starts or stops
+an input and never acknowledges a notification.
 
 What each Reader permission covers: `system:read` the node status and cluster
 nodes, `journal:read` the journal, `metrics:read` and `throughput:read` the

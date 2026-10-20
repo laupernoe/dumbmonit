@@ -404,7 +404,7 @@ mod tests {
         let ntfy = build(&http, &channel(1, "ntfy", true)).unwrap();
         let sent = with_actions_for("ntfy", ntfy.as_ref(), &message);
         assert_eq!(sent.text, message.text);
-        assert_eq!(sent.actions.len(), 2);
+        assert_eq!(sent.actions.len(), 3);
 
         // Gotify ne sait pas : les liens partent dans le texte.
         let mut gotify = channel(2, "gotify", true);

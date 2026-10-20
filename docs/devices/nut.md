@@ -53,35 +53,53 @@ runtime left, the load, the input voltage and the age of the battery.
 
 ## Let DumbMonit read the NUT server
 
-1. Find the NUT server: the machine the UPS is plugged into (a NAS, a Raspberry Pi, a server) runs upsd on TCP port 3493. From the DumbMonit host, check that it answers and note the names of its UPS.
-
-    ```
-    printf 'LIST UPS\nLOGOUT\n' | nc nas.lan 3493
-    ```
-
-    With the NUT client tools installed, `upsc -l nas.lan` gives the same list.
-
-2. On a plain NUT install, make upsd listen on an address the DumbMonit host can reach: add this line to upsd.conf, open TCP port 3493 in the firewall for the DumbMonit host, and restart upsd. Reading needs no account: upsd lets any host it accepts read the variables, and changes nothing without a user that has the right to.
+1. On a plain NUT install, add this line to upsd.conf and restart upsd.
 
     ```
     LISTEN 0.0.0.0 3493
     ```
 
-3. On a NAS, the same switch has another name. Synology DSM: Control Panel → Hardware & Power → UPS, tick Enable network UPS server, and add the DumbMonit host under Permitted DiskStation Devices; the UPS is named ups. QNAP: the UPS page of the Control Panel, Enable network UPS master, with the DumbMonit host among the allowed addresses; the UPS is named qnapups. TrueNAS: the UPS service with Remote Monitor ticked.
+2. Open TCP port 3493 in the firewall for the DumbMonit host.
 
-4. Optional: DumbMonit sends a user name and password only if you enter one, and upsd does not ask for any to read. If your policy wants every client named, add a user without actions or instcmds to upsd.users, with a long random password, and restart upsd.
+3. On a NAS, enable its network UPS server instead: Synology DSM → Control Panel → Hardware & Power → UPS, then add the DumbMonit host under Permitted DiskStation Devices.
+
+4. Optional, to name this client: add a user without actions or instcmds to upsd.users, with a long random password, and restart upsd.
 
     ```
     [dumbmonit]
     password = a-long-random-password
     ```
 
-5. In DumbMonit, enter the address of the NUT server, for example "nas.lan". Every UPS it publishes is watched; to watch only some, list their names in the UPS option.
-
-6. DumbMonit only reads: it sends LIST UPS and LIST VAR, never LOGIN, SET, INSTCMD or FSD, so the server never counts it as a secondary to wait for before shutting down.
+5. In DumbMonit, enter the NUT server's address (nas.lan): every UPS it publishes is watched.
 
 !!! warning
-    DumbMonit watches the UPS; it shuts nothing down. The machines the UPS powers still need their own NUT client (upsmon) to shut down cleanly when the battery runs low.
+    DumbMonit watches the UPS; it shuts nothing down: the machines it powers still need their own NUT client (upsmon) to shut down cleanly.
+
+Vendor documentation: https://networkupstools.org/docs/man/upsd.conf.html
+
+### Notes
+
+Reading needs no account: upsd lets any host it accepts read the variables, and
+changes nothing without a user that has the right to. DumbMonit sends a user
+name and password only if you enter one.
+
+The NUT server is the machine the UPS is plugged into (a NAS, a Raspberry Pi, a
+server); it runs upsd on TCP port 3493. On a Synology the UPS is named `ups`.
+QNAP: the UPS page of the Control Panel, Enable network UPS master, with the
+DumbMonit host among the allowed addresses; the UPS is named `qnapups`. TrueNAS:
+the UPS service with Remote Monitor ticked. To watch only some UPS, list their
+names in the UPS option.
+
+To check from the DumbMonit host that the server answers and to note the names
+of its UPS (with the NUT client tools, `upsc -l nas.lan` gives the same list):
+
+```
+printf 'LIST UPS\nLOGOUT\n' | nc nas.lan 3493
+```
+
+DumbMonit only reads: it sends LIST UPS and LIST VAR, never LOGIN, SET, INSTCMD
+or FSD, so the server never counts it as a secondary to wait for before
+shutting down.
 
 ## Credentials
 

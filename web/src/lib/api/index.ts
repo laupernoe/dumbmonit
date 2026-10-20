@@ -7,6 +7,7 @@
  */
 import { request, ApiError } from './client';
 import { normalizeCollector } from './types';
+import { sortDismissed } from '../alerts-dismiss';
 import type {
 	AlertLinkResult,
 	AlertLinkView,
@@ -350,6 +351,22 @@ export function unackAlert(fingerprint: string): Promise<Alert> {
 	return request<Alert>(`/alerts/${encodeURIComponent(fingerprint)}/ack`, { method: 'DELETE' });
 }
 
+/** Dismisses an alert: it leaves every list and count for good (this occurrence); returns the alert. */
+export function dismissAlert(fingerprint: string): Promise<Alert> {
+	return request<Alert>(`/alerts/${encodeURIComponent(fingerprint)}/dismiss`, { method: 'POST' });
+}
+
+/** Undoes a dismissal; returns the alert, back in the active list. */
+export function undismissAlert(fingerprint: string): Promise<Alert> {
+	return request<Alert>(`/alerts/${encodeURIComponent(fingerprint)}/dismiss`, { method: 'DELETE' });
+}
+
+/** The dismissed alerts that are still active (`GET /alerts?dismissed=true`), newest first. */
+export async function listDismissedAlerts(signal?: AbortSignal): Promise<Alert[]> {
+	const alerts = await request<Alert[]>('/alerts', { signal, query: { dismissed: true } });
+	return Array.isArray(alerts) ? sortDismissed(alerts) : [];
+}
+
 // --- Network discovery ------------------------------------------------------
 
 interface RawDiscoveredDevice {
@@ -665,6 +682,11 @@ export async function listAgentModules(id: TargetId, signal?: AbortSignal): Prom
 		if (cause instanceof ApiError && cause.missing) return [];
 		throw cause;
 	}
+}
+
+/** Switches the agent's relay mode on or off; the agent applies it at its next report. */
+export function setAgentRelay(id: TargetId, enabled: boolean, site: string | null): Promise<AgentHost> {
+	return request<AgentHost>(`/targets/${id}/agent/relay`, { method: 'PUT', body: { enabled, site } });
 }
 
 /** Ticks (creates the service's device) or unticks (drops it) a module. */

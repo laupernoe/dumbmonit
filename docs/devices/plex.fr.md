@@ -42,20 +42,28 @@ distants, bande passante et bibliothèques.
 
 ## Donner à DumbMonit l'accès au serveur Plex
 
-1. DumbMonit lit la propre API du serveur sur le port 32400, jamais plex.tv. Un serveur lié à un compte Plex demande un jeton (X-Plex-Token), et Plex ne peut pas en émettre un limité : c'est le jeton du propriétaire.
+1. Dans Plex Web, ouvrez Settings → Network et cliquez sur Show Advanced.
 
-2. Évitez le jeton : dans Plex, Settings → Network → List of IP addresses and networks that are allowed without auth, ajoutez l'adresse du serveur DumbMonit, par exemple comme suit, et choisissez Pas de jeton ci-dessous.
+2. Ajoutez l'adresse de DumbMonit à List of IP addresses and networks that are allowed without auth, puis enregistrez.
 
     ```
     10.0.0.20/32
     ```
 
-3. Ou utilisez le jeton : dans Plex Web, ouvrez n'importe quel film → ⋯ → Get Info → View XML. L'adresse de la page qui s'ouvre se termine par X-Plex-Token= suivi du jeton ; copiez cette valeur.
+3. Dans DumbMonit, saisissez l'adresse du serveur et choisissez No token.
 
-4. Dans DumbMonit, saisissez l'adresse du serveur, par exemple « plex.lan » (port 32400). DumbMonit ne lit que les sessions, les bibliothèques, le vérificateur de mise à jour et la liste d'activité ; il n'arrête jamais un flux et ne change jamais un réglage.
+4. Si DumbMonit n'est pas sur votre réseau, utilisez plutôt le jeton du propriétaire : ouvrez un film → ⋯ → Get Info → View XML et copiez X-Plex-Token dans l'adresse de la page.
+
+Documentation de l'éditeur : <https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/>
+
+### Pourquoi un réseau autorisé, ou le jeton du propriétaire
+
+DumbMonit lit l'API du serveur lui-même, sur le port 32400, jamais plex.tv. Un serveur lié à un compte Plex demande un jeton (X-Plex-Token), et Plex ne sait pas en émettre un limité : c'est celui du propriétaire. Lister l'adresse de DumbMonit parmi celles autorisées sans authentification évite tout jeton.
+
+DumbMonit lit seulement les sessions, les bibliothèques, le programme de mise à jour et la liste des activités ; il n'arrête jamais un flux et ne change aucun réglage.
 
 !!! warning
-    Le jeton est celui de votre compte Plex : qui le détient peut gérer le serveur et chaque bibliothèque. Préférez le réseau autorisé ci-dessus quand DumbMonit se trouve sur votre propre réseau.
+    Le jeton est celui de votre compte Plex et peut gérer le serveur et toutes les bibliothèques : préférez le réseau autorisé quand DumbMonit est sur votre propre réseau.
 
 Le réseau autorisé est aussi ce qui fait répondre Plex sans jeton depuis
 Docker : le conteneur de DumbMonit atteint Plex depuis l'adresse de son réseau
