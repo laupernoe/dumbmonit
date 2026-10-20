@@ -79,6 +79,11 @@ fn compressed_size(mut reader: impl Read) -> io::Result<u64> {
 }
 
 /// Taille estimée de l'archive, en octets.
+///
+/// Les archives quotidiennes sont comptées pour leur taille : de vrais
+/// journaux n'ont rien en commun d'un jour à l'autre, et la compression
+/// extérieure ne les réduit pas. Seuls des jours identiques octet pour octet,
+/// ce qu'aucun serveur ne produit, se compresseraient l'un sur l'autre.
 pub fn estimate(entries: &[Entry]) -> io::Result<u64> {
     // En-tête gzip, deux blocs de fin, et un en-tête par pièce : quelques
     // dizaines d'octets chacun une fois compressés.
@@ -236,19 +241,45 @@ mod tests {
         out
     }
 
-    fn sample_dir() -> tempfile::TempDir {
-        let dir = tempfile::tempdir().unwrap();
+    /// Une journée de journal plausible : chaque jour a son propre contenu.
+    ///
+    /// Des jours identiques fausseraient la mesure : la compression extérieure
+    /// retrouverait une archive `.gz` entière déjà vue dans sa fenêtre de 32 Kio
+    /// et la réduirait à presque rien, ce qui n'arrive jamais avec de vrais
+    /// journaux, dont les archives quotidiennes n'ont rien en commun.
+    fn day_of_logs(date: &str, seed: u64) -> String {
+        let mut state = seed.wrapping_mul(6_364_136_223_846_793_005).wrapping_add(1);
+        let mut next = move || {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            state >> 33
+        };
         let mut lines = String::new();
         for i in 0..2000 {
+            let (target, latency, id) = (next() % 40, next() % 900, next());
             lines.push_str(&format!(
-                "{{\"ts\":\"2026-10-20T10:00:{:02}Z\",\"level\":\"INFO\",\"msg\":\"probe ok {i}\"}}\n",
-                i % 60
+                "{{\"ts\":\"{date}T{:02}:{:02}:{:02}.{:03}Z\",\"level\":\"INFO\",\"target\":\"dumbmonit_server::scheduler\",\
+                 \"msg\":\"probe ok\",\"fields\":{{\"target_id\":{target},\"latency_ms\":{latency},\"request\":\"{id:08x}\",\"n\":{i}}},\"kind\":\"app\"}}\n",
+                i / 120 % 24,
+                i % 60,
+                next() % 60,
+                next() % 1000
             ));
         }
-        fs::write(files::path_for(dir.path(), day("2026-10-20"), false), &lines).unwrap();
-        for date in ["2026-10-19", "2026-10-12", "2026-10-01"] {
+        lines
+    }
+
+    fn sample_dir() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            files::path_for(dir.path(), day("2026-10-20"), false),
+            day_of_logs("2026-10-20", 20),
+        )
+        .unwrap();
+        for (seed, date) in [(19, "2026-10-19"), (12, "2026-10-12"), (1, "2026-10-01")] {
             let path = files::path_for(dir.path(), day(date), false);
-            fs::write(&path, &lines).unwrap();
+            fs::write(&path, day_of_logs(date, seed)).unwrap();
             files::compress(&path).unwrap();
         }
         dir
@@ -281,17 +312,17 @@ mod tests {
         write_archive(&entries, &mut archive).unwrap();
         let real = archive.len() as u64;
         let gap = estimated.abs_diff(real) as f64 / real as f64;
-        assert!(gap < 0.10 || estimated.abs_diff(real) < 2048, "estimé {estimated}, réel {real}");
+        assert!(gap < 0.10, "estimé {estimated}, réel {real}");
 
         let pieces = untar(&archive);
         assert_eq!(pieces.len(), 5);
         assert_eq!(pieces[4].0, "audit.jsonl");
         let today = &pieces[3];
         assert_eq!(today.0, "dumbmonit-2026-10-20.log");
-        assert!(String::from_utf8_lossy(&today.1).contains("probe ok 1999"));
+        assert!(String::from_utf8_lossy(&today.1).contains("\"n\":1999}"));
         // Un jour passé reste un gzip valide une fois extrait.
         let mut text = String::new();
         flate2::read::GzDecoder::new(pieces[0].1.as_slice()).read_to_string(&mut text).unwrap();
-        assert!(text.contains("probe ok 0"));
+        assert!(text.contains("\"n\":0}"));
     }
 }
