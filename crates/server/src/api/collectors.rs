@@ -4123,13 +4123,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
                     "For a fleet, or to revoke a lost token, use Settings → Agents.",
                 ],
-                ports: &[
-                    to_server(
-                        8080,
-                        "tcp",
-                        "Readings and commands (default port, 443 behind a TLS proxy)",
-                    ),
-                ],
+                ports: &[to_server(
+                    8080,
+                    "tcp",
+                    "Readings and commands (default port, 443 behind a TLS proxy)",
+                )],
                 permissions: &[],
                 warning: "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
             },
@@ -4152,13 +4150,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.",
                     "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor.",
                 ],
-                ports: &[
-                    to_server(
-                        8080,
-                        "tcp",
-                        "Readings and commands (default port, 443 behind a TLS proxy)",
-                    ),
-                ],
+                ports: &[to_server(
+                    8080,
+                    "tcp",
+                    "Readings and commands (default port, 443 behind a TLS proxy)",
+                )],
                 permissions: &[],
                 warning: "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
             },
@@ -4301,9 +4297,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If you reach the service by its IP address, enter the certificate's name in \"Server name (SNI)\".",
                     "For a certificate from your own authority, tick \"Accept an unverifiable certificate\".",
                 ],
-                ports: &[
-                    to_device(443, "tcp", "TLS handshake (default port, the one in the address)"),
-                ],
+                ports: &[to_device(
+                    443,
+                    "tcp",
+                    "TLS handshake (default port, the one in the address)",
+                )],
                 permissions: &[],
                 warning: "For a website, the \"Website or web API\" type already reads the certificate: use this type for services that do not speak HTTP.",
             },
@@ -4582,9 +4580,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
                     "To report a failure at once, append ?status=down&msg=... to the URL.",
                 ],
-                ports: &[
-                    to_server(8080, "tcp", "Heartbeat call (default port, 443 behind a proxy)"),
-                ],
+                ports: &[to_server(
+                    8080,
+                    "tcp",
+                    "Heartbeat call (default port, 443 behind a proxy)",
+                )],
                 permissions: &[],
                 warning: "Call the URL at the end of the job, after the part that matters: a call at the top would report a success even when the job fails.",
             },
@@ -5445,9 +5445,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Enter the registered domain, for example \"example.com\", not a name under it such as www.example.com.",
                     "For an extension the IANA does not list, such as .ch, set \"RDAP server\" to the registry's address.\nhttps://rdap.nic.ch/",
                 ],
-                ports: &[
-                    to_device(443, "tcp", "RDAP query to the registry and to the IANA (HTTPS)"),
-                ],
+                ports: &[to_device(
+                    443,
+                    "tcp",
+                    "RDAP query to the registry and to the IANA (HTTPS)",
+                )],
                 permissions: &[],
                 warning: "A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops.",
             },
@@ -7057,7 +7059,11 @@ mod tests {
                     "« {kind} » : sens {}",
                     port.direction
                 );
-                assert!(!port.purpose.trim().is_empty(), "« {kind} » : port {} sans usage", port.port);
+                assert!(
+                    !port.purpose.trim().is_empty(),
+                    "« {kind} » : port {} sans usage",
+                    port.port
+                );
                 assert!(
                     !port.optional || port.purpose.starts_with("Only "),
                     "« {kind} » : le port facultatif {} doit dire quelle option le demande",

@@ -1894,10 +1894,7 @@ mod e2e {
                 "/api2/json/nodes/{node}/qemu/{vmid}/status/current",
                 get(|| async { data(json!({"agent": 1})) }),
             )
-            .route(
-                "/api2/json/nodes/{node}/qemu/{vmid}/agent/get-fsinfo",
-                get(fsinfo),
-            )
+            .route("/api2/json/nodes/{node}/qemu/{vmid}/agent/get-fsinfo", get(fsinfo))
             .route("/api2/json/nodes/{node}/qemu/{vmid}/agent/get-osinfo", get(osinfo))
             .route(
                 "/api2/json/nodes/{node}/qemu/{vmid}/agent/network-get-interfaces",
