@@ -465,8 +465,7 @@ mod tests {
         let seen = Arc::new(Mutex::new(Vec::new()));
         let subscriber = tracing_subscriber::registry().with(Capture(seen.clone()));
         tracing::subscriber::with_default(subscriber, emit);
-        let out = seen.lock().unwrap().clone();
-        out
+        seen.lock().unwrap().clone()
     }
 
     #[test]
