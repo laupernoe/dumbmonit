@@ -34,6 +34,22 @@ All notable changes to this project are documented here. The format follows
   returned by any response.
 ### Added
 
+- **Server logs: kept on disk, downloadable, and shipped to a log service.**
+  DumbMonit now writes its own logs (and its audit log entries, marked
+  `"kind":"audit"`) to `/data/logs`, one JSON-lines file per day, compressed
+  once the day is over, kept 14 days by default and capped at 1 GB in total
+  (both adjustable in *Settings → System → Logs*). An administrator can
+  download the last 1, 7, 14, 30 or any number of days as a `.tar.gz`, with
+  the size shown before the download starts. Logs can also be sent to
+  Graylog (GELF over UDP, TCP or HTTP), VictoriaLogs (JSON lines), Grafana
+  Loki (push API), Elasticsearch / OpenSearch (bulk API) or any syslog
+  receiver (RFC 5424 over UDP, TCP or TLS), each destination with its own
+  minimum level and a *Send test* button. Shipping runs in the background
+  with a bounded queue: if a destination is down, records are dropped and
+  counted rather than slowing the server. Anything that looks like a secret
+  (credentials in a URL, tokens in a query string, `Authorization` headers)
+  is masked before it is written or sent, and the first-run setup code only
+  ever goes to the console.
 - **Wall widgets: a screen model to arrange them, News folded in, a Text
   widget.** Settings → Wall widgets now shows a 16:9 model of the wall (top bar,
   right column under the clock, bottom bar, a tray for hidden widgets) where
