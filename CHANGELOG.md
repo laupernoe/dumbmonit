@@ -21,6 +21,16 @@ All notable changes to this project are documented here. The format follows
   returned by any response.
 ### Added
 
+- **Wall widgets: a screen model to arrange them, News folded in, a Text
+  widget.** Settings → Wall widgets now shows a 16:9 model of the wall (top bar,
+  right column under the clock, bottom bar, a tray for hidden widgets) where
+  widgets are dragged and dropped with a mouse or a finger, or selected and moved
+  with the arrow keys and *Move to* buttons; what is dropped is what `/wall`
+  shows, and *Reset to default* restores the default layout (on a phone the model
+  is an ordered list). The News feeds are now the settings of the *News* widget
+  in the same list, saved with the others; nothing to redo, the configured feeds
+  are kept. The new *Text* widget shows a short free message (plain text, 200
+  characters) wherever it is placed.
 - **Import Uptime Kuma 1.x and 2.x from `kuma.db`.** Uptime Kuma 2 dropped its
   JSON backup, so the import now also reads the SQLite database
   (`docker cp uptime-kuma:/app/data/kuma.db .`): upload it, preview the monitors
