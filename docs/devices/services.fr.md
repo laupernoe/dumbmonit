@@ -17,11 +17,30 @@ de NTP, assez pour lire l'horloge du serveur sans session.
 ## Venir d'Uptime Kuma
 
 **Surveillances > ⋯ > Importer depuis Uptime Kuma**, aussi sur
-**Surveillances > Ajouter une surveillance** (administrateurs), lit le fichier de sauvegarde d'Uptime Kuma 1.x
-(**Réglages > Sauvegarde > Exporter**, un fichier `.json` de 4 Mo au plus).
-Uptime Kuma 2.x n'a plus d'export de sauvegarde : il n'y a donc rien à
-importer depuis cette version. Rien n'est créé avant que vous ayez vu l'aperçu :
-ce qui sera créé, et ce qui est ignoré avec la raison.
+**Surveillances > Ajouter une surveillance > Import** (administrateurs), lit la
+base d'Uptime Kuma 1.x ou 2.x, ou la sauvegarde JSON de la 1.x. Rien n'est créé
+avant que vous ayez vu l'aperçu : ce qui sera créé, et ce qui est ignoré avec la
+raison. Cochez les surveillances voulues, puis importez-les en un clic.
+
+Uptime Kuma 2.x n'a plus d'export de sauvegarde : exportez donc sa base. Arrêtez
+le conteneur (pour que le fichier soit complet), copiez `kuma.db` hors du dossier
+de données, puis choisissez-le dans la fenêtre.
+
+```bash
+docker stop uptime-kuma
+docker cp uptime-kuma:/app/data/kuma.db .
+docker start uptime-kuma
+```
+
+- Le fichier est envoyé, lu une seule fois en lecture seule depuis une copie
+  temporaire qui n'est jamais rattachée à la base de DumbMonit, puis supprimé
+  aussitôt. Il peut peser jusqu'à 512 Mo (il contient tout l'historique des
+  mesures) ; seuls les moniteurs, groupes, étiquettes, intervalles et le nombre de
+  notifications en sont lus.
+- Uptime Kuma 2 installé sur **MariaDB** n'est pas pris en charge : seul le
+  fichier SQLite `kuma.db` peut être importé.
+- La sauvegarde JSON de la 1.x (**Réglages > Sauvegarde > Exporter**, 4 Mo au
+  plus) fonctionne toujours, avec le même aperçu.
 
 | Uptime Kuma | DumbMonit |
 |---|---|
