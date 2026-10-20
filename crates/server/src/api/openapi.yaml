@@ -6366,7 +6366,7 @@ components:
     # ---------------------------------------------------------- équipements
     Target:
       type: object
-      required: [id, name, address, kind, interval_secs, enabled, tags, credential_kind]
+      required: [id, name, address, kind, interval_secs, enabled, tags, credential_kind, has_secret, credential_public]
       properties:
         id: { type: integer, format: int64 }
         name: { type: string }
@@ -6381,6 +6381,11 @@ components:
           type: object
           additionalProperties: { type: string }
         credential_kind: { type: string, description: A label — the secret itself is never returned. }
+        has_secret: { type: boolean, description: "A secret (community, passphrase, token, password) is stored. Leaving its field empty on `PUT` keeps it." }
+        credential_public:
+          type: object
+          description: "Non-secret parts of the credential, under the form's field keys (`username`, `token_id` for a Proxmox `user@realm!name` token, `auth_protocol`, `privacy_protocol`, `context`), to pre-fill the edit form. Never a secret; empty for a reader."
+          additionalProperties: { type: string }
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
@@ -6464,7 +6469,7 @@ components:
         location_id: { type: [integer, "null"], format: int64, description: "Location on the world map; `null`: none. Absent on `PUT` keeps the assignment." }
         credential:
           $ref: "#/components/schemas/CredentialInput"
-          description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'
+          description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it. Sent with a secret field absent or empty (community, passphrase, token `secret`, `password`), that secret is kept as long as the identity it belongs to (`username`, `token_id`) is unchanged; otherwise the request is refused with "Enter the … again".'
     CredentialInput:
       description: A device credential. Accepted on input only — never returned.
       writeOnly: true
@@ -6474,7 +6479,7 @@ components:
           properties:
             type: { const: none }
         - type: object
-          required: [type, community]
+          required: [type]
           properties:
             type: { const: snmp_community }
             community: { type: string }
@@ -6485,13 +6490,13 @@ components:
             username: { type: string }
             auth:
               type: [object, "null"]
-              required: [protocol, passphrase]
+              required: [protocol]
               properties:
                 protocol: { type: string, enum: [md5, sha1, sha224, sha256, sha384, sha512] }
                 passphrase: { type: string }
             privacy:
               type: [object, "null"]
-              required: [protocol, passphrase]
+              required: [protocol]
               properties:
                 protocol: { type: string, enum: [des, aes128, aes192, aes256] }
                 passphrase: { type: string }
@@ -6505,7 +6510,7 @@ components:
             token_id: { type: string }
             secret: { type: string }
         - type: object
-          required: [type, username, password]
+          required: [type, username]
           properties:
             type: { const: username_password }
             username: { type: string }

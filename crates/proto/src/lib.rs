@@ -21,7 +21,8 @@ pub use command::{
     CommandStatus, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS, truncate_result,
 };
 pub use credential::{
-    Credential, SnmpV3Auth, SnmpV3AuthProtocol, SnmpV3Privacy, SnmpV3PrivacyProtocol,
+    Credential, CredentialInput, Resolved, SnmpV3Auth, SnmpV3AuthInput, SnmpV3AuthProtocol,
+    SnmpV3Privacy, SnmpV3PrivacyInput, SnmpV3PrivacyProtocol,
 };
 pub use description::{
     CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
