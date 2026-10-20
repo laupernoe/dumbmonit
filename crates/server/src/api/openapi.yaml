@@ -4802,7 +4802,7 @@ paths:
         A notification is acknowledged with `202` and no body. The API token's
         scope applies tool by tool: a `read` token can call every read tool and
         gets an explanatory tool error (`isError: true`) from a write tool. The
-        27 tools are documented at
+        28 tools are documented at
         <https://dumbmonit.readthedocs.io/en/latest/using/assistant/>.
       x-token-scope: read
       parameters:
