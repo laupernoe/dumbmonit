@@ -18,7 +18,7 @@ async fn les_reglages_sont_valides_et_les_cles_ne_reviennent_jamais() {
     let reply = app.get("/api/wall/widgets/settings", Some(&admin)).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["crypto"]["enabled"], false);
-    assert_eq!(reply.body["layout"]["right"], json!(["weather", "news", "cve"]));
+    assert_eq!(reply.body["layout"]["right"], json!(["weather", "news", "cve", "text"]));
     assert_eq!(reply.body["has_finnhub_key"], false);
 
     let reply = app.get("/api/wall/widgets/settings", Some(&viewer)).await;
