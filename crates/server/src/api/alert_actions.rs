@@ -32,7 +32,7 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::alerting::model::Severity;
-use crate::api::alerts::{AckRequest, acknowledge};
+use crate::api::alerts::{AckRequest, acknowledge, dismiss};
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
@@ -69,6 +69,8 @@ pub struct LinkedAlert {
     pub severity: Severity,
     pub acked: bool,
     pub acked_until: Option<DateTime<Utc>>,
+    /// Écartée (« j'ai compris ») : masquée et muette jusqu'à sa résolution.
+    pub dismissed: bool,
 }
 
 #[derive(Debug, Serialize)]
@@ -84,10 +86,12 @@ pub struct ActionView {
 #[derive(Debug, Serialize)]
 pub struct ActionResult {
     pub action: Action,
-    /// Fin de l'acquittement posé.
+    /// Fin de l'acquittement posé ; pour un écartement, l'instant du geste.
     pub until: DateTime<Utc>,
     /// Alertes acquittées par ce geste.
     pub acked: usize,
+    /// Alertes écartées par ce geste.
+    pub dismissed: usize,
     pub alerts: Vec<LinkedAlert>,
 }
 
@@ -203,6 +207,7 @@ async fn linked_alerts(state: &AppState, claims: &Claims) -> ApiResult<Vec<(Stri
                 severity: rule.map_or(Severity::Warning, |rule| rule.severity),
                 acked: alert.state.is_acked(now),
                 acked_until: alert.state.acked_until,
+                dismissed: alert.state.is_dismissed(),
             },
         ));
     }
@@ -280,7 +285,7 @@ pub async fn execute(
     let alerts = linked_alerts(&state, &claims).await?;
     if alerts.is_empty() {
         return Err(ApiError::NotFound(
-            "These alerts are no longer active: nothing to acknowledge.".into(),
+            "These alerts are no longer active: nothing left to do.".into(),
         ));
     }
     let now = Utc::now();
@@ -289,9 +294,44 @@ pub async fn execute(
     }
 
     let until = now + claims.action.duration();
+    if claims.action == Action::Dismiss {
+        let mut dismissed = 0;
+        let mut views = Vec::new();
+        for (fingerprint, alert) in alerts {
+            if alert.dismissed {
+                views.push(alert);
+                continue;
+            }
+            match dismiss(&state, &fingerprint, true, ACTOR).await {
+                Ok(view) => {
+                    dismissed += 1;
+                    audit::record(
+                        &state.pool,
+                        Some(ACTOR),
+                        "alert.dismissed",
+                        Some(&fingerprint),
+                        ip,
+                    )
+                    .await;
+                    views.push(LinkedAlert { dismissed: view.dismissed, ..alert });
+                }
+                // Résolue entre-temps : rien à écarter, ce n'est pas une erreur.
+                Err(ApiError::NotFound(_)) => {}
+                Err(error) => return Err(error),
+            }
+        }
+        return Ok(no_store(ActionResult {
+            action: claims.action,
+            until,
+            acked: 0,
+            dismissed,
+            alerts: views,
+        }));
+    }
     let audit_action = match claims.action {
         Action::Ack => "alert.acked",
         Action::Snooze => "alert.snoozed",
+        Action::Dismiss => "alert.dismissed",
     };
     let mut acked = 0;
     let mut views = Vec::new();
@@ -317,7 +357,7 @@ pub async fn execute(
             Err(error) => return Err(error),
         }
     }
-    Ok(no_store(ActionResult { action: claims.action, until, acked, alerts: views }))
+    Ok(no_store(ActionResult { action: claims.action, until, acked, dismissed: 0, alerts: views }))
 }
 
 #[cfg(test)]

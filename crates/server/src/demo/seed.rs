@@ -157,6 +157,8 @@ pub async fn push_agent_batch(
         commands_enabled: Some(false),
         relay: false,
         site: None,
+        relay_control: false,
+        relay_local: false,
         machine_id: Some("demo-docker01".to_string()),
         tags: BTreeMap::new(),
         binding_supported: true,

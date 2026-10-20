@@ -81,18 +81,29 @@ devraient tourner.
 
 ## Créer une clé d'API en lecture seule pour DumbMonit
 
-1. Sur Unraid 7.2 ou plus récent, l'API est intégrée. Sur Unraid 6.12 à 7.1, installez d'abord le plugin Unraid Connect depuis l'onglet Apps : il apporte la même API, et aucune connexion Unraid Connect n'est nécessaire pour un usage local.
-
-2. Créez une clé d'API avec le rôle Viewer, qui lit tout et ne peut rien changer : sous Settings > Management Access > API Keys, ou depuis le terminal Unraid.
+1. Sur Unraid 6.12 à 7.1, installez d'abord le plugin Unraid Connect depuis l'onglet Apps. Unraid 7.2 ou plus récent intègre l'API.
+2. Ouvrez Settings → Management Access → API Keys et créez une clé nommée comme suit, avec le rôle Viewer.
 
     ```
-    unraid-api apikey --create --name dumbmonit --roles VIEWER --description "DumbMonit monitoring" --json
+    dumbmonit
     ```
 
-3. Copiez la clé. Dans DumbMonit, saisissez l'adresse du serveur Unraid, par exemple « tower.lan », et collez la clé comme Clé d'API. Si l'interface web est servie en HTTPS, choisissez https comme protocole.
+3. Copiez la clé : Unraid ne la montre qu'une fois.
+4. Dans DumbMonit, saisissez l'adresse du serveur Unraid (par exemple tower.lan), collez la clé comme clé d'API et choisissez https si l'interface web est servie en HTTPS.
+
+### Droits requis
+
+- **Rôle Viewer** — Lit tout, ne change rien
 
 !!! warning
-    Unraid ne rapporte aucune température pour un disque arrêté, et DumbMonit n'en réveille jamais un : un disque endormi n'a simplement pas de température jusqu'à ce qu'il tourne à nouveau.
+    Unraid ne donne aucune température pour un disque en veille, et DumbMonit n'en réveille jamais un : un disque endormi n'a simplement pas de température avant de tourner.
+
+Documentation du fournisseur : [Using the Unraid API](https://docs.unraid.net/API/how-to-use-the-api/).
+
+### Pourquoi ces permissions
+
+Le rôle Viewer lit tout et ne peut rien changer. Aucune connexion à Unraid
+Connect n'est nécessaire en usage local.
 
 ## Identifiants
 

@@ -52,24 +52,28 @@ plus proches de l'expiration en premier.
 
 ## Créer un utilisateur Nginx Proxy Manager en lecture seule
 
-1. Dans Nginx Proxy Manager, ouvrez Users et ajoutez un utilisateur pour DumbMonit, avec une adresse email propre comme dumbmonit@example.com. Laissez chaque rôle décoché.
+1. Dans Nginx Proxy Manager, ouvrez Users → Add User, donnez-lui un e-mail qui lui est propre, comme dumbmonit@example.com, et laissez tous les rôles décochés.
 
-2. Dans le menu de cet utilisateur, ouvrez Permissions : Item Visibility All Items ; Proxy Hosts, Redirection Hosts, 404 Hosts et Streams en View Only ; Access Lists et SSL Certificates en Hidden. Puis définissez son mot de passe avec Change Password dans le même menu.
+2. Depuis le menu de cet utilisateur, ouvrez Permissions et réglez les niveaux listés ci-dessous.
 
-3. SSL Certificates reste en Hidden volontairement : Nginx Proxy Manager donne la clé privée des certificats importés, et les identifiants du défi DNS, à tout utilisateur autorisé à les voir. DumbMonit lit chaque certificat là où il est servi à la place, avec une poignée de main TLS sur le port 443 pour chaque hôte qui en a un.
+3. Depuis le même menu, choisissez Change Password et définissez un mot de passe.
 
-4. Dans DumbMonit, saisissez l'hôte Nginx Proxy Manager avec le port de son interface web, par exemple « npm.lan:81 », et l'email et le mot de passe de cet utilisateur. Si les hôtes sont servis en HTTPS sur un autre port que 443, réglez le port HTTPS ci-dessous.
+4. Dans DumbMonit, saisissez l'hôte Nginx Proxy Manager avec son port web, par exemple npm.lan:81, ainsi que cet e-mail et ce mot de passe.
+
+### Droits requis
+
+- **Item Visibility: All Items** : Voir tous les hôtes, pas seulement les siens
+- **Proxy Hosts, Redirection Hosts, 404 Hosts, Streams: View Only** : Lire la liste des hôtes
+- **Access Lists, SSL Certificates: Hidden** : Garde les clés privées hors de portée
 
 !!! warning
-    Un hôte dont nginx refuse la configuration (une faute de frappe dans Advanced, un fichier de certificat manquant) n'est pas servi, et Nginx Proxy Manager ne le montre que par un point rouge dans la liste. Les certificats Let's Encrypt sont renouvelés trente jours à l'avance : un certificat qui expire dans moins de quatorze jours est un dont le renouvellement a échoué, et DumbMonit avertit alors.
+    Laissez SSL Certificates sur Hidden : Nginx Proxy Manager remet les clés privées à tout utilisateur autorisé à les voir.
 
-Item Visibility All Items compte : avec Created Items, l'utilisateur ne voit
-que les hôtes qu'il a créés lui-même, c'est-à-dire aucun. Un utilisateur sans
-Proxy Hosts View Only est refusé ; un sans Streams, Redirection Hosts ou 404
-Hosts ne les signale simplement pas.
+### Pourquoi ces droits
 
-DumbMonit garde le jeton que Nginx Proxy Manager donne à la connexion (valide
-un jour) et se reconnecte quand il expire, plutôt qu'à chaque vérification.
+Les certificats SSL restent masqués volontairement : Nginx Proxy Manager remet la clé privée des certificats importés, et les identifiants du challenge DNS, à tout utilisateur autorisé à les voir. DumbMonit lit plutôt chaque certificat là où il est servi, par une poignée de main TLS sur le port 443 pour chaque hôte qui en a un ; si les hôtes sont servis en HTTPS sur un autre port, renseignez Port HTTPS dans le formulaire. Un hôte dont la configuration est refusée par nginx (faute de frappe dans Advanced, fichier de certificat manquant) n'est pas servi, et Nginx Proxy Manager ne le montre que par un point rouge dans la liste. Les certificats Let's Encrypt sont renouvelés trente jours à l'avance : un certificat qui expire dans moins de quatorze jours est un renouvellement en échec, et DumbMonit avertit alors.
+
+Documentation de l'éditeur : https://nginxproxymanager.com/advanced-config/
 
 ## Identifiants
 

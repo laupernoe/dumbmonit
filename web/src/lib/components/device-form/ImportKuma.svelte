@@ -2,15 +2,17 @@
 	/**
 	 * "Import from Uptime Kuma": a trigger button and its modal dialog.
 	 *
-	 * Choose the JSON backup of Uptime Kuma 1.x, preview what will be created
-	 * and what is skipped (and why), confirm, read the summary. The server
-	 * converts and validates; this component only shows its report. Admin only:
-	 * the caller decides whether to render it.
+	 * Choose the `kuma.db` database of Uptime Kuma 1.x or 2.x (or the JSON backup
+	 * of 1.x), preview what will be created and what is skipped (and why), tick
+	 * the monitors to import, confirm, read the summary. The server reads the
+	 * file, converts and validates; this component only shows its report. Admin
+	 * only: the caller decides whether to render it.
 	 */
 	import { tick } from 'svelte';
 	import { Upload, X } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { importKuma, KUMA_MAX_BYTES } from '#lib/api/targetsImport.js';
+	import { importKuma, importKumaDb, KUMA_DB_MAX_BYTES, KUMA_MAX_BYTES } from '#lib/api/targetsImport.js';
+	import { importableRows, isSqliteHead, selectionState, tickedRows, toggleRow } from './kuma-import.js';
 	import type { KumaImportReport, TargetImportStatus } from '#lib/api/types.js';
 	import { Button, ErrorNotice, Plate } from '#lib/ui/index.js';
 	import type { Tone } from '#lib/ui/index.js';
@@ -29,8 +31,10 @@
 	let busy = $state(false);
 	let error = $state<unknown>(null);
 	let notice = $state('');
-	/** The parsed file, kept between the preview and the confirmation. */
-	let backup = $state<unknown>(null);
+	/** The chosen file, kept between the preview and the confirmation (the server reads it twice). */
+	let source = $state<{ db: File } | { json: unknown } | null>(null);
+	/** Rows of the preview that are ticked. */
+	let selected = $state<Set<number>>(new Set());
 	let preview = $state<KumaImportReport | null>(null);
 	let result = $state<KumaImportReport | null>(null);
 	let dialog = $state<HTMLElement | null>(null);
@@ -60,7 +64,8 @@
 
 	export function show() {
 		returnFocus = (document.activeElement as HTMLElement | null) ?? null;
-		backup = null;
+		source = null;
+		selected = new Set();
 		preview = null;
 		result = null;
 		error = null;
@@ -75,12 +80,16 @@
 	}
 
 	async function run(dryRun: boolean) {
+		if (!source) return;
 		busy = true;
 		error = null;
 		try {
-			const answer = await importKuma(backup, dryRun);
-			if (dryRun) preview = answer;
-			else {
+			const rows = dryRun ? undefined : tickedRows(selected, preview?.rows ?? []);
+			const answer = 'db' in source ? await importKumaDb(source.db, dryRun, rows) : await importKuma(source.json, dryRun, rows);
+			if (dryRun) {
+				preview = answer;
+				selected = new Set(importableRows(answer.rows));
+			} else {
 				result = answer;
 				if (answer.created > 0) ondone?.();
 			}
@@ -97,15 +106,25 @@
 		input.value = '';
 		if (!file) return;
 		notice = '';
-		if (file.size > KUMA_MAX_BYTES) {
-			notice = m.devices_kuma_too_large();
-			return;
-		}
-		try {
-			backup = JSON.parse(await file.text());
-		} catch {
-			notice = m.devices_kuma_not_json();
-			return;
+		// SQLite starts with a fixed header; anything else must be the JSON backup.
+		const head = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+		if (isSqliteHead(head)) {
+			if (file.size > KUMA_DB_MAX_BYTES) {
+				notice = m.devices_kuma_db_too_large();
+				return;
+			}
+			source = { db: file };
+		} else {
+			if (file.size > KUMA_MAX_BYTES) {
+				notice = m.devices_kuma_too_large();
+				return;
+			}
+			try {
+				source = { json: JSON.parse(await file.text()) };
+			} catch {
+				notice = m.devices_kuma_not_json();
+				return;
+			}
 		}
 		await run(true);
 	}
@@ -173,7 +192,7 @@
 		{/if}
 
 		{#if !report}
-			<input bind:this={fileInput} type="file" accept=".json,application/json" class="sr-only" tabindex="-1" onchange={onfile} />
+			<input bind:this={fileInput} type="file" accept=".db,.sqlite,.sqlite3,.json,application/json,application/vnd.sqlite3,application/octet-stream" class="sr-only" tabindex="-1" onchange={onfile} />
 			<div class="mt-4 flex flex-wrap items-center gap-2">
 				<Button variant="primary" loading={busy} onclick={() => fileInput?.click()}>
 					<Upload class="size-4" aria-hidden="true" />
@@ -181,6 +200,11 @@
 				</Button>
 			</div>
 			{#if busy}<p class="mt-3 text-sm text-ink-2" aria-live="polite">{m.devices_kuma_working()}</p>{/if}
+			<div class="mt-4 rounded-lg border border-line bg-surface-2 px-3.5 py-3 text-sm text-ink-2">
+				<p>{m.devices_kuma_howto_intro()}</p>
+				<p class="mt-1.5"><code class="rounded bg-surface px-1.5 py-0.5 font-mono text-[0.8125rem] break-all text-ink select-all">docker cp uptime-kuma:/app/data/kuma.db .</code></p>
+				<p class="mt-1.5">{m.devices_kuma_howto_mariadb()}</p>
+			</div>
 		{:else}
 			<p class="mt-4 text-sm font-semibold" aria-live="polite">
 				{(result ? m.devices_import_summary_done : m.devices_import_summary_preview)({
@@ -197,6 +221,20 @@
 				<table class="block w-full text-left text-[0.8125rem] sm:table sm:min-w-[40rem]">
 					<thead class="bg-surface-2 text-ink-2 max-sm:sr-only sm:sticky sm:top-0">
 						<tr>
+							<th scope="col" class="w-10 px-3 py-2 font-medium max-sm:hidden">
+								{#if !result}
+									{@const mark = selectionState(selected, report.rows)}
+									<input
+										type="checkbox"
+										class="size-4 accent-[var(--c-signal)]"
+										aria-label={m.devices_kuma_select_all()}
+										checked={mark === 'all'}
+										indeterminate={mark === 'some'}
+										disabled={busy || importableRows(report.rows).length === 0}
+										onchange={() => (selected = mark === 'all' ? new Set() : new Set(importableRows(report.rows)))}
+									/>
+								{/if}
+							</th>
 							<th scope="col" class="px-3 py-2 font-medium">{m.devices_kuma_col_monitor()}</th>
 							<th scope="col" class="px-3 py-2 font-medium">{m.devices_kuma_col_becomes()}</th>
 							<th scope="col" class="px-3 py-2 font-medium">{m.devices_import_col_folder()}</th>
@@ -206,6 +244,20 @@
 					<tbody class="max-sm:block">
 						{#each report.rows as row (row.row)}
 							<tr class="border-t border-line align-top max-sm:block max-sm:px-3 max-sm:py-2 max-sm:first:border-t-0">
+								<td class="px-3 py-2 max-sm:block max-sm:px-0 max-sm:py-0.5">
+									{#if !result && row.status === 'ok'}
+										<label class="-m-2 inline-flex min-h-10 min-w-10 cursor-pointer items-center justify-center p-2">
+											<input
+												type="checkbox"
+												class="size-4 accent-[var(--c-signal)]"
+												aria-label={m.devices_kuma_select_row({ name: row.name })}
+												checked={selected.has(row.row)}
+												disabled={busy}
+												onchange={() => (selected = toggleRow(selected, row.row))}
+											/>
+										</label>
+									{/if}
+								</td>
 								<td class="px-3 py-2 sm:max-w-[14rem] max-sm:block max-sm:px-0 max-sm:py-0.5">
 									<span class="block truncate font-medium" title={row.name}>{row.name}</span>
 									<span class="block truncate text-ink-3" title={row.source_type}>{row.source_type}</span>
@@ -237,16 +289,16 @@
 					<Button variant="ghost" onclick={close}>{m.devices_import_close()}</Button>
 					<Button variant="primary" href="/targets" onclick={close}>{m.devices_import_view_devices()}</Button>
 				{:else}
-					<Button variant="ghost" disabled={busy} onclick={() => (preview = null)}>
+					<Button variant="ghost" disabled={busy} onclick={() => ((preview = null), (source = null))}>
 						{m.devices_kuma_back()}
 					</Button>
 					<Button
 						variant="primary"
 						loading={busy}
-						disabled={report.created === 0}
+						disabled={selected.size === 0}
 						onclick={() => run(false)}
 					>
-						{m.devices_kuma_confirm({ count: report.created })}
+						{m.devices_kuma_confirm({ count: selected.size })}
 					</Button>
 				{/if}
 			</div>

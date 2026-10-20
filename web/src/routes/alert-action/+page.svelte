@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * `/alert-action#<token>` — the Acknowledge / Snooze link of a notification.
+	 * `/alert-action#<token>` — the Acknowledge / Snooze / Dismiss link of a notification.
 	 *
 	 * Works without a session: the signed token is the authorisation, for one
 	 * gesture on the alerts it names, once, for 24 hours. It sits in the URL
@@ -10,7 +10,7 @@
 	 */
 	import { onMount } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { BellOff, Check, Clock } from 'lucide-svelte';
+	import { BellOff, Check, Clock, X } from 'lucide-svelte';
 	import { inspectAlertLink, runAlertLink, toApiError } from '#lib/api/index.js';
 	import type { AlertLinkResult, AlertLinkView } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
@@ -64,9 +64,21 @@
 	}
 
 	const snooze = $derived(view?.action === 'snooze');
-	const title = $derived(snooze ? m.alert_link_snooze_title() : m.alert_link_ack_title());
+	const dismiss = $derived(view?.action === 'dismiss');
+	const title = $derived(
+		dismiss ? m.alert_link_dismiss_title() : snooze ? m.alert_link_snooze_title() : m.alert_link_ack_title()
+	);
+	const lead = $derived(
+		dismiss ? m.alert_link_dismiss_lead() : snooze ? m.alert_link_snooze_lead() : m.alert_link_ack_lead()
+	);
+	const buttonLabel = $derived(
+		dismiss ? m.alert_link_dismiss_button() : snooze ? m.alert_link_snooze_button() : m.alert_link_ack_button()
+	);
 	const doneSentence = $derived.by(() => {
 		if (!result) return '';
+		if (result.action === 'dismiss') {
+			return result.dismissed === 0 ? m.alert_link_nothing_changed() : m.alert_link_dismiss_done();
+		}
 		if (result.acked === 0) return m.alert_link_nothing_changed();
 		return result.action === 'snooze'
 			? m.alert_link_snooze_done({ time: formatDateTime(result.until) })
@@ -94,7 +106,7 @@
 				{doneSentence}
 			</p>
 		{:else if view}
-			<p class="mt-3 text-sm text-ink-2">{snooze ? m.alert_link_snooze_lead() : m.alert_link_ack_lead()}</p>
+			<p class="mt-3 text-sm text-ink-2">{lead}</p>
 
 			{#if view.alerts.length > 0}
 				<ul class="mt-4 grid gap-2" aria-label={m.alert_link_alerts_label()}>
@@ -103,7 +115,9 @@
 							<Plate tone={severityTone(alert.severity)} label={severityWord(alert.severity)} />
 							<span class="min-w-0 break-words font-semibold">{alert.target_name ?? m.alert_link_unknown_device()}</span>
 							<span class="min-w-0 break-words text-ink-2">{alert.rule_name}</span>
-							{#if alert.acked}
+							{#if alert.dismissed}
+								<span class="text-[0.8125rem] text-ink-2">{m.alert_link_already_dismissed()}</span>
+							{:else if alert.acked && !dismiss}
 								<span class="text-[0.8125rem] text-ink-2">{m.alert_link_already_acked({ time: formatDateTime(alert.acked_until) })}</span>
 							{/if}
 						</li>
@@ -122,8 +136,8 @@
 					onclick={run}
 					disabled={busy}
 				>
-					{#if snooze}<Clock class="size-4" aria-hidden="true" />{:else}<BellOff class="size-4" aria-hidden="true" />{/if}
-					{busy ? m.alert_link_working() : snooze ? m.alert_link_snooze_button() : m.alert_link_ack_button()}
+					{#if dismiss}<X class="size-4" aria-hidden="true" />{:else if snooze}<Clock class="size-4" aria-hidden="true" />{:else}<BellOff class="size-4" aria-hidden="true" />{/if}
+					{busy ? m.alert_link_working() : buttonLabel}
 				</button>
 				<p class="mt-2 text-[0.8125rem] text-ink-2">{m.alert_link_expires({ time: formatDateTime(view.expires_at) })}</p>
 			{/if}

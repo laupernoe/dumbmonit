@@ -1,7 +1,7 @@
 //! Persistance de l'agent : jetons d'enregistrement et machines enregistrées.
 
 use anyhow::{Context, Result};
-use dumbmonit_proto::{AgentIdentity, Credential, TargetId};
+use dumbmonit_proto::{AgentIdentity, Credential, RelaySetting, TargetId};
 use sqlx::{Row, SqlitePool};
 
 use crate::crypto::Cipher;
@@ -55,6 +55,20 @@ pub struct TokenRecord {
     /// Terme au-delà duquel le jeton n'enrôle plus. Les machines déjà enrôlées
     /// continuent de remonter leurs mesures.
     pub expires_at: Option<String>,
+    /// Vrai pour un jeton créé par le parcours « site distant » : la machine
+    /// qu'il enrôle devient relais dès son premier lot.
+    pub relay: bool,
+    /// Site donné à ce relais, s'il y en a un.
+    pub relay_site: Option<String>,
+}
+
+/// Longueur maximale d'un nom de site : il s'affiche sur une carte et dans une
+/// liste, il n'a pas à être un paragraphe.
+pub const MAX_SITE_LEN: usize = 80;
+
+/// Nom de site normalisé : sans blancs autour, `None` s'il est vide.
+pub fn clean_site(site: Option<&str>) -> Option<String> {
+    site.map(str::trim).filter(|s| !s.is_empty()).map(str::to_string)
 }
 
 /// Pourquoi un jeton valide n'enrôle pas cette machine-ci.
@@ -96,7 +110,7 @@ pub async fn create_token(
         "INSERT INTO agent_tokens (name, token_hash, prefix, max_uses, expires_at)
          VALUES (?, ?, ?, ?, ?)
          RETURNING id, name, prefix, created_at, last_used_at, revoked_at,
-                   max_uses, uses, expires_at",
+                   max_uses, uses, expires_at, relay, relay_site",
     )
     .bind(name)
     .bind(token::fingerprint(&clear))
@@ -113,13 +127,82 @@ pub async fn create_token(
 pub async fn list_tokens(pool: &SqlitePool) -> Result<Vec<TokenRecord>> {
     let rows = sqlx::query(
         "SELECT id, name, prefix, created_at, last_used_at, revoked_at,
-                max_uses, uses, expires_at
+                max_uses, uses, expires_at, relay, relay_site
          FROM agent_tokens ORDER BY id DESC",
     )
     .fetch_all(pool)
     .await
     .context("listing enrollment tokens")?;
     rows.iter().map(row_to_token).collect()
+}
+
+/// Fait d'un jeton un jeton de relais : la machine qu'il enrôle (ou relie)
+/// devient relais pour `site`, sans rien éditer sur elle.
+pub async fn set_token_relay(pool: &SqlitePool, id: i64, site: Option<&str>) -> Result<()> {
+    sqlx::query("UPDATE agent_tokens SET relay = 1, relay_site = ? WHERE id = ?")
+        .bind(clean_site(site))
+        .bind(id)
+        .execute(pool)
+        .await
+        .context("marking the token as a relay token")?;
+    Ok(())
+}
+
+/// Reporte sur la machine le mode relais porté par son jeton d'enrôlement.
+/// Sans effet pour un jeton ordinaire : un réglage fait dans l'interface reste.
+async fn apply_token_relay(pool: &SqlitePool, target_id: TargetId, token_id: i64) -> Result<()> {
+    sqlx::query(
+        "UPDATE agent_hosts
+         SET relay_wanted = 1,
+             relay_wanted_site = COALESCE(
+                 (SELECT relay_site FROM agent_tokens WHERE id = ?), relay_wanted_site)
+         WHERE target_id = ?
+           AND EXISTS (SELECT 1 FROM agent_tokens WHERE id = ? AND relay = 1)",
+    )
+    .bind(token_id)
+    .bind(target_id)
+    .bind(token_id)
+    .execute(pool)
+    .await
+    .context("applying the relay mode of the token")?;
+    Ok(())
+}
+
+/// Règle depuis l'interface le mode relais d'une machine. Faux si aucune
+/// machine à agent ne porte cette cible.
+pub async fn set_relay_wanted(
+    pool: &SqlitePool,
+    target_id: TargetId,
+    enabled: bool,
+    site: Option<&str>,
+) -> Result<bool> {
+    let result = sqlx::query(
+        "UPDATE agent_hosts SET relay_wanted = ?, relay_wanted_site = ? WHERE target_id = ?",
+    )
+    .bind(i64::from(enabled))
+    .bind(clean_site(site))
+    .bind(target_id)
+    .execute(pool)
+    .await
+    .context("saving the relay mode")?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Mode relais à transmettre à l'agent dans son accusé de réception.
+pub async fn relay_setting(pool: &SqlitePool, target_id: TargetId) -> Result<Option<RelaySetting>> {
+    let row =
+        sqlx::query("SELECT relay_wanted, relay_wanted_site FROM agent_hosts WHERE target_id = ?")
+            .bind(target_id)
+            .fetch_optional(pool)
+            .await
+            .context("reading the relay mode")?;
+    row.map(|row| {
+        Ok(RelaySetting {
+            enabled: row.try_get::<i64, _>("relay_wanted")? != 0,
+            site: row.try_get("relay_wanted_site")?,
+        })
+    })
+    .transpose()
 }
 
 /// Révoque un jeton. Idempotent : révoquer deux fois n'est pas une erreur, mais
@@ -340,6 +423,7 @@ pub async fn register(
 
     let secret = token::generate_secret();
     insert_host(pool, target_id, &key, identity, token_id, Some(&secret)).await?;
+    apply_token_relay(pool, target_id, token_id).await?;
     consume_enrolment(pool, token_id).await?;
     Ok(Registration { target_id, created, bound: true, issued_secret: Some(secret) })
 }
@@ -473,7 +557,8 @@ async fn bind_host(
     .execute(pool)
     .await
     .context("binding the machine to its agent")?;
-    Ok(())
+    // Réinstallée avec un jeton de relais : elle le devient.
+    apply_token_relay(pool, target_id, token_id).await
 }
 
 /// Ouvre une fenêtre de reliaison : la machine pourra se relier au prochain lot
@@ -551,9 +636,9 @@ async fn insert_host(
     sqlx::query(
         "INSERT INTO agent_hosts
              (target_id, agent_key, hostname, os, os_version, kernel_version, arch,
-              agent_version, commands_enabled, relay, site, token_id,
-              secret_hash, binding_supported, bound_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              agent_version, commands_enabled, relay, site, relay_control, relay_local,
+              token_id, secret_hash, binding_supported, bound_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
                  CASE WHEN ? IS NULL THEN NULL
                       ELSE strftime('%Y-%m-%dT%H:%M:%SZ', 'now') END)",
     )
@@ -568,6 +653,8 @@ async fn insert_host(
     .bind(identity.commands_enabled)
     .bind(i64::from(identity.relay))
     .bind(site_of(identity))
+    .bind(i64::from(identity.relay_control))
+    .bind(i64::from(identity.relay_local))
     .bind(token_id)
     .bind(secret.map(token::fingerprint))
     .bind(i64::from(identity.binding_supported))
@@ -591,7 +678,7 @@ async fn update_host(
         "UPDATE agent_hosts
          SET hostname = ?, os = ?, os_version = ?, kernel_version = ?, arch = ?,
              agent_version = ?, commands_enabled = ?, relay = ?, site = ?,
-             binding_supported = ?
+             relay_control = ?, relay_local = ?, binding_supported = ?
          WHERE target_id = ?",
     )
     .bind(&identity.hostname)
@@ -603,6 +690,8 @@ async fn update_host(
     .bind(identity.commands_enabled)
     .bind(i64::from(identity.relay))
     .bind(site_of(identity))
+    .bind(i64::from(identity.relay_control))
+    .bind(i64::from(identity.relay_local))
     .bind(i64::from(identity.binding_supported))
     .bind(target_id)
     .execute(pool)
@@ -656,6 +745,14 @@ pub struct HostInfo {
     pub relay: bool,
     /// Site déclaré par l'agent, s'il en a un.
     pub site: Option<String>,
+    /// Mode relais demandé depuis l'interface (ou par le jeton d'enrôlement).
+    pub relay_wanted: bool,
+    /// Site demandé depuis l'interface.
+    pub relay_wanted_site: Option<String>,
+    /// Vrai si l'agent sait suivre ce réglage ; faux : binaire trop ancien.
+    pub relay_control: bool,
+    /// Vrai si `relay: true` est posé dans sa configuration locale, qui prime.
+    pub relay_local: bool,
     pub last_seen_at: Option<String>,
     /// Vrai si la machine est liée à un secret connu d'elle seule.
     pub bound: bool,
@@ -688,7 +785,7 @@ impl HostInfo {
 pub async fn host(pool: &SqlitePool, target_id: TargetId) -> Result<Option<HostInfo>> {
     let row = sqlx::query(
         "SELECT hostname, os, os_version, arch, agent_version, commands_enabled, relay, site,
-                last_seen_at, secret_hash, bound_at, binding_supported, rebind_until
+                relay_wanted, relay_wanted_site, relay_control, relay_local, last_seen_at, secret_hash, bound_at, binding_supported, rebind_until
          FROM agent_hosts WHERE target_id = ?",
     )
     .bind(target_id)
@@ -703,7 +800,8 @@ pub async fn host(pool: &SqlitePool, target_id: TargetId) -> Result<Option<HostI
 pub async fn list_hosts(pool: &SqlitePool) -> Result<Vec<(TargetId, String, HostInfo)>> {
     let rows = sqlx::query(
         "SELECT h.target_id, t.name, h.hostname, h.os, h.os_version, h.arch, h.agent_version,
-                h.commands_enabled, h.relay, h.site, h.last_seen_at, h.secret_hash, h.bound_at,
+                h.commands_enabled, h.relay, h.site, h.relay_wanted, h.relay_wanted_site,
+                h.relay_control, h.relay_local, h.last_seen_at, h.secret_hash, h.bound_at,
                 h.binding_supported, h.rebind_until
          FROM agent_hosts h JOIN targets t ON t.id = h.target_id
          ORDER BY t.name",
@@ -726,6 +824,10 @@ fn row_to_host(row: &sqlx::sqlite::SqliteRow) -> Result<HostInfo> {
         commands_enabled: row.try_get::<Option<i64>, _>("commands_enabled")?.map(|v| v != 0),
         relay: row.try_get::<i64, _>("relay")? != 0,
         site: row.try_get("site")?,
+        relay_wanted: row.try_get::<i64, _>("relay_wanted")? != 0,
+        relay_wanted_site: row.try_get("relay_wanted_site")?,
+        relay_control: row.try_get::<i64, _>("relay_control")? != 0,
+        relay_local: row.try_get::<i64, _>("relay_local")? != 0,
         last_seen_at: row.try_get("last_seen_at")?,
         bound: row.try_get::<Option<String>, _>("secret_hash")?.is_some(),
         bound_at: row.try_get("bound_at")?,
@@ -758,6 +860,8 @@ fn row_to_token(row: &sqlx::sqlite::SqliteRow) -> Result<TokenRecord> {
         max_uses: row.try_get("max_uses")?,
         uses: row.try_get("uses")?,
         expires_at: row.try_get("expires_at")?,
+        relay: row.try_get::<i64, _>("relay")? != 0,
+        relay_site: row.try_get("relay_site")?,
     })
 }
 
@@ -792,6 +896,8 @@ mod tests {
             commands_enabled: Some(true),
             relay: false,
             site: None,
+            relay_control: false,
+            relay_local: false,
             machine_id: machine_id.map(str::to_string),
             tags: BTreeMap::new(),
             binding_supported: true,

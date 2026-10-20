@@ -58,18 +58,32 @@ then the repository, account and organisation counts.
 
 ## Create an access token on a site administrator account
 
-1. Create an access token on a site administrator account: avatar → Settings → Applications → Generate new token. Name it as follows and tick the read:admin, read:repository and read:user scopes.
+1. On a site administrator account, open avatar → Settings → Applications → Generate New Token.
+
+2. Name it as follows and tick only the scopes listed below.
 
     ```
     dumbmonit
     ```
 
-2. read:admin opens the administration counts, the scheduled tasks and the Actions runners; without it, only the version and the token's own account are read, and the rest is skipped without failing the probe. Forgejo and Gitea have no read-only administrator role either.
+3. Generate the token and copy it: Forgejo shows it only once.
 
-3. In DumbMonit, enter the address, for example "forgejo.lan" (port 3000) or "https://git.example.com" behind a reverse proxy, and paste the token.
+4. In DumbMonit, enter the server's address and paste the token.
+
+### Required permissions
+
+- **read:admin**: Counts, scheduled tasks and Actions runners
+- **read:repository**: Repository count
+- **read:user**: The token's own account
+
+Vendor documentation: <https://forgejo.org/docs/latest/user/api/>
+
+### Why these permissions
+
+`read:admin` opens the administration counts, the scheduled tasks and the Actions runners; without it, only the version and the token's own account are read, and the rest is skipped without failing the probe. `read:repository` gives the repository count and `read:user` the token's own account. Forgejo and Gitea have no read-only administrator role: scopes only gate which API routes a token opens, not how much an administrator account itself can do.
 
 !!! warning
-    An access token on a site administrator account can read and change everything the account can, whatever scopes are ticked: Forgejo and Gitea only gate which API routes a scope opens, not how much an administrator account itself can do. Dedicate a bot account to it rather than reusing your own.
+    Forgejo and Gitea have no read-only administrator role, so the token can do whatever its account can: use a dedicated bot account, not your own.
 
 Checking the token by hand, from the DumbMonit host:
 

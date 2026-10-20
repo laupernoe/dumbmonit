@@ -220,7 +220,7 @@ async fn tools_list_is_cacheable_and_annotated() {
     assert!(result["ttlMs"].as_u64().is_some_and(|ttl| ttl > 0));
     assert_eq!(result["cacheScope"], "private");
     let tools = result["tools"].as_array().unwrap();
-    assert_eq!(tools.len(), 27);
+    assert_eq!(tools.len(), 28);
     // Ordre déterministe, d'un appel à l'autre.
     let again = mcp.modern(&mcp.reader, "tools/list", json!({})).await;
     assert_eq!(again.body["result"]["tools"], result["tools"]);

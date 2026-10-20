@@ -317,37 +317,55 @@ L'option `photos` (activée par défaut) le désactive.
 
 ## Ce qu'il faut préparer sur le NAS
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du
-formulaire. Le principe : un compte réservé à la surveillance, dépouillé
-de tout ce dont l'API de DSM n'a pas besoin — jamais le compte avec
-lequel vous vous connectez.
+Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Le principe : un compte réservé à la surveillance, dépouillé de tout ce dont l'API de DSM n'a pas besoin — jamais le compte avec lequel vous vous connectez.
 
-1. Dans DSM, ouvrez Control Panel → User & Group → User et cliquez sur Create. Nommez le compte comme suit et donnez-lui un mot de passe long utilisé nulle part ailleurs.
+1. Dans DSM, ouvrez Control Panel → User & Group → User → Create et nommez le compte comme suit, avec un mot de passe long utilisé nulle part ailleurs.
 
     ```
     dumbmonit
     ```
 
-2. Rejoignez des groupes : cochez administrators. DSM ne répond aux appels de stockage, volume et SMART de disque qu'à ce groupe ; sans lui, le NAS se montre vivant mais ne dit rien de ses disques. Les deux étapes suivantes reprennent tout le reste.
-3. Assignez les permissions de dossier partagé : Aucun accès sur chaque dossier partagé. Assignez les permissions d'application : Refuser tout sauf DSM, plus Active Backup for Business si vous voulez lire ses tâches. Passez les pages de quota et de limite de vitesse.
-4. La vérification en deux étapes doit rester désactivée pour ce compte : aucun moniteur automatisé ne peut taper un code à usage unique. Si Control Panel → Security → Account l'impose, restreignez la règle aux groupes dont cet utilisateur n'est pas membre, ou exemptez-le.
-5. Les paquets de sauvegarde ne sont lus que tant qu'ils sont installés et tournent : DSM n'annonce pas du tout l'API d'un paquet arrêté, les tâches Hyper Backup deviennent alors silencieuses plutôt que d'échouer, et un NAS qui ne reçoit que des sauvegardes (Hyper Backup Vault) n'a pas de tâches propres à montrer. Active Backup for Business ne répond en plus qu'à un compte autorisé à l'utiliser (Active Backup for Business → Settings → Privileges) ; sinon décochez l'option « Surveiller Active Backup for Business » de DumbMonit pour arrêter de demander.
-6. Dans DumbMonit, saisissez l'adresse du NAS (HTTPS, port 5001 par défaut), puis le nom d'utilisateur et le mot de passe de ce compte.
+2. Rejoignez des groupes : cochez administrators.
+3. Assignez les permissions de dossier partagé : cochez Aucun accès sur chaque dossier partagé.
+4. Assignez les permissions d'application : Refuser toutes les applications sauf DSM, et Active Backup for Business si vous voulez lire ses tâches.
+5. Gardez la vérification en deux étapes désactivée pour ce compte (Control Panel → Security → Account).
+6. Dans DumbMonit, saisissez l'adresse du NAS (HTTPS, port 5001 par défaut) puis le nom d'utilisateur et le mot de passe de ce compte.
+
+### Droits requis
+
+- **Groupe : administrators** — L'API de stockage de DSM ne répond à aucun autre compte
+- **Application : DSM** — La seule application dont le compte a besoin
+- **Application : Active Backup for Business** — Facultatif : pour lire ses tâches
 
 !!! warning
-    Le groupe administrators est exigé par l'API de stockage de DSM, pas par DumbMonit. C'est pourquoi ce compte n'a aucun dossier partagé, aucune application et un mot de passe utilisé nulle part ailleurs : il peut lire le NAS, pas toucher vos fichiers.
-
-!!! note "Quels droits donnent quelles métriques"
-    L'API DSM n'a pas besoin des mêmes droits pour chaque appel. L'état
-    système (modèle, version, température, uptime) répond à tout
-    compte. CPU, mémoire, volumes et, surtout, statut SMART des disques
-    demandent le groupe `administrators`. Sur DSM 7, la délégation
-    « System monitoring » (Control Panel → User & Group → Delegation)
-    suffit pour l'utilisation mais pas pour l'inventaire de stockage. Un
-    compte sans droits particuliers donne donc un NAS « vivant », mais
-    rien sur ses disques.
+    Le groupe administrators est exigé par l'API de stockage de DSM, pas par DumbMonit : c'est pourquoi le compte n'a aucun dossier partagé et aucune autre application.
 
 Documentation du fournisseur : [Create a user in DSM](https://kb.synology.com/en-global/DSM/help/DSM/AdminCenter/file_user_create).
+
+### Pourquoi ces permissions
+
+L'API de DSM n'a pas besoin des mêmes droits pour chaque appel. L'état système
+(modèle, version, température, uptime) répond à tout compte. CPU, mémoire,
+volumes et, surtout, statut SMART des disques demandent le groupe
+`administrators`. Sur DSM 7, la délégation « System monitoring » (Control Panel
+→ User & Group → Delegation) suffit pour l'utilisation mais pas pour
+l'inventaire de stockage. Un compte sans droits particuliers donne donc un NAS
+« vivant », mais rien sur ses disques. Les réglages de dossiers partagés et
+d'applications reprennent tout le reste des droits du groupe.
+
+La vérification en deux étapes doit rester désactivée : aucun moniteur
+automatisé ne peut taper un code à usage unique. Si Control Panel → Security →
+Account l'impose, restreignez la règle aux groupes dont cet utilisateur n'est
+pas membre, ou exemptez-le.
+
+Les paquets de sauvegarde ne sont lus que tant qu'ils sont installés et
+tournent : DSM n'annonce pas du tout l'API d'un paquet arrêté, les tâches Hyper
+Backup deviennent alors silencieuses plutôt que d'échouer, et un NAS qui ne
+reçoit que des sauvegardes (Hyper Backup Vault) n'a pas de tâches propres à
+montrer. Active Backup for Business ne répond en plus qu'à un compte autorisé à
+l'utiliser (Active Backup for Business → Settings → Privileges) ; sinon
+décochez l'option « Surveiller Active Backup for Business » de DumbMonit pour
+arrêter de demander.
 
 ## Identifiants
 

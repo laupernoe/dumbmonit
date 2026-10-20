@@ -40,12 +40,34 @@ relay request up to 25 seconds while waiting for work (long polling).
 
 ## 2. Create an enrollment token
 
-**Settings → Agents → New token**, or add a monitor of type *agent*. Copy the
-`dmon_…` value: it is shown once.
+The simplest way: **Settings → Agents → Watch a remote site** (or tick *This
+agent is a relay for a remote site* when you create a token). Give the site a
+name, create the token, and run the install command shown on a machine at the
+site. The token itself carries relay mode and the site: the agent becomes a
+relay at its first report, with nothing to edit on the machine.
+
+**An agent already installed** becomes a relay from its page in DumbMonit: in
+the *Relay* panel, switch on *Relay for a remote site*, give the site, save. The
+agent switches at its next report, without a restart. Switching it off works
+the same way. An agent too old to follow the switch is flagged there: update it
+by re-running the install command, or use `relay: true` below.
+
+The alternatives below set relay mode on the machine itself; it then wins over
+the switch in the UI.
 
 ## 3. Start the relay at the remote site
 
-Any machine at the remote site with Docker, using `docker-compose.agent.yml`
+On Linux, macOS or FreeBSD, the one-line installer with `--relay` and the site
+(not needed with a token from *Watch a remote site*):
+
+```sh
+curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
+  --token=dmon_… --url=https://monitor.example.org --relay --site='Lyon office'
+```
+
+On Windows, add `-Relay -Site 'Lyon office'` to the PowerShell install command.
+
+Or any machine at the remote site with Docker, using `docker-compose.agent.yml`
 from the repository:
 
 ```sh
@@ -57,8 +79,8 @@ DUMBMONIT_AGENT_SITE="Lyon office" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Or the regular agent installed with the one-line installer, with two more
-keys in `/etc/dumbmonit/agent.yaml`:
+An agent already installed becomes a relay with two more keys in
+`/etc/dumbmonit/agent.yaml`, then a restart of the agent:
 
 ```yaml
 relay: true

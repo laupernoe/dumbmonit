@@ -53,31 +53,29 @@ then the messages ready and unacknowledged, messages published and delivered
 per second, connections, consumers and queues, then the ten fullest queues
 with their consumers and the memory and free disk of each node.
 
-## Create a RabbitMQ user tagged monitoring
+## Create a RabbitMQ monitoring user
 
-1. Enable the management plugin if it is not already on (the management Docker images have it). Its API listens on port 15672.
+1. Open the RabbitMQ management interface, for example http://rabbit.lan:15672, and log in with a user allowed to manage users.
 
-    ```
-    rabbitmq-plugins enable rabbitmq_management
-    ```
+2. Go to Admin → Users → Add a user, name it dumbmonit, set a password and the tag monitoring, then click Add user.
 
-2. Create a user with the monitoring tag only: it can read node, alarm and queue state, and cannot change anything.
+3. Click dumbmonit in the list, and under Set permission pick each virtual host, set Configure, Write and Read to ^$, then click Set permission.
 
-    ```
-    rabbitmqctl add_user dumbmonit 'a-long-password'
-    rabbitmqctl set_user_tags dumbmonit monitoring
-    ```
+4. In DumbMonit, enter the address of one node, for example rabbit.lan, or https://rabbit.lan:15671 when the API is served over TLS.
 
-3. Give it empty permissions on each virtual host whose queues you want to see. It can then list those queues, and still cannot publish, consume or read a message. Repeat with -p for every other virtual host.
+### Required permissions
 
-    ```
-    rabbitmqctl set_permissions -p / dumbmonit '^$' '^$' '^$'
-    ```
-
-4. In DumbMonit, enter the address of one node, for example "rabbit.lan", or "https://rabbit.lan:15671" when the API is served over TLS. One node reports the whole cluster: the alarms and partitions of every node, and every queue.
+- **monitoring (user tag)**: Read nodes, alarms and queues
+- **Configure, Write, Read = ^$ on each virtual host**: Lets it list that host's queues
 
 !!! warning
-    A memory or disk alarm blocks every publisher in the cluster, and clients get no error: applications simply hang on publish. Queues are listed fullest first, up to Queues watched one by one (100 by default); totals always cover every queue.
+    A memory or disk alarm blocks every publisher in the cluster, and clients get no error.
+
+### Why these permissions
+
+The management plugin (rabbitmq-plugins enable rabbitmq_management; the management Docker images have it) serves the API on port 15672. The monitoring tag can read node, alarm and queue state and cannot change anything. A user only sees the queues of the virtual hosts it has some permission on: the empty patterns ^$ let it list them without being able to publish, consume or read a message. Without permissions on a virtual host, its queues are not listed one by one, and the cluster totals still count them. One node reports the whole cluster: the alarms and partitions of every node, and every queue. Queues are listed fullest first, up to Queues watched one by one (100 by default).
+
+Vendor documentation: https://www.rabbitmq.com/docs/management#permissions
 
 ## Credentials
 
