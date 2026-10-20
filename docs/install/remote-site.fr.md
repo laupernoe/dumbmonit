@@ -47,12 +47,29 @@ jusqu'à 25 secondes en attendant du travail (long polling).
 
 ## 2. Créer un jeton d'enrôlement
 
-**Réglages → Agents → Nouveau jeton**, ou ajoutez une surveillance de type
-*agent*. Copiez la valeur `dmon_…` : elle n'est montrée qu'une fois.
+Le plus simple : **Réglages → Agents → Surveiller un site distant**. Nommez le
+site, créez le jeton et copiez la commande d'installation affichée : elle porte
+déjà le mode relais et le site, il n'y a rien à modifier sur la machine.
+
+Vous pouvez aussi créer un jeton ordinaire (**Réglages → Agents → Nouveau
+jeton**, ou une surveillance de type *agent*) et régler le mode relais
+vous-même, comme ci-dessous. Copiez la valeur `dmon_…` : elle n'est montrée
+qu'une fois.
 
 ## 3. Démarrer le relais sur le site distant
 
-N'importe quelle machine sur le site distant avec Docker, en utilisant
+Sous Linux, macOS ou FreeBSD, l'installateur en une ligne avec `--relay` et le
+site :
+
+```sh
+curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
+  --token=dmon_… --url=https://monitor.example.org --relay --site='Lyon office'
+```
+
+Sous Windows, ajoutez `-Relay -Site 'Lyon office'` à la commande d'installation
+PowerShell.
+
+Ou n'importe quelle machine sur le site distant avec Docker, en utilisant
 `docker-compose.agent.yml` du dépôt :
 
 ```sh
@@ -64,8 +81,8 @@ DUMBMONIT_AGENT_SITE="Lyon office" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Ou l'agent ordinaire installé avec l'installateur en une ligne, avec deux
-clés de plus dans `/etc/dumbmonit/agent.yaml` :
+Un agent déjà installé devient relais avec deux clés de plus dans
+`/etc/dumbmonit/agent.yaml`, puis un redémarrage de l'agent :
 
 ```yaml
 relay: true

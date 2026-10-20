@@ -7,8 +7,6 @@ All notable changes to this project are documented here. The format follows
 
 ### Changed
 
-- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
-- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
 - **Simpler setup guides when adding a monitor.** Each guide is now a few short
   steps done in the product's own web interface (a command is kept only where
   the product has no interface for it), followed by a framed "Required
@@ -16,6 +14,15 @@ All notable changes to this project are documented here. The format follows
   "Full guide" link to the matching documentation page. The device pages of the
   documentation carry the same steps and permissions. Integration packs can list
   `setup.permissions` too.
+
+### Fixed
+
+- **A remote-site relay installs in one command.** The install scripts accept
+  `--relay` and `--site=NAME` (`-Relay -Site NAME` on Windows) and write them
+  into agent.yaml, and *Settings → Agents → Watch a remote site* now puts them
+  in the install commands it shows. Before, the agent installed with those
+  commands was not a relay until `relay: true` was added to agent.yaml by
+  hand; that step is now only a folded note for agents already installed.
 
 ## 0.13.0 — 2026-10-19
 
