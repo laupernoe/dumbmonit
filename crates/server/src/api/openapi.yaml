@@ -1213,6 +1213,12 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import (the others are
+            left out of the answer). Absent: every row.
+          schema: { type: string, example: "1,4,5" }
       requestBody:
         required: true
         content:
@@ -1239,6 +1245,53 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "413": { description: The file is larger than 4 MiB. }
+
+  /api/targets/import/kuma-db:
+    post:
+      operationId: importKumaDb
+      tags: [Devices]
+      summary: Import monitors from an Uptime Kuma database (kuma.db)
+      description: >-
+        Body: the raw SQLite file `data/kuma.db` of Uptime Kuma 1.x or 2.x
+        (`Content-Type: application/octet-stream`), at most 512 MiB. It is
+        written to a temporary file, read once in read-only mode (never attached
+        to DumbMonit's database) and deleted afterwards. Monitors, groups,
+        tags and intervals are mapped exactly as for `/api/targets/import/kuma`;
+        notifications, credentials, headers and request bodies are never read
+        into DumbMonit. Rows are sorted by device type, folder, then name, and
+        numbered in that order, so a preview (`dry_run=true`) and the import of
+        the same file agree on the numbers given to `rows`. Uptime Kuma 2 on
+        MariaDB cannot be read. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import (the others are
+            left out of the answer). Absent: every row.
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/targets/reorder:
     post:
