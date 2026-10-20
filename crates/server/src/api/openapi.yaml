@@ -1215,6 +1215,12 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import (the others are
+            left out of the answer). Absent: every row.
+          schema: { type: string, example: "1,4,5" }
       requestBody:
         required: true
         content:
@@ -1241,6 +1247,53 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "413": { description: The file is larger than 4 MiB. }
+
+  /api/targets/import/kuma-db:
+    post:
+      operationId: importKumaDb
+      tags: [Devices]
+      summary: Import monitors from an Uptime Kuma database (kuma.db)
+      description: >-
+        Body: the raw SQLite file `data/kuma.db` of Uptime Kuma 1.x or 2.x
+        (`Content-Type: application/octet-stream`), at most 512 MiB. It is
+        written to a temporary file, read once in read-only mode (never attached
+        to DumbMonit's database) and deleted afterwards. Monitors, groups,
+        tags and intervals are mapped exactly as for `/api/targets/import/kuma`;
+        notifications, credentials, headers and request bodies are never read
+        into DumbMonit. Rows are sorted by device type, folder, then name, and
+        numbered in that order, so a preview (`dry_run=true`) and the import of
+        the same file agree on the numbers given to `rows`. Uptime Kuma 2 on
+        MariaDB cannot be read. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import (the others are
+            left out of the answer). Absent: every row.
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/targets/reorder:
     post:
@@ -1493,13 +1546,20 @@ paths:
         Pending, firing, suppressed and recently resolved. `phase` is the
         engine's state; `effective_phase` is what to show (`suppressed` when a
         parent device is unreachable, named by `suppressed_by`). Alerts of
-        deleted or paused devices are never listed.
+        deleted or paused devices are never listed. Dismissed alerts are left
+        out unless `dismissed=true`, which lists only them.
       x-token-scope: read
       parameters:
         - name: target_id
           in: query
           description: Only the alerts of this device.
           schema: { type: integer }
+        - name: dismissed
+          in: query
+          description: >-
+            `true`: only the dismissed alerts that are still active (to restore
+            one). Default: dismissed alerts are not listed.
+          schema: { type: boolean }
       responses:
         "200":
           description: Alerts.
@@ -1622,6 +1682,51 @@ paths:
       operationId: unacknowledgeAlert
       tags: [Alerts]
       summary: Lift an acknowledgement
+      x-token-scope: write
+      x-roles: [admin, operator]
+      responses:
+        "200":
+          description: The alert.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/{fingerprint}/dismiss:
+    parameters:
+      - name: fingerprint
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: dismissAlert
+      tags: [Alerts]
+      summary: Dismiss an alert
+      description: >-
+        "Got it": the current occurrence leaves the active alerts (list,
+        overview, wall, counters) and sends nothing more — no reminder, no
+        escalation, no resolution — for as long as the condition lasts. Once the
+        condition clears, the dismissal ends with it: if it comes back, that is
+        a new alert, notified as usual. Its resolution is recorded in the
+        history as "dismissed by …". Audited.
+      x-token-scope: write
+      x-roles: [admin, operator]
+      responses:
+        "200":
+          description: The alert.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: undismissAlert
+      tags: [Alerts]
+      summary: Restore a dismissed alert
+      description: Undo a dismissal while the alert is still active. Audited.
       x-token-scope: write
       x-roles: [admin, operator]
       responses:
@@ -2762,8 +2867,8 @@ paths:
       tags: [Public status]
       summary: Describe a notification action link
       description: |
-        Read-only: what the signed link from a notification would do (acknowledge, or snooze for one
-        hour) and which of its alerts are still active. Called by the `/alert-action#<token>` page,
+        Read-only: what the signed link from a notification would do (acknowledge, snooze for one
+        hour, or dismiss) and which of its alerts are still active. Called by the `/alert-action#<token>` page,
         which reads the token from the URL fragment so it never reaches a server log. Any refused
         token (forged, altered, expired, or action links switched off) gets the same `404`; repeated
         refusals from one client get `429`. Requires `X-Requested-With: DumbMonit`.
@@ -2791,8 +2896,8 @@ paths:
       summary: Run a notification action link
       description: |
         Acknowledges the link's still-active alerts until they resolve (`ack`) or for one hour
-        (`snooze`, which never shortens a longer acknowledgement), as "via notification link", and
-        records it in the audit log. Each link works once (`409` afterwards) and for 24 hours. `404`
+        (`snooze`, which never shortens a longer acknowledgement), or dismisses them (`dismiss`: hidden
+        and silent until they resolve), as "via notification link", and records it in the audit log. Each link works once (`409` afterwards) and for 24 hours. `404`
         when the token is refused or none of its alerts is still active.
         Requires `X-Requested-With: DumbMonit`.
       security: []
@@ -3178,6 +3283,36 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RebindWindow" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/relay:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    put:
+      operationId: setAgentRelay
+      tags: [Agents]
+      summary: Switch this agent's relay mode on or off
+      description: "The agent applies it on the fly at its next report, without a restart. `relay: true` in its agent.yaml wins (`relay_local`); an agent too old to follow it says `relay_control: false`."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+                site: { type: [string, "null"], maxLength: 80, description: Site of this relay. }
+      responses:
+        "200":
+          description: The machine after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentHost" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -4951,7 +5086,7 @@ paths:
         A notification is acknowledged with `202` and no body. The API token's
         scope applies tool by tool: a `read` token can call every read tool and
         gets an explanatory tool error (`isError: true`) from a write tool. The
-        27 tools are documented at
+        28 tools are documented at
         <https://dumbmonit.readthedocs.io/en/latest/using/assistant/>.
       x-token-scope: read
       parameters:
@@ -6142,6 +6277,8 @@ components:
         max_uses: { type: [integer, "null"], description: "`null` for a fleet token." }
         uses: { type: integer }
         expires_at: { type: [string, "null"], description: Enrolments stop after it; enrolled machines keep reporting. }
+        relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
+        relay_site: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
       required: [name]
@@ -6151,6 +6288,8 @@ components:
         reusable: { type: boolean, default: false, description: 'Without it, the token enrols one machine.' }
         max_uses: { type: [integer, "null"], minimum: 1 }
         expires_in_days: { type: [integer, "null"], minimum: 1 }
+        relay: { type: boolean, default: false, description: Make the enrolled machine a relay for a remote site. }
+        site: { type: [string, "null"], maxLength: 80, description: Site of that relay. }
     CreatedAgentToken:
       allOf:
         - $ref: "#/components/schemas/AgentToken"
@@ -6210,8 +6349,15 @@ components:
         steps:
           type: array
           items: { type: string }
+        permissions:
+          type: array
+          description: >-
+            Rights, roles or permissions to give the monitoring account, one per entry: the first
+            line is the right as the product names it, the optional next line says what it is for.
+            Omitted when the type needs none.
+          items: { type: string }
         warning: { type: string }
-        doc_url: { type: string }
+        doc_url: { type: string, description: "The 'Full guide' page of the documentation, or a pack's link." }
     OptionDescription:
       type: object
       properties:
@@ -6616,7 +6762,7 @@ components:
       enum: [ok, pending, firing, resolved, suppressed]
     ActiveAlert:
       type: object
-      required: [fingerprint, rule_uid, rule_name, severity, series_key, labels, phase, effective_phase, suppressed, silenced, learning, acked, notify_count]
+      required: [fingerprint, rule_uid, rule_name, severity, series_key, labels, phase, effective_phase, suppressed, silenced, learning, acked, dismissed, notify_count]
       properties:
         fingerprint: { type: string }
         rule_uid: { type: string }
@@ -6637,6 +6783,9 @@ components:
         acked_until: { type: [string, "null"], format: date-time }
         acked_by: { type: [string, "null"], description: "An account, or `token:<name>`." }
         ack_note: { type: [string, "null"] }
+        dismissed: { type: boolean, description: "Dismissed (\"Got it\"): hidden from the active views, silent until it resolves." }
+        dismissed_at: { type: [string, "null"], format: date-time }
+        dismissed_by: { type: [string, "null"], description: "An account, or `token:<name>`." }
         value: { type: [number, "null"] }
         score: { type: [number, "null"] }
         condition_since: { type: [string, "null"], format: date-time }
@@ -7033,18 +7182,19 @@ components:
         token: { type: string, description: "The part after `#` in the link." }
     AlertActionLinked:
       type: object
-      required: [rule_name, target_name, severity, acked, acked_until]
+      required: [rule_name, target_name, severity, acked, acked_until, dismissed]
       properties:
         rule_name: { type: string }
         target_name: { type: [string, "null"] }
         severity: { $ref: "#/components/schemas/Severity" }
         acked: { type: boolean }
         acked_until: { type: [string, "null"], format: date-time }
+        dismissed: { type: boolean }
     AlertActionView:
       type: object
       required: [action, expires_at, used, alerts]
       properties:
-        action: { type: string, enum: [ack, snooze] }
+        action: { type: string, enum: [ack, snooze, dismiss] }
         expires_at: { type: string, format: date-time }
         used: { type: boolean, description: "The link has already been used." }
         alerts:
@@ -7053,11 +7203,12 @@ components:
           items: { $ref: "#/components/schemas/AlertActionLinked" }
     AlertActionResult:
       type: object
-      required: [action, until, acked, alerts]
+      required: [action, until, acked, dismissed, alerts]
       properties:
-        action: { type: string, enum: [ack, snooze] }
-        until: { type: string, format: date-time }
+        action: { type: string, enum: [ack, snooze, dismiss] }
+        until: { type: string, format: date-time, description: "End of the acknowledgement; for `dismiss`, when it was done." }
         acked: { type: integer, description: "Alerts acknowledged by this action." }
+        dismissed: { type: integer, description: "Alerts dismissed by this action." }
         alerts:
           type: array
           items: { $ref: "#/components/schemas/AlertActionLinked" }
@@ -7552,6 +7703,10 @@ components:
         commands_supported: { type: boolean }
         relay: { type: boolean }
         site: { type: [string, "null"] }
+        relay_wanted: { type: boolean, description: Relay mode asked from the UI (or by the enrolment token). }
+        relay_wanted_site: { type: [string, "null"] }
+        relay_control: { type: boolean, description: "False: the agent is too old to follow `relay_wanted`." }
+        relay_local: { type: boolean, description: "`relay: true` is set in the agent's own configuration, which wins." }
         relayed: { type: integer }
         last_seen_at: { type: [string, "null"] }
         binding: { type: string, enum: [bound, pending, unsupported] }

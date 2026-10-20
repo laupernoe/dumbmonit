@@ -155,92 +155,81 @@ Notifications name the job, datastore or backup group concerned.
 
 ## What to prepare in PBS
 
-The steps below are the ones the notice next to the form shows. The principle:
-a user reserved for monitoring, a token with a read-only role — never the
-account you log in with.
-
-1. Open a shell on the backup server (in the web UI: Administration → Shell;
-   or SSH) and create a user reserved for monitoring. It needs no password:
-   the token is what logs in.
+1. Open Configuration → Access Control → User Management → Add, enter the user name dumbmonit, choose the realm Proxmox Backup authentication server, then click Add.
 
     ```
-    proxmox-backup-manager user create dumbmonit@pbs --comment "DumbMonit monitoring"
+    dumbmonit@pbs
     ```
 
-2. Create the user's API token. The command prints the token id and its
-   secret: copy both now, PBS never shows the secret again.
-
-    ```
-    proxmox-backup-manager user generate-token dumbmonit@pbs monitor
-    ```
-
-3. Give the read-only minimum, per path — to the token and to the user
-   that owns it. A token's effective privileges are the intersection of its
-   own ACL and its user's: granted to the token alone, they amount to nothing
-   at all, and PBS reports that nowhere. Every line is therefore written
-   twice. `DatastoreAudit` on `/datastore` (`Datastore.Audit`) reads the
-   datastores, snapshots, verify and prune jobs and GC; `Audit` on `/system`
-   (`Sys.Audit`) reads the node status, the task list and task logs, the
-   services, the traffic-control rules, the disks and ZFS pools.
-
-    ```
-    proxmox-backup-manager acl update /datastore DatastoreAudit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /datastore DatastoreAudit --auth-id 'dumbmonit@pbs!monitor'
-    proxmox-backup-manager acl update /system Audit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /system Audit --auth-id 'dumbmonit@pbs!monitor'
-    ```
-
-    Optional, and twice as well. `RemoteAudit` on `/remote` (`Remote.Audit`)
-    shows the sync jobs that pull from a remote: the built-in `Audit` role
-    covers `Sys.Audit` and `Datastore.Audit` only, and without `Remote.Audit`
-    such a job is not refused, it is simply absent from the job list.
-    `TapeAudit` on `/tape` (`Tape.Audit`) reads the tape tier. `Audit` on `/`
-    (`Sys.Audit` at the top level) lists pending package updates, and also
-    covers `/datastore` and `/system` if you prefer fewer lines. Without them
-    those items are silently skipped, nothing else changes. Nothing here can
-    write: the collector only performs `GET`s.
-
-    ```
-    proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs!monitor'
-    proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs!monitor'
-    proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
-    ```
-
-4. Before leaving the shell, check what the token can actually read. The
-   command prints its effective privileges, path by path; an empty result
-   means the user is missing the ACL the token has — the case where the device
-   looks perfectly alive and reports nothing.
-
-    ```
-    proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
-    ```
-
-5. Copy the token id into DumbMonit's Token ID field and the secret into its
-   Secret field.
+2. Open Configuration → Access Control → API Token → Add: user dumbmonit@pbs, token name monitor. Copy the Token ID and the Secret now, the secret is shown only once.
 
     ```
     dumbmonit@pbs!monitor
     ```
 
-6. Prefer the web UI? Configuration → Access Control: Users → Add, then API
-   Tokens → Add, then Permissions → Add. Add each permission twice, once as
-   User Permission for `dumbmonit@pbs` and once as API Token Permission
-   for `dumbmonit@pbs!monitor`: with path `/datastore` and role
-   `DatastoreAudit`, then again with path `/system` and role `Audit`. A token
-   permission on its own grants nothing.
-7. In DumbMonit, enter the server address, for example "pbs.lan" or
-   "pbs.lan:8007".
+3. Open Configuration → Access Control → Permissions → Add → User Permission: path /, user dumbmonit@pbs, role Audit.
+
+4. Add a second permission with Add → API Token Permission: path /, token dumbmonit@pbs!monitor, role Audit. A token has its own permissions, so both are needed.
+
+5. Optional, to see pull sync jobs and the tape tier: repeat both permissions with role RemoteAudit on path /remote and role TapeAudit on path /tape.
+
+6. In DumbMonit, enter the server address (for example pbs.lan:8007), the Token ID and the Secret.
+
+### Required permissions
+
+- **Audit on /**: Read-only: datastores, snapshots, tasks, node status
+- **RemoteAudit on /remote (optional)**: Shows the sync jobs that pull from a remote
+- **TapeAudit on /tape (optional)**: Reads the tape tier
+- **Sys.Modify on /system/certificates (optional)**: Only for the certificate expiry option
 
 !!! warning
-    Do not reuse the account you log in with: a leaked token would then manage
-    every backup. The Audit role can only read. PBS also uses a self-signed
-    certificate by default: if the connection is refused for that reason, tick
-    "Accept an unverifiable certificate" in the options.
+    Both the user and the token need the permission: given to the token alone, it grants nothing and PBS reports nothing. The server uses a self-signed certificate by default: tick "Accept an unverifiable certificate" in the options if the connection is refused.
 
-Vendor documentation: [PBS API tokens](https://pbs.proxmox.com/docs/user-management.html#api-tokens).
+Vendor documentation: [PBS API tokens](https://pbs.proxmox.com/docs/user-management.html#api-tokens)
+
+### Why these permissions
+
+Do not reuse the account you log in with: a leaked token would then manage
+every backup. The `Audit` role can only read.
+
+* `Audit` is `Sys.Audit` plus `Datastore.Audit`. On `/` it reads the
+  datastores, snapshots, verify and prune jobs and GC, the node status, the task
+  list and task logs, the services, the traffic-control rules, the disks and ZFS
+  pools, and the pending package updates. Nothing here can write: the collector
+  only performs `GET`s.
+* A token's effective privileges are the intersection of its own ACL and its
+  user's. Granted to the token alone, they amount to nothing at all, and PBS
+  reports that nowhere. Every permission is therefore added twice, once for the
+  user and once for the token.
+* `RemoteAudit` on `/remote` (`Remote.Audit`) shows the sync jobs that pull
+  from a remote: the built-in `Audit` role does not cover `Remote.Audit`, and
+  without it such a job is not refused, it is simply absent from the job list.
+  `TapeAudit` on `/tape` (`Tape.Audit`) reads the tape tier. Without them those
+  items are silently skipped, nothing else changes.
+* PBS uses a self-signed certificate by default: if the connection is refused
+  for that reason, tick "Accept an unverifiable certificate" in the options.
+
+To check what the token can actually read, run this on the backup server
+(Administration → Shell). It prints the effective privileges, path by path; an
+empty result means the user is missing the permission the token has — the case
+where the device looks perfectly alive and reports nothing.
+
+```
+proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
+```
+
+Prefer a shell for the whole setup?
+
+```
+proxmox-backup-manager user create dumbmonit@pbs --comment "DumbMonit monitoring"
+proxmox-backup-manager user generate-token dumbmonit@pbs monitor
+proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs'
+proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
+proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs'
+proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs!monitor'
+proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs'
+proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs!monitor'
+```
 
 ## Credentials
 

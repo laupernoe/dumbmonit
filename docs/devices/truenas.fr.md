@@ -116,52 +116,48 @@ disque, le dataset, la tâche ou le service concerné.
 ## Ce qu'il faut préparer dans TrueNAS
 
 Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
-Une chose à savoir d'abord : via l'API REST que DumbMonit utilise,
-**TrueNAS n'a pas de clé en lecture seule**. Ses rôles en lecture seule
-n'ont été branchés que dans sa nouvelle API WebSocket ; une clé dont
-l'utilisateur est un Read-Only Administrator est refusée, avec un `403`
-vide, à chaque appel REST. Cela a été vérifié sur TrueNAS 25.04.2.6 : une
-clé Read-Only Administrator a obtenu `403` sur les 55 chemins REST
-essayés, et la même clé fonctionnait via l'API WebSocket. La clé doit
-appartenir à un utilisateur avec le privilège Local Administrator — elle
-obtient donc un utilisateur et un groupe qui lui sont propres, et rien
-d'autre.
 
-1. Dans l'interface web : Credentials → Groups → Add. Nommez le groupe
-   comme suit et donnez-lui le privilège Local Administrator.
+1. Ouvrez Credentials → Groups → Add, nommez le groupe comme suit et donnez-lui le privilège Local Administrator.
 
     ```
     dumbmonit
     ```
 
-2. Pourquoi Local Administrator et pas Read-Only Administrator : TrueNAS
-   n'a branché ses rôles en lecture seule que dans son API WebSocket. Via
-   l'API REST que DumbMonit utilise, une clé en lecture seule est refusée
-   à chaque appel. DumbMonit lui-même ne fait toujours que lire : il ne
-   démarre jamais un scrub, un test SMART, une mise à jour ou une
-   réplication.
-
-3. Credentials → Users → Add. Nommez le compte comme suit, faites de
-   dumbmonit son groupe principal, et laissez l'accès shell, sudo et SSH
-   désactivés : aucun n'est nécessaire.
+2. Ouvrez Credentials → Users → Add, nommez le compte comme suit et faites de dumbmonit son groupe principal. Laissez l'accès shell, sudo et SSH désactivés.
 
     ```
     dumbmonit
     ```
 
-4. Créez la clé : Credentials → Users → API Keys → Add, choisissez
-   l'utilisateur dumbmonit et donnez un nom à la clé. TrueNAS ne montre la
-   clé qu'une fois : copiez-la. Sur TrueNAS 24.10, le chemin est le menu
-   utilisateur en haut à droite → API Keys → Add, et une clé n'appartient
-   à aucun utilisateur.
+3. Ouvrez Credentials → Users → API Keys → Add, choisissez l'utilisateur dumbmonit, donnez un nom à la clé et copiez-la : TrueNAS ne la montre qu'une fois.
+4. Sur TrueNAS 24.10, le chemin est le menu utilisateur en haut à droite → API Keys → Add.
+5. Dans DumbMonit, saisissez l'adresse du NAS (par exemple nas.lan) et collez la clé. Gardez HTTPS.
 
-5. Dans DumbMonit, saisissez l'adresse du NAS, par exemple « nas.lan », et
-   collez la clé. Gardez HTTPS : TrueNAS révoque une clé qu'elle reçoit
-   jamais en HTTP simple depuis une autre machine.
+### Droits requis
+
+- **Local Administrator (privilège de groupe)** — Le seul privilège que l'API REST accepte pour une clé
 
 !!! warning
+    Cette clé peut tout changer sur le NAS, car TrueNAS n'offre pas de clé en lecture seule via son API REST : gardez-la pour DumbMonit seul et révoquez-la si elle fuit. TrueNAS livre un certificat autosigné : si la connexion est refusée, cochez « Accepter un certificat non vérifiable » dans les options.
 
-    Cette clé peut tout changer sur le NAS : TrueNAS n'offre pas de clé en lecture seule via son API REST. Traitez-la comme le mot de passe d'un compte qui peut effacer vos pools, gardez-la pour DumbMonit seul, et révoquez-la depuis la même page si elle fuit. TrueNAS livre aussi un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
+Documentation du fournisseur : [Managing API keys](https://www.truenas.com/docs/scale/25.04/scaletutorials/toptoolbar/managingapikeys/).
+
+### Pourquoi ces permissions
+
+Via l'API REST que DumbMonit utilise, **TrueNAS n'a pas de clé en lecture
+seule**. Ses rôles en lecture seule n'ont été branchés que dans sa nouvelle API
+WebSocket ; une clé dont l'utilisateur est un Read-Only Administrator est
+refusée, avec un `403` vide, à chaque appel REST. Cela a été vérifié sur
+TrueNAS 25.04.2.6 : une clé Read-Only Administrator a obtenu `403` sur les 55
+chemins REST essayés, et la même clé fonctionnait via l'API WebSocket. La clé
+doit appartenir à un utilisateur avec le privilège Local Administrator : elle
+obtient donc un utilisateur et un groupe qui lui sont propres, et rien d'autre.
+DumbMonit lui-même ne fait que lire : il ne démarre jamais un scrub, un test
+SMART, une mise à jour ou une réplication.
+
+Gardez HTTPS : TrueNAS révoque une clé qu'elle reçoit en HTTP simple depuis une
+autre machine. L'accès shell, sudo et SSH ne sont pas nécessaires. Sur TrueNAS
+24.10, une clé n'appartient à aucun utilisateur.
 
 Adresse : `192.168.1.20`, `nas.lan`, `nas.lan:8443`, `[fd00::20]` ou une
 URL complète. Le schéma `https` et le port 443 sont ajoutés s'ils

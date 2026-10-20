@@ -99,54 +99,48 @@ service concerned.
 
 ## What to prepare in TrueNAS
 
-The steps below are the ones the notice next to the form shows. One thing to
-know first: over the REST API that DumbMonit uses, **TrueNAS has no read-only
-key**. Its read-only roles were only wired into its newer WebSocket API; a key
-whose user is a Read-Only Administrator is refused, with an empty `403`, on
-every REST call. This was checked on TrueNAS 25.04.2.6: a Read-Only
-Administrator key got `403` on all 55 REST paths tried, and the very same key
-worked over the WebSocket API. The key must belong to a user with the Local
-Administrator privilege — so it gets a user and a group of its own, and nothing
-else.
+The steps below are the ones the notice next to the form shows.
 
-1. In the web interface: Credentials → Groups → Add. Name the group as follows
-   and give it the Local Administrator privilege.
+1. Open Credentials → Groups → Add, name the group as follows and give it the Local Administrator privilege.
 
     ```
     dumbmonit
     ```
 
-2. Why Local Administrator and not Read-Only Administrator: TrueNAS wired its
-   read-only roles into its WebSocket API only. Over the REST API DumbMonit
-   uses, a read-only key is refused on every single call. DumbMonit itself only
-   ever reads: it never starts a scrub, a SMART test, an update or a
-   replication.
-
-3. Credentials → Users → Add. Name the account as follows, make dumbmonit its
-   primary group, and leave shell access, sudo and SSH off: none of them is
-   needed.
+2. Open Credentials → Users → Add, name the account as follows and make dumbmonit its primary group. Leave shell access, sudo and SSH off.
 
     ```
     dumbmonit
     ```
 
-4. Create the key: Credentials → Users → API Keys → Add, pick the dumbmonit user
-   and give the key a name. TrueNAS shows the key only once: copy it. On TrueNAS
-   24.10 the path is the user menu at the top right → API Keys → Add, and a key
-   belongs to no user.
+3. Open Credentials → Users → API Keys → Add, pick the dumbmonit user, name the key and copy it: TrueNAS shows it only once.
+4. On TrueNAS 24.10, the path is the user menu at the top right → API Keys → Add.
+5. In DumbMonit, enter the NAS address (for example nas.lan) and paste the key. Keep HTTPS.
 
-5. In DumbMonit, enter the NAS address, for example "nas.lan", and paste the
-   key. Keep HTTPS: TrueNAS revokes a key it ever receives over plain HTTP from
-   another machine.
+### Required permissions
+
+- **Local Administrator (group privilege)** — The only privilege the REST API accepts for a key
 
 !!! warning
+    This key can change anything on the NAS, because TrueNAS offers no read-only key over its REST API: keep it for DumbMonit alone and revoke it if it leaks. TrueNAS ships a self-signed certificate: if the connection is refused, tick "Accept an unverifiable certificate" in the options.
 
-    This key can change anything on the NAS: TrueNAS offers no read-only key
-    over its REST API. Treat it like the password of an account that can erase
-    your pools, keep it for DumbMonit alone, and revoke it from the same page if
-    it leaks. TrueNAS also ships with a self-signed certificate: if the
-    connection is refused for that reason, tick "Accept an unverifiable
-    certificate" in the options.
+Vendor documentation: [Managing API keys](https://www.truenas.com/docs/scale/25.04/scaletutorials/toptoolbar/managingapikeys/).
+
+### Why these permissions
+
+Over the REST API that DumbMonit uses, **TrueNAS has no read-only key**. Its
+read-only roles were only wired into its newer WebSocket API; a key whose user
+is a Read-Only Administrator is refused, with an empty `403`, on every REST
+call. This was checked on TrueNAS 25.04.2.6: a Read-Only Administrator key got
+`403` on all 55 REST paths tried, and the very same key worked over the
+WebSocket API. The key must belong to a user with the Local Administrator
+privilege, so it gets a user and a group of its own, and nothing else.
+DumbMonit itself only ever reads: it never starts a scrub, a SMART test, an
+update or a replication.
+
+Keep HTTPS: TrueNAS revokes a key it ever receives over plain HTTP from another
+machine. Shell access, sudo and SSH are not needed. On TrueNAS 24.10 a key
+belongs to no user.
 
 Address: `192.168.1.20`, `nas.lan`, `nas.lan:8443`, `[fd00::20]` or a full URL.
 The `https` scheme and port 443 are added if missing.

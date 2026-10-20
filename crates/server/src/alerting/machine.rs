@@ -2,10 +2,10 @@
 //!
 //! `ok` → `pending` (condition vraie, `for` non écoulé) → `firing` → `resolved`.
 //!
-//! La suppression, le silence et l'acquittement ne sont pas des états de cette
-//! machine : ce sont des surcouches appliquées ensuite (voir
-//! [`crate::alerting::suppress`], [`crate::alerting::silence`] et
-//! [`AlertState::is_acked`]). La distinction est délibérée — pendant une fenêtre
+//! La suppression, le silence, l'acquittement et l'écartement (« j'ai compris »)
+//! ne sont pas des états de cette machine : ce sont des surcouches appliquées
+//! ensuite (voir [`crate::alerting::suppress`], [`crate::alerting::silence`],
+//! [`AlertState::is_acked`] et [`AlertState::is_dismissed`]). La distinction est délibérée — pendant une fenêtre
 //! de maintenance, la condition continue d'être suivie, si bien qu'à la sortie une
 //! alerte toujours active n'est pas renotifiée comme si elle venait de naître.
 
@@ -106,6 +106,13 @@ pub struct AlertState {
     pub acked_by: Option<String>,
     /// Pourquoi, en une ligne, à l'intention des autres.
     pub ack_note: Option<String>,
+    /// « J'ai compris » : instant où l'occurrence en cours a été écartée. Tant
+    /// qu'elle dure, l'alerte ne notifie plus rien — résolution comprise — et
+    /// sort des vues actives. Effacé dès que la condition retombe : une alerte
+    /// qui revient plus tard est une alerte neuve.
+    pub dismissed_at: Option<DateTime<Utc>>,
+    /// Qui l'a écartée : nom du compte, ou `token:nom` pour un jeton d'API.
+    pub dismissed_by: Option<String>,
 }
 
 impl Default for AlertState {
@@ -128,6 +135,8 @@ impl Default for AlertState {
             acked_until: None,
             acked_by: None,
             ack_note: None,
+            dismissed_at: None,
+            dismissed_by: None,
         }
     }
 }
@@ -139,6 +148,17 @@ impl AlertState {
     pub fn is_acked(&self, now: DateTime<Utc>) -> bool {
         matches!(self.phase, Phase::Firing | Phase::Pending)
             && self.acked_until.is_some_and(|until| until > now)
+    }
+
+    /// Vrai tant que l'occurrence en cours est écartée (« j'ai compris »).
+    pub fn is_dismissed(&self) -> bool {
+        matches!(self.phase, Phase::Firing | Phase::Pending) && self.dismissed_at.is_some()
+    }
+
+    /// Oublie l'écartement, quel qu'en soit l'état.
+    pub fn clear_dismiss(&mut self) {
+        self.dismissed_at = None;
+        self.dismissed_by = None;
     }
 
     /// Oublie l'acquittement, quel qu'en soit l'état.
@@ -196,8 +216,16 @@ pub fn advance(
         // parti, il n'a plus d'objet. Si la condition revient, l'alerte repart de
         // zéro et notifie comme une alerte neuve.
         next.clear_ack();
+        // Une occurrence écartée se termine sans un mot : sa résolution est datée
+        // comme déjà annoncée, si bien que `group::decide` ne la voit pas. Le
+        // geste s'efface avec elle — la prochaine occurrence alertera.
+        let dismissed = previous.is_dismissed();
+        next.clear_dismiss();
         if next.phase == Phase::Resolved {
             next.resolved_at = Some(now);
+            if dismissed {
+                next.last_notified_at = Some(now);
+            }
         } else {
             next.resolved_at = None;
             next.firing_since = None;
@@ -420,6 +448,50 @@ mod tests {
         let (again, _) = advance(&ok, true, t(240), Duration::ZERO);
         assert_eq!(again.phase, Phase::Firing);
         assert!(!again.is_acked(t(240)));
+    }
+
+    #[test]
+    fn l_ecartement_ne_vaut_que_sur_une_alerte_active() {
+        let mut state = AlertState {
+            phase: Phase::Firing,
+            dismissed_at: Some(t(0)),
+            dismissed_by: Some("admin".to_string()),
+            ..Default::default()
+        };
+        assert!(state.is_dismissed());
+        state.phase = Phase::Pending;
+        assert!(state.is_dismissed(), "a pending alert can be dismissed before it fires");
+        state.phase = Phase::Resolved;
+        assert!(!state.is_dismissed(), "a resolved alert is not dismissed, whatever the row says");
+    }
+
+    #[test]
+    fn une_occurrence_ecartee_se_resout_sans_annonce_et_la_suivante_alerte() {
+        let (firing, _) = advance(&AlertState::default(), true, t(0), Duration::ZERO);
+        let mut firing = firing;
+        firing.notify_count = 1;
+        firing.last_notified_at = Some(t(0));
+        firing.dismissed_at = Some(t(30));
+        firing.dismissed_by = Some("admin".to_string());
+
+        // La condition dure des jours : l'écartement tient.
+        let (still, transition) = advance(&firing, true, t(3 * 86_400), Duration::ZERO);
+        assert_eq!(transition, None);
+        assert!(still.is_dismissed());
+
+        // Elle retombe : résolution, mais datée comme déjà annoncée.
+        let (resolved, transition) = advance(&still, false, t(3 * 86_400 + 60), Duration::ZERO);
+        assert_eq!(transition, Some(Transition { from: Phase::Firing, to: Phase::Resolved }));
+        assert_eq!(resolved.dismissed_at, None, "the dismissal ends with the occurrence");
+        assert_eq!(resolved.dismissed_by, None);
+        assert_eq!(resolved.last_notified_at, resolved.resolved_at, "nothing left to announce");
+
+        // Elle revient : nouvelle occurrence, à annoncer comme une alerte neuve.
+        let (back, _) = advance(&resolved, true, t(3 * 86_400 + 120), Duration::ZERO);
+        assert_eq!(back.phase, Phase::Firing);
+        assert!(!back.is_dismissed());
+        assert_eq!(back.notify_count, 0);
+        assert_eq!(back.last_notified_at, None);
     }
 
     #[test]

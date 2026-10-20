@@ -232,7 +232,7 @@ when a public URL is known — the `public_url` of the policy, or
 `DUMBMONIT_PUBLIC_URL`. Custom webhooks also get it as the `{{link}}`
 variable unless their own `base_url` is set.
 
-Messages also carry **Acknowledge** and **Snooze 1 h** links (buttons on
+Messages also carry **Dismiss**, **Acknowledge** and **Snooze 1 h** links (buttons on
 ntfy, Telegram and Web Push). Chat services fetch every link they display to
 build a preview, so a link never acts by itself: it opens a confirmation page,
 and only the button on that page acknowledges. Each link is signed, works once

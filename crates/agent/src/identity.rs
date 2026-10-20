@@ -25,6 +25,10 @@ pub fn detect(config: &Config) -> AgentIdentity {
         commands_enabled: Some(config.commands),
         relay: config.relay,
         site: config.site.clone(),
+        // Ce binaire applique le mode relais réglé depuis l'interface ; le
+        // réglage local, s'il est allumé, prime.
+        relay_control: true,
+        relay_local: config.relay,
         machine_id: machine_id(),
         tags: config.tags.clone(),
         // Ce binaire sait recevoir et représenter un secret de liaison. C'est ce
