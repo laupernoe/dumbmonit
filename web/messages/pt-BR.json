@@ -6953,5 +6953,10 @@
 	"worldmap_verdict_idle": "Não sondado",
 	"worldmap_verdict_ok": "Tudo no ar",
 	"worldmap_verdict_warn": "Verificar",
-	"worldmap_view_world": "Mundo"
+	"worldmap_view_world": "Mundo",
+	"devices_targets_filter_site_label": "Local",
+	"devices_targets_filter_site": "Filtrar por local",
+	"devices_targets_all_sites": "Todos os locais",
+	"devices_targets_no_site": "Sem local",
+	"devices_site_badge_aria": "Local: {name}"
 }
