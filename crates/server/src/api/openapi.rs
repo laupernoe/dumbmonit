@@ -145,6 +145,7 @@ mod tests {
         let Some(rest) = path.strip_prefix("/api") else { return false };
         const BY_HANDLER: &[&str] = &[
             "/backup",
+            "/logs",
             "/music/spotify/authorize",
             "/music/spotify/complete",
             "/music/spotify/token",

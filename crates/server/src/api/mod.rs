@@ -17,6 +17,7 @@ mod integrations;
 mod kuma_import;
 mod ldap;
 pub mod locations;
+mod logs;
 mod mcp;
 mod metrics;
 mod music;
@@ -202,6 +203,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Journaux du serveur : stockage, export et destinations (`logs.rs`).
+        .merge(logs::routes())
         // Auto-surveillance et battement de cœur sortant (`self_monitoring.rs`).
         .merge(self_monitoring::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
