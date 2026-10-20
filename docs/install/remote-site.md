@@ -40,12 +40,26 @@ relay request up to 25 seconds while waiting for work (long polling).
 
 ## 2. Create an enrollment token
 
-**Settings → Agents → New token**, or add a monitor of type *agent*. Copy the
+The simplest way: **Settings → Agents → Watch a remote site**. Give the site a
+name, create the token, and copy the install command shown: it already
+carries relay mode and the site, so there is nothing to edit on the machine.
+
+You can also create a plain token (**Settings → Agents → New token**, or add a
+monitor of type *agent*) and set relay mode yourself, as below. Copy the
 `dmon_…` value: it is shown once.
 
 ## 3. Start the relay at the remote site
 
-Any machine at the remote site with Docker, using `docker-compose.agent.yml`
+On Linux, macOS or FreeBSD, the one-line installer with `--relay` and the site:
+
+```sh
+curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
+  --token=dmon_… --url=https://monitor.example.org --relay --site='Lyon office'
+```
+
+On Windows, add `-Relay -Site 'Lyon office'` to the PowerShell install command.
+
+Or any machine at the remote site with Docker, using `docker-compose.agent.yml`
 from the repository:
 
 ```sh
@@ -57,8 +71,8 @@ DUMBMONIT_AGENT_SITE="Lyon office" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Or the regular agent installed with the one-line installer, with two more
-keys in `/etc/dumbmonit/agent.yaml`:
+An agent already installed becomes a relay with two more keys in
+`/etc/dumbmonit/agent.yaml`, then a restart of the agent:
 
 ```yaml
 relay: true

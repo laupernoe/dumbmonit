@@ -46,6 +46,8 @@ NO_START=0
 MODULES=""
 MODULES_SET=0
 PLAKAR_KLOSETS=""
+RELAY=0
+SITE=""
 
 SERVICE_NAME="dumbmonit-agent"
 # Étiquette launchd et nom rc.d : ni l'un ni l'autre n'accepte le nom Linux tel
@@ -82,6 +84,9 @@ OPTIONS:
                         Plakar klosets to read (@name from stores.yml, or a
                         path). Default: every kloset found on this machine.
     --hostname=NAME     Name announced to the server (default: the machine's)
+    --relay             Relay mode: the agent also probes the devices of its
+                        network for the server (writes relay: true)
+    --site=NAME         Site of this relay, for example "Lyon office"
     --bin=PATH          Local binary to install instead of downloading it
     --sha256=LIST       Expected SHA-256 of the downloaded binary, as
                         platform-arch:hex pairs separated by commas (for example
@@ -127,6 +132,8 @@ for argument in "$@"; do
         --modules=*)  MODULES="${argument#*=}"; MODULES_SET=1 ;;
         --plakar-klosets=*) PLAKAR_KLOSETS="${argument#*=}" ;;
         --hostname=*) HOSTNAME_OVERRIDE="${argument#*=}" ;;
+        --relay)      RELAY=1 ;;
+        --site=*)     SITE="${argument#*=}" ;;
         --bin=*)      LOCAL_BIN="${argument#*=}" ;;
         --sha256=*)   EXPECTED_SHA256="${argument#*=}" ;;
         --insecure-skip-checksum) SKIP_CHECKSUM=1 ;;
@@ -498,6 +505,11 @@ umask 077
     echo "token: $TOKEN"
     if [ -n "$INTERVAL" ]; then echo "interval_secs: $INTERVAL"; fi
     if [ -n "$HOSTNAME_OVERRIDE" ]; then echo "hostname: $HOSTNAME_OVERRIDE"; fi
+    if [ "$RELAY" -eq 1 ]; then echo "relay: true"; fi
+    if [ -n "$SITE" ]; then
+        # Entre apostrophes : un nom de site peut contenir « : » ou « # ».
+        echo "site: '$(echo "$SITE" | sed "s/'/''/g")'"
+    fi
 
     if [ -n "$SERVICES" ]; then
         echo "services:"
