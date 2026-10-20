@@ -2384,6 +2384,12 @@ async fn list_device_types(state: &AppState, args: &Args) -> ToolResult {
                 text.push_str(&format!("\n{}. {}", index + 1, step.replace('\n', " — ")));
             }
         }
+        if !kind.setup.permissions.is_empty() {
+            text.push_str("\nRequired permissions:");
+            for permission in &kind.setup.permissions {
+                text.push_str(&format!("\n- {}", permission.replace('\n', " — ")));
+            }
+        }
         if !kind.setup.warning.is_empty() {
             text.push_str(&format!("\nNote: {}", kind.setup.warning));
         }

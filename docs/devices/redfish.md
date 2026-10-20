@@ -102,26 +102,52 @@ is a word as well as a colour, and an unknown value reads "—", never 0.
 
 ## Create a read-only account on the management controller
 
-1. Open the web interface of the management controller (BMC), not the operating system of the server. Create a new local user named as follows, with a long password used nowhere else.
+1. Open the web interface of the management controller (BMC), not the operating system of the server.
+
+2. Create a local user named as follows, with a long password used nowhere else.
 
     ```
     dumbmonit
     ```
 
-2. Give it the lowest role that can read, and nothing more. Supermicro: Configuration → Users → Add User, privilege User, and tick Redfish in the account type. Dell iDRAC: iDRAC Settings → Users → Local Users → Add, role Read Only. HPE iLO: Administration → User Administration → New, untick every privilege except Login. Lenovo XClarity Controller: BMC Configuration → User/LDAP → Create, role Read-only. ASRock Rack: Settings → User Management, privilege User.
+3. Give it the read-only right of your vendor, listed below.
 
-3. Check from any machine on the management network that the account can read Redfish. The command asks for the password and prints the server's name and health.
+4. In DumbMonit, enter the controller address (bmc.lan or 10.0.0.50) with that user name and password.
 
-    ```
-    curl -k -u dumbmonit https://bmc.lan/redfish/v1/Systems
-    ```
+### Required permissions
 
-4. In DumbMonit, enter the controller address, for example "bmc.lan" or "10.0.0.50", then the user name and password of that account.
-
-5. DumbMonit only reads: fans, temperatures, voltages, power supplies, drives, memory and processor summaries, and how many log entries there are by severity. It never powers the server on or off, never changes a setting and never reads the text of the logs.
+- **Supermicro: privilege User, account type Redfish** — Configuration → Users → Add User
+- **Dell iDRAC: role Read Only** — iDRAC Settings → Users → Local Users → Add
+- **HPE iLO: Login privilege only** — Administration → User Administration → New; untick the others
+- **Lenovo XClarity Controller: role Read-only** — BMC Configuration → User/LDAP → Create
+- **ASRock Rack: privilege User** — Settings → User Management
 
 !!! warning
-    Do not reuse the factory account of the controller: it can power the server off, mount media and reflash the firmware. Management controllers also ship with a self-signed certificate: if the connection is refused for that reason, tick "Accept an unverifiable certificate" in the options. A controller answers slowly and a full read takes several requests: if the device reports timeouts, raise DUMBMONIT_PROBE_TIMEOUT_SECS on the server.
+    Do not reuse the controller's factory account, which can power the server off and reflash the firmware; a self-signed certificate needs "Accept an unverifiable certificate" ticked.
+
+Vendor documentation: https://www.dmtf.org/standards/redfish
+
+### Notes
+
+The menu names are those of current firmware; older generations move them around
+but keep the same roles. On Supermicro, the account type shown when creating a
+user decides which interfaces it may use: an account without Redfish access is
+refused with a 401 even with the right password.
+
+DumbMonit only reads: fans, temperatures, voltages, power supplies, drives,
+memory and processor summaries, and how many log entries there are by severity.
+It never powers the server on or off, never changes a setting and never reads
+the text of the logs. A controller answers slowly and a full read takes several
+requests: if the device reports timeouts, raise `DUMBMONIT_PROBE_TIMEOUT_SECS`
+on the server.
+
+To check from any machine on the management network that the account can read
+Redfish (the command asks for the password and prints the server's name and
+health):
+
+```
+curl -k -u dumbmonit https://bmc.lan/redfish/v1/Systems
+```
 
 The menu names above are those of current firmware; older generations move
 them around but keep the same roles. On Supermicro, the account type shown

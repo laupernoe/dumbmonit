@@ -58,35 +58,55 @@ tension d'entrée et l'âge de la batterie.
 
 ## Laisser DumbMonit lire le serveur NUT
 
-1. Trouvez le serveur NUT : la machine sur laquelle l'onduleur est branché (un NAS, un Raspberry Pi, un serveur) fait tourner upsd sur le port TCP 3493. Depuis l'hôte DumbMonit, vérifiez qu'il répond et notez les noms de ses onduleurs.
-
-    ```
-    printf 'LIST UPS\nLOGOUT\n' | nc nas.lan 3493
-    ```
-
-    Avec les outils client NUT installés, `upsc -l nas.lan` donne la même liste.
-
-2. Sur une installation NUT classique, faites écouter upsd sur une adresse que l'hôte DumbMonit peut atteindre : ajoutez cette ligne à upsd.conf, ouvrez le port TCP 3493 dans le pare-feu pour l'hôte DumbMonit, et redémarrez upsd. La lecture ne demande aucun compte : upsd laisse tout hôte qu'il accepte lire les variables, et ne change rien sans un utilisateur qui en a le droit.
+1. Sur une installation NUT classique, ajoutez cette ligne à upsd.conf et redémarrez upsd.
 
     ```
     LISTEN 0.0.0.0 3493
     ```
 
-3. Sur un NAS, le même interrupteur a un autre nom. Synology DSM : Control Panel → Hardware & Power → UPS, cochez Enable network UPS server, et ajoutez l'hôte DumbMonit sous Permitted DiskStation Devices ; l'onduleur est nommé ups. QNAP : la page UPS du Control Panel, Enable network UPS master, avec l'hôte DumbMonit parmi les adresses autorisées ; l'onduleur est nommé qnapups. TrueNAS : le service UPS avec Remote Monitor cochée.
+2. Ouvrez le port TCP 3493 dans le pare-feu pour l'hôte DumbMonit.
 
-4. Optionnel : DumbMonit n'envoie un nom d'utilisateur et un mot de passe que si vous en saisissez un, et upsd n'en demande aucun pour lire. Si votre politique veut que chaque client soit nommé, ajoutez un utilisateur sans actions ni instcmds à upsd.users, avec un mot de passe long et aléatoire, et redémarrez upsd.
+3. Sur un NAS, activez plutôt son serveur UPS réseau : Synology DSM → Control Panel → Hardware & Power → UPS, puis ajoutez l'hôte DumbMonit sous Permitted DiskStation Devices.
+
+4. Facultatif, pour nommer ce client : ajoutez à upsd.users un utilisateur sans actions ni instcmds, avec un long mot de passe aléatoire, et redémarrez upsd.
 
     ```
     [dumbmonit]
     password = a-long-random-password
     ```
 
-5. Dans DumbMonit, saisissez l'adresse du serveur NUT, par exemple « nas.lan ». Chaque onduleur qu'il publie est surveillé ; pour n'en surveiller que certains, listez leurs noms dans l'option Onduleurs.
-
-6. DumbMonit ne fait que lire : il envoie LIST UPS et LIST VAR, jamais LOGIN, SET, INSTCMD ou FSD, si bien que le serveur ne le compte jamais comme un secondaire à attendre avant de s'arrêter.
+5. Dans DumbMonit, saisissez l'adresse du serveur NUT (nas.lan) : tous les onduleurs qu'il publie sont surveillés.
 
 !!! warning
-    DumbMonit surveille l'onduleur ; il n'arrête rien. Les machines que l'onduleur alimente ont toujours besoin de leur propre client NUT (upsmon) pour s'arrêter proprement quand la batterie faiblit.
+    DumbMonit surveille l'onduleur ; il n'éteint rien : les machines qu'il alimente ont toujours besoin de leur propre client NUT (upsmon) pour s'éteindre proprement.
+
+Documentation de l'éditeur : https://networkupstools.org/docs/man/upsd.conf.html
+
+### Notes
+
+Lire ne demande aucun compte : upsd laisse tout hôte qu'il accepte lire les
+variables, et ne change rien sans un utilisateur qui en a le droit. DumbMonit
+n'envoie un nom d'utilisateur et un mot de passe que si vous en saisissez.
+
+Le serveur NUT est la machine sur laquelle l'onduleur est branché (un NAS, un
+Raspberry Pi, un serveur) ; elle fait tourner upsd sur le port TCP 3493. Sur un
+Synology l'onduleur s'appelle `ups`. QNAP : la page UPS du Control Panel, Enable
+network UPS master, avec l'hôte DumbMonit parmi les adresses autorisées ;
+l'onduleur s'appelle `qnapups`. TrueNAS : le service UPS avec Remote Monitor
+coché. Pour ne surveiller que certains onduleurs, listez leurs noms dans l'option
+UPS.
+
+Pour vérifier depuis l'hôte DumbMonit que le serveur répond et noter les noms de
+ses onduleurs (avec les outils clients NUT, `upsc -l nas.lan` donne la même
+liste) :
+
+```
+printf 'LIST UPS\nLOGOUT\n' | nc nas.lan 3493
+```
+
+DumbMonit ne fait que lire : il envoie LIST UPS et LIST VAR, jamais LOGIN, SET,
+INSTCMD ni FSD, donc le serveur ne le compte jamais comme un secondaire à
+attendre avant l'arrêt.
 
 ## Identifiants
 

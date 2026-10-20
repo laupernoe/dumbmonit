@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
+- **License.** DumbMonit is now MIT-licensed (was Apache-2.0).
+- **Simpler setup guides when adding a monitor.** Each guide is now a few short
+  steps done in the product's own web interface (a command is kept only where
+  the product has no interface for it), followed by a framed "Required
+  permissions" list with the exact rights, roles or scopes to grant, and a
+  "Full guide" link to the matching documentation page. The device pages of the
+  documentation carry the same steps and permissions. Integration packs can list
+  `setup.permissions` too.
+
 ## 0.13.0 — 2026-10-19
 
 ### Added

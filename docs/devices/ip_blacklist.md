@@ -49,16 +49,24 @@ minutes and runs in the background.
 
 ## Check a public IP range against the blocklists
 
-1. Enter an IPv4 address or a CIDR range up to /24, for example "198.51.100.0/24" (256 addresses). A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation.
+1. Enter an IPv4 address or a CIDR range up to /24, for example "198.51.100.0/24".
 
-2. No API key is needed: leave the credential on No key. The blocklists are queried through this server's DNS resolver, or through the one you set under Resolver. Only Spamhaus can refuse, and only when that resolver is a public one (Google, Cloudflare, Quad9): the monitor then shows "Spamhaus refuses this resolver" and the other lists keep working. For Spamhaus too, use a recursive resolver of your own, or the optional free Spamhaus DQS key.
+2. No API key is needed: leave the credential on No key.
 
-3. Tick the address blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list under Custom lists. A /24 takes close to two thousand queries with every address list ticked, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them.
+3. Tick the address blocklists to query under Blocklists, and add any other DNSBL zone under Custom lists.
 
-4. The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each.
+4. If the monitor shows "Spamhaus refuses this resolver", set "Resolver" to your own recursive resolver, or choose the free Spamhaus DQS key as the credential.
+
+    ```
+    https://www.spamhaus.com/data-access/free-data-query-service/
+    ```
 
 !!! warning
-    Spamhaus PBL lists end-user ranges that should not send mail directly (home connections, dynamic pools): a listing there is a policy, not an abuse report, and only matters for an address that runs a mail server.
+    Spamhaus PBL lists end-user ranges that should not send mail directly: a listing there only matters for an address that runs a mail server.
+
+A larger range is refused: split it into several /24 monitors. IPv6 ranges are refused, since only Spamhaus answers for IPv6: check a single IPv6 address with Mail server reputation. The blocklists are queried through this server's DNS resolver, or through the one you set under Resolver. A /24 takes close to two thousand queries with every address list ticked, sent at 10 per second and repeated every 6 hours by default: keep that pace, blocklists ban resolvers that sweep them. The first check of a range takes a few minutes: the monitor page says it is running, then shows how many addresses are listed, on which lists, and a delisting link for each.
+
+Vendor documentation: https://www.spamhaus.org/blocklists/zen-blocklist/
 
 ## What it watches
 
