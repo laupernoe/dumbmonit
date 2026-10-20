@@ -6904,5 +6904,10 @@
 	"worldmap_verdict_idle": "Nicht abgefragt",
 	"worldmap_verdict_ok": "Alles in Ordnung",
 	"worldmap_verdict_warn": "Prüfen",
-	"worldmap_view_world": "Welt"
+	"worldmap_view_world": "Welt",
+	"devices_targets_filter_site_label": "Standort",
+	"devices_targets_filter_site": "Nach Standort filtern",
+	"devices_targets_all_sites": "Alle Standorte",
+	"devices_targets_no_site": "Ohne Standort",
+	"devices_site_badge_aria": "Standort: {name}"
 }
