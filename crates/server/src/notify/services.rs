@@ -607,7 +607,9 @@ mod tests {
         let message = with_actions("https://monit.example.org");
         let actions = Ntfy::actions(&message).unwrap();
         assert_eq!(actions[0]["action"], "view");
-        assert_eq!(actions[1]["label"], "Snooze 1 h");
+        assert_eq!(actions[0]["label"], "Dismiss");
+        assert_eq!(actions[2]["label"], "Snooze 1 h");
+        assert_eq!(actions.as_array().map(Vec::len), Some(3), "ntfy takes at most three");
         assert!(
             Discord::description(&message).contains("[Acknowledge](https://monit.example.org/")
         );
