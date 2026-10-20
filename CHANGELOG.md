@@ -26,6 +26,15 @@ All notable changes to this project are documented here. The format follows
 - The folded group of acknowledged alerts in the Now list is called
   *Acknowledged* (it read *Dismissed*).
 
+### Fixed
+
+- **A remote-site relay installs in one command.** The install scripts accept
+  `--relay` and `--site=NAME` (`-Relay -Site NAME` on Windows) and write them
+  into agent.yaml, and *Settings → Agents → Watch a remote site* now puts them
+  in the install commands it shows. Before, the agent installed with those
+  commands was not a relay until `relay: true` was added to agent.yaml by
+  hand; that step is now only a folded note for agents already installed.
+
 ## 0.13.0 — 2026-10-19
 
 ### Added

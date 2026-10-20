@@ -7,10 +7,11 @@
 	 * it needs is a token and the command that ships it. The token is shown once:
 	 * the server only keeps a fingerprint.
 	 *
-	 * `relay` is the same agent sent to another network: after the install it
-	 * also needs relay mode (`relay: true` in its agent.yaml, or
-	 * `DUMBMONIT_AGENT_RELAY=true` in a container), and the devices of that
-	 * site are then added as usual and pointed at it ("Reached through"). The
+	 * `relay` is the same agent sent to another network, in relay mode: the
+	 * install one-liners carry `--relay --site=…` (`-Relay -Site …` on
+	 * Windows), the container gets `DUMBMONIT_AGENT_RELAY=true`, so nothing is
+	 * edited on the machine afterwards. The devices of that site are then
+	 * added as usual and pointed at it ("Reached through"). The
 	 * steps below are built from what the agent really reads — see
 	 * `crates/agent/src/config.rs` and docs/install/remote-site.md.
 	 */
@@ -20,6 +21,7 @@
 	import AgentChecksums from './AgentChecksums.svelte';
 	import AgentModules from './AgentModules.svelte';
 	import { withModules, type AgentModule } from './agent-modules.js';
+	import { withRelay } from './relay-install.js';
 	import RelayDiagram from './RelayDiagram.svelte';
 
 	interface Props {
@@ -41,8 +43,14 @@
 	let origin = $state('');
 	/** `null`: every module detects itself (the agent's default). */
 	let modules = $state<AgentModule[] | null>(null);
-	const installLinux = $derived(token ? withModules(token.install_linux, modules, 'unix') : '');
-	const installWindows = $derived(token ? withModules(token.install_windows, modules, 'windows') : '');
+	const installLinux = $derived.by(() => {
+		const command = token ? withModules(token.install_linux, modules, 'unix') : '';
+		return relay ? withRelay(command, siteLabel, 'unix') : command;
+	});
+	const installWindows = $derived.by(() => {
+		const command = token ? withModules(token.install_windows, modules, 'windows') : '';
+		return relay ? withRelay(command, siteLabel, 'windows') : command;
+	});
 
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
@@ -133,25 +141,33 @@
 		<AgentChecksums />
 
 		{#if relay}
-			<div class="grid gap-3 border-t border-line pt-5">
-				{@render step(2, m.deviceform_enroll_step2())}
-				<p class="text-sm leading-relaxed text-ink-2">
-					{m.deviceform_enroll_yaml_note({
-						file: 'agent.yaml',
-						linux: '/etc/dumbmonit',
-						unix: '/usr/local/etc/dumbmonit',
-						windows: 'C:\\ProgramData\\DumbMonit'
-					})}
-				</p>
-				<CopyBlock value={yaml} label={m.deviceform_enroll_copy_yaml()} />
+			<p class="text-sm leading-relaxed text-ink-2">
+				{m.deviceform_enroll_relay_included({ site: siteLabel })}
+			</p>
+			<div class="grid gap-1.5">
 				<p class="text-sm leading-relaxed text-ink-2">
 					{m.deviceform_enroll_compose_note({ file: 'docker-compose.agent.yml' })}
 				</p>
 				<CopyBlock value={compose} label={m.deviceform_enroll_copy_docker()} />
 			</div>
+			<!-- Only for an agent installed before, or by hand: the commands above already do it. -->
+			<details class="group rounded-[var(--radius-card)] border border-line px-3 py-2">
+				<summary class="flex min-h-10 cursor-pointer items-center text-sm font-semibold text-ink">{m.deviceform_enroll_yaml_summary()}</summary>
+				<div class="grid gap-2 pt-2 pb-1">
+					<p class="text-sm leading-relaxed text-ink-2">
+						{m.deviceform_enroll_yaml_note({
+							file: 'agent.yaml',
+							linux: '/etc/dumbmonit',
+							unix: '/usr/local/etc/dumbmonit',
+							windows: 'C:\\ProgramData\\DumbMonit'
+						})}
+					</p>
+					<CopyBlock value={yaml} label={m.deviceform_enroll_copy_yaml()} />
+				</div>
+			</details>
 
 			<div class="grid gap-2 border-t border-line pt-5">
-				{@render step(3, m.deviceform_enroll_step3())}
+				{@render step(2, m.deviceform_enroll_step3())}
 				<p class="text-sm leading-relaxed text-ink-2">
 					{m.deviceform_enroll_step3_note()}
 				</p>
