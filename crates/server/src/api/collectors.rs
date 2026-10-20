@@ -70,7 +70,7 @@ pub struct PortView {
 // Des macros et non des fonctions : une expression `&[to_device(…)]` n'est pas promue en
 // `'static` dans un `match`, alors qu'un littéral de structure l'est.
 macro_rules! to_device {
-    ($port:expr, $protocol:expr, $purpose:expr) => {
+    ($port:expr, $protocol:expr, $purpose:expr $(,)?) => {
         PortView {
             port: $port,
             protocol: $protocol,
@@ -82,7 +82,7 @@ macro_rules! to_device {
 }
 
 macro_rules! to_device_optional {
-    ($port:expr, $protocol:expr, $purpose:expr) => {
+    ($port:expr, $protocol:expr, $purpose:expr $(,)?) => {
         PortView {
             port: $port,
             protocol: $protocol,
@@ -94,7 +94,7 @@ macro_rules! to_device_optional {
 }
 
 macro_rules! to_server {
-    ($port:expr, $protocol:expr, $purpose:expr) => {
+    ($port:expr, $protocol:expr, $purpose:expr $(,)?) => {
         PortView {
             port: $port,
             protocol: $protocol,
