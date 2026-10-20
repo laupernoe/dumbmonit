@@ -56,21 +56,26 @@ hours by reason.
 
 ## Let DumbMonit read Loki's own health
 
-1. Nothing to install: Loki publishes /ready and /metrics on its HTTP port (3100 by default). Check from the DumbMonit host that both answer.
+1. Nothing to install: check from the DumbMonit host that Loki answers on its HTTP port (3100 by default).
 
     ```
     curl http://loki.lan:3100/ready
-    curl -s http://loki.lan:3100/metrics | grep loki_build_info
     ```
 
-2. Loki has no login of its own. If it sits behind a reverse proxy that asks for a user name and password, pick Username / password below; for a bearer token, pick Bearer token. No tenant is needed: /ready and /metrics are not per tenant.
-
-3. In DumbMonit, enter Loki's address, for example "loki.lan", or "https://logs.lan/loki" behind a reverse proxy. With Loki split into components (simple scalable or microservices), add at least the write path, where refused lines and flush failures are counted.
-
-4. DumbMonit only reads /ready and /metrics. It never runs a LogQL query and never reads a log line.
+2. Loki has no login of its own: only if a reverse proxy in front asks for one, pick Username / password (or Bearer token) below.
+3. In DumbMonit, enter Loki's address, for example "loki.lan" or "https://logs.lan/loki" behind a reverse proxy.
+4. With Loki split into components (simple scalable or microservices), add at least the write path.
 
 !!! warning
-    Refused lines are the failure to watch: when Loki refuses a line (too old, over the ingestion rate or stream limit, line too long), the sender gets an error and usually drops the batch. Nothing shows in Grafana except a gap in the logs.
+    Refused lines are the failure to watch: when Loki refuses a line (too old, over a rate or stream limit, too long), the sender usually drops the batch and Grafana only shows a gap in the logs.
+
+Vendor documentation: [Loki meta-monitoring](https://grafana.com/docs/loki/latest/operations/meta-monitoring/).
+
+### Good to know
+
+No tenant is needed: `/ready` and `/metrics` are not per tenant. The write path
+is where refused lines and flush failures are counted. DumbMonit only reads
+`/ready` and `/metrics`: it never runs a LogQL query and never reads a log line.
 
 ## Credentials
 

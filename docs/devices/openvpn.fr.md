@@ -44,24 +44,36 @@ clients en session avec leur adresse et leur trafic.
 
 ## Activer l'interface de gestion
 
-1. L'interface de gestion est un écouteur séparé, désactivé par défaut : ajoutez ceci à la configuration du serveur (server.conf, ou as.conf pour OpenVPN Access Server) puis redémarrez-le. Liez-la à une adresse que l'hôte DumbMonit peut joindre, ou à 127.0.0.1 en passant par un tunnel SSH ou un agent relais sur la même machine.
+1. Ajoutez cette ligne à la configuration du serveur (server.conf, ou as.conf sur OpenVPN Access Server) et redémarrez OpenVPN.
 
     ```
     management 0.0.0.0 7505
     ```
 
-2. Facultatif mais recommandé : l'interface de gestion n'a pas de compte, seulement un mot de passe partagé. Mettez-le dans un fichier lisible par le seul processus OpenVPN et ajoutez-le en troisième argument.
+2. Recommandé : protégez-la par un mot de passe, placé dans un fichier lisible par le seul processus OpenVPN et ajouté en troisième argument.
 
     ```
     management 0.0.0.0 7505 /etc/openvpn/management-password
     ```
 
-3. Dans DumbMonit, saisissez l'adresse du serveur, par exemple « vpn.lan » (port 7505), et le mot de passe de gestion s'il y en a un.
-
-4. DumbMonit lit seulement : il envoie version, state et status 3, jamais signal, kill ni client-kill. Il ne peut ni déconnecter un client, ni changer un réglage, ni arrêter le serveur.
+3. Dans DumbMonit, saisissez l'adresse du serveur (vpn.lan, port 7505) et le mot de passe de gestion s'il y en a un.
 
 !!! warning
-    Quiconque atteint le port de gestion et connaît le mot de passe peut déconnecter des clients, lire toutes leurs adresses IP réelles et reconfigurer le serveur en marche : gardez-le hors du réseau public, derrière une règle de pare-feu qui n'autorise que l'hôte DumbMonit, avec un mot de passe.
+    Quiconque atteint le port de gestion et connaît le mot de passe peut déconnecter des clients et reconfigurer le serveur en marche : n'autorisez que l'hôte DumbMonit dans le pare-feu et définissez un mot de passe.
+
+Documentation de l'éditeur : https://openvpn.net/community-resources/management-interface/
+
+### Notes
+
+L'interface de gestion est un écouteur séparé, désactivé par défaut, sans menu
+OpenVPN : c'est une directive de configuration, d'où la ligne à coller ici.
+Liez-la à une adresse que l'hôte DumbMonit peut joindre, ou à 127.0.0.1 et
+atteignez-la par un tunnel SSH ou un agent relais sur la même machine. Elle n'a
+pas de compte propre, seulement le mot de passe partagé.
+
+DumbMonit ne fait que lire : il envoie version, state et status 3, jamais
+signal, kill ni client-kill. Il ne peut pas déconnecter un client, changer un
+réglage ni arrêter le serveur.
 
 ## Identifiants
 

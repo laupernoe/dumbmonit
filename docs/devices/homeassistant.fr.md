@@ -106,20 +106,36 @@ du `device_tracker` de l'application compagnon (`battery_level`,
 
 ## Créer un utilisateur dédié et un jeton longue durée dans Home Assistant
 
-1. Dans Home Assistant : Settings → People → Users → Add user (activez le mode Avancé dans votre profil si l'onglet Users manque). Nommez l'utilisateur comme suit, donnez-lui un mot de passe long et aléatoire et laissez l'interrupteur Administrator désactivé. Un utilisateur ordinaire peut lire chaque entité et la liste des réparations, et ne peut pas changer la configuration.
+1. Ouvrez Settings → People → Users → Add user (activez le mode avancé dans votre profil si l'onglet manque), nommez l'utilisateur comme suit et donnez-lui un mot de passe long et aléatoire.
 
     ```
     dumbmonit
     ```
 
-2. Connectez-vous une fois à Home Assistant comme cet utilisateur, ouvrez son profil (le nom en bas de la barre latérale) → Security → Long-lived access tokens → Create token. Nommez-le d'après DumbMonit et copiez-le maintenant : il n'est montré qu'une fois.
+2. Connectez-vous avec cet utilisateur, ouvrez son profil (bas de la barre latérale) → Security → Long-lived access tokens → Create token, nommez-le et copiez-le : il n'est montré qu'une fois.
+3. Dans DumbMonit, saisissez l'adresse de Home Assistant (par exemple homeassistant.local, port 8123) et collez le jeton.
 
-3. Dans DumbMonit, saisissez l'adresse de Home Assistant, par exemple « homeassistant.local » (port 8123) ou « https://ha.example.net » derrière un reverse proxy, et collez le jeton. Les batteries sous 20 % comptent comme faibles ; l'option Seuil de batterie faible change ça.
+### Droits requis
 
-4. DumbMonit ne lit que /api/config, /api/states et, via l'API WebSocket, la liste des réparations. Il n'appelle jamais un service, ne déclenche jamais un événement et ne change jamais un état.
+- **Utilisateur standard (Administrator toggle off)** — Lit toutes les entités et la liste des réparations
 
 !!! warning
-    Un jeton longue durée porte tous les droits de son utilisateur et reste valide dix ans : créez-le pour l'utilisateur dédié, jamais pour le vôtre. Home Assistant sert du HTTP simple sauf si TLS est configuré, et le jeton voyage avec chaque requête : sur un réseau non sûr, utilisez HTTPS. Chaque téléphone et tablette connecté à l'application compagnon (l'intégration mobile_app) apparaît dans le tableau Appareils ci-dessous avec sa dernière activité ; c'est optionnel et silencieux sans cette application.
+    Un jeton longue durée porte tous les droits de son utilisateur et dure dix ans : créez-le pour l'utilisateur dédié, jamais pour le vôtre. Home Assistant sert du HTTP simple tant que TLS n'est pas configuré : sur un réseau non fiable, utilisez HTTPS.
+
+Documentation du fournisseur : [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/).
+
+### Pourquoi ces permissions
+
+Un utilisateur standard peut lire toutes les entités et la liste des
+réparations, et ne peut pas modifier la configuration. DumbMonit ne lit que
+`/api/config`, `/api/states` et, via l'API WebSocket, la liste des réparations.
+Il n'appelle jamais de service, ne déclenche jamais d'événement et ne change
+jamais d'état.
+
+Les batteries sous 20 % comptent comme faibles ; l'option Seuil de batterie
+faible le modifie. Chaque téléphone ou tablette connecté à l'application
+compagnon (l'intégration `mobile_app`) apparaît dans le tableau Appareils avec
+sa dernière activité ; c'est facultatif et silencieux sans cette application.
 
 ## Identifiants
 

@@ -55,28 +55,39 @@ leur nom.
 
 ## Créer un utilisateur en lecture seule dans Paperless-ngx
 
-1. Créez un utilisateur nommé comme suit, avec un mot de passe long et aléatoire, sans statut superutilisateur ni staff, et seulement trois permissions de lecture : tâches, surveillance système et statistiques globales. Avec l'API et votre propre compte, les deux commandes ci-dessous le créent et affichent son jeton.
+1. Dans Paperless-ngx, ouvrez Settings → Users & Groups → Add user et nommez-le comme suit, avec un long mot de passe aléatoire.
 
     ```
     dumbmonit
-    curl -u YOUR_USER -H 'Content-Type: application/json' -X POST https://paperless.example.com/api/users/ -d '{"username":"dumbmonit","password":"CHANGE-ME","user_permissions":["view_paperlesstask","view_system_monitoring","view_global_statistics"]}'
-    curl -X POST https://paperless.example.com/api/token/ -d 'username=dumbmonit&password=CHANGE-ME'
     ```
 
-2. Dans l'interface web à la place : Users & Groups → Add user, puis dans ses permissions cochez View seulement sur les lignes PaperlessTask, SystemMonitoring et GlobalStatistics. Connectez-vous une fois comme cet utilisateur, ouvrez My Profile et générez son jeton d'API.
+2. Laissez Superuser et Staff désactivés, et ne lui donnez que les droits listés ci-dessous.
 
-3. Cet utilisateur ne lit aucun document du tout : les statistiques globales donnent les compteurs, la surveillance système donne la santé de la base de données, de Redis, de Celery et de l'index, et les tâches montrent celles en échec. Sur Paperless-ngx 2.x, où les deux dernières permissions n'existent pas, la santé et les compteurs sont ignorés et le reste est lu.
+3. Connectez-vous avec cet utilisateur, ouvrez le menu utilisateur → My Profile et générez son jeton d'API (bouton en flèche circulaire).
 
-4. Dans DumbMonit, saisissez l'adresse, par exemple « paperless.lan » (port 8000) ou « https://paperless.example.com » derrière un reverse proxy, et collez le jeton.
+4. Dans DumbMonit, saisissez l'adresse de Paperless-ngx et collez le jeton.
+
+### Droits requis
+
+- **View on PaperlessTask** : Imports en échec
+- **View on SystemMonitoring** : État de la base, de Redis, de Celery et de l'index
+- **View on GlobalStatistics** : Nombre de documents
+
+Documentation de l'éditeur : <https://docs.paperless-ngx.com/api/>
+
+### Pourquoi ces droits
+
+Cet utilisateur ne lit aucun document : les statistiques globales donnent les décomptes, la surveillance du système donne l'état de la base, de Redis, de Celery et de l'index, et les tâches montrent celles qui ont échoué. Sur Paperless-ngx 2.x, où SystemMonitoring et GlobalStatistics n'existent pas, l'état et les décomptes sont ignorés et le reste est lu. Demander l'état du système peut prendre plusieurs secondes quand Redis est arrêté : Paperless l'attend avant de répondre.
+
+Pour créer l'utilisateur par l'API plutôt que par l'interface web, remplacez `CHANGE-ME` par un long mot de passe aléatoire et `YOUR_USER` par un compte autorisé à gérer les utilisateurs (curl demande son mot de passe) :
+
+```
+curl -u YOUR_USER -H 'Content-Type: application/json' -X POST https://paperless.example.com/api/users/ -d '{"username":"dumbmonit","password":"CHANGE-ME","user_permissions":["view_paperlesstask","view_system_monitoring","view_global_statistics"]}'
+curl -X POST https://paperless.example.com/api/token/ -d 'username=dumbmonit&password=CHANGE-ME'
+```
 
 !!! warning
-    Quand Redis ou Celery s'arrête, Paperless continue de servir ses pages et documents, mais rien de nouveau n'est importé, ni du dossier de consommation ni du mail, jusqu'à ce que quelqu'un regarde. DumbMonit alerte sur les deux.
-
-Remplacez `CHANGE-ME` par un mot de passe long et aléatoire avant de lancer les
-commandes, et `YOUR_USER` par un compte autorisé à gérer les utilisateurs
-(curl demandera son mot de passe). Demander l'état système peut prendre
-plusieurs secondes tant que Redis est en panne : Paperless l'attend avant de
-répondre.
+    Quand Redis ou Celery s'arrête, Paperless continue de servir ses pages et ses documents, mais plus rien n'est importé, ni depuis le dossier de consommation ni depuis le courrier, jusqu'à ce que quelqu'un regarde. DumbMonit alerte sur les deux.
 
 ## Identifiants
 

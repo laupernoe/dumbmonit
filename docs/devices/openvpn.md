@@ -43,24 +43,36 @@ clients currently in session with their address and traffic.
 
 ## Turn on the management interface
 
-1. The management interface is a separate listener, off by default: add this to the server's configuration (server.conf, or the OpenVPN Access Server's as.conf under a different name) and restart it. Bind it to an address the DumbMonit host can reach, or to 127.0.0.1 and reach it through an SSH tunnel or a relay agent on the same machine.
+1. Add this line to the server's configuration (server.conf, or as.conf on OpenVPN Access Server) and restart OpenVPN.
 
     ```
     management 0.0.0.0 7505
     ```
 
-2. Optional but recommended: the management interface has no account of its own, only a shared password. Put one in a file readable by the OpenVPN process alone and add it as a third argument.
+2. Recommended: protect it with a password, put in a file readable by the OpenVPN process alone and added as a third argument.
 
     ```
     management 0.0.0.0 7505 /etc/openvpn/management-password
     ```
 
-3. In DumbMonit, enter the server's address, for example "vpn.lan" (port 7505), and the management password if one is set.
-
-4. DumbMonit only reads: it sends version, state and status 3, never signal, kill or client-kill. It cannot disconnect a client, change a setting or stop the server.
+3. In DumbMonit, enter the server's address (vpn.lan, port 7505) and the management password if one is set.
 
 !!! warning
-    Anyone who reaches the management port and knows the password can disconnect clients, read all of their real IP addresses, and reconfigure the running server: keep it off the public network, behind a firewall rule that allows only the DumbMonit host, with a password set.
+    Anyone who reaches the management port and knows the password can disconnect clients and reconfigure the running server: allow only the DumbMonit host in the firewall and set a password.
+
+Vendor documentation: https://openvpn.net/community-resources/management-interface/
+
+### Notes
+
+The management interface is a separate listener, off by default, and it has no
+OpenVPN menu: it is a configuration directive, which is why a line is pasted
+here. Bind it to an address the DumbMonit host can reach, or to 127.0.0.1 and
+reach it through an SSH tunnel or a relay agent on the same machine. It has no
+account of its own, only the shared password.
+
+DumbMonit only reads: it sends version, state and status 3, never signal, kill
+or client-kill. It cannot disconnect a client, change a setting or stop the
+server.
 
 ## Credentials
 

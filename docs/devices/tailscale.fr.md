@@ -89,12 +89,30 @@ tableau de chaque appareil avec sa dernière connexion.
 
 ## Créer un client OAuth en lecture seule pour DumbMonit
 
-1. Dans la console Tailscale (login.tailscale.com), ouvrez Settings > Trust credentials (anciennement OAuth clients) et générez un client OAuth avec seulement la portée devices:core:read. Il liste les appareils et ne peut rien changer.
+1. Dans la console d'administration Tailscale, ouvrez Settings → Trust credentials → Credential → OAuth.
 
-2. Copiez l'ID client et le secret client (tskey-client-…), montrés une fois. Dans DumbMonit, saisissez api.tailscale.com comme adresse et collez-les comme Client ID et Client secret. Laissez l'option Tailnet vide : le tailnet du client est lu.
+2. Cochez uniquement le scope en lecture listé ci-dessous, puis cliquez sur Generate credential.
+
+3. Copiez le client ID et le client secret (tskey-client-...) : le secret n'est affiché qu'une fois.
+
+4. Dans DumbMonit, saisissez api.tailscale.com comme adresse et collez-les comme Client ID et Client secret ; laissez l'option Tailnet vide.
+
+### Droits requis
+
+- **devices:core:read** — Liste les appareils du tailnet, ne change rien
 
 !!! warning
-    Seuls les appareils étiquetés (serveurs, routeurs de sous-réseau, nœuds de sortie) sont censés rester en ligne : un téléphone ou un ordinateur portable qui dort n'est pas une panne. Nommez les appareils à surveiller dans l'option Appareils à garder en ligne, ou saisissez all. Chaque appareil du tailnet apparaît dans le tableau Appareils ci-dessous avec sa dernière connexion, surveillé ou non ; un téléphone qui voyage peut rester plusieurs jours sans, augmentez donc la péremption d'appareil pour ceux-là.
+    Seuls les appareils étiquetés (serveurs, routeurs de sous-réseau, nœuds de sortie) sont censés rester en ligne : nommez ceux à surveiller dans l'option Devices to keep online, ou saisissez all.
+
+Documentation de l'éditeur : https://tailscale.com/kb/1623/trust-credentials
+
+### Notes
+
+Laissez l'option Tailnet vide : le tailnet du client est lu. Un téléphone ou un
+portable en veille n'est pas une panne. Chaque appareil du tailnet apparaît dans
+le tableau Devices ci-dessous avec sa dernière connexion, surveillé ou non ; un
+téléphone en voyage peut rester des jours sans, relevez donc Device staleness
+pour ceux-là.
 
 ## Identifiants
 

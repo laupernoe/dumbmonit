@@ -318,61 +318,80 @@ a déjà quand il a été accordé sur `/` comme ci-dessous.
 
 ## Ce qu'il faut préparer dans Proxmox
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du
-formulaire. Le principe : un utilisateur réservé à la surveillance, un
-rôle qui ne peut que lire, un jeton — jamais le compte avec lequel vous
-vous connectez.
-
-1. Ouvrez un shell sur n'importe quel nœud (dans l'UI web : sélectionnez le nœud, puis Shell ; ou SSH) et créez un utilisateur réservé à la surveillance. Il n'a pas besoin de mot de passe : le jeton est ce qui se connecte.
+1. Ouvrez Datacenter → Permissions → Users → Add, saisissez le nom d'utilisateur dumbmonit, choisissez le realm Proxmox VE authentication server, puis cliquez sur Add.
 
     ```
-    pveum user add dumbmonit@pve --comment "DumbMonit monitoring"
+    dumbmonit@pve
     ```
 
-2. Créez un rôle avec seulement les privilèges que le collecteur utilise : Sys.Audit (nœuds, cluster, HA, disques et SMART, ZFS, certificats, versions de paquet, abonnement), Datastore.Audit (stockages et archives de sauvegarde), VM.Audit (VMs, conteneurs, snapshots) et VM.GuestAgent.Audit (ce que l'agent invité QEMU lit à l'intérieur d'une VM : usage disque, système d'exploitation, adresses IP). Aucun ne peut rien changer.
+2. Ouvrez Datacenter → Permissions → Add → User Permission : chemin /, utilisateur dumbmonit@pve, rôle PVEAuditor, puis cliquez sur Add.
 
-    ```
-    pveum role add DumbMonit --privs "Datastore.Audit Sys.Audit VM.Audit VM.GuestAgent.Audit"
-    ```
-
-3. Donnez à l'utilisateur ce rôle sur tout le cluster.
-
-    ```
-    pveum aclmod / -user dumbmonit@pve -role DumbMonit
-    ```
-
-4. Créez le jeton d'API de l'utilisateur. La séparation des privilèges est désactivée, le jeton hérite donc simplement des droits de l'utilisateur.
-
-    ```
-    pveum user token add dumbmonit@pve monitor --privsep 0
-    ```
-
-5. La commande affiche un tableau avec full-tokenid et value. Copiez full-tokenid dans le champ Token ID de DumbMonit et value (l'UUID) dans son champ Secret. Le secret est montré une fois : s'il est perdu, retirez le jeton et créez-en un nouveau.
+3. Ouvrez Datacenter → Permissions → API Tokens → Add : utilisateur dumbmonit@pve, Token ID monitor, décochez Privilege Separation, puis cliquez sur Add.
 
     ```
     dumbmonit@pve!monitor
     ```
 
-6. Optionnel, pour compter les mises à jour en attente et les correctifs de sécurité en attente : Proxmox protège cette liste avec Sys.Modify. Accordez-le seulement sur /nodes ; sans ça le collecteur ignore la liste en silence.
+4. Copiez le Token ID et le Secret dans les champs Token ID et Secret de DumbMonit. Le secret n'est affiché qu'une seule fois.
 
-    ```
-    pveum role add DumbMonitUpdates --privs Sys.Modify
-    pveum aclmod /nodes -user dumbmonit@pve -role DumbMonitUpdates
-    ```
+5. Facultatif, pour le compte des mises à jour en attente : Datacenter → Permissions → Roles → Create, un rôle avec le seul privilège Sys.Modify, puis ajoutez-le en User Permission sur le chemin /nodes.
 
-7. Sur un Proxmox plus ancien, VM.GuestAgent.Audit peut ne pas encore exister et la commande ci-dessus est refusée avec invalid privilege : les appels d'agent invité sont alors couverts par VM.Monitor, que Proxmox VE 9 a retiré à son tour. Utilisez celui que votre version connaît.
+6. Dans DumbMonit, saisissez l'adresse d'un nœud quelconque (port 8006 par défaut).
 
-    ```
-    pveum role add DumbMonit --privs "Datastore.Audit Sys.Audit VM.Audit VM.Monitor"
-    ```
+### Droits requis
 
-8. Vous préférez l'UI web ? Les mêmes étapes vivent sous Datacenter → Permissions : Users, Roles, Add → User Permission, puis API Tokens avec « Privilege Separation » décochée.
-9. Dans DumbMonit, saisissez l'adresse de n'importe quel nœud (port 8006 par défaut).
+- **PVEAuditor sur /** : Lecture seule : nœuds, stockage, VM, conteneurs, sauvegardes, agent invité
+- **Sys.Modify sur /nodes (facultatif)** : Seulement pour lister les mises à jour en attente
+- **VM.Monitor sur / (facultatif, Proxmox VE 8)** : Seulement pour les options de l'agent invité QEMU
 
 !!! warning
-    Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton qui fuit contrôlerait alors tout le cluster. Le rôle DumbMonit ci-dessus ne peut que lire. Proxmox utilise aussi un certificat autosigné par défaut : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
+    Proxmox VE utilise par défaut un certificat autosigné : cochez « Accepter un certificat non vérifiable » dans les options si la connexion est refusée. Sur Proxmox VE 8, les détails de l'agent invité demandent aussi VM.Monitor (voir le guide).
 
-Documentation du fournisseur : [Proxmox VE user management](https://pve.proxmox.com/wiki/User_Management).
+Documentation de l'éditeur : [Proxmox VE user management](https://pve.proxmox.com/wiki/User_Management)
+
+### Pourquoi ces droits
+
+Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton
+divulgué contrôlerait tout le cluster. Le rôle ci-dessous ne sait que lire.
+
+* `PVEAuditor` est un rôle intégré qui regroupe les privilèges de lecture de
+  chaque catégorie. DumbMonit utilise `Sys.Audit` (nœuds, cluster, HA, disques
+  et SMART, ZFS, certificats, versions de paquets, abonnement),
+  `Datastore.Audit` (stockages et archives de sauvegarde), `VM.Audit` (VM,
+  conteneurs, snapshots) et, sur Proxmox VE 9, `VM.GuestAgent.Audit` (ce que
+  l'agent invité QEMU lit dans une VM : occupation des disques, système
+  d'exploitation, adresses IP). Le rôle porte aussi `Pool.Audit`, `SDN.Audit`
+  et `Mapping.Audit`, inutilisés mais sans danger. Aucun ne peut rien modifier.
+* La séparation des privilèges est désactivée : le jeton hérite simplement des
+  droits de l'utilisateur, une seule permission sur l'utilisateur suffit.
+* Proxmox protège la liste des mises à jour et correctifs de sécurité en
+  attente par `Sys.Modify`. Accordez-le sur `/nodes` uniquement, par un rôle qui
+  ne contient rien d'autre ; sans lui, le collecteur ignore la liste sans
+  bruit.
+* Sur Proxmox VE 8, `VM.GuestAgent.Audit` n'existe pas encore et `PVEAuditor`
+  n'a pas `VM.Monitor`, qui couvre les appels à l'agent invité. Sans lui,
+  l'occupation des disques, le système et les adresses lus dans les VM
+  manquent. Créez un rôle contenant `VM.Monitor` et accordez-le sur `/vms`.
+  Proxmox VE 9 a retiré `VM.Monitor` à son tour : ne créez pas ce rôle
+  là-bas.
+* Le certificat de Proxmox est auto-signé par défaut : si la connexion est
+  refusée pour cette raison, cochez « Accepter un certificat non vérifiable »
+  dans les options.
+
+Vous préférez un shell ? La même configuration depuis un nœud (interface web :
+sélectionnez le nœud, puis Shell ; ou SSH) :
+
+```
+pveum user add dumbmonit@pve --comment "DumbMonit monitoring"
+pveum aclmod / -user dumbmonit@pve -role PVEAuditor
+pveum user token add dumbmonit@pve monitor --privsep 0
+pveum role add DumbMonitUpdates --privs Sys.Modify
+pveum aclmod /nodes -user dumbmonit@pve -role DumbMonitUpdates
+pveum role add DumbMonitGuestAgent --privs VM.Monitor
+pveum aclmod /vms -user dumbmonit@pve -role DumbMonitGuestAgent
+```
+
+Les deux dernières lignes ne concernent que Proxmox VE 8.
 
 ## Identifiants
 

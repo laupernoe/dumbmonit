@@ -40,6 +40,7 @@
 //! | `ca_cert` | | Autorité qui a émis le certificat du contrôleur (PEM). |
 //! | `insecure_tls` | `false` | Accepte un certificat non vérifiable. |
 //! | `request_timeout_seconds` | `8` | Délai par opération LDAP. |
+//! | `dns_servers` | | Serveurs DNS (IP) pour toutes les résolutions du moniteur ; vide : DNS du système. |
 //! | `check_all_dcs` | `true` | Vérifie le port LDAP de chaque contrôleur du domaine. |
 //! | `stale_days_users` | `90` | Inactivité d'un utilisateur, en jours. |
 //! | `stale_days_computers` | `90` | Inactivité d'un ordinateur, en jours. |
@@ -48,6 +49,7 @@
 pub mod analysis;
 mod client;
 pub mod decode;
+mod dns;
 mod metrics;
 pub mod model;
 mod options;
@@ -253,6 +255,7 @@ impl Collector for ActiveDirectoryCollector {
                 &observed.dsas,
                 observed.root.ds_service_name.as_deref(),
                 options.port,
+                options.dns_servers.as_ref(),
                 Duration::from_secs(2),
             )
             .await;

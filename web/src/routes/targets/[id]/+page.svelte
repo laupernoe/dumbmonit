@@ -78,6 +78,7 @@
 	} from '#lib/components/devices/metrics.js';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
 	import DockerStrip from '#lib/components/devices/docker/DockerStrip.svelte';
 	import { isDockerDevice } from '#lib/components/devices/agent/services.js';
@@ -307,6 +308,17 @@
 	const headerAlertCounts = $derived(countAlertsByTarget(alerts).get(id));
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
 	let refreshKey = $state(0);
+	// A dismissal or its undo (from the toast too) moves this monitor's alerts.
+	let seenDismissals = dismissals.version;
+	$effect(() => {
+		const version = dismissals.version;
+		if (version === seenDismissals) return;
+		seenDismissals = version;
+		untrack(() => {
+			void loadContext();
+			refreshKey += 1;
+		});
+	});
 	/** The alert story has nothing to tell (never fired, nothing ignored). */
 	let timelineEmpty = $state(false);
 
