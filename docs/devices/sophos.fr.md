@@ -58,16 +58,35 @@ ces interfaces et les connexions IPsec avec leur activation configurée,
 
 ## Autoriser DumbMonit à lire l'API XML du Sophos Firewall
 
-1. Sous Profiles > Device access, ajoutez un profil nommé DumbMonit read-only et réglez chaque permission sur Read-only.
+1. Profiles → Device access : ajoutez un profil nommé DumbMonit read-only et réglez chaque droit sur Read-only.
 
-2. Sous Authentication > Users, ajoutez un utilisateur nommé dumbmonit, de type Administrator, avec ce profil et un mot de passe long et aléatoire.
+2. Authentication → Users : ajoutez un utilisateur nommé dumbmonit, de type Administrator, avec ce profil et un long mot de passe aléatoire.
 
-3. Sous Backup & firmware > API (Administration > API access depuis SFOS 22), activez la configuration de l'API et ajoutez l'adresse du serveur DumbMonit aux adresses IP autorisées.
+    ```
+    dumbmonit
+    ```
 
-4. Dans DumbMonit, saisissez l'adresse du pare-feu, par exemple « sophos.lan », avec le nom d'utilisateur et le mot de passe de dumbmonit. L'API écoute sur le port d'administration, 4444 par défaut, avec un certificat autosigné : cochez Accepter un certificat non vérifiable à moins d'avoir installé le vôtre.
+3. Backup & firmware → API (Administration → API access à partir de SFOS 22) : activez la configuration de l'API et ajoutez l'adresse du serveur DumbMonit aux adresses IP autorisées.
+
+4. Dans DumbMonit, saisissez l'adresse du pare-feu (sophos.lan) avec ce nom d'utilisateur et son mot de passe.
+
+### Droits requis
+
+- **Device access profile: Read-only on every permission** — Le pare-feu l'applique aussi à l'API
 
 !!! warning
-    L'API XML est une API de configuration : elle rapporte le lien de chaque interface et si chaque connexion IPsec est activée, pas si le tunnel est monté. La haute disponibilité, les licences et la version du firmware n'y sont pas.
+    L'API écoute sur le port d'administration (4444 par défaut) avec un certificat auto-signé : cochez « Accept an unverifiable certificate » sauf si vous avez installé le vôtre.
+
+Documentation de l'éditeur : https://docs.sophos.com/nsg/sophos-firewall/21.0/API/index.html
+
+### Notes
+
+L'API XML est une API de configuration : elle donne le lien de chaque interface
+et si chaque connexion IPsec est activée, pas si le tunnel est monté. La haute
+disponibilité, les licences et la version du firmware n'y figurent pas.
+L'adresse depuis laquelle DumbMonit se connecte doit aussi pouvoir joindre le
+service d'administration HTTPS du pare-feu, en plus des adresses IP autorisées
+de l'API.
 
 ## Identifiants
 

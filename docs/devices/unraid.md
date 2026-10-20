@@ -74,18 +74,29 @@ and the containers that should be running.
 
 ## Create a read-only API key for DumbMonit
 
-1. On Unraid 7.2 or later the API is built in. On Unraid 6.12 to 7.1, install the Unraid Connect plugin from the Apps tab first: it brings the same API, and no Unraid Connect sign-in is needed for local use.
-
-2. Create an API key with the Viewer role, which reads everything and can change nothing: under Settings > Management Access > API Keys, or from the Unraid terminal.
+1. On Unraid 6.12 to 7.1, install the Unraid Connect plugin from the Apps tab first. Unraid 7.2 or later has the API built in.
+2. Open Settings → Management Access → API Keys and create a key named as follows, with the Viewer role.
 
     ```
-    unraid-api apikey --create --name dumbmonit --roles VIEWER --description "DumbMonit monitoring" --json
+    dumbmonit
     ```
 
-3. Copy the key. In DumbMonit, enter the address of the Unraid server, for example "tower.lan", and paste the key as API key. If the web interface is served over HTTPS, choose https as protocol.
+3. Copy the key: Unraid shows it only once.
+4. In DumbMonit, enter the Unraid address (for example tower.lan), paste the key as API key and choose https if the web interface is served over HTTPS.
+
+### Required permissions
+
+- **Viewer role** — Reads everything, changes nothing
 
 !!! warning
     Unraid reports no temperature for a disk that is spun down, and DumbMonit never wakes one: a sleeping disk simply has no temperature until it spins up.
+
+Vendor documentation: [Using the Unraid API](https://docs.unraid.net/API/how-to-use-the-api/).
+
+### Why these permissions
+
+The Viewer role reads everything and can change nothing. No Unraid Connect
+sign-in is needed for local use.
 
 ## Credentials
 

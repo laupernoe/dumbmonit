@@ -62,27 +62,42 @@ buffers, les shards par état et les propres notifications de Graylog.
 
 ## Créer un utilisateur et un jeton en lecture seule dans Graylog
 
-1. Dans Graylog : System → Users and Teams → Create user. Nommez l'utilisateur comme suit, donnez-lui un mot de passe long et aléatoire, et attribuez seulement le rôle Reader. Reader peut lire l'état du nœud, le journal, les buffers, le débit, les inputs et la santé du cluster de recherche, et aucun message du tout tant qu'aucun flux ne lui est partagé.
+1. Ouvrez System → Users and Teams → Create user, nommez-le comme suit, donnez-lui un mot de passe long et aléatoire et attribuez-lui uniquement le rôle Reader.
 
     ```
     dumbmonit
     ```
 
-2. Ouvrez la page Edit tokens de cet utilisateur, créez un jeton nommé d'après DumbMonit et copiez-le maintenant : Graylog ne le montre qu'une fois.
-
-3. Optionnel : les propres notifications de Graylog (un input qui n'a pas démarré, des seuils de disque, un journal presque plein) demandent une permission supplémentaire, notifications:read, qu'aucun rôle intégré n'accorde seul. Avec un compte autorisé à gérer les rôles, créez un rôle ne portant que cette permission et donnez-le à l'utilisateur dumbmonit. Sans elle, les notifications sont ignorées et rien d'autre ne change.
+2. Ouvrez la page Edit tokens de cet utilisateur, créez un jeton nommé d'après DumbMonit et copiez-le : Graylog ne le montre qu'une fois.
+3. Facultatif, pour les notifications propres à Graylog : avec un compte qui peut gérer les rôles, créez un rôle ne contenant que notifications:read et donnez-le à l'utilisateur dumbmonit.
 
     ```
     curl -u YOUR_USER -H 'X-Requested-By: cli' -H 'Content-Type: application/json' -X POST https://graylog.lan/api/roles -d '{"name":"DumbMonit Notifications","description":"Read system notifications","permissions":["notifications:read"],"read_only":false}'
     curl -u YOUR_USER -H 'X-Requested-By: cli' -X PUT 'https://graylog.lan/api/roles/DumbMonit%20Notifications/members/dumbmonit'
     ```
 
-4. Dans DumbMonit, saisissez l'adresse du nœud Graylog, par exemple « graylog.lan » (port 9000) ou « https://graylog.lan » derrière un reverse proxy, et collez le jeton. Dans un cluster Graylog, ajoutez chaque nœud : le journal, les buffers et le débit sont par nœud.
+4. Dans DumbMonit, saisissez l'adresse du nœud Graylog (par exemple graylog.lan, port 9000) et collez le jeton. Dans un cluster, ajoutez chaque nœud.
 
-5. DumbMonit ne fait que lire. Il ne cherche jamais de messages, ne démarre ni n'arrête jamais un input et n'acquitte jamais une notification.
+### Droits requis
+
+- **Reader (rôle intégré)** — État du nœud, journal, tampons, débit, entrées, santé du cluster de recherche
+- **notifications:read** — Facultatif : les notifications propres à Graylog
 
 !!! warning
-    Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton qui fuit porte tous les droits de son utilisateur, tandis que le rôle Reader ci-dessus ne peut rien changer. Graylog sert du HTTP simple sauf si vous avez configuré TLS, et le jeton voyage avec chaque requête : sur un réseau non sûr, mettez Graylog derrière HTTPS.
+    Ne réutilisez pas votre propre compte : un jeton qui fuit porte tous les droits de son utilisateur. Graylog sert du HTTP simple tant que TLS n'est pas configuré : sur un réseau non fiable, placez-le derrière HTTPS.
+
+Documentation du fournisseur : [Manage users in Graylog](https://go2docs.graylog.org/current/setting_up_graylog/manage_users.htm).
+
+### Pourquoi ces permissions
+
+Reader peut lire l'état du nœud, le journal, les tampons, le débit, les entrées
+et la santé du cluster de recherche, et aucun message tant qu'aucun flux n'est
+partagé avec lui. `notifications:read` sert aux notifications propres à Graylog
+(une entrée qui n'a pas démarré, des seuils de disque, un journal presque
+plein) ; aucun rôle intégré ne l'accorde seul. Sans elle, les notifications
+sont ignorées et rien d'autre ne change. DumbMonit ne fait que lire : il ne
+cherche jamais de messages, ne démarre ni n'arrête jamais une entrée et
+n'acquitte jamais une notification.
 
 Ce que couvre chaque permission de Reader : `system:read` l'état du nœud et
 les nœuds du cluster, `journal:read` le journal, `metrics:read` et

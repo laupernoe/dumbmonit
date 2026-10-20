@@ -316,6 +316,10 @@ struct Evaluated {
     /// Un fait nouveau est survenu pendant que l'alerte était active.
     recurred: bool,
     detail: Option<String>,
+    /// Qui avait écarté l'occurrence (« j'ai compris »), lue avant le cycle :
+    /// la machine efface l'écartement en résolvant, l'historique doit pourtant
+    /// dire pourquoi la résolution n'a pas été annoncée.
+    dismissed_by: Option<String>,
 }
 
 /// Évalue un cycle complet.
@@ -446,6 +450,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             let active = before.condition_since.is_some();
             let (condition, score, learning) =
                 evaluate_point(rule, &effective, active, &series_key, point, now, baselines);
+            let dismissed_by = dismissal_author(&before);
             let (mut state, transition) =
                 machine::advance(&before, condition, now, rule.for_duration);
             state.value = Some(point.value);
@@ -487,6 +492,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
                 threshold: effective.threshold,
                 recurred,
                 detail,
+                dismissed_by,
             });
         }
 
@@ -500,6 +506,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             before.suppressed = false;
             before.suppressed_by = None;
             before.silenced = false;
+            let dismissed_by = dismissal_author(&before);
             let (state, transition) = machine::advance(&before, false, now, rule.for_duration);
 
             // Une empreinte revenue au repos et jamais notifiée n'a plus rien à dire :
@@ -526,6 +533,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
                 threshold: overrides.effective(rule, stored.target_id).threshold,
                 recurred: false,
                 detail: None,
+                dismissed_by,
             });
         }
     }
@@ -604,7 +612,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
                 transition: transition.clone(),
                 severity: rule.severity,
                 value: entry.value,
-                reason: history_reason(&entry.state, now),
+                reason: history_reason(&entry.state, entry.dismissed_by.as_deref(), now),
                 at: now,
             });
         }
@@ -648,8 +656,22 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
     CycleOutcome { alerts, groups, history, carried_over }
 }
 
+/// Auteur de l'écartement d'une occurrence encore en cours, vide s'il est inconnu.
+fn dismissal_author(state: &AlertState) -> Option<String> {
+    state.is_dismissed().then(|| state.dismissed_by.clone().unwrap_or_default())
+}
+
 /// Explique en une phrase pourquoi cette transition n'a pas notifié, le cas échéant.
-fn history_reason(state: &AlertState, now: DateTime<Utc>) -> String {
+///
+/// `dismissed_by` vient de l'état d'avant le cycle : c'est lui qui dit qu'une
+/// résolution s'est faite en silence parce que l'occurrence avait été écartée.
+fn history_reason(state: &AlertState, dismissed_by: Option<&str>, now: DateTime<Utc>) -> String {
+    if let Some(who) = dismissed_by {
+        return match who {
+            "" => "dismissed".to_string(),
+            who => format!("dismissed by {who}"),
+        };
+    }
     if state.learning {
         "learning: would have fired".to_string()
     } else if state.suppressed {
@@ -1022,6 +1044,101 @@ mod tests {
         assert_eq!(cycle4.alerts[0].state.phase, Phase::Resolved);
         assert_eq!(cycle4.alerts[0].state.acked_until, None, "ack cleared on resolution");
         assert_eq!(cycle4.alerts[0].state.acked_by, None);
+    }
+
+    #[test]
+    fn une_alerte_ecartee_se_tait_jusqu_a_sa_resolution_et_la_suivante_alerte() {
+        let mut cpu = rule("cpu_high", RuleKind::Threshold, 90.0, 0);
+        cpu.repeat_interval = Some(Duration::from_secs(600));
+        cpu.escalate_after = Some(Duration::from_secs(1800));
+        let mut baselines = BaselineStore::default();
+        let cycle = |now: i64, value: f64, stored: Vec<StoredAlert>, b: &mut BaselineStore| {
+            plan_cycle(
+                input(
+                    at(now),
+                    vec![RuleObservations {
+                        rule: cpu.clone(),
+                        series: Some(vec![point(1, value)]),
+                    }],
+                    vec![node(1, None)],
+                    stored,
+                ),
+                b,
+            )
+        };
+
+        // Déclenchement et première annonce.
+        let cycle1 = cycle(0, 95.0, Vec::new(), &mut baselines);
+        assert_eq!(cycle1.groups[0].items[0].reason, NotifyReason::Firing);
+        let mut stored = to_stored(&cycle1);
+        mark_notified(&mut stored, &cycle1, at(0));
+
+        // « J'ai compris », comme le ferait l'API.
+        stored[0].state.dismissed_at = Some(at(30));
+        stored[0].state.dismissed_by = Some("admin".to_string());
+
+        // Des jours plus tard, rappels et escalade dus : rien ne part.
+        for now in [600, 1800, 7200, 3 * 86_400] {
+            let outcome = cycle(now, 95.0, stored.clone(), &mut baselines);
+            assert!(outcome.groups.is_empty(), "dismissed: nothing at {now}");
+            assert!(outcome.alerts[0].state.is_dismissed());
+            stored = to_stored(&outcome);
+        }
+
+        // La condition retombe : résolution muette, consignée avec son auteur.
+        let resolved = cycle(3 * 86_400 + 60, 50.0, stored, &mut baselines);
+        assert_eq!(resolved.alerts[0].state.phase, Phase::Resolved);
+        assert!(resolved.groups.is_empty(), "no resolution message for a dismissed alert");
+        assert_eq!(resolved.history.len(), 1);
+        assert_eq!(resolved.history[0].transition.to, Phase::Resolved);
+        assert_eq!(resolved.history[0].reason, "dismissed by admin");
+        assert_eq!(resolved.alerts[0].state.dismissed_at, None);
+
+        // Cycle suivant au repos : toujours rien à rejouer.
+        let stored = to_stored(&resolved);
+        let calm = cycle(3 * 86_400 + 120, 50.0, stored, &mut baselines);
+        assert!(calm.groups.is_empty());
+
+        // Elle revient : nouvelle occurrence, annoncée normalement.
+        let stored = to_stored(&calm);
+        let back = cycle(3 * 86_400 + 180, 95.0, stored, &mut baselines);
+        assert_eq!(back.groups.len(), 1, "a new occurrence alerts again");
+        assert_eq!(back.groups[0].items[0].reason, NotifyReason::Firing);
+        assert!(!back.alerts[0].state.is_dismissed());
+    }
+
+    #[test]
+    fn une_alerte_ecartee_puis_retablie_reparle() {
+        let mut cpu = rule("cpu_high", RuleKind::Threshold, 90.0, 0);
+        cpu.repeat_interval = Some(Duration::from_secs(600));
+        let mut baselines = BaselineStore::default();
+        let cycle1 = plan_cycle(
+            input(
+                at(0),
+                vec![RuleObservations { rule: cpu.clone(), series: Some(vec![point(1, 95.0)]) }],
+                vec![node(1, None)],
+                Vec::new(),
+            ),
+            &mut baselines,
+        );
+        let mut stored = to_stored(&cycle1);
+        mark_notified(&mut stored, &cycle1, at(0));
+        stored[0].state.dismissed_at = Some(at(30));
+        stored[0].state.dismissed_by = Some("admin".to_string());
+        // Annulé (« Undo ») : la ligne est rétablie, les rappels reprennent.
+        stored[0].state.dismissed_at = None;
+        stored[0].state.dismissed_by = None;
+        let cycle2 = plan_cycle(
+            input(
+                at(600),
+                vec![RuleObservations { rule: cpu, series: Some(vec![point(1, 95.0)]) }],
+                vec![node(1, None)],
+                stored,
+            ),
+            &mut baselines,
+        );
+        assert_eq!(cycle2.groups.len(), 1);
+        assert_eq!(cycle2.groups[0].items[0].reason, NotifyReason::Reminder);
     }
 
     #[test]

@@ -141,24 +141,24 @@ Une vérification en erreur est retentée au bout de dix minutes.
 
 ## Vérifier un serveur mail auprès des listes noires {#check-a-mail-server-against-the-blocklists}
 
-1. Saisissez le domaine pour lequel vous envoyez du courrier, par exemple « example.com » : DumbMonit vérifie les adresses de ses MX et du domaine lui-même. Ou saisissez l'adresse IP publique depuis laquelle le serveur envoie. Si le courrier sort par un relais qui n'est pas un MX, ajoutez son adresse dans Extra addresses.
+1. Saisissez le domaine pour lequel vous envoyez du courrier (« example.com »), ou l'adresse IP publique depuis laquelle le serveur envoie.
 
-2. Aucune clé d'API n'est nécessaire : laissez l'identifiant sur No key. Sans clé, les listes noires sont interrogées par le résolveur DNS de ce serveur, ou par celui que vous indiquez dans Resolver.
+2. Aucune clé d'API n'est nécessaire : laissez l'identifiant sur No key.
 
-3. Cochez les listes noires à interroger sous Blocklists (les majeures sont cochées par défaut) et ajoutez sous Custom lists les zones DNSBL de toute autre liste que vous utilisez.
+3. Cochez les listes noires à interroger sous Blocklists, et ajoutez toute autre zone DNSBL sous Custom lists.
 
-4. Seul Spamhaus peut refuser une question, et seulement quand le résolveur est public (Google, Cloudflare, Quad9) ou transmet à l'un d'eux. Le moniteur affiche alors « Spamhaus refuses this resolver » et toutes les autres listes continuent de fonctionner. Pour avoir Spamhaus aussi, réglez Resolver sur un résolveur récursif à vous (un Unbound qui résout depuis les serveurs racine suffit) ou choisissez comme identifiant la clé DQS de Spamhaus, facultative : un compte gratuit (usage non commercial, faible volume) dont la clé fait répondre Spamhaus quel que soit le résolveur.
+4. Si le moniteur affiche « Spamhaus refuses this resolver », réglez « Resolver » sur votre propre résolveur récursif, ou choisissez la clé Spamhaus DQS gratuite comme identifiant.
 
     ```
     https://www.spamhaus.com/data-access/free-data-query-service/
     ```
 
-5. Pour vérifier la configuration, ajoutez un moniteur pour 127.0.0.2, l'adresse d'essai que toutes les listes inscrivent : chacune doit l'afficher comme listée.
-
-6. Gmail, Outlook.com et Yahoo ne publient aucune liste interrogeable. DumbMonit vérifie à la place ce qui pèse pour eux (un DNS inverse qui revient vers l'adresse, les enregistrements SPF et DMARC) et renvoie vers leurs outils pour expéditeurs sur la page du moniteur.
-
 !!! warning
-    Une réponse refusée par Spamhaus (127.255.255.254, un résolveur public) n'est jamais affichée comme une inscription : cette liste est marquée refusée et les autres gardent leur résultat. Seulement quand aucune autre liste ne répond, le moniteur signale une erreur de configuration. Une liste qui ne répond pas est affichée inconnue, jamais propre. Les listes sont interrogées toutes les 6 heures par défaut : plus souvent n'apporte rien et fait bannir les résolveurs.
+    Une liste noire qui ne répond pas est affichée comme inconnue, jamais comme saine.
+
+Pour un domaine, DumbMonit vérifie les adresses de ses MX et du domaine lui-même ; si le courrier sort par un relais qui n'est pas un MX, ajoutez son adresse sous Extra addresses. Sans clé, les listes noires sont interrogées via le résolveur DNS de ce serveur, ou via celui que vous réglez sous Resolver. Seul Spamhaus peut refuser une requête, et seulement quand le résolveur est public (Google, Cloudflare, Quad9) ou relaie vers un résolveur public ; toutes les autres listes continuent de fonctionner. Pour vérifier la configuration, ajoutez un moniteur pour 127.0.0.2, l'adresse de test que chaque liste noire répertorie : chacune doit l'afficher comme listée. Gmail, Outlook.com et Yahoo ne publient aucune liste noire interrogeable : DumbMonit vérifie à la place ce qu'ils pèsent (un DNS inverse qui pointe vers l'adresse, les enregistrements SPF et DMARC) et renvoie vers leurs outils d'expéditeur sur la page du moniteur. Les listes sont interrogées toutes les 6 heures par défaut : interroger plus souvent n'apporte rien et fait bannir les résolveurs.
+
+Documentation de l'éditeur : https://www.spamhaus.org/blocklists/zen-blocklist/
 
 ## Ce qu'il surveille {#what-it-watches}
 

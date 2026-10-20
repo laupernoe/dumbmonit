@@ -1,10 +1,10 @@
 <script lang="ts">
 	/**
 	 * One line of the Alerts "Now" list: what is wrong, where, why, since when,
-	 * and the two actions that matter (Ack, Open). Everything else — every
-	 * affected container or disk, who acknowledged it, why it is suppressed,
-	 * Snooze and "Never for this device" — waits behind a click on the row,
-	 * which unfolds it in place.
+	 * and the actions that matter: Dismiss, a "…" menu (Ack, Snooze, "Never for
+	 * this device") and Open. Everything else — every affected container or
+	 * disk, who acknowledged it, why it is suppressed — waits behind a click
+	 * on the row, which unfolds it in place.
 	 *
 	 * The status is read from the icon's shape and its hidden word, and from
 	 * the group heading above (Warning, Advisory…); the row shows a plate as
@@ -30,9 +30,7 @@
 		ArrowUpRight,
 		Unplug
 	} from 'lucide-svelte';
-	import AckControl from './AckControl.svelte';
-	import SnoozeControl from './SnoozeControl.svelte';
-	import IgnoreControl from './IgnoreControl.svelte';
+	import AlertActions from './AlertActions.svelte';
 
 	interface Props {
 		folded: Folded;
@@ -143,7 +141,7 @@
 </script>
 
 <li class={`group/row relative ${selected ? 'bg-signal-soft/60' : ''}`}>
-	<div class="flex min-h-14 items-center gap-1 pr-1.5 pl-3 sm:gap-2 sm:pr-2 sm:pl-4">
+	<div class={`flex min-h-14 items-center gap-1 pr-1.5 pl-3 sm:gap-2 sm:pr-2 sm:pl-4 ${selecting ? '' : 'max-sm:flex-wrap'}`}>
 		{#if selecting}
 			<label class="-ml-1 inline-flex size-10 shrink-0 cursor-pointer items-center justify-center">
 				<input
@@ -159,7 +157,7 @@
 
 		<button
 			type="button"
-			class="flex min-w-0 flex-1 items-center gap-3 self-stretch rounded-md py-2.5 text-left focus-visible:outline-offset-2"
+			class={`flex min-w-0 flex-1 items-center gap-3 self-stretch rounded-md py-2.5 text-left focus-visible:outline-offset-2 ${selecting ? '' : 'max-sm:basis-full'}`}
 			aria-expanded={selecting ? undefined : expanded}
 			aria-controls={selecting ? undefined : detailsId}
 			aria-pressed={selecting && alert ? selected : undefined}
@@ -199,9 +197,16 @@
 		</button>
 
 		{#if !selecting}
-			<div class="flex shrink-0 items-center gap-0.5">
+			<div class={`flex shrink-0 items-center gap-0.5 max-sm:-mt-1 max-sm:w-full max-sm:justify-end max-sm:pb-1 ${alert ? '' : 'max-sm:hidden'}`}>
 				{#if alert}
-					<AckControl {alert} {onchanged} floating />
+					<AlertActions
+						{alert}
+						extra={folded.extra}
+						{target}
+						rule={row.kind === 'alert' ? row.rule : undefined}
+						{silences}
+						onchanged={() => onchanged?.()}
+					/>
 				{/if}
 				{#if target && showOpen}
 					<Button size="sm" variant="ghost" href={`/targets/${target.id}`} class="max-sm:hidden">
@@ -283,12 +288,6 @@
 						{m.alerts_row_open_device()}
 						<ArrowUpRight class="size-3.5" aria-hidden="true" />
 					</Button>
-				{/if}
-				{#if alert && !alert.acked}
-					<SnoozeControl {alert} {target} {silences} {onchanged} />
-					{#if row.kind === 'alert'}
-						<IgnoreControl rule={row.rule} {target} {onchanged} />
-					{/if}
 				{/if}
 			</div>
 		</div>

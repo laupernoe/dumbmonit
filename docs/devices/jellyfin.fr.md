@@ -49,20 +49,24 @@ propre de Jellyfin.
 
 ## Créer une clé d'API dans Jellyfin
 
-1. Dans Jellyfin : Dashboard → API Keys (sous Advanced) → +, et nommez la clé comme suit. Copiez-la.
+1. Dans Jellyfin, ouvrez Dashboard → Advanced → API Keys → + et nommez la clé comme suit, puis copiez-la.
 
     ```
     DumbMonit
     ```
 
-2. Jellyfin ne peut pas limiter ce qu'une clé peut faire : chaque clé a tous les droits sur le serveur. C'est pourtant la seule façon de lire les tâches planifiées et la lecture de tout le monde ; un utilisateur ordinaire ne voit ni l'une ni l'autre.
+2. Dans DumbMonit, saisissez l'adresse de Jellyfin et collez la clé.
 
-3. Dans DumbMonit, saisissez l'adresse de Jellyfin, par exemple « jellyfin.lan » (port 8096) ou « https://media.example.com » derrière un reverse proxy, et collez la clé.
+Documentation de l'éditeur : <https://api.jellyfin.org/>
 
-4. DumbMonit ne lit que /System/Info, /ScheduledTasks, /Sessions et /Plugins. Il ne démarre jamais de tâche, n'arrête jamais une lecture et ne change jamais un réglage.
+### Pourquoi une clé aux pleins droits
+
+Jellyfin ne peut pas limiter ce qu'une clé a le droit de faire : toute clé a tous les droits sur le serveur. C'est pourtant le seul moyen de lire les tâches planifiées et les lectures de tout le monde ; un utilisateur ordinaire ne voit ni les unes ni les autres.
+
+DumbMonit lit seulement `/System/Info`, `/ScheduledTasks`, `/Sessions` et `/Plugins`. Il ne lance jamais une tâche, n'arrête jamais une lecture et ne change aucun réglage. Gardez la clé sur un réseau de confiance et placez Jellyfin derrière HTTPS à travers Internet.
 
 !!! warning
-    Comme la clé porte tous les droits, gardez-la sur un réseau de confiance et mettez Jellyfin derrière HTTPS sur l'internet public. Si elle fuit un jour, révoquez-la sur la même page : rien d'autre ne l'utilise.
+    Les clés Jellyfin ne peuvent pas être limitées : celle-ci a tous les droits sur le serveur, gardez-la pour DumbMonit seul et révoquez-la sur la même page si elle fuit.
 
 ## Identifiants
 

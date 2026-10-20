@@ -40,17 +40,25 @@ relay request up to 25 seconds while waiting for work (long polling).
 
 ## 2. Create an enrollment token
 
-The simplest way: **Settings → Agents → Watch a remote site**. Give the site a
-name, create the token, and copy the install command shown: it already
-carries relay mode and the site, so there is nothing to edit on the machine.
+The simplest way: **Settings → Agents → Watch a remote site** (or tick *This
+agent is a relay for a remote site* when you create a token). Give the site a
+name, create the token, and run the install command shown on a machine at the
+site. The token itself carries relay mode and the site: the agent becomes a
+relay at its first report, with nothing to edit on the machine.
 
-You can also create a plain token (**Settings → Agents → New token**, or add a
-monitor of type *agent*) and set relay mode yourself, as below. Copy the
-`dmon_…` value: it is shown once.
+**An agent already installed** becomes a relay from its page in DumbMonit: in
+the *Relay* panel, switch on *Relay for a remote site*, give the site, save. The
+agent switches at its next report, without a restart. Switching it off works
+the same way. An agent too old to follow the switch is flagged there: update it
+by re-running the install command, or use `relay: true` below.
+
+The alternatives below set relay mode on the machine itself; it then wins over
+the switch in the UI.
 
 ## 3. Start the relay at the remote site
 
-On Linux, macOS or FreeBSD, the one-line installer with `--relay` and the site:
+On Linux, macOS or FreeBSD, the one-line installer with `--relay` and the site
+(not needed with a token from *Watch a remote site*):
 
 ```sh
 curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
