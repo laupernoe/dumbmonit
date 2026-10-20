@@ -6,6 +6,14 @@ buffers sont pleins, ce qui entre et ce qui sort, la santé d'OpenSearch ou
 Elasticsearch telle que Graylog la voit, les inputs qui n'ont pas démarré, et
 les messages qui n'ont pas pu être indexés.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 9000 | TCP | API REST de Graylog (par défaut) |
+
 DumbMonit lit l'API REST de Graylog avec un utilisateur dédié portant le rôle
 intégré **Reader**. Il ne cherche jamais de messages, ne démarre ni n'arrête
 jamais un input et n'acquitte jamais une notification.

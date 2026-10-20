@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **"Network ports to open" in every setup guide.** Each guide opens with the
+  ports to allow, with the direction spelled out (from the DumbMonit server or
+  its relay agent to the device; for the agent, the other way round) and the
+  ports only an option needs marked optional. The device pages of the
+  documentation start with the same table.
+- **A quiet note when an optional feature is skipped for a missing permission.**
+  On Proxmox VE, Proxmox Backup Server and Proxmox Datacenter Manager, a 403 on
+  an optional call (guest agent, pending updates, certificate expiry, update
+  summary...) no longer vanishes silently: the monitor page says which feature
+  was skipped and which permission the token lacks. It never raises an alert.
+
 ### Fixed
 
 - **Editing a monitor no longer loses or seems to lose its credentials.** The

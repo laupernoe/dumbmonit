@@ -238,6 +238,8 @@ impl Collector for PbsCollector {
                 ("since", (now_s - options.task_lookback_seconds).to_string()),
             ]
         };
+        // Fonctionnalités facultatives refusées (403), remplies par `optional_list`.
+        let skipped = Skipped::default();
         // Les inventaires sont indépendants : les enchaîner multiplierait
         // d'autant le temps passé sur un serveur lent.
         let (
@@ -261,25 +263,69 @@ impl Collector for PbsCollector {
             pbs.get::<NodeStatus>("/nodes/localhost/status", &[]),
             pbs.get::<Vec<DatastoreUsage>>("/status/datastore-usage", &[]),
             pbs.get::<Vec<TaskEntry>>("/nodes/localhost/tasks", &tasks_query),
-            optional_list::<JobEntry>(&pbs, options.jobs, JobKind::Sync.path()),
-            optional_list::<JobEntry>(&pbs, options.jobs, JobKind::Verify.path()),
-            optional_list::<JobEntry>(&pbs, options.jobs, JobKind::Prune.path()),
-            optional_list::<AptUpdate>(&pbs, options.updates, "/nodes/localhost/apt/update"),
-            optional_list::<DiskEntry>(&pbs, options.disks, "/nodes/localhost/disks/list"),
-            optional_list::<ZpoolEntry>(&pbs, options.disks, "/nodes/localhost/disks/zfs"),
-            optional_list::<ServiceEntry>(&pbs, options.services, "/nodes/localhost/services"),
-            optional_list::<PackageVersion>(&pbs, options.updates, "/nodes/localhost/apt/versions"),
+            optional_list::<JobEntry>(&pbs, options.jobs, JobKind::Sync.path(), &skipped, None),
+            optional_list::<JobEntry>(&pbs, options.jobs, JobKind::Verify.path(), &skipped, None),
+            optional_list::<JobEntry>(&pbs, options.jobs, JobKind::Prune.path(), &skipped, None),
+            optional_list::<AptUpdate>(
+                &pbs,
+                options.updates,
+                "/nodes/localhost/apt/update",
+                &skipped,
+                Some(UPDATES)
+            ),
+            optional_list::<DiskEntry>(
+                &pbs,
+                options.disks,
+                "/nodes/localhost/disks/list",
+                &skipped,
+                Some(DISKS)
+            ),
+            optional_list::<ZpoolEntry>(
+                &pbs,
+                options.disks,
+                "/nodes/localhost/disks/zfs",
+                &skipped,
+                Some(DISKS)
+            ),
+            optional_list::<ServiceEntry>(
+                &pbs,
+                options.services,
+                "/nodes/localhost/services",
+                &skipped,
+                Some(SERVICES)
+            ),
+            optional_list::<PackageVersion>(
+                &pbs,
+                options.updates,
+                "/nodes/localhost/apt/versions",
+                &skipped,
+                Some(UPDATES)
+            ),
             optional_list::<CertificateInfo>(
                 &pbs,
                 options.certificates,
-                "/nodes/localhost/certificates/info"
+                "/nodes/localhost/certificates/info",
+                &skipped,
+                Some(CERTIFICATES)
             ),
-            optional_list::<TrafficRule>(&pbs, options.traffic_control, "/admin/traffic-control"),
+            optional_list::<TrafficRule>(
+                &pbs,
+                options.traffic_control,
+                "/admin/traffic-control",
+                &skipped,
+                Some(TRAFFIC_CONTROL)
+            ),
             // Un seul appel pour la GC de tous les datastores, là où il en
             // fallait un par datastore — et il porte en plus la durée, la
             // planification et le compte de chunks illisibles.
-            optional_list::<GcStatus>(&pbs, true, "/admin/gc"),
-            optional_list::<DatastoreConfig>(&pbs, options.datastore_details, "/config/datastore"),
+            optional_list::<GcStatus>(&pbs, true, "/admin/gc", &skipped, None),
+            optional_list::<DatastoreConfig>(
+                &pbs,
+                options.datastore_details,
+                "/config/datastore",
+                &skipped,
+                None
+            ),
             collect_tape(&pbs, options.tape),
         );
 
@@ -463,6 +509,10 @@ impl Collector for PbsCollector {
         samples.extend(backup::gc_outcome_samples(&digest, &gc_state_known, ts_ms));
         view.jobs.extend(gc_jobs(&view.datastores, &digest));
 
+        for (feature, privilege) in skipped.into_inner().unwrap_or_else(|e| e.into_inner()) {
+            samples.push(metrics::feature_skipped_sample(feature, privilege, ts_ms));
+        }
+
         samples.push(Sample::new("pbs_scrape_errors", f64::from(errors), MetricKind::Gauge, ts_ms));
         samples.push(Sample::new(
             "pbs_scrape_duration_seconds",
@@ -604,13 +654,27 @@ fn gc_jobs(datastores: &[DatastoreView], digest: &backup::TaskDigest) -> Vec<Job
         .collect()
 }
 
+/// Fonctionnalités facultatives refusées pendant une interrogation, sous la
+/// forme (fonctionnalité, privilège). Partagé par les appels lancés en parallèle.
+type Skipped = Mutex<BTreeSet<(&'static str, &'static str)>>;
+
+const UPDATES: (&str, &str) = ("updates", "Sys.Audit on /");
+const DISKS: (&str, &str) = ("disks", "Sys.Audit on /system");
+const SERVICES: (&str, &str) = ("services", "Sys.Audit on /system");
+const CERTIFICATES: (&str, &str) = ("certificates", "Sys.Modify on /system/certificates");
+const TRAFFIC_CONTROL: (&str, &str) = ("traffic_control", "Sys.Audit on /system");
+
 /// Une liste facultative : `None` si l'option est désactivée ou si le serveur
 /// refuse l'accès — privilège facultatif, absent du minimum documenté —, sinon
-/// le résultat de l'appel, erreurs comprises.
+/// le résultat de l'appel, erreurs comprises. Un refus est noté dans `skipped`
+/// quand l'appelant nomme la fonctionnalité (`note`), pour que l'interface
+/// signale le droit manquant.
 async fn optional_list<T: DeserializeOwned>(
     pbs: &PbsClient,
     enabled: bool,
     path: &'static str,
+    skipped: &Skipped,
+    note: Option<(&'static str, &'static str)>,
 ) -> Option<Result<Vec<T>, ProbeError>> {
     if !enabled {
         return None;
@@ -619,6 +683,9 @@ async fn optional_list<T: DeserializeOwned>(
         Ok(Some(list)) => Some(Ok(list)),
         Ok(None) => {
             debug!(path, "accès refusé : privilège facultatif absent, aucune série");
+            if let Some(note) = note {
+                skipped.lock().unwrap_or_else(|e| e.into_inner()).insert(note);
+            }
             None
         }
         Err(error) => Some(Err(error)),
@@ -923,5 +990,80 @@ mod tests {
         );
         assert!(failed.is_none());
         assert_eq!(errors, 1);
+    }
+
+    /// Faux PBS : `/version` répond, tout le reste est refusé (403) ou renvoie
+    /// une liste vide selon `deny`.
+    async fn fake_pbs(deny: bool) -> String {
+        use axum::http::StatusCode;
+        use axum::response::IntoResponse;
+
+        let router = axum::Router::new().fallback(axum::routing::any(
+            move |uri: axum::http::Uri| async move {
+                if uri.path().ends_with("/version") {
+                    axum::Json(serde_json::json!({"data": {"version": "3.4", "release": "1"}}))
+                        .into_response()
+                } else if deny {
+                    StatusCode::FORBIDDEN.into_response()
+                } else {
+                    axum::Json(serde_json::json!({"data": []})).into_response()
+                }
+            },
+        ));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let url = format!("http://{}", listener.local_addr().unwrap());
+        tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
+        url
+    }
+
+    fn cible_http(url: String) -> Target {
+        let credential =
+            Credential::ApiToken { token: "monitoring@pbs!dumbmonit=8f3a1c9e-dead-beef".into() };
+        let mut target = cible(credential);
+        target.address = url;
+        target.tags.insert("certificates".into(), "true".into());
+        target
+    }
+
+    fn notes(samples: &[Sample]) -> BTreeSet<(String, String)> {
+        samples
+            .iter()
+            .filter(|s| s.metric == "pbs_feature_skipped_info")
+            .map(|s| (s.labels["feature"].clone(), s.labels["privilege"].clone()))
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn un_403_sur_une_option_facultative_laisse_une_note_sans_erreur_de_sonde() {
+        let url = fake_pbs(true).await;
+        let samples = PbsCollector::new().probe(&cible_http(url)).await.unwrap();
+
+        let attendu: BTreeSet<(String, String)> = [
+            ("updates", "Sys.Audit on /"),
+            ("disks", "Sys.Audit on /system"),
+            ("services", "Sys.Audit on /system"),
+            ("certificates", "Sys.Modify on /system/certificates"),
+            ("traffic_control", "Sys.Audit on /system"),
+        ]
+        .into_iter()
+        .map(|(feature, privilege)| (feature.to_string(), privilege.to_string()))
+        .collect();
+        assert_eq!(notes(&samples), attendu);
+        // Une note par fonctionnalité, même quand plusieurs appels sont refusés.
+        assert_eq!(
+            samples.iter().filter(|s| s.metric == "pbs_feature_skipped_info").count(),
+            attendu.len()
+        );
+        // Seuls les inventaires obligatoires comptent comme erreurs : aucune des
+        // options facultatives refusées n'y figure.
+        let errors = samples.iter().find(|s| s.metric == "pbs_scrape_errors").unwrap().value;
+        assert!(errors <= 3.0, "{errors} erreurs");
+    }
+
+    #[tokio::test]
+    async fn sans_403_aucune_note() {
+        let url = fake_pbs(false).await;
+        let samples = PbsCollector::new().probe(&cible_http(url)).await.unwrap();
+        assert!(notes(&samples).is_empty());
     }
 }

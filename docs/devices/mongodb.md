@@ -4,6 +4,14 @@ The document database itself: the replica set (members, their state, a
 missing primary, how far each secondary is behind), connections against the
 limit, the WiredTiger cache, operations and assertions.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 27017 | TCP | MongoDB protocol (default port, plain or TLS) |
+
 DumbMonit logs in with an account that holds the built-in `clusterMonitor`
 role only, runs `serverStatus`, and `replSetGetStatus` when the server belongs
 to a replica set. That role reads the state of the server and of the

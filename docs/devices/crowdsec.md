@@ -4,6 +4,15 @@ The security engine: active decisions and where they come from, alerts,
 bouncers that stopped pulling, log lines read and those no parser recognised,
 and whether the Local API answers.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 6060 | TCP | Prometheus metrics (default) |
+| 8080 | TCP | Only with the Local API check option (on by default) |
+
 DumbMonit reads CrowdSec's Prometheus metrics (port 6060) and checks `/health`
 of the Local API (port 8080). With an optional bouncer key, it also asks the
 Local API for the decisions on 192.0.2.1, a documentation address: the answer

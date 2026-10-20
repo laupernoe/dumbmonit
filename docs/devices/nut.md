@@ -11,6 +11,14 @@ connection, and every series carries the name of its UPS.
 For a UPS with its own network card, the [SNMP device](snmp.md) type reads the
 standard UPS-MIB instead.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 3493 | TCP | upsd (default) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_nut_` and carry the label `ups`, the UPS

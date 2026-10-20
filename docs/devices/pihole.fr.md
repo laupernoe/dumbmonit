@@ -5,6 +5,15 @@ bloque, l'ancienneté de ses listes de blocage, si ses résolveurs amont
 échouent, si une mise à jour attend, et les messages de sa propre page de
 diagnostic.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | API (HTTP, par défaut) |
+| 443 | TCP | Seulement avec l'option de schéma https |
+
 DumbMonit lit l'API REST de Pi-hole v6 (`/api`). Pi-hole 5 et antérieur n'ont
 pas cette API et ne sont pas supportés.
 

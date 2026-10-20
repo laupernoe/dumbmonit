@@ -4,6 +4,15 @@ The time series database and the log database themselves: whether they accept
 what they are sent, how much disk is left before they stop accepting anything,
 and what they refuse.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8428 | TCP | VictoriaMetrics HTTP API (default) |
+| 9428 | TCP | VictoriaLogs HTTP API (default) |
+
 Two monitor types share this page, because the two products share their
 foundations: `victoriametrics` for a single-node VictoriaMetrics, and
 `victorialogs` for a single-node VictoriaLogs. Both publish their own health on

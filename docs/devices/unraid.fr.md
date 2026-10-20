@@ -6,6 +6,15 @@ vérifications de parité qui ont trouvé des erreurs ou n'ont pas tourné
 depuis des semaines, des pools de cache qui se remplissent, des conteneurs
 qui devraient tourner et ne tournent pas, et l'état des VM.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | Interface web et API GraphQL (HTTP, par défaut) |
+| 443 | TCP | Seulement avec l'option de protocole HTTPS |
+
 DumbMonit envoie une clé d'API avec le rôle Viewer dans l'en-tête
 `x-api-key` à `/graphql`. Le rôle Viewer lit tout et ne peut rien changer.
 L'API est intégrée à Unraid depuis la 7.2 ; sur les versions 6.12 à 7.1 elle

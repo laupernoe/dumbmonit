@@ -3,6 +3,14 @@
 An XCP-ng or XenServer (Citrix Hypervisor) pool, read through XAPI, the
 management API every host already runs. No Xen Orchestra is needed.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | XAPI (HTTPS, default) |
+
 Every minute DumbMonit posts JSON-RPC calls to
 `https://<coordinator>/jsonrpc`: one `session.login_with_password` (the
 session is then kept from one poll to the next, and reopened once if the pool

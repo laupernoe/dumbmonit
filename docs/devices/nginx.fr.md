@@ -4,6 +4,15 @@ Le serveur web et reverse proxy : connexions actives et en attente, les
 débits accept/handled/request, et la santé des upstreams quand l'API JSON
 commerciale NGINX Plus est disponible.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | Page de statut (HTTP, par défaut) |
+| 443 | TCP | Seulement si la page de statut est servie en HTTPS |
+
 DumbMonit lit le module `stub_status` intégré de Nginx, une poignée de
 compteurs en texte brut, sans API et sans compte nécessaire sur un réseau
 correctement filtré. Quand le NGINX Plus commercial est installé, DumbMonit

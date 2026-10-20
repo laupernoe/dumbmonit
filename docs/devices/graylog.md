@@ -5,6 +5,14 @@ messages, how many wait in its journal, how full its buffers are, what comes
 in and what goes out, the health of OpenSearch or Elasticsearch as Graylog sees
 it, inputs that failed to start, and messages that failed to be indexed.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 9000 | TCP | Graylog REST API (default) |
+
 DumbMonit reads Graylog's REST API with a dedicated user holding the built-in
 **Reader** role. It never searches messages, never starts or stops an input and
 never acknowledges a notification.
