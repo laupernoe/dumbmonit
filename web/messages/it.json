@@ -6950,5 +6950,10 @@
 	"worldmap_verdict_idle": "Non interrogato",
 	"worldmap_verdict_ok": "Tutto attivo",
 	"worldmap_verdict_warn": "Da controllare",
-	"worldmap_view_world": "Mondo"
+	"worldmap_view_world": "Mondo",
+	"devices_targets_filter_site_label": "Sito",
+	"devices_targets_filter_site": "Filtra per sito",
+	"devices_targets_all_sites": "Tutti i siti",
+	"devices_targets_no_site": "Senza sito",
+	"devices_site_badge_aria": "Sito: {name}"
 }

@@ -6950,5 +6950,10 @@
 	"worldmap_verdict_idle": "Not probed",
 	"worldmap_verdict_ok": "All up",
 	"worldmap_verdict_warn": "Needs a look",
-	"worldmap_view_world": "World"
+	"worldmap_view_world": "World",
+	"devices_targets_filter_site_label": "Site",
+	"devices_targets_filter_site": "Filter by site",
+	"devices_targets_all_sites": "All sites",
+	"devices_targets_no_site": "No site",
+	"devices_site_badge_aria": "Site: {name}"
 }
