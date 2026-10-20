@@ -66,6 +66,15 @@ fn percent(used: Option<Num>, total: Option<Num>) -> Option<f64> {
     (total > 0.0).then(|| used / total * 100.0)
 }
 
+/// Fonctionnalité facultative sautée faute de droit : l'interface en tire une
+/// note discrète. Ni erreur de sonde ni alerte ; la série disparaît dès que le
+/// droit est accordé.
+pub(super) fn feature_skipped_sample(feature: &str, privilege: &str, ts_ms: i64) -> Sample {
+    gauge("feature_skipped_info", 1.0, ts_ms)
+        .with_label("feature", feature)
+        .with_label("privilege", privilege)
+}
+
 /// `GET /version` : une série de présence portant la version en étiquette, selon
 /// la convention `*_info` — la valeur ne sert à rien, les étiquettes à tout.
 pub fn version_samples(version: &Version, ts_ms: i64) -> Vec<Sample> {

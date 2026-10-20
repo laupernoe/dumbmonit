@@ -6,6 +6,15 @@ resilvers, usage de pool et de dataset par rapport à leurs quotas,
 snapshots et réplication, température des disques et autotests SMART, les
 alertes que TrueNAS lève lui-même, services et la machine.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | Interface web et API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de protocole HTTP |
+
 !!! warning "Testé contre une instance de test seulement"
 
     Cette intégration a été construite et vérifiée contre TrueNAS

@@ -7,6 +7,24 @@ the XML API. With the [agent](agent.md) installed on the MDaemon server, the
 same page also shows the mail queues, sessions and message totals, which
 MDaemon publishes only as Windows performance counters.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 25 | TCP | SMTP check (default) |
+| 143 | TCP | IMAP check (default) |
+| 3000 | TCP | Webmail check (default) |
+| 444 | TCP | Only with an XML API account (HTTPS, default) |
+| 1000 | TCP | Only with the XML API over HTTP |
+| 587 | TCP | Only with msa in the Services option |
+| 465 | TCP | Only with smtps in the Services option |
+| 110 | TCP | Only with pop3 in the Services option |
+| 995 | TCP | Only with pop3s in the Services option |
+| 993 | TCP | Only with imaps in the Services option |
+| 5222 | TCP | Only with xmpp in the Services option |
+
 !!! warning "Validated against the documentation only"
 
     This integration was built from MDaemon Technologies' published

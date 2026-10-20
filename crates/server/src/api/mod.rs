@@ -42,6 +42,7 @@ mod relay;
 mod reports;
 mod security;
 mod self_monitoring;
+mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
 mod synology;
@@ -175,6 +176,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(locations::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
+        // Fonctionnalités facultatives sautées faute de droit (`skipped_features.rs`).
+        .merge(skipped_features::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
         .merge(notify_policy::routes())
         // Rapports périodiques par courriel (`reports.rs`).

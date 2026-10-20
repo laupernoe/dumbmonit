@@ -5,6 +5,14 @@ their logs, scheduled jobs (sync, verify, prune, garbage collection),
 datastores, disks and ZFS pools, pending updates, the services and package
 versions of the server itself, and the tape tier when there is one.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8007 | TCP | API (HTTPS, default) |
+
 ## The monitor page
 
 ![A PBS monitor: failures, the 30-day backup calendar, jobs and health](../assets/screenshots/device-pbs-light.png){ loading=lazy }
@@ -77,6 +85,7 @@ All metrics are prefixed `dumbmonit_pbs_`.
 | Services (option `services`, one call) | `node_service_active` (1 running, 0 not), `node_service_enabled` (absent for a `static` unit, which another unit pulls in and which is therefore neither enabled nor disabled), `node_services_total` | `service`, `expected` (`"1"` for `proxmox-backup`, `proxmox-backup-proxy` and `proxmox-backup-banner`, the units the server cannot do without; every other unit still gets its series, with `expected="0"`, and never raises an alert) |
 | Certificate (option `certificates`, off by default) | `node_certificate_expires_seconds`, negative once expired | `certificate` (the file name), `issuer` |
 | Traffic control (option `traffic_control`) | `traffic_rate_in_bytes`, `traffic_rate_out_bytes` (measured at the instant of the probe), `traffic_limit_in_bytes`, `traffic_limit_out_bytes` (the configured cap, parsed from PBS's decimal strings like `100 MB`; absent when that direction is uncapped, rather than a zero that would read as "everything is blocked"), `traffic_rules_total` | `rule` |
+| Skipped options | `feature_skipped_info`: 1 while an optional call is refused (403) for lack of a privilege, absent otherwise. The monitor page shows it as a discreet note naming the privilege; it is neither a probe error nor an alert | `feature`, `privilege` |
 | Limits and collection | `backup_groups_total`, `backup_groups_dropped`, `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 A task that ends in `WARNINGS: n` counts as successful. Calls per datastore are

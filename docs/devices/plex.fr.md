@@ -5,6 +5,14 @@ transcodés et si c'est en matériel, la bande passante qu'ils réservent, les
 flux depuis l'extérieur de la maison, les bibliothèques en cours de scan, et
 les mises à jour.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 32400 | TCP | API (HTTP, par défaut) |
+
 DumbMonit lit la propre API du serveur sur le port 32400, jamais plex.tv. Il
 n'arrête jamais un flux, ne scanne jamais une bibliothèque et ne change jamais
 un réglage.

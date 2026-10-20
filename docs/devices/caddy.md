@@ -3,6 +3,14 @@
 The web server and reverse proxy: upstreams failing their health checks, a
 configuration reload that failed, handler errors and the share of 5xx answers.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 2019 | TCP | Admin API (HTTP, default) |
+
 DumbMonit reads three things from Caddy's admin API, all with `GET`:
 `/config/apps/http/servers` (the HTTP configuration Caddy runs, never the
 `tls` section where DNS provider tokens live), `/reverse_proxy/upstreams` (the

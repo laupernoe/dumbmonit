@@ -5,6 +5,15 @@ discrètement tout le reste tiennent le rythme : les files de Sidekiq, les
 runners CI/CD, les migrations de base de données restées d'une mise à jour,
 et — pour GitLab Enterprise Edition — la licence.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de schéma http |
+
 DumbMonit lit `/api/v4/version` avec un **jeton d'accès personnel**, le seul
 appel qui doit réussir : c'est la preuve que GitLab répond et que le jeton
 est valide. Tout le reste — Sidekiq, les runners, les migrations, les

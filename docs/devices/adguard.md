@@ -4,6 +4,16 @@ The DNS filter itself: whether protection is on, whether its DNS server runs,
 what it answered and blocked, whether its filter lists still update, whether
 its upstream servers answer, and whether a newer version is out.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Web interface and API (HTTP, default) |
+| 3000 | TCP | Only with the web interface left on port 3000, the first-run default |
+| 443 | TCP | Only with the https scheme option |
+
 A broken DNS filter does not look broken. Pages keep opening, with their ads.
 The usual failures are quiet: protection paused "for an hour" from the phone
 app and never turned back on, filter lists that stopped downloading weeks ago,

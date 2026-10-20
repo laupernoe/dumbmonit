@@ -4,6 +4,15 @@ Le moteur de sécurité : décisions actives et leur provenance, alertes,
 bouncers qui ont arrêté de récupérer, lignes de log lues et celles
 qu'aucun parseur n'a reconnues, et si la Local API répond.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 6060 | TCP | Métriques Prometheus (par défaut) |
+| 8080 | TCP | Seulement avec l'option de vérification de l'API locale (activée par défaut) |
+
 DumbMonit lit les métriques Prometheus de CrowdSec (port 6060) et vérifie
 `/health` de la Local API (port 8080). Avec une clé de bouncer optionnelle, il
 demande aussi à la Local API les décisions sur 192.0.2.1, une adresse de

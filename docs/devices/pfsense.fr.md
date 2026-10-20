@@ -23,6 +23,15 @@ changer. Chaque minute, DumbMonit lit, en parallèle,
     pas contre un pfSense en fonctionnement. Chaque appel est une lecture.
     Dites-nous ce qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de protocole HTTP |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_pfsense_`.

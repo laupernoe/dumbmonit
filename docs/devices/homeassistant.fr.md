@@ -6,6 +6,14 @@ domaine, batteries faibles, mises à jour en attente (core, système
 d'exploitation, extensions, firmware d'appareil) et les réparations
 ouvertes.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8123 | TCP | Interface web, API REST et WebSocket (HTTP, par défaut) |
+
 DumbMonit lit l'API REST de Home Assistant avec le jeton d'accès longue
 durée d'un utilisateur dédié **sans droits d'administrateur**, et la liste
 des réparations via l'API WebSocket. Il n'appelle jamais un service, ne

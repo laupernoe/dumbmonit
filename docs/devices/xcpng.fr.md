@@ -3,6 +3,14 @@
 Un pool XCP-ng ou XenServer (Citrix Hypervisor), lu via XAPI, l'API de
 gestion que chaque hôte exécute déjà. Aucun Xen Orchestra n'est nécessaire.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | XAPI (HTTPS, par défaut) |
+
 Chaque minute, DumbMonit envoie des appels JSON-RPC à
 `https://<coordinateur>/jsonrpc` : un `session.login_with_password` (la
 session est ensuite conservée d'une interrogation à l'autre, et rouverte une

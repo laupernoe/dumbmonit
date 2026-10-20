@@ -32,6 +32,15 @@ posts" box, an ad slot. Both take simple selectors, separated by commas: a tag
 (`div.notice[role=alert]`). Descendant (`main p`) and other combinators are not
 supported.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Page fetch over HTTPS (default port) |
+| 80 | TCP | Only with an http:// address (default port) |
+
 ## Page or site
 
 **Page** (the default) reads the address of the monitor and nothing else. It

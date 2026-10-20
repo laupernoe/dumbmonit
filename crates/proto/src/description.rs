@@ -69,6 +69,10 @@ pub struct SetupDescription {
     pub title: Text,
     /// Une phrase par étape ; ce qui suit un saut de ligne est à copier tel quel.
     pub steps: Vec<Text>,
+    /// Ports réseau à ouvrir entre le serveur (ou l'agent relais) et l'équipement.
+    /// Absent du JSON quand le type n'en demande aucun.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub ports: Vec<PortDescription>,
     /// Droits, rôles ou permissions à donner au compte de supervision, un par
     /// entrée : la première ligne est le droit (affiché en gras), la suivante,
     /// facultative, dit en quelques mots à quoi il sert. Absent du JSON quand le
@@ -78,6 +82,21 @@ pub struct SetupDescription {
     pub warning: Text,
     /// Lien « Guide complet » : la page de la documentation, ou le lien d'un paquet.
     pub doc_url: Text,
+}
+
+/// Un port réseau à ouvrir pour que le type fonctionne.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PortDescription {
+    pub port: u16,
+    /// `tcp` ou `udp`.
+    pub protocol: Text,
+    /// `to_device` : du serveur DumbMonit (ou de l'agent relais) vers l'équipement ;
+    /// `to_server` : de l'équipement (l'agent) vers le serveur.
+    pub direction: Text,
+    /// Ce qui passe par ce port, en quelques mots (« LDAPS », « API »).
+    pub purpose: Text,
+    /// Vrai si le port ne sert que pour une option ou un mode ; `purpose` le dit.
+    pub optional: bool,
 }
 
 /// Un réglage lu dans `Target::tags[key]`.
