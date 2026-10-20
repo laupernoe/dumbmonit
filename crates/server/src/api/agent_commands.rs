@@ -184,6 +184,7 @@ pub fn ui_routes() -> Router<AppState> {
     Router::new()
         .route("/targets/{id}/agent", get(agent_host))
         .route("/targets/{id}/agent/rebind", post(allow_rebind))
+        .route("/targets/{id}/agent/relay", put(set_relay))
         .route("/targets/{id}/agent/modules", get(list_modules))
         .route("/targets/{id}/agent/modules/{module}", put(set_module))
         .route("/targets/{id}/containers", get(list_containers))
@@ -211,6 +212,18 @@ pub struct AgentHostView {
     pub relay: bool,
     /// Site déclaré par l'agent.
     pub site: Option<String>,
+    /// Mode relais demandé depuis l'interface (ou par le jeton d'enrôlement),
+    /// transmis à l'agent dans chaque accusé de réception. Différent de
+    /// `relay` le temps que l'agent l'adopte, ou pour toujours s'il est trop
+    /// ancien pour le suivre (`relay_control` faux).
+    pub relay_wanted: bool,
+    pub relay_wanted_site: Option<String>,
+    /// Vrai si l'agent applique ce réglage à chaud. Faux : binaire antérieur,
+    /// qu'il faut mettre à jour ou régler par `relay: true` dans agent.yaml.
+    pub relay_control: bool,
+    /// Vrai si `relay: true` est posé dans la configuration de l'agent : le
+    /// relais ne s'éteint pas depuis l'interface.
+    pub relay_local: bool,
     /// Nombre d'équipements interrogés à travers cet agent (`via_agent`).
     pub relayed: usize,
     pub last_seen_at: Option<String>,
@@ -243,6 +256,10 @@ impl AgentHostView {
             agent_version: info.agent_version,
             relay: info.relay,
             site: info.site,
+            relay_wanted: info.relay_wanted,
+            relay_wanted_site: info.relay_wanted_site,
+            relay_control: info.relay_control,
+            relay_local: info.relay_local,
             relayed,
             bound: info.bound,
             bound_at: info.bound_at,
@@ -656,6 +673,42 @@ async fn allow_rebind(
         .ok_or_else(|| ApiError::NotFound(format!("No agent has reported for device {id} yet.")))?;
     tracing::info!(cible = id, par = requester(who.as_deref()), "fenêtre de reliaison ouverte");
     Ok(Json(RebindWindow { rebind_until: until, minutes: agent::REBIND_WINDOW_MINUTES }))
+}
+
+/// Corps de `PUT /api/targets/{id}/agent/relay`.
+#[derive(Debug, Deserialize)]
+pub struct RelayChoice {
+    pub enabled: bool,
+    /// Site de ce relais ; vide ou absent : aucun.
+    #[serde(default)]
+    pub site: Option<String>,
+}
+
+/// `PUT /api/targets/{id}/agent/relay` : allume ou éteint le mode relais de la
+/// machine depuis l'interface. L'agent l'applique à chaud à son prochain lot.
+async fn set_relay(
+    State(state): State<AppState>,
+    Path(id): Path<TargetId>,
+    who: Option<Extension<CurrentPrincipal>>,
+    Json(choice): Json<RelayChoice>,
+) -> ApiResult<Json<AgentHostView>> {
+    agent_target(&state, id).await?;
+    let site = agent::clean_site(choice.site.as_deref());
+    let max = agent::MAX_SITE_LEN;
+    if site.as_ref().is_some_and(|s| s.chars().count() > max) {
+        return Err(ApiError::BadRequest(format!("Site name is limited to {max} characters.")));
+    }
+    if !agent::set_relay_wanted(&state.pool, id, choice.enabled, site.as_deref()).await? {
+        return Err(ApiError::NotFound(format!("No agent has reported for device {id} yet.")));
+    }
+    tracing::info!(
+        cible = id,
+        relais = choice.enabled,
+        site = site.as_deref().unwrap_or(""),
+        par = requester(who.as_deref()),
+        "mode relais réglé depuis l'interface"
+    );
+    agent_host(State(state), Path(id)).await
 }
 
 /// Un module d'agent tel que le panneau de la machine le liste.

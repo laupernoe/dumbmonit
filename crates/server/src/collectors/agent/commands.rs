@@ -531,6 +531,8 @@ mod tests {
             commands_enabled: Some(true),
             relay: false,
             site: None,
+            relay_control: false,
+            relay_local: false,
             machine_id: Some(key.into()),
             tags: BTreeMap::new(),
             binding_supported: true,
