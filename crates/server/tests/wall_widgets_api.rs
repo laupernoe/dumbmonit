@@ -110,7 +110,7 @@ async fn la_disposition_est_enregistree_et_rendue_au_mur() {
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["layout"]["top"], json!(["fx", "crypto"]));
     assert_eq!(reply.body["layout"]["hidden"], json!(["cve"]));
-    assert_eq!(reply.body["layout"]["right"], json!(["weather", "news"]));
+    assert_eq!(reply.body["layout"]["right"], json!(["weather", "news", "text"]));
     assert_eq!(reply.body["layout"]["bottom"], json!(["stocks", "claude", "openai"]));
 
     let reply = app.get("/api/wall/widgets", Some(&viewer)).await;
@@ -192,4 +192,33 @@ async fn la_consommation_d_ia_garde_ses_cles_admin_secretes_et_ses_noms() {
     assert!(reply.body["openai"]["data"].is_null());
     assert_eq!(reply.body["openai"]["source"], "OpenAI");
     assert!(reply.body["claude"].is_null(), "éteint par l'enregistrement précédent");
+}
+
+#[tokio::test]
+async fn le_message_libre_est_court_et_n_arrive_au_mur_que_s_il_est_allume() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let viewer = app.viewer_cookie(&admin).await;
+
+    let reply = app.get("/api/wall/widgets", Some(&viewer)).await;
+    assert!(reply.body["text"].is_null(), "{}", reply.body);
+
+    let body = json!({ "text": { "enabled": true, "content": "  " } });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+    let body = json!({ "text": { "enabled": true, "content": "x".repeat(201) } });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
+
+    let body = json!({ "text": { "enabled": true, "content": "Stand-up  at\n10:00" } });
+    let reply = app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["text"]["content"], "Stand-up at 10:00");
+    let reply = app.get("/api/wall/widgets", Some(&viewer)).await;
+    assert_eq!(reply.body["text"], "Stand-up at 10:00", "{}", reply.body);
+
+    let body = json!({ "text": { "enabled": false, "content": "Stand-up at 10:00" } });
+    app.put("/api/wall/widgets/settings", body, Some(&admin)).await;
+    let reply = app.get("/api/wall/widgets", Some(&viewer)).await;
+    assert!(reply.body["text"].is_null(), "{}", reply.body);
 }
