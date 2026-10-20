@@ -5,6 +5,15 @@ every pool and the disk that failed, scrubs and resilvers, pool and dataset usag
 against their quotas, snapshots and replication, disk temperature and SMART
 self-tests, the alerts TrueNAS raises itself, services and the machine.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Web UI and API (HTTPS, default) |
+| 80 | TCP | Only with the HTTP protocol option |
+
 !!! warning "Tested against a test instance only"
 
     This integration was built and verified against TrueNAS 25.04.2.6, installed

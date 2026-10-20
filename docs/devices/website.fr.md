@@ -10,6 +10,15 @@ plateforme sur laquelle il s'exécute (WordPress, Shopify, Wix, Next.js…).
 Pour le contenu d'une page plutôt que sa santé, voir
 [Modifications du site web](webchange.md).
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | Lecture de la page en HTTPS (port par défaut) |
+| 80 | TCP | Seulement avec une adresse http:// (port par défaut) |
+
 ## Configuration
 
 1. Dans l'adresse, collez la page à vérifier, généralement la page d'accueil.

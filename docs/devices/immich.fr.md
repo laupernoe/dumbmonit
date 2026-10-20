@@ -6,6 +6,15 @@ bibliothèque, combien de photos et vidéos elle contient, et — pour chaque
 téléphone, tablette et ordinateur connecté au compte — sa dernière connexion
 et sa dernière sauvegarde.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 2283 | TCP | API (HTTP, par défaut) |
+| 443 | TCP | Seulement avec le schéma https derrière un reverse proxy |
+
 DumbMonit lit l'API d'Immich avec une **clé d'API limitée à huit permissions
 de lecture**. La clé ne peut voir aucune photo, aucun album ni aucune
 personne, et ne peut rien changer.

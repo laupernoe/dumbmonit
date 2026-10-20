@@ -16,6 +16,15 @@ redémarrage), une alimentation redondante morte sans que personne ne le
 remarque, un port qui continue de journaliser des erreurs ou de perdre son
 lien. C'est ce que cette page surveille, avec la charge.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API REST (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de protocole HTTP |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_mikrotik_`. Les totaux sont

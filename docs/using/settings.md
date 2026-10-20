@@ -11,7 +11,7 @@ Settings holds what is administrative: your account, who can sign in and how, th
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
 | Notifications & reports | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)), Reports |
 | Status pages | `/settings/status` | Status pages and announcements ([Status pages](status-pages.md)) |
-| Wall display | `/settings/wall` | Wall mode, Wall music, Wall news ([Wall mode](overview.md#wall-mode)) |
+| Wall display | `/settings/wall` | Wall mode, Wall music, Wall widgets, news included ([Wall mode](overview.md#wall-mode)) |
 | System | `/settings/system` | Backup, DumbMonit itself, API & assistants, About |
 
 Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`, `/status`) forward to the new place too.

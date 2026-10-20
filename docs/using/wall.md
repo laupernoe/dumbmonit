@@ -21,8 +21,9 @@ text.
 
 ## News on the wall
 
-An admin can add **headlines** to the wall in **Settings → Wall news**. They
-are off by default.
+An admin can add **headlines** to the wall in **Settings → Wall display → Wall
+widgets**, as the *News* widget (its feeds and its switch are in the widget). It
+is off by default.
 
 The latest headlines of the chosen feeds, text only, each with its source,
 refreshed every five minutes. They sit where the wall's layout puts them (the
@@ -78,8 +79,9 @@ wall saved with them simply no longer shows them.
 
 An admin can add **widgets** to the wall in **Settings → Wall display → Wall
 widgets**: the weather, crypto prices, stock quotes, exchange rates and the
-latest critical vulnerabilities, and the cost and tokens of your Claude and
-OpenAI API accounts. Each one is off by default and turned on on
+latest critical vulnerabilities, the cost and tokens of your Claude and
+OpenAI API accounts, and a free **message** for the team (a short plain-text
+note). The news headlines are a widget too. Each one is off by default and turned on on
 its own.
 
 The **weather** is kept simple: an icon, the temperature now and the place.
@@ -95,18 +97,22 @@ the short form (no percentages, no tags), then fewer entries with a discreet
 
 ### Layout
 
-Under **Settings → Wall widgets → Layout**, each widget (the headlines
-included) goes in one of four zones, in the order you choose:
+Under **Settings → Wall widgets → Layout**, a scale model of the screen
+(16:9) shows the zones. Each widget (the headlines and the message included)
+goes in one of four, in the order you choose, and what you drop is what the
+wall shows:
 
 - **Top bar**: one thin line across the top of the wall;
 - **Bottom bar**: one thin line along the bottom, like a status bar;
 - **Right column**: light cards under the clock;
 - **Hidden**.
 
-Change a widget's zone with its menu, and its place within the zone with the
-up and down arrows (keyboard included). By default the weather, the headlines
-and the vulnerabilities sit in the right column and the prices and AI usage in
-the bottom bar. Placing a widget does not turn it on: one that is off shows
+Drag a widget (mouse or touch) to where you want it. With the keyboard, select
+it with Enter, move it with the arrow keys and pick its zone with the *Move to*
+buttons. On a phone the model becomes an ordered list. **Reset to default**
+restores the default layout. By default the weather, the headlines, the
+vulnerabilities and the message sit in the right column and the prices and AI
+usage in the bottom bar. Placing a widget does not turn it on: one that is off shows
 nowhere, and the layout says *Off* next to it. The layout is saved on the
 server and applies to every wall.
 

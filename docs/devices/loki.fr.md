@@ -4,6 +4,14 @@ Le serveur de logs lui-même : s'il est prêt, quelles lignes il refuse et
 pourquoi, si ses chunks atteignent le stockage, et si son journal
 d'écriture anticipée a encore du disque.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 3100 | TCP | API HTTP de Loki (par défaut) |
+
 Loki publie `/ready` et `/metrics` sur son port HTTP ; DumbMonit ne lit que
 ces deux-là. Il ne lance jamais de requête LogQL et ne lit jamais une ligne de
 log.

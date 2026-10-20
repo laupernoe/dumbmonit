@@ -6,6 +6,15 @@ jour de Nextcloud et des applications, utilisateurs actifs, espace libre
 pour le répertoire de données, taille de la base de données, et l'OPcache
 de PHP.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de schéma http |
+
 DumbMonit lit le `status.php` public et les statistiques de l'application
 **serverinfo**, fournie avec Nextcloud, avec un **jeton de surveillance**
 (`NC-Token`). Le jeton ouvre ces statistiques et rien d'autre : il ne peut

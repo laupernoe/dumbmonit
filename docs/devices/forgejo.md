@@ -6,6 +6,15 @@ repositories, accounts and organisations it holds, whether its scheduled
 tasks (repository checks, cleanups, the update checker) still run on their
 own interval, and whether its Actions runners are online.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 3000 | TCP | API (HTTP, default) |
+| 443 | TCP | Only with the https scheme behind a reverse proxy |
+
 Two calls must succeed: `/api/v1/version`, public, and `/api/v1/user`, the
 proof that the **access token** is valid. Everything else — the health
 check, the repository/account/organisation counts, the scheduled tasks and

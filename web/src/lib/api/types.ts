@@ -550,6 +550,16 @@ export interface DiscoveryResult {
  * monitored: enable SNMP, create an API token... `warning` and `doc_url` may be
  * empty, in which case nothing is displayed.
  */
+export interface CollectorPort {
+	port: number;
+	protocol: string;
+	/** `to_device`: DumbMonit (or its relay agent) to the device; `to_server`: agent to DumbMonit. */
+	direction: string;
+	purpose: string;
+	/** Only used by an option or mode, named in `purpose`. */
+	optional: boolean;
+}
+
 export interface CollectorSetup {
 	title: string;
 	steps: string[];
@@ -559,6 +569,8 @@ export interface CollectorSetup {
 	 * what it is for. The server omits the field when a type needs none.
 	 */
 	permissions?: string[];
+	/** Network ports to open; the server omits the field when there are none. */
+	ports?: CollectorPort[];
 	warning: string;
 	doc_url: string;
 }
@@ -678,7 +690,7 @@ export interface CollectorInfo {
  * `|| ''` in components.
  */
 export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string }): CollectorInfo {
-	const setup = raw.setup ?? { title: '', steps: [], permissions: [], warning: '', doc_url: '' };
+	const setup = raw.setup ?? { title: '', steps: [], permissions: [], ports: [], warning: '', doc_url: '' };
 	const options = Array.isArray(raw.options) ? raw.options : [];
 	const credential_types = Array.isArray(raw.credential_types)
 		? raw.credential_types.filter((t) => typeof t === 'string')
@@ -702,6 +714,15 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 		setup: {
 			title: setup.title?.trim() ?? '',
 			steps: Array.isArray(setup.steps) ? setup.steps.filter((s) => s.trim()) : [],
+			ports: Array.isArray(setup.ports)
+				? setup.ports.filter((p) => p && Number.isInteger(p.port)).map((p) => ({
+						port: p.port,
+						protocol: (p.protocol ?? 'tcp').toLowerCase(),
+						direction: p.direction === 'to_server' ? 'to_server' : 'to_device',
+						purpose: p.purpose?.trim() ?? '',
+						optional: p.optional === true
+					}))
+				: [],
 			permissions: Array.isArray(setup.permissions) ? setup.permissions.filter((s) => s.trim()) : [],
 			warning: setup.warning?.trim() ?? '',
 			doc_url: setup.doc_url?.trim() ?? ''
@@ -2714,6 +2735,21 @@ export interface PdmHealth {
 }
 
 // ---------------------------------------------------------------------------
+// Skipped optional features (`crates/server/src/api/skipped_features.rs`)
+// ---------------------------------------------------------------------------
+
+export interface SkippedFeature {
+	/** `guest_agent`, `updates`, `certificates`, `disks`, `services`, `traffic_control`, `remote_updates`. */
+	feature: string;
+	/** The privilege the token lacks, as the device names it. */
+	privilege: string;
+}
+
+export interface SkippedFeatures {
+	features: SkippedFeature[];
+}
+
+// ---------------------------------------------------------------------------
 // Proxmox Mail Gateway (`crates/server/src/api/pmg.rs`)
 // ---------------------------------------------------------------------------
 
@@ -4353,6 +4389,8 @@ export interface WallWidgetSettings {
 	fx: WallFxSettings;
 	cve: WallCveSettings;
 	ai: WallAiSettings;
+	/** The free message widget: one short line of plain text. */
+	text: { enabled: boolean; content: string };
 	/** Where each widget goes on the wall (`wall/layout.ts`); always complete when read. */
 	layout: WallLayout;
 }
@@ -4497,6 +4535,8 @@ export interface WallWidgets {
 	cve: WallSection<WallCve[]> | null;
 	claude: WallSection<WallAiUsage> | null;
 	openai: WallSection<WallAiUsage> | null;
+	/** The free message; null when off or empty. */
+	text: string | null;
 }
 
 // --- Multi-product network discovery -----------------------------------------

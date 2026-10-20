@@ -15,6 +15,7 @@
 	import EstateSummary from './EstateSummary.svelte';
 	import FailureList from './FailureList.svelte';
 	import RemoteTable from './RemoteTable.svelte';
+	import SkippedFeatures from '../SkippedFeatures.svelte';
 	import { formatAgo, formatUnix } from './format';
 
 	interface Props {
@@ -135,5 +136,7 @@
 				<ConsoleHealth {health} />
 			{/if}
 		</Panel>
+
+		<SkippedFeatures {target} />
 	</div>
 {/if}

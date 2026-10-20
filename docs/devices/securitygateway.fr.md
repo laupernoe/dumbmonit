@@ -5,6 +5,17 @@ l'extérieur, et sur SecurityGateway 12.5 ou plus récent, la version et les
 compteurs de performance que publie son API REST : file de livraison,
 quarantaine, sessions SMTP.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 25 | TCP | Vérification SMTP (par défaut) |
+| 4000 | TCP | Vérification de l'interface web (par défaut) |
+| 4443 | TCP | Seulement avec une clé d'API (HTTPS, par défaut) ou web_https dans l'option Services |
+| 465 | TCP | Seulement si smtps figure dans l'option Services |
+
 !!! warning "Validé contre la documentation seulement"
 
     Cette intégration a été construite à partir de la documentation publiée

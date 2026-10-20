@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **"Network ports to open" in every setup guide.** Each guide opens with the
+  ports to allow, with the direction spelled out (from the DumbMonit server or
+  its relay agent to the device; for the agent, the other way round) and the
+  ports only an option needs marked optional. The device pages of the
+  documentation start with the same table.
+- **A quiet note when an optional feature is skipped for a missing permission.**
+  On Proxmox VE, Proxmox Backup Server and Proxmox Datacenter Manager, a 403 on
+  an optional call (guest agent, pending updates, certificate expiry, update
+  summary...) no longer vanishes silently: the monitor page says which feature
+  was skipped and which permission the token lacks. It never raises an alert.
+
 ### Fixed
 
 - **Editing a monitor no longer loses or seems to lose its credentials.** The
@@ -37,6 +50,16 @@ All notable changes to this project are documented here. The format follows
   (credentials in a URL, tokens in a query string, `Authorization` headers)
   is masked before it is written or sent, and the first-run setup code only
   ever goes to the console.
+- **Wall widgets: a screen model to arrange them, News folded in, a Text
+  widget.** Settings → Wall widgets now shows a 16:9 model of the wall (top bar,
+  right column under the clock, bottom bar, a tray for hidden widgets) where
+  widgets are dragged and dropped with a mouse or a finger, or selected and moved
+  with the arrow keys and *Move to* buttons; what is dropped is what `/wall`
+  shows, and *Reset to default* restores the default layout (on a phone the model
+  is an ordered list). The News feeds are now the settings of the *News* widget
+  in the same list, saved with the others; nothing to redo, the configured feeds
+  are kept. The new *Text* widget shows a short free message (plain text, 200
+  characters) wherever it is placed.
 - **Import Uptime Kuma 1.x and 2.x from `kuma.db`.** Uptime Kuma 2 dropped its
   JSON backup, so the import now also reads the SQLite database
   (`docker cp uptime-kuma:/app/data/kuma.db .`): upload it, preview the monitors
