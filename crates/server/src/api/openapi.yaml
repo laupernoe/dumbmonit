@@ -3232,6 +3232,36 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/relay:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    put:
+      operationId: setAgentRelay
+      tags: [Agents]
+      summary: Switch this agent's relay mode on or off
+      description: "The agent applies it on the fly at its next report, without a restart. `relay: true` in its agent.yaml wins (`relay_local`); an agent too old to follow it says `relay_control: false`."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+                site: { type: [string, "null"], maxLength: 80, description: Site of this relay. }
+      responses:
+        "200":
+          description: The machine after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentHost" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/agent/modules:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -5988,6 +6018,8 @@ components:
         max_uses: { type: [integer, "null"], description: "`null` for a fleet token." }
         uses: { type: integer }
         expires_at: { type: [string, "null"], description: Enrolments stop after it; enrolled machines keep reporting. }
+        relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
+        relay_site: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
       required: [name]
@@ -5997,6 +6029,8 @@ components:
         reusable: { type: boolean, default: false, description: 'Without it, the token enrols one machine.' }
         max_uses: { type: [integer, "null"], minimum: 1 }
         expires_in_days: { type: [integer, "null"], minimum: 1 }
+        relay: { type: boolean, default: false, description: Make the enrolled machine a relay for a remote site. }
+        site: { type: [string, "null"], maxLength: 80, description: Site of that relay. }
     CreatedAgentToken:
       allOf:
         - $ref: "#/components/schemas/AgentToken"
@@ -7410,6 +7444,10 @@ components:
         commands_supported: { type: boolean }
         relay: { type: boolean }
         site: { type: [string, "null"] }
+        relay_wanted: { type: boolean, description: Relay mode asked from the UI (or by the enrolment token). }
+        relay_wanted_site: { type: [string, "null"] }
+        relay_control: { type: boolean, description: "False: the agent is too old to follow `relay_wanted`." }
+        relay_local: { type: boolean, description: "`relay: true` is set in the agent's own configuration, which wins." }
         relayed: { type: integer }
         last_seen_at: { type: [string, "null"] }
         binding: { type: string, enum: [bound, pending, unsupported] }
