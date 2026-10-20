@@ -41,11 +41,11 @@
 	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
 	import BackupSection from '#lib/components/settings/BackupSection.svelte';
 	import SelfMonitoringSection from '#lib/components/settings/SelfMonitoringSection.svelte';
+	import LogsSection from '#lib/components/settings/LogsSection.svelte';
 	import PacksSection from '#lib/components/settings/PacksSection.svelte';
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
 	import MusicSection from '#lib/components/settings/MusicSection.svelte';
-	import WallNewsSection from '#lib/components/settings/WallNewsSection.svelte';
-	import WallWidgetsSection from '#lib/components/settings/WallWidgetsSection.svelte';
+		import WallWidgetsSection from '#lib/components/settings/WallWidgetsSection.svelte';
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
@@ -77,8 +77,8 @@
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],
-		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallNewsSection, WallWidgetsSection] : [])],
-		system: [BackupSection, SelfMonitoringSection, AssistantSection, AboutSection]
+		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallWidgetsSection] : [])],
+		system: [BackupSection, SelfMonitoringSection, ...(auth.isAdmin ? [LogsSection] : []), AssistantSection, AboutSection]
 	});
 
 	// An unknown tab (or one this account cannot see) lands on the first one.
@@ -127,7 +127,7 @@
 	let query = $state('');
 	const results = $derived(
 		searchSettings(searchIndex(), query).filter(
-			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'news' && entry.id !== 'widgets' && entry.id !== 'locations'))
+			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'widgets' && entry.id !== 'locations' && entry.id !== 'logs'))
 		)
 	);
 	const href = (entry: { tab: SettingsTab; id: string }) => `/settings/${entry.tab}#${entry.id}`;

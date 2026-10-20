@@ -10,15 +10,27 @@ platform it runs on (WordPress, Shopify, Wix, Next.js…).
 For the content of a page rather than its health, see
 [Website changes](webchange.md).
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Page fetch over HTTPS (default port) |
+| 80 | TCP | Only with an http:// address (default port) |
+
 ## Set it up
 
-1. In the address, paste the page to check, usually the home page, with or without https://. Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported.
-2. Optionally fill in "Expected text" with a phrase the page must always show, and adjust "Blank page below" if the page is short on purpose.
-3. The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default ("Check for changes every"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet.
-4. To add many sites at once, import a CSV file from the monitor list: each site is filed under `Websites/<category>` (E-commerce, Blog… or the category you give) or, when the page does not say, `Websites/<platform>` (WordPress, Shopify…), unless you give a folder.
+1. In the address, paste the page to check, usually the home page.
+
+2. Optionally fill in "Expected text" with a phrase the page must always show.
+
+3. To add many sites at once, import a CSV file from the monitor list.
 
 !!! warning
-    Only what the server sends is read: a page drawn entirely by JavaScript looks blank here. Lower "Blank page below" to 0 for such a site.
+    Only what the server sends is read: for a page drawn by JavaScript, set "Blank page below" to 0.
+
+Redirects are followed: http to https and example.com to www.example.com are normal, only a redirect loop or a move to another address is reported. Adjust "Blank page below" if the page is short on purpose. The first check records the reference: final address, title, description, canonical URL, indexing rules. They are compared again every 6 hours by default ("Check for changes every"), while up/down is checked at every polling interval. A change is only reported once 2 checks in a row (adjustable) have seen it, so A/B tests and flaky caches stay quiet. Imported sites are filed under `Websites/<category>` (E-commerce, Blog… or the category you give) or, when the page does not say, `Websites/<platform>` (WordPress, Shopify…), unless you give a folder.
 
 ## What each check does
 

@@ -587,12 +587,14 @@ response shapes. *read* and *write* are the token scope needed; *none* means no 
 
 | Method | Route | Purpose |
 |---|---|---|
-| `GET` | `/api/alerts` | Active alerts (pending, firing, suppressed, recently resolved). Alerts of deleted or paused monitors are never listed. `?target_id=` keeps only the alerts of one monitor. |
+| `GET` | `/api/alerts` | Active alerts (pending, firing, suppressed, recently resolved). Alerts of deleted or paused monitors are never listed. `?target_id=` keeps only the alerts of one monitor. Dismissed alerts are left out; `?dismissed=true` lists only them (`dismissed`, `dismissed_at`, `dismissed_by`). |
 | `GET` | `/api/alerts/history?since=2026-09-01T00:00:00Z&limit=200&dismissed=false` | Phase transitions. `since` is RFC 3339, default the last seven days; `limit` must be positive. `dismissed` (default `false`) excludes entries cleared with the two routes below; nothing is ever destroyed by a clear, only hidden from the default view. |
 | `POST` | `/api/alerts/history/{id}/dismiss` | Clears one `resolved` entry from the default history view. `204`. `404` on an unknown id or a still-active transition. Operator; audited. |
 | `POST` | `/api/alerts/history/dismiss-resolved` | Clears every not-yet-cleared `resolved` entry at once ("Clear all resolved"). Returns `{"dismissed": <count>}`. Operator; audited. |
 | `POST` | `/api/alerts/{fingerprint}/ack` | Acknowledge: `{"duration_secs": 14400, "note": "…"}` or `{"until": "2026-09-22T18:00:00Z"}` (one of the two; neither means 4 hours, at most 30 days). `{"until": null}` lifts it. Returns the alert. Operator; audited. |
 | `DELETE` | `/api/alerts/{fingerprint}/ack` | Lift the acknowledgement. Returns the alert. Operator. |
+| `POST` | `/api/alerts/{fingerprint}/dismiss` | Dismiss ("got it"): the current occurrence leaves the active alerts and sends nothing more, resolution included, until the condition clears. No body. Returns the alert. `404` if it is no longer active. Operator; audited. |
+| `DELETE` | `/api/alerts/{fingerprint}/dismiss` | Restore a dismissed alert. Returns the alert. Operator; audited. |
 
 An active alert:
 
@@ -932,13 +934,13 @@ same scopes, expiry, networks and rate limit — and never with a session.
 | `POST` | `/api/mcp` | API token | JSON-RPC 2.0 over the Streamable HTTP transport, one request per `POST`, answered in JSON. Protocol `2026-07-28` (stateless: every request carries its version and client capabilities in `_meta`, plus the `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` headers; `server/discover`), and `2025-11-25`, `2025-06-18` and `2025-03-26` through the `initialize` handshake. No session: no `Mcp-Session-Id` is issued, one sent is ignored. A notification gets `202` and no body. |
 | `GET`, `DELETE` | `/api/mcp` | public | `405` with `Allow: POST` — there is no server-sent stream and no session to end; the body only says what this endpoint is. |
 
-`tools` is the only capability — no resources, no prompts, no OAuth. Of the 27
+`tools` is the only capability — no resources, no prompts, no OAuth. Of the 28
 tools, a `read` token can call the 15 that only read (`get_status`,
 `list_devices`, `get_device`, `list_alerts`, `alert_history`,
 `query_metrics`, `list_silences`, `list_rules`, `list_device_types`,
 `list_agents`, `list_containers`, `list_heartbeats`, `list_status_pages`,
-`list_channels`, `list_packs`); the 12 that change something
-(`silence_device`, `remove_silence`, `acknowledge_alert`, `probe_device`,
+`list_channels`, `list_packs`); the 13 that change something
+(`silence_device`, `remove_silence`, `acknowledge_alert`, `dismiss_alert`, `probe_device`,
 `set_device_enabled`, `set_rule_enabled`, `add_device`, `discover_network`,
 `schedule_maintenance`, `restart_container`, `test_channel`,
 `post_incident`) need a `write` token. The tools call the same code as the

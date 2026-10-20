@@ -3,6 +3,15 @@
 Le serveur web : workers occupés et au repos, le scoreboard des workers par
 état, et les débits de requêtes/octets quand ExtendedStatus est activé.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | Page de statut (HTTP, par défaut) |
+| 443 | TCP | Seulement si la page de statut est servie en HTTPS |
+
 DumbMonit lit le `mod_status` intégré d'Apache, interrogé avec `?auto` pour
 qu'il réponde en simples lignes `Clé: Valeur` plutôt que par la page HTML
 destinée à un navigateur.
@@ -37,15 +46,15 @@ page n'interroge jamais Apache. Il montre les workers occupés et au repos, la
 répartition du scoreboard, et, avec ExtendedStatus, les débits de requêtes et
 d'octets sur 24 heures.
 
-## Activer mod_status d'Apache
+## Activer le mod_status d'Apache
 
-1. Assurez-vous que mod_status est chargé (il est fourni avec Apache et généralement activé par défaut).
+1. Activez mod_status (il est fourni avec Apache et souvent déjà actif).
 
     ```
     a2enmod status
     ```
 
-2. Ajoutez un emplacement de statut, restreint à l'hôte DumbMonit ; ajustez l'adresse en conséquence. Sur Debian et Ubuntu cela va dans un fichier à part, ailleurs dans la configuration principale.
+2. Ajoutez ce location à la configuration d'Apache, restreint à l'hôte DumbMonit (adaptez l'adresse).
 
     ```
     <Location "/server-status">
@@ -54,33 +63,28 @@ d'octets sur 24 heures.
     </Location>
     ```
 
-3. Activez les compteurs de requêtes et d'octets (optionnel, mais ça vaut le coup) : sans cela, seuls les workers occupés/au repos et le scoreboard sont rapportés.
+3. Facultatif : activez les compteurs de requêtes et d'octets.
 
     ```
     ExtendedStatus On
     ```
 
-4. Rechargez Apache et vérifiez qu'il répond avant de configurer DumbMonit.
+4. Rechargez Apache, puis ouvrez http://apache.lan/server-status?auto depuis l'hôte DumbMonit.
 
     ```
     apachectl graceful
-    curl -s 'http://apache.lan/server-status?auto'
     ```
 
-5. Dans DumbMonit, saisissez l'hôte Apache, par exemple « apache.lan », et le chemin s'il n'est pas « /server-status » (DumbMonit ajoute « ?auto » lui-même).
+5. Dans DumbMonit, saisissez l'hôte Apache, par exemple apache.lan, et le chemin s'il n'est pas /server-status.
 
 !!! warning
-    Sans ExtendedStatus, les requêtes et les octets ne sont pas rapportés du
-    tout, pas comme zéro : le graphique reste vide plutôt que de mentir à
-    plat. Apache ne publie pas sa propre version dans mod_status ; DumbMonit
-    la lit depuis l'en-tête de réponse Server à la place, que certaines
-    distributions réduisent volontairement.
+    Sans ExtendedStatus, requêtes et octets ne sont pas rapportés du tout : le graphique reste vide plutôt que plat.
 
-Sur Debian et Ubuntu, l'emplacement de statut existe généralement déjà dans
-`/etc/apache2/mods-available/status.conf` ; modifier la ligne `Require` là
-suffit, pas besoin de nouveau fichier. Là où la configuration est un seul
-fichier (la plupart des autres distributions), ajoutez le bloc dans l'hôte
-virtuel principal à la place.
+### Pour aller plus loin
+
+Sur Debian et Ubuntu, le location va dans un fichier à part ; ailleurs, dans la configuration principale. DumbMonit ajoute ?auto lui-même. Sans ExtendedStatus, seuls les workers occupés et inactifs et le scoreboard sont rapportés. Apache ne publie pas sa propre version dans mod_status ; DumbMonit la lit dans l'en-tête de réponse Server, que certaines distributions réduisent volontairement.
+
+Documentation de l'éditeur : https://httpd.apache.org/docs/2.4/mod/mod_status.html
 
 ## Identifiants
 

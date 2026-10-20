@@ -16,6 +16,15 @@ redémarrage), une alimentation redondante morte sans que personne ne le
 remarque, un port qui continue de journaliser des erreurs ou de perdre son
 lien. C'est ce que cette page surveille, avec la charge.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API REST (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de protocole HTTP |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_mikrotik_`. Les totaux sont
@@ -72,38 +81,65 @@ des interfaces avec leur lien, trafic, erreurs et pertes de lien.
 
 ## Créer un utilisateur en lecture seule sur le routeur
 
-1. Ouvrez un terminal sur le routeur (WinBox → New Terminal, ou SSH avec le compte par défaut) et créez un groupe qui ne peut que lire, via l'API REST. RouterOS a besoin des trois politiques pour une lecture REST : rest-api ouvre l'API, api et read autorisent la lecture elle-même.
+1. WinBox ou WebFig → System → Users → Groups → Add : nommez le groupe comme suit et cochez uniquement les policies listées ci-dessous.
 
     ```
-    /user group add name=dumbmonit-read policy=read,api,rest-api comment=DumbMonit
+    dumbmonit-read
     ```
 
-2. Créez l'utilisateur dans ce groupe avec un mot de passe long et aléatoire qui vous est propre. Pour n'accepter le compte que depuis DumbMonit, ajoutez address= suivi de l'adresse de l'hôte DumbMonit.
+2. System → Users → Add : créez l'utilisateur dumbmonit dans ce groupe, avec un long mot de passe aléatoire.
 
     ```
-    /user add name=dumbmonit group=dumbmonit-read password=REPLACE-WITH-A-LONG-RANDOM-PASSWORD
+    dumbmonit
     ```
 
-3. Activez le service web HTTPS, que RouterOS livre désactivé et sans certificat. Passez cette étape si www-ssl en a déjà un. Sinon ces commandes font un certificat sur le routeur lui-même ; puis cochez « Accepter un certificat non vérifiable » dans les options ci-dessous.
+3. IP → Services : activez www-ssl et choisissez un certificat (créez-en un sous System → Certificates).
+
+4. Facultatif, pour être prévenu des nouvelles versions de RouterOS : System → Scheduler → Add, interval 1d, start time startup, avec ce script On Event.
 
     ```
-    /certificate add name=local-ca common-name=local-ca key-usage=key-cert-sign,crl-sign days-valid=3650
-    /certificate sign local-ca
-    /certificate add name=https-cert common-name=router.lan days-valid=825
-    /certificate sign https-cert ca=local-ca
-    /ip service set www-ssl certificate=https-cert disabled=no
+    /system package update check-for-updates once
     ```
 
-4. Optionnel : pour être informé des nouvelles versions de RouterOS, laissez le routeur les vérifier au démarrage et une fois par jour. Un utilisateur en lecture seule ne peut pas démarrer cette vérification, DumbMonit en lit donc seulement le résultat.
+5. Dans DumbMonit, saisissez l'adresse du routeur (192.168.88.1) avec ce nom d'utilisateur et son mot de passe.
 
-    ```
-    /system scheduler add name=check-for-updates interval=1d start-time=startup on-event="/system package update check-for-updates once"
-    ```
+### Droits requis
 
-5. Dans DumbMonit, saisissez l'adresse du routeur, par exemple « 192.168.88.1 », avec l'utilisateur dumbmonit et son mot de passe. DumbMonit n'envoie que des requêtes GET à /rest : il ne change jamais un réglage, ne démarre jamais une mise à jour et ne redémarre jamais le routeur.
+- **read** — Lire l'état du routeur
+- **api** — Ouvrir l'API
+- **rest-api** — Ouvrir l'API REST sous /rest
 
 !!! warning
-    RouterOS 7.1 ou plus récent est requis : RouterOS 6 n'a pas d'API REST. N'utilisez pas le compte par défaut : son groupe complet peut tout changer, tandis que dumbmonit-read n'a aucune politique d'écriture et chaque changement est refusé. Le service www (HTTP simple) répond aussi à l'API REST, mais il envoie le mot de passe en clair à chaque requête.
+    RouterOS 7.1 ou plus est requis (RouterOS 6 n'a pas d'API REST) ; avec un certificat auto-signé, cochez « Accept an unverifiable certificate » dans les options.
+
+Documentation de l'éditeur : https://help.mikrotik.com/docs/spaces/ROS/pages/47579162/REST+API
+
+### Pourquoi ces droits
+
+RouterOS exige les trois policies pour une lecture REST : `rest-api` ouvre
+l'API, `api` et `read` autorisent la lecture elle-même. Sans `rest-api` le
+routeur répond 401, sans `api` « not allowed », sans `read` « not enough
+permissions » ; DumbMonit signale chaque cas comme un problème d'identifiants
+qui nomme la policy manquante. Avec les trois, un changement, un redémarrage ou
+une vérification de mise à jour est refusé. N'utilisez jamais le compte par
+défaut, qui a tous les droits. Pour n'accepter le compte que depuis DumbMonit,
+réglez l'Allowed Address de l'utilisateur sur l'hôte DumbMonit.
+
+RouterOS livre le service HTTPS désactivé et sans certificat. Vous préférez le
+terminal ? Ces commandes créent un certificat sur le routeur lui-même (cochez
+ensuite « Accept an unverifiable certificate » dans les options) :
+
+```
+/certificate add name=local-ca common-name=local-ca key-usage=key-cert-sign,crl-sign days-valid=3650
+/certificate sign local-ca
+/certificate add name=https-cert common-name=router.lan days-valid=825
+/certificate sign https-cert ca=local-ca
+/ip service set www-ssl certificate=https-cert disabled=no
+```
+
+Le service `www` (HTTP en clair) répond aussi à l'API REST, mais envoie le mot
+de passe en clair à chaque requête. Un utilisateur en lecture seule ne peut pas
+lancer la vérification de mise à jour : DumbMonit n'en lit que le résultat.
 
 Les trois politiques ont été vérifiées une par une sur RouterOS 7.23.7,
 chacune avec un utilisateur neuf : sans `rest-api` le routeur répond 401,

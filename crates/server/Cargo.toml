@@ -68,6 +68,9 @@ lettre = { version = "0.11", default-features = false, features = [
 ] }
 
 tokio-util = { version = "0.7", features = ["io"] }
+# Expédition des journaux vers un syslog TLS ou une entrée GELF TCP/TLS : le
+# même connecteur que les collecteurs (déjà dans le verrou de dépendances).
+tokio-rustls = "0.26"
 
 aes-gcm = "0.11"
 argon2 = "0.6"

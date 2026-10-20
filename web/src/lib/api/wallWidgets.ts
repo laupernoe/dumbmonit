@@ -26,6 +26,7 @@ export const DEFAULT_WIDGET_SETTINGS: WallWidgetSettings = {
 		claude: { enabled: false, people: [] },
 		openai: { enabled: false, people: [] }
 	},
+	text: { enabled: false, content: '' },
 	layout: DEFAULT_LAYOUT
 };
 

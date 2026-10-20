@@ -5,6 +5,15 @@ paused, updates, the disk that holds the library, how many photos and videos
 it holds, and — for every phone, tablet and desktop signed in to the account —
 its last connection and last backup.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 2283 | TCP | API (HTTP, default) |
+| 443 | TCP | Only with the https scheme behind a reverse proxy |
+
 DumbMonit reads Immich's API with an **API key limited to eight read
 permissions**. The key cannot see a photo, an album or a person, and cannot
 change anything.
@@ -73,21 +82,39 @@ table of devices (name, type, OS, last connection, last backup, status).
 
 ## Create a read-only API key in Immich
 
-1. Log in to Immich with an account that can open Administration: Immich only lets those accounts read photo counts and job queues. Open Account Settings → API Keys → New API Key, name it as follows, and tick these eight permissions: the first five for job queues, counts and version, the last three to list the account's devices and their last connection and backup.
+1. In Immich, open Account Settings → API Keys → New API Key and name it as follows.
 
     ```
     dumbmonit
-    server.about server.versionCheck server.storage server.statistics queue.read session.read asset.read user.read
     ```
 
-2. Copy the key now: Immich shows it only once. It reads those eight pages and nothing else: no photo, no album, no setting. If your Immich does not offer queue.read, tick job.read instead.
+2. Tick the permissions listed below, create the key and copy it: Immich shows it only once.
 
-3. A key made by an ordinary account works too: version, updates, disk space and devices are read, photo counts and job queues are skipped.
+3. In DumbMonit, enter Immich's address and paste the key.
 
-4. In DumbMonit, enter Immich's address, for example "immich.lan" (port 2283) or "https://photos.example.com" behind a reverse proxy, and paste the key.
+### Required permissions
+
+- **server.about**: Version
+- **server.versionCheck**: Update available
+- **server.storage**: Disk space
+- **server.statistics**: Photo and video counts
+- **queue.read**: Job queues (job.read on older Immich)
+- **session.read**: Devices and their last connection
+- **asset.read**: Last backup
+- **user.read**: The account that owns the key
+
+Vendor documentation: <https://immich.app/docs/api/>
+
+### Why these permissions
+
+The key reads those eight pages and nothing else: no photo, no album, no setting. A key made by an ordinary account works too: version, updates, disk space and devices are read, photo counts and job queues are skipped. If your Immich does not offer `queue.read`, tick `job.read` instead.
+
+A paused queue is easy to forget: new photos get no thumbnail, no metadata and no face, and Immich only says so on its Jobs page. DumbMonit warns when jobs wait in a queue that is not paused and runs nothing.
+
+`session.read`, `asset.read` and `user.read` list every device of the account that owns the key (its phones, tablets and browsers) with each one's last connection. Immich's API does not record which device uploaded a given photo, so "last backup" is the whole library's most recent upload, shown the same for every device: if only one device stops backing up while the others keep going, its connection will show as stale but the shared backup figure will still look fresh.
 
 !!! warning
-    A paused queue is easy to forget: new photos get no thumbnail, no metadata and no face, and Immich only says so on its Jobs page. DumbMonit warns when jobs wait in a queue that is not paused and runs nothing. session.read, asset.read and user.read list every device of the account that owns the key — its phones, tablets and browsers — with each one's last connection. Immich's API does not record which device uploaded a given photo, so "last backup" is the whole library's most recent upload, shown the same for every device: if only one device stops backing up while the others keep going, its connection will show as stale but the shared backup figure will still look fresh.
+    Create the key from an account that can open Administration, or photo counts and job queues are skipped; "last backup" is the whole library's latest upload, the same for every device.
 
 What each permission opens: `server.about` the version (`/api/server/about`),
 `server.versionCheck` the latest release Immich knows of, `server.storage` the

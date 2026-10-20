@@ -6,6 +6,14 @@ StatefulSets et DaemonSets avec des répliques manquantes, demandes de
 volume qui ne sont jamais liées, et les événements d'avertissement de la
 dernière heure.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 6443 | TCP | Serveur d'API (HTTPS, par défaut) |
+
 DumbMonit lit l'API avec le jeton d'un compte de service dédié lié à un
 ClusterRole en lecture seule : `get` et `list` sur les nœuds, pods,
 workloads, demandes de volume persistant et événements, rien d'autre. Il
@@ -91,15 +99,25 @@ et rien d'autre.
 
 ## Créer un compte de service en lecture seule pour DumbMonit
 
-1. Créez un compte de service, un ClusterRole qui ne peut que get et list les nœuds, pods, workloads, demandes de volume et événements, et liez-les ensemble. Le rôle ne lit aucun Secret ni ConfigMap. Sur un serveur k3s, lancez chaque commande avec sudo k3s kubectl.
+1. Créez le compte de service.
 
     ```
     kubectl create serviceaccount dumbmonit -n kube-system
+    ```
+
+2. Créez un ClusterRole qui ne peut que get et list ce que DumbMonit lit.
+
+    ```
     kubectl create clusterrole dumbmonit-read --verb=get,list --resource=nodes,pods,persistentvolumeclaims,events,deployments.apps,statefulsets.apps,daemonsets.apps
+    ```
+
+3. Liez le rôle au compte de service.
+
+    ```
     kubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit
     ```
 
-2. Donnez-lui un jeton qui n'expire pas : un Secret de type service-account-token, que Kubernetes remplit. Puis affichez le jeton, et la CA du cluster en base64.
+4. Créez un jeton qui n'expire pas, puis affichez le jeton et la CA du cluster en base64.
 
     ```
     echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"dumbmonit-token","namespace":"kube-system","annotations":{"kubernetes.io/service-account.name":"dumbmonit"}},"type":"kubernetes.io/service-account-token"}' | kubectl apply -f -
@@ -107,17 +125,40 @@ et rien d'autre.
     kubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\.crt}'
     ```
 
-3. Dans DumbMonit, saisissez l'adresse du serveur d'API, par exemple « https://k3s.lan:6443 ». Collez le jeton comme Jeton de compte de service et la CA en base64 comme Certificat CA du cluster : seule cette CA est alors de confiance. Un serveur d'API rapporte tout le cluster.
+5. Dans DumbMonit, saisissez l'adresse de l'API server (par exemple https://k3s.lan:6443), collez le jeton comme Jeton de compte de service et la CA comme Certificat CA du cluster.
+
+### Droits requis
+
+- **get, list sur nodes, pods, events** : À l'échelle du cluster, en lecture seule
+- **get, list sur persistentvolumeclaims** : Claims de volume jamais liés
+- **get, list sur deployments, statefulsets, daemonsets** : Workloads à court de réplicas (groupe apps)
 
 !!! warning
-    Le certificat du serveur d'API ne liste que ses propres noms et adresses : une adresse qu'il ne liste pas échoue la vérification. Utilisez-en une qu'il liste (une adresse IP de nœud, ou un nom ajouté avec --tls-san sur k3s), ou cochez Accepter un certificat non vérifiable.
+    Sur k3s, lancez chaque commande avec sudo k3s kubectl. Le certificat de l'API server ne liste que ses propres noms et adresses : utilisez-en un qu'il liste, ou cochez Accepter un certificat non vérifiable.
+
+Documentation de l'éditeur : [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+
+### Pourquoi ces droits
+
+Kubernetes n'a pas d'écran pour cela : les objets RBAC se créent avec
+`kubectl` ou un manifeste, les commandes ci-dessus sont donc la voie à suivre.
+
+Le rôle ne lit aucun Secret ni ConfigMap. Le jeton est un Secret de type
+`kubernetes.io/service-account-token`, que Kubernetes remplit et qui
+n'expire pas. Collez la CA en base64 comme Certificat CA du cluster : seule cette
+CA est alors reconnue. Un seul API server remonte tout le cluster.
+
+Le certificat de l'API server ne liste que ses propres noms et adresses : une
+adresse qu'il ne liste pas échoue à la vérification. Utilisez-en une qu'il
+liste (une adresse IP de nœud, ou un nom ajouté avec `--tls-san` sur k3s), ou
+cochez Accepter un certificat non vérifiable.
 
 ### La même chose comme manifeste
 
 Pour GitOps, ou pour revoir exactement ce qui est accordé, appliquez ce
-manifeste au lieu des trois commandes `kubectl create` et du Secret de
-l'étape 2 (`kubectl apply -f dumbmonit.yaml`), puis affichez le jeton et la
-CA comme à l'étape 2 :
+manifeste au lieu des étapes 1 à 3 et du `kubectl apply` de l'étape 4
+(`kubectl apply -f dumbmonit.yaml`), puis affichez le jeton et la CA avec
+les deux dernières commandes de l'étape 4 :
 
 ```yaml
 apiVersion: v1

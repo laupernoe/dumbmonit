@@ -5,6 +5,15 @@ bloque, l'ancienneté de ses listes de blocage, si ses résolveurs amont
 échouent, si une mise à jour attend, et les messages de sa propre page de
 diagnostic.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | API (HTTP, par défaut) |
+| 443 | TCP | Seulement avec l'option de schéma https |
+
 DumbMonit lit l'API REST de Pi-hole v6 (`/api`). Pi-hole 5 et antérieur n'ont
 pas cette API et ne sont pas supportés.
 
@@ -58,26 +67,28 @@ messages de diagnostic.
 
 ## Créer un mot de passe d'application dans Pi-hole
 
-1. Pi-hole v6 ou plus récent est requis : la version 5 n'avait pas d'API REST. Pi-hole n'a pas de compte en lecture seule ; le plus proche est un mot de passe d'application, qui ne peut changer aucun réglage.
+1. Dans l'interface web de Pi-hole, ouvrez Settings → Web interface / API et passez la page de Basic à Expert.
 
-2. Dans l'interface web de Pi-hole, ouvrez Settings → Web interface / API et passez la page de Basic à Expert. Cliquez sur Configure app password, copiez le mot de passe affiché, puis cliquez sur Enable new app password. Pi-hole ne le montre qu'une fois, et un nouveau remplace le précédent.
+2. Cliquez sur Configure app password, copiez le mot de passe affiché, puis cliquez sur Enable new app password.
 
-3. Un mot de passe d'application reste en lecture seule pour les réglages tant que webserver.api.app_sudo est false, le défaut. Vérifiez-le sur la machine Pi-hole (en Docker, préfixez la commande avec docker exec et le nom du conteneur) :
+3. Vérifiez que Settings → All settings → Webserver and API → webserver.api.app_sudo est désactivé, c'est son défaut.
 
-    ```
-    pihole-FTL --config webserver.api.app_sudo
-    ```
+4. Dans DumbMonit, saisissez l'adresse de Pi-hole et collez le mot de passe d'application, ou choisissez No password si l'interface web n'en a pas.
 
-4. Dans DumbMonit, saisissez l'adresse de Pi-hole, par exemple « pi.hole » ou « 192.168.1.53 », et collez le mot de passe d'application. Pour un Pi-hole dont l'interface web n'a pas de mot de passe, choisissez Pas de mot de passe à la place.
+Documentation de l'éditeur : <https://docs.pi-hole.net/api/>
 
-5. DumbMonit ne fait que lire. Il ne met jamais le blocage en pause et ne change jamais une liste, et il garde une session d'API ouverte entre les vérifications plutôt que d'en ouvrir une par vérification : Pi-hole autorise 16 sessions à la fois.
+### Pourquoi un mot de passe d'application
+
+Pi-hole v6 ou plus récent est requis : la version 5 n'avait pas d'API REST. Pi-hole n'a pas de compte en lecture seule ; le plus proche est un mot de passe d'application, qui ne peut changer aucun réglage tant que `webserver.api.app_sudo` vaut false, ce qui est le défaut. Pi-hole ne montre le mot de passe d'application qu'une fois, et un nouveau remplace le précédent. Vous pouvez aussi vérifier le réglage sur la machine Pi-hole (sous Docker, préfixez la commande de `docker exec` et du nom du conteneur) :
+
+```
+pihole-FTL --config webserver.api.app_sudo
+```
+
+DumbMonit ne fait que lire. Il ne met jamais le blocage en pause et ne change aucune liste, et il garde une session d'API ouverte entre les vérifications au lieu d'en ouvrir une par vérification : Pi-hole en autorise 16 à la fois. Pi-hole sert du HTTP en clair sur le port 80, et le mot de passe traverse le réseau à chaque ouverture de session : sur un réseau non fiable, utilisez HTTPS sur le port 443.
 
 !!! warning
-    Le mot de passe d'application permet quand même de mettre le blocage en
-    pause et de modifier des listes via l'API : réservez-le à DumbMonit
-    seulement. Pi-hole sert du HTTP simple sur le port 80, et le mot de passe
-    traverse le réseau chaque fois qu'une session s'ouvre : sur un réseau non
-    sûr, utilisez HTTPS sur le port 443.
+    Pi-hole v6 ou plus récent est requis ; le mot de passe d'application peut encore mettre le blocage en pause et modifier les listes via l'API, gardez-le pour DumbMonit seul.
 
 Un mot de passe d'application se connecte aussi sans le second facteur quand
 la double authentification est activée : c'est à ça qu'il sert. Pour le

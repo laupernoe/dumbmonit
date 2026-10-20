@@ -243,6 +243,19 @@ mod tests {
         assert!(platform_checksums(&dir.path().join("absent")).await.is_empty());
     }
 
+    /// Le mode relais s'installe en une commande : les deux scripts écrivent
+    /// `relay: true` et le site dans agent.yaml.
+    #[test]
+    fn the_scripts_can_install_a_relay_for_a_site() {
+        assert!(INSTALL_SH.contains("--relay)      RELAY=1 ;;"));
+        assert!(INSTALL_SH.contains("--site=*)     SITE="));
+        assert!(INSTALL_SH.contains("echo \"relay: true\""));
+        assert!(INSTALL_SH.contains("echo \"site: '"));
+        assert!(INSTALL_PS1.contains("[switch]$Relay"));
+        assert!(INSTALL_PS1.contains("[string]$Site"));
+        assert!(INSTALL_PS1.contains("$lignes.Add(\"relay: true\")"));
+    }
+
     /// La vérification est obligatoire : sans empreinte, ou sans outil pour la
     /// calculer, rien n'est installé, sauf échappatoire explicite et bruyante.
     #[test]

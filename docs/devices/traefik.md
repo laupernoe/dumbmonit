@@ -4,6 +4,14 @@ The reverse proxy: routers disabled by a configuration error, backend servers
 failing their health check, certificates that a resolver never obtained or
 that are not renewed, and the share of 5xx answers.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8080 | TCP | API and metrics (HTTP, default) |
+
 DumbMonit reads Traefik's API, which only reads: `/api/overview`,
 `/api/http/routers`, `/api/http/services`, `/api/certificates` (served by
 Traefik 3.7) and `/api/version`. When Traefik's Prometheus metrics are served on the
@@ -68,73 +76,31 @@ hours.
 
 ## Let DumbMonit read Traefik's API
 
-1. Traefik's API only reads: routers, services and certificates, never a change. Enable it with the Prometheus metrics, which add the request rate and the share of 5xx answers: add these two arguments to Traefik's command (or the same keys to its static configuration) and restart it. Both are then served on the traefik entry point, port 8080.
+1. Add these arguments to Traefik's command (or the same keys to its static configuration), then restart it.
 
     ```
     --api.insecure=true
     --metrics.prometheus=true
     ```
 
-2. Port 8080 answers without a password: publish it only on an address the DumbMonit host reaches, filter it so that nothing else does, and check that it answers.
+2. Open http://traefik.lan:8080/api/overview from the DumbMonit host: it must answer with JSON.
 
-    ```
-    curl -s http://traefik.lan:8080/api/overview
-    ```
-
-3. To require a password instead, route /api and /metrics through an entry point of your own with a basicAuth middleware, as the documentation shows, and pick basicAuth user below. Create the user dumbmonit with htpasswd.
+3. Optional: protect /api and /metrics with a basicAuth middleware on an entry point of your own, and create the user with htpasswd.
 
     ```
     htpasswd -nbB dumbmonit 'a-long-password'
     ```
 
-4. In DumbMonit, enter the Traefik host, for example "traefik.lan", with the port of that entry point if it is not 8080. Untick Read the metrics if /metrics is served elsewhere.
+4. In DumbMonit, enter the Traefik host, for example traefik.lan, with the port of that entry point if it is not 8080.
 
 !!! warning
-    A router disabled by a configuration error takes its sites down, and Traefik only says so in its log. The check that a certificate resolver obtained its certificates needs /api/certificates, which Traefik 3.7 serves; without it, certificate expiry comes from the metrics only.
+    Port 8080 answers without a password: filter it so that only the DumbMonit host reaches it.
 
-### An API entry point with a password
+### Good to know
 
-Instead of `--api.insecure=true`, give the API and the metrics an entry point
-of their own and put a basicAuth middleware in front of both. In the static
-configuration:
+Traefik's API only reads routers, services and certificates, never a change. The Prometheus metrics add the request rate and the share of 5xx answers; both are served on the traefik entry point, port 8080. To require a password instead, route /api and /metrics through an entry point of your own with a basicAuth middleware, as the Traefik documentation shows, and pick basicAuth user in the form. Untick Read the metrics if /metrics is served elsewhere. The certificate check needs /api/certificates, which Traefik 3.7 serves; without it, certificate expiry comes from the metrics only. A router disabled by a configuration error takes its sites down, and Traefik only says so in its log.
 
-```yaml
-entryPoints:
-  monitor:
-    address: ":8082"
-api: {}
-metrics:
-  prometheus:
-    manualRouting: true
-    addRoutersLabels: true
-```
-
-and in the dynamic configuration (file provider shown; Docker labels work the
-same way), with the line printed by `htpasswd`:
-
-```yaml
-http:
-  middlewares:
-    dumbmonit-auth:
-      basicAuth:
-        users:
-          - "dumbmonit:$2y$05$…"
-  routers:
-    monitor-api:
-      entryPoints: [monitor]
-      rule: "PathPrefix(`/api`)"
-      service: api@internal
-      middlewares: [dumbmonit-auth]
-    monitor-metrics:
-      entryPoints: [monitor]
-      rule: "Path(`/metrics`)"
-      service: prometheus@internal
-      middlewares: [dumbmonit-auth]
-```
-
-Then enter `traefik.lan:8082` in DumbMonit with the user `dumbmonit`.
-`addRoutersLabels` is what gives the 5xx answers per router; without it only
-the totals per entry point are counted.
+Vendor documentation: https://doc.traefik.io/traefik/operations/api/
 
 ## Credentials
 

@@ -94,8 +94,25 @@ pub async fn read(
         Some(d) => format!("/api/diagnostics/firewall/log?limit={limit}&digest={d}"),
         None => format!("/api/diagnostics/firewall/log?limit={limit}"),
     };
-    let lines: Vec<LogEntry> = client.get_or_empty(&path).await?;
+    let lines: Vec<LogEntry> = client.get_or_empty(&path).await.map_err(missing_privilege)?;
     Ok(newer_than(lines, digest))
+}
+
+/// Privilège qu'exige le journal du pare-feu en direct.
+const LIVE_VIEW_PRIVILEGE: &str = "Diagnostics: Logs: Firewall: Live View";
+
+/// Un refus sur le journal veut presque toujours dire que le groupe de la clé n'a
+/// pas ce privilège, que les autres lectures n'exigent pas : on le nomme, plutôt
+/// que de renvoyer le message générique sur la clé.
+fn missing_privilege(error: ProbeError) -> ProbeError {
+    match error {
+        ProbeError::Auth(_) => ProbeError::Auth(format!(
+            "OPNsense refused the firewall log (403). Add the privilege \u{201c}{LIVE_VIEW_PRIVILEGE}\u{201d} \
+             to the API user's group (System \u{2192} Access \u{2192} Groups \u{2192} Edit, \
+             Assigned Privileges)."
+        )),
+        other => other,
+    }
 }
 
 /// Écarte la ligne `after` et ce qui la suit (déjà lu).
@@ -144,6 +161,18 @@ mod tests {
         assert_eq!(newer.len(), 2, "la ligne de l'empreinte et les suivantes sont déjà lues");
         assert_eq!(newer_than(lines.clone(), None).len(), 6);
         assert_eq!(newer_than(lines, Some("inconnue")).len(), 6);
+    }
+
+    #[test]
+    fn un_refus_nomme_le_privilege_manquant() {
+        let error = missing_privilege(ProbeError::Auth("generic".into()));
+        let ProbeError::Auth(message) = error else { panic!("une erreur d'authentification") };
+        assert!(message.contains("Diagnostics: Logs: Firewall: Live View"), "{message}");
+        assert!(message.contains("System \u{2192} Access \u{2192} Groups"), "{message}");
+        assert!(matches!(
+            missing_privilege(ProbeError::Protocol("x".into())),
+            ProbeError::Protocol(_)
+        ));
     }
 
     #[test]

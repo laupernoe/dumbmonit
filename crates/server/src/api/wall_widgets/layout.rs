@@ -12,14 +12,14 @@ use serde::{Deserialize, Serialize};
 
 /// Les widgets du mur, dans l'ordre par défaut de leur zone.
 pub const WIDGETS: &[&str] =
-    &["weather", "news", "cve", "crypto", "stocks", "fx", "claude", "openai"];
+    &["weather", "news", "cve", "crypto", "stocks", "fx", "claude", "openai", "text"];
 
 /// La zone d'un widget tant que l'administrateur n'en a pas choisi d'autre :
 /// la météo, les titres et les vulnérabilités sous l'horloge, les cours et la
 /// consommation d'IA dans la barre du bas.
 fn default_zone(id: &str) -> Zone {
     match id {
-        "weather" | "news" | "cve" => Zone::Right,
+        "weather" | "news" | "cve" | "text" => Zone::Right,
         _ => Zone::Bottom,
     }
 }
@@ -77,7 +77,7 @@ mod tests {
     #[test]
     fn the_default_places_every_widget_once() {
         let layout = Layout::default().resolve();
-        assert_eq!(layout.right, ["weather", "news", "cve"]);
+        assert_eq!(layout.right, ["weather", "news", "cve", "text"]);
         assert_eq!(layout.bottom, ["crypto", "stocks", "fx", "claude", "openai"]);
         assert!(layout.top.is_empty() && layout.hidden.is_empty());
     }
@@ -94,6 +94,6 @@ mod tests {
         assert_eq!(layout.top, ["crypto", "fx"]);
         assert_eq!(layout.hidden, ["news"]);
         assert_eq!(layout.bottom, ["stocks", "claude", "openai"]);
-        assert_eq!(layout.right, ["weather", "cve"]);
+        assert_eq!(layout.right, ["weather", "cve", "text"]);
     }
 }

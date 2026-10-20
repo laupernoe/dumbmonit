@@ -3,6 +3,14 @@
 An XCP-ng or XenServer (Citrix Hypervisor) pool, read through XAPI, the
 management API every host already runs. No Xen Orchestra is needed.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | XAPI (HTTPS, default) |
+
 Every minute DumbMonit posts JSON-RPC calls to
 `https://<coordinator>/jsonrpc`: one `session.login_with_password` (the
 session is then kept from one poll to the next, and reopened once if the pool
@@ -63,29 +71,60 @@ The [built-in rules](../alerting/rules.md#xcp-ng-xenserver) that apply:
 
 ## Give DumbMonit a read-only XAPI account
 
-1. XAPI only accepts accounts other than its built-in superuser once the pool uses external authentication. If the pool is already joined to Active Directory, create a dumbmonit account there and go to step 3.
-
-2. Otherwise, create a local account with a long random password on every host of the pool, then turn on PAM authentication once, from the pool coordinator. Until a role is given, the account can call nothing.
+1. On every host of the pool, create a local account with a long random password.
 
     ```
     useradd -M -s /sbin/nologin dumbmonit
     passwd dumbmonit
+    ```
+
+2. On the pool coordinator, turn on PAM authentication once.
+
+    ```
     xe pool-enable-external-auth auth-type=PAM service-name=pam
     ```
 
-3. On the pool coordinator, register the account as a subject, then give that subject the built-in read-only role, with the UUID the first command prints.
+3. Register the account as a subject and note the UUID it prints.
 
     ```
     xe subject-add subject-name=dumbmonit
+    ```
+
+4. Give that subject the built-in read-only role, with the UUID.
+
+    ```
     xe subject-role-add uuid=SUBJECT_UUID role-name=read-only
     ```
 
-4. In DumbMonit, enter the address of the pool coordinator, for example "xcp01.lan", with that user name and password. Add the pool once: the coordinator reports every host, VM and storage repository. A pool member answers with the coordinator's address, which DumbMonit then follows.
+5. In DumbMonit, enter the address of the pool coordinator (for example xcp01.lan) with that user name and password.
 
-5. DumbMonit only reads, through XAPI's JSON-RPC interface (/jsonrpc): it never starts, stops or migrates a VM and never changes a storage repository or the pool's high availability.
+### Required permissions
+
+- **read-only role (XAPI)**: Sees hosts, VMs, storage repositories and HA
 
 !!! warning
-    Never give DumbMonit the superuser password of the hosts: with the read-only role, a leaked password cannot change anything. XCP-ng and XenServer ship a self-signed certificate: enable "Accept an unverifiable certificate" unless the DumbMonit host trusts the certificate the pool presents.
+    If the pool already uses Active Directory, create the account there and skip steps 1 and 2. XCP-ng uses a self-signed certificate: enable "Accept an unverifiable certificate" unless the DumbMonit host trusts it.
+
+Vendor documentation: [XenServer RBAC with the CLI](https://docs.xenserver.com/en-us/xenserver/9/users/rbac-cli)
+
+### Why these permissions
+
+XAPI has no screen for this: its role-based access control is managed with the
+`xe` command line, so the commands above are the way (Xen Orchestra manages its
+own users, not XAPI subjects).
+
+XAPI only accepts accounts other than its built-in superuser once the pool uses
+external authentication, which is why PAM is turned on. Until a role is given,
+the account can call nothing; with `read-only`, a leaked password cannot change
+anything. Never give DumbMonit the superuser password of the hosts.
+
+Add the pool once: the coordinator reports every host, VM and storage
+repository. A pool member answers with the coordinator's address, which
+DumbMonit then follows.
+
+DumbMonit only reads, through XAPI's JSON-RPC interface (`/jsonrpc`): it never
+starts, stops or migrates a VM and never changes a storage repository or the
+pool's high availability.
 
 ## Credentials
 

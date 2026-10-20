@@ -5,6 +5,14 @@ failed or ended with a warning, failed sessions of the last 24 hours,
 repositories filling up, the license, and — per protected computer or VM —
 its last successful backup.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 9419 | TCP | REST API (HTTPS, default) |
+
 DumbMonit logs in with a Windows account that holds only the Veeam Backup
 Viewer role (OAuth2 password grant on `/api/oauth2/token`, port 9419) and
 keeps the token for its fifteen-minute lifetime. Every call carries the
@@ -99,18 +107,30 @@ family above.
 
 ## Give DumbMonit a Veeam Backup Viewer account
 
-1. On the backup server, create a local Windows account for DumbMonit with a long random password and no other right on the machine (a domain account works too).
+1. On the backup server, open Computer Management → Local Users and Groups → Users → New User and create the account as follows, with a long random password.
 
     ```
-    net user dumbmonit * /add
+    dumbmonit
     ```
 
 2. In the Veeam console, open the main menu > Users and Roles > Security, click Add, enter the account (for example VBR01\dumbmonit) and give it the Veeam Backup Viewer role only.
+3. In DumbMonit, enter the backup server address (for example vbr.lan) and the account as HOST\dumbmonit or DOMAIN\dumbmonit, with its password.
+4. Tick Accept an unverifiable certificate unless you installed your own: the REST API (port 9419) uses a self-signed one.
 
-3. In DumbMonit, enter the address of the backup server, for example "vbr.lan", and the account as HOST\dumbmonit or DOMAIN\dumbmonit with its password. The REST API listens on port 9419 with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.
+### Required permissions
+
+- **Veeam Backup Viewer** — Reads jobs, sessions, repositories and restore points
 
 !!! warning
-    Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions. With the Viewer role DumbMonit reads the jobs, sessions, repositories and restore points, and shows the license as not readable: it never asks for more.
+    Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions: with the Viewer role DumbMonit shows the license as not readable and never asks for more.
+
+Vendor documentation: [Requesting authorization](https://helpcenter.veeam.com/docs/backup/vbr_rest/requesting_authorization.html).
+
+### Why these permissions
+
+The local Windows account needs no other right on the machine; a domain account
+works too. The Viewer role is enough for the jobs, sessions, repositories and
+restore points DumbMonit reads.
 
 ## Credentials
 

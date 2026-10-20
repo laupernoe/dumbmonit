@@ -13,6 +13,7 @@
 	import CephPanel from './CephPanel.svelte';
 	import GuestTable from './GuestTable.svelte';
 	import NodesPanel from './NodesPanel.svelte';
+	import SkippedFeatures from '../SkippedFeatures.svelte';
 
 	interface Props {
 		target: Target;
@@ -25,4 +26,5 @@
 	<NodesPanel {target} />
 	<CephPanel {target} />
 	<GuestTable {target} />
+	<SkippedFeatures {target} />
 </div>

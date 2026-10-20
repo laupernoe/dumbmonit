@@ -101,6 +101,10 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         warn!(?error, "webhook headers could not be moved to secrets");
     }
     info!(database = %config.database_path().display(), "database ready");
+    // Journaux du serveur : fichiers quotidiens dans `/data/logs` et
+    // destinations configurées. Ce qui a été émis depuis le démarrage attendait
+    // en file et y est écrit en premier.
+    dumbmonit_server::logs::start(&pool, &cipher, &config.data_dir).await;
     // Le fond de carte en ligne, s'il y en a un, entre dans la politique de
     // sécurité de l'interface.
     dumbmonit_server::api::locations::load_basemap(&pool).await;
@@ -267,7 +271,15 @@ fn init_tracing() {
         .as_deref()
         .and_then(|directives| EnvFilter::try_new(directives).ok())
         .unwrap_or_else(|| EnvFilter::new("info,sqlx=warn,hyper=warn"));
-    tracing_subscriber::fmt().with_env_filter(filter).with_target(false).init();
+    // La console comme avant, et à côté la couche qui garde les journaux sur
+    // disque et les expédie (`logs`) ; le filtre vaut pour les deux.
+    use tracing_subscriber::layer::SubscriberExt;
+    use tracing_subscriber::util::SubscriberInitExt;
+    tracing_subscriber::registry()
+        .with(filter)
+        .with(tracing_subscriber::fmt::layer().with_target(false))
+        .with(dumbmonit_server::logs::layer())
+        .init();
     let _ = dumbmonit_server::config::env_var("DUMBMONIT_LOG");
 }
 

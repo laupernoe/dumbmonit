@@ -4,6 +4,15 @@ The web server and reverse proxy: active and waiting connections, the
 accept/handled/request rates, and upstream health when the commercial NGINX
 Plus API is available.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Status page (HTTP, default) |
+| 443 | TCP | Only if the status page is served over HTTPS |
+
 DumbMonit reads Nginx's built-in `stub_status` module, a handful of plain-text
 counters, with no API and no account needed on a correctly filtered network.
 When the commercial NGINX Plus is installed, DumbMonit can also read its JSON
@@ -40,15 +49,7 @@ Plus, upstream health and per-zone traffic.
 
 ## Enable Nginx's stub_status module
 
-1. Nginx ships stub_status built in: it only needs a location that turns it on. Add this to the server block Nginx already serves (or to its own server block on a port of its own), then reload Nginx.
-
-    ```
-    location /basic_status {
-    stub_status;
-    }
-    ```
-
-2. Restrict that location to the DumbMonit host, so no one else can read it; adjust the address to match.
+1. Add this location to the server block Nginx already serves, restricted to the DumbMonit host (adjust the address).
 
     ```
     location /basic_status {
@@ -56,28 +57,28 @@ Plus, upstream health and per-zone traffic.
     allow 10.0.0.5;
     deny all;
     }
+    ```
+
+2. Reload Nginx.
+
+    ```
     nginx -s reload
     ```
 
-3. Check that it answers before configuring DumbMonit.
+3. Open http://nginx.lan/basic_status from the DumbMonit host: it must show Active connections.
 
-    ```
-    curl -s http://nginx.lan/basic_status
-    ```
+4. In DumbMonit, enter the Nginx host, for example nginx.lan, and the path if it is not /basic_status.
 
-4. In DumbMonit, enter the Nginx host, for example "nginx.lan", and the path if it is not "/basic_status". If NGINX Plus is installed, tick "Read the NGINX Plus API" to add upstream health and per-zone counters.
+5. If NGINX Plus is installed, tick Read the NGINX Plus API to add upstream health and per-zone counters.
 
 !!! warning
-    stub_status only counts connections and requests: a configuration error
-    in a server block, or a backend nginx cannot reach, does not show here.
-    The open-source build has no notion of "upstream": that only exists in
-    NGINX Plus, read through its own API when enabled.
+    stub_status only counts connections and requests: a configuration error in a server block or an unreachable backend does not show there.
 
-The example above restricts the location by IP, the simplest setup for a
-homelab; a `basic_auth` block works just as well if the status page cannot
-sit behind a firewall rule of its own. `stub_status` itself cannot be
-password-protected by Nginx directly — the password, if any, belongs to the
-surrounding `location` block.
+### Good to know
+
+Nginx ships stub_status built in: it only needs a location that turns it on, in the server block Nginx already serves or in a server block of its own on another port. The allow and deny lines restrict it to the DumbMonit host, so no one else can read it. The open-source build has no notion of upstream: that only exists in NGINX Plus, read through its own API when enabled.
+
+Vendor documentation: https://nginx.org/en/docs/http/ngx_http_stub_status_module.html
 
 ## Credentials
 

@@ -20,11 +20,13 @@
 		listSilences,
 		listAlertHistory,
 		listCollectors,
+		listDismissedAlerts,
 		createSilence,
 		deleteSilence,
 		setAlertRuleEnabled,
 		deleteAlertRule,
 		createAlertRule,
+		type Alert,
 		type AlertRule,
 		type Silence,
 		type AlertHistoryEntry,
@@ -35,8 +37,10 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { PageHeader, Button, ErrorNotice, Plate, Skeleton, confetti } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import { readSky } from '#lib/components/overview/sky.js';
 	import AlertList from '#lib/components/alerts/AlertList.svelte';
+	import DismissedList from '#lib/components/alerts/DismissedList.svelte';
 	import ScheduleForm from '#lib/components/alerts/ScheduleForm.svelte';
 	import SilencesSection from '#lib/components/alerts/SilencesSection.svelte';
 	import RulesSection from '#lib/components/alerts/RulesSection.svelte';
@@ -69,6 +73,13 @@
 	let collectors = $state<CollectorInfo[]>([]);
 	let silences = $state<Silence[]>([]);
 	let history = $state<AlertHistoryEntry[]>([]);
+	// "Now" shows the active alerts, or the ones someone dismissed (still active, hidden everywhere else).
+	let dismissed = $state<Alert[]>([]);
+	let nowView = $state<'active' | 'dismissed'>('active');
+	// Leave the Dismissed view once it empties (restored or cleared), instead of showing a dead end.
+	$effect(() => {
+		if (nowView === 'dismissed' && dismissed.length === 0 && !loading) nowView = 'active';
+	});
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 
@@ -116,6 +127,7 @@
 		// Only used to label/filter rules by collector kind: a stale or failed
 		// fetch must not block the rest of the page.
 		const collectorsPromise = listCollectors(signal).catch(() => [] as CollectorInfo[]);
+		void refreshDismissed(signal);
 		try {
 			const [r, s, h] = await Promise.all([
 				listAlertRules(signal),
@@ -133,6 +145,24 @@
 		}
 		collectors = await collectorsPromise;
 	}
+
+	/** Best effort: the Dismissed view just stays as it was if this fails. */
+	async function refreshDismissed(signal?: AbortSignal) {
+		try {
+			dismissed = await listDismissedAlerts(signal);
+		} catch {
+			// Kept as is.
+		}
+	}
+
+	// A dismissal or an undo (from a row or from the toast) moves that list.
+	let seenDismissals = dismissals.version;
+	$effect(() => {
+		const version = dismissals.version;
+		if (version === seenDismissals) return;
+		seenDismissals = version;
+		untrack(() => void refreshDismissed());
+	});
 
 	async function refreshSilences() {
 		try {
@@ -335,7 +365,34 @@
 		{/each}
 	</div>
 {:else if tab === 'now'}
-	<AlertList {sky} {silences} onchanged={() => void onNeedsYouChanged()} />
+	{#if dismissed.length > 0}
+		<div class="mb-3 flex justify-end">
+			<div class="inline-flex rounded-lg border border-line bg-surface-2 p-0.5" role="group" aria-label={m.alerts_dismiss_view_label()}>
+				<button
+					type="button"
+					aria-pressed={nowView === 'active'}
+					class={`inline-flex h-10 items-center rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'active' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+					onclick={() => (nowView = 'active')}
+				>
+					{m.alerts_dismiss_view_active()}
+				</button>
+				<button
+					type="button"
+					aria-pressed={nowView === 'dismissed'}
+					class={`inline-flex h-10 items-center gap-1.5 rounded-md px-3 text-[0.8125rem] font-semibold transition sm:h-8 ${nowView === 'dismissed' ? 'bg-surface text-ink shadow-lift' : 'text-ink-2 hover:text-ink'}`}
+					onclick={() => (nowView = 'dismissed')}
+				>
+					{m.alerts_dismiss_view_dismissed()}
+					<span class="tnum text-ink-3">{dismissed.length}</span>
+				</button>
+			</div>
+		</div>
+	{/if}
+	{#if nowView === 'dismissed'}
+		<DismissedList alerts={dismissed} targets={targetsMap} rules={rulesMap} />
+	{:else}
+		<AlertList {sky} {silences} onchanged={() => void onNeedsYouChanged()} />
+	{/if}
 {:else if tab === 'scheduled'}
 	<SilencesSection
 		{silences}

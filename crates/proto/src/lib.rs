@@ -21,11 +21,12 @@ pub use command::{
     CommandStatus, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS, truncate_result,
 };
 pub use credential::{
-    Credential, SnmpV3Auth, SnmpV3AuthProtocol, SnmpV3Privacy, SnmpV3PrivacyProtocol,
+    Credential, CredentialInput, Resolved, SnmpV3Auth, SnmpV3AuthInput, SnmpV3AuthProtocol,
+    SnmpV3Privacy, SnmpV3PrivacyInput, SnmpV3PrivacyProtocol,
 };
 pub use description::{
     CredentialDescription, CredentialFieldDescription, KindDescription, OptionColumn,
-    OptionDescription, OptionItem, Requirement, SetupDescription, Text,
+    OptionDescription, OptionItem, PortDescription, Requirement, SetupDescription, Text,
 };
 pub use discovery::{
     AddressForm, CMD_DISCOVERY_SCAN, Confidence, DISCOVERY_REPORT_PATH, DiscoveredHost,
@@ -35,7 +36,7 @@ pub use discovery::{
 };
 pub use push::{
     AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH, INGEST_PATH,
-    MAX_BATCH_SAMPLES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, TOKEN_PREFIX,
+    MAX_BATCH_SAMPLES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting, TOKEN_PREFIX,
 };
 pub use sample::{MetricKind, Sample};
 pub use target::{

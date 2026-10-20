@@ -130,7 +130,7 @@
 		return searchIndex()
 			.filter((entry) => entry.id !== 'security-score')
 			.filter((entry) => entry.tab !== 'team' || accounts)
-			.filter((entry) => auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'news'))
+			.filter((entry) => auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'widgets'))
 			.map((entry) => ({
 				id: `action:settings-${entry.id}`,
 				group: 'actions' as Group,

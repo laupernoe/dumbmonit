@@ -6,6 +6,14 @@ verify, prune, ramasse-miettes), datastores, disques et pools ZFS, mises
 à jour en attente, les services et versions de paquet du serveur
 lui-même, et le niveau bande quand il y en a un.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8007 | TCP | API (HTTPS, par défaut) |
+
 ## La page de la surveillance
 
 ![Une surveillance PBS : échecs, le calendrier de sauvegarde sur 30 jours, jobs et santé](../assets/screenshots/device-pbs-light.png){ loading=lazy }
@@ -91,6 +99,7 @@ Toutes les métriques sont préfixées `dumbmonit_pbs_`.
 | Services (option `services`, un appel) | `node_service_active` (1 en cours, 0 non), `node_service_enabled` (absent pour une unité `static`, qu'une autre unité entraîne et qui n'est donc ni activée ni désactivée), `node_services_total` | `service`, `expected` (`"1"` pour `proxmox-backup`, `proxmox-backup-proxy` et `proxmox-backup-banner`, les unités dont le serveur ne peut pas se passer ; chaque autre unité obtient quand même sa série, avec `expected="0"`, et ne déclenche jamais d'alerte) |
 | Certificat (option `certificates`, désactivée par défaut) | `node_certificate_expires_seconds`, négatif une fois expiré | `certificate` (le nom de fichier), `issuer` |
 | Contrôle de trafic (option `traffic_control`) | `traffic_rate_in_bytes`, `traffic_rate_out_bytes` (mesuré à l'instant de la sonde), `traffic_limit_in_bytes`, `traffic_limit_out_bytes` (le plafond configuré, analysé depuis les chaînes décimales de PBS comme `100 MB` ; absent quand cette direction est sans plafond, plutôt qu'un zéro qui se lirait comme « tout est bloqué »), `traffic_rules_total` | `rule` |
+| Options sautées | `feature_skipped_info` : 1 tant qu'un appel facultatif est refusé (403) faute de droit, absente sinon. La page du moniteur l'affiche en note discrète qui nomme le droit ; ce n'est ni une erreur de sonde ni une alerte | `feature`, `privilege` |
 | Limites et collection | `backup_groups_total`, `backup_groups_dropped`, `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Une tâche qui se termine en `WARNINGS: n` compte comme réussie. Les
@@ -183,72 +192,85 @@ datastore ou le groupe de sauvegarde concerné.
 
 ## Ce qu'il faut préparer dans PBS
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
-Le principe : un utilisateur réservé à la surveillance, un jeton avec un
-rôle en lecture seule — jamais le compte avec lequel vous vous
-connectez.
-
-1. Ouvrez un shell sur le serveur de sauvegarde (dans l'UI web : Administration → Shell ; ou SSH) et créez un utilisateur réservé à la surveillance. Il n'a pas besoin de mot de passe : le jeton est ce qui se connecte.
+1. Ouvrez Configuration → Access Control → User Management → Add, saisissez le nom d'utilisateur dumbmonit, choisissez le realm Proxmox Backup authentication server, puis cliquez sur Add.
 
     ```
-    proxmox-backup-manager user create dumbmonit@pbs --comment "DumbMonit monitoring"
+    dumbmonit@pbs
     ```
 
-2. Créez le jeton d'API de l'utilisateur. La commande affiche l'id du jeton et son secret : copiez les deux maintenant, PBS ne montre plus jamais le secret.
-
-    ```
-    proxmox-backup-manager user generate-token dumbmonit@pbs monitor
-    ```
-
-3. Donnez le minimum en lecture seule, par chemin — au jeton et à l'utilisateur qui le possède. Les privilèges effectifs d'un jeton sont l'intersection de sa propre ACL et de celle de son utilisateur : accordés au jeton seul, ils ne donnent rien du tout, et PBS ne le rapporte nulle part. Chaque ligne est donc écrite deux fois. `DatastoreAudit` sur `/datastore` (`Datastore.Audit`) lit les datastores, snapshots, jobs verify et prune et GC ; `Audit` sur `/system` (`Sys.Audit`) lit l'état du nœud, la liste de tâches et les journaux de tâche, les services, les règles de contrôle de trafic, les disques et pools ZFS.
-
-    ```
-    proxmox-backup-manager acl update /datastore DatastoreAudit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /datastore DatastoreAudit --auth-id 'dumbmonit@pbs!monitor'
-    proxmox-backup-manager acl update /system Audit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /system Audit --auth-id 'dumbmonit@pbs!monitor'
-    ```
-
-    Optionnel, et deux fois aussi. `RemoteAudit` sur `/remote`
-    (`Remote.Audit`) montre les jobs sync qui tirent depuis un remote :
-    le rôle intégré `Audit` ne couvre que `Sys.Audit` et
-    `Datastore.Audit`, et sans `Remote.Audit` un tel job n'est pas
-    refusé, il est simplement absent de la liste de jobs. `TapeAudit`
-    sur `/tape` (`Tape.Audit`) lit le niveau bande. `Audit` sur `/`
-    (`Sys.Audit` au niveau racine) liste les mises à jour de paquet en
-    attente, et couvre aussi `/datastore` et `/system` si vous préférez
-    moins de lignes. Sans eux ces éléments sont ignorés en silence, rien
-    d'autre ne change. Rien ici ne peut écrire : le collecteur ne fait
-    que des `GET`.
-
-    ```
-    proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs!monitor'
-    proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs!monitor'
-    proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs'
-    proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
-    ```
-
-4. Avant de quitter le shell, vérifiez ce que le jeton peut réellement lire. La commande affiche ses privilèges effectifs, chemin par chemin ; un résultat vide signifie que l'utilisateur manque l'ACL que le jeton a — le cas où l'appareil a l'air parfaitement vivant et ne rapporte rien.
-
-    ```
-    proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
-    ```
-
-5. Copiez l'id du jeton dans le champ Token ID de DumbMonit et le secret dans son champ Secret.
+2. Ouvrez Configuration → Access Control → API Token → Add : utilisateur dumbmonit@pbs, nom du jeton monitor. Copiez maintenant le Token ID et le Secret, le secret n'est affiché qu'une seule fois.
 
     ```
     dumbmonit@pbs!monitor
     ```
 
-6. Vous préférez l'UI web ? Configuration → Access Control : Users → Add, puis API Tokens → Add, puis Permissions → Add. Ajoutez chaque permission deux fois, une fois comme User Permission pour `dumbmonit@pbs` et une fois comme API Token Permission pour `dumbmonit@pbs!monitor` : avec le chemin `/datastore` et le rôle `DatastoreAudit`, puis à nouveau avec le chemin `/system` et le rôle `Audit`. Une permission de jeton seule n'accorde rien.
-7. Dans DumbMonit, saisissez l'adresse du serveur, par exemple « pbs.lan » ou « pbs.lan:8007 ».
+3. Ouvrez Configuration → Access Control → Permissions → Add → User Permission : chemin /, utilisateur dumbmonit@pbs, rôle Audit.
+
+4. Ajoutez une seconde permission avec Add → API Token Permission : chemin /, jeton dumbmonit@pbs!monitor, rôle Audit. Un jeton a ses propres permissions, il faut donc les deux.
+
+5. Facultatif, pour voir les jobs de synchronisation en pull et le palier bandes : répétez les deux permissions avec le rôle RemoteAudit sur le chemin /remote et le rôle TapeAudit sur le chemin /tape.
+
+6. Dans DumbMonit, saisissez l'adresse du serveur (par exemple pbs.lan:8007), le Token ID et le Secret.
+
+### Droits requis
+
+- **Audit sur /** : Lecture seule : datastores, snapshots, tâches, état du nœud
+- **RemoteAudit sur /remote (facultatif)** : Affiche les jobs de synchronisation qui tirent depuis un remote
+- **TapeAudit sur /tape (facultatif)** : Lit le palier bandes
+- **Sys.Modify sur /system/certificates (facultatif)** : Seulement pour l'option d'expiration des certificats
 
 !!! warning
-    Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton qui fuit gérerait alors chaque sauvegarde. Le rôle Audit ne peut que lire. PBS utilise aussi un certificat autosigné par défaut : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
+    L'utilisateur et le jeton ont tous deux besoin de la permission : donnée au seul jeton, elle ne donne rien et PBS ne signale rien. Le serveur utilise par défaut un certificat autosigné : cochez « Accepter un certificat non vérifiable » dans les options si la connexion est refusée.
 
-Documentation du fournisseur : [PBS API tokens](https://pbs.proxmox.com/docs/user-management.html#api-tokens).
+Documentation de l'éditeur : [PBS API tokens](https://pbs.proxmox.com/docs/user-management.html#api-tokens)
+
+### Pourquoi ces droits
+
+Ne réutilisez pas le compte avec lequel vous vous connectez : un jeton
+divulgué gérerait toutes les sauvegardes. Le rôle `Audit` ne sait que lire.
+
+* `Audit` vaut `Sys.Audit` plus `Datastore.Audit`. Sur `/`, il lit les
+  datastores, les snapshots, les jobs de vérification et de prune et le GC,
+  l'état du nœud, la liste des tâches et leurs journaux, les services, les
+  règles de traffic-control, les disques et les pools ZFS, ainsi que les mises
+  à jour de paquets en attente. Rien ici ne peut écrire : le collecteur ne fait
+  que des `GET`.
+* Les privilèges effectifs d'un jeton sont l'intersection de sa propre ACL et
+  de celle de son utilisateur. Accordés au seul jeton, ils ne valent rien, et
+  PBS ne le signale nulle part. Chaque permission est donc ajoutée deux fois,
+  pour l'utilisateur et pour le jeton.
+* `RemoteAudit` sur `/remote` (`Remote.Audit`) montre les jobs de
+  synchronisation qui tirent depuis un remote : le rôle intégré `Audit` ne
+  couvre pas `Remote.Audit`, et sans lui un tel job n'est pas refusé, il est
+  simplement absent de la liste. `TapeAudit` sur `/tape` (`Tape.Audit`) lit le
+  palier bandes. Sans eux, ces éléments sont ignorés sans bruit, le reste ne
+  change pas.
+* PBS utilise par défaut un certificat auto-signé : si la connexion est
+  refusée pour cette raison, cochez « Accepter un certificat non vérifiable »
+  dans les options.
+
+Pour vérifier ce que le jeton peut réellement lire, lancez ceci sur le serveur
+de sauvegarde (Administration → Shell). La commande affiche les privilèges
+effectifs, chemin par chemin ; un résultat vide signifie qu'il manque à
+l'utilisateur la permission qu'a le jeton — le cas où l'appareil semble vivant
+et ne remonte rien.
+
+```
+proxmox-backup-manager user permissions 'dumbmonit@pbs!monitor'
+```
+
+Vous préférez un shell pour toute la configuration ?
+
+```
+proxmox-backup-manager user create dumbmonit@pbs --comment "DumbMonit monitoring"
+proxmox-backup-manager user generate-token dumbmonit@pbs monitor
+proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs'
+proxmox-backup-manager acl update / Audit --auth-id 'dumbmonit@pbs!monitor'
+proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs'
+proxmox-backup-manager acl update /remote RemoteAudit --auth-id 'dumbmonit@pbs!monitor'
+proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs'
+proxmox-backup-manager acl update /tape TapeAudit --auth-id 'dumbmonit@pbs!monitor'
+```
 
 ## Identifiants
 

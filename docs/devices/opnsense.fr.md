@@ -18,6 +18,15 @@ résolveur, les services, CARP et les mises à jour en attente.
     source d'OPNsense plutôt qu'une réponse observée. Dites-nous ce qui
     casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de protocole HTTP |
+
 ## La page de la surveillance
 
 Au-delà des graphiques génériques, une surveillance OPNsense montre trois
@@ -134,27 +143,59 @@ DumbMonit a besoin, un utilisateur qui ne se connecte jamais, et une clé
 d'API qui n'appartient à aucun de vos propres comptes. Ce groupe exact a
 été vérifié contre chaque appel que DumbMonit fait, sur OPNsense 26.1.
 
-1. Dans l'interface web : System → Access → Groups → Add. Nommez le groupe comme suit.
+1. System → Access → Groups → Add : nommez le groupe comme suit.
 
     ```
     dumbmonit
     ```
 
-2. Cochez ces privilèges dans le groupe, exactement comme OPNsense les nomme : Lobby: Dashboard (système, mémoire, disques, températures, table d'états), System: Gateways, Status: Interfaces, Status: Services, System: Firmware, Interfaces: Virtual IPs: Status (CARP) et Services: Unbound (MVC). Puis un par fonctionnalité que vous utilisez : Services: DHCP: Kea(v4) ou Services: Dnsmasq DNS/DHCP: Settings pour les baux, VPN: WireGuard: Status, Status: OpenVPN, Status: IPsec. Un privilège que vous laissez de côté coûte exactement les métriques qu'il porte, rien d'autre.
+2. Dans ce groupe, sous Assigned Privileges, ajoutez les privilèges listés ci-dessous.
 
-3. System → Access → Users → Add. Nommez le compte comme suit, laissez OPNsense générer un mot de passe brouillé (ce compte ne se connecte jamais : il répond avec sa clé), et faites-en un membre du groupe dumbmonit.
+3. System → Access → Users → Add : nommez l'utilisateur comme suit, générez un mot de passe et faites-en un membre de ce groupe.
 
     ```
     dumbmonit
     ```
 
-4. Modifiez à nouveau cet utilisateur et, sous API keys, cliquez sur +. OPNsense télécharge un petit fichier texte avec deux lignes, key= et secret=, et ne montre le secret que cette fois. Copiez la clé dans le champ Clé d'API de DumbMonit et le secret dans son champ Secret d'API.
+4. Modifiez l'utilisateur, cliquez sur + sous API keys et conservez le fichier téléchargé : il contient la clé et le secret, affichés une seule fois.
 
-5. Dans DumbMonit, saisissez l'adresse du pare-feu, par exemple « 192.168.1.1 » ou « fw.lan:8443 ». Le pare-feu n'est jamais sollicité pour vérifier les mises à jour : DumbMonit lit le résultat de la vérification qu'OPNsense lance sur son propre calendrier, ou que vous démarrez depuis System → Firmware.
+5. Dans DumbMonit, saisissez l'adresse du pare-feu (192.168.1.1 ou fw.lan:8443), la clé comme clé d'API et le secret comme secret d'API.
+
+### Droits requis
+
+- **Lobby: Dashboard** — Système, mémoire, disques, table d'états (obligatoire)
+- **System: Gateways** — État, délai et perte des passerelles
+- **Status: Interfaces** — État du lien et compteurs
+- **Status: Services** — Services arrêtés
+- **System: Firmware** — Mises à jour en attente et redémarrage
+- **Interfaces: Virtual IPs: Status** — État CARP
+- **Services: Unbound (MVC)** — Résolveur
+- **Services: DHCP: Kea(v4)** — Baux, si vous utilisez Kea
+- **Services: Dnsmasq DNS/DHCP: Settings** — Baux, si vous utilisez Dnsmasq
+- **VPN: WireGuard: Status** — Tunnels WireGuard
+- **Status: OpenVPN** — Tunnels OpenVPN
+- **Status: IPsec** — Tunnels IPsec
+- **Diagnostics: Logs: Firewall: Live View** — Uniquement pour l'option carte du pare-feu en direct
 
 !!! warning
+    Une clé d'API est un mot de passe qui n'expire jamais : limitez les réseaux sources du groupe à l'adresse de l'hôte DumbMonit et n'accordez jamais All pages. OPNsense livre un certificat auto-signé : cochez « Accept an unverifiable certificate » si la connexion est refusée.
 
-    Ne réutilisez pas le compte avec lequel vous vous connectez : une clé d'API est un mot de passe qui n'expire jamais. OPNsense n'a pas de variante en lecture seule pour certains privilèges ci-dessus : Status: Services permet aussi de démarrer et d'arrêter un service, System: Firmware permet aussi de démarrer une mise à jour, et les privilèges Unbound, Kea et Dnsmasq couvrent aussi leurs réglages. DumbMonit ne fait toujours que lire, mais pour limiter ce qu'une clé qui fuit pourrait faire, restreignez les réseaux source du groupe à l'adresse de l'hôte DumbMonit. N'accordez jamais All pages. OPNsense livre aussi un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
+Documentation de l'éditeur : https://docs.opnsense.org/development/how-tos/api.html
+
+### Pourquoi ces droits
+
+Un privilège omis ne coûte que les métriques qu'il porte, rien d'autre ;
+seul `Lobby: Dashboard` est obligatoire. OPNsense n'a pas de variante en lecture
+seule pour certains d'entre eux : `Status: Services` permet aussi de démarrer et
+d'arrêter un service, `System: Firmware` de lancer une mise à jour, et les
+privilèges Unbound, Kea et Dnsmasq couvrent aussi leurs réglages. DumbMonit ne
+fait que lire, mais pour limiter ce qu'une clé volée permettrait, limitez les
+réseaux sources du groupe à l'adresse de l'hôte DumbMonit, et n'accordez jamais
+*All pages*.
+
+On ne demande jamais au pare-feu de chercher des mises à jour : DumbMonit lit le
+résultat de la vérification qu'OPNsense fait de lui-même, ou que vous lancez
+depuis System → Firmware.
 
 Adresse : `192.168.1.1`, `fw.lan`, `fw.lan:8443`, `[fd00::1]` ou une URL
 complète. Le schéma `https` et le port 443 sont ajoutés s'ils manquent.

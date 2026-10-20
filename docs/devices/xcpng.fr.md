@@ -3,6 +3,14 @@
 Un pool XCP-ng ou XenServer (Citrix Hypervisor), lu via XAPI, l'API de
 gestion que chaque hôte exécute déjà. Aucun Xen Orchestra n'est nécessaire.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | XAPI (HTTPS, par défaut) |
+
 Chaque minute, DumbMonit envoie des appels JSON-RPC à
 `https://<coordinateur>/jsonrpc` : un `session.login_with_password` (la
 session est ensuite conservée d'une interrogation à l'autre, et rouverte une
@@ -67,29 +75,61 @@ Les [règles intégrées](../alerting/rules.md#xcp-ng-xenserver) qui s'appliquen
 
 ## Donner à DumbMonit un compte XAPI en lecture seule
 
-1. XAPI n'accepte d'autres comptes que son super-utilisateur intégré que lorsque le pool utilise une authentification externe. Si le pool est déjà joint à Active Directory, créez-y un compte dumbmonit et passez à l'étape 3.
-
-2. Sinon, créez un compte local avec un long mot de passe aléatoire sur chaque hôte du pool, puis activez une fois l'authentification PAM, depuis le coordinateur du pool. Tant qu'un rôle n'est pas attribué, le compte ne peut rien appeler.
+1. Sur chaque hôte du pool, créez un compte local avec un long mot de passe aléatoire.
 
     ```
     useradd -M -s /sbin/nologin dumbmonit
     passwd dumbmonit
+    ```
+
+2. Sur le coordinateur du pool, activez une fois l'authentification PAM.
+
+    ```
     xe pool-enable-external-auth auth-type=PAM service-name=pam
     ```
 
-3. Sur le coordinateur du pool, enregistrez le compte comme sujet, puis donnez à ce sujet le rôle intégré read-only, avec l'UUID que la première commande affiche.
+3. Enregistrez le compte comme sujet et notez l'UUID affiché.
 
     ```
     xe subject-add subject-name=dumbmonit
+    ```
+
+4. Donnez à ce sujet le rôle intégré read-only, avec l'UUID.
+
+    ```
     xe subject-role-add uuid=SUBJECT_UUID role-name=read-only
     ```
 
-4. Dans DumbMonit, saisissez l'adresse du coordinateur du pool, par exemple « xcp01.lan », avec ce nom d'utilisateur et ce mot de passe. Ajoutez le pool une seule fois : le coordinateur rapporte tous les hôtes, VM et référentiels de stockage. Un membre du pool répond avec l'adresse du coordinateur, que DumbMonit suit ensuite.
+5. Dans DumbMonit, saisissez l'adresse du coordinateur du pool (par exemple xcp01.lan) avec ce nom d'utilisateur et ce mot de passe.
 
-5. DumbMonit ne fait que lire, via l'interface JSON-RPC de XAPI (/jsonrpc) : il ne démarre, n'arrête ni ne migre jamais une VM et ne modifie jamais un référentiel de stockage ni la haute disponibilité du pool.
+### Droits requis
+
+- **Rôle read-only (XAPI)** : Voit les hôtes, VM, dépôts de stockage et la HA
 
 !!! warning
-    Ne donnez jamais à DumbMonit le mot de passe du super-utilisateur des hôtes : avec le rôle read-only, un mot de passe divulgué ne peut rien modifier. XCP-ng et XenServer fournissent un certificat autosigné : cochez « Accepter un certificat non vérifiable » sauf si l'hôte DumbMonit fait confiance au certificat présenté par le pool.
+    Si le pool utilise déjà Active Directory, créez le compte là-bas et sautez les étapes 1 et 2. XCP-ng utilise un certificat autosigné : activez « Accepter un certificat non vérifiable » sauf si l'hôte de DumbMonit lui fait confiance.
+
+Documentation de l'éditeur : [XenServer RBAC with the CLI](https://docs.xenserver.com/en-us/xenserver/9/users/rbac-cli)
+
+### Pourquoi ces droits
+
+XAPI n'a pas d'écran pour cela : son contrôle d'accès par rôles se gère en
+ligne de commande avec `xe`, les commandes ci-dessus sont donc la voie à suivre
+(Xen Orchestra gère ses propres utilisateurs, pas les sujets XAPI).
+
+XAPI n'accepte d'autres comptes que son superutilisateur intégré qu'une fois le
+pool en authentification externe, d'où l'activation de PAM. Tant qu'aucun rôle
+n'est donné, le compte ne peut rien appeler ; avec `read-only`, un mot de passe
+divulgué ne peut rien modifier. Ne donnez jamais à DumbMonit le mot de passe
+superutilisateur des hôtes.
+
+Ajoutez le pool une seule fois : le coordinateur remonte chaque hôte, VM et
+dépôt de stockage. Un membre du pool répond avec l'adresse du coordinateur,
+que DumbMonit suit alors.
+
+DumbMonit ne fait que lire, via l'interface JSON-RPC de XAPI (`/jsonrpc`) : il
+ne démarre, n'arrête ni ne migre jamais une VM et ne modifie jamais un dépôt
+de stockage ni la haute disponibilité du pool.
 
 ## Identifiants
 

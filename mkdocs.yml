@@ -80,6 +80,7 @@ nav:
       - Monitor a remote site: install/remote-site.md
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
+      - Server logs: install/logs.md
       - Update: install/update.md
       - Verify a release: install/verify.md
       - Run a demo instance: install/demo.md

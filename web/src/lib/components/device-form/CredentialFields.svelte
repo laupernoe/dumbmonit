@@ -7,40 +7,52 @@
 	 * there is no selector. Every secret has a show/hide eye, every field cleans
 	 * what is pasted (whitespace, line breaks, wrapping quotes), and a Proxmox
 	 * token pasted whole into "Token ID" is split into its two fields. On edit
-	 * every field starts empty and stays optional: blank keeps what is saved.
+	 * the user name and token ID come pre-filled; a saved secret shows as dots,
+	 * and leaving it blank keeps it (`kept`), unless it must be typed again
+	 * (`reenter`: the error under the field says why). Every secret asks for
+	 * `new-password`: browsers ignore `off` on a password field and would
+	 * autofill the DumbMonit sign-in there, replacing the saved credential.
 	 */
 	import type { CredentialField, CredentialView } from '#lib/api/index.js';
 	import { Field } from '#lib/ui/index.js';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
 	import { sanitizeSecret, splitPastedToken, type CredentialDraft, type CredentialErrors } from './credentials';
+	import { secretDisabled } from './credential-edit';
 
 	interface Props {
 		views: CredentialView[];
 		selected: CredentialView;
 		draft: CredentialDraft;
-		/** Edit mode: blank means "keep the saved credentials". */
-		editing?: boolean;
+		/** Edit: secret fields whose blank value keeps the saved secret. */
+		kept?: string[];
+		/** Edit: secret fields that were saved but must be typed again. */
+		reenter?: string[];
 		errors?: CredentialErrors;
 		onkindchange: (kind: string) => void;
 		onblur?: (field: string) => void;
 	}
 
-	let { views, selected, draft = $bindable(), editing = false, errors = {}, onkindchange, onblur }: Props = $props();
+	let { views, selected, draft = $bindable(), kept = [], reenter = [], errors = {}, onkindchange, onblur }: Props = $props();
 
 	/** Something the form did on the user's behalf, worth a word. */
 	let note = $state('');
 
-	const keepNote = $derived(editing ? m.deviceform_cred_keep() : undefined);
-
 	/** Readable names for the protocol values SNMP v3 selects carry. */
 	function choiceLabel(value: string): string {
+		if (value === 'none') return m.deviceform_cred_choice_none();
 		const match = /^(sha|aes)(\d+)$/.exec(value);
 		if (match) return `${match[1].toUpperCase()}-${match[2]}`;
 		return value.length <= 4 ? value.toUpperCase() : value;
 	}
 
 	function help(field: CredentialField): string | undefined {
-		return keepNote ?? (field.help || undefined);
+		if (kept.includes(field.key)) return m.deviceform_cred_saved_keep();
+		return field.help || undefined;
+	}
+
+	/** A saved secret: shown as dots, whether it is kept or must be typed again. */
+	function savedSecret(field: CredentialField): boolean {
+		return kept.includes(field.key) || reenter.includes(field.key);
 	}
 
 	/** Full-width fields: long strings, or the only field of the family. */
@@ -116,7 +128,7 @@
 				<Field
 					label={field.label}
 					for={id}
-					required={field.required && !editing}
+					required={(field.required || reenter.includes(field.key)) && !kept.includes(field.key)}
 					error={errors[field.key]}
 					help={help(field)}
 					class={wide(field) ? 'sm:col-span-2' : ''}
@@ -131,8 +143,9 @@
 						<PasswordInput
 							{id}
 							bind:value={draft[field.key]}
-							autocomplete={field.key === 'password' ? 'new-password' : 'off'}
-							placeholder={editing ? '••••••••' : field.placeholder}
+							autocomplete="new-password"
+							placeholder={savedSecret(field) ? '••••••••' : field.placeholder}
+							disabled={secretDisabled(field.key, draft)}
 							invalid={Boolean(errors[field.key])}
 							class={field.key === 'secret' || field.key === 'token' ? 'font-mono text-[0.8125rem]' : ''}
 							onblur={() => blur(field)}

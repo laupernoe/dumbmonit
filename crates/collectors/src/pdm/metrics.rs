@@ -35,6 +35,15 @@ pub fn gauge(metric: &str, value: f64, ts_ms: i64) -> Sample {
     Sample::new(format!("{P}{metric}"), value, MetricKind::Gauge, ts_ms)
 }
 
+/// Fonctionnalité facultative sautée faute de privilège : l'interface en tire
+/// une note discrète. Ni erreur de sonde ni alerte ; la série disparaît dès que
+/// le privilège est accordé.
+pub fn feature_skipped_sample(feature: &str, privilege: &str, ts_ms: i64) -> Sample {
+    gauge("feature_skipped_info", 1.0, ts_ms)
+        .with_label("feature", feature)
+        .with_label("privilege", privilege)
+}
+
 /// Pourcentage d'occupation, ou `None` si le total est inconnu ou nul — mieux
 /// vaut pas de point du tout qu'un 0 % trompeur.
 fn percent(used: Option<f64>, total: Option<f64>) -> Option<f64> {

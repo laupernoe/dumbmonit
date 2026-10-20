@@ -4,6 +4,14 @@ Le serveur web et reverse proxy : upstreams qui échouent leurs contrôles de
 santé, un rechargement de configuration qui a échoué, erreurs de handler et
 la part de réponses 5xx.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 2019 | TCP | API d'administration (HTTP, par défaut) |
+
 DumbMonit lit trois choses depuis l'API d'administration de Caddy, toutes en
 `GET` : `/config/apps/http/servers` (la configuration HTTP que Caddy fait
 tourner, jamais la section `tls` où vivent les jetons de fournisseur DNS),
@@ -56,15 +64,13 @@ de 5xx et erreurs de handler sur 24 heures, puis chaque upstream avec ses
 
 ## Publier une vue en lecture seule de l'API d'administration de Caddy
 
-1. L'API d'administration de Caddy peut charger une nouvelle configuration et arrêter Caddy : elle doit rester hors de portée de tout sauf DumbMonit. Laissez-la où Caddy la met, sur localhost:2019, et laissez Caddy publier une vue en lecture seule d'elle : GET seulement, sur les trois chemins que DumbMonit lit, derrière un mot de passe.
-
-2. Créez le hash de mot de passe pour l'utilisateur dumbmonit.
+1. Calculez le hash d'un mot de passe pour l'utilisateur dumbmonit.
 
     ```
     caddy hash-password --plaintext 'a-long-password'
     ```
 
-3. Ajoutez ce site au Caddyfile, avec ce hash à la place de HASH, puis rechargez Caddy. Il répond sur le port 2020 et refuse tout sauf ces trois lectures.
+2. Ajoutez ce site au Caddyfile, mettez le hash à la place de HASH, puis rechargez Caddy.
 
     ```
     :2020 {
@@ -84,26 +90,30 @@ de 5xx et erreurs de handler sur 24 heures, puis chaque upstream avec ses
     }
     ```
 
-4. Optionnel : ajoutez metrics au bloc d'options globales en haut du Caddyfile pour compter les requêtes, erreurs et réponses 5xx par serveur. La santé des upstreams et les rechargements sont rapportés sans cela.
+3. Facultatif : ajoutez metrics au bloc d'options globales en tête du Caddyfile pour compter requêtes et erreurs.
 
     ```
     metrics
     ```
 
-5. Filtrez le port 2020 pour que seul l'hôte DumbMonit l'atteigne. Dans DumbMonit, saisissez l'hôte Caddy avec ce port, par exemple « caddy.lan:2020 », et l'utilisateur dumbmonit avec son mot de passe.
+4. Filtrez le port 2020 pour que seul l'hôte DumbMonit y accède.
+
+5. Dans DumbMonit, saisissez l'hôte Caddy avec ce port, par exemple caddy.lan:2020, et l'utilisateur dumbmonit avec son mot de passe.
+
+### Droits requis
+
+- **GET on /config/apps/http/servers** : Serveurs et routes
+- **GET on /reverse_proxy/upstreams** : Santé des upstreams
+- **GET on /metrics** : Compteurs de requêtes (facultatif)
 
 !!! warning
-    Ne publiez jamais l'API d'administration elle-même sur le réseau sans pare-feu devant : qui atteint le port 2019 peut remplacer la configuration ou arrêter Caddy, et l'option origins n'arrête pas un client qui n'envoie aucun en-tête Origin. Si vous l'exposez quand même sur un réseau privé, filtrez le port pour que seul l'hôte DumbMonit l'atteigne, et choisissez Pas de mot de passe.
+    N'exposez jamais l'API d'administration elle-même : quiconque atteint le port 2019 peut remplacer la configuration ou arrêter Caddy.
 
-Le Caddyfile garde son sens sans indentation ; `caddy fmt` l'indente.
-`header_up Host localhost:2019` est nécessaire parce que l'API
-d'administration ne répond qu'aux requêtes adressées à l'adresse sur
-laquelle elle écoute. Avec l'image conteneur de Caddy, lancez la commande de
-hash avec `docker exec`.
+### Pourquoi ces droits
 
-Une configuration chargée en JSON plutôt que depuis un Caddyfile obtient le
-même site comme serveur supplémentaire avec un handler `basic_auth`, un
-matcher `method` et `path` et un `reverse_proxy` vers `localhost:2019`.
+L'API d'administration de Caddy peut charger une nouvelle configuration et arrêter Caddy : elle doit rester hors de portée de tout sauf DumbMonit. Laissez-la où Caddy la met, sur localhost:2019, et faites publier par Caddy une vue en lecture seule : GET uniquement, sur les trois chemins que lit DumbMonit, derrière un mot de passe. Le site ci-dessus répond sur le port 2020 et refuse tout le reste. Si vous exposez quand même l'API d'administration sur un réseau privé, filtrez le port pour que seul l'hôte DumbMonit y accède, et choisissez Pas de mot de passe ; l'option origins n'arrête pas un client qui n'envoie pas d'en-tête Origin. Sans metrics, la santé des upstreams et les rechargements sont tout de même rapportés.
+
+Documentation de l'éditeur : https://caddyserver.com/docs/api
 
 ## Identifiants
 

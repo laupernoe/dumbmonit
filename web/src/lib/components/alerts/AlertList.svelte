@@ -106,7 +106,7 @@
 		building: m.overview_sky_plate_building(),
 		suppressed: m.overview_sky_plate_suppressed(),
 		snoozed: m.alerts_needs_snoozed(),
-		acked: m.alerts_needs_dismissed()
+		acked: m.alerts_needs_acked()
 	});
 
 	/** In "by monitor", a firing row's severity reads from its icon; only the odd states get a word. */
@@ -362,7 +362,7 @@
 				</div>
 				{#if open}
 					{#if group.bucket === 'acked'}
-						<p class="mt-1 mb-2 pl-8 text-[0.8125rem] text-ink-2">{m.alerts_needs_dismissed_hint()}</p>
+						<p class="mt-1 mb-2 pl-8 text-[0.8125rem] text-ink-2">{m.alerts_needs_acked_hint()}</p>
 					{/if}
 					<ul class="mt-1.5 divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-lift [&>li:first-child]:rounded-t-[var(--radius-card)] [&>li:last-child]:rounded-b-[var(--radius-card)]">
 						{#each group.items as item (item.row.key)}

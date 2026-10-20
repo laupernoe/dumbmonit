@@ -6,6 +6,15 @@ dépôts, comptes et organisations elle contient, si ses tâches planifiées
 (contrôles de dépôt, nettoyages, le vérificateur de mise à jour) tournent
 toujours sur leur propre intervalle, et si ses runners Actions sont en ligne.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 3000 | TCP | API (HTTP, par défaut) |
+| 443 | TCP | Seulement avec le schéma https derrière un reverse proxy |
+
 Deux appels doivent réussir : `/api/v1/version`, public, et `/api/v1/user`, la
 preuve que le **jeton d'accès** est valide. Tout le reste — le contrôle de
 santé, les compteurs de dépôts/comptes/organisations, les tâches planifiées et
@@ -62,18 +71,32 @@ organisations.
 
 ## Créer un jeton d'accès sur un compte administrateur du site
 
-1. Créez un jeton d'accès sur un compte administrateur du site : avatar → Settings → Applications → Generate new token. Nommez-le comme suit et cochez les portées read:admin, read:repository et read:user.
+1. Avec un compte administrateur du site, ouvrez avatar → Settings → Applications → Generate New Token.
+
+2. Nommez-le comme suit et ne cochez que les portées listées ci-dessous.
 
     ```
     dumbmonit
     ```
 
-2. read:admin ouvre les compteurs d'administration, les tâches planifiées et les runners Actions ; sans elle, seule la version et le propre compte du jeton sont lus, et le reste est ignoré sans faire échouer la sonde. Forgejo et Gitea n'ont pas non plus de rôle administrateur en lecture seule.
+3. Générez le jeton et copiez-le : Forgejo ne le montre qu'une fois.
 
-3. Dans DumbMonit, saisissez l'adresse, par exemple « forgejo.lan » (port 3000) ou « https://git.example.com » derrière un reverse proxy, et collez le jeton.
+4. Dans DumbMonit, saisissez l'adresse du serveur et collez le jeton.
+
+### Droits requis
+
+- **read:admin** : Décomptes, tâches planifiées et exécuteurs Actions
+- **read:repository** : Nombre de dépôts
+- **read:user** : Le compte du jeton
+
+Documentation de l'éditeur : <https://forgejo.org/docs/latest/user/api/>
+
+### Pourquoi ces droits
+
+`read:admin` ouvre les décomptes d'administration, les tâches planifiées et les exécuteurs Actions ; sans lui, seuls la version et le compte du jeton sont lus, et le reste est ignoré sans faire échouer la sonde. `read:repository` donne le nombre de dépôts et `read:user` le compte du jeton. Forgejo et Gitea n'ont pas de rôle administrateur en lecture seule : les portées limitent seulement les routes d'API qu'un jeton ouvre, pas ce qu'un compte administrateur peut faire lui-même.
 
 !!! warning
-    Un jeton d'accès sur un compte administrateur du site peut lire et changer tout ce que le compte peut faire, quelles que soient les portées cochées : Forgejo et Gitea ne filtrent que quelles routes d'API une portée ouvre, pas ce qu'un compte administrateur peut faire lui-même. Dédiez-lui un compte bot plutôt que de réutiliser le vôtre.
+    Forgejo et Gitea n'ont pas de rôle administrateur en lecture seule, donc le jeton peut faire tout ce que son compte peut faire : utilisez un compte robot dédié, pas le vôtre.
 
 Vérifier le jeton à la main, depuis l'hôte DumbMonit :
 

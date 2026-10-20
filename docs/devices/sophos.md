@@ -25,6 +25,14 @@ enforces that profile on the API too.
     interface status (`Connected, 1000 Mbps…` or `Disconnected`) comes from
     that documentation and community reports. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 4444 | TCP | Administration API (HTTPS, default) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_sophos_`.
@@ -55,16 +63,34 @@ activation, labelled as such.
 
 ## Allow DumbMonit to read the Sophos Firewall XML API
 
-1. Under Profiles > Device access, add a profile named DumbMonit read-only and set every permission to Read-only.
+1. Profiles → Device access: add a profile named DumbMonit read-only and set every permission to Read-only.
 
-2. Under Authentication > Users, add a user named dumbmonit, of type Administrator, with that profile and a long random password.
+2. Authentication → Users: add a user named dumbmonit, of type Administrator, with that profile and a long random password.
 
-3. Under Backup & firmware > API (Administration > API access from SFOS 22), turn the API configuration on and add the address of the DumbMonit server to the allowed IP addresses.
+    ```
+    dumbmonit
+    ```
 
-4. In DumbMonit, enter the address of the firewall, for example "sophos.lan", with the dumbmonit user name and password. The API listens on the administration port, 4444 by default, with a self-signed certificate: tick Accept an unverifiable certificate unless you installed your own.
+3. Backup & firmware → API (Administration → API access from SFOS 22): turn on the API configuration and add the DumbMonit server's address to the allowed IP addresses.
+
+4. In DumbMonit, enter the firewall address (sophos.lan) with that user name and password.
+
+### Required permissions
+
+- **Device access profile: Read-only on every permission** — The firewall enforces it on the API too
 
 !!! warning
-    The XML API is a configuration API: it reports the link of each interface and whether each IPsec connection is activated, not whether the tunnel is up. High availability, licences and the firmware version are not in it.
+    The API listens on the administration port (4444 by default) with a self-signed certificate: tick "Accept an unverifiable certificate" unless you installed your own.
+
+Vendor documentation: https://docs.sophos.com/nsg/sophos-firewall/21.0/API/index.html
+
+### Notes
+
+The XML API is a configuration API: it reports the link of each interface and
+whether each IPsec connection is activated, not whether the tunnel is up. High
+availability, licences and the firmware version are not in it. The address
+DumbMonit connects from must also be allowed to reach the firewall's HTTPS
+administration service, in addition to the API's allowed IP addresses.
 
 ## Credentials
 

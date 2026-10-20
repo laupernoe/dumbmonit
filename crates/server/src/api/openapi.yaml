@@ -160,6 +160,8 @@ tags:
       evaluated on the data collectors already gather.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
+  - name: Logs
+    description: Server logs kept on disk, their export, and shipping to a log service. Session only.
   - name: Self-monitoring
     description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
@@ -1213,6 +1215,12 @@ paths:
         - name: dry_run
           in: query
           schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import (the others are
+            left out of the answer). Absent: every row.
+          schema: { type: string, example: "1,4,5" }
       requestBody:
         required: true
         content:
@@ -1239,6 +1247,53 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "413": { description: The file is larger than 4 MiB. }
+
+  /api/targets/import/kuma-db:
+    post:
+      operationId: importKumaDb
+      tags: [Devices]
+      summary: Import monitors from an Uptime Kuma database (kuma.db)
+      description: >-
+        Body: the raw SQLite file `data/kuma.db` of Uptime Kuma 1.x or 2.x
+        (`Content-Type: application/octet-stream`), at most 512 MiB. It is
+        written to a temporary file, read once in read-only mode (never attached
+        to DumbMonit's database) and deleted afterwards. Monitors, groups,
+        tags and intervals are mapped exactly as for `/api/targets/import/kuma`;
+        notifications, credentials, headers and request bodies are never read
+        into DumbMonit. Rows are sorted by device type, folder, then name, and
+        numbered in that order, so a preview (`dry_run=true`) and the import of
+        the same file agree on the numbers given to `rows`. Uptime Kuma 2 on
+        MariaDB cannot be read. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import (the others are
+            left out of the answer). Absent: every row.
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
 
   /api/targets/reorder:
     post:
@@ -1491,13 +1546,20 @@ paths:
         Pending, firing, suppressed and recently resolved. `phase` is the
         engine's state; `effective_phase` is what to show (`suppressed` when a
         parent device is unreachable, named by `suppressed_by`). Alerts of
-        deleted or paused devices are never listed.
+        deleted or paused devices are never listed. Dismissed alerts are left
+        out unless `dismissed=true`, which lists only them.
       x-token-scope: read
       parameters:
         - name: target_id
           in: query
           description: Only the alerts of this device.
           schema: { type: integer }
+        - name: dismissed
+          in: query
+          description: >-
+            `true`: only the dismissed alerts that are still active (to restore
+            one). Default: dismissed alerts are not listed.
+          schema: { type: boolean }
       responses:
         "200":
           description: Alerts.
@@ -1620,6 +1682,51 @@ paths:
       operationId: unacknowledgeAlert
       tags: [Alerts]
       summary: Lift an acknowledgement
+      x-token-scope: write
+      x-roles: [admin, operator]
+      responses:
+        "200":
+          description: The alert.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/alerts/{fingerprint}/dismiss:
+    parameters:
+      - name: fingerprint
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      operationId: dismissAlert
+      tags: [Alerts]
+      summary: Dismiss an alert
+      description: >-
+        "Got it": the current occurrence leaves the active alerts (list,
+        overview, wall, counters) and sends nothing more — no reminder, no
+        escalation, no resolution — for as long as the condition lasts. Once the
+        condition clears, the dismissal ends with it: if it comes back, that is
+        a new alert, notified as usual. Its resolution is recorded in the
+        history as "dismissed by …". Audited.
+      x-token-scope: write
+      x-roles: [admin, operator]
+      responses:
+        "200":
+          description: The alert.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ActiveAlert" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: undismissAlert
+      tags: [Alerts]
+      summary: Restore a dismissed alert
+      description: Undo a dismissal while the alert is still active. Audited.
       x-token-scope: write
       x-roles: [admin, operator]
       responses:
@@ -2760,8 +2867,8 @@ paths:
       tags: [Public status]
       summary: Describe a notification action link
       description: |
-        Read-only: what the signed link from a notification would do (acknowledge, or snooze for one
-        hour) and which of its alerts are still active. Called by the `/alert-action#<token>` page,
+        Read-only: what the signed link from a notification would do (acknowledge, snooze for one
+        hour, or dismiss) and which of its alerts are still active. Called by the `/alert-action#<token>` page,
         which reads the token from the URL fragment so it never reaches a server log. Any refused
         token (forged, altered, expired, or action links switched off) gets the same `404`; repeated
         refusals from one client get `429`. Requires `X-Requested-With: DumbMonit`.
@@ -2789,8 +2896,8 @@ paths:
       summary: Run a notification action link
       description: |
         Acknowledges the link's still-active alerts until they resolve (`ack`) or for one hour
-        (`snooze`, which never shortens a longer acknowledgement), as "via notification link", and
-        records it in the audit log. Each link works once (`409` afterwards) and for 24 hours. `404`
+        (`snooze`, which never shortens a longer acknowledgement), or dismisses them (`dismiss`: hidden
+        and silent until they resolve), as "via notification link", and records it in the audit log. Each link works once (`409` afterwards) and for 24 hours. `404`
         when the token is refused or none of its alerts is still active.
         Requires `X-Requested-With: DumbMonit`.
       security: []
@@ -3176,6 +3283,36 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/RebindWindow" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/relay:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    put:
+      operationId: setAgentRelay
+      tags: [Agents]
+      summary: Switch this agent's relay mode on or off
+      description: "The agent applies it on the fly at its next report, without a restart. `relay: true` in its agent.yaml wins (`relay_local`); an agent too old to follow it says `relay_control: false`."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+                site: { type: [string, "null"], maxLength: 80, description: Site of this relay. }
+      responses:
+        "200":
+          description: The machine after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentHost" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -3776,6 +3913,205 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
 
   # ------------------------------------------------------------ sauvegarde
+  /api/logs:
+    get:
+      operationId: getLogs
+      tags: [Logs]
+      summary: Server log files kept on disk, retention and size cap
+      description: Administrator session only. Files are daily (UTC) JSON lines in `/data/logs`; past days are gzip-compressed.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Local log storage.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogsOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/settings:
+    put:
+      operationId: putLogsSettings
+      tags: [Logs]
+      summary: Change the retention (days) and the total size cap (MB)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogsSettingsRequest" }
+      responses:
+        "200":
+          description: Local log storage, with the new settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogsOverview" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/export:
+    get:
+      operationId: exportLogs
+      tags: [Logs]
+      summary: Download the last N days of server logs as a .tar.gz archive
+      description: >-
+        Streamed. The archive holds one file per day (`.log` for today, `.log.gz`
+        before) and `audit.jsonl`, the audit log entries of the period.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - $ref: "#/components/parameters/LogDays"
+      responses:
+        "200":
+          description: The archive, as an attachment.
+          headers:
+            Content-Disposition:
+              schema: { type: string }
+          content:
+            application/gzip:
+              schema: { type: string, format: binary }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/export/estimate:
+    get:
+      operationId: estimateLogsExport
+      tags: [Logs]
+      summary: Estimated size of the archive for N days, before downloading it
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - $ref: "#/components/parameters/LogDays"
+      responses:
+        "200":
+          description: Period, number of files and estimated compressed size.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogsEstimate" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/kinds:
+    get:
+      operationId: listLogDestinationKinds
+      tags: [Logs]
+      summary: Log destination types and the fields each one asks for
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The catalog, in menu order.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LogDestinationKind" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/destinations:
+    get:
+      operationId: listLogDestinations
+      tags: [Logs]
+      summary: Log destinations, with their delivery counters
+      description: Secrets are never returned, only `has_secret`.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The destinations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LogDestination" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createLogDestination
+      tags: [Logs]
+      summary: Add a log destination
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogDestinationRequest" }
+      responses:
+        "201":
+          description: The destination.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogDestination" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/destinations/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateLogDestination
+      tags: [Logs]
+      summary: Change a log destination
+      description: >-
+        `secrets` omitted or `null` keeps the stored secrets, `{}` clears them.
+        Changing the address (or the type) of a destination that has a secret
+        requires sending the secrets again.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/LogDestinationRequest" }
+      responses:
+        "200":
+          description: The destination.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogDestination" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteLogDestination
+      tags: [Logs]
+      summary: Remove a log destination
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/logs/destinations/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: testLogDestination
+      tags: [Logs]
+      summary: Send one test record to a log destination, now
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Whether the record was accepted.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChannelTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/backup:
     get:
       operationId: getBackupStatus
@@ -4193,6 +4529,28 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/PdmHealth" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/skipped-features:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getSkippedFeatures
+      tags: [Integrations]
+      summary: Optional features skipped because the token lacks a privilege
+      description: >-
+        For Proxmox VE, Proxmox Backup Server and Proxmox Datacenter Manager monitors, lists the
+        optional features the last probe skipped after a 403 (not an error, not an alert), with the
+        missing privilege. Empty for other monitor types and when nothing was skipped.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Skipped features.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SkippedFeatures" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -4750,7 +5108,7 @@ paths:
         A notification is acknowledged with `202` and no body. The API token's
         scope applies tool by tool: a `read` token can call every read tool and
         gets an explanatory tool error (`isError: true`) from a write tool. The
-        27 tools are documented at
+        28 tools are documented at
         <https://dumbmonit.readthedocs.io/en/latest/using/assistant/>.
       x-token-scope: read
       parameters:
@@ -5427,6 +5785,11 @@ components:
         also carry `X-Requested-With: DumbMonit`.
 
   parameters:
+    LogDays:
+      name: days
+      in: query
+      description: Number of days, today included, from 1 to the retention.
+      schema: { type: integer, minimum: 1, default: 1 }
     Id:
       name: id
       in: path
@@ -5936,6 +6299,8 @@ components:
         max_uses: { type: [integer, "null"], description: "`null` for a fleet token." }
         uses: { type: integer }
         expires_at: { type: [string, "null"], description: Enrolments stop after it; enrolled machines keep reporting. }
+        relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
+        relay_site: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
       required: [name]
@@ -5945,6 +6310,8 @@ components:
         reusable: { type: boolean, default: false, description: 'Without it, the token enrols one machine.' }
         max_uses: { type: [integer, "null"], minimum: 1 }
         expires_in_days: { type: [integer, "null"], minimum: 1 }
+        relay: { type: boolean, default: false, description: Make the enrolled machine a relay for a remote site. }
+        site: { type: [string, "null"], maxLength: 80, description: Site of that relay. }
     CreatedAgentToken:
       allOf:
         - $ref: "#/components/schemas/AgentToken"
@@ -6004,8 +6371,30 @@ components:
         steps:
           type: array
           items: { type: string }
+        ports:
+          type: array
+          description: >-
+            Network ports to open, one per entry. `direction` is `to_device` (from the DumbMonit
+            server or its relay agent to the device) or `to_server` (from the agent to the
+            server). `optional` ports are only used by an option or mode, named in `purpose`.
+            Omitted when the type opens no connection to the device.
+          items:
+            type: object
+            properties:
+              port: { type: integer }
+              protocol: { type: string, enum: [tcp, udp] }
+              direction: { type: string, enum: [to_device, to_server] }
+              purpose: { type: string }
+              optional: { type: boolean }
+        permissions:
+          type: array
+          description: >-
+            Rights, roles or permissions to give the monitoring account, one per entry: the first
+            line is the right as the product names it, the optional next line says what it is for.
+            Omitted when the type needs none.
+          items: { type: string }
         warning: { type: string }
-        doc_url: { type: string }
+        doc_url: { type: string, description: "The 'Full guide' page of the documentation, or a pack's link." }
     OptionDescription:
       type: object
       properties:
@@ -6220,7 +6609,7 @@ components:
     # ---------------------------------------------------------- équipements
     Target:
       type: object
-      required: [id, name, address, kind, interval_secs, enabled, tags, credential_kind]
+      required: [id, name, address, kind, interval_secs, enabled, tags, credential_kind, has_secret, credential_public]
       properties:
         id: { type: integer, format: int64 }
         name: { type: string }
@@ -6235,6 +6624,11 @@ components:
           type: object
           additionalProperties: { type: string }
         credential_kind: { type: string, description: A label — the secret itself is never returned. }
+        has_secret: { type: boolean, description: "A secret (community, passphrase, token, password) is stored. Leaving its field empty on `PUT` keeps it." }
+        credential_public:
+          type: object
+          description: "Non-secret parts of the credential, under the form's field keys (`username`, `token_id` for a Proxmox `user@realm!name` token, `auth_protocol`, `privacy_protocol`, `context`), to pre-fill the edit form. Never a secret; empty for a reader."
+          additionalProperties: { type: string }
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
@@ -6318,7 +6712,7 @@ components:
         location_id: { type: [integer, "null"], format: int64, description: "Location on the world map; `null`: none. Absent on `PUT` keeps the assignment." }
         credential:
           $ref: "#/components/schemas/CredentialInput"
-          description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it.'
+          description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it. Sent with a secret field absent or empty (community, passphrase, token `secret`, `password`), that secret is kept as long as the identity it belongs to (`username`, `token_id`) is unchanged; otherwise the request is refused with "Enter the … again".'
     CredentialInput:
       description: A device credential. Accepted on input only — never returned.
       writeOnly: true
@@ -6328,7 +6722,7 @@ components:
           properties:
             type: { const: none }
         - type: object
-          required: [type, community]
+          required: [type]
           properties:
             type: { const: snmp_community }
             community: { type: string }
@@ -6339,13 +6733,13 @@ components:
             username: { type: string }
             auth:
               type: [object, "null"]
-              required: [protocol, passphrase]
+              required: [protocol]
               properties:
                 protocol: { type: string, enum: [md5, sha1, sha224, sha256, sha384, sha512] }
                 passphrase: { type: string }
             privacy:
               type: [object, "null"]
-              required: [protocol, passphrase]
+              required: [protocol]
               properties:
                 protocol: { type: string, enum: [des, aes128, aes192, aes256] }
                 passphrase: { type: string }
@@ -6359,7 +6753,7 @@ components:
             token_id: { type: string }
             secret: { type: string }
         - type: object
-          required: [type, username, password]
+          required: [type, username]
           properties:
             type: { const: username_password }
             username: { type: string }
@@ -6410,7 +6804,7 @@ components:
       enum: [ok, pending, firing, resolved, suppressed]
     ActiveAlert:
       type: object
-      required: [fingerprint, rule_uid, rule_name, severity, series_key, labels, phase, effective_phase, suppressed, silenced, learning, acked, notify_count]
+      required: [fingerprint, rule_uid, rule_name, severity, series_key, labels, phase, effective_phase, suppressed, silenced, learning, acked, dismissed, notify_count]
       properties:
         fingerprint: { type: string }
         rule_uid: { type: string }
@@ -6431,6 +6825,9 @@ components:
         acked_until: { type: [string, "null"], format: date-time }
         acked_by: { type: [string, "null"], description: "An account, or `token:<name>`." }
         ack_note: { type: [string, "null"] }
+        dismissed: { type: boolean, description: "Dismissed (\"Got it\"): hidden from the active views, silent until it resolves." }
+        dismissed_at: { type: [string, "null"], format: date-time }
+        dismissed_by: { type: [string, "null"], description: "An account, or `token:<name>`." }
         value: { type: [number, "null"] }
         score: { type: [number, "null"] }
         condition_since: { type: [string, "null"], format: date-time }
@@ -6827,18 +7224,19 @@ components:
         token: { type: string, description: "The part after `#` in the link." }
     AlertActionLinked:
       type: object
-      required: [rule_name, target_name, severity, acked, acked_until]
+      required: [rule_name, target_name, severity, acked, acked_until, dismissed]
       properties:
         rule_name: { type: string }
         target_name: { type: [string, "null"] }
         severity: { $ref: "#/components/schemas/Severity" }
         acked: { type: boolean }
         acked_until: { type: [string, "null"], format: date-time }
+        dismissed: { type: boolean }
     AlertActionView:
       type: object
       required: [action, expires_at, used, alerts]
       properties:
-        action: { type: string, enum: [ack, snooze] }
+        action: { type: string, enum: [ack, snooze, dismiss] }
         expires_at: { type: string, format: date-time }
         used: { type: boolean, description: "The link has already been used." }
         alerts:
@@ -6847,11 +7245,12 @@ components:
           items: { $ref: "#/components/schemas/AlertActionLinked" }
     AlertActionResult:
       type: object
-      required: [action, until, acked, alerts]
+      required: [action, until, acked, dismissed, alerts]
       properties:
-        action: { type: string, enum: [ack, snooze] }
-        until: { type: string, format: date-time }
+        action: { type: string, enum: [ack, snooze, dismiss] }
+        until: { type: string, format: date-time, description: "End of the acknowledgement; for `dismiss`, when it was done." }
         acked: { type: integer, description: "Alerts acknowledged by this action." }
+        dismissed: { type: integer, description: "Alerts dismissed by this action." }
         alerts:
           type: array
           items: { $ref: "#/components/schemas/AlertActionLinked" }
@@ -7346,6 +7745,10 @@ components:
         commands_supported: { type: boolean }
         relay: { type: boolean }
         site: { type: [string, "null"] }
+        relay_wanted: { type: boolean, description: Relay mode asked from the UI (or by the enrolment token). }
+        relay_wanted_site: { type: [string, "null"] }
+        relay_control: { type: boolean, description: "False: the agent is too old to follow `relay_wanted`." }
+        relay_local: { type: boolean, description: "`relay: true` is set in the agent's own configuration, which wins." }
         relayed: { type: integer }
         last_seen_at: { type: [string, "null"] }
         binding: { type: string, enum: [bound, pending, unsupported] }
@@ -7638,6 +8041,95 @@ components:
         restart_required: { type: boolean, description: SNMP profiles take effect after a restart. }
 
     # ------------------------------------------------------------- sauvegarde
+    LogsOverview:
+      type: object
+      required: [directory, retention_days, max_total_mb, total_bytes, days_available, files, writer]
+      properties:
+        directory: { type: string, examples: ["/data/logs"] }
+        retention_days: { type: integer, minimum: 1, maximum: 365 }
+        max_total_mb: { type: integer, minimum: 16, maximum: 102400 }
+        total_bytes: { type: integer }
+        oldest_day: { type: [string, "null"], format: date }
+        days_available: { type: integer }
+        files:
+          type: array
+          description: Newest first.
+          items:
+            type: object
+            properties:
+              day: { type: string, format: date }
+              bytes: { type: integer }
+              compressed: { type: boolean }
+        writer:
+          type: object
+          properties:
+            active: { type: boolean }
+            dropped:
+              type: integer
+              description: Records lost before reaching the disk (writer lagging, or the size cap reached).
+    LogsSettingsRequest:
+      type: object
+      properties:
+        retention_days: { type: integer, minimum: 1, maximum: 365 }
+        max_total_mb: { type: integer, minimum: 16, maximum: 102400 }
+    LogsEstimate:
+      type: object
+      required: [days, from, to, files, bytes]
+      properties:
+        days: { type: integer }
+        from: { type: string, format: date }
+        to: { type: string, format: date }
+        files: { type: integer }
+        bytes: { type: integer, description: Estimated size of the .tar.gz archive. }
+    LogDestinationKind:
+      type: object
+      required: [kind, label, summary, doc_url, settings, secrets]
+      properties:
+        kind: { type: string, examples: [gelf, victorialogs, loki, elasticsearch, syslog] }
+        label: { type: string }
+        summary: { type: string }
+        doc_url: { type: string, format: uri }
+        settings:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelField" }
+        secrets:
+          type: array
+          items: { $ref: "#/components/schemas/ChannelField" }
+    LogDestinationRequest:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string, maxLength: 100 }
+        kind: { type: string }
+        enabled: { type: boolean, default: true }
+        min_level: { type: string, enum: [error, warn, info, debug], default: info }
+        settings: { type: object, additionalProperties: true }
+        secrets:
+          type: [object, "null"]
+          additionalProperties: { type: string }
+          description: Omitted or null keeps the stored secrets; `{}` clears them.
+    LogDestination:
+      type: object
+      required: [id, name, kind, enabled, min_level, settings, has_secret, stats]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        kind: { type: string }
+        enabled: { type: boolean }
+        min_level: { type: string, enum: [error, warn, info, debug] }
+        settings: { type: object, additionalProperties: true }
+        has_secret: { type: boolean }
+        stats:
+          type: object
+          description: Counters since the server started.
+          properties:
+            sent: { type: integer }
+            dropped: { type: integer, description: Records lost (queue full or batch refused). }
+            failed_batches: { type: integer }
+            queued: { type: integer }
+            last_error: { type: [string, "null"] }
+            last_error_at: { type: [string, "null"], description: UTC, without suffix. }
+            last_success_at: { type: [string, "null"], description: UTC, without suffix. }
     BackupStatus:
       type: object
       required: [bundle_version, min_passphrase_length, contents, secret_source, secret_path, schedule]
@@ -7851,6 +8343,22 @@ components:
         remotes:
           type: array
           items: { $ref: "#/components/schemas/PanelObject" }
+    SkippedFeatures:
+      type: object
+      required: [features]
+      properties:
+        features:
+          type: array
+          items:
+            type: object
+            required: [feature, privilege]
+            properties:
+              feature:
+                type: string
+                description: Technical id (`guest_agent`, `updates`, `certificates`, `disks`, `services`, `traffic_control`, `remote_updates`).
+              privilege:
+                type: string
+                description: The privilege the token lacks, as the device names it.
     PdmHealth:
       type: object
       additionalProperties: true
@@ -8296,6 +8804,12 @@ components:
       type: object
       properties:
         layout: { $ref: "#/components/schemas/WallLayout" }
+        text:
+          type: object
+          description: The free message widget (plain text, one line).
+          properties:
+            enabled: { type: boolean }
+            content: { type: string, maxLength: 200 }
         crypto:
           type: object
           properties:
@@ -8419,6 +8933,7 @@ components:
           oneOf:
             - { $ref: "#/components/schemas/WallWidgetSection" }
             - { type: "null" }
+        text: { type: [string, "null"], description: "The free message; null when off or empty." }
     WallNewsCountry:
       type: object
       required: [code, feeds]
@@ -8436,9 +8951,9 @@ components:
       type: object
       description: >-
         Where each wall widget goes (weather, news, cve, crypto, stocks, fx,
-        claude, openai), in order. Unknown or repeated ids are dropped; a
-        widget missing from every zone goes to its default one (weather, news
-        and cve on the right, the others in the bottom bar). Placing a widget
+        claude, openai, text), in order. Unknown or repeated ids are dropped; a
+        widget missing from every zone goes to its default one (weather, news,
+        cve and text on the right, the others in the bottom bar). Placing a widget
         does not turn it on.
       properties:
         top: { type: array, items: { type: string } }

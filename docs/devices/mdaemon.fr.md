@@ -8,6 +8,24 @@ MDaemon, la même page montre aussi les files de mail, les sessions et les
 totaux de messages, que MDaemon ne publie que comme compteurs de
 performance Windows.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 25 | TCP | Vérification SMTP (par défaut) |
+| 143 | TCP | Vérification IMAP (par défaut) |
+| 3000 | TCP | Vérification de la messagerie web (par défaut) |
+| 444 | TCP | Seulement avec un compte de l'API XML (HTTPS, par défaut) |
+| 1000 | TCP | Seulement avec l'API XML en HTTP |
+| 587 | TCP | Seulement si msa figure dans l'option Services |
+| 465 | TCP | Seulement si smtps figure dans l'option Services |
+| 110 | TCP | Seulement si pop3 figure dans l'option Services |
+| 995 | TCP | Seulement si pop3s figure dans l'option Services |
+| 993 | TCP | Seulement si imaps figure dans l'option Services |
+| 5222 | TCP | Seulement si xmpp figure dans l'option Services |
+
 !!! warning "Validé contre la documentation seulement"
 
     Cette intégration a été construite à partir de la documentation
@@ -125,30 +143,43 @@ pour en lire un que le préréglage n'a pas, listez-le sous
 
 ## Surveiller les services mail, et optionnellement l'API XML
 
-1. Rien à installer sur le serveur. Sans identifiant, DumbMonit se connecte aux ports mail depuis l'extérieur et lit chaque salutation : SMTP (25), IMAP (143) et Webmail (3000) par défaut. Ajoutez POP3, MSA, les ports TLS ou Remote Administration dans l'option Services, comme une liste telle que celle-ci.
-
-    ```
-    smtp,msa,imap,pop3,imaps,webmail
-    ```
-
-2. Pour aussi lire la version via l'API XML, créez un compte dédié dans MDaemon, nommé par exemple comme suit, avec un mot de passe long utilisé nulle part ailleurs. Donnez-lui le niveau le plus bas que votre MDaemon accepte pour l'API XML, et rien de plus : DumbMonit n'appelle que GetVersionInfo, qui ne lit aucune boîte mail et ne change rien.
+1. Pour lire aussi la version, ouvrez Accounts → Account Manager → New account et créez le compte ci-dessous, avec un long mot de passe unique.
 
     ```
     dumbmonit@example.com
     ```
 
-3. Depuis MDaemon 24, l'API XML ne répond qu'aux adresses qu'elle autorise. Ouvrez Setup → XML API Service → Address Restrictions (Setup → XML API Management sur MDaemon 26) et autorisez l'adresse depuis laquelle DumbMonit se connecte.
+2. Autorisez l'adresse depuis laquelle DumbMonit se connecte dans Setup → XML API Service → Address Restrictions (Setup → XML API Management sur MDaemon 26).
 
-4. Vérifiez depuis l'hôte DumbMonit que le compte atteint l'API. La commande demande le mot de passe et affiche une réponse qui commence par `<MDaemon><API productversion=…>`.
+3. Dans DumbMonit, saisissez l'adresse du serveur, puis l'adresse e-mail complète du compte et son mot de passe.
+
+4. Pour surveiller d'autres ports que SMTP, IMAP et le webmail, réglez l'option Services sur une liste comme celle-ci.
 
     ```
-    curl -k -u dumbmonit@example.com -H 'Content-Type: text/xml' --data '<MDaemon><API><Request version="20.0.0" echo="0" verbose="0"><Operation>GetVersionInfo</Operation><Parameters/></Request></API></MDaemon>' https://mail.example.com:444/MdMgmtWS/
+    smtp,msa,imap,pop3,imaps,webmail
     ```
 
-5. Dans DumbMonit, saisissez l'adresse du serveur, par exemple « mail.example.com », puis l'adresse email complète du compte comme nom d'utilisateur, et son mot de passe. L'API XML est atteinte sur le port HTTPS de Remote Administration, 444 par défaut.
+### Droits requis
+
+- **XML API access for the account** : Le niveau le plus bas que votre MDaemon accepte
+- **XML API address restriction** : Autoriser l'adresse depuis laquelle DumbMonit se connecte
+
+Documentation de l'éditeur : <https://help.mdaemon.com/mdaemon/en/xml-api-service.html>
+
+### Bon à savoir
+
+Rien à installer sur le serveur. Sans identifiant, DumbMonit se connecte aux ports mail depuis l'extérieur et lit chaque bannière : SMTP (25), IMAP (143) et Webmail (3000) par défaut ; ajoutez POP3, MSA, les ports TLS ou l'administration à distance dans l'option Services.
+
+Le compte ne sert qu'à lire la version par l'API XML : DumbMonit n'appelle que `GetVersionInfo`, qui ne lit aucune boîte et ne change rien. Depuis MDaemon 24, l'API XML ne répond qu'aux adresses qu'elle autorise. Elle est atteinte sur le port HTTPS de l'administration à distance, 444 par défaut. Pour vérifier depuis l'hôte DumbMonit que le compte atteint l'API, lancez la commande ci-dessous : elle demande le mot de passe et affiche une réponse qui commence par `<MDaemon><API productversion=…>`.
+
+```
+curl -k -u dumbmonit@example.com -H 'Content-Type: text/xml' --data '<MDaemon><API><Request version="20.0.0" echo="0" verbose="0"><Operation>GetVersionInfo</Operation><Parameters/></Request></API></MDaemon>' https://mail.example.com:444/MdMgmtWS/
+```
+
+Le Dynamic Screening peut bloquer une adresse après des échecs de connexion répétés : un mauvais mot de passe ici peut faire bloquer l'hôte DumbMonit, testez d'abord avec la commande ci-dessus. L'administration à distance utilise souvent un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Les tailles des files de mail ne sont pas lues par cette surveillance : MDaemon ne les publie que comme compteurs de performance Windows, que l'agent DumbMonit lit quand il est installé sur le serveur de messagerie.
 
 !!! warning
-    MDaemon n'a pas de rôle en lecture seule pour l'API XML : ne réutilisez jamais votre propre compte, et gardez ce mot de passe hors de tout autre outil. Dynamic Screening peut bloquer une adresse après des connexions échouées répétées, donc un mauvais mot de passe ici peut faire bloquer l'hôte DumbMonit : testez d'abord avec la commande ci-dessus. Remote Administration utilise souvent un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Les tailles de file mail ne sont pas lues par cette surveillance : MDaemon ne les publie que comme compteurs de performance Windows, que l'agent DumbMonit lit quand il est installé sur le serveur mail.
+    MDaemon n'a pas de rôle en lecture seule pour l'API XML : ne réutilisez jamais votre compte, et prenez un mot de passe qui ne sert nulle part ailleurs, car des échecs répétés peuvent faire bloquer DumbMonit.
 
 L'API XML est servie par le serveur web de Remote Administration : port
 1000 en HTTP et 444 en HTTPS par défaut, sur `/MdMgmtWS/`, ou par IIS quand
