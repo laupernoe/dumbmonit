@@ -23,3 +23,6 @@ fuzz/target/
 fuzz/corpus/
 fuzz/artifacts/
 fuzz/coverage/
+
+# Product website build output (site-src/build.py)
+/website/
