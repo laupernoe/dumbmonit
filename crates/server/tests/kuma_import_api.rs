@@ -228,7 +228,8 @@ async fn kuma_db_refuse_ce_qui_n_est_pas_une_base_kuma() {
     let lab = lab().await;
     let url = "/api/targets/import/kuma-db";
 
-    let texte = post_bytes(&lab.app, url, b"{\"monitorList\": []}".to_vec(), Some(&lab.admin)).await;
+    let texte =
+        post_bytes(&lab.app, url, b"{\"monitorList\": []}".to_vec(), Some(&lab.admin)).await;
     assert_eq!(texte.status, StatusCode::BAD_REQUEST, "{}", texte.body);
 
     // Une base SQLite sans table `monitor`.
