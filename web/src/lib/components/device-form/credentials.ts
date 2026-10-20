@@ -7,29 +7,19 @@ import { m } from '#lib/paraglide/messages.js';
  * expects for the families it knows (nested SNMP v3, Proxmox token in two
  * pieces) and sends the flat keys as they are for a family it does not.
  *
- * The API never returns a secret, so on edit the fields start empty and the
- * form only sends a `credential` when the user typed one (or explicitly chose
- * "No authentication"). Omitting it keeps the saved secret on the server.
+ * The API never returns a secret. On edit the form starts from the saved
+ * non-secret parts (`credential_public`: user name, token ID, protocols) and
+ * blank secret fields; a secret left blank is omitted from the payload, which
+ * keeps the saved one on the server (see `credential-edit.ts`). The form only
+ * sends a `credential` at all when something changed.
  */
-import type {
-	Credential,
-	CredentialField,
-	CredentialKind,
-	CredentialView,
-	SnmpV3AuthProtocol,
-	SnmpV3PrivacyProtocol
-} from '#lib/api/index.js';
+import { secretDisabled, type SecretPolicy } from './credential-edit';
+import type { CredentialField, CredentialKind, CredentialView } from '#lib/api/index.js';
 
 export type CredentialDraft = Record<string, string>;
 
 /** Empty draft for a family: selects start on their first choice. */
-export function emptyDraft(view: CredentialView): CredentialDraft {
-	const draft: CredentialDraft = {};
-	for (const field of view.fields) {
-		draft[field.key] = field.input === 'select' ? (field.choices[0] ?? '') : '';
-	}
-	return draft;
-}
+export { blankDraft as emptyDraft } from './credential-edit';
 
 /**
  * Maps the human label returned in `Target.credential_kind` back to a family
@@ -60,80 +50,10 @@ export function initialView(views: CredentialView[], savedLabel: string | undefi
 	return views.find((view) => view.kind === kind) ?? first;
 }
 
-/** True when the user typed something in any field (selects do not count). */
-export function draftTouched(view: CredentialView, draft: CredentialDraft): boolean {
-	return view.fields.some((field) => field.input !== 'select' && (draft[field.key] ?? '').trim() !== '');
-}
-
-/**
- * Cleans a pasted value: surrounding whitespace and line breaks, and the
- * quotes a shell snippet or a JSON export wraps a secret in.
- */
-export function sanitizeSecret(value: string): string {
-	let out = value.replace(/[\r\n]+/g, '').trim();
-	for (const quote of ['"', "'"]) {
-		if (out.length >= 2 && out.startsWith(quote) && out.endsWith(quote)) {
-			out = out.slice(1, -1).trim();
-			break;
-		}
-	}
-	return out;
-}
-
-/**
- * A Proxmox token pasted whole (`user@realm!name=secret`) into the Token ID
- * field: the two halves, so the form can move the secret where it belongs.
- */
-export function splitPastedToken(value: string): { token_id: string; secret: string } | null {
-	const clean = sanitizeSecret(value);
-	const at = clean.indexOf('=');
-	if (at <= 0 || !clean.slice(0, at).includes('!')) return null;
-	return { token_id: clean.slice(0, at), secret: clean.slice(at + 1) };
-}
+export { sanitizeSecret, splitPastedToken, toCredential } from './credential-edit';
 
 function value(draft: CredentialDraft, key: string): string {
 	return (draft[key] ?? '').trim();
-}
-
-export function toCredential(view: CredentialView, draft: CredentialDraft): Credential {
-	switch (view.kind) {
-		case 'none':
-			return { type: 'none' };
-		case 'snmp_community':
-			return { type: 'snmp_community', community: value(draft, 'community') };
-		case 'snmp_v3': {
-			const authPassphrase = draft.auth_passphrase ?? '';
-			const privacyPassphrase = draft.privacy_passphrase ?? '';
-			return {
-				type: 'snmp_v3',
-				username: value(draft, 'username'),
-				auth: authPassphrase
-					? { protocol: (draft.auth_protocol || 'sha256') as SnmpV3AuthProtocol, passphrase: authPassphrase }
-					: null,
-				privacy: privacyPassphrase
-					? {
-							protocol: (draft.privacy_protocol || 'aes128') as SnmpV3PrivacyProtocol,
-							passphrase: privacyPassphrase
-						}
-					: null
-			};
-		}
-		case 'api_token':
-			// Two pieces (Proxmox VE, PBS) or one string (bearer token): the
-			// server assembles the former and stores both the same way.
-			if (view.fields.some((field) => field.key === 'token_id')) {
-				return { type: 'api_token', token_id: value(draft, 'token_id'), secret: sanitizeSecret(draft.secret ?? '') };
-			}
-			return { type: 'api_token', token: sanitizeSecret(draft.token ?? '') };
-		case 'username_password':
-			return { type: 'username_password', username: value(draft, 'username'), password: draft.password ?? '' };
-		default: {
-			// A family this build does not know: send every field under its key.
-			const out: Record<string, string> = { type: view.kind };
-			for (const field of view.fields) out[field.key] = draft[field.key] ?? '';
-			return out as Credential;
-		}
-	}
 }
 
 /** Field-level problems of a draft, by field key; empty when it can be sent. */
@@ -143,11 +63,27 @@ function requiredMessage(field: CredentialField): string {
 	return m.deviceform_cred_required({ label: field.label });
 }
 
-export function validateCredential(view: CredentialView, draft: CredentialDraft): CredentialErrors {
+/**
+ * Field-level problems. With a `policy` (edit), a kept secret may stay blank,
+ * and a secret that must be typed again says why.
+ */
+export function validateCredential(
+	view: CredentialView,
+	draft: CredentialDraft,
+	policy: SecretPolicy | null = null
+): CredentialErrors {
 	const errors: CredentialErrors = {};
 	for (const field of view.fields) {
 		const current = field.input === 'password' ? (draft[field.key] ?? '') : value(draft, field.key);
-		if (field.required && !current) {
+		const reason = policy?.reenter[field.key];
+		if (policy?.kept.includes(field.key) && !current) continue;
+		if (reason && !current && !secretDisabled(field.key, draft)) {
+			const identity = view.fields.find((f) => f.key === policy?.identityKey);
+			errors[field.key] =
+				reason === 'identity'
+					? m.deviceform_cred_reenter_identity({ label: identity?.label ?? '' })
+					: m.deviceform_cred_reenter_destination();
+		} else if (field.required && !current && !secretDisabled(field.key, draft)) {
 			errors[field.key] = requiredMessage(field);
 		} else if (field.key === 'token_id' && current && !/^[^@!=\s]+@[^@!=\s]+![^@!=\s]+$/.test(current)) {
 			errors[field.key] = m.deviceform_cred_token_format();

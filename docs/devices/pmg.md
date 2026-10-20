@@ -4,6 +4,14 @@ Mail gateway: Postfix queues and the age of the oldest waiting message, the
 mail counted and filtered today, quarantine sizes, the age of the antivirus and
 antispam signature databases, services, certificates and cluster state.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8006 | TCP | API (HTTPS, default) |
+
 !!! warning "Tested against a test instance only"
 
     This integration was built and verified against a Proxmox Mail Gateway 9 installed for

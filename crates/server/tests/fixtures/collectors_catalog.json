@@ -48,6 +48,36 @@
         "For LDAPS, export your certification authority's certificate as Base-64 encoded X.509 and paste it as CA certificate below.",
         "In DumbMonit, enter a domain controller's name as its certificate names it (dc1.corp.example.com) and log in as svc-dumbmonit@corp.example.com."
       ],
+      "ports": [
+        {
+          "port": 636,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "LDAPS (default), also to the other domain controllers",
+          "optional": false
+        },
+        {
+          "port": 389,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the StartTLS or plain LDAP option",
+          "optional": true
+        },
+        {
+          "port": 53,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "Only with the DNS servers option",
+          "optional": true
+        },
+        {
+          "port": 53,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the DNS servers option",
+          "optional": true
+        }
+      ],
       "permissions": [
         "Domain Users membership only\nNo group or delegation is needed to read",
         "Monitor active directory replication\nOptional: inbound replication status"
@@ -237,6 +267,29 @@
         "Stop AdGuard Home, add this line under users: in AdGuardHome.yaml with HASH replaced by the printed hash, then start it again.\n- { name: dumbmonit, password: \"HASH\" }",
         "In DumbMonit, enter the address of the AdGuard Home web interface, then the user dumbmonit and its password."
       ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web interface and API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 3000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the web interface left on port 3000, the first-run default",
+          "optional": true
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the https scheme option",
+          "optional": true
+        }
+      ],
       "warning": "AdGuard Home has no read-only user, so dumbmonit can change every setting: keep its password to DumbMonit alone, and turn on HTTPS in Settings → Encryption settings across an untrusted network.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/adguard/"
     },
@@ -332,6 +385,15 @@
         "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
         "For a fleet, or to revoke a lost token, use Settings → Agents."
       ],
+      "ports": [
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_server",
+          "purpose": "Readings and commands (default port, 443 behind a TLS proxy)",
+          "optional": false
+        }
+      ],
       "warning": "The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/agent/"
     },
@@ -364,6 +426,15 @@
       "steps": [
         "Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.",
         "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor."
+      ],
+      "ports": [
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_server",
+          "purpose": "Readings and commands (default port, 443 behind a TLS proxy)",
+          "optional": false
+        }
       ],
       "warning": "If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/agent/"
@@ -426,6 +497,22 @@
         "Optional: turn on the request and byte counters.\nExtendedStatus On",
         "Reload Apache, then open http://apache.lan/server-status?auto from the DumbMonit host.\napachectl graceful",
         "In DumbMonit, enter the Apache host, for example apache.lan, and the path if it is not /server-status."
+      ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Status page (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only if the status page is served over HTTPS",
+          "optional": true
+        }
       ],
       "warning": "Without ExtendedStatus, requests and bytes are not reported at all: the chart stays empty rather than flat.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/apache/"
@@ -548,6 +635,15 @@
         "Filter port 2020 so that only the DumbMonit host reaches it.",
         "In DumbMonit, enter the Caddy host with that port, for example caddy.lan:2020, and the user dumbmonit with its password."
       ],
+      "ports": [
+        {
+          "port": 2019,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Admin API (HTTP, default)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "GET on /config/apps/http/servers\nServers and routes",
         "GET on /reverse_proxy/upstreams\nUpstream health",
@@ -653,6 +749,22 @@
         "DumbMonit also checks the Local API on port 8080 of the same host: untick Check the Local API for a host that only runs an agent.",
         "Optional: create a bouncer key and paste it as Bouncer API key below.\nsudo cscli bouncers add dumbmonit",
         "In DumbMonit, enter the CrowdSec host, for example \"crowdsec.lan\"."
+      ],
+      "ports": [
+        {
+          "port": 6060,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Prometheus metrics (default)",
+          "optional": false
+        },
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the Local API check option (on by default)",
+          "optional": true
+        }
       ],
       "permissions": [
         "Bouncer API key (optional)\nRead-only: it can only read decisions"
@@ -761,6 +873,22 @@
         "Pick another record type in the options if you do not want an IPv4 address (A record).",
         "To monitor your own DNS server, enter its IP address in \"DNS server to query\".",
         "To detect hijacking, list the addresses the answer must contain in \"Expected values\"."
+      ],
+      "ports": [
+        {
+          "port": 53,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "DNS query (default port)",
+          "optional": false
+        },
+        {
+          "port": 53,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "DNS query too large for UDP (default port)",
+          "optional": false
+        }
       ],
       "warning": "Give the DNS server by its IP address, not by a name.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#dns"
@@ -887,6 +1015,15 @@
         "Enter the registered domain, for example \"example.com\", not a name under it such as www.example.com.",
         "For an extension the IANA does not list, such as .ch, set \"RDAP server\" to the registry's address.\nhttps://rdap.nic.ch/"
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "RDAP query to the registry and to the IANA (HTTPS)",
+          "optional": false
+        }
+      ],
       "warning": "A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/domain/"
     },
@@ -996,6 +1133,22 @@
         "Generate the token and copy it: Forgejo shows it only once.",
         "In DumbMonit, enter the server's address and paste the token."
       ],
+      "ports": [
+        {
+          "port": 3000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the https scheme behind a reverse proxy",
+          "optional": true
+        }
+      ],
       "permissions": [
         "read:admin\nCounts, scheduled tasks and Actions runners",
         "read:repository\nRepository count",
@@ -1095,6 +1248,15 @@
         "Click OK: FortiGate shows the API token once. Copy it.",
         "In DumbMonit, enter the FortiGate address (fw.lan) and paste the token as API token."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Administration API (HTTPS, default)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "System: Read\nSystem status, resources, HA, licences, firmware",
         "Network: Read\nInterface configuration",
@@ -1190,6 +1352,22 @@
         "Generate the token and copy it: GitLab shows it only once.",
         "In DumbMonit, enter GitLab's address and paste the token.",
         "To watch CI pipelines, list the numeric project IDs (shown on each project's page) in the Projects watched for CI health option."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the http scheme option",
+          "optional": true
+        }
       ],
       "permissions": [
         "read_api\nToken scope: reads the whole API, writes nothing",
@@ -1335,6 +1513,15 @@
         "Optional, for Graylog's own notifications: with an account that can manage roles, create a role holding only notifications:read and give it to the dumbmonit user.\ncurl -u YOUR_USER -H 'X-Requested-By: cli' -H 'Content-Type: application/json' -X POST https://graylog.lan/api/roles -d '{\"name\":\"DumbMonit Notifications\",\"description\":\"Read system notifications\",\"permissions\":[\"notifications:read\"],\"read_only\":false}'\ncurl -u YOUR_USER -H 'X-Requested-By: cli' -X PUT 'https://graylog.lan/api/roles/DumbMonit%20Notifications/members/dumbmonit'",
         "In DumbMonit, enter the Graylog node address (for example graylog.lan, port 9000) and paste the token. In a cluster, add each node."
       ],
+      "ports": [
+        {
+          "port": 9000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Graylog REST API (default)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "Reader (built-in role)\nNode status, journal, buffers, throughput, inputs, search cluster health",
         "notifications:read\nOptional: Graylog's own notifications"
@@ -1429,6 +1616,15 @@
         "Open Settings → People → Users → Add user (turn on Advanced mode in your profile if the tab is missing), name the user as follows and give it a long random password.\ndumbmonit",
         "Log in as that user, open its profile (bottom of the sidebar) → Security → Long-lived access tokens → Create token, name it and copy it: it is shown only once.",
         "In DumbMonit, enter the Home Assistant address (for example homeassistant.local, port 8123) and paste the token."
+      ],
+      "ports": [
+        {
+          "port": 8123,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web UI, REST and WebSocket API (HTTP, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Regular user (Administrator toggle off)\nReads every entity and the repairs list"
@@ -1603,6 +1799,22 @@
         "Prefer a light page such as \"/health\" or \"/status\" over the home page.",
         "If the page needs a login, choose a credential: username and password (basic) or a token (Bearer).",
         "Optionally require a keyword in the page or a value in a JSON response, in the options."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web page or API over HTTPS (default port)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with an http:// address (default port)",
+          "optional": true
+        }
       ],
       "permissions": [
         "Read access to the monitored URL\nOnly if the page requires a login"
@@ -1845,6 +2057,22 @@
         "Tick the permissions listed below, create the key and copy it: Immich shows it only once.",
         "In DumbMonit, enter Immich's address and paste the key."
       ],
+      "ports": [
+        {
+          "port": 2283,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the https scheme behind a reverse proxy",
+          "optional": true
+        }
+      ],
       "permissions": [
         "server.about\nVersion",
         "server.versionCheck\nUpdate available",
@@ -1965,6 +2193,22 @@
         "No API key is needed: leave the credential on No key.",
         "Tick the address blocklists to query under Blocklists, and add any other DNSBL zone under Custom lists.",
         "If the monitor shows \"Spamhaus refuses this resolver\", set \"Resolver\" to your own recursive resolver, or choose the free Spamhaus DQS key as the credential.\nhttps://www.spamhaus.com/data-access/free-data-query-service/"
+      ],
+      "ports": [
+        {
+          "port": 53,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "DNS lookups of the blocklists (default port)",
+          "optional": false
+        },
+        {
+          "port": 53,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "DNS lookups too large for UDP (default port)",
+          "optional": false
+        }
       ],
       "warning": "Spamhaus PBL lists end-user ranges that should not send mail directly: a listing there only matters for an address that runs a mail server.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ip_blacklist/"
@@ -2201,6 +2445,22 @@
         "In Jellyfin, open Dashboard → Advanced → API Keys → + and name the key as follows, then copy it.\nDumbMonit",
         "In DumbMonit, enter Jellyfin's address and paste the key."
       ],
+      "ports": [
+        {
+          "port": 8096,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 8920,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the https scheme on Jellyfin's own HTTPS port",
+          "optional": true
+        }
+      ],
       "warning": "Jellyfin keys cannot be limited, so this one has every right on the server: keep it to DumbMonit and revoke it on the same page if it leaks.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/jellyfin/"
     },
@@ -2296,6 +2556,15 @@
         "Bind the role to the service account.\nkubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit",
         "Create a token that does not expire, then print the token and the cluster CA in base64.\necho '{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"dumbmonit-token\",\"namespace\":\"kube-system\",\"annotations\":{\"kubernetes.io/service-account.name\":\"dumbmonit\"}},\"type\":\"kubernetes.io/service-account-token\"}' | kubectl apply -f -\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.token}' | base64 -d\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\\.crt}'",
         "In DumbMonit, enter the API server address (for example https://k3s.lan:6443), paste the token as Service account token and the CA as Cluster CA certificate."
+      ],
+      "ports": [
+        {
+          "port": 6443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API server (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "get, list on nodes, pods, events\nCluster-wide, read-only",
@@ -2435,6 +2704,15 @@
         "In DumbMonit, enter Loki's address, for example \"loki.lan\" or \"https://logs.lan/loki\" behind a reverse proxy.",
         "With Loki split into components (simple scalable or microservices), add at least the write path."
       ],
+      "ports": [
+        {
+          "port": 3100,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Loki HTTP API (default)",
+          "optional": false
+        }
+      ],
       "warning": "Refused lines are the failure to watch: when Loki refuses a line (too old, over a rate or stream limit, too long), the sender usually drops the batch and Grafana only shows a gap in the logs.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/loki/"
     },
@@ -2534,6 +2812,22 @@
         "No API key is needed: leave the credential on No key.",
         "Tick the blocklists to query under Blocklists, and add any other DNSBL zone under Custom lists.",
         "If the monitor shows \"Spamhaus refuses this resolver\", set \"Resolver\" to your own recursive resolver, or choose the free Spamhaus DQS key as the credential.\nhttps://www.spamhaus.com/data-access/free-data-query-service/"
+      ],
+      "ports": [
+        {
+          "port": 53,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "DNS lookups of the blocklists (default port)",
+          "optional": false
+        },
+        {
+          "port": 53,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "DNS lookups too large for UDP (default port)",
+          "optional": false
+        }
       ],
       "warning": "A blocklist that does not answer is shown as unknown, never as clean.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/mail_blacklist/"
@@ -2799,6 +3093,85 @@
         "In DumbMonit, enter the server address, then the account's full email address and its password.",
         "To check more ports than SMTP, IMAP and webmail, set the Services option to a list like this one.\nsmtp,msa,imap,pop3,imaps,webmail"
       ],
+      "ports": [
+        {
+          "port": 25,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "SMTP check (default)",
+          "optional": false
+        },
+        {
+          "port": 143,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "IMAP check (default)",
+          "optional": false
+        },
+        {
+          "port": 3000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Webmail check (default)",
+          "optional": false
+        },
+        {
+          "port": 444,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with an XML API account (HTTPS, default)",
+          "optional": true
+        },
+        {
+          "port": 1000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the XML API over HTTP",
+          "optional": true
+        },
+        {
+          "port": 587,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with msa in the Services option",
+          "optional": true
+        },
+        {
+          "port": 465,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with smtps in the Services option",
+          "optional": true
+        },
+        {
+          "port": 110,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with pop3 in the Services option",
+          "optional": true
+        },
+        {
+          "port": 995,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with pop3s in the Services option",
+          "optional": true
+        },
+        {
+          "port": 993,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with imaps in the Services option",
+          "optional": true
+        },
+        {
+          "port": 5222,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with xmpp in the Services option",
+          "optional": true
+        }
+      ],
       "permissions": [
         "XML API access for the account\nThe lowest level your MDaemon accepts",
         "XML API address restriction\nAllow the address DumbMonit connects from"
@@ -2915,6 +3288,22 @@
         "IP → Services: enable www-ssl and pick a certificate (create one under System → Certificates).",
         "Optional, to hear about new RouterOS versions: System → Scheduler → Add, interval 1d, start time startup, with this On Event script.\n/system package update check-for-updates once",
         "In DumbMonit, enter the router's address (192.168.88.1) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "REST API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
       ],
       "permissions": [
         "read\nRead the router's state",
@@ -3052,6 +3441,15 @@
         "In a replica set, add every member as its own monitor.",
         "Tick TLS if the server requires it."
       ],
+      "ports": [
+        {
+          "port": 27017,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "MongoDB protocol (default port, plain or TLS)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "clusterMonitor (built-in role)\nRead server and replica set status"
       ],
@@ -3173,6 +3571,22 @@
         "If the broker requires an account, fill in its user and password.",
         "Optional: name a topic, to check that the account may still subscribe to it.",
         "Optional: tick Expect a retained message only for a topic that carries one, typically an availability topic."
+      ],
+      "ports": [
+        {
+          "port": 1883,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "MQTT (default port)",
+          "optional": false
+        },
+        {
+          "port": 8883,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the Encrypted connection option (MQTT over TLS, default)",
+          "optional": true
+        }
       ],
       "permissions": [
         "Subscribe (read) on the topic you name\nOnly if you name a topic"
@@ -3342,6 +3756,15 @@
         "In DumbMonit, enter the server, for example db.home.lan:3307 (port 3306 by default), then the account's user and password.",
         "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it."
       ],
+      "ports": [
+        {
+          "port": 3306,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "MySQL or MariaDB (default port)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "USAGE (no privilege)\nConnect and run SELECT 1, nothing more"
       ],
@@ -3472,6 +3895,22 @@
         "If occ says serverinfo is disabled, enable the Monitoring app: profile menu → Apps → Monitoring → Enable.",
         "In DumbMonit, enter the address you open Nextcloud with and paste the token."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the http scheme option",
+          "optional": true
+        }
+      ],
       "warning": "Use an address listed in Nextcloud's trusted domains, or Nextcloud refuses the request.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nextcloud/"
     },
@@ -3581,6 +4020,22 @@
         "Open http://nginx.lan/basic_status from the DumbMonit host: it must show Active connections.",
         "In DumbMonit, enter the Nginx host, for example nginx.lan, and the path if it is not /basic_status.",
         "If NGINX Plus is installed, tick Read the NGINX Plus API to add upstream health and per-zone counters."
+      ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Status page (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only if the status page is served over HTTPS",
+          "optional": true
+        }
       ],
       "warning": "stub_status only counts connections and requests: a configuration error in a server block or an unreachable backend does not show there.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nginx/"
@@ -3716,6 +4171,22 @@
         "From the same menu, choose Change Password and set a password.",
         "In DumbMonit, enter the Nginx Proxy Manager host with its web port, for example npm.lan:81, and that email and password."
       ],
+      "ports": [
+        {
+          "port": 81,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Admin API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the certificate check (HTTPS port of the hosts, default)",
+          "optional": true
+        }
+      ],
       "permissions": [
         "Item Visibility: All Items\nSee every host, not only its own",
         "Proxy Hosts, Redirection Hosts, 404 Hosts, Streams: View Only\nRead the list of hosts",
@@ -3824,6 +4295,15 @@
         "In the address, write the server's name or IP address: \"pool.ntp.org\" or \"192.168.1.1\".",
         "Lower \"Tolerated offset\" in the options to be warned earlier than 100 ms."
       ],
+      "ports": [
+        {
+          "port": 123,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "NTP request (default port)",
+          "optional": false
+        }
+      ],
       "warning": "Keep the DumbMonit host itself in sync: its own drift is added to the measured offset.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#ntp"
     },
@@ -3931,6 +4411,15 @@
         "Optional, to name this client: add a user without actions or instcmds to upsd.users, with a long random password, and restart upsd.\n[dumbmonit]\npassword = a-long-random-password",
         "In DumbMonit, enter the NUT server's address (nas.lan): every UPS it publishes is watched."
       ],
+      "ports": [
+        {
+          "port": 3493,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "upsd (default)",
+          "optional": false
+        }
+      ],
       "warning": "DumbMonit watches the UPS; it shuts nothing down: the machines it powers still need their own NUT client (upsmon) to shut down cleanly.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/nut/"
     },
@@ -4016,6 +4505,15 @@
         "In Prism Central, open Admin Center → IAM → Identities and add a local user with a long random password.\ndumbmonit",
         "Open Admin Center → IAM → Authorization Policies and create a policy with the Prism Viewer role, for all entities, assigned to that user.",
         "In DumbMonit, enter the Prism Central address (for example prism-central.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 9440,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Prism Central API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Prism Viewer, all entities\nSees clusters, hosts, VMs, storage containers, alerts"
@@ -4105,6 +4603,15 @@
         "Recommended: protect it with a password, put in a file readable by the OpenVPN process alone and added as a third argument.\nmanagement 0.0.0.0 7505 /etc/openvpn/management-password",
         "In DumbMonit, enter the server's address (vpn.lan, port 7505) and the management password if one is set."
       ],
+      "ports": [
+        {
+          "port": 7505,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Management interface (default)",
+          "optional": false
+        }
+      ],
       "warning": "Anyone who reaches the management port and knows the password can disconnect clients and reconfigure the running server: allow only the DumbMonit host in the firewall and set a password.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/openvpn/"
     },
@@ -4182,6 +4689,22 @@
         "System → Access → Users → Add: name the user as follows, generate a password, and make it a member of that group.\ndumbmonit",
         "Edit the user, click + under API keys, and save the downloaded file: it holds the key and the secret, shown only once.",
         "In DumbMonit, enter the firewall address (192.168.1.1 or fw.lan:8443), the key as API key and the secret as API secret."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
       ],
       "permissions": [
         "Lobby: Dashboard\nSystem, memory, disks, state table (required)",
@@ -4436,6 +4959,22 @@
         "Log in as that user, open the user menu → My Profile and generate its API token (circular arrow button).",
         "In DumbMonit, enter Paperless-ngx's address and paste the token."
       ],
+      "ports": [
+        {
+          "port": 8000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the https scheme behind a reverse proxy",
+          "optional": true
+        }
+      ],
       "permissions": [
         "View on PaperlessTask\nFailed imports",
         "View on SystemMonitoring\nHealth of database, Redis, Celery and index",
@@ -4579,6 +5118,15 @@
         "Add a second permission with Add → API Token Permission: path /, token dumbmonit@pbs!monitor, role Audit. A token has its own permissions, so both are needed.",
         "Optional, to see pull sync jobs and the tape tier: repeat both permissions with role RemoteAudit on path /remote and role TapeAudit on path /tape.",
         "In DumbMonit, enter the server address (for example pbs.lan:8007), the Token ID and the Secret."
+      ],
+      "ports": [
+        {
+          "port": 8007,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Audit on /\nRead-only: datastores, snapshots, tasks, node status",
@@ -4805,6 +5353,15 @@
         "Add a second permission with Add → API Token Permission: path /, token dumbmonit@pdm!monitor, role Auditor. A token has its own permissions, so both are needed.",
         "In DumbMonit, enter the console address (for example dc.lan:8443), the Token ID and the Secret."
       ],
+      "ports": [
+        {
+          "port": 8443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "Auditor on /\nRead-only: instances, tasks, console health",
         "Resource.Modify on /resource (optional)\nOnly for the update summary of the instances"
@@ -5000,6 +5557,22 @@
         "Create the key as dumbmonit, copy the key value of the answer, then remove the POST privilege again.\ncurl -k -u dumbmonit -X POST -H 'Content-Type: application/json' -d '{\"descr\":\"DumbMonit\"}' https://pfsense.lan/api/v2/auth/key",
         "In DumbMonit, enter the pfSense address (pfsense.lan) and paste the key as API key."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
+      ],
       "permissions": [
         "/api/v2/status/system GET\nCPU, memory, disk, temperature",
         "/api/v2/status/gateways GET\nGateway state, delay and loss",
@@ -5107,6 +5680,22 @@
         "Click Configure app password, copy the password shown, then click Enable new app password.",
         "Check that Settings → All settings → Webserver and API → webserver.api.app_sudo is off, its default.",
         "In DumbMonit, enter Pi-hole's address and paste the app password, or pick No password if the web interface has none."
+      ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the https scheme option",
+          "optional": true
+        }
       ],
       "warning": "Pi-hole v6 or later is required; the app password can still pause blocking and edit lists through the API, so keep it for DumbMonit only.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pihole/"
@@ -5323,6 +5912,15 @@
         "In DumbMonit, enter the server's address and pick No token.",
         "If DumbMonit is not on your network, use the owner's token instead: open a movie → ⋯ → Get Info → View XML and copy X-Plex-Token from the page address."
       ],
+      "ports": [
+        {
+          "port": 32400,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTP, default)",
+          "optional": false
+        }
+      ],
       "warning": "The token is your Plex account's and can manage the server and every library: prefer the allowed network when DumbMonit is on your own network.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/plex/"
     },
@@ -5447,6 +6045,15 @@
         "Open Configuration → User Management → Users → Add, enter the user name below, a long password used nowhere else, and tick Enabled.\ndumbmonit@pmg",
         "Set its Role to Audit, then click Add.",
         "In DumbMonit, enter the gateway address (for example mail.lan:8006), then this user name, realm included, and its password."
+      ],
+      "ports": [
+        {
+          "port": 8006,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Audit role\nRead-only: status, queues, statistics, quarantine counts"
@@ -5650,6 +6257,15 @@
         "In DumbMonit, enter the server, for example db.home.lan:5433 (port 5432 by default), then the role's user and password.",
         "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it."
       ],
+      "ports": [
+        {
+          "port": 5432,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "PostgreSQL (default port)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "LOGIN (role attribute)\nConnect only, no other privilege"
       ],
@@ -5816,6 +6432,15 @@
         "Copy the Token ID and the Secret into DumbMonit's Token ID and Secret fields. The secret is shown only once.",
         "Optional, for the pending-updates count: Datacenter → Permissions → Roles → Create a role with only Sys.Modify, then add it as a User Permission on path /nodes.",
         "In DumbMonit, enter the address of any node (port 8006 by default)."
+      ],
+      "ports": [
+        {
+          "port": 8006,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "PVEAuditor on /\nRead-only: nodes, storage, VMs, containers, backups, guest agent",
@@ -6157,6 +6782,15 @@
         "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
         "To report a failure at once, append ?status=down&msg=... to the URL."
       ],
+      "ports": [
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_server",
+          "purpose": "Heartbeat call (default port, 443 behind a proxy)",
+          "optional": false
+        }
+      ],
       "warning": "Call the URL at the end of the job, after the part that matters: a call at the top would report a success even when the job fails.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/push/"
     },
@@ -6232,6 +6866,22 @@
         "Go to Admin → Users → Add a user, name it dumbmonit, set a password and the tag monitoring, then click Add user.",
         "Click dumbmonit in the list, and under Set permission pick each virtual host, set Configure, Write and Read to ^$, then click Set permission.",
         "In DumbMonit, enter the address of one node, for example rabbit.lan, or https://rabbit.lan:15671 when the API is served over TLS."
+      ],
+      "ports": [
+        {
+          "port": 15672,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Management API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 15671,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only if the API is served over TLS (HTTPS, default)",
+          "optional": true
+        }
       ],
       "permissions": [
         "monitoring (user tag)\nRead nodes, alarms and queues",
@@ -6351,6 +7001,15 @@
         "Create a local user named as follows, with a long password used nowhere else.\ndumbmonit",
         "Give it the read-only right of your vendor, listed below.",
         "In DumbMonit, enter the controller address (bmc.lan or 10.0.0.50) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Redfish API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Supermicro: privilege User, account type Redfish\nConfiguration → Users → Add User",
@@ -6507,6 +7166,15 @@
         "In DumbMonit, enter the server address, for example cache.lan:6380, then the user and its password.",
         "Tick TLS if the server only accepts TLS on that port (tls-port)."
       ],
+      "ports": [
+        {
+          "port": 6379,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Redis protocol (default port, plain or TLS)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "+info\nRead the server statistics (INFO)",
         "+ping\nCheck that the server answers",
@@ -6607,6 +7275,36 @@
         "Sign in as that account, open Setup/Users → Accounts → API Keys and create a key with an expiry date.",
         "In DumbMonit, enter the gateway address and paste the key.",
         "To check more ports than SMTP and the web interface, set the Services option to a list like this one.\nsmtp,web_https"
+      ],
+      "ports": [
+        {
+          "port": 25,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "SMTP check (default)",
+          "optional": false
+        },
+        {
+          "port": 4000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web interface check (default)",
+          "optional": false
+        },
+        {
+          "port": 4443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with an API key (HTTPS, default) or web_https in the Services option",
+          "optional": true
+        },
+        {
+          "port": 465,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with smtps in the Services option",
+          "optional": true
+        }
       ],
       "permissions": [
         "Domain Administrator\nUse Global Administrator if the counters stay empty"
@@ -6739,6 +7437,29 @@
         "Pick the encryption: STARTTLS for port 587, TLS for port 465, None for a relay on your own network on port 25.",
         "Optional: fill in an account, to check that the relay still accepts it (a refused password is not reported as an outage).",
         "Optional: name an Expected extension, such as STARTTLS, to be warned when the relay stops advertising it."
+      ],
+      "ports": [
+        {
+          "port": 587,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Submission with STARTTLS (default)",
+          "optional": false
+        },
+        {
+          "port": 465,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with TLS encryption (SMTPS)",
+          "optional": true
+        },
+        {
+          "port": 25,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with no encryption (relay on port 25)",
+          "optional": true
+        }
       ],
       "permissions": [
         "A mail account that may log in (AUTH)\nOnly if you fill in a credential"
@@ -6915,14 +7636,15 @@
           {
             "key": "privacy_protocol",
             "label": "Privacy protocol",
-            "help": "Encryption of the SNMP traffic. Ignored when the privacy passphrase is empty.",
+            "help": "Encryption of the SNMP traffic. \"none\", or a blank passphrase on a new monitor, means authentication without encryption.",
             "placeholder": "",
             "input": "select",
             "choices": [
               "aes128",
               "aes192",
               "aes256",
-              "des"
+              "des",
+              "none"
             ],
             "required": false
           },
@@ -6947,6 +7669,15 @@
         "Enable SNMP v2c and note the read-only community (public on many devices).",
         "If the device filters by address, allow this server's address.",
         "In DumbMonit, enter the address and the community: the rest is detected automatically."
+      ],
+      "ports": [
+        {
+          "port": 161,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "SNMP (default)",
+          "optional": false
+        }
       ],
       "warning": "A community is not encrypted on the network: on a shared network, prefer SNMP v3, which authenticates and encrypts.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/snmp/"
@@ -7001,6 +7732,15 @@
         "Authentication → Users: add a user named dumbmonit, of type Administrator, with that profile and a long random password.\ndumbmonit",
         "Backup & firmware → API (Administration → API access from SFOS 22): turn on the API configuration and add the DumbMonit server's address to the allowed IP addresses.",
         "In DumbMonit, enter the firewall address (sophos.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 4444,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Administration API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Device access profile: Read-only on every permission\nThe firewall enforces it on the API too"
@@ -7093,6 +7833,22 @@
         "Assign application permissions: Deny every application except DSM, and Active Backup for Business if you want its tasks read.",
         "Keep two-step verification off for this account (Control Panel → Security → Account).",
         "In DumbMonit, enter the NAS address (HTTPS, port 5001 by default) and this account's user name and password."
+      ],
+      "ports": [
+        {
+          "port": 5001,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "DSM API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 5000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
       ],
       "permissions": [
         "Group: administrators\nDSM's storage API answers no other account",
@@ -7251,6 +8007,15 @@
         "Copy the client ID and the client secret (tskey-client-...): the secret is shown once.",
         "In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret; leave the Tailnet option empty."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Tailscale API (HTTPS, api.tailscale.com)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "devices:core:read\nLists the devices of the tailnet, changes nothing"
       ],
@@ -7404,6 +8169,15 @@
         "If you reach the service by its IP address, enter the certificate's name in \"Server name (SNI)\".",
         "For a certificate from your own authority, tick \"Accept an unverifiable certificate\"."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "TLS handshake (default port, the one in the address)",
+          "optional": false
+        }
+      ],
       "warning": "For a website, the \"Website or web API\" type already reads the certificate: use this type for services that do not speak HTTP.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#tls"
     },
@@ -7510,6 +8284,15 @@
         "Optional: protect /api and /metrics with a basicAuth middleware on an entry point of your own, and create the user with htpasswd.\nhtpasswd -nbB dumbmonit 'a-long-password'",
         "In DumbMonit, enter the Traefik host, for example traefik.lan, with the port of that entry point if it is not 8080."
       ],
+      "ports": [
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API and metrics (HTTP, default)",
+          "optional": false
+        }
+      ],
       "warning": "Port 8080 answers without a password: filter it so that only the DumbMonit host reaches it.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/traefik/"
     },
@@ -7613,6 +8396,22 @@
         "Open Credentials → Users → API Keys → Add, pick the dumbmonit user, name the key and copy it: TrueNAS shows it only once.",
         "On TrueNAS 24.10, the path is the user menu at the top right → API Keys → Add.",
         "In DumbMonit, enter the NAS address (for example nas.lan) and paste the key. Keep HTTPS."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web UI and API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
       ],
       "permissions": [
         "Local Administrator (group privilege)\nThe only privilege the REST API accepts for a key"
@@ -7802,6 +8601,22 @@
         "In DumbMonit, enter the address (unifi.lan, or unifi.lan:8443 for a self-hosted server) and paste the key or the account.",
         "If the network is not the default site, set the Site option to the short name shown after /manage/ or /network/ in the address bar."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 8443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with a self-hosted UniFi Network Server",
+          "optional": true
+        }
+      ],
       "permissions": [
         "View Only (UniFi Network role)\nReads everything and changes nothing"
       ],
@@ -7916,6 +8731,22 @@
         "Copy the key: Unraid shows it only once.",
         "In DumbMonit, enter the Unraid address (for example tower.lan), paste the key as API key and choose https if the web interface is served over HTTPS."
       ],
+      "ports": [
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web UI and GraphQL API (HTTP, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTPS protocol option",
+          "optional": true
+        }
+      ],
       "permissions": [
         "Viewer role\nReads everything, changes nothing"
       ],
@@ -8020,6 +8851,15 @@
         "In the Veeam console, open the main menu > Users and Roles > Security, click Add, enter the account (for example VBR01\\dumbmonit) and give it the Veeam Backup Viewer role only.",
         "In DumbMonit, enter the backup server address (for example vbr.lan) and the account as HOST\\dumbmonit or DOMAIN\\dumbmonit, with its password.",
         "Tick Accept an unverifiable certificate unless you installed your own: the REST API (port 9419) uses a self-signed one."
+      ],
+      "ports": [
+        {
+          "port": 9419,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "REST API (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "Veeam Backup Viewer\nReads jobs, sessions, repositories and restore points"
@@ -8169,6 +9009,15 @@
         "If it runs with -httpAuth.username and -httpAuth.password, pick Username / password below; behind vmauth or a proxy that expects a bearer token, pick Bearer token.",
         "In DumbMonit, enter the server address, for example \"victorialogs.lan\" or \"http://10.0.0.6:9428\"."
       ],
+      "ports": [
+        {
+          "port": 9428,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "VictoriaLogs HTTP API (default)",
+          "optional": false
+        }
+      ],
       "warning": "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (10 MB by default) VictoriaLogs turns read-only and refuses every new log line. DumbMonit shows the headroom left and warns under 10%.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/victoriametrics/"
     },
@@ -8293,6 +9142,15 @@
         "If it runs with -httpAuth.username and -httpAuth.password, pick Username / password below; behind vmauth or a proxy that expects a bearer token, pick Bearer token.",
         "In DumbMonit, enter the server address, for example \"victoriametrics.lan\" or \"http://10.0.0.5:8428\"."
       ],
+      "ports": [
+        {
+          "port": 8428,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "VictoriaMetrics HTTP API (default)",
+          "optional": false
+        }
+      ],
       "warning": "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (100 MB by default) VictoriaMetrics turns read-only and refuses every new sample. DumbMonit shows the headroom left and warns under 10%.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/victoriametrics/"
     },
@@ -8394,6 +9252,15 @@
         "On a standalone ESXi host instead: in the host client, Manage → Security & users → Users → Add user dumbmonit, then Host → Actions → Permissions → Add user with role Read-only.",
         "In DumbMonit, enter the vCenter or host address, with the user dumbmonit@vsphere.local on a vCenter or dumbmonit on a host. Add only the vCenter when one manages the hosts."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "vSphere API (HTTPS, default)",
+          "optional": false
+        }
+      ],
       "permissions": [
         "Read-only, propagated to children\nSees hosts, VMs, datastores and alarms"
       ],
@@ -8478,6 +9345,22 @@
         "To follow a whole site or section, set \"Scope\" to \"site\".",
         "List lines that change at every visit (a clock, a counter) in \"Ignore lines\", as regular expressions.",
         "For a screenshot of each version, follow the \"Screenshots\" section of this page."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Page fetch over HTTPS (default port)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with an http:// address (default port)",
+          "optional": true
+        }
       ],
       "warning": "Only the text the server sends is compared: pages drawn by JavaScript or behind a login are not followed.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/webchange/"
@@ -8661,6 +9544,22 @@
         "In the address, paste the page to check, usually the home page.",
         "Optionally fill in \"Expected text\" with a phrase the page must always show.",
         "To add many sites at once, import a CSV file from the monitor list."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Page fetch over HTTPS (default port)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with an http:// address (default port)",
+          "optional": true
+        }
       ],
       "warning": "Only what the server sends is read: for a page drawn by JavaScript, set \"Blank page below\" to 0.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/website/"
@@ -8972,6 +9871,22 @@
         "Optional: fill in Expected content with a fragment of the first frame the server sends by itself.",
         "Optional: if the endpoint says nothing until spoken to, put a message in Frame to send, and what the answer must contain in Expected content."
       ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "WSS (default)",
+          "optional": false
+        },
+        {
+          "port": 80,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with a ws:// address",
+          "optional": true
+        }
+      ],
       "warning": "The check hangs up within a second: a connection that a firewall or proxy cuts after thirty seconds looks healthy here.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#websocket"
     },
@@ -9136,6 +10051,15 @@
         "Register the account as a subject and note the UUID it prints.\nxe subject-add subject-name=dumbmonit",
         "Give that subject the built-in read-only role, with the UUID.\nxe subject-role-add uuid=SUBJECT_UUID role-name=read-only",
         "In DumbMonit, enter the address of the pool coordinator (for example xcp01.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "XAPI (HTTPS, default)",
+          "optional": false
+        }
       ],
       "permissions": [
         "read-only role (XAPI)\nSees hosts, VMs, storage repositories and HA"

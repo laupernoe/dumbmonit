@@ -14,6 +14,14 @@ souvenir de qui était connecté il y a cinq minutes ; il rapporte seulement qui
 est connecté maintenant, plus le nombre de clients comme métrique à tracer dans
 le temps.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 7505 | TCP | Interface de gestion (par défaut) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_openvpn_`.

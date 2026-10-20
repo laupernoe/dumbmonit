@@ -1,10 +1,13 @@
 <script lang="ts">
 	/**
 	 * Settings → Wall widgets (admins). Off by default. Independent widgets,
-	 * each with its toggle and its few choices, and the wall's layout: which
-	 * zone each widget sits in (top bar, bottom bar, right column, hidden), in
-	 * what order (`WallLayoutEditor`). Every widget turned on shows at once:
+	 * each with its toggle and its few choices, and the wall's layout: a scale
+	 * model of the screen where each widget is dropped in the zone and place it
+	 * should have (`WallLayoutEditor`). Every widget turned on shows at once:
 	 *
+	 * - news (RSS/Atom feeds, `WallNewsFields`): their own endpoint, saved
+	 *   together with the rest by the one Save button;
+	 * - a free message (plain text, one short line);
 	 * - coins (CoinGecko): pick among the main ones, or add any CoinGecko id;
 	 *   display currency; an optional free Demo key;
 	 * - weather (Open-Meteo): find a city; the wall shows its icon and
@@ -35,12 +38,15 @@
 	import { Button, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import WallLayoutEditor from './WallLayoutEditor.svelte';
+	import WallNewsFields from './WallNewsFields.svelte';
+	import { DEFAULT_NEWS_SETTINGS, getNewsSettings, saveNewsSettings, type NewsSettings } from '#lib/api/wallNews.js';
 	import { resolveLayout } from '#lib/wall/layout.js';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
 
 	const MAX_COINS = 10;
 	const MAX_CURRENCIES = 10;
 	const MAX_PEOPLE = 30;
+	const MAX_TEXT = 200;
 
 	let loading = $state(true);
 	let error = $state<unknown>(null);
@@ -61,8 +67,11 @@
 	let anthropicKey = $state<string | null>(null);
 	let openaiKey = $state<string | null>(null);
 	let symbolsText = $state('');
+	/** The News widget's feeds live behind their own endpoint (older servers: none, and the widget hides). */
+	let news = $state<NewsSettings>({ ...DEFAULT_NEWS_SETTINGS, feeds: [] });
+	let newsAvailable = $state(true);
 
-	const tracker = useDirtyTracker(() => ({ form, symbolsText, finnhubKey, coingeckoKey, anthropicKey, openaiKey }));
+	const tracker = useDirtyTracker(() => ({ form, news, symbolsText, finnhubKey, coingeckoKey, anthropicKey, openaiKey }));
 
 	let customCoin = $state('');
 	let placeQuery = $state('');
@@ -85,6 +94,7 @@
 			fx: saved.fx,
 			cve: saved.cve,
 			ai: saved.ai,
+			text: saved.text ?? { enabled: false, content: '' },
 			layout: resolveLayout(saved.layout)
 		});
 		symbolsText = saved.stocks.symbols.join(', ');
@@ -98,8 +108,17 @@
 		loading = true;
 		error = null;
 		try {
-			const [saved, offered] = await Promise.all([getWidgetSettings(signal), getWidgetCatalog(signal)]);
+			const [saved, offered, savedNews] = await Promise.all([
+				getWidgetSettings(signal),
+				getWidgetCatalog(signal),
+				getNewsSettings(signal).catch((cause) => {
+					if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
+					return null;
+				})
+			]);
 			adopt(saved);
+			newsAvailable = savedNews !== null;
+			news = savedNews ? { ticker: savedNews.ticker, feeds: savedNews.feeds.map((feed) => ({ ...feed })) } : { ...DEFAULT_NEWS_SETTINGS, feeds: [] };
 			hasFinnhub = saved.has_finnhub_key;
 			hasCoingecko = saved.has_coingecko_key;
 			hasAnthropic = saved.has_anthropic_key;
@@ -226,6 +245,10 @@
 		if (openaiKey !== null) secrets.openai = openaiKey.trim();
 		if (Object.keys(secrets).length) payload.secrets = secrets;
 		try {
+			if (newsAvailable) {
+				const savedNews = await saveNewsSettings(news);
+				news = { ticker: savedNews.ticker, feeds: savedNews.feeds.map((feed) => ({ ...feed })) };
+			}
 			const saved = await saveWidgetSettings(payload);
 			adopt(saved);
 			hasFinnhub = saved.has_finnhub_key;
@@ -449,6 +472,36 @@
 					</div>
 				</div>
 
+				<!-- News -->
+				{#if newsAvailable}
+					<div class="space-y-4 border-t border-line pt-5">
+						{@render header('widgets-news', m.settings_news_ticker(), m.settings_news_ticker_hint(), {
+							get: () => news.ticker,
+							set: (v) => (news.ticker = v)
+						})}
+						<WallNewsFields bind:form={news} {saving} />
+					</div>
+				{/if}
+
+				<!-- Free message -->
+				<div class="space-y-4 border-t border-line pt-5">
+					{@render header('widgets-text', m.settings_widgets_text(), m.settings_widgets_text_hint(), {
+						get: () => form.text.enabled,
+						set: (v) => (form.text.enabled = v)
+					})}
+					<Field label={m.settings_widgets_text_content()} for="widgets-text-content" help={m.settings_widgets_text_help({ count: form.text.content.length, max: MAX_TEXT })}>
+						<input
+							id="widgets-text-content"
+							type="text"
+							class="input"
+							maxlength={MAX_TEXT}
+							autocomplete="off"
+							placeholder={m.settings_widgets_text_placeholder()}
+							bind:value={form.text.content}
+						/>
+					</Field>
+				</div>
+
 				<!-- Coins -->
 				<div class="space-y-4 border-t border-line pt-5">
 					{@render header('widgets-crypto', m.settings_widgets_crypto(), m.settings_widgets_crypto_hint(), {
@@ -627,6 +680,8 @@
 						disabled={saving}
 						states={{
 							weather: form.weather.enabled ? 'on' : 'off',
+							news: news.ticker ? 'on' : 'off',
+							text: form.text.enabled ? 'on' : 'off',
 							crypto: form.crypto.enabled ? 'on' : 'off',
 							stocks: keyed(form.stocks.enabled, hasFinnhub, finnhubKey),
 							fx: form.fx.enabled ? 'on' : 'off',

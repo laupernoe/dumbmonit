@@ -17,6 +17,17 @@ asks for the replication rights that would expose secrets.
 One monitor covers the whole domain: point it at one domain controller and
 DumbMonit finds the others in the configuration partition.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 636 | TCP | LDAPS (default), also to the other domain controllers |
+| 389 | TCP | Only with the StartTLS or plain LDAP option |
+| 53 | UDP | Only with the DNS servers option |
+| 53 | TCP | Only with the DNS servers option |
+
 ## What LDAP can and cannot tell
 
 LDAP shows the directory as it is, not the logs of what happened in it. In

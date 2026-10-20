@@ -5,6 +5,14 @@ that stop responding, are left in maintenance mode or report a red health,
 virtual machines and their VMware Tools, datastores filling up or becoming
 inaccessible, and the alarms vSphere itself raised.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | vSphere API (HTTPS, default) |
+
 DumbMonit reads vSphere with a dedicated user holding the built-in
 **Read-only** role. It never powers a VM on or off, never enters maintenance
 mode and never acknowledges an alarm.

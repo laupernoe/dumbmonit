@@ -13,6 +13,14 @@ disappears from the next reading. DumbMonit does not try to remember who was
 connected five minutes ago; it reports only who is connected now, plus the
 client count as a metric worth graphing over time.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 7505 | TCP | Management interface (default) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_openvpn_`.

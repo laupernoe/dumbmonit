@@ -4,6 +4,15 @@ Whether Paperless-ngx still imports what it is sent: the health of its
 database, Redis, Celery workers, search index, classifier and sanity check,
 failed tasks, updates, disk space and the number of documents.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8000 | TCP | API (HTTP, default) |
+| 443 | TCP | Only with the https scheme behind a reverse proxy |
+
 DumbMonit reads Paperless-ngx's REST API with a **dedicated user that can read
 no document**: three view permissions give it the task list, the system status
 and the global counts, nothing else.

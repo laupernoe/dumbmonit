@@ -279,6 +279,15 @@ impl Collector for PdmCollector {
         }
         metrics::mark_versions_behind(&mut remotes);
 
+        // Option activée mais sans résultat : la console a refusé (ou ne connaît pas)
+        // le chemin, faute de `Resource.Modify`. Une note, ni erreur ni alerte.
+        if options.remote_updates && remote_updates.is_none() {
+            samples.push(metrics::feature_skipped_sample(
+                "remote_updates",
+                "Resource.Modify on /resource",
+                ts_ms,
+            ));
+        }
         if let Some(summary) =
             settle(remote_updates, &mut errors, target.id, "/remotes/updates/summary")
         {

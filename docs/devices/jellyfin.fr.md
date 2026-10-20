@@ -5,6 +5,15 @@ tâches planifiées qui ont échoué à leur dernière exécution (le scan de
 bibliothèque en premier), extensions qui ne se chargent plus, un redémarrage
 en attente, et ce qui joue en ce moment, transcodé ou non.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8096 | TCP | API (HTTP, par défaut) |
+| 8920 | TCP | Seulement avec le schéma https sur le port HTTPS propre à Jellyfin |
+
 DumbMonit lit l'API de Jellyfin avec une **clé d'API** créée dans le tableau
 de bord. Il ne démarre jamais de tâche, n'arrête jamais une lecture et ne
 change jamais un réglage.

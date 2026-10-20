@@ -36,6 +36,15 @@ deux prennent des sélecteurs simples, séparés par des virgules : une balise
 (`div.notice[role=alert]`). Les descendants (`main p`) et autres combinateurs
 ne sont pas pris en charge.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | Lecture de la page en HTTPS (port par défaut) |
+| 80 | TCP | Seulement avec une adresse http:// (port par défaut) |
+
 ## Page ou site
 
 **Page** (le défaut) lit l'adresse de la surveillance et rien d'autre. Ça peut

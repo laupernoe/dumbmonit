@@ -5,6 +5,14 @@ Backup Server : quelles instances elle atteint, tout le parc d'un coup
 d'œil, les tâches qui ont échoué n'importe où, et la propre santé de la
 console.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8443 | TCP | API (HTTPS, par défaut) |
+
 !!! warning "Testé contre une instance de test seulement"
 
     Cette intégration a été construite et vérifiée contre un Proxmox
@@ -93,6 +101,7 @@ Toutes les métriques sont préfixées `dumbmonit_pdm_`.
 | Hôte de la console | `node_cpu_percent`, `node_cpu_count`, `node_iowait_percent`, `node_load1`, `node_memory_used_bytes`, `node_memory_total_bytes`, `node_memory_used_percent`, `node_swap_used_bytes`, `node_swap_total_bytes`, `node_rootfs_used_bytes`, `node_rootfs_total_bytes`, `node_rootfs_percent`, `node_uptime_seconds`, `node_kernel_info`, `node_updates_pending`, `version_info` | |
 | Certificats de la console | `node_certificate_expiry_days` (négatif une fois expiré) | `file` (`proxy.pem`) |
 | Abonnement | `subscription_active` (label `status`), `subscription_active_nodes`, `subscription_total_nodes` | |
+| Options sautées | `feature_skipped_info` : 1 tant qu'un appel facultatif est refusé (403) faute de droit, absente sinon. La page du moniteur l'affiche en note discrète qui nomme le droit ; ce n'est ni une erreur de sonde ni une alerte | `feature`, `privilege` |
 | Collection | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 Une tâche qui se termine en `WARNINGS: n` compte comme réussie. Seul

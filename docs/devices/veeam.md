@@ -5,6 +5,14 @@ failed or ended with a warning, failed sessions of the last 24 hours,
 repositories filling up, the license, and — per protected computer or VM —
 its last successful backup.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 9419 | TCP | REST API (HTTPS, default) |
+
 DumbMonit logs in with a Windows account that holds only the Veeam Backup
 Viewer role (OAuth2 password grant on `/api/oauth2/token`, port 9419) and
 keeps the token for its fifteen-minute lifetime. Every call carries the

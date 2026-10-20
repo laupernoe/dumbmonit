@@ -30,6 +30,14 @@ licence et le firmware disponible.
     de licence et de firmware sont les moins documentées : dites-nous ce
     qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API d'administration (HTTPS, par défaut) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_fortigate_`.

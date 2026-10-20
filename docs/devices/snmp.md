@@ -4,6 +4,14 @@ The most universal type: almost every piece of network hardware speaks SNMP.
 Switches, routers, NAS, UPS and printers all qualify. SNMP v1, v2c and v3 are
 supported.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 161 | UDP | SNMP (default) |
+
 ## What it watches
 
 The collection profile is detected automatically from the device's

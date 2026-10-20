@@ -5,6 +5,15 @@ disks disabled, missing or reporting read errors, parity checks that found
 errors or have not run for weeks, cache pools filling up, containers that
 should be running and are not, and the state of the VMs.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Web UI and GraphQL API (HTTP, default) |
+| 443 | TCP | Only with the HTTPS protocol option |
+
 DumbMonit sends an API key with the Viewer role in the `x-api-key` header to
 `/graphql`. The Viewer role reads everything and can change nothing. The API
 is built into Unraid from 7.2; on 6.12 to 7.1 it comes with the Unraid Connect

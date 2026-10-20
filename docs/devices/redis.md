@@ -4,6 +4,14 @@ The in-memory store itself: memory against `maxmemory`, refused connections,
 the replication link and the lag of each replica, failed snapshots and
 append-only file writes, and the size of the keyspace.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 6379 | TCP | Redis protocol (default port, plain or TLS) |
+
 DumbMonit opens one connection, sends `AUTH`, then `INFO`, and closes it. The
 account it uses can run `INFO` and `PING` and nothing else: it cannot read,
 write or even list a key. Redis 6 and later, Valkey and the forks that answer

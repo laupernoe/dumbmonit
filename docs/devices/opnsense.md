@@ -14,6 +14,15 @@ tunnels, DHCP leases, the resolver, services, CARP and pending updates.
     pair and ran no OpenVPN or IPsec tunnel: those parts follow OPNsense's source
     code rather than an observed answer. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 80 | TCP | Only with the HTTP protocol option |
+
 ## The monitor page
 
 Beyond the generic charts, an OPNsense monitor shows three panels, read from what

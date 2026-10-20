@@ -5,6 +5,15 @@ quietly carry everything else are keeping up: Sidekiq's queues, the CI/CD
 runners, database migrations left over from an upgrade, and — for GitLab
 Enterprise Edition — the licence.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 80 | TCP | Only with the http scheme option |
+
 DumbMonit reads `/api/v4/version` with a **personal access token**, the only
 call that must succeed: it is the proof that GitLab answers and that the
 token is valid. Everything else — Sidekiq, runners, migrations, instance

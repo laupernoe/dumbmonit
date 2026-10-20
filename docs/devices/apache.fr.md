@@ -3,6 +3,15 @@
 Le serveur web : workers occupés et au repos, le scoreboard des workers par
 état, et les débits de requêtes/octets quand ExtendedStatus est activé.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 80 | TCP | Page de statut (HTTP, par défaut) |
+| 443 | TCP | Seulement si la page de statut est servie en HTTPS |
+
 DumbMonit lit le `mod_status` intégré d'Apache, interrogé avec `?auto` pour
 qu'il réponde en simples lignes `Clé: Valeur` plutôt que par la page HTML
 destinée à un navigateur.

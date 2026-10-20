@@ -57,6 +57,8 @@
 		sparklines: Map<TargetId, Serie[]>;
 		/** kind → human label, from the collectors list. */
 		kindLabels: Map<string, string>;
+		/** location id → name, for the site badge. */
+		siteNames?: Map<number, string>;
 		reorder?: ReorderControls | null;
 		/** One dense line each (default) or tiles in a grid. */
 		layout?: RackView;
@@ -70,7 +72,7 @@
 		selection?: RowSelection | null;
 	}
 
-	let { rows, sparklines, kindLabels, reorder = null, layout = 'compact', names = new Map(), security = new Map(), alertCounts = new Map(), selection = null }: Props = $props();
+	let { rows, sparklines, kindLabels, siteNames = new Map(), reorder = null, layout = 'compact', names = new Map(), security = new Map(), alertCounts = new Map(), selection = null }: Props = $props();
 
 	const LIST_CLASS: Record<RackView, string> = {
 		compact: 'flex flex-col divide-y divide-line rounded-[var(--radius-card)] border border-line bg-surface shadow-lift',
@@ -90,6 +92,7 @@
 					target={row.target}
 					state={row.state}
 					kindLabel={kindLabels.get(row.target.kind)}
+					site={row.target.location_id != null ? (siteNames.get(row.target.location_id) ?? null) : null}
 					depth={row.depth}
 					shadowed={row.shadowed}
 					security={security.get(row.target.id) ?? null}
@@ -100,6 +103,7 @@
 					target={row.target}
 					state={row.state}
 					kindLabel={kindLabels.get(row.target.kind)}
+					site={row.target.location_id != null ? (siteNames.get(row.target.location_id) ?? null) : null}
 					sparkline={sparklines.get(row.target.id) ?? null}
 					parentName={row.target.parent_id !== null ? (names.get(row.target.parent_id) ?? null) : null}
 					shadowed={row.shadowed}
