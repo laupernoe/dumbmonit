@@ -126,31 +126,58 @@ virtuel Hyper-V** (voir [Hôtes Hyper-V](#hyper-v-hosts)).
 
 ## Installer {#install}
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
-Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est
-le seul secret.
+Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire. Il n'y a aucun compte à créer sur la machine : le jeton d'enrôlement est le seul secret.
 
-1. Enregistrez la surveillance dans DumbMonit : un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux et pour Windows. (Un jeton peut aussi être créé dans **Réglages → Agents**.)
-2. Ce jeton est la clé de l'agent pour envoyer ses mesures à DumbMonit. Ce n'est pas un compte sur la machine : rien à créer là. Un jeton créé depuis le formulaire de surveillance est à usage unique : il enrôle cette seule machine et rien d'autre. Pour un parc, créez un jeton réutilisable dans Réglages → Agents.
-3. Lancez la commande d'installation sur la machine à surveiller, avec des droits élevés (sudo sur Linux et macOS, un PowerShell élevé sur Windows). Elle télécharge l'agent, écrit le jeton dans agent.yaml et démarre le service.
-4. La machine apparaît d'elle-même en quelques secondes, nommée d'après son nom d'hôte. À ce premier lot, le serveur donne à l'agent un secret qui lui est propre et le stocke dans `/etc/dumbmonit/agent-secret`, lisible par personne d'autre : à partir de là, cette machine est la seule qui peut rapporter sous cette surveillance. Jeton perdu ? Réglages → Agents vous laisse le révoquer et en créer un autre.
-5. Docker : pour voir les conteneurs et laisser DumbMonit les redémarrer ou les mettre à jour, l'agent doit atteindre le socket Docker. Le service que l'installateur enregistre le peut déjà ; si vous faites tourner l'agent sous un utilisateur dédié à la place, ajoutez cet utilisateur au groupe « docker » et redémarrez-le. Les politiques de redémarrage et de mise à jour automatique se règlent alors par conteneur sur la page de la surveillance.
-
-Deux choses valent d'être lues avant de déployer ça sur plus d'une
-machine : [Liaison](#binding-one-machine-one-agent), ce qui fait qu'une surveillance appartient vraiment à une installation d'agent, et
-[Usage unique ou parc](#single-use-or-fleet), le choix que vous faites
-quand vous créez un jeton.
+1. Dans DumbMonit, enregistrez la surveillance : un jeton d'enrôlement (dmon_…) est montré une fois, avec la commande d'installation prête à copier pour Linux et pour Windows.
+2. Lancez cette commande d'installation sur la machine, avec des droits élevés (sudo sur Linux et macOS, un PowerShell élevé sur Windows).
+3. La machine apparaît en quelques secondes, nommée d'après son nom d'hôte.
+4. Facultatif, pour Docker : si l'agent tourne sous un utilisateur dédié, ajoutez cet utilisateur au groupe « docker » et redémarrez l'agent.
 
     ```
     usermod -aG docker dumbmonit
     ```
 
-6. Sauvegardes Plakar : détectées automatiquement — une surveillance Plakar apparaît sous la machine quand le binaire plakar ou un kloset (~/.config/plakar/stores.yml de chaque utilisateur, ~/.plakar, /var/lib/plakar) est trouvé, et rien n'est montré sinon. Réglez "plakar_klosets" dans agent.yaml pour surveiller une liste fixe, ou "plakar: false" pour vous retirer.
-7. Les services que l'agent trouve (Docker, Plakar, restic/Borg, ZFS, libvirt, WireGuard, IPsec, test de débit) deviennent chacun une surveillance à part, rangée sous la machine, avec son propre état et ses alertes. Le panneau « Services trouvés par l'agent » de la machine liste ce qui a été trouvé et ce qui ne l'a pas été : décochez un module pour supprimer sa surveillance, cochez-en un pour le surveiller avant qu'il n'apparaisse. Voir [Services trouvés par l'agent](#services-found-by-the-agent).
+5. Pour un parc, ou pour révoquer un jeton perdu, utilisez Réglages → Agents.
 
-!!! note
-    L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin
-    d'être ouvert sur la machine surveillée.
+!!! warning
+    L'agent contacte le serveur, jamais l'inverse : aucun port n'a besoin d'être ouvert sur la machine surveillée.
+
+### Bon à savoir
+
+Le jeton est la clé de l'agent pour envoyer ses mesures à DumbMonit. Ce n'est
+pas un compte sur la machine. Un jeton créé depuis le formulaire de surveillance
+est à usage unique : il enrôle cette seule machine et rien d'autre. Pour un
+parc, créez un jeton réutilisable dans Réglages → Agents. À ce premier lot, le
+serveur donne à l'agent un secret qui lui est propre et le stocke dans
+`/etc/dumbmonit/agent-secret`, lisible par personne d'autre : à partir de là,
+cette machine est la seule qui peut rapporter sous cette surveillance.
+
+Docker : pour voir les conteneurs et laisser DumbMonit les redémarrer ou les
+mettre à jour, l'agent doit atteindre le socket Docker. Le service que
+l'installateur enregistre le peut déjà. Les politiques de redémarrage et de mise
+à jour automatique se règlent alors par conteneur sur la page de la
+surveillance.
+
+Sauvegardes Plakar : détectées automatiquement. Une surveillance Plakar apparaît
+sous la machine quand le binaire plakar ou un kloset
+(`~/.config/plakar/stores.yml` de chaque utilisateur, `~/.plakar`,
+`/var/lib/plakar`) est trouvé, et rien n'est montré sinon. Réglez
+`plakar_klosets` dans `agent.yaml` pour surveiller une liste fixe, ou
+`plakar: false` pour vous retirer.
+
+Les services que l'agent trouve (Docker, Plakar, restic/Borg, ZFS, libvirt,
+WireGuard, IPsec, test de débit) deviennent chacun une surveillance à part,
+rangée sous la machine, avec son propre état et ses alertes. Le panneau
+« Services trouvés par l'agent » de la machine liste ce qui a été trouvé et ce
+qui ne l'a pas été : décochez un module pour supprimer sa surveillance, cochez-en
+un pour le surveiller avant qu'il n'apparaisse. Voir
+[Services trouvés par l'agent](#services-found-by-the-agent).
+
+Deux choses valent d'être lues avant de déployer ça sur plus d'une machine :
+[Liaison](#binding-one-machine-one-agent), ce qui fait qu'une surveillance
+appartient vraiment à une installation d'agent, et
+[Usage unique ou parc](#single-use-or-fleet), le choix que vous faites quand
+vous créez un jeton.
 
 === "Linux (systemd ou OpenRC)"
 
@@ -420,15 +447,13 @@ les commandes partent toujours vers l'agent de la machine.
 
 Comme dans la notice de la surveillance :
 
-1. Il n'y a rien à ajouter à la main : installez l'agent sur la machine, et
-   chaque service qu'il trouve devient une surveillance sous cette machine dès
-   son premier rapport.
-2. Pour ne plus surveiller un service, décochez-le dans le panneau
-   « Services trouvés par l'agent » de la machine, ou supprimez sa surveillance : les mesures de l'agent pour ce service sont alors écartées.
+1. Installez l'agent sur la machine : chaque service qu'il trouve devient une surveillance sous cette machine dès son premier rapport.
+2. Pour ne plus en surveiller un, décochez-le dans le panneau « Services trouvés par l'agent » de la machine ou supprimez sa surveillance.
 
-!!! note
-    Si la machine cesse de rapporter, ses services sont montrés masqués
-    derrière elle plutôt que de lever leurs propres alertes.
+!!! warning
+    Si la machine cesse de rapporter, ses services sont montrés masqués derrière elle plutôt que de lever leurs propres alertes.
+
+Une fois la surveillance supprimée, les mesures de l'agent pour ce service sont écartées.
 
 ### Mettre à jour une installation existante {#upgrading-an-existing-installation}
 

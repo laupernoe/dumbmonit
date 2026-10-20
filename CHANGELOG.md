@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **Simpler setup guides when adding a monitor.** Each guide is now a few short
+  steps done in the product's own web interface (a command is kept only where
+  the product has no interface for it), followed by a framed "Required
+  permissions" list with the exact rights, roles or scopes to grant, and a
+  "Full guide" link to the matching documentation page. The device pages of the
+  documentation carry the same steps and permissions. Integration packs can list
+  `setup.permissions` too.
 ### Added
 
 - **Active Directory: DNS servers option.** When the DumbMonit host's DNS does

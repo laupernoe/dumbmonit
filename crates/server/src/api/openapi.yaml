@@ -6004,8 +6004,15 @@ components:
         steps:
           type: array
           items: { type: string }
+        permissions:
+          type: array
+          description: >-
+            Rights, roles or permissions to give the monitoring account, one per entry: the first
+            line is the right as the product names it, the optional next line says what it is for.
+            Omitted when the type needs none.
+          items: { type: string }
         warning: { type: string }
-        doc_url: { type: string }
+        doc_url: { type: string, description: "The 'Full guide' page of the documentation, or a pack's link." }
     OptionDescription:
       type: object
       properties:

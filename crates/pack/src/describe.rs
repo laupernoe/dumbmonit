@@ -42,6 +42,7 @@ impl Pack {
             setup: SetupDescription {
                 title: manifest.setup.title.clone().into(),
                 steps: manifest.setup.steps.iter().cloned().map(Into::into).collect(),
+                permissions: manifest.setup.permissions.iter().cloned().map(Into::into).collect(),
                 warning: manifest.setup.warning.clone().into(),
                 doc_url: manifest.setup.doc_url.clone().into(),
             },

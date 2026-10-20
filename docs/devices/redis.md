@@ -59,28 +59,38 @@ refused connections), then the keys, memory, clients, commands per second,
 hit ratio, keys evicted in the last 24 hours and uptime, then the keys per
 database and the lag of each replica.
 
-## Create a Redis user that may only run INFO
+## Create a read-only Redis user
 
-1. On Redis 6 or later, or Valkey, create a user that may run INFO and PING and nothing else, with no access to any key. In redis-cli, logged in with a user allowed to manage ACLs:
+1. In redis-cli, create the user (Redis 6 or later, or Valkey).
 
     ```
     ACL SETUSER dumbmonit on >a-long-password -@all +info +ping
     ```
 
-2. Make it permanent: ACL SAVE if the server loads its users from an aclfile, CONFIG REWRITE otherwise.
+2. Save it: ACL SAVE if the server uses an aclfile, CONFIG REWRITE otherwise.
 
     ```
     ACL SAVE
     ```
 
-3. On Redis 5 or older, or with only requirepass set, pick Password only below. That password carries every right: prefer an ACL user whenever the server supports one.
+3. In DumbMonit, enter the server address, for example cache.lan:6380, then the user and its password.
 
-4. In DumbMonit, enter the server address, for example "cache.lan" or "cache.lan:6380". If the server only accepts TLS on that port (tls-port), tick TLS below.
+4. Tick TLS if the server only accepts TLS on that port (tls-port).
 
-5. DumbMonit sends AUTH, then INFO. It never reads, writes or lists a key.
+### Required permissions
+
+- **+info**: Read the server statistics (INFO)
+- **+ping**: Check that the server answers
+- **-@all**: No other command, no access to any key
 
 !!! warning
-    Redis gives no warning before maxmemory: at the limit it either evicts keys silently or refuses every write, depending on maxmemory-policy. Without maxmemory it grows until the kernel kills it. DumbMonit warns above 90% of maxmemory.
+    On Redis 5 or older, or with only requirepass set, pick Password only: that password carries every right.
+
+### Why these permissions
+
+DumbMonit sends AUTH, then INFO, and closes the connection. The user can run INFO and PING and nothing else, so it can neither read, write nor list a key. Redis 5 and older, or a server with only requirepass, have no ACL users: pick Password only in the form, knowing that this password carries every right. Prefer an ACL user whenever the server supports one.
+
+Vendor documentation: https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/
 
 ## Credentials
 

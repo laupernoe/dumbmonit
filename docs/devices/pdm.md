@@ -106,43 +106,47 @@ console updates pending. Notifications name the instance concerned.
 
 ## What to prepare in Proxmox Datacenter Manager
 
-The steps below are the ones the notice next to the form shows. The principle:
-a user reserved for monitoring, a token with a read-only role — never the
-account you log in with.
-
-1. In the console, open Configuration → Access Control → Users and click Add.
-   Name the account as follows and leave the password empty: the token is what
-   logs in.
+1. Open Configuration → Access Control → Users → Add, enter the user name dumbmonit with the realm pdm and no password, then click Add.
 
     ```
     dumbmonit@pdm
     ```
 
-2. Still under Access Control, open API Tokens → Add, pick that user and name
-   the token "monitor". The console shows the secret once: copy it now.
+2. Open Configuration → Access Control → API Tokens → Add, pick that user and name the token monitor. Copy the Secret now, it is shown only once.
 
     ```
     dumbmonit@pdm!monitor
     ```
 
-3. Give both the user and the token the `Auditor` role on `/` (the top of the tree, so the whole estate).
-   `Auditor` carries `System.Audit`, `Resource.Audit` and `Access.Audit`, and
-   can change nothing. A token never has more rights than its user, so the
-   permission is granted twice: Permissions → Add → User Permission, then again
-   with API Token Permission.
-4. Copy the token id into DumbMonit's Token ID field and the secret into its
-   Secret field.
-5. In DumbMonit, enter the console address, for example "dc.lan" or
-   "dc.lan:8443".
+3. Open Configuration → Access Control → Permissions → Add → User Permission: path /, user dumbmonit@pdm, role Auditor.
+
+4. Add a second permission with Add → API Token Permission: path /, token dumbmonit@pdm!monitor, role Auditor. A token has its own permissions, so both are needed.
+
+5. In DumbMonit, enter the console address (for example dc.lan:8443), the Token ID and the Secret.
+
+### Required permissions
+
+- **Auditor on /**: Read-only: instances, tasks, console health
+- **Resource.Modify on /resource (optional)**: Only for the update summary of the instances
 
 !!! warning
-    Do not reuse the account you log in with: a leaked token would then control
-    every cluster the console federates at once. The `Auditor` role can only
-    read. The console also uses a self-signed certificate by default: if the
-    connection is refused for that reason, tick "Accept an unverifiable
-    certificate" in the options. Two items need more than `Auditor` and are
-    simply skipped without it: the per-instance metric collection status, and
-    the update summary of the federated instances.
+    The console uses a self-signed certificate by default: tick "Accept an unverifiable certificate" in the options if the connection is refused.
+
+Vendor documentation: [Proxmox Datacenter Manager access control](https://pdm.proxmox.com/docs/access-control.html)
+
+### Why these permissions
+
+Do not reuse the account you log in with: a leaked token would then control
+every cluster the console federates at once. The `Auditor` role can only read.
+
+* `Auditor` on `/` (the top of the tree, so the whole estate) carries
+  `System.Audit`, `Resource.Audit` and `Access.Audit`, and can change nothing.
+* A token never has more rights than its user, and its permissions are computed
+  from ACL entries carrying its own id: the permission is therefore granted
+  twice, to the user and to the token.
+* Two items need more than `Auditor` and are simply skipped without it: the
+  per-instance metric collection status, and the update summary of the
+  federated instances.
 
 Prefer the command line? `proxmox-datacenter-manager-admin` manages remotes,
 not users; create the account, the token and the two permissions in the web

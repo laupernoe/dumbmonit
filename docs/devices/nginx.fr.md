@@ -42,15 +42,7 @@ et, avec NGINX Plus, la santé des upstreams et le trafic par zone.
 
 ## Activer le module stub_status de Nginx
 
-1. Nginx fournit stub_status intégré : il a seulement besoin d'un emplacement qui l'active. Ajoutez ceci au bloc serveur que Nginx sert déjà (ou à son propre bloc serveur sur un port qui lui est propre), puis rechargez Nginx.
-
-    ```
-    location /basic_status {
-    stub_status;
-    }
-    ```
-
-2. Restreignez cet emplacement à l'hôte DumbMonit, pour que personne d'autre ne puisse le lire ; ajustez l'adresse en conséquence.
+1. Ajoutez ce location au bloc server déjà servi par Nginx, restreint à l'hôte DumbMonit (adaptez l'adresse).
 
     ```
     location /basic_status {
@@ -58,30 +50,28 @@ et, avec NGINX Plus, la santé des upstreams et le trafic par zone.
     allow 10.0.0.5;
     deny all;
     }
+    ```
+
+2. Rechargez Nginx.
+
+    ```
     nginx -s reload
     ```
 
-3. Vérifiez qu'il répond avant de configurer DumbMonit.
+3. Ouvrez http://nginx.lan/basic_status depuis l'hôte DumbMonit : la page doit afficher Active connections.
 
-    ```
-    curl -s http://nginx.lan/basic_status
-    ```
+4. Dans DumbMonit, saisissez l'hôte Nginx, par exemple nginx.lan, et le chemin s'il n'est pas /basic_status.
 
-4. Dans DumbMonit, saisissez l'hôte Nginx, par exemple « nginx.lan », et le chemin s'il n'est pas « /basic_status ». Si NGINX Plus est installé, cochez « Lire l'API NGINX Plus » pour ajouter la santé des upstreams et les compteurs par zone.
+5. Si NGINX Plus est installé, cochez Lire l'API NGINX Plus pour ajouter la santé des upstreams et les compteurs par zone.
 
 !!! warning
-    stub_status ne compte que les connexions et les requêtes : une erreur de
-    configuration dans un bloc serveur, ou un backend que nginx ne peut pas
-    atteindre, n'apparaît pas ici. La version open source n'a aucune notion
-    d'« upstream » : cela n'existe que dans NGINX Plus, lu via sa propre API
-    quand elle est activée.
+    stub_status ne compte que les connexions et les requêtes : une erreur de configuration dans un bloc server ou un backend injoignable n'y apparaît pas.
 
-L'exemple ci-dessus restreint l'emplacement par IP, la configuration la plus
-simple pour un homelab ; un bloc `basic_auth` fonctionne tout aussi bien si la
-page de statut ne peut pas se trouver derrière une règle de pare-feu qui lui
-est propre. `stub_status` lui-même ne peut pas être protégé par mot de passe
-directement par Nginx — le mot de passe, s'il y en a un, appartient au bloc
-`location` qui l'entoure.
+### Pour aller plus loin
+
+Nginx fournit stub_status en natif : il suffit d'un location qui l'active, dans le bloc server déjà servi ou dans un bloc server à part sur un autre port. Les lignes allow et deny le restreignent à l'hôte DumbMonit, pour que personne d'autre ne puisse le lire. La version open source ne connaît pas la notion d'upstream : elle n'existe que dans NGINX Plus, lue par sa propre API quand elle est activée.
+
+Documentation de l'éditeur : https://nginx.org/en/docs/http/ngx_http_stub_status_module.html
 
 ## Identifiants
 
