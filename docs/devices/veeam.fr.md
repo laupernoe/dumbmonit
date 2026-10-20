@@ -6,6 +6,14 @@ sessions en échec des dernières 24 heures, dépôts qui se remplissent, la
 licence, et — par ordinateur ou VM protégé — sa dernière sauvegarde
 réussie.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 9419 | TCP | API REST (HTTPS, par défaut) |
+
 DumbMonit se connecte avec un compte Windows qui détient seulement le rôle
 Veeam Backup Viewer (OAuth2 password grant sur `/api/oauth2/token`, port
 9419) et garde le jeton pour sa durée de vie de quinze minutes. Chaque

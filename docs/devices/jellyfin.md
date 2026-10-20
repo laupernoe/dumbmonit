@@ -5,6 +5,15 @@ tasks that failed on their last run (the library scan first), plugins that no
 longer load, a restart waiting, and what is playing right now, transcoded or
 not.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8096 | TCP | API (HTTP, default) |
+| 8920 | TCP | Only with the https scheme on Jellyfin's own HTTPS port |
+
 DumbMonit reads Jellyfin's API with an **API key** created in the dashboard. It
 never starts a task, never stops a playback and never changes a setting.
 

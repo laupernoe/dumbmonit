@@ -5,6 +5,14 @@ pods crash looping or stuck Pending, Deployments, StatefulSets and DaemonSets
 missing replicas, volume claims that never get bound, and the warning events
 of the last hour.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 6443 | TCP | API server (HTTPS, default) |
+
 DumbMonit reads the API with the token of a dedicated service account bound
 to a read-only ClusterRole: `get` and `list` on nodes, pods, workloads,
 persistent volume claims and events, nothing else. It never writes, and the

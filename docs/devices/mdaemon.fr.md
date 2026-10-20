@@ -8,6 +8,24 @@ MDaemon, la même page montre aussi les files de mail, les sessions et les
 totaux de messages, que MDaemon ne publie que comme compteurs de
 performance Windows.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 25 | TCP | Vérification SMTP (par défaut) |
+| 143 | TCP | Vérification IMAP (par défaut) |
+| 3000 | TCP | Vérification de la messagerie web (par défaut) |
+| 444 | TCP | Seulement avec un compte de l'API XML (HTTPS, par défaut) |
+| 1000 | TCP | Seulement avec l'API XML en HTTP |
+| 587 | TCP | Seulement si msa figure dans l'option Services |
+| 465 | TCP | Seulement si smtps figure dans l'option Services |
+| 110 | TCP | Seulement si pop3 figure dans l'option Services |
+| 995 | TCP | Seulement si pop3s figure dans l'option Services |
+| 993 | TCP | Seulement si imaps figure dans l'option Services |
+| 5222 | TCP | Seulement si xmpp figure dans l'option Services |
+
 !!! warning "Validé contre la documentation seulement"
 
     Cette intégration a été construite à partir de la documentation

@@ -6,6 +6,14 @@ santé rouge, machines virtuelles et leurs VMware Tools, datastores qui se
 remplissent ou deviennent inaccessibles, et les alarmes que vSphere lui-même
 a levées.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API vSphere (HTTPS, par défaut) |
+
 DumbMonit lit vSphere avec un utilisateur dédié portant le rôle intégré
 **Read-only**. Il n'allume ni n'éteint jamais une VM, n'entre jamais en mode
 maintenance et n'acquitte jamais une alarme.

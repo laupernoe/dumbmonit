@@ -3,6 +3,14 @@
 Des clusters Nutanix, lus via l'API REST v4 de Prism Central. Un seul Prism
 Central couvre tous les clusters qui y sont enregistrés.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 9440 | TCP | API Prism Central (HTTPS, par défaut) |
+
 Chaque minute, DumbMonit lit, avec l'authentification HTTP basique sur le
 port 9440 :
 

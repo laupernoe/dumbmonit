@@ -4,6 +4,14 @@ What Plex is doing and whether it is current: streams playing now, how many
 are transcoded and whether in hardware, the bandwidth they reserve, streams
 from outside the house, libraries being scanned, and updates.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 32400 | TCP | API (HTTP, default) |
+
 DumbMonit reads the server's own API on port 32400, never plex.tv. It never
 stops a stream, never scans a library and never changes a setting.
 

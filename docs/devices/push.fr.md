@@ -11,6 +11,14 @@ moniteur *push* dans Uptime Kuma) renverse la logique : DumbMonit ne
 contacte rien. La tâche appelle une URL secrète chaque fois qu'elle
 tourne, et c'est l'**absence** d'appel qui déclenche l'alerte.
 
+## Ports réseau à ouvrir
+
+De l'agent vers le serveur DumbMonit :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8080 | TCP | Appel du heartbeat (port par défaut, 443 derrière un proxy) |
+
 ## Comment ça fonctionne
 
 Chaque surveillance battement de cœur obtient une URL de la forme

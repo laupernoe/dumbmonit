@@ -10,6 +10,14 @@ in Uptime Kuma) turns the logic around: DumbMonit contacts nothing. The job
 calls a secret URL each time it runs, and it is the **absence** of a call that
 raises the alert.
 
+## Network ports to open
+
+From the agent to the DumbMonit server:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8080 | TCP | Heartbeat call (default port, 443 behind a proxy) |
+
 ## How it works
 
 Each heartbeat monitor gets a URL of the form

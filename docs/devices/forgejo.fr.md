@@ -6,6 +6,15 @@ dépôts, comptes et organisations elle contient, si ses tâches planifiées
 (contrôles de dépôt, nettoyages, le vérificateur de mise à jour) tournent
 toujours sur leur propre intervalle, et si ses runners Actions sont en ligne.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 3000 | TCP | API (HTTP, par défaut) |
+| 443 | TCP | Seulement avec le schéma https derrière un reverse proxy |
+
 Deux appels doivent réussir : `/api/v1/version`, public, et `/api/v1/user`, la
 preuve que le **jeton d'accès** est valide. Tout le reste — le contrôle de
 santé, les compteurs de dépôts/comptes/organisations, les tâches planifiées et

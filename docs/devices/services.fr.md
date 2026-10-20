@@ -123,6 +123,15 @@ avec le bon code de statut, le bon contenu, et un certificat valide.
 Exemples : un site web, une page de santé d'application, une API REST,
 une interface de service auto-hébergé.
 
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | Page web ou API en HTTPS (port par défaut) |
+| 80 | TCP | Seulement avec une adresse http:// (port par défaut) |
+
 ### Configuration
 
 1. Dans l'adresse, collez l'URL complète de la page à surveiller.
@@ -172,6 +181,10 @@ basique) ou jeton d'API (`Authorization: Bearer`).
 **Port réseau (TCP)** — vérifie qu'un port accepte les connexions : SSH,
 base de données, partage de fichiers, serveur de jeu, imprimante réseau.
 
+### Ports réseau à ouvrir
+
+Le port est celui que vous écrivez dans l'adresse ou dans l'option « Port » ; il n'y a pas de valeur par défaut. Du serveur DumbMonit (ou de son agent relais) vers l'équipement, ouvrez ce port TCP.
+
 ### Configuration
 
 1. Dans l'adresse, écrivez l'hôte et le port séparés par deux-points : « nas.home.lan:22 », ou « [fd00::1]:445 » en IPv6.
@@ -196,6 +209,15 @@ Seule l'ouverture de la connexion est testée : aucune donnée n'est envoyée au
 **Nom de domaine (DNS)** — vérifie qu'un nom se résout, et qu'il pointe
 vers la bonne adresse. Exemples : votre nom de domaine, un nom interne
 servi par votre Pi-hole ou AdGuard, un enregistrement MX.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 53 | UDP | Requête DNS (port par défaut) |
+| 53 | TCP | Requête DNS trop grosse pour UDP (port par défaut) |
 
 ### Configuration
 
@@ -270,6 +292,10 @@ temps de réponse et la perte de paquets. Exemples : routeur ou passerelle
 maison, point d'accès Wi-Fi, imprimante, machine sans agent ni SNMP, hôte
 distant.
 
+### Ports réseau à ouvrir
+
+Le ping utilise l'écho ICMP, qui n'a pas de port : autorisez la requête et la réponse d'écho ICMP entre le serveur DumbMonit (ou son agent relais) et l'équipement.
+
 ### Configuration
 
 1. Dans l'adresse, écrivez le nom d'hôte ou l'adresse IP : « 192.168.1.1 » ou « router.home.lan ».
@@ -311,6 +337,14 @@ avant son expiration, sur n'importe quel port chiffré. Exemples :
 serveur mail (IMAPS, SMTPS), reverse proxy, annuaire LDAPS, courtier
 MQTT, interface d'administration.
 
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | Poignée de main TLS (port par défaut, celui de l'adresse) |
+
 ### Configuration
 
 1. Dans l'adresse, écrivez l'hôte et le port du service chiffré : « mail.example.com:993 » (443 si omis).
@@ -338,6 +372,16 @@ expiré. Le verdict de la vérification est dans `probe_ssl_cert_valid`.
 | `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
 
 ## SMTP
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 587 | TCP | Soumission avec STARTTLS (par défaut) |
+| 465 | TCP | Seulement avec le chiffrement TLS (SMTPS) |
+| 25 | TCP | Seulement sans chiffrement (relais sur le port 25) |
 
 **Relais mail (SMTP)** — ouvre une vraie session sur un serveur mail :
 salutation, EHLO, STARTTLS, et la connexion si vous en donnez une.
@@ -407,6 +451,14 @@ message, donc il ne dit rien du filtrage de destinataire, SPF ou DKIM.
 
 ## PostgreSQL
 
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 5432 | TCP | PostgreSQL (port par défaut) |
+
 **Base de données PostgreSQL** — se connecte, s'authentifie et lance une
 requête : le signal d'une base de données qui tourne mais ne répond
 plus. Exemples : la base derrière Nextcloud ou Immich, un recorder Home
@@ -466,6 +518,14 @@ devient `probe_sql_value`, un graphique sur lequel vous pouvez alerter.
 
 ## MySQL et MariaDB
 
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 3306 | TCP | MySQL ou MariaDB (port par défaut) |
+
 **Base de données MySQL ou MariaDB** — se connecte, s'authentifie et
 lance une requête : le signal d'une base de données qui tourne mais ne
 répond plus. Exemples : la base derrière un WordPress, un Nextcloud ou un
@@ -517,6 +577,15 @@ La requête par défaut est SELECT 1, qui ne lit aucune table : rien d'autre n'e
 | `timeout` | La connexion ou la requête n'a pas fini à temps — le cas « actif mais lent ». |
 
 ## MQTT
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 1883 | TCP | MQTT (port par défaut) |
+| 8883 | TCP | Seulement avec l'option Connexion chiffrée (MQTT sur TLS, par défaut) |
 
 **Courtier MQTT** — se connecte au courtier, s'abonne à un topic, et
 peut attendre un message retenu. Exemples : Mosquitto, le courtier
@@ -578,6 +647,15 @@ l'automatisation qui le consomme, ou utilisez un battement de cœur.
 
 ## WebSocket
 
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | WSS (par défaut) |
+| 80 | TCP | Seulement avec une adresse ws:// |
+
 **Point de terminaison WebSocket** — lance la poignée de main de mise à
 niveau, et peut envoyer une trame et en attendre une : une panne
 différente d'une simple page HTTP. Exemples : l'API Home Assistant, un
@@ -634,6 +712,14 @@ réponse : décalage, délai d'aller-retour, stratum et indicateur de
 saut. Exemples : un routeur ou NAS servant de serveur de temps local, un
 serveur NTP interne (chrony, ntpd), un serveur de pool public utilisé
 comme référence.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 123 | UDP | Requête NTP (port par défaut) |
 
 ### Configuration
 

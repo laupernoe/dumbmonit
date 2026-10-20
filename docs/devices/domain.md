@@ -18,6 +18,14 @@ never verified: every site and mailbox under it stops at once. A domain in
 `redemptionPeriod` or `pendingDelete` has already expired and will be
 released unless it is restored, at a price.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | RDAP query to the registry and to the IANA (HTTPS) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_domain_`.

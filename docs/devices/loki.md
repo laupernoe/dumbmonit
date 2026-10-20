@@ -4,6 +4,14 @@ The log server itself: whether it is ready, which log lines it refuses and
 why, whether its chunks reach storage, and whether its write-ahead log still
 has disk.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 3100 | TCP | Loki HTTP API (default) |
+
 Loki publishes `/ready` and `/metrics` on its HTTP port; DumbMonit reads those
 two and nothing else. It never runs a LogQL query and never reads a log line.
 

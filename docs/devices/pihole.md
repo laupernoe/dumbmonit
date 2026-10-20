@@ -4,6 +4,15 @@ The DNS ad blocker: whether it is blocking, how many queries it answers and
 blocks, how old its blocklists are, whether its upstream resolvers fail, whether
 an update waits, and the messages of its own diagnosis page.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | API (HTTP, default) |
+| 443 | TCP | Only with the https scheme option |
+
 DumbMonit reads Pi-hole v6's REST API (`/api`). Pi-hole 5 and earlier have no
 such API and are not supported.
 

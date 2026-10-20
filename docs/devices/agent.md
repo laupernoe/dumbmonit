@@ -5,6 +5,14 @@ disks, network, services and containers — and, where the machine exposes them,
 temperatures, disk health, ZFS pools and KVM virtual machines — then
 **pushes** its readings to the DumbMonit server over HTTP.
 
+## Network ports to open
+
+From the agent to the DumbMonit server:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8080 | TCP | Readings and commands (default port, 443 behind a TLS proxy) |
+
 The direction is deliberate: the agent calls the server, never the other way
 round. It crosses NAT and home firewalls, and requires opening **no port** on
 the monitored machine.

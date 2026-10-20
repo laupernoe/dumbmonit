@@ -4,6 +4,14 @@ Le type le plus universel : presque tout le matériel réseau parle SNMP.
 Commutateurs, routeurs, NAS, onduleurs et imprimantes sont tous concernés.
 SNMP v1, v2c et v3 sont supportés.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 161 | UDP | SNMP (par défaut) |
+
 ## Ce qu'il surveille
 
 Le profil de collecte est détecté automatiquement d'après le `sysObjectID` de

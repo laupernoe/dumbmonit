@@ -5,6 +5,14 @@ connexions refusées, le lien de réplication et le retard de chaque réplica,
 snapshots et écritures du fichier append-only en échec, et la taille de
 l'espace de clés.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 6379 | TCP | Protocole Redis (port par défaut, clair ou TLS) |
+
 DumbMonit ouvre une connexion, envoie `AUTH`, puis `INFO`, et la ferme. Le
 compte qu'il utilise peut lancer `INFO` et `PING` et rien d'autre : il ne peut
 ni lire, ni écrire ni même lister une clé. Redis 6 et plus récent, Valkey et

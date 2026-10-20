@@ -50,6 +50,15 @@
 
 	const permissions = $derived(setup?.permissions ?? []);
 
+	/** Ports to open, grouped by direction (the usual one first). */
+	const portGroups = $derived.by(() => {
+		const ports = setup?.ports ?? [];
+		return [
+			{ direction: 'to_device', label: m.deviceform_setup_ports_to_device(), ports: ports.filter((p) => p.direction !== 'to_server') },
+			{ direction: 'to_server', label: m.deviceform_setup_ports_to_server(), ports: ports.filter((p) => p.direction === 'to_server') }
+		].filter((group) => group.ports.length > 0);
+	});
+
 	/** Splits a step into its sentence and the lines to copy, if any. */
 	function parts(step: string): { text: string; copy: string } {
 		const [text, ...rest] = step.split('\n');
@@ -85,6 +94,26 @@
 			{m.deviceform_setup_pick()}
 		</p>
 	{:else}
+		{#if portGroups.length > 0}
+			<section class="mb-4 rounded-lg border border-line bg-surface-2 px-3 py-3" aria-labelledby="setup-ports">
+				<h3 id="setup-ports" class="text-sm font-semibold text-ink">{m.deviceform_setup_ports()}</h3>
+				{#each portGroups as group (group.direction)}
+					<p class="mt-2 text-[0.8125rem] text-ink-2">{group.label}</p>
+					<ul class="mt-1 grid gap-1">
+						{#each group.ports as entry, index (index)}
+							<li class="flex flex-wrap items-baseline gap-x-2 text-sm text-ink">
+								<span class="tnum font-mono font-semibold">{entry.port}/{entry.protocol.toUpperCase()}</span>
+								<span class="min-w-0 break-words text-ink-2">{entry.purpose}</span>
+								{#if entry.optional}
+									<span class="rounded border border-line px-1.5 text-[0.6875rem] font-semibold uppercase tracking-wide text-ink-3">{m.deviceform_setup_ports_optional()}</span>
+								{/if}
+							</li>
+						{/each}
+					</ul>
+				{/each}
+			</section>
+		{/if}
+
 		{#if setup && setup.steps.length > 0}
 			<ol class="space-y-3">
 				{#each setup.steps as step, index (index)}
