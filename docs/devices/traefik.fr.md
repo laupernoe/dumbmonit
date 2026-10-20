@@ -65,73 +65,31 @@ heures.
 
 ## Laisser DumbMonit lire l'API de Traefik
 
-1. L'API de Traefik ne fait que lire : routeurs, services et certificats, jamais un changement. Activez-la avec les métriques Prometheus, qui ajoutent le débit de requêtes et la part de réponses 5xx : ajoutez ces deux arguments à la commande de Traefik (ou les mêmes clés à sa configuration statique) et redémarrez-le. Les deux sont alors servis sur le point d'entrée traefik, port 8080.
+1. Ajoutez ces arguments à la commande de Traefik (ou les mêmes clés à sa configuration statique), puis redémarrez-le.
 
     ```
     --api.insecure=true
     --metrics.prometheus=true
     ```
 
-2. Le port 8080 répond sans mot de passe : publiez-le seulement sur une adresse que l'hôte DumbMonit atteint, filtrez-le pour que rien d'autre ne le fasse, et vérifiez qu'il répond.
+2. Ouvrez http://traefik.lan:8080/api/overview depuis l'hôte DumbMonit : la réponse doit être du JSON.
 
-    ```
-    curl -s http://traefik.lan:8080/api/overview
-    ```
-
-3. Pour exiger un mot de passe à la place, routez /api et /metrics via un point d'entrée qui vous est propre avec un middleware basicAuth, comme la documentation le montre, et choisissez utilisateur basicAuth ci-dessous. Créez l'utilisateur dumbmonit avec htpasswd.
+3. Facultatif : protégez /api et /metrics par un middleware basicAuth sur un point d'entrée à vous, et créez l'utilisateur avec htpasswd.
 
     ```
     htpasswd -nbB dumbmonit 'a-long-password'
     ```
 
-4. Dans DumbMonit, saisissez l'hôte Traefik, par exemple « traefik.lan », avec le port de ce point d'entrée s'il n'est pas 8080. Décochez Lire les métriques si /metrics est servi ailleurs.
+4. Dans DumbMonit, saisissez l'hôte Traefik, par exemple traefik.lan, avec le port de ce point d'entrée s'il n'est pas 8080.
 
 !!! warning
-    Un routeur désactivé par une erreur de configuration met ses sites hors service, et Traefik ne le dit que dans son journal. La vérification qu'un resolver de certificat a obtenu ses certificats a besoin de /api/certificates, que Traefik 3.7 sert ; sans cela, l'expiration des certificats ne vient que des métriques.
+    Le port 8080 répond sans mot de passe : filtrez-le pour que seul l'hôte DumbMonit y accède.
 
-### Un point d'entrée d'API avec un mot de passe
+### Pour aller plus loin
 
-Plutôt que `--api.insecure=true`, donnez à l'API et aux métriques un point
-d'entrée qui leur est propre et mettez un middleware basicAuth devant les
-deux. Dans la configuration statique :
+L'API de Traefik ne fait que lire routeurs, services et certificats, jamais de modification. Les métriques Prometheus ajoutent le débit de requêtes et la part de réponses 5xx ; les deux sont servies sur le point d'entrée traefik, port 8080. Pour exiger un mot de passe, faites passer /api et /metrics par un point d'entrée à vous avec un middleware basicAuth, comme le montre la documentation de Traefik, et choisissez basicAuth user dans le formulaire. Décochez Lire les métriques si /metrics est servi ailleurs. La vérification des certificats utilise /api/certificates, que Traefik 3.7 sert ; sans lui, l'expiration vient des métriques seules. Un routeur désactivé par une erreur de configuration met ses sites hors service, et Traefik ne le dit que dans son journal.
 
-```yaml
-entryPoints:
-  monitor:
-    address: ":8082"
-api: {}
-metrics:
-  prometheus:
-    manualRouting: true
-    addRoutersLabels: true
-```
-
-et dans la configuration dynamique (le fournisseur fichier est montré ; les
-labels Docker fonctionnent pareil), avec la ligne affichée par `htpasswd` :
-
-```yaml
-http:
-  middlewares:
-    dumbmonit-auth:
-      basicAuth:
-        users:
-          - "dumbmonit:$2y$05$…"
-  routers:
-    monitor-api:
-      entryPoints: [monitor]
-      rule: "PathPrefix(`/api`)"
-      service: api@internal
-      middlewares: [dumbmonit-auth]
-    monitor-metrics:
-      entryPoints: [monitor]
-      rule: "Path(`/metrics`)"
-      service: prometheus@internal
-      middlewares: [dumbmonit-auth]
-```
-
-Puis saisissez `traefik.lan:8082` dans DumbMonit avec l'utilisateur
-`dumbmonit`. `addRoutersLabels` est ce qui donne les réponses 5xx par
-routeur ; sans cela seuls les totaux par point d'entrée sont comptés.
+Documentation de l'éditeur : https://doc.traefik.io/traefik/operations/api/
 
 ## Identifiants
 

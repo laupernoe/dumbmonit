@@ -14,6 +14,7 @@ mod error;
 mod health;
 mod ingest;
 mod integrations;
+mod kuma_db;
 mod kuma_import;
 mod ldap;
 pub mod locations;
@@ -132,6 +133,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             "/targets/import/kuma",
             post(kuma_import::import).layer(DefaultBodyLimit::max(kuma_import::MAX_BODY_BYTES)),
         )
+        .route("/targets/import/kuma-db", post(kuma_import::import_db))
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))
@@ -143,6 +145,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/alerts/history/dismiss-resolved", post(alerts::dismiss_resolved_history))
         .route("/alerts/history/{id}/dismiss", post(alerts::dismiss_history_entry))
         .route("/alerts/{fingerprint}/ack", post(alerts::ack_alert).delete(alerts::unack_alert))
+        .route(
+            "/alerts/{fingerprint}/dismiss",
+            post(alerts::dismiss_alert).delete(alerts::undismiss_alert),
+        )
         .route("/alerts/rules", get(alerts::list_rules).post(alerts::create_rule))
         .route("/alerts/rules/{id}", put(alerts::update_rule).delete(alerts::delete_rule))
         .route("/alerts/rules/{id}/enable", post(alerts::set_rule_enabled))

@@ -94,6 +94,9 @@
 	let reusable = $state(false);
 	let maxUses = $state('');
 	let expiresInDays = $state('');
+	/** A relay token: the enrolled agent becomes a relay for `relaySite` at its first report. */
+	let asRelay = $state(false);
+	let relaySite = $state('');
 	let scopeError = $state<string | null>(null);
 
 	/** A number the user typed, or `null` for "left blank". Rejects nonsense. */
@@ -128,13 +131,16 @@
 				base_url: location.origin,
 				reusable,
 				max_uses: uses,
-				expires_in_days: days
+				expires_in_days: days,
+				...(asRelay ? { relay: true, site: relaySite.trim() || null } : {})
 			});
 			tokens = [...tokens, created];
 			name = '';
 			maxUses = '';
 			expiresInDays = '';
 			reusable = false;
+			asRelay = false;
+			relaySite = '';
 		} catch (cause) {
 			createError = cause;
 		} finally {
@@ -229,7 +235,7 @@
 						<Cpu class="size-4" aria-hidden="true" />
 						{m.settings_agents_install()}
 					</Button>
-					<Button variant="ghost" size="sm" href="/targets/new?kind=agent&via=relay">
+					<Button variant="secondary" size="sm" href="/targets/new?kind=agent&via=relay">
 						<RadioTower class="size-4" aria-hidden="true" />
 						{m.settings_agents_watch_remote()}
 						<ArrowRight class="size-3.5" aria-hidden="true" />
@@ -286,6 +292,15 @@
 					<input id="token-expires" type="number" min="1" step="1" class="input" bind:value={expiresInDays} placeholder={m.settings_agents_no_deadline()} disabled={creating} />
 				</Field>
 			</div>
+			<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
+				<input type="checkbox" class="size-4 accent-[var(--color-signal)]" bind:checked={asRelay} disabled={creating} />
+				{m.deviceform_enroll_relay_checkbox()}
+			</label>
+			{#if asRelay}
+				<Field label={m.deviceform_enroll_site_name()} for="token-site" help={m.deviceform_enroll_site_help()}>
+					<input id="token-site" type="text" class="input" maxlength="80" autocomplete="off" bind:value={relaySite} placeholder={m.deviceform_enroll_site_placeholder()} disabled={creating} />
+				</Field>
+			{/if}
 			{#if scopeError}
 				<p class="text-sm text-warning">{scopeError}</p>
 			{/if}

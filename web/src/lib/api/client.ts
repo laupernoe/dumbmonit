@@ -172,9 +172,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 				// Proof of origin for cookie-authenticated writes (anti-CSRF): a
 				// third-party page cannot add this header without CORS consent.
 				'x-requested-with': 'DumbMonit',
-				...(body === undefined ? {} : { 'content-type': 'application/json' })
+				...(body === undefined
+					? {}
+					: { 'content-type': body instanceof Blob ? 'application/octet-stream' : 'application/json' })
 			},
-			body: body === undefined ? undefined : JSON.stringify(body)
+			// A file is sent as is (an upload); anything else travels as JSON.
+			body: body === undefined ? undefined : body instanceof Blob ? body : JSON.stringify(body)
 		});
 	} catch (cause) {
 		// A cancelled request is not an outage: propagate it as is so the caller

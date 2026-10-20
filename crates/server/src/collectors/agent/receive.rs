@@ -156,6 +156,8 @@ pub async fn ingest(
         agent_secret: registration.issued_secret,
         bound: registration.bound,
         disabled_modules: modules::disabled(&states),
+        // Le mode relais réglé dans l'interface : l'agent l'applique à chaud.
+        relay: store::relay_setting(pool, target.id).await?,
     })
 }
 
@@ -274,6 +276,8 @@ mod tests {
                 commands_enabled: Some(true),
                 relay: false,
                 site: None,
+                relay_control: false,
+                relay_local: false,
                 machine_id: None,
                 tags: BTreeMap::new(),
                 binding_supported: true,

@@ -25,6 +25,10 @@ param(
     [string[]]$Services = @(),
     [hashtable]$Tags = @{},
     [string]$HostName,
+    # Relay mode: the agent also probes the devices of its network for the server.
+    [switch]$Relay,
+    # Site of this relay, for example "Lyon office".
+    [string]$Site,
     # Optional modules to run (docker, plakar, system_health, sensors, smart, zfs,
     # libvirt, wireguard, ipsec, perf_counters, or none). Omitted: every module detects itself.
     [string[]]$Modules,
@@ -279,6 +283,8 @@ $lignes.Add("server_url: $Url")
 $lignes.Add("token: $Token")
 if ($Interval -gt 0)  { $lignes.Add("interval_secs: $Interval") }
 if ($HostName)        { $lignes.Add("hostname: $HostName") }
+if ($Relay)           { $lignes.Add("relay: true") }
+if ($Site)            { $lignes.Add("site: '$($Site -replace "'", "''")'") }
 if ($Services.Count -gt 0) {
     $lignes.Add("services:")
     foreach ($service in $Services) { $lignes.Add("  - $service") }

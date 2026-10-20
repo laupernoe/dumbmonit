@@ -116,55 +116,53 @@ critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 
 ## Install
 
-The steps below are the ones the notice next to the form shows. There is no
-account to create on the machine: the enrollment token is the only secret.
+The steps below are the ones the notice next to the form shows. There is no account to create on the machine: the enrollment token is the only secret.
 
-1. Save the monitor in DumbMonit: an enrollment token (dmon_…) is shown once,
-   with the install command ready to copy for Linux and for Windows. (A token
-   can also be created in **Settings → Agents**.)
-2. That token is the agent's key to push its measurements to DumbMonit. It is
-   not an account on the machine: nothing to create there. A token created from
-   the monitor form is single use: it enrols this one machine and nothing else.
-   For a fleet, create a reusable token in Settings → Agents.
-3. Run the install command on the machine to monitor, with elevated rights
-   (sudo on Linux and macOS, an elevated PowerShell on Windows). It downloads
-   the agent, writes the token into agent.yaml and starts the service.
-4. The machine shows up on its own within a few seconds, named after its host
-   name. On that first batch the server gives the agent a secret of its own and
-   stores it in `/etc/dumbmonit/agent-secret`, readable by nobody else: from
-   then on, that machine is the only one that can report under this monitor.
-   Lost the token? Settings → Agents lets you revoke it and create another.
-5. Docker: to see the containers and let DumbMonit restart or update them, the
-   agent must reach the Docker socket. The service the installer registers
-   already can; if you run the agent under a dedicated user instead, add that
-   user to the "docker" group and restart it. Restart and auto-update policies
-   are then set per container on the monitor page.
-
-Two things are worth reading before you roll this out to more than one
-machine: [Binding](#binding-one-machine-one-agent), which is what makes a
-monitor really belong to one agent installation, and
-[Single use or fleet](#single-use-or-fleet), which is the choice you make when
-you create a token.
+1. In DumbMonit, save the monitor: an enrollment token (dmon_…) is shown once, with the install command ready to copy for Linux and for Windows.
+2. Run that install command on the machine, with elevated rights (sudo on Linux and macOS, an elevated PowerShell on Windows).
+3. The machine shows up within a few seconds, named after its host name.
+4. Optional, for Docker: if the agent runs under a dedicated user, add that user to the "docker" group and restart the agent.
 
     ```
     usermod -aG docker dumbmonit
     ```
 
-6. Plakar backups: detected automatically — a Plakar monitor appears under the
-   machine when the plakar binary or a kloset (~/.config/plakar/stores.yml of
-   every user, ~/.plakar, /var/lib/plakar) is found, and nothing is shown
-   otherwise. Set "plakar_klosets" in agent.yaml to watch a fixed list, or
-   "plakar: false" to opt out.
-7. Services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt,
-   WireGuard, IPsec, speed test) each become their own monitor under the
-   machine, with their own status and alerts. The machine's "Services found by
-   the agent" panel lists what was found and what was not: untick a module to
-   drop its monitor, tick one to watch it before it shows up. See
-   [Services found by the agent](#services-found-by-the-agent).
+5. For a fleet, or to revoke a lost token, use Settings → Agents.
 
-!!! note
-    The agent contacts the server, never the other way round: no port needs to
-    be opened on the monitored machine.
+!!! warning
+    The agent contacts the server, never the other way round: no port needs to be opened on the monitored machine.
+
+### Good to know
+
+The token is the agent's key to push its measurements to DumbMonit. It is not an
+account on the machine. A token created from the monitor form is single use: it
+enrols this one machine and nothing else. For a fleet, create a reusable token
+in Settings → Agents. On that first batch the server gives the agent a secret of
+its own and stores it in `/etc/dumbmonit/agent-secret`, readable by nobody else:
+from then on, that machine is the only one that can report under this monitor.
+
+Docker: to see the containers and let DumbMonit restart or update them, the
+agent must reach the Docker socket. The service the installer registers already
+can. Restart and auto-update policies are then set per container on the monitor
+page.
+
+Plakar backups are detected automatically: a Plakar monitor appears under the
+machine when the plakar binary or a kloset (`~/.config/plakar/stores.yml` of
+every user, `~/.plakar`, `/var/lib/plakar`) is found, and nothing is shown
+otherwise. Set `plakar_klosets` in `agent.yaml` to watch a fixed list, or
+`plakar: false` to opt out.
+
+The services the agent finds (Docker, Plakar, restic/Borg, ZFS, libvirt,
+WireGuard, IPsec, speed test) each become their own monitor under the machine,
+with their own status and alerts. The machine's "Services found by the agent"
+panel lists what was found and what was not: untick a module to drop its
+monitor, tick one to watch it before it shows up. See
+[Services found by the agent](#services-found-by-the-agent).
+
+Two things are worth reading before you roll this out to more than one machine:
+[Binding](#binding-one-machine-one-agent), which is what makes a monitor really
+belong to one agent installation, and [Single use or fleet](#single-use-or-fleet),
+which is the choice you make when you create a token.
 
 === "Linux (systemd or OpenRC)"
 
@@ -423,15 +421,13 @@ machine's agent.
 
 The same as the monitor notice:
 
-1. There is nothing to add by hand: install the agent on the machine, and each
-   service it finds becomes a monitor under that machine on its first report.
-2. To stop watching a service, untick it in the machine's "Services found by
-   the agent" panel, or delete its monitor: the agent's readings for it are then
-   dropped.
+1. Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.
+2. To stop watching one, untick it in the machine's "Services found by the agent" panel or delete its monitor.
 
-!!! note
-    If the machine stops reporting, its services are shown as hidden behind it
-    rather than raising alerts of their own.
+!!! warning
+    If the machine stops reporting, its services are shown as hidden behind it rather than raising alerts of their own.
+
+Once a monitor is deleted, the agent's readings for that service are dropped.
 
 ### Upgrading an existing installation
 

@@ -64,9 +64,11 @@
 		cancelHref: string;
 		/** Add only: values found by the network scan (address, name, settings). Never a secret. */
 		prefill?: Prefill | null;
+		/** Add only: the relay agent picked beforehand ("Add a monitor through this relay"). */
+		viaAgentDefault?: number | null;
 	}
 
-	let { collector, target, targets = [], onsaved, cancelHref, prefill = null }: Props = $props();
+	let { collector, target, targets = [], onsaved, cancelHref, prefill = null, viaAgentDefault = null }: Props = $props();
 
 	// The scan's findings, folded into this kind's fields. Seeds once, like the rest.
 	const seed = untrack(() => seedFromPrefill(target ? null : prefill, collector));
@@ -102,7 +104,7 @@
 	let address = $state(untrack(() => target?.address ?? seed.address));
 	let intervalSecs = $state(untrack(() => target?.interval_secs ?? DEFAULT_INTERVAL));
 	let parentId = $state<number | null>(untrack(() => target?.parent_id ?? null));
-	let viaAgent = $state<number | null>(untrack(() => target?.via_agent ?? null));
+	let viaAgent = $state<number | null>(untrack(() => (target ? target.via_agent : viaAgentDefault) ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
 	let groupName = $state(untrack(() => target?.group_name ?? ''));
 	let locationId = $state<number | null>(untrack(() => target?.location_id ?? null));

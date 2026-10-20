@@ -212,6 +212,13 @@ pub struct ActiveAlertView {
     /// Compte qui a acquitté, ou `token:nom` pour un jeton d'API.
     pub acked_by: Option<String>,
     pub ack_note: Option<String>,
+    /// Vrai quand l'occurrence en cours a été écartée (« j'ai compris ») : plus
+    /// aucune notification, résolution comprise, et l'alerte sort des vues
+    /// actives. `GET /alerts` ne la renvoie qu'avec `?dismissed=true`.
+    pub dismissed: bool,
+    pub dismissed_at: Option<DateTime<Utc>>,
+    /// Compte qui l'a écartée, ou `token:nom` pour un jeton d'API.
+    pub dismissed_by: Option<String>,
     pub value: Option<f64>,
     pub score: Option<f64>,
     pub condition_since: Option<DateTime<Utc>>,
@@ -227,6 +234,7 @@ impl ActiveAlertView {
         rule: Option<&Rule>,
         now: DateTime<Utc>,
     ) -> Self {
+        let dismissed = alert.state.is_dismissed();
         Self {
             effective_phase: alert.state.effective_phase(),
             phase: alert.state.phase,
@@ -245,6 +253,9 @@ impl ActiveAlertView {
             acked_until: alert.state.acked_until,
             acked_by: alert.state.acked_by,
             ack_note: alert.state.ack_note,
+            dismissed,
+            dismissed_at: alert.state.dismissed_at,
+            dismissed_by: alert.state.dismissed_by,
             value: alert.state.value,
             score: alert.state.score,
             condition_since: alert.state.condition_since,
@@ -506,6 +517,11 @@ pub struct ActiveQuery {
     /// Ne garde que les alertes de cet équipement.
     #[serde(default)]
     pub target_id: Option<i64>,
+    /// `true` : seulement les alertes écartées (« j'ai compris ») encore en
+    /// cours, pour les rétablir. Par défaut, elles sont exclues : la liste, la
+    /// vue d'ensemble, le mur et les compteurs ne les voient plus.
+    #[serde(default)]
+    pub dismissed: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -1149,6 +1165,7 @@ pub async fn list_active(
             // Le filtre `target_id` ne garde que les alertes de cet équipement
             // (une alerte sans équipement n'y répond jamais).
             .filter(|alert| query.target_id.is_none_or(|id| alert.target_id == Some(id)))
+            .filter(|alert| alert.state.is_dismissed() == query.dismissed.unwrap_or(false))
             .map(|alert| {
                 let rule = rules.get(&alert.rule_uid);
                 ActiveAlertView::new(alert, rule, now)
@@ -1207,6 +1224,56 @@ pub async fn ack_alert(
     let actor = principal.label();
     let view = acknowledge(&state, &fingerprint, request, &actor).await?;
     audit::record(&state.pool, Some(&actor), action, Some(&fingerprint), ip).await;
+    Ok(Json(view))
+}
+
+/// Écarte (« j'ai compris ») ou rétablit une alerte, au nom de `actor`.
+///
+/// Partagé par la route HTTP, l'outil MCP et les liens des notifications.
+pub async fn dismiss(
+    state: &AppState,
+    fingerprint: &str,
+    dismissed: bool,
+    actor: &str,
+) -> ApiResult<ActiveAlertView> {
+    let by = dismissed.then_some(actor);
+    if !db::alerts::set_dismiss(&state.pool, fingerprint, by, Utc::now()).await? {
+        return Err(alert_not_found(fingerprint));
+    }
+    let alert = db::alerts::get_active(&state.pool, fingerprint)
+        .await?
+        .ok_or_else(|| alert_not_found(fingerprint))?;
+    let rule = db::alerts::list_rules(&state.pool)
+        .await?
+        .into_iter()
+        .find(|rule| rule.uid == alert.rule_uid);
+    Ok(ActiveAlertView::new(alert, rule.as_ref(), Utc::now()))
+}
+
+/// `POST /alerts/{fingerprint}/dismiss` : « j'ai compris » — l'occurrence en
+/// cours disparaît des vues actives et ne notifie plus rien.
+pub async fn dismiss_alert(
+    State(state): State<AppState>,
+    OperatorIdentity(principal): OperatorIdentity,
+    ClientIp(ip): ClientIp,
+    Path(fingerprint): Path<String>,
+) -> ApiResult<Json<ActiveAlertView>> {
+    let actor = principal.label();
+    let view = dismiss(&state, &fingerprint, true, &actor).await?;
+    audit::record(&state.pool, Some(&actor), "alert.dismissed", Some(&fingerprint), ip).await;
+    Ok(Json(view))
+}
+
+/// `DELETE /alerts/{fingerprint}/dismiss` : rétablit une alerte écartée par erreur.
+pub async fn undismiss_alert(
+    State(state): State<AppState>,
+    OperatorIdentity(principal): OperatorIdentity,
+    ClientIp(ip): ClientIp,
+    Path(fingerprint): Path<String>,
+) -> ApiResult<Json<ActiveAlertView>> {
+    let actor = principal.label();
+    let view = dismiss(&state, &fingerprint, false, &actor).await?;
+    audit::record(&state.pool, Some(&actor), "alert.undismissed", Some(&fingerprint), ip).await;
     Ok(Json(view))
 }
 

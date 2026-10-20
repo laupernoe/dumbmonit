@@ -15,10 +15,12 @@
 	import type { CollectorInfo } from '#lib/api/index.js';
 	import { Plate } from '#lib/ui/index.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
-	import { filterGroups, groupCollectors, POPULAR_KINDS, type KindChoice } from './kinds';
+	import { filterGroups, groupCollectors, POPULAR_KINDS, type ImportChoice, type KindChoice } from './kinds';
 
 	interface Props {
 		collectors: CollectorInfo[];
+		/** Listed in their own "Import" category, last, beside "Everything else". */
+		imports?: ImportChoice[];
 		/** Id of the current choice: a kind, or `agent:<feature>`. */
 		selected: string | null;
 		onselect: (kind: string, feature: string | null) => void;
@@ -30,7 +32,7 @@
 		empty?: import('svelte').Snippet<[string]>;
 	}
 
-	let { collectors, selected, onselect, onscan, wide = false, empty }: Props = $props();
+	let { collectors, imports = [], selected, onselect, onscan, wide = false, empty }: Props = $props();
 
 	let query = $state('');
 	const groups = $derived(groupCollectors(collectors));
@@ -53,6 +55,11 @@
 		else next.add(id);
 		expanded = next;
 	}
+	const fold = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+	/** Searching also finds the imports, by label or summary. */
+	const importMatches = $derived(
+		searching ? imports.filter((i) => fold(`${i.label} ${i.summary}`).includes(fold(query.trim()))) : imports
+	);
 	const flat = $derived<KindChoice[]>(
 		searching ? visible.flatMap((g) => g.choices) : [...popular, ...rest.filter((g) => expanded.has(g.id)).flatMap((g) => g.choices)]
 	);
@@ -122,7 +129,7 @@
 		/>
 	</div>
 
-	{#if flat.length === 0}
+	{#if flat.length === 0 && (!searching || importMatches.length === 0)}
 		<div class="rounded-[var(--radius-card)] border border-dashed border-line px-4 py-6 text-center">
 			<p class="text-sm text-ink">{m.deviceform_picker_no_match({ query: query.trim() })}</p>
 			{#if empty}{@render empty(query.trim())}{/if}
@@ -130,7 +137,8 @@
 	{:else}
 		<div bind:this={host} role="radiogroup" aria-label={m.deviceform_picker_group_label()} class="grid gap-5">
 			{#if searching}
-				{@render tiles(flat)}
+				{#if flat.length > 0}{@render tiles(flat)}{/if}
+				{#if importMatches.length > 0}{@render importTiles(importMatches)}{/if}
 			{:else}
 				<section aria-labelledby="picker-popular">
 					<h3 id="picker-popular" class="label-tape mb-2">{m.deviceform_picker_popular()}</h3>
@@ -156,6 +164,24 @@
 							{/if}
 						</section>
 					{/each}
+					{#if imports.length > 0}
+						{@const open = expanded.has('import')}
+						<section>
+							<button
+								type="button"
+								class="flex min-h-10 w-full items-center gap-2 rounded text-left text-sm font-semibold text-ink-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+								aria-expanded={open}
+								onclick={() => toggleExpanded('import')}
+							>
+								<ChevronDown class={`size-4 shrink-0 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} aria-hidden="true" />
+								<span>{m.deviceform_picker_import()} ({imports.length})</span>
+								<span class="hidden min-w-0 truncate font-normal text-ink-3 sm:inline">{m.deviceform_picker_import_hint()}</span>
+							</button>
+							{#if open}
+								<div class="mt-2 mb-3">{@render importTiles(imports)}</div>
+							{/if}
+						</section>
+					{/if}
 				</div>
 			{/if}
 		</div>
@@ -229,5 +255,30 @@
 				</button>
 			</li>
 		{/if}
+	</ul>
+{/snippet}
+
+{#snippet importTiles(items: ImportChoice[])}
+	<ul class={`grid gap-2 sm:grid-cols-2 ${wide ? 'xl:grid-cols-3' : ''}`}>
+		{#each items as item, i (item.id)}
+			{@const Icon = item.icon}
+			<li class="min-w-0" style={`--rise-delay: ${Math.min(i, 10) * 25}ms`}>
+				<button
+					type="button"
+					data-choice={`import:${item.id}`}
+					onclick={item.onrun}
+					aria-haspopup="dialog"
+					class="flex h-full w-full items-start gap-3 rounded-[var(--radius-card)] border border-line bg-surface px-3.5 py-3 text-left transition-[transform,box-shadow,border-color] duration-200 ease-out-expo hover:-translate-y-px hover:border-line-strong hover:shadow-float focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal"
+				>
+					<span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-line bg-surface-2 text-ink-2">
+						<Icon class="size-4" aria-hidden="true" />
+					</span>
+					<span class="min-w-0 flex-1">
+						<span class="text-[0.9375rem] leading-tight font-semibold text-ink">{item.label}</span>
+						<span class="mt-1 line-clamp-2 block text-[0.8125rem] leading-snug text-ink-2">{item.summary}</span>
+					</span>
+				</button>
+			</li>
+		{/each}
 	</ul>
 {/snippet}

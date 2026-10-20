@@ -17,3 +17,14 @@ export function websiteBannerDocsUrl(): string {
 	const locale = getLocale();
 	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/latest/integrations/website-banner/`;
 }
+
+/**
+ * A link to our Read the Docs project (the server sends the English one),
+ * switched to the language of the UI. Any other link is returned unchanged.
+ */
+export function localizedDocsUrl(url: string): string {
+	const prefix = 'https://dumbmonit.readthedocs.io/en/';
+	if (!url.startsWith(prefix)) return url;
+	const locale = getLocale();
+	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/${url.slice(prefix.length)}`;
+}

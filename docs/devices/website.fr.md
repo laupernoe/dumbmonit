@@ -12,13 +12,16 @@ Pour le contenu d'une page plutôt que sa santé, voir
 
 ## Configuration
 
-1. Dans l'adresse, collez la page à vérifier, généralement la page d'accueil, avec ou sans https://. Les redirections sont suivies : http vers https et example.com vers www.example.com sont normaux, seule une boucle de redirection ou un déplacement vers une autre adresse est signalé.
-2. Remplissez optionnellement « Texte attendu » avec une phrase que la page doit toujours afficher, et ajustez « Page vierge en dessous de » si la page est courte à dessein.
-3. La première vérification enregistre la référence : adresse finale, titre, description, URL canonique, règles d'indexation. Un changement n'est signalé qu'après **2 vérifications consécutives** (réglable) l'ayant vu, donc les tests A/B et les caches capricieux restent silencieux.
-4. Pour ajouter de nombreux sites à la fois, importez un fichier CSV depuis le menu **⋯** de la page Surveillances : chaque site est classé sous `Websites/<catégorie>` (E-commerce, Blog… ou la catégorie que vous donnez) ou, quand la page ne le dit pas, sous `Websites/<platform>` (WordPress, Shopify…), sauf si vous spécifiez un dossier.
+1. Dans l'adresse, collez la page à vérifier, généralement la page d'accueil.
+
+2. Au besoin, remplissez « Texte attendu » avec une phrase que la page doit toujours afficher.
+
+3. Pour ajouter de nombreux sites à la fois, importez un fichier CSV depuis la liste des surveillances.
 
 !!! warning
-    Seul ce que le serveur envoie est lu : une page dessinée entièrement par JavaScript semble vierge ici. Réduisez « Page vierge en dessous de » à 0 pour un tel site.
+    Seul ce que le serveur envoie est lu : pour une page dessinée par JavaScript, réglez « Page vierge en dessous de » sur 0.
+
+Les redirections sont suivies : http vers https et example.com vers www.example.com sont normaux, seule une boucle de redirection ou un déplacement vers une autre adresse est signalé. Ajustez « Page vierge en dessous de » si la page est courte à dessein. La première vérification enregistre la référence : adresse finale, titre, description, URL canonique, règles d'indexation. Elles sont comparées à nouveau toutes les 6 heures par défaut (option de contrôle des changements), tandis que le haut/bas est vérifié à chaque intervalle d'interrogation. Un changement n'est signalé qu'après 2 vérifications consécutives (réglable) l'ayant vu, donc les tests A/B et les caches capricieux restent silencieux. Les sites importés sont classés sous `Websites/<catégorie>` (E-commerce, Blog… ou la catégorie que vous donnez) ou, quand la page ne le dit pas, sous `Websites/<platform>` (WordPress, Shopify…), sauf si vous spécifiez un dossier.
 
 ## Qu'est-ce que chaque vérification fait
 
