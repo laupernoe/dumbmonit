@@ -7,6 +7,7 @@
  */
 import { request, ApiError } from './client';
 import { normalizeCollector } from './types';
+import { sortDismissed } from '../alerts-dismiss';
 import type {
 	AlertLinkResult,
 	AlertLinkView,
@@ -348,6 +349,22 @@ export function ackAlert(fingerprint: string, payload: AckPayload = {}): Promise
 /** Lifts an acknowledgement; returns the updated alert. */
 export function unackAlert(fingerprint: string): Promise<Alert> {
 	return request<Alert>(`/alerts/${encodeURIComponent(fingerprint)}/ack`, { method: 'DELETE' });
+}
+
+/** Dismisses an alert: it leaves every list and count for good (this occurrence); returns the alert. */
+export function dismissAlert(fingerprint: string): Promise<Alert> {
+	return request<Alert>(`/alerts/${encodeURIComponent(fingerprint)}/dismiss`, { method: 'POST' });
+}
+
+/** Undoes a dismissal; returns the alert, back in the active list. */
+export function undismissAlert(fingerprint: string): Promise<Alert> {
+	return request<Alert>(`/alerts/${encodeURIComponent(fingerprint)}/dismiss`, { method: 'DELETE' });
+}
+
+/** The dismissed alerts that are still active (`GET /alerts?dismissed=true`), newest first. */
+export async function listDismissedAlerts(signal?: AbortSignal): Promise<Alert[]> {
+	const alerts = await request<Alert[]>('/alerts', { signal, query: { dismissed: true } });
+	return Array.isArray(alerts) ? sortDismissed(alerts) : [];
 }
 
 // --- Network discovery ------------------------------------------------------

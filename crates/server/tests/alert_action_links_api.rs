@@ -310,6 +310,40 @@ async fn a_snooze_link_pauses_for_an_hour_and_never_shortens_a_longer_ack() {
 }
 
 #[tokio::test]
+async fn a_dismiss_link_hides_the_alerts_once() {
+    let app = setup().await;
+    let nas = app.create_target("nas").await;
+    app.fire("cpu_high@1", nas).await;
+    app.fire("cpu_high@2", nas).await;
+    let token = app.token(Action::Dismiss, &["cpu_high@1", "cpu_high@2"]).await;
+
+    let (status, view) = app.inspect(&token).await;
+    assert_eq!(status, StatusCode::OK, "{view}");
+    assert_eq!(view["action"], json!("dismiss"));
+    assert_eq!(view["alerts"][0]["dismissed"], json!(false));
+
+    let (status, done) = app.execute(&token).await;
+    assert_eq!(status, StatusCode::OK, "{done}");
+    assert_eq!(done["dismissed"], json!(2), "one link covers the whole message");
+    assert_eq!(done["acked"], json!(0));
+    assert_eq!(done["alerts"][0]["dismissed"], json!(true));
+    assert!(app.alert("cpu_high@1").await.is_null(), "hidden from the active alerts");
+    assert!(app.alert("cpu_high@2").await.is_null());
+
+    let stored = db::alerts::get_active(&app.pool, "cpu_high@1").await.unwrap().unwrap();
+    assert_eq!(stored.state.dismissed_by.as_deref(), Some("via notification link"));
+    let (_, audit) = app.request("GET", "/api/auth/audit", None, Some(&app.admin)).await;
+    assert!(
+        audit.as_array().unwrap().iter().any(|entry| entry["action"] == json!("alert.dismissed")
+            && entry["actor"] == json!("via notification link")),
+        "{audit}"
+    );
+
+    let (status, again) = app.execute(&token).await;
+    assert_eq!(status, StatusCode::CONFLICT, "{again}");
+}
+
+#[tokio::test]
 async fn refused_tokens_all_look_the_same() {
     let app = setup().await;
     let nas = app.create_target("nas").await;

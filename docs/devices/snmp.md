@@ -54,18 +54,16 @@ and drives are read over [Redfish](redfish.md) instead.
 
 ## What to prepare on the device
 
-1. Open the device's administration interface.
-2. Look for the SNMP section, often under "Network", "Services" or
-   "Administration".
-3. Enable SNMP v2c and note the read-only community ("public" by default on
-   many devices).
-4. If the device filters by address, allow the DumbMonit server's address.
-5. Come back to DumbMonit, enter the address and the community: the rest is
-   detected automatically.
+1. Open the device's web interface and find its SNMP settings, often under Network, Services or Administration.
+
+2. Enable SNMP v2c and note the read-only community (public on many devices).
+
+3. If the device filters by address, allow this server's address.
+
+4. In DumbMonit, enter the address and the community: the rest is detected automatically.
 
 !!! warning
-    A community is not encrypted on the network. On a shared network, prefer
-    SNMP v3, which authenticates and encrypts.
+    A community is not encrypted on the network: on a shared network, prefer SNMP v3, which authenticates and encrypts.
 
 ## Credentials
 

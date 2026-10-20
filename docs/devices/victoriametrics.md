@@ -81,39 +81,52 @@ queries the server. It says, in this order:
 
 ## Let DumbMonit read VictoriaMetrics' own health
 
-1. Nothing to install: VictoriaMetrics publishes its own health on /health and /metrics, on the port of its API (8428 by default). Check from the DumbMonit host that both answer.
+1. Nothing to install: check from the DumbMonit host that VictoriaMetrics answers on its API port (8428 by default).
 
     ```
     curl http://victoriametrics.lan:8428/health
-    curl -s http://victoriametrics.lan:8428/metrics | grep vm_app_version
     ```
 
-2. If VictoriaMetrics runs with -httpAuth.username and -httpAuth.password, pick Username / password below and enter those. Behind vmauth or a reverse proxy that expects a bearer token, pick Bearer token. If -metricsAuthKey is set, /metrics only answers with that key in the URL, which DumbMonit does not send: protect /metrics with the basic authentication above instead.
-
-3. In DumbMonit, enter the server address, for example "victoriametrics.lan" or "http://10.0.0.5:8428". Behind a reverse proxy, enter the full URL with its path prefix. This covers the single-node server; the components of a VictoriaMetrics cluster expose other metrics and are not covered.
-
-4. DumbMonit only reads /health and /metrics. It never runs a query against your data and never writes anything.
+2. If it runs with -httpAuth.username and -httpAuth.password, pick Username / password below; behind vmauth or a proxy that expects a bearer token, pick Bearer token.
+3. In DumbMonit, enter the server address, for example "victoriametrics.lan" or "http://10.0.0.5:8428".
 
 !!! warning
-    Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (100 MB by default) VictoriaMetrics switches to read-only and refuses every new sample, while it keeps answering queries as if nothing happened. DumbMonit shows the headroom left above that limit and warns under 10%.
+    Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (100 MB by default) VictoriaMetrics turns read-only and refuses every new sample. DumbMonit shows the headroom left and warns under 10%.
+
+Vendor documentation: [VictoriaMetrics monitoring](https://docs.victoriametrics.com/victoriametrics/single-server-victoriametrics/#monitoring).
+
+### Good to know
+
+If `-metricsAuthKey` is set, `/metrics` only answers with that key in the URL,
+which DumbMonit does not send: protect `/metrics` with the basic authentication
+above instead. Behind a reverse proxy, enter the full URL with its path prefix.
+This covers the single-node server; the components of a VictoriaMetrics cluster
+expose other metrics and are not covered. DumbMonit only reads `/health` and
+`/metrics`: it never runs a query against your data and never writes anything.
 
 ## Let DumbMonit read VictoriaLogs' own health
 
-1. Nothing to install: VictoriaLogs publishes its own health on /health and /metrics, on the port of its API (9428 by default). Check from the DumbMonit host that both answer.
+1. Nothing to install: check from the DumbMonit host that VictoriaLogs answers on its API port (9428 by default).
 
     ```
     curl http://victorialogs.lan:9428/health
-    curl -s http://victorialogs.lan:9428/metrics | grep vl_free_disk_space_bytes
     ```
 
-2. If VictoriaLogs runs with -httpAuth.username and -httpAuth.password, pick Username / password below and enter those. Behind vmauth or a reverse proxy that expects a bearer token, pick Bearer token. If -metricsAuthKey is set, /metrics only answers with that key in the URL, which DumbMonit does not send: protect /metrics with the basic authentication above instead.
-
-3. In DumbMonit, enter the server address, for example "victorialogs.lan" or "http://10.0.0.6:9428". Behind a reverse proxy, enter the full URL with its path prefix.
-
-4. DumbMonit only reads /health and /metrics. It never runs a LogsQL query and never reads a log line.
+2. If it runs with -httpAuth.username and -httpAuth.password, pick Username / password below; behind vmauth or a proxy that expects a bearer token, pick Bearer token.
+3. In DumbMonit, enter the server address, for example "victorialogs.lan" or "http://10.0.0.6:9428".
 
 !!! warning
-    Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (10 MB by default) VictoriaLogs switches to read-only and refuses every new log line. DumbMonit shows the headroom left above that limit and warns under 10%.
+    Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (10 MB by default) VictoriaLogs turns read-only and refuses every new log line. DumbMonit shows the headroom left and warns under 10%.
+
+Vendor documentation: [VictoriaLogs monitoring](https://docs.victoriametrics.com/victorialogs/#monitoring).
+
+### Good to know
+
+If `-metricsAuthKey` is set, `/metrics` only answers with that key in the URL,
+which DumbMonit does not send: protect `/metrics` with the basic authentication
+above instead. Behind a reverse proxy, enter the full URL with its path prefix.
+DumbMonit only reads `/health` and `/metrics`: it never runs a LogsQL query and
+never reads a log line.
 
 ## Credentials
 

@@ -56,20 +56,20 @@ phrase), le registrar et DNSSEC, et si la dernière requête au registre a
 
 ## Surveiller l'enregistrement d'un domaine
 
-1. Saisissez le domaine enregistré, par exemple « example.com », pas un nom en dessous comme www.example.com, que le registre ne connaît pas. Rien à configurer et aucun identifiant : RDAP, le successeur de WHOIS, est public.
+1. Saisissez le domaine enregistré, par exemple « example.com », pas un nom en dessous comme www.example.com.
 
-2. DumbMonit trouve le registre de l'extension dans le fichier d'amorçage RDAP de l'IANA, puis lui demande la date d'expiration, les codes de statut et le registrar, deux fois par jour par défaut. Les registres limitent les requêtes RDAP, et la date d'expiration change une fois par an : un intervalle de rafraîchissement plus court n'apporte rien.
-
-3. Quelques registres font tourner RDAP sans être listés par l'IANA, ceux de .ch et .li par exemple : réglez Serveur RDAP sur leur adresse. Une extension dont le registre ne fait tourner aucun service RDAP public ne peut pas être surveillée.
+2. Pour une extension que l'IANA ne liste pas, comme .ch, réglez « Serveur RDAP » sur l'adresse du registre.
 
     ```
     https://rdap.nic.ch/
     ```
 
-4. Certains registres ne publient pas la date d'expiration (.ch en est un) : DumbMonit le signale alors, et surveille quand même les codes de statut.
-
 !!! warning
-    Un domaine en clientHold ou serverHold est sorti du DNS : chaque site et boîte mail en dessous s'arrête, généralement pour une facture impayée ou une adresse de contact non vérifiée. DumbMonit avertit 30 jours avant expiration, monte le niveau 7 jours avant, et alerte immédiatement sur une suspension ou une période de rachat.
+    Un domaine en clientHold ou serverHold est retiré du DNS : tous les sites et boîtes mail qui en dépendent s'arrêtent.
+
+Aucun identifiant n'est nécessaire : RDAP, le successeur de WHOIS, est public. DumbMonit trouve le registre de l'extension dans le fichier d'amorçage RDAP de l'IANA, puis lui demande la date d'expiration, les codes de statut et le registrar, deux fois par jour par défaut ; un intervalle de rafraîchissement plus court n'apporte rien. Une extension dont le registre ne fait tourner aucun service RDAP public ne peut pas être surveillée. Certains registres ne publient pas la date d'expiration (.ch en est un) : DumbMonit le signale alors, et surveille quand même les codes de statut. Il avertit 30 jours avant l'expiration, élève l'alerte 7 jours avant, et alerte aussitôt en cas de blocage ou de période de rédemption.
+
+Documentation de l'éditeur : https://www.icann.org/rdap
 
 Un domaine que le registre ne connaît pas (un sous-domaine, une faute de
 frappe, ou un domaine qui a été supprimé) est signalé comme une erreur de

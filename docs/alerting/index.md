@@ -44,6 +44,11 @@ and `ack_note`): the phase does not move, reminders and escalations pause until
 **Snoozing** one alert works the same way under the hood but through a
 maintenance window scoped to that alert's exact labels (`silenced: true`),
 rather than the whole monitor: a sibling rule on the same monitor keeps talking.
+An alert can be **dismissed** too (`dismissed`, with `dismissed_by` and
+`dismissed_at`): same phase, but nothing is notified any more for that
+occurrence — reminders, escalation and resolution alike — and `GET /api/alerts`
+stops listing it. The dismissal clears with the condition, so a later return is
+a new alert.
 See [Getting rid of an alert](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Dependency suppression

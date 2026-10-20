@@ -101,25 +101,29 @@ PHP).
 
 ## Donner à Nextcloud un jeton de surveillance
 
-1. L'application serverinfo de Nextcloud, fournie et activée avec Nextcloud, répond à un jeton de surveillance qui ouvre ses statistiques et rien d'autre : aucun fichier, aucun utilisateur, aucun partage. Sur le serveur Nextcloud, réglez un jeton long et aléatoire et affichez-le. Lancez occ comme l'utilisateur du serveur web ; en Docker, mettez docker exec -u www-data et le nom du conteneur devant.
+1. Sur le serveur Nextcloud, posez un jeton aléatoire avec occ en tant qu'utilisateur du serveur web (sous Docker : docker exec -u www-data, puis le nom du conteneur).
 
     ```
     php occ config:app:set serverinfo token --value "$(openssl rand -hex 32)"
     php occ config:app:get serverinfo token
     ```
 
-2. Si occ dit que serverinfo est désactivé, activez-le d'abord.
+2. Si occ dit que serverinfo est désactivée, activez l'application Monitoring : menu du profil → Applications → Monitoring → Activer.
 
-    ```
-    php occ app:enable serverinfo
-    ```
+3. Dans DumbMonit, saisissez l'adresse avec laquelle vous ouvrez Nextcloud et collez le jeton.
 
-3. Dans DumbMonit, saisissez l'adresse avec laquelle vous ouvrez Nextcloud, par exemple « cloud.example.com » (HTTPS sur 443) ou « http://10.0.0.5:8080 », et collez le jeton. L'hôte doit être l'un des domaines de confiance de Nextcloud, sinon Nextcloud refuse la requête.
+Documentation de l'éditeur : <https://github.com/nextcloud/serverinfo#api>
 
-4. DumbMonit ne lit que status.php et les statistiques serverinfo. Il n'ouvre jamais un fichier, ne liste jamais les utilisateurs et ne change jamais un réglage, et le jeton ne peut se connecter nulle part.
+### Pourquoi un jeton, et pourquoi occ
+
+L'application serverinfo de Nextcloud répond à un jeton de surveillance qui ouvre ses statistiques et rien d'autre : aucun fichier, aucun utilisateur, aucun partage, et le jeton ne permet de se connecter nulle part. L'application Monitoring ne documente aucun écran pour définir ce jeton : occ est donc le moyen de le poser. DumbMonit lit seulement `status.php` et les statistiques de serverinfo : il n'ouvre jamais un fichier, ne liste jamais les utilisateurs et ne change aucun réglage.
+
+Juste après la pose du jeton, Nextcloud peut refuser la toute première lecture (401) avant qu'il ne soit pris en compte : DumbMonit réessaie une fois après deux secondes, si bien qu'une cible toute neuve n'affiche pas d'erreur « jeton refusé » parasite. Pour activer l'application en ligne de commande, `php occ app:enable serverinfo` fait la même chose que la page Applications.
+
+L'adresse doit faire partie des domaines de confiance de Nextcloud (`trusted_domains` dans `config.php`).
 
 !!! warning
-    Nextcloud ne dit pas au jeton quand les tâches de fond (cron) ont tourné pour la dernière fois : seul un compte avec tous les droits sur l'instance peut le lire. Pour être informé quand le cron s'arrête, ajoutez un battement de cœur dans DumbMonit et appelez son URL à la fin de la ligne cron, comme la documentation le montre.
+    Utilisez une adresse listée dans les domaines de confiance de Nextcloud, sinon Nextcloud refuse la requête.
 
 Avec Nextcloud AIO, lancez occ dans le conteneur `nextcloud-aio-nextcloud` :
 `docker exec -u www-data nextcloud-aio-nextcloud php occ …`. Pourquoi pas

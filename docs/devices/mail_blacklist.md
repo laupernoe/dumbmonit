@@ -131,24 +131,24 @@ result is an error is retried after ten minutes.
 
 ## Check a mail server against the blocklists
 
-1. Enter the domain you send mail for, for example "example.com": DumbMonit checks the addresses of its MX and of the domain itself. Or enter the public IP address the server sends from. If mail leaves through a relay that is not an MX, add its address under Extra addresses.
+1. Enter the domain you send mail for ("example.com"), or the public IP address the server sends from.
 
-2. No API key is needed: leave the credential on No key. Without one, the blocklists are queried through this server's DNS resolver, or through the one you set under Resolver.
+2. No API key is needed: leave the credential on No key.
 
-3. Tick the blocklists to query under Blocklists (the major ones are ticked by default), and add the DNSBL zones of any other list you use under Custom lists.
+3. Tick the blocklists to query under Blocklists, and add any other DNSBL zone under Custom lists.
 
-4. Only Spamhaus can refuse a query, and only when the resolver is a public one (Google, Cloudflare, Quad9) or forwards to one. The monitor then shows "Spamhaus refuses this resolver" and every other list keeps working. To get Spamhaus too, set Resolver to a recursive resolver of your own (an Unbound that resolves from the root servers is enough), or choose the optional Spamhaus DQS key as the credential: a free account (non-commercial use, low volume) whose key makes Spamhaus answer through any resolver.
+4. If the monitor shows "Spamhaus refuses this resolver", set "Resolver" to your own recursive resolver, or choose the free Spamhaus DQS key as the credential.
 
     ```
     https://www.spamhaus.com/data-access/free-data-query-service/
     ```
 
-5. To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed.
-
-6. Gmail, Outlook.com and Yahoo publish no blocklist that can be queried. DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page.
-
 !!! warning
-    An answer Spamhaus refused (127.255.255.254, a public resolver) is never shown as a listing: that list is marked refused and the others keep their result. Only when no other list answers does the monitor report a configuration error. A blocklist that does not answer is shown as unknown, never as clean. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.
+    A blocklist that does not answer is shown as unknown, never as clean.
+
+For a domain, DumbMonit checks the addresses of its MX and of the domain itself; if mail leaves through a relay that is not an MX, add its address under Extra addresses. Without a key, the blocklists are queried through this server's DNS resolver, or through the one you set under Resolver. Only Spamhaus can refuse a query, and only when the resolver is a public one (Google, Cloudflare, Quad9) or forwards to one; every other list keeps working. To check the setup, add a monitor for 127.0.0.2, the test address every blocklist lists: each one should show it as listed. Gmail, Outlook.com and Yahoo publish no blocklist that can be queried: DumbMonit checks what they weigh instead (a reverse DNS that points back to the address, SPF and DMARC records) and links to their sender tools on the monitor page. The lists are asked every 6 hours by default: asking more often gains nothing and gets resolvers banned.
+
+Vendor documentation: https://www.spamhaus.org/blocklists/zen-blocklist/
 
 ## What it watches
 
