@@ -1179,6 +1179,9 @@ export interface AgentToken {
 	 * this date — only revoking cuts them off.
 	 */
 	expires_at: string | null;
+	/** A relay token: the machine it enrols becomes a relay for its site at its first report. */
+	relay?: boolean;
+	relay_site?: string | null;
 }
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */
@@ -1191,6 +1194,10 @@ export interface AgentTokenPayload {
 	max_uses?: number | null;
 	/** Days before the token stops enrolling. Left out, there is no deadline. */
 	expires_in_days?: number | null;
+	/** Make the enrolled machine a relay for a remote site, without editing anything on it. */
+	relay?: boolean;
+	/** Site of that relay. */
+	site?: string | null;
 }
 
 /** Response of `POST /api/agent/tokens`: the only chance to see the token in clear. */
@@ -1220,6 +1227,17 @@ export interface AgentHost {
 	relay: boolean;
 	/** Site declared by the agent, if any. */
 	site: string | null;
+	/**
+	 * Relay mode asked from the UI (or by the enrolment token), sent to the agent
+	 * in every acknowledgement. Differs from `relay` until the agent adopts it.
+	 * Absent on an older server.
+	 */
+	relay_wanted?: boolean;
+	relay_wanted_site?: string | null;
+	/** False: the agent is too old to follow `relay_wanted` (set `relay: true` in agent.yaml, or update it). */
+	relay_control?: boolean;
+	/** `relay: true` is set in the agent's own configuration, which wins: it can't be switched off here. */
+	relay_local?: boolean;
 	/** Devices reached through this agent (`via_agent`). */
 	relayed: number;
 	last_seen_at: string | null;

@@ -76,6 +76,11 @@
 	const requestedKind = $derived(params.get('kind'));
 	/** Values from the network scan (`?prefill=`), for the kind's form only. */
 	const prefill = $derived(readPrefill(params));
+	/** A positive id from the URL (`?agent=`, `?via_agent=`), or `null`. */
+	function idParam(key: string): number | null {
+		const value = Number(params.get(key));
+		return Number.isInteger(value) && value > 0 ? value : null;
+	}
 	const selected = $derived(collectors.find((c) => c.kind === requestedKind) ?? null);
 	/** `?scan=1` opens the network scan: the first-run guide and the command palette link to it. */
 	const scanning = $derived(!requestedKind && params.get('scan') === '1');
@@ -369,7 +374,7 @@
 						<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
 						{m.deviceform_new_scan()}
 					</h2>
-					<Discovery />
+					<Discovery agent={idParam('agent')} />
 				</Panel>
 			{:else if selected}
 				<Panel>
@@ -407,6 +412,7 @@
 							<TargetForm
 								collector={selected}
 								{prefill}
+								viaAgentDefault={idParam('via_agent')}
 								{targets}
 								cancelHref="/targets"
 								onsaved={(saved) =>
