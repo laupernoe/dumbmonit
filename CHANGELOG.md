@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.13.5 — 2026-10-21
+
 ### Added
 
 - **"Network ports to open" in every setup guide.** Each guide opens with the
