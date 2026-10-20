@@ -114,11 +114,8 @@ pub async fn read(path: &Path, max_monitors: usize) -> Result<KumaDb, String> {
             }
         })
         .collect();
-    let sql = format!(
-        "SELECT {} FROM monitor ORDER BY id LIMIT {}",
-        select.join(", "),
-        max_monitors + 1
-    );
+    let sql =
+        format!("SELECT {} FROM monitor ORDER BY id LIMIT {}", select.join(", "), max_monitors + 1);
     let rows =
         sqlx::query(sqlx::AssertSqlSafe(sql)).fetch_all(&mut conn).await.map_err(unreadable)?;
 
