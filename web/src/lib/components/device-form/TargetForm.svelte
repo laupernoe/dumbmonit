@@ -40,10 +40,11 @@
 	import RequirementNotice from './RequirementNotice.svelte';
 	import MonitoredRules from './MonitoredRules.svelte';
 	import { overrideActions, pendingChanges } from './monitored-rules';
+	import { draftChanged, prefillDraft, secretPolicy, type SavedCredential } from './credential-edit';
 	import {
-		draftTouched,
 		emptyDraft,
 		initialView,
+		kindFromLabel,
 		toCredential,
 		validateCredential,
 		type CredentialDraft,
@@ -76,6 +77,26 @@
 
 	// --- Seed once from the target -------------------------------------------
 	const initialCredential: CredentialView = untrack(() => initialView(collector.credentials, target?.credential_kind));
+	/** The saved credential as the API describes it: kind, whether a secret is stored, its public parts. */
+	const saved: SavedCredential | null = untrack(() =>
+		target
+			? {
+					kind: kindFromLabel(target.credential_kind, ''),
+					has_secret: target.has_secret,
+					public: target.credential_public ?? {}
+				}
+			: null
+	);
+	/** On edit, the saved user name, token ID and protocols, secrets blank. */
+	const initialDraft: CredentialDraft = untrack(() =>
+		target
+			? prefillDraft(initialCredential, saved)
+			: {
+					...emptyDraft(initialCredential),
+					// "public" is the factory community of nearly every device: pre-filled on add.
+					...(initialCredential.kind === 'snmp_community' ? { community: 'public' } : {})
+				}
+	);
 
 	let name = $state(untrack(() => target?.name ?? seed.name));
 	let address = $state(untrack(() => target?.address ?? seed.address));
@@ -104,19 +125,14 @@
 		untrack(() => (target ? { ...target.tags } : seedChecklists(collector.options, seed.tags)))
 	);
 	let credential = $state<CredentialView>(initialCredential);
-	// "public" is the factory community of nearly every device: pre-filled on add.
-	let draft = $state<CredentialDraft>(
-		untrack(() => ({
-			...emptyDraft(initialCredential),
-			...(!target && initialCredential.kind === 'snmp_community' ? { community: 'public' } : {})
-		}))
-	);
+	let draft = $state<CredentialDraft>(untrack(() => ({ ...initialDraft })));
 
 	function changeCredential(kind: string) {
 		const next = views.find((view) => view.kind === kind);
 		if (!next || next.kind === credential.kind) return;
 		credential = next;
-		draft = emptyDraft(next);
+		// Back to the saved family: its saved parts come back too.
+		draft = next.kind === initialCredential.kind ? { ...initialDraft } : prefillDraft(next, saved);
 	}
 
 	let touched = $state<Set<string>>(new Set());
@@ -162,7 +178,7 @@
 	}
 
 	// --- Validation -----------------------------------------------------------
-	const credentialChanged = $derived(credential.kind !== initialCredential.kind || draftTouched(credential, draft));
+	const credentialChanged = $derived(credential.kind !== initialCredential.kind || draftChanged(draft, initialDraft));
 	/**
 	 * The server never sends a saved secret to a new destination: changing the
 	 * address, the relay or how the device is reached (these settings) means
@@ -181,10 +197,17 @@
 	});
 	/** On edit an untouched credential is simply not sent: the server keeps it. */
 	const sendCredential = $derived(!editing || credentialChanged || destinationChanged);
+	/**
+	 * Which saved secrets a blank field keeps, and which must be typed again
+	 * (the user name or token ID changed, or the destination did).
+	 */
+	const policy = $derived(secretPolicy(credential, draft, saved, destinationChanged));
 
 	const nameError = $derived(name.trim() ? null : m.deviceform_form_name_required());
 	const addressError = $derived(address.trim() ? null : m.deviceform_form_address_required());
-	const credentialErrors = $derived<CredentialErrors>(sendCredential ? validateCredential(credential, draft) : {});
+	const credentialErrors = $derived<CredentialErrors>(
+		sendCredential ? validateCredential(credential, draft, editing ? policy : null) : {}
+	);
 	const optionErrors = $derived.by(() => {
 		const errors: Record<string, string> = {};
 		for (const option of options) {
@@ -276,7 +299,7 @@
 			// No empty tag: a blank setting means "server default".
 			tags: Object.fromEntries(Object.entries(tags).filter(([, v]) => v.trim()))
 		};
-		if (sendCredential) payload.credential = toCredential(credential, draft);
+		if (sendCredential) payload.credential = toCredential(credential, draft, editing ? policy.kept : []);
 		return payload;
 	}
 
@@ -441,7 +464,8 @@
 			{views}
 			selected={credential}
 			bind:draft
-			editing={editing && !destinationChanged}
+			kept={editing ? policy.kept : []}
+			reenter={editing ? Object.keys(policy.reenter) : []}
 			errors={shownCredentialErrors}
 			onkindchange={changeCredential}
 			onblur={(field) => touch(`cred.${field}`)}

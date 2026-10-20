@@ -635,13 +635,16 @@
 	"demo_tour_s8_title": "Modo parede",
 	"deviceform_checksums_summary": "Checksums dos binários (SHA-256) — o instalador confere o download com estes valores",
 	"deviceform_cred_auth_label": "Autenticação",
-	"deviceform_cred_keep": "Deixe em branco para manter as credenciais salvas.",
 	"deviceform_cred_no_auth": "Sem autenticação",
 	"deviceform_cred_none": "Nada é enviado ao dispositivo: ele responde sem credenciais.",
 	"deviceform_cred_note_paste": "Valor colado limpo: espaços, aspas ou quebras de linha nas pontas foram removidos.",
 	"deviceform_cred_note_token": "Esse era o token inteiro: a parte depois de \"=\" foi movida para Segredo.",
 	"deviceform_cred_required": "{label} é obrigatório.",
 	"deviceform_cred_token_format": "Formato esperado: user@realm!name, exatamente como o Proxmox mostra.",
+	"deviceform_cred_saved_keep": "Salvo. Deixe vazio para mantê-lo.",
+	"deviceform_cred_reenter_identity": "Digite novamente: o salvo corresponde ao valor anterior de “{label}”.",
+	"deviceform_cred_reenter_destination": "Digite novamente: um segredo salvo nunca é enviado para um endereço ou conexão alterados.",
+	"deviceform_cred_choice_none": "Nenhum",
 	"deviceform_discovery_add_aria": "Adicionar {name}",
 	"deviceform_discovery_add_n": [
 		{

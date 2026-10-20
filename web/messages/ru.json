@@ -637,13 +637,16 @@
 	"demo_tour_s8_title": "Режим стены",
 	"deviceform_checksums_summary": "Контрольные суммы бинарных файлов (SHA-256) — установщик сверяет с ними загрузку",
 	"deviceform_cred_auth_label": "Аутентификация",
-	"deviceform_cred_keep": "Оставьте пустым, чтобы сохранить текущие учётные данные.",
 	"deviceform_cred_no_auth": "Без аутентификации",
 	"deviceform_cred_none": "Монитору ничего не отправляется: он отвечает без учётных данных.",
 	"deviceform_cred_note_paste": "Вставленное значение очищено: удалены пробелы, кавычки и переводы строк по краям.",
 	"deviceform_cred_note_token": "Это был весь токен: часть после «=» перенесена в поле «Секрет».",
 	"deviceform_cred_required": "Поле «{label}» обязательно.",
 	"deviceform_cred_token_format": "Ожидается user@realm!name — ровно в том виде, как его показывает Proxmox.",
+	"deviceform_cred_saved_keep": "Сохранено. Оставьте пустым, чтобы не менять.",
+	"deviceform_cred_reenter_identity": "Введите заново: сохранённое значение относится к прежнему значению поля «{label}».",
+	"deviceform_cred_reenter_destination": "Введите заново: сохранённый секрет никогда не отправляется на изменённый адрес или подключение.",
+	"deviceform_cred_choice_none": "Нет",
 	"deviceform_discovery_add_aria": "Добавить {name}",
 	"deviceform_discovery_add_n": [
 		{

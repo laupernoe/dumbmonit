@@ -635,13 +635,16 @@
 	"demo_tour_s8_title": "Wall mode",
 	"deviceform_checksums_summary": "Binary checksums (SHA-256) — the installer verifies the download against these",
 	"deviceform_cred_auth_label": "Authentication",
-	"deviceform_cred_keep": "Leave blank to keep the saved credentials.",
 	"deviceform_cred_no_auth": "No authentication",
 	"deviceform_cred_none": "Nothing is sent to the device: it answers without credentials.",
 	"deviceform_cred_note_paste": "Pasted value cleaned up: surrounding spaces, quotes or line breaks were removed.",
 	"deviceform_cred_note_token": "That was the whole token: the part after \"=\" was moved to Secret.",
 	"deviceform_cred_required": "{label} is required.",
 	"deviceform_cred_token_format": "Expected user@realm!name, exactly as Proxmox shows it.",
+	"deviceform_cred_saved_keep": "Saved. Leave empty to keep it.",
+	"deviceform_cred_reenter_identity": "Enter it again: the saved one belongs to the previous {label}.",
+	"deviceform_cred_reenter_destination": "Enter it again: a saved secret is never sent to a changed address or connection.",
+	"deviceform_cred_choice_none": "None",
 	"deviceform_discovery_add_aria": "Add {name}",
 	"deviceform_discovery_add_n": [
 		{
