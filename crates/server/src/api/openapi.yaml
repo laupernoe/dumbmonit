@@ -4332,6 +4332,28 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/skipped-features:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getSkippedFeatures
+      tags: [Integrations]
+      summary: Optional features skipped because the token lacks a privilege
+      description: >-
+        For Proxmox VE, Proxmox Backup Server and Proxmox Datacenter Manager monitors, lists the
+        optional features the last probe skipped after a 403 (not an error, not an alert), with the
+        missing privilege. Empty for other monitor types and when nothing was skipped.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Skipped features.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SkippedFeatures" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/pmg/queues:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -6143,6 +6165,21 @@ components:
         steps:
           type: array
           items: { type: string }
+        ports:
+          type: array
+          description: >-
+            Network ports to open, one per entry. `direction` is `to_device` (from the DumbMonit
+            server or its relay agent to the device) or `to_server` (from the agent to the
+            server). `optional` ports are only used by an option or mode, named in `purpose`.
+            Omitted when the type opens no connection to the device.
+          items:
+            type: object
+            properties:
+              port: { type: integer }
+              protocol: { type: string, enum: [tcp, udp] }
+              direction: { type: string, enum: [to_device, to_server] }
+              purpose: { type: string }
+              optional: { type: boolean }
         permissions:
           type: array
           description: >-
@@ -8011,6 +8048,22 @@ components:
         remotes:
           type: array
           items: { $ref: "#/components/schemas/PanelObject" }
+    SkippedFeatures:
+      type: object
+      required: [features]
+      properties:
+        features:
+          type: array
+          items:
+            type: object
+            required: [feature, privilege]
+            properties:
+              feature:
+                type: string
+                description: Technical id (`guest_agent`, `updates`, `certificates`, `disks`, `services`, `traffic_control`, `remote_updates`).
+              privilege:
+                type: string
+                description: The privilege the token lacks, as the device names it.
     PdmHealth:
       type: object
       additionalProperties: true

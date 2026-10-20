@@ -244,6 +244,34 @@ async fn un_jeton_sans_droits_facultatifs_ne_fait_pas_echouer_la_sonde() {
 }
 
 #[tokio::test]
+async fn un_403_sur_le_resume_des_mises_a_jour_laisse_une_note_sans_erreur() {
+    let note = |samples: &[Sample]| {
+        samples
+            .iter()
+            .filter(|s| s.metric == "pdm_feature_skipped_info")
+            .map(|s| (s.labels["feature"].clone(), s.labels["privilege"].clone()))
+            .collect::<Vec<_>>()
+    };
+    let tags = [("remote_updates", "true")];
+
+    let (url, _) = fake_pdm(&["/remotes/updates/summary"]).await;
+    let samples = PdmCollector::new().probe(&target_at(&url, token(), &tags)).await.unwrap();
+    assert_eq!(
+        note(&samples),
+        vec![("remote_updates".to_string(), "Resource.Modify on /resource".to_string())]
+    );
+    assert_eq!(value_of(&samples, "pdm_scrape_errors"), Some(0.0));
+
+    // Accordé : pas de note. Option coupée (défaut) : pas de note non plus.
+    let (url, _) = fake_pdm(&[]).await;
+    let samples = PdmCollector::new().probe(&target_at(&url, token(), &tags)).await.unwrap();
+    assert!(note(&samples).is_empty());
+    let (url, _) = fake_pdm(&["/remotes/updates/summary"]).await;
+    let samples = PdmCollector::new().probe(&target_at(&url, token(), &[])).await.unwrap();
+    assert!(note(&samples).is_empty());
+}
+
+#[tokio::test]
 async fn un_inventaire_obligatoire_en_panne_compte_des_erreurs_de_collecte() {
     // `/resources/list` et `/remotes/remote` sont absents (404 hors refus) : la
     // sonde répond tout de même, avec des erreurs comptées.

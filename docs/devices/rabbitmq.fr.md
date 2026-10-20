@@ -4,6 +4,15 @@ Le courtier de messages : alarmes mémoire et disque, nœuds arrêtés et
 partitions réseau, files qui se remplissent sans que personne ne les lise,
 files qui ne tournent plus, et le flux des messages.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 15672 | TCP | API de gestion (HTTP, par défaut) |
+| 15671 | TCP | Seulement si l'API est servie en TLS (HTTPS, par défaut) |
+
 DumbMonit lit l'API de management avec un utilisateur étiqueté `monitoring`
 qui a des permissions vides : il voit l'état des nœuds, les alarmes et les
 files, et ne peut ni publier, ni consommer, ni lire un message ni rien

@@ -5,6 +5,15 @@ de données, de Redis, des workers Celery, de l'index de recherche, du
 classificateur et du contrôle de cohérence, les tâches en échec, les mises à
 jour, l'espace disque et le nombre de documents.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8000 | TCP | API (HTTP, par défaut) |
+| 443 | TCP | Seulement avec le schéma https derrière un reverse proxy |
+
 DumbMonit lit l'API REST de Paperless-ngx avec un **utilisateur dédié qui ne
 peut lire aucun document** : trois permissions de lecture lui donnent la liste
 des tâches, l'état système et les compteurs globaux, rien d'autre.

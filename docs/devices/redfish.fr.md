@@ -23,6 +23,14 @@ ARM, sa mémoire, ses liens réseau — et pas le serveur qu'il gère (voir
     standards, mais ça n'a pas encore tourné contre un vrai Supermicro,
     iDRAC ou iLO pendant des semaines. Dites-nous ce qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API Redfish (HTTPS, par défaut) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_redfish_`. Les séries de

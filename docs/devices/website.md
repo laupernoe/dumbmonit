@@ -10,6 +10,15 @@ platform it runs on (WordPress, Shopify, Wix, Next.js…).
 For the content of a page rather than its health, see
 [Website changes](webchange.md).
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Page fetch over HTTPS (default port) |
+| 80 | TCP | Only with an http:// address (default port) |
+
 ## Set it up
 
 1. In the address, paste the page to check, usually the home page.

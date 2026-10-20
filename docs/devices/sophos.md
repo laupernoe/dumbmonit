@@ -25,6 +25,14 @@ enforces that profile on the API too.
     interface status (`Connected, 1000 Mbps…` or `Disconnected`) comes from
     that documentation and community reports. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 4444 | TCP | Administration API (HTTPS, default) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_sophos_`.

@@ -5,6 +5,14 @@ un primaire manquant, combien chaque secondaire est en retard), les
 connexions par rapport à la limite, le cache WiredTiger, les opérations et
 les assertions.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 27017 | TCP | Protocole MongoDB (port par défaut, clair ou TLS) |
+
 DumbMonit se connecte avec un compte qui détient seulement le rôle intégré
 `clusterMonitor`, lance `serverStatus`, et `replSetGetStatus` quand le serveur
 appartient à un replica set. Ce rôle lit l'état du serveur et de la

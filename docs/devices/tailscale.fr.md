@@ -24,6 +24,14 @@ celle d'une machine. DumbMonit a besoin de HTTPS sortant vers
     pas contre un tailnet en fonctionnement. Elle ne fait que lire. Dites-
     nous ce qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API Tailscale (HTTPS, api.tailscale.com) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_tailscale_`. Un appareil est

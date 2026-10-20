@@ -6,6 +6,14 @@ snapshots, réplication, Ceph jusqu'à l'OSD, disques physiques et pools
 ZFS, mises à jour en attente, changements de paquet, abonnement et
 certificats. Une surveillance peut couvrir tout un cluster.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8006 | TCP | API (HTTPS, par défaut) |
+
 ## Le panneau des nœuds
 
 La page de la surveillance s'ouvre sur une carte par nœud : CPU, mémoire et
@@ -203,6 +211,7 @@ Toutes les métriques sont préfixées `dumbmonit_proxmox_`.
 | Abonnement et dépôts | `node_subscription_active`, `node_subscription_info` (+ `status` : `active`, `notfound`, `expired`…, `level`, `next_due`) ; `node_repository_errors` (fichiers sources illisibles), `node_repository_warnings` (propres avertissements de Proxmox : dépôt enterprise sans abonnement, dépôt de test), `node_repository_enabled` (+ `repo` : `enterprise`, `no-subscription`, `test`, `ceph-*`) | `node` |
 | Certificats | `node_certificate_expiry_days` (négatif une fois expiré) | `node`, `filename`, `subject` |
 | Flux RRD (désactivé par défaut) | `node_rrd_<metric>`, `guest_rrd_<metric>`, `storage_rrd_<metric>` — chaque mesure que les propres serveurs de métriques de Proxmox reçoivent, sous son propre nom (voir `metrics_export` ci-dessous) | `node` ; invités : `vmid`, `type` ; stockages : `node`, `storage` |
+| Options sautées | `feature_skipped_info` : 1 tant qu'un appel facultatif est refusé (403) faute de droit, absente sinon. La page du moniteur l'affiche en note discrète qui nomme le droit ; ce n'est ni une erreur de sonde ni une alerte | `feature`, `privilege` |
 | Collection | `up`, `scrape_errors`, `scrape_duration_seconds` | |
 
 L'âge de sauvegarde par machine répond à la panne la plus coûteuse d'un

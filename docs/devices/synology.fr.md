@@ -6,6 +6,15 @@ Business, et Synology Drive et Photos. La première raison de surveiller
 un NAS est ses disques : un disque qui chauffe ou dont le statut SMART se
 dégrade annonce une panne longtemps avant qu'un volume ne s'effondre.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 5001 | TCP | API DSM (HTTPS, par défaut) |
+| 5000 | TCP | Seulement avec l'option de protocole HTTP |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_synology_`.

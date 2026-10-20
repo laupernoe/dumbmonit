@@ -17,6 +17,7 @@
 	import FailureList from './FailureList.svelte';
 	import JobTable from './JobTable.svelte';
 	import NodeHealth from './NodeHealth.svelte';
+	import SkippedFeatures from '../SkippedFeatures.svelte';
 	import TapePanel from './TapePanel.svelte';
 	import { formatAgo, formatUnix } from './format';
 
@@ -192,5 +193,6 @@
 		</Panel>
 
 		<ClientDevicesTable {target} />
+		<SkippedFeatures {target} />
 	</div>
 {/if}

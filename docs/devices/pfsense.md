@@ -21,6 +21,15 @@ parallel, `/api/v2/status/system`, `/api/v2/status/gateways`,
     response envelope and its error identifiers), not against a running
     pfSense. Every call is a read. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 80 | TCP | Only with the HTTP protocol option |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_pfsense_`.

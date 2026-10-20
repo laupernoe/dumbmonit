@@ -22,6 +22,14 @@ the tailnet is contacted.
     device model of its official Go client, not against a live tailnet. It
     only reads. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Tailscale API (HTTPS, api.tailscale.com) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_tailscale_`. A device is named by the

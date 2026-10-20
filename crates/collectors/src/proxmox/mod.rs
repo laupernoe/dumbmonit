@@ -884,7 +884,7 @@ async fn collect_nodes(
     )
     .await;
 
-    let mut aggregate = merge(outcomes);
+    let mut aggregate = merge(outcomes, ts_ms);
 
     if let Some(index) = guests_by_node {
         for (node, guests) in index.iter().filter(|(node, _)| options.wants_node(node)) {
@@ -926,6 +926,8 @@ struct NodeOutcome {
     /// Versions des paquets importants du nœud, à comparer à l'interrogation
     /// précédente (`ProxmoxCollector::packages`).
     package_versions: Option<Vec<AptVersion>>,
+    /// Fonctionnalités facultatives sautées faute de droit : (fonctionnalité, droit).
+    skipped_features: BTreeSet<(&'static str, &'static str)>,
     errors: u32,
 }
 
@@ -950,10 +952,13 @@ struct Aggregate {
 /// Un stockage partagé est visible depuis chaque nœud du cluster : sans
 /// déduplication, une même archive serait comptée autant de fois qu'il y a de
 /// nœuds et `proxmox_backup_count` deviendrait faux.
-fn merge(outcomes: Vec<NodeOutcome>) -> Aggregate {
+fn merge(outcomes: Vec<NodeOutcome>, ts_ms: i64) -> Aggregate {
     let mut aggregate = Aggregate::default();
+    // Une seule série par fonctionnalité, quel que soit le nombre de nœuds touchés.
+    let mut skipped_features = BTreeSet::new();
 
     for outcome in outcomes {
+        skipped_features.extend(outcome.skipped_features);
         aggregate.errors += outcome.errors;
         aggregate.samples.extend(outcome.samples);
         aggregate.guests.extend(outcome.guests);
@@ -1001,8 +1006,16 @@ fn merge(outcomes: Vec<NodeOutcome>) -> Aggregate {
         }
     }
 
+    for (feature, privilege) in skipped_features {
+        aggregate.samples.push(metrics::feature_skipped_sample(feature, privilege, ts_ms));
+    }
+
     aggregate
 }
+
+/// Droit qu'exige l'agent QEMU : `VM.GuestAgent.Audit` depuis Proxmox VE 9,
+/// `VM.Monitor` avant.
+const GUEST_AGENT_PRIVILEGE: &str = "VM.GuestAgent.Audit or VM.Monitor";
 
 /// Interroge un nœud. Ne renvoie jamais d'erreur : un nœud en panne se traduit par
 /// `proxmox_node_up = 0` et un compteur d'erreurs, jamais par l'abandon du cluster.
@@ -1230,10 +1243,13 @@ async fn collect_node(
         Some(Ok(Some(packages))) => {
             outcome.samples.extend(apt::updates_samples(name, &packages, ts_ms));
         }
-        Some(Ok(None)) => debug!(
-            node = name,
-            "mises à jour non listées : Sys.Modify manquant sur /nodes (droit facultatif)"
-        ),
+        Some(Ok(None)) => {
+            debug!(
+                node = name,
+                "mises à jour non listées : Sys.Modify manquant sur /nodes (droit facultatif)"
+            );
+            outcome.skipped_features.insert(("updates", "Sys.Modify"));
+        }
         Some(Err(error)) => {
             outcome.errors += 1;
             warn!(node = name, %error, "liste des mises à jour indisponible");
@@ -1245,7 +1261,10 @@ async fn collect_node(
         Some(Ok(Some(certs))) => {
             outcome.samples.extend(metrics::certificate_samples(name, &certs, now_s, ts_ms));
         }
-        Some(Ok(None)) => debug!(node = name, "certificats non listés : droit manquant"),
+        Some(Ok(None)) => {
+            debug!(node = name, "certificats non listés : droit manquant");
+            outcome.skipped_features.insert(("certificates", "Sys.Audit"));
+        }
         Some(Err(error)) => {
             outcome.errors += 1;
             warn!(node = name, %error, "informations de certificat indisponibles");
@@ -1444,6 +1463,10 @@ async fn collect_guest_details(
             }
             Some(Err(error)) => {
                 debug!(node, vmid = guest.vmid(), %error, "agent QEMU muet ou droit VM.GuestAgent.Audit manquant");
+                // Un 403 (`Auth`) est un droit manquant ; toute autre erreur est un agent muet.
+                if matches!(error, ProbeError::Auth(_)) {
+                    outcome.skipped_features.insert(("guest_agent", GUEST_AGENT_PRIVILEGE));
+                }
                 outcome.samples.push(guest::agent_silent_sample(node, guest, ts_ms));
             }
             None => {}
@@ -1598,7 +1621,7 @@ mod tests {
             ..Default::default()
         };
 
-        let aggregate = merge(vec![sain, injoignable]);
+        let aggregate = merge(vec![sain, injoignable], 0);
 
         assert_eq!(aggregate.errors, 1, "l'échec est remonté sans masquer le reste");
         assert_eq!(aggregate.guests.len(), 1);
@@ -1626,7 +1649,7 @@ mod tests {
             ..Default::default()
         };
 
-        let aggregate = merge(vec![depuis_pve1, depuis_pve2]);
+        let aggregate = merge(vec![depuis_pve1, depuis_pve2], 0);
         assert_eq!(aggregate.archives[&100].len(), 2, "deux archives distinctes, pas trois");
     }
 
@@ -1634,7 +1657,7 @@ mod tests {
     fn la_sauvegarde_la_plus_recente_lemporte_entre_noeuds() {
         let a = NodeOutcome { task_backups: BTreeMap::from([(100, 1_000)]), ..Default::default() };
         let b = NodeOutcome { task_backups: BTreeMap::from([(100, 2_000)]), ..Default::default() };
-        assert_eq!(merge(vec![a, b]).task_backups[&100], 2_000);
+        assert_eq!(merge(vec![a, b], 0).task_backups[&100], 2_000);
     }
 
     #[test]
@@ -1666,7 +1689,7 @@ mod tests {
         };
         let sans = NodeOutcome::default();
 
-        let aggregate = merge(vec![source, destination, sans]);
+        let aggregate = merge(vec![source, destination, sans], 0);
         assert_eq!(aggregate.samples.len(), 1);
         assert_eq!(aggregate.replication_jobs.len(), 1);
         assert!(aggregate.replication_supported);
@@ -1684,7 +1707,7 @@ mod tests {
             snapshot_skipped: 1,
             ..Default::default()
         };
-        let aggregate = merge(vec![a, b]);
+        let aggregate = merge(vec![a, b], 0);
         assert_eq!(aggregate.job_runs["backup-1"], JobRun { start: 200, ok: false });
         assert_eq!(aggregate.snapshot_skipped, 3);
     }
@@ -1740,7 +1763,7 @@ mod tests {
             ..Default::default()
         };
         let b = NodeOutcome { node: "pve2".into(), ..Default::default() };
-        let aggregate = merge(vec![a, b]);
+        let aggregate = merge(vec![a, b], 0);
         assert_eq!(aggregate.package_versions.len(), 1);
         assert!(aggregate.package_versions.contains_key("pve1"));
     }
@@ -1769,7 +1792,7 @@ mod tests {
 mod e2e {
     use std::collections::BTreeMap;
     use std::sync::Arc;
-    use std::sync::atomic::{AtomicU32, Ordering};
+    use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
     use std::time::Duration;
 
     use axum::extract::{Path, State};
@@ -1789,6 +1812,8 @@ mod e2e {
         osinfo: AtomicU32,
         qemu_list: AtomicU32,
         export: AtomicU32,
+        /// Vrai : l'agent QEMU répond 403, comme sans `VM.GuestAgent.Audit`.
+        agent_forbidden: AtomicBool,
     }
 
     fn data(value: Value) -> Response {
@@ -1869,10 +1894,7 @@ mod e2e {
                 "/api2/json/nodes/{node}/qemu/{vmid}/status/current",
                 get(|| async { data(json!({"agent": 1})) }),
             )
-            .route(
-                "/api2/json/nodes/{node}/qemu/{vmid}/agent/get-fsinfo",
-                get(|| async { data(json!({"result": []})) }),
-            )
+            .route("/api2/json/nodes/{node}/qemu/{vmid}/agent/get-fsinfo", get(fsinfo))
             .route("/api2/json/nodes/{node}/qemu/{vmid}/agent/get-osinfo", get(osinfo))
             .route(
                 "/api2/json/nodes/{node}/qemu/{vmid}/agent/network-get-interfaces",
@@ -1971,6 +1993,13 @@ mod e2e {
     async fn thinpools() -> Response {
         data(json!([{"lv": "data", "vg": "pve", "lv_size": 1000, "used": 960,
                      "metadata_size": 100, "metadata_used": 88}]))
+    }
+
+    async fn fsinfo(State(calls): State<Arc<Calls>>) -> Response {
+        if calls.agent_forbidden.load(Ordering::Relaxed) {
+            return forbidden();
+        }
+        data(json!({"result": []}))
     }
 
     async fn osinfo(State(calls): State<Arc<Calls>>) -> Response {
@@ -2101,6 +2130,54 @@ mod e2e {
         // Le flux RRD ne part pas tant qu'on ne l'a pas demandé.
         assert_eq!(calls.export.load(Ordering::Relaxed), 0);
         assert!(!samples.iter().any(|s| s.metric.contains("_rrd_")));
+
+        // Les 403 des mises à jour et des certificats laissent une note, sans
+        // erreur ; l'agent a répondu, donc aucune note pour lui.
+        assert_eq!(
+            valeur(
+                &samples,
+                r#"proxmox_feature_skipped_info{feature="updates",privilege="Sys.Modify"}"#
+            ),
+            Some(1.0)
+        );
+        assert_eq!(
+            valeur(
+                &samples,
+                r#"proxmox_feature_skipped_info{feature="certificates",privilege="Sys.Audit"}"#
+            ),
+            Some(1.0)
+        );
+        assert_eq!(
+            samples.iter().filter(|s| s.metric == "proxmox_feature_skipped_info").count(),
+            2
+        );
+    }
+
+    #[tokio::test]
+    async fn un_agent_en_403_laisse_une_note_sans_erreur() {
+        let calls = Arc::new(Calls::default());
+        calls.agent_forbidden.store(true, Ordering::Relaxed);
+        let address = serve(calls.clone()).await;
+        let samples = ProxmoxCollector::new().probe(&cible(address, &[])).await.unwrap();
+
+        assert_eq!(
+            valeur(
+                &samples,
+                r#"proxmox_feature_skipped_info{feature="guest_agent",privilege="VM.GuestAgent.Audit or VM.Monitor"}"#
+            ),
+            Some(1.0)
+        );
+        assert_eq!(valeur(&samples, "proxmox_scrape_errors"), Some(0.0));
+
+        // Option coupée : pas d'appel, donc pas de note.
+        let address = serve(calls).await;
+        let target = cible(address, &[("guest_agent", "false")]);
+        let samples = ProxmoxCollector::new().probe(&target).await.unwrap();
+        assert!(
+            !samples
+                .iter()
+                .any(|s| s.labels.get("feature").is_some_and(|feature| feature == "guest_agent"))
+        );
     }
 
     #[tokio::test]

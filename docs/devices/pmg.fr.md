@@ -5,6 +5,14 @@ attente, mail compté et filtré aujourd'hui, tailles de quarantaine,
 l'ancienneté des bases de signatures antivirus et antispam, services,
 certificats et état du cluster.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8006 | TCP | API (HTTPS, par défaut) |
+
 !!! warning "Testé contre une instance de test seulement"
 
     Cette intégration a été construite et vérifiée contre un Proxmox Mail

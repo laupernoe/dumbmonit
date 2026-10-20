@@ -3,6 +3,15 @@
 The web server: busy and idle workers, the worker scoreboard by state, and
 request/byte rates when ExtendedStatus is on.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Status page (HTTP, default) |
+| 443 | TCP | Only if the status page is served over HTTPS |
+
 DumbMonit reads Apache's built-in `mod_status`, queried with `?auto` so it
 answers in plain `Key: Value` lines instead of the HTML page meant for a
 browser.

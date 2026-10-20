@@ -27,6 +27,14 @@ firmware.
     licence and firmware pages are the least documented: tell us what
     breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Administration API (HTTPS, default) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_fortigate_`.

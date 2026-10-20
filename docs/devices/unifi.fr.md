@@ -19,6 +19,15 @@ lien montant perdu n'est remarqué que des jours plus tard. Pareil pour un
 second lien WAN qui est tombé : rien ne casse jusqu'à ce que le premier
 tombe aussi.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 8443 | TCP | Seulement avec un UniFi Network Server auto-hébergé |
+
 ## Deux façons d'entrer
 
 | Identifiant | API utilisée | Ce qu'elle lit |
