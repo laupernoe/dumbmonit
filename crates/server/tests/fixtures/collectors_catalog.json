@@ -113,6 +113,17 @@
         "group": ""
       },
       {
+        "key": "dns_servers",
+        "label": "DNS servers",
+        "help": "Optional. IP addresses of the DNS servers that know the domain (comma-separated). Every name lookup of this monitor then goes through them instead of the system resolver; empty keeps the system DNS.",
+        "placeholder": "10.0.0.10, 10.0.0.11",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
         "key": "check_all_dcs",
         "label": "Check every domain controller",
         "help": "Opens a connection to the LDAP port of each domain controller of the domain, to alert when one stops answering. Names that do not resolve from DumbMonit are reported, not alerted on.",

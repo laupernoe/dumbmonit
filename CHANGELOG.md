@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Active Directory: DNS servers option.** When the DumbMonit host's DNS does
+  not know the domain, fill *DNS servers* with the IPs of the servers that do:
+  every name lookup of the monitor (the controller you entered, the other
+  controllers, the reachability check) goes through them over UDP then TCP,
+  while LDAPS still checks the certificate against the name. Empty keeps the
+  system resolver; works through a relay agent too.
+
 ### Fixed
 
 - **A remote-site relay installs in one command.** The install scripts accept

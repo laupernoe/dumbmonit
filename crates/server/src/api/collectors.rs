@@ -2923,6 +2923,13 @@ const ACTIVE_DIRECTORY_OPTIONS: &[OptionView] = &[
         "Required for the plain setting: the service account's password then crosses the network readable by anyone on the path.",
         false,
     ),
+    text(
+        "dns_servers",
+        "DNS servers",
+        "Optional. IP addresses of the DNS servers that know the domain (comma-separated). Every name lookup of this monitor then goes through them instead of the system resolver; empty keeps the system DNS.",
+        "10.0.0.10, 10.0.0.11",
+        "",
+    ),
     boolean(
         "check_all_dcs",
         "Check every domain controller",

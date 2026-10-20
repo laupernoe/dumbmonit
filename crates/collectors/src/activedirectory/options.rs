@@ -4,6 +4,7 @@ use std::time::Duration;
 
 use dumbmonit_proto::{Credential, ProbeError, Target};
 
+use super::dns::DnsServers;
 use crate::uptime::tags::{parse_bool, parse_u32, split_host_port, tag};
 
 /// Protection de la connexion.
@@ -48,6 +49,8 @@ pub struct Options {
     /// Autorité de certification à laquelle se fier (PEM ou base64).
     pub ca_cert: Option<String>,
     pub request_timeout: Duration,
+    /// Serveurs DNS propres au moniteur ; `None` : le résolveur du système.
+    pub dns_servers: Option<DnsServers>,
     pub check_all_dcs: bool,
     pub stale_days_users: u32,
     pub stale_days_computers: u32,
@@ -120,6 +123,7 @@ impl Options {
                 DEFAULT_REQUEST_TIMEOUT_SECONDS,
                 1..=60,
             )?)),
+            dns_servers: DnsServers::parse(tag(target, "dns_servers"))?,
             check_all_dcs: parse_bool(target, "check_all_dcs", true)?,
             stale_days_users: parse_u32(target, "stale_days_users", DEFAULT_STALE_DAYS, 1..=3650)?,
             stale_days_computers: parse_u32(
@@ -198,6 +202,21 @@ mod tests {
         let v6 = Options::from_target(&with_login(cible("activedirectory", "[fd00::5]:3269", &[])))
             .unwrap();
         assert_eq!(v6.url(), "ldaps://[fd00::5]:3269");
+    }
+
+    #[test]
+    fn les_serveurs_dns_sont_optionnels() {
+        let target = with_login(cible("activedirectory", "dc1.corp.lan", &[]));
+        assert!(Options::from_target(&target).unwrap().dns_servers.is_none());
+        let target = with_login(cible(
+            "activedirectory",
+            "dc1.corp.lan",
+            &[("dns_servers", "10.0.0.10, 10.0.0.11")],
+        ));
+        let options = Options::from_target(&target).unwrap();
+        assert_eq!(options.dns_servers.unwrap().label(), "10.0.0.10, 10.0.0.11");
+        let target = with_login(cible("activedirectory", "dc1", &[("dns_servers", "dns.corp")]));
+        assert!(matches!(Options::from_target(&target), Err(ProbeError::Config(_))));
     }
 
     #[test]
