@@ -56,8 +56,8 @@ pub struct CollectorView {
     pub options: &'static [OptionView],
 }
 
-/// Un port à ouvrir (voir `Setup::ports`). Les fonctions `to_device`, `to_device_optional`
-/// et `to_server` fixent le sens : `to_device` va du serveur DumbMonit (ou de l'agent
+/// Un port à ouvrir (voir `Setup::ports`). Les macros `to_device!`, `to_device_optional!`
+/// et `to_server!` fixent le sens : `to_device` va du serveur DumbMonit (ou de l'agent
 /// relais) vers l'équipement, `to_server` de l'agent vers le serveur.
 pub struct PortView {
     pub port: u16,
@@ -67,16 +67,42 @@ pub struct PortView {
     pub optional: bool,
 }
 
-const fn to_device(port: u16, protocol: &'static str, purpose: &'static str) -> PortView {
-    PortView { port, protocol, direction: "to_device", purpose, optional: false }
+// Des macros et non des fonctions : une expression `&[to_device(…)]` n'est pas promue en
+// `'static` dans un `match`, alors qu'un littéral de structure l'est.
+macro_rules! to_device {
+    ($port:expr, $protocol:expr, $purpose:expr) => {
+        PortView {
+            port: $port,
+            protocol: $protocol,
+            direction: "to_device",
+            purpose: $purpose,
+            optional: false,
+        }
+    };
 }
 
-const fn to_device_optional(port: u16, protocol: &'static str, purpose: &'static str) -> PortView {
-    PortView { port, protocol, direction: "to_device", purpose, optional: true }
+macro_rules! to_device_optional {
+    ($port:expr, $protocol:expr, $purpose:expr) => {
+        PortView {
+            port: $port,
+            protocol: $protocol,
+            direction: "to_device",
+            purpose: $purpose,
+            optional: true,
+        }
+    };
 }
 
-const fn to_server(port: u16, protocol: &'static str, purpose: &'static str) -> PortView {
-    PortView { port, protocol, direction: "to_server", purpose, optional: false }
+macro_rules! to_server {
+    ($port:expr, $protocol:expr, $purpose:expr) => {
+        PortView {
+            port: $port,
+            protocol: $protocol,
+            direction: "to_server",
+            purpose: $purpose,
+            optional: false,
+        }
+    };
 }
 
 impl PortView {
@@ -3779,7 +3805,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If the device filters by address, allow this server's address.",
                     "In DumbMonit, enter the address and the community: the rest is detected automatically.",
                 ],
-                ports: &[to_device(161, "udp", "SNMP (default)")],
+                ports: &[to_device!(161, "udp", "SNMP (default)")],
                 permissions: &[],
                 warning: "A community is not encrypted on the network: on a shared network, prefer SNMP v3, which authenticates and encrypts.",
             },
@@ -3804,7 +3830,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, for the pending-updates count: Datacenter → Permissions → Roles → Create a role with only Sys.Modify, then add it as a User Permission on path /nodes.",
                     "In DumbMonit, enter the address of any node (port 8006 by default).",
                 ],
-                ports: &[to_device(8006, "tcp", "API (HTTPS, default)")],
+                ports: &[to_device!(8006, "tcp", "API (HTTPS, default)")],
                 permissions: &[
                     "PVEAuditor on /\nRead-only: nodes, storage, VMs, containers, backups, guest agent",
                     "Sys.Modify on /nodes (optional)\nOnly to list pending updates",
@@ -3833,7 +3859,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, to see pull sync jobs and the tape tier: repeat both permissions with role RemoteAudit on path /remote and role TapeAudit on path /tape.",
                     "In DumbMonit, enter the server address (for example pbs.lan:8007), the Token ID and the Secret.",
                 ],
-                ports: &[to_device(8007, "tcp", "API (HTTPS, default)")],
+                ports: &[to_device!(8007, "tcp", "API (HTTPS, default)")],
                 permissions: &[
                     "Audit on /\nRead-only: datastores, snapshots, tasks, node status",
                     "RemoteAudit on /remote (optional)\nShows the sync jobs that pull from a remote",
@@ -3862,7 +3888,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Add a second permission with Add → API Token Permission: path /, token dumbmonit@pdm!monitor, role Auditor. A token has its own permissions, so both are needed.",
                     "In DumbMonit, enter the console address (for example dc.lan:8443), the Token ID and the Secret.",
                 ],
-                ports: &[to_device(8443, "tcp", "API (HTTPS, default)")],
+                ports: &[to_device!(8443, "tcp", "API (HTTPS, default)")],
                 permissions: &[
                     "Auditor on /\nRead-only: instances, tasks, console health",
                     "Resource.Modify on /resource (optional)\nOnly for the update summary of the instances",
@@ -3887,7 +3913,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Set its Role to Audit, then click Add.",
                     "In DumbMonit, enter the gateway address (for example mail.lan:8006), then this user name, realm included, and its password.",
                 ],
-                ports: &[to_device(8006, "tcp", "API (HTTPS, default)")],
+                ports: &[to_device!(8006, "tcp", "API (HTTPS, default)")],
                 permissions: &[
                     "Audit role\nRead-only: status, queues, statistics, quarantine counts",
                 ],
@@ -3918,7 +3944,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Give it the read-only right of your vendor, listed below.",
                     "In DumbMonit, enter the controller address (bmc.lan or 10.0.0.50) with that user name and password.",
                 ],
-                ports: &[to_device(443, "tcp", "Redfish API (HTTPS, default)")],
+                ports: &[to_device!(443, "tcp", "Redfish API (HTTPS, default)")],
                 permissions: &[
                     "Supermicro: privilege User, account type Redfish\nConfiguration → Users → Add User",
                     "Dell iDRAC: role Read Only\niDRAC Settings → Users → Local Users → Add",
@@ -3948,17 +3974,21 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To check more ports than SMTP, IMAP and webmail, set the Services option to a list like this one.\nsmtp,msa,imap,pop3,imaps,webmail",
                 ],
                 ports: &[
-                    to_device(25, "tcp", "SMTP check (default)"),
-                    to_device(143, "tcp", "IMAP check (default)"),
-                    to_device(3000, "tcp", "Webmail check (default)"),
-                    to_device_optional(444, "tcp", "Only with an XML API account (HTTPS, default)"),
-                    to_device_optional(1000, "tcp", "Only with the XML API over HTTP"),
-                    to_device_optional(587, "tcp", "Only with msa in the Services option"),
-                    to_device_optional(465, "tcp", "Only with smtps in the Services option"),
-                    to_device_optional(110, "tcp", "Only with pop3 in the Services option"),
-                    to_device_optional(995, "tcp", "Only with pop3s in the Services option"),
-                    to_device_optional(993, "tcp", "Only with imaps in the Services option"),
-                    to_device_optional(5222, "tcp", "Only with xmpp in the Services option"),
+                    to_device!(25, "tcp", "SMTP check (default)"),
+                    to_device!(143, "tcp", "IMAP check (default)"),
+                    to_device!(3000, "tcp", "Webmail check (default)"),
+                    to_device_optional!(
+                        444,
+                        "tcp",
+                        "Only with an XML API account (HTTPS, default)",
+                    ),
+                    to_device_optional!(1000, "tcp", "Only with the XML API over HTTP"),
+                    to_device_optional!(587, "tcp", "Only with msa in the Services option"),
+                    to_device_optional!(465, "tcp", "Only with smtps in the Services option"),
+                    to_device_optional!(110, "tcp", "Only with pop3 in the Services option"),
+                    to_device_optional!(995, "tcp", "Only with pop3s in the Services option"),
+                    to_device_optional!(993, "tcp", "Only with imaps in the Services option"),
+                    to_device_optional!(5222, "tcp", "Only with xmpp in the Services option"),
                 ],
                 permissions: &[
                     "XML API access for the account\nThe lowest level your MDaemon accepts",
@@ -3987,14 +4017,14 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To check more ports than SMTP and the web interface, set the Services option to a list like this one.\nsmtp,web_https",
                 ],
                 ports: &[
-                    to_device(25, "tcp", "SMTP check (default)"),
-                    to_device(4000, "tcp", "Web interface check (default)"),
-                    to_device_optional(
+                    to_device!(25, "tcp", "SMTP check (default)"),
+                    to_device!(4000, "tcp", "Web interface check (default)"),
+                    to_device_optional!(
                         4443,
                         "tcp",
                         "Only with an API key (HTTPS, default) or web_https in the Services option",
                     ),
-                    to_device_optional(465, "tcp", "Only with smtps in the Services option"),
+                    to_device_optional!(465, "tcp", "Only with smtps in the Services option"),
                 ],
                 permissions: &[
                     "Domain Administrator\nUse Global Administrator if the counters stay empty",
@@ -4022,8 +4052,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the NAS address (for example nas.lan) and paste the key. Keep HTTPS.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "Web UI and API (HTTPS, default)"),
-                    to_device_optional(80, "tcp", "Only with the HTTP protocol option"),
+                    to_device!(443, "tcp", "Web UI and API (HTTPS, default)"),
+                    to_device_optional!(80, "tcp", "Only with the HTTP protocol option"),
                 ],
                 permissions: &[
                     "Local Administrator (group privilege)\nThe only privilege the REST API accepts for a key",
@@ -4051,8 +4081,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the firewall address (192.168.1.1 or fw.lan:8443), the key as API key and the secret as API secret.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "API (HTTPS, default)"),
-                    to_device_optional(80, "tcp", "Only with the HTTP protocol option"),
+                    to_device!(443, "tcp", "API (HTTPS, default)"),
+                    to_device_optional!(80, "tcp", "Only with the HTTP protocol option"),
                 ],
                 permissions: &[
                     "Lobby: Dashboard\nSystem, memory, disks, state table (required)",
@@ -4093,8 +4123,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the NAS address (HTTPS, port 5001 by default) and this account's user name and password.",
                 ],
                 ports: &[
-                    to_device(5001, "tcp", "DSM API (HTTPS, default)"),
-                    to_device_optional(5000, "tcp", "Only with the HTTP protocol option"),
+                    to_device!(5001, "tcp", "DSM API (HTTPS, default)"),
+                    to_device_optional!(5000, "tcp", "Only with the HTTP protocol option"),
                 ],
                 permissions: &[
                     "Group: administrators\nDSM's storage API answers no other account",
@@ -4123,7 +4153,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, for Docker: if the agent runs under a dedicated user, add that user to the \"docker\" group and restart the agent.\nusermod -aG docker dumbmonit",
                     "For a fleet, or to revoke a lost token, use Settings → Agents.",
                 ],
-                ports: &[to_server(
+                ports: &[to_server!(
                     8080,
                     "tcp",
                     "Readings and commands (default port, 443 behind a TLS proxy)",
@@ -4150,7 +4180,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Install the agent on the machine: each service it finds becomes a monitor under that machine on its first report.",
                     "To stop watching one, untick it in the machine's \"Services found by the agent\" panel or delete its monitor.",
                 ],
-                ports: &[to_server(
+                ports: &[to_server!(
                     8080,
                     "tcp",
                     "Readings and commands (default port, 443 behind a TLS proxy)",
@@ -4187,8 +4217,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optionally require a keyword in the page or a value in a JSON response, in the options.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "Web page or API over HTTPS (default port)"),
-                    to_device_optional(80, "tcp", "Only with an http:// address (default port)"),
+                    to_device!(443, "tcp", "Web page or API over HTTPS (default port)"),
+                    to_device_optional!(80, "tcp", "Only with an http:// address (default port)"),
                 ],
                 permissions: &[
                     "Read access to the monitored URL\nOnly if the page requires a login",
@@ -4240,8 +4270,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To detect hijacking, list the addresses the answer must contain in \"Expected values\".",
                 ],
                 ports: &[
-                    to_device(53, "udp", "DNS query (default port)"),
-                    to_device(53, "tcp", "DNS query too large for UDP (default port)"),
+                    to_device!(53, "udp", "DNS query (default port)"),
+                    to_device!(53, "tcp", "DNS query too large for UDP (default port)"),
                 ],
                 permissions: &[],
                 warning: "Give the DNS server by its IP address, not by a name.",
@@ -4297,7 +4327,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If you reach the service by its IP address, enter the certificate's name in \"Server name (SNI)\".",
                     "For a certificate from your own authority, tick \"Accept an unverifiable certificate\".",
                 ],
-                ports: &[to_device(
+                ports: &[to_device!(
                     443,
                     "tcp",
                     "TLS handshake (default port, the one in the address)",
@@ -4326,7 +4356,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the address, write the server's name or IP address: \"pool.ntp.org\" or \"192.168.1.1\".",
                     "Lower \"Tolerated offset\" in the options to be warned earlier than 100 ms.",
                 ],
-                ports: &[to_device(123, "udp", "NTP request (default port)")],
+                ports: &[to_device!(123, "udp", "NTP request (default port)")],
                 permissions: &[],
                 warning: "Keep the DumbMonit host itself in sync: its own drift is added to the measured offset.",
             },
@@ -4355,9 +4385,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional: name an Expected extension, such as STARTTLS, to be warned when the relay stops advertising it.",
                 ],
                 ports: &[
-                    to_device(587, "tcp", "Submission with STARTTLS (default)"),
-                    to_device_optional(465, "tcp", "Only with TLS encryption (SMTPS)"),
-                    to_device_optional(25, "tcp", "Only with no encryption (relay on port 25)"),
+                    to_device!(587, "tcp", "Submission with STARTTLS (default)"),
+                    to_device_optional!(465, "tcp", "Only with TLS encryption (SMTPS)"),
+                    to_device_optional!(25, "tcp", "Only with no encryption (relay on port 25)"),
                 ],
                 permissions: &[
                     "A mail account that may log in (AUTH)\nOnly if you fill in a credential",
@@ -4388,7 +4418,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the server, for example db.home.lan:5433 (port 5432 by default), then the role's user and password.",
                     "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.",
                 ],
-                ports: &[to_device(5432, "tcp", "PostgreSQL (default port)")],
+                ports: &[to_device!(5432, "tcp", "PostgreSQL (default port)")],
                 permissions: &["LOGIN (role attribute)\nConnect only, no other privilege"],
                 warning: "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
             },
@@ -4415,7 +4445,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the server, for example db.home.lan:3307 (port 3306 by default), then the account's user and password.",
                     "Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.",
                 ],
-                ports: &[to_device(3306, "tcp", "MySQL or MariaDB (default port)")],
+                ports: &[to_device!(3306, "tcp", "MySQL or MariaDB (default port)")],
                 permissions: &["USAGE (no privilege)\nConnect and run SELECT 1, nothing more"],
                 warning: "The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.",
             },
@@ -4445,8 +4475,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional: tick Expect a retained message only for a topic that carries one, typically an availability topic.",
                 ],
                 ports: &[
-                    to_device(1883, "tcp", "MQTT (default port)"),
-                    to_device_optional(
+                    to_device!(1883, "tcp", "MQTT (default port)"),
+                    to_device_optional!(
                         8883,
                         "tcp",
                         "Only with the Encrypted connection option (MQTT over TLS, default)",
@@ -4479,8 +4509,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional: if the endpoint says nothing until spoken to, put a message in Frame to send, and what the answer must contain in Expected content.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "WSS (default)"),
-                    to_device_optional(80, "tcp", "Only with a ws:// address"),
+                    to_device!(443, "tcp", "WSS (default)"),
+                    to_device_optional!(80, "tcp", "Only with a ws:// address"),
                 ],
                 permissions: &[],
                 warning: "The check hangs up within a second: a connection that a firewall or proxy cuts after thirty seconds looks healthy here.",
@@ -4513,8 +4543,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "For a screenshot of each version, follow the \"Screenshots\" section of this page.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "Page fetch over HTTPS (default port)"),
-                    to_device_optional(80, "tcp", "Only with an http:// address (default port)"),
+                    to_device!(443, "tcp", "Page fetch over HTTPS (default port)"),
+                    to_device_optional!(80, "tcp", "Only with an http:// address (default port)"),
                 ],
                 permissions: &[],
                 warning: "Only the text the server sends is compared: pages drawn by JavaScript or behind a login are not followed.",
@@ -4546,8 +4576,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To add many sites at once, import a CSV file from the monitor list.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "Page fetch over HTTPS (default port)"),
-                    to_device_optional(80, "tcp", "Only with an http:// address (default port)"),
+                    to_device!(443, "tcp", "Page fetch over HTTPS (default port)"),
+                    to_device_optional!(80, "tcp", "Only with an http:// address (default port)"),
                 ],
                 permissions: &[],
                 warning: "Only what the server sends is read: for a page drawn by JavaScript, set \"Blank page below\" to 0.",
@@ -4580,7 +4610,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
                     "To report a failure at once, append ?status=down&msg=... to the URL.",
                 ],
-                ports: &[to_server(
+                ports: &[to_server!(
                     8080,
                     "tcp",
                     "Heartbeat call (default port, 443 behind a proxy)",
@@ -4627,7 +4657,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If it runs with -httpAuth.username and -httpAuth.password, pick Username / password below; behind vmauth or a proxy that expects a bearer token, pick Bearer token.",
                     "In DumbMonit, enter the server address, for example \"victoriametrics.lan\" or \"http://10.0.0.5:8428\".",
                 ],
-                ports: &[to_device(8428, "tcp", "VictoriaMetrics HTTP API (default)")],
+                ports: &[to_device!(8428, "tcp", "VictoriaMetrics HTTP API (default)")],
                 permissions: &[],
                 warning: "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (100 MB by default) VictoriaMetrics turns read-only and refuses every new sample. DumbMonit shows the headroom left and warns under 10%.",
             },
@@ -4649,7 +4679,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If it runs with -httpAuth.username and -httpAuth.password, pick Username / password below; behind vmauth or a proxy that expects a bearer token, pick Bearer token.",
                     "In DumbMonit, enter the server address, for example \"victorialogs.lan\" or \"http://10.0.0.6:9428\".",
                 ],
-                ports: &[to_device(9428, "tcp", "VictoriaLogs HTTP API (default)")],
+                ports: &[to_device!(9428, "tcp", "VictoriaLogs HTTP API (default)")],
                 permissions: &[],
                 warning: "Free disk space is what to watch: below -storage.minFreeDiskSpaceBytes (10 MB by default) VictoriaLogs turns read-only and refuses every new log line. DumbMonit shows the headroom left and warns under 10%.",
             },
@@ -4672,7 +4702,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter Loki's address, for example \"loki.lan\" or \"https://logs.lan/loki\" behind a reverse proxy.",
                     "With Loki split into components (simple scalable or microservices), add at least the write path.",
                 ],
-                ports: &[to_device(3100, "tcp", "Loki HTTP API (default)")],
+                ports: &[to_device!(3100, "tcp", "Loki HTTP API (default)")],
                 permissions: &[],
                 warning: "Refused lines are the failure to watch: when Loki refuses a line (too old, over a rate or stream limit, too long), the sender usually drops the batch and Grafana only shows a gap in the logs.",
             },
@@ -4695,7 +4725,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, for Graylog's own notifications: with an account that can manage roles, create a role holding only notifications:read and give it to the dumbmonit user.\ncurl -u YOUR_USER -H 'X-Requested-By: cli' -H 'Content-Type: application/json' -X POST https://graylog.lan/api/roles -d '{\"name\":\"DumbMonit Notifications\",\"description\":\"Read system notifications\",\"permissions\":[\"notifications:read\"],\"read_only\":false}'\ncurl -u YOUR_USER -H 'X-Requested-By: cli' -X PUT 'https://graylog.lan/api/roles/DumbMonit%20Notifications/members/dumbmonit'",
                     "In DumbMonit, enter the Graylog node address (for example graylog.lan, port 9000) and paste the token. In a cluster, add each node.",
                 ],
-                ports: &[to_device(9000, "tcp", "Graylog REST API (default)")],
+                ports: &[to_device!(9000, "tcp", "Graylog REST API (default)")],
                 permissions: &[
                     "Reader (built-in role)\nNode status, journal, buffers, throughput, inputs, search cluster health",
                     "notifications:read\nOptional: Graylog's own notifications",
@@ -4721,8 +4751,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the address you open Nextcloud with and paste the token.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "API (HTTPS, default)"),
-                    to_device_optional(80, "tcp", "Only with the http scheme option"),
+                    to_device!(443, "tcp", "API (HTTPS, default)"),
+                    to_device_optional!(80, "tcp", "Only with the http scheme option"),
                 ],
                 permissions: &[],
                 warning: "Use an address listed in Nextcloud's trusted domains, or Nextcloud refuses the request.",
@@ -4746,8 +4776,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter Immich's address and paste the key.",
                 ],
                 ports: &[
-                    to_device(2283, "tcp", "API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(2283, "tcp", "API (HTTP, default)"),
+                    to_device_optional!(
                         443,
                         "tcp",
                         "Only with the https scheme behind a reverse proxy",
@@ -4785,8 +4815,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter Paperless-ngx's address and paste the token.",
                 ],
                 ports: &[
-                    to_device(8000, "tcp", "API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(8000, "tcp", "API (HTTP, default)"),
+                    to_device_optional!(
                         443,
                         "tcp",
                         "Only with the https scheme behind a reverse proxy",
@@ -4817,8 +4847,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter Jellyfin's address and paste the key.",
                 ],
                 ports: &[
-                    to_device(8096, "tcp", "API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(8096, "tcp", "API (HTTP, default)"),
+                    to_device_optional!(
                         8920,
                         "tcp",
                         "Only with the https scheme on Jellyfin's own HTTPS port",
@@ -4846,7 +4876,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the server's address and pick No token.",
                     "If DumbMonit is not on your network, use the owner's token instead: open a movie → ⋯ → Get Info → View XML and copy X-Plex-Token from the page address.",
                 ],
-                ports: &[to_device(32400, "tcp", "API (HTTP, default)")],
+                ports: &[to_device!(32400, "tcp", "API (HTTP, default)")],
                 permissions: &[],
                 warning: "The token is your Plex account's and can manage the server and every library: prefer the allowed network when DumbMonit is on your own network.",
             },
@@ -4871,8 +4901,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To watch CI pipelines, list the numeric project IDs (shown on each project's page) in the Projects watched for CI health option.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "API (HTTPS, default)"),
-                    to_device_optional(80, "tcp", "Only with the http scheme option"),
+                    to_device!(443, "tcp", "API (HTTPS, default)"),
+                    to_device_optional!(80, "tcp", "Only with the http scheme option"),
                 ],
                 permissions: &[
                     "read_api\nToken scope: reads the whole API, writes nothing",
@@ -4900,8 +4930,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the server's address and paste the token.",
                 ],
                 ports: &[
-                    to_device(3000, "tcp", "API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(3000, "tcp", "API (HTTP, default)"),
+                    to_device_optional!(
                         443,
                         "tcp",
                         "Only with the https scheme behind a reverse proxy",
@@ -4934,8 +4964,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter Pi-hole's address and paste the app password, or pick No password if the web interface has none.",
                 ],
                 ports: &[
-                    to_device(80, "tcp", "API (HTTP, default)"),
-                    to_device_optional(443, "tcp", "Only with the https scheme option"),
+                    to_device!(80, "tcp", "API (HTTP, default)"),
+                    to_device_optional!(443, "tcp", "Only with the https scheme option"),
                 ],
                 permissions: &[],
                 warning: "Pi-hole v6 or later is required; the app password can still pause blocking and edit lists through the API, so keep it for DumbMonit only.",
@@ -4959,13 +4989,13 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the address of the AdGuard Home web interface, then the user dumbmonit and its password.",
                 ],
                 ports: &[
-                    to_device(80, "tcp", "Web interface and API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(80, "tcp", "Web interface and API (HTTP, default)"),
+                    to_device_optional!(
                         3000,
                         "tcp",
                         "Only with the web interface left on port 3000, the first-run default",
                     ),
-                    to_device_optional(443, "tcp", "Only with the https scheme option"),
+                    to_device_optional!(443, "tcp", "Only with the https scheme option"),
                 ],
                 permissions: &[],
                 warning: "AdGuard Home has no read-only user, so dumbmonit can change every setting: keep its password to DumbMonit alone, and turn on HTTPS in Settings → Encryption settings across an untrusted network.",
@@ -4994,7 +5024,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional, to name this client: add a user without actions or instcmds to upsd.users, with a long random password, and restart upsd.\n[dumbmonit]\npassword = a-long-random-password",
                     "In DumbMonit, enter the NUT server's address (nas.lan): every UPS it publishes is watched.",
                 ],
-                ports: &[to_device(3493, "tcp", "upsd (default)")],
+                ports: &[to_device!(3493, "tcp", "upsd (default)")],
                 permissions: &[],
                 warning: "DumbMonit watches the UPS; it shuts nothing down: the machines it powers still need their own NUT client (upsmon) to shut down cleanly.",
             },
@@ -5019,8 +5049,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the router's address (192.168.88.1) with that user name and password.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "REST API (HTTPS, default)"),
-                    to_device_optional(80, "tcp", "Only with the HTTP protocol option"),
+                    to_device!(443, "tcp", "REST API (HTTPS, default)"),
+                    to_device_optional!(80, "tcp", "Only with the HTTP protocol option"),
                 ],
                 permissions: &[
                     "read\nRead the router's state",
@@ -5053,8 +5083,12 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If the network is not the default site, set the Site option to the short name shown after /manage/ or /network/ in the address bar.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "API (HTTPS, default)"),
-                    to_device_optional(8443, "tcp", "Only with a self-hosted UniFi Network Server"),
+                    to_device!(443, "tcp", "API (HTTPS, default)"),
+                    to_device_optional!(
+                        8443,
+                        "tcp",
+                        "Only with a self-hosted UniFi Network Server",
+                    ),
                 ],
                 permissions: &[
                     "View Only (UniFi Network role)\nReads everything and changes nothing",
@@ -5079,7 +5113,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Log in as that user, open its profile (bottom of the sidebar) → Security → Long-lived access tokens → Create token, name it and copy it: it is shown only once.",
                     "In DumbMonit, enter the Home Assistant address (for example homeassistant.local, port 8123) and paste the token.",
                 ],
-                ports: &[to_device(8123, "tcp", "Web UI, REST and WebSocket API (HTTP, default)")],
+                ports: &[to_device!(8123, "tcp", "Web UI, REST and WebSocket API (HTTP, default)")],
                 permissions: &[
                     "Regular user (Administrator toggle off)\nReads every entity and the repairs list",
                 ],
@@ -5104,7 +5138,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "On a standalone ESXi host instead: in the host client, Manage → Security & users → Users → Add user dumbmonit, then Host → Actions → Permissions → Add user with role Read-only.",
                     "In DumbMonit, enter the vCenter or host address, with the user dumbmonit@vsphere.local on a vCenter or dumbmonit on a host. Add only the vCenter when one manages the hosts.",
                 ],
-                ports: &[to_device(443, "tcp", "vSphere API (HTTPS, default)")],
+                ports: &[to_device!(443, "tcp", "vSphere API (HTTPS, default)")],
                 permissions: &[
                     "Read-only, propagated to children\nSees hosts, VMs, datastores and alarms",
                 ],
@@ -5130,7 +5164,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Give that subject the built-in read-only role, with the UUID.\nxe subject-role-add uuid=SUBJECT_UUID role-name=read-only",
                     "In DumbMonit, enter the address of the pool coordinator (for example xcp01.lan) with that user name and password.",
                 ],
-                ports: &[to_device(443, "tcp", "XAPI (HTTPS, default)")],
+                ports: &[to_device!(443, "tcp", "XAPI (HTTPS, default)")],
                 permissions: &[
                     "read-only role (XAPI)\nSees hosts, VMs, storage repositories and HA",
                 ],
@@ -5154,7 +5188,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Open Admin Center → IAM → Authorization Policies and create a policy with the Prism Viewer role, for all entities, assigned to that user.",
                     "In DumbMonit, enter the Prism Central address (for example prism-central.lan) with that user name and password.",
                 ],
-                ports: &[to_device(9440, "tcp", "Prism Central API (HTTPS, default)")],
+                ports: &[to_device!(9440, "tcp", "Prism Central API (HTTPS, default)")],
                 permissions: &[
                     "Prism Viewer, all entities\nSees clusters, hosts, VMs, storage containers, alerts",
                 ],
@@ -5179,7 +5213,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the server address, for example cache.lan:6380, then the user and its password.",
                     "Tick TLS if the server only accepts TLS on that port (tls-port).",
                 ],
-                ports: &[to_device(6379, "tcp", "Redis protocol (default port, plain or TLS)")],
+                ports: &[to_device!(6379, "tcp", "Redis protocol (default port, plain or TLS)")],
                 permissions: &[
                     "+info\nRead the server statistics (INFO)",
                     "+ping\nCheck that the server answers",
@@ -5210,7 +5244,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In a replica set, add every member as its own monitor.",
                     "Tick TLS if the server requires it.",
                 ],
-                ports: &[to_device(27017, "tcp", "MongoDB protocol (default port, plain or TLS)")],
+                ports: &[to_device!(27017, "tcp", "MongoDB protocol (default port, plain or TLS)")],
                 permissions: &[
                     "clusterMonitor (built-in role)\nRead server and replica set status",
                 ],
@@ -5236,8 +5270,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the address of one node, for example rabbit.lan, or https://rabbit.lan:15671 when the API is served over TLS.",
                 ],
                 ports: &[
-                    to_device(15672, "tcp", "Management API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(15672, "tcp", "Management API (HTTP, default)"),
+                    to_device_optional!(
                         15671,
                         "tcp",
                         "Only if the API is served over TLS (HTTPS, default)",
@@ -5274,8 +5308,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the CrowdSec host, for example \"crowdsec.lan\".",
                 ],
                 ports: &[
-                    to_device(6060, "tcp", "Prometheus metrics (default)"),
-                    to_device_optional(
+                    to_device!(6060, "tcp", "Prometheus metrics (default)"),
+                    to_device_optional!(
                         8080,
                         "tcp",
                         "Only with the Local API check option (on by default)",
@@ -5307,7 +5341,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Optional: protect /api and /metrics with a basicAuth middleware on an entry point of your own, and create the user with htpasswd.\nhtpasswd -nbB dumbmonit 'a-long-password'",
                     "In DumbMonit, enter the Traefik host, for example traefik.lan, with the port of that entry point if it is not 8080.",
                 ],
-                ports: &[to_device(8080, "tcp", "API and metrics (HTTP, default)")],
+                ports: &[to_device!(8080, "tcp", "API and metrics (HTTP, default)")],
                 permissions: &[],
                 warning: "Port 8080 answers without a password: filter it so that only the DumbMonit host reaches it.",
             },
@@ -5331,7 +5365,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Filter port 2020 so that only the DumbMonit host reaches it.",
                     "In DumbMonit, enter the Caddy host with that port, for example caddy.lan:2020, and the user dumbmonit with its password.",
                 ],
-                ports: &[to_device(2019, "tcp", "Admin API (HTTP, default)")],
+                ports: &[to_device!(2019, "tcp", "Admin API (HTTP, default)")],
                 permissions: &[
                     "GET on /config/apps/http/servers\nServers and routes",
                     "GET on /reverse_proxy/upstreams\nUpstream health",
@@ -5360,8 +5394,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If NGINX Plus is installed, tick Read the NGINX Plus API to add upstream health and per-zone counters.",
                 ],
                 ports: &[
-                    to_device(80, "tcp", "Status page (HTTP, default)"),
-                    to_device_optional(443, "tcp", "Only if the status page is served over HTTPS"),
+                    to_device!(80, "tcp", "Status page (HTTP, default)"),
+                    to_device_optional!(443, "tcp", "Only if the status page is served over HTTPS"),
                 ],
                 permissions: &[],
                 warning: "stub_status only counts connections and requests: a configuration error in a server block or an unreachable backend does not show there.",
@@ -5387,8 +5421,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the Apache host, for example apache.lan, and the path if it is not /server-status.",
                 ],
                 ports: &[
-                    to_device(80, "tcp", "Status page (HTTP, default)"),
-                    to_device_optional(443, "tcp", "Only if the status page is served over HTTPS"),
+                    to_device!(80, "tcp", "Status page (HTTP, default)"),
+                    to_device_optional!(443, "tcp", "Only if the status page is served over HTTPS"),
                 ],
                 permissions: &[],
                 warning: "Without ExtendedStatus, requests and bytes are not reported at all: the chart stays empty rather than flat.",
@@ -5413,8 +5447,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the Nginx Proxy Manager host with its web port, for example npm.lan:81, and that email and password.",
                 ],
                 ports: &[
-                    to_device(81, "tcp", "Admin API (HTTP, default)"),
-                    to_device_optional(
+                    to_device!(81, "tcp", "Admin API (HTTP, default)"),
+                    to_device_optional!(
                         443,
                         "tcp",
                         "Only with the certificate check (HTTPS port of the hosts, default)",
@@ -5445,7 +5479,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Enter the registered domain, for example \"example.com\", not a name under it such as www.example.com.",
                     "For an extension the IANA does not list, such as .ch, set \"RDAP server\" to the registry's address.\nhttps://rdap.nic.ch/",
                 ],
-                ports: &[to_device(
+                ports: &[to_device!(
                     443,
                     "tcp",
                     "RDAP query to the registry and to the IANA (HTTPS)",
@@ -5478,8 +5512,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If the monitor shows \"Spamhaus refuses this resolver\", set \"Resolver\" to your own recursive resolver, or choose the free Spamhaus DQS key as the credential.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
                 ],
                 ports: &[
-                    to_device(53, "udp", "DNS lookups of the blocklists (default port)"),
-                    to_device(53, "tcp", "DNS lookups too large for UDP (default port)"),
+                    to_device!(53, "udp", "DNS lookups of the blocklists (default port)"),
+                    to_device!(53, "tcp", "DNS lookups too large for UDP (default port)"),
                 ],
                 permissions: &[],
                 warning: "A blocklist that does not answer is shown as unknown, never as clean.",
@@ -5508,8 +5542,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "If the monitor shows \"Spamhaus refuses this resolver\", set \"Resolver\" to your own recursive resolver, or choose the free Spamhaus DQS key as the credential.\nhttps://www.spamhaus.com/data-access/free-data-query-service/",
                 ],
                 ports: &[
-                    to_device(53, "udp", "DNS lookups of the blocklists (default port)"),
-                    to_device(53, "tcp", "DNS lookups too large for UDP (default port)"),
+                    to_device!(53, "udp", "DNS lookups of the blocklists (default port)"),
+                    to_device!(53, "tcp", "DNS lookups too large for UDP (default port)"),
                 ],
                 permissions: &[],
                 warning: "Spamhaus PBL lists end-user ranges that should not send mail directly: a listing there only matters for an address that runs a mail server.",
@@ -5534,7 +5568,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Create a token that does not expire, then print the token and the cluster CA in base64.\necho '{\"apiVersion\":\"v1\",\"kind\":\"Secret\",\"metadata\":{\"name\":\"dumbmonit-token\",\"namespace\":\"kube-system\",\"annotations\":{\"kubernetes.io/service-account.name\":\"dumbmonit\"}},\"type\":\"kubernetes.io/service-account-token\"}' | kubectl apply -f -\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.token}' | base64 -d\nkubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\\.crt}'",
                     "In DumbMonit, enter the API server address (for example https://k3s.lan:6443), paste the token as Service account token and the CA as Cluster CA certificate.",
                 ],
-                ports: &[to_device(6443, "tcp", "API server (HTTPS, default)")],
+                ports: &[to_device!(6443, "tcp", "API server (HTTPS, default)")],
                 permissions: &[
                     "get, list on nodes, pods, events\nCluster-wide, read-only",
                     "get, list on persistentvolumeclaims\nVolume claims never bound",
@@ -5563,10 +5597,10 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter a domain controller's name as its certificate names it (dc1.corp.example.com) and log in as svc-dumbmonit@corp.example.com.",
                 ],
                 ports: &[
-                    to_device(636, "tcp", "LDAPS (default), also to the other domain controllers"),
-                    to_device_optional(389, "tcp", "Only with the StartTLS or plain LDAP option"),
-                    to_device_optional(53, "udp", "Only with the DNS servers option"),
-                    to_device_optional(53, "tcp", "Only with the DNS servers option"),
+                    to_device!(636, "tcp", "LDAPS (default), also to the other domain controllers"),
+                    to_device_optional!(389, "tcp", "Only with the StartTLS or plain LDAP option"),
+                    to_device_optional!(53, "udp", "Only with the DNS servers option"),
+                    to_device_optional!(53, "tcp", "Only with the DNS servers option"),
                 ],
                 permissions: &[
                     "Domain Users membership only\nNo group or delegation is needed to read",
@@ -5596,8 +5630,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the pfSense address (pfsense.lan) and paste the key as API key.",
                 ],
                 ports: &[
-                    to_device(443, "tcp", "API (HTTPS, default)"),
-                    to_device_optional(80, "tcp", "Only with the HTTP protocol option"),
+                    to_device!(443, "tcp", "API (HTTPS, default)"),
+                    to_device_optional!(80, "tcp", "Only with the HTTP protocol option"),
                 ],
                 permissions: &[
                     "/api/v2/status/system GET\nCPU, memory, disk, temperature",
@@ -5630,8 +5664,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the Unraid address (for example tower.lan), paste the key as API key and choose https if the web interface is served over HTTPS.",
                 ],
                 ports: &[
-                    to_device(80, "tcp", "Web UI and GraphQL API (HTTP, default)"),
-                    to_device_optional(443, "tcp", "Only with the HTTPS protocol option"),
+                    to_device!(80, "tcp", "Web UI and GraphQL API (HTTP, default)"),
+                    to_device_optional!(443, "tcp", "Only with the HTTPS protocol option"),
                 ],
                 permissions: &["Viewer role\nReads everything, changes nothing"],
                 warning: "Unraid reports no temperature for a disk that is spun down, and DumbMonit never wakes one: a sleeping disk simply has no temperature until it spins up.",
@@ -5659,7 +5693,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the backup server address (for example vbr.lan) and the account as HOST\\dumbmonit or DOMAIN\\dumbmonit, with its password.",
                     "Tick Accept an unverifiable certificate unless you installed your own: the REST API (port 9419) uses a self-signed one.",
                 ],
-                ports: &[to_device(9419, "tcp", "REST API (HTTPS, default)")],
+                ports: &[to_device!(9419, "tcp", "REST API (HTTPS, default)")],
                 permissions: &[
                     "Veeam Backup Viewer\nReads jobs, sessions, repositories and restore points",
                 ],
@@ -5684,7 +5718,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Copy the client ID and the client secret (tskey-client-...): the secret is shown once.",
                     "In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret; leave the Tailnet option empty.",
                 ],
-                ports: &[to_device(443, "tcp", "Tailscale API (HTTPS, api.tailscale.com)")],
+                ports: &[to_device!(443, "tcp", "Tailscale API (HTTPS, api.tailscale.com)")],
                 permissions: &[
                     "devices:core:read\nLists the devices of the tailnet, changes nothing",
                 ],
@@ -5710,7 +5744,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Click OK: FortiGate shows the API token once. Copy it.",
                     "In DumbMonit, enter the FortiGate address (fw.lan) and paste the token as API token.",
                 ],
-                ports: &[to_device(443, "tcp", "Administration API (HTTPS, default)")],
+                ports: &[to_device!(443, "tcp", "Administration API (HTTPS, default)")],
                 permissions: &[
                     "System: Read\nSystem status, resources, HA, licences, firmware",
                     "Network: Read\nInterface configuration",
@@ -5738,7 +5772,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Backup & firmware → API (Administration → API access from SFOS 22): turn on the API configuration and add the DumbMonit server's address to the allowed IP addresses.",
                     "In DumbMonit, enter the firewall address (sophos.lan) with that user name and password.",
                 ],
-                ports: &[to_device(4444, "tcp", "Administration API (HTTPS, default)")],
+                ports: &[to_device!(4444, "tcp", "Administration API (HTTPS, default)")],
                 permissions: &[
                     "Device access profile: Read-only on every permission\nThe firewall enforces it on the API too",
                 ],
@@ -5766,7 +5800,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Recommended: protect it with a password, put in a file readable by the OpenVPN process alone and added as a third argument.\nmanagement 0.0.0.0 7505 /etc/openvpn/management-password",
                     "In DumbMonit, enter the server's address (vpn.lan, port 7505) and the management password if one is set.",
                 ],
-                ports: &[to_device(7505, "tcp", "Management interface (default)")],
+                ports: &[to_device!(7505, "tcp", "Management interface (default)")],
                 permissions: &[],
                 warning: "Anyone who reaches the management port and knows the password can disconnect clients and reconfigure the running server: allow only the DumbMonit host in the firewall and set a password.",
             },
