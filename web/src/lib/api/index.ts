@@ -667,6 +667,11 @@ export async function listAgentModules(id: TargetId, signal?: AbortSignal): Prom
 	}
 }
 
+/** Switches the agent's relay mode on or off; the agent applies it at its next report. */
+export function setAgentRelay(id: TargetId, enabled: boolean, site: string | null): Promise<AgentHost> {
+	return request<AgentHost>(`/targets/${id}/agent/relay`, { method: 'PUT', body: { enabled, site } });
+}
+
 /** Ticks (creates the service's device) or unticks (drops it) a module. */
 export function setAgentModule(id: TargetId, module: string, enabled: boolean): Promise<AgentModule> {
 	return request<AgentModule>(`/targets/${id}/agent/modules/${encodeURIComponent(module)}`, {

@@ -5,14 +5,30 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Relay mode is switched from the UI.** An agent's page has a *Relay for a
+  remote site* switch and a site field: the server sends the setting to the
+  agent in its next acknowledgement and the agent turns relay mode on or off on
+  the fly, without a restart or a file to edit. `relay: true` in agent.yaml
+  still wins; an agent too old to follow the switch is flagged. A token from
+  *Watch a remote site* (or with *This agent is a relay for a remote site*
+  ticked) carries relay mode and the site, so the enrolled agent is a relay
+  from its first report. Once a relay, its page links to *Scan this site's
+  network* and *Add a monitor through this relay*.
+- **Reached through, in bulk.** The monitors list's selection bar sets *Reached
+  through* (direct or a relay) on many monitors at once, skips agent monitors
+  with a note, and offers to place them at the location whose site is the
+  relay's.
+
 ### Fixed
 
-- **A remote-site relay installs in one command.** The install scripts accept
-  `--relay` and `--site=NAME` (`-Relay -Site NAME` on Windows) and write them
-  into agent.yaml, and *Settings → Agents → Watch a remote site* now puts them
-  in the install commands it shows. Before, the agent installed with those
-  commands was not a relay until `relay: true` was added to agent.yaml by
-  hand; that step is now only a folded note for agents already installed.
+- **A remote-site relay installs in one command.** An agent installed from
+  *Settings → Agents → Watch a remote site* was not a relay until `relay: true`
+  was added to agent.yaml by hand. Its token now makes it a relay (see above),
+  and the agent.yaml step is only a folded note for agents already installed.
+  The install scripts also accept `--relay` and `--site=NAME` (`-Relay -Site
+  NAME` on Windows) for a relay set on the machine itself.
 
 ## 0.13.0 — 2026-10-19
 
