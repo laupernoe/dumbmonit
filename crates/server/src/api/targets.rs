@@ -4,7 +4,7 @@ use std::time::Duration;
 use axum::Json;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
-use dumbmonit_proto::{Credential, Target, TargetId};
+use dumbmonit_proto::{Credential, CredentialInput, Target, TargetId};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
@@ -31,8 +31,9 @@ const MAX_GROUP_NAME_CHARS: usize = 60;
 
 /// Représentation d'une cible renvoyée par l'API.
 ///
-/// Le secret n'y figure jamais : seul son type est exposé, ce qui suffit à
-/// l'interface pour afficher le bon formulaire.
+/// Le secret n'y figure jamais : seuls son type, sa présence et les parties
+/// non secrètes de l'identifiant (utilisateur, identifiant de jeton) sont
+/// exposés, ce qui suffit à l'interface pour pré-remplir le formulaire.
 #[derive(Debug, Serialize)]
 pub struct TargetView {
     pub id: TargetId,
@@ -48,6 +49,13 @@ pub struct TargetView {
     pub enabled: bool,
     pub tags: BTreeMap<String, String>,
     pub credential_kind: String,
+    /// Un secret est enregistré : le formulaire l'annonce, laisser le champ
+    /// vide le garde.
+    pub has_secret: bool,
+    /// Parties non secrètes de l'identifiant, sous les clés des champs du
+    /// formulaire (`username`, `token_id`, `auth_protocol`…). Jamais un secret ;
+    /// vide pour un lecteur.
+    pub credential_public: BTreeMap<String, String>,
     /// Dossier plat et libre, affiché sur `/targets`. Vide : aucun dossier.
     pub group_name: String,
     /// Rang manuel (drag, Haut/Bas), départagé par l'interface seulement entre
@@ -95,6 +103,13 @@ impl TargetView {
             enabled: target.enabled,
             tags: target.tags,
             credential_kind: target.credential.kind_label().to_string(),
+            has_secret: target.credential.has_secret(),
+            credential_public: target
+                .credential
+                .public_fields()
+                .into_iter()
+                .map(|(key, value)| (key.to_owned(), value))
+                .collect(),
             group_name: target.group_name,
             position: target.position,
             location_id: None,
@@ -141,21 +156,37 @@ pub struct TargetPayload {
     #[serde(default, deserialize_with = "deserialize_present")]
     pub location_id: Option<Option<i64>>,
     /// Absent lors d'une modification signifie « conserver le secret enregistré ».
+    /// Présent avec un secret vide ou absent (mot de passe, secret du jeton,
+    /// phrase de passe), même chose pour ce secret-là, tant que l'utilisateur ou
+    /// l'identifiant de jeton n'a pas changé : voir [`CredentialInput::resolve`].
     ///
     /// Renommer une cible ou changer sa période est bien plus fréquent que changer
     /// ses identifiants : imposer de ressaisir la community à chaque édition serait
     /// une friction inutile. Pour effacer un secret, envoyer explicitement
     /// `{"type": "none"}`.
     #[serde(default)]
-    pub credential: Option<Credential>,
+    pub credential: Option<CredentialInput>,
 }
 
 impl TargetPayload {
+    /// Validation d'une cible neuve : aucun secret enregistré à reprendre.
     pub(super) fn validate(
         self,
         state: &AppState,
         id: Option<TargetId>,
     ) -> ApiResult<db::targets::TargetInput> {
+        self.validate_with(state, id, None).map(|(input, _)| input)
+    }
+
+    /// Validation, `saved` étant l'identifiant déjà enregistré : un secret laissé
+    /// vide le reprend. Le booléen rendu dit si un secret enregistré a été repris
+    /// (l'appelant vérifie alors que la destination n'a pas changé).
+    pub(super) fn validate_with(
+        self,
+        state: &AppState,
+        id: Option<TargetId>,
+        saved: Option<&Credential>,
+    ) -> ApiResult<(db::targets::TargetInput, bool)> {
         let name = self.name.trim().to_string();
         if name.is_empty() {
             return Err(ApiError::BadRequest("Name is required.".into()));
@@ -235,7 +266,17 @@ impl TargetPayload {
             ));
         }
 
-        Ok(db::targets::TargetInput {
+        let (credential, reused_secret) = match self.credential {
+            Some(credential) => {
+                let resolved = credential
+                    .resolve(saved)
+                    .map_err(|error| ApiError::BadRequest(format!("Credential: {error}")))?;
+                (Some(resolved.credential), resolved.reused_secret)
+            }
+            None => (None, false),
+        };
+
+        let input = db::targets::TargetInput {
             name,
             address,
             kind: self.kind,
@@ -246,8 +287,9 @@ impl TargetPayload {
             enabled: self.enabled.unwrap_or(true),
             tags: self.tags,
             group_name,
-            credential: self.credential,
-        })
+            credential,
+        };
+        Ok((input, reused_secret))
     }
 }
 
@@ -302,6 +344,7 @@ impl TargetView {
             return self;
         }
         self.tags = reader_tags(&self.tags);
+        self.credential_public.clear();
         self.address = redact_userinfo(&self.address);
         self
     }
@@ -382,18 +425,19 @@ pub async fn update(
     let keep_relay = payload.via_agent.is_none();
     let keep_group = payload.group_name.is_none();
     let new_location = payload.location_id;
-    let mut input = payload.validate(&state, Some(id))?;
+    let before = load(&state, id).await?;
+    let (mut input, reused_secret) =
+        payload.validate_with(&state, Some(id), Some(&before.credential))?;
     if let Some(location) = new_location {
         super::locations::check_location(&state.pool, location).await?;
     }
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
-    let before = load(&state, id).await?;
     let relay_before = db::targets::relay_of(&state.pool, id).await?;
     if keep_relay {
         input.via_agent = relay_before;
     }
-    check_secret_destination(&before, relay_before, &input)?;
+    check_secret_destination(&before, relay_before, &input, reused_secret)?;
     if keep_group {
         input.group_name = before.group_name;
     }
@@ -429,16 +473,19 @@ const DESTINATION_TAGS: &[&str] =
 /// Un secret enregistré ne part jamais vers une destination qu'il n'a pas
 /// connue sans être ressaisi.
 ///
-/// Garder le secret quand `credential` est absent évite de le redemander à
-/// chaque renommage ; mais si l'adresse, le relais ou le transport changent
-/// dans la même requête, la conserver reviendrait à laisser n'importe quel
-/// porteur d'un jeton `write` l'envoyer chez lui — sans jamais l'avoir lu.
+/// Garder le secret quand `credential` est absent (ou quand un de ses secrets
+/// est laissé vide, `reused_secret`) évite de le redemander à chaque
+/// renommage ; mais si l'adresse, le relais ou le transport changent dans la
+/// même requête, le conserver reviendrait à laisser n'importe quel porteur d'un
+/// jeton `write` l'envoyer chez lui — sans jamais l'avoir lu.
 fn check_secret_destination(
     before: &Target,
     relay_before: Option<TargetId>,
     input: &db::targets::TargetInput,
+    reused_secret: bool,
 ) -> ApiResult<()> {
-    if input.credential.is_some() || matches!(before.credential, Credential::None) {
+    let keeps_saved = input.credential.is_none() || reused_secret;
+    if !keeps_saved || matches!(before.credential, Credential::None) {
         return Ok(());
     }
     let tag_changed =
@@ -490,7 +537,12 @@ pub async fn test_connection(
     Json(payload): Json<TestPayload>,
 ) -> ApiResult<Json<TestReport>> {
     let TestPayload { id, target: payload } = payload;
-    let mut input = payload.validate(&state, id)?;
+    let before = match id {
+        Some(id) => Some(load(&state, id).await?),
+        None => None,
+    };
+    let (mut input, reused_secret) =
+        payload.validate_with(&state, id, before.as_ref().map(|t| &t.credential))?;
     // SNMP seulement : `identify` n'ouvre qu'une session jetable. D'autres collecteurs
     // gardent une session en cache par identifiant de cible ; un essai avec des
     // identifiants modifiés (ou l'identifiant 0 partagé par tous les brouillons)
@@ -509,13 +561,14 @@ pub async fn test_connection(
     }
     // Secret laissé vide en modification : on réutilise celui qui est enregistré,
     // sous la même garde que `update` (jamais vers une destination nouvelle).
+    if let (Some(id), Some(before)) = (id, before.as_ref()) {
+        let relay_before = db::targets::relay_of(&state.pool, id).await?;
+        check_secret_destination(before, relay_before, &input, reused_secret)?;
+    }
     let mut credential = input.credential.take();
     if credential.is_none()
-        && let Some(id) = id
+        && let Some(before) = before
     {
-        let before = load(&state, id).await?;
-        let relay_before = db::targets::relay_of(&state.pool, id).await?;
-        check_secret_destination(&before, relay_before, &input)?;
         credential = Some(before.credential);
     }
     let target = Target {

@@ -15,7 +15,7 @@
 	 * Rises and falls carry an arrow and a sign, not only a colour. Text only,
 	 * no link: a kiosk never navigates away.
 	 */
-	import { Bot, ChartCandlestick, Coins, Banknote, Newspaper, ShieldAlert, Sparkles } from 'lucide-svelte';
+	import { Bot, ChartCandlestick, Coins, Banknote, MessageSquareText, Newspaper, ShieldAlert, Sparkles } from 'lucide-svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { formatRelative } from '#lib/format.js';
@@ -45,13 +45,13 @@
 	const bar = $derived(variant === 'bar');
 
 	const section = $derived(
-		id === 'news' ? null : ((widgets?.[id] as WallSection<unknown> | null | undefined) ?? null)
+		id === 'news' || id === 'text' ? null : ((widgets?.[id] as WallSection<unknown> | null | undefined) ?? null)
 	);
 	/**
 	 * Off, waiting for a key, or nothing to say: the widget takes no room at
 	 * all (a missing key is said in Settings, not on the wall).
 	 */
-	const visible = $derived(id === 'news' ? news.length > 0 : !!section?.data);
+	const visible = $derived(id === 'news' ? news.length > 0 : id === 'text' ? !!widgets?.text : !!section?.data);
 
 	const TITLES: Record<WallWidgetId, () => string> = {
 		weather: m.wall_widgets_weather,
@@ -61,9 +61,10 @@
 		stocks: m.wall_widgets_stocks,
 		fx: m.wall_widgets_fx,
 		claude: m.wall_widgets_claude,
-		openai: m.wall_widgets_openai
+		openai: m.wall_widgets_openai,
+		text: m.wall_widgets_text
 	};
-	const ICONS = { news: Newspaper, cve: ShieldAlert, crypto: Coins, stocks: ChartCandlestick, fx: Banknote, claude: Sparkles, openai: Bot };
+	const ICONS = { text: MessageSquareText, news: Newspaper, cve: ShieldAlert, crypto: Coins, stocks: ChartCandlestick, fx: Banknote, claude: Sparkles, openai: Bot };
 
 	const SKY: Record<WeatherKind, () => string> = {
 		clear: m.wall_widgets_sky_clear,
@@ -111,7 +112,7 @@
 		aria-label={TITLES[id]()}
 		title={section ? m.wall_widgets_source({ source: section.source }) : undefined}
 	>
-		{#if id !== 'weather'}
+		{#if id !== 'weather' && id !== 'text'}
 			{@const Icon = ICONS[id]}
 			<span class="w-head">
 				<Icon class="w-icon" aria-hidden="true" />
@@ -127,6 +128,8 @@
 				<b class="tnum">{roundTemperature(weather.temperature)}</b>
 				{#if !compact}<span class="dim">{weather.name}</span>{/if}
 			</span>
+		{:else if id === 'text' && widgets?.text}
+			<span class="entry text" data-entry>{widgets.text}</span>
 		{:else if id === 'news'}
 			{@const list = take(news)}
 			<ul class="entries" class:entries--news={!bar}>
@@ -378,6 +381,25 @@
 	.cve-title {
 		flex-basis: 100%;
 		font-size: 1em;
+	}
+	/* The free message: plain text, a few lines in the column, one line in a bar. */
+	.text {
+		color: var(--c-ink);
+		overflow-wrap: anywhere;
+	}
+	.w--bar .text {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		max-width: 40em;
+	}
+	.w--column .text {
+		display: -webkit-box;
+		-webkit-box-orient: vertical;
+		-webkit-line-clamp: 4;
+		line-clamp: 4;
+		overflow: hidden;
+		font-size: 1.0625em;
+		line-height: 1.4;
 	}
 	.score {
 		font-weight: 700;

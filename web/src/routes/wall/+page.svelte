@@ -149,7 +149,9 @@
 	/** Where each widget goes (Settings → Wall widgets → Layout); only those with something to show. */
 	const layout = $derived(resolveLayout(widgets?.layout));
 	function shows(id: WallWidgetId): boolean {
-		return id === 'news' ? headlines.length > 0 : !!widgets?.[id]?.data;
+		if (id === 'news') return headlines.length > 0;
+		if (id === 'text') return !!widgets?.text;
+		return !!widgets?.[id]?.data;
 	}
 	const topIds = $derived(layout.top.filter(shows));
 	const bottomIds = $derived(layout.bottom.filter(shows));

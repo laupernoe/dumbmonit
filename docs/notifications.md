@@ -98,8 +98,12 @@ certificate is the reason for a failure, the error shown for the channel names i
 ## Acknowledge or snooze from the notification
 
 When a public URL is set (**Settings → Notifications & reports → Notification policy**, or
-`DUMBMONIT_PUBLIC_URL`), every alert message carries two actions:
+`DUMBMONIT_PUBLIC_URL`), every alert message carries three actions:
 
+- **Dismiss**: "got it". The alert leaves the active list and nothing more is sent
+  for it, not even its resolution, until the condition clears; if it comes back
+  later, it alerts again. It comes first, so it is the one kept where only two
+  buttons fit (Web Push in most browsers).
 - **Acknowledge**: no more reminders until the alert resolves. The resolution is
   still announced.
 - **Snooze 1 h**: no reminders for one hour; they resume afterwards if the alert is
@@ -111,7 +115,7 @@ How they show up depends on the channel:
 |---|---|
 | ntfy, Telegram, Web Push | Buttons under the notification |
 | Discord, Slack, email and every other channel | Links at the end of the message |
-| Custom webhook | Links in `{{message}}`, and the `{{ack_url}}` / `{{snooze_url}}` variables |
+| Custom webhook | Links in `{{message}}`, and the `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` variables |
 | PagerDuty, Opsgenie | Nothing: acknowledge in the service itself |
 
 Telegram only accepts buttons pointing to an `https` address with a domain name;
@@ -125,7 +129,7 @@ build previews; they only load the page. No sign-in is needed: the link itself i
 the permission, and only for that gesture, on the alerts of that message (that firing: if an alert
 resolves and fires again, the old link no longer covers it), once, for
 24 hours. The action is recorded in the audit log, and the alert shows
-"acknowledged by via notification link".
+"acknowledged by via notification link" (or "dismissed by via notification link").
 
 Security, in short: each link is signed with a key derived from the instance secret
 (changing the secret invalidates every link), carries no session, and travels after
@@ -236,6 +240,7 @@ write your JSON normally.
 | `{{token}}` | The channel's `token` secret | *(your token)* |
 | `{{ack_url}}` | Signed link that acknowledges the alert until it resolves, empty if [action links](#acknowledge-or-snooze-from-the-notification) are off | `https://dumbmonit.home/alert-action#…` |
 | `{{snooze_url}}` | Signed link that snoozes the alert for one hour, empty if action links are off | `https://dumbmonit.home/alert-action#…` |
+| `{{dismiss_url}}` | Signed link that dismisses the alert (hidden and silent until it resolves), empty if action links are off | `https://dumbmonit.home/alert-action#…` |
 
 Two useful remarks:
 

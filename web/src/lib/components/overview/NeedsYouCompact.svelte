@@ -122,7 +122,7 @@
 				{/if}
 				{#if known}
 					<a href="/alerts" class="tnum inline-flex min-h-10 items-center text-ink-2 hover:text-ink hover:underline">
-						{#if snoozed > 0}{m.alerts_needs_snoozed()} · {snoozed}{/if}{#if snoozed > 0 && dismissed > 0}&ensp;{/if}{#if dismissed > 0}{m.alerts_needs_dismissed()} · {dismissed}{/if}
+						{#if snoozed > 0}{m.alerts_needs_snoozed()} · {snoozed}{/if}{#if snoozed > 0 && dismissed > 0}&ensp;{/if}{#if dismissed > 0}{m.alerts_needs_acked()} · {dismissed}{/if}
 					</a>
 				{/if}
 			</li>

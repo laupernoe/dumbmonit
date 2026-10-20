@@ -7,7 +7,7 @@
  * Pure (no Svelte, no Paraglide): tested by `tests/wall-layout.test.mjs`.
  */
 
-export type WallWidgetId = 'weather' | 'news' | 'cve' | 'crypto' | 'stocks' | 'fx' | 'claude' | 'openai';
+export type WallWidgetId = 'weather' | 'news' | 'cve' | 'crypto' | 'stocks' | 'fx' | 'claude' | 'openai' | 'text';
 export type WallZone = 'top' | 'bottom' | 'right' | 'hidden';
 
 export interface WallLayout {
@@ -17,11 +17,11 @@ export interface WallLayout {
 	hidden: WallWidgetId[];
 }
 
-export const WALL_WIDGETS: readonly WallWidgetId[] = ['weather', 'news', 'cve', 'crypto', 'stocks', 'fx', 'claude', 'openai'];
+export const WALL_WIDGETS: readonly WallWidgetId[] = ['weather', 'news', 'cve', 'crypto', 'stocks', 'fx', 'claude', 'openai', 'text'];
 export const WALL_ZONES: readonly WallZone[] = ['top', 'bottom', 'right', 'hidden'];
 
 function defaultZone(id: WallWidgetId): WallZone {
-	return id === 'weather' || id === 'news' || id === 'cve' ? 'right' : 'bottom';
+	return id === 'weather' || id === 'news' || id === 'cve' || id === 'text' ? 'right' : 'bottom';
 }
 
 /**
@@ -57,6 +57,36 @@ export function moveToZone(layout: WallLayout, id: WallWidgetId, zone: WallZone)
 	for (const z of WALL_ZONES) next[z] = next[z].filter((other) => other !== id);
 	next[zone] = [...next[zone], id];
 	return next;
+}
+
+/**
+ * The widget dropped into a zone at a given place (0 = first; past the end =
+ * last). The index counts the zone's widgets without the dragged one, so
+ * dropping on the same spot changes nothing.
+ */
+export function placeAt(layout: WallLayout, id: WallWidgetId, zone: WallZone, index: number): WallLayout {
+	const next = resolveLayout(layout);
+	for (const z of WALL_ZONES) next[z] = next[z].filter((other) => other !== id);
+	const list = [...next[zone]];
+	list.splice(Math.max(0, Math.min(index, list.length)), 0, id);
+	next[zone] = list;
+	return next;
+}
+
+/**
+ * Where a pointer dropped among the widgets of a zone: the number of widgets
+ * whose middle (`centers`, along the zone's axis, dragged one excluded) lies
+ * before the pointer.
+ */
+export function dropIndex(centers: readonly number[], pointer: number): number {
+	let index = 0;
+	for (const center of centers) if (pointer > center) index += 1;
+	return index;
+}
+
+/** True when two layouts place every widget the same way. */
+export function sameLayout(a: WallLayout, b: WallLayout): boolean {
+	return WALL_ZONES.every((zone) => a[zone].join(',') === b[zone].join(','));
 }
 
 /** The widget one place earlier (`-1`) or later (`+1`) within its zone; unchanged at an end. */
