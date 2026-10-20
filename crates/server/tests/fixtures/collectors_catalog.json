@@ -4184,7 +4184,8 @@
         "Services: Dnsmasq DNS/DHCP: Settings\nLeases, if you use Dnsmasq",
         "VPN: WireGuard: Status\nWireGuard tunnels",
         "Status: OpenVPN\nOpenVPN tunnels",
-        "Status: IPsec\nIPsec tunnels"
+        "Status: IPsec\nIPsec tunnels",
+        "Diagnostics: Logs: Firewall: Live View\nOnly for the live firewall map option"
       ],
       "warning": "An API key is a password that never expires: restrict the group's source networks to the DumbMonit host and never grant All pages. OPNsense ships a self-signed certificate: tick \"Accept an unverifiable certificate\" if the connection is refused.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/opnsense/"
@@ -4571,7 +4572,8 @@
       "permissions": [
         "Audit on /\nRead-only: datastores, snapshots, tasks, node status",
         "RemoteAudit on /remote (optional)\nShows the sync jobs that pull from a remote",
-        "TapeAudit on /tape (optional)\nReads the tape tier"
+        "TapeAudit on /tape (optional)\nReads the tape tier",
+        "Sys.Modify on /system/certificates (optional)\nOnly for the certificate expiry option"
       ],
       "warning": "Both the user and the token need the permission: given to the token alone, it grants nothing and PBS reports nothing. The server uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pbs/"
@@ -4793,7 +4795,8 @@
         "In DumbMonit, enter the console address (for example dc.lan:8443), the Token ID and the Secret."
       ],
       "permissions": [
-        "Auditor on /\nRead-only: instances, tasks, console health"
+        "Auditor on /\nRead-only: instances, tasks, console health",
+        "Resource.Modify on /resource (optional)\nOnly for the update summary of the instances"
       ],
       "warning": "The console uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused.",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/pdm/"
@@ -5805,7 +5808,8 @@
       ],
       "permissions": [
         "PVEAuditor on /\nRead-only: nodes, storage, VMs, containers, backups, guest agent",
-        "Sys.Modify on /nodes (optional)\nOnly to list pending updates"
+        "Sys.Modify on /nodes (optional)\nOnly to list pending updates",
+        "VM.Monitor on / (optional, Proxmox VE 8)\nOnly for the QEMU guest agent options"
       ],
       "warning": "Proxmox VE uses a self-signed certificate by default: tick \"Accept an unverifiable certificate\" in the options if the connection is refused. On Proxmox VE 8, guest agent details also need VM.Monitor (see the guide).",
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/proxmox/"
