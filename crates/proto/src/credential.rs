@@ -317,6 +317,20 @@ impl CredentialInput {
     }
 }
 
+/// Comme pour [`Credential`], `Debug` n'affiche que le type, jamais un secret.
+impl std::fmt::Debug for CredentialInput {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let kind = match self {
+            Self::None => "none",
+            Self::SnmpCommunity { .. } => "snmp_community",
+            Self::SnmpV3 { .. } => "snmp_v3",
+            Self::ApiToken { .. } => "api_token",
+            Self::UsernamePassword { .. } => "username_password",
+        };
+        write!(f, "CredentialInput({kind}, <redacted>)")
+    }
+}
+
 impl TryFrom<CredentialInput> for Credential {
     type Error = String;
 
