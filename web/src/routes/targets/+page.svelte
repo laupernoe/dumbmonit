@@ -33,8 +33,6 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
-	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
-	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -45,6 +43,7 @@
 	import {
 		SORT_KEYS,
 		hasAllTags,
+		matchesSite,
 		parseListQuery,
 		runBulk,
 		serializeListQuery,
@@ -70,7 +69,6 @@
 		ArrowUpDown,
 		ChevronRight,
 		Ellipsis,
-		FileUp,
 		FolderInput,
 		FolderPlus,
 		ListChecks,
@@ -81,7 +79,6 @@
 		Search,
 		SlidersHorizontal,
 		Trash2,
-		Upload,
 		MapPin
 	} from 'lucide-svelte';
 	import { assignLocation, listLocations } from '#lib/api/locations.js';
@@ -110,6 +107,7 @@
 	let segment = $state<Segment>(initial.segment);
 	let kind = $state(initial.kind);
 	let tagFilter = $state<string[]>(initial.tags);
+	let site = $state(initial.site);
 	let sort = $state<SortKey>(initial.sort);
 	let sortDir = $state<SortDir>(initial.dir);
 
@@ -127,6 +125,7 @@
 			segment,
 			kind,
 			tags: tagFilter,
+			site,
 			sort,
 			dir: sortDir,
 			view: view === 'compact' ? null : view
@@ -152,6 +151,7 @@
 		segment = next.segment;
 		kind = next.kind;
 		tagFilter = next.tags;
+		site = next.site;
 		sort = next.sort;
 		sortDir = next.dir;
 		view = next.view ?? loadRackView();
@@ -194,6 +194,7 @@
 		const term = search.trim().toLowerCase();
 		return targets.filter((target) => {
 			if (kind && target.kind !== kind) return false;
+			if (!matchesSite(target.location_id, site)) return false;
 			if (!hasAllTags(target.tags, tagFilter, optionKeysOf(target.kind))) return false;
 			if (!term) return true;
 			const label = kindLabels.get(target.kind) ?? '';
@@ -248,7 +249,7 @@
 	);
 	const sorted = $derived(sort !== 'default');
 	/** What "Filter" hides that is not at its default: the count on the button. */
-	const activeFilters = $derived((segment !== 'all' ? 1 : 0) + (kind ? 1 : 0) + tagFilter.length + (sorted ? 1 : 0));
+	const activeFilters = $derived((segment !== 'all' ? 1 : 0) + (kind ? 1 : 0) + (site ? 1 : 0) + tagFilter.length + (sorted ? 1 : 0));
 	let filtersOpen = $state(false);
 	/** Reordering hit-tests rows top to bottom: offered in the compact layout only, on the unfiltered rack order. */
 	const canReorder = $derived(auth.isAdmin && !filtered && !sorted && view === 'compact');
@@ -298,24 +299,29 @@
 		search = '';
 		segment = 'all';
 		kind = '';
+		site = '';
 		tagFilter = [];
 		sort = 'default';
 		sortDir = 'asc';
 	}
 
-	// "More": the map, a new folder and the imports, out of the toolbar. The
-	// import dialogs are the ones /targets/new shows, opened from a menu item;
-	// focus goes back to the "More" button when they close.
+	// "More": the map and a new folder, out of the toolbar.
 	let moreOpen = $state(false);
 	let moreMode = $state<'items' | 'folder'>('items');
 	let moreButton = $state<HTMLButtonElement | null>(null);
-	let importCsv = $state<ImportWebsites | null>(null);
-	let importKuma = $state<ImportKuma | null>(null);
-	function openImport(dialog: { show: () => void } | null) {
-		moreOpen = false;
-		moreButton?.focus();
-		dialog?.show();
-	}
+
+	// Sites (locations of the world map): a badge on each monitor and a filter.
+	let siteLocations = $state<MapLocation[]>([]);
+	const siteNames = $derived(new Map(siteLocations.map((l) => [l.id, l.name])));
+	$effect(() => {
+		const controller = new AbortController();
+		listLocations(controller.signal)
+			.then((found) => (siteLocations = found.locations))
+			.catch(() => {});
+		return () => controller.abort();
+	});
+	/** The filter is offered once a site exists; a stale `?site=` stays visible so it can be cleared. */
+	const showSiteFilter = $derived(siteLocations.length > 0 || site !== '');
 
 	const sortOptions = $derived<{ id: SortKey; label: string }[]>(
 		SORT_KEYS.map((id) => ({
@@ -973,11 +979,11 @@
 					variant="ghost"
 					aria-pressed={selecting}
 					aria-label={m.devices_list_select()}
-					class={`max-sm:w-10 max-sm:!px-0 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
+					title={m.devices_list_select()}
+					class={`!w-10 !px-0 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
 					onclick={() => (selecting ? stopSelecting() : (selecting = true))}
 				>
 					<ListChecks class="size-4" aria-hidden="true" />
-					<span class="max-sm:sr-only">{m.devices_list_select()}</span>
 				</Button>
 			{/if}
 			<Menu label={m.devices_targets_more()} align="right" bind:open={moreOpen}>
@@ -1051,15 +1057,6 @@
 								<FolderPlus class="size-4 text-ink-3" aria-hidden="true" />
 								{m.devices_targets_create_folder()}
 							</button>
-							<div class="my-1 border-t border-line" role="separator"></div>
-							<button type="button" role="menuitem" class={itemClass} onclick={() => openImport(importCsv)}>
-								<FileUp class="size-4 text-ink-3" aria-hidden="true" />
-								{m.devices_import_open()}
-							</button>
-							<button type="button" role="menuitem" class={itemClass} onclick={() => openImport(importKuma)}>
-								<Upload class="size-4 text-ink-3" aria-hidden="true" />
-								{m.devices_kuma_open()}
-							</button>
 						{/if}
 					{/if}
 				{/snippet}
@@ -1096,6 +1093,18 @@
 						{/each}
 					</select>
 				</label>
+				{#if showSiteFilter}
+					<label class="flex min-w-0 flex-col gap-1.5 max-sm:w-full">
+						<span class="label-tape">{m.devices_targets_filter_site_label()}</span>
+						<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm max-sm:!w-full" bind:value={site} aria-label={m.devices_targets_filter_site()}>
+							<option value="">{m.devices_targets_all_sites()}</option>
+							{#each siteLocations as location (location.id)}
+								<option value={String(location.id)}>{location.name}</option>
+							{/each}
+							<option value="none">{m.devices_targets_no_site()}</option>
+						</select>
+					</label>
+				{/if}
 				<div class="flex min-w-0 flex-col gap-1.5">
 					<label class="label-tape" for="monitors-sort">{m.devices_list_sort_label()}</label>
 					<div class="flex items-center gap-1">
@@ -1149,10 +1158,6 @@
 	{/if}
 {/if}
 
-{#if auth.isAdmin}
-	<ImportWebsites bind:this={importCsv} trigger={false} ondone={() => void alertsStore.refresh()} />
-	<ImportKuma bind:this={importKuma} trigger={false} ondone={() => void alertsStore.refresh()} />
-{/if}
 {#if actionError}
 	<div class="mb-3"><ErrorNotice error={actionError} title={m.devices_targets_err_save()} /></div>
 {/if}
@@ -1336,6 +1341,7 @@
 					rows={section.rows}
 					{sparklines}
 					{kindLabels}
+					{siteNames}
 					reorder={canReorder ? reorderControls() : null}
 					layout={view}
 					{names}
@@ -1361,7 +1367,7 @@
 					</button>
 				{/if}
 				{#if disabledExpanded}
-					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {alertCounts} {selection} />
+					<RackList rows={disabledRows} {sparklines} {kindLabels} {siteNames} layout={view} {names} {alertCounts} {selection} />
 				{/if}
 			</section>
 		{/if}
