@@ -353,6 +353,7 @@ async fn tools_list_is_the_documented_catalogue() {
             "schedule_maintenance",
             "remove_silence",
             "acknowledge_alert",
+            "dismiss_alert",
             "probe_device",
             "set_device_enabled",
             "set_rule_enabled",

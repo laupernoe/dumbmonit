@@ -122,6 +122,8 @@ const SELF_SERVICE: &[&str] = &[
 pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
     ("POST", "/alerts/*/ack"),
     ("DELETE", "/alerts/*/ack"),
+    ("POST", "/alerts/*/dismiss"),
+    ("DELETE", "/alerts/*/dismiss"),
     ("POST", "/alerts/silences"),
     ("DELETE", "/alerts/silences/*"),
     ("POST", "/alerts/history/dismiss-resolved"),
@@ -481,6 +483,8 @@ mod tests {
         let no = |m: Method, p: &str| assert!(!is_operator_route(&m, p), "{m} {p}");
         yes(Method::POST, "/alerts/abc123/ack");
         yes(Method::DELETE, "/api/alerts/abc123/ack");
+        yes(Method::POST, "/alerts/abc123/dismiss");
+        yes(Method::DELETE, "/api/alerts/abc123/dismiss");
         yes(Method::POST, "/alerts/silences");
         yes(Method::DELETE, "/alerts/silences/4");
         yes(Method::POST, "/alerts/history/dismiss-resolved");
@@ -490,6 +494,8 @@ mod tests {
 
         no(Method::PUT, "/alerts/abc123/ack");
         no(Method::POST, "/alerts//ack");
+        no(Method::PUT, "/alerts/abc123/dismiss");
+        no(Method::POST, "/alerts/abc/dismiss/extra");
         no(Method::POST, "/alerts/abc/ack/extra");
         no(Method::POST, "/alerts/rules");
         no(Method::PUT, "/alerts/rules/2");
