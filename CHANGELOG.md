@@ -7,6 +7,22 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Import Uptime Kuma 1.x and 2.x from `kuma.db`.** Uptime Kuma 2 dropped its
+  JSON backup, so the import now also reads the SQLite database
+  (`docker cp uptime-kuma:/app/data/kuma.db .`): upload it, preview the monitors
+  sorted by type and folder, tick the ones to import (those already monitored are
+  flagged) and import them in one click, with the same mapping as the JSON
+  backup. The file is read once in read-only mode from a temporary copy (at most
+  512 MB) that is deleted afterwards. Uptime Kuma 2 on MariaDB is not supported.
+  New endpoint `POST /api/targets/import/kuma-db`, and `rows=` on both Kuma
+  import endpoints. See
+  [Coming from Uptime Kuma](docs/devices/services.md#coming-from-uptime-kuma).
+
+### Changed
+
+- **Add a monitor:** the import buttons (Uptime Kuma, websites CSV) moved from the
+  top of the page to a new **Import** category at the bottom, beside
+  **Everything else**.
 - **Relay mode is switched from the UI.** An agent's page has a *Relay for a
   remote site* switch and a site field: the server sends the setting to the
   agent in its next acknowledgement and the agent turns relay mode on or off on
