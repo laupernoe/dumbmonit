@@ -244,7 +244,7 @@ async fn run(
             location_id: None,
             credential: None,
         };
-        let input = match payload.validate(&state, None) {
+        let input = match payload.validate(state, None) {
             Ok(input) => input,
             Err(error) => {
                 report.status = "error";
