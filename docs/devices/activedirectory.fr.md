@@ -244,6 +244,32 @@ contrôleurs de domaine refuseraient alors le bind.
   les binds NTLM et Kerberos sur TLS ; le bind simple que DumbMonit
   utilise n'est pas affecté.
 
+## DNS
+
+Les contrôleurs de domaine sont joints par leur nom (le certificat le porte),
+et les autres contrôleurs du domaine sont aussi trouvés par leur nom. Si le
+serveur DNS de la machine DumbMonit ne connaît pas le domaine, deux solutions :
+
+- L'option **Serveurs DNS** : saisissez les adresses IP des serveurs DNS qui
+  connaissent le domaine, par exemple `10.0.0.10, 10.0.0.11`. Toutes les
+  résolutions de ce moniteur (le contrôleur saisi, les autres contrôleurs,
+  *Vérifier chaque contrôleur de domaine*) passent alors par eux seuls, en UDP
+  puis en TCP. La connexion garde le nom pour la vérification du certificat.
+  Vide : le résolveur du système. Un agent relais fait de même de son côté.
+- Ou donner ces serveurs à tout le conteneur, avec `dns:` dans
+  `docker-compose.yml` :
+
+```yaml
+services:
+  dumbmonit:
+    dns:
+      - 10.0.0.10
+      - 10.0.0.11
+```
+
+Si un nom est inconnu de ces serveurs, l'erreur le dit :
+`dc01.corp.local did not resolve through 10.0.0.10`.
+
 ## Identifiants
 
 | Champ | Valeur |
@@ -263,6 +289,7 @@ un bind non authentifié sans rien vérifier.
 | Certificat CA (`ca_cert`) | | PEM de l'autorité qui a émis les certificats des contrôleurs de domaine |
 | Accepter un certificat non vérifiable (`insecure_tls`) | désactivé | |
 | Autoriser le LDAP simple (`allow_plaintext`) | désactivé | requis pour `plain` |
+| Serveurs DNS (`dns_servers`) | vide | IP des serveurs DNS pour toutes les résolutions de ce moniteur ; vide = DNS du système |
 | Vérifier chaque contrôleur de domaine (`check_all_dcs`) | activé | connexion TCP au port LDAP de chaque contrôleur de domaine |
 | Utilisateur inactif après (`stale_days_users`) | 90 | jours |
 | Ordinateur inactif après (`stale_days_computers`) | 90 | jours |
