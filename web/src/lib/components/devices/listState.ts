@@ -24,6 +24,8 @@ export interface ListQuery {
 	kind: string;
 	/** `key=value` free tags, all of which a device must carry. */
 	tags: string[];
+	/** `''`: all sites, `none`: devices without a location, else a location id. */
+	site: string;
 	sort: SortKey;
 	dir: SortDir;
 	/** `null`: not in the URL, the viewer's remembered layout applies. */
@@ -42,6 +44,7 @@ export function parseListQuery(params: {
 		segment: (SEGMENTS as readonly (string | null)[]).includes(segment) ? (segment as Segment) : 'all',
 		kind: params.get('kind') ?? '',
 		tags: params.getAll('tag').filter((t) => t.includes('=')),
+		site: params.get('site') ?? '',
 		sort: (SORT_KEYS as readonly (string | null)[]).includes(sort) ? (sort as SortKey) : 'default',
 		dir: params.get('dir') === 'desc' ? 'desc' : 'asc',
 		// `?view=rows` (retired layout) opens compact, the default.
@@ -56,6 +59,7 @@ export function serializeListQuery(query: ListQuery): string {
 	if (query.segment !== 'all') params.set('state', query.segment);
 	if (query.kind) params.set('kind', query.kind);
 	for (const tag of query.tags) params.append('tag', tag);
+	if (query.site) params.set('site', query.site);
 	if (query.sort !== 'default') {
 		params.set('sort', query.sort);
 		if (query.dir === 'desc') params.set('dir', 'desc');
@@ -98,6 +102,13 @@ export function tagCounts(
 		}
 	}
 	return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'en'));
+}
+
+/** Whether a device passes the site filter (`''` all, `none` unplaced, else a location id). */
+export function matchesSite(locationId: number | null | undefined, site: string): boolean {
+	if (!site) return true;
+	if (site === 'none') return locationId == null;
+	return locationId != null && String(locationId) === site;
 }
 
 const byName = (a: Target, b: Target) => a.name.localeCompare(b.name, 'en', { sensitivity: 'base' });
