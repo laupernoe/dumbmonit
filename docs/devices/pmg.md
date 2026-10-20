@@ -108,46 +108,43 @@ the queue, service, database or node concerned.
 
 ## What to prepare in Proxmox Mail Gateway
 
-The steps below are the ones the notice next to the form shows. The principle:
-a user reserved for monitoring, with a read-only role — never the account you
-log in with.
-
-1. In the web interface: Configuration → User Management → Users → Add. Name
-   the account as follows, give it a long password used nowhere else, and tick
-   Enabled.
+1. Open Configuration → User Management → Users → Add, enter the user name below, a long password used nowhere else, and tick Enabled.
 
     ```
     dumbmonit@pmg
     ```
 
-2. Set its Role to `Audit`. That is the exact read-only minimum for everything
-   DumbMonit reads: node status, services, postfix queues, mail statistics,
-   quarantine counts, ClamAV and SpamAssassin database age, cluster status,
-   certificates, subscription and pending updates. `Audit` can change nothing,
-   release nothing from quarantine and read no message.
+2. Set its Role to Audit, then click Add.
 
-3. Prefer a shell? The same account in one command, then set the password.
+3. In DumbMonit, enter the gateway address (for example mail.lan:8006), then this user name, realm included, and its password.
 
-    ```
-    pmgsh create /access/users --userid dumbmonit@pmg --role audit --enable 1 --comment "DumbMonit monitoring"
-    ```
+### Required permissions
 
-4. In DumbMonit, enter the gateway address, for example "mail.lan" or
-   "mail.lan:8006", then this account's user name (realm included) and
-   password.
-
-5. Proxmox Mail Gateway does not issue API tokens, unlike Proxmox VE and
-   Proxmox Backup Server: the username and password are the way in. DumbMonit
-   opens one two-hour session and renews it, rather than logging in on every
-   measurement.
+- **Audit role**: Read-only: status, queues, statistics, quarantine counts
 
 !!! warning
+    Proxmox Mail Gateway has no API tokens, so DumbMonit signs in with this password. It uses a self-signed certificate by default: tick "Accept an unverifiable certificate" in the options if the connection is refused.
 
-    Do not reuse the account you log in with: the Audit role above can only
-    read, and cannot release a quarantined message or change a rule. Proxmox
-    Mail Gateway also uses a self-signed certificate by default: if the
-    connection is refused for that reason, tick "Accept an unverifiable
-    certificate" in the options.
+Vendor documentation: [PMG user management](https://pmg.proxmox.com/pmg-docs/pmg-admin-guide.html#pmgconfig_userman)
+
+### Why these permissions
+
+Do not reuse the account you log in with: the `Audit` role can only read, and
+cannot release a quarantined message or change a rule.
+
+* `Audit` is the exact read-only minimum for everything DumbMonit reads: node
+  status, services, postfix queues, mail statistics, quarantine counts, ClamAV
+  and SpamAssassin database age, cluster status, certificates, subscription and
+  pending updates. It releases nothing from quarantine and reads no message.
+* Proxmox Mail Gateway does not issue API tokens, unlike Proxmox VE and Proxmox
+  Backup Server: the username and password are the way in. DumbMonit opens one
+  two-hour session and renews it, rather than logging in on every measurement.
+
+Prefer a shell? The same account in one command, then set the password:
+
+```
+pmgsh create /access/users --userid dumbmonit@pmg --role audit --enable 1 --comment "DumbMonit monitoring"
+```
 
 Address: `10.0.0.40`, `mail.lan`, `mail.lan:8006`, `[fd00::4]` or a full URL.
 The `https` scheme and port 8006 are added if missing.

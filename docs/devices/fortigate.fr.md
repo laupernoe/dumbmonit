@@ -89,7 +89,41 @@ les 60 jours ou expirées, et une release de correctif disponible.
 
 ## Créer un utilisateur d'API REST en lecture seule pour DumbMonit
 
-1. Depuis la CLI du FortiGate, créez un profil d'accès qui ne peut lire que l'état système, réseau et VPN, et rien d'autre.
+1. System → Admin Profiles → Create New : nommez le profil comme suit et réglez les droits d'accès listés ci-dessous, tout le reste sur None.
+
+    ```
+    dumbmonit-ro
+    ```
+
+2. System → Administrators → Create New → REST API Admin : nommez-le comme suit et choisissez ce profil.
+
+    ```
+    dumbmonit
+    ```
+
+3. Sous Trusted Hosts, saisissez l'adresse du serveur DumbMonit avec un masque /32 : FortiGate refuse 0.0.0.0/0.
+
+4. Cliquez sur OK : FortiGate affiche le jeton d'API une seule fois. Copiez-le.
+
+5. Dans DumbMonit, saisissez l'adresse du FortiGate (fw.lan) et collez le jeton comme jeton d'API.
+
+### Droits requis
+
+- **System: Read** — État du système, ressources, HA, licences, firmware
+- **Network: Read** — Configuration des interfaces
+- **VPN: Read** — Tunnels IPsec
+- **Tous les autres droits : None** — Rien d'autre n'est nécessaire
+
+!!! warning
+    FortiGate livre un certificat auto-signé : cochez « Accept an unverifiable certificate » sauf si vous avez installé le vôtre.
+
+Documentation de l'éditeur : https://docs.fortinet.com/document/fortigate/7.4.0/administration-guide/399023/rest-api-administrator
+
+### Notes
+
+- Depuis FortiOS 7.4, seul un administrateur ayant le profil super peut créer
+  un REST API admin, dans l'interface comme en CLI.
+- Vous préférez la CLI ? Le même utilisateur, avec le même jeton :
 
     ```
     config system accprofile
@@ -104,11 +138,6 @@ les 60 jours ou expirées, et une release de correctif disponible.
     set wifi none
     next
     end
-    ```
-
-2. Créez l'utilisateur d'API REST dumbmonit avec ce profil, ne faisant confiance qu'à l'adresse du serveur DumbMonit (remplacez 192.0.2.10), puis générez son jeton : il est affiché une fois.
-
-    ```
     config system api-user
     edit "dumbmonit"
     set accprofile "dumbmonit-ro"
@@ -123,10 +152,10 @@ les 60 jours ou expirées, et une release de correctif disponible.
     execute api-user generate-key dumbmonit
     ```
 
-3. Dans DumbMonit, saisissez l'adresse du FortiGate, par exemple « fw.lan » (ajoutez le port si l'interface d'administration n'écoute pas sur 443), et collez le jeton comme Jeton d'API. FortiGate livre un certificat autosigné : cochez Accepter un certificat non vérifiable sauf si vous avez installé le vôtre.
-
-!!! warning
-    Une interface ne compte comme en panne que si elle est activée, a une adresse et n'a pas de lien : les ports libres sont laissés tranquilles. Les mises à jour de firmware sont celles que FortiGuard propose au FortiGate lui-même : sans accès à FortiGuard, aucune n'est rapportée.
+- Une interface n'est comptée en panne que si elle est activée, a une adresse
+  et n'a pas de lien : les ports libres sont ignorés.
+- Les mises à jour du firmware sont celles que FortiGuard propose au FortiGate
+  lui-même : sans accès à FortiGuard, aucune n'est signalée.
 
 ## Identifiants
 

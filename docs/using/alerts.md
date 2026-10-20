@@ -22,15 +22,17 @@ always agree on what needs you.
 ## The Now list
 
 One line per problem: state icon, what is wrong, which monitor, the cause in
-one line, how long ago, and **Ack** and **Open** on the line. Lines are grouped
+one line, how long ago, and **Dismiss** and **Open** on the line; Acknowledge
+Snooze and **Never for this monitor** are in the line's **…** menu. When
+some alerts are dismissed, an **Active | Dismissed** switch appears above the
+list. Lines are grouped
 by severity (Warning, Advisory, Info, Building up, Suppressed by parent) or,
 with the **Severity | Monitor** switch, by monitor. Groups fold; *Suppressed*,
-*Snoozed* and *Dismissed* (acknowledged) start folded. One rule firing on
+*Snoozed* and *Acknowledged* start folded. One rule firing on
 several series of the same monitor is a single line ("… and 7 more").
 
 Click a line to unfold its details: every affected series, since when, who
-acknowledged it, why it is suppressed, with **Open monitor**, **Snooze** and
-**Never for this monitor**.
+acknowledged it, why it is suppressed, with **Open monitor**.
 
 Selecting several lines is a mode. The **Select** button (operators and
 admins) shows a checkbox on each line and a floating bar at the bottom with
@@ -40,9 +42,21 @@ and **Done**. Escape leaves the mode.
 ## Getting rid of an alert
 
 A firing alert is not binary — "fix it" or "live with the noise forever".
-Four actions, for four different situations, open to admins and operators
+Five actions, for five different situations, open to admins and operators
 (a viewer sees the state but cannot change it):
 
+- **Dismiss** ("got it") is the one-click gesture, first on every alert — in
+  the Now list, in an alert's details and in a monitor's panel. The alert
+  disappears at once from the list, the overview, the wall and every counter,
+  and nothing more is sent for it: no reminder, no escalation, and no
+  "resolved" message either, however long the problem lasts. There is no
+  duration to pick and no confirmation: a toast offers **Undo** for a moment.
+  A dismissal belongs to the current occurrence only: once the condition
+  clears, it ends with it, and if the problem comes back later that is a new
+  alert, notified as usual — so a real outage next week is never missed. Its
+  resolution stays in **History**, marked *dismissed by* whoever clicked. The
+  **Dismissed** view of the Now tab lists the dismissed alerts that are still
+  active, with who dismissed them and when, and **Restore** to undo a mistake.
 - **Acknowledge** ("I'm on it") is for one alert you are actively working on:
   "I know, stop reminding me for 4 h". The menu offers 1 h, 4 h, 24 h or
   *until resolved*, plus an optional note for whoever reads the card after

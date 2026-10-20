@@ -145,20 +145,22 @@ interface.
 
 ### Setup
 
-1. In the address, paste the full URL of the page to monitor. Without
-   "http://" or "https://", HTTPS is assumed.
-2. Prefer a light page that needs no login, for example the application's
-   health page ("/health", "/status"), rather than the home page.
-3. If the page requires authentication, fill in the credential: a username and
-   password give basic authentication, a token is sent as "Bearer".
-4. By default, any status code between 200 and 299 is fine. To go further,
-   require a keyword in the page or a specific value in a JSON response.
-5. Over HTTPS, the certificate is read automatically: you will be warned before
-   it expires.
+1. In the address, paste the full URL of the page to monitor.
+
+2. Prefer a light page such as "/health" or "/status" over the home page.
+
+3. If the page needs a login, choose a credential: username and password (basic) or a token (Bearer).
+
+4. Optionally require a keyword in the page or a value in a JSON response, in the options.
+
+**Required permissions**
+
+- **Read access to the monitored URL**: Only if the page requires a login
 
 !!! warning
-    Never write a password or a token in the options: they are copied in clear
-    text on every measurement. Use the credential field, which is encrypted.
+    Never write a password or a token in the options: use the credential field, which is encrypted.
+
+Without "http://" or "https://", HTTPS is assumed. By default, any status code between 200 and 299 is fine. Over HTTPS, the certificate is read automatically: you will be warned before it expires. A password or token written in the options is copied in clear text on every measurement.
 
 Credentials: none, username / password (basic authentication) or API token
 (`Authorization: Bearer`).
@@ -192,17 +194,14 @@ file share, game server, network printer.
 
 ### Setup
 
-1. In the address, write the host followed by the port, separated by a colon:
-   "nas.home.lan:22" or "192.168.1.5:445".
-2. For an IPv6 address, put it in brackets: "[fd00::1]:445".
-3. You can also leave the address without a port and enter it in the "Port"
-   option: one of the two is required.
-4. Only the connection opening is tested: no data is sent to the service, so
-   it has no effect on it.
+1. In the address, write the host and the port separated by a colon: "nas.home.lan:22", or "[fd00::1]:445" for IPv6.
+
+2. Or leave the port out of the address and fill in the "Port" option.
 
 !!! warning
-    An open port does not prove the application behind it works. For a web
-    service, prefer the "Website or web API" type, which reads the response.
+    An open port does not prove the application works: for a web service, use the "Website or web API" type.
+
+Only the opening of the connection is tested: no data is sent to the service, so it has no effect on it.
 
 ### Options
 
@@ -220,18 +219,18 @@ Pi-hole or AdGuard, an MX record.
 
 ### Setup
 
-1. In the address, write the name to resolve, without "http://":
-   "www.example.com".
-2. By default, the check asks the system resolver for an IPv4 address (A
-   record). Pick another record type in the options if needed.
-3. To monitor your own DNS server, enter its IP address in "DNS server to
-   query": the check will fail if it stops answering.
-4. To detect hijacking or a misconfiguration, list in "Expected values" the
-   addresses the answer must contain.
+1. In the address, write the name to resolve, without "http://": "www.example.com".
+
+2. Pick another record type in the options if you do not want an IPv4 address (A record).
+
+3. To monitor your own DNS server, enter its IP address in "DNS server to query".
+
+4. To detect hijacking, list the addresses the answer must contain in "Expected values".
 
 !!! warning
-    The DNS server is given by its IP address, not by a name: it would take a
-    resolver to resolve the resolver.
+    Give the DNS server by its IP address, not by a name.
+
+By default, the check asks the system resolver. If the server you query stops answering, the check fails.
 
 ### Options
 
@@ -287,20 +286,14 @@ machine without agent or SNMP, remote host.
 
 ### Setup
 
-1. In the address, write the host name or IP address: "192.168.1.1" or
-   "router.home.lan".
-2. On each poll, the check sends four echoes and measures the response time,
-   along with the share of lost packets.
-3. By default, only a total loss counts as down; partial loss stays visible in
-   the charts. Lower "Tolerated loss" to be warned earlier.
-4. If DumbMonit runs in Docker, keep the `sysctls:` lines of the shipped
-   docker-compose.yml under the dumbmonit service: they allow the container's
-   unprivileged user to open ICMP echo sockets. No capability is needed.
+1. In the address, write the host name or IP address: "192.168.1.1" or "router.home.lan".
+
+2. Lower "Tolerated loss" in the options to be warned before the loss is total.
 
 !!! warning
-    Without that sysctl, the check cannot open an ICMP socket: it reports this
-    as a configuration error, not as a host failure. Some devices also ignore
-    pings on purpose: check that before drawing conclusions.
+    In Docker, keep the sysctls lines of the shipped docker-compose.yml, or the check cannot send pings.
+
+On each poll, the check sends four echoes and measures the response time and the share of lost packets. By default, only a total loss counts as down; partial loss stays visible in the charts. Some devices ignore pings on purpose.
 
 ```yaml
 services:
@@ -332,21 +325,16 @@ proxy, LDAPS directory, MQTT broker, administration interface.
 
 ### Setup
 
-1. In the address, write the host and, if it is not 443, the port of the
-   encrypted service: "mail.example.com:993", "ldap.home.lan:636".
-2. The check opens an encrypted connection, reads the presented certificate and
-   closes right away: no data is exchanged with the application.
-3. It records the number of days before expiry, the issuer and the TLS version.
-   The bundled alert rules warn at fourteen days, then at expiry.
-4. If the service is reached by its IP address but the certificate carries a
-   name, enter that name in "Server name (SNI)".
-5. For a certificate issued by your own authority, tick "Accept an unverifiable
-   certificate": the expiry date is still monitored.
+1. In the address, write the host and the port of the encrypted service: "mail.example.com:993" (443 if omitted).
+
+2. If you reach the service by its IP address, enter the certificate's name in "Server name (SNI)".
+
+3. For a certificate from your own authority, tick "Accept an unverifiable certificate".
 
 !!! warning
-    For a website, the "Website or web API" type already reads the certificate:
-    this type is meant for services that do not speak HTTP, or whose
-    application you do not want to hit.
+    For a website, the "Website or web API" type already reads the certificate: use this type for services that do not speak HTTP.
+
+The check opens an encrypted connection, reads the presented certificate and closes right away: no data is exchanged with the application. It records the number of days before expiry, the issuer and the TLS version. The bundled alert rules warn at fourteen days, then at expiry.
 
 The handshake completes even when the certificate is refused: that is what
 allows reading the expiry date of a certificate that has already expired. The
@@ -370,23 +358,24 @@ server.
 
 ### Setup
 
-1. In the address, write the mail server, and the port if it is not the usual
-   one: "smtp.example.com" or "smtp.example.com:2525".
-2. Pick the encryption your relay uses: STARTTLS for the submission port 587,
-   TLS for port 465, None for a relay on your own network listening on port 25.
-3. To check that the relay still accepts your account, fill in the credential:
-   the check then runs AUTH and reports a refused password as such, not as an
-   outage.
-4. Nothing is ever sent: the check stops after the greeting, the extensions and
-   the optional login, then hangs up. No message enters the queue.
-5. To be warned when an extension disappears, name it in "Expected extension":
-   a relay that stops advertising STARTTLS is a relay that would send your mail
-   in clear text.
+1. In DumbMonit, enter the mail server, for example smtp.example.com:2525 (the usual port for the encryption by default).
+
+2. Pick the encryption: STARTTLS for port 587, TLS for port 465, None for a relay on your own network on port 25.
+
+3. Optional: fill in an account, to check that the relay still accepts it (a refused password is not reported as an outage).
+
+4. Optional: name an Expected extension, such as STARTTLS, to be warned when the relay stops advertising it.
+
+#### Required permissions
+
+- **A mail account that may log in (AUTH)**: Only if you fill in a credential
 
 !!! warning
-    An accepted session does not prove mail leaves. A relay that accepts
-    everything and queues it forever answers perfectly here: watch the queues
-    themselves for that.
+    An accepted session does not prove mail leaves: watch the relay's queues for that.
+
+#### Why these permissions
+
+Nothing is ever sent: the check stops after the greeting, the extensions and the optional login, then hangs up. No message enters the queue. A relay that stops advertising STARTTLS is a relay that would send your mail in clear text. A relay that accepts everything and queues it forever answers perfectly here.
 
 Credentials: none, or a username and password sent with `AUTH PLAIN` (or
 `AUTH LOGIN` when the server offers only that). They are sent **after** the
@@ -436,23 +425,32 @@ TimescaleDB instance.
 
 ### Setup
 
-1. On the server, create an account for monitoring and give it nothing more
-   than the right to connect: CREATE ROLE dumbmonit LOGIN PASSWORD
-   'a-long-password';
-2. Make sure that account may reach the server from the DumbMonit machine,
-   which usually means one more line in pg_hba.conf followed by a configuration
-   reload.
-3. In the address, write the server, and the port if it is not 5432:
-   "db.home.lan" or "db.home.lan:5433".
-4. The default query is SELECT 1, which reads no table: nothing else has to be
-   granted. Connection time and query time are recorded separately.
-5. To watch something of your own, replace the query with one that returns a
-   single number, and it becomes a chart: a queue length, a row count, a
-   replication lag.
+1. In psql, create a role that may only log in.
+
+    ```
+    CREATE ROLE dumbmonit LOGIN PASSWORD 'a-long-password';
+    ```
+
+2. Allow it to connect from the DumbMonit host with this line in pg_hba.conf (adjust the address), then reload PostgreSQL.
+
+    ```
+    host all dumbmonit 10.0.0.5/32 scram-sha-256
+    ```
+
+3. In DumbMonit, enter the server, for example db.home.lan:5433 (port 5432 by default), then the role's user and password.
+
+4. Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.
+
+#### Required permissions
+
+- **LOGIN (role attribute)**: Connect only, no other privilege
 
 !!! warning
-    The check opens a real connection on every poll. On an instance already
-    close to its connection limit, give it a longer interval.
+    The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.
+
+#### Why these permissions
+
+The default query is SELECT 1, which reads no table: nothing else has to be granted. Connection time and query time are recorded separately. A query of your own that reads a table needs SELECT on that table.
 
 Credentials: a username and password, required. A database is never monitored
 anonymously, so the form offers nothing else.
@@ -484,22 +482,26 @@ in Docker.
 
 ### Setup
 
-1. On the server, create an account for monitoring with no privilege at all:
-   CREATE USER 'dumbmonit'@'%' IDENTIFIED BY 'a-long-password';
-2. Check that the account may connect from the DumbMonit machine: a host
-   pattern of localhost would only accept connections made on the server
-   itself.
-3. In the address, write the server, and the port if it is not 3306:
-   "db.home.lan" or "db.home.lan:3307".
-4. The default query is SELECT 1, which reads no table: nothing else has to be
-   granted. Connection time and query time are recorded separately.
-5. To watch something of your own, replace the query with one that returns a
-   single number, and it becomes a chart: a queue length, a row count, a
-   replication lag.
+1. In the mysql client, create an account with no privilege (adjust the host part to the DumbMonit machine).
+
+    ```
+    CREATE USER 'dumbmonit'@'%' IDENTIFIED BY 'a-long-password';
+    ```
+
+2. In DumbMonit, enter the server, for example db.home.lan:3307 (port 3306 by default), then the account's user and password.
+
+3. Optional: replace the default query SELECT 1 with one that returns a single number, to chart it.
+
+#### Required permissions
+
+- **USAGE (no privilege)**: Connect and run SELECT 1, nothing more
 
 !!! warning
-    The check opens a real connection on every poll. On an instance already
-    close to its connection limit, give it a longer interval.
+    The check opens a real connection on every poll: on an instance close to its connection limit, give it a longer interval.
+
+#### Why these permissions
+
+The default query is SELECT 1, which reads no table: nothing else has to be granted. Connection time and query time are recorded separately. A host pattern of localhost would only accept connections made on the server itself. A query of your own that reads a table needs SELECT on that table.
 
 ### Options
 
@@ -531,22 +533,26 @@ Zigbee2MQTT, ESPHome sensors.
 
 ### Setup
 
-1. In the address, write the broker, and the port if it is not the usual one:
-   "broker.home.lan" or "broker.home.lan:1884".
-2. Tick "Encrypted connection" for a broker listening on 8883, and fill in the
-   credential if it requires an account.
-3. Connecting is already worth monitoring: a broker that refuses your account,
-   or that has stopped answering, is the reason the whole house went quiet.
-4. To go further, name a topic: the check then subscribes to it, and a broker
-   that refuses the subscription tells you the account lost its access rights.
-5. Tick "Expect a retained message" only for a topic that carries one, typically
-   an availability topic. A topic published to now and then looks silent to a
-   client that has just connected.
+1. In DumbMonit, enter the broker, for example broker.home.lan:1884 (port 1883 by default).
+
+2. Tick Encrypted connection for a broker listening on 8883.
+
+3. If the broker requires an account, fill in its user and password.
+
+4. Optional: name a topic, to check that the account may still subscribe to it.
+
+5. Optional: tick Expect a retained message only for a topic that carries one, typically an availability topic.
+
+#### Required permissions
+
+- **Subscribe (read) on the topic you name**: Only if you name a topic
 
 !!! warning
-    The check never publishes anything. It also cannot tell how old a retained
-    message is: MQTT does not date them, so a value frozen three weeks ago still
-    counts as present.
+    The check never publishes, and it cannot tell how old a retained message is: MQTT does not date them.
+
+#### Why these permissions
+
+Connecting is already worth monitoring: a broker that refuses your account, or that has stopped answering, is the reason the whole house went quiet. When you name a topic, a broker that refuses the subscription tells you the account lost its access rights. A topic published to now and then looks silent to a client that has just connected, so expect a retained message only for a topic that carries one. A value frozen three weeks ago still counts as present.
 
 ### What it cannot detect
 
@@ -587,23 +593,18 @@ proxy.
 
 ### Setup
 
-1. In the address, paste the full endpoint:
-   "wss://home.example.com/api/websocket". Without a scheme, wss is assumed.
-2. The check runs the whole opening handshake and verifies the answer the server
-   computes from the key it was sent: a reverse proxy that has lost the Upgrade
-   header is caught here, where an HTTP check would still see a healthy 200.
-3. Nothing else is needed for most endpoints. A status other than 101 is
-   reported with its code, so a 401 from an expired token is not mistaken for an
-   outage.
-4. To go further, fill in "Expected content" with a fragment of the first frame
-   the server sends by itself, for example the greeting of the Home Assistant
-   API.
-5. If the endpoint says nothing until it is spoken to, put a message in "Frame
-   to send" and what its answer must contain in "Expected content".
+1. In DumbMonit, paste the full endpoint, for example wss://home.example.com/api/websocket (wss is assumed without a scheme).
+
+2. Optional: fill in Expected content with a fragment of the first frame the server sends by itself.
+
+3. Optional: if the endpoint says nothing until spoken to, put a message in Frame to send, and what the answer must contain in Expected content.
 
 !!! warning
-    The check opens and hangs up within a second. A connection that a firewall
-    or a proxy timeout cuts after thirty seconds looks perfectly healthy here.
+    The check hangs up within a second: a connection that a firewall or proxy cuts after thirty seconds looks healthy here.
+
+#### Good to know
+
+The check runs the whole opening handshake and verifies the answer the server computes from the key it was sent: a reverse proxy that has lost the Upgrade header is caught here, where an HTTP check would still see a healthy 200. A status other than 101 is reported with its code, so a 401 from an expired token is not mistaken for an outage. For the first frame, think of the greeting of the Home Assistant API.
 
 Credentials: none, a username and password (sent as HTTP basic authentication in
 the opening request) or a token (sent as `Authorization: Bearer`).
@@ -641,23 +642,14 @@ public pool server used as a reference.
 
 ### Setup
 
-1. In the address, write the server's name or IP address: "pool.ntp.org" or
-   "192.168.1.1". UDP port 123 is used unless the "Port" option says
-   otherwise.
-2. The check sends a single SNTP request and reads the reply: no state is
-   kept between polls, and nothing is written to the server.
-3. It records the offset between the server's clock and the DumbMonit host,
-   the round-trip delay, the stratum and the leap indicator.
-4. A server that answers stratum 16, or whose leap indicator reads
-   "unsynchronized", has never managed to synchronize: the check reports it
-   down whatever the offset.
-5. Lower "Tolerated offset" to be warned earlier than 100 ms; raise it for a
-   server several hops from a reference clock.
+1. In the address, write the server's name or IP address: "pool.ntp.org" or "192.168.1.1".
+
+2. Lower "Tolerated offset" in the options to be warned earlier than 100 ms.
 
 !!! warning
-    The offset is only as good as the DumbMonit host's own clock: if that
-    host is not itself kept in sync (NTP, a hypervisor's time sync), the
-    measured offset reflects its drift as much as the server's.
+    Keep the DumbMonit host itself in sync: its own drift is added to the measured offset.
+
+UDP port 123 is used unless the "Port" option says otherwise. The check sends a single SNTP request and records the offset, the round-trip delay, the stratum and the leap indicator. A server at stratum 16, or whose leap indicator reads "unsynchronized", is reported down whatever the offset.
 
 Credentials: none.
 

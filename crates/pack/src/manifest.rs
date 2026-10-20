@@ -80,6 +80,9 @@ pub struct Setup {
     pub title: String,
     #[serde(default)]
     pub steps: Vec<String>,
+    /// Droits à donner au compte de supervision (voir `SetupDescription`).
+    #[serde(default)]
+    pub permissions: Vec<String>,
     #[serde(default)]
     pub warning: String,
     #[serde(default)]

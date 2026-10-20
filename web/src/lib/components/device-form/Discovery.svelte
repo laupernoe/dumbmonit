@@ -6,7 +6,7 @@
 	 * are found), can cancel it, and keeps the latest jobs one click away.
 	 * Found services with a matching collector open the add form pre-filled.
 	 */
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { LayoutList, Network, Radar, Square } from 'lucide-svelte';
 	import { ApiError, localSubnets, type LocalSubnet, type SubnetSource } from '#lib/api/index.js';
 	import { cancelDiscoveryJob, getDiscoveryJob, listDiscoveryJobs, startDiscoveryJob } from '#lib/api/discovery.js';
@@ -22,11 +22,18 @@
 
 	const POLL_MS = 2000;
 
+	interface Props {
+		/** Relay agent to scan from, picked beforehand ("Scan this site's network"). */
+		agent?: number | null;
+	}
+
+	let { agent = null }: Props = $props();
+
 	let cidr = $state('');
 	let subnets = $state<LocalSubnet[]>([]);
 	let prefilled = $state<LocalSubnet | null>(null);
 	let relays = $state<RelayAgent[]>([]);
-	let agentId = $state('');
+	let agentId = $state(untrack(() => (agent ? String(agent) : '')));
 	let community = $state('');
 	let depth = $state<DiscoveryDepth>('standard');
 
@@ -57,7 +64,8 @@
 		localSubnets(controller.signal)
 			.then((list) => {
 				subnets = usableSubnets(list);
-				const fill = defaultSubnet(cidr, subnets);
+				// The server's own networks mean nothing at a relay's site.
+				const fill = agentId ? null : defaultSubnet(cidr, subnets);
 				if (fill) {
 					cidr = fill;
 					prefilled = subnets[0] ?? null;

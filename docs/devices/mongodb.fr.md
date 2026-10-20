@@ -61,23 +61,33 @@ opérations par seconde, le cache utilisé, la mémoire résidente, les
 opérations en attente et l'uptime, puis l'état et le retard de chaque membre
 du replica set et les opérations par seconde par type.
 
-## Créer un compte MongoDB avec le rôle clusterMonitor
+## Créer un compte MongoDB en lecture seule
 
-1. Dans mongosh, connecté avec un utilisateur autorisé à créer des utilisateurs, créez un compte avec seulement le rôle intégré clusterMonitor. Il lit l'état du serveur et de la réplication, et aucun document d'aucune base.
+1. Dans mongosh, créez le compte avec le rôle clusterMonitor.
 
     ```
     use admin
     db.createUser({user: "dumbmonit", pwd: passwordPrompt(), roles: [{role: "clusterMonitor", db: "admin"}]})
     ```
 
-2. DumbMonit se connecte avec SCRAM-SHA-256, le défaut pour les comptes créés sur MongoDB 4.0 et plus récent. Si vous avez créé le compte dans une autre base que admin, réglez Base d'authentification ci-dessous.
+2. Dans DumbMonit, saisissez l'adresse d'un mongod, par exemple db1.lan:27018, puis l'utilisateur et son mot de passe.
 
-3. Dans DumbMonit, saisissez l'adresse d'un mongod, par exemple « db1.lan » ou « db1.lan:27018 ». Dans un replica set, ajoutez chaque membre : chacun rapporte ses propres connexions et son cache, et n'importe lequel d'entre eux rapporte l'état et le retard de tous les membres. Si le serveur exige TLS, cochez TLS ci-dessous.
+3. Dans un replica set, ajoutez chaque membre comme surveillance distincte.
 
-4. DumbMonit ne lance que serverStatus et replSetGetStatus. Il ne liste jamais une collection et ne lit jamais un document.
+4. Cochez TLS si le serveur l'exige.
+
+### Droits requis
+
+- **clusterMonitor (built-in role)** : Lire l'état du serveur et du replica set
 
 !!! warning
-    Une adresse mongodb+srv:// n'est pas résolue : saisissez plutôt l'hôte de chaque membre. MongoDB antérieur à 3.6 et les routeurs mongos ne sont pas supportés.
+    Une adresse mongodb+srv:// n'est pas résolue (saisissez l'hôte de chaque membre), et MongoDB antérieur à 3.6 et les routeurs mongos ne sont pas pris en charge.
+
+### Pourquoi ces droits
+
+clusterMonitor est en lecture seule : DumbMonit ne lance que serverStatus et replSetGetStatus. Il ne liste jamais une collection et ne lit jamais un document. DumbMonit se connecte en SCRAM-SHA-256, le défaut des comptes créés sur MongoDB 4.0 et plus récent. Si vous avez créé le compte dans une autre base que admin, renseignez Base d'authentification dans le formulaire. Dans un replica set, chaque membre rapporte ses propres connexions et son cache, et n'importe lequel rapporte l'état et le retard de tous les membres.
+
+Documentation de l'éditeur : https://www.mongodb.com/docs/manual/reference/built-in-roles/#mongodb-authrole-clusterMonitor
 
 ## Identifiants
 

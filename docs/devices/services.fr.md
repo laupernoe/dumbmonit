@@ -144,14 +144,22 @@ une interface de service auto-hébergé.
 
 ### Configuration
 
-1. Dans l'adresse, collez l'URL complète de la page à surveiller. Sans « http:// » ou « https:// », HTTPS est supposé.
-2. Préférez une page légère qui ne demande pas de connexion, par exemple la page de santé de l'application (« /health », « /status »), plutôt que la page d'accueil.
-3. Si la page demande une authentification, remplissez l'identifiant : un nom d'utilisateur et mot de passe donnent l'authentification basique, un jeton est envoyé comme « Bearer ».
-4. Par défaut, tout code de statut entre 200 et 299 convient. Pour aller plus loin, exigez un mot-clé dans la page ou une valeur spécifique dans une réponse JSON.
-5. En HTTPS, le certificat est lu automatiquement : vous serez averti avant son expiration.
+1. Dans l'adresse, collez l'URL complète de la page à surveiller.
+
+2. Préférez une page légère comme « /health » ou « /status » plutôt que la page d'accueil.
+
+3. Si la page demande une connexion, choisissez un identifiant : nom d'utilisateur et mot de passe (basique) ou jeton (Bearer).
+
+4. Au besoin, exigez un mot-clé dans la page ou une valeur dans une réponse JSON, dans les options.
+
+**Droits requis**
+
+- **Accès en lecture à l'URL surveillée** : Seulement si la page demande une connexion
 
 !!! warning
-    N'écrivez jamais un mot de passe ou un jeton dans les options : ils sont copiés en texte clair sur chaque mesure. Utilisez le champ identifiant, qui est chiffré.
+    N'écrivez jamais un mot de passe ou un jeton dans les options : utilisez le champ identifiant, qui est chiffré.
+
+Sans « http:// » ni « https:// », HTTPS est supposé. Par défaut, tout code de statut entre 200 et 299 convient. En HTTPS, le certificat est lu automatiquement : vous serez averti avant son expiration. Un mot de passe ou un jeton écrit dans les options est copié en texte clair à chaque mesure.
 
 Identifiants : aucun, nom d'utilisateur / mot de passe (authentification
 basique) ou jeton d'API (`Authorization: Bearer`).
@@ -185,13 +193,14 @@ base de données, partage de fichiers, serveur de jeu, imprimante réseau.
 
 ### Configuration
 
-1. Dans l'adresse, écrivez l'hôte suivi du port, séparés par deux-points : « nas.home.lan:22 » ou « 192.168.1.5:445 ».
-2. Pour une adresse IPv6, mettez-la entre crochets : « [fd00::1]:445 ».
-3. Vous pouvez aussi laisser l'adresse sans port et le saisir dans l'option « Port » : l'un des deux est requis.
-4. Seule l'ouverture de connexion est testée : aucune donnée n'est envoyée au service, ça n'a donc aucun effet sur lui.
+1. Dans l'adresse, écrivez l'hôte et le port séparés par deux-points : « nas.home.lan:22 », ou « [fd00::1]:445 » en IPv6.
+
+2. Ou laissez le port hors de l'adresse et remplissez l'option « Port ».
 
 !!! warning
-    Un port ouvert ne prouve pas que l'application derrière fonctionne. Pour un service web, préférez le type « Site web ou API web », qui lit la réponse.
+    Un port ouvert ne prouve pas que l'application fonctionne : pour un service web, utilisez le type « Site web ou API web ».
+
+Seule l'ouverture de la connexion est testée : aucune donnée n'est envoyée au service, il n'en est donc pas affecté.
 
 ### Options
 
@@ -210,12 +219,17 @@ servi par votre Pi-hole ou AdGuard, un enregistrement MX.
 ### Configuration
 
 1. Dans l'adresse, écrivez le nom à résoudre, sans « http:// » : « www.example.com ».
-2. Par défaut, la vérification demande au résolveur système une adresse IPv4 (enregistrement A). Choisissez un autre type d'enregistrement dans les options si nécessaire.
-3. Pour surveiller votre propre serveur DNS, saisissez son adresse IP dans « Serveur DNS à interroger » : la vérification échouera s'il arrête de répondre.
-4. Pour détecter un détournement ou une mauvaise configuration, listez dans « Valeurs attendues » les adresses que la réponse doit contenir.
+
+2. Choisissez un autre type d'enregistrement dans les options si vous ne voulez pas d'adresse IPv4 (enregistrement A).
+
+3. Pour surveiller votre propre serveur DNS, saisissez son adresse IP dans « Serveur DNS à interroger ».
+
+4. Pour détecter un détournement, listez dans « Valeurs attendues » les adresses que la réponse doit contenir.
 
 !!! warning
-    Le serveur DNS est donné par son adresse IP, pas par un nom : il faudrait un résolveur pour résoudre le résolveur.
+    Indiquez le serveur DNS par son adresse IP, pas par un nom.
+
+Par défaut, la vérification interroge le résolveur du système. Si le serveur interrogé cesse de répondre, la vérification échoue.
 
 ### Options
 
@@ -278,12 +292,13 @@ distant.
 ### Configuration
 
 1. Dans l'adresse, écrivez le nom d'hôte ou l'adresse IP : « 192.168.1.1 » ou « router.home.lan ».
-2. À chaque sonde, la vérification envoie quatre échos et mesure le temps de réponse, avec la part de paquets perdus.
-3. Par défaut, seule une perte totale compte comme en panne ; une perte partielle reste visible dans les graphiques. Baissez « Perte tolérée » pour être averti plus tôt.
-4. Si DumbMonit tourne dans Docker, gardez les lignes `sysctls:` du docker-compose.yml fourni sous le service dumbmonit : elles autorisent l'utilisateur non privilégié du conteneur à ouvrir des sockets d'écho ICMP. Aucune capacité n'est nécessaire.
+
+2. Baissez « Perte tolérée » dans les options pour être averti avant que la perte soit totale.
 
 !!! warning
-    Sans ce sysctl, la vérification ne peut pas ouvrir de socket ICMP : elle le rapporte comme une erreur de configuration, pas comme une panne d'hôte. Certains appareils ignorent aussi les pings volontairement : vérifiez ça avant de tirer des conclusions.
+    Dans Docker, gardez les lignes sysctls du docker-compose.yml fourni, sinon la vérification ne peut pas envoyer de ping.
+
+À chaque interrogation, la vérification envoie quatre échos et mesure le temps de réponse et la part de paquets perdus. Par défaut, seule une perte totale compte comme panne ; la perte partielle reste visible dans les graphiques. Certains équipements ignorent les pings à dessein.
 
 ```yaml
 services:
@@ -317,14 +332,16 @@ MQTT, interface d'administration.
 
 ### Configuration
 
-1. Dans l'adresse, écrivez l'hôte et, s'il n'est pas 443, le port du service chiffré : « mail.example.com:993 », « ldap.home.lan:636 ».
-2. La vérification ouvre une connexion chiffrée, lit le certificat présenté et ferme tout de suite : aucune donnée n'est échangée avec l'application.
-3. Elle enregistre le nombre de jours avant expiration, l'émetteur et la version TLS. Les règles d'alerte fournies avertissent à quatorze jours, puis à l'expiration.
-4. Si le service est atteint par son adresse IP mais que le certificat porte un nom, saisissez ce nom dans « Nom de serveur (SNI) ».
-5. Pour un certificat émis par votre propre autorité, cochez « Accepter un certificat non vérifiable » : la date d'expiration est quand même surveillée.
+1. Dans l'adresse, écrivez l'hôte et le port du service chiffré : « mail.example.com:993 » (443 si omis).
+
+2. Si vous joignez le service par son adresse IP, saisissez le nom du certificat dans « Nom de serveur (SNI) ».
+
+3. Pour un certificat de votre propre autorité, cochez « Accepter un certificat non vérifiable ».
 
 !!! warning
-    Pour un site web, le type « Site web ou API web » lit déjà le certificat : ce type est destiné aux services qui ne parlent pas HTTP, ou dont vous ne voulez pas solliciter l'application.
+    Pour un site web, le type « Site web ou API web » lit déjà le certificat : utilisez ce type pour les services qui ne parlent pas HTTP.
+
+La vérification ouvre une connexion chiffrée, lit le certificat présenté et la referme aussitôt : aucune donnée n'est échangée avec l'application. Elle enregistre le nombre de jours avant l'expiration, l'émetteur et la version de TLS. Les règles d'alerte fournies avertissent à quatorze jours, puis à l'expiration.
 
 La poignée de main se termine même quand le certificat est refusé :
 c'est ce qui permet de lire la date d'expiration d'un certificat déjà
@@ -348,14 +365,24 @@ local, Proxmox Mail Gateway, le port de soumission d'un serveur mail.
 
 ### Configuration
 
-1. Dans l'adresse, écrivez le serveur mail, et le port s'il n'est pas l'habituel : « smtp.example.com » ou « smtp.example.com:2525 ».
-2. Choisissez le chiffrement que votre relais utilise : STARTTLS pour le port de soumission 587, TLS pour le port 465, Aucun pour un relais sur votre propre réseau écoutant sur le port 25.
-3. Pour vérifier que le relais accepte toujours votre compte, remplissez l'identifiant : la vérification lance alors AUTH et rapporte un mot de passe refusé comme tel, pas comme une panne.
-4. Rien n'est jamais envoyé : la vérification s'arrête après la salutation, les extensions et la connexion optionnelle, puis raccroche. Aucun message n'entre dans la file.
-5. Pour être averti quand une extension disparaît, nommez-la dans « Extension attendue » : un relais qui arrête d'annoncer STARTTLS est un relais qui enverrait votre mail en texte clair.
+1. Dans DumbMonit, saisissez le serveur de messagerie, par exemple smtp.example.com:2525 (le port habituel du chiffrement par défaut).
+
+2. Choisissez le chiffrement : STARTTLS pour le port 587, TLS pour le port 465, Aucun pour un relais de votre réseau sur le port 25.
+
+3. Facultatif : renseignez un compte, pour vérifier que le relais l'accepte toujours (un mot de passe refusé n'est pas signalé comme une panne).
+
+4. Facultatif : nommez une Extension attendue, comme STARTTLS, pour être averti quand le relais cesse de l'annoncer.
+
+#### Droits requis
+
+- **A mail account that may log in (AUTH)** : Seulement si vous renseignez un identifiant
 
 !!! warning
-    Une session acceptée ne prouve pas que le mail part. Un relais qui accepte tout et le met en file pour toujours répond parfaitement ici : surveillez les files elles-mêmes pour ça.
+    Une session acceptée ne prouve pas que le courrier part : surveillez les files du relais pour cela.
+
+#### Pourquoi ces droits
+
+Rien n'est jamais envoyé : la vérification s'arrête après le message d'accueil, les extensions et la connexion facultative, puis raccroche. Aucun message n'entre dans la file. Un relais qui cesse d'annoncer STARTTLS enverrait votre courrier en clair. Un relais qui accepte tout et le garde indéfiniment en file répond parfaitement ici.
 
 Identifiants : aucun, ou un nom d'utilisateur et mot de passe envoyés
 avec `AUTH PLAIN` (ou `AUTH LOGIN` quand le serveur n'offre que ça). Ils
@@ -406,14 +433,32 @@ Assistant, une base d'application, une instance TimescaleDB.
 
 ### Configuration
 
-1. Sur le serveur, créez un compte pour la surveillance et ne lui donnez rien de plus que le droit de se connecter : CREATE ROLE dumbmonit LOGIN PASSWORD 'a-long-password';
-2. Assurez-vous que ce compte peut atteindre le serveur depuis la machine DumbMonit, ce qui demande généralement une ligne de plus dans pg_hba.conf suivie d'un rechargement de configuration.
-3. Dans l'adresse, écrivez le serveur, et le port s'il n'est pas 5432 : « db.home.lan » ou « db.home.lan:5433 ».
-4. La requête par défaut est SELECT 1, qui ne lit aucune table : rien d'autre n'a besoin d'être accordé. Temps de connexion et temps de requête sont enregistrés séparément.
-5. Pour surveiller quelque chose de vôtre, remplacez la requête par une qui renvoie un seul nombre, et ça devient un graphique : une longueur de file, un nombre de lignes, un retard de réplication.
+1. Dans psql, créez un rôle qui ne peut que se connecter.
+
+    ```
+    CREATE ROLE dumbmonit LOGIN PASSWORD 'a-long-password';
+    ```
+
+2. Autorisez-le à se connecter depuis l'hôte DumbMonit avec cette ligne dans pg_hba.conf (adaptez l'adresse), puis rechargez PostgreSQL.
+
+    ```
+    host all dumbmonit 10.0.0.5/32 scram-sha-256
+    ```
+
+3. Dans DumbMonit, saisissez le serveur, par exemple db.home.lan:5433 (port 5432 par défaut), puis l'utilisateur et le mot de passe du rôle.
+
+4. Facultatif : remplacez la requête par défaut SELECT 1 par une requête qui renvoie un seul nombre, pour le tracer.
+
+#### Droits requis
+
+- **LOGIN (role attribute)** : Se connecter seulement, aucun autre privilège
 
 !!! warning
-    La vérification ouvre une vraie connexion à chaque sonde. Sur une instance déjà proche de sa limite de connexions, donnez-lui un intervalle plus long.
+    La vérification ouvre une vraie connexion à chaque interrogation : sur une instance proche de sa limite de connexions, donnez-lui un intervalle plus long.
+
+#### Pourquoi ces droits
+
+La requête par défaut est SELECT 1, qui ne lit aucune table : rien d'autre n'est à accorder. Le temps de connexion et le temps de requête sont enregistrés séparément. Une requête de votre cru qui lit une table demande SELECT sur cette table.
 
 Identifiants : un nom d'utilisateur et mot de passe, requis. Une base de
 données n'est jamais surveillée anonymement, le formulaire n'offre donc
@@ -447,14 +492,26 @@ Kimai, une base d'application, un MariaDB en Docker.
 
 ### Configuration
 
-1. Sur le serveur, créez un compte pour la surveillance sans aucun privilège : CREATE USER 'dumbmonit'@'%' IDENTIFIED BY 'a-long-password';
-2. Vérifiez que le compte peut se connecter depuis la machine DumbMonit : un motif d'hôte de localhost n'accepterait que les connexions faites depuis le serveur lui-même.
-3. Dans l'adresse, écrivez le serveur, et le port s'il n'est pas 3306 : « db.home.lan » ou « db.home.lan:3307 ».
-4. La requête par défaut est SELECT 1, qui ne lit aucune table : rien d'autre n'a besoin d'être accordé. Temps de connexion et temps de requête sont enregistrés séparément.
-5. Pour surveiller quelque chose de vôtre, remplacez la requête par une qui renvoie un seul nombre, et ça devient un graphique : une longueur de file, un nombre de lignes, un retard de réplication.
+1. Dans le client mysql, créez un compte sans aucun privilège (adaptez la partie hôte à la machine DumbMonit).
+
+    ```
+    CREATE USER 'dumbmonit'@'%' IDENTIFIED BY 'a-long-password';
+    ```
+
+2. Dans DumbMonit, saisissez le serveur, par exemple db.home.lan:3307 (port 3306 par défaut), puis l'utilisateur et le mot de passe du compte.
+
+3. Facultatif : remplacez la requête par défaut SELECT 1 par une requête qui renvoie un seul nombre, pour le tracer.
+
+#### Droits requis
+
+- **USAGE (no privilege)** : Se connecter et lancer SELECT 1, rien de plus
 
 !!! warning
-    La vérification ouvre une vraie connexion à chaque sonde. Sur une instance déjà proche de sa limite de connexions, donnez-lui un intervalle plus long.
+    La vérification ouvre une vraie connexion à chaque interrogation : sur une instance proche de sa limite de connexions, donnez-lui un intervalle plus long.
+
+#### Pourquoi ces droits
+
+La requête par défaut est SELECT 1, qui ne lit aucune table : rien d'autre n'est à accorder. Le temps de connexion et le temps de requête sont enregistrés séparément. Un motif d'hôte localhost n'accepterait que les connexions faites sur le serveur lui-même. Une requête de votre cru qui lit une table demande SELECT sur cette table.
 
 ### Options
 
@@ -486,14 +543,26 @@ derrière Home Assistant, Zigbee2MQTT, les capteurs ESPHome.
 
 ### Configuration
 
-1. Dans l'adresse, écrivez le courtier, et le port s'il n'est pas l'habituel : « broker.home.lan » ou « broker.home.lan:1884 ».
-2. Cochez « Connexion chiffrée » pour un courtier écoutant sur 8883, et remplissez l'identifiant s'il demande un compte.
-3. Se connecter vaut déjà la peine d'être surveillé : un courtier qui refuse votre compte, ou qui a arrêté de répondre, est la raison pour laquelle toute la maison est devenue silencieuse.
-4. Pour aller plus loin, nommez un topic : la vérification s'y abonne alors, et un courtier qui refuse l'abonnement vous dit que le compte a perdu ses droits d'accès.
-5. Cochez « Attendre un message retenu » seulement pour un topic qui en porte un, typiquement un topic de disponibilité. Un topic publié de temps en temps paraît silencieux à un client qui vient juste de se connecter.
+1. Dans DumbMonit, saisissez le courtier, par exemple broker.home.lan:1884 (port 1883 par défaut).
+
+2. Cochez Connexion chiffrée pour un courtier qui écoute sur 8883.
+
+3. Si le courtier exige un compte, renseignez son utilisateur et son mot de passe.
+
+4. Facultatif : nommez un topic, pour vérifier que le compte peut toujours s'y abonner.
+
+5. Facultatif : cochez Attendre un message retenu seulement pour un topic qui en porte un, typiquement un topic de disponibilité.
+
+#### Droits requis
+
+- **Subscribe (read) on the topic you name** : Seulement si vous nommez un topic
 
 !!! warning
-    La vérification ne publie jamais rien. Elle ne peut non plus dire l'âge d'un message retenu : MQTT ne les date pas, une valeur gelée depuis trois semaines compte donc toujours comme présente.
+    La vérification ne publie jamais, et ne peut pas savoir l'âge d'un message retenu : MQTT ne les date pas.
+
+#### Pourquoi ces droits
+
+Se connecter vaut déjà la peine d'être surveillé : un courtier qui refuse votre compte, ou qui ne répond plus, est la raison pour laquelle toute la maison s'est tue. Quand vous nommez un topic, un courtier qui refuse l'abonnement vous dit que le compte a perdu ses droits d'accès. Un topic sur lequel on publie de temps en temps paraît silencieux à un client qui vient de se connecter : n'attendez un message retenu que pour un topic qui en porte un. Une valeur figée il y a trois semaines compte toujours comme présente.
 
 ### Ce qu'elle ne peut pas détecter
 
@@ -536,14 +605,18 @@ derrière un reverse proxy.
 
 ### Configuration
 
-1. Dans l'adresse, collez le point de terminaison complet : « wss://home.example.com/api/websocket ». Sans schéma, wss est supposé.
-2. La vérification lance toute la poignée de main d'ouverture et vérifie la réponse que le serveur calcule depuis la clé qui lui a été envoyée : un reverse proxy qui a perdu l'en-tête Upgrade est attrapé ici, là où une vérification HTTP verrait encore un 200 sain.
-3. Rien d'autre n'est nécessaire pour la plupart des points de terminaison. Un statut autre que 101 est rapporté avec son code, un 401 d'un jeton expiré n'est donc pas confondu avec une panne.
-4. Pour aller plus loin, remplissez « Contenu attendu » avec un fragment de la première trame que le serveur envoie de lui-même, par exemple la salutation de l'API Home Assistant.
-5. Si le point de terminaison ne dit rien jusqu'à ce qu'on lui parle, mettez un message dans « Trame à envoyer » et ce que sa réponse doit contenir dans « Contenu attendu ».
+1. Dans DumbMonit, collez le point de terminaison complet, par exemple wss://home.example.com/api/websocket (wss est supposé sans schéma).
+
+2. Facultatif : renseignez Contenu attendu avec un fragment de la première trame que le serveur envoie de lui-même.
+
+3. Facultatif : si le point de terminaison ne dit rien tant qu'on ne lui parle pas, mettez un message dans Trame à envoyer, et ce que la réponse doit contenir dans Contenu attendu.
 
 !!! warning
-    La vérification ouvre et raccroche en moins d'une seconde. Une connexion qu'un pare-feu ou un délai de proxy coupe après trente secondes paraît parfaitement saine ici.
+    La vérification raccroche en moins d'une seconde : une connexion qu'un pare-feu ou un proxy coupe après trente secondes paraît saine ici.
+
+#### Pour aller plus loin
+
+La vérification déroule toute la poignée de main d'ouverture et vérifie la réponse que le serveur calcule à partir de la clé reçue : un reverse proxy qui a perdu l'en-tête Upgrade est repéré ici, là où une vérification HTTP verrait encore un 200 sain. Un statut autre que 101 est rapporté avec son code, donc un 401 dû à un jeton expiré n'est pas pris pour une panne. Pour la première trame, pensez au message d'accueil de l'API Home Assistant.
 
 Identifiants : aucun, un nom d'utilisateur et mot de passe (envoyés en
 authentification HTTP basique dans la requête d'ouverture) ou un jeton
@@ -583,14 +656,14 @@ comme référence.
 
 ### Configuration
 
-1. Dans l'adresse, écrivez le nom ou l'adresse IP du serveur : « pool.ntp.org » ou « 192.168.1.1 ». Le port UDP 123 est utilisé sauf indication contraire de l'option « Port ».
-2. La vérification envoie une seule requête SNTP et lit la réponse : aucun état n'est gardé entre deux sondes, et rien n'est écrit sur le serveur.
-3. Elle enregistre le décalage entre l'horloge du serveur et l'hôte DumbMonit, le délai d'aller-retour, le stratum et l'indicateur de saut.
-4. Un serveur qui répond stratum 16, ou dont l'indicateur de saut lit « non synchronisé », n'a jamais réussi à se synchroniser : la vérification le rapporte en panne quel que soit le décalage.
-5. Baissez « Décalage toléré » pour être averti plus tôt que 100 ms ; augmentez-le pour un serveur à plusieurs sauts d'une horloge de référence.
+1. Dans l'adresse, écrivez le nom ou l'adresse IP du serveur : « pool.ntp.org » ou « 192.168.1.1 ».
+
+2. Baissez « Décalage toléré » dans les options pour être averti avant 100 ms.
 
 !!! warning
-    Le décalage n'est aussi bon que la propre horloge de l'hôte DumbMonit : si cet hôte n'est pas lui-même synchronisé (NTP, la synchro de temps d'un hyperviseur), le décalage mesuré reflète sa propre dérive autant que celle du serveur.
+    Gardez l'hôte DumbMonit lui-même synchronisé : sa propre dérive s'ajoute au décalage mesuré.
+
+Le port UDP 123 est utilisé sauf indication contraire de l'option « Port ». La vérification envoie une seule requête SNTP et enregistre le décalage, le délai aller-retour, la strate et l'indicateur de saut de seconde. Un serveur en strate 16, ou dont l'indicateur de saut de seconde indique « non synchronisé », est signalé en panne quel que soit le décalage.
 
 Identifiants : aucun.
 

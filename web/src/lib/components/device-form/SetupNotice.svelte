@@ -7,8 +7,10 @@
 	 * a kind is chosen, or for a kind the server cannot describe, it explains
 	 * the idea instead of showing an empty box.
 	 *
-	 * A step is one sentence; the lines that follow it, if any, are a command
-	 * or a value to copy as is, shown in a copy block.
+	 * A step is one sentence; the lines that follow it, if any, are a value (or,
+	 * when the product has no interface for it, a command) to copy as is, shown
+	 * in a copy block. The rights to give are a separate framed list: the first
+	 * line of each is the right, in bold, the next one what it is for.
 	 *
 	 * With `onclose` it is the setup guide the user opened on demand, and says
 	 * how to put it away.
@@ -17,6 +19,7 @@
 	import type { CollectorInfo } from '#lib/api/index.js';
 	import { CopyBlock, Panel, Plate } from '#lib/ui/index.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
+	import { localizedDocsUrl } from '#lib/docs.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	interface Props {
@@ -38,6 +41,14 @@
 		if (labels.length === 1 && collector.credentials[0].kind === 'none') return m.deviceform_setup_no_credentials();
 		return new Intl.ListFormat(getLocale(), { type: 'disjunction' }).format(labels);
 	});
+
+	/** Splits a permission into the right itself and what it is for. */
+	function permission(entry: string): { name: string; note: string } {
+		const [name, ...rest] = entry.split('\n');
+		return { name: name.trim(), note: rest.join(' ').trim() };
+	}
+
+	const permissions = $derived(setup?.permissions ?? []);
 
 	/** Splits a step into its sentence and the lines to copy, if any. */
 	function parts(step: string): { text: string; copy: string } {
@@ -100,6 +111,24 @@
 			</p>
 		{/if}
 
+		{#if permissions.length > 0}
+			<section class="mt-4 rounded-lg border border-signal/35 bg-signal-soft px-3 py-3" aria-labelledby="setup-permissions">
+				<h3 id="setup-permissions" class="text-sm font-semibold text-signal-ink">{m.deviceform_setup_permissions()}</h3>
+				<ul class="mt-2 grid gap-2">
+					{#each permissions as entry, index (index)}
+						{@const { name, note } = permission(entry)}
+						<li class="flex gap-2 text-sm leading-relaxed text-ink">
+							<span class="mt-2 size-1.5 shrink-0 rounded-full bg-signal-ink" aria-hidden="true"></span>
+							<span class="min-w-0 break-words">
+								<strong class="font-semibold">{name}</strong>
+								{#if note}<span class="block text-ink-2">{note}</span>{/if}
+							</span>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
 		{#if setup?.warning}
 			<div class="mt-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3 py-2.5">
 				<Plate tone="advisory" label={m.deviceform_setup_good_to_know()} />
@@ -124,12 +153,12 @@
 
 		{#if setup?.doc_url}
 			<a
-				href={setup.doc_url}
+				href={localizedDocsUrl(setup.doc_url)}
 				target="_blank"
 				rel="noreferrer noopener"
 				class="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-signal-ink hover:underline"
 			>
-				{m.deviceform_setup_documentation()}
+				{m.deviceform_setup_full_guide()}
 				<ExternalLink class="size-3.5" aria-hidden="true" />
 			</a>
 		{/if}

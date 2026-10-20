@@ -47,19 +47,26 @@ jusqu'à 25 secondes en attendant du travail (long polling).
 
 ## 2. Créer un jeton d'enrôlement
 
-Le plus simple : **Réglages → Agents → Surveiller un site distant**. Nommez le
-site, créez le jeton et copiez la commande d'installation affichée : elle porte
-déjà le mode relais et le site, il n'y a rien à modifier sur la machine.
+Le plus simple : **Réglages → Agents → Surveiller un site distant** (ou cochez
+*Cet agent est un relais pour un site distant* en créant un jeton). Nommez le
+site, créez le jeton et lancez la commande d'installation affichée sur une
+machine du site. Le jeton porte lui-même le mode relais et le site : l'agent
+devient relais dès son premier envoi, sans rien modifier sur la machine.
 
-Vous pouvez aussi créer un jeton ordinaire (**Réglages → Agents → Nouveau
-jeton**, ou une surveillance de type *agent*) et régler le mode relais
-vous-même, comme ci-dessous. Copiez la valeur `dmon_…` : elle n'est montrée
-qu'une fois.
+**Un agent déjà installé** devient relais depuis sa page dans DumbMonit : dans
+le panneau *Relais*, activez *Relais pour un site distant*, indiquez le site,
+enregistrez. L'agent bascule à son prochain envoi, sans redémarrage. On le
+désactive de la même façon. Un agent trop ancien pour suivre ce réglage y est
+signalé : mettez-le à jour en relançant la commande d'installation, ou utilisez
+`relay: true` ci-dessous.
+
+Les variantes ci-dessous règlent le mode relais sur la machine elle-même ; il
+prime alors sur l'interrupteur de l'interface.
 
 ## 3. Démarrer le relais sur le site distant
 
 Sous Linux, macOS ou FreeBSD, l'installateur en une ligne avec `--relay` et le
-site :
+site (inutile avec un jeton de *Surveiller un site distant*) :
 
 ```sh
 curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
