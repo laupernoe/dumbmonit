@@ -631,13 +631,16 @@
 	"demo_tour_s8_title": "墙屏模式",
 	"deviceform_checksums_summary": "二进制文件校验和 (SHA-256) — 安装程序会据此校验下载内容",
 	"deviceform_cred_auth_label": "认证方式",
-	"deviceform_cred_keep": "留空则保留已保存的凭据。",
 	"deviceform_cred_no_auth": "无认证",
 	"deviceform_cred_none": "不会向设备发送任何内容：它无需凭据即可应答。",
 	"deviceform_cred_note_paste": "已清理粘贴的内容：去除了首尾的空格、引号或换行。",
 	"deviceform_cred_note_token": "你粘贴的是完整令牌：“=”之后的部分已移到“密钥”字段。",
 	"deviceform_cred_required": "“{label}”为必填项。",
 	"deviceform_cred_token_format": "格式应为 user@realm!name，与 Proxmox 显示的完全一致。",
+	"deviceform_cred_saved_keep": "已保存。留空则保留。",
+	"deviceform_cred_reenter_identity": "请重新输入：已保存的值属于之前的“{label}”。",
+	"deviceform_cred_reenter_destination": "请重新输入：已保存的密钥绝不会发送到已更改的地址或连接。",
+	"deviceform_cred_choice_none": "无",
 	"deviceform_discovery_add_aria": "添加 {name}",
 	"deviceform_discovery_add_n": [
 		{
@@ -6860,5 +6863,10 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界"
+	"worldmap_view_world": "世界",
+	"devices_targets_filter_site_label": "站点",
+	"devices_targets_filter_site": "按站点筛选",
+	"devices_targets_all_sites": "所有站点",
+	"devices_targets_no_site": "无站点",
+	"devices_site_badge_aria": "站点：{name}"
 }

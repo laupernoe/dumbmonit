@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import {
 	freeTags,
 	hasAllTags,
+	matchesSite,
 	parseListQuery,
 	runBulk,
 	serializeListQuery,
@@ -30,20 +31,21 @@ test('a pristine state serializes to nothing', () => {
 
 test('query round-trips and ignores junk values', () => {
 	const q = parseListQuery(
-		new URLSearchParams('q=nas&state=attention&kind=snmp&tag=env%3Dprod&tag=team%3Da+b&sort=name&dir=desc&view=tiles')
+		new URLSearchParams('q=nas&state=attention&kind=snmp&tag=env%3Dprod&tag=team%3Da+b&site=3&sort=name&dir=desc&view=tiles')
 	);
 	assert.deepEqual(q, {
 		search: 'nas',
 		segment: 'attention',
 		kind: 'snmp',
 		tags: ['env=prod', 'team=a b'],
+		site: '3',
 		sort: 'name',
 		dir: 'desc',
 		view: 'tiles'
 	});
 	assert.equal(
 		serializeListQuery(q),
-		'?q=nas&state=attention&kind=snmp&tag=env%3Dprod&tag=team%3Da+b&sort=name&dir=desc&view=tiles'
+		'?q=nas&state=attention&kind=snmp&tag=env%3Dprod&tag=team%3Da+b&site=3&sort=name&dir=desc&view=tiles'
 	);
 	const junk = parseListQuery(new URLSearchParams('state=x&sort=y&view=z&dir=up'));
 	assert.equal(junk.segment, 'all');
@@ -118,4 +120,14 @@ test('bulk runner keeps going after a failure and reports it', async () => {
 	assert.deepEqual(out.ok, [1, 3]);
 	assert.equal(out.failed.length, 1);
 	assert.equal(out.failed[0].name, 'b');
+});
+
+test('site filter: all, none, or one location', () => {
+	assert.equal(matchesSite(null, ''), true);
+	assert.equal(matchesSite(3, ''), true);
+	assert.equal(matchesSite(null, 'none'), true);
+	assert.equal(matchesSite(3, 'none'), false);
+	assert.equal(matchesSite(3, '3'), true);
+	assert.equal(matchesSite(4, '3'), false);
+	assert.equal(matchesSite(null, '3'), false);
 });
