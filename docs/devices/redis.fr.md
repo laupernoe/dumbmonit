@@ -64,28 +64,38 @@ mémoire, les clients, les commandes par seconde, le taux de succès, les clés
 évincées dans les dernières 24 heures et l'uptime, puis les clés par base et
 le retard de chaque réplica.
 
-## Créer un utilisateur Redis qui ne peut lancer qu'INFO
+## Créer un utilisateur Redis en lecture seule
 
-1. Sur Redis 6 ou plus récent, ou Valkey, créez un utilisateur qui peut lancer INFO et PING et rien d'autre, sans accès à aucune clé. Dans redis-cli, connecté avec un utilisateur autorisé à gérer les ACL :
+1. Dans redis-cli, créez l'utilisateur (Redis 6 ou plus récent, ou Valkey).
 
     ```
     ACL SETUSER dumbmonit on >a-long-password -@all +info +ping
     ```
 
-2. Rendez-le permanent : ACL SAVE si le serveur charge ses utilisateurs depuis un aclfile, CONFIG REWRITE sinon.
+2. Enregistrez-le : ACL SAVE si le serveur utilise un aclfile, CONFIG REWRITE sinon.
 
     ```
     ACL SAVE
     ```
 
-3. Sur Redis 5 ou plus ancien, ou avec seulement requirepass défini, choisissez Mot de passe seul ci-dessous. Ce mot de passe porte tous les droits : préférez un utilisateur ACL dès que le serveur en supporte un.
+3. Dans DumbMonit, saisissez l'adresse du serveur, par exemple cache.lan:6380, puis l'utilisateur et son mot de passe.
 
-4. Dans DumbMonit, saisissez l'adresse du serveur, par exemple « cache.lan » ou « cache.lan:6380 ». Si le serveur n'accepte que TLS sur ce port (tls-port), cochez TLS ci-dessous.
+4. Cochez TLS si le serveur n'accepte que TLS sur ce port (tls-port).
 
-5. DumbMonit envoie AUTH, puis INFO. Il ne lit, n'écrit ni ne liste jamais une clé.
+### Droits requis
+
+- **+info** : Lire les statistiques du serveur (INFO)
+- **+ping** : Vérifier que le serveur répond
+- **-@all** : Aucune autre commande, aucun accès aux clés
 
 !!! warning
-    Redis ne donne aucun avertissement avant maxmemory : à la limite il évince des clés silencieusement ou refuse chaque écriture, selon maxmemory-policy. Sans maxmemory il grandit jusqu'à ce que le noyau le tue. DumbMonit avertit au-dessus de 90 % de maxmemory.
+    Sur Redis 5 ou plus ancien, ou avec seulement requirepass, choisissez Mot de passe seul : ce mot de passe porte tous les droits.
+
+### Pourquoi ces droits
+
+DumbMonit envoie AUTH, puis INFO, et ferme la connexion. L'utilisateur ne peut lancer qu'INFO et PING : il ne peut ni lire, ni écrire, ni lister une clé. Redis 5 et plus ancien, ou un serveur avec seulement requirepass, n'ont pas d'utilisateurs ACL : choisissez Mot de passe seul dans le formulaire, en sachant que ce mot de passe porte tous les droits. Préférez un utilisateur ACL dès que le serveur en supporte un.
+
+Documentation de l'éditeur : https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/
 
 ## Identifiants
 

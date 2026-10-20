@@ -179,28 +179,51 @@ compte, et le tableau des constats avec les mots de gravité.
 
 ## Créer un compte de service en lecture seule pour DumbMonit
 
-1. Créez un utilisateur dédié pour DumbMonit, par exemple svc-dumbmonit, et ne l'ajoutez à aucun groupe. Un utilisateur de domaine ordinaire suffit : chaque utilisateur authentifié peut lire ce que DumbMonit lit. En PowerShell, avec le module Active Directory :
+1. Active Directory Users and Computers → votre domaine → Users → New → User : nommez-le comme suit, définissez un long mot de passe aléatoire et ne l'ajoutez à aucun groupe.
 
     ```
-    New-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true
+    svc-dumbmonit
     ```
 
-2. Donnez-lui un mot de passe long et aléatoire. Si les mots de passe expirent dans votre domaine, DumbMonit déclenche Connexion Active Directory échouée le jour où celui-ci le fait.
+2. Sur son onglet Account, cochez Password never expires, sinon l'authentification échoue le jour où le mot de passe expire.
 
-3. Optionnel : pour voir le statut de réplication entrante, accordez au compte le droit Monitor active directory replication sur l'objet domaine lui-même. Il ne révèle aucun mot de passe ni secret.
+3. Facultatif, pour voir l'état de la réplication entrante : accordez au compte le droit listé ci-dessous sur l'objet du domaine.
 
     ```
     dsacls "DC=corp,DC=example,DC=com" /G "CORP\svc-dumbmonit:CA;Monitor active directory replication"
     ```
 
-4. LDAPS a besoin d'un certificat sur chaque contrôleur de domaine ; une autorité de certification d'entreprise (AD CS) en émet un automatiquement. Exportez le certificat de cette autorité au format X.509 encodé en Base-64 et collez-le comme Certificat CA ci-dessous.
+4. Pour LDAPS, exportez le certificat de votre autorité de certification au format X.509 encodé en Base-64 et collez-le comme certificat CA ci-dessous.
 
-5. Dans DumbMonit, saisissez le nom d'un contrôleur de domaine comme son certificat le nomme, par exemple « dc1.corp.example.com », et connectez-vous comme svc-dumbmonit@corp.example.com. DumbMonit trouve les autres contrôleurs de domaine par lui-même et vérifie que chacun répond.
+5. Dans DumbMonit, saisissez le nom d'un contrôleur de domaine tel que son certificat le nomme (dc1.corp.example.com) et connectez-vous en svc-dumbmonit@corp.example.com.
 
-6. DumbMonit ne fait que lire : il n'écrit jamais dans l'annuaire, et de LAPS il lit la date d'expiration, jamais le mot de passe.
+### Droits requis
+
+- **Domain Users membership only** — Aucun groupe ni délégation n'est nécessaire pour lire
+- **Monitor active directory replication** — Facultatif : état de la réplication entrante
 
 !!! warning
-    Le LDAP simple sur le port 389 envoie le mot de passe du compte de service en texte clair : DumbMonit le refuse sauf si vous cochez Autoriser le LDAP simple, et un contrôleur de domaine qui exige la signature LDAP le refuse aussi. Utilisez LDAPS, ou StartTLS sur le port 389.
+    Le LDAP en clair sur le port 389 envoie le mot de passe en clair et est refusé par défaut : utilisez LDAPS, ou StartTLS sur le port 389.
+
+Documentation de l'éditeur : https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/enable-ldap-over-ssl-3rd-certification-authority
+
+### Notes
+
+Un simple utilisateur du domaine suffit : tout utilisateur authentifié peut lire
+ce que DumbMonit lit. Si les mots de passe expirent dans votre domaine,
+DumbMonit signale Active Directory bind failed le jour où celui-ci expire. LDAPS
+exige un certificat sur chaque contrôleur de domaine ; une autorité de
+certification d'entreprise (AD CS) en émet un automatiquement. Le même
+utilisateur depuis PowerShell, avec le module Active Directory :
+
+```
+New-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true
+```
+
+Le droit de réplication s'accorde avec `dsacls` car l'assistant de délégation ne
+le propose pas sous ce nom. Il ne révèle ni mot de passe ni secret. DumbMonit ne
+fait que lire : il n'écrit jamais dans l'annuaire, et de LAPS il lit la date
+d'expiration, jamais le mot de passe.
 
 Pour empêcher le compte d'ouvrir une session n'importe où, refusez-lui
 *Log on locally* et *Log on through Remote Desktop Services* par Group

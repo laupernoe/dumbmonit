@@ -54,22 +54,28 @@ messages.
 
 ## Create an app password in Pi-hole
 
-1. Pi-hole v6 or later is required: version 5 had no REST API. Pi-hole has no read-only account; the closest is an app password, which cannot change any setting.
+1. In Pi-hole's web interface, open Settings → Web interface / API and switch the page from Basic to Expert.
 
-2. In Pi-hole's web interface, open Settings → Web interface / API and switch the page from Basic to Expert. Click Configure app password, copy the password shown, then click Enable new app password. Pi-hole shows it only once, and a new one replaces the previous one.
+2. Click Configure app password, copy the password shown, then click Enable new app password.
 
-3. An app password stays read-only for settings as long as webserver.api.app_sudo is false, the default. Check it on the Pi-hole machine (in Docker, prefix the command with docker exec and the container name):
+3. Check that Settings → All settings → Webserver and API → webserver.api.app_sudo is off, its default.
 
-    ```
-    pihole-FTL --config webserver.api.app_sudo
-    ```
+4. In DumbMonit, enter Pi-hole's address and paste the app password, or pick No password if the web interface has none.
 
-4. In DumbMonit, enter the Pi-hole address, for example "pi.hole" or "192.168.1.53", and paste the app password. For a Pi-hole whose web interface has no password, pick No password instead.
+Vendor documentation: <https://docs.pi-hole.net/api/>
 
-5. DumbMonit only reads. It never pauses blocking and never changes a list, and it keeps one API session open between checks instead of opening one per check: Pi-hole allows 16 sessions at a time.
+### Why an app password
+
+Pi-hole v6 or later is required: version 5 had no REST API. Pi-hole has no read-only account; the closest is an app password, which cannot change any setting as long as `webserver.api.app_sudo` is false, the default. Pi-hole shows the app password only once, and a new one replaces the previous one. You can also check the setting on the Pi-hole machine (in Docker, prefix the command with `docker exec` and the container name):
+
+```
+pihole-FTL --config webserver.api.app_sudo
+```
+
+DumbMonit only reads. It never pauses blocking and never changes a list, and it keeps one API session open between checks instead of opening one per check: Pi-hole allows 16 sessions at a time. Pi-hole serves plain HTTP on port 80, and the password crosses the network each time a session opens: across an untrusted network, use HTTPS on port 443.
 
 !!! warning
-    The app password still allows pausing blocking and editing lists through the API: keep it for DumbMonit only. Pi-hole serves plain HTTP on port 80, and the password crosses the network each time a session opens: across an untrusted network, use HTTPS on port 443.
+    Pi-hole v6 or later is required; the app password can still pause blocking and edit lists through the API, so keep it for DumbMonit only.
 
 An app password also logs in without the second factor when two-factor
 authentication is on: that is what it is for. To revoke it, empty

@@ -83,12 +83,29 @@ expires soon, then the table of every device with its last connection.
 
 ## Create a read-only OAuth client for DumbMonit
 
-1. In the Tailscale console (login.tailscale.com), open Settings > Trust credentials (formerly OAuth clients) and generate an OAuth client with only the devices:core:read scope. It lists the devices and can change nothing.
+1. In the Tailscale console (login.tailscale.com), open Settings → Trust credentials → Credential → OAuth.
 
-2. Copy the client ID and the client secret (tskey-client-…), shown once. In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret. Leave the Tailnet option empty: the tailnet of the client is read.
+2. Tick only the read scope listed below, then click Generate credential.
+
+3. Copy the client ID and the client secret (tskey-client-...): the secret is shown once.
+
+4. In DumbMonit, enter api.tailscale.com as address and paste them as Client ID and Client secret; leave the Tailnet option empty.
+
+### Required permissions
+
+- **devices:core:read** — Lists the devices of the tailnet, changes nothing
 
 !!! warning
-    Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: a phone or a laptop that sleeps is not an outage. Name the devices to watch in the Devices to keep online option, or enter all. Every device of the tailnet appears in the Devices table below with its last connection, watched or not; a phone that travels can go days without one, so raise Device staleness for those.
+    Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: name the ones to watch in the Devices to keep online option, or enter all.
+
+Vendor documentation: https://tailscale.com/kb/1623/trust-credentials
+
+### Notes
+
+Leave the Tailnet option empty: the tailnet of the client is read. A phone or a
+laptop that sleeps is not an outage. Every device of the tailnet appears in the
+Devices table below with its last connection, watched or not; a phone that
+travels can go days without one, so raise Device staleness for those.
 
 ## Credentials
 
