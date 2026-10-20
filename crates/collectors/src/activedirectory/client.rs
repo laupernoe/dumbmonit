@@ -13,11 +13,14 @@ use std::time::{Duration, Instant};
 
 use dumbmonit_proto::ProbeError;
 use ldap3::adapters::{Adapter, EntriesOnly, PagedResults};
-use ldap3::{Ldap, LdapConnAsync, LdapConnSettings, LdapError, Scope, SearchEntry, ldap_escape};
+use ldap3::{
+    Ldap, LdapConnAsync, LdapConnSettings, LdapError, Scope, SearchEntry, StdStream, ldap_escape,
+};
 use tokio::task::JoinHandle;
 
 use super::analysis::Reach;
 use super::decode;
+use super::dns::{self, DnsServers};
 use super::model::{
     Account, DcComputer, DomainObject, DsaRecord, Entry, FsmoRecord, GroupRecord, Inventory,
     Member, NTDSDSA_OPT_IS_GC, PRIVILEGED_GROUPS, RootDse,
@@ -58,8 +61,14 @@ pub async fn connect(options: &Options) -> Result<(Session, f64), ProbeError> {
             .set_starttls(options.security == Security::StartTls)
             .set_no_tls_verify(options.insecure_tls);
     }
-    let url = options.url();
+    // Avec des serveurs DNS propres, on résout nous-mêmes et on se connecte à
+    // l'adresse obtenue ; l'URL garde le nom, qui sert au SNI et à la
+    // vérification du certificat.
     let started = Instant::now();
+    if let Some(stream) = dial(options).await? {
+        settings = settings.set_std_stream(StdStream::Tcp(stream));
+    }
+    let url = options.url();
     let (conn, ldap) =
         tokio::time::timeout(options.request_timeout, LdapConnAsync::with_settings(settings, &url))
             .await
@@ -72,6 +81,36 @@ pub async fn connect(options: &Options) -> Result<(Session, f64), ProbeError> {
         let _ = conn.drive().await;
     });
     Ok((Session { ldap, driver, timeout: options.request_timeout }, elapsed))
+}
+
+/// Ouvre la connexion TCP elle-même quand le moniteur a ses serveurs DNS ;
+/// `None` pour laisser le client LDAP faire (résolveur du système, ou adresse IP
+/// saisie : rien à résoudre).
+async fn dial(options: &Options) -> Result<Option<std::net::TcpStream>, ProbeError> {
+    let Some(servers) = &options.dns_servers else { return Ok(None) };
+    if options.host.parse::<std::net::IpAddr>().is_ok() {
+        return Ok(None);
+    }
+    let timeout = options.request_timeout;
+    let addresses = dns::resolve(&options.host, options.port, Some(servers), timeout)
+        .await
+        .map_err(|error| ProbeError::Unreachable(error.message().to_string()))?;
+    let mut last = None;
+    for address in addresses {
+        match tokio::time::timeout(timeout, tokio::net::TcpStream::connect(address)).await {
+            Ok(Ok(stream)) => {
+                let stream = stream
+                    .into_std()
+                    .map_err(|error| ProbeError::Unreachable(format!("{address}: {error}")))?;
+                return Ok(Some(stream));
+            }
+            Ok(Err(error)) => last = Some(format!("{}:{}: {error}", options.host, options.port)),
+            Err(_) => return Err(ProbeError::Timeout(timeout)),
+        }
+    }
+    Err(ProbeError::Unreachable(last.unwrap_or_else(|| {
+        format!("{} did not resolve through {}", options.host, servers.label())
+    })))
 }
 
 /// Classe une erreur de connexion : injoignable (alerte) ou problème de
@@ -518,6 +557,7 @@ pub async fn check_reachability(
     dsas: &[DsaRecord],
     skip: Option<&str>,
     port: u16,
+    servers: Option<&DnsServers>,
     timeout: Duration,
 ) -> Vec<(String, Reach)> {
     let checks = dsas
@@ -526,19 +566,17 @@ pub async fn check_reachability(
         .map(|dsa| async move {
             let reach = match &dsa.dns_host_name {
                 None => Reach::NotChecked,
-                Some(host) => reach(host, port, timeout).await,
+                Some(host) => reach(host, port, servers, timeout).await,
             };
             (dsa.dsa_dn.clone(), reach)
         });
     futures::future::join_all(checks).await
 }
 
-async fn reach(host: &str, port: u16, timeout: Duration) -> Reach {
-    let addresses = match tokio::time::timeout(timeout, tokio::net::lookup_host((host, port))).await
-    {
-        Err(_) => return Reach::Unresolved(format!("{host} did not resolve in time")),
-        Ok(Err(error)) => return Reach::Unresolved(format!("{host} does not resolve: {error}")),
-        Ok(Ok(addresses)) => addresses.collect::<Vec<_>>(),
+async fn reach(host: &str, port: u16, servers: Option<&DnsServers>, timeout: Duration) -> Reach {
+    let addresses = match dns::resolve(host, port, servers, timeout).await {
+        Ok(addresses) => addresses,
+        Err(error) => return Reach::Unresolved(error.message().to_string()),
     };
     let Some(address) = addresses.first() else {
         return Reach::Unresolved(format!("{host} resolves to no address"));
@@ -632,7 +670,7 @@ mod tests {
             dns_host_name: Some("nexiste-pas.invalid".into()),
             ..DsaRecord::default()
         };
-        let result = check_reachability(&[dsa], None, 636, Duration::from_secs(2)).await;
+        let result = check_reachability(&[dsa], None, 636, None, Duration::from_secs(2)).await;
         assert!(matches!(result[0].1, Reach::Unresolved(_)), "{:?}", result[0].1);
     }
 
@@ -643,11 +681,68 @@ mod tests {
         let port = listener.local_addr().unwrap().port();
         drop(listener);
         assert!(matches!(
-            reach("127.0.0.1", port, Duration::from_secs(2)).await,
+            reach("127.0.0.1", port, None, Duration::from_secs(2)).await,
             Reach::Unreachable(_)
         ));
         let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = listener.local_addr().unwrap().port();
-        assert_eq!(reach("127.0.0.1", port, Duration::from_secs(2)).await, Reach::Reachable);
+        assert_eq!(reach("127.0.0.1", port, None, Duration::from_secs(2)).await, Reach::Reachable);
+    }
+
+    #[tokio::test]
+    async fn les_controleurs_se_joignent_par_les_serveurs_dns_indiques() {
+        let server = dns::fake::serve().await;
+        let servers = DnsServers::parse(Some(&server.to_string())).unwrap().unwrap();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let timeout = Duration::from_secs(3);
+        assert_eq!(reach("dc01.corp.local", port, Some(&servers), timeout).await, Reach::Reachable);
+        // Le DNS du système ne connaît pas ce domaine.
+        assert!(matches!(
+            reach("dc01.corp.local", port, None, timeout).await,
+            Reach::Unresolved(_)
+        ));
+        let Reach::Unresolved(why) = reach("dc02.corp.local", port, Some(&servers), timeout).await
+        else {
+            panic!("dc02 ne devrait pas se résoudre");
+        };
+        assert_eq!(why, format!("dc02.corp.local did not resolve through {}", servers.label()));
+    }
+
+    fn options_dns(host: &str, port: u16, servers: &DnsServers) -> Options {
+        Options {
+            host: host.into(),
+            port,
+            security: Security::Ldaps,
+            insecure_tls: false,
+            ca_cert: None,
+            request_timeout: Duration::from_secs(3),
+            dns_servers: Some(servers.clone()),
+            check_all_dcs: false,
+            stale_days_users: 90,
+            stale_days_computers: 90,
+            inventory_interval: Duration::from_secs(900),
+            bind_user: String::new(),
+            bind_password: String::new(),
+        }
+    }
+
+    #[tokio::test]
+    async fn la_connexion_ouvre_le_flux_sur_l_adresse_resolue_et_garde_le_nom() {
+        let server = dns::fake::serve().await;
+        let servers = DnsServers::parse(Some(&server.to_string())).unwrap().unwrap();
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+
+        let options = options_dns("dc01.corp.local", port, &servers);
+        let stream = dial(&options).await.unwrap().expect("flux ouvert par DumbMonit");
+        assert_eq!(stream.peer_addr().unwrap().port(), port);
+        // L'URL, donc le nom du certificat, reste celui du DNS.
+        assert_eq!(options.url(), format!("ldaps://dc01.corp.local:{port}"));
+
+        let error = dial(&options_dns("dc02.corp.local", port, &servers)).await.unwrap_err();
+        assert!(error.to_string().contains("dc02.corp.local did not resolve through"), "{error}");
+        // Une IP saisie ne passe pas par le DNS.
+        assert!(dial(&options_dns("127.0.0.1", port, &servers)).await.unwrap().is_none());
     }
 }

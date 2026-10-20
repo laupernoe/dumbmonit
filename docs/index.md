@@ -35,7 +35,7 @@ windows are scheduled.
 ## Talk to it
 
 - An [assistant over MCP](using/assistant.md) — Claude Code, Claude Desktop,
-  ChatGPT, VS Code, Cursor — with 27 tools: a `read` token only looks (status,
+  ChatGPT, VS Code, Cursor — with 28 tools: a `read` token only looks (status,
   monitors, alerts, metrics, agents, containers…), a `write` token can also act
   (silence, acknowledge, add a monitor, restart a container, post a
   status-page incident). Secrets are never returned.

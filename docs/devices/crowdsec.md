@@ -57,31 +57,49 @@ by origin and the unparsed share of each log source.
 
 ## Let DumbMonit read CrowdSec's metrics
 
-1. CrowdSec publishes its metrics on 127.0.0.1:6060 by default. Set listen_addr in the prometheus section of /etc/crowdsec/config.yaml to an address DumbMonit can reach, then restart CrowdSec. The official Docker image already listens on every interface.
+1. Make the metrics reachable: set listen_addr in the prometheus section of /etc/crowdsec/config.yaml to an address DumbMonit can reach, then restart CrowdSec.
 
     ```
     sudo sed -i 's/listen_addr: 127.0.0.1/listen_addr: 0.0.0.0/' /etc/crowdsec/config.yaml
     sudo systemctl restart crowdsec
     ```
 
-2. The metrics need no credential: they hold counts, bouncer and machine names and log file paths, never an IP address. Filter port 6060 so that only the DumbMonit host reaches it, and check that it answers.
+2. Check from the DumbMonit host that the metrics answer on port 6060, and filter that port so only the DumbMonit host reaches it.
 
     ```
     curl -s http://crowdsec.lan:6060/metrics | grep cs_info
     ```
 
-3. DumbMonit also checks /health of the Local API, on port 8080 of the same host: listen_uri in the api.server section must then be reachable too. Untick Check the Local API for a host that only runs an agent.
-
-4. Optional: create a bouncer key for DumbMonit and paste it as Bouncer API key below. A bouncer key can only read decisions. DumbMonit asks for the decisions on 192.0.2.1, a documentation address, so the answer is always empty and the ban list is never downloaded.
+3. DumbMonit also checks the Local API on port 8080 of the same host: untick Check the Local API for a host that only runs an agent.
+4. Optional: create a bouncer key and paste it as Bouncer API key below.
 
     ```
     sudo cscli bouncers add dumbmonit
     ```
 
-5. In DumbMonit, enter the CrowdSec host, for example "crowdsec.lan". Where the Local API and the agents run on different hosts, add each host: decisions, alerts and bouncers are counted where the Local API runs, log lines where each agent reads them.
+5. In DumbMonit, enter the CrowdSec host, for example "crowdsec.lan".
+
+### Required permissions
+
+- **Bouncer API key (optional)** — Read-only: it can only read decisions
 
 !!! warning
-    A bouncer that stops pulling keeps enforcing a frozen list: new attackers get through and nothing complains. DumbMonit warns when a bouncer's requests stop for 30 minutes. It only knows bouncers that pulled at least once since CrowdSec last started.
+    A bouncer that stops pulling keeps enforcing a frozen list: DumbMonit warns when a bouncer's requests stop for 30 minutes.
+
+Vendor documentation: [CrowdSec Prometheus metrics](https://docs.crowdsec.net/docs/next/observability/prometheus/).
+
+### Good to know
+
+The metrics need no credential: they hold counts, bouncer and machine names and
+log file paths, never an IP address. The official Docker image already listens
+on every interface. `listen_uri` in the `api.server` section must be reachable
+for the Local API check. A bouncer key can only read decisions: DumbMonit asks
+for the decisions on 192.0.2.1, a documentation address, so the answer is
+always empty and the ban list is never downloaded. Where the Local API and the
+agents run on different hosts, add each host: decisions, alerts and bouncers
+are counted where the Local API runs, log lines where each agent reads them.
+DumbMonit only knows bouncers that pulled at least once since CrowdSec last
+started.
 
 A bouncer deleted with `cscli bouncers delete` keeps its counter until
 CrowdSec restarts, and is reported as stopped until then. A bouncer that only

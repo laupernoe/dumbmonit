@@ -161,28 +161,50 @@ words.
 
 ## Create a read-only service account for DumbMonit
 
-1. Create a dedicated user for DumbMonit, for example svc-dumbmonit, and add it to no group. A plain domain user is enough: every authenticated user can read what DumbMonit reads. In PowerShell, with the Active Directory module:
+1. Active Directory Users and Computers → your domain → Users → New → User: name it as follows, set a long random password and add it to no group.
 
     ```
-    New-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true
+    svc-dumbmonit
     ```
 
-2. Give it a long random password. If passwords expire in your domain, DumbMonit raises Active Directory bind failed the day this one does.
+2. On its Account tab, tick Password never expires, or the bind fails the day the password does.
 
-3. Optional: to see inbound replication status, grant the account the Monitor active directory replication right on the domain object itself. It reveals no password and no secret.
+3. Optional, to see inbound replication status: grant the account the right listed below on the domain object.
 
     ```
     dsacls "DC=corp,DC=example,DC=com" /G "CORP\svc-dumbmonit:CA;Monitor active directory replication"
     ```
 
-4. LDAPS needs a certificate on each domain controller; an enterprise certification authority (AD CS) issues one automatically. Export the certificate of that authority in Base-64 encoded X.509 format and paste it as CA certificate below.
+4. For LDAPS, export your certification authority's certificate as Base-64 encoded X.509 and paste it as CA certificate below.
 
-5. In DumbMonit, enter the name of one domain controller as its certificate names it, for example "dc1.corp.example.com", and log in as svc-dumbmonit@corp.example.com. DumbMonit finds the other domain controllers by itself and checks that each one answers.
+5. In DumbMonit, enter a domain controller's name as its certificate names it (dc1.corp.example.com) and log in as svc-dumbmonit@corp.example.com.
 
-6. DumbMonit only reads: it never writes to the directory, and of LAPS it reads the expiry date, never the password.
+### Required permissions
+
+- **Domain Users membership only** — No group or delegation is needed to read
+- **Monitor active directory replication** — Optional: inbound replication status
 
 !!! warning
-    Plain LDAP on port 389 sends the service account's password in clear text: DumbMonit refuses it unless you tick Allow plain LDAP, and a domain controller that requires LDAP signing refuses it too. Use LDAPS, or StartTLS on port 389.
+    Plain LDAP on port 389 sends the password in clear and is refused by default: use LDAPS, or StartTLS on port 389.
+
+Vendor documentation: https://learn.microsoft.com/en-us/troubleshoot/windows-server/active-directory/enable-ldap-over-ssl-3rd-certification-authority
+
+### Notes
+
+A plain domain user is enough: every authenticated user can read what DumbMonit
+reads. If passwords expire in your domain, DumbMonit raises Active Directory bind
+failed the day this one does. LDAPS needs a certificate on each domain
+controller; an enterprise certification authority (AD CS) issues one
+automatically. The same user from PowerShell, with the Active Directory module:
+
+```
+New-ADUser -Name svc-dumbmonit -UserPrincipalName svc-dumbmonit@corp.example.com -AccountPassword (Read-Host -AsSecureString 'Password') -Enabled $true
+```
+
+The replication right is granted with `dsacls` because the delegation wizard
+does not offer it by name. It reveals no password and no secret. DumbMonit only
+reads: it never writes to the directory, and of LAPS it reads the expiry date,
+never the password.
 
 To keep the account from opening a session anywhere, deny it *Log on
 locally* and *Log on through Remote Desktop Services* by Group Policy: an LDAP
@@ -220,6 +242,32 @@ bind.
 - **LDAP channel binding** (`LdapEnforceChannelBinding`) concerns NTLM and
   Kerberos binds over TLS; the simple bind DumbMonit uses is unaffected.
 
+## DNS
+
+Domain controllers are reached by name (the certificate carries it), and the
+domain's other controllers are found by name too. If the DNS server of the
+DumbMonit host does not know the domain, there are two fixes:
+
+- **DNS servers** option: enter the IP addresses of the DNS servers that know
+  the domain, for example `10.0.0.10, 10.0.0.11`. Every lookup of this monitor
+  (the controller you entered, the other controllers, *Check every domain
+  controller*) then goes through them only, over UDP and then TCP. The
+  connection still uses the name for the certificate check. Empty keeps the
+  system resolver. A relay agent does the same on its own side.
+- Or give the whole container those servers, with `dns:` in
+  `docker-compose.yml`:
+
+```yaml
+services:
+  dumbmonit:
+    dns:
+      - 10.0.0.10
+      - 10.0.0.11
+```
+
+If a name is unknown to the servers, the error says so:
+`dc01.corp.local did not resolve through 10.0.0.10`.
+
 ## Credentials
 
 | Field | Value |
@@ -239,6 +287,7 @@ unauthenticated bind without checking anything.
 | CA certificate (`ca_cert`) | | PEM of the authority that issued the domain controllers' certificates |
 | Accept an unverifiable certificate (`insecure_tls`) | off | |
 | Allow plain LDAP (`allow_plaintext`) | off | required for `plain` |
+| DNS servers (`dns_servers`) | empty | IPs of the DNS servers used for every lookup of this monitor; empty = system DNS |
 | Check every domain controller (`check_all_dcs`) | on | TCP connection to the LDAP port of each domain controller |
 | Inactive user after (`stale_days_users`) | 90 | days |
 | Inactive computer after (`stale_days_computers`) | 90 | days |
@@ -257,7 +306,7 @@ unauthenticated bind without checking anything.
 - **The domain controller requires a protected connection**: LDAP signing is
   enforced; switch to LDAPS or StartTLS.
 - **A domain controller shows as unresolved**: its name does not resolve
-  from the DumbMonit host. Point DumbMonit's DNS at the domain's DNS servers,
+  from the DumbMonit host. Fill the *DNS servers* option with the domain's DNS servers (see DNS above),
   or untick *Check every domain controller*. Unresolved names never raise an
   alert.
 - **Replication status not readable**: grant *Monitor active directory

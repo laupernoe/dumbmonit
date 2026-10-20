@@ -588,7 +588,8 @@ mod tests {
         let message = with_actions("https://monit.example.org");
         let keyboard = Telegram::keyboard(&message).expect("buttons");
         let row = &keyboard["inline_keyboard"][0];
-        assert_eq!(row[0]["text"], "Acknowledge");
+        assert_eq!(row[0]["text"], "Dismiss");
+        assert_eq!(row[1]["text"], "Acknowledge");
         assert!(
             row[0]["url"].as_str().unwrap().starts_with("https://monit.example.org/alert-action#")
         );
@@ -606,7 +607,9 @@ mod tests {
         let message = with_actions("https://monit.example.org");
         let actions = Ntfy::actions(&message).unwrap();
         assert_eq!(actions[0]["action"], "view");
-        assert_eq!(actions[1]["label"], "Snooze 1 h");
+        assert_eq!(actions[0]["label"], "Dismiss");
+        assert_eq!(actions[2]["label"], "Snooze 1 h");
+        assert_eq!(actions.as_array().map(Vec::len), Some(3), "ntfy takes at most three");
         assert!(
             Discord::description(&message).contains("[Acknowledge](https://monit.example.org/")
         );

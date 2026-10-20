@@ -538,3 +538,12 @@ export function suggestName(address: string): string {
 	if (host.startsWith('[')) return host.slice(0, host.indexOf(']') + 1);
 	return host.replace(/:\d+$/, '') || trimmed;
 }
+
+/** A way in that is not a monitor kind: bringing monitors over from elsewhere (picker category "Import"). */
+export interface ImportChoice {
+	id: string;
+	label: string;
+	summary: string;
+	icon: typeof LucideIcon;
+	onrun: () => void;
+}
