@@ -93,9 +93,9 @@ impl TestApp {
         let status = response.status();
         let bytes = response.into_body().collect().await.expect("corps").to_bytes();
         let text = String::from_utf8_lossy(&bytes);
-        for secret in SECRETS {
-            assert!(!text.contains(secret), "{method} {uri} a renvoyé le secret {secret} : {text}");
-        }
+        // Le message ne cite ni le secret ni la réponse : seul son rang dans `SECRETS`.
+        let leaked = SECRETS.iter().position(|secret| text.contains(secret));
+        assert_eq!(leaked, None, "{method} {uri} a renvoyé le secret n° {leaked:?} de SECRETS");
         (status, serde_json::from_slice(&bytes).unwrap_or(Value::Null))
     }
 
