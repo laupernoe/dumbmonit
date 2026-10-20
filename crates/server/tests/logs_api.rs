@@ -128,12 +128,23 @@ fn write_logs(dir: &std::path::Path) {
     let logs = dir.join("logs");
     std::fs::create_dir_all(&logs).unwrap();
     let today = chrono::Utc::now().date_naive();
-    let mut lines = String::new();
-    for i in 0..500 {
-        lines.push_str(&format!("{{\"level\":\"INFO\",\"msg\":\"line {i}\"}}\n"));
-    }
     for back in [0u64, 1, 3, 20] {
         let day = today - chrono::Days::new(back);
+        // Un contenu propre à chaque jour, comme de vrais journaux : des jours
+        // identiques se compresseraient l'un sur l'autre dans l'archive.
+        let mut state = back.wrapping_add(7);
+        let mut lines = String::new();
+        for i in 0..2000 {
+            state = state
+                .wrapping_mul(6_364_136_223_846_793_005)
+                .wrapping_add(1_442_695_040_888_963_407);
+            lines.push_str(&format!(
+                "{{\"ts\":\"{day}T10:00:00Z\",\"level\":\"INFO\",\"msg\":\"probe ok\",\
+                 \"fields\":{{\"latency_ms\":{},\"request\":\"{:08x}\",\"n\":{i}}}}}\n",
+                (state >> 33) % 900,
+                state >> 40
+            ));
+        }
         let name = format!("dumbmonit-{}.log", day.format("%Y-%m-%d"));
         if back == 0 {
             std::fs::write(logs.join(name), &lines).unwrap();
@@ -181,11 +192,7 @@ async fn estimation_puis_telechargement_en_flux() {
     assert_eq!(headers[header::CONTENT_TYPE], "application/gzip");
     assert!(headers[header::CONTENT_DISPOSITION].to_str().unwrap().contains("-7d.tar.gz"));
     let gap = estimated.abs_diff(archive.len() as u64) as f64 / archive.len() as f64;
-    assert!(
-        gap < 0.15 || estimated.abs_diff(archive.len() as u64) < 2048,
-        "estimé {estimated}, réel {}",
-        archive.len()
-    );
+    assert!(gap < 0.10, "estimé {estimated}, réel {}", archive.len());
 
     let names = tar_names(&archive);
     assert_eq!(names.len(), 4, "{names:?}");
