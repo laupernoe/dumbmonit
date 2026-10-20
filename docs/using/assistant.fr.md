@@ -184,6 +184,7 @@ ne font que regarder et vous demander avant de lancer les autres.
 | `remove_silence` | write | Retire une fenêtre de maintenance. |
 | `schedule_maintenance` | write | Une fenêtre de maintenance ponctuelle à une date donnée, sur une surveillance ou toute l'instance, une semaine au plus. |
 | `acknowledge_alert` | write | Acquitte une alerte par empreinte pour un nombre d'heures (4 par défaut) : les rappels se mettent en pause, la résolution est quand même notifiée. `hours: 0` l'enlève. |
+| `dismiss_alert` | write | Écarte une alerte par empreinte (« j'ai compris ») : masquée des alertes actives et muette, résolution comprise, jusqu'à ce que la condition retombe ; un retour ultérieur alerte à nouveau. `undo: true` la rétablit. |
 | `probe_device` | write | Sonde une surveillance immédiatement et rapporte ce qui a été mesuré. |
 | `set_device_enabled` | write | Active ou désactive les vérifications d'une surveillance. |
 | `set_rule_enabled` | write | Active ou désactive une règle d'alerte. |

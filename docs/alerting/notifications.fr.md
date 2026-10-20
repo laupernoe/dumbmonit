@@ -256,7 +256,7 @@ Chaque message se termine par un lien vers la surveillance
 personnalisés l'obtiennent aussi comme variable `{{link}}` sauf si leur
 propre `base_url` est réglé.
 
-Les messages portent aussi des liens **Acquitter** et **Pause 1 h** (des
+Les messages portent aussi des liens **Écarter**, **Acquitter** et **Pause 1 h** (des
 boutons sur ntfy, Telegram et Web Push). Les services de chat récupèrent
 chaque lien affiché pour construire un aperçu : un lien n'agit donc jamais
 seul, il ouvre une page de confirmation, et seul le bouton de cette page

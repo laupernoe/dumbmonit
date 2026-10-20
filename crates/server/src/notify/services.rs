@@ -588,7 +588,8 @@ mod tests {
         let message = with_actions("https://monit.example.org");
         let keyboard = Telegram::keyboard(&message).expect("buttons");
         let row = &keyboard["inline_keyboard"][0];
-        assert_eq!(row[0]["text"], "Acknowledge");
+        assert_eq!(row[0]["text"], "Dismiss");
+        assert_eq!(row[1]["text"], "Acknowledge");
         assert!(
             row[0]["url"].as_str().unwrap().starts_with("https://monit.example.org/alert-action#")
         );
