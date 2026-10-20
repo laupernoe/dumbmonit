@@ -4353,6 +4353,8 @@ export interface WallWidgetSettings {
 	fx: WallFxSettings;
 	cve: WallCveSettings;
 	ai: WallAiSettings;
+	/** The free message widget: one short line of plain text. */
+	text: { enabled: boolean; content: string };
 	/** Where each widget goes on the wall (`wall/layout.ts`); always complete when read. */
 	layout: WallLayout;
 }
@@ -4497,6 +4499,8 @@ export interface WallWidgets {
 	cve: WallSection<WallCve[]> | null;
 	claude: WallSection<WallAiUsage> | null;
 	openai: WallSection<WallAiUsage> | null;
+	/** The free message; null when off or empty. */
+	text: string | null;
 }
 
 // --- Multi-product network discovery -----------------------------------------

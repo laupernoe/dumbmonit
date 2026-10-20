@@ -8456,6 +8456,12 @@ components:
       type: object
       properties:
         layout: { $ref: "#/components/schemas/WallLayout" }
+        text:
+          type: object
+          description: The free message widget (plain text, one line).
+          properties:
+            enabled: { type: boolean }
+            content: { type: string, maxLength: 200 }
         crypto:
           type: object
           properties:
@@ -8579,6 +8585,7 @@ components:
           oneOf:
             - { $ref: "#/components/schemas/WallWidgetSection" }
             - { type: "null" }
+        text: { type: [string, "null"], description: "The free message; null when off or empty." }
     WallNewsCountry:
       type: object
       required: [code, feeds]
@@ -8596,9 +8603,9 @@ components:
       type: object
       description: >-
         Where each wall widget goes (weather, news, cve, crypto, stocks, fx,
-        claude, openai), in order. Unknown or repeated ids are dropped; a
-        widget missing from every zone goes to its default one (weather, news
-        and cve on the right, the others in the bottom bar). Placing a widget
+        claude, openai, text), in order. Unknown or repeated ids are dropped; a
+        widget missing from every zone goes to its default one (weather, news,
+        cve and text on the right, the others in the bottom bar). Placing a widget
         does not turn it on.
       properties:
         top: { type: array, items: { type: string } }

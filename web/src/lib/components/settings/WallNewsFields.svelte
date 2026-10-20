@@ -1,48 +1,42 @@
 <script lang="ts">
 	/**
-	 * Settings → Wall news (admins). Off by default. Pick a country (or the
-	 * Tech and AI groups), tick its sources (the presets are served by the
-	 * server, each feed checked by hand), and/or add any RSS or Atom address —
-	 * "Test" reads it for real and shows the first headline. Headlines are
-	 * text only; where they go on the wall is chosen under Wall widgets.
+	 * The News widget's own settings, inside Settings → Wall widgets: pick a
+	 * country (or the Tech and AI groups), tick its sources (the presets are
+	 * served by the server, each feed checked by hand), and/or add any RSS or
+	 * Atom address — "Test" reads it for real and shows the first headline.
+	 * Whether News is on and where it sits are the widget's toggle and the
+	 * layout preview, in the parent. Headlines are text only.
 	 *
 	 * The server reads the feeds (CORS, address guard, size and time limits,
-	 * five-minute cache); nothing here talks to a news site.
+	 * five-minute cache); nothing here talks to a news site. The parent loads
+	 * and saves the feeds; this only edits them.
 	 */
 	import { Plus, X } from 'lucide-svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { m } from '#lib/paraglide/messages.js';
-	import { ApiError } from '#lib/api/index.js';
 	import {
-		DEFAULT_NEWS_SETTINGS,
 		getNewsPresets,
-		getNewsSettings,
-		saveNewsSettings,
 		testNewsFeed,
 		type FeedTest,
 		type NewsCountry,
 		type NewsFeed,
 		type NewsSettings
 	} from '#lib/api/wallNews.js';
-	import { Button, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
-	import UnsavedBadge from './UnsavedBadge.svelte';
-	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
+	import { Button, ErrorNotice, Field, Skeleton } from '#lib/ui/index.js';
 
 	const MAX_FEEDS = 8;
 
+	interface Props {
+		form: NewsSettings;
+		saving?: boolean;
+	}
+
+	let { form = $bindable(), saving = false }: Props = $props();
+
 	let loading = $state(true);
 	let error = $state<unknown>(null);
-	let missing = $state(false);
-	let saving = $state(false);
-	let notice = $state<string | null>(null);
-	let problem = $state<string | null>(null);
-
-	let form = $state<NewsSettings>({ ...DEFAULT_NEWS_SETTINGS, feeds: [] });
 	let countries = $state<NewsCountry[]>([]);
 	let country = $state('INT');
-
-	// Unsaved edits: the saved form (the draft feed fields are not saved state).
-	const tracker = useDirtyTracker(() => form);
 
 	let customUrl = $state('');
 	let customName = $state('');
@@ -94,15 +88,12 @@
 		loading = true;
 		error = null;
 		try {
-			const [saved, presets] = await Promise.all([getNewsSettings(signal), getNewsPresets(signal)]);
-			form = { ticker: saved.ticker, feeds: saved.feeds.map((feed) => ({ ...feed })) };
+			const presets = await getNewsPresets(signal);
 			countries = presets;
 			country = guessCountry(new Set(presets.map((c) => c.code)));
-			tracker.markClean();
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
-			if (cause instanceof ApiError && cause.missing) missing = true;
-			else error = cause;
+			error = cause;
 		} finally {
 			loading = false;
 		}
@@ -118,14 +109,12 @@
 	const full = $derived(form.feeds.length >= MAX_FEEDS);
 
 	function togglePreset(preset: { label: string; url: string }) {
-		notice = null;
 		form.feeds = hasFeed(preset.url)
 			? form.feeds.filter((feed) => feed.url !== preset.url)
 			: [...form.feeds, { url: preset.url, label: preset.label }];
 	}
 
 	function remove(feed: NewsFeed) {
-		notice = null;
 		form.feeds = form.feeds.filter((other) => other.url !== feed.url);
 	}
 
@@ -152,23 +141,6 @@
 		customName = '';
 		test = null;
 		testError = null;
-		notice = null;
-	}
-
-	async function save() {
-		saving = true;
-		problem = null;
-		notice = null;
-		try {
-			const saved = await saveNewsSettings(form);
-			form = { ...saved, feeds: saved.feeds.map((feed) => ({ ...feed })) };
-			tracker.markClean();
-			notice = m.settings_news_saved();
-		} catch (cause) {
-			problem = cause instanceof Error ? cause.message : String(cause);
-		} finally {
-			saving = false;
-		}
 	}
 
 	function hostOf(url: string): string {
@@ -180,9 +152,7 @@
 	}
 </script>
 
-{#if !missing}
-	<Panel id="news" title={m.settings_news_title()} description={m.settings_news_description()}>
-		{#if loading}
+{#if loading}
 			<Skeleton class="h-40 w-full" />
 		{:else if error}
 			<ErrorNotice {error} onretry={() => void load()} />
@@ -190,14 +160,6 @@
 			<div class="space-y-6">
 				<!-- Headlines -->
 				<div class="space-y-4">
-					<div class="flex items-start justify-between gap-4">
-						<div class="min-w-0">
-							<label for="news-ticker" class="text-sm font-semibold text-ink">{m.settings_news_ticker()}</label>
-							<p class="text-[0.8125rem] text-ink-2">{m.settings_news_ticker_hint()}</p>
-						</div>
-						<Toggle id="news-ticker" bind:checked={form.ticker} disabled={saving} />
-					</div>
-
 					<div class="grid gap-4 sm:grid-cols-[minmax(0,14rem)_1fr]">
 						<Field label={m.settings_news_country()} for="news-country">
 							<select id="news-country" class="input" bind:value={country}>
@@ -302,15 +264,5 @@
 						{/if}
 					</div>
 				</div>
-
-				<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
-					<Button onclick={save} disabled={saving}>{m.settings_news_save()}</Button>
-					<UnsavedBadge dirty={tracker.dirty} />
-					<p class="min-h-5 text-sm" role="status" aria-live="polite">
-						{#if problem}<span class="text-warning-ink">{problem}</span>{:else if notice}<span class="text-signal-ink">{notice}</span>{/if}
-					</p>
-				</div>
 			</div>
-		{/if}
-	</Panel>
 {/if}
