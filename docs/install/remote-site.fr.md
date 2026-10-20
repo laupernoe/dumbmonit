@@ -47,12 +47,36 @@ jusqu'à 25 secondes en attendant du travail (long polling).
 
 ## 2. Créer un jeton d'enrôlement
 
-**Réglages → Agents → Nouveau jeton**, ou ajoutez une surveillance de type
-*agent*. Copiez la valeur `dmon_…` : elle n'est montrée qu'une fois.
+Le plus simple : **Réglages → Agents → Surveiller un site distant** (ou cochez
+*Cet agent est un relais pour un site distant* en créant un jeton). Nommez le
+site, créez le jeton et lancez la commande d'installation affichée sur une
+machine du site. Le jeton porte lui-même le mode relais et le site : l'agent
+devient relais dès son premier envoi, sans rien modifier sur la machine.
+
+**Un agent déjà installé** devient relais depuis sa page dans DumbMonit : dans
+le panneau *Relais*, activez *Relais pour un site distant*, indiquez le site,
+enregistrez. L'agent bascule à son prochain envoi, sans redémarrage. On le
+désactive de la même façon. Un agent trop ancien pour suivre ce réglage y est
+signalé : mettez-le à jour en relançant la commande d'installation, ou utilisez
+`relay: true` ci-dessous.
+
+Les variantes ci-dessous règlent le mode relais sur la machine elle-même ; il
+prime alors sur l'interrupteur de l'interface.
 
 ## 3. Démarrer le relais sur le site distant
 
-N'importe quelle machine sur le site distant avec Docker, en utilisant
+Sous Linux, macOS ou FreeBSD, l'installateur en une ligne avec `--relay` et le
+site (inutile avec un jeton de *Surveiller un site distant*) :
+
+```sh
+curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
+  --token=dmon_… --url=https://monitor.example.org --relay --site='Lyon office'
+```
+
+Sous Windows, ajoutez `-Relay -Site 'Lyon office'` à la commande d'installation
+PowerShell.
+
+Ou n'importe quelle machine sur le site distant avec Docker, en utilisant
 `docker-compose.agent.yml` du dépôt :
 
 ```sh
@@ -64,8 +88,8 @@ DUMBMONIT_AGENT_SITE="Lyon office" \
 docker compose -f docker-compose.agent.yml up -d
 ```
 
-Ou l'agent ordinaire installé avec l'installateur en une ligne, avec deux
-clés de plus dans `/etc/dumbmonit/agent.yaml` :
+Un agent déjà installé devient relais avec deux clés de plus dans
+`/etc/dumbmonit/agent.yaml`, puis un redémarrage de l'agent :
 
 ```yaml
 relay: true

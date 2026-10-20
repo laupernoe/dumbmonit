@@ -26,9 +26,7 @@
 		listSilences
 	} from '#lib/api/index.js';
 	import type { Tone } from '#lib/ui/index.js';
-	import { Button, ErrorNotice, Menu, Plate, Skeleton } from '#lib/ui/index.js';
-	import { auth } from '#lib/stores/auth.svelte.js';
-	import { EllipsisVertical } from 'lucide-svelte';
+	import { Button, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import {
 		alertDetail,
@@ -36,9 +34,7 @@
 		severityTone,
 		severityWord
 	} from '#lib/components/alerts/helpers.js';
-	import AckControl from '#lib/components/alerts/AckControl.svelte';
-	import SnoozeControl from '#lib/components/alerts/SnoozeControl.svelte';
-	import IgnoreControl from '#lib/components/alerts/IgnoreControl.svelte';
+	import AlertActions from '#lib/components/alerts/AlertActions.svelte';
 
 	interface Props {
 		targetId: number;
@@ -351,34 +347,8 @@
 	</div>
 {/if}
 
-{#snippet controls(alert: Alert)}
-	<span class="flex items-center gap-1">
-		<AckControl {alert} onchanged={onackchange} />
-		{#if auth.canOperate && !alert.acked}
-			<Menu label={m.alerts_row_more_menu()}>
-				{#snippet trigger({ toggle, open })}
-					<Button
-						size="sm"
-						variant="ghost"
-						class="!h-10 !w-10 !px-0 sm:!h-7 sm:!w-7"
-						aria-haspopup="menu"
-						aria-expanded={open}
-						aria-label={m.alerts_row_more()}
-						title={m.alerts_row_more()}
-						onclick={toggle}
-					>
-						<EllipsisVertical class="size-3.5" aria-hidden="true" />
-					</Button>
-				{/snippet}
-				{#snippet children({ close })}
-					<div class="flex flex-col items-stretch gap-1">
-						<SnoozeControl {alert} {target} {silences} onchanged={() => { onackchange?.(alert); close(); }} />
-						<IgnoreControl rule={rules.get(alert.rule_uid)} {target} onchanged={() => { onackchange?.(alert); close(); }} />
-					</div>
-				{/snippet}
-			</Menu>
-		{/if}
-	</span>
+{#snippet controls(alert: Alert, extra: Alert[] = [], menu = true)}
+	<AlertActions {alert} {extra} {target} rule={rules.get(alert.rule_uid)} {silences} {menu} onchanged={onackchange} />
 {/snippet}
 
 {#if error}
@@ -424,6 +394,7 @@
 						<Button size="sm" variant="ghost" onclick={() => toggleGroup(group.key)} aria-expanded={open}>
 							{open ? m.devices_timeline_show_fewer() : m.devices_timeline_show_each({ count: group.alerts.length })}
 						</Button>
+						{@render controls(first, group.alerts.slice(1), false)}
 					{:else}
 						{@render controls(first)}
 					{/if}

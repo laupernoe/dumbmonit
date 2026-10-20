@@ -3,6 +3,15 @@
 The web server: busy and idle workers, the worker scoreboard by state, and
 request/byte rates when ExtendedStatus is on.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Status page (HTTP, default) |
+| 443 | TCP | Only if the status page is served over HTTPS |
+
 DumbMonit reads Apache's built-in `mod_status`, queried with `?auto` so it
 answers in plain `Key: Value` lines instead of the HTML page meant for a
 browser.
@@ -38,13 +47,13 @@ hours.
 
 ## Enable Apache's mod_status
 
-1. Make sure mod_status is loaded (it ships with Apache and is usually enabled by default).
+1. Enable mod_status (it ships with Apache and is usually on already).
 
     ```
     a2enmod status
     ```
 
-2. Add a status location, restricted to the DumbMonit host; adjust the address to match. On Debian and Ubuntu this goes in a file of its own, elsewhere in the main configuration.
+2. Add this location to the Apache configuration, restricted to the DumbMonit host (adjust the address).
 
     ```
     <Location "/server-status">
@@ -53,32 +62,28 @@ hours.
     </Location>
     ```
 
-3. Turn on the request and byte counters (optional, but worth it): without it, only busy/idle workers and the scoreboard are reported.
+3. Optional: turn on the request and byte counters.
 
     ```
     ExtendedStatus On
     ```
 
-4. Reload Apache and check that it answers before configuring DumbMonit.
+4. Reload Apache, then open http://apache.lan/server-status?auto from the DumbMonit host.
 
     ```
     apachectl graceful
-    curl -s 'http://apache.lan/server-status?auto'
     ```
 
-5. In DumbMonit, enter the Apache host, for example "apache.lan", and the path if it is not "/server-status" (DumbMonit adds "?auto" itself).
+5. In DumbMonit, enter the Apache host, for example apache.lan, and the path if it is not /server-status.
 
 !!! warning
-    Without ExtendedStatus, requests and bytes are not reported at all, not
-    as zero: the chart stays empty rather than lying flat. Apache does not
-    publish its own version in mod_status; DumbMonit reads it from the
-    Server response header instead, which some distributions trim down on
-    purpose.
+    Without ExtendedStatus, requests and bytes are not reported at all: the chart stays empty rather than flat.
 
-On Debian and Ubuntu, the status location usually already exists in
-`/etc/apache2/mods-available/status.conf`; editing the `Require` line there
-is enough, no new file needed. Where the configuration is a single file
-(most other distributions), add the block to the main virtual host instead.
+### Good to know
+
+On Debian and Ubuntu the location goes in a file of its own, elsewhere in the main configuration. DumbMonit adds ?auto itself. Without ExtendedStatus only busy and idle workers and the scoreboard are reported. Apache does not publish its own version in mod_status; DumbMonit reads it from the Server response header instead, which some distributions trim down on purpose.
+
+Vendor documentation: https://httpd.apache.org/docs/2.4/mod/mod_status.html
 
 ## Credentials
 

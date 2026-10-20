@@ -3,6 +3,14 @@
 The web server and reverse proxy: upstreams failing their health checks, a
 configuration reload that failed, handler errors and the share of 5xx answers.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 2019 | TCP | Admin API (HTTP, default) |
+
 DumbMonit reads three things from Caddy's admin API, all with `GET`:
 `/config/apps/http/servers` (the HTTP configuration Caddy runs, never the
 `tls` section where DNS provider tokens live), `/reverse_proxy/upstreams` (the
@@ -52,15 +60,13 @@ upstream with its remembered failures.
 
 ## Publish a read-only view of Caddy's admin API
 
-1. Caddy's admin API can load a new configuration and stop Caddy: it must stay out of reach of anything but DumbMonit. Leave it where Caddy puts it, on localhost:2019, and let Caddy publish a read-only view of it: GET only, on the three paths DumbMonit reads, behind a password.
-
-2. Create the password hash for the user dumbmonit.
+1. Hash a password for the user dumbmonit.
 
     ```
     caddy hash-password --plaintext 'a-long-password'
     ```
 
-3. Add this site to the Caddyfile, with that hash in place of HASH, then reload Caddy. It answers on port 2020 and refuses everything but those three reads.
+2. Add this site to the Caddyfile, put the hash in place of HASH, then reload Caddy.
 
     ```
     :2020 {
@@ -80,25 +86,30 @@ upstream with its remembered failures.
     }
     ```
 
-4. Optional: add metrics to the global options block at the top of the Caddyfile to count requests, errors and 5xx answers per server. Upstream health and reloads are reported without it.
+3. Optional: add metrics to the global options block at the top of the Caddyfile to count requests and errors.
 
     ```
     metrics
     ```
 
-5. Filter port 2020 so that only the DumbMonit host reaches it. In DumbMonit, enter the Caddy host with that port, for example "caddy.lan:2020", and the user dumbmonit with its password.
+4. Filter port 2020 so that only the DumbMonit host reaches it.
+
+5. In DumbMonit, enter the Caddy host with that port, for example caddy.lan:2020, and the user dumbmonit with its password.
+
+### Required permissions
+
+- **GET on /config/apps/http/servers**: Servers and routes
+- **GET on /reverse_proxy/upstreams**: Upstream health
+- **GET on /metrics**: Request counters (optional)
 
 !!! warning
-    Never publish the admin API itself on the network without a firewall in front: anyone who reaches port 2019 can replace the configuration or stop Caddy, and the origins option does not stop a client that sends no Origin header. If you do expose it on a private network, filter the port so that only the DumbMonit host reaches it, and pick No password.
+    Never expose the admin API itself: whoever reaches port 2019 can replace the configuration or stop Caddy.
 
-The Caddyfile keeps its meaning without indentation; `caddy fmt` indents it.
-`header_up Host localhost:2019` is needed because the admin API only answers
-requests addressed to the address it listens on. With the Caddy container
-image, run the hash command with `docker exec`.
+### Why these permissions
 
-A configuration loaded as JSON rather than from a Caddyfile gets the same site
-as an extra server with a `basic_auth` handler, a `method` and `path` matcher
-and a `reverse_proxy` to `localhost:2019`.
+Caddy's admin API can load a new configuration and stop Caddy: it must stay out of reach of anything but DumbMonit. Leave it where Caddy puts it, on localhost:2019, and let Caddy publish a read-only view of it: GET only, on the three paths DumbMonit reads, behind a password. The site above answers on port 2020 and refuses everything else. If you do expose the admin API on a private network, filter the port so that only the DumbMonit host reaches it, and pick No password; the origins option does not stop a client that sends no Origin header. Without metrics, upstream health and reloads are still reported.
+
+Vendor documentation: https://caddyserver.com/docs/api
 
 ## Credentials
 

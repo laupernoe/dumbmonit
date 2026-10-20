@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.13.5',
+		date: '2026-10-21',
+		highlights: [
+			{
+				title: 'Remote sites in one step',
+				text: 'Watch a remote site gives an install command that sets up a relay by itself, and any agent can be switched to relay mode from its page. Scan a site’s network or set Reached through on many monitors at once.'
+			},
+			{
+				title: 'Dismiss an alert in one click',
+				text: 'Dismiss makes an alert go away and stay quiet until the problem clears. Undo it from the Dismissed view.'
+			},
+			{
+				title: 'Simpler setup guides',
+				text: 'Each monitor type shows short steps in the product’s own web interface, the exact permissions to grant and the network ports to open.'
+			},
+			{
+				title: 'Saved credentials stay saved',
+				text: 'Editing a monitor shows the token ID or user name and keeps the saved secret when you leave it empty.'
+			},
+			{
+				title: 'Logs, imports and the wall',
+				text: 'Download DumbMonit’s logs or send them to Graylog, Loki, VictoriaLogs, Elasticsearch or syslog; import Uptime Kuma 2 from kuma.db; arrange the wall by drag and drop, with a new Text widget.'
+			}
+		]
+	},
+	{
 		version: '0.13.0',
 		date: '2026-10-19',
 		highlights: [

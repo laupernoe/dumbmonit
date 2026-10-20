@@ -38,23 +38,29 @@ export interface Health {
 export type SnmpV3AuthProtocol = 'md5' | 'sha1' | 'sha224' | 'sha256' | 'sha384' | 'sha512';
 export type SnmpV3PrivacyProtocol = 'des' | 'aes128' | 'aes192' | 'aes256';
 
+/**
+ * A credential as sent on create or edit. Mirrors `CredentialInput` in
+ * `crates/proto/src/credential.rs`: on `PUT`, a secret left out (community,
+ * passphrase, token `secret`, `password`) keeps the saved one as long as the
+ * user name or token ID it belongs to is unchanged.
+ */
 export type Credential =
 	| { type: 'none' }
-	| { type: 'snmp_community'; community: string }
+	| { type: 'snmp_community'; community?: string }
 	| {
 			type: 'snmp_v3';
 			username: string;
-			auth?: { protocol: SnmpV3AuthProtocol; passphrase: string } | null;
-			privacy?: { protocol: SnmpV3PrivacyProtocol; passphrase: string } | null;
+			auth?: { protocol: SnmpV3AuthProtocol; passphrase?: string } | null;
+			privacy?: { protocol: SnmpV3PrivacyProtocol; passphrase?: string } | null;
 			context?: string | null;
 	  }
-	| { type: 'api_token'; token: string }
+	| { type: 'api_token'; token?: string }
 	/**
 	 * A Proxmox VE / PBS token in the two pieces the product shows: the server
 	 * assembles `token_id=secret` and stores the combined form.
 	 */
-	| { type: 'api_token'; token_id: string; secret: string }
-	| { type: 'username_password'; username: string; password: string }
+	| { type: 'api_token'; token_id: string; secret?: string }
+	| { type: 'username_password'; username: string; password?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -105,7 +111,8 @@ export interface CredentialView {
  * A target as returned on read.
  *
  * `credential_kind` is a human label ("SNMP community"). The secret itself is
- * never exposed by the API, by design.
+ * never exposed by the API, by design: only whether one is saved
+ * (`has_secret`) and the non-secret parts (`credential_public`).
  */
 export interface Target {
 	id: TargetId;
@@ -120,6 +127,14 @@ export interface Target {
 	enabled: boolean;
 	tags: Record<string, string>;
 	credential_kind: string;
+	/** A secret is saved: leaving its field blank on edit keeps it. */
+	has_secret: boolean;
+	/**
+	 * Non-secret parts of the credential under the form's field keys
+	 * (`username`, `token_id`, `auth_protocol`, `privacy_protocol`, `context`).
+	 * Never a secret; empty for a reader.
+	 */
+	credential_public: Record<string, string>;
 	/** Flat folder shown on `/targets`. Empty: no folder. */
 	group_name: string;
 	/** Manual rank, tiebreaking only within the same state and folder. */
@@ -334,6 +349,16 @@ export interface Alert {
 	/** Account that acknowledged, or `token:name` for an API token. */
 	acked_by: string | null;
 	ack_note: string | null;
+	/**
+	 * True once someone dismissed this occurrence: it left every list and
+	 * count and nothing is sent for it. If the condition clears and comes
+	 * back, that is a new alert. Only `GET /alerts?dismissed=true` returns these.
+	 */
+	dismissed: boolean;
+	/** UTC, no suffix (`parseServerDate`). */
+	dismissed_at: string | null;
+	/** Account that dismissed, or `token:name` for an API token. */
+	dismissed_by: string | null;
 	value: number | null;
 	score: number | null;
 	condition_since: string | null;
@@ -525,9 +550,27 @@ export interface DiscoveryResult {
  * monitored: enable SNMP, create an API token... `warning` and `doc_url` may be
  * empty, in which case nothing is displayed.
  */
+export interface CollectorPort {
+	port: number;
+	protocol: string;
+	/** `to_device`: DumbMonit (or its relay agent) to the device; `to_server`: agent to DumbMonit. */
+	direction: string;
+	purpose: string;
+	/** Only used by an option or mode, named in `purpose`. */
+	optional: boolean;
+}
+
 export interface CollectorSetup {
 	title: string;
 	steps: string[];
+	/**
+	 * Rights, roles or permissions to give the monitoring account, one per entry:
+	 * the first line is the right (shown in bold), the optional second line says
+	 * what it is for. The server omits the field when a type needs none.
+	 */
+	permissions?: string[];
+	/** Network ports to open; the server omits the field when there are none. */
+	ports?: CollectorPort[];
 	warning: string;
 	doc_url: string;
 }
@@ -647,7 +690,7 @@ export interface CollectorInfo {
  * `|| ''` in components.
  */
 export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string }): CollectorInfo {
-	const setup = raw.setup ?? { title: '', steps: [], warning: '', doc_url: '' };
+	const setup = raw.setup ?? { title: '', steps: [], permissions: [], ports: [], warning: '', doc_url: '' };
 	const options = Array.isArray(raw.options) ? raw.options : [];
 	const credential_types = Array.isArray(raw.credential_types)
 		? raw.credential_types.filter((t) => typeof t === 'string')
@@ -671,6 +714,16 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 		setup: {
 			title: setup.title?.trim() ?? '',
 			steps: Array.isArray(setup.steps) ? setup.steps.filter((s) => s.trim()) : [],
+			ports: Array.isArray(setup.ports)
+				? setup.ports.filter((p) => p && Number.isInteger(p.port)).map((p) => ({
+						port: p.port,
+						protocol: (p.protocol ?? 'tcp').toLowerCase(),
+						direction: p.direction === 'to_server' ? 'to_server' : 'to_device',
+						purpose: p.purpose?.trim() ?? '',
+						optional: p.optional === true
+					}))
+				: [],
+			permissions: Array.isArray(setup.permissions) ? setup.permissions.filter((s) => s.trim()) : [],
 			warning: setup.warning?.trim() ?? '',
 			doc_url: setup.doc_url?.trim() ?? ''
 		},
@@ -1162,6 +1215,9 @@ export interface AgentToken {
 	 * this date — only revoking cuts them off.
 	 */
 	expires_at: string | null;
+	/** A relay token: the machine it enrols becomes a relay for its site at its first report. */
+	relay?: boolean;
+	relay_site?: string | null;
 }
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */
@@ -1174,6 +1230,10 @@ export interface AgentTokenPayload {
 	max_uses?: number | null;
 	/** Days before the token stops enrolling. Left out, there is no deadline. */
 	expires_in_days?: number | null;
+	/** Make the enrolled machine a relay for a remote site, without editing anything on it. */
+	relay?: boolean;
+	/** Site of that relay. */
+	site?: string | null;
 }
 
 /** Response of `POST /api/agent/tokens`: the only chance to see the token in clear. */
@@ -1203,6 +1263,17 @@ export interface AgentHost {
 	relay: boolean;
 	/** Site declared by the agent, if any. */
 	site: string | null;
+	/**
+	 * Relay mode asked from the UI (or by the enrolment token), sent to the agent
+	 * in every acknowledgement. Differs from `relay` until the agent adopts it.
+	 * Absent on an older server.
+	 */
+	relay_wanted?: boolean;
+	relay_wanted_site?: string | null;
+	/** False: the agent is too old to follow `relay_wanted` (set `relay: true` in agent.yaml, or update it). */
+	relay_control?: boolean;
+	/** `relay: true` is set in the agent's own configuration, which wins: it can't be switched off here. */
+	relay_local?: boolean;
 	/** Devices reached through this agent (`via_agent`). */
 	relayed: number;
 	last_seen_at: string | null;
@@ -1343,7 +1414,7 @@ export interface NotificationPolicy {
 }
 
 /** What a notification action link does (`/alert-action#<token>`). */
-export type AlertLinkAction = 'ack' | 'snooze';
+export type AlertLinkAction = 'ack' | 'snooze' | 'dismiss';
 
 /** An alert named by an action link, reduced to what is needed to decide. */
 export interface AlertLinkTarget {
@@ -1352,6 +1423,7 @@ export interface AlertLinkTarget {
 	severity: AlertSeverity;
 	acked: boolean;
 	acked_until: string | null;
+	dismissed: boolean;
 }
 
 /** `POST /api/public/alert-action/inspect`: what the link would do. */
@@ -1366,8 +1438,11 @@ export interface AlertLinkView {
 /** `POST /api/public/alert-action`: what the link did. */
 export interface AlertLinkResult {
 	action: AlertLinkAction;
+	/** The instant of the gesture (a dismissal) or the end of the ack / snooze. */
 	until: string;
 	acked: number;
+	/** Alerts dismissed by the link (`acked` is 0 then). */
+	dismissed: number;
 	alerts: AlertLinkTarget[];
 }
 
@@ -2657,6 +2732,21 @@ export interface PdmHealth {
 	/** Soonest expiry first. */
 	certificates: PdmCertificate[];
 	subscription: PdmSubscription | null;
+}
+
+// ---------------------------------------------------------------------------
+// Skipped optional features (`crates/server/src/api/skipped_features.rs`)
+// ---------------------------------------------------------------------------
+
+export interface SkippedFeature {
+	/** `guest_agent`, `updates`, `certificates`, `disks`, `services`, `traffic_control`, `remote_updates`. */
+	feature: string;
+	/** The privilege the token lacks, as the device names it. */
+	privilege: string;
+}
+
+export interface SkippedFeatures {
+	features: SkippedFeature[];
 }
 
 // ---------------------------------------------------------------------------
@@ -4299,6 +4389,8 @@ export interface WallWidgetSettings {
 	fx: WallFxSettings;
 	cve: WallCveSettings;
 	ai: WallAiSettings;
+	/** The free message widget: one short line of plain text. */
+	text: { enabled: boolean; content: string };
 	/** Where each widget goes on the wall (`wall/layout.ts`); always complete when read. */
 	layout: WallLayout;
 }
@@ -4443,6 +4535,8 @@ export interface WallWidgets {
 	cve: WallSection<WallCve[]> | null;
 	claude: WallSection<WallAiUsage> | null;
 	openai: WallSection<WallAiUsage> | null;
+	/** The free message; null when off or empty. */
+	text: string | null;
 }
 
 // --- Multi-product network discovery -----------------------------------------
@@ -4502,4 +4596,81 @@ export interface DiscoveryJob extends DiscoveryJobSummary {
 	progress: { phase: DiscoveryPhase; probed: number; total: number };
 	error: string | null;
 	hosts: DiscoveredHost[];
+}
+
+// --- Server logs (Settings → System → Logs) -----------------------------------
+
+export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
+
+export interface LogFile {
+	/** Day, `YYYY-MM-DD`. */
+	day: string;
+	bytes: number;
+	compressed: boolean;
+}
+
+/** Local log files and the disk writer. Mirrors `GET /api/logs`. */
+export interface LogsInfo {
+	directory: string;
+	retention_days: number;
+	max_total_mb: number;
+	total_bytes: number;
+	oldest_day: string | null;
+	days_available: number;
+	files: LogFile[];
+	writer: { active: boolean; dropped: number };
+}
+
+export interface LogsSettingsUpdate {
+	retention_days?: number;
+	max_total_mb?: number;
+}
+
+export interface LogExportEstimate {
+	days: number;
+	from: string;
+	to: string;
+	files: number;
+	/** Estimated size of the downloaded .tar.gz. */
+	bytes: number;
+}
+
+/** Same shape as a channel kind, without delivery actions. */
+export type LogKindInfo = Omit<ChannelKindInfo, 'actions'>;
+
+export interface LogDestinationStats {
+	sent: number;
+	dropped: number;
+	failed_batches: number;
+	queued: number;
+	last_error: string | null;
+	last_error_at: string | null;
+	last_success_at: string | null;
+}
+
+/** A destination as returned on read: never its secrets. */
+export interface LogDestination {
+	id: number;
+	name: string;
+	kind: string;
+	enabled: boolean;
+	min_level: LogLevel;
+	settings: Record<string, unknown>;
+	has_secret: boolean;
+	stats: LogDestinationStats | null;
+}
+
+export interface LogDestinationPayload {
+	name: string;
+	kind: string;
+	enabled: boolean;
+	min_level: LogLevel;
+	settings: Record<string, unknown>;
+	/** Omitted = keep the stored secrets, `{}` = clear them. */
+	secrets?: Record<string, unknown>;
+}
+
+export interface LogTestResult {
+	ok: boolean;
+	message: string;
 }

@@ -37,6 +37,16 @@ pub async fn record(
     ip: Option<IpAddr>,
 ) {
     let ip = ip.map(|ip| ip.to_string());
+    // Le même geste dans les journaux du serveur, marqué comme entrée d'audit :
+    // il suit ainsi les fichiers de `/data/logs` et les destinations (`logs`).
+    tracing::info!(
+        target: crate::logs::AUDIT_TARGET,
+        actor = actor.unwrap_or("-"),
+        action,
+        subject = subject.unwrap_or("-"),
+        ip = ip.as_deref().unwrap_or("-"),
+        "audit: {action}"
+    );
     let result =
         sqlx::query("INSERT INTO audit_log (actor, action, subject, ip) VALUES (?, ?, ?, ?)")
             .bind(actor)

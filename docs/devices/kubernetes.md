@@ -5,6 +5,14 @@ pods crash looping or stuck Pending, Deployments, StatefulSets and DaemonSets
 missing replicas, volume claims that never get bound, and the warning events
 of the last hour.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 6443 | TCP | API server (HTTPS, default) |
+
 DumbMonit reads the API with the token of a dedicated service account bound
 to a read-only ClusterRole: `get` and `list` on nodes, pods, workloads,
 persistent volume claims and events, nothing else. It never writes, and the
@@ -90,15 +98,25 @@ the last hour by reason. A healthy cluster shows its counts and nothing else.
 
 ## Create a read-only service account for DumbMonit
 
-1. Create a service account, a ClusterRole that can only get and list nodes, pods, workloads, volume claims and events, and bind them together. The role reads no Secret and no ConfigMap. On a k3s server, run each command as sudo k3s kubectl.
+1. Create the service account.
 
     ```
     kubectl create serviceaccount dumbmonit -n kube-system
+    ```
+
+2. Create a ClusterRole that can only get and list what DumbMonit reads.
+
+    ```
     kubectl create clusterrole dumbmonit-read --verb=get,list --resource=nodes,pods,persistentvolumeclaims,events,deployments.apps,statefulsets.apps,daemonsets.apps
+    ```
+
+3. Bind the role to the service account.
+
+    ```
     kubectl create clusterrolebinding dumbmonit-read --clusterrole=dumbmonit-read --serviceaccount=kube-system:dumbmonit
     ```
 
-2. Give it a token that does not expire: a Secret of type service-account-token, which Kubernetes fills in. Then print the token, and the cluster CA in base64.
+4. Create a token that does not expire, then print the token and the cluster CA in base64.
 
     ```
     echo '{"apiVersion":"v1","kind":"Secret","metadata":{"name":"dumbmonit-token","namespace":"kube-system","annotations":{"kubernetes.io/service-account.name":"dumbmonit"}},"type":"kubernetes.io/service-account-token"}' | kubectl apply -f -
@@ -106,17 +124,39 @@ the last hour by reason. A healthy cluster shows its counts and nothing else.
     kubectl -n kube-system get secret dumbmonit-token -o jsonpath='{.data.ca\.crt}'
     ```
 
-3. In DumbMonit, enter the address of the API server, for example "https://k3s.lan:6443". Paste the token as Service account token and the base64 CA as Cluster CA certificate: only that CA is then trusted. One API server reports the whole cluster.
+5. In DumbMonit, enter the API server address (for example https://k3s.lan:6443), paste the token as Service account token and the CA as Cluster CA certificate.
+
+### Required permissions
+
+- **get, list on nodes, pods, events**: Cluster-wide, read-only
+- **get, list on persistentvolumeclaims**: Volume claims never bound
+- **get, list on deployments, statefulsets, daemonsets**: Workloads missing replicas (apps group)
 
 !!! warning
-    The API server's certificate only lists its own names and addresses: an address it does not list fails verification. Use one it lists (a node IP address, or a name added with --tls-san on k3s), or tick Accept an unverifiable certificate.
+    On k3s, run each command as sudo k3s kubectl. The API server certificate only lists its own names and addresses: use one it lists, or tick Accept an unverifiable certificate.
+
+Vendor documentation: [Kubernetes RBAC](https://kubernetes.io/docs/reference/access-authn-authz/rbac/)
+
+### Why these permissions
+
+Kubernetes has no screen for this: RBAC objects are created with `kubectl` or
+a manifest, so the commands above are the way.
+
+The role reads no Secret and no ConfigMap. The token is a Secret of type
+`kubernetes.io/service-account-token`, which Kubernetes fills in and which does
+not expire. Paste the base64 CA as Cluster CA certificate: only that CA is then
+trusted. One API server reports the whole cluster.
+
+The API server's certificate only lists its own names and addresses: an address
+it does not list fails verification. Use one it lists (a node IP address, or a
+name added with `--tls-san` on k3s), or tick Accept an unverifiable certificate.
 
 ### The same thing as a manifest
 
 For GitOps, or to review exactly what is granted, apply this manifest instead
-of the three `kubectl create` commands and the Secret of step 2
-(`kubectl apply -f dumbmonit.yaml`), then print the token and the CA as in
-step 2:
+of steps 1 to 3 and of the `kubectl apply` in step 4
+(`kubectl apply -f dumbmonit.yaml`), then print the token and the CA with the
+last two commands of step 4:
 
 ```yaml
 apiVersion: v1

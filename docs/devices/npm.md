@@ -4,6 +4,15 @@ The proxy manager: hosts whose configuration nginx refused, disabled hosts,
 and the certificates the hosts present, before a Let's Encrypt renewal failure
 turns into an expired site.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 81 | TCP | Admin API (HTTP, default) |
+| 443 | TCP | Only with the certificate check (HTTPS port of the hosts, default) |
+
 DumbMonit logs in to Nginx Proxy Manager's REST API (`/api`, on the port of
 its web interface, 81) with a user of its own, then reads the proxy hosts,
 redirection hosts, 404 hosts (called dead hosts in the API) and streams. Each
@@ -51,24 +60,28 @@ disabled hosts, then the certificates soonest to expire first.
 
 ## Create a view-only Nginx Proxy Manager user
 
-1. In Nginx Proxy Manager, open Users and add a user for DumbMonit, with an email address of its own such as dumbmonit@example.com. Leave every role unticked.
+1. In Nginx Proxy Manager, open Users → Add User, give it an email of its own such as dumbmonit@example.com, and leave every role unticked.
 
-2. In that user's menu, open Permissions: Item Visibility All Items; Proxy Hosts, Redirection Hosts, 404 Hosts and Streams View Only; Access Lists and SSL Certificates Hidden. Then set its password with Change Password in the same menu.
+2. From that user's menu, open Permissions and set the levels listed below.
 
-3. SSL Certificates stay Hidden on purpose: Nginx Proxy Manager hands the private key of imported certificates, and the credentials of the DNS challenge, to any user allowed to view them. DumbMonit reads each certificate where it is served instead, with a TLS handshake on port 443 for every host that has one.
+3. From the same menu, choose Change Password and set a password.
 
-4. In DumbMonit, enter the Nginx Proxy Manager host with the port of its web interface, for example "npm.lan:81", and the email and password of that user. If the hosts are served over HTTPS on another port than 443, set HTTPS port below.
+4. In DumbMonit, enter the Nginx Proxy Manager host with its web port, for example npm.lan:81, and that email and password.
+
+### Required permissions
+
+- **Item Visibility: All Items**: See every host, not only its own
+- **Proxy Hosts, Redirection Hosts, 404 Hosts, Streams: View Only**: Read the list of hosts
+- **Access Lists, SSL Certificates: Hidden**: Keeps private keys out of reach
 
 !!! warning
-    A host whose configuration nginx refuses (a typo in Advanced, a missing certificate file) is not served, and Nginx Proxy Manager only shows it as a red dot in the list. Let's Encrypt certificates are renewed thirty days ahead: one that expires in less than fourteen days is one whose renewal failed, and DumbMonit warns then.
+    Leave SSL Certificates on Hidden: Nginx Proxy Manager hands private keys to any user allowed to view them.
 
-Item Visibility All Items matters: with Created Items, the user only sees the
-hosts it created itself, which is none. A user without Proxy Hosts View Only is
-refused; one without Streams, Redirection Hosts or 404 Hosts simply does not
-report them.
+### Why these permissions
 
-DumbMonit keeps the token Nginx Proxy Manager gives at login (valid a day) and
-logs in again when it expires, rather than at every check.
+SSL Certificates stay Hidden on purpose: Nginx Proxy Manager hands the private key of imported certificates, and the credentials of the DNS challenge, to any user allowed to view them. DumbMonit reads each certificate where it is served instead, with a TLS handshake on port 443 for every host that has one; if the hosts are served over HTTPS on another port, set HTTPS port in the form. A host whose configuration nginx refuses (a typo in Advanced, a missing certificate file) is not served, and Nginx Proxy Manager only shows it as a red dot in the list. Let's Encrypt certificates are renewed thirty days ahead: one that expires in less than fourteen days is one whose renewal failed, and DumbMonit warns then.
+
+Vendor documentation: https://nginxproxymanager.com/advanced-config/
 
 ## Credentials
 

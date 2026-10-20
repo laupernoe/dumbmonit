@@ -5,6 +5,14 @@ that stop responding, are left in maintenance mode or report a red health,
 virtual machines and their VMware Tools, datastores filling up or becoming
 inaccessible, and the alarms vSphere itself raised.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | vSphere API (HTTPS, default) |
+
 DumbMonit reads vSphere with a dedicated user holding the built-in
 **Read-only** role. It never powers a VM on or off, never enters maintenance
 mode and never acknowledges an alarm.
@@ -77,22 +85,39 @@ API.
 
 ## Create a read-only user in vSphere
 
-1. On a vCenter: Administration → Single Sign On → Users and Groups → Users, domain vsphere.local → Add. Name the user as follows and give it a long random password.
+1. On a vCenter, open Administration → Single Sign On → Users and Groups → Users, choose the domain vsphere.local, click Add and enter this user name with a long random password.
 
     ```
     dumbmonit
     ```
 
-2. Still on the vCenter: Administration → Access Control → Global Permissions → Add. Pick that user, the Read-only role, and tick Propagate to children. Read-only sees every host, VM, datastore and alarm, and can change nothing.
+2. Open Administration → Access Control → Global Permissions → Add: pick that user, role Read-only, tick Propagate to children.
 
-3. On a standalone ESXi host instead: in the host client, Manage → Security & users → Users → Add user, with the same name. Then Host → Actions → Permissions → Add user: pick it, the Read-only role, and tick Propagate to all children.
+3. On a standalone ESXi host instead: in the host client, Manage → Security & users → Users → Add user dumbmonit, then Host → Actions → Permissions → Add user with role Read-only.
 
-4. In DumbMonit, enter the address of the vCenter or of the host, for example "vcenter.lan" or "esxi1.lan", with the user name as created: dumbmonit@vsphere.local on a vCenter, dumbmonit on a host. When a vCenter manages the hosts, add only the vCenter: it reports every host, VM and datastore.
+4. In DumbMonit, enter the vCenter or host address, with the user dumbmonit@vsphere.local on a vCenter or dumbmonit on a host. Add only the vCenter when one manages the hosts.
 
-5. DumbMonit only reads, through the vSphere Web Services API (/sdk). It never powers a VM on or off, never enters maintenance mode and never acknowledges an alarm.
+### Required permissions
+
+- **Read-only, propagated to children**: Sees hosts, VMs, datastores and alarms
 
 !!! warning
-    Do not reuse the single sign-on domain account or the host's built-in account: the Read-only role above is all DumbMonit needs. vCenter and ESXi use a self-signed certificate by default: enable "Accept an unverifiable certificate" unless the DumbMonit host trusts their certificate authority.
+    vCenter and ESXi use a self-signed certificate by default: enable "Accept an unverifiable certificate" unless the DumbMonit host trusts their certificate authority.
+
+Vendor documentation: [vSphere global permissions](https://docs.vmware.com/en/VMware-vSphere/8.0/vsphere-security/GUID-74F53189-EF41-4AC1-A78E-D25621855800.html)
+
+### Why these permissions
+
+Do not reuse the single sign-on domain account or the host's built-in
+account: the `Read-only` role is all DumbMonit needs. It sees every host, VM,
+datastore and alarm, and can change nothing.
+
+When a vCenter manages the hosts, add only the vCenter: it reports every host,
+VM and datastore.
+
+DumbMonit only reads, through the vSphere Web Services API (`/sdk`). It never
+powers a VM on or off, never enters maintenance mode and never acknowledges an
+alarm.
 
 ## Credentials
 

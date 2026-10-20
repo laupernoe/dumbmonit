@@ -3,6 +3,14 @@
 Nutanix clusters, read through the v4 REST API of Prism Central. One Prism
 Central covers every cluster registered to it.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 9440 | TCP | Prism Central API (HTTPS, default) |
+
 Every minute DumbMonit reads, with HTTP basic authentication on port 9440:
 
 | What | Path |
@@ -59,20 +67,35 @@ The [built-in rules](../alerting/rules.md#nutanix) that apply:
 
 ## Create a read-only user in Prism Central
 
-1. In Prism Central, open Admin Center > IAM > Identities and add a local user with a long random password, named as follows.
+1. In Prism Central, open Admin Center → IAM → Identities and add a local user with a long random password.
 
     ```
     dumbmonit
     ```
 
-2. Under Admin Center > IAM > Authorization Policies, create a policy with the built-in Prism Viewer role, for all entities, and assign it to that user. Prism Viewer reads clusters, hosts, VMs, storage containers and alerts, and changes nothing.
+2. Open Admin Center → IAM → Authorization Policies and create a policy with the Prism Viewer role, for all entities, assigned to that user.
 
-3. In DumbMonit, enter the address of Prism Central, for example "prism-central.lan", with that user name and password. One Prism Central reports every cluster registered to it.
+3. In DumbMonit, enter the Prism Central address (for example prism-central.lan) with that user name and password.
 
-4. DumbMonit only reads the v4 API (clustermgmt, vmm and monitoring, version 4.0): it never powers a VM on or off, never resolves an alert and never changes a storage container.
+### Required permissions
+
+- **Prism Viewer, all entities**: Sees clusters, hosts, VMs, storage containers, alerts
 
 !!! warning
-    The v4 API is served by Prism Central pc.2024.3 or later; a cluster managed by Prism Element alone, or by an older Prism Central, is not supported. Prism Central ships a self-signed certificate: enable "Accept an unverifiable certificate" unless the DumbMonit host trusts its certificate authority.
+    Needs Prism Central pc.2024.3 or later (v4 API); Prism Element alone is not supported. Prism Central uses a self-signed certificate: enable "Accept an unverifiable certificate" unless DumbMonit trusts it.
+
+Vendor documentation: [Nutanix developer portal](https://developers.nutanix.com/)
+
+### Why these permissions
+
+`Prism Viewer` reads clusters, hosts, VMs, storage containers and alerts, and
+changes nothing. One Prism Central reports every cluster registered to it.
+
+The v4 API is served by Prism Central pc.2024.3 or later; a cluster managed by
+Prism Element alone, or by an older Prism Central, is not supported.
+DumbMonit only reads the v4 API (clustermgmt, vmm and monitoring, version 4.0):
+it never powers a VM on or off, never resolves an alert and never changes a
+storage container.
 
 ## Credentials
 

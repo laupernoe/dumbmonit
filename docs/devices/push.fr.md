@@ -11,6 +11,14 @@ moniteur *push* dans Uptime Kuma) renverse la logique : DumbMonit ne
 contacte rien. La tâche appelle une URL secrète chaque fois qu'elle
 tourne, et c'est l'**absence** d'appel qui déclenche l'alerte.
 
+## Ports réseau à ouvrir
+
+De l'agent vers le serveur DumbMonit :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 8080 | TCP | Appel du heartbeat (port par défaut, 443 derrière un proxy) |
+
 ## Comment ça fonctionne
 
 Chaque surveillance battement de cœur obtient une URL de la forme
@@ -56,31 +64,22 @@ pour lui fonctionne sans changement.
 
 Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
 
-1. Dans l'adresse, écrivez un court libellé pour la tâche
-   (« nightly-backup », « certbot-renew ») : rien n'est contacté, le
-   libellé doit juste être unique parmi vos battements de cœur.
-2. Réglez l'intervalle attendu sur le calendrier de la tâche (« 24h » pour
-   une tâche nocturne, « 1h » pour une horaire) et, si le calendrier
-   dérive, une période de grâce plus large. Enregistrez la surveillance.
-3. La page de la surveillance montre l'URL à appeler. Ajoutez-la à la fin de la
-   tâche, pour qu'elle ne soit appelée que quand la tâche a réussi :
+1. Dans l'adresse, écrivez un court libellé pour la tâche, unique parmi vos battements de cœur : « nightly-backup ».
+
+2. Réglez l'intervalle attendu sur le calendrier de la tâche (« 24h » pour une tâche nocturne), puis enregistrez la surveillance.
+
+3. Copiez l'URL affichée sur la page de la surveillance et appelez-la à la fin de la tâche.
 
     ```
     curl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>
     ```
 
-4. Une tâche qui peut dire quand elle a échoué peut le dire plutôt que de
-   rester silencieuse : ajoutez ?status=down&msg=… à l'URL, et l'alerte se
-   déclenche tout de suite.
-5. Jusqu'au premier appel, la surveillance montre « En attente » et rien n'est
-   alerté. URL perdue ou qui a fuité ? « Régénérer » sur la page de
-   la surveillance en émet une nouvelle ; l'ancienne arrête de répondre
-   immédiatement.
+4. Pour signaler un échec immédiatement, ajoutez ?status=down&msg=... à l'URL.
 
 !!! warning
-    Appelez l'URL à la fin de la tâche, après la partie qui compte. Un
-    appel placé en haut rapporterait un succès même quand la sauvegarde
-    elle-même a échoué.
+    Appelez l'URL à la fin de la tâche, après la partie qui compte : un appel placé au début signalerait un succès même quand la tâche échoue.
+
+Rien n'est contacté : le libellé doit seulement être unique. Jusqu'au premier appel, la surveillance montre « En attente » et rien n'est alerté. URL perdue ou divulguée ? « Régénérer » sur la page de la surveillance en émet une nouvelle ; l'ancienne cesse de répondre immédiatement.
 
 Identifiants : aucun.
 

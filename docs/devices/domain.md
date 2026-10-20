@@ -18,6 +18,14 @@ never verified: every site and mailbox under it stops at once. A domain in
 `redemptionPeriod` or `pendingDelete` has already expired and will be
 released unless it is restored, at a price.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | RDAP query to the registry and to the IANA (HTTPS) |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_domain_`.
@@ -53,20 +61,20 @@ and whether the last query to the registry failed.
 
 ## Watch a domain's registration
 
-1. Enter the registered domain, for example "example.com", not a name under it such as www.example.com, which the registry does not know. Nothing to set up and no credential: RDAP, the successor of WHOIS, is public.
+1. Enter the registered domain, for example "example.com", not a name under it such as www.example.com.
 
-2. DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default. Registries limit RDAP queries, and the expiry date changes once a year: a shorter Refresh interval gains nothing.
-
-3. A few registries run RDAP without being listed by the IANA, those of .ch and .li for instance: set RDAP server to their address. An extension whose registry runs no public RDAP service cannot be watched.
+2. For an extension the IANA does not list, such as .ch, set "RDAP server" to the registry's address.
 
     ```
     https://rdap.nic.ch/
     ```
 
-4. Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes.
-
 !!! warning
-    A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops, usually over an unpaid invoice or an unverified contact address. DumbMonit warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.
+    A domain in clientHold or serverHold is taken out of the DNS: every site and mailbox under it stops.
+
+No credential is needed: RDAP, the successor of WHOIS, is public. DumbMonit finds the registry of the extension in the IANA RDAP bootstrap file, then asks it for the expiry date, the status codes and the registrar, twice a day by default; a shorter Refresh interval gains nothing. An extension whose registry runs no public RDAP service cannot be watched. Some registries do not publish the expiry date (.ch is one): DumbMonit then says so, and still watches the status codes. It warns 30 days before expiry, raises it 7 days before, and alerts at once on a hold or a redemption period.
+
+Vendor documentation: https://www.icann.org/rdap
 
 A domain the registry does not know (a subdomain, a typo, or a domain that was
 deleted) is reported as a configuration error, not as an outage. Names with

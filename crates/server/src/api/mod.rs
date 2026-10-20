@@ -14,9 +14,11 @@ mod error;
 mod health;
 mod ingest;
 mod integrations;
+mod kuma_db;
 mod kuma_import;
 mod ldap;
 pub mod locations;
+mod logs;
 mod mcp;
 mod metrics;
 mod music;
@@ -40,6 +42,7 @@ mod relay;
 mod reports;
 mod security;
 mod self_monitoring;
+mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
 mod synology;
@@ -132,6 +135,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             "/targets/import/kuma",
             post(kuma_import::import).layer(DefaultBodyLimit::max(kuma_import::MAX_BODY_BYTES)),
         )
+        .route("/targets/import/kuma-db", post(kuma_import::import_db))
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))
@@ -143,6 +147,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/alerts/history/dismiss-resolved", post(alerts::dismiss_resolved_history))
         .route("/alerts/history/{id}/dismiss", post(alerts::dismiss_history_entry))
         .route("/alerts/{fingerprint}/ack", post(alerts::ack_alert).delete(alerts::unack_alert))
+        .route(
+            "/alerts/{fingerprint}/dismiss",
+            post(alerts::dismiss_alert).delete(alerts::undismiss_alert),
+        )
         .route("/alerts/rules", get(alerts::list_rules).post(alerts::create_rule))
         .route("/alerts/rules/{id}", put(alerts::update_rule).delete(alerts::delete_rule))
         .route("/alerts/rules/{id}/enable", post(alerts::set_rule_enabled))
@@ -168,6 +176,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(locations::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
+        // Fonctionnalités facultatives sautées faute de droit (`skipped_features.rs`).
+        .merge(skipped_features::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
         .merge(notify_policy::routes())
         // Rapports périodiques par courriel (`reports.rs`).
@@ -202,6 +212,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Journaux du serveur : stockage, export et destinations (`logs.rs`).
+        .merge(logs::routes())
         // Auto-surveillance et battement de cœur sortant (`self_monitoring.rs`).
         .merge(self_monitoring::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).

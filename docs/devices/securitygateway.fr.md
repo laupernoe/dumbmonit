@@ -5,6 +5,17 @@ l'extérieur, et sur SecurityGateway 12.5 ou plus récent, la version et les
 compteurs de performance que publie son API REST : file de livraison,
 quarantaine, sessions SMTP.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 25 | TCP | Vérification SMTP (par défaut) |
+| 4000 | TCP | Vérification de l'interface web (par défaut) |
+| 4443 | TCP | Seulement avec une clé d'API (HTTPS, par défaut) ou web_https dans l'option Services |
+| 465 | TCP | Seulement si smtps figure dans l'option Services |
+
 !!! warning "Validé contre la documentation seulement"
 
     Cette intégration a été construite à partir de la documentation publiée
@@ -70,32 +81,46 @@ dernière valeur.
 
 ## Surveiller les services de la passerelle, et optionnellement l'API REST
 
-1. Rien à installer sur le serveur. Sans identifiant, DumbMonit se connecte à SMTP (25) et à l'interface web (4000) depuis l'extérieur et lit la salutation SMTP. Changez la liste dans l'option Services, par exemple pour vérifier HTTPS plutôt que HTTP.
-
-    ```
-    smtp,web_https
-    ```
-
-2. Pour aussi lire les compteurs de performance, SecurityGateway 12.5 ou plus récent est nécessaire. Créez un compte dédié nommé comme suit, avec un mot de passe long utilisé nulle part ailleurs, et donnez-lui le rôle Domain Administrator. Si les compteurs restent vides sur la page de la surveillance, votre version les réserve au rôle Global Administrator, et le compte a besoin de ce rôle à la place.
+1. Dans SecurityGateway 12.5 ou plus récent, ouvrez Setup/Users → Accounts → Administrators → New et créez le compte ci-dessous, avec un long mot de passe unique.
 
     ```
     dumbmonit
     ```
 
-3. Connectez-vous comme ce compte et créez une clé sous Setup/Users → Accounts → API Keys, avec une date d'expiration. Une clé porte les droits du compte qui la crée, c'est pourquoi elle doit être créée depuis ce compte et pas depuis le vôtre.
+2. Donnez au compte le rôle listé ci-dessous, et restreignez-le à l'adresse de DumbMonit dans IP Restriction Options.
 
-4. Restreignez le compte à l'adresse depuis laquelle DumbMonit se connecte dans ses restrictions IP : les clés d'API les respectent aussi.
+3. Connectez-vous avec ce compte, ouvrez Setup/Users → Accounts → API Keys et créez une clé avec une date d'expiration.
 
-5. Vérifiez depuis l'hôte DumbMonit que la clé fonctionne. La commande affiche la description de l'API, qui liste aussi les compteurs que DumbMonit lit.
+4. Dans DumbMonit, saisissez l'adresse de la passerelle et collez la clé.
+
+5. Pour surveiller d'autres ports que SMTP et l'interface web, réglez l'option Services sur une liste comme celle-ci.
 
     ```
-    curl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi
+    smtp,web_https
     ```
 
-6. Dans DumbMonit, saisissez l'adresse de la passerelle, par exemple « sg.example.com », et collez la clé. L'API est atteinte sur le port HTTPS de l'interface web, 4443 par défaut, sous /api/v1.
+### Droits requis
+
+- **Domain Administrator** : Prenez Global Administrator si les compteurs restent vides
+
+Documentation de l'éditeur : <https://help.mdaemon.com/SecurityGateway/en/api_keys.html>
+
+### Bon à savoir
+
+Rien à installer sur le serveur. Sans identifiant, DumbMonit se connecte à SMTP (25) et à l'interface web (4000) depuis l'extérieur et lit la bannière SMTP. Les versions avant 12.5 n'ont pas d'API REST : laissez l'identifiant vide et DumbMonit vérifie seulement les services.
+
+Le rôle est Domain Administrator ; si les compteurs restent vides sur la page de la surveillance, votre version les réserve au rôle Global Administrator, et le compte a besoin de ce rôle à la place. Une clé porte les droits du compte qui la crée, c'est pourquoi elle doit être créée depuis le compte dédié et pas depuis le vôtre. Les clés d'API respectent les restrictions IP du compte.
+
+L'API est atteinte sur le port HTTPS de l'interface web, 4443 par défaut, sous `/api/v1`. Pour vérifier depuis l'hôte DumbMonit que la clé fonctionne, lancez la commande ci-dessous : elle affiche la description de l'API, qui liste aussi les compteurs que DumbMonit lit.
+
+```
+curl -k -H 'Authorization: Bearer YOUR_KEY' https://sg.example.com:4443/api/v1/openapi
+```
+
+L'interface web utilise souvent un certificat autosigné sur 4443 : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
 
 !!! warning
-    SecurityGateway n'a pas de rôle en lecture seule ni de clé plus restreinte : la clé peut tout faire que son compte peut faire. Ne la créez jamais depuis votre propre compte, gardez-la seulement dans DumbMonit et donnez-lui une date d'expiration. Les versions avant 12.5 n'ont pas d'API REST : laissez l'identifiant vide et DumbMonit vérifie seulement les services. L'interface web utilise souvent un certificat autosigné sur 4443 : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
+    SecurityGateway n'a ni rôle en lecture seule ni clé plus restreinte : créez la clé depuis le compte dédié, jamais depuis le vôtre, et donnez-lui une date d'expiration.
 
 ## Identifiants
 

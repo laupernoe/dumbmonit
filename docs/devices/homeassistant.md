@@ -5,6 +5,14 @@ recovery mode, entities that are unavailable or unknown by domain, low
 batteries, updates waiting (core, operating system, add-ons, device firmware)
 and the open repairs.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8123 | TCP | Web UI, REST and WebSocket API (HTTP, default) |
+
 DumbMonit reads Home Assistant's REST API with the long-lived access token of a
 dedicated user **without administrator rights**, and the list of repairs over
 the WebSocket API. It never calls a service, never fires an event and never
@@ -99,20 +107,35 @@ live phone.
 
 ## Create a dedicated user and a long-lived token in Home Assistant
 
-1. In Home Assistant: Settings → People → Users → Add user (turn on Advanced mode in your profile if the Users tab is missing). Name the user as follows, give it a long random password and leave the Administrator toggle off. A regular user can read every entity and the list of repairs, and cannot change the configuration.
+1. Open Settings → People → Users → Add user (turn on Advanced mode in your profile if the tab is missing), name the user as follows and give it a long random password.
 
     ```
     dumbmonit
     ```
 
-2. Log in to Home Assistant once as that user, open its profile (the name at the bottom of the sidebar) → Security → Long-lived access tokens → Create token. Name it after DumbMonit and copy it now: it is shown only once.
+2. Log in as that user, open its profile (bottom of the sidebar) → Security → Long-lived access tokens → Create token, name it and copy it: it is shown only once.
+3. In DumbMonit, enter the Home Assistant address (for example homeassistant.local, port 8123) and paste the token.
 
-3. In DumbMonit, enter the address of Home Assistant, for example "homeassistant.local" (port 8123) or "https://ha.example.net" behind a reverse proxy, and paste the token. Batteries under 20% count as low; the Low battery threshold option changes that.
+### Required permissions
 
-4. DumbMonit only reads /api/config, /api/states and, over the WebSocket API, the list of repairs. It never calls a service, never fires an event and never changes a state.
+- **Regular user (Administrator toggle off)** — Reads every entity and the repairs list
 
 !!! warning
-    A long-lived token carries every right of its user and stays valid for ten years: create it for the dedicated user, never for your own. Home Assistant serves plain HTTP unless TLS is configured, and the token travels with every request: across an untrusted network, use HTTPS. Every phone and tablet signed in to the companion app (the mobile_app integration) appears in the Devices table below with its last activity; it is optional and silent without that app.
+    A long-lived token carries every right of its user and lasts ten years: create it for the dedicated user, never your own. Home Assistant serves plain HTTP unless TLS is configured: across an untrusted network, use HTTPS.
+
+Vendor documentation: [Home Assistant REST API](https://developers.home-assistant.io/docs/api/rest/).
+
+### Why these permissions
+
+A regular user can read every entity and the list of repairs, and cannot change
+the configuration. DumbMonit only reads `/api/config`, `/api/states` and, over
+the WebSocket API, the list of repairs. It never calls a service, never fires
+an event and never changes a state.
+
+Batteries under 20% count as low; the Low battery threshold option changes
+that. Every phone and tablet signed in to the companion app (the `mobile_app`
+integration) appears in the Devices table with its last activity; it is
+optional and silent without that app.
 
 ## Credentials
 

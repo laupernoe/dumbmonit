@@ -23,6 +23,14 @@ ARM, sa mémoire, ses liens réseau — et pas le serveur qu'il gère (voir
     standards, mais ça n'a pas encore tourné contre un vrai Supermicro,
     iDRAC ou iLO pendant des semaines. Dites-nous ce qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API Redfish (HTTPS, par défaut) |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_redfish_`. Les séries de
@@ -113,26 +121,53 @@ une valeur inconnue lit « — », jamais 0.
 
 ## Créer un compte en lecture seule sur le contrôleur de gestion
 
-1. Ouvrez l'interface web du contrôleur de gestion (BMC), pas le système d'exploitation du serveur. Créez un nouvel utilisateur local nommé comme suit, avec un mot de passe long utilisé nulle part ailleurs.
+1. Ouvrez l'interface web du contrôleur de gestion (BMC), pas le système d'exploitation du serveur.
+
+2. Créez un utilisateur local nommé comme suit, avec un long mot de passe utilisé nulle part ailleurs.
 
     ```
     dumbmonit
     ```
 
-2. Donnez-lui le rôle le plus bas qui puisse lire, et rien de plus. Supermicro : Configuration → Users → Add User, privilège User, et cochez Redfish dans le type de compte. Dell iDRAC : iDRAC Settings → Users → Local Users → Add, rôle Read Only. HPE iLO : Administration → User Administration → New, décochez chaque privilège sauf Login. Lenovo XClarity Controller : BMC Configuration → User/LDAP → Create, rôle Read-only. ASRock Rack : Settings → User Management, privilège User.
+3. Donnez-lui le droit en lecture seule de votre constructeur, listé ci-dessous.
 
-3. Vérifiez depuis n'importe quelle machine sur le réseau de gestion que le compte peut lire Redfish. La commande demande le mot de passe et affiche le nom et la santé du serveur.
+4. Dans DumbMonit, saisissez l'adresse du contrôleur (bmc.lan ou 10.0.0.50) avec ce nom d'utilisateur et son mot de passe.
 
-    ```
-    curl -k -u dumbmonit https://bmc.lan/redfish/v1/Systems
-    ```
+### Droits requis
 
-4. Dans DumbMonit, saisissez l'adresse du contrôleur, par exemple « bmc.lan » ou « 10.0.0.50 », puis le nom d'utilisateur et le mot de passe de ce compte.
-
-5. DumbMonit ne fait que lire : ventilateurs, températures, tensions, alimentations, disques, résumés de mémoire et de processeur, et combien d'entrées de journal il y a par gravité. Il n'allume ni n'éteint jamais le serveur, ne change jamais un réglage et ne lit jamais le texte des journaux.
+- **Supermicro: privilege User, account type Redfish** — Configuration → Users → Add User
+- **Dell iDRAC: role Read Only** — iDRAC Settings → Users → Local Users → Add
+- **HPE iLO: Login privilege only** — Administration → User Administration → New ; décochez les autres
+- **Lenovo XClarity Controller: role Read-only** — BMC Configuration → User/LDAP → Create
+- **ASRock Rack: privilege User** — Settings → User Management
 
 !!! warning
-    Ne réutilisez pas le compte d'usine du contrôleur : il peut éteindre le serveur, monter des médias et reflasher le firmware. Les contrôleurs de gestion livrent aussi un certificat autosigné : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options. Un contrôleur répond lentement et une lecture complète prend plusieurs requêtes : si la surveillance rapporte des délais dépassés, augmentez DUMBMONIT_PROBE_TIMEOUT_SECS sur le serveur.
+    Ne réutilisez pas le compte d'usine du contrôleur, qui peut éteindre le serveur et reflasher le firmware ; un certificat auto-signé impose de cocher « Accept an unverifiable certificate ».
+
+Documentation de l'éditeur : https://www.dmtf.org/standards/redfish
+
+### Notes
+
+Les noms de menus sont ceux des firmwares actuels ; les générations plus
+anciennes les déplacent mais gardent les mêmes rôles. Sur Supermicro, le type de
+compte choisi à la création décide des interfaces permises : un compte sans
+accès Redfish est refusé en 401 même avec le bon mot de passe.
+
+DumbMonit ne fait que lire : ventilateurs, températures, tensions,
+alimentations, disques, mémoire et résumés de processeurs, et le nombre
+d'entrées de journal par gravité. Il n'allume ni n'éteint jamais le serveur, ne
+change aucun réglage et ne lit jamais le texte des journaux. Un contrôleur répond
+lentement et une lecture complète demande plusieurs requêtes : si l'appareil
+signale des délais dépassés, relevez `DUMBMONIT_PROBE_TIMEOUT_SECS` sur le
+serveur.
+
+Pour vérifier depuis n'importe quelle machine du réseau de gestion que le compte
+lit Redfish (la commande demande le mot de passe et affiche le nom et la santé du
+serveur) :
+
+```
+curl -k -u dumbmonit https://bmc.lan/redfish/v1/Systems
+```
 
 Les noms de menu ci-dessus sont ceux du firmware actuel ; les générations
 plus anciennes les déplacent mais gardent les mêmes rôles. Sur Supermicro,

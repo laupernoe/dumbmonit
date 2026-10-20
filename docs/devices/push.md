@@ -10,6 +10,14 @@ in Uptime Kuma) turns the logic around: DumbMonit contacts nothing. The job
 calls a secret URL each time it runs, and it is the **absence** of a call that
 raises the alert.
 
+## Network ports to open
+
+From the agent to the DumbMonit server:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 8080 | TCP | Heartbeat call (default port, 443 behind a proxy) |
+
 ## How it works
 
 Each heartbeat monitor gets a URL of the form
@@ -52,29 +60,22 @@ it works unchanged.
 
 The steps below are the ones the notice next to the form shows.
 
-1. In the address, write a short label for the job ("nightly-backup",
-   "certbot-renew"): nothing is contacted, the label only has to be unique
-   among your heartbeats.
-2. Set the expected interval to the job's schedule ("24h" for a nightly job,
-   "1h" for an hourly one) and, if the schedule drifts, a wider grace period.
-   Save the monitor.
-3. The monitor page shows the URL to call. Add it at the end of the job, so it
-   is called only when the job succeeded:
+1. In the address, write a short label for the job, unique among your heartbeats: "nightly-backup".
+
+2. Set the expected interval to the job's schedule ("24h" for a nightly job), then save the monitor.
+
+3. Copy the URL shown on the monitor page and call it at the end of the job.
 
     ```
     curl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>
     ```
 
-4. A job that can tell when it failed may say so instead of staying silent:
-   append ?status=down&msg=… to the URL, and the alert fires at once.
-5. Until the first call arrives the monitor shows "Waiting" and nothing is
-   alerted. Lost or leaked URL? "Regenerate" on the monitor page issues a new
-   one; the old one stops answering immediately.
+4. To report a failure at once, append ?status=down&msg=... to the URL.
 
 !!! warning
-    Call the URL at the end of the job, after the part that matters. A call
-    placed at the top would report a success even when the backup itself
-    failed.
+    Call the URL at the end of the job, after the part that matters: a call at the top would report a success even when the job fails.
+
+Nothing is contacted: the label only has to be unique. Until the first call arrives the monitor shows "Waiting" and nothing is alerted. Lost or leaked URL? "Regenerate" on the monitor page issues a new one; the old one stops answering immediately.
 
 Credentials: none.
 

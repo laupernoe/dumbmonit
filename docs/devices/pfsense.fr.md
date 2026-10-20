@@ -23,6 +23,15 @@ changer. Chaque minute, DumbMonit lit, en parallèle,
     pas contre un pfSense en fonctionnement. Chaque appel est une lecture.
     Dites-nous ce qui casse.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de protocole HTTP |
+
 ## Ce qu'il surveille
 
 Toutes les métriques sont préfixées `dumbmonit_pfsense_`.
@@ -78,24 +87,53 @@ mise à jour disponible du paquet d'API REST.
 
 ## Créer une clé d'API REST en lecture seule pour DumbMonit
 
-1. Installez le paquet communautaire d'API REST (pfSense-pkg-RESTAPI, version 2) depuis Diagnostics > Command Prompt ou un shell SSH, avec le fichier de la page des releases du projet qui correspond à votre version de pfSense (2.7.2 ci-dessous). Puis, sous System > REST API > Settings, cochez à la fois BasicAuth et Key parmi les méthodes d'authentification.
+1. Installez le paquet pfSense-pkg-RESTAPI (version 2) depuis Diagnostics → Command Prompt, avec le fichier qui correspond à votre version de pfSense (2.7.2 ci-dessous).
 
     ```
     pkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/latest/download/pfSense-2.7.2-pkg-RESTAPI.pkg
     ```
 
-2. Sous System > User Manager, ajoutez un utilisateur nommé dumbmonit avec un mot de passe long et aléatoire. Sous Effective Privileges, ajoutez seulement ces privilèges d'API REST : /api/v2/status/system GET, /api/v2/status/gateways GET, /api/v2/status/interfaces GET, /api/v2/status/services GET, /api/v2/system/version GET, plus /api/v2/system/restapi/version GET pour connaître les propres mises à jour du paquet. Pour l'étape suivante seulement, ajoutez aussi /api/v2/auth/key POST.
+2. System → REST API → Settings : cochez BasicAuth et Key parmi les méthodes d'authentification.
 
-3. Créez la clé en tant que dumbmonit, depuis n'importe quelle machine qui atteint pfSense : la clé porte exactement les privilèges de cet utilisateur. Copiez la valeur de clé de la réponse, puis retirez à nouveau le privilège /api/v2/auth/key POST.
+3. System → User Manager → Users → Add : créez l'utilisateur dumbmonit avec un long mot de passe aléatoire.
+
+4. Modifiez l'utilisateur et, sous Assigned Privileges, ajoutez les privilèges listés ci-dessous.
+
+5. Créez la clé en tant que dumbmonit, copiez la valeur key de la réponse, puis retirez de nouveau le privilège POST.
 
     ```
     curl -k -u dumbmonit -X POST -H 'Content-Type: application/json' -d '{"descr":"DumbMonit"}' https://pfsense.lan/api/v2/auth/key
     ```
 
-4. Dans DumbMonit, saisissez l'adresse de pfSense, par exemple « pfsense.lan », et collez la clé comme Clé d'API. pfSense livre un certificat autosigné : cochez Accepter un certificat non vérifiable sauf si vous l'avez remplacé.
+6. Dans DumbMonit, saisissez l'adresse de pfSense (pfsense.lan) et collez la clé comme clé d'API.
+
+### Droits requis
+
+- **/api/v2/status/system GET** — CPU, mémoire, disque, température
+- **/api/v2/status/gateways GET** — État, délai et perte des passerelles
+- **/api/v2/status/interfaces GET** — Lien et compteurs des interfaces
+- **/api/v2/status/services GET** — Services arrêtés
+- **/api/v2/system/version GET** — Version de pfSense
+- **/api/v2/system/restapi/version GET** — Facultatif : mises à jour du paquet REST API
+- **/api/v2/auth/key POST** — Seulement pour créer la clé, puis retirez-le
 
 !!! warning
-    L'API REST ne dit pas si une mise à jour de pfSense est disponible, seulement si le paquet lui-même en a une. Le paquet est un projet communautaire, pas une partie de pfSense : réinstallez-le après chaque mise à jour de pfSense.
+    Le paquet REST API est un projet communautaire, pas une partie de pfSense : réinstallez-le après chaque mise à niveau de pfSense. pfSense livre un certificat auto-signé : cochez « Accept an unverifiable certificate » sauf si vous l'avez remplacé.
+
+Documentation de l'éditeur : https://pfrest.org/AUTHENTICATION_AND_AUTHORIZATION/
+
+### Pourquoi ces droits et cette commande
+
+Une clé porte exactement les privilèges de l'utilisateur pfSense auquel elle
+appartient : l'utilisateur `dumbmonit` ne détient que les privilèges `GET` des
+pages que DumbMonit lit, donc la clé peut les lire et ne rien changer. Le
+paquet n'offre pas de menu pour créer une clé au nom d'un autre utilisateur :
+la clé est donc créée par un seul appel `POST` fait en tant que `dumbmonit` (le
+privilège supplémentaire est retiré juste après). Le paquet s'installe par une
+commande car le Package Manager de pfSense ne liste que les paquets officiels.
+
+L'API REST ne dit pas si une mise à jour de pfSense est disponible, seulement
+si le paquet lui-même en a une.
 
 ## Identifiants
 

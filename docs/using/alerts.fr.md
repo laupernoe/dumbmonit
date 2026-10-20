@@ -23,17 +23,19 @@ page, les deux s'accordent donc toujours sur ce qui a besoin de vous.
 ## La liste Maintenant {#the-now-list}
 
 Une ligne par problème : icône d'état, ce qui ne va pas, quelle surveillance,
-la cause en une ligne, il y a combien de temps, avec **Acquitter** et
-**Ouvrir** sur la ligne. Les lignes sont groupées par gravité (Avertissement,
+la cause en une ligne, il y a combien de temps, avec **Écarter** et
+**Ouvrir** sur la ligne ; Acquitter et Repousser et **Jamais pour cette surveillance** sont dans le menu **…** de
+la ligne. Dès que des alertes sont écartées, un commutateur **Actives |
+Écartées** apparaît au-dessus de la liste. Les lignes sont groupées par gravité (Avertissement,
 Avis, Info, En montée, Supprimée par le parent) ou, avec le commutateur
 **Gravité | Surveillance**, par surveillance. Les groupes se replient ;
-*Supprimées*, *En pause* et *Écartées* (acquittées) démarrent repliées. Une
+*Supprimées*, *En pause* et *Acquittées* démarrent repliées. Une
 règle qui se déclenche sur plusieurs séries de la même surveillance forme une
 seule ligne (« … et 7 autres »).
 
 Cliquez sur une ligne pour déplier ses détails : chaque série touchée, depuis
 quand, qui l'a acquittée, pourquoi elle est supprimée, avec **Ouvrir la
-surveillance**, **Mettre en sourdine** et **Jamais pour cette surveillance**.
+surveillance**.
 
 Sélectionner plusieurs lignes est un mode. Le bouton **Sélectionner**
 (opérateurs et administrateurs) affiche une case à cocher sur chaque ligne et
@@ -44,10 +46,24 @@ le mode.
 ## Se débarrasser d'une alerte {#getting-rid-of-an-alert}
 
 Une alerte active n'est pas binaire — « la corriger » ou « vivre avec le
-bruit pour toujours ». Quatre actions, pour quatre situations différentes,
+bruit pour toujours ». Cinq actions, pour cinq situations différentes,
 ouvertes aux administrateurs et opérateurs (un lecteur voit l'état mais ne
 peut pas le changer) :
 
+- **Écarter** (« j'ai compris ») est le geste en un clic, le premier sur
+  chaque alerte — dans la liste Maintenant, dans le détail d'une alerte et dans
+  le panneau d'une surveillance. L'alerte disparaît aussitôt de la liste, de la
+  vue d'ensemble, du mur et de tous les compteurs, et plus rien ne part pour
+  elle : ni rappel, ni escalade, ni même de message « résolue », aussi
+  longtemps que dure le problème. Pas de durée à choisir ni de confirmation :
+  un toast propose **Annuler** un instant. L'écartement ne vaut que pour
+  l'occurrence en cours : la condition retombée, il s'arrête avec elle, et si
+  le problème revient plus tard c'est une nouvelle alerte, notifiée comme
+  d'habitude — une vraie panne la semaine suivante n'est donc jamais ratée. Sa
+  résolution reste dans l'**Historique**, marquée *dismissed by* suivi de qui a
+  cliqué. La vue **Écartées** de l'onglet Maintenant liste les alertes écartées
+  encore actives, avec qui les a écartées et quand, et **Rétablir** pour
+  revenir sur une erreur.
 - **Acquitter** (« je m'en occupe ») est pour une alerte sur laquelle vous
   travaillez activement : « je sais, arrête de me le rappeler pendant 4 h ».
   Le menu propose 1 h, 4 h, 24 h ou *jusqu'à résolution*, plus une note

@@ -4,6 +4,16 @@ The DNS filter itself: whether protection is on, whether its DNS server runs,
 what it answered and blocked, whether its filter lists still update, whether
 its upstream servers answer, and whether a newer version is out.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 80 | TCP | Web interface and API (HTTP, default) |
+| 3000 | TCP | Only with the web interface left on port 3000, the first-run default |
+| 443 | TCP | Only with the https scheme option |
+
 A broken DNS filter does not look broken. Pages keep opening, with their ads.
 The usual failures are quiet: protection paused "for an hour" from the phone
 app and never turned back on, filter lists that stopped downloading weeks ago,
@@ -73,39 +83,43 @@ time, and the filter lists with their rules and last update.
 
 ## Add a user for DumbMonit to AdGuard Home
 
-1. AdGuard Home has no read-only account: every user listed in AdGuardHome.yaml can change every setting. Give DumbMonit a user of its own, so it can be removed without touching yours. First make a bcrypt hash of a long random password (htpasswd comes with the apache2-utils or httpd-tools package):
+1. Make a bcrypt hash of a long random password (htpasswd comes with apache2-utils or httpd-tools).
 
     ```
     htpasswd -B -C 10 -n -b dumbmonit 'LONG-RANDOM-PASSWORD'
     ```
 
-2. Stop AdGuard Home, open AdGuardHome.yaml (next to the AdGuardHome binary, or in the conf folder of the Docker volume) and add this line under "users:", at the same indentation as the "- name:" line already there. Replace HASH with what htpasswd printed after "dumbmonit:". Start AdGuard Home again.
+2. Stop AdGuard Home, add this line under users: in AdGuardHome.yaml with HASH replaced by the printed hash, then start it again.
 
     ```
     - { name: dumbmonit, password: "HASH" }
     ```
 
-    The section then reads:
+3. In DumbMonit, enter the address of the AdGuard Home web interface, then the user dumbmonit and its password.
 
-    ```yaml
-    users:
-      - { name: dumbmonit, password: "$2y$10$…" }
-      - name: yourname
-        password: $2a$10$…
-    ```
+Vendor documentation: <https://github.com/AdguardTeam/AdGuardHome/wiki/Configuration#password-reset>
 
-3. Check from the DumbMonit host that the user is accepted:
+### Why a user of its own
 
-    ```
-    curl -u dumbmonit http://adguard.lan/control/status
-    ```
+AdGuard Home has no read-only account and no screen to manage users: every user listed in AdGuardHome.yaml can change every setting. Give DumbMonit a user of its own, so it can be removed without touching yours. AdGuardHome.yaml sits next to the AdGuardHome binary, or in the conf folder of the Docker volume. Add the line under `users:`, at the same indentation as the `- name:` line already there, and replace `HASH` with what htpasswd printed after `dumbmonit:`. The section then reads:
 
-4. In DumbMonit, enter the address of the AdGuard Home web interface, for example "adguard.lan" (port 80) or "http://adguard.lan:3000", then the user dumbmonit and its password.
+```yaml
+users:
+  - { name: dumbmonit, password: "$2y$10$…" }
+  - name: yourname
+    password: $2a$10$…
+```
 
-5. DumbMonit only reads the status, the statistics, the filter lists and the last version check. It never reads the query log. At every check it asks AdGuard Home to test each upstream DNS server, as the Test upstreams button does; untick Test upstream servers below to stop that.
+To check from the DumbMonit host that the user is accepted:
+
+```
+curl -u dumbmonit http://adguard.lan/control/status
+```
+
+DumbMonit only reads the status, the statistics, the filter lists and the last version check. It never reads the query log. At every check it asks AdGuard Home to test each upstream DNS server, as the Test upstreams button does; untick Test upstream servers in the options to stop that. After five wrong passwords, AdGuard Home refuses the address for 15 minutes.
 
 !!! warning
-    The dumbmonit user can change every setting, like any AdGuard Home user: keep its password to DumbMonit alone. It travels with every request, so across an untrusted network turn on HTTPS in Settings → Encryption settings. After five wrong passwords, AdGuard Home refuses the address for 15 minutes.
+    AdGuard Home has no read-only user, so dumbmonit can change every setting: keep its password to DumbMonit alone, and turn on HTTPS in Settings → Encryption settings across an untrusted network.
 
 AdGuard Home must be stopped while you edit the file: it rewrites
 AdGuardHome.yaml whenever a setting changes, and would drop a line added while

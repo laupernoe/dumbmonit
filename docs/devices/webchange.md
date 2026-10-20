@@ -32,6 +32,15 @@ posts" box, an ad slot. Both take simple selectors, separated by commas: a tag
 (`div.notice[role=alert]`). Descendant (`main p`) and other combinators are not
 supported.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | Page fetch over HTTPS (default port) |
+| 80 | TCP | Only with an http:// address (default port) |
+
 ## Page or site
 
 **Page** (the default) reads the address of the monitor and nothing else. It
@@ -195,25 +204,18 @@ removed after each check. Deleting the monitor removes all of it.
 
 The steps below are the ones the notice next to the form shows.
 
-1. In the address, paste the page to watch, with http:// or https://. To watch
-   a whole site or one of its sections, paste its start page and set "Scope" to
-   "site": every page under the same folder is followed, up to "Max pages".
-2. Lines that change at every visit (a clock, a visitor counter, "updated 5
-   minutes ago") would be reported each time: list them in "Ignore lines" as
-   regular expressions.
-3. The first check only records the reference, nothing is reported. From then
-   on, each check compares the visible text page by page and keeps a
-   before/after copy of every change, shown on the monitor page; the "Website
-   changed" alert tells you.
-4. For a screenshot of each version, add a headless browser to your Compose
-   file; the exact lines are in the documentation (Advanced options,
-   "Screenshots of website changes").
-   See [Screenshots of website changes](../install/docker.md#website-screenshots).
+1. In the address, paste the page to watch, with http:// or https://.
+
+2. To follow a whole site or section, set "Scope" to "site".
+
+3. List lines that change at every visit (a clock, a counter) in "Ignore lines", as regular expressions.
+
+4. For a screenshot of each version, follow the "Screenshots" section of this page.
 
 !!! warning
-    Only the text the server sends is compared: a page drawn entirely by
-    JavaScript shows little or nothing to the check. Pages behind a login are
-    not reachable either.
+    Only the text the server sends is compared: pages drawn by JavaScript or behind a login are not followed.
+
+With the "site" scope, every page under the same folder is followed, up to "Max pages". The first check only records the reference, nothing is reported. From then on, each check compares the visible text page by page and keeps a before/after copy of every change, shown on the monitor page; the "Website changed" alert tells you.
 
 Credentials: none. Checks always run on the DumbMonit server: a website watch
 cannot go through a relay agent.

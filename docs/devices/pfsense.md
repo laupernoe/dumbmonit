@@ -21,6 +21,15 @@ parallel, `/api/v2/status/system`, `/api/v2/status/gateways`,
     response envelope and its error identifiers), not against a running
     pfSense. Every call is a read. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 80 | TCP | Only with the HTTP protocol option |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_pfsense_`.
@@ -73,24 +82,53 @@ REST API package.
 
 ## Create a read-only REST API key for DumbMonit
 
-1. Install the community REST API package (pfSense-pkg-RESTAPI, version 2) from Diagnostics > Command Prompt or an SSH shell, with the file of the project's releases page that matches your pfSense version (2.7.2 below). Then, under System > REST API > Settings, tick both BasicAuth and Key among the authentication methods.
+1. Install the pfSense-pkg-RESTAPI package (version 2) from Diagnostics → Command Prompt, with the file matching your pfSense version (2.7.2 below).
 
     ```
     pkg-static add https://github.com/pfrest/pfSense-pkg-RESTAPI/releases/latest/download/pfSense-2.7.2-pkg-RESTAPI.pkg
     ```
 
-2. Under System > User Manager, add a user named dumbmonit with a long random password. Under Effective Privileges, add only these REST API privileges: /api/v2/status/system GET, /api/v2/status/gateways GET, /api/v2/status/interfaces GET, /api/v2/status/services GET, /api/v2/system/version GET, plus /api/v2/system/restapi/version GET to hear about the package's own updates. For the next step only, add /api/v2/auth/key POST as well.
+2. System → REST API → Settings: tick both BasicAuth and Key among the authentication methods.
 
-3. Create the key as dumbmonit, from any machine that reaches pfSense: the key carries exactly that user's privileges. Copy the key value of the answer, then remove the /api/v2/auth/key POST privilege again.
+3. System → User Manager → Users → Add: create the user dumbmonit with a long random password.
+
+4. Edit the user and, under Assigned Privileges, add the privileges listed below.
+
+5. Create the key as dumbmonit, copy the key value of the answer, then remove the POST privilege again.
 
     ```
     curl -k -u dumbmonit -X POST -H 'Content-Type: application/json' -d '{"descr":"DumbMonit"}' https://pfsense.lan/api/v2/auth/key
     ```
 
-4. In DumbMonit, enter the address of pfSense, for example "pfsense.lan", and paste the key as API key. pfSense ships a self-signed certificate: tick Accept an unverifiable certificate unless you replaced it.
+6. In DumbMonit, enter the pfSense address (pfsense.lan) and paste the key as API key.
+
+### Required permissions
+
+- **/api/v2/status/system GET** — CPU, memory, disk, temperature
+- **/api/v2/status/gateways GET** — Gateway state, delay and loss
+- **/api/v2/status/interfaces GET** — Interface link and counters
+- **/api/v2/status/services GET** — Stopped services
+- **/api/v2/system/version GET** — pfSense version
+- **/api/v2/system/restapi/version GET** — Optional: updates of the REST API package
+- **/api/v2/auth/key POST** — Only while creating the key, then remove it
 
 !!! warning
-    The REST API does not say whether a pfSense update is available, only whether the package itself has one. The package is a community project, not part of pfSense: reinstall it after each pfSense upgrade.
+    The REST API package is a community project, not part of pfSense: reinstall it after each pfSense upgrade. pfSense ships a self-signed certificate: tick "Accept an unverifiable certificate" unless you replaced it.
+
+Vendor documentation: https://pfrest.org/AUTHENTICATION_AND_AUTHORIZATION/
+
+### Why these permissions and this command
+
+A key carries exactly the privileges of the pfSense user it belongs to, so the
+`dumbmonit` user holds only the `GET` privileges of the pages DumbMonit reads:
+the key can read those pages and change nothing. The package has no menu to
+create a key for another user, which is why the key is created with one `POST`
+call made as `dumbmonit` (the extra privilege is removed right after). The
+package is installed from a shell command because pfSense's Package Manager
+only lists official packages.
+
+The REST API does not say whether a pfSense update is available, only whether
+the package itself has one.
 
 ## Credentials
 

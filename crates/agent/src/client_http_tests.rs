@@ -16,6 +16,8 @@ fn batch() -> PushBatch {
         commands_enabled: None,
         relay: false,
         site: None,
+        relay_control: false,
+        relay_local: false,
         machine_id: None,
         tags: Default::default(),
         binding_supported: true,

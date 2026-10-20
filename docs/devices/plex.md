@@ -4,6 +4,14 @@ What Plex is doing and whether it is current: streams playing now, how many
 are transcoded and whether in hardware, the bandwidth they reserve, streams
 from outside the house, libraries being scanned, and updates.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 32400 | TCP | API (HTTP, default) |
+
 DumbMonit reads the server's own API on port 32400, never plex.tv. It never
 stops a stream, never scans a library and never changes a setting.
 
@@ -40,20 +48,28 @@ libraries.
 
 ## Give DumbMonit access to the Plex server
 
-1. DumbMonit reads the server's own API on port 32400, never plex.tv. A server linked to a Plex account asks for a token (X-Plex-Token), and Plex cannot issue a limited one: it is the owner's token.
+1. In Plex Web, open Settings → Network and click Show Advanced.
 
-2. Either avoid the token: in Plex, Settings → Network → List of IP addresses and networks that are allowed without auth, add the DumbMonit server's address, for example as follows, and pick No token below.
+2. Add the DumbMonit address to List of IP addresses and networks that are allowed without auth, then save.
 
     ```
     10.0.0.20/32
     ```
 
-3. Or use the token: in Plex Web, open any movie → ⋯ → Get Info → View XML. The address of the page that opens ends with X-Plex-Token= followed by the token; copy that value.
+3. In DumbMonit, enter the server's address and pick No token.
 
-4. In DumbMonit, enter the server's address, for example "plex.lan" (port 32400). DumbMonit only reads sessions, libraries, the updater and the activity list; it never stops a stream and never changes a setting.
+4. If DumbMonit is not on your network, use the owner's token instead: open a movie → ⋯ → Get Info → View XML and copy X-Plex-Token from the page address.
+
+Vendor documentation: <https://support.plex.tv/articles/204059436-finding-an-authentication-token-x-plex-token/>
+
+### Why an allowed network, or the owner's token
+
+DumbMonit reads the server's own API on port 32400, never plex.tv. A server linked to a Plex account asks for a token (X-Plex-Token), and Plex cannot issue a limited one: it is the owner's token. Listing DumbMonit's address as allowed without auth avoids the token altogether.
+
+DumbMonit only reads sessions, libraries, the updater and the activity list; it never stops a stream and never changes a setting.
 
 !!! warning
-    The token is your Plex account's: whoever holds it can manage the server and every library. Prefer the allowed network above when DumbMonit sits on your own network.
+    The token is your Plex account's and can manage the server and every library: prefer the allowed network when DumbMonit is on your own network.
 
 The allowed network is also what makes Plex answer without a token from Docker:
 DumbMonit's container reaches Plex from its Docker network address, so list

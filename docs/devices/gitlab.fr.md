@@ -5,6 +5,15 @@ discrètement tout le reste tiennent le rythme : les files de Sidekiq, les
 runners CI/CD, les migrations de base de données restées d'une mise à jour,
 et — pour GitLab Enterprise Edition — la licence.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 443 | TCP | API (HTTPS, par défaut) |
+| 80 | TCP | Seulement avec l'option de schéma http |
+
 DumbMonit lit `/api/v4/version` avec un **jeton d'accès personnel**, le seul
 appel qui doit réussir : c'est la preuve que GitLab répond et que le jeton
 est valide. Tout le reste — Sidekiq, les runners, les migrations, les
@@ -71,20 +80,35 @@ depuis l'API d'administration.
 
 ## Créer un jeton d'accès personnel sur un compte administrateur
 
-1. Créez un jeton d'accès personnel sur un compte administrateur : avatar → Edit profile → Access tokens → Add new token. Nommez-le comme suit, fixez une date d'expiration que vous êtes à l'aise de renouveler, et cochez seulement la portée read_api : elle lit toute l'API et n'écrit rien.
+1. Avec un compte administrateur, ouvrez avatar → Edit profile → Access → Personal access tokens → Generate token → Legacy token.
+
+2. Nommez-le comme suit, fixez une date d'expiration renouvelable, et ne cochez que la portée listée ci-dessous.
 
     ```
     dumbmonit
     ```
 
-2. Les files Sidekiq, les runners CI, les migrations en attente, les statistiques d'instance, les réglages d'inscription et de double authentification et la licence sont chacun lus depuis un point de terminaison réservé aux administrateurs : GitLab n'a pas de délégation plus fine pour eux. Un jeton d'un compte ordinaire fonctionne quand même ; seule la version est alors lue, et le reste est ignoré sans faire échouer la sonde.
+3. Générez le jeton et copiez-le : GitLab ne le montre qu'une fois.
 
-3. Dans DumbMonit, saisissez l'adresse avec laquelle vous ouvrez GitLab, par exemple « gitlab.example.com » (HTTPS sur 443) ou « https://git.example.com » derrière un reverse proxy, et collez le jeton.
+4. Dans DumbMonit, saisissez l'adresse de GitLab et collez le jeton.
 
-4. Pour surveiller aussi les pipelines CI, listez les identifiants numériques de projet (affichés sur la page de vue d'ensemble de chaque projet, sous son nom) dans l'option « Projets surveillés pour la santé CI », séparés par des virgules.
+5. Pour surveiller la CI, listez les ID numériques des projets (affichés sur la page de chaque projet) dans l'option Projects watched for CI health.
+
+### Droits requis
+
+- **read_api** : Portée du jeton : lit toute l'API, n'écrit rien
+- **Administrator account** : Sidekiq, exécuteurs, migrations, statistiques, réglages et licence l'exigent
+
+Documentation de l'éditeur : <https://docs.gitlab.com/ee/api/rest/>
+
+### Pourquoi ces droits
+
+`read_api` lit toute l'API et n'écrit rien. Les files Sidekiq, les exécuteurs CI, les migrations en attente, les statistiques de l'instance, les réglages d'inscription et de double authentification et la licence sont chacun lus sur un point d'accès réservé aux administrateurs : GitLab n'a pas de délégation plus fine. Un jeton d'un compte ordinaire fonctionne quand même ; seule la version est alors lue, et le reste est ignoré sans faire échouer la sonde.
+
+Sur un GitLab plus ancien, la page des jetons est avatar → Edit profile → Access tokens → Add new token. Fixez une date d'expiration que vous accepterez de renouveler, et révoquez le jeton s'il fuit.
 
 !!! warning
-    Un jeton d'accès personnel sur un compte administrateur peut lire tout ce que le compte peut lire, même avec la portée read_api : GitLab n'a pas de rôle administrateur en lecture seule. Dédiez-lui un compte bot plutôt que de réutiliser le vôtre, et révoquez le jeton s'il fuit un jour.
+    GitLab n'a pas de rôle administrateur en lecture seule, donc le jeton lit tout ce que son compte peut lire : utilisez un compte robot dédié, pas le vôtre.
 
 Vérifier le jeton à la main, depuis l'hôte DumbMonit :
 

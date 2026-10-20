@@ -14,6 +14,15 @@ tunnels, DHCP leases, the resolver, services, CARP and pending updates.
     pair and ran no OpenVPN or IPsec tunnel: those parts follow OPNsense's source
     code rather than an observed answer. Tell us what breaks.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 80 | TCP | Only with the HTTP protocol option |
+
 ## The monitor page
 
 Beyond the generic charts, an OPNsense monitor shows three panels, read from what
@@ -117,50 +126,58 @@ group with only the status privileges DumbMonit needs, a user that never logs
 in, and an API key that belongs to neither of your own accounts. This exact group
 was checked against every call DumbMonit makes, on OPNsense 26.1.
 
-1. In the web interface: System → Access → Groups → Add. Name the group as
-   follows.
+1. System → Access → Groups → Add: name the group as follows.
 
     ```
     dumbmonit
     ```
 
-2. Tick these privileges in the group, exactly as OPNsense names them: Lobby:
-   Dashboard (system, memory, disks, temperatures, state table), System:
-   Gateways, Status: Interfaces, Status: Services, System: Firmware, Interfaces:
-   Virtual IPs: Status (CARP) and Services: Unbound (MVC). Then one per feature
-   you run: Services: DHCP: Kea(v4) or Services: Dnsmasq DNS/DHCP: Settings for
-   the leases, VPN: WireGuard: Status, Status: OpenVPN, Status: IPsec. A
-   privilege you leave out costs exactly the metrics it carries, nothing else.
+2. In that group, under Assigned Privileges, add the privileges listed below.
 
-3. System → Access → Users → Add. Name the account as follows, let OPNsense
-   generate a scrambled password (this account never logs in: it answers with
-   its key), and make it a member of the dumbmonit group.
+3. System → Access → Users → Add: name the user as follows, generate a password, and make it a member of that group.
 
     ```
     dumbmonit
     ```
 
-4. Edit that user again and, under API keys, click +. OPNsense downloads a small
-   text file with two lines, key= and secret=, and shows the secret only this
-   once. Copy the key into DumbMonit's API key field and the secret into its API
-   secret field.
+4. Edit the user, click + under API keys, and save the downloaded file: it holds the key and the secret, shown only once.
 
-5. In DumbMonit, enter the firewall address, for example "192.168.1.1" or
-   "fw.lan:8443". The firewall is never asked to check for updates: DumbMonit
-   reads the result of the check OPNsense runs on its own schedule, or that you
-   start from System → Firmware.
+5. In DumbMonit, enter the firewall address (192.168.1.1 or fw.lan:8443), the key as API key and the secret as API secret.
+
+### Required permissions
+
+- **Lobby: Dashboard** — System, memory, disks, state table (required)
+- **System: Gateways** — Gateway state, delay and loss
+- **Status: Interfaces** — Link state and counters
+- **Status: Services** — Stopped services
+- **System: Firmware** — Pending updates and reboot
+- **Interfaces: Virtual IPs: Status** — CARP state
+- **Services: Unbound (MVC)** — Resolver
+- **Services: DHCP: Kea(v4)** — Leases, if you use Kea
+- **Services: Dnsmasq DNS/DHCP: Settings** — Leases, if you use Dnsmasq
+- **VPN: WireGuard: Status** — WireGuard tunnels
+- **Status: OpenVPN** — OpenVPN tunnels
+- **Status: IPsec** — IPsec tunnels
+- **Diagnostics: Logs: Firewall: Live View** — Only for the live firewall map option
 
 !!! warning
+    An API key is a password that never expires: restrict the group's source networks to the DumbMonit host and never grant All pages. OPNsense ships a self-signed certificate: tick "Accept an unverifiable certificate" if the connection is refused.
 
-    Do not reuse the account you log in with: an API key is a password that
-    never expires. OPNsense has no read-only variant of some privileges above:
-    Status: Services also allows starting and stopping a service, System:
-    Firmware also allows starting an update, and the Unbound, Kea and Dnsmasq
-    privileges also cover their settings. DumbMonit only ever reads, but to
-    limit what a leaked key could do, restrict the group's source networks to
-    the address of the DumbMonit host. Never grant All pages. OPNsense also
-    ships with a self-signed certificate: if the connection is refused for that
-    reason, tick "Accept an unverifiable certificate" in the options.
+Vendor documentation: https://docs.opnsense.org/development/how-tos/api.html
+
+### Why these permissions
+
+A privilege you leave out costs exactly the metrics it carries, nothing else;
+only `Lobby: Dashboard` is required. OPNsense has no read-only variant of some
+of them: `Status: Services` also allows starting and stopping a service,
+`System: Firmware` also allows starting an update, and the Unbound, Kea and
+Dnsmasq privileges also cover their settings. DumbMonit only ever reads, but to
+limit what a leaked key could do, restrict the group's source networks to the
+address of the DumbMonit host, and never grant *All pages*.
+
+The firewall is never asked to check for updates: DumbMonit reads the result of
+the check OPNsense runs on its own schedule, or that you start from System →
+Firmware.
 
 Address: `192.168.1.1`, `fw.lan`, `fw.lan:8443`, `[fd00::1]` or a full URL. The
 `https` scheme and port 443 are added if missing.

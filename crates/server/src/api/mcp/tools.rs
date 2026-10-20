@@ -40,8 +40,10 @@ reporting, unreachable, waiting (no data yet), disabled, down (service check fai
 Alert severities, from mild to serious, are info, advisory and warning; an alert \
 \"building up\" is not firing yet; \"suppressed by parent\" means the device's parent is \
 unreachable, so the alert is expected; \"acknowledged\" means someone knows and reminders \
-are paused. Tools marked read-only never change anything; the others (silence_device, \
-schedule_maintenance, remove_silence, acknowledge_alert, probe_device, set_device_enabled, \
+are paused; a \"dismissed\" alert (\"got it\") is hidden from the active list and silent until \
+it resolves. Tools marked read-only never change anything; the others (silence_device, \
+schedule_maintenance, remove_silence, acknowledge_alert, dismiss_alert, probe_device, \
+set_device_enabled, \
 set_rule_enabled, add_device, discover_network, restart_container, test_channel, \
 post_incident) need a token with the write scope, and some act outside the instance \
 (test_channel sends a real message, post_incident notifies status page subscribers): \
@@ -235,6 +237,8 @@ fn alert_schema() -> Value {
             "acked_by": nullable("string"),
             "acked_until": nullable("string"),
             "ack_note": nullable("string"),
+            "dismissed": { "type": "boolean" },
+            "dismissed_by": nullable("string"),
             "value": nullable("number"),
             "since": nullable("string"),
             "labels": { "type": "object" },
@@ -738,6 +742,26 @@ fn specs() -> Vec<ToolSpec> {
             alert_schema(),
         ),
         ToolSpec::write(
+            "dismiss_alert",
+            "Dismiss an alert",
+            "Dismisses one alert by fingerprint (see list_alerts): \"got it\". The current \
+             occurrence leaves the active alerts and sends nothing more — no reminder, no \
+             escalation, no resolution message — for as long as the condition lasts. If the \
+             condition clears and comes back later, that is a new alert, notified as usual. \
+             Pass undo true to restore a dismissed alert.",
+            json!({
+                "type": "object",
+                "required": ["fingerprint"],
+                "properties": {
+                    "fingerprint": { "type": "string", "description": "Alert fingerprint (see list_alerts)." },
+                    "undo": { "type": "boolean", "description": "Restore a dismissed alert instead (default false)." }
+                },
+                "additionalProperties": false
+            }),
+            alert_schema(),
+        )
+        .idempotent(),
+        ToolSpec::write(
             "probe_device",
             "Probe a device now",
             "Probes a device right now instead of waiting for its next scheduled poll, and \
@@ -1106,6 +1130,7 @@ pub async fn call(state: &AppState, token: &ApiToken, name: &str, arguments: Val
         "schedule_maintenance" => schedule_maintenance(state, &args).await,
         "remove_silence" => remove_silence(state, &args).await,
         "acknowledge_alert" => acknowledge_alert(state, &args).await,
+        "dismiss_alert" => dismiss_alert(state, &args).await,
         "probe_device" => probe_device(state, &args).await,
         "set_device_enabled" => set_device_enabled(state, &args).await,
         "set_rule_enabled" => set_rule_enabled(state, &args).await,
@@ -1436,6 +1461,8 @@ fn alert_json(alert: &ActiveAlertView, devices: &HashMap<TargetId, String>) -> V
         "acked_by": alert.acked.then_some(alert.acked_by.as_deref()).flatten(),
         "acked_until": alert.acked.then_some(alert.acked_until.map(rfc3339)).flatten(),
         "ack_note": alert.acked.then_some(alert.ack_note.as_deref()).flatten(),
+        "dismissed": alert.dismissed,
+        "dismissed_by": alert.dismissed.then_some(alert.dismissed_by.as_deref()).flatten(),
         "value": alert.value,
         "since": alert.firing_since.or(alert.condition_since).map(rfc3339),
         "labels": alert.labels,
@@ -2159,6 +2186,33 @@ async fn acknowledge_alert(state: &AppState, args: &Args) -> ToolResult {
     Ok(ToolOutput::new(text, alert_json(&alert, &names)))
 }
 
+async fn dismiss_alert(state: &AppState, args: &Args) -> ToolResult {
+    let fingerprint = args
+        .str("fingerprint")
+        .ok_or_else(|| failed("\"fingerprint\" (see list_alerts) is required."))?
+        .to_string();
+    let undo = args.bool("undo").unwrap_or(false);
+    let alert = alerts::dismiss(state, &fingerprint, !undo, "assistant").await?;
+
+    let devices = load_devices(state).await?;
+    let names: HashMap<TargetId, String> =
+        devices.iter().map(|device| (device.id(), device.name().to_string())).collect();
+    let device = alert
+        .target_id
+        .and_then(|id| names.get(&id).cloned())
+        .unwrap_or_else(|| "no device".into());
+    let text = if undo {
+        format!("{} ({device}) restored: it is listed and notifies again.", alert.rule_name)
+    } else {
+        format!(
+            "Dismissed {} ({device}): hidden from the active alerts, nothing more is sent until \
+             it resolves. If it comes back later, it alerts again. Undo with undo true.",
+            alert.rule_name
+        )
+    };
+    Ok(ToolOutput::new(text, alert_json(&alert, &names)))
+}
+
 async fn probe_device(state: &AppState, args: &Args) -> ToolResult {
     let devices = load_devices(state).await?;
     let device = resolve_arg(&devices, args)?;
@@ -2382,6 +2436,27 @@ async fn list_device_types(state: &AppState, args: &Args) -> ToolResult {
             text.push_str(&format!("\n{}:", kind.setup.title));
             for (index, step) in kind.setup.steps.iter().enumerate() {
                 text.push_str(&format!("\n{}. {}", index + 1, step.replace('\n', " — ")));
+            }
+        }
+        if !kind.setup.ports.is_empty() {
+            text.push_str("\nNetwork ports to open:");
+            for port in &kind.setup.ports {
+                let way = if port.direction == "to_server" {
+                    "device/agent to DumbMonit"
+                } else {
+                    "DumbMonit to device"
+                };
+                let optional = if port.optional { ", optional" } else { "" };
+                text.push_str(&format!(
+                    "\n- {}/{} ({way}{optional}): {}",
+                    port.port, port.protocol, port.purpose
+                ));
+            }
+        }
+        if !kind.setup.permissions.is_empty() {
+            text.push_str("\nRequired permissions:");
+            for permission in &kind.setup.permissions {
+                text.push_str(&format!("\n- {}", permission.replace('\n', " — ")));
             }
         }
         if !kind.setup.warning.is_empty() {
@@ -3241,7 +3316,7 @@ mod tests {
     #[test]
     fn every_tool_has_a_schema_and_a_scope() {
         let specs = specs();
-        assert_eq!(specs.len(), 27);
+        assert_eq!(specs.len(), 28);
         let mut names = std::collections::HashSet::new();
         for spec in &specs {
             assert!(names.insert(spec.name), "nom en double : {}", spec.name);
@@ -3277,6 +3352,7 @@ mod tests {
                 "schedule_maintenance",
                 "remove_silence",
                 "acknowledge_alert",
+                "dismiss_alert",
                 "probe_device",
                 "set_device_enabled",
                 "set_rule_enabled",

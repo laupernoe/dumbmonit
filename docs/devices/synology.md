@@ -6,6 +6,15 @@ Synology Drive and Photos. The first reason to monitor a NAS is its disks: a
 disk that heats up or whose SMART status degrades announces a failure long
 before a volume falls over.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 5001 | TCP | DSM API (HTTPS, default) |
+| 5000 | TCP | Only with the HTTP protocol option |
+
 ## What it watches
 
 All metrics are prefixed `dumbmonit_synology_`.
@@ -287,52 +296,53 @@ package. The `photos` option (on by default) turns it off.
 
 ## What to prepare on the NAS
 
-The steps below are the ones the notice next to the form shows. The principle:
-an account reserved for monitoring, stripped of everything DSM's API does not
-need — never the account you log in with.
+The steps below are the ones the notice next to the form shows. The principle: an account reserved for monitoring, stripped of everything DSM's API does not need — never the account you log in with.
 
-1. In DSM, open Control Panel → User & Group → User and click Create. Name the
-   account as follows and give it a long password that is used nowhere else.
+1. In DSM, open Control Panel → User & Group → User → Create and name the account as follows, with a long password used nowhere else.
 
     ```
     dumbmonit
     ```
 
-2. Join groups: tick administrators. DSM only answers the storage, volume and
-   disk SMART calls to that group; without it the NAS shows as alive but says
-   nothing about its disks. The next two steps take back everything else.
-3. Assign shared folder permissions: No access on every shared folder. Assign
-   application permissions: Deny everything except DSM, plus Active Backup for
-   Business if you want its tasks read. Skip the quota and speed limit pages.
-4. Two-step verification must stay off for this account: no automated monitor
-   can type a one-time code. If Control Panel → Security → Account enforces
-   it, restrict the rule to groups this user is not in, or exempt it.
-5. Backup packages are read only while they are installed and running: DSM
-   does not advertise a stopped package's API at all, so Hyper Backup tasks
-   then go quiet instead of failing, and a NAS that only receives backups
-   (Hyper Backup Vault) has no tasks of its own to show. Active Backup for
-   Business additionally answers only an account allowed to use it (Active
-   Backup for Business → Settings → Privileges); otherwise untick DumbMonit's
-   "Watch Active Backup for Business" option to stop asking.
-6. In DumbMonit, enter the NAS address (HTTPS, port 5001 by default), then
-   this account's user name and password.
+2. Join groups: tick administrators.
+3. Assign shared folder permissions: tick No access on every shared folder.
+4. Assign application permissions: Deny every application except DSM, and Active Backup for Business if you want its tasks read.
+5. Keep two-step verification off for this account (Control Panel → Security → Account).
+6. In DumbMonit, enter the NAS address (HTTPS, port 5001 by default) and this account's user name and password.
+
+### Required permissions
+
+- **Group: administrators** — DSM's storage API answers no other account
+- **Application: DSM** — The only application the account needs
+- **Application: Active Backup for Business** — Optional: to read its tasks
 
 !!! warning
-    The administrators group is required by DSM's storage API, not by
-    DumbMonit. That is why this account gets no shared folder, no application
-    and a password used nowhere else: it can read the NAS, not touch your
-    files.
-
-!!! note "Which rights give which metrics"
-    The DSM API does not need the same rights for every call. System status
-    (model, version, temperature, uptime) answers to any account. CPU, memory,
-    volumes and, above all, disk SMART status require the `administrators`
-    group. On DSM 7, the "System monitoring" delegation (Control Panel → User &
-    Group → Delegation) is enough for utilisation but not for the storage
-    inventory. An account without particular rights therefore gives a NAS that
-    is "alive", but nothing about its disks.
+    The administrators group is required by DSM's storage API, not by DumbMonit: that is why the account gets no shared folder and no other application.
 
 Vendor documentation: [Create a user in DSM](https://kb.synology.com/en-global/DSM/help/DSM/AdminCenter/file_user_create).
+
+### Why these permissions
+
+DSM's API does not need the same rights for every call. System status (model,
+version, temperature, uptime) answers to any account. CPU, memory, volumes and,
+above all, disk SMART status require the `administrators` group. On DSM 7, the
+"System monitoring" delegation (Control Panel → User & Group → Delegation) is
+enough for utilisation but not for the storage inventory. An account without
+particular rights therefore gives a NAS that is "alive", but nothing about its
+disks. The shared folder and application settings take the rest of the group's
+rights back.
+
+Two-step verification must stay off: no automated monitor can type a one-time
+code. If Control Panel → Security → Account enforces it, restrict the rule to
+groups this user is not in, or exempt it.
+
+Backup packages are read only while they are installed and running: DSM does
+not advertise a stopped package's API at all, so Hyper Backup tasks then go
+quiet instead of failing, and a NAS that only receives backups (Hyper Backup
+Vault) has no tasks of its own to show. Active Backup for Business additionally
+answers only an account allowed to use it (Active Backup for Business →
+Settings → Privileges); otherwise untick DumbMonit's "Watch Active Backup for
+Business" option to stop asking.
 
 ## Credentials
 

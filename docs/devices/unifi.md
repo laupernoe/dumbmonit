@@ -15,6 +15,15 @@ Clients roam to the next access point, the network keeps working, and the
 coverage hole or the lost uplink is only noticed days later. The same goes for
 a second WAN link that went down: nothing breaks until the first one fails too.
 
+## Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 443 | TCP | API (HTTPS, default) |
+| 8443 | TCP | Only with a self-hosted UniFi Network Server |
+
 ## Two ways in
 
 | Credential | API used | What it reads |
@@ -106,20 +115,37 @@ the official documentation.
 
 ## Create a read-only access in UniFi Network
 
-1. On a UniFi OS console (Dream Machine, Cloud Gateway, Cloud Key), you can create an API key: in UniFi Network, Settings → Control Plane → Integrations → Create API Key. Name it after DumbMonit and copy it now: it is shown only once. The key reads devices, their load and the number of clients through the official Integration API.
+1. For an API key on a UniFi OS console: UniFi Network → Settings → Control Plane → Integrations → Create API Key. Name it DumbMonit and copy it: it is shown once.
 
-2. For the WAN, Internet and alarm status, and on a self-hosted UniFi Network Server, use a local account with the View Only role instead: Settings → Admins & Users → Create New. Name it as follows, give it a long random password, restrict it to local access, and set its UniFi Network role to View Only. View Only reads everything and can change nothing.
+2. Or create a local account (needed for WAN and alarm status, and on a self-hosted server): Settings → Admins & Users → Create New, local access only.
 
     ```
     dumbmonit
     ```
 
-3. In DumbMonit, enter the address of the console or server, for example "unifi.lan" (port 443 on a console) or "unifi.lan:8443" for a self-hosted server, and paste the key or the account. If the network is not the default site, set the Site option to the short name shown in the address bar after /manage/ or /network/.
+3. Set that account's UniFi Network role to View Only.
 
-4. DumbMonit only reads. It never restarts, adopts, upgrades or provisions a device, and never acknowledges an alarm.
+4. In DumbMonit, enter the address (unifi.lan, or unifi.lan:8443 for a self-hosted server) and paste the key or the account.
+
+5. If the network is not the default site, set the Site option to the short name shown after /manage/ or /network/ in the address bar.
+
+### Required permissions
+
+- **View Only (UniFi Network role)** — Reads everything and changes nothing
 
 !!! warning
-    Do not use the owner account or a UI.com cloud account: a leaked password would open every console linked to it. Keep two-factor authentication off for this local View Only account only, since a monitoring server cannot type a code. Consoles use a self-signed certificate by default: enable "Accept an unverifiable certificate" unless you installed your own. UniFi knows every client that ever connected, most of them phones passing by: only those named, reserved on a fixed IP, or noted in UniFi are watched for staleness by default, to avoid an alert for every visitor's phone. List more in the Clients to watch option, or enter all.
+    Use a local account, never the owner or a UI.com cloud account, and accept the console's self-signed certificate in the options unless you installed your own.
+
+### Notes
+
+Keep two-factor authentication off for this local View Only account only, since
+a monitoring server cannot type a code. A leaked owner or UI.com password would
+open every console linked to it.
+
+UniFi knows every client that ever connected, most of them phones passing by:
+only those named, reserved on a fixed IP, or noted in UniFi are watched for
+staleness by default, to avoid an alert for every visitor's phone. List more in
+the Clients to watch option, or enter all.
 
 ## Controller not set up yet
 

@@ -4,6 +4,14 @@ Le serveur de logs lui-même : s'il est prêt, quelles lignes il refuse et
 pourquoi, si ses chunks atteignent le stockage, et si son journal
 d'écriture anticipée a encore du disque.
 
+## Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 3100 | TCP | API HTTP de Loki (par défaut) |
+
 Loki publie `/ready` et `/metrics` sur son port HTTP ; DumbMonit ne lit que
 ces deux-là. Il ne lance jamais de requête LogQL et ne lit jamais une ligne de
 log.
@@ -61,21 +69,27 @@ raison.
 
 ## Laisser DumbMonit lire la santé de Loki
 
-1. Rien à installer : Loki publie /ready et /metrics sur son port HTTP (3100 par défaut). Vérifiez depuis l'hôte DumbMonit que les deux répondent.
+1. Rien à installer : vérifiez depuis l'hôte DumbMonit que Loki répond sur son port HTTP (3100 par défaut).
 
     ```
     curl http://loki.lan:3100/ready
-    curl -s http://loki.lan:3100/metrics | grep loki_build_info
     ```
 
-2. Loki n'a pas de connexion propre. S'il se trouve derrière un reverse proxy qui demande un nom d'utilisateur et un mot de passe, choisissez Nom d'utilisateur / mot de passe ci-dessous ; pour un jeton bearer, choisissez Jeton bearer. Aucun tenant n'est nécessaire : /ready et /metrics ne sont pas par tenant.
-
-3. Dans DumbMonit, saisissez l'adresse de Loki, par exemple « loki.lan », ou « https://logs.lan/loki » derrière un reverse proxy. Avec Loki divisé en composants (simple scalable ou microservices), ajoutez au moins le chemin d'écriture, où les lignes refusées et les échecs de flush sont comptés.
-
-4. DumbMonit ne lit que /ready et /metrics. Il ne lance jamais de requête LogQL et ne lit jamais une ligne de log.
+2. Loki n'a pas de connexion propre : seulement si un reverse proxy devant lui en demande une, choisissez Nom d'utilisateur / mot de passe (ou Jeton bearer) ci-dessous.
+3. Dans DumbMonit, saisissez l'adresse de Loki, par exemple "loki.lan" ou "https://logs.lan/loki" derrière un reverse proxy.
+4. Avec Loki découpé en composants (simple scalable ou microservices), ajoutez au moins le chemin d'écriture.
 
 !!! warning
-    Les lignes refusées sont la panne à surveiller : quand Loki refuse une ligne (trop ancienne, au-delà du débit d'ingestion ou de la limite de flux, ligne trop longue), l'émetteur reçoit une erreur et abandonne généralement le lot. Rien ne s'affiche dans Grafana sauf un trou dans les logs.
+    Les lignes refusées sont la panne à surveiller : quand Loki refuse une ligne (trop ancienne, au-delà d'une limite de débit ou de flux, trop longue), l'émetteur abandonne généralement le lot et Grafana ne montre qu'un trou dans les logs.
+
+Documentation du fournisseur : [Loki meta-monitoring](https://grafana.com/docs/loki/latest/operations/meta-monitoring/).
+
+### Bon à savoir
+
+Aucun tenant n'est nécessaire : `/ready` et `/metrics` ne sont pas par tenant.
+Le chemin d'écriture est l'endroit où les lignes refusées et les échecs de
+flush sont comptés. DumbMonit ne lit que `/ready` et `/metrics` : il n'exécute
+jamais de requête LogQL et ne lit jamais une ligne de log.
 
 ## Identifiants
 
