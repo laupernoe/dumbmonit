@@ -5,6 +5,82 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Import Uptime Kuma 1.x and 2.x from `kuma.db`.** Uptime Kuma 2 dropped its
+  JSON backup, so the import now also reads the SQLite database
+  (`docker cp uptime-kuma:/app/data/kuma.db .`): upload it, preview the monitors
+  sorted by type and folder, tick the ones to import (those already monitored are
+  flagged) and import them in one click, with the same mapping as the JSON
+  backup. The file is read once in read-only mode from a temporary copy (at most
+  512 MB) that is deleted afterwards. Uptime Kuma 2 on MariaDB is not supported.
+  New endpoint `POST /api/targets/import/kuma-db`, and `rows=` on both Kuma
+  import endpoints. See
+  [Coming from Uptime Kuma](docs/devices/services.md#coming-from-uptime-kuma).
+
+### Changed
+
+- **Add a monitor:** the import buttons (Uptime Kuma, websites CSV) moved from the
+  top of the page to a new **Import** category at the bottom, beside
+  **Everything else**.
+- **Relay mode is switched from the UI.** An agent's page has a *Relay for a
+  remote site* switch and a site field: the server sends the setting to the
+  agent in its next acknowledgement and the agent turns relay mode on or off on
+  the fly, without a restart or a file to edit. `relay: true` in agent.yaml
+  still wins; an agent too old to follow the switch is flagged. A token from
+  *Watch a remote site* (or with *This agent is a relay for a remote site*
+  ticked) carries relay mode and the site, so the enrolled agent is a relay
+  from its first report. Once a relay, its page links to *Scan this site's
+  network* and *Add a monitor through this relay*.
+- **Reached through, in bulk.** The monitors list's selection bar sets *Reached
+  through* (direct or a relay) on many monitors at once, skips agent monitors
+  with a note, and offers to place them at the location whose site is the
+  relay's.
+### Changed
+
+- **Simpler setup guides when adding a monitor.** Each guide is now a few short
+  steps done in the product's own web interface (a command is kept only where
+  the product has no interface for it), followed by a framed "Required
+  permissions" list with the exact rights, roles or scopes to grant, and a
+  "Full guide" link to the matching documentation page. The device pages of the
+  documentation carry the same steps and permissions. Integration packs can list
+  `setup.permissions` too.
+### Added
+
+- **Dismiss an alert in one click.** Every alert now leads with a **Dismiss**
+  button — in the alert list, an alert's details and a monitor's panel — with
+  no duration to pick and no confirmation, only a toast with **Undo**. A
+  dismissed alert leaves the active list, the overview, the wall and every
+  counter, and nothing more is sent for it (no reminder, no escalation, no
+  resolution message) for as long as the condition lasts. The dismissal belongs
+  to that occurrence: once the condition clears, a later return is a new alert,
+  notified as usual. Its resolution stays in the history as "dismissed by …",
+  and a **Dismissed** view lists the ones still active, to restore a mistake.
+  Acknowledge and Snooze stay available in the alert's **…** menu.
+  Notifications carry a **Dismiss** link first (`{{dismiss_url}}` for custom
+  webhooks), the API gains `POST`/`DELETE /api/alerts/{fingerprint}/dismiss`
+  and `GET /api/alerts?dismissed=true`, and assistants a `dismiss_alert` tool.
+
+### Changed
+
+- The folded group of acknowledged alerts in the Now list is called
+  *Acknowledged* (it read *Dismissed*).
+- **Active Directory: DNS servers option.** When the DumbMonit host's DNS does
+  not know the domain, fill *DNS servers* with the IPs of the servers that do:
+  every name lookup of the monitor (the controller you entered, the other
+  controllers, the reachability check) goes through them over UDP then TCP,
+  while LDAPS still checks the certificate against the name. Empty keeps the
+  system resolver; works through a relay agent too.
+
+### Fixed
+
+- **A remote-site relay installs in one command.** An agent installed from
+  *Settings → Agents → Watch a remote site* was not a relay until `relay: true`
+  was added to agent.yaml by hand. Its token now makes it a relay (see above),
+  and the agent.yaml step is only a folded note for agents already installed.
+  The install scripts also accept `--relay` and `--site=NAME` (`-Relay -Site
+  NAME` on Windows) for a relay set on the machine itself.
+
 ## 0.13.0 — 2026-10-19
 
 ### Added

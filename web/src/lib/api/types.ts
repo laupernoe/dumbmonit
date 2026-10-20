@@ -334,6 +334,16 @@ export interface Alert {
 	/** Account that acknowledged, or `token:name` for an API token. */
 	acked_by: string | null;
 	ack_note: string | null;
+	/**
+	 * True once someone dismissed this occurrence: it left every list and
+	 * count and nothing is sent for it. If the condition clears and comes
+	 * back, that is a new alert. Only `GET /alerts?dismissed=true` returns these.
+	 */
+	dismissed: boolean;
+	/** UTC, no suffix (`parseServerDate`). */
+	dismissed_at: string | null;
+	/** Account that dismissed, or `token:name` for an API token. */
+	dismissed_by: string | null;
 	value: number | null;
 	score: number | null;
 	condition_since: string | null;
@@ -528,6 +538,12 @@ export interface DiscoveryResult {
 export interface CollectorSetup {
 	title: string;
 	steps: string[];
+	/**
+	 * Rights, roles or permissions to give the monitoring account, one per entry:
+	 * the first line is the right (shown in bold), the optional second line says
+	 * what it is for. The server omits the field when a type needs none.
+	 */
+	permissions?: string[];
 	warning: string;
 	doc_url: string;
 }
@@ -647,7 +663,7 @@ export interface CollectorInfo {
  * `|| ''` in components.
  */
 export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string }): CollectorInfo {
-	const setup = raw.setup ?? { title: '', steps: [], warning: '', doc_url: '' };
+	const setup = raw.setup ?? { title: '', steps: [], permissions: [], warning: '', doc_url: '' };
 	const options = Array.isArray(raw.options) ? raw.options : [];
 	const credential_types = Array.isArray(raw.credential_types)
 		? raw.credential_types.filter((t) => typeof t === 'string')
@@ -671,6 +687,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 		setup: {
 			title: setup.title?.trim() ?? '',
 			steps: Array.isArray(setup.steps) ? setup.steps.filter((s) => s.trim()) : [],
+			permissions: Array.isArray(setup.permissions) ? setup.permissions.filter((s) => s.trim()) : [],
 			warning: setup.warning?.trim() ?? '',
 			doc_url: setup.doc_url?.trim() ?? ''
 		},
@@ -1162,6 +1179,9 @@ export interface AgentToken {
 	 * this date — only revoking cuts them off.
 	 */
 	expires_at: string | null;
+	/** A relay token: the machine it enrols becomes a relay for its site at its first report. */
+	relay?: boolean;
+	relay_site?: string | null;
 }
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */
@@ -1174,6 +1194,10 @@ export interface AgentTokenPayload {
 	max_uses?: number | null;
 	/** Days before the token stops enrolling. Left out, there is no deadline. */
 	expires_in_days?: number | null;
+	/** Make the enrolled machine a relay for a remote site, without editing anything on it. */
+	relay?: boolean;
+	/** Site of that relay. */
+	site?: string | null;
 }
 
 /** Response of `POST /api/agent/tokens`: the only chance to see the token in clear. */
@@ -1203,6 +1227,17 @@ export interface AgentHost {
 	relay: boolean;
 	/** Site declared by the agent, if any. */
 	site: string | null;
+	/**
+	 * Relay mode asked from the UI (or by the enrolment token), sent to the agent
+	 * in every acknowledgement. Differs from `relay` until the agent adopts it.
+	 * Absent on an older server.
+	 */
+	relay_wanted?: boolean;
+	relay_wanted_site?: string | null;
+	/** False: the agent is too old to follow `relay_wanted` (set `relay: true` in agent.yaml, or update it). */
+	relay_control?: boolean;
+	/** `relay: true` is set in the agent's own configuration, which wins: it can't be switched off here. */
+	relay_local?: boolean;
 	/** Devices reached through this agent (`via_agent`). */
 	relayed: number;
 	last_seen_at: string | null;
@@ -1343,7 +1378,7 @@ export interface NotificationPolicy {
 }
 
 /** What a notification action link does (`/alert-action#<token>`). */
-export type AlertLinkAction = 'ack' | 'snooze';
+export type AlertLinkAction = 'ack' | 'snooze' | 'dismiss';
 
 /** An alert named by an action link, reduced to what is needed to decide. */
 export interface AlertLinkTarget {
@@ -1352,6 +1387,7 @@ export interface AlertLinkTarget {
 	severity: AlertSeverity;
 	acked: boolean;
 	acked_until: string | null;
+	dismissed: boolean;
 }
 
 /** `POST /api/public/alert-action/inspect`: what the link would do. */
@@ -1366,8 +1402,11 @@ export interface AlertLinkView {
 /** `POST /api/public/alert-action`: what the link did. */
 export interface AlertLinkResult {
 	action: AlertLinkAction;
+	/** The instant of the gesture (a dismissal) or the end of the ack / snooze. */
 	until: string;
 	acked: number;
+	/** Alerts dismissed by the link (`acked` is 0 then). */
+	dismissed: number;
 	alerts: AlertLinkTarget[];
 }
 

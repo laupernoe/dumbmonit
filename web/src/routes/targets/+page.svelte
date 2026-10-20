@@ -79,10 +79,13 @@
 		Search,
 		SlidersHorizontal,
 		Trash2,
-		MapPin
+		MapPin,
+		RadioTower
 	} from 'lucide-svelte';
 	import { assignLocation, listLocations } from '#lib/api/locations.js';
-	import type { MapLocation } from '#lib/api/types.js';
+	import { listRelays } from '#lib/api/relay.js';
+	import { locationForSite } from '#lib/components/devices/relay/relay-site.js';
+	import type { MapLocation, RelayAgent } from '#lib/api/types.js';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
@@ -565,6 +568,49 @@
 			.catch(() => (bulkLocations = []));
 		return () => controller.abort();
 	});
+	// Relay agents, offered as "Reached through" in bulk.
+	let bulkRelays = $state<RelayAgent[]>([]);
+	$effect(() => {
+		if (!selecting) return;
+		const controller = new AbortController();
+		listRelays(controller.signal)
+			.then((list) => (bulkRelays = list.filter((r) => r.relay || r.relayed > 0)))
+			.catch(() => (bulkRelays = []));
+		return () => controller.abort();
+	});
+	/** Agents push their own metrics: they are never reached through a relay. */
+	const relayable = (t: Target) => t.kind !== 'agent' && t.kind !== 'agent_service';
+	/** Monitors of the selection left out of "Reached through", said out loud. */
+	let relaySkipped = $state(0);
+	/** After a move to a relay whose site is a location: offer to place them there. */
+	let relayPlace = $state<{ location: MapLocation; ids: TargetId[] } | null>(null);
+
+	async function bulkRelay(agent: RelayAgent | null) {
+		const viaAgent = agent ? agent.id : null;
+		const subjects = selectedTargets.filter((t) => relayable(t) && t.id !== viaAgent);
+		relaySkipped = selectedTargets.length - subjects.length;
+		relayPlace = null;
+		const moving = subjects.filter((t) => t.via_agent !== viaAgent);
+		await bulk(moving, (t) => updateTarget(t.id, targetToPayload(t, { via_agent: viaAgent })));
+		const location = locationForSite(bulkLocations, agent?.site);
+		if (location && subjects.length > 0) relayPlace = { location, ids: subjects.map((t) => t.id) };
+	}
+
+	async function placeRelayed() {
+		if (!relayPlace || bulkBusy) return;
+		const { location, ids } = relayPlace;
+		bulkBusy = true;
+		try {
+			await assignLocation(location.id, ids);
+			await alertsStore.refresh();
+			relayPlace = null;
+		} catch (error) {
+			bulkReport = { failed: [{ name: location.name, error }], total: ids.length };
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
 	/** One request for the whole selection: the server places them all at once. */
 	async function bulkPlace(location: number | null) {
 		const subjects = selectedTargets;
@@ -1302,11 +1348,49 @@
 					{/snippet}
 				</Menu>
 			{/if}
+			{#if bulkRelays.length > 0}
+				<Menu label={m.devices_list_bulk_relay()} align="left" placement="up">
+					{#snippet trigger({ toggle, open })}
+						<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} aria-haspopup="menu" aria-expanded={open} onclick={toggle}>
+							<RadioTower class="size-4" aria-hidden="true" />
+							{m.devices_list_bulk_relay()}
+						</Button>
+					{/snippet}
+					{#snippet children({ close })}
+						<ul class="flex max-h-72 min-w-48 flex-col gap-0.5 overflow-y-auto">
+							<li>
+								<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkRelay(null); }}>
+									{m.devices_list_bulk_relay_direct()}
+								</button>
+							</li>
+							{#each bulkRelays as relay (relay.id)}
+								<li>
+									<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkRelay(relay); }}>
+										{relay.site ? m.deviceform_form_relay_site({ name: relay.name, site: relay.site }) : relay.name}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/snippet}
+				</Menu>
+			{/if}
 			<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy || selectedTargets.length === 0} onconfirm={bulkDelete}>
 				<Trash2 class="size-4" aria-hidden="true" />
 				{m.devices_list_bulk_delete()}
 			</Confirm>
 		</SelectionBar>
+	{/if}
+	{#if relaySkipped > 0 || relayPlace}
+		<div class="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-line bg-surface px-3 py-2 text-sm text-ink-2" role="status">
+			{#if relaySkipped > 0}
+				<p>{m.devices_list_bulk_relay_skipped({ count: relaySkipped })}</p>
+			{/if}
+			{#if relayPlace}
+				<p>{m.devices_list_bulk_relay_place({ count: relayPlace.ids.length, location: relayPlace.location.name })}</p>
+				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => void placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
+			{/if}
+			<Button size="sm" variant="ghost" onclick={() => { relaySkipped = 0; relayPlace = null; }}>{m.devices_list_bulk_dismiss()}</Button>
+		</div>
 	{/if}
 	{#if bulkReport}
 		<div class="mb-3">

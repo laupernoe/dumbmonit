@@ -56,35 +56,29 @@ acquittés, les messages publiés et livrés par seconde, les connexions, les
 consommateurs et les files, puis les dix files les plus pleines avec leurs
 consommateurs et la mémoire et le disque libre de chaque nœud.
 
-## Créer un utilisateur RabbitMQ étiqueté monitoring
+## Créer un utilisateur RabbitMQ de supervision
 
-1. Activez le plugin de management s'il n'est pas déjà actif (les images Docker de management l'ont). Son API écoute sur le port 15672.
+1. Ouvrez l'interface de gestion de RabbitMQ, par exemple http://rabbit.lan:15672, et connectez-vous avec un utilisateur autorisé à gérer les utilisateurs.
 
-    ```
-    rabbitmq-plugins enable rabbitmq_management
-    ```
+2. Allez dans Admin → Users → Add a user, nommez-le dumbmonit, définissez un mot de passe et le tag monitoring, puis cliquez sur Add user.
 
-2. Créez un utilisateur avec seulement l'étiquette monitoring : il peut lire l'état des nœuds, des alarmes et des files, et ne peut rien changer.
+3. Cliquez sur dumbmonit dans la liste, et sous Set permission choisissez chaque virtual host, mettez Configure, Write et Read à ^$, puis cliquez sur Set permission.
 
-    ```
-    rabbitmqctl add_user dumbmonit 'a-long-password'
-    rabbitmqctl set_user_tags dumbmonit monitoring
-    ```
+4. Dans DumbMonit, saisissez l'adresse d'un nœud, par exemple rabbit.lan, ou https://rabbit.lan:15671 quand l'API est servie en TLS.
 
-3. Donnez-lui des permissions vides sur chaque hôte virtuel dont vous voulez voir les files. Il peut alors lister ces files, et ne peut toujours ni publier, ni consommer ni lire un message. Répétez avec -p pour chaque autre hôte virtuel.
+### Droits requis
 
-    ```
-    rabbitmqctl set_permissions -p / dumbmonit '^$' '^$' '^$'
-    ```
-
-4. Dans DumbMonit, saisissez l'adresse d'un nœud, par exemple « rabbit.lan », ou « https://rabbit.lan:15671 » quand l'API est servie sur TLS. Un seul nœud rapporte tout le cluster : les alarmes et partitions de chaque nœud, et chaque file.
+- **monitoring (user tag)** : Lire les nœuds, les alarmes et les files
+- **Configure, Write, Read = ^$ on each virtual host** : Permet de lister les files de ce virtual host
 
 !!! warning
-    Une alarme mémoire ou disque bloque tous les publieurs du cluster, et les
-    clients n'obtiennent aucune erreur : les applications restent simplement
-    bloquées sur publish. Les files sont listées les plus pleines d'abord,
-    jusqu'à Files surveillées une par une (100 par défaut) ; les totaux
-    couvrent toujours toutes les files.
+    Une alarme mémoire ou disque bloque tous les producteurs du cluster, sans aucune erreur côté clients.
+
+### Pourquoi ces droits
+
+Le plugin de gestion (rabbitmq-plugins enable rabbitmq_management ; les images Docker management l'ont) sert l'API sur le port 15672. Le tag monitoring lit l'état des nœuds, des alarmes et des files, et ne peut rien modifier. Un utilisateur ne voit que les files des virtual hosts sur lesquels il a une permission : les motifs vides ^$ lui permettent de les lister sans pouvoir publier, consommer ni lire un message. Sans permissions sur un virtual host, ses files ne sont pas listées une à une, et les totaux du cluster les comptent quand même. Un nœud rapporte tout le cluster : les alarmes et partitions de chaque nœud, et chaque file. Les files sont listées de la plus pleine à la moins pleine, jusqu'à Files suivies une à une (100 par défaut).
+
+Documentation de l'éditeur : https://www.rabbitmq.com/docs/management#permissions
 
 ## Identifiants
 

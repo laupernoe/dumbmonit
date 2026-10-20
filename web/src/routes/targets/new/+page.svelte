@@ -19,7 +19,7 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ArrowLeft, BookOpen, ChevronRight, Globe, Plug, Radar } from 'lucide-svelte';
+	import { ArrowLeft, BookOpen, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
@@ -32,7 +32,19 @@
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
-	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon } from '#lib/components/device-form/kinds.js';
+	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon, type ImportChoice } from '#lib/components/device-form/kinds.js';
+
+	let kumaImport = $state<ImportKuma | null>(null);
+	let websitesImport = $state<ImportWebsites | null>(null);
+	/** Ways to bring monitors over, listed last in the picker. Administrators only. */
+	const imports = $derived<ImportChoice[]>(
+		auth.isAdmin
+			? [
+					{ id: 'kuma', label: m.devices_kuma_open(), summary: m.deviceform_picker_import_kuma_summary(), icon: Upload, onrun: () => kumaImport?.show() },
+					{ id: 'websites', label: m.devices_import_open(), summary: m.deviceform_picker_import_websites_summary(), icon: FileSpreadsheet, onrun: () => websitesImport?.show() }
+				]
+			: []
+	);
 
 	let collectors = $state<CollectorInfo[]>([]);
 	let targets = $state<Target[]>([]);
@@ -76,6 +88,11 @@
 	const requestedKind = $derived(params.get('kind'));
 	/** Values from the network scan (`?prefill=`), for the kind's form only. */
 	const prefill = $derived(readPrefill(params));
+	/** A positive id from the URL (`?agent=`, `?via_agent=`), or `null`. */
+	function idParam(key: string): number | null {
+		const value = Number(params.get(key));
+		return Number.isInteger(value) && value > 0 ? value : null;
+	}
 	const selected = $derived(collectors.find((c) => c.kind === requestedKind) ?? null);
 	/** `?scan=1` opens the network scan: the first-run guide and the command palette link to it. */
 	const scanning = $derived(!requestedKind && params.get('scan') === '1');
@@ -273,11 +290,13 @@
 	</ol>
 </nav>
 
-<PageHeader title={m.deviceform_new_add()} {description}>
-	{#snippet actions()}
-		{#if view === 'picker' && auth.isAdmin}<ImportKuma /><ImportWebsites />{/if}
-	{/snippet}
-</PageHeader>
+<PageHeader title={m.deviceform_new_add()} {description} />
+
+<!-- Opened from the "Import" category of the picker. -->
+{#if auth.isAdmin}
+	<ImportKuma bind:this={kumaImport} trigger={false} />
+	<ImportWebsites bind:this={websitesImport} trigger={false} />
+{/if}
 
 {#if view === 'picker'}
 	<!-- The picker ------------------------------------------------------------ -->
@@ -312,7 +331,7 @@
 					{m.deviceform_new_unknown_kind({ kind: requestedKind })}
 				</p>
 			{/if}
-			<CollectorPicker {collectors} selected={lastChoice === 'scan' ? null : lastChoice} wide onscan={snmp ? openScan : undefined} onselect={(kind, via) => select(kind, via)}>
+			<CollectorPicker {collectors} {imports} selected={lastChoice === 'scan' ? null : lastChoice} wide onscan={snmp ? openScan : undefined} onselect={(kind, via) => select(kind, via)}>
 				{#snippet empty()}
 					<p class="mt-1 text-sm text-ink-2">{m.deviceform_new_empty_lead()}</p>
 					<div class="mt-3 flex flex-wrap justify-center gap-2">
@@ -369,7 +388,7 @@
 						<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
 						{m.deviceform_new_scan()}
 					</h2>
-					<Discovery />
+					<Discovery agent={idParam('agent')} />
 				</Panel>
 			{:else if selected}
 				<Panel>
@@ -407,6 +426,7 @@
 							<TargetForm
 								collector={selected}
 								{prefill}
+								viaAgentDefault={idParam('via_agent')}
 								{targets}
 								cancelHref="/targets"
 								onsaved={(saved) =>

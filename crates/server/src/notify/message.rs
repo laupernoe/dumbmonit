@@ -97,6 +97,11 @@ pub const TEMPLATE_VARIABLES: &[(&str, &str)] = &[
         "Signed link that acknowledges the alert until it resolves, empty if action links are off",
     ),
     ("snooze_url", "Signed link that snoozes the alert for one hour, empty if links are off"),
+    (
+        "dismiss_url",
+        "Signed link that dismisses the alert (hidden and silent until it resolves), empty if \
+         links are off",
+    ),
 ];
 
 impl Message {
@@ -142,6 +147,7 @@ impl Message {
             ("token", String::new()),
             ("ack_url", self.action_url(Action::Ack)),
             ("snooze_url", self.action_url(Action::Snooze)),
+            ("dismiss_url", self.action_url(Action::Dismiss)),
         ])
     }
 
@@ -1141,6 +1147,7 @@ mod tests {
         let vars = message.variables();
         assert!(vars["ack_url"].starts_with("https://m.lan/alert-action#"));
         assert!(vars["snooze_url"].starts_with("https://m.lan/alert-action#"));
+        assert!(vars["dismiss_url"].starts_with("https://m.lan/alert-action#"));
         assert!(message.without_actions().actions.is_empty());
     }
 

@@ -117,20 +117,38 @@ officielle.
 
 ## Créer un accès en lecture seule dans UniFi Network
 
-1. Sur une console UniFi OS (Dream Machine, Cloud Gateway, Cloud Key), vous pouvez créer une clé d'API : dans UniFi Network, Settings → Control Plane → Integrations → Create API Key. Nommez-la d'après DumbMonit et copiez-la maintenant : elle n'est montrée qu'une fois. La clé lit les appareils, leur charge et le nombre de clients via l'Integration API officielle.
+1. Pour une clé d'API sur une console UniFi OS : UniFi Network → Settings → Control Plane → Integrations → Create API Key. Nommez-la DumbMonit et copiez-la : elle n'est affichée qu'une fois.
 
-2. Pour le statut WAN, Internet et des alarmes, et sur un UniFi Network Server auto-hébergé, utilisez plutôt un compte local avec le rôle View Only : Settings → Admins & Users → Create New. Nommez-le comme suit, donnez-lui un mot de passe long et aléatoire, restreignez-le à l'accès local, et réglez son rôle UniFi Network sur View Only. View Only lit tout et ne peut rien changer.
+2. Ou créez un compte local (requis pour l'état du WAN et des alarmes, et sur un serveur auto-hébergé) : Settings → Admins & Users → Create New, accès local uniquement.
 
     ```
     dumbmonit
     ```
 
-3. Dans DumbMonit, saisissez l'adresse de la console ou du serveur, par exemple « unifi.lan » (port 443 sur une console) ou « unifi.lan:8443 » pour un serveur auto-hébergé, et collez la clé ou le compte. Si le réseau n'est pas le site par défaut, réglez l'option Site sur le nom court affiché dans la barre d'adresse après /manage/ ou /network/.
+3. Réglez le rôle UniFi Network de ce compte sur View Only.
 
-4. DumbMonit ne fait que lire. Il ne redémarre, n'adopte, ne met à jour ni ne provisionne jamais un appareil, et n'acquitte jamais une alarme.
+4. Dans DumbMonit, saisissez l'adresse (unifi.lan, ou unifi.lan:8443 pour un serveur auto-hébergé) et collez la clé ou le compte.
+
+5. Si le réseau n'est pas le site par défaut, réglez l'option Site sur le nom court affiché après /manage/ ou /network/ dans la barre d'adresse.
+
+### Droits requis
+
+- **View Only (rôle UniFi Network)** — Lit tout et ne change rien
 
 !!! warning
-    N'utilisez pas le compte propriétaire ou un compte cloud UI.com : un mot de passe qui fuit ouvrirait chaque console liée à lui. Laissez la double authentification désactivée pour ce seul compte local View Only, car un serveur de surveillance ne peut pas taper un code. Les consoles utilisent un certificat autosigné par défaut : activez « Accepter un certificat non vérifiable » sauf si vous avez installé le vôtre. UniFi connaît chaque client qui s'est déjà connecté, la plupart des téléphones qui passent : seuls ceux nommés, réservés sur une IP fixe, ou notés dans UniFi sont surveillés pour la péremption par défaut, pour éviter une alerte pour chaque téléphone de visiteur. Listez-en plus dans l'option Clients à surveiller, ou saisissez all.
+    Utilisez un compte local, jamais le propriétaire ni un compte cloud UI.com, et acceptez le certificat auto-signé de la console dans les options sauf si vous avez installé le vôtre.
+
+### Notes
+
+Gardez l'authentification à deux facteurs désactivée pour ce seul compte local
+View Only, car un serveur de supervision ne peut pas saisir de code. Un mot de
+passe de propriétaire ou UI.com divulgué ouvrirait toutes les consoles qui lui
+sont liées.
+
+UniFi connaît chaque client qui s'est un jour connecté, la plupart des
+téléphones de passage : seuls ceux nommés, réservés sur une IP fixe ou annotés
+dans UniFi sont surveillés par défaut, pour éviter une alerte par téléphone de
+visiteur. Listez-en d'autres dans l'option Clients to watch, ou saisissez all.
 
 ## Identifiants
 

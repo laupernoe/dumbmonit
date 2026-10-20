@@ -15,6 +15,7 @@
 	import DemoNotice from '#lib/components/demo/DemoNotice.svelte';
 	import Tour from '#lib/components/demo/Tour.svelte';
 	import WhatsNew from '#lib/components/WhatsNew.svelte';
+	import DismissToast from '#lib/components/alerts/DismissToast.svelte';
 	import { demo } from '#lib/stores/demo.svelte.js';
 	import { calmMotion } from '#lib/ui/index.js';
 	import { SHORTCUTS } from '#lib/palette/shortcuts.js';
@@ -198,6 +199,9 @@
 		{/if}
 		{#if ShortcutHelp && !onWall}
 			<ShortcutHelp />
+		{/if}
+		{#if !onWall}
+			<DismissToast />
 		{/if}
 		{#if !onWall}
 			{#if !auth.demo}

@@ -123,44 +123,47 @@ concerné.
 
 ## Ce qu'il faut préparer dans Proxmox Mail Gateway
 
-Les étapes ci-dessous sont celles que montre l'avis à côté du formulaire.
-Le principe : un utilisateur réservé à la surveillance, avec un rôle en
-lecture seule — jamais le compte avec lequel vous vous connectez.
-
-1. Dans l'interface web : Configuration → User Management → Users → Add.
-   Nommez le compte comme suit, donnez-lui un mot de passe long utilisé
-   nulle part ailleurs, et cochez Enabled.
+1. Ouvrez Configuration → User Management → Users → Add, saisissez le nom d'utilisateur ci-dessous, un long mot de passe utilisé nulle part ailleurs, et cochez Enabled.
 
     ```
     dumbmonit@pmg
     ```
 
-2. Réglez son Role sur `Audit`. C'est le minimum exact en lecture seule
-   pour tout ce que DumbMonit lit : état du nœud, services, files
-   postfix, statistiques mail, compteurs de quarantaine, âge des bases
-   ClamAV et SpamAssassin, état du cluster, certificats, abonnement et
-   mises à jour en attente. `Audit` ne peut rien changer, rien libérer de
-   la quarantaine et ne lit aucun message.
+2. Réglez son Role sur Audit, puis cliquez sur Add.
 
-3. Vous préférez un shell ? Le même compte en une commande, puis réglez le
-   mot de passe.
+3. Dans DumbMonit, saisissez l'adresse de la passerelle (par exemple mail.lan:8006), puis ce nom d'utilisateur, realm compris, et son mot de passe.
 
-    ```
-    pmgsh create /access/users --userid dumbmonit@pmg --role audit --enable 1 --comment "DumbMonit monitoring"
-    ```
+### Droits requis
 
-4. Dans DumbMonit, saisissez l'adresse de la passerelle, par exemple
-   « mail.lan » ou « mail.lan:8006 », puis le nom d'utilisateur (domaine
-   inclus) et le mot de passe de ce compte.
-
-5. Proxmox Mail Gateway n'émet pas de jetons d'API, à la différence de
-   Proxmox VE et Proxmox Backup Server : le nom d'utilisateur et le mot
-   de passe sont la voie d'entrée. DumbMonit ouvre une session de deux
-   heures et la renouvelle, plutôt que de se connecter à chaque mesure.
+- **Rôle Audit** : Lecture seule : état, files d'attente, statistiques, compteurs de quarantaine
 
 !!! warning
+    Proxmox Mail Gateway n'a pas de jetons d'API : DumbMonit se connecte donc avec ce mot de passe. Il utilise par défaut un certificat autosigné : cochez « Accepter un certificat non vérifiable » dans les options si la connexion est refusée.
 
-    Ne réutilisez pas le compte avec lequel vous vous connectez : le rôle Audit ci-dessus ne peut que lire, et ne peut pas libérer un message en quarantaine ni changer une règle. Proxmox Mail Gateway utilise aussi un certificat autosigné par défaut : si la connexion est refusée pour cette raison, cochez « Accepter un certificat non vérifiable » dans les options.
+Documentation de l'éditeur : [PMG user management](https://pmg.proxmox.com/pmg-docs/pmg-admin-guide.html#pmgconfig_userman)
+
+### Pourquoi ces droits
+
+Ne réutilisez pas le compte avec lequel vous vous connectez : le rôle `Audit`
+ne sait que lire, et ne peut ni libérer un message en quarantaine ni modifier
+une règle.
+
+* `Audit` est le strict minimum en lecture seule pour tout ce que DumbMonit
+  lit : état du nœud, services, files postfix, statistiques de courrier,
+  compteurs de quarantaine, âge des bases ClamAV et SpamAssassin, état du
+  cluster, certificats, abonnement et mises à jour en attente. Il ne libère
+  rien de la quarantaine et ne lit aucun message.
+* Proxmox Mail Gateway n'émet pas de jetons d'API, contrairement à Proxmox VE
+  et Proxmox Backup Server : l'identifiant et le mot de passe sont la seule
+  porte d'entrée. DumbMonit ouvre une session de deux heures et la renouvelle,
+  au lieu de se connecter à chaque mesure.
+
+Vous préférez un shell ? Le même compte en une commande, puis définissez le
+mot de passe :
+
+```
+pmgsh create /access/users --userid dumbmonit@pmg --role audit --enable 1 --comment "DumbMonit monitoring"
+```
 
 Adresse : `10.0.0.40`, `mail.lan`, `mail.lan:8006`, `[fd00::4]` ou une URL
 complète. Le schéma `https` et le port 8006 sont ajoutés s'ils manquent.

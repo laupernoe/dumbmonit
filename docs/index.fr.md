@@ -35,7 +35,7 @@ de maintenance sont planifiées.
 ## Lui parler {#talk-to-it}
 
 - Un [assistant via MCP](using/assistant.md) — Claude Code, Claude Desktop,
-  ChatGPT, VS Code, Cursor — avec 27 outils : un jeton `read` ne fait que regarder (état,
+  ChatGPT, VS Code, Cursor — avec 28 outils : un jeton `read` ne fait que regarder (état,
   surveillances, alertes, métriques, agents, conteneurs…), un jeton `write` peut aussi agir
   (mettre en sourdine, acquitter, ajouter une surveillance, redémarrer un conteneur, publier un
   incident sur une page d'état). Les secrets ne sont jamais renvoyés.

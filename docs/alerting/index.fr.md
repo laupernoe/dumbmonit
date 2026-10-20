@@ -45,7 +45,12 @@ se mettent en pause jusqu'à `acked_until`, la résolution est quand même
 notifiée et efface l'acquittement. **Repousser** une alerte fonctionne de
 la même façon en dessous mais via une fenêtre de maintenance limitée aux
 labels exacts de cette alerte (`silenced: true`), plutôt que tout
-la surveillance : une règle sœur sur la même surveillance continue de parler. Voir
+la surveillance : une règle sœur sur la même surveillance continue de parler.
+Une alerte peut aussi être **écartée** (`dismissed`, avec `dismissed_by` et
+`dismissed_at`) : même phase, mais plus rien n'est notifié pour cette
+occurrence — rappels, escalade et résolution compris — et `GET /api/alerts`
+cesse de la lister. L'écartement s'efface avec la condition : un retour
+ultérieur est une nouvelle alerte. Voir
 [Se débarrasser d'une alerte](../using/alerts.md#getting-rid-of-an-alert).
 
 ## Suppression par dépendance {#dependency-suppression}

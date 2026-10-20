@@ -47,20 +47,24 @@ own error.
 
 ## Create an API key in Jellyfin
 
-1. In Jellyfin: Dashboard → API Keys (under Advanced) → +, and name the key as follows. Copy it.
+1. In Jellyfin, open Dashboard → Advanced → API Keys → + and name the key as follows, then copy it.
 
     ```
     DumbMonit
     ```
 
-2. Jellyfin cannot limit what a key may do: every key has full rights on the server. It is still the only way to read scheduled tasks and everyone's playback; an ordinary user sees neither.
+2. In DumbMonit, enter Jellyfin's address and paste the key.
 
-3. In DumbMonit, enter Jellyfin's address, for example "jellyfin.lan" (port 8096) or "https://media.example.com" behind a reverse proxy, and paste the key.
+Vendor documentation: <https://api.jellyfin.org/>
 
-4. DumbMonit only reads /System/Info, /ScheduledTasks, /Sessions and /Plugins. It never starts a task, never stops a playback and never changes a setting.
+### Why a full-rights key
+
+Jellyfin cannot limit what a key may do: every key has full rights on the server. It is still the only way to read scheduled tasks and everyone's playback; an ordinary user sees neither.
+
+DumbMonit only reads `/System/Info`, `/ScheduledTasks`, `/Sessions` and `/Plugins`. It never starts a task, never stops a playback and never changes a setting. Keep the key to a network you trust and put Jellyfin behind HTTPS across the internet.
 
 !!! warning
-    Because the key carries every right, keep it to a network you trust and put Jellyfin behind HTTPS across the internet. If it ever leaks, revoke it on the same page: nothing else uses it.
+    Jellyfin keys cannot be limited, so this one has every right on the server: keep it to DumbMonit and revoke it on the same page if it leaks.
 
 ## Credentials
 

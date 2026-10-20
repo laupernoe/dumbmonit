@@ -2,7 +2,8 @@
 //!
 //! Le corps est le fichier de sauvegarde que produit Uptime Kuma 1.x
 //! (Réglages → Sauvegarde → Exporter) : `{ "version", "notificationList",
-//! "monitorList": [...] }`. Uptime Kuma 2.x n'a plus cet export. Seule la liste
+//! "monitorList": [...] }`. Uptime Kuma 2.x n'a plus cet export : `import_db`
+//! (`/api/targets/import/kuma-db`) lit à la place son fichier `kuma.db`. Seule la liste
 //! des moniteurs est lue : les notifications ne sont pas importées, pas plus que
 //! les identifiants, en-têtes et corps de requête (jamais copiés, jamais journalisés).
 //!
@@ -13,13 +14,20 @@
 //! `?dry_run=true` rend le même rapport sans rien créer.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use axum::Json;
+use axum::body::Body;
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
+use futures::StreamExt;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tokio::io::AsyncWriteExt;
 
+use crate::api::kuma_db;
 use crate::api::targets::TargetPayload;
 use crate::api::{ApiError, ApiResult};
 use crate::db;
@@ -28,15 +36,21 @@ use crate::state::AppState;
 /// Taille maximale du fichier. Une sauvegarde ne contient pas les mesures : quelques
 /// centaines de moniteurs tiennent dans quelques centaines de Kio.
 pub const MAX_BODY_BYTES: usize = 4 * 1024 * 1024;
+/// Taille maximale de `kuma.db`, qui garde l'historique des mesures : plusieurs centaines de
+/// Mio sur une vieille instance. Au-delà, mieux vaut un `VACUUM` ou l'export JSON.
+pub const MAX_DB_BYTES: usize = 512 * 1024 * 1024;
 const MAX_MONITORS: usize = 2000;
 const MAX_FOLDER_DEPTH: usize = 8;
 const NOT_A_BACKUP: &str = "This is not an Uptime Kuma backup: \"monitorList\" is missing. \
-Export it from Settings, Backup in Uptime Kuma 1.x (version 2 has no backup export).";
+Export it from Settings, Backup in Uptime Kuma 1.x, or import kuma.db (version 2 has no backup export).";
 
 #[derive(Deserialize)]
 pub struct ImportQuery {
     #[serde(default)]
     dry_run: bool,
+    /// Numéros de lignes à importer, séparés par des virgules ; absent : toutes.
+    #[serde(default)]
+    rows: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -78,6 +92,105 @@ pub async fn import(
     let converted = convert(&root).map_err(ApiError::BadRequest)?;
     let notifications_ignored =
         root.get("notificationList").and_then(Value::as_array).map_or(0, Vec::len);
+    run(&state, converted, notifications_ignored, &query).await
+}
+
+/// Import du fichier `kuma.db` d'Uptime Kuma (corps brut, `POST /api/targets/import/kuma-db`).
+///
+/// Le corps est écrit dans un fichier temporaire de `data_dir` (taille bornée), lu en lecture
+/// seule puis supprimé, quelle que soit l'issue. Les moniteurs sont triés par type puis
+/// dossier puis nom : l'aperçu et l'import, qui lisent le même fichier, numérotent les lignes
+/// de la même façon, ce qui permet de n'importer que celles cochées (`rows=1,4,5`).
+pub async fn import_db(
+    State(state): State<AppState>,
+    Query(query): Query<ImportQuery>,
+    body: Body,
+) -> ApiResult<(StatusCode, Json<ImportReport>)> {
+    let file = TempDb::new(&state.config.data_dir);
+    let outcome = async {
+        store_upload(body, &file.path).await?;
+        let db = kuma_db::read(&file.path, MAX_MONITORS).await.map_err(ApiError::BadRequest)?;
+        let mut converted = convert(&db.root).map_err(ApiError::BadRequest)?;
+        converted.sort_by_cached_key(|c| {
+            (c.kind.is_none(), c.kind, c.folder.to_lowercase(), c.name.to_lowercase())
+        });
+        run(&state, converted, db.notifications, &query).await
+    }
+    .await;
+    file.remove().await;
+    outcome
+}
+
+/// Fichier temporaire de l'envoi ; supprimé (avec ses éventuels `-wal`/`-shm`) par `remove`.
+struct TempDb {
+    path: PathBuf,
+}
+
+impl TempDb {
+    fn new(dir: &Path) -> Self {
+        static COUNTER: AtomicU64 = AtomicU64::new(0);
+        let nanos =
+            SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_nanos()).unwrap_or_default();
+        let n = COUNTER.fetch_add(1, Ordering::Relaxed);
+        Self { path: dir.join(format!("kuma-import-{}-{nanos}-{n}.tmp", std::process::id())) }
+    }
+
+    async fn remove(&self) {
+        for suffix in ["", "-wal", "-shm", "-journal"] {
+            let mut name = self.path.clone().into_os_string();
+            name.push(suffix);
+            let _ = tokio::fs::remove_file(PathBuf::from(name)).await;
+        }
+    }
+}
+
+/// Écrit le corps dans `path`, en s'arrêtant à `MAX_DB_BYTES`, et vérifie l'en-tête SQLite.
+async fn store_upload(body: Body, path: &Path) -> ApiResult<()> {
+    let internal = |e: std::io::Error| ApiError::Internal(e.into());
+    if let Some(dir) = path.parent() {
+        tokio::fs::create_dir_all(dir).await.map_err(internal)?;
+    }
+    let mut out = tokio::fs::File::create(path).await.map_err(internal)?;
+    let mut stream = body.into_data_stream();
+    let mut size = 0usize;
+    let mut head: Vec<u8> = Vec::with_capacity(16);
+    while let Some(chunk) = stream.next().await {
+        let chunk = chunk.map_err(|e| ApiError::BadRequest(format!("Upload interrupted: {e}")))?;
+        size += chunk.len();
+        if size > MAX_DB_BYTES {
+            return Err(ApiError::BadRequest(format!(
+                "The database is larger than {} MiB. Copy a smaller one (or vacuum it).",
+                MAX_DB_BYTES / (1024 * 1024)
+            )));
+        }
+        if head.len() < 16 {
+            head.extend_from_slice(&chunk[..chunk.len().min(16 - head.len())]);
+        }
+        out.write_all(&chunk).await.map_err(internal)?;
+    }
+    out.flush().await.map_err(internal)?;
+    drop(out);
+    if !kuma_db::looks_like_sqlite(&head) {
+        return Err(ApiError::BadRequest(
+            "This is not an SQLite file. Upload data/kuma.db from Uptime Kuma (a MariaDB \
+             install cannot be read)."
+                .into(),
+        ));
+    }
+    Ok(())
+}
+
+async fn run(
+    state: &AppState,
+    converted: Vec<Converted>,
+    notifications_ignored: usize,
+    query: &ImportQuery,
+) -> ApiResult<(StatusCode, Json<ImportReport>)> {
+    // `rows=1,4` : seules ces lignes (numérotées comme dans l'aperçu) sont traitées.
+    let selected: Option<HashSet<usize>> = query
+        .rows
+        .as_deref()
+        .map(|list| list.split(',').filter_map(|n| n.trim().parse().ok()).collect());
 
     let mut seen: HashSet<String> = db::targets::list(&state.pool, &state.cipher)
         .await?
@@ -88,6 +201,9 @@ pub async fn import(
     let mut rows = Vec::with_capacity(converted.len());
     let (mut created, mut skipped, mut errors) = (0, 0, 0);
     for (index, item) in converted.into_iter().enumerate() {
+        if selected.as_ref().is_some_and(|rows| !rows.contains(&(index + 1))) {
+            continue;
+        }
         let mut report = RowReport {
             row: index + 1,
             name: item.name.clone(),
@@ -128,7 +244,7 @@ pub async fn import(
             location_id: None,
             credential: None,
         };
-        let input = match payload.validate(&state, None) {
+        let input = match payload.validate(state, None) {
             Ok(input) => input,
             Err(error) => {
                 report.status = "error";
