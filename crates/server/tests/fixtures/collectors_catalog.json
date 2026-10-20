@@ -7636,14 +7636,15 @@
           {
             "key": "privacy_protocol",
             "label": "Privacy protocol",
-            "help": "Encryption of the SNMP traffic. Ignored when the privacy passphrase is empty.",
+            "help": "Encryption of the SNMP traffic. \"none\", or a blank passphrase on a new monitor, means authentication without encryption.",
             "placeholder": "",
             "input": "select",
             "choices": [
               "aes128",
               "aes192",
               "aes256",
-              "des"
+              "des",
+              "none"
             ],
             "required": false
           },

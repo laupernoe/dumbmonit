@@ -159,6 +159,17 @@ impl Default for CveSettings {
     }
 }
 
+/// Longueur maximale du message libre, en caractères.
+pub const MAX_TEXT_LEN: usize = 200;
+
+/// Le message libre du mur (un mot à l'équipe) : du texte brut, court.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct TextSettings {
+    pub enabled: bool,
+    pub content: String,
+}
+
 /// Un fournisseur d'IA : allumé ou non, et les noms des identifiants que son
 /// API renvoie (comptes, clés d'API).
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
@@ -200,6 +211,7 @@ pub struct WidgetSettings {
     pub fx: FxSettings,
     pub cve: CveSettings,
     pub ai: AiSettings,
+    pub text: TextSettings,
     pub layout: layout::Layout,
 }
 
@@ -212,6 +224,7 @@ impl Default for WidgetSettings {
             fx: FxSettings::default(),
             cve: CveSettings::default(),
             ai: AiSettings::default(),
+            text: TextSettings::default(),
             layout: layout::Layout::default().resolve(),
         }
     }
@@ -321,6 +334,15 @@ fn dedupe(values: &mut Vec<String>) {
 /// Nettoie et valide les réglages reçus.
 pub fn validate(s: &mut WidgetSettings) -> Result<(), String> {
     s.layout = std::mem::take(&mut s.layout).resolve();
+
+    // Le message : espaces normalisés sur une ligne, court.
+    s.text.content = s.text.content.split_whitespace().collect::<Vec<_>>().join(" ");
+    if s.text.content.chars().count() > MAX_TEXT_LEN {
+        return Err(format!("The message is at most {MAX_TEXT_LEN} characters."));
+    }
+    if s.text.enabled && s.text.content.is_empty() {
+        return Err("Write a message, or turn the text off.".into());
+    }
 
     let crypto = &mut s.crypto;
     crypto.coins.iter_mut().for_each(|c| *c = c.trim().to_ascii_lowercase());
@@ -495,6 +517,8 @@ pub struct WallWidgets {
     pub cve: Option<Section<Vec<cve::CveItem>>>,
     pub claude: Option<Section<ai::Usage>>,
     pub openai: Option<Section<ai::Usage>>,
+    /// Le message libre, seulement s'il est allumé et non vide.
+    pub text: Option<String>,
 }
 
 static CRYPTO: LazyLock<Cache<coins::CryptoData>> = LazyLock::new(Cache::default);
@@ -646,6 +670,7 @@ async fn widgets(
         cve: None,
         claude: None,
         openai: None,
+        text: Some(s.text.content.clone()).filter(|t| s.text.enabled && !t.is_empty()),
     };
     let any = s.crypto.enabled || s.weather.enabled || s.stocks.enabled || s.fx.enabled;
     if !any && !s.cve.enabled && !s.ai.claude.enabled && !s.ai.openai.enabled {

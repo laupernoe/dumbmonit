@@ -127,6 +127,9 @@ pub struct TokenView {
     /// Terme au-delà duquel le jeton n'enrôle plus. Les machines déjà enrôlées
     /// continuent de remonter leurs mesures.
     pub expires_at: Option<String>,
+    /// Jeton de relais : la machine enrôlée devient relais de son site.
+    pub relay: bool,
+    pub relay_site: Option<String>,
 }
 
 impl From<agent::TokenRecord> for TokenView {
@@ -141,6 +144,8 @@ impl From<agent::TokenRecord> for TokenView {
             max_uses: record.max_uses,
             uses: record.uses,
             expires_at: record.expires_at,
+            relay: record.relay,
+            relay_site: record.relay_site,
         }
     }
 }
@@ -183,6 +188,13 @@ pub struct TokenPayload {
     /// Jours avant que le jeton cesse d'enrôler. Absent : sans terme.
     #[serde(default)]
     pub expires_in_days: Option<i64>,
+    /// Jeton de relais : la machine enrôlée relaie les sondes de son site dès
+    /// son premier lot, sans rien éditer sur elle.
+    #[serde(default)]
+    pub relay: bool,
+    /// Site de ce relais (« Agence de Lyon »). Ignoré sans `relay`.
+    #[serde(default)]
+    pub site: Option<String>,
 }
 
 impl TokenPayload {
@@ -227,7 +239,17 @@ pub async fn create_token(
         return Err(ApiError::BadRequest("Token name is required.".into()));
     }
 
-    let (record, secret) = agent::create_token(&state.pool, &name, payload.policy()?).await?;
+    let site = agent::clean_site(payload.site.as_deref());
+    let max = agent::MAX_SITE_LEN;
+    if site.as_ref().is_some_and(|s| s.chars().count() > max) {
+        return Err(ApiError::BadRequest(format!("Site name is limited to {max} characters.")));
+    }
+    let (mut record, secret) = agent::create_token(&state.pool, &name, payload.policy()?).await?;
+    if payload.relay {
+        agent::set_token_relay(&state.pool, record.id, site.as_deref()).await?;
+        record.relay = true;
+        record.relay_site = site;
+    }
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
     let base_url = normalise_base_url(payload.base_url.as_deref(), state.config.bind);
     let checksums = crate::api::agent_files::platform_checksums(&state.config.agent_dir).await;

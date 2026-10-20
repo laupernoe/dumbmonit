@@ -33,8 +33,6 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, Confirm, EmptyState, ErrorNotice, Menu, PageHeader, SelectionBar, Skeleton } from '#lib/ui/index.js';
-	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
-	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
 	import RackList from '#lib/components/devices/RackList.svelte';
 	import type { ReorderControls, RowSelection } from '#lib/components/devices/RackList.svelte';
 	import FolderHeader from '#lib/components/devices/FolderHeader.svelte';
@@ -45,6 +43,7 @@
 	import {
 		SORT_KEYS,
 		hasAllTags,
+		matchesSite,
 		parseListQuery,
 		runBulk,
 		serializeListQuery,
@@ -70,7 +69,6 @@
 		ArrowUpDown,
 		ChevronRight,
 		Ellipsis,
-		FileUp,
 		FolderInput,
 		FolderPlus,
 		ListChecks,
@@ -81,11 +79,13 @@
 		Search,
 		SlidersHorizontal,
 		Trash2,
-		Upload,
-		MapPin
+		MapPin,
+		RadioTower
 	} from 'lucide-svelte';
 	import { assignLocation, listLocations } from '#lib/api/locations.js';
-	import type { MapLocation } from '#lib/api/types.js';
+	import { listRelays } from '#lib/api/relay.js';
+	import { locationForSite } from '#lib/components/devices/relay/relay-site.js';
+	import type { MapLocation, RelayAgent } from '#lib/api/types.js';
 
 	const targets = $derived(alertsStore.targets);
 	const probes = $derived(alertsStore.probes);
@@ -110,6 +110,7 @@
 	let segment = $state<Segment>(initial.segment);
 	let kind = $state(initial.kind);
 	let tagFilter = $state<string[]>(initial.tags);
+	let site = $state(initial.site);
 	let sort = $state<SortKey>(initial.sort);
 	let sortDir = $state<SortDir>(initial.dir);
 
@@ -127,6 +128,7 @@
 			segment,
 			kind,
 			tags: tagFilter,
+			site,
 			sort,
 			dir: sortDir,
 			view: view === 'compact' ? null : view
@@ -152,6 +154,7 @@
 		segment = next.segment;
 		kind = next.kind;
 		tagFilter = next.tags;
+		site = next.site;
 		sort = next.sort;
 		sortDir = next.dir;
 		view = next.view ?? loadRackView();
@@ -194,6 +197,7 @@
 		const term = search.trim().toLowerCase();
 		return targets.filter((target) => {
 			if (kind && target.kind !== kind) return false;
+			if (!matchesSite(target.location_id, site)) return false;
 			if (!hasAllTags(target.tags, tagFilter, optionKeysOf(target.kind))) return false;
 			if (!term) return true;
 			const label = kindLabels.get(target.kind) ?? '';
@@ -248,7 +252,7 @@
 	);
 	const sorted = $derived(sort !== 'default');
 	/** What "Filter" hides that is not at its default: the count on the button. */
-	const activeFilters = $derived((segment !== 'all' ? 1 : 0) + (kind ? 1 : 0) + tagFilter.length + (sorted ? 1 : 0));
+	const activeFilters = $derived((segment !== 'all' ? 1 : 0) + (kind ? 1 : 0) + (site ? 1 : 0) + tagFilter.length + (sorted ? 1 : 0));
 	let filtersOpen = $state(false);
 	/** Reordering hit-tests rows top to bottom: offered in the compact layout only, on the unfiltered rack order. */
 	const canReorder = $derived(auth.isAdmin && !filtered && !sorted && view === 'compact');
@@ -298,24 +302,29 @@
 		search = '';
 		segment = 'all';
 		kind = '';
+		site = '';
 		tagFilter = [];
 		sort = 'default';
 		sortDir = 'asc';
 	}
 
-	// "More": the map, a new folder and the imports, out of the toolbar. The
-	// import dialogs are the ones /targets/new shows, opened from a menu item;
-	// focus goes back to the "More" button when they close.
+	// "More": the map and a new folder, out of the toolbar.
 	let moreOpen = $state(false);
 	let moreMode = $state<'items' | 'folder'>('items');
 	let moreButton = $state<HTMLButtonElement | null>(null);
-	let importCsv = $state<ImportWebsites | null>(null);
-	let importKuma = $state<ImportKuma | null>(null);
-	function openImport(dialog: { show: () => void } | null) {
-		moreOpen = false;
-		moreButton?.focus();
-		dialog?.show();
-	}
+
+	// Sites (locations of the world map): a badge on each monitor and a filter.
+	let siteLocations = $state<MapLocation[]>([]);
+	const siteNames = $derived(new Map(siteLocations.map((l) => [l.id, l.name])));
+	$effect(() => {
+		const controller = new AbortController();
+		listLocations(controller.signal)
+			.then((found) => (siteLocations = found.locations))
+			.catch(() => {});
+		return () => controller.abort();
+	});
+	/** The filter is offered once a site exists; a stale `?site=` stays visible so it can be cleared. */
+	const showSiteFilter = $derived(siteLocations.length > 0 || site !== '');
 
 	const sortOptions = $derived<{ id: SortKey; label: string }[]>(
 		SORT_KEYS.map((id) => ({
@@ -559,6 +568,49 @@
 			.catch(() => (bulkLocations = []));
 		return () => controller.abort();
 	});
+	// Relay agents, offered as "Reached through" in bulk.
+	let bulkRelays = $state<RelayAgent[]>([]);
+	$effect(() => {
+		if (!selecting) return;
+		const controller = new AbortController();
+		listRelays(controller.signal)
+			.then((list) => (bulkRelays = list.filter((r) => r.relay || r.relayed > 0)))
+			.catch(() => (bulkRelays = []));
+		return () => controller.abort();
+	});
+	/** Agents push their own metrics: they are never reached through a relay. */
+	const relayable = (t: Target) => t.kind !== 'agent' && t.kind !== 'agent_service';
+	/** Monitors of the selection left out of "Reached through", said out loud. */
+	let relaySkipped = $state(0);
+	/** After a move to a relay whose site is a location: offer to place them there. */
+	let relayPlace = $state<{ location: MapLocation; ids: TargetId[] } | null>(null);
+
+	async function bulkRelay(agent: RelayAgent | null) {
+		const viaAgent = agent ? agent.id : null;
+		const subjects = selectedTargets.filter((t) => relayable(t) && t.id !== viaAgent);
+		relaySkipped = selectedTargets.length - subjects.length;
+		relayPlace = null;
+		const moving = subjects.filter((t) => t.via_agent !== viaAgent);
+		await bulk(moving, (t) => updateTarget(t.id, targetToPayload(t, { via_agent: viaAgent })));
+		const location = locationForSite(bulkLocations, agent?.site);
+		if (location && subjects.length > 0) relayPlace = { location, ids: subjects.map((t) => t.id) };
+	}
+
+	async function placeRelayed() {
+		if (!relayPlace || bulkBusy) return;
+		const { location, ids } = relayPlace;
+		bulkBusy = true;
+		try {
+			await assignLocation(location.id, ids);
+			await alertsStore.refresh();
+			relayPlace = null;
+		} catch (error) {
+			bulkReport = { failed: [{ name: location.name, error }], total: ids.length };
+		} finally {
+			bulkBusy = false;
+		}
+	}
+
 	/** One request for the whole selection: the server places them all at once. */
 	async function bulkPlace(location: number | null) {
 		const subjects = selectedTargets;
@@ -973,11 +1025,11 @@
 					variant="ghost"
 					aria-pressed={selecting}
 					aria-label={m.devices_list_select()}
-					class={`max-sm:w-10 max-sm:!px-0 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
+					title={m.devices_list_select()}
+					class={`!w-10 !px-0 ${selecting ? 'bg-surface-2 text-ink' : ''}`}
 					onclick={() => (selecting ? stopSelecting() : (selecting = true))}
 				>
 					<ListChecks class="size-4" aria-hidden="true" />
-					<span class="max-sm:sr-only">{m.devices_list_select()}</span>
 				</Button>
 			{/if}
 			<Menu label={m.devices_targets_more()} align="right" bind:open={moreOpen}>
@@ -1051,15 +1103,6 @@
 								<FolderPlus class="size-4 text-ink-3" aria-hidden="true" />
 								{m.devices_targets_create_folder()}
 							</button>
-							<div class="my-1 border-t border-line" role="separator"></div>
-							<button type="button" role="menuitem" class={itemClass} onclick={() => openImport(importCsv)}>
-								<FileUp class="size-4 text-ink-3" aria-hidden="true" />
-								{m.devices_import_open()}
-							</button>
-							<button type="button" role="menuitem" class={itemClass} onclick={() => openImport(importKuma)}>
-								<Upload class="size-4 text-ink-3" aria-hidden="true" />
-								{m.devices_kuma_open()}
-							</button>
 						{/if}
 					{/if}
 				{/snippet}
@@ -1096,6 +1139,18 @@
 						{/each}
 					</select>
 				</label>
+				{#if showSiteFilter}
+					<label class="flex min-w-0 flex-col gap-1.5 max-sm:w-full">
+						<span class="label-tape">{m.devices_targets_filter_site_label()}</span>
+						<select class="input !min-h-10 !w-auto max-w-full !py-1.5 text-sm max-sm:!w-full" bind:value={site} aria-label={m.devices_targets_filter_site()}>
+							<option value="">{m.devices_targets_all_sites()}</option>
+							{#each siteLocations as location (location.id)}
+								<option value={String(location.id)}>{location.name}</option>
+							{/each}
+							<option value="none">{m.devices_targets_no_site()}</option>
+						</select>
+					</label>
+				{/if}
 				<div class="flex min-w-0 flex-col gap-1.5">
 					<label class="label-tape" for="monitors-sort">{m.devices_list_sort_label()}</label>
 					<div class="flex items-center gap-1">
@@ -1149,10 +1204,6 @@
 	{/if}
 {/if}
 
-{#if auth.isAdmin}
-	<ImportWebsites bind:this={importCsv} trigger={false} ondone={() => void alertsStore.refresh()} />
-	<ImportKuma bind:this={importKuma} trigger={false} ondone={() => void alertsStore.refresh()} />
-{/if}
 {#if actionError}
 	<div class="mb-3"><ErrorNotice error={actionError} title={m.devices_targets_err_save()} /></div>
 {/if}
@@ -1297,11 +1348,49 @@
 					{/snippet}
 				</Menu>
 			{/if}
+			{#if bulkRelays.length > 0}
+				<Menu label={m.devices_list_bulk_relay()} align="left" placement="up">
+					{#snippet trigger({ toggle, open })}
+						<Button size="sm" variant="secondary" disabled={bulkBusy || selectedTargets.length === 0} aria-haspopup="menu" aria-expanded={open} onclick={toggle}>
+							<RadioTower class="size-4" aria-hidden="true" />
+							{m.devices_list_bulk_relay()}
+						</Button>
+					{/snippet}
+					{#snippet children({ close })}
+						<ul class="flex max-h-72 min-w-48 flex-col gap-0.5 overflow-y-auto">
+							<li>
+								<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkRelay(null); }}>
+									{m.devices_list_bulk_relay_direct()}
+								</button>
+							</li>
+							{#each bulkRelays as relay (relay.id)}
+								<li>
+									<button type="button" role="menuitem" class="flex min-h-10 w-full items-center rounded-lg px-3 text-left text-[0.8125rem] text-ink hover:bg-surface-2" onclick={() => { close(); void bulkRelay(relay); }}>
+										{relay.site ? m.deviceform_form_relay_site({ name: relay.name, site: relay.site }) : relay.name}
+									</button>
+								</li>
+							{/each}
+						</ul>
+					{/snippet}
+				</Menu>
+			{/if}
 			<Confirm confirmLabel={m.devices_list_bulk_delete_confirm({ count: selectedTargets.length })} loading={bulkBusy} disabled={bulkBusy || selectedTargets.length === 0} onconfirm={bulkDelete}>
 				<Trash2 class="size-4" aria-hidden="true" />
 				{m.devices_list_bulk_delete()}
 			</Confirm>
 		</SelectionBar>
+	{/if}
+	{#if relaySkipped > 0 || relayPlace}
+		<div class="mb-3 flex flex-wrap items-center gap-2 rounded-[var(--radius-card)] border border-line bg-surface px-3 py-2 text-sm text-ink-2" role="status">
+			{#if relaySkipped > 0}
+				<p>{m.devices_list_bulk_relay_skipped({ count: relaySkipped })}</p>
+			{/if}
+			{#if relayPlace}
+				<p>{m.devices_list_bulk_relay_place({ count: relayPlace.ids.length, location: relayPlace.location.name })}</p>
+				<Button size="sm" variant="secondary" loading={bulkBusy} onclick={() => void placeRelayed()}>{m.devices_list_bulk_relay_place_apply()}</Button>
+			{/if}
+			<Button size="sm" variant="ghost" onclick={() => { relaySkipped = 0; relayPlace = null; }}>{m.devices_list_bulk_dismiss()}</Button>
+		</div>
 	{/if}
 	{#if bulkReport}
 		<div class="mb-3">
@@ -1336,6 +1425,7 @@
 					rows={section.rows}
 					{sparklines}
 					{kindLabels}
+					{siteNames}
 					reorder={canReorder ? reorderControls() : null}
 					layout={view}
 					{names}
@@ -1361,7 +1451,7 @@
 					</button>
 				{/if}
 				{#if disabledExpanded}
-					<RackList rows={disabledRows} {sparklines} {kindLabels} layout={view} {names} {alertCounts} {selection} />
+					<RackList rows={disabledRows} {sparklines} {kindLabels} {siteNames} layout={view} {names} {alertCounts} {selection} />
 				{/if}
 			</section>
 		{/if}

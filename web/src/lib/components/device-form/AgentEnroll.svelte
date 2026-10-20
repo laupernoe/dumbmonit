@@ -8,9 +8,9 @@
 	 * the server only keeps a fingerprint.
 	 *
 	 * `relay` is the same agent sent to another network, in relay mode: the
-	 * install one-liners carry `--relay --site=…` (`-Relay -Site …` on
-	 * Windows), the container gets `DUMBMONIT_AGENT_RELAY=true`, so nothing is
-	 * edited on the machine afterwards. The devices of that site are then
+	 * token itself carries relay mode and the site, so the server switches the
+	 * agent to relay at its first report — the install commands are the usual
+	 * ones and nothing is edited on the machine afterwards. The devices of that site are then
 	 * added as usual and pointed at it ("Reached through"). The
 	 * steps below are built from what the agent really reads — see
 	 * `crates/agent/src/config.rs` and docs/install/remote-site.md.
@@ -21,7 +21,6 @@
 	import AgentChecksums from './AgentChecksums.svelte';
 	import AgentModules from './AgentModules.svelte';
 	import { withModules, type AgentModule } from './agent-modules.js';
-	import { withRelay } from './relay-install.js';
 	import RelayDiagram from './RelayDiagram.svelte';
 
 	interface Props {
@@ -30,7 +29,9 @@
 		relay?: boolean;
 	}
 
-	let { cancelHref = '/targets', relay = false }: Props = $props();
+	let { cancelHref = '/targets', relay: relayFromUrl = false }: Props = $props();
+	/** Relay flow: from the URL (`via=relay`), or ticked in the plain form. */
+	let relay = $state(untrack(() => relayFromUrl));
 
 	const REMOTE_SITE_GUIDE = 'https://dumbmonit.readthedocs.io/en/latest/install/remote-site/';
 
@@ -43,14 +44,8 @@
 	let origin = $state('');
 	/** `null`: every module detects itself (the agent's default). */
 	let modules = $state<AgentModule[] | null>(null);
-	const installLinux = $derived.by(() => {
-		const command = token ? withModules(token.install_linux, modules, 'unix') : '';
-		return relay ? withRelay(command, siteLabel, 'unix') : command;
-	});
-	const installWindows = $derived.by(() => {
-		const command = token ? withModules(token.install_windows, modules, 'windows') : '';
-		return relay ? withRelay(command, siteLabel, 'windows') : command;
-	});
+	const installLinux = $derived(token ? withModules(token.install_linux, modules, 'unix') : '');
+	const installWindows = $derived(token ? withModules(token.install_windows, modules, 'windows') : '');
 
 	async function create(event: SubmitEvent) {
 		event.preventDefault();
@@ -61,7 +56,12 @@
 			// Single use: this form enrols one machine. A token for a whole fleet
 			// is created from Settings → Agents, deliberately.
 			origin = window.location.origin;
-			token = await createAgentToken({ name: name.trim(), base_url: origin });
+			// A relay token: the server makes the enrolled agent a relay for this site.
+			token = await createAgentToken({
+				name: name.trim(),
+				base_url: origin,
+				...(relay ? { relay: true, site: siteLabel } : {})
+			});
 		} catch (cause) {
 			error = cause;
 		} finally {
@@ -95,8 +95,6 @@
 					`DUMBMONIT_AGENT_URL=${origin} \\`,
 					`DUMBMONIT_AGENT_TOKEN=${token.secret} \\`,
 					`DUMBMONIT_AGENT_HOSTNAME=${hostname} \\`,
-					'DUMBMONIT_AGENT_RELAY=true \\',
-					`DUMBMONIT_AGENT_SITE="${siteLabel.replace(/["\\$`]/g, '')}" \\`,
 					'docker compose -f docker-compose.agent.yml up -d'
 				].join('\n')
 			: ''
@@ -219,6 +217,13 @@
 				</Field>
 			{/if}
 		</div>
+
+		{#if !relayFromUrl}
+			<label class="flex min-h-10 items-center gap-2 text-sm text-ink">
+				<input type="checkbox" class="size-4 accent-[var(--color-signal)]" bind:checked={relay} />
+				{m.deviceform_enroll_relay_checkbox()}
+			</label>
+		{/if}
 
 		{#if error}
 			<ErrorNotice {error} title={m.deviceform_enroll_create_error()} />

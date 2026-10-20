@@ -4,7 +4,7 @@ use std::collections::BTreeSet;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use dumbmonit_proto::{AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, Sample};
+use dumbmonit_proto::{AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample};
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
@@ -93,6 +93,10 @@ pub struct Agent {
     /// Boucle du relais, lancée après le premier lot accepté — avant, le
     /// serveur ne nous connaît pas encore et refuserait la demande.
     relay: Option<tokio::task::JoinHandle<()>>,
+    /// Mode relais réglé depuis l'interface, tel que le dernier accusé de
+    /// réception le porte. `None` tant que le serveur n'en a rien dit (serveur
+    /// antérieur) : seule la configuration locale compte alors.
+    server_relay: Option<RelaySetting>,
     /// Période courante : celle de la configuration, jusqu'à ce que le serveur en
     /// demande une autre dans son accusé de réception.
     interval: Duration,
@@ -154,6 +158,7 @@ impl Agent {
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
             relay: None,
+            server_relay: None,
             binding,
             binding_refused: false,
             disabled_modules: BTreeSet::new(),
@@ -323,7 +328,7 @@ impl Agent {
                             // Le serveur vient de nous répondre : c'est le moment
                             // de lui demander s'il attend quelque chose de nous.
                             self.commands.poll().await;
-                            self.start_relay(&shutdown);
+                            self.sync_relay(&shutdown);
                             Instant::now()
                         }
                         FlushOutcome::Idle => Instant::now(),
@@ -344,14 +349,68 @@ impl Agent {
         Ok(())
     }
 
-    /// Lance la boucle du relais si la configuration le demande, une seule fois.
-    fn start_relay(&mut self, shutdown: &Shutdown) {
-        if !self.config.relay || self.relay.is_some() {
-            return;
+    /// Vrai si l'agent doit relayer : `relay: true` en local, qui prime, ou le
+    /// réglage de l'interface.
+    fn relay_wanted(&self) -> bool {
+        self.config.relay || self.server_relay.as_ref().is_some_and(|r| r.enabled)
+    }
+
+    /// Site annoncé : celui de la configuration locale s'il y en a un, sinon
+    /// celui réglé dans l'interface.
+    fn relay_site(&self) -> Option<String> {
+        self.config.site.clone().or_else(|| {
+            self.server_relay
+                .as_ref()
+                .and_then(|r| r.site.as_deref())
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_string)
+        })
+    }
+
+    /// Adopte le mode relais que le serveur vient de renvoyer, et le reporte
+    /// dans l'identité : le lot suivant dit au serveur ce qui est en vigueur.
+    fn adopt_relay(&mut self, setting: Option<RelaySetting>) {
+        // Un serveur antérieur ne dit rien : on garde ce qu'on avait.
+        let Some(setting) = setting else { return };
+        if self.server_relay.as_ref() != Some(&setting) {
+            if self.config.relay && !setting.enabled {
+                debug!("relay switched off from the server, but relay: true in agent.yaml wins");
+            }
+            self.server_relay = Some(setting);
         }
-        let runner =
-            RelayRunner::new(self.client.clone(), self.identity.key(), RELAY_REQUEST_TIMEOUT);
-        self.relay = Some(tokio::spawn(runner.run(shutdown.clone())));
+        self.identity.relay = self.relay_wanted();
+        self.identity.site = self.relay_site();
+    }
+
+    /// Lance ou arrête la boucle du relais selon le réglage en vigueur, à chaud.
+    fn sync_relay(&mut self, shutdown: &Shutdown) {
+        // Une boucle qui a rendu la main (arrêt) ne compte plus.
+        if self.relay.as_ref().is_some_and(|handle| handle.is_finished()) {
+            self.relay = None;
+        }
+        match (self.relay_wanted(), self.relay.is_some()) {
+            (true, false) => {
+                let runner = RelayRunner::new(
+                    self.client.clone(),
+                    self.identity.key(),
+                    RELAY_REQUEST_TIMEOUT,
+                );
+                if !self.config.relay {
+                    info!(site = ?self.relay_site(), "relay mode switched on from the server");
+                }
+                self.relay = Some(tokio::spawn(runner.run(shutdown.clone())));
+            }
+            (false, true) => {
+                // L'attente longue est simplement abandonnée ; une sonde déjà
+                // confiée finit dans sa propre tâche et rend compte quand même.
+                if let Some(handle) = self.relay.take() {
+                    handle.abort();
+                }
+                info!("relay mode switched off from the server");
+            }
+            _ => {}
+        }
     }
 
     /// Envoie un lot prélevé dans le tampon.
@@ -376,6 +435,7 @@ impl Agent {
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
                 self.adopt_disabled_modules(ack.disabled_modules);
+                self.adopt_relay(ack.relay);
                 FlushOutcome::Sent { count }
             }
             Err(PushError::Forbidden(message)) => {
@@ -579,6 +639,75 @@ mod tests {
         let mut agent = Agent::new(config()).expect("agent");
         agent.adopt_interval(0);
         assert_eq!(agent.interval, Duration::from_secs(MIN_INTERVAL_SECS));
+    }
+
+    fn setting(enabled: bool, site: Option<&str>) -> Option<RelaySetting> {
+        Some(RelaySetting { enabled, site: site.map(str::to_string) })
+    }
+
+    #[tokio::test]
+    async fn the_relay_mode_set_from_the_server_switches_on_and_off_without_restart() {
+        let mut agent = Agent::new(config()).expect("agent");
+        let (trigger, shutdown) = crate::shutdown::channel();
+        assert!(agent.identity.relay_control, "ce binaire sait suivre le serveur");
+        assert!(!agent.identity.relay_local);
+
+        // Serveur antérieur : rien ne change.
+        agent.adopt_relay(None);
+        agent.sync_relay(&shutdown);
+        assert!(agent.relay.is_none());
+        assert!(!agent.identity.relay);
+
+        // Allumé dans l'interface : la boucle démarre, l'identité l'annonce.
+        agent.adopt_relay(setting(true, Some(" Agence de Lyon ")));
+        agent.sync_relay(&shutdown);
+        assert!(agent.relay.is_some(), "boucle du relais lancée à chaud");
+        assert!(agent.identity.relay);
+        assert_eq!(agent.identity.site.as_deref(), Some("Agence de Lyon"));
+
+        // Un second accusé identique ne relance rien.
+        agent.adopt_relay(setting(true, Some("Agence de Lyon")));
+        agent.sync_relay(&shutdown);
+        assert!(agent.relay.is_some());
+
+        // Éteint : la boucle s'arrête, l'identité le dit au lot suivant.
+        agent.adopt_relay(setting(false, None));
+        agent.sync_relay(&shutdown);
+        assert!(agent.relay.is_none(), "boucle du relais arrêtée à chaud");
+        assert!(!agent.identity.relay);
+        assert_eq!(agent.identity.site, None);
+        trigger.fire();
+    }
+
+    #[tokio::test]
+    async fn relay_true_in_the_local_configuration_wins_over_the_server() {
+        let mut config = config();
+        config.relay = true;
+        config.site = Some("Datacenter".into());
+        let mut agent = Agent::new(config).expect("agent");
+        let (trigger, shutdown) = crate::shutdown::channel();
+        assert!(agent.identity.relay_local, "le serveur doit savoir que c'est verrouillé");
+
+        agent.adopt_relay(setting(false, Some("Ailleurs")));
+        agent.sync_relay(&shutdown);
+        assert!(agent.relay.is_some(), "le relais local ne s'éteint pas depuis le serveur");
+        assert!(agent.identity.relay);
+        assert_eq!(agent.identity.site.as_deref(), Some("Datacenter"), "le site local prime");
+        trigger.fire();
+    }
+
+    #[tokio::test]
+    async fn the_ack_of_a_server_switches_the_relay_on() {
+        let dir = tempfile::tempdir().unwrap();
+        let ack = r#"{"target_id":3,"accepted":1,"interval_secs":60,"bound":true,
+            "relay":{"enabled":true,"site":"Lyon"}}"#;
+        let (url, _calls) = crate::testsupport::fake_http(move |_| (200, ack.to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(agent.identity.relay);
+        assert_eq!(agent.identity.site.as_deref(), Some("Lyon"));
     }
 
     #[tokio::test]

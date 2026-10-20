@@ -103,6 +103,17 @@ pub struct AgentIdentity {
     /// configuration ; sert à regrouper les équipements relayés dans l'interface.
     #[serde(default)]
     pub site: Option<String>,
+    /// Vrai si ce binaire sait recevoir du serveur le réglage du mode relais
+    /// ([`PushAck::relay`]) et l'appliquer à chaud. Absent chez un agent
+    /// antérieur : l'interface dit alors qu'il faut le mettre à jour, ou poser
+    /// `relay: true` dans son agent.yaml.
+    #[serde(default)]
+    pub relay_control: bool,
+    /// Vrai si `relay: true` est posé dans la configuration locale de l'agent
+    /// (fichier ou environnement). Ce réglage-là prime : le serveur ne peut pas
+    /// éteindre un relais allumé sur la machine.
+    #[serde(default)]
+    pub relay_local: bool,
     /// Identifiant stable de la machine, indépendant du nom d'hôte.
     ///
     /// Renommer une machine ne doit pas créer une seconde cible et couper ses
@@ -191,6 +202,26 @@ pub struct PushAck {
     /// change donc rien au résultat, il travaille seulement pour rien.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub disabled_modules: Vec<String>,
+    /// Mode relais voulu depuis l'interface pour cette machine. `None` chez un
+    /// serveur antérieur : l'agent garde alors sa configuration locale. Un agent
+    /// antérieur ignore ce champ et ne relaie que si son agent.yaml le dit.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relay: Option<RelaySetting>,
+}
+
+/// Mode relais tel que l'interface le règle pour une machine.
+///
+/// L'agent l'applique à chaud, sans redémarrer ; `relay: true` dans sa
+/// configuration locale prime toujours (un relais allumé sur la machine ne
+/// s'éteint pas depuis le serveur), de même que son `site:` s'il en a un.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct RelaySetting {
+    /// Vrai : l'agent vient chercher les sondes des équipements de son site.
+    pub enabled: bool,
+    /// Site où l'agent est posé (« Agence de Lyon »), à défaut de celui de sa
+    /// configuration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub site: Option<String>,
 }
 
 #[cfg(test)]
@@ -210,6 +241,8 @@ mod tests {
             commands_enabled: Some(true),
             relay: false,
             site: None,
+            relay_control: true,
+            relay_local: false,
             machine_id: Some("9f4c…".into()),
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             binding_supported: true,
@@ -245,6 +278,9 @@ mod tests {
         assert!(batch.identity.tags.is_empty());
         // Un agent d'avant le canal de commandes ne dit rien de ses capacités.
         assert_eq!(batch.identity.commands_enabled, None);
+        // Ni d'avant le pilotage du relais : l'interface le dira trop ancien.
+        assert!(!batch.identity.relay_control);
+        assert!(!batch.identity.relay_local);
         // Ni d'avant la liaison : le serveur ne doit surtout pas lui attribuer un
         // secret qu'il jetterait, ce qui le verrouillerait au lot suivant.
         assert!(!batch.identity.binding_supported);
@@ -261,6 +297,7 @@ mod tests {
         assert!(ack.agent_secret.is_none());
         assert!(!ack.bound);
         assert!(ack.disabled_modules.is_empty(), "rien de décoché chez un serveur ancien");
+        assert_eq!(ack.relay, None, "un serveur ancien ne dit rien du relais");
 
         let issued = PushAck {
             target_id: 7,
@@ -270,6 +307,7 @@ mod tests {
             agent_secret: Some(format!("{AGENT_SECRET_PREFIX}abcdef")),
             bound: true,
             disabled_modules: Vec::new(),
+            relay: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -316,6 +354,7 @@ mod tests {
             agent_secret: None,
             bound: true,
             disabled_modules: vec!["docker".into()],
+            relay: Some(RelaySetting { enabled: true, site: Some("Lyon".into()) }),
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");
