@@ -1155,7 +1155,9 @@ pub async fn add_update(
             if incident.kind == "incident"
                 && at > Utc::now() + TimeDelta::minutes(FUTURE_SKEW_MINUTES)
             {
-                return Err(ApiError::BadRequest("An update cannot be dated in the future.".into()));
+                return Err(ApiError::BadRequest(
+                    "An update cannot be dated in the future.".into(),
+                ));
             }
             Some(format_timestamp(at))
         }
