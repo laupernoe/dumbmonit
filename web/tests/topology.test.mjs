@@ -206,3 +206,31 @@ test('an empty map has no size', () => {
 	assert.equal(layout.width, 0);
 	assert.equal(layout.nodes.length, 0);
 });
+
+test('a remote site frame holds its relay and the devices behind it, under a roomy header', () => {
+	const nodes = [
+		node('t1'),
+		node('t2', { kind: 'agent', name: 'dm01', site: 'Crissier' }),
+		node('t3', { site: 'Crissier' }),
+		node('t4', { site: 'Crissier' }),
+		node('t5', { site: 'Crissier' })
+	];
+	const graph = buildGraph(nodes, [
+		{ from: 't2', to: 't3', source: 'relay' },
+		{ from: 't2', to: 't4', source: 'relay' }
+	]);
+	const layout = layoutMap(graph);
+	const frame = layout.frames.find((f) => f.key === 's:Crissier');
+	assert.ok(frame && frame.width >= 270, 'a narrow site still fits its title and subtitle');
+	for (const id of ['t2', 't3', 't4', 't5']) {
+		const p = layout.nodes.find((n) => n.node.id === id);
+		assert.ok(p.x > frame.x && p.x < frame.x + frame.width && p.y > frame.y + 58 && p.y < frame.y + frame.height, `${id} inside the frame`);
+	}
+	assert.deepEqual(overlaps(layout), []);
+	assert.equal(layout.nodes.length, 5);
+});
+
+test('a node listed twice is drawn once', () => {
+	const graph = buildGraph([node('t1'), node('t1'), node('t2')], []);
+	assert.equal(layoutMap(graph).nodes.length, 2);
+});

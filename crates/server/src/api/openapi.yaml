@@ -3046,7 +3046,9 @@ paths:
         monitored device only when its name designates exactly one device; a guest that
         matches none becomes its own node (`target_id` null), an unknown LLDP neighbour is
         left out. Addresses are not included. States are read from `GET /api/targets`.
-        A node's `site` is found without configuration: the device's `site` tag (except on
+        A node's `site` is found without configuration: the location the device is placed at
+        (a remote location gives its site, the main-site location gives none), else the
+        device's `site` tag (except on
         UniFi, where it names the controller site), else the site its agent or relay agent
         declares, else the name of the relay agent that polls it (`site_source` says which).
       x-token-scope: read
@@ -7775,8 +7777,8 @@ components:
         site: { type: [string, "null"], description: "Remote site the node belongs to; null for the main site." }
         site_source:
           type: [string, "null"]
-          enum: [tag, agent, relay, null]
-          description: "Where `site` comes from: the `site` tag, the site an agent declares, or the relay agent that polls the device (its name)."
+          enum: [tag, agent, relay, location, null]
+          description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), or the location the device is placed at."
         host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
         running: { type: [boolean, "null"], description: Guest only, running at the last measurement. }
     TopologyEdge:
