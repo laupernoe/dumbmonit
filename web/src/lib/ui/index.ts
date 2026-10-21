@@ -26,3 +26,4 @@ export { default as Toast } from './Toast.svelte';
 export { default as SelectionBar } from './SelectionBar.svelte';
 export { default as Combobox } from './Combobox.svelte';
 export type { ComboOption } from './Combobox.svelte';
+export { default as Disclosure } from './Disclosure.svelte';
