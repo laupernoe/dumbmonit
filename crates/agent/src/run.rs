@@ -32,11 +32,22 @@ use crate::relay::RelayRunner;
 use crate::shutdown::Shutdown;
 
 /// Première temporisation après un échec d'envoi.
-const BACKOFF_BASE: Duration = Duration::from_secs(5);
+const BACKOFF_BASE: Duration = Duration::from_secs(2);
 
-/// Plafond de la temporisation. Cinq minutes : au-delà, une machine revenue en
-/// ligne mettrait trop longtemps à se manifester dans l'interface.
-const BACKOFF_MAX: Duration = Duration::from_secs(300);
+/// Plafond de la temporisation : trente secondes, décalage aléatoire compris.
+///
+/// Il était de cinq minutes. Le serveur déclare une machine muette après trois
+/// périodes, au moins 90 s (`staleness_deadline`) : un plafond plus long que ce
+/// délai transformait chaque coupure en panne apparente rallongée de plusieurs
+/// minutes après le retour du serveur — 15 tentatives sur 53 min observées pour
+/// une coupure réseau. Un agent toutes les 30 s ne pèse rien sur un serveur qui
+/// redémarre ; le décalage aléatoire étale le parc.
+pub(crate) const BACKOFF_MAX: Duration = Duration::from_secs(30);
+
+/// Mesures gardées sur disque à l'arrêt quand le serveur ne répond pas, au plus.
+/// Quelques mégaoctets : de quoi couvrir un redémarrage pendant une coupure,
+/// pas de quoi remplir un disque.
+const MAX_PERSISTED_SAMPLES: usize = 20_000;
 
 /// Délai maximal d'un envoi. Généreux, car un lot de rattrapage est volumineux et
 /// part parfois sur une liaison lente.
@@ -119,6 +130,9 @@ pub struct Agent {
     /// Vrai une fois signalé qu'un lot a été entièrement écarté par le serveur,
     /// pour ne le dire qu'une fois par épisode.
     all_refused: bool,
+    /// Début de la coupure en cours et dernière cause journalisée : la reprise
+    /// dit combien de temps a duré la panne, un changement de cause est signalé.
+    outage: Option<(Instant, String)>,
 }
 
 impl Agent {
@@ -164,6 +178,7 @@ impl Agent {
             disabled_modules: BTreeSet::new(),
             batch_limit: MAX_BATCH_SAMPLES,
             all_refused: false,
+            outage: None,
             identity,
             client,
             config,
@@ -296,10 +311,14 @@ impl Agent {
             ),
             None => info!("modules: auto-detected (set 'modules' in agent.yaml to choose)"),
         }
+        self.restore_pending();
         self.probe.warm_up().await;
 
         let mut next_collect = Instant::now();
         let mut next_send = Instant::now();
+        // Toute réponse favorable du serveur, y compris sur le canal du relais,
+        // met fin à la temporisation : inutile d'attendre qu'elle expire.
+        let reachable = self.client.reachable();
 
         loop {
             tokio::select! {
@@ -332,8 +351,17 @@ impl Agent {
                             Instant::now()
                         }
                         FlushOutcome::Idle => Instant::now(),
-                        FlushOutcome::Failed(_) => Instant::now() + self.backoff.next_delay(),
+                        FlushOutcome::Failed(error) => {
+                            let delay = self.backoff.next_delay();
+                            self.note_failure(&error, delay);
+                            Instant::now() + delay
+                        }
                     };
+                }
+
+                _ = reachable.notified(), if self.outage.is_some() && !self.buffer.is_empty() => {
+                    debug!("server answered on another channel, sending now");
+                    next_send = Instant::now();
                 }
             }
         }
@@ -425,8 +453,12 @@ impl Agent {
 
         match self.client.send(&batch).await {
             Ok(ack) => {
-                if self.backoff.attempts() > 0 {
-                    info!(attempts = self.backoff.attempts(), "connection to the server restored");
+                if let Some((since, _)) = self.outage.take() {
+                    info!(
+                        attempts = self.backoff.attempts(),
+                        outage_s = since.elapsed().as_secs(),
+                        "connection to the server restored"
+                    );
                 }
                 self.backoff.reset();
                 self.binding_refused = false;
@@ -460,14 +492,8 @@ impl Agent {
                 FlushOutcome::Failed(PushError::TooLarge(message))
             }
             Err(error) if error.is_retryable() => {
+                // Journalisé par la boucle, qui connaît le délai avant la reprise.
                 self.buffer.restore(batch.samples);
-                // Le premier échec est signalé fort, les suivants en sourdine : une
-                // panne d'une heure ne doit pas remplir le journal de la machine.
-                if self.backoff.attempts() == 0 {
-                    warn!(%error, buffered = self.buffer.len(), "send failed, measurements kept");
-                } else {
-                    debug!(%error, attempt = self.backoff.attempts() + 1, "send failed again");
-                }
                 FlushOutcome::Failed(error)
             }
             Err(error) => {
@@ -476,6 +502,50 @@ impl Agent {
                 warn!(%error, dropped = count, "batch rejected by the server, dropped");
                 FlushOutcome::Sent { count }
             }
+        }
+    }
+
+    /// Journalise un échec d'envoi : chaque tentative laisse une ligne, avec sa
+    /// cause (statut HTTP, erreur réseau, délai dépassé) et le délai avant la
+    /// suivante. Fort au premier échec et à chaque changement de cause, en
+    /// `info` ensuite — et seulement une fois sur dix passé la dixième, pour
+    /// qu'une panne d'une nuit ne remplisse pas le journal.
+    fn note_failure(&mut self, error: &PushError, retry_in: Duration) {
+        let attempt = self.backoff.attempts();
+        let cause = error.to_string();
+        let retry_in_s = retry_in.as_secs();
+        let buffered = self.buffer.len();
+        let Some((_, last)) = self.outage.as_mut() else {
+            self.outage = Some((Instant::now(), cause.clone()));
+            // Ces deux refus ont déjà leur propre message, plus parlant.
+            if !matches!(error, PushError::Forbidden(_) | PushError::TooLarge(_)) {
+                warn!(error = %cause, buffered, retry_in_s, "send failed, measurements kept");
+            }
+            return;
+        };
+        if *last != cause {
+            *last = cause.clone();
+            warn!(error = %cause, attempt, buffered, retry_in_s, "send still failing");
+        } else if attempt <= 10 || attempt % 10 == 0 {
+            info!(error = %cause, attempt, buffered, retry_in_s, "send failed again");
+        } else {
+            debug!(error = %cause, attempt, retry_in_s, "send failed again");
+        }
+    }
+
+    /// Fichier des mesures en attente gardées à l'arrêt, à côté du secret de
+    /// liaison : le seul répertoire où l'agent sait pouvoir écrire.
+    fn pending_path(&self) -> std::path::PathBuf {
+        self.config.secret_path.with_file_name("pending-samples.json")
+    }
+
+    /// Reprend les mesures qu'un arrêt précédent n'avait pas pu envoyer.
+    fn restore_pending(&mut self) {
+        let path = self.pending_path();
+        let samples = PendingBuffer::load(&path);
+        if !samples.is_empty() {
+            info!(count = samples.len(), "measurements kept at the last shutdown, sending them");
+            self.buffer.push(samples);
         }
     }
 
@@ -506,12 +576,30 @@ impl Agent {
         if self.buffer.is_empty() {
             return;
         }
+        if let Ok(FlushOutcome::Sent { count }) =
+            tokio::time::timeout(SHUTDOWN_FLUSH_TIMEOUT, self.flush()).await
+        {
+            info!(count, "pending measurements sent before shutdown");
+        }
+        if self.buffer.is_empty() {
+            return;
+        }
+        // Le serveur n'a pas répondu (ou pas pour tout) : ce qui reste attend le
+        // prochain démarrage sur disque plutôt que d'être perdu.
         let pending = self.buffer.len();
-        match tokio::time::timeout(SHUTDOWN_FLUSH_TIMEOUT, self.flush()).await {
-            Ok(FlushOutcome::Sent { count }) => {
-                info!(count, "pending measurements sent before shutdown");
-            }
-            _ => warn!(pending, "measurements lost: the server did not answer before shutdown"),
+        let path = self.pending_path();
+        match self.buffer.save(&path, MAX_PERSISTED_SAMPLES) {
+            Ok(kept) => info!(
+                kept,
+                lost = pending.saturating_sub(kept),
+                path = %path.display(),
+                "the server did not answer before shutdown: measurements kept on disk"
+            ),
+            Err(error) => warn!(
+                pending,
+                %error,
+                "measurements lost: the server did not answer before shutdown"
+            ),
         }
     }
 
@@ -1053,5 +1141,160 @@ mod tests {
         };
         let (result, ()) = tokio::join!(agent.run(shutdown), stopper);
         result.expect("sortie propre");
+    }
+
+    // ------------------------------------------- coupures et agent relais
+
+    #[test]
+    fn the_retry_delay_never_exceeds_a_third_of_the_server_silence_limit() {
+        // Le serveur déclare une machine muette après 90 s au moins : un agent qui
+        // attend plus longtemps entre deux tentatives fabrique des coupures.
+        let mut backoff = Backoff::new(BACKOFF_BASE, BACKOFF_MAX);
+        for _ in 0..50 {
+            assert!(backoff.next_delay() <= Duration::from_secs(30));
+        }
+    }
+
+    /// Accusé qui règle la période à 5 s, le plancher : les tests restent courts.
+    const FAST_ACK: &str = r#"{"target_id":3,"accepted":1,"interval_secs":5,"bound":true}"#;
+
+    /// Agent relais pointé sur le faux serveur, sans module ni commande.
+    fn relay_agent_for(url: &str, dir: &tempfile::TempDir) -> Agent {
+        let mut config = config();
+        config.server_url = url.to_string();
+        config.secret_path = dir.path().join("agent-secret");
+        config.interval = Duration::from_secs(5);
+        config.relay = true;
+        config.modules = Some(Default::default());
+        Agent::new(config).expect("agent")
+    }
+
+    /// Écoute qui accepte les connexions et ne répond jamais : l'équipement lent
+    /// ou muet d'un site distant. Rend l'adresse et le nombre de connexions tenues.
+    async fn tarpit() -> (std::net::SocketAddr, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("écoute");
+        let address = listener.local_addr().expect("adresse");
+        let held = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let count = held.clone();
+        tokio::spawn(async move {
+            let mut sockets = Vec::new();
+            while let Ok((socket, _)) = listener.accept().await {
+                count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                sockets.push(socket);
+            }
+        });
+        (address, held)
+    }
+
+    #[tokio::test]
+    async fn a_slow_relayed_probe_never_delays_the_reports_of_the_relay_itself() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let (device, held) = tarpit().await;
+        let target = dumbmonit_proto::Target {
+            id: 41,
+            name: "pve002".into(),
+            address: format!("http://{device}/"),
+            kind: "http".into(),
+            profile_id: None,
+            parent_id: None,
+            interval: Duration::from_secs(60),
+            enabled: true,
+            tags: [("allow_private_targets".to_string(), "true".to_string())].into(),
+            credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
+        };
+        let job = dumbmonit_proto::ProbeJob { target, timeout_secs: 60, discover: false };
+        let jobs = serde_json::to_string(&[job.into_command(1, 0)]).unwrap();
+        let polls = std::sync::Arc::new(AtomicUsize::new(0));
+        let seen = polls.clone();
+        let (url, calls) = crate::testsupport::fake_http(move |req| match req.method.as_str() {
+            "POST" if req.path == "/api/ingest" => (200, FAST_ACK.to_string()),
+            // La sonde lente part au premier tour ; ensuite le canal est en panne,
+            // pour que le relais temporise au lieu de tourner à vide.
+            "GET" if seen.fetch_add(1, Ordering::SeqCst) == 0 => (200, jobs.clone()),
+            _ => (503, "busy".to_string()),
+        })
+        .await;
+        let dir = tempfile::tempdir().unwrap();
+        let agent = relay_agent_for(&url, &dir);
+        let (_trigger, shutdown) = crate::shutdown::channel();
+
+        let check = async {
+            let started = std::time::Instant::now();
+            // La sonde est entre les mains de l'équipement muet…
+            while held.load(Ordering::SeqCst) == 0 {
+                assert!(started.elapsed() < Duration::from_secs(20), "sonde jamais lancée");
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            // …et le rapport suivant de la machine part à son heure (période de
+            // 5 s), sans attendre la fin de la sonde (10 s par requête au moins).
+            let before = calls.count("POST", "/api/ingest");
+            let stuck = std::time::Instant::now();
+            while calls.count("POST", "/api/ingest") <= before {
+                assert!(
+                    stuck.elapsed() < Duration::from_secs(9),
+                    "rapport bloqué derrière la sonde relayée"
+                );
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            let reported = calls.count("POST", "/api/agent/relay/1");
+            assert_eq!(reported, 0, "la sonde devait être encore en vol");
+        };
+        tokio::select! {
+            _ = agent.run(shutdown) => panic!("la boucle s'est arrêtée seule"),
+            () = check => {}
+        }
+    }
+
+    #[tokio::test]
+    async fn the_relay_channel_coming_back_ends_the_retry_delay_at_once() {
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        let ingests = std::sync::Arc::new(AtomicUsize::new(0));
+        let failed = std::sync::Arc::new(AtomicBool::new(false));
+        let answered = std::sync::Arc::new(AtomicBool::new(false));
+        let (i, f, a) = (ingests.clone(), failed.clone(), answered.clone());
+        let (url, calls) = crate::testsupport::fake_http(move |req| match req.method.as_str() {
+            // Premier lot accepté (il lance le relais), le second refusé : la
+            // coupure. Puis tout repasse.
+            "POST" if req.path == "/api/ingest" => match i.fetch_add(1, Ordering::SeqCst) {
+                1 => {
+                    f.store(true, Ordering::SeqCst);
+                    (503, "restarting".to_string())
+                }
+                _ => (200, FAST_ACK.to_string()),
+            },
+            // Le canal du relais répond une fois, après la coupure des mesures.
+            "GET" if f.load(Ordering::SeqCst) && !a.swap(true, Ordering::SeqCst) => {
+                (200, "[]".to_string())
+            }
+            _ => (503, "restarting".to_string()),
+        })
+        .await;
+        let dir = tempfile::tempdir().unwrap();
+        let mut agent = relay_agent_for(&url, &dir);
+        // Sans le réveil, la reprise attendrait une minute entière.
+        agent.backoff = Backoff::new(Duration::from_secs(60), Duration::from_secs(60));
+        let (_trigger, shutdown) = crate::shutdown::channel();
+
+        let check = async {
+            let started = std::time::Instant::now();
+            while !answered.load(Ordering::SeqCst) {
+                assert!(started.elapsed() < Duration::from_secs(40), "relais jamais revenu");
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            let back = std::time::Instant::now();
+            while calls.count("POST", "/api/ingest") < 3 {
+                assert!(
+                    back.elapsed() < Duration::from_secs(10),
+                    "les mesures attendent la fin de la temporisation"
+                );
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+        };
+        tokio::select! {
+            _ = agent.run(shutdown) => panic!("la boucle s'est arrêtée seule"),
+            () = check => {}
+        }
     }
 }

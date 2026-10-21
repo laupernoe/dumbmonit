@@ -28,11 +28,12 @@ use crate::shutdown::Shutdown;
 const POLL_WAIT: Duration = Duration::from_secs(RELAY_POLL_HOLD_SECS);
 const POLL_TIMEOUT: Duration = Duration::from_secs(RELAY_POLL_HOLD_SECS + 20);
 
-/// Première temporisation quand le serveur ne répond pas, et son plafond. Plus
-/// court que pour les mesures : celles-ci attendent en tampon, une sonde non
-/// exécutée est simplement perdue pour ce tour.
-const BACKOFF_BASE: Duration = Duration::from_secs(5);
-const BACKOFF_MAX: Duration = Duration::from_secs(60);
+/// Première temporisation quand le serveur ne répond pas, et son plafond : les
+/// mêmes que pour les mesures (`run.rs`), sous le délai au-delà duquel le
+/// serveur déclare les équipements du site injoignables. Une réponse favorable
+/// sur l'autre canal y met fin aussitôt.
+const BACKOFF_BASE: Duration = Duration::from_secs(2);
+const BACKOFF_MAX: Duration = Duration::from_secs(30);
 
 /// Sondes menées de front. Un site ordinaire compte quelques dizaines
 /// d'équipements ; les mener toutes à la fois saturerait la liaison d'un petit
@@ -73,8 +74,14 @@ impl RelayRunner {
 
     pub async fn run(mut self, mut shutdown: Shutdown) {
         info!(kinds = ?self.kinds(), "relay mode enabled: waiting for probes from the server");
+        let reachable = self.client.reachable();
+        let mut down_since: Option<Instant> = None;
         loop {
-            let fetch = self.client.fetch_probes(&self.key, POLL_WAIT, POLL_TIMEOUT);
+            // Après une panne, un simple coup d'œil sans attente : la reprise se
+            // constate (et se journalise) aussitôt, pas au bout d'une attente
+            // longue de 25 s.
+            let wait = if down_since.is_some() { Duration::ZERO } else { POLL_WAIT };
+            let fetch = self.client.fetch_probes(&self.key, wait, POLL_TIMEOUT);
             let jobs = tokio::select! {
                 biased;
                 _ = shutdown.wait() => break,
@@ -82,25 +89,36 @@ impl RelayRunner {
             };
             match jobs {
                 Ok(jobs) => {
-                    if self.backoff.attempts() > 0 {
-                        info!("relay channel restored");
+                    if let Some(since) = down_since.take() {
+                        info!(
+                            attempts = self.backoff.attempts(),
+                            outage_s = since.elapsed().as_secs(),
+                            "relay channel restored"
+                        );
                     }
                     self.backoff.reset();
                     for job in jobs {
-                        self.spawn(job);
+                        self.spawn(job, &shutdown);
                     }
                 }
                 Err(error) => {
                     let delay = self.backoff.next_delay();
-                    if self.backoff.attempts() == 1 {
-                        warn!(%error, "cannot fetch relayed probes");
+                    let attempt = self.backoff.attempts();
+                    let retry_in_s = delay.as_secs();
+                    if down_since.is_none() {
+                        down_since = Some(Instant::now());
+                        warn!(%error, retry_in_s, "cannot fetch relayed probes");
+                    } else if attempt <= 10 || attempt % 10 == 0 {
+                        info!(%error, attempt, retry_in_s, "relay channel still down");
                     } else {
-                        debug!(%error, "relay channel still down");
+                        debug!(%error, attempt, retry_in_s, "relay channel still down");
                     }
                     tokio::select! {
                         biased;
                         _ = shutdown.wait() => break,
                         _ = tokio::time::sleep(delay) => {}
+                        // Les mesures viennent de passer : le serveur est là.
+                        _ = reachable.notified() => {}
                     }
                 }
             }
@@ -117,7 +135,7 @@ impl RelayRunner {
     }
 
     /// Exécute une sonde dans sa propre tâche, sous le plafond de concurrence.
-    fn spawn(&self, command: AgentCommand) {
+    fn spawn(&self, command: AgentCommand, shutdown: &Shutdown) {
         // Un balayage de découverte n'est pas une sonde : il ne compte pas dans
         // le plafond des sondes (il porte sa propre concurrence interne) et rend
         // compte sur sa route dédiée, au fil de l'eau.
@@ -125,8 +143,9 @@ impl RelayRunner {
             let client = self.client.clone();
             let key = self.key.clone();
             let registry = self.registry.clone();
+            let shutdown = shutdown.clone();
             tokio::spawn(async move {
-                discovery::run(&client, &key, &registry, &command).await;
+                discovery::run(&client, &key, &registry, &command, shutdown).await;
             });
             return;
         }
@@ -148,17 +167,35 @@ impl RelayRunner {
 /// Exécution d'un balayage de découverte confié à cet agent relais.
 mod discovery {
     use std::sync::Arc;
+    use std::time::Duration;
 
     use dumbmonit_collectors::Registry;
-    use dumbmonit_collectors::netscan::{self, Cancel, ScanConfig, ScanUpdate};
+    use dumbmonit_collectors::netscan::{
+        self, AGENT_MAX_CONCURRENCY, Cancel, ScanConfig, ScanUpdate,
+    };
     use dumbmonit_proto::{AgentCommand, DiscoveryReport, DiscoveryScanJob, ScanProgress};
     use tracing::{debug, info, warn};
 
     use crate::client::PushClient;
+    use crate::shutdown::Shutdown;
+
+    /// Délai laissé au dernier compte rendu quand l'agent s'arrête en plein
+    /// balayage : systemd n'attend pas indéfiniment.
+    const FINAL_REPORT_ON_STOP: Duration = Duration::from_secs(2);
 
     /// Mène le balayage et en rend compte au serveur au fil de l'eau. Jamais de
     /// panique : une commande illisible devient un compte rendu d'erreur.
-    pub async fn run(client: &PushClient, key: &str, registry: &Registry, command: &AgentCommand) {
+    ///
+    /// L'arrêt de l'agent (`shutdown`) annule le balayage aussitôt, y compris
+    /// pendant un compte rendu en cours : un `SIGTERM` ne doit jamais attendre la
+    /// fin d'un /24.
+    pub async fn run(
+        client: &PushClient,
+        key: &str,
+        registry: &Registry,
+        command: &AgentCommand,
+        mut shutdown: Shutdown,
+    ) {
         let id = command.id;
         let job = match DiscoveryScanJob::from_command(command) {
             Ok(job) => job,
@@ -176,6 +213,8 @@ mod discovery {
         let config = ScanConfig {
             depth: job.depth,
             community: job.snmp_community.clone().unwrap_or_else(|| "public".to_string()),
+            // Machine modeste, service à mémoire bornée : peu de sockets à la fois.
+            max_concurrency: AGENT_MAX_CONCURRENCY,
             ..ScanConfig::default()
         };
         let cancel = Cancel::new();
@@ -191,7 +230,17 @@ mod discovery {
 
         let mut latest = ScanProgress::default();
         let mut since_progress = 0u32;
-        while let Some(update) = rx.recv().await {
+        let mut stopping = false;
+        loop {
+            let update = tokio::select! {
+                biased;
+                _ = shutdown.wait() => {
+                    stopping = true;
+                    break;
+                }
+                update = rx.recv() => update,
+            };
+            let Some(update) = update else { break };
             let report = match update {
                 ScanUpdate::Host(host) => {
                     DiscoveryReport { progress: latest, hosts: vec![host], ..Default::default() }
@@ -208,7 +257,17 @@ mod discovery {
                     DiscoveryReport { progress, ..Default::default() }
                 }
             };
-            match client.report_discovery(key, id, &report).await {
+            // Un compte rendu par hôte, attendu avant de lire la suite : c'est la
+            // contre-pression qui empêche le canal de gonfler.
+            let sent = tokio::select! {
+                biased;
+                _ = shutdown.wait() => {
+                    stopping = true;
+                    break;
+                }
+                sent = client.report_discovery(key, id, &report) => sent,
+            };
+            match sent {
                 Ok(true) => {}
                 Ok(false) => {
                     debug!(id, "server cancelled the discovery scan");
@@ -219,8 +278,28 @@ mod discovery {
             }
         }
 
+        if stopping {
+            // Arrêt de l'agent : le balayage est annulé puis abandonné sans
+            // attendre ses sondes, et le serveur prévenu si cela tient en peu de
+            // temps.
+            cancel.cancel();
+            scan.abort();
+            let _ = scan.await;
+            drop(rx);
+            info!(id, "agent stopping, relayed discovery scan cancelled");
+            let report = DiscoveryReport {
+                progress: latest,
+                finished: true,
+                error: Some("the agent stopped during the scan".to_string()),
+                ..Default::default()
+            };
+            let last = client.report_discovery(key, id, &report);
+            let _ = tokio::time::timeout(FINAL_REPORT_ON_STOP, last).await;
+            return;
+        }
+
         // Vide ce qui reste dans le canal après une annulation, pour que la tâche
-        // de balayage se termine proprement.
+        // de balayage se termine proprement (elle s'arrête aussitôt annulée).
         while rx.recv().await.is_some() {}
         let error = match scan.await {
             Ok(Ok(_)) => None,

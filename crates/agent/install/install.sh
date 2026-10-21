@@ -598,8 +598,11 @@ LockPersonality=yes
 SystemCallArchitectures=native
 
 # Empreinte volontairement contrainte : l'outil de surveillance ne doit jamais
-# devenir la cause de la panne qu'il est censé détecter.
-MemoryMax=128M
+# devenir la cause de la panne qu'il est censé détecter. Une dizaine de Mo au
+# repos ; 256M laissent la marge d'une découverte réseau relayée (64 sockets au
+# plus, chacune pouvant tenir quelques réponses HTTP de 64 Kio) et du tampon de
+# mesures accumulé pendant une coupure, sans jamais frôler le tueur OOM.
+MemoryMax=256M
 CPUQuota=20%
 
 [Install]

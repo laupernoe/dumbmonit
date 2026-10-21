@@ -22,7 +22,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import LogDestinationForm from './LogDestinationForm.svelte';
 	import { levelLabel } from './logLabels';
-	import { MAX_MB_MAX, MAX_MB_MIN, RETENTION_MAX, RETENTION_MIN, clampDays, exportChoices, formatSize, inRange } from './logs';
+	import { MAX_MB_MAX, MAX_MB_MIN, RETENTION_MAX, RETENTION_MIN, clampDays, exportChoices, formatLogDay, formatSize, inRange } from './logs';
 
 	let info = $state<LogsInfo | null>(null);
 	let kinds = $state<KindInfo[]>([]);
@@ -141,6 +141,11 @@
 		};
 	});
 
+	// Logs only exist on disk since the server started keeping them: say since when.
+	const oldestLabel = $derived(formatLogDay(info?.oldest_day));
+	const startsBeforeLogs = $derived(
+		!!info?.oldest_day && !!estimate && estimate.days === days && estimate.from < info.oldest_day
+	);
 	const canDownload = $derived(days !== null && estimate !== null && estimate.days === days);
 
 	// --- Destinations ---------------------------------------------------------
@@ -332,6 +337,15 @@
 						</div>
 					{/if}
 				</fieldset>
+
+				{#if oldestLabel}
+					<p class="mt-3 text-sm text-ink-2">
+						{m.settings_logs_export_since({ date: oldestLabel })}
+						{#if startsBeforeLogs}
+							<span class="text-ink">{m.settings_logs_export_since_short({ date: oldestLabel })}</span>
+						{/if}
+					</p>
+				{/if}
 
 				<p class="mt-3 min-h-6 text-sm text-ink-2" aria-live="polite">
 					{#if estimateError}

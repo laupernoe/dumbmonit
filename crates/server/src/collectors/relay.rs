@@ -99,6 +99,24 @@ struct Inner {
     in_flight: HashMap<i64, Job>,
     /// Réveil des attentes longues, un par agent.
     wakers: HashMap<TargetId, Arc<Notify>>,
+    /// Dernière demande de chaque agent relais, pour journaliser ses retours.
+    last_poll: HashMap<TargetId, Instant>,
+}
+
+/// Absence au-delà de laquelle un relais qui revient demander ses sondes est
+/// journalisé comme reconnecté : une attente longue complète, plus une marge
+/// large pour l'aller-retour d'un site distant.
+pub const RECONNECT_GAP: Duration = Duration::from_secs(dumbmonit_proto::RELAY_POLL_HOLD_SECS + 35);
+
+/// Ce que dit une demande d'un relais de sa connexion.
+#[derive(Debug, PartialEq, Eq)]
+pub enum PollGap {
+    /// Il était là il y a un instant.
+    Regular,
+    /// Première demande depuis le démarrage du serveur.
+    First,
+    /// De retour après une absence de cette durée.
+    Back(Duration),
 }
 
 /// File des sondes déléguées, partagée par le planificateur et l'API.
@@ -172,6 +190,18 @@ impl RelayHub {
             }
             if tokio::time::timeout(remaining, waker.notified()).await.is_err() {
                 return Vec::new();
+            }
+        }
+    }
+
+    /// Note qu'un relais vient chercher ses sondes, et dit s'il revient de loin.
+    pub fn note_poll(&self, agent_id: TargetId, now: Instant) -> PollGap {
+        let mut inner = self.lock();
+        match inner.last_poll.insert(agent_id, now) {
+            None => PollGap::First,
+            Some(previous) => {
+                let gap = now.saturating_duration_since(previous);
+                if gap > RECONNECT_GAP { PollGap::Back(gap) } else { PollGap::Regular }
             }
         }
     }
@@ -472,6 +502,19 @@ mod tests {
 
         // Un compte rendu tardif ne trouve plus rien.
         assert!(hub.complete(9, commands[0].id).is_none());
+    }
+
+    #[test]
+    fn a_relay_coming_back_after_a_long_absence_is_told_apart() {
+        let hub = RelayHub::new();
+        let start = Instant::now();
+        assert_eq!(hub.note_poll(9, start), PollGap::First);
+        // Une attente longue complète puis la demande suivante : rien à dire.
+        let next = start + Duration::from_secs(26);
+        assert_eq!(hub.note_poll(9, next), PollGap::Regular);
+        let back = next + Duration::from_secs(300);
+        assert_eq!(hub.note_poll(9, back), PollGap::Back(Duration::from_secs(300)));
+        assert_eq!(hub.note_poll(8, back), PollGap::First, "chaque relais a son compte");
     }
 
     #[tokio::test]
