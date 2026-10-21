@@ -7,21 +7,22 @@
 	 * message.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { Megaphone, Plus, Send, X } from 'lucide-svelte';
+	import { Megaphone, Pencil, Plus, Send, X } from 'lucide-svelte';
 	import {
 		addIncidentUpdate,
 		createIncident,
 		deleteIncident,
+		updateIncident,
 		type Incident,
 		type IncidentKind,
 		type IncidentSeverity,
 		type IncidentStatus,
 		type StatusPage
 	} from '#lib/api/index.js';
-	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
 	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import { INCIDENT_STATUS, KIND_LABEL, STATUSES_FOR, isClosed } from './words';
-	import { dateToLocal, localToIso, updatesPayload, validateHistory, type DraftUpdate, type HistoryError } from './incident-history';
+	import { dateToLocal, localToIso, updatesPayload, validateDates, validateHistory, type DraftUpdate, type HistoryError } from './incident-history';
 
 	interface Props {
 		incidents: Incident[];
@@ -81,7 +82,9 @@
 			update_empty: m.status_incidents_err_update_empty(),
 			update_outside: m.status_incidents_err_update_outside(),
 			update_future: m.status_incidents_err_update_future(),
-			after_resolution: m.status_incidents_err_after_resolution()
+			after_resolution: m.status_incidents_err_after_resolution(),
+			start_required: m.status_incidents_err_start_required(),
+			end_required: m.status_incidents_err_end_required()
 		}[error];
 	}
 
@@ -144,6 +147,7 @@
 
 	function startUpdate(incident: Incident) {
 		updating = incident.id;
+		editing = null;
 		updateStatus = incident.status;
 		updateBody = '';
 		updateAt = '';
@@ -171,6 +175,57 @@
 			updateError = cause;
 		} finally {
 			posting = false;
+		}
+	}
+
+	// --- Dates of an existing announcement ---------------------------------------
+
+	let editing = $state<number | null>(null);
+	let editStart = $state('');
+	let editEnd = $state('');
+	let editOriginal = { startsAt: '', endsAt: '' };
+	let editError = $state<HistoryError | null>(null);
+	let editFailure = $state<unknown>(null);
+	let savingDates = $state(false);
+
+	const localOf = (value: string | null) => {
+		const date = parseServerDate(value);
+		return date ? dateToLocal(date) : '';
+	};
+
+	function startEdit(incident: Incident) {
+		editing = incident.id;
+		editStart = localOf(incident.starts_at);
+		editEnd = localOf(incident.ends_at);
+		editOriginal = { startsAt: editStart, endsAt: editEnd };
+		editError = null;
+		editFailure = null;
+		updating = null;
+	}
+
+	async function saveDates(event: SubmitEvent, incident: Incident) {
+		event.preventDefault();
+		editFailure = null;
+		const messages = incident.updates.flatMap((u) => parseServerDate(u.created_at) ?? []);
+		// The end only exists for a maintenance or a closed incident.
+		const hasEnd = incident.kind === 'maintenance' || isClosed(incident.status);
+		editError = validateDates(incident.kind, editStart, hasEnd ? editEnd : '', editOriginal, messages);
+		if (!editError && hasEnd && !editEnd) editError = 'end_required';
+		if (editError) return;
+		savingDates = true;
+		try {
+			replace(
+				await updateIncident(incident.id, {
+					title: incident.title,
+					starts_at: localToIso(editStart),
+					ends_at: hasEnd ? localToIso(editEnd) : undefined
+				})
+			);
+			editing = null;
+		} catch (cause) {
+			editFailure = cause;
+		} finally {
+			savingDates = false;
 		}
 	}
 
@@ -229,6 +284,10 @@
 				</p>
 			</div>
 			<div class="flex flex-wrap items-center gap-1.5">
+				<Button variant="ghost" size="sm" onclick={() => (editing === incident.id ? (editing = null) : startEdit(incident))}>
+					<Pencil class="size-4" aria-hidden="true" />
+					{editing === incident.id ? m.status_incidents_cancel() : m.status_incidents_edit_dates()}
+				</Button>
 				{#if !closed}
 					<Button variant="secondary" size="sm" onclick={() => (updating === incident.id ? (updating = null) : startUpdate(incident))}>
 						{updating === incident.id ? m.status_incidents_cancel() : m.status_incidents_post_update()}
@@ -243,6 +302,29 @@
 		</div>
 		{#if closeError?.id === incident.id}
 			<ErrorNotice error={closeError.cause} title={m.status_incidents_update_error()} class="mt-3" />
+		{/if}
+		{#if editing === incident.id}
+			{@const hasEnd = incident.kind === 'maintenance' || closed}
+			<form class="mt-3 grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-start" onsubmit={(event) => saveDates(event, incident)} novalidate>
+				<Field label={incident.kind === 'maintenance' ? m.status_incidents_starts() : m.status_incidents_started()} for="inc-{incident.id}-start" required>
+					<input id="inc-{incident.id}-start" type="datetime-local" class="input tnum" bind:value={editStart} oninput={() => (editError = null)} max={incident.kind === 'incident' ? nowLocal : undefined} disabled={savingDates} />
+				</Field>
+				{#if hasEnd}
+					<Field label={incident.kind === 'maintenance' ? m.status_incidents_ends() : m.status_incidents_resolved_on()} for="inc-{incident.id}-end" required>
+						<input id="inc-{incident.id}-end" type="datetime-local" class="input tnum" bind:value={editEnd} oninput={() => (editError = null)} min={editStart || undefined} max={incident.kind === 'incident' ? nowLocal : undefined} disabled={savingDates} />
+					</Field>
+				{:else}
+					<span></span>
+				{/if}
+				<Button type="submit" variant="secondary" class="sm:mt-[1.625rem]" loading={savingDates}>{m.status_incidents_save_dates()}</Button>
+				<p class="text-[0.8125rem] text-ink-2 sm:col-span-3">{m.status_incidents_edit_dates_help()}</p>
+				{#if editError}
+					<p class="text-[0.8125rem] text-warning sm:col-span-3" role="alert">{historyMessage(editError)}</p>
+				{/if}
+				{#if editFailure}
+					<div class="sm:col-span-3"><ErrorNotice error={editFailure} title={m.status_incidents_update_error()} /></div>
+				{/if}
+			</form>
 		{/if}
 		{#if updating === incident.id}
 			<form class="mt-3 grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-start" onsubmit={(event) => postUpdate(event, incident)} novalidate>
