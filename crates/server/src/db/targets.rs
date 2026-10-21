@@ -185,6 +185,39 @@ pub async fn reorder(pool: &SqlitePool, order: &[TargetId]) -> Result<()> {
     Ok(())
 }
 
+/// Renomme un dossier : toutes les cibles qui y sont rangées et, dans la même
+/// transaction, les pages de statut qui l'ont coché (la liaison se fait par
+/// nom). Si une page cochait déjà le nouveau nom, la référence à l'ancien
+/// disparaît au lieu de doubler. Retourne le nombre de cibles déplacées.
+pub async fn rename_folder(pool: &SqlitePool, from: &str, to: &str) -> Result<u64> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction de renommage")?;
+    let moved = sqlx::query(
+        "UPDATE targets SET group_name = ?,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE group_name = ?",
+    )
+    .bind(to)
+    .bind(from)
+    .execute(&mut *tx)
+    .await
+    .context("renommage du dossier des cibles")?
+    .rows_affected();
+    sqlx::query("UPDATE OR IGNORE status_page_groups SET group_name = ? WHERE group_name = ?")
+        .bind(to)
+        .bind(from)
+        .execute(&mut *tx)
+        .await
+        .context("renommage du dossier dans les pages de statut")?;
+    // Les lignes que le conflit a épargnées : la page cochait déjà `to`.
+    sqlx::query("DELETE FROM status_page_groups WHERE group_name = ?")
+        .bind(from)
+        .execute(&mut *tx)
+        .await
+        .context("purge de l'ancien nom de dossier des pages de statut")?;
+    tx.commit().await.context("validation du renommage du dossier")?;
+    Ok(moved)
+}
+
 pub async fn delete(pool: &SqlitePool, id: TargetId) -> Result<bool> {
     let result = sqlx::query("DELETE FROM targets WHERE id = ?")
         .bind(id)

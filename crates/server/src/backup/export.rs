@@ -356,7 +356,7 @@ async fn status_pages(
 ) -> Result<Vec<BundleStatusPage>> {
     let rows = sqlx::query(
         "SELECT id, slug, title, description, published, theme, show_uptime_days,
-             accent, scenes, scene_rotation, simple, footer_text, homepage_url, domain
+             accent, scenes, scene_rotation, simple, footer_text, homepage_url, domain, seo
          FROM status_pages ORDER BY id",
     )
     .fetch_all(pool)
@@ -387,6 +387,29 @@ async fn status_pages(
             });
         }
 
+        let groups: Vec<(String,)> = sqlx::query_as(
+            "SELECT group_name FROM status_page_groups WHERE page_id = ?
+             ORDER BY position, group_name",
+        )
+        .bind(id)
+        .fetch_all(pool)
+        .await
+        .context("lecture des groupes d'une page de statut")?;
+        let labels = sqlx::query(
+            "SELECT target_id, label FROM status_page_group_labels
+             WHERE page_id = ? ORDER BY target_id",
+        )
+        .bind(id)
+        .fetch_all(pool)
+        .await
+        .context("lecture des noms publics d'une page de statut")?;
+        let mut group_labels = Vec::with_capacity(labels.len());
+        for row in &labels {
+            let target_id: i64 = row.try_get("target_id")?;
+            let Some(target) = refs.get(&target_id).cloned() else { continue };
+            group_labels.push(BundleGroupLabel { target, label: row.try_get("label")? });
+        }
+
         out.push(BundleStatusPage {
             slug: row.try_get("slug")?,
             title: row.try_get("title")?,
@@ -402,6 +425,9 @@ async fn status_pages(
             footer_text: row.try_get("footer_text")?,
             homepage_url: row.try_get("homepage_url")?,
             domain: row.try_get("domain")?,
+            seo: Some(crate::status_seo::Seo::parse(&row.try_get::<String, _>("seo")?)),
+            groups: groups.into_iter().map(|(name,)| name).collect(),
+            group_labels,
         });
     }
     Ok(out)
