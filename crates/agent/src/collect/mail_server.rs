@@ -304,10 +304,7 @@ pub fn volume_for<'a>(path: &str, volumes: &'a [Volume]) -> Option<&'a Volume> {
 
 /// Script qui lit la version du produit d'un exécutable.
 fn version_script(exe: &str) -> String {
-    format!(
-        "(Get-Item -LiteralPath '{}').VersionInfo.ProductVersion",
-        exe.replace('\'', "''")
-    )
+    format!("(Get-Item -LiteralPath '{}').VersionInfo.ProductVersion", exe.replace('\'', "''"))
 }
 
 /// Étiquette de file sûre : minuscules, chiffres, `_` et `-`.
@@ -358,9 +355,7 @@ fn scan_queues(product: Product, root: &str) -> Vec<QueueStat> {
     match product {
         Product::MDaemon => MDAEMON_QUEUES
             .iter()
-            .filter_map(|name| {
-                scan_dir(&format!("{queues_dir}{sep}{name}"), &sanitize_queue(name))
-            })
+            .filter_map(|name| scan_dir(&format!("{queues_dir}{sep}{name}"), &sanitize_queue(name)))
             .collect(),
         Product::SecurityGateway => {
             let Ok(entries) = std::fs::read_dir(&queues_dir) else { return Vec::new() };
@@ -408,9 +403,14 @@ pub fn samples(report: &MailServerReport, now_ms: i64) -> Vec<Sample> {
         }
         for queue in &product.queues {
             out.push(
-                Sample::new("agent_mail_queue_files", queue.files as f64, MetricKind::Gauge, now_ms)
-                    .with_label("product", label)
-                    .with_label("queue", &queue.queue),
+                Sample::new(
+                    "agent_mail_queue_files",
+                    queue.files as f64,
+                    MetricKind::Gauge,
+                    now_ms,
+                )
+                .with_label("product", label)
+                .with_label("queue", &queue.queue),
             );
             if let Some(age) = queue.oldest_age_secs {
                 out.push(
@@ -580,11 +580,10 @@ impl<S: MailSource> MailServerProbe<S> {
                 }
                 None => Vec::new(),
             };
-            let data = found
-                .root
-                .as_deref()
-                .and_then(|root| volume_for(root, &volumes))
-                .map(|volume| DataVolume { free_bytes: volume.free, total_bytes: volume.total });
+            let data =
+                found.root.as_deref().and_then(|root| volume_for(root, &volumes)).map(|volume| {
+                    DataVolume { free_bytes: volume.free, total_bytes: volume.total }
+                });
             products.push(ProductReport {
                 product: found.product,
                 version,
@@ -680,10 +679,7 @@ svc\tshort\tRunning\r\n";
 
     #[test]
     fn the_executable_is_found_quoted_or_not() {
-        assert_eq!(
-            exe_from_path_name("\"C:\\A B\\x.exe\" -k").as_deref(),
-            Some("C:\\A B\\x.exe")
-        );
+        assert_eq!(exe_from_path_name("\"C:\\A B\\x.exe\" -k").as_deref(), Some("C:\\A B\\x.exe"));
         assert_eq!(
             exe_from_path_name("C:\\MDaemon\\App\\MDaemon.exe /service").as_deref(),
             Some("C:\\MDaemon\\App\\MDaemon.exe")

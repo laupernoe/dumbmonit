@@ -4007,7 +4007,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To check more ports than SMTP, IMAP and webmail, set the Services option to a list like this one.\nsmtp,msa,imap,pop3,imaps,webmail",
                 ],
                 ports: &[
-                    to_server!(8080, "tcp", "Agent readings (default port, 443 behind a TLS proxy)"),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Agent readings (default port, 443 behind a TLS proxy)"
+                    ),
                     to_device!(25, "tcp", "SMTP check (default)"),
                     to_device!(143, "tcp", "IMAP check (default)"),
                     to_device!(3000, "tcp", "Webmail check (default)"),
@@ -4053,7 +4057,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "To check more ports than SMTP and the web interface, set the Services option to a list like this one.\nsmtp,web_https",
                 ],
                 ports: &[
-                    to_server!(8080, "tcp", "Agent readings (default port, 443 behind a TLS proxy)"),
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Agent readings (default port, 443 behind a TLS proxy)"
+                    ),
                     to_device!(25, "tcp", "SMTP check (default)"),
                     to_device!(4000, "tcp", "Web interface check (default)"),
                     to_device_optional!(
