@@ -108,7 +108,7 @@ impl RelayRunner {
                     if down_since.is_none() {
                         down_since = Some(Instant::now());
                         warn!(%error, retry_in_s, "cannot fetch relayed probes");
-                    } else if attempt <= 10 || attempt % 10 == 0 {
+                    } else if attempt <= 10 || attempt.is_multiple_of(10) {
                         info!(%error, attempt, retry_in_s, "relay channel still down");
                     } else {
                         debug!(%error, attempt, retry_in_s, "relay channel still down");

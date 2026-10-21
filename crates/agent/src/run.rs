@@ -526,7 +526,7 @@ impl Agent {
         if *last != cause {
             *last = cause.clone();
             warn!(error = %cause, attempt, buffered, retry_in_s, "send still failing");
-        } else if attempt <= 10 || attempt % 10 == 0 {
+        } else if attempt <= 10 || attempt.is_multiple_of(10) {
             info!(error = %cause, attempt, buffered, retry_in_s, "send failed again");
         } else {
             debug!(error = %cause, attempt, retry_in_s, "send failed again");
