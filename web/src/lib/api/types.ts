@@ -2168,7 +2168,7 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'lldp';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'lldp' | 'samehost' | 'backup' | 'firewall';
 
 /** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
 export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
@@ -2180,7 +2180,7 @@ export interface TopologyNode {
 	/** The device; `null` for a guest. */
 	target_id: TargetId | null;
 	name: string;
-	/** The device kind; `vm` or `container` for a guest. */
+	/** The device kind; `vm` or `container` for a guest, `pve_node` for a node of a Proxmox cluster. */
 	kind: string;
 	/** Folder; a guest takes its hypervisor's. */
 	group_name: string;
@@ -2189,7 +2189,13 @@ export interface TopologyNode {
 	site_source: TopologySiteSource | null;
 	/** Guest only: the hypervisor device. */
 	host_id: TargetId | null;
-	/** Guest only: running at the last measurement. */
+	/** Subnet of the device (CIDR); `null` for a guest, a node, a public address or a host name. */
+	subnet: string | null;
+	/** VLAN of that subnet, when a firewall reports it. */
+	vlan: number | null;
+	/** Name of that network (the firewall interface description). */
+	vlan_name: string | null;
+	/** Guest: running at the last measurement. Cluster node: online. */
 	running: boolean | null;
 }
 

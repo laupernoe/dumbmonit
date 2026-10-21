@@ -15,9 +15,9 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
-	import { Box, Monitor } from 'lucide-svelte';
+	import { Box, Monitor, Server } from 'lucide-svelte';
 	import type { Frame, MapLayout, NodeState, PlacedNode } from './layout';
-	import { EDGE_DASH } from './legend';
+	import { EDGE_DASH, guestLabel, zoneLabel } from './legend';
 
 	interface Props {
 		layout: MapLayout;
@@ -85,8 +85,7 @@
 	}
 
 	function label(p: PlacedNode, l: Look): string {
-		const guest = p.node.targetId === null ? (p.node.kind === 'container' ? m.topology_guest_container() : m.topology_guest_vm()) : null;
-		return [p.node.name, guest, l.caption ?? stateText(p.node.state), p.node.site].filter(Boolean).join(' · ');
+		return [p.node.name, guestLabel(p.node), l.caption ?? stateText(p.node.state), p.node.subnet, p.node.site].filter(Boolean).join(' · ');
 	}
 
 	function frameSource(frame: Frame): string | null {
@@ -117,6 +116,7 @@
 	function frameTitle(frame: Frame): string {
 		if (frame.kind === 'main') return frame.label ?? m.topology_site_main();
 		if (frame.kind === 'site') return frame.label ?? '';
+		if (frame.kind === 'zone') return zoneLabel(frame.label, frame.vlan, frame.vlanName);
 		return (frame.label ?? m.devices_folders_none()).toUpperCase();
 	}
 
@@ -131,7 +131,10 @@
 {#each layout.frames as frame (frame.key)}
 	{@const source = frameSource(frame)}
 	<g class="topo-frame" opacity={highlight ? 0.6 : 1}>
-		{#if frame.kind === 'group'}
+		{#if frame.kind === 'zone'}
+			<rect x={frame.x} y={frame.y} width={frame.width} height={frame.height} rx="12" fill="none" class="stroke-line-strong" stroke-width="1" stroke-dasharray="3 4" />
+			<text x={frame.x + 16} y={frame.y + 25} class="fill-ink-2" font-size="11.5" font-weight="600">{short(frameTitle(frame), fit(frame.width - 32 - summary(frame).length * 6.8, 6.8))}</text>
+		{:else if frame.kind === 'group'}
 			<rect x={frame.x} y={frame.y} width={frame.width} height={frame.height} rx="14" class="fill-surface stroke-line" stroke-width="1" />
 			<text x={frame.x + 18} y={frame.y + 25} class="fill-ink-2" font-size="11.5" font-weight="700" letter-spacing="0.05em">{short(frameTitle(frame), 40)}</text>
 		{:else}
@@ -153,7 +156,7 @@
 		{/if}
 		<text
 			x={frame.x + frame.width - 18}
-			y={frame.y + (frame.kind === 'group' ? 25 : 27)}
+			y={frame.y + (frame.kind === 'group' || frame.kind === 'zone' ? 25 : 27)}
 			text-anchor="end"
 			class={frame.down > 0 ? 'fill-warning-ink' : 'fill-ink-3'}
 			font-size="11.5"
@@ -229,6 +232,8 @@
 			{#if p.node.targetId === null}
 				{#if p.node.kind === 'container'}
 					<Box class="size-4" size={icon} aria-hidden="true" />
+				{:else if p.node.kind === 'pve_node'}
+					<Server class="size-4" size={icon} aria-hidden="true" />
 				{:else}
 					<Monitor class="size-4" size={icon} aria-hidden="true" />
 				{/if}
