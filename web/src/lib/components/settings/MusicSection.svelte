@@ -31,7 +31,7 @@
 		type WallMusic
 	} from '#lib/api/music.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton, Disclosure } from '#lib/ui/index.js';
 	import { formatRelative, parseServerDate } from '#lib/format.js';
 	import { parseMusicLink } from '#lib/wall/music.js';
 	import { musicErrorText } from '#lib/wall/messages.js';
@@ -256,8 +256,7 @@
 			{/if}
 
 			<!-- Spotify Connect -->
-			<section aria-labelledby="music-spotify">
-				<h3 id="music-spotify" class="text-sm font-semibold text-ink">{m.settings_music_connect_heading()}</h3>
+			<Disclosure title={m.settings_music_connect_heading()}>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">
 					{m.settings_music_connect_intro({ name: account.speaker_name })}
 				</p>
@@ -402,9 +401,8 @@
 					{/if}
 				{/if}
 
-				<details class="mt-4 rounded-[var(--radius-card)] border border-line">
-					<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">{m.settings_music_needs_heading()}</summary>
-					<ul class="grid list-disc gap-1.5 border-t border-line py-3 pr-4 pl-8 text-[0.8125rem] text-ink-2">
+				<Disclosure class="mt-4" title={m.settings_music_needs_heading()}>
+					<ul class="grid list-disc gap-1.5 pl-4 text-[0.8125rem] text-ink-2">
 						<li>{m.settings_music_needs_1()}</li>
 						<li>{m.settings_music_needs_2()}</li>
 						<li>{m.settings_music_needs_3()}</li>
@@ -412,12 +410,11 @@
 						<li>{m.settings_music_needs_5()}</li>
 						<li>{m.settings_music_needs_6()}</li>
 					</ul>
-				</details>
-			</section>
+				</Disclosure>
+			</Disclosure>
 
 			<!-- A link for every wall -->
-			<section aria-labelledby="music-link" class="border-t border-line pt-5">
-				<h3 id="music-link" class="text-sm font-semibold text-ink">{m.settings_music_link_heading()}</h3>
+			<Disclosure title={m.settings_music_link_heading()}>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">
 					{m.settings_music_link_intro()}
 				</p>
@@ -464,7 +461,7 @@
 				{:else if !current}
 					<p class="mt-3 text-sm text-ink-2">{m.settings_music_nothing_sent()}</p>
 				{/if}
-			</section>
+			</Disclosure>
 		</div>
 	{/if}
 </Panel>

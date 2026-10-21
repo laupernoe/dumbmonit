@@ -38,6 +38,7 @@
 	"alerts_ack_stop_reminding": "在此期间不再提醒",
 	"alerts_ack_unack": "取消确认",
 	"alerts_ack_until_resolved": "直到解决",
+	"alerts_actions_ack": "确认",
 	"alerts_bulk_ack": "确认",
 	"alerts_bulk_done": "完成：{count}。",
 	"alerts_bulk_ignore": "对此监控项忽略",
@@ -5173,6 +5174,9 @@
 	"settings_backup_to_update": "待更新 {count}",
 	"settings_backup_without_key": "不含密钥",
 	"settings_backup_write_error": "无法写入备份",
+	"settings_block_connection": "连接",
+	"settings_block_off": "关",
+	"settings_block_on": "开",
 	"settings_language_auto": "自动（浏览器语言）",
 	"settings_language_theme_description": "保存在此浏览器中。",
 	"settings_language_theme_title": "语言与主题",
@@ -5300,6 +5304,8 @@
 	"settings_logs_export_last_day": "最近 1 天",
 	"settings_logs_export_last_days": "最近 {days} 天",
 	"settings_logs_export_period": "时间段",
+	"settings_logs_export_since": "日志自 {date} 起可用。",
+	"settings_logs_export_since_short": "所选时间段早于此日期：导出仅包含 {date} 之后的日志。",
 	"settings_logs_export_title": "导出",
 	"settings_logs_form_add": "添加目标",
 	"settings_logs_form_clear_secrets": "清除已保存的密钥",
@@ -7130,7 +7136,5 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界",
-	"settings_logs_export_since": "日志自 {date} 起可用。",
-	"settings_logs_export_since_short": "所选时间段早于此日期：导出仅包含 {date} 之后的日志。"
+	"worldmap_view_world": "世界"
 }

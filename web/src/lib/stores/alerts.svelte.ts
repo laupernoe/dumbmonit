@@ -10,7 +10,7 @@
  * with one immediate refresh as soon as it is visible again.
  */
 import { browser } from '$app/env';
-import { listAlerts, listTargets, type Alert, type Target } from '#lib/api/index.js';
+import { listAlerts, listTargets, onMutation, type Alert, type Target } from '#lib/api/index.js';
 import { countsAsProblem } from '#lib/alerts-attention.js';
 import { displayState, type ProbeStatus } from '#lib/format.js';
 import { loadProbeStatuses } from '#lib/metrics.js';
@@ -117,3 +117,17 @@ class AlertsStore {
 }
 
 export const alertsStore = new AlertsStore();
+
+/**
+ * Any successful write (delete a device, move it, create a folder, ack an
+ * alert...) refreshes the shared lists, so the page never keeps showing what
+ * was just removed or changed until a manual reload. Bursts (bulk actions) are
+ * coalesced into a single refresh.
+ */
+const MUTATION_DEBOUNCE_MS = 150;
+let mutationTimer: ReturnType<typeof setTimeout> | undefined;
+export function refreshAfterMutation(): void {
+	clearTimeout(mutationTimer);
+	mutationTimer = setTimeout(() => void alertsStore.refresh(), MUTATION_DEBOUNCE_MS);
+}
+if (browser) onMutation(refreshAfterMutation);

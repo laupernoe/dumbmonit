@@ -17,7 +17,7 @@
 	} from '#lib/api/logs.js';
 	import type { LogDestination, LogExportEstimate, LogsInfo, LogTestResult } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Disclosure } from '#lib/ui/index.js';
 	import { normalizeKind, type KindInfo } from '#lib/components/notifications/kinds';
 	import { m } from '#lib/paraglide/messages.js';
 	import LogDestinationForm from './LogDestinationForm.svelte';
@@ -222,8 +222,7 @@
 	{:else if info}
 		<div class="grid gap-8">
 			<!-- Local storage -->
-			<section aria-labelledby="logs-storage-title">
-				<h3 id="logs-storage-title" class="font-semibold text-ink">{m.settings_logs_storage_title()}</h3>
+			<Disclosure title={m.settings_logs_storage_title()}>
 				<dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
 					<div class="min-w-0">
 						<dt class="text-ink-3">{m.settings_logs_directory()}</dt>
@@ -295,11 +294,10 @@
 						{#if saved}<Plate tone="signal" draw label={m.settings_logs_saved()} />{/if}
 					</div>
 				</form>
-			</section>
+			</Disclosure>
 
 			<!-- Export -->
-			<section class="border-t border-line pt-6" aria-labelledby="logs-export-title">
-				<h3 id="logs-export-title" class="font-semibold text-ink">{m.settings_logs_export_title()}</h3>
+			<Disclosure title={m.settings_logs_export_title()}>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_logs_export_hint()}</p>
 
 				<fieldset class="mt-3">
@@ -370,13 +368,12 @@
 						</Button>
 					{/if}
 				</div>
-			</section>
+			</Disclosure>
 
 			<!-- Destinations -->
-			<section class="border-t border-line pt-6" aria-labelledby="logs-dest-title">
+			<Disclosure title={m.settings_logs_dest_title()}>
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div class="min-w-0">
-						<h3 id="logs-dest-title" class="font-semibold text-ink">{m.settings_logs_dest_title()}</h3>
 						<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_logs_dest_hint()}</p>
 					</div>
 					{#if !formOpen}
@@ -463,7 +460,7 @@
 						{/each}
 					</ul>
 				{/if}
-			</section>
+			</Disclosure>
 		</div>
 	{/if}
 </Panel>
