@@ -31,6 +31,7 @@ use crate::db;
 mod badges;
 mod branding;
 mod subscribers;
+mod timeline;
 use crate::db::status_pages::{
     DEFAULT_SCENE, GroupLabel, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
     SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, split_scenes,
@@ -55,6 +56,8 @@ const MAX_GROUPS: usize = 50;
 const MAX_THREAD: usize = 50;
 const MAX_GROUP_FOLDER_LEN: usize = 200;
 const MIN_HISTORY_DAYS: i64 = 7;
+/// Période la plus courte qu'une page peut choisir : 24 h.
+const MIN_SETTING_DAYS: i64 = 1;
 const MAX_HISTORY_DAYS: i64 = 90;
 
 const MAX_FOOTER_LEN: usize = 280;
@@ -118,6 +121,7 @@ pub fn public_routes() -> Router<AppState> {
         .route("/public/status/{slug}/components/{key}/badge.svg", get(badges::item_status))
         .route("/public/status/{slug}/components/{key}/uptime.svg", get(badges::item_uptime))
         .route("/public/status/{slug}/components/{key}/response.svg", get(badges::item_response))
+        .route("/public/status/{slug}/day/{date}", get(timeline::public_day))
         .route("/public/status/{slug}/logo", get(branding::public_logo))
         .route("/public/status/{slug}/subscribe", post(subscribers::subscribe))
         .route("/public/status/{slug}/confirm", post(subscribers::confirm))
@@ -251,9 +255,9 @@ impl StatusPagePayload {
             )));
         }
         let show_uptime_days = self.show_uptime_days.unwrap_or(MAX_HISTORY_DAYS);
-        if !(MIN_HISTORY_DAYS..=MAX_HISTORY_DAYS).contains(&show_uptime_days) {
+        if !(MIN_SETTING_DAYS..=MAX_HISTORY_DAYS).contains(&show_uptime_days) {
             return Err(ApiError::BadRequest(format!(
-                "The history must cover {MIN_HISTORY_DAYS} to {MAX_HISTORY_DAYS} days."
+                "The history must cover {MIN_SETTING_DAYS} to {MAX_HISTORY_DAYS} days."
             )));
         }
         let accent = match self.accent {
@@ -1213,6 +1217,11 @@ struct PublicPage {
     show_uptime_days: i64,
     /// Fenêtre réellement montrée : l'âge des données, de 7 jours au réglage.
     history_days: i64,
+    /// Durée réellement affichée par la frise, en secondes : la période choisie,
+    /// ou moins quand les données sont plus courtes.
+    window_secs: i64,
+    /// Durée d'une barre de la frise, en secondes (86 400 : une par jour).
+    step_secs: i64,
     updated_at: String,
     /// Teinte d'accent choisie parmi [`ACCENTS`].
     accent: String,
@@ -1863,12 +1872,16 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
     // Fenêtre adaptative : l'âge des données (plus ancien appareil montré), borné
     // par le réglage de la page, `MIN_HISTORY_DAYS` au moins.
     let cap = page.show_uptime_days.clamp(MIN_HISTORY_DAYS, MAX_HISTORY_DAYS);
-    let age_days = db::status_pages::oldest_target_created_at(&state.pool, page.id)
+    let oldest = db::status_pages::oldest_target_created_at(&state.pool, page.id)
         .await?
         .as_deref()
-        .and_then(parse_stored)
-        .map_or(0, |created| (now - created).num_days() + 1);
+        .and_then(parse_stored);
+    let age_days = oldest.map_or(0, |created| (now - created).num_days() + 1);
+    let age_secs = oldest.map_or(0, |created| (now - created).num_seconds().max(0));
     let days = age_days.clamp(MIN_HISTORY_DAYS, cap);
+    // Période courte (24 h, 7 jours) ou historique de moins d'une semaine : la
+    // frise passe à la maille fine, sur ce que les données couvrent vraiment.
+    let slot_plan = timeline::plan(page.show_uptime_days, age_secs);
 
     let items = db::status_pages::effective_items(&state.pool, page.id).await?;
     let targets: HashMap<TargetId, Target> = db::targets::list(&state.pool, &state.cipher)
@@ -1895,6 +1908,21 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         })
         .map(|t| t.id)
         .collect();
+    let slot_starts = slot_plan.map(|p| timeline::slot_starts(p, now.timestamp()));
+    let slots = match (slot_plan, &slot_starts) {
+        (Some(plan), Some(starts)) => {
+            timeline::collect(
+                &state.victoria,
+                &shown,
+                starts,
+                plan.step_secs,
+                now.timestamp(),
+                &inactive,
+            )
+            .await
+        }
+        _ => HashMap::new(),
+    };
     let metrics = collect_metrics(
         &state.victoria,
         &shown,
@@ -2006,7 +2034,28 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 worst_daily.entry(day).and_modify(|w| *w = w.min(value)).or_insert(value);
             }
         }
-        let history = day_starts
+        let history: Vec<DayBucket> = if let (Some(plan), Some(starts)) = (slot_plan, &slot_starts)
+        {
+            let own = slots.get(&target.id);
+            starts
+                .iter()
+                .map(|&start| {
+                    let slot = own.and_then(|own| own.get(&start));
+                    DayBucket {
+                        date: DateTime::<Utc>::from_timestamp(start, 0)
+                            .map(format_timestamp)
+                            .unwrap_or_default(),
+                        uptime_pct: slot.map(|s| round(s.uptime_pct)),
+                        down_minutes: slot.map(|s| s.down_minutes.round().max(0.0) as u32),
+                        incidents: incident_spans
+                            .iter()
+                            .filter(|(from, to)| *from < start + plan.step_secs && *to >= start)
+                            .count() as u32,
+                    }
+                })
+                .collect()
+        } else {
+            day_starts
             .iter()
             .zip(&incidents_per_day)
             .map(|(&day, &count)| DayBucket {
@@ -2022,7 +2071,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 }),
                 incidents: count,
             })
-            .collect();
+            .collect()
+        };
         let key = unique_key(&item.label, &mut keys);
         let public_item = PublicItem {
             key,
@@ -2034,7 +2084,11 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             uptime_90d: (days >= 90)
                 .then(|| metrics.uptime_90d.get(&target.id).map(|v| round(*v)))
                 .flatten(),
-            uptime_history: metrics.uptime_history.get(&target.id).map(|v| round(*v)),
+            uptime_history: if slot_plan.is_some() {
+                slots.get(&target.id).and_then(timeline::period_uptime).map(round)
+            } else {
+                metrics.uptime_history.get(&target.id).map(|v| round(*v))
+            },
             latency_ms: metrics.latency_ms.get(&target.id).map(|v| round(*v)),
             latency_series: match (
                 metrics.latency_24h.get(&target.id),
@@ -2126,6 +2180,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             theme: page.theme.clone(),
             show_uptime_days: cap,
             history_days: days,
+            window_secs: slot_plan.map_or(days * 86_400, |p| p.window_secs),
+            step_secs: slot_plan.map_or(86_400, |p| p.step_secs),
             updated_at: page.updated_at.clone(),
             accent: page.accent.clone(),
             scenes: split_scenes(&page.scenes),

@@ -36,6 +36,7 @@
 	import GroupPicker from './GroupPicker.svelte';
 	import SeoSection from './SeoSection.svelte';
 	import { pageUrl } from './seo';
+	import { PERIOD_CHOICES } from './period';
 	import SceneDefs from './scenes/SceneDefs.svelte';
 	import { SCENE_CHOICES, SCENE_COMPONENTS, SCENE_ROTATIONS } from './scenes/registry';
 
@@ -56,7 +57,7 @@
 	const initial = untrack(() => page);
 
 	const SLUG_RULE = /^[a-z0-9-]{2,40}$/;
-	const HISTORY_CHOICES = [30, 60, 90];
+	const HISTORY_CHOICES = PERIOD_CHOICES;
 	const DEFAULT_SCENE = 'paris';
 
 	let title = $state(initial?.title ?? '');
@@ -398,7 +399,7 @@
 			<Field label={m.status_form_history()} for="{idPrefix}-days" help={m.status_form_history_help()}>
 				<select id="{idPrefix}-days" class="input" bind:value={showDays} disabled={saving}>
 					{#each HISTORY_CHOICES as choice (choice)}
-						<option value={choice}>{m.status_share_days({ days: choice })}</option>
+						<option value={choice}>{choice === 1 ? m.status_period_24h() : m.status_share_days({ days: choice })}</option>
 					{/each}
 				</select>
 			</Field>

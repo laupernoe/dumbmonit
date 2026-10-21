@@ -16,7 +16,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { CalendarClock, ExternalLink, Megaphone, Moon, Sun } from 'lucide-svelte';
-	import { getPublicStatus, toApiError, type PublicIncident, type PublicStatus } from '#lib/api/index.js';
+	import { getPublicStatus, getPublicStatusDay, toApiError, type PublicDayDetail, type PublicIncident, type PublicStatus } from '#lib/api/index.js';
 	import { formatDateTime, formatPercent, formatRelative, parseServerDate } from '#lib/format.js';
 	import { theme } from '#lib/stores/theme.svelte.js';
 	import { DecryptText, EmptyState, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
@@ -26,6 +26,8 @@
 	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
 	import UptimeLegend from '#lib/components/status/UptimeLegend.svelte';
 	import ServiceRow from '#lib/components/status/ServiceRow.svelte';
+	import DayDetail from '#lib/components/status/DayDetail.svelte';
+	import { periodParts } from '#lib/components/status/period.js';
 	import StatusMascot from '#lib/components/status/StatusMascot.svelte';
 	import { useSceneLive } from '#lib/scene/live.svelte.js';
 	import { toneFrom, type MoodSnapshot, type SceneTone } from '#lib/scene/mood.js';
@@ -95,6 +97,34 @@
 	const notFound = $derived(error !== null && toApiError(error).status === 404);
 	const banner = $derived(status ? overallBanner(status) : null);
 	const days = $derived(status?.page.history_days ?? 7);
+	const windowSecs = $derived(status?.page.window_secs ?? days * 86400);
+	const stepSecs = $derived(status?.page.step_secs ?? 86400);
+	const periodLabel = $derived.by(() => {
+		const part = periodParts(windowSecs);
+		if (part.unit === 'hours') return part.count === 1 ? m.status_period_hour() : m.status_period_hours({ count: part.count });
+		return m.status_period_days({ count: part.count });
+	});
+
+	// Hour-by-hour detail of the day whose bar was opened.
+	let openDay = $state<string | null>(null);
+	let dayDetail = $state<PublicDayDetail | null>(null);
+	let dayLoading = $state(false);
+	let dayError = $state<unknown>(null);
+
+	async function showDay(date: string) {
+		openDay = date;
+		dayDetail = null;
+		dayError = null;
+		dayLoading = true;
+		try {
+			const detail = await getPublicStatusDay(slug, date);
+			if (openDay === date) dayDetail = detail;
+		} catch (cause) {
+			if (openDay === date) dayError = cause;
+		} finally {
+			if (openDay === date) dayLoading = false;
+		}
+	}
 	const bannerTone = $derived(banner?.tone ?? 'signal');
 
 	// Open announcements sit at the top; everything closed goes to the history.
@@ -250,7 +280,7 @@
 		<section class="rise-in mt-8" style="--rise-delay: 120ms" aria-labelledby="services">
 			<div class="flex items-baseline justify-between gap-3">
 				<h2 id="services" class="text-base font-semibold tracking-tight text-ink">{m.status_public_services()}</h2>
-				<p class="text-[0.8125rem] text-ink-2">{m.status_public_uptime_last({ days })}</p>
+				<p class="text-[0.8125rem] text-ink-2">{stepSecs < 86400 ? periodLabel : m.status_public_uptime_last({ days })}</p>
 			</div>
 			{#if serviceCount > 0}
 				<div class="mt-1.5"><UptimeLegend /></div>
@@ -266,12 +296,15 @@
 							{/if}
 							<ul class="divide-y divide-line" role="list">
 								{#each group.items as item (item.label)}
-									<ServiceRow {item} {days} {compact} />
+									<ServiceRow {item} {days} {windowSecs} {stepSecs} {periodLabel} onselectday={compact ? undefined : showDay} {compact} />
 								{/each}
 							</ul>
 						</div>
 					{/each}
 				</div>
+			{/if}
+			{#if openDay}
+				<DayDetail date={openDay} detail={dayDetail} loading={dayLoading} error={dayError} onclose={() => (openDay = null)} />
 			{/if}
 			{#if status.calendar && status.calendar.length > 0}
 				<h2 class="mt-6 text-base font-semibold tracking-tight text-ink">{m.status_calendar_title({ days: status.calendar.length })}</h2>

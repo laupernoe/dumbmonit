@@ -105,7 +105,7 @@ async fn page_lifecycle_and_public_document() {
     assert_eq!(groups[0]["items"][0]["state"], "unknown");
     assert!(groups[0]["items"][0]["uptime_24h"].is_null(), "no metrics without VictoriaMetrics");
     // Fenêtre adaptative : un appareil tout neuf ne montre que le minimum (7 jours).
-    assert_eq!(groups[0]["items"][0]["history"].as_array().unwrap().len(), 7);
+    assert_eq!(groups[0]["items"][0]["history"].as_array().unwrap().len(), 12);
     assert_eq!(doc["page"]["history_days"], 7);
     assert_no_key(doc, &["id", "target_id", "page_id", "address", "kind_label", "credential"], "");
     let text = doc.to_string();
@@ -675,4 +675,58 @@ async fn an_incident_created_already_resolved_notifies_nobody() {
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     assert_eq!(reply.body["status"], "resolved");
     assert_eq!(reply.body["updates"].as_array().unwrap().len(), 1);
+}
+
+#[tokio::test]
+async fn the_period_can_be_a_day_and_the_day_detail_stays_public_only() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let target = create_target(&app, &admin, "SRV-CRM01", "10.77.0.9").await;
+
+    let page = create_page(
+        &app,
+        &admin,
+        json!({ "title": "Periods", "slug": "periods", "published": true, "show_uptime_days": 1 }),
+    )
+    .await;
+    assert_eq!(page["show_uptime_days"], 1);
+    let id = page["id"].as_i64().unwrap();
+    for bad in [0, 91] {
+        let reply = app
+            .put(
+                &format!("/api/status-pages/{id}"),
+                json!({ "title": "Periods", "show_uptime_days": bad }),
+                Some(&admin),
+            )
+            .await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{bad}: {}", reply.body);
+    }
+    let items = json!([{ "target_id": target, "label": "Customer portal" }]);
+    app.put(&format!("/api/status-pages/{id}/items"), items, Some(&admin)).await;
+
+    // Une page de 24 h sur des données toutes neuves : une heure, par cinq minutes.
+    let public = app.get("/api/public/status/periods", None).await;
+    assert_eq!(public.body["page"]["window_secs"], 3_600);
+    assert_eq!(public.body["page"]["step_secs"], 300);
+
+    // Détail d'un jour : seulement le nom public, jamais le nom privé ni l'adresse.
+    let today = chrono::Utc::now().format("%Y-%m-%d").to_string();
+    let reply = app.get(&format!("/api/public/status/periods/day/{today}"), None).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["services"][0]["label"], "Customer portal");
+    assert_eq!(reply.body["services"][0]["hours"].as_array().unwrap().len(), 24);
+    let text = reply.body.to_string();
+    for secret in ["SRV-CRM01", "10.77.0.9", "target_id"] {
+        assert!(!text.contains(secret), "day detail exposes {secret}");
+    }
+    for bad in ["not-a-date", "2999-01-01", "2020-01-01"] {
+        let reply = app.get(&format!("/api/public/status/periods/day/{bad}"), None).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{bad}");
+    }
+
+    // Une page non publiée n'a pas de détail.
+    let draft = create_page(&app, &admin, json!({ "title": "Draft", "slug": "draft" })).await;
+    assert!(draft["id"].is_number());
+    let reply = app.get(&format!("/api/public/status/draft/day/{today}"), None).await;
+    assert_eq!(reply.status, StatusCode::NOT_FOUND);
 }

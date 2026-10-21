@@ -26,6 +26,13 @@ All notable changes to this project are documented here. The format follows
   also applies to monitors that come in through a ticked group. A test checks
   that the public JSON, HTML, feed, badges and sitemap never carry a private
   name, address or id.
+- **Status page history: 24 hours to 90 days, adaptive, with a day detail.** The
+  period is now a page setting (24 hours, 7, 30, 60, 90 days) and the bars adapt
+  to the data that exists: 2 hours of data show 5-minute bars, 12 hours hourly
+  bars, 3 days 6-hour bars, instead of weeks of grey. The caption names the
+  period really shown and the availability is computed over it. Clicking a bar
+  opens that day hour by hour (outages with start and end, announcements) from
+  `GET /api/public/status/<slug>/day/<date>`, public names only.
 - **Past incidents on status pages.** Enter an incident that already happened:
   start time (never in the future), optional resolution time, and updates each
   with its own date, sorted and validated. An incident entered as resolved

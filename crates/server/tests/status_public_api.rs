@@ -543,10 +543,12 @@ async fn history_has_thirty_day_uptime_and_unknown_days() {
     assert!(item["uptime_90d"].is_null(), "a 30-day page does not show 90 days");
     assert!(item.get("uptime_history").is_some(), "the uptime over the bars' days");
     let history = item["history"].as_array().unwrap();
-    // Fenêtre adaptative : les données ont un jour, la page n'en montre que 7.
+    // Fenêtre adaptative : les données sont toutes neuves, la frise ne montre
+    // que la dernière heure, par tranches de cinq minutes — pas 30 jours gris.
     assert_eq!(doc["page"]["show_uptime_days"], 30);
-    assert_eq!(doc["page"]["history_days"], 7);
-    assert_eq!(history.len(), 7);
+    assert_eq!(doc["page"]["window_secs"], 3_600);
+    assert_eq!(doc["page"]["step_secs"], 300);
+    assert_eq!(history.len(), 12);
     // Sans mesure, un jour est inconnu — ni vert, ni zéro minute de panne.
     for day in history {
         assert!(day["uptime_pct"].is_null());
