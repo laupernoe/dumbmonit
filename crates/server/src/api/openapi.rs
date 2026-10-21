@@ -102,7 +102,8 @@ mod tests {
     ///   `/callback`), et le retour de Spotify (`/api/music/spotify/callback`) :
     ///   des pages qu'un navigateur traverse, pas une API ;
     /// - la distribution de l'agent (`/install.sh`, `/install.ps1`,
-    ///   `/download/{name}`) : des fichiers, pas du JSON.
+    ///   `/download/{name}`) : des fichiers, pas du JSON ;
+    /// - `/robots.txt` et `/sitemap.xml` : du texte et du XML pour les robots.
     const EXCLUDED: &[&str] = &[
         "/api/ingest",
         "/api/agent/commands",
@@ -116,12 +117,15 @@ mod tests {
         "/install.sh",
         "/install.ps1",
         "/download/{name}",
+        "/robots.txt",
+        "/sitemap.xml",
     ];
 
     /// Fichiers dont les routes sont montées hors de `/api`.
     const OUTSIDE_FILES: &[&str] = &["prometheus.rs"];
     /// Routes montées hors de `/api` par `mod.rs`.
-    const OUTSIDE_PATHS: &[&str] = &["/install.sh", "/install.ps1", "/download/{name}"];
+    const OUTSIDE_PATHS: &[&str] =
+        &["/install.sh", "/install.ps1", "/download/{name}", "/robots.txt", "/sitemap.xml"];
 
     /// Routes publiques, celles que le garde de session ne couvre pas.
     fn is_public(path: &str, method: &str) -> bool {

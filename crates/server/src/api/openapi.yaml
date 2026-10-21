@@ -2737,6 +2737,64 @@ paths:
               schema: { type: string }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/public/status/{slug}/day/{date}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - name: date
+        in: path
+        required: true
+        description: A UTC day, `YYYY-MM-DD`, within the last 90 days.
+        schema: { type: string }
+    get:
+      operationId: getPublicStatusDay
+      tags: [Public status]
+      summary: One day of a status page, hour by hour
+      description: >-
+        Per service (public name only): availability of each of the 24 UTC hours
+        and the outages of the day with their start and end, plus the
+        announcements that touch the day.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The day.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date: { type: string }
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key: { type: string }
+                        label: { type: string }
+                        hours:
+                          type: array
+                          items: { type: [number, "null"] }
+                        outages:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              from: { type: string }
+                              to: { type: string }
+                              minutes: { type: integer }
+                  incidents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title: { type: string }
+                        kind: { type: string }
+                        status: { type: string }
+                        starts_at: { type: string }
+                        ends_at: { type: [string, "null"] }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/public/status/{slug}/uptime.svg:
     parameters:
       - $ref: "#/components/parameters/Slug"
@@ -7339,7 +7397,7 @@ components:
         description: { type: string }
         published: { type: boolean }
         theme: { type: string, enum: [auto, light, dark] }
-        show_uptime_days: { type: integer, minimum: 7, maximum: 90 }
+        show_uptime_days: { type: integer, minimum: 1, maximum: 90 }
         created_at: { type: string }
         updated_at: { type: string }
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
@@ -7350,9 +7408,39 @@ components:
         logo_type: { type: [string, "null"], enum: [image/png, image/jpeg, image/webp, null] }
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
+        seo: { $ref: "#/components/schemas/StatusPageSeo" }
+        group_labels:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
+          description: Public names of the monitors that come in through a checked group. None set for a monitor means its own name is published.
+        groups:
+          type: array
+          items: { type: string }
+          description: Checked groups (monitor folders), in order. Their current members are shown, so a monitor added to or removed from the folder appears or disappears by itself.
         items:
           type: array
           items: { $ref: "#/components/schemas/StatusPageItem" }
+    StatusPageGroupLabel:
+      type: object
+      required: [target_id, label]
+      properties:
+        target_id: { type: integer, format: int64 }
+        label: { type: string, maxLength: 80, description: Public name shown to visitors. The monitor's private name is never published when this is set. }
+    StatusPageSeo:
+      type: object
+      description: >-
+        Search-engine settings. An empty text field means "generated default"
+        (built from the page name). The page is indexable only when it is
+        published and `index` is true; otherwise it answers `noindex, nofollow`.
+      properties:
+        index: { type: boolean, default: false, description: "`true`: `index, follow`; `false`: `noindex, nofollow`." }
+        title: { type: string, maxLength: 120, description: About 60 characters is displayed. }
+        description: { type: string, maxLength: 320, description: About 155 characters is displayed. }
+        keywords: { type: string, maxLength: 300 }
+        canonical: { type: string, description: "Absolute `http(s)://` URL, or empty." }
+        image: { type: string, description: "Absolute `http(s)://` share image (Open Graph / Twitter), or empty." }
+        lang: { type: string, description: "Language tag such as `en`, `fr`, `pt-BR`; empty: `en`." }
+        site_name: { type: string, maxLength: 100 }
     StatusPageItem:
       type: object
       required: [id, page_id, target_id, label, group_name, position]
@@ -7379,7 +7467,7 @@ components:
         description: { type: string, maxLength: 1000 }
         published: { type: boolean, default: false }
         theme: { type: string, enum: [auto, light, dark], default: auto }
-        show_uptime_days: { type: integer, minimum: 7, maximum: 90, default: 90 }
+        show_uptime_days: { type: integer, minimum: 1, maximum: 90, default: 90, description: "Period shown by the history bars: 1 (24 hours), 7, 30, 60 or 90 days. The bars adapt to younger data." }
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
         footer_text: { type: string, maxLength: 280 }
         homepage_url: { type: string, maxLength: 300, description: "`http(s)://` or empty." }
@@ -7392,6 +7480,17 @@ components:
         show_calendar: { type: boolean, default: false, description: Public 90-day calendar. Omitted keeps the saved value. }
         show_latency: { type: boolean, default: false, description: Public response-time graph per service. Omitted keeps the saved value. }
         subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
+        seo:
+          $ref: "#/components/schemas/StatusPageSeo"
+        groups:
+          type: array
+          maxItems: 50
+          items: { type: string, maxLength: 200 }
+          description: Monitor folders shown as a whole (dynamic). Omitted keeps the saved list; `[]` unchecks all.
+        group_labels:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
+          description: Public names of group members. Omitted keeps the saved ones; `[]` clears them.
         domain:
           type: [string, "null"]
           description: >-
@@ -7477,6 +7576,8 @@ components:
             description: { type: string }
             theme: { type: string }
             show_uptime_days: { type: integer }
+            window_secs: { type: integer, description: "Duration the history bars really cover: the chosen period, or less when the data is younger." }
+            step_secs: { type: integer, description: "Duration of one bar; 86400 means one bar per day." }
             updated_at: { type: string }
             accent: { type: string }
             footer_text: { type: string }
@@ -7485,6 +7586,18 @@ components:
             subscribe: { type: boolean }
             show_calendar: { type: boolean, description: Present (true) only when the page shows the calendar. }
             show_latency: { type: boolean, description: Present (true) only when the page shows response times. }
+            seo:
+              type: object
+              description: Effective search-engine values (settings, or defaults built from the page name).
+              properties:
+                indexable: { type: boolean }
+                title: { type: string }
+                description: { type: string }
+                keywords: { type: string }
+                canonical: { type: string }
+                image: { type: string }
+                lang: { type: string }
+                site_name: { type: string }
         calendar:
           type: array
           description: One entry per day, oldest first (90 days). Present only when the calendar is enabled.

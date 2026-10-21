@@ -5,6 +5,39 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **SEO settings for public status pages.** A published page has a "Search
+  engines (SEO)" block: an "index this page" switch (off by default: `noindex,
+  nofollow`), SEO title, meta description, keywords, canonical URL, share image,
+  language and site name, each generated from the page name when left empty, with
+  a live search-result preview and a "Copy the prompt for an AI" / "Paste the
+  result" round trip. The server writes the tags (title, description, robots,
+  canonical, Open Graph, Twitter card, hreflang, JSON-LD) into the HTML of
+  `/s/<slug>` and sends `X-Robots-Tag`; indexable pages are listed in
+  `/sitemap.xml` and allowed in `/robots.txt`, everything else stays closed.
+- **Monitor groups on status pages.** Tick whole groups (folders) in the page
+  editor: a ticked group is live, so monitors added to or removed from it appear
+  or disappear on the page by themselves, shown under the group's name without
+  duplicates.
+- **Private and public names in the status page editor.** Every monitor shows
+  its private name (read-only, never published) next to an editable public name,
+  with a warning when an empty public name would publish the internal one; this
+  also applies to monitors that come in through a ticked group. A test checks
+  that the public JSON, HTML, feed, badges and sitemap never carry a private
+  name, address or id.
+- **Status page history: 24 hours to 90 days, adaptive, with a day detail.** The
+  period is now a page setting (24 hours, 7, 30, 60, 90 days) and the bars adapt
+  to the data that exists: 2 hours of data show 5-minute bars, 12 hours hourly
+  bars, 3 days 6-hour bars, instead of weeks of grey. The caption names the
+  period really shown and the availability is computed over it. Clicking a bar
+  opens that day hour by hour (outages with start and end, announcements) from
+  `GET /api/public/status/<slug>/day/<date>`, public names only.
+- **Past incidents on status pages.** Enter an incident that already happened:
+  start time (never in the future), optional resolution time, and updates each
+  with its own date, sorted and validated. An incident entered as resolved
+  notifies nobody; it shows in the history and the day bars at its real date.
+
 ### Fixed
 
 - **Map: remote sites and image export.** A monitor placed at a remote location

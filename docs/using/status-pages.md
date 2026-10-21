@@ -26,7 +26,7 @@ its own route (`/settings/status/new`, `/settings/status/<id>`). The public rend
 | **Address** | The last part of the URL, `/s/<address>`. Suggested from the title; lowercase letters, digits and hyphens, 2 to 40 characters. |
 | **Description** | One sentence under the title. Optional. |
 | **Theme** | Day, night, or follow the visitor's system. |
-| **History** | The longest window the history bar covers (30, 60 or 90 days). The bar adapts to the age of the page's data: it shows as many days as the oldest service has been monitored, from 7 days up to this setting. A page never says more than this — see [Badges](#badges). |
+| **History** | The period the history bars cover: 24 hours, 7, 30, 60 or 90 days. See [The history bar](#the-history-bar). A page never says more than this — see [Badges](#badges). |
 | **Simple mode** | A plain page: no scene, no mascot, no animation and no easter eggs. Light or dark follows the visitor's system, with a toggle in the header; the page's Theme setting is ignored. |
 | **Daily calendar** | Off by default. Adds a 90-day calendar under the services: one small cell per day, all services combined. See [The 90-day calendar](#the-90-day-calendar). |
 | **Response times** | Off by default. Adds a small response-time graph (24 h / 7 days) to each service that has latency data. See [Response times](#response-times). |
@@ -36,6 +36,23 @@ Then tick the monitors to show. For each one, set the **label** visitors will
 read (it defaults to the monitor name — you may prefer "Website" to
 "nginx-front-01") and, optionally, a **group** ("Network", "Storage"). Groups
 become blocks on the page, in the order you arrange the services.
+
+**Two names per monitor.** Each monitor in the list shows its **private name**
+(its name in DumbMonit, grey, read-only, never published) and an editable
+**public name**: the only one visitors, badges, the feed and the page's search
+tags ever see. The private name is the placeholder; if you leave the public name
+empty, the editor warns that the internal name will be published, and it is
+used. The same goes for monitors that arrive through a ticked group (below):
+they get their own public-name field.
+
+**Groups of monitors.** Above the search box, tick a whole monitor group (the
+folders of **Monitors**) to show all of it. A ticked group is live: a monitor
+added to the folder later appears on the page by itself and a removed one
+disappears. Open a group to see its monitors; the group's box is partly ticked
+when only some of them are ticked one by one. The monitors of a ticked group
+are shown under the group's name, and a monitor that is both ticked on its own
+and part of a ticked group appears once (it keeps its own label). Groups are
+matched by folder name: renaming a folder in **Monitors** unticks it here.
 
 Save, and the link is ready to copy. The page refreshes itself every minute.
 
@@ -86,6 +103,20 @@ on the same origin as your admin interface, under the same
   one up (see [Email subscribers](#email-subscribers)).
 
 ### The history bar
+
+Choose the period in the editor (**History**): 24 hours, 7, 30, 60 or 90 days.
+The bars follow it: hourly for 24 hours, every 6 hours for 7 days, daily from 30
+days. The bars also adapt to the data that exists. A page whose oldest service
+has been monitored for 2 hours shows the last 2 hours in 5-minute bars (not 30
+days of grey), 12 hours show hourly bars, 3 days show 6-hour bars. The caption
+under the bars names the period really shown ("Last 12 hours") and the
+availability figure is computed over exactly that period. Time before the first
+measurement counts neither as an outage nor as 100 %.
+
+Click or tap a bar (or focus it and press Enter) to open that day hour by hour:
+availability of each of the 24 hours (UTC), the outages of the day with their
+start and end, and the announcements that touched it. Only the public names
+appear. The data is also available at `GET /api/public/status/<address>/day/<YYYY-MM-DD>`.
 
 Each square is one day (UTC), toned by that day's uptime: full colour at
 99.5 % and above, amber from 95 %, red below. **A day without any measurement
@@ -163,6 +194,22 @@ windows that name a monitor surface this way; the window's name and comment stay
 private.
 
 An announcement is shown on one page or on **all pages**.
+
+### Past incidents
+
+When you set DumbMonit up, enter the incidents you already had. In **New
+announcement** (kind *Incident*), fill in **Started at** (your local time; empty
+means now; the future is refused) and, for an incident that is already over,
+**Resolved at**. Add dated **updates** (*Investigating*, *Identified*,
+*Monitoring*, *Resolved*), each with its own date: they are sorted by time, must
+fall between the start and the resolution, and nothing can follow the resolution.
+
+An incident entered with a resolution is saved as *Resolved* and **nobody is
+notified**: no subscriber email is sent. It appears in the history and in the
+day-by-day bars and calendar at its real date. When you post an update to an
+existing incident, **Date and time** works the same way: empty means now (and
+subscribers are told); a past date completes the history without notifying
+anyone. Times are stored in UTC.
 
 ### Email subscribers
 
@@ -378,6 +425,32 @@ location / { return 404; }
 render. Forward `X-Forwarded-Proto` and `X-Forwarded-Host` so that the RSS
 feed links to the right address, and set the public URL (see above) so that
 subscriber emails do too.
+
+### Search engines (SEO) {#seo}
+
+A published page has an **SEO** block in its editor. By default the page is not
+indexed: it answers `noindex, nofollow` (meta tag and `X-Robots-Tag` header).
+
+- **Let search engines index this page** switches to `index, follow`, adds the
+  page to `/sitemap.xml` and lets `/robots.txt` allow it. Everything else on the
+  instance stays closed to robots.
+- **SEO title** (about 60 characters), **meta description** (about 155),
+  **keywords**, **canonical URL**, **share image** (Open Graph / Twitter),
+  **language** and **site or organisation name**. A field left empty uses a
+  value generated from the page name, shown as its placeholder. A live preview
+  shows the result as a search engine draws it.
+- **Copy the prompt for an AI** copies a prompt filled with the page's name,
+  organisation, listed services, language and address. Paste it in ChatGPT (or
+  any assistant), then use **Paste the result** to fill the fields from its JSON
+  answer (`title`, `description`, `keywords`, `canonical`, `image`, `lang`,
+  `site_name`). Invalid fields are left out with a message.
+
+The tags are written by the server into the HTML of `/s/<address>` (and of the
+root of a [custom domain](#custom-domain)): `<title>`, description, robots,
+canonical, Open Graph, Twitter card, language and JSON-LD data. Crawlers and
+link previews do not run JavaScript, so they read them as is. A page that is a
+draft, unknown or not indexable never shows its title, and the `/embed`,
+`/confirm` and `/unsubscribe` variants are never indexed.
 
 ### Feed and document
 

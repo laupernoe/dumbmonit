@@ -13,6 +13,8 @@
 	import type { PublicDayBucket } from '#lib/api/index.js';
 	import { formatPercent } from '#lib/format.js';
 	import { dayTone, formatDowntime } from './words';
+	import { barDay, isDayBar, periodParts } from './period';
+	import { formatDateTime } from '#lib/format.js';
 	import { formatUtcDay } from './utc-day';
 
 	interface Props {
@@ -20,9 +22,17 @@
 		label: string;
 		/** Shorter bar for the compact embed. */
 		compact?: boolean;
+		/** Seconds one bar covers; 86400 (default) = a day. A shorter bar carries a time. */
+		stepSecs?: number;
+		/** Seconds the whole bar covers, for its left caption when bars are shorter than a day. */
+		windowSecs?: number;
+		/** Click or Enter on a bar: the UTC day (`YYYY-MM-DD`) to show hour by hour. */
+		onselect?: (day: string) => void;
 	}
 
-	let { history, label, compact = false }: Props = $props();
+	let { history, label, compact = false, stepSecs = 86400, windowSecs = 0, onselect }: Props = $props();
+	const dayBars = $derived(isDayBar(stepSecs));
+	const period = $derived(periodParts(windowSecs));
 
 	const FILL: Record<ReturnType<typeof dayTone>, string> = {
 		signal: 'bg-signal',
@@ -39,7 +49,7 @@
 
 	// The bucket dates are UTC days: show them as such, without a time.
 	function formatDay(date: string): string {
-		return formatUtcDay(date, getLocale());
+		return dayBars ? formatUtcDay(date, getLocale()) : formatDateTime(date);
 	}
 
 	function describe(day: PublicDayBucket): string {
@@ -108,6 +118,7 @@
 					}}
 					onblur={() => (active = null)}
 					onkeydown={(event) => onkeydown(event, index)}
+					onclick={() => onselect?.(barDay(day.date))}
 				>
 					{#if day.incidents > 0}
 						<span class="sr-only">{m.status_words_kind_incident()}</span>
@@ -118,11 +129,23 @@
 	</ul>
 	{#if !compact}
 		<div class="mt-1 flex justify-between gap-2 text-[0.6875rem] text-ink-3" aria-hidden="true">
-			<span class="tnum shrink-0">{first ? m.status_uptime_bar_days_ago({ days: history.length }) : ''}</span>
+			<span class="tnum shrink-0">
+				{#if !first}
+					&nbsp;
+				{:else if dayBars}
+					{m.status_uptime_bar_days_ago({ days: history.length })}
+				{:else if period.unit === 'hours' && period.count === 1}
+					{m.status_period_hour()}
+				{:else if period.unit === 'hours'}
+					{m.status_period_hours({ count: period.count })}
+				{:else}
+					{m.status_period_days({ count: period.count })}
+				{/if}
+			</span>
 			<span class="tnum min-h-4 truncate text-center text-ink-2">
 				{#if active !== null && history[active]}{describe(history[active])}{/if}
 			</span>
-			<span class="tnum shrink-0">{last ? m.status_uptime_bar_today() : ''}</span>
+			<span class="tnum shrink-0">{last ? (dayBars ? m.status_uptime_bar_today() : m.status_uptime_bar_now()) : ''}</span>
 		</div>
 	{/if}
 </div>

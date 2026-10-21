@@ -16,7 +16,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { CalendarClock, ExternalLink, Megaphone, Moon, Sun } from 'lucide-svelte';
-	import { getPublicStatus, toApiError, type PublicIncident, type PublicStatus } from '#lib/api/index.js';
+	import { getPublicStatus, getPublicStatusDay, toApiError, type PublicDayDetail, type PublicIncident, type PublicStatus } from '#lib/api/index.js';
 	import { formatDateTime, formatPercent, formatRelative, parseServerDate } from '#lib/format.js';
 	import { theme } from '#lib/stores/theme.svelte.js';
 	import { DecryptText, EmptyState, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
@@ -26,6 +26,8 @@
 	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
 	import UptimeLegend from '#lib/components/status/UptimeLegend.svelte';
 	import ServiceRow from '#lib/components/status/ServiceRow.svelte';
+	import DayDetail from '#lib/components/status/DayDetail.svelte';
+	import { periodParts } from '#lib/components/status/period.js';
 	import StatusMascot from '#lib/components/status/StatusMascot.svelte';
 	import { useSceneLive } from '#lib/scene/live.svelte.js';
 	import { toneFrom, type MoodSnapshot, type SceneTone } from '#lib/scene/mood.js';
@@ -43,6 +45,12 @@
 	let { slug }: Props = $props();
 
 	let status = $state<PublicStatus | null>(null);
+	const seo = $derived(status?.page.seo);
+	// The server wrote these tags into the HTML for crawlers; once the page is drawn
+	// the <svelte:head> below owns them, so the copies are dropped (no duplicates).
+	$effect(() => {
+		if (seo) document.head.querySelectorAll('[data-dm-seo]').forEach((node) => node.remove());
+	});
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let lastChecked = $state<Date | null>(null);
@@ -89,6 +97,34 @@
 	const notFound = $derived(error !== null && toApiError(error).status === 404);
 	const banner = $derived(status ? overallBanner(status) : null);
 	const days = $derived(status?.page.history_days ?? 7);
+	const windowSecs = $derived(status?.page.window_secs ?? days * 86400);
+	const stepSecs = $derived(status?.page.step_secs ?? 86400);
+	const periodLabel = $derived.by(() => {
+		const part = periodParts(windowSecs);
+		if (part.unit === 'hours') return part.count === 1 ? m.status_period_hour() : m.status_period_hours({ count: part.count });
+		return m.status_period_days({ count: part.count });
+	});
+
+	// Hour-by-hour detail of the day whose bar was opened.
+	let openDay = $state<string | null>(null);
+	let dayDetail = $state<PublicDayDetail | null>(null);
+	let dayLoading = $state(false);
+	let dayError = $state<unknown>(null);
+
+	async function showDay(date: string) {
+		openDay = date;
+		dayDetail = null;
+		dayError = null;
+		dayLoading = true;
+		try {
+			const detail = await getPublicStatusDay(slug, date);
+			if (openDay === date) dayDetail = detail;
+		} catch (cause) {
+			if (openDay === date) dayError = cause;
+		} finally {
+			if (openDay === date) dayLoading = false;
+		}
+	}
 	const bannerTone = $derived(banner?.tone ?? 'signal');
 
 	// Open announcements sit at the top; everything closed goes to the history.
@@ -204,8 +240,24 @@
 </script>
 
 <svelte:head>
-	<title>{status ? m.status_public_title_with_page({ title: status.page.title }) : m.status_public_title()}</title>
-	<meta name="robots" content="noindex" />
+	<title>{seo ? seo.title : status ? m.status_public_title_with_page({ title: status.page.title }) : m.status_public_title()}</title>
+	<!-- Same values the server wrote into the HTML (crates/server/src/status_seo.rs); noindex until the page says otherwise. -->
+	<meta name="robots" content={seo?.indexable ? 'index, follow' : 'noindex, nofollow'} />
+	{#if seo}
+		<meta name="description" content={seo.description} />
+		{#if seo.keywords}<meta name="keywords" content={seo.keywords} />{/if}
+		{#if seo.indexable && seo.canonical}<link rel="canonical" href={seo.canonical} />{/if}
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={seo.title} />
+		<meta property="og:description" content={seo.description} />
+		<meta property="og:site_name" content={seo.site_name} />
+		{#if seo.canonical}<meta property="og:url" content={seo.canonical} />{/if}
+		{#if seo.image}<meta property="og:image" content={seo.image} />{/if}
+		<meta name="twitter:card" content={seo.image ? 'summary_large_image' : 'summary'} />
+		<meta name="twitter:title" content={seo.title} />
+		<meta name="twitter:description" content={seo.description} />
+		{#if seo.image}<meta name="twitter:image" content={seo.image} />{/if}
+	{/if}
 </svelte:head>
 
 {#snippet announcements()}
@@ -228,7 +280,7 @@
 		<section class="rise-in mt-8" style="--rise-delay: 120ms" aria-labelledby="services">
 			<div class="flex items-baseline justify-between gap-3">
 				<h2 id="services" class="text-base font-semibold tracking-tight text-ink">{m.status_public_services()}</h2>
-				<p class="text-[0.8125rem] text-ink-2">{m.status_public_uptime_last({ days })}</p>
+				<p class="text-[0.8125rem] text-ink-2">{stepSecs < 86400 ? periodLabel : m.status_public_uptime_last({ days })}</p>
 			</div>
 			{#if serviceCount > 0}
 				<div class="mt-1.5"><UptimeLegend /></div>
@@ -244,12 +296,15 @@
 							{/if}
 							<ul class="divide-y divide-line" role="list">
 								{#each group.items as item (item.label)}
-									<ServiceRow {item} {days} {compact} />
+									<ServiceRow {item} {days} {windowSecs} {stepSecs} {periodLabel} onselectday={compact ? undefined : showDay} {compact} />
 								{/each}
 							</ul>
 						</div>
 					{/each}
 				</div>
+			{/if}
+			{#if openDay}
+				<DayDetail date={openDay} detail={dayDetail} loading={dayLoading} error={dayError} onclose={() => (openDay = null)} />
 			{/if}
 			{#if status.calendar && status.calendar.length > 0}
 				<h2 class="mt-6 text-base font-semibold tracking-tight text-ink">{m.status_calendar_title({ days: status.calendar.length })}</h2>
