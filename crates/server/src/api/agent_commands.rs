@@ -15,8 +15,8 @@ use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
 use dumbmonit_proto::{
-    AGENT_SECRET_HEADER, AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CommandReport,
-    TargetId,
+    AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AgentCommand, CMD_CONTAINER_RESTART,
+    CMD_CONTAINER_UPDATE, CommandReport, TargetId,
 };
 use serde::{Deserialize, Serialize};
 
@@ -118,8 +118,8 @@ pub fn agent_routes() -> Router<AppState> {
 
 /// Vérifie le jeton, puis que la machine qui parle est bien celle de cette clé.
 ///
-/// La clé d'identité voyage en clair dans l'URL et n'est un secret pour
-/// personne : sans le second contrôle, n'importe quelle machine du parc
+/// La clé d'identité voyage en clair (en-tête, ou URL pour un agent ancien) et
+/// n'est un secret pour personne : sans le second contrôle, n'importe quelle machine du parc
 /// viendrait chercher — donc consommer — les commandes Docker d'une autre.
 ///
 /// Renvoie l'identifiant du jeton et la cible autorisée.
@@ -133,12 +133,11 @@ pub async fn authenticate(
     let token_id = agent::authenticate_token(&state.pool, bearer)
         .await?
         .ok_or_else(|| Rejection::from(agent::IngestError::Unauthorized))?;
-    let key = key.trim();
-    if key.is_empty() {
-        return Err(Rejection::from(agent::IngestError::BadRequest(
-            "the 'key' query parameter is required".to_string(),
-        )));
-    }
+    let Some(key) = machine_key(headers, key) else {
+        return Err(Rejection::from(agent::IngestError::BadRequest(format!(
+            "the machine key is required (header {AGENT_KEY_HEADER})"
+        ))));
+    };
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
     match agent::authorise_key(&state.pool, key, agent::extract_secret(secret)).await? {
         agent::KeyAuth::Allowed { target_id } => Ok((token_id, target_id)),
@@ -148,6 +147,17 @@ pub async fn authenticate(
             Err(Rejection::not_found("Unknown machine: push a batch first."))
         }
     }
+}
+
+/// Clé d'identité de la machine : l'en-tête [`AGENT_KEY_HEADER`] d'abord, le
+/// paramètre `?key=` d'un agent antérieur à défaut. Jamais journalisée.
+fn machine_key<'a>(headers: &'a HeaderMap, query: &'a str) -> Option<&'a str> {
+    headers
+        .get(AGENT_KEY_HEADER)
+        .and_then(|value| value.to_str().ok())
+        .map(str::trim)
+        .filter(|key| !key.is_empty())
+        .or_else(|| Some(query.trim()).filter(|key| !key.is_empty()))
 }
 
 /// `GET /api/agent/commands?key=…` : les commandes en attente pour cette machine.
@@ -793,6 +803,18 @@ async fn set_module(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_machine_key_comes_from_its_header_then_from_the_legacy_query() {
+        let mut headers = HeaderMap::new();
+        assert_eq!(machine_key(&headers, ""), None);
+        assert_eq!(machine_key(&headers, "  "), None);
+        // Agent antérieur : la clé n'existe que dans l'URL.
+        assert_eq!(machine_key(&headers, " ancienne "), Some("ancienne"));
+        headers.insert(AGENT_KEY_HEADER, "9f4c".parse().unwrap());
+        assert_eq!(machine_key(&headers, ""), Some("9f4c"));
+        assert_eq!(machine_key(&headers, "autre"), Some("9f4c"), "l'en-tête prime");
+    }
 
     fn labels(pairs: &[(&str, &str)]) -> BTreeMap<String, String> {
         pairs.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect()

@@ -451,6 +451,27 @@ pub struct InstantSeries {
 /// d'étiquette n'était pas valide.
 pub static REJECTED_SAMPLES: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
 
+/// Vrai si la chaîne d'erreurs indique une requête annulée (« context canceled »
+/// côté VictoriaMetrics, requête abandonnée côté client) : bruit normal quand un
+/// visiteur quitte une page, pas une panne de la base de séries.
+pub fn is_cancellation(error: &anyhow::Error) -> bool {
+    let chain = format!("{error:#}").to_lowercase();
+    chain.contains("canceled") || chain.contains("cancelled")
+}
+
+/// Journalise l'échec d'une lecture des séries : `debug` pour une annulation,
+/// `warn` sinon, avec la chaîne complète des causes — « délai dépassé » ou
+/// « connexion refusée » plutôt que le seul contexte de l'appel.
+pub fn log_query_failure(error: &anyhow::Error, what: &str) {
+    let cancelled = is_cancellation(error);
+    let error = format!("{error:#}");
+    if cancelled {
+        tracing::debug!(%error, "{what} (query cancelled)");
+    } else {
+        tracing::warn!(%error, "{what}");
+    }
+}
+
 /// `[a-zA-Z_:][a-zA-Z0-9_:]*` une fois le préfixe ajouté : le préfixe commence
 /// par une lettre, le reste n'a donc qu'à rester dans l'alphabet.
 fn is_valid_metric_suffix(name: &str) -> bool {

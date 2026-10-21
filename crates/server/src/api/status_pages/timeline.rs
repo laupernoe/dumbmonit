@@ -30,7 +30,7 @@ use crate::api::ApiResult;
 use crate::db;
 use crate::db::targets::TargetStatus;
 use crate::state::AppState;
-use crate::tsdb::Victoria;
+use crate::tsdb::{Victoria, log_query_failure};
 
 /// Au-delà, la frise reste par jour.
 const MAX_SLOT_WINDOW_SECS: i64 = 7 * 86_400;
@@ -173,7 +173,7 @@ pub(crate) async fn collect(
                     }
                 }
             }
-            Err(error) => tracing::warn!(%error, "status page: slot metrics unavailable"),
+            Err(error) => log_query_failure(&error, "status page: slot metrics unavailable"),
         }
     }
 
@@ -216,7 +216,7 @@ pub(crate) async fn collect(
                     }
                 }
             }
-            Err(error) => tracing::warn!(%error, "status page: slot device metrics unavailable"),
+            Err(error) => log_query_failure(&error, "status page: slot device metrics unavailable"),
         }
     }
     out

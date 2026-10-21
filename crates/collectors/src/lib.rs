@@ -21,6 +21,7 @@ pub mod fortigate;
 pub mod homeassistant;
 pub mod http;
 pub mod kubernetes;
+pub mod log_gate;
 pub mod mdaemon;
 pub mod mikrotik;
 pub mod mongodb;

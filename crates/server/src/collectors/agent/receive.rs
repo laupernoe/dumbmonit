@@ -140,7 +140,9 @@ pub async fn ingest(
     }
 
     sink.send(samples).await;
+    let previous_ms = store::last_seen_ms(pool, target.id).await?;
     store::record_batch(pool, target.id, received_at_ms, accepted).await?;
+    note_return(&target, previous_ms, received_at_ms);
     store::touch_token(pool, token_id).await?;
     // La même trace que pour une interrogation classique : l'interface affiche
     // « vu à » sans avoir à connaître la particularité des cibles en poussée.
@@ -159,6 +161,25 @@ pub async fn ingest(
         // Le mode relais réglé dans l'interface : l'agent l'applique à chaud.
         relay: store::relay_setting(pool, target.id).await?,
     })
+}
+
+/// Journalise le retour d'une machine restée muette au-delà de son délai de
+/// fraîcheur, avec la durée de la coupure. Une ligne par retour : un lot
+/// ordinaire ne laisse aucune trace.
+fn note_return(target: &Target, previous_ms: Option<i64>, received_at_ms: i64) -> bool {
+    let Some(previous_ms) = previous_ms else { return false };
+    let gap_ms = received_at_ms.saturating_sub(previous_ms).max(0) as u64;
+    let gap = std::time::Duration::from_millis(gap_ms);
+    if gap <= super::staleness_deadline(target.interval) {
+        return false;
+    }
+    tracing::info!(
+        target = target.id,
+        name = %target.name,
+        outage = %super::human_duration(gap),
+        "agent back online"
+    );
+    true
 }
 
 /// Mesures d'un lot réparties par module, la machine à part.
@@ -242,6 +263,16 @@ fn prepare(target: &Target, samples: Vec<Sample>, received_at_ms: i64) -> (Vec<S
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+
+    #[test]
+    fn only_a_return_after_a_real_silence_is_logged() {
+        let target = target();
+        // Période de 30 s : muette au-delà de 90 s.
+        assert!(!super::note_return(&target, None, 1_000_000), "première réception");
+        assert!(!super::note_return(&target, Some(1_000_000 - 30_000), 1_000_000));
+        assert!(!super::note_return(&target, Some(1_000_000 - 90_000), 1_000_000));
+        assert!(super::note_return(&target, Some(1_000_000 - 91_000), 1_000_000));
+    }
 
     use dumbmonit_proto::{AgentIdentity, Credential};
 

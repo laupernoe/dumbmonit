@@ -7177,5 +7177,7 @@
 	"worldmap_verdict_idle": "Non interrogato",
 	"worldmap_verdict_ok": "Tutto attivo",
 	"worldmap_verdict_warn": "Da controllare",
-	"worldmap_view_world": "Mondo"
+	"worldmap_view_world": "Mondo",
+	"settings_logs_export_since": "Log disponibili dal {date}.",
+	"settings_logs_export_since_short": "La selezione inizia prima: l’esportazione contiene solo i log dal {date} in poi."
 }

@@ -1,13 +1,15 @@
 //! Envoi des lots au serveur DumbMonit.
 
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
 use dumbmonit_proto::{
-    AGENT_SECRET_HEADER, AgentCommand, COMMANDS_PATH, CommandReport, INGEST_PATH, ProbeOutcome,
-    PushAck, PushBatch, RELAY_PATH,
+    AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AgentCommand, COMMANDS_PATH, CommandReport, INGEST_PATH,
+    ProbeOutcome, PushAck, PushBatch, RELAY_PATH,
 };
+use tokio::sync::Notify;
 
 /// Ce qui peut arriver à un envoi, et surtout ce qu'il faut en faire.
 ///
@@ -70,6 +72,13 @@ pub struct PushClient {
     /// serveur peut l'attribuer en cours de route, dans l'accusé de réception
     /// d'un lot, et que les trois doivent le présenter dès l'instant d'après.
     secret: Arc<RwLock<Option<String>>>,
+    /// Vrai une fois constaté que le serveur est antérieur à l'en-tête de clé :
+    /// la clé repart alors dans l'URL, comme il l'attend.
+    legacy_key: Arc<AtomicBool>,
+    /// Réveillé à chaque réponse favorable du serveur, quel que soit le canal :
+    /// la boucle des mesures en attente de reprise repart aussitôt que le relais
+    /// a retrouvé le serveur, et inversement.
+    reachable: Arc<Notify>,
 }
 
 impl PushClient {
@@ -95,7 +104,72 @@ impl PushClient {
             url: ingest_url(server_url),
             token: token.to_string(),
             secret: Arc::new(RwLock::new(secret)),
+            legacy_key: Arc::new(AtomicBool::new(false)),
+            reachable: Arc::new(Notify::new()),
         })
+    }
+
+    /// Signal partagé « le serveur répond » : à attendre pendant une temporisation.
+    pub fn reachable(&self) -> Arc<Notify> {
+        self.reachable.clone()
+    }
+
+    /// Note une réponse favorable et réveille qui attendait le serveur.
+    fn mark_reachable(&self) {
+        self.reachable.notify_waiters();
+    }
+
+    /// Requête vers un canal d'agent (commandes, relais) : jeton, secret de
+    /// liaison et clé d'identité, celle-ci dans son en-tête — jamais dans l'URL,
+    /// sauf pour un serveur trop ancien pour lire l'en-tête.
+    fn keyed(
+        &self,
+        method: reqwest::Method,
+        path: &str,
+        key: &str,
+        query: &str,
+    ) -> reqwest::RequestBuilder {
+        let mut url = format!("{}{path}", self.base_url);
+        let mut params: Vec<String> = Vec::new();
+        if self.legacy_key.load(Ordering::Relaxed) {
+            params.push(format!("key={}", percent_encode(key)));
+        }
+        if !query.is_empty() {
+            params.push(query.to_string());
+        }
+        if !params.is_empty() {
+            url.push('?');
+            url.push_str(&params.join("&"));
+        }
+        self.identified(
+            self.http.request(method, url).bearer_auth(&self.token).header(AGENT_KEY_HEADER, key),
+        )
+    }
+
+    /// Envoie une requête de canal d'agent, et la rejoue une fois avec la clé dans
+    /// l'URL si le serveur, antérieur à l'en-tête, la réclame là.
+    async fn exchange(
+        &self,
+        build: impl Fn() -> reqwest::RequestBuilder,
+    ) -> Result<reqwest::Response, PushError> {
+        let response = build().send().await.map_err(|error| self.transport(&error))?;
+        if response.status() != reqwest::StatusCode::BAD_REQUEST
+            || self.legacy_key.load(Ordering::Relaxed)
+        {
+            return Ok(response);
+        }
+        let body = response.text().await.unwrap_or_default();
+        if !wants_legacy_key(&body) {
+            return Err(rejection_of(reqwest::StatusCode::BAD_REQUEST, &body));
+        }
+        tracing::info!("older server: the machine key goes in the URL again");
+        self.legacy_key.store(true, Ordering::Relaxed);
+        build().send().await.map_err(|error| self.transport(&error))
+    }
+
+    /// Erreur de transport lisible : la cause d'abord, l'URL sans paramètres.
+    fn transport(&self, error: &reqwest::Error) -> PushError {
+        PushError::Transport(sanitise(&describe(error), &self.token))
     }
 
     /// Adopte le secret que le serveur vient d'attribuer.
@@ -128,14 +202,16 @@ impl PushClient {
             .json(batch)
             .send()
             .await
-            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
+            .map_err(|error| self.transport(&error))?;
 
         let status = response.status();
         if status.is_success() {
-            return response
+            let ack = response
                 .json::<PushAck>()
                 .await
-                .map_err(|error| PushError::Transport(format!("unreadable response: {error}")));
+                .map_err(|error| PushError::Transport(format!("unreadable response: {error}")))?;
+            self.mark_reachable();
+            return Ok(ack);
         }
 
         Err(rejection(response).await)
@@ -146,20 +222,34 @@ impl PushClient {
     /// La clé d'identité accompagne le jeton : celui-ci est partagé par tout un
     /// parc, il ne dit pas de quelle machine il s'agit.
     pub async fn fetch_commands(&self, key: &str) -> Result<Vec<AgentCommand>, PushError> {
-        let response = self
-            .identified(
-                self.http.get(commands_url(&self.base_url, None, key)).bearer_auth(&self.token),
-            )
-            .send()
-            .await
-            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
-        if response.status().is_success() {
-            return response
-                .json::<Vec<AgentCommand>>()
-                .await
-                .map_err(|error| PushError::Transport(format!("unreadable response: {error}")));
+        let path = commands_path(None);
+        let response = self.exchange(|| self.keyed(reqwest::Method::GET, &path, key, "")).await?;
+        self.read_json(response).await
+    }
+
+    /// Corps JSON d'une réponse favorable, ou qualification du refus.
+    async fn read_json<T: serde::de::DeserializeOwned>(
+        &self,
+        response: reqwest::Response,
+    ) -> Result<T, PushError> {
+        if !response.status().is_success() {
+            return Err(rejection(response).await);
         }
-        Err(rejection(response).await)
+        let value = response
+            .json::<T>()
+            .await
+            .map_err(|error| PushError::Transport(format!("unreadable response: {error}")))?;
+        self.mark_reachable();
+        Ok(value)
+    }
+
+    /// Réponse favorable sans corps attendu, ou qualification du refus.
+    async fn read_empty(&self, response: reqwest::Response) -> Result<(), PushError> {
+        if !response.status().is_success() {
+            return Err(rejection(response).await);
+        }
+        self.mark_reachable();
+        Ok(())
     }
 
     /// Compte rendu d'exécution d'une commande.
@@ -169,20 +259,11 @@ impl PushClient {
         id: i64,
         report: &CommandReport,
     ) -> Result<(), PushError> {
+        let path = commands_path(Some(id));
         let response = self
-            .identified(
-                self.http
-                    .post(commands_url(&self.base_url, Some(id), key))
-                    .bearer_auth(&self.token),
-            )
-            .json(report)
-            .send()
-            .await
-            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
-        if response.status().is_success() {
-            return Ok(());
-        }
-        Err(rejection(response).await)
+            .exchange(|| self.keyed(reqwest::Method::POST, &path, key, "").json(report))
+            .await?;
+        self.read_empty(response).await
     }
 }
 
@@ -198,19 +279,12 @@ impl PushClient {
         wait: Duration,
         timeout: Duration,
     ) -> Result<Vec<AgentCommand>, PushError> {
-        let url = format!("{}&wait={}", relay_url(&self.base_url, None, key), wait.as_secs());
+        let path = relay_path(None);
+        let query = format!("wait={}", wait.as_secs());
         let response = self
-            .identified(self.http.get(url).timeout(timeout).bearer_auth(&self.token))
-            .send()
-            .await
-            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
-        if response.status().is_success() {
-            return response
-                .json::<Vec<AgentCommand>>()
-                .await
-                .map_err(|error| PushError::Transport(format!("unreadable response: {error}")));
-        }
-        Err(rejection(response).await)
+            .exchange(|| self.keyed(reqwest::Method::GET, &path, key, &query).timeout(timeout))
+            .await?;
+        self.read_json(response).await
     }
 
     /// Mesures et verdict d'une sonde déléguée.
@@ -220,18 +294,11 @@ impl PushClient {
         id: i64,
         outcome: &ProbeOutcome,
     ) -> Result<(), PushError> {
+        let path = relay_path(Some(id));
         let response = self
-            .identified(
-                self.http.post(relay_url(&self.base_url, Some(id), key)).bearer_auth(&self.token),
-            )
-            .json(outcome)
-            .send()
-            .await
-            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
-        if response.status().is_success() {
-            return Ok(());
-        }
-        Err(rejection(response).await)
+            .exchange(|| self.keyed(reqwest::Method::POST, &path, key, "").json(outcome))
+            .await?;
+        self.read_empty(response).await
     }
 
     /// Compte rendu progressif d'un balayage de découverte confié à cet agent.
@@ -243,45 +310,41 @@ impl PushClient {
         id: i64,
         report: &dumbmonit_proto::DiscoveryReport,
     ) -> Result<bool, PushError> {
+        let path = format!("{}/{id}", dumbmonit_proto::DISCOVERY_REPORT_PATH);
         let response = self
-            .identified(
-                self.http.post(discovery_url(&self.base_url, id, key)).bearer_auth(&self.token),
-            )
-            .json(report)
-            .send()
-            .await
-            .map_err(|error| PushError::Transport(sanitise(&error.to_string(), &self.token)))?;
+            .exchange(|| self.keyed(reqwest::Method::POST, &path, key, "").json(report))
+            .await?;
         if response.status() == reqwest::StatusCode::GONE {
             return Ok(false);
         }
-        if response.status().is_success() {
-            return Ok(true);
-        }
-        Err(rejection(response).await)
+        self.read_empty(response).await.map(|()| true)
     }
 }
 
-/// URL du compte rendu d'un balayage de découverte.
-fn discovery_url(base_url: &str, id: i64, key: &str) -> String {
-    let key = percent_encode(key);
-    format!("{base_url}{}/{id}?key={key}", dumbmonit_proto::DISCOVERY_REPORT_PATH)
-}
-
-/// URL des sondes déléguées, ou du compte rendu de l'une d'elles.
-fn relay_url(base_url: &str, id: Option<i64>, key: &str) -> String {
-    let key = percent_encode(key);
+/// Chemin des sondes déléguées, ou du compte rendu de l'une d'elles.
+fn relay_path(id: Option<i64>) -> String {
     match id {
-        Some(id) => format!("{base_url}{RELAY_PATH}/{id}?key={key}"),
-        None => format!("{base_url}{RELAY_PATH}?key={key}"),
+        Some(id) => format!("{RELAY_PATH}/{id}"),
+        None => RELAY_PATH.to_string(),
     }
+}
+
+/// Vrai si un refus 400 vient d'un serveur qui attend la clé dans l'URL.
+fn wants_legacy_key(body: &str) -> bool {
+    server_error_message(body).is_some_and(|message| message.contains("'key' query parameter"))
 }
 
 /// Qualifie une réponse d'erreur du serveur.
 async fn rejection(response: reqwest::Response) -> PushError {
     let status = response.status();
     let body = response.text().await.unwrap_or_default();
-    let from_server = server_error_message(&body).is_some();
-    let message = extract_error_message(&body);
+    rejection_of(status, &body)
+}
+
+/// Qualifie un statut d'erreur et son corps.
+fn rejection_of(status: reqwest::StatusCode, body: &str) -> PushError {
+    let from_server = server_error_message(body).is_some();
+    let message = extract_error_message(body);
 
     match status.as_u16() {
         401 => PushError::Unauthorized,
@@ -308,16 +371,62 @@ fn ingest_url(server_url: &str) -> String {
     format!("{}{INGEST_PATH}", server_url.trim_end_matches('/'))
 }
 
-/// URL de la file de commandes, ou du compte rendu d'une commande donnée.
+/// Chemin de la file de commandes, ou du compte rendu d'une commande donnée.
 ///
-/// La clé d'identité voyage en paramètre de requête : le jeton est partagé par
-/// tout un parc et ne dit pas de quelle machine il s'agit.
-fn commands_url(base_url: &str, id: Option<i64>, key: &str) -> String {
-    let key = percent_encode(key);
+/// La clé d'identité accompagne chaque requête (en-tête [`AGENT_KEY_HEADER`]) :
+/// le jeton est partagé par tout un parc et ne dit pas de quelle machine il
+/// s'agit.
+fn commands_path(id: Option<i64>) -> String {
     match id {
-        Some(id) => format!("{base_url}{COMMANDS_PATH}/{id}?key={key}"),
-        None => format!("{base_url}{COMMANDS_PATH}?key={key}"),
+        Some(id) => format!("{COMMANDS_PATH}/{id}"),
+        None => COMMANDS_PATH.to_string(),
     }
+}
+
+/// Décrit une erreur de transport : la nature (délai, connexion…), puis la
+/// chaîne des causes en commençant par la plus profonde — « Connection refused »
+/// avant « error sending request » —, puis l'URL **sans ses paramètres**.
+///
+/// Le message brut de `reqwest` commence par l'URL complète : tronqué par
+/// `systemctl status`, il ne montrait jamais la cause, et recopiait la clé de
+/// la machine quand elle voyageait encore dans l'URL.
+fn describe(error: &reqwest::Error) -> String {
+    use std::error::Error as _;
+    let nature = if error.is_timeout() {
+        "timed out"
+    } else if error.is_connect() {
+        "cannot connect"
+    } else if error.is_decode() {
+        "unreadable response"
+    } else if error.is_body() {
+        "response interrupted"
+    } else {
+        "request failed"
+    };
+    let mut causes: Vec<String> = Vec::new();
+    let mut source = error.source();
+    while let Some(cause) = source {
+        let text = cause.to_string();
+        if !text.is_empty() && !causes.contains(&text) {
+            causes.push(text);
+        }
+        source = cause.source();
+    }
+    causes.reverse();
+    let mut message = nature.to_string();
+    for cause in causes.iter().take(3) {
+        message.push_str(": ");
+        message.push_str(cause);
+    }
+    if let Some(url) = error.url() {
+        let mut url = url.clone();
+        url.set_query(None);
+        url.set_fragment(None);
+        let _ = url.set_password(None);
+        let _ = url.set_username("");
+        message.push_str(&format!(" ({url})"));
+    }
+    message
 }
 
 /// Encodage d'un paramètre de requête. Sans le `query` de reqwest — une
@@ -382,33 +491,18 @@ mod tests {
     }
 
     #[test]
-    fn the_command_urls_follow_the_shared_contract() {
-        let client =
-            PushClient::new("http://serveur:8080/", "dmon_x", None, Duration::from_secs(1))
-                .expect("client");
-        assert_eq!(
-            commands_url(&client.base_url, None, "9f4c"),
-            "http://serveur:8080/api/agent/commands?key=9f4c"
-        );
-        assert_eq!(
-            commands_url(&client.base_url, Some(42), "nas salon"),
-            "http://serveur:8080/api/agent/commands/42?key=nas%20salon"
-        );
+    fn the_agent_channel_paths_follow_the_shared_contract() {
+        assert_eq!(commands_path(None), "/api/agent/commands");
+        assert_eq!(commands_path(Some(42)), "/api/agent/commands/42");
+        assert_eq!(relay_path(None), "/api/agent/relay");
+        assert_eq!(relay_path(Some(3)), "/api/agent/relay/3");
     }
 
     #[test]
-    fn the_relay_urls_follow_the_shared_contract() {
-        let client =
-            PushClient::new("http://serveur:8080/", "dmon_x", None, Duration::from_secs(1))
-                .expect("client");
-        assert_eq!(
-            relay_url(&client.base_url, None, "9f4c"),
-            "http://serveur:8080/api/agent/relay?key=9f4c"
-        );
-        assert_eq!(
-            relay_url(&client.base_url, Some(3), "nas salon"),
-            "http://serveur:8080/api/agent/relay/3?key=nas%20salon"
-        );
+    fn only_the_old_server_refusal_switches_the_key_back_to_the_url() {
+        assert!(wants_legacy_key(r#"{"error":"the 'key' query parameter is required"}"#));
+        assert!(!wants_legacy_key(r#"{"error":"the machine key is required (header x)"}"#));
+        assert!(!wants_legacy_key("the 'key' query parameter is required"), "hors enveloppe");
     }
 
     #[test]

@@ -40,6 +40,32 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Agent drop-outs, relay key, discovery memory and log noise.** After an
+  outage the agent retried up to every 5 minutes, well past the 90 s after which
+  the server declares it silent, so a short network cut showed as a long
+  drop-out (15 attempts over 53 min seen on a relay): retries now go from 2 to
+  30 s, and any answer from the server on the measurements or relay channel ends
+  the wait at once; the relay confirms its return with an immediate poll instead
+  of a 25 s long poll. Transport errors name the root cause first (connection
+  refused, timeout, DNS, TLS) and never show the URL's query. The machine key of
+  the commands and relay channels moves from `?key=` to an
+  `X-DumbMonit-Agent-Key` header, so it no longer lands in agent or proxy logs;
+  the server still accepts `?key=` from older agents, and a new agent falls back
+  to it against an older server. Measurements still pending at shutdown are kept
+  on disk and sent at the next start. A relayed discovery scan no longer runs a
+  /24 x 69 ports sweep all at once (it ran the agent out of its 128 MB and
+  ignored SIGTERM): sockets are capped (64 on an agent), work is produced as it
+  goes, results are streamed and stopping the agent or the scan cancels it at
+  once; the systemd unit's `MemoryMax` is raised to 256M. The server now logs
+  one line per agent transition (gone silent with its silence and limit, back
+  online with the outage length, report refused with the reason, relay
+  connected or reconnected), and after a restart of the server itself an agent
+  that was fresh when it stopped gets a full delay before being declared
+  silent. Proxmox and PBS permission errors are logged once per target and
+  endpoint, then on change, recovery or every 24 hours, instead of every cycle;
+  VictoriaMetrics "context canceled" lines go to debug and status page query
+  failures carry their real cause. The log export says since when logs exist.
+
 - **Status pages: backup, folder renames, incident dates, SEO prompt.** The
   instance backup now carries each page's SEO settings, ticked groups and the
   public names of group members (older backup files still restore, with defaults

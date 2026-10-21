@@ -72,12 +72,12 @@ mod snapshots;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::future::Future;
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, MetricKind, ProbeError, Sample, Target, TargetId};
 use reqwest::StatusCode;
-use tracing::{debug, warn};
+use tracing::debug;
 
 use auth::{AuthMode, Ticket};
 use backup::{Archive, GuestIndex, GuestRef, JobRun};
@@ -95,6 +95,10 @@ use options::Options;
 use resources::GuestSummary;
 
 use crate::http;
+use crate::log_gate::LogGate;
+
+/// Échecs déjà journalisés : un endpoint en erreur à chaque cycle ne l'est qu'une fois.
+static GATE: LazyLock<LogGate> = LazyLock::new(LogGate::new);
 
 /// Identifiant de profil renvoyé par la découverte.
 const PROFILE_ID: &str = "proxmox-ve";
@@ -353,7 +357,7 @@ impl Collector for ProxmoxCollector {
             Some(Ok(entries)) => Some(resources::inventory(&entries, ts_ms)),
             Some(Err(error)) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "inventaire du cluster indisponible");
+                GATE.fail(target.id, "inventaire du cluster indisponible", &error);
                 None
             }
             None => None,
@@ -363,7 +367,7 @@ impl Collector for ProxmoxCollector {
             Ok(list) => list,
             Err(error) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "liste des nœuds Proxmox indisponible");
+                GATE.fail(target.id, "liste des nœuds Proxmox indisponible", &error);
                 Vec::new()
             }
         };
@@ -419,18 +423,24 @@ impl Collector for ProxmoxCollector {
         samples.extend(volume_samples);
 
         match cluster {
-            Ok(entries) => samples.extend(metrics::cluster_samples(&entries, ts_ms)),
+            Ok(entries) => {
+                GATE.ok(target.id, "état du cluster Proxmox indisponible");
+                samples.extend(metrics::cluster_samples(&entries, ts_ms))
+            }
             Err(error) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "état du cluster Proxmox indisponible");
+                GATE.fail(target.id, "état du cluster Proxmox indisponible", &error);
             }
         }
 
         match ha {
-            Some(Ok(entries)) => samples.extend(ha::ha_samples(&entries, ts_ms)),
+            Some(Ok(entries)) => {
+                GATE.ok(target.id, "état de la haute disponibilité indisponible");
+                samples.extend(ha::ha_samples(&entries, ts_ms))
+            }
             Some(Err(error)) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "état de la haute disponibilité indisponible");
+                GATE.fail(target.id, "état de la haute disponibilité indisponible", &error);
             }
             None => {}
         }
@@ -468,11 +478,16 @@ impl Collector for ProxmoxCollector {
         // publier la couverture : ils passent donc après la tournée des nœuds.
         match (jobs, not_backed_up) {
             (Some(Ok(jobs)), not_backed_up) => {
+                GATE.ok(target.id, "travaux de sauvegarde planifiés indisponibles");
                 let not_backed_up = match not_backed_up {
                     Some(Ok(list)) => list,
                     Some(Err(error)) => {
                         errors += 1;
-                        warn!(target_id = target.id, %error, "liste des invités non sauvegardés indisponible");
+                        GATE.fail(
+                            target.id,
+                            "liste des invités non sauvegardés indisponible",
+                            &error,
+                        );
                         Vec::new()
                     }
                     None => Vec::new(),
@@ -488,7 +503,7 @@ impl Collector for ProxmoxCollector {
             }
             (Some(Err(error)), _) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "travaux de sauvegarde planifiés indisponibles");
+                GATE.fail(target.id, "travaux de sauvegarde planifiés indisponibles", &error);
             }
             (None, _) => {}
         }
@@ -1019,6 +1034,11 @@ const GUEST_AGENT_PRIVILEGE: &str = "VM.GuestAgent.Audit or VM.Monitor";
 
 /// Interroge un nœud. Ne renvoie jamais d'erreur : un nœud en panne se traduit par
 /// `proxmox_node_up = 0` et un compteur d'erreurs, jamais par l'abandon du cluster.
+/// Portée de journalisation d'un nœud : l'API interrogée et le nom du nœud.
+fn node_scope(pve: &PveClient, node: &str) -> String {
+    format!("{}/{node}", pve.base_url())
+}
+
 async fn collect_node(
     pve: &PveClient,
     options: &Options,
@@ -1040,6 +1060,7 @@ async fn collect_node(
 
     match pve.get::<NodeStatus>(&format!("/nodes/{name}/status"), &[]).await {
         Ok(status) => {
+            GATE.ok(node_scope(pve, name), "nœud Proxmox non collecté");
             outcome.samples.push(metrics::node_up_sample(name, true, ts_ms));
             outcome.samples.extend(metrics::node_samples(name, &status, ts_ms));
         }
@@ -1048,7 +1069,7 @@ async fn collect_node(
             // seule une indisponibilité réelle doit alimenter « hors ligne ».
             outcome.samples.push(metrics::node_up_sample(name, !error.means_down(), ts_ms));
             outcome.errors += 1;
-            warn!(node = name, %error, "nœud Proxmox non collecté");
+            GATE.fail(node_scope(pve, name), "nœud Proxmox non collecté", &error);
             return outcome;
         }
     }
@@ -1182,7 +1203,11 @@ async fn collect_node(
                     }
                     Some(Err(error)) => {
                         outcome.errors += 1;
-                        warn!(node = name, kind = kind.as_str(), %error, "inventaire des invités échoué");
+                        GATE.fail(
+                            format!("{}/{}", node_scope(pve, name), kind.as_str()),
+                            "inventaire des invités échoué",
+                            &error,
+                        );
                     }
                     None => {}
                 }
@@ -1202,7 +1227,7 @@ async fn collect_node(
         }
         Err(error) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "inventaire des stockages échoué");
+            GATE.fail(node_scope(pve, name), "inventaire des stockages échoué", &error);
         }
     }
 
@@ -1222,7 +1247,7 @@ async fn collect_node(
         }
         Err(error) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "historique des tâches vzdump indisponible");
+            GATE.fail(node_scope(pve, name), "historique des tâches vzdump indisponible", &error);
         }
     }
 
@@ -1234,7 +1259,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "pas de réplication sur ce nœud"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "état de la réplication indisponible");
+            GATE.fail(node_scope(pve, name), "état de la réplication indisponible", &error);
         }
         None => {}
     }
@@ -1252,7 +1277,7 @@ async fn collect_node(
         }
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "liste des mises à jour indisponible");
+            GATE.fail(node_scope(pve, name), "liste des mises à jour indisponible", &error);
         }
         None => {}
     }
@@ -1267,7 +1292,7 @@ async fn collect_node(
         }
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "informations de certificat indisponibles");
+            GATE.fail(node_scope(pve, name), "informations de certificat indisponibles", &error);
         }
         None => {}
     }
@@ -1280,7 +1305,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "disques non listés : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "liste des disques indisponible");
+            GATE.fail(node_scope(pve, name), "liste des disques indisponible", &error);
         }
         None => {}
     }
@@ -1290,7 +1315,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "pas de pool ZFS listé sur ce nœud"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "pools ZFS indisponibles");
+            GATE.fail(node_scope(pve, name), "pools ZFS indisponibles", &error);
         }
         None => {}
     }
@@ -1303,7 +1328,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "versions des paquets non listées : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "versions des paquets indisponibles");
+            GATE.fail(node_scope(pve, name), "versions des paquets indisponibles", &error);
         }
         None => {}
     }
@@ -1315,7 +1340,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "abonnement non lu : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "état de l'abonnement indisponible");
+            GATE.fail(node_scope(pve, name), "état de l'abonnement indisponible", &error);
         }
         None => {}
     }
@@ -1327,7 +1352,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "dépôts non lus : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "dépôts APT indisponibles");
+            GATE.fail(node_scope(pve, name), "dépôts APT indisponibles", &error);
         }
         None => {}
     }
@@ -1356,7 +1381,11 @@ async fn collect_node(
                 Ok(volumes) => outcome.archives.extend(backup::archives_from_content(&volumes)),
                 Err(error) => {
                     outcome.errors += 1;
-                    warn!(node = name, storage, %error, "listing des sauvegardes échoué");
+                    GATE.fail(
+                        format!("{}/{storage}", node_scope(pve, name)),
+                        "listing des sauvegardes échoué",
+                        &error,
+                    );
                 }
             }
         }
@@ -1514,7 +1543,11 @@ async fn collect_snapshots(
             Ok(None) => debug!(node, vmid, "invité disparu avant la liste des instantanés"),
             Err(error) => {
                 outcome.errors += 1;
-                warn!(node, vmid, %error, "liste des instantanés indisponible");
+                GATE.fail(
+                    format!("{}/{vmid}", node_scope(pve, node)),
+                    "liste des instantanés indisponible",
+                    &error,
+                );
             }
         }
     }
