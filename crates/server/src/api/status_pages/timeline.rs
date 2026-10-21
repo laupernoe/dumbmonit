@@ -23,8 +23,8 @@ use serde::Serialize;
 
 use super::{
     PROBE_KINDS, device_covered, first_up_query, format_timestamp, instant_map, last_up_query,
-    parse_stored, presence_query, probe_failed_query, probe_uptime_query, public_not_found, rescale,
-    round, selector, target_of, unique_key,
+    parse_stored, presence_query, probe_failed_query, probe_uptime_query, public_not_found,
+    rescale, round, selector, target_of, unique_key,
 };
 use crate::api::ApiResult;
 use crate::db;
@@ -71,7 +71,8 @@ pub(crate) fn step_for(window_secs: i64) -> i64 {
 pub(crate) fn plan(setting_days: i64, age_secs: i64) -> Option<Plan> {
     let wanted = setting_days.clamp(1, 90) * 86_400;
     let window = wanted.min(age_secs.max(MIN_WINDOW_SECS));
-    (window <= MAX_SLOT_WINDOW_SECS).then(|| Plan { window_secs: window, step_secs: step_for(window) })
+    (window <= MAX_SLOT_WINDOW_SECS)
+        .then(|| Plan { window_secs: window, step_secs: step_for(window) })
 }
 
 /// Fin (exclue) de chaque tranche, la dernière contenant « maintenant ».
@@ -147,7 +148,8 @@ pub(crate) async fn collect(
                         if let Ok(count) = raw.parse::<f64>()
                             && count.is_finite()
                         {
-                            let minutes = (count.max(0.0) * interval / 60.0).min(step as f64 / 60.0);
+                            let minutes =
+                                (count.max(0.0) * interval / 60.0).min(step as f64 / 60.0);
                             down.insert((id, ts as i64 - step), minutes);
                         }
                     }
@@ -202,7 +204,10 @@ pub(crate) async fn collect(
                             let minutes = (100.0 - value).max(0.0) / 100.0 * covered / 60.0;
                             out.entry(id).or_default().insert(
                                 start,
-                                Slot { uptime_pct: value, down_minutes: minutes.min(step as f64 / 60.0) },
+                                Slot {
+                                    uptime_pct: value,
+                                    down_minutes: minutes.min(step as f64 / 60.0),
+                                },
                             );
                         }
                     }
@@ -308,7 +313,11 @@ pub async fn public_day(
         Some(page) if page.published => page,
         _ => return Err(public_not_found()),
     };
-    let bad = || crate::api::ApiError::BadRequest("Use a date like 2026-10-21 within the last 90 days.".into());
+    let bad = || {
+        crate::api::ApiError::BadRequest(
+            "Use a date like 2026-10-21 within the last 90 days.".into(),
+        )
+    };
     let day = NaiveDate::parse_from_str(&date, "%Y-%m-%d").map_err(|_| bad())?;
     let day_start = day.and_hms_opt(0, 0, 0).ok_or_else(bad)?.and_utc().timestamp();
     let now = Utc::now();
@@ -323,7 +332,8 @@ pub async fn public_day(
         .map(|target| (target.id, target))
         .collect();
     let statuses = db::targets::statuses(&state.pool).await?;
-    let shown: Vec<&Target> = items.iter().filter_map(|item| targets.get(&item.target_id)).collect();
+    let shown: Vec<&Target> =
+        items.iter().filter_map(|item| targets.get(&item.target_id)).collect();
     let inactive = inactive_targets(&shown, &statuses);
     let starts: Vec<i64> = (0..86_400 / DAY_STEP).map(|i| day_start + i * DAY_STEP).collect();
     let slots =
@@ -344,10 +354,16 @@ pub async fn public_day(
                     .filter_map(|i| own.get(&(day_start + hour * 3_600 + i * DAY_STEP)))
                     .map(|slot| slot.uptime_pct)
                     .collect();
-                (!values.is_empty()).then(|| round(values.iter().sum::<f64>() / values.len() as f64))
+                (!values.is_empty())
+                    .then(|| round(values.iter().sum::<f64>() / values.len() as f64))
             })
             .collect();
-        services.push(DayService { key, label: item.label.clone(), hours, outages: outages(&starts, own) });
+        services.push(DayService {
+            key,
+            label: item.label.clone(),
+            hours,
+            outages: outages(&starts, own),
+        });
     }
 
     let from = format_timestamp(DateTime::<Utc>::from_timestamp(day_start, 0).unwrap_or(now));
@@ -358,7 +374,8 @@ pub async fn public_day(
         .await?
         .into_iter()
         .filter(|incident| {
-            incident.starts_at < to && incident.ends_at.as_deref().is_none_or(|end| end >= from.as_str())
+            incident.starts_at < to
+                && incident.ends_at.as_deref().is_none_or(|end| end >= from.as_str())
         })
         .map(|incident| DayIncident {
             title: incident.title,
