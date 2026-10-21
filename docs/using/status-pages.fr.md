@@ -38,6 +38,24 @@ optionnellement, un **groupe** (« Réseau », « Stockage »). Les groupes
 deviennent des blocs sur la page, dans l'ordre où vous arrangez les
 services.
 
+**Deux noms par surveillance.** Chaque surveillance de la liste montre son
+**nom privé** (son nom dans DumbMonit, en gris, en lecture seule, jamais publié)
+et un **nom public** éditable : le seul que voient les visiteurs, les badges, le
+flux et les balises de référencement de la page. Le nom privé sert de placeholder ;
+si vous laissez le nom public vide, l'éditeur avertit que le nom interne sera
+publié, et il est utilisé. Idem pour les surveillances qui arrivent par un groupe
+coché (ci-dessous) : elles ont leur propre champ de nom public.
+
+**Groupes de surveillances.** Au-dessus de la recherche, cochez un groupe
+entier (les dossiers de **Surveillances**) pour tout afficher. Un groupe coché
+est dynamique : une surveillance ajoutée plus tard au dossier apparaît d'elle-même
+sur la page, une surveillance retirée disparaît. Dépliez un groupe pour voir ses
+surveillances ; sa case est à moitié cochée quand seules certaines sont cochées
+une à une. Les surveillances d'un groupe coché s'affichent sous le nom du groupe,
+et une surveillance à la fois cochée seule et dans un groupe coché n'apparaît
+qu'une fois (elle garde son libellé). Les groupes sont liés par le nom du dossier :
+renommer un dossier dans **Surveillances** le décoche ici.
+
 Enregistrez, et le lien est prêt à copier. La page se rafraîchit
 elle-même chaque minute.
 
@@ -99,6 +117,22 @@ d'administration, sous la même
 
 ### La barre d'historique
 
+Choisissez la période dans l'éditeur (**Historique**) : 24 heures, 7, 30, 60 ou 90
+jours. Les barres la suivent : une par heure pour 24 heures, une toutes les 6
+heures pour 7 jours, une par jour à partir de 30 jours. Elles s'adaptent aussi
+aux données qui existent. Une page dont le plus ancien service est surveillé
+depuis 2 heures montre les 2 dernières heures en barres de 5 minutes (pas 30
+jours de gris), 12 heures donnent des barres horaires, 3 jours des barres de 6
+heures. La légende sous les barres nomme la période réellement montrée
+(« Dernières 12 heures ») et la disponibilité est calculée sur cette période. Le
+temps d'avant la première mesure ne compte ni comme panne ni comme 100 %.
+
+Cliquez ou touchez une barre (ou donnez-lui le focus et appuyez sur Entrée) pour
+ouvrir ce jour heure par heure : disponibilité de chacune des 24 heures (UTC),
+pannes du jour avec leur début et leur fin, et annonces qui l'ont touché. Seuls
+les noms publics apparaissent. Les données sont aussi sur
+`GET /api/public/status/<adresse>/day/<AAAA-MM-JJ>`.
+
 Chaque carré est un jour (UTC), teinté par la disponibilité de ce
 jour-là : couleur pleine à 99,5 % et plus, ambre à partir de 95 %, rouge
 en dessous. **Un jour sans aucune mesure est gris**, pas vert — un
@@ -155,6 +189,23 @@ d'autre n'est en panne ou dégradé. Seules les fenêtres qui nomment une survei
 restent privés.
 
 Une annonce est montrée sur une page ou sur **toutes les pages**.
+
+### Incidents passés
+
+En mettant DumbMonit en place, saisissez les incidents que vous avez déjà eus.
+Dans **Nouvelle annonce** (type *Incident*), renseignez **Début** (votre heure
+locale ; vide = maintenant ; le futur est refusé) et, pour un incident déjà
+terminé, **Résolu le**. Ajoutez des **mises à jour** datées (*En investigation*,
+*Identifié*, *Surveillance*, *Résolu*), chacune avec sa propre date : elles sont
+triées dans le temps, doivent tomber entre le début et la résolution, et rien ne
+peut suivre la résolution.
+
+Un incident saisi avec une résolution est enregistré *Résolu* et **personne n'est
+prévenu** : aucun courriel n'est envoyé aux abonnés. Il apparaît dans l'historique,
+dans les barres par jour et dans le calendrier, à sa vraie date. Quand vous postez
+une mise à jour sur un incident existant, **Date et heure** fonctionne de la même
+façon : vide = maintenant (et les abonnés sont prévenus) ; une date passée complète
+l'historique sans prévenir personne. Les heures sont stockées en UTC.
 
 ### Abonnés email {#email-subscribers}
 
@@ -392,6 +443,32 @@ besoin pour s'afficher. Transférez `X-Forwarded-Proto` et
 `X-Forwarded-Host` pour que le flux RSS pointe vers la bonne adresse, et
 réglez l'URL publique (voir ci-dessus) pour que les emails d'abonné le
 fassent aussi.
+
+### Moteurs de recherche (SEO) {#seo}
+
+Une page publiée a un bloc **SEO** dans son éditeur. Par défaut la page n'est pas
+indexée : elle répond `noindex, nofollow` (balise meta et en-tête `X-Robots-Tag`).
+
+- **Indexer cette page par les moteurs de recherche** passe en `index, follow`,
+  ajoute la page à `/sitemap.xml` et l'autorise dans `/robots.txt`. Tout le reste
+  de l'instance reste fermé aux robots.
+- **Titre SEO** (environ 60 caractères), **meta description** (environ 155),
+  **mots-clés**, **URL canonique**, **image de partage** (Open Graph / Twitter),
+  **langue** et **nom du site ou de l'organisation**. Un champ vide utilise une
+  valeur générée à partir du nom de la page, affichée en placeholder. Un aperçu en
+  direct montre le résultat tel qu'un moteur le dessine.
+- **Copier le prompt pour une IA** copie un prompt rempli avec le nom de la page,
+  l'organisation, les services listés, la langue et l'adresse. Collez-le dans
+  ChatGPT (ou un autre assistant), puis **Coller le résultat** remplit les champs
+  depuis sa réponse JSON (`title`, `description`, `keywords`, `canonical`,
+  `image`, `lang`, `site_name`). Les champs invalides sont ignorés avec un message.
+
+Les balises sont écrites par le serveur dans le HTML de `/s/<adresse>` (et de la
+racine d'un [domaine personnalisé](#custom-domain)) : `<title>`, description,
+robots, canonique, Open Graph, carte Twitter, langue et données JSON-LD. Les robots
+et les aperçus de liens n'exécutent pas JavaScript : ils les lisent telles quelles.
+Une page brouillon, inconnue ou non indexable ne montre jamais son titre, et les
+variantes `/embed`, `/confirm` et `/unsubscribe` ne sont jamais indexées.
 
 ### Flux et document
 
