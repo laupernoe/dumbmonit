@@ -98,9 +98,20 @@
 				return m.topology_site_via_agent();
 			case 'tag':
 				return m.topology_site_via_tag();
+			case 'location':
+				return m.topology_site_via_location();
 			default:
 				return null;
 		}
+	}
+
+	function summary(frame: Frame): string {
+		return frame.down > 0 ? m.topology_summary_down({ count: frame.down }) : m.topology_summary_devices({ count: frame.count });
+	}
+
+	/** How many characters of `em` pixels each fit in `room` pixels (at least a few). */
+	function fit(room: number, em: number): number {
+		return Math.max(6, Math.floor(room / em));
 	}
 
 	function frameTitle(frame: Frame): string {
@@ -135,9 +146,10 @@
 				stroke-width="1.5"
 				stroke-dasharray={frame.kind === 'site' ? '7 5' : '2 5'}
 			/>
-			<text x={frame.x + 22} y={frame.y + 27} class="fill-ink" font-size="14" font-weight="700">
-				{short(frameTitle(frame), 34)}{#if source}<tspan class="fill-ink-3" font-size="11.5" font-weight="500" dx="8">{source}</tspan>{/if}
-			</text>
+			<text x={frame.x + 22} y={frame.y + 27} class="fill-ink" font-size="14" font-weight="700">{short(frameTitle(frame), fit(frame.width - 22 - 18 - summary(frame).length * 6.8 - 12, 8.4))}</text>
+			{#if source}
+				<text x={frame.x + 22} y={frame.y + 45} class="fill-ink-3" font-size="11.5" font-weight="500">{short(source, fit(frame.width - 22 - 18, 6.4))}</text>
+			{/if}
 		{/if}
 		<text
 			x={frame.x + frame.width - 18}
@@ -147,7 +159,7 @@
 			font-size="11.5"
 			font-weight="600"
 		>
-			{frame.down > 0 ? m.topology_summary_down({ count: frame.down }) : m.topology_summary_devices({ count: frame.count })}
+			{summary(frame)}
 		</text>
 	</g>
 {/each}
