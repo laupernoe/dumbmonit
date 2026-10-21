@@ -53,6 +53,7 @@ All metrics are prefixed `dumbmonit_vsphere_`. Health values follow vSphere's
 | `vm_power_state` | 0 powered on, 1 powered off, 2 suspended; at most 1000 VMs | `vm` |
 | `vm_status` | overall health | `vm` |
 | `vm_tools_status` | powered-on VMs only: 0 up to date, 1 old version, 2 installed but not running, 3 not installed | `vm` |
+| `vm_ip_info` | powered-on VMs only, always 1: the primary address VMware Tools reports (`guest.ipAddress`, read-only role is enough; none without Tools, loopback and link-local skipped). The map draws the monitors at that address under the VM | `vm`, `ip` |
 | `datastores` | datastores | |
 | `datastore_capacity_bytes`, `datastore_free_bytes`, `datastore_used_percent` | | `datastore` |
 | `datastore_accessible` | 1 accessible, 0 inaccessible | `datastore` |

@@ -5386,6 +5386,8 @@
 	"settings_logs_export_last_day": "Último dia",
 	"settings_logs_export_last_days": "Últimos {days} dias",
 	"settings_logs_export_period": "Período",
+	"settings_logs_export_since": "Registos disponíveis desde {date}.",
+	"settings_logs_export_since_short": "A sua seleção começa antes: a exportação só contém registos a partir de {date}.",
 	"settings_logs_export_title": "Exportar",
 	"settings_logs_form_add": "Adicionar destino",
 	"settings_logs_form_clear_secrets": "Apagar os segredos guardados",
@@ -6835,6 +6837,7 @@
 	"topology_legend_backup": "Cópia de segurança em",
 	"topology_legend_down": "Em baixo",
 	"topology_legend_firewall": "Através da firewall",
+	"topology_legend_hosted": "Corre num convidado",
 	"topology_legend_hypervisor": "Alojado num hipervisor",
 	"topology_legend_lldp": "Ligado por cabo a (LLDP)",
 	"topology_legend_parent": "Depende de (monitor principal declarado)",
@@ -6850,6 +6853,7 @@
 	"topology_open": "Mapa",
 	"topology_page_title": "Mapa — DumbMonit",
 	"topology_palette_detail": "Topologia de todos os monitores, imprimível",
+	"topology_panel_addresses": "Endereços IP",
 	"topology_panel_cabled": "Cablado a (LLDP)",
 	"topology_panel_close": "Fechar os detalhes",
 	"topology_panel_dependents": "Dependem dele ({count})",
@@ -6889,6 +6893,7 @@
 	"topology_site_via_tag": "etiqueta de site",
 	"topology_source_backup": "Cópia de segurança",
 	"topology_source_firewall": "Firewall",
+	"topology_source_hosted": "Corre em",
 	"topology_source_hypervisor": "Hipervisor",
 	"topology_source_lldp": "LLDP",
 	"topology_source_parent": "Monitor principal",
@@ -7234,7 +7239,5 @@
 	"worldmap_verdict_idle": "Não sondado",
 	"worldmap_verdict_ok": "Tudo a funcionar",
 	"worldmap_verdict_warn": "A verificar",
-	"worldmap_view_world": "Mundo",
-	"settings_logs_export_since": "Registos disponíveis desde {date}.",
-	"settings_logs_export_since_short": "A sua seleção começa antes: a exportação só contém registos a partir de {date}."
+	"worldmap_view_world": "Mundo"
 }

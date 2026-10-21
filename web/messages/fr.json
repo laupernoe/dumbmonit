@@ -5386,6 +5386,8 @@
 	"settings_logs_export_last_day": "Dernier jour",
 	"settings_logs_export_last_days": "{days} derniers jours",
 	"settings_logs_export_period": "Période",
+	"settings_logs_export_since": "Journaux disponibles depuis le {date}.",
+	"settings_logs_export_since_short": "Votre sélection commence avant cette date : l’export ne contient que les journaux à partir du {date}.",
 	"settings_logs_export_title": "Export",
 	"settings_logs_form_add": "Ajouter la destination",
 	"settings_logs_form_clear_secrets": "Effacer les secrets enregistrés",
@@ -6835,6 +6837,7 @@
 	"topology_legend_backup": "Sauvegardé vers",
 	"topology_legend_down": "En panne",
 	"topology_legend_firewall": "Derrière le pare-feu",
+	"topology_legend_hosted": "Tourne sur un invité",
 	"topology_legend_hypervisor": "Hébergé par un hyperviseur",
 	"topology_legend_lldp": "Câblé à (LLDP)",
 	"topology_legend_parent": "Dépend de (parent déclaré)",
@@ -6850,6 +6853,7 @@
 	"topology_open": "Carte",
 	"topology_page_title": "Carte — DumbMonit",
 	"topology_palette_detail": "Topologie de toutes les surveillances, imprimable",
+	"topology_panel_addresses": "Adresses IP",
 	"topology_panel_cabled": "Câblé à (LLDP)",
 	"topology_panel_close": "Fermer les détails",
 	"topology_panel_dependents": "En dépendent ({count})",
@@ -6889,6 +6893,7 @@
 	"topology_site_via_tag": "étiquette de site",
 	"topology_source_backup": "Sauvegarde",
 	"topology_source_firewall": "Pare-feu",
+	"topology_source_hosted": "Tourne sur",
 	"topology_source_hypervisor": "Hyperviseur",
 	"topology_source_lldp": "LLDP",
 	"topology_source_parent": "Parent",
@@ -7234,7 +7239,5 @@
 	"worldmap_verdict_idle": "Non sondé",
 	"worldmap_verdict_ok": "Tout fonctionne",
 	"worldmap_verdict_warn": "À vérifier",
-	"worldmap_view_world": "Monde",
-	"settings_logs_export_since": "Journaux disponibles depuis le {date}.",
-	"settings_logs_export_since_short": "Votre sélection commence avant cette date : l’export ne contient que les journaux à partir du {date}."
+	"worldmap_view_world": "Monde"
 }

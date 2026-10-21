@@ -5386,6 +5386,8 @@
 	"settings_logs_export_last_day": "Letzter Tag",
 	"settings_logs_export_last_days": "Letzte {days} Tage",
 	"settings_logs_export_period": "Zeitraum",
+	"settings_logs_export_since": "Protokolle verfügbar seit {date}.",
+	"settings_logs_export_since_short": "Ihre Auswahl beginnt früher: Der Export enthält nur Protokolle ab dem {date}.",
 	"settings_logs_export_title": "Export",
 	"settings_logs_form_add": "Ziel hinzufügen",
 	"settings_logs_form_clear_secrets": "Gespeicherte Geheimnisse löschen",
@@ -6835,6 +6837,7 @@
 	"topology_legend_backup": "Gesichert auf",
 	"topology_legend_down": "Ausgefallen",
 	"topology_legend_firewall": "Hinter der Firewall",
+	"topology_legend_hosted": "Läuft auf einem Gast",
 	"topology_legend_hypervisor": "Auf einem Hypervisor",
 	"topology_legend_lldp": "Verkabelt mit (LLDP)",
 	"topology_legend_parent": "Hängt ab von (übergeordneter Monitor)",
@@ -6850,6 +6853,7 @@
 	"topology_open": "Karte",
 	"topology_page_title": "Karte — DumbMonit",
 	"topology_palette_detail": "Topologie aller Monitore, druckbar",
+	"topology_panel_addresses": "IP-Adressen",
 	"topology_panel_cabled": "Verkabelt mit (LLDP)",
 	"topology_panel_close": "Details schließen",
 	"topology_panel_dependents": "Davon abhängig ({count})",
@@ -6889,6 +6893,7 @@
 	"topology_site_via_tag": "Standort-Tag",
 	"topology_source_backup": "Sicherung",
 	"topology_source_firewall": "Firewall",
+	"topology_source_hosted": "Läuft auf",
 	"topology_source_hypervisor": "Hypervisor",
 	"topology_source_lldp": "LLDP",
 	"topology_source_parent": "Übergeordnet",
@@ -7234,7 +7239,5 @@
 	"worldmap_verdict_idle": "Nicht abgefragt",
 	"worldmap_verdict_ok": "Alles in Ordnung",
 	"worldmap_verdict_warn": "Prüfen",
-	"worldmap_view_world": "Welt",
-	"settings_logs_export_since": "Protokolle verfügbar seit {date}.",
-	"settings_logs_export_since_short": "Ihre Auswahl beginnt früher: Der Export enthält nur Protokolle ab dem {date}."
+	"worldmap_view_world": "Welt"
 }
