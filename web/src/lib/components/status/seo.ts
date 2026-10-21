@@ -4,8 +4,8 @@
  * into an AI assistant, and the parser of its JSON reply. Pure functions, no
  * imports from the app: the tests run them directly.
  *
- * The prompt is written in English on purpose: it is a document for the AI
- * assistant, not interface text.
+ * The prompt is written in the user's language (or the page's), with the JSON
+ * keys of the reply left as they are.
  */
 import type { StatusPageSeo } from '../../api/types';
 
@@ -104,36 +104,110 @@ export interface PromptContext {
 
 const MAX_PROMPT_SERVICES = 30;
 
-/** The prompt to paste into an AI assistant; the reply must be a JSON object with the field keys. */
-export function buildPrompt(ctx: PromptContext): string {
+/** Wording of the prompt, so it can be written in the user's language. */
+export interface PromptTexts {
+	intro: string;
+	context: string;
+	name: (value: string) => string;
+	unnamed: string;
+	organisation: (value: string) => string;
+	orgUnknown: string;
+	address: (value: string) => string;
+	addressUnknown: string;
+	language: (value: string) => string;
+	description: (value: string) => string;
+	services: (value: string) => string;
+	none: string;
+	more: (count: number) => string;
+	rules: string;
+	ruleLang: (lang: string) => string;
+	ruleTitle: (max: number) => string;
+	ruleDescription: (max: number) => string;
+	ruleKeywords: string;
+	ruleCanonical: string;
+	ruleImage: string;
+	ruleLangField: string;
+	ruleSiteName: string;
+	rulePlain: string;
+	reply: string;
+}
+
+/** English wording, used when no other is given. */
+export const PROMPT_TEXTS_EN: PromptTexts = {
+	intro: 'You are an SEO expert. Optimise the search-engine metadata of the public status page described below.',
+	context: 'Context',
+	name: (v) => `Page name: ${v}`,
+	unnamed: '(unnamed)',
+	organisation: (v) => `Organisation: ${v}`,
+	orgUnknown: '(unknown)',
+	address: (v) => `Page address: ${v}`,
+	addressUnknown: '(not known yet)',
+	language: (v) => `Page language: ${v}`,
+	description: (v) => `Current description: ${v}`,
+	services: (v) => `Services monitored and listed on the page: ${v}`,
+	none: '(none yet)',
+	more: (n) => `and ${n} more`,
+	rules: 'Rules',
+	ruleLang: (l) => `Write title, description and keywords in the page language (${l}).`,
+	ruleTitle: (n) => `title: at most ${n} characters, starts with the organisation or product name, says it is a status page.`,
+	ruleDescription: (n) => `description: at most ${n} characters, one natural sentence, no quotation marks.`,
+	ruleKeywords: 'keywords: 5 to 10 comma-separated terms, no repetition.',
+	ruleCanonical: 'canonical: the page address above, unchanged. Leave it empty if the address is not known.',
+	ruleImage: 'image: leave it empty unless you are given an address.',
+	ruleLangField: 'lang: the language tag of the page (for example en, fr, pt-BR).',
+	ruleSiteName: 'site_name: the organisation name.',
+	rulePlain: 'Plain text only, no HTML, no line breaks inside values. Do not invent facts about the organisation.',
+	reply: 'Reply with ONLY a JSON object, no explanation and no code fence, with exactly these keys:'
+};
+
+/**
+ * Locale to write the prompt in: the page language when the interface speaks
+ * it (`fr-CH` → `fr`, `zh` → `zh-Hans`), otherwise the interface language.
+ */
+export function promptLocale(pageLang: string, available: readonly string[], fallback: string): string {
+	const tag = pageLang.trim().toLowerCase();
+	if (!tag) return fallback;
+	const exact = available.find((l) => l.toLowerCase() === tag);
+	if (exact) return exact;
+	const base = tag.split('-')[0];
+	if (base === 'zh') return available.find((l) => l.toLowerCase() === 'zh-hans') ?? fallback;
+	return available.find((l) => l.toLowerCase() === base) ?? fallback;
+}
+
+/**
+ * The prompt to paste into an AI assistant; the reply must be a JSON object
+ * with the field keys (the keys are never translated).
+ */
+export function buildPrompt(ctx: PromptContext, t: PromptTexts = PROMPT_TEXTS_EN): string {
 	const services = ctx.services.map((s) => s.trim()).filter(Boolean);
 	const shown = services.slice(0, MAX_PROMPT_SERVICES);
 	const more = services.length - shown.length;
+	const lang = ctx.lang || 'en';
 	const lines = [
-		'You are an SEO expert. Optimise the search-engine metadata of the public status page described below.',
+		t.intro,
 		'',
-		'Context',
-		`- Page name: ${ctx.name.trim() || '(unnamed)'}`,
-		`- Organisation: ${ctx.organisation.trim() || ctx.name.trim() || '(unknown)'}`,
-		`- Page address: ${ctx.url || '(not known yet)'}`,
-		`- Page language: ${ctx.lang || 'en'}`
+		t.context,
+		`- ${t.name(ctx.name.trim() || t.unnamed)}`,
+		`- ${t.organisation(ctx.organisation.trim() || ctx.name.trim() || t.orgUnknown)}`,
+		`- ${t.address(ctx.url || t.addressUnknown)}`,
+		`- ${t.language(lang)}`
 	];
-	if (ctx.description?.trim()) lines.push(`- Current description: ${ctx.description.trim()}`);
+	if (ctx.description?.trim()) lines.push(`- ${t.description(ctx.description.trim())}`);
 	lines.push(
-		`- Services monitored and listed on the page: ${shown.length ? shown.join(', ') : '(none yet)'}${more > 0 ? ` and ${more} more` : ''}`,
+		`- ${t.services(`${shown.length ? shown.join(', ') : t.none}${more > 0 ? ` ${t.more(more)}` : ''}`)}`,
 		'',
-		'Rules',
-		`- Write title, description and keywords in the page language (${ctx.lang || 'en'}).`,
-		`- title: at most ${TITLE_TARGET} characters, starts with the organisation or product name, says it is a status page.`,
-		`- description: at most ${DESCRIPTION_TARGET} characters, one natural sentence, no quotation marks.`,
-		'- keywords: 5 to 10 comma-separated terms, no repetition.',
-		'- canonical: the page address above, unchanged. Leave it empty if the address is not known.',
-		'- image: leave it empty unless you are given an address.',
-		'- lang: the language tag of the page (for example en, fr, pt-BR).',
-		'- site_name: the organisation name.',
-		'- Plain text only, no HTML, no line breaks inside values. Do not invent facts about the organisation.',
+		t.rules,
+		`- ${t.ruleLang(lang)}`,
+		`- ${t.ruleTitle(TITLE_TARGET)}`,
+		`- ${t.ruleDescription(DESCRIPTION_TARGET)}`,
+		`- ${t.ruleKeywords}`,
+		`- ${t.ruleCanonical}`,
+		`- ${t.ruleImage}`,
+		`- ${t.ruleLangField}`,
+		`- ${t.ruleSiteName}`,
+		`- ${t.rulePlain}`,
 		'',
-		'Reply with ONLY a JSON object, no explanation and no code fence, with exactly these keys:',
+		t.reply,
 		'{"title": "", "description": "", "keywords": "", "canonical": "", "image": "", "lang": "", "site_name": ""}'
 	);
 	return lines.join('\n');
