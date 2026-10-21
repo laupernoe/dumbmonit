@@ -115,9 +115,11 @@ threshold option is set) — see [WireGuard tunnels](#wireguard-tunnels),
 [IPsec tunnels](#ipsec-tunnels), [restic and Borg backups](#restic-and-borg-backups)
 and [Internet speed test](#internet-speed-test).
 
-On a Windows server that runs MDaemon, three more watch its queues:
-**MDaemon mail queue growing**, **MDaemon Bad queue not empty** and **MDaemon
-Retry queue high** (see [Rules](../alerting/rules.md#mdaemon-and-securitygateway)).
+On a Windows server that runs MDaemon or SecurityGateway, **Mail server
+Windows service stopped** watches their services, and for MDaemon five more
+watch its queues: **MDaemon mail queue growing**, **Mail queue stuck**,
+**MDaemon queue frozen**, **MDaemon Bad queue not empty** and **MDaemon Retry
+queue high** (see [Rules](../alerting/rules.md#mdaemon-and-securitygateway)).
 On a Hyper-V host, three watch the virtual machines: **Hyper-V VM health
 critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 [Hyper-V hosts](#hyper-v-hosts)).
@@ -638,6 +640,17 @@ the rules and the page that shows them are described on the
 reads them even without the service (a renamed service), `mdaemon: false`
 never does. The presence of the service is checked again every ten periods,
 so an MDaemon installed after the agent is picked up without a restart.
+
+**Mail servers (MDaemon and SecurityGateway).** On the same detection, the
+agent also reads, with no setting, what only the server itself can tell: the
+state and start mode of the product's Windows services, the version of its
+executable, the number of messages and the age of the oldest one in its queue
+folders, and the free space of the volume that holds its data. It asks
+Windows through one PowerShell call per period (every tenth period while no
+product is found). The series are `agent_mail_*` and are described on the
+[MDaemon](mdaemon.md#mail-queues-through-the-agent) and
+[SecurityGateway](securitygateway.md#read-by-the-agent) pages, which also say
+how a monitor is linked to its agent. `mdaemon: false` switches this off too.
 
 **Hyper-V.** When the Hyper-V Virtual Machine Management service (`vmms`)
 exists, the agent reads Hyper-V's performance objects; see

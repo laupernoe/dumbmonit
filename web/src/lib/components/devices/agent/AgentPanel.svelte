@@ -15,7 +15,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
-	import MdaemonQueues from '#lib/components/devices/mdaemon/MdaemonQueues.svelte';
+	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
 	import AgentModulesPanel from './AgentModulesPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
@@ -142,8 +142,9 @@
 
 <RelayPanel {target} />
 
-<!-- Shown only when this machine runs MDaemon and the agent reads its counters. -->
-<MdaemonQueues agent={target.id} />
+<!-- Shown only when this machine runs MDaemon or SecurityGateway and the agent found it. -->
+<MailAgentPanel agent={target.id} product="mdaemon" />
+<MailAgentPanel agent={target.id} product="securitygateway" />
 
 <!-- Services the agent found (Docker, ZFS, tunnels…): each is a device of its own under this machine. -->
 <AgentModulesPanel {target} />

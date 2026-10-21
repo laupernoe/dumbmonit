@@ -612,15 +612,16 @@ async fn collect_backup_jobs(
     Option<Result<Vec<NotBackedUp>, ProbeError>>,
     Vec<Sample>,
 ) {
-    let (jobs, not_backed_up) = futures::join!(
+    let (jobs, not_backed_up, pbs_storages) = futures::join!(
         when(options.backup_jobs, pve.get::<Vec<BackupJob>>("/cluster/backup", &[])),
         when(
             options.backup_jobs,
             pve.get::<Vec<NotBackedUp>>("/cluster/backup-info/not-backed-up", &[])
         ),
+        collect_pbs_storages(pve, chrono::Utc::now().timestamp_millis()),
     );
 
-    let mut samples = Vec::new();
+    let mut samples = pbs_storages;
     if options.backup_volumes
         && let Some(Ok(list)) = &jobs
     {
@@ -646,6 +647,25 @@ async fn collect_backup_jobs(
     }
 
     (jobs, not_backed_up, samples)
+}
+
+/// Stockages de type `pbs` déclarés dans la configuration (`GET /storage`) :
+/// c'est la seule source qui dit vers quel serveur PBS ce PVE sauvegarde.
+///
+/// Silencieux quoi qu'il arrive : sans le droit de lecture de la configuration
+/// des stockages, la carte n'a simplement pas de lien « sauvegardé vers ».
+async fn collect_pbs_storages(pve: &PveClient, ts_ms: i64) -> Vec<Sample> {
+    let query = [("type", "pbs".to_string())];
+    let result =
+        pve.get_unless::<Vec<model::StorageConfig>>("/storage", &query, &OPTIONAL_STATUSES);
+    match result.await {
+        Ok(Some(list)) => metrics::pbs_storage_samples(&list, ts_ms),
+        Ok(None) => Vec::new(),
+        Err(error) => {
+            debug!(%error, "configuration des stockages PBS illisible");
+            Vec::new()
+        }
+    }
 }
 
 /// Le détail de Ceph : OSD, pools, CephFS, drapeaux et sourdines.

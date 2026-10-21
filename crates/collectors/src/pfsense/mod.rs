@@ -225,6 +225,21 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
         out.push(named(flag("pfsense_interface_enabled", enabled, ts_ms)));
         out.push(named(flag("pfsense_interface_up", link_up, ts_ms)));
         out.push(named(flag("pfsense_interface_down", down, ts_ms)));
+        // Le réseau de l'interface, pour rattacher les équipements au pare-feu.
+        let hwif = text(interface, "hwif").unwrap_or(name);
+        if let (Some(ip), Some(prefix)) =
+            (text(interface, "ipaddr").filter(|ip| !ip.is_empty()), text(interface, "subnet"))
+        {
+            let vlan = crate::ifaddr::vlan_hint(hwif).or_else(|| crate::ifaddr::vlan_hint(name));
+            out.push(crate::ifaddr::address_sample(
+                "pfsense_interface_address_info",
+                name,
+                descr,
+                &format!("{ip}/{prefix}"),
+                vlan,
+                ts_ms,
+            ));
+        }
         for (field, metric) in [
             ("inerrs", "pfsense_interface_errors_in_total"),
             ("outerrs", "pfsense_interface_errors_out_total"),

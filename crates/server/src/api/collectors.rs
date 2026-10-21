@@ -482,7 +482,7 @@ const TRUENAS_KEY: CredentialView = CredentialView {
 /// vérifiés.
 const MDAEMON_LOGIN: CredentialView = CredentialView {
     kind: "username_password",
-    label: "XML API account",
+    label: "XML API account (optional, version only)",
     help: "Also reads the version through the XML API. Leave the credential empty to watch the mail services only.",
     fields: &[
         cred_text(
@@ -500,7 +500,7 @@ const MDAEMON_LOGIN: CredentialView = CredentialView {
 /// vérifiés.
 const SECURITY_GATEWAY_KEY: CredentialView = CredentialView {
     kind: "api_token",
-    label: "API key (12.5 and later)",
+    label: "API key (12.5 and later, recommended)",
     help: "Also reads the version and the performance counters through the REST API. Leave the credential empty to watch the services only.",
     fields: &[cred_secret(
         "token",
@@ -598,6 +598,26 @@ const fn boolean(
         default: if default { "true" } else { "false" },
         required: false,
         input: "boolean",
+        choices: &[],
+        group: "",
+        items: no_items,
+        columns: no_columns,
+    }
+}
+
+/// Choix de l'agent installé sur le serveur de l'équipement : l'interface
+/// propose les agents connus (`input: agent`) et enregistre l'identifiant de la
+/// cible choisie dans l'étiquette `key`. Un type qui porte ce réglage ne se
+/// surveille complètement qu'avec cet agent (voir `docs/devices/mdaemon.md`).
+const fn agent_link(key: &'static str, label: &'static str, help: &'static str) -> OptionView {
+    OptionView {
+        key,
+        label,
+        help,
+        placeholder: "",
+        default: "",
+        required: false,
+        input: "agent",
         choices: &[],
         group: "",
         items: no_items,
@@ -2109,6 +2129,11 @@ const SYNOLOGY_OPTIONS: &[OptionView] = &[
 
 /// Options lues par `collectors/mdaemon/email_server.rs`.
 const MDAEMON_OPTIONS: &[OptionView] = &[
+    agent_link(
+        "agent_id",
+        "Agent installed on this server",
+        "The DumbMonit agent that runs on the Windows server of MDaemon. It reads what cannot be read from outside: the mail queues, the sessions, the Windows services and the disk space. DumbMonit pre-selects the agent whose host name matches the address.",
+    ),
     text(
         "services",
         "Services",
@@ -2143,6 +2168,11 @@ const MDAEMON_OPTIONS: &[OptionView] = &[
 
 /// Options lues par `collectors/mdaemon/security_gateway.rs`.
 const SECURITY_GATEWAY_OPTIONS: &[OptionView] = &[
+    agent_link(
+        "agent_id",
+        "Agent installed on this server",
+        "The DumbMonit agent that runs on the Windows server of SecurityGateway. It reads what cannot be read from outside: the Windows services, the mail queue folders and the disk space. DumbMonit pre-selects the agent whose host name matches the address.",
+    ),
     text(
         "services",
         "Services",
@@ -3960,21 +3990,28 @@ fn compiled(kind: &str) -> Option<CollectorView> {
         "mdaemon" => CollectorView {
             kind: "mdaemon",
             label: "MDaemon Email Server",
-            summary: "SMTP, IMAP, POP3 and webmail answering, version, and the XML API.",
+            summary: "Needs the agent on the Windows server: mail queues, sessions, Windows services and disk space, plus the mail ports answering and, optionally, the XML API.",
             examples: &["MDaemon Email Server"],
             credential_types: &["none", "username_password"],
             credentials: &[MAIL_SERVICES_ONLY, MDAEMON_LOGIN],
             address_hint: "mail.example.com",
             default_port: 25,
             setup: Setup {
-                title: "Watch the mail services, and optionally the XML API",
+                title: "Install the agent on the MDaemon server, then add this monitor",
                 steps: &[
-                    "To also read the version, open Accounts → Account Manager → New account and create the account below, with a long unique password.\ndumbmonit@example.com",
-                    "Allow the address DumbMonit connects from in Setup → XML API Service → Address Restrictions (Setup → XML API Management on MDaemon 26).",
-                    "In DumbMonit, enter the server address, then the account's full email address and its password.",
+                    "On the Windows server that runs MDaemon, add a Server with agent monitor in DumbMonit and run its PowerShell command in an elevated PowerShell. The agent finds MDaemon by itself.",
+                    "Back here, enter the server address and choose that agent in Agent installed on this server. DumbMonit pre-selects the one with the same host name.",
+                    "Leave the credential on Services only: the agent already brings the queues, sessions, Windows services and disk space, and the mail ports are checked from DumbMonit.",
+                    "Optional, only to read the exact version: open Accounts → Account Manager → New account and create the account below, with a long unique password.\ndumbmonit@example.com",
+                    "Allow the address DumbMonit connects from in Setup → XML API Service → Address Restrictions (Setup → XML API Management on MDaemon 26), then enter the account's full email address and its password.",
                     "To check more ports than SMTP, IMAP and webmail, set the Services option to a list like this one.\nsmtp,msa,imap,pop3,imaps,webmail",
                 ],
                 ports: &[
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Agent readings (default port, 443 behind a TLS proxy)"
+                    ),
                     to_device!(25, "tcp", "SMTP check (default)"),
                     to_device!(143, "tcp", "IMAP check (default)"),
                     to_device!(3000, "tcp", "Webmail check (default)"),
@@ -3992,32 +4029,39 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     to_device_optional!(5222, "tcp", "Only with xmpp in the Services option"),
                 ],
                 permissions: &[
-                    "XML API access for the account\nThe lowest level your MDaemon accepts",
-                    "XML API address restriction\nAllow the address DumbMonit connects from",
+                    "Local administrator on the server\nOnly to install the agent, which then runs as a Windows service",
+                    "XML API access for the account\nOptional: only to read the version",
+                    "XML API address restriction\nOptional: allow the address DumbMonit connects from",
                 ],
-                warning: "MDaemon has no read-only role for the XML API: never reuse your own account, and use a password found nowhere else, as repeated failures can get DumbMonit blocked.",
+                warning: "The queues, sessions and Windows services of MDaemon can only be read on the server itself: without the agent, DumbMonit sees the mail ports and nothing else. The XML API account is optional and only brings the version; MDaemon has no read-only role for it, so never reuse your own account, and use a password found nowhere else, as repeated failures can get DumbMonit blocked.",
             },
             options: MDAEMON_OPTIONS,
         },
         "securitygateway" => CollectorView {
             kind: "securitygateway",
             label: "SecurityGateway for Email Servers",
-            summary: "Mail gateway services answering, version, and the REST API performance counters (12.5 and later).",
+            summary: "Needs the agent on the Windows server: Windows services, mail queue folders and disk space, plus the gateway ports answering and the REST API counters (12.5 and later).",
             examples: &["SecurityGateway for Email Servers"],
             credential_types: &["none", "api_token"],
             credentials: &[MAIL_SERVICES_ONLY, SECURITY_GATEWAY_KEY],
             address_hint: "sg.example.com",
             default_port: 25,
             setup: Setup {
-                title: "Watch the gateway services, and optionally the REST API",
+                title: "Install the agent on the gateway server, then add this monitor",
                 steps: &[
-                    "In SecurityGateway 12.5 or later, open Setup/Users → Accounts → Administrators → New and create the account below, with a long unique password.\ndumbmonit",
+                    "On the Windows server that runs SecurityGateway, add a Server with agent monitor in DumbMonit and run its PowerShell command in an elevated PowerShell. The agent finds SecurityGateway by itself.",
+                    "Back here, enter the gateway address and choose that agent in Agent installed on this server. DumbMonit pre-selects the one with the same host name.",
+                    "Recommended, for the performance counters: in SecurityGateway 12.5 or later, open Setup/Users → Accounts → Administrators → New and create the account below, with a long unique password.\ndumbmonit",
                     "Give the account the role listed below, and restrict it to the DumbMonit address in IP Restriction Options.",
-                    "Sign in as that account, open Setup/Users → Accounts → API Keys and create a key with an expiry date.",
-                    "In DumbMonit, enter the gateway address and paste the key.",
+                    "Sign in as that account, open Setup/Users → Accounts → API Keys and create a key with an expiry date, then paste the key in DumbMonit.",
                     "To check more ports than SMTP and the web interface, set the Services option to a list like this one.\nsmtp,web_https",
                 ],
                 ports: &[
+                    to_server!(
+                        8080,
+                        "tcp",
+                        "Agent readings (default port, 443 behind a TLS proxy)"
+                    ),
                     to_device!(25, "tcp", "SMTP check (default)"),
                     to_device!(4000, "tcp", "Web interface check (default)"),
                     to_device_optional!(
@@ -4028,9 +4072,10 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     to_device_optional!(465, "tcp", "Only with smtps in the Services option"),
                 ],
                 permissions: &[
+                    "Local administrator on the server\nOnly to install the agent, which then runs as a Windows service",
                     "Domain Administrator\nUse Global Administrator if the counters stay empty",
                 ],
-                warning: "SecurityGateway has no read-only role or narrower key: create the key from the dedicated account, never your own, and give it an expiry date.",
+                warning: "The Windows services, mail queue folders and disk space of SecurityGateway can only be read on the server itself: without the agent, DumbMonit sees the gateway ports and, with a key, the REST API counters. SecurityGateway has no read-only role or narrower key: create the key from the dedicated account, never your own, and give it an expiry date.",
             },
             options: SECURITY_GATEWAY_OPTIONS,
         },
@@ -6388,11 +6433,19 @@ mod tests {
             ),
             (
                 "mdaemon",
-                &["services", "request_timeout_seconds", "api_port", "api_tls", "insecure_tls"],
+                &[
+                    "agent_id",
+                    "services",
+                    "request_timeout_seconds",
+                    "api_port",
+                    "api_tls",
+                    "insecure_tls",
+                ],
             ),
             (
                 "securitygateway",
                 &[
+                    "agent_id",
                     "services",
                     "request_timeout_seconds",
                     "api_port",
@@ -6583,6 +6636,10 @@ mod tests {
                         option.default
                     ),
                     "text" => assert!(option.choices.is_empty(), "{contexte} : choix sur un texte"),
+                    // Le choix d'un agent : l'interface liste les agents connus, aucun défaut.
+                    "agent" => {
+                        assert!(option.default.is_empty(), "{contexte} : défaut sur un agent")
+                    }
                     "checklist" => {
                         let items = (option.items)();
                         assert!(!items.is_empty(), "{contexte} : cases à cocher sans entrée");
