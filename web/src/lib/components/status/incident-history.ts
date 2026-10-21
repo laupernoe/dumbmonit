@@ -21,7 +21,9 @@ export type HistoryError =
 	| 'update_empty'
 	| 'update_outside'
 	| 'update_future'
-	| 'after_resolution';
+	| 'after_resolution'
+	| 'start_required'
+	| 'end_required';
 
 /** The server accepts a browser clock this much ahead. */
 const SKEW_MS = 5 * 60_000;
@@ -82,4 +84,35 @@ export function validateHistory(startsAt: string, endsAt: string, updates: Draft
 /** The `updates` array of the API payload, in the order typed (the server sorts). */
 export function updatesPayload(updates: DraftUpdate[]) {
 	return updates.map((u) => ({ status: u.status, body: u.body.trim(), at: localToIso(u.at) }));
+}
+
+/**
+ * Dates of an existing incident edited in place: same rules as the server
+ * (`PUT /api/incidents/{id}`). An incident never starts or ends in the future
+ * (checked only when the date moved, a maintenance may be planned), the end is
+ * not before the start, and its messages stay inside. `original` holds the
+ * dates as they were (`datetime-local` values), `updateTimes` the dates of the
+ * messages.
+ */
+export function validateDates(
+	kind: 'incident' | 'maintenance',
+	startsAt: string,
+	endsAt: string,
+	original: { startsAt: string; endsAt: string },
+	updateTimes: Date[],
+	now: Date = new Date()
+): HistoryError | null {
+	const limit = now.getTime() + SKEW_MS;
+	const start = localToDate(startsAt);
+	const end = localToDate(endsAt);
+	if (!start) return 'start_required';
+	if (kind === 'incident') {
+		if (startsAt !== original.startsAt && start.getTime() > limit) return 'future_start';
+		if (end && endsAt !== original.endsAt && end.getTime() > limit) return 'future_end';
+	}
+	if (end && end.getTime() < start.getTime()) return 'end_before_start';
+	for (const at of updateTimes) {
+		if (at.getTime() < start.getTime() || (end && at.getTime() > end.getTime())) return 'update_outside';
+	}
+	return null;
 }

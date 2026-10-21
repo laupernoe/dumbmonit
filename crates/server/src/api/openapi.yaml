@@ -1324,6 +1324,32 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/targets/folders/rename:
+    post:
+      operationId: renameTargetFolder
+      tags: [Devices]
+      summary: Rename a folder
+      description: >-
+        Moves every device filed under folder `from` to folder `to`. Status
+        pages that ticked the folder follow the new name in the same
+        transaction.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from: { type: string }
+                to: { type: string, maxLength: 60 }
+      responses:
+        "204": { description: Folder renamed. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}:
     parameters:
       - $ref: "#/components/parameters/TargetId"

@@ -131,6 +131,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/targets", get(targets::list).post(targets::create))
         .route("/targets/test", post(targets::test_connection))
         .route("/targets/reorder", post(targets::reorder))
+        .route("/targets/folders/rename", post(targets::rename_folder))
         .route("/targets/import", post(targets_import::import))
         .route(
             "/targets/import/kuma",

@@ -19,6 +19,7 @@
 		deleteTarget,
 		listCollectors,
 		reorderTargets,
+		renameTargetFolder,
 		updateTarget,
 		type Target,
 		type TargetId,
@@ -447,7 +448,35 @@
 			pendingEmptyFolders = next;
 		}
 		const rows = rootsInFolder(oldKey);
-		if (rows.length > 0) void bulkSetGroup(rows, trimmed);
+		if (rows.length > 0) void renameFolderOnServer(rows, oldKey, trimmed);
+	}
+
+	/** One request renames the folder everywhere, status pages that ticked it included. */
+	async function renameFolderOnServer(rows: Target[], from: string, to: string) {
+		if (moving) return;
+		moving = true;
+		const prevValues = new Map(rows.map((t) => [t.id, groupOverride.get(t.id)] as const));
+		const next = new Map(groupOverride);
+		for (const t of rows) next.set(t.id, to);
+		groupOverride = next;
+		try {
+			await renameTargetFolder(from, to);
+			actionError = null;
+			await alertsStore.refresh();
+			const cleared = new Map(groupOverride);
+			for (const t of rows) cleared.delete(t.id);
+			groupOverride = cleared;
+		} catch (cause) {
+			const rolled = new Map(groupOverride);
+			for (const [id, v] of prevValues) {
+				if (v === undefined) rolled.delete(id);
+				else rolled.set(id, v);
+			}
+			groupOverride = rolled;
+			actionError = cause;
+		} finally {
+			moving = false;
+		}
 	}
 
 	function deleteFolder(key: string) {

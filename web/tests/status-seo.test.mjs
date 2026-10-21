@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import {
 	breadcrumb,
 	buildPrompt,
+	PROMPT_TEXTS_EN,
 	effectiveSeo,
 	pageUrl,
 	parseSeoReply,
+	promptLocale,
 	seoDefaults,
 	truncate
 } from '../src/lib/components/status/seo.ts';
@@ -115,4 +117,25 @@ test('bad fields are left out and reported, long ones are shortened', () => {
 		lang: 'invalid_lang',
 		keywords: 'invalid_type'
 	});
+});
+
+test('the prompt is written in the page language when the interface has it, else in the interface one', () => {
+	const locales = ['en', 'fr', 'de', 'es', 'it', 'pt', 'pt-BR', 'ru', 'zh-Hans'];
+	assert.equal(promptLocale('fr', locales, 'en'), 'fr');
+	assert.equal(promptLocale('fr-CH', locales, 'en'), 'fr');
+	assert.equal(promptLocale('pt-br', locales, 'en'), 'pt-BR');
+	assert.equal(promptLocale('zh', locales, 'en'), 'zh-Hans');
+	assert.equal(promptLocale('ja', locales, 'de'), 'de');
+	assert.equal(promptLocale('', locales, 'it'), 'it');
+});
+
+test('the prompt wording can be replaced and the JSON keys stay the same', () => {
+	const fr = { ...PROMPT_TEXTS_EN, intro: 'Tu es un expert SEO.', name: (v) => `Nom de la page : ${v}`, reply: 'Réponds UNIQUEMENT par un objet JSON :' };
+	const p = buildPrompt({ name: 'Acme', organisation: '', services: [], lang: 'fr', url: '' }, fr);
+	assert.ok(p.startsWith('Tu es un expert SEO.'));
+	assert.ok(p.includes('Nom de la page : Acme'));
+	assert.ok(!p.includes('ONLY a JSON object'));
+	for (const key of ['title', 'description', 'keywords', 'canonical', 'image', 'lang', 'site_name']) {
+		assert.ok(p.includes(`"${key}"`), key);
+	}
 });
