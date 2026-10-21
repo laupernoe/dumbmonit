@@ -5,6 +5,26 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **SEO settings for public status pages.** A published page has a "Search
+  engines (SEO)" block: an "index this page" switch (off by default: `noindex,
+  nofollow`), SEO title, meta description, keywords, canonical URL, share image,
+  language and site name, each generated from the page name when left empty, with
+  a live search-result preview and a "Copy the prompt for an AI" / "Paste the
+  result" round trip. The server writes the tags (title, description, robots,
+  canonical, Open Graph, Twitter card, hreflang, JSON-LD) into the HTML of
+  `/s/<slug>` and sends `X-Robots-Tag`; indexable pages are listed in
+  `/sitemap.xml` and allowed in `/robots.txt`, everything else stays closed.
+- **Monitor groups on status pages.** Tick whole groups (folders) in the page
+  editor: a ticked group is live, so monitors added to or removed from it appear
+  or disappear on the page by themselves, shown under the group's name without
+  duplicates.
+- **Past incidents on status pages.** Enter an incident that already happened:
+  start time (never in the future), optional resolution time, and updates each
+  with its own date, sorted and validated. An incident entered as resolved
+  notifies nobody; it shows in the history and the day bars at its real date.
+
 ## 0.13.5 — 2026-10-21
 
 ### Added

@@ -4,10 +4,13 @@
 //! fichier unique, sans répertoire de ressources à monter ni serveur Node.
 
 use axum::body::Body;
-use axum::extract::Request;
+use axum::extract::{Request, State};
 use axum::http::{HeaderValue, StatusCode, Uri, header};
 use axum::response::{IntoResponse, Response};
 use rust_embed::Embed;
+
+use crate::state::AppState;
+use crate::status_seo::{self, Head};
 
 #[derive(Embed)]
 #[folder = "../../web/build/"]
@@ -33,12 +36,27 @@ pub struct Nonce(pub String);
 /// Le repli est indispensable : l'interface est une application monopage dont les
 /// routes (`/targets/42`) n'existent pas sur le disque. Sans lui, un rechargement
 /// de page ou un lien partagé renverrait 404.
-pub async fn serve(request: Request<Body>) -> Response {
+pub async fn serve(State(state): State<AppState>, request: Request<Body>) -> Response {
     let path = request.uri().path().trim_start_matches('/');
     let nonce = request.extensions().get::<Nonce>().map(|nonce| nonce.0.clone());
     let page =
         request.extensions().get::<crate::status_host::StatusHost>().map(|host| host.slug.clone());
-    let html = Html { nonce: nonce.as_deref(), status_page: page.as_deref() };
+    // Une page de statut a ses balises de référencement dans le HTML servi :
+    // les robots et les aperçus de liens n'exécutent pas l'interface.
+    let seo = match seo_route(path, page.as_deref()) {
+        Some(SeoRoute::Main(slug)) => {
+            let found = crate::db::status_pages::get_page_by_slug(&state.pool, &slug)
+                .await
+                .unwrap_or_else(|error| {
+                    tracing::warn!(error = %format!("{error:#}"), "status page SEO unreadable");
+                    None
+                });
+            Some(status_seo::head_for(found.as_ref()))
+        }
+        Some(SeoRoute::Other) => Some(status_seo::noindex_head()),
+        None => None,
+    };
+    let html = Html { nonce: nonce.as_deref(), status_page: page.as_deref(), seo: seo.as_ref() };
 
     if let Some(response) = respond_with(path, &html) {
         return response;
@@ -66,6 +84,36 @@ struct Html<'a> {
     /// Slug de la page de statut dont c'est le domaine public : l'interface
     /// l'affiche à la racine (voir `crate::status_host`).
     status_page: Option<&'a str>,
+    /// Balises de référencement d'une route de page de statut.
+    seo: Option<&'a Head>,
+}
+
+/// Route servie par l'index de l'interface qui concerne une page de statut.
+#[derive(Debug, PartialEq, Eq)]
+enum SeoRoute {
+    /// La page elle-même : `/s/<slug>`, ou la racine de son domaine.
+    Main(String),
+    /// Ses variantes (`/embed`, `/confirm`, `/unsubscribe`) : jamais indexées.
+    Other,
+}
+
+/// `path` sans `/` initial ; `host_slug` : la page dont c'est le domaine.
+fn seo_route(path: &str, host_slug: Option<&str>) -> Option<SeoRoute> {
+    let path = path.strip_suffix('/').unwrap_or(path);
+    if path.is_empty() {
+        return host_slug.map(|slug| SeoRoute::Main(slug.to_string()));
+    }
+    let rest = path.strip_prefix("s/")?;
+    let (slug, tail) = rest.split_once('/').map_or((rest, None), |(slug, tail)| (slug, Some(tail)));
+    let valid = (2..=40).contains(&slug.len())
+        && slug.bytes().all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-');
+    if !valid {
+        return None;
+    }
+    Some(match tail {
+        None => SeoRoute::Main(slug.to_string()),
+        Some(_) => SeoRoute::Other,
+    })
 }
 
 fn respond_with(path: &str, html: &Html<'_>) -> Option<Response> {
@@ -92,6 +140,12 @@ fn respond_with(path: &str, html: &Html<'_>) -> Option<Response> {
         }
         if let Some(slug) = html.status_page {
             page = with_status_page(&page, slug);
+        }
+        if let Some(head) = html.seo
+            && let Ok(text) = std::str::from_utf8(&page)
+        {
+            page = status_seo::apply(text, head).into_bytes();
+            response = response.header("x-robots-tag", head.robots);
         }
         Body::from(page)
     } else {
@@ -183,6 +237,18 @@ mod tests {
         );
         // Un slug qui ne serait pas le nôtre ne touche pas à la page.
         assert_eq!(with_status_page(&page, "a\"><script>"), page);
+    }
+
+    #[test]
+    fn only_status_page_routes_get_seo_tags() {
+        assert_eq!(seo_route("s/acme", None), Some(SeoRoute::Main("acme".into())));
+        assert_eq!(seo_route("s/acme/", None), Some(SeoRoute::Main("acme".into())));
+        assert_eq!(seo_route("s/acme/embed", None), Some(SeoRoute::Other));
+        assert_eq!(seo_route("s/acme/confirm", None), Some(SeoRoute::Other));
+        assert_eq!(seo_route("", Some("acme")), Some(SeoRoute::Main("acme".into())));
+        assert_eq!(seo_route("", None), None);
+        assert_eq!(seo_route("targets/3", None), None);
+        assert_eq!(seo_route("s/A'; DROP", None), None);
     }
 
     #[test]

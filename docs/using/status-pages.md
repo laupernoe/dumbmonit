@@ -37,6 +37,15 @@ read (it defaults to the monitor name — you may prefer "Website" to
 "nginx-front-01") and, optionally, a **group** ("Network", "Storage"). Groups
 become blocks on the page, in the order you arrange the services.
 
+**Groups of monitors.** Above the search box, tick a whole monitor group (the
+folders of **Monitors**) to show all of it. A ticked group is live: a monitor
+added to the folder later appears on the page by itself and a removed one
+disappears. Open a group to see its monitors; the group's box is partly ticked
+when only some of them are ticked one by one. The monitors of a ticked group
+are shown under the group's name, and a monitor that is both ticked on its own
+and part of a ticked group appears once (it keeps its own label). Groups are
+matched by folder name: renaming a folder in **Monitors** unticks it here.
+
 Save, and the link is ready to copy. The page refreshes itself every minute.
 
 ### Look
@@ -163,6 +172,22 @@ windows that name a monitor surface this way; the window's name and comment stay
 private.
 
 An announcement is shown on one page or on **all pages**.
+
+### Past incidents
+
+When you set DumbMonit up, enter the incidents you already had. In **New
+announcement** (kind *Incident*), fill in **Started at** (your local time; empty
+means now; the future is refused) and, for an incident that is already over,
+**Resolved at**. Add dated **updates** (*Investigating*, *Identified*,
+*Monitoring*, *Resolved*), each with its own date: they are sorted by time, must
+fall between the start and the resolution, and nothing can follow the resolution.
+
+An incident entered with a resolution is saved as *Resolved* and **nobody is
+notified**: no subscriber email is sent. It appears in the history and in the
+day-by-day bars and calendar at its real date. When you post an update to an
+existing incident, **Date and time** works the same way: empty means now (and
+subscribers are told); a past date completes the history without notifying
+anyone. Times are stored in UTC.
 
 ### Email subscribers
 
@@ -378,6 +403,32 @@ location / { return 404; }
 render. Forward `X-Forwarded-Proto` and `X-Forwarded-Host` so that the RSS
 feed links to the right address, and set the public URL (see above) so that
 subscriber emails do too.
+
+### Search engines (SEO) {#seo}
+
+A published page has an **SEO** block in its editor. By default the page is not
+indexed: it answers `noindex, nofollow` (meta tag and `X-Robots-Tag` header).
+
+- **Let search engines index this page** switches to `index, follow`, adds the
+  page to `/sitemap.xml` and lets `/robots.txt` allow it. Everything else on the
+  instance stays closed to robots.
+- **SEO title** (about 60 characters), **meta description** (about 155),
+  **keywords**, **canonical URL**, **share image** (Open Graph / Twitter),
+  **language** and **site or organisation name**. A field left empty uses a
+  value generated from the page name, shown as its placeholder. A live preview
+  shows the result as a search engine draws it.
+- **Copy the prompt for an AI** copies a prompt filled with the page's name,
+  organisation, listed services, language and address. Paste it in ChatGPT (or
+  any assistant), then use **Paste the result** to fill the fields from its JSON
+  answer (`title`, `description`, `keywords`, `canonical`, `image`, `lang`,
+  `site_name`). Invalid fields are left out with a message.
+
+The tags are written by the server into the HTML of `/s/<address>` (and of the
+root of a [custom domain](#custom-domain)): `<title>`, description, robots,
+canonical, Open Graph, Twitter card, language and JSON-LD data. Crawlers and
+link previews do not run JavaScript, so they read them as is. A page that is a
+draft, unknown or not indexable never shows its title, and the `/embed`,
+`/confirm` and `/unsubscribe` variants are never indexed.
 
 ### Feed and document
 

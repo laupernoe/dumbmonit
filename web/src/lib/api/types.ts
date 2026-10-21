@@ -1509,6 +1509,22 @@ export interface StatusPageItem {
 	position: number;
 }
 
+/** Search-engine settings of a status page; an empty text means "generated default". */
+export interface StatusPageSeo {
+	/** `true`: `index, follow`; `false` (default): `noindex, nofollow`. */
+	index: boolean;
+	title: string;
+	description: string;
+	keywords: string;
+	/** Absolute http(s) URL, or empty. */
+	canonical: string;
+	/** Share image (Open Graph / Twitter), absolute http(s) URL, or empty. */
+	image: string;
+	/** Language tag (`en`, `pt-BR`), empty: `en`. */
+	lang: string;
+	site_name: string;
+}
+
 export interface StatusPage {
 	id: number;
 	slug: string;
@@ -1539,6 +1555,9 @@ export interface StatusPage {
 	subscribe_channel_id: number | null;
 	/** Public host name serving this page at `/` (`status.example.com`); `null`: none. */
 	domain: string | null;
+	seo: StatusPageSeo;
+	/** Checked monitor folders (dynamic): their current members are shown. */
+	groups: string[];
 	items: StatusPageItem[];
 }
 
@@ -1563,6 +1582,10 @@ export interface StatusPagePayload {
 	subscribe_channel_id?: number | null;
 	/** Public host name; `null` or `''` removes it. Omitted: kept. */
 	domain?: string | null;
+	/** Omitted: kept. */
+	seo?: StatusPageSeo;
+	/** Checked monitor folders; omitted: kept, `[]`: none. */
+	groups?: string[];
 }
 
 /** Email subscriber of a status page (admin view; the token never leaves the server). */
@@ -1626,11 +1649,26 @@ export interface IncidentPayload {
 	ends_at?: string;
 	/** First message of the timeline (creation only). */
 	body?: string;
+	/**
+	 * Dated messages of the timeline (creation only), to enter a past incident.
+	 * An incident cannot start, end or be updated in the future; with `ends_at`
+	 * (or a closing update) it is created resolved and nobody is notified.
+	 */
+	updates?: IncidentNewUpdate[];
+}
+
+export interface IncidentNewUpdate {
+	status: IncidentStatus;
+	body: string;
+	/** UTC instant; omitted: same as the previous message (the start for the first). */
+	at?: string;
 }
 
 export interface IncidentUpdatePayload {
 	status?: IncidentStatus;
 	body: string;
+	/** Past date of the message, to complete a history; omitted: now, and subscribers are notified. */
+	at?: string;
 }
 
 // Public document of `GET /api/public/status/{slug}`: no ids, no addresses.
@@ -1730,6 +1768,17 @@ export interface PublicStatus {
 		logo_url: string | null;
 		/** The page offers email subscription (an SMTP channel is chosen). */
 		subscribe: boolean;
+		/** Effective search-engine values (settings, or defaults built from the page name). */
+		seo?: {
+			indexable: boolean;
+			title: string;
+			description: string;
+			keywords: string;
+			canonical?: string;
+			image?: string;
+			lang: string;
+			site_name: string;
+		};
 	};
 	overall: PublicOverall;
 	generated_at: string;

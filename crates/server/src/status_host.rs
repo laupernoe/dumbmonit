@@ -214,7 +214,7 @@ fn allowed(path: &str, slug: &str) -> Allowed {
     {
         return Allowed::No;
     }
-    if path == "/" {
+    if matches!(path, "/" | "/robots.txt" | "/sitemap.xml") {
         return Allowed::Page;
     }
     if let Some(rest) = path.strip_prefix("/s/").and_then(|rest| rest.strip_prefix(slug)) {
