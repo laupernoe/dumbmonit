@@ -1199,7 +1199,13 @@ mod tests {
             parent_id: None,
             interval: Duration::from_secs(60),
             enabled: true,
-            tags: [("allow_private_targets".to_string(), "true".to_string())].into(),
+            // Budget de la sonde HTTP au maximum (5 s par défaut) : elle reste
+            // pendue bien au-delà de la période des rapports.
+            tags: [
+                ("allow_private_targets".to_string(), "true".to_string()),
+                ("timeout_seconds".to_string(), "60".to_string()),
+            ]
+            .into(),
             credential: dumbmonit_proto::Credential::None,
             group_name: String::new(),
             position: 0,
@@ -1228,7 +1234,7 @@ mod tests {
                 tokio::time::sleep(Duration::from_millis(50)).await;
             }
             // …et le rapport suivant de la machine part à son heure (période de
-            // 5 s), sans attendre la fin de la sonde (10 s par requête au moins).
+            // 5 s), sans attendre la fin de la sonde (60 s).
             let before = calls.count("POST", "/api/ingest");
             let stuck = std::time::Instant::now();
             while calls.count("POST", "/api/ingest") <= before {
