@@ -2056,22 +2056,22 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 .collect()
         } else {
             day_starts
-            .iter()
-            .zip(&incidents_per_day)
-            .map(|(&day, &count)| DayBucket {
-                date: NaiveDate::from_ymd_opt(1970, 1, 1)
-                    .and_then(|epoch| epoch.checked_add_signed(TimeDelta::seconds(day)))
-                    .map(|date| date.format("%Y-%m-%d").to_string())
-                    .unwrap_or_default(),
-                uptime_pct: daily.get(&day).map(|v| round(*v)),
-                // Une journée sans mesure n'a pas de minutes de panne : elle est
-                // inconnue, pas parfaite.
-                down_minutes: daily.get(&day).map(|_| {
-                    daily_down.get(&day).map_or(0, |minutes| minutes.round().max(0.0) as u32)
-                }),
-                incidents: count,
-            })
-            .collect()
+                .iter()
+                .zip(&incidents_per_day)
+                .map(|(&day, &count)| DayBucket {
+                    date: NaiveDate::from_ymd_opt(1970, 1, 1)
+                        .and_then(|epoch| epoch.checked_add_signed(TimeDelta::seconds(day)))
+                        .map(|date| date.format("%Y-%m-%d").to_string())
+                        .unwrap_or_default(),
+                    uptime_pct: daily.get(&day).map(|v| round(*v)),
+                    // Une journée sans mesure n'a pas de minutes de panne : elle est
+                    // inconnue, pas parfaite.
+                    down_minutes: daily.get(&day).map(|_| {
+                        daily_down.get(&day).map_or(0, |minutes| minutes.round().max(0.0) as u32)
+                    }),
+                    incidents: count,
+                })
+                .collect()
         };
         let key = unique_key(&item.label, &mut keys);
         let public_item = PublicItem {
