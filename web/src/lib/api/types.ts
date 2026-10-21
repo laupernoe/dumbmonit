@@ -595,7 +595,7 @@ export interface CollectorRequirement {
 }
 
 /** Input shapes a collector option can ask for. */
-export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select' | 'checklist' | 'rows';
+export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select' | 'checklist' | 'rows' | 'agent';
 
 /** One tick box of a `checklist` option. */
 export interface CollectorOptionItem {
@@ -743,7 +743,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 	};
 }
 
-const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select', 'checklist', 'rows'];
+const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select', 'checklist', 'rows', 'agent'];
 
 /**
  * Fills in an option so that it is always displayable.

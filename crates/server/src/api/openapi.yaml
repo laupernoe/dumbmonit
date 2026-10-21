@@ -6498,7 +6498,9 @@ components:
         placeholder: { type: string }
         default: { type: string }
         required: { type: boolean }
-        input: { type: string }
+        input:
+          type: string
+          description: "`text`, `number`, `boolean`, `select`, `checklist`, `rows`, or `agent`: a choice among the agents known to the server, stored as the id of the agent's monitor (blank: none). Unknown values are shown as text."
         choices:
           type: array
           items: { type: string }
