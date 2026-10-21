@@ -5516,6 +5516,8 @@
 	"settings_logs_export_last_day": "Последний день",
 	"settings_logs_export_last_days": "Последние {days} дн.",
 	"settings_logs_export_period": "Период",
+	"settings_logs_export_since": "Журналы доступны с {date}.",
+	"settings_logs_export_since_short": "Выбранный период начинается раньше: экспорт содержит только журналы начиная с {date}.",
 	"settings_logs_export_title": "Экспорт",
 	"settings_logs_form_add": "Добавить получателя",
 	"settings_logs_form_clear_secrets": "Удалить сохранённые секреты",
@@ -6989,6 +6991,7 @@
 	"topology_legend_backup": "Резервная копия на",
 	"topology_legend_down": "Недоступен",
 	"topology_legend_firewall": "Через межсетевой экран",
+	"topology_legend_hosted": "Работает на виртуальной машине",
 	"topology_legend_hypervisor": "Размещён на гипервизоре",
 	"topology_legend_lldp": "Подключён кабелем к (LLDP)",
 	"topology_legend_parent": "Зависит от (заданный родитель)",
@@ -7004,6 +7007,7 @@
 	"topology_open": "Карта",
 	"topology_page_title": "Карта — DumbMonit",
 	"topology_palette_detail": "Топология всех мониторов, для печати",
+	"topology_panel_addresses": "IP-адреса",
 	"topology_panel_cabled": "Подключено к (LLDP)",
 	"topology_panel_close": "Закрыть подробности",
 	"topology_panel_dependents": "Зависят от него ({count})",
@@ -7045,6 +7049,7 @@
 	"topology_site_via_tag": "тег площадки",
 	"topology_source_backup": "Резервное копирование",
 	"topology_source_firewall": "Межсетевой экран",
+	"topology_source_hosted": "Работает на",
 	"topology_source_hypervisor": "Гипервизор",
 	"topology_source_lldp": "LLDP",
 	"topology_source_parent": "Родитель",
@@ -7400,7 +7405,5 @@
 	"worldmap_verdict_idle": "Не опрошено",
 	"worldmap_verdict_ok": "Всё работает",
 	"worldmap_verdict_warn": "Требует внимания",
-	"worldmap_view_world": "Мир",
-	"settings_logs_export_since": "Журналы доступны с {date}.",
-	"settings_logs_export_since_short": "Выбранный период начинается раньше: экспорт содержит только журналы начиная с {date}."
+	"worldmap_view_world": "Мир"
 }

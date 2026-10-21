@@ -5300,6 +5300,8 @@
 	"settings_logs_export_last_day": "最近 1 天",
 	"settings_logs_export_last_days": "最近 {days} 天",
 	"settings_logs_export_period": "时间段",
+	"settings_logs_export_since": "日志自 {date} 起可用。",
+	"settings_logs_export_since_short": "所选时间段早于此日期：导出仅包含 {date} 之后的日志。",
 	"settings_logs_export_title": "导出",
 	"settings_logs_form_add": "添加目标",
 	"settings_logs_form_clear_secrets": "清除已保存的密钥",
@@ -6737,6 +6739,7 @@
 	"topology_legend_backup": "备份到",
 	"topology_legend_down": "故障",
 	"topology_legend_firewall": "经由防火墙",
+	"topology_legend_hosted": "运行在虚拟机上",
 	"topology_legend_hypervisor": "由虚拟化主机托管",
 	"topology_legend_lldp": "线缆连接到（LLDP）",
 	"topology_legend_parent": "依赖于（声明的父级）",
@@ -6752,6 +6755,7 @@
 	"topology_open": "地图",
 	"topology_page_title": "地图 — DumbMonit",
 	"topology_palette_detail": "所有监控项的拓扑图，可打印",
+	"topology_panel_addresses": "IP 地址",
 	"topology_panel_cabled": "线缆连接到（LLDP）",
 	"topology_panel_close": "关闭详情",
 	"topology_panel_dependents": "依赖它的项（{count}）",
@@ -6790,6 +6794,7 @@
 	"topology_site_via_tag": "站点标签",
 	"topology_source_backup": "备份",
 	"topology_source_firewall": "防火墙",
+	"topology_source_hosted": "运行于",
 	"topology_source_hypervisor": "虚拟化主机",
 	"topology_source_lldp": "LLDP",
 	"topology_source_parent": "父级",
@@ -7130,7 +7135,5 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界",
-	"settings_logs_export_since": "日志自 {date} 起可用。",
-	"settings_logs_export_since_short": "所选时间段早于此日期：导出仅包含 {date} 之后的日志。"
+	"worldmap_view_world": "世界"
 }
