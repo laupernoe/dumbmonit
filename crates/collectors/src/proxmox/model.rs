@@ -295,6 +295,21 @@ pub struct StorageEntry {
     pub shared: Option<Num>,
 }
 
+/// `GET /api2/json/storage?type=pbs` : la configuration d'un stockage, dont
+/// le serveur de sauvegarde visé.
+#[derive(Debug, Default, Deserialize)]
+pub struct StorageConfig {
+    pub storage: String,
+    #[serde(rename = "type", default)]
+    pub storage_type: Option<String>,
+    #[serde(default)]
+    pub server: Option<String>,
+    #[serde(default)]
+    pub datastore: Option<String>,
+    #[serde(default)]
+    pub namespace: Option<String>,
+}
+
 impl StorageEntry {
     pub fn is_active(&self) -> bool {
         Num::flag(self.active)

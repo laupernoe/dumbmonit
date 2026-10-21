@@ -20,6 +20,7 @@ pub mod dummy;
 pub mod fortigate;
 pub mod homeassistant;
 pub mod http;
+pub mod ifaddr;
 pub mod kubernetes;
 pub mod log_gate;
 pub mod mdaemon;

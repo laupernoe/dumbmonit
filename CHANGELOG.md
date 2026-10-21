@@ -7,6 +7,36 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Map: Proxmox clusters, backups, firewalls and subnets.** A Proxmox cluster
+  is drawn as cluster, one node per Proxmox node (online or offline), then its
+  VMs and containers, stopped ones included; a single-node Proxmox keeps its
+  guests directly under it. A monitor that matches a guest is drawn at that
+  place, not twice. A Proxmox with a `pbs` storage is linked "Backed up to" the
+  monitored PBS it targets (read from the storage configuration, nothing is
+  drawn without the right to read it), and a PBS and a Proxmox VE monitor that
+  point at the same machine are tied by a "Same host" link instead of sitting
+  apart under the same name. Firewalls (OPNsense, pfSense, FortiGate, Sophos,
+  MikroTik) lead their site, and the devices of the networks they serve hang
+  under them with a "Through the firewall" link (a declared parent always wins).
+  A new "Group by subnet" switch frames each site by subnet, with the VLAN and
+  its name when the firewall reports them ("Unknown network" otherwise), and the
+  list view shows the subnet. Links between sites now leave and enter through the
+  edge of the site frames in smooth curves instead of crossing the nodes.
+- **MDaemon and SecurityGateway are monitored through the Windows agent.** The
+  forms now open with an "Agent required on the mail server" box that explains
+  why (queues, sessions, Windows services and disk space can only be read on the
+  server itself), opens the Windows agent install flow and lets you pick the
+  agent installed on the server (pre-selected when its host name matches the
+  address), instead of finding it implicitly. The agent detects MDaemon and
+  SecurityGateway by itself and reads their Windows services (state and start
+  mode), version, queue folders (messages and age of the oldest one) and the free
+  space of their data volume. The monitor page is split into "Read by the agent"
+  (Windows services, queues, sessions, disk), "Network services" and "API", and
+  shows a banner (not an alert) when no agent is linked, it is silent, or it does
+  not see the product. The MDaemon XML API account is now optional (version
+  only); the SecurityGateway API key stays recommended for its counters. New
+  default rules: Mail server Windows service stopped, Mail queue stuck and
+  MDaemon queue frozen.
 - **SEO settings for public status pages.** A published page has a "Search
   engines (SEO)" block: an "index this page" switch (off by default: `noindex,
   nofollow`), SEO title, meta description, keywords, canonical URL, share image,
