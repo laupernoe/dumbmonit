@@ -16,6 +16,7 @@ use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
 use crate::collect::ipsec::IpsecProbe;
 use crate::collect::libvirt::LibvirtProbe;
+use crate::collect::mail_server::PlatformProbe as MailServerProbe;
 use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
 use crate::collect::registry::UpdateChecker;
@@ -85,6 +86,8 @@ pub struct Agent {
     /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
     /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
     perf_counters: PerfCountersProbe,
+    /// MDaemon et SecurityGateway : services, files, version (Windows).
+    mail_server: MailServerProbe,
     buffer: PendingBuffer,
     client: PushClient,
     backoff: Backoff,
@@ -155,6 +158,7 @@ impl Agent {
             zfs: ZfsProbe::new(&config.zfs),
             libvirt: LibvirtProbe::new(&config.libvirt),
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
+            mail_server: MailServerProbe::for_platform(config.perf_counters.mdaemon),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
             relay: None,
@@ -207,6 +211,7 @@ impl Agent {
             snapshot.libvirt = self.libvirt.read().await;
         }
         snapshot.perf_counters = self.perf_counters.read();
+        snapshot.mail_server = self.mail_server.read().await;
 
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.

@@ -22,6 +22,21 @@ All notable changes to this project are documented here. The format follows
   its name when the firewall reports them ("Unknown network" otherwise), and the
   list view shows the subnet. Links between sites now leave and enter through the
   edge of the site frames in smooth curves instead of crossing the nodes.
+- **MDaemon and SecurityGateway are monitored through the Windows agent.** The
+  forms now open with an "Agent required on the mail server" box that explains
+  why (queues, sessions, Windows services and disk space can only be read on the
+  server itself), opens the Windows agent install flow and lets you pick the
+  agent installed on the server (pre-selected when its host name matches the
+  address), instead of finding it implicitly. The agent detects MDaemon and
+  SecurityGateway by itself and reads their Windows services (state and start
+  mode), version, queue folders (messages and age of the oldest one) and the free
+  space of their data volume. The monitor page is split into "Read by the agent"
+  (Windows services, queues, sessions, disk), "Network services" and "API", and
+  shows a banner (not an alert) when no agent is linked, it is silent, or it does
+  not see the product. The MDaemon XML API account is now optional (version
+  only); the SecurityGateway API key stays recommended for its counters. New
+  default rules: Mail server Windows service stopped, Mail queue stuck and
+  MDaemon queue frozen.
 - **SEO settings for public status pages.** A published page has a "Search
   engines (SEO)" block: an "index this page" switch (off by default: `noindex,
   nofollow`), SEO title, meta description, keywords, canonical URL, share image,

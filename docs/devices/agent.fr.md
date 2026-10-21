@@ -124,8 +124,10 @@ Internet bas** / **Débit montant Internet bas** / **Latence Internet élevée**
 [Sauvegardes restic et Borg](#restic-and-borg-backups) et
 [Test de débit Internet](#internet-speed-test).
 
-Sur un serveur Windows qui fait tourner MDaemon, trois autres surveillent
-ses files : **File de mail MDaemon qui grandit**, **File Bad MDaemon non
+Sur un serveur Windows qui fait tourner MDaemon ou SecurityGateway, **Service
+Windows du serveur mail arrêté** surveille leurs services, et pour MDaemon
+cinq autres surveillent ses files : **File de mail MDaemon qui grandit**,
+**File de mail bloquée**, **File MDaemon gelée**, **File Bad MDaemon non
 vide** et **File Retry MDaemon élevée** (voir
 [Règles](../alerting/rules.md#mdaemon-and-securitygateway)). Sur un hôte
 Hyper-V, trois surveillent les machines virtuelles : **Santé de VM
@@ -638,6 +640,18 @@ la page [MDaemon](mdaemon.md#mail-queues-through-the-agent).
 `mdaemon: false` ne le fait jamais. La présence du service est vérifiée à
 nouveau toutes les dix périodes, un MDaemon installé après l'agent est
 donc pris en compte sans redémarrage.
+
+**Serveurs mail (MDaemon et SecurityGateway).** Sur la même détection,
+l’agent lit aussi, sans aucun réglage, ce que seul le serveur lui-même peut
+dire : l’état et le mode de démarrage des services Windows du produit, la
+version de son exécutable, le nombre de messages et l’âge du plus ancien dans
+ses dossiers de files, et l’espace libre du volume qui contient ses données.
+Il interroge Windows par un appel PowerShell par période (toutes les dix
+périodes tant qu’aucun produit n’est trouvé). Les séries sont `agent_mail_*`
+et sont décrites sur les pages [MDaemon](mdaemon.md#mail-queues-through-the-agent)
+et [SecurityGateway](securitygateway.md#read-by-the-agent), qui disent aussi
+comment une surveillance est liée à son agent. `mdaemon: false` désactive
+cela aussi.
 
 **Hyper-V.** Quand le service Hyper-V Virtual Machine Management
 (`vmms`) existe, l'agent lit les objets de performance d'Hyper-V ; voir
