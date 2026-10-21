@@ -494,7 +494,7 @@ async fn an_oversized_command_report_is_cut_down_by_the_server() {
 
 #[tokio::test]
 async fn the_machine_key_travels_in_a_header_and_the_legacy_query_still_works() {
-    let app = TestApp::configured().await;
+    let app = setup_with_inventory().await;
     let (enrolment, secret, target, admin) = bound_machine(&app).await;
     let queued = app
         .post(&format!("/api/targets/{target}/containers/web/restart"), json!({}), Some(&admin))
