@@ -2094,8 +2094,8 @@ export interface RelayAgent {
 /** Where a link of the map comes from. */
 export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'lldp';
 
-/** Where a node's site comes from: its `site` tag, an agent's declaration, or the relay agent that polls it. */
-export type TopologySiteSource = 'tag' | 'agent' | 'relay';
+/** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
+export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
 
 /** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
 export interface TopologyNode {

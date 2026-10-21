@@ -30,7 +30,7 @@
 	import MapSheet from '#lib/components/topology/MapSheet.svelte';
 	import Legend from '#lib/components/topology/Legend.svelte';
 	import { buildGraph, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
-	import { exportPng, exportSvg } from '#lib/components/topology/export.js';
+	import { ExportError, exportPng, exportSvg } from '#lib/components/topology/export.js';
 	import WorldView from '#lib/components/worldmap/WorldView.svelte';
 	import { Download, Network } from 'lucide-svelte';
 
@@ -132,9 +132,15 @@
 
 	const targets = $derived(new Map(alertsStore.targets.map((t) => [t.id, t])));
 
+	/** A node is drawn once, whatever the server sent. */
+	function uniqueById<T extends { id: string }>(list: T[]): T[] {
+		const seen = new Set<string>();
+		return list.filter((n) => !seen.has(n.id) && !!seen.add(n.id));
+	}
+
 	/** Every node with its live state. */
 	const allNodes = $derived.by((): MapNode[] =>
-		(topology?.nodes ?? []).map((n) => {
+		uniqueById(topology?.nodes ?? []).map((n) => {
 			const target = n.target_id !== null ? targets.get(n.target_id) : undefined;
 			return {
 				id: n.id,
@@ -190,7 +196,8 @@
 			if (action === 'svg') exportSvg(sheet, filename('svg'));
 			else await exportPng(sheet, filename('png'));
 		} catch (error) {
-			exportError = error;
+			// A local failure (drawing the image): never presented as a network one.
+			exportError = error instanceof ExportError ? new Error(m.topology_export_error_draw()) : error;
 		} finally {
 			sheetWanted = false;
 		}
@@ -302,7 +309,7 @@
 			<p class="mb-3 text-sm text-ink-2">{m.topology_no_links()}</p>
 		{/if}
 		{#if exportError}
-			<div class="mb-3"><ErrorNotice error={exportError} title={m.topology_export_error()} /></div>
+			<div class="mb-3"><ErrorNotice error={exportError} title={m.topology_export_error()} hint={m.topology_export_error_hint()} local /></div>
 		{/if}
 
 		{#if view === 'map'}
