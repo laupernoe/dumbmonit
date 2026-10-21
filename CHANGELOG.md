@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Map: Proxmox clusters, backups, firewalls and subnets.** A Proxmox cluster
+  is drawn as cluster, one node per Proxmox node (online or offline), then its
+  VMs and containers, stopped ones included; a single-node Proxmox keeps its
+  guests directly under it. A monitor that matches a guest is drawn at that
+  place, not twice. A Proxmox with a `pbs` storage is linked "Backed up to" the
+  monitored PBS it targets (read from the storage configuration, nothing is
+  drawn without the right to read it), and a PBS and a Proxmox VE monitor that
+  point at the same machine are tied by a "Same host" link instead of sitting
+  apart under the same name. Firewalls (OPNsense, pfSense, FortiGate, Sophos,
+  MikroTik) lead their site, and the devices of the networks they serve hang
+  under them with a "Through the firewall" link (a declared parent always wins).
+  A new "Group by subnet" switch frames each site by subnet, with the VLAN and
+  its name when the firewall reports them ("Unknown network" otherwise), and the
+  list view shows the subnet. Links between sites now leave and enter through the
+  edge of the site frames in smooth curves instead of crossing the nodes.
 - **SEO settings for public status pages.** A published page has a "Search
   engines (SEO)" block: an "index this page" switch (off by default: `noindex,
   nofollow`), SEO title, meta description, keywords, canonical URL, share image,

@@ -489,6 +489,16 @@ pub fn interface_samples(interfaces: &[InterfaceView], ts_ms: i64) -> Vec<Sample
             sample.labels.insert("interface".to_string(), identifier.clone());
             sample.labels.insert("device".to_string(), interface.device.clone());
             sample.labels.insert("address".to_string(), address.clone());
+            // La description et le VLAN servent à nommer les zones de la carte.
+            sample.labels.insert(
+                "description".to_string(),
+                interface.description.clone().unwrap_or_default(),
+            );
+            let vlan = crate::ifaddr::vlan_hint(&interface.device)
+                .or_else(|| crate::ifaddr::vlan_hint(&identifier));
+            if let Some(tag) = vlan {
+                sample.labels.insert("vlan".to_string(), tag.to_string());
+            }
             samples.push(sample);
         }
     }
