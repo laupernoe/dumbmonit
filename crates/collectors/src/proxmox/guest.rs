@@ -543,9 +543,8 @@ mod tests {
     #[test]
     fn un_agent_sans_reponse_ne_donne_aucune_adresse() {
         // Un agent qui n'a rien à dire renvoie un `result` absent.
-        let vide = serde_json::from_str::<Envelope<AgentInterfaces>>(r#"{"data":{}}"#)
-            .unwrap()
-            .data;
+        let vide =
+            serde_json::from_str::<Envelope<AgentInterfaces>>(r#"{"data":{}}"#).unwrap().data;
         assert!(agent_address_samples("pve1", &machine(), &vide, 1000).is_empty());
     }
 
