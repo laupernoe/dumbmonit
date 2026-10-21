@@ -6845,6 +6845,11 @@ mod tests {
             // MDaemon, compteurs de performance lus par l'agent Windows
             // (`crates/agent/src/collect/perf_counters.rs`).
             "dumbmonit_mdaemon_queue_messages",
+            "dumbmonit_mdaemon_queue_frozen",
+            // Services Windows et dossiers de files, lus par l'agent
+            // (`crates/agent/src/collect/mail_server.rs`).
+            "dumbmonit_agent_mail_service_up",
+            "dumbmonit_agent_mail_queue_oldest_seconds",
             "dumbmonit_securitygateway_service_up",
             "dumbmonit_securitygateway_api_up",
             "dumbmonit_securitygateway_counter",

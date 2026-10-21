@@ -6433,11 +6433,19 @@ mod tests {
             ),
             (
                 "mdaemon",
-                &["services", "request_timeout_seconds", "api_port", "api_tls", "insecure_tls"],
+                &[
+                    "agent_id",
+                    "services",
+                    "request_timeout_seconds",
+                    "api_port",
+                    "api_tls",
+                    "insecure_tls",
+                ],
             ),
             (
                 "securitygateway",
                 &[
+                    "agent_id",
                     "services",
                     "request_timeout_seconds",
                     "api_port",
@@ -6628,6 +6636,10 @@ mod tests {
                         option.default
                     ),
                     "text" => assert!(option.choices.is_empty(), "{contexte} : choix sur un texte"),
+                    // Le choix d'un agent : l'interface liste les agents connus, aucun défaut.
+                    "agent" => {
+                        assert!(option.default.is_empty(), "{contexte} : défaut sur un agent")
+                    }
                     "checklist" => {
                         let items = (option.items)();
                         assert!(!items.is_empty(), "{contexte} : cases à cocher sans entrée");
