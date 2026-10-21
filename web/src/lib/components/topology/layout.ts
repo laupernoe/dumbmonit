@@ -256,6 +256,10 @@ const BLOCK_GAP_X = 48;
 const BLOCK_GAP_Y = 56;
 const FRAME_PAD = 22;
 const FRAME_HEADER = 40;
+/** A site frame's header holds a title with its source under it. */
+const FRAME_HEADER_SITE = 58;
+/** A site frame never gets narrower than its header needs. */
+const FRAME_MIN_WIDTH = 270;
 const SITE_GAP = 140;
 /** Width over height the packing aims for: a landscape screen or sheet. */
 const RATIO = 1.7;
@@ -441,10 +445,11 @@ function cluster(graph: Graph, ids: string[]): Block {
 
 function framed(block: Block, frame: Omit<Frame, 'x' | 'y' | 'width' | 'height'>): Block {
 	const out = empty();
-	out.w = block.w + FRAME_PAD * 2;
-	out.h = block.h + FRAME_HEADER + FRAME_PAD;
+	const header = frame.kind === 'group' ? FRAME_HEADER : FRAME_HEADER_SITE;
+	out.w = Math.max(block.w + FRAME_PAD * 2, frame.kind === 'group' ? 0 : FRAME_MIN_WIDTH);
+	out.h = block.h + header + FRAME_PAD;
 	out.frames.push({ ...frame, x: 0, y: 0, width: out.w, height: out.h });
-	paste(out, block, FRAME_PAD, FRAME_HEADER);
+	paste(out, block, (out.w - block.w) / 2, header);
 	return out;
 }
 
