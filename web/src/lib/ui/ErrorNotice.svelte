@@ -15,15 +15,17 @@
 		onretry?: () => void;
 		/** Replaces the generic recovery hint when the caller knows better. */
 		hint?: string;
+		/** A failure of the page itself (nothing was sent to the server): no network or server advice. */
+		local?: boolean;
 		children?: Snippet;
 		class?: string;
 	}
 
-	let { error, title, onretry, hint, children, class: className = '' }: Props = $props();
+	let { error, title, onretry, hint, local = false, children, class: className = '' }: Props = $props();
 	const api = $derived(toApiError(error));
 	/** Contextual next step, derived from the failure type. */
 	const help = $derived.by(() => {
-		if (api.demo || api.missing) return null;
+		if (api.demo || api.missing || local) return null;
 		if (api.status === 0) return m.ui_error_notice_help_network();
 		if (api.status === 403) return m.ui_error_notice_help_forbidden();
 		if (api.status >= 500) return m.ui_error_notice_help_server();

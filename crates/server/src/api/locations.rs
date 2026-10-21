@@ -108,7 +108,7 @@ pub struct LocationsView {
     pub unplaced: Vec<TargetId>,
 }
 
-async fn load(pool: &SqlitePool) -> ApiResult<Vec<LocationRow>> {
+pub async fn load(pool: &SqlitePool) -> ApiResult<Vec<LocationRow>> {
     let rows = sqlx::query(
         "SELECT id, name, address, latitude, longitude, site, main_site FROM locations
          ORDER BY name COLLATE NOCASE, id",

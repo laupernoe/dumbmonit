@@ -22,6 +22,9 @@
 //! du contrôleur), le site que déclare son agent ou son agent relais, puis le
 //! nom de l'agent relais qui l'interroge — un relais sert justement à joindre
 //! un réseau distant. Sans aucun de ces indices, le nœud est au site principal.
+//! L'emplacement affecté à la main (`targets.location_id`, « Place at ») passe
+//! avant tout le reste : sur un emplacement distant, la cible est dessinée dans
+//! le cadre de ce site ; sur l'emplacement du site principal, au site principal.
 //!
 //! Un invité ou un voisin n'est relié à un équipement surveillé que si son nom
 //! désigne une seule cible : un nom ambigu ne crée aucun lien plutôt qu'un lien
@@ -142,6 +145,7 @@ pub struct Neighbor {
 pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
     let targets = load_targets(&state).await?;
     let sites = agent_sites(&state).await?;
+    let placed = placed_sites(&state, &targets, &sites).await?;
 
     let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
     let (guests, neighbors, metrics_available) = if targets.is_empty() {
@@ -160,7 +164,7 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
         )
     };
 
-    let (nodes, edges) = build(&targets, &sites, &guests, &neighbors);
+    let (nodes, edges) = build_placed(&targets, &sites, &placed, &guests, &neighbors);
     Ok(Json(TopologyView { nodes, edges, metrics_available }))
 }
 
@@ -209,6 +213,59 @@ pub async fn target_sites(state: &AppState) -> ApiResult<HashMap<TargetId, Optio
     let sites = agent_sites(state).await?;
     let (nodes, _) = build(&targets, &sites, &[], &[]);
     Ok(nodes.into_iter().filter_map(|n| n.target_id.map(|id| (id, n.site))).collect())
+}
+
+/// Site imposé par l'emplacement affecté à une cible : `Some(None)` pour
+/// l'emplacement du site principal, `Some(Some((nom, "location")))` pour un
+/// emplacement distant. Une cible sans affectation n'y figure pas.
+pub type Placed = HashMap<TargetId, Option<(String, &'static str)>>;
+
+/// Lit les affectations d'emplacement et en tire le site de chaque cible placée.
+async fn placed_sites(
+    state: &AppState,
+    targets: &[TargetRow],
+    sites: &HashMap<TargetId, String>,
+) -> ApiResult<Placed> {
+    let assigned = super::locations::assignments(&state.pool).await?;
+    if assigned.is_empty() {
+        return Ok(Placed::new());
+    }
+    let locations = super::locations::load(&state.pool).await?;
+    let (base, _) = build(targets, sites, &[], &[]);
+    let known: Vec<String> = base.into_iter().filter_map(|n| n.site).collect();
+    Ok(placed_from(&assigned, &locations, &known))
+}
+
+/// Le site de chaque cible affectée à un emplacement connu. Un emplacement
+/// distant s'appelle comme le site qu'il représente, à défaut comme lui-même ;
+/// l'orthographe d'un site déjà connu (`known`) est reprise telle quelle pour
+/// que « crissier » et « Crissier » ne fassent pas deux cadres.
+pub fn placed_from(
+    assigned: &HashMap<TargetId, super::locations::LocationId>,
+    locations: &[super::locations::LocationRow],
+    known: &[String],
+) -> Placed {
+    let by_id: HashMap<_, _> = locations.iter().map(|l| (l.id, l)).collect();
+    assigned
+        .iter()
+        .filter_map(|(target, location)| {
+            let location = by_id.get(location)?;
+            if location.main_site {
+                return Some((*target, None));
+            }
+            let name = location_name(location);
+            if name.is_empty() {
+                return Some((*target, None));
+            }
+            let spelled = known.iter().find(|k| k.trim().eq_ignore_ascii_case(&name));
+            Some((*target, Some((spelled.cloned().unwrap_or(name), "location"))))
+        })
+        .collect()
+}
+
+fn location_name(location: &super::locations::LocationRow) -> String {
+    let site = location.site.trim();
+    if site.is_empty() { location.name.trim().to_string() } else { site.to_string() }
 }
 
 /// L'étiquette `site` d'un objet JSON d'étiquettes, si elle est une chaîne non vide.
@@ -332,6 +389,20 @@ impl NameIndex {
         index
     }
 
+    /// Vrai quand `name` désigne au moins une cible autre que `except`, même
+    /// de façon ambiguë.
+    fn is_known(&self, name: &str, except: TargetId) -> bool {
+        let key = host_key(name);
+        [
+            self.exact.get(&name.trim().to_lowercase()),
+            key.as_ref().and_then(|k| self.name_key.get(k)),
+            key.as_ref().and_then(|k| self.address_key.get(k)),
+        ]
+        .into_iter()
+        .flatten()
+        .any(|tier| tier.iter().any(|id| *id != except))
+    }
+
     /// La cible désignée par `name`, autre que `except` : du plus sûr (nom
     /// identique) au plus large (même hôte dans l'adresse). Plusieurs candidats
     /// au premier palier qui en trouve : ambigu, aucun lien.
@@ -368,6 +439,17 @@ pub fn build(
     guests: &[Guest],
     neighbors: &[Neighbor],
 ) -> (Vec<NodeView>, Vec<EdgeView>) {
+    build_placed(targets, sites, &Placed::new(), guests, neighbors)
+}
+
+/// Comme [`build`], avec les sites imposés par les emplacements affectés.
+pub fn build_placed(
+    targets: &[TargetRow],
+    sites: &HashMap<TargetId, String>,
+    placed: &Placed,
+    guests: &[Guest],
+    neighbors: &[Neighbor],
+) -> (Vec<NodeView>, Vec<EdgeView>) {
     let by_id: HashMap<TargetId, &TargetRow> = targets.iter().map(|t| (t.id, t)).collect();
     // Agents qui relaient au moins une cible connue.
     let relays: HashSet<TargetId> =
@@ -386,10 +468,17 @@ pub fn build(
             })
             .or_else(|| relays.contains(&t.id).then(|| (t.name.clone(), "relay")))
     };
+    // L'emplacement affecté l'emporte sur tout ce qui se déduit.
+    let own_placed = |t: &TargetRow| -> Option<(String, &'static str)> {
+        match placed.get(&t.id) {
+            Some(site) => site.clone(),
+            None => own(t),
+        }
+    };
     let site_of = |t: &TargetRow| -> Option<(String, &'static str)> {
-        own(t).or_else(|| {
+        own_placed(t).or_else(|| {
             (t.kind == agent::modules::SERVICE_KIND)
-                .then(|| t.parent_id.and_then(|p| by_id.get(&p)).and_then(|h| own(h)))
+                .then(|| t.parent_id.and_then(|p| by_id.get(&p)).and_then(|h| own_placed(h)))
                 .flatten()
         })
     };
@@ -440,6 +529,11 @@ pub fn build(
         let Some(host) = by_id.get(&guest.host) else { continue };
         if let Some(target) = index.find(&guest.name, guest.host) {
             link(node_id(guest.host), node_id(target), "hypervisor", &mut edges);
+            continue;
+        }
+        // Un nom qui désigne plusieurs cibles est une machine surveillée, pas
+        // un invité inconnu : pas de lien (ambigu), mais pas de double non plus.
+        if index.is_known(&guest.name, guest.host) {
             continue;
         }
         let count = per_host.entry(guest.host).or_default();
@@ -629,8 +723,48 @@ mod tests {
         let b = row(3, "web01", "https://web01.lan", "http");
         let guests = vec![Guest { host: 1, name: "web01".into(), container: false, running: true }];
         let (nodes, edges) = build(&[pve, a, b], &HashMap::new(), &guests, &[]);
-        assert_eq!(sources(&edges), vec![("t1", "g1:web01", "hypervisor")]);
-        assert_eq!(nodes.len(), 4);
+        assert!(edges.is_empty(), "ambigu : aucun lien");
+        assert_eq!(nodes.len(), 3, "et aucun double de la machine surveillée");
+    }
+
+    #[test]
+    fn un_emplacement_affecte_place_la_cible_dans_le_cadre_du_site() {
+        use super::super::locations::LocationRow;
+        let loc = |id, name: &str, site: &str, main_site| LocationRow {
+            id,
+            name: name.into(),
+            address: String::new(),
+            latitude: 0.0,
+            longitude: 0.0,
+            site: site.into(),
+            main_site,
+        };
+        let locations = [loc(1, "Siège", "", true), loc(2, "Crissier", "crissier", false)];
+        let relay = row(1, "dm01", "dm01", "agent");
+        let nas = row(2, "nas60", "10.0.0.2", "synology");
+        let fw = row(3, "fw03", "10.0.0.3", "opnsense");
+        let mut svc = row(4, "nas60 · Docker", "nas60#docker", "agent_service");
+        svc.parent_id = Some(2);
+        let sites = HashMap::from([(1, "Crissier".to_string())]);
+        let assigned = HashMap::from([(2, 2), (3, 1)]);
+        let placed = placed_from(&assigned, &locations, &["Crissier".to_string()]);
+        let pve = row(5, "pve1", "pve1", "proxmox");
+        let guests = vec![Guest { host: 2, name: "v9".into(), container: false, running: true }];
+        let (nodes, _) = build_placed(&[relay, nas, fw, svc, pve], &sites, &placed, &guests, &[]);
+        let site = |id: &str| {
+            let n = nodes.iter().find(|n| n.id == id).expect("nœud");
+            (n.site.clone(), n.site_source)
+        };
+        assert_eq!(site("t1"), (Some("Crissier".into()), Some("agent")));
+        assert_eq!(
+            site("t2"),
+            (Some("Crissier".into()), Some("location")),
+            "orthographe du site connu"
+        );
+        assert_eq!(site("t3"), (None, None), "l'emplacement principal ramène au site principal");
+        assert_eq!(site("t4"), (Some("Crissier".into()), Some("location")), "le service suit");
+        assert_eq!(site("g2:v9").0.as_deref(), Some("Crissier"), "l'invité aussi");
+        assert_eq!(site("t5"), (None, None));
     }
 
     #[test]
