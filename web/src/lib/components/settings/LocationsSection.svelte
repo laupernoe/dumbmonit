@@ -23,7 +23,7 @@
 		updateLocation
 	} from '#lib/api/locations.js';
 	import type { Basemap, BasemapMode, LocationPayload, Locations, MapLocation, WallPlace } from '#lib/api/types.js';
-	import { Button, Confirm, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, Disclosure, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
 	import WorldMap, { type WorldPin } from '#lib/components/worldmap/WorldMap.svelte';
 	import { MapPin, Pencil, Plus, Search } from 'lucide-svelte';
 	import { getGeoip, setGeoip } from '#lib/api/opnsense.js';
@@ -411,8 +411,8 @@
 				</Button>
 			{/if}
 
-			<div class="space-y-3 border-t border-line pt-5" role="radiogroup" aria-labelledby="basemap-title">
-				<h3 id="basemap-title" class="text-sm font-semibold text-ink">{m.locations_basemap_title()}</h3>
+			<Disclosure title={m.locations_basemap_title()}>
+			<div class="space-y-3" role="radiogroup" aria-label={m.locations_basemap_title()}>
 				<div class="grid gap-2">
 					{#each MODES as mode (mode.id)}
 						<label class={`flex min-h-10 cursor-pointer items-start gap-3 rounded-lg border px-3 py-2 ${basemap.mode === mode.id ? 'border-signal bg-signal-soft' : 'border-line hover:border-line-strong'}`}>
@@ -440,9 +440,10 @@
 					{#if basemapSaved && !basemapDirty}<span class="text-sm text-signal-ink" role="status">{m.locations_basemap_saved()}</span>{/if}
 				</div>
 			</div>
+			</Disclosure>
 
 			{#if geoip}
-				<div class="space-y-2 border-t border-line pt-5">
+				<div class="space-y-2">
 					<Field label={m.locations_geoip_title()} for="geoip-enabled" inline help={m.locations_geoip_help()}>
 						<Toggle id="geoip-enabled" checked={geoip.enabled} disabled={geoipBusy} onchange={(on) => void toggleGeoip(on)} label={m.locations_geoip_title()} />
 					</Field>

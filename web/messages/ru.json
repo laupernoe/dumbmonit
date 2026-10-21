@@ -38,6 +38,7 @@
 	"alerts_ack_stop_reminding": "Не напоминать в течение",
 	"alerts_ack_unack": "Снять подтверждение",
 	"alerts_ack_until_resolved": "До устранения",
+	"alerts_actions_ack": "Подтвердить",
 	"alerts_bulk_ack": "Подтвердить",
 	"alerts_bulk_done": "Готово: {count}.",
 	"alerts_bulk_ignore": "Игнорировать для этого монитора",
@@ -5389,6 +5390,9 @@
 	"settings_backup_to_update": "обновить: {count}",
 	"settings_backup_without_key": "Без ключа",
 	"settings_backup_write_error": "Не удалось записать резервную копию",
+	"settings_block_connection": "Подключение",
+	"settings_block_off": "Выкл.",
+	"settings_block_on": "Вкл.",
 	"settings_language_auto": "Автоматически (язык браузера)",
 	"settings_language_theme_description": "Сохраняются в этом браузере.",
 	"settings_language_theme_title": "Язык и тема",
@@ -5516,6 +5520,8 @@
 	"settings_logs_export_last_day": "Последний день",
 	"settings_logs_export_last_days": "Последние {days} дн.",
 	"settings_logs_export_period": "Период",
+	"settings_logs_export_since": "Журналы доступны с {date}.",
+	"settings_logs_export_since_short": "Выбранный период начинается раньше: экспорт содержит только журналы начиная с {date}.",
 	"settings_logs_export_title": "Экспорт",
 	"settings_logs_form_add": "Добавить получателя",
 	"settings_logs_form_clear_secrets": "Удалить сохранённые секреты",
@@ -7400,7 +7406,5 @@
 	"worldmap_verdict_idle": "Не опрошено",
 	"worldmap_verdict_ok": "Всё работает",
 	"worldmap_verdict_warn": "Требует внимания",
-	"worldmap_view_world": "Мир",
-	"settings_logs_export_since": "Журналы доступны с {date}.",
-	"settings_logs_export_since_short": "Выбранный период начинается раньше: экспорт содержит только журналы начиная с {date}."
+	"worldmap_view_world": "Мир"
 }

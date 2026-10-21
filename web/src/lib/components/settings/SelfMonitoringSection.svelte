@@ -15,7 +15,7 @@
 	import type { HeartbeatPing, HeartbeatTestResult, SelfMonitoring, SelfMonitoringComponent } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle, Disclosure } from '#lib/ui/index.js';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/install/self-monitoring/';
 	const MIN_INTERVAL = 30;
@@ -246,11 +246,10 @@
 			</section>
 
 			<!-- Heartbeat -->
-			<section class="border-t border-line pt-6">
+			<Disclosure title={m.settings_selfmon_heartbeat_title()}>
 				<div class="flex items-start gap-2">
 					<HeartPulse class="mt-0.5 size-4 shrink-0 text-ink-2" aria-hidden="true" />
 					<div class="min-w-0">
-						<h3 class="font-semibold text-ink">{m.settings_selfmon_heartbeat_title()}</h3>
 						<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_selfmon_heartbeat_intro()}</p>
 						<a
 							href={DOCS_URL}
@@ -365,7 +364,7 @@
 						{/if}
 					</form>
 				{/if}
-			</section>
+			</Disclosure>
 		</div>
 	{/if}
 </Panel>

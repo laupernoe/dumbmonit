@@ -38,6 +38,7 @@
 	"alerts_ack_stop_reminding": "Ne plus me rappeler pendant",
 	"alerts_ack_unack": "Retirer l’acquittement",
 	"alerts_ack_until_resolved": "Jusqu’à résolution",
+	"alerts_actions_ack": "Acquitter",
 	"alerts_bulk_ack": "Acquitter",
 	"alerts_bulk_done": "Terminé : {count}.",
 	"alerts_bulk_ignore": "Ignorer pour cette surveillance",
@@ -5259,6 +5260,9 @@
 	"settings_backup_to_update": "{count} à mettre à jour",
 	"settings_backup_without_key": "Sans la clé",
 	"settings_backup_write_error": "Impossible d’écrire la sauvegarde",
+	"settings_block_connection": "Connexion",
+	"settings_block_off": "Désactivé",
+	"settings_block_on": "Activé",
 	"settings_language_auto": "Automatique (langue du navigateur)",
 	"settings_language_theme_description": "Enregistrés dans ce navigateur.",
 	"settings_language_theme_title": "Langue et thème",
@@ -5386,6 +5390,8 @@
 	"settings_logs_export_last_day": "Dernier jour",
 	"settings_logs_export_last_days": "{days} derniers jours",
 	"settings_logs_export_period": "Période",
+	"settings_logs_export_since": "Journaux disponibles depuis le {date}.",
+	"settings_logs_export_since_short": "Votre sélection commence avant cette date : l’export ne contient que les journaux à partir du {date}.",
 	"settings_logs_export_title": "Export",
 	"settings_logs_form_add": "Ajouter la destination",
 	"settings_logs_form_clear_secrets": "Effacer les secrets enregistrés",
@@ -7234,7 +7240,5 @@
 	"worldmap_verdict_idle": "Non sondé",
 	"worldmap_verdict_ok": "Tout fonctionne",
 	"worldmap_verdict_warn": "À vérifier",
-	"worldmap_view_world": "Monde",
-	"settings_logs_export_since": "Journaux disponibles depuis le {date}.",
-	"settings_logs_export_since_short": "Votre sélection commence avant cette date : l’export ne contient que les journaux à partir du {date}."
+	"worldmap_view_world": "Monde"
 }
