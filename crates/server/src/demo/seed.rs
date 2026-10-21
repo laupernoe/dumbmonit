@@ -229,6 +229,7 @@ async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, Strin
             domain: None,
             seo: Default::default(),
             groups: None,
+            group_labels: None,
         },
     )
     .await?;

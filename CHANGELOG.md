@@ -20,6 +20,12 @@ All notable changes to this project are documented here. The format follows
   editor: a ticked group is live, so monitors added to or removed from it appear
   or disappear on the page by themselves, shown under the group's name without
   duplicates.
+- **Private and public names in the status page editor.** Every monitor shows
+  its private name (read-only, never published) next to an editable public name,
+  with a warning when an empty public name would publish the internal one; this
+  also applies to monitors that come in through a ticked group. A test checks
+  that the public JSON, HTML, feed, badges and sitemap never carry a private
+  name, address or id.
 - **Past incidents on status pages.** Enter an incident that already happened:
   start time (never in the future), optional resolution time, and updates each
   with its own date, sorted and validated. An incident entered as resolved

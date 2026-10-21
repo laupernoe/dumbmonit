@@ -32,6 +32,13 @@ async fn page(app: &TestApp, admin: &str, body: Value) -> Value {
     reply.body
 }
 
+async fn target(app: &TestApp, admin: &str, name: &str, address: &str, group: &str) -> i64 {
+    let body = json!({ "name": name, "address": address, "kind": "dummy", "group_name": group });
+    let reply = app.post("/api/targets", body, Some(admin)).await;
+    assert_eq!(reply.status, StatusCode::CREATED, "target: {}", reply.body);
+    reply.body["id"].as_i64().unwrap()
+}
+
 fn robots_header(raw: &Raw) -> &str {
     raw.headers.get("x-robots-tag").and_then(|v| v.to_str().ok()).unwrap_or_default()
 }
@@ -149,4 +156,52 @@ async fn seo_settings_are_validated_and_kept_when_omitted() {
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.body["seo"]["index"], true);
     assert_eq!(reply.body["seo"]["keywords"], "a, b");
+}
+
+#[tokio::test]
+async fn only_public_names_reach_visitors_never_private_names_addresses_or_ids() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let crm = target(&app, &admin, "SRV-CRM01", "10.66.1.2", "").await;
+    let db = target(&app, &admin, "SRV-DB02", "10.66.1.3", "Rack").await;
+
+    let created = page(
+        &app,
+        &admin,
+        json!({
+            "title": "Acme", "slug": "acme", "published": true,
+            "seo": { "index": true },
+            "groups": ["Rack"],
+            "group_labels": [{ "target_id": db, "label": "Database" }]
+        }),
+    )
+    .await;
+    assert_eq!(created["group_labels"][0]["label"], "Database");
+    let id = created["id"].as_i64().unwrap();
+    let items = json!([{ "target_id": crm, "label": "Customer portal" }]);
+    let reply = app.put(&format!("/api/status-pages/{id}/items"), items, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "items: {}", reply.body);
+
+    let mut surfaces = Vec::new();
+    for uri in [
+        "/api/public/status/acme",
+        "/api/public/status/acme/rss",
+        "/api/public/status/acme/badge.svg",
+        "/s/acme",
+        "/s/acme/embed",
+        "/robots.txt",
+        "/sitemap.xml",
+    ] {
+        let reply = raw(&app, uri).await;
+        assert_ne!(reply.status, StatusCode::INTERNAL_SERVER_ERROR, "{uri}");
+        surfaces.push((uri, reply.text));
+    }
+    for (uri, text) in &surfaces {
+        for secret in ["SRV-CRM01", "SRV-DB02", "10.66.1.", "target_id", "\"address\""] {
+            assert!(!text.contains(secret), "{uri} exposes {secret}");
+        }
+    }
+    let public = &surfaces[0].1;
+    assert!(public.contains("Customer portal"), "the chosen public name is shown");
+    assert!(public.contains("Database"), "a group member shows its public name");
 }

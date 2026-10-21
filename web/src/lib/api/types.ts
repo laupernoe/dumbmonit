@@ -1525,6 +1525,12 @@ export interface StatusPageSeo {
 	site_name: string;
 }
 
+/** Public name of a monitor that reaches a page through a ticked group. */
+export interface StatusPageGroupLabel {
+	target_id: TargetId;
+	label: string;
+}
+
 export interface StatusPage {
 	id: number;
 	slug: string;
@@ -1558,6 +1564,8 @@ export interface StatusPage {
 	seo: StatusPageSeo;
 	/** Checked monitor folders (dynamic): their current members are shown. */
 	groups: string[];
+	/** Public names of the monitors that come in through a ticked group; none: the monitor name. */
+	group_labels: StatusPageGroupLabel[];
 	items: StatusPageItem[];
 }
 
@@ -1586,6 +1594,8 @@ export interface StatusPagePayload {
 	seo?: StatusPageSeo;
 	/** Checked monitor folders; omitted: kept, `[]`: none. */
 	groups?: string[];
+	/** Public names of group members; omitted: kept. */
+	group_labels?: StatusPageGroupLabel[];
 }
 
 /** Email subscriber of a status page (admin view; the token never leaves the server). */

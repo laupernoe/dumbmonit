@@ -90,6 +90,10 @@
 		...initial?.seo
 	});
 	let groups = $state<string[]>([...(initial?.groups ?? [])]);
+	// Public names of the monitors that come in through a ticked group (by monitor id).
+	let groupLabels = $state<Record<number, string>>(
+		Object.fromEntries((initial?.group_labels ?? []).map((entry) => [entry.target_id, entry.label]))
+	);
 	let domainError = $state<string | null>(null);
 	const smtpChannels = $derived(channels.filter((channel) => channel.kind === 'smtp'));
 
@@ -192,7 +196,7 @@
 	// Public names of what the page lists, for the AI prompt.
 	const serviceNames = $derived([
 		...order.map((id) => picks.get(id)?.label.trim() || targetById.get(id)?.name || '').filter(Boolean),
-		...viaGroups.map((t) => t.name)
+		...viaGroups.map((t) => groupLabels[t.id]?.trim() || t.name)
 	]);
 	const seoUrl = $derived(pageUrl(typeof window === 'undefined' ? '' : window.location.origin, slug, domain));
 	const seoLogo = $derived(initial?.logo_type && typeof window !== 'undefined' ? `${window.location.origin}/api/public/status/${slug}/logo` : '');
@@ -227,6 +231,7 @@
 			domain,
 			seo,
 			groups,
+			groupLabels,
 			items: savedItems(order, picks),
 			logo: pendingLogo !== null || (removeLogo && hasStoredLogo)
 		})
@@ -302,7 +307,10 @@
 				subscribe_channel_id: subscribeChannel,
 				domain: host === '' ? null : host,
 				seo,
-				groups
+				groups,
+				group_labels: Object.entries(groupLabels)
+					.map(([id, label]) => ({ target_id: Number(id), label: label.trim() }))
+					.filter((entry) => entry.label !== '' && viaGroups.some((t) => t.id === entry.target_id))
 			};
 			let saved = page ? await updateStatusPage(page.id, payload) : await createStatusPage(payload);
 			if (pendingLogo) {
@@ -442,8 +450,8 @@
 					{:else if order.length > 0}
 						<div class="overflow-hidden rounded-[var(--radius-card)] border border-line">
 							<div class="hidden gap-2 border-b border-line bg-canvas-deep px-3 py-1.5 text-[0.75rem] text-ink-2 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.75fr)_7.5rem]" aria-hidden="true">
-								<span class="pl-7">{m.status_edit_services_col_monitor()}</span>
-								<span>{m.status_edit_services_col_label()}</span>
+								<span class="pl-7">{m.status_services_private_name()}</span>
+								<span>{m.status_services_public_name()}</span>
 								<span>{m.status_edit_services_col_group()}</span>
 								<span class="text-right">{m.status_edit_services_col_order()}</span>
 							</div>
@@ -456,19 +464,24 @@
 											<div class="flex min-w-0 items-center gap-2 text-sm text-ink">
 												<span class="w-5 shrink-0 text-right text-[0.75rem] tnum text-ink-3">{index + 1}</span>
 												<span class="grid min-w-0">
-													<span class="truncate" title={target.name}>{target.name}</span>
-													<span class="truncate text-[0.75rem] text-ink-3">{target.kind}</span>
+													<span class="truncate text-ink-2" title={m.status_services_private_hint()}>{target.name}</span>
+													<span class="truncate text-[0.75rem] text-ink-3">{target.kind} · {m.status_services_private_hint()}</span>
 												</span>
 											</div>
-											<input
-												type="text"
-												class="input"
-												value={pick.label}
-												oninput={(event) => setPick(id, { label: event.currentTarget.value })}
-												placeholder={target.name}
-												maxlength="80"
-												aria-label={m.status_form_pick_label_aria({ name: target.name })}
-											/>
+											<div class="grid gap-1">
+												<input
+													type="text"
+													class="input"
+													value={pick.label}
+													oninput={(event) => setPick(id, { label: event.currentTarget.value })}
+													placeholder={target.name}
+													maxlength="80"
+													aria-label={m.status_form_pick_label_aria({ name: target.name })}
+												/>
+												{#if !pick.label.trim()}
+													<p class="text-[0.75rem] text-warning">{m.status_services_public_empty({ name: target.name })}</p>
+												{/if}
+											</div>
 											<input
 												type="text"
 												class="input"
@@ -492,6 +505,35 @@
 						<datalist id="{idPrefix}-groups">
 							{#each groupsSeen as group (group)}<option value={group}></option>{/each}
 						</datalist>
+					{/if}
+					{#if viaGroups.length > 0}
+						<div class="grid gap-1.5">
+							<span class={SUBHEAD}>{m.status_services_from_groups()}</span>
+							<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line">
+								{#each viaGroups as target (target.id)}
+									<li class="grid gap-2 px-3 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
+										<span class="grid min-w-0">
+											<span class="truncate text-sm text-ink-2" title={m.status_services_private_hint()}>{target.name}</span>
+											<span class="truncate text-[0.75rem] text-ink-3">{target.group_name} · {m.status_services_private_hint()}</span>
+										</span>
+										<div class="grid gap-1">
+											<input
+												type="text"
+												class="input"
+												value={groupLabels[target.id] ?? ''}
+												oninput={(event) => (groupLabels = { ...groupLabels, [target.id]: event.currentTarget.value })}
+												placeholder={target.name}
+												maxlength="80"
+												aria-label={m.status_form_pick_label_aria({ name: target.name })}
+											/>
+											{#if !(groupLabels[target.id] ?? '').trim()}
+												<p class="text-[0.75rem] text-warning">{m.status_services_public_empty({ name: target.name })}</p>
+											{/if}
+										</div>
+									</li>
+								{/each}
+							</ul>
+						</div>
 					{/if}
 					{#if groups.length > 0}
 						<ul class="grid gap-1 text-[0.8125rem] text-ink-2" aria-label={m.status_groups_dynamic_aria()}>

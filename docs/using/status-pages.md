@@ -37,6 +37,14 @@ read (it defaults to the monitor name — you may prefer "Website" to
 "nginx-front-01") and, optionally, a **group** ("Network", "Storage"). Groups
 become blocks on the page, in the order you arrange the services.
 
+**Two names per monitor.** Each monitor in the list shows its **private name**
+(its name in DumbMonit, grey, read-only, never published) and an editable
+**public name**: the only one visitors, badges, the feed and the page's search
+tags ever see. The private name is the placeholder; if you leave the public name
+empty, the editor warns that the internal name will be published, and it is
+used. The same goes for monitors that arrive through a ticked group (below):
+they get their own public-name field.
+
 **Groups of monitors.** Above the search box, tick a whole monitor group (the
 folders of **Monitors**) to show all of it. A ticked group is live: a monitor
 added to the folder later appears on the page by itself and a removed one

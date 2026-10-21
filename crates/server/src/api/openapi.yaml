@@ -7349,6 +7349,10 @@ components:
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
         seo: { $ref: "#/components/schemas/StatusPageSeo" }
+        group_labels:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
+          description: Public names of the monitors that come in through a checked group. None set for a monitor means its own name is published.
         groups:
           type: array
           items: { type: string }
@@ -7356,6 +7360,12 @@ components:
         items:
           type: array
           items: { $ref: "#/components/schemas/StatusPageItem" }
+    StatusPageGroupLabel:
+      type: object
+      required: [target_id, label]
+      properties:
+        target_id: { type: integer, format: int64 }
+        label: { type: string, maxLength: 80, description: Public name shown to visitors. The monitor's private name is never published when this is set. }
     StatusPageSeo:
       type: object
       description: >-
@@ -7417,6 +7427,10 @@ components:
           maxItems: 50
           items: { type: string, maxLength: 200 }
           description: Monitor folders shown as a whole (dynamic). Omitted keeps the saved list; `[]` unchecks all.
+        group_labels:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
+          description: Public names of group members. Omitted keeps the saved ones; `[]` clears them.
         domain:
           type: [string, "null"]
           description: >-
