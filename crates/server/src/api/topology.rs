@@ -116,6 +116,14 @@ pub struct NodeView {
     pub site_source: Option<&'static str>,
     /// Invité ou nœud : la cible hyperviseur qui l'héberge.
     pub host_id: Option<TargetId>,
+    /// Sous-réseau de l'équipement (`192.168.10.0/24`), déduit de son adresse
+    /// IP et des réseaux que les pare-feux du site connaissent. Vide pour un
+    /// invité, un nœud de cluster, ou un équipement sans adresse IP privée.
+    pub subnet: Option<String>,
+    /// VLAN de ce réseau, quand un pare-feu le donne.
+    pub vlan: Option<u16>,
+    /// Nom de ce réseau (description de l'interface du pare-feu).
+    pub vlan_name: Option<String>,
     /// Invité ou nœud Proxmox : en marche (invité) ou en ligne (nœud) à la
     /// dernière mesure.
     pub running: Option<bool>,
