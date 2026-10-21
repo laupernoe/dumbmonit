@@ -1065,11 +1065,12 @@ async fn restore_status_pages(
         if let Some(seo) = &page.seo {
             match seo.clone().validate() {
                 Ok(seo) => {
-                    let current: String = sqlx::query_scalar("SELECT seo FROM status_pages WHERE id = ?")
-                        .bind(id)
-                        .fetch_one(&mut **tx)
-                        .await
-                        .context("lecture du référencement de la page de statut")?;
+                    let current: String =
+                        sqlx::query_scalar("SELECT seo FROM status_pages WHERE id = ?")
+                            .bind(id)
+                            .fetch_one(&mut **tx)
+                            .await
+                            .context("lecture du référencement de la page de statut")?;
                     if crate::status_seo::Seo::parse(&current) != seo {
                         sqlx::query("UPDATE status_pages SET seo = ? WHERE id = ?")
                             .bind(seo.to_json())

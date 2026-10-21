@@ -328,9 +328,8 @@ async fn renommer_un_dossier_garde_les_pages_de_statut() {
     assert_eq!(status, StatusCode::NO_CONTENT, "renommage refusé : {body}");
     assert_eq!(app.get_target(a).await["group_name"], json!("Baie"));
     assert_eq!(app.get_target(b).await["group_name"], json!("Baie"));
-    let (_, page) = app
-        .request("GET", &format!("/api/status-pages/{page_id}"), None, Some(&app.admin))
-        .await;
+    let (_, page) =
+        app.request("GET", &format!("/api/status-pages/{page_id}"), None, Some(&app.admin)).await;
     assert_eq!(page["groups"], json!(["Baie", "Autre"]), "la page garde le dossier : {page}");
 
     // Vers un nom déjà coché : pas de doublon.
@@ -343,9 +342,8 @@ async fn renommer_un_dossier_garde_les_pages_de_statut() {
         )
         .await;
     assert_eq!(status, StatusCode::NO_CONTENT);
-    let (_, page) = app
-        .request("GET", &format!("/api/status-pages/{page_id}"), None, Some(&app.admin))
-        .await;
+    let (_, page) =
+        app.request("GET", &format!("/api/status-pages/{page_id}"), None, Some(&app.admin)).await;
     assert_eq!(page["groups"], json!(["Autre"]));
 
     let (status, _) = app
