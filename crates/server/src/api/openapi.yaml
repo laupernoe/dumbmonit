@@ -2737,6 +2737,64 @@ paths:
               schema: { type: string }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/public/status/{slug}/day/{date}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - name: date
+        in: path
+        required: true
+        description: A UTC day, `YYYY-MM-DD`, within the last 90 days.
+        schema: { type: string }
+    get:
+      operationId: getPublicStatusDay
+      tags: [Public status]
+      summary: One day of a status page, hour by hour
+      description: >-
+        Per service (public name only): availability of each of the 24 UTC hours
+        and the outages of the day with their start and end, plus the
+        announcements that touch the day.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The day.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date: { type: string }
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key: { type: string }
+                        label: { type: string }
+                        hours:
+                          type: array
+                          items: { type: [number, "null"] }
+                        outages:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              from: { type: string }
+                              to: { type: string }
+                              minutes: { type: integer }
+                  incidents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title: { type: string }
+                        kind: { type: string }
+                        status: { type: string }
+                        starts_at: { type: string }
+                        ends_at: { type: [string, "null"] }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/public/status/{slug}/uptime.svg:
     parameters:
       - $ref: "#/components/parameters/Slug"
@@ -7339,7 +7397,7 @@ components:
         description: { type: string }
         published: { type: boolean }
         theme: { type: string, enum: [auto, light, dark] }
-        show_uptime_days: { type: integer, minimum: 7, maximum: 90 }
+        show_uptime_days: { type: integer, minimum: 1, maximum: 90 }
         created_at: { type: string }
         updated_at: { type: string }
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
@@ -7409,7 +7467,7 @@ components:
         description: { type: string, maxLength: 1000 }
         published: { type: boolean, default: false }
         theme: { type: string, enum: [auto, light, dark], default: auto }
-        show_uptime_days: { type: integer, minimum: 7, maximum: 90, default: 90 }
+        show_uptime_days: { type: integer, minimum: 1, maximum: 90, default: 90, description: "Period shown by the history bars: 1 (24 hours), 7, 30, 60 or 90 days. The bars adapt to younger data." }
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
         footer_text: { type: string, maxLength: 280 }
         homepage_url: { type: string, maxLength: 300, description: "`http(s)://` or empty." }
@@ -7518,6 +7576,8 @@ components:
             description: { type: string }
             theme: { type: string }
             show_uptime_days: { type: integer }
+            window_secs: { type: integer, description: "Duration the history bars really cover: the chosen period, or less when the data is younger." }
+            step_secs: { type: integer, description: "Duration of one bar; 86400 means one bar per day." }
             updated_at: { type: string }
             accent: { type: string }
             footer_text: { type: string }

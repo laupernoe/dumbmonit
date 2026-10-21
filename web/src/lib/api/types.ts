@@ -1731,6 +1731,19 @@ export interface PublicStatusItem {
 	history: PublicDayBucket[];
 }
 
+/** One day of a status page, hour by hour (`GET /api/public/status/{slug}/day/{date}`). */
+export interface PublicDayDetail {
+	date: string;
+	services: {
+		key: string;
+		label: string;
+		/** Availability of each UTC hour; `null` without a measurement. */
+		hours: (number | null)[];
+		outages: { from: string; to: string; minutes: number }[];
+	}[];
+	incidents: { title: string; kind: IncidentKind; status: IncidentStatus; starts_at: string; ends_at: string | null }[];
+}
+
 export interface PublicStatusGroup {
 	name: string;
 	items: PublicStatusItem[];
@@ -1762,6 +1775,10 @@ export interface PublicStatus {
 		show_uptime_days: number;
 		/** The window actually shown: the age of the data, from 7 days up to `show_uptime_days`. */
 		history_days: number;
+		/** What the history bars really cover, in seconds: the chosen period, or less for younger data. */
+		window_secs: number;
+		/** Duration of one bar in seconds; 86400 = one bar per day. */
+		step_secs: number;
 		updated_at: string;
 		accent: StatusPageAccent;
 		/** Ordered banner scenes; empty or absent: none. */

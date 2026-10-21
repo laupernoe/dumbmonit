@@ -26,7 +26,7 @@ its own route (`/settings/status/new`, `/settings/status/<id>`). The public rend
 | **Address** | The last part of the URL, `/s/<address>`. Suggested from the title; lowercase letters, digits and hyphens, 2 to 40 characters. |
 | **Description** | One sentence under the title. Optional. |
 | **Theme** | Day, night, or follow the visitor's system. |
-| **History** | The longest window the history bar covers (30, 60 or 90 days). The bar adapts to the age of the page's data: it shows as many days as the oldest service has been monitored, from 7 days up to this setting. A page never says more than this — see [Badges](#badges). |
+| **History** | The period the history bars cover: 24 hours, 7, 30, 60 or 90 days. See [The history bar](#the-history-bar). A page never says more than this — see [Badges](#badges). |
 | **Simple mode** | A plain page: no scene, no mascot, no animation and no easter eggs. Light or dark follows the visitor's system, with a toggle in the header; the page's Theme setting is ignored. |
 | **Daily calendar** | Off by default. Adds a 90-day calendar under the services: one small cell per day, all services combined. See [The 90-day calendar](#the-90-day-calendar). |
 | **Response times** | Off by default. Adds a small response-time graph (24 h / 7 days) to each service that has latency data. See [Response times](#response-times). |
@@ -103,6 +103,20 @@ on the same origin as your admin interface, under the same
   one up (see [Email subscribers](#email-subscribers)).
 
 ### The history bar
+
+Choose the period in the editor (**History**): 24 hours, 7, 30, 60 or 90 days.
+The bars follow it: hourly for 24 hours, every 6 hours for 7 days, daily from 30
+days. The bars also adapt to the data that exists. A page whose oldest service
+has been monitored for 2 hours shows the last 2 hours in 5-minute bars (not 30
+days of grey), 12 hours show hourly bars, 3 days show 6-hour bars. The caption
+under the bars names the period really shown ("Last 12 hours") and the
+availability figure is computed over exactly that period. Time before the first
+measurement counts neither as an outage nor as 100 %.
+
+Click or tap a bar (or focus it and press Enter) to open that day hour by hour:
+availability of each of the 24 hours (UTC), the outages of the day with their
+start and end, and the announcements that touched it. Only the public names
+appear. The data is also available at `GET /api/public/status/<address>/day/<YYYY-MM-DD>`.
 
 Each square is one day (UTC), toned by that day's uptime: full colour at
 99.5 % and above, amber from 95 %, red below. **A day without any measurement

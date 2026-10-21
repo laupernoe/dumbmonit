@@ -117,6 +117,22 @@ d'administration, sous la même
 
 ### La barre d'historique
 
+Choisissez la période dans l'éditeur (**Historique**) : 24 heures, 7, 30, 60 ou 90
+jours. Les barres la suivent : une par heure pour 24 heures, une toutes les 6
+heures pour 7 jours, une par jour à partir de 30 jours. Elles s'adaptent aussi
+aux données qui existent. Une page dont le plus ancien service est surveillé
+depuis 2 heures montre les 2 dernières heures en barres de 5 minutes (pas 30
+jours de gris), 12 heures donnent des barres horaires, 3 jours des barres de 6
+heures. La légende sous les barres nomme la période réellement montrée
+(« Dernières 12 heures ») et la disponibilité est calculée sur cette période. Le
+temps d'avant la première mesure ne compte ni comme panne ni comme 100 %.
+
+Cliquez ou touchez une barre (ou donnez-lui le focus et appuyez sur Entrée) pour
+ouvrir ce jour heure par heure : disponibilité de chacune des 24 heures (UTC),
+pannes du jour avec leur début et leur fin, et annonces qui l'ont touché. Seuls
+les noms publics apparaissent. Les données sont aussi sur
+`GET /api/public/status/<adresse>/day/<AAAA-MM-JJ>`.
+
 Chaque carré est un jour (UTC), teinté par la disponibilité de ce
 jour-là : couleur pleine à 99,5 % et plus, ambre à partir de 95 %, rouge
 en dessous. **Un jour sans aucune mesure est gris**, pas vert — un

@@ -14,11 +14,17 @@
 	interface Props {
 		item: PublicStatusItem;
 		days: number;
+		/** What the bars cover (seconds) and how long one bar is; see `PublicStatus.page`. */
+		windowSecs?: number;
+		stepSecs?: number;
+		/** Name of the period for the availability readout ("Last 12 hours"). */
+		periodLabel?: string;
+		onselectday?: (day: string) => void;
 		/** Tighter row (name, one uptime figure, short bar) for pages with a banner scene. */
 		compact?: boolean;
 	}
 
-	let { item, days, compact = false }: Props = $props();
+	let { item, days, windowSecs = 0, stepSecs = 86400, periodLabel = '', onselectday, compact = false }: Props = $props();
 
 	const state = $derived(ITEM_STATE[item.state] ?? ITEM_STATE.unknown);
 
@@ -30,6 +36,7 @@
 
 	// The window adapts to the data's age: 30 and 90 days are listed only once the page covers them.
 	const readouts = $derived([
+		...(stepSecs < 86400 && periodLabel ? [{ label: periodLabel, value: item.uptime_history }] : []),
 		{ label: m.status_service_row_24h(), value: item.uptime_24h },
 		{ label: m.status_service_row_7d(), value: item.uptime_7d },
 		...(days >= 30 ? [{ label: m.status_service_row_30d(), value: item.uptime_30d }] : []),
@@ -47,7 +54,7 @@
 			</span>
 		</div>
 		<div class="mt-2">
-			<UptimeBar history={item.history} label={item.label} compact />
+			<UptimeBar history={item.history} label={item.label} compact {stepSecs} {windowSecs} onselect={onselectday} />
 		</div>
 		<LatencyGraph series={item.latency_series} label={item.label} />
 	</li>
@@ -64,7 +71,7 @@
 	</div>
 
 	<div class="mt-3">
-		<UptimeBar history={item.history} label={item.label} />
+		<UptimeBar history={item.history} label={item.label} {stepSecs} {windowSecs} onselect={onselectday} />
 	</div>
 	<LatencyGraph series={item.latency_series} label={item.label} />
 

@@ -71,6 +71,7 @@ import type {
 	Incident,
 	IncidentPayload,
 	IncidentUpdatePayload,
+	PublicDayDetail,
 	PublicStatus,
 	StatusSubscriber,
 	TargetRules
@@ -858,6 +859,10 @@ export function statusBadgeBase(slug: string, componentKey?: string): string {
 /** Public document of a status page: no session, no cookie needed. */
 export function getPublicStatus(slug: string, signal?: AbortSignal): Promise<PublicStatus> {
 	return request<PublicStatus>(`/public/status/${encodeURIComponent(slug)}`, { signal });
+}
+
+export function getPublicStatusDay(slug: string, date: string, signal?: AbortSignal): Promise<PublicDayDetail> {
+	return request<PublicDayDetail>(`/public/status/${encodeURIComponent(slug)}/day/${encodeURIComponent(date)}`, { signal });
 }
 
 // --- First-run guide (anticipated) ------------------------------------------
