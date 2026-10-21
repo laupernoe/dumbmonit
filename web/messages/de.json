@@ -7234,5 +7234,7 @@
 	"worldmap_verdict_idle": "Nicht abgefragt",
 	"worldmap_verdict_ok": "Alles in Ordnung",
 	"worldmap_verdict_warn": "Prüfen",
-	"worldmap_view_world": "Welt"
+	"worldmap_view_world": "Welt",
+	"settings_logs_export_since": "Protokolle verfügbar seit {date}.",
+	"settings_logs_export_since_short": "Ihre Auswahl beginnt früher: Der Export enthält nur Protokolle ab dem {date}."
 }

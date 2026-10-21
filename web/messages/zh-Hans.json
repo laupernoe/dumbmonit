@@ -7130,5 +7130,7 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界"
+	"worldmap_view_world": "世界",
+	"settings_logs_export_since": "日志自 {date} 起可用。",
+	"settings_logs_export_since_short": "所选时间段早于此日期：导出仅包含 {date} 之后的日志。"
 }

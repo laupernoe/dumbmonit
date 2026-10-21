@@ -108,7 +108,7 @@ Windows 故意没有温度行：读取那里的传感器意味着通过 WMI 进�
     curl -sSL http://server:8080/install.sh | sh -s -- --token=dmon_xxx --url=http://server:8080
     ```
 
-    脚本是 POSIX `sh`（BusyBox 和 dash 工作），下载机器架构（x86_64 或 aarch64）的二进制文件从服务器，写 `/etc/dumbmonit/agent.yaml`（模式 0600）并使用 systemd 注册 `dumbmonit-agent`，或在 Alpine 上使用 OpenRC。systemd 单元被强化（`ProtectSystem=strict`、`NoNewPrivileges`、`MemoryMax=128M`、`CPUQuota=20%`）。
+    脚本是 POSIX `sh`（BusyBox 和 dash 工作），下载机器架构（x86_64 或 aarch64）的二进制文件从服务器，写 `/etc/dumbmonit/agent.yaml`（模式 0600）并使用 systemd 注册 `dumbmonit-agent`，或在 Alpine 上使用 OpenRC。systemd 单元被强化（`ProtectSystem=strict`、`NoNewPrivileges`、`MemoryMax=256M`、`CPUQuota=20%`）。
 
 === "macOS（launchd）"
 
@@ -567,7 +567,7 @@ WARN 这个代理对这台机器不被识别
 
 ## 中断和诊断 {#outages-and-diagnostics}
 
-当服务器不可达时，代理继续测量并用其原始时间戳在内存中缓冲其读数。它们一旦链接回来被发送：服务器重启在图表中留下没有洞。缓冲被限制（`max_buffered_samples`，默认约一小时），当满时丢弃最旧的读数。重试从 5 秒回退到 5 分钟带抖动。
+当服务器不可达时，代理继续测量并用其原始时间戳在内存中缓冲其读数。它们一旦链接回来被发送：服务器重启在图表中留下没有洞。缓冲被限制（`max_buffered_samples`，默认约一小时），当满时丢弃最旧的读数。重试从 2 秒回退到 30 秒带抖动。
 
 ```sh
 dumbmonit-agent --dry-run          # 打印读数，发送什么都不

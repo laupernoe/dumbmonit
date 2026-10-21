@@ -19,7 +19,7 @@ use tokio::io::{AsyncBufReadExt, AsyncRead, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::{Mutex, Notify};
 use tokio::task::JoinHandle;
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 use super::Victoria;
 
@@ -300,6 +300,8 @@ async fn forward_logs(stream: impl AsyncRead + Unpin) {
     while let Ok(Some(line)) = lines.next_line().await {
         let (level, message) = split_log_line(&line);
         match level {
+            // Une requête annulée parce que le visiteur a quitté la page n'est pas un incident.
+            "warn" if message.contains("context canceled") => debug!("victoria-metrics: {message}"),
             "warn" => warn!("victoria-metrics: {message}"),
             "error" | "fatal" | "panic" => error!("victoria-metrics: {message}"),
             _ => info!("victoria-metrics: {message}"),

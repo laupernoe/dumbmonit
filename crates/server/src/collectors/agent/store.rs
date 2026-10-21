@@ -849,6 +849,26 @@ pub async fn last_seen_ms(pool: &SqlitePool, target_id: TargetId) -> Result<Opti
     }
 }
 
+/// Dernière activité du planificateur avant `before_ms` : la date la plus
+/// récente d'interrogation d'une cible, quelle qu'elle soit. C'est à peu près
+/// l'heure à laquelle le serveur s'est arrêté avant son démarrage en cours —
+/// indépendante des agents eux-mêmes, dont un seul muet fausserait l'estimation.
+pub async fn last_activity_before(pool: &SqlitePool, before_ms: i64) -> Result<Option<i64>> {
+    const FORMAT: &str = "%Y-%m-%dT%H:%M:%SZ";
+    let Some(before) = chrono::DateTime::from_timestamp_millis(before_ms) else {
+        return Ok(None);
+    };
+    let latest: Option<String> =
+        sqlx::query_scalar("SELECT MAX(last_probe_at) FROM targets WHERE last_probe_at < ?")
+            .bind(before.format(FORMAT).to_string())
+            .fetch_one(pool)
+            .await
+            .context("reading the last activity before startup")?;
+    Ok(latest
+        .and_then(|text| chrono::NaiveDateTime::parse_from_str(&text, FORMAT).ok())
+        .map(|at| at.and_utc().timestamp_millis()))
+}
+
 fn row_to_token(row: &sqlx::sqlite::SqliteRow) -> Result<TokenRecord> {
     Ok(TokenRecord {
         id: row.try_get("id")?,

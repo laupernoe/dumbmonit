@@ -86,15 +86,16 @@ pub use view::{
 };
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, MetricKind, ProbeError, Sample, Target, TargetId};
 use serde::de::DeserializeOwned;
 use tokio::sync::Semaphore;
-use tracing::{debug, warn};
+use tracing::debug;
 
 use crate::client_devices;
+use crate::log_gate::LogGate;
 use auth::{AuthMode, Ticket};
 use backup::{GroupKey, GroupSummary};
 use client::PbsClient;
@@ -106,6 +107,9 @@ use model::{
     TaskEntry, TaskLogLine, TrafficRule, ZpoolEntry,
 };
 use options::Options;
+
+/// Échecs déjà journalisés : un endpoint en erreur à chaque cycle ne l'est qu'une fois.
+static GATE: LazyLock<LogGate> = LazyLock::new(LogGate::new);
 
 /// Identifiant de profil renvoyé par la découverte.
 const PROFILE_ID: &str = "proxmox-backup-server";
@@ -330,10 +334,13 @@ impl Collector for PbsCollector {
         );
 
         match node {
-            Ok(status) => samples.extend(metrics::node_samples(&status, ts_ms)),
+            Ok(status) => {
+                GATE.ok(target.id, "état du nœud PBS indisponible");
+                samples.extend(metrics::node_samples(&status, ts_ms))
+            }
             Err(error) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "état du nœud PBS indisponible");
+                GATE.fail(target.id, "état du nœud PBS indisponible", &error);
             }
         }
 
@@ -348,7 +355,7 @@ impl Collector for PbsCollector {
                 if backfill {
                     self.forget_backfill(target.id);
                 }
-                warn!(target_id = target.id, %error, "historique des tâches PBS indisponible");
+                GATE.fail(target.id, "historique des tâches PBS indisponible", &error);
                 backup::TaskDigest::default()
             }
         };
@@ -501,7 +508,7 @@ impl Collector for PbsCollector {
             }
             Err(error) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "occupation des datastores PBS indisponible");
+                GATE.fail(target.id, "occupation des datastores PBS indisponible", &error);
             }
         }
 
@@ -705,7 +712,7 @@ fn settle<T>(
         Ok(list) => Some(list),
         Err(error) => {
             *errors += 1;
-            warn!(target_id, path, %error, "liste PBS indisponible");
+            GATE.fail(format!("{target_id}/{path}"), "liste PBS indisponible", &error);
             None
         }
     }
@@ -790,7 +797,7 @@ async fn collect_datastore(
                 }
                 Err(error) => {
                     outcome.errors += 1;
-                    warn!(datastore = store, %error, "statut de GC indisponible");
+                    GATE.fail(store, "statut de GC indisponible", &error);
                     None
                 }
             }
@@ -878,7 +885,7 @@ async fn collect_datastore(
             }
             Err(error) => {
                 outcome.errors += 1;
-                warn!(datastore = store, namespace = %namespace, %error, "listing des instantanés échoué");
+                GATE.fail(format!("{store}/{namespace}"), "listing des instantanés échoué", &error);
             }
         }
     }

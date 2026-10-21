@@ -183,7 +183,7 @@ token.
     binario per l'architettura della macchina (x86_64 o aarch64), scrive
     `/etc/dumbmonit/agent.yaml` (modo 0600) e registra `dumbmonit-agent` con
     systemd, oppure con OpenRC su Alpine. L'unit systemd è rinforzata
-    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=128M`,
+    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=256M`,
     `CPUQuota=20%`).
 
 === "macOS (launchd)"
@@ -883,7 +883,7 @@ le sue letture in memoria con i timestamp originali. Vengono inviate non appena 
 collegamento torna: un riavvio del server non lascia buchi nei grafici. Il buffer
 è limitato (`max_buffered_samples`, circa un'ora per impostazione predefinita) e
 scarta le letture più vecchie quando è pieno. I tentativi aumentano il ritardo da
-5 secondi a 5 minuti con jitter.
+2 a 30 secondi con jitter.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing

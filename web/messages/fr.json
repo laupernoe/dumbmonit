@@ -7234,5 +7234,7 @@
 	"worldmap_verdict_idle": "Non sondé",
 	"worldmap_verdict_ok": "Tout fonctionne",
 	"worldmap_verdict_warn": "À vérifier",
-	"worldmap_view_world": "Monde"
+	"worldmap_view_world": "Monde",
+	"settings_logs_export_since": "Journaux disponibles depuis le {date}.",
+	"settings_logs_export_since_short": "Votre sélection commence avant cette date : l’export ne contient que les journaux à partir du {date}."
 }

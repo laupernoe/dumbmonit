@@ -39,7 +39,7 @@ use crate::db::status_pages::{
 use crate::db::targets::TargetStatus;
 use crate::state::AppState;
 use crate::status_seo::Seo;
-use crate::tsdb::{InstantSeries, Victoria};
+use crate::tsdb::{InstantSeries, Victoria, log_query_failure};
 
 // --------------------------------------------------------------------------
 // Constantes
@@ -1602,7 +1602,7 @@ async fn collect_latency(
                     }
                 }
             }
-            Err(error) => tracing::warn!(%error, "status page: latency metrics unavailable"),
+            Err(error) => log_query_failure(&error, "status page: latency metrics unavailable"),
         }
     }
 }
@@ -1698,7 +1698,7 @@ async fn collect_metrics(
                     }
                 }
             }
-            Err(error) => tracing::warn!(%error, "status page: probe metrics unavailable"),
+            Err(error) => log_query_failure(&error, "status page: probe metrics unavailable"),
         }
     }
 
@@ -1782,7 +1782,7 @@ async fn collect_metrics(
                     }
                 }
             }
-            Err(error) => tracing::warn!(%error, "status page: device metrics unavailable"),
+            Err(error) => log_query_failure(&error, "status page: device metrics unavailable"),
         }
     }
 

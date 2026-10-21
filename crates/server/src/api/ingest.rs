@@ -10,11 +10,15 @@
 //! Les routes de jetons, elles, sont des routes d'administration ordinaires : la
 //! session de l'interface doit les protéger comme les autres.
 
+use std::sync::LazyLock;
+
 use axum::Json;
+use axum::extract::rejection::JsonRejection;
 use axum::extract::{Path, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Response};
-use dumbmonit_proto::{AGENT_SECRET_HEADER, PushAck, PushBatch};
+use dumbmonit_collectors::log_gate::LogGate;
+use dumbmonit_proto::{AGENT_SECRET_HEADER, PushBatch};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -24,6 +28,23 @@ use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{AdminIdentity, Authenticated};
 use crate::collectors::agent;
 use crate::state::AppState;
+
+/// Refus d'agents déjà journalisés : une ligne par client et par cause, pas une
+/// par tentative — un agent au jeton révoqué réessaie toutes les 30 s.
+static REFUSALS: LazyLock<LogGate> = LazyLock::new(LogGate::new);
+
+/// Journalise un refus opposé à un agent, une fois par client et par cause.
+/// `who` : adresse du client, suivie du nom de la machine quand on le connaît.
+fn note_refusal(who: &str, status: StatusCode, reason: &str) {
+    if REFUSALS.report(who, &format!("{} {reason}", status.as_u16())).is_some() {
+        tracing::info!(client = who, status = status.as_u16(), reason, "agent report refused");
+    }
+}
+
+/// Adresse lisible d'un client, pour les journaux.
+fn client_label(ip: ClientIp) -> String {
+    ip.0.map_or_else(|| "unknown".to_string(), |ip| ip.to_string())
+}
 
 /// Réponse d'erreur de l'ingestion.
 ///
@@ -77,6 +98,7 @@ impl From<agent::IngestError> for IngestRejection {
 /// contrôle-ci ne fait que trier tôt.
 pub async fn require_agent_token(
     State(state): State<AppState>,
+    ip: ClientIp,
     request: axum::extract::Request,
     next: axum::middleware::Next,
 ) -> Response {
@@ -86,27 +108,60 @@ pub async fn require_agent_token(
         .and_then(|value| value.to_str().ok());
     match agent::authenticate_token(&state.pool, bearer).await {
         Ok(Some(_)) => next.run(request).await,
-        Ok(None) => IngestRejection::from(agent::IngestError::Unauthorized).into_response(),
+        Ok(None) => {
+            let reason = "enrolment token missing, unknown or revoked";
+            note_refusal(&client_label(ip), StatusCode::UNAUTHORIZED, reason);
+            IngestRejection::from(agent::IngestError::Unauthorized).into_response()
+        }
         Err(error) => IngestRejection::from(agent::IngestError::Internal(error)).into_response(),
     }
 }
 
 /// Réception d'un lot de mesures.
 ///
-/// `POST /api/ingest`, corps [`PushBatch`], réponse [`PushAck`].
+/// `POST /api/ingest`, corps [`PushBatch`], réponse [`dumbmonit_proto::PushAck`].
 pub async fn receive(
     State(state): State<AppState>,
+    ip: ClientIp,
     headers: HeaderMap,
-    Json(batch): Json<PushBatch>,
-) -> Result<Json<PushAck>, IngestRejection> {
+    batch: Result<Json<PushBatch>, JsonRejection>,
+) -> Response {
+    let client = client_label(ip);
+    let batch = match batch {
+        Ok(Json(batch)) => batch,
+        Err(rejection) => {
+            // Corps trop gros (413), illisible ou mal typé : l'agent ne le saura
+            // que par son propre journal, le serveur le dit aussi.
+            note_refusal(&client, rejection.status(), &rejection.body_text());
+            return rejection.into_response();
+        }
+    };
     let bearer =
         headers.get(axum::http::header::AUTHORIZATION).and_then(|value| value.to_str().ok());
     // Le secret de liaison voyage dans son propre en-tête : il dit *quelle*
     // machine parle, là où le jeton dit seulement qu'elle a le droit de parler.
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
+    let who = format!("{client} {}", batch.identity.hostname);
+    let version = batch.identity.agent_version.clone();
 
-    let ack = agent::ingest(&state.pool, &state.cipher, &state.sink, bearer, secret, batch).await?;
-    Ok(Json(ack))
+    match agent::ingest(&state.pool, &state.cipher, &state.sink, bearer, secret, batch).await {
+        Ok(ack) => {
+            if REFUSALS.clear(&who) {
+                tracing::info!(client = who, "agent reports accepted again");
+            }
+            REFUSALS.clear(&client);
+            Json(ack).into_response()
+        }
+        Err(error) => {
+            let rejection = IngestRejection::from(error);
+            // Une panne interne est déjà journalisée en erreur, en entier.
+            if rejection.status != StatusCode::INTERNAL_SERVER_ERROR {
+                let reason = format!("{} (agent {version})", rejection.message);
+                note_refusal(&who, rejection.status, &reason);
+            }
+            rejection.into_response()
+        }
+    }
 }
 
 /// Un jeton tel que l'interface peut l'afficher : jamais le secret.

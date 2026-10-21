@@ -7400,5 +7400,7 @@
 	"worldmap_verdict_idle": "Не опрошено",
 	"worldmap_verdict_ok": "Всё работает",
 	"worldmap_verdict_warn": "Требует внимания",
-	"worldmap_view_world": "Мир"
+	"worldmap_view_world": "Мир",
+	"settings_logs_export_since": "Журналы доступны с {date}.",
+	"settings_logs_export_since_short": "Выбранный период начинается раньше: экспорт содержит только журналы начиная с {date}."
 }

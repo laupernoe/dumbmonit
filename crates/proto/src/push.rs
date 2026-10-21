@@ -51,6 +51,14 @@ pub const AGENT_SECRET_PREFIX: &str = "dmab_";
 /// existent pour établir.
 pub const AGENT_SECRET_HEADER: &str = "x-dumbmonit-agent-secret";
 
+/// En-tête portant la clé d'identité de la machine sur les canaux de commandes
+/// et de relais.
+///
+/// Elle voyageait dans l'URL (`?key=…`) : les messages d'erreur du client HTTP
+/// et les journaux d'accès des mandataires la recopiaient en clair. Le serveur
+/// accepte encore `?key=` d'un agent antérieur, sans jamais le journaliser.
+pub const AGENT_KEY_HEADER: &str = "x-dumbmonit-agent-key";
+
 /// Refus opposé par le serveur à un agent dont il ne reconnaît pas le secret
 /// de liaison (réponse 403, corps `{"error": …}`).
 ///
