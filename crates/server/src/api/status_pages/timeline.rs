@@ -54,11 +54,14 @@ impl Plan {
 /// Durée d'une tranche pour une période donnée : 5 min jusqu'à 3 h, 15 min
 /// jusqu'à 6 h, 1 h jusqu'à 36 h, 6 h au-delà.
 pub(crate) fn step_for(window_secs: i64) -> i64 {
-    match window_secs {
-        ..=10_800 => 300,
-        ..=21_600 => 900,
-        ..=129_600 => 3_600,
-        _ => 21_600,
+    if window_secs <= 10_800 {
+        300
+    } else if window_secs <= 21_600 {
+        900
+    } else if window_secs <= 129_600 {
+        3_600
+    } else {
+        21_600
     }
 }
 
