@@ -198,7 +198,7 @@
 		return kinds.find((k) => k.kind === kind)?.label ?? kind;
 	}
 
-	function state(destination: LogDestination): { tone: 'signal' | 'warning' | 'ghost'; label: string } {
+	function destinationStatus(destination: LogDestination): { tone: 'signal' | 'warning' | 'ghost'; label: string } {
 		if (!destination.enabled) return { tone: 'ghost', label: m.settings_logs_dest_state_off() };
 		const s = destination.stats;
 		if (s?.last_error_at && (!s.last_success_at || s.last_error_at > s.last_success_at)) {
@@ -393,7 +393,7 @@
 				{:else if destinations.length > 0}
 					<ul class="mt-4 grid gap-3" role="list">
 						{#each destinations as destination (destination.id)}
-							{@const st = state(destination)}
+							{@const st = destinationStatus(destination)}
 							{@const stats = destination.stats}
 							<li class="rounded-lg border border-line bg-surface-2/40 px-3 py-3 sm:px-4">
 								<div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">

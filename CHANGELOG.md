@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Fixed
+
+- **Map: remote sites and image export.** A monitor placed at a remote location
+  ("Place at") is now drawn inside that site's frame, like those reached through
+  its relay agent; a site frame is wide enough for its title and its source on a
+  second line, and a machine is no longer drawn twice when a guest name matches
+  several monitors. The PNG export works again (the image was blocked by the
+  page's security policy) and a local failure no longer blames the server.
+  Settings -> System no longer fails with an internal error.
+
 ## 0.13.5 — 2026-10-21
 
 ### Added
