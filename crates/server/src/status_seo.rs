@@ -402,10 +402,8 @@ pub fn apply(html: &str, head: &Head) -> String {
 /// qui n'ont pas de domaine à elles (leurs ressources comprises, pour que les
 /// robots puissent exécuter l'interface).
 pub fn robots_main(pages: &[StatusPage]) -> String {
-    let open: Vec<&StatusPage> = pages
-        .iter()
-        .filter(|page| page.domain.is_none() && resolve(page).indexable)
-        .collect();
+    let open: Vec<&StatusPage> =
+        pages.iter().filter(|page| page.domain.is_none() && resolve(page).indexable).collect();
     let mut out = String::from("User-agent: *\n");
     if open.is_empty() {
         out.push_str("Disallow: /\n");
