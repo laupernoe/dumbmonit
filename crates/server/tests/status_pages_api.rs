@@ -431,10 +431,12 @@ async fn incident_lifecycle() {
 
 /// Crée un équipement factice rangé dans un dossier.
 async fn create_grouped(app: &TestApp, cookie: &str, name: &str, group: &str) -> i64 {
+    // Une adresse par nom : deux équipements ne peuvent pas partager la leur.
+    let address = format!("10.9.0.{}", name.bytes().map(u32::from).sum::<u32>() % 250 + 1);
     let reply = app
         .post(
             "/api/targets",
-            json!({ "name": name, "address": "10.9.0.1", "kind": "dummy", "group_name": group }),
+            json!({ "name": name, "address": address, "kind": "dummy", "group_name": group }),
             Some(cookie),
         )
         .await;
