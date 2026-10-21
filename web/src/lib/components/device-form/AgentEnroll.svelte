@@ -27,9 +27,14 @@
 		cancelHref?: string;
 		/** Enrol a relay for a remote site rather than a machine to watch. */
 		relay?: boolean;
+		/** A Windows server (the mail servers): only the PowerShell command is shown. */
+		windows?: boolean;
+		/** The kind to add once the agent is installed (`mdaemon`, `securitygateway`). */
+		afterKind?: string;
 	}
 
-	let { cancelHref = '/targets', relay: relayFromUrl = false }: Props = $props();
+	let { cancelHref = '/targets', relay: relayFromUrl = false, windows = false, afterKind = '' }: Props = $props();
+	const afterProduct = $derived(afterKind === 'securitygateway' ? 'SecurityGateway' : afterKind === 'mdaemon' ? 'MDaemon' : '');
 	/** Relay flow: from the URL (`via=relay`), or ticked in the plain form. */
 	let relay = $state(untrack(() => relayFromUrl));
 
@@ -124,10 +129,14 @@
 		{/if}
 
 		<AgentModules bind:modules />
-		<div class="grid gap-1.5">
-			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_linux()}</p>
-			<CopyBlock sudo value={installLinux} label={m.deviceform_enroll_copy_linux()} />
-		</div>
+		{#if windows}
+			<p class="text-sm leading-relaxed text-ink">{m.deviceform_enroll_windows_run({ product: afterProduct || m.deviceform_enroll_windows_server() })}</p>
+		{:else}
+			<div class="grid gap-1.5">
+				<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_linux()}</p>
+				<CopyBlock sudo value={installLinux} label={m.deviceform_enroll_copy_linux()} />
+			</div>
+		{/if}
 		<div class="grid gap-1.5">
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_windows()}</p>
 			<CopyBlock value={installWindows} label={m.deviceform_enroll_copy_windows()} />
@@ -182,6 +191,8 @@
 		<div class="flex flex-wrap items-center gap-2">
 			{#if relay}
 				<Button variant="secondary" href="/targets/new">{m.deviceform_enroll_add_device()}</Button>
+			{:else if afterProduct}
+				<Button variant="primary" href={`/targets/new?kind=${afterKind}`}>{m.deviceform_enroll_add_product({ product: afterProduct })}</Button>
 			{/if}
 			<Button variant={relay ? 'ghost' : 'secondary'} href="/targets">{m.deviceform_enroll_see_devices()}</Button>
 			<Button variant="ghost" onclick={reset}>{m.deviceform_enroll_another()}</Button>
@@ -196,6 +207,10 @@
 			<div class="rounded-[var(--radius-card)] border border-line bg-canvas-deep px-3 py-3 sm:px-4">
 				<RelayDiagram class="mx-auto max-w-md" />
 			</div>
+		{:else if windows && afterProduct}
+			<p class="text-sm leading-relaxed text-ink-2">
+				{m.deviceform_enroll_windows_intro({ product: afterProduct })}
+			</p>
 		{:else}
 			<p class="text-sm leading-relaxed text-ink-2">
 				{m.deviceform_enroll_intro()}

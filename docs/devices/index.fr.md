@@ -35,8 +35,8 @@ que cette version peut surveiller.
 | [Graylog](graylog.md) | `graylog` | jeton d'accès ou nom d'utilisateur/mot de passe | Serveur de logs et son cluster OpenSearch : journal, buffers, débit, inputs |
 | [Pi-hole](pihole.md) | `pihole` | mot de passe d'application, ou aucun | Bloqueur de publicité DNS : état de blocage, part bloquée, âge des listes, mises à jour |
 | [AdGuard Home](adguard.md) | `adguard` | nom d'utilisateur/mot de passe | Filtre DNS : protection, blocages, listes de filtres, serveurs amont, mises à jour |
-| [MDaemon Email Server](mdaemon.md) | `mdaemon` | aucun, ou adresse email/mot de passe | Serveur mail : SMTP, IMAP, POP3, webmail, version |
-| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | aucun, ou clé d'API | Passerelle mail : services, file de livraison et autres compteurs |
+| [MDaemon Email Server](mdaemon.md) | `mdaemon` | aucun (agent requis sur le serveur), ou adresse email/mot de passe | Serveur mail : files, sessions et services Windows lus par l’agent, plus SMTP, IMAP, POP3, webmail, version |
+| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | aucun (agent requis sur le serveur), ou clé d’API | Passerelle mail : services Windows et files lus par l’agent, file de remise et autres compteurs |
 | [Redis / Valkey](redis.md) | `redis` | utilisateur ACL, mot de passe seul, ou aucun | Stockage en mémoire : mémoire par rapport à maxmemory, réplication, persistance, clés |
 | [MongoDB](mongodb.md) | `mongodb` | nom d'utilisateur/mot de passe (clusterMonitor) ou aucun | Base de données documents : replica set, retard, connexions, cache WiredTiger |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | nom d'utilisateur/mot de passe (étiquette monitoring) | Courtier de messages : alarmes de ressource, nœuds, partitions, files sans consommateur |
