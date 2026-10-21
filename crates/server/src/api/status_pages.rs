@@ -37,6 +37,7 @@ use crate::db::status_pages::{
 };
 use crate::db::targets::TargetStatus;
 use crate::state::AppState;
+use crate::status_seo::Seo;
 use crate::tsdb::{InstantSeries, Victoria};
 
 // --------------------------------------------------------------------------
@@ -50,6 +51,9 @@ const MAX_GROUP_LEN: usize = 60;
 const MAX_INCIDENT_TITLE_LEN: usize = 160;
 const MAX_BODY_LEN: usize = 4_000;
 const MAX_ITEMS: usize = 200;
+const MAX_GROUPS: usize = 50;
+const MAX_THREAD: usize = 50;
+const MAX_GROUP_FOLDER_LEN: usize = 200;
 const MIN_HISTORY_DAYS: i64 = 7;
 const MAX_HISTORY_DAYS: i64 = 90;
 
@@ -129,6 +133,8 @@ pub struct StatusPageView {
     #[serde(flatten)]
     pub page: StatusPage,
     pub items: Vec<PageItem>,
+    /// Groupes cochés (dynamiques), dans l'ordre.
+    pub groups: Vec<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -182,6 +188,14 @@ pub struct StatusPagePayload {
     /// d'hôte public de la page (`crate::status_host`).
     #[serde(default, deserialize_with = "present")]
     pub domain: Option<Value>,
+    /// Réglages de référencement ; absent : inchangés (tout par défaut à la
+    /// création, donc `noindex`).
+    #[serde(default)]
+    pub seo: Option<Seo>,
+    /// Groupes (dossiers de surveillances) cochés : dynamiques, leurs membres
+    /// actuels s'affichent sous le nom du groupe. Absent : inchangés.
+    #[serde(default)]
+    pub groups: Option<Vec<String>>,
 }
 
 /// Distingue un champ absent (`None`, par `default`) d'un `null` explicite
@@ -321,6 +335,33 @@ impl StatusPagePayload {
         if let Some(domain) = &domain {
             check_not_admin_host(state, domain, &origin).await?;
         }
+        let seo = match self.seo {
+            Some(seo) => seo.validate().map_err(ApiError::BadRequest)?,
+            None => existing.map(|page| Seo::parse(&page.seo)).unwrap_or_default(),
+        };
+        let groups = match self.groups {
+            None => None,
+            Some(list) => {
+                let mut clean: Vec<String> = Vec::new();
+                for name in list {
+                    let name = name.trim().to_string();
+                    if name.is_empty() || clean.contains(&name) {
+                        continue;
+                    }
+                    let too_long = name.chars().count() > MAX_GROUP_FOLDER_LEN;
+                    if too_long || name.chars().any(char::is_control) {
+                        return Err(ApiError::BadRequest("Invalid group name.".into()));
+                    }
+                    clean.push(name);
+                }
+                if clean.len() > MAX_GROUPS {
+                    return Err(ApiError::BadRequest(format!(
+                        "A page shows at most {MAX_GROUPS} groups."
+                    )));
+                }
+                Some(clean)
+            }
+        };
         Ok(StatusPageInput {
             slug,
             title,
@@ -339,6 +380,8 @@ impl StatusPagePayload {
             subscribe_channel_id,
             link_origin: origin,
             domain,
+            seo,
+            groups,
         })
     }
 }
@@ -461,7 +504,8 @@ fn duplicate_slug_to_conflict(error: anyhow::Error) -> ApiError {
 
 async fn page_view(state: &AppState, page: StatusPage) -> ApiResult<StatusPageView> {
     let items = db::status_pages::list_items(&state.pool, page.id).await?;
-    Ok(StatusPageView { page, items })
+    let groups = db::status_pages::list_groups(&state.pool, page.id).await?;
+    Ok(StatusPageView { page, items, groups })
 }
 
 pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<StatusPageView>>> {
@@ -470,12 +514,17 @@ pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<Sta
     for item in db::status_pages::list_all_items(&state.pool).await? {
         items.entry(item.page_id).or_default().push(item);
     }
+    let mut groups: HashMap<i64, Vec<String>> = HashMap::new();
+    for (page_id, name) in db::status_pages::list_all_groups(&state.pool).await? {
+        groups.entry(page_id).or_default().push(name);
+    }
     Ok(Json(
         pages
             .into_iter()
             .map(|page| {
                 let items = items.remove(&page.id).unwrap_or_default();
-                StatusPageView { page, items }
+                let groups = groups.remove(&page.id).unwrap_or_default();
+                StatusPageView { page, items, groups }
             })
             .collect(),
     ))
@@ -627,7 +676,25 @@ pub struct IncidentPayload {
     /// Premier message du fil, à la création seulement.
     #[serde(default)]
     pub body: Option<String>,
+    /// Messages datés du fil, à la création seulement : reprise d'un historique.
+    #[serde(default)]
+    pub updates: Option<Vec<NewUpdate>>,
 }
+
+/// Un message d'un fil saisi à la création d'une annonce.
+#[derive(Debug, Deserialize)]
+pub struct NewUpdate {
+    pub status: String,
+    pub body: String,
+    /// Date du message ; absent : celle du message précédent (le début pour le
+    /// premier).
+    #[serde(default)]
+    pub at: Option<String>,
+}
+
+/// Tolérance sur l'horloge du navigateur : un incident « maintenant » saisi
+/// avec quelques secondes d'avance n'est pas un incident futur.
+const FUTURE_SKEW_MINUTES: i64 = 5;
 
 /// Statuts admis pour un genre d'annonce, et celui par défaut.
 fn statuses_for(kind: &str) -> (&'static [&'static str], &'static str) {
@@ -743,9 +810,27 @@ impl IncidentPayload {
             None => None,
         };
         if let Some(ends_at) = ends_at
-            && ends_at <= starts_at
+            && ends_at < starts_at
         {
-            return Err(ApiError::BadRequest("End must come after start.".into()));
+            return Err(ApiError::BadRequest("End cannot come before start.".into()));
+        }
+        // Un incident se saisit après coup : jamais dans le futur (une maintenance,
+        // elle, se planifie). Contrôlé à la création ou quand la date change.
+        if kind == "incident" {
+            let limit = Utc::now() + TimeDelta::minutes(FUTURE_SKEW_MINUTES);
+            let start_text = format_timestamp(starts_at);
+            let start_moved = existing.is_none_or(|e| e.starts_at != start_text);
+            if starts_at > limit && start_moved {
+                return Err(ApiError::BadRequest(
+                    "An incident cannot start in the future: schedule a maintenance instead."
+                        .into(),
+                ));
+            }
+            let end_text = ends_at.map(format_timestamp);
+            let end_moved = existing.is_none_or(|e| e.ends_at != end_text);
+            if ends_at.is_some_and(|end| end > limit) && end_moved {
+                return Err(ApiError::BadRequest("An incident cannot end in the future.".into()));
+            }
         }
         if kind == "maintenance" && ends_at.is_none() && !is_closing(&status) {
             return Err(ApiError::BadRequest("A maintenance window needs an end.".into()));
@@ -792,31 +877,126 @@ pub async fn list_incidents(State(state): State<AppState>) -> ApiResult<Json<Vec
     Ok(Json(incident_views(&state, incidents).await?))
 }
 
+/// Fil d'une annonce qu'on crée : messages datés (ou le seul premier message),
+/// triés dans le temps et contrôlés. Rend le fil, le statut final et la fin.
+struct PlannedThread {
+    entries: Vec<db::status_pages::ThreadEntry>,
+    status: String,
+    ends_at: Option<DateTime<Utc>>,
+}
+
+fn plan_thread(
+    input: &IncidentInput,
+    first_body: &str,
+    drafts: Vec<NewUpdate>,
+    now: DateTime<Utc>,
+) -> ApiResult<PlannedThread> {
+    let bad = |message: String| Err(ApiError::BadRequest(message));
+    let starts = parse_stored(&input.starts_at).unwrap_or(now);
+    let ends = input.ends_at.as_deref().and_then(parse_stored);
+    let (allowed, default_status) = statuses_for(&input.kind);
+    if drafts.len() > MAX_THREAD {
+        return bad(format!("An announcement takes at most {MAX_THREAD} updates."));
+    }
+
+    // (date, statut, message), dans l'ordre de saisie d'abord.
+    let mut raw: Vec<(DateTime<Utc>, String, String)> = Vec::new();
+    let first_status = if drafts.is_empty() { input.status.as_str() } else { default_status };
+    if !first_body.is_empty() {
+        raw.push((starts.min(now), first_status.to_string(), first_body.to_string()));
+    }
+    let mut previous = starts;
+    for draft in drafts {
+        let status = draft.status.trim().to_string();
+        if !allowed.contains(&status.as_str()) {
+            return bad(format!(
+                "Status \"{status}\" is not valid for a {} (expected: {}).",
+                input.kind,
+                allowed.join(", ")
+            ));
+        }
+        let body = draft.body.trim().to_string();
+        if body.is_empty() {
+            return bad("Every update needs a message.".into());
+        }
+        if body.chars().count() > MAX_BODY_LEN {
+            return bad(format!("Messages are limited to {MAX_BODY_LEN} characters."));
+        }
+        let at = match draft.at.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+            Some(text) => parse_timestamp(text, "Update date")?,
+            None => previous,
+        };
+        previous = at;
+        raw.push((at, status, body));
+    }
+    // Chronologique ; à égalité, l'ordre de saisie est gardé (tri stable).
+    raw.sort_by_key(|entry| entry.0);
+
+    let limit = now + TimeDelta::minutes(FUTURE_SKEW_MINUTES);
+    // Une maintenance s'annonce avant son début et se clôt après sa fin prévue :
+    // seuls les incidents ont leur fil enfermé entre leur début et leur fin.
+    if input.kind == "incident" {
+        for (at, _, _) in &raw {
+            if *at < starts || ends.is_some_and(|end| *at > end) {
+                return bad("Updates must fall between the start and the end.".into());
+            }
+            if *at > limit {
+                return bad("An update cannot be dated in the future.".into());
+            }
+        }
+    }
+    if let Some(position) = raw.iter().position(|(_, status, _)| is_closing(status))
+        && position + 1 < raw.len()
+    {
+        return bad("No update can follow the resolution.".into());
+    }
+
+    let mut status = raw.last().map_or_else(|| input.status.clone(), |entry| entry.1.clone());
+    let mut ends_at = ends;
+    if is_closing(&status) && ends_at.is_none() {
+        ends_at = Some(raw.last().map_or(now.max(starts), |entry| entry.0));
+    }
+    // Une fin saisie pour un incident dit qu'il est résolu.
+    if input.kind == "incident" && ends_at.is_some() && !is_closing(&status) {
+        status = "resolved".to_string();
+    }
+    Ok(PlannedThread {
+        entries: raw
+            .into_iter()
+            .map(|(at, status, body)| db::status_pages::ThreadEntry {
+                status,
+                body,
+                at: format_timestamp(at),
+            })
+            .collect(),
+        status,
+        ends_at,
+    })
+}
+
 pub async fn create_incident(
     State(state): State<AppState>,
-    Json(payload): Json<IncidentPayload>,
+    Json(mut payload): Json<IncidentPayload>,
 ) -> ApiResult<(StatusCode, Json<IncidentView>)> {
     let body = payload.body.clone().unwrap_or_default().trim().to_string();
-    let input = payload.validate(&state, None).await?;
-    let id = db::status_pages::create_incident(&state.pool, &input).await?;
+    let drafts = payload.updates.take().unwrap_or_default();
+    let mut input = payload.validate(&state, None).await?;
     // Le premier message ouvre le fil avec le statut initial ; sans message,
     // le fil reste vide et l'annonce se résume à son titre.
-    if !body.is_empty() {
-        db::status_pages::add_update(
-            &state.pool,
-            id,
-            &input.status,
-            &body,
-            is_closing(&input.status),
-        )
-        .await?;
-    }
+    let plan = plan_thread(&input, &body, drafts, Utc::now())?;
+    input.status = plan.status;
+    input.ends_at = plan.ends_at.map(format_timestamp);
+    let id =
+        db::status_pages::create_incident_with_thread(&state.pool, &input, &plan.entries).await?;
     invalidate_cache();
     let incident = db::status_pages::get_incident(&state.pool, id)
         .await?
         .ok_or_else(|| incident_not_found(id))?;
     tracing::info!(incident = id, kind = %incident.kind, "incident created");
-    subscribers::announce(&state, incident.clone(), Some(body));
+    // Un incident saisi déjà résolu est de l'histoire : personne n'est prévenu.
+    if !is_closing(&incident.status) {
+        subscribers::announce(&state, incident.clone(), Some(body));
+    }
     let mut views = incident_views(&state, vec![incident]).await?;
     Ok((StatusCode::CREATED, Json(views.remove(0))))
 }
@@ -838,6 +1018,20 @@ pub async fn update_incident(
         } else {
             existing.ends_at.clone()
         };
+    }
+    // Les dates déplacées ne doivent pas laisser un message hors de l'annonce.
+    if input.starts_at != existing.starts_at || input.ends_at != existing.ends_at {
+        let start = parse_stored(&input.starts_at);
+        let end = input.ends_at.as_deref().and_then(parse_stored);
+        for update in db::status_pages::list_updates(&state.pool, id).await? {
+            let at = parse_stored(&update.created_at);
+            if at < start || (end.is_some() && at > end) {
+                return Err(ApiError::BadRequest(
+                    "Updates must fall between the start and the end: move or delete them first."
+                        .into(),
+                ));
+            }
+        }
     }
     if !db::status_pages::update_incident(&state.pool, id, &input).await? {
         return Err(incident_not_found(id));
@@ -879,6 +1073,11 @@ pub struct UpdatePayload {
     #[serde(default)]
     pub status: Option<String>,
     pub body: String,
+    /// Date du message, pour compléter un historique ; absent : maintenant, et
+    /// les abonnés sont prévenus. Daté, le message est de l'histoire : il ne
+    /// part à personne.
+    #[serde(default)]
+    pub at: Option<String>,
 }
 
 /// Poste un message et fait avancer le statut de l'annonce.
@@ -911,12 +1110,41 @@ pub async fn add_update(
             allowed.join(", ")
         )));
     }
-    db::status_pages::add_update(&state.pool, id, &status, &body, is_closing(&status)).await?;
+    let at = match payload.at.as_deref().map(str::trim).filter(|s| !s.is_empty()) {
+        Some(text) => {
+            let at = parse_timestamp(text, "Update date")?;
+            let starts = parse_stored(&incident.starts_at);
+            let ends = incident.ends_at.as_deref().and_then(parse_stored);
+            if starts.is_some_and(|start| at < start) || ends.is_some_and(|end| at > end) {
+                return Err(ApiError::BadRequest(
+                    "Updates must fall between the start and the end.".into(),
+                ));
+            }
+            if incident.kind == "incident"
+                && at > Utc::now() + TimeDelta::minutes(FUTURE_SKEW_MINUTES)
+            {
+                return Err(ApiError::BadRequest("An update cannot be dated in the future.".into()));
+            }
+            Some(format_timestamp(at))
+        }
+        None => None,
+    };
+    db::status_pages::add_update_at(
+        &state.pool,
+        id,
+        &status,
+        &body,
+        is_closing(&status),
+        at.as_deref(),
+    )
+    .await?;
     invalidate_cache();
     let incident = db::status_pages::get_incident(&state.pool, id)
         .await?
         .ok_or_else(|| incident_not_found(id))?;
-    subscribers::announce(&state, incident.clone(), Some(body));
+    if at.is_none() {
+        subscribers::announce(&state, incident.clone(), Some(body));
+    }
     let mut views = incident_views(&state, vec![incident]).await?;
     Ok((StatusCode::CREATED, Json(views.remove(0))))
 }
@@ -972,6 +1200,8 @@ struct PublicPage {
     logo_url: Option<String>,
     /// La page propose l'abonnement par courriel (un canal SMTP actif est choisi).
     subscribe: bool,
+    /// Valeurs de référencement effectives (réglages, ou défauts tirés du nom).
+    seo: crate::status_seo::Resolved,
 }
 
 #[derive(Debug, Serialize)]
@@ -1606,7 +1836,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
         .map_or(0, |created| (now - created).num_days() + 1);
     let days = age_days.clamp(MIN_HISTORY_DAYS, cap);
 
-    let items = db::status_pages::list_items(&state.pool, page.id).await?;
+    let items = db::status_pages::effective_items(&state.pool, page.id).await?;
     let targets: HashMap<TargetId, Target> = db::targets::list(&state.pool, &state.cipher)
         .await?
         .into_iter()
@@ -1875,6 +2105,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 format!("/api/public/status/{}/logo?v={}", page.slug, version_tag(&page.updated_at))
             }),
             subscribe: subscribers::offers_subscription(state, page).await,
+            seo: crate::status_seo::resolve(page),
         },
         overall,
         generated_at: format_timestamp(now),

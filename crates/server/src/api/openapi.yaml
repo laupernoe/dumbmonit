@@ -7348,9 +7348,29 @@ components:
         logo_type: { type: [string, "null"], enum: [image/png, image/jpeg, image/webp, null] }
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
+        seo: { $ref: "#/components/schemas/StatusPageSeo" }
+        groups:
+          type: array
+          items: { type: string }
+          description: Checked groups (monitor folders), in order. Their current members are shown, so a monitor added to or removed from the folder appears or disappears by itself.
         items:
           type: array
           items: { $ref: "#/components/schemas/StatusPageItem" }
+    StatusPageSeo:
+      type: object
+      description: >-
+        Search-engine settings. An empty text field means "generated default"
+        (built from the page name). The page is indexable only when it is
+        published and `index` is true; otherwise it answers `noindex, nofollow`.
+      properties:
+        index: { type: boolean, default: false, description: "`true`: `index, follow`; `false`: `noindex, nofollow`." }
+        title: { type: string, maxLength: 120, description: About 60 characters is displayed. }
+        description: { type: string, maxLength: 320, description: About 155 characters is displayed. }
+        keywords: { type: string, maxLength: 300 }
+        canonical: { type: string, description: "Absolute `http(s)://` URL, or empty." }
+        image: { type: string, description: "Absolute `http(s)://` share image (Open Graph / Twitter), or empty." }
+        lang: { type: string, description: "Language tag such as `en`, `fr`, `pt-BR`; empty: `en`." }
+        site_name: { type: string, maxLength: 100 }
     StatusPageItem:
       type: object
       required: [id, page_id, target_id, label, group_name, position]
@@ -7390,6 +7410,13 @@ components:
         show_calendar: { type: boolean, default: false, description: Public 90-day calendar. Omitted keeps the saved value. }
         show_latency: { type: boolean, default: false, description: Public response-time graph per service. Omitted keeps the saved value. }
         subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
+        seo:
+          $ref: "#/components/schemas/StatusPageSeo"
+        groups:
+          type: array
+          maxItems: 50
+          items: { type: string, maxLength: 200 }
+          description: Monitor folders shown as a whole (dynamic). Omitted keeps the saved list; `[]` unchecks all.
         domain:
           type: [string, "null"]
           description: >-
@@ -7483,6 +7510,18 @@ components:
             subscribe: { type: boolean }
             show_calendar: { type: boolean, description: Present (true) only when the page shows the calendar. }
             show_latency: { type: boolean, description: Present (true) only when the page shows response times. }
+            seo:
+              type: object
+              description: Effective search-engine values (settings, or defaults built from the page name).
+              properties:
+                indexable: { type: boolean }
+                title: { type: string }
+                description: { type: string }
+                keywords: { type: string }
+                canonical: { type: string }
+                image: { type: string }
+                lang: { type: string }
+                site_name: { type: string }
         calendar:
           type: array
           description: One entry per day, oldest first (90 days). Present only when the calendar is enabled.

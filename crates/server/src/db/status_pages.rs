@@ -47,6 +47,9 @@ pub struct StatusPage {
     /// Domaine public : la page est servie à la racine de ce nom d'hôte
     /// (`crate::status_host`) ; `None` : seulement sous `/s/<slug>`.
     pub domain: Option<String>,
+    /// Réglages de référencement (migration 0065), servis en objet JSON.
+    #[serde(serialize_with = "serialize_seo")]
+    pub seo: String,
 }
 
 /// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
@@ -113,6 +116,10 @@ pub fn split_scenes(csv: &str) -> Vec<String> {
     csv.split(',').map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect()
 }
 
+fn serialize_seo<S: serde::Serializer>(json: &str, serializer: S) -> Result<S::Ok, S::Error> {
+    serializer.serialize_some(&crate::status_seo::Seo::parse(json))
+}
+
 fn serialize_scenes<S: serde::Serializer>(csv: &str, serializer: S) -> Result<S::Ok, S::Error> {
     serializer.collect_seq(split_scenes(csv))
 }
@@ -123,7 +130,7 @@ macro_rules! select_page {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
             "created_at, updated_at, accent, scenes, scene_rotation, simple, show_calendar, show_latency, footer_text, homepage_url, ",
-            "logo_type, subscribe_channel_id, link_origin, domain FROM status_pages ",
+            "logo_type, subscribe_channel_id, link_origin, domain, seo FROM status_pages ",
             $tail
         )
     };
@@ -151,6 +158,10 @@ pub struct StatusPageInput {
     pub link_origin: String,
     /// Déjà normalisé et validé (`status_host::normalise_domain`).
     pub domain: Option<String>,
+    /// Déjà validé (`status_seo::Seo::validate`).
+    pub seo: crate::status_seo::Seo,
+    /// Groupes cochés, dans l'ordre ; `None` : inchangés.
+    pub groups: Option<Vec<String>>,
 }
 
 /// Un service affiché par une page.
@@ -238,8 +249,8 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     let (id,): (i64,) = sqlx::query_as(
         "INSERT INTO status_pages (slug, title, description, published, theme, show_uptime_days,
              accent, scenes, scene_rotation, simple, show_calendar, show_latency, footer_text, homepage_url,
-             subscribe_channel_id, link_origin, domain)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             subscribe_channel_id, link_origin, domain, seo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
          RETURNING id",
     )
     .bind(&input.slug)
@@ -259,9 +270,13 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     .bind(input.subscribe_channel_id)
     .bind(&input.link_origin)
     .bind(&input.domain)
+    .bind(input.seo.to_json())
     .fetch_one(pool)
     .await
     .context("création de la page de statut")?;
+    if let Some(groups) = &input.groups {
+        set_groups(pool, id, groups).await?;
+    }
     Ok(id)
 }
 
@@ -269,8 +284,10 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
 /// données, qui borne la fenêtre d'historique affichée.
 pub async fn oldest_target_created_at(pool: &SqlitePool, page_id: i64) -> Result<Option<String>> {
     let (oldest,): (Option<String>,) = sqlx::query_as(
-        "SELECT MIN(t.created_at) FROM targets t
-         JOIN status_page_items i ON i.target_id = t.id WHERE i.page_id = ?",
+        "SELECT MIN(created_at) FROM targets
+         WHERE id IN (SELECT target_id FROM status_page_items WHERE page_id = ?1)
+            OR (group_name != ''
+                AND group_name IN (SELECT group_name FROM status_page_groups WHERE page_id = ?1))",
     )
     .bind(page_id)
     .fetch_one(pool)
@@ -286,7 +303,7 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
              show_uptime_days = ?, accent = ?, scenes = ?, scene_rotation = ?, simple = ?,
              show_calendar = ?, show_latency = ?,
              footer_text = ?, homepage_url = ?, subscribe_channel_id = ?, link_origin = ?,
-             domain = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+             domain = ?, seo = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE id = ?",
     )
     .bind(&input.slug)
@@ -306,10 +323,16 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     .bind(input.subscribe_channel_id)
     .bind(&input.link_origin)
     .bind(&input.domain)
+    .bind(input.seo.to_json())
     .bind(id)
     .execute(pool)
     .await
     .context("mise à jour de la page de statut")?;
+    if result.rows_affected() > 0
+        && let Some(groups) = &input.groups
+    {
+        set_groups(pool, id, groups).await?;
+    }
     Ok(result.rows_affected() > 0)
 }
 
@@ -365,6 +388,130 @@ pub async fn list_all_items(pool: &SqlitePool) -> Result<Vec<PageItem>> {
     .fetch_all(pool)
     .await
     .context("liste des services des pages de statut")
+}
+
+// --------------------------------------------------------------------------
+// Groupes cochés (dynamiques)
+// --------------------------------------------------------------------------
+
+/// Groupes cochés d'une page, dans l'ordre.
+pub async fn list_groups(pool: &SqlitePool, page_id: i64) -> Result<Vec<String>> {
+    let rows: Vec<(String,)> = sqlx::query_as(
+        "SELECT group_name FROM status_page_groups WHERE page_id = ? ORDER BY position, group_name",
+    )
+    .bind(page_id)
+    .fetch_all(pool)
+    .await
+    .context("liste des groupes d'une page de statut")?;
+    Ok(rows.into_iter().map(|(name,)| name).collect())
+}
+
+/// Groupes cochés de toutes les pages, pour la liste d'administration.
+pub async fn list_all_groups(pool: &SqlitePool) -> Result<Vec<(i64, String)>> {
+    sqlx::query_as(
+        "SELECT page_id, group_name FROM status_page_groups ORDER BY page_id, position, group_name",
+    )
+    .fetch_all(pool)
+    .await
+    .context("liste des groupes des pages de statut")
+}
+
+/// Remplace les groupes cochés d'une page.
+pub async fn set_groups(pool: &SqlitePool, page_id: i64, groups: &[String]) -> Result<()> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction")?;
+    sqlx::query("DELETE FROM status_page_groups WHERE page_id = ?")
+        .bind(page_id)
+        .execute(&mut *tx)
+        .await
+        .context("purge des groupes de la page")?;
+    for (position, name) in groups.iter().enumerate() {
+        sqlx::query(
+            "INSERT OR IGNORE INTO status_page_groups (page_id, group_name, position)
+             VALUES (?, ?, ?)",
+        )
+        .bind(page_id)
+        .bind(name)
+        .bind(position as i64)
+        .execute(&mut *tx)
+        .await
+        .context("insertion d'un groupe de page")?;
+    }
+    tx.commit().await.context("validation des groupes de la page")?;
+    Ok(())
+}
+
+/// Une surveillance membre d'un groupe coché.
+#[derive(Debug, Clone, FromRow)]
+pub struct GroupMember {
+    pub target_id: TargetId,
+    pub name: String,
+    pub group_name: String,
+}
+
+/// Services effectivement montrés : ceux choisis un à un, puis les membres
+/// *actuels* des groupes cochés. Lu à chaque fois : une surveillance ajoutée
+/// au groupe apparaît, une retirée disparaît.
+pub async fn effective_items(pool: &SqlitePool, page_id: i64) -> Result<Vec<PageItem>> {
+    let explicit = list_items(pool, page_id).await?;
+    let groups = list_groups(pool, page_id).await?;
+    if groups.is_empty() {
+        return Ok(explicit);
+    }
+    let members: Vec<GroupMember> = sqlx::query_as(
+        "SELECT id AS target_id, name, group_name FROM targets
+         WHERE group_name != ''
+           AND group_name IN (SELECT group_name FROM status_page_groups WHERE page_id = ?)
+         ORDER BY position, id",
+    )
+    .bind(page_id)
+    .fetch_all(pool)
+    .await
+    .context("membres des groupes d'une page de statut")?;
+    Ok(merge_items(page_id, explicit, &groups, &members))
+}
+
+/// Fusionne services choisis et membres de groupes, sans doublon.
+///
+/// Un service choisi un à un garde son libellé ; s'il n'a pas de groupe à lui
+/// et appartient à un groupe coché, il s'affiche sous ce groupe. Les membres
+/// viennent ensuite, groupe par groupe dans l'ordre des cases cochées.
+pub fn merge_items(
+    page_id: i64,
+    explicit: Vec<PageItem>,
+    groups: &[String],
+    members: &[GroupMember],
+) -> Vec<PageItem> {
+    let folder_of: std::collections::HashMap<TargetId, &str> =
+        members.iter().map(|member| (member.target_id, member.group_name.as_str())).collect();
+    let mut seen: std::collections::HashSet<TargetId> = std::collections::HashSet::new();
+    let mut out = Vec::with_capacity(explicit.len() + members.len());
+    for mut item in explicit {
+        if !seen.insert(item.target_id) {
+            continue;
+        }
+        if item.group_name.is_empty()
+            && let Some(folder) = folder_of.get(&item.target_id)
+        {
+            item.group_name = (*folder).to_string();
+        }
+        out.push(item);
+    }
+    for group in groups {
+        for member in members.iter().filter(|member| &member.group_name == group) {
+            if !seen.insert(member.target_id) {
+                continue;
+            }
+            out.push(PageItem {
+                id: 0,
+                page_id,
+                target_id: member.target_id,
+                label: member.name.clone(),
+                group_name: member.group_name.clone(),
+                position: out.len() as i64,
+            });
+        }
+    }
+    out
 }
 
 /// Remplace d'un bloc les services d'une page, dans l'ordre donné.
@@ -446,6 +593,26 @@ pub async fn get_incident(pool: &SqlitePool, id: i64) -> Result<Option<Incident>
 }
 
 pub async fn create_incident(pool: &SqlitePool, input: &IncidentInput) -> Result<i64> {
+    create_incident_with_thread(pool, input, &[]).await
+}
+
+/// Un message du fil d'une annonce créée d'un bloc.
+#[derive(Debug, Clone)]
+pub struct ThreadEntry {
+    pub status: String,
+    pub body: String,
+    /// Date du message, format de la base.
+    pub at: String,
+}
+
+/// Crée une annonce et son fil dans une même transaction : une saisie
+/// d'historique est enregistrée entière ou pas du tout.
+pub async fn create_incident_with_thread(
+    pool: &SqlitePool,
+    input: &IncidentInput,
+    thread: &[ThreadEntry],
+) -> Result<i64> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction")?;
     let (id,): (i64,) = sqlx::query_as(
         "INSERT INTO incidents (page_id, title, kind, status, severity, starts_at, ends_at)
          VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -458,9 +625,23 @@ pub async fn create_incident(pool: &SqlitePool, input: &IncidentInput) -> Result
     .bind(&input.severity)
     .bind(&input.starts_at)
     .bind(&input.ends_at)
-    .fetch_one(pool)
+    .fetch_one(&mut *tx)
     .await
     .context("création de l'incident")?;
+    for entry in thread {
+        sqlx::query(
+            "INSERT INTO incident_updates (incident_id, status, body, created_at)
+             VALUES (?, ?, ?, ?)",
+        )
+        .bind(id)
+        .bind(&entry.status)
+        .bind(&entry.body)
+        .bind(&entry.at)
+        .execute(&mut *tx)
+        .await
+        .context("ajout au fil de l'incident")?;
+    }
+    tx.commit().await.context("validation de l'incident")?;
     if let Some(page_id) = input.page_id {
         touch_page(pool, page_id).await?;
     }
@@ -500,7 +681,7 @@ pub async fn delete_incident(pool: &SqlitePool, id: i64) -> Result<bool> {
 pub async fn list_updates(pool: &SqlitePool, incident_id: i64) -> Result<Vec<IncidentUpdate>> {
     sqlx::query_as(
         "SELECT id, incident_id, status, body, created_at FROM incident_updates
-         WHERE incident_id = ? ORDER BY id",
+         WHERE incident_id = ? ORDER BY created_at, id",
     )
     .bind(incident_id)
     .fetch_all(pool)
@@ -534,35 +715,52 @@ pub async fn add_update(
     body: &str,
     closes: bool,
 ) -> Result<IncidentUpdate> {
+    add_update_at(pool, incident_id, status, body, closes, None).await
+}
+
+/// Comme [`add_update`], à une date donnée (format de la base) : saisie d'un
+/// historique. Le statut de l'annonce suit alors le message *le plus récent* du
+/// fil, pas le dernier saisi ; la fin, si l'annonce n'en avait pas, est la date
+/// du message de clôture.
+pub async fn add_update_at(
+    pool: &SqlitePool,
+    incident_id: i64,
+    status: &str,
+    body: &str,
+    closes: bool,
+    at: Option<&str>,
+) -> Result<IncidentUpdate> {
     let mut tx = pool.begin().await.context("ouverture de la transaction")?;
     let update: IncidentUpdate = sqlx::query_as(
-        "INSERT INTO incident_updates (incident_id, status, body) VALUES (?, ?, ?)
+        "INSERT INTO incident_updates (incident_id, status, body, created_at)
+         VALUES (?, ?, ?, COALESCE(?, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')))
          RETURNING id, incident_id, status, body, created_at",
     )
     .bind(incident_id)
     .bind(status)
     .bind(body)
+    .bind(at)
     .fetch_one(&mut *tx)
     .await
     .context("ajout au fil de l'incident")?;
-    let update_status = if closes {
-        sqlx::query(
-            "UPDATE incidents SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
-                 ends_at = COALESCE(ends_at, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
-             WHERE id = ?",
-        )
-    } else {
-        sqlx::query(
-            "UPDATE incidents SET status = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
-             WHERE id = ?",
-        )
-    };
-    update_status
-        .bind(status)
-        .bind(incident_id)
-        .execute(&mut *tx)
-        .await
-        .context("changement de statut de l'incident")?;
+    sqlx::query(
+        "UPDATE incidents SET updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now'),
+             status = (SELECT status FROM incident_updates WHERE incident_id = ?1
+                       ORDER BY created_at DESC, id DESC LIMIT 1)
+         WHERE id = ?1",
+    )
+    .bind(incident_id)
+    .execute(&mut *tx)
+    .await
+    .context("changement de statut de l'incident")?;
+    if closes {
+        sqlx::query("UPDATE incidents SET ends_at = COALESCE(ends_at, ?2) WHERE id = ?1")
+            .bind(incident_id)
+            .bind(&update.created_at)
+            .execute(&mut *tx)
+            .await
+            .context("fin de l'incident")?;
+    }
     tx.commit().await.context("validation du fil de l'incident")?;
     Ok(update)
 }
@@ -722,4 +920,49 @@ pub async fn purge_unconfirmed(pool: &SqlitePool, before: &str) -> Result<u64> {
             .await
             .context("purge des abonnés non confirmés")?;
     Ok(result.rows_affected())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn item(target_id: TargetId, label: &str, group: &str) -> PageItem {
+        PageItem {
+            id: 1,
+            page_id: 7,
+            target_id,
+            label: label.into(),
+            group_name: group.into(),
+            position: 0,
+        }
+    }
+
+    fn member(target_id: TargetId, name: &str, group: &str) -> GroupMember {
+        GroupMember { target_id, name: name.into(), group_name: group.into() }
+    }
+
+    #[test]
+    fn group_members_follow_the_group_and_are_not_duplicated() {
+        let groups = vec!["Rack".to_string()];
+        let members = vec![member(1, "NAS", "Rack"), member(2, "Switch", "Rack")];
+        // Le NAS est aussi coché seul, avec son propre libellé.
+        let merged = merge_items(7, vec![item(1, "Storage", "")], &groups, &members);
+        assert_eq!(merged.len(), 2, "une seule ligne par surveillance");
+        assert_eq!((merged[0].target_id, merged[0].label.as_str()), (1, "Storage"));
+        assert_eq!(merged[0].group_name, "Rack", "il s'affiche sous le groupe");
+        assert_eq!((merged[1].target_id, merged[1].label.as_str()), (2, "Switch"));
+        assert_eq!(merged[1].group_name, "Rack");
+    }
+
+    #[test]
+    fn an_own_group_name_is_kept_and_a_removed_member_disappears() {
+        let groups = vec!["Rack".to_string()];
+        let members = vec![member(1, "NAS", "Rack")];
+        let merged = merge_items(7, vec![item(1, "NAS", "Storage")], &groups, &members);
+        assert_eq!(merged.len(), 1);
+        assert_eq!(merged[0].group_name, "Storage");
+        // Le groupe n'a plus de membres : seul le choix individuel reste.
+        assert_eq!(merge_items(7, vec![item(1, "NAS", "")], &groups, &[]).len(), 1);
+        assert!(merge_items(7, vec![], &groups, &[]).is_empty());
+    }
 }

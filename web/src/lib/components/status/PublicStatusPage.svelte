@@ -43,6 +43,12 @@
 	let { slug }: Props = $props();
 
 	let status = $state<PublicStatus | null>(null);
+	const seo = $derived(status?.page.seo);
+	// The server wrote these tags into the HTML for crawlers; once the page is drawn
+	// the <svelte:head> below owns them, so the copies are dropped (no duplicates).
+	$effect(() => {
+		if (seo) document.head.querySelectorAll('[data-dm-seo]').forEach((node) => node.remove());
+	});
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let lastChecked = $state<Date | null>(null);
@@ -204,8 +210,24 @@
 </script>
 
 <svelte:head>
-	<title>{status ? m.status_public_title_with_page({ title: status.page.title }) : m.status_public_title()}</title>
-	<meta name="robots" content="noindex" />
+	<title>{seo ? seo.title : status ? m.status_public_title_with_page({ title: status.page.title }) : m.status_public_title()}</title>
+	<!-- Same values the server wrote into the HTML (crates/server/src/status_seo.rs); noindex until the page says otherwise. -->
+	<meta name="robots" content={seo?.indexable ? 'index, follow' : 'noindex, nofollow'} />
+	{#if seo}
+		<meta name="description" content={seo.description} />
+		{#if seo.keywords}<meta name="keywords" content={seo.keywords} />{/if}
+		{#if seo.indexable && seo.canonical}<link rel="canonical" href={seo.canonical} />{/if}
+		<meta property="og:type" content="website" />
+		<meta property="og:title" content={seo.title} />
+		<meta property="og:description" content={seo.description} />
+		<meta property="og:site_name" content={seo.site_name} />
+		{#if seo.canonical}<meta property="og:url" content={seo.canonical} />{/if}
+		{#if seo.image}<meta property="og:image" content={seo.image} />{/if}
+		<meta name="twitter:card" content={seo.image ? 'summary_large_image' : 'summary'} />
+		<meta name="twitter:title" content={seo.title} />
+		<meta name="twitter:description" content={seo.description} />
+		{#if seo.image}<meta name="twitter:image" content={seo.image} />{/if}
+	{/if}
 </svelte:head>
 
 {#snippet announcements()}

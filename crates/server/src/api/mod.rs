@@ -41,6 +41,7 @@ mod redfish;
 mod relay;
 mod reports;
 mod security;
+mod seo_files;
 mod self_monitoring;
 mod skipped_features;
 pub(crate) mod spa;
@@ -318,6 +319,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/install.sh", get(agent_files::install_sh))
         .route("/install.ps1", get(agent_files::install_ps1))
         .route("/download/{name}", get(agent_files::download))
+        // Référencement : fermé, sauf les pages de statut cochées « indexer ».
+        .route("/robots.txt", get(seo_files::robots))
+        .route("/sitemap.xml", get(seo_files::sitemap))
         // Tout ce qui n'est pas une route d'API est servi par l'interface web, sans
         // authentification : c'est l'application elle-même qui demande le mot de
         // passe, elle doit donc pouvoir se charger d'abord.
