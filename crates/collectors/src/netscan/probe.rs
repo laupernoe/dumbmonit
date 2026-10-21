@@ -22,6 +22,10 @@ use tokio_rustls::TlsConnector;
 const MAX_BODY: usize = 64 * 1024;
 /// Octets de bannière lus au plus.
 const MAX_BANNER: usize = 4096;
+/// Durée totale d'une lecture de réponse HTTP, en multiples du délai par
+/// lecture : un service qui égrène un octet de temps en temps ne retient pas la
+/// sonde indéfiniment.
+const HTTP_READ_BUDGET: u32 = 3;
 
 /// Tout ce qu'on a pu observer d'un port ouvert, à confronter aux empreintes.
 #[derive(Debug, Default, Clone)]
@@ -78,8 +82,16 @@ pub async fn observe(
 
     // Bannière spontanée : lire ce qui vient sans rien envoyer. Un service HTTP
     // ne dit rien tant qu'on ne demande rien ; une lecture courte le confirme.
-    if want_banner
-        && let Some(bytes) = read_quietly(stream, banner_timeout).await
+    // Chaque étape suivante ouvre sa propre connexion : celle-ci est fermée
+    // aussitôt, pour qu'une sonde ne tienne jamais deux sockets à la fois (le
+    // permis du balayage vaut une socket).
+    let banner = if want_banner {
+        read_quietly(stream, banner_timeout).await
+    } else {
+        drop(stream);
+        None
+    };
+    if let Some(bytes) = banner
         && !bytes.is_empty()
     {
         evidence.banner = Some(printable(&bytes));
@@ -210,10 +222,12 @@ where
         return None;
     }
 
-    let mut raw = Vec::new();
+    let mut raw = Vec::with_capacity(8192);
     let mut chunk = vec![0u8; 8192];
+    let deadline = tokio::time::Instant::now() + timeout.saturating_mul(HTTP_READ_BUDGET);
     loop {
-        match tokio::time::timeout(timeout, stream.read(&mut chunk)).await {
+        let step = (tokio::time::Instant::now() + timeout).min(deadline);
+        match tokio::time::timeout_at(step, stream.read(&mut chunk)).await {
             Ok(Ok(0)) => break,
             Ok(Ok(n)) => {
                 raw.extend_from_slice(&chunk[..n]);

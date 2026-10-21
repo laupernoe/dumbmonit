@@ -184,7 +184,7 @@ which is the choice you make when you create a token.
     the machine's architecture (x86_64 or aarch64) from the server, writes
     `/etc/dumbmonit/agent.yaml` (mode 0600) and registers `dumbmonit-agent` with
     systemd, or with OpenRC on Alpine. The systemd unit is hardened
-    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=128M`,
+    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=256M`,
     `CPUQuota=20%`).
 
 === "macOS (launchd)"
@@ -903,7 +903,10 @@ When the server is unreachable, the agent keeps measuring and buffers its
 readings in memory with their original timestamps. They are sent as soon as
 the link is back: a server restart leaves no hole in the graphs. The buffer is
 bounded (`max_buffered_samples`, about an hour by default) and drops the oldest
-readings when full. Retries back off from 5 seconds to 5 minutes with jitter.
+readings when full. Retries back off from 2 to 30 seconds with jitter, and resume at once when
+the relay channel reaches the server again. Measurements still waiting at
+shutdown are kept on disk (`pending-samples.json`, next to the binding secret)
+and sent at the next start.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing

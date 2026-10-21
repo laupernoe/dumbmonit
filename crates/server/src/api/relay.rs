@@ -73,6 +73,13 @@ async fn pending(
     Query(query): Query<KeyQuery>,
 ) -> Result<Json<Vec<AgentCommand>>, Rejection> {
     let (token_id, agent_id) = authenticate(&state, &headers, &query.key).await?;
+    match state.relay().note_poll(agent_id, tokio::time::Instant::now()) {
+        relay::PollGap::First => tracing::info!(agent = agent_id, "relay agent connected"),
+        relay::PollGap::Back(gap) => {
+            tracing::info!(agent = agent_id, absent_s = gap.as_secs(), "relay agent reconnected")
+        }
+        relay::PollGap::Regular => {}
+    }
     // Les balayages de découverte confiés à cet agent passent par le même
     // canal ; servis sans attente (ils sont prêts dès la création).
     let mut discovery = state.discovery().take_commands(agent_id);

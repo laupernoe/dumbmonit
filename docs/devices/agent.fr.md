@@ -200,7 +200,7 @@ vous créez un jeton.
     le serveur, écrit `/etc/dumbmonit/agent.yaml` (mode 0600) et enregistre
     `dumbmonit-agent` avec systemd, ou avec OpenRC sur Alpine. L'unité
     systemd est renforcée (`ProtectSystem=strict`, `NoNewPrivileges`,
-    `MemoryMax=128M`, `CPUQuota=20%`).
+    `MemoryMax=256M`, `CPUQuota=20%`).
 
 === "macOS (launchd)"
 
@@ -930,8 +930,11 @@ lectures en tampon mémoire avec leurs horodatages d'origine. Elles sont
 envoyées dès que le lien revient : un redémarrage de serveur ne laisse
 aucun trou dans les graphiques. Le tampon est borné (`max_buffered_samples`,
 environ une heure par défaut) et abandonne les lectures les plus
-anciennes quand il est plein. Les tentatives reculent de 5 secondes à
-5 minutes avec du jitter.
+anciennes quand il est plein. Les tentatives reculent de 2 à
+30 secondes avec du jitter, et reprennent aussitôt que le canal du relais
+retrouve le serveur. Les mesures encore en attente à l'arrêt sont gardées sur
+disque (`pending-samples.json`, à côté du secret de liaison) et envoyées au
+démarrage suivant.
 
 ```sh
 dumbmonit-agent --dry-run          # affiche les lectures, n'envoie rien

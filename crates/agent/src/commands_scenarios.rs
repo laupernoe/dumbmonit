@@ -442,7 +442,9 @@ async fn the_runner_reports_expired_commands_and_runs_the_next_one() {
     assert_eq!(docker_calls.count("POST", "/containers/web/restart"), 1);
     // Identité et secret de liaison accompagnent chaque appel.
     let first = &server.all()[0];
-    assert!(first.path.ends_with("?key=nas"), "{}", first.path);
+    // La clé dans son en-tête, jamais dans l'URL.
+    assert_eq!(first.path, "/api/agent/commands", "{}", first.path);
+    assert_eq!(first.header("x-dumbmonit-agent-key"), Some("nas"));
     assert_eq!(first.header("authorization"), Some("Bearer dmon_t"));
     assert_eq!(first.header("x-dumbmonit-agent-secret"), Some("dmab_s"));
     assert!(!runner.is_busy());

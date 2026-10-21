@@ -7234,5 +7234,7 @@
 	"worldmap_verdict_idle": "Not probed",
 	"worldmap_verdict_ok": "All up",
 	"worldmap_verdict_warn": "Needs a look",
-	"worldmap_view_world": "World"
+	"worldmap_view_world": "World",
+	"settings_logs_export_since": "Logs available since {date}.",
+	"settings_logs_export_since_short": "Your selection starts before that: the export only contains logs from {date} onwards."
 }

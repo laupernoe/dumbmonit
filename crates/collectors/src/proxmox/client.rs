@@ -49,6 +49,12 @@ impl PveClient {
         Self { http, base_url, auth, timeout }
     }
 
+    /// Racine de l'API interrogée : distingue deux clusters aux nœuds homonymes
+    /// dans les clés de journalisation.
+    pub fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
     /// Interroge un chemin de l'API et déballe l'enveloppe `{"data": …}`.
     ///
     /// Un 401 sur une session par ticket déclenche exactement un renouvellement :

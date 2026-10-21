@@ -7234,5 +7234,7 @@
 	"worldmap_verdict_idle": "Não sondado",
 	"worldmap_verdict_ok": "Tudo a funcionar",
 	"worldmap_verdict_warn": "A verificar",
-	"worldmap_view_world": "Mundo"
+	"worldmap_view_world": "Mundo",
+	"settings_logs_export_since": "Registos disponíveis desde {date}.",
+	"settings_logs_export_since_short": "A sua seleção começa antes: a exportação só contém registos a partir de {date}."
 }

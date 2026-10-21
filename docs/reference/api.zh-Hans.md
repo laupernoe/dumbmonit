@@ -634,10 +634,10 @@ curl -b cookies.txt -G http://localhost:8080/api/metrics/query \
 | `POST` | `/api/agent/tokens` | 管理员，仅会话 | `{"name": "Home fleet", "base_url": "http://server:8080", "reusable": false, "max_uses": null, "expires_in_days": null}`。`201`，返回令牌字段外加 `secret`（只显示一次）、`install_linux` 和 `install_windows`。`base_url` 是代理将使用的 URL；默认为监听地址。没有 `reusable` 时，令牌是**一次性**的：只注册一台机器，不能再多。有它时，`max_uses` 限制注册次数（`null`：无限制）。`expires_in_days` 在这么多天之后停止*注册*；已注册的机器继续上报。次数小于 1 时返回 `400`。 |
 | `DELETE` | `/api/agent/tokens/{id}` | 管理员，仅会话 | 吊销。`204`；未知或已吊销时返回 `404`。 |
 | `POST` | `/api/ingest` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 接收代理发来的一批样本（正文最大 16 MB）。不应手动调用。该头携带机器的绑定密钥；尚无密钥的代理省略它，这就是它请求密钥的方式。响应会增加 `agent_secret`（密钥，在机器被绑定时仅返回一次）和 `bound`。当机器被绑定到另一个代理安装，或令牌已无法再注册时返回 `403`——消息会说明是哪种情况以及该怎么做。 |
-| `GET` | `/api/agent/relay?key=…&wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 委派给中继代理（`relay: true`）的探测。没有待处理项时最多保持 `wait` 秒（最多 25 秒）。每一项都是 `probe` 类型的命令，其 `args` 携带目标、其解密后的凭据、`timeout_secs` 和 `discover`。绝不写入磁盘。 |
-| `POST` | `/api/agent/relay/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 被委派探测的结果：`{"duration_ms", "error", "samples", "profile_id"}`（正文最大 16 MB）。`204`；探测已过期或属于另一个代理时返回 `404`。 |
-| `GET` | `/api/agent/commands?key=…&wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 为代理排队的命令（容器重启或更新），没有待处理项时最多保持 `wait` 秒。不应手动调用。`key` 本身说明不了什么——它是公开的——所以已绑定的机器还必须出示其绑定密钥；否则返回 `403`，这正是阻止一台机器拿走另一台机器命令的机制。 |
-| `POST` | `/api/agent/commands/{id}?key=…` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Secret` | 由代理报告的命令进度和结果。`result` 被截断为最后 4 KB，发生截断时开头会加上 `[truncated by the server, beginning dropped]`。 |
+| `GET` | `/api/agent/relay?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 委派给中继代理（`relay: true`）的探测。没有待处理项时最多保持 `wait` 秒（最多 25 秒）。每一项都是 `probe` 类型的命令，其 `args` 携带目标、其解密后的凭据、`timeout_secs` 和 `discover`。绝不写入磁盘。 |
+| `POST` | `/api/agent/relay/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 被委派探测的结果：`{"duration_ms", "error", "samples", "profile_id"}`（正文最大 16 MB）。`204`；探测已过期或属于另一个代理时返回 `404`。 |
+| `GET` | `/api/agent/commands?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 为代理排队的命令（容器重启或更新），没有待处理项时最多保持 `wait` 秒。不应手动调用。`key` 本身说明不了什么——它是公开的——所以已绑定的机器还必须出示其绑定密钥；否则返回 `403`，这正是阻止一台机器拿走另一台机器命令的机制。 |
+| `POST` | `/api/agent/commands/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | 由代理报告的命令进度和结果。`result` 被截断为最后 4 KB，发生截断时开头会加上 `[truncated by the server, beginning dropped]`。 |
 | `GET` | `/api/relays` | 会话 | 每个可能作为中继的代理监控项：`id`、`name`、`site`、`relay`（声明了 `relay: true`）、`last_seen_at`、`relayed`（经由它到达的监控项）。中继在前，然后按名称排序。 |
 
 ```json
