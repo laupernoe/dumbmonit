@@ -530,6 +530,8 @@ async fn a_past_incident_is_backdated_resolved_and_keeps_its_thread_in_order() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
     let page = past_page(&app, &admin).await;
+    // Heures figées une fois : recalculées, elles changent si une seconde passe.
+    let (h30, h28, h26) = (hours_ago(30), hours_ago(28), hours_ago(26));
 
     // Les messages arrivent dans le désordre : le fil est rangé dans le temps.
     let reply = app
@@ -539,12 +541,12 @@ async fn a_past_incident_is_backdated_resolved_and_keeps_its_thread_in_order() {
                 "title": "Database outage",
                 "page_id": page,
                 "severity": "major",
-                "starts_at": hours_ago(30),
-                "ends_at": hours_ago(26),
+                "starts_at": h30,
+                "ends_at": h26,
                 "updates": [
-                    { "status": "resolved", "body": "Fixed.", "at": hours_ago(26) },
-                    { "status": "investigating", "body": "Looking into it.", "at": hours_ago(30) },
-                    { "status": "identified", "body": "Disk full.", "at": hours_ago(28) }
+                    { "status": "resolved", "body": "Fixed.", "at": h26 },
+                    { "status": "investigating", "body": "Looking into it.", "at": h30 },
+                    { "status": "identified", "body": "Disk full.", "at": h28 }
                 ]
             }),
             Some(&admin),
@@ -552,7 +554,7 @@ async fn a_past_incident_is_backdated_resolved_and_keeps_its_thread_in_order() {
         .await;
     assert_eq!(reply.status, StatusCode::CREATED, "incident: {}", reply.body);
     assert_eq!(reply.body["status"], "resolved");
-    assert_eq!(reply.body["ends_at"], hours_ago(26));
+    assert_eq!(reply.body["ends_at"], h26);
     let order: Vec<&str> = reply.body["updates"]
         .as_array()
         .unwrap()
@@ -560,14 +562,14 @@ async fn a_past_incident_is_backdated_resolved_and_keeps_its_thread_in_order() {
         .map(|u| u["status"].as_str().unwrap())
         .collect();
     assert_eq!(order, ["investigating", "identified", "resolved"]);
-    assert_eq!(reply.body["updates"][0]["created_at"], hours_ago(30));
+    assert_eq!(reply.body["updates"][0]["created_at"], h30);
 
     // Visible dans l'historique public, à sa vraie date, et clos.
     let public = app.get("/api/public/status/history", None).await;
     let incidents = public.body["incidents"].as_array().unwrap();
     assert_eq!(incidents.len(), 1);
     assert_eq!(incidents[0]["status"], "resolved");
-    assert_eq!(incidents[0]["starts_at"], hours_ago(30));
+    assert_eq!(incidents[0]["starts_at"], h30);
     assert_eq!(public.body["overall"], "operational", "an old incident does not make the page red");
 }
 
@@ -587,14 +589,15 @@ async fn an_end_alone_resolves_and_a_closing_update_sets_the_end() {
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     assert_eq!(reply.body["status"], "resolved");
 
+    let (h9, h8) = (hours_ago(9), hours_ago(8));
     let reply = app
         .post(
             "/api/incidents",
             json!({
-                "title": "B", "page_id": page, "starts_at": hours_ago(9),
+                "title": "B", "page_id": page, "starts_at": h9,
                 "updates": [
-                    { "status": "investigating", "body": "x", "at": hours_ago(9) },
-                    { "status": "resolved", "body": "y", "at": hours_ago(8) }
+                    { "status": "investigating", "body": "x", "at": h9 },
+                    { "status": "resolved", "body": "y", "at": h8 }
                 ]
             }),
             Some(&admin),
@@ -602,7 +605,7 @@ async fn an_end_alone_resolves_and_a_closing_update_sets_the_end() {
         .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     assert_eq!(reply.body["status"], "resolved");
-    assert_eq!(reply.body["ends_at"], hours_ago(8));
+    assert_eq!(reply.body["ends_at"], h8);
 }
 
 #[tokio::test]

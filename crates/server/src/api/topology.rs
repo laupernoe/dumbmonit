@@ -11,7 +11,24 @@
 //! - `relay` : l'agent relais qui interroge l'équipement (`via_agent`) ;
 //! - `hypervisor` : un hyperviseur et ses invités, lus dans les dernières
 //!   mesures (Proxmox, XCP-ng, Nutanix, vSphere, libvirt de l'agent) ;
-//! - `lldp` : un voisin LLDP qu'un commutateur SNMP a vu sur un port.
+//! - `lldp` : un voisin LLDP qu'un commutateur SNMP a vu sur un port ;
+//! - `samehost` : une surveillance PBS et une surveillance Proxmox VE qui
+//!   visent la même machine (même hôte, ou même nom) ;
+//! - `backup` : un Proxmox VE qui sauvegarde vers un PBS surveillé, lu dans
+//!   ses stockages de type `pbs` (serveur et datastore).
+//!
+//! - `firewall` : un équipement dont l'adresse tombe dans un réseau qu'un
+//!   pare-feu surveillé du même site dessert (interfaces lues dans ses mesures,
+//!   à défaut le /24 de son adresse). Un parent déclaré, un relais, un
+//!   hyperviseur ou une sauvegarde passent avant : ce lien-là ne remplace rien.
+//!
+//! Chaque équipement porte aussi son sous-réseau (CIDR) et, si un pare-feu le
+//! sait, le VLAN et le nom de ce réseau : l'interface s'en sert pour les zones.
+//!
+//! Un cluster Proxmox (au moins deux nœuds connus) se dessine cluster, nœuds,
+//! invités : un nœud par nœud Proxmox, avec son état, et chaque invité sous le
+//! nœud qui l'héberge. Un Proxmox à nœud unique garde ses invités directement
+//! sous la surveillance : le nœud s'y confond.
 //!
 //! Un service trouvé par un agent prend le site de sa machine ; il ne sert
 //! jamais de cible à un invité ou à un voisin, puisqu'il partage l'adresse de
@@ -34,7 +51,7 @@
 //! port.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
-use std::net::IpAddr;
+use std::net::{IpAddr, Ipv4Addr};
 
 use axum::extract::State;
 use axum::routing::get;
@@ -83,11 +100,13 @@ pub struct TopologyView {
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct NodeView {
-    /// `t<id>` pour une cible, `g<hôte>:<nom>` pour un invité non surveillé.
+    /// `t<id>` pour une cible, `g<hôte>:<nom>` pour un invité non surveillé,
+    /// `n<hôte>:<nœud>` pour un nœud d'un cluster Proxmox.
     pub id: String,
     pub target_id: Option<TargetId>,
     pub name: String,
-    /// Type de la cible ; `vm` ou `container` pour un invité.
+    /// Type de la cible ; `vm` ou `container` pour un invité, `pve_node` pour
+    /// un nœud de cluster Proxmox.
     pub kind: String,
     /// Dossier de la cible ; pour un invité, celui de son hyperviseur.
     pub group_name: String,
@@ -95,9 +114,18 @@ pub struct NodeView {
     pub site: Option<String>,
     /// D'où vient `site` : `tag`, `agent` ou `relay`.
     pub site_source: Option<&'static str>,
-    /// Invité seulement : la cible hyperviseur qui l'héberge.
+    /// Invité ou nœud : la cible hyperviseur qui l'héberge.
     pub host_id: Option<TargetId>,
-    /// Invité seulement : en marche à la dernière mesure.
+    /// Sous-réseau de l'équipement (`192.168.10.0/24`), déduit de son adresse
+    /// IP et des réseaux que les pare-feux du site connaissent. Vide pour un
+    /// invité, un nœud de cluster, ou un équipement sans adresse IP privée.
+    pub subnet: Option<String>,
+    /// VLAN de ce réseau, quand un pare-feu le donne.
+    pub vlan: Option<u16>,
+    /// Nom de ce réseau (description de l'interface du pare-feu).
+    pub vlan_name: Option<String>,
+    /// Invité ou nœud Proxmox : en marche (invité) ou en ligne (nœud) à la
+    /// dernière mesure.
     pub running: Option<bool>,
 }
 
@@ -106,7 +134,8 @@ pub struct EdgeView {
     /// Côté amont : parent, relais, hyperviseur, commutateur.
     pub from: String,
     pub to: String,
-    /// `parent`, `service`, `relay`, `hypervisor` ou `lldp`.
+    /// `parent`, `service`, `relay`, `hypervisor`, `lldp`, `samehost`, `backup`
+    /// ou `firewall`.
     pub source: &'static str,
 }
 
@@ -128,9 +157,94 @@ pub struct TargetRow {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Guest {
     pub host: TargetId,
+    /// Nœud Proxmox qui l'héberge, quand la mesure le dit.
+    pub node: Option<String>,
     pub name: String,
     pub container: bool,
     pub running: bool,
+}
+
+/// Un nœud Proxmox lu dans `proxmox_node_up`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PveNode {
+    pub host: TargetId,
+    pub name: String,
+    pub online: bool,
+}
+
+/// Un stockage `pbs` d'un Proxmox VE : le serveur de sauvegarde qu'il vise.
+#[derive(Debug, Clone, PartialEq)]
+pub struct PbsStorage {
+    pub host: TargetId,
+    pub server: String,
+    pub datastore: String,
+}
+
+/// Ce que les mesures disent de Proxmox VE et de PBS, hors invités.
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct ProxmoxFacts {
+    pub nodes: Vec<PveNode>,
+    pub storages: Vec<PbsStorage>,
+    /// Datastores vus par chaque cible PBS : départagent deux PBS de même hôte.
+    pub datastores: Vec<(TargetId, String)>,
+    /// Réseaux des interfaces des pare-feux.
+    pub networks: Vec<Network>,
+}
+
+/// Un réseau IPv4 porté par une interface de pare-feu.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Network {
+    pub firewall: TargetId,
+    pub cidr: Cidr,
+    pub name: String,
+    pub vlan: Option<u16>,
+}
+
+/// Un réseau IPv4 : adresse (masquée) et longueur de préfixe.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Cidr {
+    network: u32,
+    prefix: u8,
+}
+
+impl Cidr {
+    /// `a.b.c.d/nn` : une adresse sans préfixe n'est pas un réseau.
+    pub fn parse(text: &str) -> Option<Self> {
+        let (ip, prefix) = text.trim().split_once('/')?;
+        Self::new(ip.trim().parse().ok()?, prefix.trim().parse().ok()?)
+    }
+
+    pub fn new(ip: Ipv4Addr, prefix: u8) -> Option<Self> {
+        (prefix <= 32).then(|| {
+            let mask = if prefix == 0 { 0 } else { u32::MAX << (32 - prefix) };
+            Self { network: u32::from(ip) & mask, prefix }
+        })
+    }
+
+    pub fn contains(&self, ip: Ipv4Addr) -> bool {
+        let mask = if self.prefix == 0 { 0 } else { u32::MAX << (32 - self.prefix) };
+        u32::from(ip) & mask == self.network
+    }
+}
+
+impl std::fmt::Display for Cidr {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}/{}", Ipv4Addr::from(self.network), self.prefix)
+    }
+}
+
+/// Adresse privée (RFC 1918, lien local, CGNAT) : les adresses publiques ne
+/// forment pas de zone, un contrôle HTTP d'un site tiers n'est pas « dans »
+/// le réseau du pare-feu.
+fn is_lan(ip: Ipv4Addr) -> bool {
+    let [a, b, ..] = ip.octets();
+    ip.is_private() || ip.is_link_local() || (a == 100 && (64..128).contains(&b))
+}
+
+/// L'adresse IPv4 d'une cible, quand son adresse en est une (un nom d'hôte
+/// n'est pas résolu : la carte ne fait aucun accès réseau).
+fn ipv4_of(address: &str) -> Option<Ipv4Addr> {
+    host_key(address)?.parse().ok()
 }
 
 /// Un voisin LLDP vu par un commutateur.
@@ -148,23 +262,26 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
     let placed = placed_sites(&state, &targets, &sites).await?;
 
     let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
-    let (guests, neighbors, metrics_available) = if targets.is_empty() {
-        (Vec::new(), Vec::new(), true)
+    let (guests, neighbors, facts, metrics_available) = if targets.is_empty() {
+        (Vec::new(), Vec::new(), ProxmoxFacts::default(), true)
     } else {
         let guests = state.victoria.query(&guests_query()).await;
         let neighbors = state.victoria.query(&lldp_query()).await;
-        let available = guests.is_ok() && neighbors.is_ok();
-        if let Err(error) = guests.as_ref().and(neighbors.as_ref()) {
+        let facts = state.victoria.query(&facts_query()).await;
+        let available = guests.is_ok() && neighbors.is_ok() && facts.is_ok();
+        let failed = guests.as_ref().err().or(neighbors.as_ref().err()).or(facts.as_ref().err());
+        if let Some(error) = failed {
             warn!(%error, "topologie : mesures illisibles, liens hyperviseur et LLDP omis");
         }
         (
             guests.map(|s| parse_guests(&s, &ids)).unwrap_or_default(),
             neighbors.map(|s| parse_neighbors(&s, &ids)).unwrap_or_default(),
+            facts.map(|s| parse_facts(&s, &ids)).unwrap_or_default(),
             available,
         )
     };
 
-    let (nodes, edges) = build_placed(&targets, &sites, &placed, &guests, &neighbors);
+    let (nodes, edges) = build_full(&targets, &sites, &placed, &guests, &neighbors, &facts);
     Ok(Json(TopologyView { nodes, edges, metrics_available }))
 }
 
@@ -283,6 +400,16 @@ fn guests_query() -> String {
     )
 }
 
+/// Séries qui décrivent Proxmox VE et PBS : état des nœuds, stockages `pbs`
+/// (serveur et datastore visés) et datastores vus par chaque PBS.
+const FACT_SERIES: &str = "dumbmonit_(proxmox_node_up|proxmox_storage_pbs_info|pbs_datastore_available\
+    |opnsense_interface_address_info|pfsense_interface_address_info\
+    |fortigate_interface_address_info)";
+
+fn facts_query() -> String {
+    format!("last_over_time({{__name__=~\"{FACT_SERIES}\"}}[{WINDOW}]) keep_metric_names")
+}
+
 fn lldp_query() -> String {
     format!("last_over_time(dumbmonit_lldp_neighbor_info[{WINDOW}])")
 }
@@ -311,14 +438,83 @@ pub fn parse_guests(series: &[InstantSeries], known: &[TargetId]) -> Vec<Guest> 
         if !value.is_finite() || !seen.insert((host, name.to_lowercase())) {
             continue;
         }
+        let node = (metric == "proxmox_guest_running")
+            .then(|| s.metric.get("node").map(|n| n.trim()).filter(|n| !n.is_empty()))
+            .flatten()
+            .map(str::to_string);
         out.push(Guest {
             host,
+            node,
             name: name.to_string(),
             container: s.metric.get("type").is_some_and(|t| t == "lxc"),
             running: value == *running_value,
         });
     }
     out
+}
+
+/// Nœuds Proxmox, stockages `pbs` et datastores PBS lus dans les mesures.
+pub fn parse_facts(series: &[InstantSeries], known: &[TargetId]) -> ProxmoxFacts {
+    let mut facts = ProxmoxFacts::default();
+    let mut seen = HashSet::new();
+    for s in series {
+        let Some(host) = target_label(s, known) else { continue };
+        let Some(metric) = s.metric.get("__name__") else { continue };
+        let metric = metric.strip_prefix(crate::tsdb::METRIC_PREFIX).unwrap_or(metric);
+        let label = |key: &str| s.metric.get(key).map(|v| v.trim()).filter(|v| !v.is_empty());
+        let Ok(value) = s.value.1.parse::<f64>() else { continue };
+        if !value.is_finite() {
+            continue;
+        }
+        match metric {
+            "proxmox_node_up" => {
+                let Some(name) = label("node") else { continue };
+                if seen.insert(("n", host, name.to_lowercase(), String::new())) {
+                    facts.nodes.push(PveNode {
+                        host,
+                        name: name.to_string(),
+                        online: value >= 1.0,
+                    });
+                }
+            }
+            "proxmox_storage_pbs_info" => {
+                let Some(server) = label("server") else { continue };
+                let datastore = label("datastore").unwrap_or_default();
+                if seen.insert(("s", host, server.to_lowercase(), datastore.to_lowercase())) {
+                    facts.storages.push(PbsStorage {
+                        host,
+                        server: server.to_string(),
+                        datastore: datastore.to_string(),
+                    });
+                }
+            }
+            "pbs_datastore_available" => {
+                let Some(name) = label("datastore") else { continue };
+                if seen.insert(("d", host, name.to_lowercase(), String::new())) {
+                    facts.datastores.push((host, name.to_string()));
+                }
+            }
+            m if m.ends_with("_interface_address_info") => {
+                let Some(cidr) = label("address").and_then(Cidr::parse) else { continue };
+                // Une liaison point à point ou un réseau public ne dessine pas de zone.
+                if cidr.prefix > 30 || !is_lan(Ipv4Addr::from(cidr.network)) {
+                    continue;
+                }
+                let interface = label("interface").unwrap_or_default();
+                let name = label("description").unwrap_or(interface);
+                if seen.insert(("i", host, cidr.to_string(), interface.to_lowercase())) {
+                    facts.networks.push(Network {
+                        firewall: host,
+                        cidr,
+                        name: name.to_string(),
+                        vlan: label("vlan").and_then(|v| v.parse().ok()),
+                    });
+                }
+            }
+            _ => {}
+        }
+    }
+    facts
 }
 
 /// Voisins LLDP, par (commutateur, nom système distant).
@@ -427,6 +623,13 @@ impl NameIndex {
     }
 }
 
+/// Types dont la surveillance désigne un pare-feu ou une passerelle de site.
+const FIREWALL_KINDS: &[&str] = &["opnsense", "pfsense", "fortigate", "sophos", "mikrotik"];
+
+fn is_loopback(key: Option<&str>) -> bool {
+    key.is_some_and(|k| k == "localhost" || k.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback()))
+}
+
 fn node_id(id: TargetId) -> String {
     format!("t{id}")
 }
@@ -449,6 +652,19 @@ pub fn build_placed(
     placed: &Placed,
     guests: &[Guest],
     neighbors: &[Neighbor],
+) -> (Vec<NodeView>, Vec<EdgeView>) {
+    build_full(targets, sites, placed, guests, neighbors, &ProxmoxFacts::default())
+}
+
+/// Comme [`build_placed`], avec ce que les mesures disent de Proxmox VE et de
+/// PBS : nœuds de cluster, sauvegardes, machines partagées.
+pub fn build_full(
+    targets: &[TargetRow],
+    sites: &HashMap<TargetId, String>,
+    placed: &Placed,
+    guests: &[Guest],
+    neighbors: &[Neighbor],
+    facts: &ProxmoxFacts,
 ) -> (Vec<NodeView>, Vec<EdgeView>) {
     let by_id: HashMap<TargetId, &TargetRow> = targets.iter().map(|t| (t.id, t)).collect();
     // Agents qui relaient au moins une cible connue.
@@ -495,6 +711,9 @@ pub fn build_placed(
                 site_source: site.as_ref().map(|(_, source)| *source),
                 site: site.map(|(name, _)| name),
                 host_id: None,
+                subnet: None,
+                vlan: None,
+                vlan_name: None,
                 running: None,
             }
         })
@@ -524,11 +743,68 @@ pub fn build_placed(
     }
 
     let index = NameIndex::new(targets);
+
+    // Nœuds Proxmox par hôte : ceux que `proxmox_node_up` annonce, plus ceux
+    // que les invités nomment (repli quand l'état des nœuds est illisible).
+    // Deux nœuds ou plus font un cluster ; un seul se confond avec la cible.
+    let mut pve_nodes: BTreeMap<TargetId, BTreeMap<String, (String, Option<bool>)>> =
+        BTreeMap::new();
+    for node in facts.nodes.iter().filter(|n| by_id.contains_key(&n.host)) {
+        pve_nodes
+            .entry(node.host)
+            .or_default()
+            .insert(node.name.to_lowercase(), (node.name.clone(), Some(node.online)));
+    }
+    for guest in guests.iter().filter(|g| by_id.contains_key(&g.host)) {
+        if let Some(name) = &guest.node {
+            pve_nodes
+                .entry(guest.host)
+                .or_default()
+                .entry(name.to_lowercase())
+                .or_insert_with(|| (name.clone(), None));
+        }
+    }
+    pve_nodes.retain(|_, list| list.len() >= 2);
+    let node_view_id = |host: TargetId, name: &str| format!("n{host}:{}", name.to_lowercase());
+    for (host_id, list) in &pve_nodes {
+        let host = by_id[host_id];
+        let site = site_of(host);
+        for (name, online) in list.values() {
+            let id = node_view_id(*host_id, name);
+            nodes.push(NodeView {
+                id: id.clone(),
+                target_id: None,
+                name: name.clone(),
+                kind: "pve_node".to_string(),
+                group_name: host.group_name.clone(),
+                site_source: site.as_ref().map(|(_, source)| *source),
+                site: site.as_ref().map(|(name, _)| name.clone()),
+                host_id: Some(*host_id),
+                subnet: None,
+                vlan: None,
+                vlan_name: None,
+                running: *online,
+            });
+            link(node_id(*host_id), id, "hypervisor", &mut edges);
+        }
+    }
+    // Le parent d'un invité : son nœud dans un cluster, sinon la cible.
+    let parent_of = |guest: &Guest| -> String {
+        guest
+            .node
+            .as_deref()
+            .filter(|n| {
+                pve_nodes.get(&guest.host).is_some_and(|list| list.contains_key(&n.to_lowercase()))
+            })
+            .map(|n| node_view_id(guest.host, n))
+            .unwrap_or_else(|| node_id(guest.host))
+    };
+
     let mut per_host: BTreeMap<TargetId, usize> = BTreeMap::new();
     for guest in guests {
         let Some(host) = by_id.get(&guest.host) else { continue };
         if let Some(target) = index.find(&guest.name, guest.host) {
-            link(node_id(guest.host), node_id(target), "hypervisor", &mut edges);
+            link(parent_of(guest), node_id(target), "hypervisor", &mut edges);
             continue;
         }
         // Un nom qui désigne plusieurs cibles est une machine surveillée, pas
@@ -552,9 +828,120 @@ pub fn build_placed(
             site_source: site.as_ref().map(|(_, source)| *source),
             site: site.map(|(name, _)| name),
             host_id: Some(host.id),
+            subnet: None,
+            vlan: None,
+            vlan_name: None,
             running: Some(guest.running),
         });
-        link(node_id(guest.host), id, "hypervisor", &mut edges);
+        link(parent_of(guest), id, "hypervisor", &mut edges);
+    }
+
+    // Une surveillance PBS et une surveillance Proxmox VE sur la même machine :
+    // même hôte dans l'adresse, ou même nom (deux surveillances d'un même
+    // serveur portent presque toujours le nom du serveur).
+    let pbs_targets: Vec<&TargetRow> = targets.iter().filter(|t| t.kind == "pbs").collect();
+    let pve_targets: Vec<&TargetRow> = targets.iter().filter(|t| t.kind == "proxmox").collect();
+    for pbs in &pbs_targets {
+        let same: Vec<&&TargetRow> = pve_targets
+            .iter()
+            .filter(|pve| {
+                let (a, b) = (host_key(&pbs.address), host_key(&pve.address));
+                let by_address = a.is_some() && a == b && !is_loopback(a.as_deref());
+                let (a, b) = (host_key(&pbs.name), host_key(&pve.name));
+                by_address || (a.is_some() && a == b)
+            })
+            .collect();
+        if let [pve] = same.as_slice() {
+            link(node_id(pve.id), node_id(pbs.id), "samehost", &mut edges);
+        }
+    }
+
+    // Un stockage `pbs` de Proxmox VE désigne le serveur de sauvegarde par son
+    // adresse : on le retrouve par adresse ou par nom, et le datastore départage
+    // deux PBS qui répondraient au même nom.
+    for storage in &facts.storages {
+        if !by_id.contains_key(&storage.host) {
+            continue;
+        }
+        let Some(key) = host_key(&storage.server) else { continue };
+        let mut candidates: Vec<&&TargetRow> = pbs_targets
+            .iter()
+            .filter(|pbs| {
+                host_key(&pbs.address).as_deref() == Some(key.as_str())
+                    || host_key(&pbs.name).as_deref() == Some(key.as_str())
+            })
+            .collect();
+        if candidates.len() > 1 {
+            candidates.retain(|pbs| {
+                facts.datastores.iter().any(|(t, d)| *t == pbs.id && *d == storage.datastore)
+            });
+        }
+        if let [pbs] = candidates.as_slice() {
+            link(node_id(storage.host), node_id(pbs.id), "backup", &mut edges);
+        }
+    }
+
+    // Sous-réseau de chaque équipement : le réseau le plus précis qu'un pare-feu
+    // du même site connaît, à défaut le /24 de son adresse.
+    let firewalls: Vec<&TargetRow> =
+        targets.iter().filter(|t| FIREWALL_KINDS.contains(&t.kind.as_str())).collect();
+    let site_name =
+        |id: TargetId| nodes.iter().find(|n| n.target_id == Some(id)).map(|n| n.site.clone());
+    let mut zones: HashMap<TargetId, (Cidr, Option<&Network>)> = HashMap::new();
+    for t in targets {
+        let Some(ip) = ipv4_of(&t.address).filter(|ip| is_lan(*ip)) else { continue };
+        let site = site_name(t.id);
+        let known = facts
+            .networks
+            .iter()
+            .filter(|n| n.cidr.contains(ip) && site_name(n.firewall) == site)
+            .max_by_key(|n| n.cidr.prefix);
+        match known {
+            Some(network) => zones.insert(t.id, (network.cidr, Some(network))),
+            None => Cidr::new(ip, 24).and_then(|c| zones.insert(t.id, (c, None))),
+        };
+    }
+
+    // Un équipement que rien ne rattache encore passe « par » le pare-feu de
+    // son site qui dessert son réseau ; le plus précis l'emporte, puis le plus
+    // ancien. Deux pare-feux en haute disponibilité restent côte à côte.
+    for t in targets {
+        if FIREWALL_KINDS.contains(&t.kind.as_str())
+            || t.parent_id.is_some_and(|p| by_id.contains_key(&p))
+            || edges.iter().any(|e| e.to == node_id(t.id))
+        {
+            continue;
+        }
+        let Some((_, ip)) = zones.get(&t.id).zip(ipv4_of(&t.address)) else { continue };
+        let site = site_name(t.id);
+        let best = firewalls
+            .iter()
+            .filter(|f| site_name(f.id) == site)
+            .filter_map(|f| {
+                let prefix = facts
+                    .networks
+                    .iter()
+                    .filter(|n| n.firewall == f.id && n.cidr.contains(ip))
+                    .map(|n| n.cidr.prefix)
+                    .max();
+                // Sans interface connue, le /24 de l'adresse du pare-feu fait foi.
+                let prefix = prefix.or_else(|| {
+                    let own = ipv4_of(&f.address)?;
+                    let known = facts.networks.iter().any(|n| n.firewall == f.id);
+                    (!known && Cidr::new(own, 24)?.contains(ip)).then_some(0)
+                })?;
+                Some((prefix, std::cmp::Reverse(f.id), f.id))
+            })
+            .max();
+        if let Some((_, _, firewall)) = best {
+            link(node_id(firewall), node_id(t.id), "firewall", &mut edges);
+        }
+    }
+    for node in nodes.iter_mut() {
+        let Some((cidr, network)) = node.target_id.and_then(|id| zones.get(&id)) else { continue };
+        node.subnet = Some(cidr.to_string());
+        node.vlan = network.and_then(|n| n.vlan);
+        node.vlan_name = network.map(|n| n.name.clone()).filter(|n| !n.is_empty());
     }
 
     for neighbor in neighbors {
@@ -639,8 +1026,14 @@ mod tests {
         let mut libvirt = row(4, "web01 · libvirt", "web01#libvirt", "agent_service");
         libvirt.parent_id = Some(2);
         let guests = vec![
-            Guest { host: 1, name: "web01.lan".into(), container: false, running: true },
-            Guest { host: 4, name: "vm-test".into(), container: false, running: true },
+            Guest {
+                host: 1,
+                node: None,
+                name: "web01.lan".into(),
+                container: false,
+                running: true,
+            },
+            Guest { host: 4, node: None, name: "vm-test".into(), container: false, running: true },
         ];
         let sites = HashMap::from([(2, "Annexe".to_string())]);
         let (nodes, edges) = build(&[pve, host, docker, libvirt], &sites, &guests, &[]);
@@ -701,8 +1094,14 @@ mod tests {
         let pve = row(1, "pve1", "https://pve1.lan:8006", "proxmox");
         let web = row(2, "web01", "web01.lan", "agent");
         let guests = vec![
-            Guest { host: 1, name: "WEB01".into(), container: false, running: true },
-            Guest { host: 1, name: "nextcloud".into(), container: true, running: false },
+            Guest { host: 1, node: None, name: "WEB01".into(), container: false, running: true },
+            Guest {
+                host: 1,
+                node: None,
+                name: "nextcloud".into(),
+                container: true,
+                running: false,
+            },
         ];
         let (nodes, edges) = build(&[pve, web], &HashMap::new(), &guests, &[]);
         assert_eq!(
@@ -721,7 +1120,13 @@ mod tests {
         let pve = row(1, "pve1", "pve1", "proxmox");
         let a = row(2, "web01", "10.0.0.2", "agent");
         let b = row(3, "web01", "https://web01.lan", "http");
-        let guests = vec![Guest { host: 1, name: "web01".into(), container: false, running: true }];
+        let guests = vec![Guest {
+            host: 1,
+            node: None,
+            name: "web01".into(),
+            container: false,
+            running: true,
+        }];
         let (nodes, edges) = build(&[pve, a, b], &HashMap::new(), &guests, &[]);
         assert!(edges.is_empty(), "ambigu : aucun lien");
         assert_eq!(nodes.len(), 3, "et aucun double de la machine surveillée");
@@ -749,7 +1154,8 @@ mod tests {
         let assigned = HashMap::from([(2, 2), (3, 1)]);
         let placed = placed_from(&assigned, &locations, &["Crissier".to_string()]);
         let pve = row(5, "pve1", "pve1", "proxmox");
-        let guests = vec![Guest { host: 2, name: "v9".into(), container: false, running: true }];
+        let guests =
+            vec![Guest { host: 2, node: None, name: "v9".into(), container: false, running: true }];
         let (nodes, _) = build_placed(&[relay, nas, fw, svc, pve], &sites, &placed, &guests, &[]);
         let site = |id: &str| {
             let n = nodes.iter().find(|n| n.id == id).expect("nœud");
@@ -765,6 +1171,334 @@ mod tests {
         assert_eq!(site("t4"), (Some("Crissier".into()), Some("location")), "le service suit");
         assert_eq!(site("g2:v9").0.as_deref(), Some("Crissier"), "l'invité aussi");
         assert_eq!(site("t5"), (None, None));
+    }
+
+    fn node_guest(host: TargetId, node: &str, name: &str, running: bool) -> Guest {
+        Guest { host, node: Some(node.into()), name: name.into(), container: false, running }
+    }
+
+    fn ids(nodes: &[NodeView]) -> Vec<&str> {
+        nodes.iter().map(|n| n.id.as_str()).collect()
+    }
+
+    #[test]
+    fn un_cluster_se_dessine_en_noeuds_puis_en_invites_allumes_ou_eteints() {
+        let cluster = row(1, "cluster", "https://node1.lan:8006", "proxmox");
+        let nas = row(2, "nas60", "10.0.0.2", "synology");
+        let guests = vec![
+            node_guest(1, "node1", "web", true),
+            node_guest(1, "node2", "db", false),
+            node_guest(1, "node2", "NAS60", true),
+        ];
+        let facts = ProxmoxFacts {
+            nodes: vec![
+                PveNode { host: 1, name: "node1".into(), online: true },
+                PveNode { host: 1, name: "node2".into(), online: true },
+                PveNode { host: 1, name: "node3".into(), online: false },
+            ],
+            ..Default::default()
+        };
+        let (nodes, edges) =
+            build_full(&[cluster, nas], &HashMap::new(), &Placed::new(), &guests, &[], &facts);
+        assert_eq!(
+            ids(&nodes),
+            ["t1", "t2", "n1:node1", "n1:node2", "n1:node3", "g1:web", "g1:db"]
+        );
+        let node3 = nodes.iter().find(|n| n.id == "n1:node3").expect("nœud éteint");
+        assert_eq!((node3.kind.as_str(), node3.running), ("pve_node", Some(false)));
+        assert_eq!(node3.host_id, Some(1));
+        let db = nodes.iter().find(|n| n.id == "g1:db").expect("invité éteint");
+        assert_eq!(db.running, Some(false), "un invité éteint reste dessiné");
+        assert_eq!(
+            sources(&edges),
+            vec![
+                ("t1", "n1:node1", "hypervisor"),
+                ("t1", "n1:node2", "hypervisor"),
+                ("t1", "n1:node3", "hypervisor"),
+                ("n1:node1", "g1:web", "hypervisor"),
+                ("n1:node2", "g1:db", "hypervisor"),
+                ("n1:node2", "t2", "hypervisor"),
+            ],
+            "la surveillance qui correspond à un invité est reliée au nœud, sans double"
+        );
+    }
+
+    #[test]
+    fn sans_etat_des_noeuds_ils_se_deduisent_des_invites() {
+        let cluster = row(1, "cluster", "node1", "proxmox");
+        let guests = vec![node_guest(1, "node1", "a", true), node_guest(1, "node2", "b", true)];
+        let (nodes, _) = build(&[cluster], &HashMap::new(), &guests, &[]);
+        assert_eq!(ids(&nodes), ["t1", "n1:node1", "n1:node2", "g1:a", "g1:b"]);
+        assert_eq!(nodes[1].running, None, "état inconnu plutôt qu'inventé");
+    }
+
+    #[test]
+    fn un_proxmox_a_noeud_unique_garde_ses_invites_sous_la_cible() {
+        let pve = row(1, "pve002", "pve002", "proxmox");
+        let facts = ProxmoxFacts {
+            nodes: vec![PveNode { host: 1, name: "pve002".into(), online: true }],
+            ..Default::default()
+        };
+        let guests = vec![node_guest(1, "pve002", "adr03", true)];
+        let (nodes, edges) =
+            build_full(&[pve], &HashMap::new(), &Placed::new(), &guests, &[], &facts);
+        assert_eq!(ids(&nodes), ["t1", "g1:adr03"], "pas de niveau nœud inutile");
+        assert_eq!(sources(&edges), vec![("t1", "g1:adr03", "hypervisor")]);
+    }
+
+    #[test]
+    fn un_stockage_pbs_relie_le_proxmox_au_pbs_qui_le_sauvegarde() {
+        let cluster = row(1, "cluster", "node1", "proxmox");
+        let pbs = row(2, "pbs01", "https://backup.lan:8007", "pbs");
+        let autre = row(3, "pbs02", "10.0.0.9", "pbs");
+        let facts = ProxmoxFacts {
+            storages: vec![PbsStorage {
+                host: 1,
+                server: "BACKUP.lan".into(),
+                datastore: "t".into(),
+            }],
+            ..Default::default()
+        };
+        let (_, edges) =
+            build_full(&[cluster, pbs, autre], &HashMap::new(), &Placed::new(), &[], &[], &facts);
+        assert_eq!(sources(&edges), vec![("t1", "t2", "backup")]);
+    }
+
+    #[test]
+    fn deux_pbs_de_meme_nom_sont_departages_par_le_datastore() {
+        let pve = row(1, "pve", "pve", "proxmox");
+        let a = row(2, "backup", "https://backup:8007", "pbs");
+        let b = row(3, "backup", "https://backup.autre:8007", "pbs");
+        let storage = |datastore: &str| PbsStorage {
+            host: 1,
+            server: "backup".into(),
+            datastore: datastore.into(),
+        };
+        let targets = [pve, a, b];
+        let (_, none) = build_full(
+            &targets,
+            &HashMap::new(),
+            &Placed::new(),
+            &[],
+            &[],
+            &ProxmoxFacts { storages: vec![storage("x")], ..Default::default() },
+        );
+        assert!(none.is_empty(), "ambigu : aucun lien plutôt qu'un lien faux");
+        let facts = ProxmoxFacts {
+            storages: vec![storage("tank")],
+            datastores: vec![(3, "tank".into())],
+            ..Default::default()
+        };
+        let (_, edges) = build_full(&targets, &HashMap::new(), &Placed::new(), &[], &[], &facts);
+        assert_eq!(sources(&edges), vec![("t1", "t3", "backup")]);
+    }
+
+    #[test]
+    fn un_pbs_et_un_pve_de_meme_hote_ou_de_meme_nom_sont_relies_une_fois() {
+        let pve = row(1, "pve002", "https://10.2.0.5:8006", "proxmox");
+        let pbs = row(2, "pve002", "https://10.2.0.5:8007", "pbs");
+        let ailleurs = row(3, "pve9", "10.9.0.9", "proxmox");
+        let facts = ProxmoxFacts {
+            storages: vec![PbsStorage {
+                host: 1,
+                server: "10.2.0.5".into(),
+                datastore: "d".into(),
+            }],
+            ..Default::default()
+        };
+        let (nodes, edges) =
+            build_full(&[pve, pbs, ailleurs], &HashMap::new(), &Placed::new(), &[], &[], &facts);
+        assert_eq!(nodes.len(), 3, "chaque cible n'est dessinée qu'une fois");
+        assert_eq!(
+            sources(&edges),
+            vec![("t1", "t2", "samehost")],
+            "le lien de sauvegarde se fond dedans"
+        );
+
+        let pve = row(1, "hote", "10.0.0.1", "proxmox");
+        let pbs = row(2, "hote", "10.0.0.2", "pbs");
+        let (_, edges) = build(&[pve, pbs], &HashMap::new(), &[], &[]);
+        assert_eq!(
+            sources(&edges),
+            vec![("t1", "t2", "samehost")],
+            "même nom, adresses distinctes"
+        );
+    }
+
+    #[test]
+    fn les_faits_proxmox_sont_lus_dans_les_series() {
+        let series = vec![
+            serie(
+                &[("__name__", "dumbmonit_proxmox_node_up"), ("target", "1"), ("node", "n1")],
+                "1",
+            ),
+            serie(
+                &[("__name__", "dumbmonit_proxmox_node_up"), ("target", "1"), ("node", "n2")],
+                "0",
+            ),
+            serie(
+                &[("__name__", "dumbmonit_proxmox_node_up"), ("target", "9"), ("node", "x")],
+                "1",
+            ),
+            serie(
+                &[
+                    ("__name__", "dumbmonit_proxmox_storage_pbs_info"),
+                    ("target", "1"),
+                    ("server", "pbs.lan"),
+                    ("datastore", "tank"),
+                ],
+                "1",
+            ),
+            serie(
+                &[
+                    ("__name__", "dumbmonit_pbs_datastore_available"),
+                    ("target", "2"),
+                    ("datastore", "tank"),
+                ],
+                "1",
+            ),
+        ];
+        let facts = parse_facts(&series, &[1, 2]);
+        assert_eq!(
+            facts.nodes,
+            vec![
+                PveNode { host: 1, name: "n1".into(), online: true },
+                PveNode { host: 1, name: "n2".into(), online: false },
+            ]
+        );
+        assert_eq!(facts.storages.len(), 1);
+        assert_eq!(facts.datastores, vec![(2, "tank".to_string())]);
+    }
+
+    fn network(firewall: TargetId, cidr: &str, name: &str, vlan: Option<u16>) -> Network {
+        Network { firewall, cidr: Cidr::parse(cidr).expect("cidr"), name: name.into(), vlan }
+    }
+
+    #[test]
+    fn un_cidr_se_normalise_et_dit_ce_quil_contient() {
+        let cidr = Cidr::parse("192.168.10.77/24").expect("cidr");
+        assert_eq!(cidr.to_string(), "192.168.10.0/24");
+        assert!(cidr.contains("192.168.10.200".parse().unwrap()));
+        assert!(!cidr.contains("192.168.11.1".parse().unwrap()));
+        assert_eq!(Cidr::parse("192.168.10.1"), None, "sans préfixe : pas un réseau");
+        assert!(is_lan("100.64.0.1".parse().unwrap()) && !is_lan("8.8.8.8".parse().unwrap()));
+    }
+
+    #[test]
+    fn le_sous_reseau_vient_des_reseaux_du_pare_feu_sinon_du_slash_24() {
+        let fw = row(1, "fw01", "192.168.1.1", "opnsense");
+        let srv = row(2, "srv", "https://192.168.10.5:443", "http");
+        let autre = row(3, "cam", "192.168.20.9", "http");
+        let public = row(4, "site", "8.8.8.8", "http");
+        let nom = row(5, "nom", "nas.lan", "http");
+        let facts = ProxmoxFacts {
+            networks: vec![
+                network(1, "192.168.1.1/24", "LAN", None),
+                network(1, "192.168.10.1/24", "Servers", Some(10)),
+            ],
+            ..Default::default()
+        };
+        let (nodes, _) = build_full(
+            &[fw, srv, autre, public, nom],
+            &HashMap::new(),
+            &Placed::new(),
+            &[],
+            &[],
+            &facts,
+        );
+        let net = |id: &str| {
+            let n = nodes.iter().find(|n| n.id == id).expect("nœud");
+            (n.subnet.clone(), n.vlan, n.vlan_name.clone())
+        };
+        assert_eq!(net("t1"), (Some("192.168.1.0/24".into()), None, Some("LAN".into())));
+        assert_eq!(net("t2"), (Some("192.168.10.0/24".into()), Some(10), Some("Servers".into())));
+        assert_eq!(net("t3"), (Some("192.168.20.0/24".into()), None, None), "repli : /24");
+        assert_eq!(net("t4"), (None, None, None), "une adresse publique ne forme pas de zone");
+        assert_eq!(net("t5"), (None, None, None), "un nom d'hôte n'est pas résolu");
+    }
+
+    #[test]
+    fn un_equipement_est_rattache_au_pare_feu_de_son_reseau() {
+        let fw1 = row(1, "fw01", "192.168.1.1", "opnsense");
+        let fw2 = row(2, "fw02", "192.168.1.2", "opnsense");
+        let nas = row(3, "nas", "192.168.1.30", "synology");
+        let loin = row(4, "loin", "172.16.0.4", "http");
+        let facts = ProxmoxFacts {
+            networks: vec![network(1, "192.168.1.1/24", "LAN", None)],
+            ..Default::default()
+        };
+        let (_, edges) =
+            build_full(&[fw1, fw2, nas, loin], &HashMap::new(), &Placed::new(), &[], &[], &facts);
+        assert_eq!(
+            sources(&edges),
+            vec![("t1", "t3", "firewall")],
+            "le pare-feu qui connaît le réseau l'emporte ; hors réseau, aucun lien"
+        );
+    }
+
+    #[test]
+    fn sans_reseau_connu_le_slash_24_du_pare_feu_sert_de_repli() {
+        let fw = row(1, "fw", "10.0.0.1", "pfsense");
+        let a = row(2, "a", "10.0.0.7", "http");
+        let b = row(3, "b", "10.0.1.7", "http");
+        let (_, edges) = build(&[fw, a, b], &HashMap::new(), &[], &[]);
+        assert_eq!(sources(&edges), vec![("t1", "t2", "firewall")]);
+    }
+
+    #[test]
+    fn le_parent_declare_et_les_autres_liens_passent_avant_le_pare_feu() {
+        let fw = row(1, "fw", "10.0.0.1", "opnsense");
+        let sw = row(2, "sw", "10.0.0.2", "snmp");
+        let mut host = row(3, "host", "10.0.0.3", "agent");
+        host.parent_id = Some(2);
+        let pve = row(4, "pve", "10.0.0.4", "proxmox");
+        let vm = row(5, "vm1", "10.0.0.5", "http");
+        let guests = vec![node_guest(4, "pve", "vm1", true)];
+        let (_, edges) = build(&[fw, sw, host, pve, vm], &HashMap::new(), &guests, &[]);
+        assert_eq!(
+            sources(&edges),
+            vec![
+                ("t2", "t3", "parent"),
+                ("t4", "t5", "hypervisor"),
+                ("t1", "t2", "firewall"),
+                ("t1", "t4", "firewall"),
+            ]
+        );
+    }
+
+    #[test]
+    fn les_reseaux_des_pare_feux_sont_lus_dans_les_series() {
+        let series = vec![
+            serie(
+                &[
+                    ("__name__", "dumbmonit_fortigate_interface_address_info"),
+                    ("target", "1"),
+                    ("interface", "vlan10"),
+                    ("description", "Servers"),
+                    ("address", "192.168.10.1/24"),
+                    ("vlan", "10"),
+                ],
+                "1",
+            ),
+            serie(
+                &[
+                    ("__name__", "dumbmonit_opnsense_interface_address_info"),
+                    ("target", "1"),
+                    ("address", "203.0.113.5/24"),
+                ],
+                "1",
+            ),
+            serie(
+                &[
+                    ("__name__", "dumbmonit_opnsense_interface_address_info"),
+                    ("target", "1"),
+                    ("address", "10.0.0.1"),
+                ],
+                "1",
+            ),
+        ];
+        let facts = parse_facts(&series, &[1]);
+        assert_eq!(facts.networks, vec![network(1, "192.168.10.1/24", "Servers", Some(10))]);
     }
 
     #[test]
@@ -819,9 +1553,9 @@ mod tests {
         assert_eq!(
             guests,
             vec![
-                Guest { host: 1, name: "ct1".into(), container: true, running: true },
-                Guest { host: 2, name: "a".into(), container: false, running: true },
-                Guest { host: 2, name: "b".into(), container: false, running: false },
+                Guest { host: 1, node: None, name: "ct1".into(), container: true, running: true },
+                Guest { host: 2, node: None, name: "a".into(), container: false, running: true },
+                Guest { host: 2, node: None, name: "b".into(), container: false, running: false },
             ]
         );
     }
