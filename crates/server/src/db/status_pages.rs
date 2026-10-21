@@ -162,6 +162,15 @@ pub struct StatusPageInput {
     pub seo: crate::status_seo::Seo,
     /// Groupes cochés, dans l'ordre ; `None` : inchangés.
     pub groups: Option<Vec<String>>,
+    /// Noms publics des membres de groupes ; `None` : inchangés.
+    pub group_labels: Option<Vec<GroupLabel>>,
+}
+
+/// Nom public d'une surveillance arrivée par un groupe coché.
+#[derive(Debug, Clone, Serialize, serde::Deserialize, FromRow)]
+pub struct GroupLabel {
+    pub target_id: TargetId,
+    pub label: String,
 }
 
 /// Un service affiché par une page.
@@ -277,6 +286,9 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
     if let Some(groups) = &input.groups {
         set_groups(pool, id, groups).await?;
     }
+    if let Some(labels) = &input.group_labels {
+        set_group_labels(pool, id, labels).await?;
+    }
     Ok(id)
 }
 
@@ -328,10 +340,13 @@ pub async fn update_page(pool: &SqlitePool, id: i64, input: &StatusPageInput) ->
     .execute(pool)
     .await
     .context("mise à jour de la page de statut")?;
-    if result.rows_affected() > 0
-        && let Some(groups) = &input.groups
-    {
-        set_groups(pool, id, groups).await?;
+    if result.rows_affected() > 0 {
+        if let Some(groups) = &input.groups {
+            set_groups(pool, id, groups).await?;
+        }
+        if let Some(labels) = &input.group_labels {
+            set_group_labels(pool, id, labels).await?;
+        }
     }
     Ok(result.rows_affected() > 0)
 }
@@ -440,12 +455,68 @@ pub async fn set_groups(pool: &SqlitePool, page_id: i64, groups: &[String]) -> R
     Ok(())
 }
 
+/// Noms publics des membres de groupes d'une page.
+pub async fn list_group_labels(pool: &SqlitePool, page_id: i64) -> Result<Vec<GroupLabel>> {
+    sqlx::query_as(
+        "SELECT target_id, label FROM status_page_group_labels WHERE page_id = ? ORDER BY target_id",
+    )
+    .bind(page_id)
+    .fetch_all(pool)
+    .await
+    .context("noms publics des membres de groupes")
+}
+
+/// Noms publics des membres de groupes de toutes les pages.
+pub async fn list_all_group_labels(pool: &SqlitePool) -> Result<Vec<(i64, GroupLabel)>> {
+    let rows: Vec<(i64, TargetId, String)> = sqlx::query_as(
+        "SELECT page_id, target_id, label FROM status_page_group_labels ORDER BY page_id, target_id",
+    )
+    .fetch_all(pool)
+    .await
+    .context("noms publics des membres de groupes")?;
+    Ok(rows
+        .into_iter()
+        .map(|(page, target_id, label)| (page, GroupLabel { target_id, label }))
+        .collect())
+}
+
+/// Remplace les noms publics des membres de groupes ; une surveillance qui
+/// n'existe plus est ignorée.
+pub async fn set_group_labels(
+    pool: &SqlitePool,
+    page_id: i64,
+    labels: &[GroupLabel],
+) -> Result<()> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction")?;
+    sqlx::query("DELETE FROM status_page_group_labels WHERE page_id = ?")
+        .bind(page_id)
+        .execute(&mut *tx)
+        .await
+        .context("purge des noms publics")?;
+    for entry in labels {
+        sqlx::query(
+            "INSERT OR REPLACE INTO status_page_group_labels (page_id, target_id, label)
+             SELECT ?, id, ? FROM targets WHERE id = ?",
+        )
+        .bind(page_id)
+        .bind(&entry.label)
+        .bind(entry.target_id)
+        .execute(&mut *tx)
+        .await
+        .context("insertion d'un nom public")?;
+    }
+    tx.commit().await.context("validation des noms publics")?;
+    Ok(())
+}
+
 /// Une surveillance membre d'un groupe coché.
 #[derive(Debug, Clone, FromRow)]
 pub struct GroupMember {
     pub target_id: TargetId,
     pub name: String,
     pub group_name: String,
+    /// Nom public choisi pour cette page ; vide : le nom de la surveillance.
+    pub public_label: String,
 }
 
 /// Services effectivement montrés : ceux choisis un à un, puis les membres
@@ -458,10 +529,13 @@ pub async fn effective_items(pool: &SqlitePool, page_id: i64) -> Result<Vec<Page
         return Ok(explicit);
     }
     let members: Vec<GroupMember> = sqlx::query_as(
-        "SELECT id AS target_id, name, group_name FROM targets
-         WHERE group_name != ''
-           AND group_name IN (SELECT group_name FROM status_page_groups WHERE page_id = ?)
-         ORDER BY position, id",
+        "SELECT t.id AS target_id, t.name, t.group_name,
+                COALESCE(l.label, '') AS public_label
+         FROM targets t
+         LEFT JOIN status_page_group_labels l ON l.page_id = ?1 AND l.target_id = t.id
+         WHERE t.group_name != ''
+           AND t.group_name IN (SELECT group_name FROM status_page_groups WHERE page_id = ?1)
+         ORDER BY t.position, t.id",
     )
     .bind(page_id)
     .fetch_all(pool)
@@ -505,7 +579,11 @@ pub fn merge_items(
                 id: 0,
                 page_id,
                 target_id: member.target_id,
-                label: member.name.clone(),
+                label: if member.public_label.trim().is_empty() {
+                    member.name.clone()
+                } else {
+                    member.public_label.trim().to_string()
+                },
                 group_name: member.group_name.clone(),
                 position: out.len() as i64,
             });
@@ -938,7 +1016,12 @@ mod tests {
     }
 
     fn member(target_id: TargetId, name: &str, group: &str) -> GroupMember {
-        GroupMember { target_id, name: name.into(), group_name: group.into() }
+        GroupMember {
+            target_id,
+            name: name.into(),
+            group_name: group.into(),
+            public_label: String::new(),
+        }
     }
 
     #[test]
@@ -952,6 +1035,16 @@ mod tests {
         assert_eq!(merged[0].group_name, "Rack", "il s'affiche sous le groupe");
         assert_eq!((merged[1].target_id, merged[1].label.as_str()), (2, "Switch"));
         assert_eq!(merged[1].group_name, "Rack");
+    }
+
+    #[test]
+    fn a_group_member_shows_its_public_name_not_the_private_one() {
+        let groups = vec!["Rack".to_string()];
+        let mut named = member(1, "SRV-CRM01", "Rack");
+        named.public_label = " Customer portal ".into();
+        let merged = merge_items(7, vec![], &groups, &[named, member(2, "SRV-DB02", "Rack")]);
+        assert_eq!(merged[0].label, "Customer portal");
+        assert_eq!(merged[1].label, "SRV-DB02", "no public name: the monitor name");
     }
 
     #[test]

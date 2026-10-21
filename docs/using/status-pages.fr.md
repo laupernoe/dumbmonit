@@ -38,6 +38,14 @@ optionnellement, un **groupe** (« Réseau », « Stockage »). Les groupes
 deviennent des blocs sur la page, dans l'ordre où vous arrangez les
 services.
 
+**Deux noms par surveillance.** Chaque surveillance de la liste montre son
+**nom privé** (son nom dans DumbMonit, en gris, en lecture seule, jamais publié)
+et un **nom public** éditable : le seul que voient les visiteurs, les badges, le
+flux et les balises de référencement de la page. Le nom privé sert de placeholder ;
+si vous laissez le nom public vide, l'éditeur avertit que le nom interne sera
+publié, et il est utilisé. Idem pour les surveillances qui arrivent par un groupe
+coché (ci-dessous) : elles ont leur propre champ de nom public.
+
 **Groupes de surveillances.** Au-dessus de la recherche, cochez un groupe
 entier (les dossiers de **Surveillances**) pour tout afficher. Un groupe coché
 est dynamique : une surveillance ajoutée plus tard au dossier apparaît d'elle-même

@@ -32,7 +32,7 @@ mod badges;
 mod branding;
 mod subscribers;
 use crate::db::status_pages::{
-    DEFAULT_SCENE, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
+    DEFAULT_SCENE, GroupLabel, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
     SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, split_scenes,
 };
 use crate::db::targets::TargetStatus;
@@ -135,6 +135,8 @@ pub struct StatusPageView {
     pub items: Vec<PageItem>,
     /// Groupes cochés (dynamiques), dans l'ordre.
     pub groups: Vec<String>,
+    /// Noms publics des surveillances arrivées par un groupe.
+    pub group_labels: Vec<GroupLabel>,
 }
 
 #[derive(Debug, Serialize)]
@@ -196,6 +198,9 @@ pub struct StatusPagePayload {
     /// actuels s'affichent sous le nom du groupe. Absent : inchangés.
     #[serde(default)]
     pub groups: Option<Vec<String>>,
+    /// Noms publics des surveillances arrivées par un groupe ; absent : inchangés.
+    #[serde(default)]
+    pub group_labels: Option<Vec<GroupLabel>>,
 }
 
 /// Distingue un champ absent (`None`, par `default`) d'un `null` explicite
@@ -362,6 +367,26 @@ impl StatusPagePayload {
                 Some(clean)
             }
         };
+        let group_labels = match self.group_labels {
+            None => None,
+            Some(list) => {
+                let mut clean: Vec<GroupLabel> = Vec::new();
+                for entry in list {
+                    let label = entry.label.trim().to_string();
+                    if label.is_empty() || clean.iter().any(|c| c.target_id == entry.target_id) {
+                        continue;
+                    }
+                    if label.chars().count() > MAX_LABEL_LEN || label.chars().any(char::is_control)
+                    {
+                        return Err(ApiError::BadRequest(format!(
+                            "Labels are limited to {MAX_LABEL_LEN} characters of plain text."
+                        )));
+                    }
+                    clean.push(GroupLabel { target_id: entry.target_id, label });
+                }
+                Some(clean)
+            }
+        };
         Ok(StatusPageInput {
             slug,
             title,
@@ -382,6 +407,7 @@ impl StatusPagePayload {
             domain,
             seo,
             groups,
+            group_labels,
         })
     }
 }
@@ -505,7 +531,8 @@ fn duplicate_slug_to_conflict(error: anyhow::Error) -> ApiError {
 async fn page_view(state: &AppState, page: StatusPage) -> ApiResult<StatusPageView> {
     let items = db::status_pages::list_items(&state.pool, page.id).await?;
     let groups = db::status_pages::list_groups(&state.pool, page.id).await?;
-    Ok(StatusPageView { page, items, groups })
+    let group_labels = db::status_pages::list_group_labels(&state.pool, page.id).await?;
+    Ok(StatusPageView { page, items, groups, group_labels })
 }
 
 pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<StatusPageView>>> {
@@ -518,13 +545,18 @@ pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<Sta
     for (page_id, name) in db::status_pages::list_all_groups(&state.pool).await? {
         groups.entry(page_id).or_default().push(name);
     }
+    let mut labels: HashMap<i64, Vec<GroupLabel>> = HashMap::new();
+    for (page_id, entry) in db::status_pages::list_all_group_labels(&state.pool).await? {
+        labels.entry(page_id).or_default().push(entry);
+    }
     Ok(Json(
         pages
             .into_iter()
             .map(|page| {
                 let items = items.remove(&page.id).unwrap_or_default();
                 let groups = groups.remove(&page.id).unwrap_or_default();
-                StatusPageView { page, items, groups }
+                let group_labels = labels.remove(&page.id).unwrap_or_default();
+                StatusPageView { page, items, groups, group_labels }
             })
             .collect(),
     ))
