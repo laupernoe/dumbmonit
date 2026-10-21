@@ -570,7 +570,7 @@ mod tests {
             image: "https://cdn.example/og.png".into(),
             ..Seo::default()
         };
-        let r = resolve(&page(seo);
+        let r = resolve(&page(seo, true));
         assert_eq!(r.title, "Custom title");
         assert_eq!(r.lang, "fr");
         assert_eq!(r.image.as_deref(), Some("https://cdn.example/og.png"));
