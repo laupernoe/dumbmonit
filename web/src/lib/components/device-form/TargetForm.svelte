@@ -27,6 +27,7 @@
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { knownFolders } from '#lib/components/devices/folders.js';
+	import { guessAgent } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { groupOptions } from './option-groups';
 	import { listRelays } from '#lib/api/relay.js';
 	import { listLocations } from '#lib/api/locations.js';
@@ -34,6 +35,7 @@
 	import type { RelayAgent } from '#lib/api/types.js';
 	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import CredentialFields from './CredentialFields.svelte';
+	import AgentLink from './AgentLink.svelte';
 	import OptionsFields from './OptionsFields.svelte';
 	import { firstRowError, parseRows, rowErrors, seedChecklists } from './option-values';
 	import TagsEditor from './TagsEditor.svelte';
@@ -166,8 +168,11 @@
 	const options = $derived(collector.options);
 	const optionKeys = $derived(options.map((o) => o.key));
 	/** The first few settings sit in the main form; the rest behind "More options". */
-	const primaryOptions = $derived(options.filter((o, i) => o.required || i < 3));
-	const moreOptions = $derived(options.filter((o) => !primaryOptions.includes(o)));
+	/** The agent chosen for a mail server has its own box at the top of the form. */
+	const agentOption = $derived(options.find((o) => o.input === 'agent') ?? null);
+	const listed = $derived(options.filter((o) => o.input !== 'agent'));
+	const primaryOptions = $derived(listed.filter((o, i) => o.required || i < 3));
+	const moreOptions = $derived(listed.filter((o) => !primaryOptions.includes(o)));
 	const moreOptionGroups = $derived(groupOptions(moreOptions));
 	const optionValues = $derived(Object.fromEntries(Object.entries(tags).filter(([k]) => optionKeys.includes(k))));
 	const freeTags = $derived(Object.fromEntries(Object.entries(tags).filter(([k]) => !optionKeys.includes(k))));
@@ -178,6 +183,35 @@
 	function setFreeTags(values: Record<string, string>) {
 		tags = { ...values, ...optionValues };
 	}
+
+	// --- Agent installed on the server (mail servers) --------------------------
+	let agentTouched = $state(false);
+	let agentGuessed = $state(false);
+	function setAgent(value: string) {
+		const key = agentOption?.key;
+		if (!key) return;
+		const next = { ...tags };
+		if (value) next[key] = value;
+		else delete next[key];
+		tags = next;
+	}
+	function chooseAgent(value: string) {
+		agentTouched = true;
+		agentGuessed = false;
+		setAgent(value);
+	}
+	// A new monitor pre-selects the agent whose host name is the address typed,
+	// until the user chooses by hand.
+	$effect(() => {
+		const option = agentOption;
+		if (!option || target || agentTouched) return;
+		const guess = guessAgent(address, targets);
+		const next = guess ? String(guess.id) : '';
+		untrack(() => {
+			if ((tags[option.key] ?? '') !== next) setAgent(next);
+			agentGuessed = next !== '';
+		});
+	});
 
 	// --- Validation -----------------------------------------------------------
 	const credentialChanged = $derived(credential.kind !== initialCredential.kind || draftChanged(draft, initialDraft));
@@ -418,6 +452,9 @@
 
 <form onsubmit={submit} class="grid gap-5" novalidate>
 	<RequirementNotice requirements={collector.requirements} />
+	{#if agentOption}
+		<AgentLink {collector} option={agentOption} {targets} value={tags[agentOption.key] ?? ''} guessed={agentGuessed} onchange={chooseAgent} />
+	{/if}
 	<div class="grid gap-4 sm:grid-cols-2">
 		<Field label={m.deviceform_form_name_label()} for="target-name" required error={shown('name', nameError)} help={m.deviceform_form_name_help()}>
 			<input
