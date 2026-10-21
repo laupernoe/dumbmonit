@@ -369,6 +369,25 @@ pub struct BundleStatusPage {
     /// Domaine public (depuis la migration 0042) ; absent : aucun.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub domain: Option<String>,
+    /// Réglages de référencement (migration 0065). Absent d'une ancienne
+    /// sauvegarde : ceux de la page restent tels quels (tout par défaut sur une
+    /// page créée).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub seo: Option<crate::status_seo::Seo>,
+    /// Dossiers cochés en bloc (migration 0066), par nom, dans l'ordre. Absent
+    /// d'une ancienne sauvegarde : aucun.
+    #[serde(default)]
+    pub groups: Vec<String>,
+    /// Noms publics des membres de ces groupes (migration 0067).
+    #[serde(default)]
+    pub group_labels: Vec<BundleGroupLabel>,
+}
+
+/// Nom public d'une surveillance arrivée par un groupe coché.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleGroupLabel {
+    pub target: String,
+    pub label: String,
 }
 
 fn default_accent() -> String {

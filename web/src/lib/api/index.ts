@@ -134,6 +134,14 @@ export function reorderTargets(order: TargetId[]): Promise<void> {
 	return request<void>('/targets/reorder', { method: 'POST', body: { order } });
 }
 
+/**
+ * Renames a folder server-side: every device in it moves, and the status pages
+ * that ticked the folder follow the new name.
+ */
+export function renameTargetFolder(from: string, to: string): Promise<void> {
+	return request<void>('/targets/folders/rename', { method: 'POST', body: { from, to } });
+}
+
 /** Probes the device right away. Can be slow: the caller shows an indicator. */
 export function probeTarget(id: TargetId): Promise<ProbeReport> {
 	return request<ProbeReport>(`/targets/${id}/probe`, { method: 'POST' });

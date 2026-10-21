@@ -276,3 +276,85 @@ async fn un_lecteur_ne_peut_pas_reordonner() {
         .await;
     assert_eq!(status, StatusCode::FORBIDDEN, "devrait être refusé : {body}");
 }
+
+/// Renommer un dossier déplace ses cibles et fait suivre les pages de statut
+/// qui l'ont coché (la liaison se fait par nom) ; un lecteur n'a pas le droit.
+#[tokio::test]
+async fn renommer_un_dossier_garde_les_pages_de_statut() {
+    let app = setup().await;
+    let (a, _) = app.create_target("a", "10.0.0.1").await;
+    let (b, _) = app.create_target("b", "10.0.0.2").await;
+    for id in [a, b] {
+        let (status, body) = app
+            .request(
+                "PUT",
+                &format!("/api/targets/{id}"),
+                Some(json!({ "name": "x", "address": format!("10.0.0.{id}"), "kind": "dummy", "group_name": "Rack" })),
+                Some(&app.admin),
+            )
+            .await;
+        assert_eq!(status, StatusCode::OK, "dossier refusé : {body}");
+    }
+    let (status, page) = app
+        .request(
+            "POST",
+            "/api/status-pages",
+            Some(json!({ "title": "P", "slug": "p", "published": true, "groups": ["Rack", "Autre"] })),
+            Some(&app.admin),
+        )
+        .await;
+    assert_eq!(status, StatusCode::CREATED, "page refusée : {page}");
+    let page_id = page["id"].as_i64().unwrap();
+
+    let viewer = app.viewer().await;
+    let (status, _) = app
+        .request(
+            "POST",
+            "/api/targets/folders/rename",
+            Some(json!({ "from": "Rack", "to": "Baie" })),
+            Some(&viewer),
+        )
+        .await;
+    assert_eq!(status, StatusCode::FORBIDDEN);
+
+    let (status, body) = app
+        .request(
+            "POST",
+            "/api/targets/folders/rename",
+            Some(json!({ "from": "Rack", "to": "Baie" })),
+            Some(&app.admin),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "renommage refusé : {body}");
+    assert_eq!(app.get_target(a).await["group_name"], json!("Baie"));
+    assert_eq!(app.get_target(b).await["group_name"], json!("Baie"));
+    let (_, page) = app
+        .request("GET", &format!("/api/status-pages/{page_id}"), None, Some(&app.admin))
+        .await;
+    assert_eq!(page["groups"], json!(["Baie", "Autre"]), "la page garde le dossier : {page}");
+
+    // Vers un nom déjà coché : pas de doublon.
+    let (status, _) = app
+        .request(
+            "POST",
+            "/api/targets/folders/rename",
+            Some(json!({ "from": "Baie", "to": "Autre" })),
+            Some(&app.admin),
+        )
+        .await;
+    assert_eq!(status, StatusCode::NO_CONTENT);
+    let (_, page) = app
+        .request("GET", &format!("/api/status-pages/{page_id}"), None, Some(&app.admin))
+        .await;
+    assert_eq!(page["groups"], json!(["Autre"]));
+
+    let (status, _) = app
+        .request(
+            "POST",
+            "/api/targets/folders/rename",
+            Some(json!({ "from": "", "to": "X" })),
+            Some(&app.admin),
+        )
+        .await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}

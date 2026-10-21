@@ -40,6 +40,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Status pages: backup, folder renames, incident dates, SEO prompt.** The
+  instance backup now carries each page's SEO settings, ticked groups and the
+  public names of group members (older backup files still restore, with defaults
+  for what they lack). Renaming a folder on the Devices page is now one request
+  that also updates the status pages that ticked it, instead of silently
+  unticking it. The incident editor can change the start and the resolution
+  date of an existing incident or maintenance, with the same checks as the API.
+  The "Copy the prompt for an AI" text is written in the page language (or the
+  interface language) instead of always English; the JSON keys stay the same.
 - **Map: remote sites and image export.** A monitor placed at a remote location
   ("Place at") is now drawn inside that site's frame, like those reached through
   its relay agent; a site frame is wide enough for its title and its source on a

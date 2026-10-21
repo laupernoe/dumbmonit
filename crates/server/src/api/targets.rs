@@ -636,6 +636,34 @@ pub async fn reorder(
     Ok(StatusCode::NO_CONTENT)
 }
 
+#[derive(Debug, Deserialize)]
+pub struct RenameFolderPayload {
+    pub from: String,
+    pub to: String,
+}
+
+/// Renomme un dossier d'un bloc ; les pages de statut qui l'ont coché le
+/// suivent (voir `db::targets::rename_folder`).
+pub async fn rename_folder(
+    State(state): State<AppState>,
+    Json(payload): Json<RenameFolderPayload>,
+) -> ApiResult<StatusCode> {
+    let from = payload.from.trim();
+    let to = payload.to.trim();
+    if from.is_empty() || to.is_empty() {
+        return Err(ApiError::BadRequest("The folder names cannot be empty.".into()));
+    }
+    if to.chars().count() > MAX_GROUP_NAME_CHARS {
+        return Err(ApiError::BadRequest(format!(
+            "The folder name must be at most {MAX_GROUP_NAME_CHARS} characters."
+        )));
+    }
+    if from != to {
+        db::targets::rename_folder(&state.pool, from, to).await?;
+    }
+    Ok(StatusCode::NO_CONTENT)
+}
+
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,

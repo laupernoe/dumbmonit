@@ -11,6 +11,7 @@
 	import type { StatusPageSeo } from '#lib/api/index.js';
 	import { Button, Field, Panel, Toggle } from '#lib/ui/index.js';
 	import { copyText } from '#lib/clipboard.js';
+	import { getLocale, locales } from '#lib/paraglide/runtime.js';
 	import {
 		DESCRIPTION_TARGET,
 		TITLE_TARGET,
@@ -18,8 +19,10 @@
 		buildPrompt,
 		effectiveSeo,
 		parseSeoReply,
+		promptLocale,
 		seoDefaults,
 		truncate,
+		type PromptTexts,
 		type SeoProblem,
 		type SeoTextKey
 	} from './seo';
@@ -51,10 +54,42 @@
 	let pasteNotes = $state<string[]>([]);
 	let applied = $state(false);
 
+	/** Prompt wording in the page language when the interface has it, else in the interface language. */
+	function promptTexts(): PromptTexts {
+		const locale = promptLocale(shown.lang, locales, getLocale());
+		const o = { locale: locale as (typeof locales)[number] };
+		return {
+			intro: m.status_seo_prompt_intro({}, o),
+			context: m.status_seo_prompt_context({}, o),
+			name: (value) => m.status_seo_prompt_name({ value }, o),
+			unnamed: m.status_seo_prompt_unnamed({}, o),
+			organisation: (value) => m.status_seo_prompt_organisation({ value }, o),
+			orgUnknown: m.status_seo_prompt_org_unknown({}, o),
+			address: (value) => m.status_seo_prompt_address({ value }, o),
+			addressUnknown: m.status_seo_prompt_address_unknown({}, o),
+			language: (value) => m.status_seo_prompt_language({ value }, o),
+			description: (value) => m.status_seo_prompt_description({ value }, o),
+			services: (value) => m.status_seo_prompt_services({ value }, o),
+			none: m.status_seo_prompt_none({}, o),
+			more: (count) => m.status_seo_prompt_more({ count }, o),
+			rules: m.status_seo_prompt_rules({}, o),
+			ruleLang: (lang) => m.status_seo_prompt_rule_lang({ lang }, o),
+			ruleTitle: (max) => m.status_seo_prompt_rule_title({ max }, o),
+			ruleDescription: (max) => m.status_seo_prompt_rule_description({ max }, o),
+			ruleKeywords: m.status_seo_prompt_rule_keywords({}, o),
+			ruleCanonical: m.status_seo_prompt_rule_canonical({}, o),
+			ruleImage: m.status_seo_prompt_rule_image({}, o),
+			ruleLangField: m.status_seo_prompt_rule_lang_field({}, o),
+			ruleSiteName: m.status_seo_prompt_rule_site_name({}, o),
+			rulePlain: m.status_seo_prompt_rule_plain({}, o),
+			reply: m.status_seo_prompt_reply({}, o)
+		};
+	}
+
 	async function copyPrompt() {
 		copyFailed = false;
 		const ok = await copyText(
-			buildPrompt({ name, organisation: shown.site_name, services, lang: shown.lang, url: shown.canonical, description })
+			buildPrompt({ name, organisation: shown.site_name, services, lang: shown.lang, url: shown.canonical, description }, promptTexts())
 		);
 		copied = ok;
 		copyFailed = !ok;
