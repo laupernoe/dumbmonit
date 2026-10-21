@@ -38,6 +38,7 @@
 	"alerts_ack_stop_reminding": "No recordármelo durante",
 	"alerts_ack_unack": "Quitar reconocimiento",
 	"alerts_ack_until_resolved": "Hasta que se resuelva",
+	"alerts_actions_ack": "Reconocer",
 	"alerts_bulk_ack": "Reconocer",
 	"alerts_bulk_done": "Hecho: {count}.",
 	"alerts_bulk_ignore": "Ignorar para este monitor",
@@ -5259,6 +5260,9 @@
 	"settings_backup_to_update": "{count} por actualizar",
 	"settings_backup_without_key": "Sin la clave",
 	"settings_backup_write_error": "No se pudo escribir la copia de seguridad",
+	"settings_block_connection": "Conexión",
+	"settings_block_off": "Desactivado",
+	"settings_block_on": "Activado",
 	"settings_language_auto": "Automático (idioma del navegador)",
 	"settings_language_theme_description": "Se guardan en este navegador.",
 	"settings_language_theme_title": "Idioma y tema",
@@ -5386,6 +5390,8 @@
 	"settings_logs_export_last_day": "Último día",
 	"settings_logs_export_last_days": "Últimos {days} días",
 	"settings_logs_export_period": "Periodo",
+	"settings_logs_export_since": "Registros disponibles desde el {date}.",
+	"settings_logs_export_since_short": "Su selección empieza antes: la exportación solo contiene registros desde el {date}.",
 	"settings_logs_export_title": "Exportar",
 	"settings_logs_form_add": "Añadir destino",
 	"settings_logs_form_clear_secrets": "Borrar los secretos guardados",
@@ -7234,7 +7240,5 @@
 	"worldmap_verdict_idle": "Sin sondear",
 	"worldmap_verdict_ok": "Todo en marcha",
 	"worldmap_verdict_warn": "Revisar",
-	"worldmap_view_world": "Mundo",
-	"settings_logs_export_since": "Registros disponibles desde el {date}.",
-	"settings_logs_export_since_short": "Su selección empieza antes: la exportación solo contiene registros desde el {date}."
+	"worldmap_view_world": "Mundo"
 }

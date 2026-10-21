@@ -38,6 +38,7 @@
 	"alerts_ack_stop_reminding": "Stop reminding me for",
 	"alerts_ack_unack": "Un-ack",
 	"alerts_ack_until_resolved": "Until resolved",
+	"alerts_actions_ack": "Acknowledge",
 	"alerts_bulk_ack": "Acknowledge",
 	"alerts_bulk_done": "Done: {count}.",
 	"alerts_bulk_ignore": "Ignore for this monitor",
@@ -5259,6 +5260,9 @@
 	"settings_backup_to_update": "{count} to update",
 	"settings_backup_without_key": "Without the key",
 	"settings_backup_write_error": "Could not write the backup",
+	"settings_block_connection": "Connection",
+	"settings_block_off": "Off",
+	"settings_block_on": "On",
 	"settings_language_auto": "Automatic (browser language)",
 	"settings_language_theme_description": "Saved in this browser.",
 	"settings_language_theme_title": "Language & theme",
@@ -5386,6 +5390,8 @@
 	"settings_logs_export_last_day": "Last day",
 	"settings_logs_export_last_days": "Last {days} days",
 	"settings_logs_export_period": "Period",
+	"settings_logs_export_since": "Logs available since {date}.",
+	"settings_logs_export_since_short": "Your selection starts before that: the export only contains logs from {date} onwards.",
 	"settings_logs_export_title": "Export",
 	"settings_logs_form_add": "Add destination",
 	"settings_logs_form_clear_secrets": "Clear saved secrets",
@@ -7234,7 +7240,5 @@
 	"worldmap_verdict_idle": "Not probed",
 	"worldmap_verdict_ok": "All up",
 	"worldmap_verdict_warn": "Needs a look",
-	"worldmap_view_world": "World",
-	"settings_logs_export_since": "Logs available since {date}.",
-	"settings_logs_export_since_short": "Your selection starts before that: the export only contains logs from {date} onwards."
+	"worldmap_view_world": "World"
 }

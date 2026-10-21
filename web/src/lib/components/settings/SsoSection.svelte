@@ -15,7 +15,7 @@
 		type OidcTestReport
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, CopyBlock, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
@@ -38,6 +38,11 @@
 		public_url: ''
 	});
 	let errors = $state<{ issuer?: string; client_id?: string; client_secret?: string; public_url?: string }>({});
+	let connOpen = $state(false);
+	// A validation error inside the folded block unfolds it.
+	$effect(() => {
+		if (errors.issuer || errors.client_id || errors.client_secret || errors.public_url) connOpen = true;
+	});
 
 	// The client secret is compared as typed or not: its text never goes into the snapshot.
 	const tracker = useDirtyTracker(() => ({ ...form, client_secret: form.client_secret !== '' }));
@@ -197,6 +202,8 @@
 				{/if}
 			</p>
 
+			<Disclosure title={m.settings_block_connection()} bind:open={connOpen}>
+			<div class="grid gap-4">
 			<div class="grid gap-4 sm:grid-cols-2">
 				<Field label={m.settings_sso_provider_name()} for="sso-name" help={m.settings_sso_provider_help()}>
 					<input id="sso-name" type="text" class="input" bind:value={form.provider_name} placeholder="SSO" autocomplete="off" disabled={saving} />
@@ -219,6 +226,8 @@
 				<p class="mb-1.5 text-sm font-semibold text-ink">{m.settings_sso_redirect_heading()}</p>
 				<CopyBlock value={redirectUri} label={m.settings_sso_redirect_copy()} />
 			</div>
+			</div>
+			</Disclosure>
 
 			{#if config.auto_create_defaulted && config.source !== 'none'}
 				<div class="flex flex-wrap items-start gap-2 rounded-[var(--radius-card)] border border-advisory/30 bg-surface p-3 text-sm text-ink-2" role="note">
@@ -230,9 +239,8 @@
 				</div>
 			{/if}
 
-			<details class="group rounded-[var(--radius-card)] border border-line">
-				<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">{m.settings_sso_more()}</summary>
-				<div class="grid gap-4 border-t border-line px-4 py-4 sm:grid-cols-2">
+			<Disclosure title={m.settings_sso_more()}>
+				<div class="grid gap-4 sm:grid-cols-2">
 					<Field label={m.settings_sso_scopes()} for="sso-scopes" help={m.settings_sso_scopes_help()}>
 						<input id="sso-scopes" type="text" class="input" bind:value={form.scopes} placeholder="openid profile email" autocomplete="off" spellcheck="false" disabled={saving} />
 					</Field>
@@ -251,7 +259,7 @@
 						</Field>
 					</div>
 				</div>
-			</details>
+			</Disclosure>
 
 			{#if saveError}
 				<ErrorNotice error={saveError} title={m.settings_sso_save_error()} />

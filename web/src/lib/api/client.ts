@@ -7,6 +7,7 @@
  */
 
 import { m } from '#lib/paraglide/messages.js';
+import { notifyMutation } from './mutations';
 
 /** Normalised error, always carrying a message that can be displayed as is. */
 export class ApiError extends Error {
@@ -195,6 +196,8 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 		if (refusedByDemo) demoRefusalHandler?.(message);
 		throw new ApiError(message, response.status, anticipated && response.status === 404, refusedByDemo);
 	}
+
+	notifyMutation(path, method);
 
 	if (response.status === 204) return undefined as T;
 
