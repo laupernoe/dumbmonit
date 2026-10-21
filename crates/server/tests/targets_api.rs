@@ -299,7 +299,7 @@ async fn renommer_un_dossier_garde_les_pages_de_statut() {
         .request(
             "POST",
             "/api/status-pages",
-            Some(json!({ "title": "P", "slug": "p", "published": true, "groups": ["Rack", "Autre"] })),
+            Some(json!({ "title": "P", "slug": "pages", "published": true, "groups": ["Rack", "Autre"] })),
             Some(&app.admin),
         )
         .await;
