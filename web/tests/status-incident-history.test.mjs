@@ -1,7 +1,7 @@
 // Past incidents: local date handling and the checks mirrored from the server. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { datedUpdates, dateToLocal, localToIso, validateHistory, updatesPayload } from '../src/lib/components/status/incident-history.ts';
+import { datedUpdates, dateToLocal, localToIso, validateDates, validateHistory, updatesPayload } from '../src/lib/components/status/incident-history.ts';
 
 const NOW = new Date('2026-10-21T12:00:00');
 const at = (hoursAgo) => dateToLocal(new Date(NOW.getTime() - hoursAgo * 3600_000));
@@ -53,4 +53,18 @@ test('the payload keeps the typed order and sends UTC dates', () => {
 	assert.equal(payload[0].body, 'done');
 	assert.equal(payload[0].at, new Date(NOW.getTime() - 6 * 3600_000).toISOString().replace(/:\d\d\.\d{3}Z$/, ':00.000Z'));
 	assert.equal(payload[1].at, undefined);
+});
+
+test('editing the dates of an existing incident follows the server rules', () => {
+	const original = { startsAt: at(10), endsAt: at(5) };
+	const msgs = [new Date(NOW.getTime() - 8 * 3600_000)];
+	const future = dateToLocal(new Date(NOW.getTime() + 3 * 3600_000));
+	assert.equal(validateDates('incident', at(10), at(5), original, msgs, NOW), null, 'unchanged');
+	assert.equal(validateDates('incident', '', at(5), original, msgs, NOW), 'start_required');
+	assert.equal(validateDates('incident', at(10), future, original, msgs, NOW), 'future_end');
+	assert.equal(validateDates('incident', future, '', original, msgs, NOW), 'future_start');
+	assert.equal(validateDates('incident', at(10), at(11), original, msgs, NOW), 'end_before_start');
+	assert.equal(validateDates('incident', at(7), at(5), original, msgs, NOW), 'update_outside', 'a message would fall before the start');
+	assert.equal(validateDates('incident', at(10), at(9), original, msgs, NOW), 'update_outside', 'a message would fall after the end');
+	assert.equal(validateDates('maintenance', future, dateToLocal(new Date(NOW.getTime() + 6 * 3600_000)), original, [], NOW), null, 'a maintenance may be planned');
 });
