@@ -138,6 +138,7 @@ nav:
       - GitLab (self-managed): devices/gitlab.md
       - Forgejo / Gitea: devices/forgejo.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
+      - Deploy the agent with Active Directory: devices/agent-active-directory.md
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md

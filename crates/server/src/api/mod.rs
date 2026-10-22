@@ -1,4 +1,5 @@
 mod activedirectory;
+mod ad_deploy;
 mod agent_commands;
 mod agent_files;
 mod alert_actions;
@@ -164,6 +165,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/notify/kinds", get(channels::kinds))
         .route("/agent/tokens", get(ingest::list_tokens).post(ingest::create_token))
         .route("/agent/tokens/{id}", delete(ingest::revoke_token))
+        // Déploiement par stratégie de groupe Active Directory (`ad_deploy.rs`).
+        .route("/agent/tokens/{id}/close", post(ad_deploy::close_token))
+        .route("/agent/ad-kit", post(ad_deploy::create_kit))
         .route("/tokens", get(tokens::list).post(tokens::create))
         .route("/tokens/{id}", delete(tokens::revoke))
         // Actions sur les conteneurs d'une machine (`agent_commands.rs`).
