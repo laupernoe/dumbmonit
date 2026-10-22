@@ -137,8 +137,23 @@ une VM, `/nodes/{node}/lxc/{vmid}/interfaces` pour un conteneur, qui
 n'a besoin de rien d'installé dedans. Ça donne `guest_os_info` (`Debian
 GNU/Linux 12 (bookworm)`, son id, sa version, le noyau) et jusqu'à
 quatre `guest_ip_info` — les adresses loopback et IPv6 link-local sont
-ignorées, et une machine avec des dizaines d'interfaces virtuelles ne
-remplit pas la base de séries.
+ignorées, de même que les ponts Docker, les paires veth et les autres réseaux
+de conteneurs (`docker0`, `br-…`, `veth…`, `cni…`), et une machine avec des
+dizaines d'interfaces virtuelles ne remplit pas la base de séries. Quand un
+invité ne dit rien de ses adresses (VM sans agent, ou sans le droit de
+l'interroger), le collecteur se rabat sur les adresses statiques de sa
+configuration (`ipconfigN` cloud-init de `/nodes/{node}/qemu/{vmid}/config`,
+`netN … ip=` de `/nodes/{node}/lxc/{vmid}/config` ; `dhcp` n'en donne aucune),
+ce que `VM.Audit` — compris dans `PVEAuditor` — permet déjà.
+
+La carte se sert de ces adresses : une surveillance dont l'adresse est l'une
+de celles d'un invité (un contrôle HTTP, un port TCP, une base de données…) se
+dessine sous cette VM ou ce conteneur avec un lien « Tourne sur » au lieu de
+flotter seule, et un agent, un ping ou une surveillance SNMP à l'adresse d'un
+invité représente l'invité lui-même. Les noms d'hôte ne sont pas résolus :
+seules les surveillances visées par adresse IP sont reliées ainsi (un invité
+dont le nom correspond à une surveillance ou au nom d'hôte d'un agent est relié
+par son nom, comme avant).
 
 Les deux sont demandés **au plus une fois par heure par invité** et
 republiés depuis la mémoire entre deux : un système d'exploitation ne
@@ -423,7 +438,7 @@ collecteur ne fait toujours que des `GET`. Par point de terminaison :
 `certificates/info`, `disks/list`, `disks/smart`, `disks/zfs`,
 `apt/versions`, `apt/repositories` et `subscription` ; `Datastore.Audit`
 pour `storage` et `storage/{id}/content` ; `VM.Audit` pour `qemu`,
-`lxc`, `snapshot`, `status/current` et les `interfaces` d'un conteneur ;
+`lxc`, `snapshot`, `status/current`, la `config` d'un invité et les `interfaces` d'un conteneur ;
 `VM.GuestAgent.Audit` — ou `VM.Monitor` avant Proxmox VE 9 — pour
 `agent/get-fsinfo`.
 

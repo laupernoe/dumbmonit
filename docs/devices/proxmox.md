@@ -123,8 +123,22 @@ asks each running guest what it is: `agent/get-osinfo` and
 for a container, which needs nothing installed inside. That gives
 `guest_os_info` (`Debian GNU/Linux 12 (bookworm)`, its id, its version, the
 kernel) and up to four `guest_ip_info` — loopback and IPv6 link-local
-addresses are skipped, and a machine with dozens of virtual interfaces does
-not fill the series database.
+addresses are skipped, so are Docker bridges, veth pairs and other container
+networks (`docker0`, `br-…`, `veth…`, `cni…`), and a machine with dozens of
+virtual interfaces does not fill the series database. When a guest says
+nothing about its addresses (a VM without the agent, or without the right to
+ask it), the collector falls back on the static addresses of its
+configuration (`/nodes/{node}/qemu/{vmid}/config` cloud-init `ipconfigN`,
+`/nodes/{node}/lxc/{vmid}/config` `netN … ip=`; `dhcp` gives none), which
+`VM.Audit` — part of `PVEAuditor` — already allows.
+
+The map uses these addresses: a monitor whose address is one of a guest's
+(an HTTP check, a TCP port, a database…) is drawn under that VM or container
+with a "Runs on" link instead of floating on its own, and an agent, ping or
+SNMP monitor at a guest's address stands for the guest itself. Host names are
+not resolved, so only monitors addressed by IP are matched this way (a guest
+whose name matches a monitor or an agent's host name is matched by name, as
+before).
 
 Both are asked **at most once an hour per guest** and republished from memory
 in between: an operating system does not change between two probes, and an
@@ -382,7 +396,8 @@ endpoint: `Sys.Audit` for `/version`, `/cluster/*`, `/nodes/{node}/status`,
 `certificates/info`, `disks/list`, `disks/smart`, `disks/zfs`, `apt/versions`,
 `apt/repositories` and `subscription`; `Datastore.Audit` for `storage` and
 `storage/{id}/content`; `VM.Audit` for `qemu`, `lxc`, `snapshot`,
-`status/current` and a container's `interfaces`; `VM.GuestAgent.Audit` — or
+`status/current`, a guest's `config` and a container's `interfaces`;
+`VM.GuestAgent.Audit` — or
 `VM.Monitor` before Proxmox VE 9 — for `agent/get-fsinfo`.
 
 Two paths ask for a little more than the rest, and both are covered by the role
