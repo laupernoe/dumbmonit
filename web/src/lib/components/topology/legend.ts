@@ -11,6 +11,7 @@ export const EDGE_DASH: Record<TopologySource | 'wan', string> = {
 	parent: '',
 	service: '2 4',
 	hypervisor: '6 4',
+	hosted: '4 2',
 	relay: '10 4 2 4',
 	lldp: '1 4',
 	samehost: '1 2',
@@ -19,7 +20,7 @@ export const EDGE_DASH: Record<TopologySource | 'wan', string> = {
 	wan: '8 6'
 };
 
-export const SOURCES: readonly TopologySource[] = ['parent', 'service', 'hypervisor', 'relay', 'lldp', 'samehost', 'backup', 'firewall'];
+export const SOURCES: readonly TopologySource[] = ['parent', 'service', 'hypervisor', 'hosted', 'relay', 'lldp', 'samehost', 'backup', 'firewall'];
 
 export function sourceLabel(source: TopologySource | 'wan'): string {
 	switch (source) {
@@ -31,6 +32,8 @@ export function sourceLabel(source: TopologySource | 'wan'): string {
 			return m.topology_legend_relay();
 		case 'hypervisor':
 			return m.topology_legend_hypervisor();
+		case 'hosted':
+			return m.topology_legend_hosted();
 		case 'lldp':
 			return m.topology_legend_lldp();
 		case 'samehost':
@@ -54,6 +57,8 @@ export function sourceShort(source: TopologySource): string {
 			return m.topology_source_relay();
 		case 'hypervisor':
 			return m.topology_source_hypervisor();
+		case 'hosted':
+			return m.topology_source_hosted();
 		case 'lldp':
 			return m.topology_source_lldp();
 		case 'samehost':

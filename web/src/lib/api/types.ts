@@ -2199,7 +2199,7 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'lldp' | 'samehost' | 'backup' | 'firewall';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall';
 
 /** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
 export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
@@ -2228,6 +2228,8 @@ export interface TopologyNode {
 	vlan_name: string | null;
 	/** Guest: running at the last measurement. Cluster node: online. */
 	running: boolean | null;
+	/** Guest (its own node, or the device that stands for it): the addresses its hypervisor reports. */
+	ips: string[];
 }
 
 /** A link: `from` is upstream (parent, relay, hypervisor, switch). Mirrors `EdgeView`. */
