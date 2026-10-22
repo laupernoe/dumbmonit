@@ -3248,7 +3248,12 @@ paths:
         `relay` (the relay agent that polls the device), `hypervisor`
         (a hypervisor and its guests, from the latest Proxmox, XCP-ng, Nutanix, vSphere or
         libvirt metrics; on a Proxmox cluster the guests hang from a `pve_node` node, one per
-        Proxmox node, itself linked to the cluster), `lldp` (an LLDP neighbour seen by an SNMP
+        Proxmox node, itself linked to the cluster), `hosted` (a device whose IP address is one
+        the hypervisor reports for a guest — Proxmox guest agent, container interfaces, static
+        configuration, VMware Tools — drawn under that guest; an address several guests report
+        is ignored and a declared parent wins; when a guest's name matches no device, the only
+        machine-level device at its address, such as an agent, ping or SNMP monitor, stands for
+        the guest instead of a duplicate node), `lldp` (an LLDP neighbour seen by an SNMP
         switch), `samehost` (a PBS and a Proxmox VE monitor that point at the same machine),
         `backup` (a Proxmox VE whose `pbs` storage targets a monitored PBS server) and
         `firewall` (a device whose address falls in a network a monitored firewall of the same
@@ -3259,7 +3264,8 @@ paths:
         left out. Each device node carries the `subnet` it sits in (from its IP address and the
         networks the site's firewalls know, else its /24; none for a public address or a host
         name) and, when a firewall says so, that network's `vlan` and `vlan_name`.
-        Addresses are not included. States are read from `GET /api/targets`.
+        Device addresses are not included; only the addresses a hypervisor reports for its guests
+        are (`ips`). States are read from `GET /api/targets`.
         A node's `site` is found without configuration: the location the device is placed at
         (a remote location gives its site, the main-site location gives none), else the
         device's `site` tag (except on
@@ -8032,7 +8038,7 @@ components:
           description: False when VictoriaMetrics did not answer; `hypervisor` and `lldp` links are then missing.
     TopologyNode:
       type: object
-      required: [id, name, kind, group_name]
+      required: [id, name, kind, group_name, ips]
       properties:
         id: { type: string, description: "`t<id>` for a device, `g<host>:<name>` for an unmonitored guest." }
         target_id: { type: [integer, "null"], format: int64, description: The device; null for a guest. }
@@ -8049,13 +8055,17 @@ components:
           description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), or the location the device is placed at."
         host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
         running: { type: [boolean, "null"], description: Guest only, running at the last measurement; for a `pve_node`, online. }
+        ips:
+          type: array
+          items: { type: string }
+          description: "Guest (its own node, or the device that stands for it): the IP addresses its hypervisor reports. Empty otherwise."
     TopologyEdge:
       type: object
       required: [from, to, source]
       properties:
         from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
         to: { type: string }
-        source: { type: string, enum: [parent, service, relay, hypervisor, lldp, samehost, backup, firewall] }
+        source: { type: string, enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall] }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
