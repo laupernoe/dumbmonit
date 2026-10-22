@@ -69,7 +69,6 @@
 	import {
 		ArrowUpDown,
 		ChevronRight,
-		Ellipsis,
 		FolderInput,
 		FolderPlus,
 		ListChecks,
@@ -309,10 +308,13 @@
 		sortDir = 'asc';
 	}
 
-	// "More": the map and a new folder, out of the toolbar.
-	let moreOpen = $state(false);
-	let moreMode = $state<'items' | 'folder'>('items');
-	let moreButton = $state<HTMLButtonElement | null>(null);
+	// The map and "Create folder" are icon buttons next to "Select".
+	let folderFormOpen = $state(false);
+	function toggleFolderForm() {
+		folderFormOpen = !folderFormOpen;
+		newFolderDraft = '';
+		if (folderFormOpen) queueMicrotask(() => newFolderInput?.focus());
+	}
 
 	// Sites (locations of the world map): a badge on each monitor and a filter.
 	let siteLocations = $state<MapLocation[]>([]);
@@ -1016,7 +1018,6 @@
 </PageHeader>
 
 {#if !firstLoad && !pageError && targets.length > 0}
-	{@const itemClass = 'flex min-h-10 w-full items-center gap-2.5 rounded-lg px-2.5 text-left text-[0.8125rem] font-medium text-ink hover:bg-surface focus-visible:outline-2 focus-visible:outline-signal'}
 	<!-- Phones: the toolbar stays put while the list scrolls under it. -->
 	<div class="mb-4 flex flex-wrap items-center gap-2 max-sm:sticky max-sm:top-[var(--safe-top)] max-sm:z-20 max-sm:-mx-4 max-sm:mb-2 max-sm:border-b max-sm:border-line max-sm:bg-canvas max-sm:px-4 max-sm:py-2">
 		<label class="relative order-1 min-w-0 flex-1 sm:max-w-sm">
@@ -1061,81 +1062,29 @@
 					<ListChecks class="size-4" aria-hidden="true" />
 				</Button>
 			{/if}
-			<Menu label={m.devices_targets_more()} align="right" bind:open={moreOpen}>
-				{#snippet trigger({ toggle, open })}
-					<button
-						bind:this={moreButton}
-						type="button"
-						data-more-toggle
-						class="inline-flex size-10 shrink-0 items-center justify-center rounded-lg text-ink-2 hover:bg-surface-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-signal"
-						aria-haspopup="menu"
-						aria-expanded={open}
-						aria-label={m.devices_targets_more()}
-						title={m.devices_targets_more()}
-						onclick={() => {
-							moreMode = 'items';
-							newFolderDraft = '';
-							toggle();
-						}}
-					>
-						<Ellipsis class="size-5" aria-hidden="true" />
-					</button>
-				{/snippet}
-				{#snippet children({ close })}
-					{#if moreMode === 'folder'}
-						<form
-							class="flex w-64 max-w-[calc(100vw-2rem)] items-center gap-1 p-0.5"
-							onsubmit={(e) => {
-								e.preventDefault();
-								createFolder(newFolderDraft);
-								newFolderDraft = '';
-								close();
-							}}
-						>
-							<input
-								bind:this={newFolderInput}
-								bind:value={newFolderDraft}
-								class="input !h-10 min-w-0 flex-1 text-[0.8125rem]"
-								placeholder={m.devices_targets_folder_placeholder()}
-								maxlength="80"
-								aria-label={m.devices_targets_folder_aria()}
-								onkeydown={(e) => {
-									if (e.key === 'Escape') {
-										e.preventDefault();
-										close();
-									}
-								}}
-							/>
-							<button
-								type="submit"
-								class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50"
-								disabled={!newFolderDraft.trim()}
-							>
-								{m.devices_targets_folder_create()}
-							</button>
-						</form>
-					{:else}
-						<a href="/map" role="menuitem" class={itemClass} onclick={close}>
-							<Network class="size-4 text-ink-3" aria-hidden="true" />
-							{m.topology_open()}
-						</a>
-						{#if auth.isAdmin}
-							<button
-								type="button"
-								role="menuitem"
-								class={itemClass}
-								onclick={() => {
-									moreMode = 'folder';
-									queueMicrotask(() => newFolderInput?.focus());
-								}}
-							>
-								<FolderPlus class="size-4 text-ink-3" aria-hidden="true" />
-								{m.devices_targets_create_folder()}
-							</button>
-						{/if}
-					{/if}
-				{/snippet}
-			</Menu>
+			<Button
+				variant="ghost"
+				href="/map"
+				aria-label={m.topology_open()}
+				title={m.topology_open()}
+				class="!w-10 !px-0"
+			>
+				<Network class="size-4" aria-hidden="true" />
+			</Button>
+			{#if auth.isAdmin}
+				<Button
+					variant="ghost"
+					aria-pressed={folderFormOpen}
+					aria-expanded={folderFormOpen}
+					aria-controls="monitors-new-folder"
+					aria-label={m.devices_targets_create_folder()}
+					title={m.devices_targets_create_folder()}
+					class={`!w-10 !px-0 ${folderFormOpen ? 'bg-surface-2 text-ink' : ''}`}
+					onclick={toggleFolderForm}
+				>
+					<FolderPlus class="size-4" aria-hidden="true" />
+				</Button>
+			{/if}
 		</div>
 
 		{#if auth.isAdmin}
@@ -1147,6 +1096,41 @@
 			</ClickSpark>
 		{/if}
 	</div>
+
+	{#if folderFormOpen && auth.isAdmin}
+		<form
+			id="monitors-new-folder"
+			class="mb-4 flex max-w-md items-center gap-2"
+			onsubmit={(e) => {
+				e.preventDefault();
+				createFolder(newFolderDraft);
+				newFolderDraft = '';
+				folderFormOpen = false;
+			}}
+		>
+			<input
+				bind:this={newFolderInput}
+				bind:value={newFolderDraft}
+				class="input !h-10 min-w-0 flex-1 text-[0.8125rem]"
+				placeholder={m.devices_targets_folder_placeholder()}
+				maxlength="80"
+				aria-label={m.devices_targets_folder_aria()}
+				onkeydown={(e) => {
+					if (e.key === 'Escape') {
+						e.preventDefault();
+						folderFormOpen = false;
+					}
+				}}
+			/>
+			<button
+				type="submit"
+				class="min-h-10 shrink-0 rounded-lg bg-signal px-3 py-1.5 text-[0.8125rem] font-semibold text-on-signal disabled:opacity-50"
+				disabled={!newFolderDraft.trim()}
+			>
+				{m.devices_targets_folder_create()}
+			</button>
+		</form>
+	{/if}
 
 	{#if filtersOpen}
 		<section

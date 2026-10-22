@@ -28,8 +28,7 @@
 		Panel,
 		Plate,
 		Skeleton,
-		Toggle
-	} from '#lib/ui/index.js';
+		Toggle, Disclosure } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 
 	let status = $state<BackupStatus | null>(null);
@@ -253,8 +252,7 @@
 			</div>
 
 			<!-- Export -->
-			<section>
-				<h3 class="font-semibold text-ink">{m.settings_backup_export_title()}</h3>
+			<Disclosure title={m.settings_backup_export_title()}>
 				<p class="mt-1 text-sm text-ink-2">
 					{m.settings_backup_export_intro({ version: status.bundle_version })}
 				</p>
@@ -321,11 +319,10 @@
 						{/if}
 					</div>
 				</form>
-			</section>
+			</Disclosure>
 
 			<!-- Restore -->
-			<section class="border-t border-line pt-6">
-				<h3 class="font-semibold text-ink">{m.settings_backup_restore_title()}</h3>
+			<Disclosure title={m.settings_backup_restore_title()}>
 				<p class="mt-1 text-sm text-ink-2">
 					{m.settings_backup_restore_intro()}
 				</p>
@@ -446,18 +443,10 @@
 						{/if}
 					</div>
 				{/if}
-			</section>
+			</Disclosure>
 
 			<!-- Scheduled local backups -->
-			<section class="border-t border-line pt-6">
-				<div class="flex flex-wrap items-center justify-between gap-2">
-					<h3 class="font-semibold text-ink">{m.settings_backup_scheduled_title()}</h3>
-					{#if status.schedule.enabled}
-						<Plate tone="signal" label={m.settings_backup_plate_every({ hours: status.schedule.interval_hours, keep: status.schedule.keep })} />
-					{:else}
-						<Plate tone="ghost" label={m.settings_backup_disabled()} />
-					{/if}
-				</div>
+			<Disclosure title={m.settings_backup_scheduled_title()} summary={status.schedule.enabled ? m.settings_backup_plate_every({ hours: status.schedule.interval_hours, keep: status.schedule.keep }) : m.settings_backup_disabled()}>
 				<p class="mt-1 text-sm text-ink-2">
 					{status.schedule.includes_secret_key ? m.settings_backup_schedule_intro_key({ directory: status.schedule.directory }) : m.settings_backup_schedule_intro_nokey({ directory: status.schedule.directory })}
 						{m.settings_backup_schedule_same_volume()}
@@ -517,7 +506,7 @@
 
 					</Button>
 				</div>
-			</section>
+			</Disclosure>
 		</div>
 	{/if}
 </Panel>

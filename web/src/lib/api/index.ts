@@ -78,6 +78,7 @@ import type {
 } from './types';
 
 export * from './types';
+export { onMutation } from './mutations';
 export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
 
 // --- Health -----------------------------------------------------------------
