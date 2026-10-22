@@ -85,7 +85,7 @@
 	}
 
 	function label(p: PlacedNode, l: Look): string {
-		return [p.node.name, guestLabel(p.node), l.caption ?? stateText(p.node.state), p.node.subnet, p.node.site].filter(Boolean).join(' · ');
+		return [p.node.name, guestLabel(p.node), l.caption ?? stateText(p.node.state), p.node.ips?.join(', '), p.node.subnet, p.node.site].filter(Boolean).join(' · ');
 	}
 
 	function frameSource(frame: Frame): string | null {

@@ -845,25 +845,63 @@ async fn fetch_guest_facts(
                 Ok(None) => debug!(node, vmid, "agent QEMU arrêté : pas de système à lire"),
                 Err(error) => debug!(node, vmid, %error, "système de la VM non rapporté"),
             }
-            match addresses {
-                Ok(Some(list)) => {
-                    samples.extend(guest::agent_address_samples(node, &entry, &list, ts_ms))
+            let found = match addresses {
+                Ok(Some(list)) => guest::agent_address_samples(node, &entry, &list, ts_ms),
+                Ok(None) => {
+                    debug!(node, vmid, "agent QEMU arrêté : pas d'adresse à lire");
+                    Vec::new()
                 }
-                Ok(None) => debug!(node, vmid, "agent QEMU arrêté : pas d'adresse à lire"),
-                Err(error) => debug!(node, vmid, %error, "adresses de la VM non rapportées"),
+                Err(error) => {
+                    debug!(node, vmid, %error, "adresses de la VM non rapportées");
+                    Vec::new()
+                }
+            };
+            if found.is_empty() {
+                let fallback = config_addresses(pve, node, vmid, &entry, GuestKind::Qemu, ts_ms);
+                samples.extend(fallback.await);
+            } else {
+                samples.extend(found);
             }
             samples
         }
         GuestKind::Lxc => {
             let path = format!("/nodes/{node}/lxc/{vmid}/interfaces");
-            match pve.get_if_present::<Vec<LxcInterface>>(&path, &[]).await {
+            let found = match pve.get_if_present::<Vec<LxcInterface>>(&path, &[]).await {
                 Ok(Some(list)) => guest::lxc_address_samples(node, &entry, &list, ts_ms),
                 Ok(None) => Vec::new(),
                 Err(error) => {
                     debug!(node, vmid, %error, "adresses du conteneur non rapportées");
                     Vec::new()
                 }
+            };
+            if found.is_empty() {
+                config_addresses(pve, node, vmid, &entry, GuestKind::Lxc, ts_ms).await
+            } else {
+                found
             }
+        }
+    }
+}
+
+/// Repli : les adresses statiques de la configuration de l'invité (cloud-init
+/// `ipconfigN` d'une VM, `netN … ip=` d'un conteneur). `VM.Audit` suffit, et
+/// le résultat partage le cache horaire des autres faits : un appel de plus par
+/// heure et par invité sans adresse, jamais à chaque interrogation.
+async fn config_addresses(
+    pve: &PveClient,
+    node: &str,
+    vmid: i64,
+    entry: &GuestEntry,
+    kind: GuestKind,
+    ts_ms: i64,
+) -> Vec<Sample> {
+    let path = format!("/nodes/{node}/{}/{vmid}/config", kind.as_str());
+    match pve.get_if_present::<serde_json::Map<String, serde_json::Value>>(&path, &[]).await {
+        Ok(Some(config)) => guest::config_address_samples(node, entry, kind, &config, ts_ms),
+        Ok(None) => Vec::new(),
+        Err(error) => {
+            debug!(node, vmid, %error, "configuration de l'invité non lue");
+            Vec::new()
         }
     }
 }

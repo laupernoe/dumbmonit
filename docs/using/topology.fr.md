@@ -11,6 +11,7 @@ Rien n'y est saisi à la main : chaque lien vient de ce que DumbMonit sait déj�
 | Dépend de | Le **parent** défini sur une sonde, celui que suit la suppression des alertes. | trait plein |
 | Joint via un relais | L'**agent relais** qui interroge une surveillance sur un site distant. | tirets longs |
 | Hébergé par un hyperviseur | Les invités signalés dans les 30 dernières minutes par Proxmox VE, XCP-ng, Nutanix, vSphere ou le module libvirt d'un agent Linux. | tirets courts |
+| Tourne sur un invité | Une sonde dont l'adresse IP est l'une de celles que l'hyperviseur rapporte pour une VM ou un conteneur (agent invité Proxmox, interfaces du conteneur ou configuration statique ; VMware Tools sur vSphere). | tirets courts serrés |
 | Câblé à (LLDP) | Un **voisin LLDP** vu par un commutateur SNMP sur l'un de ses ports (profil `ethernet-switch`). | pointillés |
 
 Un invité ou un voisin LLDP n'est relié à une sonde que si son nom désigne une
@@ -19,6 +20,15 @@ nom ambigu ne crée aucun lien plutôt qu'un lien faux. Un invité qui ne
 correspond à aucune sonde apparaît dans sa propre case (*Machine virtuelle* ou
 *Conteneur*) à côté de son hyperviseur ; un voisin LLDP inconnu est ignoré. Une
 sonde sans lien connu reste simplement dans son dossier.
+
+Les adresses des invités relient aussi les sondes à l'invité sur lequel elles
+tournent : un contrôle HTTP, un port TCP ou une base de données visant l'une
+des adresses IP d'une VM pend sous cette VM. Quand le nom d'un invité ne
+correspond à aucune sonde, le seul agent, ping ou SNMP à son adresse représente
+l'invité au lieu d'une seconde case. Une adresse que plusieurs invités
+annoncent (adresse virtuelle partagée) ne relie rien, un parent déclaré passe
+toujours avant, et les noms d'hôte ne sont pas résolus. Les adresses de
+l'invité sont affichées dans son panneau de détail.
 
 Quand deux sources relient la même paire, la carte garde la plus sûre, le lien
 déclaré avant le lien déduit. Chaque case pend à un seul lien ; les autres sont
@@ -52,5 +62,6 @@ tracés plus légèrement.
 ## API
 
 `GET /api/topology` renvoie les nœuds, les liens et la source de chaque lien
-(tous les rôles, lecture seule, sans adresses). Voir la
+(tous les rôles, lecture seule ; sans les adresses des sondes, seulement celles
+que l'hyperviseur rapporte pour ses invités). Voir la
 [référence de l'API](../reference/api.md).
