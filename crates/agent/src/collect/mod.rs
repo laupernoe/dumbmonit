@@ -14,6 +14,7 @@
 pub mod backup_repos;
 pub mod docker;
 pub mod filter;
+pub mod inventory;
 pub mod ipsec;
 pub mod libvirt;
 pub mod mail_server;
