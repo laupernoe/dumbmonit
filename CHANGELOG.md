@@ -7,6 +7,22 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Security: CVE & vulnerabilities.** A new section lists the known CVEs of
+  the software already monitored and says, per device, whether each one is
+  vulnerable, patched or to check. The inventory comes from what collectors
+  already report (Proxmox VE and its packages, PBS, OPNsense, Unraid, ESXi and
+  vCenter, FortiOS, RouterOS, UniFi, Synology DSM, MDaemon, SecurityGateway and
+  about twenty more products) and from a new daily inventory sent by the agent
+  (Debian, Ubuntu, Alpine and RPM packages; Windows build and common
+  programs). Sources: NVD by CPE, the Debian Security Tracker (backported fixes
+  count as patched), OSV.dev and the CISA KEV catalog, read once a day in the
+  background and cached for offline use; an optional NVD API key speeds it up.
+  When the data cannot decide (vendor rebuilds, unbounded ranges) the verdict
+  is "to check", never "vulnerable". Two new built-in rules alert on an
+  exploited (KEV) or critical (CVSS 9+) vulnerability that is not patched; a
+  CVE can be ignored per device to accept the risk. The device page shows its
+  own CVEs. Off by default: nothing is sent anywhere until an administrator
+  turns it on.
 - **Map: Proxmox clusters, backups, firewalls and subnets.** A Proxmox cluster
   is drawn as cluster, one node per Proxmox node (online or offline), then its
   VMs and containers, stopped ones included; a single-node Proxmox keeps its

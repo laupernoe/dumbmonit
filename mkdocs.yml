@@ -163,6 +163,7 @@ nav:
       - Topology map: using/topology.md
       - World map: using/world-map.md
       - Security score: using/security-score.md
+      - CVE & vulnerabilities: using/cves.md
       - Alerts page: using/alerts.md
       - Status pages: using/status-pages.md
       - Email reports: using/reports.md

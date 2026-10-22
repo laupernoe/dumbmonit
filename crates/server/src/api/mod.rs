@@ -9,6 +9,7 @@ mod backup;
 mod blacklist;
 mod channels;
 mod collectors;
+mod cves;
 mod discovery;
 mod error;
 mod health;
@@ -232,6 +233,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(wall_widgets::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
+        // Failles connues (CVE) de l'inventaire logiciel (`cves.rs`).
+        .merge(cves::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).
         .merge(webpush::routes())
         // Fichiers du bandeau pour sites tiers : plugin WordPress, aide PHP (`integrations.rs`).
