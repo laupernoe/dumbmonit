@@ -26,9 +26,11 @@
 		silences?: Silence[];
 		/** A window was created or lifted: the page should refresh its alerts. */
 		onchanged?: () => void;
+		/** Icon-only button; the duration picker floats under it. */
+		iconOnly?: boolean;
 	}
 
-	let { alert, target, silences = [], onchanged }: Props = $props();
+	let { alert, target, silences = [], onchanged, iconOnly = false }: Props = $props();
 
 	const active = $derived(coveringSilence(alert, silences));
 
@@ -97,8 +99,24 @@
 </script>
 
 {#if auth.canOperate}
-	<div class="flex flex-col items-start gap-1 sm:items-end" bind:this={root} {onkeydown} role="presentation">
-		{#if active}
+	<div class={iconOnly ? 'relative' : 'flex flex-col items-start gap-1 sm:items-end'} bind:this={root} {onkeydown} role="presentation">
+		{#if iconOnly}
+			<Button
+				size="sm"
+				variant="ghost"
+				loading={busy}
+				aria-label={active ? m.alerts_snooze_lift() : m.alerts_snooze_button()}
+				title={active ? m.alerts_snooze_lift() : m.alerts_snooze_button()}
+				aria-pressed={active ? true : undefined}
+				aria-haspopup={active ? undefined : 'menu'}
+				aria-expanded={active ? undefined : open}
+				aria-controls={active ? undefined : menuId}
+				class={`!w-10 !px-0 sm:!w-8 ${active ? 'bg-surface-2 text-advisory' : ''}`}
+				onclick={active ? unsnooze : toggle}
+			>
+				<BellOff class="size-4" aria-hidden="true" />
+			</Button>
+		{:else if active}
 			<Button size="sm" variant="ghost" loading={busy} onclick={unsnooze}>{m.alerts_snooze_lift()}</Button>
 		{:else}
 			<Button
@@ -120,7 +138,7 @@
 				id={menuId}
 				role="menu"
 				aria-label={m.alerts_snooze_menu_label()}
-				class="w-48 max-w-full rounded-[var(--radius-card)] border border-line bg-surface-2 p-2 text-left shadow-lift"
+				class={`w-48 max-w-[calc(100vw-2rem)] rounded-[var(--radius-card)] border border-line bg-surface-2 p-2 text-left ${iconOnly ? 'absolute top-full right-0 z-30 mt-1 shadow-float' : 'shadow-lift'}`}
 			>
 				<p class="px-1 pb-1 text-[0.6875rem] font-semibold tracking-wide text-ink-2 uppercase">
 					{m.alerts_snooze_hide_for()}

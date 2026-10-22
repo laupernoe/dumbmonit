@@ -82,6 +82,15 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Interface clean-up: lists refresh, fewer buttons, folded settings.** Any
+  successful create, update or delete now refreshes the shared device and alert
+  lists, so a deleted monitor no longer stays on screen until F5. On Monitors,
+  the map and "Create folder" are icon buttons next to "Select" and the "..."
+  menu is gone. An alert row keeps two icon buttons: acknowledge (check) and
+  snooze (duration picker). In Settings, SSO, LDAP, the Monitoring, Wall display
+  and System panels fold their long blocks into closed-by-default sections; no
+  option or default changed.
+
 - **Agent drop-outs, relay key, discovery memory and log noise.** After an
   outage the agent retried up to every 5 minutes, well past the 90 s after which
   the server declares it silent, so a short network cut showed as a long

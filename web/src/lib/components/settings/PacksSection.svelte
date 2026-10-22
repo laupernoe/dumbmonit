@@ -12,7 +12,7 @@
 	import { toApiError, type PackInstallReport, type PackView } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle, Disclosure } from '#lib/ui/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	let packs = $state<PackView[]>([]);
@@ -274,8 +274,7 @@
 				{/if}
 			</section>
 
-			<section class="border-t border-line pt-6" aria-labelledby="packs-install">
-				<h3 id="packs-install" class="font-semibold text-ink">{m.settings_packs_install_heading()}</h3>
+			<Disclosure title={m.settings_packs_install_heading()}>
 				<p class="mt-1 text-sm text-ink-2">
 					{m.settings_packs_install_intro()}
 				</p>
@@ -391,7 +390,7 @@
 						{/if}
 					</div>
 				{/if}
-			</section>
+			</Disclosure>
 		</div>
 	{/if}
 </Panel>

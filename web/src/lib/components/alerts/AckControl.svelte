@@ -19,7 +19,7 @@
 	import { ackAlert, unackAlert } from '#lib/api/index.js';
 	import { Button } from '#lib/ui/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Check } from 'lucide-svelte';
+	import { Check, CircleCheck } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { UNTIL_RESOLVED_SECS } from './helpers';
 
@@ -29,9 +29,11 @@
 		onchanged?: (alert: Alert) => void;
 		/** Float the menu over what follows (a list row) instead of opening it in flow. */
 		floating?: boolean;
+		/** Icon-only check: one click acknowledges (4 h), a click on a checked one lifts it. */
+		iconOnly?: boolean;
 	}
 
-	let { alert, onchanged, floating = false }: Props = $props();
+	let { alert, onchanged, floating = false, iconOnly = false }: Props = $props();
 
 	const DURATIONS: { label: string; secs: number }[] = $derived([
 		{ label: m.alerts_ack_hours({ hours: 1 }), secs: 3600 },
@@ -109,7 +111,24 @@
 
 {#if auth.canOperate}
 	<div class={floating ? 'relative' : 'flex flex-col items-start gap-1 sm:items-end'} bind:this={root} onkeydown={onkeydown} role="presentation">
-		{#if alert.acked}
+		{#if iconOnly}
+			<Button
+				size="sm"
+				variant="ghost"
+				loading={busy}
+				aria-pressed={alert.acked}
+				aria-label={alert.acked ? m.alerts_ack_unack() : m.alerts_actions_ack()}
+				title={alert.acked ? m.alerts_ack_unack() : m.alerts_actions_ack()}
+				class={`!w-10 !px-0 sm:!w-8 ${alert.acked ? 'bg-surface-2 text-signal' : ''}`}
+				onclick={alert.acked ? unack : () => void ack(DURATIONS[1].secs)}
+			>
+				{#if alert.acked}
+					<CircleCheck class="size-4" aria-hidden="true" />
+				{:else}
+					<Check class="size-4" aria-hidden="true" />
+				{/if}
+			</Button>
+		{:else if alert.acked}
 			<Button size="sm" variant="ghost" loading={busy} onclick={unack}>{m.alerts_ack_unack()}</Button>
 		{:else}
 			<Button
@@ -126,7 +145,7 @@
 			</Button>
 		{/if}
 
-		{#if open && !alert.acked}
+		{#if open && !alert.acked && !iconOnly}
 			<div
 				id={menuId}
 				role="menu"
