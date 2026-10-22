@@ -95,7 +95,7 @@ impl Binding {
 /// tout le monde. Sous Windows, le fichier hérite des droits du répertoire, que
 /// l'installateur restreint à SYSTEM et aux administrateurs — il n'y a pas
 /// d'équivalent direct de `0600` sans dépendance supplémentaire.
-fn write_private(path: &Path, secret: &str) -> Result<()> {
+pub(crate) fn write_private(path: &Path, secret: &str) -> Result<()> {
     use std::io::Write;
 
     if let Some(parent) = path.parent() {

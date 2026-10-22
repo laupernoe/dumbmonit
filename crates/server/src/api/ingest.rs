@@ -12,22 +12,27 @@
 
 use std::sync::LazyLock;
 
-use axum::Json;
 use axum::extract::rejection::JsonRejection;
-use axum::extract::{Path, State};
-use axum::http::{HeaderMap, StatusCode};
+use axum::extract::{Path, Query, State};
+use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
+use axum::{Extension, Json};
 use dumbmonit_collectors::log_gate::LogGate;
 use dumbmonit_proto::{AGENT_SECRET_HEADER, PushBatch};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
+use crate::agent_tls::AgentCert;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{AdminIdentity, Authenticated};
 use crate::collectors::agent;
 use crate::state::AppState;
+
+/// Refus d'un lot dont l'identité n'est pas celle du certificat client.
+pub const CERT_OF_ANOTHER_MACHINE: &str =
+    "This agent certificate belongs to another machine: the batch is refused.";
 
 /// Refus d'agents déjà journalisés : une ligne par client et par cause, pas une
 /// par tentative — un agent au jeton révoqué réessaie toutes les 30 s.
@@ -107,7 +112,39 @@ pub async fn require_agent_token(
         .get(axum::http::header::AUTHORIZATION)
         .and_then(|value| value.to_str().ok());
     match agent::authenticate_token(&state.pool, bearer).await {
-        Ok(Some(_)) => next.run(request).await,
+        Ok(Some(_)) => {
+            // Sur le port de l'interface (pas de certificat client) : l'ancien
+            // canal, refusé quand l'administrateur exige mTLS. Le refus
+            // annonce le canal chiffré, comme toute réponse faite à un agent
+            // authentifié : un agent à jour y migre de lui-même.
+            let legacy = request.extensions().get::<crate::agent_tls::AgentCert>().is_none();
+            let mut response = if legacy {
+                match crate::agent_tls::mtls_required(&state).await {
+                    Ok(true) => {
+                        let reason = "plain agent channel refused (mTLS required)";
+                        note_refusal(&client_label(ip), StatusCode::FORBIDDEN, reason);
+                        IngestRejection {
+                            status: StatusCode::FORBIDDEN,
+                            message: dumbmonit_proto::MTLS_REQUIRED.to_string(),
+                        }
+                        .into_response()
+                    }
+                    Ok(false) => next.run(request).await,
+                    Err(error) => {
+                        return IngestRejection::from(agent::IngestError::Internal(error))
+                            .into_response();
+                    }
+                }
+            } else {
+                next.run(request).await
+            };
+            if let Some(offer) = crate::agent_tls::offer(&state)
+                && let Ok(value) = HeaderValue::from_str(&offer.to_header())
+            {
+                response.headers_mut().insert(dumbmonit_proto::AGENT_TLS_HEADER, value);
+            }
+            response
+        }
         Ok(None) => {
             let reason = "enrolment token missing, unknown or revoked";
             note_refusal(&client_label(ip), StatusCode::UNAUTHORIZED, reason);
@@ -124,6 +161,7 @@ pub async fn receive(
     State(state): State<AppState>,
     ip: ClientIp,
     headers: HeaderMap,
+    cert: Option<Extension<AgentCert>>,
     batch: Result<Json<PushBatch>, JsonRejection>,
 ) -> Response {
     let client = client_label(ip);
@@ -143,9 +181,34 @@ pub async fn receive(
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
     let who = format!("{client} {}", batch.identity.hostname);
     let version = batch.identity.agent_version.clone();
+    let cert = cert.map(|Extension(cert)| cert);
+
+    // Sur le canal chiffré, le certificat dit quelle machine parle : un lot au
+    // nom d'une autre est refusé avant d'avoir rien écrit.
+    if let Some(cert) = &cert {
+        match agent::target_of_key(&state.pool, &batch.identity.key()).await {
+            Ok(Some(target)) if target == cert.target_id => {}
+            Ok(_) => {
+                note_refusal(&who, StatusCode::FORBIDDEN, "certificate of another machine");
+                return IngestRejection {
+                    status: StatusCode::FORBIDDEN,
+                    message: CERT_OF_ANOTHER_MACHINE.to_string(),
+                }
+                .into_response();
+            }
+            Err(error) => {
+                return IngestRejection::from(agent::IngestError::Internal(error)).into_response();
+            }
+        }
+    }
 
     match agent::ingest(&state.pool, &state.cipher, &state.sink, bearer, secret, batch).await {
         Ok(ack) => {
+            if let Err(error) =
+                crate::agent_tls::note_channel(&state.pool, ack.target_id, cert.as_ref()).await
+            {
+                tracing::debug!(%error, "agent channel not recorded");
+            }
             if REFUSALS.clear(&who) {
                 tracing::info!(client = who, "agent reports accepted again");
             }
@@ -306,18 +369,122 @@ pub async fn create_token(
         record.relay_site = site;
     }
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
-    let base_url = normalise_base_url(payload.base_url.as_deref(), state.config.bind);
-    let checksums = crate::api::agent_files::platform_checksums(&state.config.agent_dir).await;
+    let params = install_parameters(&state, payload.base_url.as_deref()).await;
 
     Ok((
         StatusCode::CREATED,
         Json(CreatedToken {
-            install_linux: install_linux(&base_url, &secret, &checksums),
-            install_windows: install_windows(&base_url, &secret, &checksums),
+            install_linux: params.linux_command(&secret),
+            install_windows: params.windows_command(&secret),
             token: record.into(),
             secret,
         }),
     ))
+}
+
+/// Tout ce qu'une commande d'installation porte, hormis le jeton.
+///
+/// Source unique des commandes affichées par l'interface (création d'un jeton)
+/// et de tout générateur de déploiement (script GPO, Ansible…) : ceux-ci lisent
+/// `GET /api/agent/install` et remplacent `{TOKEN}` dans les gabarits, ou
+/// appellent [`install_parameters`] côté serveur.
+#[derive(Debug, Clone, Serialize)]
+pub struct InstallParams {
+    /// URL du port de l'interface : scripts d'installation et binaires.
+    pub base_url: String,
+    /// URL du canal chiffré des agents (`https://hôte:8443`), s'il est ouvert.
+    pub agent_url: Option<String>,
+    /// Empreinte SHA-256 de l'autorité du canal, que l'agent épingle.
+    pub ca_pin: Option<String>,
+    /// Empreintes SHA-256 des binaires livrés, par plateforme.
+    pub checksums: Vec<InstallChecksum>,
+    /// Commande Unix, jeton à remplacer : `{TOKEN}`.
+    pub linux_template: String,
+    /// Commande PowerShell, jeton à remplacer : `{TOKEN}`.
+    pub windows_template: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct InstallChecksum {
+    pub platform: String,
+    pub sha256: String,
+}
+
+/// Marque du jeton dans les gabarits de [`InstallParams`].
+pub const TOKEN_PLACEHOLDER: &str = "{TOKEN}";
+
+impl InstallParams {
+    fn pairs(&self, windows: bool) -> Vec<(String, String)> {
+        self.checksums
+            .iter()
+            .filter(|sum| sum.platform.starts_with("windows-") == windows)
+            .map(|sum| (sum.platform.clone(), sum.sha256.clone()))
+            .collect()
+    }
+
+    /// Commande Unix complète pour ce jeton.
+    pub fn linux_command(&self, token: &str) -> String {
+        let mut command = install_linux(&self.base_url, token, &self.pairs(false));
+        if let (Some(url), Some(pin)) = (&self.agent_url, &self.ca_pin) {
+            command.push_str(&format!(" --tls-url={url} --ca-pin={pin}"));
+        }
+        command
+    }
+
+    /// Commande PowerShell complète pour ce jeton.
+    pub fn windows_command(&self, token: &str) -> String {
+        let mut command = install_windows(&self.base_url, token, &self.pairs(true));
+        if let (Some(url), Some(pin)) = (&self.agent_url, &self.ca_pin) {
+            command.push_str(&format!(" -TlsUrl {url} -CaPin {pin}"));
+        }
+        command
+    }
+}
+
+/// Paramètres d'installation pour une URL de base donnée (celle par laquelle
+/// les machines joignent l'interface ; à défaut, l'adresse d'écoute).
+pub async fn install_parameters(state: &AppState, base_url: Option<&str>) -> InstallParams {
+    let base_url = normalise_base_url(base_url, state.config.bind);
+    let checksums = crate::api::agent_files::platform_checksums(&state.config.agent_dir)
+        .await
+        .into_iter()
+        .map(|(platform, sha256)| InstallChecksum { platform, sha256 })
+        .collect();
+    let offer = crate::agent_tls::offer(state);
+    let agent_url =
+        offer.as_ref().and_then(|offer| dumbmonit_proto::agent_channel_url(&base_url, offer.port));
+    // L'autorité active seule : une suivante (rotation en cours) est apprise
+    // par le canal chiffré lui-même.
+    let ca_pin = offer.and_then(|offer| offer.pins.into_iter().next());
+    let mut params = InstallParams {
+        base_url,
+        agent_url,
+        ca_pin,
+        checksums,
+        linux_template: String::new(),
+        windows_template: String::new(),
+    };
+    params.linux_template = params.linux_command(TOKEN_PLACEHOLDER);
+    params.windows_template = params.windows_command(TOKEN_PLACEHOLDER);
+    params
+}
+
+#[derive(Debug, Deserialize)]
+pub struct InstallQuery {
+    #[serde(default)]
+    pub base_url: Option<String>,
+}
+
+/// `GET /api/agent/install?base_url=…` : paramètres et gabarits de la commande
+/// d'installation, sans jeton.
+///
+/// Rien de secret : l'URL, l'empreinte publique de l'autorité, celles des
+/// binaires. Ouverte à toute session et aux jetons `read`.
+pub async fn install_params(
+    State(state): State<AppState>,
+    Query(query): Query<InstallQuery>,
+) -> ApiResult<Json<InstallParams>> {
+    Ok(Json(install_parameters(&state, query.base_url.as_deref()).await))
 }
 
 pub async fn revoke_token(
@@ -449,6 +616,25 @@ mod tests {
             "curl -sSL http://serveur:8080/install.sh | sh -s -- --token=dmon_abc --url=http://serveur:8080"
         );
         assert!(install_windows("http://serveur:8080", "dmon_abc", &[]).contains("install.ps1"));
+    }
+
+    #[test]
+    fn the_install_commands_carry_the_agent_channel_and_its_pin() {
+        let pin = "a".repeat(64);
+        let params = InstallParams {
+            base_url: "http://s:8080".into(),
+            agent_url: Some("https://s:8443".into()),
+            ca_pin: Some(pin.clone()),
+            checksums: Vec::new(),
+            linux_template: String::new(),
+            windows_template: String::new(),
+        };
+        let linux = params.linux_command("dmon_abc");
+        assert!(linux.ends_with(&format!(" --tls-url=https://s:8443 --ca-pin={pin}")), "{linux}");
+        assert!(linux.contains("--token=dmon_abc"));
+        let windows = params.windows_command(TOKEN_PLACEHOLDER);
+        assert!(windows.contains("-Token {TOKEN}"), "{windows}");
+        assert!(windows.ends_with(&format!(" -TlsUrl https://s:8443 -CaPin {pin}")));
     }
 
     #[test]
