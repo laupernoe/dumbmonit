@@ -17,6 +17,14 @@
 //! - `backup` : un Proxmox VE qui sauvegarde vers un PBS surveillé, lu dans
 //!   ses stockages de type `pbs` (serveur et datastore).
 //!
+//! - `hosted` : ce qui tourne sur un invité — une cible dont l'adresse est
+//!   l'une de celles que l'hyperviseur rapporte pour la VM ou le conteneur
+//!   (agent QEMU, interfaces LXC, configuration statique, VMware Tools). Une
+//!   adresse que plusieurs invités annoncent ne désigne personne, et un parent
+//!   déclaré passe avant. Quand une seule cible « machine » (agent, ping, SNMP,
+//!   pare-feu, PBS…) répond à l'adresse d'un invité inconnu par son nom, c'est
+//!   elle qui représente l'invité : pas de nœud en double.
+//!
 //! - `firewall` : un équipement dont l'adresse tombe dans un réseau qu'un
 //!   pare-feu surveillé du même site dessert (interfaces lues dans ses mesures,
 //!   à défaut le /24 de son adresse). Un parent déclaré, un relais, un
@@ -127,6 +135,9 @@ pub struct NodeView {
     /// Invité ou nœud Proxmox : en marche (invité) ou en ligne (nœud) à la
     /// dernière mesure.
     pub running: Option<bool>,
+    /// Invité (nœud propre ou cible qui le représente) : les adresses que son
+    /// hyperviseur rapporte.
+    pub ips: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -134,8 +145,8 @@ pub struct EdgeView {
     /// Côté amont : parent, relais, hyperviseur, commutateur.
     pub from: String,
     pub to: String,
-    /// `parent`, `service`, `relay`, `hypervisor`, `lldp`, `samehost`, `backup`
-    /// ou `firewall`.
+    /// `parent`, `service`, `relay`, `hypervisor`, `hosted`, `lldp`, `samehost`,
+    /// `backup` ou `firewall`.
     pub source: &'static str,
 }
 
@@ -151,6 +162,8 @@ pub struct TargetRow {
     pub group_name: String,
     /// Étiquette `site` de la cible, si elle en a une non vide.
     pub site_tag: Option<String>,
+    /// Nom d'hôte que déclare l'agent de la machine, s'il y en a un.
+    pub hostname: Option<String>,
 }
 
 /// Un invité lu dans les mesures d'un hyperviseur.
@@ -189,6 +202,30 @@ pub struct ProxmoxFacts {
     pub datastores: Vec<(TargetId, String)>,
     /// Réseaux des interfaces des pare-feux.
     pub networks: Vec<Network>,
+    /// Adresses des invités, rapportées par leur hyperviseur.
+    pub guest_ips: Vec<GuestIp>,
+}
+
+/// Une adresse d'invité lue dans `proxmox_guest_ip_info` ou `vsphere_vm_ip_info`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GuestIp {
+    pub host: TargetId,
+    /// Nom de l'invité, tel que les séries d'état le portent.
+    pub name: String,
+    pub ip: IpAddr,
+}
+
+/// Une adresse d'invité qui peut désigner la machine : ni boucle locale, ni
+/// lien local, ni adresse non spécifiée ou multicast. Accepte un préfixe
+/// (`/24`) ou une zone (`%eth0`), qui sont retirés.
+pub fn guest_address(text: &str) -> Option<IpAddr> {
+    let text = text.trim().split('/').next()?.split('%').next()?;
+    let ip: IpAddr = text.parse().ok()?;
+    let link_local = match ip {
+        IpAddr::V4(v4) => v4.is_link_local(),
+        IpAddr::V6(v6) => v6.is_unicast_link_local(),
+    };
+    (!ip.is_loopback() && !ip.is_unspecified() && !ip.is_multicast() && !link_local).then_some(ip)
 }
 
 /// Un réseau IPv4 porté par une interface de pare-feu.
@@ -255,7 +292,8 @@ pub struct Neighbor {
 }
 
 /// `GET /api/topology` : lecture seule, ouverte à tous les rôles comme la
-/// liste des équipements. Les adresses n'y figurent pas.
+/// liste des équipements. Les adresses des cibles n'y figurent pas ; seules y
+/// sont celles que l'hyperviseur rapporte pour ses invités (`ips`).
 pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
     let targets = load_targets(&state).await?;
     let sites = agent_sites(&state).await?;
@@ -288,8 +326,11 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
 /// Les cibles telles que la carte les lit.
 async fn load_targets(state: &AppState) -> ApiResult<Vec<TargetRow>> {
     let rows = sqlx::query(
-        "SELECT id, name, address, kind, parent_id, via_agent, group_name, tags FROM targets
-         ORDER BY id",
+        "SELECT t.id AS id, t.name AS name, t.address AS address, t.kind AS kind,
+                t.parent_id AS parent_id, t.via_agent AS via_agent, t.group_name AS group_name,
+                t.tags AS tags, h.hostname AS hostname
+         FROM targets t LEFT JOIN agent_hosts h ON h.target_id = t.id
+         ORDER BY t.id",
     )
     .fetch_all(&state.pool)
     .await
@@ -306,6 +347,10 @@ async fn load_targets(state: &AppState) -> ApiResult<Vec<TargetRow>> {
                 via_agent: row.try_get("via_agent")?,
                 group_name: row.try_get("group_name")?,
                 site_tag: site_tag(&row.try_get::<String, _>("tags")?),
+                hostname: row
+                    .try_get::<Option<String>, _>("hostname")?
+                    .map(|h| h.trim().to_string())
+                    .filter(|h| !h.is_empty()),
             })
         })
         .collect::<Result<Vec<_>, sqlx::Error>>()
@@ -401,10 +446,11 @@ fn guests_query() -> String {
 }
 
 /// Séries qui décrivent Proxmox VE et PBS : état des nœuds, stockages `pbs`
-/// (serveur et datastore visés) et datastores vus par chaque PBS.
+/// (serveur et datastore visés) et datastores vus par chaque PBS ; réseaux des
+/// pare-feux ; adresses des invités (Proxmox VE, vSphere).
 const FACT_SERIES: &str = "dumbmonit_(proxmox_node_up|proxmox_storage_pbs_info|pbs_datastore_available\
     |opnsense_interface_address_info|pfsense_interface_address_info\
-    |fortigate_interface_address_info)";
+    |fortigate_interface_address_info|proxmox_guest_ip_info|vsphere_vm_ip_info)";
 
 fn facts_query() -> String {
     format!("last_over_time({{__name__=~\"{FACT_SERIES}\"}}[{WINDOW}]) keep_metric_names")
@@ -494,6 +540,14 @@ pub fn parse_facts(series: &[InstantSeries], known: &[TargetId]) -> ProxmoxFacts
                     facts.datastores.push((host, name.to_string()));
                 }
             }
+            "proxmox_guest_ip_info" | "vsphere_vm_ip_info" => {
+                let name = if metric == "vsphere_vm_ip_info" { "vm" } else { "name" };
+                let Some(name) = label(name) else { continue };
+                let Some(ip) = label("ip").and_then(guest_address) else { continue };
+                if seen.insert(("a", host, name.to_lowercase(), ip.to_string())) {
+                    facts.guest_ips.push(GuestIp { host, name: name.to_string(), ip });
+                }
+            }
             m if m.ends_with("_interface_address_info") => {
                 let Some(cidr) = label("address").and_then(Cidr::parse) else { continue };
                 // Une liaison point à point ou un réseau public ne dessine pas de zone.
@@ -573,10 +627,21 @@ impl NameIndex {
             Self { exact: HashMap::new(), name_key: HashMap::new(), address_key: HashMap::new() };
         // Un service d'agent porte l'adresse de sa machine (`hôte#module`) :
         // l'indexer rendrait la machine ambiguë pour chaque invité ou voisin.
+        // Le nom d'hôte que déclare un agent compte comme un second nom.
+        let add = |list: &mut Vec<TargetId>, id: TargetId| {
+            if !list.contains(&id) {
+                list.push(id);
+            }
+        };
         for t in targets.iter().filter(|t| t.kind != agent::modules::SERVICE_KIND) {
-            index.exact.entry(t.name.trim().to_lowercase()).or_default().push(t.id);
-            if let Some(key) = host_key(&t.name) {
-                index.name_key.entry(key).or_default().push(t.id);
+            for name in std::iter::once(t.name.as_str()).chain(t.hostname.as_deref()) {
+                if name.trim().is_empty() {
+                    continue;
+                }
+                add(index.exact.entry(name.trim().to_lowercase()).or_default(), t.id);
+                if let Some(key) = host_key(name) {
+                    add(index.name_key.entry(key).or_default(), t.id);
+                }
             }
             if let Some(key) = host_key(&t.address) {
                 index.address_key.entry(key).or_default().push(t.id);
@@ -622,6 +687,23 @@ impl NameIndex {
         None
     }
 }
+
+/// Types dont la surveillance désigne la machine elle-même plutôt qu'un service
+/// qui tourne dessus : à l'adresse d'un invité, une telle cible *est* l'invité.
+const MACHINE_KINDS: &[&str] = &[
+    "agent",
+    "ping",
+    "snmp",
+    "opnsense",
+    "pfsense",
+    "fortigate",
+    "sophos",
+    "mikrotik",
+    "pbs",
+    "pmg",
+    "truenas",
+    "unraid",
+];
 
 /// Types dont la surveillance désigne un pare-feu ou une passerelle de site.
 const FIREWALL_KINDS: &[&str] = &["opnsense", "pfsense", "fortigate", "sophos", "mikrotik"];
@@ -715,6 +797,7 @@ pub fn build_full(
                 vlan: None,
                 vlan_name: None,
                 running: None,
+                ips: Vec::new(),
             }
         })
         .collect();
@@ -784,6 +867,7 @@ pub fn build_full(
                 vlan: None,
                 vlan_name: None,
                 running: *online,
+                ips: Vec::new(),
             });
             link(node_id(*host_id), id, "hypervisor", &mut edges);
         }
@@ -800,40 +884,121 @@ pub fn build_full(
             .unwrap_or_else(|| node_id(guest.host))
     };
 
+    // Adresses de chaque invité, d'après son hyperviseur. Une adresse que
+    // plusieurs invités annoncent (adresse virtuelle partagée, réseau interne
+    // recopié) ne désigne personne.
+    let mut guest_ips: HashMap<(TargetId, String), Vec<IpAddr>> = HashMap::new();
+    let mut claims: HashMap<IpAddr, HashSet<(TargetId, String)>> = HashMap::new();
+    for address in facts.guest_ips.iter().filter(|a| by_id.contains_key(&a.host)) {
+        let key = (address.host, address.name.to_lowercase());
+        let list = guest_ips.entry(key.clone()).or_default();
+        if !list.contains(&address.ip) {
+            list.push(address.ip);
+        }
+        claims.entry(address.ip).or_default().insert(key);
+    }
+    // Cibles par adresse IP (un nom d'hôte n'est pas résolu : aucun accès réseau).
+    let mut by_ip: HashMap<IpAddr, Vec<TargetId>> = HashMap::new();
+    for t in targets.iter().filter(|t| t.kind != agent::modules::SERVICE_KIND) {
+        let Some(ip) = host_key(&t.address).and_then(|k| k.parse::<IpAddr>().ok()) else {
+            continue;
+        };
+        if !ip.is_loopback() {
+            by_ip.entry(ip).or_default().push(t.id);
+        }
+    }
+    // La cible qui représente un invité inconnu par son nom : la seule cible
+    // « machine » à son adresse, ou à défaut le seul agent.
+    let machine_at = |candidates: &[TargetId], taken: &HashSet<TargetId>| -> Option<TargetId> {
+        let free: Vec<TargetId> = candidates
+            .iter()
+            .copied()
+            .filter(|id| !taken.contains(id) && MACHINE_KINDS.contains(&by_id[id].kind.as_str()))
+            .collect();
+        let agents: Vec<TargetId> =
+            free.iter().copied().filter(|id| by_id[id].kind == "agent").collect();
+        match (free.as_slice(), agents.as_slice()) {
+            ([one], _) | (_, [one]) => Some(*one),
+            _ => None,
+        }
+    };
+    // Cibles qui sont elles-mêmes un invité, reliées à leur hyperviseur.
+    let mut is_guest: HashSet<TargetId> = HashSet::new();
+    // Nœud de chaque invité et cibles vues à ses adresses.
+    let mut hosted: Vec<(String, Vec<TargetId>)> = Vec::new();
+    let mut vm_ips: HashMap<String, Vec<IpAddr>> = HashMap::new();
+
     let mut per_host: BTreeMap<TargetId, usize> = BTreeMap::new();
     for guest in guests {
         let Some(host) = by_id.get(&guest.host) else { continue };
-        if let Some(target) = index.find(&guest.name, guest.host) {
+        let ips = guest_ips.get(&(guest.host, guest.name.to_lowercase())).cloned();
+        let ips = ips.unwrap_or_default();
+        let mut at_ip: Vec<TargetId> = ips
+            .iter()
+            .filter(|ip| claims.get(*ip).is_some_and(|c| c.len() == 1))
+            .flat_map(|ip| by_ip.get(ip).into_iter().flatten().copied())
+            .filter(|id| *id != guest.host)
+            .collect();
+        at_ip.sort_unstable();
+        at_ip.dedup();
+
+        let vm = if let Some(target) = index.find(&guest.name, guest.host) {
             link(parent_of(guest), node_id(target), "hypervisor", &mut edges);
+            is_guest.insert(target);
+            node_id(target)
+        } else if index.is_known(&guest.name, guest.host) {
+            // Un nom qui désigne plusieurs cibles est une machine surveillée,
+            // pas un invité inconnu : pas de lien (ambigu), pas de double non plus.
             continue;
+        } else if let Some(target) = machine_at(&at_ip, &is_guest) {
+            link(parent_of(guest), node_id(target), "hypervisor", &mut edges);
+            is_guest.insert(target);
+            node_id(target)
+        } else {
+            let count = per_host.entry(guest.host).or_default();
+            if *count >= MAX_GUESTS_PER_HOST {
+                continue;
+            }
+            *count += 1;
+            let id = format!("g{}:{}", guest.host, guest.name);
+            let site = site_of(host);
+            nodes.push(NodeView {
+                id: id.clone(),
+                target_id: None,
+                name: guest.name.clone(),
+                kind: if guest.container { "container" } else { "vm" }.to_string(),
+                group_name: host.group_name.clone(),
+                site_source: site.as_ref().map(|(_, source)| *source),
+                site: site.map(|(name, _)| name),
+                host_id: Some(host.id),
+                subnet: None,
+                vlan: None,
+                vlan_name: None,
+                running: Some(guest.running),
+                ips: Vec::new(),
+            });
+            link(parent_of(guest), id.clone(), "hypervisor", &mut edges);
+            id
+        };
+        if !ips.is_empty() {
+            vm_ips.entry(vm.clone()).or_insert(ips);
         }
-        // Un nom qui désigne plusieurs cibles est une machine surveillée, pas
-        // un invité inconnu : pas de lien (ambigu), mais pas de double non plus.
-        if index.is_known(&guest.name, guest.host) {
-            continue;
+        if !at_ip.is_empty() {
+            hosted.push((vm, at_ip));
         }
-        let count = per_host.entry(guest.host).or_default();
-        if *count >= MAX_GUESTS_PER_HOST {
-            continue;
+    }
+
+    // Ce qui tourne sur un invité : une cible dont l'adresse est l'une des
+    // siennes. Un parent déclaré passe avant, et une cible qui est elle-même
+    // un invité n'est pas « sur » un autre.
+    for (vm, list) in hosted {
+        for id in list {
+            let declared = by_id[&id].parent_id.is_some_and(|p| by_id.contains_key(&p));
+            if node_id(id) == vm || declared || is_guest.contains(&id) {
+                continue;
+            }
+            link(vm.clone(), node_id(id), "hosted", &mut edges);
         }
-        *count += 1;
-        let id = format!("g{}:{}", guest.host, guest.name);
-        let site = site_of(host);
-        nodes.push(NodeView {
-            id: id.clone(),
-            target_id: None,
-            name: guest.name.clone(),
-            kind: if guest.container { "container" } else { "vm" }.to_string(),
-            group_name: host.group_name.clone(),
-            site_source: site.as_ref().map(|(_, source)| *source),
-            site: site.map(|(name, _)| name),
-            host_id: Some(host.id),
-            subnet: None,
-            vlan: None,
-            vlan_name: None,
-            running: Some(guest.running),
-        });
-        link(parent_of(guest), id, "hypervisor", &mut edges);
     }
 
     // Une surveillance PBS et une surveillance Proxmox VE sur la même machine :
@@ -953,6 +1118,12 @@ pub fn build_full(
         }
     }
 
+    for node in nodes.iter_mut() {
+        if let Some(ips) = vm_ips.get(&node.id) {
+            node.ips = ips.iter().map(ToString::to_string).collect();
+        }
+    }
+
     (nodes, edges)
 }
 
@@ -970,6 +1141,7 @@ mod tests {
             via_agent: None,
             group_name: String::new(),
             site_tag: None,
+            hostname: None,
         }
     }
 
@@ -1571,5 +1743,142 @@ mod tests {
             parse_neighbors(&series, &[1]),
             vec![Neighbor { switch: 1, remote: "sw2".into() }]
         );
+    }
+
+    fn guest_ip(host: TargetId, name: &str, ip: &str) -> GuestIp {
+        GuestIp { host, name: name.into(), ip: ip.parse().unwrap() }
+    }
+
+    fn guest(host: TargetId, name: &str) -> Guest {
+        Guest { host, node: None, name: name.into(), container: false, running: true }
+    }
+
+    #[test]
+    fn une_adresse_dinvite_ignore_boucle_locale_et_lien_local() {
+        assert_eq!(guest_address("192.168.10.50"), Some("192.168.10.50".parse().unwrap()));
+        assert_eq!(guest_address(" 10.0.0.5/24 "), Some("10.0.0.5".parse().unwrap()));
+        assert_eq!(guest_address("2001:db8::5"), Some("2001:db8::5".parse().unwrap()));
+        assert_eq!(guest_address("fd00::5%eth0"), Some("fd00::5".parse().unwrap()));
+        let ignored = ["127.0.0.1", "::1", "169.254.3.4", "fe80::1", "0.0.0.0", "224.0.0.1", "x"];
+        for ignored in ignored {
+            assert_eq!(guest_address(ignored), None, "{ignored}");
+        }
+    }
+
+    #[test]
+    fn les_adresses_des_invites_sont_lues_dans_les_mesures() {
+        let line = |metric: &str, who: (&str, &str), address: &str| {
+            serie(&[("__name__", metric), ("target", "1"), who, ("ip", address)], "1")
+        };
+        let pve = "dumbmonit_proxmox_guest_ip_info";
+        let series = vec![
+            line(pve, ("name", "web"), "10.0.0.5"),
+            line(pve, ("name", "WEB"), "10.0.0.5"),
+            line(pve, ("name", "web"), "fe80::1"),
+            line("dumbmonit_vsphere_vm_ip_info", ("vm", "db"), "10.0.0.6"),
+            line(pve, ("name", "web"), "pas une adresse"),
+        ];
+        assert_eq!(
+            parse_facts(&series, &[1]).guest_ips,
+            vec![guest_ip(1, "web", "10.0.0.5"), guest_ip(1, "db", "10.0.0.6")]
+        );
+    }
+
+    #[test]
+    fn un_service_a_ladresse_dun_invite_tourne_dessus() {
+        let pve = row(1, "pve1", "10.0.0.1", "proxmox");
+        let site = row(2, "Blog", "https://10.0.0.5/", "http");
+        let base = row(3, "Postgres", "[2001:db8::5]:5432", "tcp");
+        let ailleurs = row(4, "Ailleurs", "https://10.0.0.99", "http");
+        let facts = ProxmoxFacts {
+            guest_ips: vec![guest_ip(1, "web", "10.0.0.5"), guest_ip(1, "web", "2001:db8::5")],
+            ..Default::default()
+        };
+        let (nodes, edges) = build_full(
+            &[pve, site, base, ailleurs],
+            &HashMap::new(),
+            &Placed::new(),
+            &[guest(1, "web")],
+            &[],
+            &facts,
+        );
+        assert_eq!(
+            sources(&edges),
+            vec![
+                ("t1", "g1:web", "hypervisor"),
+                ("g1:web", "t2", "hosted"),
+                ("g1:web", "t3", "hosted"),
+            ]
+        );
+        let vm = nodes.iter().find(|n| n.id == "g1:web").expect("nœud invité");
+        assert_eq!(vm.ips, ["10.0.0.5", "2001:db8::5"]);
+        assert!(nodes.iter().filter(|n| n.id != "g1:web").all(|n| n.ips.is_empty()));
+    }
+
+    #[test]
+    fn lagent_a_ladresse_dun_invite_le_represente_sans_double() {
+        let pve = row(1, "pve1", "10.0.0.1", "proxmox");
+        let agent = row(2, "serveur-web", "10.0.0.5", "agent");
+        let site = row(3, "Blog", "http://10.0.0.5:8080", "http");
+        let facts = ProxmoxFacts {
+            guest_ips: vec![guest_ip(1, "vm105", "10.0.0.5")],
+            ..Default::default()
+        };
+        let (nodes, edges) = build_full(
+            &[pve, agent, site],
+            &HashMap::new(),
+            &Placed::new(),
+            &[guest(1, "vm105")],
+            &[],
+            &facts,
+        );
+        assert_eq!(ids(&nodes), ["t1", "t2", "t3"], "pas de nœud invité en double");
+        assert_eq!(sources(&edges), vec![("t1", "t2", "hypervisor"), ("t2", "t3", "hosted")]);
+        assert_eq!(nodes[1].ips, ["10.0.0.5"], "l'agent porte les adresses de la VM");
+    }
+
+    #[test]
+    fn une_adresse_partagee_ou_un_parent_declare_ne_creent_pas_de_lien() {
+        let pve = row(1, "pve1", "10.0.0.1", "proxmox");
+        let vip = row(2, "VIP", "https://10.0.0.50", "http");
+        let switch = row(3, "switch", "10.0.0.2", "snmp");
+        let mut declare = row(4, "Boutique", "https://10.0.0.6", "http");
+        declare.parent_id = Some(3);
+        let facts = ProxmoxFacts {
+            guest_ips: vec![
+                guest_ip(1, "lb1", "10.0.0.50"),
+                guest_ip(1, "lb2", "10.0.0.50"),
+                guest_ip(1, "app", "10.0.0.6"),
+            ],
+            ..Default::default()
+        };
+        let (_, edges) = build_full(
+            &[pve, vip, switch, declare],
+            &HashMap::new(),
+            &Placed::new(),
+            &[guest(1, "lb1"), guest(1, "lb2"), guest(1, "app")],
+            &[],
+            &facts,
+        );
+        assert_eq!(
+            sources(&edges),
+            vec![
+                ("t3", "t4", "parent"),
+                ("t1", "g1:lb1", "hypervisor"),
+                ("t1", "g1:lb2", "hypervisor"),
+                ("t1", "g1:app", "hypervisor"),
+            ],
+            "adresse revendiquée deux fois : personne ; parent déclaré : gardé seul"
+        );
+    }
+
+    #[test]
+    fn le_nom_dhote_de_lagent_relie_linvite() {
+        let pve = row(1, "pve1", "10.0.0.1", "proxmox");
+        let mut agent = row(2, "Serveur de fichiers", "id-abc", "agent");
+        agent.hostname = Some("files01.lan".into());
+        let (nodes, edges) = build(&[pve, agent], &HashMap::new(), &[guest(1, "files01")], &[]);
+        assert_eq!(ids(&nodes), ["t1", "t2"]);
+        assert_eq!(sources(&edges), vec![("t1", "t2", "hypervisor")]);
     }
 }

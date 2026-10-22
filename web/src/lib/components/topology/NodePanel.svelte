@@ -114,6 +114,10 @@
 			<dd class="truncate text-ink">{node.site ?? m.topology_site_main()}</dd>
 			<dt class="text-ink-3">{m.topology_panel_folder()}</dt>
 			<dd class="truncate text-ink">{node.group || m.devices_folders_none()}</dd>
+			{#if node.ips && node.ips.length > 0}
+				<dt class="text-ink-3">{m.topology_panel_addresses()}</dt>
+				<dd class="min-w-0 font-mono text-xs leading-5 break-all text-ink">{node.ips.join(', ')}</dd>
+			{/if}
 			{#if node.subnet}
 				<dt class="text-ink-3">{m.topology_panel_network()}</dt>
 				<dd class="truncate text-ink">{zoneLabel(node.subnet, node.vlan, node.vlanName)}</dd>

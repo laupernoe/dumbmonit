@@ -22,6 +22,18 @@ All notable changes to this project are documented here. The format follows
   of the domain can enroll with the token; "Stop enrollments" closes it without
   cutting the servers already enrolled; `-UninstallAgents` and `-Remove` undo
   everything. The wizard shows the servers arriving live.
+- **Map: services and agents hang under the VM they run on.** The map now reads
+  the IP addresses the hypervisor reports for each guest (Proxmox guest agent,
+  container interfaces, or the static `ipconfigN` / `netN ip=` configuration
+  when the guest says nothing; VMware Tools' primary address on vSphere) and
+  links every monitor aimed at one of them (HTTP, TCP, database…) to that guest
+  with a "Runs on" link, instead of leaving it floating. When a guest's name
+  matches no monitor, the only agent, ping or SNMP monitor at its address
+  stands for the guest rather than a second box; an agent's reported host name
+  also matches its guest. An address several guests report links nothing, and a
+  declared parent always wins. The guest's addresses appear in its details
+  panel and tooltip. Docker bridges and veth interfaces are no longer counted
+  among a guest's addresses.
 - **Map: Proxmox clusters, backups, firewalls and subnets.** A Proxmox cluster
   is drawn as cluster, one node per Proxmox node (online or offline), then its
   VMs and containers, stopped ones included; a single-node Proxmox keeps its
