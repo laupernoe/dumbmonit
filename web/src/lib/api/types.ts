@@ -1218,6 +1218,8 @@ export interface AgentToken {
 	/** A relay token: the machine it enrols becomes a relay for its site at its first report. */
 	relay?: boolean;
 	relay_site?: string | null;
+	/** Active Directory domain this fleet token was made for; `null` for an ordinary token. */
+	ad_domain: string | null;
 }
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */
@@ -1240,6 +1242,35 @@ export interface AgentTokenPayload {
 export interface CreatedAgentToken extends AgentToken {
 	secret: string;
 	install_linux: string;
+	install_windows: string;
+}
+
+/** Body of `POST /api/agent/ad-kit`: a fleet token plus the GPO deployment script. */
+export interface AdKitPayload {
+	domain: string;
+	base_url?: string;
+	/** Servers allowed to enrol. `null` or left out: no limit. */
+	max_uses?: number | null;
+	expires_in_days?: number | null;
+	/** Distinguished name of the OU the policy is linked to. Left out: the whole domain. */
+	target_ou?: string | null;
+	include_domain_controllers?: boolean;
+	/** Security group that filters which servers receive the agent. */
+	security_group?: string | null;
+	/** Also copy the agent binary into SYSVOL, for servers without outbound access. */
+	sysvol_binary?: boolean;
+}
+
+/** Response of `POST /api/agent/ad-kit`: the only chance to see the token and script. */
+export interface CreatedAdKit {
+	token: AgentToken;
+	secret: string;
+	/** Content of the PowerShell deployment script (it contains the token). */
+	script: string;
+	/** File name to save it under, `Deploy-DumbMonit.ps1`. */
+	filename: string;
+	/** `group_name` of the targets this deployment enrols. */
+	folder: string;
 	install_windows: string;
 }
 
