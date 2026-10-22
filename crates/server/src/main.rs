@@ -234,6 +234,40 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         None => dumbmonit_server::backup::local::spawn(state.clone()),
     }
 
+    // Canal chiffré des agents : autorité interne (créée au premier démarrage),
+    // certificat du serveur, puis son propre port. Pas dans la démonstration
+    // publique, qui n'a pas d'agents.
+    if let Some(agent_bind) = state.config.agent_listen.filter(|_| !state.config.demo) {
+        dumbmonit_server::agent_tls::init(&state)
+            .await
+            .context("preparing the encrypted agent channel")?;
+        dumbmonit_server::agent_tls::spawn_refresh(state.clone());
+        let tcp = tokio::net::TcpListener::bind(agent_bind)
+            .await
+            .with_context(|| format!("cannot listen on {agent_bind} (DUMBMONIT_AGENT_LISTEN)"))?;
+        let agents = dumbmonit_server::agent_tls::listen(state.clone(), tcp)
+            .context("agent channel listener")?;
+        let router = dumbmonit_server::agent_tls::router(state.clone());
+        info!(
+            bind = %agent_bind,
+            pin = %state.agent_tls().pins().first().map_or("", String::as_str),
+            "encrypted agent channel available (TLS 1.3, mTLS, X25519MLKEM768)"
+        );
+        tokio::spawn(async move {
+            let served = axum::serve(
+                agents,
+                router
+                    .into_make_service_with_connect_info::<dumbmonit_server::agent_tls::AgentPeer>(
+                    ),
+            )
+            .with_graceful_shutdown(shutdown_signal())
+            .await;
+            if let Err(error) = served {
+                tracing::error!(%error, "encrypted agent channel stopped");
+            }
+        });
+    }
+
     let listener = tokio::net::TcpListener::bind(bind)
         .await
         .with_context(|| format!("cannot listen on {bind}"))?;

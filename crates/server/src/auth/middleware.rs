@@ -136,7 +136,7 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
 /// comptes et sessions (`/auth/**`, journal d'audit compris), gestion des
 /// comptes (`/users/**`), jetons d'API et d'agents. Un jeton ne fabrique pas
 /// d'autres secrets et ne touche pas à qui peut se connecter.
-pub const TOKEN_DENIED: &[&str] = &["/auth", "/users", "/tokens", "/agent/tokens"];
+pub const TOKEN_DENIED: &[&str] = &["/auth", "/users", "/tokens", "/agent/tokens", "/agent/tls"];
 
 const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
                                     authentication, SSO or other tokens: sign in to the web \

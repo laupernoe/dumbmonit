@@ -581,6 +581,11 @@ pub async fn allow_rebind(pool: &SqlitePool, target_id: TargetId) -> Result<Opti
     Ok((result.rows_affected() > 0).then_some(until))
 }
 
+/// Machine qui porte une clé d'identité, si elle est connue.
+pub async fn target_of_key(pool: &SqlitePool, key: &str) -> Result<Option<TargetId>> {
+    Ok(find_host(pool, key).await?.map(|host| host.target_id))
+}
+
 /// Verdict rendu à une requête qui se présente avec une clé d'identité.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum KeyAuth {

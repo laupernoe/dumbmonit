@@ -1,6 +1,7 @@
 mod activedirectory;
 mod agent_commands;
 mod agent_files;
+mod agent_tls;
 mod alert_actions;
 pub(crate) mod alerts;
 mod auth;
@@ -90,6 +91,21 @@ pub fn fuzz_wall_news(xml: &str) -> usize {
     wall_news::parse(xml, "fuzz").map_or(0, |items| items.len())
 }
 
+/// Protocole des agents : lots, commandes, sondes relayées, sous le garde du
+/// jeton d'enrôlement. Monté sur le port de l'interface (ancien canal) et sur
+/// le canal chiffré des agents ([`crate::agent_tls`]).
+pub fn agent_routes(state: &AppState) -> Router<AppState> {
+    Router::new()
+        .route("/ingest", post(ingest::receive))
+        // Canal de commandes des agents : même jeton, même raison d'être ouvert.
+        .merge(agent_commands::agent_routes())
+        // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
+        // compte rendu peut peser autant qu'un lot de mesures.
+        .merge(relay::agent_routes())
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
+        .route_layer(middleware::from_fn_with_state(state.clone(), ingest::require_agent_token))
+}
+
 pub fn router(state: AppState) -> Router {
     router_with(state, crate::music::MusicHub::from_env())
 }
@@ -164,6 +180,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/notify/kinds", get(channels::kinds))
         .route("/agent/tokens", get(ingest::list_tokens).post(ingest::create_token))
         .route("/agent/tokens/{id}", delete(ingest::revoke_token))
+        // Paramètres de la commande d'installation : URL, canal chiffré, empreintes.
+        .route("/agent/install", get(ingest::install_params))
+        // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.
+        .merge(agent_tls::routes())
         .route("/tokens", get(tokens::list).post(tokens::create))
         .route("/tokens/{id}", delete(tokens::revoke))
         // Actions sur les conteneurs d'une machine (`agent_commands.rs`).
@@ -271,20 +291,11 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         //
         // Le jeton est vérifié par `require_agent_token` avant que le corps ne
         // soit lu : un inconnu n'obtient pas 16 Mio de désérialisation.
-        .merge(
-            Router::new()
-                .route("/ingest", post(ingest::receive))
-                // Canal de commandes des agents : même jeton, même raison d'être ouvert.
-                .merge(agent_commands::agent_routes())
-                // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
-                // compte rendu peut peser autant qu'un lot de mesures.
-                .merge(relay::agent_routes())
-                .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
-                .route_layer(middleware::from_fn_with_state(
-                    state.clone(),
-                    ingest::require_agent_token,
-                )),
-        )
+        //
+        // Ce sont aussi les routes du canal chiffré des agents (`agent_tls`), qui
+        // les sert derrière un certificat client : ici, c'est l'ancien canal,
+        // refusé quand l'administrateur exige mTLS.
+        .merge(agent_routes(&state))
         // Pages de statut publiques : lecture seule, sans session, par conception.
         .merge(status_pages::public_routes())
         // Liens d'action des notifications : le jeton signé est l'autorisation

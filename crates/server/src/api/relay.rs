@@ -10,13 +10,14 @@
 
 use std::time::Duration;
 
-use axum::extract::{Path, Query, State};
+use axum::extract::{Extension, Path, Query, State};
 use axum::http::{HeaderMap, StatusCode};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use dumbmonit_proto::{AgentCommand, ProbeOutcome, RELAY_POLL_HOLD_SECS, TargetId};
 use serde::{Deserialize, Serialize};
 
+use crate::agent_tls::AgentCert;
 use crate::api::ApiResult;
 use crate::api::agent_commands::Rejection;
 use crate::collectors::agent::{self as agent};
@@ -58,8 +59,9 @@ async fn authenticate(
     state: &AppState,
     headers: &HeaderMap,
     key: &str,
+    cert: Option<&AgentCert>,
 ) -> Result<(i64, TargetId), Rejection> {
-    crate::api::agent_commands::authenticate(state, headers, key).await
+    crate::api::agent_commands::authenticate(state, headers, key, cert).await
 }
 
 /// `GET /api/agent/relay?key=…&wait=…` : les sondes qui attendent cet agent.
@@ -70,9 +72,10 @@ async fn authenticate(
 async fn pending(
     State(state): State<AppState>,
     headers: HeaderMap,
+    cert: Option<Extension<AgentCert>>,
     Query(query): Query<KeyQuery>,
 ) -> Result<Json<Vec<AgentCommand>>, Rejection> {
-    let (token_id, agent_id) = authenticate(&state, &headers, &query.key).await?;
+    let (token_id, agent_id) = authenticate(&state, &headers, &query.key, cert.as_deref()).await?;
     match state.relay().note_poll(agent_id, tokio::time::Instant::now()) {
         relay::PollGap::First => tracing::info!(agent = agent_id, "relay agent connected"),
         relay::PollGap::Back(gap) => {
@@ -102,11 +105,12 @@ async fn pending(
 async fn report(
     State(state): State<AppState>,
     headers: HeaderMap,
+    cert: Option<Extension<AgentCert>>,
     Path(id): Path<i64>,
     Query(query): Query<KeyQuery>,
     Json(outcome): Json<ProbeOutcome>,
 ) -> Result<StatusCode, Rejection> {
-    let (_, agent_id) = authenticate(&state, &headers, &query.key).await?;
+    let (_, agent_id) = authenticate(&state, &headers, &query.key, cert.as_deref()).await?;
     let Some(job) = state.relay().complete(agent_id, id) else {
         // Pas une sonde connue : peut-être un agent trop ancien à qui on a confié
         // un balayage de découverte et qui l'a rendu en erreur sur cette route
@@ -131,11 +135,12 @@ async fn report(
 async fn discovery_report(
     State(state): State<AppState>,
     headers: HeaderMap,
+    cert: Option<Extension<AgentCert>>,
     Path(id): Path<i64>,
     Query(query): Query<KeyQuery>,
     Json(mut report): Json<dumbmonit_proto::DiscoveryReport>,
 ) -> Result<StatusCode, Rejection> {
-    let (_, agent_id) = authenticate(&state, &headers, &query.key).await?;
+    let (_, agent_id) = authenticate(&state, &headers, &query.key, cert.as_deref()).await?;
     crate::api::discovery::annotate_agent_hosts(&state, &mut report.hosts).await;
     if state.discovery().apply_report(agent_id, id, report) {
         Ok(StatusCode::NO_CONTENT)
