@@ -4098,6 +4098,7 @@
 	"misc_nav_overview": "Обзор",
 	"misc_nav_palette_open": "Открыть палитру команд",
 	"misc_nav_palette_title": "Палитра команд ({shortcut})",
+	"misc_nav_security": "Безопасность",
 	"misc_nav_settings": "Настройки",
 	"misc_nav_sign_out": "Выйти",
 	"misc_nav_wall": "Режим стены",
@@ -4131,6 +4132,8 @@
 	"misc_palette_relay_detail": "Агент опрашивает другую сеть для этого сервера",
 	"misc_palette_results": "Результаты",
 	"misc_palette_scan": "Сканировать мою сеть",
+	"misc_palette_security": "Безопасность и CVE",
+	"misc_palette_security_detail": "Известные уязвимости по устройствам",
 	"misc_palette_security_score": "Оценка безопасности",
 	"misc_palette_security_score_detail": "Включить или выключить оценку безопасности мониторов",
 	"misc_palette_settings_section": "Настройки: {section}",
@@ -5026,6 +5029,167 @@
 	"scene_swiss_board_resolved": "Устранено",
 	"scene_swiss_board_up": "Снова в сети",
 	"scene_swiss_board_warn": "Задержка",
+	"security_cves_action_error": "Не удалось сохранить изменение.",
+	"security_cves_cancel": "Отмена",
+	"security_cves_card_all": "Показать все на странице безопасности",
+	"security_cves_card_clean": "Для этого устройства известных CVE нет.",
+	"security_cves_card_title": "CVE",
+	"security_cves_count_exploited": "Эксплуатируемые",
+	"security_cves_count_ignored": "Игнорируются",
+	"security_cves_count_patched": "Исправлены",
+	"security_cves_count_unknown": "Требуют проверки",
+	"security_cves_count_vulnerable": "Уязвимые",
+	"security_cves_cvss": "CVSS {score}",
+	"security_cves_disable": "Выключить",
+	"security_cves_empty_clean_body": "Ничто из инвентаризированного DumbMonit сейчас не совпадает с известной уязвимостью.",
+	"security_cves_empty_clean_title": "Для вашего инвентаря известных CVE нет",
+	"security_cves_empty_filtered_title": "Нет результатов по этим фильтрам",
+	"security_cves_empty_pending_body": "Программы ещё не инвентаризированы. Результаты появятся после следующего обновления.",
+	"security_cves_empty_pending_title": "Первая проверка ожидается",
+	"security_cves_enable": "Включить",
+	"security_cves_exploited": "Эксплуатируется",
+	"security_cves_exploited_hint": "Входит в каталог CISA уязвимостей, эксплуатируемых в реальных атаках.",
+	"security_cves_filter_all_devices": "Все устройства",
+	"security_cves_filter_all_severities": "Любая серьёзность",
+	"security_cves_filter_all_states": "Все состояния",
+	"security_cves_filter_device": "Устройство",
+	"security_cves_filter_exploited": "Только эксплуатируемые",
+	"security_cves_filter_reset": "Сбросить фильтры",
+	"security_cves_filter_severity": "Серьёзность",
+	"security_cves_filter_show_ignored": "Показывать игнорируемые",
+	"security_cves_filter_state": "Состояние",
+	"security_cves_filters_label": "Фильтры",
+	"security_cves_group_summary": "Уязвимых: {vulnerable}, к проверке: {unknown}, исправлено: {patched}",
+	"security_cves_ignore": "Игнорировать",
+	"security_cves_ignore_confirm": "Принять риск",
+	"security_cves_ignore_note": "Заметка: {note}",
+	"security_cves_ignore_note_label": "Заметка (необязательно)",
+	"security_cves_ignore_title": "Принять риск {cve} на {device}",
+	"security_cves_ignored": "Игнорируется",
+	"security_cves_ignored_by": "Игнорирует {user}, {when}",
+	"security_cves_inventory_component": "Компонент",
+	"security_cves_inventory_empty": "Компоненты ещё не инвентаризированы.",
+	"security_cves_inventory_findings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} находка",
+				"countPlural=few": "{count} находки",
+				"countPlural=many": "{count} находок",
+				"countPlural=other": "{count} находки"
+			}
+		}
+	],
+	"security_cves_inventory_origin": "Источник",
+	"security_cves_inventory_summary": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} компонент",
+				"countPlural=few": "{count} компонента",
+				"countPlural=many": "{count} компонентов",
+				"countPlural=other": "{count} компонента"
+			}
+		}
+	],
+	"security_cves_inventory_title": "Что охвачено",
+	"security_cves_inventory_version": "Версия",
+	"security_cves_last_refresh": "Последнее обновление: {when}",
+	"security_cves_load_error": "Не удалось загрузить уязвимости.",
+	"security_cves_loading": "Загрузка уязвимостей",
+	"security_cves_never_refreshed": "Ещё не обновлялось",
+	"security_cves_nvd_key_clear": "Удалить ключ",
+	"security_cves_nvd_key_help": "Повышает лимит запросов NVD, чтобы обновления завершались быстрее. Хранится в зашифрованном виде и больше не показывается.",
+	"security_cves_nvd_key_label": "Ключ API NVD (необязательно)",
+	"security_cves_nvd_key_none": "Ключ не сохранён",
+	"security_cves_nvd_key_save": "Сохранить ключ",
+	"security_cves_nvd_key_set": "Ключ сохранён",
+	"security_cves_off_admin_only": "Попросите администратора включить его.",
+	"security_cves_off_body": "DumbMonit может сопоставлять программы, которые он инвентаризирует на ваших устройствах (пакеты, операционные системы, приложения), с публичными базами уязвимостей и показывать, какие известные CVE применимы, какие уже эксплуатируются и какие исправлены.",
+	"security_cves_off_sources": "По умолчанию выключено. После включения оно обращается к NVD, OSV.dev, трекеру безопасности Debian и CISA KEV, отправляя названия и версии этих программ. Больше ничего не покидает ваш экземпляр.",
+	"security_cves_off_title": "Отслеживание уязвимостей выключено",
+	"security_cves_open_device": "Открыть {name}",
+	"security_cves_ransomware": "Используется шифровальщиками",
+	"security_cves_reason_below_fixed_version": "Установленная версия старше той, что содержит исправление.",
+	"security_cves_reason_fixed_version_installed": "Установленная версия содержит исправление.",
+	"security_cves_reason_in_affected_range": "Установленная версия входит в затронутый диапазон.",
+	"security_cves_reason_no_fix_available": "Дистрибутив считает её открытой: исправление ещё не выпущено.",
+	"security_cves_reason_undetermined": "Источник не смог определить, затронута ли эта версия.",
+	"security_cves_reason_vendor_build": "Сборка вендора: возможно обратное портирование исправления, проверьте вручную.",
+	"security_cves_reason_version_unparsed": "Версию не удалось сравнить автоматически, проверьте вручную.",
+	"security_cves_refresh": "Обновить сейчас",
+	"security_cves_refreshing": "Обновление…",
+	"security_cves_restore": "Вернуть",
+	"security_cves_settings_title": "Настройки",
+	"security_cves_severity_critical": "Критическая",
+	"security_cves_severity_high": "Высокая",
+	"security_cves_severity_low": "Низкая",
+	"security_cves_severity_medium": "Средняя",
+	"security_cves_severity_none": "Без оценки",
+	"security_cves_source_debian": "Трекер безопасности Debian",
+	"security_cves_source_error": "Ошибка: {error}",
+	"security_cves_source_items": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} запись",
+				"countPlural=few": "{count} записи",
+				"countPlural=many": "{count} записей",
+				"countPlural=other": "{count} записи"
+			}
+		}
+	],
+	"security_cves_source_kev": "CISA KEV",
+	"security_cves_source_never": "Ещё ни разу не удалось",
+	"security_cves_source_nvd": "NVD",
+	"security_cves_source_ok": "Последний успех {when}",
+	"security_cves_source_osv": "OSV.dev",
+	"security_cves_sources_summary": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} источник",
+				"countPlural=few": "{count} источника",
+				"countPlural=many": "{count} источников",
+				"countPlural=other": "{count} источника"
+			}
+		}
+	],
+	"security_cves_sources_title": "Источники",
+	"security_cves_state_patched": "Исправлено",
+	"security_cves_state_unknown": "Требует проверки",
+	"security_cves_state_vulnerable": "Уязвимо",
+	"security_cves_title": "CVE и уязвимости",
+	"security_cves_version_fix_unknown": "Установлена {installed}, версия с исправлением неизвестна",
+	"security_cves_version_fixed": "Установлена {installed}, исправлено в {fixed}",
+	"security_cves_version_no_fix": "Установлена {installed}, исправления пока нет",
+	"security_page_description": "Известные уязвимости программ, установленных на ваших устройствах.",
+	"security_page_score_link": "Настройки оценки безопасности",
+	"security_page_title": "Безопасность",
 	"settings.appearance.language_label": "Язык",
 	"settings.nav.aria_label": "Разделы настроек",
 	"settings.page.title": "Настройки",
