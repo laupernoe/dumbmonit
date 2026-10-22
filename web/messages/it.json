@@ -4044,6 +4044,7 @@
 	"misc_nav_overview": "Panoramica",
 	"misc_nav_palette_open": "Apri la palette dei comandi",
 	"misc_nav_palette_title": "Palette dei comandi ({shortcut})",
+	"misc_nav_security": "Sicurezza",
 	"misc_nav_settings": "Impostazioni",
 	"misc_nav_sign_out": "Esci",
 	"misc_nav_wall": "Modalità parete",
@@ -4077,6 +4078,8 @@
 	"misc_palette_relay_detail": "Un agente sonda un’altra rete per questo server",
 	"misc_palette_results": "Risultati",
 	"misc_palette_scan": "Scansiona la mia rete",
+	"misc_palette_security": "Sicurezza e CVE",
+	"misc_palette_security_detail": "Vulnerabilità note per dispositivo",
 	"misc_palette_security_score": "Punteggio di sicurezza",
 	"misc_palette_security_score_detail": "Attiva o disattiva il voto di sicurezza per monitor",
 	"misc_palette_settings_section": "Impostazioni: {section}",
@@ -4904,6 +4907,159 @@
 	"scene_swiss_board_resolved": "Risolto",
 	"scene_swiss_board_up": "Di nuovo su",
 	"scene_swiss_board_warn": "In ritardo",
+	"security_cves_action_error": "Impossibile salvare la modifica.",
+	"security_cves_cancel": "Annulla",
+	"security_cves_card_all": "Vedi tutto nella pagina Sicurezza",
+	"security_cves_card_clean": "Nessuna CVE nota per questo dispositivo.",
+	"security_cves_card_title": "CVE",
+	"security_cves_count_exploited": "Sfruttate",
+	"security_cves_count_ignored": "Ignorate",
+	"security_cves_count_patched": "Corrette",
+	"security_cves_count_unknown": "Da verificare",
+	"security_cves_count_vulnerable": "Vulnerabili",
+	"security_cves_cvss": "CVSS {score}",
+	"security_cves_disable": "Disattiva",
+	"security_cves_empty_clean_body": "Niente di ciò che DumbMonit ha inventariato corrisponde ora a una vulnerabilità nota.",
+	"security_cves_empty_clean_title": "Nessuna CVE nota per il vostro inventario",
+	"security_cves_empty_filtered_title": "Nessun risultato con questi filtri",
+	"security_cves_empty_pending_body": "Nessun software è ancora stato inventariato. I risultati compariranno dopo il prossimo aggiornamento.",
+	"security_cves_empty_pending_title": "Prima scansione in attesa",
+	"security_cves_enable": "Attiva",
+	"security_cves_exploited": "Sfruttata",
+	"security_cves_exploited_hint": "Presente nel catalogo CISA delle vulnerabilità sfruttate attivamente.",
+	"security_cves_filter_all_devices": "Tutti i dispositivi",
+	"security_cves_filter_all_severities": "Tutte le gravità",
+	"security_cves_filter_all_states": "Tutti gli stati",
+	"security_cves_filter_device": "Dispositivo",
+	"security_cves_filter_exploited": "Solo sfruttate",
+	"security_cves_filter_reset": "Reimposta i filtri",
+	"security_cves_filter_severity": "Gravità",
+	"security_cves_filter_show_ignored": "Mostra ignorate",
+	"security_cves_filter_state": "Stato",
+	"security_cves_filters_label": "Filtri",
+	"security_cves_group_summary": "{vulnerable} vulnerabili, {unknown} da verificare, {patched} corrette",
+	"security_cves_ignore": "Ignora",
+	"security_cves_ignore_confirm": "Accetta il rischio",
+	"security_cves_ignore_note": "Nota: {note}",
+	"security_cves_ignore_note_label": "Nota (facoltativa)",
+	"security_cves_ignore_title": "Accetta il rischio di {cve} su {device}",
+	"security_cves_ignored": "Ignorata",
+	"security_cves_ignored_by": "Ignorata da {user} {when}",
+	"security_cves_inventory_component": "Componente",
+	"security_cves_inventory_empty": "Nessun componente ancora inventariato.",
+	"security_cves_inventory_findings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} risultato",
+				"countPlural=other": "{count} risultati"
+			}
+		}
+	],
+	"security_cves_inventory_origin": "Origine",
+	"security_cves_inventory_summary": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} componente",
+				"countPlural=other": "{count} componenti"
+			}
+		}
+	],
+	"security_cves_inventory_title": "Cosa è coperto",
+	"security_cves_inventory_version": "Versione",
+	"security_cves_last_refresh": "Ultimo aggiornamento: {when}",
+	"security_cves_load_error": "Impossibile caricare le vulnerabilità.",
+	"security_cves_loading": "Caricamento delle vulnerabilità",
+	"security_cves_never_refreshed": "Non ancora aggiornato",
+	"security_cves_nvd_key_clear": "Rimuovi la chiave",
+	"security_cves_nvd_key_help": "Aumenta il limite di richieste di NVD così gli aggiornamenti finiscono prima. Salvata cifrata, mai più mostrata.",
+	"security_cves_nvd_key_label": "Chiave API NVD (facoltativa)",
+	"security_cves_nvd_key_none": "Nessuna chiave salvata",
+	"security_cves_nvd_key_save": "Salva la chiave",
+	"security_cves_nvd_key_set": "Una chiave è salvata",
+	"security_cves_off_admin_only": "Chiedete a un amministratore di attivarlo.",
+	"security_cves_off_body": "DumbMonit può confrontare il software che inventaria sui vostri dispositivi (pacchetti, sistemi, applicazioni) con database pubblici di vulnerabilità e indicare quali CVE note si applicano, quali sono già sfruttate e quali sono corrette.",
+	"security_cves_off_sources": "Disattivato per impostazione predefinita. Una volta attivo, contatta NVD, OSV.dev, il tracker di sicurezza Debian e CISA KEV inviando nomi e versioni di quel software. Nient’altro lascia la vostra istanza.",
+	"security_cves_off_title": "Il monitoraggio delle vulnerabilità è disattivato",
+	"security_cves_open_device": "Apri {name}",
+	"security_cves_ransomware": "Usata dai ransomware",
+	"security_cves_reason_below_fixed_version": "La versione installata è precedente a quella che lo corregge.",
+	"security_cves_reason_fixed_version_installed": "La versione installata include la correzione.",
+	"security_cves_reason_in_affected_range": "La versione installata rientra nell’intervallo interessato.",
+	"security_cves_reason_no_fix_available": "La distribuzione la segnala come aperta: nessuna correzione ancora pubblicata.",
+	"security_cves_reason_undetermined": "La fonte non ha saputo dire se questa versione è interessata.",
+	"security_cves_reason_vendor_build": "Build del fornitore: è possibile una correzione retroportata, verificare manualmente.",
+	"security_cves_reason_version_unparsed": "La versione non ha potuto essere confrontata automaticamente, verificare manualmente.",
+	"security_cves_refresh": "Aggiorna ora",
+	"security_cves_refreshing": "Aggiornamento in corso…",
+	"security_cves_restore": "Ripristina",
+	"security_cves_settings_title": "Impostazioni",
+	"security_cves_severity_critical": "Critica",
+	"security_cves_severity_high": "Alta",
+	"security_cves_severity_low": "Bassa",
+	"security_cves_severity_medium": "Media",
+	"security_cves_severity_none": "Senza punteggio",
+	"security_cves_source_debian": "Tracker di sicurezza Debian",
+	"security_cves_source_error": "Errore: {error}",
+	"security_cves_source_items": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} voce",
+				"countPlural=other": "{count} voci"
+			}
+		}
+	],
+	"security_cves_source_kev": "CISA KEV",
+	"security_cves_source_never": "Nessun successo finora",
+	"security_cves_source_nvd": "NVD",
+	"security_cves_source_ok": "Ultimo successo {when}",
+	"security_cves_source_osv": "OSV.dev",
+	"security_cves_sources_summary": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} fonte",
+				"countPlural=other": "{count} fonti"
+			}
+		}
+	],
+	"security_cves_sources_title": "Fonti",
+	"security_cves_state_patched": "Corretta",
+	"security_cves_state_unknown": "Da verificare",
+	"security_cves_state_vulnerable": "Vulnerabile",
+	"security_cves_title": "CVE e vulnerabilità",
+	"security_cves_version_fix_unknown": "Installata {installed}, versione corretta sconosciuta",
+	"security_cves_version_fixed": "Installata {installed}, corretta in {fixed}",
+	"security_cves_version_no_fix": "Installata {installed}, ancora nessuna correzione",
+	"security_page_description": "Vulnerabilità note del software installato sui vostri dispositivi.",
+	"security_page_score_link": "Impostazioni del punteggio di sicurezza",
+	"security_page_title": "Sicurezza",
 	"settings.appearance.language_label": "Lingua",
 	"settings.nav.aria_label": "Sezioni impostazioni",
 	"settings.page.title": "Impostazioni",
