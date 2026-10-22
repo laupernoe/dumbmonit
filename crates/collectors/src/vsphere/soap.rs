@@ -43,8 +43,16 @@ pub const HOST_PATHS: &[&str] = &[
     "summary.hardware.numCpuCores",
     "summary.hardware.memorySize",
 ];
-pub const VM_PATHS: &[&str] =
-    &["name", "runtime.powerState", "overallStatus", "guest.toolsStatus", "config.template"];
+/// `guest.ipAddress` : l'adresse principale que VMware Tools rapporte (vide
+/// sans Tools) ; la carte s'en sert pour relier la VM à ce qui tourne dessus.
+pub const VM_PATHS: &[&str] = &[
+    "name",
+    "runtime.powerState",
+    "overallStatus",
+    "guest.toolsStatus",
+    "guest.ipAddress",
+    "config.template",
+];
 pub const DATASTORE_PATHS: &[&str] =
     &["name", "summary.capacity", "summary.freeSpace", "summary.accessible", "overallStatus"];
 

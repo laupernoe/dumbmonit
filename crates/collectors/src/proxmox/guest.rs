@@ -215,7 +215,7 @@ fn address_samples(
     let mut kept = 0usize;
 
     for (iface, address) in addresses {
-        if !is_routable(&address) {
+        if !is_routable(&address) || is_virtual_interface(&iface) {
             continue;
         }
         if kept >= MAX_ADDRESSES {
@@ -231,6 +231,61 @@ fn address_samples(
     }
 
     samples
+}
+
+/// Interfaces internes à l'invité : ponts Docker, paires veth, réseaux de
+/// conteneurs. Leur adresse (`172.17.0.1`) se répète d'une machine à l'autre et
+/// prendrait la place des adresses qui identifient vraiment l'invité.
+fn is_virtual_interface(name: &str) -> bool {
+    const PREFIXES: &[&str] =
+        &["docker", "br-", "veth", "virbr", "cni", "flannel", "cali", "vxlan", "kube-", "podman"];
+    let name = name.trim().to_ascii_lowercase();
+    PREFIXES.iter().any(|prefix| name.starts_with(prefix))
+}
+
+/// `GET /nodes/{node}/{qemu|lxc}/{vmid}/config` : les adresses statiques de la
+/// configuration, en repli quand l'invité ne dit rien de lui-même (VM sans
+/// agent, conteneur arrêté dans son espace de noms).
+///
+/// Une VM cloud-init porte `ipconfigN: ip=192.168.1.10/24,gw=…,ip6=…` ; un
+/// conteneur `netN: name=eth0,bridge=vmbr0,ip=192.168.1.11/24,…`. `dhcp`,
+/// `auto` et `manual` ne disent aucune adresse et sont ignorés.
+pub fn config_address_samples(
+    node: &str,
+    guest: &GuestEntry,
+    kind: GuestKind,
+    config: &serde_json::Map<String, serde_json::Value>,
+    ts_ms: i64,
+) -> Vec<Sample> {
+    let prefix = match kind {
+        GuestKind::Qemu => "ipconfig",
+        GuestKind::Lxc => "net",
+    };
+    let mut keys: Vec<(u32, &String, &str)> = config
+        .iter()
+        .filter_map(|(key, value)| {
+            let index = key.strip_prefix(prefix)?.parse().ok()?;
+            Some((index, key, value.as_str()?))
+        })
+        .collect();
+    keys.sort();
+    let addresses = keys.into_iter().flat_map(|(_, key, value)| {
+        let fields: Vec<(&str, &str)> =
+            value.split(',').filter_map(|field| field.trim().split_once('=')).collect();
+        let iface = fields
+            .iter()
+            .find(|(k, _)| *k == "name")
+            .map(|(_, v)| v.to_string())
+            .unwrap_or_else(|| key.clone());
+        fields
+            .into_iter()
+            .filter(|(k, _)| *k == "ip" || *k == "ip6")
+            .map(|(_, v)| v.split('/').next().unwrap_or_default().trim().to_string())
+            .filter(|v| v.parse::<std::net::IpAddr>().is_ok())
+            .map(move |v| (iface.clone(), v))
+            .collect::<Vec<_>>()
+    });
+    address_samples(node, guest, kind, addresses, ts_ms)
 }
 
 /// Vrai si l'adresse sert à joindre la machine depuis ailleurs.
@@ -465,6 +520,62 @@ mod tests {
                 r#"proxmox_guest_ip_info{iface="eth0",ip="192.168.10.60",name="pihole",node="pve1",type="lxc",vmid="200"}"#
             ),
             Some(1.0)
+        );
+    }
+
+    #[test]
+    fn les_ponts_docker_ne_prennent_pas_la_place_des_vraies_adresses() {
+        let interfaces = serde_json::from_str::<Envelope<AgentInterfaces>>(
+            r#"{"data":{"result":[
+              {"name":"docker0","ip-addresses":[{"ip-address":"172.17.0.1"}]},
+              {"name":"br-1a2b3c","ip-addresses":[{"ip-address":"172.18.0.1"}]},
+              {"name":"veth12ab","ip-addresses":[{"ip-address":"fe80::1"}]},
+              {"name":"eth0","ip-addresses":[{"ip-address":"10.0.0.5"},{"ip-address":"2001:db8::5"}]}
+            ]}}"#,
+        )
+        .unwrap()
+        .data;
+        let samples = agent_address_samples("pve1", &machine(), &interfaces, 1000);
+        let ips: Vec<&str> = samples.iter().map(|s| s.labels["ip"].as_str()).collect();
+        assert_eq!(ips, ["10.0.0.5", "2001:db8::5"]);
+    }
+
+    #[test]
+    fn un_agent_sans_reponse_ne_donne_aucune_adresse() {
+        // Un agent qui n'a rien à dire renvoie un `result` absent.
+        let vide =
+            serde_json::from_str::<Envelope<AgentInterfaces>>(r#"{"data":{}}"#).unwrap().data;
+        assert!(agent_address_samples("pve1", &machine(), &vide, 1000).is_empty());
+    }
+
+    #[test]
+    fn la_configuration_donne_les_adresses_statiques_en_repli() {
+        let config: serde_json::Map<String, serde_json::Value> = serde_json::from_str(
+            r#"{"name":"router-vm","ipconfig0":"ip=192.168.10.50/24,gw=192.168.10.1",
+                "ipconfig1":"ip=dhcp,ip6=fd00::50/64","ipconfig2":"ip6=auto",
+                "net0":"virtio=BC:24:11:2A:3B:4C,bridge=vmbr0"}"#,
+        )
+        .unwrap();
+        let samples = config_address_samples("pve1", &machine(), GuestKind::Qemu, &config, 1000);
+        let found: Vec<(&str, &str)> =
+            samples.iter().map(|s| (s.labels["iface"].as_str(), s.labels["ip"].as_str())).collect();
+        assert_eq!(found, [("ipconfig0", "192.168.10.50"), ("ipconfig1", "fd00::50")]);
+    }
+
+    #[test]
+    fn la_configuration_dun_conteneur_nomme_son_interface() {
+        let config: serde_json::Map<String, serde_json::Value> = serde_json::from_str(
+            r#"{"hostname":"pihole","net0":"name=eth0,bridge=vmbr0,hwaddr=BC:24:11:00:00:01,ip=192.168.10.60/24,gw=192.168.10.1,type=veth",
+                "net1":"name=eth1,bridge=vmbr1,ip=dhcp"}"#,
+        )
+        .unwrap();
+        let conteneur: GuestEntry =
+            serde_json::from_str(r#"{"vmid":200,"name":"pihole","status":"running"}"#).unwrap();
+        let samples = config_address_samples("pve1", &conteneur, GuestKind::Lxc, &config, 1000);
+        assert_eq!(samples.len(), 1);
+        assert_eq!(
+            samples[0].series_key(),
+            r#"proxmox_guest_ip_info{iface="eth0",ip="192.168.10.60",name="pihole",node="pve1",type="lxc",vmid="200"}"#
         );
     }
 
