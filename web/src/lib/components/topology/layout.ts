@@ -43,6 +43,8 @@ export interface MapNode {
 	subnet?: string | null;
 	vlan?: number | null;
 	vlanName?: string | null;
+	/** Guest: the addresses its hypervisor reports. */
+	ips?: string[];
 }
 
 export interface MapEdge {
@@ -52,10 +54,10 @@ export interface MapEdge {
 }
 
 /** Declared links first: they are what alert suppression follows. */
-const PRIORITY: Record<TopologySource, number> = { parent: 0, service: 1, hypervisor: 2, relay: 3, samehost: 4, backup: 5, firewall: 6, lldp: 7 };
+const PRIORITY: Record<TopologySource, number> = { parent: 0, service: 1, hypervisor: 2, hosted: 3, relay: 4, samehost: 5, backup: 6, firewall: 7, lldp: 8 };
 
-/** Links an outage travels along. LLDP says who is cabled to whom, not who depends on whom. */
-const PROPAGATES: ReadonlySet<TopologySource> = new Set(['parent', 'service', 'relay', 'hypervisor']);
+/** Links an outage travels along (a service runs on its guest). LLDP says who is cabled to whom, not who depends on whom. */
+const PROPAGATES: ReadonlySet<TopologySource> = new Set(['parent', 'service', 'relay', 'hypervisor', 'hosted']);
 
 export function isDown(state: NodeState): boolean {
 	return state === 'offline' || state === 'down';

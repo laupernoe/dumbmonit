@@ -55,6 +55,7 @@ santé suivent le `overallStatus` de vSphere : 0 vert, 1 jaune, 2 rouge, 3 gris
 | `vm_power_state` | 0 allumée, 1 éteinte, 2 suspendue ; 1000 VM au plus | `vm` |
 | `vm_status` | santé globale | `vm` |
 | `vm_tools_status` | VM allumées seulement : 0 à jour, 1 vieille version, 2 installé mais pas lancé, 3 pas installé | `vm` |
+| `vm_ip_info` | VM allumées seulement, toujours 1 : l'adresse principale que rapporte VMware Tools (`guest.ipAddress`, le rôle Read-only suffit ; aucune sans Tools, boucle locale et lien local ignorés). La carte dessine sous la VM les surveillances visées à cette adresse | `vm`, `ip` |
 | `datastores` | datastores | |
 | `datastore_capacity_bytes`, `datastore_free_bytes`, `datastore_used_percent` | | `datastore` |
 | `datastore_accessible` | 1 accessible, 0 inaccessible | `datastore` |
