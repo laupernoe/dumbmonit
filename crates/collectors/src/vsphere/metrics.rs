@@ -199,7 +199,25 @@ fn vm_samples(vm: &ObjectContent, name: &str, ts_ms: i64) -> Vec<Sample> {
     {
         out.push(gauge("vsphere_vm_tools_status", tools, ts_ms).with_label("vm", name));
     }
+    // L'adresse principale vue par VMware Tools, VM allumée seulement : la
+    // boucle locale et le lien local n'identifient aucune machine.
+    if power == Some(0.0)
+        && let Some(ip) = vm.text("guest.ipAddress").and_then(guest_ip)
+    {
+        let sample = gauge("vsphere_vm_ip_info", 1.0, ts_ms).with_label("vm", name);
+        out.push(sample.with_label("ip", ip));
+    }
     out
+}
+
+/// Une adresse d'invité utile : ni vide, ni boucle locale, ni lien local.
+fn guest_ip(text: &str) -> Option<String> {
+    let ip: std::net::IpAddr = text.trim().parse().ok()?;
+    let link_local = match ip {
+        std::net::IpAddr::V4(v4) => v4.is_link_local(),
+        std::net::IpAddr::V6(v6) => v6.is_unicast_link_local(),
+    };
+    (!ip.is_loopback() && !ip.is_unspecified() && !link_local).then(|| ip.to_string())
 }
 
 fn datastore_samples(ds: &ObjectContent, name: &str, ts_ms: i64) -> Vec<Sample> {
@@ -353,6 +371,31 @@ mod tests {
             3.0
         );
         assert!(find(&samples, "vsphere_vm_tools_status", "vm", "DC0_H0_VM1").is_none());
+    }
+
+    #[test]
+    fn ladresse_dune_vm_allumee_est_publiee() {
+        let vm = |power: &str, ip: &str| ObjectContent {
+            obj: soap::MoRef { kind: "VirtualMachine".into(), id: "vm-1".into() },
+            props: BTreeMap::from([
+                ("runtime.powerState".to_string(), power.to_string()),
+                ("guest.ipAddress".to_string(), ip.to_string()),
+            ]),
+            missing: Vec::new(),
+        };
+        let ip = |samples: Vec<Sample>| {
+            samples
+                .into_iter()
+                .find(|s| s.metric == "vsphere_vm_ip_info")
+                .map(|s| s.labels["ip"].clone())
+        };
+        let seen = |power: &str, address: &str| ip(vm_samples(&vm(power, address), "web", 0));
+        assert_eq!(seen("poweredOn", "10.0.0.7").as_deref(), Some("10.0.0.7"));
+        assert_eq!(seen("poweredOn", "2001:db8::7").as_deref(), Some("2001:db8::7"));
+        assert_eq!(seen("poweredOff", "10.0.0.7"), None, "VM éteinte");
+        assert_eq!(seen("poweredOn", "169.254.1.2"), None);
+        assert_eq!(seen("poweredOn", "fe80::1"), None);
+        assert_eq!(seen("poweredOn", ""), None, "sans VMware Tools");
     }
 
     #[test]

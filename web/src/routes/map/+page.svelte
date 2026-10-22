@@ -183,6 +183,7 @@
 				subnet: n.subnet,
 				vlan: n.vlan,
 				vlanName: n.vlan_name,
+				ips: n.ips ?? [],
 				state:
 					n.target_id === null
 						? n.kind === 'pve_node'
