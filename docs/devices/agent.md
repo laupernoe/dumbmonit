@@ -268,6 +268,10 @@ which is the choice you make when you create a token.
     There is no native ARM64 build: on Windows 11 for ARM, the script installs
     the x86_64 binary, which runs under x64 emulation.
 
+    For a whole Windows domain, deploy the agent with one group policy instead of
+    running the command on each server: see
+    [Deploy the agent with Active Directory](agent-active-directory.md).
+
 One token can enrol several machines: name it after a group or a machine.
 
 ### Native binaries

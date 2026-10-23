@@ -38,9 +38,9 @@ pub use modules::AgentServiceCollector;
 pub use policy::spawn_policy_scheduler;
 pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, ingest};
 pub use store::{
-    HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, TokenPolicy, TokenRecord, allow_rebind,
-    authorise_key, clean_site, create_token, host, list_hosts, list_tokens, revoke_token,
-    set_relay_wanted, set_token_relay,
+    HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, TokenPolicy, TokenRecord, ad_folder,
+    allow_rebind, authorise_key, clean_ad_domain, clean_site, close_enrolment, create_token, host,
+    list_hosts, list_tokens, revoke_token, set_relay_wanted, set_token_ad_domain, set_token_relay,
 };
 
 /// Vérifie un en-tête `Authorization` d'agent et renvoie l'identifiant du jeton.

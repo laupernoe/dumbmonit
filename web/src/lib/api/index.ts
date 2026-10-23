@@ -29,6 +29,8 @@ import type {
 	ChannelPayload,
 	ChannelTestReport,
 	CreatedAgentToken,
+	AdKitPayload,
+	CreatedAdKit,
 	AuthStatus,
 	CreateUserPayload,
 	LdapConfig,
@@ -657,6 +659,16 @@ export function listAgentTokens(signal?: AbortSignal): Promise<AgentToken[]> {
  */
 export function createAgentToken(payload: AgentTokenPayload): Promise<CreatedAgentToken> {
 	return request<CreatedAgentToken>('/agent/tokens', { method: 'POST', body: payload });
+}
+
+/** Creates a fleet token and the script that deploys the agent through a GPO. */
+export function createAdKit(payload: AdKitPayload): Promise<CreatedAdKit> {
+	return request<CreatedAdKit>('/agent/ad-kit', { method: 'POST', body: payload });
+}
+
+/** Stops new enrolments with this token; machines already enrolled keep reporting. */
+export function closeAgentToken(id: number): Promise<void> {
+	return request<void>(`/agent/tokens/${id}/close`, { method: 'POST' });
 }
 
 export function revokeAgentToken(id: number): Promise<void> {
