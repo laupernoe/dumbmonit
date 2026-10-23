@@ -9,14 +9,15 @@
 	 * once, right after creation, together with the install commands. After
 	 * that only its prefix is ever displayed.
 	 */
-	import { ArrowRight, Cpu, KeyRound, Lock, RadioTower } from 'lucide-svelte';
+	import { ArrowRight, Cpu, KeyRound, Lock, OctagonX, RadioTower } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
+	import { closeAgentToken, createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
 	import { listRelays } from '#lib/api/relay.js';
 	import { displayState, formatDateTime, formatRelative, parseServerDate, STATE_LABEL, STATE_TONE, type TargetState } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, CopyBlock, Disclosure, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import AgentChecksums from '#lib/components/device-form/AgentChecksums.svelte';
 	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
 	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
@@ -187,6 +188,23 @@
 		return token.expires_at !== null && new Date(token.expires_at + 'Z') <= new Date();
 	}
 
+	// --- Stop enrolments (Active Directory tokens) ---------------------------
+
+	let stopping = $state<number | null>(null);
+
+	async function stopEnrolments(token: AgentToken) {
+		stopping = token.id;
+		revokeError = null;
+		try {
+			await closeAgentToken(token.id);
+			tokens = await listAgentTokens();
+		} catch (cause) {
+			revokeError = { id: token.id, cause };
+		} finally {
+			stopping = null;
+		}
+	}
+
 	// --- Revoke ---------------------------------------------------------------
 
 	let revoking = $state<number | null>(null);
@@ -275,6 +293,7 @@
 						{m.settings_agents_watch_remote()}
 						<ArrowRight class="size-3.5" aria-hidden="true" />
 					</Button>
+					<AdDeployWizard onchange={() => void load()} />
 				</div>
 			{/if}
 		</div>
@@ -408,6 +427,7 @@
 										<span class={`font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{token.prefix}…</code>
 										{#if revoked}<Plate tone="ghost" label={m.settings_agents_revoked()} />{/if}
+										{#if token.ad_domain}<Plate tone="info" label={m.settings_agents_ad_badge({ domain: token.ad_domain })} />{/if}
 										{#if !revoked}
 											<Plate tone={token.max_uses === null ? 'info' : 'ghost'} label={scopeLabel(token)} />
 											{#if spent(token)}<Plate tone="advisory" label={m.settings_agents_enrols_no_more()} />{/if}
@@ -429,6 +449,11 @@
 										</p>
 									{/if}
 								</div>
+								{#if !revoked && auth.isAdmin && token.ad_domain && !spent(token)}
+									<Confirm variant="secondary" confirmLabel={m.settings_agents_ad_token_stop_confirm()} loading={stopping === token.id} onconfirm={() => stopEnrolments(token)}>
+										<OctagonX class="size-4" aria-hidden="true" />{m.settings_agents_ad_token_stop()}
+									</Confirm>
+								{/if}
 								{#if !revoked && auth.isAdmin}
 									<Confirm confirmLabel={m.settings_agents_revoke_confirm()} loading={revoking === token.id} onconfirm={() => revoke(token)}>{m.settings_agents_revoke()}</Confirm>
 								{/if}

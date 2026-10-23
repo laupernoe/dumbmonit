@@ -248,6 +248,8 @@ pub struct TokenView {
     /// Jeton de relais : la machine enrôlée devient relais de son site.
     pub relay: bool,
     pub relay_site: Option<String>,
+    /// Jeton de flotte Active Directory : domaine auquel il est limité.
+    pub ad_domain: Option<String>,
 }
 
 impl From<agent::TokenRecord> for TokenView {
@@ -264,6 +266,7 @@ impl From<agent::TokenRecord> for TokenView {
             expires_at: record.expires_at,
             relay: record.relay,
             relay_site: record.relay_site,
+            ad_domain: record.ad_domain,
         }
     }
 }

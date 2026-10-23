@@ -287,6 +287,10 @@ vous créez un jeton.
     Il n'y a pas de build ARM64 natif : sur Windows 11 pour ARM, le script
     installe le binaire x86_64, qui tourne sous émulation x64.
 
+    Pour tout un domaine Windows, déployez l'agent avec une seule stratégie de
+    groupe plutôt que de lancer la commande sur chaque serveur : voir
+    [Déployer l'agent avec Active Directory](agent-active-directory.md).
+
 Un jeton peut enrôler plusieurs machines : nommez-le d'après un groupe ou
 une machine.
 

@@ -3096,6 +3096,53 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tokens/{id}/close:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: closeAgentToken
+      tags: [Agents]
+      summary: Stop new enrolments with a token
+      description: >-
+        Administrator only. Moves the enrolment deadline to now: machines already
+        enrolled with the token keep reporting, unlike a revocation.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Enrolments closed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/agent/ad-kit:
+    post:
+      operationId: createAgentAdKit
+      tags: [Agents]
+      summary: Create an Active Directory deployment kit
+      description: >-
+        Administrator only. Creates a reusable enrolment token limited to an Active
+        Directory domain (machines must report a fully qualified name in it, and are
+        filed in the folder "Active Directory <domain>" with the tag `ad`), and returns
+        `Deploy-DumbMonit.ps1`, to run once on a domain controller: it creates a group
+        policy that installs the agent on the servers of the chosen OU. The token is
+        shown this time only, and the script carries it.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentAdKitCreate" }
+      responses:
+        "201":
+          description: Token and deployment script.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedAgentAdKit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/agent/install:
     get:
       operationId: getAgentInstallParams
@@ -6523,6 +6570,7 @@ components:
         expires_at: { type: [string, "null"], description: Enrolments stop after it; enrolled machines keep reporting. }
         relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
         relay_site: { type: [string, "null"] }
+        ad_domain: { type: [string, "null"], description: Active Directory fleet token - enrols only fully qualified names in this domain. }
     AgentInstallParams:
       type: object
       required: [base_url, checksums, linux_template, windows_template]
@@ -6590,6 +6638,28 @@ components:
             secret: { type: string, description: Shown once. }
             install_linux: { type: string }
             install_windows: { type: string }
+    AgentAdKitCreate:
+      type: object
+      required: [domain]
+      properties:
+        domain: { type: string, description: 'DNS name of the domain, e.g. corp.example.com.' }
+        base_url: { type: string, description: The URL servers will use; the listen address by default. }
+        max_uses: { type: [integer, "null"], minimum: 1, description: Servers it may enrol; unlimited when absent. }
+        expires_in_days: { type: [integer, "null"], minimum: 1, default: 30 }
+        target_ou: { type: [string, "null"], maxLength: 512, description: Distinguished name of the OU to link the group policy to. }
+        include_domain_controllers: { type: boolean, default: false }
+        security_group: { type: [string, "null"], maxLength: 512, description: Only members of this group apply the group policy. }
+        sysvol_binary: { type: boolean, default: false, description: Also copy the agent binary to SYSVOL for servers without outbound access. }
+    CreatedAgentAdKit:
+      type: object
+      required: [token, secret, script, filename, folder, install_windows]
+      properties:
+        token: { $ref: "#/components/schemas/AgentToken" }
+        secret: { type: string, description: Shown once. }
+        script: { type: string, description: Content of Deploy-DumbMonit.ps1 (UTF-8 with a byte order mark). }
+        filename: { type: string }
+        folder: { type: string, description: Folder the enrolled servers are filed in. }
+        install_windows: { type: string }
 
     # -------------------------------------------------- types d'équipement
     KindDescription:
