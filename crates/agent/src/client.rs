@@ -1,15 +1,18 @@
 //! Envoi des lots au serveur DumbMonit.
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 use std::time::Duration;
 
 use anyhow::{Context, Result};
 use dumbmonit_proto::{
-    AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AgentCommand, COMMANDS_PATH, CommandReport, INGEST_PATH,
-    ProbeOutcome, PushAck, PushBatch, RELAY_PATH,
+    AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_TLS_HEADER, AgentCommand, CERT_REFUSED,
+    COMMANDS_PATH, CommandReport, INGEST_PATH, ProbeOutcome, PushAck, PushBatch, RELAY_PATH,
+    TLS_ENROL_PATH, TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest,
 };
 use tokio::sync::Notify;
+
+use crate::tls::{self, Pins};
 
 /// Ce qui peut arriver à un envoi, et surtout ce qu'il faut en faire.
 ///
@@ -33,6 +36,9 @@ pub enum PushError {
     /// Corps trop gros pour un intermédiaire (413). Le lot n'est pas fautif,
     /// sa taille si : on le garde, et on réessaie par morceaux plus petits.
     TooLarge(String),
+    /// Certificat client refusé par le canal chiffré (révoqué, machine
+    /// supprimée) : l'agent l'abandonne et se réenrôle avec son jeton.
+    CertificateRefused,
     /// Le serveur a compris et refusé. Réessayer à l'identique est sans espoir.
     Rejected { status: u16, message: String },
 }
@@ -54,16 +60,32 @@ impl std::fmt::Display for PushError {
                 write!(f, "batch too large for the server or a proxy: {message}")
             }
             Self::Rejected { status, message } => write!(f, "batch rejected ({status}): {message}"),
+            Self::CertificateRefused => write!(f, "agent certificate refused by the server"),
         }
     }
 }
 
-#[derive(Clone)]
-pub struct PushClient {
+/// Le chemin vers le serveur : client HTTP et racine des URL.
+struct Channel {
     http: reqwest::Client,
     /// Racine du serveur, sans barre oblique finale.
     base_url: String,
-    url: String,
+    /// Vrai sur le canal chiffré (TLS 1.3, autorité épinglée).
+    encrypted: bool,
+}
+
+#[derive(Clone)]
+pub struct PushClient {
+    /// Canal courant, partagé par toutes les copies du client : quand l'agent
+    /// passe au canal chiffré ou renouvelle son certificat, la boucle des
+    /// commandes et celle du relais suivent à la requête suivante.
+    channel: Arc<RwLock<Arc<Channel>>>,
+    timeout: Duration,
+    /// Empreintes épinglées, lues par le vérificateur TLS à chaque poignée de
+    /// main ; tenues à jour par l'annonce du serveur sur le canal chiffré.
+    pins: Pins,
+    /// Dernière annonce du canal chiffré reçue du serveur.
+    offer: Arc<Mutex<Option<TlsOffer>>>,
     token: String,
     /// Secret de liaison de cette machine, s'il en a un.
     ///
@@ -88,25 +110,132 @@ impl PushClient {
         secret: Option<String>,
         timeout: Duration,
     ) -> Result<Self> {
-        let http = reqwest::Client::builder()
-            .timeout(timeout)
-            // Le socket est réutilisé d'un envoi au suivant : sur un lien distant,
-            // rétablir TLS toutes les trente secondes coûterait plus cher que la
-            // collecte elle-même.
-            .pool_idle_timeout(Duration::from_secs(300))
-            .user_agent(concat!("dumbmonit-agent/", env!("CARGO_PKG_VERSION")))
-            .build()
-            .context("building the HTTP client")?;
-
-        Ok(Self {
-            http,
+        let channel = Channel {
+            http: http_client(timeout, None)?,
             base_url: server_url.trim_end_matches('/').to_string(),
-            url: ingest_url(server_url),
+            encrypted: false,
+        };
+        Ok(Self {
+            channel: Arc::new(RwLock::new(Arc::new(channel))),
+            timeout,
+            pins: Arc::new(RwLock::new(Vec::new())),
+            offer: Arc::new(Mutex::new(None)),
             token: token.to_string(),
             secret: Arc::new(RwLock::new(secret)),
             legacy_key: Arc::new(AtomicBool::new(false)),
             reachable: Arc::new(Notify::new()),
         })
+    }
+
+    /// Canal courant.
+    fn channel(&self) -> Arc<Channel> {
+        self.channel
+            .read()
+            .map(|channel| channel.clone())
+            .unwrap_or_else(|poisoned| poisoned.into_inner().clone())
+    }
+
+    /// Vrai une fois sur le canal chiffré.
+    pub fn is_encrypted(&self) -> bool {
+        self.channel().encrypted
+    }
+
+    /// Empreintes épinglées en ce moment.
+    pub fn pins(&self) -> Vec<String> {
+        self.pins.read().map(|pins| pins.clone()).unwrap_or_default()
+    }
+
+    /// Remplace les empreintes épinglées.
+    pub fn set_pins(&self, pins: Vec<String>) {
+        if let Ok(mut held) = self.pins.write() {
+            *held = pins;
+        }
+    }
+
+    /// Dernière annonce du canal chiffré, s'il y en a eu une.
+    pub fn offer(&self) -> Option<TlsOffer> {
+        self.offer.lock().ok().and_then(|offer| offer.clone())
+    }
+
+    /// Pose une annonce comme si le serveur l'avait envoyée (tests).
+    #[cfg(test)]
+    pub fn set_offer(&self, offer: TlsOffer) {
+        if let Ok(mut held) = self.offer.lock() {
+            *held = Some(offer);
+        }
+    }
+
+    /// Passe au canal chiffré : `url` du port des agents, certificat client
+    /// s'il y en a un. Plus aucune requête ne part en clair ensuite.
+    pub fn use_tls(&self, url: &str, identity: Option<(Vec<u8>, Vec<u8>)>) -> Result<()> {
+        let config = tls::client_config(self.pins.clone(), identity)?;
+        let channel = Channel {
+            http: http_client(self.timeout, Some(config))?,
+            base_url: url.trim_end_matches('/').to_string(),
+            encrypted: true,
+        };
+        if let Ok(mut held) = self.channel.write() {
+            *held = Arc::new(channel);
+        }
+        Ok(())
+    }
+
+    /// Lit l'annonce du canal chiffré d'une réponse. Sur le canal chiffré, le
+    /// serveur est authentifié : ses empreintes (rotation de l'autorité)
+    /// remplacent celles qu'on épinglait. En clair, l'annonce est seulement
+    /// gardée, pour la migration.
+    fn observe(&self, response: &reqwest::Response, encrypted: bool) {
+        let Some(offer) = response
+            .headers()
+            .get(AGENT_TLS_HEADER)
+            .and_then(|value| value.to_str().ok())
+            .and_then(TlsOffer::parse)
+        else {
+            return;
+        };
+        if encrypted {
+            self.set_pins(offer.pins.clone());
+        }
+        if let Ok(mut held) = self.offer.lock() {
+            *held = Some(offer);
+        }
+    }
+
+    /// Enrôlement sur le canal chiffré : la clé publique de cette machine
+    /// contre un certificat client. Le serveur est vérifié par `pins` ; le
+    /// jeton (et le secret de liaison s'il y en a un) ne part qu'à lui.
+    pub async fn enrol(
+        &self,
+        url: &str,
+        request: &TlsEnrolRequest,
+    ) -> Result<TlsCertificate, PushError> {
+        let config = tls::client_config(self.pins.clone(), None)
+            .map_err(|error| PushError::Transport(format!("{error:#}")))?;
+        let http = http_client(self.timeout, Some(config))
+            .map_err(|error| PushError::Transport(format!("{error:#}")))?;
+        let target = format!("{}{TLS_ENROL_PATH}", url.trim_end_matches('/'));
+        let response = self
+            .identified(http.post(target).bearer_auth(&self.token))
+            .json(request)
+            .send()
+            .await
+            .map_err(|error| self.transport(&error))?;
+        self.observe(&response, true);
+        self.read_json(response).await
+    }
+
+    /// Renouvellement sous le certificat en cours, avec une nouvelle clé.
+    pub async fn renew(&self, public_key: String) -> Result<TlsCertificate, PushError> {
+        let channel = self.channel();
+        let target = format!("{}{TLS_RENEW_PATH}", channel.base_url);
+        let response = self
+            .identified(channel.http.post(target).bearer_auth(&self.token))
+            .json(&TlsRenewRequest { public_key })
+            .send()
+            .await
+            .map_err(|error| self.transport(&error))?;
+        self.observe(&response, channel.encrypted);
+        self.read_json(response).await
     }
 
     /// Signal partagé « le serveur répond » : à attendre pendant une temporisation.
@@ -129,7 +258,8 @@ impl PushClient {
         key: &str,
         query: &str,
     ) -> reqwest::RequestBuilder {
-        let mut url = format!("{}{path}", self.base_url);
+        let channel = self.channel();
+        let mut url = format!("{}{path}", channel.base_url);
         let mut params: Vec<String> = Vec::new();
         if self.legacy_key.load(Ordering::Relaxed) {
             params.push(format!("key={}", percent_encode(key)));
@@ -142,7 +272,11 @@ impl PushClient {
             url.push_str(&params.join("&"));
         }
         self.identified(
-            self.http.request(method, url).bearer_auth(&self.token).header(AGENT_KEY_HEADER, key),
+            channel
+                .http
+                .request(method, url)
+                .bearer_auth(&self.token)
+                .header(AGENT_KEY_HEADER, key),
         )
     }
 
@@ -152,7 +286,9 @@ impl PushClient {
         &self,
         build: impl Fn() -> reqwest::RequestBuilder,
     ) -> Result<reqwest::Response, PushError> {
+        let encrypted = self.is_encrypted();
         let response = build().send().await.map_err(|error| self.transport(&error))?;
+        self.observe(&response, encrypted);
         if response.status() != reqwest::StatusCode::BAD_REQUEST
             || self.legacy_key.load(Ordering::Relaxed)
         {
@@ -192,17 +328,19 @@ impl PushClient {
     }
 
     /// URL effectivement appelée, pour la journalisation de démarrage.
-    pub fn url(&self) -> &str {
-        &self.url
+    pub fn url(&self) -> String {
+        ingest_url(&self.channel().base_url)
     }
 
     pub async fn send(&self, batch: &PushBatch) -> Result<PushAck, PushError> {
+        let channel = self.channel();
         let response = self
-            .identified(self.http.post(&self.url).bearer_auth(&self.token))
+            .identified(channel.http.post(ingest_url(&channel.base_url)).bearer_auth(&self.token))
             .json(batch)
             .send()
             .await
             .map_err(|error| self.transport(&error))?;
+        self.observe(&response, channel.encrypted);
 
         let status = response.status();
         if status.is_success() {
@@ -347,6 +485,9 @@ fn rejection_of(status: reqwest::StatusCode, body: &str) -> PushError {
     let message = extract_error_message(body);
 
     match status.as_u16() {
+        // Sur le canal chiffré, un 401 peut viser le certificat plutôt que le
+        // jeton : le serveur le dit par un message convenu.
+        401 if message == CERT_REFUSED => PushError::CertificateRefused,
         401 => PushError::Unauthorized,
         // 403 : le jeton est bon, mais pas cette machine-là. Le message du
         // serveur dit quoi faire — il est rendu tel quel dans les journaux.
@@ -364,6 +505,26 @@ fn rejection_of(status: reqwest::StatusCode, body: &str) -> PushError {
         400 | 404 if !from_server => PushError::Transport(format!("HTTP {status}: {message}")),
         other => PushError::Rejected { status: other, message },
     }
+}
+
+/// Client HTTP d'un canal : en clair ou derrière l'ancien mandataire tel que
+/// configuré, ou, avec `tls`, canal chiffré strict — HTTPS seulement, sans
+/// redirection.
+fn http_client(timeout: Duration, tls: Option<rustls::ClientConfig>) -> Result<reqwest::Client> {
+    let mut builder = reqwest::Client::builder()
+        .timeout(timeout)
+        // Le socket est réutilisé d'un envoi au suivant : sur un lien distant,
+        // rétablir TLS toutes les trente secondes coûterait plus cher que la
+        // collecte elle-même.
+        .pool_idle_timeout(Duration::from_secs(300))
+        .user_agent(concat!("dumbmonit-agent/", env!("CARGO_PKG_VERSION")));
+    if let Some(config) = tls {
+        builder = builder
+            .tls_backend_preconfigured(config)
+            .https_only(true)
+            .redirect(reqwest::redirect::Policy::none());
+    }
+    builder.build().context("building the HTTP client")
 }
 
 /// Construit l'URL d'ingestion à partir de la racine du serveur.

@@ -159,6 +159,8 @@ mod tests {
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 100,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
+            tls_url: None,
+            ca_pin: None,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }

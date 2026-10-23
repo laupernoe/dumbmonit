@@ -3143,6 +3143,128 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/agent/install:
+    get:
+      operationId: getAgentInstallParams
+      tags: [Agents]
+      summary: Parameters of the agent install command, without a token
+      description: >-
+        The single source of the install commands: web URL, URL and CA
+        fingerprint of the encrypted agent channel, binary checksums, and the
+        Unix and PowerShell commands with `{TOKEN}` to replace. Deployment
+        generators (GPO, Ansible) read this instead of rebuilding the command.
+      x-token-scope: read
+      parameters:
+        - name: base_url
+          in: query
+          required: false
+          schema: { type: string }
+          description: The URL machines reach this server at; the listen address by default.
+      responses:
+        "200":
+          description: Install parameters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentInstallParams" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/tls:
+    get:
+      operationId: getAgentChannel
+      tags: [Agents]
+      summary: State of the encrypted agent channel (admin only)
+      description: >-
+        TLS 1.3 with client certificates and X25519MLKEM768 key exchange on the
+        agent port. Lists the channel each agent last reported through.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setAgentChannel
+      tags: [Agents]
+      summary: Require the encrypted agent channel
+      description: >-
+        With `required`, agents reporting through the plain channel of the web
+        port are refused (up-to-date agents switch by themselves).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [required]
+              properties:
+                required: { type: boolean }
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/tls/rotation:
+    post:
+      operationId: startAgentCaRotation
+      tags: [Agents]
+      summary: Start rotating the agent certificate authority
+      description: >-
+        Creates the next authority. Agents pin it at their next encrypted
+        report; it signs nothing until the rotation is completed.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: cancelAgentCaRotation
+      tags: [Agents]
+      summary: Cancel a rotation of the agent certificate authority
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Rotation cancelled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/agent/tls/rotation/complete:
+    post:
+      operationId: completeAgentCaRotation
+      tags: [Agents]
+      summary: Complete a rotation of the agent certificate authority
+      description: >-
+        The next authority becomes active and signs the server certificate.
+        Agents that have not pinned it yet must be reinstalled.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/relays:
     get:
       operationId: listRelays
@@ -6615,6 +6737,53 @@ components:
         relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
         relay_site: { type: [string, "null"] }
         ad_domain: { type: [string, "null"], description: Active Directory fleet token - enrols only fully qualified names in this domain. }
+    AgentInstallParams:
+      type: object
+      required: [base_url, checksums, linux_template, windows_template]
+      properties:
+        base_url: { type: string, description: URL of the web port (install scripts and binaries). }
+        agent_url: { type: [string, "null"], description: "URL of the encrypted agent channel, `https://host:8443`." }
+        ca_pin: { type: [string, "null"], description: SHA-256 fingerprint of the agent certificate authority. }
+        checksums:
+          type: array
+          items:
+            type: object
+            required: [platform, sha256]
+            properties:
+              platform: { type: string }
+              sha256: { type: string }
+        linux_template: { type: string, description: "Unix install command; replace `{TOKEN}`." }
+        windows_template: { type: string, description: "PowerShell install command; replace `{TOKEN}`." }
+    AgentChannel:
+      type: object
+      required: [enabled, required, required_setting, protocol, key_exchange, agents]
+      properties:
+        enabled: { type: boolean, description: The agent port is open. }
+        port: { type: [integer, "null"] }
+        required: { type: boolean, description: The plain channel is refused right now. }
+        required_setting: { type: boolean }
+        legacy_until: { type: [string, "null"], description: End of the transition set by DUMBMONIT_AGENT_LEGACY_DAYS. }
+        protocol: { type: string }
+        key_exchange: { type: string }
+        ca_pin: { type: [string, "null"] }
+        rotation:
+          type: [object, "null"]
+          properties:
+            started_at: { type: [string, "null"] }
+            next_pin: { type: string }
+            ready: { type: integer }
+            total: { type: integer }
+        agents:
+          type: array
+          items:
+            type: object
+            required: [id, channel]
+            properties:
+              id: { type: integer, format: int64 }
+              channel: { type: string, enum: [mtls, legacy, none] }
+              group: { type: [string, "null"] }
+              tls_seen_at: { type: [string, "null"] }
+              legacy_seen_at: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
       required: [name]

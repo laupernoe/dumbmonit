@@ -34,6 +34,11 @@ use crate::commands::CommandRunner;
 use crate::config::{Config, MIN_INTERVAL_SECS};
 use crate::relay::RelayRunner;
 use crate::shutdown::Shutdown;
+use crate::tls::TlsState;
+
+/// Délai avant une nouvelle tentative d'enrôlement ou de renouvellement sur le
+/// canal chiffré, après un échec.
+const TLS_RETRY: Duration = Duration::from_secs(60);
 
 /// Première temporisation après un échec d'envoi.
 const BACKOFF_BASE: Duration = Duration::from_secs(2);
@@ -144,6 +149,16 @@ pub struct Agent {
     /// Début de la coupure en cours et dernière cause journalisée : la reprise
     /// dit combien de temps a duré la panne, un changement de cause est signalé.
     outage: Option<(Instant, String)>,
+    /// Canal chiffré : URL, empreintes, certificat. `None` tant que ni la
+    /// configuration ni le serveur n'en ont parlé (serveur antérieur).
+    tls: Option<TlsState>,
+    /// Où il est rangé, à côté du secret de liaison.
+    tls_path: std::path::PathBuf,
+    /// Pas de nouvelle tentative d'enrôlement ou de renouvellement avant.
+    tls_retry_at: Option<Instant>,
+    /// Vrai une fois un échec du canal chiffré signalé, pour ne le dire
+    /// qu'une fois par épisode.
+    tls_failed: bool,
 }
 
 impl Agent {
@@ -157,6 +172,20 @@ impl Agent {
             HTTP_TIMEOUT,
         )
         .context("preparing the push client")?;
+        let tls_path = crate::tls::beside(&config.secret_path);
+        let tls = initial_tls(&config, TlsState::load(&tls_path));
+        if let Some(state) = &tls {
+            client.set_pins(state.pins.clone());
+            if let Some(identity) = state.identity() {
+                client
+                    .use_tls(&state.url, Some(identity))
+                    .context("preparing the agent channel")?;
+            } else if state.locked || config.ca_pin.is_some() {
+                // Pas encore (ou plus) de certificat, mais l'agent ne parle
+                // qu'au canal chiffré : rien ne partira en clair d'ici là.
+                client.use_tls(&state.url, None).context("preparing the agent channel")?;
+            }
+        }
         let commands = CommandRunner::new(
             config.commands,
             client.clone(),
@@ -193,6 +222,10 @@ impl Agent {
             batch_limit: MAX_BATCH_SAMPLES,
             all_refused: false,
             outage: None,
+            tls,
+            tls_path,
+            tls_retry_at: None,
+            tls_failed: false,
             identity,
             client,
             config,
@@ -488,6 +521,14 @@ impl Agent {
 
     /// Envoie un lot prélevé dans le tampon.
     async fn flush(&mut self) -> FlushOutcome {
+        self.ensure_tls().await;
+        if self.tls_only() && !self.client.is_encrypted() {
+            // Jamais en clair une fois le canal chiffré exigé localement : les
+            // mesures attendent l'enrôlement.
+            return FlushOutcome::Failed(PushError::Transport(
+                "waiting for the encrypted agent channel (enrolment pending)".to_string(),
+            ));
+        }
         let samples = self.buffer.take(self.batch_limit);
         if samples.is_empty() {
             return FlushOutcome::Idle;
@@ -519,10 +560,23 @@ impl Agent {
                 self.adopt_relay(ack.relay);
                 FlushOutcome::Sent { count }
             }
+            Err(PushError::Forbidden(message)) if message == dumbmonit_proto::MTLS_REQUIRED => {
+                // L'ancien canal est fermé : l'annonce qui accompagne ce refus
+                // déclenche la migration au prochain tour.
+                self.buffer.restore(batch.samples);
+                self.tls_retry_at = None;
+                info!("the server requires the encrypted agent channel, switching");
+                FlushOutcome::Failed(PushError::Forbidden(message))
+            }
             Err(PushError::Forbidden(message)) => {
                 self.buffer.restore(batch.samples);
                 self.on_binding_refused(&message);
                 FlushOutcome::Failed(PushError::Forbidden(message))
+            }
+            Err(PushError::CertificateRefused) => {
+                self.buffer.restore(batch.samples);
+                self.on_certificate_refused();
+                FlushOutcome::Failed(PushError::CertificateRefused)
             }
             Err(PushError::TooLarge(message)) => {
                 if batch.inventory.is_some() {
@@ -560,6 +614,171 @@ impl Agent {
                 self.forget_inventory(batch.inventory.as_ref());
                 FlushOutcome::Sent { count }
             }
+        }
+    }
+
+    /// Vrai si rien ne doit plus partir en clair : empreinte donnée par la
+    /// commande d'installation, ou agent déjà enrôlé une fois.
+    fn tls_only(&self) -> bool {
+        self.config.ca_pin.is_some() || self.tls.as_ref().is_some_and(|state| state.locked)
+    }
+
+    /// Met le canal chiffré en place, ou le maintient : migration depuis
+    /// l'ancien canal sur l'annonce du serveur, enrôlement, renouvellement,
+    /// empreintes tenues à jour.
+    async fn ensure_tls(&mut self) {
+        if self.tls.is_none() {
+            // Un serveur à jour annonce son canal chiffré sur l'ancien : un
+            // agent installé avant migre de lui-même, en épinglant l'autorité
+            // annoncée (confiance au premier usage).
+            let Some(offer) = self.client.offer() else { return };
+            let url = self.config.tls_url.clone().or_else(|| {
+                dumbmonit_proto::agent_channel_url(&self.config.server_url, offer.port)
+            });
+            let Some(url) = url else { return };
+            info!(url, "the server offers an encrypted agent channel, enrolling");
+            self.client.set_pins(offer.pins.clone());
+            self.tls = Some(TlsState::new(url, offer.pins));
+        }
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        if self.client.is_encrypted() {
+            self.adopt_pins();
+        }
+        if self.tls_retry_at.is_some_and(|at| Instant::now() < at) {
+            return;
+        }
+        let Some(state) = self.tls.clone() else { return };
+        if state.usable(now_ms) {
+            if state.needs_renewal(now_ms) {
+                self.renew_certificate().await;
+            }
+            return;
+        }
+        self.enrol_tls(state).await;
+    }
+
+    /// Range les empreintes que le serveur vient d'annoncer sur le canal
+    /// chiffré (rotation de l'autorité).
+    fn adopt_pins(&mut self) {
+        let pins = self.client.pins();
+        let Some(state) = self.tls.as_mut() else { return };
+        if pins.is_empty() || pins == state.pins {
+            return;
+        }
+        info!(pins = pins.join(","), "pinned server authorities updated");
+        state.pins = pins;
+        if state.locked
+            && let Err(error) = state.save(&self.tls_path)
+        {
+            warn!(error = %format!("{error:#}"), "cannot store the encrypted channel state");
+        }
+    }
+
+    /// Enrôlement : une clé neuve, le jeton (et le secret de liaison), un
+    /// certificat en retour.
+    async fn enrol_tls(&mut self, mut state: TlsState) {
+        let (public_key, key) = match crate::tls::new_key() {
+            Ok(pair) => pair,
+            Err(error) => {
+                warn!(error = %format!("{error:#}"), "cannot generate the agent key");
+                self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
+                return;
+            }
+        };
+        let request =
+            dumbmonit_proto::TlsEnrolRequest { identity: self.identity.clone(), public_key };
+        match self.client.enrol(&state.url, &request).await {
+            Ok(issued) => {
+                if let Some(secret) = issued.agent_secret.clone() {
+                    self.adopt_binding(Some(secret), true);
+                }
+                self.adopt_certificate(&mut state, issued, &key);
+                info!(url = state.url, "enrolled on the encrypted agent channel (TLS 1.3, mTLS)");
+            }
+            Err(error) => {
+                if let PushError::Forbidden(message) = &error {
+                    self.on_binding_refused(message);
+                }
+                self.note_tls_failure("enrolment on the encrypted agent channel failed", &error);
+            }
+        }
+    }
+
+    /// Renouvellement sous le certificat en cours, avec une clé neuve.
+    async fn renew_certificate(&mut self) {
+        let Some(mut state) = self.tls.clone() else { return };
+        let (public_key, key) = match crate::tls::new_key() {
+            Ok(pair) => pair,
+            Err(error) => {
+                warn!(error = %format!("{error:#}"), "cannot generate the agent key");
+                self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
+                return;
+            }
+        };
+        match self.client.renew(public_key).await {
+            Ok(issued) => {
+                self.adopt_certificate(&mut state, issued, &key);
+                info!("agent certificate renewed");
+            }
+            Err(PushError::CertificateRefused) => self.on_certificate_refused(),
+            Err(error) => self.note_tls_failure("agent certificate renewal failed", &error),
+        }
+    }
+
+    /// Range un certificat reçu et bascule le client dessus.
+    fn adopt_certificate(
+        &mut self,
+        state: &mut TlsState,
+        issued: dumbmonit_proto::TlsCertificate,
+        key: &[u8],
+    ) {
+        use base64::Engine as _;
+        state.certificate = Some(issued.certificate);
+        state.key = Some(base64::engine::general_purpose::STANDARD.encode(key));
+        state.not_after_ms = Some(issued.not_after_ms);
+        if !issued.pins.is_empty() {
+            state.pins = issued.pins;
+        }
+        state.locked = true;
+        self.client.set_pins(state.pins.clone());
+        if let Err(error) = state.save(&self.tls_path) {
+            // Gardé en mémoire : l'agent marche, mais se réenrôlera au prochain
+            // démarrage.
+            warn!(error = %format!("{error:#}"), "cannot store the encrypted channel state");
+        }
+        if let Err(error) = self.client.use_tls(&state.url, state.identity()) {
+            warn!(error = %format!("{error:#}"), "cannot switch to the encrypted agent channel");
+        }
+        self.tls = Some(state.clone());
+        self.tls_retry_at = None;
+        self.tls_failed = false;
+    }
+
+    /// Le serveur ne reconnaît plus notre certificat (machine supprimée,
+    /// certificat remplacé) : on l'oublie, et on se réenrôle avec le jeton.
+    fn on_certificate_refused(&mut self) {
+        let Some(state) = self.tls.as_mut() else { return };
+        if state.certificate.is_none() {
+            return;
+        }
+        warn!("the server no longer accepts this agent certificate, enrolling again");
+        state.drop_certificate();
+        if let Err(error) = state.save(&self.tls_path) {
+            warn!(error = %format!("{error:#}"), "cannot store the encrypted channel state");
+        }
+        if let Err(error) = self.client.use_tls(&state.url, None) {
+            warn!(error = %format!("{error:#}"), "cannot reset the encrypted agent channel");
+        }
+        self.tls_retry_at = None;
+    }
+
+    fn note_tls_failure(&mut self, what: &str, error: &PushError) {
+        self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
+        if self.tls_failed {
+            debug!(%error, "{what}");
+        } else {
+            self.tls_failed = true;
+            warn!(%error, retry_in_s = TLS_RETRY.as_secs(), "{what}");
         }
     }
 
@@ -718,6 +937,38 @@ impl Agent {
     }
 }
 
+/// Canal chiffré au démarrage : l'état rangé, confronté à la configuration.
+///
+/// Une empreinte donnée par la commande d'installation qui ne figure pas dans
+/// l'état rangé, c'est une réinstallation vers un autre serveur (ou une autre
+/// autorité) : on repart d'elle.
+fn initial_tls(config: &Config, stored: Option<TlsState>) -> Option<TlsState> {
+    let configured_url = || {
+        config.tls_url.clone().or_else(|| {
+            dumbmonit_proto::agent_channel_url(
+                &config.server_url,
+                dumbmonit_proto::DEFAULT_AGENT_TLS_PORT,
+            )
+        })
+    };
+    match (stored, &config.ca_pin) {
+        (Some(mut state), Some(pin)) if state.pins.contains(pin) => {
+            if let Some(url) = config.tls_url.clone() {
+                state.url = url;
+            }
+            Some(state)
+        }
+        (_, Some(pin)) => Some(TlsState::new(configured_url()?, vec![pin.clone()])),
+        (Some(mut state), None) => {
+            if let Some(url) = config.tls_url.clone() {
+                state.url = url;
+            }
+            Some(state)
+        }
+        (None, None) => None,
+    }
+}
+
 #[derive(Debug)]
 enum FlushOutcome {
     /// Rien à envoyer.
@@ -764,6 +1015,8 @@ mod tests {
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
+            tls_url: None,
+            ca_pin: None,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }
@@ -999,6 +1252,99 @@ mod tests {
         config.server_url = url.to_string();
         config.secret_path = dir.path().join("agent-secret");
         Agent::new(config).expect("agent")
+    }
+
+    const PIN: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    /// Un port local fermé : rien n'y répond.
+    fn closed_port() -> u16 {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.local_addr().unwrap().port()
+    }
+
+    #[tokio::test]
+    async fn with_a_pinned_server_nothing_is_ever_sent_in_clear() {
+        // L'agent installé avec l'empreinte n'a pas encore pu s'enrôler (port
+        // des agents injoignable) : ses mesures attendent, elles ne partent pas
+        // en clair vers l'ancien canal pour autant.
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let mut config = config();
+        config.server_url = url;
+        config.secret_path = dir.path().join("agent-secret");
+        config.tls_url = Some(format!("https://127.0.0.1:{}", closed_port()));
+        config.ca_pin = Some(PIN.to_string());
+        let mut agent = Agent::new(config).expect("agent");
+        assert!(agent.client.is_encrypted(), "le client ne connaît plus que le canal chiffré");
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert!(!agent.buffer.is_empty(), "les mesures sont gardées");
+        assert!(calls.all().is_empty(), "rien n'est parti en clair : {:?}", calls.lines());
+    }
+
+    #[tokio::test]
+    async fn an_agent_migrating_from_the_plain_channel_keeps_reporting_until_enrolled() {
+        // Annonce reçue sur l'ancien canal, port des agents fermé : l'agent
+        // tente l'enrôlement, échoue, et continue par l'ancien canal — il n'a
+        // encore jamais été enrôlé, rien ne l'en empêche.
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        agent.client.set_offer(dumbmonit_proto::TlsOffer {
+            port: closed_port(),
+            pins: vec![PIN.to_string()],
+        });
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        let state = agent.tls.clone().expect("canal adopté");
+        assert!(state.url.starts_with("https://127.0.0.1:"), "{state:?}");
+        assert_eq!(state.pins, [PIN]);
+        assert!(!state.locked);
+        assert_eq!(calls.count("POST", "/api/ingest"), 1);
+        assert!(agent.tls_retry_at.is_some(), "nouvel essai d'enrôlement plus tard");
+    }
+
+    #[tokio::test]
+    async fn once_enrolled_an_agent_never_falls_back_to_the_plain_channel() {
+        // Un état rangé verrouillé (déjà enrôlé une fois), certificat perdu :
+        // l'agent doit se réenrôler, pas reparler en clair.
+        let dir = tempfile::tempdir().unwrap();
+        let mut state =
+            TlsState::new(format!("https://127.0.0.1:{}", closed_port()), vec![PIN.into()]);
+        state.locked = true;
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert!(calls.all().is_empty(), "{:?}", calls.lines());
+    }
+
+    #[test]
+    fn a_new_pin_in_the_install_command_replaces_the_stored_channel() {
+        let mut stored = TlsState::new("https://ancien:8443".into(), vec!["f".repeat(64)]);
+        stored.certificate = Some("Y2VydA==".into());
+        stored.locked = true;
+        let mut config = config();
+        config.server_url = "http://serveur:8080".into();
+        config.ca_pin = Some(PIN.to_string());
+        let state = initial_tls(&config, Some(stored.clone())).expect("canal");
+        assert_eq!(state.pins, [PIN]);
+        assert_eq!(state.certificate, None, "autre serveur : on repart de zéro");
+        assert_eq!(state.url, "https://serveur:8443");
+
+        // La même empreinte : l'état rangé est gardé tel quel.
+        config.ca_pin = Some("f".repeat(64));
+        assert_eq!(initial_tls(&config, Some(stored.clone())), Some(stored));
+        // Ni configuration ni état : pas de canal chiffré (serveur antérieur).
+        config.ca_pin = None;
+        assert_eq!(initial_tls(&config, None), None);
     }
 
     #[tokio::test]

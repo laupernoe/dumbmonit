@@ -18,7 +18,8 @@ séries temporelles.
 - Docker Engine avec le plugin Compose (`docker compose version` fonctionne).
 - Une machine qui peut joindre les surveillances à surveiller. Elle n'a pas besoin d'être
   joignable depuis eux, sauf pour les [agents](../devices/agent.md), qui poussent
-  leurs mesures vers le serveur en HTTP.
+  leurs mesures vers le serveur par son port agents chiffré (TCP 8443, voir
+  [Sécurité du canal des agents](agent-security.md)).
 - Le port `8080` libre sur l'hôte, ou un autre port de votre choix ([voir plus bas](#advanced-options)).
 
 ## Le fichier Compose {#the-compose-file}
@@ -32,6 +33,8 @@ services:
     image: ghcr.io/laupernoe/dumbmonit:latest
     ports:
       - "8080:8080"
+      # Encrypted agent channel: see Agent channel security.
+      - "8443:8443"
     volumes:
       - dumbmonit-data:/data
       # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:

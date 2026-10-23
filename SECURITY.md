@@ -95,6 +95,11 @@ In scope, roughly in order of how much we care:
   from before the rename), `/api/ingest`, `install.sh` /
   `install.ps1`, the binaries served under `/download/…`, and anything a
   malicious agent or a spoofed server could do to the other side.
+- **Encrypted agent channel** — the agent port (TLS 1.3, X25519MLKEM768, client
+  certificates), the internal certificate authority and its rotation,
+  enrolment and renewal, certificate pinning on the agent, revocation, and any
+  way to downgrade an agent to the plain channel. See
+  [Agent channel security](docs/install/agent-security.md).
 - **Outbound requests** — SSRF through device addresses, notification webhooks
   or the VictoriaMetrics proxy; TLS verification of integrations.
 - **Injection** — SQL, MetricsQL, notification templates, the SNMP and HTTP
@@ -110,7 +115,11 @@ without a demonstrated impact.
 ## Hardening notes for operators
 
 - Put DumbMonit behind a reverse proxy with TLS if it is reachable from outside
-  the network it monitors; the built-in server speaks plain HTTP.
+  the network it monitors; the built-in web server speaks plain HTTP. Agents on
+  other networks only need the encrypted agent port (TCP 8443, TLS 1.3 with
+  client certificates): publish that one, keep the web port private, and turn
+  on *Require the encrypted channel* in Settings → Agents once every agent
+  reports encrypted.
 - Create the first admin right after the first start (or after
   `DUMBMONIT_RESET_PASSWORD=1`): until then the API refuses everything but
   the setup routes, but whoever reaches the port first can create the account.

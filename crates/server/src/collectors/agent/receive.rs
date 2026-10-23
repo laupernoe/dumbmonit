@@ -7,8 +7,8 @@
 use std::collections::BTreeMap;
 
 use dumbmonit_proto::{
-    MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION, PushAck,
-    PushBatch, Sample, SoftwareInventory, Target,
+    AgentIdentity, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION,
+    PushAck, PushBatch, Sample, SoftwareInventory, Target,
 };
 use sqlx::SqlitePool;
 
@@ -69,6 +69,30 @@ impl<E: Into<anyhow::Error>> From<E> for IngestError {
     fn from(error: E) -> Self {
         Self::Internal(error.into())
     }
+}
+
+/// Enrôlement sur le canal chiffré : même contrôle qu'un premier lot (jeton,
+/// liaison), sans mesure. Rend la machine, créée au besoin, et le secret de
+/// liaison si celui-ci vient d'être attribué.
+pub async fn enrol(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    bearer: Option<&str>,
+    agent_secret: Option<&str>,
+    identity: &AgentIdentity,
+) -> Result<store::Registration, IngestError> {
+    if identity.hostname.trim().is_empty() {
+        return Err(IngestError::BadRequest("The host name is required.".to_string()));
+    }
+    let presented = token::extract_bearer(bearer).ok_or(IngestError::Unauthorized)?;
+    let token_id = store::find_active_token(pool, &token::fingerprint(presented))
+        .await?
+        .ok_or(IngestError::Unauthorized)?;
+    let registration =
+        store::register(pool, cipher, identity, token_id, token::extract_secret(agent_secret))
+            .await?;
+    store::touch_token(pool, token_id).await?;
+    Ok(registration)
 }
 
 /// Accepte un lot : vérifie le jeton, rattache la machine, range les mesures.

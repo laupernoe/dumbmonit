@@ -9,7 +9,7 @@
 	 * once, right after creation, together with the install commands. After
 	 * that only its prefix is ever displayed.
 	 */
-	import { ArrowRight, Cpu, KeyRound, OctagonX, RadioTower } from 'lucide-svelte';
+	import { ArrowRight, Cpu, KeyRound, Lock, OctagonX, RadioTower } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { closeAgentToken, createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
 	import { listRelays } from '#lib/api/relay.js';
@@ -21,6 +21,9 @@
 	import AgentChecksums from '#lib/components/device-form/AgentChecksums.svelte';
 	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
 	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
+	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
+	import { getAgentChannel } from '#lib/api/agent_tls.js';
+	import type { AgentChannelEntry, AgentChannelOverview } from '#lib/api/types.js';
 
 	// --- The agents themselves -----------------------------------------------
 
@@ -45,6 +48,29 @@
 		const seen = agent.last_seen_at ? parseServerDate(agent.last_seen_at) : null;
 		if (!seen) return 'pending';
 		return Date.now() - seen.getTime() < 3 * 60_000 ? 'online' : 'offline';
+	}
+
+	// --- The encrypted agent channel (administrators) --------------------------
+
+	/** `null` while unread, for non-administrators, or on an older server. */
+	let channel = $state<AgentChannelOverview | null>(null);
+	let channelError = $state<unknown>(null);
+
+	$effect(() => {
+		if (!auth.isAdmin) return;
+		const controller = new AbortController();
+		getAgentChannel(controller.signal)
+			.then((overview) => (channel = overview))
+			.catch((cause) => {
+				if (cause instanceof DOMException && cause.name === 'AbortError') return;
+				channelError = cause;
+			});
+		return () => controller.abort();
+	});
+
+	/** How an agent last reported, when the channel overview is known. */
+	function channelOf(id: number): AgentChannelEntry | undefined {
+		return channel?.agents.find((entry) => entry.id === id);
 	}
 
 	let tokens = $state<AgentToken[]>([]);
@@ -220,6 +246,7 @@
 				<ul class="grid gap-1.5" role="list" aria-label={m.settings_agents_list_aria()}>
 					{#each agents as agent (agent.id)}
 						{@const state = agentState(agent)}
+						{@const route = channelOf(agent.id)}
 						<li>
 							<a
 								href={`/targets/${agent.id}`}
@@ -228,6 +255,14 @@
 								<Led tone={STATE_TONE[state]} blink={state === 'offline' || state === 'down'} size="sm" />
 								<span class="min-w-0 truncate font-semibold text-ink">{agent.name}</span>
 								<Plate tone={STATE_TONE[state] === 'ghost' ? 'ghost' : STATE_TONE[state]} label={STATE_LABEL[state]} bare />
+								{#if route?.channel === 'mtls'}
+									<Plate tone="signal" title={m.settings_agents_tls_badge_title({ group: route.group ?? channel?.key_exchange ?? '' })}>
+										<Lock class="size-3.5" aria-hidden="true" />
+										{m.settings_agents_tls_badge()}
+									</Plate>
+								{:else if route?.channel === 'legacy'}
+									<Plate tone="advisory" label={m.settings_agents_tls_legacy()} title={m.settings_agents_tls_legacy_title()} />
+								{/if}
 								{#if agent.relay}
 									<Plate tone="info" title={m.settings_agents_relay_title()}>
 										<RadioTower class="size-3.5" aria-hidden="true" />
@@ -261,6 +296,14 @@
 					<AdDeployWizard onchange={() => void load()} />
 				</div>
 			{/if}
+		</div>
+	{/if}
+
+	{#if channel}
+		<AgentChannel bind:overview={channel} />
+	{:else if channelError}
+		<div class="border-b border-line px-5 py-4">
+			<ErrorNotice error={channelError} title={m.settings_agents_tls_load_error()} />
 		</div>
 	{/if}
 

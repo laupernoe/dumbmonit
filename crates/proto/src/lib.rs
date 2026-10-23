@@ -13,6 +13,7 @@ pub mod env;
 mod push;
 mod sample;
 mod target;
+mod tls;
 
 pub use collector::{Collector, ProbeError};
 pub use command::{
@@ -43,4 +44,10 @@ pub use sample::{MetricKind, Sample};
 pub use target::{
     EXPORTED_LABEL_PREFIX, MAX_TAG_LABEL_LEN, TAG_LABEL_PREFIX, Target, TargetId, apply_identity,
     looks_secret,
+};
+pub use tls::{
+    AGENT_TLS_HEADER, AGENT_TLS_SERVER_NAME, CERT_REFUSED, CLIENT_CERT_DAYS,
+    DEFAULT_AGENT_TLS_PORT, MTLS_REQUIRED, RENEW_BEFORE_DAYS, TLS_ENROL_PATH, TLS_RENEW_PATH,
+    TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest, agent_channel_url, is_pin,
+    normalise_pin,
 };

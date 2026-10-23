@@ -4,6 +4,7 @@ use std::time::{Duration, Instant};
 
 use sqlx::SqlitePool;
 
+use crate::agent_tls::AgentTls;
 use crate::collectors::Registry;
 use crate::collectors::discovery::Discovery;
 use crate::collectors::relay::RelayHub;
@@ -13,7 +14,7 @@ use crate::tsdb::{SampleSink, Victoria};
 
 /// État partagé par tous les gestionnaires HTTP et par le planificateur.
 #[derive(Clone)]
-pub struct AppState(Arc<Inner>, Arc<RelayHub>, Arc<Cooldowns>, Arc<Discovery>);
+pub struct AppState(Arc<Inner>, Arc<RelayHub>, Arc<Cooldowns>, Arc<Discovery>, Arc<AgentTls>);
 
 pub struct Inner {
     pub config: Config,
@@ -31,6 +32,7 @@ impl AppState {
             Arc::new(RelayHub::new()),
             Arc::new(Cooldowns::default()),
             Arc::new(Discovery::new()),
+            Arc::new(AgentTls::new()),
         )
     }
 
@@ -51,6 +53,12 @@ impl AppState {
     /// l'instance, comme le relais.
     pub fn discovery(&self) -> &Arc<Discovery> {
         &self.3
+    }
+
+    /// Canal chiffré des agents : configuration TLS courante, empreintes à
+    /// épingler, compteurs d'enrôlement (voir [`crate::agent_tls`]).
+    pub fn agent_tls(&self) -> &AgentTls {
+        &self.4
     }
 }
 
