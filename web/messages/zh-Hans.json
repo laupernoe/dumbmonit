@@ -3996,6 +3996,7 @@
 	"misc_nav_overview": "概览",
 	"misc_nav_palette_open": "打开命令面板",
 	"misc_nav_palette_title": "命令面板（{shortcut}）",
+	"misc_nav_security": "安全",
 	"misc_nav_settings": "设置",
 	"misc_nav_sign_out": "退出登录",
 	"misc_nav_wall": "墙屏模式",
@@ -4029,6 +4030,8 @@
 	"misc_palette_relay_detail": "由代理替此服务器探测另一个网络",
 	"misc_palette_results": "结果",
 	"misc_palette_scan": "扫描我的网络",
+	"misc_palette_security": "安全与 CVE",
+	"misc_palette_security_detail": "各设备的已知漏洞",
 	"misc_palette_security_score": "安全评分",
 	"misc_palette_security_score_detail": "开启或关闭每个监控项的安全评分",
 	"misc_palette_settings_section": "设置：{section}",
@@ -4822,6 +4825,155 @@
 	"scene_swiss_board_resolved": "已解决",
 	"scene_swiss_board_up": "已恢复上线",
 	"scene_swiss_board_warn": "晚点",
+	"security_cves_action_error": "无法保存更改。",
+	"security_cves_cancel": "取消",
+	"security_cves_card_all": "在“安全”页面查看全部",
+	"security_cves_card_clean": "此设备没有已知 CVE。",
+	"security_cves_card_title": "CVE",
+	"security_cves_count_exploited": "已被利用",
+	"security_cves_count_ignored": "已忽略",
+	"security_cves_count_patched": "已修复",
+	"security_cves_count_unknown": "待核查",
+	"security_cves_count_vulnerable": "存在漏洞",
+	"security_cves_cvss": "CVSS {score}",
+	"security_cves_disable": "关闭",
+	"security_cves_empty_clean_body": "DumbMonit 盘点到的内容目前没有匹配任何已知漏洞。",
+	"security_cves_empty_clean_title": "您的清单中没有已知 CVE",
+	"security_cves_empty_filtered_title": "没有符合这些筛选条件的结果",
+	"security_cves_empty_pending_body": "尚未盘点任何软件。下次刷新后将显示结果。",
+	"security_cves_empty_pending_title": "首次扫描待进行",
+	"security_cves_enable": "启用",
+	"security_cves_exploited": "已被利用",
+	"security_cves_exploited_hint": "已列入 CISA 在野被利用漏洞目录。",
+	"security_cves_filter_all_devices": "所有设备",
+	"security_cves_filter_all_severities": "所有严重程度",
+	"security_cves_filter_all_states": "所有状态",
+	"security_cves_filter_device": "设备",
+	"security_cves_filter_exploited": "仅已被利用",
+	"security_cves_filter_reset": "重置筛选",
+	"security_cves_filter_severity": "严重程度",
+	"security_cves_filter_show_ignored": "显示已忽略",
+	"security_cves_filter_state": "状态",
+	"security_cves_filters_label": "筛选",
+	"security_cves_group_summary": "{vulnerable} 个存在漏洞，{unknown} 个待核查，{patched} 个已修复",
+	"security_cves_ignore": "忽略",
+	"security_cves_ignore_confirm": "接受风险",
+	"security_cves_ignore_note": "备注：{note}",
+	"security_cves_ignore_note_label": "备注（可选）",
+	"security_cves_ignore_title": "接受 {device} 上 {cve} 的风险",
+	"security_cves_ignored": "已忽略",
+	"security_cves_ignored_by": "由 {user} 忽略，{when}",
+	"security_cves_inventory_component": "组件",
+	"security_cves_inventory_empty": "尚未盘点任何组件。",
+	"security_cves_inventory_findings": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 项发现"
+			}
+		}
+	],
+	"security_cves_inventory_origin": "来源",
+	"security_cves_inventory_summary": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个组件"
+			}
+		}
+	],
+	"security_cves_inventory_title": "覆盖范围",
+	"security_cves_inventory_version": "版本",
+	"security_cves_last_refresh": "上次刷新：{when}",
+	"security_cves_load_error": "无法加载漏洞。",
+	"security_cves_loading": "正在加载漏洞",
+	"security_cves_never_refreshed": "尚未刷新",
+	"security_cves_nvd_key_clear": "移除密钥",
+	"security_cves_nvd_key_help": "提高 NVD 速率限制，使刷新更快完成。加密存储，不会再次显示。",
+	"security_cves_nvd_key_label": "NVD API 密钥（可选）",
+	"security_cves_nvd_key_none": "未保存密钥",
+	"security_cves_nvd_key_save": "保存密钥",
+	"security_cves_nvd_key_set": "已保存密钥",
+	"security_cves_off_admin_only": "请管理员开启。",
+	"security_cves_off_body": "DumbMonit 可将其在您设备上盘点到的软件（软件包、操作系统、应用）与公开漏洞数据库比对，告诉您哪些已知 CVE 适用、哪些已被利用、哪些已修复。",
+	"security_cves_off_sources": "默认关闭。开启后会联系 NVD、OSV.dev、Debian 安全跟踪器和 CISA KEV，并发送这些软件的名称和版本。除此之外不会有任何数据离开您的实例。",
+	"security_cves_off_title": "漏洞跟踪已关闭",
+	"security_cves_open_device": "打开 {name}",
+	"security_cves_ransomware": "被勒索软件利用",
+	"security_cves_reason_below_fixed_version": "已安装版本低于修复版本。",
+	"security_cves_reason_fixed_version_installed": "已安装版本包含修复。",
+	"security_cves_reason_in_affected_range": "已安装版本处于受影响范围内。",
+	"security_cves_reason_no_fix_available": "发行版将其列为未解决：尚未发布修复。",
+	"security_cves_reason_undetermined": "来源无法确定该版本是否受影响。",
+	"security_cves_reason_vendor_build": "厂商构建：可能已回移植修复，请手动核查。",
+	"security_cves_reason_version_unparsed": "无法自动比较该版本，请手动核查。",
+	"security_cves_refresh": "立即刷新",
+	"security_cves_refreshing": "正在刷新…",
+	"security_cves_restore": "恢复",
+	"security_cves_settings_title": "设置",
+	"security_cves_severity_critical": "严重",
+	"security_cves_severity_high": "高危",
+	"security_cves_severity_low": "低危",
+	"security_cves_severity_medium": "中危",
+	"security_cves_severity_none": "未评分",
+	"security_cves_source_debian": "Debian 安全跟踪器",
+	"security_cves_source_error": "错误：{error}",
+	"security_cves_source_items": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条记录"
+			}
+		}
+	],
+	"security_cves_source_kev": "CISA KEV",
+	"security_cves_source_never": "尚未成功",
+	"security_cves_source_nvd": "NVD",
+	"security_cves_source_ok": "上次成功 {when}",
+	"security_cves_source_osv": "OSV.dev",
+	"security_cves_sources_summary": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个来源"
+			}
+		}
+	],
+	"security_cves_sources_title": "来源",
+	"security_cves_state_patched": "已修复",
+	"security_cves_state_unknown": "待核查",
+	"security_cves_state_vulnerable": "存在漏洞",
+	"security_cves_title": "CVE 与漏洞",
+	"security_cves_version_fix_unknown": "已安装 {installed}，修复版本未知",
+	"security_cves_version_fixed": "已安装 {installed}，修复于 {fixed}",
+	"security_cves_version_no_fix": "已安装 {installed}，暂无修复",
+	"security_page_description": "您设备上所运行软件的已知漏洞。",
+	"security_page_score_link": "安全评分设置",
+	"security_page_title": "安全",
 	"settings.appearance.language_label": "语言",
 	"settings.nav.aria_label": "设置分区",
 	"settings.page.title": "设置",

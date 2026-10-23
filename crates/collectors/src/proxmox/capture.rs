@@ -509,6 +509,19 @@ fn les_versions_de_paquets_reelles_disent_le_redemarrage_en_attente() {
     assert_eq!(reboot.value, 1.0);
     assert_eq!(reboot.labels.get("running").map(String::as_str), Some("7.0.6-2-pve"));
     assert_eq!(reboot.labels.get("installed").map(String::as_str), Some("7.0.14-11"));
+
+    // L'inventaire des paquets, pour la recherche de failles : un paquet par
+    // série, sans les images de noyau ni les doublons de la liste.
+    let packages: Vec<(&str, &str)> = samples
+        .iter()
+        .filter(|sample| sample.metric == "proxmox_node_package_info")
+        .map(|sample| (sample.labels["package"].as_str(), sample.labels["version"].as_str()))
+        .collect();
+    assert!(packages.contains(&("pve-manager", "9.2.10")), "{packages:?}");
+    assert!(packages.contains(&("pve-qemu-kvm", "11.0.3-2")));
+    assert!(!packages.iter().any(|(name, _)| name.ends_with("-pve-signed")));
+    let helpers = packages.iter().filter(|(name, _)| *name == "proxmox-kernel-helper").count();
+    assert_eq!(helpers, 1, "proxmox-kernel-helper figure deux fois dans la réponse");
 }
 
 /// Les deux volumes que le cluster réel porte en `backup=no` sont bien

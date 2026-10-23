@@ -4820,3 +4820,104 @@ export interface LogTestResult {
 	ok: boolean;
 	message: string;
 }
+
+// --- CVE & vulnerabilities (mirrors `crates/server/src/api/cves.rs`) --------
+
+export type CveState = 'vulnerable' | 'patched' | 'unknown';
+export type CveSeverity = 'critical' | 'high' | 'medium' | 'low' | 'none';
+export type CveReason =
+	| 'below_fixed_version'
+	| 'in_affected_range'
+	| 'no_fix_available'
+	| 'fixed_version_installed'
+	| 'vendor_build'
+	| 'undetermined'
+	| 'version_unparsed';
+
+/** `GET`/`PUT /api/security/cves/settings`. The NVD key never comes back. */
+export interface CveSettings {
+	enabled: boolean;
+	has_nvd_key: boolean;
+}
+
+/** Body of `PUT /api/security/cves/settings`: `nvd_api_key` omitted keeps the key, `""` clears it. */
+export interface CveSettingsInput {
+	enabled: boolean;
+	nvd_api_key?: string;
+}
+
+export interface CveSource {
+	name: 'nvd' | 'osv' | 'debian' | 'kev';
+	last_success: string | null;
+	last_error: string | null;
+	items: number;
+}
+
+export interface CveCounts {
+	vulnerable: number;
+	exploited: number;
+	unknown: number;
+	patched: number;
+	ignored: number;
+}
+
+export interface CveSummary {
+	enabled: boolean;
+	refreshing: boolean;
+	last_refresh: string | null;
+	counts: CveCounts;
+	targets: number;
+	components: number;
+	sources: CveSource[];
+}
+
+export interface CveFinding {
+	target_id: number;
+	target_name: string;
+	target_kind: string;
+	component: string;
+	installed_version: string;
+	fixed_version: string | null;
+	cve_id: string;
+	summary: string;
+	cvss: number | null;
+	severity: CveSeverity;
+	published: string | null;
+	exploited: boolean;
+	ransomware: boolean;
+	state: CveState;
+	reason: CveReason;
+	source: 'nvd' | 'osv' | 'debian';
+	link: string;
+	ignored: boolean;
+	ignore_note: string | null;
+	ignored_by: string | null;
+	ignored_at: string | null;
+}
+
+export interface CveList {
+	enabled: boolean;
+	findings: CveFinding[];
+}
+
+export interface CveComponent {
+	target_id: number;
+	target_name: string;
+	component: string;
+	version: string;
+	origin: string;
+	findings: number;
+}
+
+export interface CveInventory {
+	components: CveComponent[];
+}
+
+/** Query of `GET /api/security/cves`. */
+export interface CveFilters {
+	target?: number;
+	severity?: CveSeverity;
+	state?: CveState;
+	exploited?: boolean;
+	ignored?: boolean;
+}

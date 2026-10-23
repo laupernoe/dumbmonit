@@ -61,6 +61,7 @@
 	import AlertBell from '#lib/components/devices/AlertBell.svelte';
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import SecurityBadge from '#lib/components/devices/SecurityBadge.svelte';
+	import CveDeviceCard from '#lib/components/cves/CveDeviceCard.svelte';
 	import SecurityReport from '#lib/components/devices/SecurityReport.svelte';
 	import { getTargetSecurity } from '#lib/api/security.js';
 	import type { SecurityReport as SecurityReportData } from '#lib/api/index.js';
@@ -749,6 +750,8 @@
 	{#if securityShown && securityOpen}
 		<SecurityReport report={securityShown} onclose={() => (securityOpen = false)} />
 	{/if}
+
+	<CveDeviceCard targetId={target.id} />
 
 	<!-- Containers at a glance, with the fleet-wide policies; the list itself sits with the metrics.
 	     Docker is a device of its own under the machine whose agent found it. -->

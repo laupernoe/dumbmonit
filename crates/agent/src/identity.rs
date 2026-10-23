@@ -154,6 +154,7 @@ mod tests {
             wireguard: crate::collect::wireguard::WireguardConfig::default(),
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),
+            inventory: false,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 100,

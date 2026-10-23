@@ -122,6 +122,7 @@ struct FileConfig {
     wireguard_peer_names: Option<BTreeMap<String, String>>,
     ipsec: Option<bool>,
     ipsec_bin: Option<String>,
+    inventory: Option<bool>,
     speedtest: Option<bool>,
     speedtest_download_url: Option<String>,
     speedtest_upload_url: Option<String>,
@@ -273,6 +274,9 @@ pub struct Config {
     pub ipsec: IpsecConfig,
     /// Test de débit Internet. Désactivé par défaut.
     pub speedtest: SpeedtestConfig,
+    /// Inventaire logiciel quotidien (paquets installés), joint aux lots. Actif
+    /// par défaut ; indépendant de la liste `modules`.
+    pub inventory: bool,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
     /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
@@ -324,6 +328,7 @@ impl fmt::Debug for Config {
             .field("wireguard", &self.wireguard)
             .field("ipsec", &self.ipsec)
             .field("speedtest", &self.speedtest)
+            .field("inventory", &self.inventory)
             .field("backup_repos", &self.backup_repos)
             .field("perf_counters", &self.perf_counters)
             .finish()
@@ -666,6 +671,7 @@ impl Config {
                 None => Ok(from_file),
             }
         };
+        let inventory = flag("DUMBMONIT_AGENT_INVENTORY", file.inventory, true)?;
         let speedtest = SpeedtestConfig {
             enabled: flag("DUMBMONIT_AGENT_SPEEDTEST", file.speedtest, false)?,
             download_url: clean_url(
@@ -785,6 +791,7 @@ impl Config {
             wireguard,
             ipsec,
             speedtest,
+            inventory,
             backup_repos,
             perf_counters,
             max_buffered_samples,

@@ -34,8 +34,8 @@ Le désactiver masque les badges, arrête le calcul périodique, et les séries
     Le score était auparavant toujours actif, avec sa propre page
     **Security**. Une installation qui surveillait déjà une surveillance notée garde
     le score activé après la mise à niveau ; une nouvelle installation démarre
-    avec le score désactivé. L'ancienne adresse `/security` ouvre désormais le
-    réglage.
+    avec le score désactivé. L'adresse `/security` ouvre désormais
+    [CVE et failles](cves.md).
 
 ## Comment le score est calculé
 

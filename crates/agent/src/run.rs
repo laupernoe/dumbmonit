@@ -4,7 +4,9 @@ use std::collections::BTreeSet;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use dumbmonit_proto::{AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample};
+use dumbmonit_proto::{
+    AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample, SoftwareInventory,
+};
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
@@ -14,6 +16,7 @@ use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
+use crate::collect::inventory::{self, PendingInventory};
 use crate::collect::ipsec::IpsecProbe;
 use crate::collect::libvirt::LibvirtProbe;
 use crate::collect::mail_server::PlatformProbe as MailServerProbe;
@@ -99,6 +102,11 @@ pub struct Agent {
     zfs: ZfsProbe,
     /// Domaines KVM et pools libvirt. Muet sans `virsh` ni domaine.
     libvirt: LibvirtProbe,
+    /// Dernier inventaire logiciel relevé, en attente d'être joint à un lot. Vidé
+    /// quand le serveur l'a accepté.
+    inventory: PendingInventory,
+    /// Tâche de fond du relevé quotidien, lancée au premier cycle.
+    inventory_task: Option<tokio::task::JoinHandle<()>>,
     /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
     /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
     perf_counters: PerfCountersProbe,
@@ -200,6 +208,8 @@ impl Agent {
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
             libvirt: LibvirtProbe::new(&config.libvirt),
+            inventory: PendingInventory::default(),
+            inventory_task: None,
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
             mail_server: MailServerProbe::for_platform(config.perf_counters.mdaemon),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
@@ -258,6 +268,7 @@ impl Agent {
         if self.wants("libvirt") {
             snapshot.libvirt = self.libvirt.read().await;
         }
+        self.sync_inventory();
         snapshot.perf_counters = self.perf_counters.read();
         snapshot.mail_server = self.mail_server.read().await;
 
@@ -278,6 +289,35 @@ impl Agent {
             now_ms,
         ));
         samples
+    }
+
+    fn wants_inventory(&self) -> bool {
+        self.config.inventory && self.wants("inventory")
+    }
+
+    /// Lance la tâche de relevé quotidien au premier cycle, l'arrête (et oublie
+    /// ce qu'elle avait relevé) quand l'inventaire est coupé, en local ou depuis
+    /// l'interface.
+    fn sync_inventory(&mut self) {
+        if self.wants_inventory() {
+            if self.inventory_task.is_none() {
+                self.inventory_task = Some(inventory::spawn(self.inventory.clone()));
+            }
+        } else if let Some(task) = self.inventory_task.take() {
+            task.abort();
+            *inventory::lock(&self.inventory) = None;
+            info!("software inventory switched off");
+        }
+    }
+
+    /// Oublie l'inventaire en attente s'il est encore celui qui vient d'être
+    /// envoyé (le relevé suivant a pu le remplacer entre-temps).
+    fn forget_inventory(&self, sent: Option<&SoftwareInventory>) {
+        let Some(sent) = sent else { return };
+        let mut pending = inventory::lock(&self.inventory);
+        if pending.as_ref().is_some_and(|p| p.collected_at_ms == sent.collected_at_ms) {
+            *pending = None;
+        }
     }
 
     /// Faux pour un module que l'utilisateur a décoché dans l'interface.
@@ -494,8 +534,11 @@ impl Agent {
             return FlushOutcome::Idle;
         }
         let count = samples.len();
-        let batch =
+        let mut batch =
             PushBatch::new(self.identity.clone(), samples, chrono::Utc::now().timestamp_millis());
+        if self.wants_inventory() {
+            batch.inventory = inventory::lock(&self.inventory).clone();
+        }
 
         match self.client.send(&batch).await {
             Ok(ack) => {
@@ -510,6 +553,7 @@ impl Agent {
                 self.binding_refused = false;
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.note_acceptance(count, ack.accepted);
+                self.forget_inventory(batch.inventory.as_ref());
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
                 self.adopt_disabled_modules(ack.disabled_modules);
@@ -535,6 +579,14 @@ impl Agent {
                 FlushOutcome::Failed(PushError::CertificateRefused)
             }
             Err(PushError::TooLarge(message)) => {
+                if batch.inventory.is_some() {
+                    // L'inventaire est le premier suspect : on le lâche pour ce
+                    // jour (relevé suivant demain) plutôt que de tailler les mesures.
+                    warn!(reason = message, "inventory too large for the server, dropped");
+                    self.forget_inventory(batch.inventory.as_ref());
+                    self.buffer.restore(batch.samples);
+                    return FlushOutcome::Failed(PushError::TooLarge(message));
+                }
                 if count <= 1 {
                     // Une mesure seule ne se coupe plus : la garder bloquerait
                     // tout le tampon derrière elle.
@@ -559,6 +611,7 @@ impl Agent {
                 // Le serveur a compris et refusé : réémettre à l'identique ne ferait
                 // que reproduire le refus, en gardant le tampon plein pour rien.
                 warn!(%error, dropped = count, "batch rejected by the server, dropped");
+                self.forget_inventory(batch.inventory.as_ref());
                 FlushOutcome::Sent { count }
             }
         }
@@ -957,6 +1010,7 @@ mod tests {
             wireguard: crate::collect::wireguard::WireguardConfig::default(),
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),
+            inventory: false,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
@@ -1040,6 +1094,49 @@ mod tests {
         assert!(agent.identity.relay);
         assert_eq!(agent.identity.site.as_deref(), Some("Datacenter"), "le site local prime");
         trigger.fire();
+    }
+
+    #[tokio::test]
+    async fn the_inventory_rides_the_next_batch_and_is_forgotten_once_accepted() {
+        let dir = tempfile::tempdir().unwrap();
+        let answer = std::sync::Arc::new(std::sync::Mutex::new((503u16, "{}".to_string())));
+        let shared = answer.clone();
+        let (url, calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        // Activé après la collecte : la tâche de fond n'a pas à tourner ici.
+        agent.config.inventory = true;
+        let relever = || SoftwareInventory {
+            collected_at_ms: 42,
+            source: "dpkg".into(),
+            ..SoftwareInventory::default()
+        };
+        *inventory::lock(&agent.inventory) = Some(relever());
+
+        // Échec réseau côté serveur : l'inventaire part, puis reste en attente.
+        agent.buffer.push(samples.clone());
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert!(calls.bodies("POST", "/")[0].contains("\"inventory\""));
+        assert!(inventory::lock(&agent.inventory).is_some(), "conservé pour le lot suivant");
+
+        // Accepté : il est oublié.
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(calls.bodies("POST", "/")[1].contains("\"inventory\""));
+        assert!(inventory::lock(&agent.inventory).is_none());
+
+        // Le lot suivant n'en porte plus.
+        agent.buffer.push(samples.clone());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(!calls.bodies("POST", "/")[2].contains("\"inventory\""));
+
+        // Décoché dans l'interface : rien n'est joint, même s'il en reste un.
+        *inventory::lock(&agent.inventory) = Some(relever());
+        agent.adopt_disabled_modules(vec!["inventory".into()]);
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(!calls.bodies("POST", "/")[3].contains("\"inventory\""));
     }
 
     #[tokio::test]
