@@ -5,6 +5,9 @@ services:
     image: ghcr.io/laupernoe/dumbmonit:latest
     ports:
       - "8080:8080"
+      # Encrypted agent channel (TLS 1.3 + client certificates). The only port
+      # agents on other networks need; the web port can stay private.
+      - "8443:8443"
     volumes:
       - dumbmonit-data:/data
       # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:

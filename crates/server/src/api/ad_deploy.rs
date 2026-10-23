@@ -333,6 +333,22 @@ mod tests {
     }
 
     #[test]
+    fn the_kit_keeps_the_encrypted_agent_channel_of_the_install_command() {
+        // La commande vient de `ingest::install_parameters` : canal chiffré et
+        // empreinte épinglée passent tels quels dans le script de la tâche.
+        let pin = "a".repeat(64);
+        let command = format!(
+            "& ([scriptblock]::Create((irm https://dm/install.ps1))) -Token dmon_x -Url https://dm \
+             -Sha256 windows-x86_64:abc -TlsUrl https://dm:8443 -CaPin {pin}"
+        );
+        let arguments = installer_arguments(&command).expect("arguments");
+        assert!(
+            arguments.ends_with(&format!("-TlsUrl https://dm:8443 -CaPin {pin}")),
+            "{arguments}"
+        );
+    }
+
+    #[test]
     fn the_script_carries_every_value_and_no_placeholder() {
         let args = "-Token dmon_secret -Url https://dm.example.com -Sha256 windows-x86_64:00";
         let script = render_deploy_script(&params(args));

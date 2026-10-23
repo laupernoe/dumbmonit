@@ -1245,6 +1245,37 @@ export interface CreatedAgentToken extends AgentToken {
 	install_windows: string;
 }
 
+/** Channel an agent last reported through. Mirrors `AgentChannel` in `crates/server/src/api/agent_tls.rs`. */
+export interface AgentChannelEntry {
+	/** Id of the agent's target. */
+	id: TargetId;
+	/** `mtls`: encrypted agent port; `legacy`: plain channel of the web port; `none`: never seen. */
+	channel: 'mtls' | 'legacy' | 'none';
+	/** Key exchange negotiated at the last encrypted report, e.g. `X25519MLKEM768`. */
+	group: string | null;
+	tls_seen_at: string | null;
+	legacy_seen_at: string | null;
+}
+
+/** `GET /api/agent/tls`. Mirrors `Overview` in `crates/server/src/api/agent_tls.rs`. */
+export interface AgentChannelOverview {
+	/** The agent port is open (`DUMBMONIT_AGENT_LISTEN`). */
+	enabled: boolean;
+	port: number | null;
+	/** The plain channel is refused right now. */
+	required: boolean;
+	/** The setting as the administrator set it. */
+	required_setting: boolean;
+	/** End of the transition set by `DUMBMONIT_AGENT_LEGACY_DAYS`. */
+	legacy_until: string | null;
+	protocol: string;
+	key_exchange: string;
+	/** SHA-256 fingerprint of the active certificate authority. */
+	ca_pin: string | null;
+	rotation: { started_at: string | null; next_pin: string; ready: number; total: number } | null;
+	agents: AgentChannelEntry[];
+}
+
 /** Body of `POST /api/agent/ad-kit`: a fleet token plus the GPO deployment script. */
 export interface AdKitPayload {
 	domain: string;

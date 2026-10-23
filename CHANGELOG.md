@@ -7,6 +7,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Encrypted agent channel, ready for the Internet.** Agents and relay agents
+  now report on a dedicated port (TCP 8443, `DUMBMONIT_AGENT_LISTEN`) with TLS
+  1.3 only, post-quantum hybrid key exchange X25519MLKEM768 and a client
+  certificate per machine: the agent generates its key on the machine, enrols
+  once with its token and renews its 30-day certificate by itself; deleting a
+  monitor revokes it at once. The server creates its own certificate authority
+  at first start, and the install command carries its fingerprint, so an agent
+  accepts no other server, even one with a valid public certificate, and never
+  falls back to plain HTTP. Existing agents switch by themselves once updated
+  (the plain channel announces the new one); Settings → Agents shows the
+  channel of each agent, a "Require the encrypted channel" switch (on for new
+  installations) and the authority rotation. `GET /api/agent/install` returns
+  the install parameters for deployment tools. Publish port 8443 next to 8080
+  (see the Compose file); nothing to open on the agents.
 - **Security: CVE & vulnerabilities.** A new section lists the known CVEs of
   the software already monitored and says, per device, whether each one is
   vulnerable, patched or to check. The inventory comes from what collectors

@@ -21,6 +21,7 @@ mod run;
 mod shutdown;
 #[cfg(test)]
 mod testsupport;
+mod tls;
 #[cfg(windows)]
 mod winsvc;
 

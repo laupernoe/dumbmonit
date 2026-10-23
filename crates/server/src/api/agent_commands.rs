@@ -20,6 +20,7 @@ use dumbmonit_proto::{
 };
 use serde::{Deserialize, Serialize};
 
+use crate::agent_tls::AgentCert;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::CurrentPrincipal;
 use crate::collectors::agent::commands::{self, CommandError, CommandRecord, ContainerPolicy};
@@ -127,6 +128,7 @@ pub async fn authenticate(
     state: &AppState,
     headers: &HeaderMap,
     key: &str,
+    cert: Option<&AgentCert>,
 ) -> Result<(i64, TargetId), Rejection> {
     let bearer =
         headers.get(axum::http::header::AUTHORIZATION).and_then(|value| value.to_str().ok());
@@ -140,6 +142,16 @@ pub async fn authenticate(
     };
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
     match agent::authorise_key(&state.pool, key, agent::extract_secret(secret)).await? {
+        // Sur le canal chiffré, le certificat client doit être celui de cette
+        // machine-là : le sien ne donne pas accès aux commandes d'une autre.
+        agent::KeyAuth::Allowed { target_id }
+            if cert.is_some_and(|cert| cert.target_id != target_id) =>
+        {
+            Err(Rejection {
+                status: StatusCode::FORBIDDEN,
+                message: crate::api::ingest::CERT_OF_ANOTHER_MACHINE.to_string(),
+            })
+        }
         agent::KeyAuth::Allowed { target_id } => Ok((token_id, target_id)),
         agent::KeyAuth::Denied => Err(Rejection::not_this_machine()),
         agent::KeyAuth::NotBound => Err(Rejection::not_bound()),
@@ -164,9 +176,10 @@ fn machine_key<'a>(headers: &'a HeaderMap, query: &'a str) -> Option<&'a str> {
 async fn pending(
     State(state): State<AppState>,
     headers: HeaderMap,
+    cert: Option<Extension<AgentCert>>,
     Query(query): Query<KeyQuery>,
 ) -> Result<Json<Vec<AgentCommand>>, Rejection> {
-    let (token_id, target_id) = authenticate(&state, &headers, &query.key).await?;
+    let (token_id, target_id) = authenticate(&state, &headers, &query.key, cert.as_deref()).await?;
     let commands = commands::pending_for_target(&state.pool, target_id).await?;
     agent::touch_token(&state.pool, token_id).await?;
     Ok(Json(commands))
@@ -176,11 +189,12 @@ async fn pending(
 async fn report(
     State(state): State<AppState>,
     headers: HeaderMap,
+    cert: Option<Extension<AgentCert>>,
     Path(id): Path<i64>,
     Query(query): Query<KeyQuery>,
     Json(report): Json<CommandReport>,
 ) -> Result<StatusCode, Rejection> {
-    let (_, target_id) = authenticate(&state, &headers, &query.key).await?;
+    let (_, target_id) = authenticate(&state, &headers, &query.key, cert.as_deref()).await?;
     let accepted = commands::report(&state.pool, target_id, id, &report).await?;
     if !accepted {
         return Err(Rejection::not_found("Command not found for this machine."));

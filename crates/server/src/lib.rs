@@ -4,6 +4,7 @@
 //! que les tests d'intégration puissent monter l'application complète — routeur,
 //! base et collecteurs — et l'exercer comme le ferait un client.
 
+pub mod agent_tls;
 pub mod alerting;
 pub mod api;
 pub mod auth;

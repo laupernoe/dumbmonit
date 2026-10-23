@@ -78,6 +78,7 @@ nav:
       - Docker: install/docker.md
       - Add your first monitor: install/first-device.md
       - Monitor a remote site: install/remote-site.md
+      - Agent channel security: install/agent-security.md
       - Backup and restore: install/backup.md
       - Watching DumbMonit itself: install/self-monitoring.md
       - Server logs: install/logs.md
