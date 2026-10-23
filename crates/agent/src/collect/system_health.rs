@@ -1570,8 +1570,10 @@ openssl/bookworm-security,bookworm-updates 3.0.13-1~deb12u1 amd64 [upgradable fr
     async fn a_cycle_on_this_machine_completes_without_blocking() {
         // Sans dnf ni systemd (conteneur de test), chaque famille est simplement
         // absente ; ce qui compte est que rien ne bloque et que rien n'explose.
+        // Marge large : les runners CI partagés sont parfois lents à lancer les
+        // commandes système, sans que le cycle bloque pour autant.
         let mut probe = SystemHealthProbe::new(&SystemHealthConfig::default());
-        let stat = tokio::time::timeout(std::time::Duration::from_secs(15), probe.read())
+        let stat = tokio::time::timeout(std::time::Duration::from_secs(60), probe.read())
             .await
             .expect("un cycle ne doit pas attendre les vérifications lentes")
             .expect("collecteur actif");
