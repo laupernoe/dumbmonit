@@ -6215,6 +6215,50 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_security_score",
             )
         },
+
+        // --- Failles connues (`vulns/`) ---
+        //
+        // Une série par CVE et par composant vulnérable (étiquettes `cve` et
+        // `component`), republiée tous les quarts d'heure ; une CVE ignorée
+        // dans l'interface n'est plus publiée. Seuls deux cas alertent : la
+        // faille exploitée (catalogue KEV de la CISA) et la faille critique
+        // (CVSS ≥ 9). Le reste s'affiche sans notifier ; « à vérifier » ne
+        // notifie jamais. Rappel hebdomadaire : c'est un chantier, pas une
+        // panne.
+        Rule {
+            description: "A component of this device is vulnerable to a CVE that is actively \
+                          exploited (CISA KEV catalog): update it, or accept the risk in \
+                          Security → CVE & vulnerabilities."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "cve_exploited_vulnerable",
+                "Exploited vulnerability not patched",
+                RuleKind::Threshold,
+                "dumbmonit_cve_exploited_vulnerable",
+            )
+        },
+        Rule {
+            description: "A component of this device is vulnerable to a critical CVE (CVSS 9 or \
+                          more) that is not patched yet."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 9.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: " CVSS".to_string(),
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "cve_critical_vulnerable",
+                "Critical vulnerability not patched",
+                RuleKind::Threshold,
+                "dumbmonit_cve_vulnerable",
+            )
+        },
     ]
 }
 
@@ -6596,6 +6640,9 @@ mod tests {
             // Note de sécurité (`security/`).
             "security_score_drop",
             "security_score_low",
+            // Failles connues (`vulns/`).
+            "cve_exploited_vulnerable",
+            "cve_critical_vulnerable",
         ] {
             assert!(uids.contains(&attendu), "missing built-in rule: {attendu}");
         }
@@ -6612,6 +6659,9 @@ mod tests {
             "dumbmonit_up",
             // Note de sécurité, calculée par le serveur (`security/mod.rs`).
             "dumbmonit_security_score",
+            // Failles connues, publiées par le serveur (`vulns/mod.rs`).
+            "dumbmonit_cve_vulnerable",
+            "dumbmonit_cve_exploited_vulnerable",
             "dumbmonit_cpu_load_percent",
             "dumbmonit_cpu_usage_percent",
             "dumbmonit_storage_bytes_used",

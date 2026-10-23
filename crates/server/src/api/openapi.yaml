@@ -5198,6 +5198,172 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/security/cves:
+    get:
+      operationId: listCves
+      tags: [Security]
+      summary: Known vulnerabilities (CVE) of the software inventory
+      description: >-
+        One row per device, component and CVE, read from the last scan (never
+        from the sources directly). Exploited ones (CISA KEV) first, then
+        vulnerable, to check (`unknown`) and patched, highest CVSS first.
+        Ignored rows are included with `ignored: true` unless `ignored=false`.
+      x-token-scope: read
+      parameters:
+        - { name: target, in: query, schema: { type: integer } }
+        - { name: severity, in: query, schema: { $ref: "#/components/schemas/CveSeverity" } }
+        - { name: state, in: query, schema: { $ref: "#/components/schemas/CveState" } }
+        - { name: exploited, in: query, schema: { type: boolean } }
+        - { name: ignored, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: The findings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/summary:
+    get:
+      operationId: getCveSummary
+      tags: [Security]
+      summary: Vulnerability counts and source status
+      description: "`target` narrows the counts to one device."
+      x-token-scope: read
+      parameters:
+        - { name: target, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Counts, inventory size and the state of each source.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/inventory:
+    get:
+      operationId: getCveInventory
+      tags: [Security]
+      summary: Inventoried software components and where their CVEs come from
+      x-token-scope: read
+      parameters:
+        - { name: target, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: One row per device and component.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveInventory" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/settings:
+    get:
+      operationId: getCveSettings
+      tags: [Security]
+      summary: Is the CVE scan turned on
+      description: >-
+        Off by default: while off, nothing is sent to NVD, OSV.dev, the Debian
+        security tracker or CISA. The NVD API key is never returned.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The current setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setCveSettings
+      tags: [Security]
+      summary: Turn the CVE scan on or off, set the NVD API key
+      description: >-
+        `nvd_api_key` omitted keeps the stored key, an empty string clears it.
+        Turning the scan on starts a first scan. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CveSettingsInput" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/refresh:
+    post:
+      operationId: refreshCves
+      tags: [Security]
+      summary: Re-read every source and recompute the verdicts now
+      description: Runs in the background; poll the summary for `refreshing`. Administrators only.
+      x-token-scope: write
+      responses:
+        "202":
+          description: The refresh is queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refreshing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/security/cves/ignores:
+    post:
+      operationId: ignoreCve
+      tags: [Security]
+      summary: Accept the risk of one CVE on one device
+      description: >-
+        The CVE is no longer counted nor alerted on for this device; it stays
+        listed with `ignored: true`. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_id, cve_id]
+              properties:
+                target_id: { type: integer }
+                cve_id: { type: string, examples: [CVE-2024-6387] }
+                note: { type: string, maxLength: 500 }
+      responses:
+        "204": { description: Ignored. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/security/cves/ignores/{target_id}/{cve_id}:
+    parameters:
+      - { name: target_id, in: path, required: true, schema: { type: integer } }
+      - { name: cve_id, in: path, required: true, schema: { type: string } }
+    delete:
+      operationId: unignoreCve
+      tags: [Security]
+      summary: Stop ignoring a CVE on a device
+      x-token-scope: write
+      responses:
+        "204": { description: Counted and alerted on again. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ------------------------------------------------------------- assistants
   /api/mcp:
     get:
@@ -8937,6 +9103,98 @@ components:
               fail: { type: integer }
               unknown: { type: integer }
               top_failures: { type: array, items: { type: string } }
+
+    CveState:
+      type: string
+      enum: [vulnerable, patched, unknown]
+      description: "`unknown`: to check by hand (backported fix possible, ambiguous data)."
+    CveSeverity:
+      type: string
+      enum: [critical, high, medium, low, none]
+      description: CVSS 3 class; `none` when no score is known.
+    CveSettings:
+      type: object
+      required: [enabled, has_nvd_key]
+      properties:
+        enabled: { type: boolean }
+        has_nvd_key: { type: boolean }
+    CveSettingsInput:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+        nvd_api_key: { type: string, description: "Omitted: kept. Empty: cleared." }
+    CveFinding:
+      type: object
+      properties:
+        target_id: { type: integer }
+        target_name: { type: string }
+        target_kind: { type: string }
+        component: { type: string }
+        installed_version: { type: string }
+        fixed_version: { type: [string, "null"] }
+        cve_id: { type: string }
+        summary: { type: string }
+        cvss: { type: [number, "null"] }
+        severity: { $ref: "#/components/schemas/CveSeverity" }
+        published: { type: [string, "null"] }
+        exploited: { type: boolean, description: In the CISA KEV catalog. }
+        ransomware: { type: boolean }
+        state: { $ref: "#/components/schemas/CveState" }
+        reason:
+          type: string
+          enum: [below_fixed_version, in_affected_range, no_fix_available, fixed_version_installed, vendor_build, undetermined, version_unparsed]
+        source: { type: string, enum: [nvd, osv, debian] }
+        link: { type: string }
+        ignored: { type: boolean }
+        ignore_note: { type: [string, "null"] }
+        ignored_by: { type: [string, "null"] }
+        ignored_at: { type: [string, "null"] }
+    CveList:
+      type: object
+      required: [enabled, findings]
+      properties:
+        enabled: { type: boolean }
+        findings: { type: array, items: { $ref: "#/components/schemas/CveFinding" } }
+    CveSummary:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        refreshing: { type: boolean }
+        last_refresh: { type: [string, "null"] }
+        counts:
+          type: object
+          properties:
+            vulnerable: { type: integer }
+            exploited: { type: integer }
+            unknown: { type: integer }
+            patched: { type: integer }
+            ignored: { type: integer }
+        targets: { type: integer }
+        components: { type: integer }
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string, enum: [nvd, osv, debian, kev] }
+              last_success: { type: [string, "null"] }
+              last_error: { type: [string, "null"] }
+              items: { type: integer }
+    CveInventory:
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              target_id: { type: integer }
+              target_name: { type: string }
+              component: { type: string }
+              version: { type: string }
+              origin: { type: string, examples: [nvd, "debian:bookworm", "osv:Ubuntu:24.04:LTS", none] }
+              findings: { type: integer }
 
     # ------------------------------------------------------------------ MCP
     McpEndpointInfo:

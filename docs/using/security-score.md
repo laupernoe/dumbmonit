@@ -31,8 +31,8 @@ Turning it off hides the badges, stops the periodic computation, and the
 !!! note "Upgrading from 0.1.0-alpha.8 or earlier"
     The score used to be always on, with its own **Security** page. An
     installation that already monitored a rated monitor keeps the score on
-    after the upgrade; a new installation starts with it off. The old
-    `/security` address now opens the setting.
+    after the upgrade; a new installation starts with it off. The
+    `/security` address now opens [CVE & vulnerabilities](cves.md).
 
 ## How the score is computed
 
