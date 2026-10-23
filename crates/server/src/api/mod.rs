@@ -1,4 +1,5 @@
 mod activedirectory;
+mod ad_deploy;
 mod agent_commands;
 mod agent_files;
 mod agent_tls;
@@ -180,6 +181,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/notify/kinds", get(channels::kinds))
         .route("/agent/tokens", get(ingest::list_tokens).post(ingest::create_token))
         .route("/agent/tokens/{id}", delete(ingest::revoke_token))
+        // Déploiement par stratégie de groupe Active Directory (`ad_deploy.rs`).
+        .route("/agent/tokens/{id}/close", post(ad_deploy::close_token))
+        .route("/agent/ad-kit", post(ad_deploy::create_kit))
         // Paramètres de la commande d'installation : URL, canal chiffré, empreintes.
         .route("/agent/install", get(ingest::install_params))
         // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.

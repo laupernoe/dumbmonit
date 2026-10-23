@@ -21,6 +21,21 @@ All notable changes to this project are documented here. The format follows
   installations) and the authority rotation. `GET /api/agent/install` returns
   the install parameters for deployment tools. Publish port 8443 next to 8080
   (see the Compose file); nothing to open on the agents.
+- **Deploy the agent to a whole Active Directory domain with one group policy.**
+  Settings > Agents > "Deploy with Active Directory" creates a fleet enrollment
+  token limited to the domain (reusable, 30 days by default, optional server
+  cap) and downloads `Deploy-DumbMonit.ps1`. Run once on a domain controller
+  (`-WhatIf` first), it checks its prerequisites, creates or updates the
+  "DumbMonit Agent" group policy and links it to the servers' OU (optionally
+  Domain Controllers, a security group filter, and the agent binary in SYSVOL
+  for servers without outbound access). Each server then installs the agent as
+  SYSTEM with the server's own install command, verifies its SHA-256, does
+  nothing when it is already up to date, logs to the Application event log, and
+  enrolls under its fully qualified name with its own identity, filed in the
+  folder "Active Directory <domain>" with the `ad` tag and its OU. Only machines
+  of the domain can enroll with the token; "Stop enrollments" closes it without
+  cutting the servers already enrolled; `-UninstallAgents` and `-Remove` undo
+  everything. The wizard shows the servers arriving live.
 - **Map: services and agents hang under the VM they run on.** The map now reads
   the IP addresses the hypervisor reports for each guest (Proxmox guest agent,
   container interfaces, or the static `ipconfigN` / `netN ip=` configuration
