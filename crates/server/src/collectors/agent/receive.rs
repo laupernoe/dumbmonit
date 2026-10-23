@@ -7,8 +7,8 @@
 use std::collections::BTreeMap;
 
 use dumbmonit_proto::{
-    AgentIdentity, MAX_BATCH_SAMPLES, MetricKind, PUSH_PROTOCOL_VERSION, PushAck, PushBatch,
-    Sample, Target,
+    AgentIdentity, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION,
+    PushAck, PushBatch, Sample, SoftwareInventory, Target,
 };
 use sqlx::SqlitePool;
 
@@ -133,6 +133,12 @@ pub async fn ingest(
             IngestError::Internal(anyhow::anyhow!("target not found after registration"))
         })?;
 
+    // L'inventaire logiciel du jour, s'il accompagne le lot : gardé pour la
+    // recherche de failles (`vulns/`), jamais écrit dans VictoriaMetrics.
+    if let Some(inventory) = batch.inventory.as_ref().and_then(sanitize_inventory) {
+        crate::vulns::store::save_agent_inventory(pool, target.id, &inventory).await?;
+    }
+
     let received_at_ms = chrono::Utc::now().timestamp_millis();
     let (machine, services) = split_by_module(batch.samples);
 
@@ -223,6 +229,38 @@ fn split_by_module(samples: Vec<Sample>) -> Split {
         }
     }
     (machine, services)
+}
+
+/// Longueur maximale d'un nom ou d'une version d'inventaire.
+const MAX_INVENTORY_FIELD: usize = 256;
+
+/// Un inventaire raisonnable, ou rien : trop de paquets, et il est écarté
+/// (le lot, lui, reste accepté) ; les champs démesurés ou vides sont ôtés.
+fn sanitize_inventory(inventory: &SoftwareInventory) -> Option<SoftwareInventory> {
+    if inventory.packages.len() > MAX_INVENTORY_PACKAGES {
+        tracing::warn!(
+            packages = inventory.packages.len(),
+            "software inventory too large, ignored"
+        );
+        return None;
+    }
+    let fits = |value: &str| !value.trim().is_empty() && value.len() <= MAX_INVENTORY_FIELD;
+    let optional = |value: &Option<String>| value.clone().filter(|v| fits(v));
+    let mut clean = inventory.clone();
+    clean.packages.retain(|p| fits(&p.name) && fits(&p.version));
+    for package in &mut clean.packages {
+        package.source_name = optional(&package.source_name);
+        package.source_version = optional(&package.source_version);
+        package.publisher = optional(&package.publisher);
+    }
+    clean.hotfixes.retain(|h| fits(h));
+    clean.distro_id = optional(&clean.distro_id);
+    clean.distro_version = optional(&clean.distro_version);
+    clean.distro_codename = optional(&clean.distro_codename);
+    clean.os_product = optional(&clean.os_product);
+    clean.os_release = optional(&clean.os_release);
+    clean.os_build = optional(&clean.os_build);
+    Some(clean)
 }
 
 /// Contrôles qui ne dépendent d'aucun accès à la base.
@@ -446,6 +484,35 @@ mod tests {
         assert_eq!(services["docker"].1.len(), 2);
         // Chaque mesure n'est rangée qu'une fois : rien n'est compté deux fois.
         assert_eq!(machine.len() + services.values().map(|(_, v)| v.len()).sum::<usize>(), 5);
+    }
+
+    #[test]
+    fn an_inventory_is_cleaned_or_dropped_when_unreasonable() {
+        use dumbmonit_proto::InstalledPackage;
+        let package = |name: &str, version: &str| InstalledPackage {
+            name: name.into(),
+            version: version.into(),
+            source_name: Some(String::new()),
+            ..InstalledPackage::default()
+        };
+        let inventory = SoftwareInventory {
+            source: "dpkg".into(),
+            distro_id: Some("debian".into()),
+            packages: vec![
+                package("bash", "5.2-1"),
+                package("", "1"),
+                package("x", &"9".repeat(300)),
+            ],
+            ..SoftwareInventory::default()
+        };
+        let clean = sanitize_inventory(&inventory).unwrap();
+        assert_eq!(clean.packages.len(), 1);
+        assert_eq!(clean.packages[0].source_name, None, "un nom source vide est ôté");
+        let huge = SoftwareInventory {
+            packages: vec![package("a", "1"); MAX_INVENTORY_PACKAGES + 1],
+            ..SoftwareInventory::default()
+        };
+        assert!(sanitize_inventory(&huge).is_none());
     }
 
     #[test]

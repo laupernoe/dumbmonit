@@ -89,6 +89,27 @@ pub fn version_samples(node: &str, versions: &[AptVersion], ts_ms: i64) -> Vec<S
     let upgradable = versions.iter().filter(|version| version.is_upgradable()).count();
     push(gauge("node_pve_packages_upgradable", upgradable as f64, ts_ms));
 
+    // Une série de présence par paquet installé de la liste (une soixantaine
+    // sur un nœud) : c'est l'inventaire que la recherche de failles du
+    // serveur confronte aux avis de sécurité (`pve-manager`, `pve-qemu-kvm`,
+    // `corosync`, `lxc-pve`, `ceph`…). Les noyaux, un paquet par image
+    // présente sur le disque, en sont écartés : le noyau en marche suffit.
+    let mut seen = std::collections::BTreeSet::new();
+    for version in versions {
+        let (Some(name), Some(installed)) = (version.package.as_deref(), version.installed())
+        else {
+            continue;
+        };
+        if installed_kernel(version).is_some() || !seen.insert(name) {
+            continue;
+        }
+        push(
+            gauge("node_package_info", 1.0, ts_ms)
+                .with_label("package", name)
+                .with_label("version", installed),
+        );
+    }
+
     let running = versions
         .iter()
         .find_map(|version| version.running_kernel.as_deref().filter(|kernel| !kernel.is_empty()));

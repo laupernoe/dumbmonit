@@ -32,5 +32,6 @@ pub mod status_host;
 pub mod status_seo;
 pub mod tsdb;
 pub mod update;
+pub mod vulns;
 pub mod webchange;
 pub mod website;
