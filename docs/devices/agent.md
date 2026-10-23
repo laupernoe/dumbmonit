@@ -526,6 +526,7 @@ ipsec: true                # IPsec tunnels through swanctl (default: true), see 
 speedtest: false           # Internet speed test (default: false, opt-in), see below
 speedtest_download_url: https://speed.example.lan/backend/garbage.php?ckSize=50
 speedtest_upload_url: https://speed.example.lan/backend/empty.php
+inventory: true            # daily list of installed packages, for the CVE scan (default: true)
 restic_repos: []           # restic repositories to watch, see "restic and Borg backups"
 borg_repos: []             # Borg repositories to watch
 mdaemon: auto              # Windows: MDaemon queues when its service exists (true / false / auto)
