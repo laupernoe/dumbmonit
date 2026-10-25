@@ -413,6 +413,7 @@ fn truncate(text: &str, max: usize) -> String {
     text.chars().take(max).collect()
 }
 
+// `AssertSqlSafe` : seule cette constante du module entre dans le texte.
 const HOST_COLUMNS: &str = "h.target_id, t.name, h.hostname, h.agent_version, h.agent_sha256,
      h.agent_platform, h.update_ability, h.update_mode, h.update_canary, h.update_requested_ms,
      h.update_allow_downgrade, h.update_offered_ms, h.update_offered_sha, h.agent_sha_since_ms,
@@ -478,10 +479,10 @@ fn row_to_host(row: &sqlx::sqlite::SqliteRow) -> Result<HostRow> {
 
 /// Toutes les machines à agent.
 pub async fn hosts(pool: &SqlitePool) -> Result<Vec<HostRow>> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {HOST_COLUMNS} FROM agent_hosts h JOIN targets t ON t.id = h.target_id
          ORDER BY t.name"
-    ))
+    )))
     .fetch_all(pool)
     .await
     .context("listing the agents")?;
@@ -489,10 +490,10 @@ pub async fn hosts(pool: &SqlitePool) -> Result<Vec<HostRow>> {
 }
 
 async fn host_row(pool: &SqlitePool, target_id: TargetId) -> Result<Option<HostRow>> {
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {HOST_COLUMNS} FROM agent_hosts h JOIN targets t ON t.id = h.target_id
          WHERE h.target_id = ?"
-    ))
+    )))
     .bind(target_id)
     .fetch_optional(pool)
     .await
