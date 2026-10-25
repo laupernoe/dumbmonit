@@ -88,7 +88,7 @@ export function isGuestKind(kind: string): boolean {
 	return kind === 'vm' || kind === 'container';
 }
 /** Checks of one endpoint rather than of a machine (kept here: this module imports nothing at run time). */
-const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'mail_blacklist', 'ip_blacklist', 'webchange', 'smtp', 'agent_service']);
+const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'mail_blacklist', 'ip_blacklist', 'webchange', 'smtp', 'ssh', 'imap', 'pop3', 'agent_service']);
 const PLATFORM_KINDS = new Set(['proxmox', 'pdm', 'xcpng', 'nutanix', 'vsphere', 'kubernetes', 'truenas', 'synology', 'pbs', 'redfish', 'nut', 'libvirt']);
 
 /** Where a device sits in a network diagram: gear first, then platforms, machines, services. */

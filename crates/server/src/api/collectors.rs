@@ -1137,6 +1137,116 @@ const NTP_OPTIONS: &[OptionView] = &[
     PROBE_TIMEOUT,
 ];
 
+/// Options lues par `collectors/uptime/udp/options.rs`.
+const UDP_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. There is no default: UDP has no standard port to fall back on.",
+        "5060",
+        "",
+    ),
+    text(
+        "payload",
+        "Datagram to send",
+        "Sent as one datagram, 1400 bytes at most. In text, \\n \\r \\t \\0 \\\\ and \\xNN are read as escapes. Empty: an empty datagram.",
+        "PING",
+        "",
+    ),
+    select(
+        "payload_encoding",
+        "Datagram encoding",
+        "Text sends the characters as typed, Hex reads pairs of hexadecimal digits (spaces allowed).",
+        "text",
+        &["text", "hex"],
+    ),
+    text(
+        "expect_response",
+        "Expected reply",
+        "Text the reply must contain. Empty: the check succeeds unless the host answers that the port is closed, and silence counts as success.",
+        "PONG",
+        "",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Options lues par `collectors/uptime/ssh/options.rs`.
+const SSH_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "Used if the address does not give one.", "22", "22"),
+    text(
+        "expected_host_key",
+        "Expected host key",
+        "SHA256 fingerprint of the server's host key, as printed by ssh-keygen -lf. If the key differs, the server is reported down with the reason host_key. Empty: the key is not checked.",
+        "SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8",
+        "",
+    ),
+    boolean(
+        "alert_on_change",
+        "Alert when the host key changes",
+        "Records a fingerprint of the host key on every check, so that a rule can fire when it changes. Implied by an expected host key.",
+        false,
+    ),
+    select(
+        "host_key_type",
+        "Host key type",
+        "A server may hold several host keys. Auto reads the first one it offers in this order: ed25519, ecdsa, rsa. Pick the family of the fingerprint you expect.",
+        "auto",
+        &["auto", "ed25519", "ecdsa", "rsa"],
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Chiffrement des sondes de boîte aux lettres (`collectors/uptime/mailbox.rs`).
+const fn mailbox_security(help: &'static str) -> OptionView {
+    select("security", "Encryption", help, "tls", &["tls", "starttls", "none"])
+}
+
+/// Options lues par `collectors/uptime/imap/options.rs`.
+const IMAP_OPTIONS: &[OptionView] = &[
+    mailbox_security(
+        "TLS encrypts from the first byte (port 993), STARTTLS starts in clear text and upgrades (port 143), None never encrypts (port 143) and sends the password in clear text: only for your own network.",
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 993 with TLS, 143 with STARTTLS or without encryption.",
+        "993",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Options lues par `collectors/uptime/pop3/options.rs`.
+const POP3_OPTIONS: &[OptionView] = &[
+    mailbox_security(
+        "TLS encrypts from the first byte (port 995), STARTTLS starts in clear text and upgrades with STLS (port 110), None never encrypts (port 110) and sends the password in clear text: only for your own network.",
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 995 with TLS, 110 with STARTTLS or without encryption.",
+        "995",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Identifiants d'un relais de messagerie ou d'un courtier MQTT.
 const APP_LOGIN: CredentialView = CredentialView {
     kind: "username_password",
@@ -4563,6 +4673,123 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: WEBSOCKET_OPTIONS,
         },
+        "udp" => CollectorView {
+            kind: "udp",
+            label: "UDP service",
+            summary: "Sends a datagram to a UDP port and checks the reply, or that nobody refuses it.",
+            examples: &[
+                "A game or VoIP server",
+                "A syslog or SNMP listener",
+                "A WireGuard endpoint",
+                "A custom UDP service that answers a ping message",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "192.168.1.20:5060",
+            default_port: 0,
+            setup: Setup {
+                title: "Monitor a UDP service",
+                steps: &[
+                    "In the address, write the host and the UDP port: \"192.168.1.20:5060\". The port is required.",
+                    "To check that the service really answers, fill in \"Datagram to send\" and \"Expected reply\".",
+                    "Without an expected reply, the check only fails when the host answers that the port is closed.",
+                ],
+                ports: &[to_device!(
+                    161,
+                    "udp",
+                    "The service's UDP port, as written in the address (161 is only an example)",
+                )],
+                permissions: &[],
+                warning: "UDP has no connection: without an expected reply, a firewall that silently drops the datagrams looks healthy.",
+            },
+            options: UDP_OPTIONS,
+        },
+        "ssh" => CollectorView {
+            kind: "ssh",
+            label: "SSH server",
+            summary: "Reads the SSH banner and, if you ask, checks that the host key is still the one you know.",
+            examples: &[
+                "A Linux server or a Raspberry Pi",
+                "A NAS or a hypervisor with SSH enabled",
+                "A bastion host",
+                "A Git server over SSH",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "server.home.lan",
+            default_port: 22,
+            setup: Setup {
+                title: "Monitor an SSH server",
+                steps: &[
+                    "In the address, write the host name or IP address, with the port if it is not 22: \"server.home.lan:2222\".",
+                    "To be warned when the server's identity changes, read its fingerprint with ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub.",
+                    "Paste that fingerprint (SHA256:...) in \"Expected host key\", or tick \"Alert when the host key changes\" to record it without choosing one.",
+                ],
+                ports: &[to_device!(22, "tcp", "SSH (default port, the one in the address)")],
+                permissions: &[],
+                warning: "The check never logs in and does not verify the server's signature: it reads the key the server shows, like ssh-keyscan.",
+            },
+            options: SSH_OPTIONS,
+        },
+        "imap" => CollectorView {
+            kind: "imap",
+            label: "Mailbox (IMAP)",
+            summary: "An IMAP server greets, offers TLS and accepts a login, like a real mail client.",
+            examples: &[
+                "Dovecot",
+                "Your provider's IMAP server",
+                "A mailbox behind Mailcow or Mailu",
+                "Proxmox Mail Gateway's mail host",
+            ],
+            credential_types: &["none", "username_password"],
+            credentials: &[NO_AUTH, APP_LOGIN],
+            address_hint: "imap.example.com",
+            default_port: 993,
+            setup: Setup {
+                title: "Monitor an IMAP server",
+                steps: &[
+                    "In DumbMonit, enter the mail server, for example imap.example.com:1993 (port 993 with the default encryption).",
+                    "Pick the encryption: TLS for port 993, STARTTLS for port 143, None for a server on your own network.",
+                    "Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage).",
+                ],
+                ports: &[
+                    to_device!(993, "tcp", "IMAP over TLS (default)"),
+                    to_device_optional!(143, "tcp", "Only with STARTTLS or no encryption"),
+                ],
+                permissions: &["A mailbox account that may log in\nOnly if you fill in a credential"],
+                warning: "The check never opens a mailbox: a server that logs in but cannot read its storage answers perfectly here.",
+            },
+            options: IMAP_OPTIONS,
+        },
+        "pop3" => CollectorView {
+            kind: "pop3",
+            label: "Mailbox (POP3)",
+            summary: "A POP3 server greets, offers TLS and accepts a login, like a real mail client.",
+            examples: &[
+                "Dovecot",
+                "Your provider's POP3 server",
+                "An old mail server that only speaks POP3",
+            ],
+            credential_types: &["none", "username_password"],
+            credentials: &[NO_AUTH, APP_LOGIN],
+            address_hint: "pop.example.com",
+            default_port: 995,
+            setup: Setup {
+                title: "Monitor a POP3 server",
+                steps: &[
+                    "In DumbMonit, enter the mail server, for example pop.example.com:1995 (port 995 with the default encryption).",
+                    "Pick the encryption: TLS for port 995, STARTTLS for port 110 (STLS command), None for a server on your own network.",
+                    "Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage).",
+                ],
+                ports: &[
+                    to_device!(995, "tcp", "POP3 over TLS (default)"),
+                    to_device_optional!(110, "tcp", "Only with STARTTLS or no encryption"),
+                ],
+                permissions: &["A mailbox account that may log in\nOnly if you fill in a credential"],
+                warning: "The check never lists or reads messages: it logs in, then says goodbye.",
+            },
+            options: POP3_OPTIONS,
+        },
         // Changements du contenu d'un site (`webchange`) : texte comparé page à
         // page, instantanés et captures gardés sur le serveur.
         "webchange" => CollectorView {
@@ -5875,7 +6102,7 @@ fn guide_url(kind: &str) -> String {
         "victorialogs" | "victoriametrics" => "victoriametrics",
         "agent" | "agent_service" => "agent",
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mysql" | "mqtt"
-        | "websocket" => "services",
+        | "websocket" | "udp" | "ssh" | "imap" | "pop3" => "services",
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
@@ -5888,9 +6115,8 @@ fn guide_url(kind: &str) -> String {
         _ => return String::new(),
     };
     let anchor = match kind {
-        "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mqtt" | "websocket" => {
-            format!("#{kind}")
-        }
+        "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mqtt" | "websocket" | "udp"
+        | "ssh" | "imap" | "pop3" => format!("#{kind}"),
         "postgres" => "#postgresql".to_owned(),
         "mysql" => "#mysql-and-mariadb".to_owned(),
         _ => String::new(),
@@ -6048,6 +6274,10 @@ mod tests {
         "mysql",
         "mqtt",
         "websocket",
+        "udp",
+        "ssh",
+        "imap",
+        "pop3",
         "push",
         "webchange",
         "website",
@@ -6219,6 +6449,50 @@ mod tests {
                     "expect",
                     "subprotocol",
                     "origin",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "udp",
+                &[
+                    "port",
+                    "payload",
+                    "payload_encoding",
+                    "expect_response",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "ssh",
+                &[
+                    "port",
+                    "expected_host_key",
+                    "alert_on_change",
+                    "host_key_type",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "imap",
+                &[
+                    "security",
+                    "port",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "pop3",
+                &[
+                    "security",
+                    "port",
                     "server_name",
                     "insecure_tls",
                     "allow_private_targets",
@@ -6958,6 +7232,13 @@ mod tests {
         // n'exportent pas leurs défauts (ils ne sont lus que par la notice).
         assert_eq!(defaut("ntp", "port"), "123");
         assert_eq!(defaut("ntp", "offset_threshold_ms"), "100");
+        assert_eq!(defaut("ssh", "port"), "22");
+        assert_eq!(defaut("ssh", "host_key_type"), "auto");
+        assert_eq!(defaut("ssh", "alert_on_change"), "false");
+        assert_eq!(defaut("udp", "payload_encoding"), "text");
+        for kind in ["imap", "pop3"] {
+            assert_eq!(defaut(kind, "security"), "tls");
+        }
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -7278,6 +7559,10 @@ mod tests {
             ("mysql", include_str!("../../../../docs/devices/services.md")),
             ("mqtt", include_str!("../../../../docs/devices/services.md")),
             ("websocket", include_str!("../../../../docs/devices/services.md")),
+            ("udp", include_str!("../../../../docs/devices/services.md")),
+            ("ssh", include_str!("../../../../docs/devices/services.md")),
+            ("imap", include_str!("../../../../docs/devices/services.md")),
+            ("pop3", include_str!("../../../../docs/devices/services.md")),
         ];
         fn flatten(text: &str) -> String {
             text.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")
@@ -7492,7 +7777,7 @@ mod tests {
                 "« {kind} » exige un compte"
             );
         }
-        for kind in ["smtp", "mqtt"] {
+        for kind in ["smtp", "mqtt", "imap", "pop3"] {
             assert_eq!(describe(kind).credential_types, &["none", "username_password"], "{kind}");
         }
         assert_eq!(
