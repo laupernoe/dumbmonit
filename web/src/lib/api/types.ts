@@ -4921,3 +4921,86 @@ export interface CveFilters {
 	exploited?: boolean;
 	ignored?: boolean;
 }
+
+// --- Windows event log rules of an agent machine (`collectors/agent/eventlog.rs`) ---
+
+/** Event Viewer level. `information` also covers level 0, the level of Security audit events. */
+export type AgentEventLevel = 'critical' | 'error' | 'warning' | 'information';
+
+/** What the API accepts to create or replace a rule. */
+export interface AgentEventRuleInput {
+	name: string;
+	/** `System`, `Application`, `Security` or a channel such as `Microsoft-Windows-TaskScheduler/Operational`. */
+	channel: string;
+	/** Event source (provider); empty or null for any. */
+	provider?: string | null;
+	/** `4625, 7000-7099`; empty for any. */
+	event_ids?: string;
+	/** Empty for any level. */
+	levels?: AgentEventLevel[];
+	/** Text the message must contain (case-insensitive), or a regular expression. */
+	pattern?: string | null;
+	pattern_regex?: boolean;
+	severity?: AlertSeverity;
+	enabled?: boolean;
+}
+
+export interface AgentEventRule {
+	id: number;
+	target_id: number;
+	name: string;
+	channel: string;
+	provider: string | null;
+	/** Canonical form; empty for any. */
+	event_ids: string;
+	levels: AgentEventLevel[];
+	pattern: string | null;
+	pattern_regex: boolean;
+	severity: AlertSeverity;
+	enabled: boolean;
+	matches_total: number;
+	/** Events the agent skipped because of the rate limit. */
+	dropped_total: number;
+	/** Last event received (UTC, no suffix). */
+	last_match_at: string | null;
+}
+
+/** An example offered when adding a rule; never created on its own. */
+export interface AgentEventRulePreset {
+	/** Stable key: `failed_logon`, `account_locked`, `unexpected_reboot`, `service_crashed`, `disk_errors`, `log_cleared`, `application_errors`. */
+	id: string;
+	name: string;
+	channel: string;
+	provider: string | null;
+	event_ids: string;
+	levels: AgentEventLevel[];
+	severity: AlertSeverity;
+}
+
+export interface AgentEventRules {
+	/** The machine runs Windows; elsewhere rules are kept but never sent. */
+	supported: boolean;
+	/** Events kept per rule and per minute. */
+	max_per_minute: number;
+	rules: AgentEventRule[];
+	presets: AgentEventRulePreset[];
+}
+
+/** A Windows event matched by one of the machine's rules. */
+export interface AgentEvent {
+	id: number;
+	/** Null once the rule is deleted. */
+	rule_id: number | null;
+	rule_name: string;
+	severity: AlertSeverity;
+	channel: string;
+	provider: string;
+	event_id: number;
+	/** Null for "Verbose". */
+	level: AgentEventLevel | null;
+	record_id: number;
+	computer: string;
+	message: string;
+	occurred_at: string | null;
+	received_at: string | null;
+}
