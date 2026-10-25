@@ -249,7 +249,7 @@ impl Document {
         let count = objects.len() + 1;
         let _ = write!(out, "xref\n0 {count}\n0000000000 65535 f \n");
         for offset in &offsets {
-            let _ = write!(out, "{offset:010} 00000 n \n");
+            let _ = writeln!(out, "{offset:010} 00000 n ");
         }
         let _ = write!(
             out,
