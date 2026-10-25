@@ -194,7 +194,8 @@ pub fn build_logsql(
 }
 
 /// Champs rendus à part (ou sans intérêt), pas dans `fields`.
-const SHOWN_APART: [&str; 7] = ["_time", "_msg", "_stream", "_stream_id", "level", "service", "host"];
+const SHOWN_APART: [&str; 7] =
+    ["_time", "_msg", "_stream", "_stream_id", "level", "service", "host"];
 
 /// Une ligne de réponse de VictoriaLogs (un objet JSON aux valeurs texte).
 pub fn parse_line(line: &str) -> Option<LogSearchEntry> {
@@ -283,7 +284,10 @@ pub async fn search(
     }
     let text = String::from_utf8_lossy(&body);
     if status.is_client_error() {
-        return Err(ApiError::BadRequest(format!("The log store refused the query: {}", text.trim())));
+        return Err(ApiError::BadRequest(format!(
+            "The log store refused the query: {}",
+            text.trim()
+        )));
     }
     if !status.is_success() {
         return Err(ApiError::BadGateway(format!("The log store answered {status}.")));

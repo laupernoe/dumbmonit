@@ -518,12 +518,7 @@ mod tests {
             admin_key: "k".into(),
             health_url: String::new(),
         };
-        config
-            .command()
-            .as_std()
-            .get_args()
-            .map(|arg| arg.to_string_lossy().into_owned())
-            .collect()
+        config.command().as_std().get_args().map(|arg| arg.to_string_lossy().into_owned()).collect()
     }
 
     /// VictoriaLogs ne connaît pas les options d'administration de
