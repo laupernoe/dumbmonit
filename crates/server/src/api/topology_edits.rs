@@ -230,8 +230,15 @@ pub struct Correction {
     pub previous_parent: Option<TargetId>,
 }
 
-const CORRECTION_COLUMNS: &str = "id, kind, from_node, to_node, source, value, use_for_alerts,
-     previous_parent, author, created_at";
+/// Colonnes d'une correction : un littéral, que `sqlx` accepte sans audit.
+macro_rules! correction_columns {
+    () => {
+        "SELECT id, kind, from_node, to_node, source, value, use_for_alerts, previous_parent,
+             author, created_at FROM topology_corrections"
+    };
+}
+const CORRECTIONS_ALL: &str = concat!(correction_columns!(), " ORDER BY id");
+const CORRECTION_ONE: &str = concat!(correction_columns!(), " WHERE id = ?");
 
 fn correction_row(row: &SqliteRow) -> Result<Correction, sqlx::Error> {
     let kind: String = row.try_get("kind")?;
@@ -252,8 +259,7 @@ fn correction_row(row: &SqliteRow) -> Result<Correction, sqlx::Error> {
 
 /// Toutes les corrections, les plus anciennes d'abord.
 pub async fn load_corrections(pool: &SqlitePool) -> anyhow::Result<Vec<Correction>> {
-    let sql = format!("SELECT {CORRECTION_COLUMNS} FROM topology_corrections ORDER BY id");
-    let rows = sqlx::query(&sql).fetch_all(pool).await?;
+    let rows = sqlx::query(CORRECTIONS_ALL).fetch_all(pool).await?;
     Ok(rows.iter().map(correction_row).collect::<Result<Vec<_>, _>>()?)
 }
 
@@ -417,13 +423,18 @@ fn rule_row(row: &SqliteRow) -> Result<Rule, sqlx::Error> {
     })
 }
 
-const RULE_COLUMNS: &str = "id, kind, status, subnet, address, target_kind, source, parent_node,
-     evidence, author, created_at";
+macro_rules! rule_columns {
+    () => {
+        "SELECT id, kind, status, subnet, address, target_kind, source, parent_node, evidence,
+             author, created_at FROM topology_rules"
+    };
+}
+const RULES_ALL: &str = concat!(rule_columns!(), " ORDER BY id");
+const RULE_ONE: &str = concat!(rule_columns!(), " WHERE id = ?");
 
 /// Toutes les règles, les plus anciennes d'abord.
 pub async fn load_rules(pool: &SqlitePool) -> anyhow::Result<Vec<Rule>> {
-    let sql = format!("SELECT {RULE_COLUMNS} FROM topology_rules ORDER BY id");
-    let rows = sqlx::query(&sql).fetch_all(pool).await?;
+    let rows = sqlx::query(RULES_ALL).fetch_all(pool).await?;
     Ok(rows.iter().map(rule_row).collect::<Result<Vec<_>, _>>()?)
 }
 
@@ -876,8 +887,7 @@ async fn fetch_correction(
     tx: &mut Transaction<'_, Sqlite>,
     id: i64,
 ) -> ApiResult<Option<Correction>> {
-    let sql = format!("SELECT {CORRECTION_COLUMNS} FROM topology_corrections WHERE id = ?");
-    let row = sqlx::query(&sql).bind(id).fetch_optional(&mut **tx).await?;
+    let row = sqlx::query(CORRECTION_ONE).bind(id).fetch_optional(&mut **tx).await?;
     Ok(row.as_ref().map(correction_row).transpose()?)
 }
 
@@ -890,8 +900,7 @@ async fn replaced_by(
     to: &str,
     source: Option<&str>,
 ) -> ApiResult<Vec<Correction>> {
-    let sql = format!("SELECT {CORRECTION_COLUMNS} FROM topology_corrections ORDER BY id");
-    let rows = sqlx::query(&sql).fetch_all(&mut **tx).await?;
+    let rows = sqlx::query(CORRECTIONS_ALL).fetch_all(&mut **tx).await?;
     let all = rows.iter().map(correction_row).collect::<Result<Vec<_>, _>>()?;
     let pair = |c: &Correction| match (c.from.as_deref(), from) {
         (Some(a), Some(b)) => (a == b && c.to == to) || (a == to && c.to == b),
@@ -1198,8 +1207,7 @@ async fn save_rule(
     .bind(principal.label())
     .fetch_one(&mut *tx)
     .await?;
-    let sql = format!("SELECT {RULE_COLUMNS} FROM topology_rules WHERE id = ?");
-    let row = sqlx::query(&sql).bind(id).fetch_one(&mut *tx).await?;
+    let row = sqlx::query(RULE_ONE).bind(id).fetch_one(&mut *tx).await?;
     let rule = rule_row(&row)?;
     tx.commit().await?;
     Ok((StatusCode::CREATED, Json(rule)))
