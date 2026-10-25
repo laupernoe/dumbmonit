@@ -162,6 +162,8 @@ tags:
     description: Encrypted export and restore of the instance. Session only.
   - name: Logs
     description: Server logs kept on disk, their export, and shipping to a log service. Session only.
+  - name: Storage
+    description: Metrics retention, long-term 5-minute history, embedded log store and disk usage. Session only.
   - name: Self-monitoring
     description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
@@ -4220,6 +4222,77 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/search:
+    get:
+      operationId: searchLogs
+      tags: [Logs]
+      summary: Search the server logs kept by the embedded VictoriaLogs (LogsQL filters)
+      description: >-
+        Newest first. Only filters are accepted (no `|` pipes); the period, the
+        minimum level and the server's own stream are added by the server.
+        Agent logs (`source=agents|all`) are reserved and refused for now.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - { name: query, in: query, schema: { type: string, default: "*" } }
+        - { name: start, in: query, description: Start of the period (ms), schema: { type: integer } }
+        - { name: end, in: query, description: End of the period (ms), schema: { type: integer } }
+        - { name: level, in: query, schema: { type: string, enum: [error, warn, info, debug], default: info } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 1000, default: 200 } }
+        - { name: source, in: query, schema: { type: string, enum: [server, agents, all], default: server } }
+      responses:
+        "200":
+          description: Matching log entries.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogSearchResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502": { $ref: "#/components/responses/BadGateway" }
+
+  /api/system/storage:
+    get:
+      operationId: getStorage
+      tags: [Storage]
+      summary: Retentions, long-term history, embedded log store and disk usage
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Storage state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putStorage
+      tags: [Storage]
+      summary: Change retentions and turn the long-term history or the log store on or off
+      description: >-
+        A changed retention restarts the embedded process concerned (a few
+        seconds without writes, retried by the write buffer). `restarted` lists
+        what was restarted, started or stopped.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StorageUpdate" }
+      responses:
+        "200":
+          description: Storage state after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { $ref: "#/components/responses/BadGateway" }
 
   /api/logs/export:
     get:
@@ -8636,6 +8709,102 @@ components:
             dropped:
               type: integer
               description: Records lost before reaching the disk (writer lagging, or the size cap reached).
+    StorageUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        metrics_retention_days: { type: integer, minimum: 7, maximum: 3650 }
+        rollup_enabled: { type: boolean }
+        rollup_retention_days: { type: integer, minimum: 30, maximum: 3650 }
+        logs_store_enabled: { type: boolean }
+        logs_store_retention_days: { type: integer, minimum: 1, maximum: 3650 }
+    StorageView:
+      type: object
+      required: [metrics, rollup, logs_store, disk, growth, limits, restarted]
+      properties:
+        metrics:
+          type: object
+          required: [embedded, retention_days, retention_source, running]
+          properties:
+            embedded: { type: boolean }
+            retention_days: { type: integer }
+            retention_source: { type: string, enum: [settings, environment, default] }
+            running: { type: boolean }
+        rollup:
+          type: object
+          required: [available, embedded, enabled, running, retention_days, step_seconds, backfill_done]
+          properties:
+            available: { type: boolean }
+            embedded: { type: boolean }
+            enabled: { type: boolean }
+            running: { type: boolean }
+            retention_days: { type: integer }
+            step_seconds: { type: integer }
+            last_window: { type: [string, "null"], description: UTC, without suffix }
+            backfilled_until: { type: [string, "null"], description: UTC, without suffix }
+            backfill_done: { type: boolean }
+            series: { type: [integer, "null"] }
+            last_error: { type: [string, "null"] }
+        logs_store:
+          type: object
+          required: [available, enabled, running, retention_days]
+          properties:
+            available: { type: boolean }
+            enabled: { type: boolean }
+            running: { type: boolean }
+            retention_days: { type: integer }
+            last_error: { type: [string, "null"] }
+        disk:
+          type: object
+          required: [usage]
+          properties:
+            usage:
+              type: array
+              items:
+                type: object
+                required: [key, path]
+                properties:
+                  key: { type: string, enum: [metrics, rollup, logs_store, database, logs, backups] }
+                  path: { type: string }
+                  bytes: { type: [integer, "null"] }
+            free_bytes: { type: [integer, "null"] }
+            total_bytes: { type: [integer, "null"] }
+        growth:
+          type: object
+          required: [sampled_days]
+          properties:
+            bytes_per_day: { type: [number, "null"] }
+            days_until_full: { type: [number, "null"] }
+            sampled_days: { type: integer }
+        limits:
+          type: object
+          properties:
+            min_retention_days: { type: integer }
+            max_retention_days: { type: integer }
+            min_rollup_retention_days: { type: integer }
+            max_rollup_retention_days: { type: integer }
+            min_logs_retention_days: { type: integer }
+            max_logs_retention_days: { type: integer }
+        restarted:
+          type: array
+          items: { type: string, enum: [metrics, rollup, logs_store] }
+    LogSearchResult:
+      type: object
+      required: [entries, truncated]
+      properties:
+        truncated: { type: boolean }
+        entries:
+          type: array
+          items:
+            type: object
+            required: [time, level, message, source, fields]
+            properties:
+              time: { type: string, description: UTC, without suffix }
+              level: { type: string }
+              message: { type: string }
+              source: { type: string }
+              host: { type: [string, "null"] }
+              fields: { type: object, additionalProperties: { type: string } }
     LogsSettingsRequest:
       type: object
       properties:

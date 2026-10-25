@@ -177,6 +177,8 @@ nav:
       - HTTP API: reference/api.md
       - Configuration: reference/configuration.md
       - Metrics: reference/metrics.md
+      - Sizing: reference/sizing.md
+      - External VictoriaMetrics / cluster: reference/external-victoriametrics.md
   - Development:
       - Overview: development.md
       - Architecture: development/architecture.md
