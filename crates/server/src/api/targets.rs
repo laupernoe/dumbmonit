@@ -213,6 +213,13 @@ impl TargetPayload {
             )));
         }
 
+        // Un planning ou une durée illisibles se refusent ici plutôt que de laisser
+        // un moniteur muet : l'erreur dit quel réglage corriger.
+        if self.kind == crate::collectors::push::KIND {
+            crate::collectors::push::Settings::from_tags(&self.tags)
+                .map_err(|error| ApiError::BadRequest(error.to_string()))?;
+        }
+
         let group_name = self.group_name.flatten().unwrap_or_default().trim().to_string();
         if group_name.chars().count() > MAX_GROUP_NAME_CHARS {
             return Err(ApiError::BadRequest(format!(
