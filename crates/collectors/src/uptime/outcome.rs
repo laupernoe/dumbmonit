@@ -105,6 +105,8 @@ pub enum Failure {
     Unsynchronized,
     /// Écart d'horloge au-delà du seuil toléré (sonde NTP).
     ClockOffset,
+    /// Clé d'hôte SSH différente de l'empreinte attendue (sonde SSH).
+    HostKey,
 }
 
 impl Failure {
@@ -127,6 +129,7 @@ impl Failure {
             Self::Payload => "payload",
             Self::Unsynchronized => "unsynchronized",
             Self::ClockOffset => "clock_offset",
+            Self::HostKey => "host_key",
         }
     }
 }
@@ -306,6 +309,7 @@ mod tests {
             Failure::Payload,
             Failure::Unsynchronized,
             Failure::ClockOffset,
+            Failure::HostKey,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {
