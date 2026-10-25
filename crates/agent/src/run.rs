@@ -107,6 +107,9 @@ pub struct Agent {
     inventory: PendingInventory,
     /// Tâche de fond du relevé quotidien, lancée au premier cycle.
     inventory_task: Option<tokio::task::JoinHandle<()>>,
+    /// Moniteurs déclarés par les étiquettes Docker au dernier cycle ; `None` :
+    /// Docker illisible ou désactivé, le serveur ne doit alors rien archiver.
+    declared: Option<Vec<dumbmonit_proto::DeclaredMonitor>>,
     /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
     /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
     perf_counters: PerfCountersProbe,
@@ -210,6 +213,7 @@ impl Agent {
             libvirt: LibvirtProbe::new(&config.libvirt),
             inventory: PendingInventory::default(),
             inventory_task: None,
+            declared: None,
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
             mail_server: MailServerProbe::for_platform(config.perf_counters.mdaemon),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
@@ -237,10 +241,12 @@ impl Agent {
         let started = Instant::now();
         let mut snapshot = self.probe.read();
         snapshot.services = services::probe(&self.config.services).await;
+        self.declared = None;
         if self.config.docker && self.wants("docker") {
             snapshot.containers = self.docker.read().await;
             if let Some(inventory) = snapshot.containers.as_mut() {
                 self.check_updates(&mut inventory.detailed);
+                self.declared = Some(inventory.declared.clone());
             }
         }
         snapshot.system_health = self.health.read().await;
@@ -539,6 +545,7 @@ impl Agent {
         if self.wants_inventory() {
             batch.inventory = inventory::lock(&self.inventory).clone();
         }
+        batch.declared_monitors = self.declared.clone();
 
         match self.client.send(&batch).await {
             Ok(ack) => {

@@ -37,7 +37,8 @@ pub use discovery::{
 };
 pub use push::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,
-    INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES,
+    DeclaredMonitor, INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_DECLARED_MONITORS,
+    MAX_INVENTORY_PACKAGES,
     PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting, SoftwareInventory, TOKEN_PREFIX,
 };
 pub use sample::{MetricKind, Sample};

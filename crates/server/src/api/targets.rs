@@ -61,6 +61,8 @@ pub struct TargetView {
     /// Rang manuel (drag, Haut/Bas), départagé par l'interface seulement entre
     /// cibles de même état et de même dossier.
     pub position: i64,
+    /// Gestion par les étiquettes Docker d'un agent ; `None` : moniteur libre.
+    pub managed: Option<db::targets::Managed>,
     /// Emplacement affecté sur la carte du monde ; `None` : aucun (la cible
     /// peut s'y trouver quand même par son site, voir `api/locations.rs`).
     pub location_id: Option<i64>,
@@ -86,9 +88,11 @@ fn error_kind(message: &str) -> &'static str {
 
 impl TargetView {
     fn new(target: Target, status: Option<db::targets::TargetStatus>) -> Self {
-        let (last_probe_at, last_error, via_agent) = match status {
-            Some(status) => (status.last_probe_at, status.last_error, status.via_agent),
-            None => (None, None, None),
+        let (last_probe_at, last_error, via_agent, managed) = match status {
+            Some(status) => {
+                (status.last_probe_at, status.last_error, status.via_agent, status.managed)
+            }
+            None => (None, None, None, None),
         };
         let error_kind = last_error.as_deref().map(error_kind);
         Self {
@@ -112,6 +116,7 @@ impl TargetView {
                 .collect(),
             group_name: target.group_name,
             position: target.position,
+            managed,
             location_id: None,
             last_probe_at,
             last_error,
@@ -426,6 +431,12 @@ pub async fn update(
     let keep_group = payload.group_name.is_none();
     let new_location = payload.location_id;
     let before = load(&state, id).await?;
+    // Un moniteur géré ne change que par ses étiquettes, sauf la pause.
+    if db::targets::managed_get(&state.pool, id).await?.is_some()
+        && !payload_only_toggles(&payload, &before)
+    {
+        return Err(ApiError::Conflict(super::label_monitors::MANAGED_MESSAGE.into()));
+    }
     let (mut input, reused_secret) =
         payload.validate_with(&state, Some(id), Some(&before.credential))?;
     if let Some(location) = new_location {
@@ -664,10 +675,25 @@ pub async fn rename_folder(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// La requête ne change-t-elle que l'état actif d'un moniteur géré ?
+fn payload_only_toggles(payload: &TargetPayload, before: &Target) -> bool {
+    payload.name.trim() == before.name
+        && payload.address.trim() == before.address
+        && payload.kind == before.kind
+        && payload.interval_secs.is_none_or(|secs| secs == before.interval.as_secs())
+        && payload.tags == before.tags
+        && payload.parent_id == before.parent_id
+        && payload.group_name.as_ref().is_none_or(|group| {
+            group.as_deref().unwrap_or_default().trim() == before.group_name
+        })
+        && payload.credential.is_none()
+}
+
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<StatusCode> {
+    super::label_monitors::refuse_if_managed(&state, id, true).await?;
     // Les services qu'un agent a trouvés partent avec leur machine (la base
     // les supprime d'elle-même) : leurs alertes et leurs séries aussi.
     let services: Vec<TargetId> = crate::collectors::agent::modules::states(&state.pool, id)
@@ -695,6 +721,10 @@ pub(crate) async fn forget(state: &AppState, id: TargetId) {
     // cascade de la base ne les atteint pas.
     crate::webchange::store::forget_files(&state.config.data_dir, id).await;
     spawn_series_deletion(state.clone(), id);
+}
+
+pub(crate) async fn forget_alerts_of(state: &AppState, id: TargetId) {
+    forget_alerts(state, id).await;
 }
 
 async fn forget_alerts(state: &AppState, id: TargetId) {

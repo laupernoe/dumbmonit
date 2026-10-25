@@ -141,10 +141,24 @@ export interface Target {
 	position: number;
 	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
 	location_id: LocationId | null;
+	/** Set when Docker labels on an agent's container manage this monitor; `null`: a free monitor. */
+	managed?: TargetManaged | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
 	error_kind: 'down' | 'config' | null;
+}
+
+/** Management of a monitor by Docker labels (`dumbmonit.*`). Mirrors `db::targets::Managed`. */
+export interface TargetManaged {
+	/** Origin: `docker-labels`. */
+	by: string;
+	/** Agent whose containers declare the monitor. */
+	source: TargetId | null;
+	/** Stable key, `project/service/http` or `container/http`. */
+	key: string;
+	/** Set when no label declares the monitor any more: it is archived (paused, history kept). */
+	missing_since: string | null;
 }
 
 /** Body sent to `POST /api/targets` and `PUT /api/targets/{id}`. */
