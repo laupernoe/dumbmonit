@@ -310,10 +310,10 @@ mod tests {
 
     #[test]
     fn le_domaine_vient_de_l_origine() {
-        let rp = relying_party(&headers("https://Monit.Example.org"), None).unwrap();
+        let rp = relying_party(&headers("https://Monit.Example.org"), None).ok().unwrap();
         assert_eq!(rp.id, "monit.example.org");
         assert_eq!(rp.origin, "https://Monit.Example.org");
-        let rp = relying_party(&headers("https://monit.example.org:8443"), None).unwrap();
+        let rp = relying_party(&headers("https://monit.example.org:8443"), None).ok().unwrap();
         assert_eq!(
             (rp.id.as_str(), rp.origin.as_str()),
             ("monit.example.org", "https://monit.example.org:8443")
@@ -323,7 +323,7 @@ mod tests {
     #[test]
     fn https_est_exige_sauf_localhost() {
         assert!(relying_party(&headers("http://monit.lan"), None).is_err());
-        let local = relying_party(&headers("http://localhost:8080"), None).unwrap();
+        let local = relying_party(&headers("http://localhost:8080"), None).ok().unwrap();
         assert_eq!(local.id, "localhost");
     }
 
