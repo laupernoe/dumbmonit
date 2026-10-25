@@ -179,9 +179,7 @@ impl SchedulePayload {
         }
         let kind = self.kind.trim().to_string();
         if kind != "digest" && kind != "sla" {
-            return Err(ApiError::BadRequest(
-                "The kind must be \"digest\" or \"sla\".".into(),
-            ));
+            return Err(ApiError::BadRequest("The kind must be \"digest\" or \"sla\".".into()));
         }
         if kind == "sla" && frequency != Frequency::Monthly {
             return Err(ApiError::BadRequest(
@@ -326,9 +324,8 @@ pub struct SlaQuery {
 const MAX_SLA_DAYS: i64 = 366;
 
 fn parse_day(label: &str, raw: &str) -> ApiResult<chrono::NaiveDate> {
-    chrono::NaiveDate::parse_from_str(raw.trim(), "%Y-%m-%d").map_err(|_| {
-        ApiError::BadRequest(format!("\"{label}\" must be a date like 2026-10-31."))
-    })
+    chrono::NaiveDate::parse_from_str(raw.trim(), "%Y-%m-%d")
+        .map_err(|_| ApiError::BadRequest(format!("\"{label}\" must be a date like 2026-10-31.")))
 }
 
 /// `GET /api/reports/sla` : le rapport de disponibilité d'une période choisie,

@@ -37,7 +37,7 @@ pub fn escape(text: &str) -> String {
     for ch in text.chars() {
         match ch {
             '\\' => out.push_str("\\\\"),
-            ';' => out.push_str("\;"),
+            ';' => out.push_str("\\;"),
             ',' => out.push_str("\\,"),
             '\n' => out.push_str("\\n"),
             '\r' => {}
@@ -87,7 +87,8 @@ pub fn calendar(name: &str, events: &[Event]) -> String {
         lines.push(format!("DTSTART:{}", stamp(event.start)));
         // Une fin absente ou antérieure au début donne une heure : un événement
         // de durée négative est refusé par plusieurs clients.
-        let end = event.end.filter(|end| *end > event.start).unwrap_or(event.start + DEFAULT_LENGTH);
+        let end =
+            event.end.filter(|end| *end > event.start).unwrap_or(event.start + DEFAULT_LENGTH);
         lines.push(format!("DTEND:{}", stamp(end)));
         lines.push(format!("SUMMARY:{}", escape(&event.summary)));
         if !event.description.is_empty() {
@@ -120,7 +121,7 @@ mod tests {
         Event {
             uid: "maintenance-7@dumbmonit".into(),
             summary: "Switch upgrade, rack 2".into(),
-            description: "Line one\nLine two; with a semicolon".into(),
+            description: "Line one\nLine two\\; with a semicolon".into(),
             start: at(22),
             end: Some(at(23)),
             modified: at(10),
@@ -130,7 +131,7 @@ mod tests {
 
     #[test]
     fn text_is_escaped() {
-        assert_eq!(escape("a,b;c\\d\ne"), "a\\,b\;c\\\\d\\ne");
+        assert_eq!(escape("a,b;c\\d\ne"), "a\\,b\\;c\\\\d\\ne");
     }
 
     #[test]
@@ -154,7 +155,7 @@ mod tests {
         assert!(text.contains("DTSTART:20261103T223000Z\r\n"));
         assert!(text.contains("DTEND:20261103T233000Z\r\n"));
         assert!(text.contains("SUMMARY:Switch upgrade\\, rack 2\r\n"));
-        assert!(text.contains("DESCRIPTION:Line one\\nLine two\; with a semicolon\r\n"));
+        assert!(text.contains("DESCRIPTION:Line one\\nLine two\\; with a semicolon\r\n"));
         assert!(text.contains("CATEGORIES:MAINTENANCE,SCHEDULED\r\n"));
         assert_eq!(text.matches("BEGIN:VEVENT").count(), text.matches("END:VEVENT").count());
         assert_eq!(text.matches('\n').count(), text.matches("\r\n").count(), "CRLF only");

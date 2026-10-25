@@ -117,7 +117,9 @@ pub fn read_statuspage(body: &str, component: Option<&str>) -> Result<Reading, R
     let incidents = summary
         .incidents
         .iter()
-        .filter(|incident| !matches!(incident.status.as_str(), "resolved" | "postmortem" | "completed"))
+        .filter(|incident| {
+            !matches!(incident.status.as_str(), "resolved" | "postmortem" | "completed")
+        })
         .count() as u32;
 
     let (impact, affected) = match component {
@@ -141,7 +143,10 @@ pub fn read_statuspage(body: &str, component: Option<&str>) -> Result<Reading, R
                 )));
             }
             let worst = matching.iter().map(|c| Impact::from_component(&c.status)).max();
-            let affected = matching.iter().filter(|c| Impact::from_component(&c.status) > Impact::None).count();
+            let affected = matching
+                .iter()
+                .filter(|c| Impact::from_component(&c.status) > Impact::None)
+                .count();
             (worst.unwrap_or(Impact::None), affected as u32)
         }
     };
@@ -179,7 +184,8 @@ fn entries(body: &str) -> Result<Vec<Entry>, ReadError> {
         }
         let title = child_text(node, &["title"]).unwrap_or_default().to_string();
         let text = child_text(node, &["description", "summary", "content"]).unwrap_or_default();
-        let Some(at) = child_text(node, &["pubDate", "updated", "published", "date"]).and_then(parse_date)
+        let Some(at) =
+            child_text(node, &["pubDate", "updated", "published", "date"]).and_then(parse_date)
         else {
             continue;
         };
@@ -207,7 +213,12 @@ pub fn read_feed(
     found.sort_by_key(|e| std::cmp::Reverse(e.at));
 
     let Some(newest) = found.first() else {
-        return Ok(Reading { impact: Impact::None, incidents: 0, affected: 0, summary: String::new() });
+        return Ok(Reading {
+            impact: Impact::None,
+            incidents: 0,
+            affected: 0,
+            summary: String::new(),
+        });
     };
     let text = format!("{} {}", newest.title, newest.text).to_lowercase();
     let resolved = ["resolved", "operating normally", "completed"].iter().any(|w| text.contains(w));
@@ -322,7 +333,9 @@ mod tests {
         let later = now() + TimeDelta::days(3);
         assert_eq!(read_feed(AWS, None, later, TimeDelta::hours(24)).unwrap().impact, Impact::None);
         // Filtre sur le service résolu.
-        let lambda = read_feed(AWS, Some("lambda"), now() - TimeDelta::hours(5), TimeDelta::days(2)).unwrap();
+        let lambda =
+            read_feed(AWS, Some("lambda"), now() - TimeDelta::hours(5), TimeDelta::days(2))
+                .unwrap();
         assert_eq!(lambda.impact, Impact::None);
         // Aucune entrée ne correspond.
         assert_eq!(read_feed(AWS, Some("rds"), now(), TimeDelta::days(2)).unwrap().incidents, 0);
@@ -339,6 +352,9 @@ mod tests {
 
     #[test]
     fn a_page_that_is_not_a_feed_is_a_format_error() {
-        assert!(matches!(read_feed("{}", None, now(), TimeDelta::hours(1)), Err(ReadError::Format(_))));
+        assert!(matches!(
+            read_feed("{}", None, now(), TimeDelta::hours(1)),
+            Err(ReadError::Format(_))
+        ));
     }
 }

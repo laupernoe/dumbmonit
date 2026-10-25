@@ -136,7 +136,8 @@ pub fn resolve(address: &str) -> Result<(Source, String), ProbeError> {
     if !matches!(url.scheme(), "http" | "https") || url.host_str().is_none() {
         return Err(invalid());
     }
-    let label = if label.is_empty() { url.host_str().unwrap_or_default().to_string() } else { label };
+    let label =
+        if label.is_empty() { url.host_str().unwrap_or_default().to_string() } else { label };
     let path = url.path().to_ascii_lowercase();
     let feed = [".rss", ".xml", ".atom"].iter().any(|suffix| path.ends_with(suffix))
         || path.ends_with("/feed")
@@ -238,10 +239,8 @@ async fn download(settings: &Settings) -> Fetch {
     if !response.status().is_success() {
         return Err((Failure::Status, format!("{url} answered {}", response.status())));
     }
-    let bytes = response
-        .bytes()
-        .await
-        .map_err(|error| (Failure::Body, format!("{url}: {error}")))?;
+    let bytes =
+        response.bytes().await.map_err(|error| (Failure::Body, format!("{url}: {error}")))?;
     if bytes.len() > MAX_BODY_BYTES {
         return Err((Failure::Body, format!("{url}: answer larger than {MAX_BODY_BYTES} bytes")));
     }
@@ -298,12 +297,9 @@ impl Collector for ProviderCollector {
         };
         let read = match &settings.source {
             Source::Statuspage(_) => parse::read_statuspage(&body, settings.component.as_deref()),
-            Source::Feed(_) => parse::read_feed(
-                &body,
-                settings.component.as_deref(),
-                Utc::now(),
-                settings.window,
-            ),
+            Source::Feed(_) => {
+                parse::read_feed(&body, settings.component.as_deref(), Utc::now(), settings.window)
+            }
         };
         match read {
             Ok(reading) => {
@@ -338,7 +334,10 @@ mod tests {
 
     #[test]
     fn a_provider_name_resolves_to_its_status_page() {
-        assert_eq!(statuspage("cloudflare"), "https://www.cloudflarestatus.com/api/v2/summary.json");
+        assert_eq!(
+            statuspage("cloudflare"),
+            "https://www.cloudflarestatus.com/api/v2/summary.json"
+        );
         assert_eq!(statuspage(" GitHub "), "https://www.githubstatus.com/api/v2/summary.json");
         let (source, label) = resolve("aws").unwrap();
         assert!(matches!(source, Source::Feed(_)));
@@ -347,7 +346,10 @@ mod tests {
 
     #[test]
     fn a_page_address_gets_the_api_path_and_a_feed_is_kept() {
-        assert_eq!(statuspage("status.example.com"), "https://status.example.com/api/v2/summary.json");
+        assert_eq!(
+            statuspage("status.example.com"),
+            "https://status.example.com/api/v2/summary.json"
+        );
         assert_eq!(
             statuspage("https://status.example.com/"),
             "https://status.example.com/api/v2/summary.json"

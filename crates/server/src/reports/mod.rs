@@ -161,7 +161,11 @@ pub fn sla_attachments(
     let stem = sla::file_stem(data, tz);
     let mut files = Vec::new();
     if pdf {
-        files.push((format!("{stem}.pdf"), "application/pdf".to_string(), sla::pdf(data, tz, options)));
+        files.push((
+            format!("{stem}.pdf"),
+            "application/pdf".to_string(),
+            sla::pdf(data, tz, options),
+        ));
     }
     if csv {
         let monitors = sla::csv_monitors(data, options.objective).into_bytes();
@@ -223,12 +227,12 @@ pub async fn deliver(
         );
         (data, rendered)
     } else {
-        let data = collect::collect(state, &stored.name, calendar.frequency, now)
-            .await
-            .map_err(|error| {
+        let data = collect::collect(state, &stored.name, calendar.frequency, now).await.map_err(
+            |error| {
                 warn!(%error, "report: data collection failed");
                 "Cannot gather the report data.".to_string()
-            })?;
+            },
+        )?;
         let rendered = render::render(&data, calendar.tz, preview);
         (data, rendered)
     };
@@ -245,8 +249,13 @@ pub async fn deliver(
     let mut first_error = None;
     for recipient in &stored.recipients {
         let sent = if attachments.is_empty() {
-            smtp.send_html(recipient, &rendered.subject, rendered.text.clone(), rendered.html.clone())
-                .await
+            smtp.send_html(
+                recipient,
+                &rendered.subject,
+                rendered.text.clone(),
+                rendered.html.clone(),
+            )
+            .await
         } else {
             smtp.send_html_with_attachments(
                 recipient,

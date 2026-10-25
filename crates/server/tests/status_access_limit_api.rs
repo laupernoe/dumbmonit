@@ -14,7 +14,11 @@ async fn password_attempts_are_rate_limited() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
     let created = app
-        .post("/api/status-pages", json!({ "title": "Board", "slug": "board", "published": true }), Some(&admin))
+        .post(
+            "/api/status-pages",
+            json!({ "title": "Board", "slug": "board", "published": true }),
+            Some(&admin),
+        )
         .await;
     let id = created.body["id"].as_i64().unwrap();
     let access = json!({ "mode": "password", "password": "board-secret-1" });
@@ -35,4 +39,3 @@ async fn password_attempts_are_rate_limited() {
         .await;
     assert_eq!(blocked.status, StatusCode::TOO_MANY_REQUESTS);
 }
-

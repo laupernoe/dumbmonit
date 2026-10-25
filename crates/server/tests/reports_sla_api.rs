@@ -65,14 +65,23 @@ async fn the_csv_lists_monitors_and_the_incident_csv_has_its_header() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
     let created = app
-        .post("/api/targets", json!({ "name": "NAS, main", "address": "10.0.0.5", "kind": "dummy" }), Some(&admin))
+        .post(
+            "/api/targets",
+            json!({ "name": "NAS, main", "address": "10.0.0.5", "kind": "dummy" }),
+            Some(&admin),
+        )
         .await;
     assert_eq!(created.status, StatusCode::CREATED, "{}", created.body);
-    let monitors = get(&app, "/api/reports/sla?from=2024-10-01&to=2024-10-31&format=csv", Some(&admin)).await;
+    let monitors =
+        get(&app, "/api/reports/sla?from=2024-10-01&to=2024-10-31&format=csv", Some(&admin)).await;
     let text = String::from_utf8_lossy(&monitors.bytes);
     assert!(text.contains("\"NAS, main\""), "{text}");
-    let incidents =
-        get(&app, "/api/reports/sla?from=2024-10-01&to=2024-10-31&format=incidents_csv", Some(&admin)).await;
+    let incidents = get(
+        &app,
+        "/api/reports/sla?from=2024-10-01&to=2024-10-31&format=incidents_csv",
+        Some(&admin),
+    )
+    .await;
     let text = String::from_utf8_lossy(&incidents.bytes);
     assert!(text.contains("monitor,rule,severity,started_utc"), "{text}");
 }
@@ -140,10 +149,13 @@ async fn an_sla_schedule_is_monthly_and_keeps_its_options() {
     assert_eq!(created.body["objective"], 99.9);
     assert_eq!(created.body["page_id"], page_id);
 
-    let digest = app.post("/api/reports/schedules", json!({ "name": "Weekly", "enabled": false }), Some(&admin)).await;
+    let digest = app
+        .post("/api/reports/schedules", json!({ "name": "Weekly", "enabled": false }), Some(&admin))
+        .await;
     assert_eq!(digest.body["kind"], "digest", "the default is the summary");
 
-    for bad in [json!({ "kind": "other" }), json!({ "objective": 150 }), json!({ "page_id": 9999 })] {
+    for bad in [json!({ "kind": "other" }), json!({ "objective": 150 }), json!({ "page_id": 9999 })]
+    {
         let mut body = json!({ "name": "x", "enabled": false, "frequency": "monthly" });
         body.as_object_mut().unwrap().extend(bad.as_object().unwrap().clone());
         let reply = app.post("/api/reports/schedules", body, Some(&admin)).await;
