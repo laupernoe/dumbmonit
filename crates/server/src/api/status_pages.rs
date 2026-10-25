@@ -775,7 +775,7 @@ fn format_timestamp(at: DateTime<Utc>) -> String {
     at.format(TIMESTAMP_FORMAT).to_string()
 }
 
-fn parse_stored(raw: &str) -> Option<DateTime<Utc>> {
+pub(crate) fn parse_stored(raw: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(raw).map(|at| at.with_timezone(&Utc)).ok().or_else(|| {
         chrono::NaiveDateTime::parse_from_str(raw, "%Y-%m-%d %H:%M:%S")
             .ok()
