@@ -4775,6 +4775,60 @@ export interface DiscoveryJob extends DiscoveryJobSummary {
 	hosts: DiscoveredHost[];
 }
 
+// --- Scheduled network scans and inventory -----------------------------------
+// Mirrors `api/netinventory.rs`. Dates are UTC without suffix.
+
+export type NetscanRunStatus = 'running' | 'done' | 'failed' | 'cancelled';
+
+export interface NetscanScheduleInput {
+	name: string;
+	cidr: string;
+	/** Id of the relay agent that scans, `null` for the server itself. */
+	agent_id: number | null;
+	/** 300 (5 min) to 2 592 000 (30 days). */
+	interval_secs: number;
+	depth: DiscoveryDepth;
+	enabled: boolean;
+}
+
+export interface NetscanSchedule extends NetscanScheduleInput {
+	id: number;
+	agent_name: string | null;
+	/** The first scan has built the inventory (nothing was reported). */
+	initialized: boolean;
+	running: boolean;
+	last_run_at: string | null;
+	last_status: NetscanRunStatus | null;
+	last_error: string | null;
+	devices: number;
+	unknown_devices: number;
+	/** Unknown ports of known devices. */
+	unknown_ports: number;
+}
+
+export interface NetscanPort {
+	id: number;
+	port: number;
+	protocol: 'tcp' | 'udp';
+	product: string;
+	known: boolean;
+	first_seen: string;
+	last_seen: string;
+}
+
+export interface NetscanDevice {
+	id: number;
+	schedule_id: number;
+	ip: string;
+	mac: string | null;
+	hostname: string | null;
+	vendor: string | null;
+	known: boolean;
+	first_seen: string;
+	last_seen: string;
+	ports: NetscanPort[];
+}
+
 // --- Server logs (Settings → System → Logs) -----------------------------------
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';

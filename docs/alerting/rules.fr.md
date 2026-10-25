@@ -740,6 +740,15 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 | Score de sécurité en baisse | Le score a chuté de 10 points ou plus par rapport à sa meilleure valeur des dernières 24 heures (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`) : un contrôle a commencé à échouer. | ≥ 10 pts | 30 min | Avis (`warning`) | 24 h |
 | Score de sécurité faible | Le score est sous 40, note F (`dumbmonit_security_score`). Montez ou descendez le seuil pour correspondre à votre propre barre. | < 40 | 1 h | Info (`info`) | 7 j |
 
+### Inventaire du réseau {#inventaire-du-reseau}
+
+Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les deux règles sont désactivées par défaut** et de gravité `info` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+| New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+
 ### DumbMonit lui-même
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |

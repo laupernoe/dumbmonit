@@ -679,6 +679,15 @@ Computed by the server every 15 minutes for every monitor whose kind has securit
 | Security score dropped | The score fell by 10 points or more against its best value of the last 24 hours (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): a check started failing. | ≥ 10 pts | 30 min | Advisory (`warning`) | 24 h |
 | Security score low | The score is below 40, grade F (`dumbmonit_security_score`). Raise or lower the threshold to match your own bar. | < 40 | 1 h | Info (`info`) | 7 d |
 
+### Network inventory {#network-inventory}
+
+Raised from the scheduled network scans and their inventory (see [Scheduled scans and inventory](../using/discovery.md#scheduled-scans-and-inventory)). **Both rules are disabled by default** and have severity `info`: turn them on in the rules list when you want them. There is one series, so one alert, per new device or port; it stays open until the item is marked as known (the metric stops, the alert resolves within a few minutes) and has no reminder. The first scan of a network never raises anything.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| New device on the network | A scheduled scan found a device that is not in the inventory (`dumbmonit_netscan_unknown_device`). | > 0 | none | Info (`info`), **disabled** | none |
+| New open port on the network | A scheduled scan found a new open port on a known device (`dumbmonit_netscan_unknown_port`). | > 0 | none | Info (`info`), **disabled** | none |
+
 ### DumbMonit itself
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |

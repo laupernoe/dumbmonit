@@ -6291,8 +6291,49 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_cve_vulnerable",
             )
         },
+        // Inventaire du réseau (`netinventory/`). Désactivées par défaut : sur un
+        // réseau qui bouge (invités, DHCP), elles ne servent qu'à qui veut les
+        // lire, et sévérité « info » pour ne jamais réveiller personne. Une
+        // mesure par élément inconnu : une alerte par nouvel appareil ou port,
+        // qui dure jusqu'à ce qu'il soit marqué connu. Pas de rappel.
+        Rule {
+            description: "A scheduled network scan found a device that is not in the \
+                          inventory. It stays reported until it is marked as known."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            severity: Severity::Info,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_NEW_DEVICE,
+                "New device on the network",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_unknown_device",
+            )
+        },
+        Rule {
+            description: "A scheduled network scan found a new open port on a known device. It \
+                          stays reported until it is marked as known."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            severity: Severity::Info,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_NEW_PORT,
+                "New open port on the network",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_unknown_port",
+            )
+        },
     ]
 }
+
+/// `uid` des règles d'inventaire du réseau, livrées désactivées.
+pub const RULE_NETSCAN_NEW_DEVICE: &str = "netscan_new_device";
+pub const RULE_NETSCAN_NEW_PORT: &str = "netscan_new_port";
 
 /// Construit une requête prédictive « ce système de fichiers sera plein dans moins
 /// de `days` jours », pour l'assistant de création de règle de l'interface.
@@ -7135,6 +7176,9 @@ mod tests {
             "dumbmonit_hyperv_vms_health_critical",
             "dumbmonit_hyperv_host_cpu_percent",
             "dumbmonit_hyperv_vhd_errors_total",
+            // Inventaire du réseau (`netinventory/mod.rs`).
+            "dumbmonit_netscan_unknown_device",
+            "dumbmonit_netscan_unknown_port",
         ];
 
         for rule in builtin_rules() {
@@ -7163,7 +7207,9 @@ mod tests {
     #[test]
     fn les_regles_livrees_sont_actives_et_sans_canal_impose() {
         for rule in builtin_rules() {
-            assert!(rule.enabled, "{} should be enabled", rule.uid);
+            // Les règles d'inventaire du réseau sont les seules livrées éteintes.
+            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE || rule.uid == RULE_NETSCAN_NEW_PORT;
+            assert_eq!(rule.enabled, !off, "{} enabled flag", rule.uid);
             assert!(rule.builtin);
             assert!(rule.channels.is_empty(), "{} must not impose any channel", rule.uid);
             assert!(matches!(rule.selector, TargetSelector::All));

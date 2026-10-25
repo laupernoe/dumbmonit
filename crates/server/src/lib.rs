@@ -18,6 +18,7 @@ pub mod geoip;
 pub mod healthcheck;
 pub mod logs;
 pub mod music;
+pub mod netinventory;
 pub mod notify;
 pub mod packs;
 #[cfg(unix)]
