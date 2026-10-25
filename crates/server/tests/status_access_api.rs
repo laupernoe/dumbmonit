@@ -71,7 +71,9 @@ async fn a_password_page_needs_the_cookie_and_hides_the_hash() {
         .await;
     assert_eq!(short.status, StatusCode::BAD_REQUEST);
 
-    let view = set_access(&app, &admin, id, json!({ "mode": "password", "password": "board-secret-1" })).await;
+    let view =
+        set_access(&app, &admin, id, json!({ "mode": "password", "password": "board-secret-1" }))
+            .await;
     assert_eq!(view["access_mode"], "password");
     assert_eq!(view["has_password"], true);
     assert!(!view.to_string().contains("argon2"), "the hash never leaves the server");
@@ -90,17 +92,24 @@ async fn a_password_page_needs_the_cookie_and_hides_the_hash() {
     }
 
     // Mauvais mot de passe : refusé, aucun cookie.
-    let wrong = app.post("/api/public/status/board/access", json!({ "password": "nope-nope-nope" }), None).await;
+    let wrong = app
+        .post("/api/public/status/board/access", json!({ "password": "nope-nope-nope" }), None)
+        .await;
     assert_eq!(wrong.status, StatusCode::FORBIDDEN);
     assert!(wrong.set_cookie.is_none());
 
     // Bon mot de passe : cookie d'accès, puis lecture.
-    let right = app.post("/api/public/status/board/access", json!({ "password": "board-secret-1" }), None).await;
+    let right = app
+        .post("/api/public/status/board/access", json!({ "password": "board-secret-1" }), None)
+        .await;
     assert_eq!(right.status, StatusCode::OK, "{}", right.body);
     let cookie = right.cookie();
     let doc = app.get("/api/public/status/board", Some(&cookie)).await;
     assert_eq!(doc.status, StatusCode::OK, "{}", doc.body);
-    assert_eq!(app.get("/api/public/status/board/badge.svg", Some(&cookie)).await.status, StatusCode::OK);
+    assert_eq!(
+        app.get("/api/public/status/board/badge.svg", Some(&cookie)).await.status,
+        StatusCode::OK
+    );
 
     // Un cookie d'une autre page, ou forgé, ne vaut rien.
     let forged = app.get("/api/public/status/board", Some("dm_page_1=9999999999.deadbeef")).await;
@@ -108,7 +117,10 @@ async fn a_password_page_needs_the_cookie_and_hides_the_hash() {
 
     // Changer le mot de passe invalide les cookies déjà posés.
     set_access(&app, &admin, id, json!({ "mode": "password", "password": "board-secret-2" })).await;
-    assert_eq!(app.get("/api/public/status/board", Some(&cookie)).await.status, StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        app.get("/api/public/status/board", Some(&cookie)).await.status,
+        StatusCode::UNAUTHORIZED
+    );
 }
 
 #[tokio::test]
@@ -160,6 +172,8 @@ async fn leaving_password_mode_forgets_the_password() {
     let view = set_access(&app, &admin, id, json!({ "mode": "public" })).await;
     assert_eq!(view["has_password"], false);
     assert_eq!(app.get("/api/public/status/board", None).await.status, StatusCode::OK);
-    let bad = app.put(&format!("/api/status-pages/{id}/access"), json!({ "mode": "secret" }), Some(&admin)).await;
+    let bad = app
+        .put(&format!("/api/status-pages/{id}/access"), json!({ "mode": "secret" }), Some(&admin))
+        .await;
     assert_eq!(bad.status, StatusCode::BAD_REQUEST);
 }

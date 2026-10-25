@@ -127,7 +127,8 @@ pub fn public_routes() -> Router<AppState> {
         .route("/public/status/{slug}/logo", get(branding::public_logo))
         .route(
             "/public/status/{slug}/access",
-            post(access::unlock).layer(axum::middleware::from_fn(crate::auth::cookie::secure_when_https)),
+            post(access::unlock)
+                .layer(axum::middleware::from_fn(crate::auth::cookie::secure_when_https)),
         )
         .route("/public/status/{slug}/subscribe", post(subscribers::subscribe))
         .route("/public/status/{slug}/confirm", post(subscribers::confirm))

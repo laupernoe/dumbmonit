@@ -54,12 +54,8 @@ async fn a_page_feed_lists_its_maintenance_only() {
                 "body": "Short outage, expected." }),
     )
     .await;
-    announce(
-        &app,
-        &admin,
-        json!({ "title": "Disk failure", "kind": "incident", "page_id": id }),
-    )
-    .await;
+    announce(&app, &admin, json!({ "title": "Disk failure", "kind": "incident", "page_id": id }))
+        .await;
 
     let feed = raw(&app, "/api/public/status/acme/maintenance.ics", None).await;
     assert_eq!(feed.status, StatusCode::OK);
@@ -112,14 +108,23 @@ async fn the_private_feed_needs_its_token() {
     // Le jeton se lit en administrateur seulement.
     assert_eq!(app.get("/api/calendar/maintenance", None).await.status, StatusCode::UNAUTHORIZED);
     let viewer = app.viewer_cookie(&admin).await;
-    assert_eq!(app.get("/api/calendar/maintenance", Some(&viewer)).await.status, StatusCode::FORBIDDEN);
+    assert_eq!(
+        app.get("/api/calendar/maintenance", Some(&viewer)).await.status,
+        StatusCode::FORBIDDEN
+    );
 
     let shown = app.get("/api/calendar/maintenance", Some(&admin)).await;
     assert_eq!(shown.status, StatusCode::OK, "{}", shown.body);
     let token = shown.body["token"].as_str().unwrap().to_string();
-    assert_eq!(app.get("/api/calendar/maintenance", Some(&admin)).await.body["token"], token.as_str());
+    assert_eq!(
+        app.get("/api/calendar/maintenance", Some(&admin)).await.body["token"],
+        token.as_str()
+    );
 
-    assert_eq!(raw(&app, "/api/calendar/maintenance.ics", None).await.status, StatusCode::NOT_FOUND);
+    assert_eq!(
+        raw(&app, "/api/calendar/maintenance.ics", None).await.status,
+        StatusCode::NOT_FOUND
+    );
     let wrong = raw(&app, "/api/calendar/maintenance.ics?token=nope", None).await;
     assert_eq!(wrong.status, StatusCode::NOT_FOUND);
     let feed = raw(&app, &format!("/api/calendar/maintenance.ics?token={token}"), None).await;

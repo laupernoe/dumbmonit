@@ -263,7 +263,14 @@ fn table_header(sheet: &mut Sheet, columns: &[Column]) {
     sheet.page.rect_fill(LEFT, sheet.y - 4.0, RIGHT - LEFT, ROW, TINT);
     for column in columns {
         if column.right {
-            sheet.page.text_right(column.x + column.width, sheet.y, column.title, Font::Bold, 8.0, MUTED);
+            sheet.page.text_right(
+                column.x + column.width,
+                sheet.y,
+                column.title,
+                Font::Bold,
+                8.0,
+                MUTED,
+            );
         } else {
             sheet.page.text(column.x, sheet.y, column.title, Font::Bold, 8.0, MUTED);
         }
@@ -312,7 +319,14 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
 
     // En-tête.
     sheet.y -= 18.0;
-    sheet.page.text(LEFT, sheet.y, &pdf::fit(&one_line(&options.brand), Font::Bold, 20.0, RIGHT - LEFT), Font::Bold, 20.0, INK);
+    sheet.page.text(
+        LEFT,
+        sheet.y,
+        &pdf::fit(&one_line(&options.brand), Font::Bold, 20.0, RIGHT - LEFT),
+        Font::Bold,
+        20.0,
+        INK,
+    );
     sheet.y -= 18.0;
     sheet.page.text(LEFT, sheet.y, "Availability report", Font::Bold, 12.0, MUTED);
     sheet.y -= 15.0;
@@ -320,7 +334,14 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
     let report_name = one_line(&data.name);
     if !report_name.is_empty() {
         sheet.y -= 13.0;
-        sheet.page.text(LEFT, sheet.y, &pdf::fit(&report_name, Font::Regular, 9.0, RIGHT - LEFT), Font::Regular, 9.0, MUTED);
+        sheet.page.text(
+            LEFT,
+            sheet.y,
+            &pdf::fit(&report_name, Font::Regular, 9.0, RIGHT - LEFT),
+            Font::Regular,
+            9.0,
+            MUTED,
+        );
     }
     sheet.y -= 10.0;
     sheet.page.line(LEFT, sheet.y, RIGHT, sheet.y, 1.0, INK);
@@ -334,7 +355,10 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
         Stat {
             label: "Availability",
             value: pct(data.fleet_uptime),
-            sub: format!("{word}; {} vs previous", delta(data.fleet_uptime, data.fleet_previous_uptime)),
+            sub: format!(
+                "{word}; {} vs previous",
+                delta(data.fleet_uptime, data.fleet_previous_uptime)
+            ),
             color: word_color(word),
         },
         Stat {
@@ -356,7 +380,8 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
     sheet.y -= 62.0;
 
     if let Some(goal) = options.objective {
-        let measured: Vec<&DeviceStat> = data.devices.iter().filter(|d| d.uptime.is_some()).collect();
+        let measured: Vec<&DeviceStat> =
+            data.devices.iter().filter(|d| d.uptime.is_some()).collect();
         let met = measured.iter().filter(|d| status_word(d.uptime, Some(goal)) == "Met").count();
         sheet.note(&format!(
             "SLA objective {goal:.3}%: met by {met} of {} monitor(s) with data. Fleet availability is {}.",
@@ -508,7 +533,14 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
     for (index, mut page) in pages.into_iter().enumerate() {
         page.line(LEFT, 44.0, RIGHT, 44.0, 0.4, RULE);
         page.text(LEFT, 32.0, &format!("DumbMonit - generated {stamp}"), Font::Regular, 8.0, MUTED);
-        page.text_right(RIGHT, 32.0, &format!("Page {} of {total}", index + 1), Font::Regular, 8.0, MUTED);
+        page.text_right(
+            RIGHT,
+            32.0,
+            &format!("Page {} of {total}", index + 1),
+            Font::Regular,
+            8.0,
+            MUTED,
+        );
         doc.add_page(page);
     }
     doc.finish()
@@ -612,7 +644,11 @@ mod tests {
     }
 
     fn options() -> Options {
-        Options { brand: "Acme (Ops)".into(), objective: Some(99.9), generated: at("2026-11-03T08:00:00Z") }
+        Options {
+            brand: "Acme (Ops)".into(),
+            objective: Some(99.9),
+            generated: at("2026-11-03T08:00:00Z"),
+        }
     }
 
     #[test]

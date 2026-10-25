@@ -150,7 +150,15 @@ impl Page {
     }
 
     /// Texte aligné à droite sur `right`.
-    pub fn text_right(&mut self, right: f64, y: f64, text: &str, font: Font, size: f64, color: Rgb) {
+    pub fn text_right(
+        &mut self,
+        right: f64,
+        y: f64,
+        text: &str,
+        font: Font,
+        size: f64,
+        color: Rgb,
+    ) {
         let x = right - text_width(text, font, size);
         self.text(x, y, text, font, size, color);
     }
@@ -291,7 +299,8 @@ mod tests {
             .and_then(|n| n.parse().ok())
             .expect("startxref");
         assert!(text[start..].starts_with("xref\n"), "startxref points at the table");
-        let table: Vec<&str> = text[start..].lines().skip(3).take_while(|l| l.ends_with(" n ")).collect();
+        let table: Vec<&str> =
+            text[start..].lines().skip(3).take_while(|l| l.ends_with(" n ")).collect();
         assert!(table.len() >= 9);
         for (i, entry) in table.iter().enumerate() {
             let offset: usize = entry[..10].parse().expect("offset");
