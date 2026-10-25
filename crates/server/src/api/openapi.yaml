@@ -3640,6 +3640,114 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/event-rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listAgentEventRules
+      tags: [Agents]
+      summary: Windows event log rules of an agent machine
+      description: "The machine's rules, with their counters, and the suggested examples (never created on their own). The rules reach the agent in the acknowledgement of its next batch; only a Windows agent reads them (`supported`). `404` when the device is not an `agent` device."
+      x-token-scope: read
+      responses:
+        "200":
+          description: Rules, rate limit and examples.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRules" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: createAgentEventRule
+      tags: [Agents]
+      summary: Add a Windows event log rule
+      description: "At least an event ID, a source or a level is required. Every matching event raises the built-in alert of the rule's severity (`windows_event_critical`, `windows_event_warning`, `windows_event_info`) on the machine."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEventRuleInput" }
+      responses:
+        "201":
+          description: The new rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/agent/event-rules/{rule_id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: rule_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+        description: Event log rule id.
+    put:
+      operationId: updateAgentEventRule
+      tags: [Agents]
+      summary: Replace a Windows event log rule
+      description: Its counters are kept.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEventRuleInput" }
+      responses:
+        "200":
+          description: The rule after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteAgentEventRule
+      tags: [Agents]
+      summary: Delete a Windows event log rule
+      description: The events already received stay in the machine's history.
+      x-token-scope: write
+      responses:
+        "204": { description: Rule deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/events:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: limit
+        in: query
+        required: false
+        schema: { type: integer, minimum: 1, maximum: 500, default: 50 }
+        description: Number of events to return.
+    get:
+      operationId: listAgentEvents
+      tags: [Agents]
+      summary: Latest Windows events matched by the machine's rules
+      description: Newest first. The server keeps the last 500 events of each machine.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Received events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentEvent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/containers:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -8341,6 +8449,77 @@ components:
         automatic: { type: boolean, description: Nobody ticked or unticked it; the device follows detection. }
         target_id: { type: [integer, "null"], description: The service's device. }
         last_seen_at: { type: [string, "null"], description: Last batch with readings of this service (UTC). }
+    AgentEventLevel:
+      type: string
+      enum: [critical, error, warning, information]
+      description: "Event Viewer level. `information` also covers level 0 (LogAlways), the level of Security audit events."
+    AgentEventRuleInput:
+      type: object
+      required: [name, channel]
+      properties:
+        name: { type: string, maxLength: 256 }
+        channel: { type: string, maxLength: 256, description: "`System`, `Application`, `Security` or a channel such as `Microsoft-Windows-TaskScheduler/Operational`." }
+        provider: { type: [string, "null"], description: "Event source (provider), such as `Microsoft-Windows-Kernel-Power`; empty for any." }
+        event_ids: { type: string, description: "Comma-separated IDs and ranges, such as `4625, 7000-7099` (20 at most); empty for any." }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" }, description: Empty for any level. }
+        pattern: { type: [string, "null"], description: Text the message must contain (case-insensitive), or a regular expression when `pattern_regex`. }
+        pattern_regex: { type: boolean, default: false }
+        severity: { $ref: "#/components/schemas/Severity" }
+        enabled: { type: boolean, default: true }
+    AgentEventRule:
+      type: object
+      required: [id, target_id, name, channel, provider, event_ids, levels, pattern, pattern_regex, severity, enabled, matches_total, dropped_total, last_match_at]
+      properties:
+        id: { type: integer, format: int64 }
+        target_id: { type: integer, format: int64 }
+        name: { type: string }
+        channel: { type: string }
+        provider: { type: [string, "null"] }
+        event_ids: { type: string, description: Canonical form; empty for any. }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" } }
+        pattern: { type: [string, "null"] }
+        pattern_regex: { type: boolean }
+        severity: { $ref: "#/components/schemas/Severity" }
+        enabled: { type: boolean }
+        matches_total: { type: integer, format: int64, description: Events received for this rule. }
+        dropped_total: { type: integer, format: int64, description: Events the agent skipped because of the rate limit. }
+        last_match_at: { type: [string, "null"], description: Last event received (UTC). }
+    AgentEventRulePreset:
+      type: object
+      required: [id, name, channel, provider, event_ids, levels, severity]
+      properties:
+        id: { type: string, description: "Stable key: `failed_logon`, `account_locked`, `unexpected_reboot`, `service_crashed`, `disk_errors`, `log_cleared`, `application_errors`." }
+        name: { type: string }
+        channel: { type: string }
+        provider: { type: [string, "null"] }
+        event_ids: { type: string }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" } }
+        severity: { $ref: "#/components/schemas/Severity" }
+    AgentEventRules:
+      type: object
+      required: [supported, max_per_minute, rules, presets]
+      properties:
+        supported: { type: boolean, description: The machine runs Windows; elsewhere the rules are kept but never sent. }
+        max_per_minute: { type: integer, description: Events kept per rule and per minute; the rest is counted in `dropped_total`. }
+        rules: { type: array, items: { $ref: "#/components/schemas/AgentEventRule" } }
+        presets: { type: array, items: { $ref: "#/components/schemas/AgentEventRulePreset" } }
+    AgentEvent:
+      type: object
+      required: [id, rule_id, rule_name, severity, channel, provider, event_id, level, record_id, computer, message, occurred_at, received_at]
+      properties:
+        id: { type: integer, format: int64 }
+        rule_id: { type: [integer, "null"], description: Null once the rule is deleted. }
+        rule_name: { type: string }
+        severity: { $ref: "#/components/schemas/Severity" }
+        channel: { type: string }
+        provider: { type: string }
+        event_id: { type: integer }
+        level: { oneOf: [{ $ref: "#/components/schemas/AgentEventLevel" }, { type: "null" }] }
+        record_id: { type: integer, format: int64 }
+        computer: { type: string }
+        message: { type: string, description: Formatted message, 2000 characters at most. }
+        occurred_at: { type: [string, "null"], description: When Windows logged the event (UTC). }
+        received_at: { type: [string, "null"], description: When the server received it (UTC). }
     ContainerPolicy:
       type: object
       required: [auto_restart, auto_update, prune_old_image, only_in_maintenance]

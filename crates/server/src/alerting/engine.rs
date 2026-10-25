@@ -195,28 +195,41 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
 }
 
 /// Faits que les alertes « événement » annoncent un par un (voir
-/// [`cycle::Occurrence`]). Aujourd'hui une seule source : les vérifications
-/// de site qui trouvent des changements, pour la règle livrée
-/// [`crate::webchange::ALERT_RULE`]. Une lecture qui échoue n'empêche pas le
-/// cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
+/// [`cycle::Occurrence`]). Deux sources : les vérifications de site qui
+/// trouvent des changements, pour la règle livrée
+/// [`crate::webchange::ALERT_RULE`], et les événements du journal Windows
+/// remontés par les agents, pour les règles `windows_event_*`
+/// ([`crate::collectors::agent::eventlog`]). Une lecture qui échoue n'empêche
+/// pas le cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
 async fn occurrences(pool: &SqlitePool) -> HashMap<(String, i64), cycle::Occurrence> {
-    let checks = match crate::webchange::store::changed_checks(pool).await {
-        Ok(checks) => checks,
-        Err(error) => {
-            warn!(?error, "website checks not read for alerting");
-            return HashMap::new();
+    let mut found = HashMap::new();
+    match crate::webchange::store::changed_checks(pool).await {
+        Ok(checks) => {
+            found.extend(checks.into_iter().filter_map(|(target, at, changes, summary)| {
+                // `datetime('now')` de SQLite : UTC, sans fuseau.
+                let at = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S").ok()?;
+                let occurrence =
+                    cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
+                Some(((crate::webchange::ALERT_RULE.to_string(), target), occurrence))
+            }));
         }
-    };
-    checks
-        .into_iter()
-        .filter_map(|(target, at, changes, summary)| {
-            // `datetime('now')` de SQLite : UTC, sans fuseau.
-            let at = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S").ok()?;
-            let occurrence =
-                cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
-            Some(((crate::webchange::ALERT_RULE.to_string(), target), occurrence))
-        })
-        .collect()
+        Err(error) => warn!(?error, "website checks not read for alerting"),
+    }
+    match crate::collectors::agent::eventlog::occurrences(pool).await {
+        Ok(events) => {
+            found.extend(events.into_iter().filter_map(|event| {
+                let at = DateTime::from_timestamp_millis(event.announced_ms)?;
+                let occurrence = cycle::Occurrence {
+                    at,
+                    value: event.matches as f64,
+                    detail: Some(event.detail).filter(|d| !d.is_empty()),
+                };
+                Some(((event.rule_uid.to_string(), event.target_id), occurrence))
+            }));
+        }
+        Err(error) => warn!(?error, "agent event log not read for alerting"),
+    }
+    found
 }
 
 /// Exécute un cycle complet et renvoie son bilan.

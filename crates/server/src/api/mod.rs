@@ -1,6 +1,7 @@
 mod activedirectory;
 mod ad_deploy;
 mod agent_commands;
+mod agent_events;
 mod agent_files;
 mod agent_tls;
 mod alert_actions;
@@ -193,6 +194,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/tokens/{id}", delete(tokens::revoke))
         // Actions sur les conteneurs d'une machine (`agent_commands.rs`).
         .merge(agent_commands::ui_routes())
+        // Journal d'événements Windows d'une machine : règles et événements (`agent_events.rs`).
+        .merge(agent_events::routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
