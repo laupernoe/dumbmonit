@@ -130,6 +130,21 @@ pour votre ligne.
 | Débit montant Internet bas | Idem, pour `speedtest_min_upload_mbps`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 | Latence Internet élevée | Le dernier test a mesuré une latence au-dessus de `speedtest_max_latency_ms`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 
+### Journal d'événements Windows
+
+Déclenchées par les règles d'événements d'une machine Windows ; voir
+[Alertes du journal d'événements Windows](../devices/agent-windows-events.md).
+Aucune règle d'événements n'existe par défaut : ces règles restent muettes tant
+que vous n'en ajoutez pas. Une alerte par machine et par sévérité, qui cite le
+dernier événement ; elle reparle au plus toutes les 10 minutes tant que des
+événements arrivent, et se résout 15 minutes après le dernier.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Windows event (critical) | Un événement a répondu à une règle de sévérité Avertissement (`dumbmonit_agent_eventlog_matches_critical` : événements des 15 dernières minutes). | > 0 | 30 s | Avertissement (`critical`) | aucun |
+| Windows event (warning) | Idem, pour les règles de sévérité Avis (`dumbmonit_agent_eventlog_matches_warning`). | > 0 | 30 s | Avis (`warning`) | aucun |
+| Windows event (info) | Idem, pour les règles de sévérité Info (`dumbmonit_agent_eventlog_matches_info`). | > 0 | 30 s | Info (`info`) | aucun |
+
 ### Proxmox VE
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |

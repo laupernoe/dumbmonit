@@ -16,6 +16,7 @@ use crate::crypto::Cipher;
 use crate::db;
 use crate::tsdb::SampleSink;
 
+use super::eventlog;
 use super::modules::{self, Module};
 use super::store::RegisterError;
 use super::{store, token};
@@ -170,6 +171,21 @@ pub async fn ingest(
         db::targets::record_probe(pool, child.id, None).await?;
     }
 
+    // Journal d'événements Windows : les événements reçus sont rangés, puis la
+    // jauge de chaque sévérité est réécrite à chaque lot d'une machine qui a
+    // des règles, pour que l'alerte retombe quand les événements cessent.
+    if let Some(report) = batch.event_log.as_ref().filter(|report| !report.is_empty()) {
+        eventlog::record(pool, target.id, report, received_at_ms).await?;
+    }
+    samples.extend(eventlog::gauges(pool, &target, received_at_ms).await?);
+    // Les règles ne partent que vers une machine Windows : ailleurs, l'agent n'a
+    // pas de journal à lire et l'accusé reste celui d'avant.
+    let event_rules = if batch.identity.os.eq_ignore_ascii_case("windows") {
+        Some(eventlog::agent_rules(pool, target.id).await?)
+    } else {
+        None
+    };
+
     sink.send(samples).await;
     let previous_ms = store::last_seen_ms(pool, target.id).await?;
     store::record_batch(pool, target.id, received_at_ms, accepted).await?;
@@ -191,6 +207,7 @@ pub async fn ingest(
         disabled_modules: modules::disabled(&states),
         // Le mode relais réglé dans l'interface : l'agent l'applique à chaud.
         relay: store::relay_setting(pool, target.id).await?,
+        event_rules,
     })
 }
 

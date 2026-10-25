@@ -9,7 +9,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
-use crate::Sample;
+use crate::{EventLogReport, EventLogRule, Sample};
 
 /// Version du dialogue de poussée.
 ///
@@ -172,11 +172,23 @@ pub struct PushBatch {
     /// agent antérieur : un serveur antérieur, lui, ignore le champ.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inventory: Option<SoftwareInventory>,
+    /// Événements du journal Windows qui ont répondu aux règles reçues
+    /// ([`PushAck::event_rules`]). Absent quand il n'y a rien à dire, et chez
+    /// un agent antérieur ; un serveur antérieur ignore le champ.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event_log: Option<EventLogReport>,
 }
 
 impl PushBatch {
     pub fn new(identity: AgentIdentity, samples: Vec<Sample>, sent_at_ms: i64) -> Self {
-        Self { protocol: PUSH_PROTOCOL_VERSION, identity, sent_at_ms, samples, inventory: None }
+        Self {
+            protocol: PUSH_PROTOCOL_VERSION,
+            identity,
+            sent_at_ms,
+            samples,
+            inventory: None,
+            event_log: None,
+        }
     }
 }
 
@@ -282,6 +294,12 @@ pub struct PushAck {
     /// antérieur ignore ce champ et ne relaie que si son agent.yaml le dit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub relay: Option<RelaySetting>,
+    /// Règles du journal d'événements de cette machine. `None` chez un serveur
+    /// antérieur, et pour une machine qui n'est pas sous Windows : l'agent garde
+    /// alors ce qu'il avait. `Some(vec![])` : plus aucune règle. Un agent
+    /// antérieur ignore le champ.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub event_rules: Option<Vec<EventLogRule>>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -375,6 +393,8 @@ mod tests {
         assert!(batch.identity.tags.is_empty());
         // Ni d'avant l'inventaire logiciel.
         assert!(batch.inventory.is_none());
+        // Ni d'avant le journal d'événements.
+        assert!(batch.event_log.is_none());
         // Un agent d'avant le canal de commandes ne dit rien de ses capacités.
         assert_eq!(batch.identity.commands_enabled, None);
         // Ni d'avant le pilotage du relais : l'interface le dira trop ancien.
@@ -397,6 +417,7 @@ mod tests {
         assert!(!ack.bound);
         assert!(ack.disabled_modules.is_empty(), "rien de décoché chez un serveur ancien");
         assert_eq!(ack.relay, None, "un serveur ancien ne dit rien du relais");
+        assert_eq!(ack.event_rules, None, "ni du journal d'événements");
 
         let issued = PushAck {
             target_id: 7,
@@ -407,6 +428,7 @@ mod tests {
             bound: true,
             disabled_modules: Vec::new(),
             relay: None,
+            event_rules: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -454,6 +476,15 @@ mod tests {
             bound: true,
             disabled_modules: vec!["docker".into()],
             relay: Some(RelaySetting { enabled: true, site: Some("Lyon".into()) }),
+            event_rules: Some(vec![EventLogRule {
+                id: 4,
+                channel: "Security".into(),
+                provider: None,
+                event_ids: vec![crate::EventIdRange { from: 4625, to: 4625 }],
+                levels: Vec::new(),
+                pattern: None,
+                regex: false,
+            }]),
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");
