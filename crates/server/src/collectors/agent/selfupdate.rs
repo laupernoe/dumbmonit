@@ -941,7 +941,7 @@ mod tests {
         let fresh = canary(true, Some(NOW - 10 * 60_000), false);
         assert!(matches!(gate(&[fresh], 60, NOW), Gate::Waiting(why) if why.contains("follow")));
         let held = canary(true, Some(NOW - 61 * 60_000), false);
-        assert_eq!(gate(&[held.clone()], 60, NOW), Gate::Open);
+        assert_eq!(gate(std::slice::from_ref(&held), 60, NOW), Gate::Open);
         let failed = canary(false, None, true);
         let blocked = gate(&[held, failed], 60, NOW);
         assert!(matches!(blocked, Gate::Waiting(why) if why.contains("failed")));
