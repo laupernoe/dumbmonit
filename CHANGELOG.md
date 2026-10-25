@@ -5,8 +5,6 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
-## 0.14.0 — 2026-10-25
-
 ### Added
 
 - **Integrations, first batch.** Nine new notification channels, monitors created
@@ -34,6 +32,10 @@ All notable changes to this project are documented here. The format follows
     security. ES256, HTTPS required (except localhost), domain name as relying party
     ID. Checked in DumbMonit itself rather than with `webauthn-rs`, which needs
     OpenSSL.
+
+## 0.14.0 — 2026-10-25
+
+### Added
 
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
