@@ -105,6 +105,11 @@ pub enum Failure {
     Unsynchronized,
     /// Écart d'horloge au-delà du seuil toléré (sonde NTP).
     ClockOffset,
+    /// Valeur numérique hors des bornes tolérées (sonde SNMP OID).
+    Threshold,
+    /// L'objet demandé n'existe pas sur l'agent : OID inconnu, `noSuchObject`
+    /// ou `noSuchInstance` (sonde SNMP OID).
+    NotFound,
 }
 
 impl Failure {
@@ -127,6 +132,8 @@ impl Failure {
             Self::Payload => "payload",
             Self::Unsynchronized => "unsynchronized",
             Self::ClockOffset => "clock_offset",
+            Self::Threshold => "threshold",
+            Self::NotFound => "not_found",
         }
     }
 }
@@ -306,6 +313,8 @@ mod tests {
             Failure::Payload,
             Failure::Unsynchronized,
             Failure::ClockOffset,
+            Failure::Threshold,
+            Failure::NotFound,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {

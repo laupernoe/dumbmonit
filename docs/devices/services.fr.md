@@ -97,14 +97,14 @@ enregistré comme `reason="auth"`, l'alerte dit donc quoi corriger.
 ### Métriques
 
 Toutes des jauges, toutes préfixées `dumbmonit_`, toutes étiquetées
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"` en
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid"` en
 plus de `target`, `host` et `tag_*`.
 
 | Métrique | Surveillances | Signification |
 |---|---|---|
 | `probe_success` | tous | 1 si le service répond correctement, 0 sinon. |
 | `probe_duration_seconds` | tous | Durée totale de la vérification. |
-| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`. |
+| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`. |
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
 | `probe_http_content_bytes` | http | Taille du corps. |
@@ -134,6 +134,8 @@ plus de `target`, `host` et `tag_*`.
 | `probe_mqtt_message_value` | mqtt | Son contenu, quand c'est un nombre. |
 | `probe_ws_handshake_seconds` | websocket | Poignée de main d'ouverture. |
 | `probe_ws_message_bytes` | websocket | Taille de la trame reçue. |
+| `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
+| `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
 
 ## HTTP {#http}
 
@@ -771,6 +773,70 @@ Identifiants : aucun.
 | `protocol` | La réponse n'était pas un paquet NTP valide, ou ne venait pas d'un serveur (mauvais mode). |
 | `unsynchronized` | Le serveur a répondu stratum 16 ou 0 (un « kiss-o'-death », qui nomme aussi la raison dans le journal), ou son indicateur de saut lit « non synchronisé ». |
 | `clock_offset` | Le décalage mesuré dépasse « Décalage toléré ». |
+
+## SNMP OID {#snmp-oid}
+
+**Valeur SNMP (OID unique)** — lit un objet SNMP et compare sa valeur à une
+plage ou à un texte. Exemples : une sonde de température ou d'humidité, l'état
+ou la charge d'un onduleur, une chaîne de version ou un indicateur de firmware,
+un compteur exposé par un script `extend` de Net-SNMP.
+
+Là où le type d'équipement SNMP décrit toute une machine par un profil, celui-ci
+pose une question étroite : cet objet contient-il ce que j'attends ?
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 161 | UDP | Requête SNMP (port par défaut) |
+
+### Configuration
+
+1. Sur l'équipement, activez SNMP et vérifiez que la communauté ou l'utilisateur v3 peut lire l'objet (la vue SNMP doit donner accès à sa branche).
+
+2. Dans DumbMonit, saisissez l'adresse de l'équipement, puis la communauté ou l'utilisateur v3.
+
+3. Renseignez l'objet (OID) avec son suffixe d'instance, par exemple 1.3.6.1.2.1.1.3.0.
+
+4. Facultatif : fixez un minimum et un maximum, ou un texte attendu, pour être averti quand la valeur dérive.
+
+#### Droits requis
+
+- **Accès en lecture à l'objet** : Une communauté ou un utilisateur v3 en lecture seule suffit
+
+!!! warning
+    Un objet que l'agent ne connaît pas, ou que sa vue SNMP masque, est rapporté en panne avec la raison not_found.
+
+#### À savoir
+
+La vérification réutilise la session SNMP du type d'équipement SNMP : mêmes communautés (v1/v2c) et utilisateurs v3, mêmes renvois. Sans borne ni texte attendu, elle réussit dès que l'objet existe. Une valeur numérique est tracée dans `probe_snmp_value` (un texte qui contient un nombre, comme `42,5`, compte aussi). Les bornes sont incluses ; une valeur qui n'est pas un nombre échoue dès qu'une borne est posée. Le texte attendu est cherché sans tenir compte de la casse dans la valeur lue comme du texte.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `oid` | Objet (OID) | *(vide)* | L'objet SNMP à lire, sous forme numérique. Ajoutez le suffixe d'instance, souvent .0 pour une valeur simple. |
+| `port` | Port | `161` | Utilisé si l'adresse n'en donne pas. |
+| `min` | Valeur minimale | *(vide)* | Une valeur numérique inférieure échoue. Vide : pas de borne basse. |
+| `max` | Valeur maximale | *(vide)* | Une valeur numérique supérieure échoue. Vide : pas de borne haute. |
+| `expect` | Texte attendu | *(vide)* | Texte que la valeur doit contenir, quelle que soit la casse. Vide : toute valeur est acceptée. |
+| `snmp_version` | Version SNMP | `2c` | Version utilisée avec une communauté. Choisissez 1 seulement pour un vieil agent qui ignore la 2c ; les utilisateurs SNMP v3 l'ignorent. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | L'équipement est injoignable. |
+| `timeout` | L'agent n'a pas répondu à temps : mauvaise adresse, mauvaise communauté (les agents restent muets) ou pare-feu. |
+| `auth` | L'agent a refusé la communauté ou les identifiants v3. |
+| `protocol` | L'agent a répondu autre chose qu'une réponse SNMP valide, ou a refusé la requête. |
+| `not_found` | L'agent ne connaît pas l'objet (`noSuchObject`, `noSuchInstance`) : vérifiez l'OID, son suffixe d'instance et la vue SNMP. |
+| `threshold` | La valeur numérique est hors de `min` / `max`. |
+| `payload` | La valeur n'est pas un nombre alors qu'une borne est posée, ou ne contient pas le texte attendu. |
 
 ## Adresses que les vérifications refusent
 

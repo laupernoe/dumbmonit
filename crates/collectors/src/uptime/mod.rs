@@ -1,5 +1,5 @@
 //! Moniteurs de disponibilité : HTTP, TCP, DNS, ICMP, expiration de certificat,
-//! SMTP, PostgreSQL, MySQL/MariaDB, MQTT et WebSocket.
+//! SMTP, PostgreSQL, MySQL/MariaDB, MQTT, WebSocket, NTP et lecture d'un OID SNMP.
 //!
 //! Là où les collecteurs SNMP, Proxmox ou l'agent surveillent des *équipements*,
 //! ceux-ci surveillent des *services* : une page web répond-elle, un port
@@ -11,7 +11,7 @@
 //!
 //! Chaque sonde est un [`Collector`](dumbmonit_proto::Collector) à part entière —
 //! `http`, `tcp`, `dns`, `ping`, `tls`, `smtp`, `postgres`, `mysql`, `mqtt`,
-//! `websocket` — plutôt qu'un collecteur unique
+//! `websocket`, `ntp`, `snmp_oid` — plutôt qu'un collecteur unique
 //! paramétré. Elle hérite ainsi sans rien écrire du planificateur, de l'intervalle
 //! par cible, de la découverte, des alertes et de l'interface ; et l'utilisateur
 //! choisit un type dans une liste au lieu de deviner une étiquette.
@@ -33,7 +33,7 @@
 //! # Métriques produites
 //!
 //! Communes à toutes les sondes, étiquetées
-//! `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"` :
+//! `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid"` :
 //!
 //! | Métrique | Unité | Sens |
 //! |---|---|---|
@@ -83,6 +83,8 @@
 //! | `probe_ntp_root_delay_seconds` | ntp | Délai cumulé jusqu'à la racine de la hiérarchie. |
 //! | `probe_ntp_root_dispersion_seconds` | ntp | Dispersion cumulée jusqu'à la racine. |
 //! | `probe_ntp_reference_info` | ntp | Présence ; étiquette `reference_id`. |
+//! | `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
+//! | `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
 //!
 //! Toutes sont des jauges : rien ici n'est cumulatif, chaque interrogation mesure
 //! un instant. Le préfixe `dumbmonit_` est ajouté à l'écriture, comme partout.
@@ -101,6 +103,7 @@ mod outcome;
 mod ping;
 pub(crate) mod session;
 mod smtp;
+mod snmp_oid;
 mod sql;
 pub(crate) mod tags;
 mod tcp;
@@ -114,6 +117,7 @@ pub use mqtt::MqttCollector;
 pub use ntp::NtpCollector;
 pub use ping::{PingCollector, icmp_available};
 pub use smtp::SmtpCollector;
+pub use snmp_oid::SnmpOidCollector;
 pub use sql::{MysqlCollector, PostgresCollector};
 pub use tcp::TcpCollector;
 pub use tls::TlsCollector;
@@ -147,6 +151,7 @@ mod tests {
         assert_eq!(MqttCollector::new().kind(), "mqtt");
         assert_eq!(WebsocketCollector::new().kind(), "websocket");
         assert_eq!(NtpCollector::new().kind(), "ntp");
+        assert_eq!(SnmpOidCollector::new().kind(), "snmp_oid");
     }
 
     #[test]
@@ -163,6 +168,7 @@ mod tests {
             MqttCollector::new().kind().to_owned(),
             WebsocketCollector::new().kind().to_owned(),
             NtpCollector::new().kind().to_owned(),
+            SnmpOidCollector::new().kind().to_owned(),
         ];
         let mut uniques = kinds.to_vec();
         uniques.sort_unstable();
