@@ -69,7 +69,8 @@ impl Ledger {
         let json = serde_json::to_vec_pretty(self).context("encoding the update ledger")?;
         let temporary = path.with_extension("json.tmp");
         write_synced(&temporary, &json)?;
-        std::fs::rename(&temporary, path).with_context(|| format!("replacing {}", path.display()))?;
+        std::fs::rename(&temporary, path)
+            .with_context(|| format!("replacing {}", path.display()))?;
         sync_parent(path);
         Ok(())
     }
@@ -193,8 +194,8 @@ pub fn with_suffix(path: &Path, suffix: &str) -> PathBuf {
 /// Écrit un fichier et le synchronise sur disque avant de rendre la main.
 pub fn write_synced(path: &Path, bytes: &[u8]) -> Result<()> {
     use std::io::Write as _;
-    let mut file = std::fs::File::create(path)
-        .with_context(|| format!("creating {}", path.display()))?;
+    let mut file =
+        std::fs::File::create(path).with_context(|| format!("creating {}", path.display()))?;
     file.write_all(bytes).with_context(|| format!("writing {}", path.display()))?;
     file.sync_all().with_context(|| format!("syncing {}", path.display()))?;
     Ok(())

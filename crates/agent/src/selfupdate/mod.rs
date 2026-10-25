@@ -528,9 +528,8 @@ impl SelfUpdater {
             started_ms: now_ms(),
             boots: 0,
         };
-        self.put_in_place(trial, staged).map_err(|error| {
-            Attempt::Fatal(format!("cannot install the new binary: {error:#}"))
-        })
+        self.put_in_place(trial, staged)
+            .map_err(|error| Attempt::Fatal(format!("cannot install the new binary: {error:#}")))
     }
 
     /// Unix : ancien binaire copié à côté, registre écrit, renommage atomique.
