@@ -1,0 +1,12 @@
+{
+	"monitor_phases_title": "耗时分解",
+	"monitor_phases_desc": "每次检查的时间花在哪里（堆叠）：域名解析、连接、TLS、服务器等待和下载。",
+	"monitor_phases_last_title": "最近一次检查",
+	"monitor_phases_total": "总计 {value}",
+	"monitor_phases_bar_label": "最近一次检查的耗时分解：{summary}",
+	"monitor_phases_dns": "DNS 解析",
+	"monitor_phases_connect": "TCP 连接",
+	"monitor_phases_tls": "TLS 握手",
+	"monitor_phases_processing": "服务器等待",
+	"monitor_phases_transfer": "下载"
+}

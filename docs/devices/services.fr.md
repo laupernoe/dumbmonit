@@ -107,6 +107,7 @@ plus de `target`, `host` et `tag_*`.
 | `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`. |
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
+| `probe_http_phase_seconds{phase}` | http | Temps de la requête mesurée réparti en `dns`, `connect`, `tls`, `processing` et `transfer` ; les cinq somment toujours au temps de la requête (voir [Décomposition du temps de réponse](#decomposition-du-temps-de-reponse)). |
 | `probe_http_content_bytes` | http | Taille du corps. |
 | `probe_http_security_header{header}` | http | 0/1 par étiquette `header` (https seulement) : HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | tous sauf dns et ping | Établissement de connexion (connexion incluse pour les bases de données). |
@@ -194,6 +195,36 @@ basique) ou jeton d'API (`Authorization: Bearer`).
 | `max_body_bytes` | Octets maximum lus | `524288` | Au-delà, le reste de la page n'est pas téléchargé. Le mot-clé et le chemin JSON ne sont recherchés que dans cette partie. |
 | `user_agent` | Identité annoncée (User-Agent) | `DumbMonit/<version>` | Nom que la vérification donne au serveur. Changez-le si le serveur filtre les robots. |
 | `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Décomposition du temps de réponse {#decomposition-du-temps-de-reponse}
+
+Sur la page du moniteur, le panneau **Décomposition du temps** montre où chaque
+contrôle passe son temps, en aires empilées sur la période choisie, avec une barre
+proportionnelle et une légende (nom, durée, part) pour le dernier contrôle. Les
+mêmes valeurs sont dans la métrique `probe_http_phase_seconds`, une série par
+étiquette `phase` :
+
+| Phase | Ce qu'elle couvre |
+|---|---|
+| `dns` | Résolution du nom d'hôte. Nulle pour une adresse IP. |
+| `connect` | Ouverture de la connexion TCP. |
+| `tls` | Négociation TLS (HTTPS seulement). |
+| `processing` | Attente du serveur : de la requête envoyée aux en-têtes de réponse. |
+| `transfer` | Lecture du corps de la réponse. Nulle sauf si un mot-clé ou un chemin JSON exige le corps. |
+
+Les cinq séries existent toujours et somment au temps écoulé entre l'envoi de la
+requête et la fin de la lecture du corps, pour la dernière requête du contrôle (le
+dernier saut quand les redirections sont suivies). Chaque contrôle ouvre une
+connexion neuve : `dns`, `connect` et `tls` sont donc mesurés à chaque fois, au
+lieu de rester à zéro sur une connexion réutilisée.
+
+Lire le graphique : une bande `dns` haute désigne le résolveur, `connect` le
+chemin réseau ou un pare-feu, `tls` la chaîne de certificats ou le coût de la
+négociation, `processing` l'application elle-même. La séparation TCP / TLS repose
+sur la durée de négociation relevée par la lecture du certificat juste avant la
+requête, plafonnée au temps de connexion observé ; si **Lire le certificat** est
+désactivé, la négociation TLS reste comprise dans `connect`. Un contrôle en échec
+ne publie pas de phases : le graphique montre alors un trou.
 
 ## TCP {#tcp}
 

@@ -1,0 +1,12 @@
+{
+	"monitor_phases_title": "Разбивка времени",
+	"monitor_phases_desc": "На что каждая проверка тратит время, с накоплением: разрешение имени, соединение, TLS, ожидание сервера и загрузка.",
+	"monitor_phases_last_title": "Последняя проверка",
+	"monitor_phases_total": "Всего {value}",
+	"monitor_phases_bar_label": "Разбивка последней проверки: {summary}",
+	"monitor_phases_dns": "Разрешение DNS",
+	"monitor_phases_connect": "TCP-соединение",
+	"monitor_phases_tls": "TLS-рукопожатие",
+	"monitor_phases_processing": "Ожидание сервера",
+	"monitor_phases_transfer": "Загрузка"
+}
