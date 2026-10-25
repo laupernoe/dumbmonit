@@ -20,6 +20,7 @@ use base64::engine::general_purpose::STANDARD as BASE64;
 use serde_json::Value;
 use sqlx::{Row, SqlitePool};
 
+use crate::api::topology_edits;
 use crate::backup::bundle::*;
 use crate::crypto::Cipher;
 
@@ -65,7 +66,72 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
+        topology_corrections: topology_corrections(pool, &refs).await?,
+        topology_rules: topology_rules(pool, &refs).await?,
     })
+}
+
+/// Un nœud de la carte, désigné hors de cette instance. `None` : son
+/// équipement n'existe plus, la ligne ne part pas.
+fn bundle_node(id: &str, refs: &HashMap<i64, String>) -> Option<BundleNode> {
+    let (host, child) = topology_edits::node_parts(id)?;
+    Some(BundleNode { target: refs.get(&host)?.clone(), child })
+}
+
+async fn topology_corrections(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleTopologyCorrection>> {
+    let corrections =
+        topology_edits::load_corrections(pool).await.context("lecture des corrections")?;
+    Ok(corrections
+        .into_iter()
+        .filter_map(|c| {
+            let from = match c.from.as_deref() {
+                Some(id) => Some(bundle_node(id, refs)?),
+                None => None,
+            };
+            Some(BundleTopologyCorrection {
+                kind: c.kind.as_str().to_string(),
+                from,
+                to: bundle_node(&c.to, refs)?,
+                source: c.source,
+                value: c.value,
+                use_for_alerts: c.use_for_alerts,
+                previous_parent: c.previous_parent.and_then(|id| refs.get(&id).cloned()),
+                author: c.author,
+                created_at: c.created_at,
+            })
+        })
+        .collect())
+}
+
+async fn topology_rules(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleTopologyRule>> {
+    let rules = topology_edits::load_rules(pool).await.context("lecture des règles de carte")?;
+    Ok(rules
+        .into_iter()
+        .filter_map(|r| {
+            let parent = match r.spec.parent.as_deref() {
+                Some(id) => Some(bundle_node(id, refs)?),
+                None => None,
+            };
+            Some(BundleTopologyRule {
+                kind: r.spec.kind.as_str().to_string(),
+                status: r.status.as_str().to_string(),
+                subnet: r.spec.subnet,
+                address: r.spec.address,
+                target_kind: r.spec.target_kind,
+                source: r.spec.source,
+                parent,
+                evidence: r.evidence,
+                author: r.author,
+                created_at: r.created_at,
+            })
+        })
+        .collect())
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {

@@ -57,6 +57,12 @@
 //! rattaché à son hyperviseur ; un voisin LLDP inconnu, lui, n'apparaît pas —
 //! la carte montre l'infrastructure surveillée, pas tout ce qui répond sur un
 //! port.
+//!
+//! Ce qui précède est la déduction. Les corrections faites à la main sur la
+//! carte et les règles apprises de ces corrections ([`super::topology_edits`])
+//! s'appliquent ensuite, dans cet ordre : liens interdits, liens forcés et
+//! rattachements manuels, règles apprises. Chaque lien dit d'où il vient
+//! (`origin`) : déduit, corrigé à la main ou posé par une règle.
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::net::{IpAddr, Ipv4Addr};
@@ -104,6 +110,12 @@ pub struct TopologyView {
     /// Faux quand VictoriaMetrics n'a pas répondu : les liens `hypervisor` et
     /// `lldp` manquent alors, les autres restent exacts.
     pub metrics_available: bool,
+    /// Corrections faites à la main sur la carte, les plus anciennes d'abord.
+    pub corrections: Vec<super::topology_edits::Correction>,
+    /// Règles acceptées ou refusées, avec ce que chacune touche.
+    pub rules: Vec<super::topology_edits::Rule>,
+    /// Règles que les corrections laissent deviner : jamais appliquées sans accord.
+    pub suggestions: Vec<super::topology_edits::Suggestion>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq)]
@@ -118,9 +130,12 @@ pub struct NodeView {
     pub kind: String,
     /// Dossier de la cible ; pour un invité, celui de son hyperviseur.
     pub group_name: String,
+    /// `manual` quand le regroupement a été corrigé sur la carte.
+    pub group_source: Option<&'static str>,
     /// Site distant du nœud ; `None` pour le site principal.
     pub site: Option<String>,
-    /// D'où vient `site` : `tag`, `agent` ou `relay`.
+    /// D'où vient `site` : `tag`, `agent`, `relay`, `location` ou `manual`
+    /// (corrigé sur la carte).
     pub site_source: Option<&'static str>,
     /// Invité ou nœud : la cible hyperviseur qui l'héberge.
     pub host_id: Option<TargetId>,
@@ -146,8 +161,21 @@ pub struct EdgeView {
     pub from: String,
     pub to: String,
     /// `parent`, `service`, `relay`, `hypervisor`, `hosted`, `lldp`, `samehost`,
-    /// `backup` ou `firewall`.
+    /// `backup`, `firewall` ou `manual` (rattaché à la main, sur la carte seule).
     pub source: &'static str,
+    /// `deduced`, `manual` (corrigé à la main) ou `rule` (règle apprise).
+    pub origin: &'static str,
+    /// La correction qui a posé ce lien.
+    pub correction_id: Option<i64>,
+    /// La règle apprise qui a posé ce lien.
+    pub rule_id: Option<i64>,
+}
+
+impl EdgeView {
+    /// Un lien déduit, tel que la carte le trouve seule.
+    pub fn deduced(from: String, to: String, source: &'static str) -> Self {
+        Self { from, to, source, origin: "deduced", correction_id: None, rule_id: None }
+    }
 }
 
 /// Ce que la carte retient d'une cible.
@@ -280,7 +308,7 @@ fn is_lan(ip: Ipv4Addr) -> bool {
 
 /// L'adresse IPv4 d'une cible, quand son adresse en est une (un nom d'hôte
 /// n'est pas résolu : la carte ne fait aucun accès réseau).
-fn ipv4_of(address: &str) -> Option<Ipv4Addr> {
+pub(crate) fn ipv4_of(address: &str) -> Option<Ipv4Addr> {
     host_key(address)?.parse().ok()
 }
 
@@ -295,9 +323,14 @@ pub struct Neighbor {
 /// liste des équipements. Les adresses des cibles n'y figurent pas ; seules y
 /// sont celles que l'hyperviseur rapporte pour ses invités (`ips`).
 pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
-    let targets = load_targets(&state).await?;
-    let sites = agent_sites(&state).await?;
-    let placed = placed_sites(&state, &targets, &sites).await?;
+    Ok(Json(compute(&state).await?))
+}
+
+/// La carte complète : déduction, puis corrections et règles apprises.
+pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
+    let targets = load_targets(state).await?;
+    let sites = agent_sites(state).await?;
+    let placed = placed_sites(state, &targets, &sites).await?;
 
     let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
     let (guests, neighbors, facts, metrics_available) = if targets.is_empty() {
@@ -319,12 +352,21 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
         )
     };
 
-    let (nodes, edges) = build_full(&targets, &sites, &placed, &guests, &neighbors, &facts);
-    Ok(Json(TopologyView { nodes, edges, metrics_available }))
+    let (mut nodes, mut edges) = build_full(&targets, &sites, &placed, &guests, &neighbors, &facts);
+    let corrections = super::topology_edits::load_corrections(&state.pool).await?;
+    let mut rules = super::topology_edits::load_rules(&state.pool).await?;
+    let applied =
+        super::topology_edits::apply(&targets, &mut nodes, &mut edges, &corrections, &rules);
+    for rule in &mut rules {
+        rule.matches = applied.get(&rule.id).copied().unwrap_or(0);
+    }
+    let suggestions =
+        super::topology_edits::suggest(&targets, &nodes, &edges, &corrections, &rules);
+    Ok(TopologyView { nodes, edges, metrics_available, corrections, rules, suggestions })
 }
 
 /// Les cibles telles que la carte les lit.
-async fn load_targets(state: &AppState) -> ApiResult<Vec<TargetRow>> {
+pub(crate) async fn load_targets(state: &AppState) -> ApiResult<Vec<TargetRow>> {
     let rows = sqlx::query(
         "SELECT t.id AS id, t.name AS name, t.address AS address, t.kind AS kind,
                 t.parent_id AS parent_id, t.via_agent AS via_agent, t.group_name AS group_name,
@@ -373,7 +415,14 @@ async fn agent_sites(state: &AppState) -> ApiResult<HashMap<TargetId, String>> {
 pub async fn target_sites(state: &AppState) -> ApiResult<HashMap<TargetId, Option<String>>> {
     let targets = load_targets(state).await?;
     let sites = agent_sites(state).await?;
-    let (nodes, _) = build(&targets, &sites, &[], &[]);
+    let (mut nodes, mut edges) = build(&targets, &sites, &[], &[]);
+    // Un site corrigé sur la carte vaut aussi pour la carte du monde.
+    let corrections = super::topology_edits::load_corrections(&state.pool).await?;
+    let sited: Vec<_> = corrections
+        .into_iter()
+        .filter(|c| c.kind == super::topology_edits::CorrectionKind::Site)
+        .collect();
+    super::topology_edits::apply(&targets, &mut nodes, &mut edges, &sited, &[]);
     Ok(nodes.into_iter().filter_map(|n| n.target_id.map(|id| (id, n.site))).collect())
 }
 
@@ -706,7 +755,8 @@ const MACHINE_KINDS: &[&str] = &[
 ];
 
 /// Types dont la surveillance désigne un pare-feu ou une passerelle de site.
-const FIREWALL_KINDS: &[&str] = &["opnsense", "pfsense", "fortigate", "sophos", "mikrotik"];
+pub(crate) const FIREWALL_KINDS: &[&str] =
+    &["opnsense", "pfsense", "fortigate", "sophos", "mikrotik"];
 
 fn is_loopback(key: Option<&str>) -> bool {
     key.is_some_and(|k| k == "localhost" || k.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback()))
@@ -790,6 +840,7 @@ pub fn build_full(
                 name: t.name.clone(),
                 kind: t.kind.clone(),
                 group_name: t.group_name.clone(),
+                group_source: None,
                 site_source: site.as_ref().map(|(_, source)| *source),
                 site: site.map(|(name, _)| name),
                 host_id: None,
@@ -809,7 +860,7 @@ pub fn build_full(
             return;
         }
         if linked.insert((from.clone(), to.clone())) {
-            edges.push(EdgeView { from, to, source });
+            edges.push(EdgeView::deduced(from, to, source));
         }
     };
 
@@ -860,6 +911,7 @@ pub fn build_full(
                 name: name.clone(),
                 kind: "pve_node".to_string(),
                 group_name: host.group_name.clone(),
+                group_source: None,
                 site_source: site.as_ref().map(|(_, source)| *source),
                 site: site.as_ref().map(|(name, _)| name.clone()),
                 host_id: Some(*host_id),
@@ -968,6 +1020,7 @@ pub fn build_full(
                 name: guest.name.clone(),
                 kind: if guest.container { "container" } else { "vm" }.to_string(),
                 group_name: host.group_name.clone(),
+                group_source: None,
                 site_source: site.as_ref().map(|(_, source)| *source),
                 site: site.map(|(name, _)| name),
                 host_id: Some(host.id),
