@@ -79,7 +79,10 @@ pub fn take(id: &str) -> Option<Pending> {
 }
 
 /// Identité de la partie de confiance pour une requête.
-pub fn relying_party(headers: &HeaderMap, public_url: Option<&str>) -> Result<RelyingParty, AuthError> {
+pub fn relying_party(
+    headers: &HeaderMap,
+    public_url: Option<&str>,
+) -> Result<RelyingParty, AuthError> {
     let origin = headers
         .get(header::ORIGIN)
         .and_then(|value| value.to_str().ok())
@@ -88,9 +91,8 @@ pub fn relying_party(headers: &HeaderMap, public_url: Option<&str>) -> Result<Re
         .ok_or_else(|| {
             AuthError::Invalid("Passkeys need a browser request that carries its origin.".into())
         })?;
-    let (scheme, authority) = origin
-        .split_once("://")
-        .ok_or_else(|| AuthError::Invalid("Unreadable origin.".into()))?;
+    let (scheme, authority) =
+        origin.split_once("://").ok_or_else(|| AuthError::Invalid("Unreadable origin.".into()))?;
     if authority.contains(['/', '?', '#', '@']) || !matches!(scheme, "http" | "https") {
         return Err(AuthError::Invalid("Unreadable origin.".into()));
     }
@@ -256,7 +258,12 @@ pub async fn find(pool: &SqlitePool, credential_id: &[u8]) -> Result<Option<Stor
     .transpose()
 }
 
-pub async fn record_use(pool: &SqlitePool, id: i64, sign_count: u32, backup_state: bool) -> Result<()> {
+pub async fn record_use(
+    pool: &SqlitePool,
+    id: i64,
+    sign_count: u32,
+    backup_state: bool,
+) -> Result<()> {
     sqlx::query(
         "UPDATE passkeys SET sign_count = ?, backup_state = ?,
              last_used_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
@@ -307,7 +314,10 @@ mod tests {
         assert_eq!(rp.id, "monit.example.org");
         assert_eq!(rp.origin, "https://Monit.Example.org");
         let rp = relying_party(&headers("https://monit.example.org:8443"), None).unwrap();
-        assert_eq!((rp.id.as_str(), rp.origin.as_str()), ("monit.example.org", "https://monit.example.org:8443"));
+        assert_eq!(
+            (rp.id.as_str(), rp.origin.as_str()),
+            ("monit.example.org", "https://monit.example.org:8443")
+        );
     }
 
     #[test]

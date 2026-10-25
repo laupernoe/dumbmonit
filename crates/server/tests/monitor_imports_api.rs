@@ -50,7 +50,10 @@ async fn gatus_apercu_puis_import_puis_doublons() {
 
     let preview = app.post(&format!("{url}?dry_run=true"), body.clone(), Some(&admin)).await;
     assert_eq!(preview.status, StatusCode::OK, "{}", preview.body);
-    assert_eq!((preview.body["created"].clone(), preview.body["skipped"].clone()), (json!(2), json!(1)));
+    assert_eq!(
+        (preview.body["created"].clone(), preview.body["skipped"].clone()),
+        (json!(2), json!(1))
+    );
     assert_eq!(count(&app, &admin).await, 0, "a preview creates nothing");
 
     let done = app.post(url, body.clone(), Some(&admin)).await;

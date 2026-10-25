@@ -34,8 +34,7 @@ fn sms_body(message: &Message, max: usize) -> String {
 
 /// Destinataires obligatoires, au moins un.
 fn recipients(channel: &ChannelConfig, example: &str) -> Result<Vec<String>, NotifyError> {
-    let to: Vec<String> =
-        channel.setting_list("to").iter().map(|n| n.trim().to_string()).collect();
+    let to: Vec<String> = channel.setting_list("to").iter().map(|n| n.trim().to_string()).collect();
     if to.is_empty() {
         return Err(NotifyError::Config(format!(
             "\"to\" must contain at least one recipient, for example {example}"
@@ -195,9 +194,10 @@ impl Notifier for CallMeBot {
     }
 
     async fn send(&self, message: &Message) -> Result<(), NotifyError> {
-        let mut request = Request::new(reqwest::Method::GET, "https://api.callmebot.com/whatsapp.php")
-            .secret(&self.api_key)
-            .explain(Self::explain);
+        let mut request =
+            Request::new(reqwest::Method::GET, "https://api.callmebot.com/whatsapp.php")
+                .secret(&self.api_key)
+                .explain(Self::explain);
         for (name, value) in self.query(message) {
             request = request.query_pair(name, value);
         }
@@ -577,10 +577,7 @@ mod tests {
             json!({"token": "EAAGjeton"}),
         );
         let notifier = WhatsApp::new(client(), &config).unwrap();
-        assert_eq!(
-            notifier.url,
-            "https://graph.facebook.com/v23.0/1234567890/messages"
-        );
+        assert_eq!(notifier.url, "https://graph.facebook.com/v23.0/1234567890/messages");
         assert_eq!(notifier.to, vec!["33612345678"]);
         let body = notifier.payload(&sample_message(false), "33612345678");
         assert_eq!(body["messaging_product"], "whatsapp");
@@ -638,15 +635,21 @@ mod tests {
             json!({"secret": "s"}),
         );
         assert!(refus(Threema::new(client(), &bad)).contains("Gateway ID"));
-        let bad_to =
-            test_config("threema", json!({"from": "*MYGWAY1", "to": ["ABC"]}), json!({"secret": "s"}));
+        let bad_to = test_config(
+            "threema",
+            json!({"from": "*MYGWAY1", "to": ["ABC"]}),
+            json!({"secret": "s"}),
+        );
         assert!(refus(Threema::new(client(), &bad_to)).contains("eight characters"));
     }
 
     #[test]
     fn webex_envoie_du_markdown_dans_l_espace_choisi() {
-        let config =
-            test_config("webex", json!({"room_id": "Y2lzY29zcGFyazovL3Jvb20"}), json!({"token": "t"}));
+        let config = test_config(
+            "webex",
+            json!({"room_id": "Y2lzY29zcGFyazovL3Jvb20"}),
+            json!({"token": "t"}),
+        );
         let body = Webex::new(client(), &config).unwrap().payload(&sample_message(false));
         assert_eq!(body["roomId"], "Y2lzY29zcGFyazovL3Jvb20");
         assert!(body["markdown"].as_str().unwrap().starts_with("**nas"));
@@ -668,10 +671,9 @@ mod tests {
         assert!(!text.contains('⚠'), "no emoji in an SMS: {text}");
 
         assert_eq!(Vonage::verify(r#"{"message-count":"1","messages":[{"status":"0"}]}"#), None);
-        let refused = Vonage::verify(
-            r#"{"messages":[{"status":"2","error-text":"Missing api_key"}]}"#,
-        )
-        .unwrap();
+        let refused =
+            Vonage::verify(r#"{"messages":[{"status":"2","error-text":"Missing api_key"}]}"#)
+                .unwrap();
         assert!(refused.contains("Missing api_key") && refused.contains("status 2"));
     }
 
@@ -682,7 +684,8 @@ mod tests {
             json!({"from": "+15005550006", "to": ["+33612345678"]}),
             json!({"api_key": "KEY0123"}),
         );
-        let body = Telnyx::new(client(), &ok).unwrap().payload(&sample_message(false), "+33612345678");
+        let body =
+            Telnyx::new(client(), &ok).unwrap().payload(&sample_message(false), "+33612345678");
         assert_eq!(body["from"], "+15005550006");
         assert_eq!(body["to"], "+33612345678");
         let bad = test_config(
@@ -704,7 +707,8 @@ mod tests {
         assert_eq!(body["Recipients"], json!(["+41791234567", "+41797654321"]));
         assert_eq!(body["Originator"], "DumbMonit");
         assert_eq!(AspSms::verify(r#"{"StatusCode":"1","StatusInfo":"OK"}"#), None);
-        let refused = AspSms::verify(r#"{"StatusCode":"3","StatusInfo":"Credits missing"}"#).unwrap();
+        let refused =
+            AspSms::verify(r#"{"StatusCode":"3","StatusInfo":"Credits missing"}"#).unwrap();
         assert!(refused.contains("Credits missing"));
     }
 

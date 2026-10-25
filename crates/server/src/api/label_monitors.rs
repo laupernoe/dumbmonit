@@ -65,13 +65,24 @@ fn fingerprint(host: &str, declared: &[DeclaredMonitor]) -> u64 {
 
 /// Appelé après chaque lot accepté. Les erreurs sont journalisées, jamais
 /// renvoyées : un lot de mesures ne doit pas échouer à cause d'une étiquette.
-pub async fn on_batch(state: &AppState, agent: TargetId, declared: Vec<DeclaredMonitor>) {
-    let Ok(Some(host)) = db::targets::get(&state.pool, &state.cipher, agent)
-        .await
-        .map(|t| t.map(|t| host_of(&t.address)))
-    else {
+///
+/// `hostname` est le nom que la machine donne d'elle-même : c'est ce que `{host}`
+/// devient dans une adresse. Le nom de domaine du conteneur n'a pas de sens ici,
+/// et l'adresse de la cible, elle, est l'identifiant de la machine.
+pub async fn on_batch(
+    state: &AppState,
+    agent: TargetId,
+    hostname: &str,
+    declared: Vec<DeclaredMonitor>,
+) {
+    let host = hostname.trim().to_string();
+    // Le nom est inséré dans des adresses : rien qui puisse en changer la forme.
+    if !host.is_empty()
+        && !host.chars().all(|c| c.is_ascii_alphanumeric() || matches!(c, '.' | '-' | '_' | ':'))
+    {
+        tracing::warn!(agent, "host name unfit for monitor addresses, labels ignored");
         return;
-    };
+    }
     let print = fingerprint(&host, &declared);
     let key: Key = (state.config.data_dir.clone(), agent);
     if let Ok(last) = LAST.lock()
@@ -101,25 +112,6 @@ pub async fn on_batch(state: &AppState, agent: TargetId, declared: Vec<DeclaredM
             }
         }
         Err(error) => tracing::warn!(agent, %error, "Docker label monitors not reconciled"),
-    }
-}
-
-/// Hôte d'une adresse de machine : sans port, crochets d'IPv6 compris.
-pub fn host_of(address: &str) -> String {
-    let address = address.trim();
-    if let Some(rest) = address.strip_prefix('[')
-        && let Some((host, _)) = rest.split_once(']')
-    {
-        return host.to_string();
-    }
-    match address.rsplit_once(':') {
-        // Un seul deux-points : `hôte:port`. Plusieurs : une IPv6 nue.
-        Some((host, port))
-            if !host.contains(':') && port.chars().all(|c| c.is_ascii_digit()) =>
-        {
-            host.to_string()
-        }
-        _ => address.to_string(),
     }
 }
 
@@ -182,7 +174,8 @@ pub async fn reconcile(
             let mut input = input;
             input.enabled = before.enabled || restored;
             if restored || changed(&before, &input) {
-                if let Err(error) = db::targets::update(&state.pool, &state.cipher, *id, &input).await
+                if let Err(error) =
+                    db::targets::update(&state.pool, &state.cipher, *id, &input).await
                 {
                     outcome.rejected.push(format!("{key}: {error:#}"));
                     continue;
@@ -284,15 +277,6 @@ pub async fn release(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn l_hote_d_une_adresse_perd_son_port() {
-        assert_eq!(host_of("nas.lan"), "nas.lan");
-        assert_eq!(host_of("nas.lan:22"), "nas.lan");
-        assert_eq!(host_of("10.0.0.2:161"), "10.0.0.2");
-        assert_eq!(host_of("[fd00::1]:22"), "fd00::1");
-        assert_eq!(host_of("fd00::1"), "fd00::1");
-    }
 
     #[test]
     fn l_hote_remplace_son_marqueur() {

@@ -158,7 +158,8 @@ mod tests {
 
     #[test]
     fn grafana_oncall_ouvre_puis_resout_avec_le_meme_identifiant() {
-        let notifier = GrafanaOnCall::new(reqwest::Client::new(), &config("grafana_oncall")).unwrap();
+        let notifier =
+            GrafanaOnCall::new(reqwest::Client::new(), &config("grafana_oncall")).unwrap();
         let open = notifier.payload(&sample_message(false));
         let close = notifier.payload(&sample_message(true));
         assert_eq!(open["state"], "alerting");
@@ -180,7 +181,8 @@ mod tests {
 
     #[test]
     fn un_webhook_sans_schema_est_refuse_sans_etre_cite() {
-        let bad = test_config("signl4", json!({}), json!({"webhook_url": "connect.signl4.com/TOKEN123"}));
+        let bad =
+            test_config("signl4", json!({}), json!({"webhook_url": "connect.signl4.com/TOKEN123"}));
         let Err(error) = Signl4::new(reqwest::Client::new(), &bad) else { panic!("accepted") };
         let text = error.to_string();
         assert!(text.contains("webhook_url") && !text.contains("TOKEN123"));

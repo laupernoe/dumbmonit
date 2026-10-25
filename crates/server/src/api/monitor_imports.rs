@@ -91,9 +91,10 @@ async fn fetch(builder: reqwest::RequestBuilder, url: &str) -> Result<Value, Api
     let parsed = Url::parse(url).map_err(|_| ApiError::BadRequest("Invalid address.".into()))?;
     guard::vet_url(&parsed).await.map_err(|e| ApiError::BadRequest(e.to_string()))?;
     let port = parsed.port_or_known_default();
-    let response = guard::scoped(port, builder.timeout(FETCH_TIMEOUT).send())
-        .await
-        .map_err(|e| ApiError::BadGateway(format!("The service is unreachable: {}", e.without_url())))?;
+    let response =
+        guard::scoped(port, builder.timeout(FETCH_TIMEOUT).send()).await.map_err(|e| {
+            ApiError::BadGateway(format!("The service is unreachable: {}", e.without_url()))
+        })?;
     let status = response.status();
     if status == StatusCode::UNAUTHORIZED || status == StatusCode::FORBIDDEN {
         return Err(ApiError::BadRequest("The service refused this API key.".into()));
@@ -287,9 +288,10 @@ fn uptimerobot_csv(csv: &str) -> Result<Vec<Converted>, String> {
         .map(|(i, h)| (h.trim().to_lowercase().replace([' ', '_', '-', '/'], ""), i))
         .collect();
     let column = |names: &[&str]| names.iter().find_map(|n| columns.get(*n).copied());
-    let (Some(name_col), Some(url_col)) =
-        (column(&["friendlyname", "name", "monitor"]), column(&["url", "urlip", "hostname", "host"]))
-    else {
+    let (Some(name_col), Some(url_col)) = (
+        column(&["friendlyname", "name", "monitor"]),
+        column(&["url", "urlip", "hostname", "host"]),
+    ) else {
         return Err(
             "The CSV needs a \"Friendly Name\" column and a \"URL / IP\" column (export it from \
              the UptimeRobot dashboard)."
@@ -447,8 +449,11 @@ fn convert_gatus_endpoint(endpoint: &Value, default_interval: u64) -> Converted 
     let mut out = blank(text(endpoint, "name"), "endpoint", "Gatus endpoint");
     out.folder = gatus_folder(endpoint);
     out.enabled = endpoint.get("enabled").and_then(Value::as_bool).unwrap_or(true);
-    out.interval_secs =
-        endpoint.get("interval").and_then(Value::as_str).and_then(gatus_duration).unwrap_or(default_interval);
+    out.interval_secs = endpoint
+        .get("interval")
+        .and_then(Value::as_str)
+        .and_then(gatus_duration)
+        .unwrap_or(default_interval);
     let url = text(endpoint, "url");
     let mut options: BTreeMap<String, String> = BTreeMap::new();
 
@@ -495,7 +500,10 @@ fn convert_gatus_endpoint(endpoint: &Value, default_interval: u64) -> Converted 
         if let Some(timeout) =
             endpoint.pointer("/client/timeout").and_then(Value::as_str).and_then(gatus_duration)
         {
-            options.insert("timeout_seconds".into(), timeout.clamp(1, 60).min(out.interval_secs).to_string());
+            options.insert(
+                "timeout_seconds".into(),
+                timeout.clamp(1, 60).min(out.interval_secs).to_string(),
+            );
         }
         let skipped = gatus_conditions(endpoint, &mut options);
         if !skipped.is_empty() {

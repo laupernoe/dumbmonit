@@ -44,8 +44,12 @@ async fn push(app: &TestApp, enrolment: &str, secret: Option<&str>, body: &Value
     if let Some(secret) = secret {
         builder = builder.header("x-dumbmonit-agent-secret", secret);
     }
-    let response =
-        app.router.clone().oneshot(builder.body(Body::from(body.to_string())).unwrap()).await.unwrap();
+    let response = app
+        .router
+        .clone()
+        .oneshot(builder.body(Body::from(body.to_string())).unwrap())
+        .await
+        .unwrap();
     let status = response.status();
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     Reply {
@@ -78,7 +82,8 @@ impl Lab {
     }
 
     async fn declare(&self, declared: Value) {
-        let reply = push(&self.app, &self.enrolment, Some(&self.secret), &batch(Some(declared))).await;
+        let reply =
+            push(&self.app, &self.enrolment, Some(&self.secret), &batch(Some(declared))).await;
         assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     }
 

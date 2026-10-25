@@ -29,8 +29,9 @@ services:
 ```
 
 This creates two monitors in the folder `Apps/Dev`: an HTTP check named
-`Gitea (HTTP)` and a TCP check named `Gitea (TCP)`. `{host}` stands for the address
-of the machine the agent runs on.
+`Gitea (HTTP)` and a TCP check named `Gitea (TCP)`. `{host}` stands for the host name
+of the machine the agent runs on, as the agent reports it. DumbMonit must be able to resolve
+it; otherwise write the full address in the label.
 
 ## Labels
 
@@ -41,7 +42,7 @@ of the machine the agent runs on.
 | `dumbmonit.folder` | Folder, `/` for nesting (`Apps/Dev`). |
 | `dumbmonit.tags` | Comma-separated: `env=prod,critical` (a tag without a value is `true`). |
 | `dumbmonit.interval` | Check period: `30`, `30s`, `5m`, `1h`. At least 10 s. Default 60 s. |
-| `dumbmonit.http.url` | Creates an HTTP monitor. `{host}` is replaced by the machine's address. |
+| `dumbmonit.http.url` | Creates an HTTP monitor. `{host}` is replaced by the machine's host name. |
 | `dumbmonit.http.method`, `.keyword`, `.keyword_absent`, `.accepted_status`, `.insecure_tls`, `.timeout` | Options of the HTTP monitor, same meaning as in the monitor form. |
 | `dumbmonit.tcp.port` | Creates a TCP monitor on this port. |
 | `dumbmonit.tcp.host` | Host for the TCP check. Default `{host}`. |
