@@ -292,7 +292,7 @@
 	/** Said to screen readers after each step. */
 	let status = $state('');
 	/** Bumped after each step: the history is a plain object. */
-	let tick = $state(0);
+	let revision = $state(0);
 
 	const history = new EditHistory({
 		create: createCorrection,
@@ -300,8 +300,8 @@
 		saveRule,
 		deleteRule
 	});
-	const canUndo = $derived(tick >= 0 && history.canUndo);
-	const canRedo = $derived(tick >= 0 && history.canRedo);
+	const canUndo = $derived(revision >= 0 && history.canUndo);
+	const canRedo = $derived(revision >= 0 && history.canRedo);
 
 	const corrections = $derived(topology?.corrections ?? []);
 	const rules = $derived(topology?.rules ?? []);
@@ -338,7 +338,7 @@
 			editError = error;
 		} finally {
 			busy = false;
-			tick++;
+			revision++;
 		}
 	}
 
