@@ -91,14 +91,14 @@ A refused password is never an outage of the service: it is recorded as
 ### Metrics
 
 All gauges, all prefixed `dumbmonit_`, all labelled
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius"` in addition
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius|grpc"` in addition
 to `target`, `host` and `tag_*`.
 
 | Metric | Monitors | Meaning |
 |---|---|---|
 | `probe_success` | all | 1 if the service answers correctly, 0 otherwise. |
 | `probe_duration_seconds` | all | Total duration of the check. |
-| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`, `bad_secret`. |
+| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`, `bad_secret`, `unhealthy`. |
 | `probe_http_status_code` | http, websocket | Status code obtained. |
 | `probe_http_first_byte_seconds` | http | Time to the response headers. |
 | `probe_http_content_bytes` | http | Body size. |
@@ -139,6 +139,9 @@ to `target`, `host` and `tag_*`.
 | `probe_snmp_value` | snmp_oid | Value of the object, when it is a number. |
 | `probe_radius_response_seconds` | radius | Round trip of the Access-Request. |
 | `probe_radius_response_code` | radius | Code of the reply: 2 accepted, 3 rejected, 11 challenge. |
+| `probe_grpc_check_seconds` | grpc | Duration of the `Health/Check` call. |
+| `probe_grpc_serving_status` | grpc | `ServingStatus` returned: 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
+| `probe_grpc_status_code` | grpc | `grpc-status` code of the reply (0: OK). |
 
 ## HTTP
 
@@ -884,6 +887,68 @@ The reply is verified with the shared secret. A server answering with a signatur
 | `auth` | Access-Reject: the server works and refuses the test account (locked, expired, wrong password). Its Reply-Message, if any, is in the log. |
 | `bad_secret` | The reply's signature does not match: the shared secret is probably wrong. |
 | `protocol` | Access-Challenge (the account asks for a second step), another unexpected code, or a reply that is not valid RADIUS. |
+
+## gRPC
+
+**gRPC service** — calls the standard gRPC health check
+(`grpc.health.v1.Health/Check`): it catches a service that is up but reports
+itself unhealthy. Examples: a gRPC microservice, etcd, a service behind Envoy
+or a service mesh, any server that registers `grpc.health.v1`.
+
+An HTTP check cannot do this: gRPC needs HTTP/2, often without TLS (h2c), and
+the answer is a protobuf message plus a `grpc-status` in the trailers.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 50051 | TCP | gRPC over HTTP/2 (default port) |
+| 443 | TCP | Only with the Encrypted connection option (default port) |
+
+### Setup
+
+1. Check that the server registers the standard health service (grpc.health.v1.Health): most gRPC frameworks have a one-line helper for it.
+
+2. In DumbMonit, enter the server with its port, for example grpc.home.lan:50051.
+
+3. Tick Encrypted connection (TLS) for a server that requires it; the port then defaults to 443.
+
+4. Optional: name a Service, to check its own health instead of the whole server's.
+
+!!! warning
+    The check only sees what the health service reports: a server that always answers SERVING proves nothing about the methods behind it.
+
+#### Good to know
+
+Without TLS the check speaks HTTP/2 in clear text from the first byte ("prior knowledge"), which is what gRPC servers inside a network expect. With TLS it offers ALPN `h2` and fails with `protocol` if the server does not accept it, and it reads the certificate like the other encrypted checks (expiry, issuer, "Accept an unverifiable certificate").
+
+The reply is judged in two steps. The `grpc-status` first, read from the trailers or, for a "Trailers-Only" reply, from the headers: anything but `OK` fails. Then the `status` field of the health message: only `SERVING` succeeds.
+
+Credentials: none.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `service` | Service | *(empty)* | Name of the service whose health is asked, for example my.package.MyService. Empty: the health of the server as a whole. |
+| `tls` | Encrypted connection (TLS) | `false` | Connect with TLS and HTTP/2 (ALPN h2). Unticked, the check speaks HTTP/2 in clear text (h2c), as most services inside a network do. |
+| `port` | Port | *(empty)* | Used if the address does not give one. Empty: 50051, or 443 with TLS. |
+| `server_name` | Server name (SNI) | *(the host)* | Domain name announced to the server and checked in the certificate. Set it when the address is an IP. |
+| `insecure_tls` | Accept an unverifiable certificate | `false` | An unverifiable chain no longer counts as a failure: the expiry date is still recorded. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `dns`, `connect`, `timeout`, `tls`, `cert_expired` | As for the other checks: name, port, delay, TLS handshake, certificate. |
+| `unhealthy` | The server answers but reports `NOT_SERVING`, `UNKNOWN` or `SERVICE_UNKNOWN`, or replies `UNAVAILABLE`. `probe_grpc_serving_status` carries the value. |
+| `protocol` | Not HTTP/2, not gRPC, or a `grpc-status` other than the ones below. `UNIMPLEMENTED` means the server does not expose the standard health service; `NOT_FOUND`, that it does not know the name given in `service`. |
+| `status` | The endpoint answered an HTTP status other than 200 (a proxy, another service); `probe_http_status_code` carries it. |
+| `auth` | `UNAUTHENTICATED` or `PERMISSION_DENIED`: the server, or a proxy in front of it, wants credentials the health protocol does not send. |
 
 ## Addresses the checks refuse
 

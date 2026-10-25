@@ -113,9 +113,9 @@ pub use truenas::TruenasCollector;
 pub use unifi::UnifiCollector;
 pub use unraid::UnraidCollector;
 pub use uptime::{
-    DnsCollector, HttpCollector, MqttCollector, MysqlCollector, NtpCollector, PingCollector,
-    PostgresCollector, RadiusCollector, SmtpCollector, SnmpOidCollector, TcpCollector,
-    TlsCollector, WebsocketCollector,
+    DnsCollector, GrpcCollector, HttpCollector, MqttCollector, MysqlCollector, NtpCollector,
+    PingCollector, PostgresCollector, RadiusCollector, SmtpCollector, SnmpOidCollector,
+    TcpCollector, TlsCollector, WebsocketCollector,
 };
 pub use veeam::VeeamCollector;
 pub use vsphere::VsphereCollector;
@@ -218,6 +218,7 @@ impl Registry {
         registry.register(Arc::new(ApacheCollector::new()));
         registry.register(Arc::new(SnmpOidCollector::new()));
         registry.register(Arc::new(RadiusCollector::new()));
+        registry.register(Arc::new(GrpcCollector::new()));
         registry
     }
 

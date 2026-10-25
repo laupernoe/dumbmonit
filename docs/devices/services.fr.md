@@ -97,14 +97,14 @@ enregistré comme `reason="auth"`, l'alerte dit donc quoi corriger.
 ### Métriques
 
 Toutes des jauges, toutes préfixées `dumbmonit_`, toutes étiquetées
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius"` en
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius|grpc"` en
 plus de `target`, `host` et `tag_*`.
 
 | Métrique | Surveillances | Signification |
 |---|---|---|
 | `probe_success` | tous | 1 si le service répond correctement, 0 sinon. |
 | `probe_duration_seconds` | tous | Durée totale de la vérification. |
-| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`, `bad_secret`. |
+| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`, `bad_secret`, `unhealthy`. |
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
 | `probe_http_content_bytes` | http | Taille du corps. |
@@ -138,6 +138,9 @@ plus de `target`, `host` et `tag_*`.
 | `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
 | `probe_radius_response_seconds` | radius | Aller-retour de l'Access-Request. |
 | `probe_radius_response_code` | radius | Code de la réponse : 2 accepté, 3 refusé, 11 défi. |
+| `probe_grpc_check_seconds` | grpc | Durée de l'appel `Health/Check`. |
+| `probe_grpc_serving_status` | grpc | `ServingStatus` renvoyé : 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
+| `probe_grpc_status_code` | grpc | Code `grpc-status` de la réponse (0 : OK). |
 
 ## HTTP {#http}
 
@@ -898,6 +901,69 @@ La réponse est vérifiée avec le secret partagé. Un serveur dont la signature
 | `auth` | Access-Reject : le serveur fonctionne et refuse le compte de test (verrouillé, expiré, mot de passe erroné). Son Reply-Message, s'il y en a un, figure dans le journal. |
 | `bad_secret` | La signature de la réponse ne correspond pas : le secret partagé est probablement faux. |
 | `protocol` | Access-Challenge (le compte demande une seconde étape), un autre code inattendu, ou une réponse qui n'est pas du RADIUS valide. |
+
+## gRPC {#grpc}
+
+**Service gRPC** — appelle le contrôle de santé gRPC standard
+(`grpc.health.v1.Health/Check`) : il détecte un service allumé qui se déclare
+en mauvais état. Exemples : un microservice gRPC, etcd, un service derrière
+Envoy ou un maillage de services, tout serveur qui enregistre `grpc.health.v1`.
+
+Une vérification HTTP ne peut pas le faire : gRPC exige HTTP/2, souvent sans
+TLS (h2c), et la réponse est un message protobuf accompagné d'un `grpc-status`
+dans les trailers.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 50051 | TCP | gRPC sur HTTP/2 (port par défaut) |
+| 443 | TCP | Seulement avec l'option Connexion chiffrée (port par défaut) |
+
+### Configuration
+
+1. Vérifiez que le serveur enregistre le service de santé standard (grpc.health.v1.Health) : la plupart des frameworks gRPC offrent une fonction d'une ligne pour cela.
+
+2. Dans DumbMonit, saisissez le serveur avec son port, par exemple grpc.home.lan:50051.
+
+3. Cochez Connexion chiffrée (TLS) pour un serveur qui l'exige ; le port vaut alors 443 par défaut.
+
+4. Facultatif : nommez un Service, pour vérifier sa propre santé plutôt que celle du serveur entier.
+
+!!! warning
+    La vérification ne voit que ce que le service de santé déclare : un serveur qui répond toujours SERVING ne prouve rien sur les méthodes qu'il porte.
+
+#### À savoir
+
+Sans TLS, la vérification parle HTTP/2 en clair dès le premier octet (« prior knowledge »), ce qu'attendent les serveurs gRPC d'un réseau interne. Avec TLS, elle propose l'ALPN `h2` et échoue en `protocol` si le serveur ne l'accepte pas, et elle lit le certificat comme les autres vérifications chiffrées (expiration, émetteur, « Accepter un certificat invérifiable »).
+
+La réponse est jugée en deux temps. D'abord le `grpc-status`, lu dans les trailers ou, pour une réponse « Trailers-Only », dans les en-têtes : tout sauf `OK` échoue. Ensuite le champ `status` du message de santé : seul `SERVING` réussit.
+
+Identifiants : aucun.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `service` | Service | *(vide)* | Nom du service dont on demande la santé, par exemple my.package.MyService. Vide : la santé du serveur dans son ensemble. |
+| `tls` | Connexion chiffrée (TLS) | `false` | Se connecter en TLS et HTTP/2 (ALPN h2). Décochée, la vérification parle HTTP/2 en clair (h2c), comme la plupart des services d'un réseau interne. |
+| `port` | Port | *(vide)* | Utilisé si l'adresse n'en donne pas. Vide : 50051, ou 443 avec TLS. |
+| `server_name` | Nom du serveur (SNI) | *(l'hôte)* | Nom de domaine annoncé au serveur et vérifié dans le certificat. À renseigner quand l'adresse est une IP. |
+| `insecure_tls` | Accepter un certificat invérifiable | `false` | Une chaîne invérifiable ne compte plus comme un échec : la date d'expiration reste enregistrée. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `dns`, `connect`, `timeout`, `tls`, `cert_expired` | Comme pour les autres vérifications : nom, port, délai, poignée de main TLS, certificat. |
+| `unhealthy` | Le serveur répond mais déclare `NOT_SERVING`, `UNKNOWN` ou `SERVICE_UNKNOWN`, ou répond `UNAVAILABLE`. `probe_grpc_serving_status` porte la valeur. |
+| `protocol` | Pas du HTTP/2, pas du gRPC, ou un `grpc-status` autre que ceux ci-dessous. `UNIMPLEMENTED` veut dire que le serveur n'expose pas le service de santé standard ; `NOT_FOUND`, qu'il ne connaît pas le nom donné dans `service`. |
+| `status` | Le point de terminaison a répondu un statut HTTP autre que 200 (un proxy, un autre service) ; `probe_http_status_code` le porte. |
+| `auth` | `UNAUTHENTICATED` ou `PERMISSION_DENIED` : le serveur, ou un proxy devant lui, veut des identifiants que le protocole de santé n'envoie pas. |
 
 ## Adresses que les vérifications refusent
 
