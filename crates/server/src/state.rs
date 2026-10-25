@@ -10,11 +10,19 @@ use crate::collectors::discovery::Discovery;
 use crate::collectors::relay::RelayHub;
 use crate::config::Config;
 use crate::crypto::Cipher;
+use crate::storage::Storage;
 use crate::tsdb::{SampleSink, Victoria};
 
 /// État partagé par tous les gestionnaires HTTP et par le planificateur.
 #[derive(Clone)]
-pub struct AppState(Arc<Inner>, Arc<RelayHub>, Arc<Cooldowns>, Arc<Discovery>, Arc<AgentTls>);
+pub struct AppState(
+    Arc<Inner>,
+    Arc<RelayHub>,
+    Arc<Cooldowns>,
+    Arc<Discovery>,
+    Arc<AgentTls>,
+    Arc<Storage>,
+);
 
 pub struct Inner {
     pub config: Config,
@@ -33,6 +41,7 @@ impl AppState {
             Arc::new(Cooldowns::default()),
             Arc::new(Discovery::new()),
             Arc::new(AgentTls::new()),
+            Arc::new(Storage::default()),
         )
     }
 
@@ -59,6 +68,13 @@ impl AppState {
     /// épingler, compteurs d'enrôlement (voir [`crate::agent_tls`]).
     pub fn agent_tls(&self) -> &AgentTls {
         &self.4
+    }
+
+    /// Processus de stockage embarqués et état de l'agrégateur long terme
+    /// (voir [`crate::storage`]). Vide tant que `main` n'y a rien posé : les
+    /// tests n'ont aucun processus.
+    pub fn storage(&self) -> &Storage {
+        &self.5
     }
 }
 
