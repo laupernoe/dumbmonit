@@ -7,6 +7,31 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Status pages and reports, batch 1.**
+  - *Private status pages.* Each page now chooses who can see it: anyone with
+    the link (default), anyone with a password of its own (Argon2id hash, signed
+    12-hour access cookie, attempts rate-limited per address and page), or any
+    signed-in DumbMonit account (local, LDAP or SSO). A page that is not public
+    is never indexed or in the sitemap, and its JSON, badges, RSS and iCal
+    feeds, logo and email subscription follow the same access. Backups carry it.
+  - *Monthly SLA reports.* A report schedule can now be an **SLA report**: the
+    previous calendar month as a PDF (availability per group and monitor, mean
+    and 95th-percentile response time, incidents, optional objective met or
+    missed) and two CSV files, attached to the email. The same report downloads
+    on demand for any period of up to a year (Settings → Reports,
+    `GET /api/reports/sla`). The PDF is written by DumbMonit itself (standard
+    Helvetica fonts, no new dependency).
+  - *Maintenance calendars.* An iCalendar feed of announced maintenance, public
+    per status page (`/api/public/status/<address>/maintenance.ics`, following
+    the page's access) and a private one for the whole instance protected by a
+    rotatable token.
+  - *Third-party providers.* A new **Third-party service status** monitor reads
+    the public status page of a provider (Atlassian Statuspage JSON: Cloudflare,
+    GitHub, Atlassian and others; RSS/Atom feeds such as AWS Health), with an
+    optional component filter and a fail level, and fails when the provider is
+    degraded. On a status page it appears as an **External** component. Microsoft
+    365 needs the Graph API and is not covered.
+
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
   `site-src/data/roadmap.json`.
@@ -131,6 +156,9 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Alerts: unreachable monitors.** Their rows now carry the same two icon
+  buttons as other alerts (acknowledge and snooze) instead of a text "Open"
+  button; opening the monitor is an icon with a label too.
 - **Interface clean-up: lists refresh, fewer buttons, folded settings.** Any
   successful create, update or delete now refreshes the shared device and alert
   lists, so a deleted monitor no longer stays on screen until F5. On Monitors,
