@@ -7091,6 +7091,8 @@
 	"status_seo_section_help": "Как эта публичная страница выглядит в результатах поиска и превью ссылок. Пустые поля используют значение, созданное из названия страницы.",
 	"status_seo_site_name_label": "Название сайта или организации",
 	"status_seo_title_label": "SEO-заголовок",
+	"status_service_external": "Внешний",
+	"status_service_external_hint": "Сторонний поставщик, данные взяты с его собственной страницы статуса",
 	"status_service_row_24h": "24 ч",
 	"status_service_row_30d": "30 д",
 	"status_service_row_7d": "7 д",

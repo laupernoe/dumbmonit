@@ -6929,6 +6929,8 @@
 	"status_seo_section_help": "Comment cette page publique apparaît dans les résultats de recherche et les aperçus de liens. Un champ vide utilise une valeur générée à partir du nom de la page.",
 	"status_seo_site_name_label": "Nom du site ou de l’organisation",
 	"status_seo_title_label": "Titre SEO",
+	"status_service_external": "Externe",
+	"status_service_external_hint": "Un fournisseur tiers, lu sur sa propre page de statut",
 	"status_service_row_24h": "24 h",
 	"status_service_row_30d": "30 j",
 	"status_service_row_7d": "7 j",

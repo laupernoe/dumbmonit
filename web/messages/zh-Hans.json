@@ -6827,6 +6827,8 @@
 	"status_seo_section_help": "此公开页面在搜索结果和链接预览中的显示方式。留空的字段会使用根据页面名称生成的值。",
 	"status_seo_site_name_label": "网站或组织名称",
 	"status_seo_title_label": "SEO 标题",
+	"status_service_external": "外部",
+	"status_service_external_hint": "第三方提供商，读取自其自身的状态页面",
 	"status_service_row_24h": "24 小时",
 	"status_service_row_30d": "30 天",
 	"status_service_row_7d": "7 天",

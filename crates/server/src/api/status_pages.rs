@@ -74,7 +74,7 @@ const SEVERITIES: [&str; 2] = ["minor", "major"];
 
 /// Types de cibles qui émettent `probe_success` : leur état vient de là, et non
 /// de la simple présence de mesures. Les heartbeats (`push`) en font partie.
-pub(crate) const PROBE_KINDS: [&str; 6] = ["http", "tcp", "dns", "ping", "tls", "push"];
+pub(crate) const PROBE_KINDS: [&str; 7] = ["http", "tcp", "dns", "ping", "tls", "push", "provider"];
 
 /// Fenêtre au-delà de laquelle une sonde sans mesure est d'état inconnu — la même
 /// que celle de l'interface.
@@ -1281,6 +1281,9 @@ struct PublicItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     latency_series: Option<LatencySeries>,
     history: Vec<DayBucket>,
+    /// Fournisseur tiers (sonde `provider`) : la page l'affiche comme composant externe.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    external: bool,
 }
 
 /// Points `[horodatage (s), millisecondes]`, moyennés par tranche.
@@ -2123,6 +2126,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 }),
             },
             history,
+            external: target.kind == "provider",
         };
         match groups.iter_mut().find(|group| group.name == item.group_name) {
             Some(group) => group.items.push(public_item),
