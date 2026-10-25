@@ -1,8 +1,9 @@
-# Services: HTTP, TCP, DNS, ping, TLS, NTP, SMTP, SQL, MQTT, WebSocket
+# Services: HTTP, TCP, DNS, ping, TLS, NTP, UDP, SSH, SMTP, IMAP, POP3, SQL, MQTT, WebSocket
 
-Eleven monitors watch **services** rather than equipment, Uptime Kuma style: a
+Fifteen monitors watch **services** rather than equipment, Uptime Kuma style: a
 web page, a port, a DNS name, a host, a certificate, a time server, a mail
-relay, a database, an MQTT broker, a WebSocket endpoint. Each service gets a
+relay or mailbox, a database, an MQTT broker, a WebSocket endpoint, a UDP port,
+an SSH server. Each service gets a
 history bar, a response time and an availability percentage on its monitor
 page.
 
@@ -78,11 +79,11 @@ Every monitor has its own timeout (`timeout_seconds`, 5 s by default, 60 s at
 most), shorter than the server's `DUMBMONIT_PROBE_TIMEOUT_SECS`: interrupted by
 the scheduler, it could not write its zero.
 
-Built-in rules that apply to all eleven: Service down (3 minutes), Service
+Built-in rules that apply to all fifteen: Service down (3 minutes), Service
 flapping (more than six state changes in thirty minutes), Slow service (more
 than 3 s for ten minutes, successful checks only: a failing check lasts its
 timeout and is Service down, not slowness). For every check that reads a certificate — `http`,
-`tls`, `smtp`, `mqtt`, `websocket`: Certificate expiring soon (14 days) and
+`tls`, `smtp`, `imap`, `pop3`, `mqtt`, `websocket`: Certificate expiring soon (14 days) and
 Certificate expired.
 
 A refused password is never an outage of the service: it is recorded as
@@ -91,25 +92,25 @@ A refused password is never an outage of the service: it is recorded as
 ### Metrics
 
 All gauges, all prefixed `dumbmonit_`, all labelled
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp"` in addition
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|udp|ssh|imap|pop3"` in addition
 to `target`, `host` and `tag_*`.
 
 | Metric | Monitors | Meaning |
 |---|---|---|
 | `probe_success` | all | 1 if the service answers correctly, 0 otherwise. |
 | `probe_duration_seconds` | all | Total duration of the check. |
-| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`. |
+| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `unsynchronized`, `clock_offset`, `host_key`. |
 | `probe_http_status_code` | http, websocket | Status code obtained. |
 | `probe_http_first_byte_seconds` | http | Time to the response headers. |
 | `probe_http_phase_seconds{phase}` | http | Time of the measured request split into `dns`, `connect`, `tls`, `processing` and `transfer`; the five always sum to the request time (see [Response time breakdown](#response-time-breakdown)). |
 | `probe_http_content_bytes` | http | Body size. |
 | `probe_http_security_header{header}` | http | 0/1 per `header` label (https only): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
-| `probe_connect_seconds` | all but dns and ping | Connection establishment (login included for databases). |
-| `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | TLS negotiation alone. |
-| `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Presence; `version` label. |
-| `probe_ssl_cert_expiry_days` | tls, http, smtp, mqtt, websocket | Days before expiry, negative if expired. |
-| `probe_ssl_cert_valid` | tls, http, smtp, mqtt, websocket | 1 if the chain leads to a known authority. |
-| `probe_ssl_cert_issuer_info` | tls, http, smtp, mqtt, websocket | Presence; `issuer` label. |
+| `probe_connect_seconds` | all but dns, ping, ntp and udp | Connection establishment (login included for databases). |
+| `probe_tls_handshake_seconds` | tls, http, smtp, imap, pop3, mqtt, websocket | TLS negotiation alone. |
+| `probe_tls_version_info` | tls, http, smtp, imap, pop3, mqtt, websocket | Presence; `version` label. |
+| `probe_ssl_cert_expiry_days` | tls, http, smtp, imap, pop3, mqtt, websocket | Days before expiry, negative if expired. |
+| `probe_ssl_cert_valid` | tls, http, smtp, imap, pop3, mqtt, websocket | 1 if the chain leads to a known authority. |
+| `probe_ssl_cert_issuer_info` | tls, http, smtp, imap, pop3, mqtt, websocket | Presence; `issuer` label. |
 | `probe_dns_lookup_seconds` | dns | Resolution time. |
 | `probe_dns_answer_records` | dns | Records of the requested type. |
 | `probe_dns_answer_fingerprint` | dns | With "Alert when the answer changes": a 32-bit fingerprint of the sorted answer. Its value means nothing; only its changes do. |
@@ -135,6 +136,18 @@ to `target`, `host` and `tag_*`.
 | `probe_ntp_root_delay_seconds` | ntp | Cumulated delay up to the root of the hierarchy. |
 | `probe_ntp_root_dispersion_seconds` | ntp | Cumulated dispersion up to the root. |
 | `probe_ntp_reference_info` | ntp | Presence; `reference_id` label. |
+| `probe_udp_response_seconds`, `probe_udp_response_bytes` | udp | Time to the reply, and its size (only when a reply arrives). |
+| `probe_ssh_banner_seconds` | ssh | Time to the `SSH-2.0-...` banner. |
+| `probe_ssh_protocol_info{version}` | ssh | Presence; protocol version in the `version` label. |
+| `probe_ssh_software_info{software}` | ssh | Presence; server software in the `software` label (`OpenSSH_9.6p1`). |
+| `probe_ssh_kex_seconds` | ssh | Duration of the start of the key exchange (only when the host key is read). |
+| `probe_ssh_host_key_fingerprint` | ssh | With an expected host key or "Alert when the host key changes": a 32-bit fingerprint of the host key. Its value means nothing; only its changes do. |
+| `probe_ssh_host_key_info{fingerprint}` | ssh | Presence; the `SHA256:...` fingerprint, as `ssh-keygen -lf` prints it. |
+| `probe_ssh_host_key_match` | ssh | 1 if the host key is the expected one, 0 otherwise. Only with an expected host key. |
+| `probe_imap_greeting_seconds`, `probe_imap_login_seconds` | imap | Time to the `* OK` banner, and round trip of `LOGIN`. |
+| `probe_imap_authenticated` | imap | 1 when `LOGIN` succeeded. |
+| `probe_pop3_greeting_seconds`, `probe_pop3_login_seconds` | pop3 | Time to the `+OK` banner, and duration of `USER` + `PASS`. |
+| `probe_pop3_authenticated` | pop3 | 1 when the login succeeded. |
 | `probe_ws_message_bytes` | websocket | Size of the first frame received. Only present when the check sends a message or expects a reply (`send` / `expect` options). |
 
 ## HTTP
@@ -787,10 +800,260 @@ Credentials: none.
 | `unsynchronized` | The server answered stratum 16 or 0 (a "kiss-o'-death", which also names the reason in the log), or its leap indicator reads "unsynchronized". |
 | `clock_offset` | The measured offset exceeds "Tolerated offset". |
 
+## UDP
+
+**UDP service** — sends one datagram to a UDP port and checks the reply, or that
+nobody refuses it. Examples: a game or VoIP server, a syslog or SNMP listener, a
+WireGuard endpoint, a custom service that answers a ping message.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 161 | UDP | The service's UDP port, as written in the address (161 is only an example) |
+
+### Setup
+
+1. In the address, write the host and the UDP port: "192.168.1.20:5060". The port is required.
+
+2. To check that the service really answers, fill in "Datagram to send" and "Expected reply".
+
+3. Without an expected reply, the check only fails when the host answers that the port is closed.
+
+!!! warning
+    UDP has no connection: without an expected reply, a firewall that silently drops the datagrams looks healthy.
+
+There is no default port. With an expected reply, the check waits for a datagram
+back for the whole timeout and looks for the text in it; without one, it waits
+about a second and a half for the host to answer with an ICMP "port
+unreachable" (reported as `connect`). Text and hexadecimal datagrams are
+supported; in text, `\n`, `\r`, `\t`, `\0`, `\\` and `\xNN` are read as escapes. The
+reply is searched as plain text: there is no regular expression form.
+
+Credentials: none.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `port` | Port | *(empty)* | Used if the address does not give one. There is no default: UDP has no standard port to fall back on. |
+| `payload` | Datagram to send | *(empty)* | Sent as one datagram, 1400 bytes at most. In text, \n \r \t \0 \\ and \xNN are read as escapes. Empty: an empty datagram. |
+| `payload_encoding` | Datagram encoding | `text` | Text sends the characters as typed, Hex reads pairs of hexadecimal digits (spaces allowed). |
+| `expect_response` | Expected reply | *(empty)* | Text the reply must contain. Empty: the check succeeds unless the host answers that the port is closed, and silence counts as success. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `dns` | The name does not resolve. |
+| `connect` | The host answered that the port is closed (ICMP), or the socket could not be opened. |
+| `timeout` | An expected reply did not arrive within the timeout. |
+| `payload` | A reply arrived but does not contain the expected text. |
+
+## SSH
+
+**SSH server** — reads the SSH banner and, if you ask, checks that the host key is
+still the one you know. Examples: a Linux server or a Raspberry Pi, a NAS or a
+hypervisor with SSH enabled, a bastion host, a Git server over SSH.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 22 | TCP | SSH (default port, the one in the address) |
+
+### Setup
+
+1. In the address, write the host name or IP address, with the port if it is not 22: "server.home.lan:2222".
+
+2. To be warned when the server's identity changes, read its fingerprint with ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub.
+
+3. Paste that fingerprint (SHA256:...) in "Expected host key", or tick "Alert when the host key changes" to record it without choosing one.
+
+!!! warning
+    The check never logs in and does not verify the server's signature: it reads the key the server shows, like ssh-keyscan.
+
+The check always reads the banner (`SSH-2.0-OpenSSH_9.6p1 ...`): the protocol
+version and the server software are recorded as labels. When an expected host
+key is set, or "Alert when the host key changes" is ticked, it also starts the
+key exchange (`curve25519-sha256`) far enough for the server to show its public
+host key, computes its SHA-256 fingerprint and hangs up. No credential is ever
+sent.
+
+A server holding several host keys shows the first it has among `ssh-ed25519`,
+`ecdsa-sha2-nistp256`, `rsa-sha2-512` and `rsa-sha2-256`. The fingerprint you
+expect must be the one of that key: use "Host key type" to pick the family when
+you read it from another file than the ed25519 one.
+
+Credentials: none.
+
+### Alerting when the host key changes
+
+A host key that changes without you having reinstalled the machine is worth a
+look: a rebuilt server restored without its keys, or something answering in its
+place. With an expected host key, the check fails with `reason="host_key"` and
+the Service down rule fires after three minutes. Without one, tick "Alert when
+the host key changes" and create a rule on the fingerprint, in
+**Alerts > Rules**:
+
+```
+changes_prometheus(dumbmonit_probe_ssh_host_key_fingerprint[1h]) > 0
+```
+
+It fires when the fingerprint differs from the one before and resolves by itself
+an hour later, like the built-in DNS answer changed rule. The readable
+fingerprint is in `probe_ssh_host_key_info`.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `port` | Port | `22` | Used if the address does not give one. |
+| `expected_host_key` | Expected host key | *(empty)* | SHA256 fingerprint of the server's host key, as printed by ssh-keygen -lf. If the key differs, the server is reported down with the reason host_key. Empty: the key is not checked. |
+| `alert_on_change` | Alert when the host key changes | `false` | Records a fingerprint of the host key on every check, so that a rule can fire when it changes. Implied by an expected host key. |
+| `host_key_type` | Host key type | `auto` | A server may hold several host keys. Auto reads the first one it offers in this order: ed25519, ecdsa, rsa. Pick the family of the fingerprint you expect. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `dns`, `connect`, `timeout` | The name does not resolve, the port is closed, or the server did not answer in time. |
+| `protocol` | Something answered, but not SSH 2.0 — or the server offers no `curve25519-sha256` or none of the host key types asked for, or it disconnected during the key exchange. |
+| `host_key` | The host key does not match "Expected host key". The log names the key type and both fingerprints. |
+
+## IMAP
+
+**Mailbox (IMAP)** — an IMAP server greets, offers TLS and accepts a login, like a
+real mail client. Examples: Dovecot, your provider's IMAP server, a mailbox
+behind Mailcow or Mailu, Proxmox Mail Gateway's mail host.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 993 | TCP | IMAP over TLS (default) |
+| 143 | TCP | Only with STARTTLS or no encryption |
+
+### Setup
+
+1. In DumbMonit, enter the mail server, for example imap.example.com:1993 (port 993 with the default encryption).
+
+2. Pick the encryption: TLS for port 993, STARTTLS for port 143, None for a server on your own network.
+
+3. Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage).
+
+#### Required permissions
+
+- **A mailbox account that may log in**: Only if you fill in a credential
+
+!!! warning
+    The check never opens a mailbox: a server that logs in but cannot read its storage answers perfectly here.
+
+The check reads the `* OK` greeting, upgrades the connection if asked
+(`STARTTLS`), sends `LOGIN` if the target has a credential, then `LOGOUT`. It never
+selects a mailbox nor reads a message.
+
+Credentials: none, or a username and password sent with `LOGIN`. They are sent
+**after** the connection is encrypted and after the certificate has been judged:
+a server whose chain cannot be verified never receives them. The only exception
+is the encryption "None", which you must choose explicitly and which sends them
+in clear text.
+
+Over TLS or STARTTLS, the certificate is read like the TLS check reads it, so a
+mailbox is also a certificate you are warned about.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `security` | Encryption | `tls` | TLS encrypts from the first byte (port 993), STARTTLS starts in clear text and upgrades (port 143), None never encrypts (port 143) and sends the password in clear text: only for your own network. |
+| `port` | Port | *(empty)* | Used if the address does not give one. Empty: 993 with TLS, 143 with STARTTLS or without encryption. |
+| `server_name` | Server name (SNI) | *(the host)* | Domain name announced to the server and checked in the certificate. Set it when the address is an IP. |
+| `insecure_tls` | Accept an unverifiable certificate | `false` | An unverifiable chain no longer counts as a failure: the expiry date is still recorded. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `connect` | The port is closed or the server is unreachable. |
+| `protocol` | Something answered, but not IMAP — or the server hung up, or answered `BAD` or `[UNAVAILABLE]` to the login. |
+| `auth` | The account was refused (`NO`). The server is fine; the credential is not. |
+| `tls`, `cert_expired` | Same meaning as for the TLS check. `STARTTLS` refused is reported as `tls`. |
+
+## POP3
+
+**Mailbox (POP3)** — a POP3 server greets, offers TLS and accepts a login, like a
+real mail client. Examples: Dovecot, your provider's POP3 server, an old mail
+server that only speaks POP3.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 995 | TCP | POP3 over TLS (default) |
+| 110 | TCP | Only with STARTTLS or no encryption |
+
+### Setup
+
+1. In DumbMonit, enter the mail server, for example pop.example.com:1995 (port 995 with the default encryption).
+
+2. Pick the encryption: TLS for port 995, STARTTLS for port 110 (STLS command), None for a server on your own network.
+
+3. Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage).
+
+#### Required permissions
+
+- **A mailbox account that may log in**: Only if you fill in a credential
+
+!!! warning
+    The check never lists or reads messages: it logs in, then says goodbye.
+
+The check reads the `+OK` greeting, upgrades the connection if asked (`STLS`), sends
+`USER` and `PASS` if the target has a credential, then `QUIT`. Neither `STAT` nor
+`RETR` is ever sent, and nothing is deleted.
+
+Credentials: none, or a username and password. Same rule as IMAP: they are sent
+after the connection is encrypted and the certificate judged, unless you
+explicitly chose the encryption "None".
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `security` | Encryption | `tls` | TLS encrypts from the first byte (port 995), STARTTLS starts in clear text and upgrades with STLS (port 110), None never encrypts (port 110) and sends the password in clear text: only for your own network. |
+| `port` | Port | *(empty)* | Used if the address does not give one. Empty: 995 with TLS, 110 with STARTTLS or without encryption. |
+| `server_name` | Server name (SNI) | *(the host)* | Domain name announced to the server and checked in the certificate. Set it when the address is an IP. |
+| `insecure_tls` | Accept an unverifiable certificate | `false` | An unverifiable chain no longer counts as a failure: the expiry date is still recorded. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `connect` | The port is closed or the server is unreachable. |
+| `protocol` | Something answered, but not POP3 — or the mailbox is locked (`[IN-USE]`) or the system is in trouble (`[SYS/...]`). |
+| `auth` | `USER` or `PASS` was refused (`-ERR`). The server is fine; the credential is not. |
+| `tls`, `cert_expired` | Same meaning as for the TLS check. `STLS` refused is reported as `tls`. |
+
 ## Addresses the checks refuse
 
-The checks that connect to an address you give them — HTTP, TCP, TLS, NTP, SMTP,
-PostgreSQL, MySQL, MQTT, WebSocket — report what they see — which is also, word for word, what a server-side request
+The checks that connect to an address you give them — HTTP, TCP, TLS, NTP, UDP, SSH,
+SMTP, IMAP, POP3, PostgreSQL, MySQL, MQTT, WebSocket — report what they see — which is also, word for word, what a server-side request
 forgery does. To keep a monitoring admin from reading services that only the
 DumbMonit host can reach (the embedded metrics database on `127.0.0.1:8428`,
 a cloud provider's metadata service on `169.254.169.254`), the checks refuse
