@@ -172,12 +172,57 @@ pub struct PushBatch {
     /// agent antérieur : un serveur antérieur, lui, ignore le champ.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub inventory: Option<SoftwareInventory>,
+    /// Moniteurs que les étiquettes `dumbmonit.*` des conteneurs Docker de la
+    /// machine déclarent (voir [`DeclaredMonitor`]). `Some` : liste complète de
+    /// ce cycle, vide comprise — le serveur archive ce qui n'y figure plus.
+    /// `None` : Docker n'a pas pu être lu, le serveur ne touche à rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub declared_monitors: Option<Vec<DeclaredMonitor>>,
 }
 
 impl PushBatch {
     pub fn new(identity: AgentIdentity, samples: Vec<Sample>, sent_at_ms: i64) -> Self {
-        Self { protocol: PUSH_PROTOCOL_VERSION, identity, sent_at_ms, samples, inventory: None }
+        Self {
+            protocol: PUSH_PROTOCOL_VERSION,
+            identity,
+            sent_at_ms,
+            samples,
+            inventory: None,
+            declared_monitors: None,
+        }
     }
+}
+
+/// Nombre maximal de moniteurs déclarés par lot ; au-delà, l'agent tronque.
+pub const MAX_DECLARED_MONITORS: usize = 200;
+
+/// Un moniteur déclaré par les étiquettes d'un conteneur Docker.
+///
+/// L'agent ne fait que lire et normaliser les étiquettes : c'est le serveur qui
+/// valide (type, adresse, période) comme pour une création à la main, et qui
+/// crée, met à jour ou archive le moniteur correspondant.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct DeclaredMonitor {
+    /// Clé stable d'un moniteur pour une machine : `projet/service/http` pour un
+    /// service Compose, sinon `conteneur/http`. Survit à la recréation du
+    /// conteneur, ce que son identifiant ne ferait pas.
+    pub key: String,
+    /// `http`, `tcp` ou `ping`.
+    pub kind: String,
+    /// Adresse du moniteur ; `{host}` y désigne l'adresse de la machine de l'agent.
+    pub address: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub folder: String,
+    /// Étiquettes DumbMonit (`dumbmonit.tags`) et options du type (`keyword`…).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub tags: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interval_secs: Option<u64>,
+    /// Reprendre un moniteur existant de même type et adresse plutôt que de
+    /// refuser le doublon (`dumbmonit.adopt=true`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub adopt: bool,
 }
 
 /// Nombre maximal de paquets d'un inventaire. Une installation ordinaire en

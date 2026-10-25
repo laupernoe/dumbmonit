@@ -128,6 +128,11 @@ export function deleteTarget(id: TargetId): Promise<void> {
 	return request<void>(`/targets/${id}`, { method: 'DELETE' });
 }
 
+/** Hands a monitor managed by Docker labels back to manual management. */
+export function releaseManagedTarget(id: TargetId): Promise<void> {
+	return request<void>(`/targets/${id}/release`, { method: 'POST' });
+}
+
 /**
  * Sets the manual rank of each listed device to its index in `order`.
  * Devices left out keep their rank — a local reorder (one folder, one
