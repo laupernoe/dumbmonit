@@ -1175,6 +1175,27 @@ const PUSH_OPTIONS: &[OptionView] = &[
         "10%",
         "10%",
     ),
+    text(
+        "schedule",
+        "Cron schedule",
+        "Instead of the interval above: when the job is supposed to start, as a 5-field cron expression (minute hour day-of-month month day-of-week) or a shortcut such as @daily. Lists, ranges, steps and names are accepted: 30 2 * * *, */15 * * * *, 0 4 * * sun. Empty: use the interval.",
+        "30 2 * * *",
+        "",
+    ),
+    text(
+        "timezone",
+        "Time zone",
+        "IANA time zone in which the cron schedule is read, for example Europe/Paris. It follows daylight saving time.",
+        "Europe/Paris",
+        "UTC",
+    ),
+    text(
+        "max_duration",
+        "Maximum duration",
+        "A run that lasts longer than this raises the \"job too long\" alert: 30m, 2h. Needs a start call at the beginning of the job. Empty: a run still open after one period plus the grace period counts as stuck.",
+        "2h",
+        "",
+    ),
 ];
 
 /// Options lues par `webchange/options.rs` (`Options::from_target`).
@@ -4652,8 +4673,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Make the job call in",
                 steps: &[
                     "In the address, write a short label for the job, unique among your heartbeats: \"nightly-backup\".",
-                    "Set the expected interval to the job's schedule (\"24h\" for a nightly job), then save the monitor.",
+                    "Set the expected interval to the job's schedule (\"24h\" for a nightly job), or give a cron expression and a time zone, then save the monitor.",
                     "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
+                    "To time the job and report how it went, call .../start before it, then .../success or .../fail after it, with the output of the job as the request body. An exit code can be given as ?exit_code=2 or as the last path segment: .../2.",
                     "To report a failure at once, append ?status=down&msg=... to the URL.",
                 ],
                 ports: &[to_server!(
@@ -6360,7 +6382,7 @@ mod tests {
                     "live_map",
                 ],
             ),
-            ("push", &["expected_interval", "grace"]),
+            ("push", &["expected_interval", "grace", "schedule", "timezone", "max_duration"]),
             (
                 "webchange",
                 &[
@@ -6906,6 +6928,9 @@ mod tests {
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
         );
         assert_eq!(defaut("push", "grace"), crate::collectors::push::DEFAULT_GRACE);
+        assert_eq!(defaut("push", "timezone"), crate::collectors::push::DEFAULT_TIMEZONE);
+        assert_eq!(defaut("push", "schedule"), "");
+        assert_eq!(defaut("push", "max_duration"), "");
         // `collectors/{traefik,caddy,nginx,apache,npm,domain}`.
         use dumbmonit_collectors::{apache, caddy, domain, nginx, npm, traefik};
         for (kind, port) in [

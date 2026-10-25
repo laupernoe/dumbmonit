@@ -195,28 +195,45 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
 }
 
 /// Faits que les alertes « événement » annoncent un par un (voir
-/// [`cycle::Occurrence`]). Aujourd'hui une seule source : les vérifications
-/// de site qui trouvent des changements, pour la règle livrée
-/// [`crate::webchange::ALERT_RULE`]. Une lecture qui échoue n'empêche pas le
-/// cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
+/// [`cycle::Occurrence`]). Deux sources : les vérifications de site qui
+/// trouvent des changements, pour la règle livrée
+/// [`crate::webchange::ALERT_RULE`], et la dernière exécution en échec d'un
+/// moniteur en poussée, dont le code et la sortie vont dans le message de la
+/// règle `push_failed`. Une lecture qui échoue n'empêche pas le cycle :
+/// l'alerte se comporte alors comme une alerte d'état ordinaire.
 async fn occurrences(pool: &SqlitePool) -> HashMap<(String, i64), cycle::Occurrence> {
-    let checks = match crate::webchange::store::changed_checks(pool).await {
-        Ok(checks) => checks,
-        Err(error) => {
-            warn!(?error, "website checks not read for alerting");
-            return HashMap::new();
+    let mut found = HashMap::new();
+    match crate::webchange::store::changed_checks(pool).await {
+        Ok(checks) => {
+            for (target, at, changes, summary) in checks {
+                // `datetime('now')` de SQLite : UTC, sans fuseau.
+                let parsed = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S");
+                let Ok(at) = parsed else { continue };
+                let occurrence =
+                    cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
+                found.insert((crate::webchange::ALERT_RULE.to_string(), target), occurrence);
+            }
         }
-    };
-    checks
-        .into_iter()
-        .filter_map(|(target, at, changes, summary)| {
-            // `datetime('now')` de SQLite : UTC, sans fuseau.
-            let at = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S").ok()?;
-            let occurrence =
-                cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
-            Some(((crate::webchange::ALERT_RULE.to_string(), target), occurrence))
-        })
-        .collect()
+        Err(error) => warn!(?error, "website checks not read for alerting"),
+    }
+    match crate::collectors::push::store::failed_last_runs(pool).await {
+        Ok(runs) => {
+            for run in runs {
+                let finished = run.finished_ms.and_then(DateTime::<Utc>::from_timestamp_millis);
+                let Some(at) = finished else { continue };
+                // La série `push_run_failed` vaut 1 tant que la dernière exécution
+                // terminée a échoué.
+                let occurrence = cycle::Occurrence {
+                    at,
+                    value: 1.0,
+                    detail: Some(crate::collectors::push::failure_detail(&run)),
+                };
+                found.insert(("push_failed".to_string(), run.target_id), occurrence);
+            }
+        }
+        Err(error) => warn!(?error, "push runs not read for alerting"),
+    }
+    found
 }
 
 /// Exécute un cycle complet et renvoie son bilan.

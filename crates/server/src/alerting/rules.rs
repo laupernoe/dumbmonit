@@ -529,7 +529,7 @@ pub fn builtin_rules() -> Vec<Rule> {
         // n'absorbe que le battement du planificateur : la tolérance est déjà
         // dans le verdict.
         Rule {
-            description: "The job has not called in within its expected interval plus grace period, or reported a failure itself."
+            description: "The job has not called in within its expected interval or cron schedule plus grace period, or reported a failure itself (status=down)."
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
@@ -540,6 +540,38 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Heartbeat missed",
                 RuleKind::Threshold,
                 "dumbmonit_probe_success{probe=\"push\"} == bool 0",
+            )
+        },
+        // Exécution en échec : le travail a bien appelé (`/fail`, ou un code de
+        // sortie non nul), c'est donc une panne du travail et non un silence. Le
+        // moteur joint la sortie tronquée au message (`engine::occurrences`). La
+        // série reste à 1 jusqu'à la prochaine exécution réussie.
+        Rule {
+            description: "The job's last run failed: it called /fail or finished with a non-zero exit code."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            severity: Severity::Warning,
+            ..base(
+                "push_failed",
+                "Job failed",
+                RuleKind::Threshold,
+                "dumbmonit_push_run_failed{probe=\"push\"}",
+            )
+        },
+        // Exécution trop longue : plus que la durée maximale réglée, ou, sans
+        // elle, un `/start` resté sans fin au-delà d'une période plus la tolérance.
+        Rule {
+            description: "A run lasts longer than the maximum duration, or started and never finished in time."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            severity: Severity::Warning,
+            ..base(
+                "push_too_long",
+                "Job too long",
+                RuleKind::Threshold,
+                "dumbmonit_push_run_too_long{probe=\"push\"}",
             )
         },
         // Instabilité : un service qui alterne sans cesse n'est jamais « en panne »
@@ -6307,6 +6339,8 @@ mod tests {
             "pbs_gc_too_old",
             "service_down",
             "push_missed",
+            "push_failed",
+            "push_too_long",
             "service_flapping",
             "service_slow",
             "tls_cert_expiring",
@@ -6693,6 +6727,9 @@ mod tests {
             "dumbmonit_pbs_gc_last_success_age_seconds",
             // Moniteurs de disponibilité (`collectors/uptime/outcome.rs`, `tls/mod.rs`).
             "dumbmonit_probe_success",
+            // Exécutions des moniteurs en poussée (`collectors/push/mod.rs`).
+            "dumbmonit_push_run_failed",
+            "dumbmonit_push_run_too_long",
             "dumbmonit_probe_duration_seconds",
             "dumbmonit_probe_ssl_cert_expiry_days",
             // Agent : conteneurs Docker et sauvegardes Plakar (`crates/agent`).
