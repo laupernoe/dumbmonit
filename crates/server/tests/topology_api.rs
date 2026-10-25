@@ -170,10 +170,10 @@ async fn parent_id(app: &TestApp, admin: &str, id: i64) -> Value {
 async fn un_rattachement_corrige_la_carte_et_le_parent_dalerte() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
-    let fw = create(&app, &admin, json!({ "name": "fw", "address": "10.0.0.1", "kind": "dummy" }))
-        .await;
-    let sw = create(&app, &admin, json!({ "name": "sw", "address": "10.0.0.2", "kind": "dummy" }))
-        .await;
+    let fw =
+        create(&app, &admin, json!({ "name": "fw", "address": "10.0.0.1", "kind": "dummy" })).await;
+    let sw =
+        create(&app, &admin, json!({ "name": "sw", "address": "10.0.0.2", "kind": "dummy" })).await;
     let nas = create(
         &app,
         &admin,
@@ -229,8 +229,8 @@ async fn un_rattachement_corrige_la_carte_et_le_parent_dalerte() {
 async fn un_lien_faux_disparait_et_son_parent_dalerte_aussi() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
-    let up = create(&app, &admin, json!({ "name": "up", "address": "10.0.0.1", "kind": "dummy" }))
-        .await;
+    let up =
+        create(&app, &admin, json!({ "name": "up", "address": "10.0.0.1", "kind": "dummy" })).await;
     let down = create(
         &app,
         &admin,
@@ -268,12 +268,12 @@ async fn un_lien_faux_disparait_et_son_parent_dalerte_aussi() {
 async fn deux_rattachements_dun_reseau_deviennent_une_regle_acceptee() {
     let app = TestApp::configured().await;
     let admin = app.admin_cookie().await;
-    let sw = create(&app, &admin, json!({ "name": "sw", "address": "10.0.5.2", "kind": "dummy" }))
-        .await;
-    let a = create(&app, &admin, json!({ "name": "a", "address": "10.0.5.10", "kind": "dummy" }))
-        .await;
-    let b = create(&app, &admin, json!({ "name": "b", "address": "10.0.5.11", "kind": "dummy" }))
-        .await;
+    let sw =
+        create(&app, &admin, json!({ "name": "sw", "address": "10.0.5.2", "kind": "dummy" })).await;
+    let a =
+        create(&app, &admin, json!({ "name": "a", "address": "10.0.5.10", "kind": "dummy" })).await;
+    let b =
+        create(&app, &admin, json!({ "name": "b", "address": "10.0.5.11", "kind": "dummy" })).await;
     for child in [a, b] {
         let body = json!({ "kind": "parent", "from": format!("t{sw}"), "to": format!("t{child}"),
                            "use_for_alerts": false });
@@ -289,8 +289,8 @@ async fn deux_rattachements_dun_reseau_deviennent_une_regle_acceptee() {
     assert_eq!(suggestion["evidence"], 2);
 
     // Un nouvel équipement du réseau, puis la règle acceptée : il suit.
-    let c = create(&app, &admin, json!({ "name": "c", "address": "10.0.5.12", "kind": "dummy" }))
-        .await;
+    let c =
+        create(&app, &admin, json!({ "name": "c", "address": "10.0.5.12", "kind": "dummy" })).await;
     let mut accept = suggestion.clone();
     accept["status"] = json!("active");
     let reply = app.post("/api/topology/rules", accept, Some(&admin)).await;
