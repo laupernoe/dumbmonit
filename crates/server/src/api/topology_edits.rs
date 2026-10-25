@@ -398,8 +398,7 @@ pub struct Suggestion {
 fn rule_row(row: &SqliteRow) -> Result<Rule, sqlx::Error> {
     let kind: String = row.try_get("kind")?;
     let status: String = row.try_get("status")?;
-    let unreadable =
-        |what: &str| sqlx::Error::Decode(format!("règle illisible : {what}").into());
+    let unreadable = |what: &str| sqlx::Error::Decode(format!("règle illisible : {what}").into());
     Ok(Rule {
         id: row.try_get("id")?,
         status: RuleStatus::parse(&status).ok_or_else(|| unreadable(&status))?,
@@ -749,10 +748,8 @@ pub fn suggest(
             continue;
         }
         // Tous à la même adresse : la règle d'adresse, plus étroite, suffit.
-        let addresses: BTreeSet<Option<&str>> = list
-            .iter()
-            .map(|c| info.get(&c.to).and_then(|i| i.address.as_deref()))
-            .collect();
+        let addresses: BTreeSet<Option<&str>> =
+            list.iter().map(|c| info.get(&c.to).and_then(|i| i.address.as_deref())).collect();
         if addresses.len() == 1 {
             continue;
         }
@@ -930,9 +927,8 @@ async fn create_correction(
 ) -> ApiResult<(StatusCode, Json<CreatedCorrection>)> {
     let author = principal.label();
     let mut tx = state.pool.begin().await?;
-    let count: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM topology_corrections")
-        .fetch_one(&mut *tx)
-        .await?;
+    let count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM topology_corrections").fetch_one(&mut *tx).await?;
     if count >= MAX_CORRECTIONS {
         return Err(bad(format!("At most {MAX_CORRECTIONS} map corrections.")));
     }
@@ -1106,10 +1102,7 @@ async fn delete_correction(
             _ => {}
         }
     }
-    sqlx::query("DELETE FROM topology_corrections WHERE id = ?")
-        .bind(id)
-        .execute(&mut *tx)
-        .await?;
+    sqlx::query("DELETE FROM topology_corrections WHERE id = ?").bind(id).execute(&mut *tx).await?;
     tx.commit().await?;
     Ok(StatusCode::NO_CONTENT)
 }
