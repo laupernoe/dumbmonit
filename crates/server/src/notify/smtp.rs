@@ -133,6 +133,50 @@ impl Smtp {
         Ok(())
     }
 
+    /// Comme [`Smtp::send_html`], avec des pièces jointes (nom, type MIME, octets) :
+    /// c'est le format du rapport SLA mensuel.
+    pub async fn send_html_with_attachments(
+        &self,
+        recipient: &str,
+        subject: &str,
+        text: String,
+        html: String,
+        attachments: Vec<(String, String, Vec<u8>)>,
+    ) -> Result<(), NotifyError> {
+        if super::sending_disabled() {
+            return Ok(());
+        }
+        use lettre::message::header::ContentType;
+        use lettre::message::{Attachment, MultiPart};
+
+        let mut body = MultiPart::mixed().multipart(MultiPart::alternative_plain_html(text, html));
+        for (filename, mime, bytes) in attachments {
+            let content_type = ContentType::parse(&mime)
+                .map_err(|_| NotifyError::Config("invalid attachment type".to_string()))?;
+            body = body.singlepart(Attachment::new(filename).body(bytes, content_type));
+        }
+        let email = lettre::Message::builder()
+            .from(
+                self.from
+                    .parse()
+                    .map_err(|_| NotifyError::Config("invalid sender address".to_string()))?,
+            )
+            .to(recipient
+                .parse()
+                .map_err(|_| NotifyError::Config("invalid recipient address".to_string()))?)
+            .subject(subject)
+            .multipart(body)
+            .map_err(|error| NotifyError::Config(error.to_string()))?;
+        super::guard::vet_host(&self.host, self.port).await?;
+        self.transport.send(email).await.map_err(|error| {
+            NotifyError::Transport(secret::truncate(
+                &secret::redact(&error.to_string(), &self.secrets()),
+                200,
+            ))
+        })?;
+        Ok(())
+    }
+
     /// Envoie un courriel à un seul destinataire, hors des destinataires du
     /// canal : c'est ce que font les pages de statut pour leurs abonnés.
     ///

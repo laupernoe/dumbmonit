@@ -28,6 +28,14 @@ pub struct StoredSchedule {
     pub armed_at: DateTime<Utc>,
     pub last_sent_at: Option<DateTime<Utc>>,
     pub last_error: Option<String>,
+    /// `digest` (résumé glissant) ou `sla` (mois civil précédent, avec pièces jointes).
+    pub kind: String,
+    pub attach_pdf: bool,
+    pub attach_csv: bool,
+    /// Page de statut dont le nom habille le rapport SLA.
+    pub page_id: Option<i64>,
+    /// Objectif de disponibilité en pour cent, pour le rapport SLA.
+    pub objective: Option<f64>,
 }
 
 /// Calendrier validé, prêt à être écrit.
@@ -42,10 +50,16 @@ pub struct ScheduleInput {
     pub timezone: String,
     pub recipients: Vec<String>,
     pub channel_id: Option<i64>,
+    pub kind: String,
+    pub attach_pdf: bool,
+    pub attach_csv: bool,
+    pub page_id: Option<i64>,
+    pub objective: Option<f64>,
 }
 
 const COLUMNS: &str = "id, name, enabled, frequency, weekday, day_of_month, hour, timezone, \
-                       recipients, channel_id, armed_at, last_sent_at, last_error";
+                       recipients, channel_id, armed_at, last_sent_at, last_error, kind, \
+                       attach_pdf, attach_csv, page_id, objective";
 
 fn from_row(row: &SqliteRow) -> Result<StoredSchedule> {
     let recipients: String = row.try_get("recipients")?;
@@ -65,6 +79,11 @@ fn from_row(row: &SqliteRow) -> Result<StoredSchedule> {
         armed_at: from_sql(&armed),
         last_sent_at: last_sent.as_deref().map(from_sql),
         last_error: row.try_get("last_error")?,
+        kind: row.try_get("kind")?,
+        attach_pdf: row.try_get::<i64, _>("attach_pdf")? != 0,
+        attach_csv: row.try_get::<i64, _>("attach_csv")? != 0,
+        page_id: row.try_get("page_id")?,
+        objective: row.try_get("objective")?,
     })
 }
 
@@ -101,8 +120,8 @@ pub async fn insert(pool: &SqlitePool, input: &ScheduleInput, now: DateTime<Utc>
     let result = sqlx::query(
         "INSERT INTO report_schedules
              (name, enabled, frequency, weekday, day_of_month, hour, timezone, recipients,
-              channel_id, armed_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              channel_id, armed_at, kind, attach_pdf, attach_csv, page_id, objective)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&input.name)
     .bind(i64::from(input.enabled))
@@ -114,6 +133,11 @@ pub async fn insert(pool: &SqlitePool, input: &ScheduleInput, now: DateTime<Utc>
     .bind(serde_json::to_string(&input.recipients)?)
     .bind(input.channel_id)
     .bind(to_sql(now))
+    .bind(&input.kind)
+    .bind(i64::from(input.attach_pdf))
+    .bind(i64::from(input.attach_csv))
+    .bind(input.page_id)
+    .bind(input.objective)
     .execute(pool)
     .await
     .context("création du rapport planifié")?;
@@ -138,7 +162,8 @@ pub async fn update(
     sqlx::query(
         "UPDATE report_schedules
          SET name = ?, enabled = ?, frequency = ?, weekday = ?, day_of_month = ?, hour = ?,
-             timezone = ?, recipients = ?, channel_id = ?, armed_at = ?
+             timezone = ?, recipients = ?, channel_id = ?, armed_at = ?, kind = ?,
+             attach_pdf = ?, attach_csv = ?, page_id = ?, objective = ?
          WHERE id = ?",
     )
     .bind(&input.name)
@@ -151,6 +176,11 @@ pub async fn update(
     .bind(serde_json::to_string(&input.recipients)?)
     .bind(input.channel_id)
     .bind(to_sql(armed_at))
+    .bind(&input.kind)
+    .bind(i64::from(input.attach_pdf))
+    .bind(i64::from(input.attach_csv))
+    .bind(input.page_id)
+    .bind(input.objective)
     .bind(current.id)
     .execute(pool)
     .await
