@@ -36,9 +36,18 @@ pub const CHANNEL_KINDS: &[&str] = &[
     "smtp",
     "signal",
     "twilio",
+    "whatsapp",
+    "callmebot",
+    "threema",
+    "webex",
+    "vonage",
+    "telnyx",
+    "aspsms",
     // Astreinte
     "pagerduty",
     "opsgenie",
+    "grafana_oncall",
+    "signl4",
     // Sur mesure
     "webhook",
 ];
