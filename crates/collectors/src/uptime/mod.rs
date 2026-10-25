@@ -1,5 +1,5 @@
 //! Moniteurs de disponibilité : HTTP, TCP, DNS, ICMP, expiration de certificat,
-//! SMTP, PostgreSQL, MySQL/MariaDB, MQTT, WebSocket, NTP et lecture d'un OID SNMP.
+//! SMTP, PostgreSQL, MySQL/MariaDB, MQTT, WebSocket, NTP, lecture d'un OID SNMP et RADIUS.
 //!
 //! Là où les collecteurs SNMP, Proxmox ou l'agent surveillent des *équipements*,
 //! ceux-ci surveillent des *services* : une page web répond-elle, un port
@@ -11,7 +11,7 @@
 //!
 //! Chaque sonde est un [`Collector`](dumbmonit_proto::Collector) à part entière —
 //! `http`, `tcp`, `dns`, `ping`, `tls`, `smtp`, `postgres`, `mysql`, `mqtt`,
-//! `websocket`, `ntp`, `snmp_oid` — plutôt qu'un collecteur unique
+//! `websocket`, `ntp`, `snmp_oid`, `radius` — plutôt qu'un collecteur unique
 //! paramétré. Elle hérite ainsi sans rien écrire du planificateur, de l'intervalle
 //! par cible, de la découverte, des alertes et de l'interface ; et l'utilisateur
 //! choisit un type dans une liste au lieu de deviner une étiquette.
@@ -33,7 +33,7 @@
 //! # Métriques produites
 //!
 //! Communes à toutes les sondes, étiquetées
-//! `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid"` :
+//! `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius"` :
 //!
 //! | Métrique | Unité | Sens |
 //! |---|---|---|
@@ -85,6 +85,8 @@
 //! | `probe_ntp_reference_info` | ntp | Présence ; étiquette `reference_id`. |
 //! | `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
 //! | `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
+//! | `probe_radius_response_seconds` | radius | Aller-retour de l'`Access-Request`. |
+//! | `probe_radius_response_code` | radius | Code de la réponse : 2 accepté, 3 refusé, 11 défi. |
 //!
 //! Toutes sont des jauges : rien ici n'est cumulatif, chaque interrogation mesure
 //! un instant. Le préfixe `dumbmonit_` est ajouté à l'écriture, comme partout.
@@ -101,6 +103,7 @@ mod mqtt;
 mod ntp;
 mod outcome;
 mod ping;
+mod radius;
 pub(crate) mod session;
 mod smtp;
 mod snmp_oid;
@@ -116,6 +119,7 @@ pub use http::security_headers::security_headers;
 pub use mqtt::MqttCollector;
 pub use ntp::NtpCollector;
 pub use ping::{PingCollector, icmp_available};
+pub use radius::RadiusCollector;
 pub use smtp::SmtpCollector;
 pub use snmp_oid::SnmpOidCollector;
 pub use sql::{MysqlCollector, PostgresCollector};
@@ -152,6 +156,7 @@ mod tests {
         assert_eq!(WebsocketCollector::new().kind(), "websocket");
         assert_eq!(NtpCollector::new().kind(), "ntp");
         assert_eq!(SnmpOidCollector::new().kind(), "snmp_oid");
+        assert_eq!(RadiusCollector::new().kind(), "radius");
     }
 
     #[test]
@@ -169,6 +174,7 @@ mod tests {
             WebsocketCollector::new().kind().to_owned(),
             NtpCollector::new().kind().to_owned(),
             SnmpOidCollector::new().kind().to_owned(),
+            RadiusCollector::new().kind().to_owned(),
         ];
         let mut uniques = kinds.to_vec();
         uniques.sort_unstable();

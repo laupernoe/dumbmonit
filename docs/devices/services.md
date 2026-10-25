@@ -91,14 +91,14 @@ A refused password is never an outage of the service: it is recorded as
 ### Metrics
 
 All gauges, all prefixed `dumbmonit_`, all labelled
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid"` in addition
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius"` in addition
 to `target`, `host` and `tag_*`.
 
 | Metric | Monitors | Meaning |
 |---|---|---|
 | `probe_success` | all | 1 if the service answers correctly, 0 otherwise. |
 | `probe_duration_seconds` | all | Total duration of the check. |
-| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`. |
+| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`, `bad_secret`. |
 | `probe_http_status_code` | http, websocket | Status code obtained. |
 | `probe_http_first_byte_seconds` | http | Time to the response headers. |
 | `probe_http_content_bytes` | http | Body size. |
@@ -137,6 +137,8 @@ to `target`, `host` and `tag_*`.
 | `probe_ws_message_bytes` | websocket | Size of the first frame received. Only present when the check sends a message or expects a reply (`send` / `expect` options). |
 | `probe_snmp_query_seconds` | snmp_oid | Round trip of the read. |
 | `probe_snmp_value` | snmp_oid | Value of the object, when it is a number. |
+| `probe_radius_response_seconds` | radius | Round trip of the Access-Request. |
+| `probe_radius_response_code` | radius | Code of the reply: 2 accepted, 3 rejected, 11 challenge. |
 
 ## HTTP
 
@@ -823,6 +825,65 @@ The check reuses the SNMP session of the SNMP device type: same communities (v1/
 | `not_found` | The agent does not know the object (`noSuchObject`, `noSuchInstance`): check the OID, its instance suffix and the SNMP view. |
 | `threshold` | The numeric value is outside `min` / `max`. |
 | `payload` | The value is not a number although a bound is set, or does not contain the expected text. |
+
+## RADIUS
+
+**RADIUS server** — authenticates a test account (Access-Request) and expects
+an Access-Accept: it catches a server that is up but no longer accepts logins.
+Examples: FreeRADIUS, Windows NPS, the RADIUS behind a WPA-Enterprise Wi-Fi,
+behind a VPN or behind a 802.1X switch.
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 1812 | UDP | Authentication requests (default port) |
+
+### Setup
+
+1. On the RADIUS server, declare the DumbMonit host as a client, with a shared secret (clients.conf on FreeRADIUS, RADIUS Clients on Windows NPS).
+
+2. Create a test account without a second factor, and note its name and password.
+
+3. In DumbMonit, enter the server (UDP port 1812 by default), the shared secret and the test account.
+
+4. Optional: change the NAS identifier if the server filters requests by it.
+
+#### Required permissions
+
+- **A test account that may authenticate**: No network access or admin right is needed
+
+!!! warning
+    A wrong shared secret, or a host not declared as a client, usually makes the server stay silent: the check then reports a timeout.
+
+#### Good to know
+
+The check sends one Access-Request per run, with the account's name, its password hidden with the shared secret (RFC 2865) and a signature (`Message-Authenticator`, RFC 3579, placed first as the BlastRADIUS mitigation asks). It never retries: a lost datagram shows as an outage.
+
+The shared secret and the password are stored encrypted and never come back through the API. Leaving them blank when you edit the monitor keeps the saved ones; changing the account name asks for its password again.
+
+The reply is verified with the shared secret. A server answering with a signature that does not match is reported as `bad_secret` rather than as an outage, so that the alert says what to fix. A server that does not know the secret usually does not answer at all: see the failure reasons.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `port` | Port | `1812` | UDP port of the authentication service. |
+| `nas_identifier` | NAS identifier | `dumbmonit` | Value of the NAS-Identifier attribute sent with the request. Change it if the server filters requests by NAS. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `connect` | The UDP socket could not be opened. |
+| `timeout` | No valid reply in time: the server is down, the port is filtered, the shared secret is wrong or this host is not declared as a client (servers drop such requests silently). |
+| `auth` | Access-Reject: the server works and refuses the test account (locked, expired, wrong password). Its Reply-Message, if any, is in the log. |
+| `bad_secret` | The reply's signature does not match: the shared secret is probably wrong. |
+| `protocol` | Access-Challenge (the account asks for a second step), another unexpected code, or a reply that is not valid RADIUS. |
 
 ## Addresses the checks refuse
 

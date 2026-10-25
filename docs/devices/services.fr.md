@@ -97,14 +97,14 @@ enregistré comme `reason="auth"`, l'alerte dit donc quoi corriger.
 ### Métriques
 
 Toutes des jauges, toutes préfixées `dumbmonit_`, toutes étiquetées
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid"` en
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid|radius"` en
 plus de `target`, `host` et `tag_*`.
 
 | Métrique | Surveillances | Signification |
 |---|---|---|
 | `probe_success` | tous | 1 si le service répond correctement, 0 sinon. |
 | `probe_duration_seconds` | tous | Durée totale de la vérification. |
-| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`. |
+| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`, `bad_secret`. |
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
 | `probe_http_content_bytes` | http | Taille du corps. |
@@ -136,6 +136,8 @@ plus de `target`, `host` et `tag_*`.
 | `probe_ws_message_bytes` | websocket | Taille de la trame reçue. |
 | `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
 | `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
+| `probe_radius_response_seconds` | radius | Aller-retour de l'Access-Request. |
+| `probe_radius_response_code` | radius | Code de la réponse : 2 accepté, 3 refusé, 11 défi. |
 
 ## HTTP {#http}
 
@@ -837,6 +839,65 @@ La vérification réutilise la session SNMP du type d'équipement SNMP : mêmes 
 | `not_found` | L'agent ne connaît pas l'objet (`noSuchObject`, `noSuchInstance`) : vérifiez l'OID, son suffixe d'instance et la vue SNMP. |
 | `threshold` | La valeur numérique est hors de `min` / `max`. |
 | `payload` | La valeur n'est pas un nombre alors qu'une borne est posée, ou ne contient pas le texte attendu. |
+
+## RADIUS {#radius}
+
+**Serveur RADIUS** — authentifie un compte de test (Access-Request) et attend
+un Access-Accept : il détecte un serveur allumé qui n'accepte plus les
+connexions. Exemples : FreeRADIUS, Windows NPS, le RADIUS d'un Wi-Fi
+WPA-Enterprise, d'un VPN ou d'un switch 802.1X.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 1812 | UDP | Requêtes d'authentification (port par défaut) |
+
+### Configuration
+
+1. Sur le serveur RADIUS, déclarez l'hôte DumbMonit comme client, avec un secret partagé (clients.conf sur FreeRADIUS, RADIUS Clients sur Windows NPS).
+
+2. Créez un compte de test sans second facteur, et notez son nom et son mot de passe.
+
+3. Dans DumbMonit, saisissez le serveur (port UDP 1812 par défaut), le secret partagé et le compte de test.
+
+4. Facultatif : changez l'identifiant NAS si le serveur filtre les requêtes dessus.
+
+#### Droits requis
+
+- **Un compte de test autorisé à s'authentifier** : Aucun accès réseau ni droit d'administration n'est nécessaire
+
+!!! warning
+    Un secret partagé erroné, ou un hôte non déclaré comme client, rend généralement le serveur muet : la vérification signale alors un délai dépassé.
+
+#### À savoir
+
+La vérification envoie un Access-Request par passage, avec le nom du compte, son mot de passe masqué par le secret partagé (RFC 2865) et une signature (`Message-Authenticator`, RFC 3579, placée en premier comme le demande la parade à BlastRADIUS). Elle ne réessaie jamais : un datagramme perdu apparaît comme une panne.
+
+Le secret partagé et le mot de passe sont stockés chiffrés et ne ressortent jamais par l'API. Les laisser vides en modifiant la surveillance conserve ceux qui sont enregistrés ; changer le nom du compte redemande son mot de passe.
+
+La réponse est vérifiée avec le secret partagé. Un serveur dont la signature ne correspond pas est signalé `bad_secret` plutôt que comme une panne, pour que l'alerte dise quoi corriger. Un serveur qui ne connaît pas le secret ne répond en général pas du tout : voir les raisons d'échec.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `port` | Port | `1812` | Port UDP du service d'authentification. |
+| `nas_identifier` | Identifiant NAS | `dumbmonit` | Valeur de l'attribut NAS-Identifier envoyé avec la requête. Changez-la si le serveur filtre les requêtes par NAS. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | La socket UDP n'a pas pu être ouverte. |
+| `timeout` | Aucune réponse valide à temps : serveur arrêté, port filtré, secret partagé erroné ou hôte non déclaré comme client (les serveurs ignorent ces requêtes sans rien dire). |
+| `auth` | Access-Reject : le serveur fonctionne et refuse le compte de test (verrouillé, expiré, mot de passe erroné). Son Reply-Message, s'il y en a un, figure dans le journal. |
+| `bad_secret` | La signature de la réponse ne correspond pas : le secret partagé est probablement faux. |
+| `protocol` | Access-Challenge (le compte demande une seconde étape), un autre code inattendu, ou une réponse qui n'est pas du RADIUS valide. |
 
 ## Adresses que les vérifications refusent
 

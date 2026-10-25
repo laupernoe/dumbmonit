@@ -196,6 +196,13 @@ export function toCredential(view: CredentialView, draft: Draft, kept: string[] 
 			return keeps('password')
 				? { type: 'username_password', username: value(draft, 'username') }
 				: { type: 'username_password', username: value(draft, 'username'), password: draft.password ?? '' };
+		case 'radius':
+			return {
+				type: 'radius',
+				username: value(draft, 'username'),
+				...(keeps('password') ? {} : { password: draft.password ?? '' }),
+				...(keeps('shared_secret') ? {} : { shared_secret: sanitizeSecret(draft.shared_secret ?? '') })
+			};
 		default: {
 			// A family this build does not know: send every field under its key.
 			const out: Record<string, string> = { type: view.kind };
