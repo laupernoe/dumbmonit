@@ -5,6 +5,8 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.14.0 — 2026-10-25
+
 ### Added
 
 - **Integrations, first batch.** Nine new notification channels, monitors created
@@ -35,7 +37,8 @@ All notable changes to this project are documented here. The format follows
 
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
-  `site-src/data/roadmap.json`.
+  `site-src/data/roadmap.json`. It also shows what is in progress and two collapsible
+  "Ideas" sections (features and integrations), with a link to GitHub Discussions.
 
 - **Encrypted agent channel, ready for the Internet.** Agents and relay agents
   now report on a dedicated port (TCP 8443, `DUMBMONIT_AGENT_LISTEN`) with TLS
