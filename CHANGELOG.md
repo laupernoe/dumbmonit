@@ -5,8 +5,6 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
-## 0.14.0 — 2026-10-25
-
 ### Added
 
 - **Status pages and reports, batch 1.**
@@ -33,6 +31,16 @@ All notable changes to this project are documented here. The format follows
     optional component filter and a fail level, and fails when the provider is
     degraded. On a status page it appears as an **External** component. Microsoft
     365 needs the Graph API and is not covered.
+
+### Fixed
+
+- **Alerts: unreachable monitors.** Their rows now carry the same two icon
+  buttons as other alerts (acknowledge and snooze) instead of a text "Open"
+  button; opening the monitor is an icon with a label too.
+
+## 0.14.0 — 2026-10-25
+
+### Added
 
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
@@ -158,9 +166,6 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
-- **Alerts: unreachable monitors.** Their rows now carry the same two icon
-  buttons as other alerts (acknowledge and snooze) instead of a text "Open"
-  button; opening the monitor is an icon with a label too.
 - **Interface clean-up: lists refresh, fewer buttons, folded settings.** Any
   successful create, update or delete now refreshes the shared device and alert
   lists, so a deleted monitor no longer stays on screen until F5. On Monitors,
