@@ -889,6 +889,63 @@ pub fn builtin_rules() -> Vec<Rule> {
             )
         },
         // ------------------------------------------------------------------
+        // Journal d'événements Windows (`collectors/agent/eventlog.rs`).
+        //
+        // Une jauge par sévérité et par machine : le nombre d'événements reçus
+        // dans les quinze dernières minutes pour les règles d'événements de
+        // cette sévérité. Aucune règle d'événement n'existe par défaut, ces
+        // jauges n'existent donc que là où quelqu'un en a créé. Comme pour
+        // `webchange_detected`, l'alerte cite l'événement le plus récent et
+        // reparle au plus toutes les dix minutes tant que d'autres arrivent ;
+        // elle se résout quinze minutes après le dernier. Pas de rappel : un
+        // événement est un fait, pas une panne en cours.
+        // ------------------------------------------------------------------
+        Rule {
+            description: "A Windows event matched one of the machine's critical event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Critical,
+            repeat_interval: None,
+            ..base(
+                "windows_event_critical",
+                "Windows event (critical)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_critical",
+            )
+        },
+        Rule {
+            description: "A Windows event matched one of the machine's warning event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            ..base(
+                "windows_event_warning",
+                "Windows event (warning)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_warning",
+            )
+        },
+        Rule {
+            description: "A Windows event matched one of the machine's info event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base(
+                "windows_event_info",
+                "Windows event (info)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_info",
+            )
+        },
+        // ------------------------------------------------------------------
         // Matériel remonté par l'agent : disques, pools ZFS, sondes.
         //
         // Ces quatre règles ne visent que des séries que l'agent n'émet **que**
@@ -6585,6 +6642,9 @@ mod tests {
             "speedtest_download_slow",
             "speedtest_upload_slow",
             "speedtest_latency_high",
+            "windows_event_critical",
+            "windows_event_warning",
+            "windows_event_info",
             "pfsense_gateway_down",
             "pfsense_gateway_loss",
             "pfsense_gateway_latency",
@@ -7051,6 +7111,11 @@ mod tests {
             "dumbmonit_agent_speedtest_upload_bytes_per_second",
             "dumbmonit_agent_speedtest_latency_ms",
             "dumbmonit_agent_speedtest_max_latency_ms",
+            // Journal d'événements Windows, jauges écrites par le serveur à la
+            // réception des lots (`collectors/agent/eventlog.rs`).
+            "dumbmonit_agent_eventlog_matches_critical",
+            "dumbmonit_agent_eventlog_matches_warning",
+            "dumbmonit_agent_eventlog_matches_info",
             // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos
             // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`),
             // Hyper-V par l'agent Windows (`agent/src/collect/perf_counters.rs`).
