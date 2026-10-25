@@ -195,12 +195,14 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
 }
 
 /// Faits que les alertes « événement » annoncent un par un (voir
-/// [`cycle::Occurrence`]). Deux sources : les vérifications de site qui
+/// [`cycle::Occurrence`]). Trois sources : les vérifications de site qui
 /// trouvent des changements, pour la règle livrée
-/// [`crate::webchange::ALERT_RULE`], et la dernière exécution en échec d'un
+/// [`crate::webchange::ALERT_RULE`], la dernière exécution en échec d'un
 /// moniteur en poussée, dont le code et la sortie vont dans le message de la
-/// règle `push_failed`. Une lecture qui échoue n'empêche pas le cycle :
-/// l'alerte se comporte alors comme une alerte d'état ordinaire.
+/// règle `push_failed`, et les événements du journal Windows remontés par les
+/// agents, pour les règles `windows_event_*`
+/// ([`crate::collectors::agent::eventlog`]). Une lecture qui échoue n'empêche
+/// pas le cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
 async fn occurrences(pool: &SqlitePool) -> HashMap<(String, i64), cycle::Occurrence> {
     let mut found = HashMap::new();
     match crate::webchange::store::changed_checks(pool).await {
@@ -232,6 +234,20 @@ async fn occurrences(pool: &SqlitePool) -> HashMap<(String, i64), cycle::Occurre
             }
         }
         Err(error) => warn!(?error, "push runs not read for alerting"),
+    }
+    match crate::collectors::agent::eventlog::occurrences(pool).await {
+        Ok(events) => {
+            found.extend(events.into_iter().filter_map(|event| {
+                let at = DateTime::from_timestamp_millis(event.announced_ms)?;
+                let occurrence = cycle::Occurrence {
+                    at,
+                    value: event.matches as f64,
+                    detail: Some(event.detail).filter(|d| !d.is_empty()),
+                };
+                Some(((event.rule_uid.to_string(), event.target_id), occurrence))
+            }));
+        }
+        Err(error) => warn!(?error, "agent event log not read for alerting"),
     }
     found
 }

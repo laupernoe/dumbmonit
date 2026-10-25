@@ -745,6 +745,14 @@ Trois [règles intégrées](../alerting/rules.md#hyper-v) s'appliquent :
 - **Erreurs de disque virtuel Hyper-V** : un disque virtuel a rapporté
   des erreurs d'E/S dans la dernière heure (Avis).
 
+## Alertes du journal d'événements Windows {#windows-event-log-alerts}
+
+L'agent Windows peut aussi déclencher des alertes sur des événements Windows
+(échecs de connexion, redémarrages inattendus, services plantés, erreurs de
+disque) : les règles se règlent par machine sur sa page d'équipement, aucune
+n'existe par défaut. Voir
+[Alertes du journal d'événements Windows](agent-windows-events.md).
+
 ## Faire tourner l'agent dans Docker / sur un autre réseau {#run-the-agent-in-docker--on-another-network}
 
 L'agent est aussi publié comme image conteneur, avec les mêmes tags que
