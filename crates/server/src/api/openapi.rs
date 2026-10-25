@@ -137,6 +137,7 @@ mod tests {
                 | "/api/auth/login"
                 | "/api/auth/login/totp"
                 | "/api/push/{token}"
+                | "/api/push/{token}/{action}"
                 | "/api/openapi.json"
         ) || path.starts_with("/api/public/")
             || (path == "/api/mcp" && method != "post")

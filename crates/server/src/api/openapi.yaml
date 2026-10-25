@@ -3797,11 +3797,15 @@ paths:
         in: query
         description: Free text, kept truncated to 500 characters.
         schema: { type: string }
+      - name: exit_code
+        in: query
+        description: "The job's exit code. Non-zero is a failure."
+        schema: { type: integer, minimum: 0 }
     get:
       operationId: pushHeartbeatGet
       tags: [Heartbeats]
       summary: Record a heartbeat
-      description: At most sixty calls a minute per token.
+      description: At most sixty calls a minute per token. A plain call is a successful run of unknown duration (`status=down` or a non-zero `exit_code` make it a failure).
       security: []
       x-token-scope: public
       responses:
@@ -3813,13 +3817,74 @@ paths:
       operationId: pushHeartbeatPost
       tags: [Heartbeats]
       summary: Record a heartbeat
-      description: Same as the `GET`; the body is ignored.
+      description: Same as the `GET`; the body (up to 256 KiB) is the output of the job, kept truncated to its last 10 KiB.
       security: []
       x-token-scope: public
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema: { type: string }
       responses:
         "204": { description: Heartbeat recorded. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Body larger than 256 KiB. }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/push/{token}/{action}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: The heartbeat's secret token — the URL is the credential.
+        schema: { type: string }
+      - name: action
+        in: path
+        required: true
+        description: "`start` opens a run, `success` and `fail` close it, and a number is the job's exit code (0 is a success, anything else a failure). Anything else is a `404`."
+        schema: { type: string }
+      - name: status
+        in: query
+        description: "`up` (default) or `down`, on `success` only."
+        schema: { type: string, enum: [up, down] }
+      - name: msg
+        in: query
+        description: Free text, kept truncated to 500 characters; also the output when the body is empty.
+        schema: { type: string }
+      - name: exit_code
+        in: query
+        description: "The job's exit code, on `success` and `fail`."
+        schema: { type: integer, minimum: 0 }
+    get:
+      operationId: pushRunGet
+      tags: [Heartbeats]
+      summary: Record the start or the end of a run
+      description: At most sixty calls a minute per token, shared with the plain call.
+      security: []
+      x-token-scope: public
+      responses:
+        "204": { description: Run recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    post:
+      operationId: pushRunPost
+      tags: [Heartbeats]
+      summary: Record the start or the end of a run
+      description: Same as the `GET`; the body (up to 256 KiB) is the output of the job, kept truncated to its last 10 KiB.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema: { type: string }
+      responses:
+        "204": { description: Run recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Body larger than 256 KiB. }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /api/targets/{id}/push:
@@ -3837,6 +3902,34 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PushMonitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/push/runs:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: limit
+        in: query
+        description: Runs per page, 50 by default and 100 at most.
+        schema: { type: integer, minimum: 1, maximum: 100 }
+      - name: before
+        in: query
+        description: The `next_before` of the previous page.
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: listPushRuns
+      tags: [Heartbeats]
+      summary: Run history of a heartbeat device
+      description: Newest first. Only the latest 200 runs of the last 90 days are kept. `400` when the device is not a heartbeat.
+      x-token-scope: read
+      responses:
+        "200":
+          description: One page of runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushRunsPage" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -8405,6 +8498,35 @@ components:
         grace_secs: { type: [integer, "null"] }
         settings_error: { type: [string, "null"] }
         verdict: { type: string, enum: [waiting, on_time, missed, reported_down] }
+        schedule: { type: [string, "null"], description: "Cron expression replacing the interval, when set." }
+        timezone: { type: [string, "null"], description: "IANA time zone in which `schedule` is read." }
+        next_expected_at: { type: [string, "null"], description: "Next scheduled run of a cron schedule. UTC, without suffix." }
+        max_duration_secs: { type: [integer, "null"] }
+        last_run:
+          oneOf:
+            - $ref: "#/components/schemas/PushRun"
+            - type: "null"
+
+    PushRun:
+      type: object
+      required: [id, status, output]
+      properties:
+        id: { type: integer, format: int64 }
+        started_at: { type: [string, "null"], description: "UTC, without suffix. `null` when no `/start` preceded the end." }
+        finished_at: { type: [string, "null"], description: "UTC, without suffix. `null` while the run is open." }
+        duration_secs: { type: [number, "null"], description: "`null` when the duration is unknown." }
+        status: { type: string, enum: [running, success, failed, lost], description: "`lost`: started, then replaced by a new start without ever finishing." }
+        exit_code: { type: [integer, "null"] }
+        output: { type: string, description: "Output of the job, truncated to its last 10 KiB." }
+
+    PushRunsPage:
+      type: object
+      required: [runs]
+      properties:
+        runs:
+          type: array
+          items: { $ref: "#/components/schemas/PushRun" }
+        next_before: { type: [integer, "null"], format: int64, description: "Pass as `before` for the next page; `null` on the last one." }
 
     WebsiteOverview:
       type: object

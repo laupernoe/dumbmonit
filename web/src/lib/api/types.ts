@@ -2743,6 +2743,37 @@ export interface PushMonitor {
 	grace_secs: number | null;
 	settings_error: string | null;
 	verdict: 'waiting' | 'on_time' | 'missed' | 'reported_down';
+	/** Cron expression replacing the interval, and the IANA zone it is read in. */
+	schedule: string | null;
+	timezone: string | null;
+	/** Next run of a cron schedule, UTC without suffix. */
+	next_expected_at: string | null;
+	max_duration_secs: number | null;
+	/** The latest run, open or finished. */
+	last_run: PushRun | null;
+}
+
+/** One run of a heartbeat job. Mirrors `PushRunView`. */
+export interface PushRun {
+	id: number;
+	/** UTC without suffix; `null` when no `/start` preceded the end. */
+	started_at: string | null;
+	/** `null` while the run is open. */
+	finished_at: string | null;
+	/** `null` when the duration is unknown. */
+	duration_secs: number | null;
+	/** `lost`: started, then replaced by a new start without ever finishing. */
+	status: 'running' | 'success' | 'failed' | 'lost';
+	exit_code: number | null;
+	/** Output of the job, truncated server-side to its last 10 KiB. */
+	output: string;
+}
+
+/** `GET /api/targets/{id}/push/runs`. Mirrors `PushRunsPage`. */
+export interface PushRunsPage {
+	runs: PushRun[];
+	/** Pass as `before` to get the next page; `null` on the last one. */
+	next_before: number | null;
 }
 
 // --- Proxmox Datacenter Manager (crates/server/src/api/pdm.rs) --------------
