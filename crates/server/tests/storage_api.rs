@@ -41,7 +41,8 @@ async fn the_storage_view_describes_an_external_metrics_store() {
         .collect();
     assert_eq!(keys, ["metrics", "rollup", "logs_store", "database", "logs", "backups"]);
     // La base de test existe : elle a une taille.
-    let database = body["disk"]["usage"].as_array().unwrap().iter().find(|u| u["key"] == "database");
+    let database =
+        body["disk"]["usage"].as_array().unwrap().iter().find(|u| u["key"] == "database");
     assert!(database.unwrap()["bytes"].as_u64().unwrap() > 0);
     assert!(body["disk"]["free_bytes"].as_u64().is_some());
     assert_eq!(body["growth"]["bytes_per_day"], serde_json::Value::Null);

@@ -231,11 +231,10 @@ mod tests {
         config.vm_retention = "90d".into();
         config.vm_retention_from_env = true;
         let settings = resolve(&config, |_| None);
-        assert_eq!(settings.metrics, Retention {
-            days: 90,
-            flag: "90d".into(),
-            source: Source::Environment
-        });
+        assert_eq!(
+            settings.metrics,
+            Retention { days: 90, flag: "90d".into(), source: Source::Environment }
+        );
     }
 
     #[test]

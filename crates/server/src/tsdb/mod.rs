@@ -234,7 +234,10 @@ impl Victoria {
             match rollup::plan_range(query, start, end, step, &long.horizon()) {
                 rollup::RangePlan::Raw => {}
                 rollup::RangePlan::Long { query: rewritten } => {
-                    match long.victoria.query_range_raw(&rewritten, start_ms, end_ms, step_secs).await
+                    match long
+                        .victoria
+                        .query_range_raw(&rewritten, start_ms, end_ms, step_secs)
+                        .await
                     {
                         Ok(series) => return Ok(series),
                         Err(error) => log_query_failure(&error, "long-term read failed, raw used"),

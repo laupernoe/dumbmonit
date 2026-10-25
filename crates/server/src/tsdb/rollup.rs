@@ -81,11 +81,8 @@ pub struct AggregateQuery {
 }
 
 fn names_regex(kinds: &[Kind]) -> String {
-    let names: Vec<&str> = CATALOG
-        .iter()
-        .filter(|(_, kind)| kinds.contains(kind))
-        .map(|(name, _)| *name)
-        .collect();
+    let names: Vec<&str> =
+        CATALOG.iter().filter(|(_, kind)| kinds.contains(kind)).map(|(name, _)| *name).collect();
     format!("{}({})", super::METRIC_PREFIX, names.join("|"))
 }
 
@@ -270,10 +267,8 @@ pub fn lookback_secs(query: &str) -> i64 {
     while let Some(found) = lower[search..].find("offset") {
         let after = search + found + "offset".len();
         let tail = query[after..].trim_start();
-        let duration: String = tail
-            .chars()
-            .take_while(|c| c.is_ascii_alphanumeric() || *c == '.')
-            .collect();
+        let duration: String =
+            tail.chars().take_while(|c| c.is_ascii_alphanumeric() || *c == '.').collect();
         if let Some(secs) = parse_duration_secs(&duration) {
             offset = offset.max(secs);
         }
@@ -402,7 +397,8 @@ impl Horizon {
 
     /// Les agrégats couvrent-ils au moins ce que couvre le brut ?
     fn long_covers(&self) -> bool {
-        self.coverage_start_secs.is_some_and(|start| start <= self.raw_start() + COVERAGE_SLACK_SECS)
+        self.coverage_start_secs
+            .is_some_and(|start| start <= self.raw_start() + COVERAGE_SLACK_SECS)
     }
 
     /// Une lecture qui remonte jusqu'à `oldest_secs` doit-elle aller aux agrégats ?
@@ -469,9 +465,9 @@ pub fn stitch(
             Some(&position) => {
                 let target = &mut out[position];
                 let last = target.values.last().map(|(ts, _)| *ts);
-                target
-                    .values
-                    .extend(series.values.into_iter().filter(|(ts, _)| last.is_none_or(|l| *ts > l)));
+                target.values.extend(
+                    series.values.into_iter().filter(|(ts, _)| last.is_none_or(|l| *ts > l)),
+                );
             }
             None => {
                 index.insert(series.metric.clone(), out.len());
@@ -484,16 +480,11 @@ pub fn stitch(
 
 /// Échantillons à écrire dans l'instance long terme, à partir de la réponse
 /// d'une requête d'agrégation.
-pub fn to_samples(
-    series: &[super::RangeSeries],
-    suffix: &str,
-) -> Vec<dumbmonit_proto::Sample> {
+pub fn to_samples(series: &[super::RangeSeries], suffix: &str) -> Vec<dumbmonit_proto::Sample> {
     let mut out = Vec::new();
     for item in series {
-        let Some(name) = item
-            .metric
-            .get("__name__")
-            .and_then(|name| name.strip_prefix(super::METRIC_PREFIX))
+        let Some(name) =
+            item.metric.get("__name__").and_then(|name| name.strip_prefix(super::METRIC_PREFIX))
         else {
             continue;
         };
@@ -663,10 +654,7 @@ mod tests {
             other => panic!("{other:?}"),
         }
         // Plage entièrement plus ancienne que le brut : agrégats seuls.
-        assert!(matches!(
-            plan_range(q, start, start + 86_400, 3_600, &h),
-            RangePlan::Long { .. }
-        ));
+        assert!(matches!(plan_range(q, start, start + 86_400, 3_600, &h), RangePlan::Long { .. }));
         // Métrique non conservée : brut, même au-delà.
         assert_eq!(
             plan_range("dumbmonit_nut_load{target=\"1\"}", start, now, 3_600, &h),
