@@ -421,48 +421,56 @@ pub async fn create_job(
     State(state): State<AppState>,
     Json(request): Json<JobRequest>,
 ) -> ApiResult<(StatusCode, Json<JobCreated>)> {
+    let community = request.snmp_community.clone().unwrap_or_else(|| "public".to_string());
+    let id = start_scan(&state, &request.cidr, request.agent_id, community, request.depth).await?;
+    Ok((StatusCode::ACCEPTED, Json(JobCreated { id })))
+}
+
+/// Démarre un balayage, par le serveur ou par un agent relais, et rend son id.
+/// Partagé par l'API et par les scans planifiés (`netinventory`) : un seul
+/// chemin de lancement, les mêmes garde-fous.
+pub(crate) async fn start_scan(
+    state: &AppState,
+    cidr: &str,
+    agent_id: Option<dumbmonit_proto::TargetId>,
+    community: String,
+    depth: ScanDepth,
+) -> ApiResult<String> {
     // Garde-fou : réseau lisible et borné à 1024 adresses (/22).
-    let hosts = netscan::hosts_of(&request.cidr).map_err(|error| match error {
+    let hosts = check_network(cidr)?;
+
+    let id = match agent_id {
+        Some(agent_id) => {
+            let name = relay_agent_name(state, agent_id).await?;
+            let job =
+                DiscoveryScanJob { cidr: cidr.to_string(), snmp_community: Some(community), depth };
+            let id = state
+                .discovery()
+                .start_agent(agent_id, name.clone(), cidr.to_string(), job)
+                .map_err(busy)?;
+            discovery::log_started(cidr, Some(&name));
+            id
+        }
+        None => {
+            let id = state.discovery().start_local(cidr.to_string(), hosts.len()).map_err(busy)?;
+            discovery::log_started(cidr, None);
+            spawn_local_scan(state.clone(), id.clone(), cidr.to_string(), community, depth);
+            id
+        }
+    };
+    Ok(id)
+}
+
+/// Vérifie qu'un réseau est lisible et dans les bornes d'un balayage.
+pub(crate) fn check_network(cidr: &str) -> ApiResult<Vec<std::net::IpAddr>> {
+    netscan::hosts_of(cidr).map_err(|error| match error {
         netscan::ScanError::BadCidr(cidr) => {
             ApiError::BadRequest(format!("Invalid network \"{cidr}\"."))
         }
         netscan::ScanError::TooLarge(max) => ApiError::BadRequest(format!(
             "Network too large: {max} addresses at most. Choose a narrower prefix (/22)."
         )),
-    })?;
-
-    let community = request.snmp_community.clone().unwrap_or_else(|| "public".to_string());
-
-    let id = match request.agent_id {
-        Some(agent_id) => {
-            let name = relay_agent_name(&state, agent_id).await?;
-            let job = DiscoveryScanJob {
-                cidr: request.cidr.clone(),
-                snmp_community: Some(community),
-                depth: request.depth,
-            };
-            let id = state
-                .discovery()
-                .start_agent(agent_id, name.clone(), request.cidr.clone(), job)
-                .map_err(busy)?;
-            discovery::log_started(&request.cidr, Some(&name));
-            id
-        }
-        None => {
-            let id =
-                state.discovery().start_local(request.cidr.clone(), hosts.len()).map_err(busy)?;
-            discovery::log_started(&request.cidr, None);
-            spawn_local_scan(
-                state.clone(),
-                id.clone(),
-                request.cidr.clone(),
-                community,
-                request.depth,
-            );
-            id
-        }
-    };
-    Ok((StatusCode::ACCEPTED, Json(JobCreated { id })))
+    })
 }
 
 fn busy(_: CreateError) -> ApiError {
@@ -470,7 +478,7 @@ fn busy(_: CreateError) -> ApiError {
 }
 
 /// Nom d'un agent relais existant. 404 sinon.
-async fn relay_agent_name(state: &AppState, agent_id: i64) -> Result<String, ApiError> {
+pub(crate) async fn relay_agent_name(state: &AppState, agent_id: i64) -> Result<String, ApiError> {
     let hosts = crate::collectors::agent::list_hosts(&state.pool).await?;
     hosts
         .into_iter()
