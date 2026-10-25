@@ -3652,6 +3652,57 @@
 	"locations_site_none": "无",
 	"locations_title": "位置",
 	"locations_use_place": "使用 {place}",
+	"logsearch_admin_only": "只有管理员可以搜索日志。",
+	"logsearch_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 行"
+			}
+		}
+	],
+	"logsearch_description": "使用 LogsQL 搜索 DumbMonit 自身的日志，最新的在前。",
+	"logsearch_empty_hint": "请扩大时间范围、降低最低级别或简化查询。",
+	"logsearch_empty_title": "未找到日志。",
+	"logsearch_error": "无法搜索日志。",
+	"logsearch_field_host": "主机",
+	"logsearch_field_source": "来源",
+	"logsearch_from": "开始",
+	"logsearch_level": "最低级别",
+	"logsearch_level_debug": "调试（全部）",
+	"logsearch_level_error": "错误",
+	"logsearch_level_info": "信息及以上",
+	"logsearch_level_warn": "警告及以上",
+	"logsearch_period": "时间范围",
+	"logsearch_period_15m": "最近 15 分钟",
+	"logsearch_period_1h": "最近 1 小时",
+	"logsearch_period_24h": "最近 24 小时",
+	"logsearch_period_6h": "最近 6 小时",
+	"logsearch_period_7d": "最近 7 天",
+	"logsearch_period_custom": "自定义范围…",
+	"logsearch_query": "LogsQL 查询",
+	"logsearch_query_help": "* 匹配全部。示例：\"timeout\" AND kind:snmp",
+	"logsearch_query_refused": "日志存储拒绝了此查询。",
+	"logsearch_range_invalid": "请选择开始时间，以及晚于它的结束时间。",
+	"logsearch_search": "搜索",
+	"logsearch_section_hint": "日志也可以保存在可搜索的存储中。",
+	"logsearch_section_link": "搜索日志",
+	"logsearch_settings_link": "数据与保留设置",
+	"logsearch_source": "来源",
+	"logsearch_source_agents": "代理（稍后提供）",
+	"logsearch_source_server": "DumbMonit 服务器",
+	"logsearch_store_off": "日志存储已关闭。请在“设置 → 系统”中开启后再搜索日志。",
+	"logsearch_store_off_link": "打开“数据与保留”",
+	"logsearch_title": "日志",
+	"logsearch_to": "结束",
+	"logsearch_to_help": "留空表示到现在。",
+	"logsearch_truncated": "还有更多，请缩小搜索范围",
 	"metrics_title_website_blank": "空白页面",
 	"metrics_title_website_canonical_changed": "规范链接已更改",
 	"metrics_title_website_description_changed": "描述已更改",
@@ -6901,6 +6952,99 @@
 	"status_words_st_monitoring": "观察中",
 	"status_words_st_resolved": "已解决",
 	"status_words_st_scheduled": "已计划",
+	"storage_confirm_apply": "保存并重启",
+	"storage_confirm_cancel": "取消",
+	"storage_confirm_lowering": "缩短原始数据保留时长会删除更早的原始数据。",
+	"storage_confirm_restart": "更改保留时长会重启内置指标存储；写入会暂停几秒并自动重试，不会丢失数据。启用、停用或修改其他存储也会重启对应的存储。",
+	"storage_custom": "自定义…",
+	"storage_custom_days": "天数",
+	"storage_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 天"
+			}
+		}
+	],
+	"storage_days_invalid": "请输入 {min} 到 {max} 之间的整数天数。",
+	"storage_days_unit": "天",
+	"storage_description": "磁盘占用、指标和日志的保留时长，以及可选的长期历史和日志存储。",
+	"storage_disk_title": "磁盘占用",
+	"storage_docs_external": "关于外部 VictoriaMetrics",
+	"storage_free": "可用空间",
+	"storage_free_of": "可用 {free}，共 {total}（{percent}%）",
+	"storage_full_in": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "按此速度，约 {count} 天后写满。"
+			}
+		}
+	],
+	"storage_growth": "增长",
+	"storage_growth_per_day": "每天约 {size}",
+	"storage_last_error": "最近错误：{error}",
+	"storage_limits": "范围 {min} 至 {max} 天。",
+	"storage_logstore_enabled": "存储日志以便搜索",
+	"storage_logstore_intro": "默认关闭。开启后，DumbMonit 会运行内置的 VictoriaLogs 并把自身的服务器日志发送给它，你可以在“日志”页面搜索。",
+	"storage_logstore_retention": "日志保留时长",
+	"storage_logstore_title": "日志存储（VictoriaLogs）",
+	"storage_logstore_unavailable": "此镜像中不包含 VictoriaLogs 程序，因此无法在此启用日志存储。",
+	"storage_metrics_external": "此实例使用外部 VictoriaMetrics，其保留时长由它自行管理（在其上设置 -retentionPeriod）。当前为 {days} 天。",
+	"storage_metrics_intro": "每个采样点会以完整分辨率保留这么长时间，更早的原始数据将被删除；开启长期历史后，超出此期限的图表和报告将使用 5 分钟聚合数据。",
+	"storage_metrics_retention": "原始指标保留时长",
+	"storage_metrics_title": "原始指标保留",
+	"storage_none_yet": "暂无",
+	"storage_not_enough_history": "历史数据尚不足（需要两次每日采样）。",
+	"storage_off": "已关闭",
+	"storage_on": "已开启",
+	"storage_open_logs": "打开“日志”页面",
+	"storage_process_logs_store": "日志存储",
+	"storage_process_metrics": "指标存储",
+	"storage_process_rollup": "长期历史",
+	"storage_read_error": "无法读取存储设置。",
+	"storage_rollup_backfill": "从原始数据回填的历史",
+	"storage_rollup_backfill_done": "已完成",
+	"storage_rollup_backfill_until": "进行中，已回溯到 {date}",
+	"storage_rollup_enabled": "保留长期历史",
+	"storage_rollup_intro": "开源版 VictoriaMetrics 不支持降采样，因此 DumbMonit 会把 5 分钟的平均值、最小值和最大值（以及可用性的成功次数）写入第二个小型存储。超出原始数据保留期的图表、状态页和报告会自动从中读取。",
+	"storage_rollup_last_window": "最近聚合的时间窗",
+	"storage_rollup_retention": "历史保留时长",
+	"storage_rollup_series": "已写入序列数",
+	"storage_rollup_title": "长期历史（5 分钟聚合）",
+	"storage_rollup_unavailable": "不可用：使用外部 VictoriaMetrics 时，请将 DUMBMONIT_VM_LONG_URL 指向第二个实例以启用。",
+	"storage_running": "运行中",
+	"storage_save": "保存",
+	"storage_save_error": "无法保存存储设置。",
+	"storage_saved": "已保存",
+	"storage_saved_restarted": "已保存。已重启：{processes}。",
+	"storage_search_kw": "磁盘 空间 保留 天数 指标 victoriametrics 历史 长期 聚合 日志 victorialogs 增长 已满",
+	"storage_source": "来源：{source}",
+	"storage_source_default": "默认值",
+	"storage_source_environment": "环境变量 DUMBMONIT_VM_RETENTION",
+	"storage_source_settings": "在此设置",
+	"storage_status": "状态",
+	"storage_stopped": "未运行",
+	"storage_title": "数据与保留",
+	"storage_unknown": "未知",
+	"storage_usage_backups": "备份",
+	"storage_usage_database": "数据库",
+	"storage_usage_logs": "服务器日志文件",
+	"storage_usage_logs_store": "日志存储",
+	"storage_usage_metrics": "指标（原始）",
+	"storage_usage_rollup": "长期历史",
 	"tips_alerts_clear_history": "“清除所有已解决项”可在你读完之后，一次性把已关闭的告警从历史记录中清走。",
 	"tips_alerts_ignore_device": "某条规则总在一台永远不合规的监控项上触发？只对这一个监控项忽略该规则即可——其他地方它仍然照常监视。",
 	"tips_alerts_learning": "新的基线规则在最初 14 天内保持静默：它还在学习这个监控项的正常状态，之后才敢发出告警。",
