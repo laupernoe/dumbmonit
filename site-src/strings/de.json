@@ -214,5 +214,16 @@
  "sh_st_cap": "Eine öffentliche Statusseite: was die Familie prüfen kann, bevor sie fragt, ob das Internet ausgefallen ist.",
  "sh_wall_alt": "Wandmodus: „4 Probleme“ in großer Schrift, die Liste der Alarme, die meldenden Monitore, eine Uhr und ein verregnetes Pariser Dach mit den Tauben",
  "sh_wall_cap": "Der Wandmodus auf einem Raummonitor: Das Wetter über dem Pariser Dach folgt Ihren Alarmen.",
- "sh_al_alt": "Alarmseite: aktuelle Alarme nach Monitor gruppiert, jeweils mit einem Schild Nicht erreichbar, Warnung, Hinweis oder Im Aufbau, Bestätigen und Monitor öffnen"
+ "sh_al_alt": "Alarmseite: aktuelle Alarme nach Monitor gruppiert, jeweils mit einem Schild Nicht erreichbar, Warnung, Hinweis oder Im Aufbau, Bestätigen und Monitor öffnen",
+ "nav_roadmap": "Roadmap",
+ "t_roadmap": "Roadmap · DumbMonit",
+ "d_roadmap": "Was für DumbMonit geplant ist, in der Reihenfolge der geplanten Auslieferung, und was bereits erschienen ist.",
+ "rm_h1": "Roadmap",
+ "rm_lede": "Was als Nächstes kommt, in der geplanten Reihenfolge, und was bereits erschienen ist. Pläne können sich ändern: Diese Seite wird mit jeder Version aktualisiert.",
+ "rm_planned": "Geplant",
+ "rm_progress": "In Arbeit",
+ "rm_delivered": "Ausgeliefert",
+ "rm_legend": "Status der einzelnen Punkte",
+ "rm_ver": "Version",
+ "rm_issues": "Etwas fehlt? <a href=\"https://github.com/laupernoe/dumbmonit/issues/new/choose\">Sagen Sie es uns auf GitHub</a>."
 }
