@@ -32,7 +32,7 @@ python3 -m http.server 4321 --directory /tmp/preview
 
 | Path | What |
 |---|---|
-| `index.html`, `features/`, `devices/`, `devices/<family>/`, `install/`, `community/` (and the same under `<lang>/`) | The pages in each language, **generated** by `site-src/build.py` (do not edit by hand). English is the root, the others live in `/fr/`, `/de/`, `/es/`, `/it/`, `/pt/`, `/pt-BR/`, `/ru/`, `/zh-Hans/`. Colours and type follow `web/src/app.css` (day and night via `prefers-color-scheme`). |
+| `index.html`, `features/`, `devices/`, `devices/<family>/`, `install/`, `roadmap/`, `community/` (and the same under `<lang>/`) | The pages in each language, **generated** by `site-src/build.py` (do not edit by hand). English is the root, the others live in `/fr/`, `/de/`, `/es/`, `/it/`, `/pt/`, `/pt-BR/`, `/ru/`, `/zh-Hans/`. Colours and type follow `web/src/app.css` (day and night via `prefers-color-scheme`). |
 | `static/assets/site.css` | Styles and design tokens. |
 | `static/assets/shots/` | Screenshots of the live demo (`DUMBMONIT_DEMO=1`): desktop 1440 x 900 at 2x (plus a 1x copy), phone 390 x 844 at 2x, light and dark, AVIF with a WebP fallback. |
 | `static/assets/og.png` | Social preview image, 1200 × 630. |
@@ -64,3 +64,16 @@ texts are English; only the labels around them are translated. The locales are t
 - Every page carries `lang`, `hreflang` alternates (and the sitemap too).
 - Links to the documentation go through the single constant `DOCS_HOST` in `build.py`
   (`@@DOCS@@` in the strings); non-English pages point to the matching docs language.
+
+## Roadmap page
+
+The page `/roadmap/` is generated from one file, `site-src/data/roadmap.json` (sections in display
+order, which is the planned delivery order). Each item has a `status` (`planned`, `progress` or
+`delivered`) and a `text` with one entry per language (`fr`, `en`, `de`, `es`, `it`, `pt`, `pt-BR`,
+`ru`, `zh-Hans`; a missing language falls back to English). Delivered items also carry a `version`.
+Only the labels around the list (title, status names) live in `strings/<lang>.json` (`rm_*` keys).
+
+**At every release: move the delivered items to the "Déjà livré" section (`delivered`), add the
+version there with one line in every language, and delete them from the planned sections.** Put
+`"status": "progress"` on what is being worked on. Then run `python3 site-src/build.py`.
+No effort estimates and no mention of other products.
