@@ -110,6 +110,9 @@ pub enum Failure {
     /// L'objet demandé n'existe pas sur l'agent : OID inconnu, `noSuchObject`
     /// ou `noSuchInstance` (sonde SNMP OID).
     NotFound,
+    /// La signature de la réponse ne se vérifie pas : le secret partagé est
+    /// probablement faux (sonde RADIUS).
+    BadSecret,
 }
 
 impl Failure {
@@ -134,6 +137,7 @@ impl Failure {
             Self::ClockOffset => "clock_offset",
             Self::Threshold => "threshold",
             Self::NotFound => "not_found",
+            Self::BadSecret => "bad_secret",
         }
     }
 }
@@ -315,6 +319,7 @@ mod tests {
             Failure::ClockOffset,
             Failure::Threshold,
             Failure::NotFound,
+            Failure::BadSecret,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {

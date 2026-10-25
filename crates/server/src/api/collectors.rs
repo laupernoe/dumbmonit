@@ -1201,6 +1201,49 @@ const SNMP_OID_OPTIONS: &[OptionView] = &[
     PROBE_TIMEOUT,
 ];
 
+/// Identifiants d'une sonde RADIUS : le secret du serveur et un compte de test.
+const RADIUS_LOGIN: CredentialView = CredentialView {
+    kind: "radius",
+    label: "Shared secret and test account",
+    help: "The secret defined for this host on the RADIUS server, and an account created for monitoring.",
+    fields: &[
+        cred_secret(
+            "shared_secret",
+            "Shared secret",
+            "As configured for this client on the RADIUS server. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+        cred_text(
+            "username",
+            "Test account",
+            "An account without a second factor, used only to check that the server authenticates.",
+            "dumbmonit",
+        ),
+        cred_secret(
+            "password",
+            "Test account password",
+            "Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+/// Options lues par `collectors/uptime/radius/options.rs`.
+const RADIUS_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "UDP port of the authentication service.", "1812", "1812"),
+    text(
+        "nas_identifier",
+        "NAS identifier",
+        "Value of the NAS-Identifier attribute sent with the request. Change it if the server filters requests by NAS.",
+        "dumbmonit",
+        "dumbmonit",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Options lues par `collectors/push/mod.rs` (`Settings::from_target`).
 const PUSH_OPTIONS: &[OptionView] = &[
     text(
@@ -5924,6 +5967,36 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: SNMP_OID_OPTIONS,
         },
+        "radius" => CollectorView {
+            kind: "radius",
+            label: "RADIUS server",
+            summary: "Authenticates a test account (Access-Request): catches a server that is up but no longer accepts logins.",
+            examples: &[
+                "FreeRADIUS",
+                "Windows NPS",
+                "The RADIUS behind a WPA-Enterprise Wi-Fi",
+                "The RADIUS behind a VPN or a 802.1X switch",
+            ],
+            credential_types: &["radius"],
+            credentials: &[RADIUS_LOGIN],
+            address_hint: "radius.home.lan",
+            default_port: 1812,
+            setup: Setup {
+                title: "Monitor a RADIUS server",
+                steps: &[
+                    "On the RADIUS server, declare the DumbMonit host as a client, with a shared secret (clients.conf on FreeRADIUS, RADIUS Clients on Windows NPS).",
+                    "Create a test account without a second factor, and note its name and password.",
+                    "In DumbMonit, enter the server (UDP port 1812 by default), the shared secret and the test account.",
+                    "Optional: change the NAS identifier if the server filters requests by it.",
+                ],
+                ports: &[to_device!(1812, "udp", "Authentication requests (default port)")],
+                permissions: &[
+                    "A test account that may authenticate\nNo network access or admin right is needed",
+                ],
+                warning: "A wrong shared secret, or a host not declared as a client, usually makes the server stay silent: the check then reports a timeout.",
+            },
+            options: RADIUS_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -5947,7 +6020,7 @@ fn guide_url(kind: &str) -> String {
         "victorialogs" | "victoriametrics" => "victoriametrics",
         "agent" | "agent_service" => "agent",
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mysql" | "mqtt"
-        | "websocket" | "snmp_oid" => "services",
+        | "websocket" | "snmp_oid" | "radius" => "services",
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
@@ -6126,6 +6199,7 @@ mod tests {
         "website",
         "dummy",
         "snmp_oid",
+        "radius",
     ];
 
     #[test]
@@ -6312,6 +6386,7 @@ mod tests {
                     "timeout_seconds",
                 ],
             ),
+            ("radius", &["port", "nas_identifier", "allow_private_targets", "timeout_seconds"]),
             (
                 "proxmox",
                 &[
@@ -7047,6 +7122,8 @@ mod tests {
         assert_eq!(defaut("ntp", "offset_threshold_ms"), "100");
         assert_eq!(defaut("snmp_oid", "port"), "161");
         assert_eq!(defaut("snmp_oid", "snmp_version"), "2c");
+        assert_eq!(defaut("radius", "port"), "1812");
+        assert_eq!(defaut("radius", "nas_identifier"), "dumbmonit");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -7108,6 +7185,32 @@ mod tests {
                     )
                 }
             );
+        }
+    }
+
+    /// Les champs du formulaire RADIUS sont ceux que `Credential::Radius` lit.
+    #[test]
+    fn le_formulaire_radius_recompose_un_identifiant_radius() {
+        let view = describe("radius");
+        let keys: Vec<&str> = view.credentials[0].fields.iter().map(|f| f.key).collect();
+        assert_eq!(keys, ["shared_secret", "username", "password"]);
+        let mut object = serde_json::Map::new();
+        object.insert("type".into(), "radius".into());
+        for key in &keys {
+            object.insert((*key).into(), format!("valeur-{key}").into());
+        }
+        let credential: dumbmonit_proto::Credential =
+            serde_json::from_value(serde_json::Value::Object(object)).unwrap();
+        assert_eq!(
+            credential,
+            dumbmonit_proto::Credential::Radius {
+                shared_secret: "valeur-shared_secret".into(),
+                username: "valeur-username".into(),
+                password: "valeur-password".into(),
+            }
+        );
+        for field in view.credentials[0].fields {
+            assert_eq!(field.input == "password", field.key != "username", "{}", field.key);
         }
     }
 
@@ -7368,6 +7471,7 @@ mod tests {
             ("mqtt", include_str!("../../../../docs/devices/services.md")),
             ("websocket", include_str!("../../../../docs/devices/services.md")),
             ("snmp_oid", include_str!("../../../../docs/devices/services.md")),
+            ("radius", include_str!("../../../../docs/devices/services.md")),
         ];
         fn flatten(text: &str) -> String {
             text.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")
@@ -7589,6 +7693,8 @@ mod tests {
             describe("websocket").credential_types,
             &["none", "username_password", "api_token"]
         );
+        assert_eq!(describe("radius").credential_types, &["radius"]);
+        assert_eq!(describe("snmp_oid").credential_types, &["snmp_community", "snmp_v3"]);
     }
 
     /// Les défauts des sondes applicatives sont ceux de leurs `options.rs` : un

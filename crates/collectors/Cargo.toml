@@ -69,6 +69,12 @@ webpki-roots = "1"
 base64 = "0.23"
 sha1 = "0.10"
 
+# --- Sonde RADIUS (`uptime/radius/`) ---
+#
+# MD5 de la RFC 2865 (mot de passe masqué, authentificateur de réponse) et HMAC-MD5
+# de la RFC 3579, fait à la main par-dessus.
+md-5 = "0.10"
+
 # PostgreSQL et MySQL/MariaDB. `sqlx` est déjà la couche base du serveur ; ses
 # pilotes `postgres` et `mysql` sont en Rust pur, sans C, et passent donc le
 # binaire statique musl et l'image `scratch`. Le coût assumé est la taille du

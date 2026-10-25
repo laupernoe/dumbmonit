@@ -112,7 +112,8 @@ export const UPTIME_KINDS = [
 	'mysql',
 	'mqtt',
 	'websocket',
-	'snmp_oid'
+	'snmp_oid',
+	'radius'
 ] as const;
 
 export function isUptimeKind(kind: string): boolean {
