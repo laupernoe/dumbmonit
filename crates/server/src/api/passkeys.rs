@@ -70,7 +70,8 @@ fn anonymous_keys(ip: Option<std::net::IpAddr>) -> Vec<Key> {
 }
 
 fn clean_name(raw: &str) -> String {
-    let name: String = raw.trim().chars().filter(|c| !c.is_control()).take(MAX_NAME_CHARS).collect();
+    let name: String =
+        raw.trim().chars().filter(|c| !c.is_control()).take(MAX_NAME_CHARS).collect();
     if name.is_empty() { "Passkey".to_string() } else { name }
 }
 
@@ -135,10 +136,8 @@ pub async fn register_begin(
         .iter()
         .map(|id| json!({ "type": "public-key", "id": base64url_encode(id) }))
         .collect();
-    let (challenge_id, challenge) = passkeys::start(
-        Ceremony::Register { user_id: user.id },
-        rp.clone(),
-    );
+    let (challenge_id, challenge) =
+        passkeys::start(Ceremony::Register { user_id: user.id }, rp.clone());
     Ok(Json(json!({
         "challenge_id": challenge_id,
         "options": {
@@ -217,7 +216,8 @@ pub async fn register_finish(
         webauthn::verify_registration(&pending.rp, &pending.challenge, &client_data, &attestation)
             .map_err(refused)?;
     // L'identifiant annoncé par le navigateur est celui de l'attestation.
-    if base64url_decode(&payload.credential.id).as_deref() != Some(verified.credential_id.as_slice())
+    if base64url_decode(&payload.credential.id).as_deref()
+        != Some(verified.credential_id.as_slice())
     {
         return Err(refused("credential id mismatch"));
     }
@@ -247,13 +247,13 @@ pub async fn register_finish(
     if !stored {
         return Err(AuthError::Conflict("This passkey is already registered.".into()));
     }
-    audit::record(&state.pool, Some(&user.username), "passkey.added", Some(name.as_str()), ip).await;
+    audit::record(&state.pool, Some(&user.username), "passkey.added", Some(name.as_str()), ip)
+        .await;
     tracing::info!(user = %user.username, "passkey registered");
-    let added = passkeys::list(&state.pool, user.id)
-        .await?
-        .into_iter()
-        .next_back()
-        .ok_or_else(|| AuthError::Internal(anyhow::anyhow!("passkey not found after insert")))?;
+    let added =
+        passkeys::list(&state.pool, user.id).await?.into_iter().next_back().ok_or_else(|| {
+            AuthError::Internal(anyhow::anyhow!("passkey not found after insert"))
+        })?;
     Ok(Json(added))
 }
 

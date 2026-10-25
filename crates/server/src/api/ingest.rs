@@ -183,6 +183,7 @@ pub async fn receive(
     let version = batch.identity.agent_version.clone();
     let cert = cert.map(|Extension(cert)| cert);
     let declared = batch.declared_monitors.clone();
+    let hostname = batch.identity.hostname.clone();
 
     // Sur le canal chiffré, le certificat dit quelle machine parle : un lot au
     // nom d'une autre est refusé avant d'avoir rien écrit.
@@ -215,7 +216,7 @@ pub async fn receive(
             if let Some(declared) = declared
                 && !ack.disabled_modules.iter().any(|module| module == "docker")
             {
-                super::label_monitors::on_batch(&state, ack.target_id, declared).await;
+                super::label_monitors::on_batch(&state, ack.target_id, &hostname, declared).await;
             }
             if REFUSALS.clear(&who) {
                 tracing::info!(client = who, "agent reports accepted again");

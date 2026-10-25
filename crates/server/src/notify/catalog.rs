@@ -239,8 +239,9 @@ pub fn action_style(kind: &str) -> &'static str {
     match kind {
         // Astreinte avec son propre acquittement, et SMS (un lien signé de ~150
         // caractères coûterait plusieurs segments).
-        "pagerduty" | "opsgenie" | "grafana_oncall" | "signl4" | "vonage" | "telnyx"
-        | "aspsms" => "none",
+        "pagerduty" | "opsgenie" | "grafana_oncall" | "signl4" | "vonage" | "telnyx" | "aspsms" => {
+            "none"
+        }
         "ntfy" | "telegram" | super::webpush::KIND => "buttons",
         _ => "links",
     }
@@ -883,13 +884,15 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
             "WhatsApp (CallMeBot)",
             "WhatsApp message to yourself through the free CallMeBot gateway.",
             "https://dumbmonit.readthedocs.io/en/latest/notifications/#whatsapp-callmebot",
-            vec![text(
-                "phone",
-                "Phone number",
-                "Your number in international format, the one that activated CallMeBot.",
-                "+34123456789",
-            )
-            .required()],
+            vec![
+                text(
+                    "phone",
+                    "Phone number",
+                    "Your number in international format, the one that activated CallMeBot.",
+                    "+34123456789",
+                )
+                .required(),
+            ],
             vec![
                 password(
                     "api_key",
@@ -1029,8 +1032,7 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
             "SMS sent by ASPSMS, trimmed to the essentials.",
             "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-aspsms",
             vec![
-                text("userkey", "Userkey", "Your ASPSMS account userkey.", "ABCDE12345")
-                    .required(),
+                text("userkey", "Userkey", "Your ASPSMS account userkey.", "ABCDE12345").required(),
                 text(
                     "originator",
                     "Originator",

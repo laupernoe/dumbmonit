@@ -172,7 +172,8 @@ mod tests {
     fn sans_enable_un_conteneur_est_ignore() {
         let c = container("web", &[("dumbmonit.http.url", "http://x")]);
         assert!(declared(&[c]).is_empty());
-        let c = container("web", &[("dumbmonit.enable", "false"), ("dumbmonit.http.url", "http://x")]);
+        let c =
+            container("web", &[("dumbmonit.enable", "false"), ("dumbmonit.http.url", "http://x")]);
         assert!(declared(&[c]).is_empty());
     }
 

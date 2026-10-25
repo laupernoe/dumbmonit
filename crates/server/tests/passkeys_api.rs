@@ -25,7 +25,13 @@ struct Reply {
     cookie: Option<String>,
 }
 
-async fn send(app: &TestApp, method: &str, uri: &str, body: Option<Value>, cookie: Option<&str>) -> Reply {
+async fn send(
+    app: &TestApp,
+    method: &str,
+    uri: &str,
+    body: Option<Value>,
+    cookie: Option<&str>,
+) -> Reply {
     let mut builder = Request::builder().method(method).uri(uri).header(header::ORIGIN, ORIGIN);
     if let Some(cookie) = cookie {
         builder = builder.header(header::COOKIE, cookie).header("x-requested-with", "DumbMonit");
@@ -112,10 +118,24 @@ const CRED_ID: &[u8] = b"test-credential-0001";
 /// Enregistre la clé de test pour le compte `admin` ; rend la session.
 async fn register(app: &TestApp) -> String {
     let admin = app.admin_cookie().await;
-    let wrong = send(app, "POST", "/api/auth/passkeys/register/begin", Some(json!({"password": "nope"})), Some(&admin)).await;
+    let wrong = send(
+        app,
+        "POST",
+        "/api/auth/passkeys/register/begin",
+        Some(json!({"password": "nope"})),
+        Some(&admin),
+    )
+    .await;
     assert_eq!(wrong.status, StatusCode::UNAUTHORIZED, "{}", wrong.body);
 
-    let begin = send(app, "POST", "/api/auth/passkeys/register/begin", Some(json!({"password": PASSWORD})), Some(&admin)).await;
+    let begin = send(
+        app,
+        "POST",
+        "/api/auth/passkeys/register/begin",
+        Some(json!({"password": PASSWORD})),
+        Some(&admin),
+    )
+    .await;
     assert_eq!(begin.status, StatusCode::OK, "{}", begin.body);
     let challenge = begin.body["options"]["challenge"].as_str().unwrap().to_string();
     assert_eq!(begin.body["options"]["rp"]["id"], RP_ID);
@@ -187,7 +207,8 @@ async fn une_cle_enregistree_ouvre_une_session_sans_mot_de_passe() {
     assert_eq!(status.body["passkeys"], true);
 
     let body = assertion_body(&app, 1, false).await;
-    let login = send(&app, "POST", "/api/auth/passkey/login/finish", Some(body.clone()), None).await;
+    let login =
+        send(&app, "POST", "/api/auth/passkey/login/finish", Some(body.clone()), None).await;
     assert_eq!(login.status, StatusCode::NO_CONTENT, "{}", login.body);
     let cookie = login.cookie.expect("cookie de session");
     let me = send(&app, "GET", "/api/auth/me", None, Some(&cookie)).await;

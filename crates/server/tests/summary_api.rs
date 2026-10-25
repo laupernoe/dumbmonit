@@ -38,7 +38,8 @@ async fn le_resume_est_plat_et_lisible_avec_un_jeton_de_lecture() {
         )
         .await;
     assert_eq!(device.status, StatusCode::CREATED, "{}", device.body);
-    let token = app.post("/api/tokens", json!({ "name": "homepage", "scope": "read" }), Some(&admin)).await;
+    let token =
+        app.post("/api/tokens", json!({ "name": "homepage", "scope": "read" }), Some(&admin)).await;
     let secret = token.body["secret"].as_str().expect("secret").to_string();
 
     let (status, body) = with_token(&app, "/api/summary", &secret).await;

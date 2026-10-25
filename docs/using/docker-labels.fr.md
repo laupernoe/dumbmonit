@@ -29,8 +29,9 @@ services:
 ```
 
 Cela crée deux moniteurs dans le dossier `Apps/Dev` : un contrôle HTTP nommé
-`Gitea (HTTP)` et un contrôle TCP nommé `Gitea (TCP)`. `{host}` désigne l'adresse
-de la machine où tourne l'agent.
+`Gitea (HTTP)` et un contrôle TCP nommé `Gitea (TCP)`. `{host}` désigne le nom d'hôte
+de la machine où tourne l'agent, tel que l'agent le rapporte. DumbMonit doit pouvoir le
+résoudre ; sinon écrivez l'adresse complète dans l'étiquette.
 
 ## Étiquettes
 
@@ -41,7 +42,7 @@ de la machine où tourne l'agent.
 | `dumbmonit.folder` | Dossier, `/` pour imbriquer (`Apps/Dev`). |
 | `dumbmonit.tags` | Séparées par des virgules : `env=prod,critique` (une étiquette sans valeur vaut `true`). |
 | `dumbmonit.interval` | Période de contrôle : `30`, `30s`, `5m`, `1h`. 10 s au minimum. Défaut 60 s. |
-| `dumbmonit.http.url` | Crée un moniteur HTTP. `{host}` est remplacé par l'adresse de la machine. |
+| `dumbmonit.http.url` | Crée un moniteur HTTP. `{host}` est remplacé par le nom d'hôte de la machine. |
 | `dumbmonit.http.method`, `.keyword`, `.keyword_absent`, `.accepted_status`, `.insecure_tls`, `.timeout` | Options du moniteur HTTP, même sens que dans le formulaire du moniteur. |
 | `dumbmonit.tcp.port` | Crée un moniteur TCP sur ce port. |
 | `dumbmonit.tcp.host` | Hôte du contrôle TCP. Défaut `{host}`. |

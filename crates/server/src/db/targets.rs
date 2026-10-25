@@ -411,9 +411,9 @@ fn managed_from_row(row: &SqliteRow) -> Result<Option<Managed>> {
     let by: Option<String> = row.try_get("managed_by")?;
     Ok(by.map(|by| Managed {
         by,
-        source: row.try_get("managed_source").ok().flatten(),
+        source: row.try_get::<Option<i64>, _>("managed_source").ok().flatten(),
         key: row.try_get::<Option<String>, _>("managed_key").ok().flatten().unwrap_or_default(),
-        missing_since: row.try_get("managed_missing_since").ok().flatten(),
+        missing_since: row.try_get::<Option<String>, _>("managed_missing_since").ok().flatten(),
     }))
 }
 
@@ -528,9 +528,9 @@ pub async fn statuses(pool: &SqlitePool) -> Result<HashMap<TargetId, TargetStatu
         "SELECT id, last_probe_at, last_error, via_agent, managed_by, managed_source,
                 managed_key, managed_missing_since FROM targets",
     )
-        .fetch_all(pool)
-        .await
-        .context("lecture des statuts")?;
+    .fetch_all(pool)
+    .await
+    .context("lecture des statuts")?;
 
     rows.into_iter()
         .map(|row| {

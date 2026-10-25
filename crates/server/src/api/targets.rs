@@ -683,9 +683,10 @@ fn payload_only_toggles(payload: &TargetPayload, before: &Target) -> bool {
         && payload.interval_secs.is_none_or(|secs| secs == before.interval.as_secs())
         && payload.tags == before.tags
         && payload.parent_id == before.parent_id
-        && payload.group_name.as_ref().is_none_or(|group| {
-            group.as_deref().unwrap_or_default().trim() == before.group_name
-        })
+        && payload
+            .group_name
+            .as_ref()
+            .is_none_or(|group| group.as_deref().unwrap_or_default().trim() == before.group_name)
         && payload.credential.is_none()
 }
 

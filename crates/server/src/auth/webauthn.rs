@@ -146,20 +146,18 @@ fn take<'a>(data: &'a [u8], pos: &mut usize, len: impl TryInto<usize>) -> Result
 impl Cbor {
     fn get_text(&self, key: &str) -> Option<&Cbor> {
         match self {
-            Cbor::Map(entries) => entries
-                .iter()
-                .find(|(k, _)| matches!(k, Cbor::Text(t) if t == key))
-                .map(|(_, v)| v),
+            Cbor::Map(entries) => {
+                entries.iter().find(|(k, _)| matches!(k, Cbor::Text(t) if t == key)).map(|(_, v)| v)
+            }
             _ => None,
         }
     }
 
     fn get_int(&self, key: i64) -> Option<&Cbor> {
         match self {
-            Cbor::Map(entries) => entries
-                .iter()
-                .find(|(k, _)| matches!(k, Cbor::Int(i) if *i == key))
-                .map(|(_, v)| v),
+            Cbor::Map(entries) => {
+                entries.iter().find(|(k, _)| matches!(k, Cbor::Int(i) if *i == key)).map(|(_, v)| v)
+            }
             _ => None,
         }
     }
@@ -228,7 +226,9 @@ fn parse_authenticator_data(data: &[u8], expect_credential: bool) -> Result<Auth
 /// que c'est bien un point de la courbe.
 fn cose_to_sec1(cose: &Cbor) -> Result<Vec<u8>> {
     let int = |key: i64| cose.get_int(key).and_then(Cbor::as_int);
-    if int(1) != Some(COSE_KTY_EC2) || int(3) != Some(COSE_ALG_ES256) || int(-1) != Some(COSE_CRV_P256)
+    if int(1) != Some(COSE_KTY_EC2)
+        || int(3) != Some(COSE_ALG_ES256)
+        || int(-1) != Some(COSE_CRV_P256)
     {
         return Err(WebAuthnError::Rejected("only ES256 (P-256) passkeys are supported"));
     }
@@ -508,7 +508,11 @@ mod tests {
     #[test]
     fn un_enregistrement_valide_donne_la_cle_publique() {
         let key = signing_key();
-        let auth = auth_data(UP_UV | FLAG_AT | FLAG_BE | FLAG_BS, 0, Some((b"cred-1", cose_key(&key))));
+        let auth = auth_data(
+            UP_UV | FLAG_AT | FLAG_BE | FLAG_BS,
+            0,
+            Some((&b"cred-1"[..], cose_key(&key))),
+        );
         let result = verify_registration(
             &rp(),
             &CHALLENGE,
@@ -527,7 +531,7 @@ mod tests {
     #[test]
     fn un_enregistrement_est_refuse_si_defi_origine_ou_drapeaux_different() {
         let key = signing_key();
-        let good = auth_data(UP_UV | FLAG_AT, 0, Some((b"c", cose_key(&key))));
+        let good = auth_data(UP_UV | FLAG_AT, 0, Some((&b"c"[..], cose_key(&key))));
         let run = |challenge: &[u8], origin: &str, auth: &[u8]| {
             verify_registration(
                 &rp(),
@@ -545,12 +549,12 @@ mod tests {
             run(&CHALLENGE, "https://evil.example", &good).unwrap_err(),
             WebAuthnError::Rejected("the origin does not match")
         );
-        let no_uv = auth_data(FLAG_UP | FLAG_AT, 0, Some((b"c", cose_key(&key))));
+        let no_uv = auth_data(FLAG_UP | FLAG_AT, 0, Some((&b"c"[..], cose_key(&key))));
         assert_eq!(
             run(&CHALLENGE, ORIGIN, &no_uv).unwrap_err(),
             WebAuthnError::Rejected("user verification is required")
         );
-        let no_up = auth_data(FLAG_UV | FLAG_AT, 0, Some((b"c", cose_key(&key))));
+        let no_up = auth_data(FLAG_UV | FLAG_AT, 0, Some((&b"c"[..], cose_key(&key))));
         assert!(run(&CHALLENGE, ORIGIN, &no_up).is_err());
         let no_at = auth_data(UP_UV, 0, None);
         assert!(run(&CHALLENGE, ORIGIN, &no_at).is_err());
@@ -583,7 +587,7 @@ mod tests {
         let key = signing_key();
         let mut cose = cose_key(&key);
         cose[4] = 0x27; // alg -8 (EdDSA)
-        let auth = auth_data(UP_UV | FLAG_AT, 0, Some((b"c", cose)));
+        let auth = auth_data(UP_UV | FLAG_AT, 0, Some((&b"c"[..], cose)));
         let error = verify_registration(
             &rp(),
             &CHALLENGE,
