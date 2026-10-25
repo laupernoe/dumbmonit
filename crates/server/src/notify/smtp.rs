@@ -146,7 +146,6 @@ impl Smtp {
         if super::sending_disabled() {
             return Ok(());
         }
-        use lettre::message::header::ContentType;
         use lettre::message::{Attachment, MultiPart};
 
         let mut body = MultiPart::mixed().multipart(MultiPart::alternative_plain_html(text, html));
