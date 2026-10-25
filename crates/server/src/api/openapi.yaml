@@ -1037,6 +1037,208 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/discovery/schedules:
+    get:
+      operationId: listNetscanSchedules
+      tags: [Discovery]
+      summary: Scheduled network scans
+      description: >-
+        Subnets scanned at a fixed interval, by the server or by a relay agent, with
+        the counts of their inventory. Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The scheduled scans.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schedules]
+                properties:
+                  schedules:
+                    type: array
+                    items: { $ref: "#/components/schemas/NetscanSchedule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createNetscanSchedule
+      tags: [Discovery]
+      summary: Schedule a network scan
+      description: >-
+        The first completed scan of a subnet initializes the inventory without
+        alerting. At most 1024 addresses (a /22), an interval of 5 minutes to 30
+        days, 50 schedules. One schedule per subnet and scanner. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NetscanScheduleInput" }
+      responses:
+        "201":
+          description: The scheduled scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetscanSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/discovery/schedules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: updateNetscanSchedule
+      tags: [Discovery]
+      summary: Change a scheduled network scan
+      description: >-
+        Changing the subnet or the scanner starts again from an empty inventory.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NetscanScheduleInput" }
+      responses:
+        "200":
+          description: The scheduled scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetscanSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteNetscanSchedule
+      tags: [Discovery]
+      summary: Delete a scheduled network scan and its inventory
+      x-token-scope: write
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/schedules/{id}/run:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: runNetscanSchedule
+      tags: [Discovery]
+      summary: Scan now
+      description: >-
+        Asks for a scan at the next cycle of the scheduler (a few seconds) without
+        waiting for the interval. Ignored while a scan of this subnet is running.
+        Administrators only.
+      x-token-scope: write
+      responses:
+        "202": { description: Requested. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory:
+    get:
+      operationId: getNetscanInventory
+      tags: [Discovery]
+      summary: Known devices and open ports
+      description: >-
+        The inventory built by the scheduled scans, unknown devices first. An unknown
+        device or port stays reported (see the `netscan_new_device` and
+        `netscan_new_port` alert rules) until it is marked as known. Administrators
+        only.
+      x-token-scope: read
+      parameters:
+        - name: schedule_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the inventory of this scheduled scan.
+      responses:
+        "200":
+          description: The inventory.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/NetscanDevice" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/inventory/known:
+    post:
+      operationId: markAllNetscanKnown
+      tags: [Discovery]
+      summary: Mark every unknown device and port as known
+      x-token-scope: write
+      parameters:
+        - name: schedule_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the inventory of this scheduled scan.
+      responses:
+        "200":
+          description: How many items were unknown.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [marked]
+                properties:
+                  marked: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/inventory/devices/{id}/known:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: markNetscanDeviceKnown
+      tags: [Discovery]
+      summary: Mark a device, and its ports, as known
+      x-token-scope: write
+      responses:
+        "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory/ports/{id}/known:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: markNetscanPortKnown
+      tags: [Discovery]
+      summary: Mark an open port as known
+      x-token-scope: write
+      responses:
+        "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -6997,6 +7199,70 @@ components:
           description: Relay agent that runs the scan; null means the server itself.
         snmp_community: { type: string, default: public, writeOnly: true }
         depth: { type: string, enum: [standard, extended], default: standard }
+    NetscanScheduleInput:
+      type: object
+      required: [cidr]
+      properties:
+        name: { type: string, maxLength: 80 }
+        cidr: { type: string, examples: ["192.168.1.0/24"] }
+        agent_id:
+          type: [integer, "null"]
+          format: int64
+          description: Relay agent that runs the scan; null or absent means the server itself.
+        interval_secs: { type: integer, minimum: 300, maximum: 2592000, default: 3600 }
+        depth:
+          type: string
+          enum: [standard, extended]
+          default: standard
+          description: Port list of the discovery (`extended` tests more ports).
+        enabled: { type: boolean, default: true }
+    NetscanSchedule:
+      type: object
+      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, unknown_ports]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        cidr: { type: string }
+        agent_id: { type: [integer, "null"], format: int64 }
+        agent_name: { type: [string, "null"] }
+        interval_secs: { type: integer }
+        depth: { type: string, enum: [standard, extended] }
+        enabled: { type: boolean }
+        initialized: { type: boolean, description: "The first scan has initialized the inventory (nothing was reported)." }
+        running: { type: boolean }
+        last_run_at: { type: [string, "null"], description: UTC, no suffix. }
+        last_status: { type: [string, "null"], enum: [running, done, failed, cancelled, null] }
+        last_error: { type: [string, "null"] }
+        devices: { type: integer }
+        unknown_devices: { type: integer }
+        unknown_ports: { type: integer, description: Unknown ports of known devices. }
+    NetscanPort:
+      type: object
+      required: [id, port, protocol, product, known, first_seen, last_seen]
+      properties:
+        id: { type: integer, format: int64 }
+        port: { type: integer }
+        protocol: { type: string, enum: [tcp, udp] }
+        product: { type: string }
+        known: { type: boolean }
+        first_seen: { type: string }
+        last_seen: { type: string }
+    NetscanDevice:
+      type: object
+      required: [id, schedule_id, ip, mac, hostname, vendor, known, first_seen, last_seen, ports]
+      properties:
+        id: { type: integer, format: int64 }
+        schedule_id: { type: integer, format: int64 }
+        ip: { type: string, description: Last address seen; a device is identified by its MAC when visible. }
+        mac: { type: [string, "null"] }
+        hostname: { type: [string, "null"] }
+        vendor: { type: [string, "null"] }
+        known: { type: boolean }
+        first_seen: { type: string }
+        last_seen: { type: string }
+        ports:
+          type: array
+          items: { $ref: "#/components/schemas/NetscanPort" }
     DiscoveryJobSummary:
       type: object
       required: [id, cidr, agent_id, agent_name, status, started_at, finished_at, hosts_found]

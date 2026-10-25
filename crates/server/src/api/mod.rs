@@ -12,7 +12,7 @@ mod blacklist;
 mod channels;
 mod collectors;
 mod cves;
-mod discovery;
+pub(crate) mod discovery;
 mod error;
 mod health;
 mod ingest;
@@ -25,6 +25,7 @@ mod logs;
 mod mcp;
 mod metrics;
 mod music;
+mod netinventory;
 mod notify_policy;
 mod observability;
 mod oidc;
@@ -145,6 +146,20 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery/subnets", get(discovery::local_subnets))
         .route("/discovery/jobs", get(discovery::list_jobs).post(discovery::create_job))
         .route("/discovery/jobs/{id}", get(discovery::get_job).delete(discovery::cancel_job))
+        // Scans planifiés et inventaire du réseau (`netinventory.rs`).
+        .route(
+            "/discovery/schedules",
+            get(netinventory::list).post(netinventory::create),
+        )
+        .route(
+            "/discovery/schedules/{id}",
+            put(netinventory::update).delete(netinventory::remove),
+        )
+        .route("/discovery/schedules/{id}/run", post(netinventory::run_now))
+        .route("/discovery/inventory", get(netinventory::inventory))
+        .route("/discovery/inventory/known", post(netinventory::all_known))
+        .route("/discovery/inventory/devices/{id}/known", post(netinventory::device_known))
+        .route("/discovery/inventory/ports/{id}/known", post(netinventory::port_known))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))
         .route("/targets/test", post(targets::test_connection))
