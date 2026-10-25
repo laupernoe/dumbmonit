@@ -47,6 +47,7 @@
 //! |---|---|---|
 //! | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 //! | `probe_http_first_byte_seconds` | http | Délai jusqu'aux en-têtes de réponse. |
+//! | `probe_http_phase_seconds` | http | Phases de la requête mesurée ; étiquette `phase` : dns, connect, tls, processing, transfer. |
 //! | `probe_http_content_bytes` | http | Taille du corps. |
 //! | `probe_connect_seconds` | toutes sauf dns, ping | Établissement de la connexion. |
 //! | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Négociation TLS seule. |

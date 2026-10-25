@@ -172,6 +172,12 @@ impl Report {
         ));
     }
 
+    /// Dernière valeur déjà enregistrée pour une jauge (sans étiquette propre).
+    pub fn gauge_value(&self, metric: &str) -> Option<f64> {
+        let name = format!("{PREFIX}{metric}");
+        self.samples.iter().rev().find(|sample| sample.metric == name).map(|sample| sample.value)
+    }
+
     /// Même chose, mais avec une étiquette supplémentaire propre à cet échantillon
     /// — utilisée pour les séries `*_info`, dont seule l'étiquette porte le sens.
     pub fn gauge_with(&mut self, metric: &str, value: f64, key: &str, label_value: &str) {

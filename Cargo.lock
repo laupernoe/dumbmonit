@@ -938,6 +938,8 @@ dependencies = [
  "thiserror 2.0.21",
  "tokio",
  "tokio-rustls",
+ "tower-layer",
+ "tower-service",
  "tracing",
  "webpki-roots",
  "x509-parser",
