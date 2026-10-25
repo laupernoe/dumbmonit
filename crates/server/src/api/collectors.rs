@@ -1244,6 +1244,38 @@ const RADIUS_OPTIONS: &[OptionView] = &[
     PROBE_TIMEOUT,
 ];
 
+/// Options lues par `collectors/uptime/grpc/options.rs`.
+const GRPC_OPTIONS: &[OptionView] = &[
+    text(
+        "service",
+        "Service",
+        "Name of the service whose health is asked, for example my.package.MyService. Empty: the health of the server as a whole.",
+        "my.package.MyService",
+        "",
+    ),
+    boolean(
+        "tls",
+        "Encrypted connection (TLS)",
+        "Connect with TLS and HTTP/2 (ALPN h2). Unticked, the check speaks HTTP/2 in clear text (h2c), as most services inside a network do.",
+        false,
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 50051, or 443 with TLS.",
+        "50051",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Options lues par `collectors/push/mod.rs` (`Settings::from_target`).
 const PUSH_OPTIONS: &[OptionView] = &[
     text(
@@ -5997,6 +6029,41 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: RADIUS_OPTIONS,
         },
+        "grpc" => CollectorView {
+            kind: "grpc",
+            label: "gRPC service",
+            summary: "Calls the standard gRPC health check (grpc.health.v1): catches a service that is up but reports itself unhealthy.",
+            examples: &[
+                "A gRPC microservice",
+                "etcd",
+                "A service behind Envoy or a service mesh",
+                "Any server that registers grpc.health.v1",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "grpc.home.lan:50051",
+            default_port: 50051,
+            setup: Setup {
+                title: "Monitor a gRPC service",
+                steps: &[
+                    "Check that the server registers the standard health service (grpc.health.v1.Health): most gRPC frameworks have a one-line helper for it.",
+                    "In DumbMonit, enter the server with its port, for example grpc.home.lan:50051.",
+                    "Tick Encrypted connection (TLS) for a server that requires it; the port then defaults to 443.",
+                    "Optional: name a Service, to check its own health instead of the whole server's.",
+                ],
+                ports: &[
+                    to_device!(50051, "tcp", "gRPC over HTTP/2 (default port)"),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the Encrypted connection option (default port)",
+                    ),
+                ],
+                permissions: &[],
+                warning: "The check only sees what the health service reports: a server that always answers SERVING proves nothing about the methods behind it.",
+            },
+            options: GRPC_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -6020,7 +6087,7 @@ fn guide_url(kind: &str) -> String {
         "victorialogs" | "victoriametrics" => "victoriametrics",
         "agent" | "agent_service" => "agent",
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mysql" | "mqtt"
-        | "websocket" | "snmp_oid" | "radius" => "services",
+        | "websocket" | "snmp_oid" | "radius" | "grpc" => "services",
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
@@ -6200,6 +6267,7 @@ mod tests {
         "dummy",
         "snmp_oid",
         "radius",
+        "grpc",
     ];
 
     #[test]
@@ -6387,6 +6455,18 @@ mod tests {
                 ],
             ),
             ("radius", &["port", "nas_identifier", "allow_private_targets", "timeout_seconds"]),
+            (
+                "grpc",
+                &[
+                    "service",
+                    "tls",
+                    "port",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
             (
                 "proxmox",
                 &[
@@ -7124,6 +7204,7 @@ mod tests {
         assert_eq!(defaut("snmp_oid", "snmp_version"), "2c");
         assert_eq!(defaut("radius", "port"), "1812");
         assert_eq!(defaut("radius", "nas_identifier"), "dumbmonit");
+        assert_eq!(defaut("grpc", "tls"), "false");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -7472,6 +7553,7 @@ mod tests {
             ("websocket", include_str!("../../../../docs/devices/services.md")),
             ("snmp_oid", include_str!("../../../../docs/devices/services.md")),
             ("radius", include_str!("../../../../docs/devices/services.md")),
+            ("grpc", include_str!("../../../../docs/devices/services.md")),
         ];
         fn flatten(text: &str) -> String {
             text.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")
@@ -7694,6 +7776,7 @@ mod tests {
             &["none", "username_password", "api_token"]
         );
         assert_eq!(describe("radius").credential_types, &["radius"]);
+        assert_eq!(describe("grpc").credential_types, &["none"]);
         assert_eq!(describe("snmp_oid").credential_types, &["snmp_community", "snmp_v3"]);
     }
 

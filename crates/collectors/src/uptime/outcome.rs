@@ -113,6 +113,9 @@ pub enum Failure {
     /// La signature de la réponse ne se vérifie pas : le secret partagé est
     /// probablement faux (sonde RADIUS).
     BadSecret,
+    /// Le service répond mais dit ne pas être en état de servir : `NOT_SERVING`,
+    /// `SERVICE_UNKNOWN`, `UNAVAILABLE` (sonde gRPC).
+    Unhealthy,
 }
 
 impl Failure {
@@ -138,6 +141,7 @@ impl Failure {
             Self::Threshold => "threshold",
             Self::NotFound => "not_found",
             Self::BadSecret => "bad_secret",
+            Self::Unhealthy => "unhealthy",
         }
     }
 }
@@ -320,6 +324,7 @@ mod tests {
             Failure::Threshold,
             Failure::NotFound,
             Failure::BadSecret,
+            Failure::Unhealthy,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {

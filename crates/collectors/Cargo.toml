@@ -69,6 +69,15 @@ webpki-roots = "1"
 base64 = "0.23"
 sha1 = "0.10"
 
+# --- Sonde gRPC (`uptime/grpc/`) ---
+#
+# HTTP/2 pour le protocole `grpc.health.v1` : `h2` (client et serveur factice des
+# tests) et les types `http` / `bytes` qu'il expose. Le protobuf, minuscule, est
+# encodé à la main.
+h2 = "0.4"
+bytes = "1"
+http = "1"
+
 # --- Sonde RADIUS (`uptime/radius/`) ---
 #
 # MD5 de la RFC 2865 (mot de passe masqué, authentificateur de réponse) et HMAC-MD5

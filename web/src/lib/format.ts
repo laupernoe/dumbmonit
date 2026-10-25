@@ -113,7 +113,8 @@ export const UPTIME_KINDS = [
 	'mqtt',
 	'websocket',
 	'snmp_oid',
-	'radius'
+	'radius',
+	'grpc'
 ] as const;
 
 export function isUptimeKind(kind: string): boolean {
