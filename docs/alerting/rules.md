@@ -122,6 +122,21 @@ threshold is set in `agent.yaml`: nobody can guess what "slow" means for your li
 | Internet upload rate low | Same, for `speedtest_min_upload_mbps`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
 | Internet latency high | The last test measured a latency above `speedtest_max_latency_ms`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
 
+### Windows event log
+
+Raised by the event log rules of a Windows agent machine; see
+[Windows event log alerts](../devices/agent-windows-events.md). No event log
+rule exists by default, so these rules stay silent until you add one. One alert
+per machine and severity, quoting the latest event; it speaks again at most
+every 10 minutes while events keep coming, and resolves 15 minutes after the
+last one.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Windows event (critical) | An event matched a rule of severity Warning (`dumbmonit_agent_eventlog_matches_critical`: events in the last 15 minutes). | > 0 | 30 s | Warning (`critical`) | none |
+| Windows event (warning) | Same, for rules of severity Advisory (`dumbmonit_agent_eventlog_matches_warning`). | > 0 | 30 s | Advisory (`warning`) | none |
+| Windows event (info) | Same, for rules of severity Info (`dumbmonit_agent_eventlog_matches_info`). | > 0 | 30 s | Info (`info`) | none |
+
 ### Agent disks, ZFS and sensors
 
 Reported by the agent; see [Agent](../devices/agent.md).
