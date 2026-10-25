@@ -1797,6 +1797,8 @@ export interface PublicStatusItem {
 	/** Only when the page shows response times and the service has latency data. */
 	latency_series?: PublicLatencySeries;
 	history: PublicDayBucket[];
+	/** A third-party provider (a `provider` monitor): shown as an external component. */
+	external?: boolean;
 }
 
 /** One day of a status page, hour by hour (`GET /api/public/status/{slug}/day/{date}`). */

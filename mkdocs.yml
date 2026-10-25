@@ -125,6 +125,7 @@ nav:
       - Apache httpd: devices/apache.md
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
+      - Third-party service status: devices/provider.md
       - Mail server reputation: devices/mail_blacklist.md
       - IP range blocklist: devices/ip_blacklist.md
       - Kubernetes / k3s: devices/kubernetes.md

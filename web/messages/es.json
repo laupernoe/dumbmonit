@@ -6929,6 +6929,8 @@
 	"status_seo_section_help": "Cómo aparece esta página pública en los resultados de búsqueda y en las vistas previas de enlaces. Un campo vacío usa un valor generado a partir del nombre de la página.",
 	"status_seo_site_name_label": "Nombre del sitio u organización",
 	"status_seo_title_label": "Título SEO",
+	"status_service_external": "Externo",
+	"status_service_external_hint": "Un proveedor externo, leído de su propia página de estado",
 	"status_service_row_24h": "24 h",
 	"status_service_row_30d": "30 d",
 	"status_service_row_7d": "7 d",

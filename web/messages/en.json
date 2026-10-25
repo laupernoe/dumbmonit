@@ -6929,6 +6929,8 @@
 	"status_seo_section_help": "How this public page appears in search results and link previews. Empty fields use a value generated from the page name.",
 	"status_seo_site_name_label": "Site or organisation name",
 	"status_seo_title_label": "SEO title",
+	"status_service_external": "External",
+	"status_service_external_hint": "A third-party provider, read from its own status page",
 	"status_service_row_24h": "24 h",
 	"status_service_row_30d": "30 d",
 	"status_service_row_7d": "7 d",

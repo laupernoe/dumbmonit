@@ -6929,6 +6929,8 @@
 	"status_seo_section_help": "Wie diese öffentliche Seite in Suchergebnissen und Link-Vorschauen erscheint. Leere Felder verwenden einen aus dem Seitennamen erzeugten Wert.",
 	"status_seo_site_name_label": "Name der Website oder Organisation",
 	"status_seo_title_label": "SEO-Titel",
+	"status_service_external": "Extern",
+	"status_service_external_hint": "Ein Drittanbieter, gelesen von seiner eigenen Statusseite",
 	"status_service_row_24h": "24 Std.",
 	"status_service_row_30d": "30 T",
 	"status_service_row_7d": "7 T",
