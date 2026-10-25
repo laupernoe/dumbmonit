@@ -926,3 +926,22 @@ export function getOnboarding(signal?: AbortSignal): Promise<OnboardingState> {
 export function updateOnboarding(patch: OnboardingPatch): Promise<OnboardingState> {
 	return request<OnboardingState>('/onboarding', { method: 'PUT', body: patch });
 }
+
+// --- Maintenance calendar (iCal) --------------------------------------------
+
+/** Token and path of the private calendar of every maintenance (administrators only). */
+export interface MaintenanceCalendar {
+	token: string;
+	/** `/api/calendar/maintenance.ics?token=…`; add the origin to subscribe. */
+	path: string;
+}
+
+/** Reads the private calendar's token, creating it on first use. */
+export function getMaintenanceCalendar(signal?: AbortSignal): Promise<MaintenanceCalendar> {
+	return request<MaintenanceCalendar>('/calendar/maintenance', { signal });
+}
+
+/** Replaces the token: the previous link stops working. */
+export function rotateMaintenanceCalendar(): Promise<MaintenanceCalendar> {
+	return request<MaintenanceCalendar>('/calendar/maintenance/rotate', { method: 'POST' });
+}
