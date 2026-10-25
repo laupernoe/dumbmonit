@@ -32,6 +32,8 @@ pub mod token;
 pub mod totp;
 pub mod totp_login;
 pub mod users;
+pub mod webauthn;
+pub mod passkeys;
 
 /// Réinitialise l'instance : plus aucun compte, plus aucune session.
 ///

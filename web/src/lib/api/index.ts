@@ -493,12 +493,13 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			user: status?.user ?? null,
 			oidc: status?.oidc ?? NO_OIDC,
 			ldap: { enabled: Boolean(status?.ldap?.enabled) },
+			passkeys: Boolean(status?.passkeys),
 			demo: Boolean(status?.demo)
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, passkeys: false, demo: false };
 		}
 		throw cause;
 	}

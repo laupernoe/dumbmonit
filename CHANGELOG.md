@@ -7,6 +7,32 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Integrations, first batch.** Nine new notification channels, monitors created
+  from Docker labels, three importers, Homepage support and passkeys:
+  - *Notification channels*: WhatsApp (Meta Cloud API, and the free CallMeBot
+    gateway), Threema Gateway (basic mode), Webex, Grafana OnCall, SIGNL4, and SMS
+    through Vonage, Telnyx and ASPSMS. Tokens and secrets are encrypted and never
+    sent back; each channel has its test button, and the chat channels carry the
+    acknowledge and snooze links (the on-call and SMS ones leave that to the
+    service or keep the message short).
+  - *Docker labels*: an agent reads the `dumbmonit.*` labels of its containers
+    (`enable`, `name`, `folder`, `tags`, `interval`, `http.url`, `tcp.port`,
+    `ping.host`, `adopt`…) and the server creates, updates and archives the
+    matching monitors, which are marked *Managed by Docker labels*, read-only until
+    released, with an optional adoption of an existing monitor.
+  - *Imports*: UptimeRobot (API key or CSV), Gatus (`config.yaml`) and
+    Healthchecks.io (API v3, checks become heartbeats with their old ping URLs
+    recalled for redirection), with the same preview-then-import flow as Uptime
+    Kuma.
+  - *Homepage and Homarr*: `GET /api/summary` returns flat counters readable with a
+    read-only API token; the docs give the `services.yaml` block for Homepage's
+    `customapi` widget and the Homarr options.
+  - *Passkeys (WebAuthn)*: sign in with a passkey in place of password and
+    second factor, and manage them (list, rename, remove) in Settings → Account &
+    security. ES256, HTTPS required (except localhost), domain name as relying party
+    ID. Checked in DumbMonit itself rather than with `webauthn-rs`, which needs
+    OpenSSL.
+
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
   `site-src/data/roadmap.json`.
