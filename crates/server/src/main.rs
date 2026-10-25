@@ -227,6 +227,8 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     dumbmonit_server::vulns::spawn(state.clone());
     // Mesures de l'instance elle-même et battement de cœur sortant (`selfmon`).
     dumbmonit_server::selfmon::spawn(state.clone());
+    // Scans de découverte planifiés et inventaire du réseau.
+    dumbmonit_server::netinventory::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),
