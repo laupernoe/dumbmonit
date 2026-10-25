@@ -71,7 +71,10 @@ import {
 	FileDiff,
 	PanelsTopLeft,
 	MailX,
-	ListX
+	ListX,
+	Mailbox,
+	Send,
+	Terminal
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
 import { isPackKind } from '#lib/api/packs.js';
@@ -96,6 +99,10 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	mysql: Database,
 	mqtt: Antenna,
 	websocket: Cable,
+	udp: Send,
+	ssh: Terminal,
+	imap: Inbox,
+	pop3: Mailbox,
 	push: HeartPulse,
 	pdm: LayoutGrid,
 	pmg: MailCheck,
@@ -157,7 +164,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
-const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
+const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3'];
 
 /** A domain's registration, read over RDAP: a service, polled rarely. */
 const DOMAIN_KIND = 'domain';
@@ -235,6 +242,10 @@ const KIND_KEYWORDS: Record<string, string> = {
 	mysql: 'database db sql mariadb',
 	mqtt: 'iot broker home assistant zigbee mosquitto',
 	websocket: 'ws socket realtime',
+	udp: 'datagram port game voip syslog wireguard',
+	ssh: 'terminal shell sshd openssh host key fingerprint remote login',
+	imap: 'mail email mailbox dovecot inbox imaps',
+	pop3: 'mail email mailbox dovecot pop pops',
 	push: 'heartbeat cron job script backup scheduled task dead man switch'
 };
 
