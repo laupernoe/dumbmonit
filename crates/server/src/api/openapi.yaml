@@ -3265,6 +3265,133 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/updates:
+    get:
+      operationId: getAgentUpdates
+      tags: [Agents]
+      summary: Automatic agent updates (admin only)
+      description: >-
+        Settings, the agent binaries this server ships (with their signature
+        state), the canary rollout gate and, for each agent, its version and
+        update status. This is the agent binary itself, not Docker containers.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Update state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentUpdates" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setAgentUpdates
+      tags: [Agents]
+      summary: Change the automatic agent update settings
+      description: >-
+        Omitted fields are unchanged. `allow_unsigned` lets agents install
+        unsigned builds (development), over the encrypted agent channel only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentUpdateSettingsChange" }
+      responses:
+        "200":
+          description: Update state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentUpdates" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/updates/all:
+    post:
+      operationId: updateAllAgentsNow
+      tags: [Agents]
+      summary: Update every outdated agent now
+      description: >-
+        Every agent able to replace itself and older than this server's build
+        gets the update at its next report, outside the window and the canary
+        rollout, and retries a version that failed.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Update state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentUpdates" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/updates/{id}:
+    put:
+      operationId: setAgentUpdate
+      tags: [Agents]
+      summary: Per-agent update settings
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                enabled:
+                  type: [boolean, "null"]
+                  description: Forced for this agent; null follows the global setting; omitted is unchanged.
+                canary: { type: boolean, description: Updated before the others. }
+      responses:
+        "200":
+          description: Update state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentUpdates" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/agent/updates/{id}/now:
+    post:
+      operationId: updateAgentNow
+      tags: [Agents]
+      summary: Update this agent now
+      description: >-
+        The agent gets the update at its next report, outside the window and
+        the canary rollout, and retries a version that failed once. With
+        `allow_downgrade`, an agent newer than this server installs the
+        server's build.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allow_downgrade: { type: boolean, default: false }
+      responses:
+        "200":
+          description: Update state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentUpdates" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/relays:
     get:
       operationId: listRelays
@@ -6784,6 +6911,72 @@ components:
               group: { type: [string, "null"] }
               tls_seen_at: { type: [string, "null"] }
               legacy_seen_at: { type: [string, "null"] }
+    AgentUpdateSettings:
+      type: object
+      required: [enabled, window, canary_minutes, allow_unsigned]
+      properties:
+        enabled: { type: boolean, description: Agents update themselves (default true). }
+        window: { type: string, enum: [any, maintenance, manual] }
+        canary_minutes: { type: integer, minimum: 0, maximum: 10080, description: Minutes canary agents must run the new build before the others get it. }
+        allow_unsigned: { type: boolean, description: Accept unsigned builds (development), over the encrypted agent channel only. }
+    AgentUpdateSettingsChange:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        window: { type: string, enum: [any, maintenance, manual] }
+        canary_minutes: { type: integer, minimum: 0, maximum: 10080 }
+        allow_unsigned: { type: boolean }
+    AgentUpdates:
+      type: object
+      required: [settings, version, binaries, rollout, agents]
+      properties:
+        settings: { $ref: "#/components/schemas/AgentUpdateSettings" }
+        version: { type: string, description: Version of this server and of the agent binaries it ships. }
+        build: { type: [string, "null"], description: Commit of this build. }
+        binaries:
+          type: array
+          items:
+            type: object
+            required: [platform, sha256, signed]
+            properties:
+              platform: { type: string, examples: [linux-x86_64] }
+              sha256: { type: string }
+              signed: { type: boolean }
+        rollout:
+          type: object
+          required: [canaries, canaries_updated, open]
+          properties:
+            canaries: { type: integer }
+            canaries_updated: { type: integer }
+            open: { type: boolean, description: Agents that are not canaries may update. }
+            reason: { type: [string, "null"] }
+        agents:
+          type: array
+          items:
+            type: object
+            required: [id, name, hostname, version, canary, requested, status]
+            properties:
+              id: { type: integer, format: int64 }
+              name: { type: string }
+              hostname: { type: string }
+              version: { type: string }
+              platform: { type: [string, "null"] }
+              sha256: { type: [string, "null"] }
+              enabled: { type: [boolean, "null"], description: Per-agent override; null follows the global setting. }
+              canary: { type: boolean }
+              requested: { type: boolean, description: Update now was asked and has not been answered yet. }
+              status:
+                type: string
+                enum: [up_to_date, pending, updating, failed, refused, disabled, manual, waiting_window, waiting_canary, newer, legacy, container, read_only, disabled_locally, unsupported, no_binary]
+              reason: { type: [string, "null"] }
+              last:
+                type: [object, "null"]
+                properties:
+                  outcome: { type: string, enum: [succeeded, failed, rolled_back, refused] }
+                  version: { type: [string, "null"] }
+                  reason: { type: [string, "null"] }
+                  at: { type: [string, "null"] }
+              last_seen_at: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
       required: [name]

@@ -175,7 +175,6 @@ case "$(uname -s)" in
     Linux)
         PLATFORM="linux"
         CONFIG_DIR="/etc/dumbmonit"
-        BIN_PATH="/usr/local/bin/dumbmonit-agent"
         # `systemctl` peut exister sans que systemd soit l'init (conteneur,
         # chroot) : on regarde donc qui est PID 1 quand les deux outils sont
         # présents, et à défaut on se fie à l'outil disponible.
@@ -193,7 +192,6 @@ case "$(uname -s)" in
         # `/usr/local/etc` plutôt que `/etc` : macOS réserve `/etc` au système,
         # et une mise à jour majeure y fait le ménage.
         CONFIG_DIR="/usr/local/etc/dumbmonit"
-        BIN_PATH="/usr/local/bin/dumbmonit-agent"
         INIT="launchd"
         ;;
     FreeBSD)
@@ -201,7 +199,6 @@ case "$(uname -s)" in
         # Convention des ports FreeBSD : tout ce qui n'est pas la base vit sous
         # `/usr/local`.
         CONFIG_DIR="/usr/local/etc/dumbmonit"
-        BIN_PATH="/usr/local/bin/dumbmonit-agent"
         INIT="rcd"
         ;;
     *)
@@ -212,6 +209,13 @@ case "$(uname -s)" in
 esac
 
 CONFIG_FILE="$CONFIG_DIR/agent.yaml"
+# Le binaire vit dans un dossier à lui : c'est le seul que l'agent doit pouvoir
+# écrire pour se mettre à jour lui-même (copie de l'ancien, renommage atomique,
+# registre de l'essai), et l'unité systemd ne lui ouvre que celui-là. Un lien
+# dans /usr/local/bin le garde à portée de main.
+BIN_DIR="/usr/local/lib/dumbmonit-agent"
+BIN_PATH="$BIN_DIR/dumbmonit-agent"
+LINK_PATH="/usr/local/bin/dumbmonit-agent"
 UNIT_PATH="/etc/systemd/system/dumbmonit-agent.service"
 OPENRC_PATH="/etc/init.d/dumbmonit-agent"
 PLIST_PATH="/Library/LaunchDaemons/$LAUNCHD_LABEL.plist"
@@ -326,7 +330,9 @@ arreter_service() {
 if [ "$UNINSTALL" -eq 1 ]; then
     info "stopping the service"
     arreter_service
-    rm -f "$UNIT_PATH" "$OPENRC_PATH" "$PLIST_PATH" "$RC_PATH" "$BIN_PATH"
+    rm -f "$UNIT_PATH" "$OPENRC_PATH" "$PLIST_PATH" "$RC_PATH" "$BIN_PATH" "$LINK_PATH"
+    # Avec le binaire : sa copie de secours et le registre des mises à jour.
+    rm -rf "$BIN_DIR"
     rm -rf "$CONFIG_DIR"
     # Les restes d'une installation d'avant le renommage partent aussi.
     retirer_ancien_agent || true
@@ -483,6 +489,10 @@ TMP_BIN="$BIN_PATH.nouveau"
 install_binaire "$TMP_BIN"
 chmod 0755 "$TMP_BIN"
 mv -f "$TMP_BIN" "$BIN_PATH"
+# Le lien remplace aussi le binaire qu'une installation antérieure avait posé
+# à cet endroit.
+mkdir -p "$(dirname "$LINK_PATH")"
+ln -sf "$BIN_PATH" "$LINK_PATH"
 
 # Un binaire téléchargé par un navigateur porte l'attribut de quarantaine, que
 # `cp` recopie : Gatekeeper refuserait alors de le lancer, et sous launchd
@@ -598,9 +608,11 @@ ProtectSystem=strict
 # dans les foyers (~/.config/plakar), et « yes » les rendait invisibles.
 ProtectHome=read-only
 PrivateTmp=yes
-# Seul endroit inscriptible hors /tmp : le cache de Plakar
-# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY).
+# Seuls endroits inscriptibles hors /tmp : le cache de Plakar
+# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY), et le dossier du
+# binaire, que la mise à jour automatique de l'agent remplace.
 CacheDirectory=dumbmonit-agent
+ReadWritePaths=$BIN_DIR
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes

@@ -1,8 +1,9 @@
 mod activedirectory;
 mod ad_deploy;
 mod agent_commands;
-mod agent_files;
+pub(crate) mod agent_files;
 mod agent_tls;
+mod agent_updates;
 mod alert_actions;
 pub(crate) mod alerts;
 mod auth;
@@ -104,6 +105,8 @@ pub fn agent_routes(state: &AppState) -> Router<AppState> {
         // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
         // compte rendu peut peser autant qu'un lot de mesures.
         .merge(relay::agent_routes())
+        // Binaire proposé par la mise à jour automatique de l'agent.
+        .merge(agent_updates::agent_routes())
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024))
         .route_layer(middleware::from_fn_with_state(state.clone(), ingest::require_agent_token))
 }
@@ -189,6 +192,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/agent/install", get(ingest::install_params))
         // Canal chiffré des agents : état, exigence de mTLS, rotation de l'autorité.
         .merge(agent_tls::routes())
+        // Mise à jour automatique des agents : réglages, état, « Update now ».
+        .merge(agent_updates::routes())
         .route("/tokens", get(tokens::list).post(tokens::create))
         .route("/tokens/{id}", delete(tokens::revoke))
         // Actions sur les conteneurs d'une machine (`agent_commands.rs`).
