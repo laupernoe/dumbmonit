@@ -91,14 +91,14 @@ A refused password is never an outage of the service: it is recorded as
 ### Metrics
 
 All gauges, all prefixed `dumbmonit_`, all labelled
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp"` in addition
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|snmp_oid"` in addition
 to `target`, `host` and `tag_*`.
 
 | Metric | Monitors | Meaning |
 |---|---|---|
 | `probe_success` | all | 1 if the service answers correctly, 0 otherwise. |
 | `probe_duration_seconds` | all | Total duration of the check. |
-| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`. |
+| `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `threshold`, `not_found`. |
 | `probe_http_status_code` | http, websocket | Status code obtained. |
 | `probe_http_first_byte_seconds` | http | Time to the response headers. |
 | `probe_http_content_bytes` | http | Body size. |
@@ -135,6 +135,8 @@ to `target`, `host` and `tag_*`.
 | `probe_ntp_root_dispersion_seconds` | ntp | Cumulated dispersion up to the root. |
 | `probe_ntp_reference_info` | ntp | Presence; `reference_id` label. |
 | `probe_ws_message_bytes` | websocket | Size of the first frame received. Only present when the check sends a message or expects a reply (`send` / `expect` options). |
+| `probe_snmp_query_seconds` | snmp_oid | Round trip of the read. |
+| `probe_snmp_value` | snmp_oid | Value of the object, when it is a number. |
 
 ## HTTP
 
@@ -757,6 +759,70 @@ Credentials: none.
 | `protocol` | The reply was not a valid NTP packet, or did not come from a server (wrong mode). |
 | `unsynchronized` | The server answered stratum 16 or 0 (a "kiss-o'-death", which also names the reason in the log), or its leap indicator reads "unsynchronized". |
 | `clock_offset` | The measured offset exceeds "Tolerated offset". |
+
+## SNMP OID {#snmp-oid}
+
+**SNMP value (single OID)** — reads one SNMP object and checks its value
+against a range or a text. Examples: a temperature or humidity sensor, a UPS
+status or battery level, a version string or a firmware flag, a counter
+exposed by a Net-SNMP extend script.
+
+Where the SNMP device type describes a whole machine with a profile, this one
+asks a narrow question: does this object hold what I expect?
+
+### Network ports to open
+
+From the DumbMonit server (or its relay agent) to the device:
+
+| Port | Protocol | Purpose |
+|---|---|---|
+| 161 | UDP | SNMP request (default port) |
+
+### Setup
+
+1. On the device, enable SNMP and check that the community or the v3 user may read the object (the SNMP view must grant its branch).
+
+2. In DumbMonit, enter the device address, then the community or the v3 user.
+
+3. Fill in the object (OID) with its instance suffix, for example 1.3.6.1.2.1.1.3.0.
+
+4. Optional: set a minimum and a maximum, or an expected text, to be warned when the value drifts.
+
+#### Required permissions
+
+- **Read access to the object**: A read-only community or v3 user is enough
+
+!!! warning
+    An object the agent does not know, or that its SNMP view hides, is reported down with the reason not_found.
+
+#### Good to know
+
+The check reuses the SNMP session of the SNMP device type: same communities (v1/v2c) and v3 users, same retries. Without any bound or expected text, it succeeds as soon as the object exists. A numeric value is charted in `probe_snmp_value` (a text that holds a number, such as `42,5`, counts too). The bounds are inclusive; a value that is not a number fails when a bound is set. The expected text is searched case-insensitively in the value read as text.
+
+### Options
+
+| Key | Label | Default | Help |
+|---|---|---|---|
+| `oid` | Object (OID) | *(empty)* | The SNMP object to read, in numeric form. Add the instance suffix, usually .0 for a single value. |
+| `port` | Port | `161` | Used if the address does not give one. |
+| `min` | Minimum value | *(empty)* | A numeric value below this fails. Empty: no lower bound. |
+| `max` | Maximum value | *(empty)* | A numeric value above this fails. Empty: no upper bound. |
+| `expect` | Expected text | *(empty)* | Text the value must contain, whatever its case. Empty: any value is accepted. |
+| `snmp_version` | SNMP version | `2c` | Version used with a community. Pick 1 only for an old agent that ignores version 2c; SNMP v3 users ignore it. |
+| `allow_private_targets` | Allow loopback and link-local targets | `false` | See "Addresses the checks refuse" below. |
+| `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Failure reasons
+
+| `reason` | What happened |
+|---|---|
+| `connect` | The device is unreachable. |
+| `timeout` | The agent did not answer in time: wrong address, wrong community (agents stay silent), or a firewall. |
+| `auth` | The agent rejected the community or the v3 credentials. |
+| `protocol` | The agent answered something that is not a valid SNMP reply, or refused the request. |
+| `not_found` | The agent does not know the object (`noSuchObject`, `noSuchInstance`): check the OID, its instance suffix and the SNMP view. |
+| `threshold` | The numeric value is outside `min` / `max`. |
+| `payload` | The value is not a number although a bound is set, or does not contain the expected text. |
 
 ## Addresses the checks refuse
 

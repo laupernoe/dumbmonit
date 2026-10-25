@@ -1159,6 +1159,48 @@ const SQL_LOGIN: CredentialView = CredentialView {
     ],
 };
 
+/// Options lues par `collectors/uptime/snmp_oid/options.rs`.
+const SNMP_OID_OPTIONS: &[OptionView] = &[
+    text(
+        "oid",
+        "Object (OID)",
+        "The SNMP object to read, in numeric form. Add the instance suffix, usually .0 for a single value.",
+        "1.3.6.1.2.1.1.3.0",
+        "",
+    ),
+    number("port", "Port", "Used if the address does not give one.", "161", "161"),
+    text(
+        "min",
+        "Minimum value",
+        "A numeric value below this fails. Empty: no lower bound.",
+        "10",
+        "",
+    ),
+    text(
+        "max",
+        "Maximum value",
+        "A numeric value above this fails. Empty: no upper bound.",
+        "75",
+        "",
+    ),
+    text(
+        "expect",
+        "Expected text",
+        "Text the value must contain, whatever its case. Empty: any value is accepted.",
+        "online",
+        "",
+    ),
+    select(
+        "snmp_version",
+        "SNMP version",
+        "Version used with a community. Pick 1 only for an old agent that ignores version 2c; SNMP v3 users ignore it.",
+        "2c",
+        &["2c", "1"],
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Options lues par `collectors/push/mod.rs` (`Settings::from_target`).
 const PUSH_OPTIONS: &[OptionView] = &[
     text(
@@ -5852,6 +5894,36 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: OPENVPN_OPTIONS,
         },
+        "snmp_oid" => CollectorView {
+            kind: "snmp_oid",
+            label: "SNMP value (single OID)",
+            summary: "Reads one SNMP object and checks its value against a range or a text.",
+            examples: &[
+                "A temperature or humidity sensor",
+                "A UPS status or battery level",
+                "A version string or a firmware flag",
+                "A counter exposed by a Net-SNMP extend script",
+            ],
+            credential_types: &["snmp_community", "snmp_v3"],
+            credentials: &[SNMP_COMMUNITY, SNMP_V3],
+            address_hint: "192.168.1.10",
+            default_port: 161,
+            setup: Setup {
+                title: "Monitor a single SNMP value",
+                steps: &[
+                    "On the device, enable SNMP and check that the community or the v3 user may read the object (the SNMP view must grant its branch).",
+                    "In DumbMonit, enter the device address, then the community or the v3 user.",
+                    "Fill in the object (OID) with its instance suffix, for example 1.3.6.1.2.1.1.3.0.",
+                    "Optional: set a minimum and a maximum, or an expected text, to be warned when the value drifts.",
+                ],
+                ports: &[to_device!(161, "udp", "SNMP request (default port)")],
+                permissions: &[
+                    "Read access to the object\nA read-only community or v3 user is enough",
+                ],
+                warning: "An object the agent does not know, or that its SNMP view hides, is reported down with the reason not_found.",
+            },
+            options: SNMP_OID_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -5875,7 +5947,7 @@ fn guide_url(kind: &str) -> String {
         "victorialogs" | "victoriametrics" => "victoriametrics",
         "agent" | "agent_service" => "agent",
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mysql" | "mqtt"
-        | "websocket" => "services",
+        | "websocket" | "snmp_oid" => "services",
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
@@ -5892,6 +5964,7 @@ fn guide_url(kind: &str) -> String {
             format!("#{kind}")
         }
         "postgres" => "#postgresql".to_owned(),
+        "snmp_oid" => "#snmp-oid".to_owned(),
         "mysql" => "#mysql-and-mariadb".to_owned(),
         _ => String::new(),
     };
@@ -6052,6 +6125,7 @@ mod tests {
         "webchange",
         "website",
         "dummy",
+        "snmp_oid",
     ];
 
     #[test]
@@ -6221,6 +6295,19 @@ mod tests {
                     "origin",
                     "server_name",
                     "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "snmp_oid",
+                &[
+                    "oid",
+                    "port",
+                    "min",
+                    "max",
+                    "expect",
+                    "snmp_version",
                     "allow_private_targets",
                     "timeout_seconds",
                 ],
@@ -6958,6 +7045,8 @@ mod tests {
         // n'exportent pas leurs défauts (ils ne sont lus que par la notice).
         assert_eq!(defaut("ntp", "port"), "123");
         assert_eq!(defaut("ntp", "offset_threshold_ms"), "100");
+        assert_eq!(defaut("snmp_oid", "port"), "161");
+        assert_eq!(defaut("snmp_oid", "snmp_version"), "2c");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -7278,6 +7367,7 @@ mod tests {
             ("mysql", include_str!("../../../../docs/devices/services.md")),
             ("mqtt", include_str!("../../../../docs/devices/services.md")),
             ("websocket", include_str!("../../../../docs/devices/services.md")),
+            ("snmp_oid", include_str!("../../../../docs/devices/services.md")),
         ];
         fn flatten(text: &str) -> String {
             text.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")

@@ -114,7 +114,8 @@ pub use unifi::UnifiCollector;
 pub use unraid::UnraidCollector;
 pub use uptime::{
     DnsCollector, HttpCollector, MqttCollector, MysqlCollector, NtpCollector, PingCollector,
-    PostgresCollector, SmtpCollector, TcpCollector, TlsCollector, WebsocketCollector,
+    PostgresCollector, SmtpCollector, SnmpOidCollector, TcpCollector, TlsCollector,
+    WebsocketCollector,
 };
 pub use veeam::VeeamCollector;
 pub use vsphere::VsphereCollector;
@@ -215,6 +216,7 @@ impl Registry {
         registry.register(Arc::new(NginxCollector::new()));
         registry.register(Arc::new(OpenvpnCollector::new()));
         registry.register(Arc::new(ApacheCollector::new()));
+        registry.register(Arc::new(SnmpOidCollector::new()));
         registry
     }
 
