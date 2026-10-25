@@ -30,6 +30,11 @@ reqwest = { version = "0.13", default-features = false, features = [
     "json", "query", "form", "rustls", "gzip",
 ] }
 
+# Couche et service `tower` qui chronomètrent l'établissement des connexions de la
+# sonde HTTP (`connector_layer` de reqwest). Déjà dans l'arbre via reqwest.
+tower-layer = "0.3"
+tower-service = "0.3"
+
 # SNMP v1/v2c/v3 en asynchrone. Les fonctionnalités par défaut (`tokio` +
 # `crypto-rust`) couvrent v3 sans dépendance C ; `mibs` est volontairement écarté,
 # il exigerait libnetsnmp et casserait le binaire statique.
