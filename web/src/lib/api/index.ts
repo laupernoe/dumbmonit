@@ -67,6 +67,7 @@ import type {
 	RuleOverride,
 	RuleOverridePayload,
 	StatusPage,
+	StatusPageAccess,
 	StatusPagePayload,
 	StatusPageItem,
 	StatusPageItemPayload,
@@ -877,9 +878,33 @@ export function statusBadgeBase(slug: string, componentKey?: string): string {
 	return componentKey ? `${base}/components/${encodeURIComponent(componentKey)}` : base;
 }
 
-/** Public document of a status page: no session, no cookie needed. */
+/**
+ * Public document of a status page: no session, no cookie needed for a public
+ * page. A private page answers 401 (`ApiError.access` says what it wants),
+ * which must not sign the visitor out of DumbMonit.
+ */
 export function getPublicStatus(slug: string, signal?: AbortSignal): Promise<PublicStatus> {
-	return request<PublicStatus>(`/public/status/${encodeURIComponent(slug)}`, { signal });
+	return request<PublicStatus>(`/public/status/${encodeURIComponent(slug)}`, {
+		signal,
+		allowUnauthorized: true
+	});
+}
+
+/** Trades a private page's password for its access cookie. */
+export function unlockStatusPage(slug: string, password: string): Promise<{ status: string }> {
+	return request(`/public/status/${encodeURIComponent(slug)}/access`, {
+		method: 'POST',
+		body: { password },
+		allowUnauthorized: true
+	});
+}
+
+/** Admin: sets who may read a page. `password` is kept when omitted. */
+export function setStatusPageAccess(
+	id: number,
+	body: { mode: StatusPageAccess; password?: string }
+): Promise<StatusPage> {
+	return request<StatusPage>(`/status-pages/${id}/access`, { method: 'PUT', body });
 }
 
 export function getPublicStatusDay(slug: string, date: string, signal?: AbortSignal): Promise<PublicDayDetail> {

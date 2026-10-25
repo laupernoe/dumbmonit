@@ -1593,6 +1593,8 @@ export interface StatusPageGroupLabel {
 	label: string;
 }
 
+export type StatusPageAccess = 'public' | 'password' | 'users';
+
 export interface StatusPage {
 	id: number;
 	slug: string;
@@ -1624,6 +1626,10 @@ export interface StatusPage {
 	/** Public host name serving this page at `/` (`status.example.com`); `null`: none. */
 	domain: string | null;
 	seo: StatusPageSeo;
+	/** Who may read the page: everyone, whoever knows its password, or signed-in DumbMonit users. */
+	access_mode: StatusPageAccess;
+	/** A page password is stored (the hash itself never leaves the server). */
+	has_password: boolean;
 	/** Checked monitor folders (dynamic): their current members are shown. */
 	groups: string[];
 	/** Public names of the monitors that come in through a ticked group; none: the monitor name. */

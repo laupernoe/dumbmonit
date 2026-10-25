@@ -204,7 +204,8 @@ pub fn resolve(page: &StatusPage) -> Resolved {
         None
     };
     Resolved {
-        indexable: page.published && seo.index,
+        // Une page privée ne s'indexe jamais, quoi que dise son réglage SEO.
+        indexable: page.published && seo.index && page.is_public(),
         title: pick(&seo.title, default_title(name)),
         description: pick(&seo.description, default_description(name, &page.description)),
         keywords: pick(&seo.keywords, default_keywords(name)),
@@ -277,7 +278,8 @@ pub fn noindex_head() -> Head {
 /// `<head>` de la route principale d'une page (`/s/<slug>` ou la racine de son
 /// domaine). `None` : page inconnue.
 pub fn head_for(page: Option<&StatusPage>) -> Head {
-    let Some(page) = page.filter(|page| page.published) else {
+    let Some(page) = page.filter(|page| page.published && page.is_public()) else {
+        // Inconnue, non publiée ou privée : rien de son titre ne sort.
         return noindex_head();
     };
     let r = resolve(page);
@@ -484,12 +486,29 @@ mod tests {
             link_origin: "https://monit.example".into(),
             domain: None,
             seo: seo.to_json(),
+            access_mode: "public".into(),
+            has_password: false,
         }
     }
 
     const INDEX: &str = "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\" />\
         <meta name=\"description\" content=\"DumbMonit generic\" /><title>DumbMonit</title>\
         </head><body></body></html>";
+
+    #[test]
+    fn a_private_page_is_never_indexable_nor_in_the_sitemap() {
+        let seo = Seo { index: true, title: "Secret board".into(), ..Seo::default() };
+        for mode in ["password", "users"] {
+            let mut private = page(seo.clone(), true);
+            private.access_mode = mode.into();
+            assert!(!resolve(&private).indexable, "{mode}");
+            let head = head_for(Some(&private));
+            assert_eq!(head.robots, ROBOTS_NOINDEX);
+            assert!(!head.fragment.contains("Secret board"), "{mode}");
+            assert!(!sitemap(&[&private]).contains("acme"), "{mode}");
+            assert!(!robots_main(&[private.clone()]).contains("Allow:"), "{mode}");
+        }
+    }
 
     #[test]
     fn a_page_is_noindex_by_default() {

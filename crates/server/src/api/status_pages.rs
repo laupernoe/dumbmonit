@@ -16,7 +16,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::extract::{Path, State};
-use axum::http::{HeaderName, StatusCode, header};
+use axum::http::{HeaderMap, HeaderName, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
@@ -28,6 +28,7 @@ use serde_json::Value;
 use crate::api::{ApiError, ApiResult};
 use crate::db;
 
+pub(crate) mod access;
 mod badges;
 mod branding;
 mod subscribers;
@@ -102,6 +103,7 @@ pub fn routes() -> Router<AppState> {
             "/status-pages/{id}/logo",
             get(branding::admin_logo).put(branding::upload_logo).delete(branding::delete_logo),
         )
+        .route("/status-pages/{id}/access", put(access::set_access))
         .route("/status-pages/{id}/subscribers", get(subscribers::list))
         .route("/status-pages/{id}/subscribers/{subscriber}", delete(subscribers::remove))
         .route("/incidents", get(list_incidents).post(create_incident))
@@ -123,6 +125,10 @@ pub fn public_routes() -> Router<AppState> {
         .route("/public/status/{slug}/components/{key}/response.svg", get(badges::item_response))
         .route("/public/status/{slug}/day/{date}", get(timeline::public_day))
         .route("/public/status/{slug}/logo", get(branding::public_logo))
+        .route(
+            "/public/status/{slug}/access",
+            post(access::unlock).layer(axum::middleware::from_fn(crate::auth::cookie::secure_when_https)),
+        )
         .route("/public/status/{slug}/subscribe", post(subscribers::subscribe))
         .route("/public/status/{slug}/confirm", post(subscribers::confirm))
         .route("/public/status/{slug}/unsubscribe", post(subscribers::unsubscribe))
@@ -1356,8 +1362,14 @@ fn public_not_found() -> ApiError {
     ApiError::NotFound("This status page does not exist.".into())
 }
 
-/// Document public d'une page, depuis le cache ou recalculé.
-async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
+/// Document public d'une page, depuis le cache ou recalculé, après contrôle
+/// d'accès. Le booléen dit si la page est privée : ses réponses ne doivent
+/// alors se mettre en cache ni chez un intermédiaire ni chez un tiers.
+async fn load_public_checked(
+    state: &AppState,
+    slug: &str,
+    headers: &HeaderMap,
+) -> ApiResult<(Arc<Value>, bool)> {
     let page = db::status_pages::get_page_by_slug(&state.pool, slug).await?;
     // Une page non publiée est indiscernable d'une page absente : le public n'a
     // pas à savoir qu'elle se prépare.
@@ -1365,6 +1377,9 @@ async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
         Some(page) if page.published => page,
         _ => return Err(public_not_found()),
     };
+    // Le contrôle précède le cache : un document en mémoire ne se sert qu'à qui y a droit.
+    access::authorize(state, &page, headers).await?;
+    let private = !page.is_public();
 
     {
         let cache = CACHE.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -1372,7 +1387,7 @@ async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
             && entry.at.elapsed() < CACHE_TTL
             && entry.page_updated_at == page.updated_at
         {
-            return Ok(Arc::clone(&entry.body));
+            return Ok((Arc::clone(&entry.body), private));
         }
     }
 
@@ -1387,21 +1402,28 @@ async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
             body: Arc::clone(&body),
         },
     );
-    Ok(body)
+    Ok((body, private))
 }
 
 pub async fn public_status(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let body = load_public(&state, &slug).await?;
+    let (body, private) = load_public_checked(&state, &slug, &headers).await?;
     // Document public et sans cookie : lisible depuis le site de n'importe qui
     // (bandeau d'état). Pas de `Allow-Credentials`, donc aucune session jointe.
-    Ok((
-        [(header::CACHE_CONTROL, "public, max-age=30"), (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")],
-        Json(Value::clone(&body)),
-    )
-        .into_response())
+    Ok(access::seal(
+        (
+            [
+                (header::CACHE_CONTROL, "public, max-age=30"),
+                (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
+            ],
+            Json(Value::clone(&body)),
+        )
+            .into_response(),
+        private,
+    ))
 }
 
 /// Script du bandeau d'état, à inclure par un `<script>` sur un site tiers.
@@ -2234,17 +2256,21 @@ fn render_badge(overall: &str) -> String {
 pub async fn public_badge(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let body = load_public(&state, &slug).await?;
+    let (body, private) = load_public_checked(&state, &slug, &headers).await?;
     let overall = body.get("overall").and_then(Value::as_str).unwrap_or("unknown");
-    Ok((
-        [
-            (header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"),
-            (header::CACHE_CONTROL, "public, max-age=60"),
-        ],
-        render_badge(overall),
-    )
-        .into_response())
+    Ok(access::seal(
+        (
+            [
+                (header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"),
+                (header::CACHE_CONTROL, "public, max-age=60"),
+            ],
+            render_badge(overall),
+        )
+            .into_response(),
+        private,
+    ))
 }
 
 // L'origine publique vient de `oidc::Origin` : les en-têtes `X-Forwarded-*` n'y
@@ -2259,9 +2285,10 @@ fn rfc2822(stored: &str) -> String {
 pub async fn public_rss(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
     origin: super::oidc::Origin,
 ) -> ApiResult<Response> {
-    let body = load_public(&state, &slug).await?;
+    let (body, private) = load_public_checked(&state, &slug, &headers).await?;
     // Le domaine public de la page s'il y en a un ; sinon l'origine de la requête.
     let domain =
         db::status_pages::get_page_by_slug(&state.pool, &slug).await?.and_then(|page| page.domain);
@@ -2308,14 +2335,17 @@ pub async fn public_rss(
         link = xml_escape(&link),
         description = xml_escape(description),
     );
-    Ok((
-        [
-            (header::CONTENT_TYPE, "application/rss+xml; charset=utf-8"),
-            (header::CACHE_CONTROL, "public, max-age=30"),
-        ],
-        feed,
-    )
-        .into_response())
+    Ok(access::seal(
+        (
+            [
+                (header::CONTENT_TYPE, "application/rss+xml; charset=utf-8"),
+                (header::CACHE_CONTROL, "public, max-age=30"),
+            ],
+            feed,
+        )
+            .into_response(),
+        private,
+    ))
 }
 
 #[cfg(test)]
