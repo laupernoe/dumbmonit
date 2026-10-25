@@ -954,6 +954,8 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
+	/** At least one passkey is registered: the sign-in screen offers to use one. */
+	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
 }
@@ -1128,8 +1130,20 @@ export interface AuthState {
 	user: User | null;
 	oidc: OidcStatus;
 	ldap: LdapStatus;
+	/** At least one passkey is registered on the instance. */
+	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
+}
+
+/** A passkey (WebAuthn credential) of the current account. Mirrors `auth::passkeys::PasskeyView`. */
+export interface Passkey {
+	id: number;
+	name: string;
+	created_at: string;
+	last_used_at: string | null;
+	/** Copied to a synced keychain (iCloud, Google, a password manager). */
+	synced: boolean;
 }
 
 // --- Notification channels --------------------------------------------------

@@ -136,6 +136,8 @@ mod tests {
                 | "/api/auth/setup"
                 | "/api/auth/login"
                 | "/api/auth/login/totp"
+                | "/api/auth/passkey/login/begin"
+                | "/api/auth/passkey/login/finish"
                 | "/api/push/{token}"
                 | "/api/openapi.json"
         ) || path.starts_with("/api/public/")

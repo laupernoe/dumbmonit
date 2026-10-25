@@ -21,6 +21,7 @@ mod kuma_db;
 mod kuma_import;
 mod label_monitors;
 mod monitor_imports;
+mod passkeys;
 mod ldap;
 pub mod locations;
 mod logs;
@@ -131,6 +132,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/auth/me", get(auth::me))
         // Second facteur et journal d'audit (`totp.rs`).
         .merge(totp::routes())
+        // Clés d'accès : liste, ajout, renommage, suppression (`passkeys.rs`).
+        .merge(passkeys::routes())
         .route(
             "/auth/oidc/config",
             get(oidc::get_config).put(oidc::put_config).delete(oidc::delete_config),
@@ -301,6 +304,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/auth/setup", post(auth::setup))
         .route("/auth/login", post(auth::login))
         .route("/auth/login/totp", post(totp::login_step))
+        // Connexion par clé d'accès (WebAuthn), publique comme `login`.
+        .merge(passkeys::public_routes())
         .route("/auth/oidc/start", get(oidc::start))
         .route("/auth/oidc/callback", get(oidc::callback))
         // Réception des mesures poussées par les agents. Volontairement hors du

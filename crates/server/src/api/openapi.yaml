@@ -461,6 +461,194 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/auth/passkey/login/begin:
+    post:
+      operationId: beginPasskeyLogin
+      tags: [Accounts]
+      summary: Start a sign-in with a passkey
+      description: >-
+        Returns the WebAuthn options for `navigator.credentials.get()` (discoverable
+        credential, user verification required). The relying-party id is the host
+        of the request's `Origin` (or of `DUMBMONIT_PUBLIC_URL` when set); HTTPS is
+        required except on `localhost`, and an IP address is refused.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: A challenge id and the options.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PasskeyCeremony" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/auth/passkey/login/finish:
+    post:
+      operationId: finishPasskeyLogin
+      tags: [Accounts]
+      summary: Finish a sign-in with a passkey
+      description: >-
+        Verifies the assertion (challenge, origin, relying party, user presence and
+        verification, ES256 signature, counter) and opens the session. A passkey
+        replaces the password and the second factor.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge_id, credential]
+              properties:
+                challenge_id: { type: string }
+                credential:
+                  type: object
+                  required: [id, response]
+                  properties:
+                    id: { type: string, description: "Credential id, base64url." }
+                    response:
+                      type: object
+                      required: [clientDataJSON, authenticatorData, signature]
+                      properties:
+                        clientDataJSON: { type: string }
+                        authenticatorData: { type: string }
+                        signature: { type: string }
+                        userHandle: { type: [string, "null"] }
+      responses:
+        "204":
+          description: Signed in; the session cookie is set.
+          headers:
+            Set-Cookie:
+              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/passkeys:
+    get:
+      operationId: listPasskeys
+      tags: [Accounts]
+      summary: Passkeys of the signed-in account
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The account's passkeys, oldest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Passkey" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/passkeys/register/begin:
+    post:
+      operationId: beginPasskeyRegistration
+      tags: [Accounts]
+      summary: Start adding a passkey
+      description: >-
+        Asks for the password again (like the two-factor enrolment) and returns the
+        options for `navigator.credentials.create()`: ES256 only, attestation
+        `none`, resident key and user verification required. Local accounts only;
+        at most 20 passkeys per account.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordConfirmation" }
+      responses:
+        "200":
+          description: A challenge id and the options.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PasskeyCeremony" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/passkeys/register/finish:
+    post:
+      operationId: finishPasskeyRegistration
+      tags: [Accounts]
+      summary: Finish adding a passkey
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge_id, credential]
+              properties:
+                challenge_id: { type: string }
+                name: { type: string, description: "Shown in the list; 60 characters at most." }
+                credential:
+                  type: object
+                  required: [id, response]
+                  properties:
+                    id: { type: string }
+                    transports: { type: array, items: { type: string } }
+                    response:
+                      type: object
+                      required: [clientDataJSON, attestationObject]
+                      properties:
+                        clientDataJSON: { type: string }
+                        attestationObject: { type: string }
+      responses:
+        "200":
+          description: The passkey that was added.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Passkey" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/auth/passkeys/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: renamePasskey
+      tags: [Accounts]
+      summary: Rename a passkey
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "204": { description: Renamed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deletePasskey
+      tags: [Accounts]
+      summary: Remove a passkey
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/auth/totp:
     get:
       operationId: getTotpStatus
@@ -1292,6 +1480,190 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/KumaImportReport" }
         "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets/import/uptimerobot:
+    post:
+      operationId: importUptimeRobot
+      tags: [Devices]
+      summary: Import monitors from UptimeRobot
+      description: >-
+        Body: `{"api_key"}` (a read-only API key, used once to call UptimeRobot's
+        `getMonitors` and never stored) or `{"csv"}` (the export of the
+        dashboard, columns recognised by title: Friendly Name, URL / IP, Type,
+        Port, Interval, Keyword). HTTP(s) and keyword monitors become `http`
+        devices, ping becomes `ping`, port becomes `tcp`, heartbeat becomes a
+        `push` heartbeat (with a new URL). Paused monitors stay paused.
+        Contacts, credentials, headers and request bodies are never imported.
+        Same preview / `rows` contract as `/api/targets/import/kuma`, at most 2000
+        monitors. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import. Absent: every row.
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                api_key: { type: string, description: A read-only UptimeRobot API key. }
+                csv: { type: string, description: The CSV exported from the dashboard. }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { description: UptimeRobot is unreachable or answered with an error. }
+
+  /api/targets/import/gatus:
+    post:
+      operationId: importGatus
+      tags: [Devices]
+      summary: Import endpoints from a Gatus configuration
+      description: >-
+        Body: `{"yaml"}`, the content of Gatus's `config.yaml`. `endpoints` with an
+        `http(s)://` URL become `http` devices (status and `[BODY].path`
+        conditions are kept as options, the others are listed in the row's
+        message), `tcp://` becomes `tcp`, `icmp://` becomes `ping`, endpoints with
+        a `dns:` block become `dns`; `external-endpoints` become `push`
+        heartbeats (with a new URL). `group` becomes the folder. Headers, bodies
+        and alert settings are never imported. Same preview / `rows` contract as
+        `/api/targets/import/kuma`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [yaml]
+              properties:
+                yaml: { type: string }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets/import/healthchecks:
+    post:
+      operationId: importHealthchecks
+      tags: [Devices]
+      summary: Import checks from Healthchecks.io
+      description: >-
+        Body: `{"api_key", "base_url"?}`. The key is used once against
+        `GET /api/v3/checks/` of healthchecks.io (or of the self-hosted
+        `base_url`, which goes through the same outbound guard as notification
+        channels) and is never stored. Each check becomes a `push` heartbeat whose
+        expected interval is the check's `timeout` (or an approximation of its
+        cron `schedule`) and whose grace time is kept; tags become device tags.
+        The monitor gets a new push URL: the row's message recalls the old ping
+        URL (visible with a read-write key) so the job can be updated or the old
+        address redirected. Same preview / `rows` contract as
+        `/api/targets/import/kuma`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key: { type: string }
+                base_url: { type: string, description: "Self-hosted server, e.g. `https://healthchecks.example.org`. Default: healthchecks.io." }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { description: Healthchecks is unreachable or answered with an error. }
+
+  /api/targets/{id}/release:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: releaseManagedTarget
+      tags: [Devices]
+      summary: Release a monitor managed by Docker labels
+      description: >-
+        Hands a monitor created from `dumbmonit.*` container labels back to
+        manual management: it stops following the labels and can be edited and
+        deleted. Until then, `PUT` (other than pausing) and `DELETE` answer `409`.
+        Admin only.
+      x-token-scope: write
+      responses:
+        "204": { description: Released. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/summary:
+    get:
+      operationId: getSummary
+      tags: [Devices]
+      summary: Flat status counters for dashboards (Homepage, Homarr…)
+      description: >-
+        Compact counters in a shape that Homepage's `customapi` widget reads by
+        path (`devices.down`, `alerts.firing`): the same figures as the MCP
+        `get_status` tool. A `read` API token is enough.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Counters and an overall verdict.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusSummary" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -6434,6 +6806,7 @@ components:
           required: [enabled]
           properties:
             enabled: { type: boolean, description: Usernames without a local password are checked against the directory. }
+        passkeys: { type: boolean, description: "At least one passkey is registered: the sign-in screen offers to use one." }
         demo: { type: boolean }
     SetupRequest:
       type: object
@@ -7139,12 +7512,75 @@ components:
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
+        managed:
+          oneOf:
+            - { $ref: "#/components/schemas/TargetManaged" }
+            - { type: "null" }
+          description: Set when Docker labels manage this monitor.
         last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
         last_error: { type: [string, "null"] }
         error_kind:
           type: [string, "null"]
           enum: [down, config, null]
           description: "`down`: the device did not answer; `config`: our side (credentials, address, option)."
+    TargetManaged:
+      type: object
+      description: >-
+        Present on a monitor created from `dumbmonit.*` Docker labels. It follows
+        the labels (create, update, archive) and cannot be edited or deleted
+        by hand until released (`POST /api/targets/{id}/release`).
+      required: [by, key]
+      properties:
+        by: { type: string, enum: [docker-labels] }
+        source: { type: [integer, "null"], format: int64, description: Agent whose containers declare it. }
+        key: { type: string, description: "`project/service/http` for a Compose service, else `container/http`." }
+        missing_since: { $ref: "#/components/schemas/NullableServerTimestamp" }
+    StatusSummary:
+      type: object
+      required: [status, devices, alerts]
+      properties:
+        status:
+          type: string
+          enum: [ok, warning, critical]
+          description: "`critical` when an alert is critical or a device is unreachable, `warning` for any other firing alert."
+        sentence: { type: [string, "null"], description: The one-line summary shown by the interface. }
+        devices:
+          type: object
+          required: [total, up, down, waiting, disabled]
+          properties:
+            total: { type: integer }
+            up: { type: integer }
+            down: { type: integer, description: Unreachable or down. }
+            waiting: { type: integer }
+            disabled: { type: integer }
+        alerts:
+          type: object
+          required: [firing, critical, warning, info, building_up, suppressed]
+          properties:
+            firing: { type: integer }
+            critical: { type: integer }
+            warning: { type: integer }
+            info: { type: integer }
+            building_up: { type: integer }
+            suppressed: { type: integer }
+    Passkey:
+      type: object
+      required: [id, name, created_at, synced]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        created_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        last_used_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        synced: { type: boolean, description: The passkey is copied to a synced keychain. }
+    PasskeyCeremony:
+      type: object
+      required: [challenge_id, options]
+      properties:
+        challenge_id: { type: string, description: "Single-use, valid five minutes." }
+        options:
+          type: object
+          description: WebAuthn `publicKey` options with binary values encoded as base64url.
+          additionalProperties: true
     NullableServerTimestamp:
       type: [string, "null"]
       description: UTC timestamp without suffix (`2026-08-31 20:15:00`), or `null`.
