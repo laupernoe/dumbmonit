@@ -219,5 +219,16 @@
  "sh_st_cap": "A public status page: what the family can check before asking whether the internet is down.",
  "sh_wall_alt": "Wall mode: “4 problems” in large type, the list of alerts, the monitors that report, a clock, and a rainy Paris rooftop with the pigeons",
  "sh_wall_cap": "Wall mode on a room monitor: the weather over the Paris rooftop follows your alerts.",
- "sh_al_alt": "Alerts page: current alerts grouped by monitor, each with an Unreachable, Warning, Advisory or Building up plate, Ack and Open monitor"
+ "sh_al_alt": "Alerts page: current alerts grouped by monitor, each with an Unreachable, Warning, Advisory or Building up plate, Ack and Open monitor",
+ "nav_roadmap": "Roadmap",
+ "t_roadmap": "Roadmap · DumbMonit",
+ "d_roadmap": "What is planned for DumbMonit, in the order we intend to ship it, and what has already been delivered.",
+ "rm_h1": "Roadmap",
+ "rm_lede": "What comes next, in the order we plan to ship it, and what is already out. Plans can change: this page is updated with every release.",
+ "rm_planned": "Planned",
+ "rm_progress": "In progress",
+ "rm_delivered": "Delivered",
+ "rm_legend": "Status of each item",
+ "rm_ver": "Version",
+ "rm_issues": "Missing something? <a href=\"https://github.com/laupernoe/dumbmonit/issues/new/choose\">Tell us on GitHub</a>."
 }
