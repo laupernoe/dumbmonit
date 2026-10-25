@@ -214,5 +214,16 @@
  "sh_st_cap": "Una pagina di stato pubblica: ciò che la famiglia può controllare prima di chiedere se internet è giù.",
  "sh_wall_alt": "Modalità parete: «4 problemi» in grande, l’elenco degli avvisi, i monitor che rispondono, un orologio e un tetto di Parigi sotto la pioggia con i piccioni",
  "sh_wall_cap": "La modalità parete su uno schermo da sala: il meteo sul tetto di Parigi segue i tuoi avvisi.",
- "sh_al_alt": "Pagina degli avvisi: avvisi in corso raggruppati per monitor, ciascuno con una targhetta Irraggiungibile, Avviso, Allerta o In formazione, Conferma e Apri monitor"
+ "sh_al_alt": "Pagina degli avvisi: avvisi in corso raggruppati per monitor, ciascuno con una targhetta Irraggiungibile, Avviso, Allerta o In formazione, Conferma e Apri monitor",
+ "nav_roadmap": "Roadmap",
+ "t_roadmap": "Roadmap · DumbMonit",
+ "d_roadmap": "Cosa è previsto per DumbMonit, nell'ordine in cui pensiamo di rilasciarlo, e cosa è già uscito.",
+ "rm_h1": "Roadmap",
+ "rm_lede": "Cosa arriva dopo, nell'ordine di rilascio previsto, e cosa è già uscito. I piani possono cambiare: questa pagina viene aggiornata a ogni versione.",
+ "rm_planned": "Previsto",
+ "rm_progress": "In corso",
+ "rm_delivered": "Rilasciato",
+ "rm_legend": "Stato di ogni voce",
+ "rm_ver": "Versione",
+ "rm_issues": "Manca qualcosa? <a href=\"https://github.com/laupernoe/dumbmonit/issues/new/choose\">Diccelo su GitHub</a>."
 }
