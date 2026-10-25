@@ -1,0 +1,12 @@
+{
+	"monitor_phases_title": "Zeitaufteilung",
+	"monitor_phases_desc": "Wo jede Prüfung ihre Zeit verbringt, gestapelt: Namensauflösung, Verbindung, TLS, Serverwartezeit und Download.",
+	"monitor_phases_last_title": "Letzte Prüfung",
+	"monitor_phases_total": "Gesamt {value}",
+	"monitor_phases_bar_label": "Aufteilung der letzten Prüfung: {summary}",
+	"monitor_phases_dns": "DNS-Auflösung",
+	"monitor_phases_connect": "TCP-Verbindung",
+	"monitor_phases_tls": "TLS-Handshake",
+	"monitor_phases_processing": "Serverwartezeit",
+	"monitor_phases_transfer": "Download"
+}

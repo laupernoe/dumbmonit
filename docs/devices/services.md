@@ -101,6 +101,7 @@ to `target`, `host` and `tag_*`.
 | `probe_failure_info` | all | Presence (1) with a `reason` label: `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`. |
 | `probe_http_status_code` | http, websocket | Status code obtained. |
 | `probe_http_first_byte_seconds` | http | Time to the response headers. |
+| `probe_http_phase_seconds{phase}` | http | Time of the measured request split into `dns`, `connect`, `tls`, `processing` and `transfer`; the five always sum to the request time (see [Response time breakdown](#response-time-breakdown)). |
 | `probe_http_content_bytes` | http | Body size. |
 | `probe_http_security_header{header}` | http | 0/1 per `header` label (https only): HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
 | `probe_connect_seconds` | all but dns and ping | Connection establishment (login included for databases). |
@@ -195,6 +196,34 @@ Credentials: none, username / password (basic authentication) or API token
 | `max_body_bytes` | Maximum bytes read | `524288` | Beyond this, the rest of the page is not downloaded. The keyword and JSON path are only searched in this part. |
 | `user_agent` | Announced identity (User-Agent) | `DumbMonit/<version>` | Name the check gives to the server. Change it if the server filters robots. |
 | `timeout_seconds` | Timeout (seconds) | `5` | Time after which the service is reported down if it has not answered. Between 1 and 60. |
+
+### Response time breakdown
+
+On the monitor page, the **Time breakdown** panel shows where each check spends
+its time, as stacked areas over the selected range, with a proportional bar and a
+legend (name, time, share) for the last check. The same numbers are in the metric
+`probe_http_phase_seconds`, one series per `phase` label:
+
+| Phase | What it covers |
+|---|---|
+| `dns` | Resolving the host name. Zero for an IP address. |
+| `connect` | Opening the TCP connection. |
+| `tls` | TLS handshake (HTTPS only). |
+| `processing` | Server wait: from the request sent to the response headers. |
+| `transfer` | Reading the response body. Zero unless a keyword or JSON path needs the body. |
+
+The five series always exist and always add up to the time from sending the
+request to the end of the body read, for the last request of the check (the final
+hop when redirects are followed). Each check opens a fresh connection, so `dns`,
+`connect` and `tls` are measured on every check rather than staying at zero on a
+reused connection.
+
+How to read the graph: a tall `dns` band points at the resolver, `connect` at the
+network path or a firewall, `tls` at the certificate chain or handshake cost, and
+`processing` at the application itself. The TCP and TLS split uses the handshake
+time measured by the certificate read just before the request, capped to the
+connection time observed; with **Read the certificate** off, the TLS handshake
+stays inside `connect`. Failed checks publish no phases, so the graph shows a gap.
 
 ## TCP
 
