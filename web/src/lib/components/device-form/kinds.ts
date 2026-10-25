@@ -72,7 +72,6 @@ import {
 	PanelsTopLeft,
 	MailX,
 	ListX,
-	Gauge,
 	KeyRound,
 	Workflow
 } from 'lucide-svelte';
