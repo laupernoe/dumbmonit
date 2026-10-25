@@ -68,7 +68,7 @@ as a normal service tagged "External", with its own uptime history.
 
 ## Watch a provider's status page
 
-1. Enter a provider name from the list (cloudflare, github, atlassian, discord, dropbox, npm, digitalocean, twilio, zoom, vercel, netlify, datadog, aws), or the address of any Atlassian Statuspage page or RSS/Atom incident feed, for example https://www.cloudflarestatus.com.
+1. Enter a provider name (cloudflare, github, atlassian, aws, discord, npm…; the full list is in the guide), or the address of a Statuspage page or RSS/Atom feed.
 
 2. To watch one part of the provider only, enter its name under Component, for example "Workers" or "EC2".
 
@@ -82,6 +82,8 @@ No credential is needed: these pages are public.
 ## Credentials
 
 None.
+
+Names: cloudflare, github, atlassian, discord, dropbox, npm, digitalocean, twilio, zoom, vercel, netlify, datadog and aws (AWS Health feed).
 
 Address: a name from the list, the address of a Statuspage page
 (`https://www.githubstatus.com`) or of a feed. Options: Component, Fail on

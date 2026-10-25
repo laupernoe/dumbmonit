@@ -73,7 +73,7 @@ historique de disponibilité.
 
 ## Surveiller la page de statut d'un fournisseur
 
-1. Saisissez un nom de la liste (cloudflare, github, atlassian, discord, dropbox, npm, digitalocean, twilio, zoom, vercel, netlify, datadog, aws), ou l'adresse d'une page Atlassian Statuspage ou d'un flux RSS/Atom d'incidents, par exemple https://www.cloudflarestatus.com.
+1. Saisissez un nom de fournisseur (cloudflare, github, atlassian, aws, discord, npm… ; la liste complète est dans le guide), ou l'adresse d'une page Statuspage ou d'un flux RSS/Atom.
 
 2. Pour ne surveiller qu'une partie du fournisseur, saisissez son nom sous Composant, par exemple « Workers » ou « EC2 ».
 
@@ -87,6 +87,8 @@ Aucun identifiant n'est nécessaire : ces pages sont publiques.
 ## Identifiants
 
 Aucun.
+
+Noms : cloudflare, github, atlassian, discord, dropbox, npm, digitalocean, twilio, zoom, vercel, netlify, datadog et aws (flux AWS Health).
 
 Adresse : un nom de la liste, l'adresse d'une page Statuspage
 (`https://www.githubstatus.com`) ou d'un flux. Options : Composant, Échec à

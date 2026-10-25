@@ -121,7 +121,7 @@ mod tests {
         Event {
             uid: "maintenance-7@dumbmonit".into(),
             summary: "Switch upgrade, rack 2".into(),
-            description: "Line one\nLine two\\; with a semicolon".into(),
+            description: "Line one\nLine two; with a semicolon".into(),
             start: at(22),
             end: Some(at(23)),
             modified: at(10),
