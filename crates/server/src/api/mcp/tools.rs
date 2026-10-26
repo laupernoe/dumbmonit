@@ -2726,7 +2726,11 @@ fn latest_update(view: &status_pages::IncidentView) -> Option<String> {
 }
 
 async fn list_status_pages(state: &AppState) -> ToolResult {
-    let Json(pages) = status_pages::list_pages(State(state.clone())).await?;
+    let Json(pages) = status_pages::list_pages(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let Json(incidents) = status_pages::list_incidents(State(state.clone())).await?;
 
     let mut lines = Vec::new();
@@ -3134,7 +3138,11 @@ async fn post_incident(state: &AppState, args: &Args) -> ToolResult {
         let page_id = match args.0.get("page") {
             None | Some(Value::Null) => None,
             Some(reference) => {
-                let Json(pages) = status_pages::list_pages(State(state.clone())).await?;
+                let Json(pages) = status_pages::list_pages(
+                    crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+                    State(state.clone()),
+                )
+                .await?;
                 let wanted = match reference {
                     Value::Number(n) => n.to_string(),
                     Value::String(s) => s.trim().to_string(),
