@@ -56,8 +56,9 @@ pub use dumbmonit_collectors::{
     PaperlessCollector, PlexCollector, selfhosted,
 };
 pub use dumbmonit_collectors::{
-    FortigateCollector, PfsenseCollector, SophosCollector, TailscaleCollector, UnraidCollector,
-    VeeamCollector, fortigate, pfsense, sophos, tailscale, unraid, veeam,
+    FortigateCollector, PaloaltoCollector, PfsenseCollector, SonicwallCollector, SophosCollector,
+    TailscaleCollector, UnraidCollector, VeeamCollector, fortigate, paloalto, pfsense, sonicwall,
+    sophos, tailscale, unraid, veeam,
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{

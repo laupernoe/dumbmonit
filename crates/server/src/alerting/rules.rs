@@ -5840,6 +5840,152 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_sophos_interface_down",
             )
         },
+        // --- Palo Alto PAN-OS (`collectors/paloalto`, bêta) ---
+        Rule {
+            description: "A Palo Alto firewall interface bound to a zone has no link: cable, transceiver or the device in front.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_interface_down",
+                "Palo Alto interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_interface_down",
+            )
+        },
+        Rule {
+            description: "The peer of a Palo Alto HA pair is no longer active or passive, or the HA link to it is down: there is no standby any more.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_peer_lost",
+                "Palo Alto HA peer lost",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_peer_up",
+            )
+        },
+        Rule {
+            description: "The running configuration of a Palo Alto HA pair is not synchronized: a failover would run another configuration.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_out_of_sync",
+                "Palo Alto HA out of sync",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_in_sync",
+            )
+        },
+        Rule {
+            description: "This Palo Alto firewall reports its HA state as suspended or non-functional.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_not_functional",
+                "Palo Alto HA member not functional",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_local_functional",
+            )
+        },
+        Rule {
+            description: "The session table of a Palo Alto firewall has stayed above 90 % of its capacity for ten minutes: new sessions will be refused when it is full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_session_table_full",
+                "Palo Alto session table filling up",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_session_usage_percent",
+            )
+        },
+        Rule {
+            description: "The management plane CPU of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_cpu_high",
+                "Palo Alto management CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_cpu_usage_percent",
+            )
+        },
+        Rule {
+            description: "The management plane memory of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_memory_high",
+                "Palo Alto management memory high",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_memory_used_percent",
+            )
+        },
+        Rule {
+            description: "A licence or subscription of a Palo Alto firewall expires in less than 30 days, or has expired.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paloalto_license_expiring",
+                "Palo Alto licence expiring",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_license_expiry_seconds",
+            )
+        },
+        Rule {
+            description: "The last configuration commit of a Palo Alto firewall failed: the running configuration is not the one that was saved.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paloalto_commit_failed",
+                "Palo Alto commit failed",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_last_commit_ok",
+            )
+        },
+        // --- SonicWall SonicOS (`collectors/sonicwall`, bêta) ---
+        Rule {
+            description: "A SonicWall interface bound to a zone has no link.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "sonicwall_interface_down",
+                "SonicWall interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_sonicwall_interface_down",
+            )
+        },
         // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
         Rule {
             description: "libvirt reports a KVM domain as crashed: the hypervisor had to stop it.".to_string(),
@@ -6616,6 +6762,16 @@ mod tests {
             "fortigate_license_expiring",
             "fortigate_firmware_update",
             "sophos_interface_down",
+            "paloalto_interface_down",
+            "paloalto_ha_peer_lost",
+            "paloalto_ha_out_of_sync",
+            "paloalto_ha_not_functional",
+            "paloalto_session_table_full",
+            "paloalto_cpu_high",
+            "paloalto_memory_high",
+            "paloalto_license_expiring",
+            "paloalto_commit_failed",
+            "sonicwall_interface_down",
             "libvirt_domain_crashed",
             "libvirt_pool_almost_full",
             "xcpng_host_offline",
@@ -7086,6 +7242,16 @@ mod tests {
             "dumbmonit_fortigate_license_expiry_seconds",
             "dumbmonit_fortigate_firmware_update_available",
             "dumbmonit_sophos_interface_down",
+            "dumbmonit_paloalto_interface_down",
+            "dumbmonit_paloalto_ha_peer_up",
+            "dumbmonit_paloalto_ha_in_sync",
+            "dumbmonit_paloalto_ha_local_functional",
+            "dumbmonit_paloalto_session_usage_percent",
+            "dumbmonit_paloalto_cpu_usage_percent",
+            "dumbmonit_paloalto_memory_used_percent",
+            "dumbmonit_paloalto_license_expiry_seconds",
+            "dumbmonit_paloalto_last_commit_ok",
+            "dumbmonit_sonicwall_interface_down",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",

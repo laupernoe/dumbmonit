@@ -20,6 +20,8 @@ form always matches what this version can monitor.
 | [pfSense](pfsense.md) | `pfsense` | REST API key (read-only user) | Firewall: gateways down or lossy, interfaces without link, stopped services |
 | [FortiGate](fortigate.md) | `fortigate` | REST API token (read-only profile, trusted host) | Firewall: IPsec tunnels, links, HA sync, conserve mode, FortiGuard licences |
 | [Sophos Firewall](sophos.md) | `sophos` | username/password (read-only profile) | Firewall: interface links only (the XML API exposes no tunnel, HA or licence state) |
+| [Palo Alto PAN-OS](paloalto.md) | `paloalto` | username/password or API key (role-based, XML API operational requests only) | Beta. Firewall: interface links, HA peer and sync, session table, licences, failed commits |
+| [SonicWall SonicOS](sonicwall.md) | `sonicwall` | username/password (read-only user) | Beta. Firewall: interface links only |
 | [OpenVPN server](openvpn.md) | `openvpn` | none, or management password | OpenVPN server through its management interface: version, state, connected clients |
 | [UniFi Network](unifi.md) | `unifi` | API key or username/password | UniFi console or self-hosted server: devices, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |

@@ -145,6 +145,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	tailscale: Network,
 	fortigate: BrickWallShield,
 	sophos: ShieldCheck,
+	paloalto: BrickWallShield,
+	sonicwall: ShieldCheck,
 	website: PanelsTopLeft,
 	webchange: FileDiff
 };
@@ -154,7 +156,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'paloalto', 'sonicwall', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -223,6 +225,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	tailscale: 'vpn wireguard mesh tailnet headscale subnet router exit node zero trust remote access',
 	fortigate: 'fortinet fortios firewall utm ngfw ipsec vpn sd-wan ha cluster fortiguard',
 	sophos: 'sophos xg xgs sfos firewall utm ipsec vpn',
+	paloalto: 'palo alto networks pan-os panos pa-series vm-series firewall ngfw ha globalprotect panorama beta',
+	sonicwall: 'sonicwall sonicos tz nsa nssp nsv firewall utm vpn beta',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',

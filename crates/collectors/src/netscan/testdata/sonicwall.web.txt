@@ -1,0 +1,8 @@
+# source: the Server header "SonicWALL" that SonicOS web management answers with (listed in rapid7/recog xml/http_servers.xml, "SonicWALL" web server banners).
+# note: PARTLY RECONSTRUCTED. The Server value is the matched string; the redirect to the authentication page and the other headers are approximate (closed source). Not checked against a real appliance.
+HTTP/1.1 302 Found
+Server: SonicWALL
+Location: https://192.0.2.1/auth.html
+Content-Type: text/html
+Content-Length: 0
+Connection: close
