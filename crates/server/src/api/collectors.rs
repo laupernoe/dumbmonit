@@ -6436,14 +6436,9 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "meraki" | "omada" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
+        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "push"
         | "webchange" | "website" => kind,
-        | "arubacentral" | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange"
-        | "website" => kind,
-        | "sophos" | "paloalto" | "sonicwall" | "openvpn" | "xcpng" | "nutanix" | "push"
-        | "sophos" | "qnap" | "ceph" | "minio" | "openvpn" | "xcpng" | "nutanix" | "push"
-        | "activedirectory" | "pfsense" | "unraid" | "veeam" | "kopia" | "duplicati"
-        | "tailscale" | "fortigate" | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -7395,11 +7390,8 @@ mod tests {
             "meraki",
             "omada",
             "arubacentral",
-            "sophos",
             "paloalto",
             "sonicwall",
-            "xcpng",
-            "nutanix",
             "xcpng",
             "nutanix",
             "qnap",
@@ -7407,11 +7399,6 @@ mod tests {
             "minio",
             "kopia",
             "duplicati",
-            "tailscale",
-            "fortigate",
-            "sophos",
-            "xcpng",
-            "nutanix",
         ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
