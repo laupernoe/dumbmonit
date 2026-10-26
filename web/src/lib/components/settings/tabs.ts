@@ -5,14 +5,17 @@
  */
 import { m } from '#lib/paraglide/messages.js';
 
-export type SettingsTab = 'account' | 'team' | 'monitoring' | 'notifications' | 'status' | 'wall' | 'system';
+export type SettingsTab = 'general' | 'account' | 'team' | 'monitoring' | 'notifications' | 'status' | 'wall' | 'system';
 
 export const DEFAULT_TAB: SettingsTab = 'account';
 
-export const TAB_IDS: readonly SettingsTab[] = ['account', 'team', 'monitoring', 'notifications', 'status', 'wall', 'system'];
+export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'monitoring', 'notifications', 'status', 'wall', 'system'];
 
 /** Which tab holds each section (by its anchor id). */
 export const SECTION_TAB: Record<string, SettingsTab> = {
+	general: 'general',
+	'product-mode': 'general',
+	'setup-wizard': 'general',
 	appearance: 'account',
 	security: 'account',
 	push: 'account',
@@ -55,6 +58,8 @@ export function isTab(value: string | undefined): value is SettingsTab {
 
 export function tabLabel(tab: SettingsTab): string {
 	switch (tab) {
+		case 'general':
+			return m.settings_tab_general();
 		case 'account':
 			return m.settings_tab_account();
 		case 'team':
@@ -90,6 +95,7 @@ export function searchIndex(): SearchEntry[] {
 		keywords
 	});
 	return [
+		entry('product-mode', m.settings_general_mode_title(), m.settings_search_kw_general()),
 		entry('appearance', m['settings.section.appearance'](), m.settings_search_kw_appearance()),
 		entry('security', m['settings.section.security'](), m.settings_search_kw_security()),
 		entry('push', m.settings_nav_push(), m.settings_search_kw_push()),

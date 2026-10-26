@@ -56,6 +56,7 @@
 	import { DEFAULT_INTERVAL, INTERVALS, SNMP_KIND, suggestName } from './kinds';
 	import { firstReason, identitySummary, testBlocker } from './test-connection';
 	import { seedFromPrefill, type Prefill } from './discovery-prefill';
+	import { mode } from '#lib/stores/mode.svelte.js';
 
 	interface Props {
 		collector: CollectorInfo;
@@ -150,11 +151,17 @@
 	let saving = $state(false);
 	let serverError = $state<unknown>(null);
 
+	// Homelab keeps the form short: required settings and the first one; the
+	// rest waits behind "More options". Enterprise shows three up front and
+	// opens "More options" from the start.
+	const PRIMARY_COUNT = untrack(() => (mode.enterprise ? 3 : 1));
+
 	// "More options" opens by itself when an edited device already uses one.
 	let more = $state(
 		untrack(
 			() =>
-				(!target && collector.options.some((o, i) => !(o.required || i < 3) && o.key in seed.tags)) ||
+				mode.enterprise ||
+				(!target && collector.options.some((o, i) => !(o.required || i < PRIMARY_COUNT) && o.key in seed.tags)) ||
 				(!!target &&
 				(target.parent_id !== null ||
 					target.via_agent !== null ||
@@ -178,7 +185,7 @@
 	/** The agent chosen for a mail server has its own box at the top of the form. */
 	const agentOption = $derived(options.find((o) => o.input === 'agent') ?? null);
 	const listed = $derived(options.filter((o) => o.input !== 'agent'));
-	const primaryOptions = $derived(listed.filter((o, i) => o.required || i < 3));
+	const primaryOptions = $derived(listed.filter((o, i) => o.required || i < PRIMARY_COUNT));
 	const moreOptions = $derived(listed.filter((o) => !primaryOptions.includes(o)));
 	const moreOptionGroups = $derived(groupOptions(moreOptions));
 	const optionValues = $derived(Object.fromEntries(Object.entries(tags).filter(([k]) => optionKeys.includes(k))));

@@ -230,6 +230,53 @@ html.mode-enterprise :where(code, kbd, pre, samp, .font-mono) {
 	animation: ob-scan 6s linear infinite;
 }
 
+/* Miniatures of each mode (mode picker): their own palettes, whatever mode is on. */
+.mode-preview-homelab {
+	--pv-canvas: #f3efe6;
+	--pv-surface: #fbf9f4;
+	--pv-line: rgb(22 33 58 / 0.14);
+	--pv-ink: #16213a;
+	--pv-ink-2: #4a5a78;
+	--pv-up: #0f8f86;
+	--pv-warn: #b7791f;
+	--pv-down: #c8402f;
+	--pv-accent: #0f8f86;
+}
+html.dark .mode-preview-homelab {
+	--pv-canvas: #0a1020;
+	--pv-surface: #111a2e;
+	--pv-line: rgb(148 178 214 / 0.14);
+	--pv-ink: #e8eef8;
+	--pv-ink-2: #9fb0c8;
+	--pv-up: #22d3c5;
+	--pv-warn: #f5b542;
+	--pv-down: #ff6b5a;
+	--pv-accent: #22d3c5;
+}
+/* Enterprise mode is dark: its miniature shows the light Homelab regardless. */
+html.mode-enterprise .mode-preview-homelab {
+	--pv-canvas: #f3efe6;
+	--pv-surface: #fbf9f4;
+	--pv-line: rgb(22 33 58 / 0.14);
+	--pv-ink: #16213a;
+	--pv-ink-2: #4a5a78;
+	--pv-up: #0f8f86;
+	--pv-warn: #b7791f;
+	--pv-down: #c8402f;
+	--pv-accent: #0f8f86;
+}
+.mode-preview-enterprise {
+	--pv-canvas: #07080a;
+	--pv-surface: #0b0d10;
+	--pv-line: #16191e;
+	--pv-ink: #eceef1;
+	--pv-ink-2: #8a919c;
+	--pv-up: #2fd17c;
+	--pv-warn: #f2b033;
+	--pv-down: #ff5c5c;
+	--pv-accent: #7da9ff;
+}
+
 /* Tailwind utilities read the live variables, so `bg-surface` follows the theme. */
 @theme inline {
 	--color-canvas: var(--c-canvas);
@@ -262,6 +309,15 @@ html.mode-enterprise :where(code, kbd, pre, samp, .font-mono) {
 	--color-river-warn: var(--c-river-warn);
 	--color-river-down: var(--c-river-down);
 	--color-river-none: var(--c-river-none);
+	--color-pv-canvas: var(--pv-canvas);
+	--color-pv-surface: var(--pv-surface);
+	--color-pv-line: var(--pv-line);
+	--color-pv-ink: var(--pv-ink);
+	--color-pv-ink-2: var(--pv-ink-2);
+	--color-pv-up: var(--pv-up);
+	--color-pv-warn: var(--pv-warn);
+	--color-pv-down: var(--pv-down);
+	--color-pv-accent: var(--pv-accent);
 
 	--shadow-lift: var(--shadow-lift);
 	--shadow-float: var(--shadow-float);
