@@ -71,6 +71,7 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	sophos: () => import('./appliance/AppliancePanel.svelte'),
 	meraki: () => import('./appliance/AppliancePanel.svelte'),
 	omada: () => import('./appliance/AppliancePanel.svelte'),
+	arubacentral: () => import('./appliance/AppliancePanel.svelte'),
 	nginx: () => import('./appliance/AppliancePanel.svelte'),
 	apache: () => import('./appliance/AppliancePanel.svelte'),
 	openvpn: () => import('./appliance/AppliancePanel.svelte'),

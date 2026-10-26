@@ -15,7 +15,7 @@ From the DumbMonit server (or its relay agent) to the device:
 ## What it watches
 
 The collection profile is detected automatically from the device's
-`sysObjectID` (and, for UPS, its `sysDescr`). Seven profiles ship with the
+`sysObjectID` (and, for UPS, its `sysDescr`). Ten profiles ship with the
 product; a device can match several, and the profiles include each other.
 
 | Profile | Applies to | Metrics (prefix `dumbmonit_`) |
@@ -27,6 +27,9 @@ product; a device can match several, and the profiles include each other.
 | Printer (PRINTER-MIB) | HP, Kyocera, Epson, Canon, Brother, Lexmark, Ricoh, Xerox, Samsung, OKI, Konica Minolta | `printer_supply_level/max` per supply, `printer_input_level/max` per tray, `printer_pages_printed`, `printer_status` |
 | Ethernet switch (EtherLike-MIB, LLDP) | Chosen by hand for any switch; included by the vendor switch profiles | Everything from IF-MIB, plus per port `ether_fcs_errors`, `ether_alignment_errors`, `ether_symbol_errors`, `ether_late_collisions`, `ether_excessive_collisions`, `ether_mac_transmit_errors`, `ether_mac_receive_errors`, `ether_duplex_status` (1 unknown, 2 half, 3 full), `if_broadcast_packets_in`, `if_multicast_packets_in` (64-bit), and `lldp_neighbor_info` (who is plugged where: `remote_sysname`, `remote_port`, `remote_port_desc`; the local port number is the second part of the `index` label) |
 | Zyxel switch | Every Zyxel `sysObjectID` (`1.3.6.1.4.1.890`) | Everything from Ethernet switch, plus `cpu_load_percent` (one-minute average), `zyxel_cpu_5min_percent`, `memory_usage_percent`, `zyxel_firmware_info` (firmware and model as labels), and on switches that publish the hardware monitor, `zyxel_temperature_celsius` and `zyxel_temperature_high_threshold_celsius` per sensor, `zyxel_fan_rpm` and `zyxel_fan_low_threshold_rpm` per fan |
+| WatchGuard Firebox | Every WatchGuard `sysObjectID` (`1.3.6.1.4.1.3097`) | Everything from IF-MIB, plus `cpu_load_percent` (one-minute average), `watchguard_cpu_5min_percent`, `watchguard_cpu_15min_percent`, `watchguard_active_connections`, `watchguard_bytes_in/out`, `watchguard_packets_in/out`, `watchguard_stream_requests_dropped`, `watchguard_ipsec_tunnels`, `watchguard_ipsec_tunnel_kbytes_in/out` per peer address, and on a cluster `watchguard_ha_status`, `watchguard_ha_peer_status`, `watchguard_ha_error`, `watchguard_ha_peer_error` |
+| Stormshield SNS | Every Stormshield `sysObjectID` (`1.3.6.1.4.1.11256`) | Everything from IF-MIB, plus `stormshield_ha_nodes`, `stormshield_ha_dead_nodes`, `stormshield_ha_active_nodes`, `stormshield_ha_links`, `stormshield_ha_faulty_links`, `stormshield_ha_sync_status`, `stormshield_ha_node_quality` per node serial, `stormshield_cpu_temperature_celsius` per processor and `stormshield_fan_rpm` per fan |
+| HPE / Aruba switch | `1.3.6.1.4.1.11.2.3.7` (HPE ProCurve family) and `1.3.6.1.4.1.47196.4` (Aruba CX) | Everything from Ethernet switch, nothing proprietary |
 
 Counters (interface octets, pages printed) are stored raw: use `rate()` in a
 query to get a throughput. A device reboot shows as a counter reset, never as a
@@ -51,6 +54,53 @@ seen on real hardware.
 `dot3StatsFrameTooLongs` is deliberately not read: on the XS1930 it counts
 billions of perfectly healthy jumbo frames, and a series that always climbs
 on a healthy network only teaches people to ignore it.
+
+### WatchGuard Firebox
+
+The profile reads the three MIBs WatchGuard publishes under its enterprise
+number: system statistics (CPU, connections, traffic), IPsec tunnels and
+high availability. The CPU figures are reported in hundredths of a percent
+and are scaled to a percentage. The OIDs come from WatchGuard's MIBs and
+documentation; they have not yet been seen on a real Firebox, so a missing
+series means the model or Fireware version does not publish it. The
+high-availability values are the MIB's raw codes. SNMP has to be enabled
+in the Firebox's configuration; the 64-bit counters need SNMPv2c or v3.
+
+`watchguard_ipsec_tunnels` counts the security associations established at
+this moment, site-to-site tunnels and mobile users together: it is shown, but
+no built-in rule alerts on it. The generic rules (device unreachable, high
+CPU, port errors, port flapping) apply. No REST API is used: this integration is SNMP only.
+
+### Stormshield SNS
+
+The profile reads STORMSHIELD-HA-MIB (cluster nodes, dead nodes, faulty HA
+links, node quality) and STORMSHIELD-SYSTEM-MONITOR-MIB (processor
+temperature, fan speed) under `1.3.6.1.4.1.11256`. A firewall outside a
+cluster reports a single node; a virtual appliance has no fan or sensor, and
+those series stay empty. The OIDs come from Stormshield's MIBs; they have not
+yet been seen on a real appliance. The health columns of
+STORMSHIELD-HEALTH-MONITOR-MIB are text whose values the MIB does not list, so
+they are not read.
+
+Two [built-in rules](../alerting/rules.md#stormshield-sns) apply on top of the
+generic ones: a dead HA node and a faulty HA link. Enable the SNMP agent
+(Configuration → Notifications → SNMP agent) and add a filter rule that lets
+only the DumbMonit server query it, as Stormshield recommends. No web API is
+used: this integration is SNMP only.
+
+### HPE / Aruba switches and Aruba Instant On
+
+Aruba Instant On is a cloud-managed range. HPE publishes no public API for
+its portal that this integration could rely on, and no SNMP agent is
+documented for its access points, so DumbMonit cannot read the access points
+nor the Instant On portal. The Instant On 1930 switches do offer
+SNMP; when they announce an HPE `sysObjectID` of the ProCurve family
+(`1.3.6.1.4.1.11.2.3.7`), the HPE / Aruba switch profile applies the standard
+switch series (interfaces, Ethernet errors, LLDP neighbours) without any
+manual choice. If a switch announces another identifier, choose the Ethernet
+switch profile by hand: the result is the same. For Aruba access points,
+gateways and switches managed from the cloud, use
+[Aruba Central](arubacentral.md).
 
 ### Server management controllers (BMC)
 

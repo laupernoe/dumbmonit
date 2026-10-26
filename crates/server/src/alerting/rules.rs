@@ -5901,6 +5901,17 @@ pub fn builtin_rules() -> Vec<Rule> {
         // --- TP-Link Omada (`collectors/omada`) ---
         Rule {
             description: "An Omada access point, switch or gateway has been disconnected from the controller for ten minutes.".to_string(),
+        // --- Aruba Central (`collectors/arubacentral`) ---
+        Rule {
+            description: "Aruba Central reports an access point, switch or gateway offline.".to_string(),
+            ..base(
+                "arubacentral_device_offline",
+                "Aruba Central device offline",
+                "dumbmonit_arubacentral_device_online",
+            )
+        },
+        Rule {
+            description: "Aruba Central has at least one active critical alert.".to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
             for_duration: Duration::from_secs(10 * 60),
@@ -5945,6 +5956,13 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         Rule {
             description: "The Omada controller offers a firmware update for a device.".to_string(),
+                "arubacentral_critical_alert",
+                "Aruba Central critical alert",
+                "dumbmonit_arubacentral_alerts_active_by_severity{severity=\"critical\"}",
+            )
+        },
+        Rule {
+            description: "Aruba Central rates at least one device in poor health for an hour.".to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
             for_duration: Duration::from_secs(3600),
@@ -5955,6 +5973,36 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Omada firmware update",
                 RuleKind::Threshold,
                 "dumbmonit_omada_device_upgrade_available",
+                "arubacentral_devices_poor_health",
+                "Aruba Central devices in poor health",
+                "dumbmonit_arubacentral_devices_poor_health",
+            )
+        },
+        // --- Stormshield SNS, par SNMP (`profiles/stormshield.yaml`) ---
+        Rule {
+            description: "A node of a Stormshield HA cluster is declared dead: there is no standby any more.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "stormshield_ha_node_dead",
+                "Stormshield HA node dead",
+                "dumbmonit_stormshield_ha_dead_nodes",
+            )
+        },
+        Rule {
+            description: "A link between the nodes of a Stormshield HA cluster is faulty.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "stormshield_ha_link_faulty",
+                "Stormshield HA link faulty",
+                "dumbmonit_stormshield_ha_faulty_links",
             )
         },
         // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
@@ -7219,6 +7267,11 @@ mod tests {
             "dumbmonit_omada_device_cpu_usage_percent",
             "dumbmonit_omada_device_memory_used_percent",
             "dumbmonit_omada_device_upgrade_available",
+            "dumbmonit_arubacentral_device_online",
+            "dumbmonit_arubacentral_alerts_active_by_severity",
+            "dumbmonit_arubacentral_devices_poor_health",
+            "dumbmonit_stormshield_ha_dead_nodes",
+            "dumbmonit_stormshield_ha_faulty_links",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",

@@ -3529,6 +3529,7 @@
 	"kinds_label_agent": "Server con agente",
 	"kinds_label_agent_service": "Servizio trovato da un agente",
 	"kinds_label_apache": "Apache httpd",
+	"kinds_label_arubacentral": "Aruba Central (beta)",
 	"kinds_label_caddy": "Caddy",
 	"kinds_label_crowdsec": "CrowdSec",
 	"kinds_label_dns": "Nome di dominio (DNS)",

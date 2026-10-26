@@ -651,6 +651,20 @@ See [TP-Link Omada](../devices/omada.md) (beta). Devices are labelled `device`, 
 | Omada device CPU high | An Omada device has had its CPU above 90 % for fifteen minutes (`dumbmonit_omada_device_cpu_usage_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
 | Omada device memory high | An Omada device has had its memory above 90 % for fifteen minutes (`dumbmonit_omada_device_memory_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
 | Omada firmware update | The Omada controller offers a firmware update for a device (`dumbmonit_omada_device_upgrade_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+### Aruba Central
+
+See [Aruba Central](../devices/arubacentral.md). Devices are labelled `device`, `type`, `serial` and `site`.
+
+| Aruba Central device offline | Aruba Central reports an access point, switch or gateway offline (`dumbmonit_arubacentral_device_online`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| Aruba Central critical alert | Aruba Central has at least one active critical alert (`dumbmonit_arubacentral_alerts_active_by_severity{severity="critical"}`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Aruba Central devices in poor health | Aruba Central rates at least one device in poor health for an hour (`dumbmonit_arubacentral_devices_poor_health`). | > 0 | 1 h | Info (`info`) | 7 d |
+
+### Stormshield SNS
+
+Read over SNMP by the Stormshield profile; see [Stormshield SNS](../devices/snmp.md#stormshield-sns).
+
+| Stormshield HA node dead | A node of a Stormshield HA cluster is declared dead: there is no standby any more (`dumbmonit_stormshield_ha_dead_nodes`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Stormshield HA link faulty | A link between the nodes of a Stormshield HA cluster is faulty (`dumbmonit_stormshield_ha_faulty_links`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
 
 ### KVM (libvirt)
 
