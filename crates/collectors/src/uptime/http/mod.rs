@@ -19,12 +19,20 @@
 //!
 //! # Décomposition du temps de réponse
 //!
-//! `reqwest` n'expose pas les instants intermédiaires d'une requête. Ce qui est
-//! mesurable honnêtement l'est : la connexion et la poignée de main proviennent du
-//! relevé de certificat (`probe_connect_seconds`, `probe_tls_handshake_seconds`),
-//! le premier octet de la réponse est l'instant où les en-têtes arrivent
-//! (`probe_http_first_byte_seconds`), et le total inclut la lecture du corps
-//! (`probe_duration_seconds`). Rien n'est estimé ni interpolé.
+//! Deux familles de mesures coexistent.
+//!
+//! * Le relevé de certificat, sur une connexion dédiée, fournit
+//!   `probe_connect_seconds` et `probe_tls_handshake_seconds`. Le premier octet de
+//!   la réponse est l'instant où les en-têtes arrivent
+//!   (`probe_http_first_byte_seconds`), et le total inclut la lecture du corps
+//!   (`probe_duration_seconds`).
+//! * Les phases de la requête réellement mesurée, `probe_http_phase_seconds` avec
+//!   l'étiquette `phase` : `dns`, `connect`, `tls`, `processing` (attente du serveur
+//!   jusqu'aux en-têtes) et `transfer` (lecture du corps, nulle si le corps n'est
+//!   pas rapatrié). Leur somme vaut le temps écoulé de l'envoi de la requête à la
+//!   fin de la lecture, pour le dernier saut en cas de redirection. Voir
+//!   [`phases`] pour la méthode de relevé : le client est neuf à chaque sonde, donc
+//!   chaque contrôle ouvre une vraie connexion.
 //!
 //! # Adresse et étiquettes
 //!
@@ -58,10 +66,10 @@
 
 mod check;
 pub(crate) mod options;
+mod phases;
 pub mod security_headers;
 
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::{Duration, Instant};
 
 use async_trait::async_trait;
@@ -74,6 +82,7 @@ use tracing::debug;
 use super::guard;
 use super::outcome::{Failure, Report};
 use options::Options;
+use phases::{PhaseClock, Phases, SetupTimer, TimedResolver};
 
 /// Part du budget laissée au relevé de certificat.
 ///
@@ -84,40 +93,42 @@ const CERTIFICATE_BUDGET_RATIO: u32 = 2;
 /// Temps minimal laissé à la requête, quoi qu'ait coûté le relevé de certificat.
 const MIN_REQUEST_BUDGET: Duration = Duration::from_secs(1);
 
+/// Client d'une sonde et ce qui sert à décomposer son temps d'attente.
+struct Instrumented {
+    client: Client,
+    clock: Arc<PhaseClock>,
+    /// Poignée de main TLS relevée par le contrôle de certificat, s'il a eu lieu.
+    tls_hint: Option<Duration>,
+}
+
 /// Collecteur de disponibilité HTTP.
 #[derive(Default)]
-pub struct HttpCollector {
-    /// Un client par vérification TLS et par garde-fou d'adresses : ces deux
-    /// réglages se figent à la construction du client et ne peuvent pas changer
-    /// d'une requête à l'autre. Le pool de connexions est ainsi partagé entre
-    /// toutes les cibles qui ont les mêmes réglages.
-    ///
-    /// Les redirections ne font pas partie de la clé : elles sont suivies à la
-    /// main (voir [`request`]), chaque saut passant par le garde-fou.
-    clients: Mutex<HashMap<(bool, bool), Client>>,
-}
+pub struct HttpCollector;
 
 impl HttpCollector {
     pub fn new() -> Self {
-        Self::default()
+        Self
     }
 
-    fn client(&self, insecure_tls: bool, allow_private: bool) -> Result<Client, ProbeError> {
-        let key = (insecure_tls, allow_private);
-        let mut cache = self.clients.lock().unwrap_or_else(|poison| poison.into_inner());
-        if let Some(existing) = cache.get(&key) {
-            return Ok(existing.clone());
-        }
-
+    /// Construit un client propre à la sonde : résolveur et connecteur y écrivent
+    /// dans une horloge qui n'appartient qu'à elle (voir [`phases`]). Les
+    /// redirections sont suivies à la main (voir [`request`]), chaque saut passant
+    /// par le garde-fou.
+    fn client(
+        &self,
+        insecure_tls: bool,
+        allow_private: bool,
+    ) -> Result<(Client, Arc<PhaseClock>), ProbeError> {
+        let clock = Arc::new(PhaseClock::default());
         let client = Client::builder()
             .danger_accept_invalid_certs(insecure_tls)
             .redirect(Policy::none())
-            .dns_resolver(Arc::new(guard::GuardedResolver { allow_private }))
+            .pool_max_idle_per_host(0)
+            .dns_resolver(Arc::new(TimedResolver::new(allow_private, Arc::clone(&clock))))
+            .connector_layer(SetupTimer::new(Arc::clone(&clock)))
             .build()
             .map_err(|error| ProbeError::Config(format!("HTTP client unusable: {error}")))?;
-
-        cache.insert(key, client.clone());
-        Ok(client)
+        Ok((client, clock))
     }
 }
 
@@ -130,7 +141,7 @@ impl Collector for HttpCollector {
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {
         let options = Options::from_target(target)?;
         let allow_private = guard::allowed(target)?;
-        let client = self.client(options.insecure_tls, allow_private)?;
+        let (client, clock) = self.client(options.insecure_tls, allow_private)?;
 
         // Avant toute connexion, relevé de certificat compris : un refus est une
         // erreur de configuration, pas une mesure.
@@ -153,7 +164,12 @@ impl Collector for HttpCollector {
         }
 
         let budget = options.timeout.saturating_sub(started.elapsed()).max(MIN_REQUEST_BUDGET);
-        request(&mut report, &client, &options, &target.credential, allow_private, budget).await?;
+        let tls_hint = report
+            .gauge_value("tls_handshake_seconds")
+            .filter(|seconds| seconds.is_finite() && *seconds >= 0.0)
+            .map(Duration::from_secs_f64);
+        let session = Instrumented { client, clock, tls_hint };
+        request(&mut report, &session, &options, &target.credential, allow_private, budget).await?;
 
         if let Some(detail) = report.detail() {
             debug!(target_id = target.id, url = %options.url_label(), detail,
@@ -175,7 +191,7 @@ impl Collector for HttpCollector {
 /// résultat de mesure, consigné dans le rapport.
 async fn request(
     report: &mut Report,
-    client: &Client,
+    session: &Instrumented,
     options: &Options,
     credential: &Credential,
     allow_private: bool,
@@ -195,7 +211,8 @@ async fn request(
             return Ok(());
         }
 
-        let mut builder = client
+        let mut builder = session
+            .client
             .request(method.clone(), url.clone())
             .timeout(remaining)
             .header(USER_AGENT, &options.user_agent);
@@ -214,6 +231,8 @@ async fn request(
             builder = auth.apply(builder);
         }
 
+        // Chaque saut repart de zéro : seule la dernière requête est décomposée.
+        session.clock.reset();
         let first_byte = Instant::now();
         let response = match builder.send().await {
             Ok(response) => response,
@@ -262,7 +281,10 @@ async fn request(
         }
         url = next;
     };
-    report.gauge("http_first_byte_seconds", first_byte.elapsed().as_secs_f64());
+    let first_byte = first_byte.elapsed();
+    report.gauge("http_first_byte_seconds", first_byte.as_secs_f64());
+    let tls_hint = session.tls_hint.filter(|_| url.scheme() == "https");
+    let mut phases = session.clock.decompose(first_byte, tls_hint);
 
     let status = response.status();
     report.gauge("http_status_code", f64::from(status.as_u16()));
@@ -291,13 +313,18 @@ async fn request(
     // simple contrôle de statut, le télécharger serait du trafic pur perte.
     let needs_body = options.keyword.is_some() || options.json.is_some();
     if !needs_body {
+        publish_phases(report, &phases);
         if let Some(length) = response.content_length() {
             report.gauge("http_content_bytes", length as f64);
         }
         return Ok(());
     }
 
-    let (body, truncated) = match read_body(&mut response, options.max_body_bytes).await {
+    let read_started = Instant::now();
+    let read = read_body(&mut response, options.max_body_bytes).await;
+    phases.transfer = read_started.elapsed();
+    publish_phases(report, &phases);
+    let (body, truncated) = match read {
         Ok(body) => body,
         Err(error) => {
             report.fail(Failure::Body, format!("unreadable body: {error}"));
@@ -312,6 +339,14 @@ async fn request(
     let text = String::from_utf8_lossy(&body);
     verify_body(report, options, &text, truncated);
     Ok(())
+}
+
+/// Publie les cinq phases, zéros compris : une série qui apparaît et disparaît
+/// romprait l'empilement du graphe.
+fn publish_phases(report: &mut Report, phases: &Phases) {
+    for (phase, seconds) in phases.series() {
+        report.gauge_with("http_phase_seconds", seconds, "phase", phase);
+    }
 }
 
 /// Applique les vérifications portant sur le corps de la réponse.
@@ -536,6 +571,9 @@ fn cause_chain(error: &reqwest::Error) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
+    use std::sync::Mutex;
+
     use super::check::{Keyword, StatusRanges};
     use super::*;
     use crate::uptime::tags::test_support::cible;
@@ -546,16 +584,11 @@ mod tests {
     }
 
     #[test]
-    fn les_clients_sont_mutualises_par_politique() {
+    fn chaque_sonde_recoit_son_client_et_son_horloge() {
         let collector = HttpCollector::new();
-        let a = collector.client(false, false).unwrap();
-        let b = collector.client(false, false).unwrap();
-        assert_eq!(collector.clients.lock().unwrap().len(), 1, "une seule politique, un client");
-        drop((a, b));
-
-        collector.client(true, false).unwrap();
-        collector.client(false, true).unwrap();
-        assert_eq!(collector.clients.lock().unwrap().len(), 3);
+        let (_, a) = collector.client(false, false).unwrap();
+        let (_, b) = collector.client(true, true).unwrap();
+        assert!(!Arc::ptr_eq(&a, &b), "une horloge par sonde, jamais partagée");
     }
 
     #[test]
@@ -648,6 +681,11 @@ mod tests {
         format!("http://127.0.0.1:{port}")
     }
 
+    fn session(collector: &HttpCollector, insecure: bool, private: bool) -> Instrumented {
+        let (client, clock) = collector.client(insecure, private).unwrap();
+        Instrumented { client, clock, tls_hint: None }
+    }
+
     fn raison(samples: &[Sample]) -> Option<String> {
         samples
             .iter()
@@ -666,7 +704,7 @@ mod tests {
             &[("allow_private_targets", "true"), ("json_path", "$.etat"), ("json_expect", "ok")],
         );
         let options = Options::from_target(&target).unwrap();
-        let client = collector.client(false, true).unwrap();
+        let client = session(&collector, false, true);
         let mut report = Report::new("http");
         request(&mut report, &client, &options, &Credential::None, true, options.timeout)
             .await
@@ -710,7 +748,7 @@ mod tests {
         let collector = HttpCollector::new();
         let target = cible("http", &format!("{base}/to-loopback"), &[]);
         let options = Options::from_target(&target).unwrap();
-        let client = collector.client(false, false).unwrap();
+        let client = session(&collector, false, false);
 
         let mut report = Report::new("http");
         request(&mut report, &client, &options, &Credential::None, false, options.timeout)
@@ -755,7 +793,7 @@ mod tests {
         let a = ecoute(vus_a.clone(), routes_a).await;
 
         let collector = HttpCollector::new();
-        let client = collector.client(false, true).unwrap();
+        let client = session(&collector, false, true);
         for chemin in ["meme-origine", "autre-origine"] {
             let target = cible(
                 "http",
@@ -899,5 +937,105 @@ mod tests {
         assert!(options.accepted_status.accepts(401));
         assert!(!options.accepted_status.accepts(403));
         assert_eq!(StatusRanges::parse("200,401").unwrap(), options.accepted_status);
+    }
+
+    /// Faux service avec une page lente : l'attente se retrouve dans `processing`.
+    async fn service_lent() -> String {
+        use axum::routing::get;
+
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        let router = axum::Router::new().route(
+            "/lent",
+            get(|| async {
+                tokio::time::sleep(Duration::from_millis(150)).await;
+                "bonjour"
+            }),
+        );
+        tokio::spawn(async move { axum::serve(listener, router).await.unwrap() });
+        format!("http://127.0.0.1:{port}")
+    }
+
+    fn phases_publiees(samples: &[Sample]) -> HashMap<String, f64> {
+        samples
+            .iter()
+            .filter(|s| s.metric == "probe_http_phase_seconds")
+            .map(|s| (s.labels.get("phase").cloned().unwrap(), s.value))
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn les_cinq_phases_sont_publiees_et_somment_au_premier_octet() {
+        let base = service_lent().await;
+        let target = cible(
+            "http",
+            &format!("{base}/lent"),
+            &[("allow_private_targets", "true"), ("timeout_seconds", "5")],
+        );
+        let samples = HttpCollector::new().probe(&target).await.unwrap();
+        let phases = phases_publiees(&samples);
+        for phase in ["dns", "connect", "tls", "processing", "transfer"] {
+            assert!(phases.contains_key(phase), "phase « {phase} » absente : {phases:?}");
+        }
+        assert!(phases["processing"] >= 0.1, "l'attente du serveur : {phases:?}");
+        assert_eq!(phases["tls"], 0.0, "pas de TLS en clair");
+        assert_eq!(phases["dns"], 0.0, "une adresse littérale ne se résout pas");
+        assert_eq!(phases["transfer"], 0.0, "le corps n'est pas lu sans mot-clé");
+
+        let first_byte = samples.iter().find(|s| s.metric == "probe_http_first_byte_seconds");
+        let somme: f64 = phases.values().sum();
+        let attendu = first_byte.expect("premier octet").value;
+        assert!((somme - attendu).abs() < 1e-6, "{somme} != {attendu} : {phases:?}");
+    }
+
+    #[tokio::test]
+    async fn la_lecture_du_corps_alimente_la_phase_transfer() {
+        let base = service_lent().await;
+        let target = cible(
+            "http",
+            &format!("{base}/lent"),
+            &[("allow_private_targets", "true"), ("keyword", "bonjour")],
+        );
+        let samples = HttpCollector::new().probe(&target).await.unwrap();
+        let success = samples.iter().find(|s| s.metric == "probe_success").unwrap();
+        assert_eq!(success.value, 1.0);
+        let phases = phases_publiees(&samples);
+        assert_eq!(phases.len(), 5, "{phases:?}");
+        assert!(phases["transfer"] >= 0.0);
+        let first_byte = samples.iter().find(|s| s.metric == "probe_http_first_byte_seconds");
+        let total = samples.iter().find(|s| s.metric == "probe_duration_seconds").unwrap();
+        let somme: f64 = phases.values().sum();
+        assert!(somme >= first_byte.unwrap().value);
+        assert!(somme <= total.value + 1e-6, "{somme} > {}", total.value);
+    }
+
+    /// Un nom, pas une adresse : le résolveur est appelé et la phase `dns` existe.
+    #[tokio::test]
+    async fn un_nom_passe_par_le_resolveur_chronometre() {
+        let base = service_lent().await;
+        let port = base.rsplit(':').next().unwrap();
+        let target = cible(
+            "http",
+            &format!("http://localhost:{port}/lent"),
+            &[("allow_private_targets", "true")],
+        );
+        let samples = HttpCollector::new().probe(&target).await.unwrap();
+        let success = samples.iter().find(|s| s.metric == "probe_success").unwrap();
+        assert_eq!(success.value, 1.0, "{samples:?}");
+        let phases = phases_publiees(&samples);
+        assert!(phases["dns"] >= 0.0 && phases["connect"] >= 0.0, "{phases:?}");
+        assert!(phases["processing"] >= 0.1, "{phases:?}");
+    }
+
+    #[tokio::test]
+    async fn une_redirection_ne_compte_que_le_dernier_saut() {
+        let base = faux_service().await;
+        let target =
+            cible("http", &format!("{base}/redirect"), &[("allow_private_targets", "true")]);
+        let samples = HttpCollector::new().probe(&target).await.unwrap();
+        let phases = phases_publiees(&samples);
+        let first_byte = samples.iter().find(|s| s.metric == "probe_http_first_byte_seconds");
+        let somme: f64 = phases.values().sum();
+        assert!((somme - first_byte.unwrap().value).abs() < 1e-6, "{phases:?}");
     }
 }

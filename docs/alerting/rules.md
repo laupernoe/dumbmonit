@@ -122,6 +122,21 @@ threshold is set in `agent.yaml`: nobody can guess what "slow" means for your li
 | Internet upload rate low | Same, for `speedtest_min_upload_mbps`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
 | Internet latency high | The last test measured a latency above `speedtest_max_latency_ms`. | > 0 | 10 min | Advisory (`warning`) | 24 h |
 
+### Windows event log
+
+Raised by the event log rules of a Windows agent machine; see
+[Windows event log alerts](../devices/agent-windows-events.md). No event log
+rule exists by default, so these rules stay silent until you add one. One alert
+per machine and severity, quoting the latest event; it speaks again at most
+every 10 minutes while events keep coming, and resolves 15 minutes after the
+last one.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Windows event (critical) | An event matched a rule of severity Warning (`dumbmonit_agent_eventlog_matches_critical`: events in the last 15 minutes). | > 0 | 30 s | Warning (`critical`) | none |
+| Windows event (warning) | Same, for rules of severity Advisory (`dumbmonit_agent_eventlog_matches_warning`). | > 0 | 30 s | Advisory (`warning`) | none |
+| Windows event (info) | Same, for rules of severity Info (`dumbmonit_agent_eventlog_matches_info`). | > 0 | 30 s | Info (`info`) | none |
+
 ### Agent disks, ZFS and sensors
 
 Reported by the agent; see [Agent](../devices/agent.md).
@@ -786,6 +801,15 @@ Computed by the server every 15 minutes for every monitor whose kind has securit
 |---|---|---|---|---|---|
 | Security score dropped | The score fell by 10 points or more against its best value of the last 24 hours (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`): a check started failing. | ≥ 10 pts | 30 min | Advisory (`warning`) | 24 h |
 | Security score low | The score is below 40, grade F (`dumbmonit_security_score`). Raise or lower the threshold to match your own bar. | < 40 | 1 h | Info (`info`) | 7 d |
+
+### Network inventory {#network-inventory}
+
+Raised from the scheduled network scans and their inventory (see [Scheduled scans and inventory](../using/discovery.md#scheduled-scans-and-inventory)). **Both rules are disabled by default** and have severity `info`: turn them on in the rules list when you want them. There is one series, so one alert, per new device or port; it stays open until the item is marked as known (the metric stops, the alert resolves within a few minutes) and has no reminder. The first scan of a network never raises anything.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| New device on the network | A scheduled scan found a device that is not in the inventory (`dumbmonit_netscan_unknown_device`). | > 0 | none | Info (`info`), **disabled** | none |
+| New open port on the network | A scheduled scan found a new open port on a known device (`dumbmonit_netscan_unknown_port`). | > 0 | none | Info (`info`), **disabled** | none |
 
 ### DumbMonit itself
 

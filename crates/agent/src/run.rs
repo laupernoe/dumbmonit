@@ -17,6 +17,7 @@ use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
+use crate::collect::eventlog::{self, PlatformProbe as EventLogProbe};
 use crate::collect::inventory::{self, PendingInventory};
 use crate::collect::ipsec::IpsecProbe;
 use crate::collect::libvirt::LibvirtProbe;
@@ -117,6 +118,9 @@ pub struct Agent {
     perf_counters: PerfCountersProbe,
     /// MDaemon et SecurityGateway : services, files, version (Windows).
     mail_server: MailServerProbe,
+    /// Journal d'événements Windows : les règles reçues du serveur. Muet tant
+    /// qu'il n'y en a aucune, c'est-à-dire partout ailleurs que sous Windows.
+    eventlog: EventLogProbe,
     buffer: PendingBuffer,
     client: PushClient,
     backoff: Backoff,
@@ -227,6 +231,9 @@ impl Agent {
             declared: None,
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
             mail_server: MailServerProbe::for_platform(config.perf_counters.mdaemon),
+            eventlog: EventLogProbe::for_platform(
+                config.secret_path.with_file_name(eventlog::STATE_FILE),
+            ),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
             relay: None,
@@ -295,6 +302,7 @@ impl Agent {
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.
         let now_ms = chrono::Utc::now().timestamp_millis();
+        self.eventlog.read(now_ms);
         let mut samples = snapshot.to_samples(now_ms);
         if speedtest {
             samples.extend(crate::collect::speedtest::threshold_samples(
@@ -604,6 +612,7 @@ impl Agent {
         if self.wants_inventory() {
             batch.inventory = inventory::lock(&self.inventory).clone();
         }
+        batch.event_log = self.eventlog.report();
         batch.declared_monitors = self.declared.clone();
 
         match self.client.send(&batch).await {
@@ -620,10 +629,16 @@ impl Agent {
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.note_acceptance(count, ack.accepted);
                 self.forget_inventory(batch.inventory.as_ref());
+                self.eventlog.acknowledge(batch.event_log.as_ref());
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
                 self.adopt_disabled_modules(ack.disabled_modules);
                 self.adopt_relay(ack.relay);
+                // `None` : serveur antérieur, ou machine qui n'est pas sous
+                // Windows ; les règles connues restent.
+                if let Some(rules) = ack.event_rules {
+                    self.eventlog.set_rules(rules);
+                }
                 // Nouveau binaire à l'essai : ce lot accepté le confirme.
                 if self.updater.confirm() {
                     self.identity.self_update = Some(self.updater.info());
@@ -658,6 +673,13 @@ impl Agent {
                     self.buffer.restore(batch.samples);
                     return FlushOutcome::Failed(PushError::TooLarge(message));
                 }
+                if batch.event_log.is_some() {
+                    // Puis les événements du journal, que rien ne permet de couper.
+                    warn!(reason = message, "event log report too large for the server, dropped");
+                    self.eventlog.acknowledge(batch.event_log.as_ref());
+                    self.buffer.restore(batch.samples);
+                    return FlushOutcome::Failed(PushError::TooLarge(message));
+                }
                 if count <= 1 {
                     // Une mesure seule ne se coupe plus : la garder bloquerait
                     // tout le tampon derrière elle.
@@ -683,6 +705,7 @@ impl Agent {
                 // que reproduire le refus, en gardant le tampon plein pour rien.
                 warn!(%error, dropped = count, "batch rejected by the server, dropped");
                 self.forget_inventory(batch.inventory.as_ref());
+                self.eventlog.acknowledge(batch.event_log.as_ref());
                 FlushOutcome::Sent { count }
             }
         }

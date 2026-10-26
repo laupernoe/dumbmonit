@@ -11,6 +11,7 @@
 	import { formatDateTime, formatDuration, formatRelative } from '#lib/format.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { Confirm, CopyBlock, ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
+	import PushRuns from './PushRuns.svelte';
 
 	interface Props {
 		target: Target;
@@ -64,6 +65,15 @@
 	/** Full URL, from the origin the browser sees: the server does not know its public address. */
 	const url = $derived(monitor?.path ? `${typeof location === 'undefined' ? '' : location.origin}${monitor.path}` : '');
 	const cronLine = $derived(`0 3 * * * /path/to/job.sh && curl -fsS -m 10 --retry 3 ${url} > /dev/null`);
+	/** Start, run, then report the exit code and the tail of the output in one go. */
+	const wrapper = $derived(
+		[
+			`URL=${url}`,
+			'curl -fsS -m 10 --retry 3 "$URL/start" > /dev/null',
+			'OUT=$(/path/to/job.sh 2>&1); CODE=$?',
+			`printf '%s' "$OUT" | tail -c 10000 | curl -fsS -m 10 --retry 3 --data-binary @- "$URL/$CODE" > /dev/null`
+		].join('\n')
+	);
 
 	function verdictOf(v: PushMonitor['verdict']): { tone: Tone; label: string } {
 		switch (v) {
@@ -86,6 +96,7 @@
 	const cronNote = $derived(m.devicesb_push_cron_note({ sample: MARK }).split(MARK));
 </script>
 
+<div class="flex flex-col gap-6">
 <Panel title={m.devicesb_push_title()} description={m.devicesb_push_description()}>
 	{#snippet aside()}
 		{#if verdict}
@@ -120,6 +131,12 @@
 					{cronNote[0]}<code>&amp;&amp;</code>{cronNote[1] ?? ''}
 				</p>
 			</div>
+
+			<div>
+				<p class="mb-1.5 text-sm font-semibold text-ink">{m.push_runs_wrapper_heading()}</p>
+				<CopyBlock value={wrapper} label={m.push_runs_wrapper_copy()} />
+				<p class="mt-1.5 text-[0.8125rem] text-ink-2">{m.push_runs_wrapper_note()}</p>
+			</div>
 			{/if}
 
 			<dl class="grid gap-x-6 gap-y-0.5 text-sm sm:grid-cols-[auto_1fr] sm:gap-y-2 [&>dd]:mb-2 sm:[&>dd]:mb-0">
@@ -139,15 +156,33 @@
 					<dt class="text-ink-2">{m.devicesb_push_last_message()}</dt>
 					<dd class="break-words text-ink">{monitor.last_message}</dd>
 				{/if}
-				<dt class="text-ink-2">{m.devicesb_push_expected_every()}</dt>
-				<dd class="text-ink">
-					{#if monitor.expected_interval_secs !== null && monitor.grace_secs !== null}
-						{formatDuration(monitor.expected_interval_secs)}
-						<span class="text-ink-2">· {m.devicesb_push_grace({ duration: formatDuration(monitor.grace_secs) })}</span>
-					{:else}
-						<span class="text-warning-ink">{monitor.settings_error ?? m.devicesb_push_unreadable()}</span>
+				{#if monitor.schedule}
+					<dt class="text-ink-2">{m.push_runs_schedule_label()}</dt>
+					<dd class="text-ink">
+						<code>{m.push_runs_schedule_value({ expression: monitor.schedule, timezone: monitor.timezone ?? 'UTC' })}</code>
+						{#if monitor.grace_secs !== null}
+							<span class="text-ink-2">· {m.devicesb_push_grace({ duration: formatDuration(monitor.grace_secs) })}</span>
+						{/if}
+					</dd>
+					{#if monitor.next_expected_at}
+						<dt class="text-ink-2">{m.push_runs_next_expected()}</dt>
+						<dd class="tnum text-ink">{formatDateTime(monitor.next_expected_at)}</dd>
 					{/if}
-				</dd>
+				{:else}
+					<dt class="text-ink-2">{m.devicesb_push_expected_every()}</dt>
+					<dd class="text-ink">
+						{#if monitor.expected_interval_secs !== null && monitor.grace_secs !== null}
+							{formatDuration(monitor.expected_interval_secs)}
+							<span class="text-ink-2">· {m.devicesb_push_grace({ duration: formatDuration(monitor.grace_secs) })}</span>
+						{:else}
+							<span class="text-warning-ink">{monitor.settings_error ?? m.devicesb_push_unreadable()}</span>
+						{/if}
+					</dd>
+				{/if}
+				{#if monitor.max_duration_secs !== null}
+					<dt class="text-ink-2">{m.push_runs_max_duration()}</dt>
+					<dd class="tnum text-ink">{formatDuration(monitor.max_duration_secs)}</dd>
+				{/if}
 				<dt class="text-ink-2">{m.devicesb_push_calls_received()}</dt>
 				<dd class="tnum text-ink">{monitor.received_total}</dd>
 			</dl>
@@ -164,3 +199,6 @@
 		</div>
 	{/if}
 </Panel>
+
+<PushRuns {target} refreshKey={monitor?.received_total ?? 0} />
+</div>

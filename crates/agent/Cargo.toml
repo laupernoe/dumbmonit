@@ -82,6 +82,10 @@ tempfile = "3"
 # charge de l'ordre d'arrêt, et interrogation de l'état des services surveillés.
 windows-service = "0.8"
 # Compteurs de performance (PDH) : files d'attente de MDaemon et compteurs
-# listés dans `perf_counters`. Même version que celle qu'apporte déjà
-# `windows-service`, pour ne pas faire entrer une seconde copie des liaisons.
-windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Performance"] }
+# listés dans `perf_counters` ; journal d'événements (`wevtapi`) pour les
+# règles d'événements (`collect/eventlog`). Même version que celle qu'apporte
+# déjà `windows-service`, pour ne pas faire entrer une seconde copie des
+# liaisons.
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation", "Win32_System_EventLog", "Win32_System_Performance",
+] }

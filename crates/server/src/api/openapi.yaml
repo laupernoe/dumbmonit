@@ -1227,6 +1227,208 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/discovery/schedules:
+    get:
+      operationId: listNetscanSchedules
+      tags: [Discovery]
+      summary: Scheduled network scans
+      description: >-
+        Subnets scanned at a fixed interval, by the server or by a relay agent, with
+        the counts of their inventory. Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The scheduled scans.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schedules]
+                properties:
+                  schedules:
+                    type: array
+                    items: { $ref: "#/components/schemas/NetscanSchedule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createNetscanSchedule
+      tags: [Discovery]
+      summary: Schedule a network scan
+      description: >-
+        The first completed scan of a subnet initializes the inventory without
+        alerting. At most 1024 addresses (a /22), an interval of 5 minutes to 30
+        days, 50 schedules. One schedule per subnet and scanner. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NetscanScheduleInput" }
+      responses:
+        "201":
+          description: The scheduled scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetscanSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/discovery/schedules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: updateNetscanSchedule
+      tags: [Discovery]
+      summary: Change a scheduled network scan
+      description: >-
+        Changing the subnet or the scanner starts again from an empty inventory.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NetscanScheduleInput" }
+      responses:
+        "200":
+          description: The scheduled scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetscanSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteNetscanSchedule
+      tags: [Discovery]
+      summary: Delete a scheduled network scan and its inventory
+      x-token-scope: write
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/schedules/{id}/run:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: runNetscanSchedule
+      tags: [Discovery]
+      summary: Scan now
+      description: >-
+        Asks for a scan at the next cycle of the scheduler (a few seconds) without
+        waiting for the interval. Ignored while a scan of this subnet is running.
+        Administrators only.
+      x-token-scope: write
+      responses:
+        "202": { description: Requested. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory:
+    get:
+      operationId: getNetscanInventory
+      tags: [Discovery]
+      summary: Known devices and open ports
+      description: >-
+        The inventory built by the scheduled scans, unknown devices first. An unknown
+        device or port stays reported (see the `netscan_new_device` and
+        `netscan_new_port` alert rules) until it is marked as known. Administrators
+        only.
+      x-token-scope: read
+      parameters:
+        - name: schedule_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the inventory of this scheduled scan.
+      responses:
+        "200":
+          description: The inventory.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/NetscanDevice" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/inventory/known:
+    post:
+      operationId: markAllNetscanKnown
+      tags: [Discovery]
+      summary: Mark every unknown device and port as known
+      x-token-scope: write
+      parameters:
+        - name: schedule_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the inventory of this scheduled scan.
+      responses:
+        "200":
+          description: How many items were unknown.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [marked]
+                properties:
+                  marked: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/inventory/devices/{id}/known:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: markNetscanDeviceKnown
+      tags: [Discovery]
+      summary: Mark a device, and its ports, as known
+      x-token-scope: write
+      responses:
+        "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory/ports/{id}/known:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: markNetscanPortKnown
+      tags: [Discovery]
+      summary: Mark an open port as known
+      x-token-scope: write
+      responses:
+        "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -4508,6 +4710,114 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/event-rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listAgentEventRules
+      tags: [Agents]
+      summary: Windows event log rules of an agent machine
+      description: "The machine's rules, with their counters, and the suggested examples (never created on their own). The rules reach the agent in the acknowledgement of its next batch; only a Windows agent reads them (`supported`). `404` when the device is not an `agent` device."
+      x-token-scope: read
+      responses:
+        "200":
+          description: Rules, rate limit and examples.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRules" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: createAgentEventRule
+      tags: [Agents]
+      summary: Add a Windows event log rule
+      description: "At least an event ID, a source or a level is required. Every matching event raises the built-in alert of the rule's severity (`windows_event_critical`, `windows_event_warning`, `windows_event_info`) on the machine."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEventRuleInput" }
+      responses:
+        "201":
+          description: The new rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/agent/event-rules/{rule_id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: rule_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+        description: Event log rule id.
+    put:
+      operationId: updateAgentEventRule
+      tags: [Agents]
+      summary: Replace a Windows event log rule
+      description: Its counters are kept.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEventRuleInput" }
+      responses:
+        "200":
+          description: The rule after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteAgentEventRule
+      tags: [Agents]
+      summary: Delete a Windows event log rule
+      description: The events already received stay in the machine's history.
+      x-token-scope: write
+      responses:
+        "204": { description: Rule deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/events:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: limit
+        in: query
+        required: false
+        schema: { type: integer, minimum: 1, maximum: 500, default: 50 }
+        description: Number of events to return.
+    get:
+      operationId: listAgentEvents
+      tags: [Agents]
+      summary: Latest Windows events matched by the machine's rules
+      description: Newest first. The server keeps the last 500 events of each machine.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Received events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentEvent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/containers:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -4665,11 +4975,15 @@ paths:
         in: query
         description: Free text, kept truncated to 500 characters.
         schema: { type: string }
+      - name: exit_code
+        in: query
+        description: "The job's exit code. Non-zero is a failure."
+        schema: { type: integer, minimum: 0 }
     get:
       operationId: pushHeartbeatGet
       tags: [Heartbeats]
       summary: Record a heartbeat
-      description: At most sixty calls a minute per token.
+      description: At most sixty calls a minute per token. A plain call is a successful run of unknown duration (`status=down` or a non-zero `exit_code` make it a failure).
       security: []
       x-token-scope: public
       responses:
@@ -4681,13 +4995,74 @@ paths:
       operationId: pushHeartbeatPost
       tags: [Heartbeats]
       summary: Record a heartbeat
-      description: Same as the `GET`; the body is ignored.
+      description: Same as the `GET`; the body (up to 256 KiB) is the output of the job, kept truncated to its last 10 KiB.
       security: []
       x-token-scope: public
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema: { type: string }
       responses:
         "204": { description: Heartbeat recorded. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Body larger than 256 KiB. }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/push/{token}/{action}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: The heartbeat's secret token — the URL is the credential.
+        schema: { type: string }
+      - name: action
+        in: path
+        required: true
+        description: "`start` opens a run, `success` and `fail` close it, and a number is the job's exit code (0 is a success, anything else a failure). Anything else is a `404`."
+        schema: { type: string }
+      - name: status
+        in: query
+        description: "`up` (default) or `down`, on `success` only."
+        schema: { type: string, enum: [up, down] }
+      - name: msg
+        in: query
+        description: Free text, kept truncated to 500 characters; also the output when the body is empty.
+        schema: { type: string }
+      - name: exit_code
+        in: query
+        description: "The job's exit code, on `success` and `fail`."
+        schema: { type: integer, minimum: 0 }
+    get:
+      operationId: pushRunGet
+      tags: [Heartbeats]
+      summary: Record the start or the end of a run
+      description: At most sixty calls a minute per token, shared with the plain call.
+      security: []
+      x-token-scope: public
+      responses:
+        "204": { description: Run recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    post:
+      operationId: pushRunPost
+      tags: [Heartbeats]
+      summary: Record the start or the end of a run
+      description: Same as the `GET`; the body (up to 256 KiB) is the output of the job, kept truncated to its last 10 KiB.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema: { type: string }
+      responses:
+        "204": { description: Run recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Body larger than 256 KiB. }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /api/targets/{id}/push:
@@ -4705,6 +5080,34 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PushMonitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/push/runs:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: limit
+        in: query
+        description: Runs per page, 50 by default and 100 at most.
+        schema: { type: integer, minimum: 1, maximum: 100 }
+      - name: before
+        in: query
+        description: The `next_before` of the previous page.
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: listPushRuns
+      tags: [Heartbeats]
+      summary: Run history of a heartbeat device
+      description: Newest first. Only the latest 200 runs of the last 90 days are kept. `400` when the device is not a heartbeat.
+      x-token-scope: read
+      responses:
+        "200":
+          description: One page of runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushRunsPage" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -8015,6 +8418,70 @@ components:
           description: Relay agent that runs the scan; null means the server itself.
         snmp_community: { type: string, default: public, writeOnly: true }
         depth: { type: string, enum: [standard, extended], default: standard }
+    NetscanScheduleInput:
+      type: object
+      required: [cidr]
+      properties:
+        name: { type: string, maxLength: 80 }
+        cidr: { type: string, examples: ["192.168.1.0/24"] }
+        agent_id:
+          type: [integer, "null"]
+          format: int64
+          description: Relay agent that runs the scan; null or absent means the server itself.
+        interval_secs: { type: integer, minimum: 300, maximum: 2592000, default: 3600 }
+        depth:
+          type: string
+          enum: [standard, extended]
+          default: standard
+          description: Port list of the discovery (`extended` tests more ports).
+        enabled: { type: boolean, default: true }
+    NetscanSchedule:
+      type: object
+      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, unknown_ports]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        cidr: { type: string }
+        agent_id: { type: [integer, "null"], format: int64 }
+        agent_name: { type: [string, "null"] }
+        interval_secs: { type: integer }
+        depth: { type: string, enum: [standard, extended] }
+        enabled: { type: boolean }
+        initialized: { type: boolean, description: "The first scan has initialized the inventory (nothing was reported)." }
+        running: { type: boolean }
+        last_run_at: { type: [string, "null"], description: UTC, no suffix. }
+        last_status: { type: [string, "null"], enum: [running, done, failed, cancelled, null] }
+        last_error: { type: [string, "null"] }
+        devices: { type: integer }
+        unknown_devices: { type: integer }
+        unknown_ports: { type: integer, description: Unknown ports of known devices. }
+    NetscanPort:
+      type: object
+      required: [id, port, protocol, product, known, first_seen, last_seen]
+      properties:
+        id: { type: integer, format: int64 }
+        port: { type: integer }
+        protocol: { type: string, enum: [tcp, udp] }
+        product: { type: string }
+        known: { type: boolean }
+        first_seen: { type: string }
+        last_seen: { type: string }
+    NetscanDevice:
+      type: object
+      required: [id, schedule_id, ip, mac, hostname, vendor, known, first_seen, last_seen, ports]
+      properties:
+        id: { type: integer, format: int64 }
+        schedule_id: { type: integer, format: int64 }
+        ip: { type: string, description: Last address seen; a device is identified by its MAC when visible. }
+        mac: { type: [string, "null"] }
+        hostname: { type: [string, "null"] }
+        vendor: { type: [string, "null"] }
+        known: { type: boolean }
+        first_seen: { type: string }
+        last_seen: { type: string }
+        ports:
+          type: array
+          items: { $ref: "#/components/schemas/NetscanPort" }
     DiscoveryJobSummary:
       type: object
       required: [id, cidr, agent_id, agent_name, status, started_at, finished_at, hosts_found]
@@ -9580,6 +10047,77 @@ components:
         automatic: { type: boolean, description: Nobody ticked or unticked it; the device follows detection. }
         target_id: { type: [integer, "null"], description: The service's device. }
         last_seen_at: { type: [string, "null"], description: Last batch with readings of this service (UTC). }
+    AgentEventLevel:
+      type: string
+      enum: [critical, error, warning, information]
+      description: "Event Viewer level. `information` also covers level 0 (LogAlways), the level of Security audit events."
+    AgentEventRuleInput:
+      type: object
+      required: [name, channel]
+      properties:
+        name: { type: string, maxLength: 256 }
+        channel: { type: string, maxLength: 256, description: "`System`, `Application`, `Security` or a channel such as `Microsoft-Windows-TaskScheduler/Operational`." }
+        provider: { type: [string, "null"], description: "Event source (provider), such as `Microsoft-Windows-Kernel-Power`; empty for any." }
+        event_ids: { type: string, description: "Comma-separated IDs and ranges, such as `4625, 7000-7099` (20 at most); empty for any." }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" }, description: Empty for any level. }
+        pattern: { type: [string, "null"], description: Text the message must contain (case-insensitive), or a regular expression when `pattern_regex`. }
+        pattern_regex: { type: boolean, default: false }
+        severity: { $ref: "#/components/schemas/Severity" }
+        enabled: { type: boolean, default: true }
+    AgentEventRule:
+      type: object
+      required: [id, target_id, name, channel, provider, event_ids, levels, pattern, pattern_regex, severity, enabled, matches_total, dropped_total, last_match_at]
+      properties:
+        id: { type: integer, format: int64 }
+        target_id: { type: integer, format: int64 }
+        name: { type: string }
+        channel: { type: string }
+        provider: { type: [string, "null"] }
+        event_ids: { type: string, description: Canonical form; empty for any. }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" } }
+        pattern: { type: [string, "null"] }
+        pattern_regex: { type: boolean }
+        severity: { $ref: "#/components/schemas/Severity" }
+        enabled: { type: boolean }
+        matches_total: { type: integer, format: int64, description: Events received for this rule. }
+        dropped_total: { type: integer, format: int64, description: Events the agent skipped because of the rate limit. }
+        last_match_at: { type: [string, "null"], description: Last event received (UTC). }
+    AgentEventRulePreset:
+      type: object
+      required: [id, name, channel, provider, event_ids, levels, severity]
+      properties:
+        id: { type: string, description: "Stable key: `failed_logon`, `account_locked`, `unexpected_reboot`, `service_crashed`, `disk_errors`, `log_cleared`, `application_errors`." }
+        name: { type: string }
+        channel: { type: string }
+        provider: { type: [string, "null"] }
+        event_ids: { type: string }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" } }
+        severity: { $ref: "#/components/schemas/Severity" }
+    AgentEventRules:
+      type: object
+      required: [supported, max_per_minute, rules, presets]
+      properties:
+        supported: { type: boolean, description: The machine runs Windows; elsewhere the rules are kept but never sent. }
+        max_per_minute: { type: integer, description: Events kept per rule and per minute; the rest is counted in `dropped_total`. }
+        rules: { type: array, items: { $ref: "#/components/schemas/AgentEventRule" } }
+        presets: { type: array, items: { $ref: "#/components/schemas/AgentEventRulePreset" } }
+    AgentEvent:
+      type: object
+      required: [id, rule_id, rule_name, severity, channel, provider, event_id, level, record_id, computer, message, occurred_at, received_at]
+      properties:
+        id: { type: integer, format: int64 }
+        rule_id: { type: [integer, "null"], description: Null once the rule is deleted. }
+        rule_name: { type: string }
+        severity: { $ref: "#/components/schemas/Severity" }
+        channel: { type: string }
+        provider: { type: string }
+        event_id: { type: integer }
+        level: { oneOf: [{ $ref: "#/components/schemas/AgentEventLevel" }, { type: "null" }] }
+        record_id: { type: integer, format: int64 }
+        computer: { type: string }
+        message: { type: string, description: Formatted message, 2000 characters at most. }
+        occurred_at: { type: [string, "null"], description: When Windows logged the event (UTC). }
+        received_at: { type: [string, "null"], description: When the server received it (UTC). }
     ContainerPolicy:
       type: object
       required: [auto_restart, auto_update, prune_old_image, only_in_maintenance]
@@ -9644,6 +10182,35 @@ components:
         grace_secs: { type: [integer, "null"] }
         settings_error: { type: [string, "null"] }
         verdict: { type: string, enum: [waiting, on_time, missed, reported_down] }
+        schedule: { type: [string, "null"], description: "Cron expression replacing the interval, when set." }
+        timezone: { type: [string, "null"], description: "IANA time zone in which `schedule` is read." }
+        next_expected_at: { type: [string, "null"], description: "Next scheduled run of a cron schedule. UTC, without suffix." }
+        max_duration_secs: { type: [integer, "null"] }
+        last_run:
+          oneOf:
+            - $ref: "#/components/schemas/PushRun"
+            - type: "null"
+
+    PushRun:
+      type: object
+      required: [id, status, output]
+      properties:
+        id: { type: integer, format: int64 }
+        started_at: { type: [string, "null"], description: "UTC, without suffix. `null` when no `/start` preceded the end." }
+        finished_at: { type: [string, "null"], description: "UTC, without suffix. `null` while the run is open." }
+        duration_secs: { type: [number, "null"], description: "`null` when the duration is unknown." }
+        status: { type: string, enum: [running, success, failed, lost], description: "`lost`: started, then replaced by a new start without ever finishing." }
+        exit_code: { type: [integer, "null"] }
+        output: { type: string, description: "Output of the job, truncated to its last 10 KiB." }
+
+    PushRunsPage:
+      type: object
+      required: [runs]
+      properties:
+        runs:
+          type: array
+          items: { $ref: "#/components/schemas/PushRun" }
+        next_before: { type: [integer, "null"], format: int64, description: "Pass as `before` for the next page; `null` on the last one." }
 
     WebsiteOverview:
       type: object

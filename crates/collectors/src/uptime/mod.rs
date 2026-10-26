@@ -1,5 +1,6 @@
 //! Moniteurs de disponibilité : HTTP, TCP, DNS, ICMP, expiration de certificat,
-//! SMTP, PostgreSQL, MySQL/MariaDB, MQTT et WebSocket.
+//! SMTP, PostgreSQL, MySQL/MariaDB, MQTT, WebSocket, NTP, UDP, SSH, IMAP, POP3, lecture d'un
+//! OID SNMP, RADIUS et gRPC.
 //!
 //! Là où les collecteurs SNMP, Proxmox ou l'agent surveillent des *équipements*,
 //! ceux-ci surveillent des *services* : une page web répond-elle, un port
@@ -11,7 +12,8 @@
 //!
 //! Chaque sonde est un [`Collector`](dumbmonit_proto::Collector) à part entière —
 //! `http`, `tcp`, `dns`, `ping`, `tls`, `smtp`, `postgres`, `mysql`, `mqtt`,
-//! `websocket` — plutôt qu'un collecteur unique
+//! `websocket`, `ntp`, `udp`, `ssh`, `imap`, `pop3`, `snmp_oid`, `radius`, `grpc` — plutôt
+//! qu'un collecteur unique
 //! paramétré. Elle hérite ainsi sans rien écrire du planificateur, de l'intervalle
 //! par cible, de la découverte, des alertes et de l'interface ; et l'utilisateur
 //! choisit un type dans une liste au lieu de deviner une étiquette.
@@ -33,7 +35,7 @@
 //! # Métriques produites
 //!
 //! Communes à toutes les sondes, étiquetées
-//! `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"` :
+//! `probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|udp|ssh|imap|pop3|snmp_oid|radius|grpc"` :
 //!
 //! | Métrique | Unité | Sens |
 //! |---|---|---|
@@ -47,14 +49,15 @@
 //! |---|---|---|
 //! | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 //! | `probe_http_first_byte_seconds` | http | Délai jusqu'aux en-têtes de réponse. |
+//! | `probe_http_phase_seconds` | http | Phases de la requête mesurée ; étiquette `phase` : dns, connect, tls, processing, transfer. |
 //! | `probe_http_content_bytes` | http | Taille du corps. |
-//! | `probe_connect_seconds` | toutes sauf dns, ping | Établissement de la connexion. |
-//! | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Négociation TLS seule. |
-//! | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Présence ; étiquette `version`. |
-//! | `probe_ssl_cert_expiry_days` | tls, http, smtp, mqtt, websocket | Jours avant expiration, négatif si périmé. |
+//! | `probe_connect_seconds` | toutes sauf dns, ping, ntp, udp | Établissement de la connexion. |
+//! | `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket, imap, pop3 | Négociation TLS seule. |
+//! | `probe_tls_version_info` | tls, http, smtp, mqtt, websocket, imap, pop3 | Présence ; étiquette `version`. |
+//! | `probe_ssl_cert_expiry_days` | tls, http, smtp, mqtt, websocket, imap, pop3 | Jours avant expiration, négatif si périmé. |
 //! | `probe_http_security_header` | http (https seulement) | 0/1 par étiquette `header` : HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
-//! | `probe_ssl_cert_valid` | tls, http, smtp, mqtt, websocket | La chaîne remonte à une autorité connue. |
-//! | `probe_ssl_cert_issuer_info` | tls, http, smtp, mqtt, websocket | Présence ; étiquette `issuer`. |
+//! | `probe_ssl_cert_valid` | tls, http, smtp, mqtt, websocket, imap, pop3 | La chaîne remonte à une autorité connue. |
+//! | `probe_ssl_cert_issuer_info` | tls, http, smtp, mqtt, websocket, imap, pop3 | Présence ; étiquette `issuer`. |
 //! | `probe_dns_lookup_seconds` | dns | Temps de résolution. |
 //! | `probe_dns_answer_records` | dns | Enregistrements du type demandé. |
 //! | `probe_icmp_rtt_seconds` | ping | Aller-retour moyen. |
@@ -83,42 +86,79 @@
 //! | `probe_ntp_root_delay_seconds` | ntp | Délai cumulé jusqu'à la racine de la hiérarchie. |
 //! | `probe_ntp_root_dispersion_seconds` | ntp | Dispersion cumulée jusqu'à la racine. |
 //! | `probe_ntp_reference_info` | ntp | Présence ; étiquette `reference_id`. |
+//! | `probe_udp_response_seconds` | udp | Délai de la réponse (si une réponse est reçue). |
+//! | `probe_udp_response_bytes` | udp | Taille de la réponse. |
+//! | `probe_ssh_banner_seconds` | ssh | Délai jusqu'à la bannière `SSH-2.0-…`. |
+//! | `probe_ssh_protocol_info` | ssh | Présence ; étiquette `version` (protocole). |
+//! | `probe_ssh_software_info` | ssh | Présence ; étiquette `software` (logiciel du serveur). |
+//! | `probe_ssh_kex_seconds` | ssh | Durée du début d'échange de clés (si la clé est demandée). |
+//! | `probe_ssh_host_key_fingerprint` | ssh | 32 bits de l'empreinte de la clé d'hôte (voir `alert_on_change`). |
+//! | `probe_ssh_host_key_info` | ssh | Présence ; étiquette `fingerprint` (`SHA256:…`). |
+//! | `probe_ssh_host_key_match` | ssh | 1 si la clé correspond à `expected_host_key`, 0 sinon. |
+//! | `probe_imap_greeting_seconds` | imap | Délai jusqu'à la bannière `* OK`. |
+//! | `probe_imap_login_seconds` | imap | Aller-retour de la commande `LOGIN`. |
+//! | `probe_imap_authenticated` | imap | 1 quand `LOGIN` a réussi. |
+//! | `probe_pop3_greeting_seconds` | pop3 | Délai jusqu'à la bannière `+OK`. |
+//! | `probe_pop3_login_seconds` | pop3 | Durée de `USER` + `PASS`. |
+//! | `probe_pop3_authenticated` | pop3 | 1 quand l'identification a réussi. |
+//! | `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
+//! | `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
+//! | `probe_radius_response_seconds` | radius | Aller-retour de l'`Access-Request`. |
+//! | `probe_radius_response_code` | radius | Code de la réponse : 2 accepté, 3 refusé, 11 défi. |
+//! | `probe_grpc_check_seconds` | grpc | Durée de l'appel `Health/Check`. |
+//! | `probe_grpc_serving_status` | grpc | `ServingStatus` renvoyé : 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
+//! | `probe_grpc_status_code` | grpc | Code `grpc-status` de la réponse (0 : OK). |
 //!
 //! Toutes sont des jauges : rien ici n'est cumulatif, chaque interrogation mesure
 //! un instant. Le préfixe `dumbmonit_` est ajouté à l'écriture, comme partout.
 //!
-//! Les étiquettes d'identité restent de faible cardinalité : `probe` prend onze
-//! valeurs, `reason` dix-sept, `record_type` dix, `security` trois, `sslmode`
+//! Les étiquettes d'identité restent de faible cardinalité : `probe` prend quinze
+//! valeurs, `reason` dix-huit, `record_type` dix, `security` trois, `sslmode`
 //! quatre, et `url`, `port`, `server_name`, `resolver` en prennent une par cible.
 //! S'y ajoutent `target`, `host` et les `tag_*` posés par le registre.
 
 mod dns;
+mod grpc;
 pub mod guard;
 mod http;
+mod imap;
+mod mailbox;
 mod mqtt;
 mod ntp;
 mod outcome;
 mod ping;
+mod pop3;
 mod provider;
+mod radius;
 pub(crate) mod session;
 mod smtp;
+mod snmp_oid;
 mod sql;
+mod ssh;
 pub(crate) mod tags;
 mod tcp;
 pub(crate) mod tls;
+mod udp;
 pub(crate) mod websocket;
 
 pub use dns::DnsCollector;
+pub use grpc::GrpcCollector;
 pub use http::HttpCollector;
 pub use http::security_headers::security_headers;
+pub use imap::ImapCollector;
 pub use mqtt::MqttCollector;
 pub use ntp::NtpCollector;
 pub use ping::{PingCollector, icmp_available};
+pub use pop3::Pop3Collector;
 pub use provider::ProviderCollector;
+pub use radius::RadiusCollector;
 pub use smtp::SmtpCollector;
+pub use snmp_oid::SnmpOidCollector;
 pub use sql::{MysqlCollector, PostgresCollector};
+pub use ssh::SshCollector;
 pub use tcp::TcpCollector;
 pub use tls::TlsCollector;
+pub use udp::UdpCollector;
 pub use websocket::WebsocketCollector;
 
 /// Nom annoncé par défaut dans la commande `EHLO` de la sonde SMTP.
@@ -150,6 +190,13 @@ mod tests {
         assert_eq!(MqttCollector::new().kind(), "mqtt");
         assert_eq!(WebsocketCollector::new().kind(), "websocket");
         assert_eq!(NtpCollector::new().kind(), "ntp");
+        assert_eq!(UdpCollector::new().kind(), "udp");
+        assert_eq!(SshCollector::new().kind(), "ssh");
+        assert_eq!(ImapCollector::new().kind(), "imap");
+        assert_eq!(Pop3Collector::new().kind(), "pop3");
+        assert_eq!(SnmpOidCollector::new().kind(), "snmp_oid");
+        assert_eq!(RadiusCollector::new().kind(), "radius");
+        assert_eq!(GrpcCollector::new().kind(), "grpc");
     }
 
     #[test]
@@ -166,6 +213,13 @@ mod tests {
             MqttCollector::new().kind().to_owned(),
             WebsocketCollector::new().kind().to_owned(),
             NtpCollector::new().kind().to_owned(),
+            UdpCollector::new().kind().to_owned(),
+            SshCollector::new().kind().to_owned(),
+            ImapCollector::new().kind().to_owned(),
+            Pop3Collector::new().kind().to_owned(),
+            SnmpOidCollector::new().kind().to_owned(),
+            RadiusCollector::new().kind().to_owned(),
+            GrpcCollector::new().kind().to_owned(),
         ];
         let mut uniques = kinds.to_vec();
         uniques.sort_unstable();
