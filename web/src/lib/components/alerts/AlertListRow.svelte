@@ -34,6 +34,7 @@
 	import AckControl from './AckControl.svelte';
 	import SnoozeControl from './SnoozeControl.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import AlertRemediation from '#lib/components/remediation/AlertRemediation.svelte';
 
 	interface Props {
 		folded: Folded;
@@ -357,6 +358,9 @@
 						>
 					{/each}
 				</p>
+			{/if}
+			{#if alert}
+				<AlertRemediation fingerprint={alert.fingerprint} />
 			{/if}
 
 			<div class="mt-3 flex flex-wrap items-start gap-2">

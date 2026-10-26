@@ -168,6 +168,10 @@ tags:
     description: >-
       Security score per device: checks derived from vendor best practices,
       evaluated on the data collectors already gather.
+  - name: Remediation
+    description: >-
+      Runbooks linked to alerts, remediation actions (closed catalogue), automatic
+      policies armed in two steps, and the audit log. Actions are session only.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
   - name: Configuration files
@@ -8572,6 +8576,489 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/runbooks:
+    get:
+      operationId: listRunbooks
+      tags: [Remediation]
+      summary: Every runbook, with its links
+      x-token-scope: read
+      responses:
+        "200":
+          description: Runbooks, by title.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Runbook" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createRunbook
+      tags: [Remediation]
+      summary: Create a runbook (admin)
+      description: >-
+        Markdown text linked to alert rules (by uid), folders or device kinds. The
+        interface escapes any HTML: the text is never rendered as markup. Audited.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunbookInput" }
+      responses:
+        "201":
+          description: The runbook.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Runbook" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/runbooks/match:
+    get:
+      operationId: matchRunbooks
+      tags: [Remediation]
+      summary: Runbooks that apply to a rule and a device
+      x-token-scope: read
+      parameters:
+        - { name: rule_uid, in: query, schema: { type: string } }
+        - { name: target_id, in: query, schema: { type: integer, format: int64 } }
+      responses:
+        "200":
+          description: Matching runbooks.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Runbook" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/runbooks/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getRunbook
+      tags: [Remediation]
+      summary: One runbook
+      x-token-scope: read
+      responses:
+        "200":
+          description: The runbook.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Runbook" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateRunbook
+      tags: [Remediation]
+      summary: Replace a runbook and its links (admin)
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RunbookInput" }
+      responses:
+        "200":
+          description: The runbook.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Runbook" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteRunbook
+      tags: [Remediation]
+      summary: Delete a runbook (admin)
+      x-token-scope: write
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/kinds:
+    get:
+      operationId: listRemediationKinds
+      tags: [Remediation]
+      summary: The closed catalogue of action kinds and their fields
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Action kinds.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RemediationKind" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/remediation/actions:
+    get:
+      operationId: listRemediationActions
+      tags: [Remediation]
+      summary: Defined remediation actions (secrets never returned)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Actions, by name.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RemediationAction" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createRemediationAction
+      tags: [Remediation]
+      summary: Define an action (admin)
+      description: >-
+        `kind` is one of the catalogue (`GET /api/remediation/kinds`); unknown fields are
+        refused. No field carries a shell command: a script is named, and only runs if the
+        machine declares it in its own actions folder. Audited.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RemediationActionInput" }
+      responses:
+        "201":
+          description: The action.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationAction" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/remediation/actions/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateRemediationAction
+      tags: [Remediation]
+      summary: Change an action (admin); disarms every policy that uses it
+      description: >-
+        Omitting `secrets` keeps them, `{}` clears them. Changing the kind clears them.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RemediationActionInput" }
+      responses:
+        "200":
+          description: The action.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationAction" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteRemediationAction
+      tags: [Remediation]
+      summary: Delete an action and its policies (admin); its runs stay in the log
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/actions/{id}/run:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: runRemediationAction
+      tags: [Remediation]
+      summary: Run an action by hand
+      description: >-
+        Operators run an action from an active alert (`fingerprint`): the device is the
+        alert's, or the one fixed on the action. Administrators may name `target_id`
+        instead. At most 30 runs per minute for the whole instance. Audited.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      x-roles: [admin, operator]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                fingerprint: { type: string }
+                target_id: { type: integer, format: int64 }
+      responses:
+        "201":
+          description: The log entry (queued for the agent, or already finished).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationRun" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/remediation/policies:
+    get:
+      operationId: listRemediationPolicies
+      tags: [Remediation]
+      summary: Automatic remediation policies
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Policies.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RemediationPolicy" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createRemediationPolicy
+      tags: [Remediation]
+      summary: Create a policy (admin), always disarmed
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RemediationPolicyInput" }
+      responses:
+        "201":
+          description: The policy, disarmed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/remediation/policies/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateRemediationPolicy
+      tags: [Remediation]
+      summary: Change a policy (admin); disarms it
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RemediationPolicyInput" }
+      responses:
+        "200":
+          description: The policy, disarmed.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteRemediationPolicy
+      tags: [Remediation]
+      summary: Delete a policy (admin)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/policies/{id}/arm:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: armRemediationPolicy
+      tags: [Remediation]
+      summary: First step of arming a policy (admin, signed in)
+      description: >-
+        Returns a single-use code, valid two minutes, that only the same account can send
+        to `confirm`, with a plain summary of what will run.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The confirmation challenge.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [token, expires_in_secs, summary, policy]
+                properties:
+                  token: { type: string }
+                  expires_in_secs: { type: integer }
+                  summary: { type: string }
+                  policy: { $ref: "#/components/schemas/RemediationPolicy" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/policies/{id}/confirm:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: confirmRemediationPolicy
+      tags: [Remediation]
+      summary: Second step of arming a policy
+      description: The code is consumed whether it matches or not. Audited.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        "200":
+          description: The armed policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationPolicy" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/policies/{id}/disable:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: disableRemediationPolicy
+      tags: [Remediation]
+      summary: Disarm a policy (admin)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The disarmed policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RemediationPolicy" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/runs:
+    get:
+      operationId: listRemediationRuns
+      tags: [Remediation]
+      summary: The remediation audit log, newest first
+      description: Parameters are logged without secrets; outputs are truncated to 4 KiB.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - { name: target_id, in: query, schema: { type: integer, format: int64 } }
+        - { name: fingerprint, in: query, schema: { type: string } }
+        - { name: action_id, in: query, schema: { type: integer, format: int64 } }
+        - { name: policy_id, in: query, schema: { type: integer, format: int64 } }
+        - { name: before, in: query, schema: { type: integer, format: int64 } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+      responses:
+        "200":
+          description: Log entries.
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RemediationRun" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/remediation/alert/{fingerprint}:
+    parameters:
+      - name: fingerprint
+        in: path
+        required: true
+        schema: { type: string }
+    get:
+      operationId: getAlertRemediation
+      tags: [Remediation]
+      summary: Runbooks, applicable actions, policies and runs of an active alert
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The alert's remediation context.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runbooks, actions, policies, runs]
+                properties:
+                  runbooks: { type: array, items: { $ref: "#/components/schemas/Runbook" } }
+                  actions: { type: array, items: { $ref: "#/components/schemas/RemediationAction" } }
+                  policies: { type: array, items: { $ref: "#/components/schemas/RemediationPolicy" } }
+                  runs: { type: array, items: { $ref: "#/components/schemas/RemediationRun" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/remediation/targets/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getTargetRemediation
+      tags: [Remediation]
+      summary: Runbooks, agent capabilities and runs of a device
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The device's remediation context.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [runbooks, agent, runs]
+                properties:
+                  runbooks: { type: array, items: { $ref: "#/components/schemas/Runbook" } }
+                  agent:
+                    type: [object, "null"]
+                    properties:
+                      host_id: { type: integer, format: int64 }
+                      commands_enabled: { type: boolean }
+                      remediation:
+                        type: [object, "null"]
+                        properties:
+                          enabled: { type: boolean }
+                          services: { type: array, items: { type: string } }
+                          scripts:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                name: { type: string }
+                                description: { type: string }
+                                params:
+                                  type: object
+                                  additionalProperties: { type: array, items: { type: string } }
+                                timeout_secs: { type: integer }
+                  runs: { type: array, items: { $ref: "#/components/schemas/RemediationRun" } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/oncall/now:
     get:
       operationId: whoIsOnCall
@@ -9304,6 +9791,126 @@ components:
         scimType: { type: string }
         detail: { type: string }
 
+    RunbookLink:
+      type: object
+      required: [scope, value]
+      properties:
+        scope: { type: string, enum: [rule, group, kind] }
+        value: { type: string, description: "Rule uid, folder name or device kind." }
+    RunbookInput:
+      type: object
+      required: [title]
+      properties:
+        title: { type: string, maxLength: 200 }
+        body: { type: string, description: "Markdown, 64 KiB max. HTML is shown as text." }
+        links: { type: array, maxItems: 50, items: { $ref: "#/components/schemas/RunbookLink" } }
+    Runbook:
+      type: object
+      required: [id, title, body, links, created_at, updated_at]
+      properties:
+        id: { type: integer, format: int64 }
+        title: { type: string }
+        body: { type: string }
+        links: { type: array, items: { $ref: "#/components/schemas/RunbookLink" } }
+        created_at: { type: string }
+        updated_at: { type: string }
+        updated_by: { type: [string, "null"] }
+    RemediationKind:
+      type: object
+      required: [kind, label, description, needs_agent, fields]
+      properties:
+        kind: { type: string, enum: [service.restart, container.restart, script.run, webhook] }
+        label: { type: string }
+        description: { type: string }
+        needs_agent: { type: boolean }
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              label: { type: string }
+              input: { type: string, enum: [text, url, secret, params] }
+              required: { type: boolean }
+              help: { type: string }
+    RemediationActionInput:
+      type: object
+      required: [name, kind]
+      properties:
+        name: { type: string, maxLength: 100 }
+        kind: { type: string, enum: [service.restart, container.restart, script.run, webhook] }
+        params:
+          type: object
+          description: >-
+            service.restart `{service}`, container.restart `{container}`, script.run
+            `{script, params}`, webhook `{url}`.
+        target_id: { type: [integer, "null"], format: int64 }
+        secrets:
+          type: object
+          description: "webhook `{token}`. Omitted: kept; `{}`: cleared. Never returned."
+          additionalProperties: { type: string }
+    RemediationAction:
+      type: object
+      required: [id, name, kind, params, has_secret, created_at, updated_at]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        kind: { type: string }
+        params: { type: object }
+        has_secret: { type: boolean }
+        target_id: { type: [integer, "null"], format: int64 }
+        created_at: { type: string }
+        updated_at: { type: string }
+    RemediationPolicyInput:
+      type: object
+      required: [action_id, rule_uid]
+      properties:
+        action_id: { type: integer, format: int64 }
+        rule_uid: { type: string }
+        target_id: { type: [integer, "null"], format: int64 }
+        after_minutes: { type: integer, minimum: 1, maximum: 1440, default: 5 }
+        max_attempts: { type: integer, minimum: 1, maximum: 10, default: 1 }
+        window_minutes: { type: integer, minimum: 5, maximum: 10080, default: 60 }
+    RemediationPolicy:
+      type: object
+      required: [id, action_id, action_name, action_kind, rule_uid, after_minutes, max_attempts, window_minutes, enabled]
+      properties:
+        id: { type: integer, format: int64 }
+        action_id: { type: integer, format: int64 }
+        action_name: { type: string }
+        action_kind: { type: string }
+        rule_uid: { type: string }
+        target_id: { type: [integer, "null"], format: int64 }
+        after_minutes: { type: integer }
+        max_attempts: { type: integer }
+        window_minutes: { type: integer }
+        enabled: { type: boolean, description: "Armed (confirmed in two steps)." }
+        armed_by: { type: [string, "null"] }
+        armed_at: { type: [string, "null"] }
+        halted_at: { type: [string, "null"], description: "Set after two failed runs in a row." }
+        halt_reason: { type: [string, "null"] }
+        created_at: { type: string }
+        updated_at: { type: string }
+    RemediationRun:
+      type: object
+      required: [id, action_name, kind, params, trigger, requested_by, status, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        action_id: { type: [integer, "null"], format: int64 }
+        action_name: { type: string }
+        kind: { type: string }
+        params: { type: object, description: "Without secrets." }
+        target_id: { type: [integer, "null"], format: int64 }
+        target_name: { type: [string, "null"] }
+        fingerprint: { type: [string, "null"] }
+        rule_uid: { type: [string, "null"] }
+        policy_id: { type: [integer, "null"], format: int64 }
+        trigger: { type: string, enum: [manual, auto] }
+        requested_by: { type: string }
+        status: { type: string, enum: [queued, running, done, failed, cancelled, expired] }
+        output: { type: [string, "null"], description: "Truncated to 4 KiB, end kept." }
+        created_at: { type: string }
+        finished_at: { type: [string, "null"] }
     Error:
       type: object
       required: [error]

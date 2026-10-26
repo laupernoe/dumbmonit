@@ -13,6 +13,7 @@ pub mod env;
 mod eventlog;
 mod logs;
 mod push;
+pub mod remediation;
 mod sample;
 mod selfupdate;
 mod target;
@@ -54,6 +55,7 @@ pub use push::{
     MAX_INVENTORY_PACKAGES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting,
     SoftwareInventory, TOKEN_PREFIX,
 };
+pub use remediation::{CMD_SCRIPT_RUN, CMD_SERVICE_RESTART, DeclaredScript, RemediationInfo};
 pub use sample::{MetricKind, Sample};
 pub use selfupdate::{
     AGENT_FILE_PREFIX, AgentUpdateOffer, SIGNATURE_SUFFIX, SelfUpdateAbility, SelfUpdateInfo,

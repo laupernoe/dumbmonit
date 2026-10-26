@@ -146,6 +146,11 @@ pub struct AgentIdentity {
     /// agent antérieur : l'interface dit alors de le mettre à jour à la main.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub self_update: Option<SelfUpdateInfo>,
+    /// Actions de remédiation que l'agent accepte : activées ou non, services
+    /// autorisés, scripts de son dossier local. Absent chez un agent antérieur :
+    /// le serveur n'y demande alors ni service ni script.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remediation: Option<crate::RemediationInfo>,
 }
 
 impl AgentIdentity {
@@ -394,6 +399,7 @@ mod tests {
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             binding_supported: true,
             self_update: None,
+            remediation: None,
         }
     }
 
