@@ -18,7 +18,8 @@ All notable changes to this project are documented here. The format follows
   series (`dumbmonit_probe_location_success{location}`,
   `dumbmonit_probe_location_duration_seconds`). The monitor page shows state and
   latency per location (on the world map when geolocated);
-  `GET /api/targets/{id}/probe-locations` returns them.
+  `GET /api/targets/{id}/probe-locations` returns them. Backups carry the
+  setting (relay agents by reference).
 - **Status pages and reports, batch 1.**
   - *Private status pages.* Each page now chooses who can see it: anyone with
     the link (default), anyone with a password of its own (Argon2id hash, signed
