@@ -16,6 +16,10 @@
 //! compression et la longueur du message sur quatre octets, big-endian.
 
 /// Valeurs de l'énumération `ServingStatus` du protocole de santé.
+///
+/// Les variantes reprennent les noms du protocole (`SERVING`, `NOT_SERVING`) :
+/// les renommer pour plaire à clippy les rendrait méconnaissables.
+#[allow(clippy::enum_variant_names)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Serving {
     Unknown,

@@ -643,7 +643,7 @@ mod tests {
         assert_eq!(metric(&samples, "probe_success"), Some(1.0));
         let expected = wire::frame(&wire::encode_request("pkg.Echo"));
         assert_eq!(*server.requests.lock().unwrap(), vec![expected]);
-        let labelled = samples.iter().all(|s| s.labels.get("service").is_some());
+        let labelled = samples.iter().all(|s| s.labels.contains_key("service"));
         assert!(labelled, "l'étiquette service est posée sur tous les échantillons");
     }
 
