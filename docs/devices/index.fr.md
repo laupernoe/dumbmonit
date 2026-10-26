@@ -48,6 +48,11 @@ que cette version peut surveiller.
 | [Redis / Valkey](redis.md) | `redis` | utilisateur ACL, mot de passe seul, ou aucun | Stockage en mémoire : mémoire par rapport à maxmemory, réplication, persistance, clés |
 | [MongoDB](mongodb.md) | `mongodb` | nom d'utilisateur/mot de passe (clusterMonitor) ou aucun | Base de données documents : replica set, retard, connexions, cache WiredTiger |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | nom d'utilisateur/mot de passe (étiquette monitoring) | Courtier de messages : alarmes de ressource, nœuds, partitions, files sans consommateur |
+| [SQL Server](mssql.md) | `mssql` | connexion SQL (nom d'utilisateur/mot de passe) | Bases hors ligne, blocages, connexions, espace des volumes, travaux de l'Agent, AlwaysOn |
+| [Oracle Database](oracle.md) | `oracle` | compte de la base (nom d'utilisateur/mot de passe), par ORDS | État de l'instance, tablespaces, sessions, retard Data Guard, zone de récupération, travaux du planificateur |
+| [Elasticsearch / OpenSearch](elasticsearch.md) | `elasticsearch` | nom d'utilisateur/mot de passe, jeton ou aucun | État du cluster, shards non alloués, disque et tas des nœuds |
+| [InfluxDB](influxdb.md) | `influxdb` | aucun ou jeton d'API | InfluxDB 2 et 3 : santé, disponibilité, temps de marche, mémoire, erreurs serveur |
+| [Apache Kafka](kafka.md) | `kafka` | aucun ou SASL/PLAIN sous TLS | Partitions hors ligne et sous-répliquées, contrôleur, retard des groupes de consommateurs |
 | [CrowdSec](crowdsec.md) | `crowdsec` | aucun, ou clé d'API bouncer | Moteur de sécurité : décisions, alertes, bouncers qui ont arrêté de récupérer, lecture de logs |
 | [Traefik](traefik.md) | `traefik` | aucun, ou utilisateur basicAuth | Reverse proxy : routeurs désactivés, serveurs backend en panne, certificats non obtenus ou non renouvelés, part de 5xx |
 | [Caddy](caddy.md) | `caddy` | utilisateur de vue en lecture seule, ou aucun | Serveur web et reverse proxy : santé des upstreams, rechargements échoués, erreurs de handler, part de 5xx |

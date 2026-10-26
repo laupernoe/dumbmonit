@@ -124,6 +124,16 @@ stringprep = "0.1"
 ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ring"] }
 rustls-native-certs = "0.8"
 
+# --- SQL Server (`mssql/`) ---
+#
+# Protocole TDS en Rust pur (MIT OR Apache-2.0). `default-features = false`
+# écarte `native-tls` (OpenSSL) et l'authentification Windows ; TLS passe par
+# rustls (le fournisseur déjà présent dans l'arbre via reqwest), les racines par
+# le magasin du système. `tokio-util` fournit l'adaptateur entre les flux de
+# Tokio et les traits `futures` que le pilote attend.
+tiberius = { version = "0.13", default-features = false, features = ["rustls", "tds73"] }
+tokio-util = { version = "0.7", default-features = false, features = ["compat"] }
+
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
 # Faux services HTTP (DSM, PVE) montés dans les tests unitaires.

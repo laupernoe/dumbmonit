@@ -549,6 +549,37 @@ Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [M
 | CrowdSec bouncer stopped pulling | A bouncer's requests did not change in 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
 | CrowdSec reads no logs | Not a single log line read in six hours (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
 
+### More databases and Kafka
+
+SQL Server, Oracle, Elasticsearch / OpenSearch, InfluxDB and Kafka ([SQL Server](../devices/mssql.md), [Oracle](../devices/oracle.md), [Elasticsearch](../devices/elasticsearch.md), [InfluxDB](../devices/influxdb.md), [Kafka](../devices/kafka.md)). Counters go through `increase_prometheus`, so nothing fires on a monitor's first measurement.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| SQL Server database unavailable | A database is SUSPECT, RECOVERY_PENDING, OFFLINE or EMERGENCY (`dumbmonit_mssql_database_online`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| SQL Server blocked requests | A request has been waiting on a lock for more than 5 minutes: a transaction was probably left open (`dumbmonit_mssql_longest_block_seconds`). | > 300 s | 5 min | Advisory (`warning`) | 6 h |
+| SQL Server volume almost full | A volume holding database files is more than 90 % full; clears below 85 % (`dumbmonit_mssql_volume_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| SQL Server Agent job failed | The last run of an enabled SQL Server Agent job failed (backups, maintenance) (`dumbmonit_mssql_agent_job_last_ok`). | < 1 | 5 min | Advisory (`warning`) | 24 h |
+| SQL Server AlwaysOn replica unhealthy | A database replica of an availability group is not synchronizing in good health (`dumbmonit_mssql_alwayson_sync_health`). | < 2 | 10 min | Warning (`critical`) | 1 h |
+| SQL Server connections near the limit | User sessions use more than 90 % of the configured connection limit. No series without a limit (`dumbmonit_mssql_sessions_used_percent`). | > 90 % | 10 min | Advisory (`warning`) | 6 h |
+| Oracle instance not open | The instance status is not OPEN (MOUNTED, STARTED...): the database serves nothing (`dumbmonit_oracle_instance_open`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| Oracle tablespace almost full | A tablespace is more than 90 % full of its maximum size; clears below 85 % (`dumbmonit_oracle_tablespace_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Oracle sessions near the limit | Sessions use more than 90 % of the sessions parameter (ORA-00018 when it is reached) (`dumbmonit_oracle_sessions_used_percent`). | > 90 % | 10 min | Advisory (`warning`) | 6 h |
+| Oracle Data Guard apply lag | A standby applies redo more than 10 minutes behind the primary (`dumbmonit_oracle_dataguard_apply_lag_seconds`). | > 600 s | 10 min | Advisory (`warning`) | 6 h |
+| Oracle recovery area almost full | The fast recovery area is more than 90 % full: archiving can stall and freeze the database (`dumbmonit_oracle_recovery_area_used_percent`). | > 90 % | 10 min | Warning (`critical`) | 1 h |
+| Oracle scheduler job failed | At least one scheduler job run failed in the last 24 hours (`dumbmonit_oracle_scheduler_jobs_failed_24h`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| Elasticsearch cluster red | The cluster status is red: at least one primary shard is not allocated and part of the data is unavailable (`dumbmonit_elasticsearch_cluster_status`). | > 1 | 2 min | Warning (`critical`) | 1 h |
+| Elasticsearch cluster yellow | The cluster has been yellow for 30 minutes: replicas are missing and the next node failure will lose data (`dumbmonit_elasticsearch_cluster_status == 1`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Elasticsearch unassigned shards | Shards have stayed unassigned for 15 minutes (`dumbmonit_elasticsearch_unassigned_shards`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Elasticsearch node disk almost full | A node's data disk is more than 85 % full (the high watermark is 90 %, the read-only flood stage 95 %); clears below 80 % (`dumbmonit_elasticsearch_node_disk_used_percent`). | > 85 % | 10 min | Advisory (`warning`) | 6 h |
+| Elasticsearch JVM heap pressure | A node's JVM heap stays above 90 % for 15 minutes: garbage collection will slow the node (`dumbmonit_elasticsearch_node_heap_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| InfluxDB unhealthy | InfluxDB answers its health check with a failure (`dumbmonit_influxdb_healthy`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| InfluxDB not ready | InfluxDB is up but does not report itself ready for queries and writes (`dumbmonit_influxdb_ready`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| InfluxDB server errors | More than 10 API requests answered with a 5xx status in the last 15 minutes (`increase_prometheus(dumbmonit_influxdb_http_requests_5xx_total[15m])`). | > 10 | 5 min | Advisory (`warning`) | 6 h |
+| Kafka partitions offline | A partition has no leader: reads and writes to it fail (`dumbmonit_kafka_offline_partitions`). | > 0 | 2 min | Warning (`critical`) | 1 h |
+| Kafka under-replicated partitions | Partitions have fewer in-sync replicas than replicas for 10 minutes: a broker is down or lagging (`dumbmonit_kafka_under_replicated_partitions`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Kafka without controller | The cluster reports no controller: no leader election is possible (`dumbmonit_kafka_controller_present`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| Kafka consumer group lag | A consumer group is more than 10 000 messages behind for 15 minutes. Adjust the threshold to the traffic of your topics (`dumbmonit_kafka_consumer_group_lag_total`). | > 10000 | 15 min | Advisory (`warning`) | 6 h |
+
 ### Reverse proxies and domains
 
 Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md), [Nginx Proxy Manager](../devices/npm.md), [Domain expiry](../devices/domain.md)), and the DNS check's *Alert when the answer changes* option ([Services](../devices/services.md#alerting-when-the-answer-changes)). Series carry `router`, `service`, `server`, `upstream`, `proxy_host` or `cert`, so the notification names what failed.
