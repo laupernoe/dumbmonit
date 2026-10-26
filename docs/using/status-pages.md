@@ -452,6 +452,61 @@ link previews do not run JavaScript, so they read them as is. A page that is a
 draft, unknown or not indexable never shows its title, and the `/embed`,
 `/confirm` and `/unsubscribe` variants are never indexed.
 
+### Private pages {#private}
+
+By default a page is open to anyone with the link. **Who can see this page**,
+in the editor, changes that:
+
+- **Anyone with the link**: the default.
+- **Anyone with the password**: visitors see a password form first. The
+  password (8 characters at least) is stored hashed with Argon2id and never
+  shown again; leave the field empty to keep the current one. A correct
+  password sets a signed access cookie, valid for 12 hours. Changing the
+  password ends every access already granted. Mistakes are counted per address
+  and per page: after five, the next attempts wait 30 seconds, doubling up to
+  five minutes.
+- **Signed-in DumbMonit users**: any account, local, LDAP or SSO, whatever its
+  role. Visitors without a session are sent to the sign-in screen and come back
+  to the page. The session cookie belongs to the main address, so this mode
+  does not work behind a [custom domain](#custom-domain): use a password there.
+
+A page that is not public is **never indexed**, whatever its SEO block says: it
+answers `noindex, nofollow`, stays out of `/sitemap.xml` and shows no title in
+the HTML. Everything that leaves the page by its address follows the same
+access: the JSON document, the badges, the RSS and [iCal](#ical) feeds, the logo,
+the day detail and email subscription. The responses carry `Cache-Control:
+private, no-store`. A badge is an image loaded by the reader's browser, so it
+only shows where that browser already holds access; on a README it stays broken.
+The embed and the [website banner](../integrations/website-banner.md) need the
+same access too.
+
+### Maintenance calendar (iCal) {#ical}
+
+Planned maintenance can be followed from a calendar app (Google Calendar,
+Outlook, Thunderbird, Apple Calendar) that subscribes to an iCalendar feed:
+
+- `GET /api/public/status/<address>/maintenance.ics`: the maintenance announced
+  on the page (and those for every page), from 90 days back to the far future.
+  It follows the page's access mode and is linked under **Get updates** on the
+  public page.
+- `GET /api/calendar/maintenance.ics?token=…`: every maintenance of the
+  instance. The token is in the address and is the only protection: share the
+  address like a password. Administrators read it, and replace it with **New
+  address**, under the page editor's **Maintenance calendar** block.
+
+Each maintenance is one event, with its title, its start, its end (one hour
+when none is set) and its latest message as description. Incidents are not
+listed.
+
+### Third-party providers {#providers}
+
+Your page can show a provider you depend on, next to your own services. Add a
+[**Third-party service status**](../devices/provider.md) monitor (Cloudflare,
+GitHub, Atlassian, AWS…) and put it on the page like any other monitor: it
+appears with an **External** tag, its own history and the usual states. The
+provider's page is read at most once a minute and shared between monitors and
+pages.
+
 ### Feed and document
 
 - `GET /api/public/status/<address>/rss` — an RSS feed of incidents and
