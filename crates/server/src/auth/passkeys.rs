@@ -68,8 +68,9 @@ pub fn start(ceremony: Ceremony, rp: RelyingParty) -> (String, [u8; 32]) {
             // réservés aux comptes connectés, ne sont jamais évincés par un
             // afflux de connexions anonymes.
             Ceremony::Register { user_id } => {
-                let mine = |p: &Pending| {
-                    matches!(p.ceremony, Ceremony::Register { user_id: other } if other == user_id)
+                let mine = |p: &Pending| match p.ceremony {
+                    Ceremony::Register { user_id: other } => other == user_id,
+                    Ceremony::Login => false,
                 };
                 if pending.values().filter(|p| mine(p)).count() >= MAX_REGISTER_PER_USER
                     && let Some(oldest) = pending
