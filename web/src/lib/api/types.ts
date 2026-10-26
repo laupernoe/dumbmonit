@@ -4930,6 +4930,64 @@ export interface CveFilters {
 	ignored?: boolean;
 }
 
+// --- Agent self-update (Settings → Agents → Agent updates) -------------------
+
+export type AgentUpdateWindow = 'any' | 'maintenance' | 'manual';
+export interface AgentUpdateSettings {
+	enabled: boolean;
+	window: AgentUpdateWindow;
+	canary_minutes: number;
+	allow_unsigned: boolean;
+}
+export type AgentUpdateStatus =
+	| 'up_to_date'
+	| 'pending'
+	| 'updating'
+	| 'failed'
+	| 'refused'
+	| 'disabled'
+	| 'manual'
+	| 'waiting_window'
+	| 'waiting_canary'
+	| 'newer'
+	| 'legacy'
+	| 'container'
+	| 'read_only'
+	| 'disabled_locally'
+	| 'unsupported'
+	| 'no_binary';
+export interface AgentUpdateOutcome {
+	outcome: 'succeeded' | 'failed' | 'rolled_back' | 'refused';
+	version: string | null;
+	reason: string | null;
+	at: string | null;
+}
+export interface AgentUpdateAgent {
+	id: number;
+	name: string;
+	hostname: string;
+	version: string;
+	platform: string | null;
+	sha256: string | null;
+	/** `null` = follow the global setting. */
+	enabled: boolean | null;
+	canary: boolean;
+	requested: boolean;
+	status: AgentUpdateStatus;
+	reason: string | null;
+	last: AgentUpdateOutcome | null;
+	last_seen_at: string | null;
+}
+/** `GET /api/agent/updates`. */
+export interface AgentUpdates {
+	settings: AgentUpdateSettings;
+	version: string;
+	build: string | null;
+	binaries: { platform: string; sha256: string; signed: boolean }[];
+	rollout: { canaries: number; canaries_updated: number; open: boolean; reason: string | null };
+	agents: AgentUpdateAgent[];
+}
+
 // --- Data & retention (Settings → System) and log search -------------------
 // Mirrors `GET/PUT /api/system/storage` and `GET /api/logs/search`.
 
