@@ -167,6 +167,39 @@ impl Routes {
     }
 }
 
+/// Identifiant de la destination interne « VictoriaLogs embarqué » : jamais
+/// en base (les identifiants SQLite commencent à 1).
+pub const EMBEDDED_ID: i64 = 0;
+
+/// Adresse du VictoriaLogs embarqué quand il tourne.
+static EMBEDDED: RwLock<Option<String>> = RwLock::new(None);
+
+/// Branche (ou débranche) le VictoriaLogs embarqué ; effectif au prochain
+/// [`reload`].
+pub fn set_embedded(url: Option<String>) {
+    *EMBEDDED.write().unwrap_or_else(std::sync::PoisonError::into_inner) = url;
+}
+
+/// La destination interne : le journal du serveur, niveau `info` et plus,
+/// vers le VictoriaLogs embarqué.
+fn embedded_route(routes: &Routes) -> Option<Route> {
+    let url = EMBEDDED.read().unwrap_or_else(std::sync::PoisonError::into_inner).clone()?;
+    let stats = routes.stats(EMBEDDED_ID);
+    let mut settings = serde_json::Map::new();
+    settings.insert("url".into(), serde_json::Value::String(url));
+    let config = super::catalog::DestinationConfig { settings, secrets: HashMap::new() };
+    let sink = match catalog::build("victorialogs", &config) {
+        Ok(sink) => sink,
+        Err(error) => {
+            stats.misconfigured(error);
+            return None;
+        }
+    };
+    let (tx, rx) = mpsc::channel(QUEUE);
+    tokio::spawn(worker(EMBEDDED_ID, rx, sink, stats.clone()));
+    Some(Route { id: EMBEDDED_ID, min: Level::Info, tx, stats })
+}
+
 /// Relit les destinations en base et remplace les tâches d'expédition.
 ///
 /// Les anciennes tâches s'arrêtent d'elles-mêmes : leur file, dont la couche
@@ -200,7 +233,10 @@ pub async fn reload(pool: &SqlitePool, cipher: &Cipher) -> anyhow::Result<()> {
             stats,
         });
     }
-    routes.forget(&destinations.iter().map(|destination| destination.id).collect::<Vec<_>>());
+    active.extend(embedded_route(routes));
+    let mut keep: Vec<i64> = destinations.iter().map(|destination| destination.id).collect();
+    keep.push(EMBEDDED_ID);
+    routes.forget(&keep);
     routes.replace(active);
     Ok(())
 }

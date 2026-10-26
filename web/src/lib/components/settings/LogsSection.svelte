@@ -221,6 +221,10 @@
 		<Skeleton class="h-40 w-full" />
 	{:else if info}
 		<div class="grid gap-8">
+			<p class="text-sm text-ink-2">
+				{m.logsearch_section_hint()}
+				<a href="/logs" class="inline-flex min-h-10 items-center font-semibold text-signal-ink hover:underline">{m.logsearch_section_link()}</a>
+			</p>
 			<!-- Local storage -->
 			<Disclosure title={m.settings_logs_storage_title()}>
 				<dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">

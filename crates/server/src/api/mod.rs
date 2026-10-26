@@ -50,6 +50,7 @@ mod seo_files;
 mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
+mod storage;
 mod synology;
 mod target_rules;
 mod targets;
@@ -244,6 +245,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(backup::routes())
         // Journaux du serveur : stockage, export et destinations (`logs.rs`).
         .merge(logs::routes())
+        // Stockage : rétentions, historique long terme, VictoriaLogs embarqué
+        // et recherche dans les journaux (`storage.rs`).
+        .merge(storage::routes())
         // Auto-surveillance et battement de cœur sortant (`self_monitoring.rs`).
         .merge(self_monitoring::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
