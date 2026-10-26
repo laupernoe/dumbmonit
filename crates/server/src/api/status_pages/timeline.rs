@@ -15,7 +15,7 @@ use std::collections::{HashMap, HashSet};
 
 use axum::Json;
 use axum::extract::{Path, State};
-use axum::http::header;
+use axum::http::{HeaderMap, header};
 use axum::response::{IntoResponse, Response};
 use chrono::{DateTime, NaiveDate, TimeDelta, Utc};
 use dumbmonit_proto::{Target, TargetId};
@@ -23,8 +23,8 @@ use serde::Serialize;
 
 use super::{
     PROBE_KINDS, device_covered, first_up_query, format_timestamp, instant_map, last_up_query,
-    parse_stored, presence_query, probe_failed_query, probe_uptime_query, public_not_found,
-    rescale, round, selector, target_of, unique_key,
+    parse_stored, presence_query, probe_failed_query, probe_uptime_query, rescale, round, selector,
+    target_of, unique_key,
 };
 use crate::api::ApiResult;
 use crate::db;
@@ -310,12 +310,9 @@ fn outages(starts: &[i64], slots: &HashMap<i64, Slot>) -> Vec<Outage> {
 pub async fn public_day(
     State(state): State<AppState>,
     Path((slug, date)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let page = db::status_pages::get_page_by_slug(&state.pool, &slug).await?;
-    let page = match page {
-        Some(page) if page.published => page,
-        _ => return Err(public_not_found()),
-    };
+    let page = super::access::open_page(&state, &slug, &headers).await?;
     let bad = || {
         crate::api::ApiError::BadRequest(
             "Use a date like 2026-10-21 within the last 90 days.".into(),

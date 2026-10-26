@@ -103,6 +103,14 @@ Pour comparer avec une version publiée :
 
 Un écart mérite un ticket : ouvrez-en un en indiquant les commandes exécutées.
 
+## Signatures de l'agent
+
+L'image serveur publiée a une couche de plus qu'un build reproductible : les
+fichiers `.sig`, copiés depuis un contexte de build fourni par le workflow de
+release (voir [Signer les binaires de l'agent](agent-signing.md)). C'est la
+seule différence. Les binaires de l'agent eux-mêmes sont inchangés, et les
+vérifications de reproductibilité construisent sans cette couche.
+
 ## Limites
 
 - **Les images publiées avant la 0.9.1** ont été construites sans

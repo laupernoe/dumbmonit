@@ -111,6 +111,7 @@ mod tests {
         "/api/agent/relay",
         "/api/agent/relay/{id}",
         "/api/agent/relay/discovery/{id}",
+        "/api/agent/update/download/{name}",
         "/api/auth/oidc/start",
         "/api/auth/oidc/callback",
         "/api/music/spotify/callback",
@@ -137,6 +138,7 @@ mod tests {
                 | "/api/auth/login"
                 | "/api/auth/login/totp"
                 | "/api/push/{token}"
+                | "/api/calendar/maintenance.ics"
                 | "/api/openapi.json"
         ) || path.starts_with("/api/public/")
             || (path == "/api/mcp" && method != "post")
@@ -155,6 +157,7 @@ mod tests {
             "/music/spotify/token",
             "/music/speaker/report",
             "/music/speaker/play",
+            "/system/storage",
             "/webpush",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
