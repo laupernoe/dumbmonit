@@ -32,6 +32,7 @@ mod badges;
 mod branding;
 mod subscribers;
 mod timeline;
+use crate::auth::teams::TeamAccess;
 use crate::db::status_pages::{
     DEFAULT_SCENE, GroupLabel, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
     SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, split_scenes,
@@ -539,7 +540,11 @@ async fn page_view(state: &AppState, page: StatusPage) -> ApiResult<StatusPageVi
     Ok(StatusPageView { page, items, groups, group_labels })
 }
 
-pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<StatusPageView>>> {
+pub async fn list_pages(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<StatusPageView>>> {
+    let visible = access.visible_targets(&state.pool).await?;
     let pages = db::status_pages::list_pages(&state.pool).await?;
     let mut items: HashMap<i64, Vec<PageItem>> = HashMap::new();
     for item in db::status_pages::list_all_items(&state.pool).await? {
@@ -553,6 +558,18 @@ pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<Sta
     for (page_id, entry) in db::status_pages::list_all_group_labels(&state.pool).await? {
         labels.entry(page_id).or_default().push(entry);
     }
+    // Compte restreint par ses équipes : seulement les pages dont tous les
+    // composants sont des équipements qu'il voit.
+    let pages: Vec<_> = pages
+        .into_iter()
+        .filter(|page| {
+            visible.as_ref().is_none_or(|visible| {
+                items.get(&page.id).is_some_and(|list| {
+                    !list.is_empty() && list.iter().all(|i| visible.contains(&i.target_id))
+                })
+            })
+        })
+        .collect();
     Ok(Json(
         pages
             .into_iter()

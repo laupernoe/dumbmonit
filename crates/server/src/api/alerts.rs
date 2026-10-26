@@ -30,6 +30,7 @@ use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::OperatorIdentity;
+use crate::auth::teams::{Access, Level, TeamAccess};
 use crate::db;
 use crate::notify::policy_store;
 use crate::state::AppState;
@@ -543,10 +544,30 @@ pub struct HistoryQuery {
 // Règles
 // --------------------------------------------------------------------------
 
-pub async fn list_rules(State(state): State<AppState>) -> ApiResult<Json<Vec<RuleView>>> {
+pub async fn list_rules(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<RuleView>>> {
     let rules = db::alerts::list_rules(&state.pool).await?;
-    let views =
+    let mut views =
         with_overrides(&state.pool, rules.into_iter().map(RuleView::from).collect()).await?;
+    // Compte restreint par ses équipes : les règles restent lisibles (ce sont
+    // des réglages, pas des équipements), mais leurs références à des
+    // équipements hors de ses dossiers disparaissent, et une règle qui ne
+    // visait que ceux-là aussi.
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        views.retain_mut(|view| {
+            view.overrides.retain(|o| visible.contains(&o.target_id));
+            view.channels.clear();
+            match &mut view.selector {
+                TargetSelector::Ids { ids } => {
+                    ids.retain(|id| visible.contains(id));
+                    !ids.is_empty()
+                }
+                _ => true,
+            }
+        });
+    }
     Ok(Json(views))
 }
 
@@ -1135,10 +1156,14 @@ fn rule_not_found(id: i64) -> ApiError {
 // --------------------------------------------------------------------------
 
 pub async fn list_active(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(query): Query<ActiveQuery>,
 ) -> ApiResult<Json<Vec<ActiveAlertView>>> {
     let now = Utc::now();
+    // Compte restreint par ses équipes : seulement les alertes de ses
+    // équipements (une alerte sans équipement n'appartient à aucun dossier).
+    let visible = access.visible_targets(&state.pool).await?;
     let alerts = db::alerts::list_active(&state.pool).await?;
     let rules: HashMap<String, Rule> = db::alerts::list_rules(&state.pool)
         .await?
@@ -1165,6 +1190,11 @@ pub async fn list_active(
             // Le filtre `target_id` ne garde que les alertes de cet équipement
             // (une alerte sans équipement n'y répond jamais).
             .filter(|alert| query.target_id.is_none_or(|id| alert.target_id == Some(id)))
+            .filter(|alert| {
+                visible
+                    .as_ref()
+                    .is_none_or(|visible| alert.target_id.is_some_and(|id| visible.contains(&id)))
+            })
             .filter(|alert| alert.state.is_dismissed() == query.dismissed.unwrap_or(false))
             .map(|alert| {
                 let rule = rules.get(&alert.rule_uid);
@@ -1295,6 +1325,7 @@ pub async fn unack_alert(
 /// La lecture est écrite ici et non dans [`crate::db::alerts`] : ce module n'expose
 /// que les accès dont le moteur a besoin, et l'historique n'est lu que par l'API.
 pub async fn history(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(params): Query<HistoryQuery>,
 ) -> ApiResult<Json<Vec<HistoryEntryView>>> {
@@ -1322,20 +1353,31 @@ pub async fn history(
 
     let include_dismissed = params.dismissed.unwrap_or(false);
 
-    let rows = sqlx::query(
+    // Compte restreint : le filtre est posé dans la requête, avant la limite,
+    // pour que la page reste pleine. Les identifiants sont des entiers lus en
+    // base, jamais une saisie.
+    let scope_clause = match access.visible_targets(&state.pool).await? {
+        None => String::new(),
+        Some(visible) => {
+            let ids = visible.iter().map(i64::to_string).collect::<Vec<_>>().join(",");
+            format!(" AND target_id IN ({ids})")
+        }
+    };
+    let sql = format!(
         "SELECT id, fingerprint, rule_uid, target_id, from_phase, to_phase, severity, value,
                 notified, reason, at, dismissed
          FROM alert_history
-         WHERE at >= ? AND (dismissed = 0 OR ?)
+         WHERE at >= ? AND (dismissed = 0 OR ?){scope_clause}
          ORDER BY at DESC, id DESC
-         LIMIT ?",
-    )
-    .bind(since.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
-    .bind(include_dismissed)
-    .bind(limit)
-    .fetch_all(&state.pool)
-    .await
-    .map_err(anyhow::Error::from)?;
+         LIMIT ?"
+    );
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(since.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
+        .bind(include_dismissed)
+        .bind(limit)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(anyhow::Error::from)?;
 
     let entries = rows
         .iter()
@@ -1428,19 +1470,55 @@ pub async fn dismiss_resolved_history(
 // Silences
 // --------------------------------------------------------------------------
 
-pub async fn list_silences(State(state): State<AppState>) -> ApiResult<Json<Vec<SilenceView>>> {
+pub async fn list_silences(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<SilenceView>>> {
     let now = Utc::now();
-    let silences = db::alerts::list_silences(&state.pool).await?;
+    let mut silences = db::alerts::list_silences(&state.pool).await?;
+    // Compte restreint : seulement les silences posés sur ses équipements.
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        silences.retain(|s| s.target_id.is_some_and(|id| visible.contains(&id)));
+    }
     Ok(Json(silences.into_iter().map(|s| SilenceView::new(s, now)).collect()))
 }
 
 pub async fn create_silence(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(payload): Json<SilencePayload>,
 ) -> ApiResult<(StatusCode, Json<SilenceView>)> {
+    // Avant la validation, qui dirait sinon si un équipement d'une autre
+    // équipe existe.
+    check_team_silence(&state, &access, payload.target_id).await?;
     let mut silence = payload.validate(&state).await?;
     silence.id = db::alerts::create_silence(&state.pool, &silence).await?;
     Ok((StatusCode::CREATED, Json(SilenceView::new(silence, Utc::now()))))
+}
+
+/// Un compte restreint par ses équipes ne pose un silence que sur un
+/// équipement qu'il peut traiter : jamais sur toute l'instance ni sur de
+/// simples étiquettes, qui couvriraient des équipements d'autres équipes.
+async fn check_team_silence(
+    state: &AppState,
+    access: &Access,
+    target_id: Option<i64>,
+) -> ApiResult<()> {
+    if !access.is_scoped() {
+        return Ok(());
+    }
+    let Some(target_id) = target_id else {
+        return Err(ApiError::Forbidden(
+            "Team-restricted accounts can only schedule maintenance for a single target.".into(),
+        ));
+    };
+    match access.target_level(&state.pool, target_id).await? {
+        None => Err(ApiError::NotFound("Target not found.".into())),
+        Some(level) if level >= Level::Operate => Ok(()),
+        Some(_) => Err(ApiError::Forbidden(
+            "Your teams only let you view this target, not schedule maintenance for it.".into(),
+        )),
+    }
 }
 
 pub async fn delete_silence(

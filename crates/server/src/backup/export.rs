@@ -65,7 +65,28 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
+        teams: teams(pool).await?,
+        teams_settings: crate::auth::settings::get::<Value>(pool, crate::auth::teams::SETTINGS_KEY)
+            .await?,
     })
+}
+
+async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
+    let teams = crate::auth::teams::list(pool).await?;
+    Ok(teams
+        .into_iter()
+        .map(|team| BundleTeam {
+            name: team.name,
+            description: team.description,
+            idp_groups: team.idp_groups,
+            members: team
+                .members
+                .into_iter()
+                .map(|m| BundleTeamMember { username: m.username, source: m.source })
+                .collect(),
+            grants: team.grants,
+        })
+        .collect())
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {
@@ -630,5 +651,6 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
+        ("teams", "Teams, their members and their folder rights."),
     ])
 }

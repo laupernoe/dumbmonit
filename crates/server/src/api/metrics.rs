@@ -9,6 +9,7 @@ use axum::extract::{Query, State};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
+use crate::auth::teams::{self, TeamAccess};
 use crate::state::AppState;
 
 /// Nombre maximal de points par série renvoyés à l'interface.
@@ -73,6 +74,7 @@ fn backend_error(error: anyhow::Error) -> ApiError {
 }
 
 pub async fn query_range(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(params): Query<RangeQuery>,
 ) -> ApiResult<Json<Vec<SeriesView>>> {
@@ -87,10 +89,13 @@ pub async fn query_range(
     }
 
     let step = resolve_step(params.start, params.end, params.step);
+    // Un compte restreint par ses équipes ne lit que les séries de ses
+    // équipements : le filtre est ajouté par VictoriaMetrics à chaque sélecteur.
+    let filter = teams::series_filter(access.visible_targets(&state.pool).await?.as_ref());
 
     let series = state
         .victoria
-        .query_range(&params.query, params.start, params.end, step)
+        .query_range_filtered(&params.query, params.start, params.end, step, filter.as_deref())
         .await
         .map_err(backend_error)?;
 
@@ -105,12 +110,18 @@ pub struct InstantQuery {
 }
 
 pub async fn query(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(params): Query<InstantQuery>,
 ) -> ApiResult<Json<Vec<SeriesView>>> {
     validate_query(&params.query)?;
 
-    let series = state.victoria.query_fresh(&params.query).await.map_err(backend_error)?;
+    let filter = teams::series_filter(access.visible_targets(&state.pool).await?.as_ref());
+    let series = state
+        .victoria
+        .query_fresh_filtered(&params.query, filter.as_deref())
+        .await
+        .map_err(backend_error)?;
 
     Ok(Json(
         series

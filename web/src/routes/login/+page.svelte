@@ -264,6 +264,18 @@
 						{m.auth_login_sso_button({ provider: auth.oidc.provider_name })}
 					</Button>
 				</div>
+			{/if}
+
+			{#if auth.saml.enabled}
+				<div class={auth.oidc.enabled ? 'mt-3' : 'mt-6'}>
+					<Button href="/api/auth/saml/start" variant="secondary" size="lg" class="w-full" data-sveltekit-reload>
+						<KeyRound class="size-4" aria-hidden="true" />
+						{m.auth_login_sso_button({ provider: auth.saml.label })}
+					</Button>
+				</div>
+			{/if}
+
+			{#if auth.oidc.enabled || auth.saml.enabled}
 				<div class="mt-5 flex items-center gap-3 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase" aria-hidden="true">
 					<span class="h-px flex-1 bg-line"></span>
 					{m.auth_login_or()}
@@ -282,7 +294,7 @@
 				</div>
 			{/if}
 
-			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
+			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled || auth.saml.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
 				<Field label={m.auth_login_username()} for="username" error={usernameError} help={auth.ldap.enabled ? m.auth_login_username_ldap_help() : undefined}>
 					<!-- svelte-ignore a11y_autofocus -->
 					<input
