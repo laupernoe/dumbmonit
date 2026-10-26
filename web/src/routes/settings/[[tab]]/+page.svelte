@@ -34,6 +34,9 @@
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import LocationsSection from '#lib/components/settings/LocationsSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
+	import TeamsSection from '#lib/components/settings/TeamsSection.svelte';
+	import SamlSection from '#lib/components/settings/SamlSection.svelte';
+	import ScimSection from '#lib/components/settings/ScimSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import LdapSection from '#lib/components/settings/LdapSection.svelte';
 	import AgentsSection from '#lib/components/settings/AgentsSection.svelte';
@@ -66,14 +69,17 @@
 		system: HardDrive
 	};
 
-	const tabs = $derived(TAB_IDS.filter((id) => id !== 'team' || showAccounts));
+	// An account limited by its teams keeps its own preferences and the status pages.
+	const tabs = $derived(
+		TAB_IDS.filter((id) => (id !== 'team' || showAccounts) && (!auth.scoped || id === 'account' || id === 'status'))
+	);
 	const asked = $derived(page.params.tab);
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
 		account: [AppearanceSection, SecuritySection, PushSection],
-		team: [UsersSection, SsoSection, LdapSection],
+		team: [UsersSection, TeamsSection, SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],

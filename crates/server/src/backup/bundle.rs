@@ -146,6 +146,12 @@ pub struct Bundle {
     /// Emplacements de la carte du monde (migration 0059).
     #[serde(default)]
     pub locations: Vec<BundleLocation>,
+    /// Équipes, leurs membres et leurs droits par dossier (migration 0105).
+    #[serde(default)]
+    pub teams: Vec<BundleTeam>,
+    /// Réglages des équipes (clé `teams.access` de `settings`).
+    #[serde(default)]
+    pub teams_settings: Option<Value>,
 }
 
 impl Bundle {
@@ -166,6 +172,7 @@ impl Bundle {
             ("push_monitors".to_string(), self.push_monitors.len()),
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
+            ("teams".to_string(), self.teams.len()),
         ])
     }
 }
@@ -213,6 +220,42 @@ pub struct BundleTarget {
     /// Nom de l'emplacement affecté (migration 0059) ; `None` : aucun.
     #[serde(default)]
     pub location: Option<String>,
+}
+
+/// Une équipe, désignée par son nom (unique sans casse). Les membres sont
+/// désignés par leur identifiant de compte, les droits par nom de dossier.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTeam {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub idp_groups: Vec<String>,
+    #[serde(default)]
+    pub members: Vec<BundleTeamMember>,
+    #[serde(default)]
+    pub grants: Vec<crate::auth::teams::Grant>,
+    /// Rattachement au provisionnement SCIM, pour que le fournisseur retrouve
+    /// l'équipe après une restauration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    /// Créée par SCIM (et non rattachée).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub scim_created: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTeamMember {
+    pub username: String,
+    /// `manual`, `idp` ou `scim`.
+    #[serde(default = "manual_source")]
+    pub source: String,
+}
+
+fn manual_source() -> String {
+    "manual".to_string()
 }
 
 /// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).

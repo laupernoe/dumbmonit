@@ -5,16 +5,17 @@
 	import { Button, EmptyState } from '#lib/ui/index.js';
 
 	const notFound = $derived(page.status === 404);
+	const forbidden = $derived(page.status === 403);
 </script>
 
-<svelte:head><title>{notFound ? m.error_page_title_not_found() : m.error_page_title_generic({ status: page.status })} · DumbMonit</title></svelte:head>
+<svelte:head><title>{notFound ? m.error_page_title_not_found() : forbidden ? m.error_page_title_forbidden() : m.error_page_title_generic({ status: page.status })} · DumbMonit</title></svelte:head>
 
 <div class="mx-auto max-w-lg py-16">
 	<EmptyState
 		icon={Compass}
 		mascot={notFound ? 'dizzy' : undefined}
-		title={notFound ? m.error_page_heading_not_found() : m.error_page_title_generic({ status: page.status })}
-		description={notFound ? m.error_page_description_not_found() : (page.error?.message ?? m.error_page_description_fallback())}
+		title={notFound ? m.error_page_heading_not_found() : forbidden ? m.error_page_heading_forbidden() : m.error_page_title_generic({ status: page.status })}
+		description={notFound ? m.error_page_description_not_found() : forbidden ? m.error_page_description_forbidden() : (page.error?.message ?? m.error_page_description_fallback())}
 	>
 		{#snippet action()}
 			<Button href="/" variant="primary">{m.error_page_back()}</Button>

@@ -65,7 +65,40 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
+        teams: teams(pool).await?,
+        teams_settings: crate::auth::settings::get::<Value>(pool, crate::auth::teams::SETTINGS_KEY)
+            .await?,
     })
+}
+
+async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
+    let teams = crate::auth::teams::list(pool).await?;
+    let mut out = Vec::with_capacity(teams.len());
+    for team in teams {
+        let scim: Option<(Option<String>, Option<String>, i64)> = sqlx::query_as(
+            "SELECT scim_id, scim_external_id, scim_created FROM teams WHERE id = ?",
+        )
+        .bind(team.id)
+        .fetch_optional(pool)
+        .await
+        .context("rattachement SCIM d'une équipe")?;
+        let (scim_id, scim_external_id, scim_created) = scim.unwrap_or_default();
+        out.push(BundleTeam {
+            name: team.name,
+            description: team.description,
+            idp_groups: team.idp_groups,
+            members: team
+                .members
+                .into_iter()
+                .map(|m| BundleTeamMember { username: m.username, source: m.source })
+                .collect(),
+            grants: team.grants,
+            scim_id,
+            scim_external_id,
+            scim_created: scim_created != 0,
+        });
+    }
+    Ok(out)
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {
@@ -633,5 +666,6 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
+        ("teams", "Teams, their members and their folder rights."),
     ])
 }

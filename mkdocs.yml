@@ -171,6 +171,9 @@ nav:
       - Email reports: using/reports.md
       - Settings: using/settings.md
       - LDAP / Active Directory: using/ldap.md
+      - SAML 2.0: using/saml.md
+      - SCIM provisioning: using/scim.md
+      - Teams and permissions: using/teams.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md
   - Reference:
