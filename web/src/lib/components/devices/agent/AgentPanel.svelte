@@ -17,6 +17,7 @@
 	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
 	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
 	import AgentModulesPanel from './AgentModulesPanel.svelte';
+	import AgentEventsPanel from './AgentEventsPanel.svelte';
 	import AppliancePanel from '#lib/components/devices/appliance/AppliancePanel.svelte';
 
 	interface Props {
@@ -148,6 +149,9 @@
 
 <!-- Services the agent found (Docker, ZFS, tunnels…): each is a device of its own under this machine. -->
 <AgentModulesPanel {target} />
+
+<!-- Windows only: event log rules that raise alerts, and the latest matched events. -->
+<AgentEventsPanel {target} />
 
 <!-- Shown only on a Hyper-V host, where the agent reads Hyper-V's performance counters. -->
 <AppliancePanel {target} variant="hyperv" />

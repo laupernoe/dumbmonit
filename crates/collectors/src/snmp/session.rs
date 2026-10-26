@@ -162,6 +162,26 @@ impl Session {
         Ok(collected)
     }
 
+    /// Lit une seule instance et rend la valeur telle que l'agent la renvoie.
+    ///
+    /// Contrairement à [`Session::get_many`], les marqueurs d'absence
+    /// (`noSuchObject`, `noSuchInstance`) ne sont pas écartés : une sonde qui
+    /// vise un OID précis doit pouvoir dire que l'agent ne le connaît pas. Un
+    /// agent SNMPv1 l'annonce par `noSuchName`, ramené ici à `NoSuchObject`.
+    pub async fn get_value(&mut self, oid: &ObjectId) -> Result<SnmpValue, ProbeError> {
+        let reply = self.exchange(Request::Get(std::slice::from_ref(oid))).await?;
+        if reply.error_status == snmp2::snmp::ERRSTATUS_NOSUCHNAME {
+            return Ok(SnmpValue::NoSuchObject);
+        }
+        if reply.error_status != snmp2::snmp::ERRSTATUS_NOERROR {
+            return Err(ProbeError::Protocol(format!(
+                "the agent refused the request (SNMP error status {})",
+                reply.error_status
+            )));
+        }
+        Ok(reply.varbinds.into_iter().next().map_or(SnmpValue::NoSuchObject, |(_, value)| value))
+    }
+
     /// Parcourt tout le sous-arbre `root` et renvoie ses varbinds.
     ///
     /// Répète des GETBULK en repartant du dernier OID reçu, jusqu'à sortir du

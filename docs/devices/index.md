@@ -82,6 +82,9 @@ form always matches what this version can monitor.
 | [MQTT broker](services.md#mqtt) | `mqtt` | none, or username/password | Broker: connection, subscription, retained message |
 | [WebSocket](services.md#websocket) | `websocket` | none, username/password or token | WebSocket endpoint: handshake, optional message exchange |
 | [NTP time server](services.md#ntp) | `ntp` | none | Router, NAS, internal time server, public pool server |
+| [SNMP value](services.md#snmp-oid) | `snmp_oid` | SNMP community or v3 user | One SNMP object: sensor, UPS status, version string, with bounds or expected text |
+| [RADIUS server](services.md#radius) | `radius` | shared secret and test account | FreeRADIUS, Windows NPS: a real authentication |
+| [gRPC service](services.md#grpc) | `grpc` | none | Microservice, etcd: the standard gRPC health check |
 | [Heartbeat](push.md) | `push` | none (secret URL) | Cron job, backup script, automation that must call in |
 | [Website changes](webchange.md) | `webchange` | none | A page or a whole site: text changes, new and removed pages, before/after with screenshots |
 | [Website health & SEO](website.md) | `website` | none | Sites in bulk: down, blank page, redirects, noindex, robots.txt, title/description/canonical changes, platform (CSV import) |

@@ -9,6 +9,35 @@ All notable changes to this project are documented here. The format follows
 
 - **Custom dashboards and a metrics explorer.** Build dashboards from widgets on a 12-column grid: chart (MetricsQL), single value with warning and critical levels, state of a monitor folder, active alerts, and Markdown notes. Drag, resize and reorder with mouse, touch or keyboard; phones get a single column. Each dashboard saves its time range and refresh interval. Dashboards are personal (any account) or shared (administrators), and travel with backups. The new metrics explorer (`/explore`) lists the `dumbmonit_*` metrics and their labels, completes names in a MetricsQL box, draws the result and adds it to a dashboard. New API: `/api/dashboards` and `/api/metrics/catalog`.
 
+- **More service checks, scheduled jobs, Windows events and network inventory.**
+  - Seven new service checks, each with its own form: **UDP** (send a datagram,
+    optionally expect a reply), **SSH** (banner and version; an expected host key
+    fingerprint fails the check when the key changes), **IMAP** and **POP3** (TLS,
+    STARTTLS or none, greeting, optional login sent only over a trusted TLS
+    session), **gRPC** (standard `grpc.health.v1` health check, TLS or h2c),
+    **RADIUS** (Access-Request with a shared secret and a test account; Accept
+    expected, a wrong secret is reported as such) and **SNMP value** (one OID,
+    v2c or v3, with a range or an expected text). New failure reasons:
+    `host_key`, `threshold`, `not_found`, `bad_secret`, `unhealthy`.
+  - **HTTP response time breakdown**: DNS, connection, TLS, server processing and
+    transfer are recorded as `dumbmonit_probe_http_phase_seconds{phase}` and shown
+    stacked on the monitor page, with the split of the latest check.
+  - **Cron job tracking** for heartbeat monitors: `/start`, `/success`, `/fail`
+    and `/<exit code>` endpoints, the command output in the request body (last
+    10 KB kept), the run duration, an expected schedule as a cron expression with
+    a time zone and a grace period, and three built-in rules: missed, failed
+    (with the exit code and the output) and running too long. The monitor page
+    lists the runs; the docs give a shell wrapper with curl.
+  - **Windows event log alerts**: rules per agent (log, source, event IDs,
+    level, text or regex) are sent to Windows agents, which read the event log,
+    rate-limit what matches and report it; three built-in rules raise an alert
+    with the event's message. No rule is active by default; common examples
+    (4625, 41 Kernel-Power, 7034…) are offered.
+  - **New device and new port alerts**: scheduled network scans per subnet, run
+    by the server or a relay agent, keep an inventory of devices (MAC, IP) and
+    open ports. The first scan learns silently; later ones flag what is new until
+    it is marked as known. The two built-in rules are off by default, at info
+    severity.
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor

@@ -105,6 +105,19 @@ pub enum Failure {
     Unsynchronized,
     /// Écart d'horloge au-delà du seuil toléré (sonde NTP).
     ClockOffset,
+    /// Clé d'hôte SSH différente de l'empreinte attendue (sonde SSH).
+    HostKey,
+    /// Valeur numérique hors des bornes tolérées (sonde SNMP OID).
+    Threshold,
+    /// L'objet demandé n'existe pas sur l'agent : OID inconnu, `noSuchObject`
+    /// ou `noSuchInstance` (sonde SNMP OID).
+    NotFound,
+    /// La signature de la réponse ne se vérifie pas : le secret partagé est
+    /// probablement faux (sonde RADIUS).
+    BadSecret,
+    /// Le service répond mais dit ne pas être en état de servir : `NOT_SERVING`,
+    /// `SERVICE_UNKNOWN`, `UNAVAILABLE` (sonde gRPC).
+    Unhealthy,
 }
 
 impl Failure {
@@ -127,6 +140,11 @@ impl Failure {
             Self::Payload => "payload",
             Self::Unsynchronized => "unsynchronized",
             Self::ClockOffset => "clock_offset",
+            Self::HostKey => "host_key",
+            Self::Threshold => "threshold",
+            Self::NotFound => "not_found",
+            Self::BadSecret => "bad_secret",
+            Self::Unhealthy => "unhealthy",
         }
     }
 }
@@ -170,6 +188,12 @@ impl Report {
             MetricKind::Gauge,
             self.ts_ms,
         ));
+    }
+
+    /// Dernière valeur déjà enregistrée pour une jauge (sans étiquette propre).
+    pub fn gauge_value(&self, metric: &str) -> Option<f64> {
+        let name = format!("{PREFIX}{metric}");
+        self.samples.iter().rev().find(|sample| sample.metric == name).map(|sample| sample.value)
     }
 
     /// Même chose, mais avec une étiquette supplémentaire propre à cet échantillon
@@ -306,6 +330,11 @@ mod tests {
             Failure::Payload,
             Failure::Unsynchronized,
             Failure::ClockOffset,
+            Failure::HostKey,
+            Failure::Threshold,
+            Failure::NotFound,
+            Failure::BadSecret,
+            Failure::Unhealthy,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {

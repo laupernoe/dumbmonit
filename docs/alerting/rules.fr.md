@@ -130,6 +130,21 @@ pour votre ligne.
 | Débit montant Internet bas | Idem, pour `speedtest_min_upload_mbps`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 | Latence Internet élevée | Le dernier test a mesuré une latence au-dessus de `speedtest_max_latency_ms`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 
+### Journal d'événements Windows
+
+Déclenchées par les règles d'événements d'une machine Windows ; voir
+[Alertes du journal d'événements Windows](../devices/agent-windows-events.md).
+Aucune règle d'événements n'existe par défaut : ces règles restent muettes tant
+que vous n'en ajoutez pas. Une alerte par machine et par sévérité, qui cite le
+dernier événement ; elle reparle au plus toutes les 10 minutes tant que des
+événements arrivent, et se résout 15 minutes après le dernier.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Windows event (critical) | Un événement a répondu à une règle de sévérité Avertissement (`dumbmonit_agent_eventlog_matches_critical` : événements des 15 dernières minutes). | > 0 | 30 s | Avertissement (`critical`) | aucun |
+| Windows event (warning) | Idem, pour les règles de sévérité Avis (`dumbmonit_agent_eventlog_matches_warning`). | > 0 | 30 s | Avis (`warning`) | aucun |
+| Windows event (info) | Idem, pour les règles de sévérité Info (`dumbmonit_agent_eventlog_matches_info`). | > 0 | 30 s | Info (`info`) | aucun |
+
 ### Proxmox VE
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
@@ -847,6 +862,15 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 |---|---|---|---|---|---|
 | Score de sécurité en baisse | Le score a chuté de 10 points ou plus par rapport à sa meilleure valeur des dernières 24 heures (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`) : un contrôle a commencé à échouer. | ≥ 10 pts | 30 min | Avis (`warning`) | 24 h |
 | Score de sécurité faible | Le score est sous 40, note F (`dumbmonit_security_score`). Montez ou descendez le seuil pour correspondre à votre propre barre. | < 40 | 1 h | Info (`info`) | 7 j |
+
+### Inventaire du réseau {#inventaire-du-reseau}
+
+Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les deux règles sont désactivées par défaut** et de gravité `info` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+| New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
 
 ### DumbMonit lui-même
 

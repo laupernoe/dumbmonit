@@ -78,6 +78,9 @@ que cette version peut surveiller.
 | [Hôte accessible](services.md#ping) | `ping` | aucun | Passerelle, point d'accès, imprimante |
 | [Certificat TLS](services.md#tls) | `tls` | aucun | IMAPS, LDAPS, reverse proxy |
 | [Serveur de temps NTP](services.md#ntp) | `ntp` | aucun | Routeur, NAS, serveur de temps interne, serveur de pool public |
+| [Valeur SNMP](services.md#snmp-oid) | `snmp_oid` | communauté SNMP ou utilisateur v3 | Un objet SNMP : sonde, état d'onduleur, chaîne de version, avec bornes ou texte attendu |
+| [Serveur RADIUS](services.md#radius) | `radius` | secret partagé et compte de test | FreeRADIUS, Windows NPS : une vraie authentification |
+| [Service gRPC](services.md#grpc) | `grpc` | aucun | Microservice, etcd : le contrôle de santé gRPC standard |
 | [Battement de cœur](push.md) | `push` | aucun (URL secrète) | Tâche cron, script de sauvegarde, automatisation qui doit appeler |
 | [Changements de site web](webchange.md) | `webchange` | aucun | Une page ou tout un site : changements de texte, pages ajoutées et supprimées, avant/après avec captures d'écran |
 | [Surveillance de démonstration](demo.md) | `dummy` | aucun | Explorer l'interface sans matériel |

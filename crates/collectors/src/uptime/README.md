@@ -182,6 +182,7 @@ le registre.
 | `probe_failure_info` | toutes | Présence (1) ; étiquette `reason`. |
 | `probe_http_status_code` | http | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Délai jusqu'aux en-têtes de réponse. |
+| `probe_http_phase_seconds` | http | Phases de la requête mesurée ; étiquette `phase` : dns, connect, tls, processing, transfer. |
 | `probe_http_content_bytes` | http | Taille du corps. |
 | `probe_connect_seconds` | tcp, tls, http | Établissement de la connexion TCP. |
 | `probe_tls_handshake_seconds` | tls, http | Négociation TLS seule. |
