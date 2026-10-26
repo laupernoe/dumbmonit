@@ -157,6 +157,7 @@ pub async fn reconcile(
             group_name: Some(Some(item.folder.clone())),
             location_id: None,
             credential: None,
+            multisite: None,
         };
         let input = match payload.validate(state, None) {
             Ok(input) => input,
