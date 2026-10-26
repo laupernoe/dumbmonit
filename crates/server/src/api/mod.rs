@@ -14,6 +14,7 @@ mod blacklist;
 mod channels;
 mod collectors;
 mod cves;
+pub mod dashboards;
 pub(crate) mod discovery;
 mod error;
 mod health;
@@ -209,6 +210,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/targets/{id}/rules", get(target_rules::list))
         .route("/metrics/query", get(metrics::query))
         .route("/metrics/query_range", get(metrics::query_range))
+        .route("/metrics/catalog", get(metrics::catalog))
         .route("/alerts", get(alerts::list_active))
         .route("/alerts/history", get(alerts::history))
         .route("/alerts/history/dismiss-resolved", post(alerts::dismiss_resolved_history))
@@ -254,6 +256,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(topology_edits::routes())
         // Emplacements et carte du monde (`locations.rs`).
         .merge(locations::routes())
+        // Tableaux de bord personnalisés (`dashboards.rs`).
+        .merge(dashboards::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Fonctionnalités facultatives sautées faute de droit (`skipped_features.rs`).
