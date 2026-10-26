@@ -124,10 +124,18 @@ Les machines doivent faire confiance à l'éditeur du certificat.
 
 ## Mettre à jour DumbMonit
 
-Le kit embarque le SHA-256 du binaire de l'agent livré par votre serveur. Après
-une mise à jour de DumbMonit, **téléchargez un nouveau kit et relancez le
-script** : il met la GPO à jour sur place. Sinon les serveurs refusent le
-nouveau binaire (SHA-256 différent, Event ID 1002).
+Avec les [mises à jour automatiques](agent.md#automatic-updates), les agents se
+mettent à jour après une mise à jour de DumbMonit : il n'est plus nécessaire de
+relancer le kit (`Deploy-DumbMonit.ps1`). Le script de la GPO ne réinstalle plus
+un agent dont le binaire diffère de celui du kit lorsque l'agent installé est de
+la même version ou plus récent (il exécute `dumbmonit-agent.exe --version`) : il
+ne rétrograde donc jamais un agent qui s'est mis à jour.
+
+Ne relancez le kit que pour changer le jeton ou l'URL, ou pour les machines dont
+l'agent est antérieur aux mises à jour automatiques. Les agents plus anciens que
+le kit sont toujours mis à niveau par la GPO ; téléchargez d'abord un nouveau
+kit, qui embarque le SHA-256 du binaire de l'agent livré par votre serveur
+(sinon les serveurs refusent le binaire, Event ID 1002).
 
 ## Retirer le déploiement
 

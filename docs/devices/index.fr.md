@@ -55,6 +55,7 @@ que cette version peut surveiller.
 | [Apache httpd](apache.md) | `apache` | aucun, ou authentification basique | Serveur web : workers occupés/au repos, scoreboard par état, débits de requêtes et d'octets |
 | [Nginx Proxy Manager](npm.md) | `npm` | email et mot de passe utilisateur (vue seule) | Gestionnaire de proxy : hôtes refusés par nginx, hôtes désactivés, certificats servis |
 | [Expiration de domaine](domain.md) | `domain` | aucun | Domaine enregistré via RDAP : jours avant expiration, suspension, période de rachat, registrar |
+| [État d’un fournisseur tiers](provider.md) | `provider` | aucun | Page de statut publique d’un fournisseur (Cloudflare, GitHub, Atlassian, AWS…) : impact, incidents ouverts, filtre par composant ; affiché sur les pages de statut comme composant externe |
 | [Réputation du serveur mail](mail_blacklist.md) | `mail_blacklist` | aucun, ou clé DQS de Spamhaus | Domaine de messagerie ou adresse d’un serveur face aux listes noires DNS (Spamhaus, Barracuda, SpamCop…), DNS inverse, SPF, DMARC, liens de retrait |
 | [Liste noire d’une plage d’IP](ip_blacklist.md) | `ip_blacklist` | aucun, ou clé DQS de Spamhaus | Chaque adresse d’une plage IPv4 publique jusqu’à /24 face aux listes noires DNS, avec liens de retrait |
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | jeton de compte de service (ClusterRole en lecture seule) | Cluster : nœuds non prêts, pods en boucle de crash ou en attente, workloads avec répliques manquantes, demandes de volume bloquées |

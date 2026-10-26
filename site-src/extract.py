@@ -31,7 +31,7 @@ FAMILIES = [
     ("firewalls", ["opnsense", "pfsense", "fortigate", "sophos"]),
     ("hypervisors", ["proxmox", "pdm", "vsphere", "xcpng", "nutanix", "kubernetes"]),
     ("storage", ["synology", "truenas", "unraid", "pbs", "veeam"]),
-    ("checks", ["http", "tcp", "dns", "ping", "tls", "ntp", "websocket", "push", "domain", "website", "webchange"]),
+    ("checks", ["http", "tcp", "dns", "ping", "tls", "ntp", "websocket", "push", "domain", "provider", "website", "webchange"]),
     ("proxies", ["traefik", "caddy", "nginx", "apache", "npm"]),
     ("apps", ["nextcloud", "immich", "paperless", "jellyfin", "plex", "homeassistant", "gitlab", "forgejo"]),
     ("mail", ["pihole", "adguard", "crowdsec", "smtp", "mdaemon", "securitygateway", "pmg", "mail_blacklist", "ip_blacklist"]),

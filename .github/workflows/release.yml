@@ -31,6 +31,12 @@ name: Release
 #                             (`dumbmonit-agent.intoto.jsonl`). A pre-release tag
 #                             gives a draft GitHub pre-release, never latest.
 # Both images also get a build provenance attestation, pushed to ghcr.io.
+#
+# The agent binaries built in the Dockerfile are also signed with Ed25519
+# (`<file>.sig`) when the repository secret AGENT_SIGNING_KEY is set: agents
+# check that signature before they update themselves. The signatures are made
+# here, outside the build, and reach the server image as the
+# `agent-signatures` build context (docs/development/agent-signing.md).
 
 on:
   push:
@@ -177,41 +183,9 @@ jobs:
           annotations: |
             org.opencontainers.image.created={{commit_date 'YYYY-MM-DDTHH:mm:ss[Z]'}}
 
-      - id: push
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
-        with:
-          context: .
-          platforms: linux/amd64
-          # `push=true` as an output, so that the file dates in the layers can
-          # be rewritten to SOURCE_DATE_EPOCH (`rewrite-timestamp`).
-          outputs: type=image,push=true,rewrite-timestamp=true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
-          build-args: DUMBMONIT_BUILD=${{ github.sha }}
-          # Same scopes as upgrade.yml. A tag reads main's cache (left by the
-          # push of the same commit to main) and writes none.
-          cache-from: |
-            type=gha,scope=server
-            type=gha,scope=agent
-          cache-to: ${{ github.ref == 'refs/heads/dev' && 'type=gha,scope=server,mode=max,ignore-error=true' || '' }}
-          # SBOM (SPDX) and full SLSA provenance, attached to the image index
-          # by BuildKit: `docker buildx imagetools inspect <image> --format
-          # '{{ json .SBOM }}'` (or `.Provenance`).
-          sbom: true
-          provenance: mode=max
-
-      # `gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:<tag> -R laupernoe/dumbmonit`
-      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
-        with:
-          subject-name: ${{ env.IMAGE }}
-          subject-digest: ${{ steps.push.outputs.digest }}
-          push-to-registry: true
-          create-storage-record: false
-
       # The agent binaries the server image ships in /agents, taken out of the
-      # same `agent` stage: it was just built for the image above, so this only
-      # exports it from the builder's cache — nothing is compiled twice.
+      # `agent` stage before the server image is built: the image below then
+      # reuses that stage from the builder's cache — nothing is compiled twice.
       - name: Extract the agent binaries
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
@@ -233,6 +207,76 @@ jobs:
             sha256sum "$binary" > "$binary.sha256"
           done
           ls -l
+
+      # Ed25519 signatures of the agent binaries, checked by the agents before
+      # they replace themselves. Made with `openssl pkeyutl -rawin` (Ed25519 is
+      # deterministic: the same binary and key always give the same `.sig`),
+      # outside the Docker build: the key never enters a layer or a cache.
+      # Without the secret the binaries ship unsigned, and agents refuse them
+      # unless the server accepts unsigned builds (development).
+      - name: Sign the agent binaries
+        env:
+          AGENT_SIGNING_KEY: ${{ secrets.AGENT_SIGNING_KEY }}
+        run: |
+          set -eu
+          mkdir -p signatures
+          if [ -z "$AGENT_SIGNING_KEY" ]; then
+            echo "::warning::AGENT_SIGNING_KEY is not set: the agent binaries are not signed"
+            exit 0
+          fi
+          umask 077
+          key="$RUNNER_TEMP/agent-signing.pem"
+          public="$RUNNER_TEMP/agent-signing.pub.pem"
+          trap 'rm -f "$key"' EXIT
+          printf '%s\n' "$AGENT_SIGNING_KEY" > "$key"
+          openssl pkey -in "$key" -pubout -out "$public"
+          # Agents only trust the keys compiled into them: a key missing from
+          # release-keys.pem would sign binaries that no agent installs.
+          if ! grep -qxF "$(sed -n 2p "$public")" crates/agent/signing/release-keys.pem; then
+            echo "::error::the public half of AGENT_SIGNING_KEY is not in crates/agent/signing/release-keys.pem"
+            exit 1
+          fi
+          for binary in dist/dumbmonit-agent-*; do
+            case "$binary" in *.sha256|*.sig) continue ;; esac
+            openssl pkeyutl -sign -inkey "$key" -rawin -in "$binary" -out "$binary.sig"
+            openssl pkeyutl -verify -pubin -inkey "$public" -rawin -in "$binary" -sigfile "$binary.sig"
+            cp "$binary.sig" signatures/
+          done
+          ls -l signatures
+
+      - id: push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
+        with:
+          context: .
+          platforms: linux/amd64
+          # `push=true` as an output, so that the file dates in the layers can
+          # be rewritten to SOURCE_DATE_EPOCH (`rewrite-timestamp`).
+          outputs: type=image,push=true,rewrite-timestamp=true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          build-args: DUMBMONIT_BUILD=${{ github.sha }}
+          # The `.sig` files made above (an empty folder without the key).
+          build-contexts: agent-signatures=signatures
+          # Same scopes as upgrade.yml. A tag reads main's cache (left by the
+          # push of the same commit to main) and writes none.
+          cache-from: |
+            type=gha,scope=server
+            type=gha,scope=agent
+          cache-to: ${{ github.ref == 'refs/heads/dev' && 'type=gha,scope=server,mode=max,ignore-error=true' || '' }}
+          # SBOM (SPDX) and full SLSA provenance, attached to the image index
+          # by BuildKit: `docker buildx imagetools inspect <image> --format
+          # '{{ json .SBOM }}'` (or `.Provenance`).
+          sbom: true
+          provenance: mode=max
+
+      # `gh attestation verify oci://ghcr.io/laupernoe/dumbmonit:<tag> -R laupernoe/dumbmonit`
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.push.outputs.digest }}
+          push-to-registry: true
+          create-storage-record: false
 
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7
         with:
@@ -399,7 +443,7 @@ jobs:
           set -eu
           cd dist
           for file in *; do
-            case "$file" in *.sha256|*.sigstore.json) continue ;; esac
+            case "$file" in *.sha256|*.sig|*.sigstore.json) continue ;; esac
             cosign sign-blob --yes --bundle "$file.sigstore.json" "$file"
           done
 
@@ -412,6 +456,7 @@ jobs:
           subject-path: |
             dist/dumbmonit-agent-*
             !dist/*.sha256
+            !dist/*.sig
             !dist/*.sigstore.json
 
       - name: Attach the provenance

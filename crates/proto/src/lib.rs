@@ -12,8 +12,10 @@ mod discovery;
 pub mod env;
 mod push;
 mod sample;
+mod selfupdate;
 mod target;
 mod tls;
+mod version;
 
 pub use collector::{Collector, ProbeError};
 pub use command::{
@@ -41,6 +43,10 @@ pub use push::{
     PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting, SoftwareInventory, TOKEN_PREFIX,
 };
 pub use sample::{MetricKind, Sample};
+pub use selfupdate::{
+    AGENT_FILE_PREFIX, AgentUpdateOffer, SIGNATURE_SUFFIX, SelfUpdateAbility, SelfUpdateInfo,
+    SelfUpdateOutcome, SelfUpdateReport, UPDATE_DOWNLOAD_PATH, UPDATE_TRIAL_SECS, agent_file_name,
+};
 pub use target::{
     EXPORTED_LABEL_PREFIX, MAX_TAG_LABEL_LEN, TAG_LABEL_PREFIX, Target, TargetId, apply_identity,
     looks_secret,
@@ -51,3 +57,4 @@ pub use tls::{
     TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest, agent_channel_url, is_pin,
     normalise_pin,
 };
+pub use version::{Version, is_older};

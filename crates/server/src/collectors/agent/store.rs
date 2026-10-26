@@ -1049,6 +1049,7 @@ mod tests {
             machine_id: machine_id.map(str::to_string),
             tags: BTreeMap::new(),
             binding_supported: true,
+            self_update: None,
         }
     }
 

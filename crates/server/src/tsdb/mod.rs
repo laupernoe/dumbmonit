@@ -6,12 +6,15 @@
 //! quand il faut diagnostiquer.
 
 pub mod embedded;
+pub mod rollup;
 mod writer;
 
-pub use embedded::{EmbeddedConfig, EmbeddedVm};
+pub use embedded::{EmbeddedConfig, EmbeddedVm, Flavor};
 pub use writer::{DEFAULT_FLUSH_SIZE, SampleSink, spawn_writer, spawn_writer_with};
 
 use std::collections::BTreeMap;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicI64, Ordering};
 
 use anyhow::{Context, Result, bail};
 use dumbmonit_proto::Sample;
@@ -63,6 +66,62 @@ pub struct Victoria {
     /// du VictoriaMetrics embarqué. Tirée au hasard à chaque démarrage et
     /// jamais exposée : seul ce client la connaît.
     admin_key: Option<String>,
+    /// Aiguillage vers l'historique long terme, partagé par tous les clones :
+    /// posé au démarrage, et ses réglages suivent ceux de l'interface.
+    long: Arc<std::sync::RwLock<Option<Arc<LongTerm>>>>,
+}
+
+/// L'instance des agrégats cinq minutes, et ce qu'il faut savoir pour décider
+/// d'y lire (voir [`rollup`]).
+pub struct LongTerm {
+    pub victoria: Victoria,
+    /// Rétention brute, en secondes.
+    raw_retention_secs: AtomicI64,
+    /// Plus ancienne fin de fenêtre agrégée (secondes), `i64::MAX` sans agrégat.
+    coverage_start_secs: AtomicI64,
+    /// Coupé depuis l'interface : plus aucune lecture n'y va.
+    enabled: AtomicBool,
+}
+
+impl LongTerm {
+    pub fn new(victoria: Victoria, raw_retention_secs: i64) -> Self {
+        Self {
+            victoria,
+            raw_retention_secs: AtomicI64::new(raw_retention_secs),
+            coverage_start_secs: AtomicI64::new(i64::MAX),
+            enabled: AtomicBool::new(true),
+        }
+    }
+
+    pub fn set_raw_retention_secs(&self, secs: i64) {
+        self.raw_retention_secs.store(secs, Ordering::Relaxed);
+    }
+
+    pub fn set_enabled(&self, enabled: bool) {
+        self.enabled.store(enabled, Ordering::Relaxed);
+    }
+
+    pub fn enabled(&self) -> bool {
+        self.enabled.load(Ordering::Relaxed)
+    }
+
+    /// Les agrégats remontent désormais jusqu'à `secs` (s'il est plus ancien).
+    pub fn extend_coverage(&self, secs: i64) {
+        self.coverage_start_secs.fetch_min(secs, Ordering::Relaxed);
+    }
+
+    pub fn coverage_start_secs(&self) -> Option<i64> {
+        let value = self.coverage_start_secs.load(Ordering::Relaxed);
+        (value != i64::MAX).then_some(value)
+    }
+
+    fn horizon(&self) -> rollup::Horizon {
+        rollup::Horizon {
+            now_secs: chrono::Utc::now().timestamp(),
+            raw_retention_secs: self.raw_retention_secs.load(Ordering::Relaxed),
+            coverage_start_secs: self.coverage_start_secs(),
+        }
+    }
 }
 
 impl Victoria {
@@ -75,7 +134,29 @@ impl Victoria {
             http,
             base_url: base_url.into().trim_end_matches('/').to_string(),
             admin_key: None,
+            long: Arc::default(),
         })
+    }
+
+    /// Branche l'historique long terme : à partir de là, les lectures qui
+    /// remontent au-delà de la rétention brute y sont aiguillées.
+    pub fn set_long_term(&self, long: Option<Arc<LongTerm>>) {
+        *self.long.write().unwrap_or_else(std::sync::PoisonError::into_inner) = long;
+    }
+
+    /// L'historique long terme branché, s'il y en a un.
+    pub fn long_term(&self) -> Option<Arc<LongTerm>> {
+        self.long.read().unwrap_or_else(std::sync::PoisonError::into_inner).clone()
+    }
+
+    fn active_long_term(&self) -> Option<Arc<LongTerm>> {
+        self.long_term().filter(|long| long.enabled())
+    }
+
+    /// Écrit des échantillons tels quels, sans passer par le tampon : c'est
+    /// l'agrégateur qui l'appelle, avec des lots déjà constitués.
+    pub async fn write_now(&self, samples: &[Sample]) -> Result<()> {
+        self.write(samples).await
     }
 
     /// Fixe la clé d'administration (`-deleteAuthKey`) que le processus
@@ -137,7 +218,49 @@ impl Victoria {
     }
 
     /// Exécute une requête MetricsQL sur une plage de temps.
+    ///
+    /// Une plage qui remonte au-delà de la rétention brute est servie par les
+    /// agrégats pour sa partie ancienne (voir [`rollup::plan_range`]).
     pub async fn query_range(
+        &self,
+        query: &str,
+        start_ms: i64,
+        end_ms: i64,
+        step_secs: u64,
+    ) -> Result<Vec<RangeSeries>> {
+        if let Some(long) = self.active_long_term() {
+            let step = step_secs.max(1) as i64;
+            let (start, end) = (start_ms / 1000, end_ms / 1000);
+            match rollup::plan_range(query, start, end, step, &long.horizon()) {
+                rollup::RangePlan::Raw => {}
+                rollup::RangePlan::Long { query: rewritten } => {
+                    match long
+                        .victoria
+                        .query_range_raw(&rewritten, start_ms, end_ms, step_secs)
+                        .await
+                    {
+                        Ok(series) => return Ok(series),
+                        Err(error) => log_query_failure(&error, "long-term read failed, raw used"),
+                    }
+                }
+                rollup::RangePlan::Split { query: rewritten, split_secs } => {
+                    let old_end_ms = (split_secs - step) * 1000;
+                    let (old, recent) = tokio::join!(
+                        long.victoria.query_range_raw(&rewritten, start_ms, old_end_ms, step_secs),
+                        self.query_range_raw(query, split_secs * 1000, end_ms, step_secs),
+                    );
+                    match old {
+                        Ok(old) => return Ok(rollup::stitch(old, recent?)),
+                        Err(error) => log_query_failure(&error, "long-term read failed, raw used"),
+                    }
+                }
+            }
+        }
+        self.query_range_raw(query, start_ms, end_ms, step_secs).await
+    }
+
+    /// `query_range` sur cette instance seulement, sans aiguillage.
+    pub async fn query_range_raw(
         &self,
         query: &str,
         start_ms: i64,
@@ -174,6 +297,17 @@ impl Victoria {
     /// route sans option particulière en mono-nœud ; l'appelant traite un échec
     /// comme un simple avertissement.
     pub async fn delete_target_series(&self, target_id: i64) -> Result<()> {
+        self.delete_target_series_here(target_id).await?;
+        // Ses agrégats aussi : sans quoi ils resteraient deux ans.
+        if let Some(long) = self.long_term()
+            && let Err(error) = long.victoria.delete_target_series_here(target_id).await
+        {
+            tracing::warn!(error = %format!("{error:#}"), target_id, "long-term series not deleted");
+        }
+        Ok(())
+    }
+
+    async fn delete_target_series_here(&self, target_id: i64) -> Result<()> {
         let matcher = format!("{{target=\"{target_id}\"}}");
         let mut request = self
             .http
@@ -312,7 +446,25 @@ impl Victoria {
 
     /// Exécute une requête MetricsQL instantanée.
     pub async fn query(&self, query: &str) -> Result<Vec<InstantSeries>> {
+        if let Some(answer) = self.query_long(query).await {
+            return Ok(answer);
+        }
         self.query_with(query, &[]).await
+    }
+
+    /// Une requête instantanée dont la fenêtre dépasse la rétention brute est
+    /// lue sur les agrégats ; `None` quand elle doit rester sur le brut, ou si
+    /// l'historique long terme ne répond pas.
+    async fn query_long(&self, query: &str) -> Option<Vec<InstantSeries>> {
+        let long = self.active_long_term()?;
+        let rewritten = rollup::plan_instant(query, &long.horizon())?;
+        match long.victoria.query_with(&rewritten, &[]).await {
+            Ok(series) => Some(series),
+            Err(error) => {
+                log_query_failure(&error, "long-term read failed, raw used");
+                None
+            }
+        }
     }
 
     /// Requête instantanée qui voit aussi les échantillons des dernières
@@ -326,6 +478,9 @@ impl Victoria {
         // `1ms` et non `0s` : VictoriaMetrics refuse zéro (« latency_offset=0ms
         // is out of allowed range [1ms ...] »), et chaque lecture instantanée de
         // l'interface échouait alors en 400.
+        if let Some(answer) = self.query_long(query).await {
+            return Ok(answer);
+        }
         self.query_with(query, &[("latency_offset", FRESH_LATENCY_OFFSET)]).await
     }
 
