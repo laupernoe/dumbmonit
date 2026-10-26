@@ -1,6 +1,7 @@
 pub mod abb_runs;
 pub mod activedirectory;
 pub mod alerts;
+pub mod multisite;
 pub mod opnsense;
 pub mod pbs;
 pub mod pdm;

@@ -164,6 +164,9 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
     let bootstrap = BOOTSTRAP_TEMPLATE
         .replace("__DM_URL__", params.url)
         .replace("__DM_SHA256__", params.sha256)
+        // Version du binaire du kit : un agent plus récent (mis à jour par le
+        // serveur) n'est jamais rétrogradé par la stratégie de groupe.
+        .replace("__DM_VERSION__", env!("CARGO_PKG_VERSION"))
         .replace("__DM_DOMAIN__", params.domain)
         .replace("__DM_INSTALL_ARGS_B64__", &b64(params.install_args));
     let script = DEPLOY_TEMPLATE
@@ -367,6 +370,11 @@ mod tests {
         assert!(!bootstrap.contains("__DM_"), "un paramètre du script de tâche manque");
         assert!(bootstrap.contains("$Domain         = 'corp.example.com'"));
         assert_eq!(decode(&bootstrap, "$InstallArgsB64"), args);
+        // Un agent mis à jour par le serveur, plus récent que le kit, reste en
+        // place : la stratégie de groupe ne le rétrograde pas.
+        let version = format!("$KitVersion     = '{}'", env!("CARGO_PKG_VERSION"));
+        assert!(bootstrap.contains(&version), "version du kit");
+        assert!(bootstrap.contains("($current -ge $kit)"));
 
         // Les champs libres voyagent encodés : l'apostrophe ne s'échappe pas.
         assert_eq!(decode(&script, "[string]$SecurityGroup"), "Serveurs l'équipe");

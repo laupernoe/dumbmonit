@@ -24,6 +24,7 @@
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
 	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
+	import ImportServices from '#lib/components/device-form/ImportServices.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
@@ -38,11 +39,17 @@
 
 	let kumaImport = $state<ImportKuma | null>(null);
 	let websitesImport = $state<ImportWebsites | null>(null);
+	let uptimerobotImport = $state<ImportServices | null>(null);
+	let gatusImport = $state<ImportServices | null>(null);
+	let healthchecksImport = $state<ImportServices | null>(null);
 	/** Ways to bring monitors over, listed last in the picker. Administrators only. */
 	const imports = $derived<ImportChoice[]>(
 		auth.isAdmin
 			? [
 					{ id: 'kuma', label: m.devices_kuma_open(), summary: m.deviceform_picker_import_kuma_summary(), icon: Upload, onrun: () => kumaImport?.show() },
+					{ id: 'uptimerobot', label: m.devices_svc_uptimerobot_open(), summary: m.deviceform_picker_import_uptimerobot_summary(), icon: Upload, onrun: () => uptimerobotImport?.show() },
+					{ id: 'gatus', label: m.devices_svc_gatus_open(), summary: m.deviceform_picker_import_gatus_summary(), icon: Upload, onrun: () => gatusImport?.show() },
+					{ id: 'healthchecks', label: m.devices_svc_healthchecks_open(), summary: m.deviceform_picker_import_healthchecks_summary(), icon: Upload, onrun: () => healthchecksImport?.show() },
 					{ id: 'websites', label: m.devices_import_open(), summary: m.deviceform_picker_import_websites_summary(), icon: FileSpreadsheet, onrun: () => websitesImport?.show() }
 				]
 			: []
@@ -300,6 +307,9 @@
 <!-- Opened from the "Import" category of the picker. -->
 {#if auth.isAdmin}
 	<ImportKuma bind:this={kumaImport} trigger={false} />
+	<ImportServices bind:this={uptimerobotImport} provider="uptimerobot" />
+	<ImportServices bind:this={gatusImport} provider="gatus" />
+	<ImportServices bind:this={healthchecksImport} provider="healthchecks" />
 	<ImportWebsites bind:this={websitesImport} trigger={false} />
 {/if}
 

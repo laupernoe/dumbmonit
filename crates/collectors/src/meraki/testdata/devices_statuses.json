@@ -1,0 +1,7 @@
+[
+ {"name":"MX-main","serial":"Q2QN-AAAA-0001","mac":"e0:55:3d:00:00:01","publicIp":"203.0.113.10","networkId":"N_24329156","status":"online","lastReportedAt":"2026-09-21T14:12:00.000000Z","lanIp":"192.168.128.1","gateway":null,"ipType":"dhcp","primaryDns":null,"secondaryDns":null,"productType":"appliance","model":"MX68","tags":[]},
+ {"name":"MS-core","serial":"Q2XX-BBBB-0002","mac":"e0:55:3d:00:00:02","publicIp":"203.0.113.10","networkId":"N_24329156","status":"alerting","lastReportedAt":"2026-09-21T14:11:30.000000Z","lanIp":"192.168.128.2","gateway":"192.168.128.1","ipType":"static","productType":"switch","model":"MS225-24P","tags":["core"]},
+ {"name":"AP-lobby","serial":"Q2MD-CCCC-0003","mac":"e0:55:3d:00:00:03","publicIp":"203.0.113.10","networkId":"N_24329156","status":"offline","lastReportedAt":"2026-09-21T13:50:00.000000Z","lanIp":"192.168.128.20","gateway":"192.168.128.1","ipType":"dhcp","productType":"wireless","model":"MR46","tags":[]},
+ {"name":"","serial":"Q2MD-DDDD-0004","mac":"e0:55:3d:00:00:04","publicIp":"198.51.100.7","networkId":"N_24329157","status":"dormant","lastReportedAt":"2026-06-01T08:00:00.000000Z","lanIp":null,"gateway":null,"ipType":"dhcp","productType":"wireless","model":"MR36","tags":[]},
+ {"name":"MX-warehouse","serial":"Q2QN-EEEE-0005","mac":"e0:55:3d:00:00:05","publicIp":"198.51.100.8","networkId":"N_24329157","status":"online","lastReportedAt":"2026-09-21T14:12:10.000000Z","lanIp":"192.168.200.1","gateway":null,"ipType":"dhcp","productType":"appliance","model":"MX67","tags":[]}
+]

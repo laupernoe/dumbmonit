@@ -74,6 +74,7 @@ pub const EXTENDED_EXTRA_TCP: &[u16] = &[
     9440,  // Nutanix Prism
     15672, // RabbitMQ management
     32400, // Plex
+    51515, // Kopia (API du serveur)
 ];
 
 /// Les ports à balayer pour une profondeur donnée, en incluant ceux qu'une

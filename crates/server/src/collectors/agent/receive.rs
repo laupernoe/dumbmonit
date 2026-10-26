@@ -208,6 +208,8 @@ pub async fn ingest(
         // Le mode relais réglé dans l'interface : l'agent l'applique à chaud.
         relay: store::relay_setting(pool, target.id).await?,
         event_rules,
+        // Posée par la route, qui connaît les binaires livrés : `selfupdate`.
+        agent_update: None,
     })
 }
 
@@ -392,6 +394,7 @@ mod tests {
                 machine_id: None,
                 tags: BTreeMap::new(),
                 binding_supported: true,
+                self_update: None,
             },
             samples,
             0,

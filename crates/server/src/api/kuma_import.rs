@@ -47,10 +47,10 @@ Export it from Settings, Backup in Uptime Kuma 1.x, or import kuma.db (version 2
 #[derive(Deserialize)]
 pub struct ImportQuery {
     #[serde(default)]
-    dry_run: bool,
+    pub(super) dry_run: bool,
     /// Numéros de lignes à importer, séparés par des virgules ; absent : toutes.
     #[serde(default)]
-    rows: Option<String>,
+    pub(super) rows: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -180,7 +180,7 @@ async fn store_upload(body: Body, path: &Path) -> ApiResult<()> {
     Ok(())
 }
 
-async fn run(
+pub(super) async fn run(
     state: &AppState,
     converted: Vec<Converted>,
     notifications_ignored: usize,
@@ -242,6 +242,7 @@ async fn run(
             tags: item.tags,
             group_name: Some(Some(item.folder)),
             location_id: None,
+            multisite: None,
             credential: None,
         };
         let input = match payload.validate(state, None) {
@@ -378,7 +379,7 @@ fn folder_of(monitor: &Value, groups: &Groups) -> String {
 }
 
 /// Nom d'étiquette DumbMonit : minuscules, chiffres, `_` et `-`.
-fn tag_key(name: &str) -> String {
+pub(super) fn tag_key(name: &str) -> String {
     let key: String = name
         .trim()
         .to_lowercase()
@@ -401,7 +402,7 @@ fn user_tags(monitor: &Value) -> BTreeMap<String, String> {
     tags
 }
 
-fn host_port(host: &str, port: u64) -> String {
+pub(super) fn host_port(host: &str, port: u64) -> String {
     if host.contains(':') && !host.starts_with('[') {
         format!("[{host}]:{port}")
     } else {

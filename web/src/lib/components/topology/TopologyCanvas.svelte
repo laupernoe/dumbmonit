@@ -4,7 +4,13 @@
 	 * keyboard and touch users. Hovering a node lights up its dependency chain
 	 * (what it depends on, what depends on it); clicking it opens its panel.
 	 * The view opens fitted to the whole map; a drag never selects a node.
+	 *
+	 * While the map is being corrected (`editing`), dragging a node onto
+	 * another asks to attach it there (`onattach`), and links become buttons
+	 * that open their own panel (`edgePanel`). The node panel gets the
+	 * correction tools from the caller (`editor`).
 	 */
+	import type { Snippet } from 'svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { Maximize, Minus, Plus } from 'lucide-svelte';
 	import MapContent from './MapContent.svelte';
@@ -16,9 +22,64 @@
 		graph: Graph;
 		selected?: string | null;
 		class?: string;
+		editing?: boolean;
+		/** Key of the link picked while correcting. */
+		selectedEdge?: string | null;
+		/** A node dropped onto another: `child` should hang from `parent`. */
+		onattach?: (child: string, parent: string) => void;
+		/** Correction tools, inside the panel of the selected node. */
+		editor?: Snippet<[string]>;
+		/** The panel of the selected link. */
+		edgePanel?: Snippet<[string]>;
 	}
 
-	let { layout, graph, selected = $bindable(null), class: className = '' }: Props = $props();
+	let {
+		layout,
+		graph,
+		selected = $bindable(null),
+		class: className = '',
+		editing = false,
+		selectedEdge = $bindable(null),
+		onattach,
+		editor,
+		edgePanel
+	}: Props = $props();
+
+	// Leaving the corrections closes the link panel.
+	$effect(() => {
+		if (!editing && selectedEdge !== null) selectedEdge = null;
+	});
+	$effect(() => {
+		if (selectedEdge !== null && !layout.edges.some((e) => e.key === selectedEdge)) selectedEdge = null;
+	});
+
+	/** A node being dragged onto another (correcting only). */
+	let drag = $state<{ id: string; x: number; y: number; startX: number; startY: number; active: boolean } | null>(null);
+	let dropTarget = $state<string | null>(null);
+
+	function toMap(clientX: number, clientY: number): { x: number; y: number } {
+		const rect = host?.getBoundingClientRect();
+		const left = rect?.left ?? 0;
+		const top = rect?.top ?? 0;
+		return { x: (clientX - left - view.x) / view.k, y: (clientY - top - view.y) / view.k };
+	}
+
+	/** The node under a point of the map, other than `except`. */
+	function nodeAt(x: number, y: number, except: string): string | null {
+		let best: string | null = null;
+		let distance = Infinity;
+		for (const p of layout.nodes) {
+			if (p.node.id === except) continue;
+			const d = Math.hypot(p.x - x, p.y - y);
+			if (d <= p.r + 16 && d < distance) {
+				best = p.node.id;
+				distance = d;
+			}
+		}
+		return best;
+	}
+
+	const dragFrom = $derived(drag?.active ? layout.nodes.find((p) => p.node.id === drag!.id) ?? null : null);
 
 	let host = $state<HTMLDivElement | null>(null);
 	let width = $state(0);
@@ -107,6 +168,13 @@
 
 	function onpointerdown(event: PointerEvent) {
 		if ((event.target as Element).closest('button') || inPanel(event.target)) return;
+		const grabbed = editing ? (event.target as Element).closest('[data-node-id]')?.getAttribute('data-node-id') : null;
+		if (grabbed && pointers.size === 0 && event.isPrimary) {
+			const at = toMap(event.clientX, event.clientY);
+			drag = { id: grabbed, x: at.x, y: at.y, startX: event.clientX, startY: event.clientY, active: false };
+			moved = 0;
+			return;
+		}
 		pointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
 		if (pointers.size === 1) moved = 0;
 		if (pointers.size === 2) {
@@ -116,6 +184,21 @@
 	}
 
 	function onpointermove(event: PointerEvent) {
+		if (drag) {
+			const travel = Math.abs(event.clientX - drag.startX) + Math.abs(event.clientY - drag.startY);
+			if (!drag.active && travel > 6) {
+				drag.active = true;
+				host?.setPointerCapture(event.pointerId);
+			}
+			if (drag.active) {
+				moved = 100;
+				const at = toMap(event.clientX, event.clientY);
+				drag.x = at.x;
+				drag.y = at.y;
+				dropTarget = nodeAt(at.x, at.y, drag.id);
+			}
+			return;
+		}
 		const last = pointers.get(event.pointerId);
 		if (!last) return;
 		const next = { x: event.clientX, y: event.clientY };
@@ -138,6 +221,14 @@
 	}
 
 	function onpointerup(event: PointerEvent) {
+		if (drag) {
+			const done = drag;
+			const target = dropTarget;
+			drag = null;
+			dropTarget = null;
+			if (done.active && target && event.type === 'pointerup') onattach?.(done.id, target);
+			return;
+		}
 		pointers.delete(event.pointerId);
 		if (pointers.size < 2) pinch = 0;
 	}
@@ -150,19 +241,26 @@
 			return;
 		}
 		// A click on the background closes the panel.
-		if (!(event.target as Element).closest('.topo-node, button')) selected = null;
+		if (!(event.target as Element).closest('.topo-node, .topo-edge, button')) {
+			selected = null;
+			selectedEdge = null;
+		}
 	}
 
 	function onkeydown(event: KeyboardEvent) {
 		if (inPanel(event.target)) {
-			if (event.key === 'Escape') selected = null;
+			if (event.key === 'Escape') {
+				selected = null;
+				selectedEdge = null;
+			}
 			return;
 		}
 		if (event.key === 'Escape') {
 			selected = null;
+			selectedEdge = null;
 			return;
 		}
-		if ((event.target as Element).closest('.topo-node') && (event.key === 'Enter' || event.key === ' ')) return;
+		if ((event.target as Element).closest('.topo-node, .topo-edge') && (event.key === 'Enter' || event.key === ' ')) return;
 		const step = 60;
 		const moves: Record<string, [number, number]> = {
 			ArrowLeft: [step, 0],
@@ -188,7 +286,7 @@
 	bind:this={host}
 	bind:clientWidth={width}
 	bind:clientHeight={height}
-	class={`topo-canvas relative touch-none overflow-hidden rounded-[var(--radius-card)] border border-line bg-canvas select-none focus-visible:outline-2 focus-visible:outline-signal ${className}`}
+	class={`topo-canvas relative touch-none overflow-hidden rounded-[var(--radius-card)] border bg-canvas select-none focus-visible:outline-2 focus-visible:outline-signal ${editing ? 'topo-editing border-signal' : 'border-line'} ${className}`}
 	role="group"
 	aria-label={m.topology_canvas_label()}
 	tabindex="0"
@@ -201,10 +299,32 @@
 >
 	<svg class="block size-full cursor-grab active:cursor-grabbing" role="presentation" font-family="inherit">
 		<g transform={`translate(${view.x},${view.y}) scale(${view.k})`}>
-			<MapContent {layout} {highlight} {selected} onhover={(id) => (hover = id)} onselect={(id) => (selected = selected === id ? null : id)} />
+			<MapContent
+				{layout}
+				{highlight}
+				{selected}
+				{editing}
+				{selectedEdge}
+				{dropTarget}
+				dragging={drag?.active ? drag.id : null}
+				onhover={(id) => (hover = id)}
+				onselect={(id) => {
+					selectedEdge = null;
+					selected = selected === id ? null : id;
+				}}
+				onedge={(key) => {
+					selected = null;
+					selectedEdge = selectedEdge === key ? null : key;
+				}}
+			/>
+			{#if drag?.active && dragFrom}
+				<!-- The node follows the pointer; a dashed line says where it came from. -->
+				<line x1={dragFrom.x} y1={dragFrom.y} x2={drag.x} y2={drag.y} class="stroke-signal" stroke-width="1.6" stroke-dasharray="4 4" />
+				<circle cx={drag.x} cy={drag.y} r={dragFrom.r} class="fill-surface stroke-signal" stroke-width="2.5" opacity="0.9" />
+			{/if}
 		</g>
 	</svg>
-	<div class={`absolute bottom-3 flex flex-col gap-1.5 ${selected ? 'right-3 max-sm:hidden sm:right-[21.5rem]' : 'right-3'}`}>
+	<div class={`absolute bottom-3 flex flex-col gap-1.5 ${selected || selectedEdge ? 'right-3 max-sm:hidden sm:right-[21.5rem]' : 'right-3'}`}>
 		<button type="button" class={controlClass} title={m.topology_zoom_in()} aria-label={m.topology_zoom_in()} onclick={() => zoomAt(1.25)}>
 			<Plus class="size-4" aria-hidden="true" />
 		</button>
@@ -215,7 +335,15 @@
 			<Maximize class="size-4" aria-hidden="true" />
 		</button>
 	</div>
-	{#if selected && graph.nodes.has(selected)}
-		<NodePanel {graph} id={selected} onselect={(id) => (selected = id)} onclose={() => (selected = null)} />
+	{#if editing && selectedEdge && edgePanel}
+		<section
+			data-topo-panel
+			class="absolute inset-x-2 bottom-2 z-10 flex max-h-[58%] flex-col overflow-hidden rounded-[var(--radius-card)] border border-line-strong bg-surface shadow-lift sm:inset-x-auto sm:top-3 sm:right-3 sm:bottom-3 sm:max-h-none sm:w-80"
+			aria-label={m.topology_edit_edge_panel()}
+		>
+			{@render edgePanel(selectedEdge)}
+		</section>
+	{:else if selected && graph.nodes.has(selected)}
+		<NodePanel {graph} id={selected} {editor} onselect={(id) => (selected = id)} onclose={() => (selected = null)} />
 	{/if}
 </div>

@@ -17,6 +17,7 @@ use axum::body::Body;
 use axum::extract::{Path, State};
 use axum::http::{StatusCode, header};
 use axum::response::{IntoResponse, Response};
+use dumbmonit_proto::SIGNATURE_SUFFIX;
 use sha2::{Digest, Sha256};
 use tokio_util::io::ReaderStream;
 
@@ -120,14 +121,22 @@ pub async fn download(State(state): State<AppState>, Path(name): Path<String>) -
     if let Some(binary) = name.strip_suffix(CHECKSUM_SUFFIX) {
         return checksum(&state, binary).await;
     }
+    if let Some(binary) = name.strip_suffix(SIGNATURE_SUFFIX) {
+        return signature(&state, binary).await;
+    }
     if AGENT_FILES_RELEASED_ELSEWHERE.contains(&name.as_str()) {
         return released_elsewhere(&name, &name);
     }
-    if !AGENT_FILES.contains(&name.as_str()) {
+    serve_binary(&state, &name).await
+}
+
+/// Le binaire `name` de la liste fermée, en flux.
+pub async fn serve_binary(state: &AppState, name: &str) -> Response {
+    if !AGENT_FILES.contains(&name) {
         return (StatusCode::NOT_FOUND, "Unknown file.").into_response();
     }
 
-    let path = state.config.agent_dir.join(&name);
+    let path = state.config.agent_dir.join(name);
     let file = match tokio::fs::File::open(&path).await {
         Ok(file) => file,
         Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
@@ -144,13 +153,77 @@ pub async fn download(State(state): State<AppState>, Path(name): Path<String>) -
         }
     };
 
+    let length = file.metadata().await.ok().map(|metadata| metadata.len());
     let mut response = Body::from_stream(ReaderStream::new(file)).into_response();
     let headers = response.headers_mut();
+    if let Some(length) = length {
+        headers.insert(header::CONTENT_LENGTH, length.into());
+    }
     headers.insert(header::CONTENT_TYPE, "application/octet-stream".parse().unwrap());
     if let Ok(value) = format!("attachment; filename=\"{name}\"").parse() {
         headers.insert(header::CONTENT_DISPOSITION, value);
     }
     response
+}
+
+/// Signature Ed25519 détachée d'un binaire (`<nom>.sig`, 64 octets bruts),
+/// faite par la CI avec la clé de publication. Absente d'un build non signé.
+async fn signature(state: &AppState, name: &str) -> Response {
+    if !AGENT_FILES.contains(&name) {
+        return (StatusCode::NOT_FOUND, "Unknown file.").into_response();
+    }
+    match read_signature(&state.config.agent_dir, name).await {
+        Some(bytes) => (
+            [
+                (header::CONTENT_TYPE, "application/octet-stream"),
+                (header::CACHE_CONTROL, "no-cache"),
+            ],
+            bytes,
+        )
+            .into_response(),
+        None => (StatusCode::NOT_FOUND, "This build of the agent is not signed.").into_response(),
+    }
+}
+
+/// Signature d'un binaire livré, si elle existe et a la bonne taille.
+async fn read_signature(agent_dir: &std::path::Path, name: &str) -> Option<Vec<u8>> {
+    let path = agent_dir.join(format!("{name}{SIGNATURE_SUFFIX}"));
+    let bytes = tokio::fs::read(path).await.ok()?;
+    (bytes.len() == 64).then_some(bytes)
+}
+
+/// Un binaire que l'image livre, tel que la mise à jour automatique le propose.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ShippedBinary {
+    pub file: String,
+    pub sha256: String,
+    pub size: u64,
+    /// Signature Ed25519 en base64, si le build est signé.
+    pub signature: Option<String>,
+}
+
+/// Binaires déjà décrits, par chemin : figés dans l'image, comme leurs empreintes.
+static SHIPPED: LazyLock<Mutex<HashMap<PathBuf, ShippedBinary>>> = LazyLock::new(Mutex::default);
+
+/// Le binaire d'une plateforme (`linux-x86_64`…), s'il est livré.
+pub async fn shipped_binary(agent_dir: &std::path::Path, platform: &str) -> Option<ShippedBinary> {
+    use base64::Engine as _;
+    let file = dumbmonit_proto::agent_file_name(platform);
+    if !AGENT_FILES.contains(&file.as_str()) {
+        return None;
+    }
+    let path = agent_dir.join(&file);
+    if let Some(known) = SHIPPED.lock().expect("binaires livrés").get(&path).cloned() {
+        return Some(known);
+    }
+    let sha256 = sha256_of(agent_dir, &file).await.ok()??;
+    let size = tokio::fs::metadata(&path).await.ok()?.len();
+    let signature = read_signature(agent_dir, &file)
+        .await
+        .map(|bytes| base64::engine::general_purpose::STANDARD.encode(bytes));
+    let binary = ShippedBinary { file, sha256, size, signature };
+    SHIPPED.lock().expect("binaires livrés").insert(path, binary.clone());
+    Some(binary)
 }
 
 /// Empreinte au format de `sha256sum` (`<hex>  <nom>`), pour que le script

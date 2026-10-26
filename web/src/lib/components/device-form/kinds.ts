@@ -77,6 +77,7 @@ import {
 	Terminal,
 	KeyRound,
 	Workflow,
+	Wifi,
 	CloudCog
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
@@ -153,9 +154,19 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	pfsense: BrickWallFire,
 	unraid: HardDrive,
 	veeam: CloudBackup,
+	kopia: CloudBackup,
+	duplicati: CloudBackup,
 	tailscale: Network,
 	fortigate: BrickWallShield,
+	meraki: Cloud,
+	omada: Antenna,
 	sophos: ShieldCheck,
+	arubacentral: Wifi,
+	paloalto: BrickWallShield,
+	sonicwall: ShieldCheck,
+	qnap: HardDrive,
+	ceph: Database,
+	minio: Archive,
 	website: PanelsTopLeft,
 	webchange: FileDiff,
 	snmp_oid: Gauge,
@@ -168,7 +179,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
@@ -235,9 +246,19 @@ const KIND_KEYWORDS: Record<string, string> = {
 	pfsense: 'firewall router gateway vpn openvpn ipsec dhcp netgate pfsense plus multi wan failover',
 	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
 	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',
+	kopia: 'backup snapshot deduplication encrypted repository source restic borg self-hosted',
+	duplicati: 'backup encrypted cloud storage backblaze b2 s3 webdav ftp job schedule restore self-hosted',
 	tailscale: 'vpn wireguard mesh tailnet headscale subnet router exit node zero trust remote access',
 	fortigate: 'fortinet fortios firewall utm ngfw ipsec vpn sd-wan ha cluster fortiguard',
 	sophos: 'sophos xg xgs sfos firewall utm ipsec vpn',
+	meraki: 'cisco meraki cloud dashboard mx ms mr switch access point wifi security appliance sd-wan uplink license',
+	omada: 'tp-link tplink omada eap access point wifi switch gateway er605 oc200 oc300 sdn controller',
+	arubacentral: 'aruba hpe central greenlake wifi wi-fi wireless access point ap switch gateway cloud instant on',
+	paloalto: 'palo alto networks pan-os panos pa-series vm-series firewall ngfw ha globalprotect panorama beta',
+	sonicwall: 'sonicwall sonicos tz nsa nssp nsv firewall utm vpn beta',
+	qnap: 'nas qts quts hero storage raid volume disk smart snapshot backup',
+	ceph: 'storage cluster osd pg pool mon mgr rados rbd cephfs object block distributed proxmox rook',
+	minio: 'object storage s3 bucket erasure prometheus metrics distributed',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',

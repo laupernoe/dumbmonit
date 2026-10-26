@@ -19,6 +19,8 @@
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
+	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
+	import { auth } from '#lib/stores/auth.svelte.js';
 
 	const id = $derived(Number(page.params.id));
 
@@ -99,6 +101,10 @@
 						</Plate>
 					{/if}
 				{/snippet}
+				{#if target.managed}
+					<!-- Managed by Docker labels: nothing to edit here until it is released. -->
+					<ManagedNotice {target} canRelease={auth.isAdmin} onreleased={() => void load()} />
+				{:else}
 				<!-- Re-mounted per device so every field is seeded fresh. -->
 				{#key target.id}
 					<TargetForm
@@ -109,6 +115,7 @@
 						onsaved={(saved) => goto(`/targets/${saved.id}`)}
 					/>
 				{/key}
+				{/if}
 			</Panel>
 		</div>
 		<aside class="min-w-0 lg:sticky lg:top-20 lg:col-span-5">
