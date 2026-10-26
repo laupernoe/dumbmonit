@@ -3941,6 +3941,7 @@
 	"kinds_label_webchange": "Website changes",
 	"kinds_label_website": "Website health & SEO",
 	"kinds_label_websocket": "WebSocket endpoint",
+	"kinds_label_winrm": "Windows (WinRM, no agent)",
 	"livemap_blocked": "Blocked",
 	"livemap_blocked_count": "{count} blocked",
 	"livemap_country_counts": "{blocked} blocked · {passed} passed",

@@ -77,7 +77,7 @@ fn parse_scheme(value: Option<&str>, default: &'static str) -> Result<&'static s
     }
 }
 
-fn parse_port(value: Option<&str>, default: u16) -> Result<u16, ProbeError> {
+pub(crate) fn parse_port(value: Option<&str>, default: u16) -> Result<u16, ProbeError> {
     match value {
         None => Ok(default),
         Some(raw) => raw
@@ -88,7 +88,7 @@ fn parse_port(value: Option<&str>, default: u16) -> Result<u16, ProbeError> {
     }
 }
 
-fn parse_timeout(value: Option<&str>) -> Result<Duration, ProbeError> {
+pub(crate) fn parse_timeout(value: Option<&str>) -> Result<Duration, ProbeError> {
     let Some(raw) = value else { return Ok(DEFAULT_REQUEST_TIMEOUT) };
     let seconds: u64 =
         raw.parse().map_err(|_| ProbeError::Config(format!("Invalid timeout: \"{raw}\"")))?;
@@ -107,7 +107,7 @@ fn parse_timeout(value: Option<&str>) -> Result<Duration, ProbeError> {
 /// Le port par défaut d'un protocole n'est pas écrit : `https://cloud.lan` et
 /// non `https://cloud.lan:443`, ce qui compte pour Nextcloud, qui compare
 /// l'hôte reçu à ses domaines de confiance.
-fn base_url(address: &str, scheme: &str, port: u16) -> Result<String, ProbeError> {
+pub(crate) fn base_url(address: &str, scheme: &str, port: u16) -> Result<String, ProbeError> {
     let address = address.trim().trim_end_matches('/');
     if address.is_empty() {
         return Err(ProbeError::Config("Monitor address is empty".to_string()));

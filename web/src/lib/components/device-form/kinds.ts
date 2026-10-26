@@ -173,6 +173,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	pfsense: BrickWallFire,
 	unraid: HardDrive,
 	veeam: CloudBackup,
+	winrm: Cpu,
 	kopia: CloudBackup,
 	duplicati: CloudBackup,
 	tailscale: Network,
@@ -206,7 +207,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'unifiprotect', 'frigate', 'keycloak', 'authentik', 'vaultwarden', 'mailcow', 'redis', 'mongodb', 'rabbitmq', 'mssql', 'oracle', 'elasticsearch', 'influxdb', 'kafka', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'unifiprotect', 'frigate', 'keycloak', 'authentik', 'vaultwarden', 'mailcow', 'redis', 'mongodb', 'rabbitmq', 'mssql', 'oracle', 'elasticsearch', 'influxdb', 'kafka', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'winrm', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
@@ -290,6 +291,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	activedirectory: 'ad active directory ldap ldaps windows domain controller dc kerberos krbtgt fsmo samba group policy laps',
 	pfsense: 'firewall router gateway vpn openvpn ipsec dhcp netgate pfsense plus multi wan failover',
 	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
+	winrm: 'windows server wmi wql winrm ws-management agentless without agent remote management ntlm services event log cpu memory disk uptime',
 	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',
 	kopia: 'backup snapshot deduplication encrypted repository source restic borg self-hosted',
 	duplicati: 'backup encrypted cloud storage backblaze b2 s3 webdav ftp job schedule restore self-hosted',

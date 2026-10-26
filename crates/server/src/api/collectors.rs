@@ -4172,6 +4172,75 @@ const VEEAM_OPTIONS: &[OptionView] = &[
     DEVICE_STALE_DAYS,
 ];
 
+/// Compte Windows de WinRM (`collectors/winrm`) : NTLM par défaut, Basic en HTTPS.
+const WINRM_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Windows account",
+    help: "A local or domain account in the Remote Management Users group, as dumbmonit, DOMAIN\\dumbmonit or dumbmonit@domain.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The account created on the server, as dumbmonit (local) or DOMAIN\\dumbmonit.",
+            "CORP\\dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const WINRM_OPTIONS: &[OptionView] = &[
+    boolean(
+        "allow_unencrypted",
+        "Allow unencrypted traffic",
+        "Use HTTP on port 5985 instead of HTTPS on port 5986. Not recommended: the server must allow unencrypted WinRM, and everything that crosses the network, the login included, can be read. Leave it off whenever an HTTPS listener exists.",
+        false,
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. 5986 for HTTPS, 5985 with unencrypted traffic.",
+        "5986",
+        "",
+    ),
+    select(
+        "auth",
+        "Authentication",
+        "NTLM works with local and domain accounts. Basic must be enabled on the server and is only accepted over HTTPS. Kerberos is not supported.",
+        "ntlm",
+        &["ntlm", "basic"],
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+    text(
+        "services",
+        "Services to follow",
+        "Service names separated by commas. Each gets an up/down series, and one missing from the server counts as stopped. Every automatic service that is stopped is reported anyway.",
+        "Spooler, W3SVC",
+        "",
+    ),
+    text(
+        "ignore_services",
+        "Stopped services to ignore",
+        "Automatic services allowed to be stopped, separated by commas; a * at the start or the end is a wildcard. Updaters and delayed-start services such as gupdate are already ignored.",
+        "MSSQL*, Backup*",
+        "",
+    ),
+    text(
+        "event_logs",
+        "Event logs to count",
+        "Classic logs whose recent errors are counted (audit failures for Security), separated by commas. Write none to turn it off.",
+        "System,Application",
+        "System,Application",
+    ),
+    number(
+        "event_minutes",
+        "Event window (minutes)",
+        "Errors logged during this many minutes are counted, from 1 to 1440.",
+        "60",
+        "60",
+    ),
+];
+
 /// Identifiants du serveur Kopia (`--server-username` / `--server-password`),
 /// envoyés en authentification HTTP Basic (`collectors/kopia`).
 const KOPIA_LOGIN: CredentialView = CredentialView {
@@ -7318,6 +7387,42 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: VEEAM_OPTIONS,
         },
+        "winrm" => CollectorView {
+            kind: "winrm",
+            label: "Windows (WinRM, no agent)",
+            summary: "A Windows server or PC without installing anything, through WinRM and WMI queries: CPU, memory, disks, services (the chosen ones and every automatic service that is stopped), uptime and recent event log errors.",
+            examples: &["Windows Server 2019", "Windows Server 2022", "Windows 11 workstation"],
+            credential_types: &["username_password"],
+            credentials: &[WINRM_LOGIN],
+            address_hint: "srv01.corp.example.com",
+            default_port: 5986,
+            setup: Setup {
+                title: "Give DumbMonit a WinRM account on the Windows server",
+                steps: &[
+                    "On the server, in an elevated PowerShell, enable WinRM.\nEnable-PSRemoting -SkipNetworkProfileCheck -Force",
+                    "Create the HTTPS listener with a certificate named after the server (use your own certificate instead of this self-signed one if you have one), then open its port.\n$cert = New-SelfSignedCertificate -DnsName \"srv01.corp.example.com\" -CertStoreLocation Cert:\\LocalMachine\\My\nNew-Item -Path WSMan:\\LocalHost\\Listener -Transport HTTPS -Address * -CertificateThumbPrint $cert.Thumbprint -Force\nNew-NetFirewallRule -DisplayName \"WinRM HTTPS\" -Direction Inbound -Protocol TCP -LocalPort 5986 -Action Allow",
+                    "Create the account with a long random password, then add it to the groups listed below.\nnet user dumbmonit * /add\nnet localgroup \"Remote Management Users\" dumbmonit /add\nnet localgroup \"Performance Monitor Users\" dumbmonit /add\nnet localgroup \"Event Log Readers\" dumbmonit /add",
+                    "Give the account access to the WMI namespace: wmimgmt.msc → right-click WMI Control → Properties → Security → Root → CIMV2 → Security, add it and tick Enable Account and Remote Enable.",
+                    "In DumbMonit, enter the server name as its certificate names it (srv01.corp.example.com) and log in as dumbmonit, or DOMAIN\\dumbmonit for a domain account.",
+                ],
+                ports: &[
+                    to_device!(5986, "tcp", "WinRM over HTTPS (default)"),
+                    to_device_optional!(
+                        5985,
+                        "tcp",
+                        "Only with the Allow unencrypted traffic option"
+                    ),
+                ],
+                permissions: &[
+                    "Remote Management Users\nAllows the WinRM login",
+                    "Performance Monitor Users\nReads the CPU load per core",
+                    "Event Log Readers\nOnly for the event log counts",
+                    "WMI root/cimv2: Enable Account, Remote Enable\nReads the WMI classes",
+                ],
+                warning: "The account runs no command on the server, it only reads WMI. NTLM and Basic (HTTPS only) are supported, Kerberos is not. Pending Windows updates cannot be read this way. A self-signed certificate needs the option Accept an unverifiable certificate.",
+            },
+            options: WINRM_OPTIONS,
+        },
         "kopia" => CollectorView {
             kind: "kopia",
             label: "Kopia",
@@ -7826,7 +7931,7 @@ fn guide_url(kind: &str) -> String {
         | "adguard" | "nut" | "mikrotik" | "unifi" | "homeassistant" | "vsphere" | "redis"
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
-        | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
+        | "activedirectory" | "pfsense" | "unraid" | "veeam" | "winrm" | "tailscale" | "fortigate"
         | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
         | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "mssql" | "oracle" | "elasticsearch" | "influxdb" | "kafka" | "push" | "webchange" | "website" | "m365" | "entra" | "azure" | "aws" | "cloudflare" | "hetzner" | "ovh" | "infomaniak" | "prometheus" | "otlp" => kind,
         _ => return String::new(),
@@ -7989,6 +8094,7 @@ mod tests {
         "pfsense",
         "unraid",
         "veeam",
+        "winrm",
         "kopia",
         "duplicati",
         "tailscale",
@@ -8681,6 +8787,20 @@ mod tests {
                     "insecure_tls",
                     "request_timeout_seconds",
                     "device_stale_days",
+                ],
+            ),
+            (
+                "winrm",
+                &[
+                    "allow_unencrypted",
+                    "port",
+                    "auth",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "services",
+                    "ignore_services",
+                    "event_logs",
+                    "event_minutes",
                 ],
             ),
             ("kopia", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),

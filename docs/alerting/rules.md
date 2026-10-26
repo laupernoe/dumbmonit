@@ -688,6 +688,14 @@ See [Veeam Backup & Replication](../devices/veeam.md). Jobs are labelled `job` a
 | Veeam repository nearly full | A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Veeam license expiring | The Veeam license expires in less than 30 days: jobs stop at the end of the grace period (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
 
+### Windows without an agent
+
+See [Windows without an agent (WinRM)](../devices/winrm.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Windows automatic services stopped | One or more Windows services set to start automatically are stopped (`dumbmonit_windows_services_auto_stopped`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+
 ### Kopia
 
 See [Kopia](../devices/kopia.md). Sources are labelled `source` (`user@host:/path`). Beta: not yet tested on a real server.
