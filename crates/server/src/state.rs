@@ -10,11 +10,19 @@ use crate::collectors::discovery::Discovery;
 use crate::collectors::relay::RelayHub;
 use crate::config::Config;
 use crate::crypto::Cipher;
+use crate::multisite::MultiSite;
 use crate::tsdb::{SampleSink, Victoria};
 
 /// État partagé par tous les gestionnaires HTTP et par le planificateur.
 #[derive(Clone)]
-pub struct AppState(Arc<Inner>, Arc<RelayHub>, Arc<Cooldowns>, Arc<Discovery>, Arc<AgentTls>);
+pub struct AppState(
+    Arc<Inner>,
+    Arc<RelayHub>,
+    Arc<Cooldowns>,
+    Arc<Discovery>,
+    Arc<AgentTls>,
+    Arc<MultiSite>,
+);
 
 pub struct Inner {
     pub config: Config,
@@ -33,6 +41,7 @@ impl AppState {
             Arc::new(Cooldowns::default()),
             Arc::new(Discovery::new()),
             Arc::new(AgentTls::new()),
+            Arc::new(MultiSite::new()),
         )
     }
 
@@ -59,6 +68,12 @@ impl AppState {
     /// épingler, compteurs d'enrôlement (voir [`crate::agent_tls`]).
     pub fn agent_tls(&self) -> &AgentTls {
         &self.4
+    }
+
+    /// Rondes des sondes multi-emplacements et derniers constats par
+    /// emplacement (voir [`crate::multisite`]). En mémoire, comme le relais.
+    pub fn multisite(&self) -> &MultiSite {
+        &self.5
     }
 }
 

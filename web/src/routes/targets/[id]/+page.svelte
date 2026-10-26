@@ -55,6 +55,7 @@
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
+	import ProbeLocationsCard from '#lib/components/devices/ProbeLocationsCard.svelte';
 	import UptimeBar from '#lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '#lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '#lib/components/devices/FoldSection.svelte';
@@ -749,6 +750,10 @@
 
 	{#if securityShown && securityOpen}
 		<SecurityReport report={securityShown} onclose={() => (securityOpen = false)} />
+	{/if}
+
+	{#if target.multisite}
+		<ProbeLocationsCard targetId={target.id} {refreshKey} />
 	{/if}
 
 	<CveDeviceCard targetId={target.id} />

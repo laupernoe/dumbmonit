@@ -5,6 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Probes from several locations, confirmed before alerting.** An uptime monitor
+  (HTTP, TCP, ping, DNS, TLS, SMTP, SQL, MQTT, WebSocket, NTP) can now be probed
+  by the server and one or more relay agents at once. It is down only when at
+  least N of the locations fail (majority by default, configurable); a minority
+  failing shows "degraded" without raising `service_down`. On the first failure
+  every location re-checks at once, and only that confirmation is published.
+  A silent, busy or older relay agent is left out of the quorum and flagged.
+  Uptime, alerts and status pages use the decision; each location keeps its own
+  series (`dumbmonit_probe_location_success{location}`,
+  `dumbmonit_probe_location_duration_seconds`). The monitor page shows state and
+  latency per location (on the world map when geolocated);
+  `GET /api/targets/{id}/probe-locations` returns them.
+
 ## 0.14.0 — 2026-10-25
 
 ### Added

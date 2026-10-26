@@ -123,6 +123,8 @@ export interface Target {
 	parent_id: TargetId | null;
 	/** Agent that probes this device from its own network; `null` when the server does. */
 	via_agent: TargetId | null;
+	/** Probed from several locations with a quorum; `null` when only one place probes. */
+	multisite: MultisiteConfig | null;
 	interval_secs: number;
 	enabled: boolean;
 	tags: Record<string, string>;
@@ -147,6 +149,51 @@ export interface Target {
 	error_kind: 'down' | 'config' | null;
 }
 
+/** Probing an uptime monitor from several locations. */
+export interface MultisiteConfig {
+	/** The DumbMonit server itself probes too. */
+	server: boolean;
+	/** Relay agents (ids of `agent` monitors, same list as `GET /api/relays`) that probe too. */
+	agents: number[];
+	/** Failing locations needed to declare the monitor down; null = majority of the locations. */
+	quorum: number | null;
+}
+
+export type ProbeDecision = 'up' | 'degraded' | 'down' | 'unknown';
+
+/** One place that probes a multisite monitor. */
+export interface ProbeLocation {
+	/** Value of the `location` metric label: 'server' or 'agent-<id>'. */
+	location: string;
+	agent_id: number | null;
+	/** Agent name; empty for the server. */
+	name: string;
+	site: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	/** excluded: not counted in the quorum; pending: no result yet. */
+	state: 'up' | 'down' | 'excluded' | 'pending';
+	latency_ms: number | null;
+	/** Probe failure reason or exclusion detail (English, from the server). */
+	error: string | null;
+	excluded_reason: 'silent' | 'not_relay' | 'busy' | 'error' | null;
+	checked_at: string | null;
+}
+
+/** `GET /api/targets/{id}/probe-locations`. */
+export interface ProbeLocationsReport {
+	decision: ProbeDecision;
+	/** Failing locations needed for "down" (effective, after exclusions). */
+	quorum: number;
+	/** Locations counted in the last decision. */
+	counted: number;
+	failing: number;
+	/** A confirmation round is running right now. */
+	confirming: boolean;
+	decided_at: string | null;
+	locations: ProbeLocation[];
+}
+
 /** Body sent to `POST /api/targets` and `PUT /api/targets/{id}`. */
 export interface TargetPayload {
 	name: string;
@@ -155,6 +202,8 @@ export interface TargetPayload {
 	profile_id?: string | null;
 	parent_id?: TargetId | null;
 	via_agent?: TargetId | null;
+	/** Absent on edit keeps it; `null` turns it off. Exclusive with `via_agent`. */
+	multisite?: MultisiteConfig | null;
 	interval_secs?: number;
 	enabled?: boolean;
 	tags?: Record<string, string>;

@@ -45,6 +45,18 @@ For services (`http`, `tcp`, `dns`, `ping`, `tls`), `dumbmonit_up = 1` means
 fine. The two signals are kept apart on purpose: a `probe_success` of 0 says
 the service is down, an interruption of `up` says the monitoring is down.
 
+## Probing from several locations
+
+When a monitor is [probed from several locations](../devices/services.md#probing-from-several-locations), `dumbmonit_probe_success` carries the quorum decision, and these series add the detail:
+
+| Metric | Meaning |
+|---|---|
+| `dumbmonit_probe_location_success{location}` | 1 or 0 for each location (`server` or `agent-<id>`) |
+| `dumbmonit_probe_location_duration_seconds{location}` | Response time seen from each location |
+| `dumbmonit_probe_degraded` | 1 while only a minority of the locations fail (no down alert) |
+| `dumbmonit_probe_locations_failing` | Locations failing in the last decision |
+| `dumbmonit_probe_locations_counted` | Locations counted in the last decision (silent ones are left out) |
+
 ## `dumbmonit_security_score`
 
 Every 15 minutes the server computes the [security score](../using/security-score.md)

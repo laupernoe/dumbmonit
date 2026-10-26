@@ -1405,6 +1405,26 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/probe-locations:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getProbeLocations
+      tags: [Devices]
+      summary: State and latency per probe location
+      description: >-
+        For a monitor probed from several locations: the last quorum decision and
+        each location's last result. A monitor probed from one place returns
+        `unknown` with no locations.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Quorum decision and locations.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProbeLocationsReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /api/targets/{id}/probe:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -7139,6 +7159,11 @@ components:
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
+        multisite:
+          description: "Probe locations of an uptime monitor (the server and/or relay agents) and the quorum; null: probed from one place."
+          oneOf:
+            - { $ref: "#/components/schemas/MultisiteConfig" }
+            - { type: "null" }
         last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
         last_error: { type: [string, "null"] }
         error_kind:
@@ -7217,6 +7242,11 @@ components:
           additionalProperties: { type: string }
         group_name: { type: [string, "null"], description: "Flat folder shown on `/targets`. Empty or `null`: no folder. Absent on `PUT` keeps the folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location on the world map; `null`: none. Absent on `PUT` keeps the assignment." }
+        multisite:
+          description: "Probe from several locations (uptime monitors only, at least two locations, not combined with `via_agent`); `null`: one place. Absent on `PUT` keeps the setting."
+          oneOf:
+            - { $ref: "#/components/schemas/MultisiteConfig" }
+            - { type: "null" }
         credential:
           $ref: "#/components/schemas/CredentialInput"
           description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it. Sent with a secret field absent or empty (community, passphrase, token `secret`, `password`), that secret is kept as long as the identity it belongs to (`username`, `token_id`) is unchanged; otherwise the request is refused with "Enter the … again".'
@@ -7265,6 +7295,43 @@ components:
             type: { const: username_password }
             username: { type: string }
             password: { type: string }
+    MultisiteConfig:
+      type: object
+      required: [server]
+      properties:
+        server: { type: boolean, description: The DumbMonit server probes too. }
+        agents:
+          type: array
+          description: Relay agents (ids of `agent` monitors) that probe too.
+          items: { type: integer, format: int64 }
+        quorum: { type: [integer, "null"], minimum: 1, description: "Failing locations needed to declare the monitor down; null: majority." }
+    ProbeLocationsReport:
+      type: object
+      required: [decision, quorum, counted, failing, confirming, locations]
+      properties:
+        decision: { type: string, enum: [up, degraded, down, unknown], description: Last published quorum decision. }
+        quorum: { type: integer, description: "Failing locations needed for `down`, after exclusions." }
+        counted: { type: integer, description: Locations counted in the last decision (excluded ones left out). }
+        failing: { type: integer }
+        confirming: { type: boolean, description: A confirmation round is re-checking a first failure from every location. }
+        decided_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        locations:
+          type: array
+          items:
+            type: object
+            required: [location, name, state]
+            properties:
+              location: { type: string, description: "Value of the `location` metric label: `server` or `agent-<id>`." }
+              agent_id: { type: [integer, "null"], format: int64 }
+              name: { type: string, description: Agent name; empty for the server. }
+              site: { type: [string, "null"] }
+              latitude: { type: [number, "null"] }
+              longitude: { type: [number, "null"] }
+              state: { type: string, enum: [up, down, excluded, pending] }
+              latency_ms: { type: [integer, "null"] }
+              error: { type: [string, "null"] }
+              excluded_reason: { type: [string, "null"], enum: [silent, not_relay, busy, error, null] }
+              checked_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
     ProbeReport:
       type: object
       required: [sample_count, series]

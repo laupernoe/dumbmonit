@@ -48,6 +48,18 @@ sont gardés séparés volontairement : un `probe_success` de 0 dit que le
 service est en panne, une interruption de `up` dit que la surveillance
 est en panne.
 
+## Sondage depuis plusieurs emplacements
+
+Quand un moniteur est [sondé depuis plusieurs emplacements](../devices/services.fr.md#sonder-depuis-plusieurs-emplacements), `dumbmonit_probe_success` porte la décision de quorum, et ces séries ajoutent le détail :
+
+| Métrique | Signification |
+|---|---|
+| `dumbmonit_probe_location_success{location}` | 1 ou 0 pour chaque emplacement (`server` ou `agent-<id>`) |
+| `dumbmonit_probe_location_duration_seconds{location}` | Temps de réponse vu depuis chaque emplacement |
+| `dumbmonit_probe_degraded` | 1 tant qu'une minorité seulement d'emplacements échoue (pas d'alerte de panne) |
+| `dumbmonit_probe_locations_failing` | Emplacements en échec dans la dernière décision |
+| `dumbmonit_probe_locations_counted` | Emplacements comptés dans la dernière décision (les silencieux sont écartés) |
+
 ## `dumbmonit_security_score`
 
 Toutes les 15 minutes, le serveur calcule le

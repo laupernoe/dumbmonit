@@ -114,6 +114,13 @@ export const UPTIME_KINDS = [
 	'websocket'
 ] as const;
 
+/** Uptime kinds that can be probed from several locations (mirrors the server). */
+export const MULTISITE_KINDS = ['http', 'tcp', 'dns', 'ping', 'tls', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'ntp'] as const;
+
+export function isMultisiteKind(kind: string): boolean {
+	return (MULTISITE_KINDS as readonly string[]).includes(kind);
+}
+
 export function isUptimeKind(kind: string): boolean {
 	return (UPTIME_KINDS as readonly string[]).includes(kind);
 }
