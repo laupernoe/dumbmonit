@@ -130,6 +130,8 @@ nav:
       - Kubernetes / k3s: devices/kubernetes.md
       - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
+      - Kopia (beta): devices/kopia.md
+      - Duplicati (beta): devices/duplicati.md
       - Tailscale: devices/tailscale.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md

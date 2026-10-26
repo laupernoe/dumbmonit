@@ -2,7 +2,7 @@
  * How each appliance's stored series become a panel: a verdict sentence, a
  * few figures and the lists worth reading. One fold per kind, all pure, all
  * reading `dumbmonit_<prefix>_*` series as the collectors write them
- * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,nginx,apache}`,
+ * (`crates/collectors/src/{pfsense,unraid,veeam,kopia,duplicati,tailscale,fortigate,sophos,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '#lib/api/index.js';
@@ -298,6 +298,112 @@ function veeam(series: MetricSeries[]): ApplianceView {
 			{ title: 'Jobs', rows: jobs },
 			{ title: 'Repositories', rows: repositories }
 		]
+	};
+}
+
+// ----------------------------------------------------------------------- Kopia
+
+function kopia(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'kopia');
+	const info = ps.find((p) => p.name === 'repo_info')?.labels ?? null;
+	const connected = single(ps, 'repo_connected');
+	const ages = byLabel(ps, 'source_last_snapshot_age_seconds', 'source');
+	const errors = byLabel(ps, 'source_last_snapshot_errors', 'source');
+	const scheduled = byLabel(ps, 'source_scheduled', 'source');
+	const uploading = byLabel(ps, 'source_uploading', 'source');
+	const bytes = byLabel(ps, 'source_last_snapshot_bytes', 'source');
+	const sources: Row[] = [...byLabel(ps, 'source_has_snapshot', 'source').values()].map((p) => {
+		const name = p.labels.source;
+		const age = ages.get(name)?.value ?? null;
+		const failed = errors.get(name)?.value ?? 0;
+		const running = (uploading.get(name)?.value ?? 0) >= 1;
+		const behind = (scheduled.get(name)?.value ?? 0) >= 1 && age !== null && age > 2 * 86400;
+		const withErrors = failed > 0;
+		return {
+			key: name,
+			name,
+			tone: behind || withErrors ? 'advisory' : running ? 'info' : age === null ? 'ghost' : 'signal',
+			plate: behind ? 'Behind schedule' : withErrors ? 'With errors' : running ? 'Running' : age === null ? 'No snapshot' : 'Healthy',
+			details: [
+				age !== null ? `last snapshot ${formatAge(age)} ago` : '',
+				withErrors ? `${Math.round(failed)} unreadable` : '',
+				bytes.has(name) ? formatBytes(bytes.get(name)?.value) : ''
+			].filter(Boolean)
+		};
+	});
+	const RANK: Record<string, number> = { warning: 0, advisory: 1, info: 2, signal: 3, ghost: 4 };
+	sources.sort((a, b) => (RANK[a.tone] ?? 9) - (RANK[b.tone] ?? 9) || byName(a, b));
+	const behindCount = sources.filter((r) => r.plate === 'Behind schedule').length;
+	const errorCount = sources.filter((r) => r.plate === 'With errors').length;
+	const problems = [];
+	if (connected !== null && connected < 1) problems.push({ text: 'the server is not connected to its repository', severe: true });
+	if (behindCount > 0) problems.push({ text: `${behindCount} scheduled ${behindCount === 1 ? 'source has' : 'sources have'} no recent snapshot`, severe: false });
+	if (errorCount > 0) problems.push({ text: `${errorCount} ${errorCount === 1 ? 'source' : 'sources'} with unreadable files in the last snapshot`, severe: false });
+	return {
+		title: 'Backups',
+		description: info?.storage ? `Kopia server, repository on ${info.storage} storage.` : 'Read through the Kopia server API (beta).',
+		verdict: verdict(problems, 'Every source has a recent snapshot without errors.'),
+		figures: [
+			{ label: 'Repository', value: connected === null ? null : connected >= 1 ? 'Connected' : 'Disconnected', tone: connected !== null && connected < 1 ? 'warning' : 'ink' },
+			{ label: 'Sources', value: single(ps, 'sources') !== null ? String(single(ps, 'sources')) : null },
+			{ label: 'With errors', value: single(ps, 'sources_with_errors') !== null ? String(single(ps, 'sources_with_errors')) : null, tone: errorCount > 0 ? 'advisory' : 'ink' },
+			{ label: 'Running now', value: single(ps, 'sources_uploading') !== null ? String(single(ps, 'sources_uploading')) : null }
+		],
+		sections: [{ title: 'Sources', rows: sources }]
+	};
+}
+
+// -------------------------------------------------------------------- Duplicati
+
+function duplicati(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'duplicati');
+	const failed = byLabel(ps, 'backup_failed', 'backup');
+	const running = byLabel(ps, 'backup_running', 'backup');
+	const ages = byLabel(ps, 'backup_last_success_age_seconds', 'backup');
+	const scheduled = byLabel(ps, 'backup_scheduled', 'backup');
+	const warnings = byLabel(ps, 'backup_last_warnings', 'backup');
+	const sizes = byLabel(ps, 'backup_source_bytes', 'backup');
+	const messages = new Map<string, string>();
+	for (const p of ps) if (p.name === 'backup_last_error_info' && p.labels.message) messages.set(p.labels.backup, p.labels.message);
+	const backups: Row[] = [...failed.values()].map((p) => {
+		const name = p.labels.backup;
+		const isFailed = p.value >= 1;
+		const isRunning = (running.get(name)?.value ?? 0) >= 1;
+		const age = ages.get(name)?.value ?? null;
+		const old = (scheduled.get(name)?.value ?? 0) >= 1 && age !== null && age > 2 * 86400;
+		const warned = (warnings.get(name)?.value ?? 0) > 0;
+		return {
+			key: name,
+			name,
+			tone: isFailed ? 'warning' : old || warned ? 'advisory' : isRunning ? 'info' : age === null ? 'ghost' : 'signal',
+			plate: isFailed ? 'Failed' : old ? 'Too old' : warned ? 'Warnings' : isRunning ? 'Running' : age === null ? 'Never succeeded' : 'Success',
+			details: [
+				age !== null ? `last success ${formatAge(age)} ago` : '',
+				sizes.has(name) ? formatBytes(sizes.get(name)?.value) : '',
+				isFailed ? (messages.get(name) ?? '') : ''
+			].filter(Boolean)
+		};
+	});
+	const RANK: Record<string, number> = { warning: 0, advisory: 1, info: 2, signal: 3, ghost: 4 };
+	backups.sort((a, b) => (RANK[a.tone] ?? 9) - (RANK[b.tone] ?? 9) || byName(a, b));
+	const failedCount = backups.filter((b) => b.plate === 'Failed').length;
+	const oldCount = backups.filter((b) => b.plate === 'Too old').length;
+	const paused = single(ps, 'server_paused');
+	const problems = [];
+	if (failedCount > 0) problems.push({ text: `${failedCount} ${failedCount === 1 ? 'backup' : 'backups'} failed on the last run`, severe: true });
+	if (oldCount > 0) problems.push({ text: `${oldCount} scheduled ${oldCount === 1 ? 'backup has' : 'backups have'} not succeeded for two days`, severe: false });
+	if (paused !== null && paused >= 1) problems.push({ text: 'the server is paused', severe: false });
+	return {
+		title: 'Backups',
+		description: 'Read through the Duplicati server API (beta).',
+		verdict: verdict(problems, 'Every backup succeeded on its last run.'),
+		figures: [
+			{ label: 'Backups failed', value: single(ps, 'backups_failed') !== null ? String(single(ps, 'backups_failed')) : null, tone: failedCount > 0 ? 'warning' : 'ink' },
+			{ label: 'Backups', value: single(ps, 'backups') !== null ? String(single(ps, 'backups')) : null },
+			{ label: 'Running now', value: single(ps, 'backups_running') !== null ? String(single(ps, 'backups_running')) : null },
+			{ label: 'Server', value: paused === null ? null : paused >= 1 ? 'Paused' : 'Active', tone: paused !== null && paused >= 1 ? 'advisory' : 'ink' }
+		],
+		sections: [{ title: 'Backups', rows: backups }]
 	};
 }
 
@@ -614,6 +720,8 @@ export const FOLDS: Record<string, Fold> = {
 	pfsense: { prefix: 'pfsense', title: 'Firewall', fold: pfsense },
 	unraid: { prefix: 'unraid', title: 'Array', fold: unraid },
 	veeam: { prefix: 'veeam', title: 'Backups', fold: veeam },
+	kopia: { prefix: 'kopia', title: 'Backups', fold: kopia },
+	duplicati: { prefix: 'duplicati', title: 'Backups', fold: duplicati },
 	tailscale: { prefix: 'tailscale', title: 'Tailnet', fold: tailscale },
 	fortigate: { prefix: 'fortigate', title: 'Firewall', fold: fortigate },
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },

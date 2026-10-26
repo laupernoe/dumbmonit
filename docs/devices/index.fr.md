@@ -52,6 +52,8 @@ que cette version peut surveiller.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | jeton de compte de service (ClusterRole en lecture seule) | Cluster : nœuds non prêts, pods en boucle de crash ou en attente, workloads avec répliques manquantes, demandes de volume bloquées |
 | [Active Directory](activedirectory.md) | `activedirectory` | nom d'utilisateur/mot de passe (utilisateur de domaine ordinaire) | Domaine Windows via LDAPS : contrôleurs de domaine et rôles FSMO, membres de groupes privilégiés, politique de mot de passe, constats de sécurité |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | nom d'utilisateur/mot de passe (Veeam Backup Viewer) | Serveur de sauvegarde : jobs en échec, sessions en échec, dépôts qui se remplissent, licence |
+| [Kopia](kopia.md) (bêta) | `kopia` | nom d'utilisateur et mot de passe du serveur | Serveur de sauvegarde : dernier instantané de chaque source (âge, erreurs, taille), sources en retard sur leur planning, connexion au dépôt |
+| [Duplicati](duplicati.md) (bêta) | `duplicati` | mot de passe de l'interface web | Serveur de sauvegarde (2.1+) : dernière sauvegarde réussie de chaque tâche, dernier résultat, avertissements et erreurs, tâche en cours |
 | [Tailscale](tailscale.md) | `tailscale` | client OAuth (devices:core:read) ou jeton d'accès d'API | Tailnet : serveurs hors ligne, clés de nœud qui expirent, appareils en attente d'approbation |
 | [Nextcloud](nextcloud.md) | `nextcloud` | jeton de surveillance (NC-Token) | Synchronisation de fichiers : mode maintenance, mise à jour en attente, mises à jour, utilisateurs actifs, OPcache |
 | [Immich](immich.md) | `immich` | clé d'API | Bibliothèque de photos : files de tâches, mises à jour, disque, nombre de photos |

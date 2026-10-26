@@ -51,6 +51,8 @@ form always matches what this version can monitor.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
 | [Active Directory](activedirectory.md) | `activedirectory` | username/password (plain domain user) | Windows domain over LDAPS: domain controllers and FSMO roles, privileged group members, password policy, security findings |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | username/password (Veeam Backup Viewer) | Backup server: failed jobs, failed sessions, repositories filling up, license |
+| [Kopia](kopia.md) (beta) | `kopia` | server user name and password | Backup server: last snapshot of each source (age, errors, size), sources behind their schedule, repository connection |
+| [Duplicati](duplicati.md) (beta) | `duplicati` | web interface password | Backup server (2.1+): last successful backup of each task, last result, warnings and errors, task running |
 | [Tailscale](tailscale.md) | `tailscale` | OAuth client (devices:core:read) or API access token | Tailnet: servers offline, node keys expiring, devices awaiting approval |
 | [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
 | [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |
