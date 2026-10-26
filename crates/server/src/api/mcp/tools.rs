@@ -1623,6 +1623,45 @@ async fn get_status(state: &AppState) -> ToolResult {
     ))
 }
 
+/// Résumé plat de l'état de l'instance pour les tableaux de bord tiers
+/// (`GET /api/summary`, widget `customapi` de Homepage) : les compteurs de
+/// `get_status`, sans phrase ni liste, avec un verdict global.
+pub async fn dashboard_summary(state: &AppState) -> Result<Value, ToolError> {
+    let status = get_status(state).await?.structured.unwrap_or(Value::Null);
+    let count = |pointer: &str| status.pointer(pointer).and_then(Value::as_u64).unwrap_or(0);
+    let total = count("/devices/total");
+    let up = count("/devices/reporting");
+    let down = count("/devices/unreachable");
+    let waiting = count("/devices/waiting");
+    let disabled = count("/devices/disabled");
+    let critical = count("/alerts/warnings");
+    let warning = count("/alerts/advisories");
+    let info = count("/alerts/notices");
+    let firing = critical + warning + info;
+    // « ok » : rien à faire. « warning » : une alerte de moindre gravité.
+    // « critical » : une alerte critique ou un équipement injoignable.
+    let verdict = if critical > 0 || down > 0 {
+        "critical"
+    } else if warning > 0 || info > 0 {
+        "warning"
+    } else {
+        "ok"
+    };
+    Ok(json!({
+        "status": verdict,
+        "sentence": status.get("sentence").cloned().unwrap_or(Value::Null),
+        "devices": { "total": total, "up": up, "down": down, "waiting": waiting, "disabled": disabled },
+        "alerts": {
+            "firing": firing,
+            "critical": critical,
+            "warning": warning,
+            "info": info,
+            "building_up": count("/alerts/building_up"),
+            "suppressed": count("/alerts/suppressed"),
+        },
+    }))
+}
+
 async fn list_devices(state: &AppState, args: &Args) -> ToolResult {
     let devices = load_devices(state).await?;
     let parents = parent_names(&devices);
