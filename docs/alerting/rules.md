@@ -372,6 +372,52 @@ CI/CD runners, a scheduled task that stopped running.
 | Forgejo/Gitea runners all offline | Every Actions runner is offline, and at least one is registered (`dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
 | Forgejo/Gitea scheduled task overdue | A scheduled task (repository check, cleanup, update checker) did not run at its own interval (`dumbmonit_forgejo_cron_task_overdue`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
 
+### Media, identity and mail applications
+
+Sonarr, Radarr, Lidarr, Prowlarr, qBittorrent, UniFi Protect, Frigate, Keycloak, authentik, Vaultwarden and mailcow ([monitors](../devices/index.md)). These keep answering while the service they provide is broken: a download client down, a camera dropped, a database gone behind a login page. An application that does not answer at all is Monitor unreachable.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Sonarr health error | Sonarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_sonarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Sonarr queue has errors | An item of the download queue has an error (failed download, import blocked) for half an hour (`dumbmonit_sonarr_queue_has_errors`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Sonarr disk almost full | A disk Sonarr reports is more than 90 % full (`dumbmonit_sonarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Sonarr update available | A newer Sonarr release exists (`dumbmonit_sonarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Radarr health error | Radarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_radarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Radarr queue has errors | An item of the download queue has an error (failed download, import blocked) for half an hour (`dumbmonit_radarr_queue_has_errors`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Radarr disk almost full | A disk Radarr reports is more than 90 % full (`dumbmonit_radarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Radarr update available | A newer Radarr release exists (`dumbmonit_radarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Lidarr health error | Lidarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_lidarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Lidarr queue has errors | An item of the download queue has an error (failed download, import blocked) for half an hour (`dumbmonit_lidarr_queue_has_errors`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Lidarr disk almost full | A disk Lidarr reports is more than 90 % full (`dumbmonit_lidarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Lidarr update available | A newer Lidarr release exists (`dumbmonit_lidarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr health error | Prowlarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_prowlarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Prowlarr disk almost full | A disk Prowlarr reports is more than 90 % full (`dumbmonit_prowlarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Prowlarr update available | A newer Prowlarr release exists (`dumbmonit_prowlarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr indexers disabled | Prowlarr disabled indexers after repeated failures (`dumbmonit_prowlarr_indexers_disabled`): Sonarr, Radarr and Lidarr stop finding releases through them. | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| qBittorrent torrents in error | Torrents are in error or have lost their files (`dumbmonit_qbittorrent_torrents_errored`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| qBittorrent disconnected | qBittorrent is firewalled or disconnected (`dumbmonit_qbittorrent_connected == bool 0`): nothing is downloaded or seeded. | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| qBittorrent free space low | Less than 5 GiB free in the download folder (`dumbmonit_qbittorrent_free_space_bytes / 1073741824`); clears above 6 GiB. | < 5 GiB | 30 min | Advisory (`warning`) | 24 h |
+| Protect camera offline | A UniFi Protect camera is disconnected from its NVR (`dumbmonit_unifiprotect_camera_online == bool 0`). The notification names the camera. | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Protect camera not recording | A camera is connected and set to record but does not (`dumbmonit_unifiprotect_cameras_not_recording`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Protect NVR disk unhealthy | The NVR reports a failing disk (`dumbmonit_unifiprotect_disks_unhealthy`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Protect recording disabled | Recording is switched off on the NVR (`dumbmonit_unifiprotect_recording_disabled`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Frigate camera offline | A camera delivers no frames to Frigate (`dumbmonit_frigate_camera_online == bool 0`). The notification names the camera. | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Frigate detector stuck | A detector has been on the same inference for more than 30 seconds (`dumbmonit_frigate_detector_busy_seconds`). | > 30 s | 2 min | Advisory (`warning`) | 1 h |
+| Frigate storage almost full | The disk holding the recordings is more than 90 % full (`dumbmonit_frigate_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Frigate update available | A newer Frigate release exists (`dumbmonit_frigate_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Keycloak not ready | Keycloak answers but its readiness check is DOWN, usually the database (`dumbmonit_keycloak_ready == bool 0`): nobody can log in. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Keycloak realm disabled | A realm is disabled (`dumbmonit_keycloak_realms_disabled`): its users cannot log in. | > 0 | 1 h | Info (`info`) | 7 d |
+| authentik not ready | authentik answers but its readiness check fails (`dumbmonit_authentik_ready == bool 0`): database or cache down. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| authentik has no worker | No worker reports (`dumbmonit_authentik_workers == bool 0`): synchronisation, e-mails and clean-up stop. | > 0 | 10 min | Warning (`critical`) | 1 h |
+| authentik task failed | A system task failed on its last run (`dumbmonit_authentik_tasks_failed`). The notification names the task. | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| authentik outpost disconnected | An outpost that serves providers has not reported for five minutes (`dumbmonit_authentik_outposts_disconnected`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| authentik update available | A newer authentik release exists (`dumbmonit_authentik_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Vaultwarden sign-ups open | Anyone who can reach the vault can create an account (`dumbmonit_vaultwarden_signups_open`). | > 0 | 1 h | Info (`info`) | 7 d |
+| mailcow container down | A mailcow container is not running (`dumbmonit_mailcow_container_up == bool 0`). The notification names the container. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| mailcow mail queue stuck | The oldest message in Postfix's queue has waited more than four hours (`dumbmonit_mailcow_queue_oldest_seconds / 3600`). | > 4 h | 15 min | Advisory (`warning`) | 6 h |
+| mailcow mail volume almost full | The volume holding the mailboxes is more than 90 % full (`dumbmonit_mailcow_vmail_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| mailcow mailbox near quota | A mailbox is at 90 % of its quota or more (`dumbmonit_mailcow_mailboxes_near_quota`). | > 0 | 1 h | Info (`info`) | 24 h |
+
 ### Client devices
 
 One rule, shared by every integration that tracks client devices connecting and backing up — Immich's phones, tablets and desktops ([monitors](../devices/immich.md)), Proxmox Backup Server's backed-up machines, one per backup group ([monitors](../devices/pbs.md)), and Veeam's protected computers and VMs, one per object with a restore point ([monitors](../devices/veeam.md)), today; more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the monitor in the notification. Synology Active Backup for Business tracks its own monitors separately, through a rhythm-aware mechanism (`synology_abb_device_*`) rather than this generic family — see [Synology](../devices/synology.md).

@@ -1,0 +1,1 @@
+{"status":"DOWN","checks":[{"name":"Keycloak database connections async health check","status":"DOWN","data":{"Error":"Connection refused"}}]}

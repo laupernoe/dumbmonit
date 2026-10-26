@@ -24,6 +24,18 @@
 //!   exécuteurs Actions de l'administration (jeton `Authorization: token …`),
 //!   partagé avec Gitea.
 //!
+//! Les intégrations d'applications *arr, qBittorrent, UniFi Protect, Frigate,
+//! Keycloak, authentik, Vaultwarden et mailcow suivent le même schéma :
+//!
+//! * [`arr`] — Sonarr, Radarr, Lidarr, Prowlarr (clé d'API `X-Api-Key`) ;
+//! * [`qbittorrent`] — WebUI API v2 (session par cookie) ;
+//! * [`protect`] — UniFi Protect, caméras et stockage du NVR (compte local) ;
+//! * [`frigate`] — `/api/stats` et `/api/version` ;
+//! * [`keycloak`] — sondes de santé, puis API d'administration (client de service) ;
+//! * [`authentik`] — santé, version, travailleurs, tâches (jeton d'API) ;
+//! * [`vaultwarden`] — `/alive`, `/api/config`, administration en option ;
+//! * [`mailcow`] — conteneurs, file Postfix, quotas (clé d'API).
+//!
 //! # Principes
 //!
 //! * **Les erreurs sont classées pour l'alerting.** Un jeton refusé donne
@@ -45,30 +57,47 @@
 //! | `insecure_tls` | `false` | Accepte un certificat non vérifiable. |
 //! | `request_timeout_seconds` | `15` | Délai par requête HTTP. |
 
+pub mod arr;
+pub mod authentik;
 mod client;
 pub mod forgejo;
 pub mod gitlab;
+pub mod frigate;
 pub mod immich;
 pub mod jellyfin;
+pub mod keycloak;
+pub mod mailcow;
 pub mod nextcloud;
 pub(crate) mod options;
 pub mod paperless;
 pub mod plex;
+pub mod protect;
+pub mod qbittorrent;
+pub mod vaultwarden;
 
 use dumbmonit_proto::{Credential, MetricKind, ProbeError, Sample, Target};
+use reqwest::StatusCode;
 use serde_json::Value;
 
 use client::{Auth, HttpClient};
 use options::Options;
 
+pub use arr::ArrCollector;
+pub use authentik::AuthentikCollector;
 pub use forgejo::ForgejoCollector;
+pub use frigate::FrigateCollector;
 pub use gitlab::GitlabCollector;
 pub use immich::ImmichCollector;
 pub use jellyfin::JellyfinCollector;
+pub use keycloak::KeycloakCollector;
+pub use mailcow::MailcowCollector;
 pub use nextcloud::NextcloudCollector;
 pub use options::DEFAULT_REQUEST_TIMEOUT;
 pub use paperless::PaperlessCollector;
 pub use plex::PlexCollector;
+pub use protect::ProtectCollector;
+pub use qbittorrent::QbittorrentCollector;
+pub use vaultwarden::VaultwardenCollector;
 
 /// Au plus autant de séries nommées par famille (applications à mettre à
 /// jour, tâches en échec, files de travaux) : au-delà, seul leur nombre compte.
@@ -120,6 +149,30 @@ fn token(credential: &Credential) -> Option<&str> {
         Credential::ApiToken { token } => Some(token.trim()).filter(|t| !t.is_empty()),
         _ => None,
     }
+}
+
+/// Une page que le compte peut ne pas avoir le droit de lire, ou que cette
+/// version ne connaît pas : un 403 ou un 404 n'est ni une panne ni une erreur
+/// de configuration, la page est simplement sautée.
+async fn optional_json(client: &HttpClient, path: &str) -> Result<Option<Value>, ProbeError> {
+    let (status, body) = client.get(path).await?;
+    if matches!(status, StatusCode::FORBIDDEN | StatusCode::NOT_FOUND) {
+        return Ok(None);
+    }
+    if !status.is_success() {
+        return Err(client.status_error(status, &body, path));
+    }
+    client.decode(&body, path).map(Some)
+}
+
+/// Une date ISO 8601 en secondes Unix.
+fn instant(value: &str) -> Option<i64> {
+    value.parse::<chrono::DateTime<chrono::Utc>>().ok().map(|dt| dt.timestamp())
+}
+
+/// `<produit>_<nom>` : le nom d'une métrique de ce produit.
+fn metric(product: &str, name: &str) -> String {
+    format!("{product}_{name}")
 }
 
 /// Compte les appels complémentaires qui ont échoué, sans faire échouer la sonde.
