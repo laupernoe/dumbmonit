@@ -36,6 +36,15 @@ pub enum Credential {
     /// RADIUS : le secret partagé avec le serveur, et le compte de test dont la
     /// sonde présente l'identifiant et le mot de passe.
     Radius { shared_secret: String, username: String, password: String },
+    /// Compte SSH d'un équipement réseau (sauvegarde des configurations), et
+    /// le mot de passe du mode privilégié (`enable`) quand le profil en a
+    /// besoin. Vide : le mot de passe du compte sert aussi pour `enable`.
+    SshLogin {
+        username: String,
+        password: String,
+        #[serde(default)]
+        enable_secret: String,
+    },
 }
 
 /// Forme acceptée en entrée pour un [`Credential`].
@@ -86,6 +95,13 @@ pub enum CredentialInput {
         password: Option<String>,
         #[serde(default)]
         shared_secret: Option<String>,
+    },
+    SshLogin {
+        username: String,
+        #[serde(default)]
+        password: Option<String>,
+        #[serde(default)]
+        enable_secret: Option<String>,
     },
 }
 
@@ -285,6 +301,34 @@ impl CredentialInput {
                 let password = secret(password, keep_password, "password", &mut reused)?;
                 Credential::Radius { shared_secret, username, password }
             }
+            Self::SshLogin { username, password, enable_secret } => {
+                // Le mot de passe appartient au compte ; le secret `enable`
+                // appartient à l'équipement et survit à un changement de compte.
+                // Facultatif : rien de saisi ni d'enregistré, il reste vide.
+                let (keep_password, saved_enable) = match saved {
+                    Some(Credential::SshLogin { username: before, password, enable_secret }) => (
+                        if *before == username {
+                            Keep::Saved(password)
+                        } else if !password.is_empty() {
+                            Keep::Refused("user name")
+                        } else {
+                            Keep::New
+                        },
+                        Some(enable_secret.as_str()).filter(|s| !s.is_empty()),
+                    ),
+                    _ => (Keep::New, None),
+                };
+                let password = secret(password, keep_password, "password", &mut reused)?;
+                let enable_secret = match (enable_secret.filter(|s| !s.is_empty()), saved_enable) {
+                    (Some(given), _) => given,
+                    (None, Some(saved)) => {
+                        reused = true;
+                        saved.to_owned()
+                    }
+                    (None, None) => String::new(),
+                };
+                Credential::SshLogin { username, password, enable_secret }
+            }
             Self::ApiToken { token, token_id, secret } => {
                 let token_id = token_id.as_deref().map(tidy).filter(|s| !s.is_empty());
                 let secret = secret.as_deref().map(tidy).filter(|s| !s.is_empty());
@@ -359,6 +403,7 @@ impl std::fmt::Debug for CredentialInput {
             Self::ApiToken { .. } => "api_token",
             Self::UsernamePassword { .. } => "username_password",
             Self::Radius { .. } => "radius",
+            Self::SshLogin { .. } => "ssh_login",
         };
         write!(f, "CredentialInput({kind}, <redacted>)")
     }
@@ -382,6 +427,7 @@ impl Credential {
             Self::ApiToken { .. } => "API token",
             Self::UsernamePassword { .. } => "Username / password",
             Self::Radius { .. } => "RADIUS",
+            Self::SshLogin { .. } => "SSH login",
         }
     }
 }
@@ -399,6 +445,9 @@ impl Credential {
             Self::UsernamePassword { password, .. } => !password.is_empty(),
             Self::Radius { shared_secret, password, .. } => {
                 !shared_secret.is_empty() || !password.is_empty()
+            }
+            Self::SshLogin { password, enable_secret, .. } => {
+                !password.is_empty() || !enable_secret.is_empty()
             }
         }
     }
@@ -431,7 +480,9 @@ impl Credential {
                     out.insert("token_id", id.to_owned());
                 }
             }
-            Self::UsernamePassword { username, .. } | Self::Radius { username, .. } => {
+            Self::UsernamePassword { username, .. }
+            | Self::Radius { username, .. }
+            | Self::SshLogin { username, .. } => {
                 out.insert("username", username.clone());
             }
         }
@@ -464,6 +515,11 @@ impl std::fmt::Debug for Credential {
                 f,
                 "Credential::Radius {{ username: {username:?}, shared_secret: <redacted>, \
                  password: <redacted> }}"
+            ),
+            Self::SshLogin { username, .. } => write!(
+                f,
+                "Credential::SshLogin {{ username: {username:?}, password: <redacted>, \
+                 enable_secret: <redacted> }}"
             ),
         }
     }
@@ -922,5 +978,41 @@ mod tests {
         }
         assert!(!Credential::None.has_secret());
         assert!(proxmox().has_secret());
+    }
+
+    /// Compte SSH des sauvegardes de configuration : le mot de passe et le
+    /// secret `enable` ne s'affichent jamais, et un formulaire renvoyé vide
+    /// garde ceux qui sont enregistrés.
+    #[test]
+    fn un_compte_ssh_garde_ses_secrets_et_ne_les_montre_pas() {
+        let saved = parse(
+            r#"{"type":"ssh_login","username":"backup","password":"pw-1","enable_secret":"en-1"}"#,
+        )
+        .unwrap();
+        let rendered = format!("{saved:?} {saved}");
+        assert!(!rendered.contains("pw-1") && !rendered.contains("en-1"), "{rendered}");
+        assert!(saved.has_secret());
+        assert_eq!(saved.public_fields().get("username").map(String::as_str), Some("backup"));
+        assert!(!saved.public_fields().values().any(|v| v == "pw-1" || v == "en-1"));
+
+        let input: CredentialInput =
+            serde_json::from_str(r#"{"type":"ssh_login","username":"backup"}"#).unwrap();
+        let resolved = input.resolve(Some(&saved)).unwrap();
+        assert!(resolved.reused_secret);
+        assert_eq!(resolved.credential, saved);
+
+        // Autre compte : le mot de passe est à ressaisir, le secret `enable` reste.
+        let input: CredentialInput =
+            serde_json::from_str(r#"{"type":"ssh_login","username":"other"}"#).unwrap();
+        assert!(input.resolve(Some(&saved)).is_err());
+        let input: CredentialInput =
+            serde_json::from_str(r#"{"type":"ssh_login","username":"other","password":"pw-2"}"#)
+                .unwrap();
+        let Credential::SshLogin { enable_secret, .. } =
+            input.resolve(Some(&saved)).unwrap().credential
+        else {
+            panic!("ssh_login attendu");
+        };
+        assert_eq!(enable_secret, "en-1");
     }
 }

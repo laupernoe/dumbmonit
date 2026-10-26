@@ -114,6 +114,7 @@ fn outcome() -> ProbeOutcome {
         error: Some("timeout".into()),
         samples: Vec::new(),
         profile_id: None,
+        netconfig: None,
     }
 }
 

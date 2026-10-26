@@ -165,8 +165,6 @@ pub struct Bundle {
     /// Tableaux de bord, partagés et personnels (migration 0120).
     #[serde(default)]
     pub dashboards: Vec<BundleDashboard>,
-}
-
     /// Procédures et leurs rattachements (migration 0150).
     #[serde(default)]
     pub runbooks: Vec<BundleRunbook>,
@@ -178,6 +176,15 @@ pub struct Bundle {
     /// fichier. Le journal des exécutions, lui, ne voyage pas.
     #[serde(default)]
     pub remediation_policies: Vec<BundleRemediationPolicy>,
+    /// Clés d'hôte SSH mémorisées des sauvegardes de configuration réseau
+    /// (migration 0175) : restaurer sans elles referait confiance à la
+    /// première clé venue.
+    #[serde(default)]
+    pub netconfig_host_keys: Vec<BundleNetconfigHostKey>,
+    /// Versions des configurations réseau, en clair dans le lot (lui-même
+    /// chiffré par la phrase de passe). Seulement sur demande à l'export.
+    #[serde(default)]
+    pub netconfig_versions: Vec<BundleNetconfigVersion>,
 }
 
 impl Bundle {
@@ -206,6 +213,8 @@ impl Bundle {
             ("runbooks".to_string(), self.runbooks.len()),
             ("remediation_actions".to_string(), self.remediation_actions.len()),
             ("remediation_policies".to_string(), self.remediation_policies.len()),
+            ("netconfig_host_keys".to_string(), self.netconfig_host_keys.len()),
+            ("netconfig_versions".to_string(), self.netconfig_versions.len()),
         ])
     }
 }
@@ -693,6 +702,38 @@ pub struct BundleApiToken {
     /// Compte propriétaire, par nom d'utilisateur.
     #[serde(default)]
     pub user: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleNetconfigHostKey {
+    pub target: String,
+    /// Empreinte SHA-256 de la clé (`SHA256:…`).
+    pub host_key: String,
+}
+
+/// Une version de configuration réseau.
+///
+/// `Debug` est écrit à la main : le texte contient les secrets de
+/// l'équipement.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct BundleNetconfigVersion {
+    pub target: String,
+    pub fetched_at: String,
+    pub last_seen_at: String,
+    pub profile: String,
+    pub added: i64,
+    pub removed: i64,
+    pub content: String,
+}
+
+impl std::fmt::Debug for BundleNetconfigVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BundleNetconfigVersion")
+            .field("target", &self.target)
+            .field("fetched_at", &self.fetched_at)
+            .field("bytes", &self.content.len())
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

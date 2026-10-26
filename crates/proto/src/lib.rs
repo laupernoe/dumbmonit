@@ -24,7 +24,8 @@ pub use collector::{Collector, ProbeError};
 pub use command::{
     AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CMD_PROBE, COMMAND_MAX_AGE_SECS,
     COMMAND_RESULT_MAX_BYTES, COMMAND_RESULT_TRUNCATED, COMMANDS_PATH, CommandReport,
-    CommandStatus, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS, truncate_result,
+    CommandStatus, NetconfigCapture, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS,
+    truncate_result,
 };
 pub use credential::{
     Credential, CredentialInput, Resolved, SnmpV3Auth, SnmpV3AuthInput, SnmpV3AuthProtocol,

@@ -141,6 +141,8 @@ pub async fn restore(
     report.push(restore_runbooks(&mut tx, bundle).await?);
     report.push(restore_remediation_actions(&mut tx, cipher, bundle, &refs).await?);
     report.push(restore_remediation_policies(&mut tx, bundle, &refs).await?);
+    report.push(restore_netconfig_host_keys(&mut tx, bundle, &refs).await?);
+    report.push(restore_netconfig_versions(&mut tx, cipher, bundle, &refs).await?);
 
     warnings(bundle, &mut report);
 
@@ -1647,6 +1649,118 @@ async fn restore_api_tokens(
         {
             Ok(_) => report.created += 1,
             Err(error) => report.refused(&format!("API token \"{}\"", token.name), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Clés d'hôte mémorisées : identique, laissée ; différente, remplacée par
+/// celle du lot (c'est elle que l'opérateur a validée).
+async fn restore_netconfig_host_keys(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("netconfig_host_keys");
+    for entry in &bundle.netconfig_host_keys {
+        let Some(target_id) = refs.get(&entry.target).copied() else {
+            report.skipped += 1;
+            report.notes.push(format!(
+                "SSH host key: its device ({}) is not in this backup.",
+                entry.target
+            ));
+            continue;
+        };
+        let existing: Option<Option<String>> =
+            sqlx::query_scalar("SELECT host_key FROM netconfig_state WHERE target_id = ?")
+                .bind(target_id)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de la clé d'hôte")?;
+        if existing.as_ref().and_then(Option::as_deref) == Some(entry.host_key.as_str()) {
+            report.skipped += 1;
+            continue;
+        }
+        let outcome = sqlx::query(
+            "INSERT INTO netconfig_state (target_id, host_key, host_key_pinned_at)
+             VALUES (?, ?, datetime('now'))
+             ON CONFLICT (target_id) DO UPDATE
+             SET host_key = excluded.host_key, host_key_pinned_at = excluded.host_key_pinned_at,
+                 host_key_seen = NULL, host_key_seen_at = NULL",
+        )
+        .bind(target_id)
+        .bind(&entry.host_key)
+        .execute(&mut **tx)
+        .await
+        .map(|_| match existing {
+            Some(_) => RestoreOutcome::Updated,
+            None => RestoreOutcome::Created,
+        });
+        match outcome {
+            Ok(outcome) => report.count(outcome),
+            Err(error) => {
+                report.refused(&format!("SSH host key of {}", entry.target), &error.into())
+            }
+        }
+    }
+    Ok(report)
+}
+
+/// Versions des configurations réseau : rechiffrées avec la clé de cette
+/// instance, empreinte de comparaison recalculée. Une version déjà présente
+/// (même équipement, même date de relevé) est laissée.
+async fn restore_netconfig_versions(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("netconfig_versions");
+    for entry in &bundle.netconfig_versions {
+        let Some(target_id) = refs.get(&entry.target).copied() else {
+            report.skipped += 1;
+            continue;
+        };
+        let present: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM netconfig_versions WHERE target_id = ? AND fetched_at = ?",
+        )
+        .bind(target_id)
+        .bind(&entry.fetched_at)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche d'une version de configuration")?;
+        let too_large = entry.content.len() > dumbmonit_collectors::netconfig::MAX_CONFIG_BYTES;
+        if present.is_some() || too_large {
+            report.skipped += 1;
+            continue;
+        }
+        let sealed = crate::netconfig::seal(cipher, &entry.content)?;
+        let digest = crate::netconfig::digest_of(cipher, &entry.profile, &entry.content);
+        let outcome = sqlx::query(
+            "INSERT INTO netconfig_versions
+                 (target_id, fetched_at, last_seen_at, profile, digest, size_bytes, lines,
+                  added, removed, content_enc)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(target_id)
+        .bind(&entry.fetched_at)
+        .bind(&entry.last_seen_at)
+        .bind(&entry.profile)
+        .bind(&digest)
+        .bind(entry.content.len() as i64)
+        .bind(entry.content.lines().count() as i64)
+        .bind(entry.added)
+        .bind(entry.removed)
+        .bind(&sealed)
+        .execute(&mut **tx)
+        .await
+        .map(|_| RestoreOutcome::Created);
+        match outcome {
+            Ok(outcome) => report.count(outcome),
+            Err(error) => report.refused(
+                &format!("Configuration version of {} ({})", entry.target, entry.fetched_at),
+                &error.into(),
+            ),
         }
     }
     Ok(report)

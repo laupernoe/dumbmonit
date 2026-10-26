@@ -197,6 +197,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	minio: Archive,
 	website: PanelsTopLeft,
 	webchange: FileDiff,
+	netconfig: FileDiff,
 	snmp_oid: Gauge,
 	radius: KeyRound,
 	grpc: Workflow
@@ -207,7 +208,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'unifiprotect', 'frigate', 'keycloak', 'authentik', 'vaultwarden', 'mailcow', 'redis', 'mongodb', 'rabbitmq', 'mssql', 'oracle', 'elasticsearch', 'influxdb', 'kafka', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'winrm', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
+const DEVICE_KINDS = ['snmp', 'netconfig', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'unifiprotect', 'frigate', 'keycloak', 'authentik', 'vaultwarden', 'mailcow', 'redis', 'mongodb', 'rabbitmq', 'mssql', 'oracle', 'elasticsearch', 'influxdb', 'kafka', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'winrm', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
@@ -224,6 +225,7 @@ const BLOCKLIST_KINDS = ['mail_blacklist', 'ip_blacklist'];
  * kind this build does not know is still found by its own words.
  */
 const KIND_KEYWORDS: Record<string, string> = {
+	netconfig: 'configuration backup config running-config oxidized rancid diff cisco juniper aruba fortigate mikrotik switch router firewall ssh',
 	snmp: 'switch router nas ups printer access point wifi firewall network hardware mikrotik unifi cisco',
 	proxmox: 'pve hypervisor virtual machine vm lxc container cluster virtualization',
 	pbs: 'backup datastore proxmox',

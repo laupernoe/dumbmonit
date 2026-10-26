@@ -81,7 +81,9 @@
 		agent_tokens: m.settings_backup_section_agent_tokens,
 		api_tokens: m.settings_backup_section_api_tokens,
 		push_monitors: m.settings_backup_section_push_monitors,
-		packs: m.settings_backup_section_packs
+		packs: m.settings_backup_section_packs,
+		netconfig_host_keys: m.settings_backup_section_netconfig_host_keys,
+		netconfig_versions: m.settings_backup_section_netconfig_versions
 	};
 	function sectionText(key: string, fallback: string): string {
 		return SECTION_TEXT[key]?.() ?? fallback;
@@ -92,6 +94,8 @@
 	let passphrase = $state('');
 	let confirmation = $state('');
 	let withAccounts = $state(false);
+	/** Stored network configurations hold device secrets: off by default. */
+	let withNetconfig = $state(false);
 	let exporting = $state(false);
 	let exportErrors = $state<{ passphrase?: string; confirmation?: string }>({});
 	let exportError = $state<unknown>(null);
@@ -113,7 +117,7 @@
 
 		exporting = true;
 		try {
-			saveBundle(await exportBackup(passphrase, withAccounts));
+			saveBundle(await exportBackup(passphrase, withAccounts, withNetconfig));
 			exported = true;
 			passphrase = '';
 			confirmation = '';
@@ -302,6 +306,14 @@
 						help={m.settings_backup_accounts_help()}
 					>
 						<Toggle id="backup-accounts" bind:checked={withAccounts} disabled={exporting} />
+					</Field>
+					<Field
+						label={m.settings_backup_netconfig_label()}
+						for="backup-netconfig"
+						inline
+						help={m.settings_backup_netconfig_help()}
+					>
+						<Toggle id="backup-netconfig" bind:checked={withNetconfig} disabled={exporting} />
 					</Field>
 
 					{#if exportError}

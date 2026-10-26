@@ -620,6 +620,15 @@ See [Website changes](../devices/webchange.md). The monitor page shows each chan
 |---|---|---|---|---|---|
 | Website changed | A check of a watched page or site found pages that changed, appeared or disappeared (`dumbmonit_webchange_last_check_changes`). Each such check is notified and names the pages, under the same alert while it fires; it resolves at the first check that finds nothing new. | > 0 | 30 s | Info (`info`) | none |
 
+### Network configuration backups
+
+See [Network configuration backup](../devices/netconfig.md). The device page shows each version and the line diff, secrets masked.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Network configuration changed | The last backup found a configuration different from the previous version, volatile lines (timestamps, counters) aside (`dumbmonit_netconfig_config_changed`). It resolves at the next backup that finds no change. | > 0 | 30 s | Info (`info`) | none |
+| SSH host key changed | The device presented an SSH host key other than the remembered one: the connection was cut before any credential was sent, and backups stop until an administrator accepts the new key (`dumbmonit_netconfig_host_key_changed`). | > 0 | none | Warning (`critical`) | 6 h |
+
 ### Kubernetes
 
 See [Kubernetes / k3s](../devices/kubernetes.md). Every series is labelled

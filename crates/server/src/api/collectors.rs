@@ -1427,6 +1427,89 @@ const PUSH_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Compte SSH d'une sauvegarde de configuration (`netconfig`).
+const SSH_LOGIN: CredentialView = CredentialView {
+    kind: "ssh_login",
+    label: "SSH login",
+    help: "A read-only account is enough on most devices. Stored encrypted, never shown again.",
+    fields: &[
+        cred_text("username", "User name", "", "backup"),
+        cred_secret("password", "Password", "", "", true),
+        cred_secret(
+            "enable_secret",
+            "Enable password",
+            "Only for a profile that enters privileged mode (Cisco IOS, Aruba) with another password than the login's. Empty: the login password, or the saved one.",
+            "",
+            false,
+        ),
+    ],
+};
+
+/// Clé et secret d'API (OPNsense) d'une sauvegarde de configuration.
+const NETCONFIG_API_KEY: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "API key and secret",
+    help: "OPNsense API profile: the key and secret of an API user allowed to download backups.",
+    fields: &[
+        cred_text("username", "API key", "", ""),
+        cred_secret("password", "API secret", "", "", true),
+    ],
+};
+
+/// Clé d'API (PAN-OS) d'une sauvegarde de configuration.
+const NETCONFIG_API_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "PAN-OS API profile: the API key of a read-only role, sent in the X-PAN-KEY header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
+/// Options lues par `netconfig/mod.rs` (`Schedule`) et
+/// `dumbmonit_collectors::netconfig` (`FetchOptions`).
+const NETCONFIG_OPTIONS: &[OptionView] = &[
+    OptionView {
+        required: true,
+        ..select(
+            "profile",
+            "Device model",
+            "How to talk to the device and which commands to send. Only the commands of the chosen profile are ever sent.",
+            "cisco_ios",
+            dumbmonit_collectors::netconfig::PROFILE_IDS,
+        )
+    },
+    number(
+        "fetch_interval_hours",
+        "Back up every (hours)",
+        "How often the configuration is read, from 1 to 168. A failed read is retried after 15 minutes.",
+        "24",
+        "24",
+    ),
+    number(
+        "keep_versions",
+        "Versions kept",
+        "Older versions beyond this number are deleted, from 1 to 1000. The latest one is always kept.",
+        "100",
+        "100",
+    ),
+    number(
+        "keep_days",
+        "Keep versions for (days)",
+        "Versions not seen for this many days are deleted, from 0 (no age limit) to 3650. The latest one is always kept.",
+        "365",
+        "365",
+    ),
+    number(
+        "fetch_timeout_seconds",
+        "Timeout per step (seconds)",
+        "Time allowed for the connection, each prompt and each command, from 10 to 110.",
+        "60",
+        "60",
+    ),
+    insecure_tls(
+        "API profiles only (OPNsense, PAN-OS): for a device of your own behind a self-signed certificate.",
+    ),
+];
+
 /// Options lues par `webchange/options.rs` (`Options::from_target`).
 const WEBCHANGE_OPTIONS: &[OptionView] = &[
     select(
@@ -5706,6 +5789,42 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: POP3_OPTIONS,
         },
+        // Sauvegarde des configurations réseau (`netconfig`) : relevé par SSH
+        // ou par API selon un profil livré, versions chiffrées sur le serveur.
+        "netconfig" => CollectorView {
+            kind: "netconfig",
+            label: "Network configuration backup",
+            summary: "Keep every version of a switch, router or firewall configuration, see what changed line by line, and be told when it changes.",
+            examples: &[
+                "Cisco switch or router",
+                "Juniper router",
+                "FortiGate or pfSense firewall",
+                "MikroTik router",
+                "Aruba switch",
+            ],
+            credential_types: &["ssh_login", "username_password", "api_token"],
+            credentials: &[SSH_LOGIN, NETCONFIG_API_KEY, NETCONFIG_API_TOKEN],
+            address_hint: "192.168.1.1",
+            default_port: 22,
+            setup: Setup {
+                title: "Back up a device configuration",
+                steps: &[
+                    "Choose the device model in \"Device model\": it decides the commands sent, and nothing else is ever run on the device.",
+                    "Create a read-only account on the device that may log in over SSH and show the running configuration.",
+                    "For OPNsense through its API, create an API key for a user allowed to download backups; for PAN-OS, generate the API key of a read-only role.",
+                    "The first SSH connection remembers the device's host key: if it ever changes, backups stop and an alert asks you to check it.",
+                ],
+                ports: &[
+                    to_device!(22, "tcp", "SSH (default port), for every profile but the API ones"),
+                    to_device_optional!(443, "tcp", "Only with an API profile (OPNsense API, PAN-OS)"),
+                ],
+                permissions: &[
+                    "A read-only account\nAllowed to log in over SSH and to show the configuration",
+                ],
+                warning: "Configurations hold secrets: they are stored encrypted, shown with their secrets masked, and only an administrator signed in can reveal or download them.",
+            },
+            options: NETCONFIG_OPTIONS,
+        },
         // Changements du contenu d'un site (`webchange`) : texte comparé page à
         // page, instantanés et captures gardés sur le serveur.
         "webchange" => CollectorView {
@@ -7933,7 +8052,7 @@ fn guide_url(kind: &str) -> String {
         | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "winrm" | "tailscale" | "fortigate"
         | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
-        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "mssql" | "oracle" | "elasticsearch" | "influxdb" | "kafka" | "push" | "webchange" | "website" | "m365" | "entra" | "azure" | "aws" | "cloudflare" | "hetzner" | "ovh" | "infomaniak" | "prometheus" | "otlp" => kind,
+        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "mssql" | "oracle" | "elasticsearch" | "influxdb" | "kafka" | "push" | "webchange" | "website" | "netconfig" | "m365" | "entra" | "azure" | "aws" | "cloudflare" | "hetzner" | "ovh" | "infomaniak" | "prometheus" | "otlp" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -8140,6 +8259,7 @@ mod tests {
         "push",
         "webchange",
         "website",
+        "netconfig",
         "dummy",
         "snmp_oid",
         "radius",
@@ -8539,6 +8659,17 @@ mod tests {
                     "check_interval_minutes",
                     "insecure_tls",
                     "allow_private_targets",
+                ],
+            ),
+            (
+                "netconfig",
+                &[
+                    "profile",
+                    "fetch_interval_hours",
+                    "keep_versions",
+                    "keep_days",
+                    "fetch_timeout_seconds",
+                    "insecure_tls",
                 ],
             ),
             (
@@ -9639,6 +9770,7 @@ mod tests {
             ("agent_service", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("webchange", include_str!("../../../../docs/devices/webchange.md")),
+            ("netconfig", include_str!("../../../../docs/devices/netconfig.md")),
             ("website", include_str!("../../../../docs/devices/website.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),
             ("postgres", include_str!("../../../../docs/devices/services.md")),

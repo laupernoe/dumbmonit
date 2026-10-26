@@ -44,6 +44,7 @@ pub mod mikrotik;
 pub mod minio;
 pub mod mongodb;
 pub mod mssql;
+pub mod netconfig;
 pub mod netscan;
 pub mod nginx;
 pub mod npm;
