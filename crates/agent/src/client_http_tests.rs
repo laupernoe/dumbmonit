@@ -21,6 +21,7 @@ fn batch() -> PushBatch {
         machine_id: None,
         tags: Default::default(),
         binding_supported: true,
+        self_update: None,
     };
     PushBatch::new(identity, Vec::new(), 1_000)
 }
