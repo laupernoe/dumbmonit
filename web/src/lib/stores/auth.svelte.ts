@@ -12,6 +12,7 @@
  */
 import {
 	getAuthStatus,
+	getMyAccess,
 	login as apiLogin,
 	loginTotp as apiLoginTotp,
 	logout as apiLogout,
@@ -19,6 +20,8 @@ import {
 	setupAccount as apiSetupAccount,
 	type LdapStatus,
 	type OidcStatus,
+	type SamlStatus,
+	type AccessInfo,
 	type User
 } from '#lib/api/index.js';
 
@@ -95,6 +98,10 @@ class AuthStore {
 	oidc = $state<OidcStatus>({ enabled: false, provider_name: 'SSO', login_url: '/api/auth/oidc/start' });
 	/** LDAP / Active Directory sign-in through the same form. */
 	ldap = $state<LdapStatus>({ enabled: false });
+	/** SAML sign-in, a button beside the OIDC one. */
+	saml = $state<SamlStatus>({ enabled: false, label: 'SAML' });
+	/** Team rights of the signed-in account (from `/api/auth/me`). */
+	access = $state<AccessInfo | null>(null);
 	/** Public demo mode: read-only instance, sign in with demo / demo. */
 	demo = $state(false);
 	/** Error preventing us from knowing the session state (server unreachable). */
@@ -118,6 +125,14 @@ class AuthStore {
 	get canOperate(): boolean {
 		if (this.isAdmin) return true;
 		return this.user?.role === 'operator';
+	}
+
+	/**
+	 * True for an account whose view is limited by its teams: it only reaches
+	 * the devices, alerts, map, status pages and CVEs those teams grant.
+	 */
+	get scoped(): boolean {
+		return !this.isAdmin && this.access?.scoped === true;
 	}
 
 	/** Badge shown on configuration screens the current user cannot change. */
@@ -164,8 +179,10 @@ class AuthStore {
 			this.user = state.user;
 			this.oidc = state.oidc;
 			this.ldap = state.ldap;
+			this.saml = state.saml;
 			this.demo = state.demo;
 			this.error = null;
+			this.access = state.user ? await getMyAccess(signal) : null;
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			// The server is unreachable: nothing will work anyway, but we do not lock
@@ -195,6 +212,7 @@ class AuthStore {
 		this.configured = true;
 		this.authenticated = false;
 		this.user = null;
+		this.access = null;
 		this.checked = true;
 	}
 
@@ -255,6 +273,7 @@ class AuthStore {
 		}
 		this.authenticated = false;
 		this.user = null;
+		this.access = null;
 	}
 }
 
