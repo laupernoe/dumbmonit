@@ -226,6 +226,9 @@ pub struct ActiveAlertView {
     pub last_eval_at: Option<DateTime<Utc>>,
     pub last_notified_at: Option<DateTime<Utc>>,
     pub notify_count: u32,
+    /// Tickets ouverts pour cette alerte par les canaux Jira, GLPI, Zammad,
+    /// GitHub ou GitLab (vide sans canal de tickets).
+    pub tickets: Vec<crate::notify::tickets::TicketLink>,
 }
 
 impl ActiveAlertView {
@@ -263,6 +266,7 @@ impl ActiveAlertView {
             last_eval_at: alert.state.last_eval_at,
             last_notified_at: alert.state.last_notified_at,
             notify_count: alert.state.notify_count,
+            tickets: Vec::new(),
         }
     }
 }
@@ -1155,6 +1159,11 @@ pub async fn list_active(
         .map(|node| node.id)
         .collect();
 
+    // Une lecture pour toutes les alertes. Un échec ne doit pas vider la liste :
+    // les liens de tickets sont un confort, pas l'objet de la page.
+    let mut tickets =
+        crate::notify::tickets::links_by_fingerprint(&state.pool).await.unwrap_or_default();
+
     Ok(Json(
         alerts
             .into_iter()
@@ -1168,7 +1177,8 @@ pub async fn list_active(
             .filter(|alert| alert.state.is_dismissed() == query.dismissed.unwrap_or(false))
             .map(|alert| {
                 let rule = rules.get(&alert.rule_uid);
-                ActiveAlertView::new(alert, rule, now)
+                let links = tickets.remove(&alert.fingerprint).unwrap_or_default();
+                ActiveAlertView { tickets: links, ..ActiveAlertView::new(alert, rule, now) }
             })
             .collect(),
     ))
@@ -1192,6 +1202,26 @@ pub async fn acknowledge(
     };
     if !db::alerts::set_ack(&state.pool, fingerprint, ack.as_ref()).await? {
         return Err(alert_not_found(fingerprint));
+    }
+    if let Some(ack) = &ack {
+        // Les tickets ouverts de l'alerte en gardent la trace, sans faire attendre
+        // l'utilisateur derrière un service de tickets lent.
+        let mut text =
+            format!("Acknowledged by {} until {}.", ack.by, ack.until.format("%Y-%m-%d %H:%M UTC"));
+        if let Some(note) = &ack.note {
+            text.push_str(&format!(" Note: {note}"));
+        }
+        let state = state.clone();
+        let fingerprint = fingerprint.to_string();
+        tokio::spawn(async move {
+            crate::notify::tickets::on_acknowledged(
+                &state.pool,
+                &state.cipher,
+                &fingerprint,
+                &text,
+            )
+            .await;
+        });
     }
     let alert = db::alerts::get_active(&state.pool, fingerprint)
         .await?

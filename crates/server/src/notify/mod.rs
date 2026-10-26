@@ -26,6 +26,7 @@ pub mod secret;
 pub mod services;
 pub mod smtp;
 pub mod template;
+pub mod tickets;
 pub mod webpush;
 
 use std::sync::Arc;
@@ -164,6 +165,7 @@ pub fn build(
         "homeassistant" => Arc::new(gateway::HomeAssistant::new(http.clone(), config)?),
         "pagerduty" => Arc::new(oncall::PagerDuty::new(http.clone(), config)?),
         "opsgenie" => Arc::new(oncall::Opsgenie::new(http.clone(), config)?),
+        kind if tickets::is_ticket_kind(kind) => Arc::new(tickets::Ticketing::new(http, config)?),
         "webhook" => Arc::new(custom::Webhook::new(http.clone(), config)?),
         "smtp" => Arc::new(smtp::Smtp::new(config)?),
         other => return Err(NotifyError::UnknownKind(other.to_string())),
@@ -347,6 +349,11 @@ pub async fn test_channel(
     config: &ChannelConfig,
     public_url: Option<&str>,
 ) -> Result<(), NotifyError> {
+    if tickets::is_ticket_kind(&config.kind) {
+        // Crée puis ferme un ticket de test : un simple message n'éprouverait ni
+        // le projet, ni les droits de fermeture.
+        return tickets::test_channel(http, config, public_url).await;
+    }
     let notifier = build(http, config)?;
     if sending_disabled() {
         return Ok(());

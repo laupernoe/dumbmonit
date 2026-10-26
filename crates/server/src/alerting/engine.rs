@@ -414,7 +414,13 @@ async fn send_outgoing(
             let alerts = notify::message::actionable_alerts(&out.digest);
             message.actions = notify::action_link::build(key, base, &alerts, now);
         }
-        let delivery = notify::deliver_stored(store, http, config, &message).await;
+        // Un canal de tickets ne reçoit pas un message : il applique chaque alerte
+        // du résumé à son ticket (ouvrir, commenter, fermer).
+        let delivery = if notify::tickets::is_ticket_kind(&config.kind) {
+            notify::tickets::deliver(pool, http, config, &out.digest, public_url, now).await
+        } else {
+            notify::deliver_stored(store, http, config, &message).await
+        };
 
         stats().notification(&config.kind, !delivery.is_success());
         if delivery.is_success() {
