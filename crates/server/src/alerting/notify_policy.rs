@@ -188,6 +188,9 @@ pub struct Recipient {
     pub kind: String,
     pub enabled: bool,
     pub policy: ChannelPolicy,
+    /// Mode MSP : client du canal ; `None` : canal de l'instance, qui parle de
+    /// tous les clients.
+    pub client: Option<i64>,
 }
 
 impl Recipient {
@@ -350,7 +353,14 @@ pub fn plan(
     let active: Vec<&Recipient> = recipients.iter().filter(|r| r.enabled).collect();
 
     for group in groups {
-        let targets: Vec<&Recipient> = active
+        // Mode MSP : le canal d'un client ne parle que des équipements de ce
+        // client — ni des autres clients, ni des séries sans équipement.
+        let reachable: Vec<&Recipient> = active
+            .iter()
+            .copied()
+            .filter(|r| r.client.is_none_or(|client| group.client_id == Some(client)))
+            .collect();
+        let targets: Vec<&Recipient> = reachable
             .iter()
             .copied()
             .filter(|r| group.channels.is_empty() || group.channels.contains(&r.id))
@@ -410,7 +420,7 @@ pub fn plan(
             }
 
             if item.reason == NotifyReason::Unacked {
-                handoff(&active, policy, group, &item, ledger, &mut queue, &mut plan, now);
+                handoff(&reachable, policy, group, &item, ledger, &mut queue, &mut plan, now);
                 continue;
             }
 
@@ -739,6 +749,7 @@ fn outgoing(
             severity: Severity::Info,
             items: Vec::new(),
             channels: Vec::new(),
+            client_id: None,
             at: now,
         });
         group.severity = group.severity.max(queued.item.severity);
@@ -829,12 +840,13 @@ mod tests {
             severity,
             items,
             channels: Vec::new(),
+            client_id: None,
             at: now,
         }
     }
 
     fn recipient(id: i64, policy: ChannelPolicy) -> Recipient {
-        Recipient { id, kind: "ntfy".to_string(), enabled: true, policy }
+        Recipient { id, kind: "ntfy".to_string(), enabled: true, policy, client: None }
     }
 
     fn immediate() -> GlobalPolicy {
@@ -898,6 +910,36 @@ mod tests {
     // ----------------------------------------------------------------------
     // Filtre de routage
     // ----------------------------------------------------------------------
+
+    #[test]
+    fn le_canal_d_un_client_ne_parle_que_de_ce_client() {
+        // Canal 1 : client 7 ; canal 2 : client 8 ; canal 3 : l'instance.
+        let mut seven = recipient(1, ChannelPolicy::default());
+        seven.client = Some(7);
+        let mut eight = recipient(2, ChannelPolicy::default());
+        eight.client = Some(8);
+        let channels = [seven, eight, recipient(3, ChannelPolicy::default())];
+
+        let mut acme = group(1, vec![item("disk", NotifyReason::Firing, Severity::Critical)], at(0));
+        acme.client_id = Some(7);
+        let acme_plan = plan(&[acme], &channels, &immediate(), &Ledger::default(), at(0));
+        let recipients: Vec<i64> = acme_plan.outgoing.iter().map(|o| o.channel_id).collect();
+        assert_eq!(recipients, vec![1, 3], "its own channel and the instance's");
+
+        // Une série sans équipement (sans client) : l'instance seule.
+        let mut orphan = group(2, vec![item("vm", NotifyReason::Firing, Severity::Warning)], at(0));
+        orphan.target_id = None;
+        let orphan_plan = plan(&[orphan], &channels, &immediate(), &Ledger::default(), at(0));
+        let recipients: Vec<i64> = orphan_plan.outgoing.iter().map(|o| o.channel_id).collect();
+        assert_eq!(recipients, vec![3]);
+
+        // Même désigné par la règle, le canal d'un autre client se tait.
+        let mut beta = group(3, vec![item("cpu", NotifyReason::Firing, Severity::Warning)], at(0));
+        beta.client_id = Some(8);
+        beta.channels = vec![1];
+        let beta_plan = plan(&[beta], &channels, &immediate(), &Ledger::default(), at(0));
+        assert!(beta_plan.outgoing.is_empty(), "{:?}", beta_plan.outgoing);
+    }
 
     #[test]
     fn un_canal_filtre_par_etiquette_ne_recoit_que_les_siens() {
@@ -1511,6 +1553,7 @@ mod tests {
             kind: "pagerduty".to_string(),
             enabled: true,
             policy: ChannelPolicy::default(),
+            client: None,
         };
         let policy = GlobalPolicy { batch_window_secs: 60, ..GlobalPolicy::default() };
         let groups = vec![

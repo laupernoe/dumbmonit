@@ -18,6 +18,7 @@ use crate::alerting::baseline;
 use crate::alerting::cycle::{self, CycleInput, RuleObservations};
 use crate::alerting::notify_policy::{self, Outgoing, Recipient};
 use crate::alerting::source::MetricSource;
+use crate::auth::clients;
 use crate::crypto::Cipher;
 use crate::db;
 use crate::notify;
@@ -241,7 +242,14 @@ pub async fn evaluate_once(
 
     let targets = db::alerts::list_target_nodes(pool).await?;
     let previous = db::alerts::load_states(pool).await?;
-    let silences = db::alerts::list_silences(pool).await?;
+    // Mode MSP : règles, silences et canaux d'un client ne concernent que les
+    // équipements de ce client (voir `scope_to_clients`).
+    let target_clients = clients::target_clients(pool).await?;
+    let silences = scope_silences(
+        db::alerts::list_silences(pool).await?,
+        &clients::owners(pool, clients::Kind::Silence).await?,
+        &target_clients,
+    );
     let overrides = policy_store::list_overrides(pool, None, None).await?;
     let mut baselines = db::alerts::load_baselines(pool, baseline::bucket_of(now)).await?;
 
@@ -266,13 +274,15 @@ pub async fn evaluate_once(
         };
         observations.push(RuleObservations { rule, series });
     }
+    let rule_clients = clients::owners(pool, clients::Kind::Rule).await?;
+    scope_rules(&mut observations, &rule_clients, &target_clients);
 
     // La politique globale est chargée avant le cycle : son délai d'escalade
     // participe à la décision de notifier, au même titre que le rappel d'une
     // règle.
     let global = policy_store::load_global(pool).await?;
     let occurrences = occurrences(pool).await;
-    let outcome = cycle::plan_cycle(
+    let mut outcome = cycle::plan_cycle(
         CycleInput {
             now,
             observations,
@@ -286,6 +296,10 @@ pub async fn evaluate_once(
         },
         &mut baselines,
     );
+
+    for group in &mut outcome.groups {
+        group.client_id = group.target_id.and_then(|id| target_clients.get(&id).copied());
+    }
 
     report.alerts_tracked = outcome.alerts.len();
     for alert in &outcome.alerts {
@@ -312,6 +326,7 @@ pub async fn evaluate_once(
     // les filtres de canal, les heures calmes, la fenêtre de regroupement et le
     // plafond horaire avant de partir (voir `notify_policy`).
     let channels = db::alerts::list_channels(pool, cipher).await?;
+    let channel_clients = clients::owners(pool, clients::Kind::Channel).await?;
     let channel_policies = policy_store::load_channel_policies(pool).await?;
     let lookback = policy_store::lookback(&global, &channel_policies);
     let ledger = policy_store::load_ledger(pool, now, lookback).await?;
@@ -322,6 +337,7 @@ pub async fn evaluate_once(
             kind: channel.kind.clone(),
             enabled: channel.enabled,
             policy: channel_policies.get(&channel.id).cloned().unwrap_or_default(),
+            client: channel_clients.get(&channel.id).copied(),
         })
         .collect();
     let plan = notify_policy::plan(&outcome.groups, &recipients, &global, &ledger, now);
@@ -386,6 +402,60 @@ pub async fn evaluate_once(
     }
 
     Ok(report)
+}
+
+/// Client de l'équipement d'une série (étiquette `target`), s'il est connu.
+fn series_client(
+    labels: &std::collections::BTreeMap<String, String>,
+    target_clients: &HashMap<i64, i64>,
+) -> Option<i64> {
+    let id = labels.get("target")?.parse::<i64>().ok()?;
+    target_clients.get(&id).copied()
+}
+
+/// Une règle d'un client n'évalue que les séries des équipements de ce client :
+/// les autres sont retirées avant le cycle, comme si elles ne violaient rien.
+fn scope_rules(
+    observations: &mut [RuleObservations],
+    rule_clients: &HashMap<i64, i64>,
+    target_clients: &HashMap<i64, i64>,
+) {
+    for observation in observations {
+        let Some(client) = rule_clients.get(&observation.rule.id).copied() else { continue };
+        if let Some(series) = &mut observation.series {
+            series.retain(|point| series_client(&point.labels, target_clients) == Some(client));
+        }
+    }
+}
+
+/// Un silence d'un client sans équipement désigné (étiquettes, ou « tout ») ne
+/// couvre que les équipements de ce client : il est déplié en un silence par
+/// équipement. Sans équipement, il ne couvre rien.
+fn scope_silences(
+    silences: Vec<crate::alerting::silence::Silence>,
+    silence_clients: &HashMap<i64, i64>,
+    target_clients: &HashMap<i64, i64>,
+) -> Vec<crate::alerting::silence::Silence> {
+    let mut scoped = Vec::with_capacity(silences.len());
+    for silence in silences {
+        match (silence_clients.get(&silence.id), silence.target_id) {
+            (Some(client), None) => {
+                let mut targets: Vec<i64> = target_clients
+                    .iter()
+                    .filter(|(_, owner)| *owner == client)
+                    .map(|(id, _)| *id)
+                    .collect();
+                targets.sort_unstable();
+                for target in targets {
+                    let mut one = silence.clone();
+                    one.target_id = Some(target);
+                    scoped.push(one);
+                }
+            }
+            _ => scoped.push(silence),
+        }
+    }
+    scoped
 }
 
 /// Envoie les messages décidés par la politique et consigne le résultat.

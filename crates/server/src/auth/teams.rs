@@ -168,6 +168,15 @@ pub struct Scope {
     pub grants: Vec<Grant>,
     /// Noms de ses équipes, pour l'interface.
     pub teams: Vec<String>,
+    /// Mode MSP : les clients dont il voit les équipements. `None` : aucune
+    /// restriction de client (mode coupé, ou administrateur). Le niveau client
+    /// passe avant le niveau dossier : un dossier ouvert par une équipe ne
+    /// montre jamais les équipements d'un autre client.
+    pub clients: Option<Vec<i64>>,
+    /// Vue d'un administrateur limitée à un client par le sélecteur de l'en-tête
+    /// : un filtre d'affichage, pas une barrière. Le garde de routes ne
+    /// s'applique pas et les écritures restent celles d'un administrateur.
+    pub admin_view: bool,
 }
 
 impl Scope {
@@ -181,11 +190,44 @@ impl Scope {
             .max()
             .map(|level| level.min(self.ceiling))
     }
+
+    /// Vrai si le client `client` est visible.
+    pub fn sees_client(&self, client: i64) -> bool {
+        self.clients.as_ref().is_none_or(|clients| clients.contains(&client))
+    }
+
+    /// Niveau effectif sur un équipement du client `client`, rangé dans
+    /// `folder` : le client d'abord, le dossier ensuite.
+    pub fn level_for_target(&self, client: i64, folder: &str) -> Option<Level> {
+        if !self.sees_client(client) {
+            return None;
+        }
+        self.level_for(folder)
+    }
+
+    /// Droits qui ne laissent rien voir : la valeur par défaut quand on ne sait
+    /// pas qui parle.
+    pub fn nothing(ceiling: Level) -> Self {
+        Self { ceiling, grants: Vec::new(), teams: Vec::new(), clients: None, admin_view: false }
+    }
 }
 
 impl Access {
+    /// Vrai si le compte est restreint (équipes ou clients). La vue d'un
+    /// administrateur limitée à un client ne compte pas : elle filtre les
+    /// listes, elle n'interdit rien.
     pub fn is_scoped(&self) -> bool {
-        matches!(self, Self::Scoped(_))
+        matches!(self, Self::Scoped(scope) if !scope.admin_view)
+    }
+
+    /// Les clients visibles, `None` sans restriction de client.
+    pub fn clients(&self) -> Option<&[i64]> {
+        self.scope().and_then(|scope| scope.clients.as_deref())
+    }
+
+    /// Vrai si le client `client` est visible.
+    pub fn sees_client(&self, client: i64) -> bool {
+        self.scope().is_none_or(|scope| scope.sees_client(client))
     }
 
     pub fn scope(&self) -> Option<&Scope> {
@@ -208,7 +250,7 @@ impl Access {
         level: Level,
     ) -> Result<Option<HashSet<i64>>> {
         let Self::Scoped(scope) = self else { return Ok(None) };
-        let rows = sqlx::query("SELECT id, group_name FROM targets")
+        let rows = sqlx::query("SELECT id, group_name, client_id FROM targets")
             .fetch_all(pool)
             .await
             .context("lecture des dossiers des équipements")?;
@@ -216,7 +258,8 @@ impl Access {
         for row in rows {
             let id: i64 = row.try_get("id")?;
             let folder: String = row.try_get("group_name")?;
-            if scope.level_for(&folder).is_some_and(|have| have >= level) {
+            let client: i64 = row.try_get("client_id")?;
+            if scope.level_for_target(client, &folder).is_some_and(|have| have >= level) {
                 visible.insert(id);
             }
         }
@@ -232,13 +275,13 @@ impl Access {
     /// est invisible ou n'existe pas.
     pub async fn target_level(&self, pool: &SqlitePool, target_id: i64) -> Result<Option<Level>> {
         let Self::Scoped(scope) = self else { return Ok(Some(Level::Manage)) };
-        let folder: Option<String> =
-            sqlx::query_scalar("SELECT group_name FROM targets WHERE id = ?")
+        let row: Option<(String, i64)> =
+            sqlx::query_as("SELECT group_name, client_id FROM targets WHERE id = ?")
                 .bind(target_id)
                 .fetch_optional(pool)
                 .await
                 .context("lecture du dossier d'un équipement")?;
-        Ok(folder.and_then(|folder| scope.level_for(&folder)))
+        Ok(row.and_then(|(folder, client)| scope.level_for_target(client, &folder)))
     }
 
     /// Niveau sur un dossier (pour une création ou un déplacement).
@@ -273,8 +316,15 @@ fn insufficient(level: Level) -> AuthError {
     })
 }
 
-/// Droits d'équipe d'un compte.
+/// Droits d'un compte : ceux de ses équipes, puis le niveau client du mode MSP
+/// (voir [`crate::auth::clients::restrict`]).
 pub async fn access_for_user(pool: &SqlitePool, user: &User) -> Result<Access> {
+    let teams = team_access_for_user(pool, user).await?;
+    crate::auth::clients::restrict(pool, user, teams).await
+}
+
+/// Droits d'équipe d'un compte, sans le niveau client.
+async fn team_access_for_user(pool: &SqlitePool, user: &User) -> Result<Access> {
     if user.role.is_admin() {
         return Ok(Access::All);
     }
@@ -294,11 +344,9 @@ pub async fn access_for_user(pool: &SqlitePool, user: &User) -> Result<Access> {
     if rows.is_empty() {
         return Ok(match settings(pool).await?.unassigned_access {
             UnassignedAccess::All => Access::All,
-            UnassignedAccess::None => Access::Scoped(Arc::new(Scope {
-                ceiling: Level::ceiling(user.role),
-                grants: Vec::new(),
-                teams: Vec::new(),
-            })),
+            UnassignedAccess::None => {
+                Access::Scoped(Arc::new(Scope::nothing(Level::ceiling(user.role))))
+            }
         });
     }
 
@@ -315,7 +363,13 @@ pub async fn access_for_user(pool: &SqlitePool, user: &User) -> Result<Access> {
             grants.push(Grant { folder, level });
         }
     }
-    Ok(Access::Scoped(Arc::new(Scope { ceiling: Level::ceiling(user.role), grants, teams })))
+    Ok(Access::Scoped(Arc::new(Scope {
+        ceiling: Level::ceiling(user.role),
+        grants,
+        teams,
+        clients: None,
+        admin_view: false,
+    })))
 }
 
 /// Droits d'équipe d'une requête, quel qu'en soit le porteur. Un jeton hérite
@@ -327,11 +381,7 @@ pub async fn access_for(pool: &SqlitePool, principal: &Principal) -> Result<Acce
             let Some(owner) = token.owner.as_deref() else { return Ok(Access::All) };
             match users::by_username(pool, owner).await? {
                 Some(user) if !user.disabled => access_for_user(pool, &user).await,
-                _ => Ok(Access::Scoped(Arc::new(Scope {
-                    ceiling: Level::Read,
-                    grants: Vec::new(),
-                    teams: Vec::new(),
-                }))),
+                _ => Ok(Access::Scoped(Arc::new(Scope::nothing(Level::Read)))),
             }
         }
     }
@@ -350,13 +400,7 @@ impl<S: Send + Sync> FromRequestParts<S> for TeamAccess {
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
         Ok(Self(parts.extensions.get::<CurrentAccess>().map_or_else(
-            || {
-                Access::Scoped(Arc::new(Scope {
-                    ceiling: Level::Read,
-                    grants: Vec::new(),
-                    teams: Vec::new(),
-                }))
-            },
+            || Access::Scoped(Arc::new(Scope::nothing(Level::Read))),
             |current| current.0.clone(),
         )))
     }
@@ -411,6 +455,10 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     ("GET", "/security/cves", RouteRule::Open),
     ("GET", "/security/cves/summary", RouteRule::Open),
     ("GET", "/security/cves/inventory", RouteRule::Open),
+    // Mode MSP : le rapport SLA et le logo de ses propres clients (le
+    // gestionnaire vérifie le client demandé).
+    ("GET", "/reports/sla", RouteRule::Open),
+    ("GET", "/clients/*/logo", RouteRule::Open),
     // Traitement d'une alerte précise : contrôlé ici.
     ("POST", "/alerts/*/ack", RouteRule::AlertFingerprint),
     ("DELETE", "/alerts/*/ack", RouteRule::AlertFingerprint),
@@ -969,6 +1017,8 @@ mod tests {
                 .map(|(folder, level)| Grant { folder: folder.to_string(), level: *level })
                 .collect(),
             teams: vec!["A".into()],
+            clients: None,
+            admin_view: false,
         }
     }
 

@@ -174,11 +174,44 @@ impl Page {
             color.ops()
         );
     }
+
+    /// Dessine l'image n° `index` du document (voir [`Document::add_image`])
+    /// dans le rectangle (x, y, w, h), coin bas gauche en (x, y).
+    pub fn image(&mut self, index: usize, x: f64, y: f64, w: f64, h: f64) {
+        let _ = writeln!(self.ops, "q {w:.2} 0 0 {h:.2} {x:.2} {y:.2} cm /Im{index} Do Q");
+    }
+}
+
+/// Une image matricielle prête à incorporer : JPEG tel quel (`DCTDecode`), ou
+/// pixels compressés (`FlateDecode`) avec un masque alpha facultatif. Les
+/// octets sont écrits en hexadécimal (`ASCIIHexDecode`) : le fichier reste de
+/// l'ASCII pur, comme le reste du document.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Image {
+    pub width: u32,
+    pub height: u32,
+    /// `DeviceRGB` ou `DeviceGray`.
+    pub color_space: &'static str,
+    /// `DCTDecode` (JPEG) ou `FlateDecode` (pixels compressés par zlib).
+    pub filter: &'static str,
+    pub data: Vec<u8>,
+    /// Masque alpha, pixels gris de 8 bits compressés par zlib.
+    pub alpha: Option<Vec<u8>>,
+}
+
+fn hex(bytes: &[u8]) -> String {
+    let mut out = String::with_capacity(bytes.len() * 2 + 1);
+    for b in bytes {
+        let _ = write!(out, "{b:02x}");
+    }
+    out.push('>');
+    out
 }
 
 /// Le document : des pages, un titre et une date de création optionnelle.
 pub struct Document {
     pages: Vec<Page>,
+    images: Vec<Image>,
     title: String,
     /// `D:AAAAMMJJHHMMSSZ`, écrit tel quel dans les métadonnées.
     created: Option<String>,
@@ -186,7 +219,13 @@ pub struct Document {
 
 impl Document {
     pub fn new(title: &str, created: Option<String>) -> Self {
-        Self { pages: Vec::new(), title: title.to_string(), created }
+        Self { pages: Vec::new(), images: Vec::new(), title: title.to_string(), created }
+    }
+
+    /// Ajoute une image ; rend l'index à passer à [`Page::image`].
+    pub fn add_image(&mut self, image: Image) -> usize {
+        self.images.push(image);
+        self.images.len() - 1
     }
 
     pub fn add_page(&mut self, page: Page) {
@@ -225,17 +264,67 @@ impl Document {
         let empty = Page::default();
         let pages: Vec<&Page> =
             if self.pages.is_empty() { vec![&empty] } else { self.pages.iter().collect() };
+        // Les images suivent les pages : chacune prend un objet, plus un pour
+        // son masque alpha.
+        let mut next = first_page + 2 * n;
+        let mut image_objects: Vec<(usize, Option<usize>)> = Vec::new();
+        for image in &self.images {
+            let main = next;
+            next += 1;
+            let mask = image.alpha.as_ref().map(|_| {
+                next += 1;
+                next - 1
+            });
+            image_objects.push((main, mask));
+        }
+        let xobjects = if image_objects.is_empty() {
+            String::new()
+        } else {
+            let refs: Vec<String> = image_objects
+                .iter()
+                .enumerate()
+                .map(|(i, (main, _))| format!("/Im{i} {main} 0 R"))
+                .collect();
+            format!(" /XObject << {} >>", refs.join(" "))
+        };
         for (i, page) in pages.iter().enumerate() {
             let stream = first_page + 2 * i + 1;
             objects.push(format!(
                 "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {PAGE_W} {PAGE_H}] \
-                 /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents {stream} 0 R >>"
+                 /Resources << /Font << /F1 3 0 R /F2 4 0 R >>{xobjects} >> \
+                 /Contents {stream} 0 R >>"
             ));
             objects.push(format!(
                 "<< /Length {} >>\nstream\n{}endstream",
                 page.ops.len(),
                 page.ops
             ));
+        }
+        for (image, (_, mask)) in self.images.iter().zip(&image_objects) {
+            let data = hex(&image.data);
+            let smask = mask.map(|m| format!(" /SMask {m} 0 R")).unwrap_or_default();
+            objects.push(format!(
+                "<< /Type /XObject /Subtype /Image /Width {} /Height {} /ColorSpace /{} \
+                 /BitsPerComponent 8 /Filter [/ASCIIHexDecode /{}]{smask} /Length {} >>\n\
+                 stream\n{data}\nendstream",
+                image.width,
+                image.height,
+                image.color_space,
+                image.filter,
+                data.len()
+            ));
+            if let Some(alpha) = &image.alpha {
+                let data = hex(alpha);
+                objects.push(format!(
+                    "<< /Type /XObject /Subtype /Image /Width {} /Height {} \
+                     /ColorSpace /DeviceGray /BitsPerComponent 8 \
+                     /Filter [/ASCIIHexDecode /FlateDecode] /Length {} >>\n\
+                     stream\n{data}\nendstream",
+                    image.width,
+                    image.height,
+                    data.len()
+                ));
+            }
         }
 
         // Tout est de l'ASCII : les octets hauts du texte sont écrits en octal.
@@ -322,6 +411,31 @@ mod tests {
         let body_start = rest.find("stream\n").unwrap() + "stream\n".len();
         let body_end = rest.find("endstream").unwrap();
         assert_eq!(declared, body_end - body_start);
+    }
+
+    #[test]
+    fn an_image_is_referenced_by_every_page_and_stays_ascii() {
+        let mut doc = Document::new("Logo", None);
+        let index = doc.add_image(Image {
+            width: 1,
+            height: 1,
+            color_space: "DeviceGray",
+            filter: "FlateDecode",
+            data: vec![0x78, 0x9c, 0xff],
+            alpha: Some(vec![0x00, 0x01]),
+        });
+        let mut page = Page::default();
+        page.image(index, 10.0, 10.0, 20.0, 20.0);
+        doc.add_page(page);
+        doc.add_page(Page::default());
+        let pdf = doc.finish();
+        assert!(pdf.is_ascii());
+        let text = String::from_utf8_lossy(&pdf);
+        assert_eq!(text.matches("/XObject << /Im0 10 0 R >>").count(), 2, "{text}");
+        assert!(text.contains("/Im0 Do"));
+        assert!(text.contains("/SMask 11 0 R"));
+        assert!(text.contains("789cff>"));
+        assert!(text.contains("0001>"));
     }
 
     #[test]

@@ -158,6 +158,17 @@ pub struct Bundle {
     /// Règles de la carte, acceptées ou refusées (migration 0072).
     #[serde(default)]
     pub topology_rules: Vec<BundleTopologyRule>,
+    /// Mode MSP : clients, leurs membres et leur marque (migration 0185).
+    #[serde(default)]
+    pub clients: Vec<BundleClient>,
+    /// Réglage du mode MSP (clé `msp` de `settings`).
+    #[serde(default)]
+    pub msp_settings: Option<Value>,
+    /// Rattachement des objets aux clients, par clé naturelle : un objet
+    /// absent de la liste reste au client par défaut (équipements, pages,
+    /// jetons d'agent) ou à l'instance (le reste).
+    #[serde(default)]
+    pub client_assignments: Vec<BundleAssignment>,
 }
 
 impl Bundle {
@@ -181,6 +192,7 @@ impl Bundle {
             ("teams".to_string(), self.teams.len()),
             ("topology_corrections".to_string(), self.topology_corrections.len()),
             ("topology_rules".to_string(), self.topology_rules.len()),
+            ("clients".to_string(), self.clients.len()),
         ])
     }
 }
@@ -336,6 +348,48 @@ pub struct BundleTeamMember {
 
 fn manual_source() -> String {
     "manual".to_string()
+}
+
+/// Un client (mode MSP), désigné par son nom (unique sans casse).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleClient {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub contacts: Vec<String>,
+    #[serde(default)]
+    pub monitor_quota: Option<i64>,
+    #[serde(default)]
+    pub idp_groups: Vec<String>,
+    #[serde(default)]
+    pub members: Vec<BundleTeamMember>,
+    /// Logo en base64, avec son type MIME.
+    #[serde(default)]
+    pub logo: Option<String>,
+    #[serde(default)]
+    pub logo_type: Option<String>,
+    #[serde(default)]
+    pub sla_report: bool,
+    #[serde(default)]
+    pub sla_objective: Option<f64>,
+    #[serde(default = "utc")]
+    pub report_timezone: String,
+}
+
+fn utc() -> String {
+    "UTC".to_string()
+}
+
+/// Un objet rattaché à un client. `key` : `kind|address` pour un équipement
+/// (comme [`target_ref`]), le `slug` d'une page, l'empreinte d'un jeton d'agent,
+/// le nom d'un canal ou d'un rapport, l'`uid` d'une règle, et pour un silence
+/// son nom puis, après un saut de ligne, la référence de son équipement.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleAssignment {
+    pub kind: crate::auth::clients::Kind,
+    pub key: String,
+    pub client: String,
 }
 
 /// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).

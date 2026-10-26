@@ -158,6 +158,7 @@ pub async fn reconcile(
             location_id: None,
             credential: None,
             multisite: None,
+            client_id: None,
         };
         let input = match payload.validate(state, None) {
             Ok(input) => input,
@@ -192,7 +193,13 @@ pub async fn reconcile(
         }
 
         match db::targets::find_by_address(&state.pool, &input.kind, &input.address).await? {
-            Some((id, None)) if item.adopt => {
+            // Mode MSP : les étiquettes d'un agent n'adoptent jamais un moniteur
+            // d'un autre client.
+            Some((id, None))
+                if item.adopt
+                    && crate::auth::clients::target_client(&state.pool, id).await?
+                        == crate::auth::clients::target_client(&state.pool, agent).await? =>
+            {
                 db::targets::update(&state.pool, &state.cipher, id, &input).await?;
                 db::targets::set_managed(&state.pool, id, agent, &key).await?;
                 outcome.adopted += 1;

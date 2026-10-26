@@ -498,10 +498,28 @@ pub async fn collect_period(
     period: Period,
     now: DateTime<Utc>,
 ) -> Result<ReportData> {
+    collect_period_for(state, name, frequency, period, now, None).await
+}
+
+/// Comme [`collect_period`], limité aux équipements d'un client (mode MSP) :
+/// ni ses moniteurs, ni ses incidents, ni ses comptes ne citent un autre client.
+pub async fn collect_period_for(
+    state: &AppState,
+    name: &str,
+    frequency: Frequency,
+    period: Period,
+    now: DateTime<Utc>,
+    client: Option<i64>,
+) -> Result<ReportData> {
+    let owned = match client {
+        Some(client) => Some(crate::auth::clients::targets_of(&state.pool, client).await?),
+        None => None,
+    };
     let targets: Vec<Target> = db::targets::list(&state.pool, &state.cipher)
         .await?
         .into_iter()
         .filter(|target| target.enabled)
+        .filter(|target| owned.as_ref().is_none_or(|owned| owned.contains(&target.id)))
         .collect();
     let refs: Vec<&Target> = targets.iter().collect();
     let devices: Vec<DeviceInfo> = targets
@@ -517,7 +535,12 @@ pub async fn collect_period(
 
     // Un incident né avant la période mais encore ouvert doit apparaître : on
     // remonte une semaine plus tôt que la période précédente.
-    let rows = history(state, period.previous_start - TimeDelta::days(7)).await?;
+    let mut rows = history(state, period.previous_start - TimeDelta::days(7)).await?;
+    if let Some(owned) = &owned {
+        // Un incident sans équipement, ou d'un autre client, n'a rien à faire
+        // dans le rapport d'un client.
+        rows.retain(|row| row.target_id.is_some_and(|id| owned.contains(&id)));
+    }
     let incidents = build_incidents(&rows);
     let rules = rule_names(state).await?;
 

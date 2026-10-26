@@ -1503,6 +1503,233 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/clients:
+    get:
+      operationId: listClients
+      tags: [Accounts]
+      summary: MSP clients, the MSP setting and the accounts in no client
+      description: MSP administrator session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Clients.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ClientsOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createClient
+      tags: [Accounts]
+      summary: Create a client
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClientInput" }
+      responses:
+        "201":
+          description: Client created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Client" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/clients/settings:
+    put:
+      operationId: updateMspSettings
+      tags: [Accounts]
+      summary: Turn MSP mode on or off
+      description: >-
+        Off, every account sees what its role and teams allow, as before. On,
+        a non-admin account only sees the clients it belongs to.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/MspSettings" }
+      responses:
+        "200":
+          description: The setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MspSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/clients/overview:
+    get:
+      operationId: getClientsOverview
+      tags: [Accounts]
+      summary: State of each client, for the MSP overview
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: One entry per client.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/ClientHealth" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/clients/assignments:
+    get:
+      operationId: getClientAssignments
+      tags: [Accounts]
+      summary: The client of every object that has one
+      description: >-
+        One map per kind (`targets`, `status_pages`, `agent_tokens`,
+        `channels`, `rules`, `silences`, `reports`) from object id to client
+        id. An object missing from its map is shared by the instance.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The maps.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties: { type: integer, format: int64 }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/clients/assign:
+    put:
+      operationId: assignToClient
+      tags: [Accounts]
+      summary: Move objects to a client
+      description: >-
+        Moving a target takes along what depends on it (children, relayed
+        targets, label-managed monitors) and cuts any link left between two
+        clients. A status page of a client may only list targets of that
+        client; a maintenance window on a target follows the target.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClientAssign" }
+      responses:
+        "204": { description: Moved. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/clients/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateClient
+      tags: [Accounts]
+      summary: Update a client
+      description: An omitted field keeps its value. Members added by an identity provider are kept.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ClientInput" }
+      responses:
+        "200":
+          description: The client.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Client" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteClient
+      tags: [Accounts]
+      summary: Delete an empty client
+      description: >-
+        Refused while the client has targets, status pages or agent tokens,
+        and for the default client. Its channels, rules, maintenance windows
+        and report schedules go with it.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Client deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/clients/{id}/logo:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getClientLogo
+      tags: [Accounts]
+      summary: Logo of a client
+      description: For the MSP administrator and the members of the client; 404 for anyone else.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The image.
+          content:
+            image/png: { schema: { type: string, format: binary } }
+            image/jpeg: { schema: { type: string, format: binary } }
+            image/webp: { schema: { type: string, format: binary } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: uploadClientLogo
+      tags: [Accounts]
+      summary: Set the logo of a client
+      description: PNG, JPEG or WebP, 256 KiB at most, shown on its reports and status pages.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [data]
+              properties:
+                data: { type: string, description: "The file in base64, with or without a `data:` prefix." }
+      responses:
+        "204": { description: Logo stored. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteClientLogo
+      tags: [Accounts]
+      summary: Remove the logo of a client
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Logo removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/users/{id}/totp:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -3545,7 +3772,9 @@ paths:
         times (mean and 95th percentile) and, with `objective`, whether each
         monitor met it. Without `from` and `to`, the previous calendar month.
         `from` and `to` are inclusive days in `tz`, one year at most; a period
-        that is not over stops at now. Administrators only.
+        that is not over stops at now. Administrators only, except in MSP
+        mode, where a member of a client reads the report of that client
+        (`client`), and of nothing else.
       x-token-scope: read
       parameters:
         - { name: from, in: query, schema: { type: string, format: date }, description: First day included. }
@@ -3557,6 +3786,7 @@ paths:
         - { name: objective, in: query, schema: { type: number, exclusiveMinimum: 0, maximum: 100 }, description: Availability objective in percent. }
         - { name: page, in: query, schema: { type: integer, format: int64 }, description: Status page whose title heads the report. }
         - { name: title, in: query, schema: { type: string, maxLength: 120 }, description: Report name shown under the header. }
+        - { name: client, in: query, schema: { type: integer, format: int64 }, description: "MSP mode: the client reported on (its targets only, its name and logo). Required for a member of several clients." }
       responses:
         "200":
           description: The file, as an attachment.
@@ -8056,9 +8286,97 @@ components:
       allOf:
         - { $ref: "#/components/schemas/User" }
         - type: object
-          required: [access]
+          required: [access, msp]
           properties:
             access: { $ref: "#/components/schemas/TeamAccess" }
+            msp: { $ref: "#/components/schemas/MspAccess" }
+    MspAccess:
+      type: object
+      required: [enabled, admin, clients]
+      properties:
+        enabled: { type: boolean, description: MSP mode is on. }
+        admin: { type: boolean, description: "MSP administrator: sees and manages every client." }
+        clients:
+          type: array
+          description: Clients the account can pick - all of them for the MSP administrator, its own otherwise. Empty when MSP mode is off.
+          items: { $ref: "#/components/schemas/ClientRef" }
+        current: { type: [integer, "null"], format: int64, description: "Client of the current view (header `X-DumbMonit-Client`, or the only client of the account)." }
+    ClientRef:
+      type: object
+      required: [id, name, has_logo]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        has_logo: { type: boolean }
+    Client:
+      type: object
+      required: [id, name, description, contacts, idp_groups, members, targets, has_logo, sla_report, report_timezone, created_at, updated_at]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        description: { type: string }
+        contacts: { type: array, items: { type: string, format: email }, description: Recipients of the automatic monthly SLA report. }
+        monitor_quota: { type: [integer, "null"], description: "Most targets the client may have; `null` for no limit." }
+        idp_groups: { type: array, items: { type: string } }
+        members: { type: array, items: { $ref: "#/components/schemas/TeamMember" } }
+        targets: { type: integer }
+        has_logo: { type: boolean }
+        sla_report: { type: boolean, description: Send the SLA report of the past month to the contacts on the 1st. }
+        sla_objective: { type: [number, "null"] }
+        report_timezone: { type: string }
+        report_last_period: { type: [string, "null"], description: "Last month sent, `YYYY-MM`." }
+        report_last_error: { type: [string, "null"] }
+        created_at: { type: string }
+        updated_at: { type: string }
+    ClientInput:
+      type: object
+      description: An omitted field keeps its value.
+      properties:
+        name: { type: string, maxLength: 80 }
+        description: { type: string, maxLength: 500 }
+        contacts: { type: array, items: { type: string, format: email }, maxItems: 20 }
+        monitor_quota: { type: [integer, "null"], minimum: 0 }
+        idp_groups: { type: array, items: { type: string } }
+        members: { type: array, items: { type: integer, format: int64 }, description: Accounts added by hand. }
+        sla_report: { type: boolean }
+        sla_objective: { type: [number, "null"], exclusiveMinimum: 0, maximum: 100 }
+        report_timezone: { type: string }
+    MspSettings:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean, description: "MSP mode on. Off, a single-client instance behaves as before." }
+    ClientsOverview:
+      type: object
+      required: [settings, clients, unassigned_users]
+      properties:
+        settings: { $ref: "#/components/schemas/MspSettings" }
+        clients: { type: array, items: { $ref: "#/components/schemas/Client" } }
+        unassigned_users: { type: array, items: { type: integer, format: int64 }, description: Non-admin accounts in no client - with MSP mode on they see nothing. }
+    ClientHealth:
+      type: object
+      required: [id, name, has_logo, targets, alerting_targets, critical, warning, info, paused]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        has_logo: { type: boolean }
+        targets: { type: integer }
+        monitor_quota: { type: [integer, "null"] }
+        alerting_targets: { type: integer, description: Targets with at least one firing alert. }
+        critical: { type: integer }
+        warning: { type: integer }
+        info: { type: integer }
+        paused: { type: integer }
+    ClientKind:
+      type: string
+      enum: [target, status_page, agent_token, channel, rule, silence, report]
+    ClientAssign:
+      type: object
+      required: [kind, ids]
+      properties:
+        kind: { $ref: "#/components/schemas/ClientKind" }
+        ids: { type: array, items: { type: integer, format: int64 }, maxItems: 1000 }
+        client_id: { type: [integer, "null"], format: int64, description: "`null`: shared by the instance (channels, rules, maintenance windows, reports, status pages)." }
     User:
       type: object
       required: [id, username, display_name, role, auth, disabled, totp_enabled, created_at]
@@ -8439,6 +8757,7 @@ components:
         relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
         relay_site: { type: [string, "null"] }
         ad_domain: { type: [string, "null"], description: Active Directory fleet token - enrols only fully qualified names in this domain. }
+        client_id: { type: integer, format: int64, description: "MSP mode: the client this token enrols into, and the only one its machines report to." }
     AgentInstallParams:
       type: object
       required: [base_url, checksums, linux_template, windows_template]
@@ -8563,6 +8882,7 @@ components:
         expires_in_days: { type: [integer, "null"], minimum: 1 }
         relay: { type: boolean, default: false, description: Make the enrolled machine a relay for a remote site. }
         site: { type: [string, "null"], maxLength: 80, description: Site of that relay. }
+        client_id: { type: [integer, "null"], format: int64, description: "MSP mode: the client the token enrols into. Absent: the default client." }
     CreatedAgentToken:
       allOf:
         - $ref: "#/components/schemas/AgentToken"
@@ -8893,6 +9213,7 @@ components:
         profile_id: { type: [string, "null"] }
         parent_id: { type: [integer, "null"], format: int64 }
         via_agent: { type: [integer, "null"], format: int64, description: Relay agent probing this device; `null` means the server. }
+        client_id: { type: integer, format: int64, description: "MSP mode: the client of the target (`1`, the default client, otherwise)." }
         interval_secs: { type: integer }
         enabled: { type: boolean }
         tags:
@@ -9045,6 +9366,7 @@ components:
         profile_id: { type: [string, "null"], description: "Absent on `PUT` keeps the detected profile; `\"\"` clears it." }
         parent_id: { type: [integer, "null"], format: int64 }
         via_agent: { type: [integer, "null"], format: int64, description: "Absent on `PUT` keeps the relay; `null` means direct probing." }
+        client_id: { type: integer, format: int64, description: "MSP mode: the client of the target. Absent on `POST`: the client chosen in the header, the only client of the account, or the default client. Only an MSP administrator changes it on `PUT`; the targets depending on it move along." }
         interval_secs: { type: integer, minimum: 10, default: 60 }
         enabled: { type: boolean, default: true }
         tags:
@@ -9925,7 +10247,8 @@ components:
             accent: { type: string }
             footer_text: { type: string }
             homepage_url: { type: string }
-            logo_url: { type: [string, "null"] }
+            logo_url: { type: [string, "null"], description: "The page logo, or in MSP mode the logo of the page's client." }
+            brand_name: { type: string, description: "MSP mode: name of the page's client. Absent otherwise." }
             subscribe: { type: boolean }
             show_calendar: { type: boolean, description: Present (true) only when the page shows the calendar. }
             show_latency: { type: boolean, description: Present (true) only when the page shows response times. }

@@ -26,6 +26,7 @@ use crate::agent_tls::AgentCert;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
+use crate::auth::clients;
 use crate::auth::middleware::{AdminIdentity, Authenticated};
 use crate::collectors::agent;
 use crate::state::AppState;
@@ -273,6 +274,8 @@ pub struct TokenView {
     pub relay_site: Option<String>,
     /// Jeton de flotte Active Directory : domaine auquel il est limité.
     pub ad_domain: Option<String>,
+    /// Mode MSP : le client chez lequel ce jeton enrôle.
+    pub client_id: i64,
 }
 
 impl From<agent::TokenRecord> for TokenView {
@@ -290,6 +293,7 @@ impl From<agent::TokenRecord> for TokenView {
             relay: record.relay,
             relay_site: record.relay_site,
             ad_domain: record.ad_domain,
+            client_id: clients::DEFAULT_CLIENT,
         }
     }
 }
@@ -339,6 +343,10 @@ pub struct TokenPayload {
     /// Site de ce relais (« Agence de Lyon »). Ignoré sans `relay`.
     #[serde(default)]
     pub site: Option<String>,
+    /// Mode MSP : le client chez lequel le jeton enrôle. Absent : le client par
+    /// défaut.
+    #[serde(default)]
+    pub client_id: Option<i64>,
 }
 
 impl TokenPayload {
@@ -369,7 +377,18 @@ pub async fn list_tokens(
     State(state): State<AppState>,
 ) -> ApiResult<Json<Vec<TokenView>>> {
     let tokens = agent::list_tokens(&state.pool).await?;
-    Ok(Json(tokens.into_iter().map(TokenView::from).collect()))
+    let owners = clients::owners(&state.pool, clients::Kind::AgentToken).await?;
+    Ok(Json(
+        tokens
+            .into_iter()
+            .map(|record| {
+                let client = owners.get(&record.id).copied();
+                let mut view = TokenView::from(record);
+                view.client_id = client.unwrap_or(clients::DEFAULT_CLIENT);
+                view
+            })
+            .collect(),
+    ))
 }
 
 pub async fn create_token(
@@ -388,7 +407,14 @@ pub async fn create_token(
     if site.as_ref().is_some_and(|s| s.chars().count() > max) {
         return Err(ApiError::BadRequest(format!("Site name is limited to {max} characters.")));
     }
+    let client = payload.client_id.unwrap_or(clients::DEFAULT_CLIENT);
+    if !clients::exists(&state.pool, client).await? {
+        return Err(ApiError::BadRequest("This client does not exist.".into()));
+    }
     let (mut record, secret) = agent::create_token(&state.pool, &name, payload.policy()?).await?;
+    clients::assign(&state.pool, clients::Kind::AgentToken, &[record.id], Some(client))
+        .await
+        .map_err(super::clients::api_error)?;
     if payload.relay {
         agent::set_token_relay(&state.pool, record.id, site.as_deref()).await?;
         record.relay = true;
@@ -397,12 +423,14 @@ pub async fn create_token(
     audit::record(&state.pool, Some(&me.username), "agent_token.created", Some(&name), ip).await;
     let params = install_parameters(&state, payload.base_url.as_deref()).await;
 
+    let mut token = TokenView::from(record);
+    token.client_id = client;
     Ok((
         StatusCode::CREATED,
         Json(CreatedToken {
             install_linux: params.linux_command(&secret),
             install_windows: params.windows_command(&secret),
-            token: record.into(),
+            token,
             secret,
         }),
     ))
