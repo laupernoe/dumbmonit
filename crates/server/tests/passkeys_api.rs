@@ -275,3 +275,29 @@ async fn renommer_et_supprimer_une_cle() {
     let status = send(&app, "GET", "/api/auth/status", None, None).await;
     assert_eq!(status.body["passkeys"], false);
 }
+
+#[tokio::test]
+async fn un_lecteur_gere_ses_propres_cles() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let viewer = app.viewer_cookie(&admin).await;
+    let begin = send(
+        &app,
+        "POST",
+        "/api/auth/passkeys/register/begin",
+        Some(json!({"password": common::VIEWER_PASSWORD})),
+        Some(&viewer),
+    )
+    .await;
+    assert_eq!(begin.status, StatusCode::OK, "{}", begin.body);
+    // Il ne touche pas aux clés d'un autre compte : elles lui sont invisibles.
+    let id = {
+        register(&app).await;
+        send(&app, "GET", "/api/auth/passkeys", None, Some(&admin)).await.body[0]["id"]
+            .as_i64()
+            .unwrap()
+    };
+    let uri = format!("/api/auth/passkeys/{id}");
+    let other = send(&app, "DELETE", &uri, None, Some(&viewer)).await;
+    assert_eq!(other.status, StatusCode::NOT_FOUND, "{}", other.body);
+}
