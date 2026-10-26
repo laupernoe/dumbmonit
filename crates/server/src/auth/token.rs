@@ -704,6 +704,19 @@ fn guard(
             Ok(checked) => checked,
             Err(error) => return error.into_response(),
         };
+        // Les outils de l'assistant lisent toute l'instance, sans filtre
+        // d'équipe : refusés au jeton d'un compte restreint par ses équipes.
+        let principal = crate::auth::middleware::Principal::Token(checked.token.clone());
+        match crate::auth::teams::access_for(&state.pool, &principal).await {
+            Ok(access) if !access.is_scoped() => {}
+            Ok(_) => {
+                return crate::auth::AuthError::Forbidden(
+                    "Tokens of team-restricted accounts cannot use the assistant endpoint.".into(),
+                )
+                .into_response();
+            }
+            Err(error) => return crate::auth::AuthError::from(error).into_response(),
+        }
         request.extensions_mut().insert(checked.token);
         let mut response = next.run(request).await;
         checked.rate.apply(response.headers_mut());

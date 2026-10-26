@@ -37,6 +37,7 @@ use tracing::warn;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::AdminIdentity;
 use crate::auth::settings;
+use crate::auth::teams::TeamAccess;
 use crate::state::AppState;
 
 pub fn routes() -> Router<AppState> {
@@ -217,9 +218,18 @@ pub async fn location_for(state: &AppState, id: TargetId) -> ApiResult<Option<Lo
 }
 
 /// `GET /api/locations` — lecture, ouverte à tous les rôles comme la carte.
-async fn list(State(state): State<AppState>) -> ApiResult<Json<LocationsView>> {
-    let locations = load(&state.pool).await?;
-    let sites = super::topology::target_sites(&state).await?;
+async fn list(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<LocationsView>> {
+    let mut locations = load(&state.pool).await?;
+    let mut sites = super::topology::target_sites(&state).await?;
+    // Compte restreint par ses équipes : ses équipements seulement, et les
+    // emplacements où il en a au moins un.
+    let visible = access.visible_targets(&state.pool).await?;
+    if let Some(visible) = &visible {
+        sites.retain(|id, _| visible.contains(id));
+    }
     let assigned = assignments(&state.pool).await?;
     let mut ids: Vec<TargetId> = sites.keys().copied().collect();
     ids.sort_unstable();
@@ -232,6 +242,9 @@ async fn list(State(state): State<AppState>) -> ApiResult<Json<LocationsView>> {
         })
         .collect();
     let (mut members, unplaced) = resolve(&locations, &placements);
+    if visible.is_some() {
+        locations.retain(|l| members.get(&l.id).is_some_and(|m| !m.is_empty()));
+    }
     let mut known_sites: Vec<String> = Vec::new();
     for site in sites.values().flatten() {
         if !known_sites.iter().any(|s| s.eq_ignore_ascii_case(site)) {

@@ -72,6 +72,10 @@ pub struct User {
     pub ldap_dn: Option<String>,
     /// Désactivé par la connexion LDAP (groupes perdus), pas par un administrateur.
     pub disabled_by_ldap: bool,
+    /// Identité SAML : `NameID` persistant et `entityID` de l'IdP qui l'a émis
+    /// (voir [`crate::auth::saml`]).
+    pub saml_subject: Option<String>,
+    pub saml_issuer: Option<String>,
 }
 
 impl User {
@@ -81,12 +85,15 @@ impl User {
     }
 
     /// Méthode de connexion annoncée à l'interface : « password » dès qu'un mot
-    /// de passe existe, « ldap » pour un compte de l'annuaire, « oidc » sinon.
+    /// de passe existe, « ldap » pour un compte de l'annuaire, « saml » pour un
+    /// compte lié à un IdP SAML seulement, « oidc » sinon.
     pub fn auth_method(&self) -> &'static str {
         if self.password_hash.is_some() {
             "password"
         } else if self.ldap_id.is_some() {
             "ldap"
+        } else if self.saml_subject.is_some() && self.oidc_subject.is_none() {
+            "saml"
         } else {
             "oidc"
         }
@@ -111,6 +118,8 @@ fn read(row: SqliteRow) -> Result<User> {
         ldap_id: row.try_get("ldap_id")?,
         ldap_dn: row.try_get("ldap_dn")?,
         disabled_by_ldap: row.try_get::<i64, _>("disabled_by_ldap")? != 0,
+        saml_subject: row.try_get("saml_subject")?,
+        saml_issuer: row.try_get("saml_issuer")?,
     })
 }
 
@@ -126,7 +135,7 @@ pub async fn list(pool: &SqlitePool) -> Result<Vec<User>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
                 created_at, last_login_at, disabled, totp_secret, totp_enabled,
-                ldap_id, ldap_dn, disabled_by_ldap
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
          FROM users ORDER BY username COLLATE NOCASE",
     )
     .fetch_all(pool)
@@ -139,7 +148,7 @@ pub async fn get(pool: &SqlitePool, id: i64) -> Result<Option<User>> {
     let row = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
                 created_at, last_login_at, disabled, totp_secret, totp_enabled,
-                ldap_id, ldap_dn, disabled_by_ldap
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
          FROM users WHERE id = ?",
     )
     .bind(id)
@@ -153,7 +162,7 @@ pub async fn by_username(pool: &SqlitePool, username: &str) -> Result<Option<Use
     let row = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
                 created_at, last_login_at, disabled, totp_secret, totp_enabled,
-                ldap_id, ldap_dn, disabled_by_ldap
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
          FROM users WHERE username = ?",
     )
     .bind(username)
@@ -167,7 +176,7 @@ pub async fn by_oidc(pool: &SqlitePool, issuer: &str, subject: &str) -> Result<O
     let row = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
                 created_at, last_login_at, disabled, totp_secret, totp_enabled,
-                ldap_id, ldap_dn, disabled_by_ldap
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
          FROM users WHERE oidc_issuer = ? AND oidc_subject = ?",
     )
     .bind(issuer)
@@ -178,11 +187,64 @@ pub async fn by_oidc(pool: &SqlitePool, issuer: &str, subject: &str) -> Result<O
     row.map(read).transpose()
 }
 
+pub async fn by_saml(pool: &SqlitePool, issuer: &str, subject: &str) -> Result<Option<User>> {
+    let row = sqlx::query(
+        "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
+                created_at, last_login_at, disabled, totp_secret, totp_enabled,
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
+         FROM users WHERE saml_issuer = ? AND saml_subject = ?",
+    )
+    .bind(issuer)
+    .bind(subject)
+    .fetch_optional(pool)
+    .await
+    .context("recherche du compte par identité SAML")?;
+    row.map(read).transpose()
+}
+
+/// Rattache un compte existant à une identité SAML.
+pub async fn link_saml(pool: &SqlitePool, id: i64, issuer: &str, subject: &str) -> Result<()> {
+    sqlx::query("UPDATE users SET saml_issuer = ?, saml_subject = ? WHERE id = ?")
+        .bind(issuer)
+        .bind(subject)
+        .bind(id)
+        .execute(pool)
+        .await
+        .context("rattachement SAML")?;
+    Ok(())
+}
+
+/// Crée un compte sans mot de passe, lié d'emblée à son identité SAML quand
+/// elle est stable (`subject`). `None` si l'identifiant est déjà pris.
+pub async fn insert_saml(
+    pool: &SqlitePool,
+    username: &str,
+    display_name: &str,
+    role: Role,
+    identity: Option<(&str, &str)>,
+) -> Result<Option<i64>> {
+    let (issuer, subject) = identity.unzip();
+    let result = sqlx::query(
+        "INSERT INTO users (username, display_name, role, saml_issuer, saml_subject)
+         VALUES (?, ?, ?, ?, ?)
+         ON CONFLICT(username) DO NOTHING",
+    )
+    .bind(username)
+    .bind(display_name)
+    .bind(role.as_str())
+    .bind(issuer)
+    .bind(subject)
+    .execute(pool)
+    .await
+    .context("création du compte SAML")?;
+    Ok((result.rows_affected() == 1).then(|| result.last_insert_rowid()))
+}
+
 pub async fn by_ldap(pool: &SqlitePool, ldap_id: &str) -> Result<Option<User>> {
     let row = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
                 created_at, last_login_at, disabled, totp_secret, totp_enabled,
-                ldap_id, ldap_dn, disabled_by_ldap
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
          FROM users WHERE ldap_id = ?",
     )
     .bind(ldap_id)
@@ -252,7 +314,7 @@ pub async fn sole_password_user(pool: &SqlitePool) -> Result<Option<User>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
                 created_at, last_login_at, disabled, totp_secret, totp_enabled,
-                ldap_id, ldap_dn, disabled_by_ldap
+                ldap_id, ldap_dn, disabled_by_ldap, saml_subject, saml_issuer
          FROM users WHERE password_hash IS NOT NULL LIMIT 2",
     )
     .fetch_all(pool)
@@ -348,12 +410,15 @@ pub async fn set_role(pool: &SqlitePool, id: i64, role: Role) -> Result<()> {
 }
 
 pub async fn set_disabled(pool: &SqlitePool, id: i64, disabled: bool) -> Result<()> {
-    sqlx::query("UPDATE users SET disabled = ?, disabled_by_ldap = 0 WHERE id = ?")
-        .bind(i64::from(disabled))
-        .bind(id)
-        .execute(pool)
-        .await
-        .context("activation ou désactivation du compte")?;
+    sqlx::query(
+        "UPDATE users SET disabled = ?, disabled_by_ldap = 0, disabled_by_scim = 0
+         WHERE id = ?",
+    )
+    .bind(i64::from(disabled))
+    .bind(id)
+    .execute(pool)
+    .await
+    .context("activation ou désactivation du compte")?;
     Ok(())
 }
 
@@ -397,12 +462,15 @@ pub async fn apply_changes(pool: &SqlitePool, id: i64, changes: &AccountChanges<
             .context("mise à jour du mot de passe")?;
     }
     if let Some(disabled) = changes.disabled {
-        sqlx::query("UPDATE users SET disabled = ?, disabled_by_ldap = 0 WHERE id = ?")
-            .bind(i64::from(disabled))
-            .bind(id)
-            .execute(&mut *tx)
-            .await
-            .context("activation ou désactivation du compte")?;
+        sqlx::query(
+            "UPDATE users SET disabled = ?, disabled_by_ldap = 0, disabled_by_scim = 0
+             WHERE id = ?",
+        )
+        .bind(i64::from(disabled))
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .context("activation ou désactivation du compte")?;
     }
     if changes.close_sessions {
         sqlx::query("DELETE FROM auth_sessions WHERE user_id = ?")

@@ -145,6 +145,11 @@ pub struct Config {
     /// Annuaire LDAP / Active Directory décrit par l'environnement
     /// (`DUMBMONIT_LDAP_*`). Un réglage enregistré depuis l'interface l'emporte.
     pub ldap: LdapEnv,
+    /// Horloge et identifiant de requête figés pour les tests de la connexion
+    /// SAML. Jamais lus dans l'environnement : seul le code qui monte le
+    /// serveur peut les poser (voir [`crate::auth::saml::TestHooks`]).
+    #[doc(hidden)]
+    pub saml_hooks: crate::auth::saml::TestHooks,
     /// Accepte un annuaire en `ldap://` sans StartTLS (`DUMBMONIT_LDAP_ALLOW_PLAIN`).
     ///
     /// Les mots de passe des utilisateurs passeraient en clair sur le réseau ;
@@ -278,6 +283,7 @@ impl Config {
             backup_keep: env_parsed::<usize>("DUMBMONIT_BACKUP_KEEP", "7")?.clamp(1, 365),
             oidc: OidcEnv::from_env(),
             ldap: LdapEnv::from_env(),
+            saml_hooks: Default::default(),
             ldap_allow_plain: env_flag("DUMBMONIT_LDAP_ALLOW_PLAIN"),
             browser_url: env_var("DUMBMONIT_BROWSER_URL")
                 .map(|url| url.trim().trim_end_matches('/').to_string())

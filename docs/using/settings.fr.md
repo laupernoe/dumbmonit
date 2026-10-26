@@ -203,6 +203,12 @@ Administrateurs seulement. Connexion avec les identifiants et mots de passe de
 l'annuaire sur l'écran habituel, rôles tirés des groupes, comptes créés à la
 première connexion. Voir [LDAP / Active Directory](ldap.md).
 
+## SAML, SCIM et équipes
+
+Administrateurs seulement. Connexion unique SAML 2.0, provisionnement SCIM, et
+équipes qui limitent chaque compte à certains dossiers d'équipements. Voir
+[SAML 2.0](saml.md), [SCIM](scim.md) et [Équipes et droits](teams.md).
+
 ## Agents
 
 Jetons d'enrôlement pour l'[agent Linux, macOS, FreeBSD et

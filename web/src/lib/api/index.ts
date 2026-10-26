@@ -24,6 +24,7 @@ import type {
 	AlertRulePayload,
 	Silence,
 	SilencePayload,
+	AccessInfo,
 	AuthState,
 	Channel,
 	ChannelKindInfo,
@@ -83,6 +84,7 @@ import type {
 
 export * from './types';
 export { onMutation } from './mutations';
+export * from './teams';
 export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
 
 // --- Health -----------------------------------------------------------------
@@ -499,13 +501,14 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			user: status?.user ?? null,
 			oidc: status?.oidc ?? NO_OIDC,
 			ldap: { enabled: Boolean(status?.ldap?.enabled) },
+			saml: { enabled: Boolean(status?.saml?.enabled), label: status?.saml?.label || 'SAML' },
 			passkeys: Boolean(status?.passkeys),
 			demo: Boolean(status?.demo)
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, passkeys: false, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, saml: { enabled: false, label: 'SAML' }, passkeys: false, demo: false };
 		}
 		throw cause;
 	}
@@ -936,6 +939,20 @@ export function getOnboarding(signal?: AbortSignal): Promise<OnboardingState> {
 /** Dismisses a step, or the whole guide. Returns the state the server kept. */
 export function updateOnboarding(patch: OnboardingPatch): Promise<OnboardingState> {
 	return request<OnboardingState>('/onboarding', { method: 'PUT', body: patch });
+}
+
+/**
+ * Team rights of the current account. Older servers do not send `access`:
+ * the account is then treated as unrestricted. Never throws (but an abort).
+ */
+export async function getMyAccess(signal?: AbortSignal): Promise<AccessInfo | null> {
+	try {
+		const me = await request<{ access?: AccessInfo }>('/auth/me', { signal, anticipated: true });
+		return me?.access ?? null;
+	} catch (cause) {
+		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
+		return null;
+	}
 }
 
 // --- Maintenance calendar (iCal) --------------------------------------------

@@ -76,6 +76,7 @@ use sqlx::Row;
 use tracing::warn;
 
 use crate::api::ApiResult;
+use crate::auth::teams::TeamAccess;
 use crate::collectors::agent;
 use crate::state::AppState;
 use crate::tsdb::InstantSeries;
@@ -322,8 +323,20 @@ pub struct Neighbor {
 /// `GET /api/topology` : lecture seule, ouverte à tous les rôles comme la
 /// liste des équipements. Les adresses des cibles n'y figurent pas ; seules y
 /// sont celles que l'hyperviseur rapporte pour ses invités (`ips`).
-pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
-    Ok(Json(compute(&state).await?))
+pub async fn topology(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<TopologyView>> {
+    let mut view = compute(&state).await?;
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        restrict(&mut view.nodes, &mut view.edges, &visible);
+        // Corrections, règles et suggestions citent des nœuds quelconques : un
+        // compte restreint n'en voit aucune (outil d'administrateur).
+        view.corrections.clear();
+        view.rules.clear();
+        view.suggestions.clear();
+    }
+    Ok(Json(view))
 }
 
 /// La carte complète : déduction, puis corrections et règles apprises.
@@ -363,6 +376,23 @@ pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
     let suggestions =
         super::topology_edits::suggest(&targets, &nodes, &edges, &corrections, &rules);
     Ok(TopologyView { nodes, edges, metrics_available, corrections, rules, suggestions })
+}
+
+/// Carte d'un compte restreint par ses équipes : ses équipements, les invités
+/// et nœuds de ses hyperviseurs, et les liens entre eux seulement. Un nœud qui
+/// ne se rattache à aucun équipement visible disparaît.
+fn restrict(
+    nodes: &mut Vec<NodeView>,
+    edges: &mut Vec<EdgeView>,
+    visible: &std::collections::HashSet<TargetId>,
+) {
+    nodes.retain(|node| match (node.target_id, node.host_id) {
+        (Some(id), _) => visible.contains(&id),
+        (None, Some(host)) => visible.contains(&host),
+        (None, None) => false,
+    });
+    let kept: std::collections::HashSet<&str> = nodes.iter().map(|n| n.id.as_str()).collect();
+    edges.retain(|edge| kept.contains(edge.from.as_str()) && kept.contains(edge.to.as_str()));
 }
 
 /// Les cibles telles que la carte les lit.
