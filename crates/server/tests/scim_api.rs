@@ -762,7 +762,12 @@ async fn filter_values_are_data_never_sql() {
         assert_eq!(reply.status, StatusCode::OK, "{filter}");
         assert_eq!(reply.body["totalResults"], 0, "{filter}");
     }
-    let reply = lab.get(&format!("/api/scim/v2/Groups?filter={}", urlencode(r#"displayName eq "' OR 1=1 --""#))).await;
+    let reply = lab
+        .get(&format!(
+            "/api/scim/v2/Groups?filter={}",
+            urlencode(r#"displayName eq "' OR 1=1 --""#)
+        ))
+        .await;
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.body["totalResults"], 0);
 }
