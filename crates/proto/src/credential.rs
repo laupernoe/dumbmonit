@@ -33,6 +33,9 @@ pub enum Credential {
     ApiToken { token: String },
     /// Identifiants classiques, pour les API qui n'acceptent pas de jeton.
     UsernamePassword { username: String, password: String },
+    /// RADIUS : le secret partagé avec le serveur, et le compte de test dont la
+    /// sonde présente l'identifiant et le mot de passe.
+    Radius { shared_secret: String, username: String, password: String },
 }
 
 /// Forme acceptée en entrée pour un [`Credential`].
@@ -76,6 +79,13 @@ pub enum CredentialInput {
         username: String,
         #[serde(default)]
         password: Option<String>,
+    },
+    Radius {
+        username: String,
+        #[serde(default)]
+        password: Option<String>,
+        #[serde(default)]
+        shared_secret: Option<String>,
     },
 }
 
@@ -253,6 +263,28 @@ impl CredentialInput {
                 let password = secret(password, keep, "password", &mut reused)?;
                 Credential::UsernamePassword { username, password }
             }
+            Self::Radius { username, password, shared_secret } => {
+                // Le secret partagé appartient au serveur, pas au compte : il
+                // survit à un changement de nom d'utilisateur. Le mot de passe,
+                // lui, appartient au compte.
+                let (keep_secret, keep_password) = match saved {
+                    Some(Credential::Radius { username: before, password, shared_secret }) => (
+                        Keep::Saved(shared_secret),
+                        if *before == username {
+                            Keep::Saved(password)
+                        } else if !password.is_empty() {
+                            Keep::Refused("user name")
+                        } else {
+                            Keep::New
+                        },
+                    ),
+                    _ => (Keep::New, Keep::New),
+                };
+                let shared_secret =
+                    secret(shared_secret, keep_secret, "shared secret", &mut reused)?;
+                let password = secret(password, keep_password, "password", &mut reused)?;
+                Credential::Radius { shared_secret, username, password }
+            }
             Self::ApiToken { token, token_id, secret } => {
                 let token_id = token_id.as_deref().map(tidy).filter(|s| !s.is_empty());
                 let secret = secret.as_deref().map(tidy).filter(|s| !s.is_empty());
@@ -326,6 +358,7 @@ impl std::fmt::Debug for CredentialInput {
             Self::SnmpV3 { .. } => "snmp_v3",
             Self::ApiToken { .. } => "api_token",
             Self::UsernamePassword { .. } => "username_password",
+            Self::Radius { .. } => "radius",
         };
         write!(f, "CredentialInput({kind}, <redacted>)")
     }
@@ -348,6 +381,7 @@ impl Credential {
             Self::SnmpV3 { .. } => "SNMP v3",
             Self::ApiToken { .. } => "API token",
             Self::UsernamePassword { .. } => "Username / password",
+            Self::Radius { .. } => "RADIUS",
         }
     }
 }
@@ -363,6 +397,9 @@ impl Credential {
             Self::SnmpV3 { auth, privacy, .. } => auth.is_some() || privacy.is_some(),
             Self::ApiToken { token } => !token.is_empty(),
             Self::UsernamePassword { password, .. } => !password.is_empty(),
+            Self::Radius { shared_secret, password, .. } => {
+                !shared_secret.is_empty() || !password.is_empty()
+            }
         }
     }
 
@@ -394,7 +431,7 @@ impl Credential {
                     out.insert("token_id", id.to_owned());
                 }
             }
-            Self::UsernamePassword { username, .. } => {
+            Self::UsernamePassword { username, .. } | Self::Radius { username, .. } => {
                 out.insert("username", username.clone());
             }
         }
@@ -423,6 +460,11 @@ impl std::fmt::Debug for Credential {
                     "Credential::UsernamePassword {{ username: {username:?}, password: <redacted> }}"
                 )
             }
+            Self::Radius { username, .. } => write!(
+                f,
+                "Credential::Radius {{ username: {username:?}, shared_secret: <redacted>, \
+                 password: <redacted> }}"
+            ),
         }
     }
 }
@@ -636,6 +678,64 @@ mod tests {
                 context: None
             }
         );
+    }
+
+    fn radius() -> Credential {
+        Credential::Radius {
+            shared_secret: "s3cr3t-shared".into(),
+            username: "probe".into(),
+            password: "s3cr3t-pw".into(),
+        }
+    }
+
+    #[test]
+    fn radius_ne_fuit_ni_dans_le_debug_ni_dans_la_partie_publique() {
+        let credential = radius();
+        let rendered = format!("{credential:?}");
+        assert!(rendered.contains("probe"), "{rendered}");
+        assert!(!rendered.contains("s3cr3t"), "{rendered}");
+        let public = credential.public_fields();
+        assert_eq!(public.len(), 1);
+        assert_eq!(public.get("username").map(String::as_str), Some("probe"));
+        assert!(credential.has_secret());
+        assert_eq!(credential.kind_label(), "RADIUS");
+        let input: CredentialInput = serde_json::from_str(
+            r#"{"type":"radius","username":"probe","password":"s3cr3t-pw","shared_secret":"x"}"#,
+        )
+        .unwrap();
+        assert!(!format!("{input:?}").contains("s3cr3t"));
+    }
+
+    #[test]
+    fn radius_se_stocke_et_se_relit_sous_sa_forme_complete() {
+        let json = serde_json::to_string(&radius()).unwrap();
+        assert!(json.contains(r#""type":"radius""#), "{json}");
+        let back: Credential = serde_json::from_str(&json).unwrap();
+        assert_eq!(back, radius());
+        // Sans mot de passe ni secret et sans rien d'enregistré : refusé.
+        assert!(parse(r#"{"type":"radius","username":"probe"}"#).is_err());
+    }
+
+    #[test]
+    fn radius_garde_chaque_secret_laisse_vide() {
+        let resolved = resolve(r#"{"type":"radius","username":"probe"}"#, &radius()).unwrap();
+        assert_eq!(resolved.credential, radius());
+        assert!(resolved.reused_secret);
+    }
+
+    /// Changer de compte oblige à retaper son mot de passe, pas le secret du serveur.
+    #[test]
+    fn radius_change_de_compte_sans_perdre_le_secret_partage() {
+        let err = resolve(r#"{"type":"radius","username":"autre"}"#, &radius()).err().unwrap();
+        assert!(err.contains("Enter the password again"), "{err}");
+        let resolved =
+            resolve(r#"{"type":"radius","username":"autre","password":"neuf"}"#, &radius())
+                .unwrap();
+        let Credential::Radius { shared_secret, username, password } = &resolved.credential else {
+            panic!("RADIUS attendu");
+        };
+        assert_eq!(shared_secret, "s3cr3t-shared");
+        assert_eq!((username.as_str(), password.as_str()), ("autre", "neuf"));
     }
 
     #[test]

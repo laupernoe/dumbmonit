@@ -73,6 +73,79 @@ Le mode réseau host :
   redirection de port en mode host). La base de métriques embarquée reste liée à
   la boucle locale et n'est pas joignable depuis le réseau.
 
+## Scans planifiés et inventaire
+
+Un balayage ponctuel dit ce qu'il y a sur le réseau aujourd'hui. Pour être
+prévenu quand quelque chose de **nouveau** apparaît, planifiez-le : sur la page
+**Équipements**, dans la vue de balayage réseau, le panneau *Scans planifiés et
+inventaire* garde la liste des appareils et des ports ouverts que chaque réseau
+planifié a montrés, et signale ce qui est nouveau.
+
+Pour chaque planification, vous choisissez :
+
+- le **réseau** (CIDR, 1024 adresses au plus, comme un balayage manuel) ;
+- **qui balaie** : le serveur, ou un [agent relais](../devices/agent.fr.md) sur un autre site ;
+- l'**intervalle**, de 5 minutes à 30 jours ;
+- la **profondeur** (la même liste de ports *Standard* ou *Étendue* qu'un balayage manuel) ;
+- si elle est **activée**. *Scanner maintenant* la lance au prochain cycle
+  (quelques secondes) sans attendre l'intervalle.
+
+Un réseau n'est jamais balayé deux fois en même temps, et un serveur ou un agent
+relais ne mène qu'un balayage de découverte à la fois : un scan planifié qui trouve
+son exécutant occupé (balayage manuel, autre planification) démarre simplement un
+peu plus tard.
+
+### L'inventaire
+
+Chaque balayage terminé met à jour l'inventaire de son réseau :
+
+- un **appareil** est identifié par son **adresse MAC** quand elle est lisible
+  (voir [adresses MAC](#adresses-mac-et-mode-reseau-host)), sinon par son adresse IP.
+  Un appareil dont l'IP change mais qui garde sa MAC est le même appareil, pas un
+  nouveau ;
+- chaque **port ouvert** trouvé sur un appareil est listé avec sa première et sa
+  dernière observation. Seul ce que le balayage reconnaît est listé (les mêmes
+  services qu'un balayage manuel) ;
+- rien n'est jamais retiré : un appareil éteint reste dans la liste.
+
+Le **premier balayage terminé** d'un réseau construit l'inventaire sans rien
+signaler : tout ce qu'il trouve est connu d'emblée. Un premier balayage qui ne trouve
+aucun hôte (un relais coupé de son réseau, par exemple) ne compte pas, pour que le
+suivant ne signale pas tout un réseau comme nouveau. Changer le réseau ou l'exécutant
+d'une planification repart d'un inventaire vide.
+
+À partir du deuxième balayage, un appareil ou un port absent de l'inventaire y entre
+comme **nouveau** : mis en avant par une étiquette *Nouvel appareil* ou *Nouveau
+port* (pas seulement une couleur), et gardé en tête de liste.
+
+### Alertes
+
+Les nouveaux appareils et les nouveaux ports déclenchent des alertes par deux
+[règles d'alerte](../alerting/rules.fr.md#inventaire-du-reseau) livrées :
+
+| Règle | Se déclenche quand | Par défaut |
+|---|---|---|
+| New device on the network | un balayage trouve un appareil absent de l'inventaire | **désactivée**, gravité `info` |
+| New open port on the network | un balayage trouve un nouveau port ouvert sur un appareil connu | **désactivée**, gravité `info` |
+
+Les deux règles sont **désactivées par défaut** : sur un réseau où des invités vont
+et viennent, elles ne seraient que du bruit tant que vous ne les voulez pas.
+Activez-les dans les règles d'alerte, et choisissez les canaux de notification qui
+les reçoivent comme pour n'importe quelle règle.
+
+Il y a **une alerte par nouvel élément**, et elle reste ouverte tant que l'élément
+n'est pas marqué comme connu ; elle ne se répète pas et ne se redéclenche pas à
+chaque balayage. Les ports d'un nouvel appareil sont couverts par l'alerte de
+l'appareil lui-même.
+
+### Marquer comme connu
+
+Utilisez *Marquer comme connu* sur un appareil (ses ports sont marqués avec lui),
+*Marquer connu* sur un seul port, ou *Tout marquer comme connu* pour tout accepter
+d'un coup. Les éléments marqués ne sont plus signalés, et leur alerte se résout en
+quelques minutes. C'est aussi le moyen d'accepter un nouveau port ou appareil que
+vous attendiez.
+
 ## Un avertissement
 
 Un balayage de ports ressemble à une attaque pour un système de détection

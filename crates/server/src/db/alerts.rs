@@ -61,7 +61,7 @@ pub async fn seed_builtin_rules(pool: &SqlitePool) -> Result<usize> {
                  (uid, name, description, kind, query, operator, threshold, clear_threshold,
                   for_secs, severity, selector, channels, params, unit, repeat_secs,
                   escalate_after_secs, enabled, builtin)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)",
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
         )
         .bind(&rule.uid)
         .bind(&rule.name)
@@ -79,6 +79,7 @@ pub async fn seed_builtin_rules(pool: &SqlitePool) -> Result<usize> {
         .bind(&rule.unit)
         .bind(rule.repeat_interval.map(|d| d.as_secs() as i64))
         .bind(rule.escalate_after.map(|d| d.as_secs() as i64))
+        .bind(rule.enabled)
         .execute(pool)
         .await
         .with_context(|| format!("insertion de la règle livrée « {} »", rule.uid))?;

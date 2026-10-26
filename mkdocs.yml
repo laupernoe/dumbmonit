@@ -100,11 +100,19 @@ nav:
       - pfSense: devices/pfsense.md
       - FortiGate: devices/fortigate.md
       - Sophos Firewall: devices/sophos.md
+      - Cisco Meraki: devices/meraki.md
+      - TP-Link Omada: devices/omada.md
+      - Aruba Central: devices/arubacentral.md
+      - Palo Alto PAN-OS: devices/paloalto.md
+      - SonicWall SonicOS: devices/sonicwall.md
       - OpenVPN server: devices/openvpn.md
       - UniFi Network: devices/unifi.md
       - Home Assistant: devices/homeassistant.md
       - TrueNAS: devices/truenas.md
       - Unraid: devices/unraid.md
+      - QNAP QTS / QuTS hero: devices/qnap.md
+      - Ceph: devices/ceph.md
+      - MinIO: devices/minio.md
       - MikroTik RouterOS: devices/mikrotik.md
       - UPS with NUT: devices/nut.md
       - Server hardware (Redfish): devices/redfish.md
@@ -131,6 +139,8 @@ nav:
       - Kubernetes / k3s: devices/kubernetes.md
       - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
+      - Kopia (beta): devices/kopia.md
+      - Duplicati (beta): devices/duplicati.md
       - Tailscale: devices/tailscale.md
       - Microsoft 365: devices/m365.md
       - Microsoft Entra ID: devices/entra.md
@@ -149,6 +159,7 @@ nav:
       - Forgejo / Gitea: devices/forgejo.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Deploy the agent with Active Directory: devices/agent-active-directory.md
+      - Windows event log alerts: devices/agent-windows-events.md
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
@@ -156,6 +167,7 @@ nav:
       - Demo monitor: devices/demo.md
   - Integrations:
       - Website banner: integrations/website-banner.md
+      - Homepage and Homarr: integrations/homepage.md
   - Integration packs:
       - What a pack is: packs/index.md
       - Write your first pack: packs/first-pack.md
@@ -171,6 +183,8 @@ nav:
       - Network discovery: using/discovery.md
       - Wall mode and music: using/wall.md
       - Monitors page: using/devices.md
+      - Monitors from Docker labels: using/docker-labels.md
+      - Import from other tools: using/imports.md
       - Topology map: using/topology.md
       - World map: using/world-map.md
       - Security score: using/security-score.md
@@ -180,6 +194,7 @@ nav:
       - Email reports: using/reports.md
       - Settings: using/settings.md
       - LDAP / Active Directory: using/ldap.md
+      - Passkeys: using/passkeys.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md
   - Reference:

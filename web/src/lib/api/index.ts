@@ -10,6 +10,7 @@ import { normalizeCollector } from './types';
 import { sortDismissed } from '../alerts-dismiss';
 import type {
 	AlertLinkResult,
+	ProbeLocationsReport,
 	AlertLinkView,
 	AgentHost,
 	AgentToken,
@@ -100,6 +101,10 @@ export function getTarget(id: TargetId, signal?: AbortSignal): Promise<Target> {
 	return request<Target>(`/targets/${id}`, { signal });
 }
 
+export function getProbeLocations(id: TargetId, signal?: AbortSignal): Promise<ProbeLocationsReport> {
+	return request<ProbeLocationsReport>(`/targets/${id}/probe-locations`, { signal });
+}
+
 export function createTarget(payload: TargetPayload): Promise<Target> {
 	return request<Target>('/targets', { method: 'POST', body: payload });
 }
@@ -127,6 +132,11 @@ export async function localSubnets(signal?: AbortSignal): Promise<LocalSubnet[]>
 
 export function deleteTarget(id: TargetId): Promise<void> {
 	return request<void>(`/targets/${id}`, { method: 'DELETE' });
+}
+
+/** Hands a monitor managed by Docker labels back to manual management. */
+export function releaseManagedTarget(id: TargetId): Promise<void> {
+	return request<void>(`/targets/${id}/release`, { method: 'POST' });
 }
 
 /**
@@ -489,12 +499,13 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			user: status?.user ?? null,
 			oidc: status?.oidc ?? NO_OIDC,
 			ldap: { enabled: Boolean(status?.ldap?.enabled) },
+			passkeys: Boolean(status?.passkeys),
 			demo: Boolean(status?.demo)
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, passkeys: false, demo: false };
 		}
 		throw cause;
 	}

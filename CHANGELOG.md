@@ -19,6 +19,90 @@ All notable changes to this project are documented here. The format follows
   (VPS and dedicated servers, maintenance) and **Infomaniak** (products and expiry).
   Each has a page in the documentation (English and French) with the minimal rights
   and the ports to open.
+- **More service checks, scheduled jobs, Windows events and network inventory.**
+  - Seven new service checks, each with its own form: **UDP** (send a datagram,
+    optionally expect a reply), **SSH** (banner and version; an expected host key
+    fingerprint fails the check when the key changes), **IMAP** and **POP3** (TLS,
+    STARTTLS or none, greeting, optional login sent only over a trusted TLS
+    session), **gRPC** (standard `grpc.health.v1` health check, TLS or h2c),
+    **RADIUS** (Access-Request with a shared secret and a test account; Accept
+    expected, a wrong secret is reported as such) and **SNMP value** (one OID,
+    v2c or v3, with a range or an expected text). New failure reasons:
+    `host_key`, `threshold`, `not_found`, `bad_secret`, `unhealthy`.
+  - **HTTP response time breakdown**: DNS, connection, TLS, server processing and
+    transfer are recorded as `dumbmonit_probe_http_phase_seconds{phase}` and shown
+    stacked on the monitor page, with the split of the latest check.
+  - **Cron job tracking** for heartbeat monitors: `/start`, `/success`, `/fail`
+    and `/<exit code>` endpoints, the command output in the request body (last
+    10 KB kept), the run duration, an expected schedule as a cron expression with
+    a time zone and a grace period, and three built-in rules: missed, failed
+    (with the exit code and the output) and running too long. The monitor page
+    lists the runs; the docs give a shell wrapper with curl.
+  - **Windows event log alerts**: rules per agent (log, source, event IDs,
+    level, text or regex) are sent to Windows agents, which read the event log,
+    rate-limit what matches and report it; three built-in rules raise an alert
+    with the event's message. No rule is active by default; common examples
+    (4625, 41 Kernel-Power, 7034…) are offered.
+  - **New device and new port alerts**: scheduled network scans per subnet, run
+    by the server or a relay agent, keep an inventory of devices (MAC, IP) and
+    open ports. The first scan learns silently; later ones flag what is new until
+    it is marked as known. The two built-in rules are off by default, at info
+    severity.
+- **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
+
+- **Probes from several locations, confirmed before alerting.** An uptime monitor
+  (HTTP, TCP, ping, DNS, TLS, SMTP, SQL, MQTT, WebSocket, NTP) can now be probed
+  by the server and one or more relay agents at once. It is down only when at
+  least N of the locations fail (majority by default, configurable); a minority
+  failing shows "degraded" without raising `service_down`. On the first failure
+  every location re-checks at once, and only that confirmation is published.
+  A silent, busy or older relay agent is left out of the quorum and flagged.
+  Uptime, alerts and status pages use the decision; each location keeps its own
+  series (`dumbmonit_probe_location_success{location}`,
+  `dumbmonit_probe_location_duration_seconds`). The monitor page shows state and
+  latency per location (on the world map when geolocated);
+  `GET /api/targets/{id}/probe-locations` returns them. Backups carry the
+  setting (relay agents by reference).
+- **Correct the topology map, and DumbMonit learns from it.** Administrators
+  click **Correct the map** on `/map`: drag a device onto the one it really
+  depends on (or use **Attach** in its panel, by keyboard or on a phone), mark
+  a link wrong so it is never deduced again, draw a link of a chosen type, move
+  a node to another site or group it. An attachment can also become the
+  device's declared parent for alert suppression (**Also use for alerts**,
+  ticked by default). Undo and redo, a list of corrections with who made them,
+  and each link says whether it was deduced, corrected by hand or set by a
+  learned rule. From the corrections, simple deterministic rules are suggested
+  (never applied on their own), such as "Devices in 10.0.5.0/24 depend on
+  switch-core" or "Never draw *Through the firewall* links in this subnet";
+  once applied they also place devices added later. Corrections and rules are
+  included in backups. New routes under `/api/topology/corrections`,
+  `/api/topology/rules` and `/api/topology/suggestions`.
+
+- **Integrations, first batch.** Nine new notification channels, monitors created
+  from Docker labels, three importers, Homepage support and passkeys:
+  - *Notification channels*: WhatsApp (Meta Cloud API, and the free CallMeBot
+    gateway), Threema Gateway (basic mode), Webex, Grafana OnCall, SIGNL4, and SMS
+    through Vonage, Telnyx and ASPSMS. Tokens and secrets are encrypted and never
+    sent back; each channel has its test button, and the chat channels carry the
+    acknowledge and snooze links (the on-call and SMS ones leave that to the
+    service or keep the message short).
+  - *Docker labels*: an agent reads the `dumbmonit.*` labels of its containers
+    (`enable`, `name`, `folder`, `tags`, `interval`, `http.url`, `tcp.port`,
+    `ping.host`, `adopt`…) and the server creates, updates and archives the
+    matching monitors, which are marked *Managed by Docker labels*, read-only until
+    released, with an optional adoption of an existing monitor.
+  - *Imports*: UptimeRobot (API key or CSV), Gatus (`config.yaml`) and
+    Healthchecks.io (API v3, checks become heartbeats with their old ping URLs
+    recalled for redirection), with the same preview-then-import flow as Uptime
+    Kuma.
+  - *Homepage and Homarr*: `GET /api/summary` returns flat counters readable with a
+    read-only API token; the docs give the `services.yaml` block for Homepage's
+    `customapi` widget and the Homarr options.
+  - *Passkeys (WebAuthn)*: sign in with a passkey in place of password and
+    second factor, and manage them (list, rename, remove) in Settings → Account &
+    security. ES256, HTTPS required (except localhost), domain name as relying party
+    ID. Checked in DumbMonit itself rather than with `webauthn-rs`, which needs
+    OpenSSL.
 - **The agent updates itself.** Each batch now tells the server the SHA-256
   of the running agent binary; when it differs from the binary of the
   server's own build for that platform (Linux x86_64/aarch64, FreeBSD,
@@ -48,7 +132,6 @@ All notable changes to this project are documented here. The format follows
   Directory kit no longer reinstalls (or downgrades) an agent that is as
   recent as the kit or newer, so it need not be re-run after a server
   upgrade.
-
 - **Status pages and reports, batch 1.**
   - *Private status pages.* Each page now chooses who can see it: anyone with
     the link (default), anyone with a password of its own (Argon2id hash, signed

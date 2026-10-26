@@ -440,3 +440,67 @@ export async function loadResponseTimes(
 		.filter((serie) => serie.points.length > 0)
 		.slice(0, 1);
 }
+
+/**
+ * Phases of an HTTP check, in stacking order (bottom to top).
+ *
+ * `dumbmonit_probe_http_phase_seconds{phase}` is published by the HTTP probe:
+ * its five series sum to the time from sending the request to the end of the
+ * body read.
+ */
+export const HTTP_PHASES = ['dns', 'connect', 'tls', 'processing', 'transfer'] as const;
+
+export type HttpPhase = (typeof HTTP_PHASES)[number];
+
+/** Colour tokens of the phases, shared by the stacked chart and the last-check bar. */
+export const PHASE_TOKENS = ['info', 'signal', 'advisory', 'warning', 'ink-3'] as const;
+
+export function phaseLabel(phase: HttpPhase): string {
+	switch (phase) {
+		case 'dns':
+			return m.monitor_phases_dns();
+		case 'connect':
+			return m.monitor_phases_connect();
+		case 'tls':
+			return m.monitor_phases_tls();
+		case 'processing':
+			return m.monitor_phases_processing();
+		case 'transfer':
+			return m.monitor_phases_transfer();
+	}
+}
+
+/**
+ * Per-phase time of an HTTP service, in milliseconds, always the five phases
+ * in stacking order. Empty when the target has no phase series (not an HTTP
+ * probe, or no successful check in the range).
+ */
+export async function loadHttpPhases(
+	targetId: TargetId,
+	rangeSeconds: number,
+	signal?: AbortSignal
+): Promise<Serie[]> {
+	const end = Date.now();
+	const start = end - rangeSeconds * 1000;
+	const series = await queryRange(
+		{
+			query: `dumbmonit_probe_http_phase_seconds{target="${targetId}"}`,
+			start,
+			end,
+			step: stepFor(rangeSeconds)
+		},
+		signal
+	);
+	const byPhase = new Map<string, [number, number][]>();
+	for (const item of series) {
+		const phase = item.metric?.phase;
+		if (phase) byPhase.set(phase, toPoints(item));
+	}
+	if (![...byPhase.values()].some((points) => points.length > 0)) return [];
+	return HTTP_PHASES.map((phase) => ({
+		label: phaseLabel(phase),
+		points: (byPhase.get(phase) ?? []).map(
+			([ts, value]) => [ts, Math.round(value * 1000 * 10) / 10] as [number, number]
+		)
+	}));
+}

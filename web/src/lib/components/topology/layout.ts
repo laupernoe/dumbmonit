@@ -21,7 +21,7 @@
  *
  * Placement is deterministic: a refresh that changes states never moves a node.
  */
-import type { TopologySiteSource, TopologySource } from '#lib/api/index.js';
+import type { TopologyOrigin, TopologySiteSource, TopologySource } from '#lib/api/index.js';
 import type { TargetState } from '#lib/format.js';
 
 /** A device's state, or a guest's power state (a stopped VM is not an outage). */
@@ -45,16 +45,30 @@ export interface MapNode {
 	vlanName?: string | null;
 	/** Guest: the addresses its hypervisor reports. */
 	ips?: string[];
+	/** Grouping corrected on the map. */
+	groupSource?: 'manual' | null;
 }
 
 export interface MapEdge {
 	from: string;
 	to: string;
 	source: TopologySource;
+	/** Deduced by the server (default), corrected by hand, or set by a learned rule. */
+	origin?: TopologyOrigin;
+	correctionId?: number | null;
+	ruleId?: number | null;
 }
 
-/** Declared links first: they are what alert suppression follows. */
-const PRIORITY: Record<TopologySource, number> = { parent: 0, service: 1, hypervisor: 2, hosted: 3, relay: 4, samehost: 5, backup: 6, firewall: 7, lldp: 8 };
+/** The key of a link, as the map and its panels name it. */
+export function edgeKey(edge: { from: string; to: string }): string {
+	return `${edge.from}>${edge.to}`;
+}
+
+/**
+ * Declared links first: they are what alert suppression follows. A node
+ * placed by hand (`manual`) hangs where it was put, before anything deduced.
+ */
+const PRIORITY: Record<TopologySource, number> = { manual: -1, parent: 0, service: 1, hypervisor: 2, hosted: 3, relay: 4, samehost: 5, backup: 6, firewall: 7, lldp: 8 };
 
 /** Links an outage travels along (a service runs on its guest). LLDP says who is cabled to whom, not who depends on whom. */
 const PROPAGATES: ReadonlySet<TopologySource> = new Set(['parent', 'service', 'relay', 'hypervisor', 'hosted']);
@@ -75,9 +89,9 @@ const ATTENTION: Record<NodeState, number> = {
 	disabled: 4
 };
 
-const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'openwrt', 'fortigate', 'sophos']);
+const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'meraki', 'openwrt', 'fortigate', 'sophos', 'paloalto', 'sonicwall']);
 /** Firewalls and gateways: the top of a site. */
-const GATEWAY_KINDS = new Set(['opnsense', 'pfsense', 'fortigate', 'sophos', 'mikrotik']);
+const GATEWAY_KINDS = new Set(['opnsense', 'pfsense', 'fortigate', 'sophos', 'paloalto', 'sonicwall', 'mikrotik']);
 
 export function isGateway(kind: string): boolean {
 	return GATEWAY_KINDS.has(kind);
@@ -88,7 +102,7 @@ export function isGuestKind(kind: string): boolean {
 	return kind === 'vm' || kind === 'container';
 }
 /** Checks of one endpoint rather than of a machine (kept here: this module imports nothing at run time). */
-const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'webchange', 'smtp', 'agent_service']);
+const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'webchange', 'smtp', 'ssh', 'imap', 'pop3', 'agent_service', 'snmp_oid', 'radius', 'grpc']);
 const PLATFORM_KINDS = new Set(['proxmox', 'pdm', 'xcpng', 'nutanix', 'vsphere', 'kubernetes', 'truenas', 'synology', 'pbs', 'redfish', 'nut', 'libvirt']);
 
 /** Where a device sits in a network diagram: gear first, then platforms, machines, services. */
@@ -115,6 +129,8 @@ export interface Graph {
 	/** Tree parent of each node that has one (never closing a cycle). */
 	parent: Map<string, string>;
 	treeSource: Map<string, TopologySource>;
+	/** The link that places each node with a tree parent. */
+	treeEdge: Map<string, MapEdge>;
 	children: Map<string, string[]>;
 	/** Along the links an outage follows: who a node depends on, who depends on it. */
 	upstream: Map<string, string[]>;
@@ -139,6 +155,7 @@ export function buildGraph(nodes: MapNode[], edges: MapEdge[]): Graph {
 
 	const parent = new Map<string, string>();
 	const treeSource = new Map<string, TopologySource>();
+	const treeEdge = new Map<string, MapEdge>();
 	const reachesUp = (from: string, target: string): boolean => {
 		const seen = new Set<string>();
 		for (let at: string | undefined = from; at !== undefined; at = parent.get(at)) {
@@ -155,6 +172,7 @@ export function buildGraph(nodes: MapNode[], edges: MapEdge[]): Graph {
 		if (parent.has(edge.to) || reachesUp(edge.from, edge.to)) continue;
 		parent.set(edge.to, edge.from);
 		treeSource.set(edge.to, edge.source);
+		treeEdge.set(edge.to, edge);
 	}
 
 	const children = new Map<string, string[]>();
@@ -186,7 +204,7 @@ export function buildGraph(nodes: MapNode[], edges: MapEdge[]): Graph {
 		}
 	}
 
-	return { nodes: byId, edges: kept, parent, treeSource, children, upstream, downstream, cabled, down, impacted };
+	return { nodes: byId, edges: kept, parent, treeSource, treeEdge, children, upstream, downstream, cabled, down, impacted };
 }
 
 function walk(map: Map<string, string[]>, from: string): Set<string> {
@@ -312,6 +330,9 @@ export interface PlacedEdge {
 	path: string;
 	/** Arrow head at the dependent end (`points` of a polygon), for dependencies. */
 	arrow: string | null;
+	/** Middle of the drawn path: where a link corrected by hand wears its mark. */
+	mid: { x: number; y: number };
+	origin: TopologyOrigin;
 }
 
 export interface Frame {
@@ -577,7 +598,9 @@ function arrowHead(tipX: number, tipY: number, fromX: number, fromY: number): st
 	return `${f(tipX)},${f(tipY)} ${f(baseX - uy * 4)},${f(baseY + ux * 4)} ${f(baseX + uy * 4)},${f(baseY - ux * 4)}`;
 }
 
-function edgeGeometry(a: PlacedNode, b: PlacedNode, tree: boolean, spoke: boolean, arrow: boolean): { path: string; arrow: string | null } {
+type Geometry = { path: string; arrow: string | null; mid: { x: number; y: number } };
+
+function edgeGeometry(a: PlacedNode, b: PlacedNode, tree: boolean, spoke: boolean, arrow: boolean): Geometry {
 	const f = (n: number) => n.toFixed(1);
 	const gap = arrow ? 3 : 1;
 	if (tree && !spoke && b.y > a.y + a.r) {
@@ -587,13 +610,14 @@ function edgeGeometry(a: PlacedNode, b: PlacedNode, tree: boolean, spoke: boolea
 		const mid = (y1 + y2) / 2;
 		return {
 			path: `M${f(a.x)},${f(y1)} C${f(a.x)},${f(mid)} ${f(b.x)},${f(mid)} ${f(b.x)},${f(y2)}`,
-			arrow: arrow ? arrowHead(b.x, y2, b.x, mid) : null
+			arrow: arrow ? arrowHead(b.x, y2, b.x, mid) : null,
+			mid: { x: (a.x + b.x) / 2, y: mid }
 		};
 	}
 	if (spoke) {
 		const [x1, y1] = trim(a.x, a.y, b.x, b.y, a.r + 1);
 		const [x2, y2] = trim(b.x, b.y, a.x, a.y, b.r + gap);
-		return { path: `M${f(x1)},${f(y1)} L${f(x2)},${f(y2)}`, arrow: arrow ? arrowHead(x2, y2, x1, y1) : null };
+		return { path: `M${f(x1)},${f(y1)} L${f(x2)},${f(y2)}`, arrow: arrow ? arrowHead(x2, y2, x1, y1) : null, mid: { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } };
 	}
 	// Any other link: a gentle arc, so it never hides behind a tree line.
 	const len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
@@ -602,7 +626,11 @@ function edgeGeometry(a: PlacedNode, b: PlacedNode, tree: boolean, spoke: boolea
 	const cy = (a.y + b.y) / 2 - ((b.x - a.x) / len) * bend;
 	const [x1, y1] = trim(a.x, a.y, cx, cy, a.r + 1);
 	const [x2, y2] = trim(b.x, b.y, cx, cy, b.r + gap);
-	return { path: `M${f(x1)},${f(y1)} Q${f(cx)},${f(cy)} ${f(x2)},${f(y2)}`, arrow: arrow ? arrowHead(x2, y2, cx, cy) : null };
+	return {
+		path: `M${f(x1)},${f(y1)} Q${f(cx)},${f(cy)} ${f(x2)},${f(y2)}`,
+		arrow: arrow ? arrowHead(x2, y2, cx, cy) : null,
+		mid: { x: (x1 + 2 * cx + x2) / 4, y: (y1 + 2 * cy + y2) / 4 }
+	};
 }
 
 /**
@@ -618,7 +646,7 @@ function crossSite(
 	fb: Frame | undefined,
 	arrow: boolean,
 	ports: MapLayout['ports']
-): { path: string; arrow: string | null } | null {
+): Geometry | null {
 	if (!fa || !fb) return null;
 	const f = (n: number) => n.toFixed(1);
 	const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -663,7 +691,7 @@ function crossSite(
 		tip = [b.x, y2, b.x, y2 - dir * 10];
 	}
 	ports.push({ ...pa, down: false }, { ...pb, down: false });
-	return { path, arrow: arrow ? arrowHead(tip[0], tip[1], tip[2], tip[3]) : null };
+	return { path, arrow: arrow ? arrowHead(tip[0], tip[1], tip[2], tip[3]) : null, mid: { x: (pa.x + pb.x) / 2, y: (pa.y + pb.y) / 2 } };
 }
 
 /** Positions every node, link and frame of the map. */
@@ -740,16 +768,18 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean; bySubnet?:
 			const a = placed.get(e.from)!;
 			const b = placed.get(e.to)!;
 			const tree = graph.parent.get(e.to) === e.from;
-			const dependency = e.source === 'parent';
+			// A node attached by hand depends on its new parent, on the map at least: drawn the same way.
+			const dependency = e.source === 'parent' || e.source === 'manual';
 			const across = islands && siteOf(e.from) !== siteOf(e.to);
 			const routed = across ? crossSite(a, b, frameFor(e.from), frameFor(e.to), dependency, ports) : null;
 			const sameRegion = region.get(e.from) === region.get(e.to);
 			const geometry = routed ?? edgeGeometry(a, b, tree, tree && sameRegion && spots.get(e.to)!.spoke, dependency);
 			return {
-				key: `${e.from}>${e.to}`,
+				key: edgeKey(e),
 				from: e.from,
 				to: e.to,
 				source: e.source,
+				origin: e.origin ?? 'deduced',
 				style: dependency ? ('dependency' as const) : ('mesh' as const),
 				wan: islands && siteOf(e.from) !== siteOf(e.to),
 				impacted: PROPAGATES.has(e.source) && (graph.down.has(e.from) || graph.impacted.has(e.from)),
@@ -781,7 +811,7 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean; bySubnet?:
 				path = `M${f(from.x)},${f(from.y)} C${f(mid)},${f(from.y)} ${f(mid)},${f(to.y)} ${f(to.x)},${f(to.y)}`;
 			}
 			ports.push({ ...from, down: allDown }, { ...to, down: allDown });
-			edges.push({ key: `wan:${site.key}`, from: '', to: '', source: 'wan', style: 'mesh', wan: true, impacted: allDown, path, arrow: null });
+			edges.push({ key: `wan:${site.key}`, from: '', to: '', source: 'wan', style: 'mesh', wan: true, impacted: allDown, path, arrow: null, mid: { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 }, origin: 'deduced' });
 		}
 	}
 

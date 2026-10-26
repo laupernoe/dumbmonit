@@ -61,6 +61,8 @@ export type Credential =
 	 */
 	| { type: 'api_token'; token_id: string; secret?: string }
 	| { type: 'username_password'; username: string; password?: string }
+	/** RADIUS: the server's shared secret and a test account; a blank secret keeps the saved one. */
+	| { type: 'radius'; username: string; password?: string; shared_secret?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -70,6 +72,7 @@ export const CREDENTIAL_KINDS = [
 	{ value: 'snmp_v3', label: 'SNMP v3' },
 	{ value: 'api_token', label: 'API token' },
 	{ value: 'username_password', label: 'Username / password' },
+	{ value: 'radius', label: 'RADIUS' },
 	{ value: 'none', label: 'No authentication' }
 ] as const;
 
@@ -123,6 +126,8 @@ export interface Target {
 	parent_id: TargetId | null;
 	/** Agent that probes this device from its own network; `null` when the server does. */
 	via_agent: TargetId | null;
+	/** Probed from several locations with a quorum; `null` when only one place probes. */
+	multisite: MultisiteConfig | null;
 	interval_secs: number;
 	enabled: boolean;
 	tags: Record<string, string>;
@@ -141,10 +146,69 @@ export interface Target {
 	position: number;
 	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
 	location_id: LocationId | null;
+	/** Set when Docker labels on an agent's container manage this monitor; `null`: a free monitor. */
+	managed?: TargetManaged | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
 	error_kind: 'down' | 'config' | null;
+}
+
+/** Probing an uptime monitor from several locations. */
+export interface MultisiteConfig {
+	/** The DumbMonit server itself probes too. */
+	server: boolean;
+	/** Relay agents (ids of `agent` monitors, same list as `GET /api/relays`) that probe too. */
+	agents: number[];
+	/** Failing locations needed to declare the monitor down; null = majority of the locations. */
+	quorum: number | null;
+}
+
+export type ProbeDecision = 'up' | 'degraded' | 'down' | 'unknown';
+
+/** One place that probes a multisite monitor. */
+export interface ProbeLocation {
+	/** Value of the `location` metric label: 'server' or 'agent-<id>'. */
+	location: string;
+	agent_id: number | null;
+	/** Agent name; empty for the server. */
+	name: string;
+	site: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	/** excluded: not counted in the quorum; pending: no result yet. */
+	state: 'up' | 'down' | 'excluded' | 'pending';
+	latency_ms: number | null;
+	/** Probe failure reason or exclusion detail (English, from the server). */
+	error: string | null;
+	excluded_reason: 'silent' | 'not_relay' | 'busy' | 'error' | null;
+	checked_at: string | null;
+}
+
+/** `GET /api/targets/{id}/probe-locations`. */
+export interface ProbeLocationsReport {
+	decision: ProbeDecision;
+	/** Failing locations needed for "down" (effective, after exclusions). */
+	quorum: number;
+	/** Locations counted in the last decision. */
+	counted: number;
+	failing: number;
+	/** A confirmation round is running right now. */
+	confirming: boolean;
+	decided_at: string | null;
+	locations: ProbeLocation[];
+}
+
+/** Management of a monitor by Docker labels (`dumbmonit.*`). Mirrors `db::targets::Managed`. */
+export interface TargetManaged {
+	/** Origin: `docker-labels`. */
+	by: string;
+	/** Agent whose containers declare the monitor. */
+	source: TargetId | null;
+	/** Stable key, `project/service/http` or `container/http`. */
+	key: string;
+	/** Set when no label declares the monitor any more: it is archived (paused, history kept). */
+	missing_since: string | null;
 }
 
 /** Body sent to `POST /api/targets` and `PUT /api/targets/{id}`. */
@@ -155,6 +219,8 @@ export interface TargetPayload {
 	profile_id?: string | null;
 	parent_id?: TargetId | null;
 	via_agent?: TargetId | null;
+	/** Absent on edit keeps it; `null` turns it off. Exclusive with `via_agent`. */
+	multisite?: MultisiteConfig | null;
 	interval_secs?: number;
 	enabled?: boolean;
 	tags?: Record<string, string>;
@@ -888,6 +954,17 @@ function fallbackCredentialView(kind: string): CredentialView {
 					credentialField('password', 'Password', 'password', true)
 				]
 			};
+		case 'radius':
+			return {
+				kind,
+				label,
+				help: '',
+				fields: [
+					credentialField('shared_secret', 'Shared secret', 'password', true),
+					credentialField('username', 'Test account', 'text', true),
+					credentialField('password', 'Test account password', 'password', true)
+				]
+			};
 		default:
 			return { kind, label, help: '', fields: [] };
 	}
@@ -940,6 +1017,8 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
+	/** At least one passkey is registered: the sign-in screen offers to use one. */
+	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
 }
@@ -1114,8 +1193,20 @@ export interface AuthState {
 	user: User | null;
 	oidc: OidcStatus;
 	ldap: LdapStatus;
+	/** At least one passkey is registered on the instance. */
+	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
+}
+
+/** A passkey (WebAuthn credential) of the current account. Mirrors `auth::passkeys::PasskeyView`. */
+export interface Passkey {
+	id: number;
+	name: string;
+	created_at: string;
+	last_used_at: string | null;
+	/** Copied to a synced keychain (iCloud, Google, a password manager). */
+	synced: boolean;
 }
 
 // --- Notification channels --------------------------------------------------
@@ -2238,10 +2329,13 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall' | 'manual';
+
+/** Who drew a link: the server's deduction, a correction by hand, or a learned rule. */
+export type TopologyOrigin = 'deduced' | 'manual' | 'rule';
 
 /** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
-export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
+export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location' | 'manual';
 
 /** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
 export interface TopologyNode {
@@ -2254,6 +2348,8 @@ export interface TopologyNode {
 	kind: string;
 	/** Folder; a guest takes its hypervisor's. */
 	group_name: string;
+	/** `manual` when the grouping was corrected on the map. */
+	group_source?: 'manual' | null;
 	/** Remote site the node belongs to; `null` for the main site. */
 	site: string | null;
 	site_source: TopologySiteSource | null;
@@ -2276,6 +2372,79 @@ export interface TopologyEdge {
 	from: string;
 	to: string;
 	source: TopologySource;
+	origin?: TopologyOrigin;
+	/** The correction that drew it. */
+	correction_id?: number | null;
+	/** The learned rule that drew it. */
+	rule_id?: number | null;
+}
+
+export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
+
+/** A correction made by hand on the map. Mirrors `Correction` in `api/topology_edits.rs`. */
+export interface TopologyCorrection {
+	id: number;
+	kind: TopologyCorrectionKind;
+	/** The new parent, or one end of the link. */
+	from: string | null;
+	to: string;
+	/** Type of the link forbidden or drawn. */
+	source: TopologySource | null;
+	/** Site (empty: main site) or grouping. */
+	value: string | null;
+	/** `parent`: also the device's declared parent (alert suppression). */
+	use_for_alerts: boolean;
+	author: string;
+	created_at: string;
+}
+
+/** `POST /api/topology/corrections`. */
+export interface TopologyCorrectionInput {
+	kind: TopologyCorrectionKind;
+	from?: string | null;
+	to: string;
+	source?: TopologySource | null;
+	value?: string | null;
+	use_for_alerts?: boolean;
+}
+
+export interface TopologyCorrectionCreated {
+	correction: TopologyCorrection;
+	/** Corrections it replaced (same node or same pair), for an undo. */
+	replaced: TopologyCorrection[];
+}
+
+/** Scope and effect of a map rule. Mirrors `RuleSpec`. */
+export interface TopologyRuleSpec {
+	kind: 'forbid' | 'parent';
+	subnet: string | null;
+	address: string | null;
+	target_kind: string | null;
+	/** `forbid`: the type of link never deduced in the scope. */
+	source: TopologySource | null;
+	/** `parent`: the node the scope depends on. */
+	parent: string | null;
+}
+
+export type TopologyRuleStatus = 'active' | 'dismissed';
+
+export interface TopologyRule extends TopologyRuleSpec {
+	id: number;
+	status: TopologyRuleStatus;
+	evidence: number;
+	author: string;
+	created_at: string;
+	/** Links it sets or removes on today's map. */
+	matches: number;
+}
+
+/** A rule the corrections suggest; never applied until accepted. */
+export interface TopologySuggestion extends TopologyRuleSpec {
+	key: string;
+	evidence: number;
+	corrections: number[];
+	/** Other links it would change on today's map. */
+	matches: number;
 }
 
 /** `GET /api/topology`. Mirrors `TopologyView`. */
@@ -2284,6 +2453,10 @@ export interface Topology {
 	edges: TopologyEdge[];
 	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
 	metrics_available: boolean;
+	/** Corrections made by hand, already applied to `nodes` and `edges`. */
+	corrections?: TopologyCorrection[];
+	rules?: TopologyRule[];
+	suggestions?: TopologySuggestion[];
 }
 
 // --- World map locations (`api/locations.rs`) ---------------------------------
@@ -2751,6 +2924,37 @@ export interface PushMonitor {
 	grace_secs: number | null;
 	settings_error: string | null;
 	verdict: 'waiting' | 'on_time' | 'missed' | 'reported_down';
+	/** Cron expression replacing the interval, and the IANA zone it is read in. */
+	schedule: string | null;
+	timezone: string | null;
+	/** Next run of a cron schedule, UTC without suffix. */
+	next_expected_at: string | null;
+	max_duration_secs: number | null;
+	/** The latest run, open or finished. */
+	last_run: PushRun | null;
+}
+
+/** One run of a heartbeat job. Mirrors `PushRunView`. */
+export interface PushRun {
+	id: number;
+	/** UTC without suffix; `null` when no `/start` preceded the end. */
+	started_at: string | null;
+	/** `null` while the run is open. */
+	finished_at: string | null;
+	/** `null` when the duration is unknown. */
+	duration_secs: number | null;
+	/** `lost`: started, then replaced by a new start without ever finishing. */
+	status: 'running' | 'success' | 'failed' | 'lost';
+	exit_code: number | null;
+	/** Output of the job, truncated server-side to its last 10 KiB. */
+	output: string;
+}
+
+/** `GET /api/targets/{id}/push/runs`. Mirrors `PushRunsPage`. */
+export interface PushRunsPage {
+	runs: PushRun[];
+	/** Pass as `before` to get the next page; `null` on the last one. */
+	next_before: number | null;
 }
 
 // --- Proxmox Datacenter Manager (crates/server/src/api/pdm.rs) --------------
@@ -4752,6 +4956,60 @@ export interface DiscoveryJob extends DiscoveryJobSummary {
 	hosts: DiscoveredHost[];
 }
 
+// --- Scheduled network scans and inventory -----------------------------------
+// Mirrors `api/netinventory.rs`. Dates are UTC without suffix.
+
+export type NetscanRunStatus = 'running' | 'done' | 'failed' | 'cancelled';
+
+export interface NetscanScheduleInput {
+	name: string;
+	cidr: string;
+	/** Id of the relay agent that scans, `null` for the server itself. */
+	agent_id: number | null;
+	/** 300 (5 min) to 2 592 000 (30 days). */
+	interval_secs: number;
+	depth: DiscoveryDepth;
+	enabled: boolean;
+}
+
+export interface NetscanSchedule extends NetscanScheduleInput {
+	id: number;
+	agent_name: string | null;
+	/** The first scan has built the inventory (nothing was reported). */
+	initialized: boolean;
+	running: boolean;
+	last_run_at: string | null;
+	last_status: NetscanRunStatus | null;
+	last_error: string | null;
+	devices: number;
+	unknown_devices: number;
+	/** Unknown ports of known devices. */
+	unknown_ports: number;
+}
+
+export interface NetscanPort {
+	id: number;
+	port: number;
+	protocol: 'tcp' | 'udp';
+	product: string;
+	known: boolean;
+	first_seen: string;
+	last_seen: string;
+}
+
+export interface NetscanDevice {
+	id: number;
+	schedule_id: number;
+	ip: string;
+	mac: string | null;
+	hostname: string | null;
+	vendor: string | null;
+	known: boolean;
+	first_seen: string;
+	last_seen: string;
+	ports: NetscanPort[];
+}
+
 // --- Server logs (Settings → System → Logs) -----------------------------------
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -4928,6 +5186,89 @@ export interface CveFilters {
 	state?: CveState;
 	exploited?: boolean;
 	ignored?: boolean;
+}
+
+// --- Windows event log rules of an agent machine (`collectors/agent/eventlog.rs`) ---
+
+/** Event Viewer level. `information` also covers level 0, the level of Security audit events. */
+export type AgentEventLevel = 'critical' | 'error' | 'warning' | 'information';
+
+/** What the API accepts to create or replace a rule. */
+export interface AgentEventRuleInput {
+	name: string;
+	/** `System`, `Application`, `Security` or a channel such as `Microsoft-Windows-TaskScheduler/Operational`. */
+	channel: string;
+	/** Event source (provider); empty or null for any. */
+	provider?: string | null;
+	/** `4625, 7000-7099`; empty for any. */
+	event_ids?: string;
+	/** Empty for any level. */
+	levels?: AgentEventLevel[];
+	/** Text the message must contain (case-insensitive), or a regular expression. */
+	pattern?: string | null;
+	pattern_regex?: boolean;
+	severity?: AlertSeverity;
+	enabled?: boolean;
+}
+
+export interface AgentEventRule {
+	id: number;
+	target_id: number;
+	name: string;
+	channel: string;
+	provider: string | null;
+	/** Canonical form; empty for any. */
+	event_ids: string;
+	levels: AgentEventLevel[];
+	pattern: string | null;
+	pattern_regex: boolean;
+	severity: AlertSeverity;
+	enabled: boolean;
+	matches_total: number;
+	/** Events the agent skipped because of the rate limit. */
+	dropped_total: number;
+	/** Last event received (UTC, no suffix). */
+	last_match_at: string | null;
+}
+
+/** An example offered when adding a rule; never created on its own. */
+export interface AgentEventRulePreset {
+	/** Stable key: `failed_logon`, `account_locked`, `unexpected_reboot`, `service_crashed`, `disk_errors`, `log_cleared`, `application_errors`. */
+	id: string;
+	name: string;
+	channel: string;
+	provider: string | null;
+	event_ids: string;
+	levels: AgentEventLevel[];
+	severity: AlertSeverity;
+}
+
+export interface AgentEventRules {
+	/** The machine runs Windows; elsewhere rules are kept but never sent. */
+	supported: boolean;
+	/** Events kept per rule and per minute. */
+	max_per_minute: number;
+	rules: AgentEventRule[];
+	presets: AgentEventRulePreset[];
+}
+
+/** A Windows event matched by one of the machine's rules. */
+export interface AgentEvent {
+	id: number;
+	/** Null once the rule is deleted. */
+	rule_id: number | null;
+	rule_name: string;
+	severity: AlertSeverity;
+	channel: string;
+	provider: string;
+	event_id: number;
+	/** Null for "Verbose". */
+	level: AgentEventLevel | null;
+	record_id: number;
+	computer: string;
+	message: string;
+	occurred_at: string | null;
+	received_at: string | null;
 }
 
 // --- Agent self-update (Settings → Agents → Agent updates) -------------------

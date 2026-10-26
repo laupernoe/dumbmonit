@@ -463,6 +463,194 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /api/auth/passkey/login/begin:
+    post:
+      operationId: beginPasskeyLogin
+      tags: [Accounts]
+      summary: Start a sign-in with a passkey
+      description: >-
+        Returns the WebAuthn options for `navigator.credentials.get()` (discoverable
+        credential, user verification required). The relying-party id is the host
+        of the request's `Origin` (or of `DUMBMONIT_PUBLIC_URL` when set); HTTPS is
+        required except on `localhost`, and an IP address is refused.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: A challenge id and the options.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PasskeyCeremony" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+
+  /api/auth/passkey/login/finish:
+    post:
+      operationId: finishPasskeyLogin
+      tags: [Accounts]
+      summary: Finish a sign-in with a passkey
+      description: >-
+        Verifies the assertion (challenge, origin, relying party, user presence and
+        verification, ES256 signature, counter) and opens the session. A passkey
+        replaces the password and the second factor.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge_id, credential]
+              properties:
+                challenge_id: { type: string }
+                credential:
+                  type: object
+                  required: [id, response]
+                  properties:
+                    id: { type: string, description: "Credential id, base64url." }
+                    response:
+                      type: object
+                      required: [clientDataJSON, authenticatorData, signature]
+                      properties:
+                        clientDataJSON: { type: string }
+                        authenticatorData: { type: string }
+                        signature: { type: string }
+                        userHandle: { type: [string, "null"] }
+      responses:
+        "204":
+          description: Signed in; the session cookie is set.
+          headers:
+            Set-Cookie:
+              description: "`dumbmonit_session`, HttpOnly, SameSite=Lax."
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/passkeys:
+    get:
+      operationId: listPasskeys
+      tags: [Accounts]
+      summary: Passkeys of the signed-in account
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The account's passkeys, oldest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Passkey" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/passkeys/register/begin:
+    post:
+      operationId: beginPasskeyRegistration
+      tags: [Accounts]
+      summary: Start adding a passkey
+      description: >-
+        Asks for the password again (like the two-factor enrolment) and returns the
+        options for `navigator.credentials.create()`: ES256 only, attestation
+        `none`, resident key and user verification required. Local accounts only;
+        at most 20 passkeys per account.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PasswordConfirmation" }
+      responses:
+        "200":
+          description: A challenge id and the options.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PasskeyCeremony" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/auth/passkeys/register/finish:
+    post:
+      operationId: finishPasskeyRegistration
+      tags: [Accounts]
+      summary: Finish adding a passkey
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge_id, credential]
+              properties:
+                challenge_id: { type: string }
+                name: { type: string, description: "Shown in the list; 60 characters at most." }
+                credential:
+                  type: object
+                  required: [id, response]
+                  properties:
+                    id: { type: string }
+                    transports: { type: array, items: { type: string } }
+                    response:
+                      type: object
+                      required: [clientDataJSON, attestationObject]
+                      properties:
+                        clientDataJSON: { type: string }
+                        attestationObject: { type: string }
+      responses:
+        "200":
+          description: The passkey that was added.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Passkey" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/auth/passkeys/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: renamePasskey
+      tags: [Accounts]
+      summary: Rename a passkey
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "204": { description: Renamed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deletePasskey
+      tags: [Accounts]
+      summary: Remove a passkey
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/auth/totp:
     get:
       operationId: getTotpStatus
@@ -1039,6 +1227,208 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/discovery/schedules:
+    get:
+      operationId: listNetscanSchedules
+      tags: [Discovery]
+      summary: Scheduled network scans
+      description: >-
+        Subnets scanned at a fixed interval, by the server or by a relay agent, with
+        the counts of their inventory. Administrators only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The scheduled scans.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [schedules]
+                properties:
+                  schedules:
+                    type: array
+                    items: { $ref: "#/components/schemas/NetscanSchedule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createNetscanSchedule
+      tags: [Discovery]
+      summary: Schedule a network scan
+      description: >-
+        The first completed scan of a subnet initializes the inventory without
+        alerting. At most 1024 addresses (a /22), an interval of 5 minutes to 30
+        days, 50 schedules. One schedule per subnet and scanner. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NetscanScheduleInput" }
+      responses:
+        "201":
+          description: The scheduled scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetscanSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/discovery/schedules/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    put:
+      operationId: updateNetscanSchedule
+      tags: [Discovery]
+      summary: Change a scheduled network scan
+      description: >-
+        Changing the subnet or the scanner starts again from an empty inventory.
+        Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/NetscanScheduleInput" }
+      responses:
+        "200":
+          description: The scheduled scan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetscanSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteNetscanSchedule
+      tags: [Discovery]
+      summary: Delete a scheduled network scan and its inventory
+      x-token-scope: write
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/schedules/{id}/run:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: runNetscanSchedule
+      tags: [Discovery]
+      summary: Scan now
+      description: >-
+        Asks for a scan at the next cycle of the scheduler (a few seconds) without
+        waiting for the interval. Ignored while a scan of this subnet is running.
+        Administrators only.
+      x-token-scope: write
+      responses:
+        "202": { description: Requested. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory:
+    get:
+      operationId: getNetscanInventory
+      tags: [Discovery]
+      summary: Known devices and open ports
+      description: >-
+        The inventory built by the scheduled scans, unknown devices first. An unknown
+        device or port stays reported (see the `netscan_new_device` and
+        `netscan_new_port` alert rules) until it is marked as known. Administrators
+        only.
+      x-token-scope: read
+      parameters:
+        - name: schedule_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the inventory of this scheduled scan.
+      responses:
+        "200":
+          description: The inventory.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [devices]
+                properties:
+                  devices:
+                    type: array
+                    items: { $ref: "#/components/schemas/NetscanDevice" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/inventory/known:
+    post:
+      operationId: markAllNetscanKnown
+      tags: [Discovery]
+      summary: Mark every unknown device and port as known
+      x-token-scope: write
+      parameters:
+        - name: schedule_id
+          in: query
+          required: false
+          schema: { type: integer, format: int64 }
+          description: Only the inventory of this scheduled scan.
+      responses:
+        "200":
+          description: How many items were unknown.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [marked]
+                properties:
+                  marked: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/discovery/inventory/devices/{id}/known:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: markNetscanDeviceKnown
+      tags: [Discovery]
+      summary: Mark a device, and its ports, as known
+      x-token-scope: write
+      responses:
+        "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory/ports/{id}/known:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: markNetscanPortKnown
+      tags: [Discovery]
+      summary: Mark an open port as known
+      x-token-scope: write
+      responses:
+        "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/onboarding:
     get:
       operationId: getOnboarding
@@ -1297,6 +1687,190 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/targets/import/uptimerobot:
+    post:
+      operationId: importUptimeRobot
+      tags: [Devices]
+      summary: Import monitors from UptimeRobot
+      description: >-
+        Body: `{"api_key"}` (a read-only API key, used once to call UptimeRobot's
+        `getMonitors` and never stored) or `{"csv"}` (the export of the
+        dashboard, columns recognised by title: Friendly Name, URL / IP, Type,
+        Port, Interval, Keyword). HTTP(s) and keyword monitors become `http`
+        devices, ping becomes `ping`, port becomes `tcp`, heartbeat becomes a
+        `push` heartbeat (with a new URL). Paused monitors stay paused.
+        Contacts, credentials, headers and request bodies are never imported.
+        Same preview / `rows` contract as `/api/targets/import/kuma`, at most 2000
+        monitors. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          description: >-
+            Comma-separated row numbers of the preview to import. Absent: every row.
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                api_key: { type: string, description: A read-only UptimeRobot API key. }
+                csv: { type: string, description: The CSV exported from the dashboard. }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { description: UptimeRobot is unreachable or answered with an error. }
+
+  /api/targets/import/gatus:
+    post:
+      operationId: importGatus
+      tags: [Devices]
+      summary: Import endpoints from a Gatus configuration
+      description: >-
+        Body: `{"yaml"}`, the content of Gatus's `config.yaml`. `endpoints` with an
+        `http(s)://` URL become `http` devices (status and `[BODY].path`
+        conditions are kept as options, the others are listed in the row's
+        message), `tcp://` becomes `tcp`, `icmp://` becomes `ping`, endpoints with
+        a `dns:` block become `dns`; `external-endpoints` become `push`
+        heartbeats (with a new URL). `group` becomes the folder. Headers, bodies
+        and alert settings are never imported. Same preview / `rows` contract as
+        `/api/targets/import/kuma`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [yaml]
+              properties:
+                yaml: { type: string }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/targets/import/healthchecks:
+    post:
+      operationId: importHealthchecks
+      tags: [Devices]
+      summary: Import checks from Healthchecks.io
+      description: >-
+        Body: `{"api_key", "base_url"?}`. The key is used once against
+        `GET /api/v3/checks/` of healthchecks.io (or of the self-hosted
+        `base_url`, which goes through the same outbound guard as notification
+        channels) and is never stored. Each check becomes a `push` heartbeat whose
+        expected interval is the check's `timeout` (or an approximation of its
+        cron `schedule`) and whose grace time is kept; tags become device tags.
+        The monitor gets a new push URL: the row's message recalls the old ping
+        URL (visible with a read-write key) so the job can be updated or the old
+        address redirected. Same preview / `rows` contract as
+        `/api/targets/import/kuma`. Admin only.
+      x-token-scope: write
+      parameters:
+        - name: dry_run
+          in: query
+          schema: { type: boolean, default: false }
+        - name: rows
+          in: query
+          schema: { type: string, example: "1,4,5" }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [api_key]
+              properties:
+                api_key: { type: string }
+                base_url: { type: string, description: "Self-hosted server, e.g. `https://healthchecks.example.org`. Default: healthchecks.io." }
+      responses:
+        "200":
+          description: Preview (dry run).
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "201":
+          description: Import done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/KumaImportReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { description: Healthchecks is unreachable or answered with an error. }
+
+  /api/targets/{id}/release:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: releaseManagedTarget
+      tags: [Devices]
+      summary: Release a monitor managed by Docker labels
+      description: >-
+        Hands a monitor created from `dumbmonit.*` container labels back to
+        manual management: it stops following the labels and can be edited and
+        deleted. Until then, `PUT` (other than pausing) and `DELETE` answer `409`.
+        Admin only.
+      x-token-scope: write
+      responses:
+        "204": { description: Released. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/summary:
+    get:
+      operationId: getSummary
+      tags: [Devices]
+      summary: Flat status counters for dashboards (Homepage, Homarr…)
+      description: >-
+        Compact counters in a shape that Homepage's `customapi` widget reads by
+        path (`devices.down`, `alerts.firing`): the same figures as the MCP
+        `get_status` tool. A `read` API token is enough.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Counters and an overall verdict.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusSummary" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/reorder:
     post:
       operationId: reorderTargets
@@ -1407,6 +1981,27 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/probe-locations:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getProbeLocations
+      tags: [Devices]
+      summary: State and latency per probe location
+      description: >-
+        For a monitor probed from several locations: the last quorum decision and
+        each location's last result. A monitor probed from one place returns
+        `unknown` with no locations.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Quorum decision and locations.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProbeLocationsReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
   /api/targets/{id}/probe:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -3608,7 +4203,8 @@ paths:
       tags: [Devices]
       summary: Topology map of the monitored infrastructure
       description: |
-        Nodes and links derived from what the server already knows, never typed in by hand.
+        Nodes and links derived from what the server already knows, then the corrections made by
+        hand on the map and the rules learned from them (see `/api/topology/corrections`).
         Each link carries its `source`: `parent` (declared dependency, the one alert
         suppression follows), `service` (a service an agent found, hanging from its machine),
         `relay` (the relay agent that polls the device), `hypervisor`
@@ -3644,6 +4240,161 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Topology" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/topology/corrections:
+    get:
+      operationId: listTopologyCorrections
+      tags: [Devices]
+      summary: Corrections made by hand on the topology map
+      description: |
+        Oldest first. `GET /api/topology` returns them too, already applied.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The corrections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopologyCorrection" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createTopologyCorrection
+      tags: [Devices]
+      summary: Correct the topology map
+      description: |
+        `forbid`: the link `from` → `to` of type `source` is wrong and is never deduced again
+        (either direction). Marking a declared `parent` link wrong also clears the device's
+        declared parent. `link`: a link of type `source` is drawn between the two nodes, and
+        only that one. `parent`: `from` becomes the parent of `to` on the map; with
+        `use_for_alerts` (default true, devices only) it also becomes the device's declared
+        parent, the one alert suppression follows (refused when it would make a loop). `site`
+        and `group`: the node's site (`value`, empty for the main site) and grouping on the map.
+        A correction replaces the previous one on the same node (`parent`, `site`, `group`) or
+        the same pair (`forbid`, `link`); those are returned in `replaced`, so an undo can
+        bring them back.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopologyCorrectionInput" }
+      responses:
+        "201":
+          description: The correction, and the ones it replaced.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [correction, replaced]
+                properties:
+                  correction: { $ref: "#/components/schemas/TopologyCorrection" }
+                  replaced:
+                    type: array
+                    items: { $ref: "#/components/schemas/TopologyCorrection" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/topology/corrections/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    delete:
+      operationId: deleteTopologyCorrection
+      tags: [Devices]
+      summary: Take a map correction back
+      description: |
+        A declared parent the correction changed goes back to what it was, unless it was
+        changed again since.
+      x-token-scope: write
+      responses:
+        "204": { description: Correction removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/topology/rules:
+    get:
+      operationId: listTopologyRules
+      tags: [Devices]
+      summary: Map rules, accepted or declined
+      description: |
+        Each with `matches`, the links it sets or removes on today's map.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The rules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopologyRule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: saveTopologyRule
+      tags: [Devices]
+      summary: Accept or decline a map rule
+      description: |
+        Usually a suggestion from `GET /api/topology/suggestions`, sent back with `status`.
+        `active`: applied to present and future devices of its scope. `dismissed`: never
+        suggested again. The same rule (same scope and effect) only changes status.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopologyRuleInput" }
+      responses:
+        "201":
+          description: The rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopologyRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/topology/rules/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    delete:
+      operationId: deleteTopologyRule
+      tags: [Devices]
+      summary: Remove a map rule
+      description: It stops applying; a declined rule removed can be suggested again.
+      x-token-scope: write
+      responses:
+        "204": { description: Rule removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/topology/suggestions:
+    get:
+      operationId: listTopologySuggestions
+      tags: [Devices]
+      summary: Rules the corrections suggest
+      description: |
+        Deterministic: a wrong link of a type towards a device of a subnet with at least two
+        devices suggests forbidding that type of link for the whole subnet; two re-parentings
+        or more under the same parent of devices at one address suggest "what is at this
+        address depends on it" (limited to their device type when they share one); of devices
+        of one subnet, "this subnet depends on it". A suggestion another correction contradicts
+        is not made; accepted and declined rules are not suggested again. Never applied until
+        accepted.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The suggestions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopologySuggestion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -3959,6 +4710,114 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/agent/event-rules:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: listAgentEventRules
+      tags: [Agents]
+      summary: Windows event log rules of an agent machine
+      description: "The machine's rules, with their counters, and the suggested examples (never created on their own). The rules reach the agent in the acknowledgement of its next batch; only a Windows agent reads them (`supported`). `404` when the device is not an `agent` device."
+      x-token-scope: read
+      responses:
+        "200":
+          description: Rules, rate limit and examples.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRules" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    post:
+      operationId: createAgentEventRule
+      tags: [Agents]
+      summary: Add a Windows event log rule
+      description: "At least an event ID, a source or a level is required. Every matching event raises the built-in alert of the rule's severity (`windows_event_critical`, `windows_event_warning`, `windows_event_info`) on the machine."
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEventRuleInput" }
+      responses:
+        "201":
+          description: The new rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/targets/{id}/agent/event-rules/{rule_id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: rule_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+        description: Event log rule id.
+    put:
+      operationId: updateAgentEventRule
+      tags: [Agents]
+      summary: Replace a Windows event log rule
+      description: Its counters are kept.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentEventRuleInput" }
+      responses:
+        "200":
+          description: The rule after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentEventRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    delete:
+      operationId: deleteAgentEventRule
+      tags: [Agents]
+      summary: Delete a Windows event log rule
+      description: The events already received stay in the machine's history.
+      x-token-scope: write
+      responses:
+        "204": { description: Rule deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/agent/events:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: limit
+        in: query
+        required: false
+        schema: { type: integer, minimum: 1, maximum: 500, default: 50 }
+        description: Number of events to return.
+    get:
+      operationId: listAgentEvents
+      tags: [Agents]
+      summary: Latest Windows events matched by the machine's rules
+      description: Newest first. The server keeps the last 500 events of each machine.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Received events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/AgentEvent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/targets/{id}/containers:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -4116,11 +4975,15 @@ paths:
         in: query
         description: Free text, kept truncated to 500 characters.
         schema: { type: string }
+      - name: exit_code
+        in: query
+        description: "The job's exit code. Non-zero is a failure."
+        schema: { type: integer, minimum: 0 }
     get:
       operationId: pushHeartbeatGet
       tags: [Heartbeats]
       summary: Record a heartbeat
-      description: At most sixty calls a minute per token.
+      description: At most sixty calls a minute per token. A plain call is a successful run of unknown duration (`status=down` or a non-zero `exit_code` make it a failure).
       security: []
       x-token-scope: public
       responses:
@@ -4132,13 +4995,74 @@ paths:
       operationId: pushHeartbeatPost
       tags: [Heartbeats]
       summary: Record a heartbeat
-      description: Same as the `GET`; the body is ignored.
+      description: Same as the `GET`; the body (up to 256 KiB) is the output of the job, kept truncated to its last 10 KiB.
       security: []
       x-token-scope: public
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema: { type: string }
       responses:
         "204": { description: Heartbeat recorded. }
         "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Body larger than 256 KiB. }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /api/push/{token}/{action}:
+    parameters:
+      - name: token
+        in: path
+        required: true
+        description: The heartbeat's secret token — the URL is the credential.
+        schema: { type: string }
+      - name: action
+        in: path
+        required: true
+        description: "`start` opens a run, `success` and `fail` close it, and a number is the job's exit code (0 is a success, anything else a failure). Anything else is a `404`."
+        schema: { type: string }
+      - name: status
+        in: query
+        description: "`up` (default) or `down`, on `success` only."
+        schema: { type: string, enum: [up, down] }
+      - name: msg
+        in: query
+        description: Free text, kept truncated to 500 characters; also the output when the body is empty.
+        schema: { type: string }
+      - name: exit_code
+        in: query
+        description: "The job's exit code, on `success` and `fail`."
+        schema: { type: integer, minimum: 0 }
+    get:
+      operationId: pushRunGet
+      tags: [Heartbeats]
+      summary: Record the start or the end of a run
+      description: At most sixty calls a minute per token, shared with the plain call.
+      security: []
+      x-token-scope: public
+      responses:
+        "204": { description: Run recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+    post:
+      operationId: pushRunPost
+      tags: [Heartbeats]
+      summary: Record the start or the end of a run
+      description: Same as the `GET`; the body (up to 256 KiB) is the output of the job, kept truncated to its last 10 KiB.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: false
+        content:
+          text/plain:
+            schema: { type: string }
+      responses:
+        "204": { description: Run recorded. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "413": { description: Body larger than 256 KiB. }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /api/targets/{id}/push:
@@ -4156,6 +5080,34 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PushMonitor" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/push/runs:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: limit
+        in: query
+        description: Runs per page, 50 by default and 100 at most.
+        schema: { type: integer, minimum: 1, maximum: 100 }
+      - name: before
+        in: query
+        description: The `next_before` of the previous page.
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: listPushRuns
+      tags: [Heartbeats]
+      summary: Run history of a heartbeat device
+      description: Newest first. Only the latest 200 runs of the last 90 days are kept. `400` when the device is not a heartbeat.
+      x-token-scope: read
+      responses:
+        "200":
+          description: One page of runs.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PushRunsPage" }
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
@@ -6836,6 +7788,7 @@ components:
           required: [enabled]
           properties:
             enabled: { type: boolean, description: Usernames without a local password are checked against the directory. }
+        passkeys: { type: boolean, description: "At least one passkey is registered: the sign-in screen offers to use one." }
         demo: { type: boolean }
     SetupRequest:
       type: object
@@ -7465,6 +8418,70 @@ components:
           description: Relay agent that runs the scan; null means the server itself.
         snmp_community: { type: string, default: public, writeOnly: true }
         depth: { type: string, enum: [standard, extended], default: standard }
+    NetscanScheduleInput:
+      type: object
+      required: [cidr]
+      properties:
+        name: { type: string, maxLength: 80 }
+        cidr: { type: string, examples: ["192.168.1.0/24"] }
+        agent_id:
+          type: [integer, "null"]
+          format: int64
+          description: Relay agent that runs the scan; null or absent means the server itself.
+        interval_secs: { type: integer, minimum: 300, maximum: 2592000, default: 3600 }
+        depth:
+          type: string
+          enum: [standard, extended]
+          default: standard
+          description: Port list of the discovery (`extended` tests more ports).
+        enabled: { type: boolean, default: true }
+    NetscanSchedule:
+      type: object
+      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, unknown_ports]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        cidr: { type: string }
+        agent_id: { type: [integer, "null"], format: int64 }
+        agent_name: { type: [string, "null"] }
+        interval_secs: { type: integer }
+        depth: { type: string, enum: [standard, extended] }
+        enabled: { type: boolean }
+        initialized: { type: boolean, description: "The first scan has initialized the inventory (nothing was reported)." }
+        running: { type: boolean }
+        last_run_at: { type: [string, "null"], description: UTC, no suffix. }
+        last_status: { type: [string, "null"], enum: [running, done, failed, cancelled, null] }
+        last_error: { type: [string, "null"] }
+        devices: { type: integer }
+        unknown_devices: { type: integer }
+        unknown_ports: { type: integer, description: Unknown ports of known devices. }
+    NetscanPort:
+      type: object
+      required: [id, port, protocol, product, known, first_seen, last_seen]
+      properties:
+        id: { type: integer, format: int64 }
+        port: { type: integer }
+        protocol: { type: string, enum: [tcp, udp] }
+        product: { type: string }
+        known: { type: boolean }
+        first_seen: { type: string }
+        last_seen: { type: string }
+    NetscanDevice:
+      type: object
+      required: [id, schedule_id, ip, mac, hostname, vendor, known, first_seen, last_seen, ports]
+      properties:
+        id: { type: integer, format: int64 }
+        schedule_id: { type: integer, format: int64 }
+        ip: { type: string, description: Last address seen; a device is identified by its MAC when visible. }
+        mac: { type: [string, "null"] }
+        hostname: { type: [string, "null"] }
+        vendor: { type: [string, "null"] }
+        known: { type: boolean }
+        first_seen: { type: string }
+        last_seen: { type: string }
+        ports:
+          type: array
+          items: { $ref: "#/components/schemas/NetscanPort" }
     DiscoveryJobSummary:
       type: object
       required: [id, cidr, agent_id, agent_name, status, started_at, finished_at, hosts_found]
@@ -7607,12 +8624,80 @@ components:
         group_name: { type: string, description: "Flat folder shown on `/targets`; empty: no folder." }
         position: { type: integer, format: int64, description: "Manual rank, tiebreaking only within the same state and folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location assigned on the world map; null: none (the device may still sit at one through its site, see `GET /api/locations`)." }
+        multisite:
+          description: "Probe locations of an uptime monitor (the server and/or relay agents) and the quorum; null: probed from one place."
+          oneOf:
+            - { $ref: "#/components/schemas/MultisiteConfig" }
+            - { type: "null" }
+        managed:
+          oneOf:
+            - { $ref: "#/components/schemas/TargetManaged" }
+            - { type: "null" }
+          description: Set when Docker labels manage this monitor.
         last_probe_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
         last_error: { type: [string, "null"] }
         error_kind:
           type: [string, "null"]
           enum: [down, config, null]
           description: "`down`: the device did not answer; `config`: our side (credentials, address, option)."
+    TargetManaged:
+      type: object
+      description: >-
+        Present on a monitor created from `dumbmonit.*` Docker labels. It follows
+        the labels (create, update, archive) and cannot be edited or deleted
+        by hand until released (`POST /api/targets/{id}/release`).
+      required: [by, key]
+      properties:
+        by: { type: string, enum: [docker-labels] }
+        source: { type: [integer, "null"], format: int64, description: Agent whose containers declare it. }
+        key: { type: string, description: "`project/service/http` for a Compose service, else `container/http`." }
+        missing_since: { $ref: "#/components/schemas/NullableServerTimestamp" }
+    StatusSummary:
+      type: object
+      required: [status, devices, alerts]
+      properties:
+        status:
+          type: string
+          enum: [ok, warning, critical]
+          description: "`critical` when an alert is critical or a device is unreachable, `warning` for any other firing alert."
+        sentence: { type: [string, "null"], description: The one-line summary shown by the interface. }
+        devices:
+          type: object
+          required: [total, up, down, waiting, disabled]
+          properties:
+            total: { type: integer }
+            up: { type: integer }
+            down: { type: integer, description: Unreachable or down. }
+            waiting: { type: integer }
+            disabled: { type: integer }
+        alerts:
+          type: object
+          required: [firing, critical, warning, info, building_up, suppressed]
+          properties:
+            firing: { type: integer }
+            critical: { type: integer }
+            warning: { type: integer }
+            info: { type: integer }
+            building_up: { type: integer }
+            suppressed: { type: integer }
+    Passkey:
+      type: object
+      required: [id, name, created_at, synced]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        created_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        last_used_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        synced: { type: boolean, description: The passkey is copied to a synced keychain. }
+    PasskeyCeremony:
+      type: object
+      required: [challenge_id, options]
+      properties:
+        challenge_id: { type: string, description: "Single-use, valid five minutes." }
+        options:
+          type: object
+          description: WebAuthn `publicKey` options with binary values encoded as base64url.
+          additionalProperties: true
     NullableServerTimestamp:
       type: [string, "null"]
       description: UTC timestamp without suffix (`2026-08-31 20:15:00`), or `null`.
@@ -7685,6 +8770,11 @@ components:
           additionalProperties: { type: string }
         group_name: { type: [string, "null"], description: "Flat folder shown on `/targets`. Empty or `null`: no folder. Absent on `PUT` keeps the folder." }
         location_id: { type: [integer, "null"], format: int64, description: "Location on the world map; `null`: none. Absent on `PUT` keeps the assignment." }
+        multisite:
+          description: "Probe from several locations (uptime monitors only, at least two locations, not combined with `via_agent`); `null`: one place. Absent on `PUT` keeps the setting."
+          oneOf:
+            - { $ref: "#/components/schemas/MultisiteConfig" }
+            - { type: "null" }
         credential:
           $ref: "#/components/schemas/CredentialInput"
           description: 'Absent on `PUT` keeps the stored secret; `{"type": "none"}` clears it. Sent with a secret field absent or empty (community, passphrase, token `secret`, `password`), that secret is kept as long as the identity it belongs to (`username`, `token_id`) is unchanged; otherwise the request is refused with "Enter the … again".'
@@ -7733,6 +8823,43 @@ components:
             type: { const: username_password }
             username: { type: string }
             password: { type: string }
+    MultisiteConfig:
+      type: object
+      required: [server]
+      properties:
+        server: { type: boolean, description: The DumbMonit server probes too. }
+        agents:
+          type: array
+          description: Relay agents (ids of `agent` monitors) that probe too.
+          items: { type: integer, format: int64 }
+        quorum: { type: [integer, "null"], minimum: 1, description: "Failing locations needed to declare the monitor down; null: majority." }
+    ProbeLocationsReport:
+      type: object
+      required: [decision, quorum, counted, failing, confirming, locations]
+      properties:
+        decision: { type: string, enum: [up, degraded, down, unknown], description: Last published quorum decision. }
+        quorum: { type: integer, description: "Failing locations needed for `down`, after exclusions." }
+        counted: { type: integer, description: Locations counted in the last decision (excluded ones left out). }
+        failing: { type: integer }
+        confirming: { type: boolean, description: A confirmation round is re-checking a first failure from every location. }
+        decided_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
+        locations:
+          type: array
+          items:
+            type: object
+            required: [location, name, state]
+            properties:
+              location: { type: string, description: "Value of the `location` metric label: `server` or `agent-<id>`." }
+              agent_id: { type: [integer, "null"], format: int64 }
+              name: { type: string, description: Agent name; empty for the server. }
+              site: { type: [string, "null"] }
+              latitude: { type: [number, "null"] }
+              longitude: { type: [number, "null"] }
+              state: { type: string, enum: [up, down, excluded, pending] }
+              latency_ms: { type: [integer, "null"] }
+              error: { type: [string, "null"] }
+              excluded_reason: { type: [string, "null"], enum: [silent, not_relay, busy, error, null] }
+              checked_at: { $ref: "#/components/schemas/NullableServerTimestamp" }
     ProbeReport:
       type: object
       required: [sample_count, series]
@@ -8761,6 +9888,83 @@ components:
         metrics_available:
           type: boolean
           description: False when VictoriaMetrics did not answer; `hypervisor` and `lldp` links are then missing.
+        corrections:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyCorrection" }
+          description: Corrections made by hand, already applied to `nodes` and `edges`.
+        rules:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyRule" }
+        suggestions:
+          type: array
+          items: { $ref: "#/components/schemas/TopologySuggestion" }
+    TopologyCorrection:
+      type: object
+      required: [id, kind, to, use_for_alerts, author, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        kind: { type: string, enum: [forbid, link, parent, site, group] }
+        from: { type: [string, "null"], description: "Upstream node: the new parent, or one end of the link." }
+        to: { type: string, description: "The node corrected (`t<id>`, `g<host>:<name>`, `n<host>:<node>`)." }
+        source: { type: [string, "null"], description: Type of the link forbidden or drawn. }
+        value: { type: [string, "null"], description: "Site (empty: the main site) or grouping." }
+        use_for_alerts: { type: boolean, description: "`parent` only: also the device's declared parent." }
+        author: { type: string }
+        created_at: { type: string, description: UTC, without suffix. }
+    TopologyCorrectionInput:
+      type: object
+      required: [kind, to]
+      properties:
+        kind: { type: string, enum: [forbid, link, parent, site, group] }
+        from: { type: [string, "null"] }
+        to: { type: string }
+        source:
+          type: [string, "null"]
+          description: "`forbid`: any deduced type; `link`: manual, hypervisor, hosted, relay, lldp, samehost, backup or firewall."
+        value: { type: [string, "null"], maxLength: 80 }
+        use_for_alerts: { type: boolean, default: true }
+    TopologyRuleSpec:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [forbid, parent] }
+        subnet: { type: [string, "null"], description: "Scope: an IPv4 subnet (CIDR)." }
+        address: { type: [string, "null"], description: "Scope: the address (host) of the devices." }
+        target_kind: { type: [string, "null"], description: Scope limited to one device type. }
+        source: { type: [string, "null"], description: "`forbid`: the type of link never deduced in the scope." }
+        parent: { type: [string, "null"], description: "`parent`: the node the scope depends on." }
+    TopologyRuleInput:
+      allOf:
+        - { $ref: "#/components/schemas/TopologyRuleSpec" }
+        - type: object
+          required: [status]
+          properties:
+            status: { type: string, enum: [active, dismissed] }
+            evidence: { type: integer, description: Corrections it comes from. }
+    TopologyRule:
+      allOf:
+        - { $ref: "#/components/schemas/TopologyRuleSpec" }
+        - type: object
+          required: [id, status, evidence, author, created_at, matches]
+          properties:
+            id: { type: integer, format: int64 }
+            status: { type: string, enum: [active, dismissed] }
+            evidence: { type: integer }
+            author: { type: string }
+            created_at: { type: string }
+            matches: { type: integer, description: Links it sets or removes on today's map. }
+    TopologySuggestion:
+      allOf:
+        - { $ref: "#/components/schemas/TopologyRuleSpec" }
+        - type: object
+          required: [key, evidence, corrections, matches]
+          properties:
+            key: { type: string }
+            evidence: { type: integer, description: Number of corrections it comes from. }
+            corrections:
+              type: array
+              items: { type: integer, format: int64 }
+            matches: { type: integer, description: Other links it would change on today's map. }
     TopologyNode:
       type: object
       required: [id, name, kind, group_name, ips]
@@ -8776,8 +9980,12 @@ components:
         site: { type: [string, "null"], description: "Remote site the node belongs to; null for the main site." }
         site_source:
           type: [string, "null"]
-          enum: [tag, agent, relay, location, null]
-          description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), or the location the device is placed at."
+          enum: [tag, agent, relay, location, manual, null]
+          description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), the location the device is placed at, or a correction on the map."
+        group_source:
+          type: [string, "null"]
+          enum: [manual, null]
+          description: "`manual` when `group_name` was corrected on the map."
         host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
         running: { type: [boolean, "null"], description: Guest only, running at the last measurement; for a `pve_node`, online. }
         ips:
@@ -8786,11 +9994,20 @@ components:
           description: "Guest (its own node, or the device that stands for it): the IP addresses its hypervisor reports. Empty otherwise."
     TopologyEdge:
       type: object
-      required: [from, to, source]
+      required: [from, to, source, origin]
       properties:
         from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
         to: { type: string }
-        source: { type: string, enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall] }
+        source:
+          type: string
+          enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall, manual]
+          description: "`manual`: attached by hand or by a learned rule, on the map only."
+        origin:
+          type: string
+          enum: [deduced, manual, rule]
+          description: Deduced by the server, corrected by hand, or set by a learned rule.
+        correction_id: { type: [integer, "null"], format: int64, description: The correction that drew it. }
+        rule_id: { type: [integer, "null"], format: int64, description: The learned rule that drew it. }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
@@ -8830,6 +10047,77 @@ components:
         automatic: { type: boolean, description: Nobody ticked or unticked it; the device follows detection. }
         target_id: { type: [integer, "null"], description: The service's device. }
         last_seen_at: { type: [string, "null"], description: Last batch with readings of this service (UTC). }
+    AgentEventLevel:
+      type: string
+      enum: [critical, error, warning, information]
+      description: "Event Viewer level. `information` also covers level 0 (LogAlways), the level of Security audit events."
+    AgentEventRuleInput:
+      type: object
+      required: [name, channel]
+      properties:
+        name: { type: string, maxLength: 256 }
+        channel: { type: string, maxLength: 256, description: "`System`, `Application`, `Security` or a channel such as `Microsoft-Windows-TaskScheduler/Operational`." }
+        provider: { type: [string, "null"], description: "Event source (provider), such as `Microsoft-Windows-Kernel-Power`; empty for any." }
+        event_ids: { type: string, description: "Comma-separated IDs and ranges, such as `4625, 7000-7099` (20 at most); empty for any." }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" }, description: Empty for any level. }
+        pattern: { type: [string, "null"], description: Text the message must contain (case-insensitive), or a regular expression when `pattern_regex`. }
+        pattern_regex: { type: boolean, default: false }
+        severity: { $ref: "#/components/schemas/Severity" }
+        enabled: { type: boolean, default: true }
+    AgentEventRule:
+      type: object
+      required: [id, target_id, name, channel, provider, event_ids, levels, pattern, pattern_regex, severity, enabled, matches_total, dropped_total, last_match_at]
+      properties:
+        id: { type: integer, format: int64 }
+        target_id: { type: integer, format: int64 }
+        name: { type: string }
+        channel: { type: string }
+        provider: { type: [string, "null"] }
+        event_ids: { type: string, description: Canonical form; empty for any. }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" } }
+        pattern: { type: [string, "null"] }
+        pattern_regex: { type: boolean }
+        severity: { $ref: "#/components/schemas/Severity" }
+        enabled: { type: boolean }
+        matches_total: { type: integer, format: int64, description: Events received for this rule. }
+        dropped_total: { type: integer, format: int64, description: Events the agent skipped because of the rate limit. }
+        last_match_at: { type: [string, "null"], description: Last event received (UTC). }
+    AgentEventRulePreset:
+      type: object
+      required: [id, name, channel, provider, event_ids, levels, severity]
+      properties:
+        id: { type: string, description: "Stable key: `failed_logon`, `account_locked`, `unexpected_reboot`, `service_crashed`, `disk_errors`, `log_cleared`, `application_errors`." }
+        name: { type: string }
+        channel: { type: string }
+        provider: { type: [string, "null"] }
+        event_ids: { type: string }
+        levels: { type: array, items: { $ref: "#/components/schemas/AgentEventLevel" } }
+        severity: { $ref: "#/components/schemas/Severity" }
+    AgentEventRules:
+      type: object
+      required: [supported, max_per_minute, rules, presets]
+      properties:
+        supported: { type: boolean, description: The machine runs Windows; elsewhere the rules are kept but never sent. }
+        max_per_minute: { type: integer, description: Events kept per rule and per minute; the rest is counted in `dropped_total`. }
+        rules: { type: array, items: { $ref: "#/components/schemas/AgentEventRule" } }
+        presets: { type: array, items: { $ref: "#/components/schemas/AgentEventRulePreset" } }
+    AgentEvent:
+      type: object
+      required: [id, rule_id, rule_name, severity, channel, provider, event_id, level, record_id, computer, message, occurred_at, received_at]
+      properties:
+        id: { type: integer, format: int64 }
+        rule_id: { type: [integer, "null"], description: Null once the rule is deleted. }
+        rule_name: { type: string }
+        severity: { $ref: "#/components/schemas/Severity" }
+        channel: { type: string }
+        provider: { type: string }
+        event_id: { type: integer }
+        level: { oneOf: [{ $ref: "#/components/schemas/AgentEventLevel" }, { type: "null" }] }
+        record_id: { type: integer, format: int64 }
+        computer: { type: string }
+        message: { type: string, description: Formatted message, 2000 characters at most. }
+        occurred_at: { type: [string, "null"], description: When Windows logged the event (UTC). }
+        received_at: { type: [string, "null"], description: When the server received it (UTC). }
     ContainerPolicy:
       type: object
       required: [auto_restart, auto_update, prune_old_image, only_in_maintenance]
@@ -8894,6 +10182,35 @@ components:
         grace_secs: { type: [integer, "null"] }
         settings_error: { type: [string, "null"] }
         verdict: { type: string, enum: [waiting, on_time, missed, reported_down] }
+        schedule: { type: [string, "null"], description: "Cron expression replacing the interval, when set." }
+        timezone: { type: [string, "null"], description: "IANA time zone in which `schedule` is read." }
+        next_expected_at: { type: [string, "null"], description: "Next scheduled run of a cron schedule. UTC, without suffix." }
+        max_duration_secs: { type: [integer, "null"] }
+        last_run:
+          oneOf:
+            - $ref: "#/components/schemas/PushRun"
+            - type: "null"
+
+    PushRun:
+      type: object
+      required: [id, status, output]
+      properties:
+        id: { type: integer, format: int64 }
+        started_at: { type: [string, "null"], description: "UTC, without suffix. `null` when no `/start` preceded the end." }
+        finished_at: { type: [string, "null"], description: "UTC, without suffix. `null` while the run is open." }
+        duration_secs: { type: [number, "null"], description: "`null` when the duration is unknown." }
+        status: { type: string, enum: [running, success, failed, lost], description: "`lost`: started, then replaced by a new start without ever finishing." }
+        exit_code: { type: [integer, "null"] }
+        output: { type: string, description: "Output of the job, truncated to its last 10 KiB." }
+
+    PushRunsPage:
+      type: object
+      required: [runs]
+      properties:
+        runs:
+          type: array
+          items: { $ref: "#/components/schemas/PushRun" }
+        next_before: { type: [integer, "null"], format: int64, description: "Pass as `before` for the next page; `null` on the last one." }
 
     WebsiteOverview:
       type: object

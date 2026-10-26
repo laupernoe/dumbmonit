@@ -1,0 +1,8 @@
+# source: TP-Link Omada Controller API documentation (GET /api/info is the unauthenticated endpoint the Omada web UI and the mobile app call first; response {"errorCode":0,"msg":"Success.","result":{"controllerVer":...,"apiVer":"3","configured":true,"type":0,"supportApp":true,"omadacId":...}}), as reproduced by community Omada API clients.
+# note: PARTLY RECONSTRUCTED. The JSON body is the documented shape (version and omadacId made up); the HTTP headers are approximate (the controller is a Spring/Tomcat application on 8043). Not verified against a real controller.
+HTTP/1.1 200
+Content-Type: application/json;charset=UTF-8
+Content-Length: 175
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+
+{"errorCode":0,"msg":"Success.","result":{"controllerVer":"5.14.26.1","apiVer":"3","configured":true,"type":0,"supportApp":true,"omadacId":"a3f1c0d2e4b5967788990011aabbccdd"}}
