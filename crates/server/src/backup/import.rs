@@ -150,7 +150,11 @@ pub async fn restore(
 }
 
 fn warnings(bundle: &Bundle, report: &mut RestoreReport) {
-    if bundle.users.iter().any(|u| u.password_hash.is_none() && u.oidc_subject.is_none()) {
+    if bundle
+        .users
+        .iter()
+        .any(|u| u.password_hash.is_none() && u.oidc_subject.is_none() && u.saml_subject.is_none())
+    {
         report.warnings.push(
             "This backup holds no account passwords. Restored accounts cannot sign in until an \
              administrator sets a password for them, or until they sign in through SSO."
@@ -1302,6 +1306,27 @@ async fn restore_users(
             }
         }
 
+        // Même règle pour l'identité SAML, unique par IdP.
+        let mut saml = user.saml_subject.clone().zip(user.saml_issuer.clone());
+        if let Some((subject, issuer)) = &saml {
+            let taken =
+                sqlx::query("SELECT 1 FROM users WHERE saml_subject = ? AND saml_issuer = ?")
+                    .bind(subject)
+                    .bind(issuer)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("recherche du rattachement SAML")?;
+            if taken.is_some() {
+                report.notes.push(format!(
+                    "Account \"{}\": its SAML identity already belongs to another account here; \
+                     it was restored without the link.",
+                    user.username
+                ));
+                saml = None;
+            }
+        }
+        let (saml_subject, saml_issuer) = saml.unzip();
+
         let totp_secret = user
             .totp_secret
             .as_ref()
@@ -1311,8 +1336,9 @@ async fn restore_users(
 
         let row = sqlx::query(
             "INSERT INTO users (username, display_name, role, password_hash, oidc_subject,
-                                oidc_issuer, disabled, totp_secret, totp_enabled)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                                oidc_issuer, saml_subject, saml_issuer, disabled, totp_secret,
+                                totp_enabled)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
         )
         .bind(&user.username)
         .bind(&user.display_name)
@@ -1320,6 +1346,8 @@ async fn restore_users(
         .bind(&user.password_hash)
         .bind(&subject)
         .bind(&user.oidc_issuer)
+        .bind(&saml_subject)
+        .bind(&saml_issuer)
         .bind(i64::from(user.disabled))
         .bind(totp_secret.as_deref())
         .bind(i64::from(user.totp_enabled && totp_secret.is_some()))

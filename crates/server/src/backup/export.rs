@@ -492,7 +492,7 @@ async fn users(
 ) -> Result<Vec<BundleUser>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
-                created_at, disabled, totp_secret, totp_enabled
+                saml_subject, saml_issuer, created_at, disabled, totp_secret, totp_enabled
          FROM users ORDER BY id",
     )
     .fetch_all(pool)
@@ -509,6 +509,8 @@ async fn users(
             disabled: row.try_get::<i64, _>("disabled")? != 0,
             oidc_subject: row.try_get("oidc_subject")?,
             oidc_issuer: row.try_get("oidc_issuer")?,
+            saml_subject: row.try_get("saml_subject")?,
+            saml_issuer: row.try_get("saml_issuer")?,
             created_at: row.try_get("created_at")?,
             password_hash: None,
             totp_secret: None,

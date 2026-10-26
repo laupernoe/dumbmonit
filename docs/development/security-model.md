@@ -61,11 +61,43 @@ foothold on the monitored network.
 | Insecure design | The threat model above; secrets never round-trip; a single-purpose instance. |
 | Security misconfiguration | Hardened Compose files, loopback-only VictoriaMetrics, operator hardening notes in the security policy. |
 | Vulnerable components | `cargo deny` checks licences, bans and RustSec advisories; a weekly Trivy scan of the published images; Dependabot; GitHub Actions pinned by commit. |
-| Identification and authentication failures | Login rate limit per client address and per account (`auth/rate_limit.rs`), optional two-factor authentication, OpenID Connect, an admin can reset a user's second factor and sign them out. |
+| Identification and authentication failures | Login rate limit per client address and per account (`auth/rate_limit.rs`), optional two-factor authentication, OpenID Connect and SAML 2.0 (signed assertions only), an admin can reset a user's second factor and sign them out. |
 | Software and data integrity | Agent installers verify the SHA-256 of the downloaded binary; release images are built by CI. |
 | Logging and monitoring | A security log of sign-ins and sensitive changes (`auth/audit.rs`). |
 | Server-side request forgery | Integrations and notification channels follow redirects to the same host only, so a monitor cannot bounce a request and its API key elsewhere. |
 | Cross-site request forgery | State-changing requests that rely on the cookie must carry `X-Requested-With: DumbMonit` or same-origin fetch metadata, otherwise `403`; token-authenticated requests carry no cookie. |
+
+## SAML 2.0 sign-in
+
+DumbMonit is a SAML service provider (`crates/server/src/auth/saml`). XML
+signature checking is delegated to the pure-Rust `saml-rs` crate (XML-DSig and
+exclusive canonicalization by `bergshamra`, on the aws-lc-rs engine that rustls
+already uses; no libxml2 or xmlsec1, and not the RustCrypto `rsa` crate). It is
+configured with its strictest policy:
+
+- the `Assertion` itself must be signed, a signed `Response` alone is refused;
+- RSA with SHA-256 or stronger only (SHA-1 refused), one same-document
+  reference, exclusive canonicalization, no other transforms;
+- verification keys come only from the certificates the administrator saved,
+  never from the `KeyInfo` of the message;
+- `Issuer`, `Audience` (our entity ID), `Destination` and bearer `Recipient`
+  (our ACS), `NotBefore`/`NotOnOrAfter` with a two-minute clock skew,
+  `InResponseTo` of a request we sent (and none for IdP-initiated sign-in, off
+  by default), a replay cache of assertion and response IDs until they expire;
+- DOCTYPE refused and parser sizes bounded before any signature work; the ACS
+  form is limited to 256 KiB. Encrypted assertions are not supported and are
+  refused.
+
+The ACS (`POST /api/auth/saml/acs`) is posted cross-site by the identity
+provider, so it carries no anti-CSRF header and no `SameSite=Lax` cookie. It
+only verifies the assertion and hands a one-time ticket to
+`GET /api/auth/saml/complete`, which opens the session only in the browser that
+started the sign-in (a cookie bound to the `RelayState`). This stops an attacker
+from logging a victim into the attacker's own account. The tests replay
+responses shaped like those of Entra ID, Okta and Keycloak, and hostile
+variants (unsigned, tampered, signature wrapping, wrong audience or
+destination, expired, replayed, SHA-1), signed offline by
+`crates/server/tests/fixtures/saml/generate.py`.
 
 ## Verification
 

@@ -9,7 +9,8 @@
 # exactes. Seules en sont exclues, volontairement, les routes du protocole des
 # agents (`/api/ingest`, `/api/agent/commands*`, `/api/agent/relay*`), les
 # redirections du navigateur pour OpenID Connect (`/api/auth/oidc/start`,
-# `/api/auth/oidc/callback`) et la distribution de l'agent (`/install.sh`,
+# `/api/auth/oidc/callback`) et SAML (`/api/auth/saml/start`, `/acs`,
+# `/complete`), et la distribution de l'agent (`/install.sh`,
 # `/install.ps1`, `/download/{name}`).
 #
 # Chaque opération porte `x-token-scope` :
@@ -714,6 +715,91 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/LdapTestReport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/saml/metadata:
+    get:
+      operationId: getSamlMetadata
+      tags: [Accounts]
+      summary: SAML service provider metadata
+      description: |
+        Public: give this URL (or the document) to the identity provider. It
+        declares the entity ID, the assertion consumer service (HTTP-POST) and
+        that assertions must be signed. The sign-in itself goes through
+        `/api/auth/saml/start` (redirect to the identity provider),
+        `/api/auth/saml/acs` (the provider's HTTP-POST response) and
+        `/api/auth/saml/complete`: browser navigations, not API calls.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: SAML 2.0 metadata.
+          content:
+            application/samlmetadata+xml:
+              schema: { type: string }
+
+  /api/auth/saml/config:
+    get:
+      operationId: getSamlConfig
+      tags: [Accounts]
+      summary: SAML single sign-on settings
+      description: Administrator session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The stored settings, with the addresses to declare at the identity provider.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SamlConfig" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putSamlConfig
+      tags: [Accounts]
+      summary: Store SAML single sign-on settings
+      description: |
+        Absent fields take their default. When `enabled`, the identity provider
+        entity ID, sign-in URL and at least one signing certificate are required:
+        unsigned assertions are always refused.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SamlConfigUpdate" }
+      responses:
+        "200":
+          description: The new settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SamlConfig" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/saml/metadata/import:
+    post:
+      operationId: importSamlMetadata
+      tags: [Accounts]
+      summary: Read identity provider metadata
+      description: Extracts the entity ID, the sign-in URL and the signing certificates. Nothing is stored.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/SamlMetadataImportRequest" }
+      responses:
+        "200":
+          description: The values to put in the settings form.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SamlMetadataImport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -6410,7 +6496,7 @@ components:
         username: { type: string }
         display_name: { type: string }
         role: { $ref: "#/components/schemas/Role" }
-        auth: { type: string, enum: [password, ldap, oidc] }
+        auth: { type: string, enum: [password, ldap, saml, oidc] }
         disabled: { type: boolean }
         totp_enabled: { type: boolean }
         created_at: { type: string }
@@ -6434,6 +6520,12 @@ components:
           required: [enabled]
           properties:
             enabled: { type: boolean, description: Usernames without a local password are checked against the directory. }
+        saml:
+          type: object
+          required: [enabled, label]
+          properties:
+            enabled: { type: boolean, description: "SAML sign-in is configured; the button leads to `/api/auth/saml/start`." }
+            label: { type: string, description: Button label. }
         demo: { type: boolean }
     SetupRequest:
       type: object
@@ -6511,6 +6603,44 @@ components:
         action: { type: string, examples: [login, login.failed, token.created, user.updated] }
         subject: { type: [string, "null"] }
         ip: { type: [string, "null"] }
+    SamlConfigUpdate:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        idp_entity_id: { type: string, description: "Identity provider entity ID: the expected `Issuer`." }
+        idp_sso_url: { type: string, description: Identity provider sign-in endpoint (HTTP-Redirect binding). }
+        idp_certificates:
+          type: array
+          items: { type: string }
+          description: PEM signing certificates of the identity provider (several during a rollover). Only these keys verify assertions.
+        sp_entity_id: { type: string, description: "DumbMonit's entity ID (the expected audience). Empty: `sp_metadata_url`." }
+        allow_idp_initiated: { type: boolean, description: Accept responses the identity provider sends without a request. Off by default. }
+        auto_create: { type: boolean, description: Create an account on first sign-in. Off by default. }
+        button_label: { type: string, description: "Sign-in button label. Empty: `SAML`." }
+        attr_email: { type: string, description: E-mail attribute name. Empty tries the usual names (Entra ID, Okta, Keycloak). }
+        attr_name: { type: string, description: Display name attribute. Empty tries the usual names. }
+        attr_groups: { type: string, description: Groups attribute. Empty tries the usual names. }
+        admin_groups: { type: array, items: { type: string } }
+        operator_groups: { type: array, items: { type: string } }
+    SamlConfig:
+      allOf:
+        - $ref: "#/components/schemas/SamlConfigUpdate"
+        - type: object
+          properties:
+            sp_metadata_url: { type: string, readOnly: true, description: Service provider metadata URL to give to the identity provider. }
+            acs_url: { type: string, readOnly: true, description: Assertion consumer service (reply URL) to declare at the identity provider. }
+    SamlMetadataImportRequest:
+      type: object
+      required: [xml]
+      properties:
+        xml: { type: string, description: The identity provider metadata document. }
+    SamlMetadataImport:
+      type: object
+      required: [idp_entity_id, idp_sso_url, idp_certificates]
+      properties:
+        idp_entity_id: { type: string }
+        idp_sso_url: { type: string }
+        idp_certificates: { type: array, items: { type: string } }
     OidcConfig:
       type: object
       properties:

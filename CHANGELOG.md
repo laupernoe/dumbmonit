@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **SAML 2.0 sign-in.** DumbMonit can act as a SAML service provider for Entra ID,
+  Okta, Keycloak, Authentik or ADFS: public metadata at `/api/auth/saml/metadata`,
+  sign-in started by DumbMonit (HTTP-Redirect) and an HTTP-POST assertion consumer
+  service. Assertions must be signed (SHA-256 or stronger) and are checked for
+  issuer, audience, destination, validity window, request correlation and replay.
+  Accounts are linked by their persistent `NameID` or by e-mail, created on first
+  sign-in if allowed, and get their role and teams from the groups attribute.
+  Sign-in started by the identity provider is optional and off by default.
+  Settings: `GET`/`PUT /api/auth/saml/config`, metadata import with
+  `POST /api/auth/saml/metadata/import`.
+
 ## 0.14.0 — 2026-10-25
 
 ### Added

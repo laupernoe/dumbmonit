@@ -898,8 +898,8 @@ function fallbackCredentialView(kind: string): CredentialView {
 /** `operator` handles alerts (ack, ignore, snooze) but changes no configuration. */
 export type Role = 'admin' | 'operator' | 'viewer';
 
-/** How an account signs in: a local password, the LDAP / AD directory, or the identity provider. */
-export type AuthMethod = 'password' | 'ldap' | 'oidc';
+/** How an account signs in: a local password, the LDAP / AD directory, a SAML or an OIDC identity provider. */
+export type AuthMethod = 'password' | 'ldap' | 'saml' | 'oidc';
 
 /** An account, as returned by `/api/users` and `/api/auth/me`. Never carries a hash. */
 export interface User {
@@ -929,6 +929,13 @@ export interface LdapStatus {
 	enabled: boolean;
 }
 
+/** What the sign-in screen needs to know about SAML sign-in, without a session. */
+export interface SamlStatus {
+	enabled: boolean;
+	/** Button label. The button is a plain navigation to `/api/auth/saml/start`. */
+	label: string;
+}
+
 /** Raw response of `GET /api/auth/status`. */
 export interface AuthStatus {
 	/** True as soon as an account exists on the instance. */
@@ -940,6 +947,8 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
+	/** SAML 2.0 sign-in (button to `/api/auth/saml/start`). */
+	saml?: SamlStatus;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
 }
@@ -999,6 +1008,50 @@ export interface OidcConfigPayload {
 	operator_groups: string[];
 	groups_claim: string;
 	public_url: string;
+}
+
+/**
+ * `PUT /api/auth/saml/config` — absent fields take their default. When `enabled`,
+ * `idp_entity_id`, `idp_sso_url` and at least one certificate are required.
+ */
+export interface SamlConfigPayload {
+	enabled: boolean;
+	/** Identity provider entity ID: the expected `Issuer`. */
+	idp_entity_id: string;
+	/** Identity provider sign-in endpoint (HTTP-Redirect binding). */
+	idp_sso_url: string;
+	/** PEM signing certificates of the identity provider (several during a rollover). */
+	idp_certificates: string[];
+	/** DumbMonit's entity ID at the identity provider; empty means `sp_metadata_url`. */
+	sp_entity_id: string;
+	/** Accept responses the identity provider sends without a request (off by default). */
+	allow_idp_initiated: boolean;
+	/** Create an account on first sign-in (off by default). */
+	auto_create: boolean;
+	/** Sign-in button label; empty means "SAML". */
+	button_label: string;
+	/** Attribute names; empty tries the usual ones (Entra ID, Okta, Keycloak…). */
+	attr_email: string;
+	attr_name: string;
+	attr_groups: string;
+	admin_groups: string[];
+	/** Groups whose members become operators (unless also in an admin group). */
+	operator_groups: string[];
+}
+
+/** `GET /api/auth/saml/config`: the stored settings plus the addresses to declare at the provider. */
+export interface SamlConfig extends SamlConfigPayload {
+	/** Service provider metadata URL, to give to the identity provider. */
+	sp_metadata_url: string;
+	/** Assertion consumer service (reply URL), to declare at the identity provider. */
+	acs_url: string;
+}
+
+/** `POST /api/auth/saml/metadata/import` (body `{ xml }`): values extracted, nothing stored. */
+export interface SamlMetadataImport {
+	idp_entity_id: string;
+	idp_sso_url: string;
+	idp_certificates: string[];
 }
 
 /** Endpoints found by `POST /api/auth/oidc/test` (discovery only, no sign-in). */
