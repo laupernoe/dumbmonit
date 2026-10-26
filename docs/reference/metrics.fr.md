@@ -98,6 +98,17 @@ Le VictoriaMetrics embarqué garde 12 mois de données
 secondes (`DUMBMONIT_FLUSH_INTERVAL_SECS`). Supprimer une surveillance ne
 supprime pas ses séries ; elles vieillissent et expirent.
 
+La rétention brute se règle aussi dans **Réglages → Système → Données et
+rétention**. Au-delà, le serveur garde des **agrégats de 5 minutes** pendant
+730 jours par défaut dans un second VictoriaMetrics (`/data/vm-long`) : la
+moyenne sous le nom d'origine de la métrique, le minimum et le maximum en
+`<nom>:5m_min` et `<nom>:5m_max`, la somme et le compte des métriques de
+disponibilité en `<nom>:5m_sum` et `<nom>:5m_count` (les compteurs gardent leur
+dernière valeur de chaque fenêtre). Une requête dont la plage dépasse la
+rétention brute est servie automatiquement depuis eux, à la résolution de
+5 minutes. Voir [Dimensionnement](sizing.md) et la
+[référence de configuration](configuration.md#historique-long).
+
 L'historique d'alerte est gardé 90 jours et les références de séries
 disparues 60 jours, les deux dans SQLite (voir la
 [référence de configuration](configuration.md)).

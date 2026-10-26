@@ -40,7 +40,7 @@ pub fn esc(raw: &str) -> String {
 }
 
 /// Texte d'une seule ligne, sans caractère de contrôle (objets d'e-mail, texte brut).
-fn one_line(raw: &str) -> String {
+pub(crate) fn one_line(raw: &str) -> String {
     raw.chars().map(|c| if c.is_control() { ' ' } else { c }).collect::<String>().trim().to_string()
 }
 
@@ -52,7 +52,7 @@ fn pct(value: Option<f64>) -> String {
 }
 
 /// Écart en points de pourcentage, ou « n/a ».
-fn delta(now: Option<f64>, before: Option<f64>) -> String {
+pub(crate) fn delta(now: Option<f64>, before: Option<f64>) -> String {
     match (now, before) {
         (Some(a), Some(b)) => {
             let d = a - b;
@@ -66,7 +66,7 @@ fn delta(now: Option<f64>, before: Option<f64>) -> String {
     }
 }
 
-fn count_delta(now: usize, before: usize) -> String {
+pub(crate) fn count_delta(now: usize, before: usize) -> String {
     match now.cmp(&before) {
         std::cmp::Ordering::Equal => "same as the previous period".to_string(),
         std::cmp::Ordering::Greater => format!("{} more than the previous period", now - before),
@@ -75,7 +75,7 @@ fn count_delta(now: usize, before: usize) -> String {
 }
 
 /// Mot qui accompagne un pourcentage : l'état n'est jamais porté par la couleur seule.
-fn verdict(value: Option<f64>) -> (&'static str, &'static str) {
+pub(crate) fn verdict(value: Option<f64>) -> (&'static str, &'static str) {
     match value {
         None => ("No data", "#6b7280"),
         Some(v) if v >= 99.9 => ("Healthy", "#15803d"),
@@ -84,7 +84,7 @@ fn verdict(value: Option<f64>) -> (&'static str, &'static str) {
     }
 }
 
-fn duration(delta: TimeDelta) -> String {
+pub(crate) fn duration(delta: TimeDelta) -> String {
     let secs = delta.num_seconds().max(0);
     if secs < 60 {
         return format!("{secs}s");
@@ -97,7 +97,7 @@ fn duration(delta: TimeDelta) -> String {
     }
 }
 
-fn when(at: DateTime<Utc>, tz: Tz) -> String {
+pub(crate) fn when(at: DateTime<Utc>, tz: Tz) -> String {
     at.with_timezone(&tz).format("%Y-%m-%d %H:%M").to_string()
 }
 
@@ -515,6 +515,7 @@ mod tests {
             previous_uptime: &HashMap::new(),
             availability_known: true,
             incidents: &[],
+            latency: &HashMap::new(),
         });
         data.incidents.push(Incident {
             device: "<i>nas</i>".into(),

@@ -11,6 +11,7 @@ use crate::collectors::relay::RelayHub;
 use crate::config::Config;
 use crate::crypto::Cipher;
 use crate::multisite::MultiSite;
+use crate::storage::Storage;
 use crate::tsdb::{SampleSink, Victoria};
 
 /// État partagé par tous les gestionnaires HTTP et par le planificateur.
@@ -22,6 +23,7 @@ pub struct AppState(
     Arc<Discovery>,
     Arc<AgentTls>,
     Arc<MultiSite>,
+    Arc<Storage>,
 );
 
 pub struct Inner {
@@ -42,6 +44,7 @@ impl AppState {
             Arc::new(Discovery::new()),
             Arc::new(AgentTls::new()),
             Arc::new(MultiSite::new()),
+            Arc::new(Storage::default()),
         )
     }
 
@@ -74,6 +77,13 @@ impl AppState {
     /// emplacement (voir [`crate::multisite`]). En mémoire, comme le relais.
     pub fn multisite(&self) -> &MultiSite {
         &self.5
+    }
+
+    /// Processus de stockage embarqués et état de l'agrégateur long terme
+    /// (voir [`crate::storage`]). Vide tant que `main` n'y a rien posé : les
+    /// tests n'ont aucun processus.
+    pub fn storage(&self) -> &Storage {
+        &self.6
     }
 }
 

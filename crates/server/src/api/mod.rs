@@ -15,6 +15,7 @@ mod cves;
 mod discovery;
 mod error;
 mod health;
+mod ical;
 mod ingest;
 mod integrations;
 mod kuma_db;
@@ -49,6 +50,7 @@ mod seo_files;
 mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
+mod storage;
 mod synology;
 mod target_rules;
 mod targets;
@@ -212,6 +214,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(reports::routes())
         // Pages de statut et incidents (`status_pages.rs`).
         .merge(status_pages::routes())
+        // Jeton du calendrier iCal privé des maintenances (`ical.rs`).
+        .merge(ical::routes())
         // Calendrier des sauvegardes et travaux d'un Proxmox Backup Server (`pbs.rs`).
         .merge(pbs::routes())
         // Instances fédérées et santé d'un Proxmox Datacenter Manager (`pdm.rs`).
@@ -242,6 +246,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(backup::routes())
         // Journaux du serveur : stockage, export et destinations (`logs.rs`).
         .merge(logs::routes())
+        // Stockage : rétentions, historique long terme, VictoriaLogs embarqué
+        // et recherche dans les journaux (`storage.rs`).
+        .merge(storage::routes())
         // Auto-surveillance et battement de cœur sortant (`self_monitoring.rs`).
         .merge(self_monitoring::routes())
         // Paquets d'intégration : types d'équipement décrits en YAML (`packs.rs`).
@@ -306,6 +313,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_routes(&state))
         // Pages de statut publiques : lecture seule, sans session, par conception.
         .merge(status_pages::public_routes())
+        // Calendriers iCal des maintenances : par page, ou privé avec jeton (`ical.rs`).
+        .merge(ical::public_routes())
         // Liens d'action des notifications : le jeton signé est l'autorisation
         // (`alert_actions.rs`).
         .merge(alert_actions::public_routes())

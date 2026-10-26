@@ -111,7 +111,8 @@ export const UPTIME_KINDS = [
 	'postgres',
 	'mysql',
 	'mqtt',
-	'websocket'
+	'websocket',
+	'provider'
 ] as const;
 
 /** Uptime kinds that can be probed from several locations (mirrors the server). */

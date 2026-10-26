@@ -3263,6 +3263,40 @@ const NPM_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_TIMEOUT,
 ];
 
+/// Options lues par `collectors/uptime/provider/mod.rs`.
+const PROVIDER_OPTIONS: &[OptionView] = &[
+    text(
+        "component",
+        "Component",
+        "Only watch the components (or, in a feed, the entries) whose name contains this text. Empty: the provider as a whole.",
+        "Workers",
+        "",
+    ),
+    select(
+        "fail_on",
+        "Fail on",
+        "Which level counts as down: minor (any degradation), major (a partial or major outage) or critical (a major outage only).",
+        "minor",
+        &["minor", "major", "critical"],
+    ),
+    number(
+        "refresh_seconds",
+        "Refresh interval (seconds)",
+        "How long the provider's answer is reused, from 30 to 3600. Monitors and status pages on the same provider share one request.",
+        "60",
+        "60",
+    ),
+    number(
+        "window_hours",
+        "Feed window (hours)",
+        "RSS and Atom feeds only: an entry older than this no longer counts as an open incident, from 1 to 168.",
+        "24",
+        "24",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Options lues par `collectors/domain/mod.rs`.
 const DOMAIN_OPTIONS: &[OptionView] = &[
     text(
@@ -5509,6 +5543,29 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: NPM_OPTIONS,
         },
+        "provider" => CollectorView {
+            kind: "provider",
+            label: "Third-party service status",
+            summary: "The public status page of a provider you depend on (Cloudflare, GitHub, Atlassian, AWS…), read as a monitor: it fails when the provider reports an incident, so you hear about it before your users do.",
+            examples: &["Cloudflare", "GitHub", "Atlassian Cloud", "The AWS Health feed"],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "cloudflare",
+            // Un nom ou une page, pas un service : aucun port à ajouter à l'adresse.
+            default_port: 0,
+            setup: Setup {
+                title: "Watch a provider's status page",
+                steps: &[
+                    "Enter a provider name (cloudflare, github, atlassian, aws, discord, npm…; the full list is in the guide), or the address of a Statuspage page or RSS/Atom feed.",
+                    "To watch one part of the provider only, enter its name under Component, for example \"Workers\" or \"EC2\".",
+                    "Choose what makes the monitor fail: any degradation, a partial outage or worse, or a major outage only.",
+                ],
+                ports: &[to_device!(443, "tcp", "Status page of the provider (HTTPS)")],
+                permissions: &[],
+                warning: "The monitor reads what the provider chooses to publish, often minutes after the fact: it complements your own checks and never replaces them.",
+            },
+            options: PROVIDER_OPTIONS,
+        },
         "domain" => CollectorView {
             kind: "domain",
             label: "Domain expiry",
@@ -5882,7 +5939,7 @@ fn guide_url(kind: &str) -> String {
         | "immich" | "paperless" | "jellyfin" | "plex" | "gitlab" | "forgejo" | "pihole"
         | "adguard" | "nut" | "mikrotik" | "unifi" | "homeassistant" | "vsphere" | "redis"
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
-        | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
+        | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
         | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
         _ => return String::new(),
@@ -6048,6 +6105,7 @@ mod tests {
         "mysql",
         "mqtt",
         "websocket",
+        "provider",
         "push",
         "webchange",
         "website",
@@ -6548,6 +6606,17 @@ mod tests {
                 ],
             ),
             ("domain", &["rdap_server", "refresh_hours", "request_timeout_seconds"]),
+            (
+                "provider",
+                &[
+                    "component",
+                    "fail_on",
+                    "refresh_seconds",
+                    "window_hours",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
             (
                 "mail_blacklist",
                 &[
@@ -7256,6 +7325,7 @@ mod tests {
             ("apache", include_str!("../../../../docs/devices/apache.md")),
             ("npm", include_str!("../../../../docs/devices/npm.md")),
             ("domain", include_str!("../../../../docs/devices/domain.md")),
+            ("provider", include_str!("../../../../docs/devices/provider.md")),
             ("mail_blacklist", include_str!("../../../../docs/devices/mail_blacklist.md")),
             ("ip_blacklist", include_str!("../../../../docs/devices/ip_blacklist.md")),
             ("kubernetes", include_str!("../../../../docs/devices/kubernetes.md")),

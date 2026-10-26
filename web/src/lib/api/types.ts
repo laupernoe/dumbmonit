@@ -1642,6 +1642,8 @@ export interface StatusPageGroupLabel {
 	label: string;
 }
 
+export type StatusPageAccess = 'public' | 'password' | 'users';
+
 export interface StatusPage {
 	id: number;
 	slug: string;
@@ -1673,6 +1675,10 @@ export interface StatusPage {
 	/** Public host name serving this page at `/` (`status.example.com`); `null`: none. */
 	domain: string | null;
 	seo: StatusPageSeo;
+	/** Who may read the page: everyone, whoever knows its password, or signed-in DumbMonit users. */
+	access_mode: StatusPageAccess;
+	/** A page password is stored (the hash itself never leaves the server). */
+	has_password: boolean;
 	/** Checked monitor folders (dynamic): their current members are shown. */
 	groups: string[];
 	/** Public names of the monitors that come in through a ticked group; none: the monitor name. */
@@ -1840,6 +1846,8 @@ export interface PublicStatusItem {
 	/** Only when the page shows response times and the service has latency data. */
 	latency_series?: PublicLatencySeries;
 	history: PublicDayBucket[];
+	/** A third-party provider (a `provider` monitor): shown as an external component. */
+	external?: boolean;
 }
 
 /** One day of a status page, hour by hour (`GET /api/public/status/{slug}/day/{date}`). */
@@ -4969,4 +4977,97 @@ export interface CveFilters {
 	state?: CveState;
 	exploited?: boolean;
 	ignored?: boolean;
+}
+
+// --- Data & retention (Settings → System) and log search -------------------
+// Mirrors `GET/PUT /api/system/storage` and `GET /api/logs/search`.
+
+export type StorageUsageKey = 'metrics' | 'rollup' | 'logs_store' | 'database' | 'logs' | 'backups';
+export type SettingSource = 'settings' | 'environment' | 'default';
+
+export interface StorageView {
+	metrics: {
+		/** False: external VictoriaMetrics, its retention is managed there. */
+		embedded: boolean;
+		retention_days: number;
+		retention_source: SettingSource;
+		running: boolean;
+	};
+	/** Long-term 5-minute aggregates, in a second embedded VictoriaMetrics. */
+	rollup: {
+		available: boolean;
+		embedded: boolean;
+		enabled: boolean;
+		running: boolean;
+		retention_days: number;
+		step_seconds: number;
+		/** UTC without suffix: end of the latest aggregated window. */
+		last_window: string | null;
+		/** Oldest aggregated window so far. */
+		backfilled_until: string | null;
+		backfill_done: boolean;
+		series: number | null;
+		last_error: string | null;
+	};
+	/** Embedded VictoriaLogs, off by default. */
+	logs_store: {
+		available: boolean;
+		enabled: boolean;
+		running: boolean;
+		retention_days: number;
+		last_error: string | null;
+	};
+	disk: {
+		usage: { key: StorageUsageKey; path: string; bytes: number | null }[];
+		free_bytes: number | null;
+		total_bytes: number | null;
+	};
+	growth: {
+		bytes_per_day: number | null;
+		days_until_full: number | null;
+		sampled_days: number;
+	};
+	limits: {
+		min_retention_days: number;
+		max_retention_days: number;
+		min_rollup_retention_days: number;
+		max_rollup_retention_days: number;
+		min_logs_retention_days: number;
+		max_logs_retention_days: number;
+	};
+	/** Empty on GET; on PUT, the processes (re)started or stopped. */
+	restarted: ('metrics' | 'rollup' | 'logs_store')[];
+}
+
+export interface StorageUpdate {
+	metrics_retention_days?: number;
+	rollup_enabled?: boolean;
+	rollup_retention_days?: number;
+	logs_store_enabled?: boolean;
+	logs_store_retention_days?: number;
+}
+
+export interface LogSearchEntry {
+	/** UTC without suffix. */
+	time: string;
+	level: string;
+	message: string;
+	source: string;
+	host: string | null;
+	fields: Record<string, string>;
+}
+
+export interface LogSearchResult {
+	entries: LogSearchEntry[];
+	truncated: boolean;
+}
+
+export interface LogSearchParams {
+	query?: string;
+	/** Milliseconds since the epoch. */
+	start?: number;
+	end?: number;
+	level?: 'error' | 'warn' | 'info' | 'debug';
+	limit?: number;
+	source?: 'server';
 }

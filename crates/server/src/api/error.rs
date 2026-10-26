@@ -20,6 +20,9 @@ pub enum ApiError {
     /// Un service dont dépend le geste (VictoriaMetrics…) ne répond pas ou
     /// répond de façon inexploitable : ce n'est pas la faute de l'appelant.
     BadGateway(String),
+    /// Une page privée demande un mot de passe (`"password"`) ou un compte
+    /// connecté (`"users"`) : 401, avec le mode demandé dans `access`.
+    AccessRequired(&'static str, String),
     Internal(anyhow::Error),
 }
 
@@ -36,6 +39,7 @@ impl ApiError {
             Self::Conflict(why) => (StatusCode::CONFLICT, why),
             Self::TooManyRequests(why) => (StatusCode::TOO_MANY_REQUESTS, why),
             Self::BadGateway(why) => (StatusCode::BAD_GATEWAY, why),
+            Self::AccessRequired(_, why) => (StatusCode::UNAUTHORIZED, why),
             Self::Internal(error) => {
                 tracing::error!(?error, "internal error");
                 (StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.".to_string())
@@ -46,6 +50,10 @@ impl ApiError {
 
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
+        if let Self::AccessRequired(access, message) = self {
+            let body = json!({ "error": message, "access": access });
+            return (StatusCode::UNAUTHORIZED, Json(body)).into_response();
+        }
         let (status, message) = self.into_parts();
         (status, Json(json!({ "error": message }))).into_response()
     }

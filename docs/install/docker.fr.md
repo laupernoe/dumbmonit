@@ -84,7 +84,7 @@ capabilities, `PUID`/`PGID` et le sysctl `ping_group_range` sont expliqués dans
 ## VictoriaMetrics embarqué {#embedded-victoriametrics}
 
 L'image contient le binaire VictoriaMetrics (`/victoria-metrics-prod`, issu de
-`victoriametrics/victoria-metrics:v1.152.0`). Lorsque `DUMBMONIT_VM_URL` n'est pas
+`victoriametrics/victoria-metrics:v1.154.0`). Lorsque `DUMBMONIT_VM_URL` n'est pas
 défini, le serveur le démarre comme processus enfant à l'écoute sur `127.0.0.1:8428`,
 stocke ses séries sous `/data/vm`, redirige ses lignes de journal vers le sien,
 le redémarre avec un délai croissant s'il meurt et l'arrête à l'extinction. Rien n'est
@@ -98,6 +98,20 @@ budget de ses caches ; augmentez-le pour des centaines d'hôtes). Le reste se tr
 Pour utiliser un VictoriaMetrics que vous exploitez déjà, définissez `DUMBMONIT_VM_URL` à son
 adresse (`http://host:8428`) : l'embarqué n'est alors pas démarré et
 `/data/vm` reste vide.
+
+### Historique long et journaux
+
+Les données brutes sont gardées pendant la rétention ci-dessus, modifiable aussi
+dans **Réglages → Système → Données et rétention**. À côté, le serveur écrit
+des agrégats de 5 minutes dans un second VictoriaMetrics embarqué
+(`/data/vm-long`, 730 jours, 64 Mo de cache), et les graphiques, pages de
+statut et rapports qui remontent plus loin que la rétention brute sont servis
+depuis lui. VictoriaLogs (`/victoria-logs-prod`, `/data/vlogs`) est aussi dans
+l'image mais reste éteint tant que vous ne l'activez pas au même endroit ; la
+page **Logs** cherche alors dans les journaux du serveur. Toutes les variables
+sont dans la [référence de configuration](../reference/configuration.md#historique-long) ;
+les chiffres de disque et de mémoire sont dans
+[Dimensionnement](../reference/sizing.md).
 
 ## Premier démarrage {#first-start}
 
@@ -256,6 +270,8 @@ Un seul volume nommé, `dumbmonit-data`, contient tout :
 | `secret.key` | Le secret de l'instance. |
 | `backups/` | Les sauvegardes locales planifiées : une copie de la base et du secret, quotidienne par défaut, sept conservées. |
 | `vm/` | Séries temporelles de VictoriaMetrics (12 mois de rétention par défaut). |
+| `vm-long/` | Agrégats de 5 minutes, l'historique long (730 jours par défaut). |
+| `vlogs/` | Données de VictoriaLogs, seulement si vous avez activé le stockage des journaux. |
 
 DumbMonit sauvegarde lui-même sa base selon un calendrier, et exporte toute la
 configuration — surveillances, identifiants, règles, canaux — dans un seul fichier
