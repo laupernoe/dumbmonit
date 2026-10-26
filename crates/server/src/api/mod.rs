@@ -62,6 +62,7 @@ mod targets;
 mod targets_import;
 mod tokens;
 mod topology;
+pub(crate) mod topology_edits;
 mod totp;
 mod truenas;
 mod update;
@@ -226,6 +227,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).
         .merge(topology::routes())
+        // Corrections de la carte et règles apprises (`topology_edits.rs`).
+        .merge(topology_edits::routes())
         // Emplacements et carte du monde (`locations.rs`).
         .merge(locations::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).

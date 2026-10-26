@@ -2266,10 +2266,13 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall' | 'manual';
+
+/** Who drew a link: the server's deduction, a correction by hand, or a learned rule. */
+export type TopologyOrigin = 'deduced' | 'manual' | 'rule';
 
 /** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
-export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
+export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location' | 'manual';
 
 /** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
 export interface TopologyNode {
@@ -2282,6 +2285,8 @@ export interface TopologyNode {
 	kind: string;
 	/** Folder; a guest takes its hypervisor's. */
 	group_name: string;
+	/** `manual` when the grouping was corrected on the map. */
+	group_source?: 'manual' | null;
 	/** Remote site the node belongs to; `null` for the main site. */
 	site: string | null;
 	site_source: TopologySiteSource | null;
@@ -2304,6 +2309,79 @@ export interface TopologyEdge {
 	from: string;
 	to: string;
 	source: TopologySource;
+	origin?: TopologyOrigin;
+	/** The correction that drew it. */
+	correction_id?: number | null;
+	/** The learned rule that drew it. */
+	rule_id?: number | null;
+}
+
+export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
+
+/** A correction made by hand on the map. Mirrors `Correction` in `api/topology_edits.rs`. */
+export interface TopologyCorrection {
+	id: number;
+	kind: TopologyCorrectionKind;
+	/** The new parent, or one end of the link. */
+	from: string | null;
+	to: string;
+	/** Type of the link forbidden or drawn. */
+	source: TopologySource | null;
+	/** Site (empty: main site) or grouping. */
+	value: string | null;
+	/** `parent`: also the device's declared parent (alert suppression). */
+	use_for_alerts: boolean;
+	author: string;
+	created_at: string;
+}
+
+/** `POST /api/topology/corrections`. */
+export interface TopologyCorrectionInput {
+	kind: TopologyCorrectionKind;
+	from?: string | null;
+	to: string;
+	source?: TopologySource | null;
+	value?: string | null;
+	use_for_alerts?: boolean;
+}
+
+export interface TopologyCorrectionCreated {
+	correction: TopologyCorrection;
+	/** Corrections it replaced (same node or same pair), for an undo. */
+	replaced: TopologyCorrection[];
+}
+
+/** Scope and effect of a map rule. Mirrors `RuleSpec`. */
+export interface TopologyRuleSpec {
+	kind: 'forbid' | 'parent';
+	subnet: string | null;
+	address: string | null;
+	target_kind: string | null;
+	/** `forbid`: the type of link never deduced in the scope. */
+	source: TopologySource | null;
+	/** `parent`: the node the scope depends on. */
+	parent: string | null;
+}
+
+export type TopologyRuleStatus = 'active' | 'dismissed';
+
+export interface TopologyRule extends TopologyRuleSpec {
+	id: number;
+	status: TopologyRuleStatus;
+	evidence: number;
+	author: string;
+	created_at: string;
+	/** Links it sets or removes on today's map. */
+	matches: number;
+}
+
+/** A rule the corrections suggest; never applied until accepted. */
+export interface TopologySuggestion extends TopologyRuleSpec {
+	key: string;
+	evidence: number;
+	corrections: number[];
+	/** Other links it would change on today's map. */
+	matches: number;
 }
 
 /** `GET /api/topology`. Mirrors `TopologyView`. */
@@ -2312,6 +2390,10 @@ export interface Topology {
 	edges: TopologyEdge[];
 	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
 	metrics_available: boolean;
+	/** Corrections made by hand, already applied to `nodes` and `edges`. */
+	corrections?: TopologyCorrection[];
+	rules?: TopologyRule[];
+	suggestions?: TopologySuggestion[];
 }
 
 // --- World map locations (`api/locations.rs`) ---------------------------------
