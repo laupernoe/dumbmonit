@@ -248,7 +248,13 @@ pub fn action_style(kind: &str) -> &'static str {
     match kind {
         // Astreinte avec son propre acquittement, et SMS (un lien signé de ~150
         // caractères coûterait plusieurs segments).
-        "pagerduty" | "opsgenie" | "grafana_oncall" | "signl4" | "vonage" | "telnyx" | "aspsms"
+        "pagerduty"
+        | "opsgenie"
+        | "grafana_oncall"
+        | "signl4"
+        | "vonage"
+        | "telnyx"
+        | "aspsms"
         | crate::oncall::CHANNEL_KIND => "none",
         "ntfy" | "telegram" | super::webpush::KIND => "buttons",
         _ => "links",
