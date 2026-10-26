@@ -347,8 +347,8 @@
 									<Plate
 										tone="info"
 										bare
-										label={user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : user.auth === 'ldap' ? 'LDAP' : m.settings_users_auth_password()}
-										title={user.auth === 'oidc' ? m.settings_users_auth_sso_title() : user.auth === 'ldap' ? m.settings_users_auth_ldap_title() : m.settings_users_auth_password_title()}
+										label={user.auth === 'saml' ? auth.saml.label || 'SAML' : user.auth === 'oidc' ? auth.oidc.provider_name || 'SSO' : user.auth === 'ldap' ? 'LDAP' : m.settings_users_auth_password()}
+										title={user.auth === 'oidc' || user.auth === 'saml' ? m.settings_users_auth_sso_title() : user.auth === 'ldap' ? m.settings_users_auth_ldap_title() : m.settings_users_auth_password_title()}
 									/>
 									{#if user.totp_enabled}<Plate tone="signal" bare label="2FA" title={m.settings_users_2fa_title()} />{/if}
 									{#if user.disabled}<Plate tone="muted" label={m.settings_users_disabled()} />{/if}
