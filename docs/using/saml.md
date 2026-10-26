@@ -23,8 +23,9 @@ sign-in URL and the signing certificate.
 
 ## Security
 
-- **Signed assertions are required.** Algorithms are SHA-256 or stronger;
-  **SHA-1 is refused**. An unsigned assertion is rejected.
+- **Signatures are required**: on the assertion, on the whole response, or
+  both. Algorithms are SHA-256 or stronger; **SHA-1 is refused**. A response
+  where neither is signed is rejected.
 - Audience, destination, expiration and `InResponseTo` are checked, and an
   assertion can be used only once (replay protection).
 - **IdP-initiated sign-in** (starting from the IdP portal) is optional and
@@ -97,8 +98,8 @@ Two-factor authentication, when the account has it, is still asked.
    metadata URL.
 2. Set *Valid redirect URIs* and *Master SAML Processing URL* to the ACS URL;
    *Name ID format* = email.
-3. **Signature and Encryption**: **Sign assertions = ON**, algorithm
-   RSA_SHA256.
+3. **Signature and Encryption**: keep *Sign documents* on and turn **Sign
+   assertions** on as well (recommended), algorithm RSA_SHA256.
 4. **Client scopes → dedicated scope → Add mapper**: *User Property* `email`
    → attribute `email`; *User Property* `username` or a full-name mapper →
    `displayName`; *Group list* → attribute `groups` (turn *Full group path*

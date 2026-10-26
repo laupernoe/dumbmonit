@@ -732,11 +732,17 @@ async fn set_active(tx: &mut Transaction<'_, Sqlite>, id: i64, active: bool) -> 
     .execute(&mut **tx)
     .await
     .context("désactivation d'un compte SCIM")?;
-    sqlx::query("DELETE FROM auth_sessions WHERE user_id = ?")
-        .bind(id)
-        .execute(&mut **tx)
-        .await
-        .context("fermeture des sessions")?;
+    // Même garde que l'`UPDATE` : un compte promu administrateur entre-temps
+    // garde ses sessions.
+    sqlx::query(
+        "DELETE FROM auth_sessions WHERE user_id = ?
+         AND EXISTS (SELECT 1 FROM users WHERE id = ? AND role <> 'admin')",
+    )
+    .bind(id)
+    .bind(id)
+    .execute(&mut **tx)
+    .await
+    .context("fermeture des sessions")?;
     Ok(())
 }
 

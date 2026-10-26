@@ -75,7 +75,10 @@ exclusive canonicalization by `bergshamra`, on the aws-lc-rs engine that rustls
 already uses; no libxml2 or xmlsec1, and not the RustCrypto `rsa` crate). It is
 configured with its strictest policy:
 
-- the `Assertion` itself must be signed, a signed `Response` alone is refused;
+- the consumed `Assertion` must be covered by a verified signature: its own,
+  or that of the root `Response` that contains it (Keycloak signs only the
+  document by default). Only the signed content is read: an unsigned assertion
+  next to a signed one, or a signed response wrapped inside another, is refused;
 - RSA with SHA-256 or stronger only (SHA-1 refused), one same-document
   reference, exclusive canonicalization, no other transforms;
 - verification keys come only from the certificates the administrator saved,
@@ -95,8 +98,9 @@ only verifies the assertion and hands a one-time ticket to
 started the sign-in (a cookie bound to the `RelayState`). This stops an attacker
 from logging a victim into the attacker's own account. The tests replay
 responses shaped like those of Entra ID, Okta and Keycloak, and hostile
-variants (unsigned, tampered, signature wrapping, wrong audience or
-destination, expired, replayed, SHA-1), signed offline by
+variants (unsigned, tampered, signature wrapping of the assertion or of the
+response, wrong audience or destination, expired or not yet valid, replayed,
+SHA-1), signed offline by
 `crates/server/tests/fixtures/saml/generate.py`.
 
 ## Verification
