@@ -152,6 +152,17 @@ pub struct Bundle {
     /// Règles de la carte, acceptées ou refusées (migration 0072).
     #[serde(default)]
     pub topology_rules: Vec<BundleTopologyRule>,
+    /// Procédures et leurs rattachements (migration 0150).
+    #[serde(default)]
+    pub runbooks: Vec<BundleRunbook>,
+    /// Actions de remédiation, secrets compris (migration 0151).
+    #[serde(default)]
+    pub remediation_actions: Vec<BundleRemediationAction>,
+    /// Politiques automatiques. Toujours restaurées **désarmées** : armer une
+    /// action sur une machine se confirme en personne, pas en relisant un
+    /// fichier. Le journal des exécutions, lui, ne voyage pas.
+    #[serde(default)]
+    pub remediation_policies: Vec<BundleRemediationPolicy>,
 }
 
 impl Bundle {
@@ -174,6 +185,9 @@ impl Bundle {
             ("locations".to_string(), self.locations.len()),
             ("topology_corrections".to_string(), self.topology_corrections.len()),
             ("topology_rules".to_string(), self.topology_rules.len()),
+            ("runbooks".to_string(), self.runbooks.len()),
+            ("remediation_actions".to_string(), self.remediation_actions.len()),
+            ("remediation_policies".to_string(), self.remediation_policies.len()),
         ])
     }
 }
@@ -851,4 +865,41 @@ mod tests {
         envelope.kdf.t_cost = 16;
         assert!(open(&envelope, PHRASE).is_err());
     }
+}
+
+/// Une procédure : titre, texte Markdown et rattachements (règle par uid,
+/// dossier, type d'équipement — rien qui dépende des identifiants locaux).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRunbook {
+    pub title: String,
+    #[serde(default)]
+    pub body: String,
+    #[serde(default)]
+    pub links: Vec<crate::remediation::runbooks::RunbookLink>,
+}
+
+/// Une action de remédiation. L'équipement fixé est désigné par
+/// [`target_ref`] ; les secrets voyagent dans la charge chiffrée du lot.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRemediationAction {
+    pub name: String,
+    pub kind: String,
+    #[serde(default)]
+    pub params: Value,
+    #[serde(default)]
+    pub secrets: BTreeMap<String, String>,
+    #[serde(default)]
+    pub target: Option<String>,
+}
+
+/// Une politique automatique, désignée par le nom de son action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRemediationPolicy {
+    pub action: String,
+    pub rule_uid: String,
+    #[serde(default)]
+    pub target: Option<String>,
+    pub after_minutes: i64,
+    pub max_attempts: i64,
+    pub window_minutes: i64,
 }

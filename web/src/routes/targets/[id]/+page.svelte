@@ -63,6 +63,7 @@
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import SecurityBadge from '#lib/components/devices/SecurityBadge.svelte';
 	import CveDeviceCard from '#lib/components/cves/CveDeviceCard.svelte';
+	import TargetRemediation from '#lib/components/remediation/TargetRemediation.svelte';
 	import SecurityReport from '#lib/components/devices/SecurityReport.svelte';
 	import { getTargetSecurity } from '#lib/api/security.js';
 	import type { SecurityReport as SecurityReportData } from '#lib/api/index.js';
@@ -781,6 +782,11 @@
 			onackchange={() => void loadContext()}
 		/>
 	</section>
+
+	<!-- Runbooks that apply to this device, and its recent remediation runs -->
+	{#key target.id}
+		<TargetRemediation targetId={target.id} />
+	{/key}
 
 	<!-- What this kind of device has to show beyond charts (guests, backup calendar, disks…) -->
 	{#if hasKindPanel(target.kind)}

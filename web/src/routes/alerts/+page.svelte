@@ -281,6 +281,8 @@
 
 <PageHeader title={m.alerts_page_title()}>
 	{#snippet actions()}
+		<!-- Remediation log, runbooks and actions: the nav carries it on desktop only. -->
+		<Button variant="ghost" href="/actions" class="sm:hidden">{m.remediation_page_title()}</Button>
 		{#if auth.canOperate}
 			<Button
 				variant="secondary"

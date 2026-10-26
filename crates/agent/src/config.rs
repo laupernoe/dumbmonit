@@ -95,6 +95,9 @@ struct FileConfig {
     docker_update_check: Option<bool>,
     docker_max_containers: Option<usize>,
     commands: Option<bool>,
+    actions: Option<bool>,
+    actions_dir: Option<String>,
+    action_services: Option<Vec<String>>,
     relay: Option<bool>,
     site: Option<String>,
     interfaces_ignore: Option<Patterns>,
@@ -248,6 +251,9 @@ pub struct Config {
     /// Accepter les actions envoyées par le serveur (redémarrage, mise à jour
     /// de conteneur). Faux : l'agent ne fait que mesurer.
     pub commands: bool,
+    /// Actions de remédiation (services, scripts locaux). Désactivées par
+    /// défaut, et bornées par ce que la machine déclare : voir `remediation.rs`.
+    pub actions: crate::remediation::ActionsConfig,
     /// Relayer les interrogations que le serveur délègue à cet agent : il
     /// exécute alors lui-même les collecteurs (SNMP, Proxmox, HTTP…) contre les
     /// équipements de son propre réseau. Désactivé par défaut : un agent
@@ -319,6 +325,7 @@ impl fmt::Debug for Config {
             .field("docker_update_check", &self.docker_update_check)
             .field("docker_max_containers", &self.docker_max_containers)
             .field("commands", &self.commands)
+            .field("actions", &self.actions)
             .field("relay", &self.relay)
             .field("site", &self.site)
             .field("probe", &self.probe)
@@ -503,6 +510,21 @@ impl Config {
             flag("DUMBMONIT_AGENT_DOCKER_UPDATE_CHECK", file.docker_update_check, true)?;
         let commands = flag("DUMBMONIT_AGENT_COMMANDS", file.commands, true)?;
         let relay = flag("DUMBMONIT_AGENT_RELAY", file.relay, false)?;
+        // Remédiation : refusée tant que la machine ne l'a pas demandée.
+        let actions = crate::remediation::ActionsConfig {
+            enabled: flag("DUMBMONIT_AGENT_ACTIONS", file.actions, false)?,
+            dir: env
+                .get("DUMBMONIT_AGENT_ACTIONS_DIR")
+                .or(file.actions_dir)
+                .map(|dir| dir.trim().to_string())
+                .filter(|dir| !dir.is_empty())
+                .map(PathBuf::from)
+                .unwrap_or_else(|| crate::remediation::default_dir(config_path)),
+            services: match env.get("DUMBMONIT_AGENT_ACTION_SERVICES") {
+                Some(raw) => split_list(&raw),
+                None => file.action_services.unwrap_or_default(),
+            },
+        };
         let site = env
             .get("DUMBMONIT_AGENT_SITE")
             .or(file.site)
@@ -786,6 +808,7 @@ impl Config {
             docker_update_check,
             docker_max_containers,
             commands,
+            actions,
             relay,
             site,
             probe,

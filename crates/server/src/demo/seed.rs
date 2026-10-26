@@ -163,6 +163,7 @@ pub async fn push_agent_batch(
         tags: BTreeMap::new(),
         binding_supported: true,
         self_update: None,
+        remediation: None,
     };
     let batch = PushBatch {
         protocol: PUSH_PROTOCOL_VERSION,

@@ -475,6 +475,7 @@ async fn a_refused_command_is_reported_as_failed_with_the_reason() {
         client,
         key: "nas".into(),
         docker: DockerClient::new(std::path::Path::new("/inexistant/docker.sock")),
+        actions: crate::remediation::ActionsConfig::default(),
     };
     let command: AgentCommand =
         serde_json::from_value(pending(9, CMD_CONTAINER_RESTART, "dumbmonit-1", 0)).unwrap();
@@ -495,6 +496,7 @@ async fn an_unreachable_docker_daemon_fails_the_command_with_its_log() {
         client,
         key: "nas".into(),
         docker: DockerClient::new(std::path::Path::new("/inexistant/docker.sock")),
+        actions: crate::remediation::ActionsConfig::default(),
     };
     let command: AgentCommand =
         serde_json::from_value(pending(4, CMD_CONTAINER_UPDATE, "web", 0)).unwrap();
@@ -502,4 +504,29 @@ async fn an_unreachable_docker_daemon_fails_the_command_with_its_log() {
     assert_eq!(reported_statuses(&server, 4), ["running", "failed"]);
     let last = server.bodies("POST", "/api/agent/commands/4").pop().unwrap();
     assert!(last.contains("error:"), "{last}");
+}
+
+#[tokio::test]
+async fn a_remediation_command_is_refused_while_actions_are_off() {
+    let (url, server) = fake_http(|_| (204, String::new())).await;
+    let client = PushClient::new(&url, "dmon_t", None, Duration::from_secs(5)).unwrap();
+    let executor = Executor {
+        client,
+        key: "nas".into(),
+        docker: DockerClient::new(std::path::Path::new("/inexistant/docker.sock")),
+        actions: crate::remediation::ActionsConfig::default(),
+    };
+    let command = AgentCommand {
+        id: 11,
+        kind: dumbmonit_proto::CMD_SERVICE_RESTART.into(),
+        args: serde_json::json!({ "name": "nginx" }),
+        created_at_ms: 0,
+    };
+    executor.execute(command).await;
+
+    let bodies = server.bodies("POST", "/api/agent/commands/11");
+    assert_eq!(bodies.len(), 1, "refused before running: no running report");
+    let report: Value = serde_json::from_str(&bodies[0]).unwrap();
+    assert_eq!(report["status"], "failed");
+    assert!(report["result"].as_str().unwrap().contains("actions: false"), "{report}");
 }

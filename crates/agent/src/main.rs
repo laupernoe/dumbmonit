@@ -17,6 +17,7 @@ mod identity;
 #[cfg(any(windows, test))]
 mod logfile;
 mod relay;
+mod remediation;
 mod run;
 mod selfupdate;
 mod shutdown;
