@@ -111,7 +111,8 @@ export const UPTIME_KINDS = [
 	'postgres',
 	'mysql',
 	'mqtt',
-	'websocket'
+	'websocket',
+	'provider'
 ] as const;
 
 export function isUptimeKind(kind: string): boolean {

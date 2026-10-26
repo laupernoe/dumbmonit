@@ -48,6 +48,11 @@ fn service_main(_arguments: Vec<OsString>) {
 }
 
 fn run_service() -> Result<()> {
+    // Nouveau binaire à l'essai qui s'arrête au démarrage : l'ancien est
+    // rétabli, et la sortie sans annonce d'arrêt fait relancer le service.
+    if let Some(action) = crate::selfupdate::on_start() {
+        return crate::selfupdate::after_stop(action);
+    }
     let config_path =
         CONFIG_PATH.get().cloned().unwrap_or_else(crate::config::Config::default_path);
     // La configuration fixe le niveau du journal, mais une configuration

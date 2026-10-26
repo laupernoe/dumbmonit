@@ -53,7 +53,7 @@ named by id or by name. Times are UTC, RFC 3339.";
 
 /// Types de cibles qui surveillent un *service* : leur état vient du résultat de
 /// la sonde (`dumbmonit_probe_success`), pas de la dernière interrogation.
-const UPTIME_KINDS: [&str; 6] = ["http", "tcp", "dns", "ping", "tls", "push"];
+const UPTIME_KINDS: [&str; 7] = ["http", "tcp", "dns", "ping", "tls", "push", "provider"];
 
 /// Fenêtre de fraîcheur d'un résultat de sonde, alignée sur l'interface.
 const PROBE_WINDOW: &str = "10m";

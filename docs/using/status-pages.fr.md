@@ -470,6 +470,65 @@ et les aperçus de liens n'exécutent pas JavaScript : ils les lisent telles que
 Une page brouillon, inconnue ou non indexable ne montre jamais son titre, et les
 variantes `/embed`, `/confirm` et `/unsubscribe` ne sont jamais indexées.
 
+### Pages privées {#private}
+
+Par défaut une page est ouverte à toute personne qui a le lien. **Qui peut voir
+cette page**, dans l'éditeur, change cela :
+
+- **Toute personne avec le lien** : le défaut.
+- **Toute personne avec le mot de passe** : les visiteurs voient d'abord un
+  formulaire de mot de passe. Le mot de passe (8 caractères au minimum) est
+  stocké haché en Argon2id et n'est jamais réaffiché ; laissez le champ vide
+  pour garder l'actuel. Un mot de passe correct pose un cookie d'accès signé,
+  valable 12 heures. Changer le mot de passe met fin à tous les accès déjà
+  accordés. Les erreurs sont comptées par adresse et par page : après cinq, les
+  essais suivants attendent 30 secondes, en doublant jusqu'à cinq minutes.
+- **Utilisateurs DumbMonit connectés** : tout compte, local, LDAP ou SSO, quel
+  que soit son rôle. Les visiteurs sans session sont envoyés vers l'écran de
+  connexion et reviennent sur la page. Le cookie de session appartient à
+  l'adresse principale : ce mode ne fonctionne pas derrière un
+  [domaine personnalisé](#custom-domain), utilisez-y un mot de passe.
+
+Une page qui n'est pas publique n'est **jamais indexée**, quoi que dise son bloc
+SEO : elle répond `noindex, nofollow`, reste hors de `/sitemap.xml` et n'expose
+aucun titre dans le HTML. Tout ce qui sort de la page par son adresse suit le
+même accès : le document JSON, les badges, les flux RSS et [iCal](#ical), le
+logo, le détail d'un jour et l'abonnement par e-mail. Les réponses portent
+`Cache-Control: private, no-store`. Un badge est une image chargée par le
+navigateur du lecteur : il ne s'affiche que là où ce navigateur a déjà l'accès,
+et reste cassé dans un README. L'intégration (embed) et la
+[bannière de site web](../integrations/website-banner.md) demandent aussi le
+même accès.
+
+### Calendrier des maintenances (iCal) {#ical}
+
+Les maintenances planifiées se suivent depuis une application de calendrier
+(Google Agenda, Outlook, Thunderbird, Calendrier Apple) abonnée à un flux
+iCalendar :
+
+- `GET /api/public/status/<adresse>/maintenance.ics` : les maintenances
+  annoncées sur la page (et celles de toutes les pages), de 90 jours en arrière
+  à l'avenir lointain. Il suit le mode d'accès de la page et figure sous
+  **Recevoir les mises à jour** sur la page publique.
+- `GET /api/calendar/maintenance.ics?token=…` : toutes les maintenances de
+  l'instance. Le jeton est dans l'adresse et c'est la seule protection :
+  partagez-la comme un mot de passe. Les administrateurs la lisent, et la
+  remplacent avec **Nouvelle adresse**, dans le bloc **Calendrier des
+  maintenances** de l'éditeur de page.
+
+Chaque maintenance est un événement, avec son titre, son début, sa fin (une
+heure si elle n'est pas fixée) et son dernier message en description. Les
+incidents n'y figurent pas.
+
+### Fournisseurs tiers {#fournisseurs}
+
+Votre page peut montrer un fournisseur dont vous dépendez, à côté de vos propres
+services. Ajoutez un moniteur [**État d'un fournisseur tiers**](../devices/provider.md)
+(Cloudflare, GitHub, Atlassian, AWS…) et placez-le sur la page comme n'importe
+quel moniteur : il apparaît avec une étiquette **Externe**, son propre historique
+et les états habituels. La page du fournisseur est lue au plus une fois par
+minute, et partagée entre les moniteurs et les pages.
+
 ### Flux et document
 
 - `GET /api/public/status/<adresse>/rss` — un flux RSS des incidents

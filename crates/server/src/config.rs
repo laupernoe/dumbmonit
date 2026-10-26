@@ -31,6 +31,29 @@ pub struct Config {
     pub vm_retention: String,
     /// Budget mémoire des caches du VictoriaMetrics embarqué (`-memory.allowedBytes`).
     pub vm_memory: String,
+    /// Vrai si `DUMBMONIT_VM_RETENTION` est donnée : l'interface dit alors d'où
+    /// vient la valeur tant qu'aucun réglage ne la remplace.
+    pub vm_retention_from_env: bool,
+    /// Idem pour `DUMBMONIT_VM_LONG_RETENTION`.
+    pub vm_long_retention_from_env: bool,
+    /// URL d'un VictoriaMetrics externe pour l'historique long terme
+    /// (`DUMBMONIT_VM_LONG_URL`). `None` : un second processus embarqué, sous
+    /// `/data/vm-long`, quand le premier l'est aussi.
+    pub vm_long_url: Option<String>,
+    /// Adresse d'écoute du VictoriaMetrics long terme embarqué.
+    pub vm_long_listen: String,
+    /// Rétention par défaut de l'historique long terme, avant tout réglage fait
+    /// dans l'interface (même syntaxe que `vm_retention`).
+    pub vm_long_retention: String,
+    /// Budget mémoire du VictoriaMetrics long terme : il ne reçoit qu'un point
+    /// toutes les cinq minutes par série, de petits caches suffisent.
+    pub vm_long_memory: String,
+    /// Binaire VictoriaLogs embarqué (`DUMBMONIT_VLOGS_BINARY`).
+    pub vlogs_binary: PathBuf,
+    /// Adresse d'écoute du VictoriaLogs embarqué.
+    pub vlogs_listen: String,
+    /// Budget mémoire du VictoriaLogs embarqué.
+    pub vlogs_memory: String,
     /// Secret d'instance, fourni par l'environnement ou lu depuis `data_dir`.
     /// `None` ici signifie « à charger ou générer au démarrage ».
     pub secret: Option<String>,
@@ -213,6 +236,17 @@ impl Config {
             vm_listen: env_or("DUMBMONIT_VM_LISTEN", "127.0.0.1:8428"),
             vm_retention: env_or("DUMBMONIT_VM_RETENTION", "12"),
             vm_memory: env_or("DUMBMONIT_VM_MEMORY", "256MB"),
+            vm_retention_from_env: env_var("DUMBMONIT_VM_RETENTION").is_some(),
+            vm_long_retention_from_env: env_var("DUMBMONIT_VM_LONG_RETENTION").is_some(),
+            vm_long_url: env_var("DUMBMONIT_VM_LONG_URL")
+                .map(|url| url.trim_end_matches('/').to_string())
+                .filter(|url| !url.is_empty()),
+            vm_long_listen: env_or("DUMBMONIT_VM_LONG_LISTEN", "127.0.0.1:8429"),
+            vm_long_retention: env_or("DUMBMONIT_VM_LONG_RETENTION", "730d"),
+            vm_long_memory: env_or("DUMBMONIT_VM_LONG_MEMORY", "64MB"),
+            vlogs_binary: PathBuf::from(env_or("DUMBMONIT_VLOGS_BINARY", "/victoria-logs-prod")),
+            vlogs_listen: env_or("DUMBMONIT_VLOGS_LISTEN", "127.0.0.1:9428"),
+            vlogs_memory: env_or("DUMBMONIT_VLOGS_MEMORY", "64MB"),
             secret: env_var("DUMBMONIT_SECRET"),
             max_concurrent_probes: env_parsed("DUMBMONIT_MAX_CONCURRENT_PROBES", "64")?,
             probe_timeout: Duration::from_secs(env_parsed("DUMBMONIT_PROBE_TIMEOUT_SECS", "10")?),
@@ -291,6 +325,38 @@ impl Config {
     /// qu'un seul volume porte toute la persistance.
     pub fn vm_data_path(&self) -> PathBuf {
         self.data_dir.join("vm")
+    }
+
+    /// Répertoire du VictoriaMetrics long terme embarqué (agrégats 5 min).
+    pub fn vm_long_data_path(&self) -> PathBuf {
+        self.data_dir.join("vm-long")
+    }
+
+    /// Répertoire du VictoriaLogs embarqué.
+    pub fn vlogs_data_path(&self) -> PathBuf {
+        self.data_dir.join("vlogs")
+    }
+
+    /// URL effective du stockage long terme : l'externe s'il est désigné, sinon
+    /// le processus embarqué — qui n'existe que si VictoriaMetrics l'est aussi.
+    pub fn effective_long_url(&self) -> Option<String> {
+        match &self.vm_long_url {
+            Some(url) => Some(url.clone()),
+            None if self.vm_embedded() => {
+                Some(format!("http://{}", loopback_address(&self.vm_long_listen)))
+            }
+            None => None,
+        }
+    }
+
+    /// Le stockage long terme est-il un processus lancé par ce serveur ?
+    pub fn vm_long_embedded(&self) -> bool {
+        self.vm_long_url.is_none() && self.vm_embedded()
+    }
+
+    /// URL du VictoriaLogs embarqué.
+    pub fn vlogs_url(&self) -> String {
+        format!("http://{}", loopback_address(&self.vlogs_listen))
     }
 
     /// Répertoire des sauvegardes locales.
