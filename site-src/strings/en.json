@@ -193,6 +193,8 @@
  "fam_servers_blurb": "Linux, Windows, macOS and FreeBSD machines through the agent, server hardware through its management controller, UPS units and Active Directory.",
  "fam_network_name": "Network equipment",
  "fam_network_blurb": "Switches, routers, access points and VPNs: any SNMP device, MikroTik, UniFi, Tailscale and OpenVPN.",
+ "fam_cloud_name": "Cloud services",
+ "fam_cloud_blurb": "Microsoft 365, Entra ID, Azure, AWS, Cloudflare, Hetzner, OVHcloud and Infomaniak: service health, licences, secrets about to expire, tunnels, servers and alarms.",
  "fam_firewalls_name": "Firewalls",
  "fam_firewalls_blurb": "OPNsense, pfSense, FortiGate and Sophos: gateways, tunnels, interfaces, high availability and licences.",
  "fam_hypervisors_name": "Hypervisors and clusters",

@@ -1,0 +1,18 @@
+{
+  "result": [
+    {"id": "f70ff985-a4ef-4643-bbbc-4a0ed4fc8415", "name": "home-lab", "status": "healthy", "tun_type": "cfd_tunnel",
+     "created_at": "2025-03-12T10:00:00.000000Z", "deleted_at": null,
+     "connections": [
+       {"colo_name": "CDG", "id": "1bedc50d-42b3-473c-b108-ff3d10c0d925", "is_pending_reconnect": false},
+       {"colo_name": "AMS", "id": "2bedc50d-42b3-473c-b108-ff3d10c0d926", "is_pending_reconnect": false}]},
+    {"id": "a1b2c3d4-0000-4000-8000-000000000002", "name": "office", "status": "degraded", "tun_type": "cfd_tunnel",
+     "created_at": "2025-05-01T08:00:00.000000Z", "deleted_at": null,
+     "connections": [{"colo_name": "CDG", "id": "3bedc50d-42b3-473c-b108-ff3d10c0d927", "is_pending_reconnect": false}]},
+    {"id": "a1b2c3d4-0000-4000-8000-000000000003", "name": "nas", "status": "down", "tun_type": "cfd_tunnel",
+     "created_at": "2025-06-01T08:00:00.000000Z", "deleted_at": null, "connections": []},
+    {"id": "a1b2c3d4-0000-4000-8000-000000000004", "name": "spare", "status": "inactive", "tun_type": "cfd_tunnel",
+     "created_at": "2026-01-01T08:00:00.000000Z", "deleted_at": null, "connections": []}
+  ],
+  "result_info": {"page": 1, "per_page": 50, "count": 4, "total_count": 4, "total_pages": 1},
+  "success": true, "errors": [], "messages": []
+}

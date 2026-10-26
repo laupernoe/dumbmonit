@@ -637,6 +637,506 @@
    ]
   },
   {
+   "kind": "m365",
+   "label": "Microsoft 365",
+   "family": "cloud",
+   "summary": "Microsoft 365 service health, active incidents, license usage and risky users, read through Microsoft Graph.",
+   "examples": [
+    "Contoso Microsoft 365"
+   ],
+   "typical": "Service health, incidents, licenses, risky users",
+   "credential": "Entra application (client ID and secret)",
+   "credentials": [
+    {
+     "kind": "username_password",
+     "label": "Entra application (client credentials)",
+     "help": "The application (client) ID and a client secret of an Entra app registration with read-only Graph application permissions."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only Entra application for DumbMonit",
+    "steps": [
+     "In the Microsoft Entra admin center (entra.microsoft.com), open Entra ID → App registrations → New registration, name it DumbMonit, keep a single tenant and register it.",
+     "On the Overview page, copy the Application (client) ID and the Directory (tenant) ID.",
+     "Open API permissions → Add a permission → Microsoft Graph → Application permissions, add the permissions listed below, then click Grant admin consent.",
+     "Open Certificates & secrets → New client secret and copy its Value (not the Secret ID): it is shown once and it expires, so note the date.",
+     "In DumbMonit, enter graph.microsoft.com as address, paste the client ID and the secret value, and fill in the Tenant ID option."
+    ],
+    "warning": "Admin consent gives the application tenant-wide read access to the data above. Use a dedicated app registration with only these permissions, and renew its client secret before it expires."
+   },
+   "doc": {
+    "page": "m365",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Microsoft 365 service degraded",
+     "description": "A Microsoft 365 service is degraded, interrupted or under investigation according to the service health dashboard.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Microsoft 365 licenses exhausted",
+     "description": "Every unit of a paid license is assigned: the next user cannot be given it.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Microsoft 365 licenses nearly full",
+     "description": "More than 95 % of a paid license is assigned.",
+     "severity": "info"
+    },
+    {
+     "name": "Microsoft 365 users at risk",
+     "description": "Entra ID Protection flags at least one user as at risk.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "entra",
+   "label": "Microsoft Entra ID",
+   "family": "cloud",
+   "summary": "Entra ID application secret and certificate expiry, on-premises directory sync age and administrators without MFA, read through Microsoft Graph.",
+   "examples": [
+    "Contoso Entra ID"
+   ],
+   "typical": "Application secret expiry, directory sync, admin MFA",
+   "credential": "Entra application (client ID and secret)",
+   "credentials": [
+    {
+     "kind": "username_password",
+     "label": "Entra application (client credentials)",
+     "help": "The application (client) ID and a client secret of an Entra app registration with read-only Graph application permissions."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only Entra application for DumbMonit",
+    "steps": [
+     "In the Microsoft Entra admin center (entra.microsoft.com), open Entra ID → App registrations → New registration, name it DumbMonit, keep a single tenant and register it.",
+     "On the Overview page, copy the Application (client) ID and the Directory (tenant) ID.",
+     "Open API permissions → Add a permission → Microsoft Graph → Application permissions, add the permissions listed below, then click Grant admin consent.",
+     "Open Certificates & secrets → New client secret and copy its Value (not the Secret ID): it is shown once and it expires, so note the date.",
+     "In DumbMonit, enter graph.microsoft.com as address, paste the client ID and the secret value, and fill in the Tenant ID option."
+    ],
+    "warning": "Admin consent gives the application tenant-wide read access to the data above. Use a dedicated app registration with only these permissions, and renew its client secret before it expires: DumbMonit watches its own secret like any other."
+   },
+   "doc": {
+    "page": "entra",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Certificate expired",
+     "description": "The certificate has expired.",
+     "severity": "warning"
+    },
+    {
+     "name": "Entra application secret expiring",
+     "description": "A secret or certificate of an Entra application expires in less than 30 days: the application stops signing in on that day.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Entra application secret expired",
+     "description": "A secret or certificate of an Entra application expired in the last 30 days: remove it, or renew it if the application still needs it.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Entra directory sync late",
+     "description": "The last synchronization with the on-premises Active Directory is more than 3 hours old: check Entra Connect.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Entra administrator without MFA",
+     "description": "At least one administrator has no multifactor authentication method registered.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "azure",
+   "label": "Microsoft Azure",
+   "family": "cloud",
+   "summary": "Resource Health and active Azure Monitor alerts of an Azure subscription, read through a Reader service principal.",
+   "examples": [
+    "Microsoft Azure subscription"
+   ],
+   "typical": "Resource Health of every resource and active Azure Monitor alerts by severity",
+   "credential": "Entra application (client ID and secret) with the Reader role on the subscription",
+   "credentials": [
+    {
+     "kind": "username_password",
+     "label": "Entra application (service principal)",
+     "help": "The client ID and a client secret of an Entra application that has the Reader role on the subscription."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only application for DumbMonit",
+    "steps": [
+     "In the Azure portal, open Microsoft Entra ID > App registrations > New registration, name it DumbMonit, keep single tenant, then Register.",
+     "On the Overview page, copy the Application (client) ID and the Directory (tenant) ID.",
+     "Open Certificates & secrets > New client secret, choose a lifetime, then copy the secret Value: it is shown once.",
+     "Open Subscriptions > your subscription > Access control (IAM) > Add > Add role assignment, pick the Reader role, select the DumbMonit application, then Review + assign.",
+     "Copy the Subscription ID from the subscription Overview page.",
+     "In DumbMonit, enter management.azure.com as address, paste the client ID and secret, and fill the Tenant ID and Subscription ID options."
+    ],
+    "warning": "A stopped or deallocated virtual machine is reported by Azure as unavailable on the user's request: it is counted apart and raises no alert. Azure Monitor alerts need the Microsoft.AlertsManagement resource provider registered on the subscription; without it only Resource Health is monitored."
+   },
+   "doc": {
+    "page": "azure",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Azure resource unavailable",
+     "description": "Resource Health reports a resource of the subscription as unavailable for 10 minutes (not counting resources stopped by their owner).",
+     "severity": "warning"
+    },
+    {
+     "name": "Azure resource degraded",
+     "description": "Resource Health reports a resource of the subscription as degraded for 15 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Azure Monitor alert Sev0 or Sev1",
+     "description": "An Azure Monitor alert of severity Sev0 (critical) or Sev1 (error) is fired and not closed.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "aws",
+   "label": "AWS (CloudWatch)",
+   "family": "cloud",
+   "summary": "CloudWatch alarms in the ALARM state, EC2 status checks and CPU, and RDS CPU and free storage.",
+   "examples": [
+    "Amazon EC2",
+    "Amazon RDS",
+    "CloudWatch alarms"
+   ],
+   "typical": "CloudWatch alarms in ALARM, EC2 status checks and CPU, RDS CPU and free storage",
+   "credential": "Access key ID and secret (read-only IAM user, optional role)",
+   "credentials": [
+    {
+     "kind": "username_password",
+     "label": "Access key",
+     "help": "Access key ID and secret access key of a read-only IAM user (or of a user allowed to assume a read-only role)."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only IAM user for DumbMonit",
+    "steps": [
+     "In the AWS console, open IAM, Policies, Create policy, JSON tab, paste this read-only policy and name it DumbMonitReadOnly.\n{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"cloudwatch:DescribeAlarms\",\"cloudwatch:ListMetrics\",\"cloudwatch:GetMetricData\"],\"Resource\":\"*\"}]}",
+     "Open IAM, Users, Create user: name it dumbmonit, leave console access off, and attach the DumbMonitReadOnly policy.",
+     "Open the user, Security credentials, Create access key, choose Application running outside AWS. Copy the access key ID and the secret access key: the secret is shown once.",
+     "Optional, to use a role instead: attach the policy to a role that trusts the user, give the user only sts:AssumeRole on that role, and copy the role ARN into the Role ARN option.",
+     "In DumbMonit, enter monitoring.<region>.amazonaws.com as the address, paste the key and its secret, and set the same region in the Region option."
+    ],
+    "warning": "Use a dedicated IAM user with only these read permissions, never a key that can change resources. AWS bills GetMetricData per metric requested (USD 0.01 per 1,000): a long check interval keeps the cost low on large accounts."
+   },
+   "doc": {
+    "page": "aws",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "AWS CloudWatch alarm in ALARM",
+     "description": "A CloudWatch alarm has been in the ALARM state for 5 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "AWS EC2 status check failed",
+     "description": "An EC2 instance has failed an instance or system status check for 10 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "AWS EC2 CPU high",
+     "description": "An EC2 instance has had a CPU peak above 90 % for 30 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "AWS RDS CPU high",
+     "description": "An RDS database has had a CPU peak above 90 % for 30 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "AWS RDS free storage low",
+     "description": "An RDS database has less than 5 GiB of free storage for 15 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "cloudflare",
+   "label": "Cloudflare",
+   "family": "cloud",
+   "summary": "Zones, tunnels, certificates, traffic errors and load balancer pools of a Cloudflare account, read through the Cloudflare API.",
+   "examples": [
+    "Cloudflare zones and tunnels"
+   ],
+   "typical": "Zones, tunnels, certificates, 5xx errors, load balancer pools",
+   "credential": "API token (read-only)",
+   "credentials": [
+    {
+     "kind": "api_token",
+     "label": "API token",
+     "help": "A Cloudflare API token with read-only permissions."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only API token for DumbMonit",
+    "steps": [
+     "In the Cloudflare dashboard, open My Profile > API Tokens > Create Token > Create Custom Token, and name it DumbMonit.",
+     "Add the read-only permissions listed below, and nothing else. The first one is required; the others switch on one part each.",
+     "Under Account Resources and Zone Resources, choose the account and the zones to monitor (All zones is fine).",
+     "Click Continue to summary > Create Token, then copy the token: it is shown once.",
+     "In DumbMonit, use this address and paste the token as API token. Leave Account ID empty unless the token covers several accounts.\napi.cloudflare.com"
+    ],
+    "warning": "A part whose permission is missing (or that the plan does not include) is skipped and its readable metric is 0; it does not make the monitor fail. Only the zones the token can see are watched."
+   },
+   "doc": {
+    "page": "cloudflare",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Cloudflare tunnel down",
+     "description": "A Cloudflare tunnel has no connection left and cannot carry traffic.",
+     "severity": "warning"
+    },
+    {
+     "name": "Cloudflare tunnel degraded",
+     "description": "A Cloudflare tunnel has lost some of its connections to the edge.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Cloudflare certificate expiring",
+     "description": "An active certificate of a zone expires in less than 14 days; Cloudflare should have renewed it by now.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Cloudflare zone not active",
+     "description": "A zone is not active (pending name server change, moved or deactivated).",
+     "severity": "advisory"
+    },
+    {
+     "name": "Cloudflare 5xx rate high",
+     "description": "More than 5% of the responses of a zone are 5xx over the last one to two hours (zones with at least 100 requests).",
+     "severity": "advisory"
+    },
+    {
+     "name": "Cloudflare load balancer pool unhealthy",
+     "description": "An enabled load balancer pool is unhealthy.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "hetzner",
+   "label": "Hetzner Cloud",
+   "family": "cloud",
+   "summary": "Servers, volumes and backups of a Hetzner Cloud project, read through the Hetzner Cloud API.",
+   "examples": [
+    "Hetzner Cloud project"
+   ],
+   "typical": "Servers, CPU, volumes, backups",
+   "credential": "API token (read-only)",
+   "credentials": [
+    {
+     "kind": "api_token",
+     "label": "API token",
+     "help": "A read-only API token of the Hetzner Cloud project."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only API token for DumbMonit",
+    "steps": [
+     "In the Hetzner Cloud Console, open the project to monitor, then Security > API tokens > Generate API token.",
+     "Name it DumbMonit and choose the Read permission (not Read & Write).",
+     "Click Generate API token, then copy the token: it is shown once.",
+     "In DumbMonit, use this address and paste the token as API token. One monitor reads one project.\napi.hetzner.cloud"
+    ],
+    "warning": "A server that is powered off is reported as not running, on purpose or not: mute the rule for it if that is expected. The API allows 3600 requests per hour and project, so server metrics are read for 10 servers by default."
+   },
+   "doc": {
+    "page": "hetzner",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Hetzner server not running",
+     "description": "A Hetzner Cloud server is not in the running state (off, migrating, stuck starting).",
+     "severity": "advisory"
+    },
+    {
+     "name": "Hetzner server CPU sustained high",
+     "description": "A Hetzner server averages more than 90% CPU over ten minutes, for 30 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Hetzner backup too old",
+     "description": "The newest backup of a server with backups enabled is more than 3 days old.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Hetzner volume not attached",
+     "description": "A volume is attached to no server, and is billed anyway.",
+     "severity": "info"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "ovh",
+   "label": "OVHcloud",
+   "family": "cloud",
+   "summary": "State and running tasks of the VPS and dedicated servers of an OVHcloud account, read through the OVHcloud API.",
+   "examples": [
+    "OVHcloud VPS and dedicated servers"
+   ],
+   "typical": "State and running tasks of the VPS and dedicated servers",
+   "credential": "OVHcloud API token (application key, application secret and consumer key) with GET /vps* and GET /dedicated/server*",
+   "credentials": [
+    {
+     "kind": "username_password",
+     "label": "OVHcloud API keys",
+     "help": "The application key, and the application secret and consumer key joined by a colon."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only API token for DumbMonit",
+    "steps": [
+     "Open the OVHcloud token page of your region and sign in with your OVHcloud account. The link pre-selects the two read rights.\nhttps://eu.api.ovh.com/createToken/?GET=/vps*&GET=/dedicated/server*",
+     "Name the script DumbMonit, set Validity to Unlimited, and keep only the two GET rights listed below, then click Create keys.",
+     "Copy the Application Key, the Application Secret and the Consumer Key: they are shown once.",
+     "In DumbMonit, enter eu.api.ovh.com as address (ca.api.ovh.com for OVHcloud Canada) and paste the Application Key as Application key.",
+     "In the second field, type the Application Secret, a colon, then the Consumer Key.\napplication_secret:consumer_key"
+    ],
+    "warning": "The OVHcloud API publishes no calendar of planned maintenance: DumbMonit sees an intervention only once it has started, as a running task. A VPS you stopped yourself counts as down. A dedicated server is reported in error only if OVHcloud monitoring is enabled on it. Either right may be omitted to watch only the other family."
+   },
+   "doc": {
+    "page": "ovh",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "OVHcloud VPS not running",
+     "description": "An OVHcloud VPS is not in the running state for 10 minutes.",
+     "severity": "advisory"
+    },
+    {
+     "name": "OVHcloud dedicated server in error",
+     "description": "OVHcloud monitoring reports a dedicated server in error, or powered off, for 5 minutes.",
+     "severity": "warning"
+    },
+    {
+     "name": "OVHcloud task in progress",
+     "description": "One or more tasks (reboot, reinstall, maintenance) have been pending or running on the servers for an hour.",
+     "severity": "info"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
+   "kind": "infomaniak",
+   "label": "Infomaniak",
+   "family": "cloud",
+   "summary": "Expiry dates, locks and maintenance flags of the products of an Infomaniak account (domains, hosting, mail), read through the Infomaniak API.",
+   "examples": [
+    "Infomaniak domains and hosting"
+   ],
+   "typical": "Expiry dates, locks and maintenance of domains, hosting and other products",
+   "credential": "Infomaniak API token with the Products scope",
+   "credentials": [
+    {
+     "kind": "api_token",
+     "label": "API token",
+     "help": "An Infomaniak API token with the Products scope."
+    }
+   ],
+   "default_port": 443,
+   "setup": {
+    "title": "Create a read-only API token for DumbMonit",
+    "steps": [
+     "Open the Infomaniak Manager token page and sign in.\nhttps://manager.infomaniak.com/v3/ng/profile/user/token/list",
+     "Click Create a token and name it DumbMonit.",
+     "Choose the scopes listed below, and set the validity you want (no expiry avoids renewing it).",
+     "Click Create the token, then copy it: it is shown once.",
+     "In DumbMonit, enter api.infomaniak.com as address and paste the token. Fill the Account ID option if the token has no Accounts scope."
+    ],
+    "warning": "The Infomaniak API gives no finer state than the expiry date, the lock and the maintenance flags of each product: it does not tell whether a site or a mailbox is up. Use an HTTP monitor for that."
+   },
+   "doc": {
+    "page": "infomaniak",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Infomaniak product expiring",
+     "description": "A product (domain, hosting, mail) expires in less than 14 days.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Infomaniak product expired",
+     "description": "The expiry date of a product has passed.",
+     "severity": "warning"
+    },
+    {
+     "name": "Infomaniak product locked",
+     "description": "Infomaniak flags a product as locked for an hour.",
+     "severity": "advisory"
+    },
+    {
+     "name": "Infomaniak product in maintenance",
+     "description": "Infomaniak flags a product as under maintenance for an hour.",
+     "severity": "info"
+    },
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
    "kind": "opnsense",
    "label": "OPNsense",
    "family": "firewalls",
@@ -4743,6 +5243,19 @@
     "unifi",
     "tailscale",
     "openvpn"
+   ]
+  },
+  {
+   "id": "cloud",
+   "kinds": [
+    "m365",
+    "entra",
+    "azure",
+    "aws",
+    "cloudflare",
+    "hetzner",
+    "ovh",
+    "infomaniak"
    ]
   },
   {

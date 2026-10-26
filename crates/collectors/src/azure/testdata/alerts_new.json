@@ -1,0 +1,44 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/providers/Microsoft.AlertsManagement/alerts/11111111-aaaa-bbbb-cccc-000000000001",
+      "type": "Microsoft.AlertsManagement/alerts",
+      "name": "High CPU",
+      "properties": {
+        "essentials": {
+          "severity": "Sev1",
+          "signalType": "Metric",
+          "alertState": "New",
+          "monitorCondition": "Fired",
+          "targetResource": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourcegroups/rg-data/providers/microsoft.compute/virtualmachines/vm-db",
+          "targetResourceName": "vm-db",
+          "targetResourceGroup": "rg-data",
+          "targetResourceType": "microsoft.compute/virtualmachines",
+          "monitorService": "Platform",
+          "alertRule": "https://management.azure.com/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-data/providers/microsoft.insights/metricAlerts/High CPU",
+          "startDateTime": "2026-10-26T07:50:00.0000000Z",
+          "lastModifiedDateTime": "2026-10-26T07:50:00.0000000Z"
+        }
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/providers/Microsoft.AlertsManagement/alerts/11111111-aaaa-bbbb-cccc-000000000002",
+      "type": "Microsoft.AlertsManagement/alerts",
+      "name": "Disk almost full",
+      "properties": {
+        "essentials": {
+          "severity": "Sev3",
+          "signalType": "Metric",
+          "alertState": "New",
+          "monitorCondition": "Fired",
+          "targetResourceName": "vm-web",
+          "targetResourceGroup": "rg-web",
+          "targetResourceType": "microsoft.compute/virtualmachines",
+          "monitorService": "Platform",
+          "alertRule": "https://management.azure.com/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-web/providers/microsoft.insights/metricAlerts/Disk almost full",
+          "startDateTime": "2026-10-25T22:00:00.0000000Z"
+        }
+      }
+    }
+  ]
+}
