@@ -34,7 +34,7 @@ use sqlx::SqlitePool;
 use crate::auth::session::SessionToken;
 use crate::auth::token::{self, ApiToken, Scope};
 use crate::auth::users::{self, User};
-use crate::auth::{AuthError, AuthState, cookie, session};
+use crate::auth::{AuthError, AuthState, cookie, session, teams};
 use crate::state::AppState;
 
 /// Session validée, déposée dans la requête pour les gestionnaires qui en ont
@@ -137,7 +137,7 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
 /// comptes (`/users/**`), jetons d'API et d'agents. Un jeton ne fabrique pas
 /// d'autres secrets et ne touche pas à qui peut se connecter.
 pub const TOKEN_DENIED: &[&str] =
-    &["/auth", "/users", "/tokens", "/agent/tokens", "/agent/ad-kit", "/agent/tls"];
+    &["/auth", "/users", "/teams", "/tokens", "/agent/tokens", "/agent/ad-kit", "/agent/tls"];
 
 const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
                                     authentication, SSO or other tokens: sign in to the web \
@@ -198,7 +198,18 @@ pub async fn require_session(
             Err(response) => return *response,
         };
         let api_token = checked.token.clone();
-        request.extensions_mut().insert(CurrentPrincipal(Principal::Token(checked.token)));
+        let principal = Principal::Token(checked.token.clone());
+        let access = match teams::access_for(&state.pool, &principal).await {
+            Ok(access) => access,
+            Err(error) => return AuthError::from(error).into_response(),
+        };
+        if let Err(error) = teams::guard(&state.pool, &access, &method, &path).await {
+            let mut response = error.into_response();
+            checked.rate.apply(response.headers_mut());
+            return response;
+        }
+        request.extensions_mut().insert(teams::CurrentAccess(access));
+        request.extensions_mut().insert(CurrentPrincipal(principal));
         let mut response = next.run(request).await;
         checked.rate.apply(response.headers_mut());
         if is_mutation(&method) {
@@ -226,18 +237,37 @@ pub async fn require_session(
         Err(error) => return error.into_response(),
     };
 
+    let access = match teams::access_for_user(&state.pool, &user).await {
+        Ok(access) => access,
+        Err(error) => return AuthError::from(error).into_response(),
+    };
+
     if is_mutation(request.method()) {
         if let Err(reason) = same_origin(request.headers()) {
             return AuthError::Forbidden(reason.into()).into_response();
         }
         let path = request.uri().path();
+        // Un opérateur restreint par ses équipes peut aussi modifier les
+        // équipements des dossiers qu'il gère : le niveau est vérifié juste
+        // après, par le garde des équipes.
         let allowed = user.role.is_admin()
             || is_self_service(path)
-            || (user.role.can_operate() && is_operator_route(request.method(), path));
+            || (user.role.can_operate() && is_operator_route(request.method(), path))
+            || (user.role.can_operate()
+                && access.is_scoped()
+                && teams::is_manage_route(request.method(), path));
         if !allowed {
             return AuthError::admin_required().into_response();
         }
     }
+
+    if let Err(error) =
+        teams::guard(&state.pool, &access, request.method(), request.uri().path()).await
+    {
+        return error.into_response();
+    }
+
+    request.extensions_mut().insert(teams::CurrentAccess(access));
 
     request.extensions_mut().insert(CurrentSession(token));
     request.extensions_mut().insert(CurrentPrincipal(Principal::User(user.clone())));

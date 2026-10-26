@@ -91,6 +91,10 @@ async fn require_read(State(state): State<AppState>, request: Request, next: Nex
         let ip = token::request_ip(request.extensions(), request.headers());
         return match token::check(&state.pool, request.headers(), ip, Scope::Read).await {
             Ok(checked) => {
+                let principal = auth_middleware::Principal::Token(checked.token.clone());
+                if let Err(response) = refuse_scoped(&state, &principal).await {
+                    return *response;
+                }
                 let mut response = next.run(request).await;
                 checked.rate.apply(response.headers_mut());
                 response
@@ -99,9 +103,34 @@ async fn require_read(State(state): State<AppState>, request: Request, next: Nex
         };
     }
     match auth_middleware::current_session(&state.pool, request.headers()).await {
-        Ok(Some(_)) => next.run(request).await,
+        Ok(Some((_, user))) => {
+            if let Err(response) =
+                refuse_scoped(&state, &auth_middleware::Principal::User(user)).await
+            {
+                return *response;
+            }
+            next.run(request).await
+        }
         Ok(None) => unauthorized(),
         Err(error) => error.into_response(),
+    }
+}
+
+/// Les séries brutes ne sont pas filtrées par équipe : un compte (ou le jeton
+/// d'un compte) restreint par ses équipes n'y a pas accès.
+async fn refuse_scoped(
+    state: &AppState,
+    principal: &auth_middleware::Principal,
+) -> Result<(), Box<Response>> {
+    match crate::auth::teams::access_for(&state.pool, principal).await {
+        Ok(access) if !access.is_scoped() => Ok(()),
+        Ok(_) => Err(Box::new(
+            AuthError::Forbidden(
+                "Team-restricted accounts cannot read raw metrics: use the web interface.".into(),
+            )
+            .into_response(),
+        )),
+        Err(error) => Err(Box::new(AuthError::from(error).into_response())),
     }
 }
 
