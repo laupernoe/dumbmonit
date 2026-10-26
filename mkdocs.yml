@@ -110,6 +110,9 @@ nav:
       - Home Assistant: devices/homeassistant.md
       - TrueNAS: devices/truenas.md
       - Unraid: devices/unraid.md
+      - QNAP QTS / QuTS hero: devices/qnap.md
+      - Ceph: devices/ceph.md
+      - MinIO: devices/minio.md
       - MikroTik RouterOS: devices/mikrotik.md
       - UPS with NUT: devices/nut.md
       - Server hardware (Redfish): devices/redfish.md

@@ -99,6 +99,7 @@ fn http_samples_are_recognised() {
         ("opnsense.web.txt", "opnsense.web", true),
         ("pfsense.web.txt", "pfsense.web", true),
         ("unraid.web.txt", "unraid.web", false),
+        ("qnap.qts.txt", "qnap.qts", true),
         ("fortigate.web.txt", "fortigate.web", true),
         ("sophos.fw.txt", "sophos.fw", true),
         ("omada.controller.txt", "omada.controller", true),
