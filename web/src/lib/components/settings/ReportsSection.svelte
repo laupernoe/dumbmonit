@@ -6,15 +6,17 @@
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { Info, Mail, Plus } from 'lucide-svelte';
-	import { listChannels, type Channel } from '#lib/api/index.js';
+	import { listChannels, listStatusPages, type Channel, type StatusPage } from '#lib/api/index.js';
 	import { listReportSchedules, type ReportSchedule } from '#lib/api/reports.js';
 	import { Button, EmptyState, ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ReportEditor from './ReportEditor.svelte';
+	import SlaDownload from './SlaDownload.svelte';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/using/reports/';
 
 	let schedules = $state<ReportSchedule[]>([]);
 	let channels = $state<Channel[]>([]);
+	let pages = $state<StatusPage[]>([]);
 	let loading = $state(true);
 	let error = $state<unknown>(null);
 	let adding = $state(false);
@@ -44,9 +46,14 @@
 		loading = true;
 		error = null;
 		try {
-			const [list, all] = await Promise.all([listReportSchedules(signal), listChannels(signal)]);
+			const [list, all, statusPages] = await Promise.all([
+				listReportSchedules(signal),
+				listChannels(signal),
+				listStatusPages(signal)
+			]);
 			schedules = Array.isArray(list) ? list : [];
 			channels = Array.isArray(all) ? all : [];
+			pages = Array.isArray(statusPages) ? statusPages : [];
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			error = cause;
@@ -121,7 +128,7 @@
 		<div class="grid gap-6">
 			{#each schedules as schedule (schedule.id)}
 				<div class="border-t border-line pt-6 first:border-t-0 first:pt-0">
-					<ReportEditor {schedule} channels={emailChannels} {defaultTimezone} {timezones} onsaved={saved} ondeleted={removed} />
+					<ReportEditor {schedule} channels={emailChannels} {defaultTimezone} {timezones} {pages} onsaved={saved} ondeleted={removed} />
 				</div>
 			{/each}
 
@@ -132,6 +139,7 @@
 						channels={emailChannels}
 						{defaultTimezone}
 						{timezones}
+						{pages}
 						onsaved={saved}
 						ondeleted={removed}
 						oncancel={() => (adding = false)}
@@ -155,5 +163,11 @@
 				</div>
 			{/if}
 		</div>
+	{/if}
+</Panel>
+
+<Panel id="reports-sla" title={m.settings_sla_title()} description={m.settings_sla_description()}>
+	{#if !loading && !error}
+		<SlaDownload {pages} {defaultTimezone} {timezones} />
 	{/if}
 </Panel>

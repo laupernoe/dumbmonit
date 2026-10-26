@@ -1,0 +1,23 @@
+# Instance jetable pour le test de charge (scripts/load/run.sh).
+# Le volume est nommé : l'image n'a pas de shell, la taille de /data se mesure
+# depuis un conteneur alpine qui monte le même volume.
+name: dumbmonit-load
+
+services:
+  dumbmonit:
+    image: ${DUMBMONIT_IMAGE:-ghcr.io/laupernoe/dumbmonit:edge}
+    ports:
+      - "127.0.0.1:${DUMBMONIT_LOAD_PORT:-18080}:8080"
+    environment:
+      DUMBMONIT_SETUP_CODE: ${DUMBMONIT_LOAD_SETUP_CODE:-LOADT-EST42}
+      DUMBMONIT_LOG: warn
+    volumes:
+      - dumbmonit-load-data:/data
+    read_only: true
+    tmpfs: [/tmp]
+    stop_grace_period: 30s
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  dumbmonit-load-data:
+    name: dumbmonit-load-data

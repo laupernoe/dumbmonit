@@ -6379,6 +6379,121 @@
     ]
   },
   {
+    "kind": "provider",
+    "label": "Third-party service status",
+    "summary": "The public status page of a provider you depend on (Cloudflare, GitHub, Atlassian, AWS…), read as a monitor: it fails when the provider reports an incident, so you hear about it before your users do.",
+    "examples": [
+      "Cloudflare",
+      "GitHub",
+      "Atlassian Cloud",
+      "The AWS Health feed"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "cloudflare",
+    "default_port": 0,
+    "setup": {
+      "title": "Watch a provider's status page",
+      "steps": [
+        "Enter a provider name (cloudflare, github, atlassian, aws, discord, npm…; the full list is in the guide), or the address of a Statuspage page or RSS/Atom feed.",
+        "To watch one part of the provider only, enter its name under Component, for example \"Workers\" or \"EC2\".",
+        "Choose what makes the monitor fail: any degradation, a partial outage or worse, or a major outage only."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Status page of the provider (HTTPS)",
+          "optional": false
+        }
+      ],
+      "warning": "The monitor reads what the provider chooses to publish, often minutes after the fact: it complements your own checks and never replaces them.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/provider/"
+    },
+    "options": [
+      {
+        "key": "component",
+        "label": "Component",
+        "help": "Only watch the components (or, in a feed, the entries) whose name contains this text. Empty: the provider as a whole.",
+        "placeholder": "Workers",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "fail_on",
+        "label": "Fail on",
+        "help": "Which level counts as down: minor (any degradation), major (a partial or major outage) or critical (a major outage only).",
+        "placeholder": "",
+        "default": "minor",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "minor",
+          "major",
+          "critical"
+        ],
+        "group": ""
+      },
+      {
+        "key": "refresh_seconds",
+        "label": "Refresh interval (seconds)",
+        "help": "How long the provider's answer is reused, from 30 to 3600. Monitors and status pages on the same provider share one request.",
+        "placeholder": "60",
+        "default": "60",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "window_hours",
+        "label": "Feed window (hours)",
+        "help": "RSS and Atom feeds only: an entry older than this no longer counts as an open incident, from 1 to 168.",
+        "placeholder": "24",
+        "default": "24",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "proxmox",
     "label": "Proxmox VE",
     "summary": "Nodes, virtual machines, containers, storage and backups of a Proxmox server or cluster.",

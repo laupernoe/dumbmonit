@@ -50,6 +50,17 @@ pub struct StatusPage {
     /// Réglages de référencement (migration 0065), servis en objet JSON.
     #[serde(serialize_with = "serialize_seo")]
     pub seo: String,
+    /// Mode d'accès (migration 0085) : `public`, `password` ou `users`.
+    pub access_mode: String,
+    /// Un mot de passe d'accès est enregistré (l'empreinte, elle, ne sort jamais).
+    pub has_password: bool,
+}
+
+impl StatusPage {
+    /// Vrai si tout le monde peut lire la page (aucun mot de passe, aucun compte).
+    pub fn is_public(&self) -> bool {
+        self.access_mode == "public"
+    }
 }
 
 /// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
@@ -130,7 +141,8 @@ macro_rules! select_page {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
             "created_at, updated_at, accent, scenes, scene_rotation, simple, show_calendar, show_latency, footer_text, homepage_url, ",
-            "logo_type, subscribe_channel_id, link_origin, domain, seo FROM status_pages ",
+            "logo_type, subscribe_channel_id, link_origin, domain, seo, access_mode, ",
+            "(access_password_hash IS NOT NULL) AS has_password FROM status_pages ",
             $tail
         )
     };
@@ -290,6 +302,46 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
         set_group_labels(pool, id, labels).await?;
     }
     Ok(id)
+}
+
+/// Empreinte Argon2id du mot de passe d'accès d'une page, si elle en a un.
+pub async fn access_password_hash(pool: &SqlitePool, id: i64) -> Result<Option<String>> {
+    let row: Option<(Option<String>,)> =
+        sqlx::query_as("SELECT access_password_hash FROM status_pages WHERE id = ?")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .context("lecture du mot de passe d'accès d'une page de statut")?;
+    Ok(row.and_then(|(hash,)| hash))
+}
+
+/// Fixe le mode d'accès d'une page. `hash` : `Some(Some(h))` remplace
+/// l'empreinte, `Some(None)` l'efface, `None` la laisse.
+pub async fn set_access(
+    pool: &SqlitePool,
+    id: i64,
+    mode: &str,
+    hash: Option<Option<&str>>,
+) -> Result<bool> {
+    let result = match hash {
+        Some(hash) => sqlx::query(
+            "UPDATE status_pages SET access_mode = ?, access_password_hash = ?,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+        )
+        .bind(mode)
+        .bind(hash)
+        .bind(id),
+        None => sqlx::query(
+            "UPDATE status_pages SET access_mode = ?,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+        )
+        .bind(mode)
+        .bind(id),
+    }
+    .execute(pool)
+    .await
+    .context("mode d'accès de la page de statut")?;
+    Ok(result.rows_affected() > 0)
 }
 
 /// Date de création du plus ancien appareil montré par la page : l'âge de ses
