@@ -50,6 +50,8 @@ form always matches what this version can monitor.
 | [CrowdSec](crowdsec.md) | `crowdsec` | none, or bouncer API key | Security engine: decisions, alerts, bouncers that stopped pulling, log reading |
 | [Traefik](traefik.md) | `traefik` | none, or basicAuth user | Reverse proxy: disabled routers, backend servers down, certificates not obtained or not renewed, 5xx share |
 | [Caddy](caddy.md) | `caddy` | read-only view user, or none | Web server and reverse proxy: upstream health, failed reloads, handler errors, 5xx share |
+| [Prometheus exporter](prometheus.md) | `prometheus` | none, basic auth or bearer token | Any exporter (node_exporter, windows_exporter, cAdvisor, blackbox…): every series stored, graphed and usable in rules |
+| [OpenTelemetry source](otlp.md) | `otlp` | API token (write scope) | OTLP/HTTP receiver: metrics from an OpenTelemetry Collector or an application, logs relayed to VictoriaLogs |
 | [Nginx](nginx.md) | `nginx` | none, or basic auth | Web server: active/waiting connections, accept/handled/request rates, NGINX Plus upstream health |
 | [Apache httpd](apache.md) | `apache` | none, or basic auth | Web server: busy/idle workers, scoreboard by state, request and byte rates |
 | [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |

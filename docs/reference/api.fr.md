@@ -951,6 +951,17 @@ même code que l'UI web. Versions, en-têtes, codes d'erreur et notes de
 sécurité sont dans
 [Connecter un assistant](../using/assistant.md#protocol-details).
 
+## Réception OpenTelemetry (hors `/api`)
+
+OTLP sur HTTP, avec un jeton d'API `write` dans `Authorization: Bearer dmt_…` et
+la cible désignée par l'en-tête `X-DumbMonit-Target` (ou `?target=`). Voir
+[Source OpenTelemetry](../devices/otlp.md).
+
+| Méthode | Route | Usage |
+|---|---|---|
+| `POST` | `/otlp/v1/metrics` | Métriques OTLP, protobuf ou JSON, gzip facultatif. `200` avec `partialSuccess.rejectedDataPoints` si des points n'ont pas été enregistrés ; `415` pour un autre type de contenu, `400` pour un corps illisible. |
+| `POST` | `/otlp/v1/logs` | Journaux OTLP, transmis à VictoriaLogs ; `503` tant qu'il est désactivé. |
+
 ## Fichiers d'agent (hors `/api`)
 
 | Méthode | Route | Objet |

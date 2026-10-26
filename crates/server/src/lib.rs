@@ -21,6 +21,7 @@ pub mod logs;
 pub mod multisite;
 pub mod music;
 pub mod notify;
+pub mod otlp;
 pub mod packs;
 #[cfg(unix)]
 pub mod privileges;

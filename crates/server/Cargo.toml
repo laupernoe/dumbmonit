@@ -54,6 +54,9 @@ reqwest = { version = "0.13", default-features = false, features = [
 ipnet = "2"
 # Base IP → pays de DB-IP, livrée gzippée (`geoip.rs`).
 flate2 = "1.1"
+# Messages OTLP (réception OpenTelemetry) : seul le codec protobuf, sans le SDK ni
+# tonic. Apache-2.0.
+prost = "0.14"
 futures = "0.3"
 
 # `deterministic-timestamps` : sans lui, rust_embed inscrit dans le binaire la date

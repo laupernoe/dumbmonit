@@ -132,6 +132,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	crowdsec: ShieldAlert,
 	traefik: Waypoints,
 	caddy: Route,
+	prometheus: ChartLine,
+	otlp: Antenna,
 	nginx: Route,
 	apache: Route,
 	openvpn: Cable,
@@ -167,7 +169,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -221,6 +223,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	crowdsec: 'security ips ids bouncer ban firewall fail2ban intrusion attack blocklist',
 	traefik: 'reverse proxy router load balancer ingress docker kubernetes certificate acme lets encrypt 502 503',
 	caddy: 'reverse proxy web server upstream load balancer certificate acme lets encrypt 502 503',
+	prometheus: 'prometheus exporter metrics node_exporter windows_exporter cadvisor blackbox scrape openmetrics grafana',
+	otlp: 'opentelemetry otel otlp collector traces metrics logs telemetry push instrumentation sdk',
 	nginx: 'web server reverse proxy stub_status nginx plus upstream connections requests',
 	apache: 'web server httpd apache2 mod_status workers scoreboard busy idle lamp',
 	openvpn: 'vpn tunnel openvpn easy-rsa tap tun client server certificate ovpn remote access site-to-site management interface',

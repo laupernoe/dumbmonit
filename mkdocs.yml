@@ -129,6 +129,8 @@ nav:
       - CrowdSec: devices/crowdsec.md
       - Traefik: devices/traefik.md
       - Caddy: devices/caddy.md
+      - Prometheus exporter: devices/prometheus.md
+      - OpenTelemetry source: devices/otlp.md
       - Nginx: devices/nginx.md
       - Apache httpd: devices/apache.md
       - Nginx Proxy Manager: devices/npm.md

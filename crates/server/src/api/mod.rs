@@ -36,6 +36,7 @@ mod onboarding;
 mod openapi;
 mod opnsense;
 mod opnsense_live;
+mod otlp;
 mod packs;
 mod passkeys;
 mod pbs;
@@ -373,6 +374,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // `/metrics` (santé de l'instance) et `/federate` (les mesures), sous
         // jeton `read` — voir `prometheus.rs`.
         .merge(prometheus::routes(state.clone()))
+        // Réception OpenTelemetry (OTLP/HTTP), sous jeton `write` — voir `otlp.rs`.
+        .merge(otlp::routes(state.clone()))
         // Distribution de l'agent, hors `/api` : ce sont les URL que les scripts
         // d'installation lisent, publiques par nécessité (voir `agent_files`).
         .route("/install.sh", get(agent_files::install_sh))
