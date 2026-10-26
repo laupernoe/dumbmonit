@@ -15,6 +15,7 @@ pub mod activedirectory_history;
 pub mod agent;
 pub mod discovery;
 pub mod opnsense_history;
+pub mod otlp;
 pub mod pbs_history;
 pub mod pdm_history;
 pub mod pmg_history;
@@ -157,6 +158,7 @@ pub fn builtin(
     ));
     // Collecteur de démonstration : des graphes sans matériel, le temps de
     // configurer un premier équipement réel.
+    registry.register(Arc::new(otlp::OtlpCollector));
     registry.register(Arc::new(DummyCollector));
     declare_options(&mut registry);
     registry

@@ -47,6 +47,9 @@ serde-saphyr = { version = "2", default-features = false, features = ["deseriali
 # dépendance, suffit pour les quelques balises lues.
 roxmltree = "0.20"
 ipnet = "2"
+# Filtres `keep` / `drop` du collecteur Prometheus : temps linéaire, donc sans
+# risque d'explosion sur une expression saisie par l'utilisateur.
+regex = "1"
 futures = "0.3"
 
 # --- Moniteurs de disponibilité (HTTP, TCP, DNS, ICMP, expiration TLS) ---
