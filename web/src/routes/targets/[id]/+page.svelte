@@ -43,7 +43,9 @@
 	import {
 		HISTORY_SLOTS,
 		loadProbeStatuses,
+		loadHttpPhases,
 		loadResponseTimes,
+		PHASE_TOKENS,
 		loadUptimeHistory,
 		loadUptimeSummary,
 		RANGES,
@@ -55,6 +57,8 @@
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
+	import PhaseBreakdown from '#lib/components/devices/PhaseBreakdown.svelte';
+	import ProbeLocationsCard from '#lib/components/devices/ProbeLocationsCard.svelte';
 	import UptimeBar from '#lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '#lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '#lib/components/devices/FoldSection.svelte';
@@ -78,6 +82,7 @@
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
+	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
@@ -267,6 +272,7 @@
 	let summary = $state<UptimeSummary | null>(null);
 	let history = $state<HistorySlot[]>([]);
 	let responseTimes = $state<Serie[]>([]);
+	let phaseTimes = $state<Serie[]>([]);
 	let checks = $state<number | null>(null);
 	let loadingUptime = $state(true);
 	let uptimeError = $state<unknown>(null);
@@ -464,15 +470,21 @@
 	async function loadUptime(signal?: AbortSignal) {
 		uptimeError = null;
 		try {
-			const [s, h, r, c] = await Promise.all([
+			const [s, h, r, c, p] = await Promise.all([
 				loadUptimeSummary(id, signal),
 				loadUptimeHistory(id, rangeSeconds, signal),
 				loadResponseTimes(id, rangeSeconds, signal),
-				queryInstant(`count_over_time(dumbmonit_probe_success{target="${id}"}[${range}])`, signal)
+				queryInstant(`count_over_time(dumbmonit_probe_success{target="${id}"}[${range}])`, signal),
+				// The breakdown is a bonus: its failure must not hide the rest.
+				loadHttpPhases(id, rangeSeconds, signal).catch((cause) => {
+					if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
+					return [] as Serie[];
+				})
 			]);
 			summary = s;
 			history = h;
 			responseTimes = r;
+			phaseTimes = p;
 			const count = Number(c[0]?.values?.[0]?.[1]);
 			checks = Number.isFinite(count) ? count : 0;
 		} catch (cause) {
@@ -496,6 +508,7 @@
 		summary = null;
 		history = [];
 		responseTimes = [];
+		phaseTimes = [];
 		alerts = [];
 		osInfo = null;
 		probeResult = null;
@@ -733,6 +746,9 @@
 		{#if enabledError}
 			<ErrorNotice error={enabledError} title={m.devices_target_err_enabled()} class="mt-4" />
 		{/if}
+		{#if target?.managed}
+			<ManagedNotice {target} canRelease={auth.isAdmin} onreleased={() => void loadTarget()} class="mt-4" />
+		{/if}
 		{#if deleteError}
 			<ErrorNotice error={deleteError} title={m.devices_target_err_delete()} class="mt-4" />
 		{/if}
@@ -749,6 +765,10 @@
 
 	{#if securityShown && securityOpen}
 		<SecurityReport report={securityShown} onclose={() => (securityOpen = false)} />
+	{/if}
+
+	{#if target.multisite}
+		<ProbeLocationsCard targetId={target.id} {refreshKey} />
 	{/if}
 
 	<CveDeviceCard targetId={target.id} />
@@ -841,6 +861,16 @@
 						</EmptyState>
 					{/if}
 				</Panel>
+
+				{#if phaseTimes.length > 0}
+					<Panel title={m.monitor_phases_title()} description={m.monitor_phases_desc()} class="mt-4">
+						{#snippet aside()}<span class="label-tape label-tape-unit">ms</span>{/snippet}
+						<Chart series={phaseTimes} unit="ms" height={220} stacked colorTokens={[...PHASE_TOKENS]} />
+						<div class="mt-4 border-t border-line pt-4">
+							<PhaseBreakdown series={phaseTimes} />
+						</div>
+					</Panel>
+				{/if}
 			{/if}
 		{:else if metricsError}
 			<ErrorNotice error={metricsError} title={m.devices_target_err_metrics()} onretry={() => void loadMetrics()} />

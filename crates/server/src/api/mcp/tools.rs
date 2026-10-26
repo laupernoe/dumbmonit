@@ -1623,6 +1623,45 @@ async fn get_status(state: &AppState) -> ToolResult {
     ))
 }
 
+/// Résumé plat de l'état de l'instance pour les tableaux de bord tiers
+/// (`GET /api/summary`, widget `customapi` de Homepage) : les compteurs de
+/// `get_status`, sans phrase ni liste, avec un verdict global.
+pub async fn dashboard_summary(state: &AppState) -> Result<Value, ToolError> {
+    let status = get_status(state).await?.structured.unwrap_or(Value::Null);
+    let count = |pointer: &str| status.pointer(pointer).and_then(Value::as_u64).unwrap_or(0);
+    let total = count("/devices/total");
+    let up = count("/devices/reporting");
+    let down = count("/devices/unreachable");
+    let waiting = count("/devices/waiting");
+    let disabled = count("/devices/disabled");
+    let critical = count("/alerts/warnings");
+    let warning = count("/alerts/advisories");
+    let info = count("/alerts/notices");
+    let firing = critical + warning + info;
+    // « ok » : rien à faire. « warning » : une alerte de moindre gravité.
+    // « critical » : une alerte critique ou un équipement injoignable.
+    let verdict = if critical > 0 || down > 0 {
+        "critical"
+    } else if warning > 0 || info > 0 {
+        "warning"
+    } else {
+        "ok"
+    };
+    Ok(json!({
+        "status": verdict,
+        "sentence": status.get("sentence").cloned().unwrap_or(Value::Null),
+        "devices": { "total": total, "up": up, "down": down, "waiting": waiting, "disabled": disabled },
+        "alerts": {
+            "firing": firing,
+            "critical": critical,
+            "warning": warning,
+            "info": info,
+            "building_up": count("/alerts/building_up"),
+            "suppressed": count("/alerts/suppressed"),
+        },
+    }))
+}
+
 async fn list_devices(state: &AppState, args: &Args) -> ToolResult {
     let devices = load_devices(state).await?;
     let parents = parent_names(&devices);
@@ -2629,7 +2668,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             Err(error) => (None, Some(error.to_string())),
         };
         let last_seen_ms = monitor.as_ref().and_then(|m| m.last_seen_ms);
-        let verdict = match (&monitor, settings) {
+        let verdict = match (&monitor, &settings) {
             (Some(m), Some(settings)) => {
                 push::evaluate(m.last_seen_ms, m.last_status, now_ms, settings)
             }
@@ -2643,7 +2682,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             device.id(),
             if device.target.enabled { verdict_word(verdict) } else { "disabled" }
         );
-        if let Some(settings) = settings {
+        if let Some(settings) = &settings {
             line.push_str(&format!(
                 "; expected every {} s (+{} s grace)",
                 settings.expected.as_secs(),
@@ -2673,8 +2712,8 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             "device": device.name(),
             "enabled": device.target.enabled,
             "verdict": verdict_word(verdict),
-            "expected_interval_secs": settings.map(|s| s.expected.as_secs()),
-            "grace_secs": settings.map(|s| s.grace.as_secs()),
+            "expected_interval_secs": settings.as_ref().map(|s| s.expected.as_secs()),
+            "grace_secs": settings.as_ref().map(|s| s.grace.as_secs()),
             "last_seen_at": monitor.as_ref().and_then(|m| m.last_seen_at.clone()),
             "last_seen_age_secs": age,
             "last_status": monitor.as_ref().map(|m| m.last_status.as_str()),

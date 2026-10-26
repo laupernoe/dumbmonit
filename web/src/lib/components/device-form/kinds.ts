@@ -72,8 +72,13 @@ import {
 	PanelsTopLeft,
 	MailX,
 	ListX,
-	CloudCog,
+	Mailbox,
+	Send,
+	Terminal,
 	KeyRound,
+	Workflow,
+	Wifi,
+	CloudCog,
 	GlobeLock
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
@@ -99,6 +104,10 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	mysql: Database,
 	mqtt: Antenna,
 	websocket: Cable,
+	udp: Send,
+	ssh: Terminal,
+	imap: Inbox,
+	pop3: Mailbox,
 	push: HeartPulse,
 	pdm: LayoutGrid,
 	pmg: MailCheck,
@@ -146,6 +155,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	pfsense: BrickWallFire,
 	unraid: HardDrive,
 	veeam: CloudBackup,
+	kopia: CloudBackup,
+	duplicati: CloudBackup,
 	tailscale: Network,
 	m365: Mail,
 	entra: KeyRound,
@@ -156,9 +167,20 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	ovh: Server,
 	infomaniak: Cloud,
 	fortigate: BrickWallShield,
+	meraki: Cloud,
+	omada: Antenna,
 	sophos: ShieldCheck,
+	arubacentral: Wifi,
+	paloalto: BrickWallShield,
+	sonicwall: ShieldCheck,
+	qnap: HardDrive,
+	ceph: Database,
+	minio: Archive,
 	website: PanelsTopLeft,
-	webchange: FileDiff
+	webchange: FileDiff,
+	snmp_oid: Gauge,
+	radius: KeyRound,
+	grpc: Workflow
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -166,10 +188,10 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
-const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
+const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
 
 /** A domain's registration, read over RDAP: a service, polled rarely. */
 const DOMAIN_KIND = 'domain';
@@ -233,6 +255,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	pfsense: 'firewall router gateway vpn openvpn ipsec dhcp netgate pfsense plus multi wan failover',
 	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
 	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',
+	kopia: 'backup snapshot deduplication encrypted repository source restic borg self-hosted',
+	duplicati: 'backup encrypted cloud storage backblaze b2 s3 webdav ftp job schedule restore self-hosted',
 	tailscale: 'vpn wireguard mesh tailnet headscale subnet router exit node zero trust remote access',
 	m365: 'microsoft office 365 microsoft365 graph exchange online teams sharepoint onedrive licenses licences service health incident risky users saas',
 	entra: 'azure ad active directory microsoft entra id app registration secret certificate expiry mfa ad connect sync hybrid identity',
@@ -244,6 +268,14 @@ const KIND_KEYWORDS: Record<string, string> = {
 	infomaniak: 'infomaniak swiss hosting web mail kdrive product domain expiry cloud',
 	fortigate: 'fortinet fortios firewall utm ngfw ipsec vpn sd-wan ha cluster fortiguard',
 	sophos: 'sophos xg xgs sfos firewall utm ipsec vpn',
+	meraki: 'cisco meraki cloud dashboard mx ms mr switch access point wifi security appliance sd-wan uplink license',
+	omada: 'tp-link tplink omada eap access point wifi switch gateway er605 oc200 oc300 sdn controller',
+	arubacentral: 'aruba hpe central greenlake wifi wi-fi wireless access point ap switch gateway cloud instant on',
+	paloalto: 'palo alto networks pan-os panos pa-series vm-series firewall ngfw ha globalprotect panorama beta',
+	sonicwall: 'sonicwall sonicos tz nsa nssp nsv firewall utm vpn beta',
+	qnap: 'nas qts quts hero storage raid volume disk smart snapshot backup',
+	ceph: 'storage cluster osd pg pool mon mgr rados rbd cephfs object block distributed proxmox rook',
+	minio: 'object storage s3 bucket erasure prometheus metrics distributed',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',
 	http: 'website web site url api https page endpoint uptime',
 	tcp: 'port ssh smb nfs share game server socket',
@@ -256,7 +288,14 @@ const KIND_KEYWORDS: Record<string, string> = {
 	mysql: 'database db sql mariadb',
 	mqtt: 'iot broker home assistant zigbee mosquitto',
 	websocket: 'ws socket realtime',
-	push: 'heartbeat cron job script backup scheduled task dead man switch'
+	udp: 'datagram port game voip syslog wireguard',
+	ssh: 'terminal shell sshd openssh host key fingerprint remote login',
+	imap: 'mail email mailbox dovecot inbox imaps',
+	pop3: 'mail email mailbox dovecot pop pops',
+	push: 'heartbeat cron job script backup scheduled task dead man switch',
+	snmp_oid: 'snmp oid mib sensor temperature humidity ups battery value threshold',
+	radius: 'aaa authentication login freeradius nps 802.1x wpa enterprise wifi vpn eap access-request',
+	grpc: 'rpc protobuf health check http2 microservice etcd envoy istio mesh'
 };
 
 /**

@@ -19,11 +19,12 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ArrowLeft, BookOpen, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
+	import { ArrowLeft, BookOpen, CalendarClock, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
 	import ImportKuma from '#lib/components/device-form/ImportKuma.svelte';
+	import ImportServices from '#lib/components/device-form/ImportServices.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
@@ -31,17 +32,24 @@
 	import { isMailKind } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { readPrefill } from '#lib/components/device-form/discovery-prefill.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
+	import DiscoveryInventory from '#lib/components/device-form/DiscoveryInventory.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon, type ImportChoice } from '#lib/components/device-form/kinds.js';
 
 	let kumaImport = $state<ImportKuma | null>(null);
 	let websitesImport = $state<ImportWebsites | null>(null);
+	let uptimerobotImport = $state<ImportServices | null>(null);
+	let gatusImport = $state<ImportServices | null>(null);
+	let healthchecksImport = $state<ImportServices | null>(null);
 	/** Ways to bring monitors over, listed last in the picker. Administrators only. */
 	const imports = $derived<ImportChoice[]>(
 		auth.isAdmin
 			? [
 					{ id: 'kuma', label: m.devices_kuma_open(), summary: m.deviceform_picker_import_kuma_summary(), icon: Upload, onrun: () => kumaImport?.show() },
+					{ id: 'uptimerobot', label: m.devices_svc_uptimerobot_open(), summary: m.deviceform_picker_import_uptimerobot_summary(), icon: Upload, onrun: () => uptimerobotImport?.show() },
+					{ id: 'gatus', label: m.devices_svc_gatus_open(), summary: m.deviceform_picker_import_gatus_summary(), icon: Upload, onrun: () => gatusImport?.show() },
+					{ id: 'healthchecks', label: m.devices_svc_healthchecks_open(), summary: m.deviceform_picker_import_healthchecks_summary(), icon: Upload, onrun: () => healthchecksImport?.show() },
 					{ id: 'websites', label: m.devices_import_open(), summary: m.deviceform_picker_import_websites_summary(), icon: FileSpreadsheet, onrun: () => websitesImport?.show() }
 				]
 			: []
@@ -299,6 +307,9 @@
 <!-- Opened from the "Import" category of the picker. -->
 {#if auth.isAdmin}
 	<ImportKuma bind:this={kumaImport} trigger={false} />
+	<ImportServices bind:this={uptimerobotImport} provider="uptimerobot" />
+	<ImportServices bind:this={gatusImport} provider="gatus" />
+	<ImportServices bind:this={healthchecksImport} provider="healthchecks" />
 	<ImportWebsites bind:this={websitesImport} trigger={false} />
 {/if}
 
@@ -387,13 +398,22 @@
 	<div class="grid items-start gap-6 lg:grid-cols-12">
 		<section aria-labelledby="view-title" class={`min-w-0 ${guideOpen ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
 			{#if view === 'scan'}
-				<Panel>
-					<h2 id="view-title" tabindex="-1" class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink outline-none">
-						<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
-						{m.deviceform_new_scan()}
-					</h2>
-					<Discovery agent={idParam('agent')} />
-				</Panel>
+				<div class="grid gap-6">
+					<Panel>
+						<h2 id="view-title" tabindex="-1" class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink outline-none">
+							<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
+							{m.deviceform_new_scan()}
+						</h2>
+						<Discovery agent={idParam('agent')} />
+					</Panel>
+					<Panel>
+						<h2 class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+							<CalendarClock class="size-[1.125rem] text-ink-2" aria-hidden="true" />
+							{m.discovery_inventory_title()}
+						</h2>
+						<DiscoveryInventory />
+					</Panel>
+				</div>
 			{:else if selected}
 				<Panel>
 					<div class="-mx-5 -mt-4 mb-4 flex items-start justify-between gap-4 border-b border-line px-5 py-4 max-sm:-mx-4 max-sm:-mt-3 max-sm:mb-3 max-sm:px-4 max-sm:py-3">

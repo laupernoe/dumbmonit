@@ -1139,6 +1139,116 @@ const NTP_OPTIONS: &[OptionView] = &[
     PROBE_TIMEOUT,
 ];
 
+/// Options lues par `collectors/uptime/udp/options.rs`.
+const UDP_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. There is no default: UDP has no standard port to fall back on.",
+        "5060",
+        "",
+    ),
+    text(
+        "payload",
+        "Datagram to send",
+        "Sent as one datagram, 1400 bytes at most. In text, \\n \\r \\t \\0 \\\\ and \\xNN are read as escapes. Empty: an empty datagram.",
+        "PING",
+        "",
+    ),
+    select(
+        "payload_encoding",
+        "Datagram encoding",
+        "Text sends the characters as typed, Hex reads pairs of hexadecimal digits (spaces allowed).",
+        "text",
+        &["text", "hex"],
+    ),
+    text(
+        "expect_response",
+        "Expected reply",
+        "Text the reply must contain. Empty: the check succeeds unless the host answers that the port is closed, and silence counts as success.",
+        "PONG",
+        "",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Options lues par `collectors/uptime/ssh/options.rs`.
+const SSH_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "Used if the address does not give one.", "22", "22"),
+    text(
+        "expected_host_key",
+        "Expected host key",
+        "SHA256 fingerprint of the server's host key, as printed by ssh-keygen -lf. If the key differs, the server is reported down with the reason host_key. Empty: the key is not checked.",
+        "SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8",
+        "",
+    ),
+    boolean(
+        "alert_on_change",
+        "Alert when the host key changes",
+        "Records a fingerprint of the host key on every check, so that a rule can fire when it changes. Implied by an expected host key.",
+        false,
+    ),
+    select(
+        "host_key_type",
+        "Host key type",
+        "A server may hold several host keys. Auto reads the first one it offers in this order: ed25519, ecdsa, rsa. Pick the family of the fingerprint you expect.",
+        "auto",
+        &["auto", "ed25519", "ecdsa", "rsa"],
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Chiffrement des sondes de boîte aux lettres (`collectors/uptime/mailbox.rs`).
+const fn mailbox_security(help: &'static str) -> OptionView {
+    select("security", "Encryption", help, "tls", &["tls", "starttls", "none"])
+}
+
+/// Options lues par `collectors/uptime/imap/options.rs`.
+const IMAP_OPTIONS: &[OptionView] = &[
+    mailbox_security(
+        "TLS encrypts from the first byte (port 993), STARTTLS starts in clear text and upgrades (port 143), None never encrypts (port 143) and sends the password in clear text: only for your own network.",
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 993 with TLS, 143 with STARTTLS or without encryption.",
+        "993",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Options lues par `collectors/uptime/pop3/options.rs`.
+const POP3_OPTIONS: &[OptionView] = &[
+    mailbox_security(
+        "TLS encrypts from the first byte (port 995), STARTTLS starts in clear text and upgrades with STLS (port 110), None never encrypts (port 110) and sends the password in clear text: only for your own network.",
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 995 with TLS, 110 with STARTTLS or without encryption.",
+        "995",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Identifiants d'un relais de messagerie ou d'un courtier MQTT.
 const APP_LOGIN: CredentialView = CredentialView {
     kind: "username_password",
@@ -1161,6 +1271,123 @@ const SQL_LOGIN: CredentialView = CredentialView {
     ],
 };
 
+/// Options lues par `collectors/uptime/snmp_oid/options.rs`.
+const SNMP_OID_OPTIONS: &[OptionView] = &[
+    text(
+        "oid",
+        "Object (OID)",
+        "The SNMP object to read, in numeric form. Add the instance suffix, usually .0 for a single value.",
+        "1.3.6.1.2.1.1.3.0",
+        "",
+    ),
+    number("port", "Port", "Used if the address does not give one.", "161", "161"),
+    text(
+        "min",
+        "Minimum value",
+        "A numeric value below this fails. Empty: no lower bound.",
+        "10",
+        "",
+    ),
+    text(
+        "max",
+        "Maximum value",
+        "A numeric value above this fails. Empty: no upper bound.",
+        "75",
+        "",
+    ),
+    text(
+        "expect",
+        "Expected text",
+        "Text the value must contain, whatever its case. Empty: any value is accepted.",
+        "online",
+        "",
+    ),
+    select(
+        "snmp_version",
+        "SNMP version",
+        "Version used with a community. Pick 1 only for an old agent that ignores version 2c; SNMP v3 users ignore it.",
+        "2c",
+        &["2c", "1"],
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Identifiants d'une sonde RADIUS : le secret du serveur et un compte de test.
+const RADIUS_LOGIN: CredentialView = CredentialView {
+    kind: "radius",
+    label: "Shared secret and test account",
+    help: "The secret defined for this host on the RADIUS server, and an account created for monitoring.",
+    fields: &[
+        cred_secret(
+            "shared_secret",
+            "Shared secret",
+            "As configured for this client on the RADIUS server. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+        cred_text(
+            "username",
+            "Test account",
+            "An account without a second factor, used only to check that the server authenticates.",
+            "dumbmonit",
+        ),
+        cred_secret(
+            "password",
+            "Test account password",
+            "Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+/// Options lues par `collectors/uptime/radius/options.rs`.
+const RADIUS_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "UDP port of the authentication service.", "1812", "1812"),
+    text(
+        "nas_identifier",
+        "NAS identifier",
+        "Value of the NAS-Identifier attribute sent with the request. Change it if the server filters requests by NAS.",
+        "dumbmonit",
+        "dumbmonit",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Options lues par `collectors/uptime/grpc/options.rs`.
+const GRPC_OPTIONS: &[OptionView] = &[
+    text(
+        "service",
+        "Service",
+        "Name of the service whose health is asked, for example my.package.MyService. Empty: the health of the server as a whole.",
+        "my.package.MyService",
+        "",
+    ),
+    boolean(
+        "tls",
+        "Encrypted connection (TLS)",
+        "Connect with TLS and HTTP/2 (ALPN h2). Unticked, the check speaks HTTP/2 in clear text (h2c), as most services inside a network do.",
+        false,
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 50051, or 443 with TLS.",
+        "50051",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Options lues par `collectors/push/mod.rs` (`Settings::from_target`).
 const PUSH_OPTIONS: &[OptionView] = &[
     text(
@@ -1176,6 +1403,27 @@ const PUSH_OPTIONS: &[OptionView] = &[
         "Extra time tolerated after the expected interval before the heartbeat counts as missed: a percentage of the interval (10%) or a fixed duration (15m). Never less than one minute.",
         "10%",
         "10%",
+    ),
+    text(
+        "schedule",
+        "Cron schedule",
+        "Instead of the interval above: when the job is supposed to start, as a 5-field cron expression (minute hour day-of-month month day-of-week) or a shortcut such as @daily. Lists, ranges, steps and names are accepted: 30 2 * * *, */15 * * * *, 0 4 * * sun. Empty: use the interval.",
+        "30 2 * * *",
+        "",
+    ),
+    text(
+        "timezone",
+        "Time zone",
+        "IANA time zone in which the cron schedule is read, for example Europe/Paris. It follows daylight saving time.",
+        "Europe/Paris",
+        "UTC",
+    ),
+    text(
+        "max_duration",
+        "Maximum duration",
+        "A run that lasts longer than this raises the \"job too long\" alert: 30m, 2h. Needs a start call at the beginning of the job. Empty: a run still open after one period plus the grace period counts as stuck.",
+        "2h",
+        "",
     ),
 ];
 
@@ -3483,7 +3731,7 @@ const IP_BLACKLIST_OPTIONS: &[OptionView] = &[
 ];
 
 /// Délai par requête des équipements commerciaux lus par leur API
-/// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`, défaut de
+/// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada}`, défaut de
 /// `selfhosted/options.rs`).
 const VENDOR_TIMEOUT: OptionView = number(
     "request_timeout_seconds",
@@ -3568,6 +3816,44 @@ const VEEAM_OPTIONS: &[OptionView] = &[
     DEVICE_STALE_DAYS,
 ];
 
+/// Identifiants du serveur Kopia (`--server-username` / `--server-password`),
+/// envoyés en authentification HTTP Basic (`collectors/kopia`).
+const KOPIA_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Server user name and password",
+    help: "The user name and password the Kopia server was started with.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The --server-username of the Kopia server.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "The --server-password of the Kopia server.", "", true),
+    ],
+};
+
+const KOPIA_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("51515"), SELF_SIGNED_TLS, VENDOR_TIMEOUT];
+
+/// Mot de passe de l'interface web de Duplicati 2.1+ (`collectors/duplicati`) :
+/// Duplicati n'a pas de compte, seulement ce mot de passe.
+const DUPLICATI_PASSWORD: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Web interface password",
+    help: "Duplicati has no user accounts: the password of its web interface is all it asks for.",
+    fields: &[cred_secret(
+        "token",
+        "Web interface password",
+        "Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const DUPLICATI_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("8200"), APP_TLS, VENDOR_TIMEOUT];
+
 /// Client OAuth Tailscale à la portée `devices:core:read`.
 const TAILSCALE_OAUTH: CredentialView = CredentialView {
     kind: "username_password",
@@ -3623,6 +3909,54 @@ const TAILSCALE_OPTIONS: &[OptionView] = &[
     DEVICE_STALE_DAYS,
 ];
 
+/// Client d'API personnel de HPE GreenLake pour Aruba Central, échangé contre un
+/// jeton de deux heures (`collectors/arubacentral`).
+const ARUBACENTRAL_CLIENT: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "API client",
+    help: "Recommended: DumbMonit exchanges the client for an access token and renews it by itself.",
+    fields: &[
+        cred_text(
+            "username",
+            "Client ID",
+            "The client ID of the personal API client created in step 2.",
+            "",
+        ),
+        cred_secret(
+            "password",
+            "Client secret",
+            "Shown once when the client is created. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+/// Jeton d'accès déjà obtenu : il expire au bout de deux heures.
+const ARUBACENTRAL_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Access token",
+    help: "Works for a test, but expires after two hours and DumbMonit cannot renew it.",
+    fields: &[cred_secret(
+        "token",
+        "Access token",
+        "An access token of your Central instance. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const ARUBACENTRAL_OPTIONS: &[OptionView] = &[
+    text(
+        "token_address",
+        "Sign-in host",
+        "The HPE GreenLake host that issues the access tokens. Change it only if HPE gives you another.",
+        "sso.common.cloud.hpe.com",
+        "sso.common.cloud.hpe.com",
+    ),
+    VENDOR_TIMEOUT,
+];
+
 /// Jeton d'un administrateur REST API FortiOS au profil en lecture seule.
 const FORTIGATE_TOKEN: CredentialView = CredentialView {
     kind: "api_token",
@@ -3656,6 +3990,81 @@ const FORTIGATE_OPTIONS: &[OptionView] = &[
     VENDOR_TIMEOUT,
 ];
 
+/// Clé d'API Meraki d'un administrateur de l'organisation en lecture seule.
+const MERAKI_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "The key of the read-only administrator created for DumbMonit, sent as a bearer token.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "Generated under My profile → API access, shown once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const MERAKI_OPTIONS: &[OptionView] = &[
+    text(
+        "organization",
+        "Organization",
+        "The ID or name of the organization to read. Empty: the first one the API key sees.",
+        "Acme Corp",
+        "",
+    ),
+    text(
+        "networks",
+        "Networks",
+        "Comma-separated network names or IDs to watch. Empty: every network of the organization.",
+        "Main office, Warehouse",
+        "",
+    ),
+    VENDOR_TIMEOUT,
+];
+
+/// Client OpenAPI d'Omada (mode « Client », rôle Observateur).
+const OMADA_CLIENT: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "OpenAPI client",
+    help: "The client created for DumbMonit under Open API, in Client mode with the Viewer role.",
+    fields: &[
+        cred_text("username", "Client ID", "The Client ID shown when the app was created.", ""),
+        cred_secret(
+            "password",
+            "Client secret",
+            "The Client Secret, shown once. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+const OMADA_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the controller (8043 for the software controller, 443 for a hardware one).",
+        "8043",
+        "8043",
+    ),
+    text(
+        "omadac_id",
+        "Controller ID",
+        "The Omada ID shown under Open API. Empty: read from the controller, which publishes it.",
+        "a3f1c0d2e4b5967788990011aabbccdd",
+        "",
+    ),
+    text(
+        "site",
+        "Site",
+        "The name or ID of the only site to read. Empty: every site.",
+        "Default",
+        "",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
 /// Compte au profil d'accès en lecture seule (`collectors/sophos`).
 const SOPHOS_LOGIN: CredentialView = CredentialView {
     kind: "username_password",
@@ -3681,6 +4090,158 @@ const SOPHOS_OPTIONS: &[OptionView] = &[
         "4444",
     ),
     SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Palo Alto PAN-OS (`collectors/paloalto`) : mot de passe du compte d'API, ou
+/// clé déjà générée.
+const PALOALTO_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit account: DumbMonit asks the firewall for an API key with it and keeps the key, the password only travels in a request body.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The read-only account created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const PALOALTO_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "A key already generated for the dumbmonit account, sent in the X-PAN-KEY header.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "As returned by the keygen request. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const PALOALTO_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// SonicWall SonicOS (`collectors/sonicwall`) : compte en HTTP Basic.
+const SONICWALL_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit user, in a read-only group, sent as HTTP Basic.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The read-only user created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const SONICWALL_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Compte local du NAS QNAP (`collectors/qnap`), lu par les pages CGI de QTS.
+const QNAP_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit account created on the NAS. The password is sent base64-encoded to the login page, as the web interface does.",
+    fields: &[
+        cred_text("username", "User name", "The account created for DumbMonit.", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const QNAP_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: 443 over HTTPS, and 8080 over HTTP (enter it, QTS does not use 80).",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Utilisateur du tableau de bord Ceph au rôle `read-only` (`collectors/ceph`).
+const CEPH_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Dashboard user and password",
+    help: "The dumbmonit user of the Ceph dashboard, with the read-only role.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The dashboard user created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const CEPH_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the dashboard port, 8443 over HTTPS and 8080 over HTTP.",
+        "8443",
+        "8443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Jeton JWT de `mc admin prometheus generate`, envoyé en `Authorization: Bearer`.
+const MINIO_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Prometheus token",
+    help: "The bearer_token printed by mc admin prometheus generate. It opens the metrics pages only.",
+    fields: &[cred_secret(
+        "token",
+        "Prometheus token",
+        "The JWT printed after bearer_token. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const MINIO_OPTIONS: &[OptionView] = &[
+    app_scheme("http"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the S3 API port, 9000 (not the console, 9001).",
+        "9000",
+        "9000",
+    ),
+    insecure_tls(
+        "For a server with TLS enabled and a self-signed or private certificate: enable this if the connection is refused for that reason.",
+    ),
     VENDOR_TIMEOUT,
 ];
 
@@ -4599,6 +5160,127 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: WEBSOCKET_OPTIONS,
         },
+        "udp" => CollectorView {
+            kind: "udp",
+            label: "UDP service",
+            summary: "Sends a datagram to a UDP port and checks the reply, or that nobody refuses it.",
+            examples: &[
+                "A game or VoIP server",
+                "A syslog or SNMP listener",
+                "A WireGuard endpoint",
+                "A custom UDP service that answers a ping message",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "192.168.1.20:5060",
+            default_port: 0,
+            setup: Setup {
+                title: "Monitor a UDP service",
+                steps: &[
+                    "In the address, write the host and the UDP port: \"192.168.1.20:5060\". The port is required.",
+                    "To check that the service really answers, fill in \"Datagram to send\" and \"Expected reply\".",
+                    "Without an expected reply, the check only fails when the host answers that the port is closed.",
+                ],
+                ports: &[to_device!(
+                    161,
+                    "udp",
+                    "The service's UDP port, as written in the address (161 is only an example)",
+                )],
+                permissions: &[],
+                warning: "UDP has no connection: without an expected reply, a firewall that silently drops the datagrams looks healthy.",
+            },
+            options: UDP_OPTIONS,
+        },
+        "ssh" => CollectorView {
+            kind: "ssh",
+            label: "SSH server",
+            summary: "Reads the SSH banner and, if you ask, checks that the host key is still the one you know.",
+            examples: &[
+                "A Linux server or a Raspberry Pi",
+                "A NAS or a hypervisor with SSH enabled",
+                "A bastion host",
+                "A Git server over SSH",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "server.home.lan",
+            default_port: 22,
+            setup: Setup {
+                title: "Monitor an SSH server",
+                steps: &[
+                    "In the address, write the host name or IP address, with the port if it is not 22: \"server.home.lan:2222\".",
+                    "To be warned when the server's identity changes, read its fingerprint with ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub.",
+                    "Paste that fingerprint (SHA256:...) in \"Expected host key\", or tick \"Alert when the host key changes\" to record it without choosing one.",
+                ],
+                ports: &[to_device!(22, "tcp", "SSH (default port, the one in the address)")],
+                permissions: &[],
+                warning: "The check never logs in and does not verify the server's signature: it reads the key the server shows, like ssh-keyscan.",
+            },
+            options: SSH_OPTIONS,
+        },
+        "imap" => CollectorView {
+            kind: "imap",
+            label: "Mailbox (IMAP)",
+            summary: "An IMAP server greets, offers TLS and accepts a login, like a real mail client.",
+            examples: &[
+                "Dovecot",
+                "Your provider's IMAP server",
+                "A mailbox behind Mailcow or Mailu",
+                "Proxmox Mail Gateway's mail host",
+            ],
+            credential_types: &["none", "username_password"],
+            credentials: &[NO_AUTH, APP_LOGIN],
+            address_hint: "imap.example.com",
+            default_port: 993,
+            setup: Setup {
+                title: "Monitor an IMAP server",
+                steps: &[
+                    "In DumbMonit, enter the mail server, for example imap.example.com:1993 (port 993 with the default encryption).",
+                    "Pick the encryption: TLS for port 993, STARTTLS for port 143, None for a server on your own network.",
+                    "Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage).",
+                ],
+                ports: &[
+                    to_device!(993, "tcp", "IMAP over TLS (default)"),
+                    to_device_optional!(143, "tcp", "Only with STARTTLS or no encryption"),
+                ],
+                permissions: &[
+                    "A mailbox account that may log in\nOnly if you fill in a credential",
+                ],
+                warning: "The check never opens a mailbox: a server that logs in but cannot read its storage answers perfectly here.",
+            },
+            options: IMAP_OPTIONS,
+        },
+        "pop3" => CollectorView {
+            kind: "pop3",
+            label: "Mailbox (POP3)",
+            summary: "A POP3 server greets, offers TLS and accepts a login, like a real mail client.",
+            examples: &[
+                "Dovecot",
+                "Your provider's POP3 server",
+                "An old mail server that only speaks POP3",
+            ],
+            credential_types: &["none", "username_password"],
+            credentials: &[NO_AUTH, APP_LOGIN],
+            address_hint: "pop.example.com",
+            default_port: 995,
+            setup: Setup {
+                title: "Monitor a POP3 server",
+                steps: &[
+                    "In DumbMonit, enter the mail server, for example pop.example.com:1995 (port 995 with the default encryption).",
+                    "Pick the encryption: TLS for port 995, STARTTLS for port 110 (STLS command), None for a server on your own network.",
+                    "Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage).",
+                ],
+                ports: &[
+                    to_device!(995, "tcp", "POP3 over TLS (default)"),
+                    to_device_optional!(110, "tcp", "Only with STARTTLS or no encryption"),
+                ],
+                permissions: &[
+                    "A mailbox account that may log in\nOnly if you fill in a credential",
+                ],
+                warning: "The check never lists or reads messages: it logs in, then says goodbye.",
+            },
+            options: POP3_OPTIONS,
+        },
         // Changements du contenu d'un site (`webchange`) : texte comparé page à
         // page, instantanés et captures gardés sur le serveur.
         "webchange" => CollectorView {
@@ -4688,8 +5370,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 title: "Make the job call in",
                 steps: &[
                     "In the address, write a short label for the job, unique among your heartbeats: \"nightly-backup\".",
-                    "Set the expected interval to the job's schedule (\"24h\" for a nightly job), then save the monitor.",
+                    "Set the expected interval to the job's schedule (\"24h\" for a nightly job), or give a cron expression and a time zone, then save the monitor.",
                     "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
+                    "To time the job, call .../start before it, then .../success or .../fail after it, with its output as the request body. Send an exit code as ?exit_code=2 or as .../2.",
                     "To report a failure at once, append ?status=down&msg=... to the URL.",
                 ],
                 ports: &[to_server!(
@@ -5806,6 +6489,51 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: VEEAM_OPTIONS,
         },
+        "kopia" => CollectorView {
+            kind: "kopia",
+            label: "Kopia",
+            summary: "Beta. A Kopia server through its REST API: the last snapshot of each source (age, errors, size, files), sources that missed their schedule, and the repository connection.",
+            examples: &["Kopia server", "KopiaUI", "Kopia in Docker"],
+            credential_types: &["username_password", "none"],
+            credentials: &[KOPIA_LOGIN, NO_AUTH],
+            address_hint: "nas.lan",
+            default_port: 51515,
+            setup: Setup {
+                title: "Start the Kopia server with its own user name and password",
+                steps: &[
+                    "On the machine that runs the backups, start the Kopia server with a generated certificate and its own user name and password.\nkopia server start --address=0.0.0.0:51515 --tls-generate-cert --server-username=dumbmonit --server-password=PASTE-A-LONG-RANDOM-PASSWORD",
+                    "Check that the repository is connected to that server and that the DumbMonit server can reach port 51515.",
+                    "In DumbMonit, enter the server address (for example nas.lan) with that user name and password.",
+                    "Tick Accept an unverifiable certificate: the generated certificate is self-signed. If the server runs with --insecure, choose the http protocol instead.",
+                ],
+                ports: &[to_device!(51515, "tcp", "Server API (HTTPS, default)")],
+                permissions: &["Server user name and password\nKopia has no read-only API account"],
+                warning: "Kopia's API has no read-only account: the server password also lets its holder start and delete snapshots. DumbMonit only reads, but keep port 51515 on your local network.",
+            },
+            options: KOPIA_OPTIONS,
+        },
+        "duplicati" => CollectorView {
+            kind: "duplicati",
+            label: "Duplicati",
+            summary: "Beta. A Duplicati server through its API: the age of each task's last successful backup, its last result, duration, size, warnings and errors, and the task running now.",
+            examples: &["Duplicati 2.1", "Duplicati in Docker", "Duplicati on a NAS"],
+            credential_types: &["api_token"],
+            credentials: &[DUPLICATI_PASSWORD],
+            address_hint: "nas.lan",
+            default_port: 8200,
+            setup: Setup {
+                title: "Let DumbMonit read the Duplicati API",
+                steps: &[
+                    "In the Duplicati web interface, open Settings and set a long random password for the interface: Duplicati 2.1 requires one.",
+                    "If the server only listens on the machine itself, start it with these options so that DumbMonit can reach it.\n--webservice-interface=any --webservice-allowed-hostnames=*",
+                    "In DumbMonit, enter the Duplicati address (for example nas.lan) and paste that password.",
+                ],
+                ports: &[to_device!(8200, "tcp", "Web interface and API (HTTP, default)")],
+                permissions: &["Interface password\nDuplicati has no accounts or read-only mode"],
+                warning: "Duplicati 2.1 or later is required: version 2.0 signs in through a different mechanism that DumbMonit does not use. The password gives full access, so keep port 8200 on your local network.",
+            },
+            options: DUPLICATI_OPTIONS,
+        },
         "tailscale" => CollectorView {
             kind: "tailscale",
             label: "Tailscale",
@@ -5830,6 +6558,39 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "Only tagged devices (servers, subnet routers, exit nodes) are expected to stay online: name the ones to watch in the Devices to keep online option, or enter all.",
             },
             options: TAILSCALE_OPTIONS,
+        },
+        "arubacentral" => CollectorView {
+            kind: "arubacentral",
+            label: "Aruba Central",
+            summary: "Beta. The Wi-Fi access points, switches and gateways of an HPE Aruba Networking Central account through its cloud API: devices offline, active critical alerts, devices in poor health, and the number of connected clients.",
+            examples: &["Aruba access points", "Aruba CX switches", "Aruba gateways"],
+            credential_types: &["username_password", "api_token"],
+            credentials: &[ARUBACENTRAL_CLIENT, ARUBACENTRAL_TOKEN],
+            address_hint: "us1.api.central.arubanetworks.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a personal API client for DumbMonit",
+                steps: &[
+                    "Sign in to HPE GreenLake (common.cloud.hpe.com) and open Manage Workspace → Personal API clients.",
+                    "Click Create personal API client, name it as follows and choose your Central instance as the service.\ndumbmonit",
+                    "Copy the client ID and the client secret: the secret is shown once, and HPE keeps no copy.",
+                    "In Central, open the API gateway page (Menu → API Gateway → REST API) and note the base URL of your region.",
+                    "In DumbMonit, enter that base URL as the address (for example us1.api.central.arubanetworks.com) and paste the client ID and the client secret.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "Central API (HTTPS, the base URL of your region)"),
+                    to_device!(
+                        443,
+                        "tcp",
+                        "HPE GreenLake sign-in (HTTPS, sso.common.cloud.hpe.com)"
+                    ),
+                ],
+                permissions: &[
+                    "Read access to Central monitoring\nDevices, alerts and health overviews: DumbMonit never changes anything",
+                ],
+                warning: "Beta: written from HPE's published API reference, not yet tested on a real Central account. It reads the new Central API with Central credentials; credentials scoped to the GreenLake platform and classic Central are not supported.",
+            },
+            options: ARUBACENTRAL_OPTIONS,
         },
         "fortigate" => CollectorView {
             kind: "fortigate",
@@ -5885,6 +6646,203 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: SOPHOS_OPTIONS,
         },
+        "meraki" => CollectorView {
+            kind: "meraki",
+            label: "Cisco Meraki (beta)",
+            summary: "Beta. A Cisco Meraki organization through the Dashboard API: devices offline, Internet uplinks that failed, license out of compliance or expiring, clients per network.",
+            examples: &["Meraki MX / MS / MR", "Cisco Meraki cloud dashboard"],
+            credential_types: &["api_token"],
+            credentials: &[MERAKI_KEY],
+            address_hint: "api.meraki.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only API key for DumbMonit",
+                steps: &[
+                    "In the Meraki dashboard, open Organization → Settings and tick Enable access to the Cisco Meraki Dashboard API.",
+                    "Open Organization → Administrators → Add admin and create an administrator dedicated to DumbMonit, with Organization access set to Read-only.\ndumbmonit@example.com",
+                    "Sign in as that administrator, open My profile → API access and click Generate new API key. Copy it: the dashboard shows it only once.",
+                    "In DumbMonit, enter api.meraki.com as the address and paste the key as API key. Leave Organization empty to read the first organization the key sees.",
+                ],
+                ports: &[to_device!(443, "tcp", "Meraki Dashboard API (HTTPS, api.meraki.com)")],
+                permissions: &[
+                    "Organization access: Read-only\nLists devices, uplinks, licensing and clients, changes nothing",
+                ],
+                warning: "A dormant device (not seen for a long time) is counted but never reported as down, and a WAN socket without a cable is not a failed uplink: only an uplink that lost its Internet access is.",
+            },
+            options: MERAKI_OPTIONS,
+        },
+        "omada" => CollectorView {
+            kind: "omada",
+            label: "TP-Link Omada (beta)",
+            summary: "Beta. A TP-Link Omada controller through its OpenAPI: devices disconnected, CPU and memory saturated, firmware updates offered, clients per site.",
+            examples: &[
+                "Omada software controller",
+                "OC200 / OC300 hardware controller",
+                "EAP access points, TL-SG switches, ER gateways",
+            ],
+            credential_types: &["username_password"],
+            credentials: &[OMADA_CLIENT],
+            address_hint: "omada.lan",
+            default_port: 8043,
+            setup: Setup {
+                title: "Create a read-only OpenAPI client for DumbMonit",
+                steps: &[
+                    "In the Omada controller, open Global View → Settings → Platform Integration → Open API and click Add New App.",
+                    "Name the app as follows, choose the Client access mode and give it the Viewer role on the sites to read.\ndumbmonit",
+                    "Click Apply: the controller shows the Omada ID, the Client ID and the Client Secret. Copy them: the secret is shown once.",
+                    "In DumbMonit, enter the controller address (omada.lan) and the port (8043, or 443 for a hardware controller), then paste the Client ID and the Client secret.",
+                ],
+                ports: &[
+                    to_device!(
+                        8043,
+                        "tcp",
+                        "Controller HTTPS and OpenAPI (software controller, default)"
+                    ),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only for hardware controllers (OC200, OC300) and installs behind a reverse proxy"
+                    ),
+                ],
+                permissions: &[
+                    "Viewer role on the sites\nReads sites, devices and client counts, changes nothing",
+                ],
+                warning: "The Omada controller ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own. The OpenAPI exists from controller version 5.9.",
+            },
+            options: OMADA_OPTIONS,
+        },
+        "paloalto" => CollectorView {
+            kind: "paloalto",
+            label: "Palo Alto PAN-OS",
+            summary: "Beta. A Palo Alto Networks firewall through the PAN-OS XML API: interfaces without link, HA peer lost or out of sync, session table filling up, management CPU and memory, licences expiring, failed commits.",
+            examples: &["PA-400 / PA-1400 series", "VM-Series", "PAN-OS 10.x and 11.x"],
+            credential_types: &["username_password", "api_token"],
+            credentials: &[PALOALTO_LOGIN, PALOALTO_KEY],
+            address_hint: "pa.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only XML API account for DumbMonit",
+                steps: &[
+                    "Device → Admin Roles → Add: name the role as follows. On the XML API tab enable Operational Requests only; leave every other privilege, and the Web UI and Command Line tabs, disabled.\ndumbmonit-ro",
+                    "Device → Administrators → Add: name the account as follows, set Authentication to a password, the type to Role Based and the role to the one above.\ndumbmonit",
+                    "Click Commit: the role and the account exist only once committed.",
+                    "In DumbMonit, enter the firewall address (pa.lan) with that user name and password, or with an API key you generated for that account.",
+                ],
+                ports: &[to_device!(443, "tcp", "Management interface (HTTPS, default)")],
+                permissions: &[
+                    "XML API → Operational Requests: enabled\nshow system info, resources, sessions, interfaces, HA state, jobs and licence info",
+                    "Every other XML API privilege: disabled\nConfiguration, Commit, Export, Import, Report, Log and User-ID Agent are not needed",
+                    "Web UI and Command Line: disabled\nThe account never signs in interactively",
+                ],
+                warning: "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+            },
+            options: PALOALTO_OPTIONS,
+        },
+        "sonicwall" => CollectorView {
+            kind: "sonicwall",
+            label: "SonicWall SonicOS",
+            summary: "Beta. A SonicWall firewall through the SonicOS 7 API: the link of every interface bound to a zone. Kept minimal on purpose: only the API paths SonicWall publishes are read.",
+            examples: &["SonicWall TZ / NSa / NSsp", "SonicWall NSv", "SonicOS 7.x"],
+            credential_types: &["username_password"],
+            credentials: &[SONICWALL_LOGIN],
+            address_hint: "sonicwall.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only user for the SonicOS API",
+                steps: &[
+                    "Device → Settings → Administration → Audit/SonicOS API: make sure HTTP Basic Access (RFC-2617) is on, then click Accept.",
+                    "Device → Users → Local Users & Groups → Add User: name it as follows, give it a long random password and add it to the group SonicWall Read-Only Admins.\ndumbmonit",
+                    "Allow HTTPS management on the interface DumbMonit reaches the firewall through (Device → Network → Interfaces → Configure → Management).",
+                    "In DumbMonit, enter the firewall address (sonicwall.lan) with that user name and password.",
+                ],
+                ports: &[to_device!(443, "tcp", "Management interface (HTTPS, default)")],
+                permissions: &[
+                    "Group SonicWall Read-Only Admins\nThe account reads and changes nothing",
+                ],
+                warning: "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+            },
+            options: SONICWALL_OPTIONS,
+        },
+        "qnap" => CollectorView {
+            kind: "qnap",
+            label: "QNAP QTS / QuTS hero",
+            summary: "Beta. A QNAP NAS through the CGI pages of its web interface: volumes filling up, disks whose SMART health is no longer good or too hot, processor temperature, firmware updates.",
+            examples: &["QNAP TS-453D", "QuTS hero NAS", "QTS 5.x"],
+            credential_types: &["username_password"],
+            credentials: &[QNAP_LOGIN],
+            address_hint: "nas.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a limited account for DumbMonit",
+                steps: &[
+                    "Open Control Panel → Privilege → Users → Create → Create a User and create the account as follows, with a long random password. Tick no share and no application privilege.\ndumbmonit",
+                    "Add the account to the administrators group: QTS serves the system status, volumes and disks to that group only.",
+                    "Optional: under Control Panel → System → Security → Allow/Deny List, allow the web interface only from the DumbMonit server's address.",
+                    "In DumbMonit, enter the NAS address (for example nas.lan) with that user name and password. Choose http and port 8080 only if HTTPS is off.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "Web interface (HTTPS, default)"),
+                    to_device_optional!(8080, "tcp", "Only with the HTTP protocol option"),
+                ],
+                permissions: &[
+                    "administrators group\nThe only group QTS lets read the system status",
+                    "No share, no application privilege\nNothing else is needed",
+                ],
+                warning: "QTS has no read-only role for its system status, so the account sits in the administrators group: give it a unique password, and an account without 2-step verification. Over HTTP the password travels base64-encoded, not encrypted: prefer HTTPS.",
+            },
+            options: QNAP_OPTIONS,
+        },
+        "ceph" => CollectorView {
+            kind: "ceph",
+            label: "Ceph",
+            summary: "Beta. A Ceph cluster through the REST API of the manager's dashboard: health and its checks, OSDs down or nearly full, placement groups not clean, capacity, pools, monitors out of the quorum.",
+            examples: &["Ceph 18 (Reef)", "Ceph 19 (Squid)", "cephadm clusters"],
+            credential_types: &["username_password"],
+            credentials: &[CEPH_LOGIN],
+            address_hint: "ceph.lan",
+            default_port: 8443,
+            setup: Setup {
+                title: "Create a read-only dashboard user for DumbMonit",
+                steps: &[
+                    "Check that the dashboard is enabled and note the address of the active manager.\nceph mgr services",
+                    "Write a long random password to a file, and keep it: DumbMonit needs it.\nopenssl rand -base64 24 | tr -d '\\n' | tee /tmp/dumbmonit.pwd",
+                    "Create the user with the built-in read-only role.\nceph dashboard ac-user-create dumbmonit -i /tmp/dumbmonit.pwd read-only",
+                    "Delete the password file.\nshred -u /tmp/dumbmonit.pwd",
+                    "In DumbMonit, enter the address of the active manager (for example ceph.lan) with that user name and password.",
+                ],
+                ports: &[
+                    to_device!(8443, "tcp", "Dashboard REST API (HTTPS, default)"),
+                    to_device_optional!(8080, "tcp", "Only with the HTTP protocol option"),
+                ],
+                permissions: &["read-only role\nReads the state of the cluster, changes nothing"],
+                warning: "A standby manager redirects to the active one: use the address of the active manager. The dashboard ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+            },
+            options: CEPH_OPTIONS,
+        },
+        "minio" => CollectorView {
+            kind: "minio",
+            label: "MinIO",
+            summary: "Beta. A MinIO object store through its Prometheus metrics: nodes and drives offline, capacity, failed heals, replication failures and S3 server errors.",
+            examples: &["MinIO single node", "MinIO distributed cluster"],
+            credential_types: &["api_token", "none"],
+            credentials: &[MINIO_TOKEN, NO_AUTH],
+            address_hint: "minio.lan",
+            default_port: 9000,
+            setup: Setup {
+                title: "Generate a Prometheus token for DumbMonit",
+                steps: &[
+                    "With the mc client configured for your MinIO (alias myminio), generate the token of the cluster metrics.\nmc admin prometheus generate myminio cluster",
+                    "Copy the value after bearer_token in the output: that is the token.",
+                    "In DumbMonit, enter the MinIO address (for example minio.lan), paste the token as Prometheus token and choose https if MinIO serves TLS.",
+                ],
+                ports: &[to_device!(9000, "tcp", "S3 API and metrics (HTTP or HTTPS, default)")],
+                permissions: &[
+                    "Prometheus token\nOpens the metrics pages only, no S3 or console access",
+                ],
+                warning: "The token only opens the metrics pages, but anyone holding it can read them. If MinIO runs with MINIO_PROMETHEUS_AUTH_TYPE=public, the metrics need no token: choose No authentication.",
+            },
+            options: MINIO_OPTIONS,
+        },
         "openvpn" => CollectorView {
             kind: "openvpn",
             label: "OpenVPN server",
@@ -5911,6 +6869,101 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: OPENVPN_OPTIONS,
         },
+        "snmp_oid" => CollectorView {
+            kind: "snmp_oid",
+            label: "SNMP value (single OID)",
+            summary: "Reads one SNMP object and checks its value against a range or a text.",
+            examples: &[
+                "A temperature or humidity sensor",
+                "A UPS status or battery level",
+                "A version string or a firmware flag",
+                "A counter exposed by a Net-SNMP extend script",
+            ],
+            credential_types: &["snmp_community", "snmp_v3"],
+            credentials: &[SNMP_COMMUNITY, SNMP_V3],
+            address_hint: "192.168.1.10",
+            default_port: 161,
+            setup: Setup {
+                title: "Monitor a single SNMP value",
+                steps: &[
+                    "On the device, enable SNMP and check that the community or the v3 user may read the object (the SNMP view must grant its branch).",
+                    "In DumbMonit, enter the device address, then the community or the v3 user.",
+                    "Fill in the object (OID) with its instance suffix, for example 1.3.6.1.2.1.1.3.0.",
+                    "Optional: set a minimum and a maximum, or an expected text, to be warned when the value drifts.",
+                ],
+                ports: &[to_device!(161, "udp", "SNMP request (default port)")],
+                permissions: &[
+                    "Read access to the object\nA read-only community or v3 user is enough",
+                ],
+                warning: "An object the agent does not know, or that its SNMP view hides, is reported down with the reason not_found.",
+            },
+            options: SNMP_OID_OPTIONS,
+        },
+        "radius" => CollectorView {
+            kind: "radius",
+            label: "RADIUS server",
+            summary: "Authenticates a test account (Access-Request): catches a server that is up but no longer accepts logins.",
+            examples: &[
+                "FreeRADIUS",
+                "Windows NPS",
+                "The RADIUS behind a WPA-Enterprise Wi-Fi",
+                "The RADIUS behind a VPN or a 802.1X switch",
+            ],
+            credential_types: &["radius"],
+            credentials: &[RADIUS_LOGIN],
+            address_hint: "radius.home.lan",
+            default_port: 1812,
+            setup: Setup {
+                title: "Monitor a RADIUS server",
+                steps: &[
+                    "On the RADIUS server, declare the DumbMonit host as a client, with a shared secret (clients.conf on FreeRADIUS, RADIUS Clients on Windows NPS).",
+                    "Create a test account without a second factor, and note its name and password.",
+                    "In DumbMonit, enter the server (UDP port 1812 by default), the shared secret and the test account.",
+                    "Optional: change the NAS identifier if the server filters requests by it.",
+                ],
+                ports: &[to_device!(1812, "udp", "Authentication requests (default port)")],
+                permissions: &[
+                    "A test account that may authenticate\nNo network access or admin right is needed",
+                ],
+                warning: "A wrong shared secret, or a host not declared as a client, usually makes the server stay silent: the check then reports a timeout.",
+            },
+            options: RADIUS_OPTIONS,
+        },
+        "grpc" => CollectorView {
+            kind: "grpc",
+            label: "gRPC service",
+            summary: "Calls the standard gRPC health check (grpc.health.v1): catches a service that is up but reports itself unhealthy.",
+            examples: &[
+                "A gRPC microservice",
+                "etcd",
+                "A service behind Envoy or a service mesh",
+                "Any server that registers grpc.health.v1",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "grpc.home.lan:50051",
+            default_port: 50051,
+            setup: Setup {
+                title: "Monitor a gRPC service",
+                steps: &[
+                    "Check that the server registers the standard health service (grpc.health.v1.Health): most gRPC frameworks have a one-line helper for it.",
+                    "In DumbMonit, enter the server with its port, for example grpc.home.lan:50051.",
+                    "Tick Encrypted connection (TLS) for a server that requires it; the port then defaults to 443.",
+                    "Optional: name a Service, to check its own health instead of the whole server's.",
+                ],
+                ports: &[
+                    to_device!(50051, "tcp", "gRPC over HTTP/2 (default port)"),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the Encrypted connection option (default port)",
+                    ),
+                ],
+                permissions: &[],
+                warning: "The check only sees what the health service reports: a server that always answers SERVING proves nothing about the methods behind it.",
+            },
+            options: GRPC_OPTIONS,
+        },
         _ => return cloud::view(kind),
     })
 }
@@ -5934,7 +6987,9 @@ fn guide_url(kind: &str) -> String {
         "victorialogs" | "victoriametrics" => "victoriametrics",
         "agent" | "agent_service" => "agent",
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mysql" | "mqtt"
-        | "websocket" => "services",
+        | "websocket" | "udp" | "ssh" | "imap" | "pop3" | "snmp_oid" | "radius" | "grpc" => {
+            "services"
+        }
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
@@ -5943,17 +6998,17 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website"
-        | "m365" | "entra" | "azure" | "aws" | "cloudflare" | "hetzner" | "ovh" | "infomaniak" => {
-            kind
-        }
+        | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
+        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "webchange" | "website" | "m365" | "entra" | "azure" | "aws" | "cloudflare"
+        | "hetzner" | "ovh" | "infomaniak" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
-        "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mqtt" | "websocket" => {
-            format!("#{kind}")
-        }
+        "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mqtt" | "websocket" | "udp"
+        | "ssh" | "imap" | "pop3" | "radius" | "grpc" => format!("#{kind}"),
         "postgres" => "#postgresql".to_owned(),
+        "snmp_oid" => "#snmp-oid".to_owned(),
         "mysql" => "#mysql-and-mariadb".to_owned(),
         _ => String::new(),
     };
@@ -6091,6 +7146,8 @@ mod tests {
         "pfsense",
         "unraid",
         "veeam",
+        "kopia",
+        "duplicati",
         "tailscale",
         "m365",
         "entra",
@@ -6101,7 +7158,15 @@ mod tests {
         "ovh",
         "infomaniak",
         "fortigate",
+        "arubacentral",
         "sophos",
+        "meraki",
+        "omada",
+        "paloalto",
+        "sonicwall",
+        "qnap",
+        "ceph",
+        "minio",
         "openvpn",
         "xcpng",
         "nutanix",
@@ -6118,11 +7183,18 @@ mod tests {
         "mysql",
         "mqtt",
         "websocket",
+        "udp",
+        "ssh",
+        "imap",
+        "pop3",
         "provider",
         "push",
         "webchange",
         "website",
         "dummy",
+        "snmp_oid",
+        "radius",
+        "grpc",
     ];
 
     #[test]
@@ -6297,6 +7369,76 @@ mod tests {
                 ],
             ),
             (
+                "udp",
+                &[
+                    "port",
+                    "payload",
+                    "payload_encoding",
+                    "expect_response",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "ssh",
+                &[
+                    "port",
+                    "expected_host_key",
+                    "alert_on_change",
+                    "host_key_type",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "imap",
+                &[
+                    "security",
+                    "port",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "pop3",
+                &[
+                    "security",
+                    "port",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "snmp_oid",
+                &[
+                    "oid",
+                    "port",
+                    "min",
+                    "max",
+                    "expect",
+                    "snmp_version",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            ("radius", &["port", "nas_identifier", "allow_private_targets", "timeout_seconds"]),
+            (
+                "grpc",
+                &[
+                    "service",
+                    "tls",
+                    "port",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
                 "proxmox",
                 &[
                     "port",
@@ -6431,7 +7573,7 @@ mod tests {
                     "live_map",
                 ],
             ),
-            ("push", &["expected_interval", "grace"]),
+            ("push", &["expected_interval", "grace", "schedule", "timezone", "max_duration"]),
             (
                 "webchange",
                 &[
@@ -6676,9 +7818,19 @@ mod tests {
                     "device_stale_days",
                 ],
             ),
+            ("kopia", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("duplicati", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
+            ("arubacentral", &["token_address", "request_timeout_seconds"]),
             ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("meraki", &["organization", "networks", "request_timeout_seconds"]),
+            ("omada", &["port", "omadac_id", "site", "insecure_tls", "request_timeout_seconds"]),
+            ("paloalto", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("sonicwall", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("qnap", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("ceph", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("minio", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("xcpng", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("nutanix", &["port", "insecure_tls", "request_timeout_seconds"]),
         ];
@@ -6872,17 +8024,42 @@ mod tests {
             ("pfsense", dumbmonit_collectors::pfsense::DEFAULT_PORT),
             ("unraid", dumbmonit_collectors::unraid::DEFAULT_PORT),
             ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
+            ("kopia", dumbmonit_collectors::kopia::DEFAULT_PORT),
+            ("duplicati", dumbmonit_collectors::duplicati::DEFAULT_PORT),
             ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
             ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
+            ("omada", dumbmonit_collectors::omada::DEFAULT_PORT),
+            ("paloalto", dumbmonit_collectors::paloalto::DEFAULT_PORT),
+            ("sonicwall", dumbmonit_collectors::sonicwall::DEFAULT_PORT),
+            ("qnap", dumbmonit_collectors::qnap::DEFAULT_PORT),
+            ("ceph", dumbmonit_collectors::ceph::DEFAULT_PORT),
+            ("minio", dumbmonit_collectors::minio::DEFAULT_PORT),
             ("xcpng", dumbmonit_collectors::xcpng::DEFAULT_PORT),
             ("nutanix", dumbmonit_collectors::nutanix::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
             assert_eq!(describe(kind).default_port, port, "{kind}");
         }
-        for kind in
-            ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos", "xcpng", "nutanix"]
-        {
+        for kind in [
+            "pfsense",
+            "unraid",
+            "veeam",
+            "tailscale",
+            "fortigate",
+            "sophos",
+            "meraki",
+            "omada",
+            "arubacentral",
+            "paloalto",
+            "sonicwall",
+            "qnap",
+            "ceph",
+            "minio",
+            "kopia",
+            "duplicati",
+            "xcpng",
+            "nutanix",
+        ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
                 dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
@@ -6897,6 +8074,20 @@ mod tests {
             describe("tailscale").address_hint,
             dumbmonit_collectors::tailscale::DEFAULT_ADDRESS
         );
+        assert_eq!(
+            describe("arubacentral").address_hint,
+            dumbmonit_collectors::arubacentral::DEFAULT_ADDRESS
+        );
+        assert_eq!(
+            describe("arubacentral").default_port,
+            dumbmonit_collectors::arubacentral::DEFAULT_PORT
+        );
+        assert_eq!(
+            defaut("arubacentral", "token_address"),
+            dumbmonit_collectors::arubacentral::DEFAULT_TOKEN_ADDRESS
+        );
+        assert_eq!(describe("meraki").address_hint, dumbmonit_collectors::meraki::DEFAULT_ADDRESS);
+        assert_eq!(describe("meraki").default_port, dumbmonit_collectors::meraki::DEFAULT_PORT);
         for kind in ["redis", "mongodb"] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
@@ -6988,6 +8179,9 @@ mod tests {
             crate::collectors::push::DEFAULT_EXPECTED_INTERVAL
         );
         assert_eq!(defaut("push", "grace"), crate::collectors::push::DEFAULT_GRACE);
+        assert_eq!(defaut("push", "timezone"), crate::collectors::push::DEFAULT_TIMEZONE);
+        assert_eq!(defaut("push", "schedule"), "");
+        assert_eq!(defaut("push", "max_duration"), "");
         // `collectors/{traefik,caddy,nginx,apache,npm,domain}`.
         use dumbmonit_collectors::{apache, caddy, domain, nginx, npm, traefik};
         for (kind, port) in [
@@ -7040,6 +8234,18 @@ mod tests {
         // n'exportent pas leurs défauts (ils ne sont lus que par la notice).
         assert_eq!(defaut("ntp", "port"), "123");
         assert_eq!(defaut("ntp", "offset_threshold_ms"), "100");
+        assert_eq!(defaut("ssh", "port"), "22");
+        assert_eq!(defaut("ssh", "host_key_type"), "auto");
+        assert_eq!(defaut("ssh", "alert_on_change"), "false");
+        assert_eq!(defaut("udp", "payload_encoding"), "text");
+        for kind in ["imap", "pop3"] {
+            assert_eq!(defaut(kind, "security"), "tls");
+        }
+        assert_eq!(defaut("snmp_oid", "port"), "161");
+        assert_eq!(defaut("snmp_oid", "snmp_version"), "2c");
+        assert_eq!(defaut("radius", "port"), "1812");
+        assert_eq!(defaut("radius", "nas_identifier"), "dumbmonit");
+        assert_eq!(defaut("grpc", "tls"), "false");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -7104,6 +8310,32 @@ mod tests {
         }
     }
 
+    /// Les champs du formulaire RADIUS sont ceux que `Credential::Radius` lit.
+    #[test]
+    fn le_formulaire_radius_recompose_un_identifiant_radius() {
+        let view = describe("radius");
+        let keys: Vec<&str> = view.credentials[0].fields.iter().map(|f| f.key).collect();
+        assert_eq!(keys, ["shared_secret", "username", "password"]);
+        let mut object = serde_json::Map::new();
+        object.insert("type".into(), "radius".into());
+        for key in &keys {
+            object.insert((*key).into(), format!("valeur-{key}").into());
+        }
+        let credential: dumbmonit_proto::Credential =
+            serde_json::from_value(serde_json::Value::Object(object)).unwrap();
+        assert_eq!(
+            credential,
+            dumbmonit_proto::Credential::Radius {
+                shared_secret: "valeur-shared_secret".into(),
+                username: "valeur-username".into(),
+                password: "valeur-password".into(),
+            }
+        );
+        for field in view.credentials[0].fields {
+            assert_eq!(field.input == "password", field.key != "username", "{}", field.key);
+        }
+    }
+
     /// Texte d'une notice, étapes et mise en garde comprises.
     fn notice(kind: &'static str) -> String {
         let view = describe(kind);
@@ -7147,7 +8379,12 @@ mod tests {
             ("veeam", "dumbmonit"),
             ("tailscale", "devices:core:read"),
             ("fortigate", "dumbmonit"),
+            ("arubacentral", "dumbmonit"),
             ("sophos", "dumbmonit"),
+            ("paloalto", "dumbmonit"),
+            ("sonicwall", "dumbmonit"),
+            ("qnap", "dumbmonit"),
+            ("ceph", "dumbmonit"),
             ("xcpng", "dumbmonit"),
             ("nutanix", "dumbmonit"),
             ("nextcloud", "token"),
@@ -7202,6 +8439,9 @@ mod tests {
                 // « REST API Admin », le type de compte d'API.
                 .replace("admin profiles", "")
                 .replace("rest api admin", "")
+                // Le menu « Device → Admin Roles » de PAN-OS, où se crée le
+                // rôle en lecture seule : un menu, pas un compte.
+                .replace("admin roles", "")
                 // L'application « Admin Center » de Prism Central, où se
                 // gèrent les identités : un menu, pas un compte.
                 .replace("admin center", "");
@@ -7346,9 +8586,19 @@ mod tests {
             ("pfsense", include_str!("../../../../docs/devices/pfsense.md")),
             ("unraid", include_str!("../../../../docs/devices/unraid.md")),
             ("veeam", include_str!("../../../../docs/devices/veeam.md")),
+            ("kopia", include_str!("../../../../docs/devices/kopia.md")),
+            ("duplicati", include_str!("../../../../docs/devices/duplicati.md")),
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
+            ("meraki", include_str!("../../../../docs/devices/meraki.md")),
+            ("omada", include_str!("../../../../docs/devices/omada.md")),
+            ("arubacentral", include_str!("../../../../docs/devices/arubacentral.md")),
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
+            ("paloalto", include_str!("../../../../docs/devices/paloalto.md")),
+            ("sonicwall", include_str!("../../../../docs/devices/sonicwall.md")),
+            ("qnap", include_str!("../../../../docs/devices/qnap.md")),
+            ("ceph", include_str!("../../../../docs/devices/ceph.md")),
+            ("minio", include_str!("../../../../docs/devices/minio.md")),
             ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
             ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),
@@ -7361,6 +8611,13 @@ mod tests {
             ("mysql", include_str!("../../../../docs/devices/services.md")),
             ("mqtt", include_str!("../../../../docs/devices/services.md")),
             ("websocket", include_str!("../../../../docs/devices/services.md")),
+            ("udp", include_str!("../../../../docs/devices/services.md")),
+            ("ssh", include_str!("../../../../docs/devices/services.md")),
+            ("imap", include_str!("../../../../docs/devices/services.md")),
+            ("pop3", include_str!("../../../../docs/devices/services.md")),
+            ("snmp_oid", include_str!("../../../../docs/devices/services.md")),
+            ("radius", include_str!("../../../../docs/devices/services.md")),
+            ("grpc", include_str!("../../../../docs/devices/services.md")),
         ];
         fn flatten(text: &str) -> String {
             text.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")
@@ -7575,13 +8832,16 @@ mod tests {
                 "« {kind} » exige un compte"
             );
         }
-        for kind in ["smtp", "mqtt"] {
+        for kind in ["smtp", "mqtt", "imap", "pop3"] {
             assert_eq!(describe(kind).credential_types, &["none", "username_password"], "{kind}");
         }
         assert_eq!(
             describe("websocket").credential_types,
             &["none", "username_password", "api_token"]
         );
+        assert_eq!(describe("radius").credential_types, &["radius"]);
+        assert_eq!(describe("grpc").credential_types, &["none"]);
+        assert_eq!(describe("snmp_oid").credential_types, &["snmp_community", "snmp_v3"]);
     }
 
     /// Les défauts des sondes applicatives sont ceux de leurs `options.rs` : un

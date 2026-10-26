@@ -112,8 +112,22 @@ export const UPTIME_KINDS = [
 	'mysql',
 	'mqtt',
 	'websocket',
+	'udp',
+	'ssh',
+	'imap',
+	'pop3',
+	'snmp_oid',
+	'radius',
+	'grpc',
 	'provider'
 ] as const;
+
+/** Uptime kinds that can be probed from several locations (mirrors the server). */
+export const MULTISITE_KINDS = ['http', 'tcp', 'dns', 'ping', 'tls', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'ntp'] as const;
+
+export function isMultisiteKind(kind: string): boolean {
+	return (MULTISITE_KINDS as readonly string[]).includes(kind);
+}
 
 export function isUptimeKind(kind: string): boolean {
 	return (UPTIME_KINDS as readonly string[]).includes(kind);
@@ -173,6 +187,11 @@ const FAILURE_REASON_LABEL: Record<string, () => string> = {
 	protocol: () => m.misc_reason_protocol(),
 	query: () => m.misc_reason_query(),
 	payload: () => m.misc_reason_payload(),
+	host_key: () => m.misc_reason_host_key(),
+	threshold: () => m.misc_reason_threshold(),
+	not_found: () => m.misc_reason_not_found(),
+	bad_secret: () => m.misc_reason_bad_secret(),
+	unhealthy: () => m.misc_reason_unhealthy(),
 	missed: () => m.misc_reason_missed(),
 	reported_down: () => m.misc_reason_reported_down()
 };

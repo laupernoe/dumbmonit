@@ -21,11 +21,19 @@ que cette version peut surveiller.
 | [pfSense](pfsense.md) | `pfsense` | clé d'API REST (utilisateur en lecture seule) | Pare-feu : passerelles en panne ou avec pertes, interfaces sans lien, services arrêtés |
 | [FortiGate](fortigate.md) | `fortigate` | jeton d'API REST (profil en lecture seule, hôte de confiance) | Pare-feu : tunnels IPsec, liens, synchro HA, mode conserve, licences FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | nom d'utilisateur/mot de passe (profil en lecture seule) | Pare-feu : liens d'interface seulement (l'API XML n'expose ni tunnel, ni HA, ni licence) |
+| [Cisco Meraki](meraki.md) | `meraki` | clé d'API (administrateur en lecture seule) | Bêta. Cloud Meraki : appareils hors ligne, liaisons Internet en échec, état et expiration de la licence, clients par réseau |
+| [TP-Link Omada](omada.md) | `omada` | identifiant et secret de client OpenAPI (rôle Viewer) | Bêta. Contrôleur Omada : appareils déconnectés ou en attente, CPU et mémoire, mises à jour du firmware, clients par site |
+| [Aruba Central](arubacentral.md) | `arubacentral` | client d'API (ID et secret) ou jeton d'accès | Bêta. Points d'accès, commutateurs et passerelles Aruba par l'API cloud : appareils hors ligne, alertes critiques, santé des appareils, clients |
+| [Palo Alto PAN-OS](paloalto.md) | `paloalto` | nom d'utilisateur/mot de passe ou clé d'API (rôle limité aux requêtes opérationnelles de l'API XML) | Bêta. Pare-feu : liens d'interface, pair et synchro HA, table des sessions, licences, validations en échec |
+| [SonicWall SonicOS](sonicwall.md) | `sonicwall` | nom d'utilisateur/mot de passe (utilisateur en lecture seule) | Bêta. Pare-feu : liens d'interface seulement |
 | [Serveur OpenVPN](openvpn.md) | `openvpn` | aucun, ou mot de passe de gestion | Serveur OpenVPN via son interface de gestion : version, état, clients connectés |
 | [UniFi Network](unifi.md) | `unifi` | clé d'API ou nom d'utilisateur/mot de passe | Console UniFi ou serveur auto-hébergé : appareils, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | jeton d'accès longue durée | Maison connectée : entités indisponibles, batteries faibles, mises à jour, réparations |
 | [TrueNAS](truenas.md) | `truenas` | clé d'API | Serveur de stockage ZFS (SCALE, Community Edition) |
 | [Unraid](unraid.md) | `unraid` | clé d'API (rôle Viewer) | NAS : array, disques, vérifications de parité, pools de cache, conteneurs, VM |
+| [QNAP QTS / QuTS hero](qnap.md) | `qnap` | nom d'utilisateur/mot de passe (compte limité) | NAS (bêta) : volumes qui se remplissent, état SMART et température des disques, mises à jour |
+| [Ceph](ceph.md) | `ceph` | utilisateur et mot de passe du tableau de bord (rôle read-only) | Grappe de stockage (bêta) : contrôles de santé, OSD, groupes de placement, capacité, pools, moniteurs |
+| [MinIO](minio.md) | `minio` | jeton Prometheus (ou aucun) | Stockage objet (bêta) : nœuds et disques hors ligne, capacité, échecs de réparation et de réplication, erreurs S3 |
 | [MikroTik RouterOS](mikrotik.md) | `mikrotik` | nom d'utilisateur/mot de passe (groupe en lecture seule) | Routeur ou commutateur : versions et firmware en retard, CPU, mémoire, capteurs, erreurs d'interface |
 | [Onduleur avec NUT](nut.md) | `nut` | aucun, ou nom d'utilisateur/mot de passe | Onduleur sur un NAS, un Raspberry Pi ou un serveur faisant tourner Network UPS Tools |
 | [Matériel serveur (Redfish)](redfish.md) | `redfish` | nom d'utilisateur/mot de passe | Ventilateurs, températures, alimentations et disques du serveur, lus depuis son BMC |
@@ -53,6 +61,8 @@ que cette version peut surveiller.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | jeton de compte de service (ClusterRole en lecture seule) | Cluster : nœuds non prêts, pods en boucle de crash ou en attente, workloads avec répliques manquantes, demandes de volume bloquées |
 | [Active Directory](activedirectory.md) | `activedirectory` | nom d'utilisateur/mot de passe (utilisateur de domaine ordinaire) | Domaine Windows via LDAPS : contrôleurs de domaine et rôles FSMO, membres de groupes privilégiés, politique de mot de passe, constats de sécurité |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | nom d'utilisateur/mot de passe (Veeam Backup Viewer) | Serveur de sauvegarde : jobs en échec, sessions en échec, dépôts qui se remplissent, licence |
+| [Kopia](kopia.md) (bêta) | `kopia` | nom d'utilisateur et mot de passe du serveur | Serveur de sauvegarde : dernier instantané de chaque source (âge, erreurs, taille), sources en retard sur leur planning, connexion au dépôt |
+| [Duplicati](duplicati.md) (bêta) | `duplicati` | mot de passe de l'interface web | Serveur de sauvegarde (2.1+) : dernière sauvegarde réussie de chaque tâche, dernier résultat, avertissements et erreurs, tâche en cours |
 | [Tailscale](tailscale.md) | `tailscale` | client OAuth (devices:core:read) ou jeton d'accès d'API | Tailnet : serveurs hors ligne, clés de nœud qui expirent, appareils en attente d'approbation |
 | [Microsoft 365](m365.md) | `m365` | Application Entra (ID client et secret) | Santé des services, incidents, licences, utilisateurs à risque |
 | [Microsoft Entra ID](entra.md) | `entra` | Application Entra (ID client et secret) | Expiration des secrets, synchronisation d'annuaire, MFA des administrateurs |
@@ -76,6 +86,9 @@ que cette version peut surveiller.
 | [Hôte accessible](services.md#ping) | `ping` | aucun | Passerelle, point d'accès, imprimante |
 | [Certificat TLS](services.md#tls) | `tls` | aucun | IMAPS, LDAPS, reverse proxy |
 | [Serveur de temps NTP](services.md#ntp) | `ntp` | aucun | Routeur, NAS, serveur de temps interne, serveur de pool public |
+| [Valeur SNMP](services.md#snmp-oid) | `snmp_oid` | communauté SNMP ou utilisateur v3 | Un objet SNMP : sonde, état d'onduleur, chaîne de version, avec bornes ou texte attendu |
+| [Serveur RADIUS](services.md#radius) | `radius` | secret partagé et compte de test | FreeRADIUS, Windows NPS : une vraie authentification |
+| [Service gRPC](services.md#grpc) | `grpc` | aucun | Microservice, etcd : le contrôle de santé gRPC standard |
 | [Battement de cœur](push.md) | `push` | aucun (URL secrète) | Tâche cron, script de sauvegarde, automatisation qui doit appeler |
 | [Changements de site web](webchange.md) | `webchange` | aucun | Une page ou tout un site : changements de texte, pages ajoutées et supprimées, avant/après avec captures d'écran |
 | [Surveillance de démonstration](demo.md) | `dummy` | aucun | Explorer l'interface sans matériel |
