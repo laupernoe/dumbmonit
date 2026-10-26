@@ -101,6 +101,7 @@ fn http_samples_are_recognised() {
         ("unraid.web.txt", "unraid.web", false),
         ("fortigate.web.txt", "fortigate.web", true),
         ("sophos.fw.txt", "sophos.fw", true),
+        ("omada.controller.txt", "omada.controller", true),
         ("mikrotik.web.txt", "mikrotik.web", false),
         ("unifi.network.txt", "unifi.network", true),
         ("unifi.os.txt", "unifi.os", true),

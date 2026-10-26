@@ -21,6 +21,8 @@ que cette version peut surveiller.
 | [pfSense](pfsense.md) | `pfsense` | clé d'API REST (utilisateur en lecture seule) | Pare-feu : passerelles en panne ou avec pertes, interfaces sans lien, services arrêtés |
 | [FortiGate](fortigate.md) | `fortigate` | jeton d'API REST (profil en lecture seule, hôte de confiance) | Pare-feu : tunnels IPsec, liens, synchro HA, mode conserve, licences FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | nom d'utilisateur/mot de passe (profil en lecture seule) | Pare-feu : liens d'interface seulement (l'API XML n'expose ni tunnel, ni HA, ni licence) |
+| [Cisco Meraki](meraki.md) | `meraki` | clé d'API (administrateur en lecture seule) | Bêta. Cloud Meraki : appareils hors ligne, liaisons Internet en échec, état et expiration de la licence, clients par réseau |
+| [TP-Link Omada](omada.md) | `omada` | identifiant et secret de client OpenAPI (rôle Viewer) | Bêta. Contrôleur Omada : appareils déconnectés ou en attente, CPU et mémoire, mises à jour du firmware, clients par site |
 | [Serveur OpenVPN](openvpn.md) | `openvpn` | aucun, ou mot de passe de gestion | Serveur OpenVPN via son interface de gestion : version, état, clients connectés |
 | [UniFi Network](unifi.md) | `unifi` | clé d'API ou nom d'utilisateur/mot de passe | Console UniFi ou serveur auto-hébergé : appareils, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | jeton d'accès longue durée | Maison connectée : entités indisponibles, batteries faibles, mises à jour, réparations |

@@ -116,6 +116,20 @@ fn http_products() -> Vec<Fingerprint> {
         .confidence(Confidence::Medium)
         .kind("sophos")
         .prefill(host_prefill()),
+        // Le contrôleur Omada publie, sans authentification, sa version et son
+        // identifiant : le même identifiant que celui de l'API ouverte.
+        Fingerprint::http(
+            "omada.controller",
+            "TP-Link Omada Controller",
+            &[8043, 443],
+            "/api/info",
+        )
+        .status(200)
+        .body("\"controllerVer\"")
+        .body("\"omadacId\"")
+        .version_json("/result/controllerVer")
+        .kind("omada")
+        .prefill(host_prefill()),
         Fingerprint::http("mikrotik.web", "MikroTik RouterOS", &[80, 443], "/")
             .status(200)
             .title("RouterOS router configuration page")

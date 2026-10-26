@@ -20,6 +20,8 @@ form always matches what this version can monitor.
 | [pfSense](pfsense.md) | `pfsense` | REST API key (read-only user) | Firewall: gateways down or lossy, interfaces without link, stopped services |
 | [FortiGate](fortigate.md) | `fortigate` | REST API token (read-only profile, trusted host) | Firewall: IPsec tunnels, links, HA sync, conserve mode, FortiGuard licences |
 | [Sophos Firewall](sophos.md) | `sophos` | username/password (read-only profile) | Firewall: interface links only (the XML API exposes no tunnel, HA or licence state) |
+| [Cisco Meraki](meraki.md) | `meraki` | API key (read-only administrator) | Beta. Meraki cloud: devices offline, failed Internet uplinks, license state and expiry, clients per network |
+| [TP-Link Omada](omada.md) | `omada` | OpenAPI client ID and secret (Viewer role) | Beta. Omada controller: devices disconnected or pending, CPU and memory, firmware updates, clients per site |
 | [OpenVPN server](openvpn.md) | `openvpn` | none, or management password | OpenVPN server through its management interface: version, state, connected clients |
 | [UniFi Network](unifi.md) | `unifi` | API key or username/password | UniFi console or self-hosted server: devices, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |
