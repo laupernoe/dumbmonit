@@ -156,6 +156,7 @@ mod tests {
             "/music/spotify/token",
             "/music/speaker/report",
             "/music/speaker/play",
+            "/system/storage",
             "/webpush",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {

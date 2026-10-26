@@ -3680,6 +3680,58 @@
 	"locations_site_none": "None",
 	"locations_title": "Locations",
 	"locations_use_place": "Use {place}",
+	"logsearch_admin_only": "Only administrators can search the logs.",
+	"logsearch_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} line",
+				"countPlural=other": "{count} lines"
+			}
+		}
+	],
+	"logsearch_description": "Search DumbMonit’s own logs with LogsQL, newest first.",
+	"logsearch_empty_hint": "Widen the period, lower the minimum level or simplify the query.",
+	"logsearch_empty_title": "No log lines found.",
+	"logsearch_error": "Couldn't search the logs.",
+	"logsearch_field_host": "host",
+	"logsearch_field_source": "source",
+	"logsearch_from": "From",
+	"logsearch_level": "Minimum level",
+	"logsearch_level_debug": "Debug (everything)",
+	"logsearch_level_error": "Error",
+	"logsearch_level_info": "Info and above",
+	"logsearch_level_warn": "Warning and above",
+	"logsearch_period": "Period",
+	"logsearch_period_15m": "Last 15 minutes",
+	"logsearch_period_1h": "Last hour",
+	"logsearch_period_24h": "Last 24 hours",
+	"logsearch_period_6h": "Last 6 hours",
+	"logsearch_period_7d": "Last 7 days",
+	"logsearch_period_custom": "Custom range…",
+	"logsearch_query": "LogsQL query",
+	"logsearch_query_help": "* matches everything. Example: \"timeout\" AND kind:snmp",
+	"logsearch_query_refused": "The log store refused this query.",
+	"logsearch_range_invalid": "Pick a start, and an end after it.",
+	"logsearch_search": "Search",
+	"logsearch_section_hint": "Logs can also be kept in a searchable store.",
+	"logsearch_section_link": "Search the logs",
+	"logsearch_settings_link": "Data & retention settings",
+	"logsearch_source": "Source",
+	"logsearch_source_agents": "Agents (coming later)",
+	"logsearch_source_server": "DumbMonit server",
+	"logsearch_store_off": "The log store is off. Turn it on in Settings → System to search logs.",
+	"logsearch_store_off_link": "Open Data & retention",
+	"logsearch_title": "Logs",
+	"logsearch_to": "To",
+	"logsearch_to_help": "Leave empty for now.",
+	"logsearch_truncated": "more exist, narrow the search",
 	"metrics_title_website_blank": "Blank page",
 	"metrics_title_website_canonical_changed": "Canonical changed",
 	"metrics_title_website_description_changed": "Description changed",
@@ -7058,6 +7110,101 @@
 	"status_words_st_monitoring": "Monitoring",
 	"status_words_st_resolved": "Resolved",
 	"status_words_st_scheduled": "Scheduled",
+	"storage_confirm_apply": "Save and restart",
+	"storage_confirm_cancel": "Cancel",
+	"storage_confirm_lowering": "Lowering the raw retention deletes older raw data.",
+	"storage_confirm_restart": "Changing the retention restarts the embedded metrics store; writes pause for a few seconds and are retried, nothing is lost. Enabling, disabling or changing the other stores restarts that one too.",
+	"storage_custom": "Custom…",
+	"storage_custom_days": "Number of days",
+	"storage_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} day",
+				"countPlural=other": "{count} days"
+			}
+		}
+	],
+	"storage_days_invalid": "Enter a whole number of days between {min} and {max}.",
+	"storage_days_unit": "days",
+	"storage_description": "Disk usage, how long metrics and logs are kept, and the optional long-term history and log store.",
+	"storage_disk_title": "Disk usage",
+	"storage_docs_external": "About external VictoriaMetrics",
+	"storage_free": "Free space",
+	"storage_free_of": "{free} free of {total} ({percent}%)",
+	"storage_full_in": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Full in about {count} day at this pace.",
+				"countPlural=other": "Full in about {count} days at this pace."
+			}
+		}
+	],
+	"storage_growth": "Growth",
+	"storage_growth_per_day": "About {size} per day",
+	"storage_last_error": "Last error: {error}",
+	"storage_limits": "Between {min} and {max} days.",
+	"storage_logstore_enabled": "Store logs for search",
+	"storage_logstore_intro": "Off by default. When on, DumbMonit runs an embedded VictoriaLogs and sends its own server logs to it, so you can search them on the Logs page.",
+	"storage_logstore_retention": "Keep logs for",
+	"storage_logstore_title": "Log store (VictoriaLogs)",
+	"storage_logstore_unavailable": "The VictoriaLogs binary is not in this image, so the log store cannot be turned on here.",
+	"storage_metrics_external": "This instance uses an external VictoriaMetrics, which manages its own retention (-retentionPeriod there). It currently keeps {days} days.",
+	"storage_metrics_intro": "Every sample is kept at full resolution for this long. Older raw data is deleted; with the long-term history on, graphs and reports beyond it use 5-minute aggregates.",
+	"storage_metrics_retention": "Keep raw metrics for",
+	"storage_metrics_title": "Raw metrics retention",
+	"storage_none_yet": "None yet",
+	"storage_not_enough_history": "Not enough history yet (needs two daily samples).",
+	"storage_off": "Off",
+	"storage_on": "On",
+	"storage_open_logs": "Open the Logs page",
+	"storage_process_logs_store": "log store",
+	"storage_process_metrics": "metrics store",
+	"storage_process_rollup": "long-term history",
+	"storage_read_error": "Couldn't read the storage settings.",
+	"storage_rollup_backfill": "History copied from raw data",
+	"storage_rollup_backfill_done": "Complete",
+	"storage_rollup_backfill_until": "In progress, back to {date}",
+	"storage_rollup_enabled": "Keep a long-term history",
+	"storage_rollup_intro": "VictoriaMetrics open source has no downsampling, so DumbMonit writes 5-minute average, minimum and maximum values (and success counts for availability) into a second small store. Graphs, status pages and reports beyond the raw retention read from it automatically.",
+	"storage_rollup_last_window": "Last aggregated window",
+	"storage_rollup_retention": "Keep the history for",
+	"storage_rollup_series": "Series written",
+	"storage_rollup_title": "Long-term history (5-minute aggregates)",
+	"storage_rollup_unavailable": "Not available: with an external VictoriaMetrics, set DUMBMONIT_VM_LONG_URL to a second instance to enable it.",
+	"storage_running": "Running",
+	"storage_save": "Save",
+	"storage_save_error": "Couldn't save the storage settings.",
+	"storage_saved": "Saved",
+	"storage_saved_restarted": "Saved. Restarted: {processes}.",
+	"storage_search_kw": "disk space retention days metrics victoriametrics history rollup long term aggregates logs victorialogs growth full",
+	"storage_source": "Source: {source}",
+	"storage_source_default": "default",
+	"storage_source_environment": "environment variable DUMBMONIT_VM_RETENTION",
+	"storage_source_settings": "set here",
+	"storage_status": "Status",
+	"storage_stopped": "Not running",
+	"storage_title": "Data & retention",
+	"storage_unknown": "Unknown",
+	"storage_usage_backups": "Backups",
+	"storage_usage_database": "Database",
+	"storage_usage_logs": "Server log files",
+	"storage_usage_logs_store": "Log store",
+	"storage_usage_metrics": "Metrics (raw)",
+	"storage_usage_rollup": "Long-term history",
 	"tips_alerts_clear_history": "\"Clear all resolved\" sweeps the closed alerts out of your history in one go, once you are done reading them.",
 	"tips_alerts_ignore_device": "A rule firing on a monitor that will just never comply? Ignore that rule for that one monitor — the rule still watches everywhere else.",
 	"tips_alerts_learning": "A new baseline rule stays silent for its first 14 days: it is still learning what normal looks like for this monitor before it dares to alert on it.",

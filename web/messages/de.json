@@ -3680,6 +3680,58 @@
 	"locations_site_none": "Keiner",
 	"locations_title": "Standorte",
 	"locations_use_place": "{place} verwenden",
+	"logsearch_admin_only": "Nur Administratoren können die Logs durchsuchen.",
+	"logsearch_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Zeile",
+				"countPlural=other": "{count} Zeilen"
+			}
+		}
+	],
+	"logsearch_description": "Durchsuchen Sie die Logs von DumbMonit mit LogsQL, neueste zuerst.",
+	"logsearch_empty_hint": "Erweitern Sie den Zeitraum, senken Sie den Mindestlevel oder vereinfachen Sie die Abfrage.",
+	"logsearch_empty_title": "Keine Logzeilen gefunden.",
+	"logsearch_error": "Die Logs konnten nicht durchsucht werden.",
+	"logsearch_field_host": "Host",
+	"logsearch_field_source": "Quelle",
+	"logsearch_from": "Von",
+	"logsearch_level": "Mindestlevel",
+	"logsearch_level_debug": "Debug (alles)",
+	"logsearch_level_error": "Fehler",
+	"logsearch_level_info": "Info und höher",
+	"logsearch_level_warn": "Warnung und höher",
+	"logsearch_period": "Zeitraum",
+	"logsearch_period_15m": "Letzte 15 Minuten",
+	"logsearch_period_1h": "Letzte Stunde",
+	"logsearch_period_24h": "Letzte 24 Stunden",
+	"logsearch_period_6h": "Letzte 6 Stunden",
+	"logsearch_period_7d": "Letzte 7 Tage",
+	"logsearch_period_custom": "Eigener Zeitraum …",
+	"logsearch_query": "LogsQL-Abfrage",
+	"logsearch_query_help": "* findet alles. Beispiel: \"timeout\" AND kind:snmp",
+	"logsearch_query_refused": "Der Log-Speicher hat diese Abfrage abgelehnt.",
+	"logsearch_range_invalid": "Wählen Sie einen Beginn und ein späteres Ende.",
+	"logsearch_search": "Suchen",
+	"logsearch_section_hint": "Logs können auch in einem durchsuchbaren Speicher abgelegt werden.",
+	"logsearch_section_link": "Logs durchsuchen",
+	"logsearch_settings_link": "Einstellungen Daten und Aufbewahrung",
+	"logsearch_source": "Quelle",
+	"logsearch_source_agents": "Agenten (folgt später)",
+	"logsearch_source_server": "DumbMonit-Server",
+	"logsearch_store_off": "Der Log-Speicher ist aus. Aktivieren Sie ihn unter Einstellungen → System, um Logs zu durchsuchen.",
+	"logsearch_store_off_link": "Daten und Aufbewahrung öffnen",
+	"logsearch_title": "Logs",
+	"logsearch_to": "Bis",
+	"logsearch_to_help": "Leer lassen für jetzt.",
+	"logsearch_truncated": "es gibt mehr, schränken Sie die Suche ein",
 	"metrics_title_website_blank": "Leere Seite",
 	"metrics_title_website_canonical_changed": "Canonical geändert",
 	"metrics_title_website_description_changed": "Beschreibung geändert",
@@ -7058,6 +7110,101 @@
 	"status_words_st_monitoring": "Wird beobachtet",
 	"status_words_st_resolved": "Behoben",
 	"status_words_st_scheduled": "Geplant",
+	"storage_confirm_apply": "Speichern und neu starten",
+	"storage_confirm_cancel": "Abbrechen",
+	"storage_confirm_lowering": "Eine kürzere Aufbewahrung der Rohdaten löscht ältere Rohdaten.",
+	"storage_confirm_restart": "Eine Änderung der Aufbewahrung startet den eingebetteten Metrikspeicher neu; Schreibvorgänge pausieren einige Sekunden und werden wiederholt, nichts geht verloren. Das Aktivieren, Deaktivieren oder Ändern der anderen Speicher startet auch diesen neu.",
+	"storage_custom": "Benutzerdefiniert …",
+	"storage_custom_days": "Anzahl Tage",
+	"storage_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Tag",
+				"countPlural=other": "{count} Tage"
+			}
+		}
+	],
+	"storage_days_invalid": "Geben Sie eine ganze Zahl an Tagen zwischen {min} und {max} ein.",
+	"storage_days_unit": "Tage",
+	"storage_description": "Speicherplatz, Aufbewahrungsdauer von Metriken und Logs sowie der optionale Langzeitverlauf und Log-Speicher.",
+	"storage_disk_title": "Speicherbelegung",
+	"storage_docs_external": "Zu externem VictoriaMetrics",
+	"storage_free": "Freier Speicher",
+	"storage_free_of": "{free} frei von {total} ({percent} %)",
+	"storage_full_in": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Bei diesem Tempo in etwa {count} Tag voll.",
+				"countPlural=other": "Bei diesem Tempo in etwa {count} Tagen voll."
+			}
+		}
+	],
+	"storage_growth": "Wachstum",
+	"storage_growth_per_day": "Etwa {size} pro Tag",
+	"storage_last_error": "Letzter Fehler: {error}",
+	"storage_limits": "Zwischen {min} und {max} Tagen.",
+	"storage_logstore_enabled": "Logs für die Suche speichern",
+	"storage_logstore_intro": "Standardmäßig aus. Wenn aktiv, startet DumbMonit ein eingebettetes VictoriaLogs und sendet die eigenen Server-Logs dorthin, sodass Sie sie auf der Seite „Logs“ durchsuchen können.",
+	"storage_logstore_retention": "Logs aufbewahren für",
+	"storage_logstore_title": "Log-Speicher (VictoriaLogs)",
+	"storage_logstore_unavailable": "Das VictoriaLogs-Programm ist nicht in diesem Image enthalten, der Log-Speicher kann hier nicht aktiviert werden.",
+	"storage_metrics_external": "Diese Instanz nutzt ein externes VictoriaMetrics, das seine Aufbewahrung selbst verwaltet (dort -retentionPeriod). Aktuell sind es {days} Tage.",
+	"storage_metrics_intro": "Jede Messung wird so lange in voller Auflösung gespeichert. Ältere Rohdaten werden gelöscht; ist der Langzeitverlauf aktiv, nutzen Diagramme und Berichte darüber hinaus 5-Minuten-Aggregate.",
+	"storage_metrics_retention": "Rohmetriken aufbewahren für",
+	"storage_metrics_title": "Aufbewahrung der Rohmetriken",
+	"storage_none_yet": "Noch keine",
+	"storage_not_enough_history": "Noch nicht genug Verlauf (zwei Tagesmessungen nötig).",
+	"storage_off": "Aus",
+	"storage_on": "An",
+	"storage_open_logs": "Seite „Logs“ öffnen",
+	"storage_process_logs_store": "Log-Speicher",
+	"storage_process_metrics": "Metrikspeicher",
+	"storage_process_rollup": "Langzeitverlauf",
+	"storage_read_error": "Die Speichereinstellungen konnten nicht gelesen werden.",
+	"storage_rollup_backfill": "Aus Rohdaten übernommener Verlauf",
+	"storage_rollup_backfill_done": "Abgeschlossen",
+	"storage_rollup_backfill_until": "Läuft, bisher bis {date}",
+	"storage_rollup_enabled": "Langzeitverlauf führen",
+	"storage_rollup_intro": "Das Open-Source-VictoriaMetrics kennt kein Downsampling. Deshalb schreibt DumbMonit 5-Minuten-Mittel-, Minimal- und Maximalwerte (und Erfolgszähler für die Verfügbarkeit) in einen zweiten kleinen Speicher. Diagramme, Statusseiten und Berichte jenseits der Rohdaten-Aufbewahrung lesen automatisch daraus.",
+	"storage_rollup_last_window": "Letztes aggregiertes Fenster",
+	"storage_rollup_retention": "Verlauf aufbewahren für",
+	"storage_rollup_series": "Geschriebene Serien",
+	"storage_rollup_title": "Langzeitverlauf (5-Minuten-Aggregate)",
+	"storage_rollup_unavailable": "Nicht verfügbar: Bei externem VictoriaMetrics setzen Sie DUMBMONIT_VM_LONG_URL auf eine zweite Instanz, um es zu aktivieren.",
+	"storage_running": "Läuft",
+	"storage_save": "Speichern",
+	"storage_save_error": "Die Speichereinstellungen konnten nicht gespeichert werden.",
+	"storage_saved": "Gespeichert",
+	"storage_saved_restarted": "Gespeichert. Neu gestartet: {processes}.",
+	"storage_search_kw": "festplatte speicher aufbewahrung tage metriken victoriametrics verlauf langzeit aggregate logs victorialogs wachstum voll",
+	"storage_source": "Quelle: {source}",
+	"storage_source_default": "Standardwert",
+	"storage_source_environment": "Umgebungsvariable DUMBMONIT_VM_RETENTION",
+	"storage_source_settings": "hier festgelegt",
+	"storage_status": "Status",
+	"storage_stopped": "Läuft nicht",
+	"storage_title": "Daten und Aufbewahrung",
+	"storage_unknown": "Unbekannt",
+	"storage_usage_backups": "Sicherungen",
+	"storage_usage_database": "Datenbank",
+	"storage_usage_logs": "Server-Logdateien",
+	"storage_usage_logs_store": "Log-Speicher",
+	"storage_usage_metrics": "Metriken (roh)",
+	"storage_usage_rollup": "Langzeitverlauf",
 	"tips_alerts_clear_history": "„Alle behobenen löschen“ fegt die geschlossenen Warnungen mit einem Klick aus Ihrem Verlauf, sobald Sie sie gelesen haben.",
 	"tips_alerts_ignore_device": "Eine Regel schlägt bei einem Monitor an, der sich nie fügen wird? Ignorieren Sie diese Regel nur für diesen einen Monitor – überall sonst überwacht sie weiter.",
 	"tips_alerts_learning": "Eine neue Basisregel bleibt in den ersten 14 Tagen stumm: Sie lernt noch, was für diesen Monitor normal ist, bevor sie zu warnen wagt.",
