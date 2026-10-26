@@ -1,0 +1,10 @@
+# source: the XML document QTS answers to GET /cgi-bin/authLogin.cgi without credentials, as read by python-qnapstats and the Home Assistant `qnap` integration (root element QDocRoot version="1.0", authPassed 0)
+# note: RECONSTRUCTED. The root element and the authPassed field are the documented ones; the headers and the rest of the body are approximate (closed source), values invented.
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Server: http server 1.0
+Content-Type: text/xml; charset=UTF-8
+Content-Length: 150
+Connection: close
+
+<?xml version="1.0" encoding="UTF-8" ?><QDocRoot version="1.0"><authPassed><![CDATA[0]]></authPassed><authSid><![CDATA[]]></authSid></QDocRoot>

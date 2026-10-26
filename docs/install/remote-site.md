@@ -134,6 +134,10 @@ shown as `suppressed` with `suppressed_by` = the relay, and only one
 notification goes out — for the relay. The parent you set explicitly keeps its
 role and wins when both are down.
 
+## Probing from the server and several relays
+
+A monitor does not have to choose between the server and one relay: it can be probed from both, or from several relays, with a quorum and a confirmation round before any alert. See [Probing from several locations](../devices/services.md#probing-from-several-locations).
+
 ## Limits
 
 - One relay per monitor. A monitor probed by the relay is not also probed by

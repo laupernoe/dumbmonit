@@ -105,6 +105,8 @@ const SELF_SERVICE: &[&str] = &[
     "/auth/totp",
     "/auth/totp/enroll",
     "/auth/totp/verify",
+    "/auth/passkeys/register/begin",
+    "/auth/passkeys/register/finish",
     "/music/speaker/report",
     "/music/speaker/play",
 ];
@@ -368,7 +370,14 @@ fn is_mutation(method: &Method) -> bool {
 /// le préfixe. On tolère les deux plutôt que de dépendre de ce détail.
 fn is_self_service(path: &str) -> bool {
     let path = path.strip_prefix("/api").unwrap_or(path);
-    SELF_SERVICE.contains(&path) || is_own_push_device(path)
+    SELF_SERVICE.contains(&path) || is_own_push_device(path) || is_own_passkey(path)
+}
+
+/// Clés d'accès : chacun renomme et retire *les siennes* (`api::passkeys` filtre
+/// par compte), comme il gère son TOTP.
+fn is_own_passkey(path: &str) -> bool {
+    path.strip_prefix("/auth/passkeys/")
+        .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// Abonnements Web Push : chacun abonne, teste et retire *ses* appareils, ce
@@ -518,6 +527,11 @@ mod tests {
         assert!(is_self_service("/webpush/test"));
         assert!(!is_self_service("/webpush/subscriptions/12/../../users"));
         assert!(!is_self_service("/webpush/subscriptions/"));
+        assert!(is_self_service("/api/auth/passkeys/register/begin"));
+        assert!(is_self_service("/auth/passkeys/register/finish"));
+        assert!(is_self_service("/api/auth/passkeys/3"));
+        assert!(!is_self_service("/auth/passkeys/"));
+        assert!(!is_self_service("/auth/passkeys/3/../../users"));
     }
 
     #[test]

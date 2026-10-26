@@ -369,6 +369,57 @@ async fn routes_outside_the_team_list_are_refused() {
     assert_eq!(reply.status, StatusCode::OK);
 }
 
+/// Routes arrivées avec les corrections de carte, le multisite et les clés
+/// d'accès : un compte restreint, même gestionnaire, n'écrit pas sur la carte,
+/// ne lit que les emplacements de sonde de ses équipements, et garde ses clés.
+#[tokio::test]
+async fn map_corrections_probe_locations_and_passkeys_follow_the_guard() {
+    let lab = lab().await;
+    let (operator, cookie) = create_user(&lab.app, &lab.admin, "olga", "operator").await;
+    let reply = lab
+        .app
+        .put(
+            &format!("/api/teams/{}", lab.paris_team),
+            json!({ "members": [operator], "grants": [{ "folder": "Paris", "level": "manage" }] }),
+            Some(&lab.admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+
+    // Corrections, règles et suggestions de la carte : fermées (liste fermée).
+    for uri in ["/api/topology/corrections", "/api/topology/rules", "/api/topology/suggestions"] {
+        let reply = lab.app.get(uri, Some(&cookie)).await;
+        assert_eq!(reply.status, StatusCode::FORBIDDEN, "GET {uri}: {}", reply.body);
+    }
+    let body = json!({ "kind": "attach", "from": format!("t{}", lab.paris), "to": format!("t{}", lab.lyon) });
+    let reply = lab.app.post("/api/topology/corrections", body, Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN, "{}", reply.body);
+    let reply = lab.app.delete("/api/topology/corrections/1", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN, "{}", reply.body);
+    let reply = lab.app.post("/api/topology/rules", json!({}), Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN, "{}", reply.body);
+
+    // La carte elle-même reste filtrée, sans correction ni règle.
+    let reply = lab.app.get("/api/topology", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let text = reply.body.to_string();
+    assert!(!text.contains(SECRET_NAME) && !text.contains(SECRET_ADDRESS), "{text}");
+    assert_eq!(reply.body["corrections"], json!([]));
+    assert_eq!(reply.body["rules"], json!([]));
+
+    // Emplacements de sonde : le sien oui, celui de Lyon non.
+    let reply =
+        lab.app.get(&format!("/api/targets/{}/probe-locations", lab.paris), Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let reply =
+        lab.app.get(&format!("/api/targets/{}/probe-locations", lab.lyon), Some(&cookie)).await;
+    assert_ne!(reply.status, StatusCode::OK, "{}", reply.body);
+
+    // Ses propres clés d'accès restent à lui.
+    let reply = lab.app.get("/api/auth/passkeys", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+}
+
 #[tokio::test]
 async fn operating_and_managing_follow_the_folder_level_and_the_role() {
     let lab = lab().await;

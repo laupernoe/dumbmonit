@@ -28,6 +28,7 @@ use serde::Serialize;
 use serde_json::Value;
 use sqlx::{Row, Sqlite, SqlitePool, Transaction};
 
+use crate::api::topology_edits::{self, CorrectionKind, RuleKind, RuleSpec, RuleStatus};
 use crate::backup::bundle::*;
 use crate::crypto::Cipher;
 
@@ -119,6 +120,8 @@ pub async fn restore(
     let refs = target_ids(&mut tx).await?;
     report.push(restore_locations(&mut tx, bundle, &refs).await?);
     report.push(restore_teams(&mut tx, bundle).await?);
+    report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
+    report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
     let channels = channel_ids(&mut tx).await?;
@@ -249,6 +252,13 @@ async fn restore_targets(
         let parent = parent.filter(|p| p != id);
         let relay = relay.filter(|p| p != id);
 
+        if let Some(multisite) = &target.multisite
+            && restore_multisite(tx, &mut report, &refs, *id, &target.name, multisite).await?
+            && outcomes.get(&key) == Some(&RestoreOutcome::Skipped)
+        {
+            outcomes.insert(key.clone(), RestoreOutcome::Updated);
+        }
+
         let current = sqlx::query("SELECT parent_id, via_agent FROM targets WHERE id = ?")
             .bind(id)
             .fetch_one(&mut **tx)
@@ -276,6 +286,74 @@ async fn restore_targets(
         report.count(outcome);
     }
     Ok(report)
+}
+
+/// Rétablit le réglage multi-emplacements d'un moniteur. Un agent absent est
+/// laissé de côté (avec une note), un quorum devenu trop grand revient à la
+/// majorité. Rend `true` si quelque chose a changé.
+async fn restore_multisite(
+    tx: &mut Transaction<'_, Sqlite>,
+    report: &mut SectionReport,
+    refs: &HashMap<String, i64>,
+    id: i64,
+    owner: &str,
+    multisite: &BundleMultisite,
+) -> Result<bool> {
+    let mut agents: Vec<i64> = multisite
+        .agents
+        .iter()
+        .filter_map(|a| resolve(report, refs, Some(a), owner, "probe location"))
+        .filter(|a| *a != id)
+        .collect();
+    agents.sort_unstable();
+    agents.dedup();
+    let locations = agents.len() + usize::from(multisite.server);
+    let quorum = multisite.quorum.filter(|q| *q as usize <= locations).map(i64::from);
+
+    let current =
+        sqlx::query("SELECT include_server, quorum FROM target_multisite WHERE target_id = ?")
+            .bind(id)
+            .fetch_optional(&mut **tx)
+            .await
+            .context("lecture de la sonde multi-emplacements")?;
+    let current_agents = sqlx::query_scalar::<_, i64>(
+        "SELECT agent_id FROM target_multisite_agents WHERE target_id = ? ORDER BY agent_id",
+    )
+    .bind(id)
+    .fetch_all(&mut **tx)
+    .await
+    .context("lecture des agents de la sonde multi-emplacements")?;
+    if let Some(row) = &current
+        && (row.try_get::<i64, _>("include_server")? != 0) == multisite.server
+        && row.try_get::<Option<i64>, _>("quorum")? == quorum
+        && current_agents == agents
+    {
+        return Ok(false);
+    }
+
+    sqlx::query("DELETE FROM target_multisite WHERE target_id = ?")
+        .bind(id)
+        .execute(&mut **tx)
+        .await
+        .context("retrait de la sonde multi-emplacements")?;
+    sqlx::query(
+        "INSERT INTO target_multisite (target_id, include_server, quorum) VALUES (?, ?, ?)",
+    )
+    .bind(id)
+    .bind(i64::from(multisite.server))
+    .bind(quorum)
+    .execute(&mut **tx)
+    .await
+    .context("restauration de la sonde multi-emplacements")?;
+    for agent in agents {
+        sqlx::query("INSERT INTO target_multisite_agents (target_id, agent_id) VALUES (?, ?)")
+            .bind(id)
+            .bind(agent)
+            .execute(&mut **tx)
+            .await
+            .context("restauration d'un agent de la sonde multi-emplacements")?;
+    }
+    Ok(true)
 }
 
 fn resolve(
@@ -1774,6 +1852,169 @@ async fn restore_teams(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Res
             .execute(&mut **tx)
             .await
             .context("membre de l'équipe")?;
+        }
+    }
+    Ok(report)
+}
+
+/// Un nœud du lot, avec les identifiants d'ici ; `None` : son équipement
+/// n'est pas là.
+fn local_node(node: &BundleNode, refs: &HashMap<String, i64>) -> Option<(String, i64)> {
+    let host = *refs.get(&node.target)?;
+    Some((topology_edits::node_from_parts(host, node.child.as_deref())?, host))
+}
+
+/// Corrections de la carte : une correction identique déjà là est laissée.
+/// Le parent d'alerte d'un rattachement voyage déjà avec l'équipement
+/// (`parent`) : rien n'est réécrit dans `targets`.
+async fn restore_topology_corrections(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("topology_corrections");
+    for entry in &bundle.topology_corrections {
+        let Some(kind) = CorrectionKind::parse(&entry.kind) else {
+            report.skipped += 1;
+            report.notes.push(format!("map correction of unknown kind \"{}\"", entry.kind));
+            continue;
+        };
+        let missing = |report: &mut SectionReport| {
+            report.skipped += 1;
+            report.notes.push(format!(
+                "map correction on \"{}\": a device it points at is not in this instance",
+                entry.to.target
+            ));
+        };
+        let Some((to, to_target)) = local_node(&entry.to, refs) else {
+            missing(&mut report);
+            continue;
+        };
+        let (from, from_target) = match &entry.from {
+            Some(node) => match local_node(node, refs) {
+                Some((id, target)) => (Some(id), Some(target)),
+                None => {
+                    missing(&mut report);
+                    continue;
+                }
+            },
+            None => (None, None),
+        };
+        let same: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM topology_corrections
+             WHERE kind = ? AND from_node IS ? AND to_node = ? AND source IS ? AND value IS ?",
+        )
+        .bind(kind.as_str())
+        .bind(&from)
+        .bind(&to)
+        .bind(&entry.source)
+        .bind(&entry.value)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche de la correction")?;
+        if same.is_some() {
+            report.skipped += 1;
+            continue;
+        }
+        let previous = entry.previous_parent.as_ref().and_then(|r| refs.get(r).copied());
+        let result = sqlx::query(
+            "INSERT INTO topology_corrections (kind, from_node, to_node, from_target, to_target,
+                 source, value, use_for_alerts, previous_parent, author, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(NULLIF(?, ''), datetime('now')))",
+        )
+        .bind(kind.as_str())
+        .bind(&from)
+        .bind(&to)
+        .bind(from_target)
+        .bind(to_target)
+        .bind(&entry.source)
+        .bind(&entry.value)
+        .bind(entry.use_for_alerts)
+        .bind(previous)
+        .bind(&entry.author)
+        .bind(&entry.created_at)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused(&format!("map correction on \"{to}\""), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Règles de la carte, par leur clé : même état, laissée ; autre état, mise à jour.
+async fn restore_topology_rules(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("topology_rules");
+    for entry in &bundle.topology_rules {
+        let (Some(kind), Some(status)) =
+            (RuleKind::parse(&entry.kind), RuleStatus::parse(&entry.status))
+        else {
+            report.skipped += 1;
+            report.notes.push(format!("map rule of unknown kind \"{}\"", entry.kind));
+            continue;
+        };
+        let parent = match &entry.parent {
+            Some(node) => match local_node(node, refs) {
+                Some(found) => Some(found),
+                None => {
+                    report.skipped += 1;
+                    report.notes.push(format!(
+                        "map rule: the device \"{}\" it depends on is not in this instance",
+                        node.target
+                    ));
+                    continue;
+                }
+            },
+            None => None,
+        };
+        let spec = RuleSpec {
+            kind,
+            subnet: entry.subnet.clone(),
+            address: entry.address.clone(),
+            target_kind: entry.target_kind.clone(),
+            source: entry.source.clone(),
+            parent: parent.as_ref().map(|(id, _)| id.clone()),
+        };
+        let key = spec.key();
+        let existing: Option<String> =
+            sqlx::query_scalar("SELECT status FROM topology_rules WHERE key = ?")
+                .bind(&key)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de la règle de carte")?;
+        if existing.as_deref() == Some(status.as_str()) {
+            report.skipped += 1;
+            continue;
+        }
+        let result = sqlx::query(
+            "INSERT INTO topology_rules (key, kind, status, subnet, address, target_kind, source,
+                 parent_node, parent_target, evidence, author, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(NULLIF(?, ''), datetime('now')))
+             ON CONFLICT(key) DO UPDATE SET status = excluded.status",
+        )
+        .bind(&key)
+        .bind(kind.as_str())
+        .bind(status.as_str())
+        .bind(&spec.subnet)
+        .bind(&spec.address)
+        .bind(&spec.target_kind)
+        .bind(&spec.source)
+        .bind(&spec.parent)
+        .bind(parent.map(|(_, target)| target))
+        .bind(entry.evidence)
+        .bind(&entry.author)
+        .bind(&entry.created_at)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) if existing.is_some() => report.count(RestoreOutcome::Updated),
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused("map rule", &error.into()),
         }
     }
     Ok(report)

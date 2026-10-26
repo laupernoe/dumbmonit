@@ -1,0 +1,1 @@
+<response status="success"><result><num-max>262144</num-max><num-active>18432</num-active><num-mcast>0</num-mcast><num-bcast>12</num-bcast><num-installed>912345</num-installed><num-tcp>15210</num-tcp><num-udp>3100</num-udp><num-icmp>122</num-icmp><num-predict>0</num-predict><pps>5400</pps><cps>42</cps><kbps>35200</kbps></result></response>

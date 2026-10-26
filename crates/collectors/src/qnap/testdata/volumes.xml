@@ -1,0 +1,2 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<QDocRoot version="1.0"><volumeList><volume><volumeValue><volumeNo>1</volumeNo><volumeLabel>DataVol1</volumeLabel><totalsize>4000000000000</totalsize><freesize>400000000000</freesize></volumeValue></volume><volume><volumeValue><volumeNo>2</volumeNo><volumeLabel>Backups</volumeLabel><totalsize>2000000000000</totalsize><freesize>1500000000000</freesize></volumeValue></volume></volumeList></QDocRoot>
