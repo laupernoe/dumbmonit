@@ -59,6 +59,9 @@ pub use dumbmonit_collectors::{
     ArubaCentralCollector, FortigateCollector, PfsenseCollector, SophosCollector,
     TailscaleCollector, UnraidCollector, VeeamCollector, arubacentral, fortigate, pfsense, sophos,
     tailscale, unraid, veeam,
+    FortigateCollector, PaloaltoCollector, PfsenseCollector, SonicwallCollector, SophosCollector,
+    TailscaleCollector, UnraidCollector, VeeamCollector, fortigate, paloalto, pfsense, sonicwall,
+    sophos, tailscale, unraid, veeam,
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{

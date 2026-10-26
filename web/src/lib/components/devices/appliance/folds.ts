@@ -4,6 +4,7 @@
  * reading `dumbmonit_<prefix>_*` series as the collectors write them
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada,nginx,apache}`,
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,arubacentral,nginx,apache}`,
+ * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,paloalto,sonicwall,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '#lib/api/index.js';
@@ -520,6 +521,50 @@ function meraki(series: MetricSeries[]): ApplianceView {
 		sections: [
 			{ title: 'Devices offline or alerting', rows: devices },
 			{ title: 'Uplinks that failed', rows: uplinks }
+// ------------------------------------------------------------ Palo Alto PAN-OS
+
+function paloalto(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'paloalto');
+	const info = ps.find((p) => p.name === 'version_info')?.labels;
+	const interfaces: Row[] = [...byLabel(ps, 'interface_down', 'interface').values()]
+		.filter((p) => p.value >= 1)
+		.map((p) => ({ key: p.labels.interface, name: p.labels.interface, tone: 'warning', plate: 'No link', details: p.labels.zone ? [p.labels.zone] : undefined }));
+	interfaces.sort(byName);
+	const licenses: Row[] = [...byLabel(ps, 'license_expiry_seconds', 'license').values()]
+		.filter((p) => p.value < 60 * 86400)
+		.map((p) => ({ key: p.labels.license, name: p.labels.license, tone: p.value < 0 ? 'warning' : 'advisory', plate: p.value < 0 ? 'Expired' : `Expires ${days(p.value)}` }));
+	const haEnabled = single(ps, 'ha_enabled');
+	const peerUp = single(ps, 'ha_peer_up');
+	const inSync = single(ps, 'ha_in_sync');
+	const functional = single(ps, 'ha_local_functional');
+	const usage = single(ps, 'session_usage_percent');
+	const commit = single(ps, 'last_commit_ok');
+	const haState = ps.find((p) => p.name === 'ha_state_info')?.labels;
+	if (functional !== null && functional < 1) problems.push({ text: 'this firewall is not functional in its HA pair', severe: true });
+	if (peerUp !== null && peerUp < 1) problems.push({ text: 'the HA peer is lost', severe: true });
+	if (inSync !== null && inSync < 1) problems.push({ text: 'the HA pair is out of sync', severe: false });
+	if (interfaces.length > 0) problems.push({ text: m.misc2_folds_interface_without_link({ count: interfaces.length }), severe: false });
+	if (usage !== null && usage > 90) problems.push({ text: 'the session table is nearly full', severe: false });
+	if (commit !== null && commit < 1) problems.push({ text: 'the last commit failed', severe: false });
+	const expired = licenses.filter((l) => l.tone === 'warning').length;
+	if (expired > 0) problems.push({ text: m.misc2_folds_licence_expired({ count: expired }), severe: false });
+	return {
+		title: 'Firewall',
+		description: info ? `${info.model || 'Palo Alto'} ${info.hostname ? `"${info.hostname}" ` : ''}running PAN-OS ${info.version}. Beta.` : 'Read through the PAN-OS XML API. Beta.',
+		verdict: verdict(problems, 'Every zoned interface has its link and the HA pair, if any, is healthy.'),
+		figures: [
+			{ label: 'CPU', value: percent(single(ps, 'cpu_usage_percent')), hint: 'Management plane' },
+			{ label: 'Memory', value: percent(single(ps, 'memory_used_percent')), hint: 'Management plane' },
+			{ label: 'Sessions', value: single(ps, 'sessions') !== null ? String(single(ps, 'sessions')) : null, tone: usage !== null && usage > 90 ? 'advisory' : 'ink', hint: usage !== null ? `${Math.round(usage)}% of the table` : undefined },
+			{
+				label: 'HA',
+				value: haEnabled === null || haEnabled < 1 ? 'Standalone' : haState ? haState.state : inSync !== null && inSync >= 1 ? 'In sync' : 'Enabled',
+				tone: (peerUp !== null && peerUp < 1) || (inSync !== null && inSync < 1) ? 'advisory' : 'ink'
+			}
+		],
+		sections: [
+			{ title: 'Interfaces without link', rows: interfaces },
+			{ title: 'Licences expiring or expired', rows: licenses }
 		]
 	};
 }
@@ -574,6 +619,36 @@ function omada(series: MetricSeries[]): ApplianceView {
 			{ label: 'Clients', value: single(ps, 'clients') !== null ? String(single(ps, 'clients')) : null }
 		],
 		sections: [{ title: 'Devices needing a look', rows: devices }]
+// ------------------------------------------------------------ SonicWall SonicOS
+
+function sonicwall(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'sonicwall');
+	const info = ps.find((p) => p.name === 'version_info')?.labels;
+	const links = byLabel(ps, 'interface_link_up', 'interface');
+	const interfaces: Row[] = [...byLabel(ps, 'interface_down', 'interface').values()]
+		.filter((p) => p.labels.zone && p.labels.zone.toLowerCase() !== 'unassigned')
+		.map((p) => {
+			const name = p.labels.interface;
+			const link = links.get(name)?.value ?? null;
+			return {
+				key: name,
+				name,
+				tone: p.value >= 1 ? 'warning' : link === null ? 'ghost' : 'signal',
+				plate: p.value >= 1 ? 'No link' : link === null ? 'Unknown' : 'Connected',
+				details: [p.labels.zone]
+			};
+		});
+	interfaces.sort((a, b) => Number(a.tone !== 'warning') - Number(b.tone !== 'warning') || a.name.localeCompare(b.name, 'en', { numeric: true }));
+	const down = single(ps, 'interfaces_down') ?? 0;
+	return {
+		title: 'Firewall',
+		description: info ? `${info.model ? `SonicWall ${info.model}, ` : ''}${info.version}. Beta; tunnel, HA and licence states are not read.` : 'SonicWall, read through the SonicOS API. Beta; tunnel, HA and licence states are not read.',
+		verdict: verdict(down > 0 ? [{ text: m.misc2_folds_interface_without_link({ count: down }), severe: false }] : [], 'Every interface in a zone has its link.'),
+		figures: [
+			{ label: 'Interfaces', value: single(ps, 'interfaces') !== null ? String(single(ps, 'interfaces')) : null },
+			{ label: 'Without link', value: String(down), tone: down > 0 ? 'advisory' : 'ink' }
+		],
+		sections: [{ title: 'Interfaces in a zone', rows: interfaces }]
 	};
 }
 
@@ -783,6 +858,8 @@ export const FOLDS: Record<string, Fold> = {
 	meraki: { prefix: 'meraki', title: 'Cloud network', fold: meraki },
 	omada: { prefix: 'omada', title: 'Wi-Fi and switching', fold: omada },
 	arubacentral: { prefix: 'arubacentral', title: 'Aruba Central', fold: arubacentral },
+	paloalto: { prefix: 'paloalto', title: 'Firewall', fold: paloalto },
+	sonicwall: { prefix: 'sonicwall', title: 'Firewall', fold: sonicwall },
 	nginx: { prefix: 'nginx', title: 'Web server', fold: nginx },
 	apache: { prefix: 'apache', title: 'Web server', fold: apache },
 	openvpn: { prefix: 'openvpn', title: 'VPN', fold: openvpn },

@@ -103,6 +103,8 @@ nav:
       - Cisco Meraki: devices/meraki.md
       - TP-Link Omada: devices/omada.md
       - Aruba Central: devices/arubacentral.md
+      - Palo Alto PAN-OS: devices/paloalto.md
+      - SonicWall SonicOS: devices/sonicwall.md
       - OpenVPN server: devices/openvpn.md
       - UniFi Network: devices/unifi.md
       - Home Assistant: devices/homeassistant.md

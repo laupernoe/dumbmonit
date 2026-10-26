@@ -76,8 +76,9 @@ const ATTENTION: Record<NodeState, number> = {
 };
 
 const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'meraki', 'openwrt', 'fortigate', 'sophos']);
+const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'openwrt', 'fortigate', 'sophos', 'paloalto', 'sonicwall']);
 /** Firewalls and gateways: the top of a site. */
-const GATEWAY_KINDS = new Set(['opnsense', 'pfsense', 'fortigate', 'sophos', 'mikrotik']);
+const GATEWAY_KINDS = new Set(['opnsense', 'pfsense', 'fortigate', 'sophos', 'paloalto', 'sonicwall', 'mikrotik']);
 
 export function isGateway(kind: string): boolean {
 	return GATEWAY_KINDS.has(kind);

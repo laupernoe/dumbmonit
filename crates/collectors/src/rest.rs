@@ -1,6 +1,6 @@
 //! Client HTTP commun aux intégrations d'équipements commerciaux interrogés par
 //! une API REST ou GraphQL (pfSense, Unraid, Veeam, Tailscale, FortiGate,
-//! Sophos).
+//! Sophos, PAN-OS, SonicOS).
 //!
 //! Même contrat que les autres clients du dépôt : le client `reqwest` partagé
 //! (`crate::http`), un délai par requête, des en-têtes d'authentification posés
@@ -106,6 +106,11 @@ impl RestClient {
     /// GET brut : statut et corps, sans interprétation.
     pub async fn get(&self, path: &str) -> Result<(StatusCode, String), ProbeError> {
         self.send(self.http.get(self.url(path)), path).await
+    }
+
+    /// DELETE brut : statut et corps, sans interprétation (fermeture de session).
+    pub async fn delete(&self, path: &str) -> Result<(StatusCode, String), ProbeError> {
+        self.send(self.http.delete(self.url(path)), path).await
     }
 
     /// GET d'un document JSON ; tout statut non 2xx devient une erreur typée.
