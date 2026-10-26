@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 @import '@fontsource-variable/bricolage-grotesque/opsz.css';
+@import '@fontsource-variable/geist/wght.css';
+@import '@fontsource-variable/geist-mono/wght.css';
 @import 'uplot/dist/uPlot.min.css';
 
 /* The manual toggle puts the `dark` class on <html>; `prefers-color-scheme`
@@ -42,6 +44,17 @@
 
 	--c-on-signal: #f3efe6;
 
+	/* The one solid button and the focus ring: the signal teal in both lights. */
+	--c-primary: var(--c-signal);
+	--c-on-primary: var(--c-on-signal);
+	--c-focus: var(--c-signal);
+
+	/* Health river cells (a strip per monitor over time). */
+	--c-river-up: rgb(15 143 134 / 0.55);
+	--c-river-warn: #b7791f;
+	--c-river-down: #c8402f;
+	--c-river-none: rgb(22 33 58 / 0.1);
+
 	--dot-from: rgb(22 33 58 / 0.42);
 	--dot-to: rgb(15 143 134 / 0.5);
 	--dot-glow: rgb(15 143 134 / 0.22);
@@ -82,12 +95,139 @@ html.dark,
 
 	--c-on-signal: #06201e;
 
+	--c-river-up: rgb(34 211 197 / 0.45);
+	--c-river-warn: #b8862c;
+	--c-river-down: #d0503f;
+	--c-river-none: rgb(159 176 200 / 0.12);
+
 	--dot-from: rgb(159 176 200 / 0.22);
 	--dot-to: rgb(34 211 197 / 0.32);
 	--dot-glow: rgb(34 211 197 / 0.14);
 
 	--shadow-lift: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -10px rgb(0 0 0 / 0.6);
 	--shadow-float: 0 2px 8px rgb(0 0 0 / 0.35), 0 24px 48px -16px rgb(0 0 0 / 0.7);
+}
+
+/* ---------------------------------------------------------------------------
+   Enterprise mode: Obsidian. A console for long shifts — near-black ground,
+   cool grey ink, status hues that read at a glance and nothing else in colour.
+   Always dark (the theme store forces `dark` alongside this class). Same token
+   names as the two lights, so every page and component follows unchanged.
+   --------------------------------------------------------------------------- */
+html.mode-enterprise {
+	color-scheme: dark;
+
+	--c-canvas: #07080a;
+	--c-canvas-deep: #050607;
+	--c-surface: #0b0d10;
+	--c-surface-2: #111419;
+	--c-line: #16191e;
+	--c-line-strong: #23272e;
+
+	--c-ink: #eceef1;
+	--c-ink-2: #8a919c;
+	--c-ink-3: #7a818c;
+	--c-ghost: rgb(236 238 241 / 0.08);
+
+	--c-signal: #2fd17c;
+	--c-signal-ink: #7be3a8;
+	--c-signal-soft: rgb(47 209 124 / 0.12);
+	--c-advisory: #f2b033;
+	--c-advisory-ink: #f7c766;
+	--c-advisory-soft: rgb(242 176 51 / 0.13);
+	--c-warning: #ff5c5c;
+	--c-warning-ink: #ff8a8a;
+	--c-warning-soft: rgb(255 92 92 / 0.13);
+	--c-info: #7da9ff;
+	--c-info-ink: #b3ccff;
+	--c-info-soft: rgb(125 169 255 / 0.13);
+
+	--c-on-signal: #04140b;
+
+	/* The solid button is ink on black, not green: green means "up" here. */
+	--c-primary: #eceef1;
+	--c-on-primary: #07080a;
+	--c-focus: #7da9ff;
+
+	--c-river-up: #1d5e3c;
+	--c-river-warn: #a7761c;
+	--c-river-down: #c24040;
+	--c-river-none: #13161a;
+
+	--dot-from: rgb(138 145 156 / 0.16);
+	--dot-to: rgb(125 169 255 / 0.22);
+	--dot-glow: rgb(125 169 255 / 0.1);
+
+	--shadow-lift: 0 1px 0 rgb(255 255 255 / 0.02) inset, 0 1px 2px rgb(0 0 0 / 0.5);
+	--shadow-float: 0 2px 8px rgb(0 0 0 / 0.5), 0 24px 48px -16px rgb(0 0 0 / 0.8);
+
+	--font-ui: 'Geist Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-code: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+}
+
+html.mode-enterprise body {
+	font-family: var(--font-ui);
+	font-feature-settings: normal;
+	font-variation-settings: normal;
+	font-size: 0.8125rem;
+}
+
+/* Bricolage's display voice belongs to the bulletin; the console speaks Geist. */
+html.mode-enterprise .display {
+	font-variation-settings: normal;
+	letter-spacing: -0.02em;
+}
+
+html.mode-enterprise :where(code, kbd, pre, samp, .font-mono) {
+	font-family: var(--font-code);
+}
+
+/* The console's few moving parts: a live dot, lines that draw once, a scan line. */
+@keyframes ob-live {
+	0%,
+	100% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.35;
+	}
+}
+@keyframes ob-draw {
+	from {
+		stroke-dashoffset: 300;
+	}
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+@keyframes ob-cell {
+	from {
+		opacity: 0;
+	}
+	to {
+		opacity: 1;
+	}
+}
+@keyframes ob-scan {
+	from {
+		left: 0;
+	}
+	to {
+		left: 100%;
+	}
+}
+.ob-live {
+	animation: ob-live 1.4s ease-in-out infinite;
+}
+.ob-draw {
+	stroke-dasharray: 300;
+	animation: ob-draw 1.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.ob-cell {
+	animation: ob-cell 0.5s ease both;
+}
+.ob-scan {
+	animation: ob-scan 6s linear infinite;
 }
 
 /* Tailwind utilities read the live variables, so `bg-surface` follows the theme. */
@@ -115,6 +255,13 @@ html.dark,
 	--color-info-ink: var(--c-info-ink);
 	--color-info-soft: var(--c-info-soft);
 	--color-on-signal: var(--c-on-signal);
+	--color-primary: var(--c-primary);
+	--color-on-primary: var(--c-on-primary);
+	--color-focus: var(--c-focus);
+	--color-river-up: var(--c-river-up);
+	--color-river-warn: var(--c-river-warn);
+	--color-river-down: var(--c-river-down);
+	--color-river-none: var(--c-river-none);
 
 	--shadow-lift: var(--shadow-lift);
 	--shadow-float: var(--shadow-float);
@@ -197,7 +344,7 @@ body {
 }
 
 :focus-visible {
-	outline: 2px solid var(--c-signal);
+	outline: 2px solid var(--c-focus);
 	outline-offset: 2px;
 	border-radius: 4px;
 }

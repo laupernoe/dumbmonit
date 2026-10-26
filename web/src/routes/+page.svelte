@@ -47,6 +47,8 @@
 	import NeedsYouCompact from '#lib/components/overview/NeedsYouCompact.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { viewport } from '#lib/stores/viewport.svelte.js';
+	import { mode } from '#lib/stores/mode.svelte.js';
+	import EnterpriseOverview from '#lib/components/enterprise/EnterpriseOverview.svelte';
 
 	const DAY_MS = 24 * 3600 * 1000;
 	const HISTORY_DAYS = 7;
@@ -227,6 +229,8 @@
 	// Loaded on open, then every 30 seconds. The last visit is read once before
 	// the first load and written every minute while open, and on the way out.
 	onMount(() => {
+		// Enterprise mode shows its own overview, fed by the shared stores.
+		if (mode.enterprise) return;
 		lastVisit = readLastVisit();
 		const controller = new AbortController();
 		void load(controller.signal);
@@ -330,6 +334,10 @@
 </script>
 
 <svelte:head><title>{m.overview_page_title()} · DumbMonit</title></svelte:head>
+
+{#if mode.enterprise}
+	<EnterpriseOverview />
+{:else}
 
 <!--
 	The whole page fits the window on a computer (≥ 1024 × 560): the sky band
@@ -511,6 +519,7 @@
 		{/if}
 	{/if}
 </div>
+{/if}
 
 <style>
 	/* Short computer screens: a smaller sentence keeps the sky band low and leaves the room to the list. */

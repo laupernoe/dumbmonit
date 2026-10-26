@@ -9,6 +9,8 @@
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '#lib/stores/auth.svelte.js';
 	import NavBar from '#lib/components/NavBar.svelte';
+	import EnterpriseShell from '#lib/components/shell/EnterpriseShell.svelte';
+	import { mode } from '#lib/stores/mode.svelte.js';
 	import VersionTag from '#lib/components/VersionTag.svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import DemoBanner from '#lib/components/demo/DemoBanner.svelte';
@@ -81,6 +83,25 @@
 	$effect(() => theme.watchSystem());
 	$effect(() => {
 		theme.apply();
+	});
+	// The product mode picks the shell and the colour tokens; read before sign-in.
+	$effect(() => {
+		mode.apply();
+	});
+	$effect(() => {
+		if (statusHost) return;
+		void mode.init();
+	});
+	// The setup wizard owns the whole screen, outside both shells.
+	const onWelcome = $derived(page.url.pathname.startsWith('/welcome'));
+	// First sign-in of an administrator on a fresh instance: the setup wizard.
+	// Asked once per page load; "Skip" or the last step marks it done on the server.
+	let wizardOffered = false;
+	$effect(() => {
+		if (!auth.canUseApi || !auth.isAdmin || auth.demo || mode.setupCompleted !== false) return;
+		if (wizardOffered || onWelcome || onWall || isPublicRoute(page.url.pathname)) return;
+		wizardOffered = true;
+		void goto('/welcome', { replace: true });
 	});
 
 	// Session state is established once at startup; the global 401 handler is
@@ -190,10 +211,16 @@
 		{#if auth.demo}
 			<DemoBanner />
 		{/if}
-		<NavBar />
-		<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-3 pb-[calc(var(--tabbar-h)+1rem+var(--safe-bottom))] sm:px-6 sm:pt-6 sm:pb-12">
+		{#if onWelcome}
 			{@render children()}
-		</main>
+		{:else if mode.enterprise}
+			<EnterpriseShell>{@render children()}</EnterpriseShell>
+		{:else}
+			<NavBar />
+			<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-3 pb-[calc(var(--tabbar-h)+1rem+var(--safe-bottom))] sm:px-6 sm:pt-6 sm:pb-12">
+				{@render children()}
+			</main>
+		{/if}
 		{#if CommandPalette && !onWall}
 			<CommandPalette />
 		{/if}
