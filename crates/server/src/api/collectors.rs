@@ -3447,7 +3447,7 @@ const IP_BLACKLIST_OPTIONS: &[OptionView] = &[
 ];
 
 /// Délai par requête des équipements commerciaux lus par leur API
-/// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`, défaut de
+/// (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada}`, défaut de
 /// `selfhosted/options.rs`).
 const VENDOR_TIMEOUT: OptionView = number(
     "request_timeout_seconds",
@@ -3614,6 +3614,81 @@ const FORTIGATE_OPTIONS: &[OptionView] = &[
         "VDOM",
         "The virtual domain to read. Empty: the one the REST API user belongs to.",
         "root",
+        "",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Clé d'API Meraki d'un administrateur de l'organisation en lecture seule.
+const MERAKI_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "The key of the read-only administrator created for DumbMonit, sent as a bearer token.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "Generated under My profile → API access, shown once. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const MERAKI_OPTIONS: &[OptionView] = &[
+    text(
+        "organization",
+        "Organization",
+        "The ID or name of the organization to read. Empty: the first one the API key sees.",
+        "Acme Corp",
+        "",
+    ),
+    text(
+        "networks",
+        "Networks",
+        "Comma-separated network names or IDs to watch. Empty: every network of the organization.",
+        "Main office, Warehouse",
+        "",
+    ),
+    VENDOR_TIMEOUT,
+];
+
+/// Client OpenAPI d'Omada (mode « Client », rôle Observateur).
+const OMADA_CLIENT: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "OpenAPI client",
+    help: "The client created for DumbMonit under Open API, in Client mode with the Viewer role.",
+    fields: &[
+        cred_text("username", "Client ID", "The Client ID shown when the app was created.", ""),
+        cred_secret(
+            "password",
+            "Client secret",
+            "The Client Secret, shown once. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+const OMADA_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the controller (8043 for the software controller, 443 for a hardware one).",
+        "8043",
+        "8043",
+    ),
+    text(
+        "omadac_id",
+        "Controller ID",
+        "The Omada ID shown under Open API. Empty: read from the controller, which publishes it.",
+        "a3f1c0d2e4b5967788990011aabbccdd",
+        "",
+    ),
+    text(
+        "site",
+        "Site",
+        "The name or ID of the only site to read. Empty: every site.",
+        "Default",
         "",
     ),
     SELF_SIGNED_TLS,
@@ -5826,6 +5901,71 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: SOPHOS_OPTIONS,
         },
+        "meraki" => CollectorView {
+            kind: "meraki",
+            label: "Cisco Meraki (beta)",
+            summary: "Beta. A Cisco Meraki organization through the Dashboard API: devices offline, Internet uplinks that failed, license out of compliance or expiring, clients per network.",
+            examples: &["Meraki MX / MS / MR", "Cisco Meraki cloud dashboard"],
+            credential_types: &["api_token"],
+            credentials: &[MERAKI_KEY],
+            address_hint: "api.meraki.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only API key for DumbMonit",
+                steps: &[
+                    "In the Meraki dashboard, open Organization → Settings and tick Enable access to the Cisco Meraki Dashboard API.",
+                    "Open Organization → Administrators → Add admin and create an administrator dedicated to DumbMonit, with Organization access set to Read-only.\ndumbmonit@example.com",
+                    "Sign in as that administrator, open My profile → API access and click Generate new API key. Copy it: the dashboard shows it only once.",
+                    "In DumbMonit, enter api.meraki.com as the address and paste the key as API key. Leave Organization empty to read the first organization the key sees.",
+                ],
+                ports: &[to_device!(443, "tcp", "Meraki Dashboard API (HTTPS, api.meraki.com)")],
+                permissions: &[
+                    "Organization access: Read-only\nLists devices, uplinks, licensing and clients, changes nothing",
+                ],
+                warning: "A dormant device (not seen for a long time) is counted but never reported as down, and a WAN socket without a cable is not a failed uplink: only an uplink that lost its Internet access is.",
+            },
+            options: MERAKI_OPTIONS,
+        },
+        "omada" => CollectorView {
+            kind: "omada",
+            label: "TP-Link Omada (beta)",
+            summary: "Beta. A TP-Link Omada controller through its OpenAPI: devices disconnected, CPU and memory saturated, firmware updates offered, clients per site.",
+            examples: &[
+                "Omada software controller",
+                "OC200 / OC300 hardware controller",
+                "EAP access points, TL-SG switches, ER gateways",
+            ],
+            credential_types: &["username_password"],
+            credentials: &[OMADA_CLIENT],
+            address_hint: "omada.lan",
+            default_port: 8043,
+            setup: Setup {
+                title: "Create a read-only OpenAPI client for DumbMonit",
+                steps: &[
+                    "In the Omada controller, open Global View → Settings → Platform Integration → Open API and click Add New App.",
+                    "Name the app as follows, choose the Client access mode and give it the Viewer role on the sites to read.\ndumbmonit",
+                    "Click Apply: the controller shows the Omada ID, the Client ID and the Client Secret. Copy them: the secret is shown once.",
+                    "In DumbMonit, enter the controller address (omada.lan), set the port if it is not 8043 (443 for a hardware controller), then paste the Client ID and the Client secret. Enter the Omada ID in the Controller ID option, or leave it empty to read it from the controller.",
+                ],
+                ports: &[
+                    to_device!(
+                        8043,
+                        "tcp",
+                        "Controller HTTPS and OpenAPI (software controller, default)"
+                    ),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Hardware controllers (OC200, OC300) and installs behind a reverse proxy"
+                    ),
+                ],
+                permissions: &[
+                    "Viewer role on the sites\nReads sites, devices and client counts, changes nothing",
+                ],
+                warning: "The Omada controller ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own. The OpenAPI exists from controller version 5.9.",
+            },
+            options: OMADA_OPTIONS,
+        },
         "openvpn" => CollectorView {
             kind: "openvpn",
             label: "OpenVPN server",
@@ -5884,7 +6024,8 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
+        | "sophos" | "meraki" | "omada" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "webchange" | "website" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -6032,6 +6173,8 @@ mod tests {
         "tailscale",
         "fortigate",
         "sophos",
+        "meraki",
+        "omada",
         "openvpn",
         "xcpng",
         "nutanix",
@@ -6597,6 +6740,8 @@ mod tests {
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
             ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("meraki", &["organization", "networks", "request_timeout_seconds"]),
+            ("omada", &["port", "omadac_id", "site", "insecure_tls", "request_timeout_seconds"]),
             ("xcpng", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("nutanix", &["port", "insecure_tls", "request_timeout_seconds"]),
         ];
@@ -6792,15 +6937,25 @@ mod tests {
             ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
             ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
             ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
+            ("omada", dumbmonit_collectors::omada::DEFAULT_PORT),
             ("xcpng", dumbmonit_collectors::xcpng::DEFAULT_PORT),
             ("nutanix", dumbmonit_collectors::nutanix::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
             assert_eq!(describe(kind).default_port, port, "{kind}");
         }
-        for kind in
-            ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos", "xcpng", "nutanix"]
-        {
+        for kind in [
+            "pfsense",
+            "unraid",
+            "veeam",
+            "tailscale",
+            "fortigate",
+            "sophos",
+            "meraki",
+            "omada",
+            "xcpng",
+            "nutanix",
+        ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
                 dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
@@ -6815,6 +6970,8 @@ mod tests {
             describe("tailscale").address_hint,
             dumbmonit_collectors::tailscale::DEFAULT_ADDRESS
         );
+        assert_eq!(describe("meraki").address_hint, dumbmonit_collectors::meraki::DEFAULT_ADDRESS);
+        assert_eq!(describe("meraki").default_port, dumbmonit_collectors::meraki::DEFAULT_PORT);
         for kind in ["redis", "mongodb"] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
@@ -7265,6 +7422,8 @@ mod tests {
             ("veeam", include_str!("../../../../docs/devices/veeam.md")),
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
+            ("meraki", include_str!("../../../../docs/devices/meraki.md")),
+            ("omada", include_str!("../../../../docs/devices/omada.md")),
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
             ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
             ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),

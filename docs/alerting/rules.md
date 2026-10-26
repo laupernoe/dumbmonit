@@ -630,6 +630,28 @@ See [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Sophos interface without link | A Sophos Firewall interface that is switched on and bound to a zone has no link (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
 
+### Cisco Meraki
+
+See [Cisco Meraki](../devices/meraki.md) (beta). Devices are labelled `device`, `serial`, `model` and `network`, uplinks `interface`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Meraki device offline | A Cisco Meraki device has been offline (out of reach of the cloud dashboard) for ten minutes. Dormant devices, unseen for a long time, are left out (`dumbmonit_meraki_device_offline`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Meraki uplink failed | A Meraki router lost the Internet access of a configured uplink (the wired and cellular sockets without a cable are not counted) (`dumbmonit_meraki_uplink_failed`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Meraki license problem | The Meraki license is not in compliance (expired, missing or out of compliance): the dashboard may stop managing the devices (`dumbmonit_meraki_license_ok`). | < 1 | 1 h | Advisory (`warning`) | 1 d |
+| Meraki license expiring | A Meraki license expires in less than 30 days (`dumbmonit_meraki_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
+
+### TP-Link Omada
+
+See [TP-Link Omada](../devices/omada.md) (beta). Devices are labelled `device`, `mac`, `model` and `site`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Omada device offline | An Omada access point, switch or gateway has been disconnected from the controller for ten minutes (`dumbmonit_omada_device_offline`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Omada device CPU high | An Omada device has had its CPU above 90 % for fifteen minutes (`dumbmonit_omada_device_cpu_usage_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Omada device memory high | An Omada device has had its memory above 90 % for fifteen minutes (`dumbmonit_omada_device_memory_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Omada firmware update | The Omada controller offers a firmware update for a device (`dumbmonit_omada_device_upgrade_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
 ### KVM (libvirt)
 
 Reported by the Linux agent on a KVM host; see [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).

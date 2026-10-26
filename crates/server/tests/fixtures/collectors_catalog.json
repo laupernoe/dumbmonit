@@ -3259,6 +3259,96 @@
     ]
   },
   {
+    "kind": "meraki",
+    "label": "Cisco Meraki (beta)",
+    "summary": "Beta. A Cisco Meraki organization through the Dashboard API: devices offline, Internet uplinks that failed, license out of compliance or expiring, clients per network.",
+    "examples": [
+      "Meraki MX / MS / MR",
+      "Cisco Meraki cloud dashboard"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "API key",
+        "help": "The key of the read-only administrator created for DumbMonit, sent as a bearer token.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API key",
+            "help": "Generated under My profile → API access, shown once. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "api.meraki.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only API key for DumbMonit",
+      "steps": [
+        "In the Meraki dashboard, open Organization → Settings and tick Enable access to the Cisco Meraki Dashboard API.",
+        "Open Organization → Administrators → Add admin and create an administrator dedicated to DumbMonit, with Organization access set to Read-only.\ndumbmonit@example.com",
+        "Sign in as that administrator, open My profile → API access and click Generate new API key. Copy it: the dashboard shows it only once.",
+        "In DumbMonit, enter api.meraki.com as the address and paste the key as API key. Leave Organization empty to read the first organization the key sees."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Meraki Dashboard API (HTTPS, api.meraki.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Organization access: Read-only\nLists devices, uplinks, licensing and clients, changes nothing"
+      ],
+      "warning": "A dormant device (not seen for a long time) is counted but never reported as down, and a WAN socket without a cable is not a failed uplink: only an uplink that lost its Internet access is.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/meraki/"
+    },
+    "options": [
+      {
+        "key": "organization",
+        "label": "Organization",
+        "help": "The ID or name of the organization to read. Empty: the first one the API key sees.",
+        "placeholder": "Acme Corp",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "networks",
+        "label": "Networks",
+        "help": "Comma-separated network names or IDs to watch. Empty: every network of the organization.",
+        "placeholder": "Main office, Warehouse",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "mikrotik",
     "label": "MikroTik RouterOS",
     "summary": "RouterOS and RouterBOOT versions behind, CPU, memory, temperatures, fans and power supplies, and errors and link losses on every interface.",
@@ -4551,6 +4641,135 @@
         "default": "9440",
         "required": false,
         "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "omada",
+    "label": "TP-Link Omada (beta)",
+    "summary": "Beta. A TP-Link Omada controller through its OpenAPI: devices disconnected, CPU and memory saturated, firmware updates offered, clients per site.",
+    "examples": [
+      "Omada software controller",
+      "OC200 / OC300 hardware controller",
+      "EAP access points, TL-SG switches, ER gateways"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "OpenAPI client",
+        "help": "The client created for DumbMonit under Open API, in Client mode with the Viewer role.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Client ID",
+            "help": "The Client ID shown when the app was created.",
+            "placeholder": "",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Client secret",
+            "help": "The Client Secret, shown once. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "omada.lan",
+    "default_port": 8043,
+    "setup": {
+      "title": "Create a read-only OpenAPI client for DumbMonit",
+      "steps": [
+        "In the Omada controller, open Global View → Settings → Platform Integration → Open API and click Add New App.",
+        "Name the app as follows, choose the Client access mode and give it the Viewer role on the sites to read.\ndumbmonit",
+        "Click Apply: the controller shows the Omada ID, the Client ID and the Client Secret. Copy them: the secret is shown once.",
+        "In DumbMonit, enter the controller address (omada.lan), set the port if it is not 8043 (443 for a hardware controller), then paste the Client ID and the Client secret. Enter the Omada ID in the Controller ID option, or leave it empty to read it from the controller."
+      ],
+      "ports": [
+        {
+          "port": 8043,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Controller HTTPS and OpenAPI (software controller, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Hardware controllers (OC200, OC300) and installs behind a reverse proxy",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "Viewer role on the sites\nReads sites, devices and client counts, changes nothing"
+      ],
+      "warning": "The Omada controller ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own. The OpenAPI exists from controller version 5.9.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/omada/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the HTTPS port of the controller (8043 for the software controller, 443 for a hardware one).",
+        "placeholder": "8043",
+        "default": "8043",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "omadac_id",
+        "label": "Controller ID",
+        "help": "The Omada ID shown under Open API. Empty: read from the controller, which publishes it.",
+        "placeholder": "a3f1c0d2e4b5967788990011aabbccdd",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "site",
+        "label": "Site",
+        "help": "The name or ID of the only site to read. Empty: every site.",
+        "placeholder": "Default",
+        "default": "",
+        "required": false,
+        "input": "text",
         "choices": [],
         "group": ""
       },

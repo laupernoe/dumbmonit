@@ -5840,6 +5840,123 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_sophos_interface_down",
             )
         },
+        // --- Cisco Meraki (`collectors/meraki`) ---
+        Rule {
+            description: "A Cisco Meraki device has been offline (out of reach of the cloud dashboard) for ten minutes. Dormant devices, unseen for a long time, are left out.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "meraki_device_offline",
+                "Meraki device offline",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_device_offline",
+            )
+        },
+        Rule {
+            description: "A Meraki router lost the Internet access of a configured uplink (the wired and cellular sockets without a cable are not counted).".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "meraki_uplink_failed",
+                "Meraki uplink failed",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_uplink_failed",
+            )
+        },
+        Rule {
+            description: "The Meraki license is not in compliance (expired, missing or out of compliance): the dashboard may stop managing the devices.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "meraki_license_problem",
+                "Meraki license problem",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_license_ok",
+            )
+        },
+        Rule {
+            description: "A Meraki license expires in less than 30 days.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "meraki_license_expiring",
+                "Meraki license expiring",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_license_expiry_seconds",
+            )
+        },
+        // --- TP-Link Omada (`collectors/omada`) ---
+        Rule {
+            description: "An Omada access point, switch or gateway has been disconnected from the controller for ten minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "omada_device_offline",
+                "Omada device offline",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_offline",
+            )
+        },
+        Rule {
+            description: "An Omada device has had its CPU above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "omada_cpu_high",
+                "Omada device CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_cpu_usage_percent",
+            )
+        },
+        Rule {
+            description: "An Omada device has had its memory above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "omada_memory_high",
+                "Omada device memory high",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_memory_used_percent",
+            )
+        },
+        Rule {
+            description: "The Omada controller offers a firmware update for a device.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "omada_firmware_update",
+                "Omada firmware update",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_upgrade_available",
+            )
+        },
         // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
         Rule {
             description: "libvirt reports a KVM domain as crashed: the hypervisor had to stop it.".to_string(),
@@ -6616,6 +6733,14 @@ mod tests {
             "fortigate_license_expiring",
             "fortigate_firmware_update",
             "sophos_interface_down",
+            "meraki_device_offline",
+            "meraki_uplink_failed",
+            "meraki_license_problem",
+            "meraki_license_expiring",
+            "omada_device_offline",
+            "omada_cpu_high",
+            "omada_memory_high",
+            "omada_firmware_update",
             "libvirt_domain_crashed",
             "libvirt_pool_almost_full",
             "xcpng_host_offline",
@@ -7051,8 +7176,8 @@ mod tests {
             "dumbmonit_agent_speedtest_upload_bytes_per_second",
             "dumbmonit_agent_speedtest_latency_ms",
             "dumbmonit_agent_speedtest_max_latency_ms",
-            // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos
-            // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`),
+            // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos, Meraki, Omada
+            // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada}`),
             // Hyper-V par l'agent Windows (`agent/src/collect/perf_counters.rs`).
             "dumbmonit_pfsense_gateway_up",
             "dumbmonit_pfsense_gateway_loss_percent",
@@ -7086,6 +7211,14 @@ mod tests {
             "dumbmonit_fortigate_license_expiry_seconds",
             "dumbmonit_fortigate_firmware_update_available",
             "dumbmonit_sophos_interface_down",
+            "dumbmonit_meraki_device_offline",
+            "dumbmonit_meraki_uplink_failed",
+            "dumbmonit_meraki_license_ok",
+            "dumbmonit_meraki_license_expiry_seconds",
+            "dumbmonit_omada_device_offline",
+            "dumbmonit_omada_device_cpu_usage_percent",
+            "dumbmonit_omada_device_memory_used_percent",
+            "dumbmonit_omada_device_upgrade_available",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",

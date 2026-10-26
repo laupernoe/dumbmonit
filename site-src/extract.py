@@ -27,7 +27,7 @@ OUT = Path(__file__).resolve().parent / "data" / "devices.json"
 # (the build fails otherwise, so a new collector cannot be forgotten).
 FAMILIES = [
     ("servers", ["agent", "redfish", "nut", "activedirectory"]),
-    ("network", ["snmp", "mikrotik", "unifi", "tailscale", "openvpn"]),
+    ("network", ["snmp", "mikrotik", "unifi", "tailscale", "openvpn", "meraki", "omada"]),
     ("firewalls", ["opnsense", "pfsense", "fortigate", "sophos"]),
     ("hypervisors", ["proxmox", "pdm", "vsphere", "xcpng", "nutanix", "kubernetes"]),
     ("storage", ["synology", "truenas", "unraid", "pbs", "veeam"]),
