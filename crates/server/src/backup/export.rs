@@ -492,7 +492,8 @@ async fn users(
 ) -> Result<Vec<BundleUser>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
-                created_at, disabled, totp_secret, totp_enabled
+                created_at, disabled, totp_secret, totp_enabled,
+                scim_id, scim_external_id, scim_email, disabled_by_scim
          FROM users ORDER BY id",
     )
     .fetch_all(pool)
@@ -514,6 +515,10 @@ async fn users(
             totp_secret: None,
             totp_enabled: false,
             recovery_codes: Vec::new(),
+            scim_id: row.try_get("scim_id")?,
+            scim_external_id: row.try_get("scim_external_id")?,
+            scim_email: row.try_get("scim_email")?,
+            disabled_by_scim: row.try_get::<i64, _>("disabled_by_scim")? != 0,
         };
 
         if options.include_account_secrets {

@@ -1100,6 +1100,28 @@ export interface LdapTestReport {
 	};
 }
 
+/** Role given to the accounts SCIM provisioning creates — never `admin`. */
+export type ScimDefaultRole = 'viewer' | 'operator';
+
+/** `GET`/`PUT /api/auth/scim`, and `POST /api/auth/scim/token` (with `token`). */
+export interface ScimSettings {
+	enabled: boolean;
+	/** Tenant URL to give the identity provider: `<origin>/api/scim/v2`. */
+	base_url: string;
+	token_set: boolean;
+	/** RFC 3339 UTC; `null` without a token. */
+	token_created_at: string | null;
+	default_role: ScimDefaultRole;
+	/** The new `dmscim_…` token, only in the answer to `POST /api/auth/scim/token`. */
+	token?: string;
+}
+
+/** Body of `PUT /api/auth/scim`. */
+export interface ScimSettingsPayload {
+	enabled: boolean;
+	default_role?: ScimDefaultRole;
+}
+
 /**
  * Authentication state as handled by the interface.
  *

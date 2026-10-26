@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **SCIM 2.0 provisioning (Entra ID, Okta).** An identity provider can now
+  create, update, disable and delete accounts and teams through
+  `/api/scim/v2`, with its own bearer token (`dmscim_…`, generated once in
+  the settings, stored hashed). Provisioned accounts get the configured
+  default role (viewer or operator) and sign in through SSO; disabling one
+  closes its sessions. SCIM never touches an administrator, never sets a
+  password, never removes a member an administrator added and never changes
+  a team's folder rights. Settings API: `GET`/`PUT /api/auth/scim`,
+  `POST`/`DELETE /api/auth/scim/token`.
+
 ## 0.14.0 — 2026-10-25
 
 ### Added

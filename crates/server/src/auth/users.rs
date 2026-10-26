@@ -348,12 +348,15 @@ pub async fn set_role(pool: &SqlitePool, id: i64, role: Role) -> Result<()> {
 }
 
 pub async fn set_disabled(pool: &SqlitePool, id: i64, disabled: bool) -> Result<()> {
-    sqlx::query("UPDATE users SET disabled = ?, disabled_by_ldap = 0 WHERE id = ?")
-        .bind(i64::from(disabled))
-        .bind(id)
-        .execute(pool)
-        .await
-        .context("activation ou désactivation du compte")?;
+    sqlx::query(
+        "UPDATE users SET disabled = ?, disabled_by_ldap = 0, disabled_by_scim = 0
+         WHERE id = ?",
+    )
+    .bind(i64::from(disabled))
+    .bind(id)
+    .execute(pool)
+    .await
+    .context("activation ou désactivation du compte")?;
     Ok(())
 }
 
@@ -397,12 +400,15 @@ pub async fn apply_changes(pool: &SqlitePool, id: i64, changes: &AccountChanges<
             .context("mise à jour du mot de passe")?;
     }
     if let Some(disabled) = changes.disabled {
-        sqlx::query("UPDATE users SET disabled = ?, disabled_by_ldap = 0 WHERE id = ?")
-            .bind(i64::from(disabled))
-            .bind(id)
-            .execute(&mut *tx)
-            .await
-            .context("activation ou désactivation du compte")?;
+        sqlx::query(
+            "UPDATE users SET disabled = ?, disabled_by_ldap = 0, disabled_by_scim = 0
+             WHERE id = ?",
+        )
+        .bind(i64::from(disabled))
+        .bind(id)
+        .execute(&mut *tx)
+        .await
+        .context("activation ou désactivation du compte")?;
     }
     if changes.close_sessions {
         sqlx::query("DELETE FROM auth_sessions WHERE user_id = ?")

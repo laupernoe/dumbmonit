@@ -1302,6 +1302,25 @@ async fn restore_users(
             }
         }
 
+        // `scim_id` est unique : déjà pris, le compte est restauré sans son
+        // rattachement SCIM, que le fournisseur refera.
+        let mut scim_id = user.scim_id.clone();
+        if let Some(value) = &scim_id {
+            let taken = sqlx::query("SELECT 1 FROM users WHERE scim_id = ?")
+                .bind(value)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche du rattachement SCIM")?;
+            if taken.is_some() {
+                report.notes.push(format!(
+                    "Account \"{}\": its SCIM identity already belongs to another account here; \
+                     it was restored without the link.",
+                    user.username
+                ));
+                scim_id = None;
+            }
+        }
+
         let totp_secret = user
             .totp_secret
             .as_ref()
@@ -1311,8 +1330,9 @@ async fn restore_users(
 
         let row = sqlx::query(
             "INSERT INTO users (username, display_name, role, password_hash, oidc_subject,
-                                oidc_issuer, disabled, totp_secret, totp_enabled)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                                oidc_issuer, disabled, totp_secret, totp_enabled,
+                                scim_id, scim_external_id, scim_email, disabled_by_scim)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
         )
         .bind(&user.username)
         .bind(&user.display_name)
@@ -1323,6 +1343,10 @@ async fn restore_users(
         .bind(i64::from(user.disabled))
         .bind(totp_secret.as_deref())
         .bind(i64::from(user.totp_enabled && totp_secret.is_some()))
+        .bind(&scim_id)
+        .bind(scim_id.as_ref().and(user.scim_external_id.as_ref()))
+        .bind(scim_id.as_ref().and(user.scim_email.as_ref()))
+        .bind(i64::from(user.disabled && user.disabled_by_scim))
         .fetch_one(&mut **tx)
         .await
         .context("création du compte")?;
