@@ -130,6 +130,8 @@ tags:
     description: The first-run guide.
   - name: Metrics
     description: MetricsQL queries proxied to VictoriaMetrics.
+  - name: Dashboards
+    description: Custom dashboards (a grid of widgets) and the metrics catalogue behind the explorer.
   - name: Alerts
     description: Active alerts, history and acknowledgements.
   - name: Rules
@@ -4914,6 +4916,123 @@ paths:
                 items: { $ref: "#/components/schemas/TopologySuggestion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/metrics/catalog:
+    get:
+      operationId: getMetricsCatalog
+      tags: [Dashboards]
+      summary: Live `dumbmonit_*` metrics and their labels
+      description: |
+        The metrics written during the last hour, with how many series each has and a few
+        values of each label. Feeds the metrics explorer's name completion.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The catalogue.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MetricsCatalog" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { $ref: "#/components/responses/BadGateway" }
+
+  /api/dashboards:
+    get:
+      operationId: listDashboards
+      tags: [Dashboards]
+      summary: Shared dashboards and the caller's own
+      description: A token sees the shared dashboards only.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Dashboards, shared first, then by name.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Dashboard" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createDashboard
+      tags: [Dashboards]
+      summary: Create a dashboard
+      description: |
+        Any account may create personal dashboards (`shared: false`, owned by the caller;
+        tokens cannot). Shared dashboards are created by administrators or `write` tokens.
+        Names are unique among shared dashboards and per owner.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DashboardInput" }
+      responses:
+        "201":
+          description: The dashboard.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/dashboards/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: getDashboard
+      tags: [Dashboards]
+      summary: One dashboard
+      description: Another account's personal dashboard answers 404.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The dashboard.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: updateDashboard
+      tags: [Dashboards]
+      summary: Replace a dashboard
+      description: |
+        The owner changes a personal dashboard; administrators change shared ones and are the
+        only ones who can turn sharing on or off.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/DashboardInput" }
+      responses:
+        "200":
+          description: The dashboard.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Dashboard" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteDashboard
+      tags: [Dashboards]
+      summary: Delete a dashboard
+      x-token-scope: write
+      responses:
+        "204": { description: Deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/locations:
     get:
@@ -10971,6 +11090,69 @@ components:
         relay: { type: boolean, description: The agent declared `relay true` in its last batch. }
         last_seen_at: { type: [string, "null"] }
         relayed: { type: integer, description: Devices reached through this agent. }
+    DashboardWidget:
+      type: object
+      required: [id, type, x, y, w, h]
+      properties:
+        id: { type: string, maxLength: 40, description: "Letters, digits, '-' and '_'; unique in the dashboard." }
+        type: { type: string, enum: [chart, stat, group, alerts, text] }
+        title: { type: string, maxLength: 80 }
+        x: { type: integer, minimum: 0, maximum: 11, description: Column on the 12-column grid. }
+        y: { type: integer, minimum: 0 }
+        w: { type: integer, minimum: 1, maximum: 12 }
+        h: { type: integer, minimum: 1, maximum: 24 }
+        config:
+          type: object
+          description: |
+            By type. `chart`: `query`, `unit`. `stat`: `query`, `unit`, `warn`, `crit`,
+            `direction` (`above` or `below`). `group`: `folder` (empty: devices without a
+            folder). `alerts`: `limit` (1 to 50). `text`: `markdown`. Other keys are dropped.
+          additionalProperties: true
+    DashboardInput:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 80 }
+        shared: { type: boolean, default: false }
+        range_secs: { type: integer, minimum: 60, maximum: 34560000, default: 3600 }
+        refresh_secs: { type: integer, description: "0 (off) or 5 to 3600.", default: 30 }
+        widgets:
+          type: array
+          maxItems: 60
+          items: { $ref: "#/components/schemas/DashboardWidget" }
+    Dashboard:
+      allOf:
+        - $ref: "#/components/schemas/DashboardInput"
+        - type: object
+          required: [id, can_edit, owner, created_at, updated_at, widgets, range_secs, refresh_secs, shared]
+          properties:
+            id: { type: integer, format: int64 }
+            owner: { type: [string, "null"], description: Account that owns it; null when made by a token. }
+            can_edit: { type: boolean, description: The caller may change or delete it. }
+            created_at: { type: string }
+            updated_at: { type: string }
+    MetricsCatalog:
+      type: object
+      required: [metrics, truncated]
+      properties:
+        truncated: { type: boolean }
+        metrics:
+          type: array
+          items:
+            type: object
+            required: [name, series, labels]
+            properties:
+              name: { type: string }
+              series: { type: integer }
+              labels:
+                type: array
+                items:
+                  type: object
+                  required: [name, values, more]
+                  properties:
+                    name: { type: string }
+                    values: { type: array, items: { type: string } }
+                    more: { type: boolean }
     Locations:
       type: object
       required: [locations, sites, unplaced]

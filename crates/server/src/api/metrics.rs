@@ -131,6 +131,115 @@ pub async fn query(
     ))
 }
 
+/// Séries lues pour dresser le catalogue : au-delà, un parc exceptionnel serait
+/// décrit par ses premières séries seulement (`truncated`).
+const CATALOG_SERIES_LIMIT: usize = 50_000;
+/// Valeurs d'étiquette montrées par métrique : de quoi reconnaître l'étiquette.
+const CATALOG_VALUES_PER_LABEL: usize = 12;
+/// Fenêtre où une série compte comme vivante.
+const CATALOG_WINDOW_SECS: i64 = 3600;
+const CATALOG_MAX_BYTES: usize = 32 * 1024 * 1024;
+
+#[derive(Debug, Serialize, PartialEq)]
+pub struct LabelInfo {
+    pub name: String,
+    /// Quelques valeurs vues, triées.
+    pub values: Vec<String>,
+    /// Il y en a d'autres que celles listées.
+    pub more: bool,
+}
+
+#[derive(Debug, Serialize, PartialEq)]
+pub struct MetricInfo {
+    pub name: String,
+    pub series: usize,
+    pub labels: Vec<LabelInfo>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct Catalog {
+    pub metrics: Vec<MetricInfo>,
+    /// La liste des séries a été coupée à [`CATALOG_SERIES_LIMIT`].
+    pub truncated: bool,
+}
+
+/// Regroupe des séries (étiquettes, nom sous `__name__`) par métrique.
+fn summarize(series: &[serde_json::Map<String, serde_json::Value>]) -> Vec<MetricInfo> {
+    use std::collections::{BTreeMap, BTreeSet};
+    type Seen = (usize, BTreeMap<String, BTreeSet<String>>);
+    let mut by_name: BTreeMap<String, Seen> = BTreeMap::new();
+    for entry in series {
+        let Some(name) = entry.get("__name__").and_then(|v| v.as_str()) else { continue };
+        if !name.starts_with("dumbmonit_") {
+            continue;
+        }
+        let seen = by_name.entry(name.to_string()).or_default();
+        seen.0 += 1;
+        for (label, value) in entry {
+            if label == "__name__" {
+                continue;
+            }
+            if let Some(value) = value.as_str() {
+                seen.1.entry(label.clone()).or_default().insert(value.to_string());
+            }
+        }
+    }
+    by_name
+        .into_iter()
+        .map(|(name, (series, labels))| MetricInfo {
+            name,
+            series,
+            labels: labels
+                .into_iter()
+                .map(|(name, values)| LabelInfo {
+                    more: values.len() > CATALOG_VALUES_PER_LABEL,
+                    values: values.into_iter().take(CATALOG_VALUES_PER_LABEL).collect(),
+                    name,
+                })
+                .collect(),
+        })
+        .collect()
+}
+
+/// `GET /api/metrics/catalog` : les métriques `dumbmonit_*` vivantes et leurs
+/// étiquettes, pour l'explorateur de métriques. Une seule lecture de
+/// `/api/v1/series` côté VictoriaMetrics, résumée ici.
+pub async fn catalog(State(state): State<AppState>) -> ApiResult<Json<Catalog>> {
+    let since = chrono::Utc::now().timestamp() - CATALOG_WINDOW_SECS;
+    let query = reqwest::Url::parse_with_params(
+        "http://catalog.invalid/",
+        [
+            ("match[]", "{__name__=~\"dumbmonit_.*\"}".to_string()),
+            ("start", since.to_string()),
+            ("limit", (CATALOG_SERIES_LIMIT + 1).to_string()),
+        ],
+    )
+    .map_err(anyhow::Error::from)?
+    .query()
+    .map(str::to_string);
+    let (status, body) = state
+        .victoria
+        .proxy_read(&["series"], query.as_deref(), None, CATALOG_MAX_BYTES)
+        .await
+        .map_err(|error| {
+            tracing::warn!(%error, "VictoriaMetrics catalog failed");
+            ApiError::BadGateway("The metrics backend is not answering.".into())
+        })?;
+    if status != 200 {
+        return Err(ApiError::BadGateway("The metrics backend refused the listing.".into()));
+    }
+    #[derive(Deserialize)]
+    struct Series {
+        data: Vec<serde_json::Map<String, serde_json::Value>>,
+    }
+    let parsed: Series = serde_json::from_str(&body).map_err(|_| {
+        ApiError::BadGateway("The metrics backend sent an unreadable answer.".into())
+    })?;
+    let truncated = parsed.data.len() > CATALOG_SERIES_LIMIT;
+    let slice = &parsed.data[..parsed.data.len().min(CATALOG_SERIES_LIMIT)];
+    Ok(Json(Catalog { metrics: summarize(slice), truncated }))
+}
+
 /// Choisit un pas qui garde le nombre de points sous [`MAX_POINTS`].
 ///
 /// Le pas demandé par l'interface est respecté tant qu'il reste raisonnable ; sur
@@ -150,6 +259,24 @@ mod tests {
     use super::*;
 
     const HOUR: i64 = 3_600_000;
+
+    #[test]
+    fn the_catalog_groups_series_by_metric_and_keeps_only_ours() {
+        let series: Vec<_> = [
+            serde_json::json!({"__name__": "dumbmonit_cpu", "target": "1", "core": "0"}),
+            serde_json::json!({"__name__": "dumbmonit_cpu", "target": "2", "core": "0"}),
+            serde_json::json!({"__name__": "other_metric", "target": "2"}),
+        ]
+        .into_iter()
+        .map(|v| v.as_object().unwrap().clone())
+        .collect();
+        let found = summarize(&series);
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].name, "dumbmonit_cpu");
+        assert_eq!(found[0].series, 2);
+        assert_eq!(found[0].labels[0].name, "core");
+        assert_eq!(found[0].labels[1].values, vec!["1", "2"]);
+    }
 
     #[test]
     fn honours_a_reasonable_requested_step() {

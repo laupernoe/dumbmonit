@@ -19,6 +19,8 @@ All notable changes to this project are documented here. The format follows
   (VPS and dedicated servers, maintenance) and **Infomaniak** (products and expiry).
   Each has a page in the documentation (English and French) with the minimal rights
   and the ports to open.
+- **Custom dashboards and a metrics explorer.** Build dashboards from widgets on a 12-column grid: chart (MetricsQL), single value with warning and critical levels, state of a monitor folder, active alerts, and Markdown notes. Drag, resize and reorder with mouse, touch or keyboard; phones get a single column. Each dashboard saves its time range and refresh interval. Dashboards are personal (any account) or shared (administrators), and travel with backups. The new metrics explorer (`/explore`) lists the `dumbmonit_*` metrics and their labels, completes names in a MetricsQL box, draws the result and adds it to a dashboard. New API: `/api/dashboards` and `/api/metrics/catalog`.
+
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key
