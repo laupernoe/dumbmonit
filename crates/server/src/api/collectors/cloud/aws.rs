@@ -50,7 +50,7 @@ pub(super) fn view() -> CollectorView {
                 to_device_optional!(
                     443,
                     "tcp",
-                    "STS AssumeRole, only with a role ARN (HTTPS, sts.<region>.amazonaws.com)"
+                    "Only with a role ARN: STS AssumeRole (HTTPS, sts.<region>.amazonaws.com)"
                 ),
             ],
             permissions: &[

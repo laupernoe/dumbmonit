@@ -661,14 +661,6 @@ Voir [Tailscale](../devices/tailscale.md). Les appareils sont étiquetés
 | Appareil Tailscale en attente d'approbation | Un appareil a rejoint le tailnet et attend l'approbation : approuvez-le s'il est attendu, supprimez-le sinon (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Avis (`warning`) | 1 j |
 | Mise à jour client Tailscale | Un appareil Tailscale qui doit rester en ligne fait tourner un client avec une mise à jour disponible (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 j |
 
-
-
-
-
-
-
-
-
 ### Microsoft 365 {#microsoft-365}
 
 Voir [Microsoft 365](../devices/m365.md). Règles pour les locataires Microsoft 365 lus via Microsoft Graph : santé des services, licences et utilisateurs à risque.

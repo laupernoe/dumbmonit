@@ -607,14 +607,6 @@ See [Tailscale](../devices/tailscale.md). Devices are labelled `device`, the fir
 | Tailscale device awaiting approval | A device joined the tailnet and awaits approval: approve it if it is expected, remove it otherwise (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Advisory (`warning`) | 1 d |
 | Tailscale client update | A Tailscale device that must stay online runs a client with an update available (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 d |
 
-
-
-
-
-
-
-
-
 ### Microsoft 365
 
 See [Microsoft 365](../devices/m365.md). Rules for Microsoft 365 tenants read through Microsoft Graph: service health, licenses and risky users.
