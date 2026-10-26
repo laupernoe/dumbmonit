@@ -20,6 +20,36 @@ All notable changes to this project are documented here. The format follows
   latency per location (on the world map when geolocated);
   `GET /api/targets/{id}/probe-locations` returns them. Backups carry the
   setting (relay agents by reference).
+- **The agent updates itself.** Each batch now tells the server the SHA-256
+  of the running agent binary; when it differs from the binary of the
+  server's own build for that platform (Linux x86_64/aarch64, FreeBSD,
+  Windows), the reply offers it — the build decides, not only the version, so
+  an `:edge` server aligns its agents too, and an agent newer than the server
+  is never downgraded unless you ask. The agent downloads it through its own
+  channel (encrypted and pinned when it has it), checks its SHA-256 and an
+  Ed25519 signature against a release key compiled into the agent (unsigned
+  builds are refused unless "Accept unsigned builds (development)" is on, and
+  then only over the encrypted channel), runs it once with `--version`, keeps
+  the old binary and swaps atomically: `exec` in place on Linux/FreeBSD, a
+  helper that stops, swaps and restarts the service on Windows. If the new
+  agent has no batch accepted within 2 minutes, or keeps stopping at startup,
+  the old one comes back and the failure shows in the UI; that build is not
+  retried until you click Update now. Settings → Agents → "Automatic agent
+  updates": on by default (new and existing installations), per-agent
+  override, window (any time, maintenance windows only, manual), canary agents
+  first with the others N minutes later, Update now / Update all now, and each
+  agent's version and status. Agents in Docker never replace themselves
+  (update the image), `self_update: false` in agent.yaml opts a machine out,
+  and agents installed before this version need one manual update. Linux and
+  FreeBSD installs now keep the binary in `/usr/local/lib/dumbmonit-agent/`
+  (symlinked from `/usr/local/bin`), the only folder the systemd unit lets the
+  agent write. The release workflow signs the agent binaries when the
+  `AGENT_SIGNING_KEY` secret is set (`<binary>.sig`, also served at
+  `/download/<binary>.sig`); the binaries stay reproducible. The Active
+  Directory kit no longer reinstalls (or downgrades) an agent that is as
+  recent as the kit or newer, so it need not be re-run after a server
+  upgrade.
+
 - **Status pages and reports, batch 1.**
   - *Private status pages.* Each page now chooses who can see it: anyone with
     the link (default), anyone with a password of its own (Argon2id hash, signed

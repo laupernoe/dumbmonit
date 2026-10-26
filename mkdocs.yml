@@ -186,5 +186,6 @@ nav:
       - Security model: development/security-model.md
       - Assurance case: development/assurance-case.md
       - Reproducible builds: development/reproducible-builds.md
+      - Signing the agent binaries: development/agent-signing.md
       - Roadmap: development/roadmap.md
   - FAQ: faq.md
