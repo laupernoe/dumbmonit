@@ -66,9 +66,42 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
+        teams: teams(pool).await?,
+        teams_settings: crate::auth::settings::get::<Value>(pool, crate::auth::teams::SETTINGS_KEY)
+            .await?,
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
     })
+}
+
+async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
+    let teams = crate::auth::teams::list(pool).await?;
+    let mut out = Vec::with_capacity(teams.len());
+    for team in teams {
+        let scim: Option<(Option<String>, Option<String>, i64)> = sqlx::query_as(
+            "SELECT scim_id, scim_external_id, scim_created FROM teams WHERE id = ?",
+        )
+        .bind(team.id)
+        .fetch_optional(pool)
+        .await
+        .context("rattachement SCIM d'une équipe")?;
+        let (scim_id, scim_external_id, scim_created) = scim.unwrap_or_default();
+        out.push(BundleTeam {
+            name: team.name,
+            description: team.description,
+            idp_groups: team.idp_groups,
+            members: team
+                .members
+                .into_iter()
+                .map(|m| BundleTeamMember { username: m.username, source: m.source })
+                .collect(),
+            grants: team.grants,
+            scim_id,
+            scim_external_id,
+            scim_created: scim_created != 0,
+        });
+    }
+    Ok(out)
 }
 
 /// Un nœud de la carte, désigné hors de cette instance. `None` : son
@@ -568,7 +601,8 @@ async fn users(
 ) -> Result<Vec<BundleUser>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
-                created_at, disabled, totp_secret, totp_enabled
+                saml_subject, saml_issuer, created_at, disabled, totp_secret, totp_enabled,
+                scim_id, scim_external_id, scim_email, disabled_by_scim
          FROM users ORDER BY id",
     )
     .fetch_all(pool)
@@ -585,11 +619,17 @@ async fn users(
             disabled: row.try_get::<i64, _>("disabled")? != 0,
             oidc_subject: row.try_get("oidc_subject")?,
             oidc_issuer: row.try_get("oidc_issuer")?,
+            saml_subject: row.try_get("saml_subject")?,
+            saml_issuer: row.try_get("saml_issuer")?,
             created_at: row.try_get("created_at")?,
             password_hash: None,
             totp_secret: None,
             totp_enabled: false,
             recovery_codes: Vec::new(),
+            scim_id: row.try_get("scim_id")?,
+            scim_external_id: row.try_get("scim_external_id")?,
+            scim_email: row.try_get("scim_email")?,
+            disabled_by_scim: row.try_get::<i64, _>("disabled_by_scim")? != 0,
         };
 
         if options.include_account_secrets {
@@ -704,5 +744,6 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
+        ("teams", "Teams, their members and their folder rights."),
     ])
 }

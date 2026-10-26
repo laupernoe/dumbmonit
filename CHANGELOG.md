@@ -48,6 +48,21 @@ All notable changes to this project are documented here. The format follows
     open ports. The first scan learns silently; later ones flag what is new until
     it is marked as known. The two built-in rules are off by default, at info
     severity.
+- **Teams, per-folder rights, SAML 2.0 and SCIM 2.0.** Settings → Team & access
+  groups accounts into teams and gives each team a level per folder of devices
+  (subfolders included): read, operate (acknowledge, dismiss, maintenance) or
+  manage (edit, add, delete devices). The global role stays the ceiling (viewer →
+  read, operator → manage) and admins see everything. An account in a team only
+  sees its folders, enforced by the server on every route: device lists and
+  details, metric queries (filtered per device in VictoriaMetrics), alerts,
+  history, silences, rules, map, locations, status pages, CVEs and Web Push;
+  everything else, raw Prometheus/federate and the MCP endpoint included, is
+  refused to team-restricted accounts and their API tokens. Teams can follow
+  OIDC, LDAP and SAML groups. DumbMonit is now a SAML 2.0 service provider
+  (metadata, SP- and optional IdP-initiated sign-in, a signed assertion or response required)
+  and accepts SCIM 2.0 provisioning of users and groups from Entra ID and Okta.
+  Teams travel in the backup. Guides for Entra ID, Okta, Keycloak and Authentik.
+
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor

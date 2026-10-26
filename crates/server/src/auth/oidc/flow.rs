@@ -324,6 +324,8 @@ async fn map_identity(
             user.role = role;
         }
     }
+    // Les équipes qui listent des groupes du fournisseur suivent eux aussi.
+    crate::auth::teams::sync_idp_groups(pool, user.id, &groups).await?;
     Ok(user)
 }
 

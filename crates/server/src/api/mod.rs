@@ -50,6 +50,8 @@ mod push;
 mod redfish;
 mod relay;
 mod reports;
+mod saml;
+mod scim;
 mod security;
 mod self_monitoring;
 mod seo_files;
@@ -62,6 +64,7 @@ mod synology;
 mod target_rules;
 mod targets;
 mod targets_import;
+mod teams;
 mod tokens;
 mod topology;
 pub(crate) mod topology_edits;
@@ -152,6 +155,12 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             get(ldap::get_config).put(ldap::put_config).delete(ldap::delete_config),
         )
         .route("/auth/ldap/test", post(ldap::test))
+        // Connexion SAML : réglages et lecture de métadonnées d'IdP (`saml.rs`).
+        .route("/auth/saml/config", get(saml::get_config).put(saml::put_config))
+        .route("/auth/saml/metadata/import", post(saml::import_metadata))
+        // Provisionnement SCIM : réglages et jeton du fournisseur (`scim.rs`).
+        .route("/auth/scim", get(scim::get_settings).put(scim::put_settings))
+        .route("/auth/scim/token", post(scim::create_token).delete(scim::delete_token))
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
@@ -313,6 +322,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(integrations::routes())
         // Mise à jour guidée : dernière version publiée (`update.rs`).
         .merge(update::routes())
+        // Équipes et droits par dossier (`teams.rs`).
+        .merge(teams::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(
@@ -336,6 +347,14 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(passkeys::public_routes())
         .route("/auth/oidc/start", get(oidc::start))
         .route("/auth/oidc/callback", get(oidc::callback))
+        // Connexion SAML : métadonnées du fournisseur de service, départ vers
+        // l'IdP, réception de sa réponse (un formulaire posté depuis le site de
+        // l'IdP, donc sans en-tête anti-CSRF : la signature de l'assertion fait
+        // foi) et ouverture de la session (`saml.rs`).
+        .route("/auth/saml/metadata", get(saml::metadata))
+        .route("/auth/saml/start", get(saml::start))
+        .route("/auth/saml/acs", post(saml::acs).layer(DefaultBodyLimit::max(saml::MAX_ACS_BYTES)))
+        .route("/auth/saml/complete", get(saml::complete))
         // Réception des mesures poussées par les agents. Volontairement hors du
         // routeur protégé : un agent est un programme installé sur une machine
         // distante, il n'ouvre pas de session et présente un jeton
@@ -365,7 +384,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::public_routes())
         // Retour de Spotify après l'approbation : une navigation, vérifiée par
         // son `state` et par la session qui revient (`music.rs`).
-        .merge(music::public_routes());
+        .merge(music::public_routes())
+        // Provisionnement SCIM 2.0 (Entra ID, Okta) : hors session, sous le jeton
+        // dédié du fournisseur, vérifié par sa propre garde (`scim.rs`).
+        .merge(scim::routes(&state));
 
     // Serveur MCP : authentifié par jeton d'API, pas par session — un assistant
     // n'a pas de navigateur. Le garde ne couvre que `POST` ; `GET` et `DELETE`
