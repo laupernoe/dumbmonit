@@ -17,7 +17,7 @@ use super::format_timestamp;
 use crate::db;
 use crate::db::status_pages::Subscriber;
 use crate::notify::http::{self, Request};
-use crate::notify::{ChannelConfig, Notifier, NotifyError, guard, message};
+use crate::notify::{ChannelConfig, NotifyError, guard, message};
 use crate::state::AppState;
 
 /// Types de canal de notification capables d'envoyer un SMS.
