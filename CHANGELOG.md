@@ -7,6 +7,30 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Two product modes, and a setup wizard.** An administrator picks how the
+  interface looks, at first launch or in **Settings → General**, and can switch
+  at any time without losing anything:
+  - **Homelab** (the default, and what existing instances keep) is the familiar
+    interface made simpler: four destinations in the bar and everything else
+    under **More** and the command palette, the rarely used sections of each
+    Settings tab folded behind **Advanced**, and device forms that show fewer
+    fields up front. Light and dark themes as before.
+  - **Enterprise** is a new, very dark console (Geist type): an icon rail, a
+    header with breadcrumb, **LIVE**, time range and the command palette, and a
+    context panel on the right that shows what needs attention, the monitor you
+    picked, the nearest forecast and who gets told. Its overview has a band of
+    five figures (monitors up, 30-day availability, p95, open alerts, MTTR), a
+    **health river** of every monitor over the range, and a dense monitor table
+    with state, type and text filters, optional columns and keyboard
+    navigation (`j` / `k`, `Enter`, `o`, `i` for the panel, `g m`, `g x`, `g l`).
+  - The **setup wizard** opens after the first administrator signs in, and again
+    from Settings → General: mode, instance name, language and time zone, a
+    first notification channel with a test, first monitors (network scan, import
+    or by hand), an agent; in Enterprise mode, optional steps for single sign-on
+    and teams, on-call and retention. Every step can be skipped.
+  - API: `GET /api/instance` (public: mode and whether setup is done),
+    `GET`/`PUT /api/instance/settings`. The settings travel with the backup.
+
 - **Cloud integrations.** Eight new monitor types read the cloud services a small
   team depends on, with read-only credentials and built-in alert rules grouped per
   product: **Microsoft 365** (service health and incidents, licences, risky users),
