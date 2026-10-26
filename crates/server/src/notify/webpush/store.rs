@@ -44,6 +44,8 @@ pub struct Subscription {
     /// appareils reçoivent les boutons d'action. Un lecteur voit l'alerte,
     /// pas de quoi la faire taire.
     pub can_act: bool,
+    /// Compte propriétaire : ses équipes décident des alertes qu'il reçoit.
+    pub user_id: i64,
 }
 
 /// Empreinte publique d'une adresse d'abonnement.
@@ -248,7 +250,14 @@ pub async fn recipients(
             crate::auth::users::Role::parse(&role),
             Some(crate::auth::users::Role::Admin | crate::auth::users::Role::Operator)
         );
-        out.push(Subscription { id, endpoint: row.try_get("endpoint")?, p256dh, auth, can_act });
+        out.push(Subscription {
+            id,
+            endpoint: row.try_get("endpoint")?,
+            p256dh,
+            auth,
+            can_act,
+            user_id,
+        });
     }
     Ok(out)
 }

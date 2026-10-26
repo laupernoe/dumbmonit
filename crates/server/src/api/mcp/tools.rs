@@ -1441,8 +1441,12 @@ fn alert_word(alert: &ActiveAlertView) -> &'static str {
 }
 
 async fn active_alerts(state: &AppState) -> Result<Vec<ActiveAlertView>, ToolError> {
-    let Json(alerts) =
-        alerts::list_active(State(state.clone()), Query(alerts::ActiveQuery::default())).await?;
+    let Json(alerts) = alerts::list_active(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+        Query(alerts::ActiveQuery::default()),
+    )
+    .await?;
     Ok(alerts)
 }
 
@@ -1838,11 +1842,16 @@ async fn alert_history(state: &AppState, args: &Args) -> ToolResult {
     // large et on filtre ici, borné pour ne pas rapatrier des mois.
     let fetch = if only.is_some() { (limit * 10).min(5_000) } else { limit };
     let Json(entries) = alerts::history(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Query(HistoryQuery { since: Some(since.clone()), limit: Some(fetch), dismissed: None }),
     )
     .await?;
-    let Json(rules) = alerts::list_rules(State(state.clone())).await?;
+    let Json(rules) = alerts::list_rules(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let rule_names: HashMap<&str, &str> =
         rules.iter().map(|r| (r.uid.as_str(), r.name.as_str())).collect();
 
@@ -1928,6 +1937,7 @@ async fn query_metrics(state: &AppState, args: &Args) -> ToolResult {
     let step = args.i64("step_secs").filter(|s| *s > 0).map_or(floor, |s| (s as u64).max(floor));
 
     let Json(series) = metrics::query_range(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Query(RangeQuery { query: query.clone(), start, end, step: Some(step) }),
     )
@@ -2034,7 +2044,11 @@ fn zone_text(timezone: Option<&str>, utc_offset_minutes: i32) -> String {
 async fn list_silences(state: &AppState) -> ToolResult {
     let devices = load_devices(state).await?;
     let parents = parent_names(&devices);
-    let Json(silences) = alerts::list_silences(State(state.clone())).await?;
+    let Json(silences) = alerts::list_silences(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
 
     let text = if silences.is_empty() {
         "No maintenance window.".to_string()
@@ -2109,6 +2123,7 @@ async fn silence_device(state: &AppState, args: &Args) -> ToolResult {
     let ends_at = starts_at + TimeDelta::milliseconds((hours * 3_600_000.0) as i64);
 
     let (_, Json(silence)) = alerts::create_silence(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Json(SilencePayload {
             name: format!("{} — silenced by assistant", device.name()),
@@ -2266,7 +2281,11 @@ async fn set_device_enabled(state: &AppState, args: &Args) -> ToolResult {
 }
 
 async fn list_rules(state: &AppState) -> ToolResult {
-    let Json(rules) = alerts::list_rules(State(state.clone())).await?;
+    let Json(rules) = alerts::list_rules(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let text = if rules.is_empty() {
         "No alert rule.".to_string()
     } else {
@@ -2324,7 +2343,11 @@ async fn list_rules(state: &AppState) -> ToolResult {
 
 async fn set_rule_enabled(state: &AppState, args: &Args) -> ToolResult {
     let enabled = args.required_bool("enabled")?;
-    let Json(rules) = alerts::list_rules(State(state.clone())).await?;
+    let Json(rules) = alerts::list_rules(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let rule = if let Some(id) = args.i64("id") {
         rules.iter().find(|r| r.id == id)
     } else if let Some(uid) = args.str("uid") {
@@ -2952,7 +2975,12 @@ async fn add_device(state: &AppState, args: &Args) -> ToolResult {
         ))
     })?;
 
-    let (_, Json(view)) = targets::create(State(state.clone()), Json(payload)).await?;
+    let (_, Json(view)) = targets::create(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+        Json(payload),
+    )
+    .await?;
     let mut text = format!(
         "Added **{}** (#{}, {}, {}); credential: {}. It will be polled every {} s",
         view.name, view.id, view.kind, view.address, view.credential_kind, view.interval_secs
@@ -3221,6 +3249,7 @@ async fn schedule_maintenance(state: &AppState, args: &Args) -> ToolResult {
         args.str("name").map(str::to_string).unwrap_or_else(|| format!("Maintenance — {scope}"));
 
     let (_, Json(silence)) = alerts::create_silence(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Json(SilencePayload {
             name: name.clone(),
