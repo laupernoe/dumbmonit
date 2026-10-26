@@ -492,6 +492,7 @@ fn ports_only() -> Vec<Fingerprint> {
         Fingerprint::port("mikrotik.api", "MikroTik API", &[8728, 8729]).kind("mikrotik"),
         Fingerprint::port("mikrotik.winbox", "MikroTik WinBox", &[8291]).kind("mikrotik"),
         Fingerprint::port("veeam.vbr", "Veeam Backup & Replication", &[9419]).kind("veeam"),
+        Fingerprint::port("kopia.server", "Kopia server", &[51515]).kind("kopia"),
         Fingerprint::port("print.ipp", "Printer (IPP)", &[631])
             .kind("tcp")
             .prefill(PrefillSpec::host_port()),

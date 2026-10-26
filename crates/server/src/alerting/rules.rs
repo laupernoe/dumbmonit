@@ -5643,9 +5643,96 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base(
                 "veeam_license_expiring",
+            "kopia_snapshot_errors",
+            "kopia_snapshot_old",
+            "kopia_repo_disconnected",
+            "duplicati_backup_failed",
+            "duplicati_backup_old",
                 "Veeam license expiring",
                 RuleKind::Threshold,
                 "dumbmonit_veeam_license_expiry_seconds",
+            "dumbmonit_kopia_source_last_snapshot_errors",
+            "dumbmonit_kopia_source_last_snapshot_age_seconds",
+            "dumbmonit_kopia_source_scheduled",
+            "dumbmonit_kopia_repo_connected",
+            "dumbmonit_duplicati_backup_failed",
+            "dumbmonit_duplicati_backup_last_success_age_seconds",
+            "dumbmonit_duplicati_backup_scheduled",
+            )
+        },
+        // --- Kopia (`collectors/kopia`) ---
+        Rule {
+            description: "The last snapshot of a Kopia source finished with errors: some files were not saved.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "kopia_snapshot_errors",
+                "Kopia snapshot with errors",
+                RuleKind::Threshold,
+                "dumbmonit_kopia_source_last_snapshot_errors",
+            )
+        },
+        // Seules les sources planifiées : une source manuelle n'a pas à être récente.
+        Rule {
+            description: "A scheduled Kopia source has no snapshot for more than two days: its schedule is not running or its snapshots fail.".to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "kopia_snapshot_old",
+                "Kopia snapshot too old",
+                RuleKind::Threshold,
+                "dumbmonit_kopia_source_last_snapshot_age_seconds and on (target, source) dumbmonit_kopia_source_scheduled > 0",
+            )
+        },
+        Rule {
+            description: "The Kopia server is not connected to its repository: no snapshot can run.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "kopia_repo_disconnected",
+                "Kopia repository disconnected",
+                RuleKind::Threshold,
+                "dumbmonit_kopia_repo_connected",
+            )
+        },
+        // --- Duplicati (`collectors/duplicati`) ---
+        Rule {
+            description: "The last run of a Duplicati backup failed: what it protects has no new version.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "duplicati_backup_failed",
+                "Duplicati backup failed",
+                RuleKind::Threshold,
+                "dumbmonit_duplicati_backup_failed",
+            )
+        },
+        Rule {
+            description: "A scheduled Duplicati backup has not succeeded for more than two days.".to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "duplicati_backup_old",
+                "Duplicati backup too old",
+                RuleKind::Threshold,
+                "dumbmonit_duplicati_backup_last_success_age_seconds and on (target, backup_id) dumbmonit_duplicati_backup_scheduled > 0",
             )
         },
         // --- Tailscale (`collectors/tailscale`) ---
