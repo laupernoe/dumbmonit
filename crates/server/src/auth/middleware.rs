@@ -34,7 +34,7 @@ use sqlx::SqlitePool;
 use crate::auth::session::SessionToken;
 use crate::auth::token::{self, ApiToken, Scope};
 use crate::auth::users::{self, User};
-use crate::auth::{AuthError, AuthState, cookie, session, teams};
+use crate::auth::{AuthError, AuthState, clients, cookie, session, teams};
 use crate::state::AppState;
 
 /// Session validée, déposée dans la requête pour les gestionnaires qui en ont
@@ -146,6 +146,7 @@ pub const TOKEN_DENIED: &[&str] = &[
     "/auth",
     "/users",
     "/teams",
+    "/clients",
     "/tokens",
     "/agent/tokens",
     "/agent/ad-kit",
@@ -255,6 +256,15 @@ pub async fn require_session(
         Ok(access) => access,
         Err(error) => return AuthError::from(error).into_response(),
     };
+    // Mode MSP : le client choisi dans l'en-tête limite l'affichage. Jamais
+    // plus de droits : voir `clients::narrow`.
+    let access =
+        match clients::apply_view(&state.pool, request.headers(), access, user.role.is_admin())
+            .await
+        {
+            Ok(access) => access,
+            Err(error) => return AuthError::from(error).into_response(),
+        };
 
     if is_mutation(request.method()) {
         if let Err(reason) = same_origin(request.headers()) {

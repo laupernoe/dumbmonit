@@ -845,6 +845,7 @@ mod tests {
             severity: Severity::Warning,
             items,
             channels: Vec::new(),
+            client_id: None,
             at: at(3600),
         }
     }

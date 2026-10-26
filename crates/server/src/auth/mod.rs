@@ -18,6 +18,7 @@
 
 pub mod audit;
 pub mod client_ip;
+pub mod clients;
 pub mod cookie;
 pub mod cors;
 pub mod ldap;

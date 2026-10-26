@@ -30,6 +30,7 @@ use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::OperatorIdentity;
+use crate::auth::clients;
 use crate::auth::teams::{Access, Level, TeamAccess};
 use crate::db;
 use crate::notify::policy_store;
@@ -568,16 +569,22 @@ pub async fn list_rules(
             }
         });
     }
+    // Mode MSP : les règles de l'instance et celles de ses clients seulement.
+    clients::retain_visible(&state.pool, &access, clients::Kind::Rule, &mut views, |v| v.id, true)
+        .await?;
     Ok(Json(views))
 }
 
 pub async fn create_rule(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(payload): Json<RulePayload>,
 ) -> ApiResult<(StatusCode, Json<RuleView>)> {
     let existing = db::alerts::list_rules(&state.pool).await?;
     let mut rule = payload.validate(&state, None, &existing).await?;
     rule.id = db::alerts::upsert_rule(&state.pool, &rule).await?;
+    // Créée dans la vue d'un client : elle lui appartient.
+    clients::adopt(&state.pool, &access, clients::Kind::Rule, rule.id).await?;
     Ok((StatusCode::CREATED, Json(view_with_overrides(&state.pool, rule).await?)))
 }
 
@@ -1476,9 +1483,16 @@ pub async fn list_silences(
 ) -> ApiResult<Json<Vec<SilenceView>>> {
     let now = Utc::now();
     let mut silences = db::alerts::list_silences(&state.pool).await?;
-    // Compte restreint : seulement les silences posés sur ses équipements.
+    // Compte restreint : seulement les silences posés sur ses équipements. La
+    // vue d'un client par l'administrateur montre aussi les silences sans
+    // équipement de ce client.
     if let Some(visible) = access.visible_targets(&state.pool).await? {
-        silences.retain(|s| s.target_id.is_some_and(|id| visible.contains(&id)));
+        let owners = clients::owners(&state.pool, clients::Kind::Silence).await?;
+        let admin_view = !access.is_scoped();
+        silences.retain(|s| match s.target_id {
+            Some(id) => visible.contains(&id),
+            None => admin_view && owners.get(&s.id).is_some_and(|c| access.sees_client(*c)),
+        });
     }
     Ok(Json(silences.into_iter().map(|s| SilenceView::new(s, now)).collect()))
 }
@@ -1493,6 +1507,17 @@ pub async fn create_silence(
     check_team_silence(&state, &access, payload.target_id).await?;
     let mut silence = payload.validate(&state).await?;
     silence.id = db::alerts::create_silence(&state.pool, &silence).await?;
+    // Mode MSP : un silence sur un équipement suit son client ; sans
+    // équipement, il appartient au client de la vue (sinon à l'instance).
+    match silence.target_id {
+        Some(target) => {
+            let client = clients::target_client(&state.pool, target).await?;
+            clients::assign(&state.pool, clients::Kind::Silence, &[silence.id], client)
+                .await
+                .map_err(super::clients::api_error)?;
+        }
+        None => clients::adopt(&state.pool, &access, clients::Kind::Silence, silence.id).await?,
+    }
     Ok((StatusCode::CREATED, Json(SilenceView::new(silence, Utc::now()))))
 }
 

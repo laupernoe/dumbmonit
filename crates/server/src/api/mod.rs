@@ -11,6 +11,7 @@ mod backends;
 mod backup;
 mod blacklist;
 mod channels;
+pub(crate) mod clients;
 mod collectors;
 mod cves;
 mod discovery;
@@ -312,6 +313,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(update::routes())
         // Équipes et droits par dossier (`teams.rs`).
         .merge(teams::routes())
+        // Mode multi-clients (MSP) : clients, appartenance, logo (`clients.rs`).
+        .merge(clients::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(
