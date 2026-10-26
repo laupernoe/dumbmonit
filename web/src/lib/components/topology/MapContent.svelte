@@ -16,8 +16,8 @@
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
 	import { Box, Monitor, Server } from 'lucide-svelte';
-	import type { Frame, MapLayout, NodeState, PlacedNode } from './layout';
-	import { EDGE_DASH, guestLabel, zoneLabel } from './legend';
+	import type { Frame, MapLayout, NodeState, PlacedEdge, PlacedNode } from './layout';
+	import { EDGE_DASH, guestLabel, sourceShort, zoneLabel } from './legend';
 
 	interface Props {
 		layout: MapLayout;
@@ -28,9 +28,44 @@
 		selected?: string | null;
 		onhover?: (id: string | null) => void;
 		onselect?: (id: string) => void;
+		/** Correcting the map: links become buttons too. */
+		editing?: boolean;
+		/** Key of the link picked while correcting. */
+		selectedEdge?: string | null;
+		onedge?: (key: string) => void;
+		/** Node a dragged node would be attached under. */
+		dropTarget?: string | null;
+		/** Node being dragged: drawn faded where it was. */
+		dragging?: string | null;
 	}
 
-	let { layout, interactive = true, highlight = null, selected = null, onhover, onselect }: Props = $props();
+	let {
+		layout,
+		interactive = true,
+		highlight = null,
+		selected = null,
+		onhover,
+		onselect,
+		editing = false,
+		selectedEdge = null,
+		onedge,
+		dropTarget = null,
+		dragging = null
+	}: Props = $props();
+
+	const names = $derived(new Map(layout.nodes.map((p) => [p.node.id, p.node.name])));
+
+	function edgeLabel(edge: PlacedEdge): string {
+		const kind = edge.source === 'wan' ? '' : sourceShort(edge.source);
+		return m.topology_edit_edge_label({ from: names.get(edge.from) ?? edge.from, to: names.get(edge.to) ?? edge.to, kind });
+	}
+
+	function onedgekey(event: KeyboardEvent, key: string) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			onedge?.(key);
+		}
+	}
 
 	type Badge = 'ok' | 'down' | 'impacted' | 'warn' | 'wait' | 'idle';
 
@@ -99,6 +134,8 @@
 				return m.topology_site_via_tag();
 			case 'location':
 				return m.topology_site_via_location();
+			case 'manual':
+				return m.topology_site_via_manual();
 			default:
 				return null;
 		}
@@ -188,8 +225,42 @@
 		{#if edge.arrow}
 			<polygon points={edge.arrow} class={FILL[tone]} />
 		{/if}
+		{#if edge.origin !== 'deduced'}
+			<!-- Corrected by hand: a hollow diamond; set by a learned rule: a filled one. Never colour alone. -->
+			<path
+				d={`M${edge.mid.x},${edge.mid.y - 5.5} L${edge.mid.x + 5.5},${edge.mid.y} L${edge.mid.x},${edge.mid.y + 5.5} L${edge.mid.x - 5.5},${edge.mid.y} Z`}
+				class={`${edge.origin === 'rule' ? FILL[tone] : 'fill-canvas'} ${STROKE[tone]}`}
+				stroke-width="1.6"
+			/>
+		{/if}
+		{#if selectedEdge === edge.key}
+			<path d={edge.path} fill="none" class="stroke-signal" stroke-width="5" stroke-linecap="round" opacity="0.35" />
+		{/if}
 	</g>
 {/each}
+
+{#if editing && interactive}
+	<!-- Wide invisible strokes: a link is easy to hit with a finger, and reachable with Tab. -->
+	{#each layout.edges as edge (edge.key)}
+		{#if edge.source !== 'wan' && edge.from && edge.to}
+			<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
+			<path
+				d={edge.path}
+				fill="none"
+				stroke="transparent"
+				stroke-width="16"
+				class="topo-edge"
+				pointer-events="stroke"
+				role="button"
+				tabindex="0"
+				aria-label={edgeLabel(edge)}
+				aria-pressed={selectedEdge === edge.key}
+				onclick={() => onedge?.(edge.key)}
+				onkeydown={(event: KeyboardEvent) => onedgekey(event, edge.key)}
+			><title>{edgeLabel(edge)}</title></path>
+		{/if}
+	{/each}
+{/if}
 
 {#each layout.ports as port, i (i)}
 	<circle cx={port.x} cy={port.y} r="5" class={`fill-surface ${port.down ? 'stroke-warning' : 'stroke-ink-3'}`} stroke-width="2" opacity={highlight ? 0.4 : 1} />
@@ -205,8 +276,9 @@
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<g
 		class={interactive ? 'topo-node' : undefined}
+		data-node-id={interactive ? p.node.id : undefined}
 		transform={`translate(${p.x},${p.y})`}
-		opacity={dimmed ? 0.22 : 1}
+		opacity={dragging === p.node.id ? 0.35 : dimmed ? 0.22 : 1}
 		role={interactive ? 'button' : 'img'}
 		tabindex={interactive ? 0 : undefined}
 		aria-label={label(p, l)}
@@ -224,6 +296,9 @@
 		{/if}
 		{#if selected === p.node.id}
 			<circle r={p.r + 6} fill="none" class="stroke-signal" stroke-width="2.5" />
+		{/if}
+		{#if dropTarget === p.node.id}
+			<circle r={p.r + 10} fill="none" class="stroke-signal" stroke-width="2.5" stroke-dasharray="5 4" />
 		{/if}
 		<!-- A wider invisible disc: an easier target for a finger. -->
 		<circle r={p.r + 8} fill="transparent" />
@@ -290,6 +365,15 @@
 	:global(.topo-node) {
 		cursor: pointer;
 		outline: none;
+	}
+	:global(.topo-edge) {
+		cursor: pointer;
+		outline: none;
+	}
+	:global(.topo-edge:hover),
+	:global(.topo-edge:focus-visible) {
+		stroke: var(--c-signal);
+		stroke-opacity: 0.3;
 	}
 	:global(.topo-node:focus-visible .topo-disc),
 	:global(.topo-node:hover .topo-disc) {

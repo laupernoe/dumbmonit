@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Correct the topology map, and DumbMonit learns from it.** Administrators
+  click **Correct the map** on `/map`: drag a device onto the one it really
+  depends on (or use **Attach** in its panel, by keyboard or on a phone), mark
+  a link wrong so it is never deduced again, draw a link of a chosen type, move
+  a node to another site or group it. An attachment can also become the
+  device's declared parent for alert suppression (**Also use for alerts**,
+  ticked by default). Undo and redo, a list of corrections with who made them,
+  and each link says whether it was deduced, corrected by hand or set by a
+  learned rule. From the corrections, simple deterministic rules are suggested
+  (never applied on their own), such as "Devices in 10.0.5.0/24 depend on
+  switch-core" or "Never draw *Through the firewall* links in this subnet";
+  once applied they also place devices added later. Corrections and rules are
+  included in backups. New routes under `/api/topology/corrections`,
+  `/api/topology/rules` and `/api/topology/suggestions`.
+
 - **Integrations, first batch.** Nine new notification channels, monitors created
   from Docker labels, three importers, Homepage support and passkeys:
   - *Notification channels*: WhatsApp (Meta Cloud API, and the free CallMeBot
