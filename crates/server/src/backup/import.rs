@@ -128,6 +128,7 @@ pub async fn restore(
     report.push(restore_rules(&mut tx, bundle, &refs, &channels).await?);
     report.push(restore_overrides(&mut tx, bundle, &refs).await?);
     report.push(restore_notify_policy(&mut tx, bundle).await?);
+    report.push(restore_instance(&mut tx, bundle).await?);
     report.push(restore_silences(&mut tx, bundle, &refs).await?);
     report.push(restore_status_pages(&mut tx, bundle, &refs).await?);
     report.push(restore_report_schedules(&mut tx, bundle, &channels).await?);
@@ -793,6 +794,57 @@ async fn restore_notify_policy(
     .execute(&mut **tx)
     .await
     .context("écriture de la politique de notification")?;
+    report.count(if existing.is_some() {
+        RestoreOutcome::Updated
+    } else {
+        RestoreOutcome::Created
+    });
+    Ok(report)
+}
+
+/// Réglages d'instance (`crate::instance`). L'assistant de démarrage reste
+/// terminé s'il l'était ici : restaurer une instance n'oblige pas à le refaire,
+/// et un lot d'une instance déjà installée le marque terminé.
+async fn restore_instance(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("instance");
+    let Some(incoming) = &bundle.instance else { return Ok(report) };
+
+    let existing = sqlx::query("SELECT value FROM settings WHERE key = ?")
+        .bind(crate::instance::KEY)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("lecture des réglages d'instance")?;
+    let current: Option<crate::instance::InstanceSettings> = match &existing {
+        Some(row) => serde_json::from_slice(&row.try_get::<Vec<u8>, _>("value")?).ok(),
+        None => None,
+    };
+
+    let mut next = incoming.clone();
+    if let Some(current) = &current
+        && current.setup_completed
+        && !next.setup_completed
+    {
+        next.setup_completed = true;
+        next.setup_completed_at.clone_from(&current.setup_completed_at);
+    }
+    if current.as_ref() == Some(&next) {
+        report.skipped += 1;
+        return Ok(report);
+    }
+
+    sqlx::query(
+        "INSERT INTO settings (key, value) VALUES (?, ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value,
+             updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')",
+    )
+    .bind(crate::instance::KEY)
+    .bind(serde_json::to_vec(&next)?)
+    .execute(&mut **tx)
+    .await
+    .context("écriture des réglages d'instance")?;
     report.count(if existing.is_some() {
         RestoreOutcome::Updated
     } else {

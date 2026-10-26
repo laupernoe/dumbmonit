@@ -68,6 +68,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         locations: locations(pool).await?,
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
+        instance: crate::instance::stored(pool).await?,
     })
 }
 
@@ -704,5 +705,6 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
+        ("instance", "Instance name, language, time zone and product mode."),
     ])
 }

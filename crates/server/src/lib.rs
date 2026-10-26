@@ -17,6 +17,7 @@ pub mod demo;
 pub mod geoip;
 pub mod healthcheck;
 pub mod ical;
+pub mod instance;
 pub mod logs;
 pub mod multisite;
 pub mod music;
