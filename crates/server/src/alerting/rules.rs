@@ -551,6 +551,9 @@ pub fn builtin_rules() -> Vec<Rule> {
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
+            // Un délai court, comme pour `webchange_detected` : il écarte un point isolé
+            // sans retarder l'annonce d'un échec réel.
+            for_duration: Duration::from_secs(30),
             severity: Severity::Warning,
             ..base(
                 "push_failed",
@@ -566,6 +569,9 @@ pub fn builtin_rules() -> Vec<Rule> {
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
+            // Un délai court, comme pour `webchange_detected` : il écarte un point isolé
+            // sans retarder l'annonce d'un échec réel.
+            for_duration: Duration::from_secs(30),
             severity: Severity::Warning,
             ..base(
                 "push_too_long",

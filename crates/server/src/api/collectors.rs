@@ -5023,7 +5023,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the address, write a short label for the job, unique among your heartbeats: \"nightly-backup\".",
                     "Set the expected interval to the job's schedule (\"24h\" for a nightly job), or give a cron expression and a time zone, then save the monitor.",
                     "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
-                    "To time the job and report how it went, call .../start before it, then .../success or .../fail after it, with the output of the job as the request body. An exit code can be given as ?exit_code=2 or as the last path segment: .../2.",
+                    "To time the job, call .../start before it, then .../success or .../fail after it, with its output as the request body. Send an exit code as ?exit_code=2 or as .../2.",
                     "To report a failure at once, append ?status=down&msg=... to the URL.",
                 ],
                 ports: &[to_server!(
