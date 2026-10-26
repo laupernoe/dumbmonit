@@ -152,6 +152,10 @@ pub struct Bundle {
     /// Réglages des équipes (clé `teams.access` de `settings`).
     #[serde(default)]
     pub teams_settings: Option<Value>,
+    /// Astreintes : plannings, remplacements, politiques, contacts et
+    /// préférences (migrations 0100 à 0102).
+    #[serde(default)]
+    pub oncall: crate::backup::oncall::BundleOncall,
     /// Corrections de la carte de topologie (migration 0072).
     #[serde(default)]
     pub topology_corrections: Vec<BundleTopologyCorrection>,
@@ -179,6 +183,7 @@ impl Bundle {
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
             ("teams".to_string(), self.teams.len()),
+            ("oncall".to_string(), self.oncall.count()),
             ("topology_corrections".to_string(), self.topology_corrections.len()),
             ("topology_rules".to_string(), self.topology_rules.len()),
         ])

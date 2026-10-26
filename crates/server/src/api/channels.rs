@@ -190,6 +190,9 @@ pub async fn create(
 ) -> ApiResult<(StatusCode, Json<ChannelSummary>)> {
     let policy = parse_policy(payload.policy.take(), &ChannelPolicy::default())?;
     let draft = payload.validate(None)?;
+    if draft.kind == crate::oncall::CHANNEL_KIND {
+        super::oncall::ensure_channel_policy(&state, &draft.settings).await?;
+    }
     let id = db::alerts::upsert_channel(&state.pool, &state.cipher, &draft)
         .await
         .map_err(duplicate_name_to_conflict)?;
@@ -212,6 +215,9 @@ pub async fn update(
 
     let mut draft = payload.validate(Some(&current))?;
     draft.id = Some(id);
+    if draft.kind == crate::oncall::CHANNEL_KIND {
+        super::oncall::ensure_channel_policy(&state, &draft.settings).await?;
+    }
 
     db::alerts::upsert_channel(&state.pool, &state.cipher, &draft)
         .await
@@ -302,7 +308,10 @@ impl ChannelPayload {
     /// la configuration résultante est éprouvée par le constructeur du notificateur
     /// lui-même, ce qui évite de réécrire — et de laisser diverger — la liste des
     /// réglages obligatoires de chaque service.
-    fn validate(self, current: Option<&ChannelConfig>) -> ApiResult<db::alerts::ChannelDraft> {
+    pub(crate) fn validate(
+        self,
+        current: Option<&ChannelConfig>,
+    ) -> ApiResult<db::alerts::ChannelDraft> {
         let name = self.name.trim().to_string();
         if name.is_empty() {
             return Err(ApiError::BadRequest("Channel name is required.".into()));

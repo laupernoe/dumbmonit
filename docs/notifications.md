@@ -875,6 +875,14 @@ In SIGNL4, copy the team webhook from **Teams → Team settings**: it is
 An alert reaches the team's phones (`X-S4-Status: new`) and its resolution closes it
 (`resolved`), matched on a per-device external ID.
 
+### DumbMonit on-call
+
+Pages the person on call, then escalates step by step until someone
+acknowledges. It has a single setting, the **escalation policy** to run, and no
+secret. Schedules, contacts and policies are described in
+[On-call](alerting/oncall.md); the channel goes through the usual routing
+(labels, minimum severity, channels chosen per rule).
+
 ### Custom webhook
 
 See [The custom channel](#the-custom-channel) above.

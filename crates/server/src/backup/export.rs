@@ -69,6 +69,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         teams: teams(pool).await?,
         teams_settings: crate::auth::settings::get::<Value>(pool, crate::auth::teams::SETTINGS_KEY)
             .await?,
+        oncall: crate::backup::oncall::collect(pool, cipher).await?,
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
     })
@@ -745,5 +746,10 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
         ("teams", "Teams, their members and their folder rights."),
+        (
+            "oncall",
+            "On-call schedules, replacements, escalation policies, and each account's contacts \
+             (with their secrets) and quiet hours.",
+        ),
     ])
 }
