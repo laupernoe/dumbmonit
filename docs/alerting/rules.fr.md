@@ -649,6 +649,25 @@ Voir [Veeam Backup & Replication](../devices/veeam.md). Les jobs sont
 | Dépôt Veeam presque plein | Un dépôt de sauvegarde Veeam est plein à plus de 90 % : les prochains jobs échoueront par manque d'espace (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 j |
 | Licence Veeam arrivant à expiration | La licence Veeam expire dans moins de 30 jours : les jobs s'arrêtent à la fin de la période de grâce (`dumbmonit_veeam_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
 
+### Kopia {#kopia}
+
+Voir [Kopia](../devices/kopia.md). Les sources sont étiquetées `source` (`utilisateur@machine:/chemin`). Bêta : pas encore testé sur un vrai serveur.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Instantané Kopia avec erreurs | Le dernier instantané d'une source Kopia s'est terminé avec des erreurs : certains fichiers n'ont pas été sauvegardés (`dumbmonit_kopia_source_last_snapshot_errors`). | > 0 | 5 min | Avis (`warning`) | 1 j |
+| Instantané Kopia trop ancien | Une source Kopia planifiée n'a pas d'instantané depuis plus de deux jours (`dumbmonit_kopia_source_last_snapshot_age_seconds`, sources planifiées seulement). | > 2 j | 30 min | Avis (`warning`) | 1 j |
+| Dépôt Kopia déconnecté | Le serveur Kopia n'est pas connecté à son dépôt : aucun instantané ne peut s'exécuter (`dumbmonit_kopia_repo_connected`). | < 1 | 10 min | Avertissement (`critical`) | 6 h |
+
+### Duplicati {#duplicati}
+
+Voir [Duplicati](../devices/duplicati.md). Les sauvegardes sont étiquetées `backup` et `backup_id`. Bêta : pas encore testé sur un vrai serveur.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Sauvegarde Duplicati en échec | La dernière exécution d'une sauvegarde Duplicati a échoué : ce qu'elle protège n'a pas de nouvelle version (`dumbmonit_duplicati_backup_failed`). | > 0 | 5 min | Avertissement (`critical`) | 1 j |
+| Sauvegarde Duplicati trop ancienne | Une sauvegarde Duplicati planifiée n'a pas réussi depuis plus de deux jours (`dumbmonit_duplicati_backup_last_success_age_seconds`, sauvegardes planifiées seulement). | > 2 j | 30 min | Avis (`warning`) | 1 j |
+
 ### Tailscale {#tailscale}
 
 Voir [Tailscale](../devices/tailscale.md). Les appareils sont étiquetés
@@ -685,6 +704,95 @@ Voir [Sophos Firewall](../devices/sophos.md).
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
 | Interface Sophos sans lien | Une interface Sophos Firewall allumée et liée à une zone n'a pas de lien (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+
+### Cisco Meraki {#cisco-meraki}
+
+Voir [Cisco Meraki](../devices/meraki.md) (bêta). Les appareils sont étiquetés `device`, `serial`, `model` et `network`, les liaisons `interface`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Appareil Meraki hors ligne | Un appareil Cisco Meraki est hors ligne (injoignable par le dashboard cloud) depuis dix minutes. Les appareils dormants, non vus depuis longtemps, sont ignorés (`dumbmonit_meraki_device_offline`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Liaison Meraki en échec | Un routeur Meraki a perdu l'accès à Internet d'une liaison configurée (les prises filaires et cellulaires sans câble ne comptent pas) (`dumbmonit_meraki_uplink_failed`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Problème de licence Meraki | La licence Meraki n'est pas conforme (expirée, absente ou hors conformité) : le dashboard peut cesser de gérer les appareils (`dumbmonit_meraki_license_ok`). | < 1 | 1 h | Avis (`warning`) | 1 j |
+| Licence Meraki bientôt expirée | Une licence Meraki expire dans moins de 30 jours (`dumbmonit_meraki_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
+
+### TP-Link Omada {#tp-link-omada}
+
+Voir [TP-Link Omada](../devices/omada.md) (bêta). Les appareils sont étiquetés `device`, `mac`, `model` et `site`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Appareil Omada hors ligne | Un point d'accès, commutateur ou passerelle Omada est déconnecté du contrôleur depuis dix minutes (`dumbmonit_omada_device_offline`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Processeur d'un appareil Omada élevé | Le processeur d'un appareil Omada est au-dessus de 90 % depuis quinze minutes (`dumbmonit_omada_device_cpu_usage_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mémoire d'un appareil Omada élevée | La mémoire d'un appareil Omada est au-dessus de 90 % depuis quinze minutes (`dumbmonit_omada_device_memory_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mise à jour du firmware Omada | Le contrôleur Omada propose une mise à jour du firmware pour un appareil (`dumbmonit_omada_device_upgrade_available`). | > 0 | 1 h | Info (`info`) | 7 j |
+### Aruba Central {#aruba-central}
+
+Voir [Aruba Central](../devices/arubacentral.md). Les appareils sont étiquetés `device`, `type`, `serial` et `site`.
+
+| Appareil Aruba Central hors ligne | Aruba Central signale un point d'accès, un commutateur ou une passerelle hors ligne (`dumbmonit_arubacentral_device_online`). | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Alerte critique Aruba Central | Aruba Central a au moins une alerte critique active (`dumbmonit_arubacentral_alerts_active_by_severity{severity="critical"}`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Appareils Aruba Central en mauvaise santé | Aruba Central classe au moins un appareil en mauvaise santé pendant une heure (`dumbmonit_arubacentral_devices_poor_health`). | > 0 | 1 h | Info (`info`) | 7 j |
+
+### Stormshield SNS {#stormshield-sns}
+
+Lu en SNMP par le profil Stormshield ; voir [Stormshield SNS](../devices/snmp.md#stormshield-sns).
+
+| Nœud HA Stormshield mort | Un nœud d'un cluster HA Stormshield est déclaré mort : il n'y a plus de secours (`dumbmonit_stormshield_ha_dead_nodes`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Lien HA Stormshield défaillant | Un lien entre les nœuds d'un cluster HA Stormshield est défaillant (`dumbmonit_stormshield_ha_faulty_links`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+### Palo Alto PAN-OS {#palo-alto-pan-os}
+
+Voir [Palo Alto PAN-OS](../devices/paloalto.md) (bêta). Les interfaces sont étiquetées `interface` et `zone`, les licences `license`.
+
+| Interface Palo Alto sans lien | Une interface de pare-feu Palo Alto rattachée à une zone n'a pas de lien : câble, transceiver ou l'appareil en face (`dumbmonit_paloalto_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Pair HA Palo Alto perdu | Le pair d'une paire HA Palo Alto n'est plus actif ni passif, ou le lien HA vers lui est coupé : il n'y a plus de secours (`dumbmonit_paloalto_ha_peer_up`). | < 1 | 2 min | Avertissement (`critical`) | 6 h |
+| HA Palo Alto désynchronisé | La configuration courante d'une paire HA Palo Alto n'est pas synchronisée : un basculement ferait tourner une autre configuration (`dumbmonit_paloalto_ha_in_sync`). | < 1 | 15 min | Avis (`warning`) | 6 h |
+| Membre HA Palo Alto non fonctionnel | Ce pare-feu Palo Alto indique un état HA suspendu ou non fonctionnel (`dumbmonit_paloalto_ha_local_functional`). | < 1 | 5 min | Avertissement (`critical`) | 6 h |
+| Table des sessions Palo Alto qui se remplit | La table des sessions d'un pare-feu Palo Alto est restée au-dessus de 90 % de sa capacité pendant dix minutes : les nouvelles sessions seront refusées quand elle sera pleine (`dumbmonit_paloalto_session_usage_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| CPU de gestion Palo Alto élevé | Le CPU du plan de gestion d'un pare-feu Palo Alto est resté au-dessus de 90 % pendant quinze minutes (`dumbmonit_paloalto_cpu_usage_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mémoire de gestion Palo Alto élevée | La mémoire du plan de gestion d'un pare-feu Palo Alto est restée au-dessus de 90 % pendant quinze minutes (`dumbmonit_paloalto_memory_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Licence Palo Alto arrivant à expiration | Une licence ou un abonnement d'un pare-feu Palo Alto expire dans moins de 30 jours, ou a expiré (`dumbmonit_paloalto_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
+| Validation Palo Alto en échec | La dernière validation de configuration d'un pare-feu Palo Alto a échoué : la configuration courante n'est pas celle qui a été enregistrée (`dumbmonit_paloalto_last_commit_ok`). | < 1 | 5 min | Info (`info`) | 1 j |
+
+### SonicWall SonicOS {#sonicwall-sonicos}
+
+Voir [SonicWall SonicOS](../devices/sonicwall.md) (bêta).
+
+| Interface SonicWall sans lien | Une interface SonicWall rattachée à une zone n'a pas de lien (`dumbmonit_sonicwall_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+### QNAP QTS {#qnap-qts}
+
+Voir [QNAP QTS / QuTS hero](../devices/qnap.md). Les volumes portent le label `volume`, les disques `disk` et `model`.
+
+| Volume QNAP presque plein | Un volume QNAP est plein à plus de 90 % : partages, instantanés et applications ne peuvent plus écrire (`dumbmonit_qnap_volume_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 d |
+| Santé d'un disque QNAP pas bonne | L'état SMART d'un disque QNAP n'est plus bon (avertissement ou anormal) : remplacez-le avant que le RAID perde sa redondance (`dumbmonit_qnap_disk_ok`). | < 1 | 15 min | Avis (`warning`) | 6 h |
+| Disque QNAP trop chaud | Un disque QNAP est resté au-dessus de 55 °C pendant quinze minutes (`dumbmonit_qnap_disk_temperature_celsius`). | > 55 °C | 15 min | Avis (`warning`) | 6 h |
+| Processeur QNAP trop chaud | Le processeur du QNAP est resté au-dessus de 90 °C pendant quinze minutes (`dumbmonit_qnap_cpu_temperature_celsius`). | > 90 °C | 15 min | Avis (`warning`) | 6 h |
+| Mise à jour QNAP | QNAP propose une version plus récente de QTS ou QuTS hero (`dumbmonit_qnap_firmware_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
+### Ceph {#ceph}
+
+Voir [Ceph](../devices/ceph.md). Les OSD portent les labels `osd` et `host`, les pools `pool`.
+
+| Ceph en erreur | La grappe Ceph signale HEALTH_ERR : des données peuvent être indisponibles ou menacées (`dumbmonit_ceph_health_status`). | > 1 | 5 min | Avertissement (`critical`) | 1 h |
+| Ceph en avertissement | La grappe Ceph signale HEALTH_WARN depuis 30 minutes : voir ses contrôles de santé (`dumbmonit_ceph_health_status`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| OSD Ceph arrêté | Un ou plusieurs OSD Ceph sont arrêtés : la grappe reconstruit leurs données ailleurs et perd de la redondance en attendant (`dumbmonit_ceph_osds_down`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Groupes de placement Ceph pas propres | Des groupes de placement Ceph ne sont plus active+clean depuis 30 minutes : données dégradées, déplacées ou inactives (`dumbmonit_ceph_pgs_unclean`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Objets Ceph introuvables | Ceph signale des objets introuvables : aucune copie de certaines données n'est trouvée (`dumbmonit_ceph_objects_unfound`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Capacité Ceph élevée | La grappe Ceph est pleine à plus de 80 % : elle passe en lecture seule à 95 %, et la reconstruction après une panne demande de la place libre (`dumbmonit_ceph_capacity_used_percent`). | > 80 % | 30 min | Avis (`warning`) | 1 d |
+| OSD Ceph presque plein | Un OSD Ceph est plein à plus de 85 % (le ratio nearfull par défaut) : les écritures s'y arrêtent au ratio full (`dumbmonit_ceph_osd_used_percent`). | > 85 % | 15 min | Avis (`warning`) | 12 h |
+| Pool Ceph presque plein | Un pool Ceph est plein à plus de 90 % (`dumbmonit_ceph_pool_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 12 h |
+| Moniteur Ceph hors quorum | Un moniteur Ceph est hors du quorum : une perte de plus et la grappe s'arrête (`dumbmonit_ceph_mons_out_of_quorum`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+
+### MinIO {#minio}
+
+Voir [MinIO](../devices/minio.md).
+
+| Nœud MinIO hors ligne | Un nœud MinIO est hors ligne : la grappe tourne avec moins de parité (`dumbmonit_minio_nodes_offline`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Disque MinIO hors ligne | Un disque MinIO est hors ligne : les objets sont reconstruits à partir de la parité jusqu'à son retour (`dumbmonit_minio_drives_offline`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Capacité MinIO élevée | La capacité utilisable de la grappe MinIO est utilisée à plus de 85 % (`dumbmonit_minio_capacity_usable_used_percent`). | > 85 % | 30 min | Avis (`warning`) | 1 d |
+| Échecs de réparation MinIO | MinIO n'a pas pu réparer certains objets lors de son auto-réparation en cours (`dumbmonit_minio_heal_objects_failed`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Échecs de réplication MinIO | Des objets d'un bucket MinIO n'ont pas pu être répliqués vers le site distant (`dumbmonit_minio_replication_failed_objects`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Erreurs serveur S3 MinIO | Plus de 5 % des requêtes S3 servies par MinIO ces 10 dernières minutes ont fini en erreur serveur (5xx) (`100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])`). | > 5 % | 10 min | Avis (`warning`) | 6 h |
 
 ### KVM (libvirt) {#kvm-libvirt}
 

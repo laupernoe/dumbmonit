@@ -329,10 +329,13 @@ mod tests {
             vec![
                 "ethernet-switch",
                 "host-resources",
+                "hpe-aruba-switch",
                 "if-mib",
                 "printer",
+                "stormshield",
                 "system",
                 "ups",
+                "watchguard",
                 "zyxel"
             ]
         );
