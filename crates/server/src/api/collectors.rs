@@ -3648,6 +3648,76 @@ const SOPHOS_OPTIONS: &[OptionView] = &[
     VENDOR_TIMEOUT,
 ];
 
+/// Palo Alto PAN-OS (`collectors/paloalto`) : mot de passe du compte d'API, ou
+/// clé déjà générée.
+const PALOALTO_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit account: DumbMonit asks the firewall for an API key with it and keeps the key, the password only travels in a request body.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The read-only account created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const PALOALTO_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "A key already generated for the dumbmonit account, sent in the X-PAN-KEY header.",
+    fields: &[cred_secret(
+        "token",
+        "API key",
+        "As returned by the keygen request. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const PALOALTO_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// SonicWall SonicOS (`collectors/sonicwall`) : compte en HTTP Basic.
+const SONICWALL_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit user, in a read-only group, sent as HTTP Basic.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The read-only user created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const SONICWALL_OPTIONS: &[OptionView] = &[
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
 /// Sujet XAPI de `collectors/xcpng` : un compte de l'annuaire du pool (Active
 /// Directory, ou PAM sur les hôtes), au rôle intégré `read-only`.
 const XCPNG_LOGIN: CredentialView = CredentialView {
@@ -5826,6 +5896,58 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: SOPHOS_OPTIONS,
         },
+        "paloalto" => CollectorView {
+            kind: "paloalto",
+            label: "Palo Alto PAN-OS",
+            summary: "Beta. A Palo Alto Networks firewall through the PAN-OS XML API: interfaces without link, HA peer lost or out of sync, session table filling up, management CPU and memory, licences expiring, failed commits.",
+            examples: &["PA-400 / PA-1400 series", "VM-Series", "PAN-OS 10.x and 11.x"],
+            credential_types: &["username_password", "api_token"],
+            credentials: &[PALOALTO_LOGIN, PALOALTO_KEY],
+            address_hint: "pa.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only XML API account for DumbMonit",
+                steps: &[
+                    "Device → Admin Roles → Add: name the role as follows. On the XML API tab enable Operational Requests only; leave every other privilege, and the Web UI and Command Line tabs, disabled.\ndumbmonit-ro",
+                    "Device → Administrators → Add: name the account as follows, set Authentication to a password, the type to Role Based and the role to the one above.\ndumbmonit",
+                    "Click Commit: the role and the account exist only once committed.",
+                    "In DumbMonit, enter the firewall address (pa.lan) with that user name and password, or with an API key you generated for that account.",
+                ],
+                ports: &[to_device!(443, "tcp", "Management interface (HTTPS, default)")],
+                permissions: &[
+                    "XML API → Operational Requests: enabled\nshow system info, resources, sessions, interfaces, HA state, jobs and licence info",
+                    "Every other XML API privilege: disabled\nConfiguration, Commit, Export, Import, Report, Log and User-ID Agent are not needed",
+                    "Web UI and Command Line: disabled\nThe account never signs in interactively",
+                ],
+                warning: "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+            },
+            options: PALOALTO_OPTIONS,
+        },
+        "sonicwall" => CollectorView {
+            kind: "sonicwall",
+            label: "SonicWall SonicOS",
+            summary: "Beta. A SonicWall firewall through the SonicOS 7 API: the link of every interface bound to a zone. Kept minimal on purpose: only the API paths SonicWall publishes are read.",
+            examples: &["SonicWall TZ / NSa / NSsp", "SonicWall NSv", "SonicOS 7.x"],
+            credential_types: &["username_password"],
+            credentials: &[SONICWALL_LOGIN],
+            address_hint: "sonicwall.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only user for the SonicOS API",
+                steps: &[
+                    "Device → Settings → Administration → Audit/SonicOS API: make sure HTTP Basic Access (RFC-2617) is on, then click Accept.",
+                    "Device → Users → Local Users & Groups → Add User: name it as follows, give it a long random password and add it to the group SonicWall Read-Only Admins.\ndumbmonit",
+                    "Allow HTTPS management on the interface DumbMonit reaches the firewall through (Device → Network → Interfaces → Configure → Management).",
+                    "In DumbMonit, enter the firewall address (sonicwall.lan) with that user name and password.",
+                ],
+                ports: &[to_device!(443, "tcp", "Management interface (HTTPS, default)")],
+                permissions: &[
+                    "Group SonicWall Read-Only Admins\nThe account reads and changes nothing",
+                ],
+                warning: "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+            },
+            options: SONICWALL_OPTIONS,
+        },
         "openvpn" => CollectorView {
             kind: "openvpn",
             label: "OpenVPN server",
@@ -5884,7 +6006,8 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
+        | "sophos" | "paloalto" | "sonicwall" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "webchange" | "website" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -6032,6 +6155,8 @@ mod tests {
         "tailscale",
         "fortigate",
         "sophos",
+        "paloalto",
+        "sonicwall",
         "openvpn",
         "xcpng",
         "nutanix",
@@ -6597,6 +6722,8 @@ mod tests {
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
             ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("paloalto", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("sonicwall", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("xcpng", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("nutanix", &["port", "insecure_tls", "request_timeout_seconds"]),
         ];
@@ -6792,15 +6919,26 @@ mod tests {
             ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
             ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
             ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
+            ("paloalto", dumbmonit_collectors::paloalto::DEFAULT_PORT),
+            ("sonicwall", dumbmonit_collectors::sonicwall::DEFAULT_PORT),
             ("xcpng", dumbmonit_collectors::xcpng::DEFAULT_PORT),
             ("nutanix", dumbmonit_collectors::nutanix::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
             assert_eq!(describe(kind).default_port, port, "{kind}");
         }
-        for kind in
-            ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos", "xcpng", "nutanix"]
-        {
+        for kind in [
+            "pfsense",
+            "unraid",
+            "veeam",
+            "tailscale",
+            "fortigate",
+            "sophos",
+            "paloalto",
+            "sonicwall",
+            "xcpng",
+            "nutanix",
+        ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
                 dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
@@ -7066,6 +7204,8 @@ mod tests {
             ("tailscale", "devices:core:read"),
             ("fortigate", "dumbmonit"),
             ("sophos", "dumbmonit"),
+            ("paloalto", "dumbmonit"),
+            ("sonicwall", "dumbmonit"),
             ("xcpng", "dumbmonit"),
             ("nutanix", "dumbmonit"),
             ("nextcloud", "token"),
@@ -7120,6 +7260,9 @@ mod tests {
                 // « REST API Admin », le type de compte d'API.
                 .replace("admin profiles", "")
                 .replace("rest api admin", "")
+                // Le menu « Device → Admin Roles » de PAN-OS, où se crée le
+                // rôle en lecture seule : un menu, pas un compte.
+                .replace("admin roles", "")
                 // L'application « Admin Center » de Prism Central, où se
                 // gèrent les identités : un menu, pas un compte.
                 .replace("admin center", "");
@@ -7266,6 +7409,8 @@ mod tests {
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
+            ("paloalto", include_str!("../../../../docs/devices/paloalto.md")),
+            ("sonicwall", include_str!("../../../../docs/devices/sonicwall.md")),
             ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
             ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),

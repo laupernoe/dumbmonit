@@ -686,6 +686,30 @@ Voir [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Interface Sophos sans lien | Une interface Sophos Firewall allumée et liée à une zone n'a pas de lien (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
 
+### Palo Alto PAN-OS {#palo-alto-pan-os}
+
+Voir [Palo Alto PAN-OS](../devices/paloalto.md) (bêta). Les interfaces sont étiquetées `interface` et `zone`, les licences `license`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Interface Palo Alto sans lien | Une interface de pare-feu Palo Alto rattachée à une zone n'a pas de lien : câble, transceiver ou l'appareil en face (`dumbmonit_paloalto_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Pair HA Palo Alto perdu | Le pair d'une paire HA Palo Alto n'est plus actif ni passif, ou le lien HA vers lui est coupé : il n'y a plus de secours (`dumbmonit_paloalto_ha_peer_up`). | < 1 | 2 min | Avertissement (`critical`) | 6 h |
+| HA Palo Alto désynchronisé | La configuration courante d'une paire HA Palo Alto n'est pas synchronisée : un basculement ferait tourner une autre configuration (`dumbmonit_paloalto_ha_in_sync`). | < 1 | 15 min | Avis (`warning`) | 6 h |
+| Membre HA Palo Alto non fonctionnel | Ce pare-feu Palo Alto indique un état HA suspendu ou non fonctionnel (`dumbmonit_paloalto_ha_local_functional`). | < 1 | 5 min | Avertissement (`critical`) | 6 h |
+| Table des sessions Palo Alto qui se remplit | La table des sessions d'un pare-feu Palo Alto est restée au-dessus de 90 % de sa capacité pendant dix minutes : les nouvelles sessions seront refusées quand elle sera pleine (`dumbmonit_paloalto_session_usage_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| CPU de gestion Palo Alto élevé | Le CPU du plan de gestion d'un pare-feu Palo Alto est resté au-dessus de 90 % pendant quinze minutes (`dumbmonit_paloalto_cpu_usage_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mémoire de gestion Palo Alto élevée | La mémoire du plan de gestion d'un pare-feu Palo Alto est restée au-dessus de 90 % pendant quinze minutes (`dumbmonit_paloalto_memory_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Licence Palo Alto arrivant à expiration | Une licence ou un abonnement d'un pare-feu Palo Alto expire dans moins de 30 jours, ou a expiré (`dumbmonit_paloalto_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
+| Validation Palo Alto en échec | La dernière validation de configuration d'un pare-feu Palo Alto a échoué : la configuration courante n'est pas celle qui a été enregistrée (`dumbmonit_paloalto_last_commit_ok`). | < 1 | 5 min | Info (`info`) | 1 j |
+
+### SonicWall SonicOS {#sonicwall-sonicos}
+
+Voir [SonicWall SonicOS](../devices/sonicwall.md) (bêta).
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Interface SonicWall sans lien | Une interface SonicWall rattachée à une zone n'a pas de lien (`dumbmonit_sonicwall_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+
 ### KVM (libvirt) {#kvm-libvirt}
 
 Rapporté par l'agent Linux sur un hôte KVM ; voir [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).

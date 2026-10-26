@@ -630,6 +630,30 @@ See [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Sophos interface without link | A Sophos Firewall interface that is switched on and bound to a zone has no link (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
 
+### Palo Alto PAN-OS
+
+See [Palo Alto PAN-OS](../devices/paloalto.md) (beta). Interfaces are labelled `interface` and `zone`, licences `license`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Palo Alto interface without link | A Palo Alto firewall interface bound to a zone has no link: cable, transceiver or the device in front (`dumbmonit_paloalto_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Palo Alto HA peer lost | The peer of a Palo Alto HA pair is no longer active or passive, or the HA link to it is down: there is no standby any more (`dumbmonit_paloalto_ha_peer_up`). | < 1 | 2 min | Warning (`critical`) | 6 h |
+| Palo Alto HA out of sync | The running configuration of a Palo Alto HA pair is not synchronized: a failover would run another configuration (`dumbmonit_paloalto_ha_in_sync`). | < 1 | 15 min | Advisory (`warning`) | 6 h |
+| Palo Alto HA member not functional | This Palo Alto firewall reports its HA state as suspended or non-functional (`dumbmonit_paloalto_ha_local_functional`). | < 1 | 5 min | Warning (`critical`) | 6 h |
+| Palo Alto session table filling up | The session table of a Palo Alto firewall has stayed above 90 % of its capacity for ten minutes: new sessions will be refused when it is full (`dumbmonit_paloalto_session_usage_percent`). | > 90 % | 10 min | Advisory (`warning`) | 6 h |
+| Palo Alto management CPU high | The management plane CPU of a Palo Alto firewall has stayed above 90 % for fifteen minutes (`dumbmonit_paloalto_cpu_usage_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Palo Alto management memory high | The management plane memory of a Palo Alto firewall has stayed above 90 % for fifteen minutes (`dumbmonit_paloalto_memory_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Palo Alto licence expiring | A licence or subscription of a Palo Alto firewall expires in less than 30 days, or has expired (`dumbmonit_paloalto_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
+| Palo Alto commit failed | The last configuration commit of a Palo Alto firewall failed: the running configuration is not the one that was saved (`dumbmonit_paloalto_last_commit_ok`). | < 1 | 5 min | Info (`info`) | 1 d |
+
+### SonicWall SonicOS
+
+See [SonicWall SonicOS](../devices/sonicwall.md) (beta).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| SonicWall interface without link | A SonicWall interface bound to a zone has no link (`dumbmonit_sonicwall_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+
 ### KVM (libvirt)
 
 Reported by the Linux agent on a KVM host; see [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).

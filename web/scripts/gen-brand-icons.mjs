@@ -54,6 +54,8 @@ const KINDS = {
 	veeam: 'veeam',
 	tailscale: 'tailscale',
 	fortigate: 'fortinet',
+	paloalto: 'paloaltonetworks',
+	sonicwall: 'sonicwall',
 	postgres: 'postgresql',
 	mysql: 'mysql',
 	mqtt: 'mqtt'
