@@ -3543,6 +3543,7 @@
 	"kinds_label_agent": "Сервер с агентом",
 	"kinds_label_agent_service": "Служба, найденная агентом",
 	"kinds_label_apache": "Apache httpd",
+	"kinds_label_arubacentral": "Aruba Central (бета)",
 	"kinds_label_caddy": "Caddy",
 	"kinds_label_crowdsec": "CrowdSec",
 	"kinds_label_dns": "Доменное имя (DNS)",

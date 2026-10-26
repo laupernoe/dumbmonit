@@ -529,6 +529,8 @@ fn snmp() -> Vec<Fingerprint> {
         f("snmp.netgear", "Netgear switch", Some("1.3.6.1.4.1.4526"), None),
         f("snmp.tplink", "TP-Link switch", Some("1.3.6.1.4.1.11863"), None),
         f("snmp.zyxel", "Zyxel", Some("1.3.6.1.4.1.890"), None),
+        f("snmp.watchguard", "WatchGuard Firebox", Some("1.3.6.1.4.1.3097"), None),
+        f("snmp.stormshield", "Stormshield SNS", Some("1.3.6.1.4.1.11256"), None),
         // Produits reconnus par le sysDescr (OID Net-SNMP générique, partagé).
         f("snmp.synology", "Synology DSM", None, Some("synology")),
         f("snmp.truenas", "TrueNAS", None, Some("TrueNAS")),

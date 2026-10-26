@@ -21,6 +21,7 @@ que cette version peut surveiller.
 | [pfSense](pfsense.md) | `pfsense` | clé d'API REST (utilisateur en lecture seule) | Pare-feu : passerelles en panne ou avec pertes, interfaces sans lien, services arrêtés |
 | [FortiGate](fortigate.md) | `fortigate` | jeton d'API REST (profil en lecture seule, hôte de confiance) | Pare-feu : tunnels IPsec, liens, synchro HA, mode conserve, licences FortiGuard |
 | [Sophos Firewall](sophos.md) | `sophos` | nom d'utilisateur/mot de passe (profil en lecture seule) | Pare-feu : liens d'interface seulement (l'API XML n'expose ni tunnel, ni HA, ni licence) |
+| [Aruba Central](arubacentral.md) | `arubacentral` | client d'API (ID et secret) ou jeton d'accès | Bêta. Points d'accès, commutateurs et passerelles Aruba par l'API cloud : appareils hors ligne, alertes critiques, santé des appareils, clients |
 | [Serveur OpenVPN](openvpn.md) | `openvpn` | aucun, ou mot de passe de gestion | Serveur OpenVPN via son interface de gestion : version, état, clients connectés |
 | [UniFi Network](unifi.md) | `unifi` | clé d'API ou nom d'utilisateur/mot de passe | Console UniFi ou serveur auto-hébergé : appareils, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | jeton d'accès longue durée | Maison connectée : entités indisponibles, batteries faibles, mises à jour, réparations |

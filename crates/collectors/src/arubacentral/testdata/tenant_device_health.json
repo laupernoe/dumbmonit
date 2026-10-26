@@ -1,0 +1,14 @@
+{
+  "id": "00001",
+  "type": "network-monitoring/tenant-device-health",
+  "deviceTypes": [
+    {
+      "name": "Switches",
+      "health": { "groups": [ { "name": "Poor", "value": 0 }, { "name": "Fair", "value": 1 }, { "name": "Good", "value": 3 } ] }
+    },
+    {
+      "name": "Access Points",
+      "health": { "groups": [ { "name": "Poor", "value": 1 }, { "name": "Fair", "value": 2 }, { "name": "Good", "value": 14 } ] }
+    }
+  ]
+}

@@ -3501,6 +3501,7 @@
 	"kinds_label_agent": "带代理的服务器",
 	"kinds_label_agent_service": "代理发现的服务",
 	"kinds_label_apache": "Apache httpd",
+	"kinds_label_arubacentral": "Aruba Central (测试版)",
 	"kinds_label_caddy": "Caddy",
 	"kinds_label_crowdsec": "CrowdSec",
 	"kinds_label_dns": "域名 (DNS)",
