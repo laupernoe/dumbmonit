@@ -26,6 +26,7 @@ pub mod oidc;
 pub mod password;
 pub mod rate_limit;
 pub mod saml;
+pub mod scim;
 pub mod session;
 pub mod settings;
 pub mod setup_code;

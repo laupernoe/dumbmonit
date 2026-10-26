@@ -73,9 +73,17 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
 
 async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
     let teams = crate::auth::teams::list(pool).await?;
-    Ok(teams
-        .into_iter()
-        .map(|team| BundleTeam {
+    let mut out = Vec::with_capacity(teams.len());
+    for team in teams {
+        let scim: Option<(Option<String>, Option<String>, i64)> = sqlx::query_as(
+            "SELECT scim_id, scim_external_id, scim_created FROM teams WHERE id = ?",
+        )
+        .bind(team.id)
+        .fetch_optional(pool)
+        .await
+        .context("rattachement SCIM d'une équipe")?;
+        let (scim_id, scim_external_id, scim_created) = scim.unwrap_or_default();
+        out.push(BundleTeam {
             name: team.name,
             description: team.description,
             idp_groups: team.idp_groups,
@@ -85,8 +93,12 @@ async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
                 .map(|m| BundleTeamMember { username: m.username, source: m.source })
                 .collect(),
             grants: team.grants,
-        })
-        .collect())
+            scim_id,
+            scim_external_id,
+            scim_created: scim_created != 0,
+        });
+    }
+    Ok(out)
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {
@@ -513,7 +525,8 @@ async fn users(
 ) -> Result<Vec<BundleUser>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
-                saml_subject, saml_issuer, created_at, disabled, totp_secret, totp_enabled
+                saml_subject, saml_issuer, created_at, disabled, totp_secret, totp_enabled,
+                scim_id, scim_external_id, scim_email, disabled_by_scim
          FROM users ORDER BY id",
     )
     .fetch_all(pool)
@@ -537,6 +550,10 @@ async fn users(
             totp_secret: None,
             totp_enabled: false,
             recovery_codes: Vec::new(),
+            scim_id: row.try_get("scim_id")?,
+            scim_external_id: row.try_get("scim_external_id")?,
+            scim_email: row.try_get("scim_email")?,
+            disabled_by_scim: row.try_get::<i64, _>("disabled_by_scim")? != 0,
         };
 
         if options.include_account_secrets {

@@ -113,6 +113,11 @@ tags:
     description: This document.
   - name: Accounts
     description: Sign-in, sessions, two-factor authentication, SSO and accounts. Session only.
+  - name: SCIM
+    description: >-
+      SCIM 2.0 provisioning of accounts and teams by an identity provider
+      (Entra ID, Okta), with its own bearer token (`dmscim_…`). No API token or
+      session is accepted; disabled, these routes answer 404.
   - name: API tokens
     description: Tokens for scripts and assistants. Session only — a token never creates another token.
   - name: Devices
@@ -802,6 +807,331 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/scim:
+    get:
+      operationId: getScimSettings
+      tags: [Accounts]
+      summary: SCIM provisioning settings
+      description: >-
+        Administrator session only. Says whether SCIM provisioning is on, the
+        base URL to give the identity provider, whether a token exists (never
+        the token itself) and the role given to the accounts SCIM creates.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScimSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putScimSettings
+      tags: [Accounts]
+      summary: Turn SCIM provisioning on or off
+      description: >-
+        `default_role` is `viewer` or `operator`: SCIM never creates an
+        administrator. An absent `default_role` keeps the current one.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: boolean }
+                default_role: { type: string, enum: [viewer, operator] }
+      responses:
+        "200":
+          description: The new settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ScimSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/auth/scim/token:
+    post:
+      operationId: createScimToken
+      tags: [Accounts]
+      summary: Generate the SCIM token
+      description: >-
+        Generates a new bearer token for the identity provider and returns it
+        in `token`, this once only. The previous token stops working at once.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The settings, with the new token in clear.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: "#/components/schemas/ScimSettings" }
+                  - type: object
+                    required: [token]
+                    properties:
+                      token: { type: string, description: "`dmscim_…`, shown once." }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: deleteScimToken
+      tags: [Accounts]
+      summary: Revoke the SCIM token
+      description: Every SCIM request is refused until a new token is generated.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Token revoked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/scim/v2/ServiceProviderConfig:
+    get:
+      operationId: scimServiceProviderConfig
+      tags: [SCIM]
+      summary: SCIM service provider configuration
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      responses:
+        "200": { $ref: "#/components/responses/ScimResource" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+
+  /api/scim/v2/ResourceTypes:
+    get:
+      operationId: scimResourceTypes
+      tags: [SCIM]
+      summary: SCIM resource types (User, Group)
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      responses:
+        "200": { $ref: "#/components/responses/ScimList" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+
+  /api/scim/v2/Schemas:
+    get:
+      operationId: scimSchemas
+      tags: [SCIM]
+      summary: SCIM schemas (User, Group)
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      responses:
+        "200": { $ref: "#/components/responses/ScimList" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+
+  /api/scim/v2/Users:
+    get:
+      operationId: scimListUsers
+      tags: [SCIM]
+      summary: List provisioned accounts
+      description: >-
+        Only the accounts SCIM created or linked. `filter` understands `eq`
+        comparisons joined by `and` on `id`, `userName`, `externalId`,
+        `displayName`, `active`, `emails` and `emails[type eq "work"].value`;
+        anything else is `400 invalidFilter`.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      parameters:
+        - { $ref: "#/components/parameters/ScimFilter" }
+        - { $ref: "#/components/parameters/ScimStartIndex" }
+        - { $ref: "#/components/parameters/ScimCount" }
+        - { $ref: "#/components/parameters/ScimExcludedAttributes" }
+      responses:
+        "200": { $ref: "#/components/responses/ScimList" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+    post:
+      operationId: scimCreateUser
+      tags: [SCIM]
+      summary: Provision an account
+      description: >-
+        Creates the account with the `default_role` setting (never admin), or
+        links the existing account with the same `userName` when it is not an
+        administrator and not already provisioned (`409 uniqueness` otherwise).
+        A `password` is never read: the account signs in through SSO.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      requestBody: { $ref: "#/components/requestBodies/ScimResource" }
+      responses:
+        "201": { $ref: "#/components/responses/ScimResource" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "409": { $ref: "#/components/responses/ScimError" }
+
+  /api/scim/v2/Users/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ScimId" }
+    get:
+      operationId: scimGetUser
+      tags: [SCIM]
+      summary: A provisioned account
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      responses:
+        "200": { $ref: "#/components/responses/ScimResource" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+    put:
+      operationId: scimReplaceUser
+      tags: [SCIM]
+      summary: Replace a provisioned account
+      description: Refused (`403`) on an administrator.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      requestBody: { $ref: "#/components/requestBodies/ScimResource" }
+      responses:
+        "200": { $ref: "#/components/responses/ScimResource" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+        "409": { $ref: "#/components/responses/ScimError" }
+    patch:
+      operationId: scimPatchUser
+      tags: [SCIM]
+      summary: Update a provisioned account
+      description: >-
+        `add`, `replace` and `remove`, in any case, with or without `path`.
+        `active: false` (or `"False"`) disables the account and closes its
+        sessions; `true` only re-enables an account SCIM disabled. Attributes
+        DumbMonit does not keep are ignored. Refused (`403`) on an administrator.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      requestBody: { $ref: "#/components/requestBodies/ScimPatch" }
+      responses:
+        "200": { $ref: "#/components/responses/ScimResource" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+    delete:
+      operationId: scimDeleteUser
+      tags: [SCIM]
+      summary: Delete a provisioned account
+      description: The account, its sessions and its API tokens go. Refused (`403`) on an administrator.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Account deleted. }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+
+  /api/scim/v2/Groups:
+    get:
+      operationId: scimListGroups
+      tags: [SCIM]
+      summary: List provisioned teams
+      description: >-
+        Only the teams SCIM created or linked. `filter` understands `eq`
+        comparisons joined by `and` on `id`, `displayName`, `externalId` and
+        `members`. `excludedAttributes=members` leaves the members out.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      parameters:
+        - { $ref: "#/components/parameters/ScimFilter" }
+        - { $ref: "#/components/parameters/ScimStartIndex" }
+        - { $ref: "#/components/parameters/ScimCount" }
+        - { $ref: "#/components/parameters/ScimExcludedAttributes" }
+      responses:
+        "200": { $ref: "#/components/responses/ScimList" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+    post:
+      operationId: scimCreateGroup
+      tags: [SCIM]
+      summary: Provision a team
+      description: >-
+        Creates the team, or links the existing team with the same name when no
+        provider manages it yet. Folder rights stay the administrator's: a new
+        team sees nothing until it is given some.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      requestBody: { $ref: "#/components/requestBodies/ScimResource" }
+      responses:
+        "201": { $ref: "#/components/responses/ScimResource" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "409": { $ref: "#/components/responses/ScimError" }
+
+  /api/scim/v2/Groups/{id}:
+    parameters:
+      - { $ref: "#/components/parameters/ScimId" }
+    get:
+      operationId: scimGetGroup
+      tags: [SCIM]
+      summary: A provisioned team
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      parameters:
+        - { $ref: "#/components/parameters/ScimExcludedAttributes" }
+      responses:
+        "200": { $ref: "#/components/responses/ScimResource" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+    put:
+      operationId: scimReplaceGroup
+      tags: [SCIM]
+      summary: Replace a provisioned team
+      description: >-
+        With `members`, the members SCIM added follow the list; members added by
+        an administrator always stay. A linked team keeps its name.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      requestBody: { $ref: "#/components/requestBodies/ScimResource" }
+      responses:
+        "200": { $ref: "#/components/responses/ScimResource" }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+        "409": { $ref: "#/components/responses/ScimError" }
+    patch:
+      operationId: scimPatchGroup
+      tags: [SCIM]
+      summary: Update a provisioned team
+      description: >-
+        `members` add, remove and replace, `members[value eq "…"]` remove,
+        `displayName` and `externalId`.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      requestBody: { $ref: "#/components/requestBodies/ScimPatch" }
+      responses:
+        "204": { description: Team updated. }
+        "400": { $ref: "#/components/responses/ScimError" }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
+    delete:
+      operationId: scimDeleteGroup
+      tags: [SCIM]
+      summary: Delete a provisioned team
+      description: >-
+        Deletes the team when SCIM created it; otherwise only removes the members
+        SCIM added and unlinks it.
+      security: [{ scimBearer: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Team deleted or unlinked. }
+        "401": { $ref: "#/components/responses/ScimError" }
+        "403": { $ref: "#/components/responses/ScimError" }
+        "404": { $ref: "#/components/responses/ScimError" }
 
   /api/users:
     get:
@@ -6396,6 +6726,14 @@ components:
         API token created in Settings → API & assistants. `read` scope: every
         `GET`; `write` scope: also `POST`, `PUT`, `DELETE`. Never valid on
         operations marked `x-token-scope: none`. 120 calls per minute per token.
+    scimBearer:
+      type: http
+      scheme: bearer
+      bearerFormat: dmscim_…
+      description: >-
+        The SCIM token generated in Settings for the identity provider. Valid
+        only on `/api/scim/v2`; repeated failures from one address are answered
+        429.
     cookieAuth:
       type: apiKey
       in: cookie
@@ -6405,6 +6743,30 @@ components:
         also carry `X-Requested-With: DumbMonit`.
 
   parameters:
+    ScimId:
+      name: id
+      in: path
+      required: true
+      description: SCIM id (a UUID).
+      schema: { type: string }
+    ScimFilter:
+      name: filter
+      in: query
+      description: 'For example `userName eq "jane@example.org"`.'
+      schema: { type: string }
+    ScimStartIndex:
+      name: startIndex
+      in: query
+      schema: { type: integer, minimum: 1, default: 1 }
+    ScimCount:
+      name: count
+      in: query
+      schema: { type: integer, minimum: 0, maximum: 200, default: 200 }
+    ScimExcludedAttributes:
+      name: excludedAttributes
+      in: query
+      description: Comma-separated attributes to leave out, such as `members`.
+      schema: { type: string }
     LogDays:
       name: days
       in: query
@@ -6478,7 +6840,52 @@ components:
       description: "`Bearer` (with `error=\"invalid_token\"` for an expired token)."
       schema: { type: string }
 
+  requestBodies:
+    ScimResource:
+      required: true
+      content:
+        application/scim+json:
+          schema: { $ref: "#/components/schemas/ScimResource" }
+        application/json:
+          schema: { $ref: "#/components/schemas/ScimResource" }
+    ScimPatch:
+      required: true
+      content:
+        application/scim+json:
+          schema: { $ref: "#/components/schemas/ScimPatch" }
+        application/json:
+          schema: { $ref: "#/components/schemas/ScimPatch" }
+
   responses:
+    ScimResource:
+      description: A SCIM resource (RFC 7643).
+      content:
+        application/scim+json:
+          schema: { $ref: "#/components/schemas/ScimResource" }
+    ScimList:
+      description: A SCIM `ListResponse`.
+      content:
+        application/scim+json:
+          schema:
+            type: object
+            required: [schemas, totalResults, Resources]
+            properties:
+              schemas: { type: array, items: { type: string } }
+              totalResults: { type: integer }
+              startIndex: { type: integer }
+              itemsPerPage: { type: integer }
+              Resources:
+                type: array
+                items: { $ref: "#/components/schemas/ScimResource" }
+    ScimError:
+      description: >-
+        A SCIM error: `400` (`scimType` invalidFilter, invalidValue,
+        invalidSyntax, mutability, noTarget, invalidPath), `401` missing or
+        wrong token, `403` the target is an administrator, `404` unknown id or
+        SCIM disabled, `409` uniqueness, `429` too many failed attempts.
+      content:
+        application/scim+json:
+          schema: { $ref: "#/components/schemas/ScimError" }
     BadRequest:
       description: The request is malformed or invalid.
       content:
@@ -6534,6 +6941,48 @@ components:
           schema: { type: string }
 
   schemas:
+    ScimSettings:
+      type: object
+      required: [enabled, base_url, token_set, token_created_at, default_role]
+      properties:
+        enabled: { type: boolean }
+        base_url: { type: string, description: "Tenant URL to give the identity provider: `<origin>/api/scim/v2`." }
+        token_set: { type: boolean }
+        token_created_at: { type: [string, "null"], description: RFC 3339 UTC. }
+        default_role: { type: string, enum: [viewer, operator] }
+
+    ScimResource:
+      type: object
+      description: A SCIM `User` or `Group` (RFC 7643 §4), or a discovery document.
+      additionalProperties: true
+      properties:
+        schemas: { type: array, items: { type: string } }
+        id: { type: string }
+
+    ScimPatch:
+      type: object
+      required: [Operations]
+      properties:
+        schemas: { type: array, items: { type: string } }
+        Operations:
+          type: array
+          items:
+            type: object
+            required: [op]
+            properties:
+              op: { type: string, description: "`add`, `replace` or `remove`, in any case." }
+              path: { type: string }
+              value: {}
+
+    ScimError:
+      type: object
+      required: [schemas, status, detail]
+      properties:
+        schemas: { type: array, items: { type: string } }
+        status: { type: string, description: The HTTP status, as a string. }
+        scimType: { type: string }
+        detail: { type: string }
+
     Error:
       type: object
       required: [error]
