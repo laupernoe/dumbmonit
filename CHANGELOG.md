@@ -9,6 +9,24 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Data retention, long-term history and an embedded log store.** Settings →
+  System → Data & retention sets the raw metrics retention (the embedded
+  VictoriaMetrics restarts for a few seconds, writes are buffered; an external
+  one is managed where it runs) and shows the space taken by `/data/vm`,
+  `/data/vm-long`, `/data/vlogs`, the databases, logs and backups, the free
+  space and the daily growth. A second, small embedded VictoriaMetrics
+  (`/data/vm-long`, 64 MB of cache, 730 days by default) keeps 5-minute
+  averages, minimums and maximums of availability, latency, CPU, memory, disk
+  and traffic, plus success sums and counts so availability stays exact; the
+  server fills it every minute and copies the existing raw history at first
+  start. Graphs, status pages and reports whose range goes past the raw
+  retention read from it automatically. An optional embedded VictoriaLogs
+  v1.53.0 (`/data/vlogs`, off by default) receives the server's own logs,
+  searchable with LogsQL on a new Logs page. New variables
+  `DUMBMONIT_VM_LONG_URL`, `_LISTEN`, `_MEMORY`, `_RETENTION` and
+  `DUMBMONIT_VLOGS_BINARY`, `_LISTEN`, `_MEMORY`; new docs pages Sizing and
+  External VictoriaMetrics / cluster; a manual load-test workflow (1 000 or
+  5 000 monitors).
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
   `site-src/data/roadmap.json`. It also shows what is in progress and two collapsible

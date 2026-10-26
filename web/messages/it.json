@@ -3680,6 +3680,58 @@
 	"locations_site_none": "Nessuno",
 	"locations_title": "Sedi",
 	"locations_use_place": "Usa {place}",
+	"logsearch_admin_only": "Solo gli amministratori possono cercare nei log.",
+	"logsearch_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} riga",
+				"countPlural=other": "{count} righe"
+			}
+		}
+	],
+	"logsearch_description": "Cerca nei log di DumbMonit con LogsQL, dal più recente.",
+	"logsearch_empty_hint": "Amplia il periodo, abbassa il livello minimo o semplifica la query.",
+	"logsearch_empty_title": "Nessuna riga di log trovata.",
+	"logsearch_error": "Impossibile cercare nei log.",
+	"logsearch_field_host": "host",
+	"logsearch_field_source": "sorgente",
+	"logsearch_from": "Da",
+	"logsearch_level": "Livello minimo",
+	"logsearch_level_debug": "Debug (tutto)",
+	"logsearch_level_error": "Errore",
+	"logsearch_level_info": "Info e superiori",
+	"logsearch_level_warn": "Avviso e superiori",
+	"logsearch_period": "Periodo",
+	"logsearch_period_15m": "Ultimi 15 minuti",
+	"logsearch_period_1h": "Ultima ora",
+	"logsearch_period_24h": "Ultime 24 ore",
+	"logsearch_period_6h": "Ultime 6 ore",
+	"logsearch_period_7d": "Ultimi 7 giorni",
+	"logsearch_period_custom": "Intervallo personalizzato…",
+	"logsearch_query": "Query LogsQL",
+	"logsearch_query_help": "* corrisponde a tutto. Esempio: \"timeout\" AND kind:snmp",
+	"logsearch_query_refused": "L’archivio dei log ha rifiutato questa query.",
+	"logsearch_range_invalid": "Scegli un inizio e una fine successiva.",
+	"logsearch_search": "Cerca",
+	"logsearch_section_hint": "I log possono anche essere conservati in un archivio ricercabile.",
+	"logsearch_section_link": "Cerca nei log",
+	"logsearch_settings_link": "Impostazioni dati e conservazione",
+	"logsearch_source": "Sorgente",
+	"logsearch_source_agents": "Agenti (in arrivo)",
+	"logsearch_source_server": "Server DumbMonit",
+	"logsearch_store_off": "L’archivio dei log è disattivato. Attivalo in Impostazioni → Sistema per cercare nei log.",
+	"logsearch_store_off_link": "Apri Dati e conservazione",
+	"logsearch_title": "Log",
+	"logsearch_to": "A",
+	"logsearch_to_help": "Lascia vuoto per adesso.",
+	"logsearch_truncated": "ce ne sono altre, restringi la ricerca",
 	"metrics_title_website_blank": "Pagina vuota",
 	"metrics_title_website_canonical_changed": "Canonical modificato",
 	"metrics_title_website_description_changed": "Descrizione modificata",
@@ -7003,6 +7055,101 @@
 	"status_words_st_monitoring": "Sotto monitoraggio",
 	"status_words_st_resolved": "Risolto",
 	"status_words_st_scheduled": "Programmata",
+	"storage_confirm_apply": "Salva e riavvia",
+	"storage_confirm_cancel": "Annulla",
+	"storage_confirm_lowering": "Ridurre la conservazione dei dati grezzi elimina quelli più vecchi.",
+	"storage_confirm_restart": "Cambiare la conservazione riavvia l’archivio metriche integrato; le scritture si fermano per qualche secondo e vengono ritentate, nulla va perso. Attivare, disattivare o modificare gli altri archivi riavvia anche quello.",
+	"storage_custom": "Personalizzato…",
+	"storage_custom_days": "Numero di giorni",
+	"storage_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} giorno",
+				"countPlural=other": "{count} giorni"
+			}
+		}
+	],
+	"storage_days_invalid": "Inserisci un numero intero di giorni tra {min} e {max}.",
+	"storage_days_unit": "giorni",
+	"storage_description": "Spazio su disco, per quanto tempo si conservano metriche e log, più storico a lungo termine e archivio dei log opzionali.",
+	"storage_disk_title": "Spazio occupato",
+	"storage_docs_external": "Informazioni su VictoriaMetrics esterno",
+	"storage_free": "Spazio libero",
+	"storage_free_of": "{free} liberi su {total} ({percent}%)",
+	"storage_full_in": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Pieno in circa {count} giorno a questo ritmo.",
+				"countPlural=other": "Pieno in circa {count} giorni a questo ritmo."
+			}
+		}
+	],
+	"storage_growth": "Crescita",
+	"storage_growth_per_day": "Circa {size} al giorno",
+	"storage_last_error": "Ultimo errore: {error}",
+	"storage_limits": "Da {min} a {max} giorni.",
+	"storage_logstore_enabled": "Archivia i log per la ricerca",
+	"storage_logstore_intro": "Disattivato per impostazione predefinita. Se attivo, DumbMonit avvia un VictoriaLogs integrato e vi invia i propri log del server, che puoi cercare nella pagina Log.",
+	"storage_logstore_retention": "Conserva i log per",
+	"storage_logstore_title": "Archivio dei log (VictoriaLogs)",
+	"storage_logstore_unavailable": "Il binario di VictoriaLogs non è in questa immagine, quindi l’archivio dei log non può essere attivato qui.",
+	"storage_metrics_external": "Questa istanza usa un VictoriaMetrics esterno, che gestisce da sé la conservazione (-retentionPeriod su di esso). Al momento è di {days} giorni.",
+	"storage_metrics_intro": "Ogni campione viene conservato a piena risoluzione per questo periodo. I dati grezzi più vecchi vengono eliminati; con lo storico a lungo termine attivo, grafici e report oltre questo limite usano aggregati di 5 minuti.",
+	"storage_metrics_retention": "Conserva le metriche grezze per",
+	"storage_metrics_title": "Conservazione delle metriche grezze",
+	"storage_none_yet": "Ancora nessuna",
+	"storage_not_enough_history": "Storico ancora insufficiente (servono due rilevazioni giornaliere).",
+	"storage_off": "Disattivato",
+	"storage_on": "Attivo",
+	"storage_open_logs": "Apri la pagina Log",
+	"storage_process_logs_store": "archivio dei log",
+	"storage_process_metrics": "archivio metriche",
+	"storage_process_rollup": "storico a lungo termine",
+	"storage_read_error": "Impossibile leggere le impostazioni di archiviazione.",
+	"storage_rollup_backfill": "Storico copiato dai dati grezzi",
+	"storage_rollup_backfill_done": "Completato",
+	"storage_rollup_backfill_until": "In corso, fino al {date}",
+	"storage_rollup_enabled": "Mantieni uno storico a lungo termine",
+	"storage_rollup_intro": "VictoriaMetrics open source non ha il downsampling, quindi DumbMonit scrive medie, minimi e massimi su 5 minuti (e contatori di successo per la disponibilità) in un secondo piccolo archivio. Grafici, pagine di stato e report oltre la conservazione grezza leggono da qui automaticamente.",
+	"storage_rollup_last_window": "Ultima finestra aggregata",
+	"storage_rollup_retention": "Conserva lo storico per",
+	"storage_rollup_series": "Serie scritte",
+	"storage_rollup_title": "Storico a lungo termine (aggregati di 5 minuti)",
+	"storage_rollup_unavailable": "Non disponibile: con un VictoriaMetrics esterno, imposta DUMBMONIT_VM_LONG_URL su una seconda istanza per attivarlo.",
+	"storage_running": "In esecuzione",
+	"storage_save": "Salva",
+	"storage_save_error": "Impossibile salvare le impostazioni di archiviazione.",
+	"storage_saved": "Salvato",
+	"storage_saved_restarted": "Salvato. Riavviato: {processes}.",
+	"storage_search_kw": "disco spazio conservazione giorni metriche victoriametrics storico lungo termine aggregati log victorialogs crescita pieno",
+	"storage_source": "Origine: {source}",
+	"storage_source_default": "predefinito",
+	"storage_source_environment": "variabile d’ambiente DUMBMONIT_VM_RETENTION",
+	"storage_source_settings": "impostato qui",
+	"storage_status": "Stato",
+	"storage_stopped": "Non in esecuzione",
+	"storage_title": "Dati e conservazione",
+	"storage_unknown": "Sconosciuto",
+	"storage_usage_backups": "Backup",
+	"storage_usage_database": "Database",
+	"storage_usage_logs": "File di log del server",
+	"storage_usage_logs_store": "Archivio dei log",
+	"storage_usage_metrics": "Metriche (grezze)",
+	"storage_usage_rollup": "Storico a lungo termine",
 	"tips_alerts_clear_history": "«Cancella tutte le risolte» spazza via in un colpo gli avvisi chiusi dalla cronologia, quando hai finito di leggerli.",
 	"tips_alerts_ignore_device": "Una regola scatta su un monitor che non si adeguerà mai? Ignora quella regola solo per quel monitor: altrove continua a controllare.",
 	"tips_alerts_learning": "Una nuova regola di baseline resta in silenzio per i primi 14 giorni: sta ancora imparando cosa è normale per questo monitor prima di azzardarsi ad avvisare.",
