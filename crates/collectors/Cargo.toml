@@ -92,6 +92,12 @@ http = "1"
 # de la RFC 3579, fait à la main par-dessus.
 md-5 = "0.10"
 
+# --- Windows sans agent (`winrm/`) ---
+#
+# MD4 de l'empreinte NT (NTLMv2). HMAC-MD5 est écrit à la main par-dessus `md-5`,
+# comme pour RADIUS. MIT OR Apache-2.0, sans C.
+md4 = "0.11"
+
 # PostgreSQL et MySQL/MariaDB. `sqlx` est déjà la couche base du serveur ; ses
 # pilotes `postgres` et `mysql` sont en Rust pur, sans C, et passent donc le
 # binaire statique musl et l'image `scratch`. Le coût assumé est la taille du

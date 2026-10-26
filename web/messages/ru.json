@@ -3955,6 +3955,7 @@
 	"kinds_label_webchange": "Изменения на сайте",
 	"kinds_label_website": "Состояние и SEO сайта",
 	"kinds_label_websocket": "Конечная точка WebSocket",
+	"kinds_label_winrm": "Windows (WinRM, без агента)",
 	"livemap_blocked": "Заблокировано",
 	"livemap_blocked_count": "Заблокировано: {count}",
 	"livemap_country_counts": "блок. {blocked} · проп. {passed}",
