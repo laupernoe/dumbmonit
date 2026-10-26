@@ -529,7 +529,7 @@ pub fn builtin_rules() -> Vec<Rule> {
         // n'absorbe que le battement du planificateur : la tolérance est déjà
         // dans le verdict.
         Rule {
-            description: "The job has not called in within its expected interval plus grace period, or reported a failure itself."
+            description: "The job has not called in within its expected interval or cron schedule plus grace period, or reported a failure itself (status=down)."
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
@@ -540,6 +540,44 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Heartbeat missed",
                 RuleKind::Threshold,
                 "dumbmonit_probe_success{probe=\"push\"} == bool 0",
+            )
+        },
+        // Exécution en échec : le travail a bien appelé (`/fail`, ou un code de
+        // sortie non nul), c'est donc une panne du travail et non un silence. Le
+        // moteur joint la sortie tronquée au message (`engine::occurrences`). La
+        // série reste à 1 jusqu'à la prochaine exécution réussie.
+        Rule {
+            description: "The job's last run failed: it called /fail or finished with a non-zero exit code."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // Un délai court, comme pour `webchange_detected` : il écarte un point isolé
+            // sans retarder l'annonce d'un échec réel.
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            ..base(
+                "push_failed",
+                "Job failed",
+                RuleKind::Threshold,
+                "dumbmonit_push_run_failed{probe=\"push\"}",
+            )
+        },
+        // Exécution trop longue : plus que la durée maximale réglée, ou, sans
+        // elle, un `/start` resté sans fin au-delà d'une période plus la tolérance.
+        Rule {
+            description: "A run lasts longer than the maximum duration, or started and never finished in time."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // Un délai court, comme pour `webchange_detected` : il écarte un point isolé
+            // sans retarder l'annonce d'un échec réel.
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            ..base(
+                "push_too_long",
+                "Job too long",
+                RuleKind::Threshold,
+                "dumbmonit_push_run_too_long{probe=\"push\"}",
             )
         },
         // Instabilité : un service qui alterne sans cesse n'est jamais « en panne »
@@ -886,6 +924,63 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Internet latency high",
                 RuleKind::Threshold,
                 "dumbmonit_agent_speedtest_latency_ms - dumbmonit_agent_speedtest_max_latency_ms",
+            )
+        },
+        // ------------------------------------------------------------------
+        // Journal d'événements Windows (`collectors/agent/eventlog.rs`).
+        //
+        // Une jauge par sévérité et par machine : le nombre d'événements reçus
+        // dans les quinze dernières minutes pour les règles d'événements de
+        // cette sévérité. Aucune règle d'événement n'existe par défaut, ces
+        // jauges n'existent donc que là où quelqu'un en a créé. Comme pour
+        // `webchange_detected`, l'alerte cite l'événement le plus récent et
+        // reparle au plus toutes les dix minutes tant que d'autres arrivent ;
+        // elle se résout quinze minutes après le dernier. Pas de rappel : un
+        // événement est un fait, pas une panne en cours.
+        // ------------------------------------------------------------------
+        Rule {
+            description: "A Windows event matched one of the machine's critical event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Critical,
+            repeat_interval: None,
+            ..base(
+                "windows_event_critical",
+                "Windows event (critical)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_critical",
+            )
+        },
+        Rule {
+            description: "A Windows event matched one of the machine's warning event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            ..base(
+                "windows_event_warning",
+                "Windows event (warning)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_warning",
+            )
+        },
+        Rule {
+            description: "A Windows event matched one of the machine's info event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base(
+                "windows_event_info",
+                "Windows event (info)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_info",
             )
         },
         // ------------------------------------------------------------------
@@ -6955,8 +7050,55 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_cve_vulnerable",
             )
         },
+        // Inventaire du réseau (`netinventory/`). Désactivées par défaut : sur un
+        // réseau qui bouge (invités, DHCP), elles ne servent qu'à qui veut les
+        // lire, et sévérité « info » pour ne jamais réveiller personne. Une
+        // mesure par élément inconnu : une alerte par nouvel appareil ou port,
+        // qui dure jusqu'à ce qu'il soit marqué connu. Pas de rappel.
+        Rule {
+            description: "A scheduled network scan found a device that is not in the \
+                          inventory. It stays reported until it is marked as known."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // La mesure est réécrite à chaque cycle : 60 s écartent un balayage
+            // interrompu sans retarder l'annonce.
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Info,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_NEW_DEVICE,
+                "New device on the network",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_unknown_device",
+            )
+        },
+        Rule {
+            description: "A scheduled network scan found a new open port on a known device. It \
+                          stays reported until it is marked as known."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // La mesure est réécrite à chaque cycle : 60 s écartent un balayage
+            // interrompu sans retarder l'annonce.
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Info,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_NEW_PORT,
+                "New open port on the network",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_unknown_port",
+            )
+        },
     ]
 }
+
+/// `uid` des règles d'inventaire du réseau, livrées désactivées.
+pub const RULE_NETSCAN_NEW_DEVICE: &str = "netscan_new_device";
+pub const RULE_NETSCAN_NEW_PORT: &str = "netscan_new_port";
 
 /// Construit une requête prédictive « ce système de fichiers sera plein dans moins
 /// de `days` jours », pour l'assistant de création de règle de l'interface.
@@ -7003,6 +7145,8 @@ mod tests {
             "pbs_gc_too_old",
             "service_down",
             "push_missed",
+            "push_failed",
+            "push_too_long",
             "service_flapping",
             "service_slow",
             "tls_cert_expiring",
@@ -7281,6 +7425,9 @@ mod tests {
             "speedtest_download_slow",
             "speedtest_upload_slow",
             "speedtest_latency_high",
+            "windows_event_critical",
+            "windows_event_warning",
+            "windows_event_info",
             "pfsense_gateway_down",
             "pfsense_gateway_loss",
             "pfsense_gateway_latency",
@@ -7432,6 +7579,9 @@ mod tests {
             "dumbmonit_pbs_gc_last_success_age_seconds",
             // Moniteurs de disponibilité (`collectors/uptime/outcome.rs`, `tls/mod.rs`).
             "dumbmonit_probe_success",
+            // Exécutions des moniteurs en poussée (`collectors/push/mod.rs`).
+            "dumbmonit_push_run_failed",
+            "dumbmonit_push_run_too_long",
             "dumbmonit_probe_duration_seconds",
             "dumbmonit_probe_ssl_cert_expiry_days",
             // Agent : conteneurs Docker et sauvegardes Plakar (`crates/agent`).
@@ -7790,6 +7940,11 @@ mod tests {
             "dumbmonit_agent_speedtest_upload_bytes_per_second",
             "dumbmonit_agent_speedtest_latency_ms",
             "dumbmonit_agent_speedtest_max_latency_ms",
+            // Journal d'événements Windows, jauges écrites par le serveur à la
+            // réception des lots (`collectors/agent/eventlog.rs`).
+            "dumbmonit_agent_eventlog_matches_critical",
+            "dumbmonit_agent_eventlog_matches_warning",
+            "dumbmonit_agent_eventlog_matches_info",
             // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos, Meraki, Omada
             // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada}`),
             // Hyper-V par l'agent Windows (`agent/src/collect/perf_counters.rs`).
@@ -7860,6 +8015,9 @@ mod tests {
             "dumbmonit_hyperv_vms_health_critical",
             "dumbmonit_hyperv_host_cpu_percent",
             "dumbmonit_hyperv_vhd_errors_total",
+            // Inventaire du réseau (`netinventory/mod.rs`).
+            "dumbmonit_netscan_unknown_device",
+            "dumbmonit_netscan_unknown_port",
             "dumbmonit_duplicati_backup_last_success_age_seconds",
             "dumbmonit_duplicati_backup_scheduled",
             "dumbmonit_kopia_source_last_snapshot_age_seconds",
@@ -7915,7 +8073,9 @@ mod tests {
     #[test]
     fn les_regles_livrees_sont_actives_et_sans_canal_impose() {
         for rule in builtin_rules() {
-            assert!(rule.enabled, "{} should be enabled", rule.uid);
+            // Les règles d'inventaire du réseau sont les seules livrées éteintes.
+            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE || rule.uid == RULE_NETSCAN_NEW_PORT;
+            assert_eq!(rule.enabled, !off, "{} enabled flag", rule.uid);
             assert!(rule.builtin);
             assert!(rule.channels.is_empty(), "{} must not impose any channel", rule.uid);
             assert!(matches!(rule.selector, TargetSelector::All));

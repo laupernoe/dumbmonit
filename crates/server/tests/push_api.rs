@@ -8,11 +8,13 @@ mod common;
 
 use std::sync::Arc;
 
-use axum::http::StatusCode;
+use axum::body::Body;
+use axum::http::{Request, StatusCode};
 use dumbmonit_proto::Collector;
 use dumbmonit_server::collectors::push::{self, PushCollector};
 use dumbmonit_server::{collectors, db};
 use serde_json::json;
+use tower::ServiceExt;
 
 use common::TestApp;
 
@@ -88,7 +90,7 @@ async fn le_type_push_est_decrit_a_linterface_sans_identifiant_ni_port() {
     assert_eq!(push["credential_types"], json!(["none"]));
     let keys: Vec<&str> =
         push["options"].as_array().unwrap().iter().map(|o| o["key"].as_str().unwrap()).collect();
-    assert_eq!(keys, ["expected_interval", "grace"]);
+    assert_eq!(keys, ["expected_interval", "grace", "schedule", "timezone", "max_duration"]);
 }
 
 #[tokio::test]
@@ -308,4 +310,223 @@ async fn le_jeton_est_stocke_chiffre_et_hache_jamais_en_clair() {
     assert_eq!(row.0, push::token::fingerprint(&token));
     assert_ne!(row.0, token);
     assert!(!String::from_utf8_lossy(&row.1).contains(&token), "le clair n'est pas en base");
+}
+
+/// POST avec un corps brut (la sortie du travail), comme `curl --data-binary`.
+async fn raw_post(app: &TestApp, uri: &str, body: Vec<u8>) -> StatusCode {
+    let request = Request::builder().method("POST").uri(uri).body(Body::from(body)).unwrap();
+    app.router.clone().oneshot(request).await.expect("réponse").status()
+}
+
+/// Appel public sans session, comme `curl` dans une crontab.
+async fn hit(app: &TestApp, path: &str) -> StatusCode {
+    app.get(path, None).await.status
+}
+
+async fn token_of(app: &TestApp, cookie: &str, id: i64) -> String {
+    app.get(&format!("/api/targets/{id}/push"), Some(cookie)).await.body["token"]
+        .as_str()
+        .unwrap()
+        .to_string()
+}
+
+#[tokio::test]
+async fn start_puis_succes_mesure_la_duree_et_laisse_une_execution() {
+    let (app, _pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    let token = token_of(&app, &cookie, id).await;
+
+    assert_eq!(hit(&app, &format!("/api/push/{token}/start")).await, StatusCode::NO_CONTENT);
+    let view = app.get(&format!("/api/targets/{id}/push"), Some(&cookie)).await.body;
+    assert_eq!(view["last_run"]["status"], "running");
+    assert!(view["last_run"]["started_at"].is_string());
+
+    tokio::time::sleep(std::time::Duration::from_millis(30)).await;
+    let uri = format!("/api/push/{token}/success");
+    assert_eq!(raw_post(&app, &uri, b"all good\n".to_vec()).await, StatusCode::NO_CONTENT);
+
+    let page = app.get(&format!("/api/targets/{id}/push/runs"), Some(&cookie)).await;
+    assert_eq!(page.status, StatusCode::OK, "{}", page.body);
+    let runs = page.body["runs"].as_array().unwrap();
+    assert_eq!(runs.len(), 1, "{}", page.body);
+    assert_eq!(runs[0]["status"], "success");
+    assert_eq!(runs[0]["output"], "all good\n");
+    assert!(runs[0]["duration_secs"].as_f64().unwrap() > 0.0);
+    assert!(runs[0]["started_at"].is_string() && runs[0]["finished_at"].is_string());
+    assert!(page.body["next_before"].is_null());
+}
+
+#[tokio::test]
+async fn le_ping_simple_est_un_succes_sans_duree() {
+    let (app, _pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    let token = token_of(&app, &cookie, id).await;
+
+    assert_eq!(app.get(&format!("/api/push/{token}"), None).await.status, StatusCode::NO_CONTENT);
+    let runs = app.get(&format!("/api/targets/{id}/push/runs"), Some(&cookie)).await.body;
+    assert_eq!(runs["runs"][0]["status"], "success");
+    assert!(runs["runs"][0]["started_at"].is_null());
+    assert!(runs["runs"][0]["duration_secs"].is_null());
+}
+
+#[tokio::test]
+async fn fail_et_code_de_sortie_non_nul_sont_des_echecs_avec_leur_sortie() {
+    let (app, pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    let token = token_of(&app, &cookie, id).await;
+
+    // `/fail` avec un code en paramètre et la sortie en corps.
+    let uri = format!("/api/push/{token}/fail?exit_code=23");
+    assert_eq!(raw_post(&app, &uri, b"rsync: error".to_vec()).await, StatusCode::NO_CONTENT);
+    // Le code dans le chemin.
+    assert_eq!(app.get(&format!("/api/push/{token}/2"), None).await.status, StatusCode::NO_CONTENT);
+    // Le code 0 dans le chemin, ou un `exit_code=0` : un succès.
+    assert_eq!(app.get(&format!("/api/push/{token}/0"), None).await.status, StatusCode::NO_CONTENT);
+    // Un succès qui porte un code non nul est un échec.
+    assert_eq!(
+        app.get(&format!("/api/push/{token}/success?exit_code=1"), None).await.status,
+        StatusCode::NO_CONTENT
+    );
+
+    let runs = app.get(&format!("/api/targets/{id}/push/runs"), Some(&cookie)).await.body;
+    let runs = runs["runs"].as_array().unwrap();
+    let summary: Vec<(String, Option<i64>)> = runs
+        .iter()
+        .map(|r| (r["status"].as_str().unwrap().to_string(), r["exit_code"].as_i64()))
+        .collect();
+    // Les plus récentes d'abord.
+    assert_eq!(
+        summary,
+        [
+            ("failed".to_string(), Some(1)),
+            ("success".to_string(), Some(0)),
+            ("failed".to_string(), Some(2)),
+            ("failed".to_string(), Some(23)),
+        ]
+    );
+    assert_eq!(runs[3]["output"], "rsync: error");
+
+    // Dernière exécution réussie : plus d'échec annoncé par le collecteur.
+    assert_eq!(app.get(&format!("/api/push/{token}/0"), None).await.status, StatusCode::NO_CONTENT);
+    let samples = PushCollector::new(pool.clone()).probe(&target(id, "1h")).await.expect("ok");
+    assert_eq!(samples.iter().find(|s| s.metric == "push_run_failed").unwrap().value, 0.0);
+
+    // Un échec : le collecteur le dit, et le heartbeat reste « à l'heure ».
+    assert_eq!(hit(&app, &format!("/api/push/{token}/fail")).await, StatusCode::NO_CONTENT);
+    let samples = PushCollector::new(pool.clone()).probe(&target(id, "1h")).await.expect("ok");
+    assert_eq!(samples.iter().find(|s| s.metric == "push_run_failed").unwrap().value, 1.0);
+    assert_eq!(samples.iter().find(|s| s.metric == "probe_success").unwrap().value, 1.0);
+    let view = app.get(&format!("/api/targets/{id}/push"), Some(&cookie)).await.body;
+    assert_eq!(view["verdict"], "on_time");
+}
+
+#[tokio::test]
+async fn les_entrees_invalides_sont_refusees_sans_rien_enregistrer() {
+    let (app, _pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    let token = token_of(&app, &cookie, id).await;
+
+    for bad in ["?exit_code=abc", "?exit_code=-1", "/success?exit_code=1.5"] {
+        let reply = app.get(&format!("/api/push/{token}{bad}"), None).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{bad}");
+    }
+    // Un segment inconnu est un 404, comme un jeton inconnu.
+    for path in ["/nope", "/12a"] {
+        let reply = app.get(&format!("/api/push/{token}{path}"), None).await;
+        assert_eq!(reply.status, StatusCode::NOT_FOUND, "{path}");
+    }
+    let unknown = "0123456789abcdef0123456789abcdef";
+    assert_eq!(hit(&app, &format!("/api/push/{unknown}/start")).await, StatusCode::NOT_FOUND);
+
+    let runs = app.get(&format!("/api/targets/{id}/push/runs"), Some(&cookie)).await.body;
+    assert!(runs["runs"].as_array().unwrap().is_empty(), "{runs}");
+}
+
+#[tokio::test]
+async fn le_corps_est_borne_et_la_sortie_tronquee_a_10_ko() {
+    let (app, _pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    let token = token_of(&app, &cookie, id).await;
+
+    // 100 Ko : accepté, conservé tronqué (la fin), UTF-8 intact.
+    let body = format!("{}\u{20ac}FIN", "é".repeat(50_000)).into_bytes();
+    let uri = format!("/api/push/{token}/fail");
+    assert_eq!(raw_post(&app, &uri, body).await, StatusCode::NO_CONTENT);
+    let runs = app.get(&format!("/api/targets/{id}/push/runs"), Some(&cookie)).await.body;
+    let output = runs["runs"][0]["output"].as_str().unwrap();
+    assert!(output.len() <= 10 * 1024 && output.len() > 10 * 1024 - 4, "{}", output.len());
+    assert!(output.ends_with("\u{20ac}FIN"));
+
+    // Au-delà de 256 Ko : refusé.
+    let uri = format!("/api/push/{token}/fail");
+    assert_eq!(raw_post(&app, &uri, vec![b'x'; 300 * 1024]).await, StatusCode::PAYLOAD_TOO_LARGE);
+}
+
+#[tokio::test]
+async fn lhistorique_se_pagine_et_se_lit_sans_le_jeton() {
+    let (app, _pool, cookie) = setup().await;
+    let id = create_heartbeat(&app, &cookie, "1h").await;
+    let token = token_of(&app, &cookie, id).await;
+    for n in 0..5 {
+        assert_eq!(
+            app.get(&format!("/api/push/{token}/{n}"), None).await.status,
+            StatusCode::NO_CONTENT
+        );
+    }
+    let viewer = app.viewer_cookie(&cookie).await;
+    let first = app.get(&format!("/api/targets/{id}/push/runs?limit=2"), Some(&viewer)).await;
+    assert_eq!(first.status, StatusCode::OK, "{}", first.body);
+    let runs = first.body["runs"].as_array().unwrap();
+    assert_eq!(runs.len(), 2);
+    assert_eq!(runs[0]["exit_code"], 4);
+    let cursor = first.body["next_before"].as_i64().expect("page suivante");
+    let second = app
+        .get(&format!("/api/targets/{id}/push/runs?limit=2&before={cursor}"), Some(&viewer))
+        .await;
+    assert_eq!(second.body["runs"][0]["exit_code"], 2);
+    let last = app
+        .get(&format!("/api/targets/{id}/push/runs?limit=100&before={cursor}"), Some(&viewer))
+        .await;
+    assert_eq!(last.body["runs"].as_array().unwrap().len(), 3);
+    assert!(last.body["next_before"].is_null());
+
+    // Sans session : refusé.
+    let anonymous = app.get(&format!("/api/targets/{id}/push/runs"), None).await;
+    assert_eq!(anonymous.status, StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn un_planning_cron_se_valide_a_lenregistrement_et_se_relit() {
+    let (app, _pool, cookie) = setup().await;
+    let create = |schedule: &str, timezone: &str| {
+        json!({
+            "name": "Cron job",
+            "address": format!("cron-{}", schedule.len()),
+            "kind": "push",
+            "tags": {
+                "schedule": schedule,
+                "timezone": timezone,
+                "grace": "15m",
+                "max_duration": "2h"
+            }
+        })
+    };
+    let invalid = [("* * * *", "UTC"), ("0 3 * * *", "Mars/Olympus"), ("99 * * * *", "UTC")];
+    for (schedule, timezone) in invalid {
+        let reply = app.post("/api/targets", create(schedule, timezone), Some(&cookie)).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{schedule} {timezone}: {}", reply.body);
+        assert!(reply.body["error"].as_str().unwrap().contains("schedule"), "{}", reply.body);
+    }
+    let valid = create("30 2 * * mon-fri", "Europe/Paris");
+    let reply = app.post("/api/targets", valid, Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    let id = reply.body["id"].as_i64().unwrap();
+
+    let view = app.get(&format!("/api/targets/{id}/push"), Some(&cookie)).await.body;
+    assert_eq!(view["schedule"], "30 2 * * mon-fri");
+    assert_eq!(view["timezone"], "Europe/Paris");
+    assert_eq!(view["grace_secs"], 900);
+    assert_eq!(view["max_duration_secs"], 7200);
+    assert!(view["next_expected_at"].is_string(), "{view}");
+    assert!(view["settings_error"].is_null());
 }

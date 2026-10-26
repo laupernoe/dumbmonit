@@ -1,6 +1,7 @@
 mod activedirectory;
 mod ad_deploy;
 mod agent_commands;
+mod agent_events;
 pub(crate) mod agent_files;
 mod agent_tls;
 mod agent_updates;
@@ -14,7 +15,7 @@ mod channels;
 mod collectors;
 mod cves;
 pub mod dashboards;
-mod discovery;
+pub(crate) mod discovery;
 mod error;
 mod health;
 mod ical;
@@ -30,6 +31,7 @@ mod mcp;
 mod metrics;
 mod monitor_imports;
 mod music;
+mod netinventory;
 mod notify_policy;
 mod observability;
 mod oidc;
@@ -160,6 +162,14 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery/subnets", get(discovery::local_subnets))
         .route("/discovery/jobs", get(discovery::list_jobs).post(discovery::create_job))
         .route("/discovery/jobs/{id}", get(discovery::get_job).delete(discovery::cancel_job))
+        // Scans planifiés et inventaire du réseau (`netinventory.rs`).
+        .route("/discovery/schedules", get(netinventory::list).post(netinventory::create))
+        .route("/discovery/schedules/{id}", put(netinventory::update).delete(netinventory::remove))
+        .route("/discovery/schedules/{id}/run", post(netinventory::run_now))
+        .route("/discovery/inventory", get(netinventory::inventory))
+        .route("/discovery/inventory/known", post(netinventory::all_known))
+        .route("/discovery/inventory/devices/{id}/known", post(netinventory::device_known))
+        .route("/discovery/inventory/ports/{id}/known", post(netinventory::port_known))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))
         .route("/targets/test", post(targets::test_connection))
@@ -224,6 +234,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/tokens/{id}", delete(tokens::revoke))
         // Actions sur les conteneurs d'une machine (`agent_commands.rs`).
         .merge(agent_commands::ui_routes())
+        // Journal d'événements Windows d'une machine : règles et événements (`agent_events.rs`).
+        .merge(agent_events::routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).

@@ -160,12 +160,25 @@ pub struct Secured {
     pub trusted: bool,
     pub trust_error: Option<String>,
     pub version: Option<String>,
+    /// Protocole applicatif négocié (ALPN), quand la sonde en a proposé.
+    pub alpn: Option<Vec<u8>>,
 }
 
 /// Chiffre une connexion déjà ouverte : TLS implicite comme `STARTTLS`.
 pub async fn upgrade(
     stream: TcpStream,
     server_name: &str,
+    deadline: Deadline,
+) -> Result<Secured, SessionError> {
+    upgrade_with_alpn(stream, server_name, &[], deadline).await
+}
+
+/// Comme [`upgrade`], en proposant des protocoles applicatifs (ALPN) — `h2` pour
+/// gRPC. Le protocole retenu par le serveur est dans [`Secured::alpn`].
+pub async fn upgrade_with_alpn(
+    stream: TcpStream,
+    server_name: &str,
+    alpn: &[&[u8]],
     deadline: Deadline,
 ) -> Result<Secured, SessionError> {
     let name = ServerName::try_from(server_name.to_string()).map_err(|_| {
@@ -175,12 +188,13 @@ pub async fn upgrade(
     let verifier = Arc::new(
         RecordingVerifier::new().map_err(|error| SessionError::Tls(format!("{error:?}")))?,
     );
-    let config = ClientConfig::builder_with_provider(provider())
+    let mut config = ClientConfig::builder_with_provider(provider())
         .with_safe_default_protocol_versions()
         .map_err(|error| SessionError::Tls(format!("invalid TLS configuration: {error}")))?
         .dangerous()
         .with_custom_certificate_verifier(verifier.clone())
         .with_no_client_auth();
+    config.alpn_protocols = alpn.iter().map(|protocol| protocol.to_vec()).collect();
 
     let started = Instant::now();
     let stream = deadline
@@ -195,6 +209,7 @@ pub async fn upgrade(
         .and_then(<[CertificateDer<'_>]>::first)
         .map(|certificate| certificate.as_ref().to_vec());
     let version = connection.protocol_version().map(|version| protocol_label(&version));
+    let alpn = connection.alpn_protocol().map(<[u8]>::to_vec);
     let trust_error = verifier.verdict();
 
     Ok(Secured {
@@ -204,6 +219,7 @@ pub async fn upgrade(
         trusted: trust_error.is_none(),
         trust_error,
         version,
+        alpn,
     })
 }
 
