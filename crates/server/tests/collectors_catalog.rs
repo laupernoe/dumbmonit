@@ -76,6 +76,9 @@ async fn le_catalogue_des_types_reste_identique_a_linstantane() {
     if std::env::var_os("DUMBMONIT_BLESS").is_some() {
         std::fs::write(FIXTURE, pretty(body)).expect("écriture de l'instantané");
     }
+    for (index, chunk) in body.as_bytes().chunks(2000).enumerate() {
+        println!("CATALOGDUMP {index:05} {}", String::from_utf8_lossy(chunk));
+    }
     let expected = compact(&std::fs::read_to_string(FIXTURE).expect("instantané du catalogue"));
     if let Some(at) = expected.bytes().zip(body.bytes()).position(|(a, b)| a != b) {
         let from = at.saturating_sub(120);
