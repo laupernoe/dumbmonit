@@ -113,6 +113,18 @@ automatiquement le canal en clair N jours après la mise à jour.
 Les agents antérieurs au canal chiffré ne connaissent pas le canal chiffré : mettez-les à
 jour en relançant la commande d'installation.
 
+## Mises à jour de l'agent
+
+Les agents se mettent à jour depuis le serveur (voir
+[Mises à jour automatiques](../devices/agent.md#automatic-updates)). L'intégrité
+vient du SHA-256 de l'offre ; l'authenticité d'une signature Ed25519, vérifiée
+avec une clé publique de release compilée dans l'agent : un serveur compromis ou
+usurpé ne peut donc pas pousser du code arbitraire. Les builds sans signature
+sont refusés, sauf si un administrateur active *Accepter les builds non signés
+(développement)* **et** que l'offre arrive par le canal chiffré. Le
+téléchargement passe par le canal épinglé de l'agent, avec son jeton, son secret
+de liaison et sa clé de machine.
+
 ## Mandataires inverses
 
 Ne placez pas de mandataire inverse qui termine TLS devant le port agents : le

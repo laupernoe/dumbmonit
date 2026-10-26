@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::selfupdate::{AgentUpdateOffer, SelfUpdateInfo};
 use crate::{EventLogReport, EventLogRule, Sample};
 
 /// Version du dialogue de poussée.
@@ -139,6 +140,11 @@ pub struct AgentIdentity {
     /// progressive possible dans les deux sens.
     #[serde(default)]
     pub binding_supported: bool,
+    /// Mise à jour automatique de l'agent : empreinte du binaire, plateforme,
+    /// capacité à se remplacer, issue de la dernière tentative. Absent chez un
+    /// agent antérieur : l'interface dit alors de le mettre à jour à la main.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub self_update: Option<SelfUpdateInfo>,
 }
 
 impl AgentIdentity {
@@ -177,6 +183,12 @@ pub struct PushBatch {
     /// un agent antérieur ; un serveur antérieur ignore le champ.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub event_log: Option<EventLogReport>,
+    /// Moniteurs que les étiquettes `dumbmonit.*` des conteneurs Docker de la
+    /// machine déclarent (voir [`DeclaredMonitor`]). `Some` : liste complète de
+    /// ce cycle, vide comprise — le serveur archive ce qui n'y figure plus.
+    /// `None` : Docker n'a pas pu être lu, le serveur ne touche à rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub declared_monitors: Option<Vec<DeclaredMonitor>>,
 }
 
 impl PushBatch {
@@ -188,8 +200,41 @@ impl PushBatch {
             samples,
             inventory: None,
             event_log: None,
+            declared_monitors: None,
         }
     }
+}
+
+/// Nombre maximal de moniteurs déclarés par lot ; au-delà, l'agent tronque.
+pub const MAX_DECLARED_MONITORS: usize = 200;
+
+/// Un moniteur déclaré par les étiquettes d'un conteneur Docker.
+///
+/// L'agent ne fait que lire et normaliser les étiquettes : c'est le serveur qui
+/// valide (type, adresse, période) comme pour une création à la main, et qui
+/// crée, met à jour ou archive le moniteur correspondant.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct DeclaredMonitor {
+    /// Clé stable d'un moniteur pour une machine : `projet/service/http` pour un
+    /// service Compose, sinon `conteneur/http`. Survit à la recréation du
+    /// conteneur, ce que son identifiant ne ferait pas.
+    pub key: String,
+    /// `http`, `tcp` ou `ping`.
+    pub kind: String,
+    /// Adresse du moniteur ; `{host}` y désigne l'adresse de la machine de l'agent.
+    pub address: String,
+    pub name: String,
+    #[serde(default, skip_serializing_if = "String::is_empty")]
+    pub folder: String,
+    /// Étiquettes DumbMonit (`dumbmonit.tags`) et options du type (`keyword`…).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub tags: BTreeMap<String, String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub interval_secs: Option<u64>,
+    /// Reprendre un moniteur existant de même type et adresse plutôt que de
+    /// refuser le doublon (`dumbmonit.adopt=true`).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub adopt: bool,
 }
 
 /// Nombre maximal de paquets d'un inventaire. Une installation ordinaire en
@@ -300,6 +345,10 @@ pub struct PushAck {
     /// antérieur ignore le champ.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub event_rules: Option<Vec<EventLogRule>>,
+    /// Binaire de l'agent à installer, quand le serveur en propose un à cette
+    /// machine (mise à jour automatique). Ignoré par un agent antérieur.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_update: Option<AgentUpdateOffer>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -339,6 +388,7 @@ mod tests {
             machine_id: Some("9f4c…".into()),
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             binding_supported: true,
+            self_update: None,
         }
     }
 
@@ -403,6 +453,8 @@ mod tests {
         // Ni d'avant la liaison : le serveur ne doit surtout pas lui attribuer un
         // secret qu'il jetterait, ce qui le verrouillerait au lot suivant.
         assert!(!batch.identity.binding_supported);
+        // Ni d'avant la mise à jour automatique : à mettre à jour à la main.
+        assert!(batch.identity.self_update.is_none());
     }
 
     #[test]
@@ -418,6 +470,7 @@ mod tests {
         assert!(ack.disabled_modules.is_empty(), "rien de décoché chez un serveur ancien");
         assert_eq!(ack.relay, None, "un serveur ancien ne dit rien du relais");
         assert_eq!(ack.event_rules, None, "ni du journal d'événements");
+        assert_eq!(ack.agent_update, None, "ni de mise à jour de l'agent");
 
         let issued = PushAck {
             target_id: 7,
@@ -429,6 +482,7 @@ mod tests {
             disabled_modules: Vec::new(),
             relay: None,
             event_rules: None,
+            agent_update: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -485,6 +539,7 @@ mod tests {
                 pattern: None,
                 regex: false,
             }]),
+            agent_update: None,
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");

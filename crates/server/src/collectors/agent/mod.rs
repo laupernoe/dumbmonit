@@ -23,6 +23,7 @@ pub mod eventlog;
 pub mod modules;
 pub mod policy;
 mod receive;
+pub mod selfupdate;
 mod store;
 mod token;
 
@@ -296,6 +297,7 @@ mod tests {
             machine_id: Some("id-nas".into()),
             tags: Default::default(),
             binding_supported: true,
+            self_update: None,
         };
         let registration = store::register(&pool, &cipher, &identity, token_record.id, None)
             .await

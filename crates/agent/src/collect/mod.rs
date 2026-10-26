@@ -14,6 +14,7 @@
 pub mod backup_repos;
 pub mod docker;
 pub mod eventlog;
+pub mod docker_labels;
 pub mod filter;
 pub mod inventory;
 pub mod ipsec;

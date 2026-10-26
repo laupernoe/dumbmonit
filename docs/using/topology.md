@@ -2,7 +2,8 @@
 
 The **Map** page (**⋯ → Map** on the Monitors page, or *Map* in the command
 palette, `/map`) draws your whole infrastructure in one picture. Nothing is
-typed in by hand: every link comes from what DumbMonit already knows.
+typed in: every link comes from what DumbMonit already knows, and an
+administrator can [correct the map](#correct-the-map) where it is wrong.
 
 ## Where the links come from
 
@@ -47,6 +48,54 @@ before deduced. Each box hangs from one link; the others are drawn lighter.
   unmonitored virtual machines and containers.
 - On a phone the page opens on the **List** view: the same tree, indented.
 
+## Correct the map
+
+The deduction is sometimes wrong: a device "goes through the firewall" when it
+sits behind a switch, an HTTP check does not know which VM it runs on.
+Administrators click **Correct the map** above the map:
+
+- **Attach**: drag a device onto the one it really depends on. Without a mouse,
+  pick the device and use **Attach** in its panel (search by name or type).
+  **Also use for alerts** (ticked by default, devices only) makes it the
+  device's declared parent too, the one alert suppression follows: when the
+  parent goes down, the device's alerts are suppressed. Unticked, only the map
+  changes. A loop of parents is refused.
+- **This link is wrong**: click a link, then mark it wrong. It disappears and
+  is never deduced again. Marking a declared parent wrong also clears it for
+  alerts. A service found by an agent always hangs from its machine.
+- **Link**: draw a link of a chosen type between two nodes.
+- **Site** and **Group**: move a node to another site frame, or group it in the
+  folder view of the map (its folder on Monitors does not change).
+
+**Undo** and **Redo** (Ctrl+Z, Ctrl+Shift+Z) take each step back or forward.
+Under the map, the list of corrections says who made each one and when; remove
+one and the map (and a declared parent it changed) goes back to what it was.
+Corrections are applied before the deduction, in this order: wrong links,
+links drawn by hand and attachments, then learned rules. Each link says who
+drew it: deduced by DumbMonit, corrected by hand (a hollow diamond on the
+link) or a learned rule (a filled diamond). Corrections and rules are part of
+the backup.
+
+### What DumbMonit learns
+
+From the corrections, DumbMonit suggests rules, with simple and predictable
+heuristics (no statistics):
+
+- a link marked wrong towards a device of a subnet suggests never drawing that
+  type of link in the whole subnet (for example "Never draw *Through the
+  firewall* links in 10.0.5.0/24");
+- two devices at one address attached under the same parent suggest "what is
+  at this address depends on it" (limited to their type when they share one:
+  "HTTP monitors at 10.0.0.40 depend on vm-web");
+- two devices of one subnet attached under the same parent suggest "Devices in
+  10.0.5.0/24 depend on switch-core".
+
+A suggestion is never applied on its own: **Apply the rule** or **Not this
+one** (a declined rule is not suggested again). An applied rule also places
+the devices added later, unless something surer places them (a declared
+parent, a hypervisor, an agent service, a correction). Remove a rule and its
+links go.
+
 ## Export and print
 
 **Export** offers:
@@ -61,5 +110,7 @@ before deduced. Each box hangs from one link; the others are drawn lighter.
 
 `GET /api/topology` returns the nodes, the links and the source of each link
 (any role, read-only; no device addresses, only the guest addresses a
-hypervisor reports). See the
+hypervisor reports). `/api/topology/corrections`, `/api/topology/rules` and
+`/api/topology/suggestions` hold the corrections, the learned rules and the
+suggestions (writes for administrators). See the
 [API reference](../reference/api.md).

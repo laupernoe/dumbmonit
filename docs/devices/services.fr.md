@@ -155,6 +155,30 @@ plus de `target`, `host` et `tag_*`.
 | `probe_grpc_serving_status` | grpc | `ServingStatus` renvoyé : 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
 | `probe_grpc_status_code` | grpc | Code `grpc-status` de la réponse (0 : OK). |
 
+## Sonder depuis plusieurs emplacements {#sonder-depuis-plusieurs-emplacements}
+
+Un moniteur peut être sondé depuis plusieurs endroits à la fois, pour qu'un problème sur un seul réseau ne passe pas pour une panne. Dans le formulaire du moniteur, sous « Plus d'options », activez **Sonder depuis plusieurs emplacements** et cochez les emplacements : **Ce serveur** et les [agents relais](../install/remote-site.md) de votre choix. Il en faut au moins deux. Cela fonctionne pour les moniteurs HTTP, TCP, DNS, ping, TLS, SMTP, PostgreSQL, MySQL, MQTT, WebSocket et NTP, et ne se combine pas avec « Joint via » (un moniteur est sondé soit par un relais, soit par plusieurs emplacements).
+
+Chaque emplacement exécute la sonde à l'intervalle habituel. Le résultat est une **décision** :
+
+- **En panne** quand au moins *N* des *M* emplacements comptés échouent. *N* est le quorum : par défaut la majorité des emplacements (3 emplacements : 2 ; 2 emplacements : les deux), ou tout nombre de 1 au nombre d'emplacements.
+- **Dégradé** quand certains emplacements échouent, mais moins que le quorum. La page du moniteur affiche « Dégradé à un emplacement » et l'endroit en échec, mais aucune alerte `service_down` n'est levée et les pages de statut restent au vert.
+- **En ligne** quand aucun emplacement compté n'échoue.
+
+**Confirmation.** Quand un moniteur passe de « en ligne » à dégradé ou en panne, le serveur resonde aussitôt depuis tous les emplacements et ne publie que la décision de ce tour de confirmation. Un raté vu une seule fois n'alerte jamais.
+
+**Les emplacements silencieux sont écartés.** Un emplacement qui ne répond pas à temps (relais hors ligne), dont l'agent n'a pas activé le mode relais, qui a trop de sondes en attente, ou qui ne peut pas exécuter cette sonde, est exclu du décompte et affiché comme « Non compté » avec la raison ; le quorum s'adapte aux emplacements restants (il ne dépasse jamais leur nombre). Un agent relais garde au plus 32 sondes multi-emplacements à la fois ; au-delà, l'emplacement est exclu comme occupé. Un agent relais trop ancien pour connaître un type de moniteur répond par une erreur : l'emplacement est exclu et signalé, sans qu'il soit nécessaire de mettre l'agent à jour.
+
+La page du moniteur affiche une carte **Emplacements de sondage** : la décision, le nombre d'emplacements en échec face au quorum, et pour chacun son état, son temps de réponse, sa dernière vérification et la raison de son exclusion. Les emplacements placés sur la [carte du monde](../using/world-map.md) apparaissent aussi sur une petite carte.
+
+### Métriques par emplacement
+
+Par emplacement : `dumbmonit_probe_location_success{location}` et `dumbmonit_probe_location_duration_seconds{location}`, où `location` vaut `server` ou `agent-<id>`. La métrique habituelle `dumbmonit_probe_success` porte la décision de quorum : alertes, disponibilité et pages de statut la suivent. De plus, `dumbmonit_probe_degraded` vaut 1 tant qu'une minorité seulement d'emplacements échoue, et `dumbmonit_probe_locations_failing` et `dumbmonit_probe_locations_counted` donnent les chiffres derrière la décision. Voir [Métriques](../reference/metrics.md).
+
+### Être prévenu d'un emplacement dégradé
+
+Un moniteur dégradé ne lève jamais `service_down`. Pour en être tout de même informé, créez une règle d'alerte personnalisée (Alertes, Nouvelle règle) de sévérité **info**, avec la requête `dumbmonit_probe_degraded == bool 1`, l'opérateur `>` et le seuil `0`, pendant 5 minutes.
+
 ## HTTP {#http}
 
 **Site web ou API web (HTTP)** — vérifie qu'une page ou une API répond,

@@ -1,0 +1,59 @@
+# HELP minio_cluster_bucket_total Total number of buckets in the cluster
+# TYPE minio_cluster_bucket_total gauge
+minio_cluster_bucket_total 12
+# HELP minio_cluster_capacity_raw_free_bytes Total free capacity online in the cluster
+# TYPE minio_cluster_capacity_raw_free_bytes gauge
+minio_cluster_capacity_raw_free_bytes 3.2e+12
+# HELP minio_cluster_capacity_raw_total_bytes Total capacity online in the cluster
+# TYPE minio_cluster_capacity_raw_total_bytes gauge
+minio_cluster_capacity_raw_total_bytes 8e+12
+# HELP minio_cluster_capacity_usable_free_bytes Total free usable capacity online in the cluster
+# TYPE minio_cluster_capacity_usable_free_bytes gauge
+minio_cluster_capacity_usable_free_bytes 1.6e+12
+# HELP minio_cluster_capacity_usable_total_bytes Total usable capacity online in the cluster
+# TYPE minio_cluster_capacity_usable_total_bytes gauge
+minio_cluster_capacity_usable_total_bytes 4e+12
+# HELP minio_cluster_drive_offline_total Total drives offline in this cluster
+# TYPE minio_cluster_drive_offline_total gauge
+minio_cluster_drive_offline_total 1
+# HELP minio_cluster_drive_online_total Total drives online in this cluster
+# TYPE minio_cluster_drive_online_total gauge
+minio_cluster_drive_online_total 15
+# HELP minio_cluster_drive_total Total drives in this cluster
+# TYPE minio_cluster_drive_total gauge
+minio_cluster_drive_total 16
+# HELP minio_cluster_nodes_offline_total Total number of MinIO nodes offline
+# TYPE minio_cluster_nodes_offline_total gauge
+minio_cluster_nodes_offline_total 1
+# HELP minio_cluster_nodes_online_total Total number of MinIO nodes online
+# TYPE minio_cluster_nodes_online_total gauge
+minio_cluster_nodes_online_total 3
+# HELP minio_cluster_usage_object_total Total number of objects in a cluster
+# TYPE minio_cluster_usage_object_total gauge
+minio_cluster_usage_object_total 482113
+# HELP minio_cluster_usage_total_bytes Total cluster usage in bytes
+# TYPE minio_cluster_usage_total_bytes gauge
+minio_cluster_usage_total_bytes 2.4e+12
+# HELP minio_heal_objects_error_total Objects for which healing failed in current self healing run
+# TYPE minio_heal_objects_error_total gauge
+minio_heal_objects_error_total 3
+# HELP minio_heal_time_last_activity_nano_seconds Time elapsed (in nano seconds) since last self healing activity
+# TYPE minio_heal_time_last_activity_nano_seconds gauge
+minio_heal_time_last_activity_nano_seconds 4.5e+10
+# HELP minio_bucket_replication_failed_count Total number of objects which failed replication
+# TYPE minio_bucket_replication_failed_count gauge
+minio_bucket_replication_failed_count{bucket="photos",server="127.0.0.1:9000"} 4
+minio_bucket_replication_failed_count{bucket="backups",server="127.0.0.1:9000"} 0
+# HELP minio_s3_requests_total Total number of s3 requests
+# TYPE minio_s3_requests_total counter
+minio_s3_requests_total{api="getobject"} 9000
+minio_s3_requests_total{api="putobject"} 1000
+# HELP minio_s3_requests_4xx_errors_total Total number of s3 requests with (4xx) errors
+# TYPE minio_s3_requests_4xx_errors_total counter
+minio_s3_requests_4xx_errors_total{api="getobject"} 120
+# HELP minio_s3_requests_5xx_errors_total Total number of s3 requests with (5xx) errors
+# TYPE minio_s3_requests_5xx_errors_total counter
+minio_s3_requests_5xx_errors_total{api="putobject"} 7
+# HELP minio_software_version_info MinIO Release tag for the server
+# TYPE minio_software_version_info gauge
+minio_software_version_info{commit="abc123def",version="RELEASE.2025-04-22T22-12-26Z"} 1

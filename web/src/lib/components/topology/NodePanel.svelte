@@ -9,6 +9,7 @@
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { kindLabel } from '#lib/kind-label.js';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
+	import type { Snippet } from 'svelte';
 	import { Box, Monitor, Server, X } from 'lucide-svelte';
 	import { Button } from '#lib/ui/index.js';
 	import { ancestors, blockers, descendants, type Graph, type NodeState } from './layout';
@@ -19,9 +20,11 @@
 		id: string;
 		onselect: (id: string) => void;
 		onclose: () => void;
+		/** Correction tools for this node, while the map is being corrected. */
+		editor?: Snippet<[string]>;
 	}
 
-	let { graph, id, onselect, onclose }: Props = $props();
+	let { graph, id, onselect, onclose, editor }: Props = $props();
 
 	const node = $derived(graph.nodes.get(id)!);
 	const down = $derived(graph.down.has(id));
@@ -31,6 +34,7 @@
 	const behind = $derived(impacted ? blockers(graph, id) : []);
 	const cabled = $derived(graph.cabled.get(id) ?? []);
 	const via = $derived(graph.treeSource.get(id) ?? null);
+	const placedBy = $derived(graph.treeEdge.get(id)?.origin ?? 'deduced');
 	const href = $derived(node.targetId !== null ? `/targets/${node.targetId}` : node.hostId !== null ? `/targets/${node.hostId}` : null);
 
 	const SHOWN = 8;
@@ -124,9 +128,18 @@
 			{/if}
 			{#if via}
 				<dt class="text-ink-3">{m.topology_panel_placed_by()}</dt>
-				<dd class="truncate text-ink">{sourceShort(via)}</dd>
+				<dd class="text-ink">
+					{sourceShort(via)}
+					<span class="block text-xs text-ink-3">
+						{placedBy === 'manual' ? m.topology_origin_manual() : placedBy === 'rule' ? m.topology_origin_rule() : m.topology_origin_deduced()}
+					</span>
+				</dd>
 			{/if}
 		</dl>
+
+		{#if editor}
+			{@render editor(id)}
+		{/if}
 
 		<div>
 			<h3 class="mb-1.5 text-xs font-semibold tracking-wide text-ink-3 uppercase">{m.topology_panel_depends_on()}</h3>

@@ -157,6 +157,30 @@ to `target`, `host` and `tag_*`.
 | `probe_grpc_serving_status` | grpc | `ServingStatus` returned: 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
 | `probe_grpc_status_code` | grpc | `grpc-status` code of the reply (0: OK). |
 
+## Probing from several locations
+
+A monitor can be probed from several places at once, so that a problem on one network is not mistaken for an outage. In the monitor's form, under "More options", turn on **Probe from several locations** and tick the locations: **This server** and any [relay agent](../install/remote-site.md). At least two locations are needed. It works for HTTP, TCP, DNS, ping, TLS, SMTP, PostgreSQL, MySQL, MQTT, WebSocket and NTP monitors, and cannot be combined with "Reached through" (a monitor is probed either by one relay, or by several locations).
+
+Every location runs the probe on the usual interval. The result is a **decision**:
+
+- **Down** when at least *N* of the *M* counted locations fail. *N* is the quorum: by default a majority of the locations (3 locations: 2; 2 locations: both), or any number from 1 to the number of locations.
+- **Degraded** when some locations fail but fewer than the quorum. The monitor page shows "Degraded at one location" and which place fails, but no `service_down` alert is raised and status pages stay up.
+- **Up** when no counted location fails.
+
+**Confirmation.** When a monitor goes from up to degraded or down, the server immediately probes again from every location and only publishes the decision of that confirmation round. A blip seen once never alerts.
+
+**Silent locations are left out.** A location that does not answer in time (a relay that is offline), whose agent has not enabled relay mode, that has too many probes queued, or that cannot run this probe is excluded from the count, shown as "Not counted" with the reason, and the quorum adapts to the locations that remain (it never exceeds their number). A relay agent holds at most 32 multisite probes at a time; beyond that the location is excluded as busy. A relay agent that is too old to know a monitor type answers with an error: that location is excluded and flagged, with no need to update the agent.
+
+The monitor page shows a **Probe locations** card: the decision, how many locations fail against the quorum, and per location its state, response time, last check and the reason it is left out. Locations placed on the [world map](../using/world-map.md) also show on a small map.
+
+### Location metrics
+
+Per location: `dumbmonit_probe_location_success{location}` and `dumbmonit_probe_location_duration_seconds{location}`, where `location` is `server` or `agent-<id>`. The usual `dumbmonit_probe_success` carries the quorum decision, so alerts, uptime figures and status pages follow it. In addition, `dumbmonit_probe_degraded` is 1 while only a minority of locations fail, and `dumbmonit_probe_locations_failing` and `dumbmonit_probe_locations_counted` give the figures behind the decision. See [Metrics](../reference/metrics.md).
+
+### Being told about a degraded location
+
+A degraded monitor never raises `service_down`. To hear about it anyway, create a custom alert rule (Alerts, New rule) with severity **info**, the query `dumbmonit_probe_degraded == bool 1`, the operator `>` and the threshold `0`, for 5 minutes.
+
 ## HTTP
 
 **Website or web API (HTTP)** — checks that a page or an API answers, with the
