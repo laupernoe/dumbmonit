@@ -34,7 +34,6 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, ProbeError, Sample, Target};
-use futures::stream::{self, StreamExt};
 use reqwest::StatusCode;
 use serde_json::{Map, Value};
 
@@ -52,7 +51,6 @@ const MAX_PAGES: usize = 20;
 const BACKUP_PAGES: usize = 5;
 const DEFAULT_METRICS_SERVERS: usize = 10;
 const MAX_METRICS_SERVERS: usize = 100;
-const PARALLEL: usize = 5;
 /// Fenêtre sur laquelle l'activité est moyennée, et pas entre deux points.
 const METRICS_WINDOW_SECS: i64 = 600;
 const METRICS_STEP_SECS: u32 = 60;
@@ -119,6 +117,15 @@ fn envelope(
 async fn call(client: &RestClient, path: &str) -> Result<Value, ProbeError> {
     let (status, body) = client.get(path).await?;
     envelope(client, status, &body, path)
+}
+
+/// Un appel dont la réponse reste associée au nom qui l'a demandé.
+async fn call_named<'a>(
+    client: &RestClient,
+    name: &'a str,
+    path: String,
+) -> (&'a str, Result<Value, ProbeError>) {
+    (name, call(client, &path).await)
 }
 
 /// Lit une liste paginée : les éléments de `key`, jusqu'à `next_page` nul.
@@ -326,17 +333,14 @@ async fn gather(
     if !running.is_empty() {
         let (start, end) = metrics_window(ts_ms);
         let (start, end) = (start.as_str(), end.as_str());
-        let answers = stream::iter(running)
-            .map(|(id, name)| async move {
-                let path = format!(
-                    "{API}/servers/{id}/metrics?type=cpu,disk,network&start={start}&end={end}\
-                     &step={METRICS_STEP_SECS}"
-                );
-                (name, call(client, &path).await)
-            })
-            .buffer_unordered(PARALLEL)
-            .collect::<Vec<_>>()
-            .await;
+        let answers = futures::future::join_all(running.into_iter().map(|(id, name)| {
+            let path = format!(
+                "{API}/servers/{id}/metrics?type=cpu,disk,network&start={start}&end={end}\
+                 &step={METRICS_STEP_SECS}"
+            );
+            call_named(client, name, path)
+        }))
+        .await;
         let mut metrics_ok = true;
         for (name, answer) in &answers {
             match answer {

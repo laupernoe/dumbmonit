@@ -36,7 +36,6 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, ProbeError, Sample, Target};
-use futures::stream::{self, StreamExt};
 use reqwest::StatusCode;
 use serde_json::{Value, json};
 
@@ -55,8 +54,6 @@ const MAX_ACCOUNTS: usize = 5;
 const MAX_ZONE_CALLS: usize = 50;
 /// Zones par requête GraphQL (limite de zones par requête des offres basses).
 const ANALYTICS_CHUNK: usize = 10;
-/// Appels simultanés au plus.
-const PARALLEL: usize = 5;
 /// Sous ce nombre de requêtes, un pourcentage d'erreurs 5xx n'a pas de sens.
 const MIN_REQUESTS: f64 = 100.0;
 
@@ -164,6 +161,15 @@ fn envelope(
 async fn call(client: &RestClient, path: &str) -> Result<Value, ProbeError> {
     let (status, body) = client.get(path).await?;
     envelope(client, status, &body, path)
+}
+
+/// Un appel dont la réponse reste associée au nom qui l'a demandé.
+async fn call_named<'a>(
+    client: &RestClient,
+    name: &'a str,
+    path: String,
+) -> (&'a str, Result<Value, ProbeError>) {
+    (name, call(client, &path).await)
 }
 
 /// Le tableau `result` d'une réponse, vide s'il manque.
@@ -510,14 +516,11 @@ async fn gather(
     out.push(readable("tunnels", tunnels.is_some(), ts_ms));
 
     // Certificats, une requête par zone.
-    let packs = stream::iter(live.iter())
-        .map(|(id, name)| async move {
-            let path = format!("{API}/zones/{id}/ssl/certificate_packs?status=all");
-            (name.as_str(), call(client, &path).await)
-        })
-        .buffer_unordered(PARALLEL)
-        .collect::<Vec<_>>()
-        .await;
+    let packs = futures::future::join_all(live.iter().map(|(id, name)| {
+        let path = format!("{API}/zones/{id}/ssl/certificate_packs?status=all");
+        call_named(client, name.as_str(), path)
+    }))
+    .await;
     let mut certificates_ok = true;
     for (zone, reply) in &packs {
         match reply {
@@ -581,14 +584,11 @@ async fn gather(
     if let Some(pools) = &pools {
         out.extend(pool_samples(pools, ts_ms));
         if !pools.is_empty() {
-            let found = stream::iter(live.iter())
-                .map(|(id, name)| async move {
-                    let path = format!("{API}/zones/{id}/load_balancers");
-                    (name.as_str(), call(client, &path).await)
-                })
-                .buffer_unordered(PARALLEL)
-                .collect::<Vec<_>>()
-                .await;
+            let found = futures::future::join_all(live.iter().map(|(id, name)| {
+                let path = format!("{API}/zones/{id}/load_balancers");
+                call_named(client, name.as_str(), path)
+            }))
+            .await;
             let mut count = 0usize;
             for (zone, reply) in &found {
                 match reply {
