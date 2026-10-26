@@ -59,6 +59,9 @@ import type {
 	WebchangeChangeDetail,
 	WebchangeChangeKind,
 	WebchangePagesResponse,
+	NetconfigCompare,
+	NetconfigOverview,
+	NetconfigVersionContent,
 	ChannelMatcher,
 	MatchPreview,
 	NotificationPolicy,
@@ -197,6 +200,57 @@ export function webchangeScreenshotUrl(id: TargetId, snapshotId: number): string
 /** Asks for an immediate check of every page of this device. Fire-and-forget: 202. */
 export function checkWebchangeNow(id: TargetId): Promise<void> {
 	return request<void>(`/targets/${id}/webchange/check`, { method: 'POST' });
+}
+
+// --- Network configuration backups (netconfig) ------------------------------
+
+/** State, host key and version list of a `netconfig` device. */
+export function getNetconfig(id: TargetId, signal?: AbortSignal): Promise<NetconfigOverview> {
+	return request<NetconfigOverview>(`/targets/${id}/netconfig`, { signal });
+}
+
+/** One version's text, secrets masked unless `unmasked` (administrators only, audited). */
+export function getNetconfigVersion(
+	id: TargetId,
+	versionId: number,
+	unmasked = false,
+	signal?: AbortSignal
+): Promise<NetconfigVersionContent> {
+	return request<NetconfigVersionContent>(`/targets/${id}/netconfig/versions/${versionId}`, {
+		query: { unmasked: unmasked || undefined },
+		signal
+	});
+}
+
+/** Line diff between two versions; `from` defaults to the version before `to`. */
+export function compareNetconfig(
+	id: TargetId,
+	to: number,
+	options: { from?: number; unmasked?: boolean } = {},
+	signal?: AbortSignal
+): Promise<NetconfigCompare> {
+	return request<NetconfigCompare>(`/targets/${id}/netconfig/diff`, {
+		query: { to, from: options.from, unmasked: options.unmasked || undefined },
+		signal
+	});
+}
+
+/** Download link of a raw version (administrators signed in only, audited). */
+export function netconfigDownloadUrl(id: TargetId, versionId: number): string {
+	return `/api/targets/${id}/netconfig/versions/${versionId}/download`;
+}
+
+/** Reads the configuration now. Fire-and-forget: 202, `started` false if one is running. */
+export function fetchNetconfigNow(id: TargetId): Promise<{ started: boolean }> {
+	return request<{ started: boolean }>(`/targets/${id}/netconfig/fetch`, { method: 'POST' });
+}
+
+/** Accepts the new SSH host key the device presents, after checking its fingerprint. */
+export function acceptNetconfigHostKey(id: TargetId, fingerprint: string): Promise<void> {
+	return request<void>(`/targets/${id}/netconfig/host-key/accept`, {
+		method: 'POST',
+		body: { fingerprint }
+	});
 }
 
 // --- Metrics (anticipated) --------------------------------------------------

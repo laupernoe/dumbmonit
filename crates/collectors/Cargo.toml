@@ -121,6 +121,18 @@ stringprep = "0.1"
 ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ring"] }
 rustls-native-certs = "0.8"
 
+# --- Sauvegarde des configurations réseau (`netconfig/`) ---
+#
+# Client SSH en Rust pur (Apache-2.0). Moteur `ring`, celui que rustls emploie
+# déjà ici : `aws-lc-rs` (par défaut) compliquerait la construction croisée de
+# l'agent. `rsa` : beaucoup d'équipements réseau n'ont qu'une clé d'hôte RSA ;
+# elle ne sert qu'à vérifier leur signature (opération publique), jamais à
+# déchiffrer ni signer avec une clé privée (voir `deny.toml`).
+russh = { version = "0.65", default-features = false, features = ["flate2", "ring", "rsa"] }
+# Règles des profils (invite, lignes volatiles, secrets à masquer) : déjà dans
+# le verrou de dépendances (serveur), en temps linéaire, sans retour arrière.
+regex = "1"
+
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
 # Faux services HTTP (DSM, PVE) montés dans les tests unitaires.

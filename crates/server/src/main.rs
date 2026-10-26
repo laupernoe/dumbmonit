@@ -193,6 +193,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     // Une vérification de site interrompue par un arrêt du serveur a laissé son
     // verrou : il est levé avant que le collecteur ne reprenne.
     dumbmonit_server::webchange::store::release_all(&pool).await?;
+    dumbmonit_server::netconfig::store::release_all(&pool).await?;
 
     // Liste unique, partagée avec l'agent relais (`collectors::builtin`).
     let mut registry = collectors::builtin(&pool, &config, &packs);
@@ -240,6 +241,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     dumbmonit_server::selfmon::spawn(state.clone());
     // Scans de découverte planifiés et inventaire du réseau.
     dumbmonit_server::netinventory::spawn(state.clone());
+    dumbmonit_server::netconfig::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),

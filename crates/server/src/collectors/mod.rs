@@ -149,6 +149,9 @@ pub fn builtin(
             browser_url: config.browser_url.clone(),
         },
     )));
+    // Sauvegarde des configurations réseau : le collecteur relit l'état en
+    // base, les relevés tournent en tâche de fond (`netconfig::spawn`).
+    registry.register(Arc::new(crate::netconfig::NetconfigCollector::new(pool.clone())));
     // Santé et référencement d'un site : référence des métadonnées et
     // historique des changements gardés en base.
     registry.register(Arc::new(

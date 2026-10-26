@@ -1,0 +1,12 @@
+# Sauvegarde des configurations : OPNsense par son API (clé et secret d'API,
+# privilège « Diagnostics: Configuration History » ou « Backup »).
+id: opnsense_api
+label: OPNsense (API)
+transport: http
+port: 443
+http:
+  path: /api/core/backup/download/this
+  auth: basic
+volatile: []
+secrets:
+  - '<(?:password|bcrypt-hash|sha512-hash|md5-hash|nt-hash|pre-shared-key|community|ldap_bindpw|radius_secret|apikey|api_key|authkey|prv|shared_key|tls|secret|ipsecpsk|passwordenc|psk|key)>(?P<secret>[^<]+)</'

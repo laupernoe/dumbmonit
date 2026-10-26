@@ -7,6 +7,28 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Network configuration backup** (new `netconfig` device type, the way
+  Oxidized or RANCID do it): the configuration of a switch, router or firewall
+  is read over SSH or the device's API at a set interval, through a relay agent
+  if needed, and a new version is kept only when it really changed, volatile
+  lines (timestamps, counters, re-encrypted values) aside. Declarative profiles
+  in `profiles/netconfig/` for Cisco IOS/IOS-XE and NX-OS, Aruba/HPE, MikroTik
+  RouterOS (`/export`), Juniper Junos, FortiGate, pfSense and OPNsense
+  (`config.xml` over SSH, or the OPNsense API), Ubiquiti EdgeOS/USG and UniFi
+  devices, Stormshield SNS and Palo Alto PAN-OS (XML API), with prompt,
+  paging and `enable` handling. No command can be typed in the interface.
+  Versions are compressed and encrypted with the instance key, with a
+  configurable retention; the device page shows the line diff between any two
+  versions with `+`/`−` markers and secrets masked (passwords, SNMP
+  communities, pre-shared keys). Only an administrator signed in can reveal
+  secrets or download a version, both recorded in the audit log. The SSH host
+  key is trusted on first use and pinned: a different key cuts the connection
+  before any credential is sent, raises the **SSH host key changed** alert and
+  waits for an administrator to accept it. New built-in rule **Network
+  configuration changed**, new `ssh_login` credential (with an optional enable
+  password). The instance backup carries the pinned host keys, and the
+  configuration versions only when **Include network configuration versions**
+  is ticked (off by default).
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key

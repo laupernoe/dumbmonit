@@ -117,6 +117,10 @@ pub struct ExportPayload {
     /// codes de secours des comptes. Faux par défaut.
     #[serde(default)]
     pub include_account_secrets: bool,
+    /// Emporter aussi les versions des configurations réseau, qui contiennent
+    /// les secrets des équipements. Faux par défaut.
+    #[serde(default)]
+    pub include_netconfig_versions: bool,
 }
 
 pub async fn create(
@@ -129,8 +133,10 @@ pub async fn create(
     bundle::check_passphrase(&payload.passphrase)
         .map_err(|e| ApiError::BadRequest(e.to_string()))?;
 
-    let options =
-        export::ExportOptions { include_account_secrets: payload.include_account_secrets };
+    let options = export::ExportOptions {
+        include_account_secrets: payload.include_account_secrets,
+        include_netconfig_versions: payload.include_netconfig_versions,
+    };
     let collected = export::collect(&state.pool, &state.cipher, options).await?;
     // Argon2id (32 Mio, trois passes) hors des fils du runtime : une dérivation
     // ne doit pas figer les autres requêtes.
@@ -140,7 +146,12 @@ pub async fn create(
     let body = serde_json::to_vec_pretty(&envelope)?;
 
     let name = format!("dumbmonit-backup-{}.json", chrono::Utc::now().format("%Y%m%d-%H%M%S"));
-    tracing::info!(actor = %me, accounts = payload.include_account_secrets, "backup exported");
+    tracing::info!(
+        actor = %me,
+        accounts = payload.include_account_secrets,
+        netconfig_versions = payload.include_netconfig_versions,
+        "backup exported"
+    );
     audit::record(&state.pool, Some(&me), "backup.exported", Some(&name), ip).await;
 
     Ok((

@@ -156,6 +156,7 @@ nav:
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
       - Website health & SEO: devices/website.md
+      - Network configuration backup: devices/netconfig.md
       - Demo monitor: devices/demo.md
   - Integrations:
       - Website banner: integrations/website-banner.md

@@ -5135,6 +5135,34 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: None,
             ..base("webchange_detected", "Website changed", RuleKind::Threshold, "dumbmonit_webchange_last_check_changes")
         },
+        // --- Sauvegarde des configurations réseau (`netconfig`) ---
+        //
+        // La jauge vaut 1 quand le dernier relevé réussi a produit une nouvelle
+        // version (jamais pour la toute première). Elle retombe au relevé
+        // suivant sans changement. Pas de rappel : un changement est un fait.
+        Rule {
+            description: "The configuration of a backed-up network device changed since the previous version. The device page shows the line diff, secrets masked."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base("netconfig_changed", "Network configuration changed", RuleKind::Threshold, "dumbmonit_netconfig_config_changed")
+        },
+        // Clé d'hôte SSH différente de celle mémorisée : la connexion est
+        // refusée avant toute authentification, plus aucune sauvegarde n'a lieu
+        // tant qu'un administrateur n'a pas accepté la nouvelle clé. Équipement
+        // remplacé ou réinstallé… ou interception : à vérifier, d'où le niveau.
+        Rule {
+            description: "A backed-up device presented an SSH host key other than the remembered one. Backups are stopped and no credential was sent; check the device, then accept the new key on its page."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::ZERO,
+            severity: Severity::Critical,
+            ..base("netconfig_host_key_changed", "SSH host key changed", RuleKind::Threshold, "dumbmonit_netconfig_host_key_changed")
+        },
         // --- Santé et référencement d'un site (`website`) ---
         //
         // Un site injoignable (réseau, délai, certificat refusé, boucle de
@@ -7399,6 +7427,8 @@ mod tests {
             "domain_redemption",
             "dns_answer_changed",
             "webchange_detected",
+            "netconfig_changed",
+            "netconfig_host_key_changed",
             "website_down",
             "website_blank",
             "website_expected_text_missing",
@@ -7891,6 +7921,9 @@ mod tests {
             "dumbmonit_probe_dns_answer_fingerprint",
             // Changements d'un site web (`webchange`).
             "dumbmonit_webchange_last_check_changes",
+            // Sauvegarde des configurations réseau (`netconfig/mod.rs`).
+            "dumbmonit_netconfig_config_changed",
+            "dumbmonit_netconfig_host_key_changed",
             // Santé et référencement d'un site (`website`).
             "dumbmonit_website_up",
             "dumbmonit_website_blank",
