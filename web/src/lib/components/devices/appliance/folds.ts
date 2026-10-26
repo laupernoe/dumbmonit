@@ -5,6 +5,7 @@
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada,nginx,apache}`,
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,arubacentral,nginx,apache}`,
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,paloalto,sonicwall,nginx,apache}`,
+ * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,qnap,ceph,minio,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '#lib/api/index.js';
@@ -845,6 +846,170 @@ function arubacentral(series: MetricSeries[]): ApplianceView {
 			{ label: 'Clients', value: byLabel(ps, 'clients', 'type').size > 0 ? String(clients) : null }
 		],
 		sections: [{ title: 'Devices, offline first', rows: devices }]
+// ------------------------------------------------------------------------ QNAP
+
+function qnap(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'qnap');
+	const info = ps.find((p) => p.name === 'version_info')?.labels;
+	const temps = byLabel(ps, 'disk_temperature_celsius', 'disk');
+	const warnings = byLabel(ps, 'disk_warning', 'disk');
+	const disks: Row[] = [...byLabel(ps, 'disk_ok', 'disk').values()].map((p) => {
+		const name = p.labels.disk;
+		const t = temps.get(name)?.value ?? null;
+		const ok = p.value >= 1;
+		const warn = (warnings.get(name)?.value ?? 0) >= 1;
+		return {
+			key: name,
+			name,
+			tone: ok ? 'signal' : warn ? 'advisory' : 'warning',
+			plate: ok ? 'OK' : warn ? 'SMART warning' : 'SMART abnormal',
+			details: [p.labels.model ?? '', t !== null ? `${Math.round(t)} °C` : ''].filter(Boolean)
+		};
+	});
+	disks.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }));
+	const volumes: Row[] = [...byLabel(ps, 'volume_used_percent', 'volume').values()].map((p) => ({
+		key: p.labels.volume,
+		name: p.labels.volume,
+		tone: p.value > 90 ? 'warning' : p.value > 80 ? 'advisory' : 'signal',
+		plate: `${Math.round(p.value)}% used`
+	}));
+	volumes.sort((a, b) => Number(b.tone !== 'signal') - Number(a.tone !== 'signal') || byName(a, b));
+	const bad = disks.filter((d) => d.tone !== 'signal').length;
+	const hot = [...temps.values()].filter((p) => p.value > 55).length;
+	const full = volumes.filter((v) => v.tone === 'warning').length;
+	const cpuTemp = single(ps, 'cpu_temperature_celsius');
+	const update = single(ps, 'firmware_update_available');
+	const latest = ps.find((p) => p.name === 'firmware_latest_info')?.labels.version ?? null;
+	if (bad > 0) problems.push({ text: `${bad} ${bad === 1 ? 'disk' : 'disks'} without a good SMART health`, severe: true });
+	if (hot > 0) problems.push({ text: `${hot} ${hot === 1 ? 'disk' : 'disks'} above 55 °C`, severe: false });
+	if (full > 0) problems.push({ text: `${full} ${full === 1 ? 'volume' : 'volumes'} over 90% full`, severe: false });
+	if (cpuTemp !== null && cpuTemp > 90) problems.push({ text: 'the processor is very hot', severe: false });
+	if (update !== null && update >= 1) problems.push({ text: `a firmware update is available${latest ? ` (${latest})` : ''}`, severe: false });
+	const uptime = single(ps, 'uptime_seconds');
+	return {
+		title: 'NAS',
+		description: info ? `${info.model || 'QNAP'} ${info.hostname ? `"${info.hostname}" ` : ''}running QTS ${info.version}.` : 'Read through the QTS web interface.',
+		verdict: verdict(problems, 'Every volume has room and every disk reports a good SMART health.'),
+		figures: [
+			{ label: 'CPU', value: percent(single(ps, 'cpu_usage_percent')) },
+			{ label: 'Memory', value: percent(single(ps, 'memory_used_percent')) },
+			{ label: 'Temperature', value: cpuTemp !== null ? `${Math.round(cpuTemp)} °C` : null, hint: 'processor' },
+			{ label: 'Uptime', value: uptime !== null ? formatAge(uptime) : null }
+		],
+		sections: [
+			{ title: 'Volumes', rows: volumes },
+			{ title: 'Disks', rows: disks }
+		]
+	};
+}
+
+// ------------------------------------------------------------------------ Ceph
+
+function ceph(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'ceph');
+	const version = ps.find((p) => p.name === 'version_info')?.labels.version ?? null;
+	const status = single(ps, 'health_status');
+	const checks: Row[] = ps
+		.filter((p) => p.name === 'health_check_info')
+		.map((p) => ({
+			key: p.labels.check,
+			name: p.labels.check,
+			tone: p.labels.severity === 'HEALTH_ERR' ? 'warning' : 'advisory',
+			plate: p.labels.severity === 'HEALTH_ERR' ? 'Error' : 'Warning'
+		}));
+	checks.sort((a, b) => Number(b.tone === 'warning') - Number(a.tone === 'warning') || byName(a, b));
+	const ups = byLabel(ps, 'osd_up', 'osd');
+	const inside = byLabel(ps, 'osd_in', 'osd');
+	const used = byLabel(ps, 'osd_used_percent', 'osd');
+	const osds: Row[] = [...ups.values()]
+		.map((p) => {
+			const name = p.labels.osd;
+			const up = p.value >= 1;
+			const isIn = (inside.get(name)?.value ?? 1) >= 1;
+			const u = used.get(name)?.value ?? null;
+			const nearFull = u !== null && u > 85;
+			return {
+				key: name,
+				name,
+				tone: !up ? 'warning' : !isIn || nearFull ? 'advisory' : 'signal',
+				plate: !up ? 'Down' : !isIn ? 'Out' : nearFull ? 'Nearly full' : 'Up',
+				details: [p.labels.host ?? '', u !== null ? `${Math.round(u)}% used` : ''].filter(Boolean)
+			} satisfies Row;
+		})
+		.filter((r) => r.tone !== 'signal');
+	osds.sort((a, b) => a.name.localeCompare(b.name, 'en', { numeric: true }));
+	const pools: Row[] = [...byLabel(ps, 'pool_used_percent', 'pool').values()]
+		.sort((a, b) => b.value - a.value)
+		.map((p) => ({
+			key: p.labels.pool,
+			name: p.labels.pool,
+			tone: p.value > 90 ? 'warning' : p.value > 80 ? 'advisory' : 'signal',
+			plate: `${Math.round(p.value)}% used`
+		}));
+	const osdsTotal = single(ps, 'osds');
+	const osdsUp = single(ps, 'osds_up');
+	const pgs = single(ps, 'pgs');
+	const pgsClean = single(ps, 'pgs_clean');
+	const unclean = single(ps, 'pgs_unclean') ?? 0;
+	const capacity = single(ps, 'capacity_used_percent');
+	const outOfQuorum = single(ps, 'mons_out_of_quorum') ?? 0;
+	const unfound = single(ps, 'objects_unfound') ?? 0;
+	const down = osds.filter((o) => o.tone === 'warning').length;
+	if (status !== null && status >= 2) problems.push({ text: 'the cluster reports HEALTH_ERR', severe: true });
+	else if (status !== null && status >= 1) problems.push({ text: `the cluster reports HEALTH_WARN (${checks.length} ${checks.length === 1 ? 'check' : 'checks'})`, severe: false });
+	if (down > 0) problems.push({ text: `${down} ${down === 1 ? 'OSD' : 'OSDs'} down`, severe: false });
+	if (unclean > 0) problems.push({ text: `${unclean} placement ${unclean === 1 ? 'group' : 'groups'} not clean`, severe: false });
+	if (unfound > 0) problems.push({ text: 'unfound objects', severe: true });
+	if (outOfQuorum > 0) problems.push({ text: `${outOfQuorum} ${outOfQuorum === 1 ? 'monitor' : 'monitors'} out of the quorum`, severe: true });
+	if (capacity !== null && capacity > 80) problems.push({ text: 'capacity above 80%', severe: false });
+	return {
+		title: 'Cluster',
+		description: version ? `Ceph ${version}, read through the manager dashboard API.` : 'Read through the Ceph manager dashboard API.',
+		verdict: verdict(problems, 'The cluster is healthy: every OSD is up and every placement group is clean.'),
+		figures: [
+			{ label: 'OSDs up', value: osdsTotal !== null ? `${osdsUp ?? 0}/${osdsTotal}` : null, tone: osdsTotal !== null && (osdsUp ?? 0) < osdsTotal ? 'warning' : 'ink' },
+			{ label: 'PGs clean', value: pgs !== null ? `${pgsClean ?? 0}/${pgs}` : null, tone: unclean > 0 ? 'advisory' : 'ink' },
+			{ label: 'Capacity used', value: percent(capacity), hint: formatBytes(single(ps, 'capacity_bytes')), tone: capacity !== null && capacity > 80 ? 'advisory' : 'ink' },
+			{ label: 'Monitors', value: single(ps, 'mons') !== null ? `${(single(ps, 'mons') ?? 0) - outOfQuorum}/${single(ps, 'mons')}` : null, tone: outOfQuorum > 0 ? 'warning' : 'ink' }
+		],
+		sections: [
+			{ title: 'Health checks', rows: checks },
+			{ title: 'OSDs needing attention', rows: osds },
+			{ title: 'Pools', rows: pools }
+		]
+	};
+}
+
+// ----------------------------------------------------------------------- MinIO
+
+function minio(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'minio');
+	const version = ps.find((p) => p.name === 'version_info')?.labels.version ?? null;
+	const nodesOnline = single(ps, 'nodes_online');
+	const nodesOffline = single(ps, 'nodes_offline') ?? 0;
+	const drivesOnline = single(ps, 'drives_online');
+	const drivesOffline = single(ps, 'drives_offline') ?? 0;
+	const used = single(ps, 'capacity_usable_used_percent') ?? single(ps, 'capacity_raw_used_percent');
+	const healFailed = single(ps, 'heal_objects_failed') ?? 0;
+	const replication = single(ps, 'replication_failed_objects') ?? 0;
+	const objects = single(ps, 'objects');
+	if (nodesOffline > 0) problems.push({ text: `${nodesOffline} ${nodesOffline === 1 ? 'node' : 'nodes'} offline`, severe: true });
+	if (drivesOffline > 0) problems.push({ text: `${drivesOffline} ${drivesOffline === 1 ? 'drive' : 'drives'} offline`, severe: false });
+	if (used !== null && used > 85) problems.push({ text: 'capacity above 85%', severe: false });
+	if (healFailed > 0) problems.push({ text: 'objects the heal could not repair', severe: false });
+	if (replication > 0) problems.push({ text: 'objects that failed to replicate', severe: false });
+	const total = (online: number | null, offline: number) => (online !== null ? `${online}/${online + offline}` : null);
+	return {
+		title: 'Object store',
+		description: version ? `MinIO ${version.replace(/^RELEASE\./, '')}, read through its Prometheus metrics.` : 'Read through the MinIO Prometheus metrics.',
+		verdict: verdict(problems, 'Every node and drive is online and nothing is failing to heal or replicate.'),
+		figures: [
+			{ label: 'Nodes online', value: total(nodesOnline, nodesOffline), tone: nodesOffline > 0 ? 'warning' : 'ink' },
+			{ label: 'Drives online', value: total(drivesOnline, drivesOffline), tone: drivesOffline > 0 ? 'advisory' : 'ink' },
+			{ label: 'Capacity used', value: percent(used), hint: formatBytes(single(ps, 'capacity_usable_bytes') ?? single(ps, 'capacity_raw_bytes')), tone: used !== null && used > 85 ? 'advisory' : 'ink' },
+			{ label: 'Objects', value: objects !== null ? objects.toLocaleString('en') : null, hint: single(ps, 'buckets') !== null ? `${single(ps, 'buckets')} buckets` : undefined }
+		],
+		sections: []
 	};
 }
 
@@ -854,6 +1019,9 @@ export const FOLDS: Record<string, Fold> = {
 	veeam: { prefix: 'veeam', title: 'Backups', fold: veeam },
 	tailscale: { prefix: 'tailscale', title: 'Tailnet', fold: tailscale },
 	fortigate: { prefix: 'fortigate', title: 'Firewall', fold: fortigate },
+	qnap: { prefix: 'qnap', title: 'NAS', fold: qnap },
+	ceph: { prefix: 'ceph', title: 'Cluster', fold: ceph },
+	minio: { prefix: 'minio', title: 'Object store', fold: minio },
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },
 	meraki: { prefix: 'meraki', title: 'Cloud network', fold: meraki },
 	omada: { prefix: 'omada', title: 'Wi-Fi and switching', fold: omada },

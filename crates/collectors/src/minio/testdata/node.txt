@@ -1,0 +1,3 @@
+# HELP minio_node_process_uptime_seconds Total uptime of MinIO server process in seconds
+# TYPE minio_node_process_uptime_seconds gauge
+minio_node_process_uptime_seconds 86400

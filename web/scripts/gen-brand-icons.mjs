@@ -58,6 +58,9 @@ const KINDS = {
 	omada: 'omadacloud',
 	paloalto: 'paloaltonetworks',
 	sonicwall: 'sonicwall',
+	qnap: 'qnap',
+	ceph: 'ceph',
+	minio: 'minio',
 	postgres: 'postgresql',
 	mysql: 'mysql',
 	mqtt: 'mqtt'
