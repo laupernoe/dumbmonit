@@ -6,7 +6,7 @@ import { getLocale } from '#lib/paraglide/runtime.js';
 export function personName(people: Person[], id: number | null | undefined): string {
 	if (id === null || id === undefined) return '';
 	const person = people.find((p) => p.id === id);
-	return person ? person.display_name.trim() || person.username : `#${id}`;
+	return person ? person.display_name.trim() || person.username || `#${id}` : `#${id}`;
 }
 
 export function initials(name: string): string {

@@ -287,3 +287,34 @@ async fn chacun_gere_ses_contacts_et_ses_heures_sans_voir_ceux_des_autres() {
     );
     assert_eq!(app.get(&url, None).await.status, StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn la_liste_des_personnes_cache_les_donnees_personnelles_aux_autres() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    let viewer = app.viewer_cookie(&admin).await;
+
+    let seen_by_admin = app.get("/api/oncall/people", Some(&admin)).await;
+    assert_eq!(seen_by_admin.status, StatusCode::OK, "{}", seen_by_admin.body);
+    for person in seen_by_admin.body.as_array().unwrap() {
+        assert!(person["username"].is_string() && person["role"].is_string());
+        assert!(person["contacts"].is_u64());
+    }
+
+    let seen_by_viewer = app.get("/api/oncall/people", Some(&viewer)).await;
+    assert_eq!(seen_by_viewer.status, StatusCode::OK, "{}", seen_by_viewer.body);
+    let list = seen_by_viewer.body.as_array().unwrap();
+    assert!(list.len() >= 2);
+    let mut own = 0;
+    for person in list {
+        assert!(person["display_name"].is_string() && person["on_call"].is_boolean());
+        if person.get("username").is_some() {
+            // Seule la fiche de l'appelant est complète.
+            own += 1;
+            assert_eq!(person["username"], "viewer");
+        } else {
+            assert!(person.get("role").is_none() && person.get("contacts").is_none());
+        }
+    }
+    assert_eq!(own, 1, "only the caller's own record is complete: {list:?}");
+}
