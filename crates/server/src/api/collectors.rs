@@ -2608,6 +2608,130 @@ const GITLAB_OPTIONS: &[OptionView] = &[
 const FORGEJO_OPTIONS: &[OptionView] =
     &[app_scheme("http"), app_port("3000"), APP_TLS, APP_TIMEOUT];
 
+const SONARR_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("8989"), APP_TLS, APP_TIMEOUT];
+const RADARR_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("7878"), APP_TLS, APP_TIMEOUT];
+const LIDARR_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("8686"), APP_TLS, APP_TIMEOUT];
+const PROWLARR_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("9696"), APP_TLS, APP_TIMEOUT];
+const QBITTORRENT_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("8080"), APP_TLS, APP_TIMEOUT];
+const UNIFIPROTECT_APP_OPTIONS: &[OptionView] = &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+const FRIGATE_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("5000"), APP_TLS, APP_TIMEOUT];
+const KEYCLOAK_APP_OPTIONS: &[OptionView] = &[
+    app_scheme("http"),
+    app_port("8080"),
+    text(
+        "health_port",
+        "Health port",
+        "Port of the health checks. Keycloak 25 and later serve them on the management port (9000); type same for Keycloak 24 and earlier, which use the main port.",
+        "9000",
+        "9000",
+    ),
+    select(
+        "health_scheme",
+        "Health protocol",
+        "Protocol of the management port. It is plain HTTP unless Keycloak is configured otherwise.",
+        "http",
+        &["http", "https"],
+    ),
+    text(
+        "auth_realm",
+        "Realm of the client",
+        "The realm in which the service-account client was created.",
+        "master",
+        "master",
+    ),
+    text(
+        "realms",
+        "Realms to read (optional)",
+        "Comma-separated realm names whose sessions and users are counted; leave empty for every realm, up to 20.",
+        "homelab,staff",
+        "",
+    ),
+    APP_TLS,
+    APP_TIMEOUT,
+];
+const AUTHENTIK_APP_OPTIONS: &[OptionView] = &[app_scheme("http"), app_port("9000"), APP_TLS, APP_TIMEOUT];
+const VAULTWARDEN_APP_OPTIONS: &[OptionView] = &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+const MAILCOW_APP_OPTIONS: &[OptionView] = &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+
+const ARR_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "The API key of Settings → General → Security, sent in the X-Api-Key header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
+const QBITTORRENT_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name / password",
+    help: "The WebUI account. DumbMonit opens a session and reuses its cookie for the probe.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const QBITTORRENT_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No authentication (allowed address)",
+    help: "For an address qBittorrent lets in without a login (whitelisted IP subnets).",
+    fields: &[],
+};
+
+const PROTECT_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Local user name / password",
+    help: "A local UniFi OS user with the View Only role on Protect. Ubiquiti cloud accounts are refused.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const KEYCLOAK_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "None (health checks only)",
+    help: "Nothing is sent: the health checks are public. Realms, sessions and users need a client below.",
+    fields: &[],
+};
+
+const KEYCLOAK_CLIENT: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Client ID / secret",
+    help: "A service-account client with read-only roles. DumbMonit asks for a token at each probe.",
+    fields: &[
+        cred_text("username", "Client ID", "", "dumbmonit"),
+        cred_secret("password", "Client secret", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const AUTHENTIK_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API token",
+    help: "The key of an API token created for a service account, sent as \"Authorization: Bearer …\".",
+    fields: &[cred_secret("token", "API token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const VAULTWARDEN_NO_ADMIN: CredentialView = CredentialView {
+    kind: "none",
+    label: "No admin token (public checks only)",
+    help: "Only /alive and /api/config are read, which Vaultwarden serves without any login.",
+    fields: &[],
+};
+
+const VAULTWARDEN_ADMIN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Admin token",
+    help: "The plain ADMIN_TOKEN of the admin page. It opens a session whose cookie DumbMonit keeps between probes; only counters are read.",
+    fields: &[cred_secret("token", "Admin token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const MAILCOW_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Read-only API key",
+    help: "The read-only key of System → Configuration → Access → API, sent in the X-API-Key header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
 const NEXTCLOUD_TOKEN: CredentialView = CredentialView {
     kind: "api_token",
     label: "Monitoring token (NC-Token)",
@@ -5687,6 +5811,280 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: IMMICH_OPTIONS,
         },
+        "sonarr" => CollectorView {
+            kind: "sonarr",
+            label: "Sonarr (beta)",
+            summary: "Health warnings, failing download clients and indexers, download queue errors, library disk space, updates.",
+            examples: &["Sonarr v4"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "sonarr.lan",
+            default_port: 8989,
+            setup: Setup {
+                title: "Read the API key in Sonarr",
+                steps: &[
+                    "In Sonarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Sonarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(8989, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &[],
+                warning: "A Sonarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: SONARR_APP_OPTIONS,
+        },
+        "radarr" => CollectorView {
+            kind: "radarr",
+            label: "Radarr (beta)",
+            summary: "Health warnings, failing download clients and indexers, download queue errors, library disk space, updates.",
+            examples: &["Radarr v5"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "radarr.lan",
+            default_port: 7878,
+            setup: Setup {
+                title: "Read the API key in Radarr",
+                steps: &[
+                    "In Radarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Radarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(7878, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &[],
+                warning: "A Radarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: RADARR_APP_OPTIONS,
+        },
+        "lidarr" => CollectorView {
+            kind: "lidarr",
+            label: "Lidarr (beta)",
+            summary: "Health warnings, failing download clients and indexers, download queue errors, library disk space, updates.",
+            examples: &["Lidarr"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "lidarr.lan",
+            default_port: 8686,
+            setup: Setup {
+                title: "Read the API key in Lidarr",
+                steps: &[
+                    "In Lidarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Lidarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(8686, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &[],
+                warning: "A Lidarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: LIDARR_APP_OPTIONS,
+        },
+        "prowlarr" => CollectorView {
+            kind: "prowlarr",
+            label: "Prowlarr (beta)",
+            summary: "Health warnings, indexers disabled after failures, disk space, updates.",
+            examples: &["Prowlarr"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "prowlarr.lan",
+            default_port: 9696,
+            setup: Setup {
+                title: "Read the API key in Prowlarr",
+                steps: &[
+                    "In Prowlarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Prowlarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(9696, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &[],
+                warning: "A Prowlarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: PROWLARR_APP_OPTIONS,
+        },
+        "qbittorrent" => CollectorView {
+            kind: "qbittorrent",
+            label: "qBittorrent (beta)",
+            summary: "Torrents in error or stalled, lost connectivity, download and upload speed, free space, torrents by state.",
+            examples: &["qBittorrent 4.x and 5.x"],
+            credential_types: &["username_password", "none"],
+            credentials: &[QBITTORRENT_LOGIN, QBITTORRENT_NO_AUTH],
+            address_hint: "qbittorrent.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Give DumbMonit access to qBittorrent's WebUI",
+                steps: &[
+                    "In qBittorrent, open Tools → Options → Web UI and tick Web User Interface (Remote control).",
+                    "Under Authentication, set a user name and password named as follows, or allow DumbMonit's address in the whitelisted IP subnets bypass.\ndumbmonit",
+                    "In DumbMonit, enter qBittorrent's address and that user name and password, or choose No authentication for a bypassed address.",
+                ],
+                ports: &[
+                    to_device!(8080, "tcp", "WebUI (HTTP, default)",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &[],
+                warning: "qBittorrent bans an address for an hour after five failed logins (HTTP 403): fix the password before the next probe, or the probe stays refused.",
+            },
+            options: QBITTORRENT_APP_OPTIONS,
+        },
+        "unifiprotect" => CollectorView {
+            kind: "unifiprotect",
+            label: "UniFi Protect (beta)",
+            summary: "Cameras offline or not recording, NVR disks and storage, recording switched off.",
+            examples: &["UNVR", "Dream Machine Pro", "Cloud Key Gen2+"],
+            credential_types: &["username_password"],
+            credentials: &[PROTECT_LOGIN],
+            address_hint: "unvr.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a local view-only user for Protect",
+                steps: &[
+                    "In UniFi OS, open Admins & Users → Create New and create a local user named as follows, with no cloud account.\ndumbmonit",
+                    "Give it access to the Protect application only, with the View Only role, and none to Network or other applications.",
+                    "In DumbMonit, enter the console's address and that user name and password.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "UniFi OS (HTTPS, default)",),
+                ],
+                permissions: &[],
+                warning: "Use a local account: UniFi OS refuses Ubiquiti cloud accounts here. The console's certificate is usually self-signed: turn on the certificate option.",
+            },
+            options: UNIFIPROTECT_APP_OPTIONS,
+        },
+        "frigate" => CollectorView {
+            kind: "frigate",
+            label: "Frigate NVR (beta)",
+            summary: "Cameras that stopped delivering frames, detector speed and hangs, frame rates, recording storage, updates.",
+            examples: &["Frigate 0.14 and later"],
+            credential_types: &["none", "api_token"],
+            credentials: &[NO_AUTH, HTTP_TOKEN],
+            address_hint: "frigate.lan",
+            default_port: 5000,
+            setup: Setup {
+                title: "Let DumbMonit read Frigate's statistics",
+                steps: &[
+                    "Nothing to install: check from the DumbMonit host that Frigate's API answers on port 5000.\ncurl http://frigate.lan:5000/api/version",
+                    "If a proxy in front of Frigate expects a token (port 8971 requires a login), choose Bearer token below; otherwise choose No authentication.",
+                    "In DumbMonit, enter Frigate's address, for example \"frigate.lan\".",
+                ],
+                ports: &[
+                    to_device!(5000, "tcp", "API (HTTP, default, no login)",),
+                    to_device_optional!(8971, "tcp", "Only with the authenticated port behind a bearer-token proxy",),
+                ],
+                permissions: &[],
+                warning: "Port 5000 has no login and gives full control of Frigate: expose it only to DumbMonit, never to the internet. A camera you turned off in Frigate's settings also reads as offline.",
+            },
+            options: FRIGATE_APP_OPTIONS,
+        },
+        "keycloak" => CollectorView {
+            kind: "keycloak",
+            label: "Keycloak (beta)",
+            summary: "Readiness and database health, version, realms (disabled ones), active sessions and users per realm.",
+            examples: &["Keycloak 25 and later", "Keycloak 24 and earlier"],
+            credential_types: &["none", "username_password"],
+            credentials: &[KEYCLOAK_NO_AUTH, KEYCLOAK_CLIENT],
+            address_hint: "sso.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Let DumbMonit read Keycloak's health and realms",
+                steps: &[
+                    "Run Keycloak with health checks on, with the option below. From Keycloak 25 they answer on the management port 9000.\nKC_HEALTH_ENABLED=true",
+                    "Optional, for realms, sessions and users: in the master realm, create a client named as follows, with Client authentication and Service accounts roles on, and Standard flow off.\ndumbmonit",
+                    "On that client's Service accounts roles tab, assign the client roles listed below, then copy the secret from its Credentials tab.",
+                    "In DumbMonit, enter Keycloak's address and the client ID and secret, or choose None (health checks only).",
+                ],
+                ports: &[
+                    to_device!(8080, "tcp", "API (HTTP, default)",),
+                    to_device!(9000, "tcp", "Health checks on the management port (Keycloak 25 and later)",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &["view-realm\nMaster-realm client role: realms and their state", "view-users\nMaster-realm client role: user counts"],
+                warning: "Keycloak 24 and earlier serve the health checks on the main port: set the health port option to same. Health checks must be enabled on the server, or DumbMonit reports a missing /health/ready.",
+            },
+            options: KEYCLOAK_APP_OPTIONS,
+        },
+        "authentik" => CollectorView {
+            kind: "authentik",
+            label: "authentik (beta)",
+            summary: "Readiness, workers, failed system tasks, outpost connections, version updates, users.",
+            examples: &["authentik 2025.x"],
+            credential_types: &["api_token"],
+            credentials: &[AUTHENTIK_TOKEN],
+            address_hint: "auth.lan",
+            default_port: 9000,
+            setup: Setup {
+                title: "Create an API token in authentik",
+                steps: &[
+                    "In authentik, open Directory → Users → Create a service account and name it as follows, without a random password.\ndumbmonit",
+                    "Put that user in a group that can open the authentik interface, so it can read the system pages.",
+                    "Open Directory → Tokens and App passwords, create a token for that user with the intent API Token and no expiry, and copy its key.",
+                    "In DumbMonit, enter authentik's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(9000, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(9443, "tcp", "Only with the https scheme on authentik's own HTTPS port",),
+                    to_device_optional!(443, "tcp", "Only with the https scheme behind a reverse proxy",),
+                ],
+                permissions: &[],
+                warning: "authentik has no read-only role for its system pages: the token's user must be allowed into the interface, so keep the key only in DumbMonit. Pages the token cannot read are skipped, not failed.",
+            },
+            options: AUTHENTIK_APP_OPTIONS,
+        },
+        "vaultwarden" => CollectorView {
+            kind: "vaultwarden",
+            label: "Vaultwarden (beta)",
+            summary: "Liveness, version, open sign-ups, and with the admin token disabled-account and two-step login counts.",
+            examples: &["Vaultwarden"],
+            credential_types: &["none", "api_token"],
+            credentials: &[VAULTWARDEN_NO_ADMIN, VAULTWARDEN_ADMIN],
+            address_hint: "vault.example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Check Vaultwarden, and optionally read its admin page",
+                steps: &[
+                    "Nothing to install: check from the DumbMonit host that Vaultwarden answers.\ncurl https://vault.example.com/alive",
+                    "Optional, for account counts: enable the admin page with an ADMIN_TOKEN on the server, and keep the plain token you type on the /admin page.",
+                    "In DumbMonit, enter Vaultwarden's address; paste the admin token, or choose No admin token for the public checks only.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "API (HTTPS, default)",),
+                    to_device_optional!(80, "tcp", "Only with the http scheme option, inside a trusted network",),
+                ],
+                permissions: &[],
+                warning: "The admin token opens Vaultwarden's admin page and can change every setting: store it only in DumbMonit, or leave it out if you do not need the counts. DumbMonit reads counters only, never a name, e-mail address or vault item.",
+            },
+            options: VAULTWARDEN_APP_OPTIONS,
+        },
+        "mailcow" => CollectorView {
+            kind: "mailcow",
+            label: "mailcow (beta)",
+            summary: "Stopped containers, Postfix queue size and age, mail volume, mailboxes near their quota.",
+            examples: &["mailcow: dockerized"],
+            credential_types: &["api_token"],
+            credentials: &[MAILCOW_KEY],
+            address_hint: "mail.example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only API key in mailcow",
+                steps: &[
+                    "In mailcow, open System → Configuration → Access → API and find the Read-only access section.",
+                    "Tick Activate API, add DumbMonit's IP address to the allowed addresses and save.",
+                    "Copy the read-only key, then enter mailcow's address in DumbMonit and paste it.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "API (HTTPS, default)",),
+                    to_device_optional!(80, "tcp", "Only with the http scheme option",),
+                ],
+                permissions: &[],
+                warning: "mailcow only answers the addresses allowed on its API page: if DumbMonit reaches it through NAT or a relay agent, allow that address instead.",
+            },
+            options: MAILCOW_APP_OPTIONS,
+        },
         "paperless" => CollectorView {
             kind: "paperless",
             label: "Paperless-ngx",
@@ -7141,7 +7539,7 @@ fn guide_url(kind: &str) -> String {
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
-        | "immich" | "paperless" | "jellyfin" | "plex" | "gitlab" | "forgejo" | "pihole"
+        | "immich" | "sonarr" | "radarr" | "lidarr" | "prowlarr" | "qbittorrent" | "unifiprotect" | "frigate" | "keycloak" | "authentik" | "vaultwarden" | "mailcow" | "paperless" | "jellyfin" | "plex" | "gitlab" | "forgejo" | "pihole"
         | "adguard" | "nut" | "mikrotik" | "unifi" | "homeassistant" | "vsphere" | "redis"
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
@@ -7270,6 +7668,17 @@ mod tests {
         "plex",
         "gitlab",
         "forgejo",
+        "sonarr",
+        "radarr",
+        "lidarr",
+        "prowlarr",
+        "qbittorrent",
+        "unifiprotect",
+        "frigate",
+        "keycloak",
+        "authentik",
+        "vaultwarden",
+        "mailcow",
         "pihole",
         "adguard",
         "nut",
@@ -7844,6 +8253,17 @@ mod tests {
                 ],
             ),
             ("forgejo", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("sonarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("radarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("lidarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("prowlarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("qbittorrent", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("unifiprotect", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("frigate", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("keycloak", &["scheme", "port", "health_port", "health_scheme", "auth_realm", "realms", "insecure_tls", "request_timeout_seconds"]),
+            ("authentik", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("vaultwarden", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("mailcow", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             (
                 "unifi",
                 &[
@@ -8117,6 +8537,17 @@ mod tests {
             ("plex", "http", selfhosted::plex::DEFAULT_PORT),
             ("gitlab", "https", selfhosted::gitlab::DEFAULT_PORT),
             ("forgejo", "http", selfhosted::forgejo::DEFAULT_PORT),
+            ("sonarr", "http", selfhosted::arr::SONARR.port),
+            ("radarr", "http", selfhosted::arr::RADARR.port),
+            ("lidarr", "http", selfhosted::arr::LIDARR.port),
+            ("prowlarr", "http", selfhosted::arr::PROWLARR.port),
+            ("qbittorrent", "http", selfhosted::qbittorrent::DEFAULT_PORT),
+            ("unifiprotect", "https", selfhosted::protect::DEFAULT_PORT),
+            ("frigate", "http", selfhosted::frigate::DEFAULT_PORT),
+            ("keycloak", "http", selfhosted::keycloak::DEFAULT_PORT),
+            ("authentik", "http", selfhosted::authentik::DEFAULT_PORT),
+            ("vaultwarden", "https", selfhosted::vaultwarden::DEFAULT_PORT),
+            ("mailcow", "https", selfhosted::mailcow::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "scheme"), scheme, "« {kind} »");
             assert_eq!(defaut(kind, "port"), port.to_string(), "« {kind} »");
@@ -8708,6 +9139,17 @@ mod tests {
             ("plex", include_str!("../../../../docs/devices/plex.md")),
             ("gitlab", include_str!("../../../../docs/devices/gitlab.md")),
             ("forgejo", include_str!("../../../../docs/devices/forgejo.md")),
+            ("sonarr", include_str!("../../../../docs/devices/sonarr.md")),
+            ("radarr", include_str!("../../../../docs/devices/radarr.md")),
+            ("lidarr", include_str!("../../../../docs/devices/lidarr.md")),
+            ("prowlarr", include_str!("../../../../docs/devices/prowlarr.md")),
+            ("qbittorrent", include_str!("../../../../docs/devices/qbittorrent.md")),
+            ("unifiprotect", include_str!("../../../../docs/devices/unifiprotect.md")),
+            ("frigate", include_str!("../../../../docs/devices/frigate.md")),
+            ("keycloak", include_str!("../../../../docs/devices/keycloak.md")),
+            ("authentik", include_str!("../../../../docs/devices/authentik.md")),
+            ("vaultwarden", include_str!("../../../../docs/devices/vaultwarden.md")),
+            ("mailcow", include_str!("../../../../docs/devices/mailcow.md")),
             ("pihole", include_str!("../../../../docs/devices/pihole.md")),
             ("adguard", include_str!("../../../../docs/devices/adguard.md")),
             ("nut", include_str!("../../../../docs/devices/nut.md")),

@@ -21,6 +21,17 @@ All notable changes to this project are documented here. The format follows
   and the ports to open.
 - **Custom dashboards and a metrics explorer.** Build dashboards from widgets on a 12-column grid: chart (MetricsQL), single value with warning and critical levels, state of a monitor folder, active alerts, and Markdown notes. Drag, resize and reorder with mouse, touch or keyboard; phones get a single column. Each dashboard saves its time range and refresh interval. Dashboards are personal (any account) or shared (administrators), and travel with backups. The new metrics explorer (`/explore`) lists the `dumbmonit_*` metrics and their labels, completes names in a MetricsQL box, draws the result and adds it to a dashboard. New API: `/api/dashboards` and `/api/metrics/catalog`.
 
+- **Application integrations (beta).** Eleven new monitor types, written from the vendors' API documentation and tested on realistic responses, not yet against live instances:
+  - **Sonarr, Radarr, Lidarr and Prowlarr** (API key): health errors and warnings (the System → Status page), failing download clients and indexers, download queue errors, disk space, updates, and, for Prowlarr, indexers disabled after failures.
+  - **qBittorrent** (WebUI session or allowed address): torrents in error or stalled, lost connectivity (firewalled, disconnected), speeds, free space, torrents by state.
+  - **UniFi Protect** (local user): cameras offline or connected but not recording, NVR disks in failure, storage in use, recording switched off.
+  - **Frigate** (internal API, optional bearer token): cameras that stopped delivering frames, detector speed and hangs, frame rates, recording storage, updates.
+  - **Keycloak** (health checks, then an optional service-account client): readiness and database health, realms, active sessions and users per realm.
+  - **authentik** (API token): readiness, workers, failed system tasks, disconnected outposts, updates, users.
+  - **Vaultwarden** (public checks, optional admin token): liveness, version, open sign-ups, account counts. The admin session is kept between probes because its login is rate-limited.
+  - **mailcow** (read-only API key): stopped containers, Postfix queue size and age, mail volume, mailboxes close to their quota.
+
+  Thirty-nine built-in alert rules cover them (health errors, offline cameras, stuck queues, full disks, updates); each type has a setup guide and a documentation page in English and French. A host that does not answer is Monitor unreachable; a refused key or password is shown as a configuration error and not notified.
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key

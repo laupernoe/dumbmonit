@@ -127,6 +127,17 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	plex: Tv,
 	gitlab: GitBranch,
 	forgejo: GitFork,
+	sonarr: Tv,
+	radarr: Film,
+	lidarr: Disc3,
+	prowlarr: Waypoints,
+	qbittorrent: Cloud,
+	unifiprotect: ShieldCheck,
+	frigate: Radio,
+	keycloak: ShieldCheck,
+	authentik: ShieldCheck,
+	vaultwarden: Archive,
+	mailcow: Mail,
 	pihole: ShieldBan,
 	adguard: ShieldBan,
 	nut: BatteryCharging,
@@ -190,7 +201,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'sonarr', 'radarr', 'lidarr', 'prowlarr', 'qbittorrent', 'unifiprotect', 'frigate', 'keycloak', 'authentik', 'vaultwarden', 'mailcow', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'prometheus', 'otlp', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
@@ -229,6 +240,17 @@ const KIND_KEYWORDS: Record<string, string> = {
 	plex: 'media server movies tv shows music streaming transcode pms self-hosted app',
 	gitlab: 'forge source control git ci cd pipeline sidekiq runner self-hosted app devops',
 	forgejo: 'forge gitea source control git self-hosted app devops actions runner',
+	sonarr: 'tv series shows pvr arr usenet torrent download self-hosted app',
+	radarr: 'movies films pvr arr usenet torrent download self-hosted app',
+	lidarr: 'music albums artists pvr arr usenet torrent download self-hosted app',
+	prowlarr: 'indexers trackers usenet torrent arr proxy search self-hosted app',
+	qbittorrent: 'torrent bittorrent download client seeding webui self-hosted app',
+	unifiprotect: 'ubiquiti unifi protect cameras nvr video surveillance cctv recording doorbell',
+	frigate: 'cameras nvr video surveillance cctv object detection coral tpu rtsp self-hosted app',
+	keycloak: 'identity sso oidc saml login realm iam authentication self-hosted app',
+	authentik: 'identity sso oidc saml ldap login outpost iam authentication self-hosted app',
+	vaultwarden: 'bitwarden passwords password manager vault self-hosted app',
+	mailcow: 'mail email server dockerized postfix dovecot sogo rspamd mailboxes queue quota self-hosted',
 	pihole: 'dns ad blocker adblock blocklist gravity ftl dhcp sinkhole privacy',
 	adguard: 'dns ad blocker adblock blocklist filter adguardhome doh dot dhcp sinkhole privacy',
 	nut: 'ups battery power outage upsd upsc network ups tools apc eaton cyberpower synology',

@@ -378,6 +378,52 @@ de tourner.
 | Runners Forgejo/Gitea tous hors ligne | Chaque runner Actions est hors ligne, et au moins un est enregistré (`dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0`). | < 1 | 10 min | Avis (`warning`) | 6 h |
 | Tâche planifiée Forgejo/Gitea en retard | Une tâche planifiée (contrôle de dépôt, nettoyage, vérificateur de mise à jour) n'a pas tourné à son propre intervalle (`dumbmonit_forgejo_cron_task_overdue`). | > 0 | 30 min | Avis (`warning`) | 24 h |
 
+### Applications médias, identité et messagerie {#media-identity-and-mail-applications}
+
+Sonarr, Radarr, Lidarr, Prowlarr, qBittorrent, UniFi Protect, Frigate, Keycloak, authentik, Vaultwarden et mailcow ([surveillances](../devices/index.md)). Elles continuent de répondre alors que le service qu'elles rendent est cassé : un client de téléchargement tombé, une caméra décrochée, une base de données disparue derrière une page de connexion. Une application qui ne répond plus du tout est Surveillance inaccessible.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Sonarr health error | Sonarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_sonarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Sonarr queue has errors | Un élément de la file de téléchargement est en erreur (téléchargement échoué, import bloqué) depuis une demi-heure (`dumbmonit_sonarr_queue_has_errors`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Sonarr disk almost full | Un disque que Sonarr signale est plein à plus de 90 % (`dumbmonit_sonarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Sonarr update available | Une version plus récente de Sonarr existe (`dumbmonit_sonarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Radarr health error | Radarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_radarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Radarr queue has errors | Un élément de la file de téléchargement est en erreur (téléchargement échoué, import bloqué) depuis une demi-heure (`dumbmonit_radarr_queue_has_errors`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Radarr disk almost full | Un disque que Radarr signale est plein à plus de 90 % (`dumbmonit_radarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Radarr update available | Une version plus récente de Radarr existe (`dumbmonit_radarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Lidarr health error | Lidarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_lidarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Lidarr queue has errors | Un élément de la file de téléchargement est en erreur (téléchargement échoué, import bloqué) depuis une demi-heure (`dumbmonit_lidarr_queue_has_errors`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Lidarr disk almost full | Un disque que Lidarr signale est plein à plus de 90 % (`dumbmonit_lidarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Lidarr update available | Une version plus récente de Lidarr existe (`dumbmonit_lidarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr health error | Prowlarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_prowlarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Prowlarr disk almost full | Un disque que Prowlarr signale est plein à plus de 90 % (`dumbmonit_prowlarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Prowlarr update available | Une version plus récente de Prowlarr existe (`dumbmonit_prowlarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr indexers disabled | Prowlarr a désactivé des indexeurs après des échecs répétés (`dumbmonit_prowlarr_indexers_disabled`) : Sonarr, Radarr et Lidarr ne trouvent plus de versions par eux. | > 0 | 1 h | Avis (`warning`) | 24 h |
+| qBittorrent torrents in error | Des torrents sont en erreur ou ont perdu leurs fichiers (`dumbmonit_qbittorrent_torrents_errored`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| qBittorrent disconnected | qBittorrent est « firewalled » ou déconnecté (`dumbmonit_qbittorrent_connected == bool 0`) : rien n'est téléchargé ni partagé. | > 0 | 15 min | Avis (`warning`) | 6 h |
+| qBittorrent free space low | Moins de 5 Gio libres dans le dossier de téléchargement (`dumbmonit_qbittorrent_free_space_bytes / 1073741824`) ; se rétablit au-dessus de 6 Gio. | < 5 GiB | 30 min | Avis (`warning`) | 24 h |
+| Protect camera offline | Une caméra UniFi Protect est déconnectée de son NVR (`dumbmonit_unifiprotect_camera_online == bool 0`). La notification nomme la caméra. | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Protect camera not recording | Une caméra est connectée et réglée pour enregistrer, mais n'enregistre pas (`dumbmonit_unifiprotect_cameras_not_recording`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Protect NVR disk unhealthy | Le NVR signale un disque défaillant (`dumbmonit_unifiprotect_disks_unhealthy`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Protect recording disabled | L'enregistrement est coupé sur le NVR (`dumbmonit_unifiprotect_recording_disabled`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Frigate camera offline | Une caméra ne livre aucune image à Frigate (`dumbmonit_frigate_camera_online == bool 0`). La notification nomme la caméra. | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Frigate detector stuck | Un détecteur est sur la même inférence depuis plus de 30 secondes (`dumbmonit_frigate_detector_busy_seconds`). | > 30 s | 2 min | Avis (`warning`) | 1 h |
+| Frigate storage almost full | Le disque des enregistrements est plein à plus de 90 % (`dumbmonit_frigate_storage_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Frigate update available | Une version plus récente de Frigate existe (`dumbmonit_frigate_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Keycloak not ready | Keycloak répond mais son contrôle de disponibilité est DOWN, le plus souvent la base de données (`dumbmonit_keycloak_ready == bool 0`) : personne ne peut se connecter. | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Keycloak realm disabled | Un realm est désactivé (`dumbmonit_keycloak_realms_disabled`) : ses utilisateurs ne peuvent pas se connecter. | > 0 | 1 h | Info (`info`) | 7 d |
+| authentik not ready | authentik répond mais son contrôle de disponibilité échoue (`dumbmonit_authentik_ready == bool 0`) : base de données ou cache tombé. | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| authentik has no worker | Aucun worker ne répond (`dumbmonit_authentik_workers == bool 0`) : synchronisation, courriels et nettoyage s'arrêtent. | > 0 | 10 min | Avertissement (`critical`) | 1 h |
+| authentik task failed | Une tâche système a échoué à sa dernière exécution (`dumbmonit_authentik_tasks_failed`). La notification nomme la tâche. | > 0 | 1 h | Avis (`warning`) | 24 h |
+| authentik outpost disconnected | Un avant-poste qui sert des fournisseurs ne s'est pas manifesté depuis cinq minutes (`dumbmonit_authentik_outposts_disconnected`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| authentik update available | Une version plus récente d'authentik existe (`dumbmonit_authentik_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Vaultwarden sign-ups open | N'importe qui pouvant atteindre le coffre peut créer un compte (`dumbmonit_vaultwarden_signups_open`). | > 0 | 1 h | Info (`info`) | 7 d |
+| mailcow container down | Un conteneur mailcow ne tourne pas (`dumbmonit_mailcow_container_up == bool 0`). La notification nomme le conteneur. | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| mailcow mail queue stuck | Le plus ancien message de la file de Postfix attend depuis plus de quatre heures (`dumbmonit_mailcow_queue_oldest_seconds / 3600`). | > 4 h | 15 min | Avis (`warning`) | 6 h |
+| mailcow mail volume almost full | Le volume qui contient les boîtes est plein à plus de 90 % (`dumbmonit_mailcow_vmail_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| mailcow mailbox near quota | Une boîte est à 90 % de son quota ou plus (`dumbmonit_mailcow_mailboxes_near_quota`). | > 0 | 1 h | Info (`info`) | 24 h |
+
 ### Appareils clients {#client-devices}
 
 Une règle, partagée par chaque intégration qui suit des appareils qui
