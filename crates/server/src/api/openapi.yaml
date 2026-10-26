@@ -6208,7 +6208,7 @@ paths:
     get:
       operationId: listOnCallPeople
       tags: [On-call]
-      summary: Accounts that can be on call, with their number of contact methods
+      summary: Accounts that can be on call (name and on-call state; login, role and contact count for administrators and the person themselves)
       x-token-scope: read
       responses:
         "200":
@@ -10191,11 +10191,12 @@ components:
       type: object
       properties:
         id: { type: integer, format: int64 }
-        username: { type: string }
         display_name: { type: string }
-        role: { type: string, enum: [admin, operator, viewer] }
         disabled: { type: boolean }
-        contacts: { type: integer, description: Enabled contact methods. }
+        on_call: { type: boolean, description: On call right now on at least one schedule. }
+        username: { type: string, description: Administrators and the person themselves only. }
+        role: { type: string, enum: [admin, operator, viewer], description: Administrators and the person themselves only. }
+        contacts: { type: integer, description: Enabled contact methods. Administrators and the person themselves only. }
     OnCallEntry:
       type: object
       properties:

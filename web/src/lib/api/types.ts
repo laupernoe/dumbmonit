@@ -4935,12 +4935,15 @@ export interface CveFilters {
 /** A person who can be put on a rotation. */
 export interface Person {
 	id: number;
-	username: string;
 	display_name: string;
-	role: Role;
 	disabled: boolean;
+	/** On call right now on at least one schedule. */
+	on_call: boolean;
+	/** The fields below are only sent to administrators and to the person themselves. */
+	username?: string;
+	role?: Role;
 	/** Enabled contact methods. */
-	contacts: number;
+	contacts?: number;
 }
 
 /** Hours a layer is active, 0 = Monday … 6 = Sunday. `end <= start` crosses midnight; both 0 = all day. */

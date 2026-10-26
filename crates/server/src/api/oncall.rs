@@ -79,28 +79,54 @@ fn to_wire(at: DateTime<Utc>) -> String {
 #[derive(Debug, Serialize)]
 pub struct Person {
     pub id: i64,
-    pub username: String,
     pub display_name: String,
-    pub role: &'static str,
     pub disabled: bool,
+    /// Cette personne est d'astreinte à cet instant, sur au moins un planning.
+    pub on_call: bool,
+    /// Réservés aux administrateurs et à la personne elle-même.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub username: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub role: Option<&'static str>,
     /// Moyens de contact actifs.
-    pub contacts: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contacts: Option<usize>,
 }
 
 /// `GET /api/oncall/people`
-pub async fn people(State(state): State<AppState>) -> ApiResult<Json<Vec<Person>>> {
+///
+/// Tous les rôles voient le nom et l'état d'astreinte (de quoi composer un
+/// planning) ; l'identifiant de connexion, le rôle et les moyens de contact ne
+/// sont rendus qu'aux administrateurs et à la personne concernée.
+pub async fn people(
+    State(state): State<AppState>,
+    Authenticated(caller): Authenticated,
+) -> ApiResult<Json<Vec<Person>>> {
     let accounts = users::list(&state.pool).await?;
-    let contacts = store::list_contacts(&state.pool, &state.cipher, None).await?;
+    let now = Utc::now();
+    let schedules = runner::load_schedules(&state.pool, now).await?;
+    let on_call: HashSet<i64> = entries(&schedules, now).iter().filter_map(|e| e.user_id).collect();
+    let contacts = if caller.role.is_admin() {
+        store::list_contacts(&state.pool, &state.cipher, None).await?
+    } else {
+        store::list_contacts(&state.pool, &state.cipher, Some(caller.id)).await?
+    };
     Ok(Json(
         accounts
             .into_iter()
-            .map(|user| Person {
-                contacts: contacts.iter().filter(|c| c.user_id == user.id && c.enabled).count(),
-                id: user.id,
-                username: user.username,
-                display_name: user.display_name,
-                role: user.role.as_str(),
-                disabled: user.disabled,
+            .map(|user| {
+                let full = caller.role.is_admin() || caller.id == user.id;
+                Person {
+                    id: user.id,
+                    display_name: user.display_name,
+                    disabled: user.disabled,
+                    on_call: on_call.contains(&user.id),
+                    contacts: full.then(|| {
+                        contacts.iter().filter(|c| c.user_id == user.id && c.enabled).count()
+                    }),
+                    role: full.then(|| user.role.as_str()),
+                    username: full.then_some(user.username),
+                }
             })
             .collect(),
     ))
