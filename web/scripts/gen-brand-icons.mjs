@@ -52,6 +52,7 @@ const KINDS = {
 	pfsense: 'pfsense',
 	unraid: 'unraid',
 	veeam: 'veeam',
+	duplicati: 'duplicati',
 	tailscale: 'tailscale',
 	fortigate: 'fortinet',
 	meraki: 'cisco',

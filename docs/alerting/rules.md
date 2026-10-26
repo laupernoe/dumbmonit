@@ -596,6 +596,25 @@ See [Veeam Backup & Replication](../devices/veeam.md). Jobs are labelled `job` a
 | Veeam repository nearly full | A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Veeam license expiring | The Veeam license expires in less than 30 days: jobs stop at the end of the grace period (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
 
+### Kopia
+
+See [Kopia](../devices/kopia.md). Sources are labelled `source` (`user@host:/path`). Beta: not yet tested on a real server.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Kopia snapshot with errors | The last snapshot of a Kopia source finished with errors: some files were not saved (`dumbmonit_kopia_source_last_snapshot_errors`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
+| Kopia snapshot too old | A scheduled Kopia source has no snapshot for more than two days (`dumbmonit_kopia_source_last_snapshot_age_seconds`, scheduled sources only). | > 2 d | 30 min | Advisory (`warning`) | 1 d |
+| Kopia repository disconnected | The Kopia server is not connected to its repository: no snapshot can run (`dumbmonit_kopia_repo_connected`). | < 1 | 10 min | Warning (`critical`) | 6 h |
+
+### Duplicati
+
+See [Duplicati](../devices/duplicati.md). Backups are labelled `backup` and `backup_id`. Beta: not yet tested on a real server.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Duplicati backup failed | The last run of a Duplicati backup failed: what it protects has no new version (`dumbmonit_duplicati_backup_failed`). | > 0 | 5 min | Warning (`critical`) | 1 d |
+| Duplicati backup too old | A scheduled Duplicati backup has not succeeded for more than two days (`dumbmonit_duplicati_backup_last_success_age_seconds`, scheduled backups only). | > 2 d | 30 min | Advisory (`warning`) | 1 d |
+
 ### Tailscale
 
 See [Tailscale](../devices/tailscale.md). Devices are labelled `device`, the first label of their MagicDNS name.

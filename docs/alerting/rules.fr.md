@@ -649,6 +649,25 @@ Voir [Veeam Backup & Replication](../devices/veeam.md). Les jobs sont
 | Dépôt Veeam presque plein | Un dépôt de sauvegarde Veeam est plein à plus de 90 % : les prochains jobs échoueront par manque d'espace (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 j |
 | Licence Veeam arrivant à expiration | La licence Veeam expire dans moins de 30 jours : les jobs s'arrêtent à la fin de la période de grâce (`dumbmonit_veeam_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
 
+### Kopia {#kopia}
+
+Voir [Kopia](../devices/kopia.md). Les sources sont étiquetées `source` (`utilisateur@machine:/chemin`). Bêta : pas encore testé sur un vrai serveur.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Instantané Kopia avec erreurs | Le dernier instantané d'une source Kopia s'est terminé avec des erreurs : certains fichiers n'ont pas été sauvegardés (`dumbmonit_kopia_source_last_snapshot_errors`). | > 0 | 5 min | Avis (`warning`) | 1 j |
+| Instantané Kopia trop ancien | Une source Kopia planifiée n'a pas d'instantané depuis plus de deux jours (`dumbmonit_kopia_source_last_snapshot_age_seconds`, sources planifiées seulement). | > 2 j | 30 min | Avis (`warning`) | 1 j |
+| Dépôt Kopia déconnecté | Le serveur Kopia n'est pas connecté à son dépôt : aucun instantané ne peut s'exécuter (`dumbmonit_kopia_repo_connected`). | < 1 | 10 min | Avertissement (`critical`) | 6 h |
+
+### Duplicati {#duplicati}
+
+Voir [Duplicati](../devices/duplicati.md). Les sauvegardes sont étiquetées `backup` et `backup_id`. Bêta : pas encore testé sur un vrai serveur.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Sauvegarde Duplicati en échec | La dernière exécution d'une sauvegarde Duplicati a échoué : ce qu'elle protège n'a pas de nouvelle version (`dumbmonit_duplicati_backup_failed`). | > 0 | 5 min | Avertissement (`critical`) | 1 j |
+| Sauvegarde Duplicati trop ancienne | Une sauvegarde Duplicati planifiée n'a pas réussi depuis plus de deux jours (`dumbmonit_duplicati_backup_last_success_age_seconds`, sauvegardes planifiées seulement). | > 2 j | 30 min | Avis (`warning`) | 1 j |
+
 ### Tailscale {#tailscale}
 
 Voir [Tailscale](../devices/tailscale.md). Les appareils sont étiquetés

@@ -3532,6 +3532,44 @@ const VEEAM_OPTIONS: &[OptionView] = &[
     DEVICE_STALE_DAYS,
 ];
 
+/// Identifiants du serveur Kopia (`--server-username` / `--server-password`),
+/// envoyés en authentification HTTP Basic (`collectors/kopia`).
+const KOPIA_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Server user name and password",
+    help: "The user name and password the Kopia server was started with.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The --server-username of the Kopia server.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "The --server-password of the Kopia server.", "", true),
+    ],
+};
+
+const KOPIA_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("51515"), SELF_SIGNED_TLS, VENDOR_TIMEOUT];
+
+/// Mot de passe de l'interface web de Duplicati 2.1+ (`collectors/duplicati`) :
+/// Duplicati n'a pas de compte, seulement ce mot de passe.
+const DUPLICATI_PASSWORD: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Web interface password",
+    help: "Duplicati has no user accounts: the password of its web interface is all it asks for.",
+    fields: &[cred_secret(
+        "token",
+        "Web interface password",
+        "Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const DUPLICATI_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("8200"), APP_TLS, VENDOR_TIMEOUT];
+
 /// Client OAuth Tailscale à la portée `devices:core:read`.
 const TAILSCALE_OAUTH: CredentialView = CredentialView {
     kind: "username_password",
@@ -5999,6 +6037,55 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: VEEAM_OPTIONS,
         },
+        "kopia" => CollectorView {
+            kind: "kopia",
+            label: "Kopia",
+            summary: "Beta. A Kopia server through its REST API: the last snapshot of each source (age, errors, size, files), sources that missed their schedule, and the repository connection.",
+            examples: &["Kopia server", "KopiaUI", "Kopia in Docker"],
+            credential_types: &["username_password", "none"],
+            credentials: &[KOPIA_LOGIN, NO_AUTH],
+            address_hint: "nas.lan",
+            default_port: 51515,
+            setup: Setup {
+                title: "Start the Kopia server with its own user name and password",
+                steps: &[
+                    "On the machine that runs the backups, start the Kopia server with a generated certificate and its own user name and password.\nkopia server start --address=0.0.0.0:51515 --tls-generate-cert --server-username=dumbmonit --server-password=PASTE-A-LONG-RANDOM-PASSWORD",
+                    "Check that the repository is connected to that server and that the DumbMonit server can reach port 51515.",
+                    "In DumbMonit, enter the server address (for example nas.lan) with that user name and password.",
+                    "Tick Accept an unverifiable certificate: the generated certificate is self-signed. If the server runs with --insecure, choose the http protocol instead.",
+                ],
+                ports: &[to_device!(51515, "tcp", "Server API (HTTPS, default)")],
+                permissions: &[
+                    "Server user name and password\nKopia has no read-only API account",
+                ],
+                warning: "Kopia's API has no read-only account: the server password also lets its holder start and delete snapshots. DumbMonit only reads, but keep port 51515 on your local network.",
+            },
+            options: KOPIA_OPTIONS,
+        },
+        "duplicati" => CollectorView {
+            kind: "duplicati",
+            label: "Duplicati",
+            summary: "Beta. A Duplicati server through its API: the age of each task's last successful backup, its last result, duration, size, warnings and errors, and the task running now.",
+            examples: &["Duplicati 2.1", "Duplicati in Docker", "Duplicati on a NAS"],
+            credential_types: &["api_token"],
+            credentials: &[DUPLICATI_PASSWORD],
+            address_hint: "nas.lan",
+            default_port: 8200,
+            setup: Setup {
+                title: "Let DumbMonit read the Duplicati API",
+                steps: &[
+                    "In the Duplicati web interface, open Settings and set a long random password for the interface: Duplicati 2.1 requires one.",
+                    "If the server only listens on the machine itself, start it with these options so that DumbMonit can reach it.\n--webservice-interface=any --webservice-allowed-hostnames=*",
+                    "In DumbMonit, enter the Duplicati address (for example nas.lan) and paste that password.",
+                ],
+                ports: &[to_device!(8200, "tcp", "Web interface and API (HTTP, default)")],
+                permissions: &[
+                    "Interface password\nDuplicati has no accounts or read-only mode",
+                ],
+                warning: "Duplicati 2.1 or later is required: version 2.0 signs in through a different mechanism that DumbMonit does not use. The password gives full access, so keep port 8200 on your local network.",
+            },
+            options: DUPLICATI_OPTIONS,
+        },
         "tailscale" => CollectorView {
             kind: "tailscale",
             label: "Tailscale",
@@ -6355,6 +6442,8 @@ fn guide_url(kind: &str) -> String {
         | "website" => kind,
         | "sophos" | "paloalto" | "sonicwall" | "openvpn" | "xcpng" | "nutanix" | "push"
         | "sophos" | "qnap" | "ceph" | "minio" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "activedirectory" | "pfsense" | "unraid" | "veeam" | "kopia" | "duplicati"
+        | "tailscale" | "fortigate" | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -6499,6 +6588,8 @@ mod tests {
         "pfsense",
         "unraid",
         "veeam",
+        "kopia",
+        "duplicati",
         "tailscale",
         "fortigate",
         "arubacentral",
@@ -7072,6 +7163,8 @@ mod tests {
                     "device_stale_days",
                 ],
             ),
+            ("kopia", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("duplicati", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
             ("arubacentral", &["token_address", "request_timeout_seconds"]),
@@ -7276,6 +7369,8 @@ mod tests {
             ("pfsense", dumbmonit_collectors::pfsense::DEFAULT_PORT),
             ("unraid", dumbmonit_collectors::unraid::DEFAULT_PORT),
             ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
+            ("kopia", dumbmonit_collectors::kopia::DEFAULT_PORT),
+            ("duplicati", dumbmonit_collectors::duplicati::DEFAULT_PORT),
             ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
             ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
             ("omada", dumbmonit_collectors::omada::DEFAULT_PORT),
@@ -7310,6 +7405,13 @@ mod tests {
             "qnap",
             "ceph",
             "minio",
+            "kopia",
+            "duplicati",
+            "tailscale",
+            "fortigate",
+            "sophos",
+            "xcpng",
+            "nutanix",
         ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
@@ -7795,6 +7897,8 @@ mod tests {
             ("pfsense", include_str!("../../../../docs/devices/pfsense.md")),
             ("unraid", include_str!("../../../../docs/devices/unraid.md")),
             ("veeam", include_str!("../../../../docs/devices/veeam.md")),
+            ("kopia", include_str!("../../../../docs/devices/kopia.md")),
+            ("duplicati", include_str!("../../../../docs/devices/duplicati.md")),
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
             ("meraki", include_str!("../../../../docs/devices/meraki.md")),
