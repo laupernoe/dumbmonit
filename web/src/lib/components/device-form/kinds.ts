@@ -138,6 +138,11 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	redis: DatabaseZap,
 	mongodb: Leaf,
 	rabbitmq: Inbox,
+	mssql: Database,
+	oracle: Database,
+	elasticsearch: DatabaseZap,
+	influxdb: Database,
+	kafka: Workflow,
 	crowdsec: ShieldAlert,
 	traefik: Waypoints,
 	caddy: Route,
@@ -179,7 +184,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'mssql', 'oracle', 'elasticsearch', 'influxdb', 'kafka', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
@@ -230,6 +235,11 @@ const KIND_KEYWORDS: Record<string, string> = {
 	redis: 'redis valkey keydb cache key value in-memory database db replication',
 	mongodb: 'mongo database db nosql document replica set wiredtiger',
 	rabbitmq: 'rabbit amqp mqtt message broker queue messaging erlang',
+	mssql: 'sql server microsoft mssql tds database db always on availability group agent job',
+	oracle: 'oracle database db ords rest tablespace data guard dataguard rman sql',
+	elasticsearch: 'elasticsearch opensearch elastic search index shard cluster elk kibana lucene',
+	influxdb: 'influx influxdb time series tsdb metrics telegraf flux database db',
+	kafka: 'kafka redpanda confluent event streaming broker topic partition consumer group lag message',
 	crowdsec: 'security ips ids bouncer ban firewall fail2ban intrusion attack blocklist',
 	traefik: 'reverse proxy router load balancer ingress docker kubernetes certificate acme lets encrypt 502 503',
 	caddy: 'reverse proxy web server upstream load balancer certificate acme lets encrypt 502 503',

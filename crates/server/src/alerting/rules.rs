@@ -4868,6 +4868,263 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base("rabbitmq_queue_not_running", "RabbitMQ queue unavailable", RuleKind::Threshold, "dumbmonit_rabbitmq_queue_running")
         },
+        // --- SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka ---
+        Rule {
+            description: "A database is SUSPECT, RECOVERY_PENDING, OFFLINE or EMERGENCY."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("mssql_database_unavailable", "SQL Server database unavailable", RuleKind::Threshold, "dumbmonit_mssql_database_online")
+        },
+        Rule {
+            description: "A request has been waiting on a lock for more than 5 minutes: a transaction was probably left open."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 300.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("mssql_blocking", "SQL Server blocked requests", RuleKind::Threshold, "dumbmonit_mssql_longest_block_seconds")
+        },
+        Rule {
+            description: "A volume holding database files is more than 90 % full; clears below 85 %."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("mssql_volume_almost_full", "SQL Server volume almost full", RuleKind::Threshold, "dumbmonit_mssql_volume_used_percent")
+        },
+        Rule {
+            description: "The last run of an enabled SQL Server Agent job failed (backups, maintenance)."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(86400)),
+            ..base("mssql_agent_job_failed", "SQL Server Agent job failed", RuleKind::Threshold, "dumbmonit_mssql_agent_job_last_ok")
+        },
+        Rule {
+            description: "A database replica of an availability group is not synchronizing in good health."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("mssql_alwayson_unhealthy", "SQL Server AlwaysOn replica unhealthy", RuleKind::Threshold, "dumbmonit_mssql_alwayson_sync_health")
+        },
+        Rule {
+            description: "User sessions use more than 90 % of the configured connection limit. No series without a limit."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("mssql_sessions_high", "SQL Server connections near the limit", RuleKind::Threshold, "dumbmonit_mssql_sessions_used_percent")
+        },
+        Rule {
+            description: "The instance status is not OPEN (MOUNTED, STARTED...): the database serves nothing."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("oracle_instance_not_open", "Oracle instance not open", RuleKind::Threshold, "dumbmonit_oracle_instance_open")
+        },
+        Rule {
+            description: "A tablespace is more than 90 % full of its maximum size; clears below 85 %."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("oracle_tablespace_almost_full", "Oracle tablespace almost full", RuleKind::Threshold, "dumbmonit_oracle_tablespace_used_percent")
+        },
+        Rule {
+            description: "Sessions use more than 90 % of the sessions parameter (ORA-00018 when it is reached)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("oracle_sessions_near_limit", "Oracle sessions near the limit", RuleKind::Threshold, "dumbmonit_oracle_sessions_used_percent")
+        },
+        Rule {
+            description: "A standby applies redo more than 10 minutes behind the primary."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 600.0,
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("oracle_dataguard_lag", "Oracle Data Guard apply lag", RuleKind::Threshold, "dumbmonit_oracle_dataguard_apply_lag_seconds")
+        },
+        Rule {
+            description: "The fast recovery area is more than 90 % full: archiving can stall and freeze the database."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Critical,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("oracle_recovery_area_full", "Oracle recovery area almost full", RuleKind::Threshold, "dumbmonit_oracle_recovery_area_used_percent")
+        },
+        Rule {
+            description: "At least one scheduler job run failed in the last 24 hours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(86400)),
+            ..base("oracle_scheduler_job_failed", "Oracle scheduler job failed", RuleKind::Threshold, "dumbmonit_oracle_scheduler_jobs_failed_24h")
+        },
+        Rule {
+            description: "The cluster status is red: at least one primary shard is not allocated and part of the data is unavailable."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("elasticsearch_cluster_red", "Elasticsearch cluster red", RuleKind::Threshold, "dumbmonit_elasticsearch_cluster_status")
+        },
+        Rule {
+            description: "The cluster has been yellow for 30 minutes: replicas are missing and the next node failure will lose data."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(1800),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_cluster_yellow", "Elasticsearch cluster yellow", RuleKind::Threshold, "dumbmonit_elasticsearch_cluster_status == 1")
+        },
+        Rule {
+            description: "Shards have stayed unassigned for 15 minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_unassigned_shards", "Elasticsearch unassigned shards", RuleKind::Threshold, "dumbmonit_elasticsearch_unassigned_shards")
+        },
+        Rule {
+            description: "A node's data disk is more than 85 % full (the high watermark is 90 %, the read-only flood stage 95 %); clears below 80 %."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            clear_threshold: Some(80.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_disk_almost_full", "Elasticsearch node disk almost full", RuleKind::Threshold, "dumbmonit_elasticsearch_node_disk_used_percent")
+        },
+        Rule {
+            description: "A node's JVM heap stays above 90 % for 15 minutes: garbage collection will slow the node."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_heap_high", "Elasticsearch JVM heap pressure", RuleKind::Threshold, "dumbmonit_elasticsearch_node_heap_used_percent")
+        },
+        Rule {
+            description: "InfluxDB answers its health check with a failure."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("influxdb_unhealthy", "InfluxDB unhealthy", RuleKind::Threshold, "dumbmonit_influxdb_healthy")
+        },
+        Rule {
+            description: "InfluxDB is up but does not report itself ready for queries and writes."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("influxdb_not_ready", "InfluxDB not ready", RuleKind::Threshold, "dumbmonit_influxdb_ready")
+        },
+        Rule {
+            description: "More than 10 API requests answered with a 5xx status in the last 15 minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 10.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("influxdb_request_errors", "InfluxDB server errors", RuleKind::Threshold, "increase_prometheus(dumbmonit_influxdb_http_requests_5xx_total[15m])")
+        },
+        Rule {
+            description: "A partition has no leader: reads and writes to it fail."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("kafka_offline_partitions", "Kafka partitions offline", RuleKind::Threshold, "dumbmonit_kafka_offline_partitions")
+        },
+        Rule {
+            description: "Partitions have fewer in-sync replicas than replicas for 10 minutes: a broker is down or lagging."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("kafka_under_replicated", "Kafka under-replicated partitions", RuleKind::Threshold, "dumbmonit_kafka_under_replicated_partitions")
+        },
+        Rule {
+            description: "The cluster reports no controller: no leader election is possible."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("kafka_no_controller", "Kafka without controller", RuleKind::Threshold, "dumbmonit_kafka_controller_present")
+        },
+        Rule {
+            description: "A consumer group is more than 10 000 messages behind for 15 minutes. Adjust the threshold to the traffic of your topics."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 10000.0,
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("kafka_consumer_lag", "Kafka consumer group lag", RuleKind::Threshold, "dumbmonit_kafka_consumer_group_lag_total")
+        },
         // --- CrowdSec (`collectors/crowdsec`) ---
         Rule {
             description: "The CrowdSec Local API does not answer: no decision is taken or handed to the bouncers."
@@ -7381,6 +7638,31 @@ mod tests {
             "rabbitmq_partition",
             "rabbitmq_queue_no_consumer",
             "rabbitmq_queue_not_running",
+            // SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka.
+            "mssql_database_unavailable",
+            "mssql_blocking",
+            "mssql_volume_almost_full",
+            "mssql_agent_job_failed",
+            "mssql_alwayson_unhealthy",
+            "mssql_sessions_high",
+            "oracle_instance_not_open",
+            "oracle_tablespace_almost_full",
+            "oracle_sessions_near_limit",
+            "oracle_dataguard_lag",
+            "oracle_recovery_area_full",
+            "oracle_scheduler_job_failed",
+            "elasticsearch_cluster_red",
+            "elasticsearch_cluster_yellow",
+            "elasticsearch_unassigned_shards",
+            "elasticsearch_disk_almost_full",
+            "elasticsearch_heap_high",
+            "influxdb_unhealthy",
+            "influxdb_not_ready",
+            "influxdb_request_errors",
+            "kafka_offline_partitions",
+            "kafka_under_replicated",
+            "kafka_no_controller",
+            "kafka_consumer_lag",
             "crowdsec_lapi_down",
             "crowdsec_bouncer_stale",
             "crowdsec_no_logs_read",
@@ -7862,6 +8144,31 @@ mod tests {
             "dumbmonit_rabbitmq_queue_messages_ready",
             "dumbmonit_rabbitmq_queue_consumers",
             "dumbmonit_rabbitmq_queue_running",
+            // SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka (`collectors/{mssql,oracle,
+            // elasticsearch,influxdb,kafka}`).
+            "dumbmonit_mssql_database_online",
+            "dumbmonit_mssql_longest_block_seconds",
+            "dumbmonit_mssql_volume_used_percent",
+            "dumbmonit_mssql_agent_job_last_ok",
+            "dumbmonit_mssql_alwayson_sync_health",
+            "dumbmonit_mssql_sessions_used_percent",
+            "dumbmonit_oracle_instance_open",
+            "dumbmonit_oracle_tablespace_used_percent",
+            "dumbmonit_oracle_sessions_used_percent",
+            "dumbmonit_oracle_dataguard_apply_lag_seconds",
+            "dumbmonit_oracle_recovery_area_used_percent",
+            "dumbmonit_oracle_scheduler_jobs_failed_24h",
+            "dumbmonit_elasticsearch_cluster_status",
+            "dumbmonit_elasticsearch_unassigned_shards",
+            "dumbmonit_elasticsearch_node_disk_used_percent",
+            "dumbmonit_elasticsearch_node_heap_used_percent",
+            "dumbmonit_influxdb_healthy",
+            "dumbmonit_influxdb_ready",
+            "dumbmonit_influxdb_http_requests_5xx_total",
+            "dumbmonit_kafka_offline_partitions",
+            "dumbmonit_kafka_under_replicated_partitions",
+            "dumbmonit_kafka_controller_present",
+            "dumbmonit_kafka_consumer_group_lag_total",
             "dumbmonit_crowdsec_lapi_up",
             "dumbmonit_crowdsec_bouncer_requests_total",
             "dumbmonit_crowdsec_lines_read_total",
