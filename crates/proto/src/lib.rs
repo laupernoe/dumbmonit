@@ -10,6 +10,7 @@ mod credential;
 mod description;
 mod discovery;
 pub mod env;
+mod logs;
 mod push;
 mod sample;
 mod selfupdate;
@@ -36,6 +37,9 @@ pub use discovery::{
     DiscoveredService, DiscoveryReport, DiscoveryScanJob, Fingerprint, FingerprintProbe, HttpMatch,
     MAX_DISCOVERY_HOSTS, PrefillSpec, PrefillValue, ScanDepth, ScanPhase, ScanProgress, Transport,
     VersionRule,
+};
+pub use logs::{
+    LOGS_PATH, LogBatch, LogLine, LogsSetting, MAX_LOG_LINES, MAX_LOG_MESSAGE, level_rank,
 };
 pub use push::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,

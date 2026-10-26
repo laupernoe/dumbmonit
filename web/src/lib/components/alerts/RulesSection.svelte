@@ -279,6 +279,14 @@
 							: m.alerts_rules_op_lte({ amount })
 			);
 		}
+		if (rule.kind === 'log_pattern') {
+			parts.push(
+				m.logalert_window_scope({
+					window: formatDuration(rule.params.log_window_secs ?? 300),
+					scope: rule.params.log_per_target === false ? m.logalert_scope_all() : m.logalert_scope_target()
+				})
+			);
+		}
 		parts.push(
 			rule.for_secs > 0
 				? m.alerts_rules_for({ duration: formatDuration(rule.for_secs) })

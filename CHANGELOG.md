@@ -7,6 +7,21 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Central logs: agents, syslog and SNMP traps, with alerts on patterns.** The
+  Logs page now searches, besides DumbMonit's own logs, lines collected by agents
+  (systemd journal, followed files with wildcards and rotation, Windows event log
+  channels; switched on per machine from its device page, minimum level, bounded
+  disk buffer, sent over the agent's usual channel), a built-in syslog server
+  (UDP and TCP, RFC 3164 and 5424, port 5514, off by default) and an SNMP trap
+  receiver (v1 and v2c, informs acknowledged, port 1162, off by default; OIDs
+  named from the SNMP profiles). Senders are attached to devices by IP. Filter by
+  source, device and level, open a device's logs from its page, and turn a search
+  into a new *log pattern* alert rule (LogsQL filter, sliding window, line-count
+  threshold, per device or overall) that goes through the normal alert engine and
+  backups. Settings: `DUMBMONIT_SYSLOG_*`, `DUMBMONIT_TRAPS_*`,
+  `DUMBMONIT_AGENT_LOGS=off` to forbid collection on a machine. SNMPv3 traps are
+  not supported.
+
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor

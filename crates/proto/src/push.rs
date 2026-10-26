@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::Sample;
+use crate::logs::LogsSetting;
 use crate::selfupdate::{AgentUpdateOffer, SelfUpdateInfo};
 
 /// Version du dialogue de poussée.
@@ -337,6 +338,10 @@ pub struct PushAck {
     /// machine (mise à jour automatique). Ignoré par un agent antérieur.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub agent_update: Option<AgentUpdateOffer>,
+    /// Collecte de journaux voulue depuis l'interface pour cette machine.
+    /// `None` chez un serveur antérieur : l'agent ne collecte alors rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logs: Option<LogsSetting>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -467,6 +472,7 @@ mod tests {
             disabled_modules: Vec::new(),
             relay: None,
             agent_update: None,
+            logs: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -515,6 +521,7 @@ mod tests {
             disabled_modules: vec!["docker".into()],
             relay: Some(RelaySetting { enabled: true, site: Some("Lyon".into()) }),
             agent_update: None,
+            logs: Some(LogsSetting { enabled: true, ..LogsSetting::default() }),
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");

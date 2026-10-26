@@ -181,6 +181,7 @@ nav:
       - Security score: using/security-score.md
       - CVE & vulnerabilities: using/cves.md
       - Alerts page: using/alerts.md
+      - Logs (agents, syslog, SNMP traps): using/logs.md
       - Status pages: using/status-pages.md
       - Email reports: using/reports.md
       - Settings: using/settings.md
