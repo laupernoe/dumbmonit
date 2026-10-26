@@ -49,7 +49,11 @@ pub struct CurrentSession(pub SessionToken);
 pub struct CurrentUser(pub User);
 
 /// Qui fait la requête : un compte connecté par session, ou un jeton d'API.
+///
+/// Une valeur par requête, posée dans ses extensions : la différence de taille
+/// entre les deux variantes ne coûte rien qui vaille une indirection.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum Principal {
     User(User),
     Token(ApiToken),
