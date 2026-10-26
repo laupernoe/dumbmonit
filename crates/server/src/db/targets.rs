@@ -392,9 +392,130 @@ pub async fn relayed_counts(pool: &SqlitePool) -> Result<HashMap<TargetId, usize
         .collect()
 }
 
+/// Gestion d'un moniteur par les étiquettes d'un conteneur Docker.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct Managed {
+    /// Origine : `docker-labels`.
+    pub by: String,
+    /// Agent dont les conteneurs déclarent le moniteur.
+    pub source: Option<TargetId>,
+    pub key: String,
+    /// Posé quand les étiquettes ne le déclarent plus (moniteur archivé).
+    pub missing_since: Option<String>,
+}
+
+/// Valeur de `managed_by` pour les moniteurs nés des étiquettes Docker.
+pub const MANAGED_DOCKER_LABELS: &str = "docker-labels";
+
+fn managed_from_row(row: &SqliteRow) -> Result<Option<Managed>> {
+    let by: Option<String> = row.try_get("managed_by")?;
+    Ok(by.map(|by| Managed {
+        by,
+        source: row.try_get::<Option<i64>, _>("managed_source").ok().flatten(),
+        key: row.try_get::<Option<String>, _>("managed_key").ok().flatten().unwrap_or_default(),
+        missing_since: row.try_get::<Option<String>, _>("managed_missing_since").ok().flatten(),
+    }))
+}
+
+/// Les moniteurs gérés d'un agent.
+pub async fn managed_of(pool: &SqlitePool, source: TargetId) -> Result<Vec<(TargetId, Managed)>> {
+    let rows = sqlx::query(
+        "SELECT id, managed_by, managed_source, managed_key, managed_missing_since
+         FROM targets WHERE managed_by IS NOT NULL AND managed_source = ?",
+    )
+    .bind(source)
+    .fetch_all(pool)
+    .await
+    .context("lecture des moniteurs gérés")?;
+    rows.iter()
+        .filter_map(|row| match managed_from_row(row) {
+            Ok(Some(managed)) => row.try_get("id").ok().map(|id| Ok((id, managed))),
+            Ok(None) => None,
+            Err(error) => Some(Err(error)),
+        })
+        .collect()
+}
+
+/// La gestion d'une cible, `None` si elle est libre.
+pub async fn managed_get(pool: &SqlitePool, id: TargetId) -> Result<Option<Managed>> {
+    let row = sqlx::query(
+        "SELECT managed_by, managed_source, managed_key, managed_missing_since
+         FROM targets WHERE id = ?",
+    )
+    .bind(id)
+    .fetch_optional(pool)
+    .await
+    .context("lecture de la gestion d'une cible")?;
+    row.as_ref().map(managed_from_row).transpose().map(Option::flatten)
+}
+
+/// Place une cible sous la gestion des étiquettes d'un agent.
+pub async fn set_managed(
+    pool: &SqlitePool,
+    id: TargetId,
+    source: TargetId,
+    key: &str,
+) -> Result<()> {
+    sqlx::query(
+        "UPDATE targets SET managed_by = ?, managed_source = ?, managed_key = ?,
+             managed_missing_since = NULL WHERE id = ?",
+    )
+    .bind(MANAGED_DOCKER_LABELS)
+    .bind(source)
+    .bind(key)
+    .bind(id)
+    .execute(pool)
+    .await
+    .context("marquage d'un moniteur géré")?;
+    Ok(())
+}
+
+/// Rend une cible à la gestion manuelle. Vrai si elle était gérée.
+pub async fn release_managed(pool: &SqlitePool, id: TargetId) -> Result<bool> {
+    let result = sqlx::query(
+        "UPDATE targets SET managed_by = NULL, managed_source = NULL, managed_key = NULL,
+             managed_missing_since = NULL WHERE id = ? AND managed_by IS NOT NULL",
+    )
+    .bind(id)
+    .execute(pool)
+    .await
+    .context("libération d'un moniteur géré")?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Archive (désactive et date) ou réactive un moniteur géré.
+pub async fn set_missing(pool: &SqlitePool, id: TargetId, missing: bool) -> Result<()> {
+    let sql = if missing {
+        "UPDATE targets SET enabled = 0,
+             managed_missing_since = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ? AND managed_missing_since IS NULL"
+    } else {
+        "UPDATE targets SET enabled = 1, managed_missing_since = NULL
+         WHERE id = ? AND managed_missing_since IS NOT NULL"
+    };
+    sqlx::query(sql).bind(id).execute(pool).await.context("archivage d'un moniteur géré")?;
+    Ok(())
+}
+
+/// Cible de ce type et de cette adresse, gérée ou non.
+pub async fn find_by_address(
+    pool: &SqlitePool,
+    kind: &str,
+    address: &str,
+) -> Result<Option<(TargetId, Option<String>)>> {
+    let row = sqlx::query("SELECT id, managed_by FROM targets WHERE kind = ? AND address = ?")
+        .bind(kind)
+        .bind(address)
+        .fetch_optional(pool)
+        .await
+        .context("recherche d'une cible par adresse")?;
+    row.map(|row| Ok((row.try_get("id")?, row.try_get("managed_by")?))).transpose()
+}
+
 /// Issue de la dernière interrogation d'une cible, pour l'affichage.
 #[derive(Debug, Clone)]
 pub struct TargetStatus {
+    pub managed: Option<Managed>,
     pub last_probe_at: Option<String>,
     pub last_error: Option<String>,
     /// Agent relais, recopié ici pour que l'API l'expose sans relire la cible.
@@ -403,10 +524,13 @@ pub struct TargetStatus {
 
 /// Statut de toutes les cibles, indexé par identifiant.
 pub async fn statuses(pool: &SqlitePool) -> Result<HashMap<TargetId, TargetStatus>> {
-    let rows = sqlx::query("SELECT id, last_probe_at, last_error, via_agent FROM targets")
-        .fetch_all(pool)
-        .await
-        .context("lecture des statuts")?;
+    let rows = sqlx::query(
+        "SELECT id, last_probe_at, last_error, via_agent, managed_by, managed_source,
+                managed_key, managed_missing_since FROM targets",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des statuts")?;
 
     rows.into_iter()
         .map(|row| {
@@ -416,6 +540,7 @@ pub async fn statuses(pool: &SqlitePool) -> Result<HashMap<TargetId, TargetStatu
                     last_probe_at: row.try_get("last_probe_at")?,
                     last_error: row.try_get("last_error")?,
                     via_agent: row.try_get("via_agent")?,
+                    managed: managed_from_row(&row)?,
                 },
             ))
         })

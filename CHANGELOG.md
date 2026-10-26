@@ -22,6 +22,60 @@ All notable changes to this project are documented here. The format follows
   included in backups. New routes under `/api/topology/corrections`,
   `/api/topology/rules` and `/api/topology/suggestions`.
 
+- **Integrations, first batch.** Nine new notification channels, monitors created
+  from Docker labels, three importers, Homepage support and passkeys:
+  - *Notification channels*: WhatsApp (Meta Cloud API, and the free CallMeBot
+    gateway), Threema Gateway (basic mode), Webex, Grafana OnCall, SIGNL4, and SMS
+    through Vonage, Telnyx and ASPSMS. Tokens and secrets are encrypted and never
+    sent back; each channel has its test button, and the chat channels carry the
+    acknowledge and snooze links (the on-call and SMS ones leave that to the
+    service or keep the message short).
+  - *Docker labels*: an agent reads the `dumbmonit.*` labels of its containers
+    (`enable`, `name`, `folder`, `tags`, `interval`, `http.url`, `tcp.port`,
+    `ping.host`, `adopt`…) and the server creates, updates and archives the
+    matching monitors, which are marked *Managed by Docker labels*, read-only until
+    released, with an optional adoption of an existing monitor.
+  - *Imports*: UptimeRobot (API key or CSV), Gatus (`config.yaml`) and
+    Healthchecks.io (API v3, checks become heartbeats with their old ping URLs
+    recalled for redirection), with the same preview-then-import flow as Uptime
+    Kuma.
+  - *Homepage and Homarr*: `GET /api/summary` returns flat counters readable with a
+    read-only API token; the docs give the `services.yaml` block for Homepage's
+    `customapi` widget and the Homarr options.
+  - *Passkeys (WebAuthn)*: sign in with a passkey in place of password and
+    second factor, and manage them (list, rename, remove) in Settings → Account &
+    security. ES256, HTTPS required (except localhost), domain name as relying party
+    ID. Checked in DumbMonit itself rather than with `webauthn-rs`, which needs
+    OpenSSL.
+- **The agent updates itself.** Each batch now tells the server the SHA-256
+  of the running agent binary; when it differs from the binary of the
+  server's own build for that platform (Linux x86_64/aarch64, FreeBSD,
+  Windows), the reply offers it — the build decides, not only the version, so
+  an `:edge` server aligns its agents too, and an agent newer than the server
+  is never downgraded unless you ask. The agent downloads it through its own
+  channel (encrypted and pinned when it has it), checks its SHA-256 and an
+  Ed25519 signature against a release key compiled into the agent (unsigned
+  builds are refused unless "Accept unsigned builds (development)" is on, and
+  then only over the encrypted channel), runs it once with `--version`, keeps
+  the old binary and swaps atomically: `exec` in place on Linux/FreeBSD, a
+  helper that stops, swaps and restarts the service on Windows. If the new
+  agent has no batch accepted within 2 minutes, or keeps stopping at startup,
+  the old one comes back and the failure shows in the UI; that build is not
+  retried until you click Update now. Settings → Agents → "Automatic agent
+  updates": on by default (new and existing installations), per-agent
+  override, window (any time, maintenance windows only, manual), canary agents
+  first with the others N minutes later, Update now / Update all now, and each
+  agent's version and status. Agents in Docker never replace themselves
+  (update the image), `self_update: false` in agent.yaml opts a machine out,
+  and agents installed before this version need one manual update. Linux and
+  FreeBSD installs now keep the binary in `/usr/local/lib/dumbmonit-agent/`
+  (symlinked from `/usr/local/bin`), the only folder the systemd unit lets the
+  agent write. The release workflow signs the agent binaries when the
+  `AGENT_SIGNING_KEY` secret is set (`<binary>.sig`, also served at
+  `/download/<binary>.sig`); the binaries stay reproducible. The Active
+  Directory kit no longer reinstalls (or downgrades) an agent that is as
+  recent as the kit or newer, so it need not be re-run after a server
+  upgrade.
 - **Status pages and reports, batch 1.**
   - *Private status pages.* Each page now chooses who can see it: anyone with
     the link (default), anyone with a password of its own (Argon2id hash, signed
