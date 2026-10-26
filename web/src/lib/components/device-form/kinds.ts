@@ -74,7 +74,9 @@ import {
 	ListX,
 	Mailbox,
 	Send,
-	Terminal
+	Terminal,
+	KeyRound,
+	Workflow
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
 import { isPackKind } from '#lib/api/packs.js';
@@ -153,7 +155,10 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	fortigate: BrickWallShield,
 	sophos: ShieldCheck,
 	website: PanelsTopLeft,
-	webchange: FileDiff
+	webchange: FileDiff,
+	snmp_oid: Gauge,
+	radius: KeyRound,
+	grpc: Workflow
 };
 
 export function kindIcon(kind: string): typeof LucideIcon {
@@ -164,7 +169,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
-const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3'];
+const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
 
 /** A domain's registration, read over RDAP: a service, polled rarely. */
 const DOMAIN_KIND = 'domain';
@@ -246,7 +251,10 @@ const KIND_KEYWORDS: Record<string, string> = {
 	ssh: 'terminal shell sshd openssh host key fingerprint remote login',
 	imap: 'mail email mailbox dovecot inbox imaps',
 	pop3: 'mail email mailbox dovecot pop pops',
-	push: 'heartbeat cron job script backup scheduled task dead man switch'
+	push: 'heartbeat cron job script backup scheduled task dead man switch',
+	snmp_oid: 'snmp oid mib sensor temperature humidity ups battery value threshold',
+	radius: 'aaa authentication login freeradius nps 802.1x wpa enterprise wifi vpn eap access-request',
+	grpc: 'rpc protobuf health check http2 microservice etcd envoy istio mesh'
 };
 
 /**

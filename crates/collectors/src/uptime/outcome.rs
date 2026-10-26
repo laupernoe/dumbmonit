@@ -107,6 +107,17 @@ pub enum Failure {
     ClockOffset,
     /// Clé d'hôte SSH différente de l'empreinte attendue (sonde SSH).
     HostKey,
+    /// Valeur numérique hors des bornes tolérées (sonde SNMP OID).
+    Threshold,
+    /// L'objet demandé n'existe pas sur l'agent : OID inconnu, `noSuchObject`
+    /// ou `noSuchInstance` (sonde SNMP OID).
+    NotFound,
+    /// La signature de la réponse ne se vérifie pas : le secret partagé est
+    /// probablement faux (sonde RADIUS).
+    BadSecret,
+    /// Le service répond mais dit ne pas être en état de servir : `NOT_SERVING`,
+    /// `SERVICE_UNKNOWN`, `UNAVAILABLE` (sonde gRPC).
+    Unhealthy,
 }
 
 impl Failure {
@@ -130,6 +141,10 @@ impl Failure {
             Self::Unsynchronized => "unsynchronized",
             Self::ClockOffset => "clock_offset",
             Self::HostKey => "host_key",
+            Self::Threshold => "threshold",
+            Self::NotFound => "not_found",
+            Self::BadSecret => "bad_secret",
+            Self::Unhealthy => "unhealthy",
         }
     }
 }
@@ -316,6 +331,10 @@ mod tests {
             Failure::Unsynchronized,
             Failure::ClockOffset,
             Failure::HostKey,
+            Failure::Threshold,
+            Failure::NotFound,
+            Failure::BadSecret,
+            Failure::Unhealthy,
         ];
         let mut vus: Vec<&str> = Vec::new();
         for raison in toutes {
