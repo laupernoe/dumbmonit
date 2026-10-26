@@ -164,6 +164,8 @@ tags:
     description: Encrypted export and restore of the instance. Session only.
   - name: Logs
     description: Server logs kept on disk, their export, and shipping to a log service. Session only.
+  - name: Storage
+    description: Metrics retention, long-term 5-minute history, embedded log store and disk usage. Session only.
   - name: Self-monitoring
     description: Health of DumbMonit itself and the outgoing heartbeat.
   - name: Assistants
@@ -2384,6 +2386,44 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/status-pages/{id}/access:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: setStatusPageAccess
+      tags: [Status pages]
+      summary: Choose who can read a page
+      description: >-
+        `public` (anyone with the link), `password` (a password of its own,
+        hashed with Argon2id and never returned) or `users` (a signed-in DumbMonit
+        account, local, LDAP or SSO, on the main address only). A page that is not
+        public is never indexed or listed in the sitemap, and its document,
+        badges, RSS and iCal feeds, logo and day detail follow the same access.
+        With `password`, the field is required the first time and kept when
+        omitted afterwards; changing it ends every access cookie already issued.
+        Any other mode erases the stored password.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              properties:
+                mode: { type: string, enum: [public, password, users] }
+                password: { type: string, minLength: 8, maxLength: 200 }
+      responses:
+        "200":
+          description: The page.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusPageView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/status-pages/{id}/logo:
     parameters:
       - $ref: "#/components/parameters/Id"
@@ -2588,6 +2628,95 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  /api/reports/sla:
+    get:
+      operationId: downloadSlaReport
+      tags: [Reports]
+      summary: Availability (SLA) report of a chosen period
+      description: >-
+        Builds the report on the spot: availability per monitor and per group
+        against the period of the same length before it, incidents, response
+        times (mean and 95th percentile) and, with `objective`, whether each
+        monitor met it. Without `from` and `to`, the previous calendar month.
+        `from` and `to` are inclusive days in `tz`, one year at most; a period
+        that is not over stops at now. Administrators only.
+      x-token-scope: read
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date }, description: First day included. }
+        - { name: to, in: query, schema: { type: string, format: date }, description: Last day included; today when omitted. }
+        - { name: tz, in: query, schema: { type: string, default: UTC }, description: IANA timezone of the period and of the dates shown. }
+        - name: format
+          in: query
+          schema: { type: string, enum: [pdf, csv, incidents_csv], default: pdf }
+        - { name: objective, in: query, schema: { type: number, exclusiveMinimum: 0, maximum: 100 }, description: Availability objective in percent. }
+        - { name: page, in: query, schema: { type: integer, format: int64 }, description: Status page whose title heads the report. }
+        - { name: title, in: query, schema: { type: string, maxLength: 120 }, description: Report name shown under the header. }
+      responses:
+        "200":
+          description: The file, as an attachment.
+          content:
+            application/pdf: { schema: { type: string, format: binary } }
+            text/csv: { schema: { type: string } }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/calendar/maintenance:
+    get:
+      operationId: getMaintenanceCalendarToken
+      tags: [Status pages]
+      summary: Token and address of the private maintenance calendar
+      description: >-
+        The token is created on first use. Administrators only: anyone holding
+        the address can read every announced maintenance.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The token and the feed path.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MaintenanceCalendar" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/calendar/maintenance/rotate:
+    post:
+      operationId: rotateMaintenanceCalendarToken
+      tags: [Status pages]
+      summary: Replace the private calendar token
+      description: The previous address stops working at once.
+      x-token-scope: write
+      responses:
+        "200":
+          description: The new token and the feed path.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/MaintenanceCalendar" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/calendar/maintenance.ics:
+    get:
+      operationId: getMaintenanceCalendar
+      tags: [Public status]
+      summary: Every maintenance as an iCalendar feed (private, token)
+      description: >-
+        RFC 5545 feed of the announced maintenance from 90 days back to the far
+        future, for a calendar app to subscribe to. The token travels in the
+        address and is the only protection: treat the URL as a secret. An
+        unknown token answers 404.
+      security: []
+      x-token-scope: public
+      parameters:
+        - { name: token, in: query, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: iCalendar.
+          content:
+            text/calendar:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/incidents:
     get:
       operationId: listIncidents
@@ -2709,6 +2838,10 @@ paths:
       operationId: getPublicStatus
       tags: [Public status]
       summary: The document a published status page is built from
+      description: >-
+        A page in `password` or `users` access mode answers 401 with an `access`
+        field (`password` or `users`) until the visitor unlocks it; badges, RSS,
+        iCal, logo and day detail of that page do the same.
       security: []
       x-token-scope: public
       responses:
@@ -2717,6 +2850,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/PublicStatus" }
+        "401": { $ref: "#/components/responses/PageAccessRequired" }
         "404": { $ref: "#/components/responses/NotFound" }
 
   /api/public/status/{slug}/badge.svg:
@@ -2764,6 +2898,64 @@ paths:
             application/rss+xml:
               schema: { type: string }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/maintenance.ics:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    get:
+      operationId: getPublicStatusMaintenanceCalendar
+      tags: [Public status]
+      summary: The page's maintenance as an iCalendar feed
+      description: >-
+        RFC 5545 feed of the maintenance announced on the page (and those for
+        every page), from 90 days back to the far future. It follows the page's
+        access mode.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: iCalendar.
+          content:
+            text/calendar:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/PageAccessRequired" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/access:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: unlockPublicStatus
+      tags: [Public status]
+      summary: Trade a private page's password for its access cookie
+      description: >-
+        For a page in `password` mode. The cookie (`dm_page_<id>`, HttpOnly,
+        12 hours) is signed with a key derived from the instance secret and bound
+        to the page and to the current password. Attempts are counted per address
+        and per page: after a few mistakes, answers 429 until the delay passes.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password: { type: string }
+      responses:
+        "200":
+          description: Unlocked; the access cookie is set.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [unlocked] }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
 
   /api/public/status/{slug}/day/{date}:
     parameters:
@@ -4222,6 +4414,77 @@ paths:
         "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/search:
+    get:
+      operationId: searchLogs
+      tags: [Logs]
+      summary: Search the server logs kept by the embedded VictoriaLogs (LogsQL filters)
+      description: >-
+        Newest first. Only filters are accepted (no `|` pipes); the period, the
+        minimum level and the server's own stream are added by the server.
+        Agent logs (`source=agents|all`) are reserved and refused for now.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      parameters:
+        - { name: query, in: query, schema: { type: string, default: "*" } }
+        - { name: start, in: query, description: Start of the period (ms), schema: { type: integer } }
+        - { name: end, in: query, description: End of the period (ms), schema: { type: integer } }
+        - { name: level, in: query, schema: { type: string, enum: [error, warn, info, debug], default: info } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 1000, default: 200 } }
+        - { name: source, in: query, schema: { type: string, enum: [server, agents, all], default: server } }
+      responses:
+        "200":
+          description: Matching log entries.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogSearchResult" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "502": { $ref: "#/components/responses/BadGateway" }
+
+  /api/system/storage:
+    get:
+      operationId: getStorage
+      tags: [Storage]
+      summary: Retentions, long-term history, embedded log store and disk usage
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Storage state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageView" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: putStorage
+      tags: [Storage]
+      summary: Change retentions and turn the long-term history or the log store on or off
+      description: >-
+        A changed retention restarts the embedded process concerned (a few
+        seconds without writes, retried by the write buffer). `restarted` lists
+        what was restarted, started or stopped.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StorageUpdate" }
+      responses:
+        "200":
+          description: Storage state after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StorageView" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "502": { $ref: "#/components/responses/BadGateway" }
 
   /api/logs/export:
     get:
@@ -6798,6 +7061,18 @@ components:
       content:
         application/json:
           schema: { $ref: "#/components/schemas/Error" }
+    PageAccessRequired:
+      description: >-
+        A private status page: `access` says what it wants, `password` (POST it to
+        `/api/public/status/{slug}/access`) or `users` (sign in to DumbMonit).
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [error, access]
+            properties:
+              error: { type: string }
+              access: { type: string, enum: [password, users] }
     TooManyRequests:
       description: Rate limited.
       headers:
@@ -8289,6 +8564,11 @@ components:
         last_sent_at: { type: [string, "null"], format: date-time }
         last_error: { type: [string, "null"] }
         next_run_at: { type: [string, "null"], format: date-time }
+        kind: { type: string, enum: [digest, sla], description: "`digest`: the rolling summary; `sla`: the previous calendar month with a PDF and CSV files." }
+        attach_pdf: { type: boolean }
+        attach_csv: { type: boolean }
+        page_id: { type: [integer, "null"], format: int64, description: Status page whose title heads the SLA report. }
+        objective: { type: [number, "null"], description: Availability objective in percent (SLA report). }
     ReportSchedulePayload:
       type: object
       properties:
@@ -8304,6 +8584,17 @@ components:
           maxItems: 20
           items: { type: string, format: email }
         channel_id: { type: [integer, "null"], format: int64 }
+        kind: { type: string, enum: [digest, sla], default: digest, description: "`sla` requires `frequency: monthly`." }
+        attach_pdf: { type: boolean, default: true, description: SLA report only. }
+        attach_csv: { type: boolean, default: true, description: "SLA report only: the monitors file and the incidents file." }
+        page_id: { type: [integer, "null"], format: int64 }
+        objective: { type: [number, "null"], exclusiveMinimum: 0, maximum: 100 }
+    MaintenanceCalendar:
+      type: object
+      required: [token, path]
+      properties:
+        token: { type: string }
+        path: { type: string, description: "`/api/calendar/maintenance.ics?token=…`: add the server's origin to subscribe." }
     ReportPreviewResult:
       type: object
       required: [sent, failed]
@@ -8332,6 +8623,8 @@ components:
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
         seo: { $ref: "#/components/schemas/StatusPageSeo" }
+        access_mode: { type: string, enum: [public, password, users], description: "Who can read the page; set through `PUT /api/status-pages/{id}/access`." }
+        has_password: { type: boolean, description: A page password is stored (the hash is never returned). }
         group_labels:
           type: array
           items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
@@ -8570,6 +8863,9 @@ components:
                           uptime_pct: { type: [number, "null"] }
                           down_minutes: { type: [integer, "null"] }
                           incidents: { type: integer }
+                    external:
+                      type: boolean
+                      description: Present and true for a third-party provider (a `provider` monitor), shown as an external component.
         incidents:
           type: array
           items: { $ref: "#/components/schemas/PublicIncident" }
@@ -9112,6 +9408,102 @@ components:
             dropped:
               type: integer
               description: Records lost before reaching the disk (writer lagging, or the size cap reached).
+    StorageUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        metrics_retention_days: { type: integer, minimum: 7, maximum: 3650 }
+        rollup_enabled: { type: boolean }
+        rollup_retention_days: { type: integer, minimum: 30, maximum: 3650 }
+        logs_store_enabled: { type: boolean }
+        logs_store_retention_days: { type: integer, minimum: 1, maximum: 3650 }
+    StorageView:
+      type: object
+      required: [metrics, rollup, logs_store, disk, growth, limits, restarted]
+      properties:
+        metrics:
+          type: object
+          required: [embedded, retention_days, retention_source, running]
+          properties:
+            embedded: { type: boolean }
+            retention_days: { type: integer }
+            retention_source: { type: string, enum: [settings, environment, default] }
+            running: { type: boolean }
+        rollup:
+          type: object
+          required: [available, embedded, enabled, running, retention_days, step_seconds, backfill_done]
+          properties:
+            available: { type: boolean }
+            embedded: { type: boolean }
+            enabled: { type: boolean }
+            running: { type: boolean }
+            retention_days: { type: integer }
+            step_seconds: { type: integer }
+            last_window: { type: [string, "null"], description: UTC, without suffix }
+            backfilled_until: { type: [string, "null"], description: UTC, without suffix }
+            backfill_done: { type: boolean }
+            series: { type: [integer, "null"] }
+            last_error: { type: [string, "null"] }
+        logs_store:
+          type: object
+          required: [available, enabled, running, retention_days]
+          properties:
+            available: { type: boolean }
+            enabled: { type: boolean }
+            running: { type: boolean }
+            retention_days: { type: integer }
+            last_error: { type: [string, "null"] }
+        disk:
+          type: object
+          required: [usage]
+          properties:
+            usage:
+              type: array
+              items:
+                type: object
+                required: [key, path]
+                properties:
+                  key: { type: string, enum: [metrics, rollup, logs_store, database, logs, backups] }
+                  path: { type: string }
+                  bytes: { type: [integer, "null"] }
+            free_bytes: { type: [integer, "null"] }
+            total_bytes: { type: [integer, "null"] }
+        growth:
+          type: object
+          required: [sampled_days]
+          properties:
+            bytes_per_day: { type: [number, "null"] }
+            days_until_full: { type: [number, "null"] }
+            sampled_days: { type: integer }
+        limits:
+          type: object
+          properties:
+            min_retention_days: { type: integer }
+            max_retention_days: { type: integer }
+            min_rollup_retention_days: { type: integer }
+            max_rollup_retention_days: { type: integer }
+            min_logs_retention_days: { type: integer }
+            max_logs_retention_days: { type: integer }
+        restarted:
+          type: array
+          items: { type: string, enum: [metrics, rollup, logs_store] }
+    LogSearchResult:
+      type: object
+      required: [entries, truncated]
+      properties:
+        truncated: { type: boolean }
+        entries:
+          type: array
+          items:
+            type: object
+            required: [time, level, message, source, fields]
+            properties:
+              time: { type: string, description: UTC, without suffix }
+              level: { type: string }
+              message: { type: string }
+              source: { type: string }
+              host: { type: [string, "null"] }
+              fields: { type: object, additionalProperties: { type: string } }
     LogsSettingsRequest:
       type: object
       properties:

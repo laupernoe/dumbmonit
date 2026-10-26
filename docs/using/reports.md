@@ -41,6 +41,40 @@ just before.
 
 Click the **i** next to the section title for a reminder of the content.
 
+## SLA reports {#sla}
+
+A schedule of type **SLA report** is the monthly availability report you hand to
+a customer or an auditor. It covers the previous **calendar month** (the 1st at
+midnight to the 1st at midnight, in the schedule's timezone), so it is always
+monthly: the email goes out on the chosen day of the month, with:
+
+- the **PDF**: the name of the organisation (the title of a status page you
+  choose, otherwise DumbMonit), the period, availability, incidents and total
+  downtime, availability by group and by monitor with the **mean and 95th
+  percentile response time** of each probe, and every incident;
+- two **CSV files**: the monitors (`availability-2026-10-monitors.csv`) and the
+  incidents (`availability-2026-10-incidents.csv`), UTF-8 with a byte order mark
+  for Excel. Cells that start with `=`, `+`, `-` or `@` get a leading apostrophe,
+  so a monitor name cannot become a spreadsheet formula.
+
+Both attachments can be switched off separately. With an **availability
+objective** (for example 99.9), each monitor is marked **Met** or **Missed**
+and the report says how many met it; without one, the usual words (Healthy,
+Degraded, Poor) are used. The report is in English; the figures are the ones
+of the status pages.
+
+The PDF is written by DumbMonit itself, with the standard Helvetica fonts and no
+library: A4, text and tables, a footer with the generation date and the page
+number. The logo of a status page is not embedded; its name heads the report.
+
+### Download a period
+
+Below the schedules, **Availability report (SLA)** builds the same report on
+demand, for any period of one year at most (both days included, in the timezone
+you choose, ending now if it has not ended). Choose the PDF, the monitors CSV or
+the incidents CSV. The default is the previous calendar month. Administrators
+only.
+
 ## Send a preview
 
 **Send a preview** emails the current report to the saved recipients right now,
@@ -59,6 +93,8 @@ recipients.
   sent when it comes back only if that is within 3 hours of the slot. Later than
   that, it waits for the next slot. A report you create or re-enable never sends
   a slot that is already past.
+- An SLA report is built at the time of sending, from the previous calendar
+  month: a restart or a late send (within the 3 hours) gives the same report.
 - At most 10 reports can exist.
 - In demo mode nothing is sent.
 

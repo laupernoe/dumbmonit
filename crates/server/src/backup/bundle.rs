@@ -379,6 +379,13 @@ pub struct BundleStatusPage {
     /// page créée).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub seo: Option<crate::status_seo::Seo>,
+    /// Mode d'accès (migration 0085) : absent pour une page publique. Le lot est
+    /// chiffré ; l'empreinte du mot de passe d'accès y voyage donc avec la page,
+    /// pour qu'une page privée restaurée ne devienne pas publique.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub access_mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub access_password_hash: Option<String>,
     /// Dossiers cochés en bloc (migration 0066), par nom, dans l'ordre. Absent
     /// d'une ancienne sauvegarde : aucun.
     #[serde(default)]

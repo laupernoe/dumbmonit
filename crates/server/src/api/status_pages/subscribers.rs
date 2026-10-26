@@ -16,7 +16,7 @@ use std::time::{Duration, Instant};
 
 use axum::Json;
 use axum::extract::{Path, Query, State};
-use axum::http::{StatusCode, header};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use chrono::{TimeDelta, Utc};
 use serde::Deserialize;
@@ -216,12 +216,15 @@ pub async fn subscribe(
     State(state): State<AppState>,
     ClientIp(ip): ClientIp,
     Path(slug): Path<String>,
+    headers: HeaderMap,
     Json(payload): Json<SubscribePayload>,
 ) -> ApiResult<Response> {
     if let Err(wait) = admit(ip, Instant::now()) {
         return Ok(too_many(wait));
     }
     let (page, channel) = subscribable(&state, &slug).await?;
+    // Sur une page privée, on ne s'abonne qu'en y ayant accès.
+    super::access::authorize(&state, &page, &headers).await?;
     let Some(email) = normalise_email(&payload.email) else {
         return Err(ApiError::BadRequest("Enter a valid email address.".into()));
     };

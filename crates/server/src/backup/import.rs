@@ -1061,6 +1061,31 @@ async fn restore_status_pages(
             .await
             .context("mode simple de la page de statut")?;
 
+        // Accès : revalidé contre le jeu fermé. Absent (page publique, ou ancienne
+        // sauvegarde), la page garde son accès.
+        if let Some(mode) = page.access_mode.as_deref()
+            && crate::api::status_pages::access::MODES.contains(&mode)
+        {
+            // Sans empreinte, un mode « mot de passe » refuserait tout le monde.
+            let mode = if mode == "password" && page.access_password_hash.is_none() {
+                "users"
+            } else {
+                mode
+            };
+            sqlx::query(
+                "UPDATE status_pages SET access_mode = ?, access_password_hash = ?
+                 WHERE id = ? AND (access_mode != ? OR access_password_hash IS NOT ?)",
+            )
+            .bind(mode)
+            .bind(&page.access_password_hash)
+            .bind(id)
+            .bind(mode)
+            .bind(&page.access_password_hash)
+            .execute(&mut **tx)
+            .await
+            .context("accès de la page de statut")?;
+        }
+
         // Référencement : revalidé comme à la saisie ; absent (ancienne
         // sauvegarde), la page garde ses réglages.
         if let Some(seo) = &page.seo {
