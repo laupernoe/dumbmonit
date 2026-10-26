@@ -327,6 +327,8 @@
 	"alerts_row_acked": "已确认{by}{until}{note}。提醒已暂停，恢复时仍会通知你。",
 	"alerts_row_acked_by": " 由 {name}",
 	"alerts_row_acked_note": " — {note}",
+	"alerts_row_ticket_closed": "已关闭",
+	"alerts_row_tickets": "工单：",
 	"alerts_row_dismiss": "关闭",
 	"alerts_row_learning": "基线学习的前 {days} 天保持静默。",
 	"alerts_row_learning_suppressed": "学习正常形态期间保持静默。",

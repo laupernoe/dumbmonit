@@ -343,6 +343,8 @@
 	"alerts_row_acked": "Reconocida{by}{until}{note}. Recordatorios en pausa; aun así recibirás aviso cuando se resuelva.",
 	"alerts_row_acked_by": " por {name}",
 	"alerts_row_acked_note": " — {note}",
+	"alerts_row_ticket_closed": "cerrado",
+	"alerts_row_tickets": "Tickets:",
 	"alerts_row_dismiss": "Descartar",
 	"alerts_row_learning": "En silencio durante los primeros {days} días de la línea base.",
 	"alerts_row_learning_suppressed": "En silencio mientras aprende el comportamiento normal.",

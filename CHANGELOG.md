@@ -137,6 +137,17 @@ All notable changes to this project are documented here. The format follows
   globally (SMS more strictly) and need access to private pages. The editor
   lists subscribers by channel with masked numbers and URLs, exports CSV and
   removes subscribers; the channels a page opens are included in backups.
+- **Automatic tickets: Jira, GLPI, Zammad, GitHub Issues and GitLab Issues.** Five new
+  notification channels that keep one ticket per alert. An alert opening creates the
+  ticket (title, description with a link to DumbMonit, priority from the severity); the
+  external id is remembered per alert, so a reminder never opens a second ticket.
+  Escalations, unacknowledged alerts, new findings and acknowledgements are added as
+  comments; the resolution comments and closes the ticket (Jira transition name, GLPI
+  status, Zammad state, GitHub/GitLab close). An optional delay reopens the closed
+  ticket if the alert returns. Failures show in the channel's last error and transient
+  ones are retried with backoff. The ticket link is shown on the alert
+  (`tickets` in `GET /api/alerts`), and **Send test** creates then closes a test ticket.
+
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor

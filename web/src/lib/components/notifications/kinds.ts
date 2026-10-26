@@ -20,6 +20,7 @@ import {
 	MessageSquare,
 	Send,
 	Siren,
+	Ticket,
 	Smartphone,
 	Webhook
 } from 'lucide-svelte';
@@ -104,7 +105,12 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	aspsms: Smartphone,
 	grafana_oncall: Siren,
 	signl4: Siren,
-	homeassistant: House
+	homeassistant: House,
+	jira: Ticket,
+	glpi: Ticket,
+	zammad: Ticket,
+	github_issues: Ticket,
+	gitlab_issues: Ticket
 };
 
 /** The icon for a channel kind; a bell for a kind this build does not know. */

@@ -49,7 +49,8 @@ pub const LEDGER_HOUR_SECS: i64 = 3600;
 
 /// Types de canaux d'astreinte : ils ouvrent et ferment des incidents par
 /// équipement, un résumé multi-équipements casserait leur rapprochement. Ils
-/// reçoivent donc un message par équipement, sans attendre la fenêtre.
+/// reçoivent donc un message par équipement, sans attendre la fenêtre. Les
+/// canaux de tickets (voir [`crate::notify::tickets`]) suivent la même règle.
 pub const ONCALL_KINDS: &[&str] = &["pagerduty", "opsgenie", "oncall", "grafana_oncall", "signl4"];
 
 /// Politique globale, stockée dans `settings` sous `notify_policy`.
@@ -193,6 +194,7 @@ pub struct Recipient {
 impl Recipient {
     fn is_oncall(&self) -> bool {
         ONCALL_KINDS.contains(&self.kind.as_str())
+            || crate::notify::tickets::is_ticket_kind(&self.kind)
     }
 }
 
