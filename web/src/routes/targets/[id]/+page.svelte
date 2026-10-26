@@ -78,6 +78,7 @@
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
+	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
@@ -732,6 +733,9 @@
 		{/if}
 		{#if enabledError}
 			<ErrorNotice error={enabledError} title={m.devices_target_err_enabled()} class="mt-4" />
+		{/if}
+		{#if target?.managed}
+			<ManagedNotice {target} canRelease={auth.isAdmin} onreleased={() => void loadTarget()} class="mt-4" />
 		{/if}
 		{#if deleteError}
 			<ErrorNotice error={deleteError} title={m.devices_target_err_delete()} class="mt-4" />

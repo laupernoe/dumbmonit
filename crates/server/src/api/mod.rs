@@ -21,11 +21,13 @@ mod ingest;
 mod integrations;
 mod kuma_db;
 mod kuma_import;
+mod label_monitors;
 mod ldap;
 pub mod locations;
 mod logs;
 mod mcp;
 mod metrics;
+mod monitor_imports;
 mod music;
 mod notify_policy;
 mod observability;
@@ -35,6 +37,7 @@ mod openapi;
 mod opnsense;
 mod opnsense_live;
 mod packs;
+mod passkeys;
 mod pbs;
 mod pdm;
 mod pmg;
@@ -52,12 +55,14 @@ mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
 mod storage;
+mod summary;
 mod synology;
 mod target_rules;
 mod targets;
 mod targets_import;
 mod tokens;
 mod topology;
+pub(crate) mod topology_edits;
 mod totp;
 mod truenas;
 mod update;
@@ -133,6 +138,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/auth/me", get(auth::me))
         // Second facteur et journal d'audit (`totp.rs`).
         .merge(totp::routes())
+        // Clés d'accès : liste, ajout, renommage, suppression (`passkeys.rs`).
+        .merge(passkeys::routes())
         .route(
             "/auth/oidc/config",
             get(oidc::get_config).put(oidc::put_config).delete(oidc::delete_config),
@@ -146,6 +153,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
+        // Compteurs plats pour Homepage / tableaux de bord tiers (`summary.rs`).
+        .route("/summary", get(summary::get))
         .route("/discovery", post(discovery::scan))
         .route("/discovery/subnets", get(discovery::local_subnets))
         .route("/discovery/jobs", get(discovery::list_jobs).post(discovery::create_job))
@@ -161,7 +170,19 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             post(kuma_import::import).layer(DefaultBodyLimit::max(kuma_import::MAX_BODY_BYTES)),
         )
         .route("/targets/import/kuma-db", post(kuma_import::import_db))
+        .route(
+            "/targets/import/uptimerobot",
+            post(monitor_imports::uptimerobot)
+                .layer(DefaultBodyLimit::max(monitor_imports::MAX_BODY_BYTES)),
+        )
+        .route(
+            "/targets/import/gatus",
+            post(monitor_imports::gatus)
+                .layer(DefaultBodyLimit::max(monitor_imports::MAX_BODY_BYTES)),
+        )
+        .route("/targets/import/healthchecks", post(monitor_imports::healthchecks))
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
+        .route("/targets/{id}/release", post(label_monitors::release))
         .route("/targets/{id}/probe", post(targets::probe_now))
         .route("/targets/{id}/discover", post(targets::discover))
         .route("/targets/{id}/rules", get(target_rules::list))
@@ -206,6 +227,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).
         .merge(topology::routes())
+        // Corrections de la carte et règles apprises (`topology_edits.rs`).
+        .merge(topology_edits::routes())
         // Emplacements et carte du monde (`locations.rs`).
         .merge(locations::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
@@ -296,6 +319,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/auth/setup", post(auth::setup))
         .route("/auth/login", post(auth::login))
         .route("/auth/login/totp", post(totp::login_step))
+        // Connexion par clé d'accès (WebAuthn), publique comme `login`.
+        .merge(passkeys::public_routes())
         .route("/auth/oidc/start", get(oidc::start))
         .route("/auth/oidc/callback", get(oidc::callback))
         // Réception des mesures poussées par les agents. Volontairement hors du

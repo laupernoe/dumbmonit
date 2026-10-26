@@ -11,6 +11,7 @@
 	import { Button, ErrorNotice, Field, Panel, Plate } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import TwoFactorSection from './TwoFactorSection.svelte';
+	import PasskeysSection from './PasskeysSection.svelte';
 	import { viewport } from '#lib/stores/viewport.svelte.js';
 
 	let current = $state('');
@@ -129,6 +130,8 @@
 	{/if}
 
 	<TwoFactorSection />
+
+	<PasskeysSection />
 
 	{#if auth.available}
 		<div class="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 max-sm:mt-4 max-sm:pt-4">
