@@ -80,6 +80,7 @@ import type {
 } from './types';
 
 export * from './types';
+export * from './oncall';
 export { onMutation } from './mutations';
 export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
 

@@ -45,15 +45,17 @@
 	import SilencesSection from '#lib/components/alerts/SilencesSection.svelte';
 	import RulesSection from '#lib/components/alerts/RulesSection.svelte';
 	import HistorySection from '#lib/components/alerts/HistorySection.svelte';
+	import OnCallSection from '#lib/components/oncall/OnCallSection.svelte';
 	import { rulesByUid, targetsById } from '#lib/components/alerts/helpers.js';
 	import { rovingIndex } from '#lib/ui/roving.js';
 	import { m } from '#lib/paraglide/messages.js';
 
-	type Tab = 'now' | 'scheduled' | 'history' | 'rules';
-	const TAB_IDS: readonly Tab[] = ['now', 'scheduled', 'history', 'rules'];
+	type Tab = 'now' | 'scheduled' | 'oncall' | 'history' | 'rules';
+	const TAB_IDS: readonly Tab[] = ['now', 'scheduled', 'oncall', 'history', 'rules'];
 	const TABS: { id: Tab; label: string }[] = $derived([
 		{ id: 'now', label: m.alerts_page_tab_now() },
 		{ id: 'scheduled', label: m.alerts_page_tab_maintenance() },
+		{ id: 'oncall', label: m.oncall_tab() },
 		{ id: 'history', label: m.alerts_page_tab_history() },
 		{ id: 'rules', label: m.alerts_page_tab_rules() }
 	]);
@@ -401,6 +403,8 @@
 		onremove={removeSilence}
 		onschedule={() => (scheduling = true)}
 	/>
+{:else if tab === 'oncall'}
+	<OnCallSection />
 {:else if tab === 'rules'}
 	<RulesSection
 		{rules}

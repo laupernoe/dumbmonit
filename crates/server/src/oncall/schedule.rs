@@ -133,6 +133,9 @@ pub struct Slot {
     pub override_id: Option<i64>,
 }
 
+/// La garde en cours : qui, depuis quand, jusqu'à quand (quand c'est connu).
+pub type Current = (Slot, Option<DateTime<Utc>>, Option<DateTime<Utc>>);
+
 /// Une garde continue : même personne, même origine.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct Shift {
@@ -322,14 +325,13 @@ impl Layer {
                 cuts.insert(at);
             }
         };
-        let mut k = self.rotation.index_at(tz, from).unwrap_or(0);
-        for _ in 0..MAX_BOUNDARIES {
+        let first = self.rotation.index_at(tz, from).unwrap_or(0);
+        for k in (first..).take(MAX_BOUNDARIES) {
             let at = self.rotation.shift_start(tz, k);
             if at >= to {
                 break;
             }
             push(at);
-            k += 1;
         }
         if self.restrictions.is_empty() {
             return;
@@ -357,7 +359,7 @@ impl Definition {
     }
 
     /// Le titulaire désigné par les couches seules.
-    fn from_layers(&self, tz: Tz, at: DateTime<Utc>) -> Option<Slot> {
+    fn layered(&self, tz: Tz, at: DateTime<Utc>) -> Option<Slot> {
         self.layers.iter().enumerate().rev().find_map(|(index, layer)| {
             layer.who(tz, at).map(|user_id| Slot { user_id, layer: Some(index), override_id: None })
         })
@@ -365,7 +367,7 @@ impl Definition {
 
     /// Qui est d'astreinte à `at`. Le remplacement le plus récent l'emporte.
     pub fn on_call(&self, overrides: &[Override], at: DateTime<Utc>) -> Option<Slot> {
-        let base = self.from_layers(self.tz(), at);
+        let base = self.layered(self.tz(), at);
         let mut active: Vec<&Override> =
             overrides.iter().filter(|o| at >= o.starts_at && at < o.ends_at).collect();
         active.sort_by_key(|o| std::cmp::Reverse(o.id));
@@ -446,11 +448,7 @@ impl Definition {
 
     /// La garde en cours à `now`, avec ses bornes quand elles tombent dans un
     /// horizon raisonnable (deux semaines en arrière, cinq en avant).
-    pub fn current(
-        &self,
-        overrides: &[Override],
-        now: DateTime<Utc>,
-    ) -> Option<(Slot, Option<DateTime<Utc>>, Option<DateTime<Utc>>)> {
+    pub fn current(&self, overrides: &[Override], now: DateTime<Utc>) -> Option<Current> {
         let slot = self.on_call(overrides, now)?;
         let from = now - TimeDelta::days(14);
         let to = now + TimeDelta::days(35);
