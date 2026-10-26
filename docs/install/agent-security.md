@@ -108,6 +108,17 @@ plain channel automatically N days after the update.
 Agents released before the encrypted channel do not know the encrypted channel: update them by
 re-running the install command.
 
+## Agent updates
+
+Agents update themselves from the server (see
+[Automatic updates](../devices/agent.md#automatic-updates)). Integrity comes
+from the SHA-256 in the offer; authenticity from an Ed25519 signature, checked
+against a release public key compiled into the agent, so a compromised or
+impersonated server cannot push arbitrary code. Builds without a signature are
+refused unless an administrator turns on *Accept unsigned builds (development)*
+**and** the offer comes over the encrypted channel. The download goes through
+the agent's own pinned channel, with its token, binding secret and machine key.
+
 ## Reverse proxies
 
 Do not put a TLS-terminating reverse proxy in front of the agent port: the

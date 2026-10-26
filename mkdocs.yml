@@ -125,6 +125,7 @@ nav:
       - Apache httpd: devices/apache.md
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
+      - Third-party service status: devices/provider.md
       - Mail server reputation: devices/mail_blacklist.md
       - IP range blocklist: devices/ip_blacklist.md
       - Kubernetes / k3s: devices/kubernetes.md
@@ -185,11 +186,14 @@ nav:
       - HTTP API: reference/api.md
       - Configuration: reference/configuration.md
       - Metrics: reference/metrics.md
+      - Sizing: reference/sizing.md
+      - External VictoriaMetrics / cluster: reference/external-victoriametrics.md
   - Development:
       - Overview: development.md
       - Architecture: development/architecture.md
       - Security model: development/security-model.md
       - Assurance case: development/assurance-case.md
       - Reproducible builds: development/reproducible-builds.md
+      - Signing the agent binaries: development/agent-signing.md
       - Roadmap: development/roadmap.md
   - FAQ: faq.md

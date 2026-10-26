@@ -459,6 +459,35 @@ impl PushClient {
     }
 }
 
+impl PushClient {
+    /// Binaire proposé par le serveur pour la mise à jour de l'agent, par le
+    /// canal courant (chiffré quand l'agent l'a) : au plus `max` octets.
+    pub async fn download_update(
+        &self,
+        key: &str,
+        file: &str,
+        max: u64,
+        timeout: Duration,
+    ) -> Result<Vec<u8>, PushError> {
+        let path = format!("{}/{file}", dumbmonit_proto::UPDATE_DOWNLOAD_PATH);
+        let response = self
+            .exchange(|| self.keyed(reqwest::Method::GET, &path, key, "").timeout(timeout))
+            .await?;
+        if !response.status().is_success() {
+            return Err(rejection(response).await);
+        }
+        if response.content_length().is_some_and(|length| length > max) {
+            return Err(PushError::TooLarge(format!("the agent binary exceeds {max} bytes")));
+        }
+        let bytes = response.bytes().await.map_err(|error| self.transport(&error))?;
+        if bytes.len() as u64 > max {
+            return Err(PushError::TooLarge(format!("the agent binary exceeds {max} bytes")));
+        }
+        self.mark_reachable();
+        Ok(bytes.to_vec())
+    }
+}
+
 /// Chemin des sondes déléguées, ou du compte rendu de l'une d'elles.
 fn relay_path(id: Option<i64>) -> String {
     match id {

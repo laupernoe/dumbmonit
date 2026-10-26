@@ -2999,6 +2999,48 @@
    ]
   },
   {
+   "kind": "provider",
+   "label": "Third-party service status",
+   "family": "checks",
+   "summary": "The public status page of a provider you depend on (Cloudflare, GitHub, Atlassian, AWS…), read as a monitor: it fails when the provider reports an incident, so you hear about it before your users do.",
+   "examples": [
+    "Cloudflare",
+    "GitHub",
+    "Atlassian Cloud",
+    "The AWS Health feed"
+   ],
+   "typical": "A provider's public status page (Cloudflare, GitHub, Atlassian, AWS…): impact, open incidents, per-component filter; shown on status pages as an external component",
+   "credential": "none",
+   "credentials": [
+    {
+     "kind": "none",
+     "label": "No authentication",
+     "help": "Nothing is sent: the monitor answers without credentials."
+    }
+   ],
+   "default_port": 0,
+   "setup": {
+    "title": "Watch a provider's status page",
+    "steps": [
+     "Enter a provider name (cloudflare, github, atlassian, aws, discord, npm…; the full list is in the guide), or the address of a Statuspage page or RSS/Atom feed.",
+     "To watch one part of the provider only, enter its name under Component, for example \"Workers\" or \"EC2\".",
+     "Choose what makes the monitor fail: any degradation, a partial outage or worse, or a major outage only."
+    ],
+    "warning": "The monitor reads what the provider chooses to publish, often minutes after the fact: it complements your own checks and never replaces them."
+   },
+   "doc": {
+    "page": "provider",
+    "anchor": ""
+   },
+   "rules": [
+    {
+     "name": "Monitor unreachable",
+     "description": "No measurement received for more than three minutes. bottomk by (target) (1, time() - tlast_over_time(dumbmonit_up[7d]))",
+     "severity": "warning"
+    }
+   ]
+  },
+  {
    "kind": "website",
    "label": "Website health & SEO",
    "family": "checks",
@@ -5258,6 +5300,7 @@
     "websocket",
     "push",
     "domain",
+    "provider",
     "website",
     "webchange"
    ]

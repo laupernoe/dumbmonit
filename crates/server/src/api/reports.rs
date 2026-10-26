@@ -3,8 +3,9 @@
 //! Réservé aux administrateurs, lecture comprise : la liste des destinataires
 //! est une liste d'adresses de l'équipe.
 
-use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::extract::{Path, Query, State};
+use axum::http::{StatusCode, header};
+use axum::response::{IntoResponse, Response};
 use axum::routing::{get, post};
 use axum::{Json, Router};
 use chrono::{DateTime, SecondsFormat, Utc};
@@ -13,7 +14,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::AdminIdentity;
 use crate::db;
-use crate::reports::schedule::{Frequency, parse_timezone};
+use crate::reports::schedule::{self, Frequency, Period, parse_timezone};
 use crate::reports::store::{self, ScheduleInput, StoredSchedule};
 use crate::reports::{self, MAX_SCHEDULES};
 use crate::state::AppState;
@@ -23,6 +24,7 @@ pub fn routes() -> Router<AppState> {
         .route("/reports/schedules", get(list).post(create))
         .route("/reports/schedules/{id}", get(get_one).put(update).delete(remove))
         .route("/reports/schedules/{id}/send-test", post(send_test))
+        .route("/reports/sla", get(download_sla))
 }
 
 #[derive(Debug, Serialize)]
@@ -41,6 +43,12 @@ pub struct ScheduleView {
     pub last_sent_at: Option<String>,
     pub last_error: Option<String>,
     pub next_run_at: Option<String>,
+    /// `digest` ou `sla`.
+    pub kind: String,
+    pub attach_pdf: bool,
+    pub attach_csv: bool,
+    pub page_id: Option<i64>,
+    pub objective: Option<f64>,
 }
 
 fn iso(at: DateTime<Utc>) -> String {
@@ -62,6 +70,11 @@ fn view(stored: &StoredSchedule, now: DateTime<Utc>) -> ScheduleView {
         last_sent_at: stored.last_sent_at.map(iso),
         last_error: stored.last_error.clone(),
         next_run_at: reports::next_run(stored, now).map(iso),
+        kind: stored.kind.clone(),
+        attach_pdf: stored.attach_pdf,
+        attach_csv: stored.attach_csv,
+        page_id: stored.page_id,
+        objective: stored.objective,
     }
 }
 
@@ -79,6 +92,12 @@ pub struct SchedulePayload {
     pub timezone: String,
     pub recipients: Vec<String>,
     pub channel_id: Option<i64>,
+    /// `digest` (résumé glissant) ou `sla` (mois civil précédent, mensuel).
+    pub kind: String,
+    pub attach_pdf: bool,
+    pub attach_csv: bool,
+    pub page_id: Option<i64>,
+    pub objective: Option<f64>,
 }
 
 impl Default for SchedulePayload {
@@ -93,7 +112,23 @@ impl Default for SchedulePayload {
             timezone: "UTC".to_string(),
             recipients: Vec::new(),
             channel_id: None,
+            kind: "digest".to_string(),
+            attach_pdf: true,
+            attach_csv: true,
+            page_id: None,
+            objective: None,
         }
+    }
+}
+
+/// Objectif de disponibilité : un pourcentage entre 0 (exclu) et 100.
+fn valid_objective(objective: Option<f64>) -> ApiResult<Option<f64>> {
+    match objective {
+        None => Ok(None),
+        Some(value) if value.is_finite() && value > 0.0 && value <= 100.0 => Ok(Some(value)),
+        Some(_) => Err(ApiError::BadRequest(
+            "The availability objective must be a percentage above 0 and up to 100.".into(),
+        )),
     }
 }
 
@@ -142,6 +177,21 @@ impl SchedulePayload {
                 ));
             }
         }
+        let kind = self.kind.trim().to_string();
+        if kind != "digest" && kind != "sla" {
+            return Err(ApiError::BadRequest("The kind must be \"digest\" or \"sla\".".into()));
+        }
+        if kind == "sla" && frequency != Frequency::Monthly {
+            return Err(ApiError::BadRequest(
+                "An SLA report covers a calendar month: choose the monthly frequency.".into(),
+            ));
+        }
+        if let Some(id) = self.page_id
+            && db::status_pages::get_page(&state.pool, id).await?.is_none()
+        {
+            return Err(ApiError::BadRequest("The status page does not exist.".into()));
+        }
+        let objective = valid_objective(self.objective)?;
         Ok(ScheduleInput {
             name,
             enabled: self.enabled,
@@ -152,6 +202,11 @@ impl SchedulePayload {
             timezone,
             recipients,
             channel_id: self.channel_id,
+            kind,
+            attach_pdf: self.attach_pdf,
+            attach_csv: self.attach_csv,
+            page_id: self.page_id,
+            objective,
         })
     }
 }
@@ -244,4 +299,127 @@ pub async fn send_test(
         Ok(delivery) => Ok(Json(SendTestReply { sent: delivery.sent, failed: delivery.failed })),
         Err(message) => Err(ApiError::BadRequest(message)),
     }
+}
+
+/// Paramètres de `GET /api/reports/sla`.
+#[derive(Debug, Deserialize)]
+pub struct SlaQuery {
+    /// Premier jour inclus, `AAAA-MM-JJ`. Absent : le mois civil précédent.
+    pub from: Option<String>,
+    /// Dernier jour inclus. Absent avec `from` : aujourd'hui.
+    pub to: Option<String>,
+    /// Fuseau IANA de la période et de l'affichage. Défaut : UTC.
+    pub tz: Option<String>,
+    /// `pdf` (défaut), `csv` (moniteurs) ou `incidents_csv`.
+    pub format: Option<String>,
+    /// Objectif de disponibilité, en pour cent.
+    pub objective: Option<f64>,
+    /// Page de statut dont le nom habille le rapport.
+    pub page: Option<i64>,
+    /// Titre du rapport (nom affiché sous l'en-tête).
+    pub title: Option<String>,
+}
+
+/// Plus longue période demandable : une année (bissextile comprise).
+const MAX_SLA_DAYS: i64 = 366;
+
+fn parse_day(label: &str, raw: &str) -> ApiResult<chrono::NaiveDate> {
+    chrono::NaiveDate::parse_from_str(raw.trim(), "%Y-%m-%d")
+        .map_err(|_| ApiError::BadRequest(format!("\"{label}\" must be a date like 2026-10-31.")))
+}
+
+/// `GET /api/reports/sla` : le rapport de disponibilité d'une période choisie,
+/// à la demande, en PDF ou en CSV.
+pub async fn download_sla(
+    State(state): State<AppState>,
+    _admin: AdminIdentity,
+    Query(query): Query<SlaQuery>,
+) -> ApiResult<Response> {
+    use crate::reports::{collect, sla};
+    let tz_name = query.tz.as_deref().map(str::trim).filter(|t| !t.is_empty()).unwrap_or("UTC");
+    let tz = parse_timezone(tz_name).ok_or_else(|| {
+        ApiError::BadRequest("The timezone must be an IANA name such as \"Europe/Paris\".".into())
+    })?;
+    let now = Utc::now();
+    let period = match (query.from.as_deref(), query.to.as_deref()) {
+        (None, None) => Period::previous_calendar_month(now, tz)
+            .ok_or_else(|| ApiError::BadRequest("Cannot work out the month.".into()))?,
+        (from, to) => {
+            let today = now.with_timezone(&tz).date_naive();
+            let first = match from {
+                Some(raw) => parse_day("from", raw)?,
+                None => {
+                    return Err(ApiError::BadRequest("Give \"from\" together with \"to\".".into()));
+                }
+            };
+            let last = match to {
+                Some(raw) => parse_day("to", raw)?,
+                None => today,
+            };
+            if last < first {
+                return Err(ApiError::BadRequest("\"to\" must not be before \"from\".".into()));
+            }
+            if (last - first).num_days() + 1 > MAX_SLA_DAYS {
+                return Err(ApiError::BadRequest(format!(
+                    "A report covers at most {MAX_SLA_DAYS} days."
+                )));
+            }
+            let start = schedule::local_midnight(first, tz)
+                .ok_or_else(|| ApiError::BadRequest("\"from\" is not a valid date.".into()))?;
+            let end = schedule::local_midnight(last.succ_opt().unwrap_or(last), tz)
+                .ok_or_else(|| ApiError::BadRequest("\"to\" is not a valid date.".into()))?;
+            if start >= now {
+                return Err(ApiError::BadRequest("The period starts in the future.".into()));
+            }
+            // Une période en cours s'arrête à maintenant.
+            Period::custom(start, end.min(now))
+        }
+    };
+
+    let title = query.title.as_deref().map(str::trim).filter(|t| !t.is_empty());
+    let name = title.unwrap_or("Availability report");
+    if name.chars().count() > 120 || name.chars().any(char::is_control) {
+        return Err(ApiError::BadRequest(
+            "The title must be 120 characters at most, without control characters.".into(),
+        ));
+    }
+    let objective = valid_objective(query.objective)?;
+    if let Some(id) = query.page
+        && db::status_pages::get_page(&state.pool, id).await?.is_none()
+    {
+        return Err(ApiError::BadRequest("The status page does not exist.".into()));
+    }
+
+    let data = collect::collect_period(&state, name, Frequency::Monthly, period, now)
+        .await
+        .map_err(|error| ApiError::Internal(error.context("collecte du rapport SLA")))?;
+    let options = reports::sla_options(&state, query.page, objective, now).await;
+    let stem = sla::file_stem(&data, tz);
+    let (body, content_type, filename) = match query.format.as_deref().unwrap_or("pdf") {
+        "pdf" => (sla::pdf(&data, tz, &options), "application/pdf", format!("{stem}.pdf")),
+        "csv" => (
+            sla::csv_monitors(&data, objective).into_bytes(),
+            reports::CSV_TYPE,
+            format!("{stem}-monitors.csv"),
+        ),
+        "incidents_csv" => (
+            sla::csv_incidents(&data).into_bytes(),
+            reports::CSV_TYPE,
+            format!("{stem}-incidents.csv"),
+        ),
+        other => {
+            return Err(ApiError::BadRequest(format!(
+                "Unknown format \"{other}\" (expected: pdf, csv, incidents_csv)."
+            )));
+        }
+    };
+    Ok((
+        [
+            (header::CONTENT_TYPE, content_type.to_string()),
+            (header::CONTENT_DISPOSITION, format!("attachment; filename=\"{filename}\"")),
+            (header::CACHE_CONTROL, "private, no-store".to_string()),
+        ],
+        body,
+    )
+        .into_response())
 }
