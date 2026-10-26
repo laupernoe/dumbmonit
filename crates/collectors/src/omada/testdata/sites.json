@@ -1,0 +1,1 @@
+{"errorCode":0,"msg":"Success.","result":{"totalRows":2,"currentPage":1,"currentSize":2,"data":[{"siteId":"site-default","name":"Default","region":"France","timeZone":"Europe/Paris","scenario":"Office","type":0},{"siteId":"site-branch","name":"Branch","region":"France","timeZone":"Europe/Paris","scenario":"Office","type":0}]}}
