@@ -409,6 +409,18 @@ async fn keycloak_groups_give_the_role_and_the_teams() {
     assert_eq!(issuer.as_deref(), Some(KEYCLOAK));
 }
 
+/// Keycloak, réglages par défaut : seule la réponse est signée. Sa signature,
+/// posée sur la racine, couvre l'assertion.
+#[tokio::test]
+async fn a_response_signed_only_at_the_root_is_accepted() {
+    let app = app_at(NOW).await;
+    configure_ok(&app, KEYCLOAK, "keycloak-cert.pem", json!({})).await;
+    let session = sign_in(&app, "keycloak-document-signed-response.xml").await.expect("connexion");
+    let user = me(&app, &session).await;
+    assert_eq!(user["username"], "carol@kc.example");
+    assert_eq!(user["role"], "viewer");
+}
+
 // --- Réponses refusées ----------------------------------------------------------
 
 /// Chaque document hostile est refusé, et personne n'est connecté ni créé.
@@ -432,6 +444,35 @@ async fn forged_or_mismatched_responses_are_refused() {
         assert_eq!(refused, Err("invalid_response".to_string()), "{what} ({file})");
         assert_eq!(usernames(&app, &admin).await, vec!["admin".to_string()], "{what}");
     }
+}
+
+/// XSW sur la réponse : la réponse signée de Carol, intacte, est enveloppée
+/// dans une réponse non signée qui porte l'assertion de Mallory.
+#[tokio::test]
+async fn a_signed_response_wrapped_in_another_is_refused() {
+    let app = app_at(NOW).await;
+    let admin = configure_ok(&app, KEYCLOAK, "keycloak-cert.pem", json!({})).await;
+    let refused = sign_in(&app, "xsw-response-wrap-response.xml").await;
+    assert_eq!(refused, Err("invalid_response".to_string()));
+    assert_eq!(usernames(&app, &admin).await, vec!["admin".to_string()]);
+}
+
+/// Avant `NotBefore` (09:55), tolérance de deux minutes comprise : refusée.
+#[tokio::test]
+async fn an_assertion_not_yet_valid_is_refused() {
+    // 09:50:00Z.
+    let app = app_at(NOW - 11 * 60).await;
+    configure_ok(&app, ENTRA, "entra-cert.pem", json!({})).await;
+    assert_eq!(sign_in(&app, "entra-response.xml").await, Err("expired".to_string()));
+}
+
+/// Quelques secondes d'écart d'horloge avec l'IdP restent dans la tolérance.
+#[tokio::test]
+async fn a_small_clock_skew_is_tolerated() {
+    // 09:59:45Z : la réponse semble émise quinze secondes dans le futur.
+    let app = app_at(NOW - 75).await;
+    configure_ok(&app, ENTRA, "entra-cert.pem", json!({})).await;
+    assert!(sign_in(&app, "entra-response.xml").await.is_ok());
 }
 
 #[tokio::test]

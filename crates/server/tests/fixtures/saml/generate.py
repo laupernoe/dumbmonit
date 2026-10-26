@@ -324,6 +324,48 @@ def main():
     )
     write("keycloak-response", sign(kc, kc_key, kc_cert, ds_prefix="dsig"))
 
+    # --- Keycloak avec ses réglages par défaut (« Sign documents » seul) : la
+    # réponse est signée, pas l'assertion. La signature de la racine couvre
+    # l'assertion qu'elle contient.
+    def kc_plain(assertion_id, name_id="G-1c2d3e4f-5a6b-7c8d-9e0f-carolkeycloak",
+                 email="carol@kc.example"):
+        return assertion(
+            prefix="saml",
+            issuer=kc_issuer,
+            assertion_id=assertion_id,
+            name_id=name_id,
+            name_format=PERSISTENT,
+            attributes=[
+                ("email", [email], BASIC),
+                ("firstName", ["Carol"], BASIC),
+                ("groups", ["/ops"], BASIC),
+            ],
+        )
+
+    kc_doc = response(
+        prefixes=("samlp", "saml"), issuer=kc_issuer, response_id="ID_kc-doc-signed-response-0001",
+        assertions=[kc_plain("ID_kc-doc-signed-assertion-0001")],
+    )
+    write("keycloak-document-signed-response", sign(kc_doc, kc_key, kc_cert, ds_prefix="dsig"))
+
+    # XSW sur la réponse : une réponse non signée au nom de Mallory enveloppe,
+    # dans ses `Extensions`, la réponse signée (intacte) de Carol. La référence
+    # `#ID` signée se résout toujours, mais elle ne désigne pas la racine.
+    inner = sign(response(
+        prefixes=("samlp", "saml"), issuer=kc_issuer, response_id="ID_kc-wrapped-response-0001",
+        assertions=[kc_plain("ID_kc-wrapped-assertion-0001")],
+    ), kc_key, kc_cert, ds_prefix="dsig")
+    outer = response(
+        prefixes=("samlp", "saml"), issuer=kc_issuer, response_id="ID_kc-evil-response-0001",
+        assertions=[kc_plain("ID_kc-evil-assertion-0001", name_id="G-mallory",
+                             email="mallory@kc.example")],
+    )
+    outer = outer.replace(
+        b"</saml:Issuer>", b"</saml:Issuer><samlp:Extensions>" + inner + b"</samlp:Extensions>", 1
+    )
+    assert inner in outer
+    write("xsw-response-wrap-response", outer)
+
     # Métadonnées d'IdP façon Okta, pour l'import.
     body = "".join(okta_cert.decode().strip().splitlines()[1:-1])
     metadata = f"""<?xml version="1.0" encoding="UTF-8"?>

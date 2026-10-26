@@ -72,10 +72,16 @@
 		invalid_token: () => ({ title: m.auth_login_sso_invalid_token_title(), detail: m.auth_login_sso_invalid_token_detail() }),
 		no_account: () => ({ title: m.auth_login_sso_no_account_title(), detail: m.auth_login_sso_no_account_detail() }),
 		disabled: () => ({ title: m.auth_login_sso_disabled_title(), detail: m.auth_login_sso_disabled_detail() }),
-		internal: () => ({ title: m.auth_login_sso_internal_title(), detail: m.auth_login_sso_internal_detail() })
+		internal: () => ({ title: m.auth_login_sso_internal_title(), detail: m.auth_login_sso_internal_detail() }),
+		// SAML only.
+		invalid_response: () => ({ title: m.auth_login_sso_invalid_response_title(), detail: m.auth_login_sso_invalid_response_detail() }),
+		expired: () => ({ title: m.auth_login_sso_expired_title(), detail: m.auth_login_sso_expired_detail() }),
+		replay: () => ({ title: m.auth_login_sso_replay_title(), detail: m.auth_login_sso_replay_detail() }),
+		unsolicited: () => ({ title: m.auth_login_sso_unsolicited_title(), detail: m.auth_login_sso_unsolicited_detail() })
 	};
 	const ssoFailure = $derived.by(() => {
-		if (page.url.searchParams.get('error') !== 'oidc') return null;
+		const error = page.url.searchParams.get('error');
+		if (error !== 'oidc' && error !== 'saml') return null;
 		const reason = page.url.searchParams.get('reason') ?? 'internal';
 		return (SSO_REASONS[reason] ?? SSO_REASONS.internal)();
 	});

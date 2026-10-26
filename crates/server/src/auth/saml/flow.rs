@@ -256,9 +256,12 @@ fn setup(error: SamlError) -> FlowError {
 /// Le fournisseur de service, avec la politique de vérification la plus
 /// stricte de `saml-rs` :
 ///
-/// - signature directe de l'`Assertion` exigée (`RequireSigned`) : une
-///   `Response` signée seule ne suffit pas, et une assertion non signée
-///   glissée à côté d'une assertion signée est refusée (XSW) ;
+/// - l'assertion consommée doit être couverte par une signature vérifiée :
+///   la sienne, ou celle de la `Response` racine qui la contient (Keycloak, par
+///   défaut, ne signe que le document). Seul le contenu couvert par la
+///   signature est lu : une assertion non signée glissée à côté d'une assertion
+///   signée, ou une réponse signée enveloppée dans une autre, est refusée
+///   (XSW) ;
 /// - profil `StrictRsaSha2` : une seule référence locale `#id`, RSA-SHA256/384/512
 ///   et condensé SHA-256 ou plus (SHA-1 refusé), canonicalisation exclusive,
 ///   transformations limitées à enveloped-signature et exc-c14n ;
@@ -270,7 +273,9 @@ fn setup(error: SamlError) -> FlowError {
 /// n'aurait qu'une clé de plus à garder.
 pub fn service_provider(endpoints: &Endpoints) -> Result<Saml<Sp>, SamlError> {
     let policy = SpValidationPolicy {
-        assertions: AssertionSignaturePolicy::RequireSigned,
+        // En HTTP-POST, `saml-rs` exige toujours une signature de l'assertion
+        // ou de la réponse ; `check_session` vérifie ensuite laquelle.
+        assertions: AssertionSignaturePolicy::AllowUnsignedForCompatibility,
         xml_signatures: XmlSignatureProfile::StrictRsaSha2,
         audience: AudienceValidationPolicy::Validate,
         authn_requests: AuthnRequestSigningPolicy::DoNotSignForCompatibility,
@@ -321,8 +326,16 @@ fn idp_descriptor(config: &SamlConfig) -> Result<IdpDescriptor, SamlError> {
 }
 
 /// Les métadonnées du fournisseur de service, à donner à l'IdP.
+///
+/// `WantAssertionsSigned` y reste à `true` : c'est ce que l'on demande à l'IdP
+/// (et ce qu'un IdP qui importe ces métadonnées réglera), même si une réponse
+/// signée seulement à la racine est acceptée. Les métadonnées du SP ne sont pas
+/// signées : les retoucher n'invalide rien.
 pub fn sp_metadata_xml(endpoints: &Endpoints) -> Result<String, FlowError> {
-    Ok(service_provider(endpoints).map_err(setup)?.metadata_xml().to_string())
+    Ok(service_provider(endpoints)
+        .map_err(setup)?
+        .metadata_xml()
+        .replace("WantAssertionsSigned=\"false\"", "WantAssertionsSigned=\"true\""))
 }
 
 /// Construit la redirection vers l'IdP. Rend l'URL, le `RelayState` (clé de la
@@ -419,16 +432,21 @@ fn check_session(
     if unsolicited && session.in_response_to().is_some() {
         return Err(FlowError::Invalid("unsolicited response carries InResponseTo".into()));
     }
+    // L'assertion est protégée par sa propre signature ou par celle de la
+    // racine `Response` (qui couvre tout son sous-arbre, assertion comprise).
+    // Une signature posée sur un élément enveloppé ne couvre ni l'une ni
+    // l'autre, et `saml-rs` ne la rapporte pas.
     let signatures = session.verified_xml_signatures();
-    let assertion_signed = signatures.iter().any(|signature| {
+    let assertion_protected = signatures.iter().any(|signature| {
         matches!(
             signature.coverage(),
             VerifiedXmlSignatureCoverage::ConsumedAssertion
+                | VerifiedXmlSignatureCoverage::ResponseRoot
                 | VerifiedXmlSignatureCoverage::ResponseRootAndConsumedAssertion
         )
     });
-    if !assertion_signed {
-        return Err(FlowError::Invalid("assertion is not signed".into()));
+    if !assertion_protected {
+        return Err(FlowError::Invalid("neither the assertion nor the response is signed".into()));
     }
     if let Some(weak) =
         signatures.iter().find(|signature| !strong_algorithm(signature.algorithm_uri()))

@@ -746,6 +746,27 @@ async fn lists_are_paginated() {
     assert_scim_error(&reply, StatusCode::BAD_REQUEST, Some("invalidValue"));
 }
 
+/// Les valeurs d'un filtre sont comparées en mémoire, jamais concaténées à du
+/// SQL : une valeur hostile ne trouve simplement personne.
+#[tokio::test]
+async fn filter_values_are_data_never_sql() {
+    let lab = Lab::new().await;
+    lab.user("u1").await;
+    for filter in [
+        r#"userName eq "x' OR '1'='1""#,
+        r#"userName eq "u1' --""#,
+        r#"userName eq "\" OR 1=1 --""#,
+        r#"externalId eq "%""#,
+    ] {
+        let reply = lab.get(&format!("/api/scim/v2/Users?filter={}", urlencode(filter))).await;
+        assert_eq!(reply.status, StatusCode::OK, "{filter}");
+        assert_eq!(reply.body["totalResults"], 0, "{filter}");
+    }
+    let reply = lab.get(&format!("/api/scim/v2/Groups?filter={}", urlencode(r#"displayName eq "' OR 1=1 --""#))).await;
+    assert_eq!(reply.status, StatusCode::OK);
+    assert_eq!(reply.body["totalResults"], 0);
+}
+
 #[tokio::test]
 async fn unsupported_filters_are_invalid_filters() {
     let lab = Lab::new().await;

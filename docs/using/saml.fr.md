@@ -25,8 +25,9 @@ certificat de signature.
 
 ## Sécurité
 
-- Les **assertions signées sont obligatoires**. Algorithmes SHA-256 ou plus ;
-  **SHA-1 est refusé**. Une assertion non signée est rejetée.
+- **Une signature est obligatoire** : sur l'assertion, sur la réponse entière,
+  ou les deux. Algorithmes SHA-256 ou plus ; **SHA-1 est refusé**. Une réponse
+  dont ni l'une ni l'autre n'est signée est rejetée.
 - L'audience, la destination, l'expiration et `InResponseTo` sont vérifiées,
   et une assertion ne sert qu'une fois (anti-rejeu).
 - La **connexion initiée par l'IdP** (depuis le portail de l'IdP) est
@@ -103,8 +104,8 @@ demandée.
    l'URL des métadonnées.
 2. Renseignez *Valid redirect URIs* et *Master SAML Processing URL* avec l'URL
    ACS ; *Name ID format* = email.
-3. **Signature and Encryption** : **Sign assertions = ON**, algorithme
-   RSA_SHA256.
+3. **Signature and Encryption** : gardez *Sign documents* et activez aussi
+   **Sign assertions** (recommandé), algorithme RSA_SHA256.
 4. **Client scopes → dedicated scope → Add mapper** : *User Property* `email`
    → attribut `email` ; *User Property* `username` ou un mapper de nom complet
    → `displayName` ; *Group list* → attribut `groups` (désactivez *Full group
