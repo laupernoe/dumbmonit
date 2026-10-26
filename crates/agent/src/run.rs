@@ -34,6 +34,7 @@ use crate::collect::zfs::ZfsProbe;
 use crate::collect::{SystemProbe, agent_samples, services};
 use crate::commands::CommandRunner;
 use crate::config::{Config, MIN_INTERVAL_SECS};
+use crate::logs::LogRunner;
 use crate::relay::RelayRunner;
 use crate::selfupdate::{AfterStop, SelfUpdater};
 use crate::shutdown::Shutdown;
@@ -133,6 +134,10 @@ pub struct Agent {
     /// réception le porte. `None` tant que le serveur n'en a rien dit (serveur
     /// antérieur) : seule la configuration locale compte alors.
     server_relay: Option<RelaySetting>,
+    /// Collecte de journaux de cette machine, et le réglage que le dernier accusé
+    /// de réception portait (`None` : serveur antérieur, rien n'est collecté).
+    logs: LogRunner,
+    server_logs: Option<dumbmonit_proto::LogsSetting>,
     /// Période courante : celle de la configuration, jusqu'à ce que le serveur en
     /// demande une autre dans son accusé de réception.
     interval: Duration,
@@ -210,6 +215,11 @@ impl Agent {
             identity.key(),
             &config.docker_socket,
         );
+        let logs = LogRunner::new(
+            client.clone(),
+            identity.key(),
+            config.secret_path.with_file_name("logs-spool.jsonl"),
+        );
         Ok(Self {
             interval: config.interval,
             buffer: PendingBuffer::new(config.max_buffered_samples),
@@ -238,6 +248,8 @@ impl Agent {
             commands,
             relay: None,
             server_relay: None,
+            logs,
+            server_logs: None,
             binding,
             binding_refused: false,
             disabled_modules: BTreeSet::new(),
@@ -460,6 +472,7 @@ impl Agent {
                             // de lui demander s'il attend quelque chose de nous.
                             self.commands.poll().await;
                             self.sync_relay(&shutdown);
+                            self.logs.apply(self.server_logs.clone(), &shutdown);
                             if self.apply_update().await {
                                 break;
                             }
@@ -501,6 +514,7 @@ impl Agent {
                 let _ = relay.await;
             }
         }
+        self.logs.finish(self.after_stop.is_none()).await;
         self.final_flush().await;
         if let Some(action) = self.after_stop.take() {
             info!("agent stopped for its update");
@@ -639,6 +653,7 @@ impl Agent {
                 if let Some(rules) = ack.event_rules {
                     self.eventlog.set_rules(rules);
                 }
+                self.server_logs = ack.logs;
                 // Nouveau binaire à l'essai : ce lot accepté le confirme.
                 if self.updater.confirm() {
                     self.identity.self_update = Some(self.updater.info());

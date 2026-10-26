@@ -231,6 +231,15 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     state.storage().set_metrics(embedded_vm).await;
     dumbmonit_server::storage::start(&state).await;
 
+    // Journaux centralisés : écrivain vers VictoriaLogs, table des émetteurs,
+    // serveur syslog et récepteur de traps (chacun désactivé par défaut).
+    if !state.config.demo {
+        dumbmonit_server::logs::central::spawn(state.clone());
+        dumbmonit_server::logs::attach::spawn(state.pool.clone());
+        dumbmonit_server::logs::syslog::spawn();
+        dumbmonit_server::logs::traps::spawn();
+    }
+
     scheduler::spawn(state.clone());
     // Configuration en fichiers : appliquée au démarrage puis à chaque changement.
     dumbmonit_server::gitops::watch::spawn(state.clone());

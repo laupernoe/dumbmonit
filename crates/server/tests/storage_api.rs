@@ -113,6 +113,9 @@ async fn log_search_says_when_the_log_store_is_off() {
     let (app, cookie) = app().await;
     let reply = app.get("/api/logs/search?query=error", Some(&cookie)).await;
     assert_eq!(reply.status, StatusCode::CONFLICT, "{}", reply.body);
-    let reply = app.get("/api/logs/search?source=agents", Some(&cookie)).await;
+    // Les journaux d'agent, de syslog et de traps se cherchent comme les siens.
+    let reply = app.get("/api/logs/search?source=agent&target=3", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::CONFLICT, "{}", reply.body);
+    let reply = app.get("/api/logs/search?source=bogus", Some(&cookie)).await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
 }

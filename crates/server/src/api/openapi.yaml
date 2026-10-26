@@ -6141,7 +6141,9 @@ paths:
       description: >-
         Newest first. Only filters are accepted (no `|` pipes); the period, the
         minimum level and the server's own stream are added by the server.
-        Agent logs (`source=agents|all`) are reserved and refused for now.
+        `source` picks the stream: the server itself (`server`), lines collected
+        by agents (`agent`), the built-in syslog server (`syslog`), SNMP traps
+        (`trap`) or all of them (`all`). `target` keeps one device's lines.
       security: [{ cookieAuth: [] }]
       x-token-scope: none
       parameters:
@@ -6150,7 +6152,8 @@ paths:
         - { name: end, in: query, description: End of the period (ms), schema: { type: integer } }
         - { name: level, in: query, schema: { type: string, enum: [error, warn, info, debug], default: info } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 1000, default: 200 } }
-        - { name: source, in: query, schema: { type: string, enum: [server, agents, all], default: server } }
+        - { name: source, in: query, schema: { type: string, enum: [server, agent, syslog, trap, all], default: server } }
+        - { name: target, in: query, description: Device id, schema: { type: integer, format: int64 } }
       responses:
         "200":
           description: Matching log entries.
@@ -6162,6 +6165,64 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
         "502": { $ref: "#/components/responses/BadGateway" }
+
+  /api/logs/inputs:
+    get:
+      operationId: getLogInputs
+      tags: [Logs]
+      summary: State of the syslog server and the SNMP trap receiver
+      description: Both are off unless the environment turns them on (`DUMBMONIT_SYSLOG_ENABLED`, `DUMBMONIT_TRAPS_ENABLED`).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Receivers and counters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/LogInputs" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/logs/agents/{id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getAgentLogs
+      tags: [Logs]
+      summary: Log collection setting of an agent device
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The setting, and when lines last arrived.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentLogs" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: setAgentLogs
+      tags: [Logs]
+      summary: Turn log collection on or off for an agent, and choose what it reads
+      description: The agent applies it on the fly at its next report. `DUMBMONIT_AGENT_LOGS=off` on the machine forbids collection there whatever this says.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentLogsSetting" }
+      responses:
+        "200":
+          description: The setting after the change.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentLogs" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/system/storage:
     get:
@@ -10447,6 +10508,8 @@ components:
         mad_floor_abs: { type: number, default: 0.000001 }
         mad_floor_rel: { type: number, default: 0.01 }
         min_samples: { type: integer, default: 3 }
+        log_window_secs: { type: integer, minimum: 60, maximum: 86400, default: 300, description: "`log_pattern` rules: counting window. Accepted on write as `window_secs` too." }
+        log_per_target: { type: boolean, default: true, description: "`log_pattern` rules: one alert per device (the `target` field of the lines), or a single one. Accepted on write as `per_target` too." }
     Operator:
       type: string
       enum: [">", ">=", "<", "<="]
@@ -10458,7 +10521,7 @@ components:
         uid: { type: string }
         name: { type: string }
         description: { type: string }
-        kind: { type: string, enum: [threshold, anomaly, predict] }
+        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`." }
         query: { type: string }
         operator: { $ref: "#/components/schemas/Operator" }
         threshold: { type: number }
@@ -10486,7 +10549,7 @@ components:
         uid: { type: string, description: Derived from the name when absent. }
         name: { type: string }
         description: { type: string }
-        kind: { type: string, enum: [threshold, anomaly, predict] }
+        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`." }
         query: { type: string }
         operator: { $ref: "#/components/schemas/Operator" }
         threshold: { type: number }
@@ -12059,9 +12122,54 @@ components:
               time: { type: string, description: UTC, without suffix }
               level: { type: string }
               message: { type: string }
-              source: { type: string }
+              source: { type: string, enum: [dumbmonit, agent, syslog, trap], description: Stream the line belongs to. }
               host: { type: [string, "null"] }
+              origin: { type: [string, "null"], description: "Unit, file, channel or sender address." }
+              target_name: { type: [string, "null"], description: Device the sender is attached to. }
               fields: { type: object, additionalProperties: { type: string } }
+    AgentLogsSetting:
+      type: object
+      properties:
+        enabled: { type: boolean, default: false }
+        min_level: { type: string, enum: [error, warn, info, debug], default: warn }
+        journald: { type: boolean, default: true, description: Read the systemd journal (Linux). }
+        files:
+          type: array
+          maxItems: 20
+          items: { type: string, description: "Absolute path; `*` and `?` work in each component." }
+        eventlog:
+          type: array
+          maxItems: 10
+          items: { type: string, description: Windows event log channel. }
+    AgentLogs:
+      allOf:
+        - $ref: "#/components/schemas/AgentLogsSetting"
+        - type: object
+          required: [last_received_at, received_total, store_running]
+          properties:
+            last_received_at: { type: [string, "null"], description: UTC, without suffix }
+            received_total: { type: integer }
+            store_running: { type: boolean, description: False when the embedded log store is off, lines would be dropped. }
+    LogInput:
+      type: object
+      required: [enabled, listening, received, rejected, unmatched, last_at, error]
+      properties:
+        enabled: { type: boolean }
+        listening: { type: array, items: { type: string, description: "`udp/5514`, `tcp/5514`" } }
+        received: { type: integer }
+        rejected: { type: integer }
+        unmatched: { type: integer, description: Messages from a sender no device carries. }
+        last_at: { type: [string, "null"] }
+        error: { type: [string, "null"] }
+    LogInputs:
+      type: object
+      required: [store_running, syslog, traps, written, dropped]
+      properties:
+        store_running: { type: boolean }
+        syslog: { $ref: "#/components/schemas/LogInput" }
+        traps: { $ref: "#/components/schemas/LogInput" }
+        written: { type: integer, description: Central log entries written to the store since the server started. }
+        dropped: { type: integer }
     LogsSettingsRequest:
       type: object
       properties:

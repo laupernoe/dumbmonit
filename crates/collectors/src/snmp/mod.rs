@@ -38,6 +38,39 @@ pub use profile::{Catalog, Profile};
 // Type d'un champ public de `ScanOptions` : il doit être nommable par l'appelant.
 pub use session::CommunityVersion;
 
+/// Nom lisible d'un OID, d'après les profils embarqués : la métrique ou
+/// l'étiquette dont l'OID est le plus long préfixe, suivie de l'index restant
+/// (`if_oper_status.3`). Sert à décrire les varbinds d'une trap reçue ;
+/// `None` quand aucun profil ne connaît ce sous-arbre.
+pub fn describe_oid(arcs: &[u64]) -> Option<String> {
+    use std::collections::HashMap;
+    use std::sync::OnceLock;
+
+    static NAMES: OnceLock<HashMap<Vec<u64>, String>> = OnceLock::new();
+    let names = NAMES.get_or_init(|| {
+        let mut names: HashMap<Vec<u64>, String> = HashMap::new();
+        for profile in profile::embedded().profiles() {
+            for metric in &profile.metrics {
+                names.entry(metric.oid.arcs().to_vec()).or_insert_with(|| metric.name.clone());
+                for (label, oid) in &metric.labels {
+                    names.entry(oid.arcs().to_vec()).or_insert_with(|| label.clone());
+                }
+            }
+        }
+        names
+    });
+    (1..=arcs.len()).rev().find_map(|length| {
+        names.get(&arcs[..length]).map(|name| {
+            if length == arcs.len() {
+                name.clone()
+            } else {
+                let index: Vec<String> = arcs[length..].iter().map(u64::to_string).collect();
+                format!("{name}.{}", index.join("."))
+            }
+        })
+    })
+}
+
 /// Les trois scalaires d'identification, lus à chaque auto-détection.
 static SYS_DESCR: LazyLock<ObjectId> =
     LazyLock::new(|| ObjectId::new(vec![1, 3, 6, 1, 2, 1, 1, 1, 0]));

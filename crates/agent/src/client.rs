@@ -7,8 +7,9 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use dumbmonit_proto::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_TLS_HEADER, AgentCommand, CERT_REFUSED,
-    COMMANDS_PATH, CommandReport, INGEST_PATH, ProbeOutcome, PushAck, PushBatch, RELAY_PATH,
-    TLS_ENROL_PATH, TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest,
+    COMMANDS_PATH, CommandReport, INGEST_PATH, LOGS_PATH, LogBatch, ProbeOutcome, PushAck,
+    PushBatch, RELAY_PATH, TLS_ENROL_PATH, TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest,
+    TlsOffer, TlsRenewRequest,
 };
 use tokio::sync::Notify;
 
@@ -388,6 +389,14 @@ impl PushClient {
         }
         self.mark_reachable();
         Ok(())
+    }
+
+    /// Lot de lignes de journal, sur le même canal que les commandes.
+    pub async fn send_logs(&self, key: &str, batch: &LogBatch) -> Result<(), PushError> {
+        let response = self
+            .exchange(|| self.keyed(reqwest::Method::POST, LOGS_PATH, key, "").json(batch))
+            .await?;
+        self.read_empty(response).await
     }
 
     /// Compte rendu d'exécution d'une commande.

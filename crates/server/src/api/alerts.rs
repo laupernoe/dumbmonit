@@ -398,6 +398,14 @@ struct AnomalyParamsPayload {
     mad_floor_abs: Option<f64>,
     mad_floor_rel: Option<f64>,
     min_samples: Option<u32>,
+    /// Règle « motif de journal » : fenêtre de comptage (secondes). L'alias est le
+    /// nom sous lequel la règle est renvoyée : un `PUT` qui la renvoie telle quelle
+    /// ne la remet pas à zéro.
+    #[serde(alias = "log_window_secs")]
+    window_secs: Option<u64>,
+    /// Règle « motif de journal » : une alerte par cible, ou une seule.
+    #[serde(alias = "log_per_target")]
+    per_target: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -849,6 +857,11 @@ impl RulePayload {
             "The escalation delay \"escalate_after_secs\"",
         )?;
 
+        if kind == RuleKind::LogPattern && crate::logs::central::has_pipe(&query) {
+            return Err(ApiError::BadRequest(
+                "A log pattern accepts filters only: remove the `|` pipes from the query.".into(),
+            ));
+        }
         let selector = parse_selector(self.selector)?;
         let params = parse_params(self.params)?;
         let channels = validate_channels(state, self.channels.unwrap_or_default()).await?;
@@ -885,8 +898,9 @@ fn parse_kind(raw: Option<&str>) -> ApiResult<RuleKind> {
         None | Some("") | Some("threshold") => Ok(RuleKind::Threshold),
         Some("anomaly") => Ok(RuleKind::Anomaly),
         Some("predict") => Ok(RuleKind::Predict),
+        Some("log_pattern") => Ok(RuleKind::LogPattern),
         Some(other) => Err(ApiError::BadRequest(format!(
-            "Unknown rule type \"{other}\" (expected: threshold, anomaly, predict)."
+            "Unknown rule type \"{other}\" (expected: threshold, anomaly, predict, log_pattern)."
         ))),
     }
 }
@@ -962,7 +976,18 @@ fn parse_params(raw: Option<Value>) -> ApiResult<AnomalyParams> {
         mad_floor_abs: payload.mad_floor_abs.unwrap_or(defaults.mad_floor_abs),
         mad_floor_rel: payload.mad_floor_rel.unwrap_or(defaults.mad_floor_rel),
         min_samples: payload.min_samples.unwrap_or(defaults.min_samples),
+        log_window_secs: payload.window_secs.unwrap_or(defaults.log_window_secs),
+        log_per_target: payload.per_target.unwrap_or(defaults.log_per_target),
     };
+    if !(crate::alerting::model::MIN_LOG_WINDOW_SECS..=crate::alerting::model::MAX_LOG_WINDOW_SECS)
+        .contains(&params.log_window_secs)
+    {
+        return Err(ApiError::BadRequest(format!(
+            "\"window_secs\" must be between {} and {} seconds.",
+            crate::alerting::model::MIN_LOG_WINDOW_SECS,
+            crate::alerting::model::MAX_LOG_WINDOW_SECS
+        )));
+    }
 
     if !(params.k.is_finite() && params.k > 0.0) {
         return Err(ApiError::BadRequest(

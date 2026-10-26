@@ -34,6 +34,7 @@ pub mod baseline;
 pub mod cycle;
 pub mod engine;
 pub mod group;
+pub mod log_source;
 pub mod machine;
 pub mod matcher;
 pub mod model;
