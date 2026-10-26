@@ -199,6 +199,8 @@ tags:
       PKCE). Refresh tokens never leave the server.
   - name: Prometheus compatibility
     description: Read access for an existing Prometheus or Grafana, outside `/api`.
+  - name: OpenTelemetry
+    description: OTLP/HTTP reception of metrics and logs, outside `/api`.
 
 paths:
   # ------------------------------------------------------------------ santé
@@ -7851,6 +7853,93 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
+  /otlp/v1/metrics:
+    post:
+      operationId: receiveOtlpMetrics
+      tags: [OpenTelemetry]
+      summary: Receive OpenTelemetry metrics
+      description: >-
+        OTLP/HTTP `ExportMetricsServiceRequest`, protobuf or JSON, optionally gzip (8 MiB, 32 MiB decompressed). Gauges, cumulative sums and histograms become `dumbmonit_*` series under the target. Delta temporality, exponential histograms and out-of-range timestamps are refused point by point and counted in `partialSuccess.rejectedDataPoints`.
+      x-token-scope: write
+      parameters:
+        - name: X-DumbMonit-Target
+          in: header
+          description: Id of the target the data is written under (or the `target` query parameter).
+          schema: { type: integer }
+        - name: target
+          in: query
+          description: Same as the header, for exporters that cannot set one.
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/x-protobuf:
+            schema: { type: string, format: binary }
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: Accepted; `partialSuccess` states what was not stored.
+          content:
+            application/x-protobuf:
+              schema: { type: string, format: binary }
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "415":
+          description: Neither protobuf nor JSON, or an unsupported `Content-Encoding`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+
+  /otlp/v1/logs:
+    post:
+      operationId: receiveOtlpLogs
+      tags: [OpenTelemetry]
+      summary: Receive OpenTelemetry logs
+      description: >-
+        OTLP/HTTP `ExportLogsServiceRequest`, relayed unchanged to the embedded VictoriaLogs with the field `target`. `503` while log storage is disabled, `502` when VictoriaLogs does not answer.
+      x-token-scope: write
+      parameters:
+        - name: X-DumbMonit-Target
+          in: header
+          description: Id of the target the data is written under (or the `target` query parameter).
+          schema: { type: integer }
+        - name: target
+          in: query
+          description: Same as the header, for exporters that cannot set one.
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/x-protobuf:
+            schema: { type: string, format: binary }
+          application/json:
+            schema: { type: object, additionalProperties: true }
+      responses:
+        "200":
+          description: Accepted by VictoriaLogs.
+          content:
+            application/x-protobuf:
+              schema: { type: string, format: binary }
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "415":
+          description: Neither protobuf nor JSON, or an unsupported `Content-Encoding`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Error" }
+        "429": { $ref: "#/components/responses/TooManyRequests" }
+        "502": { description: VictoriaLogs did not answer. }
+        "503": { description: Log storage is not enabled. }
   /api/wall/news:
     get:
       operationId: getWallNews

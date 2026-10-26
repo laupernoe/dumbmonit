@@ -3399,6 +3399,99 @@ const CADDY_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_TIMEOUT,
 ];
 
+/// Un exporter Prometheus sans mot de passe, ou derrière un proxy qui en pose un.
+const PROMETHEUS_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "Most exporters answer without authentication on a filtered network.",
+    fields: &[],
+};
+
+const PROMETHEUS_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Basic auth",
+    help: "For an exporter behind basic authentication (web.config.file, or a reverse proxy).",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const PROMETHEUS_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Bearer token",
+    help: "Sent as \"Authorization: Bearer …\" on every read.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+/// Options lues par `collectors/prometheus/mod.rs` et `observability/options.rs`.
+const PROMETHEUS_OPTIONS: &[OptionView] = &[
+    select(
+        "preset",
+        "Exporter",
+        "Fills in the usual port. Pick custom for any other exporter and give its port.",
+        "custom",
+        &[
+            "custom",
+            "node_exporter",
+            "windows_exporter",
+            "cadvisor",
+            "blackbox_exporter",
+            "snmp_exporter",
+            "smartctl_exporter",
+            "mysqld_exporter",
+            "postgres_exporter",
+            "redis_exporter",
+            "nginx_exporter",
+            "prometheus",
+        ],
+    ),
+    select(
+        "scheme",
+        "Protocol",
+        "HTTPS if the exporter is behind TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. Empty: the port of the exporter chosen above (9100 for custom).",
+        "9100",
+        "",
+    ),
+    text(
+        "path",
+        "Path",
+        "Page to read, with its query if any: /probe?target=example.org&module=http_2xx for the blackbox exporter.",
+        "/metrics",
+        "/metrics",
+    ),
+    text(
+        "keep",
+        "Keep only (regular expression)",
+        "Only the metrics whose name matches are stored, for example ^(node_cpu|node_memory). Empty: all.",
+        "^node_(cpu|memory|filesystem)",
+        "",
+    ),
+    text(
+        "drop",
+        "Ignore (regular expression)",
+        "The metrics whose name matches are not stored, for example ^go_|_bucket$.",
+        "^go_",
+        "",
+    ),
+    number(
+        "max_series",
+        "Series limit",
+        "At most this many series are stored per read, from 1 to 50000. The surplus is counted in dumbmonit_scrape_series_dropped.",
+        "5000",
+        "5000",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
 /// `stub_status` et `mod_status` are not guarded by a password on a correctly
 /// filtered network : the usual setup is no credential at all.
 const WEB_SERVER_NO_AUTH: CredentialView = CredentialView {
@@ -5385,6 +5478,38 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: PUSH_OPTIONS,
         },
+        "otlp" => CollectorView {
+            kind: "otlp",
+            label: "OpenTelemetry source",
+            summary: "Receives OpenTelemetry metrics (OTLP over HTTP) from a collector or an instrumented application: gauges, counters and histograms are stored and can be graphed and alerted on.",
+            examples: &[
+                "OpenTelemetry Collector",
+                "Instrumented application",
+                "Docker host with an OTel agent",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "otel-collector",
+            default_port: 0,
+            setup: Setup {
+                title: "Send OTLP/HTTP to DumbMonit",
+                steps: &[
+                    "In Settings, API & assistants, create a token with the write scope. Restrict it to the network of your collector.",
+                    "Save this source, then note its number: it ends the address of its page, /devices/<number>.",
+                    "In the otlphttp exporter of your collector, set the endpoint to this server followed by /otlp, then add two headers: Authorization with the token, and X-DumbMonit-Target with the number of this source.\nhttps://monit.example.com/otlp",
+                    "Make sure counters and histograms use cumulative temporality (the default); for delta, add the deltatocumulative processor.",
+                    "Optional: logs sent to /otlp/v1/logs are stored in VictoriaLogs when it is enabled in Settings, Storage.",
+                ],
+                ports: &[to_server!(
+                    8080,
+                    "tcp",
+                    "OTLP over HTTP (default port, 443 behind a proxy)",
+                )],
+                permissions: &[],
+                warning: "OTLP over gRPC is not supported: configure the otlphttp exporter, not otlp. The token can write to the whole API: keep it in the collector's secrets.",
+            },
+            options: &[],
+        },
         "dummy" => CollectorView {
             kind: "dummy",
             label: "Demo device",
@@ -6139,6 +6264,29 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "Never expose the admin API itself: whoever reaches port 2019 can replace the configuration or stop Caddy.",
             },
             options: CADDY_OPTIONS,
+        },
+        "prometheus" => CollectorView {
+            kind: "prometheus",
+            label: "Prometheus exporter",
+            summary: "Any exporter that serves Prometheus metrics (node_exporter, windows_exporter, cAdvisor, blackbox_exporter…): every series is stored and can be graphed and used in threshold alerts.",
+            examples: &["node_exporter", "windows_exporter", "cAdvisor", "blackbox_exporter"],
+            credential_types: &["none", "username_password", "api_token"],
+            credentials: &[PROMETHEUS_NO_AUTH, PROMETHEUS_LOGIN, PROMETHEUS_TOKEN],
+            address_hint: "server.lan:9100",
+            default_port: 9100,
+            setup: Setup {
+                title: "Point DumbMonit at the exporter",
+                steps: &[
+                    "Check that the exporter answers from the DumbMonit host.\ncurl http://server.lan:9100/metrics",
+                    "In DumbMonit, enter the host and pick the exporter, or leave custom and give the port.",
+                    "Optional: restrict what is stored with Keep only or Ignore, to keep a large exporter within the series limit.",
+                    "Optional: if the exporter is on another site, choose a relay agent to read it from there.",
+                ],
+                ports: &[to_device!(9100, "tcp", "Metrics page (HTTP, default for node_exporter)")],
+                permissions: &[],
+                warning: "Metrics pages are usually unauthenticated: filter the port so that only the DumbMonit host reaches it.",
+            },
+            options: PROMETHEUS_OPTIONS,
         },
         "nginx" => CollectorView {
             kind: "nginx",
@@ -7001,7 +7149,7 @@ fn guide_url(kind: &str) -> String {
         | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
         | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "push"
         | "webchange" | "website" | "m365" | "entra" | "azure" | "aws" | "cloudflare"
-        | "hetzner" | "ovh" | "infomaniak" => kind,
+        | "hetzner" | "ovh" | "infomaniak" | "prometheus" | "otlp" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
