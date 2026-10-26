@@ -30,6 +30,8 @@ use super::webauthn::RelyingParty;
 
 const TTL: Duration = Duration::from_secs(5 * 60);
 const MAX_PENDING: usize = 1_000;
+/// Enrôlements en cours par compte.
+const MAX_REGISTER_PER_USER: usize = 10;
 /// Nombre maximal de clés d'accès par compte.
 pub const MAX_PER_USER: i64 = 20;
 /// Longueur maximale du nom d'une clé.
@@ -61,12 +63,24 @@ pub fn start(ceremony: Ceremony, rp: RelyingParty) -> (String, [u8; 32]) {
     if let Ok(mut pending) = PENDING.lock() {
         pending.retain(|_, p| now.duration_since(p.started) < TTL);
         match ceremony {
-            // Un seul enrôlement en cours par compte : le précédent est annulé.
-            // Les enrôlements, réservés aux comptes connectés, ne sont jamais
-            // évincés par un afflux de connexions anonymes.
-            Ceremony::Register { user_id } => pending.retain(|_, p| {
-                !matches!(p.ceremony, Ceremony::Register { user_id: other } if other == user_id)
-            }),
+            // Quelques enrôlements en cours par compte au plus (plusieurs onglets) :
+            // au-delà, le plus ancien de ce compte est annulé. Les enrôlements,
+            // réservés aux comptes connectés, ne sont jamais évincés par un
+            // afflux de connexions anonymes.
+            Ceremony::Register { user_id } => {
+                let mine = |p: &Pending| {
+                    matches!(p.ceremony, Ceremony::Register { user_id: other } if other == user_id)
+                };
+                if pending.values().filter(|p| mine(p)).count() >= MAX_REGISTER_PER_USER
+                    && let Some(oldest) = pending
+                        .iter()
+                        .filter(|(_, p)| mine(p))
+                        .min_by_key(|(_, p)| p.started)
+                        .map(|(k, _)| k.clone())
+                {
+                    pending.remove(&oldest);
+                }
+            }
             // `login/begin` est public : un afflux n'évince que d'autres connexions.
             Ceremony::Login => {
                 let logins = pending.values().filter(|p| matches!(p.ceremony, Ceremony::Login));
@@ -379,8 +393,11 @@ mod tests {
     fn un_afflux_de_connexions_n_evince_pas_un_enrolement() {
         let rp = RelyingParty { id: "b.example".into(), origin: "https://b.example".into() };
         let (first, _) = start(Ceremony::Register { user_id: 424_242 }, rp.clone());
+        for _ in 0..MAX_REGISTER_PER_USER - 1 {
+            start(Ceremony::Register { user_id: 424_242 }, rp.clone());
+        }
         let (register, _) = start(Ceremony::Register { user_id: 424_242 }, rp.clone());
-        // Un nouvel enrôlement du même compte annule le précédent.
+        // Au-delà de la limite par compte, le plus ancien enrôlement est annulé.
         assert!(take(&first).is_none());
         for _ in 0..MAX_PENDING + 10 {
             start(Ceremony::Login, rp.clone());
