@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.13.6',
+		date: '2026-10-25',
+		highlights: [
+			{
+				title: 'Encrypted agent channel',
+				text: 'Agents report on port 8443 with TLS 1.3, post-quantum key exchange and a certificate per machine, and only trust your server. Open 8443 next to 8080; existing agents switch by themselves once updated.'
+			},
+			{
+				title: 'CVE & vulnerabilities',
+				text: 'The new Security page lists the known CVEs of the software you monitor and says, per device, whether each one is vulnerable, patched or to check. Off by default: turn it on in Security.'
+			},
+			{
+				title: 'Deploy to Active Directory',
+				text: 'Settings → Agents → Deploy with Active Directory downloads a script that creates one group policy: every server of the chosen OU installs the agent and shows up here.'
+			},
+			{
+				title: 'A map that explains your network',
+				text: 'Proxmox clusters, backups to PBS, firewalls first, subnets and VLANs, and services hung under the VM that runs them.'
+			},
+			{
+				title: 'Richer status pages',
+				text: 'SEO settings, whole groups, public names, a 24 h to 90 day history with a day view, and past incidents.'
+			}
+		]
+	},
+	{
 		version: '0.13.5',
 		date: '2026-10-21',
 		highlights: [

@@ -34,4 +34,13 @@ allow-wildcard-paths = true
 # correctif, explicitement ignorée ici avec sa raison.
 [advisories]
 version = 2
-ignore = []
+ignore = [
+    # crypto-bigint 0.5 (via p256 0.13) : branches dépendantes du secret. Le
+    # correctif n'existe qu'en 0.7, que p256 0.14 utilise, mais web-push-native
+    # 0.5 (dernière version) exige p256 0.13. Exposition : la signature VAPID
+    # des notifications Web Push, déclenchée par le serveur lui-même, sans
+    # mesure de temps possible depuis l'extérieur ; la PKI des agents signe
+    # avec aws-lc-rs et n'utilise p256 que pour valider des clés publiques.
+    # À retirer dès que web-push-native passe à p256 0.14.
+    { id = "RUSTSEC-2026-0387", reason = "p256 0.13 imposé par web-push-native ; seule la signature VAPID interne est concernée" },
+]
