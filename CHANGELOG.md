@@ -5,11 +5,14 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.13.6 — 2026-10-25
+
 ### Added
 
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
-  `site-src/data/roadmap.json`.
+  `site-src/data/roadmap.json`. It also shows what is in progress and two collapsible
+  "Ideas" sections (features and integrations), with a link to GitHub Discussions.
 
 - **Encrypted agent channel, ready for the Internet.** Agents and relay agents
   now report on a dedicated port (TCP 8443, `DUMBMONIT_AGENT_LISTEN`) with TLS
@@ -130,6 +133,12 @@ All notable changes to this project are documented here. The format follows
   notifies nobody; it shows in the history and the day bars at its real date.
 
 ### Fixed
+
+- **Linux agents keep their encrypted-channel certificate across restarts.** The
+  systemd unit made `/etc/dumbmonit` read-only (`ProtectSystem=strict`), so the
+  agent could not save its certificate (`agent-tls.json`) and binding secret
+  there; the unit now allows writing to its configuration directory only.
+  Reinstall the agent with the install command to get the new unit.
 
 - **Interface clean-up: lists refresh, fewer buttons, folded settings.** Any
   successful create, update or delete now refreshes the shared device and alert
