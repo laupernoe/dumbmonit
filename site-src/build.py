@@ -308,6 +308,7 @@ def shot(root, name, alt_key, mode):
 RM_STATUS = {
     "planned": ("rm_planned", "plate-info", '<circle cx="12" cy="12" r="8"/>'),
     "progress": ("rm_progress", "plate-advisory", '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16Z" fill="currentColor"/>'),
+    "idea": ("rm_idea", "plate-info", '<circle cx="12" cy="12" r="8" stroke-dasharray="3 3.2"/>'),
     "delivered": ("rm_delivered", "plate-signal", '<path d="m5 12.5 4.5 4.5L19 7.5"/>'),
 }
 
@@ -317,22 +318,39 @@ def render_roadmap(ctx, roadmap):
     t, code = ctx["t"], ctx["code"]
     pick = lambda m: m.get(code) or m["en"]
     out = []
+    plate_of = lambda st: (
+        f'<span class="plate {RM_STATUS[st][1]}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '
+        f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{RM_STATUS[st][2]}</svg>{esc(t[RM_STATUS[st][0]])}</span>'
+    )
     for sec in roadmap["sections"]:
-        head = f'<h2>{esc(pick(sec["title"]))}</h2>'
+        sid = esc(sec["id"])
+        head = f'<h2 id="{sid}-h">{esc(pick(sec["title"]))}</h2>'
         if sec.get("label"):
             head = f'<p class="label-tape">{esc(pick(sec["label"]))}</p>' + head
+        if "groups" in sec:
+            # Idea sections are long: one collapsible <details> per category (closed by default).
+            groups = []
+            for g in sec["groups"]:
+                lis = "\n".join(
+                    f'\t\t\t\t<li>{esc(it["name"] if "name" in it else pick(it["text"]))}</li>' for it in g["items"]
+                )
+                groups.append(
+                    f'\t\t<details class="rm-group"><summary><span class="rm-gtitle">{esc(pick(g["title"]))}</span>'
+                    f'<span class="rm-count tnum">{len(g["items"])} {esc(t["rm_count"])}</span>{plate_of(g["items"][0]["status"])}</summary>\n'
+                    f'\t\t\t<ul class="rm-chips">\n{lis}\n\t\t\t</ul>\n\t\t</details>'
+                )
+            out.append(
+                f'\t<section class="rm-sec" id="{sid}" aria-labelledby="{sid}-h">\n'
+                f'\t\t<div class="rm-head">{head}</div>\n' + "\n".join(groups) + "\n\t</section>"
+            )
+            continue
         items = []
         for it in sec["items"]:
-            key, cls, icon = RM_STATUS[it["status"]]
-            plate = (
-                f'<span class="plate {cls}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" '
-                f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{icon}</svg>{esc(t[key])}</span>'
-            )
             ver = f'<strong class="rm-ver tnum">{esc(it["version"])}</strong> ' if it.get("version") else ""
-            items.append(f'\t\t\t<li>{plate}<span class="rm-text">{ver}{esc(pick(it["text"]))}</span></li>')
+            items.append(f'\t\t\t<li>{plate_of(it["status"])}<span class="rm-text">{ver}{esc(pick(it["text"]))}</span></li>')
         out.append(
-            f'\t<section class="rm-sec" id="{esc(sec["id"])}" aria-labelledby="{esc(sec["id"])}-h">\n'
-            f'\t\t<div class="rm-head">{head.replace("<h2>", f"<h2 id=\"{esc(sec['id'])}-h\">")}</div>\n'
+            f'\t<section class="rm-sec" id="{sid}" aria-labelledby="{sid}-h">\n'
+            f'\t\t<div class="rm-head">{head}</div>\n'
             f'\t\t<ul class="rm-list">\n' + "\n".join(items) + "\n\t\t</ul>\n\t</section>"
         )
     return "\n".join(out)
