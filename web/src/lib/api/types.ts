@@ -5110,6 +5110,8 @@ export interface AgentEvent {
 	message: string;
 	occurred_at: string | null;
 	received_at: string | null;
+}
+
 // --- Data & retention (Settings → System) and log search -------------------
 // Mirrors `GET/PUT /api/system/storage` and `GET /api/logs/search`.
 
