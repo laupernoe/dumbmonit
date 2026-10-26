@@ -707,11 +707,7 @@ struct UserChanges {
 ///
 /// Désactiver ferme ses sessions. Réactiver ne vaut que pour un compte que SCIM
 /// a lui-même désactivé : celui qu'un administrateur a désactivé le reste.
-async fn set_active(
-    tx: &mut Transaction<'_, Sqlite>,
-    id: i64,
-    active: bool,
-) -> anyhow::Result<()> {
+async fn set_active(tx: &mut Transaction<'_, Sqlite>, id: i64, active: bool) -> anyhow::Result<()> {
     if active {
         sqlx::query(
             "UPDATE users SET disabled = 0, disabled_by_scim = 0
@@ -1264,8 +1260,8 @@ fn parse_group(body: &Value) -> ScimResult<GroupInput> {
     let body = object(body)?;
     let name = field(body, "displayName")
         .ok_or_else(|| ScimError::invalid_value("\"displayName\" is required."))?;
-    let display_name = teams::validate_name(&text(name, "displayName")?)
-        .map_err(ScimError::invalid_value)?;
+    let display_name =
+        teams::validate_name(&text(name, "displayName")?).map_err(ScimError::invalid_value)?;
     let external_id = field(body, "externalId").map(parse_external_id).transpose()?.flatten();
     let members = field(body, "members").map(member_values).transpose()?;
     Ok(GroupInput { display_name, external_id, members })
@@ -1377,12 +1373,13 @@ async fn replace_members(
     team_id: i64,
     ids: &[i64],
 ) -> anyhow::Result<()> {
-    let current: Vec<i64> =
-        sqlx::query_scalar("SELECT user_id FROM team_members WHERE team_id = ? AND source = 'scim'")
-            .bind(team_id)
-            .fetch_all(&mut **tx)
-            .await
-            .context("membres SCIM d'une équipe")?;
+    let current: Vec<i64> = sqlx::query_scalar(
+        "SELECT user_id FROM team_members WHERE team_id = ? AND source = 'scim'",
+    )
+    .bind(team_id)
+    .fetch_all(&mut **tx)
+    .await
+    .context("membres SCIM d'une équipe")?;
     let gone: Vec<i64> = current.into_iter().filter(|id| !ids.contains(id)).collect();
     remove_members(tx, team_id, &gone).await?;
     add_members(tx, team_id, ids).await
