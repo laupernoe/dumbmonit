@@ -19,6 +19,7 @@ pub mod healthcheck;
 pub mod logs;
 pub mod music;
 pub mod notify;
+pub mod oncall;
 pub mod packs;
 #[cfg(unix)]
 pub mod privileges;

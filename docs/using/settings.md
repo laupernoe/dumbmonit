@@ -6,7 +6,7 @@ Settings holds what is administrative: your account, who can sign in and how, th
 
 | Tab | Address | What it holds |
 |---|---|---|
-| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications |
+| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
 | Team & access | `/settings/team` | Users, Single sign-on |
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
 | Notifications & reports | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)), Reports |

@@ -6,7 +6,7 @@ Réglages contient ce qui est administratif : votre compte, qui peut se connecte
 
 | Onglet | Adresse | Contenu |
 |---|---|---|
-| Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push |
+| Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
 | Équipe et accès | `/settings/team` | Utilisateurs, Authentification unique |
 | Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md) |
 | Notifications et rapports | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)), Rapports |

@@ -130,6 +130,10 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
     ("POST", "/alerts/history/*/dismiss"),
     ("PUT", "/alerts/rules/*/overrides/*"),
     ("DELETE", "/alerts/rules/*/overrides/*"),
+    // Remplacements d'astreinte : prendre la garde d'un collègue est un geste
+    // d'exploitation, pas de configuration (`api::oncall`).
+    ("POST", "/oncall/schedules/*/overrides"),
+    ("DELETE", "/oncall/schedules/*/overrides/*"),
 ];
 
 /// Préfixes de routes interdits aux jetons d'API, quelle que soit leur portée :
@@ -137,7 +141,7 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
 /// comptes (`/users/**`), jetons d'API et d'agents. Un jeton ne fabrique pas
 /// d'autres secrets et ne touche pas à qui peut se connecter.
 pub const TOKEN_DENIED: &[&str] =
-    &["/auth", "/users", "/tokens", "/agent/tokens", "/agent/ad-kit", "/agent/tls"];
+    &["/auth", "/users", "/tokens", "/agent/tokens", "/agent/ad-kit", "/agent/tls", "/account"];
 
 const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
                                     authentication, SSO or other tokens: sign in to the web \
@@ -326,7 +330,20 @@ fn is_mutation(method: &Method) -> bool {
 /// le préfixe. On tolère les deux plutôt que de dépendre de ce détail.
 fn is_self_service(path: &str) -> bool {
     let path = path.strip_prefix("/api").unwrap_or(path);
-    SELF_SERVICE.contains(&path) || is_own_push_device(path)
+    SELF_SERVICE.contains(&path) || is_own_push_device(path) || is_own_oncall_profile(path)
+}
+
+/// Contacts, heures calmes et lien de calendrier d'astreinte : chacun gère les
+/// siens (`api::oncall`), en session seulement — les gestionnaires exigent un
+/// compte connecté et ne voient que ce compte.
+fn is_own_oncall_profile(path: &str) -> bool {
+    let digits = |id: &str| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit());
+    match path {
+        "/account/contacts" | "/account/oncall" | "/account/oncall/calendar" => true,
+        _ => path
+            .strip_prefix("/account/contacts/")
+            .is_some_and(|rest| digits(rest) || rest.strip_suffix("/test").is_some_and(digits)),
+    }
 }
 
 /// Abonnements Web Push : chacun abonne, teste et retire *ses* appareils, ce
@@ -476,6 +493,13 @@ mod tests {
         assert!(is_self_service("/webpush/test"));
         assert!(!is_self_service("/webpush/subscriptions/12/../../users"));
         assert!(!is_self_service("/webpush/subscriptions/"));
+        assert!(is_self_service("/api/account/contacts"));
+        assert!(is_self_service("/account/contacts/3"));
+        assert!(is_self_service("/account/contacts/3/test"));
+        assert!(is_self_service("/account/oncall/calendar"));
+        assert!(!is_self_service("/account/contacts/3/../../../users"));
+        assert!(!is_self_service("/account/contacts//test"));
+        assert!(!is_self_service("/oncall/schedules"));
     }
 
     #[test]

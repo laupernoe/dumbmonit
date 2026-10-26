@@ -29,6 +29,7 @@ mod notify_policy;
 mod observability;
 mod oidc;
 mod onboarding;
+mod oncall;
 mod openapi;
 mod opnsense;
 mod opnsense_live;
@@ -207,6 +208,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(skipped_features::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
         .merge(notify_policy::routes())
+        // Astreintes : plannings, escalades, contacts et heures de chacun (`oncall.rs`).
+        .merge(oncall::routes())
         // Rapports périodiques par courriel (`reports.rs`).
         .merge(reports::routes())
         // Pages de statut et incidents (`status_pages.rs`).
@@ -308,6 +311,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // Liens d'action des notifications : le jeton signé est l'autorisation
         // (`alert_actions.rs`).
         .merge(alert_actions::public_routes())
+        // Calendrier iCal d'astreinte d'une personne : l'URL secrète est
+        // l'autorisation, une application de calendrier n'a pas de session.
+        .merge(oncall::public_routes())
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
         .merge(push::public_routes())

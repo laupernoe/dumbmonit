@@ -817,6 +817,14 @@ alias.
 > préférez PagerDuty ou un canal personnalisé pointant vers Jira Service
 > Management.
 
+### DumbMonit on-call
+
+Prévient la personne d'astreinte, puis escalade étape par étape jusqu'à ce que
+quelqu'un acquitte. Un seul réglage, la **politique d'escalade** à exécuter, et
+aucun secret. Plannings, contacts et politiques sont décrits dans
+[Astreintes](alerting/oncall.md) ; le canal passe par le routage habituel
+(étiquettes, sévérité minimale, canaux choisis par règle).
+
 ### Webhook personnalisé
 
 Voir [Le canal personnalisé](#the-custom-channel) ci-dessus.

@@ -146,6 +146,10 @@ pub struct Bundle {
     /// Emplacements de la carte du monde (migration 0059).
     #[serde(default)]
     pub locations: Vec<BundleLocation>,
+    /// Astreintes : plannings, remplacements, politiques, contacts et
+    /// préférences (migrations 0100 à 0102).
+    #[serde(default)]
+    pub oncall: crate::backup::oncall::BundleOncall,
 }
 
 impl Bundle {
@@ -166,6 +170,7 @@ impl Bundle {
             ("push_monitors".to_string(), self.push_monitors.len()),
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
+            ("oncall".to_string(), self.oncall.count()),
         ])
     }
 }
