@@ -139,6 +139,9 @@ pub struct Config {
     pub backup_interval: Duration,
     /// Nombre de sauvegardes locales conservées (`DUMBMONIT_BACKUP_KEEP`).
     pub backup_keep: usize,
+    /// Dossier de configuration en fichiers YAML (`DUMBMONIT_CONFIG_DIR`),
+    /// appliqué au démarrage et à chaque changement (voir [`crate::gitops`]).
+    pub config_dir: Option<PathBuf>,
     /// Connexion OpenID Connect décrite par l'environnement (`DUMBMONIT_OIDC_*`,
     /// `DUMBMONIT_PUBLIC_URL`). Un réglage enregistré depuis l'interface l'emporte.
     pub oidc: OidcEnv,
@@ -276,6 +279,9 @@ impl Config {
                 env_parsed::<u64>("DUMBMONIT_BACKUP_INTERVAL_HOURS", "24")?.clamp(1, 8760) * 3600,
             ),
             backup_keep: env_parsed::<usize>("DUMBMONIT_BACKUP_KEEP", "7")?.clamp(1, 365),
+            config_dir: env_var("DUMBMONIT_CONFIG_DIR")
+                .filter(|d| !d.trim().is_empty())
+                .map(PathBuf::from),
             oidc: OidcEnv::from_env(),
             ldap: LdapEnv::from_env(),
             ldap_allow_plain: env_flag("DUMBMONIT_LDAP_ALLOW_PLAIN"),

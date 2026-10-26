@@ -152,6 +152,27 @@ pub async fn restore(
     Ok(report)
 }
 
+/// Applique, dans la transaction de l'appelant, les sections qu'un fichier de
+/// configuration déclare (voir [`crate::gitops`]) : équipements, canaux, règles,
+/// surcharges, fenêtres de maintenance et pages de statut. La validation et
+/// l'annulation restent à l'appelant, qui doit aussi traiter les notes des
+/// sections comme des refus.
+pub(crate) async fn restore_config(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+) -> Result<Vec<SectionReport>> {
+    let mut sections = vec![restore_targets(tx, cipher, bundle).await?];
+    let refs = target_ids(tx).await?;
+    sections.push(restore_channels(tx, cipher, bundle).await?);
+    let channels = channel_ids(tx).await?;
+    sections.push(restore_rules(tx, bundle, &refs, &channels).await?);
+    sections.push(restore_overrides(tx, bundle, &refs).await?);
+    sections.push(restore_silences(tx, bundle, &refs).await?);
+    sections.push(restore_status_pages(tx, bundle, &refs).await?);
+    Ok(sections)
+}
+
 fn warnings(bundle: &Bundle, report: &mut RestoreReport) {
     if bundle.users.iter().any(|u| u.password_hash.is_none() && u.oidc_subject.is_none()) {
         report.warnings.push(

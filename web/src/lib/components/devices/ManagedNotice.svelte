@@ -22,6 +22,9 @@
 	}
 	let { target, canRelease = false, onreleased, class: className = '' }: Props = $props();
 
+	/** Declared by a configuration file rather than by Docker labels. */
+	const byFile = $derived(target.managed?.by === 'config-file');
+
 	let busy = $state(false);
 	let error = $state<unknown>(null);
 
@@ -44,13 +47,15 @@
 		<div class="flex flex-wrap items-center gap-2">
 			<Plate tone="info">
 				<Lock class="size-3.5" aria-hidden="true" />
-				{m.devices_managed_badge()}
+				{byFile ? m.settings_config_badge() : m.devices_managed_badge()}
 			</Plate>
 			{#if target.managed.missing_since}
 				<Plate tone="advisory" label={m.devices_managed_archived({ date: formatDateTime(target.managed.missing_since) })} />
 			{/if}
 		</div>
-		<p class="mt-2 text-sm text-ink-2">{m.devices_managed_notice({ key: target.managed.key })}</p>
+		<p class="mt-2 text-sm text-ink-2">
+			{byFile ? m.devices_managed_file_notice({ key: target.managed.key }) : m.devices_managed_notice({ key: target.managed.key })}
+		</p>
 		{#if canRelease}
 			<div class="mt-3 flex flex-wrap items-center gap-3">
 				<Button variant="secondary" loading={busy} onclick={release}>{m.devices_managed_release()}</Button>

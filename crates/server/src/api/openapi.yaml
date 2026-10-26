@@ -160,6 +160,11 @@ tags:
       evaluated on the data collectors already gather.
   - name: Backup
     description: Encrypted export and restore of the instance. Session only.
+  - name: Configuration files
+    description: >-
+      Declarative configuration in YAML (GitOps): plan, apply and export.
+      Administrator session or `write` token. Objects declared by a file are
+      managed by it and refuse manual edits.
   - name: Logs
     description: Server logs kept on disk, their export, and shipping to a log service. Session only.
   - name: Storage
@@ -5403,6 +5408,117 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/config/plan:
+    post:
+      operationId: planConfig
+      tags: [Configuration files]
+      summary: What a configuration file would change (nothing is written)
+      description: >-
+        Send the file as `yaml` or the same document as `config` (JSON). The
+        plan names the fields that differ, never their values. Secret references
+        (`${NAME}`) that were not resolved are listed in `unresolved` and assumed
+        unchanged.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfigRequest" }
+      responses:
+        "200":
+          description: The plan.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigPlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/config/apply:
+    post:
+      operationId: applyConfig
+      tags: [Configuration files]
+      summary: Apply a configuration file, in one transaction
+      description: >-
+        Creates and updates what the file declares, marks it as managed by file,
+        and with `prune` deletes managed objects that are no longer declared.
+        Any refused entry (unknown reference, invalid value) cancels everything.
+        Unresolved secret references are refused: resolve them first (the
+        command-line tool does).
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ConfigRequest" }
+      responses:
+        "200":
+          description: What was done.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigPlan" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/config/export:
+    get:
+      operationId: exportConfig
+      tags: [Configuration files]
+      summary: Export the instance as a configuration file
+      description: >-
+        YAML by default, `?format=json` for an object holding the YAML, the
+        document and the variables to define. Secrets are replaced by references
+        (`${DUMBMONIT_...}`), never exported. Monitors created by Docker labels
+        or discovered by agents, and built-in rules, are left out.
+      x-token-scope: read
+      parameters:
+        - { name: format, in: query, required: false, schema: { type: string, enum: [yaml, json] } }
+      responses:
+        "200":
+          description: The configuration file.
+          content:
+            application/yaml:
+              schema: { type: string }
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigExport" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/config/status:
+    get:
+      operationId: getConfigStatus
+      tags: [Configuration files]
+      summary: Watched directory and objects managed by file
+      x-token-scope: read
+      responses:
+        "200":
+          description: State.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ConfigStatus" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/config/release:
+    post:
+      operationId: releaseConfig
+      tags: [Configuration files]
+      summary: Hand every file-managed object back to manual management
+      description: Deletes nothing; the next apply adopts the declared objects again.
+      x-token-scope: write
+      responses:
+        "200":
+          description: How many markers were removed.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  released: { type: integer }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   # ----------------------------------------------------- auto-surveillance
   /api/self-monitoring:
     get:
@@ -10080,6 +10196,79 @@ components:
               with_secret: { type: boolean }
         total_bytes: { type: integer }
         directory_error: { type: [string, "null"] }
+    ConfigRequest:
+      type: object
+      description: Either `yaml` or `config`.
+      properties:
+        yaml: { type: string, description: The file, as text. }
+        config: { type: object, additionalProperties: true, description: The same document as JSON. }
+        prune: { type: boolean, default: false, description: Delete managed objects that are no longer declared. }
+    ConfigChange:
+      type: object
+      required: [section, key, action, fields]
+      properties:
+        section: { type: string, enum: [targets, channels, rules, rule_overrides, silences, status_pages] }
+        key: { type: string }
+        action: { type: string, enum: [create, update, delete] }
+        fields:
+          type: array
+          items: { type: string }
+          description: Names of the fields that differ (never their values).
+    ConfigPlan:
+      type: object
+      required: [changes, create, update, delete, unchanged, warnings, applied, unresolved]
+      properties:
+        changes:
+          type: array
+          items: { $ref: "#/components/schemas/ConfigChange" }
+        create: { type: integer }
+        update: { type: integer }
+        delete: { type: integer }
+        unchanged: { type: integer }
+        warnings:
+          type: array
+          items: { type: string }
+        applied: { type: boolean }
+        unresolved:
+          type: array
+          items: { type: string }
+    ConfigExport:
+      type: object
+      required: [version, yaml, config, variables]
+      properties:
+        version: { type: integer }
+        yaml: { type: string }
+        config: { type: object, additionalProperties: true }
+        variables:
+          type: array
+          items: { type: string }
+    ConfigStatus:
+      type: object
+      required: [schema_version, watch, managed, keys]
+      properties:
+        schema_version: { type: integer }
+        watch:
+          type: object
+          properties:
+            directory: { type: [string, "null"] }
+            files:
+              type: array
+              items: { type: string }
+            last_applied_at: { type: [string, "null"] }
+            last_error: { type: [string, "null"] }
+            last_changes:
+              type: [array, "null"]
+              items: { type: integer }
+              description: "[created, updated, deleted] of the last application."
+        managed:
+          type: object
+          additionalProperties: { type: integer }
+        keys:
+          type: object
+          description: Keys of the managed objects by kind (rule, channel, silence, status_page, override).
+          additionalProperties:
+            type: array
+            items: { type: string }
     BackupExportRequest:
       type: object
       required: [passphrase]

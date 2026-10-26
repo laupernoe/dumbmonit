@@ -69,6 +69,7 @@ configuration file to mount.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups, 1 to 8760. The first one happens one interval after startup, not at startup. |
 | `DUMBMONIT_DEMO` | *(off)* | `1` for a public, read-only demo with a fixed fictional estate, sign-in `demo` / `demo`. **Recreates the database at every start**: never on a real data volume. See [Run a demo instance](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | How many backups are kept, 1 to 365. The oldest are removed with their `.key`. |
+| `DUMBMONIT_CONFIG_DIR` | empty | A folder of YAML files applied (with prune) at startup and on every change. See [Configuration files](../using/config-files.md). |
 | `DUMBMONIT_BROWSER_URL` | *(unset)* | Headless Chromium used for the screenshots of [website changes](../devices/webchange.md#screenshots), as `http://host:9222` (its DevTools port). Add a `chromedp/headless-shell` service to your Compose file, as shown in [Screenshots](../devices/webchange.md#screenshots). Unset: text comparison only. |
 
 Baseline retention (60 days) and the 14-day learning period are not
