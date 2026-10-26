@@ -48,6 +48,9 @@
 	let kind = $state<IncidentKind>('incident');
 	let severity = $state<IncidentSeverity>('minor');
 	let pageId = $state<string>('');
+	// Services the announcement concerns (device ids); none: the whole page.
+	let affected = $state<number[]>([]);
+	const pageItems = $derived(pages.find((p) => String(p.id) === pageId)?.items ?? []);
 	let startsAt = $state('');
 	let endsAt = $state('');
 	let body = $state('');
@@ -93,6 +96,7 @@
 		kind = 'incident';
 		severity = 'minor';
 		pageId = '';
+		affected = [];
 		startsAt = '';
 		endsAt = '';
 		body = '';
@@ -121,6 +125,7 @@
 				kind,
 				severity: kind === 'incident' ? severity : undefined,
 				page_id: pageId ? Number(pageId) : null,
+				components: pageId && affected.length > 0 ? affected : undefined,
 				starts_at: toIso(startsAt),
 				ends_at: toIso(endsAt),
 				body: body.trim() || undefined,
@@ -406,7 +411,7 @@
 					</Field>
 				{/if}
 				<Field label={m.status_incidents_shown_on()} for="inc-new-page">
-					<select id="inc-new-page" class="input" bind:value={pageId} disabled={saving}>
+					<select id="inc-new-page" class="input" bind:value={pageId} onchange={() => (affected = [])} disabled={saving}>
 						<option value="">{m.status_incidents_all_pages()}</option>
 						{#each pages as p (p.id)}
 							<option value={String(p.id)}>{p.title}</option>
@@ -414,6 +419,25 @@
 					</select>
 				</Field>
 			</div>
+			{#if pageItems.length > 0}
+				<fieldset class="grid gap-1.5" disabled={saving}>
+					<legend class="text-sm font-semibold text-ink">{m.status_incidents_components()}</legend>
+					<p class="text-[0.8125rem] text-ink-2">{m.status_incidents_components_help()}</p>
+					<div class="flex flex-wrap gap-x-4 gap-y-1">
+						{#each pageItems as item (item.target_id)}
+							<label class="inline-flex min-h-10 items-center gap-2 text-sm text-ink">
+								<input
+									type="checkbox"
+									class="size-4 accent-[var(--c-signal)]"
+									checked={affected.includes(item.target_id)}
+									onchange={(event) => (affected = event.currentTarget.checked ? [...affected, item.target_id] : affected.filter((id) => id !== item.target_id))}
+								/>
+								{item.label}
+							</label>
+						{/each}
+					</div>
+				</fieldset>
+			{/if}
 			<Field label={m.status_incidents_first_message()} for="inc-new-body" help={m.status_incidents_first_message_help()}>
 				<textarea id="inc-new-body" class="input min-h-10" rows="2" bind:value={body} placeholder={kind === 'incident' ? m.status_incidents_body_placeholder_incident() : m.status_incidents_body_placeholder_maintenance()} maxlength="4000" disabled={saving}></textarea>
 			</Field>

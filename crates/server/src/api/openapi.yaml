@@ -2867,8 +2867,11 @@ paths:
     get:
       operationId: listStatusPageSubscribers
       tags: [Status pages]
-      summary: Email subscribers of a page
-      description: Admin accounts and `write` tokens only (personal data). Their tokens never leave the server.
+      summary: Subscribers of a page
+      description: >-
+        Admin accounts and `write` tokens only (personal data). Email, SMS, webhook and Slack
+        subscribers are listed together; phone numbers and URLs are masked, and tokens and
+        secrets never leave the server.
       x-token-scope: read
       responses:
         "200":
@@ -2878,6 +2881,67 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Subscriber" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/status-pages/{id}/subscribers.csv:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: exportStatusPageSubscribers
+      tags: [Status pages]
+      summary: Export the subscribers of a page as CSV
+      description: >-
+        Admin accounts and `write` tokens only. Columns: type, destination, status,
+        subscribed_at, services. Webhook and Slack URLs stay masked.
+      x-token-scope: read
+      responses:
+        "200":
+          description: CSV file.
+          content:
+            text/csv: { schema: { type: string } }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/status-pages/{id}/subscription:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: getStatusPageSubscription
+      tags: [Status pages]
+      summary: Subscription channels open on a page (besides email)
+      x-token-scope: read
+      responses:
+        "200":
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusSubscriptionSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+    put:
+      operationId: setStatusPageSubscription
+      tags: [Status pages]
+      summary: Open or close the SMS, webhook and Slack subscriptions of a page
+      description: >-
+        Email is chosen with the page itself (`subscribe_channel_id`). SMS needs a Vonage, Telnyx
+        or ASPSMS notification channel; webhook and Slack need nothing, the visitor gives their URL.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/StatusSubscriptionSettings" }
+      responses:
+        "200":
+          description: Saved.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusSubscriptionSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -3503,11 +3567,14 @@ paths:
     post:
       operationId: subscribeToStatus
       tags: [Public status]
-      summary: Subscribe an email address to a page's announcements
+      summary: Subscribe to a page's announcements
       description: >-
-        Mails a confirmation link through the page's SMTP channel. Always `202`
-        with the same message, whatever the address's state. At most five
-        requests per client and sixty in all per 15 minutes.
+        By email (default), SMS, signed webhook or Slack, as far as the page offers them
+        (`page.subscribe_kinds`). Double opt-in: email and Slack get a link, SMS a code (confirm it
+        with `confirm-code`), a webhook a signed request carrying the confirmation link; its HMAC
+        secret is returned once in this response. Always `202` with the same message, whatever the
+        destination's state. On a private page the visitor must already have access. At most five
+        requests per client (three for SMS), forty per page and sixty in all per 15 minutes.
       security: []
       x-token-scope: public
       requestBody:
@@ -3516,15 +3583,28 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email]
               properties:
-                email: { type: string, format: email }
+                kind: { type: string, enum: [email, sms, webhook, slack], default: email }
+                email: { type: string, format: email, description: "For `email`." }
+                phone: { type: string, description: "E.164 number, for `sms`." }
+                url: { type: string, description: "For `webhook` (http/https) and `slack` (incoming webhook URL)." }
+                components:
+                  type: array
+                  items: { type: string }
+                  description: Public keys of the services to follow (`groups[].items[].key`); omitted or empty means all.
       responses:
         "202":
           description: Confirmation pending.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/StatusMessage" }
+              schema:
+                type: object
+                required: [status, confirm, message]
+                properties:
+                  status: { type: string, enum: [pending] }
+                  confirm: { type: string, enum: [link, code, signed_request] }
+                  message: { type: string }
+                  secret: { type: string, description: "Webhook only, shown once: the HMAC-SHA256 key that signs every request (`X-DumbMonit-Signature: sha256=<hex of HMAC(secret, timestamp + '.' + body)>`, `X-DumbMonit-Timestamp`)." }
         "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
@@ -3603,6 +3683,35 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/StatusMessage" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/public/status/{slug}/confirm-code:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+    post:
+      operationId: confirmStatusSmsSubscription
+      tags: [Public status]
+      summary: Confirm an SMS subscription with the code received
+      description: Five tries, 15 minutes. Wrong or expired code gives `400`.
+      security: []
+      x-token-scope: public
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [phone, code]
+              properties:
+                phone: { type: string }
+                code: { type: string }
+      responses:
+        "200":
+          description: "`{\"status\": \"confirmed\"}`."
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/StatusMessage" }
+        "400": { $ref: "#/components/responses/BadRequest" }
         "404": { $ref: "#/components/responses/NotFound" }
 
   /api/public/status/{slug}/unsubscribe:
@@ -9096,13 +9205,22 @@ components:
       required: [data]
       properties:
         data: { type: string, description: "Base64, or a `data:` URL." }
+    StatusSubscriptionSettings:
+      type: object
+      properties:
+        sms_channel_id: { type: [integer, "null"], format: int64, description: "Vonage, Telnyx or ASPSMS channel that texts the subscribers; `null`: no SMS." }
+        webhook: { type: boolean }
+        slack: { type: boolean }
     Subscriber:
       type: object
-      required: [id, page_id, email, created_at]
+      required: [id, page_id, kind, destination, created_at]
       properties:
         id: { type: integer, format: int64 }
         page_id: { type: integer, format: int64 }
-        email: { type: string }
+        kind: { type: string, enum: [email, sms, webhook, slack] }
+        destination: { type: string, description: "Address for email; masked number or URL host otherwise." }
+        email: { type: [string, "null"], description: "Address, email subscribers only." }
+        components: { type: [array, "null"], items: { type: integer, format: int64 }, description: "Followed devices; `null`: all." }
         confirmed_at: { type: [string, "null"], description: "`null` while pending." }
         created_at: { type: string }
     Incident:
@@ -9134,11 +9252,15 @@ components:
       allOf:
         - $ref: "#/components/schemas/Incident"
         - type: object
-          required: [updates]
+          required: [updates, components]
           properties:
             updates:
               type: array
               items: { $ref: "#/components/schemas/IncidentUpdate" }
+            components:
+              type: array
+              items: { type: integer, format: int64 }
+              description: Devices the announcement concerns; empty means the whole page.
     IncidentPayload:
       type: object
       required: [title]
@@ -9151,6 +9273,10 @@ components:
         starts_at: { type: string }
         ends_at: { type: [string, "null"] }
         body: { type: string, maxLength: 4000, description: 'First update, at creation only.' }
+        components:
+          type: array
+          items: { type: integer, format: int64 }
+          description: Devices the announcement concerns. Subscribers who follow only other services are not notified; omitted keeps the stored value (the whole page at creation).
     IncidentUpdatePayload:
       type: object
       required: [body]
@@ -9176,7 +9302,10 @@ components:
             footer_text: { type: string }
             homepage_url: { type: string }
             logo_url: { type: [string, "null"] }
-            subscribe: { type: boolean }
+            subscribe: { type: boolean, description: The page offers at least one subscription. }
+            subscribe_kinds:
+              type: array
+              items: { type: string, enum: [email, sms, webhook, slack] }
             show_calendar: { type: boolean, description: Present (true) only when the page shows the calendar. }
             show_latency: { type: boolean, description: Present (true) only when the page shows response times. }
             seo:

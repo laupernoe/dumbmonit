@@ -418,6 +418,20 @@ fn utc() -> String {
     "UTC".to_string()
 }
 
+/// Canaux par lesquels les visiteurs d'une page peuvent s'abonner. Les canaux
+/// de notification (courriel, SMS) sont désignés par leur nom.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BundleSubscriptions {
+    #[serde(default)]
+    pub email_channel: Option<String>,
+    #[serde(default)]
+    pub sms_channel: Option<String>,
+    #[serde(default)]
+    pub webhook: bool,
+    #[serde(default)]
+    pub slack: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BundleStatusPage {
     pub slug: String,
@@ -468,6 +482,10 @@ pub struct BundleStatusPage {
     /// Noms publics des membres de ces groupes (migration 0067).
     #[serde(default)]
     pub group_labels: Vec<BundleGroupLabel>,
+    /// Canaux d'abonnement ouverts (migration 0140). Les abonnés eux-mêmes ne
+    /// voyagent pas. Absent d'une ancienne sauvegarde : réglages inchangés.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subscriptions: Option<BundleSubscriptions>,
 }
 
 /// Nom public d'une surveillance arrivée par un groupe coché.
