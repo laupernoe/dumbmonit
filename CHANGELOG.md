@@ -5,6 +5,10 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
+
 ## 0.13.6 — 2026-10-25
 
 ### Added
