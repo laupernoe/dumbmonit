@@ -28,6 +28,7 @@ pub mod rate_limit;
 pub mod session;
 pub mod settings;
 pub mod setup_code;
+pub mod teams;
 pub mod token;
 pub mod totp;
 pub mod totp_login;
