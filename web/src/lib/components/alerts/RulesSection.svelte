@@ -29,6 +29,7 @@
 	import { severityTone, severityWord } from './helpers';
 	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import FileManagedBadge from '#lib/components/settings/FileManagedBadge.svelte';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { ruleKinds } from './rules-filter';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
@@ -453,6 +454,7 @@
 				<div class="flex flex-wrap items-center gap-2">
 					<Plate tone={severityTone(rule.severity)} label={severityWord(rule.severity)} bare />
 					<span class="truncate font-semibold text-ink">{rule.name}</span>
+					<FileManagedBadge kind="rule" id={rule.uid} />
 					{#if rule.builtin}
 						<Plate tone="ghost" label={m.alerts_rules_builtin()} bare />
 					{/if}

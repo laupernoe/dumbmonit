@@ -40,6 +40,7 @@
 	import AssistantSection from '#lib/components/settings/AssistantSection.svelte';
 	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
 	import BackupSection from '#lib/components/settings/BackupSection.svelte';
+	import ConfigFilesSection from '#lib/components/settings/ConfigFilesSection.svelte';
 	import SelfMonitoringSection from '#lib/components/settings/SelfMonitoringSection.svelte';
 	import StorageSection from '#lib/components/settings/StorageSection.svelte';
 	import LogsSection from '#lib/components/settings/LogsSection.svelte';
@@ -79,7 +80,7 @@
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallWidgetsSection] : [])],
-		system: [BackupSection, SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
+		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
 
 	// An unknown tab (or one this account cannot see) lands on the first one.

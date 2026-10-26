@@ -37,6 +37,7 @@ n'y a pas de fichier de configuration à monter.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Heures entre deux sauvegardes, de 1 à 8760. La première a lieu un intervalle après le démarrage, pas au démarrage. |
 | `DUMBMONIT_DEMO` | *(désactivé)* | `1` pour une démo publique, en lecture seule, avec un parc fictif fixe, connexion `demo` / `demo`. **Recrée la base de données à chaque démarrage** : jamais sur un vrai volume de données. Voir [Lancer une instance de démonstration](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Combien de sauvegardes sont conservées, de 1 à 365. Les plus anciennes sont supprimées avec leur `.key`. |
+| `DUMBMONIT_CONFIG_DIR` | vide | Un dossier de fichiers YAML appliqué (avec prune) au démarrage et à chaque changement. Voir [Fichiers de configuration](../using/config-files.md). |
 | `DUMBMONIT_BROWSER_URL` | *(non défini)* | Chromium headless utilisé pour les captures d'écran des [changements de site web](../devices/webchange.md#screenshots), sous la forme `http://host:9222` (son port DevTools). Ajoutez un service `chromedp/headless-shell` à votre fichier Compose, comme montré sous [Captures d'écran](../devices/webchange.md#screenshots). Non défini : comparaison de texte seulement. |
 
 La rétention de référence (60 jours) et la période d'apprentissage de 14

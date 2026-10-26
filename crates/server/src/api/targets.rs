@@ -456,10 +456,10 @@ pub async fn update(
     let before = load(&state, id).await?;
     let multisite_before = db::multisite::get(&state.pool, id).await?;
     // Un moniteur géré ne change que par ses étiquettes, sauf la pause.
-    if db::targets::managed_get(&state.pool, id).await?.is_some()
+    if let Some(managed) = db::targets::managed_get(&state.pool, id).await?
         && !payload_only_toggles(&payload, &before)
     {
-        return Err(ApiError::Conflict(super::label_monitors::MANAGED_MESSAGE.into()));
+        return Err(ApiError::Conflict(super::label_monitors::managed_message(&managed).into()));
     }
     let (mut input, reused_secret) =
         payload.validate_with(&state, Some(id), Some(&before.credential))?;

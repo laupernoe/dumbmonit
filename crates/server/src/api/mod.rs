@@ -15,6 +15,7 @@ mod collectors;
 mod cves;
 mod discovery;
 mod error;
+mod gitops;
 mod health;
 mod ical;
 mod ingest;
@@ -58,7 +59,7 @@ mod storage;
 mod summary;
 mod synology;
 mod target_rules;
-mod targets;
+pub(crate) mod targets;
 mod targets_import;
 mod tokens;
 mod topology;
@@ -272,6 +273,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Configuration en fichiers (GitOps) : plan, application, export (`gitops.rs`).
+        .merge(gitops::routes())
         // Journaux du serveur : stockage, export et destinations (`logs.rs`).
         .merge(logs::routes())
         // Stockage : rétentions, historique long terme, VictoriaLogs embarqué
@@ -303,6 +306,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(update::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
+        // Objets « gérés par fichier » : refus de les modifier à la main. Posé avant
+        // le garde de session pour s'exécuter après lui (`route_layer` : le dernier
+        // ajouté passe en premier).
+        .route_layer(middleware::from_fn_with_state(state.clone(), crate::gitops::guard::guard))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             crate::auth::middleware::require_session,

@@ -246,6 +246,19 @@ fn changed(before: &dumbmonit_proto::Target, input: &db::targets::TargetInput) -
 pub const MANAGED_MESSAGE: &str = "This monitor is managed by Docker labels: change the labels \
      on the container, or release it first to edit it here.";
 
+/// Même refus pour un moniteur déclaré par un fichier de configuration.
+pub const MANAGED_BY_FILE_MESSAGE: &str = "This monitor is managed by a configuration file: \
+     change the file and apply it again, or release it first to edit it here.";
+
+/// Le refus qui convient à l'origine de la gestion.
+pub fn managed_message(managed: &db::targets::Managed) -> &'static str {
+    if managed.by == crate::gitops::MANAGED_BY_FILE {
+        MANAGED_BY_FILE_MESSAGE
+    } else {
+        MANAGED_MESSAGE
+    }
+}
+
 /// Refuse la modification ou la suppression d'un moniteur géré (hors archivé,
 /// qui peut être supprimé).
 pub async fn refuse_if_managed(
@@ -256,7 +269,7 @@ pub async fn refuse_if_managed(
     let managed = db::targets::managed_get(&state.pool, id).await?;
     match &managed {
         Some(m) if deleting && m.missing_since.is_some() => {}
-        Some(_) => return Err(ApiError::Conflict(MANAGED_MESSAGE.into())),
+        Some(m) => return Err(ApiError::Conflict(managed_message(m).into())),
         None => {}
     }
     Ok(managed)
