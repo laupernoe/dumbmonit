@@ -8074,7 +8074,7 @@ components:
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
         seo: { $ref: "#/components/schemas/StatusPageSeo" }
-        access_mode: { type: string, enum: [public, password, users], description: Who can read the page; set through `PUT /api/status-pages/{id}/access`. }
+        access_mode: { type: string, enum: [public, password, users], description: "Who can read the page; set through `PUT /api/status-pages/{id}/access`." }
         has_password: { type: boolean, description: A page password is stored (the hash is never returned). }
         group_labels:
           type: array
