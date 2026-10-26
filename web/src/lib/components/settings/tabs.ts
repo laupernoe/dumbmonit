@@ -40,6 +40,7 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 	backup: 'system',
 	'self-monitoring': 'system',
 	logs: 'system',
+	storage: 'system',
 	assistant: 'system',
 	about: 'system'
 };
@@ -115,6 +116,7 @@ export function searchIndex(): SearchEntry[] {
 		entry('backup', m['settings.section.backup'](), m.settings_search_kw_backup()),
 		entry('self-monitoring', m.settings_selfmon_title(), m.settings_search_kw_selfmon()),
 		entry('logs', m.settings_logs_title(), m.settings_logs_search_kw()),
+		entry('storage', m.storage_title(), m.storage_search_kw()),
 		entry('assistant', m['settings.section.assistant'](), m.settings_search_kw_assistant()),
 		entry('about', m['settings.section.about'](), m.settings_search_kw_about())
 	];

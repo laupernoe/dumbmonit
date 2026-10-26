@@ -12,7 +12,7 @@ Réglages contient ce qui est administratif : votre compte, qui peut se connecte
 | Notifications et rapports | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)), Rapports |
 | Pages de statut | `/settings/status` | Pages d'état et annonces ([Pages d'état](status-pages.md)) |
 | Mur | `/settings/wall` | Mode mural, Musique murale, Actualités murales ([Mode mural](overview.md#wall-mode)) |
-| Système | `/settings/system` | Sauvegarde, DumbMonit lui-même, API et assistants, À propos |
+| Système | `/settings/system` | Données et rétention, Sauvegarde, DumbMonit lui-même, API et assistants, À propos |
 
 Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`, `/status`) redirigent aussi vers le nouvel emplacement.
 
@@ -238,6 +238,29 @@ hebdomadaire, quotidien ou mensuel, le jour, l'heure et le fuseau
 horaire, les destinataires et le canal email, puis **Envoyer un aperçu**
 pour voir le résultat. Réservé aux administrateurs. Voir
 [Rapports par email](reports.md).
+
+## Données et rétention {#data-retention}
+
+Réservé aux administrateurs. Montre l'espace disque pris par les métriques
+(`vm`), les agrégats de 5 minutes (`vm-long`), le stockage des journaux
+(`vlogs`), la base de données et les sauvegardes, l'espace libre, et la
+croissance par jour avec le nombre de jours avant que le volume soit plein.
+
+* **Rétention des métriques brutes** (7 à 3650 jours). En lecture seule avec un
+  VictoriaMetrics externe : réglez-la là-bas. La baisser supprime les données
+  brutes plus anciennes au prochain cycle de rétention de VictoriaMetrics.
+* **Historique long** : activé ou non, sa rétention (730 jours par défaut) et
+  son état (dernière fenêtre écrite, progression de la copie de l'historique).
+  Les graphiques, pages de statut et rapports qui remontent au-delà de la
+  rétention brute sont servis depuis lui.
+* **Stockage des journaux** : désactivé par défaut. L'activer démarre
+  VictoriaLogs embarqué et ouvre la page **Logs**, réservée aux
+  administrateurs : une recherche LogsQL dans les journaux du serveur.
+
+Enregistrer une rétention redémarre quelques secondes le processus embarqué
+concerné ; les échantillons sont mis en tampon entre-temps. Voir
+[Dimensionnement](../reference/sizing.md) et
+[VictoriaMetrics externe](../reference/external-victoriametrics.md).
 
 ## Sauvegarde
 

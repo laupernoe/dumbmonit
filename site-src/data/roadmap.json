@@ -2133,7 +2133,7 @@
    "items": [
     {
      "status": "delivered",
-     "version": "0.14.0",
+     "version": "0.13.6",
      "text": {
       "fr": "canal agents chiffré (TLS 1.3, certificat par agent, post-quantique) ; CVE et failles ; déploiement Active Directory ; carte v2 (clusters, PBS, pare-feux, VLAN, VM reliées par IP) ; MDaemon/SecurityGateway via l'agent ; pages de statut (SEO, groupes, noms publics, historique 24 h à 90 j, incidents passés)",
       "en": "encrypted agent channel (TLS 1.3, one certificate per agent, post-quantum); CVEs and vulnerabilities; Active Directory deployment; map v2 (clusters, PBS, firewalls, VLANs, VMs linked by IP); MDaemon/SecurityGateway through the agent; status pages (SEO, groups, public names, 24 h to 90 day history, past incidents)",
