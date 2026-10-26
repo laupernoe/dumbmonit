@@ -62,6 +62,13 @@ impl Cipher {
         hmac_sha256(&self.subkey_root, label)
     }
 
+    /// Empreinte à clé (HMAC-SHA256 sous la sous-clé `label`) : compare deux
+    /// textes secrets sans qu'une empreinte stockée ou affichée permette de
+    /// vérifier une supposition hors de cette instance.
+    pub fn keyed_digest(&self, label: &[u8], data: &[u8]) -> [u8; 32] {
+        hmac_sha256(&self.subkey(label), data)
+    }
+
     /// Chiffre en préfixant le nonce aléatoire au texte chiffré.
     pub fn encrypt(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
         let nonce_bytes: [u8; NONCE_LEN] = rand::random();

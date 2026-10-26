@@ -1,0 +1,14 @@
+# Sauvegarde des configurations : Ubiquiti EdgeOS (EdgeRouter) et passerelles
+# UniFi USG.
+id: ubiquiti_edgeos
+label: Ubiquiti EdgeOS / UniFi USG
+transport: ssh_shell
+prompt: '^[\w.\-]+@[\w.\-]+:[\w~/.\-]*[$#] ?$'
+setup:
+  - terminal length 0
+commands:
+  - show configuration commands
+exit: exit
+volatile: []
+secrets:
+  - '\b(?:plaintext-password|encrypted-password|pre-shared-secret|secret|community|key|password|passphrase) ''?(?P<secret>[^''\s]+)'

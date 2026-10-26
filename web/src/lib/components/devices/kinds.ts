@@ -82,7 +82,8 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	nginx: () => import('./appliance/AppliancePanel.svelte'),
 	apache: () => import('./appliance/AppliancePanel.svelte'),
 	openvpn: () => import('./appliance/AppliancePanel.svelte'),
-	webchange: () => import('./webchange/WebchangePanel.svelte')
+	webchange: () => import('./webchange/WebchangePanel.svelte'),
+	netconfig: () => import('./netconfig/NetconfigPanel.svelte')
 };
 
 /** Whether a kind has a dedicated panel, without loading it. */

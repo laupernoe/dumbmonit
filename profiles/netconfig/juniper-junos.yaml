@@ -1,0 +1,12 @@
+# Sauvegarde des configurations : Juniper Junos.
+id: juniper_junos
+label: Juniper Junos
+transport: ssh_exec
+commands:
+  - show configuration | display omit | no-more
+volatile:
+  - '^## Last commit: '
+  - '^## Last changed: '
+secrets:
+  - '\b(?:encrypted-password|secret|ascii-text|authentication-key|hello-authentication-key|key|simple-password|community) "(?P<secret>[^"]+)"'
+  - '^\s*community (?P<secret>\S+) \{'

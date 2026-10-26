@@ -1,0 +1,11 @@
+# Sauvegarde des configurations : appareils UniFi (commutateurs, points
+# d'accès) : configuration reçue du contrôleur.
+id: unifi_device
+label: UniFi switch / access point
+transport: ssh_exec
+commands:
+  - mca-ctrl -t dump-cfg
+volatile:
+  - '"(?:cfgversion|uptime|time|inform_ip|mgmt_cfg_version)"\s*:'
+secrets:
+  - '"(?:x_passphrase|x_password|x_shadow|x_authkey|x_secret|x_psk|x_iapp_key|password|psk|passphrase)"\s*:\s*"(?P<secret>[^"]*)"'

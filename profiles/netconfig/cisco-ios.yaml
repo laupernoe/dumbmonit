@@ -1,0 +1,32 @@
+# Sauvegarde des configurations : Cisco IOS et IOS-XE (`crates/collectors/src/netconfig`).
+#
+# Format décrit dans `docs/devices/netconfig.md`. Aucune commande ne vient de
+# l'interface : seules celles des profils livrés sont envoyées, telles quelles.
+id: cisco_ios
+label: Cisco IOS / IOS-XE
+transport: ssh_shell
+prompt: '^[\w.\-/:()@]+[>#] ?$'
+enable:
+  command: enable
+  unprivileged: '>\s?$'
+  password_prompt: '(?i)password: ?$'
+setup:
+  - terminal length 0
+  - terminal width 0
+more:
+  expect: '--More--'
+  send: " "
+commands:
+  - show running-config
+exit: exit
+strip:
+  - '^Building configuration\.\.\.$'
+  - '^Current configuration : \d+ bytes$'
+volatile:
+  - '^! Last configuration change at '
+  - '^! NVRAM config last updated at '
+  - '^! No configuration change since last restart'
+  - '^ntp clock-period '
+secrets:
+  - '\b(?:secret|password|key|key-string|pre-shared-key|community|md5|ascii|hex)(?: [0-9])? (?P<secret>\S+)'
+  - '^\s*snmp-server community (?P<secret>\S+)'

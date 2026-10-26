@@ -590,6 +590,15 @@ la surveillance montre chaque changement avant et après.
 |---|---|---|---|---|---|
 | Site web changé | Une vérification d'une page ou d'un site surveillé a trouvé des pages qui ont changé, sont apparues ou ont disparu (`dumbmonit_webchange_last_check_changes`). Chacune de ces vérifications est notifiée et nomme les pages, sous la même alerte tant qu'elle est active ; elle se résout à la première vérification qui ne trouve rien de nouveau. | > 0 | 30 s | Info (`info`) | aucun |
 
+### Sauvegardes des configurations réseau
+
+Voir [Sauvegarde des configurations réseau](../devices/netconfig.md). La page de l'équipement montre chaque version et le diff ligne à ligne, secrets masqués.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Configuration réseau modifiée | La dernière sauvegarde a trouvé une configuration différente de la version précédente, hors lignes volatiles (horodatages, compteurs) (`dumbmonit_netconfig_config_changed`). Elle se résout à la sauvegarde suivante qui ne trouve aucun changement. | > 0 | 30 s | Info (`info`) | aucun |
+| Clé d'hôte SSH modifiée | L'équipement a présenté une clé d'hôte SSH différente de celle mémorisée : la connexion a été coupée avant l'envoi de tout identifiant, et les sauvegardes s'arrêtent jusqu'à ce qu'un administrateur accepte la nouvelle clé (`dumbmonit_netconfig_host_key_changed`). | > 0 | aucun | Avertissement (`critical`) | 6 h |
+
 ### Kubernetes {#kubernetes}
 
 Voir [Kubernetes / k3s](../devices/kubernetes.md). Chaque série est
