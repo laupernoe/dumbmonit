@@ -640,7 +640,7 @@
           "port": 443,
           "protocol": "tcp",
           "direction": "to_device",
-          "purpose": "STS AssumeRole, only with a role ARN (HTTPS, sts.<region>.amazonaws.com)",
+          "purpose": "Only with a role ARN: STS AssumeRole (HTTPS, sts.<region>.amazonaws.com)",
           "optional": true
         }
       ],
