@@ -1,6 +1,6 @@
 mod activedirectory;
 mod ad_deploy;
-mod agent_commands;
+pub(crate) mod agent_commands;
 pub(crate) mod agent_files;
 mod agent_tls;
 mod agent_updates;
@@ -47,6 +47,7 @@ mod proxmox;
 mod push;
 mod redfish;
 mod relay;
+mod remediation;
 mod reports;
 mod security;
 mod self_monitoring;
@@ -301,6 +302,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(integrations::routes())
         // Mise à jour guidée : dernière version publiée (`update.rs`).
         .merge(update::routes())
+        // Procédures, actions de remédiation, politiques et journal (`remediation.rs`).
+        .merge(remediation::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         .route_layer(middleware::from_fn_with_state(

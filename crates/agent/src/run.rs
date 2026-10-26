@@ -205,7 +205,8 @@ impl Agent {
             client.clone(),
             identity.key(),
             &config.docker_socket,
-        );
+        )
+        .with_actions(config.actions.clone());
         Ok(Self {
             interval: config.interval,
             buffer: PendingBuffer::new(config.max_buffered_samples),
@@ -1069,6 +1070,7 @@ mod tests {
             docker_update_check: false,
             docker_max_containers: 200,
             commands: false,
+            actions: crate::remediation::ActionsConfig::default(),
             relay: false,
             site: None,
             probe: crate::collect::ProbeConfig::default(),

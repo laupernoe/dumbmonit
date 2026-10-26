@@ -234,6 +234,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     scheduler::spawn(state.clone());
     dumbmonit_server::reports::spawn(state.clone());
     alerting::spawn(state.clone());
+    dumbmonit_server::remediation::spawn(state.clone());
     dumbmonit_server::security::spawn(state.clone());
     dumbmonit_server::vulns::spawn(state.clone());
     // Mesures de l'instance elle-même et battement de cœur sortant (`selfmon`).

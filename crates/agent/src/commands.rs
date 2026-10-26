@@ -11,12 +11,14 @@
 //! remettre l'ancien en service. L'ancien conteneur n'est supprimé qu'une fois le
 //! nouveau jugé sain ; entre les deux, il attend renommé.
 
+use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 use std::time::Duration;
 
 use anyhow::{Context, Result, bail};
 use dumbmonit_proto::{
-    AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CommandReport, CommandStatus,
+    AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CMD_SCRIPT_RUN, CMD_SERVICE_RESTART,
+    CommandReport, CommandStatus,
 };
 use serde_json::{Map, Value, json};
 use tokio::task::JoinHandle;
@@ -24,6 +26,7 @@ use tracing::{debug, info, warn};
 
 use crate::client::PushClient;
 use crate::collect::docker::{DockerClient, DockerResponse};
+use crate::remediation::{self, ActionsConfig, ReplayGuard};
 
 /// Taille maximale du compte rendu envoyé au serveur. Le journal complet reste
 /// dans les traces de l'agent ; l'interface n'a besoin que de la fin.
@@ -66,14 +69,44 @@ const HEALTH_POLL: Duration = Duration::from_secs(2);
 /// Ce que l'agent accepte de faire.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
-    Restart { name: String },
-    Update { name: String, prune: bool },
+    Restart {
+        name: String,
+    },
+    Update {
+        name: String,
+        prune: bool,
+    },
+    /// Redémarrer un service systemd ou Windows (remédiation).
+    Service {
+        name: String,
+    },
+    /// Lancer un script déclaré dans le dossier d'actions (remédiation).
+    Script {
+        name: String,
+        params: BTreeMap<String, String>,
+    },
 }
 
 impl Action {
     /// Vérifie une commande avant de la lancer. Tout ce qui est refusé ici
     /// l'est avec un message que l'interface affichera tel quel.
     pub fn from_command(command: &AgentCommand) -> Result<Self> {
+        match command.kind.as_str() {
+            CMD_SERVICE_RESTART => {
+                let name = command.arg_str("name").context("missing service name")?;
+                dumbmonit_proto::remediation::validate_service_name(name)
+                    .map_err(anyhow::Error::msg)?;
+                return Ok(Self::Service { name: name.to_string() });
+            }
+            CMD_SCRIPT_RUN => {
+                let name = command.arg_str("name").context("missing action name")?;
+                dumbmonit_proto::remediation::validate_action_name(name)
+                    .map_err(anyhow::Error::msg)?;
+                let params = remediation::command_params(command)?;
+                return Ok(Self::Script { name: name.to_string(), params });
+            }
+            _ => {}
+        }
         let name = command.arg_str("name").context("missing container name")?;
         validate_name(name)?;
         match command.kind.as_str() {
@@ -88,8 +121,17 @@ impl Action {
 
     fn name(&self) -> &str {
         match self {
-            Self::Restart { name } | Self::Update { name, .. } => name,
+            Self::Restart { name }
+            | Self::Update { name, .. }
+            | Self::Service { name }
+            | Self::Script { name, .. } => name,
         }
+    }
+
+    /// Vrai pour les actions de remédiation, qui exigent `actions: true` et une
+    /// enveloppe anti-rejeu.
+    fn is_remediation(&self) -> bool {
+        matches!(self, Self::Service { .. } | Self::Script { .. })
     }
 }
 
@@ -207,13 +249,35 @@ pub struct CommandRunner {
     client: PushClient,
     key: String,
     docker: DockerClient,
+    /// Réglages locaux des actions de remédiation (désactivées par défaut).
+    actions: ActionsConfig,
+    /// Nonces déjà acceptés : une demande rejouée n'est pas réexécutée.
+    replay: ReplayGuard,
+    /// Commandes déjà lancées par ce processus : une commande qui reviendrait
+    /// dans la file (compte rendu perdu) n'est pas exécutée deux fois.
+    started: HashSet<i64>,
     /// La commande en cours, s'il y en a une.
     task: Option<JoinHandle<()>>,
 }
 
 impl CommandRunner {
     pub fn new(enabled: bool, client: PushClient, key: String, docker_socket: &Path) -> Self {
-        Self { enabled, client, key, docker: DockerClient::new(docker_socket), task: None }
+        Self {
+            enabled,
+            client,
+            key,
+            docker: DockerClient::new(docker_socket),
+            actions: ActionsConfig::default(),
+            replay: ReplayGuard::default(),
+            started: HashSet::new(),
+            task: None,
+        }
+    }
+
+    /// Réglages des actions de remédiation de cette machine.
+    pub fn with_actions(mut self, actions: ActionsConfig) -> Self {
+        self.actions = actions;
+        self
     }
 
     /// Vrai tant qu'une commande s'exécute.
@@ -253,10 +317,35 @@ impl CommandRunner {
                 .await;
                 continue;
             }
+            if !self.started.insert(command.id) {
+                debug!(id = command.id, "command already started by this agent, skipped");
+                continue;
+            }
+            if self.started.len() > 4096 {
+                self.started.clear();
+                self.started.insert(command.id);
+            }
+            // L'enveloppe anti-rejeu est vérifiée ici, avant toute exécution, et
+            // retenue même si l'action échoue ensuite : un nonce ne sert qu'une fois.
+            let remediation_kind =
+                matches!(command.kind.as_str(), CMD_SERVICE_RESTART | CMD_SCRIPT_RUN);
+            if let Err(error) = self.replay.admit(&command, now_ms, remediation_kind) {
+                warn!(id = command.id, kind = command.kind, %error, "command refused");
+                report(
+                    &self.client,
+                    &self.key,
+                    command.id,
+                    CommandStatus::Failed,
+                    format!("{error:#}"),
+                )
+                .await;
+                continue;
+            }
             let executor = Executor {
                 client: self.client.clone(),
                 key: self.key.clone(),
                 docker: self.docker.clone(),
+                actions: self.actions.clone(),
             };
             self.task = Some(tokio::spawn(async move { executor.execute(command).await }));
             return;
@@ -293,6 +382,7 @@ struct Executor {
     client: PushClient,
     key: String,
     docker: DockerClient,
+    actions: ActionsConfig,
 }
 
 impl Executor {
@@ -312,13 +402,41 @@ impl Executor {
                 return;
             }
         };
-        info!(id = command.id, kind = command.kind, container = action.name(), "command started");
+        if action.is_remediation() && !self.actions.enabled {
+            warn!(id = command.id, kind = command.kind, "remediation refused: actions are off");
+            report(
+                &self.client,
+                &self.key,
+                command.id,
+                CommandStatus::Failed,
+                "refused: remediation actions are disabled on this machine (actions: false)"
+                    .to_string(),
+            )
+            .await;
+            return;
+        }
+        info!(id = command.id, kind = command.kind, subject = action.name(), "command started");
         report(&self.client, &self.key, command.id, CommandStatus::Running, String::new()).await;
 
         let mut log = Log::default();
         let outcome = match &action {
             Action::Restart { name } => restart(&self.docker, name, &mut log).await,
             Action::Update { name, prune } => update(&self.docker, name, *prune, &mut log).await,
+            Action::Service { name } => {
+                log.push(format!("restarting service {name}"));
+                remediation::restart_service(&self.actions, name)
+                    .await
+                    .and_then(|outcome| outcome_into_log(outcome, &mut log))
+            }
+            Action::Script { name, params } => {
+                log.push(format!("running action {name}"));
+                match remediation::load_script(&self.actions.dir, name) {
+                    Ok(script) => remediation::run_script(&script, params)
+                        .await
+                        .and_then(|outcome| outcome_into_log(outcome, &mut log)),
+                    Err(error) => Err(error),
+                }
+            }
         };
         let status = match outcome {
             Ok(()) => CommandStatus::Done,
@@ -330,6 +448,18 @@ impl Executor {
         info!(id = command.id, status = status.as_str(), "command finished");
         report(&self.client, &self.key, command.id, status, log.excerpt()).await;
     }
+}
+
+/// Verse la sortie d'un processus dans le journal ; un code de retour non nul
+/// est un échec.
+fn outcome_into_log(outcome: remediation::Outcome, log: &mut Log) -> Result<()> {
+    if !outcome.output.is_empty() {
+        log.push(outcome.output);
+    }
+    if !outcome.success {
+        bail!("the action failed");
+    }
+    Ok(())
 }
 
 // ---------------------------------------------------------------- actions
@@ -856,6 +986,34 @@ mod tests {
             Action::from_command(&command(CMD_CONTAINER_UPDATE, json!({"name": "web"}))).unwrap(),
             Action::Update { name: "web".into(), prune: true }
         );
+    }
+
+    #[test]
+    fn remediation_commands_are_validated_before_anything_runs() {
+        assert_eq!(
+            Action::from_command(&command(CMD_SERVICE_RESTART, json!({"name": "nginx"}))).unwrap(),
+            Action::Service { name: "nginx".into() }
+        );
+        assert!(
+            Action::from_command(&command(CMD_SERVICE_RESTART, json!({"name": "-H"}))).is_err()
+        );
+        assert!(
+            Action::from_command(&command(CMD_SCRIPT_RUN, json!({"name": "../../bin/sh"})))
+                .is_err()
+        );
+        assert!(
+            Action::from_command(&command(
+                CMD_SCRIPT_RUN,
+                json!({"name": "flush", "params": {"level": "x; reboot"}})
+            ))
+            .is_err()
+        );
+        let ok = Action::from_command(&command(
+            CMD_SCRIPT_RUN,
+            json!({"name": "flush", "params": {"level": "high"}}),
+        ))
+        .unwrap();
+        assert!(ok.is_remediation());
     }
 
     #[test]
