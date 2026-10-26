@@ -9,10 +9,12 @@
 	interface Props {
 		/** Sites are drawn: the WAN link is part of the legend. */
 		wan?: boolean;
+		/** Some links were corrected by hand or set by a learned rule. */
+		corrected?: boolean;
 		class?: string;
 	}
 
-	let { wan = false, class: className = '' }: Props = $props();
+	let { wan = false, corrected = false, class: className = '' }: Props = $props();
 </script>
 
 <div class={`flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-2 ${className}`}>
@@ -37,6 +39,22 @@
 				<line x1="4" y1="5" x2="30" y2="5" class="stroke-ink-3" stroke-width="2.2" stroke-linecap="round" stroke-dasharray={EDGE_DASH.wan} />
 			</svg>
 			{sourceLabel('wan')}
+		</span>
+	{/if}
+	{#if corrected}
+		<span class="inline-flex items-center gap-2">
+			<svg width="34" height="12" aria-hidden="true" class="shrink-0">
+				<line x1="2" y1="6" x2="32" y2="6" class="stroke-ink-2" stroke-width="1.6" stroke-linecap="round" />
+				<path d="M17,0.5 L22.5,6 L17,11.5 L11.5,6 Z" class="fill-canvas stroke-ink-2" stroke-width="1.6" />
+			</svg>
+			{m.topology_legend_corrected()}
+		</span>
+		<span class="inline-flex items-center gap-2">
+			<svg width="34" height="12" aria-hidden="true" class="shrink-0">
+				<line x1="2" y1="6" x2="32" y2="6" class="stroke-ink-2" stroke-width="1.6" stroke-linecap="round" />
+				<path d="M17,0.5 L22.5,6 L17,11.5 L11.5,6 Z" class="fill-ink-2 stroke-ink-2" stroke-width="1.6" />
+			</svg>
+			{m.topology_legend_learned()}
 		</span>
 	{/if}
 	<span class="inline-flex items-center gap-2">

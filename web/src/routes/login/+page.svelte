@@ -14,7 +14,8 @@
 	import { ApiError } from '#lib/api/index.js';
 	import { auth, safeDestination } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, DotField, ErrorNotice, Field, shake } from '#lib/ui/index.js';
-	import { KeyRound, Info } from 'lucide-svelte';
+	import { KeyRound, FingerprintPattern, Info } from 'lucide-svelte';
+	import { passkeysSupported } from '#lib/api/passkeys.js';
 	import { tick } from 'svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import LanguageSelect from '#lib/components/LanguageSelect.svelte';
@@ -89,6 +90,24 @@
 	const ssoHref = $derived(
 		cameFromElsewhere ? `${auth.oidc.login_url}?redirect=${encodeURIComponent(destination)}` : auth.oidc.login_url
 	);
+
+	// Passkey: one gesture replaces password and second factor. Offered once the
+	// instance has at least one, on a browser that can use it.
+	let passkeyBusy = $state(false);
+	const canUsePasskey = $derived(auth.passkeys && passkeysSupported());
+
+	async function signInWithPasskey() {
+		failure = null;
+		localError = null;
+		passkeyBusy = true;
+		try {
+			await auth.loginPasskey();
+		} catch (cause) {
+			failure = { title: m.auth_login_passkey_failed(), error: cause instanceof ApiError && cause.status !== 401 ? cause : new ApiError(m.auth_login_passkey_failed_detail(), 400) };
+		} finally {
+			passkeyBusy = false;
+		}
+	}
 
 	function retryDelay(message: string): number | null {
 		const match = /(\d+)\s*(s|sec|second)/i.exec(message);
@@ -300,7 +319,21 @@
 				</div>
 			{/if}
 
-			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled || auth.saml.enabled ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
+			{#if canUsePasskey}
+				<div class="mt-6">
+					<Button variant="secondary" size="lg" class="w-full" loading={passkeyBusy} onclick={() => void signInWithPasskey()}>
+						<FingerprintPattern class="size-4" aria-hidden="true" />
+						{m.auth_login_passkey_button()}
+					</Button>
+				</div>
+				<div class="mt-5 flex items-center gap-3 text-[0.75rem] font-semibold tracking-wide text-ink-3 uppercase" aria-hidden="true">
+					<span class="h-px flex-1 bg-line"></span>
+					{m.auth_login_or()}
+					<span class="h-px flex-1 bg-line"></span>
+				</div>
+			{/if}
+
+			<form bind:this={passwordForm} class={`grid gap-4 ${auth.oidc.enabled || auth.saml.enabled || canUsePasskey ? 'mt-5' : 'mt-6'}`} onsubmit={submit} novalidate>
 				<Field label={m.auth_login_username()} for="username" error={usernameError} help={auth.ldap.enabled ? m.auth_login_username_ldap_help() : undefined}>
 					<!-- svelte-ignore a11y_autofocus -->
 					<input

@@ -1,0 +1,6 @@
+{"errorCode":0,"msg":"Success.","result":{"totalRows":4,"currentPage":1,"currentSize":4,"data":[
+{"mac":"AA-BB-CC-00-00-01","name":"AP-Hall","type":"ap","model":"EAP660 HD","modelVersion":"1.0","firmwareVersion":"1.1.2 Build 20240810 Rel.56123","ip":"192.168.0.11","status":1,"statusCategory":1,"cpuUtil":12,"memUtil":48,"uptimeLong":864000,"needUpgrade":false,"clientNum":17},
+{"mac":"AA-BB-CC-00-00-02","name":"SW-Core","type":"switch","model":"TL-SG3428X","modelVersion":"2.0","firmwareVersion":"1.0.5 Build 20240601 Rel.30001","ip":"192.168.0.2","status":1,"statusCategory":1,"cpuUtil":95,"memUtil":91,"uptimeLong":3456000,"needUpgrade":true,"clientNum":0},
+{"mac":"AA-BB-CC-00-00-03","name":"ER605","type":"gateway","model":"ER605","modelVersion":"2.6","firmwareVersion":"2.2.4 Build 20240701 Rel.12345","ip":"192.168.0.1","status":0,"statusCategory":0,"cpuUtil":0,"memUtil":0,"uptimeLong":0,"needUpgrade":false,"clientNum":0},
+{"mac":"AA-BB-CC-00-00-04","name":"","type":"ap","model":"EAP610","modelVersion":"3.0","firmwareVersion":"1.0.0","ip":"","status":2,"statusCategory":2,"needUpgrade":false}
+]}}

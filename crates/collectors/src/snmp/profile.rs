@@ -469,6 +469,9 @@ const EMBEDDED: &[(&str, &str)] = &[
     ("printer.yaml", include_str!("../../../../profiles/printer.yaml")),
     ("ethernet-switch.yaml", include_str!("../../../../profiles/ethernet-switch.yaml")),
     ("zyxel.yaml", include_str!("../../../../profiles/zyxel.yaml")),
+    ("watchguard.yaml", include_str!("../../../../profiles/watchguard.yaml")),
+    ("stormshield.yaml", include_str!("../../../../profiles/stormshield.yaml")),
+    ("hpe-aruba-switch.yaml", include_str!("../../../../profiles/hpe-aruba-switch.yaml")),
 ];
 
 /// Catalogue partagé, construit une seule fois.

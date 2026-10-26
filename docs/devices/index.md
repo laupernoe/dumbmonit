@@ -20,11 +20,19 @@ form always matches what this version can monitor.
 | [pfSense](pfsense.md) | `pfsense` | REST API key (read-only user) | Firewall: gateways down or lossy, interfaces without link, stopped services |
 | [FortiGate](fortigate.md) | `fortigate` | REST API token (read-only profile, trusted host) | Firewall: IPsec tunnels, links, HA sync, conserve mode, FortiGuard licences |
 | [Sophos Firewall](sophos.md) | `sophos` | username/password (read-only profile) | Firewall: interface links only (the XML API exposes no tunnel, HA or licence state) |
+| [Cisco Meraki](meraki.md) | `meraki` | API key (read-only administrator) | Beta. Meraki cloud: devices offline, failed Internet uplinks, license state and expiry, clients per network |
+| [TP-Link Omada](omada.md) | `omada` | OpenAPI client ID and secret (Viewer role) | Beta. Omada controller: devices disconnected or pending, CPU and memory, firmware updates, clients per site |
+| [Aruba Central](arubacentral.md) | `arubacentral` | API client (ID and secret) or access token | Beta. Aruba access points, switches and gateways through the cloud API: devices offline, critical alerts, device health, clients |
+| [Palo Alto PAN-OS](paloalto.md) | `paloalto` | username/password or API key (role-based, XML API operational requests only) | Beta. Firewall: interface links, HA peer and sync, session table, licences, failed commits |
+| [SonicWall SonicOS](sonicwall.md) | `sonicwall` | username/password (read-only user) | Beta. Firewall: interface links only |
 | [OpenVPN server](openvpn.md) | `openvpn` | none, or management password | OpenVPN server through its management interface: version, state, connected clients |
 | [UniFi Network](unifi.md) | `unifi` | API key or username/password | UniFi console or self-hosted server: devices, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |
 | [TrueNAS](truenas.md) | `truenas` | API key | ZFS storage server (SCALE, Community Edition) |
 | [Unraid](unraid.md) | `unraid` | API key (Viewer role) | NAS: array, disks, parity checks, cache pools, containers, VMs |
+| [QNAP QTS / QuTS hero](qnap.md) | `qnap` | username/password (limited account) | NAS (beta): volumes filling up, disk SMART health and temperature, firmware updates |
+| [Ceph](ceph.md) | `ceph` | dashboard user and password (read-only role) | Storage cluster (beta): health checks, OSDs, placement groups, capacity, pools, monitors |
+| [MinIO](minio.md) | `minio` | Prometheus token (or none) | Object store (beta): nodes and drives offline, capacity, heal and replication failures, S3 errors |
 | [MikroTik RouterOS](mikrotik.md) | `mikrotik` | username/password (read-only group) | Router or switch: versions and firmware behind, CPU, memory, sensors, interface errors |
 | [UPS with NUT](nut.md) | `nut` | none, or username/password | UPS on a NAS, Raspberry Pi or server running Network UPS Tools |
 | [Server hardware (Redfish)](redfish.md) | `redfish` | username/password | Server fans, temperatures, power supplies and drives, read from its BMC |
@@ -52,6 +60,8 @@ form always matches what this version can monitor.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
 | [Active Directory](activedirectory.md) | `activedirectory` | username/password (plain domain user) | Windows domain over LDAPS: domain controllers and FSMO roles, privileged group members, password policy, security findings |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | username/password (Veeam Backup Viewer) | Backup server: failed jobs, failed sessions, repositories filling up, license |
+| [Kopia](kopia.md) (beta) | `kopia` | server user name and password | Backup server: last snapshot of each source (age, errors, size), sources behind their schedule, repository connection |
+| [Duplicati](duplicati.md) (beta) | `duplicati` | web interface password | Backup server (2.1+): last successful backup of each task, last result, warnings and errors, task running |
 | [Tailscale](tailscale.md) | `tailscale` | OAuth client (devices:core:read) or API access token | Tailnet: servers offline, node keys expiring, devices awaiting approval |
 | [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
 | [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |

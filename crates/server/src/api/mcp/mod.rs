@@ -30,6 +30,8 @@
 
 mod tools;
 
+pub(crate) use tools::{ToolError, dashboard_summary};
+
 use std::sync::Arc;
 
 use axum::Extension;

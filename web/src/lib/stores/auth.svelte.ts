@@ -24,6 +24,7 @@ import {
 	type AccessInfo,
 	type User
 } from '#lib/api/index.js';
+import { signInWithPasskey } from '#lib/api/passkeys.js';
 
 /**
  * Minimum length required for a password.
@@ -102,6 +103,8 @@ class AuthStore {
 	saml = $state<SamlStatus>({ enabled: false, label: 'SAML' });
 	/** Team rights of the signed-in account (from `/api/auth/me`). */
 	access = $state<AccessInfo | null>(null);
+	/** A passkey is registered on the instance: the sign-in screen offers to use one. */
+	passkeys = $state(false);
 	/** Public demo mode: read-only instance, sign in with demo / demo. */
 	demo = $state(false);
 	/** Error preventing us from knowing the session state (server unreachable). */
@@ -180,6 +183,7 @@ class AuthStore {
 			this.oidc = state.oidc;
 			this.ldap = state.ldap;
 			this.saml = state.saml;
+			this.passkeys = state.passkeys;
 			this.demo = state.demo;
 			this.error = null;
 			this.access = state.user ? await getMyAccess(signal) : null;
@@ -237,6 +241,13 @@ class AuthStore {
 		this.sessionOpened();
 		await this.refresh();
 		return null;
+	}
+
+	/** Signs in with a passkey: password and second factor in one gesture. */
+	async loginPasskey(): Promise<void> {
+		await signInWithPasskey();
+		this.sessionOpened();
+		await this.refresh();
 	}
 
 	/** Second step of the sign-in: the one-time code. */

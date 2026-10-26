@@ -90,6 +90,9 @@ pub struct StatusView {
     oidc: OidcStatus,
     ldap: LdapStatus,
     saml: SamlStatus,
+    /// Au moins une clé d'accès est enregistrée : l'écran de connexion propose
+    /// de s'en servir.
+    passkeys: bool,
     /// Mode démonstration publique : l'écran de connexion propose le compte
     /// `demo`, et toute écriture sera refusée (voir `crate::demo`).
     demo: bool,
@@ -194,6 +197,7 @@ pub async fn status(
         },
         ldap: LdapStatus { enabled: directory.config.enabled() },
         saml: SamlStatus { enabled: saml_config.usable(), label: saml_config.label().to_string() },
+        passkeys: configured && crate::auth::passkeys::count(&state.pool, None).await? > 0,
         demo: state.config.demo,
     }))
 }

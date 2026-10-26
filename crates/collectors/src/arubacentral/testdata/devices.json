@@ -1,0 +1,67 @@
+{
+  "items": [
+    {
+      "serialNumber": "CNAP000001",
+      "macAddress": "11:22:33:44:55:01",
+      "deviceName": "ap-lobby",
+      "deviceType": "ACCESS_POINT",
+      "model": "AP-515",
+      "partNumber": "R2H28A",
+      "firmwareVersion": "10.7.1.0",
+      "ipv4": "192.0.2.21",
+      "status": "ONLINE",
+      "uptimeInMillis": 1702794777,
+      "lastSeenAt": null,
+      "siteId": "24833497",
+      "siteName": "Head office",
+      "id": "CNAP000001",
+      "type": "network-monitoring/device-monitoring"
+    },
+    {
+      "serialNumber": "CNAP000002",
+      "macAddress": "11:22:33:44:55:02",
+      "deviceName": "ap-warehouse",
+      "deviceType": "ACCESS_POINT",
+      "model": "AP-505",
+      "firmwareVersion": "10.7.1.0",
+      "ipv4": "192.0.2.22",
+      "status": "OFFLINE",
+      "lastSeenAt": "2026-10-20T08:00:00Z",
+      "siteId": "24833498",
+      "siteName": "Warehouse",
+      "id": "CNAP000002",
+      "type": "network-monitoring/device-monitoring"
+    },
+    {
+      "serialNumber": "SG00000001",
+      "macAddress": "11:22:33:44:55:03",
+      "deviceName": "core-sw1",
+      "deviceType": "SWITCH",
+      "model": "6200F-24G-4SFP+",
+      "firmwareVersion": "10.13.1000",
+      "ipv4": "192.0.2.11",
+      "status": "ONLINE",
+      "uptimeInMillis": 86400000,
+      "siteId": "24833497",
+      "siteName": "Head office",
+      "id": "SG00000001",
+      "type": "network-monitoring/device-monitoring"
+    },
+    {
+      "serialNumber": "GW00000001",
+      "macAddress": "11:22:33:44:55:04",
+      "deviceName": "edge-gw",
+      "deviceType": "GATEWAY",
+      "model": "7005",
+      "status": "ONLINE",
+      "uptimeInMillis": 3600000,
+      "siteId": "24833497",
+      "siteName": "Head office",
+      "id": "GW00000001",
+      "type": "network-monitoring/device-monitoring"
+    }
+  ],
+  "count": 4,
+  "total": 4,
+  "next": null
+}
