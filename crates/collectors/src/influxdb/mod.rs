@@ -255,7 +255,8 @@ pub fn samples(replies: &Replies, ts_ms: i64) -> Vec<Sample> {
             out.push(gauge(name, value));
         }
     }
-    if let (Some(open), Some(max)) = (metrics.sum("process_open_fds"), metrics.sum("process_max_fds"))
+    if let (Some(open), Some(max)) =
+        (metrics.sum("process_open_fds"), metrics.sum("process_max_fds"))
         && max > 0.0
     {
         out.push(gauge("influxdb_open_fds_percent", open / max * 100.0));
@@ -323,7 +324,10 @@ mod tests {
     #[test]
     fn v2_en_bonne_sante_puis_en_echec() {
         let health = parse_health(200, HEALTH_V2).unwrap();
-        assert_eq!((health.generation, health.healthy, health.version.as_str()), (Generation::V2, true, "2.7.5"));
+        assert_eq!(
+            (health.generation, health.healthy, health.version.as_str()),
+            (Generation::V2, true, "2.7.5")
+        );
         let health = parse_health(503, HEALTH_V2_FAIL).unwrap();
         assert!(!health.healthy && !health.ready);
     }

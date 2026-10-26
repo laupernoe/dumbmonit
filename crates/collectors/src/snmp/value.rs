@@ -230,10 +230,9 @@ mod tests {
 
     #[test]
     fn une_adresse_mac_devient_hexadecimale() {
-        let value = SnmpValue::from_wire(&snmp2::Value::OctetString(&[
-            0x00, 0x1a, 0x2b, 0x3c, 0x4d, 0xff,
-        ]))
-        .unwrap();
+        let value =
+            SnmpValue::from_wire(&snmp2::Value::OctetString(&[0x00, 0x1a, 0x2b, 0x3c, 0x4d, 0xff]))
+                .unwrap();
         assert_eq!(value.as_label().as_deref(), Some("00:1a:2b:3c:4d:ff"));
         // Six caractères imprimables : c'est du texte.
         let text = SnmpValue::from_wire(&snmp2::Value::OctetString(b"switch")).unwrap();

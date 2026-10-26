@@ -52,8 +52,9 @@ serde-saphyr = { version = "2", default-features = false, features = ["deseriali
 # dépendance, suffit pour les quelques balises lues.
 roxmltree = "0.20"
 ipnet = "2"
-# Filtres `keep` / `drop` du collecteur Prometheus : temps linéaire, donc sans
-# risque d'explosion sur une expression saisie par l'utilisateur.
+# Filtres `keep` / `drop` du collecteur Prometheus et règles des profils de
+# sauvegarde réseau (`netconfig/`) : temps linéaire, donc sans risque
+# d'explosion sur une expression saisie par l'utilisateur.
 regex = "1"
 futures = "0.3"
 
@@ -147,9 +148,6 @@ tokio-util = { version = "0.7", default-features = false, features = ["compat"] 
 # elle ne sert qu'à vérifier leur signature (opération publique), jamais à
 # déchiffrer ni signer avec une clé privée (voir `deny.toml`).
 russh = { version = "0.65", default-features = false, features = ["flate2", "ring", "rsa"] }
-# Règles des profils (invite, lignes volatiles, secrets à masquer) : déjà dans
-# le verrou de dépendances (serveur), en temps linéaire, sans retour arrière.
-regex = "1"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }

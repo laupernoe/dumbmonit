@@ -186,10 +186,8 @@ fn le_trafic_non_chiffre_exige_la_case_et_refuse_basic() {
     assert!(matches!(refused, Err(ProbeError::Config(_))));
     let o = options(&[("allow_unencrypted", "true")]);
     assert_eq!(o.endpoint, "http://srv01.corp.example.com:5985/wsman");
-    let basic = Options::from_target(&target(
-        "srv01",
-        &[("allow_unencrypted", "true"), ("auth", "basic")],
-    ));
+    let basic =
+        Options::from_target(&target("srv01", &[("allow_unencrypted", "true"), ("auth", "basic")]));
     assert!(matches!(basic, Err(ProbeError::Config(_))));
     assert_eq!(options(&[("auth", "basic")]).auth, AuthMode::Basic);
     assert!(Options::from_target(&target("srv01", &[("auth", "kerberos")])).is_err());

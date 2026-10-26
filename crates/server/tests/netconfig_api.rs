@@ -197,12 +197,11 @@ async fn each_role_sees_what_it_may() {
     assert_eq!(audited, 1);
     let reply = app.request("GET", &download, None, Some(&lab.admin)).await;
     assert_eq!(reply.status, StatusCode::OK);
-    let audited: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM audit_log WHERE action = 'netconfig.downloaded'",
-    )
-    .fetch_one(&lab.pool)
-    .await
-    .expect("journal");
+    let audited: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM audit_log WHERE action = 'netconfig.downloaded'")
+            .fetch_one(&lab.pool)
+            .await
+            .expect("journal");
     assert_eq!(audited, 1);
 
     // Sans `to` précédent connu : la toute première version n'a pas de départ.
@@ -245,8 +244,7 @@ async fn a_changed_host_key_waits_for_an_administrator() {
 
     // La sonde le dit par la métrique de l'alerte, sans passer pour une panne.
     let cipher = db::init_cipher(&lab.pool, "secret-de-test-suffisamment-long").await.unwrap();
-    let target =
-        db::targets::get(&lab.pool, &cipher, id).await.expect("lecture").expect("cible");
+    let target = db::targets::get(&lab.pool, &cipher, id).await.expect("lecture").expect("cible");
     let collector = netconfig::NetconfigCollector::new(lab.pool.clone());
     let samples =
         dumbmonit_proto::Collector::probe(&collector, &target).await.expect("pas une panne");

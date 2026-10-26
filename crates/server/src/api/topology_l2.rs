@@ -174,9 +174,7 @@ impl L2Data {
                     }
                 }
                 "dumbmonit_if_oper_status" => {
-                    if let (Some(port), Some(text)) =
-                        (index.parse::<u32>().ok(), label("ifname"))
-                    {
+                    if let (Some(port), Some(text)) = (index.parse::<u32>().ok(), label("ifname")) {
                         data.if_names.insert((target, port), text.to_string());
                     }
                 }
@@ -190,7 +188,8 @@ impl L2Data {
                     if label("status").is_some_and(|st| st != "3") {
                         continue;
                     }
-                    if let (Some(mac), Some(v)) = (mac_from_index(index), value.filter(|v| *v >= 1.0))
+                    if let (Some(mac), Some(v)) =
+                        (mac_from_index(index), value.filter(|v| *v >= 1.0))
                     {
                         data.fdb.push(FdbRow { switch: target, mac, bridge_port: v as u32 });
                     }
@@ -248,8 +247,7 @@ fn join_ports(ports: &BTreeSet<String>) -> Option<String> {
 /// adresses IP des cibles. Une adresse ambiguë n'est attribuée à personne.
 fn mac_owners(targets: &[TargetRow], data: &L2Data) -> HashMap<String, TargetId> {
     let mut by_ip: HashMap<IpAddr, Vec<&TargetRow>> = HashMap::new();
-    for t in targets.iter().filter(|t| t.kind != crate::collectors::agent::modules::SERVICE_KIND)
-    {
+    for t in targets.iter().filter(|t| t.kind != crate::collectors::agent::modules::SERVICE_KIND) {
         let ip = host_key(&t.address).and_then(|k| k.parse::<IpAddr>().ok());
         if let Some(ip) = ip.filter(|ip| !ip.is_loopback()) {
             by_ip.entry(ip).or_default().push(t);
@@ -366,9 +364,8 @@ pub fn derive(targets: &[TargetRow], data: &L2Data) -> Vec<Link> {
 pub fn apply(edges: &mut Vec<EdgeView>, links: &[Link]) {
     for link in links {
         let (a, b) = (node_id(link.a), node_id(link.b));
-        if let Some(edge) = edges
-            .iter_mut()
-            .find(|e| (e.from == a && e.to == b) || (e.from == b && e.to == a))
+        if let Some(edge) =
+            edges.iter_mut().find(|e| (e.from == a && e.to == b) || (e.from == b && e.to == a))
         {
             if edge.from == a {
                 edge.from_port = link.a_port.clone();
@@ -424,17 +421,20 @@ mod tests {
 
     #[test]
     fn lldp_donne_un_lien_commutateur_avec_ports_des_deux_cotes() {
-        let targets = [
-            target(1, "sw1", "10.0.0.1", "snmp"),
-            target(2, "sw2", "10.0.0.2", "snmp"),
-        ];
+        let targets = [target(1, "sw1", "10.0.0.1", "snmp"), target(2, "sw2", "10.0.0.2", "snmp")];
         let series = [
-            serie("lldp_neighbor_info", 1, "4", &[
-                ("index", "0.7.1"), ("remote_sysname", "sw2.lan"), ("remote_port", "Gi1/0/24"),
-            ]),
-            serie("lldp_neighbor_info", 2, "4", &[
-                ("index", "0.24.1"), ("remote_sysname", "SW1"), ("remote_port", "Gi1/0/7"),
-            ]),
+            serie(
+                "lldp_neighbor_info",
+                1,
+                "4",
+                &[("index", "0.7.1"), ("remote_sysname", "sw2.lan"), ("remote_port", "Gi1/0/24")],
+            ),
+            serie(
+                "lldp_neighbor_info",
+                2,
+                "4",
+                &[("index", "0.24.1"), ("remote_sysname", "SW1"), ("remote_port", "Gi1/0/7")],
+            ),
             serie("lldp_local_port_info", 1, "5", &[("index", "7"), ("port_id", "Gi1/0/7")]),
             serie("lldp_local_port_info", 2, "5", &[("index", "24"), ("port_id", "Gi1/0/24")]),
         ];
@@ -453,19 +453,29 @@ mod tests {
 
     #[test]
     fn cdp_et_liens_paralleles_ne_font_qu_un_lien() {
-        let targets = [
-            target(1, "core", "10.0.0.1", "snmp"),
-            target(2, "access", "10.0.0.2", "snmp"),
-        ];
+        let targets =
+            [target(1, "core", "10.0.0.1", "snmp"), target(2, "access", "10.0.0.2", "snmp")];
         let series = [
-            serie("cdp_neighbor_info", 1, "1", &[
-                ("index", "3.1"), ("remote_sysname", "access.lan(FOC123)"),
-                ("remote_port", "Te1/1"),
-            ]),
-            serie("cdp_neighbor_info", 1, "1", &[
-                ("index", "4.1"), ("remote_sysname", "access.lan(FOC123)"),
-                ("remote_port", "Te1/2"),
-            ]),
+            serie(
+                "cdp_neighbor_info",
+                1,
+                "1",
+                &[
+                    ("index", "3.1"),
+                    ("remote_sysname", "access.lan(FOC123)"),
+                    ("remote_port", "Te1/1"),
+                ],
+            ),
+            serie(
+                "cdp_neighbor_info",
+                1,
+                "1",
+                &[
+                    ("index", "4.1"),
+                    ("remote_sysname", "access.lan(FOC123)"),
+                    ("remote_port", "Te1/2"),
+                ],
+            ),
             serie("if_oper_status", 1, "1", &[("index", "3"), ("ifname", "Te1/0/3")]),
             serie("if_oper_status", 1, "1", &[("index", "4"), ("ifname", "Te1/0/4")]),
         ];
@@ -488,17 +498,23 @@ mod tests {
         let host = "0.17.34.51.68.85"; // 00:11:22:33:44:55
         let cam = "0.17.34.51.68.102"; // 00:11:22:33:44:66
         let series = [
-            serie("lldp_neighbor_info", 1, "4", &[
-                ("index", "0.24.1"), ("remote_sysname", "sw2"), ("remote_port", "Gi24"),
-            ]),
+            serie(
+                "lldp_neighbor_info",
+                1,
+                "4",
+                &[("index", "0.24.1"), ("remote_sysname", "sw2"), ("remote_port", "Gi24")],
+            ),
             serie("fdb_entry", 1, "5", &[("index", host), ("status", "3")]),
             serie("fdb_entry", 1, "24", &[("index", cam), ("status", "3")]),
             // sw2 voit l'hôte via le trunk (port 24) et la caméra sur son port 3.
             serie("fdb_entry", 2, "24", &[("index", host), ("status", "3")]),
             serie("fdb_entry", 2, "3", &[("index", cam), ("status", "3")]),
-            serie("lldp_neighbor_info", 2, "4", &[
-                ("index", "0.24.1"), ("remote_sysname", "sw1"), ("remote_port", "Gi24"),
-            ]),
+            serie(
+                "lldp_neighbor_info",
+                2,
+                "4",
+                &[("index", "0.24.1"), ("remote_sysname", "sw1"), ("remote_port", "Gi24")],
+            ),
             serie("bridge_port_info", 1, "105", &[("index", "5")]),
             serie("if_oper_status", 1, "1", &[("index", "105"), ("ifname", "Gi1/0/5")]),
             serie("if_oper_status", 2, "1", &[("index", "3"), ("ifname", "Gi1/0/3")]),
@@ -514,12 +530,8 @@ mod tests {
         data.lag_members.insert((1, 7));
         let links = derive(&targets, &data);
         assert!(links.iter().any(|l| l.a == 1 && l.b == 2));
-        assert!(links.contains(&Link {
-            a: 1, a_port: Some("Gi1/0/5".into()), b: 3, b_port: None
-        }));
-        assert!(links.contains(&Link {
-            a: 2, a_port: Some("Gi1/0/3".into()), b: 4, b_port: None
-        }));
+        assert!(links.contains(&Link { a: 1, a_port: Some("Gi1/0/5".into()), b: 3, b_port: None }));
+        assert!(links.contains(&Link { a: 2, a_port: Some("Gi1/0/3".into()), b: 4, b_port: None }));
         // L'hôte n'est rattaché qu'une fois, et pas au trunk de sw2.
         assert_eq!(links.iter().filter(|l| l.b == 3).count(), 1);
         assert!(!links.iter().any(|l| l.a == 1 && l.b == 4));
@@ -528,14 +540,20 @@ mod tests {
     #[test]
     fn un_port_qui_apprend_trop_d_adresses_est_un_trunk() {
         let targets = [target(1, "sw", "10.0.0.1", "snmp"), target(3, "nas", "10.0.0.30", "agent")];
-        let mut series = vec![serie("arp_entry", 1, "3", &[
-            ("index", "1.10.0.0.30"), ("mac", "00:11:22:33:44:55"),
-        ])];
+        let mut series = vec![serie(
+            "arp_entry",
+            1,
+            "3",
+            &[("index", "1.10.0.0.30"), ("mac", "00:11:22:33:44:55")],
+        )];
         series.push(serie("fdb_entry", 1, "9", &[("index", "0.17.34.51.68.85"), ("status", "3")]));
         for i in 0..=MAX_ACCESS_MACS {
-            series.push(serie("fdb_entry", 1, "9", &[
-                ("index", format!("2.0.0.0.0.{i}").as_str()), ("status", "3"),
-            ]));
+            series.push(serie(
+                "fdb_entry",
+                1,
+                "9",
+                &[("index", format!("2.0.0.0.0.{i}").as_str()), ("status", "3")],
+            ));
         }
         let links = derive(&targets, &L2Data::parse(&series, &[1, 3]));
         assert!(links.is_empty(), "{links:?}");

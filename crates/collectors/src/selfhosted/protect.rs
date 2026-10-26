@@ -48,7 +48,9 @@ pub fn samples(bootstrap: &Value, ts_ms: i64) -> Vec<Sample> {
         .map(|list| {
             // Les caméras découvertes mais pas adoptées n'appartiennent pas
             // encore au système : elles ne comptent pas comme des pannes.
-            list.iter().filter(|c| c.get("isAdopted").and_then(Value::as_bool) != Some(false)).collect()
+            list.iter()
+                .filter(|c| c.get("isAdopted").and_then(Value::as_bool) != Some(false))
+                .collect()
         })
         .unwrap_or_default();
     let (mut offline, mut idle) = (0usize, 0usize);
@@ -56,7 +58,8 @@ pub fn samples(bootstrap: &Value, ts_ms: i64) -> Vec<Sample> {
         let online = text(camera, "state") == Some("CONNECTED")
             || camera.get("isConnected").and_then(Value::as_bool) == Some(true);
         let recording = camera.get("isRecording").and_then(Value::as_bool).unwrap_or(false);
-        let never = camera.pointer("/recordingSettings/mode").and_then(Value::as_str) == Some("never");
+        let never =
+            camera.pointer("/recordingSettings/mode").and_then(Value::as_str) == Some("never");
         if !online {
             offline += 1;
         } else if !recording && !never {
@@ -97,8 +100,7 @@ pub fn samples(bootstrap: &Value, ts_ms: i64) -> Vec<Sample> {
             ));
             out.push(gauge(&metric(P, "storage_size_bytes"), size, ts_ms));
         }
-        if let Some(devices) =
-            nvr.pointer("/systemInfo/storage/devices").and_then(Value::as_array)
+        if let Some(devices) = nvr.pointer("/systemInfo/storage/devices").and_then(Value::as_array)
         {
             let unhealthy = devices
                 .iter()
@@ -135,12 +137,11 @@ fn client(target: &Target, cookie: Option<&str>) -> Result<HttpClient, ProbeErro
 async fn login(target: &Target) -> Result<String, ProbeError> {
     let (username, password) = credentials(target)?;
     let path = "/api/auth/login";
-    let body = serde_json::json!({ "username": username, "password": password, "rememberMe": false });
+    let body =
+        serde_json::json!({ "username": username, "password": password, "rememberMe": false });
     let (status, headers, text) = client(target, None)?.login(path, None, Some(&body)).await?;
-    if matches!(
-        status,
-        StatusCode::BAD_REQUEST | StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN
-    ) {
+    if matches!(status, StatusCode::BAD_REQUEST | StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN)
+    {
         return Err(ProbeError::Auth(
             "UniFi OS refused the user name or password. Use a local account with access to \
              Protect, not an Ubiquiti cloud account."
@@ -354,7 +355,13 @@ mod tests {
                             return (StatusCode::BAD_REQUEST, LOGIN_REFUSED).into_response();
                         }
                         logins.fetch_add(1, Ordering::SeqCst);
-                        ([(header::SET_COOKIE, "TOKEN=jwt123; path=/; samesite=none; secure; httponly")], LOGIN_OK)
+                        (
+                            [(
+                                header::SET_COOKIE,
+                                "TOKEN=jwt123; path=/; samesite=none; secure; httponly",
+                            )],
+                            LOGIN_OK,
+                        )
                             .into_response()
                     }
                 }),

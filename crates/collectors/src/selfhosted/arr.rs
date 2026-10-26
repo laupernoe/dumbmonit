@@ -40,12 +40,30 @@ pub struct Flavor {
     pub indexers: bool,
 }
 
-pub const SONARR: Flavor =
-    Flavor { kind: "sonarr", product: "Sonarr", port: 8989, api: "v3", queue: true, indexers: false };
-pub const RADARR: Flavor =
-    Flavor { kind: "radarr", product: "Radarr", port: 7878, api: "v3", queue: true, indexers: false };
-pub const LIDARR: Flavor =
-    Flavor { kind: "lidarr", product: "Lidarr", port: 8686, api: "v1", queue: true, indexers: false };
+pub const SONARR: Flavor = Flavor {
+    kind: "sonarr",
+    product: "Sonarr",
+    port: 8989,
+    api: "v3",
+    queue: true,
+    indexers: false,
+};
+pub const RADARR: Flavor = Flavor {
+    kind: "radarr",
+    product: "Radarr",
+    port: 7878,
+    api: "v3",
+    queue: true,
+    indexers: false,
+};
+pub const LIDARR: Flavor = Flavor {
+    kind: "lidarr",
+    product: "Lidarr",
+    port: 8686,
+    api: "v1",
+    queue: true,
+    indexers: false,
+};
 pub const PROWLARR: Flavor = Flavor {
     kind: "prowlarr",
     product: "Prowlarr",
@@ -134,7 +152,11 @@ pub fn queue_samples(flavor: &Flavor, body: &Value, ts_ms: i64) -> Vec<Sample> {
     if let Some(unknown) = number(body.get("unknownCount")) {
         out.push(gauge(&metric(p, "queue_unknown"), unknown, ts_ms));
     }
-    out.push(flag(&metric(p, "queue_has_errors"), flag_of("errors") || flag_of("unknownErrors"), ts_ms));
+    out.push(flag(
+        &metric(p, "queue_has_errors"),
+        flag_of("errors") || flag_of("unknownErrors"),
+        ts_ms,
+    ));
     out.push(flag(
         &metric(p, "queue_has_warnings"),
         flag_of("warnings") || flag_of("unknownWarnings"),
@@ -182,9 +204,7 @@ pub async fn probe(
         client.get_json::<Value>(&health_path),
         client.get_json::<Value>(&disks_path),
         optional_json(client, &update_path),
-        async {
-            if flavor.queue { optional_json(client, &queue_path).await } else { Ok(None) }
-        },
+        async { if flavor.queue { optional_json(client, &queue_path).await } else { Ok(None) } },
         async {
             if flavor.indexers { optional_json(client, &indexers_path).await } else { Ok(None) }
         },
@@ -193,7 +213,9 @@ pub async fn probe(
     let mut errors = 0u32;
     let mut out = Vec::new();
     let version = status.get("version").and_then(Value::as_str).unwrap_or("unknown");
-    out.push(gauge(&metric(flavor.kind, "version_info"), 1.0, ts_ms).with_label("version", version));
+    out.push(
+        gauge(&metric(flavor.kind, "version_info"), 1.0, ts_ms).with_label("version", version),
+    );
     if let Some(body) = settle(health, &mut errors, target.id, "health") {
         out.extend(health_samples(flavor, &body, ts_ms));
     }
@@ -408,7 +430,9 @@ mod tests {
         }
     }
 
-    fn guarded(body: &'static str) -> impl Fn(HeaderMap) -> std::future::Ready<(StatusCode, &'static str)> + Clone {
+    fn guarded(
+        body: &'static str,
+    ) -> impl Fn(HeaderMap) -> std::future::Ready<(StatusCode, &'static str)> + Clone {
         move |headers: HeaderMap| {
             let ok = headers.get("x-api-key").and_then(|v| v.to_str().ok()) == Some("cle");
             std::future::ready(if ok {

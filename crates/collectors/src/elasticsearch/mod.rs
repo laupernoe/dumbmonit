@@ -205,8 +205,7 @@ mod tests {
     use crate::uptime::tags::test_support::cible;
 
     const INFO: &str = r#"{"name":"es1","cluster_name":"prod","version":{"number":"8.15.2"}}"#;
-    const OPENSEARCH: &str =
-        r#"{"name":"os1","cluster_name":"logs","version":{"distribution":"opensearch","number":"2.17.0"}}"#;
+    const OPENSEARCH: &str = r#"{"name":"os1","cluster_name":"logs","version":{"distribution":"opensearch","number":"2.17.0"}}"#;
     const HEALTH_YELLOW: &str = r#"{"cluster_name":"prod","status":"yellow","number_of_nodes":3,
         "number_of_data_nodes":3,"active_primary_shards":40,"active_shards":70,
         "relocating_shards":0,"initializing_shards":1,"unassigned_shards":9,
@@ -264,8 +263,7 @@ mod tests {
         assert_eq!(heap.unwrap().value, 71.0);
         // data-2 n'annonce pas son tas : rien d'inventé.
         assert!(
-            find(&samples, "elasticsearch_node_heap_used_percent", &[("node", "data-2")])
-                .is_none()
+            find(&samples, "elasticsearch_node_heap_used_percent", &[("node", "data-2")]).is_none()
         );
     }
 

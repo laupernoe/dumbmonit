@@ -150,7 +150,9 @@ impl Session {
                 "Kafka refused the credentials{}. Check the user name and password.",
                 message.map(|m| format!(" ({m})")).unwrap_or_default()
             ))),
-            (code, _) => Err(ProbeError::Protocol(format!("SASL authentication failed (code {code})."))),
+            (code, _) => {
+                Err(ProbeError::Protocol(format!("SASL authentication failed (code {code}).")))
+            }
         }
     }
 
@@ -231,9 +233,7 @@ async fn consumer_lag(pool: &mut Pool<'_>, cluster: &Cluster, max_groups: usize)
             report.unreachable_brokers += 1;
             continue;
         };
-        let Ok(reply) = session
-            .call(wire::API_LIST_GROUPS, wire::VERSION_LIST_GROUPS, &[])
-            .await
+        let Ok(reply) = session.call(wire::API_LIST_GROUPS, wire::VERSION_LIST_GROUPS, &[]).await
         else {
             continue;
         };
@@ -254,9 +254,8 @@ async fn consumer_lag(pool: &mut Pool<'_>, cluster: &Cluster, max_groups: usize)
     for (node, group) in listed {
         let Ok(session) = pool.session(node).await else { continue };
         let request = wire::offset_fetch_request(&group);
-        let Ok(reply) = session
-            .call(wire::API_OFFSET_FETCH, wire::VERSION_OFFSET_FETCH, &request)
-            .await
+        let Ok(reply) =
+            session.call(wire::API_OFFSET_FETCH, wire::VERSION_OFFSET_FETCH, &request).await
         else {
             continue;
         };
@@ -289,9 +288,8 @@ async fn consumer_lag(pool: &mut Pool<'_>, cluster: &Cluster, max_groups: usize)
         };
         let partitions: Vec<(String, i32)> = partitions.into_iter().collect();
         let request = wire::list_offsets_request(&partitions);
-        let Ok(reply) = session
-            .call(wire::API_LIST_OFFSETS, wire::VERSION_LIST_OFFSETS, &request)
-            .await
+        let Ok(reply) =
+            session.call(wire::API_LIST_OFFSETS, wire::VERSION_LIST_OFFSETS, &request).await
         else {
             continue;
         };

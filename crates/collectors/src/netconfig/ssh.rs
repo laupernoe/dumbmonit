@@ -138,8 +138,8 @@ pub async fn fetch(
         }
         Ok(Ok(handle)) => handle,
     };
-    let host_key = seen_key
-        .ok_or_else(|| ProbeError::Protocol("the device presented no host key".into()))?;
+    let host_key =
+        seen_key.ok_or_else(|| ProbeError::Protocol("the device presented no host key".into()))?;
 
     authenticate(&mut handle, login, step).await?;
 
@@ -169,13 +169,11 @@ async fn authenticate(
     step: Duration,
 ) -> Result<(), ProbeError> {
     let refused = || ProbeError::Auth("the device refused the user name or password".into());
-    let password = tokio::time::timeout(
-        step,
-        handle.authenticate_password(login.username, login.password),
-    )
-    .await
-    .map_err(|_| ProbeError::Protocol("no answer to the authentication".into()))?
-    .map_err(ssh_error)?;
+    let password =
+        tokio::time::timeout(step, handle.authenticate_password(login.username, login.password))
+            .await
+            .map_err(|_| ProbeError::Protocol("no answer to the authentication".into()))?
+            .map_err(ssh_error)?;
     if password.success() {
         return Ok(());
     }

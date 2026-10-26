@@ -131,7 +131,11 @@ pub fn mailbox_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
 
 // ------------------------------------------------------------------ sonde
 
-pub async fn probe(client: &HttpClient, target: &Target, ts_ms: i64) -> Result<Vec<Sample>, ProbeError> {
+pub async fn probe(
+    client: &HttpClient,
+    target: &Target,
+    ts_ms: i64,
+) -> Result<Vec<Sample>, ProbeError> {
     // La preuve de vie et d'authentification : le seul appel qui condamne.
     let containers: Value = client.get_json("/api/v1/get/status/containers").await?;
     let mut out = container_samples(&containers, ts_ms);
@@ -240,8 +244,14 @@ mod tests {
         let samples = container_samples(&json(CONTAINERS), 0);
         assert_eq!(value(&samples, "mailcow_containers_total"), Some(6.0));
         assert_eq!(value(&samples, "mailcow_containers_running"), Some(5.0));
-        assert_eq!(named(&samples, "mailcow_container_up", "container", "rspamd-mailcow"), Some(0.0));
-        assert_eq!(named(&samples, "mailcow_container_up", "container", "postfix-mailcow"), Some(1.0));
+        assert_eq!(
+            named(&samples, "mailcow_container_up", "container", "rspamd-mailcow"),
+            Some(0.0)
+        );
+        assert_eq!(
+            named(&samples, "mailcow_container_up", "container", "postfix-mailcow"),
+            Some(1.0)
+        );
     }
 
     #[test]
@@ -259,7 +269,10 @@ mod tests {
 
     #[test]
     fn le_volume_des_courriels_arrive_en_texte() {
-        assert_eq!(value(&vmail_samples(&json(VMAIL), 0), "mailcow_vmail_used_percent"), Some(85.0));
+        assert_eq!(
+            value(&vmail_samples(&json(VMAIL), 0), "mailcow_vmail_used_percent"),
+            Some(85.0)
+        );
         assert!(vmail_samples(&json("{}"), 0).is_empty());
         let samples = version_samples(&json(VERSION), 0);
         assert_eq!(samples[0].labels["version"], "2025-08a");
@@ -330,7 +343,10 @@ mod tests {
                     if ok {
                         (StatusCode::OK, CONTAINERS)
                     } else {
-                        (StatusCode::UNAUTHORIZED, r#"{"type":"error","msg":"authentication failed"}"#)
+                        (
+                            StatusCode::UNAUTHORIZED,
+                            r#"{"type":"error","msg":"authentication failed"}"#,
+                        )
                     }
                 }),
             )
@@ -365,8 +381,8 @@ mod tests {
 
     #[tokio::test]
     async fn les_pages_absentes_sont_sautees_sans_erreur() {
-        let app = Router::new()
-            .route("/api/v1/get/status/containers", get(|| async { CONTAINERS }));
+        let app =
+            Router::new().route("/api/v1/get/status/containers", get(|| async { CONTAINERS }));
         let base = serve(app).await;
         let samples = MailcowCollector::new().probe(&target(base, "cle")).await.unwrap();
         assert_eq!(value(&samples, "mailcow_scrape_errors"), Some(0.0));

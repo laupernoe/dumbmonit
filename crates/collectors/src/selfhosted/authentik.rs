@@ -39,7 +39,8 @@ pub const MAX_OUTPOSTS: usize = 10;
 /// `GET /api/v3/admin/version/`.
 pub fn version_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
     let current = body.get("version_current").and_then(Value::as_str).unwrap_or("unknown");
-    let mut out = vec![gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", current)];
+    let mut out =
+        vec![gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", current)];
     // `outdated` n'a de sens que si authentik a pu lire la dernière version
     // publiée (`version_latest_valid`) : sans accès sortant, il se tait.
     if body.get("version_latest_valid").and_then(Value::as_bool) == Some(true) {
@@ -73,7 +74,8 @@ pub fn worker_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
 /// `SUCCESSFUL`, `WARNING`, `ERROR` ou `UNKNOWN`.
 pub fn task_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
     let Some(tasks) = body.as_array() else { return Vec::new() };
-    let status = |task: &Value| task.get("status").and_then(Value::as_str).unwrap_or("").to_string();
+    let status =
+        |task: &Value| task.get("status").and_then(Value::as_str).unwrap_or("").to_string();
     let failed: Vec<&Value> = tasks.iter().filter(|t| status(t) == "ERROR").collect();
     let warned = tasks.iter().filter(|t| status(t) == "WARNING").count();
     let mut out = vec![
@@ -146,7 +148,11 @@ async fn health(client: &HttpClient, path: &str) -> Result<bool, ProbeError> {
     Ok(client.get(path).await?.0.is_success())
 }
 
-pub async fn probe(client: &HttpClient, target: &Target, ts_ms: i64) -> Result<Vec<Sample>, ProbeError> {
+pub async fn probe(
+    client: &HttpClient,
+    target: &Target,
+    ts_ms: i64,
+) -> Result<Vec<Sample>, ProbeError> {
     // La preuve de vie et d'authentification : le seul appel qui condamne.
     let version: Value = client.get_json("/api/v3/admin/version/").await?;
     let mut out = version_samples(&version, ts_ms);
@@ -181,10 +187,9 @@ pub async fn probe(client: &HttpClient, target: &Target, ts_ms: i64) -> Result<V
             .into_iter()
             .map(|(pk, name)| (format!("/api/v3/outposts/instances/{pk}/health/"), name))
             .collect();
-        let healths = futures::future::join_all(
-            paths.iter().map(|(path, _)| optional_json(client, path)),
-        )
-        .await;
+        let healths =
+            futures::future::join_all(paths.iter().map(|(path, _)| optional_json(client, path)))
+                .await;
         let mut connected = Vec::new();
         for ((_, name), health) in paths.iter().zip(healths) {
             if let Some(Some(body)) = settle(health, &mut errors, target.id, "outposts/health") {
@@ -316,10 +321,8 @@ mod tests {
         assert_eq!(names, ["authentik Embedded Outpost", "ldap-outpost"]);
         assert_eq!(fresh_instances(&json(HEALTH_EMBEDDED), NOW), 1);
         assert_eq!(fresh_instances(&json(HEALTH_LDAP), NOW), 0);
-        let samples = outpost_samples(
-            &[("embedded".to_string(), 1), ("ldap-outpost".to_string(), 0)],
-            0,
-        );
+        let samples =
+            outpost_samples(&[("embedded".to_string(), 1), ("ldap-outpost".to_string(), 0)], 0);
         assert_eq!(value(&samples, "authentik_outposts_total"), Some(2.0));
         assert_eq!(value(&samples, "authentik_outposts_disconnected"), Some(1.0));
     }
