@@ -2,7 +2,7 @@
  * How each appliance's stored series become a panel: a verdict sentence, a
  * few figures and the lists worth reading. One fold per kind, all pure, all
  * reading `dumbmonit_<prefix>_*` series as the collectors write them
- * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,nginx,apache}`,
+ * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '#lib/api/index.js';
@@ -457,6 +457,125 @@ function sophos(series: MetricSeries[]): ApplianceView {
 	};
 }
 
+// ---------------------------------------------------------------------- Meraki
+
+function plural(count: number, noun: string): string {
+	return `${count} ${noun}${count === 1 ? '' : 's'}`;
+}
+
+function meraki(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'meraki');
+	const org = ps.find((p) => p.name === 'organization_info')?.labels.organization ?? null;
+	const status = (name: string): number | null => ps.find((p) => p.name === 'devices' && p.labels.status === name)?.value ?? null;
+	const online = status('online');
+	const alerting = status('alerting');
+	const offline = status('offline') ?? 0;
+	const dormant = status('dormant');
+	const age = byLabel(ps, 'device_last_report_age_seconds', 'serial');
+	const devices: Row[] = [];
+	for (const p of byLabel(ps, 'device_offline', 'serial').values()) {
+		const alert = (byLabel(ps, 'device_alerting', 'serial').get(p.labels.serial)?.value ?? 0) >= 1;
+		if (p.value < 1 && !alert) continue;
+		const reported = age.get(p.labels.serial)?.value ?? null;
+		devices.push({
+			key: p.labels.serial,
+			name: p.labels.device,
+			tone: p.value >= 1 ? 'warning' : 'advisory',
+			plate: p.value >= 1 ? 'Offline' : 'Alerting',
+			details: [p.labels.model, p.labels.network, reported !== null ? `last seen ${formatAge(reported)} ago` : ''].filter(Boolean)
+		});
+	}
+	devices.sort((a, b) => Number(a.tone !== 'warning') - Number(b.tone !== 'warning') || byName(a, b));
+	const failover = new Set(ps.filter((p) => p.name === 'uplink_failover' && p.value >= 1).map((p) => p.labels.serial));
+	const uplinks: Row[] = ps
+		.filter((p) => p.name === 'uplink_failed' && p.value >= 1)
+		.map((p) => ({
+			key: `${p.labels.serial}/${p.labels.interface}`,
+			name: `${p.labels.device} ${p.labels.interface}`,
+			tone: 'warning',
+			plate: 'Failed',
+			details: [p.labels.network, failover.has(p.labels.serial) ? 'running on its backup uplink' : ''].filter(Boolean)
+		}));
+	uplinks.sort(byName);
+	const licenseOk = single(ps, 'license_ok');
+	const expiry = single(ps, 'license_expiry_seconds');
+	const problems = [];
+	if (offline > 0) problems.push({ text: `${plural(offline, 'device')} offline`, severe: true });
+	if (uplinks.length > 0) problems.push({ text: `${plural(uplinks.length, 'uplink')} failed`, severe: false });
+	if (licenseOk !== null && licenseOk < 1) problems.push({ text: 'the license is not in compliance', severe: false });
+	if (expiry !== null && expiry < 30 * 86400) problems.push({ text: expiry < 0 ? 'the license has expired' : `the license expires ${days(expiry)}`, severe: false });
+	const total = (online ?? 0) + (alerting ?? 0) + offline;
+	return {
+		title: 'Cloud network',
+		description: org ? `Organization "${org}", read through the Meraki Dashboard API.` : 'Read through the Meraki Dashboard API.',
+		verdict: verdict(problems, 'Every device reaches the dashboard and every uplink works.'),
+		figures: [
+			{ label: 'Devices online', value: online !== null ? `${online + (alerting ?? 0)}/${total}` : null, tone: offline > 0 ? 'warning' : 'ink' },
+			{ label: 'Alerting', value: alerting !== null ? String(alerting) : null, tone: alerting !== null && alerting > 0 ? 'advisory' : 'ink' },
+			{ label: 'Dormant', value: dormant !== null ? String(dormant) : null, hint: 'Not seen for a long time, never counted as down' },
+			{ label: 'Clients', value: single(ps, 'clients') !== null ? String(single(ps, 'clients')) : null, hint: 'Seen in the last hour' },
+			{ label: 'License', value: expiry !== null ? (expiry < 0 ? 'Expired' : days(expiry)) : null, tone: licenseOk !== null && licenseOk < 1 ? 'advisory' : 'ink' }
+		],
+		sections: [
+			{ title: 'Devices offline or alerting', rows: devices },
+			{ title: 'Uplinks that failed', rows: uplinks }
+		]
+	};
+}
+
+// ----------------------------------------------------------------------- Omada
+
+function omada(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'omada');
+	const info = ps.find((p) => p.name === 'controller_info')?.labels;
+	const count = (name: string): number => ps.find((p) => p.name === 'devices' && p.labels.status === name)?.value ?? 0;
+	const offlineFlags = byLabel(ps, 'device_offline', 'mac');
+	const pendingFlags = byLabel(ps, 'device_pending', 'mac');
+	const cpu = byLabel(ps, 'device_cpu_usage_percent', 'mac');
+	const memory = byLabel(ps, 'device_memory_used_percent', 'mac');
+	const upgrade = byLabel(ps, 'device_upgrade_available', 'mac');
+	const devices: Row[] = [];
+	let hot = 0;
+	for (const p of byLabel(ps, 'device_online', 'mac').values()) {
+		const mac = p.labels.mac;
+		const isOffline = (offlineFlags.get(mac)?.value ?? 0) >= 1;
+		const isPending = (pendingFlags.get(mac)?.value ?? 0) >= 1;
+		const c = cpu.get(mac)?.value ?? null;
+		const mem = memory.get(mac)?.value ?? null;
+		const saturated = (c !== null && c > 90) || (mem !== null && mem > 90);
+		const update = (upgrade.get(mac)?.value ?? 0) >= 1;
+		if (!isOffline && !isPending && !saturated && !update) continue;
+		if (saturated) hot += 1;
+		devices.push({
+			key: mac,
+			name: p.labels.device,
+			tone: isOffline ? 'warning' : isPending || saturated ? 'advisory' : 'info',
+			plate: isOffline ? 'Disconnected' : isPending ? 'Pending adoption' : saturated ? 'Saturated' : 'Update',
+			details: [p.labels.model, p.labels.site, c !== null ? `CPU ${Math.round(c)}%` : '', mem !== null ? `memory ${Math.round(mem)}%` : '', update ? 'firmware update available' : ''].filter(Boolean)
+		});
+	}
+	const RANK: Record<string, number> = { warning: 0, advisory: 1, info: 2 };
+	devices.sort((a, b) => (RANK[a.tone] ?? 9) - (RANK[b.tone] ?? 9) || byName(a, b));
+	const offline = count('offline');
+	const pending = count('pending');
+	const problems = [];
+	if (offline > 0) problems.push({ text: `${plural(offline, 'device')} disconnected`, severe: true });
+	if (pending > 0) problems.push({ text: `${plural(pending, 'device')} awaiting adoption`, severe: false });
+	if (hot > 0) problems.push({ text: `${plural(hot, 'device')} with CPU or memory above 90%`, severe: false });
+	const online = count('online');
+	return {
+		title: 'Wi-Fi and switching',
+		description: info?.version ? `Omada controller ${info.version}, read through its OpenAPI.` : 'Read through the Omada OpenAPI.',
+		verdict: verdict(problems, 'Every device is connected to the controller.'),
+		figures: [
+			{ label: 'Devices online', value: `${online}/${online + offline + pending}`, tone: offline > 0 ? 'warning' : 'ink' },
+			{ label: 'Sites', value: single(ps, 'sites') !== null ? String(single(ps, 'sites')) : null },
+			{ label: 'Clients', value: single(ps, 'clients') !== null ? String(single(ps, 'clients')) : null }
+		],
+		sections: [{ title: 'Devices needing a look', rows: devices }]
+	};
+}
+
 // --------------------------------------------------------------------- Nginx
 
 function nginx(series: MetricSeries[]): ApplianceView {
@@ -617,6 +736,8 @@ export const FOLDS: Record<string, Fold> = {
 	tailscale: { prefix: 'tailscale', title: 'Tailnet', fold: tailscale },
 	fortigate: { prefix: 'fortigate', title: 'Firewall', fold: fortigate },
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },
+	meraki: { prefix: 'meraki', title: 'Cloud network', fold: meraki },
+	omada: { prefix: 'omada', title: 'Wi-Fi and switching', fold: omada },
 	nginx: { prefix: 'nginx', title: 'Web server', fold: nginx },
 	apache: { prefix: 'apache', title: 'Web server', fold: apache },
 	openvpn: { prefix: 'openvpn', title: 'VPN', fold: openvpn },
