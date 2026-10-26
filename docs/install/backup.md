@@ -7,7 +7,7 @@ Two different things, for two different accidents.
 | What it holds | The configuration: monitors and their credentials, rules, channels, status pages, accounts, tokens. | The whole database, as one file, plus `secret.key`. |
 | Where it goes | Wherever you put it — it is encrypted with a passphrase you choose. | `/data/backups/`, inside the same volume. |
 | What it saves you from | A lost server, a move to new hardware, a fresh install. | The change you regret ten minutes later, an upgrade that went wrong. |
-| What it does not hold | Metrics history, alert state and history, the audit log, sessions. | Metrics history (`vm/`). |
+| What it does not hold | Metrics history, alert state and history, the audit log, sessions. | Metrics history (`vm/`, `vm-long/`) and logs (`vlogs/`). |
 
 Neither replaces an archive of the whole volume if you want the graphs back
 too; that is at the bottom of this page.
@@ -256,8 +256,10 @@ docker compose start
 To restore, create the volume, extract the archive into it the same way, then
 `docker compose up -d`.
 
-If space matters, `--exclude=./vm` keeps the archive small: the database and the
-secret are the setup, `vm/` is only the history.
+If space matters, `--exclude=./vm --exclude=./vm-long --exclude=./vlogs` keeps the
+archive small: the database and the secret are the setup; `vm/` (raw metrics),
+`vm-long/` (5-minute aggregates) and `vlogs/` (logs) are only history. Stop the
+container first if you want these directories consistent.
 
 ## What to do before an upgrade
 

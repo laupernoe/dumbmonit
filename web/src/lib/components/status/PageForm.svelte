@@ -15,6 +15,7 @@
 	import {
 		createStatusPage,
 		deleteStatusPageLogo,
+		setStatusPageAccess,
 		setStatusPageItems,
 		statusPageLogoUrl,
 		toApiError,
@@ -22,6 +23,7 @@
 		uploadStatusPageLogo,
 		type Channel,
 		type StatusPage,
+		type StatusPageAccess,
 		type StatusPageSeo,
 		type StatusPageAccent,
 		type StatusPageSceneRotation,
@@ -66,6 +68,10 @@
 	let description = $state(initial?.description ?? '');
 	let theme = $state<StatusPageTheme>(initial?.theme ?? 'auto');
 	let published = $state(initial?.published ?? false);
+	let accessMode = $state<StatusPageAccess>(initial?.access_mode ?? 'public');
+	// Typed password; empty keeps the stored one. Never pre-filled: the server only says "has one".
+	let accessPassword = $state('');
+	let accessError = $state<string | null>(null);
 	let showDays = $state(initial?.show_uptime_days ?? 90);
 	let accent = $state<StatusPageAccent>(initial?.accent ?? 'default');
 	// Banner scenes in the order they were ticked; none keeps the plain page. New pages start on one.
@@ -219,6 +225,8 @@
 			description,
 			theme,
 			published,
+			accessMode,
+			accessPassword,
 			showDays,
 			accent,
 			scenes,
@@ -264,7 +272,8 @@
 			[titleError, 'title'],
 			[slugError, 'slug'],
 			[homepageError, 'homepage'],
-			[domainError, 'domain']
+			[domainError, 'domain'],
+			[accessError, 'access-password']
 		];
 		const first = order.find(([message]) => message);
 		if (!first) return;
@@ -283,7 +292,18 @@
 		const host = domain.trim().replace(/^https?:\/\//i, '').replace(/\/$/, '');
 		domainError =
 			host === '' || /^[a-z0-9.-]+$/i.test(host) ? null : m.status_form_domain_rule();
-		if (titleError || slugError || homepageError || domainError) {
+		const typed = accessPassword.trim();
+		accessError =
+			accessMode !== 'password'
+				? null
+				: typed === ''
+					? initial?.has_password
+						? null
+						: m.status_access_password_required()
+					: typed.length < 8
+						? m.status_access_password_short()
+						: null;
+		if (titleError || slugError || homepageError || domainError || accessError) {
 			focusFirstError();
 			return;
 		}
@@ -320,6 +340,13 @@
 			} else if (removeLogo && hasStoredLogo) {
 				await deleteStatusPageLogo(saved.id);
 				saved = { ...saved, logo_type: null };
+			}
+			// Access has its own route (the password is hashed there); only sent when it changes.
+			if (accessMode !== (initial?.access_mode ?? 'public') || typed !== '') {
+				saved = await setStatusPageAccess(saved.id, {
+					mode: accessMode,
+					password: accessMode === 'password' && typed !== '' ? typed : undefined
+				});
 			}
 			const stored = await setStatusPageItems(saved.id, savedItems(order, picks));
 			onsaved({ ...saved, items: stored });
@@ -386,6 +413,32 @@
 					<Toggle id="{idPrefix}-published" bind:checked={published} disabled={saving} label={m.status_form_published()} />
 				</div>
 			</div>
+			<Field label={m.status_access_label()} for="{idPrefix}-access" help={m.status_access_help()}>
+				<select id="{idPrefix}-access" class="input" bind:value={accessMode} disabled={saving}>
+					<option value="public">{m.status_access_public()}</option>
+					<option value="password">{m.status_access_password()}</option>
+					<option value="users">{m.status_access_users()}</option>
+				</select>
+			</Field>
+			{#if accessMode === 'password'}
+				<Field
+					label={m.status_access_password_label()}
+					for="{idPrefix}-access-password"
+					error={accessError}
+					help={initial?.has_password ? m.status_access_password_keep() : m.status_access_password_help()}
+				>
+					<input
+						id="{idPrefix}-access-password"
+						type="password"
+						class="input"
+						bind:value={accessPassword}
+						autocomplete="new-password"
+						maxlength="200"
+						disabled={saving}
+						aria-invalid={accessError ? 'true' : undefined}
+					/>
+				</Field>
+			{/if}
 			<Field label={m.status_form_description()} for="{idPrefix}-description" help={m.status_form_description_help()}>
 				<input id="{idPrefix}-description" type="text" class="input" bind:value={description} maxlength="1000" placeholder={m.status_form_description_placeholder()} disabled={saving} />
 			</Field>

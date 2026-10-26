@@ -83,7 +83,7 @@ The published image is pulled; the read-only file system, the capabilities,
 ## Embedded VictoriaMetrics
 
 The image contains the VictoriaMetrics binary (`/victoria-metrics-prod`, from
-`victoriametrics/victoria-metrics:v1.152.0`). When `DUMBMONIT_VM_URL` is not
+`victoriametrics/victoria-metrics:v1.154.0`). When `DUMBMONIT_VM_URL` is not
 set, the server starts it as a child process listening on `127.0.0.1:8428`,
 stores its series under `/data/vm`, forwards its log lines into its own log,
 restarts it with a backoff if it dies and stops it at shutdown. Nothing is
@@ -97,6 +97,19 @@ budget of its caches; raise it for hundreds of hosts). The rest is in the
 To use a VictoriaMetrics you already run, set `DUMBMONIT_VM_URL` to its
 address (`http://host:8428`): the embedded one is then not started and
 `/data/vm` stays empty.
+
+### Long-term history and logs
+
+Raw data is kept for the retention above, which you can also change in
+**Settings → System → Data & retention**. Next to it, the server writes
+5-minute aggregates into a second embedded VictoriaMetrics (`/data/vm-long`,
+730 days, 64 MB of cache), and graphs, status pages and reports that reach back
+further than the raw retention are answered from it. VictoriaLogs
+(`/victoria-logs-prod`, `/data/vlogs`) is also in the image but off until you
+turn it on in the same place; the **Logs** page then searches the server's
+logs. All variables are in the
+[configuration reference](../reference/configuration.md#long-term-history);
+disk and memory figures are in [Sizing](../reference/sizing.md).
 
 ## First start
 
@@ -256,6 +269,8 @@ One named volume, `dumbmonit-data`, holds everything:
 | `secret.key` | The instance secret. |
 | `backups/` | The scheduled local backups: a copy of the database and of the secret, daily by default, seven kept. |
 | `vm/` | VictoriaMetrics time series (12 months of retention by default). |
+| `vm-long/` | 5-minute aggregates, the long-term history (730 days by default). |
+| `vlogs/` | VictoriaLogs data, only if you enabled the log store. |
 
 DumbMonit backs its own database up on a schedule, and exports the whole
 configuration — monitors, credentials, rules, channels — as a single file

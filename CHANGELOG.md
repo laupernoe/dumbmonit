@@ -36,11 +36,59 @@ All notable changes to this project are documented here. The format follows
     open ports. The first scan learns silently; later ones flag what is new until
     it is marked as known. The two built-in rules are off by default, at info
     severity.
+- **Status pages and reports, batch 1.**
+  - *Private status pages.* Each page now chooses who can see it: anyone with
+    the link (default), anyone with a password of its own (Argon2id hash, signed
+    12-hour access cookie, attempts rate-limited per address and page), or any
+    signed-in DumbMonit account (local, LDAP or SSO). A page that is not public
+    is never indexed or in the sitemap, and its JSON, badges, RSS and iCal
+    feeds, logo and email subscription follow the same access. Backups carry it.
+  - *Monthly SLA reports.* A report schedule can now be an **SLA report**: the
+    previous calendar month as a PDF (availability per group and monitor, mean
+    and 95th-percentile response time, incidents, optional objective met or
+    missed) and two CSV files, attached to the email. The same report downloads
+    on demand for any period of up to a year (Settings → Reports,
+    `GET /api/reports/sla`). The PDF is written by DumbMonit itself (standard
+    Helvetica fonts, no new dependency).
+  - *Maintenance calendars.* An iCalendar feed of announced maintenance, public
+    per status page (`/api/public/status/<address>/maintenance.ics`, following
+    the page's access) and a private one for the whole instance protected by a
+    rotatable token.
+  - *Third-party providers.* A new **Third-party service status** monitor reads
+    the public status page of a provider (Atlassian Statuspage JSON: Cloudflare,
+    GitHub, Atlassian and others; RSS/Atom feeds such as AWS Health), with an
+    optional component filter and a fail level, and fails when the provider is
+    degraded. On a status page it appears as an **External** component. Microsoft
+    365 needs the Graph API and is not covered.
+
+### Fixed
+
+- **Alerts: unreachable monitors.** Their rows now carry the same two icon
+  buttons as other alerts (acknowledge and snooze) instead of a text "Open"
+  button; opening the monitor is an icon with a label too.
 
 ## 0.13.6 — 2026-10-25
 
 ### Added
 
+- **Data retention, long-term history and an embedded log store.** Settings →
+  System → Data & retention sets the raw metrics retention (the embedded
+  VictoriaMetrics restarts for a few seconds, writes are buffered; an external
+  one is managed where it runs) and shows the space taken by `/data/vm`,
+  `/data/vm-long`, `/data/vlogs`, the databases, logs and backups, the free
+  space and the daily growth. A second, small embedded VictoriaMetrics
+  (`/data/vm-long`, 64 MB of cache, 730 days by default) keeps 5-minute
+  averages, minimums and maximums of availability, latency, CPU, memory, disk
+  and traffic, plus success sums and counts so availability stays exact; the
+  server fills it every minute and copies the existing raw history at first
+  start. Graphs, status pages and reports whose range goes past the raw
+  retention read from it automatically. An optional embedded VictoriaLogs
+  v1.53.0 (`/data/vlogs`, off by default) receives the server's own logs,
+  searchable with LogsQL on a new Logs page. New variables
+  `DUMBMONIT_VM_LONG_URL`, `_LISTEN`, `_MEMORY`, `_RETENTION` and
+  `DUMBMONIT_VLOGS_BINARY`, `_LISTEN`, `_MEMORY`; new docs pages Sizing and
+  External VictoriaMetrics / cluster; a manual load-test workflow (1 000 or
+  5 000 monitors).
 - **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
   planned in delivery order and what has already shipped. It is generated from
   `site-src/data/roadmap.json`. It also shows what is in progress and two collapsible
