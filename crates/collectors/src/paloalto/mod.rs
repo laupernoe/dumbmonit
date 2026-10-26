@@ -293,9 +293,8 @@ fn figures(line: &str) -> Vec<(f64, String)> {
     body.split(',')
         .filter_map(|segment| {
             let segment = segment.trim();
-            let end = segment
-                .find(|c: char| !(c.is_ascii_digit() || c == '.'))
-                .unwrap_or(segment.len());
+            let end =
+                segment.find(|c: char| !(c.is_ascii_digit() || c == '.')).unwrap_or(segment.len());
             let value: f64 = segment[..end].parse().ok()?;
             let label = segment[end..]
                 .split_whitespace()
@@ -505,18 +504,17 @@ fn interfaces(root: Node<'_, '_>, ts_ms: i64, out: &mut Vec<Sample>) {
     for entry in ifnet.children().filter(|n| n.has_tag_name("entry")) {
         let Some(name) = dtext(entry, "name") else { continue };
         let zone = dtext(entry, "zone").unwrap_or("");
-        let address = dtext(entry, "ip")
-            .filter(|ip| {
-                ip.split('/').next().is_some_and(|a| a.parse::<std::net::Ipv4Addr>().is_ok())
-            });
+        let address = dtext(entry, "ip").filter(|ip| {
+            ip.split('/').next().is_some_and(|a| a.parse::<std::net::Ipv4Addr>().is_ok())
+        });
         count += 1;
         // Seuls les ports physiques et les agrégats ont un lien à surveiller.
         let physical = name.starts_with("ethernet") || name.starts_with("ae");
         let link = hardware.get(name).filter(|_| physical);
         // Un port rattaché à une zone, sans lien : un câble ou un voisin en
         // moins. Un port libre (sans zone) n'a pas à avoir de lien.
-        let is_down = !zone.is_empty()
-            && link.is_some_and(|(state, _)| state.eq_ignore_ascii_case("down"));
+        let is_down =
+            !zone.is_empty() && link.is_some_and(|(state, _)| state.eq_ignore_ascii_case("down"));
         down += usize::from(is_down);
         if count > MAX_NAMED {
             continue;
@@ -648,17 +646,15 @@ mod tests {
             1000.0
         );
         assert!(
-            find_sample(&s, "paloalto_interface_link_up", &[("interface", "ethernet1/4")]).is_none()
+            find_sample(&s, "paloalto_interface_link_up", &[("interface", "ethernet1/4")])
+                .is_none()
                 || value(&s, "paloalto_interface_down", &[("interface", "ethernet1/4")]) == 0.0,
             "free port without zone"
         );
         assert_eq!(value(&s, "paloalto_interfaces_down", &[]), 1.0);
-        let address = find_sample(
-            &s,
-            "paloalto_interface_address_info",
-            &[("interface", "ethernet1/2.30")],
-        )
-        .unwrap();
+        let address =
+            find_sample(&s, "paloalto_interface_address_info", &[("interface", "ethernet1/2.30")])
+                .unwrap();
         assert_eq!(address.labels["vlan"], "30");
         assert!(
             find_sample(&s, "paloalto_interface_address_info", &[("interface", "tunnel.1")])
@@ -669,8 +665,9 @@ mod tests {
             |license: &str| value(&s, "paloalto_license_expired", &[("license", license)]);
         assert_eq!(expired("PAN-DB URL Filtering"), 1.0);
         assert_eq!(expired("Threat Prevention"), 0.0);
-        let days = value(&s, "paloalto_license_expiry_seconds", &[("license", "Threat Prevention")])
-            / 86_400.0;
+        let days =
+            value(&s, "paloalto_license_expiry_seconds", &[("license", "Threat Prevention")])
+                / 86_400.0;
         assert!((days - 29.58).abs() < 0.1, "{days}");
         assert!(
             find_sample(&s, "paloalto_license_expiry_seconds", &[("license", "PA-440")]).is_none(),
@@ -791,10 +788,8 @@ mod tests {
         assert_eq!(value(&s, "paloalto_sessions", &[]), 18_432.0);
         assert!(collector.keys.get("1:dumbmonit").is_some(), "key kept");
 
-        target.credential = Credential::UsernamePassword {
-            username: "dumbmonit".into(),
-            password: "nope".into(),
-        };
+        target.credential =
+            Credential::UsernamePassword { username: "dumbmonit".into(), password: "nope".into() };
         let error = PaloaltoCollector::new().probe(&target).await.unwrap_err();
         assert!(matches!(error, ProbeError::Auth(_)), "{error}");
     }

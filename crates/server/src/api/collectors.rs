@@ -3815,38 +3815,11 @@ const PALOALTO_LOGIN: CredentialView = CredentialView {
     kind: "username_password",
     label: "User name and password",
     help: "The dumbmonit account: DumbMonit asks the firewall for an API key with it and keeps the key, the password only travels in a request body.",
-/// Compte local du NAS QNAP (`collectors/qnap`), lu par les pages CGI de QTS.
-const QNAP_LOGIN: CredentialView = CredentialView {
-    help: "The dumbmonit account created on the NAS. The password is sent base64-encoded to the login page, as the web interface does.",
-    fields: &[
-        cred_text("username", "User name", "The account created for DumbMonit.", "dumbmonit"),
-        cred_secret("password", "Password", "", "", true),
-    ],
-};
-
-const QNAP_OPTIONS: &[OptionView] = &[
-    app_scheme("https"),
-    number(
-        "port",
-        "Port",
-        "Used if the address does not give a port: 443 over HTTPS, and 8080 over HTTP (enter it, QTS does not use 80).",
-        "443",
-        "443",
-    ),
-    SELF_SIGNED_TLS,
-    VENDOR_TIMEOUT,
-];
-
-/// Utilisateur du tableau de bord Ceph au rôle `read-only` (`collectors/ceph`).
-const CEPH_LOGIN: CredentialView = CredentialView {
-    label: "Dashboard user and password",
-    help: "The dumbmonit user of the Ceph dashboard, with the read-only role.",
     fields: &[
         cred_text(
             "username",
             "User name",
             "The read-only account created for DumbMonit.",
-            "The dashboard user created for DumbMonit.",
             "dumbmonit",
         ),
         cred_secret("password", "Password", "", "", true),
@@ -3861,26 +3834,6 @@ const PALOALTO_KEY: CredentialView = CredentialView {
         "token",
         "API key",
         "As returned by the keygen request. Stored encrypted, never shown again.",
-const CEPH_OPTIONS: &[OptionView] = &[
-    app_scheme("https"),
-    number(
-        "port",
-        "Port",
-        "Used if the address does not give a port: the dashboard port, 8443 over HTTPS and 8080 over HTTP.",
-        "8443",
-        "8443",
-    ),
-    SELF_SIGNED_TLS,
-    VENDOR_TIMEOUT,
-];
-
-/// Jeton JWT de `mc admin prometheus generate`, envoyé en `Authorization: Bearer`.
-const MINIO_TOKEN: CredentialView = CredentialView {
-    label: "Prometheus token",
-    help: "The bearer_token printed by mc admin prometheus generate. It opens the metrics pages only.",
-        "token",
-        "Prometheus token",
-        "The JWT printed after bearer_token. Stored encrypted, never shown again.",
         "",
         true,
     )],
@@ -3923,6 +3876,76 @@ const SONICWALL_OPTIONS: &[OptionView] = &[
         "443",
     ),
     SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Compte local du NAS QNAP (`collectors/qnap`), lu par les pages CGI de QTS.
+const QNAP_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit account created on the NAS. The password is sent base64-encoded to the login page, as the web interface does.",
+    fields: &[
+        cred_text("username", "User name", "The account created for DumbMonit.", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const QNAP_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: 443 over HTTPS, and 8080 over HTTP (enter it, QTS does not use 80).",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Utilisateur du tableau de bord Ceph au rôle `read-only` (`collectors/ceph`).
+const CEPH_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Dashboard user and password",
+    help: "The dumbmonit user of the Ceph dashboard, with the read-only role.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The dashboard user created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const CEPH_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the dashboard port, 8443 over HTTPS and 8080 over HTTP.",
+        "8443",
+        "8443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Jeton JWT de `mc admin prometheus generate`, envoyé en `Authorization: Bearer`.
+const MINIO_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Prometheus token",
+    help: "The bearer_token printed by mc admin prometheus generate. It opens the metrics pages only.",
+    fields: &[cred_secret(
+        "token",
+        "Prometheus token",
+        "The JWT printed after bearer_token. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
 const MINIO_OPTIONS: &[OptionView] = &[
     app_scheme("http"),
     number(
@@ -6055,9 +6078,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "Tick Accept an unverifiable certificate: the generated certificate is self-signed. If the server runs with --insecure, choose the http protocol instead.",
                 ],
                 ports: &[to_device!(51515, "tcp", "Server API (HTTPS, default)")],
-                permissions: &[
-                    "Server user name and password\nKopia has no read-only API account",
-                ],
+                permissions: &["Server user name and password\nKopia has no read-only API account"],
                 warning: "Kopia's API has no read-only account: the server password also lets its holder start and delete snapshots. DumbMonit only reads, but keep port 51515 on your local network.",
             },
             options: KOPIA_OPTIONS,
@@ -6079,9 +6100,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the Duplicati address (for example nas.lan) and paste that password.",
                 ],
                 ports: &[to_device!(8200, "tcp", "Web interface and API (HTTP, default)")],
-                permissions: &[
-                    "Interface password\nDuplicati has no accounts or read-only mode",
-                ],
+                permissions: &["Interface password\nDuplicati has no accounts or read-only mode"],
                 warning: "Duplicati 2.1 or later is required: version 2.0 signs in through a different mechanism that DumbMonit does not use. The password gives full access, so keep port 8200 on your local network.",
             },
             options: DUPLICATI_OPTIONS,
@@ -6262,6 +6281,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "The Omada controller ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own. The OpenAPI exists from controller version 5.9.",
             },
             options: OMADA_OPTIONS,
+        },
         "paloalto" => CollectorView {
             kind: "paloalto",
             label: "Palo Alto PAN-OS",
@@ -6270,6 +6290,8 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             credential_types: &["username_password", "api_token"],
             credentials: &[PALOALTO_LOGIN, PALOALTO_KEY],
             address_hint: "pa.lan",
+            default_port: 443,
+            setup: Setup {
                 title: "Create a read-only XML API account for DumbMonit",
                 steps: &[
                     "Device → Admin Roles → Add: name the role as follows. On the XML API tab enable Operational Requests only; leave every other privilege, and the Web UI and Command Line tabs, disabled.\ndumbmonit-ro",
@@ -6278,6 +6300,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the firewall address (pa.lan) with that user name and password, or with an API key you generated for that account.",
                 ],
                 ports: &[to_device!(443, "tcp", "Management interface (HTTPS, default)")],
+                permissions: &[
                     "XML API → Operational Requests: enabled\nshow system info, resources, sessions, interfaces, HA state, jobs and licence info",
                     "Every other XML API privilege: disabled\nConfiguration, Commit, Export, Import, Report, Log and User-ID Agent are not needed",
                     "Web UI and Command Line: disabled\nThe account never signs in interactively",
@@ -6291,8 +6314,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             label: "SonicWall SonicOS",
             summary: "Beta. A SonicWall firewall through the SonicOS 7 API: the link of every interface bound to a zone. Kept minimal on purpose: only the API paths SonicWall publishes are read.",
             examples: &["SonicWall TZ / NSa / NSsp", "SonicWall NSv", "SonicOS 7.x"],
+            credential_types: &["username_password"],
             credentials: &[SONICWALL_LOGIN],
             address_hint: "sonicwall.lan",
+            default_port: 443,
+            setup: Setup {
                 title: "Create a read-only user for the SonicOS API",
                 steps: &[
                     "Device → Settings → Administration → Audit/SonicOS API: make sure HTTP Basic Access (RFC-2617) is on, then click Accept.",
@@ -6301,18 +6327,23 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the firewall address (sonicwall.lan) with that user name and password.",
                 ],
                 ports: &[to_device!(443, "tcp", "Management interface (HTTPS, default)")],
+                permissions: &[
                     "Group SonicWall Read-Only Admins\nThe account reads and changes nothing",
                 ],
                 warning: "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
             },
             options: SONICWALL_OPTIONS,
+        },
         "qnap" => CollectorView {
             kind: "qnap",
             label: "QNAP QTS / QuTS hero",
             summary: "Beta. A QNAP NAS through the CGI pages of its web interface: volumes filling up, disks whose SMART health is no longer good or too hot, processor temperature, firmware updates.",
             examples: &["QNAP TS-453D", "QuTS hero NAS", "QTS 5.x"],
+            credential_types: &["username_password"],
             credentials: &[QNAP_LOGIN],
             address_hint: "nas.lan",
+            default_port: 443,
+            setup: Setup {
                 title: "Create a limited account for DumbMonit",
                 steps: &[
                     "Open Control Panel → Privilege → Users → Create → Create a User and create the account as follows, with a long random password. Tick no share and no application privilege.\ndumbmonit",
@@ -6324,6 +6355,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     to_device!(443, "tcp", "Web interface (HTTPS, default)"),
                     to_device_optional!(8080, "tcp", "Only with the HTTP protocol option"),
                 ],
+                permissions: &[
                     "administrators group\nThe only group QTS lets read the system status",
                     "No share, no application privilege\nNothing else is needed",
                 ],
@@ -6336,9 +6368,11 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             label: "Ceph",
             summary: "Beta. A Ceph cluster through the REST API of the manager's dashboard: health and its checks, OSDs down or nearly full, placement groups not clean, capacity, pools, monitors out of the quorum.",
             examples: &["Ceph 18 (Reef)", "Ceph 19 (Squid)", "cephadm clusters"],
+            credential_types: &["username_password"],
             credentials: &[CEPH_LOGIN],
             address_hint: "ceph.lan",
             default_port: 8443,
+            setup: Setup {
                 title: "Create a read-only dashboard user for DumbMonit",
                 steps: &[
                     "Check that the dashboard is enabled and note the address of the active manager.\nceph mgr services",
@@ -6365,6 +6399,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             credentials: &[MINIO_TOKEN, NO_AUTH],
             address_hint: "minio.lan",
             default_port: 9000,
+            setup: Setup {
                 title: "Generate a Prometheus token for DumbMonit",
                 steps: &[
                     "With the mc client configured for your MinIO (alias myminio), generate the token of the cluster metrics.\nmc admin prometheus generate myminio cluster",
@@ -6372,6 +6407,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In DumbMonit, enter the MinIO address (for example minio.lan), paste the token as Prometheus token and choose https if MinIO serves TLS.",
                 ],
                 ports: &[to_device!(9000, "tcp", "S3 API and metrics (HTTP or HTTPS, default)")],
+                permissions: &[
                     "Prometheus token\nOpens the metrics pages only, no S3 or console access",
                 ],
                 warning: "The token only opens the metrics pages, but anyone holding it can read them. If MinIO runs with MINIO_PROMETHEUS_AUTH_TYPE=public, the metrics need no token: choose No authentication.",
@@ -7392,13 +7428,13 @@ mod tests {
             "arubacentral",
             "paloalto",
             "sonicwall",
-            "xcpng",
-            "nutanix",
             "qnap",
             "ceph",
             "minio",
             "kopia",
             "duplicati",
+            "xcpng",
+            "nutanix",
         ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
@@ -7414,8 +7450,6 @@ mod tests {
             describe("tailscale").address_hint,
             dumbmonit_collectors::tailscale::DEFAULT_ADDRESS
         );
-        assert_eq!(describe("meraki").address_hint, dumbmonit_collectors::meraki::DEFAULT_ADDRESS);
-        assert_eq!(describe("meraki").default_port, dumbmonit_collectors::meraki::DEFAULT_PORT);
         assert_eq!(
             describe("arubacentral").address_hint,
             dumbmonit_collectors::arubacentral::DEFAULT_ADDRESS
@@ -7428,6 +7462,8 @@ mod tests {
             defaut("arubacentral", "token_address"),
             dumbmonit_collectors::arubacentral::DEFAULT_TOKEN_ADDRESS
         );
+        assert_eq!(describe("meraki").address_hint, dumbmonit_collectors::meraki::DEFAULT_ADDRESS);
+        assert_eq!(describe("meraki").default_port, dumbmonit_collectors::meraki::DEFAULT_PORT);
         for kind in ["redis", "mongodb"] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),

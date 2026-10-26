@@ -312,9 +312,8 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
         // Une erreur postérieure (à quelques secondes près) à la fin de la dernière
         // exécution : la dernière exécution a échoué. Une réussite ultérieure
         // l'emporte, même si Duplicati garde l'ancienne erreur dans ses métadonnées.
-        let metadata_failed = error_at.is_some_and(|e| {
-            finished.or(last_date).is_none_or(|run| e + 5_000 >= run)
-        });
+        let metadata_failed =
+            error_at.is_some_and(|e| finished.or(last_date).is_none_or(|run| e + 5_000 >= run));
         let known = r.results.get(&id);
         let is_failed = match known {
             Some(k) => {
@@ -328,9 +327,8 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
         if total > MAX_NAMED {
             continue;
         }
-        let named = |sample: Sample| {
-            sample.with_label("backup", name).with_label("backup_id", id.as_str())
-        };
+        let named =
+            |sample: Sample| sample.with_label("backup", name).with_label("backup_id", id.as_str());
         out.push(named(flag("duplicati_backup_failed", is_failed, ts_ms)));
         out.push(named(flag("duplicati_backup_running", is_running, ts_ms)));
         let scheduled = entry.get("Schedule").is_some_and(|s| text(s, "Time").is_some());
@@ -358,10 +356,10 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
             }
         }
         if let Some(k) = known {
-            out.push(named(g("duplicati_backup_last_result_info", 1.0).with_label(
-                "result",
-                k.result.to_ascii_lowercase(),
-            )));
+            out.push(named(
+                g("duplicati_backup_last_result_info", 1.0)
+                    .with_label("result", k.result.to_ascii_lowercase()),
+            ));
             out.push(named(g("duplicati_backup_last_warnings", k.warnings)));
             out.push(named(g("duplicati_backup_last_errors", k.errors)));
         }
@@ -371,9 +369,10 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
             out.push(named(info));
         }
         if is_running
-            && let Some(progress) = r.progress.as_ref().filter(|p| {
-                backup_id_of_progress(p).as_deref() == Some(id.as_str())
-            })
+            && let Some(progress) = r
+                .progress
+                .as_ref()
+                .filter(|p| backup_id_of_progress(p).as_deref() == Some(id.as_str()))
             && let Some(fraction) = number(progress.get("OverallProgress"))
         {
             let percent = (fraction * 100.0).clamp(0.0, 100.0);

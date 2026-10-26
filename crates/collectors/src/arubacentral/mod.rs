@@ -53,8 +53,7 @@ const TOKEN_PATH: &str = "/as/token.oauth2";
 const MAX_PAGES: usize = 10;
 const DEVICES: &str = "/network-monitoring/v1/devices?limit=1000";
 /// `status eq 'Active'`, déjà encodé.
-const ALERTS: &str =
-    "/network-notifications/v1/alerts?filter=status%20eq%20%27Active%27&limit=100";
+const ALERTS: &str = "/network-notifications/v1/alerts?filter=status%20eq%20%27Active%27&limit=100";
 const CLIENT_HEALTH: &str = "/network-monitoring/v1/tenant-client-health";
 const DEVICE_HEALTH: &str = "/network-monitoring/v1/tenant-device-health";
 
@@ -324,8 +323,7 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
         if index >= MAX_NAMED {
             continue;
         }
-        let Some(name) = text(device, "deviceName").or_else(|| text(device, "serialNumber"))
-        else {
+        let Some(name) = text(device, "deviceName").or_else(|| text(device, "serialNumber")) else {
             continue;
         };
         let serial = text(device, "serialNumber").unwrap_or("");
@@ -477,8 +475,7 @@ mod tests {
             86_400.0
         );
         assert!(
-            find(&s, "arubacentral_device_uptime_seconds", &[("device", "ap-warehouse")])
-                .is_none(),
+            find(&s, "arubacentral_device_uptime_seconds", &[("device", "ap-warehouse")]).is_none(),
             "an offline device has no uptime"
         );
         let info = find(&s, "arubacentral_device_info", &[("device", "ap-lobby")]).unwrap();
