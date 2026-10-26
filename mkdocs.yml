@@ -159,6 +159,17 @@ nav:
       - Plex Media Server: devices/plex.md
       - GitLab (self-managed): devices/gitlab.md
       - Forgejo / Gitea: devices/forgejo.md
+      - Sonarr (beta): devices/sonarr.md
+      - Radarr (beta): devices/radarr.md
+      - Lidarr (beta): devices/lidarr.md
+      - Prowlarr (beta): devices/prowlarr.md
+      - qBittorrent (beta): devices/qbittorrent.md
+      - UniFi Protect (beta): devices/unifiprotect.md
+      - Frigate NVR (beta): devices/frigate.md
+      - Keycloak (beta): devices/keycloak.md
+      - authentik (beta): devices/authentik.md
+      - Vaultwarden (beta): devices/vaultwarden.md
+      - mailcow (beta): devices/mailcow.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Deploy the agent with Active Directory: devices/agent-active-directory.md
       - Windows event log alerts: devices/agent-windows-events.md

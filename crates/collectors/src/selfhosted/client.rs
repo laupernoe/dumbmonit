@@ -14,6 +14,7 @@ use std::time::Duration;
 use dumbmonit_proto::ProbeError;
 use reqwest::StatusCode;
 use serde::de::DeserializeOwned;
+use serde_json::Value;
 
 /// Longueur maximale du corps d'erreur repris dans un message.
 const MAX_ERROR_BODY: usize = 200;
@@ -189,6 +190,36 @@ impl HttpClient {
         Ok((status, body))
     }
 
+    /// Un `POST` (formulaire ou JSON) dont on veut aussi les en-têtes de réponse :
+    /// l'ouverture de session par cookie (qBittorrent, UniFi OS, Vaultwarden) y
+    /// lit `Set-Cookie`. Le code reste à l'appelant.
+    pub async fn login(
+        &self,
+        path: &str,
+        form: Option<&[(&str, &str)]>,
+        json: Option<&Value>,
+    ) -> Result<(StatusCode, reqwest::header::HeaderMap, String), ProbeError> {
+        let mut request = self.http.post(self.url(path));
+        if let Some(form) = form {
+            request = request.form(form);
+        }
+        if let Some(json) = json {
+            request = request.json(json);
+        }
+        for (name, value) in &self.auth.headers {
+            request = request.header(*name, value);
+        }
+        let response = request
+            .timeout(self.timeout)
+            .send()
+            .await
+            .map_err(|error| self.transport(&error, path))?;
+        let status = response.status();
+        let headers = response.headers().clone();
+        let body = response.text().await.map_err(|error| self.transport(&error, path))?;
+        Ok((status, headers, body))
+    }
+
     /// Traduit un code HTTP en erreur de sonde : un identifiant refusé ne doit
     /// jamais passer pour « serveur injoignable », un 503 jamais pour une erreur
     /// de configuration.
@@ -229,6 +260,20 @@ impl HttpClient {
     }
 }
 
+/// Les cookies posés par une réponse, prêts à être renvoyés dans un en-tête
+/// `Cookie` : seuls les couples `nom=valeur` sont gardés, jamais les attributs.
+pub fn cookies_of(headers: &reqwest::header::HeaderMap) -> String {
+    headers
+        .get_all(reqwest::header::SET_COOKIE)
+        .iter()
+        .filter_map(|value| value.to_str().ok())
+        .filter_map(|value| value.split(';').next())
+        .map(str::trim)
+        .filter(|pair| pair.contains('=') && !pair.ends_with('='))
+        .collect::<Vec<_>>()
+        .join("; ")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -257,6 +302,18 @@ mod tests {
         assert!(client().status_error(StatusCode::BAD_GATEWAY, "", "/api").means_down());
         let error = client().status_error(StatusCode::NOT_FOUND, "", "/api");
         assert!(matches!(error, ProbeError::Protocol(ref m) if m.contains("http://immich.lan")));
+    }
+
+    #[test]
+    fn les_cookies_de_session_perdent_leurs_attributs() {
+        let mut headers = reqwest::header::HeaderMap::new();
+        headers.append(
+            reqwest::header::SET_COOKIE,
+            "SID=abc123; HttpOnly; SameSite=Strict; path=/".parse().unwrap(),
+        );
+        headers.append(reqwest::header::SET_COOKIE, "TOKEN=jwt; Secure".parse().unwrap());
+        headers.append(reqwest::header::SET_COOKIE, "gone=; Max-Age=0".parse().unwrap());
+        assert_eq!(cookies_of(&headers), "SID=abc123; TOKEN=jwt");
     }
 
     #[test]

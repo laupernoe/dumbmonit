@@ -80,6 +80,17 @@ form always matches what this version can monitor.
 | [Plex Media Server](plex.md) | `plex` | X-Plex-Token, or none from an allowed network | Media server: streams, transcodes, libraries, updates |
 | [GitLab (self-managed)](gitlab.md) | `gitlab` | personal access token | Forge: Sidekiq backlog, CI runners, pending migrations, sign-up/2FA settings, licence |
 | [Forgejo / Gitea](forgejo.md) | `forgejo` | access token | Forge: health check, scheduled tasks, Actions runners, repository/account counts |
+| [Sonarr (beta)](sonarr.md) | `sonarr` | API key | Series: health, failing clients and indexers, queue errors, disk, updates |
+| [Radarr (beta)](radarr.md) | `radarr` | API key | Movies: health, failing clients and indexers, queue errors, disk, updates |
+| [Lidarr (beta)](lidarr.md) | `lidarr` | API key | Music: health, failing clients and indexers, queue errors, disk, updates |
+| [Prowlarr (beta)](prowlarr.md) | `prowlarr` | API key | Indexers: health, indexers disabled after failures, disk, updates |
+| [qBittorrent (beta)](qbittorrent.md) | `qbittorrent` | user name and password, or none | Torrent client: torrents in error, lost connectivity, speeds, free space |
+| [UniFi Protect (beta)](unifiprotect.md) | `unifiprotect` | local user name and password | Cameras: offline or not recording, NVR disks and storage |
+| [Frigate NVR (beta)](frigate.md) | `frigate` | none or bearer token | NVR: cameras without frames, detector hangs, frame rates, recording storage |
+| [Keycloak (beta)](keycloak.md) | `keycloak` | none, or client ID and secret | Identity: readiness and database, realms, sessions, users |
+| [authentik (beta)](authentik.md) | `authentik` | API token | Identity: readiness, workers, failed tasks, outposts, updates |
+| [Vaultwarden (beta)](vaultwarden.md) | `vaultwarden` | none, or admin token | Password vault: liveness, version, open sign-ups, account counts |
+| [mailcow (beta)](mailcow.md) | `mailcow` | read-only API key | Mail server: stopped containers, queue, mail volume, mailbox quotas |
 | [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi, [Hyper-V host](agent.md#hyper-v-hosts) |
 | [Website or web API](services.md#http) | `http` | none, username/password or token | Health page, REST API |
 | [Network port](services.md#tcp) | `tcp` | none | SSH, SMB, database |

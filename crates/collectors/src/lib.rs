@@ -138,8 +138,10 @@ pub use rabbitmq::RabbitmqCollector;
 pub use redfish::RedfishCollector;
 pub use redis::RedisCollector;
 pub use selfhosted::{
-    ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
-    PaperlessCollector, PlexCollector,
+    ArrCollector, AuthentikCollector, ForgejoCollector, FrigateCollector, GitlabCollector,
+    ImmichCollector, JellyfinCollector, KeycloakCollector, MailcowCollector, NextcloudCollector,
+    PaperlessCollector, PlexCollector, ProtectCollector, QbittorrentCollector,
+    VaultwardenCollector,
 };
 pub use snmp::SnmpCollector;
 pub use socket::DEFAULT_TIMEOUT as SOCKET_DEFAULT_TIMEOUT;
@@ -215,6 +217,17 @@ impl Registry {
         registry.register(Arc::new(PlexCollector::new()));
         registry.register(Arc::new(GitlabCollector::new()));
         registry.register(Arc::new(ForgejoCollector::new()));
+        registry.register(Arc::new(ArrCollector::sonarr()));
+        registry.register(Arc::new(ArrCollector::radarr()));
+        registry.register(Arc::new(ArrCollector::lidarr()));
+        registry.register(Arc::new(ArrCollector::prowlarr()));
+        registry.register(Arc::new(QbittorrentCollector::new()));
+        registry.register(Arc::new(ProtectCollector::new()));
+        registry.register(Arc::new(FrigateCollector::new()));
+        registry.register(Arc::new(KeycloakCollector::new()));
+        registry.register(Arc::new(AuthentikCollector::new()));
+        registry.register(Arc::new(VaultwardenCollector::new()));
+        registry.register(Arc::new(MailcowCollector::new()));
         registry.register(Arc::new(PiholeCollector::new()));
         registry.register(Arc::new(AdguardCollector::new()));
         registry.register(Arc::new(NutCollector::new()));
