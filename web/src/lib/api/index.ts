@@ -79,6 +79,9 @@ import type {
 	PublicDayDetail,
 	PublicStatus,
 	StatusSubscriber,
+	StatusSubscribePayload,
+	StatusSubscribeReply,
+	StatusSubscriptionSettings,
 	TargetRules
 } from './types';
 
@@ -860,8 +863,21 @@ export function deleteStatusSubscriber(id: number, subscriber: number): Promise<
 }
 
 /** Public: asks for a confirmation email. Same answer whatever the address's state. */
-export function subscribeToStatus(slug: string, email: string): Promise<{ status: string; message: string }> {
-	return request(`/public/status/${encodeURIComponent(slug)}/subscribe`, { method: 'POST', body: { email } });
+export function subscribeToStatus(slug: string, payload: StatusSubscribePayload): Promise<StatusSubscribeReply> {
+	return request(`/public/status/${encodeURIComponent(slug)}/subscribe`, { method: 'POST', body: payload });
+}
+
+/** Public: confirms an SMS subscription with the code that was texted. */
+export function confirmStatusSmsCode(slug: string, phone: string, code: string): Promise<{ status: string }> {
+	return request(`/public/status/${encodeURIComponent(slug)}/confirm-code`, { method: 'POST', body: { phone, code } });
+}
+
+export function getStatusSubscriptionSettings(id: number, signal?: AbortSignal): Promise<StatusSubscriptionSettings> {
+	return request<StatusSubscriptionSettings>(`/status-pages/${id}/subscription`, { signal });
+}
+
+export function saveStatusSubscriptionSettings(id: number, settings: StatusSubscriptionSettings): Promise<StatusSubscriptionSettings> {
+	return request<StatusSubscriptionSettings>(`/status-pages/${id}/subscription`, { method: 'PUT', body: settings });
 }
 
 /** Public: confirms a subscription with the token from the email. */

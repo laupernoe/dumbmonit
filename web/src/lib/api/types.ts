@@ -1788,14 +1788,51 @@ export interface StatusPagePayload {
 	group_labels?: StatusPageGroupLabel[];
 }
 
-/** Email subscriber of a status page (admin view; the token never leaves the server). */
+export type StatusSubscriptionKind = 'email' | 'sms' | 'webhook' | 'slack';
+
+/** Subscriber of a status page (admin view; tokens and secrets never leave the server). */
 export interface StatusSubscriber {
 	id: number;
 	page_id: number;
-	email: string;
-	/** `null` until the address followed its confirmation link. */
+	kind: StatusSubscriptionKind;
+	/** Full address for an email; masked number or URL host otherwise. */
+	destination: string;
+	/** Address, email subscribers only. */
+	email: string | null;
+	/** Followed device ids; `null`: every service. */
+	components: number[] | null;
+	/** `null` until the destination was confirmed. */
 	confirmed_at: string | null;
 	created_at: string;
+}
+
+/** Subscription channels open on a page besides email. */
+export interface StatusSubscriptionSettings {
+	/** Vonage, Telnyx or ASPSMS channel texting the subscribers; `null`: no SMS. */
+	sms_channel_id: number | null;
+	webhook: boolean;
+	slack: boolean;
+}
+
+/** Public: what a visitor sends to subscribe. */
+export interface StatusSubscribePayload {
+	kind: StatusSubscriptionKind;
+	email?: string;
+	/** E.164, for SMS. */
+	phone?: string;
+	/** Webhook or Slack incoming webhook URL. */
+	url?: string;
+	/** Public keys of the followed services; omitted: all. */
+	components?: string[];
+}
+
+export interface StatusSubscribeReply {
+	status: 'pending';
+	/** How the destination confirms: a link, a code (SMS) or a signed request (webhook). */
+	confirm: 'link' | 'code' | 'signed_request';
+	message: string;
+	/** Webhook only, shown once: the HMAC-SHA256 signing key. */
+	secret?: string;
 }
 
 export interface StatusPageItemPayload {
@@ -1837,6 +1874,8 @@ export interface Incident {
 	created_at: string;
 	updated_at: string;
 	updates: IncidentUpdate[];
+	/** Device ids the announcement concerns; empty: the whole page. */
+	components: number[];
 }
 
 export interface IncidentPayload {
@@ -1855,6 +1894,11 @@ export interface IncidentPayload {
 	 * (or a closing update) it is created resolved and nobody is notified.
 	 */
 	updates?: IncidentNewUpdate[];
+	/**
+	 * Devices the announcement concerns, among the page's services: subscribers who follow
+	 * only other services are not notified. Omitted: unchanged (the whole page at creation).
+	 */
+	components?: number[];
 }
 
 export interface IncidentNewUpdate {
@@ -1985,8 +2029,10 @@ export interface PublicStatus {
 		homepage_url: string;
 		/** Versioned relative URL of the logo, `null` without one. */
 		logo_url: string | null;
-		/** The page offers email subscription (an SMTP channel is chosen). */
+		/** The page offers at least one subscription. */
 		subscribe: boolean;
+		/** Subscriptions offered. */
+		subscribe_kinds: StatusSubscriptionKind[];
 		/** Effective search-engine values (settings, or defaults built from the page name). */
 		seo?: {
 			indexable: boolean;

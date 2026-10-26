@@ -126,6 +126,17 @@ All notable changes to this project are documented here. The format follows
   logs to VictoriaLogs when it is enabled. OTLP over gRPC is not supported; the
   `otlphttp` exporter does the same job.
 
+- **Status page subscribers by SMS, signed webhook or Slack.** Besides email,
+  visitors of a public status page can follow it by text message (code
+  confirmation, through a Vonage, Telnyx or ASPSMS channel you pick), by
+  HMAC-signed webhook (confirmation request, secret shown once, outbound
+  guard) or by Slack incoming webhook (test message with a confirmation link),
+  all with double opt-in, one-click unsubscribe and the choice of the services
+  to follow. Announcements can name the services they concern. Messages go
+  through a retrying queue; sign-ups are rate limited per client, per page and
+  globally (SMS more strictly) and need access to private pages. The editor
+  lists subscribers by channel with masked numbers and URLs, exports CSV and
+  removes subscribers; the channels a page opens are included in backups.
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor

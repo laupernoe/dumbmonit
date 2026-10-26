@@ -107,9 +107,7 @@
 		{#if current}
 			<ShareSection page={current} />
 			<MaintenanceCalendar page={current} />
-			{#if current.subscribe_channel_id !== null}
-				<SubscribersPanel page={current} />
-			{/if}
+			<SubscribersPanel page={current} {channels} />
 		{/if}
 	</div>
 {/if}
