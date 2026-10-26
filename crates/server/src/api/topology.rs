@@ -703,6 +703,7 @@ const MACHINE_KINDS: &[&str] = &[
     "pmg",
     "truenas",
     "unraid",
+    "qnap",
 ];
 
 /// Types dont la surveillance désigne un pare-feu ou une passerelle de site.

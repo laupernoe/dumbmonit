@@ -25,6 +25,9 @@ form always matches what this version can monitor.
 | [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |
 | [TrueNAS](truenas.md) | `truenas` | API key | ZFS storage server (SCALE, Community Edition) |
 | [Unraid](unraid.md) | `unraid` | API key (Viewer role) | NAS: array, disks, parity checks, cache pools, containers, VMs |
+| [QNAP QTS / QuTS hero](qnap.md) | `qnap` | username/password (limited account) | NAS (beta): volumes filling up, disk SMART health and temperature, firmware updates |
+| [Ceph](ceph.md) | `ceph` | dashboard user and password (read-only role) | Storage cluster (beta): health checks, OSDs, placement groups, capacity, pools, monitors |
+| [MinIO](minio.md) | `minio` | Prometheus token (or none) | Object store (beta): nodes and drives offline, capacity, heal and replication failures, S3 errors |
 | [MikroTik RouterOS](mikrotik.md) | `mikrotik` | username/password (read-only group) | Router or switch: versions and firmware behind, CPU, memory, sensors, interface errors |
 | [UPS with NUT](nut.md) | `nut` | none, or username/password | UPS on a NAS, Raspberry Pi or server running Network UPS Tools |
 | [Server hardware (Redfish)](redfish.md) | `redfish` | username/password | Server fans, temperatures, power supplies and drives, read from its BMC |

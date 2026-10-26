@@ -26,6 +26,9 @@ que cette version peut surveiller.
 | [Home Assistant](homeassistant.md) | `homeassistant` | jeton d'accès longue durée | Maison connectée : entités indisponibles, batteries faibles, mises à jour, réparations |
 | [TrueNAS](truenas.md) | `truenas` | clé d'API | Serveur de stockage ZFS (SCALE, Community Edition) |
 | [Unraid](unraid.md) | `unraid` | clé d'API (rôle Viewer) | NAS : array, disques, vérifications de parité, pools de cache, conteneurs, VM |
+| [QNAP QTS / QuTS hero](qnap.md) | `qnap` | nom d'utilisateur/mot de passe (compte limité) | NAS (bêta) : volumes qui se remplissent, état SMART et température des disques, mises à jour |
+| [Ceph](ceph.md) | `ceph` | utilisateur et mot de passe du tableau de bord (rôle read-only) | Grappe de stockage (bêta) : contrôles de santé, OSD, groupes de placement, capacité, pools, moniteurs |
+| [MinIO](minio.md) | `minio` | jeton Prometheus (ou aucun) | Stockage objet (bêta) : nœuds et disques hors ligne, capacité, échecs de réparation et de réplication, erreurs S3 |
 | [MikroTik RouterOS](mikrotik.md) | `mikrotik` | nom d'utilisateur/mot de passe (groupe en lecture seule) | Routeur ou commutateur : versions et firmware en retard, CPU, mémoire, capteurs, erreurs d'interface |
 | [Onduleur avec NUT](nut.md) | `nut` | aucun, ou nom d'utilisateur/mot de passe | Onduleur sur un NAS, un Raspberry Pi ou un serveur faisant tourner Network UPS Tools |
 | [Matériel serveur (Redfish)](redfish.md) | `redfish` | nom d'utilisateur/mot de passe | Ventilateurs, températures, alimentations et disques du serveur, lus depuis son BMC |

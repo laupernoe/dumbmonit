@@ -84,7 +84,15 @@ impl RestClient {
     }
 
     fn prepare(&self, request: reqwest::RequestBuilder) -> reqwest::RequestBuilder {
-        let mut request = request.header(reqwest::header::ACCEPT, "application/json");
+        // Un en-tête `Accept` posé par l'intégration (Ceph exige un type
+        // versionné) remplace celui par défaut au lieu de s'y ajouter.
+        let custom_accept =
+            self.headers.iter().any(|(name, _)| name.eq_ignore_ascii_case("accept"));
+        let mut request = if custom_accept {
+            request
+        } else {
+            request.header(reqwest::header::ACCEPT, "application/json")
+        };
         for (name, value) in &self.headers {
             request = request.header(*name, value);
         }

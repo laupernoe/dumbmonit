@@ -686,6 +686,47 @@ Voir [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Interface Sophos sans lien | Une interface Sophos Firewall allumée et liée à une zone n'a pas de lien (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
 
+### QNAP QTS {#qnap-qts}
+
+Voir [QNAP QTS / QuTS hero](../devices/qnap.md). Les volumes portent le label `volume`, les disques `disk` et `model`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Volume QNAP presque plein | Un volume QNAP est plein à plus de 90 % : partages, instantanés et applications ne peuvent plus écrire (`dumbmonit_qnap_volume_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 d |
+| Santé d'un disque QNAP pas bonne | L'état SMART d'un disque QNAP n'est plus bon (avertissement ou anormal) : remplacez-le avant que le RAID perde sa redondance (`dumbmonit_qnap_disk_ok`). | < 1 | 15 min | Avis (`warning`) | 6 h |
+| Disque QNAP trop chaud | Un disque QNAP est resté au-dessus de 55 °C pendant quinze minutes (`dumbmonit_qnap_disk_temperature_celsius`). | > 55 °C | 15 min | Avis (`warning`) | 6 h |
+| Processeur QNAP trop chaud | Le processeur du QNAP est resté au-dessus de 90 °C pendant quinze minutes (`dumbmonit_qnap_cpu_temperature_celsius`). | > 90 °C | 15 min | Avis (`warning`) | 6 h |
+| Mise à jour QNAP | QNAP propose une version plus récente de QTS ou QuTS hero (`dumbmonit_qnap_firmware_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
+### Ceph {#ceph}
+
+Voir [Ceph](../devices/ceph.md). Les OSD portent les labels `osd` et `host`, les pools `pool`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Ceph en erreur | La grappe Ceph signale HEALTH_ERR : des données peuvent être indisponibles ou menacées (`dumbmonit_ceph_health_status`). | > 1 | 5 min | Avertissement (`critical`) | 1 h |
+| Ceph en avertissement | La grappe Ceph signale HEALTH_WARN depuis 30 minutes : voir ses contrôles de santé (`dumbmonit_ceph_health_status`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| OSD Ceph arrêté | Un ou plusieurs OSD Ceph sont arrêtés : la grappe reconstruit leurs données ailleurs et perd de la redondance en attendant (`dumbmonit_ceph_osds_down`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Groupes de placement Ceph pas propres | Des groupes de placement Ceph ne sont plus active+clean depuis 30 minutes : données dégradées, déplacées ou inactives (`dumbmonit_ceph_pgs_unclean`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Objets Ceph introuvables | Ceph signale des objets introuvables : aucune copie de certaines données n'est trouvée (`dumbmonit_ceph_objects_unfound`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Capacité Ceph élevée | La grappe Ceph est pleine à plus de 80 % : elle passe en lecture seule à 95 %, et la reconstruction après une panne demande de la place libre (`dumbmonit_ceph_capacity_used_percent`). | > 80 % | 30 min | Avis (`warning`) | 1 d |
+| OSD Ceph presque plein | Un OSD Ceph est plein à plus de 85 % (le ratio nearfull par défaut) : les écritures s'y arrêtent au ratio full (`dumbmonit_ceph_osd_used_percent`). | > 85 % | 15 min | Avis (`warning`) | 12 h |
+| Pool Ceph presque plein | Un pool Ceph est plein à plus de 90 % (`dumbmonit_ceph_pool_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 12 h |
+| Moniteur Ceph hors quorum | Un moniteur Ceph est hors du quorum : une perte de plus et la grappe s'arrête (`dumbmonit_ceph_mons_out_of_quorum`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+
+### MinIO {#minio}
+
+Voir [MinIO](../devices/minio.md).
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Nœud MinIO hors ligne | Un nœud MinIO est hors ligne : la grappe tourne avec moins de parité (`dumbmonit_minio_nodes_offline`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Disque MinIO hors ligne | Un disque MinIO est hors ligne : les objets sont reconstruits à partir de la parité jusqu'à son retour (`dumbmonit_minio_drives_offline`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Capacité MinIO élevée | La capacité utilisable de la grappe MinIO est utilisée à plus de 85 % (`dumbmonit_minio_capacity_usable_used_percent`). | > 85 % | 30 min | Avis (`warning`) | 1 d |
+| Échecs de réparation MinIO | MinIO n'a pas pu réparer certains objets lors de son auto-réparation en cours (`dumbmonit_minio_heal_objects_failed`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Échecs de réplication MinIO | Des objets d'un bucket MinIO n'ont pas pu être répliqués vers le site distant (`dumbmonit_minio_replication_failed_objects`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Erreurs serveur S3 MinIO | Plus de 5 % des requêtes S3 servies par MinIO ces 10 dernières minutes ont fini en erreur serveur (5xx) (`100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])`). | > 5 % | 10 min | Avis (`warning`) | 6 h |
+
 ### KVM (libvirt) {#kvm-libvirt}
 
 Rapporté par l'agent Linux sur un hôte KVM ; voir [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).

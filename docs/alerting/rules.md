@@ -630,6 +630,47 @@ See [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Sophos interface without link | A Sophos Firewall interface that is switched on and bound to a zone has no link (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
 
+### QNAP QTS
+
+See [QNAP QTS / QuTS hero](../devices/qnap.md). Volumes are labelled `volume`, disks `disk` and `model`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| QNAP volume nearly full | A QNAP volume is more than 90 % full: shares, snapshots and apps stop being able to write (`dumbmonit_qnap_volume_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
+| QNAP disk health not good | The SMART health of a QNAP disk is no longer good (warning or abnormal): replace it before the RAID loses redundancy (`dumbmonit_qnap_disk_ok`). | < 1 | 15 min | Advisory (`warning`) | 6 h |
+| QNAP disk too hot | A QNAP disk has stayed above 55 °C for fifteen minutes (`dumbmonit_qnap_disk_temperature_celsius`). | > 55 °C | 15 min | Advisory (`warning`) | 6 h |
+| QNAP processor too hot | The QNAP processor has stayed above 90 °C for fifteen minutes (`dumbmonit_qnap_cpu_temperature_celsius`). | > 90 °C | 15 min | Advisory (`warning`) | 6 h |
+| QNAP firmware update | QNAP offers a newer QTS or QuTS hero release (`dumbmonit_qnap_firmware_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
+### Ceph
+
+See [Ceph](../devices/ceph.md). OSDs are labelled `osd` and `host`, pools `pool`.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Ceph health error | The Ceph cluster reports HEALTH_ERR: data may be unavailable or at risk (`dumbmonit_ceph_health_status`). | > 1 | 5 min | Warning (`critical`) | 1 h |
+| Ceph health warning | The Ceph cluster has reported HEALTH_WARN for 30 minutes: see its health checks (`dumbmonit_ceph_health_status`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Ceph OSD down | One or more Ceph OSDs are down: the cluster rebuilds their data elsewhere and loses redundancy meanwhile (`dumbmonit_ceph_osds_down`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Ceph placement groups not clean | Some Ceph placement groups have not been active+clean for 30 minutes: data is degraded, misplaced or inactive (`dumbmonit_ceph_pgs_unclean`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Ceph objects unfound | Ceph reports unfound objects: no copy of some data can be found (`dumbmonit_ceph_objects_unfound`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Ceph capacity high | The Ceph cluster is more than 80 % full: it turns read-only at 95 %, and rebuilding after a failure needs free space (`dumbmonit_ceph_capacity_used_percent`). | > 80 % | 30 min | Advisory (`warning`) | 1 d |
+| Ceph OSD nearly full | A Ceph OSD is more than 85 % full (the default nearfull ratio): writes to it stop at the full ratio (`dumbmonit_ceph_osd_used_percent`). | > 85 % | 15 min | Advisory (`warning`) | 12 h |
+| Ceph pool nearly full | A Ceph pool is more than 90 % full (`dumbmonit_ceph_pool_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 12 h |
+| Ceph monitor out of quorum | A Ceph monitor is out of the quorum: one more loss and the cluster stops (`dumbmonit_ceph_mons_out_of_quorum`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+
+### MinIO
+
+See [MinIO](../devices/minio.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| MinIO node offline | A MinIO node is offline: the cluster runs with less parity (`dumbmonit_minio_nodes_offline`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+| MinIO drive offline | A MinIO drive is offline: objects are rebuilt from parity until it is back (`dumbmonit_minio_drives_offline`). | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| MinIO capacity high | The usable capacity of the MinIO cluster is more than 85 % used (`dumbmonit_minio_capacity_usable_used_percent`). | > 85 % | 30 min | Advisory (`warning`) | 1 d |
+| MinIO heal failures | MinIO could not heal some objects in its current self-healing run (`dumbmonit_minio_heal_objects_failed`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| MinIO replication failures | Objects of a MinIO bucket failed to replicate to the remote site (`dumbmonit_minio_replication_failed_objects`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| MinIO S3 server errors | More than 5 % of the S3 requests MinIO served in the last 10 minutes failed with a server error (5xx) (`100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])`). | > 5 % | 10 min | Advisory (`warning`) | 6 h |
+
 ### KVM (libvirt)
 
 Reported by the Linux agent on a KVM host; see [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).

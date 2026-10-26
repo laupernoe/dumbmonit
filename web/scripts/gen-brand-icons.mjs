@@ -54,6 +54,9 @@ const KINDS = {
 	veeam: 'veeam',
 	tailscale: 'tailscale',
 	fortigate: 'fortinet',
+	qnap: 'qnap',
+	ceph: 'ceph',
+	minio: 'minio',
 	postgres: 'postgresql',
 	mysql: 'mysql',
 	mqtt: 'mqtt'
