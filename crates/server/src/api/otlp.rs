@@ -60,6 +60,23 @@ async fn require_write(State(state): State<AppState>, request: Request, next: Ne
     let ip = token::request_ip(request.extensions(), request.headers());
     match token::check(&state.pool, request.headers(), ip, Scope::Write).await {
         Ok(checked) => {
+            // Un compte limité par ses équipes n'écrit pas sous l'identité d'une
+            // cible quelconque : ses jetons sont refusés ici comme ailleurs.
+            let principal = crate::auth::middleware::Principal::Token(checked.token.clone());
+            match crate::auth::teams::access_for(&state.pool, &principal).await {
+                Ok(access) if access.is_scoped() => {
+                    return failure(
+                        StatusCode::FORBIDDEN,
+                        "OpenTelemetry ingestion is not available to the API tokens of \
+                         team-restricted accounts: use a token of an unrestricted account.",
+                    );
+                }
+                Ok(_) => {}
+                Err(error) => {
+                    tracing::error!(?error, "OTLP: team access lookup failed");
+                    return failure(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.");
+                }
+            }
             let mut response = next.run(request).await;
             checked.rate.apply(response.headers_mut());
             response

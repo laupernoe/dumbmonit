@@ -204,12 +204,20 @@ fn summarize(series: &[serde_json::Map<String, serde_json::Value>]) -> Vec<Metri
 /// `GET /api/metrics/catalog` : les métriques `dumbmonit_*` vivantes et leurs
 /// étiquettes, pour l'explorateur de métriques. Une seule lecture de
 /// `/api/v1/series` côté VictoriaMetrics, résumée ici.
-pub async fn catalog(State(state): State<AppState>) -> ApiResult<Json<Catalog>> {
+///
+/// Un compte limité par ses équipes ne voit que les séries de ses équipements :
+/// le même filtre `target` que les requêtes est ajouté au sélecteur.
+pub async fn catalog(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Catalog>> {
+    let filter = teams::series_filter(access.visible_targets(&state.pool).await?.as_ref());
+    let selector = catalog_selector(filter.as_deref());
     let since = chrono::Utc::now().timestamp() - CATALOG_WINDOW_SECS;
     let query = reqwest::Url::parse_with_params(
         "http://catalog.invalid/",
         [
-            ("match[]", "{__name__=~\"dumbmonit_.*\"}".to_string()),
+            ("match[]", selector),
             ("start", since.to_string()),
             ("limit", (CATALOG_SERIES_LIMIT + 1).to_string()),
         ],
@@ -238,6 +246,15 @@ pub async fn catalog(State(state): State<AppState>) -> ApiResult<Json<Catalog>> 
     let truncated = parsed.data.len() > CATALOG_SERIES_LIMIT;
     let slice = &parsed.data[..parsed.data.len().min(CATALOG_SERIES_LIMIT)];
     Ok(Json(Catalog { metrics: summarize(slice), truncated }))
+}
+
+/// Sélecteur des séries du catalogue, restreint par le filtre d'équipe
+/// (`{target=~"1|2"}`) quand il y en a un.
+fn catalog_selector(filter: Option<&str>) -> String {
+    match filter.and_then(|f| f.strip_prefix('{')?.strip_suffix('}')) {
+        Some(inner) if !inner.is_empty() => format!("{{__name__=~\"dumbmonit_.*\",{inner}}}"),
+        _ => "{__name__=~\"dumbmonit_.*\"}".to_string(),
+    }
 }
 
 /// Choisit un pas qui garde le nombre de points sous [`MAX_POINTS`].
@@ -276,6 +293,19 @@ mod tests {
         assert_eq!(found[0].series, 2);
         assert_eq!(found[0].labels[0].name, "core");
         assert_eq!(found[0].labels[1].values, vec!["1", "2"]);
+    }
+
+    #[test]
+    fn the_catalog_selector_carries_the_team_filter() {
+        assert_eq!(catalog_selector(None), "{__name__=~\"dumbmonit_.*\"}");
+        assert_eq!(
+            catalog_selector(Some("{target=~\"1|2\"}")),
+            "{__name__=~\"dumbmonit_.*\",target=~\"1|2\"}"
+        );
+        assert_eq!(
+            catalog_selector(Some("{target=\"-1\"}")),
+            "{__name__=~\"dumbmonit_.*\",target=\"-1\"}"
+        );
     }
 
     #[test]
