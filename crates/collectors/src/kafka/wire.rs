@@ -442,7 +442,10 @@ mod tests {
         assert_eq!(cluster.cluster_id.as_deref(), Some("cluster-abc"));
         assert_eq!(cluster.controller, 1);
         assert_eq!(cluster.brokers.len(), 2);
-        assert_eq!(cluster.brokers[1], BrokerInfo { id: 2, host: "kafka-2.lan".into(), port: 9092 });
+        assert_eq!(
+            cluster.brokers[1],
+            BrokerInfo { id: 2, host: "kafka-2.lan".into(), port: 9092 }
+        );
         let orders = &cluster.topics[0];
         assert_eq!((orders.name.as_str(), orders.internal), ("orders", false));
         assert_eq!(orders.partitions[1].leader, -1);

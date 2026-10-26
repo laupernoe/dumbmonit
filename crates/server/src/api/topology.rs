@@ -363,7 +363,13 @@ pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
 
     let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
     let (guests, neighbors, facts, l2, metrics_available) = if targets.is_empty() {
-        (Vec::new(), Vec::new(), ProxmoxFacts::default(), super::topology_l2::L2Data::default(), true)
+        (
+            Vec::new(),
+            Vec::new(),
+            ProxmoxFacts::default(),
+            super::topology_l2::L2Data::default(),
+            true,
+        )
     } else {
         let guests = state.victoria.query(&guests_query()).await;
         let neighbors = state.victoria.query(&lldp_query()).await;

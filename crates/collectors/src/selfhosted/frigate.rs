@@ -36,7 +36,8 @@ pub fn samples(stats: &Value, now_s: i64, ts_ms: i64) -> Vec<Sample> {
     let service = stats.get("service");
     let version = service.and_then(|s| s.get("version")).and_then(Value::as_str);
     out.push(
-        gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", version.unwrap_or("unknown")),
+        gauge(&metric(P, "version_info"), 1.0, ts_ms)
+            .with_label("version", version.unwrap_or("unknown")),
     );
     if let (Some(current), Some(latest)) =
         (version, service.and_then(|s| s.get("latest_version")).and_then(Value::as_str))
@@ -94,7 +95,9 @@ pub fn samples(stats: &Value, now_s: i64, ts_ms: i64) -> Vec<Sample> {
             Some(start) if start > 0.0 => (now_s as f64 - start).max(0.0),
             _ => 0.0,
         };
-        out.push(gauge(&metric(P, "detector_busy_seconds"), stuck, ts_ms).with_label("detector", name));
+        out.push(
+            gauge(&metric(P, "detector_busy_seconds"), stuck, ts_ms).with_label("detector", name),
+        );
     }
 
     // Les systèmes de fichiers en mémoire (`/dev/shm`, `/tmp/cache`) sont pleins
@@ -220,21 +223,28 @@ mod tests {
     #[test]
     fn le_detecteur_sain_n_est_pas_occupe_et_le_fige_l_est() {
         let healthy = samples(&json(STATS), 1_790_800_000, 0);
-        assert_eq!(with(&healthy, "frigate_detector_inference_ms", "detector", "coral"), Some(8.12));
+        assert_eq!(
+            with(&healthy, "frigate_detector_inference_ms", "detector", "coral"),
+            Some(8.12)
+        );
         assert_eq!(with(&healthy, "frigate_detector_busy_seconds", "detector", "coral"), Some(0.0));
         let stalled = samples(&json(STALLED), 1_790_799_100, 0);
         assert_eq!(
             with(&stalled, "frigate_detector_busy_seconds", "detector", "coral"),
             Some(99.5)
         );
-        assert_eq!(with(&stalled, "frigate_detector_inference_ms", "detector", "coral"), Some(850.3));
+        assert_eq!(
+            with(&stalled, "frigate_detector_inference_ms", "detector", "coral"),
+            Some(850.3)
+        );
     }
 
     #[test]
     fn le_stockage_ignore_les_montages_en_memoire() {
         let samples = samples(&json(STATS), 0, 0);
-        let used = with(&samples, "frigate_storage_used_percent", "path", "/media/frigate/recordings")
-            .unwrap();
+        let used =
+            with(&samples, "frigate_storage_used_percent", "path", "/media/frigate/recordings")
+                .unwrap();
         assert!((used - 78.5).abs() < 1e-6, "{used}");
         assert!(with(&samples, "frigate_storage_used_percent", "path", "/tmp/cache").is_none());
         let full = super::samples(&json(STALLED), 0, 0);
@@ -306,8 +316,7 @@ mod tests {
     async fn sans_authentification_et_injoignable() {
         let app = Router::new().route("/api/stats", get(|| async { STATS }));
         let base = serve(app).await;
-        let samples =
-            FrigateCollector::new().probe(&target(base, Credential::None)).await.unwrap();
+        let samples = FrigateCollector::new().probe(&target(base, Credential::None)).await.unwrap();
         assert_eq!(value(&samples, "frigate_cameras_total"), Some(3.0));
         let error = FrigateCollector::new()
             .probe(&target("http://127.0.0.1:1".into(), Credential::None))

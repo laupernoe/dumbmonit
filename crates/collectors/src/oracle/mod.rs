@@ -55,8 +55,7 @@ pub const DEFAULT_ORDS_PATH: &str = "/ords";
 const INSTANCE: &str = "select status, database_status, version, \
     round((sysdate - startup_time) * 86400) as uptime from v$instance";
 const DATABASE: &str = "select open_mode, database_role, log_mode from v$database";
-const TABLESPACES: &str =
-    "select tablespace_name, used_percent from dba_tablespace_usage_metrics";
+const TABLESPACES: &str = "select tablespace_name, used_percent from dba_tablespace_usage_metrics";
 const LIMITS: &str = "select resource_name, current_utilization, limit_value \
     from v$resource_limit where resource_name in ('sessions', 'processes')";
 const DATAGUARD: &str = "select name, value from v$dataguard_stats \
@@ -144,11 +143,8 @@ pub fn parse_outcome(body: &str) -> Result<Outcome, ProbeError> {
             .unwrap_or_else(|| error.to_string());
         return Ok(Outcome::Failed(text));
     }
-    let rows = item
-        .pointer("/resultSet/items")
-        .and_then(Value::as_array)
-        .cloned()
-        .unwrap_or_default();
+    let rows =
+        item.pointer("/resultSet/items").and_then(Value::as_array).cloned().unwrap_or_default();
     Ok(Outcome::Rows(rows))
 }
 
@@ -407,10 +403,7 @@ mod tests {
         assert_eq!(find(&samples, "oracle_sessions_used_percent", &[]).unwrap().value, 30.0);
         assert!(find(&samples, "oracle_processes_used_percent", &[]).is_none());
         assert_eq!(find(&samples, "oracle_processes", &[]).unwrap().value, 50.0);
-        assert_eq!(
-            find(&samples, "oracle_dataguard_apply_lag_seconds", &[]).unwrap().value,
-            600.0
-        );
+        assert_eq!(find(&samples, "oracle_dataguard_apply_lag_seconds", &[]).unwrap().value, 600.0);
         assert_eq!(find(&samples, "oracle_recovery_area_used_percent", &[]).unwrap().value, 71.25);
         assert_eq!(find(&samples, "oracle_scheduler_jobs_failed_24h", &[]).unwrap().value, 2.0);
         let info = find(&samples, "oracle_database_info", &[]).unwrap();
@@ -489,7 +482,8 @@ mod tests {
 
     #[test]
     fn le_chemin_ords_se_compose_des_etiquettes() {
-        let mut target = cible("oracle", "db.lan", &[("ords_path", "/prod/ords/"), ("schema", "mon")]);
+        let mut target =
+            cible("oracle", "db.lan", &[("ords_path", "/prod/ords/"), ("schema", "mon")]);
         target.credential =
             Credential::UsernamePassword { username: "DUMBMONIT".into(), password: "x".into() };
         assert_eq!(connection(&target).unwrap().sql_path, "/prod/ords/mon/_/sql");

@@ -42,7 +42,8 @@ const SESSION_REUSE: Duration = Duration::from_secs(15 * 60);
 /// `GET /api/config`.
 pub fn config_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
     let version = body.get("version").and_then(Value::as_str).unwrap_or("unknown");
-    let mut out = vec![gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", version)];
+    let mut out =
+        vec![gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", version)];
     if let Some(closed) = body.pointer("/settings/disableUserRegistration").and_then(Value::as_bool)
     {
         out.push(flag(&metric(P, "signups_open"), !closed, ts_ms));
@@ -140,8 +141,7 @@ async fn fetch_users(
         .await
         .map_err(|error| net(&error, options.request_timeout, path))?;
     let status = response.status();
-    if status.is_redirection()
-        || matches!(status, StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN)
+    if status.is_redirection() || matches!(status, StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN)
     {
         return Ok(None);
     }
@@ -274,7 +274,8 @@ mod tests {
         let info = samples.iter().find(|s| s.metric == "vaultwarden_version_info").unwrap();
         assert_eq!(info.labels["version"], "2025.5.0");
         assert_eq!(value(&samples, "vaultwarden_signups_open"), Some(0.0));
-        let open = serde_json::json!({"version": "1", "settings": {"disableUserRegistration": false}});
+        let open =
+            serde_json::json!({"version": "1", "settings": {"disableUserRegistration": false}});
         assert_eq!(value(&config_samples(&open, 0), "vaultwarden_signups_open"), Some(1.0));
     }
 
@@ -392,10 +393,8 @@ mod tests {
     #[tokio::test]
     async fn un_mauvais_jeton_est_une_erreur_d_authentification() {
         let base = serve(app(Arc::new(AtomicUsize::new(0)))).await;
-        let error = VaultwardenCollector::new()
-            .probe(&target(base, admin("mauvais")))
-            .await
-            .unwrap_err();
+        let error =
+            VaultwardenCollector::new().probe(&target(base, admin("mauvais"))).await.unwrap_err();
         assert!(matches!(error, ProbeError::Auth(_)));
         assert!(!error.means_down());
     }

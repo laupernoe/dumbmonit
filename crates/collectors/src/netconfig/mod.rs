@@ -67,7 +67,9 @@ pub const RELAY_HOST_KEY_TAG: &str = "netconfig_host_key";
 pub enum Failure {
     /// La clé d'hôte présentée n'est pas celle mémorisée : connexion coupée
     /// avant l'authentification.
-    HostKeyMismatch { seen: String },
+    HostKeyMismatch {
+        seen: String,
+    },
     Probe(ProbeError),
 }
 

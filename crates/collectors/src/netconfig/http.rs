@@ -9,8 +9,8 @@ use std::time::Duration;
 
 use dumbmonit_proto::ProbeError;
 
-use super::{MAX_CONFIG_BYTES, append_bounded, too_large};
 use super::profile::{HttpAuth, HttpSpec};
+use super::{MAX_CONFIG_BYTES, append_bounded, too_large};
 
 /// Identifiant d'une requête : couple identifiant / secret, ou jeton.
 pub enum HttpCredential<'a> {

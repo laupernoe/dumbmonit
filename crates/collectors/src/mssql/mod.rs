@@ -108,7 +108,8 @@ fn settings(target: &Target) -> Result<Settings, ProbeError> {
     let port = tags::parse_u32(target, "port", u32::from(DEFAULT_PORT), 1..=65_535)? as u16;
     let address = target.address.trim();
     let address = address.split_once("://").map_or(address, |(_, rest)| rest);
-    let (host, port) = tags::split_host_port(address.split(['/', '?']).next().unwrap_or(address), port)?;
+    let (host, port) =
+        tags::split_host_port(address.split(['/', '?']).next().unwrap_or(address), port)?;
     Ok(Settings {
         host,
         port,
@@ -471,10 +472,16 @@ mod tests {
         assert_eq!(find(&samples, "mssql_databases_offline", &[]).unwrap().value, 1.0);
         let online = find(&samples, "mssql_database_online", &[("database", "old")]).unwrap();
         assert_eq!((online.value, online.labels["state"].as_str()), (0.0, "SUSPECT"));
-        assert_eq!(find(&samples, "mssql_agent_job_last_ok", &[("job", "Nightly")]).unwrap().value, 0.0);
+        assert_eq!(
+            find(&samples, "mssql_agent_job_last_ok", &[("job", "Nightly")]).unwrap().value,
+            0.0
+        );
         assert_eq!(find(&samples, "mssql_agent_jobs_failed", &[]).unwrap().value, 1.0);
         // Un travail en cours (4) n'est pas un échec.
-        assert_eq!(find(&samples, "mssql_agent_job_last_ok", &[("job", "Reindex")]).unwrap().value, 1.0);
+        assert_eq!(
+            find(&samples, "mssql_agent_job_last_ok", &[("job", "Reindex")]).unwrap().value,
+            1.0
+        );
     }
 
     #[test]
@@ -506,7 +513,8 @@ mod tests {
 
     #[test]
     fn les_reglages_se_lisent_sur_la_cible() {
-        let mut target = cible("mssql", "mssql://sql.lan:1444", &[("database", "app"), ("tls", "no")]);
+        let mut target =
+            cible("mssql", "mssql://sql.lan:1444", &[("database", "app"), ("tls", "no")]);
         target.credential = login();
         let settings = settings(&target).unwrap();
         assert_eq!((settings.host.as_str(), settings.port), ("sql.lan", 1444));

@@ -227,13 +227,8 @@ async fn an_http_probe_is_relayed_through_the_agent_and_recorded_on_the_target()
     assert!(samples.iter().any(|s| s.metric == "up"));
 
     // … et rend compte.
-    let outcome = ProbeOutcome {
-        duration_ms: 12,
-        error: None,
-        samples,
-        profile_id: None,
-        netconfig: None,
-    };
+    let outcome =
+        ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None, netconfig: None };
     let (status, body) = as_agent(
         &app,
         "POST",
@@ -531,13 +526,8 @@ async fn an_uptime_monitor_is_probed_from_several_locations() {
         .probe(&job.target, Duration::from_secs(job.timeout_secs))
         .await
         .expect("sonde http locale");
-    let outcome = ProbeOutcome {
-        duration_ms: 12,
-        error: None,
-        samples,
-        profile_id: None,
-        netconfig: None,
-    };
+    let outcome =
+        ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None, netconfig: None };
     let (status, body) = as_agent(
         &app,
         "POST",

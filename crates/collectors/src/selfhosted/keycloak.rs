@@ -83,7 +83,8 @@ pub fn health_samples(name: &str, body: &Value, ts_ms: i64) -> Vec<Sample> {
         for check in checks.unwrap_or(&[]).iter().take(MAX_NAMED) {
             if let Some(label) = check.get("name").and_then(Value::as_str) {
                 out.push(
-                    flag(&metric(P, "health_check_up"), up(check), ts_ms).with_label("check", label),
+                    flag(&metric(P, "health_check_up"), up(check), ts_ms)
+                        .with_label("check", label),
                 );
             }
         }
@@ -115,10 +116,8 @@ pub fn serverinfo_samples(body: &Value, ts_ms: i64) -> Vec<Sample> {
 /// [`MAX_REALMS`]).
 pub fn realm_samples(body: &Value, wanted: &[String], ts_ms: i64) -> (Vec<Sample>, Vec<String>) {
     let list = body.as_array().map(Vec::as_slice).unwrap_or(&[]);
-    let disabled = list
-        .iter()
-        .filter(|r| r.get("enabled").and_then(Value::as_bool) == Some(false))
-        .count();
+    let disabled =
+        list.iter().filter(|r| r.get("enabled").and_then(Value::as_bool) == Some(false)).count();
     let samples = vec![
         gauge(&metric(P, "realms_total"), list.len() as f64, ts_ms),
         gauge(&metric(P, "realms_disabled"), disabled as f64, ts_ms),
@@ -196,11 +195,8 @@ async fn admin_token(
     secret: &str,
 ) -> Result<String, ProbeError> {
     let path = format!("/realms/{}/protocol/openid-connect/token", encode(realm));
-    let form = [
-        ("grant_type", "client_credentials"),
-        ("client_id", client_id),
-        ("client_secret", secret),
-    ];
+    let form =
+        [("grant_type", "client_credentials"), ("client_id", client_id), ("client_secret", secret)];
     let (status, _, body) = client.login(&path, Some(&form[..]), None).await?;
     if matches!(status.as_u16(), 400 | 401 | 403) {
         return Err(ProbeError::Auth(format!(
@@ -269,7 +265,12 @@ async fn admin_samples(
             total_active += active;
             readable = true;
         }
-        out.extend(realm_detail_samples(name, counts, users.as_ref().and_then(|u| number(Some(u))), ts_ms));
+        out.extend(realm_detail_samples(
+            name,
+            counts,
+            users.as_ref().and_then(|u| number(Some(u))),
+            ts_ms,
+        ));
     }
     if readable {
         out.push(gauge(&metric(P, "sessions_active"), total_active, ts_ms));
@@ -350,7 +351,8 @@ mod tests {
     const LIVE: &str = include_str!("testdata/keycloak_26.0.5/health_live.json");
     const SERVERINFO: &str = include_str!("testdata/keycloak_26.0.5/serverinfo.json");
     const REALMS: &str = include_str!("testdata/keycloak_26.0.5/realms.json");
-    const SESSIONS: &str = include_str!("testdata/keycloak_26.0.5/client_session_stats_homelab.json");
+    const SESSIONS: &str =
+        include_str!("testdata/keycloak_26.0.5/client_session_stats_homelab.json");
     const TOKEN: &str = include_str!("testdata/keycloak_26.0.5/token.json");
     const TOKEN_REFUSED: &str = include_str!("testdata/keycloak_26.0.5/token_refused.json");
 
@@ -365,9 +367,7 @@ mod tests {
     fn realm(samples: &[Sample], name: &str, realm: &str) -> Option<f64> {
         samples
             .iter()
-            .find(|s| {
-                s.metric == name && s.labels.get("realm").map(String::as_str) == Some(realm)
-            })
+            .find(|s| s.metric == name && s.labels.get("realm").map(String::as_str) == Some(realm))
             .map(|s| s.value)
     }
 
@@ -442,7 +442,10 @@ mod tests {
             parent_id: None,
             interval: Duration::from_secs(60),
             enabled: true,
-            tags: tags.iter().map(|(k, v)| (k.to_string(), v.to_string())).collect::<BTreeMap<_, _>>(),
+            tags: tags
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect::<BTreeMap<_, _>>(),
             credential,
             group_name: String::new(),
             position: 0,
@@ -489,10 +492,8 @@ mod tests {
     async fn la_sante_seule_se_lit_sans_identifiants() {
         let base = serve(app()).await;
         let tags = [("health_port", "same")];
-        let samples = KeycloakCollector::new()
-            .probe(&target(base, Credential::None, &tags))
-            .await
-            .unwrap();
+        let samples =
+            KeycloakCollector::new().probe(&target(base, Credential::None, &tags)).await.unwrap();
         assert_eq!(value(&samples, "keycloak_ready"), Some(1.0));
         assert_eq!(value(&samples, "keycloak_live"), Some(1.0));
         assert!(value(&samples, "keycloak_admin_readable").is_none());
@@ -503,10 +504,8 @@ mod tests {
     async fn l_administration_donne_domaines_sessions_et_utilisateurs() {
         let base = serve(app()).await;
         let tags = [("health_port", "same"), ("realms", "homelab, master")];
-        let samples = KeycloakCollector::new()
-            .probe(&target(base, secret("bon"), &tags))
-            .await
-            .unwrap();
+        let samples =
+            KeycloakCollector::new().probe(&target(base, secret("bon"), &tags)).await.unwrap();
         assert_eq!(value(&samples, "keycloak_admin_readable"), Some(1.0));
         assert_eq!(value(&samples, "keycloak_realms_total"), Some(3.0));
         assert_eq!(realm(&samples, "keycloak_realm_sessions", "homelab"), Some(13.0));
@@ -521,10 +520,8 @@ mod tests {
     async fn un_secret_refuse_est_une_erreur_d_authentification() {
         let base = serve(app()).await;
         let tags = [("health_port", "same")];
-        let error = KeycloakCollector::new()
-            .probe(&target(base, secret("faux"), &tags))
-            .await
-            .unwrap_err();
+        let error =
+            KeycloakCollector::new().probe(&target(base, secret("faux"), &tags)).await.unwrap_err();
         assert!(matches!(error, ProbeError::Auth(_)));
         assert!(!error.means_down());
     }
@@ -536,10 +533,8 @@ mod tests {
             .route("/health/live", get(|| async { LIVE }));
         let base = serve(app).await;
         let tags = [("health_port", "same")];
-        let samples = KeycloakCollector::new()
-            .probe(&target(base, Credential::None, &tags))
-            .await
-            .unwrap();
+        let samples =
+            KeycloakCollector::new().probe(&target(base, Credential::None, &tags)).await.unwrap();
         assert_eq!(value(&samples, "keycloak_ready"), Some(0.0));
 
         let error = KeycloakCollector::new()

@@ -119,8 +119,8 @@ pub fn authenticate_message(
     now_filetime: u64,
 ) -> Vec<u8> {
     let key = ntlmv2_hash(password, user, domain);
-    let timestamp = server_timestamp(&challenge.target_info)
-        .unwrap_or_else(|| now_filetime.to_le_bytes());
+    let timestamp =
+        server_timestamp(&challenge.target_info).unwrap_or_else(|| now_filetime.to_le_bytes());
     let mut temp = Vec::with_capacity(32 + challenge.target_info.len());
     temp.extend_from_slice(&[1, 1, 0, 0, 0, 0, 0, 0]);
     temp.extend_from_slice(&timestamp);

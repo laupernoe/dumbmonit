@@ -40,6 +40,12 @@ pub use dumbmonit_collectors::{
     pihole,
 };
 pub use dumbmonit_collectors::{
+    ArrCollector, AuthentikCollector, ForgejoCollector, FrigateCollector, GitlabCollector,
+    ImmichCollector, JellyfinCollector, KeycloakCollector, MailcowCollector, NextcloudCollector,
+    PaperlessCollector, PlexCollector, ProtectCollector, QbittorrentCollector,
+    VaultwardenCollector, selfhosted,
+};
+pub use dumbmonit_collectors::{
     ArubaCentralCollector, FortigateCollector, PaloaltoCollector, PfsenseCollector,
     SonicwallCollector, SophosCollector, TailscaleCollector, UnraidCollector, VeeamCollector,
     arubacentral, fortigate, paloalto, pfsense, sonicwall, sophos, tailscale, unraid, veeam,
@@ -59,12 +65,6 @@ pub use dumbmonit_collectors::{
     snmp, synology, truenas, uptime,
 };
 pub use dumbmonit_collectors::{DuplicatiCollector, KopiaCollector, duplicati, kopia};
-pub use dumbmonit_collectors::{
-    ArrCollector, AuthentikCollector, ForgejoCollector, FrigateCollector, GitlabCollector,
-    ImmichCollector, JellyfinCollector, KeycloakCollector, MailcowCollector, NextcloudCollector,
-    PaperlessCollector, PlexCollector, ProtectCollector, QbittorrentCollector,
-    VaultwardenCollector, selfhosted,
-};
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{
     HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,

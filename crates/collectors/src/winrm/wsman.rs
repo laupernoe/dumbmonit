@@ -122,8 +122,7 @@ fn find<'a, 'b>(root: roxmltree::Node<'a, 'b>, name: &str) -> Option<roxmltree::
 /// Texte d'une propriété : le texte direct, ou celui du premier descendant
 /// (WMI enveloppe les dates dans `<cim:Datetime>`).
 fn property_text(node: roxmltree::Node<'_, '_>) -> Option<String> {
-    let direct: String =
-        node.children().filter(|n| n.is_text()).filter_map(|n| n.text()).collect();
+    let direct: String = node.children().filter(|n| n.is_text()).filter_map(|n| n.text()).collect();
     let direct = direct.trim();
     if !direct.is_empty() {
         return Some(direct.to_string());

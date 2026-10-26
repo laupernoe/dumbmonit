@@ -59,7 +59,8 @@ const GROUPS: [&str; 8] = [
 
 /// `GET /api/v2/sync/maindata?rid=0` en métriques.
 pub fn samples(version: &str, body: &Value, ts_ms: i64) -> Vec<Sample> {
-    let mut out = vec![gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", version)];
+    let mut out =
+        vec![gauge(&metric(P, "version_info"), 1.0, ts_ms).with_label("version", version)];
     let state = body.get("server_state");
     let field = |key: &str| state.and_then(|s| number(s.get(key)));
     if let Some(status) = state.and_then(|s| s.get("connection_status")).and_then(Value::as_str) {
@@ -145,9 +146,7 @@ async fn session(target: &Target) -> Result<HttpClient, ProbeError> {
         return Err(anonymous.status_error(status, &body, path));
     }
     if body.trim().eq_ignore_ascii_case("fails.") {
-        return Err(ProbeError::Auth(
-            "qBittorrent refused the user name or password.".to_string(),
-        ));
+        return Err(ProbeError::Auth("qBittorrent refused the user name or password.".to_string()));
     }
     let cookie = cookies_of(&headers);
     if cookie.is_empty() {

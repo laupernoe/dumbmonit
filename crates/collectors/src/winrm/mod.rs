@@ -175,15 +175,13 @@ impl Options {
         }
         let event_minutes = match tag(target, "event_minutes") {
             None => DEFAULT_EVENT_MINUTES,
-            Some(raw) => raw
-                .parse::<u64>()
-                .ok()
-                .filter(|m| (1..=1440).contains(m))
-                .ok_or_else(|| {
+            Some(raw) => {
+                raw.parse::<u64>().ok().filter(|m| (1..=1440).contains(m)).ok_or_else(|| {
                     ProbeError::Config(format!(
                         "Invalid event window \"{raw}\": between 1 and 1440 minutes"
                     ))
-                })?,
+                })?
+            }
         };
         // Absent ou vide : les journaux par défaut ; `none` désactive le comptage.
         let event_logs = match tag(target, "event_logs") {
@@ -237,8 +235,22 @@ fn message_id() -> String {
     let b = random_bytes::<16>().unwrap_or([7; 16]);
     format!(
         "{:02X}{:02X}{:02X}{:02X}-{:02X}{:02X}-{:02X}{:02X}-{:02X}{:02X}-{:02X}{:02X}{:02X}{:02X}{:02X}{:02X}",
-        b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7], b[8], b[9], b[10], b[11], b[12], b[13],
-        b[14], b[15]
+        b[0],
+        b[1],
+        b[2],
+        b[3],
+        b[4],
+        b[5],
+        b[6],
+        b[7],
+        b[8],
+        b[9],
+        b[10],
+        b[11],
+        b[12],
+        b[13],
+        b[14],
+        b[15]
     )
 }
 
@@ -505,12 +517,11 @@ impl Collector for WinrmCollector {
             return Err(ProbeError::Protocol("Win32_OperatingSystem returned nothing".to_string()));
         }
         let now = now_ms();
-        let since = chrono::DateTime::from_timestamp_millis(
-            now - options.event_minutes as i64 * 60 * 1000,
-        )
-        .unwrap_or_default()
-        .format("%Y%m%d%H%M%S.000000+000")
-        .to_string();
+        let since =
+            chrono::DateTime::from_timestamp_millis(now - options.event_minutes as i64 * 60 * 1000)
+                .unwrap_or_default()
+                .format("%Y%m%d%H%M%S.000000+000")
+                .to_string();
         let replies = Replies {
             os,
             cpu: session.optional("cpu", CPU_WQL, PAGE_SIZE, MAX_PAGES).await?,
@@ -631,7 +642,8 @@ pub fn samples(r: &Replies, options: &Options, ts_ms: i64) -> Vec<Sample> {
             out.push(readable("cpu", true, ts_ms));
             let mut cores = 0usize;
             for row in rows {
-                let (Some(name), Some(load)) = (row.get("Name"), number(row, "PercentProcessorTime"))
+                let (Some(name), Some(load)) =
+                    (row.get("Name"), number(row, "PercentProcessorTime"))
                 else {
                     continue;
                 };
