@@ -852,7 +852,7 @@ mod tests {
             .map(|name| (name.to_string(), header(headers, name).unwrap_or("").to_string()))
             .collect();
         let amz_date = header(headers, "x-amz-date").unwrap_or_default();
-        let signer = Signer { access_key, secret_key, region: *region, service: *service };
+        let signer = Signer { access_key, secret_key, region, service };
         let expected =
             signer.authorization(amz_date, "POST", "/", "", &signed, &sha256_hex(body.as_bytes()));
         *key == access_key && amz_date.starts_with(*day) && expected == auth
