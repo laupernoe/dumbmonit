@@ -21,6 +21,7 @@
 	import { theme } from '#lib/stores/theme.svelte.js';
 	import { DecryptText, EmptyState, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
 	import Logo from '#lib/components/Logo.svelte';
+	import AccessGate from '#lib/components/status/AccessGate.svelte';
 	import IncidentCard from '#lib/components/status/IncidentCard.svelte';
 	import StatusUpdates from '#lib/components/status/StatusUpdates.svelte';
 	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
@@ -95,6 +96,8 @@
 	});
 
 	const notFound = $derived(error !== null && toApiError(error).status === 404);
+	// A private page answers 401 and says what it wants: a password or a DumbMonit sign-in.
+	const gate = $derived(error !== null ? toApiError(error).access : null);
 	const banner = $derived(status ? overallBanner(status) : null);
 	const days = $derived(status?.page.history_days ?? 7);
 	const windowSecs = $derived(status?.page.window_secs ?? days * 86400);
@@ -417,6 +420,8 @@
 		<main class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12">
 			{#if error && notFound}
 				<EmptyState mascot="dizzy" title={m.status_public_not_found_title()} description={m.status_public_not_found_description()} />
+			{:else if error && gate}
+				<AccessGate {slug} access={gate} onunlocked={() => { error = null; loading = true; void load(); }} />
 			{:else if error}
 				<ErrorNotice {error} title={m.status_public_load_error()} onretry={() => void load()} />
 			{:else if loading || !status || !banner}

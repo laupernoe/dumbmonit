@@ -7,7 +7,7 @@ Deux choses différentes, pour deux accidents différents.
 | Ce qu'il contient | La configuration : surveillances et leurs identifiants, règles, canaux, pages d'état, comptes, jetons. | Toute la base de données, comme un fichier, plus `secret.key`. |
 | Où il va | Où vous le mettez — il est chiffré avec une phrase de passe que vous choisissez. | `/data/backups/`, dans le même volume. |
 | Ce dont il vous sauve | Un serveur perdu, un déménagement vers un nouveau matériel, une installation neuve. | Le changement que vous regrettez dix minutes plus tard, une mise à jour qui a mal tourné. |
-| Ce qu'il ne contient pas | Historique de métriques, état et historique d'alertes, le journal d'audit, les sessions. | Historique de métriques (`vm/`). |
+| Ce qu'il ne contient pas | Historique de métriques, état et historique d'alertes, le journal d'audit, les sessions. | Historique de métriques (`vm/`, `vm-long/`) et journaux (`vlogs/`). |
 
 Ni l'un ni l'autre ne remplace une archive de tout le volume si vous
 voulez aussi récupérer les graphiques ; c'est en bas de cette page.
@@ -277,9 +277,11 @@ docker compose start
 Pour restaurer, créez le volume, extrayez l'archive dedans de la même
 façon, puis `docker compose up -d`.
 
-Si l'espace compte, `--exclude=./vm` garde l'archive petite : la base de
-données et le secret sont la configuration, `vm/` n'est que
-l'historique.
+Si l'espace compte, `--exclude=./vm --exclude=./vm-long --exclude=./vlogs` garde
+l'archive petite : la base de données et le secret sont la configuration ; `vm/`
+(métriques brutes), `vm-long/` (agrégats de 5 minutes) et `vlogs/` (journaux)
+ne sont que de l'historique. Arrêtez le conteneur avant si vous voulez ces
+répertoires cohérents.
 
 ## Quoi faire avant une mise à jour
 

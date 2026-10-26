@@ -1,0 +1,58 @@
+name: Load test
+
+# Manual only: starts the published image, creates N demo monitors, lets them
+# run, and uploads a summary (CPU, memory, disk growth, API latency) as an
+# artifact. The figures in docs/reference/sizing.md are checked against it.
+# The runner (ubuntu-latest, 4 vCPU / 16 GB) is smaller than a real server:
+# read the numbers as an upper bound for CPU.
+on:
+  workflow_dispatch:
+    inputs:
+      monitors:
+        description: Number of monitors to create
+        type: choice
+        options: ["1000", "5000"]
+        default: "1000"
+      duration:
+        description: Duration of the measurement, in minutes
+        type: number
+        default: 30
+      tag:
+        description: Image tag of ghcr.io/laupernoe/dumbmonit
+        type: string
+        default: edge
+
+permissions:
+  contents: read
+
+concurrency:
+  group: load-test
+  cancel-in-progress: false
+
+jobs:
+  load:
+    name: ${{ inputs.monitors }} monitors, ${{ inputs.duration }} min
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Run the load test
+        env:
+          MONITORS: ${{ inputs.monitors }}
+          DURATION_MIN: ${{ inputs.duration }}
+          DUMBMONIT_IMAGE: ghcr.io/laupernoe/dumbmonit:${{ inputs.tag }}
+        run: scripts/load/run.sh "$RUNNER_TEMP/load-out"
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f "$RUNNER_TEMP/load-out/summary.md" ]; then
+            cat "$RUNNER_TEMP/load-out/summary.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: load-test-${{ inputs.monitors }}
+          path: ${{ runner.temp }}/load-out/
+          if-no-files-found: warn

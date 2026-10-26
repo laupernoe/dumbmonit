@@ -9,6 +9,8 @@ fr:
   "Alerting": "Alertes"
   "Using DumbMonit": "Utiliser DumbMonit"
   "Reference": "Référence"
+  "Sizing": "Dimensionnement"
+  "External VictoriaMetrics / cluster": "VictoriaMetrics externe / cluster"
   "Development": "Développement"
   "FAQ": "FAQ"
 
