@@ -181,6 +181,7 @@ pub async fn receive(
     let secret = headers.get(AGENT_SECRET_HEADER).and_then(|value| value.to_str().ok());
     let who = format!("{client} {}", batch.identity.hostname);
     let version = batch.identity.agent_version.clone();
+    let identity = batch.identity.clone();
     let cert = cert.map(|Extension(cert)| cert);
     let declared = batch.declared_monitors.clone();
     let hostname = batch.identity.hostname.clone();
@@ -205,7 +206,7 @@ pub async fn receive(
     }
 
     match agent::ingest(&state.pool, &state.cipher, &state.sink, bearer, secret, batch).await {
-        Ok(ack) => {
+        Ok(mut ack) => {
             if let Err(error) =
                 crate::agent_tls::note_channel(&state.pool, ack.target_id, cert.as_ref()).await
             {
@@ -217,6 +218,19 @@ pub async fn receive(
                 && !ack.disabled_modules.iter().any(|module| module == "docker")
             {
                 super::label_monitors::on_batch(&state, ack.target_id, &hostname, declared).await;
+            }
+            // Mise à jour automatique de l'agent : ce qu'il dit de son binaire,
+            // puis l'offre du binaire de ce build si elle est de mise. Une
+            // panne ici ne coûte jamais le lot.
+            let target_id = ack.target_id;
+            if let Err(error) = agent::selfupdate::record(&state.pool, target_id, &identity).await {
+                tracing::warn!(error = %format!("{error:#}"), "agent update state not recorded");
+            }
+            match agent::selfupdate::offer_for(&state, target_id).await {
+                Ok(offer) => ack.agent_update = offer,
+                Err(error) => {
+                    tracing::warn!(error = %format!("{error:#}"), "agent update offer skipped");
+                }
             }
             if REFUSALS.clear(&who) {
                 tracing::info!(client = who, "agent reports accepted again");

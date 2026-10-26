@@ -101,6 +101,14 @@ To compare with a published release:
 
 A mismatch is worth an issue: please open one with the commands you ran.
 
+## Agent signatures
+
+The published server image has one more layer than a reproducible build: the
+`.sig` files, copied from a build context provided by the release workflow (see
+[Signing the agent binaries](agent-signing.md)). It is the only difference. The
+agent binaries themselves are unchanged, and the reproducible-builds checks
+build without that layer.
+
 ## Limits
 
 - **Published images before 0.9.1** were built without `SOURCE_DATE_EPOCH`:

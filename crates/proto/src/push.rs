@@ -10,6 +10,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use crate::Sample;
+use crate::selfupdate::{AgentUpdateOffer, SelfUpdateInfo};
 
 /// Version du dialogue de poussée.
 ///
@@ -139,6 +140,11 @@ pub struct AgentIdentity {
     /// progressive possible dans les deux sens.
     #[serde(default)]
     pub binding_supported: bool,
+    /// Mise à jour automatique de l'agent : empreinte du binaire, plateforme,
+    /// capacité à se remplacer, issue de la dernière tentative. Absent chez un
+    /// agent antérieur : l'interface dit alors de le mettre à jour à la main.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub self_update: Option<SelfUpdateInfo>,
 }
 
 impl AgentIdentity {
@@ -327,6 +333,10 @@ pub struct PushAck {
     /// antérieur ignore ce champ et ne relaie que si son agent.yaml le dit.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub relay: Option<RelaySetting>,
+    /// Binaire de l'agent à installer, quand le serveur en propose un à cette
+    /// machine (mise à jour automatique). Ignoré par un agent antérieur.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub agent_update: Option<AgentUpdateOffer>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -366,6 +376,7 @@ mod tests {
             machine_id: Some("9f4c…".into()),
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             binding_supported: true,
+            self_update: None,
         }
     }
 
@@ -428,6 +439,8 @@ mod tests {
         // Ni d'avant la liaison : le serveur ne doit surtout pas lui attribuer un
         // secret qu'il jetterait, ce qui le verrouillerait au lot suivant.
         assert!(!batch.identity.binding_supported);
+        // Ni d'avant la mise à jour automatique : à mettre à jour à la main.
+        assert!(batch.identity.self_update.is_none());
     }
 
     #[test]
@@ -442,6 +455,7 @@ mod tests {
         assert!(!ack.bound);
         assert!(ack.disabled_modules.is_empty(), "rien de décoché chez un serveur ancien");
         assert_eq!(ack.relay, None, "un serveur ancien ne dit rien du relais");
+        assert_eq!(ack.agent_update, None, "ni de mise à jour de l'agent");
 
         let issued = PushAck {
             target_id: 7,
@@ -452,6 +466,7 @@ mod tests {
             bound: true,
             disabled_modules: Vec::new(),
             relay: None,
+            agent_update: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -499,6 +514,7 @@ mod tests {
             bound: true,
             disabled_modules: vec!["docker".into()],
             relay: Some(RelaySetting { enabled: true, site: Some("Lyon".into()) }),
+            agent_update: None,
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");
