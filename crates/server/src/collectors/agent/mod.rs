@@ -20,6 +20,7 @@
 
 pub mod commands;
 pub mod eventlog;
+pub mod logs;
 pub mod modules;
 pub mod policy;
 mod receive;

@@ -109,6 +109,7 @@ mod tests {
         "/api/ingest",
         "/api/agent/commands",
         "/api/agent/commands/{id}",
+        "/api/agent/logs",
         "/api/agent/relay",
         "/api/agent/relay/{id}",
         "/api/agent/relay/discovery/{id}",

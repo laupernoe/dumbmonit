@@ -11,6 +11,7 @@ mod description;
 mod discovery;
 pub mod env;
 mod eventlog;
+mod logs;
 mod push;
 mod sample;
 mod selfupdate;
@@ -42,6 +43,10 @@ pub use eventlog::{
     EVENT_RULE_MAX_PER_MINUTE, EventIdRange, EventLevel, EventLogDropped, EventLogEntry,
     EventLogReport, EventLogRule, MAX_EVENT_ID_RANGES, MAX_EVENT_LOG_ENTRIES,
     MAX_EVENT_MESSAGE_CHARS, format_event_ids, parse_event_ids, truncate_message,
+};
+
+pub use logs::{
+    LOGS_PATH, LogBatch, LogLine, LogsSetting, MAX_LOG_LINES, MAX_LOG_MESSAGE, level_rank,
 };
 pub use push::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,

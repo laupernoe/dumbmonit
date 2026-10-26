@@ -15,6 +15,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, Confirm, ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
 	import RelayPanel from '#lib/components/devices/relay/RelayPanel.svelte';
+	import LogsPanel from '#lib/components/devices/agent/LogsPanel.svelte';
 	import MailAgentPanel from '#lib/components/devices/mdaemon/MailAgentPanel.svelte';
 	import AgentModulesPanel from './AgentModulesPanel.svelte';
 	import AgentEventsPanel from './AgentEventsPanel.svelte';
@@ -142,6 +143,9 @@
 {/if}
 
 <RelayPanel {target} />
+
+<!-- Log collection, off until an administrator turns it on. -->
+<LogsPanel {target} />
 
 <!-- Shown only when this machine runs MDaemon or SecurityGateway and the agent found it. -->
 <MailAgentPanel agent={target.id} product="mdaemon" />

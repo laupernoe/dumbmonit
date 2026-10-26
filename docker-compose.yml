@@ -8,6 +8,12 @@ services:
       # Encrypted agent channel (TLS 1.3 + client certificates). The only port
       # agents on other networks need; the web port can stay private.
       - "8443:8443"
+      # Central logs (off by default; turn on with DUMBMONIT_SYSLOG_ENABLED /
+      # DUMBMONIT_TRAPS_ENABLED under `environment`, and the log store in
+      # Settings > System). Unprivileged ports: the container runs as non-root.
+      # - "5514:5514/udp"   # syslog (RFC 3164 / 5424)
+      # - "5514:5514/tcp"
+      # - "1162:1162/udp"   # SNMP traps (v1 / v2c)
     volumes:
       - dumbmonit-data:/data
       # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
