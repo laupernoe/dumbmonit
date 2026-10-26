@@ -132,6 +132,8 @@ tags:
     description: Maintenance windows.
   - name: Notifications
     description: Notification channels and the global notification policy.
+  - name: On-call
+    description: On-call schedules, replacements, escalation policies and their log; each account's contacts, quiet hours and calendar link.
   - name: Status pages
     description: Status pages, their items, logos and subscribers.
   - name: Reports
@@ -6201,6 +6203,477 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "409": { $ref: "#/components/responses/Conflict" }
 
+  # ---------------------------------------------------------- on-call
+  /api/oncall/people:
+    get:
+      operationId: listOnCallPeople
+      tags: [On-call]
+      summary: Accounts that can be on call, with their number of contact methods
+      x-token-scope: read
+      responses:
+        "200":
+          description: Accounts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OnCallPerson" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/now:
+    get:
+      operationId: whoIsOnCall
+      tags: [On-call]
+      summary: Who is on call now, schedule by schedule
+      x-token-scope: read
+      responses:
+        "200":
+          description: One entry per schedule.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OnCallEntry" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/schedules:
+    get:
+      operationId: listOnCallSchedules
+      tags: [On-call]
+      summary: Every on-call schedule, with who is on call now
+      x-token-scope: read
+      responses:
+        "200":
+          description: Schedules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OnCallSchedule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createOnCallSchedule
+      tags: [On-call]
+      summary: Create an on-call schedule
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OnCallSchedulePayload" }
+      responses:
+        "201":
+          description: The schedule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/schedules/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateOnCallSchedule
+      tags: [On-call]
+      summary: Replace an on-call schedule
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OnCallSchedulePayload" }
+      responses:
+        "200":
+          description: The schedule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallSchedule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: deleteOnCallSchedule
+      tags: [On-call]
+      summary: Delete an on-call schedule (refused while an escalation policy calls it)
+      x-token-scope: write
+      responses:
+        "204": { description: Schedule deleted. }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/schedules/{id}/shifts:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listOnCallShifts
+      tags: [On-call]
+      summary: Shifts of a schedule over a period, final rota and each layer
+      x-token-scope: read
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date-time } }
+        - { name: to, in: query, description: "At most 92 days after `from`.", schema: { type: string, format: date-time } }
+      responses:
+        "200":
+          description: Shifts.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallShifts" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/schedules/{id}/overrides:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    get:
+      operationId: listOnCallOverrides
+      tags: [On-call]
+      summary: Replacements of a schedule, upcoming first
+      x-token-scope: read
+      responses:
+        "200":
+          description: Replacements.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/OnCallOverride" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createOnCallOverride
+      tags: [On-call]
+      summary: Add a replacement, someone taking the shift of someone else for a while
+      x-token-scope: write
+      x-roles: [admin, operator]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OnCallOverridePayload" }
+      responses:
+        "201":
+          description: The replacement.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallOverride" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/schedules/{id}/overrides/{oid}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+      - { name: oid, in: path, required: true, schema: { type: integer, format: int64 } }
+    delete:
+      operationId: deleteOnCallOverride
+      tags: [On-call]
+      summary: Remove a replacement
+      x-token-scope: write
+      x-roles: [admin, operator]
+      responses:
+        "204": { description: Replacement removed. }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/policies:
+    get:
+      operationId: listEscalationPolicies
+      tags: [On-call]
+      summary: Every escalation policy, with the on-call channels that run it
+      x-token-scope: read
+      responses:
+        "200":
+          description: Policies.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/EscalationPolicy" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createEscalationPolicy
+      tags: [On-call]
+      summary: Create an escalation policy
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EscalationPolicyPayload" }
+      responses:
+        "201":
+          description: The policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EscalationPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/policies/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateEscalationPolicy
+      tags: [On-call]
+      summary: Replace an escalation policy
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EscalationPolicyPayload" }
+      responses:
+        "200":
+          description: The policy.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EscalationPolicy" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: deleteEscalationPolicy
+      tags: [On-call]
+      summary: Delete an escalation policy (refused while an on-call channel runs it)
+      x-token-scope: write
+      responses:
+        "204": { description: Policy deleted. }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/oncall/escalations:
+    get:
+      operationId: listEscalations
+      tags: [On-call]
+      summary: Escalations, newest first, with their log (who was called, when, how, who acknowledged)
+      x-token-scope: read
+      parameters:
+        - { name: status, in: query, schema: { type: string, enum: [active, ended, all] } }
+        - { name: fingerprint, in: query, schema: { type: string } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200, default: 50 } }
+      responses:
+        "200":
+          description: Escalations.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Escalation" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/account/contacts/options:
+    get:
+      operationId: contactOptions
+      tags: [On-call]
+      summary: Services a person can add as their own contact, and team channels that can reach one person
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Options.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContactOptions" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/account/contacts:
+    get:
+      operationId: listMyContacts
+      tags: [On-call]
+      summary: The signed-in account's on-call contact methods
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Contacts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Contact" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createMyContact
+      tags: [On-call]
+      summary: Add an on-call contact method to the signed-in account
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactPayload" }
+      responses:
+        "201":
+          description: The contact.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Contact" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/account/contacts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateMyContact
+      tags: [On-call]
+      summary: Update a contact method (omitting `secrets` keeps them, `{}` clears them)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContactPayload" }
+      responses:
+        "200":
+          description: The contact.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Contact" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: deleteMyContact
+      tags: [On-call]
+      summary: Remove a contact method
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Contact removed. }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/account/contacts/{id}/test:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: testMyContact
+      tags: [On-call]
+      summary: Send a test message to a contact method
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Sent.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ChannelTestReport" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/account/oncall:
+    get:
+      operationId: myOnCallProfile
+      tags: [On-call]
+      summary: The signed-in account's time zone, quiet hours, current and next shifts
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallProfile" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: updateMyOnCallProfile
+      tags: [On-call]
+      summary: Set the time zone and quiet hours (null quiet hours clear them)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/OnCallProfilePayload" }
+      responses:
+        "200":
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallProfile" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/account/oncall/calendar:
+    post:
+      operationId: createMyOnCallCalendar
+      tags: [On-call]
+      summary: Create a new iCal subscription link (the previous one stops working)
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: The link, shown once.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/OnCallCalendarLink" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: revokeMyOnCallCalendar
+      tags: [On-call]
+      summary: Revoke the iCal subscription link
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Link revoked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/public/oncall/calendar/{token}:
+    parameters:
+      - { name: token, in: path, required: true, description: "The secret of the link, with or without `.ics`.", schema: { type: string } }
+    get:
+      operationId: onCallCalendar
+      tags: [On-call]
+      summary: A person's on-call shifts as an iCalendar feed (30 days back, 90 days ahead)
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The calendar.
+          content:
+            text/calendar:
+              schema: { type: string }
+        "404": { $ref: "#/components/responses/NotFound" }
+
 components:
   securitySchemes:
     bearerAuth:
@@ -7617,6 +8090,9 @@ components:
         destination:
           type: boolean
           description: The field says where the secrets go; changing it on update requires `secrets` in the same request.
+        lookup:
+          type: string
+          description: Empty, or a list the UI loads itself (`oncall_policies`, the escalation policies) to offer as choices.
     Channel:
       type: object
       required: [id, name, kind, enabled, settings, has_secret, policy]
@@ -9711,3 +10187,227 @@ components:
         scopes: { type: array, items: { type: string } }
         loopback_redirect_uri: { type: string }
         callback_path: { type: string }
+    OnCallPerson:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        username: { type: string }
+        display_name: { type: string }
+        role: { type: string, enum: [admin, operator, viewer] }
+        disabled: { type: boolean }
+        contacts: { type: integer, description: Enabled contact methods. }
+    OnCallEntry:
+      type: object
+      properties:
+        schedule_id: { type: integer, format: int64 }
+        schedule_name: { type: string }
+        user_id: { type: [integer, "null"], format: int64 }
+        since: { type: [string, "null"], format: date-time }
+        until: { type: [string, "null"], format: date-time }
+        override_id: { type: [integer, "null"], format: int64 }
+    OnCallWindow:
+      type: object
+      description: Weekly window in the schedule's time zone; an end at or before the start crosses midnight, equal start and end cover the whole day.
+      required: [days, start_minute, end_minute]
+      properties:
+        days: { type: array, items: { type: integer, minimum: 0, maximum: 6 }, description: "0 = Monday." }
+        start_minute: { type: integer, minimum: 0, maximum: 1439 }
+        end_minute: { type: integer, minimum: 0, maximum: 1439 }
+    OnCallLayer:
+      type: object
+      required: [rotation, participants]
+      properties:
+        name: { type: string }
+        rotation:
+          type: object
+          required: [kind, start]
+          properties:
+            kind: { type: string, enum: [daily, weekly, custom] }
+            start: { type: string, description: "First handoff, local time of the schedule (YYYY-MM-DDTHH:MM)." }
+            length: { type: integer, minimum: 1, description: Custom rotations only. }
+            unit: { type: string, enum: [hours, days, weeks], description: Custom rotations only. }
+        participants: { type: array, items: { type: integer, format: int64 }, description: Account ids in rotation order. }
+        restrictions: { type: array, items: { $ref: "#/components/schemas/OnCallWindow" } }
+    OnCallSchedulePayload:
+      type: object
+      required: [name, timezone, layers]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        timezone: { type: string, description: IANA time zone. }
+        handoff_notifications: { type: boolean }
+        layers: { type: array, items: { $ref: "#/components/schemas/OnCallLayer" }, description: A later layer wins where it is active. }
+    OnCallSchedule:
+      allOf:
+        - $ref: "#/components/schemas/OnCallSchedulePayload"
+        - type: object
+          properties:
+            id: { type: integer, format: int64 }
+            now:
+              type: [object, "null"]
+              properties:
+                user_id: { type: integer, format: int64 }
+                since: { type: [string, "null"], format: date-time }
+                until: { type: [string, "null"], format: date-time }
+                layer: { type: [integer, "null"] }
+                override_id: { type: [integer, "null"], format: int64 }
+            created_at: { type: string }
+            updated_at: { type: string }
+    OnCallShift:
+      type: object
+      properties:
+        start: { type: string, format: date-time }
+        end: { type: string, format: date-time }
+        user_id: { type: integer, format: int64 }
+        layer: { type: [integer, "null"] }
+        override_id: { type: [integer, "null"], format: int64 }
+    OnCallShifts:
+      type: object
+      properties:
+        final: { type: array, items: { $ref: "#/components/schemas/OnCallShift" } }
+        layers: { type: array, items: { type: array, items: { $ref: "#/components/schemas/OnCallShift" } } }
+        overrides: { type: array, items: { $ref: "#/components/schemas/OnCallOverride" } }
+    OnCallOverridePayload:
+      type: object
+      required: [user_id, starts_at, ends_at]
+      properties:
+        user_id: { type: integer, format: int64, description: Who takes the shift. }
+        replaces: { type: [integer, "null"], format: int64, description: "Only while this person would be on call; null: whoever is." }
+        starts_at: { type: string, format: date-time }
+        ends_at: { type: string, format: date-time }
+        note: { type: string }
+    OnCallOverride:
+      allOf:
+        - $ref: "#/components/schemas/OnCallOverridePayload"
+        - type: object
+          properties:
+            id: { type: integer, format: int64 }
+            schedule_id: { type: integer, format: int64 }
+            created_by: { type: string }
+            created_at: { type: string }
+    EscalationStep:
+      type: object
+      required: [delay_minutes, targets]
+      properties:
+        delay_minutes: { type: integer, minimum: 1, maximum: 1440, description: Wait after this step before the next one. }
+        targets:
+          type: array
+          items:
+            type: object
+            required: [type, id]
+            properties:
+              type: { type: string, enum: [schedule, user, channel] }
+              id: { type: integer, format: int64 }
+    EscalationPolicyPayload:
+      type: object
+      required: [name, steps]
+      properties:
+        name: { type: string }
+        description: { type: string }
+        repeat: { type: integer, minimum: 0, maximum: 9, description: Extra rounds of the whole chain after the last step. }
+        steps: { type: array, items: { $ref: "#/components/schemas/EscalationStep" } }
+    EscalationPolicy:
+      allOf:
+        - $ref: "#/components/schemas/EscalationPolicyPayload"
+        - type: object
+          properties:
+            id: { type: integer, format: int64 }
+            channels: { type: array, items: { type: integer, format: int64 }, description: On-call channels that run this policy. }
+            created_at: { type: string }
+            updated_at: { type: string }
+    Escalation:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        policy_id: { type: integer, format: int64 }
+        policy_name: { type: string }
+        channel_id: { type: integer, format: int64 }
+        fingerprint: { type: string }
+        target_id: { type: [integer, "null"], format: int64 }
+        target_name: { type: string }
+        rule_name: { type: string }
+        severity: { type: string, enum: [info, warning, critical] }
+        status: { type: string, enum: [active, acked, resolved, exhausted, cancelled] }
+        step: { type: integer, description: Next step index. }
+        round: { type: integer }
+        next_at: { type: [string, "null"], format: date-time }
+        started_at: { type: [string, "null"], format: date-time }
+        ended_at: { type: [string, "null"], format: date-time }
+        acked_by: { type: [string, "null"] }
+        events:
+          type: array
+          items:
+            type: object
+            properties:
+              at: { type: string, format: date-time }
+              step: { type: [integer, "null"] }
+              round: { type: [integer, "null"] }
+              event: { type: string, enum: [started, notified, failed, skipped, acked, resolved, exhausted, cancelled] }
+              user_id: { type: [integer, "null"], format: int64 }
+              user_name: { type: [string, "null"] }
+              via: { type: string }
+              kind: { type: string }
+              detail: { type: string }
+    ContactOptions:
+      type: object
+      properties:
+        kinds: { type: array, items: { type: string } }
+        team_channels:
+          type: array
+          items:
+            type: object
+            properties:
+              id: { type: integer, format: int64 }
+              name: { type: string }
+              kind: { type: string }
+              recipient: { type: string, enum: [email, phone, chat_id] }
+    ContactPayload:
+      type: object
+      required: [label]
+      properties:
+        label: { type: string }
+        kind: { type: string, description: Own service (one of `ContactOptions.kinds`). }
+        via_channel_id: { type: [integer, "null"], format: int64, description: Team channel that reaches this address instead. }
+        address: { type: [string, "null"] }
+        settings: { type: object }
+        secrets: { type: object, description: "Omitted: kept. `{}`: cleared." }
+        enabled: { type: boolean }
+        min_severity: { type: string, enum: [info, warning, critical] }
+    Contact:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        label: { type: string }
+        kind: { type: string }
+        via_channel_id: { type: [integer, "null"], format: int64 }
+        via_channel_name: { type: [string, "null"] }
+        address: { type: [string, "null"] }
+        settings: { type: object }
+        has_secret: { type: boolean }
+        enabled: { type: boolean }
+        min_severity: { type: string, enum: [info, warning, critical] }
+        last_error: { type: [string, "null"] }
+        last_used_at: { type: [string, "null"], format: date-time }
+    OnCallProfilePayload:
+      type: object
+      properties:
+        timezone: { type: string }
+        quiet_hours: { type: [object, "null"], description: "A weekly window, as a channel's quiet hours. Outside on-call duty, only critical alerts get through during it." }
+    OnCallProfile:
+      type: object
+      properties:
+        timezone: { type: string }
+        quiet_hours: { type: [object, "null"] }
+        calendar: { type: boolean, description: An iCal link exists. }
+        on_call: { type: array, items: { $ref: "#/components/schemas/OnCallEntry" } }
+        next_shift:
+          type: [object, "null"]
+          properties:
+            schedule_id: { type: integer, format: int64 }
+            schedule_name: { type: string }
+            start: { type: string, format: date-time }
+            end: { type: string, format: date-time }
+    OnCallCalendarLink:
+      type: object
+      properties:
+        url: { type: string }

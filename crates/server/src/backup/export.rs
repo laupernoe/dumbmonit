@@ -65,6 +65,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
+        oncall: crate::backup::oncall::collect(pool, cipher).await?,
     })
 }
 
@@ -628,5 +629,10 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
+        (
+            "oncall",
+            "On-call schedules, replacements, escalation policies, and each account's contacts \
+             (with their secrets) and quiet hours.",
+        ),
     ])
 }

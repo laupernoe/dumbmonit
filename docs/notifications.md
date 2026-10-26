@@ -781,6 +781,14 @@ As with PagerDuty, a resolution closes the alert, identified by its alias.
 > channel stays for existing installations; for a new one, prefer PagerDuty or a
 > custom channel pointing to Jira Service Management.
 
+### DumbMonit on-call
+
+Pages the person on call, then escalates step by step until someone
+acknowledges. It has a single setting, the **escalation policy** to run, and no
+secret. Schedules, contacts and policies are described in
+[On-call](alerting/oncall.md); the channel goes through the usual routing
+(labels, minimum severity, channels chosen per rule).
+
 ### Custom webhook
 
 See [The custom channel](#the-custom-channel) above.

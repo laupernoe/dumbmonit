@@ -156,6 +156,7 @@ nav:
       - Rules: alerting/rules.md
       - Maintenance windows: alerting/maintenance.md
       - Notification policy: alerting/notifications.md
+      - On-call: alerting/oncall.md
       - Notification channels: notifications.md
   - Using DumbMonit:
       - Overview page: using/overview.md

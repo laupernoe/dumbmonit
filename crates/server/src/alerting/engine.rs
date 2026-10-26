@@ -176,6 +176,7 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
     let forgotten = db::alerts::purge_stale_baselines(pool, baseline_cutoff).await?;
 
     let expired = db::alerts::purge_expired_silences(pool, now).await?;
+    let escalations = crate::oncall::runner::maintenance(pool, now).await?;
 
     // Le registre des notifications ne sert qu'aux fenêtres glissantes du pipeline
     // (plafond horaire, battement, délai minimal) : au-delà, il ne vaut rien.
@@ -188,6 +189,7 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
         historique = removed,
         baselines = forgotten,
         silences = expired,
+        escalades = escalations,
         registre = ledger,
         "maintenance done"
     );
@@ -347,6 +349,20 @@ pub async fn evaluate_once(
     )
     .await;
 
+    // Astreintes : les escalades en cours avancent (étape suivante, arrêt à
+    // l'acquittement), les relèves sont annoncées. Une erreur ici ne doit pas
+    // empêcher le cycle d'enregistrer ce qui précède.
+    let oncall = crate::oncall::runner::Ctx {
+        pool,
+        cipher,
+        http,
+        public_url: public_url.as_deref(),
+        action_key: action_key.as_ref(),
+    };
+    if let Err(error) = crate::oncall::runner::tick(&oncall, now).await {
+        warn!(?error, "on-call pass failed");
+    }
+
     // L'historique explique pourquoi une transition n'est pas partie : la raison
     // du cycle (suppression, maintenance, apprentissage) prime, sinon celle de la
     // politique (battement, filtre de canal, délai minimal).
@@ -409,6 +425,44 @@ async fn send_outgoing(
         let Some(config) = channels.iter().find(|channel| channel.id == out.channel_id) else {
             continue;
         };
+        // Canal d'astreinte : pas de message, une escalade s'ouvre (ou se
+        // referme) et `oncall::runner::tick` l'appellera dans la foulée.
+        if config.kind == crate::oncall::CHANNEL_KIND {
+            let ctx = crate::oncall::runner::Ctx {
+                pool,
+                cipher: store.cipher,
+                http,
+                public_url,
+                action_key,
+            };
+            let error = crate::oncall::runner::engage(&ctx, config, &out.digest, now)
+                .await
+                .err()
+                .map(|error| format!("{error:#}"));
+            let delivery = notify::DeliveryReport {
+                channel_id: config.id,
+                channel_name: config.name.clone(),
+                transient: false,
+                error,
+            };
+            stats().notification(&config.kind, !delivery.is_success());
+            if delivery.is_success() {
+                report.notifications_sent += 1;
+                if let Err(error) =
+                    policy_store::record_sent(pool, out.channel_id, &out.queue_ids, &out.sent, now)
+                        .await
+                {
+                    warn!(?error, "sent notification not recorded");
+                }
+            } else {
+                report.notifications_failed += 1;
+                warn!(channel = %config.name, "on-call escalation not started");
+            }
+            if let Err(error) = db::alerts::record_delivery(pool, &delivery, now).await {
+                warn!(?error, "delivery report not recorded");
+            }
+            continue;
+        }
         let mut message = notify::render_digest(&out.digest, public_url);
         if let (Some(key), Some(base)) = (action_key, public_url) {
             let alerts = notify::message::actionable_alerts(&out.digest);
