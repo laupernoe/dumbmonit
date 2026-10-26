@@ -3648,6 +3648,88 @@ const SOPHOS_OPTIONS: &[OptionView] = &[
     VENDOR_TIMEOUT,
 ];
 
+/// Compte local du NAS QNAP (`collectors/qnap`), lu par les pages CGI de QTS.
+const QNAP_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name and password",
+    help: "The dumbmonit account created on the NAS. The password is sent base64-encoded to the login page, as the web interface does.",
+    fields: &[
+        cred_text("username", "User name", "The account created for DumbMonit.", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const QNAP_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: 443 over HTTPS, and 8080 over HTTP (enter it, QTS does not use 80).",
+        "443",
+        "443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Utilisateur du tableau de bord Ceph au rôle `read-only` (`collectors/ceph`).
+const CEPH_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Dashboard user and password",
+    help: "The dumbmonit user of the Ceph dashboard, with the read-only role.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The dashboard user created for DumbMonit.",
+            "dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const CEPH_OPTIONS: &[OptionView] = &[
+    app_scheme("https"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the dashboard port, 8443 over HTTPS and 8080 over HTTP.",
+        "8443",
+        "8443",
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+];
+
+/// Jeton JWT de `mc admin prometheus generate`, envoyé en `Authorization: Bearer`.
+const MINIO_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Prometheus token",
+    help: "The bearer_token printed by mc admin prometheus generate. It opens the metrics pages only.",
+    fields: &[cred_secret(
+        "token",
+        "Prometheus token",
+        "The JWT printed after bearer_token. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const MINIO_OPTIONS: &[OptionView] = &[
+    app_scheme("http"),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port: the S3 API port, 9000 (not the console, 9001).",
+        "9000",
+        "9000",
+    ),
+    insecure_tls(
+        "For a server with TLS enabled and a self-signed or private certificate: enable this if the connection is refused for that reason.",
+    ),
+    VENDOR_TIMEOUT,
+];
+
 /// Sujet XAPI de `collectors/xcpng` : un compte de l'annuaire du pool (Active
 /// Directory, ou PAM sur les hôtes), au rôle intégré `read-only`.
 const XCPNG_LOGIN: CredentialView = CredentialView {
@@ -5826,6 +5908,86 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: SOPHOS_OPTIONS,
         },
+        "qnap" => CollectorView {
+            kind: "qnap",
+            label: "QNAP QTS / QuTS hero",
+            summary: "Beta. A QNAP NAS through the CGI pages of its web interface: volumes filling up, disks whose SMART health is no longer good or too hot, processor temperature, firmware updates.",
+            examples: &["QNAP TS-453D", "QuTS hero NAS", "QTS 5.x"],
+            credential_types: &["username_password"],
+            credentials: &[QNAP_LOGIN],
+            address_hint: "nas.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a limited account for DumbMonit",
+                steps: &[
+                    "Open Control Panel → Privilege → Users → Create → Create a User and create the account as follows, with a long random password. Tick no share and no application privilege.\ndumbmonit",
+                    "Add the account to the administrators group: QTS serves the system status, volumes and disks to that group only.",
+                    "Optional: under Control Panel → System → Security → Allow/Deny List, allow the web interface only from the DumbMonit server's address.",
+                    "In DumbMonit, enter the NAS address (for example nas.lan) with that user name and password. Choose http and port 8080 only if HTTPS is off.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "Web interface (HTTPS, default)"),
+                    to_device_optional!(8080, "tcp", "Only with the HTTP protocol option"),
+                ],
+                permissions: &[
+                    "administrators group\nThe only group QTS lets read the system status",
+                    "No share, no application privilege\nNothing else is needed",
+                ],
+                warning: "QTS has no read-only role for its system status, so the account sits in the administrators group: give it a unique password, and an account without 2-step verification. Over HTTP the password travels base64-encoded, not encrypted: prefer HTTPS.",
+            },
+            options: QNAP_OPTIONS,
+        },
+        "ceph" => CollectorView {
+            kind: "ceph",
+            label: "Ceph",
+            summary: "Beta. A Ceph cluster through the REST API of the manager's dashboard: health and its checks, OSDs down or nearly full, placement groups not clean, capacity, pools, monitors out of the quorum.",
+            examples: &["Ceph 18 (Reef)", "Ceph 19 (Squid)", "cephadm clusters"],
+            credential_types: &["username_password"],
+            credentials: &[CEPH_LOGIN],
+            address_hint: "ceph.lan",
+            default_port: 8443,
+            setup: Setup {
+                title: "Create a read-only dashboard user for DumbMonit",
+                steps: &[
+                    "Check that the dashboard is enabled and note the address of the active manager.\nceph mgr services",
+                    "Write a long random password to a file, and keep it: DumbMonit needs it.\nopenssl rand -base64 24 | tr -d '\\n' | tee /tmp/dumbmonit.pwd",
+                    "Create the user with the built-in read-only role.\nceph dashboard ac-user-create dumbmonit -i /tmp/dumbmonit.pwd read-only",
+                    "Delete the password file.\nshred -u /tmp/dumbmonit.pwd",
+                    "In DumbMonit, enter the address of the active manager (for example ceph.lan) with that user name and password.",
+                ],
+                ports: &[
+                    to_device!(8443, "tcp", "Dashboard REST API (HTTPS, default)"),
+                    to_device_optional!(8080, "tcp", "Only with the HTTP protocol option"),
+                ],
+                permissions: &["read-only role\nReads the state of the cluster, changes nothing"],
+                warning: "A standby manager redirects to the active one: use the address of the active manager. The dashboard ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+            },
+            options: CEPH_OPTIONS,
+        },
+        "minio" => CollectorView {
+            kind: "minio",
+            label: "MinIO",
+            summary: "Beta. A MinIO object store through its Prometheus metrics: nodes and drives offline, capacity, failed heals, replication failures and S3 server errors.",
+            examples: &["MinIO single node", "MinIO distributed cluster"],
+            credential_types: &["api_token", "none"],
+            credentials: &[MINIO_TOKEN, NO_AUTH],
+            address_hint: "minio.lan",
+            default_port: 9000,
+            setup: Setup {
+                title: "Generate a Prometheus token for DumbMonit",
+                steps: &[
+                    "With the mc client configured for your MinIO (alias myminio), generate the token of the cluster metrics.\nmc admin prometheus generate myminio cluster",
+                    "Copy the value after bearer_token in the output: that is the token.",
+                    "In DumbMonit, enter the MinIO address (for example minio.lan), paste the token as Prometheus token and choose https if MinIO serves TLS.",
+                ],
+                ports: &[to_device!(9000, "tcp", "S3 API and metrics (HTTP or HTTPS, default)")],
+                permissions: &[
+                    "Prometheus token\nOpens the metrics pages only, no S3 or console access",
+                ],
+                warning: "The token only opens the metrics pages, but anyone holding it can read them. If MinIO runs with MINIO_PROMETHEUS_AUTH_TYPE=public, the metrics need no token: choose No authentication.",
+            },
+            options: MINIO_OPTIONS,
+        },
         "openvpn" => CollectorView {
             kind: "openvpn",
             label: "OpenVPN server",
@@ -5884,7 +6046,8 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
+        | "sophos" | "qnap" | "ceph" | "minio" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "webchange" | "website" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -6032,6 +6195,9 @@ mod tests {
         "tailscale",
         "fortigate",
         "sophos",
+        "qnap",
+        "ceph",
+        "minio",
         "openvpn",
         "xcpng",
         "nutanix",
@@ -6597,6 +6763,9 @@ mod tests {
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
             ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
+            ("qnap", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("ceph", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("minio", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             ("xcpng", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("nutanix", &["port", "insecure_tls", "request_timeout_seconds"]),
         ];
@@ -6792,15 +6961,28 @@ mod tests {
             ("veeam", dumbmonit_collectors::veeam::DEFAULT_PORT),
             ("fortigate", dumbmonit_collectors::fortigate::DEFAULT_PORT),
             ("sophos", dumbmonit_collectors::sophos::DEFAULT_PORT),
+            ("qnap", dumbmonit_collectors::qnap::DEFAULT_PORT),
+            ("ceph", dumbmonit_collectors::ceph::DEFAULT_PORT),
+            ("minio", dumbmonit_collectors::minio::DEFAULT_PORT),
             ("xcpng", dumbmonit_collectors::xcpng::DEFAULT_PORT),
             ("nutanix", dumbmonit_collectors::nutanix::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
             assert_eq!(describe(kind).default_port, port, "{kind}");
         }
-        for kind in
-            ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos", "xcpng", "nutanix"]
-        {
+        for kind in [
+            "pfsense",
+            "unraid",
+            "veeam",
+            "tailscale",
+            "fortigate",
+            "sophos",
+            "xcpng",
+            "nutanix",
+            "qnap",
+            "ceph",
+            "minio",
+        ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
                 dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
@@ -7066,6 +7248,8 @@ mod tests {
             ("tailscale", "devices:core:read"),
             ("fortigate", "dumbmonit"),
             ("sophos", "dumbmonit"),
+            ("qnap", "dumbmonit"),
+            ("ceph", "dumbmonit"),
             ("xcpng", "dumbmonit"),
             ("nutanix", "dumbmonit"),
             ("nextcloud", "token"),
@@ -7266,6 +7450,9 @@ mod tests {
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
+            ("qnap", include_str!("../../../../docs/devices/qnap.md")),
+            ("ceph", include_str!("../../../../docs/devices/ceph.md")),
+            ("minio", include_str!("../../../../docs/devices/minio.md")),
             ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
             ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),
             ("agent", include_str!("../../../../docs/devices/agent.md")),

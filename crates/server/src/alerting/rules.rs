@@ -5840,6 +5840,297 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_sophos_interface_down",
             )
         },
+        // --- QNAP QTS (`collectors/qnap`) ---
+        Rule {
+            description: "A QNAP volume is more than 90 % full: shares, snapshots and apps stop being able to write.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "qnap_volume_full",
+                "QNAP volume nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_volume_used_percent",
+            )
+        },
+        Rule {
+            description: "The SMART health of a QNAP disk is no longer good (warning or abnormal): replace it before the RAID loses redundancy.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "qnap_disk_unhealthy",
+                "QNAP disk health not good",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_disk_ok",
+            )
+        },
+        Rule {
+            description: "A QNAP disk has stayed above 55 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 55.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "qnap_disk_hot",
+                "QNAP disk too hot",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_disk_temperature_celsius",
+            )
+        },
+        Rule {
+            description: "The QNAP processor has stayed above 90 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "qnap_cpu_hot",
+                "QNAP processor too hot",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_cpu_temperature_celsius",
+            )
+        },
+        Rule {
+            description: "QNAP offers a newer QTS or QuTS hero release.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(1 * 3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "qnap_firmware_update",
+                "QNAP firmware update",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_firmware_update_available",
+            )
+        },
+        // --- Ceph (`collectors/ceph`) ---
+        Rule {
+            description: "The Ceph cluster reports HEALTH_ERR: data may be unavailable or at risk.".to_string(),
+            operator: Operator::Gt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base(
+                "ceph_health_error",
+                "Ceph health error",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_health_status",
+            )
+        },
+        Rule {
+            description: "The Ceph cluster has reported HEALTH_WARN for 30 minutes: see its health checks.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ceph_health_warn",
+                "Ceph health warning",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_health_status",
+            )
+        },
+        Rule {
+            description: "One or more Ceph OSDs are down: the cluster rebuilds their data elsewhere and loses redundancy meanwhile.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ceph_osd_down",
+                "Ceph OSD down",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_osds_down",
+            )
+        },
+        Rule {
+            description: "Some Ceph placement groups have not been active+clean for 30 minutes: data is degraded, misplaced or inactive.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ceph_pg_unclean",
+                "Ceph placement groups not clean",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_pgs_unclean",
+            )
+        },
+        Rule {
+            description: "Ceph reports unfound objects: no copy of some data can be found.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base(
+                "ceph_objects_unfound",
+                "Ceph objects unfound",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_objects_unfound",
+            )
+        },
+        Rule {
+            description: "The Ceph cluster is more than 80 % full: it turns read-only at 95 %, and rebuilding after a failure needs free space.".to_string(),
+            operator: Operator::Gt,
+            threshold: 80.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "ceph_capacity_high",
+                "Ceph capacity high",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_capacity_used_percent",
+            )
+        },
+        Rule {
+            description: "A Ceph OSD is more than 85 % full (the default nearfull ratio): writes to it stop at the full ratio.".to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base(
+                "ceph_osd_nearly_full",
+                "Ceph OSD nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_osd_used_percent",
+            )
+        },
+        Rule {
+            description: "A Ceph pool is more than 90 % full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base(
+                "ceph_pool_nearly_full",
+                "Ceph pool nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_pool_used_percent",
+            )
+        },
+        Rule {
+            description: "A Ceph monitor is out of the quorum: one more loss and the cluster stops.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base(
+                "ceph_mon_out_of_quorum",
+                "Ceph monitor out of quorum",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_mons_out_of_quorum",
+            )
+        },
+        // --- MinIO (`collectors/minio`) ---
+        Rule {
+            description: "A MinIO node is offline: the cluster runs with less parity.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(1 * 3600)),
+            ..base(
+                "minio_node_offline",
+                "MinIO node offline",
+                RuleKind::Threshold,
+                "dumbmonit_minio_nodes_offline",
+            )
+        },
+        Rule {
+            description: "A MinIO drive is offline: objects are rebuilt from parity until it is back.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_drive_offline",
+                "MinIO drive offline",
+                RuleKind::Threshold,
+                "dumbmonit_minio_drives_offline",
+            )
+        },
+        Rule {
+            description: "The usable capacity of the MinIO cluster is more than 85 % used.".to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "minio_capacity_high",
+                "MinIO capacity high",
+                RuleKind::Threshold,
+                "dumbmonit_minio_capacity_usable_used_percent",
+            )
+        },
+        Rule {
+            description: "MinIO could not heal some objects in its current self-healing run.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_heal_failures",
+                "MinIO heal failures",
+                RuleKind::Threshold,
+                "dumbmonit_minio_heal_objects_failed",
+            )
+        },
+        Rule {
+            description: "Objects of a MinIO bucket failed to replicate to the remote site.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_replication_failed",
+                "MinIO replication failures",
+                RuleKind::Threshold,
+                "dumbmonit_minio_replication_failed_objects",
+            )
+        },
+        Rule {
+            description: "More than 5 % of the S3 requests MinIO served in the last 10 minutes failed with a server error (5xx).".to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_s3_server_errors",
+                "MinIO S3 server errors",
+                RuleKind::Threshold,
+                "100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])",
+            )
+        },
         // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
         Rule {
             description: "libvirt reports a KVM domain as crashed: the hypervisor had to stop it.".to_string(),
@@ -6616,6 +6907,26 @@ mod tests {
             "fortigate_license_expiring",
             "fortigate_firmware_update",
             "sophos_interface_down",
+            "qnap_volume_full",
+            "qnap_disk_unhealthy",
+            "qnap_disk_hot",
+            "qnap_cpu_hot",
+            "qnap_firmware_update",
+            "ceph_health_error",
+            "ceph_health_warn",
+            "ceph_osd_down",
+            "ceph_pg_unclean",
+            "ceph_objects_unfound",
+            "ceph_capacity_high",
+            "ceph_osd_nearly_full",
+            "ceph_pool_nearly_full",
+            "ceph_mon_out_of_quorum",
+            "minio_node_offline",
+            "minio_drive_offline",
+            "minio_capacity_high",
+            "minio_heal_failures",
+            "minio_replication_failed",
+            "minio_s3_server_errors",
             "libvirt_domain_crashed",
             "libvirt_pool_almost_full",
             "xcpng_host_offline",
@@ -7086,6 +7397,27 @@ mod tests {
             "dumbmonit_fortigate_license_expiry_seconds",
             "dumbmonit_fortigate_firmware_update_available",
             "dumbmonit_sophos_interface_down",
+            // QNAP, Ceph, MinIO (`collectors/{qnap,ceph,minio}`).
+            "dumbmonit_qnap_volume_used_percent",
+            "dumbmonit_qnap_disk_ok",
+            "dumbmonit_qnap_disk_temperature_celsius",
+            "dumbmonit_qnap_cpu_temperature_celsius",
+            "dumbmonit_qnap_firmware_update_available",
+            "dumbmonit_ceph_health_status",
+            "dumbmonit_ceph_osds_down",
+            "dumbmonit_ceph_pgs_unclean",
+            "dumbmonit_ceph_objects_unfound",
+            "dumbmonit_ceph_capacity_used_percent",
+            "dumbmonit_ceph_osd_used_percent",
+            "dumbmonit_ceph_pool_used_percent",
+            "dumbmonit_ceph_mons_out_of_quorum",
+            "dumbmonit_minio_nodes_offline",
+            "dumbmonit_minio_drives_offline",
+            "dumbmonit_minio_capacity_usable_used_percent",
+            "dumbmonit_minio_heal_objects_failed",
+            "dumbmonit_minio_replication_failed_objects",
+            "dumbmonit_minio_s3_requests_5xx_total",
+            "dumbmonit_minio_s3_requests_total",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",

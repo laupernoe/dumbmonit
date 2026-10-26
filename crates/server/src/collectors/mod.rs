@@ -41,6 +41,7 @@ pub use dumbmonit_collectors::{
 pub use dumbmonit_collectors::{
     CaddyCollector, DomainCollector, NpmCollector, TraefikCollector, caddy, domain, npm, traefik,
 };
+pub use dumbmonit_collectors::{CephCollector, MinioCollector, QnapCollector, ceph, minio, qnap};
 pub use dumbmonit_collectors::{
     CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
     rabbitmq, redis,

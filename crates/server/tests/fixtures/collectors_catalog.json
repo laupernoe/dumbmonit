@@ -703,6 +703,128 @@
     ]
   },
   {
+    "kind": "ceph",
+    "label": "Ceph",
+    "summary": "Beta. A Ceph cluster through the REST API of the manager's dashboard: health and its checks, OSDs down or nearly full, placement groups not clean, capacity, pools, monitors out of the quorum.",
+    "examples": [
+      "Ceph 18 (Reef)",
+      "Ceph 19 (Squid)",
+      "cephadm clusters"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Dashboard user and password",
+        "help": "The dumbmonit user of the Ceph dashboard, with the read-only role.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The dashboard user created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "ceph.lan",
+    "default_port": 8443,
+    "setup": {
+      "title": "Create a read-only dashboard user for DumbMonit",
+      "steps": [
+        "Check that the dashboard is enabled and note the address of the active manager.\nceph mgr services",
+        "Write a long random password to a file, and keep it: DumbMonit needs it.\nopenssl rand -base64 24 | tr -d '\\n' | tee /tmp/dumbmonit.pwd",
+        "Create the user with the built-in read-only role.\nceph dashboard ac-user-create dumbmonit -i /tmp/dumbmonit.pwd read-only",
+        "Delete the password file.\nshred -u /tmp/dumbmonit.pwd",
+        "In DumbMonit, enter the address of the active manager (for example ceph.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 8443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Dashboard REST API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "read-only role\nReads the state of the cluster, changes nothing"
+      ],
+      "warning": "A standby manager redirects to the active one: use the address of the active manager. The dashboard ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ceph/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the dashboard port, 8443 over HTTPS and 8080 over HTTP.",
+        "placeholder": "8443",
+        "default": "8443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "crowdsec",
     "label": "CrowdSec",
     "summary": "The security engine: active decisions, alerts, bouncers that stopped pulling, log lines read and not parsed, Local API health.",
@@ -3399,6 +3521,116 @@
         "help": "Beyond this, the next interfaces are counted but not read. From 1 to 1000.",
         "placeholder": "64",
         "default": "64",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "minio",
+    "label": "MinIO",
+    "summary": "Beta. A MinIO object store through its Prometheus metrics: nodes and drives offline, capacity, failed heals, replication failures and S3 server errors.",
+    "examples": [
+      "MinIO single node",
+      "MinIO distributed cluster"
+    ],
+    "credential_types": [
+      "api_token",
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Prometheus token",
+        "help": "The bearer_token printed by mc admin prometheus generate. It opens the metrics pages only.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Prometheus token",
+            "help": "The JWT printed after bearer_token. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "minio.lan",
+    "default_port": 9000,
+    "setup": {
+      "title": "Generate a Prometheus token for DumbMonit",
+      "steps": [
+        "With the mc client configured for your MinIO (alias myminio), generate the token of the cluster metrics.\nmc admin prometheus generate myminio cluster",
+        "Copy the value after bearer_token in the output: that is the token.",
+        "In DumbMonit, enter the MinIO address (for example minio.lan), paste the token as Prometheus token and choose https if MinIO serves TLS."
+      ],
+      "ports": [
+        {
+          "port": 9000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "S3 API and metrics (HTTP or HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Prometheus token\nOpens the metrics pages only, no S3 or console access"
+      ],
+      "warning": "The token only opens the metrics pages, but anyone holding it can read them. If MinIO runs with MINIO_PROMETHEUS_AUTH_TYPE=public, the metrics need no token: choose No authentication.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/minio/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the S3 API port, 9000 (not the console, 9001).",
+        "placeholder": "9000",
+        "default": "9000",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a server with TLS enabled and a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -6835,6 +7067,128 @@
         "default": "10%",
         "required": false,
         "input": "text",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "qnap",
+    "label": "QNAP QTS / QuTS hero",
+    "summary": "Beta. A QNAP NAS through the CGI pages of its web interface: volumes filling up, disks whose SMART health is no longer good or too hot, processor temperature, firmware updates.",
+    "examples": [
+      "QNAP TS-453D",
+      "QuTS hero NAS",
+      "QTS 5.x"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "User name and password",
+        "help": "The dumbmonit account created on the NAS. The password is sent base64-encoded to the login page, as the web interface does.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The account created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "nas.lan",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a limited account for DumbMonit",
+      "steps": [
+        "Open Control Panel → Privilege → Users → Create → Create a User and create the account as follows, with a long random password. Tick no share and no application privilege.\ndumbmonit",
+        "Add the account to the administrators group: QTS serves the system status, volumes and disks to that group only.",
+        "Optional: under Control Panel → System → Security → Allow/Deny List, allow the web interface only from the DumbMonit server's address.",
+        "In DumbMonit, enter the NAS address (for example nas.lan) with that user name and password. Choose http and port 8080 only if HTTPS is off."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web interface (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "administrators group\nThe only group QTS lets read the system status",
+        "No share, no application privilege\nNothing else is needed"
+      ],
+      "warning": "QTS has no read-only role for its system status, so the account sits in the administrators group: give it a unique password, and an account without 2-step verification. Over HTTP the password travels base64-encoded, not encrypted: prefer HTTPS.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/qnap/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: 443 over HTTPS, and 8080 over HTTP (enter it, QTS does not use 80).",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
         "choices": [],
         "group": ""
       }

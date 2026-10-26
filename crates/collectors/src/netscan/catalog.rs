@@ -85,6 +85,14 @@ fn http_products() -> Vec<Fingerprint> {
             .confidence(Confidence::Medium)
             .kind("truenas")
             .prefill(host_prefill()),
+        // QNAP : sans session, `authLogin.cgi` répond par un document XML
+        // `QDocRoot` (authPassed à 0) ; c'est la page que lit l'intégration.
+        Fingerprint::http("qnap.qts", "QNAP QTS", &[443, 8080], "/cgi-bin/authLogin.cgi")
+            .status(200)
+            .body("<QDocRoot version=\"1.0\">")
+            .confidence(Confidence::Medium)
+            .kind("qnap")
+            .prefill(host_prefill()),
         Fingerprint::http("unraid.web", "Unraid", &[80, 443], "/login")
             .status(200)
             .body("Unraid webGUI")
@@ -397,6 +405,7 @@ fn http_products() -> Vec<Fingerprint> {
         Fingerprint::http("minio.live", "MinIO", &[9000], "/minio/health/live")
             .status(200)
             .header("server", "MinIO")
+            .kind("minio")
             .prefill(host_prefill()),
         Fingerprint::http("minio.console", "MinIO Console", &[9001], "/")
             .status(200)
