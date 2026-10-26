@@ -54,6 +54,8 @@ const KINDS = {
 	veeam: 'veeam',
 	tailscale: 'tailscale',
 	fortigate: 'fortinet',
+	meraki: 'cisco',
+	omada: 'omadacloud',
 	postgres: 'postgresql',
 	mysql: 'mysql',
 	mqtt: 'mqtt'
