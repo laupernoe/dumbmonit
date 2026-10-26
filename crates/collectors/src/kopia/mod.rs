@@ -117,8 +117,7 @@ fn present(value: Option<&Value>) -> bool {
 /// Vrai si Kopia déclenche lui-même les instantanés de cette source.
 fn is_scheduled(entry: &Value) -> bool {
     let schedule = entry.get("schedule");
-    let manual =
-        schedule.and_then(|s| s.get("manual")).and_then(Value::as_bool).unwrap_or(false);
+    let manual = schedule.and_then(|s| s.get("manual")).and_then(Value::as_bool).unwrap_or(false);
     if manual {
         return false;
     }
@@ -194,8 +193,7 @@ pub fn samples(r: &Replies, ts_ms: i64) -> Vec<Sample> {
         if let Some(age) = end.or(start).and_then(|t| age_seconds(t, ts_ms)) {
             out.push(named(g("kopia_source_last_snapshot_age_seconds", age)));
         }
-        if let (Some(start), Some(end)) =
-            (start.and_then(instant_ms), end.and_then(instant_ms))
+        if let (Some(start), Some(end)) = (start.and_then(instant_ms), end.and_then(instant_ms))
             && end >= start
         {
             out.push(named(g(
@@ -256,10 +254,7 @@ mod tests {
         let replies = Replies { status: json(STATUS), sources: Some(json(SOURCES_JSON)) };
         let s = samples(&replies, now());
         assert_eq!(value(&s, "kopia_repo_connected", &[]), 1.0);
-        assert_eq!(
-            find(&s, "kopia_repo_info", &[]).unwrap().labels["storage"],
-            "filesystem"
-        );
+        assert_eq!(find(&s, "kopia_repo_info", &[]).unwrap().labels["storage"], "filesystem");
         assert_eq!(value(&s, "kopia_sources", &[]), 4.0, "the remote source is not counted");
         assert_eq!(value(&s, "kopia_sources_remote", &[]), 1.0);
         assert_eq!(value(&s, "kopia_sources_without_snapshot", &[]), 1.0);
@@ -288,8 +283,10 @@ mod tests {
         assert_eq!(value(&s, "kopia_source_has_snapshot", &scratch), 0.0);
         assert_eq!(value(&s, "kopia_source_scheduled", &scratch), 0.0, "manual");
         assert!(find(&s, "kopia_source_last_snapshot_age_seconds", &scratch).is_none());
-        assert!(find(&s, "kopia_source_has_snapshot", &[("source", "anna@laptop:/home/anna")])
-            .is_none());
+        assert!(
+            find(&s, "kopia_source_has_snapshot", &[("source", "anna@laptop:/home/anna")])
+                .is_none()
+        );
     }
 
     #[test]
@@ -303,10 +300,8 @@ mod tests {
 
     #[tokio::test]
     async fn interrogation_complete() {
-        let expected = format!(
-            "Basic {}",
-            base64::engine::general_purpose::STANDARD.encode(b"kopia:s3cret")
-        );
+        let expected =
+            format!("Basic {}", base64::engine::general_purpose::STANDARD.encode(b"kopia:s3cret"));
         let app = Router::new().fallback(get(move |headers: HeaderMap, uri: Uri| {
             let expected = expected.clone();
             async move {
@@ -325,17 +320,13 @@ mod tests {
         let address = serve(app).await;
         let collector = KopiaCollector::new();
         let mut target = cible("kopia", &format!("http://{address}"), &[]);
-        target.credential = Credential::UsernamePassword {
-            username: "kopia".into(),
-            password: "s3cret".into(),
-        };
+        target.credential =
+            Credential::UsernamePassword { username: "kopia".into(), password: "s3cret".into() };
         let s = collector.probe(&target).await.unwrap();
         assert_eq!(value(&s, "kopia_sources", &[]), 4.0);
 
-        target.credential = Credential::UsernamePassword {
-            username: "kopia".into(),
-            password: "wrong".into(),
-        };
+        target.credential =
+            Credential::UsernamePassword { username: "kopia".into(), password: "wrong".into() };
         let error = collector.probe(&target).await.unwrap_err();
         assert!(matches!(error, ProbeError::Auth(_)), "{error}");
         assert!(!error.means_down());

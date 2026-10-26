@@ -39,6 +39,11 @@ pub use dumbmonit_collectors::{
     pihole,
 };
 pub use dumbmonit_collectors::{
+    ArubaCentralCollector, FortigateCollector, PaloaltoCollector, PfsenseCollector,
+    SonicwallCollector, SophosCollector, TailscaleCollector, UnraidCollector, VeeamCollector,
+    arubacentral, fortigate, paloalto, pfsense, sonicwall, sophos, tailscale, unraid, veeam,
+};
+pub use dumbmonit_collectors::{
     CaddyCollector, DomainCollector, NpmCollector, TraefikCollector, caddy, domain, npm, traefik,
 };
 pub use dumbmonit_collectors::{CephCollector, MinioCollector, QnapCollector, ceph, minio, qnap};
@@ -56,11 +61,6 @@ pub use dumbmonit_collectors::{DuplicatiCollector, KopiaCollector, duplicati, ko
 pub use dumbmonit_collectors::{
     ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
     PaperlessCollector, PlexCollector, selfhosted,
-};
-pub use dumbmonit_collectors::{
-    ArubaCentralCollector, FortigateCollector, PaloaltoCollector, PfsenseCollector,
-    SonicwallCollector, SophosCollector, TailscaleCollector, UnraidCollector, VeeamCollector,
-    arubacentral, fortigate, paloalto, pfsense, sonicwall, sophos, tailscale, unraid, veeam,
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{

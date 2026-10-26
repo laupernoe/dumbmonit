@@ -3,10 +3,6 @@
  * few figures and the lists worth reading. One fold per kind, all pure, all
  * reading `dumbmonit_<prefix>_*` series as the collectors write them
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada,nginx,apache}`,
- * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,arubacentral,nginx,apache}`,
- * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,paloalto,sonicwall,nginx,apache}`,
- * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,qnap,ceph,minio,nginx,apache}`,
- * (`crates/collectors/src/{pfsense,unraid,veeam,kopia,duplicati,tailscale,fortigate,sophos,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '#lib/api/index.js';
@@ -629,50 +625,6 @@ function meraki(series: MetricSeries[]): ApplianceView {
 		sections: [
 			{ title: 'Devices offline or alerting', rows: devices },
 			{ title: 'Uplinks that failed', rows: uplinks }
-// ------------------------------------------------------------ Palo Alto PAN-OS
-
-function paloalto(series: MetricSeries[]): ApplianceView {
-	const ps = points(series, 'paloalto');
-	const info = ps.find((p) => p.name === 'version_info')?.labels;
-	const interfaces: Row[] = [...byLabel(ps, 'interface_down', 'interface').values()]
-		.filter((p) => p.value >= 1)
-		.map((p) => ({ key: p.labels.interface, name: p.labels.interface, tone: 'warning', plate: 'No link', details: p.labels.zone ? [p.labels.zone] : undefined }));
-	interfaces.sort(byName);
-	const licenses: Row[] = [...byLabel(ps, 'license_expiry_seconds', 'license').values()]
-		.filter((p) => p.value < 60 * 86400)
-		.map((p) => ({ key: p.labels.license, name: p.labels.license, tone: p.value < 0 ? 'warning' : 'advisory', plate: p.value < 0 ? 'Expired' : `Expires ${days(p.value)}` }));
-	const haEnabled = single(ps, 'ha_enabled');
-	const peerUp = single(ps, 'ha_peer_up');
-	const inSync = single(ps, 'ha_in_sync');
-	const functional = single(ps, 'ha_local_functional');
-	const usage = single(ps, 'session_usage_percent');
-	const commit = single(ps, 'last_commit_ok');
-	const haState = ps.find((p) => p.name === 'ha_state_info')?.labels;
-	if (functional !== null && functional < 1) problems.push({ text: 'this firewall is not functional in its HA pair', severe: true });
-	if (peerUp !== null && peerUp < 1) problems.push({ text: 'the HA peer is lost', severe: true });
-	if (inSync !== null && inSync < 1) problems.push({ text: 'the HA pair is out of sync', severe: false });
-	if (interfaces.length > 0) problems.push({ text: m.misc2_folds_interface_without_link({ count: interfaces.length }), severe: false });
-	if (usage !== null && usage > 90) problems.push({ text: 'the session table is nearly full', severe: false });
-	if (commit !== null && commit < 1) problems.push({ text: 'the last commit failed', severe: false });
-	const expired = licenses.filter((l) => l.tone === 'warning').length;
-	if (expired > 0) problems.push({ text: m.misc2_folds_licence_expired({ count: expired }), severe: false });
-	return {
-		title: 'Firewall',
-		description: info ? `${info.model || 'Palo Alto'} ${info.hostname ? `"${info.hostname}" ` : ''}running PAN-OS ${info.version}. Beta.` : 'Read through the PAN-OS XML API. Beta.',
-		verdict: verdict(problems, 'Every zoned interface has its link and the HA pair, if any, is healthy.'),
-		figures: [
-			{ label: 'CPU', value: percent(single(ps, 'cpu_usage_percent')), hint: 'Management plane' },
-			{ label: 'Memory', value: percent(single(ps, 'memory_used_percent')), hint: 'Management plane' },
-			{ label: 'Sessions', value: single(ps, 'sessions') !== null ? String(single(ps, 'sessions')) : null, tone: usage !== null && usage > 90 ? 'advisory' : 'ink', hint: usage !== null ? `${Math.round(usage)}% of the table` : undefined },
-			{
-				label: 'HA',
-				value: haEnabled === null || haEnabled < 1 ? 'Standalone' : haState ? haState.state : inSync !== null && inSync >= 1 ? 'In sync' : 'Enabled',
-				tone: (peerUp !== null && peerUp < 1) || (inSync !== null && inSync < 1) ? 'advisory' : 'ink'
-			}
-		],
-		sections: [
-			{ title: 'Interfaces without link', rows: interfaces },
-			{ title: 'Licences expiring or expired', rows: licenses }
 		]
 	};
 }
@@ -727,6 +679,58 @@ function omada(series: MetricSeries[]): ApplianceView {
 			{ label: 'Clients', value: single(ps, 'clients') !== null ? String(single(ps, 'clients')) : null }
 		],
 		sections: [{ title: 'Devices needing a look', rows: devices }]
+	};
+}
+
+// ------------------------------------------------------------ Palo Alto PAN-OS
+
+function paloalto(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'paloalto');
+	const info = ps.find((p) => p.name === 'version_info')?.labels;
+	const interfaces: Row[] = [...byLabel(ps, 'interface_down', 'interface').values()]
+		.filter((p) => p.value >= 1)
+		.map((p) => ({ key: p.labels.interface, name: p.labels.interface, tone: 'warning', plate: 'No link', details: p.labels.zone ? [p.labels.zone] : undefined }));
+	interfaces.sort(byName);
+	const licenses: Row[] = [...byLabel(ps, 'license_expiry_seconds', 'license').values()]
+		.filter((p) => p.value < 60 * 86400)
+		.map((p) => ({ key: p.labels.license, name: p.labels.license, tone: p.value < 0 ? 'warning' : 'advisory', plate: p.value < 0 ? 'Expired' : `Expires ${days(p.value)}` }));
+	const haEnabled = single(ps, 'ha_enabled');
+	const peerUp = single(ps, 'ha_peer_up');
+	const inSync = single(ps, 'ha_in_sync');
+	const functional = single(ps, 'ha_local_functional');
+	const usage = single(ps, 'session_usage_percent');
+	const commit = single(ps, 'last_commit_ok');
+	const haState = ps.find((p) => p.name === 'ha_state_info')?.labels;
+	const problems = [];
+	if (functional !== null && functional < 1) problems.push({ text: 'this firewall is not functional in its HA pair', severe: true });
+	if (peerUp !== null && peerUp < 1) problems.push({ text: 'the HA peer is lost', severe: true });
+	if (inSync !== null && inSync < 1) problems.push({ text: 'the HA pair is out of sync', severe: false });
+	if (interfaces.length > 0) problems.push({ text: m.misc2_folds_interface_without_link({ count: interfaces.length }), severe: false });
+	if (usage !== null && usage > 90) problems.push({ text: 'the session table is nearly full', severe: false });
+	if (commit !== null && commit < 1) problems.push({ text: 'the last commit failed', severe: false });
+	const expired = licenses.filter((l) => l.tone === 'warning').length;
+	if (expired > 0) problems.push({ text: m.misc2_folds_licence_expired({ count: expired }), severe: false });
+	return {
+		title: 'Firewall',
+		description: info ? `${info.model || 'Palo Alto'} ${info.hostname ? `"${info.hostname}" ` : ''}running PAN-OS ${info.version}. Beta.` : 'Read through the PAN-OS XML API. Beta.',
+		verdict: verdict(problems, 'Every zoned interface has its link and the HA pair, if any, is healthy.'),
+		figures: [
+			{ label: 'CPU', value: percent(single(ps, 'cpu_usage_percent')), hint: 'Management plane' },
+			{ label: 'Memory', value: percent(single(ps, 'memory_used_percent')), hint: 'Management plane' },
+			{ label: 'Sessions', value: single(ps, 'sessions') !== null ? String(single(ps, 'sessions')) : null, tone: usage !== null && usage > 90 ? 'advisory' : 'ink', hint: usage !== null ? `${Math.round(usage)}% of the table` : undefined },
+			{
+				label: 'HA',
+				value: haEnabled === null || haEnabled < 1 ? 'Standalone' : haState ? haState.state : inSync !== null && inSync >= 1 ? 'In sync' : 'Enabled',
+				tone: (peerUp !== null && peerUp < 1) || (inSync !== null && inSync < 1) ? 'advisory' : 'ink'
+			}
+		],
+		sections: [
+			{ title: 'Interfaces without link', rows: interfaces },
+			{ title: 'Licences expiring or expired', rows: licenses }
+		]
+	};
+}
+
 // ------------------------------------------------------------ SonicWall SonicOS
 
 function sonicwall(series: MetricSeries[]): ApplianceView {
@@ -953,6 +957,9 @@ function arubacentral(series: MetricSeries[]): ApplianceView {
 			{ label: 'Clients', value: byLabel(ps, 'clients', 'type').size > 0 ? String(clients) : null }
 		],
 		sections: [{ title: 'Devices, offline first', rows: devices }]
+	};
+}
+
 // ------------------------------------------------------------------------ QNAP
 
 function qnap(series: MetricSeries[]): ApplianceView {
@@ -987,6 +994,7 @@ function qnap(series: MetricSeries[]): ApplianceView {
 	const cpuTemp = single(ps, 'cpu_temperature_celsius');
 	const update = single(ps, 'firmware_update_available');
 	const latest = ps.find((p) => p.name === 'firmware_latest_info')?.labels.version ?? null;
+	const problems = [];
 	if (bad > 0) problems.push({ text: `${bad} ${bad === 1 ? 'disk' : 'disks'} without a good SMART health`, severe: true });
 	if (hot > 0) problems.push({ text: `${hot} ${hot === 1 ? 'disk' : 'disks'} above 55 °C`, severe: false });
 	if (full > 0) problems.push({ text: `${full} ${full === 1 ? 'volume' : 'volumes'} over 90% full`, severe: false });
@@ -1062,6 +1070,7 @@ function ceph(series: MetricSeries[]): ApplianceView {
 	const outOfQuorum = single(ps, 'mons_out_of_quorum') ?? 0;
 	const unfound = single(ps, 'objects_unfound') ?? 0;
 	const down = osds.filter((o) => o.tone === 'warning').length;
+	const problems = [];
 	if (status !== null && status >= 2) problems.push({ text: 'the cluster reports HEALTH_ERR', severe: true });
 	else if (status !== null && status >= 1) problems.push({ text: `the cluster reports HEALTH_WARN (${checks.length} ${checks.length === 1 ? 'check' : 'checks'})`, severe: false });
 	if (down > 0) problems.push({ text: `${down} ${down === 1 ? 'OSD' : 'OSDs'} down`, severe: false });
@@ -1100,6 +1109,7 @@ function minio(series: MetricSeries[]): ApplianceView {
 	const healFailed = single(ps, 'heal_objects_failed') ?? 0;
 	const replication = single(ps, 'replication_failed_objects') ?? 0;
 	const objects = single(ps, 'objects');
+	const problems = [];
 	if (nodesOffline > 0) problems.push({ text: `${nodesOffline} ${nodesOffline === 1 ? 'node' : 'nodes'} offline`, severe: true });
 	if (drivesOffline > 0) problems.push({ text: `${drivesOffline} ${drivesOffline === 1 ? 'drive' : 'drives'} offline`, severe: false });
 	if (used !== null && used > 85) problems.push({ text: 'capacity above 85%', severe: false });

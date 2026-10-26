@@ -5651,16 +5651,8 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Veeam license expiring",
                 RuleKind::Threshold,
                 "dumbmonit_veeam_license_expiry_seconds",
-            "dumbmonit_kopia_source_last_snapshot_errors",
-            "dumbmonit_kopia_source_last_snapshot_age_seconds",
-            "dumbmonit_kopia_source_scheduled",
-            "dumbmonit_kopia_repo_connected",
-            "dumbmonit_duplicati_backup_failed",
-            "dumbmonit_duplicati_backup_last_success_age_seconds",
-            "dumbmonit_duplicati_backup_scheduled",
             )
         },
-        // --- Kopia (`collectors/kopia`) ---
         Rule {
             description: "The last snapshot of a Kopia source finished with errors: some files were not saved.".to_string(),
             operator: Operator::Gt,
@@ -5927,7 +5919,6 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_sophos_interface_down",
             )
         },
-        // --- Cisco Meraki (`collectors/meraki`) ---
         Rule {
             description: "A Cisco Meraki device has been offline (out of reach of the cloud dashboard) for ten minutes. Dormant devices, unseen for a long time, are left out.".to_string(),
             operator: Operator::Gt,
@@ -5944,9 +5935,6 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         Rule {
             description: "A Meraki router lost the Internet access of a configured uplink (the wired and cellular sockets without a cable are not counted).".to_string(),
-        // --- Palo Alto PAN-OS (`collectors/paloalto`, bêta) ---
-        Rule {
-            description: "A Palo Alto firewall interface bound to a zone has no link: cable, transceiver or the device in front.".to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
             for_duration: Duration::from_secs(5 * 60),
@@ -5975,84 +5963,6 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         Rule {
             description: "A Meraki license expires in less than 30 days.".to_string(),
-                "paloalto_interface_down",
-                "Palo Alto interface without link",
-                "dumbmonit_paloalto_interface_down",
-            )
-        },
-        Rule {
-            description: "The peer of a Palo Alto HA pair is no longer active or passive, or the HA link to it is down: there is no standby any more.".to_string(),
-            for_duration: Duration::from_secs(2 * 60),
-            severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base(
-                "paloalto_ha_peer_lost",
-                "Palo Alto HA peer lost",
-                "dumbmonit_paloalto_ha_peer_up",
-            )
-        },
-        Rule {
-            description: "The running configuration of a Palo Alto HA pair is not synchronized: a failover would run another configuration.".to_string(),
-            for_duration: Duration::from_secs(15 * 60),
-            repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base(
-                "paloalto_ha_out_of_sync",
-                "Palo Alto HA out of sync",
-                "dumbmonit_paloalto_ha_in_sync",
-            )
-        },
-        Rule {
-            description: "This Palo Alto firewall reports its HA state as suspended or non-functional.".to_string(),
-            for_duration: Duration::from_secs(5 * 60),
-            severity: Severity::Critical,
-            repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base(
-                "paloalto_ha_not_functional",
-                "Palo Alto HA member not functional",
-                "dumbmonit_paloalto_ha_local_functional",
-            )
-        },
-        Rule {
-            description: "The session table of a Palo Alto firewall has stayed above 90 % of its capacity for ten minutes: new sessions will be refused when it is full.".to_string(),
-            operator: Operator::Gt,
-            threshold: 90.0,
-            for_duration: Duration::from_secs(10 * 60),
-            unit: "%".to_string(),
-            repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base(
-                "paloalto_session_table_full",
-                "Palo Alto session table filling up",
-                "dumbmonit_paloalto_session_usage_percent",
-            )
-        },
-        Rule {
-            description: "The management plane CPU of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
-            operator: Operator::Gt,
-            threshold: 90.0,
-            for_duration: Duration::from_secs(15 * 60),
-            unit: "%".to_string(),
-            repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base(
-                "paloalto_cpu_high",
-                "Palo Alto management CPU high",
-                "dumbmonit_paloalto_cpu_usage_percent",
-            )
-        },
-        Rule {
-            description: "The management plane memory of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
-            operator: Operator::Gt,
-            threshold: 90.0,
-            for_duration: Duration::from_secs(15 * 60),
-            unit: "%".to_string(),
-            repeat_interval: Some(Duration::from_secs(6 * 3600)),
-            ..base(
-                "paloalto_memory_high",
-                "Palo Alto management memory high",
-                "dumbmonit_paloalto_memory_used_percent",
-            )
-        },
-        Rule {
-            description: "A licence or subscription of a Palo Alto firewall expires in less than 30 days, or has expired.".to_string(),
             operator: Operator::Lt,
             threshold: 30.0 * 24.0 * 3600.0,
             for_duration: Duration::from_secs(3600),
@@ -6069,17 +5979,6 @@ pub fn builtin_rules() -> Vec<Rule> {
         // --- TP-Link Omada (`collectors/omada`) ---
         Rule {
             description: "An Omada access point, switch or gateway has been disconnected from the controller for ten minutes.".to_string(),
-        // --- Aruba Central (`collectors/arubacentral`) ---
-        Rule {
-            description: "Aruba Central reports an access point, switch or gateway offline.".to_string(),
-            ..base(
-                "arubacentral_device_offline",
-                "Aruba Central device offline",
-                "dumbmonit_arubacentral_device_online",
-            )
-        },
-        Rule {
-            description: "Aruba Central has at least one active critical alert.".to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
             for_duration: Duration::from_secs(10 * 60),
@@ -6124,8 +6023,43 @@ pub fn builtin_rules() -> Vec<Rule> {
         },
         Rule {
             description: "The Omada controller offers a firmware update for a device.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "omada_firmware_update",
+                "Omada firmware update",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_upgrade_available",
+            )
+        },
+        Rule {
+            description: "Aruba Central reports an access point, switch or gateway offline.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "arubacentral_device_offline",
+                "Aruba Central device offline",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_device_online",
+            )
+        },
+        Rule {
+            description: "Aruba Central has at least one active critical alert.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
                 "arubacentral_critical_alert",
                 "Aruba Central critical alert",
+                RuleKind::Threshold,
                 "dumbmonit_arubacentral_alerts_active_by_severity{severity=\"critical\"}",
             )
         },
@@ -6137,38 +6071,15 @@ pub fn builtin_rules() -> Vec<Rule> {
             severity: Severity::Info,
             repeat_interval: Some(Duration::from_secs(168 * 3600)),
             ..base(
-                "omada_firmware_update",
-                "Omada firmware update",
-                RuleKind::Threshold,
-                "dumbmonit_omada_device_upgrade_available",
                 "arubacentral_devices_poor_health",
                 "Aruba Central devices in poor health",
+                RuleKind::Threshold,
                 "dumbmonit_arubacentral_devices_poor_health",
             )
         },
         // --- Stormshield SNS, par SNMP (`profiles/stormshield.yaml`) ---
         Rule {
             description: "A node of a Stormshield HA cluster is declared dead: there is no standby any more.".to_string(),
-                "paloalto_license_expiring",
-                "Palo Alto licence expiring",
-                "dumbmonit_paloalto_license_expiry_seconds",
-            )
-        },
-        Rule {
-            description: "The last configuration commit of a Palo Alto firewall failed: the running configuration is not the one that was saved.".to_string(),
-            operator: Operator::Lt,
-            threshold: 1.0,
-            for_duration: Duration::from_secs(5 * 60),
-            repeat_interval: Some(Duration::from_secs(24 * 3600)),
-            ..base(
-                "paloalto_commit_failed",
-                "Palo Alto commit failed",
-                "dumbmonit_paloalto_last_commit_ok",
-            )
-        },
-        // --- SonicWall SonicOS (`collectors/sonicwall`, bêta) ---
-        Rule {
-            description: "A SonicWall interface bound to a zone has no link.".to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
             for_duration: Duration::from_secs(5 * 60),
@@ -6177,6 +6088,7 @@ pub fn builtin_rules() -> Vec<Rule> {
             ..base(
                 "stormshield_ha_node_dead",
                 "Stormshield HA node dead",
+                RuleKind::Threshold,
                 "dumbmonit_stormshield_ha_dead_nodes",
             )
         },
@@ -6190,192 +6102,442 @@ pub fn builtin_rules() -> Vec<Rule> {
             ..base(
                 "stormshield_ha_link_faulty",
                 "Stormshield HA link faulty",
+                RuleKind::Threshold,
                 "dumbmonit_stormshield_ha_faulty_links",
+            )
+        },
+        Rule {
+            description: "A Palo Alto firewall interface bound to a zone has no link: cable, transceiver or the device in front.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_interface_down",
+                "Palo Alto interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_interface_down",
+            )
+        },
+        Rule {
+            description: "The peer of a Palo Alto HA pair is no longer active or passive, or the HA link to it is down: there is no standby any more.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_peer_lost",
+                "Palo Alto HA peer lost",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_peer_up",
+            )
+        },
+        Rule {
+            description: "The running configuration of a Palo Alto HA pair is not synchronized: a failover would run another configuration.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_out_of_sync",
+                "Palo Alto HA out of sync",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_in_sync",
+            )
+        },
+        Rule {
+            description: "This Palo Alto firewall reports its HA state as suspended or non-functional.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_not_functional",
+                "Palo Alto HA member not functional",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_local_functional",
+            )
+        },
+        Rule {
+            description: "The session table of a Palo Alto firewall has stayed above 90 % of its capacity for ten minutes: new sessions will be refused when it is full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_session_table_full",
+                "Palo Alto session table filling up",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_session_usage_percent",
+            )
+        },
+        Rule {
+            description: "The management plane CPU of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_cpu_high",
+                "Palo Alto management CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_cpu_usage_percent",
+            )
+        },
+        Rule {
+            description: "The management plane memory of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_memory_high",
+                "Palo Alto management memory high",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_memory_used_percent",
+            )
+        },
+        Rule {
+            description: "A licence or subscription of a Palo Alto firewall expires in less than 30 days, or has expired.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paloalto_license_expiring",
+                "Palo Alto licence expiring",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_license_expiry_seconds",
+            )
+        },
+        Rule {
+            description: "The last configuration commit of a Palo Alto firewall failed: the running configuration is not the one that was saved.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paloalto_commit_failed",
+                "Palo Alto commit failed",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_last_commit_ok",
+            )
+        },
+        // --- SonicWall SonicOS (`collectors/sonicwall`, bêta) ---
+        Rule {
+            description: "A SonicWall interface bound to a zone has no link.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
                 "sonicwall_interface_down",
                 "SonicWall interface without link",
                 RuleKind::Threshold,
                 "dumbmonit_sonicwall_interface_down",
-        // --- QNAP QTS (`collectors/qnap`) ---
+            )
+        },
         Rule {
             description: "A QNAP volume is more than 90 % full: shares, snapshots and apps stop being able to write.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base(
                 "qnap_volume_full",
                 "QNAP volume nearly full",
+                RuleKind::Threshold,
                 "dumbmonit_qnap_volume_used_percent",
             )
         },
         Rule {
             description: "The SMART health of a QNAP disk is no longer good (warning or abnormal): replace it before the RAID loses redundancy.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "qnap_disk_unhealthy",
                 "QNAP disk health not good",
+                RuleKind::Threshold,
                 "dumbmonit_qnap_disk_ok",
             )
         },
         Rule {
             description: "A QNAP disk has stayed above 55 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
             threshold: 55.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
             unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "qnap_disk_hot",
                 "QNAP disk too hot",
+                RuleKind::Threshold,
                 "dumbmonit_qnap_disk_temperature_celsius",
             )
         },
         Rule {
             description: "The QNAP processor has stayed above 90 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
             unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "qnap_cpu_hot",
                 "QNAP processor too hot",
+                RuleKind::Threshold,
                 "dumbmonit_qnap_cpu_temperature_celsius",
             )
         },
         Rule {
             description: "QNAP offers a newer QTS or QuTS hero release.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
             for_duration: Duration::from_secs(1 * 3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
             ..base(
                 "qnap_firmware_update",
                 "QNAP firmware update",
+                RuleKind::Threshold,
                 "dumbmonit_qnap_firmware_update_available",
             )
         },
         // --- Ceph (`collectors/ceph`) ---
         Rule {
             description: "The Ceph cluster reports HEALTH_ERR: data may be unavailable or at risk.".to_string(),
+            operator: Operator::Gt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
             repeat_interval: Some(Duration::from_secs(1 * 3600)),
             ..base(
                 "ceph_health_error",
                 "Ceph health error",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_health_status",
             )
         },
         Rule {
             description: "The Ceph cluster has reported HEALTH_WARN for 30 minutes: see its health checks.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "ceph_health_warn",
                 "Ceph health warning",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_health_status",
             )
         },
         Rule {
             description: "One or more Ceph OSDs are down: the cluster rebuilds their data elsewhere and loses redundancy meanwhile.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "ceph_osd_down",
                 "Ceph OSD down",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_osds_down",
             )
         },
         Rule {
             description: "Some Ceph placement groups have not been active+clean for 30 minutes: data is degraded, misplaced or inactive.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "ceph_pg_unclean",
                 "Ceph placement groups not clean",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_pgs_unclean",
             )
         },
         Rule {
             description: "Ceph reports unfound objects: no copy of some data can be found.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
             repeat_interval: Some(Duration::from_secs(1 * 3600)),
             ..base(
                 "ceph_objects_unfound",
                 "Ceph objects unfound",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_objects_unfound",
             )
         },
         Rule {
             description: "The Ceph cluster is more than 80 % full: it turns read-only at 95 %, and rebuilding after a failure needs free space.".to_string(),
+            operator: Operator::Gt,
             threshold: 80.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base(
                 "ceph_capacity_high",
                 "Ceph capacity high",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_capacity_used_percent",
             )
         },
         Rule {
             description: "A Ceph OSD is more than 85 % full (the default nearfull ratio): writes to it stop at the full ratio.".to_string(),
+            operator: Operator::Gt,
             threshold: 85.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
             repeat_interval: Some(Duration::from_secs(12 * 3600)),
             ..base(
                 "ceph_osd_nearly_full",
                 "Ceph OSD nearly full",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_osd_used_percent",
             )
         },
         Rule {
             description: "A Ceph pool is more than 90 % full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
             repeat_interval: Some(Duration::from_secs(12 * 3600)),
             ..base(
                 "ceph_pool_nearly_full",
                 "Ceph pool nearly full",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_pool_used_percent",
             )
         },
         Rule {
             description: "A Ceph monitor is out of the quorum: one more loss and the cluster stops.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
             repeat_interval: Some(Duration::from_secs(1 * 3600)),
             ..base(
                 "ceph_mon_out_of_quorum",
                 "Ceph monitor out of quorum",
+                RuleKind::Threshold,
                 "dumbmonit_ceph_mons_out_of_quorum",
             )
         },
         // --- MinIO (`collectors/minio`) ---
         Rule {
             description: "A MinIO node is offline: the cluster runs with less parity.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
             repeat_interval: Some(Duration::from_secs(1 * 3600)),
             ..base(
                 "minio_node_offline",
                 "MinIO node offline",
+                RuleKind::Threshold,
                 "dumbmonit_minio_nodes_offline",
             )
         },
         Rule {
             description: "A MinIO drive is offline: objects are rebuilt from parity until it is back.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "minio_drive_offline",
                 "MinIO drive offline",
+                RuleKind::Threshold,
                 "dumbmonit_minio_drives_offline",
             )
         },
         Rule {
             description: "The usable capacity of the MinIO cluster is more than 85 % used.".to_string(),
+            operator: Operator::Gt,
             threshold: 85.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
             ..base(
                 "minio_capacity_high",
                 "MinIO capacity high",
+                RuleKind::Threshold,
                 "dumbmonit_minio_capacity_usable_used_percent",
             )
         },
         Rule {
             description: "MinIO could not heal some objects in its current self-healing run.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "minio_heal_failures",
                 "MinIO heal failures",
+                RuleKind::Threshold,
                 "dumbmonit_minio_heal_objects_failed",
             )
         },
         Rule {
             description: "Objects of a MinIO bucket failed to replicate to the remote site.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
             for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "minio_replication_failed",
                 "MinIO replication failures",
+                RuleKind::Threshold,
                 "dumbmonit_minio_replication_failed_objects",
             )
         },
         Rule {
             description: "More than 5 % of the S3 requests MinIO served in the last 10 minutes failed with a server error (5xx).".to_string(),
+            operator: Operator::Gt,
             threshold: 5.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base(
                 "minio_s3_server_errors",
                 "MinIO S3 server errors",
+                RuleKind::Threshold,
                 "100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])",
             )
         },
@@ -7686,27 +7848,6 @@ mod tests {
             "dumbmonit_paloalto_license_expiry_seconds",
             "dumbmonit_paloalto_last_commit_ok",
             "dumbmonit_sonicwall_interface_down",
-            // QNAP, Ceph, MinIO (`collectors/{qnap,ceph,minio}`).
-            "dumbmonit_qnap_volume_used_percent",
-            "dumbmonit_qnap_disk_ok",
-            "dumbmonit_qnap_disk_temperature_celsius",
-            "dumbmonit_qnap_cpu_temperature_celsius",
-            "dumbmonit_qnap_firmware_update_available",
-            "dumbmonit_ceph_health_status",
-            "dumbmonit_ceph_osds_down",
-            "dumbmonit_ceph_pgs_unclean",
-            "dumbmonit_ceph_objects_unfound",
-            "dumbmonit_ceph_capacity_used_percent",
-            "dumbmonit_ceph_osd_used_percent",
-            "dumbmonit_ceph_pool_used_percent",
-            "dumbmonit_ceph_mons_out_of_quorum",
-            "dumbmonit_minio_nodes_offline",
-            "dumbmonit_minio_drives_offline",
-            "dumbmonit_minio_capacity_usable_used_percent",
-            "dumbmonit_minio_heal_objects_failed",
-            "dumbmonit_minio_replication_failed_objects",
-            "dumbmonit_minio_s3_requests_5xx_total",
-            "dumbmonit_minio_s3_requests_total",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",

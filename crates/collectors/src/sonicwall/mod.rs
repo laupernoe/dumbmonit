@@ -131,12 +131,13 @@ pub fn envelope(reply: &Value) -> Result<(), ProbeError> {
     let code = info.and_then(|i| i.get("code")).and_then(Value::as_str).unwrap_or("unknown");
     let message = info.and_then(|i| i.get("message")).and_then(Value::as_str).unwrap_or("");
     let upper = code.to_ascii_uppercase();
-    Err(if upper.contains("UNAUTHORIZED") || upper.contains("AUTH") || upper.contains("FORBIDDEN")
-    {
-        ProbeError::Auth(format!("SonicWall refused the request ({code}): {message}"))
-    } else {
-        ProbeError::Protocol(format!("SonicWall answered an error ({code}): {message}"))
-    })
+    Err(
+        if upper.contains("UNAUTHORIZED") || upper.contains("AUTH") || upper.contains("FORBIDDEN") {
+            ProbeError::Auth(format!("SonicWall refused the request ({code}): {message}"))
+        } else {
+            ProbeError::Protocol(format!("SonicWall answered an error ({code}): {message}"))
+        },
+    )
 }
 
 #[async_trait]
@@ -337,8 +338,8 @@ mod tests {
 
         let logouts = Arc::new(AtomicUsize::new(0));
         let counter = Arc::clone(&logouts);
-        let app = Router::new().fallback(any(
-            move |method: Method, headers: HeaderMap, uri: Uri| {
+        let app =
+            Router::new().fallback(any(move |method: Method, headers: HeaderMap, uri: Uri| {
                 let counter = Arc::clone(&counter);
                 async move {
                     // « dumbmonit:s3cret » en Basic.
@@ -358,8 +359,7 @@ mod tests {
                         _ => (StatusCode::FORBIDDEN, ""),
                     }
                 }
-            },
-        ));
+            }));
         let address = serve(app).await;
         let mut target = cible("sonicwall", &format!("http://{address}"), &[]);
         target.credential = Credential::UsernamePassword {
@@ -371,10 +371,8 @@ mod tests {
         assert!(find(&s, "sonicwall_version_info", &[]).is_none());
         assert_eq!(logouts.load(Ordering::SeqCst), 1, "session closed");
 
-        target.credential = Credential::UsernamePassword {
-            username: "dumbmonit".into(),
-            password: "nope".into(),
-        };
+        target.credential =
+            Credential::UsernamePassword { username: "dumbmonit".into(), password: "nope".into() };
         let error = SonicwallCollector::new().probe(&target).await.unwrap_err();
         assert!(matches!(error, ProbeError::Auth(_)), "{error}");
         assert!(!error.means_down());
