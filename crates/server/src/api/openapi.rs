@@ -139,6 +139,7 @@ mod tests {
                 | "/api/auth/passkey/login/begin"
                 | "/api/auth/passkey/login/finish"
                 | "/api/push/{token}"
+                | "/api/calendar/maintenance.ics"
                 | "/api/openapi.json"
         ) || path.starts_with("/api/public/")
             || (path == "/api/mcp" && method != "post")
@@ -157,6 +158,7 @@ mod tests {
             "/music/spotify/token",
             "/music/speaker/report",
             "/music/speaker/play",
+            "/system/storage",
             "/webpush",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {
