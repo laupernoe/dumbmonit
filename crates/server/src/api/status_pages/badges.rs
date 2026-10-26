@@ -7,12 +7,12 @@
 //! sur le fond clair que sur le fond sombre d'un README GitHub.
 
 use axum::extract::{Path, Query, State};
-use axum::http::header;
+use axum::http::{HeaderMap, header};
 use axum::response::{IntoResponse, Response};
 use serde::Deserialize;
 use serde_json::Value;
 
-use super::{load_public, round};
+use super::{access, load_public_checked, round};
 use crate::api::{ApiError, ApiResult};
 use crate::state::AppState;
 
@@ -187,56 +187,63 @@ fn window_label(days: u32) -> String {
 pub async fn page_uptime(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
     Query(query): Query<UptimeQuery>,
 ) -> ApiResult<Response> {
-    let doc = load_public(&state, &slug).await?;
+    let (doc, private) = load_public_checked(&state, &slug, &headers).await?;
     let (days, field) = window_field(&doc, query.days)?;
     let (value, colour) = uptime_value(mean(&doc, field));
-    Ok(svg_response(render(&window_label(days), &value, colour)))
+    Ok(access::seal(svg_response(render(&window_label(days), &value, colour)), private))
 }
 
 pub async fn page_response(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let doc = load_public(&state, &slug).await?;
+    let (doc, private) = load_public_checked(&state, &slug, &headers).await?;
     let (value, colour) = latency_value(mean(&doc, "latency_ms"));
-    Ok(svg_response(render("response", &value, colour)))
+    Ok(access::seal(svg_response(render("response", &value, colour)), private))
 }
 
 pub async fn item_status(
     State(state): State<AppState>,
     Path((slug, key)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let doc = load_public(&state, &slug).await?;
+    let (doc, private) = load_public_checked(&state, &slug, &headers).await?;
     let item = find_item(&doc, &key)?;
     let label = item.get("label").and_then(Value::as_str).unwrap_or("service");
     let (word, colour) = item_word(item.get("state").and_then(Value::as_str).unwrap_or(""));
-    Ok(svg_response(render(label, word, colour)))
+    Ok(access::seal(svg_response(render(label, word, colour)), private))
 }
 
 pub async fn item_uptime(
     State(state): State<AppState>,
     Path((slug, key)): Path<(String, String)>,
+    headers: HeaderMap,
     Query(query): Query<UptimeQuery>,
 ) -> ApiResult<Response> {
-    let doc = load_public(&state, &slug).await?;
+    let (doc, private) = load_public_checked(&state, &slug, &headers).await?;
     let (days, field) = window_field(&doc, query.days)?;
     let item = find_item(&doc, &key)?;
     let label = item.get("label").and_then(Value::as_str).unwrap_or("service");
     let (value, colour) = uptime_value(item.get(field).and_then(Value::as_f64));
-    Ok(svg_response(render(&format!("{label} · {}", window_label(days)), &value, colour)))
+    let svg = svg_response(render(&format!("{label} · {}", window_label(days)), &value, colour));
+    Ok(access::seal(svg, private))
 }
 
 pub async fn item_response(
     State(state): State<AppState>,
     Path((slug, key)): Path<(String, String)>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let doc = load_public(&state, &slug).await?;
+    let (doc, private) = load_public_checked(&state, &slug, &headers).await?;
     let item = find_item(&doc, &key)?;
     let label = item.get("label").and_then(Value::as_str).unwrap_or("service");
     let (value, colour) = latency_value(item.get("latency_ms").and_then(Value::as_f64));
-    Ok(svg_response(render(&format!("{label} · response"), &value, colour)))
+    let svg = svg_response(render(&format!("{label} · response"), &value, colour));
+    Ok(access::seal(svg, private))
 }
 
 #[cfg(test)]

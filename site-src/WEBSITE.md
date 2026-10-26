@@ -68,7 +68,7 @@ texts are English; only the labels around them are translated. The locales are t
 ## Roadmap page
 
 The page `/roadmap/` is generated from one file, `site-src/data/roadmap.json` (sections in display
-order, which is the planned delivery order). Each item has a `status` (`planned`, `progress` or
+order, which is the planned delivery order). Each item has a `status` (`planned`, `progress`, `idea` or
 `delivered`) and a `text` with one entry per language (`fr`, `en`, `de`, `es`, `it`, `pt`, `pt-BR`,
 `ru`, `zh-Hans`; a missing language falls back to English). Delivered items also carry a `version`.
 Only the labels around the list (title, status names) live in `strings/<lang>.json` (`rm_*` keys).
@@ -76,4 +76,6 @@ Only the labels around the list (title, status names) live in `strings/<lang>.js
 **At every release: move the delivered items to the "Déjà livré" section (`delivered`), add the
 version there with one line in every language, and delete them from the planned sections.** Put
 `"status": "progress"` on what is being worked on. Then run `python3 site-src/build.py`.
-No effort estimates and no mention of other products.
+The two "Ideas" sections use `groups` (a title and items) instead of `items`: each group renders as a
+collapsed `<details>`, and an item is either a `text` (translated) or a plain `name` (a product name).
+Ideas are not commitments; promote one to a batch when work starts. No effort estimates.
