@@ -195,6 +195,7 @@ nav:
       - Status pages: using/status-pages.md
       - Email reports: using/reports.md
       - Settings: using/settings.md
+      - Configuration files (GitOps): using/config-files.md
       - LDAP / Active Directory: using/ldap.md
       - SAML 2.0: using/saml.md
       - SCIM provisioning: using/scim.md

@@ -201,7 +201,7 @@ export interface ProbeLocationsReport {
 
 /** Management of a monitor by Docker labels (`dumbmonit.*`). Mirrors `db::targets::Managed`. */
 export interface TargetManaged {
-	/** Origin: `docker-labels`. */
+	/** Origin: `docker-labels`, or `config-file` for a monitor a configuration file declares. */
 	by: string;
 	/** Agent whose containers declare the monitor. */
 	source: TargetId | null;
@@ -3349,6 +3349,55 @@ export type OnboardingStep = 'device' | 'channel' | 'test';
 export interface OnboardingPatch {
 	skipped?: boolean;
 	dismissed?: OnboardingStep[];
+}
+
+// --- Configuration files (GitOps) ---------------------------------------------
+
+/** One line of a configuration plan. Mirrors `Change` in `crates/server/src/gitops/plan.rs`. */
+export interface ConfigChange {
+	section: 'targets' | 'channels' | 'rules' | 'rule_overrides' | 'silences' | 'status_pages';
+	key: string;
+	action: 'create' | 'update' | 'delete';
+	/** Names of the fields that differ, never their values. */
+	fields: string[];
+}
+
+/** Response of `POST /api/config/plan` and `/api/config/apply`. */
+export interface ConfigPlan {
+	changes: ConfigChange[];
+	create: number;
+	update: number;
+	delete: number;
+	unchanged: number;
+	warnings: string[];
+	applied: boolean;
+	/** Objects whose secret references could not be resolved (plan only). */
+	unresolved: string[];
+}
+
+/** Response of `GET /api/config/export?format=json`. */
+export interface ConfigExport {
+	version: number;
+	yaml: string;
+	config: Record<string, unknown>;
+	/** Environment variables to define before applying the file. */
+	variables: string[];
+}
+
+/** Response of `GET /api/config/status`. */
+export interface ConfigStatus {
+	schema_version: number;
+	watch: {
+		directory: string | null;
+		files: string[];
+		last_applied_at: string | null;
+		last_error: string | null;
+		/** `[created, updated, deleted]` of the last application. */
+		last_changes: [number, number, number] | null;
+	};
+	managed: Record<string, number>;
+	/** Keys of the file-managed objects by kind: rule (uid), channel (name), silence, status_page (slug), override. */
+	keys: Record<string, string[]>;
 }
 
 // --- Backup and restore -----------------------------------------------------
