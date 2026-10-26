@@ -664,6 +664,14 @@ Voir [Veeam Backup & Replication](../devices/veeam.md). Les jobs sont
 | Dépôt Veeam presque plein | Un dépôt de sauvegarde Veeam est plein à plus de 90 % : les prochains jobs échoueront par manque d'espace (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 j |
 | Licence Veeam arrivant à expiration | La licence Veeam expire dans moins de 30 jours : les jobs s'arrêtent à la fin de la période de grâce (`dumbmonit_veeam_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
 
+### Windows sans agent {#windows-sans-agent}
+
+Voir [Windows sans agent (WinRM)](../devices/winrm.md).
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Services Windows automatiques arrêtés | Au moins un service Windows en démarrage automatique est arrêté (`dumbmonit_windows_services_auto_stopped`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+
 ### Kopia {#kopia}
 
 Voir [Kopia](../devices/kopia.md). Les sources sont étiquetées `source` (`utilisateur@machine:/chemin`). Bêta : pas encore testé sur un vrai serveur.

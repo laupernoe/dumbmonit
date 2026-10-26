@@ -7,6 +7,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Windows without an agent (WinRM).** A new `winrm` device type monitors a
+  Windows server or PC through WS-Management and read-only WQL queries: nothing
+  to install, nothing executed on the machine. HTTPS (5986) by default, NTLMv2 or
+  Basic over HTTPS; unencrypted HTTP (5985) only when ticked explicitly. It
+  reports the same `dumbmonit_*` metrics as the Windows agent (CPU, memory, swap,
+  disks, uptime, `service_up`), the services you choose plus every stopped
+  automatic service (with a built-in rule), and recent event log error counts per
+  log and Event ID. Unreachable means down, a refused login is a configuration
+  error. Works through a relay agent. Kerberos and pending updates are not
+  supported; the docs cover the server preparation, the least-privilege account,
+  ports and Group Policy.
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key
