@@ -51,6 +51,8 @@ que cette version peut surveiller.
 | [CrowdSec](crowdsec.md) | `crowdsec` | aucun, ou clé d'API bouncer | Moteur de sécurité : décisions, alertes, bouncers qui ont arrêté de récupérer, lecture de logs |
 | [Traefik](traefik.md) | `traefik` | aucun, ou utilisateur basicAuth | Reverse proxy : routeurs désactivés, serveurs backend en panne, certificats non obtenus ou non renouvelés, part de 5xx |
 | [Caddy](caddy.md) | `caddy` | utilisateur de vue en lecture seule, ou aucun | Serveur web et reverse proxy : santé des upstreams, rechargements échoués, erreurs de handler, part de 5xx |
+| [Exporter Prometheus](prometheus.md) | `prometheus` | aucun, authentification basique ou jeton bearer | N'importe quel exporter (node_exporter, windows_exporter, cAdvisor, blackbox…) : toutes les séries enregistrées, tracées et utilisables dans des règles |
+| [Source OpenTelemetry](otlp.md) | `otlp` | jeton d'API (portée write) | Récepteur OTLP/HTTP : métriques d'un OpenTelemetry Collector ou d'une application, journaux transmis à VictoriaLogs |
 | [Nginx](nginx.md) | `nginx` | aucun, ou authentification basique | Serveur web : connexions actives/en attente, débits accept/handled/request, santé des upstreams NGINX Plus |
 | [Apache httpd](apache.md) | `apache` | aucun, ou authentification basique | Serveur web : workers occupés/au repos, scoreboard par état, débits de requêtes et d'octets |
 | [Nginx Proxy Manager](npm.md) | `npm` | email et mot de passe utilisateur (vue seule) | Gestionnaire de proxy : hôtes refusés par nginx, hôtes désactivés, certificats servis |

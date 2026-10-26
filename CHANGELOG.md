@@ -113,6 +113,18 @@ All notable changes to this project are documented here. The format follows
   backups. Settings: `DUMBMONIT_SYSLOG_*`, `DUMBMONIT_TRAPS_*`,
   `DUMBMONIT_AGENT_LOGS=off` to forbid collection on a machine. SNMPv3 traps are
   not supported.
+- **Any Prometheus exporter, and OpenTelemetry (OTLP/HTTP) reception.** A new
+  "Prometheus exporter" monitor reads the `/metrics` page of node_exporter,
+  windows_exporter, cAdvisor, blackbox_exporter or any other exporter, with
+  presets for the common ones, basic or bearer authentication, optional relay
+  agent, keep/ignore filters on metric names and a series limit; every series is
+  stored, graphed in the explorer and usable in threshold rules. A new
+  "OpenTelemetry source" monitor receives `POST /otlp/v1/metrics` (protobuf or
+  JSON, gzip) from an OpenTelemetry Collector or an SDK, with a `write` API token
+  and the `X-DumbMonit-Target` header: gauges, sums and histograms become series,
+  unsupported points are reported back as rejected. `POST /otlp/v1/logs` relays
+  logs to VictoriaLogs when it is enabled. OTLP over gRPC is not supported; the
+  `otlphttp` exporter does the same job.
 
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 

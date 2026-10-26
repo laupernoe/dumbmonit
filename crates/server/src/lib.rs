@@ -24,6 +24,7 @@ pub mod music;
 pub mod netinventory;
 pub mod notify;
 pub mod oncall;
+pub mod otlp;
 pub mod packs;
 #[cfg(unix)]
 pub mod privileges;

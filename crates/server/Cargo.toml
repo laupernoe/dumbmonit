@@ -56,6 +56,9 @@ ipnet = "2"
 flate2 = "1.1"
 # Écriture du YAML de configuration (la lecture passe par `dumbmonit-collectors`).
 serde-saphyr = { version = "2", default-features = false, features = ["serialize"] }
+# Messages OTLP (réception OpenTelemetry) : seul le codec protobuf, sans le SDK ni
+# tonic. Apache-2.0.
+prost = "0.14"
 futures = "0.3"
 
 # `deterministic-timestamps` : sans lui, rust_embed inscrit dans le binaire la date
