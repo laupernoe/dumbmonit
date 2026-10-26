@@ -32,6 +32,7 @@
 	import { listRelays } from '#lib/api/relay.js';
 	import { listLocations } from '#lib/api/locations.js';
 	import type { MapLocation } from '#lib/api/types.js';
+	import { isMultisiteKind } from '#lib/format.js';
 	import type { RelayAgent } from '#lib/api/types.js';
 	import { Button, ClickSpark, ErrorNotice, Field, Toggle } from '#lib/ui/index.js';
 	import CredentialFields from './CredentialFields.svelte';
@@ -107,6 +108,11 @@
 	let intervalSecs = $state(untrack(() => target?.interval_secs ?? DEFAULT_INTERVAL));
 	let parentId = $state<number | null>(untrack(() => target?.parent_id ?? null));
 	let viaAgent = $state<number | null>(untrack(() => (target ? target.via_agent : viaAgentDefault) ?? null));
+	// Probe from several locations (uptime kinds). Exclusive with `viaAgent`.
+	let msOn = $state(untrack(() => !!target?.multisite));
+	let msServer = $state(untrack(() => target?.multisite?.server ?? true));
+	let msAgents = $state<number[]>(untrack(() => [...(target?.multisite?.agents ?? [])]));
+	let msQuorum = $state<number | null>(untrack(() => target?.multisite?.quorum ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
 	let groupName = $state(untrack(() => target?.group_name ?? ''));
 	let locationId = $state<number | null>(untrack(() => target?.location_id ?? null));
@@ -152,6 +158,7 @@
 				(!!target &&
 				(target.parent_id !== null ||
 					target.via_agent !== null ||
+					target.multisite !== null ||
 					target.interval_secs !== DEFAULT_INTERVAL ||
 					!target.enabled ||
 					target.group_name !== '' ||
@@ -228,6 +235,7 @@
 		return (
 			address.trim() !== target.address.trim() ||
 			(canRelay ? viaAgent : null) !== target.via_agent ||
+			multisiteAgentsKey(canMultisite && msOn ? msAgents : []) !== multisiteAgentsKey(target.multisite?.agents ?? []) ||
 			DESTINATION_TAGS.some((key) => sentTag(key) !== savedTag(key))
 		);
 	});
@@ -311,6 +319,21 @@
 		return () => controller.abort();
 	});
 	const relayCandidates = $derived(relays);
+	// --- Several locations -----------------------------------------------------
+	const canMultisite = $derived(isMultisiteKind(collector.kind));
+	const multisiteAgentsKey = (ids: number[]) => [...ids].sort((a, b) => a - b).join(',');
+	const msTotal = $derived((msServer ? 1 : 0) + msAgents.length);
+	const msTooFew = $derived(msOn && msTotal < 2);
+	/** An unknown agent id (deleted since) stays listed so it can be unticked. */
+	const msUnknownAgents = $derived(msAgents.filter((id) => !relays.some((r) => r.id === id)));
+	const msNotReady = $derived(msOn && relays.some((r) => msAgents.includes(r.id) && !r.relay));
+	function toggleMsAgent(id: number, on: boolean) {
+		msAgents = on ? [...msAgents.filter((x) => x !== id), id] : msAgents.filter((x) => x !== id);
+	}
+	// The quorum cannot exceed the number of locations left.
+	$effect(() => {
+		if (msQuorum !== null && msQuorum > Math.max(msTotal, 1)) msQuorum = null;
+	});
 	/** The chosen relay, when it has not declared `relay: true`: probes would wait forever. */
 	const relayNotReady = $derived(
 		viaAgent !== null && relays.some((r) => r.id === viaAgent && !r.relay)
@@ -327,7 +350,10 @@
 			// The profile is detected by the server; on edit the detected one is kept.
 			profile_id: target?.profile_id ?? null,
 			parent_id: parentId,
-			via_agent: canRelay ? viaAgent : null,
+			via_agent: canRelay && !(canMultisite && msOn) ? viaAgent : null,
+			...(canMultisite && (msOn || target?.multisite)
+				? { multisite: msOn ? { server: msServer, agents: msAgents, quorum: msQuorum } : null }
+				: {}),
 			interval_secs: intervalSecs,
 			enabled,
 			group_name: groupName.trim(),
@@ -381,7 +407,7 @@
 
 	// A result describes the settings it was run with: drop it when they change.
 	$effect(() => {
-		void [address, credential.kind, JSON.stringify(draft), JSON.stringify(tags), viaAgent];
+		void [address, credential.kind, JSON.stringify(draft), JSON.stringify(tags), viaAgent, msOn, msServer, msAgents, msQuorum];
 		untrack(() => {
 			testController?.abort();
 			testReport = null;
@@ -427,7 +453,7 @@
 		attempted = true;
 		serverError = null;
 		rulesError = null;
-		if (!valid || saving) return;
+		if (!valid || saving || (canMultisite && msTooFew)) return;
 		saving = true;
 		try {
 			const payload = buildPayload();
@@ -597,7 +623,7 @@
 					</select>
 				</Field>
 
-				{#if canRelay && (relayCandidates.length > 0 || viaAgent !== null)}
+				{#if canRelay && !(canMultisite && msOn) && (relayCandidates.length > 0 || viaAgent !== null)}
 					<Field
 						label={m.deviceform_form_relay_label()}
 						for="target-relay"
@@ -621,6 +647,66 @@
 						{m.deviceform_form_remote_hint()}
 						<a href="/targets/new?kind=agent&via=relay" class="font-semibold text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink">{m.deviceform_form_remote_link()}</a>
 					</p>
+				{/if}
+
+				{#if canMultisite && (relayCandidates.length > 0 || msOn)}
+					<div class="grid gap-3 sm:col-span-2">
+						<Field
+							label={m.deviceform_multisite_label()}
+							for="target-multisite"
+							inline
+							help={viaAgent !== null && !msOn ? m.deviceform_multisite_exclusive() : m.deviceform_multisite_help()}
+						>
+							<Toggle
+								id="target-multisite"
+								bind:checked={msOn}
+								disabled={viaAgent !== null && !msOn}
+								label={m.deviceform_multisite_label()}
+								onchange={(on) => {
+									if (on) viaAgent = null;
+								}}
+							/>
+						</Field>
+						{#if msOn}
+							<fieldset class="grid gap-1 rounded-[var(--radius-card)] border border-line p-3">
+								<legend class="px-1 text-sm font-semibold text-ink">{m.deviceform_multisite_locations()}</legend>
+								<label class="flex min-h-10 items-center gap-3 text-sm text-ink">
+									<input type="checkbox" class="size-4 accent-[var(--color-signal)]" bind:checked={msServer} />
+									{m.deviceform_multisite_server()}
+								</label>
+								{#each relayCandidates as relay (relay.id)}
+									<label class="flex min-h-10 items-center gap-3 text-sm text-ink">
+										<input
+											type="checkbox"
+											class="size-4 accent-[var(--color-signal)]"
+											checked={msAgents.includes(relay.id)}
+											onchange={(e) => toggleMsAgent(relay.id, e.currentTarget.checked)}
+										/>
+										<span class="min-w-0 break-words">{relay.relay ? relayLabel(relay) : m.deviceform_form_relay_off({ label: relayLabel(relay) })}</span>
+									</label>
+								{/each}
+								{#each msUnknownAgents as id (id)}
+									<label class="flex min-h-10 items-center gap-3 text-sm text-ink">
+										<input type="checkbox" class="size-4 accent-[var(--color-signal)]" checked onchange={(e) => toggleMsAgent(id, e.currentTarget.checked)} />
+										{m.deviceform_form_relay_agent_n({ id })}
+									</label>
+								{/each}
+								{#if msTooFew}
+									<p class="text-[0.8125rem] text-warning" role="alert">{m.deviceform_multisite_too_few()}</p>
+								{:else if msNotReady}
+									<p class="text-[0.8125rem] text-ink-2">{m.deviceform_multisite_not_ready()}</p>
+								{/if}
+							</fieldset>
+							<Field label={m.deviceform_multisite_quorum_label()} for="target-quorum" help={m.deviceform_multisite_quorum_help()}>
+								<select id="target-quorum" class="input" bind:value={msQuorum}>
+									<option value={null}>{m.deviceform_multisite_quorum_majority()}</option>
+									{#each Array.from({ length: Math.max(msTotal, 1) }, (_, i) => i + 1) as n (n)}
+										<option value={n}>{m.deviceform_multisite_quorum_n({ n, total: msTotal })}</option>
+									{/each}
+								</select>
+							</Field>
+						{/if}
+					</div>
 				{/if}
 			</div>
 
