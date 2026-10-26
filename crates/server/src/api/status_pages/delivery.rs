@@ -277,9 +277,9 @@ async fn deliver(
 static RUNNING: tokio::sync::Mutex<()> = tokio::sync::Mutex::const_new(());
 
 /// Traite les envois échus. Un seul passage à la fois : un second appelant
-/// repart sans rien faire, la file est déjà en cours de vidage.
+/// attend la fin du premier, puis ne trouve que ce qui reste à envoyer.
 pub async fn process_due(state: &AppState) {
-    let Ok(_guard) = RUNNING.try_lock() else { return };
+    let _guard = RUNNING.lock().await;
     let now = Utc::now();
     let stamp = format_timestamp(now);
     let _ = sqlx::query("DELETE FROM status_deliveries WHERE created_at < ?")

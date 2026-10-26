@@ -188,11 +188,6 @@ pub async fn available_kinds(state: &AppState, page: &StatusPage) -> Vec<&'stati
     kinds
 }
 
-/// La page propose-t-elle au moins un abonnement ?
-pub async fn offers_subscription(state: &AppState, page: &StatusPage) -> bool {
-    !available_kinds(state, page).await.is_empty()
-}
-
 /// Base des liens des courriels : le domaine public de la page s'il y en a un
 /// (servi en HTTPS par le mandataire), sinon l'URL publique réglée, sinon
 /// l'origine vue par l'administrateur quand il a enregistré la page. Jamais
