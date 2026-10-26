@@ -6,7 +6,7 @@
 	 * no one who follows it.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { Mail, Rss } from 'lucide-svelte';
+	import { CalendarDays, Mail, Rss } from 'lucide-svelte';
 	import { subscribeToStatus, toApiError } from '#lib/api/index.js';
 
 	interface Props {
@@ -22,6 +22,7 @@
 	let error = $state<string | null>(null);
 
 	const rss = $derived(`/api/public/status/${encodeURIComponent(slug)}/rss`);
+	const ical = $derived(`/api/public/status/${encodeURIComponent(slug)}/maintenance.ics`);
 
 	async function submit(event: SubmitEvent) {
 		event.preventDefault();
@@ -86,6 +87,12 @@
 		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={rss}>
 			<Rss class="size-4" aria-hidden="true" />
 			{m.status_updates_rss()}
+		</a>
+	</p>
+	<p class="mt-2 text-sm text-ink-2">
+		<a class="inline-flex items-center gap-1.5 font-semibold text-accent underline decoration-accent/40 underline-offset-4 hover:decoration-accent" href={ical}>
+			<CalendarDays class="size-4" aria-hidden="true" />
+			{m.status_updates_ical()}
 		</a>
 	</p>
 </section>

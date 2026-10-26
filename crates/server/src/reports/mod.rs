@@ -12,8 +12,10 @@
 //! messagerie restent ceux des notifications, sans second endroit à tenir.
 
 pub mod collect;
+pub mod pdf;
 pub mod render;
 pub mod schedule;
+pub mod sla;
 pub mod store;
 
 use std::collections::HashMap;
@@ -132,6 +134,50 @@ async fn resolve_channel(
     }
 }
 
+/// Habillage d'un rapport SLA : le nom de la page de statut choisie, à défaut
+/// « DumbMonit ».
+pub async fn sla_options(
+    state: &AppState,
+    page_id: Option<i64>,
+    objective: Option<f64>,
+    now: DateTime<Utc>,
+) -> sla::Options {
+    let brand = match page_id {
+        Some(id) => db::status_pages::get_page(&state.pool, id).await.ok().flatten(),
+        None => None,
+    }
+    .map_or_else(|| "DumbMonit".to_string(), |page| page.title);
+    sla::Options { brand, objective, generated: now }
+}
+
+/// Les fichiers d'un rapport SLA : (nom, type MIME, octets).
+pub fn sla_attachments(
+    data: &collect::ReportData,
+    tz: chrono_tz::Tz,
+    options: &sla::Options,
+    pdf: bool,
+    csv: bool,
+) -> Vec<(String, String, Vec<u8>)> {
+    let stem = sla::file_stem(data, tz);
+    let mut files = Vec::new();
+    if pdf {
+        files.push((
+            format!("{stem}.pdf"),
+            "application/pdf".to_string(),
+            sla::pdf(data, tz, options),
+        ));
+    }
+    if csv {
+        let monitors = sla::csv_monitors(data, options.objective).into_bytes();
+        files.push((format!("{stem}-monitors.csv"), CSV_TYPE.to_string(), monitors));
+        let incidents = sla::csv_incidents(data).into_bytes();
+        files.push((format!("{stem}-incidents.csv"), CSV_TYPE.to_string(), incidents));
+    }
+    files
+}
+
+pub const CSV_TYPE: &str = "text/csv; charset=utf-8";
+
 /// Résultat d'un envoi : combien de destinataires l'ont reçu.
 #[derive(Debug)]
 pub struct Delivery {
@@ -159,20 +205,68 @@ pub async fn deliver(
     let channel = resolve_channel(state, stored).await?;
     let smtp = Smtp::new(&channel).map_err(|error| error.to_string())?;
 
-    let data =
-        collect::collect(state, &stored.name, calendar.frequency, now).await.map_err(|error| {
-            warn!(%error, "report: data collection failed");
-            "Cannot gather the report data.".to_string()
-        })?;
-    let rendered = render::render(&data, calendar.tz, preview);
+    let sla = stored.kind == "sla";
+    let (data, mut rendered) = if sla {
+        // Le mois civil entier qui précède l'envoi, dans le fuseau du calendrier.
+        let period = schedule::Period::previous_calendar_month(now, calendar.tz)
+            .ok_or("Cannot work out the month to report.".to_string())?;
+        let data = collect::collect_period(state, &stored.name, Frequency::Monthly, period, now)
+            .await
+            .map_err(|error| {
+                warn!(%error, "report: data collection failed");
+                "Cannot gather the report data.".to_string()
+            })?;
+        let mut rendered = render::render(&data, calendar.tz, preview);
+        let count = data.incidents.len();
+        rendered.subject = format!(
+            "{}[DumbMonit] SLA report, {}: {} availability, {count} incident{}",
+            if preview { "[Preview] " } else { "" },
+            sla::month_label(&data, calendar.tz),
+            data.fleet_uptime.map_or_else(|| "n/a".to_string(), |v| format!("{v:.2}%")),
+            if count == 1 { "" } else { "s" }
+        );
+        (data, rendered)
+    } else {
+        let data = collect::collect(state, &stored.name, calendar.frequency, now).await.map_err(
+            |error| {
+                warn!(%error, "report: data collection failed");
+                "Cannot gather the report data.".to_string()
+            },
+        )?;
+        let rendered = render::render(&data, calendar.tz, preview);
+        (data, rendered)
+    };
+    rendered.subject = rendered.subject.replace(['\r', '\n'], " ");
+
+    let attachments = if sla {
+        let options = sla_options(state, stored.page_id, stored.objective, now).await;
+        sla_attachments(&data, calendar.tz, &options, stored.attach_pdf, stored.attach_csv)
+    } else {
+        Vec::new()
+    };
 
     let mut delivery = Delivery { sent: 0, failed: 0 };
     let mut first_error = None;
     for recipient in &stored.recipients {
-        match smtp
-            .send_html(recipient, &rendered.subject, rendered.text.clone(), rendered.html.clone())
+        let sent = if attachments.is_empty() {
+            smtp.send_html(
+                recipient,
+                &rendered.subject,
+                rendered.text.clone(),
+                rendered.html.clone(),
+            )
             .await
-        {
+        } else {
+            smtp.send_html_with_attachments(
+                recipient,
+                &rendered.subject,
+                rendered.text.clone(),
+                rendered.html.clone(),
+                attachments.clone(),
+            )
+            .await
+        };
+        match sent {
             Ok(()) => delivery.sent += 1,
             Err(error) => {
                 delivery.failed += 1;
@@ -322,6 +416,11 @@ mod tests {
             timezone: "UTC".into(),
             recipients: vec!["ops@example.org".into()],
             channel_id: None,
+            kind: "digest".into(),
+            attach_pdf: true,
+            attach_csv: true,
+            page_id: None,
+            objective: None,
         }
     }
 
