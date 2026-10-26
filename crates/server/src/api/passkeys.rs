@@ -347,9 +347,23 @@ pub async fn login_finish(
         tracing::warn!(reason, "passkey sign-in refused");
         AuthError::Unauthorized("Passkey sign-in failed.".into())
     };
-    let outcome = verify_login(&state, &payload).await;
-    let (user, stored_id, assertion) = match outcome {
-        Ok(found) => found,
+    let outcome = match verify_login(&state, &payload).await {
+        Ok((user, stored_id, assertion)) => {
+            // Le compteur est comparé une seconde fois, atomiquement, au moment
+            // de l'enregistrer : voir `passkeys::record_use`.
+            let advanced = passkeys::record_use(
+                &state.pool,
+                stored_id,
+                assertion.sign_count,
+                assertion.backup_state,
+            )
+            .await?;
+            if advanced { Ok(user) } else { Err("the signature counter was already used") }
+        }
+        Err(reason) => Err(reason),
+    };
+    let user = match outcome {
+        Ok(user) => user,
         Err(reason) => {
             auth.limiter().lock().await.record_failure(&keys, Instant::now());
             audit::record(&state.pool, None, "passkey.failed", None, ip).await;
@@ -357,8 +371,6 @@ pub async fn login_finish(
         }
     };
     auth.limiter().lock().await.record_success(&keys);
-    passkeys::record_use(&state.pool, stored_id, assertion.sign_count, assertion.backup_state)
-        .await?;
     audit::record(&state.pool, Some(&user.username), "login.passkey", None, ip).await;
     open_session(&state, &auth, &user, ip).await
 }

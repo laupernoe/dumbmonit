@@ -60,11 +60,26 @@ pub fn start(ceremony: Ceremony, rp: RelyingParty) -> (String, [u8; 32]) {
     let now = Instant::now();
     if let Ok(mut pending) = PENDING.lock() {
         pending.retain(|_, p| now.duration_since(p.started) < TTL);
-        if pending.len() >= MAX_PENDING
-            && let Some(oldest) =
-                pending.iter().min_by_key(|(_, p)| p.started).map(|(k, _)| k.clone())
-        {
-            pending.remove(&oldest);
+        match ceremony {
+            // Un seul enrôlement en cours par compte : le précédent est annulé.
+            // Les enrôlements, réservés aux comptes connectés, ne sont jamais
+            // évincés par un afflux de connexions anonymes.
+            Ceremony::Register { user_id } => pending.retain(|_, p| {
+                !matches!(p.ceremony, Ceremony::Register { user_id: other } if other == user_id)
+            }),
+            // `login/begin` est public : un afflux n'évince que d'autres connexions.
+            Ceremony::Login => {
+                let logins = pending.values().filter(|p| matches!(p.ceremony, Ceremony::Login));
+                if logins.count() >= MAX_PENDING
+                    && let Some(oldest) = pending
+                        .iter()
+                        .filter(|(_, p)| matches!(p.ceremony, Ceremony::Login))
+                        .min_by_key(|(_, p)| p.started)
+                        .map(|(k, _)| k.clone())
+                {
+                    pending.remove(&oldest);
+                }
+            }
         }
         pending.insert(id.clone(), Pending { ceremony, challenge, rp, started: now });
     }
@@ -258,15 +273,20 @@ pub async fn find(pool: &SqlitePool, credential_id: &[u8]) -> Result<Option<Stor
     .transpose()
 }
 
+/// Note l'usage d'une clé et avance son compteur. Faux si une autre connexion a
+/// entre-temps présenté un compteur égal ou supérieur : deux assertions de même
+/// compteur, menées en parallèle, trahissent une clé clonée comme un compteur qui
+/// recule — la comparaison se fait donc dans l'`UPDATE`, pas seulement avant.
 pub async fn record_use(
     pool: &SqlitePool,
     id: i64,
     sign_count: u32,
     backup_state: bool,
-) -> Result<()> {
-    sqlx::query(
-        "UPDATE passkeys SET sign_count = ?, backup_state = ?,
-             last_used_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+) -> Result<bool> {
+    let result = sqlx::query(
+        "UPDATE passkeys SET sign_count = ?1, backup_state = ?2,
+             last_used_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
+         WHERE id = ?3 AND (sign_count < ?1 OR (?1 = 0 AND sign_count = 0))",
     )
     .bind(i64::from(sign_count))
     .bind(i64::from(backup_state))
@@ -274,7 +294,7 @@ pub async fn record_use(
     .execute(pool)
     .await
     .context("usage d'une clé d'accès")?;
-    Ok(())
+    Ok(result.rows_affected() > 0)
 }
 
 pub async fn rename(pool: &SqlitePool, user_id: i64, id: i64, name: &str) -> Result<bool> {
@@ -347,10 +367,69 @@ mod tests {
     #[test]
     fn un_defi_ne_sert_qu_une_fois() {
         let rp = RelyingParty { id: "a.example".into(), origin: "https://a.example".into() };
-        let (id, challenge) = start(Ceremony::Login, rp);
+        // Un enrôlement : un afflux de connexions d'un test voisin ne l'évince pas.
+        let (id, challenge) = start(Ceremony::Register { user_id: 434_343 }, rp);
         let first = take(&id).expect("défi connu");
         assert_eq!(first.challenge, challenge);
         assert!(take(&id).is_none(), "a challenge cannot be replayed");
         assert!(take("inconnu").is_none());
+    }
+
+    #[test]
+    fn un_afflux_de_connexions_n_evince_pas_un_enrolement() {
+        let rp = RelyingParty { id: "b.example".into(), origin: "https://b.example".into() };
+        let (first, _) = start(Ceremony::Register { user_id: 424_242 }, rp.clone());
+        let (register, _) = start(Ceremony::Register { user_id: 424_242 }, rp.clone());
+        // Un nouvel enrôlement du même compte annule le précédent.
+        assert!(take(&first).is_none());
+        for _ in 0..MAX_PENDING + 10 {
+            start(Ceremony::Login, rp.clone());
+        }
+        assert!(matches!(
+            take(&register).map(|p| p.ceremony),
+            Some(Ceremony::Register { user_id: 424_242 })
+        ));
+        let logins = PENDING
+            .lock()
+            .unwrap()
+            .values()
+            .filter(|p| matches!(p.ceremony, Ceremony::Login))
+            .count();
+        assert!(logins <= MAX_PENDING);
+    }
+
+    #[tokio::test]
+    async fn un_compteur_deja_presente_n_est_pas_accepte_deux_fois() {
+        let dir = tempfile::tempdir().unwrap();
+        let pool = crate::db::open(&dir.path().join("t.db")).await.unwrap();
+        sqlx::query(
+            "INSERT INTO users (username, display_name, role, password_hash)
+             VALUES ('a', '', 'admin', 'x')",
+        )
+        .execute(&pool)
+        .await
+        .unwrap();
+        let user_id: i64 = sqlx::query_scalar("SELECT id FROM users WHERE username = 'a'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
+        let key = NewPasskey {
+            user_id,
+            name: "k",
+            credential_id: b"cred",
+            public_key: b"pk",
+            sign_count: 4,
+            backup_eligible: false,
+            backup_state: false,
+            transports: &[],
+        };
+        assert!(insert(&pool, &key).await.unwrap());
+        let id = find(&pool, b"cred").await.unwrap().unwrap().id;
+        // Deux connexions parallèles au même compteur : la seconde perd.
+        assert!(record_use(&pool, id, 5, false).await.unwrap());
+        assert!(!record_use(&pool, id, 5, false).await.unwrap());
+        assert!(!record_use(&pool, id, 3, false).await.unwrap());
+        assert!(record_use(&pool, id, 6, true).await.unwrap());
+        assert_eq!(find(&pool, b"cred").await.unwrap().unwrap().sign_count, 6);
     }
 }
