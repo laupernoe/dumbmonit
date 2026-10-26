@@ -25,6 +25,7 @@
 
 	// A function: the labels follow the active language at render time.
 	const links = () => allLinks().filter((link) => !auth.scoped || link.href !== '/');
+	const phoneLinks = $derived(links().filter((link) => link.phone));
 	const allLinks = () => [
 		{ href: '/', label: m.misc_nav_overview(), icon: Gauge, exact: true, phone: true },
 		{ href: '/targets', label: m.misc_nav_devices(), icon: Server, exact: false, phone: true },
@@ -182,7 +183,6 @@
 	backdrop blur over a scrolling list costs a repaint every frame.
 -->
 <nav aria-label={m.misc_nav_main()} class="vt-nav-bottom fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] sm:hidden">
-	{@const phoneLinks = links().filter((link) => link.phone)}
 	<ul class="grid" style:grid-template-columns={`repeat(${phoneLinks.length}, minmax(0, 1fr))`}>
 		{#each phoneLinks as link (link.href)}
 			{@const active = isActive(link.href, link.exact)}
