@@ -240,8 +240,8 @@ fn event_data(xml: &str) -> String {
 /// Lit le XML d'un événement rendu par `EvtRender`. `None` sans `EventID`.
 pub fn parse_event(xml: &str) -> Option<ParsedEvent> {
     let system = element(xml, "System")?;
-    let number = |name: &str| element(system, name).map(str::trim).and_then(|v| v.parse().ok());
-    let event_id: u32 = number("EventID")?;
+    let text = |name: &str| element(system, name).map(str::trim);
+    let event_id: u32 = text("EventID")?.parse().ok()?;
     let time_created_ms = attribute(system, "TimeCreated", "SystemTime")
         .and_then(|raw| chrono::DateTime::parse_from_rfc3339(&raw).ok())
         .map(|at| at.timestamp_millis())
@@ -249,8 +249,8 @@ pub fn parse_event(xml: &str) -> Option<ParsedEvent> {
     Some(ParsedEvent {
         provider: attribute(system, "Provider", "Name").unwrap_or_default(),
         event_id,
-        level: number("Level").unwrap_or(0),
-        record_id: number("EventRecordID").unwrap_or(0),
+        level: text("Level").and_then(|v| v.parse().ok()).unwrap_or(0),
+        record_id: text("EventRecordID").and_then(|v| v.parse().ok()).unwrap_or(0),
         time_created_ms,
         channel: element(system, "Channel").map(unescape).unwrap_or_default(),
         computer: element(system, "Computer").map(unescape).unwrap_or_default(),

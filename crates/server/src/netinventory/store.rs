@@ -49,6 +49,8 @@ fn parse_depth(raw: &str) -> ScanDepth {
     if raw == "extended" { ScanDepth::Extended } else { ScanDepth::Standard }
 }
 
+// Les requêtes de ce module composent leurs colonnes à partir de constantes du
+// module (`format!` sans donnée extérieure) : d'où les `AssertSqlSafe`.
 const SCHEDULE_COLUMNS: &str = "id, name, cidr, agent_id, interval_secs, depth, enabled, \
      initialized, last_run_at, last_status, last_error";
 
@@ -70,13 +72,16 @@ fn schedule_from_row(row: &sqlx::sqlite::SqliteRow) -> Result<Schedule> {
 
 pub async fn list_schedules(pool: &SqlitePool) -> Result<Vec<Schedule>> {
     let sql = format!("SELECT {SCHEDULE_COLUMNS} FROM netscan_schedules ORDER BY id");
-    let rows = sqlx::query(&sql).fetch_all(pool).await.context("lecture des scans planifiés")?;
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+        .fetch_all(pool)
+        .await
+        .context("lecture des scans planifiés")?;
     rows.iter().map(schedule_from_row).collect()
 }
 
 pub async fn get_schedule(pool: &SqlitePool, id: i64) -> Result<Option<Schedule>> {
     let sql = format!("SELECT {SCHEDULE_COLUMNS} FROM netscan_schedules WHERE id = ?");
-    let row = sqlx::query(&sql)
+    let row = sqlx::query(sqlx::AssertSqlSafe(sql))
         .bind(id)
         .fetch_optional(pool)
         .await
@@ -152,10 +157,10 @@ pub async fn delete_schedule(pool: &SqlitePool, id: i64) -> Result<bool> {
 
 /// Marque le début d'un balayage.
 pub async fn record_run_start(pool: &SqlitePool, id: i64) -> Result<()> {
-    sqlx::query(&format!(
+    sqlx::query(sqlx::AssertSqlSafe(format!(
         "UPDATE netscan_schedules SET last_run_at = {NOW}, last_status = 'running',
              last_error = NULL WHERE id = ?"
-    ))
+    )))
     .bind(id)
     .execute(pool)
     .await?;
@@ -270,12 +275,12 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
     for planned in diff::plan(&known, hosts) {
         let device_id = match planned.existing_id {
             Some(device_id) => {
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     "UPDATE netscan_devices SET ident = ?, mac = COALESCE(?, mac), ip = ?,
                          hostname = COALESCE(?, hostname), vendor = COALESCE(?, vendor),
                          last_seen = {NOW}
                      WHERE id = ?"
-                ))
+                )))
                 .bind(&planned.ident)
                 .bind(&planned.mac)
                 .bind(&planned.ip)
@@ -288,12 +293,12 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
             }
             None => {
                 applied.new_devices += usize::from(!first_scan);
-                sqlx::query_scalar(&format!(
+                sqlx::query_scalar(sqlx::AssertSqlSafe(format!(
                     "INSERT INTO netscan_devices
                          (schedule_id, ident, mac, ip, hostname, vendor, known, first_seen,
                           last_seen)
                      VALUES (?, ?, ?, ?, ?, ?, ?, {NOW}, {NOW}) RETURNING id"
-                ))
+                )))
                 .bind(id)
                 .bind(&planned.ident)
                 .bind(&planned.mac)
@@ -310,12 +315,12 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
                 // Les ports d'un appareil nouveau ne sont pas comptés à part :
                 // l'alerte de l'appareil les couvre.
                 applied.new_ports += usize::from(!first_scan && !planned.is_new);
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     "INSERT INTO netscan_ports
                          (device_id, port, protocol, product, known, first_seen, last_seen)
                      VALUES (?, ?, ?, ?, ?, {NOW}, {NOW})
                      ON CONFLICT (device_id, port, protocol) DO UPDATE SET last_seen = {NOW}"
-                ))
+                )))
                 .bind(device_id)
                 .bind(i64::from(port.port))
                 .bind(&port.protocol)
@@ -324,10 +329,10 @@ pub async fn apply_scan(pool: &SqlitePool, id: i64, hosts: &[DiscoveredHost]) ->
                 .execute(&mut *tx)
                 .await?;
             } else {
-                sqlx::query(&format!(
+                sqlx::query(sqlx::AssertSqlSafe(format!(
                     "UPDATE netscan_ports SET last_seen = {NOW}, product = ?
                      WHERE device_id = ? AND port = ? AND protocol = ?"
-                ))
+                )))
                 .bind(&port.product)
                 .bind(device_id)
                 .bind(i64::from(port.port))
