@@ -2420,7 +2420,7 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall' | 'manual';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'l2' | 'samehost' | 'backup' | 'firewall' | 'manual';
 
 /** Who drew a link: the server's deduction, a correction by hand, or a learned rule. */
 export type TopologyOrigin = 'deduced' | 'manual' | 'rule';
@@ -2468,6 +2468,9 @@ export interface TopologyEdge {
 	correction_id?: number | null;
 	/** The learned rule that drew it. */
 	rule_id?: number | null;
+	/** Switch port on the `from` / `to` side (`lldp` and `l2` links), read from the switch tables. */
+	from_port?: string | null;
+	to_port?: string | null;
 }
 
 export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
