@@ -2,7 +2,8 @@
 
 La page **Carte** (**⋯ → Carte** sur la page Surveillances, ou *Carte* dans la
 palette de commandes, `/map`) dessine toute votre infrastructure en une image.
-Rien n'y est saisi à la main : chaque lien vient de ce que DumbMonit sait déjà.
+Rien n'y est saisi : chaque lien vient de ce que DumbMonit sait déjà, et un
+administrateur peut [corriger la carte](#corriger-la-carte) là où elle se trompe.
 
 ## D'où viennent les liens
 
@@ -49,6 +50,58 @@ tracés plus légèrement.
   à cocher masque les machines virtuelles et conteneurs non surveillés.
 - Sur un téléphone, la page s'ouvre sur la vue **Liste** : le même arbre, indenté.
 
+## Corriger la carte
+
+La déduction se trompe parfois : un équipement « passe par le pare-feu » alors
+qu'il est derrière un commutateur, un contrôle HTTP ne sait pas sur quelle VM il
+tourne. Les administrateurs cliquent sur **Corriger la carte** au-dessus de la
+carte :
+
+- **Rattacher** : glissez un équipement sur celui dont il dépend vraiment. Sans
+  souris, sélectionnez l'équipement et utilisez **Rattacher** dans son panneau
+  (recherche par nom ou par type). **Utiliser aussi pour les alertes** (cochée
+  par défaut, équipements seulement) en fait aussi le parent déclaré, celui que
+  suit la suppression des alertes : quand le parent tombe, les alertes de
+  l'équipement sont masquées. Décochée, seule la carte change. Une boucle de
+  parents est refusée.
+- **Ce lien est faux** : cliquez sur un lien, puis marquez-le faux. Il disparaît
+  et n'est plus jamais déduit. Marquer faux un parent déclaré le retire aussi
+  pour les alertes. Un service trouvé par un agent reste toujours sous sa
+  machine.
+- **Lien** : tracez un lien d'un type choisi entre deux nœuds.
+- **Site** et **Groupe** : déplacez un nœud dans un autre cadre de site, ou
+  regroupez-le dans la vue par dossier de la carte (son dossier sur la page des
+  sondes ne change pas).
+
+**Annuler** et **Rétablir** (Ctrl+Z, Ctrl+Maj+Z) reviennent sur chaque étape.
+Sous la carte, la liste des corrections dit qui a fait chacune et quand ;
+retirez-en une et la carte (et le parent déclaré qu'elle avait changé)
+redevient comme avant. Les corrections s'appliquent avant la déduction, dans
+cet ordre : liens faux, liens tracés et rattachements à la main, puis règles
+apprises. Chaque lien dit qui l'a tracé : déduit par DumbMonit, corrigé à la
+main (un losange vide sur le lien) ou règle apprise (un losange plein). Les
+corrections et les règles font partie de la sauvegarde.
+
+### Ce que DumbMonit apprend
+
+À partir des corrections, DumbMonit propose des règles, par des heuristiques
+simples et prévisibles (aucune statistique) :
+
+- un lien marqué faux vers un équipement d'un sous-réseau propose de ne plus
+  tracer ce type de lien dans tout le sous-réseau (par exemple « Ne jamais
+  tracer de liens « Derrière le pare-feu » dans 10.0.5.0/24 ») ;
+- deux équipements d'une même adresse rattachés sous le même parent proposent
+  « ce qui est à cette adresse en dépend » (limité à leur type s'ils ont le
+  même : « Les surveillances HTTP à 10.0.0.40 dépendent de vm-web ») ;
+- deux équipements d'un même sous-réseau rattachés sous le même parent
+  proposent « Les équipements de 10.0.5.0/24 dépendent de switch-core ».
+
+Une suggestion n'est jamais appliquée d'elle-même : **Appliquer la règle** ou
+**Pas celle-ci** (une règle refusée n'est plus proposée). Une règle appliquée
+place aussi les équipements ajoutés ensuite, sauf si quelque chose de plus sûr
+les place (parent déclaré, hyperviseur, service d'agent, correction). Retirez
+une règle et ses liens s'en vont.
+
 ## Exporter et imprimer
 
 **Exporter** propose :
@@ -63,5 +116,8 @@ tracés plus légèrement.
 
 `GET /api/topology` renvoie les nœuds, les liens et la source de chaque lien
 (tous les rôles, lecture seule ; sans les adresses des sondes, seulement celles
-que l'hyperviseur rapporte pour ses invités). Voir la
+que l'hyperviseur rapporte pour ses invités). `/api/topology/corrections`,
+`/api/topology/rules` et `/api/topology/suggestions` portent les corrections,
+les règles apprises et les suggestions (écriture réservée aux administrateurs).
+Voir la
 [référence de l'API](../reference/api.md).

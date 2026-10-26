@@ -183,6 +183,8 @@ pub async fn receive(
     let version = batch.identity.agent_version.clone();
     let identity = batch.identity.clone();
     let cert = cert.map(|Extension(cert)| cert);
+    let declared = batch.declared_monitors.clone();
+    let hostname = batch.identity.hostname.clone();
 
     // Sur le canal chiffré, le certificat dit quelle machine parle : un lot au
     // nom d'une autre est refusé avant d'avoir rien écrit.
@@ -209,6 +211,13 @@ pub async fn receive(
                 crate::agent_tls::note_channel(&state.pool, ack.target_id, cert.as_ref()).await
             {
                 tracing::debug!(%error, "agent channel not recorded");
+            }
+            // Moniteurs déclarés par les étiquettes Docker : sans effet si le module
+            // Docker est décoché pour cette machine.
+            if let Some(declared) = declared
+                && !ack.disabled_modules.iter().any(|module| module == "docker")
+            {
+                super::label_monitors::on_batch(&state, ack.target_id, &hostname, declared).await;
             }
             // Mise à jour automatique de l'agent : ce qu'il dit de son binaire,
             // puis l'offre du binaire de ce build si elle est de mise. Une
