@@ -230,10 +230,12 @@ mod tests {
 
     #[test]
     fn une_ligne_ne_sert_qu_une_fois_par_balayage() {
+        // Le même hôte rapporté deux fois dans un balayage ne fait qu'un appareil,
+        // déjà connu : ni doublon, ni fausse nouveauté.
         let known = [device(3, "ip:10.0.0.4", "10.0.0.4", &[])];
         let plan = plan(&known, &[host("10.0.0.4", None, &[]), host("10.0.0.4", None, &[])]);
+        assert_eq!(plan.len(), 1);
         assert!(!plan[0].is_new);
-        assert!(plan[1].is_new);
     }
 
     #[test]

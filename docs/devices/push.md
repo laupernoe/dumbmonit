@@ -103,7 +103,7 @@ The steps below are the ones the notice next to the form shows.
     curl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>
     ```
 
-4. To time the job and report how it went, call .../start before it, then .../success or .../fail after it, with the output of the job as the request body. An exit code can be given as ?exit_code=2 or as the last path segment: .../2.
+4. To time the job, call .../start before it, then .../success or .../fail after it, with its output as the request body. Send an exit code as ?exit_code=2 or as .../2.
 
 5. To report a failure at once, append ?status=down&msg=... to the URL.
 
