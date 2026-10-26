@@ -69,7 +69,7 @@
 			}
 			const id = sequences.feed(event, Date.now());
 			const shortcut = SHORTCUTS.find((s) => s.id === id);
-			if (!shortcut || (shortcut.admin && !auth.isAdmin)) return;
+			if (!shortcut || (shortcut.admin && !auth.isAdmin) || (shortcut.enterprise && !mode.enterprise)) return;
 			event.preventDefault();
 			if (shortcut.href) void goto(shortcut.href);
 			else if (shortcut.id === 'theme') theme.toggle();
