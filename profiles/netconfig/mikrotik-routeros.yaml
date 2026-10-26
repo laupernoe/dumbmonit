@@ -1,0 +1,13 @@
+# Sauvegarde des configurations : MikroTik RouterOS (`/export`). Depuis
+# RouterOS 7, `/export` laisse de côté les valeurs sensibles sauf
+# `show-sensitive`, qui n'est pas demandé ici.
+id: mikrotik_routeros
+label: MikroTik RouterOS
+transport: ssh_exec
+commands:
+  - /export terse
+volatile:
+  - '^# \d{4}-\d\d-\d\d \d\d:\d\d:\d\d by RouterOS'
+  - '^# [a-z]{3}/\d\d/\d{4} \d\d:\d\d:\d\d by RouterOS'
+secrets:
+  - '\b(?:password|secret|passphrase|wpa2-pre-shared-key|wpa-pre-shared-key|pre-shared-key|authentication-key|community|private-key|auth-password|encryption-password)=(?P<secret>"[^"]*"|\S+)'

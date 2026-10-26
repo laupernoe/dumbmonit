@@ -36,6 +36,13 @@ pub struct ExportOptions {
     /// longtemps qu'on veut. L'opérateur peut demander l'inverse quand il
     /// déménage une instance entière.
     pub include_account_secrets: bool,
+    /// Versions des configurations réseau sauvegardées (`netconfig`).
+    ///
+    /// Faux par défaut : chacune contient tous les secrets de son équipement
+    /// (mots de passe, communautés, clés partagées), et un lot est fait pour
+    /// voyager. Les équipements, leurs options et les clés d'hôte mémorisées
+    /// partent toujours.
+    pub include_netconfig_versions: bool,
 }
 
 /// Construit le lot complet à partir de la base.
@@ -76,6 +83,12 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         runbooks: runbooks(pool).await?,
         remediation_actions: remediation_actions(pool, cipher, &refs).await?,
         remediation_policies: remediation_policies(pool, &refs).await?,
+        netconfig_host_keys: netconfig_host_keys(pool, &refs).await?,
+        netconfig_versions: if options.include_netconfig_versions {
+            netconfig_versions(pool, cipher, &refs).await?
+        } else {
+            Vec::new()
+        },
     })
 }
 
@@ -104,6 +117,56 @@ async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
             scim_id,
             scim_external_id,
             scim_created: scim_created != 0,
+        });
+    }
+    Ok(out)
+}
+
+async fn netconfig_host_keys(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleNetconfigHostKey>> {
+    Ok(crate::netconfig::store::pinned_keys(pool)
+        .await?
+        .into_iter()
+        .filter_map(|(id, host_key)| {
+            Some(BundleNetconfigHostKey { target: refs.get(&id)?.clone(), host_key })
+        })
+        .collect())
+}
+
+async fn netconfig_versions(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleNetconfigVersion>> {
+    let rows = sqlx::query(
+        "SELECT target_id, fetched_at, last_seen_at, profile, added, removed, content_enc
+         FROM netconfig_versions ORDER BY target_id, id",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des versions de configuration")?;
+    let mut out = Vec::with_capacity(rows.len());
+    for row in &rows {
+        let target_id: i64 = row.try_get("target_id")?;
+        let Some(target) = refs.get(&target_id).cloned() else { continue };
+        let sealed: Vec<u8> = row.try_get("content_enc")?;
+        let content = match crate::netconfig::open(cipher, &sealed) {
+            Ok(content) => content,
+            Err(error) => {
+                tracing::warn!(target = target_id, %error, "version de configuration illisible");
+                continue;
+            }
+        };
+        out.push(BundleNetconfigVersion {
+            target,
+            fetched_at: row.try_get("fetched_at")?,
+            last_seen_at: row.try_get("last_seen_at")?,
+            profile: row.try_get("profile")?,
+            added: row.try_get("added")?,
+            removed: row.try_get("removed")?,
+            content,
         });
     }
     Ok(out)
@@ -789,6 +852,14 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
             "oncall",
             "On-call schedules, replacements, escalation policies, and each account's contacts \
              (with their secrets) and quiet hours.",
+        ),
+        (
+            "netconfig_host_keys",
+            "Remembered SSH host keys of configuration backups, so no device is trusted anew.",
+        ),
+        (
+            "netconfig_versions",
+            "Network configuration versions, only when you include them: they hold device secrets.",
         ),
     ])
 }

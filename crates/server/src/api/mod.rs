@@ -33,6 +33,7 @@ mod mcp;
 mod metrics;
 mod monitor_imports;
 mod music;
+mod netconfig;
 mod netinventory;
 mod notify_policy;
 mod observability;
@@ -323,6 +324,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(packs::routes())
         // Changements d'un site web : pages, diff et captures (`webchange.rs`).
         .merge(webchange::routes())
+        // Sauvegarde des configurations réseau : versions, diff, clé d'hôte (`netconfig.rs`).
+        .merge(netconfig::routes())
         // Santé et référencement d'un site : dernière lecture et changements (`website.rs`).
         .merge(website::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).

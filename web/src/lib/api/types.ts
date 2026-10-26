@@ -63,6 +63,8 @@ export type Credential =
 	| { type: 'username_password'; username: string; password?: string }
 	/** RADIUS: the server's shared secret and a test account; a blank secret keeps the saved one. */
 	| { type: 'radius'; username: string; password?: string; shared_secret?: string }
+	/** SSH login of a configuration backup; a blank password or enable secret keeps the saved one. */
+	| { type: 'ssh_login'; username: string; password?: string; enable_secret?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -73,6 +75,7 @@ export const CREDENTIAL_KINDS = [
 	{ value: 'api_token', label: 'API token' },
 	{ value: 'username_password', label: 'Username / password' },
 	{ value: 'radius', label: 'RADIUS' },
+	{ value: 'ssh_login', label: 'SSH login' },
 	{ value: 'none', label: 'No authentication' }
 ] as const;
 
@@ -336,6 +339,68 @@ export interface WebchangeDiffLine {
 export interface WebchangeChangeDetail extends WebchangeChange {
 	before_snapshot: WebchangeSnapshot | null;
 	after_snapshot: WebchangeSnapshot | null;
+	diff: WebchangeDiffLine[];
+}
+
+// --- Network configuration backups (netconfig) ------------------------------
+
+/** One stored configuration version (`GET /targets/{id}/netconfig`), without its text. */
+export interface NetconfigVersion {
+	id: number;
+	fetched_at: string;
+	/** Last backup that found this same configuration. */
+	last_seen_at: string;
+	profile: string;
+	size_bytes: number;
+	lines: number;
+	added: number;
+	removed: number;
+}
+
+export interface NetconfigHostKey {
+	/** Remembered SHA-256 fingerprint (`SHA256:…`); null before the first SSH backup. */
+	pinned: string | null;
+	pinned_at: string | null;
+	/** A different key the device presented and that was refused, waiting for an administrator. */
+	changed_to: string | null;
+	changed_at: string | null;
+}
+
+export type NetconfigErrorKind = 'down' | 'auth' | 'config' | 'host_key';
+
+/** `GET /targets/{id}/netconfig`. */
+export interface NetconfigOverview {
+	profile: string | null;
+	profile_label: string | null;
+	transport: 'ssh_shell' | 'ssh_exec' | 'http' | null;
+	running: boolean;
+	last_attempt_at: string | null;
+	last_success_at: string | null;
+	last_error: string | null;
+	last_error_kind: NetconfigErrorKind | null;
+	host_key: NetconfigHostKey;
+	/** The viewer may read version contents, secrets masked (operator or admin). */
+	can_read: boolean;
+	/** The viewer may reveal secrets and download (admin signed in). */
+	can_reveal: boolean;
+	versions: NetconfigVersion[];
+}
+
+/** `GET /targets/{id}/netconfig/versions/{version_id}`. */
+export interface NetconfigVersionContent {
+	version: NetconfigVersion;
+	masked: boolean;
+	masked_values: number;
+	content: string;
+}
+
+/** `GET /targets/{id}/netconfig/diff`: same line format as website changes. */
+export interface NetconfigCompare {
+	from: NetconfigVersion | null;
+	to: NetconfigVersion;
+	masked: boolean;
+	added: number;
+	removed: number;
 	diff: WebchangeDiffLine[];
 }
 
@@ -981,6 +1046,17 @@ function fallbackCredentialView(kind: string): CredentialView {
 					credentialField('shared_secret', 'Shared secret', 'password', true),
 					credentialField('username', 'Test account', 'text', true),
 					credentialField('password', 'Test account password', 'password', true)
+				]
+			};
+		case 'ssh_login':
+			return {
+				kind,
+				label,
+				help: '',
+				fields: [
+					credentialField('username', 'User name', 'text', true),
+					credentialField('password', 'Password', 'password', true),
+					credentialField('enable_secret', 'Enable password', 'password', false)
 				]
 			};
 		default:

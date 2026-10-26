@@ -43,4 +43,11 @@ ignore = [
     # avec aws-lc-rs et n'utilise p256 que pour valider des clés publiques.
     # À retirer dès que web-push-native passe à p256 0.14.
     { id = "RUSTSEC-2026-0387", reason = "p256 0.13 imposé par web-push-native ; seule la signature VAPID interne est concernée" },
+    # rsa (Marvin, attaque temporelle sur le déchiffrement et la signature avec
+    # une clé privée RSA), tiré par russh pour la sauvegarde des configurations
+    # réseau : de nombreux équipements n'ont qu'une clé d'hôte RSA. Le client
+    # ne fait que vérifier la signature de l'équipement (opération publique) et
+    # s'authentifie par mot de passe : aucune clé privée RSA n'est jamais
+    # chargée ni utilisée.
+    { id = "RUSTSEC-2023-0071", reason = "russh vérifie seulement des signatures RSA d'hôte (clé publique) ; aucune clé privée RSA" },
 ]

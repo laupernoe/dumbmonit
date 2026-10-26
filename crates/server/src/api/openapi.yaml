@@ -160,6 +160,8 @@ tags:
     description: Pages, changes, line diffs and screenshots of a `webchange` device.
   - name: Websites
     description: Last reading, tracked SEO metadata and confirmed changes of a `website` device.
+  - name: Network configuration backups
+    description: Stored configuration versions, line diffs and the SSH host key of a `netconfig` device.
   - name: Integration packs
     description: Device types described in YAML.
   - name: Integrations
@@ -6034,6 +6036,175 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/netconfig:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getNetconfig
+      tags: [Network configuration backups]
+      summary: Backup state, SSH host key and versions of a device
+      description: >-
+        Open to every role: dates, sizes and line counts only, never the text
+        of a configuration. `can_read` and `can_reveal` say what the caller may
+        open next.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The overview.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetconfigOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/netconfig/versions/{version_id}:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: version_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+      - name: unmasked
+        in: query
+        required: false
+        description: Show secrets in clear. Administrators signed in to the web interface only (never an API token); recorded in the audit log.
+        schema: { type: boolean, default: false }
+    get:
+      operationId: getNetconfigVersion
+      tags: [Network configuration backups]
+      summary: The text of one version, secrets masked
+      description: >-
+        Operator or administrator role (or a `write` token). Each secret is
+        replaced by `<masked:xxxxxx>`, a short fingerprint keyed with the
+        instance secret.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The version.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetconfigVersionContent" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/netconfig/versions/{version_id}/download:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: version_id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    get:
+      operationId: downloadNetconfigVersion
+      tags: [Network configuration backups]
+      summary: Download a raw version
+      description: >-
+        The configuration as read from the device, secrets in clear, as a text
+        attachment. Administrators signed in to the web interface only: an API
+        token is refused. Recorded in the audit log.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The configuration.
+          content:
+            text/plain:
+              schema: { type: string }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/netconfig/diff:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+      - name: to
+        in: query
+        required: true
+        schema: { type: integer, format: int64 }
+      - name: from
+        in: query
+        required: false
+        description: Defaults to the version before `to`.
+        schema: { type: integer, format: int64 }
+      - name: unmasked
+        in: query
+        required: false
+        description: Same rule as for a version.
+        schema: { type: boolean, default: false }
+    get:
+      operationId: compareNetconfigVersions
+      tags: [Network configuration backups]
+      summary: Line diff between two versions
+      description: >-
+        Computed on the masked texts: a changed secret shows as a changed line
+        without being revealed. Three lines of context around each change,
+        longer unchanged runs collapsed into one `skip` line.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The diff.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/NetconfigCompare" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/netconfig/fetch:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: fetchNetconfigNow
+      tags: [Network configuration backups]
+      summary: Back up a device now
+      description: >-
+        Starts a backup in the background and answers at once. `started` is
+        false when one is already running.
+      x-token-scope: write
+      responses:
+        "202":
+          description: The backup is running.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [started]
+                properties:
+                  started: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/netconfig/host-key/accept:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    post:
+      operationId: acceptNetconfigHostKey
+      tags: [Network configuration backups]
+      summary: Accept the new SSH host key a device presents
+      description: >-
+        `fingerprint` must be the key the device presented last (`changed_to`);
+        if another one was seen since, `409` and nothing changes.
+        Administrators signed in to the web interface only; recorded in the
+        audit log. A backup starts right after.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [fingerprint]
+              properties:
+                fingerprint: { type: string, examples: ["SHA256:Nh0Me49Zh9fDw/VYUfq43IJmI1T+XrjiYONPND8GzaM"] }
+      responses:
+        "204": { description: The key is now the remembered one. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
   /api/targets/{id}/website:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -11149,6 +11320,14 @@ components:
             type: { const: username_password }
             username: { type: string }
             password: { type: string }
+        - type: object
+          required: [type, username]
+          description: SSH login of a network configuration backup; `enable_secret` is the optional privileged-mode password.
+          properties:
+            type: { const: ssh_login }
+            username: { type: string }
+            password: { type: string }
+            enable_secret: { type: string }
     MultisiteConfig:
       type: object
       required: [server]
@@ -12791,6 +12970,66 @@ components:
         text: { type: string, description: "Empty for `skip`." }
         count: { type: [integer, "null"], description: "Unchanged lines hidden by a `skip` line." }
 
+    NetconfigVersion:
+      type: object
+      required: [id, fetched_at, last_seen_at, profile, size_bytes, lines, added, removed]
+      properties:
+        id: { type: integer, format: int64 }
+        fetched_at: { type: string, description: "UTC, `YYYY-MM-DD HH:MM:SS`." }
+        last_seen_at: { type: string, description: Last backup that found this same configuration. }
+        profile: { type: string }
+        size_bytes: { type: integer }
+        lines: { type: integer }
+        added: { type: integer, description: Lines added since the previous version, volatile lines aside. }
+        removed: { type: integer }
+    NetconfigOverview:
+      type: object
+      required: [running, host_key, can_read, can_reveal, versions]
+      properties:
+        profile: { type: [string, "null"] }
+        profile_label: { type: [string, "null"] }
+        transport: { type: [string, "null"], enum: [ssh_shell, ssh_exec, http, null] }
+        running: { type: boolean }
+        last_attempt_at: { type: [string, "null"] }
+        last_success_at: { type: [string, "null"] }
+        last_error: { type: [string, "null"] }
+        last_error_kind: { type: [string, "null"], enum: [down, auth, config, host_key, null] }
+        host_key:
+          type: object
+          properties:
+            pinned: { type: [string, "null"], description: "Remembered SHA-256 fingerprint (`SHA256:…`)." }
+            pinned_at: { type: [string, "null"] }
+            changed_to: { type: [string, "null"], description: A different key the device presented and that was refused. }
+            changed_at: { type: [string, "null"] }
+        can_read: { type: boolean, description: The caller may read version contents, secrets masked. }
+        can_reveal: { type: boolean, description: The caller may reveal secrets and download. }
+        versions:
+          type: array
+          items: { $ref: "#/components/schemas/NetconfigVersion" }
+    NetconfigVersionContent:
+      type: object
+      required: [version, masked, masked_values, content]
+      properties:
+        version: { $ref: "#/components/schemas/NetconfigVersion" }
+        masked: { type: boolean }
+        masked_values: { type: integer }
+        content: { type: string }
+    NetconfigCompare:
+      type: object
+      required: [to, masked, added, removed, diff]
+      properties:
+        from:
+          oneOf:
+            - $ref: "#/components/schemas/NetconfigVersion"
+            - type: "null"
+        to: { $ref: "#/components/schemas/NetconfigVersion" }
+        masked: { type: boolean }
+        added: { type: integer }
+        removed: { type: integer }
+        diff:
+          type: array
+          items: { $ref: "#/components/schemas/WebchangeDiffLine" }
+
     WebchangeChangeDetail:
       allOf:
         - $ref: "#/components/schemas/WebchangeChange"
@@ -13201,6 +13440,10 @@ components:
       properties:
         passphrase: { type: string, minLength: 16, writeOnly: true }
         include_account_secrets: { type: boolean, default: false }
+        include_netconfig_versions:
+          type: boolean
+          default: false
+          description: Also carry the stored network configuration versions, which hold device secrets.
     BackupRestoreRequest:
       type: object
       required: [bundle, passphrase]
