@@ -59,8 +59,10 @@ pub use dumbmonit_collectors::{
 };
 pub use dumbmonit_collectors::{DuplicatiCollector, KopiaCollector, duplicati, kopia};
 pub use dumbmonit_collectors::{
-    ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
-    PaperlessCollector, PlexCollector, selfhosted,
+    ArrCollector, AuthentikCollector, ForgejoCollector, FrigateCollector, GitlabCollector,
+    ImmichCollector, JellyfinCollector, KeycloakCollector, MailcowCollector, NextcloudCollector,
+    PaperlessCollector, PlexCollector, ProtectCollector, QbittorrentCollector,
+    VaultwardenCollector, selfhosted,
 };
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{

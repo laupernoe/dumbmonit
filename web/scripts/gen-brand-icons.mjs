@@ -64,7 +64,15 @@ const KINDS = {
 	minio: 'minio',
 	postgres: 'postgresql',
 	mysql: 'mysql',
-	mqtt: 'mqtt'
+	mqtt: 'mqtt',
+	sonarr: 'sonarr',
+	radarr: 'radarr',
+	qbittorrent: 'qbittorrent',
+	unifiprotect: 'ubiquiti',
+	frigate: 'frigate',
+	keycloak: 'keycloak',
+	authentik: 'authentik',
+	vaultwarden: 'vaultwarden'
 };
 
 /** Website platform (crates/server/src/website/platform.rs `as_str`) → slug. */

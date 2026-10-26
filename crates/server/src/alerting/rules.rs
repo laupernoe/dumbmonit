@@ -93,7 +93,7 @@ const CONTAINER_STOPPED_QUERY: &str = "dumbmonit_container_up == bool 0 \
      unless on(target, container) dumbmonit_container_stop_expected == 1";
 
 pub fn builtin_rules() -> Vec<Rule> {
-    vec![
+    let mut rules = vec![
         // Équipement injoignable.
         //
         // On ne cherche pas un `up == 0` : le planificateur n'écrit rien quand
@@ -7093,7 +7093,423 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_netscan_unknown_port",
             )
         },
-    ]
+    ];
+    rules.extend(apps_rules());
+    rules
+}
+
+/// Durée en minutes, pour les règles des applications.
+fn app_minutes(n: u64) -> Duration {
+    Duration::from_secs(n * 60)
+}
+
+/// Durée en heures, pour les règles des applications.
+fn app_hours(n: u64) -> Duration {
+    Duration::from_secs(n * 3600)
+}
+
+/// Une règle de seuil d'application : retenue, gravité et rappel.
+#[allow(clippy::too_many_arguments)]
+fn app_rule(
+    uid: &str,
+    name: &str,
+    description: &str,
+    query: &str,
+    operator: Operator,
+    threshold: f64,
+    hold: Duration,
+    severity: Severity,
+    repeat: Duration,
+) -> Rule {
+    Rule {
+        description: description.to_string(),
+        operator,
+        threshold,
+        for_duration: hold,
+        severity,
+        repeat_interval: Some(repeat),
+        ..base(uid, name, RuleKind::Threshold, query)
+    }
+}
+
+/// Règles des applications de `collectors/selfhosted` : Sonarr, Radarr, Lidarr,
+/// Prowlarr, qBittorrent, UniFi Protect, Frigate, Keycloak, authentik,
+/// Vaultwarden et mailcow. Une application qui ne répond plus du tout relève de
+/// la règle « injoignable » ; celles-ci surveillent ce qui continue de répondre
+/// pendant que le service est en panne.
+fn apps_rules() -> Vec<Rule> {
+    let mut rules = Vec::new();
+    // La famille *arr : mêmes métriques, préfixées par le produit.
+    for (kind, product, has_queue) in [
+        ("sonarr", "Sonarr", true),
+        ("radarr", "Radarr", true),
+        ("lidarr", "Lidarr", true),
+        ("prowlarr", "Prowlarr", false),
+    ] {
+        rules.push(app_rule(
+            &format!("{kind}_health_error"),
+            &format!("{product} health error"),
+            &format!(
+                "{product} reports an error on its System → Status page: a download client or \
+                 indexer that fails, a missing root folder."
+            ),
+            &format!("dumbmonit_{kind}_health_errors"),
+            Operator::Gt,
+            0.0,
+            app_minutes(15),
+            Severity::Warning,
+            app_hours(6),
+        ));
+        if has_queue {
+            rules.push(app_rule(
+                &format!("{kind}_queue_errors"),
+                &format!("{product} queue has errors"),
+                &format!(
+                    "An item in {product}'s download queue has an error (failed download, import \
+                     blocked) and nothing cleared it for half an hour."
+                ),
+                &format!("dumbmonit_{kind}_queue_has_errors"),
+                Operator::Gt,
+                0.0,
+                app_minutes(30),
+                Severity::Warning,
+                app_hours(6),
+            ));
+        }
+        rules.push(Rule {
+            clear_threshold: Some(88.0),
+            unit: "%".to_string(),
+            ..app_rule(
+                &format!("{kind}_disk_almost_full"),
+                &format!("{product} disk almost full"),
+                &format!("A disk {product} reports is more than 90% full."),
+                &format!("dumbmonit_{kind}_disk_used_percent"),
+                Operator::Gt,
+                90.0,
+                app_minutes(30),
+                Severity::Warning,
+                app_hours(24),
+            )
+        });
+        rules.push(app_rule(
+            &format!("{kind}_update_available"),
+            &format!("{product} update available"),
+            &format!("A newer {product} release is available."),
+            &format!("dumbmonit_{kind}_update_available"),
+            Operator::Gt,
+            0.0,
+            app_hours(1),
+            Severity::Info,
+            app_hours(7 * 24),
+        ));
+    }
+    rules.push(app_rule(
+        "prowlarr_indexers_disabled",
+        "Prowlarr indexers disabled",
+        "Prowlarr disabled indexers after repeated failures: Sonarr, Radarr and Lidarr stop \
+         finding releases through them.",
+        "dumbmonit_prowlarr_indexers_disabled",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Warning,
+        app_hours(24),
+    ));
+
+    // qBittorrent.
+    rules.push(app_rule(
+        "qbittorrent_torrents_errored",
+        "qBittorrent torrents in error",
+        "Torrents are in error or have lost their files (disk full, folder moved): they never \
+         resume by themselves.",
+        "dumbmonit_qbittorrent_torrents_errored",
+        Operator::Gt,
+        0.0,
+        app_minutes(15),
+        Severity::Warning,
+        app_hours(24),
+    ));
+    rules.push(app_rule(
+        "qbittorrent_disconnected",
+        "qBittorrent disconnected",
+        "qBittorrent is not connected to the network (closed port, VPN down): nothing is \
+         downloaded or seeded.",
+        "dumbmonit_qbittorrent_connected == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(15),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(Rule {
+        clear_threshold: Some(6.0),
+        unit: "GiB".to_string(),
+        ..app_rule(
+            "qbittorrent_free_space_low",
+            "qBittorrent free space low",
+            "Less than 5 GiB free in qBittorrent's download folder.",
+            "dumbmonit_qbittorrent_free_space_bytes / 1073741824",
+            Operator::Lt,
+            5.0,
+            app_minutes(30),
+            Severity::Warning,
+            app_hours(24),
+        )
+    });
+
+    // UniFi Protect.
+    rules.push(app_rule(
+        "unifiprotect_camera_offline",
+        "Protect camera offline",
+        "A UniFi Protect camera has been disconnected from its NVR for five minutes.",
+        "dumbmonit_unifiprotect_camera_online == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(app_rule(
+        "unifiprotect_camera_not_recording",
+        "Protect camera not recording",
+        "A camera is connected but not recording although it is set to (disk trouble, \
+         recording stopped).",
+        "dumbmonit_unifiprotect_cameras_not_recording",
+        Operator::Gt,
+        0.0,
+        app_minutes(15),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(app_rule(
+        "unifiprotect_disk_unhealthy",
+        "Protect NVR disk unhealthy",
+        "The NVR reports a failing disk.",
+        "dumbmonit_unifiprotect_disks_unhealthy",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "unifiprotect_recording_disabled",
+        "Protect recording disabled",
+        "Recording is switched off on the NVR: no camera is recording.",
+        "dumbmonit_unifiprotect_recording_disabled",
+        Operator::Gt,
+        0.0,
+        app_minutes(10),
+        Severity::Warning,
+        app_hours(6),
+    ));
+
+    // Frigate.
+    rules.push(app_rule(
+        "frigate_camera_offline",
+        "Frigate camera offline",
+        "A camera delivers no frames to Frigate (stream down, camera off): its recording and \
+         detection have stopped.",
+        "dumbmonit_frigate_camera_online == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(Rule {
+        unit: "s".to_string(),
+        ..app_rule(
+            "frigate_detector_stuck",
+            "Frigate detector stuck",
+            "A detector has been busy on the same inference for more than 30 seconds (Coral \
+             or GPU hung).",
+            "dumbmonit_frigate_detector_busy_seconds",
+            Operator::Gt,
+            30.0,
+            app_minutes(2),
+            Severity::Warning,
+            app_hours(1),
+        )
+    });
+    rules.push(Rule {
+        clear_threshold: Some(88.0),
+        unit: "%".to_string(),
+        ..app_rule(
+            "frigate_storage_almost_full",
+            "Frigate storage almost full",
+            "The disk holding Frigate's recordings is more than 90% full.",
+            "dumbmonit_frigate_storage_used_percent",
+            Operator::Gt,
+            90.0,
+            app_minutes(30),
+            Severity::Warning,
+            app_hours(24),
+        )
+    });
+    rules.push(app_rule(
+        "frigate_update_available",
+        "Frigate update available",
+        "A newer Frigate release is available.",
+        "dumbmonit_frigate_update_available",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // Keycloak.
+    rules.push(app_rule(
+        "keycloak_not_ready",
+        "Keycloak not ready",
+        "Keycloak answers but reports itself not ready (database down): nobody can log in.",
+        "dumbmonit_keycloak_ready == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "keycloak_realm_disabled",
+        "Keycloak realm disabled",
+        "A Keycloak realm is disabled: its users cannot log in.",
+        "dumbmonit_keycloak_realms_disabled",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // authentik.
+    rules.push(app_rule(
+        "authentik_not_ready",
+        "authentik not ready",
+        "authentik answers but reports itself not ready (database or cache down): logins fail.",
+        "dumbmonit_authentik_ready == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "authentik_no_worker",
+        "authentik has no worker",
+        "No authentik worker is running: source synchronisation, e-mails and clean-up tasks \
+         stop.",
+        "dumbmonit_authentik_workers == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(10),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "authentik_tasks_failed",
+        "authentik task failed",
+        "A scheduled system task (a source synchronisation, a blueprint) failed on its last \
+         run.",
+        "dumbmonit_authentik_tasks_failed",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Warning,
+        app_hours(24),
+    ));
+    rules.push(app_rule(
+        "authentik_outpost_disconnected",
+        "authentik outpost disconnected",
+        "An outpost that serves providers has not reported for five minutes: the applications \
+         it protects do not answer.",
+        "dumbmonit_authentik_outposts_disconnected",
+        Operator::Gt,
+        0.0,
+        app_minutes(10),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(app_rule(
+        "authentik_update_available",
+        "authentik update available",
+        "A newer authentik release is available.",
+        "dumbmonit_authentik_update_available",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // Vaultwarden.
+    rules.push(app_rule(
+        "vaultwarden_signups_open",
+        "Vaultwarden sign-ups open",
+        "Anyone who can reach this Vaultwarden can create an account (SIGNUPS_ALLOWED).",
+        "dumbmonit_vaultwarden_signups_open",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // mailcow.
+    rules.push(app_rule(
+        "mailcow_container_down",
+        "mailcow container down",
+        "A mailcow container is not running (Postfix, Dovecot, rspamd…): mail is not delivered, \
+         read or filtered.",
+        "dumbmonit_mailcow_container_up == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(Rule {
+        unit: "h".to_string(),
+        ..app_rule(
+            "mailcow_queue_stuck",
+            "mailcow mail queue stuck",
+            "The oldest message in Postfix's queue has waited more than four hours.",
+            "dumbmonit_mailcow_queue_oldest_seconds / 3600",
+            Operator::Gt,
+            4.0,
+            app_minutes(15),
+            Severity::Warning,
+            app_hours(6),
+        )
+    });
+    rules.push(Rule {
+        clear_threshold: Some(88.0),
+        unit: "%".to_string(),
+        ..app_rule(
+            "mailcow_vmail_almost_full",
+            "mailcow mail volume almost full",
+            "The volume holding mailcow's mailboxes is more than 90% full.",
+            "dumbmonit_mailcow_vmail_used_percent",
+            Operator::Gt,
+            90.0,
+            app_minutes(30),
+            Severity::Warning,
+            app_hours(24),
+        )
+    });
+    rules.push(app_rule(
+        "mailcow_mailbox_near_quota",
+        "mailcow mailbox near quota",
+        "A mailbox is at 90% or more of its quota: incoming mail will soon be refused.",
+        "dumbmonit_mailcow_mailboxes_near_quota",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(24),
+    ));
+    rules
 }
 
 /// `uid` des règles d'inventaire du réseau, livrées désactivées.
@@ -7296,6 +7712,47 @@ mod tests {
             "immich_queue_paused",
             "immich_storage_almost_full",
             "immich_update_available",
+            // Applications (`collectors/selfhosted/{arr,qbittorrent,protect,frigate,
+            // keycloak,authentik,vaultwarden,mailcow}.rs`).
+            "sonarr_health_error",
+            "sonarr_queue_errors",
+            "sonarr_disk_almost_full",
+            "sonarr_update_available",
+            "radarr_health_error",
+            "radarr_queue_errors",
+            "radarr_disk_almost_full",
+            "radarr_update_available",
+            "lidarr_health_error",
+            "lidarr_queue_errors",
+            "lidarr_disk_almost_full",
+            "lidarr_update_available",
+            "prowlarr_health_error",
+            "prowlarr_disk_almost_full",
+            "prowlarr_update_available",
+            "prowlarr_indexers_disabled",
+            "qbittorrent_torrents_errored",
+            "qbittorrent_disconnected",
+            "qbittorrent_free_space_low",
+            "unifiprotect_camera_offline",
+            "unifiprotect_camera_not_recording",
+            "unifiprotect_disk_unhealthy",
+            "unifiprotect_recording_disabled",
+            "frigate_camera_offline",
+            "frigate_detector_stuck",
+            "frigate_storage_almost_full",
+            "frigate_update_available",
+            "keycloak_not_ready",
+            "keycloak_realm_disabled",
+            "authentik_not_ready",
+            "authentik_no_worker",
+            "authentik_tasks_failed",
+            "authentik_outpost_disconnected",
+            "authentik_update_available",
+            "vaultwarden_signups_open",
+            "mailcow_container_down",
+            "mailcow_queue_stuck",
+            "mailcow_vmail_almost_full",
+            "mailcow_mailbox_near_quota",
             // Appareils clients, générique (`collectors/client_devices.rs`).
             "client_device_stale",
             "paperless_broker_down",
@@ -8045,6 +8502,47 @@ mod tests {
             "dumbmonit_qnap_disk_temperature_celsius",
             "dumbmonit_qnap_firmware_update_available",
             "dumbmonit_qnap_volume_used_percent",
+            // Applications (`collectors/selfhosted/{arr,qbittorrent,protect,frigate,
+            // keycloak,authentik,vaultwarden,mailcow}.rs`).
+            "dumbmonit_sonarr_health_errors",
+            "dumbmonit_sonarr_disk_used_percent",
+            "dumbmonit_sonarr_update_available",
+            "dumbmonit_sonarr_queue_has_errors",
+            "dumbmonit_radarr_health_errors",
+            "dumbmonit_radarr_disk_used_percent",
+            "dumbmonit_radarr_update_available",
+            "dumbmonit_radarr_queue_has_errors",
+            "dumbmonit_lidarr_health_errors",
+            "dumbmonit_lidarr_disk_used_percent",
+            "dumbmonit_lidarr_update_available",
+            "dumbmonit_lidarr_queue_has_errors",
+            "dumbmonit_prowlarr_health_errors",
+            "dumbmonit_prowlarr_disk_used_percent",
+            "dumbmonit_prowlarr_update_available",
+            "dumbmonit_prowlarr_indexers_disabled",
+            "dumbmonit_qbittorrent_torrents_errored",
+            "dumbmonit_qbittorrent_connected",
+            "dumbmonit_qbittorrent_free_space_bytes",
+            "dumbmonit_unifiprotect_camera_online",
+            "dumbmonit_unifiprotect_cameras_not_recording",
+            "dumbmonit_unifiprotect_disks_unhealthy",
+            "dumbmonit_unifiprotect_recording_disabled",
+            "dumbmonit_frigate_camera_online",
+            "dumbmonit_frigate_detector_busy_seconds",
+            "dumbmonit_frigate_storage_used_percent",
+            "dumbmonit_frigate_update_available",
+            "dumbmonit_keycloak_ready",
+            "dumbmonit_keycloak_realms_disabled",
+            "dumbmonit_authentik_ready",
+            "dumbmonit_authentik_workers",
+            "dumbmonit_authentik_tasks_failed",
+            "dumbmonit_authentik_outposts_disconnected",
+            "dumbmonit_authentik_update_available",
+            "dumbmonit_vaultwarden_signups_open",
+            "dumbmonit_mailcow_container_up",
+            "dumbmonit_mailcow_queue_oldest_seconds",
+            "dumbmonit_mailcow_vmail_used_percent",
+            "dumbmonit_mailcow_mailboxes_near_quota",
         ];
 
         for rule in builtin_rules() {
