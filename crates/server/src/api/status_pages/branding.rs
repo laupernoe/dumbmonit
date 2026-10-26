@@ -7,12 +7,12 @@
 
 use axum::Json;
 use axum::extract::{Path, State};
-use axum::http::{StatusCode, header};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use base64::Engine;
 use serde::Deserialize;
 
-use super::{invalidate_cache, page_not_found, public_not_found};
+use super::{invalidate_cache, page_not_found};
 use crate::api::{ApiError, ApiResult};
 use crate::db;
 use crate::state::AppState;
@@ -142,11 +142,9 @@ async fn serve(state: &AppState, id: i64, kind: &str, cache: &'static str) -> Ap
 pub async fn public_logo(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let page = match db::status_pages::get_page_by_slug(&state.pool, &slug).await? {
-        Some(page) if page.published => page,
-        _ => return Err(public_not_found()),
-    };
+    let page = super::access::open_page(&state, &slug, &headers).await?;
     let Some(kind) = page.logo_type.as_deref() else {
         return Err(ApiError::NotFound("This page has no logo.".into()));
     };

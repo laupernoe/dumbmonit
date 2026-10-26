@@ -356,7 +356,8 @@ async fn status_pages(
 ) -> Result<Vec<BundleStatusPage>> {
     let rows = sqlx::query(
         "SELECT id, slug, title, description, published, theme, show_uptime_days,
-             accent, scenes, scene_rotation, simple, footer_text, homepage_url, domain, seo
+             accent, scenes, scene_rotation, simple, footer_text, homepage_url, domain, seo,
+             access_mode, access_password_hash
          FROM status_pages ORDER BY id",
     )
     .fetch_all(pool)
@@ -426,6 +427,9 @@ async fn status_pages(
             homepage_url: row.try_get("homepage_url")?,
             domain: row.try_get("domain")?,
             seo: Some(crate::status_seo::Seo::parse(&row.try_get::<String, _>("seo")?)),
+            access_mode: Some(row.try_get::<String, _>("access_mode")?)
+                .filter(|mode| mode != "public"),
+            access_password_hash: row.try_get("access_password_hash")?,
             groups: groups.into_iter().map(|(name,)| name).collect(),
             group_labels,
         });

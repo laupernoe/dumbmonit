@@ -76,7 +76,8 @@ import {
 	Send,
 	Terminal,
 	KeyRound,
-	Workflow
+	Workflow,
+	CloudCog
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
 import { isPackKind } from '#lib/api/packs.js';
@@ -144,6 +145,7 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	openvpn: Cable,
 	npm: Split,
 	domain: CalendarClock,
+	provider: CloudCog,
 	mail_blacklist: MailX,
 	ip_blacklist: ListX,
 	kubernetes: ShipWheel,
@@ -169,7 +171,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
-const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
+const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'provider', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket', 'udp', 'ssh', 'imap', 'pop3', 'snmp_oid', 'radius', 'grpc'];
 
 /** A domain's registration, read over RDAP: a service, polled rarely. */
 const DOMAIN_KIND = 'domain';
@@ -224,6 +226,7 @@ const KIND_KEYWORDS: Record<string, string> = {
 	apache: 'web server httpd apache2 mod_status workers scoreboard busy idle lamp',
 	openvpn: 'vpn tunnel openvpn easy-rsa tap tun client server certificate ovpn remote access site-to-site management interface',
 	npm: 'nginx proxy manager reverse proxy hosts certificate lets encrypt ssl jc21',
+	provider: 'provider third-party vendor saas status page statuspage atlassian cloudflare github aws health outage incident degraded dependency upstream rss',
 	domain: 'domain name registration expiry expiration renew registrar whois rdap hold',
 	mail_blacklist: 'blacklist blocklist dnsbl rbl spamhaus barracuda spamcop spam reputation deliverability mail email smtp mx gmail outlook hotmail yahoo delist ptr rdns spf dmarc',
 	ip_blacklist: 'blacklist blocklist dnsbl rbl spamhaus barracuda spamcop spam reputation ip range cidr subnet block delist',
