@@ -246,7 +246,10 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
 /// ([`super::Notifier::renders_actions`]).
 pub fn action_style(kind: &str) -> &'static str {
     match kind {
-        "pagerduty" | "opsgenie" | crate::oncall::CHANNEL_KIND => "none",
+        // Astreinte avec son propre acquittement, et SMS (un lien signé de ~150
+        // caractères coûterait plusieurs segments).
+        "pagerduty" | "opsgenie" | "grafana_oncall" | "signl4" | "vonage" | "telnyx" | "aspsms"
+        | crate::oncall::CHANNEL_KIND => "none",
         "ntfy" | "telegram" | super::webpush::KIND => "buttons",
         _ => "links",
     }
@@ -847,6 +850,245 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
                 )
                 .required(),
             ],
+        ),
+
+        "whatsapp" => info(
+            kind,
+            "WhatsApp (Cloud API)",
+            "WhatsApp message through the Meta Cloud API.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#whatsapp-cloud-api",
+            vec![
+                text(
+                    "phone_number_id",
+                    "Phone number ID",
+                    "The numeric ID of the sending number, shown under WhatsApp → API Setup \
+                     in the Meta developer console. Not the phone number itself.",
+                    "109876543210987",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in international format per line. Meta only allows free text \
+                     within 24 h of the recipient's last message to your number.",
+                    "+33612345678",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Access token",
+                    "A permanent system-user token with the whatsapp_business_messaging \
+                     permission.",
+                    "EAAGm0PX4ZCpsBA…",
+                )
+                .required(),
+            ],
+        ),
+        "callmebot" => info(
+            kind,
+            "WhatsApp (CallMeBot)",
+            "WhatsApp message to yourself through the free CallMeBot gateway.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#whatsapp-callmebot",
+            vec![
+                text(
+                    "phone",
+                    "Phone number",
+                    "Your number in international format, the one that activated CallMeBot.",
+                    "+34123456789",
+                )
+                .required(),
+            ],
+            vec![
+                password(
+                    "api_key",
+                    "API key",
+                    "Sent back by the CallMeBot contact once you have written to it.",
+                    "123456",
+                )
+                .required(),
+            ],
+        ),
+        "threema" => info(
+            kind,
+            "Threema Gateway",
+            "Threema message from your Gateway ID, in basic mode.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#threema-gateway",
+            vec![
+                text(
+                    "from",
+                    "Gateway ID",
+                    "Eight characters starting with \"*\", from gateway.threema.ch.",
+                    "*MYGWAY1",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One Threema ID (eight characters) per line.",
+                    "ECHOECHO",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "secret",
+                    "API secret",
+                    "Shown next to the Gateway ID in the Threema Gateway portal.",
+                    "AbCdEfGhIjKlMnOp",
+                )
+                .required(),
+            ],
+        ),
+        "webex" => info(
+            kind,
+            "Webex",
+            "Message from a Webex bot in a space.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#webex",
+            vec![
+                text(
+                    "room_id",
+                    "Room ID",
+                    "The space identifier (not its name). The bot must be a member of the \
+                     space.",
+                    "Y2lzY29zcGFyazovL3VzL1JPT00vYWJj",
+                )
+                .required(),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Bot token",
+                    "Created on developer.webex.com → My Apps → Create a Bot.",
+                    "NzE2ZjQ5Y2ItZXhhbXBsZQ",
+                )
+                .required(),
+            ],
+        ),
+        "vonage" => info(
+            kind,
+            "SMS via Vonage",
+            "SMS sent by Vonage, trimmed to the essentials.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-vonage",
+            vec![
+                text("api_key", "API key", "Shown on the Vonage API dashboard.", "ab12cd34")
+                    .required(),
+                text(
+                    "from",
+                    "Sender",
+                    "A number, or an alphanumeric sender name where your country allows it.",
+                    "DumbMonit",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in international format per line.",
+                    "+33612345678",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "api_secret",
+                    "API secret",
+                    "Next to the API key on the Vonage dashboard.",
+                    "AbCdEfGhIjKlMnOp",
+                )
+                .required(),
+            ],
+        ),
+        "telnyx" => info(
+            kind,
+            "SMS via Telnyx",
+            "SMS sent by Telnyx, trimmed to the essentials.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-telnyx",
+            vec![
+                text(
+                    "from",
+                    "Sender number",
+                    "A Telnyx number with SMS enabled, in E.164 format.",
+                    "+15005550006",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in E.164 format (with the +) per line.",
+                    "+33612345678",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "api_key",
+                    "API key (v2)",
+                    "Mission Control Portal → Auth → API Keys.",
+                    "KEY0123456789ABCDEF",
+                )
+                .required(),
+            ],
+        ),
+        "aspsms" => info(
+            kind,
+            "SMS via ASPSMS",
+            "SMS sent by ASPSMS, trimmed to the essentials.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-aspsms",
+            vec![
+                text("userkey", "Userkey", "Your ASPSMS account userkey.", "ABCDE12345").required(),
+                text(
+                    "originator",
+                    "Originator",
+                    "Sender name (11 characters at most) or number, as allowed by your account.",
+                    "DumbMonit",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in international format per line.",
+                    "+41791234567",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "password",
+                    "API password",
+                    "The API password set in the ASPSMS interface (not the login password).",
+                    "AbCdEfGhIjKl",
+                )
+                .required(),
+            ],
+        ),
+        "grafana_oncall" => info(
+            kind,
+            "Grafana OnCall",
+            "Alert group in Grafana OnCall, resolved when the alert is.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#grafana-oncall",
+            vec![],
+            vec![webhook_url(
+                "Integrations → New integration → Webhook, then copy the HTTP endpoint.",
+                "https://oncall.example.org/integrations/v1/webhook/AbCdEf123456/",
+            )],
+        ),
+        "signl4" => info(
+            kind,
+            "SIGNL4",
+            "Mobile alert to your SIGNL4 team, closed when the alert resolves.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#signl4",
+            vec![],
+            vec![webhook_url(
+                "The team webhook: https://connect.signl4.com/webhook/ followed by your team \
+                 secret, shown under Teams → Team settings.",
+                "https://connect.signl4.com/webhook/abc123def4",
+            )],
         ),
 
         // --- Astreinte -----------------------------------------------------

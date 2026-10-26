@@ -150,6 +150,12 @@ pub struct Bundle {
     /// préférences (migrations 0100 à 0102).
     #[serde(default)]
     pub oncall: crate::backup::oncall::BundleOncall,
+    /// Corrections de la carte de topologie (migration 0072).
+    #[serde(default)]
+    pub topology_corrections: Vec<BundleTopologyCorrection>,
+    /// Règles de la carte, acceptées ou refusées (migration 0072).
+    #[serde(default)]
+    pub topology_rules: Vec<BundleTopologyRule>,
 }
 
 impl Bundle {
@@ -171,6 +177,8 @@ impl Bundle {
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
             ("oncall".to_string(), self.oncall.count()),
+            ("topology_corrections".to_string(), self.topology_corrections.len()),
+            ("topology_rules".to_string(), self.topology_rules.len()),
         ])
     }
 }
@@ -218,6 +226,78 @@ pub struct BundleTarget {
     /// Nom de l'emplacement affecté (migration 0059) ; `None` : aucun.
     #[serde(default)]
     pub location: Option<String>,
+    /// Sondes depuis plusieurs emplacements (migration 0095) ; `None` : le
+    /// mode est coupé, ou le lot vient d'un serveur qui ne le connaissait pas.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub multisite: Option<BundleMultisite>,
+}
+
+/// Réglage multi-emplacements d'un moniteur, ses agents désignés par référence.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleMultisite {
+    /// Le serveur sonde aussi, en direct.
+    pub server: bool,
+    /// Références des agents relais (voir [`target_ref`]).
+    #[serde(default)]
+    pub agents: Vec<String>,
+    /// Emplacements en échec qu'il faut pour la panne ; `None` : la majorité.
+    #[serde(default)]
+    pub quorum: Option<u32>,
+}
+
+/// Un nœud de la carte de topologie, hors de son instance : l'équipement (ou
+/// l'hyperviseur, voir [`target_ref`]) et, pour un invité ou un nœud de
+/// cluster, `g:<nom>` ou `n:<nœud>`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BundleNode {
+    pub target: String,
+    #[serde(default)]
+    pub child: Option<String>,
+}
+
+/// Une correction de la carte de topologie.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTopologyCorrection {
+    pub kind: String,
+    #[serde(default)]
+    pub from: Option<BundleNode>,
+    pub to: BundleNode,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub value: Option<String>,
+    #[serde(default)]
+    pub use_for_alerts: bool,
+    /// Parent d'alerte d'avant la correction (voir [`target_ref`]).
+    #[serde(default)]
+    pub previous_parent: Option<String>,
+    #[serde(default)]
+    pub author: String,
+    #[serde(default)]
+    pub created_at: String,
+}
+
+/// Une règle de la carte de topologie, acceptée ou refusée.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTopologyRule {
+    pub kind: String,
+    pub status: String,
+    #[serde(default)]
+    pub subnet: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub target_kind: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub parent: Option<BundleNode>,
+    #[serde(default)]
+    pub evidence: i64,
+    #[serde(default)]
+    pub author: String,
+    #[serde(default)]
+    pub created_at: String,
 }
 
 /// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).
@@ -668,6 +748,7 @@ mod tests {
                 group_name: "Rack A".to_string(),
                 position: 3,
                 location: None,
+                multisite: None,
             }],
             ..Bundle::default()
         }

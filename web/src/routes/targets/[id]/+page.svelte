@@ -55,6 +55,7 @@
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
+	import ProbeLocationsCard from '#lib/components/devices/ProbeLocationsCard.svelte';
 	import UptimeBar from '#lib/components/devices/UptimeBar.svelte';
 	import DeviceTimeline from '#lib/components/devices/DeviceTimeline.svelte';
 	import FoldSection from '#lib/components/devices/FoldSection.svelte';
@@ -78,6 +79,7 @@
 		type MetricRow
 	} from '#lib/components/devices/metrics.js';
 	import SilenceControl from '#lib/components/devices/SilenceControl.svelte';
+	import ManagedNotice from '#lib/components/devices/ManagedNotice.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { dismissals } from '#lib/stores/dismissals.svelte.js';
 	import DockerPanel from '#lib/components/devices/docker/DockerPanel.svelte';
@@ -733,6 +735,9 @@
 		{#if enabledError}
 			<ErrorNotice error={enabledError} title={m.devices_target_err_enabled()} class="mt-4" />
 		{/if}
+		{#if target?.managed}
+			<ManagedNotice {target} canRelease={auth.isAdmin} onreleased={() => void loadTarget()} class="mt-4" />
+		{/if}
 		{#if deleteError}
 			<ErrorNotice error={deleteError} title={m.devices_target_err_delete()} class="mt-4" />
 		{/if}
@@ -749,6 +754,10 @@
 
 	{#if securityShown && securityOpen}
 		<SecurityReport report={securityShown} onclose={() => (securityOpen = false)} />
+	{/if}
+
+	{#if target.multisite}
+		<ProbeLocationsCard targetId={target.id} {refreshKey} />
 	{/if}
 
 	<CveDeviceCard targetId={target.id} />

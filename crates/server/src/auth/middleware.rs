@@ -101,6 +101,8 @@ const SELF_SERVICE: &[&str] = &[
     "/auth/totp",
     "/auth/totp/enroll",
     "/auth/totp/verify",
+    "/auth/passkeys/register/begin",
+    "/auth/passkeys/register/finish",
     "/music/speaker/report",
     "/music/speaker/play",
 ];
@@ -140,8 +142,16 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
 /// comptes et sessions (`/auth/**`, journal d'audit compris), gestion des
 /// comptes (`/users/**`), jetons d'API et d'agents. Un jeton ne fabrique pas
 /// d'autres secrets et ne touche pas à qui peut se connecter.
-pub const TOKEN_DENIED: &[&str] =
-    &["/auth", "/users", "/tokens", "/agent/tokens", "/agent/ad-kit", "/agent/tls", "/account"];
+pub const TOKEN_DENIED: &[&str] = &[
+    "/auth",
+    "/users",
+    "/tokens",
+    "/agent/tokens",
+    "/agent/ad-kit",
+    "/agent/tls",
+    "/agent/updates",
+    "/account",
+];
 
 const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
                                     authentication, SSO or other tokens: sign in to the web \
@@ -330,7 +340,10 @@ fn is_mutation(method: &Method) -> bool {
 /// le préfixe. On tolère les deux plutôt que de dépendre de ce détail.
 fn is_self_service(path: &str) -> bool {
     let path = path.strip_prefix("/api").unwrap_or(path);
-    SELF_SERVICE.contains(&path) || is_own_push_device(path) || is_own_oncall_profile(path)
+    SELF_SERVICE.contains(&path)
+        || is_own_push_device(path)
+        || is_own_oncall_profile(path)
+        || is_own_passkey(path)
 }
 
 /// Contacts, heures calmes et lien de calendrier d'astreinte : chacun gère les
@@ -344,6 +357,13 @@ fn is_own_oncall_profile(path: &str) -> bool {
             .strip_prefix("/account/contacts/")
             .is_some_and(|rest| digits(rest) || rest.strip_suffix("/test").is_some_and(digits)),
     }
+}
+
+/// Clés d'accès : chacun renomme et retire *les siennes* (`api::passkeys` filtre
+/// par compte), comme il gère son TOTP.
+fn is_own_passkey(path: &str) -> bool {
+    path.strip_prefix("/auth/passkeys/")
+        .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// Abonnements Web Push : chacun abonne, teste et retire *ses* appareils, ce
@@ -500,6 +520,11 @@ mod tests {
         assert!(!is_self_service("/account/contacts/3/../../../users"));
         assert!(!is_self_service("/account/contacts//test"));
         assert!(!is_self_service("/oncall/schedules"));
+        assert!(is_self_service("/api/auth/passkeys/register/begin"));
+        assert!(is_self_service("/auth/passkeys/register/finish"));
+        assert!(is_self_service("/api/auth/passkeys/3"));
+        assert!(!is_self_service("/auth/passkeys/"));
+        assert!(!is_self_service("/auth/passkeys/3/../../users"));
     }
 
     #[test]

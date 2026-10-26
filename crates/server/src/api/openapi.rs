@@ -111,6 +111,7 @@ mod tests {
         "/api/agent/relay",
         "/api/agent/relay/{id}",
         "/api/agent/relay/discovery/{id}",
+        "/api/agent/update/download/{name}",
         "/api/auth/oidc/start",
         "/api/auth/oidc/callback",
         "/api/music/spotify/callback",
@@ -136,6 +137,8 @@ mod tests {
                 | "/api/auth/setup"
                 | "/api/auth/login"
                 | "/api/auth/login/totp"
+                | "/api/auth/passkey/login/begin"
+                | "/api/auth/passkey/login/finish"
                 | "/api/push/{token}"
                 | "/api/calendar/maintenance.ics"
                 | "/api/openapi.json"

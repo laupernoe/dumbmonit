@@ -123,6 +123,8 @@ export interface Target {
 	parent_id: TargetId | null;
 	/** Agent that probes this device from its own network; `null` when the server does. */
 	via_agent: TargetId | null;
+	/** Probed from several locations with a quorum; `null` when only one place probes. */
+	multisite: MultisiteConfig | null;
 	interval_secs: number;
 	enabled: boolean;
 	tags: Record<string, string>;
@@ -141,10 +143,69 @@ export interface Target {
 	position: number;
 	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
 	location_id: LocationId | null;
+	/** Set when Docker labels on an agent's container manage this monitor; `null`: a free monitor. */
+	managed?: TargetManaged | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
 	error_kind: 'down' | 'config' | null;
+}
+
+/** Probing an uptime monitor from several locations. */
+export interface MultisiteConfig {
+	/** The DumbMonit server itself probes too. */
+	server: boolean;
+	/** Relay agents (ids of `agent` monitors, same list as `GET /api/relays`) that probe too. */
+	agents: number[];
+	/** Failing locations needed to declare the monitor down; null = majority of the locations. */
+	quorum: number | null;
+}
+
+export type ProbeDecision = 'up' | 'degraded' | 'down' | 'unknown';
+
+/** One place that probes a multisite monitor. */
+export interface ProbeLocation {
+	/** Value of the `location` metric label: 'server' or 'agent-<id>'. */
+	location: string;
+	agent_id: number | null;
+	/** Agent name; empty for the server. */
+	name: string;
+	site: string | null;
+	latitude: number | null;
+	longitude: number | null;
+	/** excluded: not counted in the quorum; pending: no result yet. */
+	state: 'up' | 'down' | 'excluded' | 'pending';
+	latency_ms: number | null;
+	/** Probe failure reason or exclusion detail (English, from the server). */
+	error: string | null;
+	excluded_reason: 'silent' | 'not_relay' | 'busy' | 'error' | null;
+	checked_at: string | null;
+}
+
+/** `GET /api/targets/{id}/probe-locations`. */
+export interface ProbeLocationsReport {
+	decision: ProbeDecision;
+	/** Failing locations needed for "down" (effective, after exclusions). */
+	quorum: number;
+	/** Locations counted in the last decision. */
+	counted: number;
+	failing: number;
+	/** A confirmation round is running right now. */
+	confirming: boolean;
+	decided_at: string | null;
+	locations: ProbeLocation[];
+}
+
+/** Management of a monitor by Docker labels (`dumbmonit.*`). Mirrors `db::targets::Managed`. */
+export interface TargetManaged {
+	/** Origin: `docker-labels`. */
+	by: string;
+	/** Agent whose containers declare the monitor. */
+	source: TargetId | null;
+	/** Stable key, `project/service/http` or `container/http`. */
+	key: string;
+	/** Set when no label declares the monitor any more: it is archived (paused, history kept). */
+	missing_since: string | null;
 }
 
 /** Body sent to `POST /api/targets` and `PUT /api/targets/{id}`. */
@@ -155,6 +216,8 @@ export interface TargetPayload {
 	profile_id?: string | null;
 	parent_id?: TargetId | null;
 	via_agent?: TargetId | null;
+	/** Absent on edit keeps it; `null` turns it off. Exclusive with `via_agent`. */
+	multisite?: MultisiteConfig | null;
 	interval_secs?: number;
 	enabled?: boolean;
 	tags?: Record<string, string>;
@@ -940,6 +1003,8 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
+	/** At least one passkey is registered: the sign-in screen offers to use one. */
+	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
 }
@@ -1114,8 +1179,20 @@ export interface AuthState {
 	user: User | null;
 	oidc: OidcStatus;
 	ldap: LdapStatus;
+	/** At least one passkey is registered on the instance. */
+	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
+}
+
+/** A passkey (WebAuthn credential) of the current account. Mirrors `auth::passkeys::PasskeyView`. */
+export interface Passkey {
+	id: number;
+	name: string;
+	created_at: string;
+	last_used_at: string | null;
+	/** Copied to a synced keychain (iCloud, Google, a password manager). */
+	synced: boolean;
 }
 
 // --- Notification channels --------------------------------------------------
@@ -2243,10 +2320,13 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall' | 'manual';
+
+/** Who drew a link: the server's deduction, a correction by hand, or a learned rule. */
+export type TopologyOrigin = 'deduced' | 'manual' | 'rule';
 
 /** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
-export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
+export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location' | 'manual';
 
 /** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
 export interface TopologyNode {
@@ -2259,6 +2339,8 @@ export interface TopologyNode {
 	kind: string;
 	/** Folder; a guest takes its hypervisor's. */
 	group_name: string;
+	/** `manual` when the grouping was corrected on the map. */
+	group_source?: 'manual' | null;
 	/** Remote site the node belongs to; `null` for the main site. */
 	site: string | null;
 	site_source: TopologySiteSource | null;
@@ -2281,6 +2363,79 @@ export interface TopologyEdge {
 	from: string;
 	to: string;
 	source: TopologySource;
+	origin?: TopologyOrigin;
+	/** The correction that drew it. */
+	correction_id?: number | null;
+	/** The learned rule that drew it. */
+	rule_id?: number | null;
+}
+
+export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
+
+/** A correction made by hand on the map. Mirrors `Correction` in `api/topology_edits.rs`. */
+export interface TopologyCorrection {
+	id: number;
+	kind: TopologyCorrectionKind;
+	/** The new parent, or one end of the link. */
+	from: string | null;
+	to: string;
+	/** Type of the link forbidden or drawn. */
+	source: TopologySource | null;
+	/** Site (empty: main site) or grouping. */
+	value: string | null;
+	/** `parent`: also the device's declared parent (alert suppression). */
+	use_for_alerts: boolean;
+	author: string;
+	created_at: string;
+}
+
+/** `POST /api/topology/corrections`. */
+export interface TopologyCorrectionInput {
+	kind: TopologyCorrectionKind;
+	from?: string | null;
+	to: string;
+	source?: TopologySource | null;
+	value?: string | null;
+	use_for_alerts?: boolean;
+}
+
+export interface TopologyCorrectionCreated {
+	correction: TopologyCorrection;
+	/** Corrections it replaced (same node or same pair), for an undo. */
+	replaced: TopologyCorrection[];
+}
+
+/** Scope and effect of a map rule. Mirrors `RuleSpec`. */
+export interface TopologyRuleSpec {
+	kind: 'forbid' | 'parent';
+	subnet: string | null;
+	address: string | null;
+	target_kind: string | null;
+	/** `forbid`: the type of link never deduced in the scope. */
+	source: TopologySource | null;
+	/** `parent`: the node the scope depends on. */
+	parent: string | null;
+}
+
+export type TopologyRuleStatus = 'active' | 'dismissed';
+
+export interface TopologyRule extends TopologyRuleSpec {
+	id: number;
+	status: TopologyRuleStatus;
+	evidence: number;
+	author: string;
+	created_at: string;
+	/** Links it sets or removes on today's map. */
+	matches: number;
+}
+
+/** A rule the corrections suggest; never applied until accepted. */
+export interface TopologySuggestion extends TopologyRuleSpec {
+	key: string;
+	evidence: number;
+	corrections: number[];
+	/** Other links it would change on today's map. */
+	matches: number;
 }
 
 /** `GET /api/topology`. Mirrors `TopologyView`. */
@@ -2289,6 +2444,10 @@ export interface Topology {
 	edges: TopologyEdge[];
 	/** False when VictoriaMetrics did not answer: hypervisor and LLDP links are missing. */
 	metrics_available: boolean;
+	/** Corrections made by hand, already applied to `nodes` and `edges`. */
+	corrections?: TopologyCorrection[];
+	rules?: TopologyRule[];
+	suggestions?: TopologySuggestion[];
 }
 
 // --- World map locations (`api/locations.rs`) ---------------------------------
@@ -5169,6 +5328,66 @@ export interface OnCallProfilePayload {
 	timezone?: string;
 	/** `null` clears. */
 	quiet_hours?: QuietHours | null;
+}
+
+// --- Agent self-update (Settings → Agents → Agent updates) -------------------
+
+export type AgentUpdateWindow = 'any' | 'maintenance' | 'manual';
+export interface AgentUpdateSettings {
+	enabled: boolean;
+	window: AgentUpdateWindow;
+	canary_minutes: number;
+	allow_unsigned: boolean;
+}
+export type AgentUpdateStatus =
+	| 'up_to_date'
+	| 'pending'
+	| 'updating'
+	| 'failed'
+	| 'refused'
+	| 'disabled'
+	| 'manual'
+	| 'waiting_window'
+	| 'waiting_canary'
+	| 'newer'
+	| 'legacy'
+	| 'container'
+	| 'read_only'
+	| 'disabled_locally'
+	| 'unsupported'
+	| 'no_binary';
+export interface AgentUpdateOutcome {
+	outcome: 'succeeded' | 'failed' | 'rolled_back' | 'refused';
+	version: string | null;
+	reason: string | null;
+	at: string | null;
+}
+export interface AgentUpdateAgent {
+	id: number;
+	name: string;
+	hostname: string;
+	version: string;
+	platform: string | null;
+	sha256: string | null;
+	/** `null` = follow the global setting. */
+	enabled: boolean | null;
+	canary: boolean;
+	requested: boolean;
+	status: AgentUpdateStatus;
+	reason: string | null;
+	last: AgentUpdateOutcome | null;
+	last_seen_at: string | null;
+}
+/** `GET /api/agent/updates`. */
+export interface AgentUpdates {
+	settings: AgentUpdateSettings;
+	version: string;
+	build: string | null;
+	binaries: { platform: string; sha256: string; signed: boolean }[];
+	rollout: { canaries: number; canaries_updated: number; open: boolean; reason: string | null };
+	agents: AgentUpdateAgent[];
+}
+
 // --- Data & retention (Settings → System) and log search -------------------
 // Mirrors `GET/PUT /api/system/storage` and `GET /api/logs/search`.
 

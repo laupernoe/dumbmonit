@@ -1,0 +1,6 @@
+<response status="success"><result>top - 10:00:05 up 12 days,  3:04,  0 users,  load average: 0.42, 0.38, 0.35
+Tasks: 148 total,   2 running, 146 sleeping,   0 stopped,   0 zombie
+Cpu(s):  7.0%us,  3.0%sy,  0.0%ni, 89.0%id,  1.0%wa,  0.0%hi,  0.0%si,  0.0%st
+Mem:   4045912k total,  3236730k used,   809182k free,    80144k buffers
+Swap:  2007992k total,        0k used,  2007992k free,  1000000k cached
+</result></response>

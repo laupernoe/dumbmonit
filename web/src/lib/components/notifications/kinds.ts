@@ -95,6 +95,15 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	zulip: MessageSquare,
 	signal: MessageCircle,
 	twilio: Smartphone,
+	whatsapp: MessageCircle,
+	callmebot: MessageCircle,
+	threema: MessageCircle,
+	webex: MessageSquare,
+	vonage: Smartphone,
+	telnyx: Smartphone,
+	aspsms: Smartphone,
+	grafana_oncall: Siren,
+	signl4: Siren,
 	homeassistant: House
 };
 

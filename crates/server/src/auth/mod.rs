@@ -23,6 +23,7 @@ pub mod cors;
 pub mod ldap;
 pub mod middleware;
 pub mod oidc;
+pub mod passkeys;
 pub mod password;
 pub mod rate_limit;
 pub mod session;
@@ -32,6 +33,7 @@ pub mod token;
 pub mod totp;
 pub mod totp_login;
 pub mod users;
+pub mod webauthn;
 
 /// Réinitialise l'instance : plus aucun compte, plus aucune session.
 ///

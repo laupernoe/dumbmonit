@@ -11,6 +11,7 @@ use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::Identity;
 use crate::collectors::relay::{self, JobResult};
 use crate::db;
+use crate::db::multisite::MultisiteConfig;
 use crate::state::AppState;
 
 /// Période d'interrogation minimale. En dessous, on sature l'équipement surveillé
@@ -61,9 +62,14 @@ pub struct TargetView {
     /// Rang manuel (drag, Haut/Bas), départagé par l'interface seulement entre
     /// cibles de même état et de même dossier.
     pub position: i64,
+    /// Gestion par les étiquettes Docker d'un agent ; `None` : moniteur libre.
+    pub managed: Option<db::targets::Managed>,
     /// Emplacement affecté sur la carte du monde ; `None` : aucun (la cible
     /// peut s'y trouver quand même par son site, voir `api/locations.rs`).
     pub location_id: Option<i64>,
+    /// Emplacements multiples (serveur, agents relais) et quorum ; `None` :
+    /// sondé d'un seul endroit (voir [`crate::multisite`]).
+    pub multisite: Option<MultisiteConfig>,
     pub last_probe_at: Option<String>,
     pub last_error: Option<String>,
     /// Nature de `last_error` : `down` (équipement injoignable) ou `config`
@@ -86,9 +92,11 @@ fn error_kind(message: &str) -> &'static str {
 
 impl TargetView {
     fn new(target: Target, status: Option<db::targets::TargetStatus>) -> Self {
-        let (last_probe_at, last_error, via_agent) = match status {
-            Some(status) => (status.last_probe_at, status.last_error, status.via_agent),
-            None => (None, None, None),
+        let (last_probe_at, last_error, via_agent, managed) = match status {
+            Some(status) => {
+                (status.last_probe_at, status.last_error, status.via_agent, status.managed)
+            }
+            None => (None, None, None, None),
         };
         let error_kind = last_error.as_deref().map(error_kind);
         Self {
@@ -112,7 +120,9 @@ impl TargetView {
                 .collect(),
             group_name: target.group_name,
             position: target.position,
+            managed,
             location_id: None,
+            multisite: None,
             last_probe_at,
             last_error,
             error_kind,
@@ -155,6 +165,10 @@ pub struct TargetPayload {
     /// modification : conserver l'affectation, comme pour `group_name`.
     #[serde(default, deserialize_with = "deserialize_present")]
     pub location_id: Option<Option<i64>>,
+    /// Sonde depuis plusieurs emplacements ; `null` : un seul. Absent lors d'une
+    /// modification : conserver le réglage, comme pour `location_id`.
+    #[serde(default, deserialize_with = "deserialize_present")]
+    pub multisite: Option<Option<MultisiteConfig>>,
     /// Absent lors d'une modification signifie « conserver le secret enregistré ».
     /// Présent avec un secret vide ou absent (mot de passe, secret du jeton,
     /// phrase de passe), même chose pour ce secret-là, tant que l'utilisateur ou
@@ -300,6 +314,7 @@ pub async fn list(
     let targets = db::targets::list(&state.pool, &state.cipher).await?;
     let mut statuses = db::targets::statuses(&state.pool).await?;
     let places = super::locations::assignments(&state.pool).await?;
+    let mut multisite = db::multisite::all(&state.pool).await?;
     let admin = who.is_admin();
     Ok(Json(
         targets
@@ -307,7 +322,8 @@ pub async fn list(
             .map(|target| {
                 let status = statuses.remove(&target.id);
                 let location = places.get(&target.id).copied();
-                TargetView::new(target, status).at(location).for_reader(admin)
+                let sites = multisite.remove(&target.id);
+                TargetView::new(target, status).at(location).sites(sites).for_reader(admin)
             })
             .collect(),
     ))
@@ -321,7 +337,8 @@ pub async fn get_one(
     let target = load(&state, id).await?;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     let location = super::locations::location_of(&state.pool, id).await?;
-    Ok(Json(TargetView::new(target, status).at(location).for_reader(who.is_admin())))
+    let sites = db::multisite::get(&state.pool, id).await?;
+    Ok(Json(TargetView::new(target, status).at(location).sites(sites).for_reader(who.is_admin())))
 }
 
 /// Valeur substituée à ce qui ressemble à un secret, pour qui n'administre pas.
@@ -330,6 +347,11 @@ pub const REDACTED: &str = "***";
 impl TargetView {
     fn at(mut self, location: Option<i64>) -> Self {
         self.location_id = location;
+        self
+    }
+
+    fn sites(mut self, multisite: Option<MultisiteConfig>) -> Self {
+        self.multisite = multisite;
         self
     }
 
@@ -390,16 +412,21 @@ pub async fn create(
     Json(payload): Json<TargetPayload>,
 ) -> ApiResult<(StatusCode, Json<TargetView>)> {
     let location = payload.location_id.flatten();
+    let multisite = payload.multisite.clone().flatten();
     let input = payload.validate(&state, None)?;
     super::locations::check_location(&state.pool, location).await?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
     check_pack_relay(&input)?;
+    let multisite = check_multisite(&state, None, &input, multisite).await?;
     let id = db::targets::create(&state.pool, &state.cipher, &input)
         .await
         .map_err(duplicate_address_to_conflict)?;
     if location.is_some() {
         super::locations::set_location(&state.pool, &[id], location).await?;
+    }
+    if multisite.is_some() {
+        db::multisite::set(&state.pool, id, multisite.as_ref()).await?;
     }
     let target = load(&state, id).await?;
     crate::packs::apply_thresholds(&state.pool, &target).await;
@@ -413,7 +440,7 @@ pub async fn create(
     // Le relais fait partie du statut, pas de la cible : sans lui, la réponse
     // dirait `via_agent: null` alors qu'il vient d'être enregistré.
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
-    Ok((StatusCode::CREATED, Json(TargetView::new(target, status).at(location))))
+    Ok((StatusCode::CREATED, Json(TargetView::new(target, status).at(location).sites(multisite))))
 }
 
 pub async fn update(
@@ -425,7 +452,15 @@ pub async fn update(
     let keep_relay = payload.via_agent.is_none();
     let keep_group = payload.group_name.is_none();
     let new_location = payload.location_id;
+    let new_multisite = payload.multisite.clone();
     let before = load(&state, id).await?;
+    let multisite_before = db::multisite::get(&state.pool, id).await?;
+    // Un moniteur géré ne change que par ses étiquettes, sauf la pause.
+    if db::targets::managed_get(&state.pool, id).await?.is_some()
+        && !payload_only_toggles(&payload, &before)
+    {
+        return Err(ApiError::Conflict(super::label_monitors::MANAGED_MESSAGE.into()));
+    }
     let (mut input, reused_secret) =
         payload.validate_with(&state, Some(id), Some(&before.credential))?;
     if let Some(location) = new_location {
@@ -437,7 +472,19 @@ pub async fn update(
     if keep_relay {
         input.via_agent = relay_before;
     }
-    check_secret_destination(&before, relay_before, &input, reused_secret)?;
+    let multisite = match new_multisite {
+        Some(multisite) => multisite,
+        None => multisite_before.clone(),
+    };
+    let multisite = check_multisite(&state, Some(id), &input, multisite).await?;
+    let agents = |config: &Option<MultisiteConfig>| {
+        let mut agents = config.as_ref().map(|c| c.agents.clone()).unwrap_or_default();
+        agents.sort_unstable();
+        agents.dedup();
+        agents
+    };
+    let sites_moved = agents(&multisite_before) != agents(&multisite);
+    check_secret_destination(&before, relay_before, &input, reused_secret, sites_moved)?;
     if keep_group {
         input.group_name = before.group_name;
     }
@@ -454,6 +501,9 @@ pub async fn update(
     if let Some(location) = new_location {
         super::locations::set_location(&state.pool, &[id], location).await?;
     }
+    if multisite != multisite_before {
+        db::multisite::set(&state.pool, id, multisite.as_ref()).await?;
+    }
     // Mettre en pause promet « ne lève aucune alerte » : ce qui était en cours
     // s'éteint tout de suite, sans notification.
     if before.enabled && !input.enabled {
@@ -463,7 +513,7 @@ pub async fn update(
     crate::packs::apply_thresholds(&state.pool, &target).await;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     let location = super::locations::location_of(&state.pool, id).await?;
-    Ok(Json(TargetView::new(target, status).at(location)))
+    Ok(Json(TargetView::new(target, status).at(location).sites(multisite)))
 }
 
 /// Étiquettes qui changent l'endroit (ou la manière) dont le secret est envoyé.
@@ -483,6 +533,7 @@ fn check_secret_destination(
     relay_before: Option<TargetId>,
     input: &db::targets::TargetInput,
     reused_secret: bool,
+    sites_moved: bool,
 ) -> ApiResult<()> {
     let keeps_saved = input.credential.is_none() || reused_secret;
     if !keeps_saved || matches!(before.credential, Credential::None) {
@@ -493,6 +544,7 @@ fn check_secret_destination(
     let moved = before.address.trim() != input.address.trim()
         || before.kind != input.kind
         || relay_before != input.via_agent
+        || sites_moved
         || tag_changed;
     if moved {
         return Err(ApiError::BadRequest(
@@ -563,7 +615,8 @@ pub async fn test_connection(
     // sous la même garde que `update` (jamais vers une destination nouvelle).
     if let (Some(id), Some(before)) = (id, before.as_ref()) {
         let relay_before = db::targets::relay_of(&state.pool, id).await?;
-        check_secret_destination(before, relay_before, &input, reused_secret)?;
+        let sites_moved = false;
+        check_secret_destination(before, relay_before, &input, reused_secret, sites_moved)?;
     }
     let mut credential = input.credential.take();
     if credential.is_none()
@@ -664,10 +717,26 @@ pub async fn rename_folder(
     Ok(StatusCode::NO_CONTENT)
 }
 
+/// La requête ne change-t-elle que l'état actif d'un moniteur géré ?
+fn payload_only_toggles(payload: &TargetPayload, before: &Target) -> bool {
+    payload.name.trim() == before.name
+        && payload.address.trim() == before.address
+        && payload.kind == before.kind
+        && payload.interval_secs.is_none_or(|secs| secs == before.interval.as_secs())
+        && payload.tags == before.tags
+        && payload.parent_id == before.parent_id
+        && payload
+            .group_name
+            .as_ref()
+            .is_none_or(|group| group.as_deref().unwrap_or_default().trim() == before.group_name)
+        && payload.credential.is_none()
+}
+
 pub async fn delete(
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<StatusCode> {
+    super::label_monitors::refuse_if_managed(&state, id, true).await?;
     // Les services qu'un agent a trouvés partent avec leur machine (la base
     // les supprime d'elle-même) : leurs alertes et leurs séries aussi.
     let services: Vec<TargetId> = crate::collectors::agent::modules::states(&state.pool, id)
@@ -695,6 +764,10 @@ pub(crate) async fn forget(state: &AppState, id: TargetId) {
     // cascade de la base ne les atteint pas.
     crate::webchange::store::forget_files(&state.config.data_dir, id).await;
     spawn_series_deletion(state.clone(), id);
+}
+
+pub(crate) async fn forget_alerts_of(state: &AppState, id: TargetId) {
+    forget_alerts(state, id).await;
 }
 
 async fn forget_alerts(state: &AppState, id: TargetId) {
@@ -879,6 +952,12 @@ pub async fn probe_now(
 ) -> ApiResult<Json<ProbeReport>> {
     let target = load(&state, id).await?;
 
+    if let Some(config) = db::multisite::get(&state.pool, id).await?
+        && crate::multisite::supports(&target.kind)
+    {
+        return probe_from_locations(&state, target, config).await;
+    }
+
     if let Some(agent_id) = db::targets::relay_of(&state.pool, id).await? {
         return probe_through_relay(&state, target, agent_id).await;
     }
@@ -951,6 +1030,224 @@ async fn probe_through_relay(
             deadline.as_secs()
         ))),
     }
+}
+
+/// Sonde immédiate d'une cible multi-emplacements : une ronde complète, dont la
+/// décision est publiée sans ronde de confirmation (le geste en tient lieu).
+async fn probe_from_locations(
+    state: &AppState,
+    target: Target,
+    config: MultisiteConfig,
+) -> ApiResult<Json<ProbeReport>> {
+    let timeout = dumbmonit_collectors::Registry::deadline_for(&target, state.config.probe_timeout);
+    let deadline = relay::deadline_for(timeout) + Duration::from_secs(10);
+    let receiver = crate::multisite::start(state, &target, &config, true).ok_or_else(|| {
+        ApiError::Conflict("A probe round is already running for this monitor.".into())
+    })?;
+    match tokio::time::timeout(deadline, receiver).await {
+        Ok(Ok(published)) => {
+            Ok(Json(ProbeReport { sample_count: published.series.len(), series: published.series }))
+        }
+        Ok(Err(_)) | Err(_) => Err(ApiError::BadRequest(format!(
+            "Timed out: the probe locations did not answer within {}s",
+            deadline.as_secs()
+        ))),
+    }
+}
+
+/// Plafond d'emplacements d'un moniteur : au-delà, la sonde ne gagne plus rien
+/// en certitude, et chaque ronde charge autant de sites.
+const MAX_PROBE_LOCATIONS: usize = 16;
+
+/// Valide le réglage multi-emplacements d'une cible et le rend normalisé
+/// (agents dédoublonnés et triés).
+async fn check_multisite(
+    state: &AppState,
+    id: Option<TargetId>,
+    input: &db::targets::TargetInput,
+    config: Option<MultisiteConfig>,
+) -> ApiResult<Option<MultisiteConfig>> {
+    let Some(mut config) = config else { return Ok(None) };
+    if !crate::multisite::supports(&input.kind) {
+        return Err(ApiError::BadRequest(format!(
+            "Only uptime monitors ({}) can be probed from several locations.",
+            crate::multisite::KINDS.join(", ")
+        )));
+    }
+    if input.via_agent.is_some() {
+        return Err(ApiError::BadRequest(
+            "A monitor probed from several locations cannot also be reached through a single              relay: add that agent to its locations instead."
+                .into(),
+        ));
+    }
+    config.agents.sort_unstable();
+    config.agents.dedup();
+    if config.locations() < 2 {
+        return Err(ApiError::BadRequest(
+            "Probing from several locations needs at least two locations (this server counts as one)."
+                .into(),
+        ));
+    }
+    if config.locations() > MAX_PROBE_LOCATIONS {
+        return Err(ApiError::BadRequest(format!(
+            "A monitor can be probed from at most {MAX_PROBE_LOCATIONS} locations."
+        )));
+    }
+    if let Some(quorum) = config.quorum
+        && (quorum == 0 || quorum as usize > config.locations())
+    {
+        return Err(ApiError::BadRequest(format!(
+            "The quorum must be between 1 and the number of locations ({}).",
+            config.locations()
+        )));
+    }
+    for agent in &config.agents {
+        if Some(*agent) == id {
+            return Err(ApiError::BadRequest("A monitor cannot probe itself.".into()));
+        }
+        check_relay(state, Some(*agent)).await?;
+    }
+    Ok(Some(config))
+}
+
+/// Un emplacement de sonde tel que la page du moniteur l'affiche.
+#[derive(Debug, Serialize)]
+pub struct ProbeLocationView {
+    pub location: String,
+    pub agent_id: Option<TargetId>,
+    pub name: String,
+    pub site: Option<String>,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
+    pub state: crate::multisite::LocationState,
+    pub latency_ms: Option<u64>,
+    pub error: Option<String>,
+    pub excluded_reason: Option<crate::multisite::Exclusion>,
+    pub checked_at: Option<String>,
+}
+
+/// Réponse de `GET /api/targets/{id}/probe-locations`.
+#[derive(Debug, Serialize)]
+pub struct ProbeLocationsReport {
+    pub decision: crate::multisite::Verdict,
+    pub quorum: usize,
+    pub counted: usize,
+    pub failing: usize,
+    pub confirming: bool,
+    pub decided_at: Option<String>,
+    pub locations: Vec<ProbeLocationView>,
+}
+
+/// Horodatage UTC sans suffixe, comme ceux de la base.
+fn server_time(at: chrono::DateTime<chrono::Utc>) -> String {
+    at.format("%Y-%m-%dT%H:%M:%S").to_string()
+}
+
+/// `GET /api/targets/{id}/probe-locations` — état et latence par emplacement,
+/// et dernière décision de quorum.
+pub async fn probe_locations(
+    State(state): State<AppState>,
+    Path(id): Path<TargetId>,
+) -> ApiResult<Json<ProbeLocationsReport>> {
+    load(&state, id).await?;
+    let Some(config) = db::multisite::get(&state.pool, id).await? else {
+        return Ok(Json(ProbeLocationsReport {
+            decision: crate::multisite::Verdict::Unknown,
+            quorum: 0,
+            counted: 0,
+            failing: 0,
+            confirming: false,
+            decided_at: None,
+            locations: Vec::new(),
+        }));
+    };
+    let snapshot = state.multisite().snapshot(id, &config);
+    let hosts: std::collections::HashMap<TargetId, (String, Option<String>)> =
+        crate::collectors::agent::list_hosts(&state.pool)
+            .await?
+            .into_iter()
+            .map(|(target_id, name, info)| (target_id, (name, info.site)))
+            .collect();
+    let places = probe_places(&state, &config).await?;
+    let locations = snapshot
+        .locations
+        .into_iter()
+        .map(|(location, status)| {
+            let agent_id = location.agent_id();
+            let (name, site) = match agent_id {
+                Some(agent) => {
+                    hosts.get(&agent).cloned().unwrap_or_else(|| (format!("Agent {agent}"), None))
+                }
+                None => (String::new(), None),
+            };
+            let place = places.get(&location).copied();
+            ProbeLocationView {
+                location: location.label(),
+                agent_id,
+                name,
+                site,
+                latitude: place.map(|(lat, _)| lat),
+                longitude: place.map(|(_, lon)| lon),
+                state: status
+                    .as_ref()
+                    .map_or(crate::multisite::LocationState::Pending, |s| s.state),
+                latency_ms: status.as_ref().and_then(|s| s.latency_ms),
+                error: status.as_ref().and_then(|s| s.error.clone()),
+                excluded_reason: status.as_ref().and_then(|s| s.excluded_reason),
+                checked_at: status.as_ref().map(|s| server_time(s.checked_at)),
+            }
+        })
+        .collect();
+    let configured = config.locations();
+    let (decision, decided_at) = match snapshot.decision {
+        Some((decision, at)) => (decision, Some(server_time(at))),
+        None => (
+            crate::multisite::Decision {
+                verdict: crate::multisite::Verdict::Unknown,
+                quorum: crate::multisite::required(configured, config.quorum),
+                counted: 0,
+                failing: 0,
+            },
+            None,
+        ),
+    };
+    Ok(Json(ProbeLocationsReport {
+        decision: decision.verdict,
+        quorum: decision.quorum,
+        counted: decision.counted,
+        failing: decision.failing,
+        confirming: snapshot.confirming,
+        decided_at,
+        locations,
+    }))
+}
+
+/// Coordonnées des emplacements de sonde sur la carte du monde, quand ils y
+/// sont : l'agent par son emplacement (affectation, site), le serveur par le
+/// site principal.
+async fn probe_places(
+    state: &AppState,
+    config: &MultisiteConfig,
+) -> ApiResult<std::collections::HashMap<crate::multisite::Location, (f64, f64)>> {
+    let mut places = std::collections::HashMap::new();
+    let locations = super::locations::load(&state.pool).await?;
+    if locations.is_empty() {
+        return Ok(places);
+    }
+    if config.server
+        && let Some(main) = locations.iter().find(|l| l.main_site)
+    {
+        places.insert(crate::multisite::Location::Server, (main.latitude, main.longitude));
+    }
+    for agent in &config.agents {
+        if let Some(found) = super::locations::location_for(state, *agent).await? {
+            places.insert(
+                crate::multisite::Location::Agent(*agent),
+                (found.latitude, found.longitude),
+            );
+        }
+    }
+    Ok(places)
 }
 
 async fn load(state: &AppState, id: TargetId) -> ApiResult<Target> {

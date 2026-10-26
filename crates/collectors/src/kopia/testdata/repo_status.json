@@ -1,0 +1,1 @@
+{"connected":true,"configFile":"/app/config/repository.config","description":"Repository in Filesystem: /repository","storage":"filesystem","username":"kopia","hostname":"nas","hash":"BLAKE2B-256-128","encryption":"AES256-GCM-HMAC-SHA256","splitter":"DYNAMIC-4M-BUZHASH","formatVersion":3,"supportsContentCompression":true,"readonly":false}
