@@ -232,6 +232,8 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     dumbmonit_server::storage::start(&state).await;
 
     scheduler::spawn(state.clone());
+    // Configuration en fichiers : appliquée au démarrage puis à chaque changement.
+    dumbmonit_server::gitops::watch::spawn(state.clone());
     dumbmonit_server::reports::spawn(state.clone());
     alerting::spawn(state.clone());
     dumbmonit_server::security::spawn(state.clone());

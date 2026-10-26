@@ -82,6 +82,23 @@ All notable changes to this project are documented here. The format follows
   end notices, and an iCal link to subscribe to their shifts. Schedules,
   policies, contacts and preferences are part of backups. See
   [On-call](https://dumbmonit.readthedocs.io/en/latest/alerting/oncall/).
+- **Configuration in YAML files (GitOps), a command-line tool and a Terraform
+  provider.** One declarative file (`version: 1`) describes monitors and their
+  folders, alert rules and per-monitor overrides, notification channels,
+  maintenance windows and status pages, with the keys and references of the
+  backup format. `POST /api/config/plan` shows what would be created, updated or
+  deleted (field names only, never values), `POST /api/config/apply` does it in
+  one transaction (`prune` deletes what a file manages and no longer declares;
+  hand-made objects are never touched), `GET /api/config/export` writes the
+  instance with every secret replaced by a `${VARIABLE}` or `${file:/path}`
+  reference. Declared objects are marked *Managed by file* and refuse manual
+  edits, like monitors managed by Docker labels; Settings → System →
+  Configuration files exports, plans, applies and releases them.
+  `DUMBMONIT_CONFIG_DIR` applies a watched folder at startup and on every
+  change. New `dumbmonit-cli` binary (`login`, `export`, `plan`, `apply
+  [--prune]`, `targets list`, `silence create`, `--json`), and a Terraform
+  provider in `integrations/terraform-provider-dumbmonit` (monitors, channels,
+  rules, maintenance windows, status pages, plus lookups).
 
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
