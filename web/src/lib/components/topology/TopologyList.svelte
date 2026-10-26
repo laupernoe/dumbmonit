@@ -6,9 +6,9 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
-	import { Box, Monitor } from 'lucide-svelte';
+	import { Box, Monitor, Server } from 'lucide-svelte';
 	import type { ListRow, NodeState, SiteInfo } from './layout';
-	import { sourceShort } from './legend';
+	import { guestLabel, sourceShort, zoneLabel } from './legend';
 
 	interface Props {
 		sections: { site: SiteInfo; rows: ListRow[] }[];
@@ -48,7 +48,7 @@
 							{/if}
 							<span class={row.down ? 'text-warning' : 'text-ink-2'}>
 								{#if row.node.targetId === null}
-									{#if row.node.kind === 'container'}<Box class="size-4" aria-hidden="true" />{:else}<Monitor class="size-4" aria-hidden="true" />{/if}
+									{#if row.node.kind === 'container'}<Box class="size-4" aria-hidden="true" />{:else if row.node.kind === 'pve_node'}<Server class="size-4" aria-hidden="true" />{:else}<Monitor class="size-4" aria-hidden="true" />{/if}
 								{:else}
 									<KindIcon kind={row.node.kind} class="size-4" />
 								{/if}
@@ -56,9 +56,12 @@
 							<span class="min-w-0 flex-1">
 								<span class="block truncate text-sm font-semibold text-ink">{row.node.name}</span>
 								<span class="block truncate text-xs text-ink-2">
-									{#if row.via}{sourceShort(row.via)} · {/if}{row.node.targetId === null ? (row.node.kind === 'container' ? m.topology_guest_container() : m.topology_guest_vm()) + ' · ' : ''}{stateText(row.node.state)}
+									{#if row.via}{sourceShort(row.via)} · {/if}{guestLabel(row.node) ? guestLabel(row.node) + ' · ' : ''}{stateText(row.node.state)}
 								</span>
 							</span>
+							{#if row.node.subnet}
+								<span class="hidden shrink-0 rounded-full border border-line px-2 py-0.5 text-xs text-ink-2 sm:inline">{zoneLabel(row.node.subnet, row.node.vlan, row.node.vlanName)}</span>
+							{/if}
 							{#if row.down}
 								<span class="shrink-0 rounded-full bg-warning-soft px-2 py-0.5 text-xs font-bold text-warning-ink">{m.topology_legend_down()}</span>
 							{:else if row.impacted}

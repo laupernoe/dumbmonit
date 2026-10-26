@@ -135,6 +135,21 @@ pub struct Config {
     /// centaines de sites ne parte jamais d'un bloc. Voir
     /// [`crate::website::throttle`].
     pub website: WebsiteLimits,
+    /// Écoute du canal chiffré des agents (`DUMBMONIT_AGENT_LISTEN`,
+    /// `0.0.0.0:8443` par défaut ; `off` le coupe). TLS 1.3 et certificats
+    /// clients : c'est le seul port à ouvrir vers l'extérieur pour des agents
+    /// distants.
+    pub agent_listen: Option<SocketAddr>,
+    /// Port que les agents composent pour joindre ce canal
+    /// (`DUMBMONIT_AGENT_PUBLIC_PORT`), quand une redirection de port ou un
+    /// mandataire TCP le publie sous un autre numéro. Par défaut, celui de
+    /// l'écoute.
+    pub agent_public_port: Option<u16>,
+    /// Nombre de jours pendant lesquels l'ancien canal en clair reste accepté
+    /// après la mise à jour d'une instance existante
+    /// (`DUMBMONIT_AGENT_LEGACY_DAYS`). `None` : jusqu'à ce qu'un administrateur
+    /// exige mTLS dans l'interface.
+    pub agent_legacy_days: Option<u32>,
 }
 
 /// Réglages d'instance du collecteur `website`.
@@ -234,7 +249,28 @@ impl Config {
                 .map(|url| url.trim().trim_end_matches('/').to_string())
                 .filter(|url| !url.is_empty()),
             website: WebsiteLimits::from_env()?,
+            agent_listen: parse_agent_listen(env_var("DUMBMONIT_AGENT_LISTEN").as_deref())?,
+            agent_public_port: env_var("DUMBMONIT_AGENT_PUBLIC_PORT")
+                .map(|raw| {
+                    raw.trim().parse::<u16>().ok().filter(|port| *port != 0).with_context(|| {
+                        format!("DUMBMONIT_AGENT_PUBLIC_PORT: invalid port '{raw}'")
+                    })
+                })
+                .transpose()?,
+            agent_legacy_days: env_var("DUMBMONIT_AGENT_LEGACY_DAYS")
+                .map(|raw| {
+                    raw.trim().parse::<u32>().with_context(|| {
+                        format!("DUMBMONIT_AGENT_LEGACY_DAYS: invalid value '{raw}'")
+                    })
+                })
+                .transpose()?,
         })
+    }
+
+    /// Port que les agents composent pour le canal chiffré, s'il est ouvert.
+    pub fn agent_port(&self) -> Option<u16> {
+        let listen = self.agent_listen?;
+        Some(self.agent_public_port.unwrap_or(listen.port()))
     }
 
     pub fn database_path(&self) -> PathBuf {
@@ -269,6 +305,20 @@ impl Config {
             None => format!("http://{}", loopback_address(&self.vm_listen)),
         }
     }
+}
+
+/// Lit `DUMBMONIT_AGENT_LISTEN` : absente, l'écoute par défaut ; `off`
+/// (ou `none`, `0`, vide), pas de canal des agents.
+fn parse_agent_listen(raw: Option<&str>) -> Result<Option<SocketAddr>> {
+    let Some(raw) = raw.map(str::trim) else {
+        return Ok(Some(SocketAddr::from(([0, 0, 0, 0], dumbmonit_proto::DEFAULT_AGENT_TLS_PORT))));
+    };
+    if matches!(raw.to_ascii_lowercase().as_str(), "" | "off" | "none" | "0" | "false" | "no") {
+        return Ok(None);
+    }
+    raw.parse::<SocketAddr>().map(Some).with_context(|| {
+        format!("DUMBMONIT_AGENT_LISTEN: invalid address '{raw}' (e.g. 0.0.0.0:8443)")
+    })
 }
 
 /// Adresse par laquelle joindre un processus local qui écoute sur `listen` :
@@ -358,6 +408,18 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_agent_channel_listens_on_8443_unless_told_otherwise() {
+        assert_eq!(parse_agent_listen(None).unwrap(), Some("0.0.0.0:8443".parse().unwrap()));
+        assert_eq!(
+            parse_agent_listen(Some(" 127.0.0.1:9443 ")).unwrap(),
+            Some("127.0.0.1:9443".parse().unwrap())
+        );
+        assert_eq!(parse_agent_listen(Some("off")).unwrap(), None);
+        assert_eq!(parse_agent_listen(Some("")).unwrap(), None);
+        assert!(parse_agent_listen(Some("8443")).is_err(), "une adresse complète est attendue");
+    }
 
     #[test]
     fn the_embedded_instance_is_reached_on_the_loopback() {

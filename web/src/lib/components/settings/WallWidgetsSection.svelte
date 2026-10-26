@@ -35,7 +35,7 @@
 		saveWidgetSettings,
 		searchPlaces
 	} from '#lib/api/wallWidgets.js';
-	import { Button, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Disclosure, ErrorNotice, Field, Panel, Skeleton, Toggle } from '#lib/ui/index.js';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import WallLayoutEditor from './WallLayoutEditor.svelte';
 	import WallNewsFields from './WallNewsFields.svelte';
@@ -384,6 +384,7 @@
 		{:else}
 			<div class="space-y-6">
 				<!-- Weather -->
+				<Disclosure title={m.settings_widgets_weather()} summary={form.weather.enabled ? m.settings_block_on() : m.settings_block_off()}>
 				<div class="space-y-4">
 					{@render header('widgets-weather', m.settings_widgets_weather(), m.settings_widgets_weather_hint(), {
 						get: () => form.weather.enabled,
@@ -471,20 +472,24 @@
 						{/if}
 					</div>
 				</div>
+				</Disclosure>
 
 				<!-- News -->
 				{#if newsAvailable}
-					<div class="space-y-4 border-t border-line pt-5">
+					<Disclosure title={m.settings_news_ticker()} summary={news.ticker ? m.settings_block_on() : m.settings_block_off()}>
+					<div class="space-y-4">
 						{@render header('widgets-news', m.settings_news_ticker(), m.settings_news_ticker_hint(), {
 							get: () => news.ticker,
 							set: (v) => (news.ticker = v)
 						})}
 						<WallNewsFields bind:form={news} {saving} />
 					</div>
+					</Disclosure>
 				{/if}
 
 				<!-- Free message -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_text()} summary={form.text.enabled ? m.settings_block_on() : m.settings_block_off()}>
+				<div class="space-y-4">
 					{@render header('widgets-text', m.settings_widgets_text(), m.settings_widgets_text_hint(), {
 						get: () => form.text.enabled,
 						set: (v) => (form.text.enabled = v)
@@ -501,9 +506,11 @@
 						/>
 					</Field>
 				</div>
+				</Disclosure>
 
 				<!-- Coins -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_crypto()} summary={form.crypto.enabled ? m.settings_block_on() : m.settings_block_off()}>
+				<div class="space-y-4">
 					{@render header('widgets-crypto', m.settings_widgets_crypto(), m.settings_widgets_crypto_hint(), {
 						get: () => form.crypto.enabled,
 						set: (v) => (form.crypto.enabled = v)
@@ -547,9 +554,11 @@
 						(v) => (coingeckoKey = v)
 					)}
 				</div>
+				</Disclosure>
 
 				<!-- Stocks -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_stocks()} summary={form.stocks.enabled ? m.settings_block_on() : m.settings_block_off()}>
+				<div class="space-y-4">
 					{@render header('widgets-stocks', m.settings_widgets_stocks(), m.settings_widgets_stocks_hint(), {
 						get: () => form.stocks.enabled,
 						set: (v) => (form.stocks.enabled = v)
@@ -567,9 +576,11 @@
 					)}
 					{@render missingKey(keyed(form.stocks.enabled, hasFinnhub, finnhubKey))}
 				</div>
+				</Disclosure>
 
 				<!-- Exchange rates -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_fx()} summary={form.fx.enabled ? m.settings_block_on() : m.settings_block_off()}>
+				<div class="space-y-4">
 					{@render header('widgets-fx', m.settings_widgets_fx(), m.settings_widgets_fx_hint(), {
 						get: () => form.fx.enabled,
 						set: (v) => (form.fx.enabled = v)
@@ -593,9 +604,11 @@
 						</fieldset>
 					</div>
 				</div>
+				</Disclosure>
 
 				<!-- Vulnerabilities -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_cve()} summary={form.cve.enabled ? m.settings_block_on() : m.settings_block_off()}>
+				<div class="space-y-4">
 					{@render header('widgets-cve', m.settings_widgets_cve(), m.settings_widgets_cve_hint(), {
 						get: () => form.cve.enabled,
 						set: (v) => (form.cve.enabled = v)
@@ -613,11 +626,12 @@
 						</Field>
 					</div>
 				</div>
+				</Disclosure>
 
 				<!-- AI usage -->
-				<div class="space-y-4 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_ai()}>
+				<div class="space-y-4">
 					<div class="min-w-0">
-						<h3 class="text-sm font-semibold text-ink">{m.settings_widgets_ai()}</h3>
 						<p class="text-[0.8125rem] text-ink-2">{m.settings_widgets_ai_hint()}</p>
 					</div>
 					<Field label={m.settings_widgets_ai_period()} for="widgets-ai-period">
@@ -668,11 +682,12 @@
 						{#if form.ai.by_person}{@render people('openai')}{/if}
 					</div>
 				</div>
+				</Disclosure>
 
 				<!-- Layout -->
-				<div class="space-y-3 border-t border-line pt-5">
+				<Disclosure title={m.settings_widgets_layout()}>
+				<div class="space-y-3">
 					<div class="min-w-0">
-						<h3 class="text-sm font-semibold text-ink">{m.settings_widgets_layout()}</h3>
 						<p class="text-[0.8125rem] text-ink-2">{m.settings_widgets_layout_hint()}</p>
 					</div>
 					<WallLayoutEditor
@@ -691,6 +706,7 @@
 						}}
 					/>
 				</div>
+				</Disclosure>
 
 				<div class="flex flex-wrap items-center gap-3 border-t border-line pt-4">
 					<Button onclick={save} disabled={saving}>{m.settings_widgets_save()}</Button>

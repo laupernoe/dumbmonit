@@ -11,15 +11,18 @@
 	 * connects to the mail server. Stopped services come first; every state is a
 	 * word as well as a colour, and an unknown value reads "—".
 	 *
-	 * MDaemon's queues are not visible from outside: when the Windows agent runs
-	 * on the same server, it reads them from MDaemon's performance counters, and
-	 * they are shown below this panel (see `queues.ts` for how the agent is found).
+	 * The queues, sessions and Windows services are not visible from outside: the
+	 * Windows agent installed on the same server reads them, and its panel comes
+	 * first on the page. The monitor is linked to the agent by its `agent_id`
+	 * setting; a banner says so when there is none or it is silent (see
+	 * `queues.ts` for how an agent without the setting is found).
 	 */
 	import { untrack } from 'svelte';
 	import { listTargets, queryInstant, type Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
-	import MdaemonQueues from './MdaemonQueues.svelte';
-	import { REPORTING_QUERY, pickAgent } from './queues';
+	import MailAgentBanner from './MailAgentBanner.svelte';
+	import MailAgentPanel from './MailAgentPanel.svelte';
+	import { reportingQuery, resolveAgent } from './queues';
 
 	interface Props {
 		target: Target;
@@ -165,20 +168,31 @@
 		}
 	}
 
-	/** The agent on the same machine, when it reports MDaemon's queues. */
+	/** The agent installed on the mail server, chosen by the user or found by its host name. */
 	let linked = $state<Target | null>(null);
+	let explicit = $state(false);
+	/** The agent reports this product's series (it found the product on the server). */
+	let reports = $state(false);
+	/** Set once the agents have been read, so the banner never flashes before. */
+	let linkKnown = $state(false);
 
 	$effect(() => {
 		const device = target;
 		linked = null;
-		if (device.kind !== 'mdaemon') return;
+		explicit = false;
+		reports = false;
+		linkKnown = false;
 		const controller = new AbortController();
-		Promise.all([listTargets(controller.signal), queryInstant(REPORTING_QUERY, controller.signal)])
+		Promise.all([listTargets(controller.signal), queryInstant(reportingQuery(prefix), controller.signal)])
 			.then(([targets, reporting]) => {
 				const ids = new Set(reporting.map((s) => Number(s.metric.target)).filter(Number.isFinite));
-				linked = pickAgent(device, targets, ids);
+				const found = resolveAgent(device, targets, ids);
+				linked = found.agent;
+				explicit = found.explicit;
+				reports = found.agent !== null && ids.has(found.agent.id);
+				linkKnown = true;
 			})
-			// The queues are a bonus: failing to find them must not cover the page in errors.
+			// The agent is a bonus for the page: failing to find it must not cover it in errors.
 			.catch(() => (linked = null));
 		return () => controller.abort();
 	});
@@ -228,8 +242,16 @@
 	);
 </script>
 
+{#if linkKnown}
+	<MailAgentBanner device={target} agent={linked} {explicit} {reports} />
+{/if}
+
+{#if linked}
+	<MailAgentPanel agent={linked.id} agentName={linked.name} product={prefix} />
+{/if}
+
 {#if !loading && (hasAnything || error)}
-<Panel title={m.devices_mail_title()} padded={false} class="rise-in">
+<Panel title={m.devices_mail_net_title()} description={m.devices_mail_net_desc()} padded={false} class="rise-in">
 	{#snippet aside()}
 		{#if reading.services.length > 0}
 			{#if down === 0}
@@ -271,12 +293,8 @@
 					{reading.apiUp === null ? m.devices_mail_version_unknown_nocred() : m.devices_mail_version_unknown()}
 				{/if}
 			</p>
-			{#if prefix === 'mdaemon' && !linked}
-				<p class="text-ink-2">
-					{m.devices_mail_queues_hint()}
-				</p>
-			{/if}
 			{#if reading.apiUp !== null}
+				<h3 class="mt-1 text-sm font-semibold text-ink">{m.devices_mail_api_heading()}</h3>
 				<div class="flex flex-wrap items-center gap-x-3 gap-y-1">
 					<Plate tone={reading.apiUp ? 'signal' : 'warning'} label={reading.apiUp ? m.devices_mail_api_answering({ api: apiName }) : m.devices_mail_api_down({ api: apiName })} />
 					{#if reading.operationOk === false}
@@ -307,8 +325,4 @@
 		{/if}
 	{/if}
 </Panel>
-{/if}
-
-{#if linked}
-	<MdaemonQueues agent={linked.id} agentName={linked.name} />
 {/if}

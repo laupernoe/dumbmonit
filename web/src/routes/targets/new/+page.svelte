@@ -28,6 +28,7 @@
 	import CollectorPicker from '#lib/components/device-form/CollectorPicker.svelte';
 	import TargetForm from '#lib/components/device-form/TargetForm.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
+	import { isMailKind } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { readPrefill } from '#lib/components/device-form/discovery-prefill.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
@@ -99,6 +100,9 @@
 	const snmp = $derived(collectors.find((c) => c.kind === SNMP_KIND) ?? null);
 	/** What the agent was picked for (Docker, Plakar…), when it was picked that way. */
 	const feature = $derived(selected?.kind === AGENT_KIND ? agentFeature(params.get('via')) : null);
+	/** `?os=windows&then=mdaemon`: the agent install for a mail server, then its monitor. */
+	const windowsSetup = $derived(params.get('os') === 'windows');
+	const afterKind = $derived(isMailKind(params.get('then') ?? '') ? (params.get('then') ?? '') : '');
 	const selectedId = $derived(selected ? (feature ? `${AGENT_KIND}:${feature.id}` : selected.kind) : null);
 	const has = (kind: string) => collectors.some((c) => c.kind === kind);
 	/** What the setup guide explains: the scan is an SNMP matter. */
@@ -415,7 +419,7 @@
 								</p>
 							{/if}
 							{#key relaying}
-								<AgentEnroll cancelHref="/targets" relay={relaying} />
+								<AgentEnroll cancelHref="/targets" relay={relaying} windows={windowsSetup} {afterKind} />
 							{/key}
 						{:else}
 							{#if prefill}

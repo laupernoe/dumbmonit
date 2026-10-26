@@ -33,6 +33,8 @@ DUMBMONIT_URL="${DUMBMONIT_URL:-}"
 
 TOKEN=""
 URL=""
+TLS_URL=""
+CA_PIN=""
 INTERVAL=""
 SERVICES=""
 TAGS=""
@@ -69,6 +71,12 @@ USAGE:
 OPTIONS:
     --token=TOKEN       Enrollment token (required)
     --url=URL           Server URL, for example http://server:8080
+    --tls-url=URL       Encrypted agent channel, for example https://server:8443
+                        (default: the host of --url, port 8443)
+    --ca-pin=SHA256     Fingerprint of the server's certificate authority. With
+                        it, the agent only talks to that server, over TLS 1.3
+                        with its own client certificate, and never in clear.
+                        The install command shown by the server includes it.
     --interval=N        Sampling period in seconds (default: 30)
     --services=a,b,c    Services whose state is reported: systemd units on
                         Linux, launchd labels on macOS, rc.d names on FreeBSD
@@ -126,6 +134,8 @@ for argument in "$@"; do
     case "$argument" in
         --token=*)    TOKEN="${argument#*=}" ;;
         --url=*)      URL="${argument#*=}" ;;
+        --tls-url=*)  TLS_URL="${argument#*=}" ;;
+        --ca-pin=*)   CA_PIN="${argument#*=}" ;;
         --interval=*) INTERVAL="${argument#*=}" ;;
         --services=*) SERVICES="${argument#*=}" ;;
         --tags=*)     TAGS="${argument#*=}" ;;
@@ -503,6 +513,8 @@ umask 077
     echo "# Written by install.sh — environment variables override it."
     echo "server_url: $URL"
     echo "token: $TOKEN"
+    if [ -n "$TLS_URL" ]; then echo "tls_url: $TLS_URL"; fi
+    if [ -n "$CA_PIN" ]; then echo "ca_pin: $CA_PIN"; fi
     if [ -n "$INTERVAL" ]; then echo "interval_secs: $INTERVAL"; fi
     if [ -n "$HOSTNAME_OVERRIDE" ]; then echo "hostname: $HOSTNAME_OVERRIDE"; fi
     if [ "$RELAY" -eq 1 ]; then echo "relay: true"; fi
@@ -586,9 +598,12 @@ ProtectSystem=strict
 # dans les foyers (~/.config/plakar), et « yes » les rendait invisibles.
 ProtectHome=read-only
 PrivateTmp=yes
-# Seul endroit inscriptible hors /tmp : le cache de Plakar
-# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY).
+# Endroits inscriptibles hors /tmp : le cache de Plakar
+# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY) et le dossier de
+# configuration, où l'agent range son secret de liaison et son certificat du
+# canal chiffré (agent-tls.json), renouvelé tous les 30 jours.
 CacheDirectory=dumbmonit-agent
+ReadWritePaths=$CONFIG_DIR
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
@@ -598,8 +613,11 @@ LockPersonality=yes
 SystemCallArchitectures=native
 
 # Empreinte volontairement contrainte : l'outil de surveillance ne doit jamais
-# devenir la cause de la panne qu'il est censé détecter.
-MemoryMax=128M
+# devenir la cause de la panne qu'il est censé détecter. Une dizaine de Mo au
+# repos ; 256M laissent la marge d'une découverte réseau relayée (64 sockets au
+# plus, chacune pouvant tenir quelques réponses HTTP de 64 Kio) et du tampon de
+# mesures accumulé pendant une coupure, sans jamais frôler le tueur OOM.
+MemoryMax=256M
 CPUQuota=20%
 
 [Install]

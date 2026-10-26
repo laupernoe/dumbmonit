@@ -189,7 +189,7 @@ quando cria um token.
     `/etc/dumbmonit/agent.yaml` (modo 0600) e registra `dumbmonit-agent`
     com o systemd, ou com o OpenRC no Alpine. A unidade systemd é
     reforçada (`ProtectSystem=strict`, `NoNewPrivileges`,
-    `MemoryMax=128M`, `CPUQuota=20%`).
+    `MemoryMax=256M`, `CPUQuota=20%`).
 
 === "macOS (launchd)"
 
@@ -907,7 +907,7 @@ suas leituras em memória com seus timestamps originais. São enviadas tão
 logo o link volta: um reinício de servidor não deixa lacuna nos gráficos.
 O buffer é limitado (`max_buffered_samples`, cerca de uma hora por
 padrão) e descarta as leituras mais antigas quando cheio. Tentativas
-recuam de 5 segundos a 5 minutos com jitter.
+recuam de 2 a 30 segundos com jitter.
 
 ```sh
 dumbmonit-agent --dry-run          # imprime as leituras, não envia nada

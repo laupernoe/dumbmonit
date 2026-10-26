@@ -83,6 +83,8 @@ pub const MODULES: &[&str] = &[
 struct FileConfig {
     server_url: Option<String>,
     token: Option<String>,
+    tls_url: Option<String>,
+    ca_pin: Option<String>,
     interval_secs: Option<u64>,
     hostname: Option<String>,
     services: Option<Vec<String>>,
@@ -120,6 +122,7 @@ struct FileConfig {
     wireguard_peer_names: Option<BTreeMap<String, String>>,
     ipsec: Option<bool>,
     ipsec_bin: Option<String>,
+    inventory: Option<bool>,
     speedtest: Option<bool>,
     speedtest_download_url: Option<String>,
     speedtest_upload_url: Option<String>,
@@ -219,6 +222,13 @@ pub struct Config {
     pub server_url: String,
     /// Jeton d'enregistrement. Ne doit jamais apparaître dans les journaux.
     pub token: String,
+    /// Canal chiffré des agents (`https://hôte:8443`), tel que la commande
+    /// d'installation l'écrit. `None` : même hôte que `server_url`, port annoncé
+    /// par le serveur.
+    pub tls_url: Option<String>,
+    /// Empreinte SHA-256 de l'autorité du serveur. Posée, l'agent ne parle
+    /// qu'au canal chiffré et ne reconnaît que ce serveur.
+    pub ca_pin: Option<String>,
     pub interval: Duration,
     /// Nom d'hôte annoncé au serveur. `None` : celui que le système déclare.
     pub hostname: Option<String>,
@@ -264,6 +274,9 @@ pub struct Config {
     pub ipsec: IpsecConfig,
     /// Test de débit Internet. Désactivé par défaut.
     pub speedtest: SpeedtestConfig,
+    /// Inventaire logiciel quotidien (paquets installés), joint aux lots. Actif
+    /// par défaut ; indépendant de la liste `modules`.
+    pub inventory: bool,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
     /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
@@ -289,6 +302,8 @@ impl fmt::Debug for Config {
         f.debug_struct("Config")
             .field("server_url", &self.server_url)
             .field("token", &"<redacted>")
+            .field("tls_url", &self.tls_url)
+            .field("ca_pin", &self.ca_pin)
             .field("interval", &self.interval)
             .field("hostname", &self.hostname)
             .field("services", &self.services)
@@ -313,6 +328,7 @@ impl fmt::Debug for Config {
             .field("wireguard", &self.wireguard)
             .field("ipsec", &self.ipsec)
             .field("speedtest", &self.speedtest)
+            .field("inventory", &self.inventory)
             .field("backup_repos", &self.backup_repos)
             .field("perf_counters", &self.perf_counters)
             .finish()
@@ -419,6 +435,27 @@ impl Config {
                 "the enrollment token is required (key 'token' or variable DUMBMONIT_AGENT_TOKEN)"
             );
         }
+
+        let tls_url = env
+            .get("DUMBMONIT_AGENT_TLS_URL")
+            .or(file.tls_url)
+            .map(|url| url.trim().trim_end_matches('/').to_string())
+            .filter(|url| !url.is_empty());
+        if let Some(url) = &tls_url
+            && !url.starts_with("https://")
+        {
+            bail!("the agent channel URL must start with https:// (got '{url}')");
+        }
+        let ca_pin = match env.get("DUMBMONIT_AGENT_CA_PIN").or(file.ca_pin) {
+            Some(raw) if !raw.trim().is_empty() => {
+                Some(dumbmonit_proto::normalise_pin(&raw).with_context(|| {
+                    format!(
+                        "ca_pin: a SHA-256 fingerprint (64 hex digits) is expected, got '{raw}'"
+                    )
+                })?)
+            }
+            _ => None,
+        };
 
         let interval_secs = match env.get("DUMBMONIT_AGENT_INTERVAL_SECS") {
             Some(raw) => raw
@@ -634,6 +671,7 @@ impl Config {
                 None => Ok(from_file),
             }
         };
+        let inventory = flag("DUMBMONIT_AGENT_INVENTORY", file.inventory, true)?;
         let speedtest = SpeedtestConfig {
             enabled: flag("DUMBMONIT_AGENT_SPEEDTEST", file.speedtest, false)?,
             download_url: clean_url(
@@ -721,6 +759,8 @@ impl Config {
         Ok(Self {
             server_url,
             token,
+            tls_url,
+            ca_pin,
             interval: Duration::from_secs(interval_secs),
             hostname: env
                 .get("DUMBMONIT_AGENT_HOSTNAME")
@@ -751,6 +791,7 @@ impl Config {
             wireguard,
             ipsec,
             speedtest,
+            inventory,
             backup_repos,
             perf_counters,
             max_buffered_samples,
@@ -1103,6 +1144,26 @@ mod tests {
             token: Some("dmon_abc".into()),
             ..FileConfig::default()
         }
+    }
+
+    #[test]
+    fn the_encrypted_channel_comes_from_the_install_command() {
+        let pin = "AB:".repeat(31) + "AB";
+        let file = FileConfig {
+            tls_url: Some("https://serveur:8443/".into()),
+            ca_pin: Some(pin),
+            ..file_with_url_and_token()
+        };
+        let config = Config::merge(file, env(&[])).expect("configuration");
+        assert_eq!(config.tls_url.as_deref(), Some("https://serveur:8443"));
+        assert_eq!(config.ca_pin.as_deref(), Some("ab".repeat(32).as_str()));
+        assert!(!format!("{config:?}").contains("dmon_abc"), "le jeton reste caché");
+
+        let plain =
+            FileConfig { tls_url: Some("http://serveur:8443".into()), ..file_with_url_and_token() };
+        assert!(Config::merge(plain, env(&[])).is_err(), "jamais de canal des agents en clair");
+        let short = FileConfig { ca_pin: Some("abcd".into()), ..file_with_url_and_token() };
+        assert!(Config::merge(short, env(&[])).is_err(), "une empreinte tronquée est refusée");
     }
 
     #[test]

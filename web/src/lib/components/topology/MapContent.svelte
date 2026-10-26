@@ -15,9 +15,9 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
-	import { Box, Monitor } from 'lucide-svelte';
+	import { Box, Monitor, Server } from 'lucide-svelte';
 	import type { Frame, MapLayout, NodeState, PlacedNode } from './layout';
-	import { EDGE_DASH } from './legend';
+	import { EDGE_DASH, guestLabel, zoneLabel } from './legend';
 
 	interface Props {
 		layout: MapLayout;
@@ -85,8 +85,7 @@
 	}
 
 	function label(p: PlacedNode, l: Look): string {
-		const guest = p.node.targetId === null ? (p.node.kind === 'container' ? m.topology_guest_container() : m.topology_guest_vm()) : null;
-		return [p.node.name, guest, l.caption ?? stateText(p.node.state), p.node.site].filter(Boolean).join(' · ');
+		return [p.node.name, guestLabel(p.node), l.caption ?? stateText(p.node.state), p.node.ips?.join(', '), p.node.subnet, p.node.site].filter(Boolean).join(' · ');
 	}
 
 	function frameSource(frame: Frame): string | null {
@@ -98,14 +97,26 @@
 				return m.topology_site_via_agent();
 			case 'tag':
 				return m.topology_site_via_tag();
+			case 'location':
+				return m.topology_site_via_location();
 			default:
 				return null;
 		}
 	}
 
+	function summary(frame: Frame): string {
+		return frame.down > 0 ? m.topology_summary_down({ count: frame.down }) : m.topology_summary_devices({ count: frame.count });
+	}
+
+	/** How many characters of `em` pixels each fit in `room` pixels (at least a few). */
+	function fit(room: number, em: number): number {
+		return Math.max(6, Math.floor(room / em));
+	}
+
 	function frameTitle(frame: Frame): string {
 		if (frame.kind === 'main') return frame.label ?? m.topology_site_main();
 		if (frame.kind === 'site') return frame.label ?? '';
+		if (frame.kind === 'zone') return zoneLabel(frame.label, frame.vlan, frame.vlanName);
 		return (frame.label ?? m.devices_folders_none()).toUpperCase();
 	}
 
@@ -120,7 +131,10 @@
 {#each layout.frames as frame (frame.key)}
 	{@const source = frameSource(frame)}
 	<g class="topo-frame" opacity={highlight ? 0.6 : 1}>
-		{#if frame.kind === 'group'}
+		{#if frame.kind === 'zone'}
+			<rect x={frame.x} y={frame.y} width={frame.width} height={frame.height} rx="12" fill="none" class="stroke-line-strong" stroke-width="1" stroke-dasharray="3 4" />
+			<text x={frame.x + 16} y={frame.y + 25} class="fill-ink-2" font-size="11.5" font-weight="600">{short(frameTitle(frame), fit(frame.width - 32 - summary(frame).length * 6.8, 6.8))}</text>
+		{:else if frame.kind === 'group'}
 			<rect x={frame.x} y={frame.y} width={frame.width} height={frame.height} rx="14" class="fill-surface stroke-line" stroke-width="1" />
 			<text x={frame.x + 18} y={frame.y + 25} class="fill-ink-2" font-size="11.5" font-weight="700" letter-spacing="0.05em">{short(frameTitle(frame), 40)}</text>
 		{:else}
@@ -135,19 +149,20 @@
 				stroke-width="1.5"
 				stroke-dasharray={frame.kind === 'site' ? '7 5' : '2 5'}
 			/>
-			<text x={frame.x + 22} y={frame.y + 27} class="fill-ink" font-size="14" font-weight="700">
-				{short(frameTitle(frame), 34)}{#if source}<tspan class="fill-ink-3" font-size="11.5" font-weight="500" dx="8">{source}</tspan>{/if}
-			</text>
+			<text x={frame.x + 22} y={frame.y + 27} class="fill-ink" font-size="14" font-weight="700">{short(frameTitle(frame), fit(frame.width - 22 - 18 - summary(frame).length * 6.8 - 12, 8.4))}</text>
+			{#if source}
+				<text x={frame.x + 22} y={frame.y + 45} class="fill-ink-3" font-size="11.5" font-weight="500">{short(source, fit(frame.width - 22 - 18, 6.4))}</text>
+			{/if}
 		{/if}
 		<text
 			x={frame.x + frame.width - 18}
-			y={frame.y + (frame.kind === 'group' ? 25 : 27)}
+			y={frame.y + (frame.kind === 'group' || frame.kind === 'zone' ? 25 : 27)}
 			text-anchor="end"
 			class={frame.down > 0 ? 'fill-warning-ink' : 'fill-ink-3'}
 			font-size="11.5"
 			font-weight="600"
 		>
-			{frame.down > 0 ? m.topology_summary_down({ count: frame.down }) : m.topology_summary_devices({ count: frame.count })}
+			{summary(frame)}
 		</text>
 	</g>
 {/each}
@@ -217,6 +232,8 @@
 			{#if p.node.targetId === null}
 				{#if p.node.kind === 'container'}
 					<Box class="size-4" size={icon} aria-hidden="true" />
+				{:else if p.node.kind === 'pve_node'}
+					<Server class="size-4" size={icon} aria-hidden="true" />
 				{:else}
 					<Monitor class="size-4" size={icon} aria-hidden="true" />
 				{/if}

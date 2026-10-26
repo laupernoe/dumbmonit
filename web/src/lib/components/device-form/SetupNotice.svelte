@@ -15,9 +15,9 @@
 	 * With `onclose` it is the setup guide the user opened on demand, and says
 	 * how to put it away.
 	 */
-	import { ExternalLink, X } from 'lucide-svelte';
+	import { Download, ExternalLink, X } from 'lucide-svelte';
 	import type { CollectorInfo } from '#lib/api/index.js';
-	import { CopyBlock, Panel, Plate } from '#lib/ui/index.js';
+	import { Button, CopyBlock, Panel, Plate } from '#lib/ui/index.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { localizedDocsUrl } from '#lib/docs.js';
 	import KindIcon from '#lib/components/KindIcon.svelte';
@@ -49,6 +49,10 @@
 	}
 
 	const permissions = $derived(setup?.permissions ?? []);
+
+	/** Mail servers: their queues and services are read by the agent on the server. */
+	const needsAgent = $derived(collector?.options.some((option) => option.input === 'agent') ?? false);
+	const product = $derived(collector?.kind === 'securitygateway' ? 'SecurityGateway' : 'MDaemon');
 
 	/** Ports to open, grouped by direction (the usual one first). */
 	const portGroups = $derived.by(() => {
@@ -94,6 +98,19 @@
 			{m.deviceform_setup_pick()}
 		</p>
 	{:else}
+		{#if needsAgent}
+			<section class="mb-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3 py-3" aria-labelledby="setup-agent">
+				<Plate tone="advisory" label={m.deviceform_mailagent_plate_required()} />
+				<h3 id="setup-agent" class="mt-1.5 text-sm font-semibold text-ink">{m.deviceform_mailagent_title()}</h3>
+				<p class="mt-1 text-sm leading-relaxed text-ink">{m.deviceform_mailagent_why({ product })}</p>
+				<div class="mt-2.5">
+					<Button variant="secondary" href={`/targets/new?kind=agent&os=windows&then=${collector.kind}`}>
+						<Download class="size-4" aria-hidden="true" />{m.deviceform_mailagent_install()}
+					</Button>
+				</div>
+			</section>
+		{/if}
+
 		{#if portGroups.length > 0}
 			<section class="mb-4 rounded-lg border border-line bg-surface-2 px-3 py-3" aria-labelledby="setup-ports">
 				<h3 id="setup-ports" class="text-sm font-semibold text-ink">{m.deviceform_setup_ports()}</h3>

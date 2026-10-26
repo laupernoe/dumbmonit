@@ -2125,6 +2125,69 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_mdaemon_queue_messages{queue=\"retry\"}",
             )
         },
+        // Services Windows et dossiers de files, lus par l'agent installé sur le
+        // serveur de messagerie (`crates/agent/src/collect/mail_server.rs`) : les
+        // séries portent la cible de l'agent. Un service à démarrage manuel ou
+        // désactivé n'alerte pas : seul `start="auto"` dit qu'il doit tourner.
+        Rule {
+            description: "A Windows service of MDaemon or SecurityGateway that starts \
+                          automatically is not running. Read by the agent installed on the \
+                          mail server."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mail_server_service_stopped",
+                "Mail server Windows service stopped",
+                RuleKind::Threshold,
+                "dumbmonit_agent_mail_service_up{start=\"auto\"}",
+            )
+        },
+        // L'âge du plus ancien message d'une file qui doit se vider : au-delà de
+        // deux heures, rien n'en sort (file gelée, remise bloquée). Le nombre de
+        // messages ne le dirait pas : une file peut garder le même effectif
+        // avec toujours les mêmes messages.
+        Rule {
+            description: "The oldest message of an MDaemon inbound, local or remote queue has \
+                          been waiting for more than two hours: the queue is frozen or \
+                          delivery is blocked. Counted from the queue folders by the agent on \
+                          the mail server."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 7200.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mail_queue_stuck",
+                "Mail queue stuck",
+                RuleKind::Threshold,
+                "dumbmonit_agent_mail_queue_oldest_seconds{queue=~\"inbound|local|remote\"}",
+            )
+        },
+        // MDaemon lève lui-même l'indicateur « gelée » d'une file (compteur de
+        // performance), ce qui ne dépend pas de l'âge des messages.
+        Rule {
+            description: "MDaemon reports one of its queues as frozen: it no longer processes \
+                          it. Read from the Windows performance counters by the agent on the \
+                          mail server."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "mdaemon_queue_frozen",
+                "MDaemon queue frozen",
+                RuleKind::Threshold,
+                "dumbmonit_mdaemon_queue_frozen",
+            )
+        },
         Rule {
             description: "A service of the SecurityGateway mail gateway does not answer, or \
                           refuses service."
@@ -6152,6 +6215,50 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_security_score",
             )
         },
+
+        // --- Failles connues (`vulns/`) ---
+        //
+        // Une série par CVE et par composant vulnérable (étiquettes `cve` et
+        // `component`), republiée tous les quarts d'heure ; une CVE ignorée
+        // dans l'interface n'est plus publiée. Seuls deux cas alertent : la
+        // faille exploitée (catalogue KEV de la CISA) et la faille critique
+        // (CVSS ≥ 9). Le reste s'affiche sans notifier ; « à vérifier » ne
+        // notifie jamais. Rappel hebdomadaire : c'est un chantier, pas une
+        // panne.
+        Rule {
+            description: "A component of this device is vulnerable to a CVE that is actively \
+                          exploited (CISA KEV catalog): update it, or accept the risk in \
+                          Security → CVE & vulnerabilities."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "cve_exploited_vulnerable",
+                "Exploited vulnerability not patched",
+                RuleKind::Threshold,
+                "dumbmonit_cve_exploited_vulnerable",
+            )
+        },
+        Rule {
+            description: "A component of this device is vulnerable to a critical CVE (CVSS 9 or \
+                          more) that is not patched yet."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 9.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: " CVSS".to_string(),
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(
+                "cve_critical_vulnerable",
+                "Critical vulnerability not patched",
+                RuleKind::Threshold,
+                "dumbmonit_cve_vulnerable",
+            )
+        },
     ]
 }
 
@@ -6289,6 +6396,9 @@ mod tests {
             "mdaemon_queue_growing",
             "mdaemon_bad_queue_not_empty",
             "mdaemon_retry_queue_high",
+            "mail_server_service_stopped",
+            "mail_queue_stuck",
+            "mdaemon_queue_frozen",
             "securitygateway_service_down",
             "securitygateway_api_down",
             "securitygateway_queue_growing",
@@ -6530,6 +6640,9 @@ mod tests {
             // Note de sécurité (`security/`).
             "security_score_drop",
             "security_score_low",
+            // Failles connues (`vulns/`).
+            "cve_exploited_vulnerable",
+            "cve_critical_vulnerable",
         ] {
             assert!(uids.contains(&attendu), "missing built-in rule: {attendu}");
         }
@@ -6546,6 +6659,9 @@ mod tests {
             "dumbmonit_up",
             // Note de sécurité, calculée par le serveur (`security/mod.rs`).
             "dumbmonit_security_score",
+            // Failles connues, publiées par le serveur (`vulns/mod.rs`).
+            "dumbmonit_cve_vulnerable",
+            "dumbmonit_cve_exploited_vulnerable",
             "dumbmonit_cpu_load_percent",
             "dumbmonit_cpu_usage_percent",
             "dumbmonit_storage_bytes_used",
@@ -6779,6 +6895,11 @@ mod tests {
             // MDaemon, compteurs de performance lus par l'agent Windows
             // (`crates/agent/src/collect/perf_counters.rs`).
             "dumbmonit_mdaemon_queue_messages",
+            "dumbmonit_mdaemon_queue_frozen",
+            // Services Windows et dossiers de files, lus par l'agent
+            // (`crates/agent/src/collect/mail_server.rs`).
+            "dumbmonit_agent_mail_service_up",
+            "dumbmonit_agent_mail_queue_oldest_seconds",
             "dumbmonit_securitygateway_service_up",
             "dumbmonit_securitygateway_api_up",
             "dumbmonit_securitygateway_counter",

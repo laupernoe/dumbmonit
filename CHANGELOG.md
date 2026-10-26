@@ -5,6 +5,193 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.13.6 — 2026-10-25
+
+### Added
+
+- **Roadmap page on the website.** A new Roadmap page, in all nine languages, lists what is
+  planned in delivery order and what has already shipped. It is generated from
+  `site-src/data/roadmap.json`. It also shows what is in progress and two collapsible
+  "Ideas" sections (features and integrations), with a link to GitHub Discussions.
+
+- **Encrypted agent channel, ready for the Internet.** Agents and relay agents
+  now report on a dedicated port (TCP 8443, `DUMBMONIT_AGENT_LISTEN`) with TLS
+  1.3 only, post-quantum hybrid key exchange X25519MLKEM768 and a client
+  certificate per machine: the agent generates its key on the machine, enrols
+  once with its token and renews its 30-day certificate by itself; deleting a
+  monitor revokes it at once. The server creates its own certificate authority
+  at first start, and the install command carries its fingerprint, so an agent
+  accepts no other server, even one with a valid public certificate, and never
+  falls back to plain HTTP. Existing agents switch by themselves once updated
+  (the plain channel announces the new one); Settings → Agents shows the
+  channel of each agent, a "Require the encrypted channel" switch (on for new
+  installations) and the authority rotation. `GET /api/agent/install` returns
+  the install parameters for deployment tools. Publish port 8443 next to 8080
+  (see the Compose file); nothing to open on the agents.
+- **Security: CVE & vulnerabilities.** A new section lists the known CVEs of
+  the software already monitored and says, per device, whether each one is
+  vulnerable, patched or to check. The inventory comes from what collectors
+  already report (Proxmox VE and its packages, PBS, OPNsense, Unraid, ESXi and
+  vCenter, FortiOS, RouterOS, UniFi, Synology DSM, MDaemon, SecurityGateway and
+  about twenty more products) and from a new daily inventory sent by the agent
+  (Debian, Ubuntu, Alpine and RPM packages; Windows build and common
+  programs). Sources: NVD by CPE, the Debian Security Tracker (backported fixes
+  count as patched), OSV.dev and the CISA KEV catalog, read once a day in the
+  background and cached for offline use; an optional NVD API key speeds it up.
+  When the data cannot decide (vendor rebuilds, unbounded ranges) the verdict
+  is "to check", never "vulnerable". Two new built-in rules alert on an
+  exploited (KEV) or critical (CVSS 9+) vulnerability that is not patched; a
+  CVE can be ignored per device to accept the risk. The device page shows its
+  own CVEs. Off by default: nothing is sent anywhere until an administrator
+  turns it on.
+- **Deploy the agent to a whole Active Directory domain with one group policy.**
+  Settings > Agents > "Deploy with Active Directory" creates a fleet enrollment
+  token limited to the domain (reusable, 30 days by default, optional server
+  cap) and downloads `Deploy-DumbMonit.ps1`. Run once on a domain controller
+  (`-WhatIf` first), it checks its prerequisites, creates or updates the
+  "DumbMonit Agent" group policy and links it to the servers' OU (optionally
+  Domain Controllers, a security group filter, and the agent binary in SYSVOL
+  for servers without outbound access). Each server then installs the agent as
+  SYSTEM with the server's own install command, verifies its SHA-256, does
+  nothing when it is already up to date, logs to the Application event log, and
+  enrolls under its fully qualified name with its own identity, filed in the
+  folder "Active Directory <domain>" with the `ad` tag and its OU. Only machines
+  of the domain can enroll with the token; "Stop enrollments" closes it without
+  cutting the servers already enrolled; `-UninstallAgents` and `-Remove` undo
+  everything. The wizard shows the servers arriving live.
+- **Map: services and agents hang under the VM they run on.** The map now reads
+  the IP addresses the hypervisor reports for each guest (Proxmox guest agent,
+  container interfaces, or the static `ipconfigN` / `netN ip=` configuration
+  when the guest says nothing; VMware Tools' primary address on vSphere) and
+  links every monitor aimed at one of them (HTTP, TCP, database…) to that guest
+  with a "Runs on" link, instead of leaving it floating. When a guest's name
+  matches no monitor, the only agent, ping or SNMP monitor at its address
+  stands for the guest rather than a second box; an agent's reported host name
+  also matches its guest. An address several guests report links nothing, and a
+  declared parent always wins. The guest's addresses appear in its details
+  panel and tooltip. Docker bridges and veth interfaces are no longer counted
+  among a guest's addresses.
+- **Map: Proxmox clusters, backups, firewalls and subnets.** A Proxmox cluster
+  is drawn as cluster, one node per Proxmox node (online or offline), then its
+  VMs and containers, stopped ones included; a single-node Proxmox keeps its
+  guests directly under it. A monitor that matches a guest is drawn at that
+  place, not twice. A Proxmox with a `pbs` storage is linked "Backed up to" the
+  monitored PBS it targets (read from the storage configuration, nothing is
+  drawn without the right to read it), and a PBS and a Proxmox VE monitor that
+  point at the same machine are tied by a "Same host" link instead of sitting
+  apart under the same name. Firewalls (OPNsense, pfSense, FortiGate, Sophos,
+  MikroTik) lead their site, and the devices of the networks they serve hang
+  under them with a "Through the firewall" link (a declared parent always wins).
+  A new "Group by subnet" switch frames each site by subnet, with the VLAN and
+  its name when the firewall reports them ("Unknown network" otherwise), and the
+  list view shows the subnet. Links between sites now leave and enter through the
+  edge of the site frames in smooth curves instead of crossing the nodes.
+- **MDaemon and SecurityGateway are monitored through the Windows agent.** The
+  forms now open with an "Agent required on the mail server" box that explains
+  why (queues, sessions, Windows services and disk space can only be read on the
+  server itself), opens the Windows agent install flow and lets you pick the
+  agent installed on the server (pre-selected when its host name matches the
+  address), instead of finding it implicitly. The agent detects MDaemon and
+  SecurityGateway by itself and reads their Windows services (state and start
+  mode), version, queue folders (messages and age of the oldest one) and the free
+  space of their data volume. The monitor page is split into "Read by the agent"
+  (Windows services, queues, sessions, disk), "Network services" and "API", and
+  shows a banner (not an alert) when no agent is linked, it is silent, or it does
+  not see the product. The MDaemon XML API account is now optional (version
+  only); the SecurityGateway API key stays recommended for its counters. New
+  default rules: Mail server Windows service stopped, Mail queue stuck and
+  MDaemon queue frozen.
+- **SEO settings for public status pages.** A published page has a "Search
+  engines (SEO)" block: an "index this page" switch (off by default: `noindex,
+  nofollow`), SEO title, meta description, keywords, canonical URL, share image,
+  language and site name, each generated from the page name when left empty, with
+  a live search-result preview and a "Copy the prompt for an AI" / "Paste the
+  result" round trip. The server writes the tags (title, description, robots,
+  canonical, Open Graph, Twitter card, hreflang, JSON-LD) into the HTML of
+  `/s/<slug>` and sends `X-Robots-Tag`; indexable pages are listed in
+  `/sitemap.xml` and allowed in `/robots.txt`, everything else stays closed.
+- **Monitor groups on status pages.** Tick whole groups (folders) in the page
+  editor: a ticked group is live, so monitors added to or removed from it appear
+  or disappear on the page by themselves, shown under the group's name without
+  duplicates.
+- **Private and public names in the status page editor.** Every monitor shows
+  its private name (read-only, never published) next to an editable public name,
+  with a warning when an empty public name would publish the internal one; this
+  also applies to monitors that come in through a ticked group. A test checks
+  that the public JSON, HTML, feed, badges and sitemap never carry a private
+  name, address or id.
+- **Status page history: 24 hours to 90 days, adaptive, with a day detail.** The
+  period is now a page setting (24 hours, 7, 30, 60, 90 days) and the bars adapt
+  to the data that exists: 2 hours of data show 5-minute bars, 12 hours hourly
+  bars, 3 days 6-hour bars, instead of weeks of grey. The caption names the
+  period really shown and the availability is computed over it. Clicking a bar
+  opens that day hour by hour (outages with start and end, announcements) from
+  `GET /api/public/status/<slug>/day/<date>`, public names only.
+- **Past incidents on status pages.** Enter an incident that already happened:
+  start time (never in the future), optional resolution time, and updates each
+  with its own date, sorted and validated. An incident entered as resolved
+  notifies nobody; it shows in the history and the day bars at its real date.
+
+### Fixed
+
+- **Linux agents keep their encrypted-channel certificate across restarts.** The
+  systemd unit made `/etc/dumbmonit` read-only (`ProtectSystem=strict`), so the
+  agent could not save its certificate (`agent-tls.json`) and binding secret
+  there; the unit now allows writing to its configuration directory only.
+  Reinstall the agent with the install command to get the new unit.
+
+- **Interface clean-up: lists refresh, fewer buttons, folded settings.** Any
+  successful create, update or delete now refreshes the shared device and alert
+  lists, so a deleted monitor no longer stays on screen until F5. On Monitors,
+  the map and "Create folder" are icon buttons next to "Select" and the "..."
+  menu is gone. An alert row keeps two icon buttons: acknowledge (check) and
+  snooze (duration picker). In Settings, SSO, LDAP, the Monitoring, Wall display
+  and System panels fold their long blocks into closed-by-default sections; no
+  option or default changed.
+
+- **Agent drop-outs, relay key, discovery memory and log noise.** After an
+  outage the agent retried up to every 5 minutes, well past the 90 s after which
+  the server declares it silent, so a short network cut showed as a long
+  drop-out (15 attempts over 53 min seen on a relay): retries now go from 2 to
+  30 s, and any answer from the server on the measurements or relay channel ends
+  the wait at once; the relay confirms its return with an immediate poll instead
+  of a 25 s long poll. Transport errors name the root cause first (connection
+  refused, timeout, DNS, TLS) and never show the URL's query. The machine key of
+  the commands and relay channels moves from `?key=` to an
+  `X-DumbMonit-Agent-Key` header, so it no longer lands in agent or proxy logs;
+  the server still accepts `?key=` from older agents, and a new agent falls back
+  to it against an older server. Measurements still pending at shutdown are kept
+  on disk and sent at the next start. A relayed discovery scan no longer runs a
+  /24 x 69 ports sweep all at once (it ran the agent out of its 128 MB and
+  ignored SIGTERM): sockets are capped (64 on an agent), work is produced as it
+  goes, results are streamed and stopping the agent or the scan cancels it at
+  once; the systemd unit's `MemoryMax` is raised to 256M. The server now logs
+  one line per agent transition (gone silent with its silence and limit, back
+  online with the outage length, report refused with the reason, relay
+  connected or reconnected), and after a restart of the server itself an agent
+  that was fresh when it stopped gets a full delay before being declared
+  silent. Proxmox and PBS permission errors are logged once per target and
+  endpoint, then on change, recovery or every 24 hours, instead of every cycle;
+  VictoriaMetrics "context canceled" lines go to debug and status page query
+  failures carry their real cause. The log export says since when logs exist.
+
+- **Status pages: backup, folder renames, incident dates, SEO prompt.** The
+  instance backup now carries each page's SEO settings, ticked groups and the
+  public names of group members (older backup files still restore, with defaults
+  for what they lack). Renaming a folder on the Devices page is now one request
+  that also updates the status pages that ticked it, instead of silently
+  unticking it. The incident editor can change the start and the resolution
+  date of an existing incident or maintenance, with the same checks as the API.
+  The "Copy the prompt for an AI" text is written in the page language (or the
+  interface language) instead of always English; the JSON keys stay the same.
+- **Map: remote sites and image export.** A monitor placed at a remote location
+  ("Place at") is now drawn inside that site's frame, like those reached through
+  its relay agent; a site frame is wide enough for its title and its source on a
+  second line, and a machine is no longer drawn twice when a guest name matches
+  several monitors. The PNG export works again (the image was blocked by the
+  page's security policy) and a local failure no longer blames the server.
+  Settings -> System no longer fails with an internal error.
+
 ## 0.13.5 — 2026-10-21
 
 ### Added

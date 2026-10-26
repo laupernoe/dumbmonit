@@ -28,3 +28,9 @@ export function localizedDocsUrl(url: string): string {
 	const locale = getLocale();
 	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/${url.slice(prefix.length)}`;
 }
+
+/** Page "Deploy with Active Directory" of the documentation, in the language of the UI. */
+export function adDeployDocsUrl(): string {
+	const locale = getLocale();
+	return `https://dumbmonit.readthedocs.io/${DOCS_LANGUAGE[locale] ?? locale}/latest/devices/agent-active-directory/`;
+}

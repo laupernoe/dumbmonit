@@ -309,6 +309,23 @@ fn interfaces(r: &Replies, ts_ms: i64, out: &mut Vec<Sample>) {
         if link && let Some(speed) = number(interface.get("speed")) {
             out.push(named(g("fortigate_interface_speed_mbps", speed)));
         }
+        // Le réseau de l'interface, pour rattacher les équipements au pare-feu.
+        if addressed
+            && let (Some(ip), Some(mask)) = (text(interface, "ip"), number(interface.get("mask")))
+        {
+            let vlan = number(interface.get("vlanid"))
+                .map(|v| v as u16)
+                .filter(|v| (1..=4094).contains(v))
+                .or_else(|| crate::ifaddr::vlan_hint(name));
+            out.push(crate::ifaddr::address_sample(
+                "fortigate_interface_address_info",
+                name,
+                alias,
+                &format!("{ip}/{}", mask as u32),
+                vlan,
+                ts_ms,
+            ));
+        }
         for (field, metric) in [
             ("rx_bytes", "fortigate_interface_bytes_in_total"),
             ("tx_bytes", "fortigate_interface_bytes_out_total"),

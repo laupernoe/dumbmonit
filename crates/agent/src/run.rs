@@ -4,7 +4,9 @@ use std::collections::BTreeSet;
 use std::time::Duration;
 
 use anyhow::{Context, Result};
-use dumbmonit_proto::{AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample};
+use dumbmonit_proto::{
+    AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample, SoftwareInventory,
+};
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
 
@@ -14,8 +16,10 @@ use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
+use crate::collect::inventory::{self, PendingInventory};
 use crate::collect::ipsec::IpsecProbe;
 use crate::collect::libvirt::LibvirtProbe;
+use crate::collect::mail_server::PlatformProbe as MailServerProbe;
 use crate::collect::perf_counters::PlatformProbe as PerfCountersProbe;
 use crate::collect::plakar::PlakarProbe;
 use crate::collect::registry::UpdateChecker;
@@ -30,13 +34,29 @@ use crate::commands::CommandRunner;
 use crate::config::{Config, MIN_INTERVAL_SECS};
 use crate::relay::RelayRunner;
 use crate::shutdown::Shutdown;
+use crate::tls::TlsState;
+
+/// Délai avant une nouvelle tentative d'enrôlement ou de renouvellement sur le
+/// canal chiffré, après un échec.
+const TLS_RETRY: Duration = Duration::from_secs(60);
 
 /// Première temporisation après un échec d'envoi.
-const BACKOFF_BASE: Duration = Duration::from_secs(5);
+const BACKOFF_BASE: Duration = Duration::from_secs(2);
 
-/// Plafond de la temporisation. Cinq minutes : au-delà, une machine revenue en
-/// ligne mettrait trop longtemps à se manifester dans l'interface.
-const BACKOFF_MAX: Duration = Duration::from_secs(300);
+/// Plafond de la temporisation : trente secondes, décalage aléatoire compris.
+///
+/// Il était de cinq minutes. Le serveur déclare une machine muette après trois
+/// périodes, au moins 90 s (`staleness_deadline`) : un plafond plus long que ce
+/// délai transformait chaque coupure en panne apparente rallongée de plusieurs
+/// minutes après le retour du serveur — 15 tentatives sur 53 min observées pour
+/// une coupure réseau. Un agent toutes les 30 s ne pèse rien sur un serveur qui
+/// redémarre ; le décalage aléatoire étale le parc.
+pub(crate) const BACKOFF_MAX: Duration = Duration::from_secs(30);
+
+/// Mesures gardées sur disque à l'arrêt quand le serveur ne répond pas, au plus.
+/// Quelques mégaoctets : de quoi couvrir un redémarrage pendant une coupure,
+/// pas de quoi remplir un disque.
+const MAX_PERSISTED_SAMPLES: usize = 20_000;
 
 /// Délai maximal d'un envoi. Généreux, car un lot de rattrapage est volumineux et
 /// part parfois sur une liaison lente.
@@ -82,9 +102,16 @@ pub struct Agent {
     zfs: ZfsProbe,
     /// Domaines KVM et pools libvirt. Muet sans `virsh` ni domaine.
     libvirt: LibvirtProbe,
+    /// Dernier inventaire logiciel relevé, en attente d'être joint à un lot. Vidé
+    /// quand le serveur l'a accepté.
+    inventory: PendingInventory,
+    /// Tâche de fond du relevé quotidien, lancée au premier cycle.
+    inventory_task: Option<tokio::task::JoinHandle<()>>,
     /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
     /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
     perf_counters: PerfCountersProbe,
+    /// MDaemon et SecurityGateway : services, files, version (Windows).
+    mail_server: MailServerProbe,
     buffer: PendingBuffer,
     client: PushClient,
     backoff: Backoff,
@@ -119,6 +146,19 @@ pub struct Agent {
     /// Vrai une fois signalé qu'un lot a été entièrement écarté par le serveur,
     /// pour ne le dire qu'une fois par épisode.
     all_refused: bool,
+    /// Début de la coupure en cours et dernière cause journalisée : la reprise
+    /// dit combien de temps a duré la panne, un changement de cause est signalé.
+    outage: Option<(Instant, String)>,
+    /// Canal chiffré : URL, empreintes, certificat. `None` tant que ni la
+    /// configuration ni le serveur n'en ont parlé (serveur antérieur).
+    tls: Option<TlsState>,
+    /// Où il est rangé, à côté du secret de liaison.
+    tls_path: std::path::PathBuf,
+    /// Pas de nouvelle tentative d'enrôlement ou de renouvellement avant.
+    tls_retry_at: Option<Instant>,
+    /// Vrai une fois un échec du canal chiffré signalé, pour ne le dire
+    /// qu'une fois par épisode.
+    tls_failed: bool,
 }
 
 impl Agent {
@@ -132,6 +172,20 @@ impl Agent {
             HTTP_TIMEOUT,
         )
         .context("preparing the push client")?;
+        let tls_path = crate::tls::beside(&config.secret_path);
+        let tls = initial_tls(&config, TlsState::load(&tls_path));
+        if let Some(state) = &tls {
+            client.set_pins(state.pins.clone());
+            if let Some(identity) = state.identity() {
+                client
+                    .use_tls(&state.url, Some(identity))
+                    .context("preparing the agent channel")?;
+            } else if state.locked || config.ca_pin.is_some() {
+                // Pas encore (ou plus) de certificat, mais l'agent ne parle
+                // qu'au canal chiffré : rien ne partira en clair d'ici là.
+                client.use_tls(&state.url, None).context("preparing the agent channel")?;
+            }
+        }
         let commands = CommandRunner::new(
             config.commands,
             client.clone(),
@@ -154,7 +208,10 @@ impl Agent {
             smart: SmartProbe::new(&config.smart),
             zfs: ZfsProbe::new(&config.zfs),
             libvirt: LibvirtProbe::new(&config.libvirt),
+            inventory: PendingInventory::default(),
+            inventory_task: None,
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
+            mail_server: MailServerProbe::for_platform(config.perf_counters.mdaemon),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
             relay: None,
@@ -164,6 +221,11 @@ impl Agent {
             disabled_modules: BTreeSet::new(),
             batch_limit: MAX_BATCH_SAMPLES,
             all_refused: false,
+            outage: None,
+            tls,
+            tls_path,
+            tls_retry_at: None,
+            tls_failed: false,
             identity,
             client,
             config,
@@ -206,7 +268,9 @@ impl Agent {
         if self.wants("libvirt") {
             snapshot.libvirt = self.libvirt.read().await;
         }
+        self.sync_inventory();
         snapshot.perf_counters = self.perf_counters.read();
+        snapshot.mail_server = self.mail_server.read().await;
 
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.
@@ -225,6 +289,35 @@ impl Agent {
             now_ms,
         ));
         samples
+    }
+
+    fn wants_inventory(&self) -> bool {
+        self.config.inventory && self.wants("inventory")
+    }
+
+    /// Lance la tâche de relevé quotidien au premier cycle, l'arrête (et oublie
+    /// ce qu'elle avait relevé) quand l'inventaire est coupé, en local ou depuis
+    /// l'interface.
+    fn sync_inventory(&mut self) {
+        if self.wants_inventory() {
+            if self.inventory_task.is_none() {
+                self.inventory_task = Some(inventory::spawn(self.inventory.clone()));
+            }
+        } else if let Some(task) = self.inventory_task.take() {
+            task.abort();
+            *inventory::lock(&self.inventory) = None;
+            info!("software inventory switched off");
+        }
+    }
+
+    /// Oublie l'inventaire en attente s'il est encore celui qui vient d'être
+    /// envoyé (le relevé suivant a pu le remplacer entre-temps).
+    fn forget_inventory(&self, sent: Option<&SoftwareInventory>) {
+        let Some(sent) = sent else { return };
+        let mut pending = inventory::lock(&self.inventory);
+        if pending.as_ref().is_some_and(|p| p.collected_at_ms == sent.collected_at_ms) {
+            *pending = None;
+        }
     }
 
     /// Faux pour un module que l'utilisateur a décoché dans l'interface.
@@ -296,10 +389,14 @@ impl Agent {
             ),
             None => info!("modules: auto-detected (set 'modules' in agent.yaml to choose)"),
         }
+        self.restore_pending();
         self.probe.warm_up().await;
 
         let mut next_collect = Instant::now();
         let mut next_send = Instant::now();
+        // Toute réponse favorable du serveur, y compris sur le canal du relais,
+        // met fin à la temporisation : inutile d'attendre qu'elle expire.
+        let reachable = self.client.reachable();
 
         loop {
             tokio::select! {
@@ -332,8 +429,17 @@ impl Agent {
                             Instant::now()
                         }
                         FlushOutcome::Idle => Instant::now(),
-                        FlushOutcome::Failed(_) => Instant::now() + self.backoff.next_delay(),
+                        FlushOutcome::Failed(error) => {
+                            let delay = self.backoff.next_delay();
+                            self.note_failure(&error, delay);
+                            Instant::now() + delay
+                        }
                     };
+                }
+
+                _ = reachable.notified(), if self.outage.is_some() && !self.buffer.is_empty() => {
+                    debug!("server answered on another channel, sending now");
+                    next_send = Instant::now();
                 }
             }
         }
@@ -415,35 +521,72 @@ impl Agent {
 
     /// Envoie un lot prélevé dans le tampon.
     async fn flush(&mut self) -> FlushOutcome {
+        self.ensure_tls().await;
+        if self.tls_only() && !self.client.is_encrypted() {
+            // Jamais en clair une fois le canal chiffré exigé localement : les
+            // mesures attendent l'enrôlement.
+            return FlushOutcome::Failed(PushError::Transport(
+                "waiting for the encrypted agent channel (enrolment pending)".to_string(),
+            ));
+        }
         let samples = self.buffer.take(self.batch_limit);
         if samples.is_empty() {
             return FlushOutcome::Idle;
         }
         let count = samples.len();
-        let batch =
+        let mut batch =
             PushBatch::new(self.identity.clone(), samples, chrono::Utc::now().timestamp_millis());
+        if self.wants_inventory() {
+            batch.inventory = inventory::lock(&self.inventory).clone();
+        }
 
         match self.client.send(&batch).await {
             Ok(ack) => {
-                if self.backoff.attempts() > 0 {
-                    info!(attempts = self.backoff.attempts(), "connection to the server restored");
+                if let Some((since, _)) = self.outage.take() {
+                    info!(
+                        attempts = self.backoff.attempts(),
+                        outage_s = since.elapsed().as_secs(),
+                        "connection to the server restored"
+                    );
                 }
                 self.backoff.reset();
                 self.binding_refused = false;
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.note_acceptance(count, ack.accepted);
+                self.forget_inventory(batch.inventory.as_ref());
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
                 self.adopt_disabled_modules(ack.disabled_modules);
                 self.adopt_relay(ack.relay);
                 FlushOutcome::Sent { count }
             }
+            Err(PushError::Forbidden(message)) if message == dumbmonit_proto::MTLS_REQUIRED => {
+                // L'ancien canal est fermé : l'annonce qui accompagne ce refus
+                // déclenche la migration au prochain tour.
+                self.buffer.restore(batch.samples);
+                self.tls_retry_at = None;
+                info!("the server requires the encrypted agent channel, switching");
+                FlushOutcome::Failed(PushError::Forbidden(message))
+            }
             Err(PushError::Forbidden(message)) => {
                 self.buffer.restore(batch.samples);
                 self.on_binding_refused(&message);
                 FlushOutcome::Failed(PushError::Forbidden(message))
             }
+            Err(PushError::CertificateRefused) => {
+                self.buffer.restore(batch.samples);
+                self.on_certificate_refused();
+                FlushOutcome::Failed(PushError::CertificateRefused)
+            }
             Err(PushError::TooLarge(message)) => {
+                if batch.inventory.is_some() {
+                    // L'inventaire est le premier suspect : on le lâche pour ce
+                    // jour (relevé suivant demain) plutôt que de tailler les mesures.
+                    warn!(reason = message, "inventory too large for the server, dropped");
+                    self.forget_inventory(batch.inventory.as_ref());
+                    self.buffer.restore(batch.samples);
+                    return FlushOutcome::Failed(PushError::TooLarge(message));
+                }
                 if count <= 1 {
                     // Une mesure seule ne se coupe plus : la garder bloquerait
                     // tout le tampon derrière elle.
@@ -460,22 +603,226 @@ impl Agent {
                 FlushOutcome::Failed(PushError::TooLarge(message))
             }
             Err(error) if error.is_retryable() => {
+                // Journalisé par la boucle, qui connaît le délai avant la reprise.
                 self.buffer.restore(batch.samples);
-                // Le premier échec est signalé fort, les suivants en sourdine : une
-                // panne d'une heure ne doit pas remplir le journal de la machine.
-                if self.backoff.attempts() == 0 {
-                    warn!(%error, buffered = self.buffer.len(), "send failed, measurements kept");
-                } else {
-                    debug!(%error, attempt = self.backoff.attempts() + 1, "send failed again");
-                }
                 FlushOutcome::Failed(error)
             }
             Err(error) => {
                 // Le serveur a compris et refusé : réémettre à l'identique ne ferait
                 // que reproduire le refus, en gardant le tampon plein pour rien.
                 warn!(%error, dropped = count, "batch rejected by the server, dropped");
+                self.forget_inventory(batch.inventory.as_ref());
                 FlushOutcome::Sent { count }
             }
+        }
+    }
+
+    /// Vrai si rien ne doit plus partir en clair : empreinte donnée par la
+    /// commande d'installation, ou agent déjà enrôlé une fois.
+    fn tls_only(&self) -> bool {
+        self.config.ca_pin.is_some() || self.tls.as_ref().is_some_and(|state| state.locked)
+    }
+
+    /// Met le canal chiffré en place, ou le maintient : migration depuis
+    /// l'ancien canal sur l'annonce du serveur, enrôlement, renouvellement,
+    /// empreintes tenues à jour.
+    async fn ensure_tls(&mut self) {
+        if self.tls.is_none() {
+            // Un serveur à jour annonce son canal chiffré sur l'ancien : un
+            // agent installé avant migre de lui-même, en épinglant l'autorité
+            // annoncée (confiance au premier usage).
+            let Some(offer) = self.client.offer() else { return };
+            let url = self.config.tls_url.clone().or_else(|| {
+                dumbmonit_proto::agent_channel_url(&self.config.server_url, offer.port)
+            });
+            let Some(url) = url else { return };
+            info!(url, "the server offers an encrypted agent channel, enrolling");
+            self.client.set_pins(offer.pins.clone());
+            self.tls = Some(TlsState::new(url, offer.pins));
+        }
+        let now_ms = chrono::Utc::now().timestamp_millis();
+        if self.client.is_encrypted() {
+            self.adopt_pins();
+        }
+        if self.tls_retry_at.is_some_and(|at| Instant::now() < at) {
+            return;
+        }
+        let Some(state) = self.tls.clone() else { return };
+        if state.usable(now_ms) {
+            if state.needs_renewal(now_ms) {
+                self.renew_certificate().await;
+            }
+            return;
+        }
+        self.enrol_tls(state).await;
+    }
+
+    /// Range les empreintes que le serveur vient d'annoncer sur le canal
+    /// chiffré (rotation de l'autorité).
+    fn adopt_pins(&mut self) {
+        let pins = self.client.pins();
+        let Some(state) = self.tls.as_mut() else { return };
+        if pins.is_empty() || pins == state.pins {
+            return;
+        }
+        info!(pins = pins.join(","), "pinned server authorities updated");
+        state.pins = pins;
+        if state.locked
+            && let Err(error) = state.save(&self.tls_path)
+        {
+            warn!(error = %format!("{error:#}"), "cannot store the encrypted channel state");
+        }
+    }
+
+    /// Enrôlement : une clé neuve, le jeton (et le secret de liaison), un
+    /// certificat en retour.
+    async fn enrol_tls(&mut self, mut state: TlsState) {
+        let (public_key, key) = match crate::tls::new_key() {
+            Ok(pair) => pair,
+            Err(error) => {
+                warn!(error = %format!("{error:#}"), "cannot generate the agent key");
+                self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
+                return;
+            }
+        };
+        let request =
+            dumbmonit_proto::TlsEnrolRequest { identity: self.identity.clone(), public_key };
+        match self.client.enrol(&state.url, &request).await {
+            Ok(issued) => {
+                if let Some(secret) = issued.agent_secret.clone() {
+                    self.adopt_binding(Some(secret), true);
+                }
+                self.adopt_certificate(&mut state, issued, &key);
+                info!(url = state.url, "enrolled on the encrypted agent channel (TLS 1.3, mTLS)");
+            }
+            Err(error) => {
+                if let PushError::Forbidden(message) = &error {
+                    self.on_binding_refused(message);
+                }
+                self.note_tls_failure("enrolment on the encrypted agent channel failed", &error);
+            }
+        }
+    }
+
+    /// Renouvellement sous le certificat en cours, avec une clé neuve.
+    async fn renew_certificate(&mut self) {
+        let Some(mut state) = self.tls.clone() else { return };
+        let (public_key, key) = match crate::tls::new_key() {
+            Ok(pair) => pair,
+            Err(error) => {
+                warn!(error = %format!("{error:#}"), "cannot generate the agent key");
+                self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
+                return;
+            }
+        };
+        match self.client.renew(public_key).await {
+            Ok(issued) => {
+                self.adopt_certificate(&mut state, issued, &key);
+                info!("agent certificate renewed");
+            }
+            Err(PushError::CertificateRefused) => self.on_certificate_refused(),
+            Err(error) => self.note_tls_failure("agent certificate renewal failed", &error),
+        }
+    }
+
+    /// Range un certificat reçu et bascule le client dessus.
+    fn adopt_certificate(
+        &mut self,
+        state: &mut TlsState,
+        issued: dumbmonit_proto::TlsCertificate,
+        key: &[u8],
+    ) {
+        use base64::Engine as _;
+        state.certificate = Some(issued.certificate);
+        state.key = Some(base64::engine::general_purpose::STANDARD.encode(key));
+        state.not_after_ms = Some(issued.not_after_ms);
+        if !issued.pins.is_empty() {
+            state.pins = issued.pins;
+        }
+        state.locked = true;
+        self.client.set_pins(state.pins.clone());
+        if let Err(error) = state.save(&self.tls_path) {
+            // Gardé en mémoire : l'agent marche, mais se réenrôlera au prochain
+            // démarrage.
+            warn!(error = %format!("{error:#}"), "cannot store the encrypted channel state");
+        }
+        if let Err(error) = self.client.use_tls(&state.url, state.identity()) {
+            warn!(error = %format!("{error:#}"), "cannot switch to the encrypted agent channel");
+        }
+        self.tls = Some(state.clone());
+        self.tls_retry_at = None;
+        self.tls_failed = false;
+    }
+
+    /// Le serveur ne reconnaît plus notre certificat (machine supprimée,
+    /// certificat remplacé) : on l'oublie, et on se réenrôle avec le jeton.
+    fn on_certificate_refused(&mut self) {
+        let Some(state) = self.tls.as_mut() else { return };
+        if state.certificate.is_none() {
+            return;
+        }
+        warn!("the server no longer accepts this agent certificate, enrolling again");
+        state.drop_certificate();
+        if let Err(error) = state.save(&self.tls_path) {
+            warn!(error = %format!("{error:#}"), "cannot store the encrypted channel state");
+        }
+        if let Err(error) = self.client.use_tls(&state.url, None) {
+            warn!(error = %format!("{error:#}"), "cannot reset the encrypted agent channel");
+        }
+        self.tls_retry_at = None;
+    }
+
+    fn note_tls_failure(&mut self, what: &str, error: &PushError) {
+        self.tls_retry_at = Some(Instant::now() + TLS_RETRY);
+        if self.tls_failed {
+            debug!(%error, "{what}");
+        } else {
+            self.tls_failed = true;
+            warn!(%error, retry_in_s = TLS_RETRY.as_secs(), "{what}");
+        }
+    }
+
+    /// Journalise un échec d'envoi : chaque tentative laisse une ligne, avec sa
+    /// cause (statut HTTP, erreur réseau, délai dépassé) et le délai avant la
+    /// suivante. Fort au premier échec et à chaque changement de cause, en
+    /// `info` ensuite — et seulement une fois sur dix passé la dixième, pour
+    /// qu'une panne d'une nuit ne remplisse pas le journal.
+    fn note_failure(&mut self, error: &PushError, retry_in: Duration) {
+        let attempt = self.backoff.attempts();
+        let cause = error.to_string();
+        let retry_in_s = retry_in.as_secs();
+        let buffered = self.buffer.len();
+        let Some((_, last)) = self.outage.as_mut() else {
+            self.outage = Some((Instant::now(), cause.clone()));
+            // Ces deux refus ont déjà leur propre message, plus parlant.
+            if !matches!(error, PushError::Forbidden(_) | PushError::TooLarge(_)) {
+                warn!(error = %cause, buffered, retry_in_s, "send failed, measurements kept");
+            }
+            return;
+        };
+        if *last != cause {
+            *last = cause.clone();
+            warn!(error = %cause, attempt, buffered, retry_in_s, "send still failing");
+        } else if attempt <= 10 || attempt.is_multiple_of(10) {
+            info!(error = %cause, attempt, buffered, retry_in_s, "send failed again");
+        } else {
+            debug!(error = %cause, attempt, retry_in_s, "send failed again");
+        }
+    }
+
+    /// Fichier des mesures en attente gardées à l'arrêt, à côté du secret de
+    /// liaison : le seul répertoire où l'agent sait pouvoir écrire.
+    fn pending_path(&self) -> std::path::PathBuf {
+        self.config.secret_path.with_file_name("pending-samples.json")
+    }
+
+    /// Reprend les mesures qu'un arrêt précédent n'avait pas pu envoyer.
+    fn restore_pending(&mut self) {
+        let path = self.pending_path();
+        let samples = PendingBuffer::load(&path);
+        if !samples.is_empty() {
+            info!(count = samples.len(), "measurements kept at the last shutdown, sending them");
+            self.buffer.push(samples);
         }
     }
 
@@ -506,12 +853,30 @@ impl Agent {
         if self.buffer.is_empty() {
             return;
         }
+        if let Ok(FlushOutcome::Sent { count }) =
+            tokio::time::timeout(SHUTDOWN_FLUSH_TIMEOUT, self.flush()).await
+        {
+            info!(count, "pending measurements sent before shutdown");
+        }
+        if self.buffer.is_empty() {
+            return;
+        }
+        // Le serveur n'a pas répondu (ou pas pour tout) : ce qui reste attend le
+        // prochain démarrage sur disque plutôt que d'être perdu.
         let pending = self.buffer.len();
-        match tokio::time::timeout(SHUTDOWN_FLUSH_TIMEOUT, self.flush()).await {
-            Ok(FlushOutcome::Sent { count }) => {
-                info!(count, "pending measurements sent before shutdown");
-            }
-            _ => warn!(pending, "measurements lost: the server did not answer before shutdown"),
+        let path = self.pending_path();
+        match self.buffer.save(&path, MAX_PERSISTED_SAMPLES) {
+            Ok(kept) => info!(
+                kept,
+                lost = pending.saturating_sub(kept),
+                path = %path.display(),
+                "the server did not answer before shutdown: measurements kept on disk"
+            ),
+            Err(error) => warn!(
+                pending,
+                %error,
+                "measurements lost: the server did not answer before shutdown"
+            ),
         }
     }
 
@@ -572,6 +937,38 @@ impl Agent {
     }
 }
 
+/// Canal chiffré au démarrage : l'état rangé, confronté à la configuration.
+///
+/// Une empreinte donnée par la commande d'installation qui ne figure pas dans
+/// l'état rangé, c'est une réinstallation vers un autre serveur (ou une autre
+/// autorité) : on repart d'elle.
+fn initial_tls(config: &Config, stored: Option<TlsState>) -> Option<TlsState> {
+    let configured_url = || {
+        config.tls_url.clone().or_else(|| {
+            dumbmonit_proto::agent_channel_url(
+                &config.server_url,
+                dumbmonit_proto::DEFAULT_AGENT_TLS_PORT,
+            )
+        })
+    };
+    match (stored, &config.ca_pin) {
+        (Some(mut state), Some(pin)) if state.pins.contains(pin) => {
+            if let Some(url) = config.tls_url.clone() {
+                state.url = url;
+            }
+            Some(state)
+        }
+        (_, Some(pin)) => Some(TlsState::new(configured_url()?, vec![pin.clone()])),
+        (Some(mut state), None) => {
+            if let Some(url) = config.tls_url.clone() {
+                state.url = url;
+            }
+            Some(state)
+        }
+        (None, None) => None,
+    }
+}
+
 #[derive(Debug)]
 enum FlushOutcome {
     /// Rien à envoyer.
@@ -613,10 +1010,13 @@ mod tests {
             wireguard: crate::collect::wireguard::WireguardConfig::default(),
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),
+            inventory: false,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,
             secret_path: std::path::PathBuf::from("/inexistant/agent-secret"),
+            tls_url: None,
+            ca_pin: None,
             log_level: tracing::Level::INFO,
             deprecated_env: Vec::new(),
         }
@@ -694,6 +1094,49 @@ mod tests {
         assert!(agent.identity.relay);
         assert_eq!(agent.identity.site.as_deref(), Some("Datacenter"), "le site local prime");
         trigger.fire();
+    }
+
+    #[tokio::test]
+    async fn the_inventory_rides_the_next_batch_and_is_forgotten_once_accepted() {
+        let dir = tempfile::tempdir().unwrap();
+        let answer = std::sync::Arc::new(std::sync::Mutex::new((503u16, "{}".to_string())));
+        let shared = answer.clone();
+        let (url, calls) =
+            crate::testsupport::fake_http(move |_| shared.lock().unwrap().clone()).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        // Activé après la collecte : la tâche de fond n'a pas à tourner ici.
+        agent.config.inventory = true;
+        let relever = || SoftwareInventory {
+            collected_at_ms: 42,
+            source: "dpkg".into(),
+            ..SoftwareInventory::default()
+        };
+        *inventory::lock(&agent.inventory) = Some(relever());
+
+        // Échec réseau côté serveur : l'inventaire part, puis reste en attente.
+        agent.buffer.push(samples.clone());
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert!(calls.bodies("POST", "/")[0].contains("\"inventory\""));
+        assert!(inventory::lock(&agent.inventory).is_some(), "conservé pour le lot suivant");
+
+        // Accepté : il est oublié.
+        *answer.lock().unwrap() = (200, ACK.to_string());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(calls.bodies("POST", "/")[1].contains("\"inventory\""));
+        assert!(inventory::lock(&agent.inventory).is_none());
+
+        // Le lot suivant n'en porte plus.
+        agent.buffer.push(samples.clone());
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(!calls.bodies("POST", "/")[2].contains("\"inventory\""));
+
+        // Décoché dans l'interface : rien n'est joint, même s'il en reste un.
+        *inventory::lock(&agent.inventory) = Some(relever());
+        agent.adopt_disabled_modules(vec!["inventory".into()]);
+        agent.buffer.push(samples);
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        assert!(!calls.bodies("POST", "/")[3].contains("\"inventory\""));
     }
 
     #[tokio::test]
@@ -809,6 +1252,99 @@ mod tests {
         config.server_url = url.to_string();
         config.secret_path = dir.path().join("agent-secret");
         Agent::new(config).expect("agent")
+    }
+
+    const PIN: &str = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+    /// Un port local fermé : rien n'y répond.
+    fn closed_port() -> u16 {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        listener.local_addr().unwrap().port()
+    }
+
+    #[tokio::test]
+    async fn with_a_pinned_server_nothing_is_ever_sent_in_clear() {
+        // L'agent installé avec l'empreinte n'a pas encore pu s'enrôler (port
+        // des agents injoignable) : ses mesures attendent, elles ne partent pas
+        // en clair vers l'ancien canal pour autant.
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let mut config = config();
+        config.server_url = url;
+        config.secret_path = dir.path().join("agent-secret");
+        config.tls_url = Some(format!("https://127.0.0.1:{}", closed_port()));
+        config.ca_pin = Some(PIN.to_string());
+        let mut agent = Agent::new(config).expect("agent");
+        assert!(agent.client.is_encrypted(), "le client ne connaît plus que le canal chiffré");
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert!(!agent.buffer.is_empty(), "les mesures sont gardées");
+        assert!(calls.all().is_empty(), "rien n'est parti en clair : {:?}", calls.lines());
+    }
+
+    #[tokio::test]
+    async fn an_agent_migrating_from_the_plain_channel_keeps_reporting_until_enrolled() {
+        // Annonce reçue sur l'ancien canal, port des agents fermé : l'agent
+        // tente l'enrôlement, échoue, et continue par l'ancien canal — il n'a
+        // encore jamais été enrôlé, rien ne l'en empêche.
+        let dir = tempfile::tempdir().unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        agent.client.set_offer(dumbmonit_proto::TlsOffer {
+            port: closed_port(),
+            pins: vec![PIN.to_string()],
+        });
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Sent { .. }));
+        let state = agent.tls.clone().expect("canal adopté");
+        assert!(state.url.starts_with("https://127.0.0.1:"), "{state:?}");
+        assert_eq!(state.pins, [PIN]);
+        assert!(!state.locked);
+        assert_eq!(calls.count("POST", "/api/ingest"), 1);
+        assert!(agent.tls_retry_at.is_some(), "nouvel essai d'enrôlement plus tard");
+    }
+
+    #[tokio::test]
+    async fn once_enrolled_an_agent_never_falls_back_to_the_plain_channel() {
+        // Un état rangé verrouillé (déjà enrôlé une fois), certificat perdu :
+        // l'agent doit se réenrôler, pas reparler en clair.
+        let dir = tempfile::tempdir().unwrap();
+        let mut state =
+            TlsState::new(format!("https://127.0.0.1:{}", closed_port()), vec![PIN.into()]);
+        state.locked = true;
+        state.save(&crate::tls::beside(&dir.path().join("agent-secret"))).unwrap();
+        let (url, calls) = crate::testsupport::fake_http(|_| (200, ACK.to_string())).await;
+        let mut agent = agent_for(&url, &dir);
+        let samples = agent.collect().await;
+        agent.buffer.push(samples);
+
+        assert!(matches!(agent.flush().await, FlushOutcome::Failed(_)));
+        assert!(calls.all().is_empty(), "{:?}", calls.lines());
+    }
+
+    #[test]
+    fn a_new_pin_in_the_install_command_replaces_the_stored_channel() {
+        let mut stored = TlsState::new("https://ancien:8443".into(), vec!["f".repeat(64)]);
+        stored.certificate = Some("Y2VydA==".into());
+        stored.locked = true;
+        let mut config = config();
+        config.server_url = "http://serveur:8080".into();
+        config.ca_pin = Some(PIN.to_string());
+        let state = initial_tls(&config, Some(stored.clone())).expect("canal");
+        assert_eq!(state.pins, [PIN]);
+        assert_eq!(state.certificate, None, "autre serveur : on repart de zéro");
+        assert_eq!(state.url, "https://serveur:8443");
+
+        // La même empreinte : l'état rangé est gardé tel quel.
+        config.ca_pin = Some("f".repeat(64));
+        assert_eq!(initial_tls(&config, Some(stored.clone())), Some(stored));
+        // Ni configuration ni état : pas de canal chiffré (serveur antérieur).
+        config.ca_pin = None;
+        assert_eq!(initial_tls(&config, None), None);
     }
 
     #[tokio::test]
@@ -1053,5 +1589,166 @@ mod tests {
         };
         let (result, ()) = tokio::join!(agent.run(shutdown), stopper);
         result.expect("sortie propre");
+    }
+
+    // ------------------------------------------- coupures et agent relais
+
+    #[test]
+    fn the_retry_delay_never_exceeds_a_third_of_the_server_silence_limit() {
+        // Le serveur déclare une machine muette après 90 s au moins : un agent qui
+        // attend plus longtemps entre deux tentatives fabrique des coupures.
+        let mut backoff = Backoff::new(BACKOFF_BASE, BACKOFF_MAX);
+        for _ in 0..50 {
+            assert!(backoff.next_delay() <= Duration::from_secs(30));
+        }
+    }
+
+    /// Accusé qui règle la période à 5 s, le plancher : les tests restent courts.
+    const FAST_ACK: &str = r#"{"target_id":3,"accepted":1,"interval_secs":5,"bound":true}"#;
+
+    /// Agent relais pointé sur le faux serveur, sans module ni commande.
+    fn relay_agent_for(url: &str, dir: &tempfile::TempDir) -> Agent {
+        let mut config = config();
+        config.server_url = url.to_string();
+        config.secret_path = dir.path().join("agent-secret");
+        config.interval = Duration::from_secs(5);
+        config.relay = true;
+        config.modules = Some(Default::default());
+        Agent::new(config).expect("agent")
+    }
+
+    /// Écoute qui accepte les connexions et ne répond jamais : l'équipement lent
+    /// ou muet d'un site distant. Rend l'adresse et le nombre de connexions tenues.
+    async fn tarpit() -> (std::net::SocketAddr, std::sync::Arc<std::sync::atomic::AtomicUsize>) {
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("écoute");
+        let address = listener.local_addr().expect("adresse");
+        let held = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let count = held.clone();
+        tokio::spawn(async move {
+            let mut sockets = Vec::new();
+            while let Ok((socket, _)) = listener.accept().await {
+                count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                sockets.push(socket);
+            }
+        });
+        (address, held)
+    }
+
+    #[tokio::test]
+    async fn a_slow_relayed_probe_never_delays_the_reports_of_the_relay_itself() {
+        use std::sync::atomic::{AtomicUsize, Ordering};
+        let (device, held) = tarpit().await;
+        let target = dumbmonit_proto::Target {
+            id: 41,
+            name: "pve002".into(),
+            address: format!("http://{device}/"),
+            kind: "http".into(),
+            profile_id: None,
+            parent_id: None,
+            interval: Duration::from_secs(60),
+            enabled: true,
+            // Budget de la sonde HTTP au maximum (5 s par défaut) : elle reste
+            // pendue bien au-delà de la période des rapports.
+            tags: [
+                ("allow_private_targets".to_string(), "true".to_string()),
+                ("timeout_seconds".to_string(), "60".to_string()),
+            ]
+            .into(),
+            credential: dumbmonit_proto::Credential::None,
+            group_name: String::new(),
+            position: 0,
+        };
+        let job = dumbmonit_proto::ProbeJob { target, timeout_secs: 60, discover: false };
+        let jobs = serde_json::to_string(&[job.into_command(1, 0)]).unwrap();
+        let polls = std::sync::Arc::new(AtomicUsize::new(0));
+        let seen = polls.clone();
+        let (url, calls) = crate::testsupport::fake_http(move |req| match req.method.as_str() {
+            "POST" if req.path == "/api/ingest" => (200, FAST_ACK.to_string()),
+            // La sonde lente part au premier tour ; ensuite le canal est en panne,
+            // pour que le relais temporise au lieu de tourner à vide.
+            "GET" if seen.fetch_add(1, Ordering::SeqCst) == 0 => (200, jobs.clone()),
+            _ => (503, "busy".to_string()),
+        })
+        .await;
+        let dir = tempfile::tempdir().unwrap();
+        let agent = relay_agent_for(&url, &dir);
+        let (_trigger, shutdown) = crate::shutdown::channel();
+
+        let check = async {
+            let started = std::time::Instant::now();
+            // La sonde est entre les mains de l'équipement muet…
+            while held.load(Ordering::SeqCst) == 0 {
+                assert!(started.elapsed() < Duration::from_secs(20), "sonde jamais lancée");
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            // …et le rapport suivant de la machine part à son heure (période de
+            // 5 s), sans attendre la fin de la sonde (60 s).
+            let before = calls.count("POST", "/api/ingest");
+            let stuck = std::time::Instant::now();
+            while calls.count("POST", "/api/ingest") <= before {
+                assert!(
+                    stuck.elapsed() < Duration::from_secs(9),
+                    "rapport bloqué derrière la sonde relayée"
+                );
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            let reported = calls.count("POST", "/api/agent/relay/1");
+            assert_eq!(reported, 0, "la sonde devait être encore en vol");
+        };
+        tokio::select! {
+            _ = agent.run(shutdown) => panic!("la boucle s'est arrêtée seule"),
+            () = check => {}
+        }
+    }
+
+    #[tokio::test]
+    async fn the_relay_channel_coming_back_ends_the_retry_delay_at_once() {
+        use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+        let ingests = std::sync::Arc::new(AtomicUsize::new(0));
+        let failed = std::sync::Arc::new(AtomicBool::new(false));
+        let answered = std::sync::Arc::new(AtomicBool::new(false));
+        let (i, f, a) = (ingests.clone(), failed.clone(), answered.clone());
+        let (url, calls) = crate::testsupport::fake_http(move |req| match req.method.as_str() {
+            // Premier lot accepté (il lance le relais), le second refusé : la
+            // coupure. Puis tout repasse.
+            "POST" if req.path == "/api/ingest" => match i.fetch_add(1, Ordering::SeqCst) {
+                1 => {
+                    f.store(true, Ordering::SeqCst);
+                    (503, "restarting".to_string())
+                }
+                _ => (200, FAST_ACK.to_string()),
+            },
+            // Le canal du relais répond une fois, après la coupure des mesures.
+            "GET" if f.load(Ordering::SeqCst) && !a.swap(true, Ordering::SeqCst) => {
+                (200, "[]".to_string())
+            }
+            _ => (503, "restarting".to_string()),
+        })
+        .await;
+        let dir = tempfile::tempdir().unwrap();
+        let mut agent = relay_agent_for(&url, &dir);
+        // Sans le réveil, la reprise attendrait une minute entière.
+        agent.backoff = Backoff::new(Duration::from_secs(60), Duration::from_secs(60));
+        let (_trigger, shutdown) = crate::shutdown::channel();
+
+        let check = async {
+            let started = std::time::Instant::now();
+            while !answered.load(Ordering::SeqCst) {
+                assert!(started.elapsed() < Duration::from_secs(40), "relais jamais revenu");
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+            let back = std::time::Instant::now();
+            while calls.count("POST", "/api/ingest") < 3 {
+                assert!(
+                    back.elapsed() < Duration::from_secs(10),
+                    "les mesures attendent la fin de la temporisation"
+                );
+                tokio::time::sleep(Duration::from_millis(50)).await;
+            }
+        };
+        tokio::select! {
+            _ = agent.run(shutdown) => panic!("la boucle s'est arrêtée seule"),
+            () = check => {}
+        }
     }
 }

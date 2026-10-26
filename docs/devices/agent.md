@@ -115,9 +115,11 @@ threshold option is set) — see [WireGuard tunnels](#wireguard-tunnels),
 [IPsec tunnels](#ipsec-tunnels), [restic and Borg backups](#restic-and-borg-backups)
 and [Internet speed test](#internet-speed-test).
 
-On a Windows server that runs MDaemon, three more watch its queues:
-**MDaemon mail queue growing**, **MDaemon Bad queue not empty** and **MDaemon
-Retry queue high** (see [Rules](../alerting/rules.md#mdaemon-and-securitygateway)).
+On a Windows server that runs MDaemon or SecurityGateway, **Mail server
+Windows service stopped** watches their services, and for MDaemon five more
+watch its queues: **MDaemon mail queue growing**, **Mail queue stuck**,
+**MDaemon queue frozen**, **MDaemon Bad queue not empty** and **MDaemon Retry
+queue high** (see [Rules](../alerting/rules.md#mdaemon-and-securitygateway)).
 On a Hyper-V host, three watch the virtual machines: **Hyper-V VM health
 critical**, **Hyper-V host CPU high** and **Hyper-V virtual disk errors** (see
 [Hyper-V hosts](#hyper-v-hosts)).
@@ -182,7 +184,7 @@ which is the choice you make when you create a token.
     the machine's architecture (x86_64 or aarch64) from the server, writes
     `/etc/dumbmonit/agent.yaml` (mode 0600) and registers `dumbmonit-agent` with
     systemd, or with OpenRC on Alpine. The systemd unit is hardened
-    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=128M`,
+    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=256M`,
     `CPUQuota=20%`).
 
 === "macOS (launchd)"
@@ -265,6 +267,10 @@ which is the choice you make when you create a token.
 
     There is no native ARM64 build: on Windows 11 for ARM, the script installs
     the x86_64 binary, which runs under x64 emulation.
+
+    For a whole Windows domain, deploy the agent with one group policy instead of
+    running the command on each server: see
+    [Deploy the agent with Active Directory](agent-active-directory.md).
 
 One token can enrol several machines: name it after a group or a machine.
 
@@ -520,6 +526,7 @@ ipsec: true                # IPsec tunnels through swanctl (default: true), see 
 speedtest: false           # Internet speed test (default: false, opt-in), see below
 speedtest_download_url: https://speed.example.lan/backend/garbage.php?ckSize=50
 speedtest_upload_url: https://speed.example.lan/backend/empty.php
+inventory: true            # daily list of installed packages, for the CVE scan (default: true)
 restic_repos: []           # restic repositories to watch, see "restic and Borg backups"
 borg_repos: []             # Borg repositories to watch
 mdaemon: auto              # Windows: MDaemon queues when its service exists (true / false / auto)
@@ -638,6 +645,17 @@ the rules and the page that shows them are described on the
 reads them even without the service (a renamed service), `mdaemon: false`
 never does. The presence of the service is checked again every ten periods,
 so an MDaemon installed after the agent is picked up without a restart.
+
+**Mail servers (MDaemon and SecurityGateway).** On the same detection, the
+agent also reads, with no setting, what only the server itself can tell: the
+state and start mode of the product's Windows services, the version of its
+executable, the number of messages and the age of the oldest one in its queue
+folders, and the free space of the volume that holds its data. It asks
+Windows through one PowerShell call per period (every tenth period while no
+product is found). The series are `agent_mail_*` and are described on the
+[MDaemon](mdaemon.md#mail-queues-through-the-agent) and
+[SecurityGateway](securitygateway.md#read-by-the-agent) pages, which also say
+how a monitor is linked to its agent. `mdaemon: false` switches this off too.
 
 **Hyper-V.** When the Hyper-V Virtual Machine Management service (`vmms`)
 exists, the agent reads Hyper-V's performance objects; see
@@ -890,7 +908,10 @@ When the server is unreachable, the agent keeps measuring and buffers its
 readings in memory with their original timestamps. They are sent as soon as
 the link is back: a server restart leaves no hole in the graphs. The buffer is
 bounded (`max_buffered_samples`, about an hour by default) and drops the oldest
-readings when full. Retries back off from 5 seconds to 5 minutes with jitter.
+readings when full. Retries back off from 2 to 30 seconds with jitter, and resume at once when
+the relay channel reaches the server again. Measurements still waiting at
+shutdown are kept on disk (`pending-samples.json`, next to the binding secret)
+and sent at the next start.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing

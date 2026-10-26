@@ -1060,6 +1060,81 @@ async fn restore_status_pages(
             .await
             .context("mode simple de la page de statut")?;
 
+        // Référencement : revalidé comme à la saisie ; absent (ancienne
+        // sauvegarde), la page garde ses réglages.
+        if let Some(seo) = &page.seo {
+            match seo.clone().validate() {
+                Ok(seo) => {
+                    let current: String =
+                        sqlx::query_scalar("SELECT seo FROM status_pages WHERE id = ?")
+                            .bind(id)
+                            .fetch_one(&mut **tx)
+                            .await
+                            .context("lecture du référencement de la page de statut")?;
+                    if crate::status_seo::Seo::parse(&current) != seo {
+                        sqlx::query("UPDATE status_pages SET seo = ? WHERE id = ?")
+                            .bind(seo.to_json())
+                            .bind(id)
+                            .execute(&mut **tx)
+                            .await
+                            .context("référencement de la page de statut")?;
+                        if outcome == RestoreOutcome::Skipped {
+                            outcome = RestoreOutcome::Updated;
+                        }
+                    }
+                }
+                Err(why) => report.notes.push(format!(
+                    "Status page \"{}\": the SEO settings were left out ({why})",
+                    page.slug
+                )),
+            }
+        }
+
+        // Dossiers cochés : ajoutés ou remis à leur rang, jamais retirés.
+        for (position, name) in page.groups.iter().enumerate() {
+            let name = name.trim();
+            if name.is_empty() {
+                continue;
+            }
+            let changed = sqlx::query(
+                "INSERT INTO status_page_groups (page_id, group_name, position) VALUES (?, ?, ?)
+                 ON CONFLICT(page_id, group_name) DO UPDATE SET position = excluded.position
+                 WHERE position IS NOT excluded.position",
+            )
+            .bind(id)
+            .bind(name)
+            .bind(position as i64)
+            .execute(&mut **tx)
+            .await
+            .context("enregistrement d'un groupe de page de statut")?;
+            if changed.rows_affected() > 0 && outcome == RestoreOutcome::Skipped {
+                outcome = RestoreOutcome::Updated;
+            }
+        }
+        for entry in &page.group_labels {
+            let Some(target_id) = refs.get(&entry.target).copied() else {
+                report.notes.push(format!(
+                    "Status page \"{}\": the monitor {} named in a group is not in this backup.",
+                    page.slug, entry.target
+                ));
+                continue;
+            };
+            let changed = sqlx::query(
+                "INSERT INTO status_page_group_labels (page_id, target_id, label) VALUES (?, ?, ?)
+                 ON CONFLICT(page_id, target_id) DO UPDATE SET label = excluded.label
+                 WHERE label IS NOT excluded.label",
+            )
+            .bind(id)
+            .bind(target_id)
+            .bind(&entry.label)
+            .execute(&mut **tx)
+            .await
+            .context("enregistrement d'un nom public de groupe")?;
+            if changed.rows_affected() > 0 && outcome == RestoreOutcome::Skipped {
+                outcome = RestoreOutcome::Updated;
+            }
+        }
+
         for item in &page.items {
             let Some(target_id) = refs.get(&item.target).copied() else {
                 report.notes.push(format!(

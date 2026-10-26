@@ -131,12 +131,14 @@ async fn commands_are_fetched_and_reported_with_the_machine_key() {
     let commands = client.fetch_commands("nas salon").await.expect("commandes");
     assert_eq!(commands.len(), 1);
     assert_eq!(commands[0].arg_str("name"), Some("web"));
-    assert_eq!(calls.all()[0].path, "/api/agent/commands?key=nas%20salon");
+    assert_eq!(calls.all()[0].path, "/api/agent/commands");
+    assert_eq!(calls.all()[0].header("x-dumbmonit-agent-key"), Some("nas salon"));
 
     let report = CommandReport { status: CommandStatus::Done, result: "ok".into() };
     client.report_command("nas salon", 5, &report).await.expect("compte rendu");
     let sent = &calls.all()[1];
-    assert_eq!(sent.path, "/api/agent/commands/5?key=nas%20salon");
+    assert_eq!(sent.path, "/api/agent/commands/5");
+    assert_eq!(sent.header("x-dumbmonit-agent-key"), Some("nas salon"));
     assert!(sent.body.contains("\"done\""), "{}", sent.body);
 }
 
@@ -150,10 +152,63 @@ async fn relay_probes_are_polled_with_a_wait_and_reported() {
     let client = client(&url, None);
     let jobs = client.fetch_probes("site-a", Duration::from_secs(25), Duration::from_secs(5)).await;
     assert!(jobs.expect("sondes").is_empty());
-    assert_eq!(calls.all()[0].path, "/api/agent/relay?key=site-a&wait=25");
+    assert_eq!(calls.all()[0].path, "/api/agent/relay?wait=25");
+    assert_eq!(calls.all()[0].header("x-dumbmonit-agent-key"), Some("site-a"));
 
     let error = client.report_probe("site-a", 3, &outcome()).await.unwrap_err();
     assert!(matches!(&error, PushError::Forbidden(m) if m == "not your device"), "{error}");
-    assert_eq!(calls.all()[1].path, "/api/agent/relay/3?key=site-a");
+    assert_eq!(calls.all()[1].path, "/api/agent/relay/3");
     assert!(calls.all()[1].body.contains("timeout"));
+}
+
+#[tokio::test]
+async fn an_older_server_gets_the_key_back_in_the_url_and_it_sticks() {
+    // Serveur antérieur à l'en-tête : il réclame `?key=` en 400.
+    let (url, calls) = fake_http(|req| {
+        if req.path.contains("key=") {
+            (200, "[]".to_string())
+        } else {
+            (400, r#"{"error":"the 'key' query parameter is required"}"#.to_string())
+        }
+    })
+    .await;
+    let client = client(&url, None);
+    let wait = Duration::from_secs(5);
+    assert!(client.fetch_probes("site-a", Duration::ZERO, wait).await.expect("sondes").is_empty());
+    assert_eq!(
+        calls.lines(),
+        ["GET /api/agent/relay?wait=0", "GET /api/agent/relay?key=site-a&wait=0"]
+    );
+    // Les requêtes suivantes partent directement à l'ancienne.
+    client.fetch_commands("site-a").await.expect("commandes");
+    assert_eq!(calls.lines()[2], "GET /api/agent/commands?key=site-a");
+}
+
+#[tokio::test]
+async fn a_transport_error_names_its_root_cause_first_and_hides_the_query() {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let dead = format!("http://{}", listener.local_addr().unwrap());
+    drop(listener);
+    let client = client(&dead, None);
+    // Même un serveur ancien (clé dans l'URL) ne la fait pas fuiter.
+    client.legacy_key.store(true, Ordering::Relaxed);
+    let wait = Duration::from_secs(1);
+    let error = client.fetch_probes("cle-secrete-0123", wait, wait).await.unwrap_err().to_string();
+    assert!(!error.contains("cle-secrete-0123"), "la clé a fuité : {error}");
+    assert!(!error.contains("wait="), "paramètres recopiés : {error}");
+    assert!(error.starts_with("server unreachable: cannot connect: "), "{error}");
+    // La cause système vient avant l'URL, qui ferme le message.
+    let cause = error.find("refused").or_else(|| error.find("os error"));
+    let cause = cause.unwrap_or_else(|| panic!("cause absente : {error}"));
+    assert!(cause < error.find("http://").expect("url"), "{error}");
+}
+
+#[tokio::test]
+async fn any_favourable_answer_wakes_whoever_waits_for_the_server() {
+    let (url, _) = fake_http(|_| (200, "[]".to_string())).await;
+    let client = client(&url, None);
+    let signal = client.reachable();
+    let waiting = signal.notified();
+    client.fetch_commands("k").await.expect("commandes");
+    tokio::time::timeout(Duration::from_secs(1), waiting).await.expect("réveil attendu");
 }

@@ -7,20 +7,22 @@
 	 * message.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
-	import { Megaphone, Send } from 'lucide-svelte';
+	import { Megaphone, Pencil, Plus, Send, X } from 'lucide-svelte';
 	import {
 		addIncidentUpdate,
 		createIncident,
 		deleteIncident,
+		updateIncident,
 		type Incident,
 		type IncidentKind,
 		type IncidentSeverity,
 		type IncidentStatus,
 		type StatusPage
 	} from '#lib/api/index.js';
-	import { formatDateTime, formatRelative } from '#lib/format.js';
+	import { formatDateTime, formatRelative, parseServerDate } from '#lib/format.js';
 	import { Button, Confirm, EmptyState, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import { INCIDENT_STATUS, KIND_LABEL, STATUSES_FOR, isClosed } from './words';
+	import { dateToLocal, localToIso, updatesPayload, validateDates, validateHistory, type DraftUpdate, type HistoryError } from './incident-history';
 
 	interface Props {
 		incidents: Incident[];
@@ -49,6 +51,11 @@
 	let startsAt = $state('');
 	let endsAt = $state('');
 	let body = $state('');
+	// Past incident: dated messages, typed in the browser's local time.
+	let history = $state<DraftUpdate[]>([]);
+	let historyError = $state<HistoryError | null>(null);
+	// Datetime inputs cannot reach into the future for an incident.
+	const nowLocal = $derived(dateToLocal(new Date()));
 	let titleError = $state<string | null>(null);
 	let windowError = $state<string | null>(null);
 	let saving = $state(false);
@@ -61,6 +68,26 @@
 		return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 	}
 
+	function addHistoryRow() {
+		const last = history[history.length - 1];
+		history = [...history, { status: last?.status ?? 'investigating', at: last?.at ?? startsAt, body: '' }];
+		historyError = null;
+	}
+
+	function historyMessage(error: HistoryError): string {
+		return {
+			future_start: m.status_incidents_err_future_start(),
+			future_end: m.status_incidents_err_future_end(),
+			end_before_start: m.status_incidents_err_end_before_start(),
+			update_empty: m.status_incidents_err_update_empty(),
+			update_outside: m.status_incidents_err_update_outside(),
+			update_future: m.status_incidents_err_update_future(),
+			after_resolution: m.status_incidents_err_after_resolution(),
+			start_required: m.status_incidents_err_start_required(),
+			end_required: m.status_incidents_err_end_required()
+		}[error];
+	}
+
 	function resetForm() {
 		title = '';
 		kind = 'incident';
@@ -69,6 +96,8 @@
 		startsAt = '';
 		endsAt = '';
 		body = '';
+		history = [];
+		historyError = null;
 		titleError = null;
 		windowError = null;
 		createError = null;
@@ -83,7 +112,8 @@
 			if (!startsAt || !endsAt) windowError = m.status_incidents_window_required();
 			else if (new Date(endsAt) <= new Date(startsAt)) windowError = m.status_incidents_window_order();
 		}
-		if (titleError || windowError) return;
+		historyError = kind === 'incident' ? validateHistory(startsAt, endsAt, history) : null;
+		if (titleError || windowError || historyError) return;
 		saving = true;
 		try {
 			const created = await createIncident({
@@ -91,9 +121,10 @@
 				kind,
 				severity: kind === 'incident' ? severity : undefined,
 				page_id: pageId ? Number(pageId) : null,
-				starts_at: kind === 'maintenance' ? toIso(startsAt) : undefined,
-				ends_at: kind === 'maintenance' ? toIso(endsAt) : undefined,
-				body: body.trim() || undefined
+				starts_at: toIso(startsAt),
+				ends_at: toIso(endsAt),
+				body: body.trim() || undefined,
+				updates: kind === 'incident' && history.length > 0 ? updatesPayload(history) : undefined
 			});
 			onchange([created, ...incidents]);
 			resetForm();
@@ -110,13 +141,16 @@
 	let updating = $state<number | null>(null);
 	let updateStatus = $state<IncidentStatus>('investigating');
 	let updateBody = $state('');
+	let updateAt = $state('');
 	let updateError = $state<unknown>(null);
 	let posting = $state(false);
 
 	function startUpdate(incident: Incident) {
 		updating = incident.id;
+		editing = null;
 		updateStatus = incident.status;
 		updateBody = '';
+		updateAt = '';
 		updateError = null;
 	}
 
@@ -133,13 +167,65 @@
 		posting = true;
 		updateError = null;
 		try {
-			replace(await addIncidentUpdate(incident.id, { status: updateStatus, body: updateBody.trim() }));
+			replace(await addIncidentUpdate(incident.id, { status: updateStatus, body: updateBody.trim(), at: localToIso(updateAt) }));
 			updating = null;
 			updateBody = '';
+			updateAt = '';
 		} catch (cause) {
 			updateError = cause;
 		} finally {
 			posting = false;
+		}
+	}
+
+	// --- Dates of an existing announcement ---------------------------------------
+
+	let editing = $state<number | null>(null);
+	let editStart = $state('');
+	let editEnd = $state('');
+	let editOriginal = { startsAt: '', endsAt: '' };
+	let editError = $state<HistoryError | null>(null);
+	let editFailure = $state<unknown>(null);
+	let savingDates = $state(false);
+
+	const localOf = (value: string | null) => {
+		const date = parseServerDate(value);
+		return date ? dateToLocal(date) : '';
+	};
+
+	function startEdit(incident: Incident) {
+		editing = incident.id;
+		editStart = localOf(incident.starts_at);
+		editEnd = localOf(incident.ends_at);
+		editOriginal = { startsAt: editStart, endsAt: editEnd };
+		editError = null;
+		editFailure = null;
+		updating = null;
+	}
+
+	async function saveDates(event: SubmitEvent, incident: Incident) {
+		event.preventDefault();
+		editFailure = null;
+		const messages = incident.updates.flatMap((u) => parseServerDate(u.created_at) ?? []);
+		// The end only exists for a maintenance or a closed incident.
+		const hasEnd = incident.kind === 'maintenance' || isClosed(incident.status);
+		editError = validateDates(incident.kind, editStart, hasEnd ? editEnd : '', editOriginal, messages);
+		if (!editError && hasEnd && !editEnd) editError = 'end_required';
+		if (editError) return;
+		savingDates = true;
+		try {
+			replace(
+				await updateIncident(incident.id, {
+					title: incident.title,
+					starts_at: localToIso(editStart),
+					ends_at: hasEnd ? localToIso(editEnd) : undefined
+				})
+			);
+			editing = null;
+		} catch (cause) {
+			editFailure = cause;
+		} finally {
+			savingDates = false;
 		}
 	}
 
@@ -198,6 +284,10 @@
 				</p>
 			</div>
 			<div class="flex flex-wrap items-center gap-1.5">
+				<Button variant="ghost" size="sm" onclick={() => (editing === incident.id ? (editing = null) : startEdit(incident))}>
+					<Pencil class="size-4" aria-hidden="true" />
+					{editing === incident.id ? m.status_incidents_cancel() : m.status_incidents_edit_dates()}
+				</Button>
 				{#if !closed}
 					<Button variant="secondary" size="sm" onclick={() => (updating === incident.id ? (updating = null) : startUpdate(incident))}>
 						{updating === incident.id ? m.status_incidents_cancel() : m.status_incidents_post_update()}
@@ -212,6 +302,29 @@
 		</div>
 		{#if closeError?.id === incident.id}
 			<ErrorNotice error={closeError.cause} title={m.status_incidents_update_error()} class="mt-3" />
+		{/if}
+		{#if editing === incident.id}
+			{@const hasEnd = incident.kind === 'maintenance' || closed}
+			<form class="mt-3 grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] sm:items-start" onsubmit={(event) => saveDates(event, incident)} novalidate>
+				<Field label={incident.kind === 'maintenance' ? m.status_incidents_starts() : m.status_incidents_started()} for="inc-{incident.id}-start" required>
+					<input id="inc-{incident.id}-start" type="datetime-local" class="input tnum" bind:value={editStart} oninput={() => (editError = null)} max={incident.kind === 'incident' ? nowLocal : undefined} disabled={savingDates} />
+				</Field>
+				{#if hasEnd}
+					<Field label={incident.kind === 'maintenance' ? m.status_incidents_ends() : m.status_incidents_resolved_on()} for="inc-{incident.id}-end" required>
+						<input id="inc-{incident.id}-end" type="datetime-local" class="input tnum" bind:value={editEnd} oninput={() => (editError = null)} min={editStart || undefined} max={incident.kind === 'incident' ? nowLocal : undefined} disabled={savingDates} />
+					</Field>
+				{:else}
+					<span></span>
+				{/if}
+				<Button type="submit" variant="secondary" class="sm:mt-[1.625rem]" loading={savingDates}>{m.status_incidents_save_dates()}</Button>
+				<p class="text-[0.8125rem] text-ink-2 sm:col-span-3">{m.status_incidents_edit_dates_help()}</p>
+				{#if editError}
+					<p class="text-[0.8125rem] text-warning sm:col-span-3" role="alert">{historyMessage(editError)}</p>
+				{/if}
+				{#if editFailure}
+					<div class="sm:col-span-3"><ErrorNotice error={editFailure} title={m.status_incidents_update_error()} /></div>
+				{/if}
+			</form>
 		{/if}
 		{#if updating === incident.id}
 			<form class="mt-3 grid gap-3 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[10rem_minmax(0,1fr)_auto] sm:items-start" onsubmit={(event) => postUpdate(event, incident)} novalidate>
@@ -229,6 +342,11 @@
 					<Send class="size-4" aria-hidden="true" />
 					{m.status_incidents_post()}
 				</Button>
+				<div class="sm:col-span-3 sm:max-w-xs">
+					<Field label={m.status_incidents_update_when()} for="inc-{incident.id}-at" help={m.status_incidents_update_when_help()}>
+						<input id="inc-{incident.id}-at" type="datetime-local" class="input tnum" bind:value={updateAt} min={dateToLocal(new Date(incident.starts_at.endsWith('Z') ? incident.starts_at : `${incident.starts_at}Z`))} max={nowLocal} disabled={posting} />
+					</Field>
+				</div>
 				{#if updateError}
 					<div class="sm:col-span-3"><ErrorNotice error={updateError} title={m.status_incidents_post_error()} /></div>
 				{/if}
@@ -273,6 +391,12 @@
 							<option value="major">{m.status_incidents_impact_major()}</option>
 						</select>
 					</Field>
+					<Field label={m.status_incidents_started()} for="inc-new-started" help={m.status_incidents_started_help()}>
+						<input id="inc-new-started" type="datetime-local" class="input tnum" bind:value={startsAt} oninput={() => (historyError = null)} max={nowLocal} disabled={saving} />
+					</Field>
+					<Field label={m.status_incidents_resolved_at()} for="inc-new-resolved" help={m.status_incidents_resolved_help()}>
+						<input id="inc-new-resolved" type="datetime-local" class="input tnum" bind:value={endsAt} oninput={() => (historyError = null)} max={nowLocal} min={startsAt || undefined} disabled={saving} />
+					</Field>
 				{:else}
 					<Field label={m.status_incidents_starts()} for="inc-new-starts" error={windowError} required>
 						<input id="inc-new-starts" type="datetime-local" class="input tnum" bind:value={startsAt} oninput={() => (windowError = null)} disabled={saving} />
@@ -293,6 +417,43 @@
 			<Field label={m.status_incidents_first_message()} for="inc-new-body" help={m.status_incidents_first_message_help()}>
 				<textarea id="inc-new-body" class="input min-h-10" rows="2" bind:value={body} placeholder={kind === 'incident' ? m.status_incidents_body_placeholder_incident() : m.status_incidents_body_placeholder_maintenance()} maxlength="4000" disabled={saving}></textarea>
 			</Field>
+			{#if kind === 'incident'}
+				<div class="grid gap-3">
+					<div class="flex flex-wrap items-center justify-between gap-2">
+						<div>
+							<p class="text-sm font-semibold text-ink">{m.status_incidents_history_title()}</p>
+							<p class="text-[0.8125rem] text-ink-2">{m.status_incidents_history_help()}</p>
+						</div>
+						<Button type="button" variant="ghost" size="sm" onclick={addHistoryRow} disabled={saving}>
+							<Plus class="size-4" aria-hidden="true" />
+							{m.status_incidents_history_add()}
+						</Button>
+					</div>
+					{#each history as row, index (index)}
+						<div class="grid gap-2 rounded-lg border border-line bg-surface p-3 sm:grid-cols-[9rem_11rem_minmax(0,1fr)_auto] sm:items-start">
+							<Field label={m.status_incidents_status()} for="inc-new-h{index}-status">
+								<select id="inc-new-h{index}-status" class="input" bind:value={row.status} disabled={saving}>
+									{#each STATUSES_FOR.incident as choice (choice)}
+										<option value={choice}>{INCIDENT_STATUS[choice].label}</option>
+									{/each}
+								</select>
+							</Field>
+							<Field label={m.status_incidents_update_date()} for="inc-new-h{index}-at">
+								<input id="inc-new-h{index}-at" type="datetime-local" class="input tnum" bind:value={row.at} oninput={() => (historyError = null)} max={nowLocal} disabled={saving} />
+							</Field>
+							<Field label={m.status_incidents_message()} for="inc-new-h{index}-body">
+								<textarea id="inc-new-h{index}-body" class="input min-h-10" rows="2" bind:value={row.body} oninput={() => (historyError = null)} maxlength="4000" disabled={saving}></textarea>
+							</Field>
+							<button type="button" class="inline-flex size-10 items-center justify-center rounded-md text-ink-2 hover:bg-surface-2 hover:text-ink sm:mt-[1.625rem]" aria-label={m.status_incidents_history_remove_aria({ number: index + 1 })} onclick={() => (history = history.filter((_, i) => i !== index))} disabled={saving}>
+								<X class="size-4" aria-hidden="true" />
+							</button>
+						</div>
+					{/each}
+					{#if historyError}
+						<p class="text-[0.8125rem] text-warning" role="alert">{historyMessage(historyError)}</p>
+					{/if}
+				</div>
+			{/if}
 			{#if createError}
 				<ErrorNotice error={createError} title={m.status_incidents_create_error()} />
 			{/if}

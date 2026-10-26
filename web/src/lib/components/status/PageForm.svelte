@@ -22,6 +22,7 @@
 		uploadStatusPageLogo,
 		type Channel,
 		type StatusPage,
+		type StatusPageSeo,
 		type StatusPageAccent,
 		type StatusPageSceneRotation,
 		type StatusPageTheme,
@@ -32,6 +33,10 @@
 	import { slugify } from './share';
 	import { formFingerprint, moveId, savedItems, type ServicePick } from './form-state';
 	import DomainField from './DomainField.svelte';
+	import GroupPicker from './GroupPicker.svelte';
+	import SeoSection from './SeoSection.svelte';
+	import { pageUrl } from './seo';
+	import { PERIOD_CHOICES } from './period';
 	import SceneDefs from './scenes/SceneDefs.svelte';
 	import { SCENE_CHOICES, SCENE_COMPONENTS, SCENE_ROTATIONS } from './scenes/registry';
 
@@ -52,7 +57,7 @@
 	const initial = untrack(() => page);
 
 	const SLUG_RULE = /^[a-z0-9-]{2,40}$/;
-	const HISTORY_CHOICES = [30, 60, 90];
+	const HISTORY_CHOICES = PERIOD_CHOICES;
 	const DEFAULT_SCENE = 'paris';
 
 	let title = $state(initial?.title ?? '');
@@ -73,6 +78,23 @@
 	let homepageUrl = $state(initial?.homepage_url ?? '');
 	let subscribeChannel = $state<number | null>(initial?.subscribe_channel_id ?? null);
 	let domain = $state(initial?.domain ?? '');
+	// Search-engine settings (shown for a published page) and the monitor folders ticked as a whole.
+	let seo = $state<StatusPageSeo>({
+		index: false,
+		title: '',
+		description: '',
+		keywords: '',
+		canonical: '',
+		image: '',
+		lang: '',
+		site_name: '',
+		...initial?.seo
+	});
+	let groups = $state<string[]>([...(initial?.groups ?? [])]);
+	// Public names of the monitors that come in through a ticked group (by monitor id).
+	let groupLabels = $state<Record<number, string>>(
+		Object.fromEntries((initial?.group_labels ?? []).map((entry) => [entry.target_id, entry.label]))
+	);
 	let domainError = $state<string | null>(null);
 	const smtpChannels = $derived(channels.filter((channel) => channel.kind === 'smtp'));
 
@@ -161,10 +183,24 @@
 		picks = next;
 	}
 
+	function toggleGroup(name: string, on: boolean) {
+		groups = on ? [...groups.filter((g) => g !== name), name] : groups.filter((g) => g !== name);
+	}
+
 	function move(id: number, delta: -1 | 1) {
 		order = moveId(order, id, delta);
 	}
 
+	const pickedIds = $derived(new Set(order));
+	// Monitors that a ticked folder brings in and that are not ticked one by one.
+	const viaGroups = $derived(targets.filter((t) => t.group_name && groups.includes(t.group_name) && !pickedIds.has(t.id)));
+	// Public names of what the page lists, for the AI prompt.
+	const serviceNames = $derived([
+		...order.map((id) => picks.get(id)?.label.trim() || targetById.get(id)?.name || '').filter(Boolean),
+		...viaGroups.map((t) => groupLabels[t.id]?.trim() || t.name)
+	]);
+	const seoUrl = $derived(pageUrl(typeof window === 'undefined' ? '' : window.location.origin, slug, domain));
+	const seoLogo = $derived(initial?.logo_type && typeof window !== 'undefined' ? `${window.location.origin}/api/public/status/${slug}/logo` : '');
 	const groupsSeen = $derived([...new Set([...picks.values()].map((p) => p.group).filter(Boolean))]);
 	const targetById = $derived(new Map(targets.map((t) => [t.id, t])));
 	const sortedTargets = $derived([...targets].sort((a, b) => a.name.localeCompare(b.name)));
@@ -194,6 +230,9 @@
 			homepageUrl,
 			subscribeChannel,
 			domain,
+			seo,
+			groups,
+			groupLabels,
 			items: savedItems(order, picks),
 			logo: pendingLogo !== null || (removeLogo && hasStoredLogo)
 		})
@@ -267,7 +306,12 @@
 				footer_text: footerText.trim(),
 				homepage_url: homepageUrl.trim(),
 				subscribe_channel_id: subscribeChannel,
-				domain: host === '' ? null : host
+				domain: host === '' ? null : host,
+				seo,
+				groups,
+				group_labels: Object.entries(groupLabels)
+					.map(([id, label]) => ({ target_id: Number(id), label: label.trim() }))
+					.filter((entry) => entry.label !== '' && viaGroups.some((t) => t.id === entry.target_id))
 			};
 			let saved = page ? await updateStatusPage(page.id, payload) : await createStatusPage(payload);
 			if (pendingLogo) {
@@ -355,7 +399,7 @@
 			<Field label={m.status_form_history()} for="{idPrefix}-days" help={m.status_form_history_help()}>
 				<select id="{idPrefix}-days" class="input" bind:value={showDays} disabled={saving}>
 					{#each HISTORY_CHOICES as choice (choice)}
-						<option value={choice}>{m.status_share_days({ days: choice })}</option>
+						<option value={choice}>{choice === 1 ? m.status_period_24h() : m.status_share_days({ days: choice })}</option>
 					{/each}
 				</select>
 			</Field>
@@ -365,8 +409,8 @@
 	<!-- 2. Services: search to add on the left, the list as visitors will see it on the right. -->
 	<Panel title={m.status_form_services()} description={m.status_edit_section_services_help()}>
 		{#snippet aside()}
-			{#if order.length > 0}
-				<span class="text-sm text-ink-2 tnum">{m.status_form_services_count({ count: order.length })}</span>
+			{#if order.length + viaGroups.length > 0}
+				<span class="text-sm text-ink-2 tnum">{m.status_form_services_count({ count: order.length + viaGroups.length })}</span>
 			{/if}
 		{/snippet}
 		{#if sortedTargets.length === 0}
@@ -376,6 +420,15 @@
 				<legend class="sr-only">{m.status_form_services()}</legend>
 				<div class="grid gap-1.5">
 					<span class={SUBHEAD}>{m.status_edit_services_add()}</span>
+					<GroupPicker
+						id="{idPrefix}-folders"
+						{targets}
+						{groups}
+						picked={pickedIds}
+						ontogglegroup={toggleGroup}
+						ontoggletarget={toggle}
+						disabled={saving}
+					/>
 					<Combobox
 						id="{idPrefix}-services"
 						options={serviceOptions}
@@ -393,13 +446,13 @@
 
 				<div class="grid min-w-0 gap-1.5">
 					<span class={SUBHEAD} id="{idPrefix}-list-label">{m.status_edit_services_list()}</span>
-					{#if order.length === 0}
+					{#if order.length === 0 && groups.length === 0}
 						<p class="ghost-cell rounded-lg border border-dashed border-line px-4 py-6 text-center text-sm text-ink-2">{m.status_edit_services_none()}</p>
-					{:else}
+					{:else if order.length > 0}
 						<div class="overflow-hidden rounded-[var(--radius-card)] border border-line">
 							<div class="hidden gap-2 border-b border-line bg-canvas-deep px-3 py-1.5 text-[0.75rem] text-ink-2 md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,0.75fr)_7.5rem]" aria-hidden="true">
-								<span class="pl-7">{m.status_edit_services_col_monitor()}</span>
-								<span>{m.status_edit_services_col_label()}</span>
+								<span class="pl-7">{m.status_services_private_name()}</span>
+								<span>{m.status_services_public_name()}</span>
 								<span>{m.status_edit_services_col_group()}</span>
 								<span class="text-right">{m.status_edit_services_col_order()}</span>
 							</div>
@@ -412,19 +465,24 @@
 											<div class="flex min-w-0 items-center gap-2 text-sm text-ink">
 												<span class="w-5 shrink-0 text-right text-[0.75rem] tnum text-ink-3">{index + 1}</span>
 												<span class="grid min-w-0">
-													<span class="truncate" title={target.name}>{target.name}</span>
-													<span class="truncate text-[0.75rem] text-ink-3">{target.kind}</span>
+													<span class="truncate text-ink-2" title={m.status_services_private_hint()}>{target.name}</span>
+													<span class="truncate text-[0.75rem] text-ink-3">{target.kind} · {m.status_services_private_hint()}</span>
 												</span>
 											</div>
-											<input
-												type="text"
-												class="input"
-												value={pick.label}
-												oninput={(event) => setPick(id, { label: event.currentTarget.value })}
-												placeholder={target.name}
-												maxlength="80"
-												aria-label={m.status_form_pick_label_aria({ name: target.name })}
-											/>
+											<div class="grid gap-1">
+												<input
+													type="text"
+													class="input"
+													value={pick.label}
+													oninput={(event) => setPick(id, { label: event.currentTarget.value })}
+													placeholder={target.name}
+													maxlength="80"
+													aria-label={m.status_form_pick_label_aria({ name: target.name })}
+												/>
+												{#if !pick.label.trim()}
+													<p class="text-[0.75rem] text-warning">{m.status_services_public_empty({ name: target.name })}</p>
+												{/if}
+											</div>
 											<input
 												type="text"
 												class="input"
@@ -448,6 +506,42 @@
 						<datalist id="{idPrefix}-groups">
 							{#each groupsSeen as group (group)}<option value={group}></option>{/each}
 						</datalist>
+					{/if}
+					{#if viaGroups.length > 0}
+						<div class="grid gap-1.5">
+							<span class={SUBHEAD}>{m.status_services_from_groups()}</span>
+							<ul class="divide-y divide-line overflow-hidden rounded-[var(--radius-card)] border border-line">
+								{#each viaGroups as target (target.id)}
+									<li class="grid gap-2 px-3 py-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start">
+										<span class="grid min-w-0">
+											<span class="truncate text-sm text-ink-2" title={m.status_services_private_hint()}>{target.name}</span>
+											<span class="truncate text-[0.75rem] text-ink-3">{target.group_name} · {m.status_services_private_hint()}</span>
+										</span>
+										<div class="grid gap-1">
+											<input
+												type="text"
+												class="input"
+												value={groupLabels[target.id] ?? ''}
+												oninput={(event) => (groupLabels = { ...groupLabels, [target.id]: event.currentTarget.value })}
+												placeholder={target.name}
+												maxlength="80"
+												aria-label={m.status_form_pick_label_aria({ name: target.name })}
+											/>
+											{#if !(groupLabels[target.id] ?? '').trim()}
+												<p class="text-[0.75rem] text-warning">{m.status_services_public_empty({ name: target.name })}</p>
+											{/if}
+										</div>
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{/if}
+					{#if groups.length > 0}
+						<ul class="grid gap-1 text-[0.8125rem] text-ink-2" aria-label={m.status_groups_dynamic_aria()}>
+							{#each groups as group (group)}
+								<li>{m.status_groups_dynamic({ group, count: targets.filter((t) => t.group_name === group).length })}</li>
+							{/each}
+						</ul>
 					{/if}
 				</div>
 			</fieldset>
@@ -612,7 +706,21 @@
 		</div>
 	</Panel>
 
-	<!-- 4. Email updates and the page's own address. -->
+	<!-- 4. Search engines: only for a published page. -->
+	{#if published}
+		<SeoSection
+			{idPrefix}
+			bind:seo
+			name={title}
+			{description}
+			url={seoUrl}
+			logo={seoLogo}
+			services={serviceNames}
+			disabled={saving}
+		/>
+	{/if}
+
+	<!-- 5. Email updates and the page's own address. -->
 	<Panel title={m.status_form_section_connect()} description={m.status_edit_section_connect_help()}>
 		<div class="grid items-start gap-x-8 gap-y-4 lg:grid-cols-2">
 			<Field

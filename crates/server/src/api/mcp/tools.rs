@@ -3095,7 +3095,7 @@ async fn post_incident(state: &AppState, args: &Args) -> ToolResult {
     let status = args.str("status").map(str::to_string);
 
     let (created, Json(view)) = if let Some(id) = args.i64("incident_id") {
-        let payload = status_pages::UpdatePayload { status, body: body.to_string() };
+        let payload = status_pages::UpdatePayload { status, body: body.to_string(), at: None };
         let (_, view) =
             status_pages::add_update(State(state.clone()), Path(id), Json(payload)).await?;
         (false, view)
@@ -3144,6 +3144,7 @@ async fn post_incident(state: &AppState, args: &Args) -> ToolResult {
             starts_at: None,
             ends_at: None,
             body: Some(body.to_string()),
+            updates: None,
         };
         let (_, view) = status_pages::create_incident(State(state.clone()), Json(payload)).await?;
         (true, view)

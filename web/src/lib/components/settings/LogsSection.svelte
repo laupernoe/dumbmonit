@@ -17,12 +17,12 @@
 	} from '#lib/api/logs.js';
 	import type { LogDestination, LogExportEstimate, LogsInfo, LogTestResult } from '#lib/api/types.js';
 	import { formatRelative } from '#lib/format.js';
-	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton } from '#lib/ui/index.js';
+	import { Button, Confirm, EmptyState, ErrorNotice, Field, Panel, Plate, Skeleton, Disclosure } from '#lib/ui/index.js';
 	import { normalizeKind, type KindInfo } from '#lib/components/notifications/kinds';
 	import { m } from '#lib/paraglide/messages.js';
 	import LogDestinationForm from './LogDestinationForm.svelte';
 	import { levelLabel } from './logLabels';
-	import { MAX_MB_MAX, MAX_MB_MIN, RETENTION_MAX, RETENTION_MIN, clampDays, exportChoices, formatSize, inRange } from './logs';
+	import { MAX_MB_MAX, MAX_MB_MIN, RETENTION_MAX, RETENTION_MIN, clampDays, exportChoices, formatLogDay, formatSize, inRange } from './logs';
 
 	let info = $state<LogsInfo | null>(null);
 	let kinds = $state<KindInfo[]>([]);
@@ -141,6 +141,11 @@
 		};
 	});
 
+	// Logs only exist on disk since the server started keeping them: say since when.
+	const oldestLabel = $derived(formatLogDay(info?.oldest_day));
+	const startsBeforeLogs = $derived(
+		!!info?.oldest_day && !!estimate && estimate.days === days && estimate.from < info.oldest_day
+	);
 	const canDownload = $derived(days !== null && estimate !== null && estimate.days === days);
 
 	// --- Destinations ---------------------------------------------------------
@@ -198,7 +203,7 @@
 		return kinds.find((k) => k.kind === kind)?.label ?? kind;
 	}
 
-	function state(destination: LogDestination): { tone: 'signal' | 'warning' | 'ghost'; label: string } {
+	function destinationStatus(destination: LogDestination): { tone: 'signal' | 'warning' | 'ghost'; label: string } {
 		if (!destination.enabled) return { tone: 'ghost', label: m.settings_logs_dest_state_off() };
 		const s = destination.stats;
 		if (s?.last_error_at && (!s.last_success_at || s.last_error_at > s.last_success_at)) {
@@ -217,8 +222,7 @@
 	{:else if info}
 		<div class="grid gap-8">
 			<!-- Local storage -->
-			<section aria-labelledby="logs-storage-title">
-				<h3 id="logs-storage-title" class="font-semibold text-ink">{m.settings_logs_storage_title()}</h3>
+			<Disclosure title={m.settings_logs_storage_title()}>
 				<dl class="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-3">
 					<div class="min-w-0">
 						<dt class="text-ink-3">{m.settings_logs_directory()}</dt>
@@ -290,11 +294,10 @@
 						{#if saved}<Plate tone="signal" draw label={m.settings_logs_saved()} />{/if}
 					</div>
 				</form>
-			</section>
+			</Disclosure>
 
 			<!-- Export -->
-			<section class="border-t border-line pt-6" aria-labelledby="logs-export-title">
-				<h3 id="logs-export-title" class="font-semibold text-ink">{m.settings_logs_export_title()}</h3>
+			<Disclosure title={m.settings_logs_export_title()}>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_logs_export_hint()}</p>
 
 				<fieldset class="mt-3">
@@ -333,6 +336,15 @@
 					{/if}
 				</fieldset>
 
+				{#if oldestLabel}
+					<p class="mt-3 text-sm text-ink-2">
+						{m.settings_logs_export_since({ date: oldestLabel })}
+						{#if startsBeforeLogs}
+							<span class="text-ink">{m.settings_logs_export_since_short({ date: oldestLabel })}</span>
+						{/if}
+					</p>
+				{/if}
+
 				<p class="mt-3 min-h-6 text-sm text-ink-2" aria-live="polite">
 					{#if estimateError}
 						{m.settings_logs_export_estimate_error()}
@@ -356,13 +368,12 @@
 						</Button>
 					{/if}
 				</div>
-			</section>
+			</Disclosure>
 
 			<!-- Destinations -->
-			<section class="border-t border-line pt-6" aria-labelledby="logs-dest-title">
+			<Disclosure title={m.settings_logs_dest_title()}>
 				<div class="flex flex-wrap items-start justify-between gap-3">
 					<div class="min-w-0">
-						<h3 id="logs-dest-title" class="font-semibold text-ink">{m.settings_logs_dest_title()}</h3>
 						<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_logs_dest_hint()}</p>
 					</div>
 					{#if !formOpen}
@@ -393,7 +404,7 @@
 				{:else if destinations.length > 0}
 					<ul class="mt-4 grid gap-3" role="list">
 						{#each destinations as destination (destination.id)}
-							{@const st = state(destination)}
+							{@const st = destinationStatus(destination)}
 							{@const stats = destination.stats}
 							<li class="rounded-lg border border-line bg-surface-2/40 px-3 py-3 sm:px-4">
 								<div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
@@ -449,7 +460,7 @@
 						{/each}
 					</ul>
 				{/if}
-			</section>
+			</Disclosure>
 		</div>
 	{/if}
 </Panel>
