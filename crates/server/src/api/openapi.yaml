@@ -4216,7 +4216,9 @@ paths:
         is ignored and a declared parent wins; when a guest's name matches no device, the only
         machine-level device at its address, such as an agent, ping or SNMP monitor, stands for
         the guest instead of a duplicate node), `lldp` (an LLDP neighbour seen by an SNMP
-        switch), `samehost` (a PBS and a Proxmox VE monitor that point at the same machine),
+        switch), `l2` (a layer-2 link read from switch tables: LLDP/CDP neighbours between
+        switches, or a host on an access port found through the bridge forwarding table and
+        ARP; trunks and LAG members never carry hosts), `samehost` (a PBS and a Proxmox VE monitor that point at the same machine),
         `backup` (a Proxmox VE whose `pbs` storage targets a monitored PBS server) and
         `firewall` (a device whose address falls in a network a monitored firewall of the same
         site serves, when nothing else attaches it). A pair of
@@ -9920,7 +9922,7 @@ components:
         to: { type: string }
         source:
           type: [string, "null"]
-          description: "`forbid`: any deduced type; `link`: manual, hypervisor, hosted, relay, lldp, samehost, backup or firewall."
+          description: "`forbid`: any deduced type; `link`: manual, hypervisor, hosted, relay, lldp, l2, samehost, backup or firewall."
         value: { type: [string, "null"], maxLength: 80 }
         use_for_alerts: { type: boolean, default: true }
     TopologyRuleSpec:
@@ -10000,7 +10002,7 @@ components:
         to: { type: string }
         source:
           type: string
-          enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall, manual]
+          enum: [parent, service, relay, hypervisor, hosted, lldp, l2, samehost, backup, firewall, manual]
           description: "`manual`: attached by hand or by a learned rule, on the map only."
         origin:
           type: string
@@ -10008,6 +10010,8 @@ components:
           description: Deduced by the server, corrected by hand, or set by a learned rule.
         correction_id: { type: [integer, "null"], format: int64, description: The correction that drew it. }
         rule_id: { type: [integer, "null"], format: int64, description: The learned rule that drew it. }
+        from_port: { type: [string, "null"], description: "Switch port at the `from` end (`lldp` and `l2` links)." }
+        to_port: { type: [string, "null"], description: "Switch port at the `to` end." }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]

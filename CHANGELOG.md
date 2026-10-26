@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Automatic layer-2 topology.** The Ethernet switch SNMP profile now reads LLDP
+  and CDP neighbours, the bridge forwarding table, ARP and LAG membership; the map
+  draws `l2` links between switches (with the port on each side, on hover and in
+  the link panel) and from hosts to their access port, never on trunks or LAG
+  members. Manual corrections keep priority. See Using the map.
+
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key

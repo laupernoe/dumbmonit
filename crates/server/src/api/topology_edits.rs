@@ -72,6 +72,7 @@ pub const SOURCES: &[&str] = &[
     "hypervisor",
     "hosted",
     "lldp",
+    "l2",
     "samehost",
     "backup",
     "firewall",
@@ -81,11 +82,11 @@ pub const SOURCES: &[&str] = &[
 /// Types qu'un lien forcé peut prendre. `manual` : « dépend de », sur la carte
 /// seule ; un parent d'alerte se pose par un rattachement (`parent`).
 pub const LINK_SOURCES: &[&str] =
-    &["manual", "hypervisor", "hosted", "relay", "lldp", "samehost", "backup", "firewall"];
+    &["manual", "hypervisor", "hosted", "relay", "lldp", "l2", "samehost", "backup", "firewall"];
 
 /// Liens déduits qu'une règle peut interdire pour tout un périmètre.
 pub const GENERAL_FORBID: &[&str] =
-    &["hypervisor", "hosted", "lldp", "samehost", "backup", "firewall"];
+    &["hypervisor", "hosted", "lldp", "l2", "samehost", "backup", "firewall"];
 
 /// Liens qui placent un nœud avec certitude : une règle apprise n'y touche pas.
 const STRONG: &[&str] = &["parent", "service", "hypervisor", "hosted", "manual"];
@@ -557,6 +558,8 @@ pub fn apply(
             origin: "manual",
             correction_id: Some(c.id),
             rule_id: None,
+            from_port: None,
+            to_port: None,
         });
     }
 
@@ -590,6 +593,8 @@ pub fn apply(
             origin: "manual",
             correction_id: Some(c.id),
             rule_id: None,
+            from_port: None,
+            to_port: None,
         });
     }
 
@@ -616,6 +621,8 @@ pub fn apply(
                 origin: "rule",
                 correction_id: None,
                 rule_id: Some(rule.id),
+                from_port: None,
+                to_port: None,
             });
             ruled.insert(id);
             *matches.entry(rule.id).or_default() += 1;
