@@ -1,0 +1,21 @@
+{
+  "data": {
+    "viewer": {
+      "zones": [
+        {"zoneTag": "023e105f4ecef8ad9ca31a8372d0c353",
+         "httpRequests1hGroups": [
+           {"sum": {"requests": 1200, "responseStatusMap": [
+             {"edgeResponseStatus": 200, "requests": 1100},
+             {"edgeResponseStatus": 404, "requests": 20},
+             {"edgeResponseStatus": 502, "requests": 60},
+             {"edgeResponseStatus": 503, "requests": 20}]}},
+           {"sum": {"requests": 300, "responseStatusMap": [{"edgeResponseStatus": 200, "requests": 300}]}}]},
+        {"zoneTag": "2b6f1f0a1d3c4e5f60718293a4b5c6d7",
+         "httpRequests1hGroups": [
+           {"sum": {"requests": 40, "responseStatusMap": [
+             {"edgeResponseStatus": 200, "requests": 30}, {"edgeResponseStatus": 500, "requests": 10}]}}]}
+      ]
+    }
+  },
+  "errors": null
+}

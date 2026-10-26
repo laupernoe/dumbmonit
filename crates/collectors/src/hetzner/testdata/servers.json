@@ -1,0 +1,21 @@
+{
+  "servers": [
+    {"id": 42, "name": "web-1", "status": "running", "created": "2025-11-02T10:00:00+00:00",
+     "public_net": {"ipv4": {"ip": "203.0.113.10"}},
+     "server_type": {"id": 22, "name": "cx22", "cores": 2, "memory": 4.0, "disk": 40},
+     "datacenter": {"id": 3, "name": "fsn1-dc14", "location": {"id": 1, "name": "fsn1", "city": "Falkenstein"}},
+     "backup_window": "22-02", "locked": false, "protection": {"delete": false, "rebuild": false},
+     "volumes": [101], "labels": {}},
+    {"id": 43, "name": "db-1", "status": "off", "created": "2025-11-03T10:00:00+00:00",
+     "server_type": {"id": 23, "name": "cx32", "cores": 4, "memory": 8.0, "disk": 80},
+     "datacenter": {"id": 3, "name": "fsn1-dc14", "location": {"id": 1, "name": "fsn1", "city": "Falkenstein"}},
+     "backup_window": null, "locked": false, "protection": {"delete": false, "rebuild": false},
+     "volumes": [], "labels": {}},
+    {"id": 44, "name": "worker-1", "status": "running", "created": "2026-02-01T10:00:00+00:00",
+     "server_type": {"id": 22, "name": "cx22", "cores": 2, "memory": 4.0, "disk": 40},
+     "datacenter": {"id": 4, "name": "nbg1-dc3", "location": {"id": 2, "name": "nbg1", "city": "Nuremberg"}},
+     "backup_window": null, "locked": false, "protection": {"delete": false, "rebuild": false},
+     "volumes": [], "labels": {}}
+  ],
+  "meta": {"pagination": {"page": 1, "per_page": 50, "previous_page": null, "next_page": null, "last_page": 1, "total_entries": 3}}
+}

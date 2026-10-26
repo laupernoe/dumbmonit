@@ -105,6 +105,8 @@ macro_rules! to_server {
     };
 }
 
+mod cloud;
+
 impl PortView {
     fn description(&self) -> PortDescription {
         PortDescription {
@@ -6962,7 +6964,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: GRPC_OPTIONS,
         },
-        _ => return None,
+        _ => return cloud::view(kind),
     })
 }
 
@@ -6998,7 +7000,8 @@ fn guide_url(kind: &str) -> String {
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
         | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
         | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "push"
-        | "webchange" | "website" => kind,
+        | "webchange" | "website" | "m365" | "entra" | "azure" | "aws" | "cloudflare"
+        | "hetzner" | "ovh" | "infomaniak" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -7146,6 +7149,14 @@ mod tests {
         "kopia",
         "duplicati",
         "tailscale",
+        "m365",
+        "entra",
+        "azure",
+        "aws",
+        "cloudflare",
+        "hetzner",
+        "ovh",
+        "infomaniak",
         "fortigate",
         "arubacentral",
         "sophos",

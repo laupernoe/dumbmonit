@@ -59,6 +59,24 @@ impl RestClient {
         })
     }
 
+    /// Client d'une autre racine que l'adresse de la cible (service de
+    /// connexion, second hôte d'une même API) : même politique TLS et même
+    /// délai que `for_target`, racine donnée en entier (`https://login.example`).
+    pub fn for_base(
+        target: &Target,
+        base_url: &str,
+        product: &'static str,
+    ) -> Result<Self, ProbeError> {
+        let options = Options::from_target(target, "https", 443)?;
+        Ok(Self {
+            http: crate::http::client(options.insecure_tls)?,
+            base_url: base_url.trim().trim_end_matches('/').to_string(),
+            headers: Vec::new(),
+            timeout: options.request_timeout,
+            product,
+        })
+    }
+
     /// Ajoute un en-tête envoyé avec chaque requête.
     pub fn with_header(mut self, name: &'static str, value: impl Into<String>) -> Self {
         self.headers.push((name, value.into()));
@@ -137,6 +155,33 @@ impl RestClient {
         form: &[(&str, &str)],
     ) -> Result<(StatusCode, String), ProbeError> {
         self.send(self.http.post(self.url(path)).form(form), path).await
+    }
+
+    /// GET avec des en-têtes propres à cet appel (signature d'une requête, par exemple).
+    pub async fn get_with(
+        &self,
+        path: &str,
+        extra: &[(&str, String)],
+    ) -> Result<(StatusCode, String), ProbeError> {
+        let mut request = self.http.get(self.url(path));
+        for (name, value) in extra {
+            request = request.header(*name, value);
+        }
+        self.send(request, path).await
+    }
+
+    /// POST d'un corps texte avec des en-têtes propres à cet appel (API signées).
+    pub async fn post_raw(
+        &self,
+        path: &str,
+        body: String,
+        extra: &[(&str, String)],
+    ) -> Result<(StatusCode, String), ProbeError> {
+        let mut request = self.http.post(self.url(path)).body(body);
+        for (name, value) in extra {
+            request = request.header(*name, value);
+        }
+        self.send(request, path).await
     }
 
     /// POST d'un corps JSON.
