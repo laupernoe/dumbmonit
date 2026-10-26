@@ -123,6 +123,7 @@ struct FileConfig {
     ipsec: Option<bool>,
     ipsec_bin: Option<String>,
     inventory: Option<bool>,
+    self_update: Option<bool>,
     speedtest: Option<bool>,
     speedtest_download_url: Option<String>,
     speedtest_upload_url: Option<String>,
@@ -277,6 +278,10 @@ pub struct Config {
     /// Inventaire logiciel quotidien (paquets installés), joint aux lots. Actif
     /// par défaut ; indépendant de la liste `modules`.
     pub inventory: bool,
+    /// Mise à jour automatique de l'agent par le serveur. Active par défaut ;
+    /// `false` la refuse sur cette machine, quels que soient les réglages du
+    /// serveur.
+    pub self_update: bool,
     /// Dépôts restic et Borg déclarés.
     pub backup_repos: BackupReposConfig,
     /// Compteurs de performance Windows : liste libre, jeux MDaemon et Hyper-V.
@@ -329,6 +334,7 @@ impl fmt::Debug for Config {
             .field("ipsec", &self.ipsec)
             .field("speedtest", &self.speedtest)
             .field("inventory", &self.inventory)
+            .field("self_update", &self.self_update)
             .field("backup_repos", &self.backup_repos)
             .field("perf_counters", &self.perf_counters)
             .finish()
@@ -672,6 +678,7 @@ impl Config {
             }
         };
         let inventory = flag("DUMBMONIT_AGENT_INVENTORY", file.inventory, true)?;
+        let self_update = flag("DUMBMONIT_AGENT_SELF_UPDATE", file.self_update, true)?;
         let speedtest = SpeedtestConfig {
             enabled: flag("DUMBMONIT_AGENT_SPEEDTEST", file.speedtest, false)?,
             download_url: clean_url(
@@ -792,6 +799,7 @@ impl Config {
             ipsec,
             speedtest,
             inventory,
+            self_update,
             backup_repos,
             perf_counters,
             max_buffered_samples,
