@@ -228,7 +228,7 @@
 			</li>
 		{/each}
 		<li class="min-w-0">
-			<Menu label={m.misc_nav_more()} placement="up" align="right" class="h-full">
+			<Menu label={m.misc_nav_more()} placement="up" align="right" class="h-full w-full">
 				{#snippet trigger({ toggle, open })}
 					<button type="button" onclick={toggle} aria-expanded={open} class="flex h-14 w-full flex-col items-center justify-center gap-0.5 text-[0.6875rem] font-medium text-ink-3">
 						<Ellipsis class="size-5" aria-hidden="true" />
