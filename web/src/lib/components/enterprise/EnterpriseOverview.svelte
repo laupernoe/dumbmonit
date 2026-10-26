@@ -7,6 +7,7 @@
 	 * 30 s); the river, latencies, p95 and availability from the fleet store
 	 * (one set of queries, refreshed every minute while LIVE is on).
 	 */
+	import { untrack } from 'svelte';
 	import { countAlertsByTarget, countsAsProblem } from '#lib/alerts-attention.js';
 	import { formatDuration } from '#lib/format.js';
 	import { kindLabel } from '#lib/kind-label.js';
@@ -22,7 +23,8 @@
 	import Sparkline from './Sparkline.svelte';
 	import { STATUS_RANK, consoleStatus } from './status.js';
 
-	$effect(() => fleetStore.start());
+	// One subscription for the life of the view; the range is followed separately.
+	$effect(() => untrack(() => fleetStore.start()));
 	// A new range reloads the figures at once.
 	$effect(() => {
 		consoleState.range;
