@@ -6318,7 +6318,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     "In the Omada controller, open Global View → Settings → Platform Integration → Open API and click Add New App.",
                     "Name the app as follows, choose the Client access mode and give it the Viewer role on the sites to read.\ndumbmonit",
                     "Click Apply: the controller shows the Omada ID, the Client ID and the Client Secret. Copy them: the secret is shown once.",
-                    "In DumbMonit, enter the controller address (omada.lan), set the port if it is not 8043 (443 for a hardware controller), then paste the Client ID and the Client secret. Enter the Omada ID in the Controller ID option, or leave it empty to read it from the controller.",
+                    "In DumbMonit, enter the controller address (omada.lan) and the port (8043, or 443 for a hardware controller), then paste the Client ID and the Client secret.",
                 ],
                 ports: &[
                     to_device!(
@@ -6329,7 +6329,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     to_device_optional!(
                         443,
                         "tcp",
-                        "Hardware controllers (OC200, OC300) and installs behind a reverse proxy"
+                        "Only for hardware controllers (OC200, OC300) and installs behind a reverse proxy"
                     ),
                 ],
                 permissions: &[

@@ -35,7 +35,7 @@ From the DumbMonit server (or its relay agent) to the device:
 | Port | Protocol | Purpose |
 |---|---|---|
 | 8043 | TCP | Controller HTTPS and OpenAPI (software controller, default) |
-| 443 | TCP | Hardware controllers (OC200, OC300) and installs behind a reverse proxy |
+| 443 | TCP | Only for hardware controllers (OC200, OC300) and installs behind a reverse proxy |
 
 Port 443 is only needed when the controller listens there instead of 8043.
 
@@ -84,7 +84,7 @@ look: disconnected, awaiting adoption, saturated or with a firmware update.
 
 3. Click Apply: the controller shows the Omada ID, the Client ID and the Client Secret. Copy them: the secret is shown once.
 
-4. In DumbMonit, enter the controller address (omada.lan), set the port if it is not 8043 (443 for a hardware controller), then paste the Client ID and the Client secret. Enter the Omada ID in the Controller ID option, or leave it empty to read it from the controller.
+4. In DumbMonit, enter the controller address (omada.lan) and the port (8043, or 443 for a hardware controller), then paste the Client ID and the Client secret.
 
 ### Required permissions
 
