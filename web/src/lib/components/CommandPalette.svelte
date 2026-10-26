@@ -11,7 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { tick } from 'svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import {
+	import { LayoutGrid, Compass,
 		Search,
 		Gauge,
 		Server,
@@ -99,6 +99,8 @@
 		{ id: 'page:/map', group: 'pages', label: m.topology_title(), detail: m.topology_palette_detail(), keywords: 'map topology graph diagram network tree print export pdf', icon: Network, href: '/map', run: go('/map') },
 		{ id: 'page:/alerts', group: 'pages', label: m.misc_nav_alerts(), keywords: 'needs you warnings advisories', icon: BellRing, href: '/alerts', run: go('/alerts') },
 		{ id: 'page:/settings/notifications#notifications-channels', group: 'pages', label: m.misc_palette_notifications(), detail: m.misc_palette_notifications_detail(), keywords: 'channels policy quiet hours alerts', icon: BellRing, href: '/settings/notifications#notifications-channels', run: go('/settings/notifications#notifications-channels') },
+		{ id: 'page:/dashboards', group: 'pages', label: m.misc_nav_dashboards(), detail: m.dash_palette_detail(), keywords: 'dashboards widgets grid charts graphs custom panels', icon: LayoutGrid, href: '/dashboards', run: go('/dashboards') },
+		{ id: 'page:/explore', group: 'pages', label: m.explore_title(), detail: m.explore_palette_detail(), keywords: 'metrics explorer promql metricsql query victoriametrics labels', icon: Compass, href: '/explore', run: go('/explore') },
 		{ id: 'page:/security', group: 'pages', label: m.misc_palette_security(), detail: m.misc_palette_security_detail(), keywords: 'security cve vulnerabilities kev nvd osv exploit patch', icon: ShieldAlert, href: '/security', run: go('/security') },
 		{ id: 'page:/settings#security-score', group: 'pages', label: m.misc_palette_security_score(), detail: m.misc_palette_security_score_detail(), keywords: 'security score grade pingcastle secure score checks audit', icon: ShieldCheck, href: '/settings/monitoring#security-score', run: go('/settings/monitoring#security-score') },
 		{ id: 'page:/settings/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, href: '/settings/status', run: go('/settings/status') },

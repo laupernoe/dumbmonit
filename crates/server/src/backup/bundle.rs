@@ -152,6 +152,9 @@ pub struct Bundle {
     /// Règles de la carte, acceptées ou refusées (migration 0072).
     #[serde(default)]
     pub topology_rules: Vec<BundleTopologyRule>,
+    /// Tableaux de bord, partagés et personnels (migration 0120).
+    #[serde(default)]
+    pub dashboards: Vec<BundleDashboard>,
 }
 
 impl Bundle {
@@ -174,6 +177,7 @@ impl Bundle {
             ("locations".to_string(), self.locations.len()),
             ("topology_corrections".to_string(), self.topology_corrections.len()),
             ("topology_rules".to_string(), self.topology_rules.len()),
+            ("dashboards".to_string(), self.dashboards.len()),
         ])
     }
 }
@@ -307,6 +311,22 @@ pub struct BundleLocation {
     pub site: String,
     #[serde(default)]
     pub main_site: bool,
+}
+
+/// Un tableau de bord, désigné par son nom et son propriétaire (nom de
+/// compte ; `None` pour un tableau partagé).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleDashboard {
+    pub name: String,
+    #[serde(default)]
+    pub shared: bool,
+    #[serde(default)]
+    pub owner: Option<String>,
+    pub range_secs: i64,
+    pub refresh_secs: i64,
+    /// Grille de widgets telle que stockée ; revalidée à la restauration.
+    #[serde(default)]
+    pub widgets: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

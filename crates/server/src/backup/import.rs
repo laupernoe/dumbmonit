@@ -121,6 +121,7 @@ pub async fn restore(
     report.push(restore_locations(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
+    report.push(restore_dashboards(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
     let channels = channel_ids(&mut tx).await?;
@@ -1676,6 +1677,114 @@ async fn restore_locations(
         .execute(&mut **tx)
         .await
         .context("emplacement d'un équipement")?;
+    }
+    Ok(report)
+}
+
+/// Tableaux de bord, par propriétaire et nom (sans casse) : identique, laissé ;
+/// différent, mis à jour. Un tableau personnel dont le compte n'existe pas ici
+/// est ignoré (les comptes sont restaurés avant).
+async fn restore_dashboards(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    use crate::api::dashboards::{DashboardPayload, validate};
+    let mut report = SectionReport::new("dashboards");
+    for entry in &bundle.dashboards {
+        let name = entry.name.trim();
+        let widgets = match serde_json::from_value(if entry.widgets.is_null() {
+            serde_json::json!([])
+        } else {
+            entry.widgets.clone()
+        }) {
+            Ok(widgets) => widgets,
+            Err(_) => {
+                report.skipped += 1;
+                report.notes.push(format!("dashboard \"{name}\" has an unreadable grid"));
+                continue;
+            }
+        };
+        let input = match validate(DashboardPayload {
+            name: name.to_string(),
+            shared: entry.shared,
+            range_secs: entry.range_secs,
+            refresh_secs: entry.refresh_secs,
+            widgets,
+        }) {
+            Ok(input) => input,
+            Err(_) => {
+                report.skipped += 1;
+                report.notes.push(format!("dashboard \"{name}\" is not valid"));
+                continue;
+            }
+        };
+        let owner_id: Option<i64> = match &entry.owner {
+            Some(owner) => {
+                sqlx::query_scalar("SELECT id FROM users WHERE username = ? COLLATE NOCASE")
+                    .bind(owner)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("propriétaire d'un tableau de bord")?
+            }
+            None => None,
+        };
+        if !entry.shared && owner_id.is_none() {
+            report.skipped += 1;
+            report.notes.push(format!("dashboard \"{name}\": its owner does not exist here"));
+            continue;
+        }
+        let widgets = serde_json::to_string(&input.widgets).context("grille d'un tableau")?;
+        let existing = sqlx::query(
+            "SELECT id, range_secs, refresh_secs, widgets FROM dashboards
+             WHERE name = ? COLLATE NOCASE AND shared = ? AND (shared = 1 OR owner_id = ?)",
+        )
+        .bind(&input.name)
+        .bind(input.shared)
+        .bind(owner_id)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche du tableau de bord")?;
+        if let Some(row) = &existing {
+            if row.try_get::<i64, _>("range_secs")? == input.range_secs
+                && row.try_get::<i64, _>("refresh_secs")? == input.refresh_secs
+                && row.try_get::<String, _>("widgets")? == widgets
+            {
+                report.skipped += 1;
+                continue;
+            }
+            let id: i64 = row.try_get("id")?;
+            let result = sqlx::query(
+                "UPDATE dashboards SET range_secs = ?, refresh_secs = ?, widgets = ?,
+                     updated_at = strftime('%Y-%m-%d %H:%M:%S', 'now') WHERE id = ?",
+            )
+            .bind(input.range_secs)
+            .bind(input.refresh_secs)
+            .bind(&widgets)
+            .bind(id)
+            .execute(&mut **tx)
+            .await;
+            match result {
+                Ok(_) => report.count(RestoreOutcome::Updated),
+                Err(error) => report.refused(&format!("dashboard \"{name}\""), &error.into()),
+            }
+            continue;
+        }
+        let result = sqlx::query(
+            "INSERT INTO dashboards (name, shared, owner_id, range_secs, refresh_secs, widgets)
+             VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        .bind(&input.name)
+        .bind(input.shared)
+        .bind(owner_id)
+        .bind(input.range_secs)
+        .bind(input.refresh_secs)
+        .bind(&widgets)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused(&format!("dashboard \"{name}\""), &error.into()),
+        }
     }
     Ok(report)
 }
