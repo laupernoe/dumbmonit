@@ -229,8 +229,8 @@ async fn sms_webhook_and_slack_subscribers() {
         .post(
             "/api/notify/channels",
             json!({ "name": "Texto", "kind": "vonage",
-                    "settings": { "api_key": "k", "from": "DumbMonit", "to": ["+33600000000"] },
-                    "secrets": { "api_secret": "s" } }),
+                    "settings": { "from": "DumbMonit", "to": ["+33600000000"] },
+                    "secrets": { "api_key": "k", "api_secret": "s" } }),
             Some(&admin),
         )
         .await;

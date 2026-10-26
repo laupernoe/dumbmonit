@@ -1,10 +1,10 @@
 //! Réception OpenTelemetry (OTLP/HTTP), hors `/api` : c'est l'URL qu'un collecteur
 //! OpenTelemetry ou un SDK construit lui-même (`<endpoint>/v1/metrics`).
 //!
-//! - `POST /otlp/v1/metrics` : métriques, en protobuf (`application/x-protobuf`)
+//! - `POST /api/otlp/v1/metrics` : métriques, en protobuf (`application/x-protobuf`)
 //!   ou en JSON, avec ou sans `Content-Encoding: gzip`. Converties par
 //!   [`crate::otlp::convert`] et écrites sous l'identité d'une cible.
-//! - `POST /otlp/v1/logs` : journaux, transmis tels quels à l'ingestion OTLP du
+//! - `POST /api/otlp/v1/logs` : journaux, transmis tels quels à l'ingestion OTLP du
 //!   VictoriaLogs embarqué, s'il est activé (503 sinon).
 //!
 //! Authentification : un jeton d'API de portée `write` (`Authorization: Bearer

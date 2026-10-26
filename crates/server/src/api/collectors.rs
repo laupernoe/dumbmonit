@@ -5967,9 +5967,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 steps: &[
                     "In Settings, API & assistants, create a token with the write scope. Restrict it to the network of your collector.",
                     "Save this source, then note its number: it ends the address of its page, /devices/<number>.",
-                    "In the otlphttp exporter of your collector, set the endpoint to this server followed by /otlp, then add two headers: Authorization with the token, and X-DumbMonit-Target with the number of this source.\nhttps://monit.example.com/otlp",
+                    "In the otlphttp exporter of your collector, set the endpoint to this server followed by /api/otlp, then add two headers: Authorization with the token, and X-DumbMonit-Target with the number of this source.\nhttps://monit.example.com/api/otlp",
                     "Make sure counters and histograms use cumulative temporality (the default); for delta, add the deltatocumulative processor.",
-                    "Optional: logs sent to /otlp/v1/logs are stored in VictoriaLogs when it is enabled in Settings, Storage.",
+                    "Optional: logs sent to /api/otlp/v1/logs are stored in VictoriaLogs when it is enabled in Settings, Storage.",
                 ],
                 ports: &[to_server!(
                     8080,

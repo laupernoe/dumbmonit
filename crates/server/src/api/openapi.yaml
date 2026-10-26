@@ -8139,7 +8139,7 @@ paths:
         "404": { $ref: "#/components/responses/NotFound" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
-  /otlp/v1/metrics:
+  /api/otlp/v1/metrics:
     post:
       operationId: receiveOtlpMetrics
       tags: [OpenTelemetry]
@@ -8182,7 +8182,7 @@ paths:
               schema: { $ref: "#/components/schemas/Error" }
         "429": { $ref: "#/components/responses/TooManyRequests" }
 
-  /otlp/v1/logs:
+  /api/otlp/v1/logs:
     post:
       operationId: receiveOtlpLogs
       tags: [OpenTelemetry]

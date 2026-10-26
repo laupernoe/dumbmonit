@@ -959,8 +959,8 @@ la cible désignée par l'en-tête `X-DumbMonit-Target` (ou `?target=`). Voir
 
 | Méthode | Route | Usage |
 |---|---|---|
-| `POST` | `/otlp/v1/metrics` | Métriques OTLP, protobuf ou JSON, gzip facultatif. `200` avec `partialSuccess.rejectedDataPoints` si des points n'ont pas été enregistrés ; `415` pour un autre type de contenu, `400` pour un corps illisible. |
-| `POST` | `/otlp/v1/logs` | Journaux OTLP, transmis à VictoriaLogs ; `503` tant qu'il est désactivé. |
+| `POST` | `/api/otlp/v1/metrics` | Métriques OTLP, protobuf ou JSON, gzip facultatif. `200` avec `partialSuccess.rejectedDataPoints` si des points n'ont pas été enregistrés ; `415` pour un autre type de contenu, `400` pour un corps illisible. |
+| `POST` | `/api/otlp/v1/logs` | Journaux OTLP, transmis à VictoriaLogs ; `503` tant qu'il est désactivé. |
 
 ## Fichiers d'agent (hors `/api`)
 

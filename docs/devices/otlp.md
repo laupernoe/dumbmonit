@@ -11,8 +11,8 @@ DumbMonit does not poll anything here: the data comes in.
 
 | Route | Purpose |
 |---|---|
-| `POST /otlp/v1/metrics` | Metrics, `application/x-protobuf` or `application/json`, plain or `Content-Encoding: gzip`. |
-| `POST /otlp/v1/logs` | Logs, relayed unchanged to VictoriaLogs (`503` while it is disabled). |
+| `POST /api/otlp/v1/metrics` | Metrics, `application/x-protobuf` or `application/json`, plain or `Content-Encoding: gzip`. |
+| `POST /api/otlp/v1/logs` | Logs, relayed unchanged to VictoriaLogs (`503` while it is disabled). |
 
 OTLP over gRPC is not supported: the HTTP exporter of the OpenTelemetry Collector
 (`otlphttp`) and of every SDK does the same job on the same port as the web
@@ -43,7 +43,7 @@ processors:
 
 exporters:
   otlphttp/dumbmonit:
-    endpoint: https://monit.example.com/otlp
+    endpoint: https://monit.example.com/api/otlp
     headers:
       Authorization: Bearer dmt_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       X-DumbMonit-Target: "12"
@@ -63,7 +63,7 @@ service:
 An SDK reads the same settings from its environment:
 
 ```
-OTEL_EXPORTER_OTLP_ENDPOINT=https://monit.example.com/otlp
+OTEL_EXPORTER_OTLP_ENDPOINT=https://monit.example.com/api/otlp
 OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
 OTEL_EXPORTER_OTLP_HEADERS=Authorization=Bearer dmt_xxx,X-DumbMonit-Target=12
 ```

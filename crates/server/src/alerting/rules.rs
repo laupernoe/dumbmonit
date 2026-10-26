@@ -5418,7 +5418,9 @@ pub fn builtin_rules() -> Vec<Rule> {
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
-            for_duration: Duration::ZERO,
+            // La jauge reste à 1 tant que la clé n'est pas acceptée : une minute
+            // de retenue écarte un relevé isolé sans retarder l'alerte.
+            for_duration: Duration::from_secs(60),
             severity: Severity::Critical,
             ..base("netconfig_host_key_changed", "SSH host key changed", RuleKind::Threshold, "dumbmonit_netconfig_host_key_changed")
         },

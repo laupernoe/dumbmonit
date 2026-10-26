@@ -556,8 +556,8 @@ target named by the `X-DumbMonit-Target` header (or `?target=`). See
 
 | Method | Route | Purpose |
 |---|---|---|
-| `POST` | `/otlp/v1/metrics` | OTLP metrics, protobuf or JSON, optionally gzip. `200` with `partialSuccess.rejectedDataPoints` when some points were not stored; `415` for another content type, `400` for an unreadable body. |
-| `POST` | `/otlp/v1/logs` | OTLP logs, relayed to VictoriaLogs; `503` while it is disabled. |
+| `POST` | `/api/otlp/v1/metrics` | OTLP metrics, protobuf or JSON, optionally gzip. `200` with `partialSuccess.rejectedDataPoints` when some points were not stored; `415` for another content type, `400` for an unreadable body. |
+| `POST` | `/api/otlp/v1/logs` | OTLP logs, relayed to VictoriaLogs; `503` while it is disabled. |
 
 ## Further routes
 
