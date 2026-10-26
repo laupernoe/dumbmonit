@@ -141,10 +141,24 @@ export interface Target {
 	position: number;
 	/** Location assigned on the world map; `null`: none (it may still sit at one through its site). */
 	location_id: LocationId | null;
+	/** Set when Docker labels on an agent's container manage this monitor; `null`: a free monitor. */
+	managed?: TargetManaged | null;
 	last_probe_at: string | null;
 	last_error: string | null;
 	/** What `last_error` means: the device is `down`, or our `config` is wrong. */
 	error_kind: 'down' | 'config' | null;
+}
+
+/** Management of a monitor by Docker labels (`dumbmonit.*`). Mirrors `db::targets::Managed`. */
+export interface TargetManaged {
+	/** Origin: `docker-labels`. */
+	by: string;
+	/** Agent whose containers declare the monitor. */
+	source: TargetId | null;
+	/** Stable key, `project/service/http` or `container/http`. */
+	key: string;
+	/** Set when no label declares the monitor any more: it is archived (paused, history kept). */
+	missing_since: string | null;
 }
 
 /** Body sent to `POST /api/targets` and `PUT /api/targets/{id}`. */
@@ -940,6 +954,8 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
+	/** At least one passkey is registered: the sign-in screen offers to use one. */
+	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
 }
@@ -1114,8 +1130,20 @@ export interface AuthState {
 	user: User | null;
 	oidc: OidcStatus;
 	ldap: LdapStatus;
+	/** At least one passkey is registered on the instance. */
+	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
+}
+
+/** A passkey (WebAuthn credential) of the current account. Mirrors `auth::passkeys::PasskeyView`. */
+export interface Passkey {
+	id: number;
+	name: string;
+	created_at: string;
+	last_used_at: string | null;
+	/** Copied to a synced keychain (iCloud, Google, a password manager). */
+	synced: boolean;
 }
 
 // --- Notification channels --------------------------------------------------

@@ -50,7 +50,7 @@ pub const LEDGER_HOUR_SECS: i64 = 3600;
 /// Types de canaux d'astreinte : ils ouvrent et ferment des incidents par
 /// équipement, un résumé multi-équipements casserait leur rapprochement. Ils
 /// reçoivent donc un message par équipement, sans attendre la fenêtre.
-pub const ONCALL_KINDS: &[&str] = &["pagerduty", "opsgenie"];
+pub const ONCALL_KINDS: &[&str] = &["pagerduty", "opsgenie", "grafana_oncall", "signl4"];
 
 /// Politique globale, stockée dans `settings` sous `notify_policy`.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
