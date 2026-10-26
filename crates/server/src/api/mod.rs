@@ -43,6 +43,7 @@ mod push;
 mod redfish;
 mod relay;
 mod reports;
+mod scim;
 mod security;
 mod self_monitoring;
 mod seo_files;
@@ -138,6 +139,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             get(ldap::get_config).put(ldap::put_config).delete(ldap::delete_config),
         )
         .route("/auth/ldap/test", post(ldap::test))
+        // Provisionnement SCIM : réglages et jeton du fournisseur (`scim.rs`).
+        .route("/auth/scim", get(scim::get_settings).put(scim::put_settings))
+        .route("/auth/scim/token", post(scim::create_token).delete(scim::delete_token))
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
@@ -313,7 +317,10 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::public_routes())
         // Retour de Spotify après l'approbation : une navigation, vérifiée par
         // son `state` et par la session qui revient (`music.rs`).
-        .merge(music::public_routes());
+        .merge(music::public_routes())
+        // Provisionnement SCIM 2.0 (Entra ID, Okta) : hors session, sous le jeton
+        // dédié du fournisseur, vérifié par sa propre garde (`scim.rs`).
+        .merge(scim::routes(&state));
 
     // Serveur MCP : authentifié par jeton d'API, pas par session — un assistant
     // n'a pas de navigateur. Le garde ne couvre que `POST` ; `GET` et `DELETE`
