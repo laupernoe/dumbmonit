@@ -3324,6 +3324,43 @@ export interface OnboardingPatch {
 	dismissed?: OnboardingStep[];
 }
 
+// --- Product mode and setup wizard -----------------------------------------
+
+/**
+ * How the interface presents itself. Presentation only: switching never
+ * deletes anything. Mirrors `ProductMode` in `crates/server/src/instance.rs`.
+ */
+export type ProductMode = 'homelab' | 'enterprise';
+
+/** `GET /api/instance`: public, read before sign-in to pick the layout. */
+export interface PublicInstance {
+	product_mode: ProductMode;
+	setup_completed: boolean;
+}
+
+/** `GET /api/instance/settings`. Mirrors `InstanceSettings` in `crates/server/src/instance.rs`. */
+export interface InstanceSettings {
+	product_mode: ProductMode;
+	setup_completed: boolean;
+	/** UTC without suffix; `null` until the wizard is finished. */
+	setup_completed_at?: string | null;
+	/** Empty shows "DumbMonit". At most 80 characters. */
+	name: string;
+	/** Default interface language (a Paraglide locale); empty follows the browser. */
+	language: string;
+	/** IANA time zone; empty means UTC. */
+	timezone: string;
+}
+
+/** `PUT /api/instance/settings`: an omitted field keeps its value. */
+export interface InstancePatch {
+	product_mode?: ProductMode;
+	setup_completed?: boolean;
+	name?: string;
+	language?: string;
+	timezone?: string;
+}
+
 // --- Backup and restore -----------------------------------------------------
 
 /** One section of the backup bundle. Mirrors `Section` in `crates/server/src/api/backup.rs`. */
