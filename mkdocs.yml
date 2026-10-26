@@ -126,6 +126,11 @@ nav:
       - Redis and Valkey: devices/redis.md
       - MongoDB: devices/mongodb.md
       - RabbitMQ: devices/rabbitmq.md
+      - SQL Server: devices/mssql.md
+      - Oracle Database: devices/oracle.md
+      - Elasticsearch / OpenSearch: devices/elasticsearch.md
+      - InfluxDB: devices/influxdb.md
+      - Apache Kafka: devices/kafka.md
       - CrowdSec: devices/crowdsec.md
       - Traefik: devices/traefik.md
       - Caddy: devices/caddy.md

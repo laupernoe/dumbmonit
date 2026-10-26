@@ -3158,6 +3158,145 @@ const RABBITMQ_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Connexion SQL Server (authentification SQL, `collectors/mssql`).
+const MSSQL_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "SQL Server login",
+    help: "A SQL Server authentication login, not a Windows account. Sent in the TDS login packet over TLS.",
+    fields: &[
+        cred_text("username", "Login", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Compte de la base, envoyé en basic à ORDS (`collectors/oracle`).
+const ORACLE_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Username / password",
+    help: "The database account enabled for REST in ORDS, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const ELASTICSEARCH_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Username / password",
+    help: "A user holding only the cluster privilege monitor, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const ELASTICSEARCH_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Bearer token",
+    help: "A service account token, sent as a bearer token. Elasticsearch API keys use another scheme and are not supported.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const INFLUXDB_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API token",
+    help: "Sent as a bearer token. InfluxDB 3 needs it on /health; InfluxDB 2 does not.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const KAFKA_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "SASL/PLAIN",
+    help: "For a SASL_SSL listener only: the password is accepted over TLS and never sent in clear text.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Options lues par `collectors/mssql/mod.rs` et `collectors/uptime/tags.rs`.
+const MSSQL_OPTIONS: &[OptionView] = &[
+    socket_port("1433"),
+    text(
+        "database",
+        "Database",
+        "The database the session opens. master exists on every instance.",
+        "master",
+        "master",
+    ),
+    boolean(
+        "tls",
+        "Encrypt the connection",
+        "Untick only for an old server that cannot encrypt: the session is then sent in clear text, the login excepted.",
+        true,
+    ),
+    insecure_tls(
+        "A default installation presents a self-signed certificate: enable this if the connection is refused for that reason.",
+    ),
+    SOCKET_TIMEOUT,
+];
+
+/// Options lues par `collectors/oracle/mod.rs` et `observability/options.rs`.
+const ORACLE_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "ORDS listens over plain HTTP unless you configured TLS for it (usually on port 8443).",
+        "http",
+        &["http", "https"],
+    ),
+    observability_port("8080"),
+    text(
+        "ords_path",
+        "ORDS path prefix",
+        "The context path ORDS is served under, /ords by default.",
+        "/ords",
+        "/ords",
+    ),
+    text(
+        "schema",
+        "Schema alias",
+        "The REST alias of the schema the account is enabled for. Empty: the account name in lower case.",
+        "dumbmonit",
+        "",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Options lues par `collectors/elasticsearch/mod.rs` et `observability/options.rs`.
+const ELASTICSEARCH_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "Elasticsearch 8 and later, and the OpenSearch security plugin, answer over HTTPS by default.",
+        "http",
+        &["http", "https"],
+    ),
+    observability_port("9200"),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Options lues par `collectors/influxdb/mod.rs` et `observability/options.rs`.
+const INFLUXDB_OPTIONS: &[OptionView] =
+    &[OBSERVABILITY_SCHEME, observability_port("8086"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
+
+/// Options lues par `collectors/kafka/mod.rs` et `collectors/socket.rs`.
+const KAFKA_OPTIONS: &[OptionView] = &[
+    socket_port("9092"),
+    SOCKET_TLS,
+    SOCKET_INSECURE_TLS,
+    SOCKET_TIMEOUT,
+    number(
+        "max_groups",
+        "Consumer groups measured",
+        "The lag is measured for this many groups, in name order (0 to 500, 0 to skip the lag). The cluster health is always read.",
+        "50",
+        "50",
+    ),
+];
+
 /// Options lues par `collectors/crowdsec/mod.rs` et `observability/options.rs`.
 const CROWDSEC_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_SCHEME,
@@ -6048,6 +6187,150 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: RABBITMQ_OPTIONS,
         },
+        "mssql" => CollectorView {
+            kind: "mssql",
+            label: "SQL Server",
+            summary: "The database engine itself: databases that are not online, blocked requests, sessions against the limit, disk space of the data volumes, SQL Server Agent jobs and AlwaysOn availability groups.",
+            examples: &["SQL Server 2019 to 2025", "SQL Server Express", "Azure SQL Managed Instance"],
+            credential_types: &["username_password"],
+            credentials: &[MSSQL_LOGIN],
+            address_hint: "sql.lan",
+            default_port: 1433,
+            setup: Setup {
+                title: "Create a read-only SQL Server login",
+                steps: &[
+                    "Connect to the instance with SQL Server Management Studio or sqlcmd, with a login allowed to create logins, and create the login DumbMonit will use.\nCREATE LOGIN dumbmonit WITH PASSWORD = 'choose-a-long-password', CHECK_POLICY = ON;",
+                    "Give it the server-wide read rights it needs to see the state of the engine, and nothing else.\nGRANT VIEW SERVER STATE TO dumbmonit;\nGRANT VIEW ANY DEFINITION TO dumbmonit;",
+                    "Optional, for the SQL Server Agent jobs: let it read the job history in msdb.\nUSE msdb;\nCREATE USER dumbmonit FOR LOGIN dumbmonit;\nALTER ROLE SQLAgentReaderRole ADD MEMBER dumbmonit;",
+                    "Check that the instance accepts SQL Server authentication (mixed mode) and listens on a fixed TCP port: SQL Server Configuration Manager, Network Configuration, TCP/IP.",
+                    "In DumbMonit, enter the server address, for example sql.lan, or sql.lan:1444 for another port, then the login and its password.",
+                    "Tick Accept an unverifiable certificate while the server still presents its self-signed certificate.",
+                ],
+                ports: &[
+                    to_device!(1433, "tcp", "SQL Server (TDS, default port)"),
+                ],
+                permissions: &[
+                    "VIEW SERVER STATE\nRead sessions, requests and volumes",
+                    "VIEW ANY DEFINITION\nList the databases and their files",
+                    "SQLAgentReaderRole (msdb)\nOptional: read the Agent job history",
+                ],
+                warning: "Windows authentication is not supported: use a SQL Server login, on an instance that allows SQL Server authentication (mixed mode). Named instances need their fixed TCP port in the address.",
+            },
+            options: MSSQL_OPTIONS,
+        },
+        "oracle" => CollectorView {
+            kind: "oracle",
+            label: "Oracle Database",
+            summary: "The database through Oracle REST Data Services: an instance that is not open, tablespaces filling up, sessions against the limit, Data Guard lag, the fast recovery area and failed scheduler jobs.",
+            examples: &["Oracle Database 19c, 21c, 23ai", "Oracle Database Free", "Oracle XE"],
+            credential_types: &["username_password"],
+            credentials: &[ORACLE_LOGIN],
+            address_hint: "ords.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Let DumbMonit read Oracle through ORDS",
+                steps: &[
+                    "Make sure Oracle REST Data Services (ORDS) runs in front of the database with REST-enabled SQL switched on.\nords config set restEnabledSql.active true",
+                    "As a privileged user, create the account DumbMonit will use, with the two rights it needs.\nCREATE USER dumbmonit IDENTIFIED BY \"choose-a-long-password\";\nGRANT CREATE SESSION, SELECT_CATALOG_ROLE TO dumbmonit;",
+                    "Connected as that account, enable its schema for REST with the alias dumbmonit.\nEXEC ORDS.ENABLE_SCHEMA(p_enabled => TRUE, p_url_mapping_type => 'BASE_PATH', p_url_mapping_pattern => 'dumbmonit');",
+                    "In DumbMonit, enter the ORDS address, for example ords.lan:8080 or https://ords.lan:8443, then the account and its password.",
+                    "If the schema alias or the ORDS path differ from the defaults, set them in the options below.",
+                ],
+                ports: &[
+                    to_device!(8080, "tcp", "ORDS (HTTP, default)"),
+                    to_device_optional!(8443, "tcp", "Only if ORDS is served over TLS (HTTPS, default)"),
+                ],
+                permissions: &[
+                    "CREATE SESSION\nLet the account log in",
+                    "SELECT_CATALOG_ROLE\nRead the V$ and DBA_ views, no data",
+                ],
+                warning: "There is no native Oracle client: DumbMonit reads the database through ORDS over HTTP, and never contacts the listener on port 1521. The REST-enabled SQL settings vary between ORDS versions: check the ORDS documentation of yours.",
+            },
+            options: ORACLE_OPTIONS,
+        },
+        "elasticsearch" => CollectorView {
+            kind: "elasticsearch",
+            label: "Elasticsearch / OpenSearch",
+            summary: "The search cluster: red or yellow status, unassigned shards, disk filling up on a node and JVM heap pressure.",
+            examples: &["Elasticsearch 7, 8, 9", "OpenSearch 1, 2, 3", "The index behind Graylog or Wazuh"],
+            credential_types: &["username_password", "api_token", "none"],
+            credentials: &[ELASTICSEARCH_LOGIN, ELASTICSEARCH_TOKEN, NO_AUTH],
+            address_hint: "es.lan",
+            default_port: 9200,
+            setup: Setup {
+                title: "Create a monitoring-only Elasticsearch user",
+                steps: &[
+                    "Create a role that only holds the cluster privilege monitor, from Kibana (Stack Management, Roles) or with the API.\ncurl -u elastic -X PUT \"https://es.lan:9200/_security/role/dumbmonit\" -H \"Content-Type: application/json\" -d '{\"cluster\":[\"monitor\"]}'",
+                    "Create the user with that role.\ncurl -u elastic -X PUT \"https://es.lan:9200/_security/user/dumbmonit\" -H \"Content-Type: application/json\" -d '{\"password\":\"choose-a-long-password\",\"roles\":[\"dumbmonit\"]}'",
+                    "OpenSearch: create a role with the cluster permission cluster_monitor in Security, Roles, and map the user to it.",
+                    "In DumbMonit, enter the address of one node, for example es.lan, then the user and its password.",
+                    "Elasticsearch 8 and later serve HTTPS with a generated certificate: pick HTTPS, and tick Accept an unverifiable certificate unless you installed your own.",
+                ],
+                ports: &[
+                    to_device!(9200, "tcp", "REST API (HTTP or HTTPS, default)"),
+                ],
+                permissions: &[
+                    "monitor (cluster privilege)\nRead the cluster health and node statistics",
+                    "cluster_monitor (OpenSearch)\nThe same permission on OpenSearch",
+                ],
+                warning: "The account needs no index privilege: DumbMonit never reads a document. One node reports the whole cluster, so enter a node that is not the one you expect to fail.",
+            },
+            options: ELASTICSEARCH_OPTIONS,
+        },
+        "influxdb" => CollectorView {
+            kind: "influxdb",
+            label: "InfluxDB",
+            summary: "The time series database: health and readiness, uptime, memory, file descriptors and server errors, for InfluxDB 2 and 3.",
+            examples: &["InfluxDB 2.x", "InfluxDB 3 Core", "InfluxDB 3 Enterprise"],
+            credential_types: &["none", "api_token"],
+            credentials: &[NO_AUTH, INFLUXDB_TOKEN],
+            address_hint: "influx.lan",
+            default_port: 8086,
+            setup: Setup {
+                title: "Let DumbMonit read InfluxDB's health",
+                steps: &[
+                    "InfluxDB 2: nothing to create, /health, /ready and /metrics are open. Leave the credential on No authentication.",
+                    "InfluxDB 3 asks for a token on /health and /metrics by default: paste a token as API token, or start the server with --disable-authz health,ping,metrics.",
+                    "In DumbMonit, enter the server address, for example influx.lan, with the port 8086 for InfluxDB 2 or 8181 for InfluxDB 3.",
+                    "Tick HTTPS if the server, or the reverse proxy in front of it, serves TLS.",
+                ],
+                ports: &[
+                    to_device!(8086, "tcp", "InfluxDB 2 API (default port)"),
+                    to_device_optional!(8181, "tcp", "Only for InfluxDB 3, whose default port is 8181"),
+                ],
+                permissions: &[],
+                warning: "InfluxDB 3 answers 401 on /health without a token unless it runs with --disable-authz. The token is only used to read health and metrics.",
+            },
+            options: INFLUXDB_OPTIONS,
+        },
+        "kafka" => CollectorView {
+            kind: "kafka",
+            label: "Apache Kafka",
+            summary: "The event streaming cluster: offline and under-replicated partitions, a missing controller, and the lag of the consumer groups.",
+            examples: &["Apache Kafka (KRaft or ZooKeeper)", "Redpanda", "Confluent Platform"],
+            credential_types: &["none", "username_password"],
+            credentials: &[NO_AUTH, KAFKA_LOGIN],
+            address_hint: "kafka.lan",
+            default_port: 9092,
+            setup: Setup {
+                title: "Give DumbMonit read-only access to Kafka",
+                steps: &[
+                    "Skip this step for a cluster without an authorizer. Otherwise give a dedicated principal read-only ACLs, from a host that can reach the brokers.\nkafka-acls.sh --bootstrap-server kafka.lan:9092 --add --allow-principal User:dumbmonit --operation Describe --cluster\nkafka-acls.sh --bootstrap-server kafka.lan:9092 --add --allow-principal User:dumbmonit --operation Describe --topic '*'\nkafka-acls.sh --bootstrap-server kafka.lan:9092 --add --allow-principal User:dumbmonit --operation Describe --group '*'",
+                    "In DumbMonit, enter the address of one broker, for example kafka.lan:9092: DumbMonit then contacts the other brokers at the addresses they advertise.",
+                    "Tick TLS if the listener is SSL or SASL_SSL, and enter the SASL/PLAIN user and password if the listener asks for them.",
+                ],
+                ports: &[
+                    to_device!(9092, "tcp", "Kafka protocol (default port, plain or TLS), every broker is contacted"),
+                ],
+                permissions: &[
+                    "Describe on the cluster\nList the consumer groups",
+                    "Describe on topics\nRead partitions, leaders and end offsets",
+                    "Describe on groups\nRead the offsets each group committed",
+                ],
+                warning: "Each broker must be reachable at the address it advertises (advertised.listeners): a broker DumbMonit cannot reach leaves the consumer lag incomplete. SASL/PLAIN is accepted only over TLS; SCRAM and Kerberos are not supported.",
+            },
+            options: KAFKA_OPTIONS,
+        },
         "crowdsec" => CollectorView {
             kind: "crowdsec",
             label: "CrowdSec",
@@ -6997,7 +7280,7 @@ fn guide_url(kind: &str) -> String {
         | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
         | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
-        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "push"
+        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "mssql" | "oracle" | "elasticsearch" | "influxdb" | "kafka" | "push"
         | "webchange" | "website" => kind,
         _ => return String::new(),
     };
@@ -7129,6 +7412,11 @@ mod tests {
         "redis",
         "mongodb",
         "rabbitmq",
+        "mssql",
+        "oracle",
+        "elasticsearch",
+        "influxdb",
+        "kafka",
         "crowdsec",
         "traefik",
         "caddy",
@@ -7716,6 +8004,17 @@ mod tests {
                 "rabbitmq",
                 &["scheme", "port", "insecure_tls", "request_timeout_seconds", "max_queues"],
             ),
+            ("mssql", &["port", "database", "tls", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "oracle",
+                &["scheme", "port", "ords_path", "schema", "insecure_tls", "request_timeout_seconds"],
+            ),
+            ("elasticsearch", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("influxdb", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "kafka",
+                &["port", "tls", "insecure_tls", "request_timeout_seconds", "max_groups"],
+            ),
             (
                 "crowdsec",
                 &["scheme", "port", "lapi", "lapi_port", "insecure_tls", "request_timeout_seconds"],
@@ -7990,6 +8289,24 @@ mod tests {
         assert_eq!(
             defaut("rabbitmq", "max_queues"),
             dumbmonit_collectors::rabbitmq::DEFAULT_MAX_QUEUES.to_string()
+        );
+        // `collectors/{mssql,oracle,elasticsearch,influxdb,kafka}`.
+        assert_eq!(defaut("mssql", "port"), dumbmonit_collectors::mssql::DEFAULT_PORT.to_string());
+        assert_eq!(defaut("mssql", "database"), dumbmonit_collectors::mssql::DEFAULT_DATABASE);
+        assert_eq!(defaut("oracle", "port"), dumbmonit_collectors::oracle::DEFAULT_PORT.to_string());
+        assert_eq!(defaut("oracle", "ords_path"), dumbmonit_collectors::oracle::DEFAULT_ORDS_PATH);
+        assert_eq!(
+            defaut("elasticsearch", "port"),
+            dumbmonit_collectors::elasticsearch::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("influxdb", "port"),
+            dumbmonit_collectors::influxdb::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(defaut("kafka", "port"), dumbmonit_collectors::kafka::DEFAULT_PORT.to_string());
+        assert_eq!(
+            defaut("kafka", "max_groups"),
+            dumbmonit_collectors::kafka::DEFAULT_MAX_GROUPS.to_string()
         );
         assert_eq!(
             defaut("crowdsec", "port"),
@@ -8357,6 +8674,10 @@ mod tests {
             ("redis", "dumbmonit"),
             ("mongodb", "dumbmonit"),
             ("rabbitmq", "dumbmonit"),
+            ("mssql", "dumbmonit"),
+            ("oracle", "dumbmonit"),
+            ("elasticsearch", "dumbmonit"),
+            ("kafka", "dumbmonit"),
             ("crowdsec", "dumbmonit"),
             ("traefik", "dumbmonit"),
             ("caddy", "dumbmonit"),
@@ -8559,6 +8880,11 @@ mod tests {
             ("redis", include_str!("../../../../docs/devices/redis.md")),
             ("mongodb", include_str!("../../../../docs/devices/mongodb.md")),
             ("rabbitmq", include_str!("../../../../docs/devices/rabbitmq.md")),
+            ("mssql", include_str!("../../../../docs/devices/mssql.md")),
+            ("oracle", include_str!("../../../../docs/devices/oracle.md")),
+            ("elasticsearch", include_str!("../../../../docs/devices/elasticsearch.md")),
+            ("influxdb", include_str!("../../../../docs/devices/influxdb.md")),
+            ("kafka", include_str!("../../../../docs/devices/kafka.md")),
             ("crowdsec", include_str!("../../../../docs/devices/crowdsec.md")),
             ("traefik", include_str!("../../../../docs/devices/traefik.md")),
             ("caddy", include_str!("../../../../docs/devices/caddy.md")),

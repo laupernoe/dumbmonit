@@ -542,6 +542,37 @@ rien ne se déclenche donc sur la première mesure d'une surveillance.
 | Bouncer CrowdSec arrêté de récupérer | Les requêtes d'un bouncer n'ont pas changé en 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Avis (`warning`) | 6 h |
 | CrowdSec ne lit aucun log | Pas une seule ligne de log lue en six heures (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Avis (`warning`) | 24 h |
 
+### Autres bases de données et Kafka {#more-databases-and-kafka}
+
+SQL Server, Oracle, Elasticsearch / OpenSearch, InfluxDB et Kafka ([SQL Server](../devices/mssql.md), [Oracle](../devices/oracle.md), [Elasticsearch](../devices/elasticsearch.md), [InfluxDB](../devices/influxdb.md), [Kafka](../devices/kafka.md)). Les compteurs passent par `increase_prometheus`, rien ne se déclenche donc à la première mesure d'une surveillance.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Base SQL Server indisponible | Une base est SUSPECT, RECOVERY_PENDING, OFFLINE ou EMERGENCY (`dumbmonit_mssql_database_online`). | < 1 | 5 min | Avertissement (`critical`) | 1 h |
+| Requêtes SQL Server bloquées | Une requête attend un verrou depuis plus de 5 minutes : une transaction a probablement été laissée ouverte (`dumbmonit_mssql_longest_block_seconds`). | > 300 s | 5 min | Avis (`warning`) | 6 h |
+| Volume SQL Server presque plein | Un volume qui porte des fichiers de bases est plein à plus de 90 % ; revient sous 85 % (`dumbmonit_mssql_volume_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Travail de l'Agent SQL Server en échec | La dernière exécution d'un travail actif de l'Agent SQL Server a échoué (sauvegardes, maintenance) (`dumbmonit_mssql_agent_job_last_ok`). | < 1 | 5 min | Avis (`warning`) | 24 h |
+| Réplique AlwaysOn SQL Server dégradée | Une réplique d'un groupe de disponibilité ne se synchronise pas en bonne santé (`dumbmonit_mssql_alwayson_sync_health`). | < 2 | 10 min | Avertissement (`critical`) | 1 h |
+| Connexions SQL Server proches de la limite | Les sessions utilisateur dépassent 90 % de la limite de connexions configurée. Aucune série sans limite (`dumbmonit_mssql_sessions_used_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| Instance Oracle non ouverte | L'instance n'est pas OPEN (MOUNTED, STARTED...) : la base ne sert plus rien (`dumbmonit_oracle_instance_open`). | < 1 | 2 min | Avertissement (`critical`) | 1 h |
+| Tablespace Oracle presque plein | Un tablespace est plein à plus de 90 % de sa taille maximale ; revient sous 85 % (`dumbmonit_oracle_tablespace_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Sessions Oracle proches de la limite | Les sessions dépassent 90 % du paramètre sessions (ORA-00018 à la limite) (`dumbmonit_oracle_sessions_used_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| Retard d'application Oracle Data Guard | Un standby applique le redo avec plus de 10 minutes de retard sur le primaire (`dumbmonit_oracle_dataguard_apply_lag_seconds`). | > 600 s | 10 min | Avis (`warning`) | 6 h |
+| Zone de récupération Oracle presque pleine | La zone de récupération rapide est pleine à plus de 90 % : l'archivage peut se bloquer et figer la base (`dumbmonit_oracle_recovery_area_used_percent`). | > 90 % | 10 min | Avertissement (`critical`) | 1 h |
+| Travail du planificateur Oracle en échec | Au moins une exécution d'un travail du planificateur a échoué ces dernières 24 heures (`dumbmonit_oracle_scheduler_jobs_failed_24h`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| Cluster Elasticsearch rouge | Le cluster est rouge : au moins un shard primaire n'est pas alloué, une partie des données est indisponible (`dumbmonit_elasticsearch_cluster_status`). | > 1 | 2 min | Avertissement (`critical`) | 1 h |
+| Cluster Elasticsearch jaune | Le cluster est jaune depuis 30 minutes : des réplicas manquent et la prochaine panne d'un nœud perdra des données (`dumbmonit_elasticsearch_cluster_status == 1`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Shards Elasticsearch non alloués | Des shards restent non alloués depuis 15 minutes (`dumbmonit_elasticsearch_unassigned_shards`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Disque d'un nœud Elasticsearch presque plein | Le disque de données d'un nœud est plein à plus de 85 % (seuil haut à 90 %, lecture seule à 95 %) ; revient sous 80 % (`dumbmonit_elasticsearch_node_disk_used_percent`). | > 85 % | 10 min | Avis (`warning`) | 6 h |
+| Tas JVM Elasticsearch saturé | Le tas JVM d'un nœud reste au-dessus de 90 % pendant 15 minutes : le ramasse-miettes va ralentir le nœud (`dumbmonit_elasticsearch_node_heap_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| InfluxDB en mauvaise santé | InfluxDB répond à son contrôle de santé par un échec (`dumbmonit_influxdb_healthy`). | < 1 | 2 min | Avertissement (`critical`) | 1 h |
+| InfluxDB pas prêt | InfluxDB répond mais ne se déclare pas prêt pour les requêtes et les écritures (`dumbmonit_influxdb_ready`). | < 1 | 5 min | Avis (`warning`) | 6 h |
+| Erreurs serveur InfluxDB | Plus de 10 requêtes de l'API ont reçu une réponse 5xx ces 15 dernières minutes (`increase_prometheus(dumbmonit_influxdb_http_requests_5xx_total[15m])`). | > 10 | 5 min | Avis (`warning`) | 6 h |
+| Partitions Kafka hors ligne | Une partition n'a plus de leader : les lectures et les écritures échouent (`dumbmonit_kafka_offline_partitions`). | > 0 | 2 min | Avertissement (`critical`) | 1 h |
+| Partitions Kafka sous-répliquées | Des partitions ont moins de réplicas synchronisés que de réplicas depuis 10 minutes : un courtier est tombé ou en retard (`dumbmonit_kafka_under_replicated_partitions`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Kafka sans contrôleur | Le cluster ne signale aucun contrôleur : aucune élection de leader n'est possible (`dumbmonit_kafka_controller_present`). | < 1 | 2 min | Avertissement (`critical`) | 1 h |
+| Retard d'un groupe de consommateurs Kafka | Un groupe de consommateurs a plus de 10 000 messages de retard depuis 15 minutes. Ajustez le seuil au trafic de vos rubriques (`dumbmonit_kafka_consumer_group_lag_total`). | > 10000 | 15 min | Avis (`warning`) | 6 h |
+
 ### Reverse proxies et domaines {#reverse-proxies-and-domains}
 
 Traefik, Caddy, Nginx Proxy Manager et les enregistrements de domaine
