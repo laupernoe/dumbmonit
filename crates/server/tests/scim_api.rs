@@ -792,7 +792,7 @@ async fn groups_and_their_members() {
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     let gid = reply.body["id"].as_str().unwrap().to_string();
     assert_eq!(reply.body["displayName"], "NOC");
-    assert_eq!(member_ids(&reply.body), [u1.clone()]);
+    assert_eq!(member_ids(&reply.body), [u1.as_str()]);
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM team_members WHERE source = 'scim'").await, 1);
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM team_folder_grants").await, 0, "aucun droit");
 
@@ -823,12 +823,12 @@ async fn groups_and_their_members() {
         .patch(&uri, json!([{ "op": "Add", "path": "members", "value": [{ "value": u2 }] }]))
         .await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
-    assert_eq!(member_ids(&lab.get(&uri).await.body), [u1.clone(), u2.clone()]);
+    assert_eq!(member_ids(&lab.get(&uri).await.body), [u1.as_str(), u2.as_str()]);
 
     let path = format!(r#"members[value eq "{u1}"]"#);
     let reply = lab.patch(&uri, json!([{ "op": "Remove", "path": path }])).await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
-    assert_eq!(member_ids(&lab.get(&uri).await.body), [u2.clone()]);
+    assert_eq!(member_ids(&lab.get(&uri).await.body), [u2.as_str()]);
 
     let reply = lab
         .patch(&uri, json!([{ "op": "Remove", "path": "members", "value": [{ "value": u2 }] }]))
@@ -848,7 +848,7 @@ async fn groups_and_their_members() {
         lab.put(&uri, json!({ "displayName": "NOC Team", "members": [{ "value": u1 }] })).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["displayName"], "NOC Team");
-    assert_eq!(member_ids(&reply.body), [u1.clone()]);
+    assert_eq!(member_ids(&reply.body), [u1.as_str()]);
 
     // Un membre inconnu est refusé.
     let reply = lab
