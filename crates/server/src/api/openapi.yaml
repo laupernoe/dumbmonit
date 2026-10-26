@@ -4001,7 +4001,8 @@ paths:
       tags: [Devices]
       summary: Topology map of the monitored infrastructure
       description: |
-        Nodes and links derived from what the server already knows, never typed in by hand.
+        Nodes and links derived from what the server already knows, then the corrections made by
+        hand on the map and the rules learned from them (see `/api/topology/corrections`).
         Each link carries its `source`: `parent` (declared dependency, the one alert
         suppression follows), `service` (a service an agent found, hanging from its machine),
         `relay` (the relay agent that polls the device), `hypervisor`
@@ -4037,6 +4038,161 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Topology" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/topology/corrections:
+    get:
+      operationId: listTopologyCorrections
+      tags: [Devices]
+      summary: Corrections made by hand on the topology map
+      description: |
+        Oldest first. `GET /api/topology` returns them too, already applied.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The corrections.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopologyCorrection" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createTopologyCorrection
+      tags: [Devices]
+      summary: Correct the topology map
+      description: |
+        `forbid`: the link `from` → `to` of type `source` is wrong and is never deduced again
+        (either direction). Marking a declared `parent` link wrong also clears the device's
+        declared parent. `link`: a link of type `source` is drawn between the two nodes, and
+        only that one. `parent`: `from` becomes the parent of `to` on the map; with
+        `use_for_alerts` (default true, devices only) it also becomes the device's declared
+        parent, the one alert suppression follows (refused when it would make a loop). `site`
+        and `group`: the node's site (`value`, empty for the main site) and grouping on the map.
+        A correction replaces the previous one on the same node (`parent`, `site`, `group`) or
+        the same pair (`forbid`, `link`); those are returned in `replaced`, so an undo can
+        bring them back.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopologyCorrectionInput" }
+      responses:
+        "201":
+          description: The correction, and the ones it replaced.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [correction, replaced]
+                properties:
+                  correction: { $ref: "#/components/schemas/TopologyCorrection" }
+                  replaced:
+                    type: array
+                    items: { $ref: "#/components/schemas/TopologyCorrection" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/topology/corrections/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    delete:
+      operationId: deleteTopologyCorrection
+      tags: [Devices]
+      summary: Take a map correction back
+      description: |
+        A declared parent the correction changed goes back to what it was, unless it was
+        changed again since.
+      x-token-scope: write
+      responses:
+        "204": { description: Correction removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/topology/rules:
+    get:
+      operationId: listTopologyRules
+      tags: [Devices]
+      summary: Map rules, accepted or declined
+      description: |
+        Each with `matches`, the links it sets or removes on today's map.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The rules.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopologyRule" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: saveTopologyRule
+      tags: [Devices]
+      summary: Accept or decline a map rule
+      description: |
+        Usually a suggestion from `GET /api/topology/suggestions`, sent back with `status`.
+        `active`: applied to present and future devices of its scope. `dismissed`: never
+        suggested again. The same rule (same scope and effect) only changes status.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TopologyRuleInput" }
+      responses:
+        "201":
+          description: The rule.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TopologyRule" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/topology/rules/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: integer, format: int64 } }
+    delete:
+      operationId: deleteTopologyRule
+      tags: [Devices]
+      summary: Remove a map rule
+      description: It stops applying; a declined rule removed can be suggested again.
+      x-token-scope: write
+      responses:
+        "204": { description: Rule removed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/topology/suggestions:
+    get:
+      operationId: listTopologySuggestions
+      tags: [Devices]
+      summary: Rules the corrections suggest
+      description: |
+        Deterministic: a wrong link of a type towards a device of a subnet with at least two
+        devices suggests forbidding that type of link for the whole subnet; two re-parentings
+        or more under the same parent of devices at one address suggest "what is at this
+        address depends on it" (limited to their device type when they share one); of devices
+        of one subnet, "this subnet depends on it". A suggestion another correction contradicts
+        is not made; accepted and declined rules are not suggested again. Never applied until
+        accepted.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The suggestions.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/TopologySuggestion" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -9265,6 +9421,83 @@ components:
         metrics_available:
           type: boolean
           description: False when VictoriaMetrics did not answer; `hypervisor` and `lldp` links are then missing.
+        corrections:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyCorrection" }
+          description: Corrections made by hand, already applied to `nodes` and `edges`.
+        rules:
+          type: array
+          items: { $ref: "#/components/schemas/TopologyRule" }
+        suggestions:
+          type: array
+          items: { $ref: "#/components/schemas/TopologySuggestion" }
+    TopologyCorrection:
+      type: object
+      required: [id, kind, to, use_for_alerts, author, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        kind: { type: string, enum: [forbid, link, parent, site, group] }
+        from: { type: [string, "null"], description: "Upstream node: the new parent, or one end of the link." }
+        to: { type: string, description: "The node corrected (`t<id>`, `g<host>:<name>`, `n<host>:<node>`)." }
+        source: { type: [string, "null"], description: Type of the link forbidden or drawn. }
+        value: { type: [string, "null"], description: "Site (empty: the main site) or grouping." }
+        use_for_alerts: { type: boolean, description: "`parent` only: also the device's declared parent." }
+        author: { type: string }
+        created_at: { type: string, description: UTC, without suffix. }
+    TopologyCorrectionInput:
+      type: object
+      required: [kind, to]
+      properties:
+        kind: { type: string, enum: [forbid, link, parent, site, group] }
+        from: { type: [string, "null"] }
+        to: { type: string }
+        source:
+          type: [string, "null"]
+          description: "`forbid`: any deduced type; `link`: manual, hypervisor, hosted, relay, lldp, samehost, backup or firewall."
+        value: { type: [string, "null"], maxLength: 80 }
+        use_for_alerts: { type: boolean, default: true }
+    TopologyRuleSpec:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [forbid, parent] }
+        subnet: { type: [string, "null"], description: "Scope: an IPv4 subnet (CIDR)." }
+        address: { type: [string, "null"], description: "Scope: the address (host) of the devices." }
+        target_kind: { type: [string, "null"], description: Scope limited to one device type. }
+        source: { type: [string, "null"], description: "`forbid`: the type of link never deduced in the scope." }
+        parent: { type: [string, "null"], description: "`parent`: the node the scope depends on." }
+    TopologyRuleInput:
+      allOf:
+        - { $ref: "#/components/schemas/TopologyRuleSpec" }
+        - type: object
+          required: [status]
+          properties:
+            status: { type: string, enum: [active, dismissed] }
+            evidence: { type: integer, description: Corrections it comes from. }
+    TopologyRule:
+      allOf:
+        - { $ref: "#/components/schemas/TopologyRuleSpec" }
+        - type: object
+          required: [id, status, evidence, author, created_at, matches]
+          properties:
+            id: { type: integer, format: int64 }
+            status: { type: string, enum: [active, dismissed] }
+            evidence: { type: integer }
+            author: { type: string }
+            created_at: { type: string }
+            matches: { type: integer, description: Links it sets or removes on today's map. }
+    TopologySuggestion:
+      allOf:
+        - { $ref: "#/components/schemas/TopologyRuleSpec" }
+        - type: object
+          required: [key, evidence, corrections, matches]
+          properties:
+            key: { type: string }
+            evidence: { type: integer, description: Number of corrections it comes from. }
+            corrections:
+              type: array
+              items: { type: integer, format: int64 }
+            matches: { type: integer, description: Other links it would change on today's map. }
     TopologyNode:
       type: object
       required: [id, name, kind, group_name, ips]
@@ -9280,8 +9513,12 @@ components:
         site: { type: [string, "null"], description: "Remote site the node belongs to; null for the main site." }
         site_source:
           type: [string, "null"]
-          enum: [tag, agent, relay, location, null]
-          description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), or the location the device is placed at."
+          enum: [tag, agent, relay, location, manual, null]
+          description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), the location the device is placed at, or a correction on the map."
+        group_source:
+          type: [string, "null"]
+          enum: [manual, null]
+          description: "`manual` when `group_name` was corrected on the map."
         host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
         running: { type: [boolean, "null"], description: Guest only, running at the last measurement; for a `pve_node`, online. }
         ips:
@@ -9290,11 +9527,20 @@ components:
           description: "Guest (its own node, or the device that stands for it): the IP addresses its hypervisor reports. Empty otherwise."
     TopologyEdge:
       type: object
-      required: [from, to, source]
+      required: [from, to, source, origin]
       properties:
         from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
         to: { type: string }
-        source: { type: string, enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall] }
+        source:
+          type: string
+          enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall, manual]
+          description: "`manual`: attached by hand or by a learned rule, on the map only."
+        origin:
+          type: string
+          enum: [deduced, manual, rule]
+          description: Deduced by the server, corrected by hand, or set by a learned rule.
+        correction_id: { type: [integer, "null"], format: int64, description: The correction that drew it. }
+        rule_id: { type: [integer, "null"], format: int64, description: The learned rule that drew it. }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
