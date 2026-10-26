@@ -891,6 +891,13 @@ Three [built-in rules](../alerting/rules.md#hyper-v) apply:
 - **Hyper-V virtual disk errors**: a virtual disk reported I/O errors in the
   last hour (Advisory).
 
+## Windows event log alerts
+
+The Windows agent can also raise alerts on Windows events (failed logons,
+unexpected reboots, crashed services, disk errors): rules are set per machine
+on its device page, none exists by default. See
+[Windows event log alerts](agent-windows-events.md).
+
 ## Run the agent in Docker / on another network
 
 The agent is also published as a container image, with the same tags as the

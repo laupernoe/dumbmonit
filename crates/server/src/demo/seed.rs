@@ -170,6 +170,7 @@ pub async fn push_agent_batch(
         sent_at_ms: now,
         samples: synthetic::agent_samples(now),
         inventory: None,
+        event_log: None,
         declared_monitors: None,
     };
     let bearer = format!("Bearer {token}");
