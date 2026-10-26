@@ -47,6 +47,11 @@ form always matches what this version can monitor.
 | [Redis / Valkey](redis.md) | `redis` | ACL user, password only, or none | In-memory store: memory against maxmemory, replication, persistence, keys |
 | [MongoDB](mongodb.md) | `mongodb` | username/password (clusterMonitor) or none | Document database: replica set, lag, connections, WiredTiger cache |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | username/password (monitoring tag) | Message broker: resource alarms, nodes, partitions, queues without consumer |
+| [SQL Server](mssql.md) | `mssql` | SQL login (username/password) | Databases not online, blocking, connections, volume space, Agent jobs, AlwaysOn |
+| [Oracle Database](oracle.md) | `oracle` | database account (username/password), through ORDS | Instance state, tablespaces, sessions, Data Guard lag, recovery area, scheduler jobs |
+| [Elasticsearch / OpenSearch](elasticsearch.md) | `elasticsearch` | username/password, token or none | Cluster status, unassigned shards, node disk and heap |
+| [InfluxDB](influxdb.md) | `influxdb` | none or API token | InfluxDB 2 and 3: health, readiness, uptime, memory, server errors |
+| [Apache Kafka](kafka.md) | `kafka` | none or SASL/PLAIN over TLS | Offline and under-replicated partitions, controller, consumer group lag |
 | [CrowdSec](crowdsec.md) | `crowdsec` | none, or bouncer API key | Security engine: decisions, alerts, bouncers that stopped pulling, log reading |
 | [Traefik](traefik.md) | `traefik` | none, or basicAuth user | Reverse proxy: disabled routers, backend servers down, certificates not obtained or not renewed, 5xx share |
 | [Caddy](caddy.md) | `caddy` | read-only view user, or none | Web server and reverse proxy: upstream health, failed reloads, handler errors, 5xx share |

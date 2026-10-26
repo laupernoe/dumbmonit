@@ -32,6 +32,25 @@ All notable changes to this project are documented here. The format follows
   - **mailcow** (read-only API key): stopped containers, Postfix queue size and age, mail volume, mailboxes close to their quota.
 
   Thirty-nine built-in alert rules cover them (health errors, offline cameras, stuck queues, full disks, updates); each type has a setup guide and a documentation page in English and French. A host that does not answer is Monitor unreachable; a refused key or password is shown as a configuration error and not notified.
+- **Five more integrations: SQL Server, Oracle, Elasticsearch / OpenSearch, InfluxDB and Kafka.**
+  - **SQL Server**: databases that are not online, blocked requests, sessions
+    against the limit, free space of the data volumes, SQL Server Agent jobs whose
+    last run failed, and AlwaysOn replica health. A SQL login with read-only
+    server rights; TDS over TLS in pure Rust (`tiberius`, no OpenSSL).
+  - **Oracle**: instance state, tablespaces, sessions and processes, Data Guard
+    lag, fast recovery area and failed scheduler jobs. Read through Oracle REST
+    Data Services (ORDS), because Oracle's native protocol has no open pure-Rust
+    client and OCI cannot ship in the static image.
+  - **Elasticsearch / OpenSearch**: cluster status, unassigned shards, disk and
+    JVM heap per node, with a user that only holds the `monitor` privilege.
+  - **InfluxDB 2 and 3**: health, readiness, uptime, memory, descriptors and 5xx
+    counters.
+  - **Kafka**: brokers, controller, offline and under-replicated partitions,
+    and the lag of the consumer groups, over a small hand-written client of the
+    Kafka protocol (SASL/PLAIN over TLS; no librdkafka in the image).
+  - Twenty-four default alert rules cover them, from a red cluster or an offline
+    database to a failed job, a full volume or a consumer group falling behind.
+
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key
