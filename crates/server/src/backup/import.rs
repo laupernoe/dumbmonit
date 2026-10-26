@@ -244,6 +244,13 @@ async fn restore_targets(
         let parent = parent.filter(|p| p != id);
         let relay = relay.filter(|p| p != id);
 
+        if let Some(multisite) = &target.multisite
+            && restore_multisite(tx, &mut report, &refs, *id, &target.name, multisite).await?
+            && outcomes.get(&key) == Some(&RestoreOutcome::Skipped)
+        {
+            outcomes.insert(key.clone(), RestoreOutcome::Updated);
+        }
+
         let current = sqlx::query("SELECT parent_id, via_agent FROM targets WHERE id = ?")
             .bind(id)
             .fetch_one(&mut **tx)
@@ -271,6 +278,74 @@ async fn restore_targets(
         report.count(outcome);
     }
     Ok(report)
+}
+
+/// Rétablit le réglage multi-emplacements d'un moniteur. Un agent absent est
+/// laissé de côté (avec une note), un quorum devenu trop grand revient à la
+/// majorité. Rend `true` si quelque chose a changé.
+async fn restore_multisite(
+    tx: &mut Transaction<'_, Sqlite>,
+    report: &mut SectionReport,
+    refs: &HashMap<String, i64>,
+    id: i64,
+    owner: &str,
+    multisite: &BundleMultisite,
+) -> Result<bool> {
+    let mut agents: Vec<i64> = multisite
+        .agents
+        .iter()
+        .filter_map(|a| resolve(report, refs, Some(a), owner, "probe location"))
+        .filter(|a| *a != id)
+        .collect();
+    agents.sort_unstable();
+    agents.dedup();
+    let locations = agents.len() + usize::from(multisite.server);
+    let quorum = multisite.quorum.filter(|q| *q as usize <= locations).map(i64::from);
+
+    let current =
+        sqlx::query("SELECT include_server, quorum FROM target_multisite WHERE target_id = ?")
+            .bind(id)
+            .fetch_optional(&mut **tx)
+            .await
+            .context("lecture de la sonde multi-emplacements")?;
+    let current_agents = sqlx::query_scalar::<_, i64>(
+        "SELECT agent_id FROM target_multisite_agents WHERE target_id = ? ORDER BY agent_id",
+    )
+    .bind(id)
+    .fetch_all(&mut **tx)
+    .await
+    .context("lecture des agents de la sonde multi-emplacements")?;
+    if let Some(row) = &current
+        && (row.try_get::<i64, _>("include_server")? != 0) == multisite.server
+        && row.try_get::<Option<i64>, _>("quorum")? == quorum
+        && current_agents == agents
+    {
+        return Ok(false);
+    }
+
+    sqlx::query("DELETE FROM target_multisite WHERE target_id = ?")
+        .bind(id)
+        .execute(&mut **tx)
+        .await
+        .context("retrait de la sonde multi-emplacements")?;
+    sqlx::query(
+        "INSERT INTO target_multisite (target_id, include_server, quorum) VALUES (?, ?, ?)",
+    )
+    .bind(id)
+    .bind(i64::from(multisite.server))
+    .bind(quorum)
+    .execute(&mut **tx)
+    .await
+    .context("restauration de la sonde multi-emplacements")?;
+    for agent in agents {
+        sqlx::query("INSERT INTO target_multisite_agents (target_id, agent_id) VALUES (?, ?)")
+            .bind(id)
+            .bind(agent)
+            .execute(&mut **tx)
+            .await
+            .context("restauration d'un agent de la sonde multi-emplacements")?;
+    }
+    Ok(true)
 }
 
 fn resolve(

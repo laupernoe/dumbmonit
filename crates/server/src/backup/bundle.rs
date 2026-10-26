@@ -213,6 +213,23 @@ pub struct BundleTarget {
     /// Nom de l'emplacement affecté (migration 0059) ; `None` : aucun.
     #[serde(default)]
     pub location: Option<String>,
+    /// Sondes depuis plusieurs emplacements (migration 0095) ; `None` : le
+    /// mode est coupé, ou le lot vient d'un serveur qui ne le connaissait pas.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub multisite: Option<BundleMultisite>,
+}
+
+/// Réglage multi-emplacements d'un moniteur, ses agents désignés par référence.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleMultisite {
+    /// Le serveur sonde aussi, en direct.
+    pub server: bool,
+    /// Références des agents relais (voir [`target_ref`]).
+    #[serde(default)]
+    pub agents: Vec<String>,
+    /// Emplacements en échec qu'il faut pour la panne ; `None` : la majorité.
+    #[serde(default)]
+    pub quorum: Option<u32>,
 }
 
 /// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).
@@ -663,6 +680,7 @@ mod tests {
                 group_name: "Rack A".to_string(),
                 position: 3,
                 location: None,
+                multisite: None,
             }],
             ..Bundle::default()
         }
