@@ -143,6 +143,7 @@ mod tests {
                 | "/api/push/{token}/{action}"
                 | "/api/calendar/maintenance.ics"
                 | "/api/openapi.json"
+                | "/api/instance"
         ) || path.starts_with("/api/public/")
             || (path == "/api/mcp" && method != "post")
     }

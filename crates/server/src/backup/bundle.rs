@@ -152,6 +152,9 @@ pub struct Bundle {
     /// Règles de la carte, acceptées ou refusées (migration 0072).
     #[serde(default)]
     pub topology_rules: Vec<BundleTopologyRule>,
+    /// Réglages d'instance : mode produit, nom, langue, fuseau (migration 0180).
+    #[serde(default)]
+    pub instance: Option<crate::instance::InstanceSettings>,
 }
 
 impl Bundle {
