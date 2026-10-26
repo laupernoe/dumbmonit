@@ -3731,6 +3731,7 @@
 	"kinds_label_webchange": "网站更改",
 	"kinds_label_website": "网站健康与 SEO",
 	"kinds_label_websocket": "WebSocket 端点",
+	"kinds_label_winrm": "Windows（WinRM，无代理）",
 	"livemap_blocked": "已拦截",
 	"livemap_blocked_count": "已拦截 {count}",
 	"livemap_country_counts": "拦截 {blocked} · 放行 {passed}",

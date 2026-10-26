@@ -66,6 +66,7 @@ pub mod unifi;
 pub mod unraid;
 pub mod uptime;
 pub mod veeam;
+pub mod winrm;
 pub mod vsphere;
 pub mod xcpng;
 pub mod yaml;
@@ -139,6 +140,7 @@ pub use uptime::{
     UdpCollector, WebsocketCollector,
 };
 pub use veeam::VeeamCollector;
+pub use winrm::WinrmCollector;
 pub use vsphere::VsphereCollector;
 pub use xcpng::XcpngCollector;
 
@@ -220,6 +222,7 @@ impl Registry {
         registry.register(Arc::new(PfsenseCollector::new()));
         registry.register(Arc::new(UnraidCollector::new()));
         registry.register(Arc::new(VeeamCollector::new()));
+        registry.register(Arc::new(WinrmCollector::new()));
         registry.register(Arc::new(KopiaCollector::new()));
         registry.register(Arc::new(DuplicatiCollector::new()));
         registry.register(Arc::new(TailscaleCollector::new()));

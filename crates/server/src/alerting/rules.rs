@@ -5743,6 +5743,21 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_veeam_license_expiry_seconds",
             )
         },
+        // --- Windows sans agent (`collectors/winrm`) ---
+        Rule {
+            description: "One or more Windows services set to start automatically are stopped (reads WMI over WinRM, no agent).".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "winrm_services_auto_stopped",
+                "Windows automatic services stopped",
+                RuleKind::Threshold,
+                "dumbmonit_windows_services_auto_stopped",
+            )
+        },
         Rule {
             description: "The last snapshot of a Kopia source finished with errors: some files were not saved.".to_string(),
             operator: Operator::Gt,
@@ -7446,6 +7461,7 @@ mod tests {
             "veeam_job_warning",
             "veeam_repository_full",
             "veeam_license_expiring",
+            "winrm_services_auto_stopped",
             "tailscale_device_offline",
             "tailscale_key_expiring",
             "tailscale_device_unapproved",
@@ -7966,6 +7982,7 @@ mod tests {
             "dumbmonit_veeam_job_warning",
             "dumbmonit_veeam_repository_used_percent",
             "dumbmonit_veeam_license_expiry_seconds",
+            "dumbmonit_windows_services_auto_stopped",
             "dumbmonit_tailscale_device_offline_seconds",
             "dumbmonit_tailscale_device_watched",
             "dumbmonit_tailscale_device_key_expiry_seconds",

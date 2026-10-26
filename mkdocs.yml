@@ -139,6 +139,7 @@ nav:
       - Kubernetes / k3s: devices/kubernetes.md
       - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
+      - Windows without an agent (WinRM): devices/winrm.md
       - Kopia (beta): devices/kopia.md
       - Duplicati (beta): devices/duplicati.md
       - Tailscale: devices/tailscale.md

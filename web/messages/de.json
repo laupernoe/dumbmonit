@@ -3759,6 +3759,7 @@
 	"kinds_label_webchange": "Website-Änderungen",
 	"kinds_label_website": "Website-Zustand und SEO",
 	"kinds_label_websocket": "WebSocket-Endpunkt",
+	"kinds_label_winrm": "Windows (WinRM, ohne Agent)",
 	"livemap_blocked": "Blockiert",
 	"livemap_blocked_count": "{count} blockiert",
 	"livemap_country_counts": "{blocked} blockiert · {passed} durchgelassen",
