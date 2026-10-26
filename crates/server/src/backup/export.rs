@@ -205,6 +205,7 @@ async fn targets(
     .fetch_all(pool)
     .await
     .context("lecture des équipements")?;
+    let mut multisite = crate::db::multisite::all(pool).await?;
 
     let mut out = Vec::with_capacity(rows.len());
     for row in &rows {
@@ -240,6 +241,11 @@ async fn targets(
             group_name: row.try_get("group_name")?,
             position: row.try_get("position")?,
             location: row.try_get("location")?,
+            multisite: multisite.remove(&id).map(|config| BundleMultisite {
+                server: config.server,
+                agents: config.agents.iter().filter_map(|a| refs.get(a).cloned()).collect(),
+                quorum: config.quorum,
+            }),
         });
     }
     Ok(out)

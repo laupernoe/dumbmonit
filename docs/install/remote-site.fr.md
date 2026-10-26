@@ -144,6 +144,10 @@ plus du parent que vous avez pu régler) : quand le relais lui-même est
 sort — pour le relais. Le parent que vous avez réglé explicitement garde
 son rôle et gagne quand les deux sont en panne.
 
+## Sonder depuis le serveur et plusieurs relais
+
+Un moniteur n'a pas à choisir entre le serveur et un relais : il peut être sondé depuis les deux, ou depuis plusieurs relais, avec un quorum et un tour de confirmation avant toute alerte. Voir [Sonder depuis plusieurs emplacements](../devices/services.fr.md#sonder-depuis-plusieurs-emplacements).
+
 ## Limites
 
 - Un relais par surveillance. Une surveillance sondée par le relais n'est pas aussi
