@@ -44,6 +44,44 @@ de même durée juste avant.
 
 Cliquez sur le **i** à côté du titre de section pour un rappel du contenu.
 
+## Rapports SLA {#sla}
+
+Un calendrier de type **Rapport SLA** est le rapport mensuel de disponibilité
+que l'on remet à un client ou à un auditeur. Il couvre le **mois civil
+précédent** (du 1er à minuit au 1er suivant à minuit, dans le fuseau du
+calendrier) : il est donc toujours mensuel. Le courriel part le jour du mois
+choisi, avec :
+
+- le **PDF** : le nom de l'organisation (le titre d'une page de statut que vous
+  choisissez, sinon DumbMonit), la période, la disponibilité, les incidents et
+  l'indisponibilité totale, la disponibilité par groupe et par moniteur avec le
+  **temps de réponse moyen et au 95e centile** de chaque sonde, et chaque
+  incident ;
+- deux **fichiers CSV** : les moniteurs (`availability-2026-10-monitors.csv`) et
+  les incidents (`availability-2026-10-incidents.csv`), en UTF-8 avec une marque
+  d'ordre des octets pour Excel. Une cellule qui commence par `=`, `+`, `-` ou `@`
+  reçoit une apostrophe, pour qu'un nom de moniteur ne devienne pas une formule
+  de tableur.
+
+Les deux pièces jointes se désactivent séparément. Avec un **objectif de
+disponibilité** (par exemple 99,9), chaque moniteur est marqué **Tenu** ou
+**Manqué** (Met / Missed dans le rapport) et le rapport dit combien l'ont tenu ;
+sans objectif, les mots habituels sont utilisés (Healthy, Degraded, Poor). Le
+rapport est en anglais ; les chiffres sont ceux des pages de statut.
+
+Le PDF est écrit par DumbMonit lui-même, avec les polices standard Helvetica et
+sans bibliothèque : A4, texte et tableaux, un pied de page avec la date de
+génération et le numéro de page. Le logo d'une page de statut n'est pas
+incorporé ; son nom coiffe le rapport.
+
+### Télécharger une période
+
+Sous les calendriers, **Rapport de disponibilité (SLA)** construit le même
+rapport à la demande, pour toute période d'un an au plus (les deux jours inclus,
+dans le fuseau choisi, jusqu'à maintenant si elle n'est pas terminée). Choisissez
+le PDF, le CSV des moniteurs ou le CSV des incidents. Le défaut est le mois civil
+précédent. Réservé aux administrateurs.
+
 ## Envoyer un aperçu
 
 **Envoyer un aperçu** adresse le rapport actuel aux destinataires enregistrés

@@ -5,7 +5,7 @@
 
 use std::str::FromStr;
 
-use chrono::{DateTime, Datelike, Duration, NaiveDate, TimeDelta, TimeZone, Utc};
+use chrono::{DateTime, Datelike, Duration, Months, NaiveDate, TimeDelta, TimeZone, Utc};
 use chrono_tz::Tz;
 
 /// Un créneau manqué de plus de trois heures n'est pas envoyé après coup : un
@@ -66,6 +66,33 @@ impl Period {
     pub fn span(&self) -> TimeDelta {
         self.end - self.start
     }
+
+    /// Une période libre `[start, end)`; la période de comparaison est la
+    /// fenêtre de même durée qui la précède.
+    pub fn custom(start: DateTime<Utc>, end: DateTime<Utc>) -> Self {
+        Self { start, end, previous_start: start - (end - start) }
+    }
+
+    /// Le mois civil entier qui précède `now`, dans le fuseau `tz` : du 1er à
+    /// 00:00 local au 1er suivant à 00:00 local.
+    pub fn previous_calendar_month(now: DateTime<Utc>, tz: Tz) -> Option<Self> {
+        let today = now.with_timezone(&tz).date_naive();
+        let first_this = today.with_day(1)?;
+        let first_prev = first_this.checked_sub_months(Months::new(1))?;
+        Some(Self::custom(local_midnight(first_prev, tz)?, local_midnight(first_this, tz)?))
+    }
+}
+
+/// Minuit local de `date`, en UTC. Dans un trou de changement d'heure, la
+/// première heure qui existe.
+pub fn local_midnight(date: NaiveDate, tz: Tz) -> Option<DateTime<Utc>> {
+    for hour in 0..3 {
+        let naive = date.and_hms_opt(hour, 0, 0)?;
+        if let Some(local) = tz.from_local_datetime(&naive).earliest() {
+            return Some(local.with_timezone(&Utc));
+        }
+    }
+    None
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -173,6 +200,37 @@ mod tests {
         assert_eq!(weekly.previous_start, at("2026-09-28T08:00:00Z"));
         assert_eq!(Period::ending_at(end, Frequency::Daily).span(), Duration::days(1));
         assert_eq!(Period::ending_at(end, Frequency::Monthly).span(), Duration::days(30));
+    }
+
+    #[test]
+    fn le_mois_civil_precedent_va_du_premier_au_premier() {
+        let period = Period::previous_calendar_month(at("2026-11-03T08:00:00Z"), Tz::UTC).unwrap();
+        assert_eq!(period.start, at("2026-10-01T00:00:00Z"));
+        assert_eq!(period.end, at("2026-11-01T00:00:00Z"));
+        // Janvier : le mois précédent est décembre de l'année d'avant.
+        let january = Period::previous_calendar_month(at("2027-01-15T12:00:00Z"), Tz::UTC).unwrap();
+        assert_eq!(january.start, at("2026-12-01T00:00:00Z"));
+        assert_eq!(january.span(), Duration::days(31));
+        // Février 2027 : 28 jours, la comparaison remonte d'autant.
+        let feb = Period::previous_calendar_month(at("2027-03-02T00:00:00Z"), Tz::UTC).unwrap();
+        assert_eq!(feb.span(), Duration::days(28));
+        assert_eq!(feb.previous_start, at("2027-01-04T00:00:00Z"));
+    }
+
+    #[test]
+    fn le_mois_civil_suit_le_fuseau() {
+        // À Paris (UTC+1 en novembre), le 1er novembre à minuit local est 23:00 UTC la veille.
+        let paris = parse_timezone("Europe/Paris").unwrap();
+        let period = Period::previous_calendar_month(at("2026-11-03T08:00:00Z"), paris).unwrap();
+        assert_eq!(period.end, at("2026-10-31T23:00:00Z"));
+        // Octobre 2026 : passage à l'heure d'hiver le 25, 31 jours de 24 h + 1 h.
+        assert_eq!(period.span(), Duration::days(31) + Duration::hours(1));
+    }
+
+    #[test]
+    fn une_periode_libre_compare_avec_la_fenetre_precedente() {
+        let period = Period::custom(at("2026-10-10T00:00:00Z"), at("2026-10-20T00:00:00Z"));
+        assert_eq!(period.previous_start, at("2026-09-30T00:00:00Z"));
     }
 
     #[test]

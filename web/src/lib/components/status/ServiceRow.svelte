@@ -49,6 +49,9 @@
 		<div class="flex items-center gap-3">
 			<Plate tone={state.tone} label={state.label} pulse={item.state === 'down'} />
 			<span class="min-w-0 flex-1 truncate font-semibold text-ink">{item.label}</span>
+			{#if item.external}
+				<span class="shrink-0 rounded-full border border-line px-2 py-0.5 text-[0.6875rem] font-semibold text-ink-2" title={m.status_service_external_hint()}>{m.status_service_external()}</span>
+			{/if}
 			<span class="tnum shrink-0 text-sm text-ink-2" title={m.status_service_row_uptime_over({ days })}>
 				{formatPercent(item.uptime_history)}
 			</span>
@@ -64,6 +67,9 @@
 		<div class="flex min-w-0 items-center gap-3">
 			<Plate tone={state.tone} label={state.label} pulse={item.state === 'down'} />
 			<span class="truncate font-semibold text-ink">{item.label}</span>
+			{#if item.external}
+				<span class="shrink-0 rounded-full border border-line px-2 py-0.5 text-[0.6875rem] font-semibold text-ink-2" title={m.status_service_external_hint()}>{m.status_service_external()}</span>
+			{/if}
 		</div>
 		{#if item.latency_ms !== null}
 			<span class="text-sm text-ink-2">{m.status_service_row_response({ time: formatLatencyMs(item.latency_ms) })}</span>

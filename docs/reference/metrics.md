@@ -78,6 +78,16 @@ under `/data/vm`, in the `dumbmonit-data` volume. The server batches its
 writes and flushes them every 5 seconds (`DUMBMONIT_FLUSH_INTERVAL_SECS`).
 Deleting a monitor does not delete its series; they age out.
 
+Raw retention is also set in **Settings → System → Data & retention**. Beyond
+it, the server keeps **5-minute aggregates** for 730 days by default in a second
+VictoriaMetrics (`/data/vm-long`): the average under the original metric name,
+the minimum and maximum as `<name>:5m_min` and `<name>:5m_max`, and the sum and
+count of availability metrics as `<name>:5m_sum` and `<name>:5m_count`
+(counters keep their last value of each window). A query whose range goes past
+the raw retention is answered from them automatically, at 5-minute resolution.
+See [Sizing](sizing.md) and the
+[configuration reference](configuration.md#long-term-history).
+
 Alert history is kept 90 days and the baselines of series that disappeared for
 60 days, both in SQLite (see the [configuration reference](configuration.md)).
 
