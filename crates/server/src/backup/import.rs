@@ -1193,6 +1193,41 @@ async fn restore_status_pages(
             }
         }
 
+        // Canaux d'abonnement : un canal de notification désigné par son nom
+        // qui n'existe pas ici laisse le réglage tel qu'il est.
+        if let Some(subscriptions) = &page.subscriptions {
+            let channels = channel_ids(tx).await?;
+            let named =
+                |name: &Option<String>| name.as_ref().and_then(|n| channels.get(n).copied());
+            let email = named(&subscriptions.email_channel);
+            let sms = named(&subscriptions.sms_channel);
+            for (wanted, got, label) in [
+                (&subscriptions.email_channel, email, "email"),
+                (&subscriptions.sms_channel, sms, "SMS"),
+            ] {
+                if wanted.is_some() && got.is_none() {
+                    report.notes.push(format!(
+                        "Status page \"{}\": the {label} subscription channel is not on this instance",
+                        page.slug
+                    ));
+                }
+            }
+            sqlx::query(
+                "UPDATE status_pages SET subscribe_webhook = ?, subscribe_slack = ?,
+                     subscribe_channel_id = COALESCE(?, subscribe_channel_id),
+                     subscribe_sms_channel_id = COALESCE(?, subscribe_sms_channel_id)
+                 WHERE id = ?",
+            )
+            .bind(i64::from(subscriptions.webhook))
+            .bind(i64::from(subscriptions.slack))
+            .bind(email)
+            .bind(sms)
+            .bind(id)
+            .execute(&mut **tx)
+            .await
+            .context("canaux d'abonnement de la page de statut")?;
+        }
+
         // Dossiers cochés : ajoutés ou remis à leur rang, jamais retirés.
         for (position, name) in page.groups.iter().enumerate() {
             let name = name.trim();

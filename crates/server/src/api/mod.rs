@@ -54,6 +54,7 @@ mod seo_files;
 mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
+pub use status_pages::delivery::spawn as spawn_status_deliveries;
 mod storage;
 mod summary;
 mod synology;
