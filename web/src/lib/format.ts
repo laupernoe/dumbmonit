@@ -179,6 +179,11 @@ const FAILURE_REASON_LABEL: Record<string, () => string> = {
 	protocol: () => m.misc_reason_protocol(),
 	query: () => m.misc_reason_query(),
 	payload: () => m.misc_reason_payload(),
+	host_key: () => m.misc_reason_host_key(),
+	threshold: () => m.misc_reason_threshold(),
+	not_found: () => m.misc_reason_not_found(),
+	bad_secret: () => m.misc_reason_bad_secret(),
+	unhealthy: () => m.misc_reason_unhealthy(),
 	missed: () => m.misc_reason_missed(),
 	reported_down: () => m.misc_reason_reported_down()
 };
