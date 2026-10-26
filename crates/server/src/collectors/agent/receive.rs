@@ -193,6 +193,8 @@ pub async fn ingest(
         relay: store::relay_setting(pool, target.id).await?,
         // Posée par la route, qui connaît les binaires livrés : `selfupdate`.
         agent_update: None,
+        // La collecte de journaux réglée dans l'interface (désactivée par défaut).
+        logs: Some(super::logs::setting(pool, target.id).await?),
     })
 }
 

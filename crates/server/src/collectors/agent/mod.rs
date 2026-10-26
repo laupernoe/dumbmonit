@@ -19,6 +19,7 @@
 //! à l'interface de traiter les deux mondes sans distinction.
 
 pub mod commands;
+pub mod logs;
 pub mod modules;
 pub mod policy;
 mod receive;

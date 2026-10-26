@@ -356,7 +356,7 @@ export type AlertPhase = 'ok' | 'pending' | 'firing' | 'resolved';
 export type AlertEffectivePhase = AlertPhase | 'suppressed';
 
 /** How a rule watches its metric. */
-export type RuleKind = 'threshold' | 'anomaly' | 'predict';
+export type RuleKind = 'threshold' | 'anomaly' | 'predict' | 'log_pattern';
 
 /** Comparison operator of a threshold rule. */
 export type RuleOperator = '>' | '>=' | '<' | '<=';
@@ -367,13 +367,17 @@ export type TargetSelector =
 	| { kind: 'ids'; ids: TargetId[] }
 	| { kind: 'labels'; labels: Record<string, string> };
 
-/** Anomaly-detection settings; only exposed for `kind === 'anomaly'` rules. */
+/** Anomaly-detection settings (`anomaly` rules) and log-pattern settings (`log_pattern` rules). */
 export interface AnomalyParams {
 	k: number;
 	alpha: number;
 	mad_floor_abs: number;
 	mad_floor_rel: number;
 	min_samples: number;
+	/** `log_pattern`: counting window, in seconds (60…86400). */
+	log_window_secs: number;
+	/** `log_pattern`: one alert per device (true) or a single one. */
+	log_per_target: boolean;
 }
 
 /**
@@ -5220,8 +5224,13 @@ export interface LogSearchEntry {
 	time: string;
 	level: string;
 	message: string;
+	/** Stream: `dumbmonit` (the server), `agent`, `syslog` or `trap`. */
 	source: string;
 	host: string | null;
+	/** Unit, file, channel or sender address. */
+	origin: string | null;
+	/** Device the sender is attached to, when its address matches one. */
+	target_name: string | null;
 	fields: Record<string, string>;
 }
 
@@ -5237,5 +5246,48 @@ export interface LogSearchParams {
 	end?: number;
 	level?: 'error' | 'warn' | 'info' | 'debug';
 	limit?: number;
-	source?: 'server';
+	source?: LogSource;
+	/** Device id: its agent, syslog and trap lines only. */
+	target?: number;
+}
+
+export type LogSource = 'server' | 'agent' | 'syslog' | 'trap' | 'all';
+
+/** Log collection of one agent (`/api/logs/agents/{id}`). */
+export interface AgentLogsSetting {
+	enabled: boolean;
+	min_level: 'error' | 'warn' | 'info' | 'debug';
+	journald: boolean;
+	/** Followed files, absolute paths with `*` and `?` wildcards. */
+	files: string[];
+	/** Windows event log channels. */
+	eventlog: string[];
+}
+
+export interface AgentLogs extends AgentLogsSetting {
+	/** UTC without suffix. */
+	last_received_at: string | null;
+	received_total: number;
+	/** False when the embedded log store is off: received lines are lost. */
+	store_running: boolean;
+}
+
+/** State of one receiver (syslog or SNMP traps). */
+export interface LogInput {
+	enabled: boolean;
+	listening: string[];
+	received: number;
+	rejected: number;
+	/** Messages from a sender no device carries. */
+	unmatched: number;
+	last_at: string | null;
+	error: string | null;
+}
+
+export interface LogInputs {
+	store_running: boolean;
+	syslog: LogInput;
+	traps: LogInput;
+	written: number;
+	dropped: number;
 }

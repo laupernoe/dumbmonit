@@ -17,13 +17,17 @@
 //! Les entrées du journal d'audit (`auth::audit`) passent par le même chemin
 //! sous la cible [`AUDIT_TARGET`], et sont marquées `"kind":"audit"`.
 
+pub mod attach;
 pub mod catalog;
+pub mod central;
 pub mod export;
 pub mod files;
 pub mod scrub;
 pub mod ship;
 pub mod sinks;
 pub mod store;
+pub mod syslog;
+pub mod traps;
 
 use std::cell::Cell;
 use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};

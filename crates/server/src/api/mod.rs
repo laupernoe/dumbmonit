@@ -2,6 +2,7 @@ mod activedirectory;
 mod ad_deploy;
 mod agent_commands;
 pub(crate) mod agent_files;
+mod agent_logs;
 mod agent_tls;
 mod agent_updates;
 mod alert_actions;
@@ -109,6 +110,8 @@ pub fn agent_routes(state: &AppState) -> Router<AppState> {
         .route("/ingest", post(ingest::receive))
         // Canal de commandes des agents : même jeton, même raison d'être ouvert.
         .merge(agent_commands::agent_routes())
+        // Lignes de journal collectées par les agents : même jeton, même canal.
+        .merge(agent_logs::agent_routes())
         // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
         // compte rendu peut peser autant qu'un lot de mesures.
         .merge(relay::agent_routes())
@@ -222,6 +225,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/tokens/{id}", delete(tokens::revoke))
         // Actions sur les conteneurs d'une machine (`agent_commands.rs`).
         .merge(agent_commands::ui_routes())
+        // Collecte de journaux d'une machine et état des entrées (`agent_logs.rs`).
+        .merge(agent_logs::ui_routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).

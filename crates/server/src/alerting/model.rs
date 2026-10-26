@@ -86,6 +86,11 @@ pub enum RuleKind {
     Anomaly,
     /// Extrapolation `predict_linear()`, entièrement calculée par VictoriaMetrics.
     Predict,
+    /// Nombre de lignes de journal qui répondent à une requête LogsQL, sur une
+    /// fenêtre glissante (`params.log_window_secs`), comparé à un seuil. Évaluée
+    /// par VictoriaLogs, par cible ou en global.
+    #[serde(rename = "log_pattern")]
+    LogPattern,
 }
 
 impl RuleKind {
@@ -94,6 +99,7 @@ impl RuleKind {
             Self::Threshold => "threshold",
             Self::Anomaly => "anomaly",
             Self::Predict => "predict",
+            Self::LogPattern => "log_pattern",
         }
     }
 
@@ -101,6 +107,7 @@ impl RuleKind {
         match raw {
             "anomaly" => Self::Anomaly,
             "predict" => Self::Predict,
+            "log_pattern" => Self::LogPattern,
             _ => Self::Threshold,
         }
     }
@@ -229,11 +236,40 @@ pub struct AnomalyParams {
     pub mad_floor_rel: f64,
     /// Nombre minimal d'observations dans le seau avant de scorer.
     pub min_samples: u32,
+    /// Règle « motif de journal » : fenêtre de comptage, en secondes.
+    #[serde(default = "default_log_window")]
+    pub log_window_secs: u64,
+    /// Règle « motif de journal » : une alerte par cible (`true`) ou une seule
+    /// pour l'ensemble.
+    #[serde(default = "default_log_per_target")]
+    pub log_per_target: bool,
+}
+
+/// Fenêtre par défaut d'une règle « motif de journal » : cinq minutes.
+pub const DEFAULT_LOG_WINDOW_SECS: u64 = 300;
+/// Bornes de la fenêtre d'une règle « motif de journal ».
+pub const MIN_LOG_WINDOW_SECS: u64 = 60;
+pub const MAX_LOG_WINDOW_SECS: u64 = 86_400;
+
+fn default_log_window() -> u64 {
+    DEFAULT_LOG_WINDOW_SECS
+}
+
+fn default_log_per_target() -> bool {
+    true
 }
 
 impl Default for AnomalyParams {
     fn default() -> Self {
-        Self { k: 3.5, alpha: 0.05, mad_floor_abs: 1e-6, mad_floor_rel: 0.01, min_samples: 3 }
+        Self {
+            k: 3.5,
+            alpha: 0.05,
+            mad_floor_abs: 1e-6,
+            mad_floor_rel: 0.01,
+            min_samples: 3,
+            log_window_secs: DEFAULT_LOG_WINDOW_SECS,
+            log_per_target: true,
+        }
     }
 }
 

@@ -99,7 +99,7 @@
 		confetti,
 		type Tone
 	} from '#lib/ui/index.js';
-	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, Search, ServerOff } from 'lucide-svelte';
+	import { Activity, ArrowUpRight, ChevronDown, EllipsisVertical, ExternalLink, Pencil, ScrollText, Search, ServerOff } from 'lucide-svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 
 	const id = $derived(Number(page.params.id));
@@ -679,6 +679,10 @@
 							<Pencil class="size-4" aria-hidden="true" />
 							{m.devices_target_edit()}
 						</Button>
+						<Button variant="secondary" href={`/logs?target=${target.id}`}>
+							<ScrollText class="size-4" aria-hidden="true" />
+							{m.devices_target_logs()}
+						</Button>
 					</div>
 					<!-- Rare and heavier actions: switching the monitor off, deleting it. -->
 					<Menu label={m.devices_target_more_actions()} align={actionsAtEnd ? 'right' : 'left'}>
@@ -700,6 +704,10 @@
 								<Button variant="ghost" href={`/targets/${id}/edit`} class="justify-start">
 									<Pencil class="size-4" aria-hidden="true" />
 									{m.devices_target_edit()}
+								</Button>
+								<Button variant="ghost" href={`/logs?target=${id}`} class="justify-start">
+									<ScrollText class="size-4" aria-hidden="true" />
+									{m.devices_target_logs()}
 								</Button>
 								{#if target?.enabled}<SilenceControl {target} {refreshKey} />{/if}
 							</div>

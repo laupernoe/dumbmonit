@@ -16,6 +16,7 @@ use tracing::{debug, info, warn};
 
 use crate::alerting::baseline;
 use crate::alerting::cycle::{self, CycleInput, RuleObservations};
+use crate::alerting::log_source;
 use crate::alerting::notify_policy::{self, Outgoing, Recipient};
 use crate::alerting::source::MetricSource;
 use crate::crypto::Cipher;
@@ -126,7 +127,11 @@ async fn run(state: AppState, config: AlertingConfig) {
         let now = Utc::now();
 
         let started = std::time::Instant::now();
-        let outcome = evaluate_once(&state.pool, &state.cipher, &state.victoria, &http, now).await;
+        // Les règles « motif de journal » interrogent VictoriaLogs ; son adresse
+        // n'existe que tant que le magasin embarqué tourne.
+        let source =
+            log_source::EngineSource::new(&state.victoria, crate::storage::logs_url(&state).await);
+        let outcome = evaluate_once(&state.pool, &state.cipher, &source, &http, now).await;
         // Le cycle est publié sur `/metrics` même quand il échoue : sa durée et
         // le nombre de règles en échec sont précisément ce qu'on veut voir alors.
         let (evaluated, failed) = match &outcome {
@@ -252,7 +257,14 @@ pub async fn evaluate_once(
     // sérialiser garantit qu'on ne submerge jamais VictoriaMetrics au démarrage,
     // quand toutes les règles sont évaluées pour la première fois.
     for rule in rules {
-        let series = match source.instant(&rule.query).await {
+        let fetched = if rule.kind == crate::alerting::model::RuleKind::LogPattern {
+            source
+                .log_matches(&rule.query, rule.params.log_window_secs, rule.params.log_per_target)
+                .await
+        } else {
+            source.instant(&rule.query).await
+        };
+        let series = match fetched {
             Ok(series) => {
                 report.rules_evaluated += 1;
                 Some(series)
