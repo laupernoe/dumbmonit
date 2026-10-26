@@ -5,6 +5,38 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **More service checks, scheduled jobs, Windows events and network inventory.**
+  - Seven new service checks, each with its own form: **UDP** (send a datagram,
+    optionally expect a reply), **SSH** (banner and version; an expected host key
+    fingerprint fails the check when the key changes), **IMAP** and **POP3** (TLS,
+    STARTTLS or none, greeting, optional login sent only over a trusted TLS
+    session), **gRPC** (standard `grpc.health.v1` health check, TLS or h2c),
+    **RADIUS** (Access-Request with a shared secret and a test account; Accept
+    expected, a wrong secret is reported as such) and **SNMP value** (one OID,
+    v2c or v3, with a range or an expected text). New failure reasons:
+    `host_key`, `threshold`, `not_found`, `bad_secret`, `unhealthy`.
+  - **HTTP response time breakdown**: DNS, connection, TLS, server processing and
+    transfer are recorded as `dumbmonit_probe_http_phase_seconds{phase}` and shown
+    stacked on the monitor page, with the split of the latest check.
+  - **Cron job tracking** for heartbeat monitors: `/start`, `/success`, `/fail`
+    and `/<exit code>` endpoints, the command output in the request body (last
+    10 KB kept), the run duration, an expected schedule as a cron expression with
+    a time zone and a grace period, and three built-in rules: missed, failed
+    (with the exit code and the output) and running too long. The monitor page
+    lists the runs; the docs give a shell wrapper with curl.
+  - **Windows event log alerts**: rules per agent (log, source, event IDs,
+    level, text or regex) are sent to Windows agents, which read the event log,
+    rate-limit what matches and report it; three built-in rules raise an alert
+    with the event's message. No rule is active by default; common examples
+    (4625, 41 Kernel-Power, 7034…) are offered.
+  - **New device and new port alerts**: scheduled network scans per subnet, run
+    by the server or a relay agent, keep an inventory of devices (MAC, IP) and
+    open ports. The first scan learns silently; later ones flag what is new until
+    it is marked as known. The two built-in rules are off by default, at info
+    severity.
+
 ## 0.13.6 — 2026-10-25
 
 ### Added
