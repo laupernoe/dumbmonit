@@ -1,0 +1,19 @@
+{
+  "Metrics": [
+    {
+      "Dimensions": [{ "Name": "DBInstanceIdentifier", "Value": "prod-db" }],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/RDS"
+    },
+    {
+      "Dimensions": [{ "Name": "DBClusterIdentifier", "Value": "prod-cluster" }],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/RDS"
+    },
+    {
+      "Dimensions": [{ "Name": "EngineName", "Value": "postgres" }],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/RDS"
+    }
+  ]
+}

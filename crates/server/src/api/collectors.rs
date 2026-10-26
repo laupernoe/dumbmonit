@@ -105,6 +105,8 @@ macro_rules! to_server {
     };
 }
 
+mod cloud;
+
 impl PortView {
     fn description(&self) -> PortDescription {
         PortDescription {
@@ -5852,7 +5854,7 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: OPENVPN_OPTIONS,
         },
-        _ => return None,
+        _ => return cloud::view(kind),
     })
 }
 
@@ -5884,7 +5886,10 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
+        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website"
+        | "m365" | "entra" | "azure" | "aws" | "cloudflare" | "hetzner" | "ovh" | "infomaniak" => {
+            kind
+        }
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -6030,6 +6035,14 @@ mod tests {
         "unraid",
         "veeam",
         "tailscale",
+        "m365",
+        "entra",
+        "azure",
+        "aws",
+        "cloudflare",
+        "hetzner",
+        "ovh",
+        "infomaniak",
         "fortigate",
         "sophos",
         "openvpn",

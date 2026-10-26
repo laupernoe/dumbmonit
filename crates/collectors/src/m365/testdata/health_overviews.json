@@ -1,0 +1,9 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#admin/serviceAnnouncement/healthOverviews",
+  "value": [
+    { "id": "Exchange", "service": "Exchange Online", "status": "serviceDegradation" },
+    { "id": "MicrosoftTeams", "service": "Microsoft Teams", "status": "serviceOperational" },
+    { "id": "SharePoint", "service": "SharePoint Online", "status": "serviceOperational" },
+    { "id": "OrgLiveID", "service": "Microsoft Entra", "status": "serviceRestored" }
+  ]
+}

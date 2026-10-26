@@ -1,0 +1,91 @@
+//! Notice de cloudflare (générée à partir de la spécification du produit).
+
+use super::super::*;
+
+pub(super) fn view() -> CollectorView {
+    CollectorView {
+        kind: "cloudflare",
+        label: "Cloudflare",
+        summary: "Zones, tunnels, certificates, traffic errors and load balancer pools of a Cloudflare account, read through the Cloudflare API.",
+        examples: &["Cloudflare zones and tunnels"],
+        credential_types: &["api_token"],
+        credentials: &[CredentialView {
+            kind: "api_token",
+            label: "API token",
+            help: "A Cloudflare API token with read-only permissions.",
+            fields: &[CredentialField {
+                key: "token",
+                label: "API token",
+                help: "The token created in the dashboard, shown once.",
+                placeholder: "",
+                input: "password",
+                choices: &[],
+                required: true,
+            }],
+        }],
+        address_hint: "api.cloudflare.com",
+        default_port: 443,
+        setup: Setup {
+            title: "Create a read-only API token for DumbMonit",
+            steps: &[
+                "In the Cloudflare dashboard, open My Profile > API Tokens > Create Token > Create Custom Token, and name it DumbMonit.",
+                "Add the read-only permissions listed below, and nothing else. The first one is required; the others switch on one part each.",
+                "Under Account Resources and Zone Resources, choose the account and the zones to monitor (All zones is fine).",
+                "Click Continue to summary > Create Token, then copy the token: it is shown once.",
+                "In DumbMonit, use this address and paste the token as API token. Leave Account ID empty unless the token covers several accounts.\napi.cloudflare.com",
+            ],
+            ports: &[to_device!(443, "tcp", "Cloudflare API (HTTPS, api.cloudflare.com)")],
+            permissions: &[
+                "Zone > Zone > Read\nLists the zones and their status; required.",
+                "Zone > SSL and Certificates > Read\nReads the expiry date of the certificates of each zone.",
+                "Zone > Analytics > Read\nReads the requests and 5xx responses of each zone.",
+                "Zone > Load Balancers > Read\nLists the load balancers of each zone.",
+                "Account > Cloudflare Tunnel > Read\nReads the status of the tunnels.",
+                "Account > Account Settings > Read\nFinds the account of the tunnels; not needed if the Account ID option is filled.",
+                "Account > Load Balancing: Monitors And Pools > Read\nReads the health of the load balancer pools.",
+            ],
+            warning: "A part whose permission is missing (or that the plan does not include) is skipped and its readable metric is 0; it does not make the monitor fail. Only the zones the token can see are watched.",
+        },
+        options: &[
+            OptionView {
+                key: "account_id",
+                label: "Account ID",
+                help: "The Cloudflare account of the tunnels and load balancer pools. Empty: read from the token (up to 5 accounts).",
+                placeholder: "01a7362d577a6c3019a474fd6f485823",
+                default: "",
+                required: false,
+                input: "text",
+                choices: &[],
+                group: "",
+                items: no_items,
+                columns: no_columns,
+            },
+            OptionView {
+                key: "analytics",
+                label: "Read traffic",
+                help: "Read requests and 5xx responses of each zone (one GraphQL call per 10 zones). Turn off to save API calls.",
+                placeholder: "",
+                default: "true",
+                required: false,
+                input: "boolean",
+                choices: &[],
+                group: "",
+                items: no_items,
+                columns: no_columns,
+            },
+            OptionView {
+                key: "request_timeout_seconds",
+                label: "Timeout per request (seconds)",
+                help: "Time allowed for each call, from 1 to 120.",
+                placeholder: "15",
+                default: "15",
+                required: false,
+                input: "number",
+                choices: &[],
+                group: "",
+                items: no_items,
+                columns: no_columns,
+            },
+        ],
+    }
+}

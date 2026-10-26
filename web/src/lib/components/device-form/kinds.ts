@@ -71,7 +71,10 @@ import {
 	FileDiff,
 	PanelsTopLeft,
 	MailX,
-	ListX
+	ListX,
+	CloudCog,
+	KeyRound,
+	GlobeLock
 } from 'lucide-svelte';
 import type { CollectorInfo } from '#lib/api/index.js';
 import { isPackKind } from '#lib/api/packs.js';
@@ -143,6 +146,14 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	unraid: HardDrive,
 	veeam: CloudBackup,
 	tailscale: Network,
+	m365: Mail,
+	entra: KeyRound,
+	azure: CloudCog,
+	aws: CloudCog,
+	cloudflare: GlobeLock,
+	hetzner: Server,
+	ovh: Server,
+	infomaniak: Cloud,
 	fortigate: BrickWallShield,
 	sophos: ShieldCheck,
 	website: PanelsTopLeft,
@@ -154,7 +165,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'm365', 'entra', 'azure', 'aws', 'cloudflare', 'hetzner', 'ovh', 'infomaniak'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -221,6 +232,14 @@ const KIND_KEYWORDS: Record<string, string> = {
 	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
 	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',
 	tailscale: 'vpn wireguard mesh tailnet headscale subnet router exit node zero trust remote access',
+	m365: 'microsoft office 365 microsoft365 graph exchange online teams sharepoint onedrive licenses licences service health incident risky users saas',
+	entra: 'azure ad active directory microsoft entra id app registration secret certificate expiry mfa ad connect sync hybrid identity',
+	azure: 'microsoft azure monitor resource health vm virtual machine subscription service principal alerts cloud',
+	aws: 'amazon web services cloudwatch ec2 rds alarms status check sigv4 iam cloud',
+	cloudflare: 'cdn dns zone tunnel cloudflared certificate waf load balancer analytics 5xx zero trust',
+	hetzner: 'hetzner cloud vps server volume backup snapshot cpu cloud hosting',
+	ovh: 'ovhcloud ovh vps dedicated server bare metal maintenance incident cloud hosting',
+	infomaniak: 'infomaniak swiss hosting web mail kdrive product domain expiry cloud',
 	fortigate: 'fortinet fortios firewall utm ngfw ipsec vpn sd-wan ha cluster fortiguard',
 	sophos: 'sophos xg xgs sfos firewall utm ipsec vpn',
 	agent: 'linux windows macos mac freebsd raspberry pi server pc desktop laptop vm cpu memory ram disk network install',

@@ -1,0 +1,35 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#Collection(microsoft.graph.userRegistrationDetails)",
+  "value": [
+    {
+      "id": "11111111-2222-3333-4444-000000000001",
+      "userPrincipalName": "alice@contoso.com",
+      "userDisplayName": "Alice",
+      "isAdmin": true,
+      "isMfaRegistered": true,
+      "isMfaCapable": true,
+      "isSsprRegistered": true,
+      "methodsRegistered": ["microsoftAuthenticatorPush", "mobilePhone"]
+    },
+    {
+      "id": "11111111-2222-3333-4444-000000000002",
+      "userPrincipalName": "bob@contoso.com",
+      "userDisplayName": "Bob",
+      "isAdmin": true,
+      "isMfaRegistered": false,
+      "isMfaCapable": false,
+      "isSsprRegistered": false,
+      "methodsRegistered": []
+    },
+    {
+      "id": "11111111-2222-3333-4444-000000000003",
+      "userPrincipalName": "breakglass@contoso.onmicrosoft.com",
+      "userDisplayName": "Break glass",
+      "isAdmin": true,
+      "isMfaRegistered": false,
+      "isMfaCapable": false,
+      "isSsprRegistered": false,
+      "methodsRegistered": []
+    }
+  ]
+}

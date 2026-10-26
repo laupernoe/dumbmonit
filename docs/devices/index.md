@@ -52,6 +52,14 @@ form always matches what this version can monitor.
 | [Active Directory](activedirectory.md) | `activedirectory` | username/password (plain domain user) | Windows domain over LDAPS: domain controllers and FSMO roles, privileged group members, password policy, security findings |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | username/password (Veeam Backup Viewer) | Backup server: failed jobs, failed sessions, repositories filling up, license |
 | [Tailscale](tailscale.md) | `tailscale` | OAuth client (devices:core:read) or API access token | Tailnet: servers offline, node keys expiring, devices awaiting approval |
+| [Microsoft 365](m365.md) | `m365` | Entra application (client ID and secret) | Service health, incidents, licenses, risky users |
+| [Microsoft Entra ID](entra.md) | `entra` | Entra application (client ID and secret) | Application secret expiry, directory sync, admin MFA |
+| [Microsoft Azure](azure.md) | `azure` | Entra application (client ID and secret) with the Reader role on the subscription | Resource Health of every resource and active Azure Monitor alerts by severity |
+| [AWS (CloudWatch)](aws.md) | `aws` | Access key ID and secret (read-only IAM user, optional role) | CloudWatch alarms in ALARM, EC2 status checks and CPU, RDS CPU and free storage |
+| [Cloudflare](cloudflare.md) | `cloudflare` | API token (read-only) | Zones, tunnels, certificates, 5xx errors, load balancer pools |
+| [Hetzner Cloud](hetzner.md) | `hetzner` | API token (read-only) | Servers, CPU, volumes, backups |
+| [OVHcloud](ovh.md) | `ovh` | OVHcloud API token (application key, application secret and consumer key) with GET /vps* and GET /dedicated/server* | State and running tasks of the VPS and dedicated servers |
+| [Infomaniak](infomaniak.md) | `infomaniak` | Infomaniak API token with the Products scope | Expiry dates, locks and maintenance of domains, hosting and other products |
 | [Nextcloud](nextcloud.md) | `nextcloud` | monitoring token (NC-Token) | File sync: maintenance mode, pending upgrade, updates, active users, OPcache |
 | [Immich](immich.md) | `immich` | API key | Photo library: job queues, updates, disk, photo counts |
 | [Paperless-ngx](paperless.md) | `paperless` | API token or username/password | Documents: Redis, Celery, index, failed imports, updates |

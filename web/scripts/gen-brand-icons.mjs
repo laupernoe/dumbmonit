@@ -54,6 +54,10 @@ const KINDS = {
 	veeam: 'veeam',
 	tailscale: 'tailscale',
 	fortigate: 'fortinet',
+	cloudflare: 'cloudflare',
+	hetzner: 'hetzner',
+	ovh: 'ovh',
+	infomaniak: 'infomaniak',
 	postgres: 'postgresql',
 	mysql: 'mysql',
 	mqtt: 'mqtt'
