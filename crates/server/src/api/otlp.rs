@@ -99,29 +99,31 @@ async fn resolve_target(
     state: &AppState,
     headers: &HeaderMap,
     query: &TargetQuery,
-) -> Result<dumbmonit_proto::Target, Response> {
+) -> Result<dumbmonit_proto::Target, Box<Response>> {
     let from_header = headers
         .get(TARGET_HEADER)
         .and_then(|value| value.to_str().ok())
         .and_then(|value| value.trim().parse::<TargetId>().ok());
     let Some(id) = from_header.or(query.target) else {
-        return Err(failure(
+        return Err(Box::new(failure(
             StatusCode::BAD_REQUEST,
             "Name the target that receives the data: send the header X-DumbMonit-Target with its \
              id (or ?target=<id>). Create an OpenTelemetry source in DumbMonit to get one.",
-        ));
+        )));
     };
     match db::targets::get(&state.pool, &state.cipher, id).await {
         Ok(Some(target)) => Ok(target),
-        Ok(None) => Err(failure(StatusCode::NOT_FOUND, format!("There is no target {id}."))),
+        Ok(None) => {
+            Err(Box::new(failure(StatusCode::NOT_FOUND, format!("There is no target {id}."))))
+        }
         Err(error) => {
             tracing::error!(?error, "OTLP: target lookup failed");
-            Err(failure(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error."))
+            Err(Box::new(failure(StatusCode::INTERNAL_SERVER_ERROR, "Internal server error.")))
         }
     }
 }
 
-fn header_text<'a>(headers: &'a HeaderMap, name: header::HeaderName) -> Option<&'a str> {
+fn header_text(headers: &HeaderMap, name: header::HeaderName) -> Option<&str> {
     headers.get(name).and_then(|value| value.to_str().ok())
 }
 
@@ -140,7 +142,7 @@ async fn metrics(
     };
     let target = match resolve_target(&state, &headers, &query).await {
         Ok(target) => target,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
     let raw = match header_text(&headers, header::CONTENT_ENCODING).map(str::trim) {
         None | Some("") | Some("identity") => body.to_vec(),
@@ -201,7 +203,7 @@ async fn logs(
     }
     let target = match resolve_target(&state, &headers, &query).await {
         Ok(target) => target,
-        Err(response) => return response,
+        Err(response) => return *response,
     };
     let Some(base) = crate::storage::logs_url(&state).await else {
         return failure(

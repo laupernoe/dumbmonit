@@ -250,7 +250,7 @@ async fn consumer_lag(pool: &mut Pool<'_>, cluster: &Cluster, max_groups: usize)
     report.total_groups = listed.len();
     listed.truncate(max_groups);
 
-    let mut committed: Vec<(String, Vec<(String, i32, i64)>)> = Vec::new();
+    let mut committed: Vec<(String, Vec<wire::PartitionOffset>)> = Vec::new();
     for (node, group) in listed {
         let Ok(session) = pool.session(node).await else { continue };
         let request = wire::offset_fetch_request(&group);
