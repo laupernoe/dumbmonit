@@ -598,9 +598,12 @@ ProtectSystem=strict
 # dans les foyers (~/.config/plakar), et « yes » les rendait invisibles.
 ProtectHome=read-only
 PrivateTmp=yes
-# Seul endroit inscriptible hors /tmp : le cache de Plakar
-# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY).
+# Endroits inscriptibles hors /tmp : le cache de Plakar
+# (/var/cache/dumbmonit-agent, transmis dans CACHE_DIRECTORY) et le dossier de
+# configuration, où l'agent range son secret de liaison et son certificat du
+# canal chiffré (agent-tls.json), renouvelé tous les 30 jours.
 CacheDirectory=dumbmonit-agent
+ReadWritePaths=$CONFIG_DIR
 ProtectKernelTunables=yes
 ProtectKernelModules=yes
 ProtectControlGroups=yes
