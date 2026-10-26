@@ -5,6 +5,7 @@
 	 * gets told. It reads the shared stores, so it follows whichever page is
 	 * open; picking a row on the overview fills the second section.
 	 */
+	import { untrack } from 'svelte';
 	import { ArrowUpRight, Ellipsis } from 'lucide-svelte';
 	import { createSilence, listAlertRules, probeTarget, toApiError, type AlertRule } from '#lib/api/index.js';
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
@@ -30,7 +31,8 @@
 			.catch(() => {});
 		return () => controller.abort();
 	});
-	$effect(() => fleetStore.start());
+	// One subscription for the life of the view; the range is followed separately.
+	$effect(() => untrack(() => fleetStore.start()));
 
 	const sky = $derived(readSky({ targets: alertsStore.targets, probes: alertsStore.probes, alerts: alertsStore.alerts, rules }));
 	const attention = $derived(sky.needsYou.filter((row) => !isAckedRow(row) && !isSnoozedRow(row)));

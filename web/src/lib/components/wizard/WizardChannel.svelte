@@ -8,7 +8,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { Button, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
 	import ChannelForm from '#lib/components/notifications/ChannelForm.svelte';
-	import { normalizeKind, type KindInfo } from '#lib/components/notifications/kinds';
+	import { normalizeKind, type KindInfo } from '#lib/components/notifications/kinds.js';
 
 	let kinds = $state<KindInfo[]>([]);
 	let channels = $state<Channel[]>([]);
