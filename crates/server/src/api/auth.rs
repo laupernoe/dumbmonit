@@ -16,7 +16,9 @@ use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{Authenticated, CurrentSession, current_session};
 use crate::auth::rate_limit::Key;
 use crate::auth::users::{self, Role, User};
-use crate::auth::{AuthError, AuthResult, AuthState, audit, cookie, ldap, oidc, password, session};
+use crate::auth::{
+    AuthError, AuthResult, AuthState, audit, cookie, ldap, oidc, password, saml, session,
+};
 use crate::state::AppState;
 
 /// Un compte, tel que l'interface le voit. Jamais d'empreinte de mot de passe.
@@ -59,6 +61,14 @@ pub struct OidcStatus {
     pub login_url: &'static str,
 }
 
+/// Ce que l'écran de connexion a besoin de savoir de la connexion SAML : le
+/// bouton à montrer. Il mène à `/api/auth/saml/start`.
+#[derive(Debug, Serialize)]
+pub struct SamlStatus {
+    pub enabled: bool,
+    pub label: String,
+}
+
 /// Ce que l'écran de connexion a besoin de savoir de l'annuaire : seulement
 /// s'il est actif, pour le dire à côté du formulaire.
 #[derive(Debug, Serialize)]
@@ -78,6 +88,7 @@ pub struct StatusView {
     user: Option<UserView>,
     oidc: OidcStatus,
     ldap: LdapStatus,
+    saml: SamlStatus,
     /// Mode démonstration publique : l'écran de connexion propose le compte
     /// `demo`, et toute écriture sera refusée (voir `crate::demo`).
     demo: bool,
@@ -170,6 +181,7 @@ pub async fn status(
     };
     let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
     let directory = ldap::resolve(&state.pool, &state.cipher, &state.config.ldap).await?;
+    let saml_config = saml::load(&state.pool).await?;
     Ok(Json(StatusView {
         configured,
         authenticated: user.is_some(),
@@ -180,6 +192,7 @@ pub async fn status(
             login_url: "/api/auth/oidc/start",
         },
         ldap: LdapStatus { enabled: directory.config.enabled() },
+        saml: SamlStatus { enabled: saml_config.usable(), label: saml_config.label().to_string() },
         demo: state.config.demo,
     }))
 }

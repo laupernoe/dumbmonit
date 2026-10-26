@@ -443,6 +443,11 @@ pub struct BundleUser {
     pub oidc_subject: Option<String>,
     #[serde(default)]
     pub oidc_issuer: Option<String>,
+    /// Identité SAML (`NameID` persistant et IdP émetteur).
+    #[serde(default)]
+    pub saml_subject: Option<String>,
+    #[serde(default)]
+    pub saml_issuer: Option<String>,
     #[serde(default)]
     pub created_at: Option<String>,
     /// Empreinte Argon2 du mot de passe, présente seulement si l'opérateur a

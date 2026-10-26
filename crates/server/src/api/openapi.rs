@@ -99,7 +99,8 @@ mod tests {
     ///   serveur, authentifié par un jeton d'enregistrement, que nul client n'a
     ///   à appeler ;
     /// - les redirections de la connexion OIDC (`/api/auth/oidc/start` et
-    ///   `/callback`), et le retour de Spotify (`/api/music/spotify/callback`) :
+    ///   `/callback`) et SAML (`/api/auth/saml/start`, `/acs`, `/complete`), et
+    ///   le retour de Spotify (`/api/music/spotify/callback`) :
     ///   des pages qu'un navigateur traverse, pas une API ;
     /// - la distribution de l'agent (`/install.sh`, `/install.ps1`,
     ///   `/download/{name}`) : des fichiers, pas du JSON ;
@@ -113,6 +114,9 @@ mod tests {
         "/api/agent/relay/discovery/{id}",
         "/api/auth/oidc/start",
         "/api/auth/oidc/callback",
+        "/api/auth/saml/start",
+        "/api/auth/saml/acs",
+        "/api/auth/saml/complete",
         "/api/music/spotify/callback",
         "/install.sh",
         "/install.ps1",
@@ -136,6 +140,7 @@ mod tests {
                 | "/api/auth/setup"
                 | "/api/auth/login"
                 | "/api/auth/login/totp"
+                | "/api/auth/saml/metadata"
                 | "/api/push/{token}"
                 | "/api/openapi.json"
         ) || path.starts_with("/api/public/")

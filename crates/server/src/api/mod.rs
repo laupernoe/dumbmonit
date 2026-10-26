@@ -43,6 +43,7 @@ mod push;
 mod redfish;
 mod relay;
 mod reports;
+mod saml;
 mod security;
 mod self_monitoring;
 mod seo_files;
@@ -138,6 +139,9 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             get(ldap::get_config).put(ldap::put_config).delete(ldap::delete_config),
         )
         .route("/auth/ldap/test", post(ldap::test))
+        // Connexion SAML : réglages et lecture de métadonnées d'IdP (`saml.rs`).
+        .route("/auth/saml/config", get(saml::get_config).put(saml::put_config))
+        .route("/auth/saml/metadata/import", post(saml::import_metadata))
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
@@ -286,6 +290,14 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/auth/login/totp", post(totp::login_step))
         .route("/auth/oidc/start", get(oidc::start))
         .route("/auth/oidc/callback", get(oidc::callback))
+        // Connexion SAML : métadonnées du fournisseur de service, départ vers
+        // l'IdP, réception de sa réponse (un formulaire posté depuis le site de
+        // l'IdP, donc sans en-tête anti-CSRF : la signature de l'assertion fait
+        // foi) et ouverture de la session (`saml.rs`).
+        .route("/auth/saml/metadata", get(saml::metadata))
+        .route("/auth/saml/start", get(saml::start))
+        .route("/auth/saml/acs", post(saml::acs).layer(DefaultBodyLimit::max(saml::MAX_ACS_BYTES)))
+        .route("/auth/saml/complete", get(saml::complete))
         // Réception des mesures poussées par les agents. Volontairement hors du
         // routeur protégé : un agent est un programme installé sur une machine
         // distante, il n'ouvre pas de session et présente un jeton

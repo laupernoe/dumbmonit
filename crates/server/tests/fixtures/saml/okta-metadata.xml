@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="http://www.okta.com/exk8dumbmonittest0h7">
+  <md:IDPSSODescriptor WantAuthnRequestsSigned="false" protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">
+    <md:KeyDescriptor use="signing">
+      <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+        <ds:X509Data>
+          <ds:X509Certificate>MIICyDCCAbCgAwIBAgIUOgvbeIEuS4jeiQElvhxhzAM3pXMwDQYJKoZIhvcNAQELBQAwHjEcMBoGA1UEAwwTZHVtYm1vbml0LW9rdGEtdGVzdDAeFw0yNjAxMDEwMDAwMDBaFw00NjAxMDEwMDAwMDBaMB4xHDAaBgNVBAMME2R1bWJtb25pdC1va3RhLXRlc3QwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDTLFPkKJqK3U+LIKQO5/yaPX6U/yDV2JPuzpk1JFi3ZCRaq4TxhaBUhJdoGr4CwW6qPDNNe2LWTzZwrBiPTJ3JcZ07NSDt6p0k7olOZtaxcwvbXm0z5tgWhob95T5PhY4IV9LAunAnXwb9o3KatKUlhkaFawxdg0LAZmohnU4n1HJTHEUe8jbsHKMpMN5g8J+5RIvpBMTNmMpxbgf71yaN2k0kbBwpB5l6a8Fv66KYb+x5OeTuBFWpnLqqiKZRbXJFkuVff0LWz5LLe3DdNArKB/+dnaLrTKc3s0qxoabEUp9I8LAzFCFFAPX5r0LUQHGSVOPj03lP1N1Qq1ulVsJZAgMBAAEwDQYJKoZIhvcNAQELBQADggEBADxJ/kS5MGLttbv7pdHhNlO8KheQ5t0If8BeOfMpySnShAATlk+G//u8gCpaqEuvlf2B6jcaH0AUVXGBEvkg+kpbtvw2ZWP+iwNcEk22TAUVLBiv6ilP2jnKRFUqjBbESz6pZ/fQWGQkxdNQC4tDUBind+7QzS03NtK8cIkW+4K0WiNX3TRlNjlPgfDxmxBqxpkb+lhiPh4xFKHTqb7Bf+HA0eSEK/36e3l7RHOBLDbqW6nEngjGPinK80LlFWVB6UXY8D3dB299fujDrRb+vGwcxP08RMXOCSYFVvOTn5IXuEGN+cKI+UY2B5mS4eN1cMqjgTGXuUFYr1BWjT26amk=</ds:X509Certificate>
+        </ds:X509Data>
+      </ds:KeyInfo>
+    </md:KeyDescriptor>
+    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified</md:NameIDFormat>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://dumbmonit-test.okta.example/app/dumbmonit/exk8dumbmonittest0h7/sso/saml"/>
+    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://dumbmonit-test.okta.example/app/dumbmonit/exk8dumbmonittest0h7/sso/saml"/>
+  </md:IDPSSODescriptor>
+</md:EntityDescriptor>
