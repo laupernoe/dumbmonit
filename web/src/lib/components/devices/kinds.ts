@@ -69,6 +69,7 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	tailscale: () => import('./appliance/AppliancePanel.svelte'),
 	fortigate: () => import('./appliance/AppliancePanel.svelte'),
 	sophos: () => import('./appliance/AppliancePanel.svelte'),
+	arubacentral: () => import('./appliance/AppliancePanel.svelte'),
 	nginx: () => import('./appliance/AppliancePanel.svelte'),
 	apache: () => import('./appliance/AppliancePanel.svelte'),
 	openvpn: () => import('./appliance/AppliancePanel.svelte'),

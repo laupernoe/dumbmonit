@@ -3587,6 +3587,54 @@ const TAILSCALE_OPTIONS: &[OptionView] = &[
     DEVICE_STALE_DAYS,
 ];
 
+/// Client d'API personnel de HPE GreenLake pour Aruba Central, échangé contre un
+/// jeton de deux heures (`collectors/arubacentral`).
+const ARUBACENTRAL_CLIENT: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "API client",
+    help: "Recommended: DumbMonit exchanges the client for an access token and renews it by itself.",
+    fields: &[
+        cred_text(
+            "username",
+            "Client ID",
+            "The client ID of the personal API client created in step 2.",
+            "",
+        ),
+        cred_secret(
+            "password",
+            "Client secret",
+            "Shown once when the client is created. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+/// Jeton d'accès déjà obtenu : il expire au bout de deux heures.
+const ARUBACENTRAL_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Access token",
+    help: "Works for a test, but expires after two hours and DumbMonit cannot renew it.",
+    fields: &[cred_secret(
+        "token",
+        "Access token",
+        "An access token of your Central instance. Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const ARUBACENTRAL_OPTIONS: &[OptionView] = &[
+    text(
+        "token_address",
+        "Sign-in host",
+        "The HPE GreenLake host that issues the access tokens. Change it only if HPE gives you another.",
+        "sso.common.cloud.hpe.com",
+        "sso.common.cloud.hpe.com",
+    ),
+    VENDOR_TIMEOUT,
+];
+
 /// Jeton d'un administrateur REST API FortiOS au profil en lecture seule.
 const FORTIGATE_TOKEN: CredentialView = CredentialView {
     kind: "api_token",
@@ -5772,6 +5820,39 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: TAILSCALE_OPTIONS,
         },
+        "arubacentral" => CollectorView {
+            kind: "arubacentral",
+            label: "Aruba Central",
+            summary: "Beta. The Wi-Fi access points, switches and gateways of an HPE Aruba Networking Central account through its cloud API: devices offline, active critical alerts, devices in poor health, and the number of connected clients.",
+            examples: &["Aruba access points", "Aruba CX switches", "Aruba gateways"],
+            credential_types: &["username_password", "api_token"],
+            credentials: &[ARUBACENTRAL_CLIENT, ARUBACENTRAL_TOKEN],
+            address_hint: "us1.api.central.arubanetworks.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a personal API client for DumbMonit",
+                steps: &[
+                    "Sign in to HPE GreenLake (common.cloud.hpe.com) and open Manage Workspace → Personal API clients.",
+                    "Click Create personal API client, name it as follows and choose your Central instance as the service.\ndumbmonit",
+                    "Copy the client ID and the client secret: the secret is shown once, and HPE keeps no copy.",
+                    "In Central, open the API gateway page (Menu → API Gateway → REST API) and note the base URL of your region.",
+                    "In DumbMonit, enter that base URL as the address (for example us1.api.central.arubanetworks.com) and paste the client ID and the client secret.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "Central API (HTTPS, the base URL of your region)"),
+                    to_device!(
+                        443,
+                        "tcp",
+                        "HPE GreenLake sign-in (HTTPS, sso.common.cloud.hpe.com)"
+                    ),
+                ],
+                permissions: &[
+                    "Read access to Central monitoring\nDevices, alerts and health overviews: DumbMonit never changes anything",
+                ],
+                warning: "Beta: written from HPE's published API reference, not yet tested on a real Central account. It reads the new Central API with Central credentials; credentials scoped to the GreenLake platform and classic Central are not supported.",
+            },
+            options: ARUBACENTRAL_OPTIONS,
+        },
         "fortigate" => CollectorView {
             kind: "fortigate",
             label: "FortiGate",
@@ -5884,7 +5965,8 @@ fn guide_url(kind: &str) -> String {
         | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
         | "npm" | "domain" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
         | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange" | "website" => kind,
+        | "arubacentral" | "sophos" | "openvpn" | "xcpng" | "nutanix" | "push" | "webchange"
+        | "website" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -6031,6 +6113,7 @@ mod tests {
         "veeam",
         "tailscale",
         "fortigate",
+        "arubacentral",
         "sophos",
         "openvpn",
         "xcpng",
@@ -6596,6 +6679,7 @@ mod tests {
             ),
             ("tailscale", &["tailnet", "watch", "request_timeout_seconds", "device_stale_days"]),
             ("fortigate", &["port", "vdom", "insecure_tls", "request_timeout_seconds"]),
+            ("arubacentral", &["token_address", "request_timeout_seconds"]),
             ("sophos", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("xcpng", &["port", "insecure_tls", "request_timeout_seconds"]),
             ("nutanix", &["port", "insecure_tls", "request_timeout_seconds"]),
@@ -6798,9 +6882,17 @@ mod tests {
             assert_eq!(defaut(kind, "port"), port.to_string(), "{kind}");
             assert_eq!(describe(kind).default_port, port, "{kind}");
         }
-        for kind in
-            ["pfsense", "unraid", "veeam", "tailscale", "fortigate", "sophos", "xcpng", "nutanix"]
-        {
+        for kind in [
+            "pfsense",
+            "unraid",
+            "veeam",
+            "tailscale",
+            "fortigate",
+            "arubacentral",
+            "sophos",
+            "xcpng",
+            "nutanix",
+        ] {
             assert_eq!(
                 defaut(kind, "request_timeout_seconds"),
                 dumbmonit_collectors::selfhosted::DEFAULT_REQUEST_TIMEOUT.as_secs().to_string(),
@@ -6814,6 +6906,18 @@ mod tests {
         assert_eq!(
             describe("tailscale").address_hint,
             dumbmonit_collectors::tailscale::DEFAULT_ADDRESS
+        );
+        assert_eq!(
+            describe("arubacentral").address_hint,
+            dumbmonit_collectors::arubacentral::DEFAULT_ADDRESS
+        );
+        assert_eq!(
+            describe("arubacentral").default_port,
+            dumbmonit_collectors::arubacentral::DEFAULT_PORT
+        );
+        assert_eq!(
+            defaut("arubacentral", "token_address"),
+            dumbmonit_collectors::arubacentral::DEFAULT_TOKEN_ADDRESS
         );
         for kind in ["redis", "mongodb"] {
             assert_eq!(
@@ -7065,6 +7169,7 @@ mod tests {
             ("veeam", "dumbmonit"),
             ("tailscale", "devices:core:read"),
             ("fortigate", "dumbmonit"),
+            ("arubacentral", "dumbmonit"),
             ("sophos", "dumbmonit"),
             ("xcpng", "dumbmonit"),
             ("nutanix", "dumbmonit"),
@@ -7265,6 +7370,7 @@ mod tests {
             ("veeam", include_str!("../../../../docs/devices/veeam.md")),
             ("tailscale", include_str!("../../../../docs/devices/tailscale.md")),
             ("fortigate", include_str!("../../../../docs/devices/fortigate.md")),
+            ("arubacentral", include_str!("../../../../docs/devices/arubacentral.md")),
             ("sophos", include_str!("../../../../docs/devices/sophos.md")),
             ("xcpng", include_str!("../../../../docs/devices/xcpng.md")),
             ("nutanix", include_str!("../../../../docs/devices/nutanix.md")),

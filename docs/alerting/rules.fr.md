@@ -686,6 +686,25 @@ Voir [Sophos Firewall](../devices/sophos.md).
 |---|---|---|---|---|---|
 | Interface Sophos sans lien | Une interface Sophos Firewall allumée et liée à une zone n'a pas de lien (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
 
+### Aruba Central {#aruba-central}
+
+Voir [Aruba Central](../devices/arubacentral.md). Les appareils sont étiquetés `device`, `type`, `serial` et `site`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Appareil Aruba Central hors ligne | Aruba Central signale un point d'accès, un commutateur ou une passerelle hors ligne (`dumbmonit_arubacentral_device_online`). | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Alerte critique Aruba Central | Aruba Central a au moins une alerte critique active (`dumbmonit_arubacentral_alerts_active_by_severity{severity="critical"}`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Appareils Aruba Central en mauvaise santé | Aruba Central classe au moins un appareil en mauvaise santé pendant une heure (`dumbmonit_arubacentral_devices_poor_health`). | > 0 | 1 h | Info (`info`) | 7 j |
+
+### Stormshield SNS {#stormshield-sns}
+
+Lu en SNMP par le profil Stormshield ; voir [Stormshield SNS](../devices/snmp.md#stormshield-sns).
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Nœud HA Stormshield mort | Un nœud d'un cluster HA Stormshield est déclaré mort : il n'y a plus de secours (`dumbmonit_stormshield_ha_dead_nodes`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Lien HA Stormshield défaillant | Un lien entre les nœuds d'un cluster HA Stormshield est défaillant (`dumbmonit_stormshield_ha_faulty_links`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+
 ### KVM (libvirt) {#kvm-libvirt}
 
 Rapporté par l'agent Linux sur un hôte KVM ; voir [Agent](../devices/agent.md#kvm-virtual-machines-through-libvirt).

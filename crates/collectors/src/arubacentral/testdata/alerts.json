@@ -1,0 +1,55 @@
+{
+  "count": 3,
+  "next": null,
+  "total": 3,
+  "items": [
+    {
+      "id": "22071893000:47765082406",
+      "key": "ad4c9f5b-25d2-37f9-a4ed-fc0e6b0f5825",
+      "name": "Insufficient PoE Received",
+      "category": "System",
+      "severity": "Critical",
+      "priority": "Very High",
+      "status": "Active",
+      "summary": "AP CNAP000001 did not receive the requested PoE power which may limit its functions.",
+      "createdAt": "2026-10-25T07:04:33.352Z",
+      "updatedAt": "2026-10-25T08:37:02.475Z",
+      "updatedBy": null,
+      "type": "network-notifications/alerts",
+      "deviceType": "Access Point",
+      "clearedReason": null
+    },
+    {
+      "id": "22071893000:47765082407",
+      "key": "bd4c9f5b-25d2-37f9-a4ed-fc0e6b0f5826",
+      "name": "AP disconnected",
+      "category": "System",
+      "severity": "Minor",
+      "priority": "Medium",
+      "status": "Active",
+      "summary": "AP CNAP000002 is disconnected.",
+      "createdAt": "2026-10-25T07:00:00.000Z",
+      "updatedAt": "2026-10-25T07:00:00.000Z",
+      "updatedBy": null,
+      "type": "network-notifications/alerts",
+      "deviceType": "Access Point",
+      "clearedReason": null
+    },
+    {
+      "id": "22071893000:47765082408",
+      "key": "cd4c9f5b-25d2-37f9-a4ed-fc0e6b0f5827",
+      "name": "High CPU",
+      "category": "System",
+      "severity": "Minor",
+      "priority": "Medium",
+      "status": "Active",
+      "summary": "Gateway GW00000001 CPU is high.",
+      "createdAt": "2026-10-25T06:00:00.000Z",
+      "updatedAt": "2026-10-25T06:00:00.000Z",
+      "updatedBy": null,
+      "type": "network-notifications/alerts",
+      "deviceType": "Gateway",
+      "clearedReason": null
+    }
+  ]
+}

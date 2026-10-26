@@ -5840,6 +5840,78 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_sophos_interface_down",
             )
         },
+        // --- Aruba Central (`collectors/arubacentral`) ---
+        Rule {
+            description: "Aruba Central reports an access point, switch or gateway offline.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "arubacentral_device_offline",
+                "Aruba Central device offline",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_device_online",
+            )
+        },
+        Rule {
+            description: "Aruba Central has at least one active critical alert.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "arubacentral_critical_alert",
+                "Aruba Central critical alert",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_alerts_active_by_severity{severity=\"critical\"}",
+            )
+        },
+        Rule {
+            description: "Aruba Central rates at least one device in poor health for an hour.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "arubacentral_devices_poor_health",
+                "Aruba Central devices in poor health",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_devices_poor_health",
+            )
+        },
+        // --- Stormshield SNS, par SNMP (`profiles/stormshield.yaml`) ---
+        Rule {
+            description: "A node of a Stormshield HA cluster is declared dead: there is no standby any more.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "stormshield_ha_node_dead",
+                "Stormshield HA node dead",
+                RuleKind::Threshold,
+                "dumbmonit_stormshield_ha_dead_nodes",
+            )
+        },
+        Rule {
+            description: "A link between the nodes of a Stormshield HA cluster is faulty.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "stormshield_ha_link_faulty",
+                "Stormshield HA link faulty",
+                RuleKind::Threshold,
+                "dumbmonit_stormshield_ha_faulty_links",
+            )
+        },
         // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
         Rule {
             description: "libvirt reports a KVM domain as crashed: the hypervisor had to stop it.".to_string(),
@@ -7086,6 +7158,11 @@ mod tests {
             "dumbmonit_fortigate_license_expiry_seconds",
             "dumbmonit_fortigate_firmware_update_available",
             "dumbmonit_sophos_interface_down",
+            "dumbmonit_arubacentral_device_online",
+            "dumbmonit_arubacentral_alerts_active_by_severity",
+            "dumbmonit_arubacentral_devices_poor_health",
+            "dumbmonit_stormshield_ha_dead_nodes",
+            "dumbmonit_stormshield_ha_faulty_links",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",
