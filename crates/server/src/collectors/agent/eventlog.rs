@@ -190,6 +190,8 @@ fn utc(ms: i64) -> Option<String> {
     chrono::DateTime::from_timestamp_millis(ms).map(|at| at.format("%Y-%m-%dT%H:%M:%S").to_string())
 }
 
+// Les requêtes de ce module composent leurs colonnes à partir de constantes du
+// module (`format!` sans donnée extérieure) : d'où les `AssertSqlSafe`.
 const COLUMNS: &str = "id, target_id, name, channel, provider, event_ids, levels, pattern, \
      pattern_regex, severity, enabled, matches_total, dropped_total, last_match_ms";
 
@@ -216,9 +218,9 @@ fn from_row(row: &sqlx::sqlite::SqliteRow) -> Result<EventRule> {
 
 /// Les règles d'une machine, dans l'ordre de création.
 pub async fn list(pool: &SqlitePool, host: TargetId) -> Result<Vec<EventRule>> {
-    let rows = sqlx::query(&format!(
+    let rows = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {COLUMNS} FROM agent_event_rules WHERE target_id = ? ORDER BY id"
-    ))
+    )))
     .bind(host)
     .fetch_all(pool)
     .await
@@ -228,9 +230,9 @@ pub async fn list(pool: &SqlitePool, host: TargetId) -> Result<Vec<EventRule>> {
 
 /// Une règle de cette machine.
 pub async fn get(pool: &SqlitePool, host: TargetId, id: i64) -> Result<Option<EventRule>> {
-    let row = sqlx::query(&format!(
+    let row = sqlx::query(sqlx::AssertSqlSafe(format!(
         "SELECT {COLUMNS} FROM agent_event_rules WHERE target_id = ? AND id = ?"
-    ))
+    )))
     .bind(host)
     .bind(id)
     .fetch_optional(pool)

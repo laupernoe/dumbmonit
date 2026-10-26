@@ -2631,7 +2631,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
         let last_seen_ms = monitor.as_ref().and_then(|m| m.last_seen_ms);
         let verdict = match (&monitor, settings) {
             (Some(m), Some(settings)) => {
-                push::evaluate(m.last_seen_ms, m.last_status, now_ms, settings)
+                push::evaluate(m.last_seen_ms, m.last_status, now_ms, &settings)
             }
             (Some(m), None) if m.last_seen_ms.is_some() => Verdict::OnTime,
             _ => Verdict::Waiting,
