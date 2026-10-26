@@ -531,7 +531,7 @@ async fn a_token_inherits_the_teams_of_its_owner() {
         .post("/api/tokens", json!({ "name": "script", "scope": "read" }), Some(&lab.admin))
         .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
-    let token = reply.body["token"].as_str().unwrap().to_string();
+    let token = reply.body["secret"].as_str().unwrap().to_string();
     let token_id = reply.body["id"].as_i64().unwrap();
     sqlx::query("UPDATE api_tokens SET user_id = ? WHERE id = ?")
         .bind(viewer)

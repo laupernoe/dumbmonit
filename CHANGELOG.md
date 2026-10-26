@@ -7,16 +7,20 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
-- **SAML 2.0 sign-in.** DumbMonit can act as a SAML service provider for Entra ID,
-  Okta, Keycloak, Authentik or ADFS: public metadata at `/api/auth/saml/metadata`,
-  sign-in started by DumbMonit (HTTP-Redirect) and an HTTP-POST assertion consumer
-  service. Assertions must be signed (SHA-256 or stronger) and are checked for
-  issuer, audience, destination, validity window, request correlation and replay.
-  Accounts are linked by their persistent `NameID` or by e-mail, created on first
-  sign-in if allowed, and get their role and teams from the groups attribute.
-  Sign-in started by the identity provider is optional and off by default.
-  Settings: `GET`/`PUT /api/auth/saml/config`, metadata import with
-  `POST /api/auth/saml/metadata/import`.
+- **Teams, per-folder rights, SAML 2.0 and SCIM 2.0.** Settings → Team & access
+  groups accounts into teams and gives each team a level per folder of devices
+  (subfolders included): read, operate (acknowledge, dismiss, maintenance) or
+  manage (edit, add, delete devices). The global role stays the ceiling (viewer →
+  read, operator → manage) and admins see everything. An account in a team only
+  sees its folders, enforced by the server on every route: device lists and
+  details, metric queries (filtered per device in VictoriaMetrics), alerts,
+  history, silences, rules, map, locations, status pages, CVEs and Web Push;
+  everything else, raw Prometheus/federate and the MCP endpoint included, is
+  refused to team-restricted accounts and their API tokens. Teams can follow
+  OIDC, LDAP and SAML groups. DumbMonit is now a SAML 2.0 service provider
+  (metadata, SP- and optional IdP-initiated sign-in, signed assertions required)
+  and accepts SCIM 2.0 provisioning of users and groups from Entra ID and Okta.
+  Teams travel in the backup. Guides for Entra ID, Okta, Keycloak and Authentik.
 
 ## 0.14.0 — 2026-10-25
 
