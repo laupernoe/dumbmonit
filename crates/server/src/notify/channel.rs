@@ -50,6 +50,12 @@ pub const CHANNEL_KINDS: &[&str] = &[
     "oncall",
     "grafana_oncall",
     "signl4",
+    // Tickets automatiques
+    "jira",
+    "glpi",
+    "zammad",
+    "github_issues",
+    "gitlab_issues",
     // Sur mesure
     "webhook",
 ];

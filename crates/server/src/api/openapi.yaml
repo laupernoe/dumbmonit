@@ -10654,6 +10654,20 @@ components:
         last_eval_at: { type: [string, "null"], format: date-time }
         last_notified_at: { type: [string, "null"], format: date-time }
         notify_count: { type: integer }
+        tickets:
+          type: array
+          description: Tickets opened for this alert by the Jira, GLPI, Zammad, GitHub Issues and GitLab Issues channels.
+          items: { $ref: "#/components/schemas/AlertTicket" }
+    AlertTicket:
+      type: object
+      required: [channel_id, channel_name, kind, label, url, state]
+      properties:
+        channel_id: { type: integer, format: int64 }
+        channel_name: { type: string }
+        kind: { type: string, description: "Channel kind: `jira`, `glpi`, `zammad`, `github_issues` or `gitlab_issues`." }
+        label: { type: string, description: "Ticket reference, such as `OPS-12` or `#34`." }
+        url: { type: string, description: Address of the ticket in the service. }
+        state: { type: string, enum: [open, closed] }
     AckRequest:
       type: object
       description: "`until` or `duration_secs` (not both); neither means 4 hours; `{\"until\": null}` lifts it."

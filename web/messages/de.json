@@ -343,6 +343,8 @@
 	"alerts_row_acked": "Bestätigt{by}{until}{note}. Erinnerungen pausiert; bei Behebung erhalten Sie trotzdem eine Meldung.",
 	"alerts_row_acked_by": " von {name}",
 	"alerts_row_acked_note": " – {note}",
+	"alerts_row_ticket_closed": "geschlossen",
+	"alerts_row_tickets": "Tickets:",
 	"alerts_row_dismiss": "Schließen",
 	"alerts_row_learning": "In den ersten {days} Tagen der Basislinie stumm.",
 	"alerts_row_learning_suppressed": "Stumm, solange es das normale Verhalten lernt.",

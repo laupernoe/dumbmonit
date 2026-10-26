@@ -392,6 +392,18 @@ export interface AnomalyParams {
  * the interface displays. There is no `target_name` here: resolve it from the
  * targets list via `target_id`.
  */
+/** A ticket a channel (Jira, GLPI, Zammad, GitHub, GitLab) opened for an alert. */
+export interface AlertTicket {
+	channel_id: number;
+	channel_name: string;
+	/** `jira`, `glpi`, `zammad`, `github_issues` or `gitlab_issues`. */
+	kind: string;
+	/** Reference shown to the user, like `OPS-12` or `#34`. */
+	label: string;
+	url: string;
+	state: 'open' | 'closed';
+}
+
 export interface Alert {
 	fingerprint: string;
 	rule_uid: string;
@@ -435,6 +447,8 @@ export interface Alert {
 	firing_since: string | null;
 	last_eval_at: string | null;
 	last_notified_at: string | null;
+	/** Tickets opened for this alert by the ticket channels (Jira, GLPI, Zammad, GitHub, GitLab). */
+	tickets?: AlertTicket[];
 	notify_count: number;
 }
 

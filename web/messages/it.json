@@ -343,6 +343,8 @@
 	"alerts_row_acked": "Confermato{by}{until}{note}. Promemoria in pausa; riceverai comunque una notifica alla risoluzione.",
 	"alerts_row_acked_by": " da {name}",
 	"alerts_row_acked_note": " — {note}",
+	"alerts_row_ticket_closed": "chiuso",
+	"alerts_row_tickets": "Ticket:",
 	"alerts_row_dismiss": "Ignora",
 	"alerts_row_learning": "Silenziosa nei primi {days} giorni della linea di base.",
 	"alerts_row_learning_suppressed": "Silenziosa mentre impara il comportamento normale.",
