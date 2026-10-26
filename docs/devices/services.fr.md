@@ -97,14 +97,14 @@ enregistré comme `reason="auth"`, l'alerte dit donc quoi corriger.
 ### Métriques
 
 Toutes des jauges, toutes préfixées `dumbmonit_`, toutes étiquetées
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|udp|ssh|imap|pop3"` en
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|udp|ssh|imap|pop3|snmp_oid|radius|grpc"` en
 plus de `target`, `host` et `tag_*`.
 
 | Métrique | Surveillances | Signification |
 |---|---|---|
 | `probe_success` | tous | 1 si le service répond correctement, 0 sinon. |
 | `probe_duration_seconds` | tous | Durée totale de la vérification. |
-| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `unsynchronized`, `clock_offset`, `host_key`. |
+| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `unsynchronized`, `clock_offset`, `host_key`, `threshold`, `not_found`, `bad_secret`, `unhealthy`. |
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
 | `probe_http_phase_seconds{phase}` | http | Temps de la requête mesurée réparti en `dns`, `connect`, `tls`, `processing` et `transfer` ; les cinq somment toujours au temps de la requête (voir [Décomposition du temps de réponse](#decomposition-du-temps-de-reponse)). |
@@ -147,6 +147,13 @@ plus de `target`, `host` et `tag_*`.
 | `probe_pop3_greeting_seconds`, `probe_pop3_login_seconds` | pop3 | Temps jusqu'à la bannière `+OK`, et durée de `USER` + `PASS`. |
 | `probe_pop3_authenticated` | pop3 | 1 quand l'identification a réussi. |
 | `probe_ws_message_bytes` | websocket | Taille de la trame reçue. |
+| `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
+| `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
+| `probe_radius_response_seconds` | radius | Aller-retour de l'Access-Request. |
+| `probe_radius_response_code` | radius | Code de la réponse : 2 accepté, 3 refusé, 11 défi. |
+| `probe_grpc_check_seconds` | grpc | Durée de l'appel `Health/Check`. |
+| `probe_grpc_serving_status` | grpc | `ServingStatus` renvoyé : 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
+| `probe_grpc_status_code` | grpc | Code `grpc-status` de la réponse (0 : OK). |
 
 ## HTTP {#http}
 
@@ -1072,6 +1079,192 @@ jugement du certificat, sauf si vous avez explicitement choisi le chiffrement
 | `protocol` | Quelque chose a répondu, mais pas du POP3 — ou la boîte est verrouillée (`[IN-USE]`) ou le système est en difficulté (`[SYS/...]`). |
 | `auth` | `USER` ou `PASS` a été refusé (`-ERR`). Le serveur va bien ; l'identifiant, non. |
 | `tls`, `cert_expired` | Même sens que pour la vérification TLS. Un `STLS` refusé est rapporté comme `tls`. |
+
+## SNMP OID {#snmp-oid}
+
+**Valeur SNMP (OID unique)** — lit un objet SNMP et compare sa valeur à une
+plage ou à un texte. Exemples : une sonde de température ou d'humidité, l'état
+ou la charge d'un onduleur, une chaîne de version ou un indicateur de firmware,
+un compteur exposé par un script `extend` de Net-SNMP.
+
+Là où le type d'équipement SNMP décrit toute une machine par un profil, celui-ci
+pose une question étroite : cet objet contient-il ce que j'attends ?
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 161 | UDP | Requête SNMP (port par défaut) |
+
+### Configuration
+
+1. Sur l'équipement, activez SNMP et vérifiez que la communauté ou l'utilisateur v3 peut lire l'objet (la vue SNMP doit donner accès à sa branche).
+
+2. Dans DumbMonit, saisissez l'adresse de l'équipement, puis la communauté ou l'utilisateur v3.
+
+3. Renseignez l'objet (OID) avec son suffixe d'instance, par exemple 1.3.6.1.2.1.1.3.0.
+
+4. Facultatif : fixez un minimum et un maximum, ou un texte attendu, pour être averti quand la valeur dérive.
+
+#### Droits requis
+
+- **Accès en lecture à l'objet** : Une communauté ou un utilisateur v3 en lecture seule suffit
+
+!!! warning
+    Un objet que l'agent ne connaît pas, ou que sa vue SNMP masque, est rapporté en panne avec la raison not_found.
+
+#### À savoir
+
+La vérification réutilise la session SNMP du type d'équipement SNMP : mêmes communautés (v1/v2c) et utilisateurs v3, mêmes renvois. Sans borne ni texte attendu, elle réussit dès que l'objet existe. Une valeur numérique est tracée dans `probe_snmp_value` (un texte qui contient un nombre, comme `42,5`, compte aussi). Les bornes sont incluses ; une valeur qui n'est pas un nombre échoue dès qu'une borne est posée. Le texte attendu est cherché sans tenir compte de la casse dans la valeur lue comme du texte.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `oid` | Objet (OID) | *(vide)* | L'objet SNMP à lire, sous forme numérique. Ajoutez le suffixe d'instance, souvent .0 pour une valeur simple. |
+| `port` | Port | `161` | Utilisé si l'adresse n'en donne pas. |
+| `min` | Valeur minimale | *(vide)* | Une valeur numérique inférieure échoue. Vide : pas de borne basse. |
+| `max` | Valeur maximale | *(vide)* | Une valeur numérique supérieure échoue. Vide : pas de borne haute. |
+| `expect` | Texte attendu | *(vide)* | Texte que la valeur doit contenir, quelle que soit la casse. Vide : toute valeur est acceptée. |
+| `snmp_version` | Version SNMP | `2c` | Version utilisée avec une communauté. Choisissez 1 seulement pour un vieil agent qui ignore la 2c ; les utilisateurs SNMP v3 l'ignorent. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | L'équipement est injoignable. |
+| `timeout` | L'agent n'a pas répondu à temps : mauvaise adresse, mauvaise communauté (les agents restent muets) ou pare-feu. |
+| `auth` | L'agent a refusé la communauté ou les identifiants v3. |
+| `protocol` | L'agent a répondu autre chose qu'une réponse SNMP valide, ou a refusé la requête. |
+| `not_found` | L'agent ne connaît pas l'objet (`noSuchObject`, `noSuchInstance`) : vérifiez l'OID, son suffixe d'instance et la vue SNMP. |
+| `threshold` | La valeur numérique est hors de `min` / `max`. |
+| `payload` | La valeur n'est pas un nombre alors qu'une borne est posée, ou ne contient pas le texte attendu. |
+
+## RADIUS {#radius}
+
+**Serveur RADIUS** — authentifie un compte de test (Access-Request) et attend
+un Access-Accept : il détecte un serveur allumé qui n'accepte plus les
+connexions. Exemples : FreeRADIUS, Windows NPS, le RADIUS d'un Wi-Fi
+WPA-Enterprise, d'un VPN ou d'un switch 802.1X.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 1812 | UDP | Requêtes d'authentification (port par défaut) |
+
+### Configuration
+
+1. Sur le serveur RADIUS, déclarez l'hôte DumbMonit comme client, avec un secret partagé (clients.conf sur FreeRADIUS, RADIUS Clients sur Windows NPS).
+
+2. Créez un compte de test sans second facteur, et notez son nom et son mot de passe.
+
+3. Dans DumbMonit, saisissez le serveur (port UDP 1812 par défaut), le secret partagé et le compte de test.
+
+4. Facultatif : changez l'identifiant NAS si le serveur filtre les requêtes dessus.
+
+#### Droits requis
+
+- **Un compte de test autorisé à s'authentifier** : Aucun accès réseau ni droit d'administration n'est nécessaire
+
+!!! warning
+    Un secret partagé erroné, ou un hôte non déclaré comme client, rend généralement le serveur muet : la vérification signale alors un délai dépassé.
+
+#### À savoir
+
+La vérification envoie un Access-Request par passage, avec le nom du compte, son mot de passe masqué par le secret partagé (RFC 2865) et une signature (`Message-Authenticator`, RFC 3579, placée en premier comme le demande la parade à BlastRADIUS). Elle ne réessaie jamais : un datagramme perdu apparaît comme une panne.
+
+Le secret partagé et le mot de passe sont stockés chiffrés et ne ressortent jamais par l'API. Les laisser vides en modifiant la surveillance conserve ceux qui sont enregistrés ; changer le nom du compte redemande son mot de passe.
+
+La réponse est vérifiée avec le secret partagé. Un serveur dont la signature ne correspond pas est signalé `bad_secret` plutôt que comme une panne, pour que l'alerte dise quoi corriger. Un serveur qui ne connaît pas le secret ne répond en général pas du tout : voir les raisons d'échec.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `port` | Port | `1812` | Port UDP du service d'authentification. |
+| `nas_identifier` | Identifiant NAS | `dumbmonit` | Valeur de l'attribut NAS-Identifier envoyé avec la requête. Changez-la si le serveur filtre les requêtes par NAS. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | La socket UDP n'a pas pu être ouverte. |
+| `timeout` | Aucune réponse valide à temps : serveur arrêté, port filtré, secret partagé erroné ou hôte non déclaré comme client (les serveurs ignorent ces requêtes sans rien dire). |
+| `auth` | Access-Reject : le serveur fonctionne et refuse le compte de test (verrouillé, expiré, mot de passe erroné). Son Reply-Message, s'il y en a un, figure dans le journal. |
+| `bad_secret` | La signature de la réponse ne correspond pas : le secret partagé est probablement faux. |
+| `protocol` | Access-Challenge (le compte demande une seconde étape), un autre code inattendu, ou une réponse qui n'est pas du RADIUS valide. |
+
+## gRPC {#grpc}
+
+**Service gRPC** — appelle le contrôle de santé gRPC standard
+(`grpc.health.v1.Health/Check`) : il détecte un service allumé qui se déclare
+en mauvais état. Exemples : un microservice gRPC, etcd, un service derrière
+Envoy ou un maillage de services, tout serveur qui enregistre `grpc.health.v1`.
+
+Une vérification HTTP ne peut pas le faire : gRPC exige HTTP/2, souvent sans
+TLS (h2c), et la réponse est un message protobuf accompagné d'un `grpc-status`
+dans les trailers.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 50051 | TCP | gRPC sur HTTP/2 (port par défaut) |
+| 443 | TCP | Seulement avec l'option Connexion chiffrée (port par défaut) |
+
+### Configuration
+
+1. Vérifiez que le serveur enregistre le service de santé standard (grpc.health.v1.Health) : la plupart des frameworks gRPC offrent une fonction d'une ligne pour cela.
+
+2. Dans DumbMonit, saisissez le serveur avec son port, par exemple grpc.home.lan:50051.
+
+3. Cochez Connexion chiffrée (TLS) pour un serveur qui l'exige ; le port vaut alors 443 par défaut.
+
+4. Facultatif : nommez un Service, pour vérifier sa propre santé plutôt que celle du serveur entier.
+
+!!! warning
+    La vérification ne voit que ce que le service de santé déclare : un serveur qui répond toujours SERVING ne prouve rien sur les méthodes qu'il porte.
+
+#### À savoir
+
+Sans TLS, la vérification parle HTTP/2 en clair dès le premier octet (« prior knowledge »), ce qu'attendent les serveurs gRPC d'un réseau interne. Avec TLS, elle propose l'ALPN `h2` et échoue en `protocol` si le serveur ne l'accepte pas, et elle lit le certificat comme les autres vérifications chiffrées (expiration, émetteur, « Accepter un certificat invérifiable »).
+
+La réponse est jugée en deux temps. D'abord le `grpc-status`, lu dans les trailers ou, pour une réponse « Trailers-Only », dans les en-têtes : tout sauf `OK` échoue. Ensuite le champ `status` du message de santé : seul `SERVING` réussit.
+
+Identifiants : aucun.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `service` | Service | *(vide)* | Nom du service dont on demande la santé, par exemple my.package.MyService. Vide : la santé du serveur dans son ensemble. |
+| `tls` | Connexion chiffrée (TLS) | `false` | Se connecter en TLS et HTTP/2 (ALPN h2). Décochée, la vérification parle HTTP/2 en clair (h2c), comme la plupart des services d'un réseau interne. |
+| `port` | Port | *(vide)* | Utilisé si l'adresse n'en donne pas. Vide : 50051, ou 443 avec TLS. |
+| `server_name` | Nom du serveur (SNI) | *(l'hôte)* | Nom de domaine annoncé au serveur et vérifié dans le certificat. À renseigner quand l'adresse est une IP. |
+| `insecure_tls` | Accepter un certificat invérifiable | `false` | Une chaîne invérifiable ne compte plus comme un échec : la date d'expiration reste enregistrée. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `dns`, `connect`, `timeout`, `tls`, `cert_expired` | Comme pour les autres vérifications : nom, port, délai, poignée de main TLS, certificat. |
+| `unhealthy` | Le serveur répond mais déclare `NOT_SERVING`, `UNKNOWN` ou `SERVICE_UNKNOWN`, ou répond `UNAVAILABLE`. `probe_grpc_serving_status` porte la valeur. |
+| `protocol` | Pas du HTTP/2, pas du gRPC, ou un `grpc-status` autre que ceux ci-dessous. `UNIMPLEMENTED` veut dire que le serveur n'expose pas le service de santé standard ; `NOT_FOUND`, qu'il ne connaît pas le nom donné dans `service`. |
+| `status` | Le point de terminaison a répondu un statut HTTP autre que 200 (un proxy, un autre service) ; `probe_http_status_code` le porte. |
+| `auth` | `UNAUTHENTICATED` ou `PERMISSION_DENIED` : le serveur, ou un proxy devant lui, veut des identifiants que le protocole de santé n'envoie pas. |
 
 ## Adresses que les vérifications refusent
 

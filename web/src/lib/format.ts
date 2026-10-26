@@ -115,7 +115,10 @@ export const UPTIME_KINDS = [
 	'udp',
 	'ssh',
 	'imap',
-	'pop3'
+	'pop3',
+	'snmp_oid',
+	'radius',
+	'grpc'
 ] as const;
 
 export function isUptimeKind(kind: string): boolean {

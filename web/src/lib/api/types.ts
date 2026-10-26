@@ -61,6 +61,8 @@ export type Credential =
 	 */
 	| { type: 'api_token'; token_id: string; secret?: string }
 	| { type: 'username_password'; username: string; password?: string }
+	/** RADIUS: the server's shared secret and a test account; a blank secret keeps the saved one. */
+	| { type: 'radius'; username: string; password?: string; shared_secret?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -70,6 +72,7 @@ export const CREDENTIAL_KINDS = [
 	{ value: 'snmp_v3', label: 'SNMP v3' },
 	{ value: 'api_token', label: 'API token' },
 	{ value: 'username_password', label: 'Username / password' },
+	{ value: 'radius', label: 'RADIUS' },
 	{ value: 'none', label: 'No authentication' }
 ] as const;
 
@@ -886,6 +889,17 @@ function fallbackCredentialView(kind: string): CredentialView {
 				fields: [
 					credentialField('username', 'User name', 'text', true),
 					credentialField('password', 'Password', 'password', true)
+				]
+			};
+		case 'radius':
+			return {
+				kind,
+				label,
+				help: '',
+				fields: [
+					credentialField('shared_secret', 'Shared secret', 'password', true),
+					credentialField('username', 'Test account', 'text', true),
+					credentialField('password', 'Test account password', 'password', true)
 				]
 			};
 		default:

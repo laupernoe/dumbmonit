@@ -1269,6 +1269,123 @@ const SQL_LOGIN: CredentialView = CredentialView {
     ],
 };
 
+/// Options lues par `collectors/uptime/snmp_oid/options.rs`.
+const SNMP_OID_OPTIONS: &[OptionView] = &[
+    text(
+        "oid",
+        "Object (OID)",
+        "The SNMP object to read, in numeric form. Add the instance suffix, usually .0 for a single value.",
+        "1.3.6.1.2.1.1.3.0",
+        "",
+    ),
+    number("port", "Port", "Used if the address does not give one.", "161", "161"),
+    text(
+        "min",
+        "Minimum value",
+        "A numeric value below this fails. Empty: no lower bound.",
+        "10",
+        "",
+    ),
+    text(
+        "max",
+        "Maximum value",
+        "A numeric value above this fails. Empty: no upper bound.",
+        "75",
+        "",
+    ),
+    text(
+        "expect",
+        "Expected text",
+        "Text the value must contain, whatever its case. Empty: any value is accepted.",
+        "online",
+        "",
+    ),
+    select(
+        "snmp_version",
+        "SNMP version",
+        "Version used with a community. Pick 1 only for an old agent that ignores version 2c; SNMP v3 users ignore it.",
+        "2c",
+        &["2c", "1"],
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Identifiants d'une sonde RADIUS : le secret du serveur et un compte de test.
+const RADIUS_LOGIN: CredentialView = CredentialView {
+    kind: "radius",
+    label: "Shared secret and test account",
+    help: "The secret defined for this host on the RADIUS server, and an account created for monitoring.",
+    fields: &[
+        cred_secret(
+            "shared_secret",
+            "Shared secret",
+            "As configured for this client on the RADIUS server. Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+        cred_text(
+            "username",
+            "Test account",
+            "An account without a second factor, used only to check that the server authenticates.",
+            "dumbmonit",
+        ),
+        cred_secret(
+            "password",
+            "Test account password",
+            "Stored encrypted, never shown again.",
+            "",
+            true,
+        ),
+    ],
+};
+
+/// Options lues par `collectors/uptime/radius/options.rs`.
+const RADIUS_OPTIONS: &[OptionView] = &[
+    number("port", "Port", "UDP port of the authentication service.", "1812", "1812"),
+    text(
+        "nas_identifier",
+        "NAS identifier",
+        "Value of the NAS-Identifier attribute sent with the request. Change it if the server filters requests by NAS.",
+        "dumbmonit",
+        "dumbmonit",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
+/// Options lues par `collectors/uptime/grpc/options.rs`.
+const GRPC_OPTIONS: &[OptionView] = &[
+    text(
+        "service",
+        "Service",
+        "Name of the service whose health is asked, for example my.package.MyService. Empty: the health of the server as a whole.",
+        "my.package.MyService",
+        "",
+    ),
+    boolean(
+        "tls",
+        "Encrypted connection (TLS)",
+        "Connect with TLS and HTTP/2 (ALPN h2). Unticked, the check speaks HTTP/2 in clear text (h2c), as most services inside a network do.",
+        false,
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give one. Empty: 50051, or 443 with TLS.",
+        "50051",
+        "",
+    ),
+    server_name_option(
+        "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+    ),
+    insecure_tls(
+        "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+    ),
+    ALLOW_PRIVATE_TARGETS,
+    PROBE_TIMEOUT,
+];
+
 /// Options lues par `collectors/push/mod.rs` (`Settings::from_target`).
 const PUSH_OPTIONS: &[OptionView] = &[
     text(
@@ -6101,6 +6218,101 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: OPENVPN_OPTIONS,
         },
+        "snmp_oid" => CollectorView {
+            kind: "snmp_oid",
+            label: "SNMP value (single OID)",
+            summary: "Reads one SNMP object and checks its value against a range or a text.",
+            examples: &[
+                "A temperature or humidity sensor",
+                "A UPS status or battery level",
+                "A version string or a firmware flag",
+                "A counter exposed by a Net-SNMP extend script",
+            ],
+            credential_types: &["snmp_community", "snmp_v3"],
+            credentials: &[SNMP_COMMUNITY, SNMP_V3],
+            address_hint: "192.168.1.10",
+            default_port: 161,
+            setup: Setup {
+                title: "Monitor a single SNMP value",
+                steps: &[
+                    "On the device, enable SNMP and check that the community or the v3 user may read the object (the SNMP view must grant its branch).",
+                    "In DumbMonit, enter the device address, then the community or the v3 user.",
+                    "Fill in the object (OID) with its instance suffix, for example 1.3.6.1.2.1.1.3.0.",
+                    "Optional: set a minimum and a maximum, or an expected text, to be warned when the value drifts.",
+                ],
+                ports: &[to_device!(161, "udp", "SNMP request (default port)")],
+                permissions: &[
+                    "Read access to the object\nA read-only community or v3 user is enough",
+                ],
+                warning: "An object the agent does not know, or that its SNMP view hides, is reported down with the reason not_found.",
+            },
+            options: SNMP_OID_OPTIONS,
+        },
+        "radius" => CollectorView {
+            kind: "radius",
+            label: "RADIUS server",
+            summary: "Authenticates a test account (Access-Request): catches a server that is up but no longer accepts logins.",
+            examples: &[
+                "FreeRADIUS",
+                "Windows NPS",
+                "The RADIUS behind a WPA-Enterprise Wi-Fi",
+                "The RADIUS behind a VPN or a 802.1X switch",
+            ],
+            credential_types: &["radius"],
+            credentials: &[RADIUS_LOGIN],
+            address_hint: "radius.home.lan",
+            default_port: 1812,
+            setup: Setup {
+                title: "Monitor a RADIUS server",
+                steps: &[
+                    "On the RADIUS server, declare the DumbMonit host as a client, with a shared secret (clients.conf on FreeRADIUS, RADIUS Clients on Windows NPS).",
+                    "Create a test account without a second factor, and note its name and password.",
+                    "In DumbMonit, enter the server (UDP port 1812 by default), the shared secret and the test account.",
+                    "Optional: change the NAS identifier if the server filters requests by it.",
+                ],
+                ports: &[to_device!(1812, "udp", "Authentication requests (default port)")],
+                permissions: &[
+                    "A test account that may authenticate\nNo network access or admin right is needed",
+                ],
+                warning: "A wrong shared secret, or a host not declared as a client, usually makes the server stay silent: the check then reports a timeout.",
+            },
+            options: RADIUS_OPTIONS,
+        },
+        "grpc" => CollectorView {
+            kind: "grpc",
+            label: "gRPC service",
+            summary: "Calls the standard gRPC health check (grpc.health.v1): catches a service that is up but reports itself unhealthy.",
+            examples: &[
+                "A gRPC microservice",
+                "etcd",
+                "A service behind Envoy or a service mesh",
+                "Any server that registers grpc.health.v1",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "grpc.home.lan:50051",
+            default_port: 50051,
+            setup: Setup {
+                title: "Monitor a gRPC service",
+                steps: &[
+                    "Check that the server registers the standard health service (grpc.health.v1.Health): most gRPC frameworks have a one-line helper for it.",
+                    "In DumbMonit, enter the server with its port, for example grpc.home.lan:50051.",
+                    "Tick Encrypted connection (TLS) for a server that requires it; the port then defaults to 443.",
+                    "Optional: name a Service, to check its own health instead of the whole server's.",
+                ],
+                ports: &[
+                    to_device!(50051, "tcp", "gRPC over HTTP/2 (default port)"),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the Encrypted connection option (default port)",
+                    ),
+                ],
+                permissions: &[],
+                warning: "The check only sees what the health service reports: a server that always answers SERVING proves nothing about the methods behind it.",
+            },
+            options: GRPC_OPTIONS,
+        },
         _ => return None,
     })
 }
@@ -6124,7 +6336,9 @@ fn guide_url(kind: &str) -> String {
         "victorialogs" | "victoriametrics" => "victoriametrics",
         "agent" | "agent_service" => "agent",
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mysql" | "mqtt"
-        | "websocket" | "udp" | "ssh" | "imap" | "pop3" => "services",
+        | "websocket" | "udp" | "ssh" | "imap" | "pop3" | "snmp_oid" | "radius" | "grpc" => {
+            "services"
+        }
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
@@ -6138,8 +6352,9 @@ fn guide_url(kind: &str) -> String {
     };
     let anchor = match kind {
         "http" | "tcp" | "dns" | "ping" | "tls" | "ntp" | "smtp" | "mqtt" | "websocket" | "udp"
-        | "ssh" | "imap" | "pop3" => format!("#{kind}"),
+        | "ssh" | "imap" | "pop3" | "radius" | "grpc" => format!("#{kind}"),
         "postgres" => "#postgresql".to_owned(),
+        "snmp_oid" => "#snmp-oid".to_owned(),
         "mysql" => "#mysql-and-mariadb".to_owned(),
         _ => String::new(),
     };
@@ -6304,6 +6519,9 @@ mod tests {
         "webchange",
         "website",
         "dummy",
+        "snmp_oid",
+        "radius",
+        "grpc",
     ];
 
     #[test]
@@ -6514,6 +6732,32 @@ mod tests {
                 "pop3",
                 &[
                     "security",
+                    "port",
+                    "server_name",
+                    "insecure_tls",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            (
+                "snmp_oid",
+                &[
+                    "oid",
+                    "port",
+                    "min",
+                    "max",
+                    "expect",
+                    "snmp_version",
+                    "allow_private_targets",
+                    "timeout_seconds",
+                ],
+            ),
+            ("radius", &["port", "nas_identifier", "allow_private_targets", "timeout_seconds"]),
+            (
+                "grpc",
+                &[
+                    "service",
+                    "tls",
                     "port",
                     "server_name",
                     "insecure_tls",
@@ -7264,6 +7508,11 @@ mod tests {
         for kind in ["imap", "pop3"] {
             assert_eq!(defaut(kind, "security"), "tls");
         }
+        assert_eq!(defaut("snmp_oid", "port"), "161");
+        assert_eq!(defaut("snmp_oid", "snmp_version"), "2c");
+        assert_eq!(defaut("radius", "port"), "1812");
+        assert_eq!(defaut("radius", "nas_identifier"), "dumbmonit");
+        assert_eq!(defaut("grpc", "tls"), "false");
     }
 
     /// `credential_types` et `credentials` décrivent la même liste : l'ancienne
@@ -7325,6 +7574,32 @@ mod tests {
                     )
                 }
             );
+        }
+    }
+
+    /// Les champs du formulaire RADIUS sont ceux que `Credential::Radius` lit.
+    #[test]
+    fn le_formulaire_radius_recompose_un_identifiant_radius() {
+        let view = describe("radius");
+        let keys: Vec<&str> = view.credentials[0].fields.iter().map(|f| f.key).collect();
+        assert_eq!(keys, ["shared_secret", "username", "password"]);
+        let mut object = serde_json::Map::new();
+        object.insert("type".into(), "radius".into());
+        for key in &keys {
+            object.insert((*key).into(), format!("valeur-{key}").into());
+        }
+        let credential: dumbmonit_proto::Credential =
+            serde_json::from_value(serde_json::Value::Object(object)).unwrap();
+        assert_eq!(
+            credential,
+            dumbmonit_proto::Credential::Radius {
+                shared_secret: "valeur-shared_secret".into(),
+                username: "valeur-username".into(),
+                password: "valeur-password".into(),
+            }
+        );
+        for field in view.credentials[0].fields {
+            assert_eq!(field.input == "password", field.key != "username", "{}", field.key);
         }
     }
 
@@ -7588,6 +7863,9 @@ mod tests {
             ("ssh", include_str!("../../../../docs/devices/services.md")),
             ("imap", include_str!("../../../../docs/devices/services.md")),
             ("pop3", include_str!("../../../../docs/devices/services.md")),
+            ("snmp_oid", include_str!("../../../../docs/devices/services.md")),
+            ("radius", include_str!("../../../../docs/devices/services.md")),
+            ("grpc", include_str!("../../../../docs/devices/services.md")),
         ];
         fn flatten(text: &str) -> String {
             text.replace('`', "").split_whitespace().collect::<Vec<_>>().join(" ")
@@ -7809,6 +8087,9 @@ mod tests {
             describe("websocket").credential_types,
             &["none", "username_password", "api_token"]
         );
+        assert_eq!(describe("radius").credential_types, &["radius"]);
+        assert_eq!(describe("grpc").credential_types, &["none"]);
+        assert_eq!(describe("snmp_oid").credential_types, &["snmp_community", "snmp_v3"]);
     }
 
     /// Les défauts des sondes applicatives sont ceux de leurs `options.rs` : un
