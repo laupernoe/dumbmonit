@@ -370,6 +370,13 @@ on every system.
 
 ### Upgrade
 
+From this version on, agents update themselves (see
+[Automatic updates](#automatic-updates)): after upgrading the server there is
+nothing to run. The install command below is still the way to do the **first**
+update of an agent that predates this feature, and to change its token or URL.
+Take the command from the current server; the binary now lives in
+`/usr/local/lib/dumbmonit-agent/` on Linux.
+
 Both scripts are idempotent: running the install command again, with the same
 token and URL, replaces the binary, rewrites the configuration and restarts the
 service. That is the upgrade procedure. Take the command from the current
@@ -383,6 +390,152 @@ the new path (`/etc/dumbmonit/agent.yaml`, `C:\ProgramData\DumbMonit\agent.yaml`
 and installs `dumbmonit-agent` in its place. The old `ezym_…` token stays
 valid, so the command shown when the token was created still works; nothing
 has to be revoked first.
+
+## Automatic updates {#automatic-updates}
+
+From this version on, the agent updates itself from your server: after you
+upgrade DumbMonit, the agents follow without re-running any install command.
+The first update of an agent that predates this feature is manual (see
+[Agents installed before this version](#agents-before-automatic-updates)).
+
+!!! note
+    This is about the **DumbMonit agent binary**. It has nothing to do with the
+    update policies of [Docker containers](#docker-containers), which update the
+    containers monitored on a host.
+
+### How it works {#how-automatic-updates-work}
+
+- On every batch the agent reports the SHA-256 of its running binary, its
+  platform (`linux-x86_64`, `linux-aarch64`, `freebsd-x86_64`,
+  `windows-x86_64`), whether it is able to replace itself, and the outcome of
+  its last update attempt.
+- The server ships the agent binaries of its own build (`/agents` in the image,
+  `DUMBMONIT_AGENT_DIR`). When the agent's SHA-256 differs from the server's
+  binary for its platform, and updates are allowed for that agent, the server's
+  reply to the batch carries an offer: version, build, file, SHA-256, size and
+  Ed25519 signature. The offer is made on the encrypted agent channel (port
+  8443) and on the old plain channel.
+- The **build** decides, not only the version: a `:edge` server aligns its
+  agents on its own build. An agent is never downgraded, unless an administrator
+  asks for it: **Update now** on an agent newer than the server offers
+  **Install the server's version**.
+- The agent downloads the file with `GET /api/agent/update/download/<file>`
+  through its own channel (encrypted, pinned, mutual TLS when it has a
+  certificate), presenting the enrolment token, the binding secret and the
+  machine key. A neighbour holding the fleet token cannot fetch it as another
+  machine.
+- Before anything is replaced, the agent checks that the size is at most
+  128 MiB, that the SHA-256 equals the offer, that the Ed25519 signature
+  verifies against a release public key compiled into the agent
+  (see [Security](#automatic-updates-security)), and then runs the new binary
+  once with `--version`: it must print the offered version.
+
+**Linux and FreeBSD.** The old binary is copied next to the new one
+(`dumbmonit-agent.previous`), an update ledger (`dumbmonit-agent.update.json`)
+is written, then the new binary replaces the old one with an atomic, fsync'd
+rename and the agent `exec()`s it in the same process: systemd, OpenRC and
+rc.d see the same PID. Measurements still buffered are flushed, or kept on
+disk, first.
+
+**Windows.** A running `.exe` cannot be overwritten. The agent copies itself to
+`dumbmonit-agent-update-helper.exe`, starts it detached with `--update-helper`
+and stops. The helper waits for the `DumbMonitAgent` service to stop, swaps
+`dumbmonit-agent.exe` and the staged `dumbmonit-agent.new.exe` (the old one is
+kept as `.previous`), starts the service and watches the trial.
+
+On Linux the install script puts the binary in
+`/usr/local/lib/dumbmonit-agent/dumbmonit-agent`; a symlink stays at
+`/usr/local/bin/dumbmonit-agent`. The systemd unit gets
+`ReadWritePaths=/usr/local/lib/dumbmonit-agent`: with `ProtectSystem=strict`,
+that folder is the only place the agent can write besides its cache.
+
+### Settings {#automatic-updates-settings}
+
+**Settings → Agents → Automatic agent updates** (admin session only; API tokens
+cannot change these settings). The same settings are available through
+`GET`/`PUT /api/agent/updates`, `PUT /api/agent/updates/{id}`,
+`POST /api/agent/updates/{id}/now` and `POST /api/agent/updates/all`.
+
+| Setting | Meaning |
+|---|---|
+| Agents update themselves | On by default, for new and existing installations. Each agent can override it: follow the global setting, on, or off. |
+| Window | **Any time** (default), **only during a maintenance window** (an active silence on the device) or **manual only** (Update now). |
+| Progressive rollout | Agents marked **canary** get the update first. The others wait until every eligible canary has run the new build for N minutes (default 60, maximum 10080) without failure; a failed canary holds the rollout. With no canary, everyone updates at once. |
+| Update now / Update all now | Per agent, or for all of them: ignores the window and the rollout, and retries a failed build once. |
+| Accept unsigned builds (development) | Off by default, with a warning in the UI. See [Security](#automatic-updates-security). |
+
+The agent list shows the version and an update status for each agent: up to
+date, pending, updating, failed (with the reason), refused, disabled, manual,
+waiting for window, waiting for canaries, newer than server, legacy, container,
+read-only, disabled locally, unsupported, no binary.
+
+### Security {#automatic-updates-security}
+
+- **Integrity**: the SHA-256 comes from the server.
+- **Authenticity**: an Ed25519 detached signature, made with the release key
+  held only in the GitHub secret `AGENT_SIGNING_KEY`. The public key (several
+  are allowed, for rotation) is compiled into the agent
+  (`crates/agent/signing/release-keys.pem`). A signature that does not verify
+  is always refused, whatever the settings.
+- **Unsigned builds** (no `.sig`: local builds, forks, CI without the secret)
+  are refused by default. They are accepted only when **both** the server
+  setting *Accept unsigned builds (development)* is on **and** the offer
+  arrived over the encrypted agent channel, where the server is authenticated
+  by the CA pin the agent got from the install command of that same server. On
+  the plain channel anyone in the middle could set the flag, so signatures are
+  mandatory there. A refusal is reported (status *refused*) without downloading
+  anything, and is evaluated again when the setting changes.
+- Signatures are separate files (`<binary>.sig`, 64 raw bytes, also served at
+  `/download/<binary>.sig`), so the binaries stay bit-for-bit
+  [reproducible](../development/reproducible-builds.md).
+
+To verify a binary by hand:
+
+```sh
+openssl pkeyutl -verify -pubin -inkey release-key.pub.pem -rawin \
+  -in dumbmonit-agent-linux-x86_64 -sigfile dumbmonit-agent-linux-x86_64.sig
+```
+
+How the keys are made and used by the release workflow:
+[Signing the agent binaries](../development/agent-signing.md). The agent channel
+itself is described in [Agent channel security](../install/agent-security.md).
+
+### Rollback {#automatic-updates-rollback}
+
+The new binary is on trial until the server accepts its first batch. If that
+does not happen within 120 s (150 s for the Windows helper), or if the binary
+stops at startup more than 3 times (a crash loop under systemd
+`Restart=always`, or the Windows recovery actions), the previous binary is
+restored and restarted. The failure (`rolled_back` and its reason) is reported
+to the server with the next batch.
+
+That build is then not retried automatically on that machine, neither by the
+agent nor by the server, until an administrator clicks **Update now**, which
+retries once. OpenRC without supervision does not restart a crashed agent: the
+rollback then happens at its next start.
+
+### Docker and other cases {#automatic-updates-other-cases}
+
+- **Docker**: an agent in a container never replaces itself (the image
+  `ghcr.io/laupernoe/dumbmonit-agent` sets `DUMBMONIT_AGENT_CONTAINER=1`;
+  `/.dockerenv` and `/run/.containerenv` are also detected). The UI says to
+  update its image: `docker compose pull && docker compose up -d`.
+- **macOS**: the server image does not ship macOS agents. Update them with
+  `install.sh` (status *unsupported*).
+- <span id="agents-before-automatic-updates"></span>**Agents installed before
+  this version** do not know how to update themselves (status *legacy*):
+  re-run the install command once.
+- **Folder not writable**: an agent that cannot write to its folder reports
+  *read-only*. Re-run the install command once (it sets up the new layout).
+
+### Turning it off {#automatic-updates-off}
+
+- For everyone: turn off **Agents update themselves** in Settings → Agents, or
+  choose **manual only** to update on demand.
+- For one agent: set its override to **off**.
+- On the machine itself: `self_update: false` in `agent.yaml`, or
+  `DUMBMONIT_AGENT_SELF_UPDATE=false` (status *disabled locally*). It always
+  wins over the server.
 
 ## Services found by the agent
 

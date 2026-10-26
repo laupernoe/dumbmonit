@@ -22,6 +22,7 @@
 	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
 	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
 	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
+	import AgentUpdates from '#lib/components/settings/AgentUpdates.svelte';
 	import { getAgentChannel } from '#lib/api/agent_tls.js';
 	import type { AgentChannelEntry, AgentChannelOverview } from '#lib/api/types.js';
 
@@ -305,6 +306,10 @@
 		<div class="border-b border-line px-5 py-4">
 			<ErrorNotice error={channelError} title={m.settings_agents_tls_load_error()} />
 		</div>
+	{/if}
+
+	{#if auth.isAdmin}
+		<AgentUpdates />
 	{/if}
 
 	<div class="px-5 py-4">
