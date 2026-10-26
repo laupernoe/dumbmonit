@@ -6,3 +6,4 @@ Location: https://192.0.2.1/auth.html
 Content-Type: text/html
 Content-Length: 0
 Connection: close
+

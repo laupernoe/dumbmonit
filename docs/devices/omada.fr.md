@@ -36,7 +36,7 @@ Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
 | Port | Protocole | Usage |
 |---|---|---|
 | 8043 | TCP | HTTPS et OpenAPI du contrôleur (contrôleur logiciel, par défaut) |
-| 443 | TCP | Contrôleurs matériels (OC200, OC300) et installations derrière un proxy inverse |
+| 443 | TCP | Seulement pour les contrôleurs matériels (OC200, OC300) et installations derrière un proxy inverse |
 
 Le port 443 n'est utile que si le contrôleur écoute là plutôt que sur 8043.
 
@@ -89,7 +89,7 @@ une mise à jour du firmware.
 
 3. Cliquez sur Apply : le contrôleur affiche l'Omada ID, le Client ID et le Client Secret. Copiez-les : le secret n'est affiché qu'une fois.
 
-4. Dans DumbMonit, saisissez l'adresse du contrôleur (omada.lan), changez le port s'il n'est pas 8043 (443 pour un contrôleur matériel), puis collez le Client ID et le Client secret. Saisissez l'Omada ID dans l'option Identifiant du contrôleur, ou laissez-la vide pour le lire sur le contrôleur.
+4. Dans DumbMonit, saisissez l'adresse du contrôleur (omada.lan) et le port (8043, ou 443 pour un contrôleur matériel), puis collez le Client ID et le Client secret.
 
 ### Permissions requises
 
