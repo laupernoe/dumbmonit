@@ -317,12 +317,51 @@ pub async fn send(
     let body_with_actions = payload_for(message, true).to_string();
 
     let mut outcome = Outcome::default();
+    // Un compte restreint par ses équipes ne reçoit que les alertes de ses
+    // équipements : un message porte sur un seul équipement (`group_key`), et
+    // un message sans équipement ne lui parvient pas. Droits relus une fois par
+    // compte et par envoi.
+    let mut allowed: std::collections::HashMap<i64, bool> = std::collections::HashMap::new();
     for subscription in &subscriptions {
+        let user_id = subscription.user_id;
+        // Un envoi à un compte précis (message de test) ne porte pas d'alerte.
+        let may = match allowed.get(&user_id) {
+            _ if matches!(audience, Audience::User { .. }) => true,
+            Some(may) => *may,
+            None => {
+                let may = may_receive(store.pool, user_id, message.target_id).await;
+                allowed.insert(user_id, may);
+                may
+            }
+        };
+        if !may {
+            continue;
+        }
         let body = if subscription.can_act { &body_with_actions } else { &body };
         let delivery = send_one(http, &keys, subscription, settings, body).await;
         record(store.pool, subscription.id, &delivery, &mut outcome).await;
     }
     Ok(outcome)
+}
+
+/// Vrai si le compte peut voir l'équipement du message. En cas d'erreur de
+/// lecture, on s'abstient : une notification manquée vaut mieux qu'une fuite.
+async fn may_receive(pool: &sqlx::SqlitePool, user_id: i64, target_id: Option<i64>) -> bool {
+    let user = match crate::auth::users::get(pool, user_id).await {
+        Ok(Some(user)) => user,
+        _ => return false,
+    };
+    let access = match crate::auth::teams::access_for_user(pool, &user).await {
+        Ok(access) => access,
+        Err(_) => return false,
+    };
+    if !access.is_scoped() {
+        return true;
+    }
+    match target_id {
+        Some(id) => access.can_see(pool, id).await.unwrap_or(false),
+        None => false,
+    }
 }
 
 /// Consigne la réponse du service de push pour un abonnement : dernier succès,

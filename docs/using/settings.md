@@ -174,6 +174,12 @@ Admins only. Sign-in with directory usernames and passwords on the usual
 sign-in screen, roles from the directory groups, accounts created at the first
 sign-in. See [LDAP / Active Directory](ldap.md).
 
+## SAML, SCIM and teams
+
+Admins only. SAML 2.0 single sign-on, SCIM provisioning, and teams that limit
+each account to some folders of monitors. See [SAML 2.0](saml.md),
+[SCIM provisioning](scim.md) and [Teams and permissions](teams.md).
+
 ## Agents
 
 Enrollment tokens for the [Linux, macOS, FreeBSD and Windows agent](../devices/agent.md).

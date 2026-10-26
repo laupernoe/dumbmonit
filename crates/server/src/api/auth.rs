@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{Authenticated, CurrentSession, current_session};
 use crate::auth::rate_limit::Key;
+use crate::auth::teams::TeamAccess;
 use crate::auth::users::{self, Role, User};
 use crate::auth::{AuthError, AuthResult, AuthState, audit, cookie, ldap, oidc, password, session};
 use crate::state::AppState;
@@ -184,9 +185,46 @@ pub async fn status(
     }))
 }
 
+/// Ce que les équipes ouvrent au compte, pour que l'interface masque ce qu'il
+/// ne peut pas ouvrir. Le serveur l'applique de toute façon.
+#[derive(Debug, Serialize)]
+pub struct AccessView {
+    /// Vrai si le compte est restreint par ses équipes.
+    pub scoped: bool,
+    pub teams: Vec<String>,
+    pub grants: Vec<crate::auth::teams::Grant>,
+    /// Plafond imposé par le rôle, `null` sans restriction.
+    pub ceiling: Option<crate::auth::teams::Level>,
+}
+
+impl From<&crate::auth::teams::Access> for AccessView {
+    fn from(access: &crate::auth::teams::Access) -> Self {
+        match access.scope() {
+            None => Self { scoped: false, teams: Vec::new(), grants: Vec::new(), ceiling: None },
+            Some(scope) => Self {
+                scoped: true,
+                teams: scope.teams.clone(),
+                grants: scope.grants.clone(),
+                ceiling: Some(scope.ceiling),
+            },
+        }
+    }
+}
+
+/// Réponse de `GET /api/auth/me` : le compte, et ses droits d'équipe.
+#[derive(Debug, Serialize)]
+pub struct MeView {
+    #[serde(flatten)]
+    pub user: UserView,
+    pub access: AccessView,
+}
+
 /// `GET /api/auth/me` — le compte de la session courante.
-pub async fn me(Authenticated(user): Authenticated) -> Json<UserView> {
-    Json(user.into())
+pub async fn me(
+    Authenticated(user): Authenticated,
+    TeamAccess(access): TeamAccess,
+) -> Json<MeView> {
+    Json(MeView { user: user.into(), access: AccessView::from(&access) })
 }
 
 /// `POST /api/auth/setup` — création du premier administrateur.

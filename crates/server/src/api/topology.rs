@@ -70,6 +70,7 @@ use sqlx::Row;
 use tracing::warn;
 
 use crate::api::ApiResult;
+use crate::auth::teams::TeamAccess;
 use crate::collectors::agent;
 use crate::state::AppState;
 use crate::tsdb::InstantSeries;
@@ -294,7 +295,10 @@ pub struct Neighbor {
 /// `GET /api/topology` : lecture seule, ouverte à tous les rôles comme la
 /// liste des équipements. Les adresses des cibles n'y figurent pas ; seules y
 /// sont celles que l'hyperviseur rapporte pour ses invités (`ips`).
-pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
+pub async fn topology(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<TopologyView>> {
     let targets = load_targets(&state).await?;
     let sites = agent_sites(&state).await?;
     let placed = placed_sites(&state, &targets, &sites).await?;
@@ -319,8 +323,28 @@ pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyV
         )
     };
 
-    let (nodes, edges) = build_full(&targets, &sites, &placed, &guests, &neighbors, &facts);
+    let (mut nodes, mut edges) = build_full(&targets, &sites, &placed, &guests, &neighbors, &facts);
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        restrict(&mut nodes, &mut edges, &visible);
+    }
     Ok(Json(TopologyView { nodes, edges, metrics_available }))
+}
+
+/// Carte d'un compte restreint par ses équipes : ses équipements, les invités
+/// et nœuds de ses hyperviseurs, et les liens entre eux seulement. Un nœud qui
+/// ne se rattache à aucun équipement visible disparaît.
+fn restrict(
+    nodes: &mut Vec<NodeView>,
+    edges: &mut Vec<EdgeView>,
+    visible: &std::collections::HashSet<TargetId>,
+) {
+    nodes.retain(|node| match (node.target_id, node.host_id) {
+        (Some(id), _) => visible.contains(&id),
+        (None, Some(host)) => visible.contains(&host),
+        (None, None) => false,
+    });
+    let kept: std::collections::HashSet<&str> = nodes.iter().map(|n| n.id.as_str()).collect();
+    edges.retain(|edge| kept.contains(edge.from.as_str()) && kept.contains(edge.to.as_str()));
 }
 
 /// Les cibles telles que la carte les lit.

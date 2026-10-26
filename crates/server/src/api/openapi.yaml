@@ -442,7 +442,7 @@ paths:
           description: The account.
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/User" }
+              schema: { $ref: "#/components/schemas/CurrentUser" }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
@@ -1127,6 +1127,105 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
         "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/teams:
+    get:
+      operationId: listTeams
+      tags: [Accounts]
+      summary: Teams, existing folders and the team settings
+      description: Administrator session only.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Teams.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeamsOverview" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    post:
+      operationId: createTeam
+      tags: [Accounts]
+      summary: Create a team
+      description: Administrator session only. `members` lists the accounts added by hand.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeamInput" }
+      responses:
+        "201":
+          description: Team created.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Team" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/teams/settings:
+    put:
+      operationId: updateTeamSettings
+      tags: [Accounts]
+      summary: What accounts without a team can see
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeamSettings" }
+      responses:
+        "200":
+          description: The settings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeamSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/teams/{id}:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    put:
+      operationId: updateTeam
+      tags: [Accounts]
+      summary: Update a team
+      description: An omitted field keeps its value. Members added by an identity provider or SCIM are kept.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/TeamInput" }
+      responses:
+        "200":
+          description: The team.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Team" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "409": { $ref: "#/components/responses/Conflict" }
+    delete:
+      operationId: deleteTeam
+      tags: [Accounts]
+      summary: Delete a team
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Team deleted. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
 
   /api/users/{id}/totp:
     parameters:
@@ -6851,6 +6950,78 @@ components:
         `admin` does everything; `operator` reads everything and handles
         alerts (operations marked `x-roles: [admin, operator]`); `viewer`
         reads.
+    TeamLevel:
+      type: string
+      enum: [read, operate, manage]
+    TeamGrant:
+      type: object
+      required: [folder, level]
+      properties:
+        folder:
+          type: string
+          description: "`*` for every target, empty for targets in no folder, otherwise a folder (its subfolders included)."
+        level: { $ref: "#/components/schemas/TeamLevel" }
+    TeamMember:
+      type: object
+      required: [user_id, username, display_name, role, source]
+      properties:
+        user_id: { type: integer, format: int64 }
+        username: { type: string }
+        display_name: { type: string }
+        role: { $ref: "#/components/schemas/Role" }
+        source: { type: string, enum: [manual, idp, scim] }
+    Team:
+      type: object
+      required: [id, name, description, idp_groups, members, grants, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        description: { type: string }
+        idp_groups: { type: array, items: { type: string } }
+        members: { type: array, items: { $ref: "#/components/schemas/TeamMember" } }
+        grants: { type: array, items: { $ref: "#/components/schemas/TeamGrant" } }
+        created_at: { type: string }
+    TeamInput:
+      type: object
+      properties:
+        name: { type: string }
+        description: { type: string }
+        idp_groups: { type: array, items: { type: string } }
+        members: { type: array, items: { type: integer, format: int64 } }
+        grants: { type: array, items: { $ref: "#/components/schemas/TeamGrant" } }
+    TeamSettings:
+      type: object
+      required: [unassigned_access]
+      properties:
+        unassigned_access:
+          type: string
+          enum: [all, none]
+          description: What an account that belongs to no team can see.
+    TeamsOverview:
+      type: object
+      required: [teams, folders, settings]
+      properties:
+        teams: { type: array, items: { $ref: "#/components/schemas/Team" } }
+        folders: { type: array, items: { type: string } }
+        settings: { $ref: "#/components/schemas/TeamSettings" }
+    TeamAccess:
+      type: object
+      required: [scoped, teams, grants]
+      properties:
+        scoped: { type: boolean, description: "`true` when the account only sees what its teams open." }
+        teams: { type: array, items: { type: string } }
+        grants: { type: array, items: { $ref: "#/components/schemas/TeamGrant" } }
+        ceiling:
+          oneOf:
+            - { $ref: "#/components/schemas/TeamLevel" }
+            - { type: "null" }
+    CurrentUser:
+      allOf:
+        - { $ref: "#/components/schemas/User" }
+        - type: object
+          required: [access]
+          properties:
+            access: { $ref: "#/components/schemas/TeamAccess" }
     User:
       type: object
       required: [id, username, display_name, role, auth, disabled, totp_enabled, created_at]
