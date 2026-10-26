@@ -178,6 +178,7 @@ nav:
       - Import from other tools: using/imports.md
       - Topology map: using/topology.md
       - World map: using/world-map.md
+      - Dashboards and metrics explorer: using/dashboards.md
       - Security score: using/security-score.md
       - CVE & vulnerabilities: using/cves.md
       - Alerts page: using/alerts.md

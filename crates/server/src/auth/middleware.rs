@@ -335,7 +335,20 @@ fn is_mutation(method: &Method) -> bool {
 /// le préfixe. On tolère les deux plutôt que de dépendre de ce détail.
 fn is_self_service(path: &str) -> bool {
     let path = path.strip_prefix("/api").unwrap_or(path);
-    SELF_SERVICE.contains(&path) || is_own_push_device(path) || is_own_passkey(path)
+    SELF_SERVICE.contains(&path)
+        || is_own_push_device(path)
+        || is_own_passkey(path)
+        || is_dashboard_route(path)
+}
+
+/// Tableaux de bord : chacun crée, modifie et supprime *les siens*. Les
+/// gestionnaires (`api::dashboards`) réservent les tableaux partagés aux
+/// administrateurs et cachent les tableaux personnels d'autrui.
+fn is_dashboard_route(path: &str) -> bool {
+    path == "/dashboards"
+        || path
+            .strip_prefix("/dashboards/")
+            .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// Clés d'accès : chacun renomme et retire *les siennes* (`api::passkeys` filtre
@@ -496,6 +509,10 @@ mod tests {
         assert!(is_self_service("/auth/passkeys/register/finish"));
         assert!(is_self_service("/api/auth/passkeys/3"));
         assert!(!is_self_service("/auth/passkeys/"));
+        assert!(is_self_service("/api/dashboards"));
+        assert!(is_self_service("/dashboards/12"));
+        assert!(!is_self_service("/dashboards/12/../../users"));
+        assert!(!is_self_service("/dashboards/"));
         assert!(!is_self_service("/auth/passkeys/3/../../users"));
     }
 

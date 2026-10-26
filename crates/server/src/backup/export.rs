@@ -68,6 +68,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         locations: locations(pool).await?,
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
+        dashboards: dashboards(pool).await?,
     })
 }
 
@@ -132,6 +133,29 @@ async fn topology_rules(
             })
         })
         .collect())
+}
+
+async fn dashboards(pool: &SqlitePool) -> Result<Vec<BundleDashboard>> {
+    let rows = sqlx::query(
+        "SELECT d.name, d.shared, u.username AS owner, d.range_secs, d.refresh_secs, d.widgets
+         FROM dashboards d LEFT JOIN users u ON u.id = d.owner_id ORDER BY d.id",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des tableaux de bord")?;
+    rows.iter()
+        .map(|row| {
+            let widgets: String = row.try_get("widgets")?;
+            Ok(BundleDashboard {
+                name: row.try_get("name")?,
+                shared: row.try_get::<i64, _>("shared")? != 0,
+                owner: row.try_get("owner")?,
+                range_secs: row.try_get("range_secs")?,
+                refresh_secs: row.try_get("refresh_secs")?,
+                widgets: serde_json::from_str(&widgets).unwrap_or_default(),
+            })
+        })
+        .collect()
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {

@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- **Custom dashboards and a metrics explorer.** Build dashboards from widgets on a 12-column grid: chart (MetricsQL), single value with warning and critical levels, state of a monitor folder, active alerts, and Markdown notes. Drag, resize and reorder with mouse, touch or keyboard; phones get a single column. Each dashboard saves its time range and refresh interval. Dashboards are personal (any account) or shared (administrators), and travel with backups. The new metrics explorer (`/explore`) lists the `dumbmonit_*` metrics and their labels, completes names in a MetricsQL box, draws the result and adds it to a dashboard. New API: `/api/dashboards` and `/api/metrics/catalog`.
+
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor

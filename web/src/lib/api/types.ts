@@ -5239,3 +5239,91 @@ export interface LogSearchParams {
 	limit?: number;
 	source?: 'server';
 }
+
+// --- Dashboards and metrics explorer ----------------------------------------
+// Mirrors `crates/server/src/api/dashboards.rs` and `metrics.rs` (catalog).
+
+export type DashboardId = number;
+
+export type WidgetKind = 'chart' | 'stat' | 'group' | 'alerts' | 'text';
+
+export interface ChartConfig {
+	query: string;
+	unit: string;
+}
+
+export interface StatConfig {
+	query: string;
+	unit: string;
+	warn?: number;
+	crit?: number;
+	/** `above`: bad when the value is high; `below`: bad when it is low. */
+	direction: 'above' | 'below';
+}
+
+export interface GroupConfig {
+	/** Folder (`group_name`) of the monitors; empty: monitors without a folder. */
+	folder: string;
+}
+
+export interface AlertsConfig {
+	limit: number;
+}
+
+export interface TextConfig {
+	markdown: string;
+}
+
+export interface DashboardWidget {
+	/** Letters, digits, `-` and `_`; unique inside the dashboard. */
+	id: string;
+	type: WidgetKind;
+	title: string;
+	/** Column (0-11), row, width (1-12 columns) and height (rows) on the grid. */
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	/** Shape depends on `type`; see the `*Config` interfaces. */
+	config: Record<string, unknown>;
+}
+
+export interface Dashboard {
+	id: DashboardId;
+	name: string;
+	shared: boolean;
+	/** Owning account; `null` when a token made it. */
+	owner: string | null;
+	can_edit: boolean;
+	range_secs: number;
+	/** 0: no automatic refresh. */
+	refresh_secs: number;
+	widgets: DashboardWidget[];
+	created_at: string;
+	updated_at: string;
+}
+
+export interface DashboardPayload {
+	name: string;
+	shared: boolean;
+	range_secs: number;
+	refresh_secs: number;
+	widgets: DashboardWidget[];
+}
+
+export interface CatalogLabel {
+	name: string;
+	values: string[];
+	more: boolean;
+}
+
+export interface CatalogMetric {
+	name: string;
+	series: number;
+	labels: CatalogLabel[];
+}
+
+export interface MetricsCatalog {
+	metrics: CatalogMetric[];
+	truncated: boolean;
+}
