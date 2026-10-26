@@ -990,8 +990,6 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
             "SMS sent by Vonage, trimmed to the essentials.",
             "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-vonage",
             vec![
-                text("api_key", "API key", "Shown on the Vonage API dashboard.", "ab12cd34")
-                    .required(),
                 text(
                     "from",
                     "Sender",
@@ -1009,6 +1007,8 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
                 .list(),
             ],
             vec![
+                password("api_key", "API key", "Shown on the Vonage API dashboard.", "ab12cd34")
+                    .required(),
                 password(
                     "api_secret",
                     "API secret",

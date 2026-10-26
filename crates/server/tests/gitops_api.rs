@@ -138,7 +138,8 @@ async fn prune_removes_only_what_the_file_manages() {
 async fn unresolved_references_are_refused_on_apply_but_planned() {
     let app = TestApp::configured().await;
     let cookie = app.admin_cookie().await;
-    let yaml = file(false).replace(SECRET, "${NTFY_TOKEN}");
+    // Entre guillemets : dans une table en ligne, `{` ouvrirait une table imbriquée.
+    let yaml = file(false).replace(SECRET, "'${NTFY_TOKEN}'");
 
     let plan = post(&app, &cookie, "/api/config/plan", &yaml, false).await;
     assert_eq!(plan.status, StatusCode::OK, "{}", plan.body);

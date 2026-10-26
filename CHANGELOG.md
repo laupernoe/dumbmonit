@@ -188,10 +188,10 @@ All notable changes to this project are documented here. The format follows
   presets for the common ones, basic or bearer authentication, optional relay
   agent, keep/ignore filters on metric names and a series limit; every series is
   stored, graphed in the explorer and usable in threshold rules. A new
-  "OpenTelemetry source" monitor receives `POST /otlp/v1/metrics` (protobuf or
+  "OpenTelemetry source" monitor receives `POST /api/otlp/v1/metrics` (protobuf or
   JSON, gzip) from an OpenTelemetry Collector or an SDK, with a `write` API token
   and the `X-DumbMonit-Target` header: gauges, sums and histograms become series,
-  unsupported points are reported back as rejected. `POST /otlp/v1/logs` relays
+  unsupported points are reported back as rejected. `POST /api/otlp/v1/logs` relays
   logs to VictoriaLogs when it is enabled. OTLP over gRPC is not supported; the
   `otlphttp` exporter does the same job.
 
@@ -329,6 +329,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Vonage SMS channels** could not be saved: the API key is now entered with the
+  secrets (it was a plain setting the API refused to store in clear text).
 - **Alerts: unreachable monitors.** Their rows now carry the same two icon
   buttons as other alerts (acknowledge and snooze) instead of a text "Open"
   button; opening the monitor is an icon with a label too.

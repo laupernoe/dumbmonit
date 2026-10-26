@@ -1,7 +1,7 @@
 //! Collecteur « otlp » : la cible qui reçoit les métriques OpenTelemetry.
 //!
 //! Comme le moniteur « push », `probe` n'interroge rien : les points arrivent par
-//! `POST /otlp/v1/metrics` (`api/otlp.rs`) et sont écrits sous l'identité de la
+//! `POST /api/otlp/v1/metrics` (`api/otlp.rs`) et sont écrits sous l'identité de la
 //! cible. Ce collecteur ne fait que publier l'activité de la réception, pour
 //! qu'une règle de seuil sur l'âge du dernier envoi signale un exportateur muet.
 //!

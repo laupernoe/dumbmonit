@@ -837,8 +837,8 @@ Le message est envoyé en Markdown.
 
 La clé et le secret d'API sont sur le tableau de bord Vonage.
 
-- **Réglages** — `api_key`, `from` (un numéro ou un nom alphanumérique), `to` (liste)
-- **Secrets** — `api_secret`
+- **Réglages** — `from` (un numéro ou un nom alphanumérique), `to` (liste)
+- **Secrets** — `api_key`, `api_secret`
 
 ### SMS via Telnyx
 

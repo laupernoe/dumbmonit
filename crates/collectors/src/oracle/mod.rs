@@ -433,9 +433,10 @@ mod tests {
         let app = Router::new().route(
             "/ords/dumbmonit/_/sql",
             post(|headers: HeaderMap, body: String| async move {
-                // dumbmonit:secret
+                // DUMBMONIT:secret : le compte tel que saisi, le schéma en minuscules
+                // ne sert qu'au chemin.
                 if headers.get("authorization").and_then(|v| v.to_str().ok())
-                    != Some("Basic ZHVtYm1vbml0OnNlY3JldA==")
+                    != Some("Basic RFVNQk1PTklUOnNlY3JldA==")
                 {
                     return (StatusCode::UNAUTHORIZED, String::new());
                 }
