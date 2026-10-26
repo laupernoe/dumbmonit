@@ -6365,6 +6365,9 @@ pub fn builtin_rules() -> Vec<Rule> {
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
+            // La mesure est réécrite à chaque cycle : 60 s écartent un balayage
+            // interrompu sans retarder l'annonce.
+            for_duration: Duration::from_secs(60),
             severity: Severity::Info,
             repeat_interval: None,
             enabled: false,
@@ -6381,6 +6384,9 @@ pub fn builtin_rules() -> Vec<Rule> {
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
+            // La mesure est réécrite à chaque cycle : 60 s écartent un balayage
+            // interrompu sans retarder l'annonce.
+            for_duration: Duration::from_secs(60),
             severity: Severity::Info,
             repeat_interval: None,
             enabled: false,
