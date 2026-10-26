@@ -148,6 +148,7 @@ nav:
       - Demo monitor: devices/demo.md
   - Integrations:
       - Website banner: integrations/website-banner.md
+      - Homepage and Homarr: integrations/homepage.md
   - Integration packs:
       - What a pack is: packs/index.md
       - Write your first pack: packs/first-pack.md
@@ -163,6 +164,8 @@ nav:
       - Network discovery: using/discovery.md
       - Wall mode and music: using/wall.md
       - Monitors page: using/devices.md
+      - Monitors from Docker labels: using/docker-labels.md
+      - Import from other tools: using/imports.md
       - Topology map: using/topology.md
       - World map: using/world-map.md
       - Security score: using/security-score.md
@@ -172,6 +175,7 @@ nav:
       - Email reports: using/reports.md
       - Settings: using/settings.md
       - LDAP / Active Directory: using/ldap.md
+      - Passkeys: using/passkeys.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md
   - Reference:
