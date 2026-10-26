@@ -143,6 +143,8 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	pfsense: BrickWallFire,
 	unraid: HardDrive,
 	veeam: CloudBackup,
+	kopia: CloudBackup,
+	duplicati: CloudBackup,
 	tailscale: Network,
 	fortigate: BrickWallShield,
 	meraki: Cloud,
@@ -163,7 +165,7 @@ export function kindIcon(kind: string): typeof LucideIcon {
 }
 
 /** Kinds that describe a machine the collector polls, in display order. */
-const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio'];
+const DEVICE_KINDS = ['snmp', 'proxmox', 'vsphere', 'xcpng', 'nutanix', 'pbs', 'pdm', 'pmg', 'synology', 'truenas', 'unraid', 'opnsense', 'pfsense', 'fortigate', 'sophos', 'openvpn', 'unifi', 'omada', 'meraki', 'homeassistant', 'mikrotik', 'nut', 'redfish', 'pihole', 'adguard', 'mdaemon', 'securitygateway', 'victoriametrics', 'victorialogs', 'loki', 'graylog', 'nextcloud', 'immich', 'paperless', 'jellyfin', 'plex', 'gitlab', 'forgejo', 'redis', 'mongodb', 'rabbitmq', 'crowdsec', 'traefik', 'caddy', 'nginx', 'apache', 'npm', 'kubernetes', 'activedirectory', 'veeam', 'tailscale', 'arubacentral', 'paloalto', 'sonicwall', 'qnap', 'ceph', 'minio', 'kopia', 'duplicati'];
 
 /** Services in display order: the everyday checks first, the specialised ones after. */
 const SERVICE_KINDS = ['http', 'ping', 'tcp', 'dns', 'tls', 'ntp', 'domain', 'mail_blacklist', 'ip_blacklist', 'push', 'smtp', 'postgres', 'mysql', 'mqtt', 'websocket'];
@@ -229,6 +231,8 @@ const KIND_KEYWORDS: Record<string, string> = {
 	pfsense: 'firewall router gateway vpn openvpn ipsec dhcp netgate pfsense plus multi wan failover',
 	unraid: 'nas array parity disk cache pool docker vm storage lime technology tower',
 	veeam: 'backup replication vbr job restore point repository vmware hyper-v agent windows',
+	kopia: 'backup snapshot deduplication encrypted repository source restic borg self-hosted',
+	duplicati: 'backup encrypted cloud storage backblaze b2 s3 webdav ftp job schedule restore self-hosted',
 	tailscale: 'vpn wireguard mesh tailnet headscale subnet router exit node zero trust remote access',
 	fortigate: 'fortinet fortios firewall utm ngfw ipsec vpn sd-wan ha cluster fortiguard',
 	sophos: 'sophos xg xgs sfos firewall utm ipsec vpn',

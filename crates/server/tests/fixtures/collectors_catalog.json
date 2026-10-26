@@ -1331,6 +1331,110 @@
     "options": []
   },
   {
+    "kind": "duplicati",
+    "label": "Duplicati",
+    "summary": "Beta. A Duplicati server through its API: the age of each task's last successful backup, its last result, duration, size, warnings and errors, and the task running now.",
+    "examples": [
+      "Duplicati 2.1",
+      "Duplicati in Docker",
+      "Duplicati on a NAS"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Web interface password",
+        "help": "Duplicati has no user accounts: the password of its web interface is all it asks for.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Web interface password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "nas.lan",
+    "default_port": 8200,
+    "setup": {
+      "title": "Let DumbMonit read the Duplicati API",
+      "steps": [
+        "In the Duplicati web interface, open Settings and set a long random password for the interface: Duplicati 2.1 requires one.",
+        "If the server only listens on the machine itself, start it with these options so that DumbMonit can reach it.\n--webservice-interface=any --webservice-allowed-hostnames=*",
+        "In DumbMonit, enter the Duplicati address (for example nas.lan) and paste that password."
+      ],
+      "ports": [
+        {
+          "port": 8200,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web interface and API (HTTP, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Interface password\nDuplicati has no accounts or read-only mode"
+      ],
+      "warning": "Duplicati 2.1 or later is required: version 2.0 signs in through a different mechanism that DumbMonit does not use. The password gives full access, so keep port 8200 on your local network.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/duplicati/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        "placeholder": "8200",
+        "default": "8200",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "forgejo",
     "label": "Forgejo / Gitea",
     "summary": "Health check, repository, user and organisation counts, scheduled tasks running on time, Actions runners online or not.",
@@ -2741,6 +2845,127 @@
         "key": "request_timeout_seconds",
         "label": "Timeout per request (seconds)",
         "help": "Time allowed for each call, from 1 to 120. Photo and file counts are computed on every call on a large instance.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "kopia",
+    "label": "Kopia",
+    "summary": "Beta. A Kopia server through its REST API: the last snapshot of each source (age, errors, size, files), sources that missed their schedule, and the repository connection.",
+    "examples": [
+      "Kopia server",
+      "KopiaUI",
+      "Kopia in Docker"
+    ],
+    "credential_types": [
+      "username_password",
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Server user name and password",
+        "help": "The user name and password the Kopia server was started with.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The --server-username of the Kopia server.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "The --server-password of the Kopia server.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "nas.lan",
+    "default_port": 51515,
+    "setup": {
+      "title": "Start the Kopia server with its own user name and password",
+      "steps": [
+        "On the machine that runs the backups, start the Kopia server with a generated certificate and its own user name and password.\nkopia server start --address=0.0.0.0:51515 --tls-generate-cert --server-username=dumbmonit --server-password=PASTE-A-LONG-RANDOM-PASSWORD",
+        "Check that the repository is connected to that server and that the DumbMonit server can reach port 51515.",
+        "In DumbMonit, enter the server address (for example nas.lan) with that user name and password.",
+        "Tick Accept an unverifiable certificate: the generated certificate is self-signed. If the server runs with --insecure, choose the http protocol instead."
+      ],
+      "ports": [
+        {
+          "port": 51515,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Server API (HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Server user name and password\nKopia has no read-only API account"
+      ],
+      "warning": "Kopia's API has no read-only account: the server password also lets its holder start and delete snapshots. DumbMonit only reads, but keep port 51515 on your local network.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/kopia/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        "placeholder": "51515",
+        "default": "51515",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "15",
         "default": "15",
         "required": false,

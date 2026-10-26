@@ -52,6 +52,7 @@ pub use dumbmonit_collectors::{
     TcpCollector, TlsCollector, TruenasCollector, dummy, http, opnsense, pbs, pdm, pmg, proxmox,
     snmp, synology, truenas, uptime,
 };
+pub use dumbmonit_collectors::{DuplicatiCollector, KopiaCollector, duplicati, kopia};
 pub use dumbmonit_collectors::{
     ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
     PaperlessCollector, PlexCollector, selfhosted,
