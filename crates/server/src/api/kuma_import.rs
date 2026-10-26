@@ -242,6 +242,7 @@ async fn run(
             tags: item.tags,
             group_name: Some(Some(item.folder)),
             location_id: None,
+            multisite: None,
             credential: None,
         };
         let input = match payload.validate(state, None) {

@@ -10,6 +10,7 @@ import { normalizeCollector } from './types';
 import { sortDismissed } from '../alerts-dismiss';
 import type {
 	AlertLinkResult,
+	ProbeLocationsReport,
 	AlertLinkView,
 	AgentHost,
 	AgentToken,
@@ -97,6 +98,10 @@ export function listTargets(signal?: AbortSignal): Promise<Target[]> {
 
 export function getTarget(id: TargetId, signal?: AbortSignal): Promise<Target> {
 	return request<Target>(`/targets/${id}`, { signal });
+}
+
+export function getProbeLocations(id: TargetId, signal?: AbortSignal): Promise<ProbeLocationsReport> {
+	return request<ProbeLocationsReport>(`/targets/${id}/probe-locations`, { signal });
 }
 
 export function createTarget(payload: TargetPayload): Promise<Target> {

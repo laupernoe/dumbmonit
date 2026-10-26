@@ -158,6 +158,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/targets/import/kuma-db", post(kuma_import::import_db))
         .route("/targets/{id}", get(targets::get_one).put(targets::update).delete(targets::delete))
         .route("/targets/{id}/probe", post(targets::probe_now))
+        .route("/targets/{id}/probe-locations", get(targets::probe_locations))
         .route("/targets/{id}/discover", post(targets::discover))
         .route("/targets/{id}/rules", get(target_rules::list))
         .route("/metrics/query", get(metrics::query))
