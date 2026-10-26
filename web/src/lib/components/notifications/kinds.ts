@@ -51,7 +51,8 @@ export function normalizeField(raw: Partial<ChannelField> & { key: string; shape
 		placeholder: typeof raw.placeholder === 'string' ? raw.placeholder : '',
 		options: Array.isArray(raw.options) ? raw.options.filter((o): o is string => typeof o === 'string') : [],
 		shape,
-		default: typeof raw.default === 'string' ? raw.default : ''
+		default: typeof raw.default === 'string' ? raw.default : '',
+		lookup: typeof raw.lookup === 'string' && raw.lookup ? raw.lookup : undefined
 	};
 }
 
