@@ -148,14 +148,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery/jobs", get(discovery::list_jobs).post(discovery::create_job))
         .route("/discovery/jobs/{id}", get(discovery::get_job).delete(discovery::cancel_job))
         // Scans planifiés et inventaire du réseau (`netinventory.rs`).
-        .route(
-            "/discovery/schedules",
-            get(netinventory::list).post(netinventory::create),
-        )
-        .route(
-            "/discovery/schedules/{id}",
-            put(netinventory::update).delete(netinventory::remove),
-        )
+        .route("/discovery/schedules", get(netinventory::list).post(netinventory::create))
+        .route("/discovery/schedules/{id}", put(netinventory::update).delete(netinventory::remove))
         .route("/discovery/schedules/{id}/run", post(netinventory::run_now))
         .route("/discovery/inventory", get(netinventory::inventory))
         .route("/discovery/inventory/known", post(netinventory::all_known))

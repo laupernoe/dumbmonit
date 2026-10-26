@@ -239,20 +239,15 @@ mod tests {
     }
 
     fn cible_locale(port: u16, tags: &[(&str, &str)]) -> Target {
-        let mut all = vec![
-            ("timeout_seconds", "3"),
-            ("allow_private_targets", "true"),
-            ("security", "none"),
-        ];
+        let mut all =
+            vec![("timeout_seconds", "3"), ("allow_private_targets", "true"), ("security", "none")];
         all.extend_from_slice(tags);
         cible("pop3", &format!("127.0.0.1:{port}"), &all)
     }
 
     fn avec_identifiants(mut target: Target) -> Target {
-        target.credential = Credential::UsernamePassword {
-            username: "monit".into(),
-            password: "secret".into(),
-        };
+        target.credential =
+            Credential::UsernamePassword { username: "monit".into(), password: "secret".into() };
         target
     }
 
@@ -316,11 +311,9 @@ mod tests {
 
     #[tokio::test]
     async fn une_boite_verrouillee_nest_pas_un_compte_refuse() {
-        let (port, _) = faux_pop3(
-            "+OK ready",
-            vec![("USER", "+OK"), ("PASS", "-ERR [IN-USE] mailbox locked")],
-        )
-        .await;
+        let (port, _) =
+            faux_pop3("+OK ready", vec![("USER", "+OK"), ("PASS", "-ERR [IN-USE] mailbox locked")])
+                .await;
         let target = avec_identifiants(cible_locale(port, &[]));
         let samples = Pop3Collector::new().probe(&target).await.unwrap();
         assert_eq!(reason(&samples).as_deref(), Some("protocol"));
