@@ -235,6 +235,15 @@ pub struct BundleTeam {
     pub members: Vec<BundleTeamMember>,
     #[serde(default)]
     pub grants: Vec<crate::auth::teams::Grant>,
+    /// Rattachement au provisionnement SCIM, pour que le fournisseur retrouve
+    /// l'équipe après une restauration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    /// Créée par SCIM (et non rattachée).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub scim_created: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -496,6 +505,18 @@ pub struct BundleUser {
     /// Empreintes des codes de secours restants, base64.
     #[serde(default)]
     pub recovery_codes: Vec<String>,
+    /// Rattachement au provisionnement SCIM : identifiant SCIM, identifiant
+    /// chez le fournisseur, courriel annoncé. Le jeton SCIM, lui, ne fait jamais
+    /// partie d'une sauvegarde.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_email: Option<String>,
+    /// Désactivé par le fournisseur (SCIM), pas par un administrateur.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub disabled_by_scim: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

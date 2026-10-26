@@ -147,13 +147,15 @@ mod tests {
             || (path == "/api/mcp" && method != "post")
     }
 
-    /// Routes fermées à tout jeton : celles du garde, plus les sauvegardes et la
-    /// connexion à Spotify et son jeton pour le mur (refusées par leur
-    /// gestionnaire, qui exige une session).
+    /// Routes fermées à tout jeton d'API : celles du garde, plus les sauvegardes
+    /// et la connexion à Spotify et son jeton pour le mur (refusées par leur
+    /// gestionnaire, qui exige une session), et le provisionnement SCIM, qui
+    /// n'accepte que le jeton dédié du fournisseur d'identité.
     fn is_session_only(path: &str) -> bool {
         let Some(rest) = path.strip_prefix("/api") else { return false };
         const BY_HANDLER: &[&str] = &[
             "/backup",
+            "/scim",
             "/logs",
             "/music/spotify/authorize",
             "/music/spotify/complete",
