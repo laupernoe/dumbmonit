@@ -128,14 +128,15 @@ impl Lab {
         reply.body["id"].as_i64().expect("id")
     }
 
-    async fn scalar(&self, sql: &str) -> i64 {
+    async fn scalar(&self, sql: &'static str) -> i64 {
         sqlx::query_scalar(sql).fetch_one(&self.pool).await.expect(sql)
     }
 
     async fn audit_actions(&self) -> Vec<String> {
         let reply = self.app.get("/api/auth/audit", Some(&self.admin)).await;
         assert_eq!(reply.status, StatusCode::OK);
-        reply.body
+        reply
+            .body
             .as_array()
             .expect("journal")
             .iter()
@@ -231,7 +232,10 @@ async fn the_admin_settings_follow_the_contract() {
     assert_eq!(reply.body["token_set"], false);
     assert_eq!(reply.body["token_created_at"], Value::Null);
 
-    let actions: Vec<String> = app.get("/api/auth/audit", Some(&admin)).await.body
+    let actions: Vec<String> = app
+        .get("/api/auth/audit", Some(&admin))
+        .await
+        .body
         .as_array()
         .unwrap()
         .iter()
@@ -324,8 +328,7 @@ async fn disabled_scim_answers_404_even_with_the_token() {
     let lab = Lab::new().await;
     let reply = lab.app.put("/api/auth/scim", json!({ "enabled": false }), Some(&lab.admin)).await;
     assert_eq!(reply.status, StatusCode::OK);
-    for uri in ["/api/scim/v2/Users", "/api/scim/v2/Groups", "/api/scim/v2/ServiceProviderConfig"]
-    {
+    for uri in ["/api/scim/v2/Users", "/api/scim/v2/Groups", "/api/scim/v2/ServiceProviderConfig"] {
         let reply = lab.get(uri).await;
         assert_scim_error(&reply, StatusCode::NOT_FOUND, None);
     }
@@ -366,8 +369,12 @@ async fn the_discovery_documents_are_served() {
     assert_eq!(types.body["totalResults"], 2);
     let schemas = lab.get("/api/scim/v2/Schemas").await;
     assert_eq!(schemas.status, StatusCode::OK);
-    let ids: Vec<&str> =
-        schemas.body["Resources"].as_array().unwrap().iter().filter_map(|s| s["id"].as_str()).collect();
+    let ids: Vec<&str> = schemas.body["Resources"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|s| s["id"].as_str())
+        .collect();
     assert_eq!(ids, [USER_SCHEMA, GROUP_SCHEMA]);
 }
 
@@ -459,7 +466,8 @@ async fn an_entra_id_user_lifecycle() {
     assert_eq!(reply.body["emails"][0]["value"], "jd@contoso.com");
 
     // Désactivation : `active` en chaîne `"False"`.
-    let reply = lab.patch(&uri, json!([{ "op": "Replace", "path": "active", "value": "False" }])).await;
+    let reply =
+        lab.patch(&uri, json!([{ "op": "Replace", "path": "active", "value": "False" }])).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["active"], false);
     assert_eq!(lab.account("jane@contoso.com").await.unwrap()["disabled"], true);
@@ -481,7 +489,8 @@ async fn an_entra_id_user_lifecycle() {
     assert_scim_error(&reply, StatusCode::NOT_FOUND, None);
 
     let actions = lab.audit_actions().await;
-    for action in ["scim.user.created", "scim.user.updated", "scim.user.disabled", "scim.user.deleted"]
+    for action in
+        ["scim.user.created", "scim.user.updated", "scim.user.disabled", "scim.user.deleted"]
     {
         assert!(actions.iter().any(|a| a == action), "{action} absent : {actions:?}");
     }
@@ -513,7 +522,8 @@ async fn an_okta_user_lifecycle() {
     let mut replaced = user.clone();
     replaced["id"] = json!(id);
     replaced["displayName"] = json!("Robert Smith");
-    replaced["emails"] = json!([{ "primary": true, "value": "robert@okta.example", "type": "work" }]);
+    replaced["emails"] =
+        json!([{ "primary": true, "value": "robert@okta.example", "type": "work" }]);
     let uri = format!("/api/scim/v2/Users/{id}");
     let reply = lab.put(&uri, replaced).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
@@ -526,7 +536,8 @@ async fn an_okta_user_lifecycle() {
     assert_eq!(reply.body["active"], false);
 
     let filter = urlencode(r#"userName eq "bob@okta.example""#);
-    let reply = lab.get(&format!("/api/scim/v2/Users?filter={filter}&startIndex=1&count=100")).await;
+    let reply =
+        lab.get(&format!("/api/scim/v2/Users?filter={filter}&startIndex=1&count=100")).await;
     assert_eq!(reply.body["totalResults"], 1);
     assert_eq!(reply.body["Resources"][0]["active"], false);
     assert_eq!(lab.account("bob@okta.example").await.unwrap()["disabled"], true);
@@ -560,7 +571,8 @@ async fn an_administrator_is_never_touched() {
     // L'administrateur existant n'est pas rattaché.
     let reply = lab.post("/api/scim/v2/Users", json!({ "userName": "admin" })).await;
     assert_scim_error(&reply, StatusCode::CONFLICT, Some("uniqueness"));
-    let reply = lab.post("/api/scim/v2/Users", json!({ "userName": "ADMIN", "active": false })).await;
+    let reply =
+        lab.post("/api/scim/v2/Users", json!({ "userName": "ADMIN", "active": false })).await;
     assert_scim_error(&reply, StatusCode::CONFLICT, Some("uniqueness"));
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM users WHERE scim_id IS NOT NULL").await, 0);
     assert!(lab.app.login_as("admin", PASSWORD).await.status.is_success());
@@ -570,12 +582,15 @@ async fn an_administrator_is_never_touched() {
     // Un compte provisionné puis promu administrateur devient intouchable.
     let id = lab.user("eve").await;
     let local_id = lab.account("eve").await.unwrap()["id"].as_i64().unwrap();
-    let reply =
-        lab.app.put(&format!("/api/users/{local_id}"), json!({ "role": "admin" }), Some(&lab.admin)).await;
+    let reply = lab
+        .app
+        .put(&format!("/api/users/{local_id}"), json!({ "role": "admin" }), Some(&lab.admin))
+        .await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
 
     let uri = format!("/api/scim/v2/Users/{id}");
-    let reply = lab.patch(&uri, json!([{ "op": "replace", "path": "active", "value": false }])).await;
+    let reply =
+        lab.patch(&uri, json!([{ "op": "replace", "path": "active", "value": false }])).await;
     assert_scim_error(&reply, StatusCode::FORBIDDEN, None);
     let reply = lab.put(&uri, json!({ "userName": "eve", "active": false })).await;
     assert_scim_error(&reply, StatusCode::FORBIDDEN, None);
@@ -589,7 +604,10 @@ async fn an_administrator_is_never_touched() {
 
     // Ni inscrit dans une équipe.
     let reply = lab
-        .post("/api/scim/v2/Groups", json!({ "displayName": "Admins", "members": [{ "value": id }] }))
+        .post(
+            "/api/scim/v2/Groups",
+            json!({ "displayName": "Admins", "members": [{ "value": id }] }),
+        )
         .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     assert_eq!(member_ids(&reply.body), Vec::<String>::new());
@@ -619,7 +637,8 @@ async fn an_existing_local_account_is_linked_but_never_an_admin() {
 
     // Désactivé par SCIM : ses sessions sont fermées.
     let uri = format!("/api/scim/v2/Users/{id}");
-    let reply = lab.patch(&uri, json!([{ "op": "Replace", "path": "active", "value": "False" }])).await;
+    let reply =
+        lab.patch(&uri, json!([{ "op": "Replace", "path": "active", "value": "False" }])).await;
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(lab.app.get("/api/auth/me", Some(&carol)).await.status, StatusCode::UNAUTHORIZED);
     assert!(!lab.app.login_as("carol", LOCAL_PASSWORD).await.status.is_success());
@@ -635,14 +654,17 @@ async fn an_existing_local_account_is_linked_but_never_an_admin() {
 
     // Un compte désactivé par un administrateur le reste, quoi que dise SCIM.
     let dave = lab.local_user("dave", "viewer").await;
-    let reply =
-        lab.app.put(&format!("/api/users/{dave}"), json!({ "disabled": true }), Some(&lab.admin)).await;
+    let reply = lab
+        .app
+        .put(&format!("/api/users/{dave}"), json!({ "disabled": true }), Some(&lab.admin))
+        .await;
     assert_eq!(reply.status, StatusCode::OK);
     let reply = lab.post("/api/scim/v2/Users", json!({ "userName": "dave", "active": true })).await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     assert_eq!(reply.body["active"], false);
     let uri = format!("/api/scim/v2/Users/{}", reply.body["id"].as_str().unwrap());
-    let reply = lab.patch(&uri, json!([{ "op": "replace", "path": "active", "value": true }])).await;
+    let reply =
+        lab.patch(&uri, json!([{ "op": "replace", "path": "active", "value": true }])).await;
     assert_eq!(reply.status, StatusCode::OK);
     assert_eq!(reply.body["active"], false);
     assert_eq!(lab.account("dave").await.unwrap()["disabled"], true);
@@ -776,11 +798,14 @@ async fn groups_and_their_members() {
 
     // Filtres et exclusion des membres, comme Entra ID.
     let filter = urlencode(r#"displayName eq "noc""#);
-    let reply = lab.get(&format!("/api/scim/v2/Groups?filter={filter}&excludedAttributes=members")).await;
+    let reply =
+        lab.get(&format!("/api/scim/v2/Groups?filter={filter}&excludedAttributes=members")).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["totalResults"], 1);
     assert!(reply.body["Resources"][0].get("members").is_none(), "{}", reply.body);
-    let reply = lab.get(&format!("/api/scim/v2/Groups?filter={}", urlencode(r#"externalId eq "g1""#))).await;
+    let reply = lab
+        .get(&format!("/api/scim/v2/Groups?filter={}", urlencode(r#"externalId eq "g1""#)))
+        .await;
     assert_eq!(reply.body["totalResults"], 1);
     let with_u1 = format!(r#"id eq "{gid}" and members eq "{u1}""#);
     let reply = lab.get(&format!("/api/scim/v2/Groups?filter={}", urlencode(&with_u1))).await;
@@ -794,7 +819,9 @@ async fn groups_and_their_members() {
     assert!(reply.body.get("members").is_none());
 
     // Ajout, retrait par filtre de valeur, retrait par liste.
-    let reply = lab.patch(&uri, json!([{ "op": "Add", "path": "members", "value": [{ "value": u2 }] }])).await;
+    let reply = lab
+        .patch(&uri, json!([{ "op": "Add", "path": "members", "value": [{ "value": u2 }] }]))
+        .await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
     assert_eq!(member_ids(&lab.get(&uri).await.body), [u1.clone(), u2.clone()]);
 
@@ -811,10 +838,14 @@ async fn groups_and_their_members() {
 
     // Renommage sans chemin (Okta) et remplacement complet.
     let reply = lab
-        .patch(&uri, json!([{ "op": "replace", "value": { "id": gid, "displayName": "NOC Team" } }]))
+        .patch(
+            &uri,
+            json!([{ "op": "replace", "value": { "id": gid, "displayName": "NOC Team" } }]),
+        )
         .await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
-    let reply = lab.put(&uri, json!({ "displayName": "NOC Team", "members": [{ "value": u1 }] })).await;
+    let reply =
+        lab.put(&uri, json!({ "displayName": "NOC Team", "members": [{ "value": u1 }] })).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["displayName"], "NOC Team");
     assert_eq!(member_ids(&reply.body), [u1.clone()]);
@@ -856,17 +887,22 @@ async fn a_linked_team_keeps_its_name_rights_and_manual_members() {
         .execute(&lab.pool)
         .await
         .unwrap();
-    sqlx::query("INSERT INTO team_folder_grants (team_id, folder, level) VALUES (?, 'Paris', 'read')")
-        .bind(team)
-        .execute(&lab.pool)
-        .await
-        .unwrap();
+    sqlx::query(
+        "INSERT INTO team_folder_grants (team_id, folder, level) VALUES (?, 'Paris', 'read')",
+    )
+    .bind(team)
+    .execute(&lab.pool)
+    .await
+    .unwrap();
 
     // Le fournisseur rattache l'équipe existante (nom sans casse) et y inscrit
     // un compte.
     let user = lab.user("grace").await;
     let reply = lab
-        .post("/api/scim/v2/Groups", json!({ "displayName": "ops", "members": [{ "value": user }] }))
+        .post(
+            "/api/scim/v2/Groups",
+            json!({ "displayName": "ops", "members": [{ "value": user }] }),
+        )
         .await;
     assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
     let uri = format!("/api/scim/v2/Groups/{}", reply.body["id"].as_str().unwrap());
@@ -881,14 +917,18 @@ async fn a_linked_team_keeps_its_name_rights_and_manual_members() {
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM team_members WHERE source = 'scim'").await, 0);
 
     // Le nom donné par l'administrateur reste.
-    let reply = lab.put(&uri, json!({ "displayName": "Renamed", "members": [{ "value": user }] })).await;
+    let reply =
+        lab.put(&uri, json!({ "displayName": "Renamed", "members": [{ "value": user }] })).await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert_eq!(reply.body["displayName"], "Ops");
 
     // Supprimée côté fournisseur : détachée seulement.
     let reply = lab.delete(&uri).await;
     assert_eq!(reply.status, StatusCode::NO_CONTENT);
-    assert_eq!(lab.scalar("SELECT COUNT(*) FROM teams WHERE name = 'Ops' AND scim_id IS NULL").await, 1);
+    assert_eq!(
+        lab.scalar("SELECT COUNT(*) FROM teams WHERE name = 'Ops' AND scim_id IS NULL").await,
+        1
+    );
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM team_folder_grants").await, 1);
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM team_members WHERE source = 'manual'").await, 1);
     assert_eq!(lab.scalar("SELECT COUNT(*) FROM team_members WHERE source = 'scim'").await, 0);
@@ -901,7 +941,10 @@ async fn deleting_a_user_removes_it_from_its_teams() {
     let lab = Lab::new().await;
     let user = lab.user("henry").await;
     let reply = lab
-        .post("/api/scim/v2/Groups", json!({ "displayName": "Night", "members": [{ "value": user }] }))
+        .post(
+            "/api/scim/v2/Groups",
+            json!({ "displayName": "Night", "members": [{ "value": user }] }),
+        )
         .await;
     assert_eq!(reply.status, StatusCode::CREATED);
     let group = format!("/api/scim/v2/Groups/{}", reply.body["id"].as_str().unwrap());
