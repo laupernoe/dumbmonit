@@ -1,6 +1,6 @@
 mod activedirectory;
 mod ad_deploy;
-mod agent_commands;
+pub(crate) mod agent_commands;
 mod agent_events;
 pub(crate) mod agent_files;
 mod agent_logs;
@@ -54,6 +54,7 @@ mod proxmox;
 mod push;
 mod redfish;
 mod relay;
+mod remediation;
 mod reports;
 mod saml;
 mod scim;
@@ -341,6 +342,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(update::routes())
         // Équipes et droits par dossier (`teams.rs`).
         .merge(teams::routes())
+        // Procédures, actions de remédiation, politiques et journal (`remediation.rs`).
+        .merge(remediation::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
         // Objets « gérés par fichier » : refus de les modifier à la main. Posé avant

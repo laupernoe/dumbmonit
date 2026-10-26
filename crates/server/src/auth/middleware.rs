@@ -140,6 +140,9 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
     // d'exploitation, pas de configuration (`api::oncall`).
     ("POST", "/oncall/schedules/*/overrides"),
     ("DELETE", "/oncall/schedules/*/overrides/*"),
+    // Lancer à la main une action de remédiation définie par un
+    // administrateur, depuis une alerte en cours (`api::remediation::run_action`).
+    ("POST", "/remediation/actions/*/run"),
 ];
 
 /// Préfixes de routes interdits aux jetons d'API, quelle que soit leur portée :
@@ -156,6 +159,8 @@ pub const TOKEN_DENIED: &[&str] = &[
     "/agent/tls",
     "/agent/updates",
     "/account",
+    // Agir sur une machine (remédiation) reste un geste fait dans l'interface.
+    "/remediation",
 ];
 
 const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
@@ -591,6 +596,7 @@ mod tests {
         yes(Method::POST, "/alerts/history/9/dismiss");
         yes(Method::PUT, "/alerts/rules/2/overrides/7");
         yes(Method::DELETE, "/alerts/rules/2/overrides/7");
+        yes(Method::POST, "/remediation/actions/3/run");
 
         no(Method::PUT, "/alerts/abc123/ack");
         no(Method::POST, "/alerts//ack");
@@ -613,6 +619,12 @@ mod tests {
         no(Method::PUT, "/settings");
         no(Method::POST, "/backup/restore");
         no(Method::POST, "/status-pages");
+        // La remédiation se lance, ne se configure pas, depuis un compte opérateur.
+        no(Method::POST, "/remediation/actions");
+        no(Method::PUT, "/remediation/actions/3");
+        no(Method::POST, "/remediation/policies/1/arm");
+        no(Method::POST, "/remediation/policies/1/confirm");
+        no(Method::POST, "/runbooks");
     }
 
     #[test]
@@ -626,6 +638,8 @@ mod tests {
         assert!(!is_token_denied("/targets"));
         assert!(!is_token_denied("/api/agent/relay"));
         assert!(!is_token_denied("/authors"), "un préfixe, pas une sous-chaîne");
+        assert!(is_token_denied("/api/remediation/actions/1/run"));
+        assert!(!is_token_denied("/runbooks"));
     }
 
     #[test]

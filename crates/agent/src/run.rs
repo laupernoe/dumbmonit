@@ -214,7 +214,8 @@ impl Agent {
             client.clone(),
             identity.key(),
             &config.docker_socket,
-        );
+        )
+        .with_actions(config.actions.clone());
         let logs = LogRunner::new(
             client.clone(),
             identity.key(),
@@ -1107,6 +1108,7 @@ mod tests {
             docker_update_check: false,
             docker_max_containers: 200,
             commands: false,
+            actions: crate::remediation::ActionsConfig::default(),
             relay: false,
             site: None,
             probe: crate::collect::ProbeConfig::default(),

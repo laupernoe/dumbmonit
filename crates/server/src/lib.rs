@@ -28,6 +28,7 @@ pub mod otlp;
 pub mod packs;
 #[cfg(unix)]
 pub mod privileges;
+pub mod remediation;
 pub mod reports;
 pub mod scheduler;
 pub mod security;

@@ -299,6 +299,7 @@ mod tests {
             tags: Default::default(),
             binding_supported: true,
             self_update: None,
+            remediation: None,
         };
         let registration = store::register(&pool, &cipher, &identity, token_record.id, None)
             .await

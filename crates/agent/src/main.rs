@@ -18,6 +18,7 @@ mod identity;
 mod logfile;
 mod logs;
 mod relay;
+mod remediation;
 mod run;
 mod selfupdate;
 mod shutdown;

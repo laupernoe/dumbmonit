@@ -789,7 +789,7 @@ async fn insert_host(
     .execute(pool)
     .await
     .context("registering the machine")?;
-    Ok(())
+    store_remediation(pool, target_id, identity).await
 }
 
 /// Rafraîchit la description de la machine à chaque lot.
@@ -824,6 +824,28 @@ async fn update_host(
     .execute(pool)
     .await
     .context("updating the machine")?;
+    store_remediation(pool, target_id, identity).await
+}
+
+/// Range ce que l'agent déclare de ses actions de remédiation, borné et
+/// assaini : la déclaration vient d'une machine que le serveur ne contrôle pas.
+async fn store_remediation(
+    pool: &SqlitePool,
+    target_id: TargetId,
+    identity: &AgentIdentity,
+) -> Result<()> {
+    let declared = identity
+        .remediation
+        .clone()
+        .map(|info| serde_json::to_string(&info.sanitized()))
+        .transpose()
+        .context("encoding the remediation declaration")?;
+    sqlx::query("UPDATE agent_hosts SET remediation = ? WHERE target_id = ?")
+        .bind(declared)
+        .bind(target_id)
+        .execute(pool)
+        .await
+        .context("recording the remediation declaration")?;
     Ok(())
 }
 
@@ -1050,6 +1072,7 @@ mod tests {
             tags: BTreeMap::new(),
             binding_supported: true,
             self_update: None,
+            remediation: None,
         }
     }
 

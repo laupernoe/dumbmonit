@@ -180,6 +180,7 @@ nav:
       - Maintenance windows: alerting/maintenance.md
       - Notification policy: alerting/notifications.md
       - On-call: alerting/oncall.md
+      - Runbooks and remediation: alerting/remediation.md
       - Notification channels: notifications.md
   - Using DumbMonit:
       - Overview page: using/overview.md

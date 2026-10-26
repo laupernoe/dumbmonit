@@ -38,6 +38,9 @@ pub fn detect(config: &Config) -> AgentIdentity {
         // Complété par la boucle de l'agent (empreinte, capacité, dernière
         // tentative) : `run::Agent::new`.
         self_update: None,
+        // Relu du disque à chaque démarrage : ajouter un manifeste demande de
+        // redémarrer l'agent, comme toute modification de agent.yaml.
+        remediation: Some(crate::remediation::describe(&config.actions)),
     }
 }
 
@@ -145,6 +148,7 @@ mod tests {
             docker_update_check: false,
             docker_max_containers: 200,
             commands: false,
+            actions: crate::remediation::ActionsConfig::default(),
             relay: false,
             site: None,
             probe: crate::collect::ProbeConfig::default(),

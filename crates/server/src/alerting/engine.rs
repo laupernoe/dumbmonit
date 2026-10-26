@@ -509,6 +509,14 @@ async fn send_outgoing(
             continue;
         }
         let mut message = notify::render_digest(&out.digest, public_url);
+        // Procédures des alertes qui sonnent : un lien, jamais leur texte.
+        if let Some(base) = public_url {
+            use crate::remediation::runbooks;
+            let done = runbooks::attach_to_message(pool, &mut message, &out.digest, base).await;
+            if let Err(error) = done {
+                warn!(?error, "runbook links not added to the notification");
+            }
+        }
         if let (Some(key), Some(base)) = (action_key, public_url) {
             let alerts = notify::message::actionable_alerts(&out.digest);
             message.actions = notify::action_link::build(key, base, &alerts, now);

@@ -73,6 +73,9 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
         dashboards: dashboards(pool).await?,
+        runbooks: runbooks(pool).await?,
+        remediation_actions: remediation_actions(pool, cipher, &refs).await?,
+        remediation_policies: remediation_policies(pool, &refs).await?,
     })
 }
 
@@ -788,4 +791,55 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
              (with their secrets) and quiet hours.",
         ),
     ])
+}
+
+async fn runbooks(pool: &SqlitePool) -> Result<Vec<BundleRunbook>> {
+    let list = crate::remediation::runbooks::list(pool).await.context("lecture des procédures")?;
+    Ok(list
+        .into_iter()
+        .map(|runbook| BundleRunbook {
+            title: runbook.title,
+            body: runbook.body,
+            links: runbook.links,
+        })
+        .collect())
+}
+
+async fn remediation_actions(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleRemediationAction>> {
+    use crate::remediation::store;
+    let mut out = Vec::new();
+    for action in store::list_actions(pool).await.context("lecture des actions")? {
+        let secrets = store::action_secrets(pool, cipher, action.id).await?;
+        out.push(BundleRemediationAction {
+            name: action.name,
+            kind: action.kind,
+            params: action.params,
+            secrets,
+            target: action.target_id.and_then(|id| refs.get(&id).cloned()),
+        });
+    }
+    Ok(out)
+}
+
+async fn remediation_policies(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleRemediationPolicy>> {
+    let list =
+        crate::remediation::store::list_policies(pool).await.context("lecture des politiques")?;
+    Ok(list
+        .into_iter()
+        .map(|policy| BundleRemediationPolicy {
+            action: policy.action_name,
+            rule_uid: policy.rule_uid,
+            target: policy.target_id.and_then(|id| refs.get(&id).cloned()),
+            after_minutes: policy.after_minutes,
+            max_attempts: policy.max_attempts,
+            window_minutes: policy.window_minutes,
+        })
+        .collect())
 }
