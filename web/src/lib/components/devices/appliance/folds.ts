@@ -3,6 +3,7 @@
  * few figures and the lists worth reading. One fold per kind, all pure, all
  * reading `dumbmonit_<prefix>_*` series as the collectors write them
  * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada,nginx,apache}`,
+ * (`crates/collectors/src/{pfsense,unraid,veeam,tailscale,fortigate,sophos,arubacentral,nginx,apache}`,
  * and the Hyper-V preset of the Windows agent).
  */
 import type { MetricSeries } from '#lib/api/index.js';
@@ -729,6 +730,49 @@ function hyperv(series: MetricSeries[]): ApplianceView {
 	};
 }
 
+// --------------------------------------------------------------- Aruba Central
+
+const ARUBA_TYPES: Record<string, string> = { access_point: 'Access point', switch: 'Switch', gateway: 'Gateway' };
+
+function arubacentral(series: MetricSeries[]): ApplianceView {
+	const ps = points(series, 'arubacentral');
+	const info = byLabel(ps, 'device_info', 'serial');
+	const uptime = byLabel(ps, 'device_uptime_seconds', 'serial');
+	const devices: Row[] = [...byLabel(ps, 'device_online', 'serial').values()].map((p) => {
+		const serial = p.labels.serial;
+		const up = uptime.get(serial)?.value ?? null;
+		const meta = info.get(serial)?.labels;
+		return {
+			key: serial,
+			name: p.labels.device,
+			tone: p.value >= 1 ? 'signal' : 'warning',
+			plate: p.value >= 1 ? 'Online' : 'Offline',
+			details: [ARUBA_TYPES[p.labels.type] ?? p.labels.type, meta?.model ?? '', p.labels.site ?? '', up !== null ? `up ${formatAge(up)}` : ''].filter(Boolean)
+		};
+	});
+	devices.sort((a, b) => Number(a.tone === 'signal') - Number(b.tone === 'signal') || byName(a, b));
+	const offline = single(ps, 'devices_offline') ?? 0;
+	const critical = byLabel(ps, 'alerts_active_by_severity', 'severity').get('critical')?.value ?? 0;
+	const poor = single(ps, 'devices_poor_health') ?? 0;
+	const problems = [];
+	if (offline > 0) problems.push({ text: `${offline} ${offline === 1 ? 'device' : 'devices'} offline`, severe: true });
+	if (critical > 0) problems.push({ text: `${critical} critical ${critical === 1 ? 'alert' : 'alerts'} active`, severe: true });
+	if (poor > 0) problems.push({ text: `${poor} ${poor === 1 ? 'device' : 'devices'} in poor health`, severe: false });
+	const clients = [...byLabel(ps, 'clients', 'type').values()].reduce((sum, p) => sum + p.value, 0);
+	return {
+		title: 'Aruba Central',
+		description: 'Read from the Aruba Central API (beta).',
+		verdict: verdict(problems, 'Every device is online.'),
+		figures: [
+			{ label: 'Devices online', value: single(ps, 'devices') !== null ? `${(single(ps, 'devices') ?? 0) - offline}/${single(ps, 'devices')}` : null, tone: offline > 0 ? 'warning' : 'ink' },
+			{ label: 'Active alerts', value: single(ps, 'alerts_active') !== null ? String(single(ps, 'alerts_active')) : null, tone: critical > 0 ? 'warning' : 'ink' },
+			{ label: 'Poor health', value: single(ps, 'devices_poor_health') !== null ? String(poor) : null },
+			{ label: 'Clients', value: byLabel(ps, 'clients', 'type').size > 0 ? String(clients) : null }
+		],
+		sections: [{ title: 'Devices, offline first', rows: devices }]
+	};
+}
+
 export const FOLDS: Record<string, Fold> = {
 	pfsense: { prefix: 'pfsense', title: 'Firewall', fold: pfsense },
 	unraid: { prefix: 'unraid', title: 'Array', fold: unraid },
@@ -738,6 +782,7 @@ export const FOLDS: Record<string, Fold> = {
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },
 	meraki: { prefix: 'meraki', title: 'Cloud network', fold: meraki },
 	omada: { prefix: 'omada', title: 'Wi-Fi and switching', fold: omada },
+	arubacentral: { prefix: 'arubacentral', title: 'Aruba Central', fold: arubacentral },
 	nginx: { prefix: 'nginx', title: 'Web server', fold: nginx },
 	apache: { prefix: 'apache', title: 'Web server', fold: apache },
 	openvpn: { prefix: 'openvpn', title: 'VPN', fold: openvpn },
