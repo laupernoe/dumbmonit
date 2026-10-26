@@ -47,6 +47,10 @@ pub struct Field {
     /// secrets : l'API refuse de les envoyer vers une destination qu'ils n'ont
     /// pas connue, et l'interface les affiche alors comme obligatoires.
     pub destination: bool,
+    /// Liste de choix que l'interface va chercher elle-même, vide sinon :
+    /// `oncall_policies` (politiques d'escalade) pour le canal d'astreinte. Une
+    /// interface qui ne la connaît pas affiche le champ selon `input`.
+    pub lookup: &'static str,
 }
 
 /// Un type de canal, prêt à être présenté.
@@ -135,6 +139,7 @@ fn field(
         shape: "scalar",
         default: "",
         destination: false,
+        lookup: "",
     }
 }
 
@@ -176,6 +181,10 @@ impl Field {
 
     fn required(self) -> Self {
         Self { required: true, ..self }
+    }
+
+    fn lookup(self, lookup: &'static str) -> Self {
+        Self { lookup, ..self }
     }
 
     fn with_default(self, default: &'static str) -> Self {
@@ -239,9 +248,14 @@ pub fn action_style(kind: &str) -> &'static str {
     match kind {
         // Astreinte avec son propre acquittement, et SMS (un lien signé de ~150
         // caractères coûterait plusieurs segments).
-        "pagerduty" | "opsgenie" | "grafana_oncall" | "signl4" | "vonage" | "telnyx" | "aspsms" => {
-            "none"
-        }
+        "pagerduty"
+        | "opsgenie"
+        | "grafana_oncall"
+        | "signl4"
+        | "vonage"
+        | "telnyx"
+        | "aspsms"
+        | crate::oncall::CHANNEL_KIND => "none",
         "ntfy" | "telegram" | super::webpush::KIND => "buttons",
         _ => "links",
     }
@@ -1131,6 +1145,27 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
                 )
                 .required(),
             ],
+        ),
+
+        // Astreintes intégrées : rien ne part vers un tiers, le canal ouvre une
+        // escalade (`crate::oncall`).
+        "oncall" => info(
+            kind,
+            "DumbMonit on-call",
+            "Runs an escalation policy: pages whoever is on call, then the next step until \
+             someone acknowledges.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#dumbmonit-on-call",
+            vec![
+                number(
+                    "policy_id",
+                    "Escalation policy",
+                    "The policy to run, set up in Alerts → On-call.",
+                    "1",
+                )
+                .required()
+                .lookup("oncall_policies"),
+            ],
+            vec![],
         ),
 
         // --- Sur mesure ----------------------------------------------------

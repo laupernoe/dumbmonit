@@ -53,11 +53,11 @@ pub struct SectionReport {
 }
 
 impl SectionReport {
-    fn new(section: &str) -> Self {
+    pub(crate) fn new(section: &str) -> Self {
         Self { section: section.to_string(), ..Self::default() }
     }
 
-    fn count(&mut self, outcome: RestoreOutcome) {
+    pub(crate) fn count(&mut self, outcome: RestoreOutcome) {
         match outcome {
             RestoreOutcome::Created => self.created += 1,
             RestoreOutcome::Updated => self.updated += 1,
@@ -65,7 +65,7 @@ impl SectionReport {
         }
     }
 
-    fn refused(&mut self, what: &str, error: &anyhow::Error) {
+    pub(crate) fn refused(&mut self, what: &str, error: &anyhow::Error) {
         self.skipped += 1;
         self.notes.push(format!("{what} was refused by the database: {error}"));
     }
@@ -136,6 +136,7 @@ pub async fn restore(
     report.push(restore_agent_tokens(&mut tx, bundle).await?);
     report.push(restore_api_tokens(&mut tx, bundle).await?);
     report.push(restore_push_monitors(&mut tx, cipher, bundle, &refs).await?);
+    report.push(crate::backup::oncall::restore(&mut tx, cipher, &bundle.oncall).await?);
 
     warnings(bundle, &mut report);
 

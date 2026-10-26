@@ -62,6 +62,24 @@ All notable changes to this project are documented here. The format follows
   (metadata, SP- and optional IdP-initiated sign-in, a signed assertion or response required)
   and accepts SCIM 2.0 provisioning of users and groups from Entra ID and Okta.
   Teams travel in the backup. Guides for Entra ID, Okta, Keycloak and Authentik.
+- **On-call, built in and free.** Alerts → On-call holds rotation schedules
+  (daily, weekly or custom shifts, handoff time and time zone, DST-safe),
+  stacked layers such as working hours over nights and weekends, one-off
+  replacements ("X covers for Y from … to …", open to operators), a week and
+  month calendar and who is on call now. Escalation policies chain steps (the
+  person on call in a schedule, a named person or a channel), wait N minutes
+  without an acknowledgement before the next step and repeat the chain K
+  times; an acknowledgement by anyone, from the UI or a notification link,
+  stops it, and a per-alert log shows who was called, when, how and who
+  acknowledged. Policies plug into the existing routing through a new
+  "DumbMonit on-call" channel type, so tag filters, minimum severity and
+  per-rule channels apply unchanged. In Settings → My account each person adds
+  their own contacts (their own ntfy, Pushover, Telegram… or their address on
+  a team email, SMS, Signal or Telegram channel) and quiet hours (outside
+  on-call duty only critical alerts get through), gets optional shift start and
+  end notices, and an iCal link to subscribe to their shifts. Schedules,
+  policies, contacts and preferences are part of backups. See
+  [On-call](https://dumbmonit.readthedocs.io/en/latest/alerting/oncall/).
 
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 

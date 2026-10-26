@@ -164,6 +164,7 @@ pub fn build(
         "homeassistant" => Arc::new(gateway::HomeAssistant::new(http.clone(), config)?),
         "pagerduty" => Arc::new(oncall::PagerDuty::new(http.clone(), config)?),
         "opsgenie" => Arc::new(oncall::Opsgenie::new(http.clone(), config)?),
+        crate::oncall::CHANNEL_KIND => Arc::new(crate::oncall::OncallChannel::new(config)?),
         "webhook" => Arc::new(custom::Webhook::new(http.clone(), config)?),
         "smtp" => Arc::new(smtp::Smtp::new(config)?),
         other => return Err(NotifyError::UnknownKind(other.to_string())),
@@ -299,6 +300,20 @@ pub async fn test_channel_stored(
     config: &ChannelConfig,
     public_url: Option<&str>,
 ) -> Result<(), NotifyError> {
+    if config.kind == crate::oncall::CHANNEL_KIND {
+        build(http, config)?;
+        if sending_disabled() {
+            return Ok(());
+        }
+        let ctx = crate::oncall::runner::Ctx {
+            pool: store.pool,
+            cipher: store.cipher,
+            http,
+            public_url,
+            action_key: None,
+        };
+        return crate::oncall::runner::test_channel(&ctx, config).await;
+    }
     if config.kind != webpush::KIND {
         return test_channel(http, config, public_url).await;
     }

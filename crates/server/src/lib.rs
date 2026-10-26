@@ -22,6 +22,7 @@ pub mod multisite;
 pub mod music;
 pub mod netinventory;
 pub mod notify;
+pub mod oncall;
 pub mod packs;
 #[cfg(unix)]
 pub mod privileges;

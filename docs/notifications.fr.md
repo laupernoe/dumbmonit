@@ -913,6 +913,14 @@ Une alerte arrive sur les téléphones de l'équipe (`X-S4-Status: new`) et sa
 résolution la ferme (`resolved`), rapprochées par un identifiant externe par
 équipement.
 
+### DumbMonit on-call
+
+Prévient la personne d'astreinte, puis escalade étape par étape jusqu'à ce que
+quelqu'un acquitte. Un seul réglage, la **politique d'escalade** à exécuter, et
+aucun secret. Plannings, contacts et politiques sont décrits dans
+[Astreintes](alerting/oncall.md) ; le canal passe par le routage habituel
+(étiquettes, sévérité minimale, canaux choisis par règle).
+
 ### Webhook personnalisé
 
 Voir [Le canal personnalisé](#the-custom-channel) ci-dessus.

@@ -153,3 +153,40 @@ async fn un_relais_smtp_interne_est_refuse_avant_toute_connexion() {
     assert!(report.error.is_some_and(|e| e.contains("DumbMonit itself")));
     assert!(!interne.touche());
 }
+
+#[tokio::test]
+async fn un_contact_perso_ne_joint_pas_le_serveur() {
+    use dumbmonit_server::oncall::runner::contact_config;
+    use dumbmonit_server::oncall::store::ContactRow;
+
+    let interne = serveur(ok).await;
+    guard::protect([interne.address]);
+    let contact = ContactRow {
+        id: 1,
+        user_id: 1,
+        label: "phone".into(),
+        kind: "ntfy".into(),
+        via_channel_id: None,
+        address: None,
+        settings: serde_json::json!({
+            "topic": "astreinte",
+            "server_url": format!("http://127.0.0.1:{}", interne.port()),
+        }),
+        secrets: serde_json::json!({}),
+        has_secret: false,
+        enabled: true,
+        min_severity: dumbmonit_server::alerting::model::Severity::Info,
+        position: 0,
+        last_error: None,
+        last_used_at: None,
+    };
+    let config = contact_config(&[], "Alice", &contact).unwrap();
+    let report = dumbmonit_server::notify::deliver(
+        &http_client(),
+        &config,
+        &dumbmonit_server::notify::test_message("trial"),
+    )
+    .await;
+    assert!(report.error.is_some_and(|e| e.contains("DumbMonit itself")));
+    assert!(!interne.touche(), "a personal contact must never reach the internal address");
+}
