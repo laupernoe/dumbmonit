@@ -23,6 +23,8 @@ form always matches what this version can monitor.
 | [Cisco Meraki](meraki.md) | `meraki` | API key (read-only administrator) | Beta. Meraki cloud: devices offline, failed Internet uplinks, license state and expiry, clients per network |
 | [TP-Link Omada](omada.md) | `omada` | OpenAPI client ID and secret (Viewer role) | Beta. Omada controller: devices disconnected or pending, CPU and memory, firmware updates, clients per site |
 | [Aruba Central](arubacentral.md) | `arubacentral` | API client (ID and secret) or access token | Beta. Aruba access points, switches and gateways through the cloud API: devices offline, critical alerts, device health, clients |
+| [Palo Alto PAN-OS](paloalto.md) | `paloalto` | username/password or API key (role-based, XML API operational requests only) | Beta. Firewall: interface links, HA peer and sync, session table, licences, failed commits |
+| [SonicWall SonicOS](sonicwall.md) | `sonicwall` | username/password (read-only user) | Beta. Firewall: interface links only |
 | [OpenVPN server](openvpn.md) | `openvpn` | none, or management password | OpenVPN server through its management interface: version, state, connected clients |
 | [UniFi Network](unifi.md) | `unifi` | API key or username/password | UniFi console or self-hosted server: devices, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | long-lived access token | Smart home: unavailable entities, low batteries, updates, repairs |

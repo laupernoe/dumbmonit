@@ -5250,6 +5250,125 @@
     ]
   },
   {
+    "kind": "paloalto",
+    "label": "Palo Alto PAN-OS",
+    "summary": "Beta. A Palo Alto Networks firewall through the PAN-OS XML API: interfaces without link, HA peer lost or out of sync, session table filling up, management CPU and memory, licences expiring, failed commits.",
+    "examples": [
+      "PA-400 / PA-1400 series",
+      "VM-Series",
+      "PAN-OS 10.x and 11.x"
+    ],
+    "credential_types": [
+      "username_password",
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "User name and password",
+        "help": "The dumbmonit account: DumbMonit asks the firewall for an API key with it and keeps the key, the password only travels in a request body.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The read-only account created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "api_token",
+        "label": "API key",
+        "help": "A key already generated for the dumbmonit account, sent in the X-PAN-KEY header.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API key",
+            "help": "As returned by the keygen request. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "pa.lan",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only XML API account for DumbMonit",
+      "steps": [
+        "Device → Admin Roles → Add: name the role as follows. On the XML API tab enable Operational Requests only; leave every other privilege, and the Web UI and Command Line tabs, disabled.\ndumbmonit-ro",
+        "Device → Administrators → Add: name the account as follows, set Authentication to a password, the type to Role Based and the role to the one above.\ndumbmonit",
+        "Click Commit: the role and the account exist only once committed.",
+        "In DumbMonit, enter the firewall address (pa.lan) with that user name and password, or with an API key you generated for that account."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Management interface (HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "XML API → Operational Requests: enabled\nshow system info, resources, sessions, interfaces, HA state, jobs and licence info",
+        "Every other XML API privilege: disabled\nConfiguration, Commit, Export, Import, Report, Log and User-ID Agent are not needed",
+        "Web UI and Command Line: disabled\nThe account never signs in interactively"
+      ],
+      "warning": "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/paloalto/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "paperless",
     "label": "Paperless-ngx",
     "summary": "Redis, Celery, search index and classifier health, failed imports, updates, disk space, document count.",
@@ -8057,6 +8176,106 @@
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/snmp/"
     },
     "options": []
+  },
+  {
+    "kind": "sonicwall",
+    "label": "SonicWall SonicOS",
+    "summary": "Beta. A SonicWall firewall through the SonicOS 7 API: the link of every interface bound to a zone. Kept minimal on purpose: only the API paths SonicWall publishes are read.",
+    "examples": [
+      "SonicWall TZ / NSa / NSsp",
+      "SonicWall NSv",
+      "SonicOS 7.x"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "User name and password",
+        "help": "The dumbmonit user, in a read-only group, sent as HTTP Basic.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The read-only user created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "sonicwall.lan",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only user for the SonicOS API",
+      "steps": [
+        "Device → Settings → Administration → Audit/SonicOS API: make sure HTTP Basic Access (RFC-2617) is on, then click Accept.",
+        "Device → Users → Local Users & Groups → Add User: name it as follows, give it a long random password and add it to the group SonicWall Read-Only Admins.\ndumbmonit",
+        "Allow HTTPS management on the interface DumbMonit reaches the firewall through (Device → Network → Interfaces → Configure → Management).",
+        "In DumbMonit, enter the firewall address (sonicwall.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Management interface (HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Group SonicWall Read-Only Admins\nThe account reads and changes nothing"
+      ],
+      "warning": "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/sonicwall/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
   },
   {
     "kind": "sophos",

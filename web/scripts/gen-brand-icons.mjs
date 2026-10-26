@@ -56,6 +56,8 @@ const KINDS = {
 	fortigate: 'fortinet',
 	meraki: 'cisco',
 	omada: 'omadacloud',
+	paloalto: 'paloaltonetworks',
+	sonicwall: 'sonicwall',
 	postgres: 'postgresql',
 	mysql: 'mysql',
 	mqtt: 'mqtt'

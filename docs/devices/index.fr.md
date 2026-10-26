@@ -24,6 +24,8 @@ que cette version peut surveiller.
 | [Cisco Meraki](meraki.md) | `meraki` | clé d'API (administrateur en lecture seule) | Bêta. Cloud Meraki : appareils hors ligne, liaisons Internet en échec, état et expiration de la licence, clients par réseau |
 | [TP-Link Omada](omada.md) | `omada` | identifiant et secret de client OpenAPI (rôle Viewer) | Bêta. Contrôleur Omada : appareils déconnectés ou en attente, CPU et mémoire, mises à jour du firmware, clients par site |
 | [Aruba Central](arubacentral.md) | `arubacentral` | client d'API (ID et secret) ou jeton d'accès | Bêta. Points d'accès, commutateurs et passerelles Aruba par l'API cloud : appareils hors ligne, alertes critiques, santé des appareils, clients |
+| [Palo Alto PAN-OS](paloalto.md) | `paloalto` | nom d'utilisateur/mot de passe ou clé d'API (rôle limité aux requêtes opérationnelles de l'API XML) | Bêta. Pare-feu : liens d'interface, pair et synchro HA, table des sessions, licences, validations en échec |
+| [SonicWall SonicOS](sonicwall.md) | `sonicwall` | nom d'utilisateur/mot de passe (utilisateur en lecture seule) | Bêta. Pare-feu : liens d'interface seulement |
 | [Serveur OpenVPN](openvpn.md) | `openvpn` | aucun, ou mot de passe de gestion | Serveur OpenVPN via son interface de gestion : version, état, clients connectés |
 | [UniFi Network](unifi.md) | `unifi` | clé d'API ou nom d'utilisateur/mot de passe | Console UniFi ou serveur auto-hébergé : appareils, WAN, clients |
 | [Home Assistant](homeassistant.md) | `homeassistant` | jeton d'accès longue durée | Maison connectée : entités indisponibles, batteries faibles, mises à jour, réparations |
