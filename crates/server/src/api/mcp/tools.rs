@@ -3220,6 +3220,7 @@ async fn post_incident(state: &AppState, args: &Args) -> ToolResult {
             ends_at: None,
             body: Some(body.to_string()),
             updates: None,
+            components: None,
         };
         let (_, view) = status_pages::create_incident(State(state.clone()), Json(payload)).await?;
         (true, view)

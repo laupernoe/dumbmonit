@@ -31,6 +31,7 @@ use crate::db;
 pub(crate) mod access;
 mod badges;
 mod branding;
+pub mod delivery;
 mod subscribers;
 mod timeline;
 use crate::auth::teams::TeamAccess;
@@ -107,6 +108,11 @@ pub fn routes() -> Router<AppState> {
         .route("/status-pages/{id}/access", put(access::set_access))
         .route("/status-pages/{id}/subscribers", get(subscribers::list))
         .route("/status-pages/{id}/subscribers/{subscriber}", delete(subscribers::remove))
+        .route("/status-pages/{id}/subscribers.csv", get(subscribers::export))
+        .route(
+            "/status-pages/{id}/subscription",
+            get(subscribers::get_settings).put(subscribers::put_settings),
+        )
         .route("/incidents", get(list_incidents).post(create_incident))
         .route("/incidents/{id}", put(update_incident).delete(delete_incident))
         .route("/incidents/{id}/updates", get(list_updates).post(add_update))
@@ -133,6 +139,7 @@ pub fn public_routes() -> Router<AppState> {
         )
         .route("/public/status/{slug}/subscribe", post(subscribers::subscribe))
         .route("/public/status/{slug}/confirm", post(subscribers::confirm))
+        .route("/public/status/{slug}/confirm-code", post(subscribers::confirm_code))
         .route("/public/status/{slug}/unsubscribe", post(subscribers::unsubscribe))
 }
 
@@ -156,6 +163,8 @@ pub struct IncidentView {
     #[serde(flatten)]
     pub incident: Incident,
     pub updates: Vec<IncidentUpdate>,
+    /// Équipements touchés (ceux que suivent les abonnés) ; vide : toute la page.
+    pub components: Vec<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -739,6 +748,11 @@ pub struct IncidentPayload {
     /// Messages datés du fil, à la création seulement : reprise d'un historique.
     #[serde(default)]
     pub updates: Option<Vec<NewUpdate>>,
+    /// Équipements touchés, parmi les services de la page : les abonnés qui ne
+    /// suivent que d'autres services ne sont pas prévenus. Absent : inchangé
+    /// (toute la page à la création).
+    #[serde(default)]
+    pub components: Option<Vec<i64>>,
 }
 
 /// Un message d'un fil saisi à la création d'une annonce.
@@ -923,11 +937,16 @@ async fn incident_views(
     for update in db::status_pages::list_updates_for(&state.pool, &ids).await? {
         updates.entry(update.incident_id).or_default().push(update);
     }
+    let mut components: HashMap<i64, Vec<i64>> = HashMap::new();
+    for (incident, target) in db::status_pages::incident_component_rows(&state.pool).await? {
+        components.entry(incident).or_default().push(target);
+    }
     Ok(incidents
         .into_iter()
         .map(|incident| {
             let updates = updates.remove(&incident.id).unwrap_or_default();
-            IncidentView { incident, updates }
+            let components = components.remove(&incident.id).unwrap_or_default();
+            IncidentView { incident, updates, components }
         })
         .collect())
 }
@@ -1040,6 +1059,7 @@ pub async fn create_incident(
 ) -> ApiResult<(StatusCode, Json<IncidentView>)> {
     let body = payload.body.clone().unwrap_or_default().trim().to_string();
     let drafts = payload.updates.take().unwrap_or_default();
+    let components = payload.components.take();
     let mut input = payload.validate(&state, None).await?;
     // Le premier message ouvre le fil avec le statut initial ; sans message,
     // le fil reste vide et l'annonce se résume à son titre.
@@ -1048,6 +1068,9 @@ pub async fn create_incident(
     input.ends_at = plan.ends_at.map(format_timestamp);
     let id =
         db::status_pages::create_incident_with_thread(&state.pool, &input, &plan.entries).await?;
+    if let Some(components) = components {
+        db::status_pages::set_incident_components(&state.pool, id, &components).await?;
+    }
     invalidate_cache();
     let incident = db::status_pages::get_incident(&state.pool, id)
         .await?
@@ -1064,8 +1087,9 @@ pub async fn create_incident(
 pub async fn update_incident(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    Json(payload): Json<IncidentPayload>,
+    Json(mut payload): Json<IncidentPayload>,
 ) -> ApiResult<Json<IncidentView>> {
+    let components = payload.components.take();
     let existing = db::status_pages::get_incident(&state.pool, id)
         .await?
         .ok_or_else(|| incident_not_found(id))?;
@@ -1095,6 +1119,9 @@ pub async fn update_incident(
     }
     if !db::status_pages::update_incident(&state.pool, id, &input).await? {
         return Err(incident_not_found(id));
+    }
+    if let Some(components) = components {
+        db::status_pages::set_incident_components(&state.pool, id, &components).await?;
     }
     invalidate_cache();
     let incident = db::status_pages::get_incident(&state.pool, id)
@@ -1265,8 +1292,10 @@ struct PublicPage {
     homepage_url: String,
     /// Adresse relative du logo, versionnée pour les caches ; `None` sans logo.
     logo_url: Option<String>,
-    /// La page propose l'abonnement par courriel (un canal SMTP actif est choisi).
+    /// La page propose au moins un abonnement.
     subscribe: bool,
+    /// Abonnements ouverts : `email`, `sms`, `webhook`, `slack`.
+    subscribe_kinds: Vec<&'static str>,
     /// Valeurs de référencement effectives (réglages, ou défauts tirés du nom).
     seo: crate::status_seo::Resolved,
 }
@@ -2216,6 +2245,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             .collect()
     });
 
+    let subscribe_kinds = subscribers::available_kinds(state, page).await;
     Ok(PublicStatus {
         page: PublicPage {
             slug: page.slug.clone(),
@@ -2238,7 +2268,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             logo_url: page.logo_type.as_ref().map(|_| {
                 format!("/api/public/status/{}/logo?v={}", page.slug, version_tag(&page.updated_at))
             }),
-            subscribe: subscribers::offers_subscription(state, page).await,
+            subscribe: !subscribe_kinds.is_empty(),
+            subscribe_kinds,
             seo: crate::status_seo::resolve(page),
         },
         overall,

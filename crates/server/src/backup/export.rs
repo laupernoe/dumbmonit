@@ -57,7 +57,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         )
         .await?,
         silences: silences(pool, &refs).await?,
-        status_pages: status_pages(pool, &refs).await?,
+        status_pages: status_pages(pool, &refs, &channel_names).await?,
         report_schedules: report_schedules(pool, &channel_names).await?,
         incidents: incidents(pool).await?,
         users: users(pool, cipher, options).await?,
@@ -483,11 +483,13 @@ async fn report_schedules(
 async fn status_pages(
     pool: &SqlitePool,
     refs: &HashMap<i64, String>,
+    channel_names: &HashMap<i64, String>,
 ) -> Result<Vec<BundleStatusPage>> {
     let rows = sqlx::query(
         "SELECT id, slug, title, description, published, theme, show_uptime_days,
              accent, scenes, scene_rotation, simple, footer_text, homepage_url, domain, seo,
-             access_mode, access_password_hash
+             access_mode, access_password_hash, subscribe_channel_id,
+             subscribe_sms_channel_id, subscribe_webhook, subscribe_slack
          FROM status_pages ORDER BY id",
     )
     .fetch_all(pool)
@@ -562,6 +564,16 @@ async fn status_pages(
             access_password_hash: row.try_get("access_password_hash")?,
             groups: groups.into_iter().map(|(name,)| name).collect(),
             group_labels,
+            subscriptions: Some(BundleSubscriptions {
+                email_channel: row
+                    .try_get::<Option<i64>, _>("subscribe_channel_id")?
+                    .and_then(|id| channel_names.get(&id).cloned()),
+                sms_channel: row
+                    .try_get::<Option<i64>, _>("subscribe_sms_channel_id")?
+                    .and_then(|id| channel_names.get(&id).cloned()),
+                webhook: row.try_get::<i64, _>("subscribe_webhook")? != 0,
+                slack: row.try_get::<i64, _>("subscribe_slack")? != 0,
+            }),
         });
     }
     Ok(out)
