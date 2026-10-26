@@ -306,8 +306,11 @@ pub fn offset_fetch_request(group: &str) -> Vec<u8> {
     body.finish()
 }
 
+/// Offset d'une partition : `(rubrique, partition, offset)`.
+pub type PartitionOffset = (String, i32, i64);
+
 /// `(rubrique, partition, offset validé)`, hors partitions sans offset (-1).
-pub fn parse_offset_fetch(body: &[u8]) -> Result<(i16, Vec<(String, i32, i64)>), ProbeError> {
+pub fn parse_offset_fetch(body: &[u8]) -> Result<(i16, Vec<PartitionOffset>), ProbeError> {
     let mut r = Reader::new(body);
     let mut offsets = Vec::new();
     for _ in 0..r.array_len()? {
@@ -350,7 +353,7 @@ pub fn list_offsets_request(partitions: &[(String, i32)]) -> Vec<u8> {
 }
 
 /// `(rubrique, partition, dernier offset)` des partitions sans erreur.
-pub fn parse_list_offsets(body: &[u8]) -> Result<Vec<(String, i32, i64)>, ProbeError> {
+pub fn parse_list_offsets(body: &[u8]) -> Result<Vec<PartitionOffset>, ProbeError> {
     let mut r = Reader::new(body);
     let mut ends = Vec::new();
     for _ in 0..r.array_len()? {

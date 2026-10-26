@@ -94,7 +94,7 @@ pub fn health_samples(flavor: &Flavor, body: &Value, ts_ms: i64) -> Vec<Sample> 
         out.push(
             gauge(&metric(p, "health_issue"), 1.0, ts_ms)
                 .with_label("source", source)
-                .with_label("level", &level(item)),
+                .with_label("level", level(item)),
         );
     }
     out
