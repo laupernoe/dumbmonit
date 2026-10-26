@@ -262,11 +262,7 @@ impl Victoria {
                     let old_end_ms = (split_secs - step) * 1000;
                     let (old, recent) = tokio::join!(
                         long.victoria.query_range_raw_filtered(
-                            &rewritten,
-                            start_ms,
-                            old_end_ms,
-                            step_secs,
-                            filter,
+                            &rewritten, start_ms, old_end_ms, step_secs, filter,
                         ),
                         self.query_range_raw_filtered(
                             query,
