@@ -3680,6 +3680,58 @@
 	"locations_site_none": "Aucun",
 	"locations_title": "Emplacements",
 	"locations_use_place": "Utiliser {place}",
+	"logsearch_admin_only": "Seuls les administrateurs peuvent chercher dans les journaux.",
+	"logsearch_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ligne",
+				"countPlural=other": "{count} lignes"
+			}
+		}
+	],
+	"logsearch_description": "Cherchez dans les journaux de DumbMonit avec LogsQL, du plus récent au plus ancien.",
+	"logsearch_empty_hint": "Élargissez la période, baissez le niveau minimal ou simplifiez la requête.",
+	"logsearch_empty_title": "Aucune ligne de journal trouvée.",
+	"logsearch_error": "Impossible de chercher dans les journaux.",
+	"logsearch_field_host": "hôte",
+	"logsearch_field_source": "source",
+	"logsearch_from": "Du",
+	"logsearch_level": "Niveau minimal",
+	"logsearch_level_debug": "Debug (tout)",
+	"logsearch_level_error": "Erreur",
+	"logsearch_level_info": "Info et plus",
+	"logsearch_level_warn": "Avertissement et plus",
+	"logsearch_period": "Période",
+	"logsearch_period_15m": "15 dernières minutes",
+	"logsearch_period_1h": "Dernière heure",
+	"logsearch_period_24h": "24 dernières heures",
+	"logsearch_period_6h": "6 dernières heures",
+	"logsearch_period_7d": "7 derniers jours",
+	"logsearch_period_custom": "Plage personnalisée…",
+	"logsearch_query": "Requête LogsQL",
+	"logsearch_query_help": "* correspond à tout. Exemple : \"timeout\" AND kind:snmp",
+	"logsearch_query_refused": "Le stockage des journaux a refusé cette requête.",
+	"logsearch_range_invalid": "Choisissez un début, et une fin postérieure.",
+	"logsearch_search": "Chercher",
+	"logsearch_section_hint": "Les journaux peuvent aussi être conservés dans un stockage interrogeable.",
+	"logsearch_section_link": "Chercher dans les journaux",
+	"logsearch_settings_link": "Réglages données et rétention",
+	"logsearch_source": "Source",
+	"logsearch_source_agents": "Agents (plus tard)",
+	"logsearch_source_server": "Serveur DumbMonit",
+	"logsearch_store_off": "Le stockage des journaux est désactivé. Activez-le dans Réglages → Système pour chercher dans les journaux.",
+	"logsearch_store_off_link": "Ouvrir Données et rétention",
+	"logsearch_title": "Journaux",
+	"logsearch_to": "Au",
+	"logsearch_to_help": "Laissez vide pour maintenant.",
+	"logsearch_truncated": "il y en a d’autres, affinez la recherche",
 	"metrics_title_website_blank": "Page vide",
 	"metrics_title_website_canonical_changed": "Canonique modifiée",
 	"metrics_title_website_description_changed": "Description modifiée",
@@ -7003,6 +7055,101 @@
 	"status_words_st_monitoring": "Sous surveillance",
 	"status_words_st_resolved": "Résolu",
 	"status_words_st_scheduled": "Planifiée",
+	"storage_confirm_apply": "Enregistrer et redémarrer",
+	"storage_confirm_cancel": "Annuler",
+	"storage_confirm_lowering": "Réduire la rétention brute supprime les données brutes plus anciennes.",
+	"storage_confirm_restart": "Modifier la rétention redémarre le stockage de métriques embarqué ; les écritures sont suspendues quelques secondes puis réessayées, rien n’est perdu. Activer, désactiver ou modifier les autres stockages redémarre aussi celui-ci.",
+	"storage_custom": "Personnalisé…",
+	"storage_custom_days": "Nombre de jours",
+	"storage_days": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} jour",
+				"countPlural=other": "{count} jours"
+			}
+		}
+	],
+	"storage_days_invalid": "Saisissez un nombre entier de jours entre {min} et {max}.",
+	"storage_days_unit": "jours",
+	"storage_description": "Espace disque, durée de conservation des métriques et des journaux, historique long terme et stockage des journaux (optionnels).",
+	"storage_disk_title": "Espace disque utilisé",
+	"storage_docs_external": "À propos de VictoriaMetrics externe",
+	"storage_free": "Espace libre",
+	"storage_free_of": "{free} libres sur {total} ({percent} %)",
+	"storage_full_in": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Plein dans environ {count} jour à ce rythme.",
+				"countPlural=other": "Plein dans environ {count} jours à ce rythme."
+			}
+		}
+	],
+	"storage_growth": "Croissance",
+	"storage_growth_per_day": "Environ {size} par jour",
+	"storage_last_error": "Dernière erreur : {error}",
+	"storage_limits": "Entre {min} et {max} jours.",
+	"storage_logstore_enabled": "Stocker les journaux pour la recherche",
+	"storage_logstore_intro": "Désactivé par défaut. Une fois activé, DumbMonit lance un VictoriaLogs embarqué et lui envoie ses propres journaux serveur, que vous pouvez chercher dans la page Journaux.",
+	"storage_logstore_retention": "Conserver les journaux pendant",
+	"storage_logstore_title": "Stockage des journaux (VictoriaLogs)",
+	"storage_logstore_unavailable": "Le binaire VictoriaLogs n’est pas dans cette image : le stockage des journaux ne peut pas être activé ici.",
+	"storage_metrics_external": "Cette instance utilise un VictoriaMetrics externe, qui gère lui-même sa rétention (-retentionPeriod chez lui). Elle est actuellement de {days} jours.",
+	"storage_metrics_intro": "Chaque mesure est conservée en pleine résolution pendant cette durée. Les données brutes plus anciennes sont supprimées ; avec l’historique long terme activé, les graphiques et rapports au-delà utilisent des agrégats de 5 minutes.",
+	"storage_metrics_retention": "Conserver les métriques brutes pendant",
+	"storage_metrics_title": "Rétention des métriques brutes",
+	"storage_none_yet": "Aucune pour l’instant",
+	"storage_not_enough_history": "Pas encore assez d’historique (il faut deux relevés quotidiens).",
+	"storage_off": "Désactivé",
+	"storage_on": "Activé",
+	"storage_open_logs": "Ouvrir la page Journaux",
+	"storage_process_logs_store": "stockage des journaux",
+	"storage_process_metrics": "stockage des métriques",
+	"storage_process_rollup": "historique long terme",
+	"storage_read_error": "Impossible de lire les réglages de stockage.",
+	"storage_rollup_backfill": "Historique recopié depuis les données brutes",
+	"storage_rollup_backfill_done": "Terminé",
+	"storage_rollup_backfill_until": "En cours, remonté jusqu’au {date}",
+	"storage_rollup_enabled": "Conserver un historique long terme",
+	"storage_rollup_intro": "VictoriaMetrics open source n’a pas de sous-échantillonnage : DumbMonit écrit donc des moyennes, minimums et maximums sur 5 minutes (et des compteurs de succès pour la disponibilité) dans un second petit stockage. Les graphiques, pages de statut et rapports au-delà de la rétention brute y puisent automatiquement.",
+	"storage_rollup_last_window": "Dernière fenêtre agrégée",
+	"storage_rollup_retention": "Conserver l’historique pendant",
+	"storage_rollup_series": "Séries écrites",
+	"storage_rollup_title": "Historique long terme (agrégats de 5 minutes)",
+	"storage_rollup_unavailable": "Indisponible : avec un VictoriaMetrics externe, définissez DUMBMONIT_VM_LONG_URL vers une seconde instance pour l’activer.",
+	"storage_running": "En marche",
+	"storage_save": "Enregistrer",
+	"storage_save_error": "Impossible d’enregistrer les réglages de stockage.",
+	"storage_saved": "Enregistré",
+	"storage_saved_restarted": "Enregistré. Redémarré : {processes}.",
+	"storage_search_kw": "disque espace rétention jours métriques victoriametrics historique long terme agrégats journaux victorialogs croissance plein",
+	"storage_source": "Origine : {source}",
+	"storage_source_default": "valeur par défaut",
+	"storage_source_environment": "variable d’environnement DUMBMONIT_VM_RETENTION",
+	"storage_source_settings": "défini ici",
+	"storage_status": "État",
+	"storage_stopped": "Arrêté",
+	"storage_title": "Données et rétention",
+	"storage_unknown": "Inconnu",
+	"storage_usage_backups": "Sauvegardes",
+	"storage_usage_database": "Base de données",
+	"storage_usage_logs": "Fichiers journaux du serveur",
+	"storage_usage_logs_store": "Stockage des journaux",
+	"storage_usage_metrics": "Métriques (brutes)",
+	"storage_usage_rollup": "Historique long terme",
 	"tips_alerts_clear_history": "« Effacer toutes les résolues » balaie d’un coup les alertes closes de votre historique, une fois que vous avez fini de les lire.",
 	"tips_alerts_ignore_device": "Une règle se déclenche sur une surveillance qui ne rentrera jamais dans le rang ? Ignorez cette règle pour cette surveillance seulement : elle continue de surveiller partout ailleurs.",
 	"tips_alerts_learning": "Une nouvelle règle de référence reste silencieuse pendant ses 14 premiers jours : elle apprend encore ce qui est normal pour cette surveillance avant d’oser alerter.",
