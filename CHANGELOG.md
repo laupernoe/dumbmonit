@@ -26,7 +26,7 @@ All notable changes to this project are documented here. The format follows
   policies, contacts and preferences are part of backups. See
   [On-call](https://dumbmonit.readthedocs.io/en/latest/alerting/oncall/).
 
-## 0.14.0 — 2026-10-25
+## 0.13.6 — 2026-10-25
 
 ### Added
 
@@ -154,6 +154,12 @@ All notable changes to this project are documented here. The format follows
   notifies nobody; it shows in the history and the day bars at its real date.
 
 ### Fixed
+
+- **Linux agents keep their encrypted-channel certificate across restarts.** The
+  systemd unit made `/etc/dumbmonit` read-only (`ProtectSystem=strict`), so the
+  agent could not save its certificate (`agent-tls.json`) and binding secret
+  there; the unit now allows writing to its configuration directory only.
+  Reinstall the agent with the install command to get the new unit.
 
 - **Interface clean-up: lists refresh, fewer buttons, folded settings.** Any
   successful create, update or delete now refreshes the shared device and alert
