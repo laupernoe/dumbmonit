@@ -21,6 +21,7 @@ import {
 	type OidcStatus,
 	type User
 } from '#lib/api/index.js';
+import { signInWithPasskey } from '#lib/api/passkeys.js';
 
 /**
  * Minimum length required for a password.
@@ -95,6 +96,8 @@ class AuthStore {
 	oidc = $state<OidcStatus>({ enabled: false, provider_name: 'SSO', login_url: '/api/auth/oidc/start' });
 	/** LDAP / Active Directory sign-in through the same form. */
 	ldap = $state<LdapStatus>({ enabled: false });
+	/** A passkey is registered on the instance: the sign-in screen offers to use one. */
+	passkeys = $state(false);
 	/** Public demo mode: read-only instance, sign in with demo / demo. */
 	demo = $state(false);
 	/** Error preventing us from knowing the session state (server unreachable). */
@@ -164,6 +167,7 @@ class AuthStore {
 			this.user = state.user;
 			this.oidc = state.oidc;
 			this.ldap = state.ldap;
+			this.passkeys = state.passkeys;
 			this.demo = state.demo;
 			this.error = null;
 		} catch (cause) {
@@ -219,6 +223,13 @@ class AuthStore {
 		this.sessionOpened();
 		await this.refresh();
 		return null;
+	}
+
+	/** Signs in with a passkey: password and second factor in one gesture. */
+	async loginPasskey(): Promise<void> {
+		await signInWithPasskey();
+		this.sessionOpened();
+		await this.refresh();
 	}
 
 	/** Second step of the sign-in: the one-time code. */

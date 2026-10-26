@@ -54,3 +54,30 @@ export function importKumaDb(file: File, dryRun: boolean, rows?: number[]): Prom
 		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows) }
 	});
 }
+
+/**
+ * Imports from UptimeRobot (API key or exported CSV), Gatus (config.yaml) and
+ * Healthchecks.io (API key). Same preview/import contract as Uptime Kuma: the
+ * server fetches or parses, converts and validates, and answers with the same
+ * report. Keys are sent once and never stored.
+ */
+export type ServiceImport =
+	| { provider: 'uptimerobot'; apiKey: string }
+	| { provider: 'uptimerobot'; csv: string }
+	| { provider: 'gatus'; yaml: string }
+	| { provider: 'healthchecks'; apiKey: string; baseUrl?: string };
+
+/** Largest CSV/YAML accepted by the server. */
+export const SERVICE_IMPORT_MAX_BYTES = 4 * 1024 * 1024;
+
+export function importFromService(source: ServiceImport, dryRun: boolean, rows?: number[]): Promise<KumaImportReport> {
+	let body: Record<string, unknown>;
+	if (source.provider === 'gatus') body = { yaml: source.yaml };
+	else if (source.provider === 'healthchecks') body = { api_key: source.apiKey, base_url: source.baseUrl || undefined };
+	else body = 'csv' in source ? { csv: source.csv } : { api_key: source.apiKey };
+	return request<KumaImportReport>(`/targets/import/${source.provider}`, {
+		method: 'POST',
+		body,
+		query: { dry_run: dryRun ? true : undefined, rows: rowsParam(rows) }
+	});
+}

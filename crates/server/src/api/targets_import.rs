@@ -389,7 +389,7 @@ async fn existing_addresses(state: &AppState) -> ApiResult<HashSet<String>> {
 // ---------------------------------------------------------------- CSV
 
 /// CSV RFC 4180 : guillemets, `""`, sauts de ligne entre guillemets, CRLF, BOM.
-fn parse_csv(text: &str) -> Result<Vec<Vec<String>>, String> {
+pub(super) fn parse_csv(text: &str) -> Result<Vec<Vec<String>>, String> {
     let text = text.strip_prefix('\u{feff}').unwrap_or(text);
     let mut rows: Vec<Vec<String>> = Vec::new();
     let mut row: Vec<String> = Vec::new();

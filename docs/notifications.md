@@ -116,7 +116,8 @@ How they show up depends on the channel:
 | ntfy, Telegram, Web Push | Buttons under the notification |
 | Discord, Slack, email and every other channel | Links at the end of the message |
 | Custom webhook | Links in `{{message}}`, and the `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` variables |
-| PagerDuty, Opsgenie | Nothing: acknowledge in the service itself |
+| PagerDuty, Opsgenie, Grafana OnCall, SIGNL4 | Nothing: acknowledge in the service itself |
+| Vonage, Telnyx, ASPSMS (SMS) | Nothing: a signed link would cost several SMS segments |
 
 Telegram only accepts buttons pointing to an `https` address with a domain name;
 with an IP address or a plain `http` URL, the actions stay as links in the text.
@@ -751,6 +752,78 @@ segments billed separately.
 
 > On a trial account, Twilio only sends to numbers you have verified.
 
+### WhatsApp (Cloud API)
+
+Uses the WhatsApp Business Cloud API from Meta. In the Meta developer console, create
+an app of type *Business*, add the **WhatsApp** product and note the **Phone number
+ID** under *API Setup*. Create a permanent token for a *system user* with the
+`whatsapp_business_messaging` permission.
+
+- **Settings** — `phone_number_id`, `to` (list of numbers in international format)
+- **Secrets** — `token`
+
+> Meta only allows free text **within 24 hours of the recipient's last message** to
+> your business number. Have each recipient write "hello" to the number first. Sending
+> outside that window needs an approved template, which this channel does not use.
+
+### WhatsApp (CallMeBot)
+
+A free gateway for notifying yourself, with no Meta account. Add the CallMeBot contact
+to your phone, send it `I allow callmebot to send me messages`, and it answers with an
+API key.
+
+- **Settings** — `phone` (your number in international format)
+- **Secrets** — `api_key`
+
+CallMeBot is a third-party service with no guarantee of availability: use the Cloud API
+for anything critical.
+
+### Threema Gateway
+
+On [gateway.threema.ch](https://gateway.threema.ch), create a *Basic* Gateway ID
+(eight characters starting with `*`) and note its secret.
+
+- **Settings** — `from` (the Gateway ID), `to` (list of eight-character Threema IDs)
+- **Secrets** — `secret`
+
+The message is encrypted by the Threema server (basic mode), which is enough for an
+alert and needs no key pair. Each message consumes a Gateway credit.
+
+### Webex
+
+On [developer.webex.com](https://developer.webex.com) create a **Bot** (*My Apps →
+Create a Bot*), copy its token, then add the bot to the space. The room ID is returned
+by the *List Rooms* API call.
+
+- **Settings** — `room_id`
+- **Secrets** — `token` (the bot token)
+
+The message is sent in Markdown.
+
+### SMS via Vonage
+
+The API key and secret are on the Vonage API dashboard.
+
+- **Settings** — `api_key`, `from` (a number or alphanumeric name), `to` (list)
+- **Secrets** — `api_secret`
+
+### SMS via Telnyx
+
+Create an API key (v2) in the Mission Control Portal and buy a number with SMS
+enabled.
+
+- **Settings** — `from` (the Telnyx number), `to` (list, E.164 format with the `+`)
+- **Secrets** — `api_key`
+
+### SMS via ASPSMS
+
+- **Settings** — `userkey`, `originator` (11 characters at most), `to` (list)
+- **Secrets** — `password` (the API password)
+
+The three SMS channels send at most 300 characters, without emoji, on a single line.
+They carry no acknowledge/snooze link — a signed link would cost several segments —
+use a chat channel for that.
+
 ### PagerDuty
 
 In PagerDuty: **Services → your service → Integrations → Add integration**, and
@@ -780,6 +853,27 @@ As with PagerDuty, a resolution closes the alert, identified by its alias.
 > Atlassian has set the **end of service for Opsgenie on 5 April 2027**. This
 > channel stays for existing installations; for a new one, prefer PagerDuty or a
 > custom channel pointing to Jira Service Management.
+
+### Grafana OnCall
+
+In Grafana OnCall: **Integrations → New integration → Webhook**, then copy the HTTP
+endpoint.
+
+- **Secrets** — `webhook_url`
+
+An alert opens an alert group (`state: alerting`) and its resolution resolves it
+(`state: ok`), matched on a `dumbmonit-` identifier per device. Acknowledge from
+OnCall itself.
+
+### SIGNL4
+
+In SIGNL4, copy the team webhook from **Teams → Team settings**: it is
+`https://connect.signl4.com/webhook/` followed by your team secret.
+
+- **Secrets** — `webhook_url`
+
+An alert reaches the team's phones (`X-S4-Status: new`) and its resolution closes it
+(`resolved`), matched on a per-device external ID.
 
 ### Custom webhook
 
