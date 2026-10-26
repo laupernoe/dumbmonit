@@ -4894,7 +4894,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     to_device!(993, "tcp", "IMAP over TLS (default)"),
                     to_device_optional!(143, "tcp", "Only with STARTTLS or no encryption"),
                 ],
-                permissions: &["A mailbox account that may log in\nOnly if you fill in a credential"],
+                permissions: &[
+                    "A mailbox account that may log in\nOnly if you fill in a credential",
+                ],
                 warning: "The check never opens a mailbox: a server that logs in but cannot read its storage answers perfectly here.",
             },
             options: IMAP_OPTIONS,
@@ -4923,7 +4925,9 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                     to_device!(995, "tcp", "POP3 over TLS (default)"),
                     to_device_optional!(110, "tcp", "Only with STARTTLS or no encryption"),
                 ],
-                permissions: &["A mailbox account that may log in\nOnly if you fill in a credential"],
+                permissions: &[
+                    "A mailbox account that may log in\nOnly if you fill in a credential",
+                ],
                 warning: "The check never lists or reads messages: it logs in, then says goodbye.",
             },
             options: POP3_OPTIONS,

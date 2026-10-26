@@ -345,8 +345,7 @@ pub struct PushRunsPage {
 }
 
 fn utc_text(ms: i64) -> Option<String> {
-    chrono::DateTime::from_timestamp_millis(ms)
-        .map(|at| at.format("%Y-%m-%dT%H:%M:%S").to_string())
+    chrono::DateTime::from_timestamp_millis(ms).map(|at| at.format("%Y-%m-%dT%H:%M:%S").to_string())
 }
 
 fn run_view(run: Run) -> PushRunView {

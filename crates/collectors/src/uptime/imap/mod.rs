@@ -108,8 +108,7 @@ async fn converse(report: &mut Report, options: &Options) -> Result<(), ProbeErr
         }
     };
 
-    if login(report, &mut stream, &mut reader, options, preauthenticated, deadline).await.is_ok()
-    {
+    if login(report, &mut stream, &mut reader, options, preauthenticated, deadline).await.is_ok() {
         // Sans attendre la réponse : le service a déjà tout dit.
         let _ = stream.write_line(&format!("{TAG_LOGOUT} LOGOUT"), deadline).await;
     }
@@ -132,10 +131,8 @@ async fn opening(
     let upper = greeting.to_ascii_uppercase();
     let preauthenticated = upper.starts_with("* PREAUTH");
     if !preauthenticated && !upper.starts_with("* OK") {
-        report.fail(
-            Failure::Protocol,
-            format!("not an IMAP greeting: \"{}\"", truncated(&greeting)),
-        );
+        report
+            .fail(Failure::Protocol, format!("not an IMAP greeting: \"{}\"", truncated(&greeting)));
         return Err(Aborted);
     }
     if options.security != Security::StartTls {
@@ -295,20 +292,15 @@ mod tests {
     }
 
     fn cible_locale(port: u16, tags: &[(&str, &str)]) -> Target {
-        let mut all = vec![
-            ("timeout_seconds", "3"),
-            ("allow_private_targets", "true"),
-            ("security", "none"),
-        ];
+        let mut all =
+            vec![("timeout_seconds", "3"), ("allow_private_targets", "true"), ("security", "none")];
         all.extend_from_slice(tags);
         cible("imap", &format!("127.0.0.1:{port}"), &all)
     }
 
     fn avec_identifiants(mut target: Target, password: &str) -> Target {
-        target.credential = Credential::UsernamePassword {
-            username: "monit".into(),
-            password: password.into(),
-        };
+        target.credential =
+            Credential::UsernamePassword { username: "monit".into(), password: password.into() };
         target
     }
 

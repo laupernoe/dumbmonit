@@ -145,9 +145,8 @@ fn parse_field(
         }
         let (range, step) = match item.split_once('/') {
             Some((range, step)) => {
-                let step: u32 = step
-                    .parse()
-                    .map_err(|_| format!("{label}: \"{step}\" is not a valid step"))?;
+                let step: u32 =
+                    step.parse().map_err(|_| format!("{label}: \"{step}\" is not a valid step"))?;
                 if step == 0 {
                     return Err(format!("{label}: the step cannot be zero"));
                 }
@@ -195,8 +194,9 @@ pub fn parse_timezone(name: &str) -> Option<Tz> {
 impl Schedule {
     pub fn new(expression: &str, timezone: &str) -> Result<Self, String> {
         let expr = CronExpr::parse(expression)?;
-        let tz = parse_timezone(timezone)
-            .ok_or_else(|| format!("\"{timezone}\" is not an IANA time zone (e.g. Europe/Paris)"))?;
+        let tz = parse_timezone(timezone).ok_or_else(|| {
+            format!("\"{timezone}\" is not an IANA time zone (e.g. Europe/Paris)")
+        })?;
         Ok(Self {
             expr,
             tz,
