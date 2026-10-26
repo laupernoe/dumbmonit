@@ -117,10 +117,17 @@ The machines must trust the certificate's publisher.
 
 ## Upgrading DumbMonit
 
-The kit embeds the SHA-256 of the agent binary shipped by your server. After
-upgrading DumbMonit, **download a new kit and run the script again**: it updates
-the GPO in place. Otherwise servers refuse the new binary (different SHA-256,
-Event ID 1002).
+With [automatic updates](agent.md#automatic-updates), agents update themselves
+after you upgrade DumbMonit: there is no need to run the kit
+(`Deploy-DumbMonit.ps1`) again. The GPO script no longer reinstalls an agent
+whose binary differs from the kit when the installed agent is the same version
+or newer (it runs `dumbmonit-agent.exe --version`), so it never downgrades an
+agent that updated itself.
+
+Run the kit again only to change the token or URL, or for machines whose agent
+predates automatic updates. Agents older than the kit are still upgraded by the
+GPO; download a new kit first, as it embeds the SHA-256 of the agent binary
+shipped by your server (otherwise servers refuse the binary, Event ID 1002).
 
 ## Removing the deployment
 

@@ -1,0 +1,14 @@
+{
+  "id": "00001",
+  "type": "network-monitoring/tenant-client-health",
+  "clientTypes": [
+    {
+      "name": "Wireless",
+      "health": { "groups": [ { "name": "Good", "value": 41 }, { "name": "Fair", "value": 4 }, { "name": "Poor", "value": 2 } ] }
+    },
+    {
+      "name": "Wired",
+      "health": { "groups": [ { "name": "Good", "value": 12 } ] }
+    }
+  ]
+}

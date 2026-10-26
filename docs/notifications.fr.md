@@ -112,7 +112,8 @@ Leur présentation dépend du canal :
 | ntfy, Telegram, Web Push | Boutons sous la notification |
 | Discord, Slack, courriel et tous les autres canaux | Liens en fin de message |
 | Webhook personnalisé | Liens dans `{{message}}`, et les variables `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` |
-| PagerDuty, Opsgenie | Rien : acquittez dans le service lui-même |
+| PagerDuty, Opsgenie, Grafana OnCall, SIGNL4 | Rien : acquittez dans le service lui-même |
+| Vonage, Telnyx, ASPSMS (SMS) | Rien : un lien signé coûterait plusieurs segments de SMS |
 
 Telegram n'accepte de boutons que vers une adresse `https` avec un nom de domaine ;
 avec une adresse IP ou une URL en `http`, les actions restent des liens dans le
@@ -782,6 +783,79 @@ en segments facturés séparément.
 > Sur un compte d'essai, Twilio n'envoie qu'aux numéros que vous avez
 > vérifiés.
 
+### WhatsApp (Cloud API)
+
+Utilise l'API Cloud WhatsApp Business de Meta. Dans la console développeur Meta,
+créez une application de type *Business*, ajoutez le produit **WhatsApp** et notez
+le **Phone number ID** sous *API Setup*. Créez un jeton permanent pour un
+*utilisateur système* avec la permission `whatsapp_business_messaging`.
+
+- **Réglages** — `phone_number_id`, `to` (liste de numéros au format international)
+- **Secrets** — `token`
+
+> Meta n'autorise le texte libre que **dans les 24 heures suivant le dernier message
+> du destinataire** à votre numéro. Faites écrire « bonjour » au numéro par chaque
+> destinataire. Hors de cette fenêtre il faut un modèle approuvé, que ce canal
+> n'utilise pas.
+
+### WhatsApp (CallMeBot)
+
+Une passerelle gratuite pour vous notifier vous-même, sans compte Meta. Ajoutez le
+contact CallMeBot, envoyez-lui `I allow callmebot to send me messages` : il répond
+avec une clé d'API.
+
+- **Réglages** — `phone` (votre numéro au format international)
+- **Secrets** — `api_key`
+
+CallMeBot est un service tiers sans garantie de disponibilité : pour ce qui est
+critique, préférez l'API Cloud.
+
+### Threema Gateway
+
+Sur [gateway.threema.ch](https://gateway.threema.ch), créez un ID Gateway *Basic*
+(huit caractères commençant par `*`) et notez son secret.
+
+- **Réglages** — `from` (l'ID Gateway), `to` (liste d'ID Threema de huit caractères)
+- **Secrets** — `secret`
+
+Le message est chiffré par le serveur Threema (mode basique), ce qui suffit pour une
+alerte et ne demande aucune paire de clés. Chaque message consomme un crédit Gateway.
+
+### Webex
+
+Sur [developer.webex.com](https://developer.webex.com), créez un **Bot** (*My Apps →
+Create a Bot*), copiez son jeton, puis ajoutez le bot à l'espace. L'identifiant de
+l'espace est renvoyé par l'appel d'API *List Rooms*.
+
+- **Réglages** — `room_id`
+- **Secrets** — `token` (le jeton du bot)
+
+Le message est envoyé en Markdown.
+
+### SMS via Vonage
+
+La clé et le secret d'API sont sur le tableau de bord Vonage.
+
+- **Réglages** — `api_key`, `from` (un numéro ou un nom alphanumérique), `to` (liste)
+- **Secrets** — `api_secret`
+
+### SMS via Telnyx
+
+Créez une clé d'API (v2) dans le Mission Control Portal et achetez un numéro avec
+SMS activé.
+
+- **Réglages** — `from` (le numéro Telnyx), `to` (liste, format E.164 avec le `+`)
+- **Secrets** — `api_key`
+
+### SMS via ASPSMS
+
+- **Réglages** — `userkey`, `originator` (11 caractères au plus), `to` (liste)
+- **Secrets** — `password` (le mot de passe d'API)
+
+Les trois canaux SMS envoient 300 caractères au plus, sans émoji, sur une seule
+ligne. Ils n'ont pas de lien d'acquittement ni de mise en pause — un lien signé
+coûterait plusieurs segments — : utilisez pour cela un canal de messagerie.
+
 ### PagerDuty
 
 Dans PagerDuty : **Services → votre service → Integrations → Add
@@ -816,6 +890,28 @@ alias.
 > canal reste pour les installations existantes ; pour une nouvelle,
 > préférez PagerDuty ou un canal personnalisé pointant vers Jira Service
 > Management.
+
+### Grafana OnCall
+
+Dans Grafana OnCall : **Integrations → New integration → Webhook**, puis copiez le
+point d'accès HTTP.
+
+- **Secrets** — `webhook_url`
+
+Une alerte ouvre un groupe d'alertes (`state: alerting`) et sa résolution le résout
+(`state: ok`), rapprochés par un identifiant `dumbmonit-` propre à chaque équipement.
+L'acquittement se fait dans OnCall.
+
+### SIGNL4
+
+Dans SIGNL4, copiez le webhook de l'équipe depuis **Teams → Team settings** : c'est
+`https://connect.signl4.com/webhook/` suivi du secret d'équipe.
+
+- **Secrets** — `webhook_url`
+
+Une alerte arrive sur les téléphones de l'équipe (`X-S4-Status: new`) et sa
+résolution la ferme (`resolved`), rapprochées par un identifiant externe par
+équipement.
 
 ### DumbMonit on-call
 

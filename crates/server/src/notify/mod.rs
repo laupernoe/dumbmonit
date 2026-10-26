@@ -16,7 +16,9 @@ pub mod error;
 pub mod gateway;
 pub mod guard;
 pub mod http;
+pub mod incident;
 pub mod message;
+pub mod messaging;
 pub mod oncall;
 pub mod policy_store;
 pub mod push;
@@ -149,6 +151,15 @@ pub fn build(
         webpush::KIND => Arc::new(webpush::WebPush::new(config)?),
         "signal" => Arc::new(push::Signal::new(http.clone(), config)?),
         "twilio" => Arc::new(push::Twilio::new(http.clone(), config)?),
+        "whatsapp" => Arc::new(messaging::WhatsApp::new(http.clone(), config)?),
+        "callmebot" => Arc::new(messaging::CallMeBot::new(http.clone(), config)?),
+        "threema" => Arc::new(messaging::Threema::new(http.clone(), config)?),
+        "webex" => Arc::new(messaging::Webex::new(http.clone(), config)?),
+        "vonage" => Arc::new(messaging::Vonage::new(http.clone(), config)?),
+        "telnyx" => Arc::new(messaging::Telnyx::new(http.clone(), config)?),
+        "aspsms" => Arc::new(messaging::AspSms::new(http.clone(), config)?),
+        "grafana_oncall" => Arc::new(incident::GrafanaOnCall::new(http.clone(), config)?),
+        "signl4" => Arc::new(incident::Signl4::new(http.clone(), config)?),
         "apprise" => Arc::new(gateway::Apprise::new(http.clone(), config)?),
         "homeassistant" => Arc::new(gateway::HomeAssistant::new(http.clone(), config)?),
         "pagerduty" => Arc::new(oncall::PagerDuty::new(http.clone(), config)?),

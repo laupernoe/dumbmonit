@@ -17,6 +17,7 @@ export const EDGE_DASH: Record<TopologySource | 'wan', string> = {
 	samehost: '1 2',
 	backup: '14 4',
 	firewall: '5 3 1 3',
+	manual: '',
 	wan: '8 6'
 };
 
@@ -42,6 +43,8 @@ export function sourceLabel(source: TopologySource | 'wan'): string {
 			return m.topology_legend_backup();
 		case 'firewall':
 			return m.topology_legend_firewall();
+		case 'manual':
+			return m.topology_legend_manual();
 		case 'wan':
 			return m.topology_legend_wan();
 	}
@@ -67,6 +70,8 @@ export function sourceShort(source: TopologySource): string {
 			return m.topology_source_backup();
 		case 'firewall':
 			return m.topology_source_firewall();
+		case 'manual':
+			return m.topology_source_manual();
 	}
 }
 

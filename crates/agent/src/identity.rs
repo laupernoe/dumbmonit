@@ -35,6 +35,9 @@ pub fn detect(config: &Config) -> AgentIdentity {
         // drapeau qui autorise le serveur à lui en attribuer un : un agent plus
         // ancien le jetterait, et se verrait refuser son lot suivant.
         binding_supported: true,
+        // Complété par la boucle de l'agent (empreinte, capacité, dernière
+        // tentative) : `run::Agent::new`.
+        self_update: None,
     }
 }
 
@@ -155,6 +158,7 @@ mod tests {
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),
             inventory: false,
+            self_update: true,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 100,

@@ -1,0 +1,1 @@
+{"interfaces":[{"ipv4":{"name":"X0","zone":"LAN","status":"1 Gbps Full Duplex"}},{"ipv4":{"name":"X1","zone":"WAN","status":"No link"}},{"ipv4":{"name":"X2","zone":"DMZ","status":"100 Mbps Full Duplex"}},{"ipv4":{"name":"X3","zone":"","status":"No link"}},{"ipv4":{"name":"X4","zone":"Unassigned","status":"No link"}}]}
