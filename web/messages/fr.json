@@ -272,6 +272,8 @@
 	"alerts_row_acked": "Acquittée{by}{until}{note}. Rappels suspendus ; vous serez quand même prévenu à sa résolution.",
 	"alerts_row_acked_by": " par {name}",
 	"alerts_row_acked_note": " — {note}",
+	"alerts_row_ticket_closed": "clos",
+	"alerts_row_tickets": "Tickets :",
 	"alerts_row_dismiss": "Écarter",
 	"alerts_row_learning": "Silencieuse pendant les {days} premiers jours de la référence.",
 	"alerts_row_learning_suppressed": "Silencieuse le temps de connaître le comportement normal.",

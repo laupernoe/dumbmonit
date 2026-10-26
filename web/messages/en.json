@@ -272,6 +272,8 @@
 	"alerts_row_acked": "Acked{by}{until}{note}. Reminders paused; you will still hear when it resolves.",
 	"alerts_row_acked_by": " by {name}",
 	"alerts_row_acked_note": " — {note}",
+	"alerts_row_ticket_closed": "closed",
+	"alerts_row_tickets": "Tickets:",
 	"alerts_row_dismiss": "Dismiss",
 	"alerts_row_learning": "Silent for its first {days} days of baseline.",
 	"alerts_row_learning_suppressed": "Silent while it learns the normal shape.",

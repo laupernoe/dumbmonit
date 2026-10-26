@@ -262,6 +262,8 @@
 	"alerts_row_acked": "Подтверждено{by}{until}{note}. Напоминания приостановлены; об устранении вы всё равно узнаете.",
 	"alerts_row_acked_by": " пользователем {name}",
 	"alerts_row_acked_note": " — {note}",
+	"alerts_row_ticket_closed": "закрыт",
+	"alerts_row_tickets": "Тикеты:",
 	"alerts_row_dismiss": "Скрыть",
 	"alerts_row_learning": "Молчит первые {days} дн. обучения базовой линии.",
 	"alerts_row_learning_suppressed": "Молчит, пока изучает нормальное поведение.",
