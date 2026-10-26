@@ -579,6 +579,120 @@
     ]
   },
   {
+    "kind": "arubacentral",
+    "label": "Aruba Central",
+    "summary": "Beta. The Wi-Fi access points, switches and gateways of an HPE Aruba Networking Central account through its cloud API: devices offline, active critical alerts, devices in poor health, and the number of connected clients.",
+    "examples": [
+      "Aruba access points",
+      "Aruba CX switches",
+      "Aruba gateways"
+    ],
+    "credential_types": [
+      "username_password",
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "API client",
+        "help": "Recommended: DumbMonit exchanges the client for an access token and renews it by itself.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Client ID",
+            "help": "The client ID of the personal API client created in step 2.",
+            "placeholder": "",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Client secret",
+            "help": "Shown once when the client is created. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "api_token",
+        "label": "Access token",
+        "help": "Works for a test, but expires after two hours and DumbMonit cannot renew it.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Access token",
+            "help": "An access token of your Central instance. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "us1.api.central.arubanetworks.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a personal API client for DumbMonit",
+      "steps": [
+        "Sign in to HPE GreenLake (common.cloud.hpe.com) and open Manage Workspace → Personal API clients.",
+        "Click Create personal API client, name it as follows and choose your Central instance as the service.\ndumbmonit",
+        "Copy the client ID and the client secret: the secret is shown once, and HPE keeps no copy.",
+        "In Central, open the API gateway page (Menu → API Gateway → REST API) and note the base URL of your region.",
+        "In DumbMonit, enter that base URL as the address (for example us1.api.central.arubanetworks.com) and paste the client ID and the client secret."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Central API (HTTPS, the base URL of your region)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "HPE GreenLake sign-in (HTTPS, sso.common.cloud.hpe.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Read access to Central monitoring\nDevices, alerts and health overviews: DumbMonit never changes anything"
+      ],
+      "warning": "Beta: written from HPE's published API reference, not yet tested on a real Central account. It reads the new Central API with Central credentials; credentials scoped to the GreenLake platform and classic Central are not supported.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/arubacentral/"
+    },
+    "options": [
+      {
+        "key": "token_address",
+        "label": "Sign-in host",
+        "help": "The HPE GreenLake host that issues the access tokens. Change it only if HPE gives you another.",
+        "placeholder": "sso.common.cloud.hpe.com",
+        "default": "sso.common.cloud.hpe.com",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "aws",
     "label": "AWS (CloudWatch)",
     "summary": "CloudWatch alarms in the ALARM state, EC2 status checks and CPU, and RDS CPU and free storage.",
@@ -935,6 +1049,128 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "10",
         "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "ceph",
+    "label": "Ceph",
+    "summary": "Beta. A Ceph cluster through the REST API of the manager's dashboard: health and its checks, OSDs down or nearly full, placement groups not clean, capacity, pools, monitors out of the quorum.",
+    "examples": [
+      "Ceph 18 (Reef)",
+      "Ceph 19 (Squid)",
+      "cephadm clusters"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Dashboard user and password",
+        "help": "The dumbmonit user of the Ceph dashboard, with the read-only role.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The dashboard user created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "ceph.lan",
+    "default_port": 8443,
+    "setup": {
+      "title": "Create a read-only dashboard user for DumbMonit",
+      "steps": [
+        "Check that the dashboard is enabled and note the address of the active manager.\nceph mgr services",
+        "Write a long random password to a file, and keep it: DumbMonit needs it.\nopenssl rand -base64 24 | tr -d '\\n' | tee /tmp/dumbmonit.pwd",
+        "Create the user with the built-in read-only role.\nceph dashboard ac-user-create dumbmonit -i /tmp/dumbmonit.pwd read-only",
+        "Delete the password file.\nshred -u /tmp/dumbmonit.pwd",
+        "In DumbMonit, enter the address of the active manager (for example ceph.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 8443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Dashboard REST API (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "read-only role\nReads the state of the cluster, changes nothing"
+      ],
+      "warning": "A standby manager redirects to the active one: use the address of the active manager. The dashboard ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ceph/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the dashboard port, 8443 over HTTPS and 8080 over HTTP.",
+        "placeholder": "8443",
+        "default": "8443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -1429,6 +1665,110 @@
       "doc_url": ""
     },
     "options": []
+  },
+  {
+    "kind": "duplicati",
+    "label": "Duplicati",
+    "summary": "Beta. A Duplicati server through its API: the age of each task's last successful backup, its last result, duration, size, warnings and errors, and the task running now.",
+    "examples": [
+      "Duplicati 2.1",
+      "Duplicati in Docker",
+      "Duplicati on a NAS"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Web interface password",
+        "help": "Duplicati has no user accounts: the password of its web interface is all it asks for.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Web interface password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "nas.lan",
+    "default_port": 8200,
+    "setup": {
+      "title": "Let DumbMonit read the Duplicati API",
+      "steps": [
+        "In the Duplicati web interface, open Settings and set a long random password for the interface: Duplicati 2.1 requires one.",
+        "If the server only listens on the machine itself, start it with these options so that DumbMonit can reach it.\n--webservice-interface=any --webservice-allowed-hostnames=*",
+        "In DumbMonit, enter the Duplicati address (for example nas.lan) and paste that password."
+      ],
+      "ports": [
+        {
+          "port": 8200,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web interface and API (HTTP, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Interface password\nDuplicati has no accounts or read-only mode"
+      ],
+      "warning": "Duplicati 2.1 or later is required: version 2.0 signs in through a different mechanism that DumbMonit does not use. The password gives full access, so keep port 8200 on your local network.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/duplicati/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        "placeholder": "8200",
+        "default": "8200",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
   },
   {
     "kind": "entra",
@@ -2024,6 +2364,136 @@
     ]
   },
   {
+    "kind": "grpc",
+    "label": "gRPC service",
+    "summary": "Calls the standard gRPC health check (grpc.health.v1): catches a service that is up but reports itself unhealthy.",
+    "examples": [
+      "A gRPC microservice",
+      "etcd",
+      "A service behind Envoy or a service mesh",
+      "Any server that registers grpc.health.v1"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "grpc.home.lan:50051",
+    "default_port": 50051,
+    "setup": {
+      "title": "Monitor a gRPC service",
+      "steps": [
+        "Check that the server registers the standard health service (grpc.health.v1.Health): most gRPC frameworks have a one-line helper for it.",
+        "In DumbMonit, enter the server with its port, for example grpc.home.lan:50051.",
+        "Tick Encrypted connection (TLS) for a server that requires it; the port then defaults to 443.",
+        "Optional: name a Service, to check its own health instead of the whole server's."
+      ],
+      "ports": [
+        {
+          "port": 50051,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "gRPC over HTTP/2 (default port)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the Encrypted connection option (default port)",
+          "optional": true
+        }
+      ],
+      "warning": "The check only sees what the health service reports: a server that always answers SERVING proves nothing about the methods behind it.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#grpc"
+    },
+    "options": [
+      {
+        "key": "service",
+        "label": "Service",
+        "help": "Name of the service whose health is asked, for example my.package.MyService. Empty: the health of the server as a whole.",
+        "placeholder": "my.package.MyService",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "tls",
+        "label": "Encrypted connection (TLS)",
+        "help": "Connect with TLS and HTTP/2 (ALPN h2). Unticked, the check speaks HTTP/2 in clear text (h2c), as most services inside a network do.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give one. Empty: 50051, or 443 with TLS.",
+        "placeholder": "50051",
+        "default": "",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "server_name",
+        "label": "Server name (SNI)",
+        "help": "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+        "placeholder": "mail.example.com",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "hetzner",
     "label": "Hetzner Cloud",
     "summary": "Servers, volumes and backups of a Hetzner Cloud project, read through the Hetzner Cloud API.",
@@ -2526,6 +2996,157 @@
         "default": "DumbMonit/<version>",
         "required": false,
         "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "imap",
+    "label": "Mailbox (IMAP)",
+    "summary": "An IMAP server greets, offers TLS and accepts a login, like a real mail client.",
+    "examples": [
+      "Dovecot",
+      "Your provider's IMAP server",
+      "A mailbox behind Mailcow or Mailu",
+      "Proxmox Mail Gateway's mail host"
+    ],
+    "credential_types": [
+      "none",
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      },
+      {
+        "kind": "username_password",
+        "label": "Username / password",
+        "help": "Sent once the connection is encrypted, never before.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "",
+            "placeholder": "monitoring",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "imap.example.com",
+    "default_port": 993,
+    "setup": {
+      "title": "Monitor an IMAP server",
+      "steps": [
+        "In DumbMonit, enter the mail server, for example imap.example.com:1993 (port 993 with the default encryption).",
+        "Pick the encryption: TLS for port 993, STARTTLS for port 143, None for a server on your own network.",
+        "Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage)."
+      ],
+      "ports": [
+        {
+          "port": 993,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "IMAP over TLS (default)",
+          "optional": false
+        },
+        {
+          "port": 143,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with STARTTLS or no encryption",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "A mailbox account that may log in\nOnly if you fill in a credential"
+      ],
+      "warning": "The check never opens a mailbox: a server that logs in but cannot read its storage answers perfectly here.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#imap"
+    },
+    "options": [
+      {
+        "key": "security",
+        "label": "Encryption",
+        "help": "TLS encrypts from the first byte (port 993), STARTTLS starts in clear text and upgrades (port 143), None never encrypts (port 143) and sends the password in clear text: only for your own network.",
+        "placeholder": "",
+        "default": "tls",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "tls",
+          "starttls",
+          "none"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give one. Empty: 993 with TLS, 143 with STARTTLS or without encryption.",
+        "placeholder": "993",
+        "default": "",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "server_name",
+        "label": "Server name (SNI)",
+        "help": "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+        "placeholder": "mail.example.com",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
         "choices": [],
         "group": ""
       },
@@ -3118,6 +3739,127 @@
         "key": "request_timeout_seconds",
         "label": "Timeout per request (seconds)",
         "help": "Time allowed for each call, from 1 to 120. Photo and file counts are computed on every call on a large instance.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "kopia",
+    "label": "Kopia",
+    "summary": "Beta. A Kopia server through its REST API: the last snapshot of each source (age, errors, size, files), sources that missed their schedule, and the repository connection.",
+    "examples": [
+      "Kopia server",
+      "KopiaUI",
+      "Kopia in Docker"
+    ],
+    "credential_types": [
+      "username_password",
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Server user name and password",
+        "help": "The user name and password the Kopia server was started with.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The --server-username of the Kopia server.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "The --server-password of the Kopia server.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "nas.lan",
+    "default_port": 51515,
+    "setup": {
+      "title": "Start the Kopia server with its own user name and password",
+      "steps": [
+        "On the machine that runs the backups, start the Kopia server with a generated certificate and its own user name and password.\nkopia server start --address=0.0.0.0:51515 --tls-generate-cert --server-username=dumbmonit --server-password=PASTE-A-LONG-RANDOM-PASSWORD",
+        "Check that the repository is connected to that server and that the DumbMonit server can reach port 51515.",
+        "In DumbMonit, enter the server address (for example nas.lan) with that user name and password.",
+        "Tick Accept an unverifiable certificate: the generated certificate is self-signed. If the server runs with --insecure, choose the http protocol instead."
+      ],
+      "ports": [
+        {
+          "port": 51515,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Server API (HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Server user name and password\nKopia has no read-only API account"
+      ],
+      "warning": "Kopia's API has no read-only account: the server password also lets its holder start and delete snapshots. DumbMonit only reads, but keep port 51515 on your local network.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/kopia/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port. Choosing the other protocol without a port uses 80 or 443.",
+        "placeholder": "51515",
+        "default": "51515",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "15",
         "default": "15",
         "required": false,
@@ -3981,6 +4723,96 @@
     ]
   },
   {
+    "kind": "meraki",
+    "label": "Cisco Meraki (beta)",
+    "summary": "Beta. A Cisco Meraki organization through the Dashboard API: devices offline, Internet uplinks that failed, license out of compliance or expiring, clients per network.",
+    "examples": [
+      "Meraki MX / MS / MR",
+      "Cisco Meraki cloud dashboard"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "API key",
+        "help": "The key of the read-only administrator created for DumbMonit, sent as a bearer token.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API key",
+            "help": "Generated under My profile → API access, shown once. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "api.meraki.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only API key for DumbMonit",
+      "steps": [
+        "In the Meraki dashboard, open Organization → Settings and tick Enable access to the Cisco Meraki Dashboard API.",
+        "Open Organization → Administrators → Add admin and create an administrator dedicated to DumbMonit, with Organization access set to Read-only.\ndumbmonit@example.com",
+        "Sign in as that administrator, open My profile → API access and click Generate new API key. Copy it: the dashboard shows it only once.",
+        "In DumbMonit, enter api.meraki.com as the address and paste the key as API key. Leave Organization empty to read the first organization the key sees."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Meraki Dashboard API (HTTPS, api.meraki.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Organization access: Read-only\nLists devices, uplinks, licensing and clients, changes nothing"
+      ],
+      "warning": "A dormant device (not seen for a long time) is counted but never reported as down, and a WAN socket without a cable is not a failed uplink: only an uplink that lost its Internet access is.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/meraki/"
+    },
+    "options": [
+      {
+        "key": "organization",
+        "label": "Organization",
+        "help": "The ID or name of the organization to read. Empty: the first one the API key sees.",
+        "placeholder": "Acme Corp",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "networks",
+        "label": "Networks",
+        "help": "Comma-separated network names or IDs to watch. Empty: every network of the organization.",
+        "placeholder": "Main office, Warehouse",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "mikrotik",
     "label": "MikroTik RouterOS",
     "summary": "RouterOS and RouterBOOT versions behind, CPU, memory, temperatures, fans and power supplies, and errors and link losses on every interface.",
@@ -4121,6 +4953,116 @@
         "help": "Beyond this, the next interfaces are counted but not read. From 1 to 1000.",
         "placeholder": "64",
         "default": "64",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "minio",
+    "label": "MinIO",
+    "summary": "Beta. A MinIO object store through its Prometheus metrics: nodes and drives offline, capacity, failed heals, replication failures and S3 server errors.",
+    "examples": [
+      "MinIO single node",
+      "MinIO distributed cluster"
+    ],
+    "credential_types": [
+      "api_token",
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "Prometheus token",
+        "help": "The bearer_token printed by mc admin prometheus generate. It opens the metrics pages only.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "Prometheus token",
+            "help": "The JWT printed after bearer_token. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "minio.lan",
+    "default_port": 9000,
+    "setup": {
+      "title": "Generate a Prometheus token for DumbMonit",
+      "steps": [
+        "With the mc client configured for your MinIO (alias myminio), generate the token of the cluster metrics.\nmc admin prometheus generate myminio cluster",
+        "Copy the value after bearer_token in the output: that is the token.",
+        "In DumbMonit, enter the MinIO address (for example minio.lan), paste the token as Prometheus token and choose https if MinIO serves TLS."
+      ],
+      "ports": [
+        {
+          "port": 9000,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "S3 API and metrics (HTTP or HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Prometheus token\nOpens the metrics pages only, no S3 or console access"
+      ],
+      "warning": "The token only opens the metrics pages, but anyone holding it can read them. If MinIO runs with MINIO_PROMETHEUS_AUTH_TYPE=public, the metrics need no token: choose No authentication.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/minio/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "http",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the S3 API port, 9000 (not the console, 9001).",
+        "placeholder": "9000",
+        "default": "9000",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "For a server with TLS enabled and a self-signed or private certificate: enable this if the connection is refused for that reason.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -5301,6 +6243,135 @@
     ]
   },
   {
+    "kind": "omada",
+    "label": "TP-Link Omada (beta)",
+    "summary": "Beta. A TP-Link Omada controller through its OpenAPI: devices disconnected, CPU and memory saturated, firmware updates offered, clients per site.",
+    "examples": [
+      "Omada software controller",
+      "OC200 / OC300 hardware controller",
+      "EAP access points, TL-SG switches, ER gateways"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "OpenAPI client",
+        "help": "The client created for DumbMonit under Open API, in Client mode with the Viewer role.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Client ID",
+            "help": "The Client ID shown when the app was created.",
+            "placeholder": "",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Client secret",
+            "help": "The Client Secret, shown once. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "omada.lan",
+    "default_port": 8043,
+    "setup": {
+      "title": "Create a read-only OpenAPI client for DumbMonit",
+      "steps": [
+        "In the Omada controller, open Global View → Settings → Platform Integration → Open API and click Add New App.",
+        "Name the app as follows, choose the Client access mode and give it the Viewer role on the sites to read.\ndumbmonit",
+        "Click Apply: the controller shows the Omada ID, the Client ID and the Client Secret. Copy them: the secret is shown once.",
+        "In DumbMonit, enter the controller address (omada.lan) and the port (8043, or 443 for a hardware controller), then paste the Client ID and the Client secret."
+      ],
+      "ports": [
+        {
+          "port": 8043,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Controller HTTPS and OpenAPI (software controller, default)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only for hardware controllers (OC200, OC300) and installs behind a reverse proxy",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "Viewer role on the sites\nReads sites, devices and client counts, changes nothing"
+      ],
+      "warning": "The Omada controller ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own. The OpenAPI exists from controller version 5.9.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/omada/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the HTTPS port of the controller (8043 for the software controller, 443 for a hardware one).",
+        "placeholder": "8043",
+        "default": "8043",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "omadac_id",
+        "label": "Controller ID",
+        "help": "The Omada ID shown under Open API. Empty: read from the controller, which publishes it.",
+        "placeholder": "a3f1c0d2e4b5967788990011aabbccdd",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "site",
+        "label": "Site",
+        "help": "The name or ID of the only site to read. Empty: every site.",
+        "placeholder": "Default",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "openvpn",
     "label": "OpenVPN server",
     "summary": "An OpenVPN server through its management interface: version, whether it reports itself connected, and every client currently in session with its addresses and traffic.",
@@ -5703,6 +6774,125 @@
       "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ovh/"
     },
     "options": [
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "paloalto",
+    "label": "Palo Alto PAN-OS",
+    "summary": "Beta. A Palo Alto Networks firewall through the PAN-OS XML API: interfaces without link, HA peer lost or out of sync, session table filling up, management CPU and memory, licences expiring, failed commits.",
+    "examples": [
+      "PA-400 / PA-1400 series",
+      "VM-Series",
+      "PAN-OS 10.x and 11.x"
+    ],
+    "credential_types": [
+      "username_password",
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "User name and password",
+        "help": "The dumbmonit account: DumbMonit asks the firewall for an API key with it and keeps the key, the password only travels in a request body.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The read-only account created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "api_token",
+        "label": "API key",
+        "help": "A key already generated for the dumbmonit account, sent in the X-PAN-KEY header.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API key",
+            "help": "As returned by the keygen request. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "pa.lan",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only XML API account for DumbMonit",
+      "steps": [
+        "Device → Admin Roles → Add: name the role as follows. On the XML API tab enable Operational Requests only; leave every other privilege, and the Web UI and Command Line tabs, disabled.\ndumbmonit-ro",
+        "Device → Administrators → Add: name the account as follows, set Authentication to a password, the type to Role Based and the role to the one above.\ndumbmonit",
+        "Click Commit: the role and the account exist only once committed.",
+        "In DumbMonit, enter the firewall address (pa.lan) with that user name and password, or with an API key you generated for that account."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Management interface (HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "XML API → Operational Requests: enabled\nshow system info, resources, sessions, interfaces, HA state, jobs and licence info",
+        "Every other XML API privilege: disabled\nConfiguration, Commit, Export, Import, Report, Log and User-ID Agent are not needed",
+        "Web UI and Command Line: disabled\nThe account never signs in interactively"
+      ],
+      "warning": "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/paloalto/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
       {
         "key": "request_timeout_seconds",
         "label": "Timeout per request (seconds)",
@@ -7029,6 +8219,156 @@
     ]
   },
   {
+    "kind": "pop3",
+    "label": "Mailbox (POP3)",
+    "summary": "A POP3 server greets, offers TLS and accepts a login, like a real mail client.",
+    "examples": [
+      "Dovecot",
+      "Your provider's POP3 server",
+      "An old mail server that only speaks POP3"
+    ],
+    "credential_types": [
+      "none",
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      },
+      {
+        "kind": "username_password",
+        "label": "Username / password",
+        "help": "Sent once the connection is encrypted, never before.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "",
+            "placeholder": "monitoring",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "pop.example.com",
+    "default_port": 995,
+    "setup": {
+      "title": "Monitor a POP3 server",
+      "steps": [
+        "In DumbMonit, enter the mail server, for example pop.example.com:1995 (port 995 with the default encryption).",
+        "Pick the encryption: TLS for port 995, STARTTLS for port 110 (STLS command), None for a server on your own network.",
+        "Optional: fill in a mailbox account, to check that the server still accepts logins (a refused password is not reported as an outage)."
+      ],
+      "ports": [
+        {
+          "port": 995,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "POP3 over TLS (default)",
+          "optional": false
+        },
+        {
+          "port": 110,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with STARTTLS or no encryption",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "A mailbox account that may log in\nOnly if you fill in a credential"
+      ],
+      "warning": "The check never lists or reads messages: it logs in, then says goodbye.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#pop3"
+    },
+    "options": [
+      {
+        "key": "security",
+        "label": "Encryption",
+        "help": "TLS encrypts from the first byte (port 995), STARTTLS starts in clear text and upgrades with STLS (port 110), None never encrypts (port 110) and sends the password in clear text: only for your own network.",
+        "placeholder": "",
+        "default": "tls",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "tls",
+          "starttls",
+          "none"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give one. Empty: 995 with TLS, 110 with STARTTLS or without encryption.",
+        "placeholder": "995",
+        "default": "",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "server_name",
+        "label": "Server name (SNI)",
+        "help": "Domain name announced to the server and checked in the certificate. Set it when the address is an IP.",
+        "placeholder": "mail.example.com",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "An unverifiable chain no longer counts as a failure: the expiry date is still recorded.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "postgres",
     "label": "PostgreSQL database",
     "summary": "Logs in and runs a query: catches a database that is up but no longer answering.",
@@ -7714,8 +9054,9 @@
       "title": "Make the job call in",
       "steps": [
         "In the address, write a short label for the job, unique among your heartbeats: \"nightly-backup\".",
-        "Set the expected interval to the job's schedule (\"24h\" for a nightly job), then save the monitor.",
+        "Set the expected interval to the job's schedule (\"24h\" for a nightly job), or give a cron expression and a time zone, then save the monitor.",
         "Copy the URL shown on the monitor page and call it at the end of the job.\ncurl -fsS -m 10 --retry 3 https://monit.example.com/api/push/<token>",
+        "To time the job, call .../start before it, then .../success or .../fail after it, with its output as the request body. Send an exit code as ?exit_code=2 or as .../2.",
         "To report a failure at once, append ?status=down&msg=... to the URL."
       ],
       "ports": [
@@ -7750,6 +9091,161 @@
         "default": "10%",
         "required": false,
         "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "schedule",
+        "label": "Cron schedule",
+        "help": "Instead of the interval above: when the job is supposed to start, as a 5-field cron expression (minute hour day-of-month month day-of-week) or a shortcut such as @daily. Lists, ranges, steps and names are accepted: 30 2 * * *, */15 * * * *, 0 4 * * sun. Empty: use the interval.",
+        "placeholder": "30 2 * * *",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timezone",
+        "label": "Time zone",
+        "help": "IANA time zone in which the cron schedule is read, for example Europe/Paris. It follows daylight saving time.",
+        "placeholder": "Europe/Paris",
+        "default": "UTC",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "max_duration",
+        "label": "Maximum duration",
+        "help": "A run that lasts longer than this raises the \"job too long\" alert: 30m, 2h. Needs a start call at the beginning of the job. Empty: a run still open after one period plus the grace period counts as stuck.",
+        "placeholder": "2h",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "qnap",
+    "label": "QNAP QTS / QuTS hero",
+    "summary": "Beta. A QNAP NAS through the CGI pages of its web interface: volumes filling up, disks whose SMART health is no longer good or too hot, processor temperature, firmware updates.",
+    "examples": [
+      "QNAP TS-453D",
+      "QuTS hero NAS",
+      "QTS 5.x"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "User name and password",
+        "help": "The dumbmonit account created on the NAS. The password is sent base64-encoded to the login page, as the web interface does.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The account created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "nas.lan",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a limited account for DumbMonit",
+      "steps": [
+        "Open Control Panel → Privilege → Users → Create → Create a User and create the account as follows, with a long random password. Tick no share and no application privilege.\ndumbmonit",
+        "Add the account to the administrators group: QTS serves the system status, volumes and disks to that group only.",
+        "Optional: under Control Panel → System → Security → Allow/Deny List, allow the web interface only from the DumbMonit server's address.",
+        "In DumbMonit, enter the NAS address (for example nas.lan) with that user name and password. Choose http and port 8080 only if HTTPS is off."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Web interface (HTTPS, default)",
+          "optional": false
+        },
+        {
+          "port": 8080,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Only with the HTTP protocol option",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "administrators group\nThe only group QTS lets read the system status",
+        "No share, no application privilege\nNothing else is needed"
+      ],
+      "warning": "QTS has no read-only role for its system status, so the account sits in the administrators group: give it a unique password, and an account without 2-step verification. Over HTTP the password travels base64-encoded, not encrypted: prefer HTTPS.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/qnap/"
+    },
+    "options": [
+      {
+        "key": "scheme",
+        "label": "Protocol",
+        "help": "Used when the address does not start with http:// or https://.",
+        "placeholder": "",
+        "default": "https",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "http",
+          "https"
+        ],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: 443 over HTTPS, and 8080 over HTTP (enter it, QTS does not use 80).",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
         "choices": [],
         "group": ""
       }
@@ -7880,6 +9376,127 @@
         "help": "The fullest queues are charted one by one, up to this number (0 to 500). Totals always cover every queue.",
         "placeholder": "100",
         "default": "100",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "radius",
+    "label": "RADIUS server",
+    "summary": "Authenticates a test account (Access-Request): catches a server that is up but no longer accepts logins.",
+    "examples": [
+      "FreeRADIUS",
+      "Windows NPS",
+      "The RADIUS behind a WPA-Enterprise Wi-Fi",
+      "The RADIUS behind a VPN or a 802.1X switch"
+    ],
+    "credential_types": [
+      "radius"
+    ],
+    "credentials": [
+      {
+        "kind": "radius",
+        "label": "Shared secret and test account",
+        "help": "The secret defined for this host on the RADIUS server, and an account created for monitoring.",
+        "fields": [
+          {
+            "key": "shared_secret",
+            "label": "Shared secret",
+            "help": "As configured for this client on the RADIUS server. Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "username",
+            "label": "Test account",
+            "help": "An account without a second factor, used only to check that the server authenticates.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Test account password",
+            "help": "Stored encrypted, never shown again.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "radius.home.lan",
+    "default_port": 1812,
+    "setup": {
+      "title": "Monitor a RADIUS server",
+      "steps": [
+        "On the RADIUS server, declare the DumbMonit host as a client, with a shared secret (clients.conf on FreeRADIUS, RADIUS Clients on Windows NPS).",
+        "Create a test account without a second factor, and note its name and password.",
+        "In DumbMonit, enter the server (UDP port 1812 by default), the shared secret and the test account.",
+        "Optional: change the NAS identifier if the server filters requests by it."
+      ],
+      "ports": [
+        {
+          "port": 1812,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "Authentication requests (default port)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "A test account that may authenticate\nNo network access or admin right is needed"
+      ],
+      "warning": "A wrong shared secret, or a host not declared as a client, usually makes the server stay silent: the check then reports a timeout.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#radius"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "UDP port of the authentication service.",
+        "placeholder": "1812",
+        "default": "1812",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "nas_identifier",
+        "label": "NAS identifier",
+        "help": "Value of the NAS-Identifier attribute sent with the request. Change it if the server filters requests by NAS.",
+        "placeholder": "dumbmonit",
+        "default": "dumbmonit",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
         "required": false,
         "input": "number",
         "choices": [],
@@ -8641,6 +10258,322 @@
     "options": []
   },
   {
+    "kind": "snmp_oid",
+    "label": "SNMP value (single OID)",
+    "summary": "Reads one SNMP object and checks its value against a range or a text.",
+    "examples": [
+      "A temperature or humidity sensor",
+      "A UPS status or battery level",
+      "A version string or a firmware flag",
+      "A counter exposed by a Net-SNMP extend script"
+    ],
+    "credential_types": [
+      "snmp_community",
+      "snmp_v3"
+    ],
+    "credentials": [
+      {
+        "kind": "snmp_community",
+        "label": "SNMP v1 / v2c (community)",
+        "help": "The simplest form: one shared word, sent unencrypted.",
+        "fields": [
+          {
+            "key": "community",
+            "label": "SNMP community",
+            "help": "Most devices ship with \"public\". A read-only community is enough.",
+            "placeholder": "public",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      },
+      {
+        "kind": "snmp_v3",
+        "label": "SNMP v3 (user, authentication, privacy)",
+        "help": "Authenticated and encrypted. Needs a USM user on the device.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The SNMP v3 user configured on the device.",
+            "placeholder": "monitor",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "auth_protocol",
+            "label": "Authentication protocol",
+            "help": "Must match what the device was configured with.",
+            "placeholder": "",
+            "input": "select",
+            "choices": [
+              "sha256",
+              "sha512",
+              "sha384",
+              "sha224",
+              "sha1",
+              "md5"
+            ],
+            "required": false
+          },
+          {
+            "key": "auth_passphrase",
+            "label": "Authentication passphrase",
+            "help": "At least 8 characters, as set on the device.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "privacy_protocol",
+            "label": "Privacy protocol",
+            "help": "Encryption of the SNMP traffic. \"none\", or a blank passphrase on a new monitor, means authentication without encryption.",
+            "placeholder": "",
+            "input": "select",
+            "choices": [
+              "aes128",
+              "aes192",
+              "aes256",
+              "des",
+              "none"
+            ],
+            "required": false
+          },
+          {
+            "key": "privacy_passphrase",
+            "label": "Privacy passphrase",
+            "help": "Leave blank for authentication without encryption (authNoPriv).",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": false
+          }
+        ]
+      }
+    ],
+    "address_hint": "192.168.1.10",
+    "default_port": 161,
+    "setup": {
+      "title": "Monitor a single SNMP value",
+      "steps": [
+        "On the device, enable SNMP and check that the community or the v3 user may read the object (the SNMP view must grant its branch).",
+        "In DumbMonit, enter the device address, then the community or the v3 user.",
+        "Fill in the object (OID) with its instance suffix, for example 1.3.6.1.2.1.1.3.0.",
+        "Optional: set a minimum and a maximum, or an expected text, to be warned when the value drifts."
+      ],
+      "ports": [
+        {
+          "port": 161,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "SNMP request (default port)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Read access to the object\nA read-only community or v3 user is enough"
+      ],
+      "warning": "An object the agent does not know, or that its SNMP view hides, is reported down with the reason not_found.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#snmp-oid"
+    },
+    "options": [
+      {
+        "key": "oid",
+        "label": "Object (OID)",
+        "help": "The SNMP object to read, in numeric form. Add the instance suffix, usually .0 for a single value.",
+        "placeholder": "1.3.6.1.2.1.1.3.0",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give one.",
+        "placeholder": "161",
+        "default": "161",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "min",
+        "label": "Minimum value",
+        "help": "A numeric value below this fails. Empty: no lower bound.",
+        "placeholder": "10",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "max",
+        "label": "Maximum value",
+        "help": "A numeric value above this fails. Empty: no upper bound.",
+        "placeholder": "75",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "expect",
+        "label": "Expected text",
+        "help": "Text the value must contain, whatever its case. Empty: any value is accepted.",
+        "placeholder": "online",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "snmp_version",
+        "label": "SNMP version",
+        "help": "Version used with a community. Pick 1 only for an old agent that ignores version 2c; SNMP v3 users ignore it.",
+        "placeholder": "",
+        "default": "2c",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "2c",
+          "1"
+        ],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "sonicwall",
+    "label": "SonicWall SonicOS",
+    "summary": "Beta. A SonicWall firewall through the SonicOS 7 API: the link of every interface bound to a zone. Kept minimal on purpose: only the API paths SonicWall publishes are read.",
+    "examples": [
+      "SonicWall TZ / NSa / NSsp",
+      "SonicWall NSv",
+      "SonicOS 7.x"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "User name and password",
+        "help": "The dumbmonit user, in a read-only group, sent as HTTP Basic.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "User name",
+            "help": "The read-only user created for DumbMonit.",
+            "placeholder": "dumbmonit",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Password",
+            "help": "",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "sonicwall.lan",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only user for the SonicOS API",
+      "steps": [
+        "Device → Settings → Administration → Audit/SonicOS API: make sure HTTP Basic Access (RFC-2617) is on, then click Accept.",
+        "Device → Users → Local Users & Groups → Add User: name it as follows, give it a long random password and add it to the group SonicWall Read-Only Admins.\ndumbmonit",
+        "Allow HTTPS management on the interface DumbMonit reaches the firewall through (Device → Network → Interfaces → Configure → Management).",
+        "In DumbMonit, enter the firewall address (sonicwall.lan) with that user name and password."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Management interface (HTTPS, default)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Group SonicWall Read-Only Admins\nThe account reads and changes nothing"
+      ],
+      "warning": "The management interface ships a self-signed certificate: tick \"Accept an unverifiable certificate\" unless you installed your own.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/sonicwall/"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give a port: the HTTPS port of the management interface.",
+        "placeholder": "443",
+        "default": "443",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "insecure_tls",
+        "label": "Accept an unverifiable certificate",
+        "help": "The device ships a self-signed certificate: enable this unless you installed one DumbMonit trusts.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "sophos",
     "label": "Sophos Firewall",
     "summary": "A Sophos Firewall (SFOS) through its XML API: the link of every interface in a zone, and which IPsec connections are activated. Its live tunnel, HA and licence state are not in that API.",
@@ -8733,6 +10666,122 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "15",
         "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "ssh",
+    "label": "SSH server",
+    "summary": "Reads the SSH banner and, if you ask, checks that the host key is still the one you know.",
+    "examples": [
+      "A Linux server or a Raspberry Pi",
+      "A NAS or a hypervisor with SSH enabled",
+      "A bastion host",
+      "A Git server over SSH"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "server.home.lan",
+    "default_port": 22,
+    "setup": {
+      "title": "Monitor an SSH server",
+      "steps": [
+        "In the address, write the host name or IP address, with the port if it is not 22: \"server.home.lan:2222\".",
+        "To be warned when the server's identity changes, read its fingerprint with ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub.",
+        "Paste that fingerprint (SHA256:...) in \"Expected host key\", or tick \"Alert when the host key changes\" to record it without choosing one."
+      ],
+      "ports": [
+        {
+          "port": 22,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "SSH (default port, the one in the address)",
+          "optional": false
+        }
+      ],
+      "warning": "The check never logs in and does not verify the server's signature: it reads the key the server shows, like ssh-keyscan.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#ssh"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give one.",
+        "placeholder": "22",
+        "default": "22",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "expected_host_key",
+        "label": "Expected host key",
+        "help": "SHA256 fingerprint of the server's host key, as printed by ssh-keygen -lf. If the key differs, the server is reported down with the reason host_key. Empty: the key is not checked.",
+        "placeholder": "SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "alert_on_change",
+        "label": "Alert when the host key changes",
+        "help": "Records a fingerprint of the host key on every check, so that a rule can fire when it changes. Implied by an expected host key.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "host_key_type",
+        "label": "Host key type",
+        "help": "A server may hold several host keys. Auto reads the first one it offers in this order: ed25519, ecdsa, rsa. Pick the family of the fingerprint you expect.",
+        "placeholder": "",
+        "default": "auto",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "auto",
+          "ed25519",
+          "ecdsa",
+          "rsa"
+        ],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
         "required": false,
         "input": "number",
         "choices": [],
@@ -9486,6 +11535,120 @@
         "default": "true",
         "required": false,
         "input": "boolean",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "udp",
+    "label": "UDP service",
+    "summary": "Sends a datagram to a UDP port and checks the reply, or that nobody refuses it.",
+    "examples": [
+      "A game or VoIP server",
+      "A syslog or SNMP listener",
+      "A WireGuard endpoint",
+      "A custom UDP service that answers a ping message"
+    ],
+    "credential_types": [
+      "none"
+    ],
+    "credentials": [
+      {
+        "kind": "none",
+        "label": "No authentication",
+        "help": "Nothing is sent: the monitor answers without credentials.",
+        "fields": []
+      }
+    ],
+    "address_hint": "192.168.1.20:5060",
+    "default_port": 0,
+    "setup": {
+      "title": "Monitor a UDP service",
+      "steps": [
+        "In the address, write the host and the UDP port: \"192.168.1.20:5060\". The port is required.",
+        "To check that the service really answers, fill in \"Datagram to send\" and \"Expected reply\".",
+        "Without an expected reply, the check only fails when the host answers that the port is closed."
+      ],
+      "ports": [
+        {
+          "port": 161,
+          "protocol": "udp",
+          "direction": "to_device",
+          "purpose": "The service's UDP port, as written in the address (161 is only an example)",
+          "optional": false
+        }
+      ],
+      "warning": "UDP has no connection: without an expected reply, a firewall that silently drops the datagrams looks healthy.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/services/#udp"
+    },
+    "options": [
+      {
+        "key": "port",
+        "label": "Port",
+        "help": "Used if the address does not give one. There is no default: UDP has no standard port to fall back on.",
+        "placeholder": "5060",
+        "default": "",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "payload",
+        "label": "Datagram to send",
+        "help": "Sent as one datagram, 1400 bytes at most. In text, \\n \\r \\t \\0 \\\\ and \\xNN are read as escapes. Empty: an empty datagram.",
+        "placeholder": "PING",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "payload_encoding",
+        "label": "Datagram encoding",
+        "help": "Text sends the characters as typed, Hex reads pairs of hexadecimal digits (spaces allowed).",
+        "placeholder": "",
+        "default": "text",
+        "required": false,
+        "input": "select",
+        "choices": [
+          "text",
+          "hex"
+        ],
+        "group": ""
+      },
+      {
+        "key": "expect_response",
+        "label": "Expected reply",
+        "help": "Text the reply must contain. Empty: the check succeeds unless the host answers that the port is closed, and silence counts as success.",
+        "placeholder": "PONG",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "allow_private_targets",
+        "label": "Allow loopback and link-local targets",
+        "help": "By default the check refuses addresses only the DumbMonit host itself can reach (127.0.0.1, ::1, 169.254.x.x). Enable this to monitor a service running on the DumbMonit host. Private LAN addresses (10.x, 192.168.x) are always allowed.",
+        "placeholder": "",
+        "default": "false",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "timeout_seconds",
+        "label": "Timeout (seconds)",
+        "help": "Time after which the service is reported down if it has not answered. Between 1 and 60.",
+        "placeholder": "5",
+        "default": "5",
+        "required": false,
+        "input": "number",
         "choices": [],
         "group": ""
       }
