@@ -36,6 +36,10 @@ pub struct DeviceStat {
     pub previous_uptime: Option<f64>,
     pub incidents: usize,
     pub downtime_secs: i64,
+    /// Temps de réponse moyen et 95e centile sur la période, en ms ; seulement
+    /// pour les sondes (HTTP, TCP…), qui mesurent une durée.
+    pub latency_avg_ms: Option<f64>,
+    pub latency_p95_ms: Option<f64>,
 }
 
 #[derive(Debug, Clone)]
@@ -209,6 +213,8 @@ pub struct Inputs<'a> {
     pub previous_uptime: &'a HashMap<i64, f64>,
     pub availability_known: bool,
     pub incidents: &'a [RawIncident],
+    /// Par équipement : (moyenne, 95e centile) du temps de réponse, en ms.
+    pub latency: &'a HashMap<i64, (f64, f64)>,
 }
 
 fn mean(values: impl Iterator<Item = f64>) -> Option<f64> {
@@ -247,6 +253,8 @@ pub fn assemble(input: Inputs<'_>) -> ReportData {
             previous_uptime: input.previous_uptime.get(&d.id).copied(),
             incidents: counts.get(&d.id).copied().unwrap_or(0),
             downtime_secs: per_device.remove(&d.id).map(merged_secs).unwrap_or(0),
+            latency_avg_ms: input.latency.get(&d.id).map(|(avg, _)| *avg),
+            latency_p95_ms: input.latency.get(&d.id).map(|(_, p95)| *p95),
         })
         .collect();
     // Les moins disponibles d'abord ; les équipements sans mesure à la fin.
@@ -328,9 +336,17 @@ async fn uptimes(
     state: &AppState,
     targets: &[&Target],
     period: Period,
+    now: DateTime<Utc>,
 ) -> Option<(HashMap<i64, f64>, HashMap<i64, f64>)> {
     let span = period.span().num_seconds();
     let now_secs = period.end.timestamp() as f64;
+    // Une période passée (rapport d'un mois écoulé) se lit en décalant les
+    // requêtes de ce qui sépare sa fin de maintenant.
+    let lag = (now - period.end).num_seconds().max(0);
+    let shift = if lag > 0 { format!(" offset {lag}s") } else { String::new() };
+    let shift_prev = format!(" offset {}s", lag + span);
+    // Fenêtre qui remonte jusqu'au début de la période précédente.
+    let reach = (now - period.previous_start).num_seconds().max(span * 2);
     let span_f = span as f64;
     let mut current: HashMap<TargetId, f64> = HashMap::new();
     let mut previous: HashMap<TargetId, f64> = HashMap::new();
@@ -343,8 +359,8 @@ async fn uptimes(
     if !probes.is_empty() {
         let sel = selector(&probes);
         let window = format!("{span}s");
-        let now_q = probe_uptime_query(&sel, &window, "");
-        let prev_q = probe_uptime_query(&sel, &window, &format!(" offset {span}s"));
+        let now_q = probe_uptime_query(&sel, &window, &shift);
+        let prev_q = probe_uptime_query(&sel, &window, &shift_prev);
         match tokio::try_join!(state.victoria.query(&now_q), state.victoria.query(&prev_q)) {
             Ok((a, b)) => {
                 current.extend(instant_map(a));
@@ -360,9 +376,9 @@ async fn uptimes(
     if !devices.is_empty() {
         let sel = selector(&devices);
         let presence = presence_slots(&sel, &format!("{span}s"));
-        let now_q = format!("avg_over_time({presence}) * 100");
-        let prev_q = format!("avg_over_time({presence} offset {span}s) * 100");
-        let first_q = first_up_query(&sel, &format!("{}s", span * 2));
+        let now_q = format!("avg_over_time({presence}{shift}) * 100");
+        let prev_q = format!("avg_over_time({presence}{shift_prev}) * 100");
+        let first_q = first_up_query(&sel, &format!("{reach}s"));
         match tokio::try_join!(
             state.victoria.query(&now_q),
             state.victoria.query(&prev_q),
@@ -392,6 +408,41 @@ async fn uptimes(
         }
     }
     Some((current, previous))
+}
+
+/// Temps de réponse des sondes sur la période : moyenne et 95e centile, en ms.
+/// Meilleur effort : sans réponse de VictoriaMetrics, le rapport n'en montre pas.
+async fn latencies(
+    state: &AppState,
+    targets: &[&Target],
+    period: Period,
+    now: DateTime<Utc>,
+) -> HashMap<i64, (f64, f64)> {
+    let probes: Vec<TargetId> =
+        targets.iter().filter(|t| PROBE_KINDS.contains(&t.kind.as_str())).map(|t| t.id).collect();
+    if probes.is_empty() {
+        return HashMap::new();
+    }
+    let span = period.span().num_seconds();
+    let lag = (now - period.end).num_seconds().max(0);
+    let shift = if lag > 0 { format!(" offset {lag}s") } else { String::new() };
+    let range =
+        format!("dumbmonit_probe_duration_seconds{{{}}}[{span}s]{shift}", selector(&probes));
+    let avg_q = format!("avg by (target) (avg_over_time({range})) * 1000");
+    let p95_q = format!("max by (target) (quantile_over_time(0.95, {range})) * 1000");
+    match tokio::try_join!(state.victoria.query(&avg_q), state.victoria.query(&p95_q)) {
+        Ok((avg, p95)) => {
+            let p95 = instant_map(p95);
+            instant_map(avg)
+                .into_iter()
+                .filter_map(|(id, avg)| p95.get(&id).map(|p95| (id, (avg, *p95))))
+                .collect()
+        }
+        Err(error) => {
+            tracing::warn!(%error, "report: response times unavailable");
+            HashMap::new()
+        }
+    }
 }
 
 async fn history(state: &AppState, since: DateTime<Utc>) -> Result<Vec<HistoryRow>> {
@@ -435,7 +486,18 @@ pub async fn collect(
     frequency: Frequency,
     end: DateTime<Utc>,
 ) -> Result<ReportData> {
-    let period = Period::ending_at(end, frequency);
+    collect_period(state, name, frequency, Period::ending_at(end, frequency), end).await
+}
+
+/// Les données d'un rapport pour une période quelconque, lue à l'instant `now`
+/// (la période peut être passée : un mois civil écoulé).
+pub async fn collect_period(
+    state: &AppState,
+    name: &str,
+    frequency: Frequency,
+    period: Period,
+    now: DateTime<Utc>,
+) -> Result<ReportData> {
     let targets: Vec<Target> = db::targets::list(&state.pool, &state.cipher)
         .await?
         .into_iter()
@@ -447,7 +509,8 @@ pub async fn collect(
         .map(|t| DeviceInfo { id: t.id, name: t.name.clone(), group: t.group_name.clone() })
         .collect();
 
-    let (uptime, previous_uptime, known) = match uptimes(state, &refs, period).await {
+    let latency = latencies(state, &refs, period, now).await;
+    let (uptime, previous_uptime, known) = match uptimes(state, &refs, period, now).await {
         Some((now, before)) => (now, before, true),
         None => (HashMap::new(), HashMap::new(), false),
     };
@@ -475,6 +538,7 @@ pub async fn collect(
         previous_uptime: &previous_uptime,
         availability_known: known,
         incidents: &incidents,
+        latency: &latency,
     }))
 }
 
@@ -544,7 +608,17 @@ mod tests {
             previous_uptime: &previous,
             availability_known: true,
             incidents: &incidents,
+            latency: &HashMap::from([(1, (120.0, 340.0))]),
         })
+    }
+
+    #[test]
+    fn le_temps_de_reponse_suit_l_equipement() {
+        let report = data(&[]);
+        let nas = report.devices.iter().find(|d| d.name == "NAS").expect("NAS");
+        assert_eq!((nas.latency_avg_ms, nas.latency_p95_ms), (Some(120.0), Some(340.0)));
+        let router = report.devices.iter().find(|d| d.name == "Router").expect("Router");
+        assert_eq!((router.latency_avg_ms, router.latency_p95_ms), (None, None));
     }
 
     #[test]
