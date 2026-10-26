@@ -29,6 +29,8 @@ import type {
 	ChannelPayload,
 	ChannelTestReport,
 	CreatedAgentToken,
+	AdKitPayload,
+	CreatedAdKit,
 	AuthStatus,
 	CreateUserPayload,
 	LdapConfig,
@@ -71,12 +73,14 @@ import type {
 	Incident,
 	IncidentPayload,
 	IncidentUpdatePayload,
+	PublicDayDetail,
 	PublicStatus,
 	StatusSubscriber,
 	TargetRules
 } from './types';
 
 export * from './types';
+export { onMutation } from './mutations';
 export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
 
 // --- Health -----------------------------------------------------------------
@@ -131,6 +135,14 @@ export function deleteTarget(id: TargetId): Promise<void> {
  */
 export function reorderTargets(order: TargetId[]): Promise<void> {
 	return request<void>('/targets/reorder', { method: 'POST', body: { order } });
+}
+
+/**
+ * Renames a folder server-side: every device in it moves, and the status pages
+ * that ticked the folder follow the new name.
+ */
+export function renameTargetFolder(from: string, to: string): Promise<void> {
+	return request<void>('/targets/folders/rename', { method: 'POST', body: { from, to } });
 }
 
 /** Probes the device right away. Can be slow: the caller shows an indicator. */
@@ -649,6 +661,16 @@ export function createAgentToken(payload: AgentTokenPayload): Promise<CreatedAge
 	return request<CreatedAgentToken>('/agent/tokens', { method: 'POST', body: payload });
 }
 
+/** Creates a fleet token and the script that deploys the agent through a GPO. */
+export function createAdKit(payload: AdKitPayload): Promise<CreatedAdKit> {
+	return request<CreatedAdKit>('/agent/ad-kit', { method: 'POST', body: payload });
+}
+
+/** Stops new enrolments with this token; machines already enrolled keep reporting. */
+export function closeAgentToken(id: number): Promise<void> {
+	return request<void>(`/agent/tokens/${id}/close`, { method: 'POST' });
+}
+
 export function revokeAgentToken(id: number): Promise<void> {
 	return request<void>(`/agent/tokens/${id}`, { method: 'DELETE' });
 }
@@ -858,6 +880,10 @@ export function statusBadgeBase(slug: string, componentKey?: string): string {
 /** Public document of a status page: no session, no cookie needed. */
 export function getPublicStatus(slug: string, signal?: AbortSignal): Promise<PublicStatus> {
 	return request<PublicStatus>(`/public/status/${encodeURIComponent(slug)}`, { signal });
+}
+
+export function getPublicStatusDay(slug: string, date: string, signal?: AbortSignal): Promise<PublicDayDetail> {
+	return request<PublicDayDetail>(`/public/status/${encodeURIComponent(slug)}/day/${encodeURIComponent(date)}`, { signal });
 }
 
 // --- First-run guide (anticipated) ------------------------------------------

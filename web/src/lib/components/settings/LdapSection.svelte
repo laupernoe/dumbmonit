@@ -20,7 +20,7 @@
 		type LdapTestStep
 	} from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, Disclosure, ErrorNotice, Field, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import PasswordInput from './PasswordInput.svelte';
 	import UnsavedBadge from './UnsavedBadge.svelte';
 	import { useDirtyTracker } from '#lib/settings/unsaved.svelte.js';
@@ -74,7 +74,14 @@
 		viewer_groups: '',
 		timeout_seconds: 5
 	});
+	let connOpen = $state(false);
+	let groupsOpen = $state(false);
 	let errors = $state<{ url?: string; base_dn?: string; bind_password?: string; user_filter?: string; group_filter?: string }>({});
+	// A validation error inside a folded block unfolds it.
+	$effect(() => {
+		if (errors.url || errors.base_dn || errors.bind_password || errors.user_filter) connOpen = true;
+		if (errors.group_filter) groupsOpen = true;
+	});
 	let testUsername = $state('');
 
 	// The password is compared as typed or not: its text never goes into the snapshot.
@@ -293,6 +300,8 @@
 				{m.settings_ldap_local_note()}
 			</p>
 
+			<Disclosure title={m.settings_block_connection()} bind:open={connOpen}>
+			<div class="grid gap-4">
 			<div class="flex flex-wrap items-center gap-2">
 				<span class="text-sm font-semibold text-ink">{m.settings_ldap_preset_label()}</span>
 				<Button variant="ghost" size="sm" onclick={() => applyPreset('ad')} disabled={saving}>{m.settings_ldap_preset_ad()}</Button>
@@ -323,9 +332,11 @@
 					<input id="ldap-user-filter" type="text" class="input font-mono text-[0.8125rem]" bind:value={form.user_filter} placeholder={PRESETS.ad.user_filter} autocomplete="off" spellcheck="false" disabled={saving} aria-invalid={errors.user_filter ? 'true' : undefined} oninput={() => (errors = { ...errors, user_filter: undefined })} />
 				</Field>
 			</div>
+			</div>
+			</Disclosure>
 
-			<fieldset class="grid gap-4 rounded-[var(--radius-card)] border border-line p-4 sm:grid-cols-2">
-				<legend class="px-1 text-sm font-semibold text-ink">{m.settings_ldap_groups_heading()}</legend>
+			<Disclosure title={m.settings_ldap_groups_heading()} bind:open={groupsOpen}>
+			<div class="grid gap-4 sm:grid-cols-2">
 				<Field label={m.settings_ldap_group_mode()} for="ldap-group-mode" help={m.settings_ldap_group_mode_help()} class="sm:col-span-2">
 					<select id="ldap-group-mode" class="input" bind:value={form.group_mode} disabled={saving}>
 						<option value="memberof">{m.settings_ldap_group_mode_memberof()}</option>
@@ -350,11 +361,11 @@
 					<textarea id="ldap-viewer-groups" class="input min-h-20 font-mono text-[0.8125rem]" rows="3" bind:value={form.viewer_groups} placeholder="CN=IT Staff,OU=Groups,DC=corp,DC=example" spellcheck="false" autocomplete="off" disabled={saving}></textarea>
 				</Field>
 				<p class="text-sm text-ink-2 sm:col-span-2">{m.settings_ldap_groups_help()}</p>
-			</fieldset>
+			</div>
+			</Disclosure>
 
-			<details class="group rounded-[var(--radius-card)] border border-line">
-				<summary class="cursor-pointer px-4 py-3 text-sm font-semibold text-ink select-none">{m.settings_ldap_more()}</summary>
-				<div class="grid gap-4 border-t border-line px-4 py-4 sm:grid-cols-2">
+			<Disclosure title={m.settings_ldap_more()}>
+				<div class="grid gap-4 sm:grid-cols-2">
 					<div class="sm:col-span-2">
 						<Field label={m.settings_ldap_tls_verify()} for="ldap-tls-verify" inline help={m.settings_ldap_tls_verify_help()}>
 							<Toggle id="ldap-tls-verify" bind:checked={form.tls_verify} disabled={saving} />
@@ -376,7 +387,7 @@
 						<input id="ldap-timeout" type="number" min="1" max="30" class="input tnum" bind:value={form.timeout_seconds} disabled={saving} />
 					</Field>
 				</div>
-			</details>
+			</Disclosure>
 
 			{#if !form.tls_verify}
 				<div class="flex flex-wrap items-start gap-2 rounded-[var(--radius-card)] border border-warning/35 bg-surface p-3 text-sm text-ink-2" role="note">

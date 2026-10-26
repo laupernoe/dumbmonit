@@ -8,7 +8,8 @@
 use dumbmonit_proto::{MetricKind, Sample};
 
 use super::model::{
-    CertificateInfo, ClusterStatusEntry, GuestEntry, NodeStatus, Num, StorageEntry, Version,
+    CertificateInfo, ClusterStatusEntry, GuestEntry, NodeStatus, Num, StorageConfig, StorageEntry,
+    Version,
 };
 
 /// Préfixe commun à toutes les métriques de l'intégration.
@@ -301,6 +302,26 @@ pub fn guest_samples(
     }
 
     samples
+}
+
+/// `GET /storage?type=pbs` : un stockage de sauvegarde vers un serveur PBS.
+/// Une série par stockage, portée par la cible PVE (pas de nœud : la
+/// configuration est celle du cluster).
+pub fn pbs_storage_samples(storages: &[StorageConfig], ts_ms: i64) -> Vec<Sample> {
+    storages
+        .iter()
+        .filter(|s| s.storage_type.as_deref().is_none_or(|t| t == "pbs"))
+        .filter_map(|s| {
+            let server = s.server.as_deref().map(str::trim).filter(|v| !v.is_empty())?;
+            Some(
+                gauge("storage_pbs_info", 1.0, ts_ms)
+                    .with_label("storage", s.storage.clone())
+                    .with_label("server", server)
+                    .with_label("datastore", s.datastore.clone().unwrap_or_default())
+                    .with_label("namespace", s.namespace.clone().unwrap_or_default()),
+            )
+        })
+        .collect()
 }
 
 /// `GET /nodes/{node}/storage`.
@@ -634,6 +655,20 @@ mod tests {
             ),
             Some(12.5)
         );
+    }
+
+    #[test]
+    fn un_stockage_pbs_publie_son_serveur_et_son_datastore() {
+        let list: Vec<StorageConfig> = serde_json::from_str(
+            r#"[{"storage":"pbs-main","type":"pbs","server":"pbs01.lan","datastore":"tank","namespace":"prod"},
+                {"storage":"sans-serveur","type":"pbs"}]"#,
+        )
+        .unwrap();
+        let samples = pbs_storage_samples(&list, 1000);
+        assert_eq!(samples.len(), 1);
+        assert_eq!(samples[0].labels["server"], "pbs01.lan");
+        assert_eq!(samples[0].labels["datastore"], "tank");
+        assert_eq!(samples[0].labels["namespace"], "prod");
     }
 
     #[test]

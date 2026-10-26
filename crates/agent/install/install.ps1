@@ -21,6 +21,11 @@
 param(
     [string]$Token,
     [string]$Url,
+    # Encrypted agent channel, for example https://server:8443 (default: the host of -Url, port 8443).
+    [string]$TlsUrl,
+    # Fingerprint (SHA-256) of the server's certificate authority: the agent then only talks to
+    # that server, over TLS 1.3 with its own client certificate, never in clear.
+    [string]$CaPin,
     [int]$Interval = 0,
     [string[]]$Services = @(),
     [hashtable]$Tags = @{},
@@ -281,6 +286,8 @@ $lignes.Add("# DumbMonit system agent configuration.")
 $lignes.Add("# Written by install.ps1 — environment variables override it.")
 $lignes.Add("server_url: $Url")
 $lignes.Add("token: $Token")
+if ($TlsUrl) { $lignes.Add("tls_url: $TlsUrl") }
+if ($CaPin)  { $lignes.Add("ca_pin: $CaPin") }
 if ($Interval -gt 0)  { $lignes.Add("interval_secs: $Interval") }
 if ($HostName)        { $lignes.Add("hostname: $HostName") }
 if ($Relay)           { $lignes.Add("relay: true") }

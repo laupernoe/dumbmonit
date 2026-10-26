@@ -34,8 +34,8 @@ form always matches what this version can monitor.
 | [Graylog](graylog.md) | `graylog` | access token or username/password | Log server and its OpenSearch cluster: journal, buffers, throughput, inputs |
 | [Pi-hole](pihole.md) | `pihole` | app password, or none | DNS ad blocker: blocking state, blocked share, blocklist age, updates |
 | [AdGuard Home](adguard.md) | `adguard` | username/password | DNS filter: protection, blocks, filter lists, upstream servers, updates |
-| [MDaemon Email Server](mdaemon.md) | `mdaemon` | none, or email address/password | Mail server: SMTP, IMAP, POP3, webmail, version |
-| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | none, or API key | Mail gateway: services, delivery queue and other counters |
+| [MDaemon Email Server](mdaemon.md) | `mdaemon` | none (agent on the server required), or email address/password | Mail server: agent-read queues, sessions and Windows services, plus SMTP, IMAP, POP3, webmail, version |
+| [SecurityGateway for Email Servers](securitygateway.md) | `securitygateway` | none (agent on the server required), or API key | Mail gateway: agent-read Windows services and queues, delivery queue and other counters |
 | [Redis / Valkey](redis.md) | `redis` | ACL user, password only, or none | In-memory store: memory against maxmemory, replication, persistence, keys |
 | [MongoDB](mongodb.md) | `mongodb` | username/password (clusterMonitor) or none | Document database: replica set, lag, connections, WiredTiger cache |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | username/password (monitoring tag) | Message broker: resource alarms, nodes, partitions, queues without consumer |

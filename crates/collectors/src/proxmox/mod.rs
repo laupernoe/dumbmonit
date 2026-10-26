@@ -72,12 +72,12 @@ mod snapshots;
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::future::Future;
 use std::sync::atomic::{AtomicU32, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, LazyLock, Mutex};
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, MetricKind, ProbeError, Sample, Target, TargetId};
 use reqwest::StatusCode;
-use tracing::{debug, warn};
+use tracing::debug;
 
 use auth::{AuthMode, Ticket};
 use backup::{Archive, GuestIndex, GuestRef, JobRun};
@@ -95,6 +95,10 @@ use options::Options;
 use resources::GuestSummary;
 
 use crate::http;
+use crate::log_gate::LogGate;
+
+/// Échecs déjà journalisés : un endpoint en erreur à chaque cycle ne l'est qu'une fois.
+static GATE: LazyLock<LogGate> = LazyLock::new(LogGate::new);
 
 /// Identifiant de profil renvoyé par la découverte.
 const PROFILE_ID: &str = "proxmox-ve";
@@ -353,7 +357,7 @@ impl Collector for ProxmoxCollector {
             Some(Ok(entries)) => Some(resources::inventory(&entries, ts_ms)),
             Some(Err(error)) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "inventaire du cluster indisponible");
+                GATE.fail(target.id, "inventaire du cluster indisponible", &error);
                 None
             }
             None => None,
@@ -363,7 +367,7 @@ impl Collector for ProxmoxCollector {
             Ok(list) => list,
             Err(error) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "liste des nœuds Proxmox indisponible");
+                GATE.fail(target.id, "liste des nœuds Proxmox indisponible", &error);
                 Vec::new()
             }
         };
@@ -419,18 +423,24 @@ impl Collector for ProxmoxCollector {
         samples.extend(volume_samples);
 
         match cluster {
-            Ok(entries) => samples.extend(metrics::cluster_samples(&entries, ts_ms)),
+            Ok(entries) => {
+                GATE.ok(target.id, "état du cluster Proxmox indisponible");
+                samples.extend(metrics::cluster_samples(&entries, ts_ms))
+            }
             Err(error) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "état du cluster Proxmox indisponible");
+                GATE.fail(target.id, "état du cluster Proxmox indisponible", &error);
             }
         }
 
         match ha {
-            Some(Ok(entries)) => samples.extend(ha::ha_samples(&entries, ts_ms)),
+            Some(Ok(entries)) => {
+                GATE.ok(target.id, "état de la haute disponibilité indisponible");
+                samples.extend(ha::ha_samples(&entries, ts_ms))
+            }
             Some(Err(error)) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "état de la haute disponibilité indisponible");
+                GATE.fail(target.id, "état de la haute disponibilité indisponible", &error);
             }
             None => {}
         }
@@ -468,11 +478,16 @@ impl Collector for ProxmoxCollector {
         // publier la couverture : ils passent donc après la tournée des nœuds.
         match (jobs, not_backed_up) {
             (Some(Ok(jobs)), not_backed_up) => {
+                GATE.ok(target.id, "travaux de sauvegarde planifiés indisponibles");
                 let not_backed_up = match not_backed_up {
                     Some(Ok(list)) => list,
                     Some(Err(error)) => {
                         errors += 1;
-                        warn!(target_id = target.id, %error, "liste des invités non sauvegardés indisponible");
+                        GATE.fail(
+                            target.id,
+                            "liste des invités non sauvegardés indisponible",
+                            &error,
+                        );
                         Vec::new()
                     }
                     None => Vec::new(),
@@ -488,7 +503,7 @@ impl Collector for ProxmoxCollector {
             }
             (Some(Err(error)), _) => {
                 errors += 1;
-                warn!(target_id = target.id, %error, "travaux de sauvegarde planifiés indisponibles");
+                GATE.fail(target.id, "travaux de sauvegarde planifiés indisponibles", &error);
             }
             (None, _) => {}
         }
@@ -597,15 +612,16 @@ async fn collect_backup_jobs(
     Option<Result<Vec<NotBackedUp>, ProbeError>>,
     Vec<Sample>,
 ) {
-    let (jobs, not_backed_up) = futures::join!(
+    let (jobs, not_backed_up, pbs_storages) = futures::join!(
         when(options.backup_jobs, pve.get::<Vec<BackupJob>>("/cluster/backup", &[])),
         when(
             options.backup_jobs,
             pve.get::<Vec<NotBackedUp>>("/cluster/backup-info/not-backed-up", &[])
         ),
+        collect_pbs_storages(pve, chrono::Utc::now().timestamp_millis()),
     );
 
-    let mut samples = Vec::new();
+    let mut samples = pbs_storages;
     if options.backup_volumes
         && let Some(Ok(list)) = &jobs
     {
@@ -631,6 +647,25 @@ async fn collect_backup_jobs(
     }
 
     (jobs, not_backed_up, samples)
+}
+
+/// Stockages de type `pbs` déclarés dans la configuration (`GET /storage`) :
+/// c'est la seule source qui dit vers quel serveur PBS ce PVE sauvegarde.
+///
+/// Silencieux quoi qu'il arrive : sans le droit de lecture de la configuration
+/// des stockages, la carte n'a simplement pas de lien « sauvegardé vers ».
+async fn collect_pbs_storages(pve: &PveClient, ts_ms: i64) -> Vec<Sample> {
+    let query = [("type", "pbs".to_string())];
+    let result =
+        pve.get_unless::<Vec<model::StorageConfig>>("/storage", &query, &OPTIONAL_STATUSES);
+    match result.await {
+        Ok(Some(list)) => metrics::pbs_storage_samples(&list, ts_ms),
+        Ok(None) => Vec::new(),
+        Err(error) => {
+            debug!(%error, "configuration des stockages PBS illisible");
+            Vec::new()
+        }
+    }
 }
 
 /// Le détail de Ceph : OSD, pools, CephFS, drapeaux et sourdines.
@@ -810,25 +845,63 @@ async fn fetch_guest_facts(
                 Ok(None) => debug!(node, vmid, "agent QEMU arrêté : pas de système à lire"),
                 Err(error) => debug!(node, vmid, %error, "système de la VM non rapporté"),
             }
-            match addresses {
-                Ok(Some(list)) => {
-                    samples.extend(guest::agent_address_samples(node, &entry, &list, ts_ms))
+            let found = match addresses {
+                Ok(Some(list)) => guest::agent_address_samples(node, &entry, &list, ts_ms),
+                Ok(None) => {
+                    debug!(node, vmid, "agent QEMU arrêté : pas d'adresse à lire");
+                    Vec::new()
                 }
-                Ok(None) => debug!(node, vmid, "agent QEMU arrêté : pas d'adresse à lire"),
-                Err(error) => debug!(node, vmid, %error, "adresses de la VM non rapportées"),
+                Err(error) => {
+                    debug!(node, vmid, %error, "adresses de la VM non rapportées");
+                    Vec::new()
+                }
+            };
+            if found.is_empty() {
+                let fallback = config_addresses(pve, node, vmid, &entry, GuestKind::Qemu, ts_ms);
+                samples.extend(fallback.await);
+            } else {
+                samples.extend(found);
             }
             samples
         }
         GuestKind::Lxc => {
             let path = format!("/nodes/{node}/lxc/{vmid}/interfaces");
-            match pve.get_if_present::<Vec<LxcInterface>>(&path, &[]).await {
+            let found = match pve.get_if_present::<Vec<LxcInterface>>(&path, &[]).await {
                 Ok(Some(list)) => guest::lxc_address_samples(node, &entry, &list, ts_ms),
                 Ok(None) => Vec::new(),
                 Err(error) => {
                     debug!(node, vmid, %error, "adresses du conteneur non rapportées");
                     Vec::new()
                 }
+            };
+            if found.is_empty() {
+                config_addresses(pve, node, vmid, &entry, GuestKind::Lxc, ts_ms).await
+            } else {
+                found
             }
+        }
+    }
+}
+
+/// Repli : les adresses statiques de la configuration de l'invité (cloud-init
+/// `ipconfigN` d'une VM, `netN … ip=` d'un conteneur). `VM.Audit` suffit, et
+/// le résultat partage le cache horaire des autres faits : un appel de plus par
+/// heure et par invité sans adresse, jamais à chaque interrogation.
+async fn config_addresses(
+    pve: &PveClient,
+    node: &str,
+    vmid: i64,
+    entry: &GuestEntry,
+    kind: GuestKind,
+    ts_ms: i64,
+) -> Vec<Sample> {
+    let path = format!("/nodes/{node}/{}/{vmid}/config", kind.as_str());
+    match pve.get_if_present::<serde_json::Map<String, serde_json::Value>>(&path, &[]).await {
+        Ok(Some(config)) => guest::config_address_samples(node, entry, kind, &config, ts_ms),
+        Ok(None) => Vec::new(),
+        Err(error) => {
+            debug!(node, vmid, %error, "configuration de l'invité non lue");
+            Vec::new()
         }
     }
 }
@@ -1019,6 +1092,11 @@ const GUEST_AGENT_PRIVILEGE: &str = "VM.GuestAgent.Audit or VM.Monitor";
 
 /// Interroge un nœud. Ne renvoie jamais d'erreur : un nœud en panne se traduit par
 /// `proxmox_node_up = 0` et un compteur d'erreurs, jamais par l'abandon du cluster.
+/// Portée de journalisation d'un nœud : l'API interrogée et le nom du nœud.
+fn node_scope(pve: &PveClient, node: &str) -> String {
+    format!("{}/{node}", pve.base_url())
+}
+
 async fn collect_node(
     pve: &PveClient,
     options: &Options,
@@ -1040,6 +1118,7 @@ async fn collect_node(
 
     match pve.get::<NodeStatus>(&format!("/nodes/{name}/status"), &[]).await {
         Ok(status) => {
+            GATE.ok(node_scope(pve, name), "nœud Proxmox non collecté");
             outcome.samples.push(metrics::node_up_sample(name, true, ts_ms));
             outcome.samples.extend(metrics::node_samples(name, &status, ts_ms));
         }
@@ -1048,7 +1127,7 @@ async fn collect_node(
             // seule une indisponibilité réelle doit alimenter « hors ligne ».
             outcome.samples.push(metrics::node_up_sample(name, !error.means_down(), ts_ms));
             outcome.errors += 1;
-            warn!(node = name, %error, "nœud Proxmox non collecté");
+            GATE.fail(node_scope(pve, name), "nœud Proxmox non collecté", &error);
             return outcome;
         }
     }
@@ -1182,7 +1261,11 @@ async fn collect_node(
                     }
                     Some(Err(error)) => {
                         outcome.errors += 1;
-                        warn!(node = name, kind = kind.as_str(), %error, "inventaire des invités échoué");
+                        GATE.fail(
+                            format!("{}/{}", node_scope(pve, name), kind.as_str()),
+                            "inventaire des invités échoué",
+                            &error,
+                        );
                     }
                     None => {}
                 }
@@ -1202,7 +1285,7 @@ async fn collect_node(
         }
         Err(error) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "inventaire des stockages échoué");
+            GATE.fail(node_scope(pve, name), "inventaire des stockages échoué", &error);
         }
     }
 
@@ -1222,7 +1305,7 @@ async fn collect_node(
         }
         Err(error) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "historique des tâches vzdump indisponible");
+            GATE.fail(node_scope(pve, name), "historique des tâches vzdump indisponible", &error);
         }
     }
 
@@ -1234,7 +1317,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "pas de réplication sur ce nœud"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "état de la réplication indisponible");
+            GATE.fail(node_scope(pve, name), "état de la réplication indisponible", &error);
         }
         None => {}
     }
@@ -1252,7 +1335,7 @@ async fn collect_node(
         }
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "liste des mises à jour indisponible");
+            GATE.fail(node_scope(pve, name), "liste des mises à jour indisponible", &error);
         }
         None => {}
     }
@@ -1267,7 +1350,7 @@ async fn collect_node(
         }
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "informations de certificat indisponibles");
+            GATE.fail(node_scope(pve, name), "informations de certificat indisponibles", &error);
         }
         None => {}
     }
@@ -1280,7 +1363,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "disques non listés : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "liste des disques indisponible");
+            GATE.fail(node_scope(pve, name), "liste des disques indisponible", &error);
         }
         None => {}
     }
@@ -1290,7 +1373,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "pas de pool ZFS listé sur ce nœud"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "pools ZFS indisponibles");
+            GATE.fail(node_scope(pve, name), "pools ZFS indisponibles", &error);
         }
         None => {}
     }
@@ -1303,7 +1386,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "versions des paquets non listées : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "versions des paquets indisponibles");
+            GATE.fail(node_scope(pve, name), "versions des paquets indisponibles", &error);
         }
         None => {}
     }
@@ -1315,7 +1398,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "abonnement non lu : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "état de l'abonnement indisponible");
+            GATE.fail(node_scope(pve, name), "état de l'abonnement indisponible", &error);
         }
         None => {}
     }
@@ -1327,7 +1410,7 @@ async fn collect_node(
         Some(Ok(None)) => debug!(node = name, "dépôts non lus : droit manquant"),
         Some(Err(error)) => {
             outcome.errors += 1;
-            warn!(node = name, %error, "dépôts APT indisponibles");
+            GATE.fail(node_scope(pve, name), "dépôts APT indisponibles", &error);
         }
         None => {}
     }
@@ -1356,7 +1439,11 @@ async fn collect_node(
                 Ok(volumes) => outcome.archives.extend(backup::archives_from_content(&volumes)),
                 Err(error) => {
                     outcome.errors += 1;
-                    warn!(node = name, storage, %error, "listing des sauvegardes échoué");
+                    GATE.fail(
+                        format!("{}/{storage}", node_scope(pve, name)),
+                        "listing des sauvegardes échoué",
+                        &error,
+                    );
                 }
             }
         }
@@ -1514,7 +1601,11 @@ async fn collect_snapshots(
             Ok(None) => debug!(node, vmid, "invité disparu avant la liste des instantanés"),
             Err(error) => {
                 outcome.errors += 1;
-                warn!(node, vmid, %error, "liste des instantanés indisponible");
+                GATE.fail(
+                    format!("{}/{vmid}", node_scope(pve, node)),
+                    "liste des instantanés indisponible",
+                    &error,
+                );
             }
         }
     }

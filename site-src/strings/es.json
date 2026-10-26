@@ -214,5 +214,19 @@
  "sh_st_cap": "Una página de estado pública: lo que la familia puede consultar antes de preguntar si se ha caído internet.",
  "sh_wall_alt": "Modo pared: «4 problemas» en grande, la lista de alertas, los monitores que responden, un reloj y un tejado de París bajo la lluvia con las palomas",
  "sh_wall_cap": "El modo pared en una pantalla de sala: el tiempo sobre el tejado de París sigue tus alertas.",
- "sh_al_alt": "Página de alertas: alertas en curso agrupadas por monitor, cada una con una placa Inaccesible, Aviso grave, Aviso o En formación, Confirmar y Abrir monitor"
+ "sh_al_alt": "Página de alertas: alertas en curso agrupadas por monitor, cada una con una placa Inaccesible, Aviso grave, Aviso o En formación, Confirmar y Abrir monitor",
+ "nav_roadmap": "Hoja de ruta",
+ "t_roadmap": "Hoja de ruta · DumbMonit",
+ "d_roadmap": "Lo que está previsto para DumbMonit, en el orden en que pensamos entregarlo, y lo que ya se ha publicado.",
+ "rm_h1": "Hoja de ruta",
+ "rm_lede": "Lo que viene a continuación, en el orden previsto de entrega, y lo que ya está publicado. Los planes pueden cambiar: esta página se actualiza con cada versión.",
+ "rm_planned": "Previsto",
+ "rm_progress": "En curso",
+ "rm_idea": "Idea",
+ "rm_discuss": "¿Una idea o una integración que falta? <a href=\"https://github.com/laupernoe/dumbmonit/discussions\">Abra una discusión en GitHub</a>.",
+ "rm_count": "elementos",
+ "rm_delivered": "Entregado",
+ "rm_legend": "Estado de cada elemento",
+ "rm_ver": "Versión",
+ "rm_issues": "¿Echas algo en falta? <a href=\"https://github.com/laupernoe/dumbmonit/issues/new/choose\">Cuéntanoslo en GitHub</a>."
 }

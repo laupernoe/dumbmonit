@@ -7,7 +7,8 @@
 use std::collections::BTreeMap;
 
 use dumbmonit_proto::{
-    MAX_BATCH_SAMPLES, MetricKind, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, Sample, Target,
+    AgentIdentity, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES, MetricKind, PUSH_PROTOCOL_VERSION,
+    PushAck, PushBatch, Sample, SoftwareInventory, Target,
 };
 use sqlx::SqlitePool;
 
@@ -70,6 +71,30 @@ impl<E: Into<anyhow::Error>> From<E> for IngestError {
     }
 }
 
+/// Enrôlement sur le canal chiffré : même contrôle qu'un premier lot (jeton,
+/// liaison), sans mesure. Rend la machine, créée au besoin, et le secret de
+/// liaison si celui-ci vient d'être attribué.
+pub async fn enrol(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    bearer: Option<&str>,
+    agent_secret: Option<&str>,
+    identity: &AgentIdentity,
+) -> Result<store::Registration, IngestError> {
+    if identity.hostname.trim().is_empty() {
+        return Err(IngestError::BadRequest("The host name is required.".to_string()));
+    }
+    let presented = token::extract_bearer(bearer).ok_or(IngestError::Unauthorized)?;
+    let token_id = store::find_active_token(pool, &token::fingerprint(presented))
+        .await?
+        .ok_or(IngestError::Unauthorized)?;
+    let registration =
+        store::register(pool, cipher, identity, token_id, token::extract_secret(agent_secret))
+            .await?;
+    store::touch_token(pool, token_id).await?;
+    Ok(registration)
+}
+
 /// Accepte un lot : vérifie le jeton, rattache la machine, range les mesures.
 pub async fn ingest(
     pool: &SqlitePool,
@@ -108,6 +133,12 @@ pub async fn ingest(
             IngestError::Internal(anyhow::anyhow!("target not found after registration"))
         })?;
 
+    // L'inventaire logiciel du jour, s'il accompagne le lot : gardé pour la
+    // recherche de failles (`vulns/`), jamais écrit dans VictoriaMetrics.
+    if let Some(inventory) = batch.inventory.as_ref().and_then(sanitize_inventory) {
+        crate::vulns::store::save_agent_inventory(pool, target.id, &inventory).await?;
+    }
+
     let received_at_ms = chrono::Utc::now().timestamp_millis();
     let (machine, services) = split_by_module(batch.samples);
 
@@ -140,7 +171,9 @@ pub async fn ingest(
     }
 
     sink.send(samples).await;
+    let previous_ms = store::last_seen_ms(pool, target.id).await?;
     store::record_batch(pool, target.id, received_at_ms, accepted).await?;
+    note_return(&target, previous_ms, received_at_ms);
     store::touch_token(pool, token_id).await?;
     // La même trace que pour une interrogation classique : l'interface affiche
     // « vu à » sans avoir à connaître la particularité des cibles en poussée.
@@ -161,6 +194,25 @@ pub async fn ingest(
     })
 }
 
+/// Journalise le retour d'une machine restée muette au-delà de son délai de
+/// fraîcheur, avec la durée de la coupure. Une ligne par retour : un lot
+/// ordinaire ne laisse aucune trace.
+fn note_return(target: &Target, previous_ms: Option<i64>, received_at_ms: i64) -> bool {
+    let Some(previous_ms) = previous_ms else { return false };
+    let gap_ms = received_at_ms.saturating_sub(previous_ms).max(0) as u64;
+    let gap = std::time::Duration::from_millis(gap_ms);
+    if gap <= super::staleness_deadline(target.interval) {
+        return false;
+    }
+    tracing::info!(
+        target = target.id,
+        name = %target.name,
+        outage = %super::human_duration(gap),
+        "agent back online"
+    );
+    true
+}
+
 /// Mesures d'un lot réparties par module, la machine à part.
 type Split = (Vec<Sample>, BTreeMap<&'static str, (&'static Module, Vec<Sample>)>);
 
@@ -177,6 +229,38 @@ fn split_by_module(samples: Vec<Sample>) -> Split {
         }
     }
     (machine, services)
+}
+
+/// Longueur maximale d'un nom ou d'une version d'inventaire.
+const MAX_INVENTORY_FIELD: usize = 256;
+
+/// Un inventaire raisonnable, ou rien : trop de paquets, et il est écarté
+/// (le lot, lui, reste accepté) ; les champs démesurés ou vides sont ôtés.
+fn sanitize_inventory(inventory: &SoftwareInventory) -> Option<SoftwareInventory> {
+    if inventory.packages.len() > MAX_INVENTORY_PACKAGES {
+        tracing::warn!(
+            packages = inventory.packages.len(),
+            "software inventory too large, ignored"
+        );
+        return None;
+    }
+    let fits = |value: &str| !value.trim().is_empty() && value.len() <= MAX_INVENTORY_FIELD;
+    let optional = |value: &Option<String>| value.clone().filter(|v| fits(v));
+    let mut clean = inventory.clone();
+    clean.packages.retain(|p| fits(&p.name) && fits(&p.version));
+    for package in &mut clean.packages {
+        package.source_name = optional(&package.source_name);
+        package.source_version = optional(&package.source_version);
+        package.publisher = optional(&package.publisher);
+    }
+    clean.hotfixes.retain(|h| fits(h));
+    clean.distro_id = optional(&clean.distro_id);
+    clean.distro_version = optional(&clean.distro_version);
+    clean.distro_codename = optional(&clean.distro_codename);
+    clean.os_product = optional(&clean.os_product);
+    clean.os_release = optional(&clean.os_release);
+    clean.os_build = optional(&clean.os_build);
+    Some(clean)
 }
 
 /// Contrôles qui ne dépendent d'aucun accès à la base.
@@ -242,6 +326,16 @@ fn prepare(target: &Target, samples: Vec<Sample>, received_at_ms: i64) -> (Vec<S
 #[cfg(test)]
 mod tests {
     use std::collections::BTreeMap;
+
+    #[test]
+    fn only_a_return_after_a_real_silence_is_logged() {
+        let target = target();
+        // Période de 30 s : muette au-delà de 90 s.
+        assert!(!super::note_return(&target, None, 1_000_000), "première réception");
+        assert!(!super::note_return(&target, Some(1_000_000 - 30_000), 1_000_000));
+        assert!(!super::note_return(&target, Some(1_000_000 - 90_000), 1_000_000));
+        assert!(super::note_return(&target, Some(1_000_000 - 91_000), 1_000_000));
+    }
 
     use dumbmonit_proto::{AgentIdentity, Credential};
 
@@ -390,6 +484,35 @@ mod tests {
         assert_eq!(services["docker"].1.len(), 2);
         // Chaque mesure n'est rangée qu'une fois : rien n'est compté deux fois.
         assert_eq!(machine.len() + services.values().map(|(_, v)| v.len()).sum::<usize>(), 5);
+    }
+
+    #[test]
+    fn an_inventory_is_cleaned_or_dropped_when_unreasonable() {
+        use dumbmonit_proto::InstalledPackage;
+        let package = |name: &str, version: &str| InstalledPackage {
+            name: name.into(),
+            version: version.into(),
+            source_name: Some(String::new()),
+            ..InstalledPackage::default()
+        };
+        let inventory = SoftwareInventory {
+            source: "dpkg".into(),
+            distro_id: Some("debian".into()),
+            packages: vec![
+                package("bash", "5.2-1"),
+                package("", "1"),
+                package("x", &"9".repeat(300)),
+            ],
+            ..SoftwareInventory::default()
+        };
+        let clean = sanitize_inventory(&inventory).unwrap();
+        assert_eq!(clean.packages.len(), 1);
+        assert_eq!(clean.packages[0].source_name, None, "un nom source vide est ôté");
+        let huge = SoftwareInventory {
+            packages: vec![package("a", "1"); MAX_INVENTORY_PACKAGES + 1],
+            ..SoftwareInventory::default()
+        };
+        assert!(sanitize_inventory(&huge).is_none());
     }
 
     #[test]

@@ -177,7 +177,7 @@ critical**, **Hyper-V host CPU high** и **Hyper-V virtual disk errors** (см.
     для архитектуры машины (x86_64 или aarch64), записывает
     `/etc/dumbmonit/agent.yaml` (режим 0600) и регистрирует `dumbmonit-agent` в
     systemd или в OpenRC на Alpine. Юнит systemd усилен
-    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=128M`,
+    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=256M`,
     `CPUQuota=20%`).
 
 === "macOS (launchd)"
@@ -857,7 +857,7 @@ DumbMonit, записывается в журнал, и попытка повт�
 показания в памяти с их исходными метками времени. Они отправляются, как только
 связь восстанавливается: перезапуск сервера не оставляет дыр на графиках. Буфер
 ограничен (`max_buffered_samples`, по умолчанию около часа) и при заполнении отбрасывает самые старые
-показания. Повторные попытки замедляются от 5 секунд до 5 минут с джиттером.
+показания. Повторные попытки замедляются от 2 до 30 секунд с джиттером.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing

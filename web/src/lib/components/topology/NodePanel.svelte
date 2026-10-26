@@ -9,10 +9,10 @@
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { kindLabel } from '#lib/kind-label.js';
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
-	import { Box, Monitor, X } from 'lucide-svelte';
+	import { Box, Monitor, Server, X } from 'lucide-svelte';
 	import { Button } from '#lib/ui/index.js';
 	import { ancestors, blockers, descendants, type Graph, type NodeState } from './layout';
-	import { sourceShort } from './legend';
+	import { guestLabel, sourceShort, zoneLabel } from './legend';
 
 	interface Props {
 		graph: Graph;
@@ -74,7 +74,7 @@
 	<header class="flex items-start gap-3 border-b border-line px-4 py-3">
 		<span class={`mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full border-2 ${down ? 'border-warning bg-warning-soft text-warning-ink' : impacted ? 'border-dashed border-advisory text-advisory-ink' : 'border-line-strong text-ink-2'}`}>
 			{#if node.targetId === null}
-				{#if node.kind === 'container'}<Box class="size-4" aria-hidden="true" />{:else}<Monitor class="size-4" aria-hidden="true" />{/if}
+				{#if node.kind === 'container'}<Box class="size-4" aria-hidden="true" />{:else if node.kind === 'pve_node'}<Server class="size-4" aria-hidden="true" />{:else}<Monitor class="size-4" aria-hidden="true" />{/if}
 			{:else}
 				<KindIcon kind={node.kind} class="size-4" />
 			{/if}
@@ -82,7 +82,7 @@
 		<div class="min-w-0 flex-1">
 			<h2 class="truncate text-base font-semibold text-ink">{node.name}</h2>
 			<p class="truncate text-xs text-ink-2">
-				{node.targetId === null ? (node.kind === 'container' ? m.topology_guest_container() : m.topology_guest_vm()) : kindLabel(node.kind)}
+				{guestLabel(node) ?? kindLabel(node.kind)}
 			</p>
 		</div>
 		<button
@@ -114,6 +114,14 @@
 			<dd class="truncate text-ink">{node.site ?? m.topology_site_main()}</dd>
 			<dt class="text-ink-3">{m.topology_panel_folder()}</dt>
 			<dd class="truncate text-ink">{node.group || m.devices_folders_none()}</dd>
+			{#if node.ips && node.ips.length > 0}
+				<dt class="text-ink-3">{m.topology_panel_addresses()}</dt>
+				<dd class="min-w-0 font-mono text-xs leading-5 break-all text-ink">{node.ips.join(', ')}</dd>
+			{/if}
+			{#if node.subnet}
+				<dt class="text-ink-3">{m.topology_panel_network()}</dt>
+				<dd class="truncate text-ink">{zoneLabel(node.subnet, node.vlan, node.vlanName)}</dd>
+			{/if}
 			{#if via}
 				<dt class="text-ink-3">{m.topology_panel_placed_by()}</dt>
 				<dd class="truncate text-ink">{sourceShort(via)}</dd>

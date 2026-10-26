@@ -168,6 +168,7 @@ pub async fn push_agent_batch(
         identity,
         sent_at_ms: now,
         samples: synthetic::agent_samples(now),
+        inventory: None,
     };
     let bearer = format!("Bearer {token}");
     let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch)
@@ -227,6 +228,9 @@ async fn seed_status_page(pool: &SqlitePool, targets: &[(TargetId, String, Strin
             link_origin: String::new(),
             // La démonstration n'a pas de domaine à elle : la page reste sous `/s/home`.
             domain: None,
+            seo: Default::default(),
+            groups: None,
+            group_labels: None,
         },
     )
     .await?;

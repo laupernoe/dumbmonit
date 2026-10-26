@@ -214,5 +214,19 @@
  "sh_st_cap": "Une page de statut publique : ce que la famille peut vérifier avant de demander si internet est en panne.",
  "sh_wall_alt": "Mode mur : « 4 problèmes » en grand, la liste des alertes, les surveillances qui répondent, une horloge et un toit parisien sous la pluie avec les pigeons",
  "sh_wall_cap": "Le mode mur sur un écran de salle : la météo du toit parisien suit vos alertes.",
- "sh_al_alt": "Page des alertes : alertes en cours regroupées par surveillance, chacune avec une plaque Injoignable, Avertissement, Avis ou En formation, Acquitter et Ouvrir la surveillance"
+ "sh_al_alt": "Page des alertes : alertes en cours regroupées par surveillance, chacune avec une plaque Injoignable, Avertissement, Avis ou En formation, Acquitter et Ouvrir la surveillance",
+ "nav_roadmap": "Feuille de route",
+ "t_roadmap": "Feuille de route · DumbMonit",
+ "d_roadmap": "Ce qui est prévu pour DumbMonit, dans l'ordre où nous comptons le livrer, et ce qui est déjà sorti.",
+ "rm_h1": "Feuille de route",
+ "rm_lede": "Ce qui vient ensuite, dans l'ordre prévu de livraison, et ce qui est déjà sorti. Les plans peuvent changer : cette page est mise à jour à chaque version.",
+ "rm_planned": "Prévu",
+ "rm_progress": "En cours",
+ "rm_idea": "Idée",
+ "rm_discuss": "Une idée ou une intégration manquante ? <a href=\"https://github.com/laupernoe/dumbmonit/discussions\">Ouvrez une discussion GitHub</a>.",
+ "rm_count": "éléments",
+ "rm_delivered": "Livré",
+ "rm_legend": "Statut de chaque élément",
+ "rm_ver": "Version",
+ "rm_issues": "Il manque quelque chose ? <a href=\"https://github.com/laupernoe/dumbmonit/issues/new/choose\">Dites-le-nous sur GitHub</a>."
 }

@@ -14,8 +14,10 @@
 pub mod backup_repos;
 pub mod docker;
 pub mod filter;
+pub mod inventory;
 pub mod ipsec;
 pub mod libvirt;
+pub mod mail_server;
 pub mod perf_counters;
 pub mod plakar;
 pub mod registry;
@@ -39,6 +41,7 @@ use crate::collect::docker::ContainerInventory;
 use crate::collect::filter::NameFilter;
 use crate::collect::ipsec::IpsecReport;
 use crate::collect::libvirt::LibvirtReport;
+use crate::collect::mail_server::MailServerReport;
 use crate::collect::perf_counters::PerfReport;
 use crate::collect::plakar::PlakarReport;
 use crate::collect::sensors::SensorsStat;
@@ -251,6 +254,8 @@ pub struct Snapshot {
     pub zfs: Option<ZfsReport>,
     /// Compteurs de performance Windows. `None` : rien à lire ici.
     pub perf_counters: Option<PerfReport>,
+    /// MDaemon et SecurityGateway : services, files, version. `None` : absents.
+    pub mail_server: Option<MailServerReport>,
     /// Tunnels WireGuard. `None` : pas de `wg`, ou aucune interface.
     pub wireguard: Option<WireguardReport>,
     /// Tunnels IPsec (strongSwan). `None` : pas de `swanctl`, ou aucune connexion.
@@ -299,6 +304,9 @@ impl Snapshot {
         }
         if let Some(counters) = &self.perf_counters {
             samples.extend(perf_counters::samples(counters, now_ms));
+        }
+        if let Some(report) = &self.mail_server {
+            samples.extend(mail_server::samples(report, now_ms));
         }
         if let Some(tunnels) = &self.wireguard {
             samples.extend(wireguard::samples(tunnels, now_ms));
@@ -588,6 +596,7 @@ impl SystemProbe {
             smart: None,
             zfs: None,
             perf_counters: None,
+            mail_server: None,
             wireguard: None,
             ipsec: None,
             speedtest: None,
@@ -1145,6 +1154,24 @@ mod tests {
                     .map(|spec| (spec, 4.0))
                     .collect(),
             }),
+            mail_server: Some(mail_server::MailServerReport {
+                products: vec![mail_server::ProductReport {
+                    product: mail_server::Product::MDaemon,
+                    version: Some("24.5.1".into()),
+                    services: vec![mail_server::MailService {
+                        name: "MDaemon".into(),
+                        display: "MDaemon Email Server".into(),
+                        state: ServiceState::Running,
+                        start: "auto",
+                    }],
+                    queues: vec![mail_server::QueueStat {
+                        queue: "bad".into(),
+                        files: 0,
+                        oldest_age_secs: None,
+                    }],
+                    data: None,
+                }],
+            }),
             wireguard: Some(wireguard::WireguardReport {
                 interfaces: vec![wireguard::Interface {
                     name: "wg0".into(),
@@ -1220,6 +1247,9 @@ mod tests {
             "agent_disk_smart_ok",
             "agent_zfs_pool_health",
             "mdaemon_queue_messages",
+            "agent_mail_info",
+            "agent_mail_service_up",
+            "agent_mail_queue_files",
             "agent_wireguard_interface_peers",
             "agent_ipsec_tunnel_up",
             "agent_speedtest_download_bytes_per_second",

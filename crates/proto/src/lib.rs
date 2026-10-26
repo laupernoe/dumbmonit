@@ -13,6 +13,7 @@ pub mod env;
 mod push;
 mod sample;
 mod target;
+mod tls;
 
 pub use collector::{Collector, ProbeError};
 pub use command::{
@@ -35,11 +36,18 @@ pub use discovery::{
     VersionRule,
 };
 pub use push::{
-    AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH, INGEST_PATH,
-    MAX_BATCH_SAMPLES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting, TOKEN_PREFIX,
+    AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,
+    INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES,
+    PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting, SoftwareInventory, TOKEN_PREFIX,
 };
 pub use sample::{MetricKind, Sample};
 pub use target::{
     EXPORTED_LABEL_PREFIX, MAX_TAG_LABEL_LEN, TAG_LABEL_PREFIX, Target, TargetId, apply_identity,
     looks_secret,
+};
+pub use tls::{
+    AGENT_TLS_HEADER, AGENT_TLS_SERVER_NAME, CERT_REFUSED, CLIENT_CERT_DAYS,
+    DEFAULT_AGENT_TLS_PORT, MTLS_REQUIRED, RENEW_BEFORE_DAYS, TLS_ENROL_PATH, TLS_RENEW_PATH,
+    TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest, agent_channel_url, is_pin,
+    normalise_pin,
 };

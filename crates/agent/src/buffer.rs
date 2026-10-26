@@ -10,6 +10,7 @@
 //! surveillance ne doit jamais devenir la panne.
 
 use std::collections::VecDeque;
+use std::path::Path;
 
 use dumbmonit_proto::Sample;
 
@@ -64,6 +65,37 @@ impl PendingBuffer {
         self.enforce_capacity();
     }
 
+    /// Écrit sur disque au plus `max` mesures, les plus récentes, pour le
+    /// prochain démarrage. Rend le nombre de mesures écrites.
+    ///
+    /// Écriture dans un fichier voisin puis renommage : un arrêt brutal pendant
+    /// l'écriture laisse l'ancien fichier, ou aucun, jamais un fichier tronqué.
+    pub fn save(&self, path: &Path, max: usize) -> std::io::Result<usize> {
+        let skip = self.samples.len().saturating_sub(max);
+        let kept: Vec<&Sample> = self.samples.iter().skip(skip).collect();
+        let body = serde_json::to_vec(&kept).map_err(std::io::Error::other)?;
+        let partial = path.with_extension("json.partial");
+        std::fs::write(&partial, body)?;
+        std::fs::rename(&partial, path)?;
+        Ok(kept.len())
+    }
+
+    /// Relit les mesures gardées par un arrêt précédent et efface le fichier :
+    /// elles repartent une fois, pas à chaque démarrage. Un fichier illisible
+    /// est effacé lui aussi — le garder bloquerait la reprise à jamais.
+    pub fn load(path: &Path) -> Vec<Sample> {
+        let Ok(body) = std::fs::read(path) else { return Vec::new() };
+        let _ = std::fs::remove_file(path);
+        match serde_json::from_slice::<Vec<Sample>>(&body) {
+            Ok(samples) => samples,
+            Err(error) => {
+                let path = path.display();
+                tracing::warn!(%error, %path, "unreadable kept measurements, discarded");
+                Vec::new()
+            }
+        }
+    }
+
     fn enforce_capacity(&mut self) {
         if self.samples.len() <= self.capacity {
             return;
@@ -86,6 +118,25 @@ mod tests {
 
     fn batch(range: std::ops::Range<i64>) -> Vec<Sample> {
         range.map(sample).collect()
+    }
+
+    #[test]
+    fn measurements_kept_at_shutdown_come_back_once_at_startup() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("pending-samples.json");
+        let mut buffer = PendingBuffer::new(100);
+        buffer.push(batch(0..10));
+        // Borné : ce sont les plus récentes qui sont gardées.
+        assert_eq!(buffer.save(&path, 4).unwrap(), 4);
+
+        let back = PendingBuffer::load(&path);
+        assert_eq!(back.iter().map(|s| s.ts_ms).collect::<Vec<_>>(), vec![6, 7, 8, 9]);
+        assert!(!path.exists(), "relues une fois, pas à chaque démarrage");
+        assert!(PendingBuffer::load(&path).is_empty());
+
+        std::fs::write(&path, "pas du JSON").unwrap();
+        assert!(PendingBuffer::load(&path).is_empty());
+        assert!(!path.exists(), "un fichier illisible ne bloque pas les démarrages suivants");
     }
 
     #[test]

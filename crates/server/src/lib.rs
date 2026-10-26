@@ -4,6 +4,7 @@
 //! que les tests d'intégration puissent monter l'application complète — routeur,
 //! base et collecteurs — et l'exercer comme le ferait un client.
 
+pub mod agent_tls;
 pub mod alerting;
 pub mod api;
 pub mod auth;
@@ -28,7 +29,9 @@ pub mod selfmon;
 pub mod state;
 pub mod stats;
 pub mod status_host;
+pub mod status_seo;
 pub mod tsdb;
 pub mod update;
+pub mod vulns;
 pub mod webchange;
 pub mod website;

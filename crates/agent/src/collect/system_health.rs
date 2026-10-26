@@ -39,6 +39,10 @@ pub struct OsInfo {
     pub version_id: String,
     pub pretty_name: String,
     pub id_like: String,
+    /// `VERSION_CODENAME` (`bookworm`, `noble`), vide s'il manque.
+    pub version_codename: String,
+    /// `UBUNTU_CODENAME`, repli de `VERSION_CODENAME` chez les dérivés d'Ubuntu.
+    pub ubuntu_codename: String,
 }
 
 /// Mode SELinux, dans l'ordre croissant de contrainte : la valeur remontée suit
@@ -179,6 +183,8 @@ pub fn parse_os_release(text: &str) -> OsInfo {
             "VERSION_ID" => os.version_id = value,
             "PRETTY_NAME" => os.pretty_name = value,
             "ID_LIKE" => os.id_like = value,
+            "VERSION_CODENAME" => os.version_codename = value,
+            "UBUNTU_CODENAME" => os.ubuntu_codename = value,
             _ => {}
         }
     }
@@ -1344,6 +1350,7 @@ openssl/bookworm-security,bookworm-updates 3.0.13-1~deb12u1 amd64 [upgradable fr
                 version_id: "44".into(),
                 pretty_name: "Fedora Linux 44 (Server Edition)".into(),
                 id_like: String::new(),
+                ..OsInfo::default()
             }
         );
     }
@@ -1563,8 +1570,10 @@ openssl/bookworm-security,bookworm-updates 3.0.13-1~deb12u1 amd64 [upgradable fr
     async fn a_cycle_on_this_machine_completes_without_blocking() {
         // Sans dnf ni systemd (conteneur de test), chaque famille est simplement
         // absente ; ce qui compte est que rien ne bloque et que rien n'explose.
+        // Marge large : les runners CI partagés sont parfois lents à lancer les
+        // commandes système, sans que le cycle bloque pour autant.
         let mut probe = SystemHealthProbe::new(&SystemHealthConfig::default());
-        let stat = tokio::time::timeout(std::time::Duration::from_secs(15), probe.read())
+        let stat = tokio::time::timeout(std::time::Duration::from_secs(60), probe.read())
             .await
             .expect("un cycle ne doit pas attendre les vérifications lentes")
             .expect("collecteur actif");

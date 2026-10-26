@@ -2,6 +2,7 @@
  * Pure logic of the Logs section: export period, sizes, destination payload.
  * No UI or message import, so it can be tested on its own.
  */
+import { getLocale } from '#lib/paraglide/runtime.js';
 import type { KindField } from '#lib/components/notifications/kinds';
 import type { LogDestination, LogLevel } from '#lib/api/types';
 import type { LogDestinationPayload } from '#lib/api/types';
@@ -17,6 +18,14 @@ export const EXPORT_CHOICES: readonly number[] = [1, 7, 14, 30];
 /** Quick choices with whether each fits within the retention. */
 export function exportChoices(retention: number): { days: number; disabled: boolean }[] {
 	return EXPORT_CHOICES.map((days) => ({ days, disabled: days > retention }));
+}
+
+/** A server day ("2026-10-21", UTC) as a localized date; empty when absent. */
+export function formatLogDay(day: string | null | undefined): string {
+	if (!day) return '';
+	const date = new Date(`${day}T00:00:00Z`);
+	if (Number.isNaN(date.getTime())) return '';
+	return new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium', timeZone: 'UTC' }).format(date);
 }
 
 function asNumber(value: unknown): number {

@@ -9,17 +9,21 @@
 	 * once, right after creation, together with the install commands. After
 	 * that only its prefix is ever displayed.
 	 */
-	import { ArrowRight, Cpu, KeyRound, RadioTower } from 'lucide-svelte';
+	import { ArrowRight, Cpu, KeyRound, Lock, OctagonX, RadioTower } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
+	import { closeAgentToken, createAgentToken, listAgentTokens, revokeAgentToken, type AgentToken, type CreatedAgentToken, type RelayAgent } from '#lib/api/index.js';
 	import { listRelays } from '#lib/api/relay.js';
 	import { displayState, formatDateTime, formatRelative, parseServerDate, STATE_LABEL, STATE_TONE, type TargetState } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { Button, Confirm, CopyBlock, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import { Button, Confirm, CopyBlock, Disclosure, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
+	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import AgentChecksums from '#lib/components/device-form/AgentChecksums.svelte';
 	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
 	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
+	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
+	import { getAgentChannel } from '#lib/api/agent_tls.js';
+	import type { AgentChannelEntry, AgentChannelOverview } from '#lib/api/types.js';
 
 	// --- The agents themselves -----------------------------------------------
 
@@ -44,6 +48,29 @@
 		const seen = agent.last_seen_at ? parseServerDate(agent.last_seen_at) : null;
 		if (!seen) return 'pending';
 		return Date.now() - seen.getTime() < 3 * 60_000 ? 'online' : 'offline';
+	}
+
+	// --- The encrypted agent channel (administrators) --------------------------
+
+	/** `null` while unread, for non-administrators, or on an older server. */
+	let channel = $state<AgentChannelOverview | null>(null);
+	let channelError = $state<unknown>(null);
+
+	$effect(() => {
+		if (!auth.isAdmin) return;
+		const controller = new AbortController();
+		getAgentChannel(controller.signal)
+			.then((overview) => (channel = overview))
+			.catch((cause) => {
+				if (cause instanceof DOMException && cause.name === 'AbortError') return;
+				channelError = cause;
+			});
+		return () => controller.abort();
+	});
+
+	/** How an agent last reported, when the channel overview is known. */
+	function channelOf(id: number): AgentChannelEntry | undefined {
+		return channel?.agents.find((entry) => entry.id === id);
 	}
 
 	let tokens = $state<AgentToken[]>([]);
@@ -161,6 +188,23 @@
 		return token.expires_at !== null && new Date(token.expires_at + 'Z') <= new Date();
 	}
 
+	// --- Stop enrolments (Active Directory tokens) ---------------------------
+
+	let stopping = $state<number | null>(null);
+
+	async function stopEnrolments(token: AgentToken) {
+		stopping = token.id;
+		revokeError = null;
+		try {
+			await closeAgentToken(token.id);
+			tokens = await listAgentTokens();
+		} catch (cause) {
+			revokeError = { id: token.id, cause };
+		} finally {
+			stopping = null;
+		}
+	}
+
 	// --- Revoke ---------------------------------------------------------------
 
 	let revoking = $state<number | null>(null);
@@ -202,6 +246,7 @@
 				<ul class="grid gap-1.5" role="list" aria-label={m.settings_agents_list_aria()}>
 					{#each agents as agent (agent.id)}
 						{@const state = agentState(agent)}
+						{@const route = channelOf(agent.id)}
 						<li>
 							<a
 								href={`/targets/${agent.id}`}
@@ -210,6 +255,14 @@
 								<Led tone={STATE_TONE[state]} blink={state === 'offline' || state === 'down'} size="sm" />
 								<span class="min-w-0 truncate font-semibold text-ink">{agent.name}</span>
 								<Plate tone={STATE_TONE[state] === 'ghost' ? 'ghost' : STATE_TONE[state]} label={STATE_LABEL[state]} bare />
+								{#if route?.channel === 'mtls'}
+									<Plate tone="signal" title={m.settings_agents_tls_badge_title({ group: route.group ?? channel?.key_exchange ?? '' })}>
+										<Lock class="size-3.5" aria-hidden="true" />
+										{m.settings_agents_tls_badge()}
+									</Plate>
+								{:else if route?.channel === 'legacy'}
+									<Plate tone="advisory" label={m.settings_agents_tls_legacy()} title={m.settings_agents_tls_legacy_title()} />
+								{/if}
 								{#if agent.relay}
 									<Plate tone="info" title={m.settings_agents_relay_title()}>
 										<RadioTower class="size-3.5" aria-hidden="true" />
@@ -240,13 +293,22 @@
 						{m.settings_agents_watch_remote()}
 						<ArrowRight class="size-3.5" aria-hidden="true" />
 					</Button>
+					<AdDeployWizard onchange={() => void load()} />
 				</div>
 			{/if}
 		</div>
 	{/if}
 
+	{#if channel}
+		<AgentChannel bind:overview={channel} />
+	{:else if channelError}
+		<div class="border-b border-line px-5 py-4">
+			<ErrorNotice error={channelError} title={m.settings_agents_tls_load_error()} />
+		</div>
+	{/if}
+
 	<div class="px-5 py-4">
-		<h3 class="text-sm font-semibold text-ink">{m.settings_agents_tokens_title()}</h3>
+		<Disclosure title={m.settings_agents_tokens_title()}>
 		<p class="mt-0.5 mb-3 text-sm text-ink-2">
 			{m.settings_agents_tokens_intro()}
 		</p>
@@ -365,6 +427,7 @@
 										<span class={`font-semibold ${revoked ? 'text-ink-2' : 'text-ink'}`}>{token.name}</span>
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{token.prefix}…</code>
 										{#if revoked}<Plate tone="ghost" label={m.settings_agents_revoked()} />{/if}
+										{#if token.ad_domain}<Plate tone="info" label={m.settings_agents_ad_badge({ domain: token.ad_domain })} />{/if}
 										{#if !revoked}
 											<Plate tone={token.max_uses === null ? 'info' : 'ghost'} label={scopeLabel(token)} />
 											{#if spent(token)}<Plate tone="advisory" label={m.settings_agents_enrols_no_more()} />{/if}
@@ -386,6 +449,11 @@
 										</p>
 									{/if}
 								</div>
+								{#if !revoked && auth.isAdmin && token.ad_domain && !spent(token)}
+									<Confirm variant="secondary" confirmLabel={m.settings_agents_ad_token_stop_confirm()} loading={stopping === token.id} onconfirm={() => stopEnrolments(token)}>
+										<OctagonX class="size-4" aria-hidden="true" />{m.settings_agents_ad_token_stop()}
+									</Confirm>
+								{/if}
 								{#if !revoked && auth.isAdmin}
 									<Confirm confirmLabel={m.settings_agents_revoke_confirm()} loading={revoking === token.id} onconfirm={() => revoke(token)}>{m.settings_agents_revoke()}</Confirm>
 								{/if}
@@ -398,5 +466,6 @@
 				</ul>
 			{/if}
 		</div>
+		</Disclosure>
 	</div>
 </Panel>

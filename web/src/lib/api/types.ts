@@ -595,7 +595,7 @@ export interface CollectorRequirement {
 }
 
 /** Input shapes a collector option can ask for. */
-export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select' | 'checklist' | 'rows';
+export type CollectorOptionInput = 'text' | 'number' | 'boolean' | 'select' | 'checklist' | 'rows' | 'agent';
 
 /** One tick box of a `checklist` option. */
 export interface CollectorOptionItem {
@@ -743,7 +743,7 @@ export function normalizeCollector(raw: Partial<CollectorInfo> & { kind: string 
 	};
 }
 
-const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select', 'checklist', 'rows'];
+const OPTION_INPUTS: readonly CollectorOptionInput[] = ['text', 'number', 'boolean', 'select', 'checklist', 'rows', 'agent'];
 
 /**
  * Fills in an option so that it is always displayable.
@@ -1218,6 +1218,8 @@ export interface AgentToken {
 	/** A relay token: the machine it enrols becomes a relay for its site at its first report. */
 	relay?: boolean;
 	relay_site?: string | null;
+	/** Active Directory domain this fleet token was made for; `null` for an ordinary token. */
+	ad_domain: string | null;
 }
 
 /** Body of `POST /api/agent/tokens`. Omitting everything gives a single-use token. */
@@ -1240,6 +1242,66 @@ export interface AgentTokenPayload {
 export interface CreatedAgentToken extends AgentToken {
 	secret: string;
 	install_linux: string;
+	install_windows: string;
+}
+
+/** Channel an agent last reported through. Mirrors `AgentChannel` in `crates/server/src/api/agent_tls.rs`. */
+export interface AgentChannelEntry {
+	/** Id of the agent's target. */
+	id: TargetId;
+	/** `mtls`: encrypted agent port; `legacy`: plain channel of the web port; `none`: never seen. */
+	channel: 'mtls' | 'legacy' | 'none';
+	/** Key exchange negotiated at the last encrypted report, e.g. `X25519MLKEM768`. */
+	group: string | null;
+	tls_seen_at: string | null;
+	legacy_seen_at: string | null;
+}
+
+/** `GET /api/agent/tls`. Mirrors `Overview` in `crates/server/src/api/agent_tls.rs`. */
+export interface AgentChannelOverview {
+	/** The agent port is open (`DUMBMONIT_AGENT_LISTEN`). */
+	enabled: boolean;
+	port: number | null;
+	/** The plain channel is refused right now. */
+	required: boolean;
+	/** The setting as the administrator set it. */
+	required_setting: boolean;
+	/** End of the transition set by `DUMBMONIT_AGENT_LEGACY_DAYS`. */
+	legacy_until: string | null;
+	protocol: string;
+	key_exchange: string;
+	/** SHA-256 fingerprint of the active certificate authority. */
+	ca_pin: string | null;
+	rotation: { started_at: string | null; next_pin: string; ready: number; total: number } | null;
+	agents: AgentChannelEntry[];
+}
+
+/** Body of `POST /api/agent/ad-kit`: a fleet token plus the GPO deployment script. */
+export interface AdKitPayload {
+	domain: string;
+	base_url?: string;
+	/** Servers allowed to enrol. `null` or left out: no limit. */
+	max_uses?: number | null;
+	expires_in_days?: number | null;
+	/** Distinguished name of the OU the policy is linked to. Left out: the whole domain. */
+	target_ou?: string | null;
+	include_domain_controllers?: boolean;
+	/** Security group that filters which servers receive the agent. */
+	security_group?: string | null;
+	/** Also copy the agent binary into SYSVOL, for servers without outbound access. */
+	sysvol_binary?: boolean;
+}
+
+/** Response of `POST /api/agent/ad-kit`: the only chance to see the token and script. */
+export interface CreatedAdKit {
+	token: AgentToken;
+	secret: string;
+	/** Content of the PowerShell deployment script (it contains the token). */
+	script: string;
+	/** File name to save it under, `Deploy-DumbMonit.ps1`. */
+	filename: string;
+	/** `group_name` of the targets this deployment enrols. */
+	folder: string;
 	install_windows: string;
 }
 
@@ -1509,6 +1571,28 @@ export interface StatusPageItem {
 	position: number;
 }
 
+/** Search-engine settings of a status page; an empty text means "generated default". */
+export interface StatusPageSeo {
+	/** `true`: `index, follow`; `false` (default): `noindex, nofollow`. */
+	index: boolean;
+	title: string;
+	description: string;
+	keywords: string;
+	/** Absolute http(s) URL, or empty. */
+	canonical: string;
+	/** Share image (Open Graph / Twitter), absolute http(s) URL, or empty. */
+	image: string;
+	/** Language tag (`en`, `pt-BR`), empty: `en`. */
+	lang: string;
+	site_name: string;
+}
+
+/** Public name of a monitor that reaches a page through a ticked group. */
+export interface StatusPageGroupLabel {
+	target_id: TargetId;
+	label: string;
+}
+
 export interface StatusPage {
 	id: number;
 	slug: string;
@@ -1539,6 +1623,11 @@ export interface StatusPage {
 	subscribe_channel_id: number | null;
 	/** Public host name serving this page at `/` (`status.example.com`); `null`: none. */
 	domain: string | null;
+	seo: StatusPageSeo;
+	/** Checked monitor folders (dynamic): their current members are shown. */
+	groups: string[];
+	/** Public names of the monitors that come in through a ticked group; none: the monitor name. */
+	group_labels: StatusPageGroupLabel[];
 	items: StatusPageItem[];
 }
 
@@ -1563,6 +1652,12 @@ export interface StatusPagePayload {
 	subscribe_channel_id?: number | null;
 	/** Public host name; `null` or `''` removes it. Omitted: kept. */
 	domain?: string | null;
+	/** Omitted: kept. */
+	seo?: StatusPageSeo;
+	/** Checked monitor folders; omitted: kept, `[]`: none. */
+	groups?: string[];
+	/** Public names of group members; omitted: kept. */
+	group_labels?: StatusPageGroupLabel[];
 }
 
 /** Email subscriber of a status page (admin view; the token never leaves the server). */
@@ -1626,11 +1721,26 @@ export interface IncidentPayload {
 	ends_at?: string;
 	/** First message of the timeline (creation only). */
 	body?: string;
+	/**
+	 * Dated messages of the timeline (creation only), to enter a past incident.
+	 * An incident cannot start, end or be updated in the future; with `ends_at`
+	 * (or a closing update) it is created resolved and nobody is notified.
+	 */
+	updates?: IncidentNewUpdate[];
+}
+
+export interface IncidentNewUpdate {
+	status: IncidentStatus;
+	body: string;
+	/** UTC instant; omitted: same as the previous message (the start for the first). */
+	at?: string;
 }
 
 export interface IncidentUpdatePayload {
 	status?: IncidentStatus;
 	body: string;
+	/** Past date of the message, to complete a history; omitted: now, and subscribers are notified. */
+	at?: string;
 }
 
 // Public document of `GET /api/public/status/{slug}`: no ids, no addresses.
@@ -1683,6 +1793,19 @@ export interface PublicStatusItem {
 	history: PublicDayBucket[];
 }
 
+/** One day of a status page, hour by hour (`GET /api/public/status/{slug}/day/{date}`). */
+export interface PublicDayDetail {
+	date: string;
+	services: {
+		key: string;
+		label: string;
+		/** Availability of each UTC hour; `null` without a measurement. */
+		hours: (number | null)[];
+		outages: { from: string; to: string; minutes: number }[];
+	}[];
+	incidents: { title: string; kind: IncidentKind; status: IncidentStatus; starts_at: string; ends_at: string | null }[];
+}
+
 export interface PublicStatusGroup {
 	name: string;
 	items: PublicStatusItem[];
@@ -1714,6 +1837,10 @@ export interface PublicStatus {
 		show_uptime_days: number;
 		/** The window actually shown: the age of the data, from 7 days up to `show_uptime_days`. */
 		history_days: number;
+		/** What the history bars really cover, in seconds: the chosen period, or less for younger data. */
+		window_secs: number;
+		/** Duration of one bar in seconds; 86400 = one bar per day. */
+		step_secs: number;
 		updated_at: string;
 		accent: StatusPageAccent;
 		/** Ordered banner scenes; empty or absent: none. */
@@ -1730,6 +1857,17 @@ export interface PublicStatus {
 		logo_url: string | null;
 		/** The page offers email subscription (an SMTP channel is chosen). */
 		subscribe: boolean;
+		/** Effective search-engine values (settings, or defaults built from the page name). */
+		seo?: {
+			indexable: boolean;
+			title: string;
+			description: string;
+			keywords: string;
+			canonical?: string;
+			image?: string;
+			lang: string;
+			site_name: string;
+		};
 	};
 	overall: PublicOverall;
 	generated_at: string;
@@ -2092,10 +2230,10 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'lldp';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall';
 
-/** Where a node's site comes from: its `site` tag, an agent's declaration, or the relay agent that polls it. */
-export type TopologySiteSource = 'tag' | 'agent' | 'relay';
+/** Where a node's site comes from: the location it is placed at, its `site` tag, an agent's declaration, or the relay agent that polls it. */
+export type TopologySiteSource = 'tag' | 'agent' | 'relay' | 'location';
 
 /** A node of `GET /api/topology`. Mirrors `NodeView` in `crates/server/src/api/topology.rs`. */
 export interface TopologyNode {
@@ -2104,7 +2242,7 @@ export interface TopologyNode {
 	/** The device; `null` for a guest. */
 	target_id: TargetId | null;
 	name: string;
-	/** The device kind; `vm` or `container` for a guest. */
+	/** The device kind; `vm` or `container` for a guest, `pve_node` for a node of a Proxmox cluster. */
 	kind: string;
 	/** Folder; a guest takes its hypervisor's. */
 	group_name: string;
@@ -2113,8 +2251,16 @@ export interface TopologyNode {
 	site_source: TopologySiteSource | null;
 	/** Guest only: the hypervisor device. */
 	host_id: TargetId | null;
-	/** Guest only: running at the last measurement. */
+	/** Subnet of the device (CIDR); `null` for a guest, a node, a public address or a host name. */
+	subnet: string | null;
+	/** VLAN of that subnet, when a firewall reports it. */
+	vlan: number | null;
+	/** Name of that network (the firewall interface description). */
+	vlan_name: string | null;
+	/** Guest: running at the last measurement. Cluster node: online. */
 	running: boolean | null;
+	/** Guest (its own node, or the device that stands for it): the addresses its hypervisor reports. */
+	ips: string[];
 }
 
 /** A link: `from` is upstream (parent, relay, hypervisor, switch). Mirrors `EdgeView`. */
@@ -4673,4 +4819,105 @@ export interface LogDestinationPayload {
 export interface LogTestResult {
 	ok: boolean;
 	message: string;
+}
+
+// --- CVE & vulnerabilities (mirrors `crates/server/src/api/cves.rs`) --------
+
+export type CveState = 'vulnerable' | 'patched' | 'unknown';
+export type CveSeverity = 'critical' | 'high' | 'medium' | 'low' | 'none';
+export type CveReason =
+	| 'below_fixed_version'
+	| 'in_affected_range'
+	| 'no_fix_available'
+	| 'fixed_version_installed'
+	| 'vendor_build'
+	| 'undetermined'
+	| 'version_unparsed';
+
+/** `GET`/`PUT /api/security/cves/settings`. The NVD key never comes back. */
+export interface CveSettings {
+	enabled: boolean;
+	has_nvd_key: boolean;
+}
+
+/** Body of `PUT /api/security/cves/settings`: `nvd_api_key` omitted keeps the key, `""` clears it. */
+export interface CveSettingsInput {
+	enabled: boolean;
+	nvd_api_key?: string;
+}
+
+export interface CveSource {
+	name: 'nvd' | 'osv' | 'debian' | 'kev';
+	last_success: string | null;
+	last_error: string | null;
+	items: number;
+}
+
+export interface CveCounts {
+	vulnerable: number;
+	exploited: number;
+	unknown: number;
+	patched: number;
+	ignored: number;
+}
+
+export interface CveSummary {
+	enabled: boolean;
+	refreshing: boolean;
+	last_refresh: string | null;
+	counts: CveCounts;
+	targets: number;
+	components: number;
+	sources: CveSource[];
+}
+
+export interface CveFinding {
+	target_id: number;
+	target_name: string;
+	target_kind: string;
+	component: string;
+	installed_version: string;
+	fixed_version: string | null;
+	cve_id: string;
+	summary: string;
+	cvss: number | null;
+	severity: CveSeverity;
+	published: string | null;
+	exploited: boolean;
+	ransomware: boolean;
+	state: CveState;
+	reason: CveReason;
+	source: 'nvd' | 'osv' | 'debian';
+	link: string;
+	ignored: boolean;
+	ignore_note: string | null;
+	ignored_by: string | null;
+	ignored_at: string | null;
+}
+
+export interface CveList {
+	enabled: boolean;
+	findings: CveFinding[];
+}
+
+export interface CveComponent {
+	target_id: number;
+	target_name: string;
+	component: string;
+	version: string;
+	origin: string;
+	findings: number;
+}
+
+export interface CveInventory {
+	components: CveComponent[];
+}
+
+/** Query of `GET /api/security/cves`. */
+export interface CveFilters {
+	target?: number;
+	severity?: CveSeverity;
+	state?: CveState;
+	exploited?: boolean;
+	ignored?: boolean;
 }

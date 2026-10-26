@@ -1324,6 +1324,32 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/targets/folders/rename:
+    post:
+      operationId: renameTargetFolder
+      tags: [Devices]
+      summary: Rename a folder
+      description: >-
+        Moves every device filed under folder `from` to folder `to`. Status
+        pages that ticked the folder follow the new name in the same
+        transaction.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from: { type: string }
+                to: { type: string, maxLength: 60 }
+      responses:
+        "204": { description: Folder renamed. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -2737,6 +2763,64 @@ paths:
               schema: { type: string }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/public/status/{slug}/day/{date}:
+    parameters:
+      - $ref: "#/components/parameters/Slug"
+      - name: date
+        in: path
+        required: true
+        description: A UTC day, `YYYY-MM-DD`, within the last 90 days.
+        schema: { type: string }
+    get:
+      operationId: getPublicStatusDay
+      tags: [Public status]
+      summary: One day of a status page, hour by hour
+      description: >-
+        Per service (public name only): availability of each of the 24 UTC hours
+        and the outages of the day with their start and end, plus the
+        announcements that touch the day.
+      security: []
+      x-token-scope: public
+      responses:
+        "200":
+          description: The day.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date: { type: string }
+                  services:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        key: { type: string }
+                        label: { type: string }
+                        hours:
+                          type: array
+                          items: { type: [number, "null"] }
+                        outages:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              from: { type: string }
+                              to: { type: string }
+                              minutes: { type: integer }
+                  incidents:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        title: { type: string }
+                        kind: { type: string }
+                        status: { type: string }
+                        starts_at: { type: string }
+                        ends_at: { type: [string, "null"] }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/public/status/{slug}/uptime.svg:
     parameters:
       - $ref: "#/components/parameters/Slug"
@@ -3012,6 +3096,175 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/agent/tokens/{id}/close:
+    parameters:
+      - $ref: "#/components/parameters/Id"
+    post:
+      operationId: closeAgentToken
+      tags: [Agents]
+      summary: Stop new enrolments with a token
+      description: >-
+        Administrator only. Moves the enrolment deadline to now: machines already
+        enrolled with the token keep reporting, unlike a revocation.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Enrolments closed. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/agent/ad-kit:
+    post:
+      operationId: createAgentAdKit
+      tags: [Agents]
+      summary: Create an Active Directory deployment kit
+      description: >-
+        Administrator only. Creates a reusable enrolment token limited to an Active
+        Directory domain (machines must report a fully qualified name in it, and are
+        filed in the folder "Active Directory <domain>" with the tag `ad`), and returns
+        `Deploy-DumbMonit.ps1`, to run once on a domain controller: it creates a group
+        policy that installs the agent on the servers of the chosen OU. The token is
+        shown this time only, and the script carries it.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/AgentAdKitCreate" }
+      responses:
+        "201":
+          description: Token and deployment script.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CreatedAgentAdKit" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/install:
+    get:
+      operationId: getAgentInstallParams
+      tags: [Agents]
+      summary: Parameters of the agent install command, without a token
+      description: >-
+        The single source of the install commands: web URL, URL and CA
+        fingerprint of the encrypted agent channel, binary checksums, and the
+        Unix and PowerShell commands with `{TOKEN}` to replace. Deployment
+        generators (GPO, Ansible) read this instead of rebuilding the command.
+      x-token-scope: read
+      parameters:
+        - name: base_url
+          in: query
+          required: false
+          schema: { type: string }
+          description: The URL machines reach this server at; the listen address by default.
+      responses:
+        "200":
+          description: Install parameters.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentInstallParams" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/tls:
+    get:
+      operationId: getAgentChannel
+      tags: [Agents]
+      summary: State of the encrypted agent channel (admin only)
+      description: >-
+        TLS 1.3 with client certificates and X25519MLKEM768 key exchange on the
+        agent port. Lists the channel each agent last reported through.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setAgentChannel
+      tags: [Agents]
+      summary: Require the encrypted agent channel
+      description: >-
+        With `required`, agents reporting through the plain channel of the web
+        port are refused (up-to-date agents switch by themselves).
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [required]
+              properties:
+                required: { type: boolean }
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/agent/tls/rotation:
+    post:
+      operationId: startAgentCaRotation
+      tags: [Agents]
+      summary: Start rotating the agent certificate authority
+      description: >-
+        Creates the next authority. Agents pin it at their next encrypted
+        report; it signs nothing until the rotation is completed.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    delete:
+      operationId: cancelAgentCaRotation
+      tags: [Agents]
+      summary: Cancel a rotation of the agent certificate authority
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "204": { description: Rotation cancelled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/agent/tls/rotation/complete:
+    post:
+      operationId: completeAgentCaRotation
+      tags: [Agents]
+      summary: Complete a rotation of the agent certificate authority
+      description: >-
+        The next authority becomes active and signs the server certificate.
+        Agents that have not pinned it yet must be reinstalled.
+      security: [{ cookieAuth: [] }]
+      x-token-scope: none
+      responses:
+        "200":
+          description: Channel state.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AgentChannel" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   /api/relays:
     get:
       operationId: listRelays
@@ -3041,12 +3294,28 @@ paths:
         suppression follows), `service` (a service an agent found, hanging from its machine),
         `relay` (the relay agent that polls the device), `hypervisor`
         (a hypervisor and its guests, from the latest Proxmox, XCP-ng, Nutanix, vSphere or
-        libvirt metrics) and `lldp` (an LLDP neighbour seen by an SNMP switch). A pair of
+        libvirt metrics; on a Proxmox cluster the guests hang from a `pve_node` node, one per
+        Proxmox node, itself linked to the cluster), `hosted` (a device whose IP address is one
+        the hypervisor reports for a guest — Proxmox guest agent, container interfaces, static
+        configuration, VMware Tools — drawn under that guest; an address several guests report
+        is ignored and a declared parent wins; when a guest's name matches no device, the only
+        machine-level device at its address, such as an agent, ping or SNMP monitor, stands for
+        the guest instead of a duplicate node), `lldp` (an LLDP neighbour seen by an SNMP
+        switch), `samehost` (a PBS and a Proxmox VE monitor that point at the same machine),
+        `backup` (a Proxmox VE whose `pbs` storage targets a monitored PBS server) and
+        `firewall` (a device whose address falls in a network a monitored firewall of the same
+        site serves, when nothing else attaches it). A pair of
         nodes is linked once, by the surest source. A guest or neighbour is linked to a
         monitored device only when its name designates exactly one device; a guest that
         matches none becomes its own node (`target_id` null), an unknown LLDP neighbour is
-        left out. Addresses are not included. States are read from `GET /api/targets`.
-        A node's `site` is found without configuration: the device's `site` tag (except on
+        left out. Each device node carries the `subnet` it sits in (from its IP address and the
+        networks the site's firewalls know, else its /24; none for a public address or a host
+        name) and, when a firewall says so, that network's `vlan` and `vlan_name`.
+        Device addresses are not included; only the addresses a hypervisor reports for its guests
+        are (`ips`). States are read from `GET /api/targets`.
+        A node's `site` is found without configuration: the location the device is placed at
+        (a remote location gives its site, the main-site location gives none), else the
+        device's `site` tag (except on
         UniFi, where it names the controller site), else the site its agent or relay agent
         declares, else the name of the relay agent that polls it (`site_source` says which).
       x-token-scope: read
@@ -5051,6 +5320,172 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
 
+  /api/security/cves:
+    get:
+      operationId: listCves
+      tags: [Security]
+      summary: Known vulnerabilities (CVE) of the software inventory
+      description: >-
+        One row per device, component and CVE, read from the last scan (never
+        from the sources directly). Exploited ones (CISA KEV) first, then
+        vulnerable, to check (`unknown`) and patched, highest CVSS first.
+        Ignored rows are included with `ignored: true` unless `ignored=false`.
+      x-token-scope: read
+      parameters:
+        - { name: target, in: query, schema: { type: integer } }
+        - { name: severity, in: query, schema: { $ref: "#/components/schemas/CveSeverity" } }
+        - { name: state, in: query, schema: { $ref: "#/components/schemas/CveState" } }
+        - { name: exploited, in: query, schema: { type: boolean } }
+        - { name: ignored, in: query, schema: { type: boolean } }
+      responses:
+        "200":
+          description: The findings.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveList" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/summary:
+    get:
+      operationId: getCveSummary
+      tags: [Security]
+      summary: Vulnerability counts and source status
+      description: "`target` narrows the counts to one device."
+      x-token-scope: read
+      parameters:
+        - { name: target, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: Counts, inventory size and the state of each source.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveSummary" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/inventory:
+    get:
+      operationId: getCveInventory
+      tags: [Security]
+      summary: Inventoried software components and where their CVEs come from
+      x-token-scope: read
+      parameters:
+        - { name: target, in: query, schema: { type: integer } }
+      responses:
+        "200":
+          description: One row per device and component.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveInventory" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/settings:
+    get:
+      operationId: getCveSettings
+      tags: [Security]
+      summary: Is the CVE scan turned on
+      description: >-
+        Off by default: while off, nothing is sent to NVD, OSV.dev, the Debian
+        security tracker or CISA. The NVD API key is never returned.
+      x-token-scope: read
+      responses:
+        "200":
+          description: The current setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveSettings" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+    put:
+      operationId: setCveSettings
+      tags: [Security]
+      summary: Turn the CVE scan on or off, set the NVD API key
+      description: >-
+        `nvd_api_key` omitted keeps the stored key, an empty string clears it.
+        Turning the scan on starts a first scan. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CveSettingsInput" }
+      responses:
+        "200":
+          description: The new setting.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/CveSettings" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
+  /api/security/cves/refresh:
+    post:
+      operationId: refreshCves
+      tags: [Security]
+      summary: Re-read every source and recompute the verdicts now
+      description: Runs in the background; poll the summary for `refreshing`. Administrators only.
+      x-token-scope: write
+      responses:
+        "202":
+          description: The refresh is queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  refreshing: { type: boolean }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "409": { $ref: "#/components/responses/Conflict" }
+
+  /api/security/cves/ignores:
+    post:
+      operationId: ignoreCve
+      tags: [Security]
+      summary: Accept the risk of one CVE on one device
+      description: >-
+        The CVE is no longer counted nor alerted on for this device; it stays
+        listed with `ignored: true`. Administrators only.
+      x-token-scope: write
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target_id, cve_id]
+              properties:
+                target_id: { type: integer }
+                cve_id: { type: string, examples: [CVE-2024-6387] }
+                note: { type: string, maxLength: 500 }
+      responses:
+        "204": { description: Ignored. }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/security/cves/ignores/{target_id}/{cve_id}:
+    parameters:
+      - { name: target_id, in: path, required: true, schema: { type: integer } }
+      - { name: cve_id, in: path, required: true, schema: { type: string } }
+    delete:
+      operationId: unignoreCve
+      tags: [Security]
+      summary: Stop ignoring a CVE on a device
+      x-token-scope: write
+      responses:
+        "204": { description: Counted and alerted on again. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
   # ------------------------------------------------------------- assistants
   /api/mcp:
     get:
@@ -6301,6 +6736,54 @@ components:
         expires_at: { type: [string, "null"], description: Enrolments stop after it; enrolled machines keep reporting. }
         relay: { type: boolean, description: The machine it enrols becomes a relay for its site at its first report. }
         relay_site: { type: [string, "null"] }
+        ad_domain: { type: [string, "null"], description: Active Directory fleet token - enrols only fully qualified names in this domain. }
+    AgentInstallParams:
+      type: object
+      required: [base_url, checksums, linux_template, windows_template]
+      properties:
+        base_url: { type: string, description: URL of the web port (install scripts and binaries). }
+        agent_url: { type: [string, "null"], description: "URL of the encrypted agent channel, `https://host:8443`." }
+        ca_pin: { type: [string, "null"], description: SHA-256 fingerprint of the agent certificate authority. }
+        checksums:
+          type: array
+          items:
+            type: object
+            required: [platform, sha256]
+            properties:
+              platform: { type: string }
+              sha256: { type: string }
+        linux_template: { type: string, description: "Unix install command; replace `{TOKEN}`." }
+        windows_template: { type: string, description: "PowerShell install command; replace `{TOKEN}`." }
+    AgentChannel:
+      type: object
+      required: [enabled, required, required_setting, protocol, key_exchange, agents]
+      properties:
+        enabled: { type: boolean, description: The agent port is open. }
+        port: { type: [integer, "null"] }
+        required: { type: boolean, description: The plain channel is refused right now. }
+        required_setting: { type: boolean }
+        legacy_until: { type: [string, "null"], description: End of the transition set by DUMBMONIT_AGENT_LEGACY_DAYS. }
+        protocol: { type: string }
+        key_exchange: { type: string }
+        ca_pin: { type: [string, "null"] }
+        rotation:
+          type: [object, "null"]
+          properties:
+            started_at: { type: [string, "null"] }
+            next_pin: { type: string }
+            ready: { type: integer }
+            total: { type: integer }
+        agents:
+          type: array
+          items:
+            type: object
+            required: [id, channel]
+            properties:
+              id: { type: integer, format: int64 }
+              channel: { type: string, enum: [mtls, legacy, none] }
+              group: { type: [string, "null"] }
+              tls_seen_at: { type: [string, "null"] }
+              legacy_seen_at: { type: [string, "null"] }
     AgentTokenCreate:
       type: object
       required: [name]
@@ -6321,6 +6804,28 @@ components:
             secret: { type: string, description: Shown once. }
             install_linux: { type: string }
             install_windows: { type: string }
+    AgentAdKitCreate:
+      type: object
+      required: [domain]
+      properties:
+        domain: { type: string, description: 'DNS name of the domain, e.g. corp.example.com.' }
+        base_url: { type: string, description: The URL servers will use; the listen address by default. }
+        max_uses: { type: [integer, "null"], minimum: 1, description: Servers it may enrol; unlimited when absent. }
+        expires_in_days: { type: [integer, "null"], minimum: 1, default: 30 }
+        target_ou: { type: [string, "null"], maxLength: 512, description: Distinguished name of the OU to link the group policy to. }
+        include_domain_controllers: { type: boolean, default: false }
+        security_group: { type: [string, "null"], maxLength: 512, description: Only members of this group apply the group policy. }
+        sysvol_binary: { type: boolean, default: false, description: Also copy the agent binary to SYSVOL for servers without outbound access. }
+    CreatedAgentAdKit:
+      type: object
+      required: [token, secret, script, filename, folder, install_windows]
+      properties:
+        token: { $ref: "#/components/schemas/AgentToken" }
+        secret: { type: string, description: Shown once. }
+        script: { type: string, description: Content of Deploy-DumbMonit.ps1 (UTF-8 with a byte order mark). }
+        filename: { type: string }
+        folder: { type: string, description: Folder the enrolled servers are filed in. }
+        install_windows: { type: string }
 
     # -------------------------------------------------- types d'équipement
     KindDescription:
@@ -6404,7 +6909,9 @@ components:
         placeholder: { type: string }
         default: { type: string }
         required: { type: boolean }
-        input: { type: string }
+        input:
+          type: string
+          description: "`text`, `number`, `boolean`, `select`, `checklist`, `rows`, or `agent`: a choice among the agents known to the server, stored as the id of the agent's monitor (blank: none). Unknown values are shown as text."
         choices:
           type: array
           items: { type: string }
@@ -7337,7 +7844,7 @@ components:
         description: { type: string }
         published: { type: boolean }
         theme: { type: string, enum: [auto, light, dark] }
-        show_uptime_days: { type: integer, minimum: 7, maximum: 90 }
+        show_uptime_days: { type: integer, minimum: 1, maximum: 90 }
         created_at: { type: string }
         updated_at: { type: string }
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
@@ -7348,9 +7855,39 @@ components:
         logo_type: { type: [string, "null"], enum: [image/png, image/jpeg, image/webp, null] }
         subscribe_channel_id: { type: [integer, "null"], format: int64 }
         domain: { type: [string, "null"], description: "Public host name serving this page at `/`; `null` for none." }
+        seo: { $ref: "#/components/schemas/StatusPageSeo" }
+        group_labels:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
+          description: Public names of the monitors that come in through a checked group. None set for a monitor means its own name is published.
+        groups:
+          type: array
+          items: { type: string }
+          description: Checked groups (monitor folders), in order. Their current members are shown, so a monitor added to or removed from the folder appears or disappears by itself.
         items:
           type: array
           items: { $ref: "#/components/schemas/StatusPageItem" }
+    StatusPageGroupLabel:
+      type: object
+      required: [target_id, label]
+      properties:
+        target_id: { type: integer, format: int64 }
+        label: { type: string, maxLength: 80, description: Public name shown to visitors. The monitor's private name is never published when this is set. }
+    StatusPageSeo:
+      type: object
+      description: >-
+        Search-engine settings. An empty text field means "generated default"
+        (built from the page name). The page is indexable only when it is
+        published and `index` is true; otherwise it answers `noindex, nofollow`.
+      properties:
+        index: { type: boolean, default: false, description: "`true`: `index, follow`; `false`: `noindex, nofollow`." }
+        title: { type: string, maxLength: 120, description: About 60 characters is displayed. }
+        description: { type: string, maxLength: 320, description: About 155 characters is displayed. }
+        keywords: { type: string, maxLength: 300 }
+        canonical: { type: string, description: "Absolute `http(s)://` URL, or empty." }
+        image: { type: string, description: "Absolute `http(s)://` share image (Open Graph / Twitter), or empty." }
+        lang: { type: string, description: "Language tag such as `en`, `fr`, `pt-BR`; empty: `en`." }
+        site_name: { type: string, maxLength: 100 }
     StatusPageItem:
       type: object
       required: [id, page_id, target_id, label, group_name, position]
@@ -7377,7 +7914,7 @@ components:
         description: { type: string, maxLength: 1000 }
         published: { type: boolean, default: false }
         theme: { type: string, enum: [auto, light, dark], default: auto }
-        show_uptime_days: { type: integer, minimum: 7, maximum: 90, default: 90 }
+        show_uptime_days: { type: integer, minimum: 1, maximum: 90, default: 90, description: "Period shown by the history bars: 1 (24 hours), 7, 30, 60 or 90 days. The bars adapt to younger data." }
         accent: { type: string, enum: [default, blue, teal, violet, rose, amber] }
         footer_text: { type: string, maxLength: 280 }
         homepage_url: { type: string, maxLength: 300, description: "`http(s)://` or empty." }
@@ -7390,6 +7927,17 @@ components:
         show_calendar: { type: boolean, default: false, description: Public 90-day calendar. Omitted keeps the saved value. }
         show_latency: { type: boolean, default: false, description: Public response-time graph per service. Omitted keeps the saved value. }
         subscribe_channel_id: { type: [integer, "null"], format: int64, description: "An `smtp` channel; `null` turns email subscription off." }
+        seo:
+          $ref: "#/components/schemas/StatusPageSeo"
+        groups:
+          type: array
+          maxItems: 50
+          items: { type: string, maxLength: 200 }
+          description: Monitor folders shown as a whole (dynamic). Omitted keeps the saved list; `[]` unchecks all.
+        group_labels:
+          type: array
+          items: { $ref: "#/components/schemas/StatusPageGroupLabel" }
+          description: Public names of group members. Omitted keeps the saved ones; `[]` clears them.
         domain:
           type: [string, "null"]
           description: >-
@@ -7475,6 +8023,8 @@ components:
             description: { type: string }
             theme: { type: string }
             show_uptime_days: { type: integer }
+            window_secs: { type: integer, description: "Duration the history bars really cover: the chosen period, or less when the data is younger." }
+            step_secs: { type: integer, description: "Duration of one bar; 86400 means one bar per day." }
             updated_at: { type: string }
             accent: { type: string }
             footer_text: { type: string }
@@ -7483,6 +8033,18 @@ components:
             subscribe: { type: boolean }
             show_calendar: { type: boolean, description: Present (true) only when the page shows the calendar. }
             show_latency: { type: boolean, description: Present (true) only when the page shows response times. }
+            seo:
+              type: object
+              description: Effective search-engine values (settings, or defaults built from the page name).
+              properties:
+                indexable: { type: boolean }
+                title: { type: string }
+                description: { type: string }
+                keywords: { type: string }
+                canonical: { type: string }
+                image: { type: string }
+                lang: { type: string }
+                site_name: { type: string }
         calendar:
           type: array
           description: One entry per day, oldest first (90 days). Present only when the calendar is enabled.
@@ -7712,27 +8274,34 @@ components:
           description: False when VictoriaMetrics did not answer; `hypervisor` and `lldp` links are then missing.
     TopologyNode:
       type: object
-      required: [id, name, kind, group_name]
+      required: [id, name, kind, group_name, ips]
       properties:
         id: { type: string, description: "`t<id>` for a device, `g<host>:<name>` for an unmonitored guest." }
         target_id: { type: [integer, "null"], format: int64, description: The device; null for a guest. }
         name: { type: string }
-        kind: { type: string, description: "The device type; `vm` or `container` for a guest." }
+        kind: { type: string, description: "The device type; `vm` or `container` for a guest, `pve_node` for a node of a Proxmox cluster." }
+        subnet: { type: [string, "null"], description: "Subnet of the device (CIDR), none for a guest, a node, a public address or a host name." }
+        vlan: { type: [integer, "null"], description: "VLAN of that subnet, when a firewall reports it." }
+        vlan_name: { type: [string, "null"], description: "Name of that network (the firewall interface description)." }
         group_name: { type: string, description: Folder; a guest takes its hypervisor's. }
         site: { type: [string, "null"], description: "Remote site the node belongs to; null for the main site." }
         site_source:
           type: [string, "null"]
-          enum: [tag, agent, relay, null]
-          description: "Where `site` comes from: the `site` tag, the site an agent declares, or the relay agent that polls the device (its name)."
+          enum: [tag, agent, relay, location, null]
+          description: "Where `site` comes from: the `site` tag, the site an agent declares, the relay agent that polls the device (its name), or the location the device is placed at."
         host_id: { type: [integer, "null"], format: int64, description: Guest only, the hypervisor device. }
-        running: { type: [boolean, "null"], description: Guest only, running at the last measurement. }
+        running: { type: [boolean, "null"], description: Guest only, running at the last measurement; for a `pve_node`, online. }
+        ips:
+          type: array
+          items: { type: string }
+          description: "Guest (its own node, or the device that stands for it): the IP addresses its hypervisor reports. Empty otherwise."
     TopologyEdge:
       type: object
       required: [from, to, source]
       properties:
         from: { type: string, description: Upstream node (parent, relay, hypervisor, switch). }
         to: { type: string }
-        source: { type: string, enum: [parent, service, relay, hypervisor, lldp] }
+        source: { type: string, enum: [parent, service, relay, hypervisor, hosted, lldp, samehost, backup, firewall] }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]
@@ -8703,6 +9272,98 @@ components:
               fail: { type: integer }
               unknown: { type: integer }
               top_failures: { type: array, items: { type: string } }
+
+    CveState:
+      type: string
+      enum: [vulnerable, patched, unknown]
+      description: "`unknown`: to check by hand (backported fix possible, ambiguous data)."
+    CveSeverity:
+      type: string
+      enum: [critical, high, medium, low, none]
+      description: CVSS 3 class; `none` when no score is known.
+    CveSettings:
+      type: object
+      required: [enabled, has_nvd_key]
+      properties:
+        enabled: { type: boolean }
+        has_nvd_key: { type: boolean }
+    CveSettingsInput:
+      type: object
+      required: [enabled]
+      properties:
+        enabled: { type: boolean }
+        nvd_api_key: { type: string, description: "Omitted: kept. Empty: cleared." }
+    CveFinding:
+      type: object
+      properties:
+        target_id: { type: integer }
+        target_name: { type: string }
+        target_kind: { type: string }
+        component: { type: string }
+        installed_version: { type: string }
+        fixed_version: { type: [string, "null"] }
+        cve_id: { type: string }
+        summary: { type: string }
+        cvss: { type: [number, "null"] }
+        severity: { $ref: "#/components/schemas/CveSeverity" }
+        published: { type: [string, "null"] }
+        exploited: { type: boolean, description: In the CISA KEV catalog. }
+        ransomware: { type: boolean }
+        state: { $ref: "#/components/schemas/CveState" }
+        reason:
+          type: string
+          enum: [below_fixed_version, in_affected_range, no_fix_available, fixed_version_installed, vendor_build, undetermined, version_unparsed]
+        source: { type: string, enum: [nvd, osv, debian] }
+        link: { type: string }
+        ignored: { type: boolean }
+        ignore_note: { type: [string, "null"] }
+        ignored_by: { type: [string, "null"] }
+        ignored_at: { type: [string, "null"] }
+    CveList:
+      type: object
+      required: [enabled, findings]
+      properties:
+        enabled: { type: boolean }
+        findings: { type: array, items: { $ref: "#/components/schemas/CveFinding" } }
+    CveSummary:
+      type: object
+      properties:
+        enabled: { type: boolean }
+        refreshing: { type: boolean }
+        last_refresh: { type: [string, "null"] }
+        counts:
+          type: object
+          properties:
+            vulnerable: { type: integer }
+            exploited: { type: integer }
+            unknown: { type: integer }
+            patched: { type: integer }
+            ignored: { type: integer }
+        targets: { type: integer }
+        components: { type: integer }
+        sources:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string, enum: [nvd, osv, debian, kev] }
+              last_success: { type: [string, "null"] }
+              last_error: { type: [string, "null"] }
+              items: { type: integer }
+    CveInventory:
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            type: object
+            properties:
+              target_id: { type: integer }
+              target_name: { type: string }
+              component: { type: string }
+              version: { type: string }
+              origin: { type: string, examples: [nvd, "debian:bookworm", "osv:Ubuntu:24.04:LTS", none] }
+              findings: { type: integer }
 
     # ------------------------------------------------------------------ MCP
     McpEndpointInfo:

@@ -7,6 +7,7 @@
  * the server itself. `pickAgent` finds which agent runs on the same machine.
  */
 import type { MetricSeries, Target, TargetId } from '#lib/api/types.js';
+import { explicitAgent, shortHost } from './agent-link.ts';
 
 export interface QueueStat {
 	queue: string;
@@ -87,8 +88,83 @@ export function totalsQuery(agent: TargetId): string {
 	return `increase({__name__=~"dumbmonit_mdaemon_(messages_total|filtered_messages_total)", target="${agent}"}[24h])`;
 }
 
-/** Which agents report MDaemon counters at all. */
-export const REPORTING_QUERY = 'count by (target) (dumbmonit_mdaemon_queue_messages)';
+/** Which agents report a mail server's series at all (performance counters or the agent's own probe). */
+export function reportingQuery(product: string): string {
+	const own = `count by (target) (dumbmonit_agent_mail_info{product="${product}"})`;
+	return product === 'mdaemon' ? `${own} or count by (target) (dumbmonit_mdaemon_queue_messages)` : own;
+}
+
+/** Windows services, queue folders and disk space the agent reads for one product. */
+export function agentMailQuery(agent: TargetId, product: string): string {
+	return `{__name__=~"dumbmonit_agent_mail_(info|service_up|queue_files|queue_oldest_seconds|data_free_bytes|data_total_bytes)", target="${agent}", product="${product}"}`;
+}
+
+export interface WindowsService {
+	name: string;
+	display: string;
+	/** `auto`, `manual`, `disabled` or `other`: what Windows starts it with. */
+	start: string;
+	running: boolean;
+}
+
+export interface AgentMail {
+	/** The agent found the product on the server (it sent `info`). */
+	detected: boolean;
+	version: string | null;
+	services: WindowsService[];
+	/** Messages (`.msg` files) waiting in each queue folder. */
+	files: Record<string, number>;
+	/** Age in seconds of the oldest message of each non-empty queue folder. */
+	oldest: Record<string, number>;
+	freeBytes: number | null;
+	totalBytes: number | null;
+}
+
+export const EMPTY_AGENT_MAIL: AgentMail = {
+	detected: false,
+	version: null,
+	services: [],
+	files: {},
+	oldest: {},
+	freeBytes: null,
+	totalBytes: null
+};
+
+/** Folds the agent's own series (`dumbmonit_agent_mail_*`) into one reading. */
+export function foldAgentMail(series: MetricSeries[]): AgentMail {
+	const out: AgentMail = { ...EMPTY_AGENT_MAIL, services: [], files: {}, oldest: {} };
+	for (const serie of series) {
+		const value = last(serie);
+		if (!Number.isFinite(value)) continue;
+		const m = serie.metric;
+		switch ((m.__name__ ?? '').replace('dumbmonit_agent_mail_', '')) {
+			case 'info':
+				out.detected = true;
+				out.version = m.version || null;
+				break;
+			case 'service_up':
+				if (m.service) {
+					out.services.push({ name: m.service, display: m.display || m.service, start: m.start || 'other', running: value >= 1 });
+				}
+				break;
+			case 'queue_files':
+				if (m.queue) out.files[m.queue] = value;
+				break;
+			case 'queue_oldest_seconds':
+				if (m.queue) out.oldest[m.queue] = value;
+				break;
+			case 'data_free_bytes':
+				out.freeBytes = value;
+				break;
+			case 'data_total_bytes':
+				out.totalBytes = value;
+				break;
+		}
+	}
+	// Stopped services first: that is what the administrator looks for.
+	out.services.sort((a, b) => Number(a.running) - Number(b.running) || a.display.localeCompare(b.display, 'en'));
+	return out;
+}
 
 function last(serie: MetricSeries): number {
 	return Number(serie.values.at(-1)?.[1]);
@@ -163,19 +239,26 @@ export function foldCounters(gauges: MetricSeries[], totals: MetricSeries[]): Md
 	return out;
 }
 
-/** `mail.example.com:444` → `mail`; an IP address stays whole. */
-function shortHost(address: string): string {
-	let host = address.trim().toLowerCase();
-	host = host.replace(/^[a-z]+:\/\//, '').replace(/\/.*$/, '');
-	if (host.startsWith('[')) return host.slice(1, host.indexOf(']'));
-	host = host.replace(/:\d+$/, '');
-	if (/^\d{1,3}(\.\d{1,3}){3}$/.test(host)) return host;
-	return host.split('.')[0];
+/**
+ * The agent of a mail server monitor, and whether the user chose it.
+ *
+ * The `agent_id` setting wins and is returned even before the agent reports
+ * anything (the page then says so). Without it, [`pickAgent`] looks for the
+ * agent among those that already report this product's series.
+ */
+export function resolveAgent(
+	device: Target,
+	targets: Target[],
+	reporting: Set<TargetId>
+): { agent: Target | null; explicit: boolean } {
+	const chosen = explicitAgent(device, targets);
+	if (chosen) return { agent: chosen, explicit: true };
+	return { agent: pickAgent(device, targets, reporting), explicit: false };
 }
 
 /**
- * The agent that runs on the same machine as an MDaemon device, among the
- * agents that report MDaemon counters (`reporting`). In order:
+ * The agent that runs on the same machine as a mail server monitor, among the
+ * agents that report its series (`reporting`), when no agent was chosen. In order:
  *
  * 1. the device's parent is that agent (set by the user on the device page);
  * 2. the device is probed through that agent in relay mode;
@@ -197,7 +280,7 @@ export function pickAgent(device: Target, targets: Target[], reporting: Set<Targ
 	const host = shortHost(device.address);
 	const named = agents.filter((a) => shortHost(a.name) === host);
 	if (named.length === 1) return named[0];
-	const devices = targets.filter((t) => t.kind === 'mdaemon');
+	const devices = targets.filter((t) => t.kind === device.kind);
 	if (devices.length === 1 && agents.length === 1) return agents[0];
 	return null;
 }

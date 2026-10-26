@@ -60,6 +60,8 @@ pub struct TokenRecord {
     pub relay: bool,
     /// Site donné à ce relais, s'il y en a un.
     pub relay_site: Option<String>,
+    /// Jeton de flotte Active Directory : domaine DNS auquel il est limité.
+    pub ad_domain: Option<String>,
 }
 
 /// Longueur maximale d'un nom de site : il s'affiche sur une carte et dans une
@@ -78,6 +80,9 @@ pub enum EnrolmentDenied {
     Exhausted,
     /// Le terme d'enrôlement est passé.
     Expired,
+    /// Jeton de flotte Active Directory : la machine ne se présente pas sous
+    /// un nom complet du domaine auquel il est limité.
+    OutsideDomain,
 }
 
 impl EnrolmentDenied {
@@ -91,6 +96,11 @@ impl EnrolmentDenied {
             Self::Expired => {
                 "This enrollment token has passed its enrollment deadline. Create a new \
                  one; machines already enrolled keep reporting."
+            }
+            Self::OutsideDomain => {
+                "This enrollment token is limited to an Active Directory domain, and this \
+                 machine does not report a fully qualified name in it. Install the agent \
+                 with -HostName <name>.<domain>, or use another token."
             }
         }
     }
@@ -110,7 +120,7 @@ pub async fn create_token(
         "INSERT INTO agent_tokens (name, token_hash, prefix, max_uses, expires_at)
          VALUES (?, ?, ?, ?, ?)
          RETURNING id, name, prefix, created_at, last_used_at, revoked_at,
-                   max_uses, uses, expires_at, relay, relay_site",
+                   max_uses, uses, expires_at, relay, relay_site, ad_domain",
     )
     .bind(name)
     .bind(token::fingerprint(&clear))
@@ -127,7 +137,7 @@ pub async fn create_token(
 pub async fn list_tokens(pool: &SqlitePool) -> Result<Vec<TokenRecord>> {
     let rows = sqlx::query(
         "SELECT id, name, prefix, created_at, last_used_at, revoked_at,
-                max_uses, uses, expires_at, relay, relay_site
+                max_uses, uses, expires_at, relay, relay_site, ad_domain
          FROM agent_tokens ORDER BY id DESC",
     )
     .fetch_all(pool)
@@ -146,6 +156,107 @@ pub async fn set_token_relay(pool: &SqlitePool, id: i64, site: Option<&str>) -> 
         .await
         .context("marking the token as a relay token")?;
     Ok(())
+}
+
+/// Longueur maximale d'un nom de domaine DNS (RFC 1035).
+pub const MAX_DOMAIN_LEN: usize = 253;
+
+/// Domaine Active Directory normalisé : minuscules, sans point final ni
+/// blancs. `None` s'il est vide ou n'a pas la forme d'un nom DNS
+/// (`corp.example.com` : des étiquettes de lettres, chiffres et tirets).
+///
+/// Strict à dessein : ce nom finit dans le nom d'un dossier, dans une
+/// étiquette, et surtout dans un script PowerShell exécuté en administrateur
+/// du domaine. Rien d'autre que ces caractères n'a à y entrer.
+pub fn clean_ad_domain(domain: &str) -> Option<String> {
+    let domain = domain.trim().trim_end_matches('.').to_ascii_lowercase();
+    if domain.is_empty() || domain.len() > MAX_DOMAIN_LEN {
+        return None;
+    }
+    let valid_label = |label: &str| {
+        !label.is_empty()
+            && label.len() <= 63
+            && !label.starts_with('-')
+            && !label.ends_with('-')
+            && label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-')
+    };
+    domain.split('.').all(valid_label).then_some(domain)
+}
+
+/// Vrai si `hostname` est un nom complet du domaine `domain` (déjà normalisé),
+/// sous-domaines compris : `srv01.corp.example.com` et
+/// `srv02.paris.corp.example.com` sont dans `corp.example.com`, `srv01` ou
+/// `srv01.evilcorp.example.com` non.
+pub fn hostname_in_domain(hostname: &str, domain: &str) -> bool {
+    let hostname = hostname.trim().trim_end_matches('.').to_ascii_lowercase();
+    hostname.strip_suffix(domain).is_some_and(|head| head.len() > 1 && head.ends_with('.'))
+}
+
+/// Dossier dans lequel sont rangées les machines d'un domaine.
+pub fn ad_folder(domain: &str) -> String {
+    format!("Active Directory {domain}")
+}
+
+/// Limite un jeton à un domaine Active Directory (voir [`clean_ad_domain`]).
+pub async fn set_token_ad_domain(pool: &SqlitePool, id: i64, domain: &str) -> Result<()> {
+    sqlx::query("UPDATE agent_tokens SET ad_domain = ? WHERE id = ?")
+        .bind(domain)
+        .bind(id)
+        .execute(pool)
+        .await
+        .context("limiting the token to an Active Directory domain")?;
+    Ok(())
+}
+
+/// Clôt les inscriptions d'un jeton sans couper les machines qu'il a fait
+/// entrer : son terme est ramené à maintenant. C'est l'arrêt qui convient à un
+/// jeton de flotte une fois le parc déployé — le révoquer, lui, ferait taire
+/// toutes les machines qui l'utilisent. Faux si le jeton est inconnu ou
+/// révoqué.
+pub async fn close_enrolment(pool: &SqlitePool, id: i64) -> Result<bool> {
+    let result = sqlx::query(
+        "UPDATE agent_tokens
+         SET expires_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now', '-1 second')
+         WHERE id = ? AND revoked_at IS NULL",
+    )
+    .bind(id)
+    .execute(pool)
+    .await
+    .context("closing the token enrolments")?;
+    Ok(result.rows_affected() > 0)
+}
+
+/// Domaine Active Directory auquel un jeton est limité, s'il l'est.
+async fn token_ad_domain(pool: &SqlitePool, token_id: i64) -> Result<Option<String>> {
+    let row = sqlx::query("SELECT ad_domain FROM agent_tokens WHERE id = ?")
+        .bind(token_id)
+        .fetch_optional(pool)
+        .await
+        .context("reading the token domain")?;
+    Ok(row.map(|row| row.try_get::<Option<String>, _>("ad_domain")).transpose()?.flatten())
+}
+
+/// Ce jeton peut-il faire entrer *cette* machine ? Ses limites
+/// ([`enrolment_allowed`]), puis son domaine s'il en a un.
+async fn enrolment_allowed_for(
+    pool: &SqlitePool,
+    token_id: i64,
+    identity: &AgentIdentity,
+) -> Result<Result<(), EnrolmentDenied>> {
+    if let Err(denied) = enrolment_allowed(pool, token_id).await? {
+        return Ok(Err(denied));
+    }
+    if let Some(domain) = token_ad_domain(pool, token_id).await?
+        && !hostname_in_domain(&identity.hostname, &domain)
+    {
+        tracing::warn!(
+            hote = identity.hostname,
+            domaine = domain,
+            "inscription refusée : machine hors du domaine du jeton"
+        );
+        return Ok(Err(EnrolmentDenied::OutsideDomain));
+    }
+    Ok(Ok(()))
 }
 
 /// Reporte sur la machine le mode relais porté par son jeton d'enrôlement.
@@ -383,7 +494,7 @@ pub async fn register(
 
     // Une machine inconnue est un enrôlement : c'est là, et seulement là, que la
     // portée du jeton compte.
-    if let Err(denied) = enrolment_allowed(pool, token_id).await? {
+    if let Err(denied) = enrolment_allowed_for(pool, token_id, identity).await? {
         return Err(RegisterError::EnrolmentDenied(denied));
     }
 
@@ -399,6 +510,17 @@ pub async fn register(
     let (target_id, created) = match existing {
         Some(row) => (row.try_get::<TargetId, _>("id")?, false),
         None => {
+            // Jeton de flotte Active Directory : la machine est rangée d'office
+            // dans le dossier de son domaine, avec l'étiquette `ad`. L'OU
+            // d'origine, quand le script de déploiement la connaît, arrive
+            // dans les étiquettes de l'agent (`ad_ou`).
+            let ad_domain = token_ad_domain(pool, token_id).await?;
+            let mut tags = identity.tags.clone();
+            let mut group_name = String::new();
+            if let Some(domain) = &ad_domain {
+                tags.insert("ad".to_string(), domain.clone());
+                group_name = ad_folder(domain);
+            }
             let input = db::targets::TargetInput {
                 name: identity.hostname.clone(),
                 // L'adresse d'une cible « agent » n'est pas une adresse de contact :
@@ -411,11 +533,11 @@ pub async fn register(
                 via_agent: None,
                 interval: std::time::Duration::from_secs(DEFAULT_INTERVAL_SECS),
                 enabled: true,
-                tags: identity.tags.clone(),
+                tags,
                 // Aucun secret à conserver de ce côté : c'est l'agent qui se
                 // connecte, le serveur n'a jamais à joindre la machine.
                 credential: Some(Credential::None),
-                group_name: String::new(),
+                group_name,
             };
             (db::targets::create(pool, cipher, &input).await?, true)
         }
@@ -456,7 +578,7 @@ async fn claim(
             // Réinstallation : quelqu'un a explicitement ouvert la fenêtre dans
             // l'interface, et le jeton doit encore pouvoir enrôler.
             if host.rebind_open && identity.binding_supported {
-                if let Err(denied) = enrolment_allowed(pool, token_id).await? {
+                if let Err(denied) = enrolment_allowed_for(pool, token_id, identity).await? {
                     return Err(RegisterError::EnrolmentDenied(denied));
                 }
                 let secret = token::generate_secret();
@@ -498,7 +620,7 @@ async fn claim(
             // Le jeton qui a enrôlé la machine l'a déjà comptée ; un autre doit
             // encore pouvoir enrôler.
             if host.token_id != Some(token_id)
-                && let Err(denied) = enrolment_allowed(pool, token_id).await?
+                && let Err(denied) = enrolment_allowed_for(pool, token_id, identity).await?
             {
                 return Err(RegisterError::EnrolmentDenied(denied));
             }
@@ -579,6 +701,11 @@ pub async fn allow_rebind(pool: &SqlitePool, target_id: TargetId) -> Result<Opti
         .await
         .context("opening the re-enrolment window")?;
     Ok((result.rows_affected() > 0).then_some(until))
+}
+
+/// Machine qui porte une clé d'identité, si elle est connue.
+pub async fn target_of_key(pool: &SqlitePool, key: &str) -> Result<Option<TargetId>> {
+    Ok(find_host(pool, key).await?.map(|host| host.target_id))
 }
 
 /// Verdict rendu à une requête qui se présente avec une clé d'identité.
@@ -849,6 +976,26 @@ pub async fn last_seen_ms(pool: &SqlitePool, target_id: TargetId) -> Result<Opti
     }
 }
 
+/// Dernière activité du planificateur avant `before_ms` : la date la plus
+/// récente d'interrogation d'une cible, quelle qu'elle soit. C'est à peu près
+/// l'heure à laquelle le serveur s'est arrêté avant son démarrage en cours —
+/// indépendante des agents eux-mêmes, dont un seul muet fausserait l'estimation.
+pub async fn last_activity_before(pool: &SqlitePool, before_ms: i64) -> Result<Option<i64>> {
+    const FORMAT: &str = "%Y-%m-%dT%H:%M:%SZ";
+    let Some(before) = chrono::DateTime::from_timestamp_millis(before_ms) else {
+        return Ok(None);
+    };
+    let latest: Option<String> =
+        sqlx::query_scalar("SELECT MAX(last_probe_at) FROM targets WHERE last_probe_at < ?")
+            .bind(before.format(FORMAT).to_string())
+            .fetch_one(pool)
+            .await
+            .context("reading the last activity before startup")?;
+    Ok(latest
+        .and_then(|text| chrono::NaiveDateTime::parse_from_str(&text, FORMAT).ok())
+        .map(|at| at.and_utc().timestamp_millis()))
+}
+
 fn row_to_token(row: &sqlx::sqlite::SqliteRow) -> Result<TokenRecord> {
     Ok(TokenRecord {
         id: row.try_get("id")?,
@@ -862,6 +1009,7 @@ fn row_to_token(row: &sqlx::sqlite::SqliteRow) -> Result<TokenRecord> {
         expires_at: row.try_get("expires_at")?,
         relay: row.try_get::<i64, _>("relay")? != 0,
         relay_site: row.try_get("relay_site")?,
+        ad_domain: row.try_get("ad_domain")?,
     })
 }
 
@@ -1495,5 +1643,98 @@ mod tests {
 
         let listed = list_tokens(&db.pool).await.unwrap();
         assert_eq!(listed.iter().find(|t| t.id == open).unwrap().uses, 2);
+    }
+
+    #[test]
+    fn an_ad_domain_is_normalised_or_refused() {
+        assert_eq!(clean_ad_domain(" Corp.Example.COM. ").as_deref(), Some("corp.example.com"));
+        assert_eq!(clean_ad_domain("ad-01.lan").as_deref(), Some("ad-01.lan"));
+        for bad in ["", "  ", "corp..lan", "-corp.lan", "corp-.lan", "corp lan", "corp';exit;'.lan"]
+        {
+            assert_eq!(clean_ad_domain(bad), None, "{bad:?} doit être refusé");
+        }
+        assert_eq!(clean_ad_domain(&"a".repeat(64)), None, "étiquette de plus de 63 caractères");
+    }
+
+    #[test]
+    fn only_a_full_name_inside_the_domain_belongs_to_it() {
+        let domain = "corp.example.com";
+        assert!(hostname_in_domain("SRV01.corp.example.com", domain));
+        assert!(hostname_in_domain("srv01.corp.example.com.", domain));
+        assert!(hostname_in_domain("srv02.paris.corp.example.com", domain));
+        assert!(!hostname_in_domain("srv01", domain), "un nom court ne dit pas son domaine");
+        assert!(!hostname_in_domain("corp.example.com", domain));
+        assert!(!hostname_in_domain(".corp.example.com", domain));
+        assert!(!hostname_in_domain("srv01.evilcorp.example.com", domain));
+        assert!(!hostname_in_domain("srv01.corp.example.com.evil", domain));
+    }
+
+    #[tokio::test]
+    async fn an_ad_fleet_token_enrols_only_its_domain_and_files_the_machines() {
+        let db = setup().await;
+        let id = token(&db, "AD corp").await;
+        set_token_ad_domain(&db.pool, id, "corp.example.com").await.unwrap();
+        assert_eq!(
+            list_tokens(&db.pool).await.unwrap()[0].ad_domain.as_deref(),
+            Some("corp.example.com")
+        );
+
+        // Hors du domaine, ou sous un nom court : refusé, et rien n'est compté.
+        for outsider in ["srv01", "srv01.other.lan"] {
+            assert!(matches!(
+                register(&db.pool, &db.cipher, &identity(outsider, None), id, None)
+                    .await
+                    .expect_err("hors du domaine"),
+                RegisterError::EnrolmentDenied(EnrolmentDenied::OutsideDomain)
+            ));
+        }
+        assert_eq!(list_tokens(&db.pool).await.unwrap()[0].uses, 0);
+
+        // Dans le domaine : inscrit, rangé dans le dossier du domaine, étiqueté.
+        let mut member = identity("SRV01.corp.example.com", None);
+        member.tags.insert("ad_ou".into(), "OU=Servers,DC=corp,DC=example,DC=com".into());
+        let registration = enrol(&db, &member, id).await;
+        assert!(registration.created);
+        assert!(registration.issued_secret.is_some(), "chaque machine a son propre secret");
+        let target = db::targets::get(&db.pool, &db.cipher, registration.target_id)
+            .await
+            .unwrap()
+            .expect("cible");
+        assert_eq!(target.group_name, "Active Directory corp.example.com");
+        assert_eq!(target.tags.get("ad").map(String::as_str), Some("corp.example.com"));
+        assert_eq!(
+            target.tags.get("ad_ou").map(String::as_str),
+            Some("OU=Servers,DC=corp,DC=example,DC=com")
+        );
+        assert_eq!(list_tokens(&db.pool).await.unwrap()[0].uses, 1);
+    }
+
+    #[tokio::test]
+    async fn closing_a_fleet_token_stops_enrolments_but_not_reports() {
+        let db = setup().await;
+        let id = token(&db, "flotte").await;
+        let registration = enrol(&db, &identity("nas", Some("id-nas")), id).await;
+        let secret = registration.issued_secret.expect("secret");
+
+        assert!(close_enrolment(&db.pool, id).await.unwrap());
+        assert_eq!(enrolment_allowed(&db.pool, id).await.unwrap(), Err(EnrolmentDenied::Expired));
+        assert!(matches!(
+            register(&db.pool, &db.cipher, &identity("autre", Some("id-2")), id, None)
+                .await
+                .expect_err("plus d'inscription"),
+            RegisterError::EnrolmentDenied(EnrolmentDenied::Expired)
+        ));
+        // La machine inscrite continue, et le jeton reste valable pour elle.
+        assert!(
+            register(&db.pool, &db.cipher, &identity("nas", Some("id-nas")), id, Some(&secret))
+                .await
+                .is_ok()
+        );
+        let listed = list_tokens(&db.pool).await.unwrap();
+        assert!(listed[0].revoked_at.is_none());
+
+        // Un jeton révoqué ne se « clôt » plus : il est déjà fermé à tout.
+        assert!(revoke_token(&db.pool, id).await.unwrap());
+        assert!(!close_enrolment(&db.pool, id).await.unwrap());
     }
 }

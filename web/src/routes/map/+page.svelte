@@ -29,14 +29,15 @@
 	import TopologyList from '#lib/components/topology/TopologyList.svelte';
 	import MapSheet from '#lib/components/topology/MapSheet.svelte';
 	import Legend from '#lib/components/topology/Legend.svelte';
-	import { buildGraph, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
-	import { exportPng, exportSvg } from '#lib/components/topology/export.js';
+	import { buildGraph, isGuestKind, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
+	import { ExportError, exportPng, exportSvg } from '#lib/components/topology/export.js';
 	import WorldView from '#lib/components/worldmap/WorldView.svelte';
 	import { Download, Network } from 'lucide-svelte';
 
 	type View = 'map' | 'list' | 'world';
 
 	const GROUP_KEY = 'dumbmonit.map.byGroup';
+	const SUBNET_KEY = 'dumbmonit.map.bySubnet';
 
 	let topology = $state<Topology | null>(null);
 	let loadError = $state<unknown>(null);
@@ -99,12 +100,40 @@
 		})()
 	);
 
-	function setByGroup(value: boolean) {
-		byGroup = value;
+	/** Folders and subnets both frame the nodes: one at a time. */
+	let bySubnet = $state(
+		(() => {
+			try {
+				return localStorage.getItem(SUBNET_KEY) === '1' && localStorage.getItem(GROUP_KEY) !== '1';
+			} catch {
+				return false;
+			}
+		})()
+	);
+
+	function remember(key: string, value: boolean) {
 		try {
-			localStorage.setItem(GROUP_KEY, value ? '1' : '0');
+			localStorage.setItem(key, value ? '1' : '0');
 		} catch {
 			// A private window: the choice lasts for this visit.
+		}
+	}
+
+	function setByGroup(value: boolean) {
+		byGroup = value;
+		remember(GROUP_KEY, value);
+		if (value && bySubnet) {
+			bySubnet = false;
+			remember(SUBNET_KEY, false);
+		}
+	}
+
+	function setBySubnet(value: boolean) {
+		bySubnet = value;
+		remember(SUBNET_KEY, value);
+		if (value && byGroup) {
+			byGroup = false;
+			remember(GROUP_KEY, false);
 		}
 	}
 
@@ -132,9 +161,15 @@
 
 	const targets = $derived(new Map(alertsStore.targets.map((t) => [t.id, t])));
 
+	/** A node is drawn once, whatever the server sent. */
+	function uniqueById<T extends { id: string }>(list: T[]): T[] {
+		const seen = new Set<string>();
+		return list.filter((n) => !seen.has(n.id) && !!seen.add(n.id));
+	}
+
 	/** Every node with its live state. */
 	const allNodes = $derived.by((): MapNode[] =>
-		(topology?.nodes ?? []).map((n) => {
+		uniqueById(topology?.nodes ?? []).map((n) => {
 			const target = n.target_id !== null ? targets.get(n.target_id) : undefined;
 			return {
 				id: n.id,
@@ -145,11 +180,21 @@
 				group: target?.group_name ?? n.group_name,
 				site: n.site,
 				siteSource: n.site_source ?? null,
+				subnet: n.subnet,
+				vlan: n.vlan,
+				vlanName: n.vlan_name,
+				ips: n.ips ?? [],
 				state:
 					n.target_id === null
-						? n.running
-							? 'running'
-							: 'stopped'
+						? n.kind === 'pve_node'
+							? n.running === null
+								? 'unknown'
+								: n.running
+									? 'online'
+									: 'offline'
+							: n.running
+								? 'running'
+								: 'stopped'
 						: target
 							? displayState(target, alertsStore.probes.get(target.id))
 							: 'unknown'
@@ -157,11 +202,11 @@
 		})
 	);
 
-	const hasGuests = $derived(allNodes.some((n) => n.targetId === null));
-	const nodes = $derived(showGuests ? allNodes : allNodes.filter((n) => n.targetId !== null));
+	const hasGuests = $derived(allNodes.some((n) => isGuestKind(n.kind) && n.targetId === null));
+	const nodes = $derived(showGuests ? allNodes : allNodes.filter((n) => !(isGuestKind(n.kind) && n.targetId === null)));
 
 	const graph = $derived(buildGraph(nodes, topology?.edges ?? []));
-	const layout = $derived(layoutMap(graph, { byGroup }));
+	const layout = $derived(layoutMap(graph, { byGroup, bySubnet }));
 	const sections = $derived(listRows(graph));
 	const siteCount = $derived(sections.length - 1);
 	const firstDown = $derived(layout.nodes.find((p) => p.down)?.node.id ?? null);
@@ -190,7 +235,8 @@
 			if (action === 'svg') exportSvg(sheet, filename('svg'));
 			else await exportPng(sheet, filename('png'));
 		} catch (error) {
-			exportError = error;
+			// A local failure (drawing the image): never presented as a network one.
+			exportError = error instanceof ExportError ? new Error(m.topology_export_error_draw()) : error;
 		} finally {
 			sheetWanted = false;
 		}
@@ -269,6 +315,10 @@
 					<Toggle checked={byGroup} onchange={setByGroup} label={m.topology_group_toggle()} />
 					<span aria-hidden="true">{m.topology_group_toggle()}</span>
 				</label>
+				<label class="inline-flex min-h-10 items-center gap-2.5 text-sm text-ink-2">
+					<Toggle checked={bySubnet} onchange={setBySubnet} label={m.topology_subnet_toggle()} />
+					<span aria-hidden="true">{m.topology_subnet_toggle()}</span>
+				</label>
 				{#if hasGuests}
 					<label class="inline-flex min-h-10 items-center gap-2.5 text-sm text-ink-2">
 						<Toggle bind:checked={showGuests} label={m.topology_guests_toggle()} />
@@ -302,7 +352,7 @@
 			<p class="mb-3 text-sm text-ink-2">{m.topology_no_links()}</p>
 		{/if}
 		{#if exportError}
-			<div class="mb-3"><ErrorNotice error={exportError} title={m.topology_export_error()} /></div>
+			<div class="mb-3"><ErrorNotice error={exportError} title={m.topology_export_error()} hint={m.topology_export_error_hint()} local /></div>
 		{/if}
 
 		{#if view === 'map'}

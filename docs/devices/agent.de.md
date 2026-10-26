@@ -169,7 +169,7 @@ beim Erstellen eines Tokens treffen.
     Architektur des Rechners (x86_64 oder aarch64) vom Server herunter, schreibt
     `/etc/dumbmonit/agent.yaml` (Modus 0600) und registriert `dumbmonit-agent` bei systemd oder
     unter Alpine bei OpenRC. Die systemd-Unit ist gehärtet (`ProtectSystem=strict`,
-    `NoNewPrivileges`, `MemoryMax=128M`, `CPUQuota=20%`).
+    `NoNewPrivileges`, `MemoryMax=256M`, `CPUQuota=20%`).
 
 === "macOS (launchd)"
 
@@ -840,7 +840,7 @@ Ist der Server nicht erreichbar, misst der Agent weiter und puffert seine Messwe
 ursprünglichen Zeitstempeln im Speicher. Sie werden gesendet, sobald die Verbindung wieder steht:
 Ein Serverneustart hinterlässt kein Loch in den Diagrammen. Der Puffer ist begrenzt
 (`max_buffered_samples`, standardmäßig etwa eine Stunde) und verwirft bei Überlauf die ältesten
-Messwerte. Wiederholungen weichen von 5 Sekunden bis 5 Minuten mit Jitter zurück.
+Messwerte. Wiederholungen weichen von 2 bis 30 Sekunden mit Jitter zurück.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing

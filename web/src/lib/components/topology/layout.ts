@@ -13,7 +13,11 @@
  * Remote sites are islands beside the main site, found without configuration
  * (the server's `site`: a `site` tag, an agent's declaration, or the relay
  * agent that polls the device), joined to it by a WAN link. Folders only
- * frame nodes when asked to (`byGroup`).
+ * frame nodes when asked to (`byGroup`); likewise subnets (`bySubnet`): the
+ * site's firewalls sit in a row on top and every other node goes in a light
+ * frame for its subnet (`192.168.10.0/24 · VLAN 10 Servers`), a guest staying
+ * in its hypervisor's. Remote links between sites run along the frames'
+ * edges, never through the nodes.
  *
  * Placement is deterministic: a refresh that changes states never moves a node.
  */
@@ -35,6 +39,12 @@ export interface MapNode {
 	site: string | null;
 	siteSource: TopologySiteSource | null;
 	state: NodeState;
+	/** Subnet (CIDR) the device sits in, when known. */
+	subnet?: string | null;
+	vlan?: number | null;
+	vlanName?: string | null;
+	/** Guest: the addresses its hypervisor reports. */
+	ips?: string[];
 }
 
 export interface MapEdge {
@@ -44,10 +54,10 @@ export interface MapEdge {
 }
 
 /** Declared links first: they are what alert suppression follows. */
-const PRIORITY: Record<TopologySource, number> = { parent: 0, service: 1, hypervisor: 2, relay: 3, lldp: 4 };
+const PRIORITY: Record<TopologySource, number> = { parent: 0, service: 1, hypervisor: 2, hosted: 3, relay: 4, samehost: 5, backup: 6, firewall: 7, lldp: 8 };
 
-/** Links an outage travels along. LLDP says who is cabled to whom, not who depends on whom. */
-const PROPAGATES: ReadonlySet<TopologySource> = new Set(['parent', 'service', 'relay', 'hypervisor']);
+/** Links an outage travels along (a service runs on its guest). LLDP says who is cabled to whom, not who depends on whom. */
+const PROPAGATES: ReadonlySet<TopologySource> = new Set(['parent', 'service', 'relay', 'hypervisor', 'hosted']);
 
 export function isDown(state: NodeState): boolean {
 	return state === 'offline' || state === 'down';
@@ -65,7 +75,18 @@ const ATTENTION: Record<NodeState, number> = {
 	disabled: 4
 };
 
-const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'openwrt', 'fortigate']);
+const NETWORK_KINDS = new Set(['snmp', 'opnsense', 'pfsense', 'unifi', 'mikrotik', 'omada', 'openwrt', 'fortigate', 'sophos']);
+/** Firewalls and gateways: the top of a site. */
+const GATEWAY_KINDS = new Set(['opnsense', 'pfsense', 'fortigate', 'sophos', 'mikrotik']);
+
+export function isGateway(kind: string): boolean {
+	return GATEWAY_KINDS.has(kind);
+}
+
+/** A virtual machine or container (a node of a Proxmox cluster is `pve_node`). */
+export function isGuestKind(kind: string): boolean {
+	return kind === 'vm' || kind === 'container';
+}
 /** Checks of one endpoint rather than of a machine (kept here: this module imports nothing at run time). */
 const ENDPOINT_KINDS = new Set(['http', 'tcp', 'udp', 'dns', 'tls', 'websocket', 'push', 'domain', 'mail_blacklist', 'ip_blacklist', 'webchange', 'smtp', 'agent_service']);
 const PLATFORM_KINDS = new Set(['proxmox', 'pdm', 'xcpng', 'nutanix', 'vsphere', 'kubernetes', 'truenas', 'synology', 'pbs', 'redfish', 'nut', 'libvirt']);
@@ -147,7 +168,8 @@ export function buildGraph(nodes: MapNode[], edges: MapEdge[]): Graph {
 		if (PROPAGATES.has(edge.source)) {
 			push(downstream, edge.from, edge.to);
 			push(upstream, edge.to, edge.from);
-		} else {
+		} else if (edge.source !== 'firewall') {
+			// A firewall serving a subnet is not a cable: lighting up every device behind it says nothing.
 			push(cabled, edge.from, edge.to);
 			push(cabled, edge.to, edge.from);
 		}
@@ -256,6 +278,10 @@ const BLOCK_GAP_X = 48;
 const BLOCK_GAP_Y = 56;
 const FRAME_PAD = 22;
 const FRAME_HEADER = 40;
+/** A site frame's header holds a title with its source under it. */
+const FRAME_HEADER_SITE = 58;
+/** A site frame never gets narrower than its header needs. */
+const FRAME_MIN_WIDTH = 270;
 const SITE_GAP = 140;
 /** Width over height the packing aims for: a landscape screen or sheet. */
 const RATIO = 1.7;
@@ -290,8 +316,12 @@ export interface PlacedEdge {
 
 export interface Frame {
 	key: string;
-	kind: 'site' | 'main' | 'group';
+	kind: 'site' | 'main' | 'group' | 'zone';
+	/** A zone's subnet (`null`: unknown network), a folder or a site name. */
 	label: string | null;
+	/** Zone only: the VLAN of the subnet and its name. */
+	vlan?: number | null;
+	vlanName?: string | null;
 	source: TopologySiteSource | null;
 	x: number;
 	y: number;
@@ -431,20 +461,26 @@ function cluster(graph: Graph, ids: string[]): Block {
 		.sort((a, b) => compareNodes(graph.nodes.get(a)!, graph.nodes.get(b)!));
 	const hasKids = (id: string) => (graph.children.get(id) ?? []).some((c) => members.has(c));
 	const trees = roots.filter(hasKids).map((id) => subtree(graph, id, members));
-	const loose = roots.filter((id) => !hasKids(id));
-	const area = trees.reduce((sum, t) => sum + t.w * t.h, 0) + loose.length * COL * NODE_H;
+	const idle = roots.filter((id) => !hasKids(id));
+	// A firewall without anyone behind it (its high-availability twin) stays beside the other one, on top.
+	const twins = idle.filter((id) => isGateway(graph.nodes.get(id)!.kind));
+	const loose = idle.filter((id) => !twins.includes(id));
+	const area = trees.reduce((sum, t) => sum + t.w * t.h, 0) + idle.length * COL * NODE_H;
 	const width = Math.max(COL, ...trees.map((t) => t.w), Math.sqrt(area * RATIO));
 	const blocks = [...trees];
+	if (twins.length > 0) blocks.unshift(grid(twins, twins.length, false));
 	if (loose.length > 0) blocks.push(grid(loose, Math.max(1, Math.floor((width + BLOCK_GAP_X) / COL)), false));
 	return shelves(blocks, width);
 }
 
 function framed(block: Block, frame: Omit<Frame, 'x' | 'y' | 'width' | 'height'>): Block {
 	const out = empty();
-	out.w = block.w + FRAME_PAD * 2;
-	out.h = block.h + FRAME_HEADER + FRAME_PAD;
+	const light = frame.kind === 'group' || frame.kind === 'zone';
+	const header = light ? FRAME_HEADER : FRAME_HEADER_SITE;
+	out.w = Math.max(block.w + FRAME_PAD * 2, light ? 0 : FRAME_MIN_WIDTH);
+	out.h = block.h + header + FRAME_PAD;
 	out.frames.push({ ...frame, x: 0, y: 0, width: out.w, height: out.h });
-	paste(out, block, FRAME_PAD, FRAME_HEADER);
+	paste(out, block, (out.w - block.w) / 2, header);
 	return out;
 }
 
@@ -452,18 +488,78 @@ function counts(graph: Graph, ids: string[]) {
 	return { count: ids.length, down: ids.filter((id) => graph.down.has(id)).length };
 }
 
-/** One site: plain trees, or one framed block per folder. */
-function siteBlock(graph: Graph, site: SiteInfo, byGroup: boolean): Block {
-	if (!byGroup) return cluster(graph, site.ids);
+export type Grouping = 'none' | 'folder' | 'subnet';
+
+/** One site: plain trees, or one framed block per folder or subnet. `region` learns where each node went. */
+function siteBlock(graph: Graph, site: SiteInfo, grouping: Grouping, region: Map<string, string>): Block {
+	if (grouping === 'subnet') return subnetBlock(graph, site, region);
+	if (grouping === 'none') return cluster(graph, site.ids);
 	const groups = new Map<string, string[]>();
 	for (const id of site.ids) push(groups, graph.nodes.get(id)!.group, id);
 	const blocks = [...groups]
 		.sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : a.localeCompare(b, 'en', { sensitivity: 'base' })))
-		.map(([group, ids]) =>
-			framed(cluster(graph, ids), { key: `g:${site.key}:${group}`, kind: 'group', label: group || null, source: null, ...counts(graph, ids) })
-		);
+		.map(([group, ids]) => {
+			for (const id of ids) region.set(id, `g:${group}`);
+			return framed(cluster(graph, ids), { key: `g:${site.key}:${group}`, kind: 'group', label: group || null, source: null, ...counts(graph, ids) });
+		});
 	const area = blocks.reduce((sum, b) => sum + b.w * b.h, 0);
 	return shelves(blocks, Math.max(...blocks.map((b) => b.w), Math.sqrt(area * RATIO)));
+}
+
+/** The subnet a node sits in: its own, else its hypervisor's (a guest has none). `''`: unknown. */
+function subnetOf(graph: Graph, id: string): string {
+	const seen = new Set<string>();
+	for (let at: string | undefined = id; at !== undefined && !seen.has(at); at = graph.parent.get(at)) {
+		seen.add(at);
+		const node = graph.nodes.get(at)!;
+		if (node.subnet) return node.subnet;
+		if (!isGuestKind(node.kind) && node.kind !== 'pve_node') break;
+	}
+	return '';
+}
+
+/** Numeric sort key of `a.b.c.d/n` so zones read in address order. */
+function subnetKey(subnet: string): number {
+	const [ip] = subnet.split('/');
+	return ip.split('.').reduce((sum, part) => sum * 256 + (Number(part) || 0), 0);
+}
+
+/** Firewalls in a row on top, then one light frame per subnet (the unknown network last). */
+function subnetBlock(graph: Graph, site: SiteInfo, region: Map<string, string>): Block {
+	const gateways = site.ids.filter((id) => isGateway(graph.nodes.get(id)!.kind));
+	const zones = new Map<string, string[]>();
+	for (const id of site.ids) {
+		if (gateways.includes(id)) continue;
+		push(zones, subnetOf(graph, id), id);
+	}
+	for (const id of gateways) region.set(id, 'gateways');
+	const blocks = [...zones]
+		.sort(([a], [b]) => (a === '' ? 1 : b === '' ? -1 : subnetKey(a) - subnetKey(b)))
+		.map(([subnet, ids]) => {
+			for (const id of ids) region.set(id, `z:${subnet}`);
+			// A zone is named after the VLAN any of its devices reports.
+			const named = ids.map((id) => graph.nodes.get(id)!).find((n) => n.subnet === subnet && (n.vlan || n.vlanName));
+			return framed(cluster(graph, ids), {
+				key: `z:${site.key}:${subnet}`,
+				kind: 'zone',
+				label: subnet || null,
+				vlan: named?.vlan ?? null,
+				vlanName: named?.vlanName ?? null,
+				source: null,
+				...counts(graph, ids)
+			});
+		});
+	const area = blocks.reduce((sum, b) => sum + b.w * b.h, 0);
+	const body = blocks.length > 0 ? shelves(blocks, Math.max(...blocks.map((b) => b.w), Math.sqrt(area * RATIO))) : empty();
+	if (gateways.length === 0) return body;
+	const top = grid(gateways.sort((a, b) => compareNodes(graph.nodes.get(a)!, graph.nodes.get(b)!)), Math.min(gateways.length, 4), false);
+	if (blocks.length === 0) return top;
+	const out = empty();
+	out.w = Math.max(top.w, body.w);
+	paste(out, top, (out.w - top.w) / 2, 0);
+	paste(out, body, (out.w - body.w) / 2, top.h + BLOCK_GAP_Y);
+	out.h = top.h + BLOCK_GAP_Y + body.h;
+	return out;
 }
 
 function trim(ax: number, ay: number, bx: number, by: number, distance: number): [number, number] {
@@ -509,14 +605,77 @@ function edgeGeometry(a: PlacedNode, b: PlacedNode, tree: boolean, spoke: boolea
 	return { path: `M${f(x1)},${f(y1)} Q${f(cx)},${f(cy)} ${f(x2)},${f(y2)}`, arrow: arrow ? arrowHead(x2, y2, cx, cy) : null };
 }
 
+/**
+ * A link between two sites: out of its node, through a port on the edge of its
+ * site's frame, across the gap, through the port on the other frame, into the
+ * other node. Three smooth curves with a common tangent at each port, so it
+ * never cuts through a frame's header or a node on the way.
+ */
+function crossSite(
+	a: PlacedNode,
+	b: PlacedNode,
+	fa: Frame | undefined,
+	fb: Frame | undefined,
+	arrow: boolean,
+	ports: MapLayout['ports']
+): { path: string; arrow: string | null } | null {
+	if (!fa || !fb) return null;
+	const f = (n: number) => n.toFixed(1);
+	const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+	const horizontal = fb.x >= fa.x + fa.width || fa.x >= fb.x + fb.width;
+	const vertical = fb.y >= fa.y + fa.height || fa.y >= fb.y + fb.height;
+	if (!horizontal && !vertical) return null;
+	const pa = { x: 0, y: 0 };
+	const pb = { x: 0, y: 0 };
+	let path: string;
+	let tip: [number, number, number, number];
+	if (horizontal) {
+		const dir = fb.x >= fa.x + fa.width ? 1 : -1;
+		pa.x = dir > 0 ? fa.x + fa.width : fa.x;
+		pb.x = dir > 0 ? fb.x : fb.x + fb.width;
+		pa.y = clamp(a.y, fa.y + FRAME_HEADER_SITE, fa.y + fa.height - FRAME_PAD);
+		pb.y = clamp(b.y, fb.y + FRAME_HEADER_SITE, fb.y + fb.height - FRAME_PAD);
+		const x1 = a.x + dir * (a.r + 1);
+		const x2 = b.x - dir * (b.r + (arrow ? 3 : 1));
+		const h1 = (pa.x - x1) / 2;
+		const gap = (pb.x - pa.x) / 3;
+		const h3 = (x2 - pb.x) / 2;
+		path =
+			`M${f(x1)},${f(a.y)} C${f(x1 + h1)},${f(a.y)} ${f(pa.x - h1)},${f(pa.y)} ${f(pa.x)},${f(pa.y)}` +
+			` C${f(pa.x + gap)},${f(pa.y)} ${f(pb.x - gap)},${f(pb.y)} ${f(pb.x)},${f(pb.y)}` +
+			` C${f(pb.x + h3)},${f(pb.y)} ${f(x2 - h3)},${f(b.y)} ${f(x2)},${f(b.y)}`;
+		tip = [x2, b.y, x2 - dir * 10, b.y];
+	} else {
+		const dir = fb.y >= fa.y + fa.height ? 1 : -1;
+		pa.y = dir > 0 ? fa.y + fa.height : fa.y;
+		pb.y = dir > 0 ? fb.y : fb.y + fb.height;
+		pa.x = clamp(a.x, fa.x + FRAME_PAD, fa.x + fa.width - FRAME_PAD);
+		pb.x = clamp(b.x, fb.x + FRAME_PAD, fb.x + fb.width - FRAME_PAD);
+		const y1 = a.y + dir * (a.r + 1);
+		const y2 = b.y - dir * (b.r + (arrow ? 3 : 1));
+		const v1 = (pa.y - y1) / 2;
+		const gap = (pb.y - pa.y) / 3;
+		const v3 = (y2 - pb.y) / 2;
+		path =
+			`M${f(a.x)},${f(y1)} C${f(a.x)},${f(y1 + v1)} ${f(pa.x)},${f(pa.y - v1)} ${f(pa.x)},${f(pa.y)}` +
+			` C${f(pa.x)},${f(pa.y + gap)} ${f(pb.x)},${f(pb.y - gap)} ${f(pb.x)},${f(pb.y)}` +
+			` C${f(pb.x)},${f(pb.y + v3)} ${f(b.x)},${f(y2 - v3)} ${f(b.x)},${f(y2)}`;
+		tip = [b.x, y2, b.x, y2 - dir * 10];
+	}
+	ports.push({ ...pa, down: false }, { ...pb, down: false });
+	return { path, arrow: arrow ? arrowHead(tip[0], tip[1], tip[2], tip[3]) : null };
+}
+
 /** Positions every node, link and frame of the map. */
-export function layoutMap(graph: Graph, options: { byGroup?: boolean } = {}): MapLayout {
+export function layoutMap(graph: Graph, options: { byGroup?: boolean; bySubnet?: boolean } = {}): MapLayout {
 	const sites = splitSites(graph);
 	if (sites.length === 0) return { nodes: [], edges: [], frames: [], ports: [], width: 0, height: 0 };
 	const islands = sites.length > 1;
 
+	const grouping: Grouping = options.bySubnet ? 'subnet' : options.byGroup ? 'folder' : 'none';
+	const region = new Map<string, string>();
 	const blocks = sites.map((site, i) => {
-		const inner = siteBlock(graph, site, options.byGroup ?? false);
+		const inner = siteBlock(graph, site, grouping, region);
 		if (!islands) return inner;
 		return framed(inner, { key: `s:${site.key}`, kind: i === 0 ? 'main' : 'site', label: site.name, source: site.source, ...counts(graph, site.ids) });
 	});
@@ -573,6 +732,8 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean } = {}): Ma
 
 	const siteOf = (id: string) => graph.nodes.get(id)!.site ?? '';
 	const spots = all.at;
+	const ports: MapLayout['ports'] = [];
+	const frameFor = (id: string) => all.frames.find((f) => f.key === `s:${siteOf(id)}`);
 	const edges: PlacedEdge[] = graph.edges
 		.filter((e) => placed.has(e.from) && placed.has(e.to))
 		.map((e) => {
@@ -580,7 +741,10 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean } = {}): Ma
 			const b = placed.get(e.to)!;
 			const tree = graph.parent.get(e.to) === e.from;
 			const dependency = e.source === 'parent';
-			const geometry = edgeGeometry(a, b, tree, tree && spots.get(e.to)!.spoke, dependency);
+			const across = islands && siteOf(e.from) !== siteOf(e.to);
+			const routed = across ? crossSite(a, b, frameFor(e.from), frameFor(e.to), dependency, ports) : null;
+			const sameRegion = region.get(e.from) === region.get(e.to);
+			const geometry = routed ?? edgeGeometry(a, b, tree, tree && sameRegion && spots.get(e.to)!.spoke, dependency);
 			return {
 				key: `${e.from}>${e.to}`,
 				from: e.from,
@@ -594,7 +758,6 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean } = {}): Ma
 		});
 
 	// A WAN link from the main site to every island no link reaches yet.
-	const ports: MapLayout['ports'] = [];
 	if (islands) {
 		const frameOf = (key: string) => all.frames.find((f) => f.key === `s:${key}`)!;
 		const home = frameOf(sites[0].key);

@@ -51,6 +51,14 @@ pub const AGENT_SECRET_PREFIX: &str = "dmab_";
 /// existent pour établir.
 pub const AGENT_SECRET_HEADER: &str = "x-dumbmonit-agent-secret";
 
+/// En-tête portant la clé d'identité de la machine sur les canaux de commandes
+/// et de relais.
+///
+/// Elle voyageait dans l'URL (`?key=…`) : les messages d'erreur du client HTTP
+/// et les journaux d'accès des mandataires la recopiaient en clair. Le serveur
+/// accepte encore `?key=` d'un agent antérieur, sans jamais le journaliser.
+pub const AGENT_KEY_HEADER: &str = "x-dumbmonit-agent-key";
+
 /// Refus opposé par le serveur à un agent dont il ne reconnaît pas le secret
 /// de liaison (réponse 403, corps `{"error": …}`).
 ///
@@ -159,12 +167,79 @@ pub struct PushBatch {
     /// l'écart entre les deux qui révèle le retard.
     pub sent_at_ms: i64,
     pub samples: Vec<Sample>,
+    /// Inventaire logiciel de la machine, joint à un lot environ une fois par
+    /// jour (voir [`SoftwareInventory`]). Absent le reste du temps, et chez un
+    /// agent antérieur : un serveur antérieur, lui, ignore le champ.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub inventory: Option<SoftwareInventory>,
 }
 
 impl PushBatch {
     pub fn new(identity: AgentIdentity, samples: Vec<Sample>, sent_at_ms: i64) -> Self {
-        Self { protocol: PUSH_PROTOCOL_VERSION, identity, sent_at_ms, samples }
+        Self { protocol: PUSH_PROTOCOL_VERSION, identity, sent_at_ms, samples, inventory: None }
     }
+}
+
+/// Nombre maximal de paquets d'un inventaire. Une installation ordinaire en
+/// compte de 300 à 3 000 ; au-delà, l'agent tronque plutôt que de faire
+/// refuser son lot.
+pub const MAX_INVENTORY_PACKAGES: usize = 20_000;
+
+/// Ce qui est installé sur la machine, pour la recherche de failles (CVE).
+///
+/// Relevé une fois par jour par l'agent, à partir du gestionnaire de paquets
+/// (`dpkg-query`, `rpm -qa`, `apk`) ou, sous Windows, de la liste des
+/// programmes installés et du numéro de build du système. Le serveur n'en
+/// garde que le dernier : rien n'est historisé.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct SoftwareInventory {
+    /// Horodatage du relevé, en millisecondes depuis l'époque Unix.
+    pub collected_at_ms: i64,
+    /// Provenance de la liste : `dpkg`, `rpm`, `apk` ou `windows`.
+    pub source: String,
+    /// `ID` d'`/etc/os-release` (`debian`, `ubuntu`, `almalinux`…).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distro_id: Option<String>,
+    /// `VERSION_ID` d'`/etc/os-release` (`12`, `24.04`, `3.20.3`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distro_version: Option<String>,
+    /// `VERSION_CODENAME` d'`/etc/os-release` (`bookworm`, `noble`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub distro_codename: Option<String>,
+    /// Windows : `ProductName` (« Windows Server 2022 Standard »).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub os_product: Option<String>,
+    /// Windows : `DisplayVersion` (`23H2`, `24H2`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub os_release: Option<String>,
+    /// Windows : build complet, révision comprise (`10.0.22631.4317`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub os_build: Option<String>,
+    /// Windows : correctifs installés (`KB5044285`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub hotfixes: Vec<String>,
+    #[serde(default)]
+    pub packages: Vec<InstalledPackage>,
+}
+
+/// Un paquet (ou programme) installé.
+#[derive(Debug, Clone, PartialEq, Eq, Default, Serialize, Deserialize)]
+pub struct InstalledPackage {
+    /// Nom du paquet binaire, ou `DisplayName` d'un programme Windows.
+    pub name: String,
+    /// Version telle que le gestionnaire de paquets l'écrit (époque comprise
+    /// chez Debian et RPM : `1:2.39-1`).
+    pub version: String,
+    /// Paquet source (Debian : `${source:Package}`, Alpine : `origin`), qui
+    /// est la clé des avis de sécurité des distributions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_name: Option<String>,
+    /// Version du paquet source quand elle diffère (rebuilds binNMU).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub source_version: Option<String>,
+    /// Windows : éditeur (`Publisher`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub publisher: Option<String>,
 }
 
 /// Réponse du serveur à un lot accepté.
@@ -263,6 +338,28 @@ mod tests {
     }
 
     #[test]
+    fn an_inventory_rides_along_only_when_present() {
+        let mut batch = PushBatch::new(identity(), Vec::new(), 1);
+        assert!(!serde_json::to_string(&batch).unwrap().contains("inventory"));
+        batch.inventory = Some(SoftwareInventory {
+            collected_at_ms: 1,
+            source: "dpkg".into(),
+            distro_id: Some("debian".into()),
+            distro_codename: Some("bookworm".into()),
+            packages: vec![InstalledPackage {
+                name: "libssl3".into(),
+                version: "3.0.15-1~deb12u1".into(),
+                source_name: Some("openssl".into()),
+                ..InstalledPackage::default()
+            }],
+            ..SoftwareInventory::default()
+        });
+        let json = serde_json::to_string(&batch).unwrap();
+        assert!(!json.contains("hotfixes"), "les champs vides restent hors du lot");
+        assert_eq!(serde_json::from_str::<PushBatch>(&json).unwrap(), batch);
+    }
+
+    #[test]
     fn optional_identity_fields_may_be_omitted() {
         // Un agent minimal — ou plus ancien — n'envoie que l'indispensable ; le
         // serveur doit l'accepter sans renvoyer une erreur de désérialisation.
@@ -276,6 +373,8 @@ mod tests {
         assert_eq!(batch.identity.hostname, "pi");
         assert!(batch.identity.machine_id.is_none());
         assert!(batch.identity.tags.is_empty());
+        // Ni d'avant l'inventaire logiciel.
+        assert!(batch.inventory.is_none());
         // Un agent d'avant le canal de commandes ne dit rien de ses capacités.
         assert_eq!(batch.identity.commands_enabled, None);
         // Ni d'avant le pilotage du relais : l'interface le dira trop ancien.

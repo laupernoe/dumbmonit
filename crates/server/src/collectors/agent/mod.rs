@@ -25,19 +25,23 @@ mod receive;
 mod store;
 mod token;
 
+use std::collections::HashMap;
+use std::sync::Mutex;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target};
+use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, TargetId};
 use sqlx::SqlitePool;
+use tokio::sync::OnceCell;
 
 pub use modules::AgentServiceCollector;
 pub use policy::spawn_policy_scheduler;
-pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, ingest};
+pub use receive::{AGENT_TOO_OLD, BINDING_MISMATCH, IngestError, NOT_BOUND, enrol, ingest};
 pub use store::{
-    HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, TokenPolicy, TokenRecord, allow_rebind,
-    authorise_key, clean_site, create_token, host, list_hosts, list_tokens, revoke_token,
-    set_relay_wanted, set_token_relay,
+    HostInfo, KeyAuth, MAX_SITE_LEN, REBIND_WINDOW_MINUTES, Registration, TokenPolicy, TokenRecord,
+    ad_folder, allow_rebind, authorise_key, clean_ad_domain, clean_site, close_enrolment,
+    create_token, host, list_hosts, list_tokens, revoke_token, set_relay_wanted,
+    set_token_ad_domain, set_token_relay, target_of_key,
 };
 
 /// Vérifie un en-tête `Authorization` d'agent et renvoie l'identifiant du jeton.
@@ -76,12 +80,72 @@ const MISSED_INTERVALS: u32 = 3;
 
 pub struct AgentCollector {
     pool: SqlitePool,
+    /// Démarrage du serveur (ms) : la grâce après un redémarrage part de là.
+    started_ms: i64,
+    /// Dernière activité du planificateur avant ce démarrage : à peu près l'heure
+    /// à laquelle le serveur s'est arrêté. Lue une fois, au besoin.
+    stopped_ms: OnceCell<Option<i64>>,
+    /// Machines déclarées muettes, avec leur dernier lot connu : une ligne de
+    /// journal par transition, pas une par cycle.
+    silent: Mutex<HashMap<TargetId, i64>>,
 }
 
 impl AgentCollector {
     pub fn new(pool: SqlitePool) -> Self {
-        Self { pool }
+        Self::started_at(pool, chrono::Utc::now().timestamp_millis())
     }
+
+    fn started_at(pool: SqlitePool, started_ms: i64) -> Self {
+        Self { pool, started_ms, stopped_ms: OnceCell::new(), silent: Mutex::new(HashMap::new()) }
+    }
+
+    /// Heure approximative de l'arrêt précédent du serveur.
+    async fn stopped_ms(&self) -> Option<i64> {
+        let read = || async {
+            match store::last_activity_before(&self.pool, self.started_ms).await {
+                Ok(stopped) => stopped,
+                Err(error) => {
+                    tracing::debug!(?error, "last activity before startup unreadable");
+                    None
+                }
+            }
+        };
+        *self.stopped_ms.get_or_init(read).await
+    }
+
+    fn silent(&self) -> std::sync::MutexGuard<'_, HashMap<TargetId, i64>> {
+        self.silent.lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+}
+
+/// Ce que dit la date du dernier lot d'une machine.
+#[derive(Debug, PartialEq, Eq)]
+enum Freshness {
+    Fresh,
+    /// Muette depuis le redémarrage du serveur seulement : elle était à jour quand
+    /// il s'est arrêté, et n'a pas encore eu un délai complet pour se manifester.
+    /// Pas d'alerte « injoignable » pour une coupure qui est celle du serveur.
+    Grace,
+    Stale,
+}
+
+/// Verdict de fraîcheur. `stopped_ms` : dernière activité du serveur avant son
+/// démarrage en cours (`started_ms`).
+fn freshness(
+    last_seen_ms: i64,
+    now_ms: i64,
+    started_ms: i64,
+    stopped_ms: Option<i64>,
+    deadline: Duration,
+) -> Freshness {
+    let deadline_ms = deadline.as_millis() as i64;
+    if now_ms.saturating_sub(last_seen_ms) <= deadline_ms {
+        return Freshness::Fresh;
+    }
+    let in_grace = now_ms.saturating_sub(started_ms) <= deadline_ms;
+    let fresh_at_stop = last_seen_ms < started_ms
+        && stopped_ms.is_some_and(|stopped| stopped.saturating_sub(last_seen_ms) <= deadline_ms);
+    if in_grace && fresh_at_stop { Freshness::Grace } else { Freshness::Stale }
 }
 
 /// Ancienneté au-delà de laquelle une machine est déclarée injoignable.
@@ -133,13 +197,34 @@ impl Collector for AgentCollector {
         let age = Duration::from_millis(now_ms.saturating_sub(last_seen).max(0) as u64);
         let deadline = staleness_deadline(target.interval);
 
-        if age > deadline {
+        let verdict = if age > deadline {
+            let stopped = self.stopped_ms().await;
+            freshness(last_seen, now_ms, self.started_ms, stopped, deadline)
+        } else {
+            Freshness::Fresh
+        };
+        if verdict == Freshness::Stale {
+            // Une ligne à l'entrée dans le silence ; le retour est journalisé à
+            // la réception du lot suivant (`receive.rs`), au moment exact.
+            if self.silent().insert(target.id, last_seen).is_none() {
+                tracing::info!(
+                    target = target.id,
+                    name = %target.name,
+                    silent_for = %human_duration(age),
+                    limit = %human_duration(deadline),
+                    "agent went silent"
+                );
+            }
             return Err(ProbeError::Unreachable(format!(
                 "no measurement for {} (limit {})",
                 human_duration(age),
                 human_duration(deadline)
             )));
         }
+        if verdict == Freshness::Grace {
+            tracing::debug!(target = target.id, "server just restarted, waiting for this agent");
+        }
+        self.silent().remove(&target.id);
 
         // Le registre pose `up` lui-même ; on n'ajoute que ce qu'il ne sait pas :
         // depuis combien de temps cette machine s'est manifestée. C'est la mesure
@@ -219,6 +304,46 @@ mod tests {
             store::record_batch(&pool, registration.target_id, ts, 10).await.expect("lot");
         }
         (pool, dir)
+    }
+
+    #[test]
+    fn a_server_restart_is_not_blamed_on_its_agents() {
+        let deadline = Duration::from_secs(90);
+        let started = 1_000_000_000;
+        // Arrêt du serveur 30 s avant de redémarrer ; l'agent avait parlé 10 s
+        // avant l'arrêt. 80 s après le démarrage, son silence dépasse 90 s mais
+        // il n'a pas encore eu un délai complet : pas d'alerte.
+        let stopped = Some(started - 30_000);
+        let last = started - 40_000;
+        assert_eq!(freshness(last, started + 80_000, started, stopped, deadline), Freshness::Grace);
+        // Passé le délai complet après le démarrage, le silence est le sien.
+        assert_eq!(freshness(last, started + 91_000, started, stopped, deadline), Freshness::Stale);
+        // Déjà muet bien avant l'arrêt : aucune grâce, l'alerte reste ouverte.
+        let dead = started - 600_000;
+        assert_eq!(freshness(dead, started + 10_000, started, stopped, deadline), Freshness::Stale);
+        // Un lot récent reste un lot récent.
+        let recent = started + 70_000;
+        let now = started + 80_000;
+        assert_eq!(freshness(recent, now, started, stopped, deadline), Freshness::Fresh);
+        // Aucune activité connue avant le démarrage (base neuve) : pas de grâce.
+        assert_eq!(freshness(last, now, started, None, deadline), Freshness::Stale);
+    }
+
+    #[tokio::test]
+    async fn an_agent_silent_since_the_server_stopped_gets_a_full_delay_after_startup() {
+        let now = chrono::Utc::now().timestamp_millis();
+        // Le serveur a redémarré il y a 60 s après 60 s d'arrêt ; l'agent avait
+        // parlé juste avant l'arrêt.
+        let (pool, _dir) = pool_with_agent(Some(now - 125_000)).await;
+        let stopped = chrono::DateTime::from_timestamp_millis(now - 120_000).unwrap();
+        sqlx::query("UPDATE targets SET last_probe_at = ?")
+            .bind(stopped.format("%Y-%m-%dT%H:%M:%SZ").to_string())
+            .execute(&pool)
+            .await
+            .expect("activité avant l'arrêt");
+        let collector = AgentCollector::started_at(pool, now - 60_000);
+        let samples = collector.probe(&target(30)).await.expect("grâce après redémarrage");
+        assert!(samples.iter().any(|s| s.metric == "agent_last_batch_age_seconds"));
     }
 
     #[test]

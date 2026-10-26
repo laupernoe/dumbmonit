@@ -154,7 +154,7 @@ um token.
     binário para a arquitetura da máquina (x86_64 ou aarch64), escreve
     `/etc/dumbmonit/agent.yaml` (modo 0600) e regista `dumbmonit-agent` no
     systemd, ou no OpenRC no Alpine. A unit do systemd é endurecida
-    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=128M`,
+    (`ProtectSystem=strict`, `NoNewPrivileges`, `MemoryMax=256M`,
     `CPUQuota=20%`).
 
 === "macOS (launchd)"
@@ -806,8 +806,8 @@ Quando o servidor é inacessível, o agente continua a medir e guarda as suas
 leituras em buffer na memória com os carimbos temporais originais. São enviadas
 assim que a ligação volta: um reinício do servidor não deixa buraco nos gráficos.
 O buffer é limitado (`max_buffered_samples`, cerca de uma hora por predefinição) e
-descarta as leituras mais antigas quando enche. As tentativas recuam de 5 segundos
-a 5 minutos com jitter.
+descarta as leituras mais antigas quando enche. As tentativas recuam de 2
+a 30 segundos com jitter.
 
 ```sh
 dumbmonit-agent --dry-run          # print the readings, send nothing

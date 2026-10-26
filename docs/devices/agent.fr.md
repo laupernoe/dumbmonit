@@ -124,8 +124,10 @@ Internet bas** / **Débit montant Internet bas** / **Latence Internet élevée**
 [Sauvegardes restic et Borg](#restic-and-borg-backups) et
 [Test de débit Internet](#internet-speed-test).
 
-Sur un serveur Windows qui fait tourner MDaemon, trois autres surveillent
-ses files : **File de mail MDaemon qui grandit**, **File Bad MDaemon non
+Sur un serveur Windows qui fait tourner MDaemon ou SecurityGateway, **Service
+Windows du serveur mail arrêté** surveille leurs services, et pour MDaemon
+cinq autres surveillent ses files : **File de mail MDaemon qui grandit**,
+**File de mail bloquée**, **File MDaemon gelée**, **File Bad MDaemon non
 vide** et **File Retry MDaemon élevée** (voir
 [Règles](../alerting/rules.md#mdaemon-and-securitygateway)). Sur un hôte
 Hyper-V, trois surveillent les machines virtuelles : **Santé de VM
@@ -198,7 +200,7 @@ vous créez un jeton.
     le serveur, écrit `/etc/dumbmonit/agent.yaml` (mode 0600) et enregistre
     `dumbmonit-agent` avec systemd, ou avec OpenRC sur Alpine. L'unité
     systemd est renforcée (`ProtectSystem=strict`, `NoNewPrivileges`,
-    `MemoryMax=128M`, `CPUQuota=20%`).
+    `MemoryMax=256M`, `CPUQuota=20%`).
 
 === "macOS (launchd)"
 
@@ -284,6 +286,10 @@ vous créez un jeton.
 
     Il n'y a pas de build ARM64 natif : sur Windows 11 pour ARM, le script
     installe le binaire x86_64, qui tourne sous émulation x64.
+
+    Pour tout un domaine Windows, déployez l'agent avec une seule stratégie de
+    groupe plutôt que de lancer la commande sur chaque serveur : voir
+    [Déployer l'agent avec Active Directory](agent-active-directory.md).
 
 Un jeton peut enrôler plusieurs machines : nommez-le d'après un groupe ou
 une machine.
@@ -520,6 +526,7 @@ ipsec: true                # tunnels IPsec via swanctl (défaut : true), voir ci
 speedtest: false           # test de débit Internet (défaut : false, opt-in), voir ci-dessous
 speedtest_download_url: https://speed.example.lan/backend/garbage.php?ckSize=50
 speedtest_upload_url: https://speed.example.lan/backend/empty.php
+inventory: true            # liste quotidienne des paquets installés, pour la recherche de CVE (défaut : true)
 restic_repos: []           # dépôts restic à surveiller, voir "sauvegardes restic et Borg"
 borg_repos: []             # dépôts Borg à surveiller
 mdaemon: auto              # Windows : files MDaemon quand son service existe (true / false / auto)
@@ -638,6 +645,18 @@ la page [MDaemon](mdaemon.md#mail-queues-through-the-agent).
 `mdaemon: false` ne le fait jamais. La présence du service est vérifiée à
 nouveau toutes les dix périodes, un MDaemon installé après l'agent est
 donc pris en compte sans redémarrage.
+
+**Serveurs mail (MDaemon et SecurityGateway).** Sur la même détection,
+l’agent lit aussi, sans aucun réglage, ce que seul le serveur lui-même peut
+dire : l’état et le mode de démarrage des services Windows du produit, la
+version de son exécutable, le nombre de messages et l’âge du plus ancien dans
+ses dossiers de files, et l’espace libre du volume qui contient ses données.
+Il interroge Windows par un appel PowerShell par période (toutes les dix
+périodes tant qu’aucun produit n’est trouvé). Les séries sont `agent_mail_*`
+et sont décrites sur les pages [MDaemon](mdaemon.md#mail-queues-through-the-agent)
+et [SecurityGateway](securitygateway.md#read-by-the-agent), qui disent aussi
+comment une surveillance est liée à son agent. `mdaemon: false` désactive
+cela aussi.
 
 **Hyper-V.** Quand le service Hyper-V Virtual Machine Management
 (`vmms`) existe, l'agent lit les objets de performance d'Hyper-V ; voir
@@ -916,8 +935,11 @@ lectures en tampon mémoire avec leurs horodatages d'origine. Elles sont
 envoyées dès que le lien revient : un redémarrage de serveur ne laisse
 aucun trou dans les graphiques. Le tampon est borné (`max_buffered_samples`,
 environ une heure par défaut) et abandonne les lectures les plus
-anciennes quand il est plein. Les tentatives reculent de 5 secondes à
-5 minutes avec du jitter.
+anciennes quand il est plein. Les tentatives reculent de 2 à
+30 secondes avec du jitter, et reprennent aussitôt que le canal du relais
+retrouve le serveur. Les mesures encore en attente à l'arrêt sont gardées sur
+disque (`pending-samples.json`, à côté du secret de liaison) et envoyées au
+démarrage suivant.
 
 ```sh
 dumbmonit-agent --dry-run          # affiche les lectures, n'envoie rien

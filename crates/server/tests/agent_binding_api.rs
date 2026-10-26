@@ -491,3 +491,37 @@ async fn an_oversized_command_report_is_cut_down_by_the_server() {
     );
     assert!(stored.ends_with("the last line explains"), "la fin est ce qui explique");
 }
+
+#[tokio::test]
+async fn the_machine_key_travels_in_a_header_and_the_legacy_query_still_works() {
+    let app = setup_with_inventory().await;
+    let (enrolment, secret, target, admin) = bound_machine(&app).await;
+    let queued = app
+        .post(&format!("/api/targets/{target}/containers/web/restart"), json!({}), Some(&admin))
+        .await;
+    assert_eq!(queued.status, StatusCode::CREATED, "{}", queued.body);
+
+    // Agent récent : la clé dans son en-tête, rien dans l'URL.
+    let request = |key: Option<&str>| {
+        let mut builder = Request::builder()
+            .method("GET")
+            .uri("/api/agent/commands")
+            .header(header::AUTHORIZATION, format!("Bearer {enrolment}"))
+            .header(SECRET_HEADER, secret.clone());
+        if let Some(key) = key {
+            builder = builder.header("x-dumbmonit-agent-key", key);
+        }
+        builder.body(Body::empty()).unwrap()
+    };
+    let by_header = send(&app, request(Some("id-nas"))).await;
+    assert_eq!(by_header.status, StatusCode::OK, "{}", by_header.body);
+    assert_eq!(by_header.body.as_array().expect("liste").len(), 1);
+
+    // Sans clé nulle part : refus explicite.
+    let missing = send(&app, request(None)).await;
+    assert_eq!(missing.status, StatusCode::BAD_REQUEST, "{}", missing.body);
+
+    // Agent antérieur : `?key=` reste accepté.
+    let legacy = fetch_commands(&app, &enrolment, "id-nas", Some(&secret)).await;
+    assert_eq!(legacy.status, StatusCode::OK, "{}", legacy.body);
+}

@@ -18,7 +18,8 @@ time series.
 - Docker Engine with the Compose plugin (`docker compose version` works).
 - A machine that can reach the monitors you want to monitor. It does not need to
   be reachable from them, except for [agents](../devices/agent.md), which push
-  their measurements to the server over HTTP.
+  their measurements to the server over its encrypted agent port (TCP 8443, see
+  [Agent channel security](agent-security.md)).
 - Port `8080` free on the host, or another port of your choice ([see below](#advanced-options)).
 
 ## The Compose file
@@ -32,6 +33,8 @@ services:
     image: ghcr.io/laupernoe/dumbmonit:latest
     ports:
       - "8080:8080"
+      # Encrypted agent channel: see Agent channel security.
+      - "8443:8443"
     volumes:
       - dumbmonit-data:/data
       # Or a host directory; on a SELinux host (Fedora, RHEL) add `:Z`:
