@@ -202,7 +202,11 @@ impl Access {
 
     /// Les équipements sur lesquels on a au moins `level`, ou `None` sans
     /// restriction d'équipe.
-    pub async fn targets_at(&self, pool: &SqlitePool, level: Level) -> Result<Option<HashSet<i64>>> {
+    pub async fn targets_at(
+        &self,
+        pool: &SqlitePool,
+        level: Level,
+    ) -> Result<Option<HashSet<i64>>> {
         let Self::Scoped(scope) = self else { return Ok(None) };
         let rows = sqlx::query("SELECT id, group_name FROM targets")
             .fetch_all(pool)
@@ -507,13 +511,13 @@ pub async fn guard(
     let segment = |n: usize| path.split('/').nth(n).unwrap_or_default().to_string();
     let target: Option<i64> = match rule {
         RouteRule::Open => return Ok(()),
-        RouteRule::AlertFingerprint => {
-            sqlx::query_scalar::<_, Option<i64>>("SELECT target_id FROM alert_state WHERE fingerprint = ?")
-                .bind(segment(2))
-                .fetch_optional(pool)
-                .await?
-                .flatten()
-        }
+        RouteRule::AlertFingerprint => sqlx::query_scalar::<_, Option<i64>>(
+            "SELECT target_id FROM alert_state WHERE fingerprint = ?",
+        )
+        .bind(segment(2))
+        .fetch_optional(pool)
+        .await?
+        .flatten(),
         RouteRule::HistoryEntry => {
             sqlx::query_scalar::<_, Option<i64>>("SELECT target_id FROM alert_history WHERE id = ?")
                 .bind(segment(3).parse::<i64>().unwrap_or(-1))
@@ -730,8 +734,8 @@ async fn grants(pool: &SqlitePool, team_id: i64) -> Result<Vec<Grant>> {
 
 /// Crée une équipe. Rend son identifiant.
 pub async fn create(pool: &SqlitePool, input: &TeamInput) -> Result<i64, TeamError> {
-    let name = validate_name(input.name.as_deref().unwrap_or_default())
-        .map_err(TeamError::Invalid)?;
+    let name =
+        validate_name(input.name.as_deref().unwrap_or_default()).map_err(TeamError::Invalid)?;
     let mut tx = pool.begin().await?;
     let inserted = sqlx::query(
         "INSERT INTO teams (name) VALUES (?) ON CONFLICT(name) DO NOTHING RETURNING id",
@@ -1042,7 +1046,10 @@ mod tests {
     fn groups_match_by_name_or_first_rdn() {
         assert!(group_matches("NOC", "noc"));
         assert!(group_matches("noc", "cn=NOC,ou=Groups,dc=example,dc=org"));
-        assert!(group_matches("cn=noc,ou=groups,dc=example,dc=org", "CN=NOC,OU=Groups,DC=example,DC=org"));
+        assert!(group_matches(
+            "cn=noc,ou=groups,dc=example,dc=org",
+            "CN=NOC,OU=Groups,DC=example,DC=org"
+        ));
         assert!(!group_matches("noc", "cn=noc-admins,ou=Groups"));
         assert!(!group_matches("", "noc"));
     }

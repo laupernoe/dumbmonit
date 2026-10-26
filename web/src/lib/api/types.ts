@@ -898,8 +898,8 @@ function fallbackCredentialView(kind: string): CredentialView {
 /** `operator` handles alerts (ack, ignore, snooze) but changes no configuration. */
 export type Role = 'admin' | 'operator' | 'viewer';
 
-/** How an account signs in: a local password, the LDAP / AD directory, a SAML or an OIDC identity provider. */
-export type AuthMethod = 'password' | 'ldap' | 'saml' | 'oidc';
+/** How an account signs in: a local password, the LDAP / AD directory, or the identity provider. */
+export type AuthMethod = 'password' | 'ldap' | 'oidc' | 'saml';
 
 /** An account, as returned by `/api/users` and `/api/auth/me`. Never carries a hash. */
 export interface User {
@@ -913,6 +913,20 @@ export interface User {
 	totp_enabled: boolean;
 	created_at: string;
 	last_login_at: string | null;
+	/** What the account may reach, when the server tells (`/api/auth/me`). */
+	access?: AccessInfo;
+}
+
+/** Team rights: `read` < `operate` < `manage`. */
+export type GrantLevel = 'read' | 'operate' | 'manage';
+
+/** `access` of `GET /api/auth/me`. `scoped` accounts only see the devices their teams grant. */
+export interface AccessInfo {
+	scoped: boolean;
+	teams: string[];
+	grants: TeamGrant[];
+	/** What the global role caps rights at (viewer: read, operator: manage); `null` for admins. */
+	ceiling: GrantLevel | null;
 }
 
 /** What the sign-in screen needs to know about single sign-on, without a session. */
@@ -924,16 +938,15 @@ export interface OidcStatus {
 	login_url: string;
 }
 
+/** SAML sign-in availability, read without a session for the sign-in screen. */
+export interface SamlStatus {
+	enabled: boolean;
+	label: string;
+}
+
 /** What the sign-in screen needs to know about the directory, without a session. */
 export interface LdapStatus {
 	enabled: boolean;
-}
-
-/** What the sign-in screen needs to know about SAML sign-in, without a session. */
-export interface SamlStatus {
-	enabled: boolean;
-	/** Button label. The button is a plain navigation to `/api/auth/saml/start`. */
-	label: string;
 }
 
 /** Raw response of `GET /api/auth/status`. */
@@ -947,7 +960,6 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
-	/** SAML 2.0 sign-in (button to `/api/auth/saml/start`). */
 	saml?: SamlStatus;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
 	demo: boolean;
@@ -1008,50 +1020,6 @@ export interface OidcConfigPayload {
 	operator_groups: string[];
 	groups_claim: string;
 	public_url: string;
-}
-
-/**
- * `PUT /api/auth/saml/config` — absent fields take their default. When `enabled`,
- * `idp_entity_id`, `idp_sso_url` and at least one certificate are required.
- */
-export interface SamlConfigPayload {
-	enabled: boolean;
-	/** Identity provider entity ID: the expected `Issuer`. */
-	idp_entity_id: string;
-	/** Identity provider sign-in endpoint (HTTP-Redirect binding). */
-	idp_sso_url: string;
-	/** PEM signing certificates of the identity provider (several during a rollover). */
-	idp_certificates: string[];
-	/** DumbMonit's entity ID at the identity provider; empty means `sp_metadata_url`. */
-	sp_entity_id: string;
-	/** Accept responses the identity provider sends without a request (off by default). */
-	allow_idp_initiated: boolean;
-	/** Create an account on first sign-in (off by default). */
-	auto_create: boolean;
-	/** Sign-in button label; empty means "SAML". */
-	button_label: string;
-	/** Attribute names; empty tries the usual ones (Entra ID, Okta, Keycloak…). */
-	attr_email: string;
-	attr_name: string;
-	attr_groups: string;
-	admin_groups: string[];
-	/** Groups whose members become operators (unless also in an admin group). */
-	operator_groups: string[];
-}
-
-/** `GET /api/auth/saml/config`: the stored settings plus the addresses to declare at the provider. */
-export interface SamlConfig extends SamlConfigPayload {
-	/** Service provider metadata URL, to give to the identity provider. */
-	sp_metadata_url: string;
-	/** Assertion consumer service (reply URL), to declare at the identity provider. */
-	acs_url: string;
-}
-
-/** `POST /api/auth/saml/metadata/import` (body `{ xml }`): values extracted, nothing stored. */
-export interface SamlMetadataImport {
-	idp_entity_id: string;
-	idp_sso_url: string;
-	idp_certificates: string[];
 }
 
 /** Endpoints found by `POST /api/auth/oidc/test` (discovery only, no sign-in). */
@@ -1167,6 +1135,7 @@ export interface AuthState {
 	user: User | null;
 	oidc: OidcStatus;
 	ldap: LdapStatus;
+	saml: SamlStatus;
 	/** Public demo mode (read-only, fictional data). */
 	demo: boolean;
 }
@@ -4973,4 +4942,95 @@ export interface CveFilters {
 	state?: CveState;
 	exploited?: boolean;
 	ignored?: boolean;
+}
+
+// --- Teams, SAML, SCIM ---------------------------------------------------------
+
+/** Where a team member comes from: added by hand, by an IdP group, or by SCIM provisioning. */
+export type MemberSource = 'manual' | 'idp' | 'scim';
+
+export interface TeamMember {
+	user_id: number;
+	username: string;
+	display_name: string;
+	role: Role;
+	source: MemberSource;
+}
+
+/**
+ * A right on a folder of devices. `folder` is `"*"` (every device), `""` (devices
+ * without a folder) or a folder name (sub-folders `Paris/…` included).
+ */
+export interface TeamGrant {
+	folder: string;
+	level: GrantLevel;
+}
+
+export interface Team {
+	id: number;
+	name: string;
+	description: string;
+	idp_groups: string[];
+	members: TeamMember[];
+	grants: TeamGrant[];
+	created_at: string;
+}
+
+/** Absent fields stay unchanged on `PUT`. `members` lists the manual members only. */
+export interface TeamInput {
+	name?: string;
+	description?: string;
+	idp_groups?: string[];
+	members?: number[];
+	grants?: TeamGrant[];
+}
+
+export type UnassignedAccess = 'all' | 'none';
+
+export interface TeamsResponse {
+	teams: Team[];
+	folders: string[];
+	settings: { unassigned_access: UnassignedAccess };
+}
+
+/** `GET/PUT /api/auth/saml/config`. The two URLs are read-only. */
+export interface SamlConfig {
+	enabled: boolean;
+	idp_entity_id: string;
+	idp_sso_url: string;
+	/** PEM certificates of the identity provider. */
+	idp_certificates: string[];
+	sp_entity_id: string;
+	allow_idp_initiated: boolean;
+	auto_create: boolean;
+	button_label: string;
+	attr_email: string;
+	attr_name: string;
+	attr_groups: string;
+	admin_groups: string[];
+	operator_groups: string[];
+	sp_metadata_url: string;
+	acs_url: string;
+}
+
+/** `POST /api/auth/saml/metadata/import`: fills the form, nothing is saved. */
+export interface SamlMetadataImport {
+	idp_entity_id: string;
+	idp_sso_url: string;
+	idp_certificates: string[];
+}
+
+export type ScimDefaultRole = 'viewer' | 'operator';
+
+export interface ScimSettings {
+	enabled: boolean;
+	base_url: string;
+	token_set: boolean;
+	token_created_at: string | null;
+	default_role: ScimDefaultRole;
+}
+
+/** Answer of the token rotation: the bearer token is shown once. */
+export interface ScimTokenReply extends ScimSettings {
+	token: string;
 }

@@ -118,6 +118,7 @@ pub async fn restore(
 
     let refs = target_ids(&mut tx).await?;
     report.push(restore_locations(&mut tx, bundle, &refs).await?);
+    report.push(restore_teams(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
     let channels = channel_ids(&mut tx).await?;
@@ -1601,6 +1602,113 @@ async fn restore_locations(
         .execute(&mut **tx)
         .await
         .context("emplacement d'un équipement")?;
+    }
+    Ok(report)
+}
+
+/// Équipes : créées ou mises à jour par nom. Les droits sont remplacés par ceux
+/// du lot ; les membres du lot sont ajoutés (un compte absent est signalé), sans
+/// retirer ceux que l'instance a déjà.
+async fn restore_teams(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Result<SectionReport> {
+    let mut report = SectionReport::new("teams");
+    if let Some(settings) = &bundle.teams_settings
+        && serde_json::from_value::<crate::auth::teams::TeamSettings>(settings.clone()).is_ok()
+    {
+        sqlx::query(
+            "INSERT INTO settings (key, value) VALUES (?, ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        )
+        .bind(crate::auth::teams::SETTINGS_KEY)
+        .bind(serde_json::to_vec(settings)?)
+        .execute(&mut **tx)
+        .await
+        .context("réglages des équipes")?;
+    }
+    for team in &bundle.teams {
+        let Ok(name) = crate::auth::teams::validate_name(&team.name) else {
+            report.skipped += 1;
+            report.notes.push(format!("team \"{}\" has no valid name", team.name));
+            continue;
+        };
+        let existing: Option<i64> =
+            sqlx::query_scalar("SELECT id FROM teams WHERE name = ? COLLATE NOCASE")
+                .bind(&name)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de l'équipe")?;
+        let id: i64 = match existing {
+            Some(id) => {
+                sqlx::query("UPDATE teams SET description = ?, idp_groups = ? WHERE id = ?")
+                    .bind(&team.description)
+                    .bind(serde_json::to_string(&team.idp_groups)?)
+                    .bind(id)
+                    .execute(&mut **tx)
+                    .await
+                    .context("mise à jour de l'équipe")?;
+                report.count(RestoreOutcome::Updated);
+                id
+            }
+            None => {
+                let id = sqlx::query_scalar(
+                    "INSERT INTO teams (name, description, idp_groups) VALUES (?, ?, ?)
+                     RETURNING id",
+                )
+                .bind(&name)
+                .bind(&team.description)
+                .bind(serde_json::to_string(&team.idp_groups)?)
+                .fetch_one(&mut **tx)
+                .await
+                .context("création de l'équipe")?;
+                report.count(RestoreOutcome::Created);
+                id
+            }
+        };
+        sqlx::query("DELETE FROM team_folder_grants WHERE team_id = ?")
+            .bind(id)
+            .execute(&mut **tx)
+            .await
+            .context("droits de l'équipe")?;
+        for grant in &team.grants {
+            sqlx::query(
+                "INSERT INTO team_folder_grants (team_id, folder, level) VALUES (?, ?, ?)
+                 ON CONFLICT(team_id, folder) DO UPDATE SET level = excluded.level",
+            )
+            .bind(id)
+            .bind(crate::auth::teams::normalize_folder(&grant.folder))
+            .bind(grant.level.as_str())
+            .execute(&mut **tx)
+            .await
+            .context("droit de l'équipe")?;
+        }
+        for member in &team.members {
+            let source = match member.source.as_str() {
+                "idp" | "scim" => member.source.as_str(),
+                _ => "manual",
+            };
+            let user: Option<i64> =
+                sqlx::query_scalar("SELECT id FROM users WHERE username = ? COLLATE NOCASE")
+                    .bind(&member.username)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("membre de l'équipe")?;
+            let Some(user) = user else {
+                report.notes.push(format!(
+                    "team \"{name}\": account \"{}\" not found, membership skipped",
+                    member.username
+                ));
+                continue;
+            };
+            sqlx::query(
+                "INSERT INTO team_members (team_id, user_id, source) VALUES (?, ?, ?)
+                 ON CONFLICT(team_id, user_id) DO NOTHING",
+            )
+            .bind(id)
+            .bind(user)
+            .bind(source)
+            .execute(&mut **tx)
+            .await
+            .context("membre de l'équipe")?;
+        }
     }
     Ok(report)
 }
