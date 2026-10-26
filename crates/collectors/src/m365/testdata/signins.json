@@ -1,0 +1,8 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#auditLogs/signIns",
+  "value": [
+    { "id": "s1", "createdDateTime": "2026-10-26T08:41:00Z", "userPrincipalName": "alice@contoso.com", "status": { "errorCode": 50126, "failureReason": "Invalid username or password." } },
+    { "id": "s2", "createdDateTime": "2026-10-26T08:44:00Z", "userPrincipalName": "alice@contoso.com", "status": { "errorCode": 50126, "failureReason": "Invalid username or password." } },
+    { "id": "s3", "createdDateTime": "2026-10-26T08:50:00Z", "userPrincipalName": "carol@contoso.com", "status": { "errorCode": 50053, "failureReason": "Account locked." } }
+  ]
+}

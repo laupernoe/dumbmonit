@@ -610,11 +610,80 @@ function hyperv(series: MetricSeries[]): ApplianceView {
 	};
 }
 
+// ----------------------------------------------------------- Cloud services
+
+/** A key figure of a cloud service, in the unit its collector declared. */
+function figureValue(unit: string, value: number): string {
+	if (unit === 'percent') return `${Math.round(value)}%`;
+	if (unit === 'bytes') return formatBytes(value);
+	if (unit === 'days') return `${Math.round(value)} d`;
+	return String(Math.round(value));
+}
+
+/**
+ * Cloud services (Microsoft 365, Entra ID, Azure, AWS, Cloudflare, Hetzner,
+ * OVHcloud, Infomaniak) all publish the same two generic families
+ * (`crates/collectors/src/cloud.rs`): `<kind>_item_ok{group,item,detail}` for
+ * the lists and `<kind>_figure{name,unit}` for the figures.
+ */
+function cloud(series: MetricSeries[], prefix: string, title: string, description: string): ApplianceView {
+	const ps = points(series, prefix);
+	const groups = new Map<string, Row[]>();
+	let bad = 0;
+	for (const p of ps) {
+		if (p.name !== 'item_ok' || p.labels.item === undefined) continue;
+		const ok = p.value >= 1;
+		if (!ok) bad += 1;
+		const group = p.labels.group || 'Items';
+		const rows = groups.get(group) ?? [];
+		rows.push({
+			key: `${group}/${p.labels.item}`,
+			name: p.labels.item,
+			tone: ok ? 'signal' : 'warning',
+			plate: p.labels.detail || (ok ? 'OK' : 'Problem')
+		});
+		groups.set(group, rows);
+	}
+	const LIMIT = 30;
+	const sections: Section[] = [...groups.entries()]
+		.sort(([a], [b]) => a.localeCompare(b, 'en'))
+		.map(([name, rows]) => {
+			rows.sort((a, b) => Number(a.tone === 'signal') - Number(b.tone === 'signal') || byName(a, b));
+			const hidden = rows.length - LIMIT;
+			return { title: name, rows: rows.slice(0, LIMIT), more: hidden > 0 ? `${hidden} more, all healthy or lower priority.` : undefined };
+		});
+	const figures: Figure[] = ps
+		.filter((p) => p.name === 'figure' && p.labels.name !== undefined)
+		.sort((a, b) => a.labels.name.localeCompare(b.labels.name, 'en'))
+		.slice(0, 4)
+		.map((p) => ({ label: p.labels.name, value: figureValue(p.labels.unit ?? '', p.value) }));
+	const problems = bad > 0 ? [{ text: `${bad} item${bad === 1 ? '' : 's'} need${bad === 1 ? 's' : ''} attention`, severe: true }] : [];
+	return {
+		title,
+		description,
+		verdict: verdict(problems, 'Everything looks healthy.'),
+		figures,
+		sections
+	};
+}
+
+function cloudFold(prefix: string, title: string, description: string): Fold {
+	return { prefix, title, fold: (series) => cloud(series, prefix, title, description) };
+}
+
 export const FOLDS: Record<string, Fold> = {
 	pfsense: { prefix: 'pfsense', title: 'Firewall', fold: pfsense },
 	unraid: { prefix: 'unraid', title: 'Array', fold: unraid },
 	veeam: { prefix: 'veeam', title: 'Backups', fold: veeam },
 	tailscale: { prefix: 'tailscale', title: 'Tailnet', fold: tailscale },
+	m365: cloudFold('m365', 'Microsoft 365', 'Read through the Microsoft Graph API.'),
+	entra: cloudFold('entra', 'Entra ID', 'Read through the Microsoft Graph API.'),
+	azure: cloudFold('azure', 'Azure', 'Read through the Azure Resource Manager API.'),
+	aws: cloudFold('aws', 'AWS', 'Read through the Amazon CloudWatch API.'),
+	cloudflare: cloudFold('cloudflare', 'Cloudflare', 'Read through the Cloudflare API.'),
+	hetzner: cloudFold('hetzner', 'Hetzner Cloud', 'Read through the Hetzner Cloud API.'),
+	ovh: cloudFold('ovh', 'OVHcloud', 'Read through the OVHcloud API.'),
+	infomaniak: cloudFold('infomaniak', 'Infomaniak', 'Read through the Infomaniak API.'),
 	fortigate: { prefix: 'fortigate', title: 'Firewall', fold: fortigate },
 	sophos: { prefix: 'sophos', title: 'Firewall', fold: sophos },
 	nginx: { prefix: 'nginx', title: 'Web server', fold: nginx },

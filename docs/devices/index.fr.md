@@ -53,6 +53,14 @@ que cette version peut surveiller.
 | [Active Directory](activedirectory.md) | `activedirectory` | nom d'utilisateur/mot de passe (utilisateur de domaine ordinaire) | Domaine Windows via LDAPS : contrôleurs de domaine et rôles FSMO, membres de groupes privilégiés, politique de mot de passe, constats de sécurité |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | nom d'utilisateur/mot de passe (Veeam Backup Viewer) | Serveur de sauvegarde : jobs en échec, sessions en échec, dépôts qui se remplissent, licence |
 | [Tailscale](tailscale.md) | `tailscale` | client OAuth (devices:core:read) ou jeton d'accès d'API | Tailnet : serveurs hors ligne, clés de nœud qui expirent, appareils en attente d'approbation |
+| [Microsoft 365](m365.md) | `m365` | Application Entra (ID client et secret) | Santé des services, incidents, licences, utilisateurs à risque |
+| [Microsoft Entra ID](entra.md) | `entra` | Application Entra (ID client et secret) | Expiration des secrets, synchronisation d'annuaire, MFA des administrateurs |
+| [Microsoft Azure](azure.md) | `azure` | Application Entra (ID client et secret) avec le rôle Reader sur l'abonnement | Resource Health de chaque ressource et alertes Azure Monitor actives par sévérité |
+| [AWS (CloudWatch)](aws.md) | `aws` | Identifiant de clé d'accès et secret (utilisateur IAM en lecture seule, rôle facultatif) | Alarmes CloudWatch en ALARM, contrôles d'état et CPU EC2, CPU et stockage libre RDS |
+| [Cloudflare](cloudflare.md) | `cloudflare` | jeton d'API (lecture seule) | Zones, tunnels, certificats, erreurs 5xx, pools de répartition de charge |
+| [Hetzner Cloud](hetzner.md) | `hetzner` | jeton d'API (lecture seule) | Serveurs, processeur, volumes, sauvegardes |
+| [OVHcloud](ovh.md) | `ovh` | Jeton d'API OVHcloud (clé d'application, secret d'application et clé de consommateur) avec GET /vps* et GET /dedicated/server* | État et tâches en cours des VPS et des serveurs dédiés |
+| [Infomaniak](infomaniak.md) | `infomaniak` | Jeton d'API Infomaniak avec la portée Products | Dates d'expiration, blocages et maintenance des domaines, hébergements et autres produits |
 | [Nextcloud](nextcloud.md) | `nextcloud` | jeton de surveillance (NC-Token) | Synchronisation de fichiers : mode maintenance, mise à jour en attente, mises à jour, utilisateurs actifs, OPcache |
 | [Immich](immich.md) | `immich` | clé d'API | Bibliothèque de photos : files de tâches, mises à jour, disque, nombre de photos |
 | [Paperless-ngx](paperless.md) | `paperless` | jeton d'API ou nom d'utilisateur/mot de passe | Documents : Redis, Celery, index, imports en échec, mises à jour |

@@ -131,6 +131,14 @@ nav:
       - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
       - Tailscale: devices/tailscale.md
+      - Microsoft 365: devices/m365.md
+      - Microsoft Entra ID: devices/entra.md
+      - Microsoft Azure: devices/azure.md
+      - AWS CloudWatch: devices/aws.md
+      - Cloudflare: devices/cloudflare.md
+      - Hetzner Cloud: devices/hetzner.md
+      - OVHcloud: devices/ovh.md
+      - Infomaniak: devices/infomaniak.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md
       - Paperless-ngx: devices/paperless.md

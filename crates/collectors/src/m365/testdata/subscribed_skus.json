@@ -1,0 +1,59 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#subscribedSkus",
+  "value": [
+    {
+      "id": "0b1f2a3c-0000-0000-0000-000000000001_6fd2c87f-b296-42f0-b197-1e91e994b900",
+      "skuId": "6fd2c87f-b296-42f0-b197-1e91e994b900",
+      "skuPartNumber": "ENTERPRISEPACK",
+      "appliesTo": "User",
+      "capabilityStatus": "Enabled",
+      "consumedUnits": 25,
+      "prepaidUnits": { "enabled": 25, "suspended": 0, "warning": 0, "lockedOut": 0 }
+    },
+    {
+      "id": "0b1f2a3c-0000-0000-0000-000000000001_05e9a617-0261-4cee-bb44-138d3ef5d965",
+      "skuId": "05e9a617-0261-4cee-bb44-138d3ef5d965",
+      "skuPartNumber": "SPE_E3",
+      "appliesTo": "User",
+      "capabilityStatus": "Enabled",
+      "consumedUnits": 96,
+      "prepaidUnits": { "enabled": 100, "suspended": 0, "warning": 0, "lockedOut": 0 }
+    },
+    {
+      "id": "0b1f2a3c-0000-0000-0000-000000000001_3b555118-da6a-4418-894f-7df1e2096870",
+      "skuId": "3b555118-da6a-4418-894f-7df1e2096870",
+      "skuPartNumber": "O365_BUSINESS_PREMIUM",
+      "appliesTo": "User",
+      "capabilityStatus": "Enabled",
+      "consumedUnits": 10,
+      "prepaidUnits": { "enabled": 50, "suspended": 0, "warning": 0, "lockedOut": 0 }
+    },
+    {
+      "id": "0b1f2a3c-0000-0000-0000-000000000001_f30db892-07e9-47e9-837c-80727f46fd3d",
+      "skuId": "f30db892-07e9-47e9-837c-80727f46fd3d",
+      "skuPartNumber": "FLOW_FREE",
+      "appliesTo": "User",
+      "capabilityStatus": "Enabled",
+      "consumedUnits": 5,
+      "prepaidUnits": { "enabled": 10000, "suspended": 0, "warning": 0, "lockedOut": 0 }
+    },
+    {
+      "id": "0b1f2a3c-0000-0000-0000-000000000001_a403ebcc-fae0-4ca2-8c8c-7a907fd6c235",
+      "skuId": "a403ebcc-fae0-4ca2-8c8c-7a907fd6c235",
+      "skuPartNumber": "POWER_BI_STANDARD",
+      "appliesTo": "User",
+      "capabilityStatus": "Enabled",
+      "consumedUnits": 3,
+      "prepaidUnits": { "enabled": 1000000, "suspended": 0, "warning": 0, "lockedOut": 0 }
+    },
+    {
+      "id": "0b1f2a3c-0000-0000-0000-000000000001_efccb6f7-5641-4e0e-bd10-b4976e1bf68e",
+      "skuId": "efccb6f7-5641-4e0e-bd10-b4976e1bf68e",
+      "skuPartNumber": "EMS",
+      "appliesTo": "User",
+      "capabilityStatus": "Suspended",
+      "consumedUnits": 12,
+      "prepaidUnits": { "enabled": 0, "suspended": 20, "warning": 0, "lockedOut": 0 }
+    }
+  ]
+}

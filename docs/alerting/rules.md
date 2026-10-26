@@ -607,6 +607,103 @@ See [Tailscale](../devices/tailscale.md). Devices are labelled `device`, the fir
 | Tailscale device awaiting approval | A device joined the tailnet and awaits approval: approve it if it is expected, remove it otherwise (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Advisory (`warning`) | 1 d |
 | Tailscale client update | A Tailscale device that must stay online runs a client with an update available (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 d |
 
+
+
+
+
+
+
+
+
+### Microsoft 365
+
+See [Microsoft 365](../devices/m365.md). Rules for Microsoft 365 tenants read through Microsoft Graph: service health, licenses and risky users.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Microsoft 365 service degraded | A Microsoft 365 service is degraded, interrupted or under investigation according to the service health dashboard. (`dumbmonit_m365_services_degraded`) | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Microsoft 365 licenses exhausted | Every unit of a paid license is assigned: the next user cannot be given it. (`dumbmonit_m365_license_used_percent`) | ≥ 100 % | 1 h | Advisory (`warning`) | 1 d |
+| Microsoft 365 licenses nearly full | More than 95 % of a paid license is assigned. (`dumbmonit_m365_license_used_percent < 99.99`) | > 95 % | 1 h | Info (`info`) | 7 d |
+| Microsoft 365 users at risk | Entra ID Protection flags at least one user as at risk. (`dumbmonit_m365_risky_users`) | > 0 | 15 min | Advisory (`warning`) | 1 d |
+
+### Microsoft Entra ID
+
+See [Microsoft Entra ID](../devices/entra.md). Rules for Microsoft Entra ID tenants read through Microsoft Graph: application secrets, directory sync and administrator MFA.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Entra application secret expiring | A secret or certificate of an Entra application expires in less than 30 days: the application stops signing in on that day. (`dumbmonit_entra_credential_expiry_seconds > 0`) | < 30 d | 1 h | Advisory (`warning`) | 1 d |
+| Entra application secret expired | A secret or certificate of an Entra application expired in the last 30 days: remove it, or renew it if the application still needs it. (`dumbmonit_entra_credential_expiry_seconds`) | expired | 1 h | Advisory (`warning`) | 1 d |
+| Entra directory sync late | The last synchronization with the on-premises Active Directory is more than 3 hours old: check Entra Connect. (`dumbmonit_entra_ad_sync_age_seconds`) | > 3 h | 10 min | Advisory (`warning`) | 6 h |
+| Entra administrator without MFA | At least one administrator has no multifactor authentication method registered. (`dumbmonit_entra_admin_without_mfa`) | > 0 | 1 h | Advisory (`warning`) | 1 d |
+
+### Microsoft Azure
+
+See [Microsoft Azure](../devices/azure.md). Rules for an Azure subscription read through Resource Health and Azure Monitor alerts.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Azure resource unavailable | Resource Health reports a resource of the subscription as unavailable for 10 minutes (not counting resources stopped by their owner). (`dumbmonit_azure_resources_unavailable`) | > 0 | 10 min | Warning (`critical`) | 6 h |
+| Azure resource degraded | Resource Health reports a resource of the subscription as degraded for 15 minutes. (`dumbmonit_azure_resources_degraded`) | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Azure Monitor alert Sev0 or Sev1 | An Azure Monitor alert of severity Sev0 (critical) or Sev1 (error) is fired and not closed. (`dumbmonit_azure_alerts_high_active`) | > 0 | 5 min | Advisory (`warning`) | 6 h |
+
+### AWS CloudWatch
+
+See [AWS (CloudWatch)](../devices/aws.md). AWS alarms, EC2 instances and RDS databases read through CloudWatch.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| AWS CloudWatch alarm in ALARM | A CloudWatch alarm has been in the ALARM state for 5 minutes. (`dumbmonit_aws_alarm_in_alarm`) | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| AWS EC2 status check failed | An EC2 instance has failed an instance or system status check for 10 minutes. (`dumbmonit_aws_ec2_status_check_failed`) | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| AWS EC2 CPU high | An EC2 instance has had a CPU peak above 90 % for 30 minutes. (`dumbmonit_aws_ec2_cpu_percent`) | > 90 % | 30 min | Advisory (`warning`) | 6 h |
+| AWS RDS CPU high | An RDS database has had a CPU peak above 90 % for 30 minutes. (`dumbmonit_aws_rds_cpu_percent`) | > 90 % | 30 min | Advisory (`warning`) | 6 h |
+| AWS RDS free storage low | An RDS database has less than 5 GiB of free storage for 15 minutes. (`dumbmonit_aws_rds_free_storage_bytes`) | < 5 GiB | 15 min | Advisory (`warning`) | 6 h |
+
+### Cloudflare
+
+See [Cloudflare](../devices/cloudflare.md). Rules for the zones, tunnels, certificates and load balancer pools of a Cloudflare account.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Cloudflare tunnel down | A Cloudflare tunnel has no connection left and cannot carry traffic. (`dumbmonit_cloudflare_tunnel_down`) | > 0 | 5 min | Warning (`critical`) | 6 h |
+| Cloudflare tunnel degraded | A Cloudflare tunnel has lost some of its connections to the edge. (`dumbmonit_cloudflare_tunnel_degraded`) | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Cloudflare certificate expiring | An active certificate of a zone expires in less than 14 days; Cloudflare should have renewed it by now. (`dumbmonit_cloudflare_certificate_expiry_seconds`) | < 14 d | 1 h | Advisory (`warning`) | 1 d |
+| Cloudflare zone not active | A zone is not active (pending name server change, moved or deactivated). (`dumbmonit_cloudflare_zone_active`) | < 1 | 1 h | Advisory (`warning`) | 1 d |
+| Cloudflare 5xx rate high | More than 5% of the responses of a zone are 5xx over the last one to two hours (zones with at least 100 requests). (`dumbmonit_cloudflare_zone_http_5xx_percent`) | > 5 % | 15 min | Advisory (`warning`) | 6 h |
+| Cloudflare load balancer pool unhealthy | An enabled load balancer pool is unhealthy. (`dumbmonit_cloudflare_lb_pool_healthy`) | < 1 | 5 min | Advisory (`warning`) | 6 h |
+
+### Hetzner Cloud
+
+See [Hetzner Cloud](../devices/hetzner.md). Rules for the servers, volumes and backups of a Hetzner Cloud project.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Hetzner server not running | A Hetzner Cloud server is not in the running state (off, migrating, stuck starting). (`dumbmonit_hetzner_server_running`) | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| Hetzner server CPU sustained high | A Hetzner server averages more than 90% CPU over ten minutes, for 30 minutes. (`dumbmonit_hetzner_server_cpu_percent`) | > 90 % | 30 min | Advisory (`warning`) | 6 h |
+| Hetzner backup too old | The newest backup of a server with backups enabled is more than 3 days old. (`dumbmonit_hetzner_server_backup_age_seconds`) | > 3 d | 1 h | Advisory (`warning`) | 1 d |
+| Hetzner volume not attached | A volume is attached to no server, and is billed anyway. (`dumbmonit_hetzner_volume_attached`) | < 1 | 1 h | Info (`info`) | 7 d |
+
+### OVHcloud
+
+See [OVHcloud](../devices/ovh.md). Rules for the VPS and dedicated servers of an OVHcloud account.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| OVHcloud VPS not running | An OVHcloud VPS is not in the running state for 10 minutes. (`dumbmonit_ovh_vps_up`) | < 1 | 10 min | Advisory (`warning`) | 6 h |
+| OVHcloud dedicated server in error | OVHcloud monitoring reports a dedicated server in error, or powered off, for 5 minutes. (`dumbmonit_ovh_dedicated_up`) | < 1 | 5 min | Warning (`critical`) | 6 h |
+| OVHcloud task in progress | One or more tasks (reboot, reinstall, maintenance) have been pending or running on the servers for an hour. (`dumbmonit_ovh_tasks_active`) | > 0 | 1 h | Info (`info`) | 1 d |
+
+### Infomaniak
+
+See [Infomaniak](../devices/infomaniak.md). Rules for the products of an Infomaniak account.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Infomaniak product expiring | A product (domain, hosting, mail) expires in less than 14 days. (`dumbmonit_infomaniak_product_expiry_seconds`) | < 14 d | 1 h | Advisory (`warning`) | 1 d |
+| Infomaniak product expired | The expiry date of a product has passed. (`dumbmonit_infomaniak_product_expiry_seconds`) | < 0 | 1 h | Warning (`critical`) | 1 d |
+| Infomaniak product locked | Infomaniak flags a product as locked for an hour. (`dumbmonit_infomaniak_product_locked`) | > 0 | 1 h | Advisory (`warning`) | 1 d |
+| Infomaniak product in maintenance | Infomaniak flags a product as under maintenance for an hour. (`dumbmonit_infomaniak_product_maintenance`) | > 0 | 1 h | Info (`info`) | 1 d |
+
 ### FortiGate
 
 See [FortiGate](../devices/fortigate.md). Tunnels are labelled `tunnel`, interfaces `interface` and `alias`, licences `license`.

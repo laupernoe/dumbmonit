@@ -1,0 +1,6 @@
+{
+  "result": "success",
+  "data": [
+    { "id": 77, "name": "Acme SA", "legal_entity_type": "company", "created_at": 1500000000 }
+  ]
+}

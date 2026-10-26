@@ -1,0 +1,54 @@
+{
+  "Messages": [],
+  "MetricDataResults": [
+    {
+      "Id": "ec0",
+      "Label": "i-0123456789abcdef0 CPU",
+      "StatusCode": "Complete",
+      "Timestamps": [1790000100.0, 1789999800.0],
+      "Values": [97.5, 41.0]
+    },
+    {
+      "Id": "es0",
+      "Label": "i-0123456789abcdef0 status",
+      "StatusCode": "Complete",
+      "Timestamps": [1790000100.0, 1789999800.0],
+      "Values": [0.0, 0.0]
+    },
+    {
+      "Id": "ec1",
+      "Label": "i-0fedcba9876543210 CPU",
+      "StatusCode": "Complete",
+      "Timestamps": [],
+      "Values": []
+    },
+    {
+      "Id": "es1",
+      "Label": "i-0fedcba9876543210 status",
+      "StatusCode": "Complete",
+      "Timestamps": [1790000100.0, 1789999800.0],
+      "Values": [1.0, 0.0]
+    },
+    {
+      "Id": "rc0",
+      "Label": "prod-db CPU",
+      "StatusCode": "Complete",
+      "Timestamps": [1790000100.0, 1789999800.0],
+      "Values": [55.25, 60.5]
+    },
+    {
+      "Id": "rf0",
+      "Label": "prod-db storage",
+      "StatusCode": "Complete",
+      "Timestamps": [1789999800.0, 1790000100.0],
+      "Values": [21500000000.0, 21474836480.0]
+    },
+    {
+      "Id": "rn0",
+      "Label": "prod-db connections",
+      "StatusCode": "Complete",
+      "Timestamps": [1790000100.0, 1789999800.0],
+      "Values": [42.0, 40.0]
+    }
+  ]
+}

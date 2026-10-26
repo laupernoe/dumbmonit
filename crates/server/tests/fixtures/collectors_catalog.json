@@ -579,6 +579,246 @@
     ]
   },
   {
+    "kind": "aws",
+    "label": "AWS (CloudWatch)",
+    "summary": "CloudWatch alarms in the ALARM state, EC2 status checks and CPU, and RDS CPU and free storage.",
+    "examples": [
+      "Amazon EC2",
+      "Amazon RDS",
+      "CloudWatch alarms"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Access key",
+        "help": "Access key ID and secret access key of a read-only IAM user (or of a user allowed to assume a read-only role).",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Access key ID",
+            "help": "Starts with AKIA for a long-term key.",
+            "placeholder": "AKIAIOSFODNN7EXAMPLE",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Secret access key",
+            "help": "Shown once when the access key is created.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "monitoring.eu-west-3.amazonaws.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only IAM user for DumbMonit",
+      "steps": [
+        "In the AWS console, open IAM, Policies, Create policy, JSON tab, paste this read-only policy and name it DumbMonitReadOnly.\n{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"cloudwatch:DescribeAlarms\",\"cloudwatch:ListMetrics\",\"cloudwatch:GetMetricData\"],\"Resource\":\"*\"}]}",
+        "Open IAM, Users, Create user: name it dumbmonit, leave console access off, and attach the DumbMonitReadOnly policy.",
+        "Open the user, Security credentials, Create access key, choose Application running outside AWS. Copy the access key ID and the secret access key: the secret is shown once.",
+        "Optional, to use a role instead: attach the policy to a role that trusts the user, give the user only sts:AssumeRole on that role, and copy the role ARN into the Role ARN option.",
+        "In DumbMonit, enter monitoring.<region>.amazonaws.com as the address, paste the key and its secret, and set the same region in the Region option."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "CloudWatch API (HTTPS, monitoring.<region>.amazonaws.com)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "STS AssumeRole, only with a role ARN (HTTPS, sts.<region>.amazonaws.com)",
+          "optional": true
+        }
+      ],
+      "permissions": [
+        "cloudwatch:DescribeAlarms\nLists the alarms in the ALARM state; changes nothing.",
+        "cloudwatch:ListMetrics\nFinds the EC2 instances and RDS databases that publish metrics.",
+        "cloudwatch:GetMetricData\nReads CPU, status checks, free storage and connections over the last 10 minutes.",
+        "sts:AssumeRole (only with a role ARN)\nLets the user assume the read-only role; allow it on that role only."
+      ],
+      "warning": "Use a dedicated IAM user with only these read permissions, never a key that can change resources. AWS bills GetMetricData per metric requested (USD 0.01 per 1,000): a long check interval keeps the cost low on large accounts.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/aws/"
+    },
+    "options": [
+      {
+        "key": "region",
+        "label": "Region",
+        "help": "AWS region of the account resources, also used to sign requests. It must match the region in the address.",
+        "placeholder": "eu-west-3",
+        "default": "",
+        "required": true,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "role_arn",
+        "label": "Role ARN",
+        "help": "Optional. Role to assume through STS, instead of reading with the user's own permissions.",
+        "placeholder": "arn:aws:iam::123456789012:role/dumbmonit-read",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "endpoint_url",
+        "label": "STS endpoint URL",
+        "help": "Optional, only with a role. Replaces https://sts.<region>.amazonaws.com (VPC endpoint, China or GovCloud regions).",
+        "placeholder": "https://sts.eu-west-3.amazonaws.com",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "azure",
+    "label": "Microsoft Azure",
+    "summary": "Resource Health and active Azure Monitor alerts of an Azure subscription, read through a Reader service principal.",
+    "examples": [
+      "Microsoft Azure subscription"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Entra application (service principal)",
+        "help": "The client ID and a client secret of an Entra application that has the Reader role on the subscription.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Application (client) ID",
+            "help": "The Application (client) ID of the app registration, a GUID.",
+            "placeholder": "00000000-0000-0000-0000-000000000000",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Client secret",
+            "help": "The Value of a client secret of the app registration (shown once when created).",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "management.azure.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only application for DumbMonit",
+      "steps": [
+        "In the Azure portal, open Microsoft Entra ID > App registrations > New registration, name it DumbMonit, keep single tenant, then Register.",
+        "On the Overview page, copy the Application (client) ID and the Directory (tenant) ID.",
+        "Open Certificates & secrets > New client secret, choose a lifetime, then copy the secret Value: it is shown once.",
+        "Open Subscriptions > your subscription > Access control (IAM) > Add > Add role assignment, pick the Reader role, select the DumbMonit application, then Review + assign.",
+        "Copy the Subscription ID from the subscription Overview page.",
+        "In DumbMonit, enter management.azure.com as address, paste the client ID and secret, and fill the Tenant ID and Subscription ID options."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Azure Resource Manager API (HTTPS, management.azure.com)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Microsoft sign-in, access token (HTTPS, login.microsoftonline.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Reader (role on the subscription)\nReads Resource Health and the active Azure Monitor alerts; changes nothing."
+      ],
+      "warning": "A stopped or deallocated virtual machine is reported by Azure as unavailable on the user's request: it is counted apart and raises no alert. Azure Monitor alerts need the Microsoft.AlertsManagement resource provider registered on the subscription; without it only Resource Health is monitored.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/azure/"
+    },
+    "options": [
+      {
+        "key": "tenant_id",
+        "label": "Tenant ID",
+        "help": "The Directory (tenant) ID of the application, a GUID or a domain such as contoso.onmicrosoft.com.",
+        "placeholder": "00000000-0000-0000-0000-000000000000",
+        "default": "",
+        "required": true,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "subscription_id",
+        "label": "Subscription ID",
+        "help": "The subscription to watch, as shown on its Overview page in the Azure portal.",
+        "placeholder": "00000000-0000-0000-0000-000000000000",
+        "default": "",
+        "required": true,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "login_url",
+        "label": "Sign-in URL",
+        "help": "Where the access token is requested. Change it only for a sovereign cloud, such as https://login.microsoftonline.us.",
+        "placeholder": "https://login.microsoftonline.com",
+        "default": "https://login.microsoftonline.com",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
     "kind": "caddy",
     "label": "Caddy",
     "summary": "The web server and reverse proxy: upstreams failing their health checks, a configuration reload that failed, handler errors and the share of 5xx answers.",
@@ -695,6 +935,102 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "10",
         "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "cloudflare",
+    "label": "Cloudflare",
+    "summary": "Zones, tunnels, certificates, traffic errors and load balancer pools of a Cloudflare account, read through the Cloudflare API.",
+    "examples": [
+      "Cloudflare zones and tunnels"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "API token",
+        "help": "A Cloudflare API token with read-only permissions.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API token",
+            "help": "The token created in the dashboard, shown once.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "api.cloudflare.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only API token for DumbMonit",
+      "steps": [
+        "In the Cloudflare dashboard, open My Profile > API Tokens > Create Token > Create Custom Token, and name it DumbMonit.",
+        "Add the read-only permissions listed below, and nothing else. The first one is required; the others switch on one part each.",
+        "Under Account Resources and Zone Resources, choose the account and the zones to monitor (All zones is fine).",
+        "Click Continue to summary > Create Token, then copy the token: it is shown once.",
+        "In DumbMonit, use this address and paste the token as API token. Leave Account ID empty unless the token covers several accounts.\napi.cloudflare.com"
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Cloudflare API (HTTPS, api.cloudflare.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Zone > Zone > Read\nLists the zones and their status; required.",
+        "Zone > SSL and Certificates > Read\nReads the expiry date of the certificates of each zone.",
+        "Zone > Analytics > Read\nReads the requests and 5xx responses of each zone.",
+        "Zone > Load Balancers > Read\nLists the load balancers of each zone.",
+        "Account > Cloudflare Tunnel > Read\nReads the status of the tunnels.",
+        "Account > Account Settings > Read\nFinds the account of the tunnels; not needed if the Account ID option is filled.",
+        "Account > Load Balancing: Monitors And Pools > Read\nReads the health of the load balancer pools."
+      ],
+      "warning": "A part whose permission is missing (or that the plan does not include) is skipped and its readable metric is 0; it does not make the monitor fail. Only the zones the token can see are watched.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/cloudflare/"
+    },
+    "options": [
+      {
+        "key": "account_id",
+        "label": "Account ID",
+        "help": "The Cloudflare account of the tunnels and load balancer pools. Empty: read from the token (up to 5 accounts).",
+        "placeholder": "01a7362d577a6c3019a474fd6f485823",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "analytics",
+        "label": "Read traffic",
+        "help": "Read requests and 5xx responses of each zone (one GraphQL call per 10 zones). Turn off to save API calls.",
+        "placeholder": "",
+        "default": "true",
+        "required": false,
+        "input": "boolean",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -1093,6 +1429,114 @@
       "doc_url": ""
     },
     "options": []
+  },
+  {
+    "kind": "entra",
+    "label": "Microsoft Entra ID",
+    "summary": "Entra ID application secret and certificate expiry, on-premises directory sync age and administrators without MFA, read through Microsoft Graph.",
+    "examples": [
+      "Contoso Entra ID"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Entra application (client credentials)",
+        "help": "The application (client) ID and a client secret of an Entra app registration with read-only Graph application permissions.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Application (client) ID",
+            "help": "Shown on the Overview page of the app registration.",
+            "placeholder": "00000000-0000-0000-0000-000000000000",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Client secret",
+            "help": "The secret Value (not the Secret ID), shown once when the secret is created.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "graph.microsoft.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only Entra application for DumbMonit",
+      "steps": [
+        "In the Microsoft Entra admin center (entra.microsoft.com), open Entra ID → App registrations → New registration, name it DumbMonit, keep a single tenant and register it.",
+        "On the Overview page, copy the Application (client) ID and the Directory (tenant) ID.",
+        "Open API permissions → Add a permission → Microsoft Graph → Application permissions, add the permissions listed below, then click Grant admin consent.",
+        "Open Certificates & secrets → New client secret and copy its Value (not the Secret ID): it is shown once and it expires, so note the date.",
+        "In DumbMonit, enter graph.microsoft.com as address, paste the client ID and the secret value, and fill in the Tenant ID option."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Microsoft Graph API (HTTPS, graph.microsoft.com)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Microsoft sign-in, token request (HTTPS, login.microsoftonline.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Application.Read.All\nReads app registrations: the expiry date of each secret and certificate, never their values.",
+        "Organization.Read.All\nReads the tenant and its on-premises directory sync status.",
+        "Reports.Read.All\nReads admin MFA registration; needs Entra ID P1 or P2 (optional)."
+      ],
+      "warning": "Admin consent gives the application tenant-wide read access to the data above. Use a dedicated app registration with only these permissions, and renew its client secret before it expires: DumbMonit watches its own secret like any other.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/entra/"
+    },
+    "options": [
+      {
+        "key": "tenant_id",
+        "label": "Tenant ID",
+        "help": "Directory (tenant) ID of the app registration: a GUID, or a verified domain name.",
+        "placeholder": "00000000-0000-0000-0000-000000000000",
+        "default": "",
+        "required": true,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "login_url",
+        "label": "Sign-in URL",
+        "help": "Microsoft sign-in service. Change it only for a sovereign cloud, for example https://login.microsoftonline.us.",
+        "placeholder": "https://login.microsoftonline.com",
+        "default": "https://login.microsoftonline.com",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
   },
   {
     "kind": "forgejo",
@@ -1572,6 +2016,84 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "10",
         "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "hetzner",
+    "label": "Hetzner Cloud",
+    "summary": "Servers, volumes and backups of a Hetzner Cloud project, read through the Hetzner Cloud API.",
+    "examples": [
+      "Hetzner Cloud project"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "API token",
+        "help": "A read-only API token of the Hetzner Cloud project.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API token",
+            "help": "The token created in the dashboard, shown once.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "api.hetzner.cloud",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only API token for DumbMonit",
+      "steps": [
+        "In the Hetzner Cloud Console, open the project to monitor, then Security > API tokens > Generate API token.",
+        "Name it DumbMonit and choose the Read permission (not Read & Write).",
+        "Click Generate API token, then copy the token: it is shown once.",
+        "In DumbMonit, use this address and paste the token as API token. One monitor reads one project.\napi.hetzner.cloud"
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Hetzner Cloud API (HTTPS, api.hetzner.cloud)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Read (project token)\nLists servers, volumes and backups and reads server metrics; changes nothing."
+      ],
+      "warning": "A server that is powered off is reported as not running, on purpose or not: mute the rule for it if that is expected. The API allows 3600 requests per hour and project, so server metrics are read for 10 servers by default.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/hetzner/"
+    },
+    "options": [
+      {
+        "key": "metrics_servers",
+        "label": "Servers with metrics",
+        "help": "How many running servers get their CPU, disk and network read each minute, from 0 (none) to 100. Each one costs one API call.",
+        "placeholder": "10",
+        "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -2140,6 +2662,97 @@
         "help": "A device (phone, tablet, desktop…) with no connection and no backup for longer than this is reported stale. From 1 to 90.",
         "placeholder": "3",
         "default": "3",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "infomaniak",
+    "label": "Infomaniak",
+    "summary": "Expiry dates, locks and maintenance flags of the products of an Infomaniak account (domains, hosting, mail), read through the Infomaniak API.",
+    "examples": [
+      "Infomaniak domains and hosting"
+    ],
+    "credential_types": [
+      "api_token"
+    ],
+    "credentials": [
+      {
+        "kind": "api_token",
+        "label": "API token",
+        "help": "An Infomaniak API token with the Products scope.",
+        "fields": [
+          {
+            "key": "token",
+            "label": "API token",
+            "help": "The token created in the Infomaniak Manager.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "api.infomaniak.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only API token for DumbMonit",
+      "steps": [
+        "Open the Infomaniak Manager token page and sign in.\nhttps://manager.infomaniak.com/v3/ng/profile/user/token/list",
+        "Click Create a token and name it DumbMonit.",
+        "Choose the scopes listed below, and set the validity you want (no expiry avoids renewing it).",
+        "Click Create the token, then copy it: it is shown once.",
+        "In DumbMonit, enter api.infomaniak.com as address and paste the token. Fill the Account ID option if the token has no Accounts scope."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Infomaniak API (HTTPS, api.infomaniak.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "Products (scope: product)\nLists the products of the account with their expiry date and flags; changes nothing.",
+        "Accounts (scope: accounts)\nLists the account IDs of the token; optional when the Account ID option is filled."
+      ],
+      "warning": "The Infomaniak API gives no finer state than the expiry date, the lock and the maintenance flags of each product: it does not tell whether a site or a mailbox is up. Use an HTTP monitor for that.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/infomaniak/"
+    },
+    "options": [
+      {
+        "key": "account_id",
+        "label": "Account ID",
+        "help": "The Infomaniak account to read, a number. Empty: every account the token can list (up to 10), which needs the Accounts scope.",
+        "placeholder": "123456",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "service_names",
+        "label": "Services",
+        "help": "Comma-separated service names to read, such as domain, hosting. Empty: every product of the account.",
+        "placeholder": "domain, hosting",
+        "default": "",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -2759,6 +3372,115 @@
         "help": "Time allowed for each call, from 1 to 120.",
         "placeholder": "10",
         "default": "10",
+        "required": false,
+        "input": "number",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "m365",
+    "label": "Microsoft 365",
+    "summary": "Microsoft 365 service health, active incidents, license usage and risky users, read through Microsoft Graph.",
+    "examples": [
+      "Contoso Microsoft 365"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "Entra application (client credentials)",
+        "help": "The application (client) ID and a client secret of an Entra app registration with read-only Graph application permissions.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Application (client) ID",
+            "help": "Shown on the Overview page of the app registration.",
+            "placeholder": "00000000-0000-0000-0000-000000000000",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Client secret",
+            "help": "The secret Value (not the Secret ID), shown once when the secret is created.",
+            "placeholder": "",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "graph.microsoft.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only Entra application for DumbMonit",
+      "steps": [
+        "In the Microsoft Entra admin center (entra.microsoft.com), open Entra ID → App registrations → New registration, name it DumbMonit, keep a single tenant and register it.",
+        "On the Overview page, copy the Application (client) ID and the Directory (tenant) ID.",
+        "Open API permissions → Add a permission → Microsoft Graph → Application permissions, add the permissions listed below, then click Grant admin consent.",
+        "Open Certificates & secrets → New client secret and copy its Value (not the Secret ID): it is shown once and it expires, so note the date.",
+        "In DumbMonit, enter graph.microsoft.com as address, paste the client ID and the secret value, and fill in the Tenant ID option."
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Microsoft Graph API (HTTPS, graph.microsoft.com)",
+          "optional": false
+        },
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "Microsoft sign-in, token request (HTTPS, login.microsoftonline.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "ServiceHealth.Read.All\nReads the health of each service and its active incidents (required).",
+        "LicenseAssignment.Read.All\nReads purchased and assigned license counts per SKU (optional).",
+        "IdentityRiskyUser.Read.All\nReads users flagged at risk; needs Entra ID P2 (optional).",
+        "AuditLog.Read.All\nCounts failed sign-ins when risk data is unavailable; needs Entra ID P1 (optional)."
+      ],
+      "warning": "Admin consent gives the application tenant-wide read access to the data above. Use a dedicated app registration with only these permissions, and renew its client secret before it expires.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/m365/"
+    },
+    "options": [
+      {
+        "key": "tenant_id",
+        "label": "Tenant ID",
+        "help": "Directory (tenant) ID of the app registration: a GUID, or a verified domain name.",
+        "placeholder": "00000000-0000-0000-0000-000000000000",
+        "default": "",
+        "required": true,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "login_url",
+        "label": "Sign-in URL",
+        "help": "Microsoft sign-in service. Change it only for a sovereign cloud, for example https://login.microsoftonline.us.",
+        "placeholder": "https://login.microsoftonline.com",
+        "default": "https://login.microsoftonline.com",
+        "required": false,
+        "input": "text",
+        "choices": [],
+        "group": ""
+      },
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
         "required": false,
         "input": "number",
         "choices": [],
@@ -4911,6 +5633,84 @@
         "default": "false",
         "required": false,
         "input": "boolean",
+        "choices": [],
+        "group": ""
+      }
+    ]
+  },
+  {
+    "kind": "ovh",
+    "label": "OVHcloud",
+    "summary": "State and running tasks of the VPS and dedicated servers of an OVHcloud account, read through the OVHcloud API.",
+    "examples": [
+      "OVHcloud VPS and dedicated servers"
+    ],
+    "credential_types": [
+      "username_password"
+    ],
+    "credentials": [
+      {
+        "kind": "username_password",
+        "label": "OVHcloud API keys",
+        "help": "The application key, and the application secret and consumer key joined by a colon.",
+        "fields": [
+          {
+            "key": "username",
+            "label": "Application key",
+            "help": "The Application Key shown when the token was created.",
+            "placeholder": "a1b2c3d4e5f6a7b8",
+            "input": "text",
+            "choices": [],
+            "required": true
+          },
+          {
+            "key": "password",
+            "label": "Application secret:Consumer key",
+            "help": "The Application Secret and the Consumer Key joined by a colon, in this order: secret:consumer.",
+            "placeholder": "application_secret:consumer_key",
+            "input": "password",
+            "choices": [],
+            "required": true
+          }
+        ]
+      }
+    ],
+    "address_hint": "eu.api.ovh.com",
+    "default_port": 443,
+    "setup": {
+      "title": "Create a read-only API token for DumbMonit",
+      "steps": [
+        "Open the OVHcloud token page of your region and sign in with your OVHcloud account. The link pre-selects the two read rights.\nhttps://eu.api.ovh.com/createToken/?GET=/vps*&GET=/dedicated/server*",
+        "Name the script DumbMonit, set Validity to Unlimited, and keep only the two GET rights listed below, then click Create keys.",
+        "Copy the Application Key, the Application Secret and the Consumer Key: they are shown once.",
+        "In DumbMonit, enter eu.api.ovh.com as address (ca.api.ovh.com for OVHcloud Canada) and paste the Application Key as Application key.",
+        "In the second field, type the Application Secret, a colon, then the Consumer Key.\napplication_secret:consumer_key"
+      ],
+      "ports": [
+        {
+          "port": 443,
+          "protocol": "tcp",
+          "direction": "to_device",
+          "purpose": "OVHcloud API (HTTPS, eu.api.ovh.com)",
+          "optional": false
+        }
+      ],
+      "permissions": [
+        "GET /vps*\nLists the VPS and reads their state and tasks; changes nothing.",
+        "GET /dedicated/server*\nLists the dedicated servers and reads their state and tasks; changes nothing."
+      ],
+      "warning": "The OVHcloud API publishes no calendar of planned maintenance: DumbMonit sees an intervention only once it has started, as a running task. A VPS you stopped yourself counts as down. A dedicated server is reported in error only if OVHcloud monitoring is enabled on it. Either right may be omitted to watch only the other family.",
+      "doc_url": "https://dumbmonit.readthedocs.io/en/latest/devices/ovh/"
+    },
+    "options": [
+      {
+        "key": "request_timeout_seconds",
+        "label": "Timeout per request (seconds)",
+        "help": "Time allowed for each call, from 1 to 120.",
+        "placeholder": "15",
+        "default": "15",
+        "required": false,
+        "input": "number",
         "choices": [],
         "group": ""
       }

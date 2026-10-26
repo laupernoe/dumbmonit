@@ -5,6 +5,21 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Cloud integrations.** Eight new monitor types read the cloud services a small
+  team depends on, with read-only credentials and built-in alert rules grouped per
+  product: **Microsoft 365** (service health and incidents, licences, risky users),
+  **Microsoft Entra ID** (application secrets and certificates about to expire,
+  administrators without MFA, AD Connect sync older than 3 hours), **Microsoft Azure**
+  (Resource Health and active Azure Monitor alerts), **AWS CloudWatch** (EC2 status
+  checks and CPU, RDS, alarms in ALARM state; SigV4 signing built in),
+  **Cloudflare** (zones, tunnels, certificates, 5xx rate, load balancers),
+  **Hetzner Cloud** (servers and their metrics, volumes, backups), **OVHcloud**
+  (VPS and dedicated servers, maintenance) and **Infomaniak** (products and expiry).
+  Each has a page in the documentation (English and French) with the minimal rights
+  and the ports to open.
+
 ## 0.14.0 — 2026-10-25
 
 ### Added
