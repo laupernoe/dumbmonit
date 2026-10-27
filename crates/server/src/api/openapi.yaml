@@ -12528,9 +12528,9 @@ components:
           type: array
           items: { type: string }
           description: >-
-            Decorative scene ids: `paris`, `tokyo`, `newyork`, `matterhorn`. A retired id (for
-            example `venice`) is folded onto the nearest of the four. Omitted keeps the saved
-            list; `[]` means no scene.
+            Decorative scene ids: `paris`, `tokyo`, `newyork`, `dubai`. A retired id (for
+            example `venice`, or `matterhorn`, replaced by `dubai`) is folded onto the nearest
+            of the four. Omitted keeps the saved list; `[]` means no scene.
         scene_rotation: { type: string, description: Omitted keeps the saved value (`visit` on creation). }
         simple: { type: boolean, default: false, description: Omitted keeps the saved value. }
         show_calendar: { type: boolean, default: false, description: Public 90-day calendar. Omitted keeps the saved value. }

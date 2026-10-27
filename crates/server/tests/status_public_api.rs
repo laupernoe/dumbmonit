@@ -335,7 +335,7 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
     for bad in [
         json!({ "scenes": ["atlantis"] }),
         json!({ "scenes": ["paris", "paris"] }),
-        json!({ "scenes": ["paris", "tokyo", "newyork", "matterhorn", "paris"] }),
+        json!({ "scenes": ["paris", "tokyo", "newyork", "dubai", "paris"] }),
         json!({ "scene_rotation": "5m" }),
     ] {
         let mut body = json!({ "title": "Skyline", "slug": "skyline" });
@@ -355,15 +355,15 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
         .put(
             &url,
             json!({ "title": "Skyline", "slug": "skyline", "published": true,
-                    "scenes": ["venice", "kyoto", "london", "chalet"] }),
+                    "scenes": ["venice", "kyoto", "london", "chalet", "matterhorn"] }),
             Some(&admin),
         )
         .await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(reply.body["scenes"], json!(["paris", "tokyo", "matterhorn"]));
+    assert_eq!(reply.body["scenes"], json!(["paris", "tokyo", "dubai"]));
 
     // Les quatre scènes passent ; `[]` vide la liste.
-    let all = json!(["paris", "tokyo", "newyork", "matterhorn"]);
+    let all = json!(["paris", "tokyo", "newyork", "dubai"]);
     let reply = app
         .put(
             &url,
@@ -585,4 +585,46 @@ async fn only_the_status_page_and_its_embed_can_be_framed() {
         assert!(csp.contains("frame-ancestors 'none'"), "{uri} must not be framed: {csp}");
         assert_eq!(reply.headers["x-frame-options"], "DENY", "{uri}");
     }
+}
+
+/// Migration 0205 : le Cervin retiré devient Dubaï dans les scènes enregistrées,
+/// voisins compris ; les autres scènes ne bougent pas.
+#[tokio::test]
+async fn stored_matterhorn_scenes_become_dubai_after_migration() {
+    let dir = tempfile::tempdir().expect("répertoire temporaire");
+    let path = dir.path().join("dumbmonit.db");
+    let old = dumbmonit_server::db::open_up_to(&path, 200).await.expect("base ancienne");
+    for (slug, scenes) in [
+        ("alps", "matterhorn"),
+        ("pair", "matterhorn,matterhorn"),
+        ("mixed", "paris,matterhorn,tokyo"),
+        ("both", "matterhorn,dubai"),
+        ("other", "newyork"),
+        ("none", ""),
+    ] {
+        sqlx::query("INSERT INTO status_pages (slug, title, scenes) VALUES (?, ?, ?)")
+            .bind(slug)
+            .bind(slug)
+            .bind(scenes)
+            .execute(&old)
+            .await
+            .expect("page ancienne");
+    }
+    old.close().await;
+
+    let pool = dumbmonit_server::db::open(&path).await.expect("migrations appliquées");
+    let rows: Vec<(String, String)> =
+        sqlx::query_as("SELECT slug, scenes FROM status_pages ORDER BY slug")
+            .fetch_all(&pool)
+            .await
+            .expect("pages relues");
+    let stored: std::collections::HashMap<String, String> = rows.into_iter().collect();
+    assert_eq!(stored["alps"], "dubai");
+    assert_eq!(stored["pair"], "dubai,dubai");
+    assert_eq!(stored["mixed"], "paris,dubai,tokyo");
+    assert_eq!(stored["both"], "dubai,dubai");
+    assert_eq!(stored["other"], "newyork");
+    assert_eq!(stored["none"], "");
+    // À la lecture, les doublons disparaissent.
+    assert_eq!(dumbmonit_server::db::status_pages::split_scenes(&stored["both"]), vec!["dubai"]);
 }
