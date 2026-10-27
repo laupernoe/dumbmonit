@@ -64,13 +64,16 @@ impl StatusPage {
 }
 
 /// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
-/// dessin dans `web/src/routes/s/`; validé par `api::status_pages`.
+/// dessin dans `web/src/lib/components/status/scenes/` ; validé par
+/// `api::status_pages`.
 /// Scène d'une page créée sans liste de scènes.
 pub const DEFAULT_SCENE: &str = "paris";
-pub const SCENES: &[&str] = &["paris", "tokyo", "newyork", "matterhorn"];
+pub const SCENES: &[&str] = &["paris", "tokyo", "newyork", "dubai"];
 
 /// Anciennes scènes retirées → scène conservée la plus proche. Les pages et
-/// sauvegardes existantes y sont repliées (migration 0200, lecture, import, API).
+/// sauvegardes existantes y sont repliées (migrations 0200 et 0205, lecture,
+/// import, API). Dubaï remplace le Cervin : `matterhorn` et tout ce qui s'y
+/// repliait vont désormais sur `dubai`, comme le fait la migration 0205.
 #[rustfmt::skip]
 pub const LEGACY_SCENES: &[(&str, &str)] = &[
     ("venice", "paris"), ("london", "paris"), ("rome", "paris"), ("barcelona", "paris"),
@@ -80,13 +83,13 @@ pub const LEGACY_SCENES: &[(&str, &str)] = &[
     ("giza", "paris"), ("petra", "paris"), ("tajmahal", "paris"), ("desert", "paris"),
     ("lighthouse", "paris"), ("train", "paris"), ("arcade", "paris"), ("hamsters", "paris"),
     ("cats", "paris"),
-    ("sydney", "tokyo"), ("dubai", "tokyo"), ("hongkong", "tokyo"), ("kyoto", "tokyo"),
-    ("zen", "tokyo"), ("greatwall", "tokyo"), ("orbit", "tokyo"), ("aquarium", "tokyo"),
+    ("sydney", "tokyo"), ("hongkong", "tokyo"), ("kyoto", "tokyo"), ("zen", "tokyo"),
+    ("greatwall", "tokyo"), ("orbit", "tokyo"), ("aquarium", "tokyo"),
     ("sanfrancisco", "newyork"), ("rio", "newyork"), ("sugarloaf", "newyork"),
     ("chichenitza", "newyork"), ("machupicchu", "newyork"), ("mars", "newyork"),
-    ("geneva", "matterhorn"), ("bern", "matterhorn"), ("lucerne", "matterhorn"),
-    ("chillon", "matterhorn"), ("chalet", "matterhorn"), ("reykjavik", "matterhorn"),
-    ("forest", "matterhorn"), ("raclette", "matterhorn"),
+    ("matterhorn", "dubai"), ("geneva", "dubai"), ("bern", "dubai"), ("lucerne", "dubai"),
+    ("chillon", "dubai"), ("chalet", "dubai"), ("reykjavik", "dubai"), ("forest", "dubai"),
+    ("raclette", "dubai"),
 ];
 
 /// Identifiant de scène conservé pour `id` : lui-même, ou son remplaçant si la
@@ -1330,7 +1333,10 @@ mod scene_tests {
     #[test]
     fn split_scenes_folds_and_drops_duplicates_keeping_order() {
         assert_eq!(split_scenes("venice, tokyo,london,kyoto"), vec!["paris", "tokyo"]);
-        assert_eq!(split_scenes("chalet,newyork"), vec!["matterhorn", "newyork"]);
+        assert_eq!(split_scenes("chalet,newyork"), vec!["dubai", "newyork"]);
+        // Le Cervin est retiré au profit de Dubaï ; Dubaï n'est plus replié sur Tokyo.
+        assert_eq!(split_scenes("matterhorn,dubai,tokyo"), vec!["dubai", "tokyo"]);
+        assert_eq!(canonical_scene("dubai"), Some("dubai"));
         assert!(split_scenes("").is_empty());
     }
 }
