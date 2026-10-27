@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Network watch**: scheduled network scans now flag a **MAC address change** (a new
+  device on the address of a known device: spoofing or replaced hardware; alert rule
+  `netscan_mac_change`, disabled by default), let you **ignore** a device, and draw
+  each subnet as a **grid** (one tile per address: new, known, ignored, absent, free)
+  with filters and an *Add as a monitor* action. Scheduled scans and the devices you
+  marked known or ignored are part of the backup.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

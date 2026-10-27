@@ -1048,12 +1048,13 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 
 ### Inventaire du réseau {#inventaire-du-reseau}
 
-Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les deux règles sont désactivées par défaut** et de gravité `info` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
+Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les trois règles sont désactivées par défaut** ; les deux premières sont de gravité `info`, celle du changement de MAC `warning` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
 | New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
 | New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+| MAC address changed for an IP | Un nouvel appareil a pris l'adresse d'un appareil connu avec une autre adresse MAC : usurpation ou matériel remplacé (`dumbmonit_netscan_mac_change`). Ouverte jusqu'à ce qu'il soit marqué connu ou ignoré. | > 0 | aucun | Avertissement (`warning`), **désactivée** | aucun |
 
 ### DumbMonit lui-même
 

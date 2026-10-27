@@ -199,6 +199,11 @@ pub struct Bundle {
     /// jetons d'agent) ou à l'instance (le reste).
     #[serde(default)]
     pub client_assignments: Vec<BundleAssignment>,
+    /// Scans de découverte planifiés et appareils connus ou ignorés de leur
+    /// inventaire (migrations 0082 et 0211). Les appareils encore « nouveaux »
+    /// n'y sont pas : sans décision, ils se signalent de nouveau.
+    #[serde(default)]
+    pub netscan_schedules: Vec<BundleNetscanSchedule>,
 }
 
 impl Bundle {
@@ -230,6 +235,7 @@ impl Bundle {
             ("netconfig_host_keys".to_string(), self.netconfig_host_keys.len()),
             ("netconfig_versions".to_string(), self.netconfig_versions.len()),
             ("clients".to_string(), self.clients.len()),
+            ("netscan_schedules".to_string(), self.netscan_schedules.len()),
         ])
     }
 }
@@ -1101,4 +1107,37 @@ pub struct BundleRemediationPolicy {
     pub after_minutes: i64,
     pub max_attempts: i64,
     pub window_minutes: i64,
+}
+
+/// Un scan de découverte planifié, avec les appareils que l'administrateur a
+/// acceptés (connus) ou écartés (ignorés). Clé naturelle : sous-réseau + scanner.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleNetscanSchedule {
+    pub name: String,
+    pub cidr: String,
+    /// Référence de l'agent relais qui balaie (voir [`target_ref`]) ; vide : le serveur.
+    #[serde(default)]
+    pub agent: Option<String>,
+    pub interval_secs: i64,
+    pub depth: String,
+    pub enabled: bool,
+    #[serde(default)]
+    pub devices: Vec<BundleNetscanDevice>,
+}
+
+/// Un appareil connu ou ignoré. Clé naturelle : son identité (`mac:…` ou `ip:…`).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleNetscanDevice {
+    pub ident: String,
+    #[serde(default)]
+    pub mac: Option<String>,
+    pub ip: String,
+    #[serde(default)]
+    pub hostname: Option<String>,
+    #[serde(default)]
+    pub vendor: Option<String>,
+    #[serde(default)]
+    pub ignored: bool,
+    pub first_seen: String,
+    pub last_seen: String,
 }

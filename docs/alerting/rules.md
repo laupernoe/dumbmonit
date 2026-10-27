@@ -987,12 +987,13 @@ Computed by the server every 15 minutes for every monitor whose kind has securit
 
 ### Network inventory {#network-inventory}
 
-Raised from the scheduled network scans and their inventory (see [Scheduled scans and inventory](../using/discovery.md#scheduled-scans-and-inventory)). **Both rules are disabled by default** and have severity `info`: turn them on in the rules list when you want them. There is one series, so one alert, per new device or port; it stays open until the item is marked as known (the metric stops, the alert resolves within a few minutes) and has no reminder. The first scan of a network never raises anything.
+Raised from the scheduled network scans and their inventory (see [Scheduled scans and inventory](../using/discovery.md#scheduled-scans-and-inventory)). **All three rules are disabled by default**; the first two have severity `info`, the MAC change one `warning`: turn them on in the rules list when you want them. There is one series, so one alert, per new device or port; it stays open until the item is marked as known (the metric stops, the alert resolves within a few minutes) and has no reminder. The first scan of a network never raises anything.
 
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | New device on the network | A scheduled scan found a device that is not in the inventory (`dumbmonit_netscan_unknown_device`). | > 0 | none | Info (`info`), **disabled** | none |
 | New open port on the network | A scheduled scan found a new open port on a known device (`dumbmonit_netscan_unknown_port`). | > 0 | none | Info (`info`), **disabled** | none |
+| MAC address changed for an IP | A new device took the address of a known device under another MAC address: spoofing or replaced hardware (`dumbmonit_netscan_mac_change`). Open until marked as known or ignored. | > 0 | none | Warning (`warning`), **disabled** | none |
 
 ### DumbMonit itself
 
