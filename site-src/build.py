@@ -90,12 +90,27 @@ ICONS = {
     "cpu": _SV + '<rect x="5" y="5" width="14" height="14" rx="2"/><rect x="9" y="9" width="6" height="6"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
     "relay": _SV + '<circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14"/></svg>',
     "monitor": _SV + '<rect x="2.5" y="4" width="19" height="13" rx="1.5"/><path d="M8 21h8M12 17v4"/></svg>',
+    "cloud": _SV + '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5Z"/></svg>',
+    "shield": _SV + '<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.3 7.5 9.5 4.3-1.2 7.5-4.9 7.5-9.5V6Z"/></svg>',
+    "layers": _SV + '<rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>',
+    "disk": _SV + '<ellipse cx="12" cy="5.5" rx="8" ry="2.5"/><path d="M4 5.5v13c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5v-13M4 12c0 1.4 3.6 2.5 8 2.5s8-1.1 8-2.5"/></svg>',
+    "check": _SV + '<circle cx="12" cy="12" r="9"/><path d="m8 12.5 2.8 2.8L16.5 9.5"/></svg>',
+    "route": _SV + '<circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="6" r="2.5"/><path d="M8.5 18H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></svg>',
+    "apps": _SV + '<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><path d="M17.25 13.5v7.5M13.5 17.25H21"/></svg>',
+    "mail": _SV + '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>',
+    "chart": _SV + '<path d="M3 3v18h18"/><path d="m7 15 4-5 3 3 5-7"/></svg>',
+    "lock": _SV + '<rect x="4.5" y="10.5" width="15" height="10" rx="2"/><path d="M8 10.5V7a4 4 0 0 1 8 0v3.5"/></svg>',
+    "zap": _SV + '<path d="M3 12h4l3-8 4 16 3-8h4"/></svg>',
     "net": _SV + '<rect x="9" y="2.5" width="6" height="5" rx="1"/><rect x="2.5" y="16.5" width="6" height="5" rx="1"/><rect x="15.5" y="16.5" width="6" height="5" rx="1"/><path d="M12 7.5V12M5.5 16.5V12h13v4.5"/></svg>',
 }
-NAV_ICONS = {"": "home", "features/": "features", "devices/": "server", "install/": "download", "roadmap/": "roadmap", "community/": "users"}
 
 # Diagrams: real text in boxes (it wraps and translates), wires drawn in CSS. Vertical on
 # phones, horizontal on wide screens. Product names stay as they are; the rest are {{keys}}.
+FAMILY_ICONS = {
+    "servers": "server", "network": "net", "cloud": "cloud", "firewalls": "shield", "hypervisors": "layers",
+    "storage": "disk", "checks": "check", "proxies": "route", "apps": "apps", "mail": "mail", "data": "chart",
+}
+
 DIAGRAMS = {
     "arch": """<figure class="dg-fig">
 <div class="dg">
@@ -173,27 +188,6 @@ DIAGRAMS = {
 <figcaption>{{dg4_cap}}</figcaption>
 </figure>""",
 }
-
-# The health river of the console mock-up (home): one row per fictional monitor, 48 slots.
-# u = up, w = degraded, d = down, n = no data yet. Fixed patterns, so every build is identical.
-RIVER_ROWS = [
-    ("nas-02", "u" * 36 + "ww" + "u" * 3 + "w" + "d" * 6),
-    ("pve-cluster", "u" * 14 + "w" + "u" * 20 + "ww" + "u" * 8 + "ww" + "u"),
-    ("fw-edge", "u" * 30 + "www" + "u" * 15),
-    ("sw-core-01", "u" * 48),
-    ("dc01", "u" * 48),
-    ("www", "n" * 6 + "u" * 42),
-]
-
-
-def river():
-    cls = {"u": "", "w": ' class="w"', "d": ' class="d"', "n": ' class="n"'}
-    rows = []
-    for name, cells in RIVER_ROWS:
-        assert len(cells) == 48, name
-        rows.append(f'\t\t\t\t\t\t\t\t<li><span>{name}</span><div class="c-cells">' + "".join(f"<i{cls[c]}></i>" for c in cells) + "</div></li>")
-    return "\t\t\t\t\t\t\t<ul>\n" + "\n".join(rows) + "\n\t\t\t\t\t\t\t</ul>"
-
 
 KEY = r"[A-Za-z_][A-Za-z0-9_]*"
 # Strings whose counters (@@NDEV@@...) show as animated figures; never ones used in attributes.
@@ -316,7 +310,7 @@ def family_card(ctx, fam, n):
     t = ctx["t"]
     link = ctx["link"](f"devices/{fam['id']}/")
     return (
-        f'\t\t\t<li class="card"><h3><a href="{link}">{esc(fam_name(t, fam["id"]))}</a></h3>'
+        f'\t\t\t<li class="card"><span class="icon" aria-hidden="true">{ICONS[FAMILY_ICONS.get(fam["id"], "box")]}</span><h3><a href="{link}">{esc(fam_name(t, fam["id"]))}</a></h3>'
         f'<p>{esc(t[f"fam_{fam["id"]}_blurb"])}</p>'
         f'<p class="label-tape">{esc(t["fp_n"]).replace("{n}", f'<span class="num" data-n="{n}">{n}</span>')}</p></li>'
     )
@@ -492,9 +486,9 @@ def fragments(ctx, page, data):
             for f in data["families"]
         ),
         "CATALOG": "\n".join(device_card(ctx, d) for d in devs),
+        "N_DEV": str(len(devs)),
+        "N_CH": str(len(data["channels"])),
     }
-    if page["tmpl"] == "home":
-        frag["RIVER"] = river()
     for name, value in DIAGRAMS.items():
         frag[f"DIAGRAM:{name}"] = value
     if page["tmpl"] == "roadmap":
@@ -565,6 +559,11 @@ DEVICES_SCRIPT = """(function () {
 		});
 	});
 	q.addEventListener('input', apply);
+	// The search box of the home page lands here as ?q=.
+	try {
+		var given = new URLSearchParams(location.search).get('q');
+		if (given) { q.value = given; apply(); }
+	} catch (e) {}
 })();"""
 
 
@@ -608,29 +607,29 @@ def build_page(templates, svgs, strings, data, page, code):
     for name, value in frag.items():
         body = body.replace(f"@@{name}@@", value)
 
+    # Top navigation, as on a product site: Product (home), Features, Integrations, Docs (external),
+    # Roadmap, Community, Download (the install page). GitHub sits beside it as a button.
     nav_items = [
+        ("", t["nav_product"]),
         ("features/", t["nav_features"]),
-        ("devices/", t["nav_devices"]),
-        ("install/", t["nav_install"]),
+        ("devices/", t["nav_integrations"]),
+        (None, t["nav_docs"]),
         ("roadmap/", t["nav_roadmap"]),
         ("community/", t["nav_community"]),
+        ("install/", t["nav_download"]),
     ]
+    docs_home = DOCS_HOST + docs_dir + "/latest/"
     nav = "\n".join(
-        f'\t\t\t<a href="{link(p)}"' + (' aria-current="page"' if page["nav"] == p else "") + f">{esc(label)}</a>"
+        f'\t\t\t<a href="{link(p) if p is not None else docs_home}"'
+        + (' aria-current="page"' if p is not None and (page["nav"] or "") == p else "")
+        + (' class="nav-dl"' if p == "install/" else "")
+        + f">{esc(label)}</a>"
         for p, label in nav_items
     )
-    rail = "\n".join(
-        f'\t<a href="{link(p)}" tabindex="-1" title="{esc(label)}"' + (' aria-current="page"' if (page["nav"] or "") == p else "") + f">{ICONS[NAV_ICONS[p]]}</a>"
-        for p, label in [("", t["k172"])] + nav_items
-    )
-    current = next((label for p, label in nav_items if p == page["nav"]), None)
-    if page["tmpl"] == "family":
-        crumb = (f'<a href="{link("")}">DumbMonit</a><span aria-hidden="true">/</span><a href="{link("devices/")}">{esc(t["nav_devices"])}</a>'
-                 f'<span aria-hidden="true">/</span><span aria-current="page">{esc(fam_name(t, page["family"]))}</span>')
-    elif current:
-        crumb = f'<a href="{link("")}">DumbMonit</a><span aria-hidden="true">/</span><span aria-current="page">{esc(current)}</span>'
-    else:
-        crumb = '<span aria-current="page">DumbMonit</span>'
+    foot_langs = "\t\t\t\t<ul>\n" + "\n".join(
+        f'\t\t\t\t\t<li><a href="{rel(code, path, c, path)}" hreflang="{c}" lang="{c}"' + (' aria-current="true"' if c == code else "") + f">{n}</a></li>"
+        for c, n, *_ in LANGS
+    ) + "\n\t\t\t\t</ul>"
     items = []
     for c, n, _s, _o, _d in LANGS:
         cur = ' aria-current="true"' if c == code else ""
@@ -664,7 +663,7 @@ def build_page(templates, svgs, strings, data, page, code):
     t_full = templates["base"].replace("@@BODY@@", body)
     for name, value in {
         "TITLE": esc(title), "DESC": esc(desc), "URL": url, "LANG": code, "OGLOCALE": og,
-        "ALTERNATES": alternates, "NAV": nav, "RAIL": rail, "CRUMB": crumb, "SWITCHER": switcher, "ROOT": root_of(code, path),
+        "ALTERNATES": alternates, "NAV": nav, "FOOT_LANGS": foot_langs, "SWITCHER": switcher, "ROOT": root_of(code, path),
         "JSONLD": jsonld, "SCRIPT": script,
         "DETECT": detect_script(code, path) if code == "en" else "",
     }.items():
