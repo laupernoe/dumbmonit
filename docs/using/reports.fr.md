@@ -7,7 +7,7 @@ défaut ; quotidien et mensuel sont à un clic. Les rapports réutilisent un
 **canal de notification email (SMTP)**, configurez-en donc un d'abord (voir
 [Canaux de notification](../notifications.md)).
 
-Ouvrez **Réglages > Rapports** pour les configurer. Tout ici est réservé aux
+Ouvrez **Rapports** (le rail Entreprise ; **Plus** en Homelab) pour les configurer. La page réunit l'export de disponibilité (SLA) d'une période, les rapports planifiés et l'historique de leurs envois ; elle était dans les Réglages, et `/settings/reports` y redirige. Tout ici est réservé aux
 administrateurs, lecture incluse, car la page liste les adresses des
 destinataires.
 
@@ -76,11 +76,17 @@ incorporé ; son nom coiffe le rapport.
 
 ### Télécharger une période
 
-Sous les calendriers, **Rapport de disponibilité (SLA)** construit le même
+En haut de la page, **Rapport de disponibilité (SLA)** construit le même
 rapport à la demande, pour toute période d'un an au plus (les deux jours inclus,
 dans le fuseau choisi, jusqu'à maintenant si elle n'est pas terminée). Choisissez
 le PDF, le CSV des moniteurs ou le CSV des incidents. Le défaut est le mois civil
-précédent. Réservé aux administrateurs.
+précédent. En mode MSP, choisissez le client concerné. Réservé aux administrateurs.
+
+### Historique des envois
+
+En bas de la page, **Historique des envois** liste chaque rapport planifié avec
+son dernier envoi, le prochain prévu et le résultat de la dernière tentative (un
+envoi échoué affiche son erreur jusqu'au prochain succès).
 
 ## Envoyer un aperçu
 

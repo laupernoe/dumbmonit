@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { kindLabel as kindLabelOf } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
+	import { tagChip } from '#lib/tag-chip.js';
 	/**
 	 * Device detail: one large faceplate band, the alert timeline of this device, then
 	 * the instruments — availability for a service; for a device, the essentials
@@ -634,7 +635,8 @@
 					{#if tags.length > 0}
 						<div class="mt-2 flex flex-wrap gap-1.5">
 							{#each tags as [key, value] (key)}
-								<Plate tone="ghost" bare label={`${key} = ${value}`} />
+								{@const chip = tagChip(key, value)}
+								<Plate tone="ghost" bare label={chip.label} title={chip.title} class="max-w-full" />
 							{/each}
 						</div>
 					{/if}

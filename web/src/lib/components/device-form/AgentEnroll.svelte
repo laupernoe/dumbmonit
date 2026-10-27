@@ -20,6 +20,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, CopyBlock, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import AgentChecksums from './AgentChecksums.svelte';
+	import AgentChannelNote from './AgentChannelNote.svelte';
 	import AgentModules from './AgentModules.svelte';
 	import { withModules, type AgentModule } from './agent-modules.js';
 	import RelayDiagram from './RelayDiagram.svelte';
@@ -148,6 +149,7 @@
 			<p class="text-sm font-semibold text-ink">{m.deviceform_enroll_token()} <span class="font-normal text-ink-2">— {token.name}</span></p>
 			<CopyBlock value={token.secret} label={m.deviceform_enroll_copy_token()} secret />
 		</div>
+		<AgentChannelNote />
 		<AgentChecksums />
 
 		{#if relay}

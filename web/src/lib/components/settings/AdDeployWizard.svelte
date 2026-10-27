@@ -13,6 +13,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { closeAgentToken, createAdKit, listAgentTokens, listTargets, type CreatedAdKit, type Target } from '#lib/api/index.js';
 	import { adDeployDocsUrl } from '#lib/docs.js';
+	import AgentChannelNote from '#lib/components/device-form/AgentChannelNote.svelte';
 	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
 
 	interface Props {
@@ -38,6 +39,10 @@
 	let includeDcs = $state(false);
 	let securityGroup = $state('');
 	let sysvol = $state(false);
+	let serverHost = $state('');
+	let dnsServer = $state('');
+	let serverHostError = $state<string | null>(null);
+	let dnsServerError = $state<string | null>(null);
 	let domainError = $state<string | null>(null);
 	let numberError = $state<string | null>(null);
 	let creating = $state(false);
@@ -71,6 +76,8 @@
 		returnFocus?.focus();
 		// The secret is gone for good once the dialog is closed.
 		kit = null;
+		serverHostError = null;
+		dnsServerError = null;
 		step = 1;
 		downloaded = false;
 		closed = false;
@@ -80,6 +87,24 @@
 		uses = 0;
 		max = null;
 		pollFailed = false;
+	}
+
+	/** DNS name (labels of letters, digits, `-`, `_`) or IPv4 address, optional `:port`. */
+	const HOST_RE = /^(?=.{1,253}$)([A-Za-z0-9_]([A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?)(\.[A-Za-z0-9_]([A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?)*\.?(:\d{1,5})?$/;
+
+	function validHost(raw: string): boolean {
+		const text = raw.trim();
+		if (!HOST_RE.test(text)) return false;
+		const port = text.includes(':') ? Number(text.split(':')[1]) : 1;
+		return port >= 1 && port <= 65535;
+	}
+
+	/** IPv4 (four 0-255 groups) or a plain IPv6 literal. */
+	function validIp(raw: string): boolean {
+		const text = raw.trim();
+		const v4 = text.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+		if (v4) return v4.slice(1).every((n) => Number(n) <= 255);
+		return text.includes(':') && /^[0-9A-Fa-f:.]+$/.test(text);
 	}
 
 	/** A whole number >= 1, `null` when blank, `'error'` otherwise. */
@@ -95,8 +120,18 @@
 		createError = null;
 		domainError = null;
 		numberError = null;
+		serverHostError = null;
+		dnsServerError = null;
 		if (!domain.trim()) {
 			domainError = m.settings_agents_ad_domain_required();
+			return;
+		}
+		if (serverHost.trim() && !validHost(serverHost)) {
+			serverHostError = m.settings_agents_ad_server_host_invalid();
+			return;
+		}
+		if (dnsServer.trim() && !validIp(dnsServer)) {
+			dnsServerError = m.settings_agents_ad_dns_server_invalid();
 			return;
 		}
 		const uses_ = whole(maxUses);
@@ -111,6 +146,8 @@
 				domain: domain.trim(),
 				// The address the servers will reach this one at.
 				base_url: location.origin,
+				server_host: serverHost.trim() || null,
+				dns_server: dnsServer.trim() || null,
 				max_uses: uses_,
 				expires_in_days: days_,
 				target_ou: targetOu.trim() || null,
@@ -277,6 +314,37 @@
 						/>
 					</Field>
 					<div class="flex flex-col gap-3 sm:flex-row">
+						<Field label={m.settings_agents_ad_server_host()} for="ad-server-host" class="flex-1" error={serverHostError} help={m.settings_agents_ad_server_host_help({ origin: location.host })}>
+							<input
+								id="ad-server-host"
+								type="text"
+								class="input"
+								bind:value={serverHost}
+								placeholder={location.hostname}
+								autocomplete="off"
+								autocapitalize="none"
+								spellcheck="false"
+								disabled={creating}
+								aria-invalid={serverHostError ? 'true' : undefined}
+								oninput={() => (serverHostError = null)}
+							/>
+						</Field>
+						<Field label={m.settings_agents_ad_dns_server()} for="ad-dns-server" class="flex-1" error={dnsServerError} help={m.settings_agents_ad_dns_server_help()}>
+							<input
+								id="ad-dns-server"
+								type="text"
+								class="input"
+								bind:value={dnsServer}
+								placeholder="10.0.0.2"
+								autocomplete="off"
+								spellcheck="false"
+								disabled={creating}
+								aria-invalid={dnsServerError ? 'true' : undefined}
+								oninput={() => (dnsServerError = null)}
+							/>
+						</Field>
+					</div>
+					<div class="flex flex-col gap-3 sm:flex-row">
 						<Field label={m.settings_agents_ad_max()} for="ad-max" class="flex-1" help={m.settings_agents_ad_max_help()}>
 							<input id="ad-max" type="number" min="1" step="1" inputmode="numeric" class="input" bind:value={maxUses} placeholder={m.settings_agents_ad_unlimited()} disabled={creating} />
 						</Field>
@@ -330,6 +398,19 @@
 					{/if}
 				</div>
 				<p class="mt-3 rounded-lg border border-advisory/40 bg-surface-2 px-3.5 py-3 text-sm text-ink">{m.settings_agents_ad_secret_warning()}</p>
+				{#if kit}
+					<dl class="mt-3 grid gap-1 rounded-lg border border-line px-3.5 py-3 text-sm">
+						<div class="flex flex-wrap gap-x-2">
+							<dt class="text-ink-2">{m.settings_agents_ad_summary_server()}</dt>
+							<dd class="min-w-0 break-all font-mono text-ink">{kit.server_url}</dd>
+						</div>
+						<div class="flex flex-wrap gap-x-2">
+							<dt class="text-ink-2">{m.settings_agents_ad_summary_dns()}</dt>
+							<dd class="min-w-0 break-all font-mono text-ink">{kit.dns_server ?? m.settings_agents_ad_summary_dns_none()}</dd>
+						</div>
+					</dl>
+				{/if}
+				<AgentChannelNote class="mt-3" />
 			{:else if step === 3}
 				<p class="text-sm text-ink">{m.settings_agents_ad_run_intro()}</p>
 				<div class="mt-3 grid gap-3">
@@ -343,6 +424,7 @@
 					</div>
 				</div>
 				<p class="mt-3 text-sm text-ink-2">{m.settings_agents_ad_run_timing()}</p>
+				<AgentChannelNote class="mt-3" />
 				<p class="mt-2 text-sm">
 					<a class="inline-flex min-h-10 items-center gap-1 font-semibold text-info underline underline-offset-2" href={adDeployDocsUrl()} target="_blank" rel="noopener noreferrer">
 						{m.settings_agents_ad_docs()}

@@ -120,7 +120,7 @@ contact, and who acknowledged. It is on the alert's details.
 ## 4. Plugging it in
 
 Create a notification channel of type **DumbMonit on-call** (Settings →
-Notifications & reports → Channels) and pick its escalation policy. It then
+Notifications → Channels) and pick its escalation policy. It then
 behaves like any channel: routing filters by label, a minimum severity, and the
 channels you choose per rule all apply. A typical setup is a rule for critical
 production alerts that sends to this channel, while the rest still goes to chat.
@@ -132,7 +132,7 @@ Use **Test** on the channel to page step 1 with a test message.
 
 !!! note "Acknowledge links need the public URL"
     The acknowledge and snooze links in notifications only work when a
-    **public URL** is set (Settings → Notifications & reports → Notification
+    **public URL** is set (Settings → Notifications → Notification
     policy, or `DUMBMONIT_PUBLIC_URL`). Without it, people acknowledge from the
     UI, and the iCal links are relative paths.
 

@@ -106,7 +106,7 @@ reste juste, seule la notification est omise.
 
 Pour être prévenu des retours à la normale même pendant une maintenance,
 activez **Envoyer aussi les retours à la normale pendant un silence ou une
-maintenance** dans Réglages → Notifications et rapports → Politique de
+maintenance** dans Réglages → Notifications → Politique de
 notification, ou passez `resolutions_during_silence` à `send` avec
 `PUT /api/notify/policy` (`suppress` par défaut). Le réglage est global et
 s'applique à tous les silences et fenêtres.

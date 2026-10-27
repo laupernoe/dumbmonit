@@ -16,6 +16,7 @@
 		Gauge,
 		Server,
 		BellRing,
+		FileText,
 		Globe,
 		Settings2,
 		Tv,
@@ -103,7 +104,8 @@
 		{ id: 'page:/explore', group: 'pages', label: m.explore_title(), detail: m.explore_palette_detail(), keywords: 'metrics explorer promql metricsql query victoriametrics labels', icon: Compass, href: '/explore', run: go('/explore') },
 		{ id: 'page:/security', group: 'pages', label: m.misc_palette_security(), detail: m.misc_palette_security_detail(), keywords: 'security cve vulnerabilities kev nvd osv exploit patch', icon: ShieldAlert, href: '/security', run: go('/security') },
 		{ id: 'page:/settings#security-score', group: 'pages', label: m.misc_palette_security_score(), detail: m.misc_palette_security_score_detail(), keywords: 'security score grade pingcastle secure score checks audit', icon: ShieldCheck, href: '/settings/monitoring#security-score', run: go('/settings/monitoring#security-score') },
-		{ id: 'page:/settings/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, href: '/settings/status', run: go('/settings/status') },
+		{ id: 'page:/status', group: 'pages', label: m.misc_palette_status_pages(), detail: m.misc_palette_status_detail(), keywords: 'public incidents maintenance announcements uptime', icon: Globe, href: '/status', run: go('/status') },
+		{ id: 'page:/reports', group: 'pages', admin: true, label: m.reports_page_title(), detail: m.reports_palette_detail(), keywords: 'reports sla availability export pdf csv scheduled email history', icon: FileText, href: '/reports', run: go('/reports') },
 		{ id: 'page:/logs', group: 'pages', admin: true, label: m.logsearch_title(), keywords: 'logs search logsql victorialogs errors', icon: ScrollText, href: '/logs', run: go('/logs') },
 		{ id: 'page:/settings', group: 'pages', label: m.misc_nav_settings(), keywords: 'preferences account language password users sso agents tokens assistant appearance theme backup about', icon: Settings2, href: '/settings', run: go('/settings') },
 		{ id: 'page:/wall', group: 'pages', label: m.misc_nav_wall(), detail: m.misc_palette_wall_detail(), keywords: 'kiosk tv screen', icon: Tv, href: '/wall', run: go('/wall') },
@@ -116,8 +118,8 @@
 		{ id: 'action:api-token', group: 'actions', admin: true, label: m.misc_palette_api_token(), detail: m.misc_palette_api_token_detail(), keywords: 'api token rest http key script automation bearer prometheus grafana federate scrape', icon: KeyRound, run: go('/settings/system#assistant') },
 		{ id: 'action:maintenance', group: 'actions', label: m.misc_palette_maintenance(), keywords: 'silence window quiet', icon: CalendarClock, run: go('/alerts#scheduled') },
 		{ id: 'action:channel', group: 'actions', admin: true, label: m.misc_palette_channel(), keywords: 'slack discord telegram email webhook', icon: BellPlus, run: go('/settings/notifications#notifications-channels') },
-		{ id: 'action:status-page', group: 'actions', admin: true, label: m.misc_palette_status_page(), keywords: 'public status page create', icon: Globe, run: go('/settings/status/new') },
-		{ id: 'action:incident', group: 'actions', admin: true, label: m.misc_palette_incident(), keywords: 'status page maintenance announcement outage', icon: Megaphone, run: go('/settings/status#incidents') },
+		{ id: 'action:status-page', group: 'actions', admin: true, label: m.misc_palette_status_page(), keywords: 'public status page create', icon: Globe, run: go('/status/new') },
+		{ id: 'action:incident', group: 'actions', admin: true, label: m.misc_palette_incident(), keywords: 'status page maintenance announcement outage', icon: Megaphone, run: go('/status#incidents') },
 		...(auth.canOperate
 			? [{ id: 'action:silence', group: 'actions' as Group, label: m.misc_palette_silence(), keywords: 'mute quiet maintenance snooze pause alerts', icon: BellOff, run: go('/alerts#scheduled') }]
 			: []),

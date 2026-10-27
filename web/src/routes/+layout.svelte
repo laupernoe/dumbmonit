@@ -247,7 +247,7 @@
 	{#if auth.demo}
 		<DemoNotice />
 	{/if}
-	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/settings/status')}
+	{#if !onWall && !statusHost && !page.url.pathname.startsWith('/status')}
 		<VersionTag />
 	{/if}
 </div>

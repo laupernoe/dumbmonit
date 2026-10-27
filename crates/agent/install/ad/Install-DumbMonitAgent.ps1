@@ -23,6 +23,9 @@ $ErrorActionPreference = 'Stop'
 
 # Valeurs posées par le serveur DumbMonit à la génération du kit.
 $Url            = '__DM_URL__'
+# Serveur DNS à interroger si cette machine ne résout pas le nom du serveur
+# DumbMonit (vide : résolveur habituel seulement).
+$DnsServer      = '__DM_DNS_SERVER__'
 $ExpectedSha256 = '__DM_SHA256__'
 $KitVersion     = '__DM_VERSION__'
 $Domain         = '__DM_DOMAIN__'
@@ -177,6 +180,31 @@ try {
             exit 1
         }
         $arguments += " -BinPath '$($localCopy -replace "'", "''")'"
+    }
+
+    # ----------------------------------------------- nom du serveur DumbMonit
+    # Si le résolveur de cette machine ne connaît pas le nom du serveur, on le
+    # résout via le serveur DNS du kit et on l'inscrit dans le fichier hosts
+    # (ligne marquée « # DumbMonit », remplacée à chaque passage).
+    if ($DnsServer) {
+        try {
+            $serverHost = ([uri]$Url).DnsSafeHost
+            if ($null -eq ($serverHost -as [System.Net.IPAddress])) {
+                $known = $null
+                try { $known = Resolve-DnsName -Name $serverHost -Type A -DnsOnly -ErrorAction Stop } catch { $known = $null }
+                if (-not $known) {
+                    $answer = Resolve-DnsName -Name $serverHost -Server $DnsServer -Type A -DnsOnly -ErrorAction Stop | Where-Object { $_.Type -eq 'A' } | Select-Object -First 1
+                    if ($answer) {
+                        $hostsFile = Join-Path $env:SystemRoot 'System32\drivers\etc\hosts'
+                        $kept = @(Get-Content -LiteralPath $hostsFile -ErrorAction SilentlyContinue | Where-Object { $_ -notmatch '# DumbMonit$' })
+                        $kept += "$($answer.IPAddress) $serverHost # DumbMonit"
+                        Set-Content -LiteralPath $hostsFile -Value $kept -Encoding ASCII
+                    }
+                }
+            }
+        } catch {
+            Write-Journal 1003 Warning "Could not resolve the DumbMonit server name through the DNS server ${DnsServer}: $_"
+        }
     }
 
     # ---------------------------------------------------------- installation

@@ -18,6 +18,37 @@ Each dashboard saves its own **time range** (15 minutes to 30 days) and **refres
 interval (off, 10 s, 30 s, 1 min, 5 min). While viewing, you can change both on the
 fly without saving; they return to the saved values when you reopen the dashboard.
 
+### Start from a template
+
+**New from a template** offers ready-made dashboards that fill themselves with your own
+devices. Pick one, then choose what it covers, check the preview (live data, nothing is
+saved yet), name it and create it. After that it is an ordinary dashboard you can edit.
+
+| Template | Reads |
+|---|---|
+| Homelab overview | Every device: how many are up or down, active alerts, the state of each folder, CPU and memory of agent hosts. |
+| Linux and Windows servers | Agent hosts: CPU, memory, disks per volume, load, network traffic, stopped services. |
+| Network | SNMP switches (traffic and errors per port), FortiGate and OPNsense firewalls (CPU, gateways, tunnels, states), UniFi internet latency. |
+| Proxmox and virtualization | Proxmox VE nodes, guests, storages and the age of the last backup of each guest. |
+| Storage and backups | Synology, TrueNAS, Proxmox Backup Server, Kopia and Duplicati: volumes and pools, datastores, time since the last backup. |
+| Websites and TLS | HTTP, TLS and website monitors: availability, response time, certificate expiry. |
+| Active Directory | Domain controller response, replication, locked-out and stale accounts, security findings. |
+| Kubernetes | Nodes, pods, crash loops, missing replicas, warning events. |
+| Docker hosts | Containers running and stopped, on the agent hosts that report Docker. |
+| SLA by folder or client | Availability over 7 and 30 days, estimated downtime, weakest devices, the state of each folder. |
+
+**What it covers.** Filter by device type (when the template reads several), folder
+(sub-folders included), site (the location a device is placed at on the world map) and,
+in multi-client mode, client. Only the devices your account can see are used, so a
+restricted account gets a template filled with its own devices only.
+
+**A template with no device to feed it is dimmed**, with the reason: add a device of the
+type it reads first. A widget that reads a type you do not have is left out of the result.
+
+Each widget's query selects the devices by id when you create the dashboard. It is a
+snapshot: a device added later is not included until you create the dashboard again (or
+add its id to the queries). Beyond 300 devices the queries carry the first 300.
+
 ### Widgets
 
 | Widget | Shows |

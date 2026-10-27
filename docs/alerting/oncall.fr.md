@@ -129,7 +129,7 @@ quel contact, et qui a acquitté. Il se trouve dans le détail de l'alerte.
 ## 4. Le branchement
 
 Créez un canal de notification de type **DumbMonit on-call** (Réglages →
-Notifications et rapports → Canaux) et choisissez sa politique d'escalade. Il
+Notifications → Canaux) et choisissez sa politique d'escalade. Il
 se comporte alors comme tout canal : filtres de routage par étiquette,
 sévérité minimale et canaux choisis par règle s'appliquent. Un montage typique :
 une règle pour les alertes critiques de production qui écrit sur ce canal,
@@ -143,7 +143,7 @@ Le bouton **Tester** du canal appelle l'étape 1 avec un message de test.
 !!! note "Les liens d'acquittement demandent l'URL publique"
     Les liens d'acquittement et de mise en pause des notifications ne
     fonctionnent que si une **URL publique** est définie (Réglages →
-    Notifications et rapports → Politique de notification, ou
+    Notifications → Politique de notification, ou
     `DUMBMONIT_PUBLIC_URL`). Sans elle, on acquitte depuis l'interface, et les
     liens iCal sont des chemins relatifs.
 

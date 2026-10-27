@@ -5,6 +5,69 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.14.1 — 2026-10-28
+
+### Added
+
+- **Deploy with Active Directory** takes the name (FQDN) or address of the
+  DumbMonit server the agents contact and, optionally, a DNS server that resolves
+  it. Both are validated, written into the kit (servers that cannot resolve the
+  name get it from that DNS server) and shown in the summary.
+- The setup wizard offers **Deploy with Active Directory** directly in the first
+  monitors step.
+- Every agent install page (install command, relay, Active Directory) now states
+  that agents talk to the server over the encrypted channel with an agent
+  certificate (mTLS, TLS 1.3), and which port to open (the agent port, TCP 8443 by
+  default, agent to server, also from another site).
+- **Add a monitor by site.** *Add a monitor* (and the setup wizard's monitors
+  step) now asks where it is first: a location of the world map, or no site.
+  The page then proposes what to add there, namely devices a network scan found
+  through the site's relay agent that nobody monitors yet (one click creates them)
+  and the monitor types that fit the site, all pre-filled with the site's relay
+  agent, location and folder. The full list of types stays below. In MSP mode
+  only the current client's sites are offered.
+- **Dashboard templates.** **New from a template** on the Dashboards page offers ten
+  ready-made dashboards that fill themselves with your own devices: homelab overview,
+  Linux and Windows servers, network, Proxmox and virtualization, storage and backups,
+  websites and TLS, Active Directory, Kubernetes, Docker hosts, and SLA. Narrow one to a
+  device type, folder, site or client, check the live preview, and create it. A template
+  with no device to feed it is dimmed, with the reason. Templates are served by the server
+  (`GET /api/dashboards/templates` and `…/{id}/preview`), limited to the devices the
+  account can see.
+- **Enterprise wall mode.** With the instance in Enterprise mode, `/wall` shows a very dark board in Geist: the verdict and the clock, the five fleet figures, the health river, open alerts and who is on call.
+
+### Changed
+
+- **Security page, compact.** CVEs now show as a dense gallery of short cards
+  instead of long per-device lists, with a one-line counter strip and foldable
+  group headers. A switch picks the pivot: **by CVE** (each CVE once, with the
+  machines it touches, severity, exploited or not, fix available or not) or
+  **by machine** (each machine once, with its CVEs). Click a CVE to filter the
+  machines, or a machine to filter its CVEs. Quick filters: severity, state,
+  exploited, fix available, ignored, folder, client (MSP mode) and a search
+  box (CVE ID, package, machine). Pivot, filters and focus live in the URL.
+- **Active Directory findings** use two columns on wide screens and fold long
+  descriptions behind "Show more".
+- **Fewer, better themes.** Status pages keep four banner scenes (Paris, Tokyo, New York, the Matterhorn) and the Homelab wall four backdrops (Paris, New York, Tokyo, Zermatt). The others were retired and fold onto the nearest one: existing pages (migration 0200), backups, API calls and saved or linked `?city=` choices all land on a kept scene. The wall's **OLED** theme is gone (a saved `oled` reads as Night).
+- **Enterprise rail.** The account button (your initials) moved to the foot of the rail, just above Settings, and the documentation and GitHub buttons are back at the bottom.
+- **Status pages leave Settings.** They are a destination of their own, **Status pages** (`/status`, editor at `/status/<id>`) on the Enterprise rail and under **More** in Homelab. `/settings/status` and its anchors forward there.
+- **A Reports page.** The SLA export of a period (with the client in MSP mode), the scheduled reports and a sending history are together on **Reports** (`/reports`, Enterprise rail and **More**); they left Settings, and `/settings/reports` forwards. The Settings tab is now just **Notifications**.
+- The status page scene picker shows its four scenes at once, without search
+  or paging; the retired OLED wall palettes are gone.
+
+### Fixed
+
+- A monitor's page no longer prints a whole certificate (the Active Directory
+  `ca_cert` option) over its header: option chips show one line, cut with an
+  ellipsis and the value on hover, a PEM as "PEM". `credential_public` also drops
+  any long, multi-line or PEM value.
+- Restricted (MSP client) accounts: the dashboard template preview no longer
+  names a site where they have no device, and is now open to them (it only
+  reads the devices they see).
+- The agent channel note and the Active Directory deployment plan show the
+  server's real public agent port (`DUMBMONIT_AGENT_PUBLIC_PORT`, or the listen
+  port) instead of 8443.
+
 ## 0.14.0 — 2026-10-28
 
 ### Added

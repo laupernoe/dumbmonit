@@ -15,7 +15,7 @@ depuis n'importe quel onglet.
 | **Règles** | Chaque règle avec sa gravité, une marque *Intégrée* et, si une surveillance l'ignore, *Ignorée sur N surveillances* ; activer, modifier en place, supprimer les vôtres, créer une règle de seuil. Voir [Règles](../alerting/rules.md). |
 
 Les canaux de notification et la politique de notification se trouvent sous
-**Réglages → Notifications et rapports** (voir [Notifications](#notifications)).
+**Réglages → Notifications** (voir [Notifications](#notifications)).
 
 Le même modèle de vérité alimente le bulletin de la vue d'ensemble et cette
 page, les deux s'accordent donc toujours sur ce qui a besoin de vous.

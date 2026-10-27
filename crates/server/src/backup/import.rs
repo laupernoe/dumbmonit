@@ -1107,10 +1107,11 @@ async fn restore_status_pages(
         // Une sauvegarde éditée à la main ne doit pas contourner le jeu fermé.
         let mut kept: Vec<&str> = Vec::new();
         for scene in &page.scenes {
-            if crate::db::status_pages::SCENES.contains(&scene.as_str())
-                && !kept.contains(&scene.as_str())
+            // Une scène retirée se replie sur la plus proche conservée.
+            if let Some(canonical) = crate::db::status_pages::canonical_scene(scene)
+                && !kept.contains(&canonical)
             {
-                kept.push(scene);
+                kept.push(canonical);
             }
         }
         let scenes = kept.join(",");

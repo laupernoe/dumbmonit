@@ -19,6 +19,41 @@ Chaque tableau enregistre sa **plage de temps** (15 minutes à 30 jours) et son
 pouvez changer les deux à la volée sans enregistrer ; les valeurs enregistrées
 reviennent à la réouverture.
 
+### Partir d'un modèle
+
+**Nouveau depuis un modèle** propose des tableaux prêts à l'emploi qui se remplissent
+avec vos propres équipements. Choisissez-en un, indiquez ce qu'il couvre, vérifiez
+l'aperçu (données en direct, rien n'est encore enregistré), nommez-le et créez-le.
+Ensuite c'est un tableau ordinaire, que vous pouvez modifier.
+
+| Modèle | Lit |
+|---|---|
+| Vue d'ensemble homelab | Tous les équipements : combien sont joignables ou en panne, alertes actives, état de chaque dossier, CPU et mémoire des hôtes avec agent. |
+| Serveurs Linux et Windows | Hôtes avec agent : CPU, mémoire, disques par volume, charge, trafic réseau, services arrêtés. |
+| Réseau | Switchs SNMP (trafic et erreurs par port), pare-feux FortiGate et OPNsense (CPU, passerelles, tunnels, états), latence Internet UniFi. |
+| Proxmox et virtualisation | Nœuds, invités et stockages Proxmox VE, âge de la dernière sauvegarde de chaque invité. |
+| Stockage et sauvegardes | Synology, TrueNAS, Proxmox Backup Server, Kopia et Duplicati : volumes et pools, datastores, temps écoulé depuis la dernière sauvegarde. |
+| Sites web et TLS | Moniteurs HTTP, TLS et site web : disponibilité, temps de réponse, expiration des certificats. |
+| Active Directory | Réponse des contrôleurs de domaine, réplication, comptes verrouillés ou obsolètes, constats de sécurité. |
+| Kubernetes | Nœuds, pods, boucles de crash, réplicas manquants, événements d'avertissement. |
+| Hôtes Docker | Conteneurs en marche et arrêtés, sur les hôtes dont l'agent remonte Docker. |
+| SLA par dossier ou client | Disponibilité sur 7 et 30 jours, indisponibilité estimée, équipements les plus fragiles, état de chaque dossier. |
+
+**Ce qu'il couvre.** Filtrez par type d'équipement (quand le modèle en lit plusieurs),
+dossier (sous-dossiers compris), site (l'emplacement où l'équipement est placé sur la
+carte du monde) et, en mode multi-clients, client. Seuls les équipements que votre
+compte voit sont utilisés : un compte restreint obtient un modèle rempli de ses seuls
+équipements.
+
+**Un modèle sans aucun équipement pour l'alimenter est grisé**, avec la raison :
+ajoutez d'abord un équipement du type qu'il lit. Un widget qui lit un type que vous
+n'avez pas est omis du résultat.
+
+La requête de chaque widget désigne les équipements par leur identifiant au moment de
+la création. C'est un instantané : un équipement ajouté plus tard n'y figure pas tant
+que vous ne recréez pas le tableau (ou n'ajoutez pas son identifiant aux requêtes).
+Au-delà de 300 équipements, les requêtes portent les 300 premiers.
+
 ### Widgets
 
 | Widget | Affiche |

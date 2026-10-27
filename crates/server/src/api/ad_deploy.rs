@@ -73,6 +73,15 @@ pub struct AdKitPayload {
     /// Copier aussi le binaire dans SYSVOL, pour les serveurs sans accès sortant.
     #[serde(default)]
     pub sysvol_binary: bool,
+    /// Nom DNS (FQDN) ou adresse IPv4 du serveur DumbMonit que les agents
+    /// contacteront, avec un port facultatif (`dumbmonit.corp.example.com`).
+    /// Absent : l'hôte de `base_url`. Remplace seulement l'hôte de l'URL.
+    #[serde(default)]
+    pub server_host: Option<String>,
+    /// Serveur DNS (adresse IP) à interroger pour résoudre `server_host` si le
+    /// résolveur du serveur visé n'y arrive pas.
+    #[serde(default)]
+    pub dns_server: Option<String>,
 }
 
 /// Réponse : le jeton (montré cette fois seulement) et le script qui le porte.
@@ -85,6 +94,10 @@ pub struct CreatedAdKit {
     /// Dossier dans lequel les serveurs inscrits sont rangés.
     pub folder: String,
     pub install_windows: String,
+    /// URL que les agents contacteront, telle qu'écrite dans le kit.
+    pub server_url: String,
+    /// Serveur DNS inscrit dans le kit, le cas échéant.
+    pub dns_server: Option<String>,
 }
 
 /// Champ libre facultatif : sans blancs autour, `None` s'il est vide.
@@ -96,6 +109,66 @@ fn optional_field(value: Option<&str>, what: &str) -> Result<Option<String>, Api
         return Err(ApiError::BadRequest(format!("The {what} is not valid.")));
     }
     Ok(Some(value.to_string()))
+}
+
+/// Nom d'hôte (FQDN) ou adresse IPv4, avec un port facultatif, tel qu'accepté
+/// pour `server_host`. Ni schéma, ni chemin, ni blanc : rien qui ne soit un nom.
+fn clean_server_host(raw: &str) -> Result<String, ApiError> {
+    let bad = || {
+        ApiError::BadRequest(
+            "The server name must be a DNS name or an IPv4 address, optionally followed by \
+             :port (for example dumbmonit.corp.example.com)."
+                .into(),
+        )
+    };
+    let raw = raw.trim();
+    let (host, port) = match raw.rsplit_once(':') {
+        Some((host, port)) => (host, Some(port)),
+        None => (raw, None),
+    };
+    if let Some(port) = port
+        && !matches!(port.parse::<u16>(), Ok(n) if n > 0)
+    {
+        return Err(bad());
+    }
+    let host = host.trim_end_matches('.');
+    let label_ok = |label: &str| {
+        !label.is_empty()
+            && label.len() <= 63
+            && !label.starts_with('-')
+            && !label.ends_with('-')
+            && label.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+    };
+    if host.is_empty() || host.len() > 253 || !host.split('.').all(label_ok) {
+        return Err(bad());
+    }
+    Ok(match port {
+        Some(port) => format!("{}:{port}", host.to_ascii_lowercase()),
+        None => host.to_ascii_lowercase(),
+    })
+}
+
+/// Adresse IP d'un serveur DNS (IPv4 ou IPv6), rendue sous sa forme canonique.
+fn clean_dns_server(raw: &str) -> Result<String, ApiError> {
+    raw.trim().parse::<std::net::IpAddr>().map(|ip| ip.to_string()).map_err(|_| {
+        ApiError::BadRequest("The DNS server must be an IP address, for example 10.0.0.2.".into())
+    })
+}
+
+/// URL des agents quand `server_host` remplace l'hôte de `base_url` : même
+/// schéma (https par défaut) et même port, sauf port donné dans `host`.
+fn url_with_host(base_url: Option<&str>, host: &str) -> String {
+    let base = base_url.map(str::trim).filter(|b| !b.is_empty()).unwrap_or("https://x");
+    let (scheme, rest) = base.split_once("://").unwrap_or(("https", base));
+    let authority = rest.split(['/', '?', '#']).next().unwrap_or_default();
+    let base_port = authority
+        .rsplit_once(':')
+        .map(|(_, port)| port)
+        .filter(|port| !port.is_empty() && port.chars().all(|c| c.is_ascii_digit()));
+    match (host.contains(':'), base_port) {
+        (false, Some(port)) => format!("{scheme}://{host}:{port}"),
+        _ => format!("{scheme}://{host}"),
+    }
 }
 
 /// URL telle qu'elle sera écrite, entre apostrophes, dans les scripts.
@@ -146,6 +219,10 @@ pub struct KitParams<'a> {
     pub include_domain_controllers: bool,
     pub security_group: &'a str,
     pub sysvol_binary: bool,
+    /// Serveur DNS à utiliser pour résoudre l'hôte de `url` ; vide : aucun.
+    pub dns_server: &'a str,
+    /// Port public du canal chiffré des agents ; vide : canal coupé.
+    pub agent_port: &'a str,
     pub generated: &'a str,
 }
 
@@ -168,6 +245,7 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
         // serveur) n'est jamais rétrogradé par la stratégie de groupe.
         .replace("__DM_VERSION__", env!("CARGO_PKG_VERSION"))
         .replace("__DM_DOMAIN__", params.domain)
+        .replace("__DM_DNS_SERVER__", params.dns_server)
         .replace("__DM_INSTALL_ARGS_B64__", &b64(params.install_args));
     let script = DEPLOY_TEMPLATE
         .replace("__DM_TARGET_OU_B64__", &b64(params.target_ou))
@@ -179,8 +257,10 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
         .replace("__DM_SYSVOL__", if params.sysvol_binary { "true" } else { "false" })
         .replace("__DM_DOMAIN__", params.domain)
         .replace("__DM_URL__", params.url)
+        .replace("__DM_DNS_SERVER__", params.dns_server)
         .replace("__DM_SHA256__", params.sha256)
         .replace("__DM_TOKEN_PREFIX__", params.token_prefix)
+        .replace("__DM_AGENT_PORT__", params.agent_port)
         .replace("__DM_GENERATED__", params.generated)
         .replace("__DM_INSTALLER_B64__", &b64(INSTALL_PS1))
         .replace("__DM_BOOTSTRAP_B64__", &b64(&bootstrap));
@@ -208,13 +288,27 @@ pub async fn create_kit(
     if let Some(url) = payload.base_url.as_deref().filter(|url| !url.trim().is_empty()) {
         script_safe_url(url)?;
     }
+    let server_host = match payload.server_host.as_deref().map(str::trim) {
+        Some(host) if !host.is_empty() => Some(clean_server_host(host)?),
+        _ => None,
+    };
+    let dns_server = match payload.dns_server.as_deref().map(str::trim) {
+        Some(dns) if !dns.is_empty() => Some(clean_dns_server(dns)?),
+        _ => None,
+    };
+    // Le nom saisi remplace l'hôte de l'URL publique : c'est lui que porteront
+    // la commande d'installation, le canal chiffré et le kit.
+    let base_url = match &server_host {
+        Some(host) => Some(url_with_host(payload.base_url.as_deref(), host)),
+        None => payload.base_url.clone(),
+    };
 
     // Le jeton est créé par le chemin ordinaire : mêmes contrôles, même
     // journal d'audit, même commande d'installation. Construit depuis du JSON
     // pour suivre les champs que ce chemin gagnera.
     let token_payload: TokenPayload = serde_json::from_value(serde_json::json!({
         "name": agent::ad_folder(&domain),
-        "base_url": payload.base_url,
+        "base_url": base_url,
         "reusable": true,
         "max_uses": payload.max_uses,
         "expires_in_days": expires_in_days,
@@ -249,6 +343,7 @@ pub async fn create_kit(
         .unwrap_or_default();
     let generated = chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string();
 
+    let agent_port = state.config.agent_port().map(|port| port.to_string()).unwrap_or_default();
     let script = render_deploy_script(&KitParams {
         domain: &domain,
         url: &url,
@@ -259,6 +354,8 @@ pub async fn create_kit(
         include_domain_controllers: payload.include_domain_controllers,
         security_group: security_group.as_deref().unwrap_or(""),
         sysvol_binary: payload.sysvol_binary,
+        dns_server: dns_server.as_deref().unwrap_or(""),
+        agent_port: &agent_port,
         generated: &generated,
     });
 
@@ -271,6 +368,8 @@ pub async fn create_kit(
             script,
             filename: FILENAME,
             install_windows,
+            server_url: url,
+            dns_server,
         }),
     ))
 }
@@ -309,6 +408,8 @@ mod tests {
             include_domain_controllers: true,
             security_group: "Serveurs l'équipe",
             sysvol_binary: false,
+            dns_server: "10.0.0.2",
+            agent_port: "9443",
             generated: "2026-10-22 12:00",
         }
     }
@@ -360,6 +461,8 @@ mod tests {
         assert!(!script.contains("__DM_"), "un paramètre n'a pas été remplacé");
         assert!(script.contains("$Domain         = 'corp.example.com'"));
         assert!(script.contains("$Url            = 'https://dm.example.com'"));
+        assert!(script.contains("$DnsServer      = '10.0.0.2'"));
+        assert!(script.contains("$AgentPort      = '9443'"), "le vrai port du canal des agents");
         assert!(script.contains("[bool]::Parse('true')"), "contrôleurs de domaine inclus");
         assert!(script.contains("[bool]::Parse('false')"), "pas de binaire dans SYSVOL");
         // Le jeton n'apparaît pas en clair : il n'est que dans le script de la
@@ -439,6 +542,47 @@ mod tests {
         ] {
             assert!(script_safe_url(bad).is_err(), "{bad:?} doit être refusée");
         }
+    }
+
+    #[test]
+    fn the_server_name_must_be_a_plain_dns_name_or_address() {
+        assert_eq!(
+            clean_server_host(" DumbMonit.Corp.Example.com. ").ok().unwrap(),
+            "dumbmonit.corp.example.com"
+        );
+        assert_eq!(clean_server_host("10.0.0.5:8443").ok().unwrap(), "10.0.0.5:8443");
+        for bad in [
+            "",
+            "https://dm",
+            "dm/path",
+            "dm name",
+            "dm'x",
+            "-dm.lan",
+            "dm..lan",
+            "dm:0",
+            "dm:99999",
+            "dm:abc",
+            "dm$x",
+        ] {
+            assert!(clean_server_host(bad).is_err(), "{bad:?} doit être refusé");
+        }
+    }
+
+    #[test]
+    fn the_dns_server_must_be_an_ip_address() {
+        assert_eq!(clean_dns_server(" 10.0.0.2 ").ok().unwrap(), "10.0.0.2");
+        assert!(clean_dns_server("::1").is_ok());
+        assert!(clean_dns_server("dns.corp.lan").is_err());
+        assert!(clean_dns_server("10.0.0.2'; calc").is_err());
+    }
+
+    #[test]
+    fn the_server_name_replaces_the_host_of_the_public_url() {
+        let url = |base, host| url_with_host(Some(base), host);
+        assert_eq!(url("https://old.example.com", "dm.corp.lan"), "https://dm.corp.lan");
+        assert_eq!(url("http://10.0.0.1:8080", "dm.corp.lan"), "http://dm.corp.lan:8080");
+        assert_eq!(url("http://10.0.0.1:8080", "dm.corp.lan:8443"), "http://dm.corp.lan:8443");
+        assert_eq!(url_with_host(None, "dm.corp.lan"), "https://dm.corp.lan");
     }
 
     #[test]

@@ -1290,3 +1290,52 @@ async fn scim_groups_drive_client_membership() {
     assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
     assert_eq!(member(lab.pool.clone(), lab.acme).await, 0);
 }
+
+/// Les emplacements (ajout par site, filtres des modèles de tableaux de bord)
+/// ne montrent à un membre de client que ceux où il a un équipement.
+#[tokio::test]
+async fn locations_and_template_sites_stay_within_the_client() {
+    let lab = lab().await;
+    let (alice, cookie) = create_user(&lab.app, &lab.admin, "alice", "operator").await;
+    join(&lab, lab.acme, alice).await;
+
+    let mut sites = Vec::new();
+    for (name, target) in [("Acme HQ", lab.a1), ("Beta Vault", lab.b1)] {
+        let body = json!({ "name": name, "latitude": 46.5, "longitude": 6.6 });
+        let reply = lab.app.post("/api/locations", body, Some(&lab.admin)).await;
+        assert!(reply.status.is_success(), "{}", reply.body);
+        let id = reply.body["id"].as_i64().unwrap();
+        let body = json!({ "location_id": id, "target_ids": [target] });
+        let reply = lab.app.post("/api/locations/assign", body, Some(&lab.admin)).await;
+        assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+        sites.push(id);
+    }
+
+    // L'administrateur voit les deux.
+    let reply = lab.app.get("/api/locations", Some(&lab.admin)).await;
+    assert!(reply.body.to_string().contains("Beta Vault"), "{}", reply.body);
+
+    let reply = lab.app.get("/api/locations", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let names = names(&reply.body["locations"], "name");
+    assert_eq!(names, vec!["Acme HQ".to_string()], "{}", reply.body);
+    let text = reply.body.to_string();
+    assert!(!text.contains("Beta Vault") && !text.contains(&format!("\"target_id\":{}", lab.b1)));
+
+    let reply = lab.app.get("/api/dashboards/templates", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let text = reply.body["filters"].to_string();
+    assert!(text.contains("Acme HQ") && !text.contains("Beta Vault"), "{text}");
+
+    // Un site d'un autre client demandé à la main : ni son nom ni ses équipements.
+    let uri = format!("/api/dashboards/templates/homelab-overview/preview?site={}", sites[1]);
+    let reply = lab.app.get(&uri, Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let text = reply.body.to_string();
+    assert!(!text.contains("Beta Vault") && !text.contains(SECRET_NAME), "{text}");
+    assert_eq!(reply.body["matched_count"], 0, "{text}");
+
+    // Les relais (agents de tous les clients) restent hors de la liste fermée.
+    let reply = lab.app.get("/api/relays", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN, "{}", reply.body);
+}

@@ -82,6 +82,16 @@ pub struct TargetView {
     pub error_kind: Option<&'static str>,
 }
 
+/// Longueur maximale d'une valeur de `credential_public`.
+const MAX_PUBLIC_LEN: usize = 200;
+
+/// Une valeur de `credential_public` doit rester courte, sur une ligne et sans
+/// armure PEM : un certificat ou un texte long n'a rien à y faire (l'interface
+/// l'afficherait tel quel). Ce qui ne passe pas est simplement omis.
+fn is_short_public(value: &str) -> bool {
+    value.len() <= MAX_PUBLIC_LEN && !value.contains(['\n', '\r']) && !value.contains("-----BEGIN")
+}
+
 /// Classe un message d'erreur de sonde d'après son préfixe.
 ///
 /// Seul le texte est conservé en base ; les préfixes proviennent de l'affichage
@@ -120,6 +130,7 @@ impl TargetView {
                 .credential
                 .public_fields()
                 .into_iter()
+                .filter(|(_, value)| is_short_public(value))
                 .map(|(key, value)| (key.to_owned(), value))
                 .collect(),
             group_name: target.group_name,
@@ -1403,5 +1414,19 @@ fn duplicate_address_to_conflict(error: anyhow::Error) -> ApiError {
         ApiError::Conflict("A monitor with this type and address already exists.".into())
     } else {
         ApiError::Internal(error)
+    }
+}
+
+#[cfg(test)]
+mod public_tests {
+    use super::*;
+
+    #[test]
+    fn public_values_must_be_short_single_line_and_not_pem() {
+        assert!(is_short_public("dumbmonit@pve!monitor"));
+        assert!(is_short_public("DOMAIN\\svc-monit"));
+        assert!(!is_short_public("-----BEGIN CERTIFICATE-----MIIB"));
+        assert!(!is_short_public("a\nb"));
+        assert!(!is_short_public(&"x".repeat(MAX_PUBLIC_LEN + 1)));
     }
 }
