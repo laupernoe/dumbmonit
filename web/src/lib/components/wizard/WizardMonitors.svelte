@@ -8,9 +8,20 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { Button } from '#lib/ui/index.js';
+	import AddBySite from '#lib/components/device-form/AddBySite.svelte';
+	import { listCollectors, type CollectorInfo } from '#lib/api/index.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 
 	let scanning = $state(false);
+	let collectors = $state<CollectorInfo[]>([]);
+	let site = $state<string | null>(null);
+	$effect(() => {
+		const controller = new AbortController();
+		listCollectors(controller.signal)
+			.then((list) => (collectors = list))
+			.catch(() => {});
+		return () => controller.abort();
+	});
 	let refreshing = $state(false);
 
 	async function refresh() {
@@ -22,6 +33,11 @@
 	const card =
 		'flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 text-left transition-colors hover:border-line-strong';
 </script>
+
+<!-- Site first: what the site's scans found is added in one click, the types open the form in a new tab. -->
+{#if collectors.length > 0}
+	<AddBySite {collectors} bind:site newTab onadded={() => void refresh()} />
+{/if}
 
 <div class="grid gap-3 sm:grid-cols-3">
 	<button type="button" class={`${card} ${scanning ? '!border-ink' : ''}`} aria-expanded={scanning} aria-controls="wizard-scan" onclick={() => (scanning = !scanning)}>

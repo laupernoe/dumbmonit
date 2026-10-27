@@ -84,6 +84,17 @@ containers](../devices/agent.md#docker-containers).
 
 ## Adding and editing
 
+**Add a monitor** starts with the site: pick a location of the
+[world map](world-map.md), or **No site**. DumbMonit then proposes what to add
+there: devices a [network scan](discovery.md) found through that site's relay
+agent and nobody monitors yet (**Add** creates them at once, except SNMP devices,
+which open the form for the community), and the monitor types that fit the site
+(the ones its devices already use, then the common ones). Every proposal is
+filled in with the site's relay agent, its location and its usual folder, and you
+can still change them in the form. Without any location the page is the plain
+list of types. In MSP mode only the current client's sites are offered. The
+setup wizard's *Add your first monitors* step offers the same choice.
+
 See [Add your first monitor](../install/first-device.md) for the form and the
 [monitor types](../devices/index.md) for what each type needs. When editing, the
 form opens **More options** by itself if the monitor already uses one.
