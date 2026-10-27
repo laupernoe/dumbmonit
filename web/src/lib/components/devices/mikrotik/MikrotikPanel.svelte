@@ -10,6 +10,7 @@
 	import { queryInstant, type Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
+	import SwitchPanel from '#lib/components/devices/switch/SwitchPanel.svelte';
 	import { formatBytes } from '../docker/api';
 	import { formatSpan } from '../pbs/format';
 	import { DAY, EMPTY, GAUGES, RATES, fold, formatBits, sensorValue, type Reading } from './reading';
@@ -169,6 +170,8 @@
 				{/if}
 			</div>
 		</Panel>
+
+		<SwitchPanel {target} />
 
 		{#if reading.ports.length > 0}
 			<Panel title={m.devices_mikrotik_ifaces()} description={m.devices_mikrotik_ifaces_desc()} padded={false} class="rise-in">

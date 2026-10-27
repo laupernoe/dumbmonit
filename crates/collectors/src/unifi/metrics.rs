@@ -5,18 +5,31 @@
 //! | `device_state` | 0 en ligne, 1 hors ligne, 2 en attente d'adoption, 3 mise à jour, 4 adoption en cours, 5 adoption échouée, 6 isolé, 7 autre |
 //! | `device_up` | 1 en ligne ou en mise à jour, 0 hors ligne, isolé ou adoption échouée ; absent pour un équipement pas encore adopté |
 //! | `subsystem_status` | 0 ok, 1 avertissement, 2 erreur, 3 inconnu |
+//! | `port_up` | 1 lien monté, 0 sans lien ; absent pour un port désactivé (`port_enabled` = 0) |
+//! | `port_neighbor_info` | toujours 1 : la série existe pour ses étiquettes (voisin LLDP) |
 
 use std::collections::BTreeMap;
 
 use dumbmonit_proto::{MetricKind, Sample};
 
-use super::model::{Device, DeviceState, Health};
+use super::model::{Device, DeviceState, DeviceType, Health};
 
 /// Au-delà, les équipements ne portent plus de série propre.
 pub const MAX_DEVICES: usize = 500;
 
+/// Commutateurs et passerelles dont les ports sont publiés un à un : au-delà,
+/// la façade d'un parc entier coûterait des dizaines de milliers de séries.
+pub const MAX_PORTED_DEVICES: usize = 32;
+
+/// Ports publiés par équipement (le plus gros châssis UniFi en compte 52).
+pub const MAX_PORTS_PER_DEVICE: usize = 64;
+
 fn gauge(name: &str, value: f64, ts_ms: i64) -> Sample {
     Sample::new(name, value, MetricKind::Gauge, ts_ms)
+}
+
+fn counter(name: &str, value: f64, ts_ms: i64) -> Sample {
+    Sample::new(name, value, MetricKind::Counter, ts_ms)
 }
 
 fn flag(value: bool) -> f64 {
@@ -86,6 +99,79 @@ pub fn device_samples(devices: &[Device], ts_ms: i64) -> Vec<Sample> {
                     label(gauge("unifi_wan_link_up", flag(*up), ts_ms))
                         .with_label("wan", wan.as_str()),
                 );
+            }
+        }
+    }
+    out
+}
+
+/// Les ports des commutateurs et passerelles en ligne, pour le panneau de
+/// commutateur. Les points d'accès, qui n'ont qu'un ou deux ports, n'en
+/// publient pas. Étiquettes : `device`, `mac`, `port` (numéro en façade) et
+/// `port_name`.
+pub fn port_samples(devices: &[Device], ts_ms: i64) -> Vec<Sample> {
+    let mut out = Vec::new();
+    let ported = devices
+        .iter()
+        .take(MAX_DEVICES)
+        .filter(|device| matches!(device.kind, DeviceType::Switch | DeviceType::Gateway))
+        .filter(|device| device.state == DeviceState::Online && !device.ports.is_empty())
+        .take(MAX_PORTED_DEVICES);
+    for device in ported {
+        for port in device.ports.iter().take(MAX_PORTS_PER_DEVICE) {
+            let index = port.index.to_string();
+            let label = |sample: Sample| {
+                let sample = sample
+                    .with_label("device", device.name.as_str())
+                    .with_label("mac", device.mac.as_str())
+                    .with_label("port", index.as_str());
+                match &port.name {
+                    Some(name) => sample.with_label("port_name", name.as_str()),
+                    None => sample,
+                }
+            };
+            let enabled = port.enabled.unwrap_or(true);
+            out.push(label(gauge("unifi_port_enabled", flag(enabled), ts_ms)));
+            if !enabled {
+                continue;
+            }
+            if let Some(up) = port.up {
+                out.push(label(gauge("unifi_port_up", flag(up), ts_ms)));
+            }
+            if port.up == Some(true) {
+                if let Some(speed) = port.speed_bps.filter(|s| *s > 0.0) {
+                    out.push(label(gauge("unifi_port_speed_bps", speed, ts_ms)));
+                }
+                if let Some(full) = port.full_duplex {
+                    out.push(label(gauge("unifi_port_full_duplex", flag(full), ts_ms)));
+                }
+            }
+            if port.uplink {
+                out.push(label(gauge("unifi_port_uplink", 1.0, ts_ms)));
+            }
+            if let Some(poe) = port.poe_enabled {
+                out.push(label(gauge("unifi_port_poe_enabled", flag(poe), ts_ms)));
+                if poe && let Some(watts) = port.poe_watts {
+                    out.push(label(gauge("unifi_port_poe_watts", watts, ts_ms)));
+                }
+            }
+            for (name, value) in [
+                ("unifi_port_rx_bytes_total", port.rx_bytes),
+                ("unifi_port_tx_bytes_total", port.tx_bytes),
+                ("unifi_port_rx_errors_total", port.rx_errors),
+                ("unifi_port_tx_errors_total", port.tx_errors),
+            ] {
+                if let Some(value) = value {
+                    out.push(label(counter(name, value, ts_ms)));
+                }
+            }
+            if let Some(chassis) = &port.neighbor_chassis {
+                let mut sample = label(gauge("unifi_port_neighbor_info", 1.0, ts_ms))
+                    .with_label("remote_chassis", chassis.as_str());
+                if let Some(remote) = &port.neighbor_port {
+                    sample = sample.with_label("remote_port", remote.as_str());
+                }
+                out.push(sample);
             }
         }
     }

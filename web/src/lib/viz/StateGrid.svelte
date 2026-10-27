@@ -28,9 +28,11 @@
 		/** Write the state under the label. Off only when a legend names the glyphs. */
 		showState?: boolean;
 		onselect?: (key: string) => void;
+		/** Key of the selected tile (pressed button), when `onselect` is set. */
+		selected?: string | null;
 		class?: string;
 	}
-	let { cells, label, rows = 0, showState = true, onselect, class: cls = '' }: Props = $props();
+	let { cells, label, rows = 0, showState = true, onselect, selected = null, class: cls = '' }: Props = $props();
 
 	const faceplate = $derived(rows > 0);
 </script>
@@ -50,6 +52,8 @@
 				type={onselect ? 'button' : undefined}
 				class="tile"
 				class:tile--hatched={cell.tone === 'advisory'}
+				class:tile--selected={onselect !== undefined && selected === cell.key}
+				aria-pressed={onselect ? selected === cell.key : undefined}
 				title={cell.detail ? `${cell.label}: ${cell.stateLabel}. ${cell.detail}` : `${cell.label}: ${cell.stateLabel}`}
 				style:border-color={TONE_COLOR[cell.tone]}
 				style:background-color={TONE_SOFT[cell.tone]}
@@ -86,6 +90,10 @@
 	}
 	.tile--hatched {
 		background-image: repeating-linear-gradient(135deg, transparent 0 4px, var(--c-advisory-soft) 4px 6px);
+	}
+	.tile--selected {
+		box-shadow: 0 0 0 2px var(--c-ink);
+		font-weight: 600;
 	}
 	.glyph {
 		font-weight: 700;
