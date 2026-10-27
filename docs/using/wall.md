@@ -23,14 +23,14 @@ text.
 
 The wall follows the app's theme, or forces **Day** or **Night** for that display
 (the *Theme* button, or `?theme=`). The true-black OLED theme was retired: a
-saved or linked `oled` now reads as Night. The Homelab wall draws one of four
+saved or linked `oled` now reads as Night. The wall can draw one of four
 backdrops: Paris, New York, Tokyo or Zermatt (*Auto* picks the closest to the
 browser's time zone). The other backdrops were retired, and a saved or linked
 `?city=` that names one lands on the nearest of the four.
 
-## Enterprise wall
+## Console board
 
-When the instance is in Enterprise mode, `/wall` shows a different board: a
+`/wall` shows a board built like the console: a
 black ground in the console's own type, the verdict and the clock, the five
 fleet figures, the health river, the open alerts and who is on call. It has no
 scenery, no music and no widgets; ++esc++ or **Exit** returns to the console.

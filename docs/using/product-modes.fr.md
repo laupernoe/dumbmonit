@@ -1,35 +1,11 @@
-# Modes produit et assistant de démarrage
+# Interface et assistant de démarrage
 
-DumbMonit peut se présenter de deux façons. Les moniteurs, les alertes et les
-réglages sont les mêmes ; seule l'interface change. Un administrateur choisit au
-premier lancement et peut changer à tout moment dans **Réglages → Général**.
-Changer de mode ne supprime jamais rien.
+## La console
 
-## Homelab
-
-Le mode par défaut, et celui que gardent toutes les instances créées avant ce
-réglage.
-
-- La barre garde quatre destinations : **Vue d'ensemble**, **Moniteurs**,
-  **Alertes** et **Réglages**. La sécurité, la carte de topologie, les journaux,
-  les pages de statut, les rapports, le mode mur, la documentation et GitHub sont sous
-  **Plus**, et chaque page est dans la palette de commandes (`Ctrl K` / `⌘K`).
-- Chaque onglet des Réglages montre les sections dont on a le plus besoin. Les
-  autres (authentification unique, LDAP, paquets d'intégration, note de
-  sécurité, emplacements, politique de notification, musique, widgets
-  du mur, auto-surveillance, stockage, journaux, API et assistants) attendent
-  derrière **Avancé**, en bas de l'onglet. Un lien vers l'une d'elles ouvre le
-  pli tout seul.
-- Les formulaires d'équipement montrent les champs obligatoires et le premier
-  réglage ; les autres sont sous **Plus d'options**, avec des valeurs par
-  défaut sensées.
-- La vue d'ensemble reste le bulletin météo, et les thèmes clair et sombre
-  fonctionnent comme avant.
-
-## Entreprise
-
-Une console dense et très sombre, pour les équipes qui la gardent ouverte toute
-la journée.
+DumbMonit n'a qu'une seule interface : une console dense et très sombre, pour
+les équipes qui la gardent ouverte toute la journée. Les administrateurs règlent
+le nom de l'instance, la langue et le fuseau horaire dans **Réglages →
+Général**.
 
 - Un **rail d'icônes** à gauche liste toutes les destinations, pages de statut
   et rapports compris. Tout en bas : la documentation, GitHub, votre compte (le
@@ -50,9 +26,8 @@ la journée.
   du pire au meilleur. Le tableau se filtre par état, type et texte, accepte des
   colonnes en plus (adresse, dossier) ou en moins, et se pilote au clavier :
   `j` / `k` pour se déplacer, `Entrée` pour sélectionner, `o` pour ouvrir.
-- Le **mode mur** a son propre tableau Entreprise : fond noir, la rivière de santé, les
-  cinq chiffres, les alertes ouvertes et qui est d'astreinte, sans décor. Le
-  Homelab garde sa scène de ville.
+- Le **mode mur** a son propre tableau : fond noir, la rivière de santé, les
+  cinq chiffres, les alertes ouvertes et qui est d'astreinte, sans décor.
 - Autres raccourcis : `g m` carte de topologie, `g x` sécurité, `g l` journaux.
   `?` affiche la liste complète.
 - Les formulaires d'équipement ouvrent **Plus d'options** d'emblée et montrent
@@ -67,16 +42,15 @@ L'assistant s'ouvre après la première connexion d'un administrateur sur une
 nouvelle instance. Relancez-le quand vous voulez depuis **Réglages → Général →
 Lancer l'assistant de démarrage**.
 
-1. **Mode** : Homelab ou Entreprise, avec un aperçu de chacun.
-2. **Instance** : nom affiché dans l'en-tête, langue et fuseau horaire par
+1. **Instance** : nom affiché dans l'en-tête, langue et fuseau horaire par
    défaut.
-3. **Notifications** : ajoutez un canal (le même formulaire que dans les
+2. **Notifications** : ajoutez un canal (le même formulaire que dans les
    Réglages, donc tous les types de canaux) et envoyez un test.
-4. **Premiers moniteurs** : balayez votre réseau sur place, ou ouvrez l'import
+3. **Premiers moniteurs** : balayez votre réseau sur place, ou ouvrez l'import
    et l'ajout à la main dans un nouvel onglet.
-5. **Agent** : la commande d'installation pour une machine à surveiller.
+4. **Agent** : la commande d'installation pour une machine à surveiller.
 
-En mode Entreprise, trois étapes facultatives suivent : **authentification
+Trois étapes facultatives suivent : **authentification
 unique et équipes**, **astreinte** (politique de notification et rôles) et
 **rétention**.
 
@@ -86,9 +60,9 @@ revient pas dans un autre navigateur.
 
 ## API et sauvegarde
 
-- `GET /api/instance` est public et ne répond que `product_mode` et
-  `setup_completed`, pour que la page de connexion ait déjà la bonne allure.
-- `GET /api/instance/settings` rend le mode, le nom, la langue et le fuseau ;
+- `GET /api/instance` est public et ne répond que `product_mode` (toujours
+  `enterprise`) et `setup_completed`.
+- `GET /api/instance/settings` rend le nom, la langue et le fuseau ;
   `PUT /api/instance/settings` (administrateurs) les modifie. Un champ absent
   garde sa valeur.
 - Ces réglages font partie de la sauvegarde de configuration (section

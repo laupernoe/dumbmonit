@@ -6,7 +6,7 @@ default; daily and monthly are one click away. Reports reuse an **email (SMTP)
 notification channel**, so set one up first (see
 [Notification channels](../notifications.md)).
 
-Open **Reports** (the Enterprise rail; **More** in Homelab) to set them up. The page holds the availability (SLA) export of a period, the scheduled reports and the history of their sends; it used to be in Settings, and `/settings/reports` forwards to it. Everything here is admin-only,
+Open **Reports** (in the icon rail) to set them up. The page holds the availability (SLA) export of a period, the scheduled reports and the history of their sends; it used to be in Settings, and `/settings/reports` forwards to it. Everything here is admin-only,
 reading included, because the page lists the recipients' addresses.
 
 ## What a report contains
