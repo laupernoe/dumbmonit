@@ -3,7 +3,15 @@
  * `crates/server/src/api/dashboards.rs` and `metrics.rs`; types live in `types.ts`.
  */
 import { request } from './client';
-import type { Dashboard, DashboardId, DashboardPayload, MetricsCatalog } from './types';
+import type {
+	Dashboard,
+	DashboardId,
+	DashboardPayload,
+	DashboardTemplateFilter,
+	DashboardTemplateList,
+	DashboardTemplatePreview,
+	MetricsCatalog
+} from './types';
 
 export function listDashboards(signal?: AbortSignal): Promise<Dashboard[]> {
 	return request<Dashboard[]>('/dashboards', { signal });
@@ -23,4 +31,19 @@ export function deleteDashboard(id: DashboardId): Promise<void> {
 
 export function getMetricsCatalog(signal?: AbortSignal): Promise<MetricsCatalog> {
 	return request<MetricsCatalog>('/metrics/catalog', { signal });
+}
+
+export function listDashboardTemplates(signal?: AbortSignal): Promise<DashboardTemplateList> {
+	return request<DashboardTemplateList>('/dashboards/templates', { signal });
+}
+
+export function previewDashboardTemplate(id: string, filter: DashboardTemplateFilter, signal?: AbortSignal): Promise<DashboardTemplatePreview> {
+	const query = new URLSearchParams();
+	if (filter.kind) query.set('kind', filter.kind);
+	if (filter.folder) query.set('folder', filter.folder);
+	if (filter.site !== undefined) query.set('site', String(filter.site));
+	if (filter.client !== undefined) query.set('client', String(filter.client));
+	const text = query.toString();
+	const suffix = text ? `?${text}` : '';
+	return request<DashboardTemplatePreview>(`/dashboards/templates/${encodeURIComponent(id)}/preview${suffix}`, { signal });
 }

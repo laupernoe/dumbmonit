@@ -9,22 +9,19 @@
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Activity, BellRing, Check, Compass, Gauge, MessageSquareText, Pencil, Plus, RefreshCw, Server, X } from 'lucide-svelte';
+	import { Activity, BellRing, Check, Compass, Gauge, LayoutTemplate, MessageSquareText, Pencil, Plus, RefreshCw, Server, X } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { createDashboard, deleteDashboard, getMetricsCatalog, listDashboards, updateDashboard } from '#lib/api/dashboards.js';
-	import type { CatalogMetric, Dashboard, DashboardWidget, WidgetKind } from '#lib/api/types.js';
+	import type { CatalogMetric, Dashboard, DashboardPayload, DashboardWidget, WidgetKind } from '#lib/api/types.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { compact, slotFor } from '#lib/dashboards/grid.js';
 	import { rangeOptions, refreshOptions } from '#lib/dashboards/options.js';
-	import { DEFAULT_SIZE, WIDGET_KINDS, cfgNumber, cfgString, defaultConfig, newWidgetId } from '#lib/dashboards/widgets.js';
+	import { DEFAULT_SIZE, WIDGET_KINDS, defaultConfig, newWidgetId } from '#lib/dashboards/widgets.js';
 	import { Button, Confirm, EmptyState, ErrorNotice, Field, PageHeader, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import DashboardGrid from '#lib/components/dashboards/DashboardGrid.svelte';
 	import WidgetEditor from '#lib/components/dashboards/WidgetEditor.svelte';
-	import ChartWidget from '#lib/components/dashboards/ChartWidget.svelte';
-	import StatWidget from '#lib/components/dashboards/StatWidget.svelte';
-	import GroupWidget from '#lib/components/dashboards/GroupWidget.svelte';
-	import AlertsWidget from '#lib/components/dashboards/AlertsWidget.svelte';
-	import TextWidget from '#lib/components/dashboards/TextWidget.svelte';
+	import WidgetView from '#lib/components/dashboards/WidgetView.svelte';
+	import TemplatePicker from '#lib/components/dashboards/TemplatePicker.svelte';
 
 	const LAST_KEY = 'dumbmonit.dashboards.last';
 
@@ -43,6 +40,7 @@
 	let busy = $state(false);
 
 	let creating = $state(false);
+	let fromTemplate = $state(false);
 	let newName = $state('');
 	let newShared = $state(false);
 
@@ -156,6 +154,36 @@
 		}
 	}
 
+	async function createFromTemplate(payload: DashboardPayload) {
+		busy = true;
+		saveError = null;
+		try {
+			const made = await createDashboard(payload);
+			replace(made);
+			fromTemplate = false;
+			// Shown as it is, ready to read: opening it must not start the editor.
+			viewKey = made.id;
+			viewRange = made.range_secs;
+			viewRefresh = made.refresh_secs;
+			open(made.id);
+		} catch (cause) {
+			saveError = cause;
+		} finally {
+			busy = false;
+		}
+	}
+
+	function toggleCreate() {
+		creating = !creating;
+		fromTemplate = false;
+	}
+
+	function openTemplates() {
+		saveError = null;
+		creating = false;
+		fromTemplate = true;
+	}
+
 	function startEditing(target: Dashboard | null = selected) {
 		if (!target) return;
 		draft = {
@@ -258,7 +286,8 @@
 				</Field>
 			{/if}
 			{#if !editing}
-				<Button onclick={() => (creating = !creating)} aria-expanded={creating}><Plus class="size-4" aria-hidden="true" />{m.dash_new()}</Button>
+				<Button onclick={toggleCreate} aria-expanded={creating}><Plus class="size-4" aria-hidden="true" />{m.dash_new()}</Button>
+				<Button onclick={() => (fromTemplate ? (fromTemplate = false) : openTemplates())} aria-expanded={fromTemplate}><LayoutTemplate class="size-4" aria-hidden="true" />{m.dash_tpl_new()}</Button>
 				{#if selected?.can_edit}
 					<Button onclick={() => startEditing()}><Pencil class="size-4" aria-hidden="true" />{m.dash_edit()}</Button>
 				{/if}
@@ -287,13 +316,17 @@
 			</Panel>
 		{/if}
 
+		{#if fromTemplate && !editing}
+			<TemplatePicker {mayShare} {busy} error={saveError} oncreate={createFromTemplate} oncancel={() => (fromTemplate = false)} />
+		{/if}
+
 		{#if !selected}
 			<EmptyState
 				icon={Gauge}
 				title={m.dash_empty_title()}
 				description={m.dash_empty_description()}
-				primary={{ label: m.dash_new(), onclick: () => (creating = true) }}
-				secondary={{ label: m.dash_explorer_link(), href: '/explore' }}
+				primary={{ label: m.dash_tpl_new(), onclick: openTemplates }}
+				secondary={{ label: m.dash_new(), onclick: toggleCreate }}
 			/>
 		{:else}
 			{#if editing}
@@ -360,17 +393,7 @@
 			{:else}
 				<DashboardGrid {widgets} {editing} {titleOf} onchange={(next) => (draft.widgets = next as DashboardWidget[])} onedit={(id) => (editingWidget = id)} onremove={(id) => (draft.widgets = compact(draft.widgets.filter((w) => w.id !== id)))}>
 					{#snippet item(w)}
-						{#if w.type === 'chart'}
-							<ChartWidget query={cfgString(w, 'query')} unit={cfgString(w, 'unit')} {range} {tick} />
-						{:else if w.type === 'stat'}
-							<StatWidget query={cfgString(w, 'query')} unit={cfgString(w, 'unit')} warn={cfgNumber(w, 'warn')} crit={cfgNumber(w, 'crit')} direction={cfgString(w, 'direction') === 'below' ? 'below' : 'above'} {tick} />
-						{:else if w.type === 'group'}
-							<GroupWidget folder={cfgString(w, 'folder')} />
-						{:else if w.type === 'alerts'}
-							<AlertsWidget limit={cfgNumber(w, 'limit') ?? 10} />
-						{:else}
-							<TextWidget markdown={cfgString(w, 'markdown')} />
-						{/if}
+						<WidgetView widget={w} {range} {tick} />
 					{/snippet}
 				</DashboardGrid>
 			{/if}
