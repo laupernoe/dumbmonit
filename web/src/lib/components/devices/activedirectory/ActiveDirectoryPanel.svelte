@@ -27,6 +27,8 @@
 	let error = $state<unknown>(null);
 	/** Findings whose sample list is unfolded. */
 	let open = $state<Record<string, boolean>>({});
+	/** Findings whose long description is unfolded. */
+	let detail = $state<Record<string, boolean>>({});
 
 	/** The score's scale (low → critical), in the interface's words. */
 	const SEVERITY: Record<AdFindingSeverity, { tone: Tone; label: string }> = {
@@ -171,20 +173,31 @@
 						: m.devices_ad_inventory_pending()}
 				</p>
 			{:else}
-				<ul class="flex flex-col divide-y divide-line">
+				<ul class="grid md:grid-cols-2">
 					{#each findings as finding (finding.id)}
 						{@const plate = SEVERITY[finding.severity] ?? { tone: 'ghost', label: finding.severity }}
-						<li class="flex flex-col gap-1.5 px-5 py-3">
-							<div class="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:gap-3">
+						{@const long = finding.detail.length > 120}
+						<li class="flex min-w-0 flex-col gap-1 border-b border-line px-4 py-2.5 md:odd:border-r">
+							<div class="flex flex-wrap items-center gap-x-2.5 gap-y-1">
 								<span class="shrink-0"><Plate tone={plate.tone} label={plate.label} /></span>
-								<span class="min-w-0 flex-1 text-sm font-semibold break-words text-ink">{finding.title}</span>
+								<span class="min-w-0 flex-1 basis-40 text-sm font-semibold break-words text-ink">{finding.title}</span>
 								{#if finding.samples.length > 0}
 									<span class="tnum shrink-0 text-[0.8125rem] text-ink-2">
 										{pl(m.devices_ad_objects_one, m.devices_ad_objects_other, finding.count)}
 									</span>
 								{/if}
 							</div>
-							<p class="text-[0.8125rem] text-ink-2">{finding.detail}</p>
+							<p class={`text-[0.8125rem] text-ink-2 ${long && !detail[finding.id] ? 'line-clamp-2' : ''}`}>{finding.detail}</p>
+							{#if long}
+								<button
+									type="button"
+									class="inline-flex min-h-10 items-center self-start text-[0.8125rem] text-ink-2 underline underline-offset-2 hover:text-ink focus-visible:outline-2 focus-visible:outline-signal sm:min-h-6"
+									aria-expanded={!!detail[finding.id]}
+									onclick={() => (detail[finding.id] = !detail[finding.id])}
+								>
+									{detail[finding.id] ? m.devices_ad_detail_hide() : m.devices_ad_detail_show()}
+								</button>
+							{/if}
 							{#if finding.samples.length > 0}
 								{@const shown = open[finding.id] ? finding.samples : finding.samples.slice(0, 5)}
 								<p class="text-[0.75rem] break-words text-ink-3">
