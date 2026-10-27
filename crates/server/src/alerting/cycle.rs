@@ -98,6 +98,20 @@ impl BaselineStore {
     }
 }
 
+/// Ce qui accompagne une série d'une règle dérivée (prévision, dérive), par
+/// empreinte : voir [`crate::alerting::derived`].
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct Annotation {
+    /// Écart à la normale en nombre d'écarts robustes (règle de dérive).
+    pub score: Option<f64>,
+    /// Ce que le message en dit (« now 0.480, usual 0.120 … »).
+    pub detail: Option<String>,
+    /// Règle de dérive : la condition a le droit de s'ouvrir (score et écart
+    /// minimal atteints). Une fois ouverte, seul le seuil (et son hystérésis)
+    /// la tient : un score qui frôle `k` ne doit pas la faire battre.
+    pub armed: bool,
+}
+
 /// Tout ce qu'un cycle a besoin de connaître.
 pub struct CycleInput {
     pub now: DateTime<Utc>,
@@ -116,6 +130,8 @@ pub struct CycleInput {
     /// Faits nouveaux survenus sur une alerte qui reste active, par règle
     /// (`uid`) et par cible : voir [`Occurrence`].
     pub occurrences: HashMap<(String, TargetId), Occurrence>,
+    /// Compléments des séries des règles dérivées, par empreinte.
+    pub annotations: HashMap<String, Annotation>,
 }
 
 /// Le dernier fait qu'une alerte « événement » a constaté.
@@ -448,8 +464,17 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             // Hystérésis : la condition était vraie au cycle précédent si elle est
             // datée, que l'alerte soit encore en attente ou déjà partie.
             let active = before.condition_since.is_some();
-            let (condition, score, learning) =
-                evaluate_point(rule, &effective, active, &series_key, point, now, baselines);
+            let annotation = input.annotations.get(&fingerprint);
+            let (condition, score, learning) = evaluate_point(
+                rule,
+                &effective,
+                active,
+                &series_key,
+                point,
+                annotation,
+                now,
+                baselines,
+            );
             let dismissed_by = dismissal_author(&before);
             let (mut state, transition) =
                 machine::advance(&before, condition, now, rule.for_duration);
@@ -468,10 +493,19 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
                     && state.firing_since.is_some_and(|since| occurrence.at > since)
                     && point.value == occurrence.value
             });
+            // Une prévision qui franchit un palier (14 puis 7 jours) reparle sous
+            // la même identité, avec sa nouvelle sévérité.
+            let tier_rose = rule.kind == model::RuleKind::Forecast
+                && transition.is_none()
+                && state.phase == Phase::Firing
+                && alert_severity(rule, Some(point.value)) > alert_severity(rule, before.value);
+            let recurred = recurred || tier_rose;
             if recurred {
                 state.firing_since = Some(now);
             }
-            let detail = occurrence.and_then(|occurrence| occurrence.detail.clone());
+            let detail = occurrence
+                .and_then(|occurrence| occurrence.detail.clone())
+                .or_else(|| annotation.and_then(|annotation| annotation.detail.clone()));
 
             let target_name = target
                 .map(|t| t.name.clone())
@@ -604,13 +638,14 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             }
         }
 
+        let severity = alert_severity(rule, entry.value.or(entry.state.value));
         if let Some(transition) = &entry.transition {
             history.push(HistoryEntry {
                 fingerprint: entry.fingerprint.clone(),
                 rule_uid: rule.uid.clone(),
                 target_id: entry.target_id,
                 transition: transition.clone(),
-                severity: rule.severity,
+                severity,
                 value: entry.value,
                 reason: history_reason(&entry.state, entry.dismissed_by.as_deref(), now),
                 at: now,
@@ -626,7 +661,7 @@ pub fn plan_cycle(input: CycleInput, baselines: &mut BaselineStore) -> CycleOutc
             series_key: entry.series_key,
             labels: entry.labels,
             state: entry.state,
-            severity: rule.severity,
+            severity,
             value: entry.value,
             score: entry.score,
             unit: rule.unit.clone(),
@@ -691,15 +726,27 @@ fn history_reason(state: &AlertState, dismissed_by: Option<&str>, now: DateTime<
     }
 }
 
+/// Sévérité d'une alerte : celle de la règle, relevée par les paliers de jours
+/// restants pour une prévision (voir [`crate::alerting::forecast::tier`]).
+fn alert_severity(rule: &Rule, value: Option<f64>) -> crate::alerting::model::Severity {
+    if rule.kind == model::RuleKind::Forecast {
+        crate::alerting::forecast::tier(rule.severity, value, &rule.params)
+    } else {
+        rule.severity
+    }
+}
+
 /// Évalue un point selon le type de la règle.
 ///
 /// Renvoie `(condition_remplie, score_d_anomalie, en_apprentissage)`.
+#[allow(clippy::too_many_arguments)]
 fn evaluate_point(
     rule: &Rule,
     effective: &Effective,
     active: bool,
     series_key: &str,
     point: &SeriesPoint,
+    annotation: Option<&Annotation>,
     now: DateTime<Utc>,
     baselines: &mut BaselineStore,
 ) -> (bool, Option<f64>, bool) {
@@ -707,8 +754,9 @@ fn evaluate_point(
 
     match rule.kind {
         // Une règle prédictive n'est qu'un seuil sur une requête `predict_linear` :
-        // c'est VictoriaMetrics qui extrapole, pas nous.
-        RuleKind::Threshold | RuleKind::Predict | RuleKind::LogPattern => (
+        // c'est VictoriaMetrics qui extrapole, pas nous. Une règle de prévision
+        // est un seuil sur un nombre de jours déjà calculé (`derived`).
+        RuleKind::Threshold | RuleKind::Predict | RuleKind::LogPattern | RuleKind::Forecast => (
             rule.operator.holds(
                 point.value,
                 effective.threshold,
@@ -718,6 +766,18 @@ fn evaluate_point(
             None,
             false,
         ),
+        // Dérive : un seuil sur le rapport à la normale, qui ne s'ouvre que si
+        // l'écart est aussi statistiquement net (voir `Annotation::armed`).
+        RuleKind::Drift => {
+            let holds = rule.operator.holds(
+                point.value,
+                effective.threshold,
+                effective.clear_threshold,
+                active,
+            );
+            let armed = annotation.is_some_and(|annotation| annotation.armed);
+            (holds && (active || armed), annotation.and_then(|annotation| annotation.score), false)
+        }
         RuleKind::Anomaly => {
             let bucket_index = baseline::bucket_of(now);
             let series = baselines
@@ -866,7 +926,98 @@ mod tests {
             resolutions_during_silence: ResolutionsDuringSilence::default(),
             overrides: Vec::new(),
             occurrences: HashMap::new(),
+            annotations: HashMap::new(),
         }
+    }
+
+    #[test]
+    fn une_prevision_monte_de_palier_et_reparle() {
+        // « Plein dans moins de 30 jours », information au-dessus de 14 jours.
+        let mut full = rule("capacity_forecast", RuleKind::Forecast, 30.0, 0);
+        full.operator = Operator::Lt;
+        full.severity = Severity::Info;
+        let mut baselines = BaselineStore::default();
+        let mut stored: Vec<StoredAlert> = Vec::new();
+        let mut run = |now: i64, days: f64, stored: &mut Vec<StoredAlert>| {
+            let outcome = plan_cycle(
+                input(
+                    at(now),
+                    vec![RuleObservations {
+                        rule: full.clone(),
+                        series: Some(vec![point(1, days)]),
+                    }],
+                    vec![node(1, None)],
+                    stored.clone(),
+                ),
+                &mut baselines,
+            );
+            *stored = to_stored(&outcome);
+            mark_notified(stored, &outcome, at(now));
+            outcome
+        };
+
+        let first = run(0, 25.0, &mut stored);
+        assert_eq!(first.groups[0].items[0].reason, NotifyReason::Firing);
+        assert_eq!(first.alerts[0].severity, Severity::Info);
+        assert!(run(60, 24.0, &mut stored).groups.is_empty(), "same tier: quiet");
+
+        // Sous quatorze jours : avertissement, annoncé sous la même identité.
+        let warning = run(120, 13.5, &mut stored);
+        assert_eq!(warning.alerts[0].severity, Severity::Warning);
+        assert_eq!(warning.groups[0].items[0].reason, NotifyReason::Recurrence);
+        assert!(warning.history.is_empty(), "no resolve, no new firing");
+
+        // Sous sept jours : critique.
+        let critical = run(180, 6.0, &mut stored);
+        assert_eq!(critical.alerts[0].severity, Severity::Critical);
+        assert_eq!(critical.groups[0].items[0].reason, NotifyReason::Recurrence);
+        assert!(run(240, 5.9, &mut stored).groups.is_empty());
+    }
+
+    #[test]
+    fn une_derive_ne_s_ouvre_que_si_elle_est_armee() {
+        let mut drift = rule("latency_drift", RuleKind::Drift, 2.0, 0);
+        drift.operator = Operator::Ge;
+        let fingerprint = model::fingerprint(&drift.uid, &model::identity_key(&point(1, 0.0).labels));
+        let annotated = |armed: bool| {
+            HashMap::from([(
+                fingerprint.clone(),
+                Annotation { score: Some(if armed { 9.0 } else { 1.0 }), detail: None, armed },
+            )])
+        };
+        let mut baselines = BaselineStore::default();
+        let mut stored: Vec<StoredAlert> = Vec::new();
+        let mut run = |now: i64, ratio: f64, armed: bool, stored: &mut Vec<StoredAlert>| {
+            let mut cycle_input = input(
+                at(now),
+                vec![RuleObservations { rule: drift.clone(), series: Some(vec![point(1, ratio)]) }],
+                vec![node(1, None)],
+                stored.clone(),
+            );
+            cycle_input.annotations = annotated(armed);
+            let outcome = plan_cycle(cycle_input, &mut baselines);
+            *stored = to_stored(&outcome);
+            mark_notified(stored, &outcome, at(now));
+            outcome
+        };
+
+        // Trois fois la normale, mais dans le bruit habituel : rien.
+        let noisy = run(0, 3.0, false, &mut stored);
+        assert!(noisy.groups.is_empty());
+        assert_eq!(noisy.alerts[0].state.phase, Phase::Ok);
+
+        // Écart net : l'alerte part, avec son score.
+        let fired = run(60, 3.0, true, &mut stored);
+        assert_eq!(fired.groups[0].items[0].reason, NotifyReason::Firing);
+        assert_eq!(fired.alerts[0].score, Some(9.0));
+
+        // Ouverte, elle tient sur le seuil seul, même si le score retombe.
+        let held = run(120, 2.5, false, &mut stored);
+        assert_eq!(held.alerts[0].state.phase, Phase::Firing);
+
+        // Revenue sous le seuil : résolue.
+        let resolved = run(180, 1.1, false, &mut stored);
+        assert_eq!(resolved.groups[0].items[0].reason, NotifyReason::Resolved);
     }
 
     #[test]

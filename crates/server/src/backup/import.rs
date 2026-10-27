@@ -698,6 +698,10 @@ async fn upsert_rule(
             && row.try_get::<String, _>("severity")? == rule.severity
             && row.try_get::<String, _>("selector")? == selector
             && row.try_get::<String, _>("channels")? == channel_json
+            // Les réglages (anomalie, prévision, dérive) se comparent en JSON
+            // structuré : l'ordre des clés diffère entre la base et le lot.
+            && serde_json::from_str::<Value>(&row.try_get::<String, _>("params")?).ok().as_ref()
+                == Some(&rule.params)
             && row.try_get::<String, _>("unit")? == rule.unit
             && row.try_get::<Option<i64>, _>("repeat_secs")? == rule.repeat_secs
             && row.try_get::<Option<i64>, _>("escalate_after_secs")? == rule.escalate_after_secs

@@ -20,6 +20,7 @@ mod dashboard_templates;
 pub mod dashboards;
 pub(crate) mod discovery;
 mod error;
+mod forecasts;
 mod gitops;
 mod health;
 mod ical;
@@ -262,6 +263,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_logs::ui_routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
+        // Prévisions de remplissage d'un équipement (`forecasts.rs`).
+        .merge(forecasts::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
         .merge(relay::ui_routes())
         // Carte de topologie, construite à partir des liens connus (`topology.rs`).
