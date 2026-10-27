@@ -272,6 +272,17 @@ pub fn agent_samples(ts_ms: i64) -> Vec<Sample> {
                 (ts_ms.rem_euclid((9 + index as i64) * 86_400_000) / 1000) as f64,
                 ts_ms,
             )));
+            // Consommation : une onde lente par conteneur, mémoire sous une limite de 1 Gio.
+            let wave = ((ts_ms / 60_000) as f64 / (3.0 + index as f64)).sin().abs();
+            let memory = (60.0 + 25.0 * index as f64 + 120.0 * wave) * 1_048_576.0;
+            samples.push(labelled(gauge("container_cpu_percent", 2.0 + 18.0 * wave, ts_ms)));
+            samples.push(labelled(gauge("container_memory_bytes", memory, ts_ms)));
+            samples.push(labelled(gauge("container_memory_limit_bytes", 1_073_741_824.0, ts_ms)));
+            samples.push(labelled(gauge(
+                "container_memory_percent",
+                memory / 1_073_741_824.0 * 100.0,
+                ts_ms,
+            )));
         }
         samples.push(labelled(gauge(
             "container_image_age_seconds",

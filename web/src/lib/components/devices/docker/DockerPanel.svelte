@@ -16,6 +16,7 @@
 	import { formatDuration, formatRelative } from '#lib/format.js';
 	import { Button, Confirm, CopyBlock, ErrorNotice, Led, Plate, SelectionBar, Skeleton, Toggle, type Tone } from '#lib/ui/index.js';
 	import Chart from '#lib/components/Chart.svelte';
+	import { CapacityBar, TopN } from '#lib/viz/index.js';
 	import FoldSection from '../FoldSection.svelte';
 	import FoldRow from '../FoldRow.svelte';
 	import Segmented from '../Segmented.svelte';
@@ -30,8 +31,11 @@
 		type CommandStatus,
 		type CommandView,
 		type ContainerPolicy,
+		formatBytes,
 		type ContainerView
 	} from './api';
+	import UsageMeters from './UsageMeters.svelte';
+	import { isCrashLooping, memoryRatio, topBy } from './usage';
 	import { fleetFor } from './fleet.svelte';
 	import { agentHostOf } from '#lib/components/devices/agent/services.js';
 
@@ -64,6 +68,7 @@
 		const total = fleet.containers.length;
 		const parts = [`${total}`, m.devices_docker_running({ count: fleet.running })];
 		if (fleet.running < total) parts.push(m.devices_docker_stopped_n({ count: total - fleet.running }));
+		if (looping.length > 0) parts.push(m.devices_docker_crashloop_n({ count: looping.length }));
 		if (fleet.updates > 0) {
 			parts.push(
 				fleet.updates === 1
@@ -87,6 +92,18 @@
 		);
 		if (c.image_age_seconds !== null) parts.push(m.devices_docker_image_old({ duration: formatDuration(c.image_age_seconds) }));
 		return parts.join(' · ');
+	}
+
+	// --- Consumption ---------------------------------------------------------------
+
+	const topCpu = $derived(topBy(fleet.containers, 'cpu_percent'));
+	const topMemory = $derived(topBy(fleet.containers, 'memory_bytes'));
+	/** The rankings only earn their place once there is something to rank. */
+	const showTop = $derived(topCpu.length >= 2 || topMemory.length >= 2);
+	const looping = $derived(fleet.containers.filter((c) => isCrashLooping(c)));
+
+	function openRow(name: string) {
+		openRows = { ...openRows, [name]: true };
 	}
 
 	// --- Bulk selection -----------------------------------------------------------
@@ -354,6 +371,35 @@
 		{#if visible.length === 0}
 			<p class="px-4 py-4 text-sm text-ink-2 sm:px-5">{m.devices_docker_bulk_filter_empty()}</p>
 		{/if}
+		{#if showTop}
+			<div class="grid gap-x-8 gap-y-4 border-b border-line px-4 py-3 sm:px-5 md:grid-cols-2">
+				{#if topCpu.length >= 2}
+					<section>
+						<h3 class="text-sm font-semibold text-ink">{m.devices_docker_top_cpu_title()}</h3>
+						<TopN
+							items={topCpu}
+							limit={5}
+							max={Math.max(100, topCpu[0].value)}
+							format={(v: number) => `${v.toFixed(v >= 10 ? 0 : 1)}%`}
+							label={m.devices_docker_top_cpu_aria()}
+							onselect={openRow}
+						/>
+					</section>
+				{/if}
+				{#if topMemory.length >= 2}
+					<section>
+						<h3 class="text-sm font-semibold text-ink">{m.devices_docker_top_mem_title()}</h3>
+						<TopN
+							items={topMemory}
+							limit={5}
+							format={formatBytes}
+							label={m.devices_docker_top_mem_aria()}
+							onselect={openRow}
+						/>
+					</section>
+				{/if}
+			</div>
+		{/if}
 		<ul class="divide-y divide-line">
 			{#each visible as c, i (c.name)}
 				{@const s = stateOf(c)}
@@ -375,11 +421,15 @@
 							<Led tone={s.tone} blink={s.blink} label={s.word} />
 							<span class="truncate font-semibold text-ink">{c.name}</span>
 							<Plate tone={s.tone} label={s.word} bare />
+							{#if isCrashLooping(c)}
+								<Plate tone="warning" label={m.devices_docker_crashloop({ count: c.restarts_15m ?? 0 })} bare />
+							{/if}
 							{#if c.update_available === true}
 								<Plate tone="info" label={m.devices_docker_update_available()} bare />
 							{/if}
 						</span>
 						<span class="tnum truncate text-[0.8125rem] text-ink-2">{statusLine(c)}</span>
+						{#if c.up}<UsageMeters container={c} />{/if}
 					{/snippet}
 					{#snippet trailing()}
 						{#if c.last_command && isPending(c.last_command)}
@@ -388,6 +438,22 @@
 					{/snippet}
 
 					<p class="text-sm text-ink-2 break-all">{c.image}</p>
+
+					{#if c.up && c.memory_bytes != null}
+						{@const ratio = memoryRatio(c)}
+						{#if ratio !== null && c.memory_limit_bytes}
+							<CapacityBar
+								used={c.memory_bytes}
+								capacity={c.memory_limit_bytes}
+								format={formatBytes}
+								label={m.devices_docker_mem_limit_label()}
+							/>
+						{:else}
+							<p class="text-sm text-ink-2">
+								{m.devices_docker_mem_no_limit({ used: formatBytes(c.memory_bytes) })}
+							</p>
+						{/if}
+					{/if}
 
 					<!-- Policy switches and actions -->
 					<div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">

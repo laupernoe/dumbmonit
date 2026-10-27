@@ -106,7 +106,7 @@ les messages d'erreur du client HTTP.
 | Disques (compteurs) | `disk_read_bytes`, `disk_written_bytes`, une série par périphérique | `device` |
 | Hôte | `uptime_seconds`, `process_count` | — |
 | Services | `service_up` (1 = en marche) | `service` |
-| Conteneurs | `container_up`, `container_count`, `container_running_count` | `container`, `image` |
+| Conteneurs | `container_up`, `container_count`, `container_running_count`, `container_cpu_percent`, `container_memory_bytes`, `container_memory_percent`, `container_net_*_bytes`, `container_block_*_bytes`, `container_pids`, `container_df_*_bytes` | `container`, `image` |
 | Agent | `agent_collect_seconds`, `agent_buffered_samples`, `agent_dropped_samples` | — |
 
 Les compteurs cumulatifs partent **bruts**, en `Counter` : le taux est calculé à

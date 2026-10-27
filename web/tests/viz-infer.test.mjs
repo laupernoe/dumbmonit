@@ -53,7 +53,11 @@ const COUNTERS = [
 	'rabbitmq_messages_published_total',
 	'proxmox_guest_network_in_bytes',
 	'proxmox_guest_disk_write_bytes',
-	'agent_wireguard_peer_rx_bytes'
+	'agent_wireguard_peer_rx_bytes',
+	'container_net_rx_bytes',
+	'container_net_tx_bytes',
+	'container_block_read_bytes',
+	'container_block_write_bytes'
 ];
 
 // Gauges that look like counters: totals of a population, not events.
@@ -69,7 +73,12 @@ const GAUGES = [
 	'cpu_usage_percent',
 	'memory_used_bytes',
 	'loki_flush_queue_length',
-	'mdaemon_uptime_seconds'
+	'mdaemon_uptime_seconds',
+	'container_cpu_percent',
+	'container_memory_bytes',
+	'container_memory_limit_bytes',
+	'container_df_images_bytes',
+	'container_df_reclaimable_bytes'
 ];
 
 test('counters are found with and without the dumbmonit_ prefix', () => {
