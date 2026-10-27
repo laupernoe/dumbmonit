@@ -463,8 +463,9 @@ async fn a_client_operator_cannot_touch_another_client() {
     assert_eq!(reply.status, StatusCode::NOT_FOUND, "{}", reply.body);
     let reply = lab.app.delete(&format!("/api/targets/{}", lab.b1), Some(&cookie)).await;
     assert_eq!(reply.status, StatusCode::NOT_FOUND, "{}", reply.body);
-    let reply = lab.app.post(&format!("/api/targets/{}/probe", lab.b1), json!({}), Some(&cookie));
-    assert_eq!(reply.await.status, StatusCode::NOT_FOUND);
+    let reply =
+        lab.app.post(&format!("/api/targets/{}/probe", lab.b1), json!({}), Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::NOT_FOUND);
 
     // Créer chez Beta : refusé sans dire si Beta existe ; sans client : chez Acme.
     let reply = lab
