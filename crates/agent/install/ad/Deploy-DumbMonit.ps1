@@ -77,6 +77,7 @@ $Url            = '__DM_URL__'
 # Serveur DNS qui résout le nom du serveur DumbMonit pour les machines qui n'y
 # arrivent pas (vide : aucun).
 $DnsServer      = '__DM_DNS_SERVER__'
+$AgentPort      = '__DM_AGENT_PORT__'
 $ExpectedSha256 = '__DM_SHA256__'
 $TokenHint      = '__DM_TOKEN_PREFIX__'
 $Generated      = '__DM_GENERATED__'
@@ -230,7 +231,8 @@ Write-Plan "Group policy:  $GpoName (immediate scheduled task, SYSTEM, at every 
 foreach ($link in $links) { Write-Plan "Linked to:     $link" }
 if ($groupSid) { Write-Plan "Applies to:    members of $SecurityGroup only" }
 else { Write-Plan 'Applies to:    every computer in the linked OUs' }
-Write-Plan "DumbMonit:     $Url (encrypted agent channel: mTLS, TLS 1.3, agent to server, TCP 8443 by default)"
+if ($AgentPort) { Write-Plan "DumbMonit:     $Url (encrypted agent channel: mTLS, TLS 1.3, agent to server, TCP $AgentPort)" }
+else { Write-Plan "DumbMonit:     $Url (agents report over this address)" }
 if ($DnsServer) { Write-Plan "DNS server:    $DnsServer (resolves the server name on machines that cannot)" }
 Write-Plan "Kit:           $kitDir"
 if ($UseSysvol) { Write-Plan 'Agent binary:  copied to SYSVOL (servers without outbound access)' }
