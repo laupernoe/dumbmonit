@@ -697,6 +697,20 @@
       "zh-Hans": "SAML 和 SCIM",
       "pt-BR": "SAML e SCIM"
      }
+    },
+    {
+     "status": "planned",
+     "text": {
+      "fr": "Prévision des pannes par IA : conteneur optionnel dumbmonit-forecast (désactivé par défaut) qui prévoit disque plein, saturation et anomalies saisonnières, et déclenche des alertes « panne prévue »",
+      "en": "AI failure forecasting: an optional dumbmonit-forecast container (off by default) that predicts full disks, saturation and seasonal anomalies, and raises \"predicted failure\" alerts",
+      "de": "KI-Ausfallprognose: optionaler Container dumbmonit-forecast (standardmäßig aus), der volle Datenträger, Auslastung und saisonale Anomalien vorhersagt und Warnungen „vorhergesagter Ausfall“ auslöst",
+      "es": "Previsión de fallos con IA: contenedor opcional dumbmonit-forecast (desactivado por defecto) que prevé discos llenos, saturación y anomalías estacionales, y lanza alertas de «fallo previsto»",
+      "it": "Previsione dei guasti con IA: container opzionale dumbmonit-forecast (disattivato di default) che prevede dischi pieni, saturazione e anomalie stagionali, e genera avvisi «guasto previsto»",
+      "pt": "Previsão de falhas com IA: contentor opcional dumbmonit-forecast (desativado por omissão) que prevê discos cheios, saturação e anomalias sazonais, e lança alertas de «falha prevista»",
+      "ru": "Прогноз сбоев с помощью ИИ: необязательный контейнер dumbmonit-forecast (по умолчанию выключен), который предсказывает заполнение дисков, перегрузку и сезонные аномалии и создаёт оповещения «ожидаемый сбой»",
+      "zh-Hans": "AI 故障预测：可选的 dumbmonit-forecast 容器（默认关闭），预测磁盘写满、资源饱和与季节性异常，并发出“预计故障”告警",
+      "pt-BR": "Previsão de falhas com IA: contêiner opcional dumbmonit-forecast (desativado por padrão) que prevê discos cheios, saturação e anomalias sazonais, e dispara alertas de \"falha prevista\""
+     }
     }
    ]
   },
