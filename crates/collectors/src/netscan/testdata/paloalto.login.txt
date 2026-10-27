@@ -1,0 +1,23 @@
+# source: the login page of the PAN-OS web interface (GET /php/login.php, title "Palo Alto Networks - Login"), as indexed by public exposed-panel searches and listed in the PAN-OS administrator guide (Access the web interface).
+# note: PARTLY RECONSTRUCTED. The title is the matched string; headers and the rest of the page are approximate (closed source). Not checked against a real firewall.
+HTTP/1.1 200 OK
+Date: Mon, 19 Oct 2026 10:00:00 GMT
+Content-Type: text/html; charset=UTF-8
+Content-Length: 4200
+Connection: close
+Cache-Control: no-cache, no-store, must-revalidate
+X-Frame-Options: DENY
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Palo Alto Networks - Login</title>
+</head>
+<body class="login">
+<form name="loginform" method="post" action="/php/login.php">
+<input type="text" name="user" id="user">
+<input type="password" name="passwd" id="passwd">
+</form>
+</body>
+</html>

@@ -1,6 +1,8 @@
 # Ce qu'un commutateur Ethernet dit de ses ports au-delà d'IF-MIB : les erreurs
 # de trame par cause (EtherLike-MIB, RFC 3635), le duplex négocié, le trafic de
-# diffusion en compteurs 64 bits, et les voisins LLDP (IEEE 802.1AB).
+# diffusion en compteurs 64 bits, les voisins LLDP (IEEE 802.1AB) et CDP, la table d'adresses du pont
+# (FDB), la table ARP et les agrégats LAG, dont la carte de topologie tire les
+# liens de niveau 2.
 #
 # Ce profil ne s'attribue à aucun sysObjectID : les MIB qu'il lit sont
 # standard, mais seuls les commutateurs les remplissent vraiment. Il est inclus
@@ -123,6 +125,86 @@ metrics:
       remote_sysname: 1.0.8802.1.1.2.1.4.1.1.9
       remote_port: 1.0.8802.1.1.2.1.4.1.1.7
       remote_port_desc: 1.0.8802.1.1.2.1.4.1.1.8
+      remote_chassis: 1.0.8802.1.1.2.1.4.1.1.5
+    filters:
+      max_rows: 128
+
+  # Nom des ports locaux LLDP (lldpLocPortTable), indexé par lldpLocPortNum :
+  # la carte de topologie s'en sert pour nommer le port d'un lien.
+  - name: lldp_local_port_info
+    oid: 1.0.8802.1.1.2.1.3.7.1.2
+    kind: gauge
+    walk: true
+    labels:
+      port_id: 1.0.8802.1.1.2.1.3.7.1.3
+      port_desc: 1.0.8802.1.1.2.1.3.7.1.4
+    filters:
+      max_rows: 128
+
+  # Voisins CDP (CISCO-CDP-MIB, cdpCacheTable), indexés par ifIndex.deviceIndex :
+  # le port local se lit dans le premier arc de l'étiquette « index ». La valeur
+  # (type d'adresse) n'a pas de sens propre. Absent hors équipements Cisco.
+  - name: cdp_neighbor_info
+    oid: 1.3.6.1.4.1.9.9.23.1.2.1.1.3
+    kind: gauge
+    walk: true
+    labels:
+      remote_sysname: 1.3.6.1.4.1.9.9.23.1.2.1.1.6
+      remote_port: 1.3.6.1.4.1.9.9.23.1.2.1.1.7
+    filters:
+      max_rows: 128
+
+  # Table de ports du pont : numéro de port du pont -> ifIndex.
+  - name: bridge_port_info
+    oid: 1.3.6.1.2.1.17.1.4.1.2
+    kind: gauge
+    walk: true
+    filters:
+      max_rows: 256
+
+  # Table d'adresses apprises (BRIDGE-MIB dot1dTpFdbTable), indexée par l'adresse
+  # MAC (6 arcs) ; la valeur est le port du pont. Statut 3 = apprise.
+  - name: fdb_entry
+    oid: 1.3.6.1.2.1.17.4.3.1.2
+    kind: gauge
+    walk: true
+    labels:
+      status: 1.3.6.1.2.1.17.4.3.1.3
+    filters:
+      max_rows: 2048
+
+  # Même table pour les commutateurs à VLAN (Q-BRIDGE-MIB dot1qTpFdbTable),
+  # indexée par VLAN puis adresse MAC.
+  - name: fdb_entry_q
+    oid: 1.3.6.1.2.1.17.7.1.2.2.1.2
+    kind: gauge
+    walk: true
+    labels:
+      status: 1.3.6.1.2.1.17.7.1.2.2.1.3
+    filters:
+      max_rows: 2048
+
+  # Table ARP (ipNetToMediaTable), indexée par ifIndex.adresse IPv4 ; la valeur
+  # est le type (3 = dynamique) et l'adresse MAC est dans l'étiquette « mac ».
+  # Elle rattache une adresse MAC apprise à un équipement surveillé.
+  - name: arp_entry
+    oid: 1.3.6.1.2.1.4.22.1.4
+    kind: gauge
+    walk: true
+    labels:
+      mac: 1.3.6.1.2.1.4.22.1.2
+    filters:
+      max_rows: 1024
+
+  # Agrégats 802.3ad (LAG-MIB, dot3adAggPortAttachedAggID), indexés par ifIndex :
+  # la valeur est l'ifIndex de l'agrégat, 0 hors agrégat. Les ports membres ne
+  # sont jamais pris pour des ports d'accès.
+  - name: lag_member_info
+    oid: 1.2.840.10006.300.43.1.2.1.1.13
+    kind: gauge
+    walk: true
+    labels:
+      ifname: 1.3.6.1.2.1.31.1.1.1.1
     filters:
       max_rows: 128
 

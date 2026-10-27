@@ -7,8 +7,9 @@ use std::time::Duration;
 use anyhow::{Context, Result};
 use dumbmonit_proto::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_TLS_HEADER, AgentCommand, CERT_REFUSED,
-    COMMANDS_PATH, CommandReport, INGEST_PATH, ProbeOutcome, PushAck, PushBatch, RELAY_PATH,
-    TLS_ENROL_PATH, TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest,
+    COMMANDS_PATH, CommandReport, INGEST_PATH, LOGS_PATH, LogBatch, ProbeOutcome, PushAck,
+    PushBatch, RELAY_PATH, TLS_ENROL_PATH, TLS_RENEW_PATH, TlsCertificate, TlsEnrolRequest,
+    TlsOffer, TlsRenewRequest,
 };
 use tokio::sync::Notify;
 
@@ -390,6 +391,14 @@ impl PushClient {
         Ok(())
     }
 
+    /// Lot de lignes de journal, sur le même canal que les commandes.
+    pub async fn send_logs(&self, key: &str, batch: &LogBatch) -> Result<(), PushError> {
+        let response = self
+            .exchange(|| self.keyed(reqwest::Method::POST, LOGS_PATH, key, "").json(batch))
+            .await?;
+        self.read_empty(response).await
+    }
+
     /// Compte rendu d'exécution d'une commande.
     pub async fn report_command(
         &self,
@@ -456,6 +465,35 @@ impl PushClient {
             return Ok(false);
         }
         self.read_empty(response).await.map(|()| true)
+    }
+}
+
+impl PushClient {
+    /// Binaire proposé par le serveur pour la mise à jour de l'agent, par le
+    /// canal courant (chiffré quand l'agent l'a) : au plus `max` octets.
+    pub async fn download_update(
+        &self,
+        key: &str,
+        file: &str,
+        max: u64,
+        timeout: Duration,
+    ) -> Result<Vec<u8>, PushError> {
+        let path = format!("{}/{file}", dumbmonit_proto::UPDATE_DOWNLOAD_PATH);
+        let response = self
+            .exchange(|| self.keyed(reqwest::Method::GET, &path, key, "").timeout(timeout))
+            .await?;
+        if !response.status().is_success() {
+            return Err(rejection(response).await);
+        }
+        if response.content_length().is_some_and(|length| length > max) {
+            return Err(PushError::TooLarge(format!("the agent binary exceeds {max} bytes")));
+        }
+        let bytes = response.bytes().await.map_err(|error| self.transport(&error))?;
+        if bytes.len() as u64 > max {
+            return Err(PushError::TooLarge(format!("the agent binary exceeds {max} bytes")));
+        }
+        self.mark_reachable();
+        Ok(bytes.to_vec())
     }
 }
 

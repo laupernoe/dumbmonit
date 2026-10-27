@@ -1,0 +1,21 @@
+# Commutateurs HPE / Aruba qui annoncent un sysObjectID connu : la famille
+# ProCurve (1.3.6.1.4.1.11.2.3.7, dont les Aruba Instant On 1930 relèvent
+# d'après leur numérotation HPE) et Aruba CX (1.3.6.1.4.1.47196.4).
+#
+# Ce profil ne lit aucun OID propriétaire : les points d'accès Instant On
+# n'ont pas de SNMP, et l'API cloud d'Instant On n'est pas publiée. Il
+# applique seulement ce qu'un commutateur sait dire par les MIB standard
+# (ports IF-MIB, erreurs EtherLike, voisins LLDP), sans qu'il faille choisir
+# le profil « Ethernet switch » à la main.
+#
+# Si un commutateur de cette famille annonce un autre sysObjectID, le choix
+# manuel du profil « Ethernet switch » donne le même résultat.
+id: hpe-aruba-switch
+name: HPE / Aruba switch (Instant On, ProCurve, CX)
+match:
+  sysobjectid:
+    - 1.3.6.1.4.1.11.2.3.7
+    - 1.3.6.1.4.1.47196.4
+  priority: 0
+
+include: [ethernet-switch]

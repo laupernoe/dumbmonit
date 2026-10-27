@@ -146,6 +146,59 @@ pub struct Bundle {
     /// Emplacements de la carte du monde (migration 0059).
     #[serde(default)]
     pub locations: Vec<BundleLocation>,
+    /// Équipes, leurs membres et leurs droits par dossier (migration 0105).
+    #[serde(default)]
+    pub teams: Vec<BundleTeam>,
+    /// Réglages des équipes (clé `teams.access` de `settings`).
+    #[serde(default)]
+    pub teams_settings: Option<Value>,
+    /// Astreintes : plannings, remplacements, politiques, contacts et
+    /// préférences (migrations 0100 à 0102).
+    #[serde(default)]
+    pub oncall: crate::backup::oncall::BundleOncall,
+    /// Corrections de la carte de topologie (migration 0072).
+    #[serde(default)]
+    pub topology_corrections: Vec<BundleTopologyCorrection>,
+    /// Règles de la carte, acceptées ou refusées (migration 0072).
+    #[serde(default)]
+    pub topology_rules: Vec<BundleTopologyRule>,
+    /// Tableaux de bord, partagés et personnels (migration 0120).
+    #[serde(default)]
+    pub dashboards: Vec<BundleDashboard>,
+    /// Procédures et leurs rattachements (migration 0150).
+    #[serde(default)]
+    pub runbooks: Vec<BundleRunbook>,
+    /// Actions de remédiation, secrets compris (migration 0151).
+    #[serde(default)]
+    pub remediation_actions: Vec<BundleRemediationAction>,
+    /// Politiques automatiques. Toujours restaurées **désarmées** : armer une
+    /// action sur une machine se confirme en personne, pas en relisant un
+    /// fichier. Le journal des exécutions, lui, ne voyage pas.
+    #[serde(default)]
+    pub remediation_policies: Vec<BundleRemediationPolicy>,
+    /// Clés d'hôte SSH mémorisées des sauvegardes de configuration réseau
+    /// (migration 0175) : restaurer sans elles referait confiance à la
+    /// première clé venue.
+    #[serde(default)]
+    pub netconfig_host_keys: Vec<BundleNetconfigHostKey>,
+    /// Versions des configurations réseau, en clair dans le lot (lui-même
+    /// chiffré par la phrase de passe). Seulement sur demande à l'export.
+    #[serde(default)]
+    pub netconfig_versions: Vec<BundleNetconfigVersion>,
+    /// Réglages d'instance : mode produit, nom, langue, fuseau (migration 0180).
+    #[serde(default)]
+    pub instance: Option<crate::instance::InstanceSettings>,
+    /// Mode MSP : clients, leurs membres et leur marque (migration 0185).
+    #[serde(default)]
+    pub clients: Vec<BundleClient>,
+    /// Réglage du mode MSP (clé `msp` de `settings`).
+    #[serde(default)]
+    pub msp_settings: Option<Value>,
+    /// Rattachement des objets aux clients, par clé naturelle : un objet
+    /// absent de la liste reste au client par défaut (équipements, pages,
+    /// jetons d'agent) ou à l'instance (le reste).
+    #[serde(default)]
+    pub client_assignments: Vec<BundleAssignment>,
 }
 
 impl Bundle {
@@ -166,6 +219,17 @@ impl Bundle {
             ("push_monitors".to_string(), self.push_monitors.len()),
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
+            ("teams".to_string(), self.teams.len()),
+            ("oncall".to_string(), self.oncall.count()),
+            ("topology_corrections".to_string(), self.topology_corrections.len()),
+            ("topology_rules".to_string(), self.topology_rules.len()),
+            ("dashboards".to_string(), self.dashboards.len()),
+            ("runbooks".to_string(), self.runbooks.len()),
+            ("remediation_actions".to_string(), self.remediation_actions.len()),
+            ("remediation_policies".to_string(), self.remediation_policies.len()),
+            ("netconfig_host_keys".to_string(), self.netconfig_host_keys.len()),
+            ("netconfig_versions".to_string(), self.netconfig_versions.len()),
+            ("clients".to_string(), self.clients.len()),
         ])
     }
 }
@@ -213,6 +277,156 @@ pub struct BundleTarget {
     /// Nom de l'emplacement affecté (migration 0059) ; `None` : aucun.
     #[serde(default)]
     pub location: Option<String>,
+    /// Sondes depuis plusieurs emplacements (migration 0095) ; `None` : le
+    /// mode est coupé, ou le lot vient d'un serveur qui ne le connaissait pas.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub multisite: Option<BundleMultisite>,
+}
+
+/// Réglage multi-emplacements d'un moniteur, ses agents désignés par référence.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleMultisite {
+    /// Le serveur sonde aussi, en direct.
+    pub server: bool,
+    /// Références des agents relais (voir [`target_ref`]).
+    #[serde(default)]
+    pub agents: Vec<String>,
+    /// Emplacements en échec qu'il faut pour la panne ; `None` : la majorité.
+    #[serde(default)]
+    pub quorum: Option<u32>,
+}
+
+/// Un nœud de la carte de topologie, hors de son instance : l'équipement (ou
+/// l'hyperviseur, voir [`target_ref`]) et, pour un invité ou un nœud de
+/// cluster, `g:<nom>` ou `n:<nœud>`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BundleNode {
+    pub target: String,
+    #[serde(default)]
+    pub child: Option<String>,
+}
+
+/// Une correction de la carte de topologie.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTopologyCorrection {
+    pub kind: String,
+    #[serde(default)]
+    pub from: Option<BundleNode>,
+    pub to: BundleNode,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub value: Option<String>,
+    #[serde(default)]
+    pub use_for_alerts: bool,
+    /// Parent d'alerte d'avant la correction (voir [`target_ref`]).
+    #[serde(default)]
+    pub previous_parent: Option<String>,
+    #[serde(default)]
+    pub author: String,
+    #[serde(default)]
+    pub created_at: String,
+}
+
+/// Une règle de la carte de topologie, acceptée ou refusée.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTopologyRule {
+    pub kind: String,
+    pub status: String,
+    #[serde(default)]
+    pub subnet: Option<String>,
+    #[serde(default)]
+    pub address: Option<String>,
+    #[serde(default)]
+    pub target_kind: Option<String>,
+    #[serde(default)]
+    pub source: Option<String>,
+    #[serde(default)]
+    pub parent: Option<BundleNode>,
+    #[serde(default)]
+    pub evidence: i64,
+    #[serde(default)]
+    pub author: String,
+    #[serde(default)]
+    pub created_at: String,
+}
+
+/// Une équipe, désignée par son nom (unique sans casse). Les membres sont
+/// désignés par leur identifiant de compte, les droits par nom de dossier.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTeam {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub idp_groups: Vec<String>,
+    #[serde(default)]
+    pub members: Vec<BundleTeamMember>,
+    #[serde(default)]
+    pub grants: Vec<crate::auth::teams::Grant>,
+    /// Rattachement au provisionnement SCIM, pour que le fournisseur retrouve
+    /// l'équipe après une restauration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    /// Créée par SCIM (et non rattachée).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub scim_created: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTeamMember {
+    pub username: String,
+    /// `manual`, `idp` ou `scim`.
+    #[serde(default = "manual_source")]
+    pub source: String,
+}
+
+fn manual_source() -> String {
+    "manual".to_string()
+}
+
+/// Un client (mode MSP), désigné par son nom (unique sans casse).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleClient {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub contacts: Vec<String>,
+    #[serde(default)]
+    pub monitor_quota: Option<i64>,
+    #[serde(default)]
+    pub idp_groups: Vec<String>,
+    #[serde(default)]
+    pub members: Vec<BundleTeamMember>,
+    /// Logo en base64, avec son type MIME.
+    #[serde(default)]
+    pub logo: Option<String>,
+    #[serde(default)]
+    pub logo_type: Option<String>,
+    #[serde(default)]
+    pub sla_report: bool,
+    #[serde(default)]
+    pub sla_objective: Option<f64>,
+    #[serde(default = "utc")]
+    pub report_timezone: String,
+}
+
+fn utc() -> String {
+    "UTC".to_string()
+}
+
+/// Un objet rattaché à un client. `key` : `kind|address` pour un équipement
+/// (comme [`target_ref`]), le `slug` d'une page, l'empreinte d'un jeton d'agent,
+/// le nom d'un canal ou d'un rapport, l'`uid` d'une règle, et pour un silence
+/// son nom puis, après un saut de ligne, la référence de son équipement.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleAssignment {
+    pub kind: crate::auth::clients::Kind,
+    pub key: String,
+    pub client: String,
 }
 
 /// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).
@@ -227,6 +441,22 @@ pub struct BundleLocation {
     pub site: String,
     #[serde(default)]
     pub main_site: bool,
+}
+
+/// Un tableau de bord, désigné par son nom et son propriétaire (nom de
+/// compte ; `None` pour un tableau partagé).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleDashboard {
+    pub name: String,
+    #[serde(default)]
+    pub shared: bool,
+    #[serde(default)]
+    pub owner: Option<String>,
+    pub range_secs: i64,
+    pub refresh_secs: i64,
+    /// Grille de widgets telle que stockée ; revalidée à la restauration.
+    #[serde(default)]
+    pub widgets: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -334,8 +564,18 @@ fn eight() -> u32 {
     8
 }
 
-fn utc() -> String {
-    "UTC".to_string()
+/// Canaux par lesquels les visiteurs d'une page peuvent s'abonner. Les canaux
+/// de notification (courriel, SMS) sont désignés par leur nom.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BundleSubscriptions {
+    #[serde(default)]
+    pub email_channel: Option<String>,
+    #[serde(default)]
+    pub sms_channel: Option<String>,
+    #[serde(default)]
+    pub webhook: bool,
+    #[serde(default)]
+    pub slack: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -374,6 +614,13 @@ pub struct BundleStatusPage {
     /// page créée).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub seo: Option<crate::status_seo::Seo>,
+    /// Mode d'accès (migration 0085) : absent pour une page publique. Le lot est
+    /// chiffré ; l'empreinte du mot de passe d'accès y voyage donc avec la page,
+    /// pour qu'une page privée restaurée ne devienne pas publique.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub access_mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub access_password_hash: Option<String>,
     /// Dossiers cochés en bloc (migration 0066), par nom, dans l'ordre. Absent
     /// d'une ancienne sauvegarde : aucun.
     #[serde(default)]
@@ -381,6 +628,10 @@ pub struct BundleStatusPage {
     /// Noms publics des membres de ces groupes (migration 0067).
     #[serde(default)]
     pub group_labels: Vec<BundleGroupLabel>,
+    /// Canaux d'abonnement ouverts (migration 0140). Les abonnés eux-mêmes ne
+    /// voyagent pas. Absent d'une ancienne sauvegarde : réglages inchangés.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subscriptions: Option<BundleSubscriptions>,
 }
 
 /// Nom public d'une surveillance arrivée par un groupe coché.
@@ -443,6 +694,11 @@ pub struct BundleUser {
     pub oidc_subject: Option<String>,
     #[serde(default)]
     pub oidc_issuer: Option<String>,
+    /// Identité SAML (`NameID` persistant et IdP émetteur).
+    #[serde(default)]
+    pub saml_subject: Option<String>,
+    #[serde(default)]
+    pub saml_issuer: Option<String>,
     #[serde(default)]
     pub created_at: Option<String>,
     /// Empreinte Argon2 du mot de passe, présente seulement si l'opérateur a
@@ -457,6 +713,18 @@ pub struct BundleUser {
     /// Empreintes des codes de secours restants, base64.
     #[serde(default)]
     pub recovery_codes: Vec<String>,
+    /// Rattachement au provisionnement SCIM : identifiant SCIM, identifiant
+    /// chez le fournisseur, courriel annoncé. Le jeton SCIM, lui, ne fait jamais
+    /// partie d'une sauvegarde.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_email: Option<String>,
+    /// Désactivé par le fournisseur (SCIM), pas par un administrateur.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub disabled_by_scim: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -487,6 +755,38 @@ pub struct BundleApiToken {
     /// Compte propriétaire, par nom d'utilisateur.
     #[serde(default)]
     pub user: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleNetconfigHostKey {
+    pub target: String,
+    /// Empreinte SHA-256 de la clé (`SHA256:…`).
+    pub host_key: String,
+}
+
+/// Une version de configuration réseau.
+///
+/// `Debug` est écrit à la main : le texte contient les secrets de
+/// l'équipement.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct BundleNetconfigVersion {
+    pub target: String,
+    pub fetched_at: String,
+    pub last_seen_at: String,
+    pub profile: String,
+    pub added: i64,
+    pub removed: i64,
+    pub content: String,
+}
+
+impl std::fmt::Debug for BundleNetconfigVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BundleNetconfigVersion")
+            .field("target", &self.target)
+            .field("fetched_at", &self.fetched_at)
+            .field("bytes", &self.content.len())
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -656,6 +956,7 @@ mod tests {
                 group_name: "Rack A".to_string(),
                 position: 3,
                 location: None,
+                multisite: None,
             }],
             ..Bundle::default()
         }
@@ -763,4 +1064,41 @@ mod tests {
         envelope.kdf.t_cost = 16;
         assert!(open(&envelope, PHRASE).is_err());
     }
+}
+
+/// Une procédure : titre, texte Markdown et rattachements (règle par uid,
+/// dossier, type d'équipement — rien qui dépende des identifiants locaux).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRunbook {
+    pub title: String,
+    #[serde(default)]
+    pub body: String,
+    #[serde(default)]
+    pub links: Vec<crate::remediation::runbooks::RunbookLink>,
+}
+
+/// Une action de remédiation. L'équipement fixé est désigné par
+/// [`target_ref`] ; les secrets voyagent dans la charge chiffrée du lot.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRemediationAction {
+    pub name: String,
+    pub kind: String,
+    #[serde(default)]
+    pub params: Value,
+    #[serde(default)]
+    pub secrets: BTreeMap<String, String>,
+    #[serde(default)]
+    pub target: Option<String>,
+}
+
+/// Une politique automatique, désignée par le nom de son action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRemediationPolicy {
+    pub action: String,
+    pub rule_uid: String,
+    #[serde(default)]
+    pub target: Option<String>,
+    pub after_minutes: i64,
+    pub max_attempts: i64,
+    pub window_minutes: i64,
 }

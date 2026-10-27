@@ -48,6 +48,18 @@ sont gardés séparés volontairement : un `probe_success` de 0 dit que le
 service est en panne, une interruption de `up` dit que la surveillance
 est en panne.
 
+## Sondage depuis plusieurs emplacements
+
+Quand un moniteur est [sondé depuis plusieurs emplacements](../devices/services.fr.md#sonder-depuis-plusieurs-emplacements), `dumbmonit_probe_success` porte la décision de quorum, et ces séries ajoutent le détail :
+
+| Métrique | Signification |
+|---|---|
+| `dumbmonit_probe_location_success{location}` | 1 ou 0 pour chaque emplacement (`server` ou `agent-<id>`) |
+| `dumbmonit_probe_location_duration_seconds{location}` | Temps de réponse vu depuis chaque emplacement |
+| `dumbmonit_probe_degraded` | 1 tant qu'une minorité seulement d'emplacements échoue (pas d'alerte de panne) |
+| `dumbmonit_probe_locations_failing` | Emplacements en échec dans la dernière décision |
+| `dumbmonit_probe_locations_counted` | Emplacements comptés dans la dernière décision (les silencieux sont écartés) |
+
 ## `dumbmonit_security_score`
 
 Toutes les 15 minutes, le serveur calcule le
@@ -85,6 +97,17 @@ Le VictoriaMetrics embarqué garde 12 mois de données
 `dumbmonit-data`. Le serveur groupe ses écritures et les vide toutes les 5
 secondes (`DUMBMONIT_FLUSH_INTERVAL_SECS`). Supprimer une surveillance ne
 supprime pas ses séries ; elles vieillissent et expirent.
+
+La rétention brute se règle aussi dans **Réglages → Système → Données et
+rétention**. Au-delà, le serveur garde des **agrégats de 5 minutes** pendant
+730 jours par défaut dans un second VictoriaMetrics (`/data/vm-long`) : la
+moyenne sous le nom d'origine de la métrique, le minimum et le maximum en
+`<nom>:5m_min` et `<nom>:5m_max`, la somme et le compte des métriques de
+disponibilité en `<nom>:5m_sum` et `<nom>:5m_count` (les compteurs gardent leur
+dernière valeur de chaque fenêtre). Une requête dont la plage dépasse la
+rétention brute est servie automatiquement depuis eux, à la résolution de
+5 minutes. Voir [Dimensionnement](sizing.md) et la
+[référence de configuration](configuration.md#historique-long).
 
 L'historique d'alerte est gardé 90 jours et les références de séries
 disparues 60 jours, les deux dans SQLite (voir la

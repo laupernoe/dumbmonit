@@ -10,16 +10,22 @@ mod credential;
 mod description;
 mod discovery;
 pub mod env;
+mod eventlog;
+mod logs;
 mod push;
+pub mod remediation;
 mod sample;
+mod selfupdate;
 mod target;
 mod tls;
+mod version;
 
 pub use collector::{Collector, ProbeError};
 pub use command::{
     AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CMD_PROBE, COMMAND_MAX_AGE_SECS,
     COMMAND_RESULT_MAX_BYTES, COMMAND_RESULT_TRUNCATED, COMMANDS_PATH, CommandReport,
-    CommandStatus, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS, truncate_result,
+    CommandStatus, NetconfigCapture, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS,
+    truncate_result,
 };
 pub use credential::{
     Credential, CredentialInput, Resolved, SnmpV3Auth, SnmpV3AuthInput, SnmpV3AuthProtocol,
@@ -35,12 +41,27 @@ pub use discovery::{
     MAX_DISCOVERY_HOSTS, PrefillSpec, PrefillValue, ScanDepth, ScanPhase, ScanProgress, Transport,
     VersionRule,
 };
+pub use eventlog::{
+    EVENT_RULE_MAX_PER_MINUTE, EventIdRange, EventLevel, EventLogDropped, EventLogEntry,
+    EventLogReport, EventLogRule, MAX_EVENT_ID_RANGES, MAX_EVENT_LOG_ENTRIES,
+    MAX_EVENT_MESSAGE_CHARS, format_event_ids, parse_event_ids, truncate_message,
+};
+
+pub use logs::{
+    LOGS_PATH, LogBatch, LogLine, LogsSetting, MAX_LOG_LINES, MAX_LOG_MESSAGE, level_rank,
+};
 pub use push::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,
-    INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_INVENTORY_PACKAGES,
-    PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting, SoftwareInventory, TOKEN_PREFIX,
+    DeclaredMonitor, INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_DECLARED_MONITORS,
+    MAX_INVENTORY_PACKAGES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting,
+    SoftwareInventory, TOKEN_PREFIX,
 };
+pub use remediation::{CMD_SCRIPT_RUN, CMD_SERVICE_RESTART, DeclaredScript, RemediationInfo};
 pub use sample::{MetricKind, Sample};
+pub use selfupdate::{
+    AGENT_FILE_PREFIX, AgentUpdateOffer, SIGNATURE_SUFFIX, SelfUpdateAbility, SelfUpdateInfo,
+    SelfUpdateOutcome, SelfUpdateReport, UPDATE_DOWNLOAD_PATH, UPDATE_TRIAL_SECS, agent_file_name,
+};
 pub use target::{
     EXPORTED_LABEL_PREFIX, MAX_TAG_LABEL_LEN, TAG_LABEL_PREFIX, Target, TargetId, apply_identity,
     looks_secret,
@@ -51,3 +72,4 @@ pub use tls::{
     TlsCertificate, TlsEnrolRequest, TlsOffer, TlsRenewRequest, agent_channel_url, is_pin,
     normalise_pin,
 };
+pub use version::{Version, is_older};

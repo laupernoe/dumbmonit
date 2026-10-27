@@ -245,6 +245,52 @@ l'**URL publique** de la [politique de notification](../alerting/notifications.m
 utilisée la dernière fois que vous avez enregistré la page — jamais
 depuis la requête d'un visiteur.
 
+### Abonnés SMS, webhook et Slack {#channel-subscribers}
+
+En plus de l'email, une page peut proposer trois autres façons de la suivre.
+Ouvrez-les dans le panneau des abonnés de l'éditeur (**Canaux d'abonnement**) ;
+la page publique affiche alors un onglet par canal.
+
+- **SMS.** Choisissez un canal Vonage, Telnyx ou ASPSMS parmi les
+  [Notifications](../alerting/notifications.md) ; ses identifiants et son
+  expéditeur sont réutilisés, pas ses destinataires. Le visiteur saisit un
+  numéro au format international (`+33612345678`) et le confirme avec un code à
+  six chiffres reçu par SMS (cinq essais, 15 minutes). Les annonces tiennent
+  en un court message avec un lien `Stop:`. Un SMS coûte de l'argent : les
+  inscriptions SMS ont des limites plus basses (trois requêtes par adresse
+  client et 25 en tout par 15 minutes).
+- **Webhook signé.** Le visiteur donne une URL `http(s)`. DumbMonit lui envoie
+  en POST une requête signée `subscription.confirm` portant un `confirm_url` ;
+  l'abonnement démarre quand le point d'arrivée (ou le visiteur) l'appelle. Le
+  secret de signature (`whsec_…`) est affiché une seule fois, sur la page,
+  juste après la demande. Chaque requête porte `X-DumbMonit-Timestamp` et
+  `X-DumbMonit-Signature: sha256=<hex>`, le HMAC-SHA256 de
+  `<horodatage>.<corps>` avec le secret. Le corps JSON contient `type`
+  (`incident` ou `maintenance`), `page`, `incident` (id, titre, statut,
+  gravité, dates), `message` et `unsubscribe_url`. L'URL passe par la même
+  garde sortante que les canaux de notification (les adresses du serveur
+  lui-même sont refusées).
+- **Slack.** Le visiteur colle l'URL du webhook entrant de son propre Slack
+  (`https://hooks.slack.com/services/…`). DumbMonit y publie un message de test
+  avec un lien de confirmation ; chaque annonce porte ensuite un lien de
+  désabonnement.
+- **Services suivis.** Un abonné peut cocher les services qui l'intéressent.
+  En créant une annonce pour une page, vous pouvez cocher les services
+  concernés (`components` dans l'API) : les abonnés qui ne suivent que
+  d'autres services ne sont pas prévenus. Une annonce sans service coché, et un
+  abonné sans service coché, signifient « tout ».
+- **Envoi.** Les messages SMS, webhook et Slack passent par une file : un échec
+  est repris après 1 minute, 5 minutes, 30 minutes, 2 heures, puis abandonné
+  après cinq essais ou un jour. Les envois sont espacés pour ne pas inonder un
+  fournisseur.
+- **Pages privées.** Sur une page protégée par mot de passe ou par connexion,
+  seul qui peut voir la page peut s'y abonner.
+- **Administration.** Le panneau liste les abonnés de tous les canaux (numéros
+  et URL masqués, filtre par canal), les exporte en CSV
+  (`GET /api/status-pages/{id}/subscribers.csv` ; les URL restent masquées) et
+  en supprime n'importe lequel. Les canaux ouverts par une page voyagent avec
+  les [sauvegardes](../install/backup.md) ; pas les abonnés eux-mêmes.
+
 ## 4. Partager le lien
 
 La page vit à `https://votre-serveur/s/<adresse>`. Tout sous `/s/` et
@@ -469,6 +515,65 @@ robots, canonique, Open Graph, carte Twitter, langue et données JSON-LD. Les ro
 et les aperçus de liens n'exécutent pas JavaScript : ils les lisent telles quelles.
 Une page brouillon, inconnue ou non indexable ne montre jamais son titre, et les
 variantes `/embed`, `/confirm` et `/unsubscribe` ne sont jamais indexées.
+
+### Pages privées {#private}
+
+Par défaut une page est ouverte à toute personne qui a le lien. **Qui peut voir
+cette page**, dans l'éditeur, change cela :
+
+- **Toute personne avec le lien** : le défaut.
+- **Toute personne avec le mot de passe** : les visiteurs voient d'abord un
+  formulaire de mot de passe. Le mot de passe (8 caractères au minimum) est
+  stocké haché en Argon2id et n'est jamais réaffiché ; laissez le champ vide
+  pour garder l'actuel. Un mot de passe correct pose un cookie d'accès signé,
+  valable 12 heures. Changer le mot de passe met fin à tous les accès déjà
+  accordés. Les erreurs sont comptées par adresse et par page : après cinq, les
+  essais suivants attendent 30 secondes, en doublant jusqu'à cinq minutes.
+- **Utilisateurs DumbMonit connectés** : tout compte, local, LDAP ou SSO, quel
+  que soit son rôle. Les visiteurs sans session sont envoyés vers l'écran de
+  connexion et reviennent sur la page. Le cookie de session appartient à
+  l'adresse principale : ce mode ne fonctionne pas derrière un
+  [domaine personnalisé](#custom-domain), utilisez-y un mot de passe.
+
+Une page qui n'est pas publique n'est **jamais indexée**, quoi que dise son bloc
+SEO : elle répond `noindex, nofollow`, reste hors de `/sitemap.xml` et n'expose
+aucun titre dans le HTML. Tout ce qui sort de la page par son adresse suit le
+même accès : le document JSON, les badges, les flux RSS et [iCal](#ical), le
+logo, le détail d'un jour et l'abonnement par e-mail. Les réponses portent
+`Cache-Control: private, no-store`. Un badge est une image chargée par le
+navigateur du lecteur : il ne s'affiche que là où ce navigateur a déjà l'accès,
+et reste cassé dans un README. L'intégration (embed) et la
+[bannière de site web](../integrations/website-banner.md) demandent aussi le
+même accès.
+
+### Calendrier des maintenances (iCal) {#ical}
+
+Les maintenances planifiées se suivent depuis une application de calendrier
+(Google Agenda, Outlook, Thunderbird, Calendrier Apple) abonnée à un flux
+iCalendar :
+
+- `GET /api/public/status/<adresse>/maintenance.ics` : les maintenances
+  annoncées sur la page (et celles de toutes les pages), de 90 jours en arrière
+  à l'avenir lointain. Il suit le mode d'accès de la page et figure sous
+  **Recevoir les mises à jour** sur la page publique.
+- `GET /api/calendar/maintenance.ics?token=…` : toutes les maintenances de
+  l'instance. Le jeton est dans l'adresse et c'est la seule protection :
+  partagez-la comme un mot de passe. Les administrateurs la lisent, et la
+  remplacent avec **Nouvelle adresse**, dans le bloc **Calendrier des
+  maintenances** de l'éditeur de page.
+
+Chaque maintenance est un événement, avec son titre, son début, sa fin (une
+heure si elle n'est pas fixée) et son dernier message en description. Les
+incidents n'y figurent pas.
+
+### Fournisseurs tiers {#fournisseurs}
+
+Votre page peut montrer un fournisseur dont vous dépendez, à côté de vos propres
+services. Ajoutez un moniteur [**État d'un fournisseur tiers**](../devices/provider.md)
+(Cloudflare, GitHub, Atlassian, AWS…) et placez-le sur la page comme n'importe
+quel moniteur : il apparaît avec une étiquette **Externe**, son propre historique
+et les états habituels. La page du fournisseur est lue au plus une fois par
+minute, et partagée entre les moniteurs et les pages.
 
 ### Flux et document
 

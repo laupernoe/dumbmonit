@@ -1,0 +1,3 @@
+{"errorCode":0,"msg":"Success.","result":{"totalRows":1,"currentPage":1,"currentSize":1,"data":[
+{"mac":"AA-BB-CC-00-01-01","name":"AP-Branch","type":"ap","model":"EAP225","modelVersion":"4.0","firmwareVersion":"5.1.0 Build 20240401 Rel.00001","ip":"10.0.1.5","status":1,"statusCategory":1,"cpuUtil":5,"memUtil":40,"uptimeLong":120,"needUpgrade":false,"clientNum":3}
+]}}

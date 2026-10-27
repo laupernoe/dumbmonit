@@ -1,0 +1,20 @@
+# Sauvegarde des configurations : Cisco NX-OS.
+id: cisco_nxos
+label: Cisco NX-OS
+transport: ssh_shell
+prompt: '^[\w.\-/:()@]+[>#] ?$'
+setup:
+  - terminal length 0
+  - terminal width 511
+more:
+  expect: '--More--'
+  send: " "
+commands:
+  - show running-config
+exit: exit
+volatile:
+  - '^!Time: '
+  - '^!Running configuration last done at: '
+secrets:
+  - '\b(?:secret|password|key|key-string|community)(?: [0-9])? (?P<secret>\S+)'
+  - '\b(?:md5|sha|sha-256|aes-128|priv) (?P<secret>0x[0-9a-fA-F]+)'

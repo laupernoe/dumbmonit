@@ -1,0 +1,12 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#organization",
+  "value": [
+    {
+      "id": "99999999-8888-7777-6666-555555555555",
+      "displayName": "Contoso",
+      "onPremisesSyncEnabled": true,
+      "onPremisesLastSyncDateTime": "2026-10-26T07:30:00Z",
+      "verifiedDomains": [{ "name": "contoso.com", "isDefault": true }]
+    }
+  ]
+}

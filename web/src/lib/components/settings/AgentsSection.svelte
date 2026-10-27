@@ -22,6 +22,7 @@
 	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
 	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
 	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
+	import AgentUpdates from '#lib/components/settings/AgentUpdates.svelte';
 	import { getAgentChannel } from '#lib/api/agent_tls.js';
 	import type { AgentChannelEntry, AgentChannelOverview } from '#lib/api/types.js';
 
@@ -159,7 +160,9 @@
 				reusable,
 				max_uses: uses,
 				expires_in_days: days,
-				...(asRelay ? { relay: true, site: relaySite.trim() || null } : {})
+				...(asRelay ? { relay: true, site: relaySite.trim() || null } : {}),
+				// MSP mode: the token enrols into the client picked in the header.
+				...(auth.mspOn && auth.currentClient !== null ? { client_id: auth.currentClient } : {})
 			});
 			tokens = [...tokens, created];
 			name = '';
@@ -307,6 +310,10 @@
 		</div>
 	{/if}
 
+	{#if auth.isAdmin}
+		<AgentUpdates />
+	{/if}
+
 	<div class="px-5 py-4">
 		<Disclosure title={m.settings_agents_tokens_title()}>
 		<p class="mt-0.5 mb-3 text-sm text-ink-2">
@@ -428,6 +435,10 @@
 										<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">{token.prefix}…</code>
 										{#if revoked}<Plate tone="ghost" label={m.settings_agents_revoked()} />{/if}
 										{#if token.ad_domain}<Plate tone="info" label={m.settings_agents_ad_badge({ domain: token.ad_domain })} />{/if}
+										{#if auth.mspOn && token.client_id !== undefined}
+											{@const owner = auth.msp?.clients.find((c) => c.id === token.client_id)}
+											{#if owner}<Plate tone="muted" bare label={m.settings_agents_client_badge({ name: owner.name })} />{/if}
+										{/if}
 										{#if !revoked}
 											<Plate tone={token.max_uses === null ? 'info' : 'ghost'} label={scopeLabel(token)} />
 											{#if spent(token)}<Plate tone="advisory" label={m.settings_agents_enrols_no_more()} />{/if}

@@ -13,6 +13,8 @@
 
 pub mod backup_repos;
 pub mod docker;
+pub mod docker_labels;
+pub mod eventlog;
 pub mod filter;
 pub mod inventory;
 pub mod ipsec;

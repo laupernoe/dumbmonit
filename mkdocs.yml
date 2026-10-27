@@ -100,11 +100,19 @@ nav:
       - pfSense: devices/pfsense.md
       - FortiGate: devices/fortigate.md
       - Sophos Firewall: devices/sophos.md
+      - Cisco Meraki: devices/meraki.md
+      - TP-Link Omada: devices/omada.md
+      - Aruba Central: devices/arubacentral.md
+      - Palo Alto PAN-OS: devices/paloalto.md
+      - SonicWall SonicOS: devices/sonicwall.md
       - OpenVPN server: devices/openvpn.md
       - UniFi Network: devices/unifi.md
       - Home Assistant: devices/homeassistant.md
       - TrueNAS: devices/truenas.md
       - Unraid: devices/unraid.md
+      - QNAP QTS / QuTS hero: devices/qnap.md
+      - Ceph: devices/ceph.md
+      - MinIO: devices/minio.md
       - MikroTik RouterOS: devices/mikrotik.md
       - UPS with NUT: devices/nut.md
       - Server hardware (Redfish): devices/redfish.md
@@ -118,19 +126,38 @@ nav:
       - Redis and Valkey: devices/redis.md
       - MongoDB: devices/mongodb.md
       - RabbitMQ: devices/rabbitmq.md
+      - SQL Server: devices/mssql.md
+      - Oracle Database: devices/oracle.md
+      - Elasticsearch / OpenSearch: devices/elasticsearch.md
+      - InfluxDB: devices/influxdb.md
+      - Apache Kafka: devices/kafka.md
       - CrowdSec: devices/crowdsec.md
       - Traefik: devices/traefik.md
       - Caddy: devices/caddy.md
+      - Prometheus exporter: devices/prometheus.md
+      - OpenTelemetry source: devices/otlp.md
       - Nginx: devices/nginx.md
       - Apache httpd: devices/apache.md
       - Nginx Proxy Manager: devices/npm.md
       - Domain expiry: devices/domain.md
+      - Third-party service status: devices/provider.md
       - Mail server reputation: devices/mail_blacklist.md
       - IP range blocklist: devices/ip_blacklist.md
       - Kubernetes / k3s: devices/kubernetes.md
       - Active Directory: devices/activedirectory.md
       - Veeam Backup & Replication: devices/veeam.md
+      - Windows without an agent (WinRM): devices/winrm.md
+      - Kopia (beta): devices/kopia.md
+      - Duplicati (beta): devices/duplicati.md
       - Tailscale: devices/tailscale.md
+      - Microsoft 365: devices/m365.md
+      - Microsoft Entra ID: devices/entra.md
+      - Microsoft Azure: devices/azure.md
+      - AWS CloudWatch: devices/aws.md
+      - Cloudflare: devices/cloudflare.md
+      - Hetzner Cloud: devices/hetzner.md
+      - OVHcloud: devices/ovh.md
+      - Infomaniak: devices/infomaniak.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md
       - Paperless-ngx: devices/paperless.md
@@ -138,15 +165,29 @@ nav:
       - Plex Media Server: devices/plex.md
       - GitLab (self-managed): devices/gitlab.md
       - Forgejo / Gitea: devices/forgejo.md
+      - Sonarr (beta): devices/sonarr.md
+      - Radarr (beta): devices/radarr.md
+      - Lidarr (beta): devices/lidarr.md
+      - Prowlarr (beta): devices/prowlarr.md
+      - qBittorrent (beta): devices/qbittorrent.md
+      - UniFi Protect (beta): devices/unifiprotect.md
+      - Frigate NVR (beta): devices/frigate.md
+      - Keycloak (beta): devices/keycloak.md
+      - authentik (beta): devices/authentik.md
+      - Vaultwarden (beta): devices/vaultwarden.md
+      - mailcow (beta): devices/mailcow.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Deploy the agent with Active Directory: devices/agent-active-directory.md
+      - Windows event log alerts: devices/agent-windows-events.md
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md
       - Website health & SEO: devices/website.md
+      - Network configuration backup: devices/netconfig.md
       - Demo monitor: devices/demo.md
   - Integrations:
       - Website banner: integrations/website-banner.md
+      - Homepage and Homarr: integrations/homepage.md
   - Integration packs:
       - What a pack is: packs/index.md
       - Write your first pack: packs/first-pack.md
@@ -156,32 +197,48 @@ nav:
       - Rules: alerting/rules.md
       - Maintenance windows: alerting/maintenance.md
       - Notification policy: alerting/notifications.md
+      - On-call: alerting/oncall.md
+      - Runbooks and remediation: alerting/remediation.md
       - Notification channels: notifications.md
   - Using DumbMonit:
+      - Product modes and setup wizard: using/product-modes.md
       - Overview page: using/overview.md
       - Network discovery: using/discovery.md
       - Wall mode and music: using/wall.md
       - Monitors page: using/devices.md
+      - Monitors from Docker labels: using/docker-labels.md
+      - Import from other tools: using/imports.md
       - Topology map: using/topology.md
       - World map: using/world-map.md
+      - Dashboards and metrics explorer: using/dashboards.md
       - Security score: using/security-score.md
       - CVE & vulnerabilities: using/cves.md
       - Alerts page: using/alerts.md
+      - Logs (agents, syslog, SNMP traps): using/logs.md
       - Status pages: using/status-pages.md
       - Email reports: using/reports.md
       - Settings: using/settings.md
+      - Configuration files (GitOps): using/config-files.md
       - LDAP / Active Directory: using/ldap.md
+      - SAML 2.0: using/saml.md
+      - SCIM provisioning: using/scim.md
+      - Teams and permissions: using/teams.md
+      - Multi-client (MSP): using/msp.md
+      - Passkeys: using/passkeys.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md
   - Reference:
       - HTTP API: reference/api.md
       - Configuration: reference/configuration.md
       - Metrics: reference/metrics.md
+      - Sizing: reference/sizing.md
+      - External VictoriaMetrics / cluster: reference/external-victoriametrics.md
   - Development:
       - Overview: development.md
       - Architecture: development/architecture.md
       - Security model: development/security-model.md
       - Assurance case: development/assurance-case.md
       - Reproducible builds: development/reproducible-builds.md
+      - Signing the agent binaries: development/agent-signing.md
       - Roadmap: development/roadmap.md
   - FAQ: faq.md

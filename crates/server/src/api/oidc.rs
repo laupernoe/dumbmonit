@@ -172,7 +172,7 @@ fn header_value(value: &str) -> header::HeaderValue {
 /// La règle de forme est doublée d'une résolution contre une origine factice :
 /// si le résultat en sort, ce n'était pas un chemin interne, quelle que soit
 /// l'astuce d'écriture.
-fn is_internal_path(path: &str) -> bool {
+pub(super) fn is_internal_path(path: &str) -> bool {
     let mut chars = path.chars();
     if chars.next() != Some('/') || matches!(chars.next(), Some('/' | '\\')) {
         return false;

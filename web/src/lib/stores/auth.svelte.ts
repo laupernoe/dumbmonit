@@ -12,6 +12,8 @@
  */
 import {
 	getAuthStatus,
+	getMyRights,
+	setClientView,
 	login as apiLogin,
 	loginTotp as apiLoginTotp,
 	logout as apiLogout,
@@ -19,8 +21,12 @@ import {
 	setupAccount as apiSetupAccount,
 	type LdapStatus,
 	type OidcStatus,
+	type SamlStatus,
+	type AccessInfo,
+	type MspAccess,
 	type User
 } from '#lib/api/index.js';
+import { signInWithPasskey } from '#lib/api/passkeys.js';
 
 /**
  * Minimum length required for a password.
@@ -42,6 +48,31 @@ export function validatePassword(value: string): string | null {
 	}
 	return null;
 }
+
+/** Where the client picked in the header is remembered, per browser. */
+const CLIENT_VIEW_KEY = 'dumbmonit.client';
+
+function readClientView(): number | null {
+	try {
+		const raw = globalThis.localStorage?.getItem(CLIENT_VIEW_KEY);
+		const id = raw ? Number.parseInt(raw, 10) : Number.NaN;
+		return Number.isFinite(id) ? id : null;
+	} catch {
+		return null;
+	}
+}
+
+function writeClientView(id: number | null): void {
+	try {
+		if (id === null) globalThis.localStorage?.removeItem(CLIENT_VIEW_KEY);
+		else globalThis.localStorage?.setItem(CLIENT_VIEW_KEY, String(id));
+	} catch {
+		// Private window or blocked storage: the choice lasts until the page reloads.
+	}
+}
+
+// Sent from the very first request, `/api/auth/me` included.
+setClientView(readClientView());
 
 /** Pages reachable without an open session. */
 export const PUBLIC_ROUTES = ['/login', '/setup'];
@@ -95,6 +126,14 @@ class AuthStore {
 	oidc = $state<OidcStatus>({ enabled: false, provider_name: 'SSO', login_url: '/api/auth/oidc/start' });
 	/** LDAP / Active Directory sign-in through the same form. */
 	ldap = $state<LdapStatus>({ enabled: false });
+	/** SAML sign-in, a button beside the OIDC one. */
+	saml = $state<SamlStatus>({ enabled: false, label: 'SAML' });
+	/** Team rights of the signed-in account (from `/api/auth/me`). */
+	access = $state<AccessInfo | null>(null);
+	/** MSP mode as this account sees it: the clients it may pick (from `/api/auth/me`). */
+	msp = $state<MspAccess | null>(null);
+	/** A passkey is registered on the instance: the sign-in screen offers to use one. */
+	passkeys = $state(false);
 	/** Public demo mode: read-only instance, sign in with demo / demo. */
 	demo = $state(false);
 	/** Error preventing us from knowing the session state (server unreachable). */
@@ -118,6 +157,36 @@ class AuthStore {
 	get canOperate(): boolean {
 		if (this.isAdmin) return true;
 		return this.user?.role === 'operator';
+	}
+
+	/**
+	 * True for an account whose view is limited by its teams: it only reaches
+	 * the devices, alerts, map, status pages and CVEs those teams grant.
+	 */
+	get scoped(): boolean {
+		return !this.isAdmin && this.access?.scoped === true;
+	}
+
+	/** MSP mode is on. */
+	get mspOn(): boolean {
+		return this.msp?.enabled === true;
+	}
+
+	/** Client of the current view (the header's choice, or the only client of a member). */
+	get currentClient(): number | null {
+		return this.msp?.current ?? null;
+	}
+
+	/**
+	 * Narrows every page to one client (`null`: all of them, MSP administrator
+	 * only). Remembered in this browser; the page reloads so that every list
+	 * is fetched again for the new client (or `href` opens, already narrowed).
+	 */
+	selectClient(id: number | null, href?: string): void {
+		writeClientView(id);
+		setClientView(id);
+		if (href) globalThis.location?.assign(href);
+		else globalThis.location?.reload();
 	}
 
 	/** Badge shown on configuration screens the current user cannot change. */
@@ -164,8 +233,20 @@ class AuthStore {
 			this.user = state.user;
 			this.oidc = state.oidc;
 			this.ldap = state.ldap;
+			this.saml = state.saml;
+			this.passkeys = state.passkeys;
 			this.demo = state.demo;
 			this.error = null;
+			const rights = state.user ? await getMyRights(signal) : { access: null, msp: null };
+			this.access = rights.access;
+			this.msp = rights.msp;
+			// A remembered client that is no longer offered (deleted, membership
+			// removed, mode off) is forgotten rather than silently ignored.
+			const remembered = readClientView();
+			if (remembered !== null && !rights.msp?.clients.some((client) => client.id === remembered)) {
+				writeClientView(null);
+				setClientView(null);
+			}
 		} catch (cause) {
 			if (cause instanceof DOMException && cause.name === 'AbortError') return;
 			// The server is unreachable: nothing will work anyway, but we do not lock
@@ -195,6 +276,8 @@ class AuthStore {
 		this.configured = true;
 		this.authenticated = false;
 		this.user = null;
+		this.access = null;
+		this.msp = null;
 		this.checked = true;
 	}
 
@@ -219,6 +302,13 @@ class AuthStore {
 		this.sessionOpened();
 		await this.refresh();
 		return null;
+	}
+
+	/** Signs in with a passkey: password and second factor in one gesture. */
+	async loginPasskey(): Promise<void> {
+		await signInWithPasskey();
+		this.sessionOpened();
+		await this.refresh();
 	}
 
 	/** Second step of the sign-in: the one-time code. */
@@ -255,6 +345,8 @@ class AuthStore {
 		}
 		this.authenticated = false;
 		this.user = null;
+		this.access = null;
+		this.msp = null;
 	}
 }
 

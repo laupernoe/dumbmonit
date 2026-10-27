@@ -136,17 +136,24 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
         // Sans URL externe, l'image se suffit : VictoriaMetrics est lancé ici même
         // et le démarrage attend qu'il réponde — une erreur à ce stade (binaire
         // absent, port pris) doit arrêter le serveur, pas le laisser tourner à vide.
-        let vm = tsdb::EmbeddedVm::start(
-            tsdb::EmbeddedConfig {
-                binary: config.vm_binary.clone(),
-                data_path: config.vm_data_path(),
-                listen: config.vm_listen.clone(),
-                retention: config.vm_retention.clone(),
-                memory: config.vm_memory.clone(),
-                admin_key: vm_admin_key,
-            },
-            &victoria,
-        )
+        // La rétention réglée dans l'interface l'emporte sur l'environnement.
+        let retention = match dumbmonit_server::storage::settings::load(&pool, &config).await {
+            Ok(settings) => settings.metrics.flag,
+            Err(error) => {
+                warn!(error = %format!("{error:#}"), "storage settings unreadable, environment used");
+                config.vm_retention.clone()
+            }
+        };
+        let vm = tsdb::EmbeddedVm::start(tsdb::EmbeddedConfig {
+            flavor: tsdb::Flavor::Metrics,
+            binary: config.vm_binary.clone(),
+            data_path: config.vm_data_path(),
+            listen: config.vm_listen.clone(),
+            retention,
+            memory: config.vm_memory.clone(),
+            admin_key: vm_admin_key,
+            health_url: format!("{victoria_url}/health"),
+        })
         .await
         .context("starting the embedded VictoriaMetrics")?;
         Some(vm)
@@ -186,6 +193,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     // Une vérification de site interrompue par un arrêt du serveur a laissé son
     // verrou : il est levé avant que le collecteur ne reprenne.
     dumbmonit_server::webchange::store::release_all(&pool).await?;
+    dumbmonit_server::netconfig::store::release_all(&pool).await?;
 
     // Liste unique, partagée avec l'agent relais (`collectors::builtin`).
     let mut registry = collectors::builtin(&pool, &config, &packs);
@@ -219,14 +227,34 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     // les tâches de fond jusqu'à la fin du runtime.
     let final_sink = sink.clone();
     let state = AppState::new(Inner { config, pool, cipher, victoria, sink, collectors: registry });
+    // Historique long terme, VictoriaLogs embarqué et agrégateur : rien ici
+    // n'empêche de surveiller si l'un d'eux ne démarre pas.
+    state.storage().set_metrics(embedded_vm).await;
+    dumbmonit_server::storage::start(&state).await;
+
+    // Journaux centralisés : écrivain vers VictoriaLogs, table des émetteurs,
+    // serveur syslog et récepteur de traps (chacun désactivé par défaut).
+    if !state.config.demo {
+        dumbmonit_server::logs::central::spawn(state.clone());
+        dumbmonit_server::logs::attach::spawn(state.pool.clone());
+        dumbmonit_server::logs::syslog::spawn();
+        dumbmonit_server::logs::traps::spawn();
+    }
 
     scheduler::spawn(state.clone());
+    // Configuration en fichiers : appliquée au démarrage puis à chaque changement.
+    dumbmonit_server::gitops::watch::spawn(state.clone());
     dumbmonit_server::reports::spawn(state.clone());
+    dumbmonit_server::api::spawn_status_deliveries(state.clone());
     alerting::spawn(state.clone());
+    dumbmonit_server::remediation::spawn(state.clone());
     dumbmonit_server::security::spawn(state.clone());
     dumbmonit_server::vulns::spawn(state.clone());
     // Mesures de l'instance elle-même et battement de cœur sortant (`selfmon`).
     dumbmonit_server::selfmon::spawn(state.clone());
+    // Scans de découverte planifiés et inventaire du réseau.
+    dumbmonit_server::netinventory::spawn(state.clone());
+    dumbmonit_server::netconfig::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),
@@ -276,6 +304,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
 
     // `ConnectInfo` : l'adresse du client, pour les compteurs de tentatives et
     // le journal d'audit (voir `auth::client_ip`).
+    let state_for_shutdown = state.clone();
     axum::serve(
         listener,
         api::router(state).into_make_service_with_connect_info::<std::net::SocketAddr>(),
@@ -290,9 +319,9 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     if !final_sink.flush(FINAL_FLUSH_TIMEOUT).await {
         warn!(timeout = ?FINAL_FLUSH_TIMEOUT, "final write flush failed or timed out, samples lost");
     }
-    if let Some(vm) = embedded_vm {
-        vm.stop().await;
-    }
+    // VictoriaLogs et l'historique long terme d'abord, les mesures brutes en
+    // dernier.
+    state_for_shutdown.storage().stop_all().await;
 
     info!("clean shutdown");
     Ok(())

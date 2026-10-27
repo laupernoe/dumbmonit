@@ -85,6 +85,14 @@ fn http_products() -> Vec<Fingerprint> {
             .confidence(Confidence::Medium)
             .kind("truenas")
             .prefill(host_prefill()),
+        // QNAP : sans session, `authLogin.cgi` répond par un document XML
+        // `QDocRoot` (authPassed à 0) ; c'est la page que lit l'intégration.
+        Fingerprint::http("qnap.qts", "QNAP QTS", &[443, 8080], "/cgi-bin/authLogin.cgi")
+            .status(200)
+            .body("<QDocRoot version=\"1.0\">")
+            .confidence(Confidence::Medium)
+            .kind("qnap")
+            .prefill(host_prefill()),
         Fingerprint::http("unraid.web", "Unraid", &[80, 443], "/login")
             .status(200)
             .body("Unraid webGUI")
@@ -116,6 +124,31 @@ fn http_products() -> Vec<Fingerprint> {
         .confidence(Confidence::Medium)
         .kind("sophos")
         .prefill(host_prefill()),
+        // Le contrôleur Omada publie, sans authentification, sa version et son
+        // identifiant : le même identifiant que celui de l'API ouverte.
+        Fingerprint::http(
+            "omada.controller",
+            "TP-Link Omada Controller",
+            &[8043, 443],
+            "/api/info",
+        )
+        .status(200)
+        .body("\"controllerVer\"")
+        .body("\"omadacId\"")
+        .version_json("/result/controllerVer")
+        .kind("omada")
+        .prefill(host_prefill()),
+        Fingerprint::http("paloalto.login", "Palo Alto Networks PAN-OS", &[443], "/php/login.php")
+            .status(200)
+            .body("Palo Alto Networks - Login")
+            .confidence(Confidence::Medium)
+            .kind("paloalto")
+            .prefill(host_prefill()),
+        Fingerprint::http("sonicwall.web", "SonicWall SonicOS", &[443, 8443], "/")
+            .header("server", "SonicWALL")
+            .confidence(Confidence::Medium)
+            .kind("sonicwall")
+            .prefill(host_prefill()),
         Fingerprint::http("mikrotik.web", "MikroTik RouterOS", &[80, 443], "/")
             .status(200)
             .title("RouterOS router configuration page")
@@ -397,6 +430,7 @@ fn http_products() -> Vec<Fingerprint> {
         Fingerprint::http("minio.live", "MinIO", &[9000], "/minio/health/live")
             .status(200)
             .header("server", "MinIO")
+            .kind("minio")
             .prefill(host_prefill()),
         Fingerprint::http("minio.console", "MinIO Console", &[9001], "/")
             .status(200)
@@ -492,6 +526,7 @@ fn ports_only() -> Vec<Fingerprint> {
         Fingerprint::port("mikrotik.api", "MikroTik API", &[8728, 8729]).kind("mikrotik"),
         Fingerprint::port("mikrotik.winbox", "MikroTik WinBox", &[8291]).kind("mikrotik"),
         Fingerprint::port("veeam.vbr", "Veeam Backup & Replication", &[9419]).kind("veeam"),
+        Fingerprint::port("kopia.server", "Kopia server", &[51515]).kind("kopia"),
         Fingerprint::port("print.ipp", "Printer (IPP)", &[631])
             .kind("tcp")
             .prefill(PrefillSpec::host_port()),
@@ -529,6 +564,8 @@ fn snmp() -> Vec<Fingerprint> {
         f("snmp.netgear", "Netgear switch", Some("1.3.6.1.4.1.4526"), None),
         f("snmp.tplink", "TP-Link switch", Some("1.3.6.1.4.1.11863"), None),
         f("snmp.zyxel", "Zyxel", Some("1.3.6.1.4.1.890"), None),
+        f("snmp.watchguard", "WatchGuard Firebox", Some("1.3.6.1.4.1.3097"), None),
+        f("snmp.stormshield", "Stormshield SNS", Some("1.3.6.1.4.1.11256"), None),
         // Produits reconnus par le sysDescr (OID Net-SNMP générique, partagé).
         f("snmp.synology", "Synology DSM", None, Some("synology")),
         f("snmp.truenas", "TrueNAS", None, Some("TrueNAS")),

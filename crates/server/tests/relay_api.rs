@@ -136,8 +136,13 @@ async fn take_probe(app: &TestApp, token: &str, key: &str) -> (AgentCommand, Pro
                 probe = Some((command, job));
                 continue;
             }
-            let outcome =
-                ProbeOutcome { duration_ms: 1, error: None, samples: Vec::new(), profile_id: None };
+            let outcome = ProbeOutcome {
+                duration_ms: 1,
+                error: None,
+                samples: Vec::new(),
+                profile_id: None,
+                netconfig: None,
+            };
             let (status, body) = as_agent(
                 app,
                 "POST",
@@ -222,7 +227,8 @@ async fn an_http_probe_is_relayed_through_the_agent_and_recorded_on_the_target()
     assert!(samples.iter().any(|s| s.metric == "up"));
 
     // … et rend compte.
-    let outcome = ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None };
+    let outcome =
+        ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None, netconfig: None };
     let (status, body) = as_agent(
         &app,
         "POST",
@@ -288,6 +294,7 @@ async fn a_failed_relayed_probe_lands_in_last_error() {
         error: Some("Monitor unreachable: connection refused".into()),
         samples: Vec::new(),
         profile_id: None,
+        netconfig: None,
     };
     let (status, _) = as_agent(
         &app,
@@ -334,7 +341,13 @@ async fn the_relay_channel_requires_the_token_and_a_known_machine() {
     assert_eq!(jobs, json!([]));
 
     // Un compte rendu pour une sonde inexistante est refusé, pas accepté en silence.
-    let outcome = ProbeOutcome { duration_ms: 0, error: None, samples: vec![], profile_id: None };
+    let outcome = ProbeOutcome {
+        duration_ms: 0,
+        error: None,
+        samples: vec![],
+        profile_id: None,
+        netconfig: None,
+    };
     let (status, _) = as_agent(
         &app,
         "POST",
@@ -430,4 +443,124 @@ async fn via_agent_is_validated_and_kept_when_omitted() {
         .await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
     assert!(reply.body["via_agent"].is_null());
+}
+
+/// Sonde depuis plusieurs emplacements : le réglage est validé, l'agent reçoit
+/// sa part de la ronde, et la page du moniteur lit l'état par emplacement.
+#[tokio::test]
+async fn an_uptime_monitor_is_probed_from_several_locations() {
+    let app = setup().await;
+    let admin = app.admin_cookie().await;
+    let token = enrollment_token(&app, &admin).await;
+    let agent_id = register_relay(&app, &token, "machine-geneve", true).await;
+    let web = local_web_server().await;
+
+    let payload = |multisite: Value, via_agent: Option<i64>| {
+        json!({
+            "name": "site-multi", "address": web, "kind": "http",
+            "via_agent": via_agent, "credential": { "type": "none" },
+            "tags": { "allow_private_targets": "true" },
+            "multisite": multisite,
+        })
+    };
+    // Un seul emplacement, un relais en plus, un seuil hors bornes : refusés.
+    for (multisite, via_agent) in [
+        (json!({ "server": true, "agents": [] }), None),
+        (json!({ "server": false, "agents": [agent_id] }), None),
+        (json!({ "server": true, "agents": [agent_id] }), Some(agent_id)),
+        (json!({ "server": true, "agents": [agent_id], "quorum": 3 }), None),
+    ] {
+        let reply =
+            app.post("/api/targets", payload(multisite.clone(), via_agent), Some(&admin)).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{multisite}: {}", reply.body);
+    }
+
+    let reply = app
+        .post(
+            "/api/targets",
+            payload(json!({ "server": true, "agents": [agent_id, agent_id] }), None),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    let target_id = reply.body["id"].as_i64().unwrap();
+    assert_eq!(
+        reply.body["multisite"],
+        json!({ "server": true, "agents": [agent_id], "quorum": null }),
+        "agents dédoublonnés"
+    );
+
+    // Avant toute ronde : les emplacements attendent.
+    let report = app.get(&format!("/api/targets/{target_id}/probe-locations"), Some(&admin)).await;
+    assert_eq!(report.status, StatusCode::OK, "{}", report.body);
+    assert_eq!(report.body["decision"], "unknown");
+    assert_eq!(report.body["quorum"], 2);
+    let locations = report.body["locations"].as_array().unwrap();
+    assert_eq!(locations.len(), 2);
+    assert_eq!(locations[0]["location"], "server");
+    assert_eq!(locations[1]["location"], format!("agent-{agent_id}"));
+    assert_eq!(locations[1]["state"], "pending");
+
+    // « Probe now » lance une ronde complète et attend la décision.
+    let probe = {
+        let app = app.router.clone();
+        let admin = admin.clone();
+        tokio::spawn(async move {
+            let request = Request::builder()
+                .method("POST")
+                .uri(format!("/api/targets/{target_id}/probe"))
+                .header(header::COOKIE, admin)
+                .header("x-requested-with", "DumbMonit")
+                .body(Body::empty())
+                .unwrap();
+            let response = app.oneshot(request).await.expect("réponse");
+            let status = response.status();
+            let bytes = response.into_body().collect().await.expect("corps").to_bytes();
+            (status, serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null))
+        })
+    };
+    let (command, job) = take_probe(&app, &token, "machine-geneve").await;
+    assert_eq!(job.target.id, target_id);
+    let registry = dumbmonit_server::collectors::Registry::remote(Duration::from_secs(2));
+    let samples = registry
+        .probe(&job.target, Duration::from_secs(job.timeout_secs))
+        .await
+        .expect("sonde http locale");
+    let outcome =
+        ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None, netconfig: None };
+    let (status, body) = as_agent(
+        &app,
+        "POST",
+        &format!("/api/agent/relay/{}?key=machine-geneve", command.id),
+        &token,
+        serde_json::to_value(&outcome).unwrap(),
+    )
+    .await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    let (status, reply) = probe.await.expect("tâche");
+    assert_eq!(status, StatusCode::OK, "{reply}");
+    assert!(
+        reply["series"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|s| s.as_str().unwrap().contains("probe_success{")),
+        "{reply}"
+    );
+
+    // La décision est publiée, l'agent a son constat et sa latence.
+    let report = app.get(&format!("/api/targets/{target_id}/probe-locations"), Some(&admin)).await;
+    assert_eq!(report.body["decision"], "up", "{}", report.body);
+    let agent = &report.body["locations"][1];
+    assert_eq!(agent["state"], "up", "{}", report.body);
+    assert!(agent["latency_ms"].is_u64(), "{}", report.body);
+    assert!(agent["checked_at"].is_string());
+    let view = app.get(&format!("/api/targets/{target_id}"), Some(&admin)).await;
+    assert!(view.body["last_error"].is_null(), "{}", view.body);
+
+    // `null` retire le réglage.
+    let off = payload(Value::Null, None);
+    let reply = app.put(&format!("/api/targets/{target_id}"), off, Some(&admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert!(reply.body["multisite"].is_null());
 }

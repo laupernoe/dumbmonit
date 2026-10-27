@@ -1,0 +1,13 @@
+{
+  "name": "vps-aaa111.vps.ovh.net",
+  "displayName": "web-1",
+  "state": "running",
+  "zone": "Region OpenStack: os-gra3",
+  "offerType": "ssd",
+  "vcore": 2,
+  "memoryLimit": 4096,
+  "netbootMode": "local",
+  "keymap": "fr",
+  "slaMonitoring": true,
+  "model": { "name": "vps-ssd-2", "offer": "VPS vps2020-essential-2-4-80", "memory": 4096, "vcore": 2, "disk": 80, "version": "2019v1", "maximumAdditionnalIp": 16 }
+}

@@ -6,6 +6,7 @@
  * to `<html>` as a `dark` class, as Tailwind expects.
  */
 import { browser } from '$app/env';
+import { mode } from './mode.svelte.js';
 
 export type ThemePreference = 'auto' | 'light' | 'dark';
 
@@ -47,6 +48,8 @@ class Theme {
 
 	/** Theme actually applied, once the preference is resolved. */
 	get resolved(): 'light' | 'dark' {
+		// The Enterprise console is dark by design: one palette, tuned for long shifts.
+		if (mode.enterprise) return 'dark';
 		if (this.preference === 'auto') return this.#systemDark ? 'dark' : 'light';
 		return this.preference;
 	}

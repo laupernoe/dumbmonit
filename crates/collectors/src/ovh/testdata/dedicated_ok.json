@@ -1,0 +1,17 @@
+{
+  "name": "ns100.ip-1-2-3.eu",
+  "serverId": 100,
+  "state": "ok",
+  "powerState": "poweron",
+  "monitoring": true,
+  "datacenter": "rbx8",
+  "commercialRange": "advance",
+  "os": "debian12_64",
+  "ip": "1.2.3.4",
+  "reverse": "ns100.ip-1-2-3.eu",
+  "professionalUse": false,
+  "supportLevel": "pro",
+  "noIntervention": false,
+  "rack": "G123B04",
+  "region": "eu-west-rbx"
+}

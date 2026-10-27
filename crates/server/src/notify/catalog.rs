@@ -47,6 +47,10 @@ pub struct Field {
     /// secrets : l'API refuse de les envoyer vers une destination qu'ils n'ont
     /// pas connue, et l'interface les affiche alors comme obligatoires.
     pub destination: bool,
+    /// Liste de choix que l'interface va chercher elle-même, vide sinon :
+    /// `oncall_policies` (politiques d'escalade) pour le canal d'astreinte. Une
+    /// interface qui ne la connaît pas affiche le champ selon `input`.
+    pub lookup: &'static str,
 }
 
 /// Un type de canal, prêt à être présenté.
@@ -135,6 +139,7 @@ fn field(
         shape: "scalar",
         default: "",
         destination: false,
+        lookup: "",
     }
 }
 
@@ -176,6 +181,10 @@ impl Field {
 
     fn required(self) -> Self {
         Self { required: true, ..self }
+    }
+
+    fn lookup(self, lookup: &'static str) -> Self {
+        Self { lookup, ..self }
     }
 
     fn with_default(self, default: &'static str) -> Self {
@@ -237,7 +246,21 @@ fn describe(kind: &'static str) -> Option<KindInfo> {
 /// ([`super::Notifier::renders_actions`]).
 pub fn action_style(kind: &str) -> &'static str {
     match kind {
-        "pagerduty" | "opsgenie" => "none",
+        // Astreinte avec son propre acquittement, et SMS (un lien signé de ~150
+        // caractères coûterait plusieurs segments).
+        "pagerduty"
+        | "opsgenie"
+        | "grafana_oncall"
+        | "signl4"
+        | "vonage"
+        | "telnyx"
+        | "aspsms"
+        | crate::oncall::CHANNEL_KIND
+        | "jira"
+        | "glpi"
+        | "zammad"
+        | "github_issues"
+        | "gitlab_issues" => "none",
         "ntfy" | "telegram" | super::webpush::KIND => "buttons",
         _ => "links",
     }
@@ -262,6 +285,11 @@ pub fn supports_insecure_tls(kind: &str) -> bool {
             | "homeassistant"
             | "signal"
             | "webhook"
+            | "jira"
+            | "glpi"
+            | "zammad"
+            | "github_issues"
+            | "gitlab_issues"
     )
 }
 
@@ -840,6 +868,245 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
             ],
         ),
 
+        "whatsapp" => info(
+            kind,
+            "WhatsApp (Cloud API)",
+            "WhatsApp message through the Meta Cloud API.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#whatsapp-cloud-api",
+            vec![
+                text(
+                    "phone_number_id",
+                    "Phone number ID",
+                    "The numeric ID of the sending number, shown under WhatsApp → API Setup \
+                     in the Meta developer console. Not the phone number itself.",
+                    "109876543210987",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in international format per line. Meta only allows free text \
+                     within 24 h of the recipient's last message to your number.",
+                    "+33612345678",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Access token",
+                    "A permanent system-user token with the whatsapp_business_messaging \
+                     permission.",
+                    "EAAGm0PX4ZCpsBA…",
+                )
+                .required(),
+            ],
+        ),
+        "callmebot" => info(
+            kind,
+            "WhatsApp (CallMeBot)",
+            "WhatsApp message to yourself through the free CallMeBot gateway.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#whatsapp-callmebot",
+            vec![
+                text(
+                    "phone",
+                    "Phone number",
+                    "Your number in international format, the one that activated CallMeBot.",
+                    "+34123456789",
+                )
+                .required(),
+            ],
+            vec![
+                password(
+                    "api_key",
+                    "API key",
+                    "Sent back by the CallMeBot contact once you have written to it.",
+                    "123456",
+                )
+                .required(),
+            ],
+        ),
+        "threema" => info(
+            kind,
+            "Threema Gateway",
+            "Threema message from your Gateway ID, in basic mode.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#threema-gateway",
+            vec![
+                text(
+                    "from",
+                    "Gateway ID",
+                    "Eight characters starting with \"*\", from gateway.threema.ch.",
+                    "*MYGWAY1",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One Threema ID (eight characters) per line.",
+                    "ECHOECHO",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "secret",
+                    "API secret",
+                    "Shown next to the Gateway ID in the Threema Gateway portal.",
+                    "AbCdEfGhIjKlMnOp",
+                )
+                .required(),
+            ],
+        ),
+        "webex" => info(
+            kind,
+            "Webex",
+            "Message from a Webex bot in a space.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#webex",
+            vec![
+                text(
+                    "room_id",
+                    "Room ID",
+                    "The space identifier (not its name). The bot must be a member of the \
+                     space.",
+                    "Y2lzY29zcGFyazovL3VzL1JPT00vYWJj",
+                )
+                .required(),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Bot token",
+                    "Created on developer.webex.com → My Apps → Create a Bot.",
+                    "NzE2ZjQ5Y2ItZXhhbXBsZQ",
+                )
+                .required(),
+            ],
+        ),
+        "vonage" => info(
+            kind,
+            "SMS via Vonage",
+            "SMS sent by Vonage, trimmed to the essentials.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-vonage",
+            vec![
+                text(
+                    "from",
+                    "Sender",
+                    "A number, or an alphanumeric sender name where your country allows it.",
+                    "DumbMonit",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in international format per line.",
+                    "+33612345678",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password("api_key", "API key", "Shown on the Vonage API dashboard.", "ab12cd34")
+                    .required(),
+                password(
+                    "api_secret",
+                    "API secret",
+                    "Next to the API key on the Vonage dashboard.",
+                    "AbCdEfGhIjKlMnOp",
+                )
+                .required(),
+            ],
+        ),
+        "telnyx" => info(
+            kind,
+            "SMS via Telnyx",
+            "SMS sent by Telnyx, trimmed to the essentials.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-telnyx",
+            vec![
+                text(
+                    "from",
+                    "Sender number",
+                    "A Telnyx number with SMS enabled, in E.164 format.",
+                    "+15005550006",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in E.164 format (with the +) per line.",
+                    "+33612345678",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "api_key",
+                    "API key (v2)",
+                    "Mission Control Portal → Auth → API Keys.",
+                    "KEY0123456789ABCDEF",
+                )
+                .required(),
+            ],
+        ),
+        "aspsms" => info(
+            kind,
+            "SMS via ASPSMS",
+            "SMS sent by ASPSMS, trimmed to the essentials.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#sms-via-aspsms",
+            vec![
+                text("userkey", "Userkey", "Your ASPSMS account userkey.", "ABCDE12345").required(),
+                text(
+                    "originator",
+                    "Originator",
+                    "Sender name (11 characters at most) or number, as allowed by your account.",
+                    "DumbMonit",
+                )
+                .required(),
+                textarea(
+                    "to",
+                    "Recipients",
+                    "One number in international format per line.",
+                    "+41791234567",
+                )
+                .required()
+                .list(),
+            ],
+            vec![
+                password(
+                    "password",
+                    "API password",
+                    "The API password set in the ASPSMS interface (not the login password).",
+                    "AbCdEfGhIjKl",
+                )
+                .required(),
+            ],
+        ),
+        "grafana_oncall" => info(
+            kind,
+            "Grafana OnCall",
+            "Alert group in Grafana OnCall, resolved when the alert is.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#grafana-oncall",
+            vec![],
+            vec![webhook_url(
+                "Integrations → New integration → Webhook, then copy the HTTP endpoint.",
+                "https://oncall.example.org/integrations/v1/webhook/AbCdEf123456/",
+            )],
+        ),
+        "signl4" => info(
+            kind,
+            "SIGNL4",
+            "Mobile alert to your SIGNL4 team, closed when the alert resolves.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#signl4",
+            vec![],
+            vec![webhook_url(
+                "The team webhook: https://connect.signl4.com/webhook/ followed by your team \
+                 secret, shown under Teams → Team settings.",
+                "https://connect.signl4.com/webhook/abc123def4",
+            )],
+        ),
+
         // --- Astreinte -----------------------------------------------------
         "pagerduty" => info(
             kind,
@@ -885,6 +1152,264 @@ fn describe_base(kind: &'static str) -> Option<KindInfo> {
                     "API key",
                     "Teams → Integrations → Add integration → API.",
                     "01234567-89ab-cdef-0123-456789abcdef",
+                )
+                .required(),
+            ],
+        ),
+
+        // Astreintes intégrées : rien ne part vers un tiers, le canal ouvre une
+        // escalade (`crate::oncall`).
+        "oncall" => info(
+            kind,
+            "DumbMonit on-call",
+            "Runs an escalation policy: pages whoever is on call, then the next step until \
+             someone acknowledges.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#dumbmonit-on-call",
+            vec![
+                number(
+                    "policy_id",
+                    "Escalation policy",
+                    "The policy to run, set up in Alerts → On-call.",
+                    "1",
+                )
+                .required()
+                .lookup("oncall_policies"),
+            ],
+            vec![],
+        ),
+
+        // --- Tickets automatiques ---------------------------------------------
+        "jira" => info(
+            kind,
+            "Jira",
+            "Ticket opened by the alert, commented on escalation, closed by its resolution.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#jira",
+            vec![
+                url(
+                    "server_url",
+                    "Jira address",
+                    "Jira Cloud site or Data Center server, without /rest.",
+                    "https://example.atlassian.net",
+                )
+                .required(),
+                text(
+                    "email",
+                    "Account e-mail",
+                    "Jira Cloud: the account that owns the API token. Leave empty on Data Center, where the token is a personal access token.",
+                    "ops@example.org",
+                ),
+                text("project", "Project key", "The key shown before the issue number.", "OPS")
+                    .required()
+                    .destination(true),
+                text("issue_type", "Issue type", "Defaults to Task.", "Task").with_default("Task"),
+                textarea("labels", "Labels", "One label per line.", "dumbmonit").list(),
+                select(
+                    "priority",
+                    "Priority field",
+                    "\"map\" sets Highest, Medium or Low from the severity; \"none\" leaves it \
+                     to the project (some projects have no priority field).",
+                    &["map", "none"],
+                ),
+                text(
+                    "close_transition",
+                    "Transition on resolution",
+                    "Name of the workflow transition (or of its target status) that closes the \
+                     issue. Defaults to Done.",
+                    "Done",
+                )
+                .with_default("Done"),
+                text(
+                    "reopen_transition",
+                    "Transition to reopen",
+                    "Used when the alert comes back within the reopen delay. Defaults to Reopen.",
+                    "Reopen",
+                )
+                .with_default("Reopen"),
+                number(
+                    "reopen_hours",
+                    "Reopen if the alert returns within (hours)",
+                    "0 or empty: a returning alert always opens a new ticket.",
+                    "24",
+                ),
+            ],
+            vec![
+                password(
+                    "api_token",
+                    "API token",
+                    "Cloud: id.atlassian.com → Security → API tokens. Data Center: Profile → \
+                     Personal Access Tokens.",
+                    "ATATT3xFfGF0…",
+                )
+                .required(),
+            ],
+        ),
+        "glpi" => info(
+            kind,
+            "GLPI",
+            "Incident opened by the alert, followed up on escalation, solved by its resolution.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#glpi",
+            vec![
+                url(
+                    "server_url",
+                    "GLPI address",
+                    "The address of GLPI; /apirest.php is added. The REST API must be enabled \
+                     (Setup → General → API).",
+                    "https://glpi.example.org",
+                )
+                .required(),
+                number("entity_id", "Entity id", "Empty: the profile's default entity.", "0"),
+                number("category_id", "Category id", "ITIL category of the ticket.", "12"),
+                select(
+                    "close_status",
+                    "Status on resolution",
+                    "Solved lets the requester validate; Closed ends the ticket.",
+                    &["solved", "closed"],
+                ),
+                number(
+                    "reopen_hours",
+                    "Reopen if the alert returns within (hours)",
+                    "0 or empty: a returning alert always opens a new ticket.",
+                    "24",
+                ),
+            ],
+            vec![
+                password(
+                    "user_token",
+                    "User API token",
+                    "My settings → Remote access keys → API token.",
+                    "f7g3csp8mgatg5ebc5elnazakw20i9fyev1qopya7",
+                )
+                .required(),
+                password(
+                    "app_token",
+                    "Application token",
+                    "Setup → General → API → API clients. Empty if the client does not require one.",
+                    "nHqcAHhq0XQYPrCzGXZNfMn1NGgUVUMdnPqZ9o3m",
+                ),
+            ],
+        ),
+        "zammad" => info(
+            kind,
+            "Zammad",
+            "Ticket opened by the alert, noted on escalation, closed by its resolution.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#zammad",
+            vec![
+                url(
+                    "server_url",
+                    "Zammad address",
+                    "The address of your Zammad, without /api.",
+                    "https://support.example.org",
+                )
+                .required(),
+                text("group", "Group", "The group that receives the tickets.", "Users").required(),
+                text(
+                    "customer",
+                    "Customer",
+                    "E-mail or login of the customer the tickets are filed for.",
+                    "ops@example.org",
+                )
+                .required(),
+                text("close_state", "State on resolution", "Defaults to closed.", "closed")
+                    .with_default("closed"),
+                text(
+                    "reopen_state",
+                    "State to reopen",
+                    "Used when the alert comes back within the reopen delay. Defaults to open.",
+                    "open",
+                )
+                .with_default("open"),
+                number(
+                    "reopen_hours",
+                    "Reopen if the alert returns within (hours)",
+                    "0 or empty: a returning alert always opens a new ticket.",
+                    "24",
+                ),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Access token",
+                    "Profile → Token Access. It needs the ticket.agent permission.",
+                    "s3cr3t-zammad-t0ken",
+                )
+                .required(),
+            ],
+        ),
+        "github_issues" => info(
+            kind,
+            "GitHub Issues",
+            "Issue opened by the alert, commented on escalation, closed by its resolution.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#github-issues",
+            vec![
+                text("repository", "Repository", "As owner/name.", "my-org/homelab")
+                    .required()
+                    .destination(true),
+                url(
+                    "api_url",
+                    "API address",
+                    "Only for GitHub Enterprise Server, for example https://ghe.example.org/api/v3.",
+                    "https://api.github.com",
+                ),
+                textarea(
+                    "labels",
+                    "Labels",
+                    "One label per line. They must already exist.",
+                    "monitoring",
+                )
+                .list(),
+                number(
+                    "reopen_hours",
+                    "Reopen if the alert returns within (hours)",
+                    "0 or empty: a returning alert always opens a new issue.",
+                    "24",
+                ),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Fine-grained token",
+                    "Settings → Developer settings → Fine-grained tokens, with Issues: read and \
+                     write on the repository.",
+                    "github_pat_11AAAA…",
+                )
+                .required(),
+            ],
+        ),
+        "gitlab_issues" => info(
+            kind,
+            "GitLab Issues",
+            "Issue opened by the alert, commented on escalation, closed by its resolution.",
+            "https://dumbmonit.readthedocs.io/en/latest/notifications/#gitlab-issues",
+            vec![
+                url(
+                    "server_url",
+                    "GitLab address",
+                    "gitlab.com or your instance, without /api.",
+                    "https://gitlab.example.org",
+                )
+                .required(),
+                text(
+                    "project",
+                    "Project",
+                    "Numeric id or path such as group/project.",
+                    "ops/homelab",
+                )
+                .required()
+                .destination(true),
+                textarea("labels", "Labels", "One label per line.", "monitoring").list(),
+                number(
+                    "reopen_hours",
+                    "Reopen if the alert returns within (hours)",
+                    "0 or empty: a returning alert always opens a new issue.",
+                    "24",
+                ),
+            ],
+            vec![
+                password(
+                    "token",
+                    "Access token",
+                    "A project or personal access token with the api scope.",
+                    "glpat-xxxxxxxxxxxxxxxxxxxx",
                 )
                 .required(),
             ],

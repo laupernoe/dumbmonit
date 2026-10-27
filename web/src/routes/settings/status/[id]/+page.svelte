@@ -15,6 +15,7 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ErrorNotice, PageHeader, Plate, Skeleton } from '#lib/ui/index.js';
 	import PageForm from '#lib/components/status/PageForm.svelte';
+	import MaintenanceCalendar from '#lib/components/status/MaintenanceCalendar.svelte';
 	import ShareSection from '#lib/components/status/ShareSection.svelte';
 	import SubscribersPanel from '#lib/components/status/SubscribersPanel.svelte';
 
@@ -105,9 +106,8 @@
 		{/key}
 		{#if current}
 			<ShareSection page={current} />
-			{#if current.subscribe_channel_id !== null}
-				<SubscribersPanel page={current} />
-			{/if}
+			<MaintenanceCalendar page={current} />
+			<SubscribersPanel page={current} {channels} />
 		{/if}
 	</div>
 {/if}

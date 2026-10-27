@@ -13,14 +13,21 @@
 	 * The "World" view (`?view=world`) is another picture of the same estate:
 	 * locations on a world map (`WorldView`), each with the state of its
 	 * monitors.
+	 *
+	 * "Correct the map" (admins): drag a node onto its real parent, mark a link
+	 * wrong, draw one, change a node's site or group — with undo and redo, a
+	 * list of the corrections, and the rules DumbMonit suggests from them.
+	 * Everything goes through the server (`/api/topology/corrections`), which
+	 * applies it to the map it sends back.
 	 */
 	import { flushSync, tick } from 'svelte';
 	import { page } from '$app/state';
 	import { replaceState } from '$app/navigation';
 	import { m } from '#lib/paraglide/messages.js';
 	import { getLocale } from '#lib/paraglide/runtime.js';
-	import { getTopology } from '#lib/api/topology.js';
-	import type { Topology } from '#lib/api/index.js';
+	import { createCorrection, deleteCorrection, deleteRule, getTopology, saveRule } from '#lib/api/topology.js';
+	import type { Topology, TopologyCorrection, TopologyRule, TopologySource, TopologySuggestion } from '#lib/api/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { displayState } from '#lib/format.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { Button, EmptyState, ErrorNotice, Menu, PageHeader, Skeleton, Toggle } from '#lib/ui/index.js';
@@ -29,10 +36,14 @@
 	import TopologyList from '#lib/components/topology/TopologyList.svelte';
 	import MapSheet from '#lib/components/topology/MapSheet.svelte';
 	import Legend from '#lib/components/topology/Legend.svelte';
-	import { buildGraph, isGuestKind, layoutMap, listRows, type MapNode } from '#lib/components/topology/layout.js';
+	import NodeEditor from '#lib/components/topology/NodeEditor.svelte';
+	import EdgeEditor from '#lib/components/topology/EdgeEditor.svelte';
+	import CorrectionsPanel from '#lib/components/topology/CorrectionsPanel.svelte';
+	import { EditHistory, ruleSpec } from '#lib/components/topology/edits.js';
+	import { buildGraph, edgeKey, isGuestKind, layoutMap, listRows, type MapEdge, type MapNode } from '#lib/components/topology/layout.js';
 	import { ExportError, exportPng, exportSvg } from '#lib/components/topology/export.js';
 	import WorldView from '#lib/components/worldmap/WorldView.svelte';
-	import { Download, Network } from 'lucide-svelte';
+	import { Download, Network, PencilRuler, Redo2, Undo2 } from 'lucide-svelte';
 
 	type View = 'map' | 'list' | 'world';
 
@@ -54,6 +65,7 @@
 	/** The view lives in the address, so a link (or the wall) can open the world map. */
 	function setView(next: View) {
 		view = next;
+		if (next !== 'map') editing = false;
 		const url = new URL(page.url);
 		if (next === 'map') url.searchParams.delete('view');
 		else url.searchParams.set('view', next);
@@ -177,7 +189,9 @@
 				hostId: n.host_id,
 				name: target?.name ?? n.name,
 				kind: n.kind,
-				group: target?.group_name ?? n.group_name,
+				// A grouping corrected on the map wins over the device's folder.
+				group: n.group_source === 'manual' ? n.group_name : (target?.group_name ?? n.group_name),
+				groupSource: n.group_source ?? null,
 				site: n.site,
 				siteSource: n.site_source ?? null,
 				subnet: n.subnet,
@@ -205,7 +219,12 @@
 	const hasGuests = $derived(allNodes.some((n) => isGuestKind(n.kind) && n.targetId === null));
 	const nodes = $derived(showGuests ? allNodes : allNodes.filter((n) => !(isGuestKind(n.kind) && n.targetId === null)));
 
-	const graph = $derived(buildGraph(nodes, topology?.edges ?? []));
+	const edges = $derived(
+		(topology?.edges ?? []).map(
+			(e): MapEdge => ({ from: e.from, to: e.to, source: e.source, origin: e.origin ?? 'deduced', correctionId: e.correction_id ?? null, ruleId: e.rule_id ?? null, fromPort: e.from_port ?? null, toPort: e.to_port ?? null })
+		)
+	);
+	const graph = $derived(buildGraph(nodes, edges));
 	const layout = $derived(layoutMap(graph, { byGroup, bySubnet }));
 	const sections = $derived(listRows(graph));
 	const siteCount = $derived(sections.length - 1);
@@ -261,7 +280,130 @@
 	}
 
 	const loading = $derived(topology === null && loadError === null);
+
+	// --- Correcting the map ------------------------------------------------
+
+	let editing = $state(false);
+	let selectedEdge = $state<string | null>(null);
+	/** A parent picked by a drop (or the picker), waiting for the child's confirmation. */
+	let pending = $state<{ child: string; parent: string } | null>(null);
+	let busy = $state(false);
+	let editError = $state<unknown>(null);
+	/** Said to screen readers after each step. */
+	let status = $state('');
+	/** Bumped after each step: the history is a plain object. */
+	let revision = $state(0);
+
+	const history = new EditHistory({
+		create: createCorrection,
+		remove: deleteCorrection,
+		saveRule,
+		deleteRule
+	});
+	const canUndo = $derived(revision >= 0 && history.canUndo);
+	const canRedo = $derived(revision >= 0 && history.canRedo);
+
+	const corrections = $derived(topology?.corrections ?? []);
+	const rules = $derived(topology?.rules ?? []);
+	const suggestions = $derived(topology?.suggestions ?? []);
+	const corrected = $derived(edges.some((e) => e.origin !== 'deduced'));
+	const sites = $derived([...new Set(allNodes.map((n) => n.site).filter((s): s is string => !!s))].sort((a, b) => a.localeCompare(b)));
+	const groups = $derived([...new Set(allNodes.map((n) => n.group).filter(Boolean))].sort((a, b) => a.localeCompare(b)));
+	const allById = $derived(new Map(allNodes.map((n) => [n.id, n])));
+	const name = (id: string) => allById.get(id)?.name ?? id;
+
+	// A pick on another node drops a pending attachment.
+	$effect(() => {
+		if (pending && selected !== pending.child) pending = null;
+	});
+
+	function startEditing() {
+		editing = !editing;
+		editError = null;
+		if (!editing) {
+			pending = null;
+			selectedEdge = null;
+		}
+	}
+
+	async function step(action: () => Promise<unknown>, done: string) {
+		busy = true;
+		editError = null;
+		try {
+			await action();
+			status = done;
+			pending = null;
+			await load();
+		} catch (error) {
+			editError = error;
+		} finally {
+			busy = false;
+			revision++;
+		}
+	}
+
+	function attach(child: string, parent: string, useForAlerts: boolean) {
+		void step(() => history.create({ kind: 'parent', from: parent, to: child, use_for_alerts: useForAlerts }), m.topology_edit_status_saved());
+	}
+
+	function link(child: string, other: string, kind: TopologySource) {
+		void step(() => history.create({ kind: 'link', from: other, to: child, source: kind }), m.topology_edit_status_saved());
+	}
+
+	function setSite(id: string, site: string) {
+		void step(() => history.create({ kind: 'site', to: id, value: site }), m.topology_edit_status_saved());
+	}
+
+	function setGroup(id: string, group: string) {
+		void step(() => history.create({ kind: 'group', to: id, value: group }), m.topology_edit_status_saved());
+	}
+
+	function markWrong(edge: MapEdge) {
+		selectedEdge = null;
+		void step(() => history.create({ kind: 'forbid', from: edge.from, to: edge.to, source: edge.source }), m.topology_edit_status_saved());
+	}
+
+	function removeCorrection(correction: TopologyCorrection) {
+		selectedEdge = null;
+		void step(() => history.remove(correction), m.topology_edit_status_removed());
+	}
+
+	function removeRule(rule: TopologyRule) {
+		selectedEdge = null;
+		void step(() => history.unrule(rule), m.topology_edit_status_removed());
+	}
+
+	function decide(suggestion: TopologySuggestion, accept: boolean) {
+		void step(
+			() => history.rule(ruleSpec(suggestion), accept ? 'active' : 'dismissed', suggestion.evidence),
+			accept ? m.topology_edit_status_applied() : m.topology_edit_status_declined()
+		);
+	}
+
+	function undo() {
+		if (canUndo && !busy) void step(() => history.undo(), m.topology_edit_status_undone());
+	}
+
+	function redo() {
+		if (canRedo && !busy) void step(() => history.redo(), m.topology_edit_status_redone());
+	}
+
+	function onkeydown(event: KeyboardEvent) {
+		if (!editing || !(event.ctrlKey || event.metaKey)) return;
+		const target = event.target as HTMLElement | null;
+		if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+		const key = event.key.toLowerCase();
+		if (key === 'z' && !event.shiftKey) {
+			event.preventDefault();
+			undo();
+		} else if ((key === 'z' && event.shiftKey) || key === 'y') {
+			event.preventDefault();
+			redo();
+		}
+	}
 </script>
+
+<svelte:window {onkeydown} />
 
 <svelte:head>
 	<title>{m.topology_page_title()}</title>
@@ -272,6 +414,12 @@
 <div class="topo-screen print:hidden">
 	<PageHeader title={m.topology_title()} description={m.topology_description()}>
 		{#snippet actions()}
+			{#if auth.isAdmin && view === 'map' && layout.nodes.length > 0}
+				<Button variant={editing ? 'primary' : 'secondary'} aria-pressed={editing} onclick={startEditing}>
+					<PencilRuler class="size-4" aria-hidden="true" />
+					{editing ? m.topology_edit_done() : m.topology_edit_start()}
+				</Button>
+			{/if}
 			{#if layout.nodes.length > 0 && view !== 'world'}
 				<Menu label={m.topology_export()} align="right">
 					{#snippet trigger({ toggle, open })}
@@ -355,14 +503,98 @@
 			<div class="mb-3"><ErrorNotice error={exportError} title={m.topology_export_error()} hint={m.topology_export_error_hint()} local /></div>
 		{/if}
 
+		{#if view === 'map' && editing}
+			<div class="mb-3 flex flex-col gap-2 rounded-[var(--radius-card)] border border-signal/50 bg-surface px-4 py-3 sm:flex-row sm:items-center sm:gap-4">
+				<p class="min-w-0 flex-1 text-sm text-ink-2">{m.topology_edit_banner()}</p>
+				<div class="flex shrink-0 items-center gap-2">
+					<Button variant="secondary" size="sm" disabled={!canUndo || busy} onclick={undo} title={m.topology_edit_undo_hint()}>
+						<Undo2 class="size-4" aria-hidden="true" />{m.topology_edit_undo()}
+					</Button>
+					<Button variant="secondary" size="sm" disabled={!canRedo || busy} onclick={redo} title={m.topology_edit_redo_hint()}>
+						<Redo2 class="size-4" aria-hidden="true" />{m.topology_edit_redo()}
+					</Button>
+				</div>
+				<p class="sr-only" aria-live="polite">{status}</p>
+			</div>
+			{#if editError}
+				<div class="mb-3"><ErrorNotice error={editError} title={m.topology_edit_error()} /></div>
+			{/if}
+		{/if}
+
 		{#if view === 'map'}
-			<TopologyCanvas {layout} {graph} bind:selected class="h-[72vh] min-h-[440px]" />
+			<TopologyCanvas
+				{layout}
+				{graph}
+				bind:selected
+				bind:selectedEdge
+				{editing}
+				editor={editing ? nodeEditor : undefined}
+				edgePanel={editing ? edgeEditor : undefined}
+				onattach={(child, parent) => {
+					selected = child;
+					pending = { child, parent };
+				}}
+				class="h-[72vh] min-h-[440px]"
+			/>
 		{:else}
 			<TopologyList {sections} />
 		{/if}
-		<Legend wan={siteCount > 0} class="mt-3" />
+		<Legend wan={siteCount > 0} {corrected} class="mt-3" />
+		{#if view === 'map' && editing}
+			<CorrectionsPanel
+				{corrections}
+				{rules}
+				{suggestions}
+				{name}
+				{busy}
+				onaccept={(s) => decide(s, true)}
+				ondecline={(s) => decide(s, false)}
+				onremoverule={removeRule}
+				onremove={removeCorrection}
+				class="mt-6"
+			/>
+		{/if}
 	{/if}
 </div>
+
+{#snippet nodeEditor(id: string)}
+	<NodeEditor
+		{graph}
+		{id}
+		{corrections}
+		{sites}
+		{groups}
+		{busy}
+		pending={pending?.child === id ? pending.parent : null}
+		onpending={(parent) => (pending = parent === null ? null : { child: id, parent })}
+		onattach={(parent, useForAlerts) => attach(id, parent, useForAlerts)}
+		onlink={(other, kind) => link(id, other, kind)}
+		onsite={(site) => setSite(id, site)}
+		ongroup={(group) => setGroup(id, group)}
+		onremove={removeCorrection}
+	/>
+{/snippet}
+
+{#snippet edgeEditor(key: string)}
+	{@const edge = graph.edges.find((e) => edgeKey(e) === key)}
+	{#if edge}
+		<EdgeEditor
+			{edge}
+			{name}
+			{corrections}
+			{rules}
+			{busy}
+			onwrong={markWrong}
+			onremovecorrection={removeCorrection}
+			onremoverule={removeRule}
+			onselect={(id) => {
+				selectedEdge = null;
+				selected = id;
+			}}
+			onclose={() => (selectedEdge = null)}
+		/>
+	{/if}
+{/snippet}
 
 {#if sheetWanted && layout.nodes.length > 0}
 	<!-- The sheet: hidden on screen, the only thing printed, and the source of the exports. Mounted on demand (`sheetWanted`). -->

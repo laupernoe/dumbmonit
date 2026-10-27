@@ -69,8 +69,19 @@ Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://g
 
 ## Status
 
-**Version 0.11.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
+**Version 0.14.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
 Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
+
+## Support DumbMonit
+
+DumbMonit is free and has no company behind it. If it saves you time, you can support its development:
+
+- **Liberapay** (recurring or one-off): [liberapay.com/laupernoe](https://liberapay.com/laupernoe)
+- **Bitcoin**: `bc1phcqfc46ev9ztpuxyh3fmz6aaktshnz8z4ve9jk7pxdcyu9ks37wqq2kjgd`
+- **Ethereum**: `0x67Cd93028943308B8c12782C9ad078D253278f40`
+- **Solana**: `63u8bhkf63HBcNYbRRyaHPtfRtSUmbugtwaauzAxHtb3`
+
+Bug reports, translations and device profiles help just as much.
 
 ## License
 

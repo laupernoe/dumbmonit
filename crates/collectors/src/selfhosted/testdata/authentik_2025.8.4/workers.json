@@ -1,0 +1,1 @@
+[{"worker_id":"celery@authentik-worker-1","version":"2025.8.4","version_matches":true},{"worker_id":"celery@authentik-worker-2","version":"2025.6.3","version_matches":false}]

@@ -71,6 +71,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       RUN: ${{ needs.changes.outputs.rust }}
+      # The test binaries of the whole workspace no longer fit the runner's
+      # disk with debug info: none is needed to read a failing assertion.
+      CARGO_INCREMENTAL: 0
+      CARGO_PROFILE_DEV_DEBUG: 0
+      CARGO_PROFILE_TEST_DEBUG: 0
     steps:
       - name: Changed paths known
         if: needs.changes.result != 'success'
@@ -78,6 +83,9 @@ jobs:
       - name: Nothing to check
         if: env.RUN != 'true'
         run: echo "No Rust change in this pull request." >> "$GITHUB_STEP_SUMMARY"
+      - name: Free disk space
+        if: env.RUN == 'true'
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
       - if: env.RUN == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       # The server embeds web/build at compile time (rust_embed): without it
@@ -119,6 +127,8 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
+      - name: Free disk space
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h /
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:

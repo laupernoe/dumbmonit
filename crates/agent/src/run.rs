@@ -5,7 +5,8 @@ use std::time::Duration;
 
 use anyhow::{Context, Result};
 use dumbmonit_proto::{
-    AgentIdentity, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample, SoftwareInventory,
+    AgentIdentity, AgentUpdateOffer, MAX_BATCH_SAMPLES, PushBatch, RelaySetting, Sample,
+    SoftwareInventory,
 };
 use tokio::time::Instant;
 use tracing::{debug, info, warn};
@@ -16,6 +17,7 @@ use crate::buffer::PendingBuffer;
 use crate::client::{PushClient, PushError};
 use crate::collect::backup_repos::BackupReposProbe;
 use crate::collect::docker::DockerProbe;
+use crate::collect::eventlog::{self, PlatformProbe as EventLogProbe};
 use crate::collect::inventory::{self, PendingInventory};
 use crate::collect::ipsec::IpsecProbe;
 use crate::collect::libvirt::LibvirtProbe;
@@ -32,7 +34,9 @@ use crate::collect::zfs::ZfsProbe;
 use crate::collect::{SystemProbe, agent_samples, services};
 use crate::commands::CommandRunner;
 use crate::config::{Config, MIN_INTERVAL_SECS};
+use crate::logs::LogRunner;
 use crate::relay::RelayRunner;
+use crate::selfupdate::{AfterStop, SelfUpdater};
 use crate::shutdown::Shutdown;
 use crate::tls::TlsState;
 
@@ -107,11 +111,17 @@ pub struct Agent {
     inventory: PendingInventory,
     /// Tâche de fond du relevé quotidien, lancée au premier cycle.
     inventory_task: Option<tokio::task::JoinHandle<()>>,
+    /// Moniteurs déclarés par les étiquettes Docker au dernier cycle ; `None` :
+    /// Docker illisible ou désactivé, le serveur ne doit alors rien archiver.
+    declared: Option<Vec<dumbmonit_proto::DeclaredMonitor>>,
     /// Compteurs de performance Windows (liste libre, jeu MDaemon). Muet
     /// ailleurs, et muet sous Windows quand rien n'est configuré ni détecté.
     perf_counters: PerfCountersProbe,
     /// MDaemon et SecurityGateway : services, files, version (Windows).
     mail_server: MailServerProbe,
+    /// Journal d'événements Windows : les règles reçues du serveur. Muet tant
+    /// qu'il n'y en a aucune, c'est-à-dire partout ailleurs que sous Windows.
+    eventlog: EventLogProbe,
     buffer: PendingBuffer,
     client: PushClient,
     backoff: Backoff,
@@ -124,6 +134,10 @@ pub struct Agent {
     /// réception le porte. `None` tant que le serveur n'en a rien dit (serveur
     /// antérieur) : seule la configuration locale compte alors.
     server_relay: Option<RelaySetting>,
+    /// Collecte de journaux de cette machine, et le réglage que le dernier accusé
+    /// de réception portait (`None` : serveur antérieur, rien n'est collecté).
+    logs: LogRunner,
+    server_logs: Option<dumbmonit_proto::LogsSetting>,
     /// Période courante : celle de la configuration, jusqu'à ce que le serveur en
     /// demande une autre dans son accusé de réception.
     interval: Duration,
@@ -159,11 +173,20 @@ pub struct Agent {
     /// Vrai une fois un échec du canal chiffré signalé, pour ne le dire
     /// qu'une fois par épisode.
     tls_failed: bool,
+    /// Mise à jour automatique de l'agent lui-même.
+    updater: SelfUpdater,
+    /// Dernière offre de mise à jour du serveur, examinée après l'envoi.
+    update_offer: Option<AgentUpdateOffer>,
+    /// Ce qu'il reste à faire une fois la boucle arrêtée (redémarrer sur le
+    /// nouveau binaire, ou rétablir l'ancien).
+    after_stop: Option<AfterStop>,
 }
 
 impl Agent {
     pub fn new(config: Config) -> Result<Self> {
-        let identity = crate::identity::detect(&config);
+        let mut identity = crate::identity::detect(&config);
+        let updater = SelfUpdater::new(config.self_update);
+        identity.self_update = Some(updater.info());
         let binding = Binding::load(&config.secret_path);
         let client = PushClient::new(
             &config.server_url,
@@ -191,6 +214,12 @@ impl Agent {
             client.clone(),
             identity.key(),
             &config.docker_socket,
+        )
+        .with_actions(config.actions.clone());
+        let logs = LogRunner::new(
+            client.clone(),
+            identity.key(),
+            config.secret_path.with_file_name("logs-spool.jsonl"),
         );
         Ok(Self {
             interval: config.interval,
@@ -210,12 +239,18 @@ impl Agent {
             libvirt: LibvirtProbe::new(&config.libvirt),
             inventory: PendingInventory::default(),
             inventory_task: None,
+            declared: None,
             perf_counters: PerfCountersProbe::for_platform(&config.perf_counters),
             mail_server: MailServerProbe::for_platform(config.perf_counters.mdaemon),
+            eventlog: EventLogProbe::for_platform(
+                config.secret_path.with_file_name(eventlog::STATE_FILE),
+            ),
             backoff: Backoff::new(BACKOFF_BASE, BACKOFF_MAX),
             commands,
             relay: None,
             server_relay: None,
+            logs,
+            server_logs: None,
             binding,
             binding_refused: false,
             disabled_modules: BTreeSet::new(),
@@ -226,6 +261,9 @@ impl Agent {
             tls_path,
             tls_retry_at: None,
             tls_failed: false,
+            updater,
+            update_offer: None,
+            after_stop: None,
             identity,
             client,
             config,
@@ -237,10 +275,12 @@ impl Agent {
         let started = Instant::now();
         let mut snapshot = self.probe.read();
         snapshot.services = services::probe(&self.config.services).await;
+        self.declared = None;
         if self.config.docker && self.wants("docker") {
             snapshot.containers = self.docker.read().await;
             if let Some(inventory) = snapshot.containers.as_mut() {
                 self.check_updates(&mut inventory.detailed);
+                self.declared = Some(inventory.declared.clone());
             }
         }
         snapshot.system_health = self.health.read().await;
@@ -275,6 +315,7 @@ impl Agent {
         // Un seul horodatage pour tout le cycle : c'est ce qui rend les séries
         // comparables entre elles à l'instant près.
         let now_ms = chrono::Utc::now().timestamp_millis();
+        self.eventlog.read(now_ms);
         let mut samples = snapshot.to_samples(now_ms);
         if speedtest {
             samples.extend(crate::collect::speedtest::threshold_samples(
@@ -394,6 +435,12 @@ impl Agent {
 
         let mut next_collect = Instant::now();
         let mut next_send = Instant::now();
+        // Nouveau binaire à l'essai : sans lot accepté d'ici là, l'ancien
+        // revient.
+        let trial_deadline = self.updater.trial_deadline();
+        if trial_deadline.is_some() {
+            info!("new agent version on trial until its first accepted batch");
+        }
         // Toute réponse favorable du serveur, y compris sur le canal du relais,
         // met fin à la temporisation : inutile d'attendre qu'elle expire.
         let reachable = self.client.reachable();
@@ -426,6 +473,10 @@ impl Agent {
                             // de lui demander s'il attend quelque chose de nous.
                             self.commands.poll().await;
                             self.sync_relay(&shutdown);
+                            self.logs.apply(self.server_logs.clone(), &shutdown);
+                            if self.apply_update().await {
+                                break;
+                            }
                             Instant::now()
                         }
                         FlushOutcome::Idle => Instant::now(),
@@ -441,18 +492,55 @@ impl Agent {
                     debug!("server answered on another channel, sending now");
                     next_send = Instant::now();
                 }
+
+                _ = tokio::time::sleep_until(trial_deadline.unwrap_or(next_collect)),
+                    if trial_deadline.is_some() && self.updater.in_trial() => {
+                    if let Some(action) = self.updater.expire_trial() {
+                        self.after_stop = Some(action);
+                        break;
+                    }
+                }
             }
         }
 
         self.commands.finish(SHUTDOWN_COMMAND_TIMEOUT).await;
         if let Some(relay) = self.relay.take() {
-            // Le relais observe le même signal d'arrêt : on attend seulement
-            // qu'il ait rendu la main.
-            let _ = relay.await;
+            if self.after_stop.is_some() {
+                // Arrêt pour la mise à jour : le signal d'arrêt n'a pas été
+                // donné, le relais ne rendrait pas la main de lui-même.
+                relay.abort();
+            } else {
+                // Le relais observe le même signal d'arrêt : on attend
+                // seulement qu'il ait rendu la main.
+                let _ = relay.await;
+            }
         }
+        self.logs.finish(self.after_stop.is_none()).await;
         self.final_flush().await;
+        if let Some(action) = self.after_stop.take() {
+            info!("agent stopped for its update");
+            return crate::selfupdate::after_stop(action);
+        }
         info!("agent stopped");
         Ok(())
+    }
+
+    /// Examine l'offre de mise à jour du dernier accusé de réception. Vrai si
+    /// le nouveau binaire est en place : la boucle s'arrête pour lui céder la
+    /// place.
+    async fn apply_update(&mut self) -> bool {
+        let Some(offer) = self.update_offer.take() else { return false };
+        let key = self.identity.key();
+        let after = self.updater.consider(&offer, &self.client, &key).await;
+        // L'issue (refus, échec) part avec le lot suivant.
+        self.identity.self_update = Some(self.updater.info());
+        match after {
+            Some(action) => {
+                self.after_stop = Some(action);
+                true
+            }
+            None => false,
+        }
     }
 
     /// Vrai si l'agent doit relayer : `relay: true` en local, qui prime, ou le
@@ -539,6 +627,8 @@ impl Agent {
         if self.wants_inventory() {
             batch.inventory = inventory::lock(&self.inventory).clone();
         }
+        batch.event_log = self.eventlog.report();
+        batch.declared_monitors = self.declared.clone();
 
         match self.client.send(&batch).await {
             Ok(ack) => {
@@ -554,10 +644,22 @@ impl Agent {
                 debug!(target = ack.target_id, accepted = ack.accepted, "batch accepted");
                 self.note_acceptance(count, ack.accepted);
                 self.forget_inventory(batch.inventory.as_ref());
+                self.eventlog.acknowledge(batch.event_log.as_ref());
                 self.adopt_binding(ack.agent_secret.clone(), ack.bound);
                 self.adopt_interval(ack.interval_secs);
                 self.adopt_disabled_modules(ack.disabled_modules);
                 self.adopt_relay(ack.relay);
+                // `None` : serveur antérieur, ou machine qui n'est pas sous
+                // Windows ; les règles connues restent.
+                if let Some(rules) = ack.event_rules {
+                    self.eventlog.set_rules(rules);
+                }
+                self.server_logs = ack.logs;
+                // Nouveau binaire à l'essai : ce lot accepté le confirme.
+                if self.updater.confirm() {
+                    self.identity.self_update = Some(self.updater.info());
+                }
+                self.update_offer = ack.agent_update;
                 FlushOutcome::Sent { count }
             }
             Err(PushError::Forbidden(message)) if message == dumbmonit_proto::MTLS_REQUIRED => {
@@ -587,6 +689,13 @@ impl Agent {
                     self.buffer.restore(batch.samples);
                     return FlushOutcome::Failed(PushError::TooLarge(message));
                 }
+                if batch.event_log.is_some() {
+                    // Puis les événements du journal, que rien ne permet de couper.
+                    warn!(reason = message, "event log report too large for the server, dropped");
+                    self.eventlog.acknowledge(batch.event_log.as_ref());
+                    self.buffer.restore(batch.samples);
+                    return FlushOutcome::Failed(PushError::TooLarge(message));
+                }
                 if count <= 1 {
                     // Une mesure seule ne se coupe plus : la garder bloquerait
                     // tout le tampon derrière elle.
@@ -612,6 +721,7 @@ impl Agent {
                 // que reproduire le refus, en gardant le tampon plein pour rien.
                 warn!(%error, dropped = count, "batch rejected by the server, dropped");
                 self.forget_inventory(batch.inventory.as_ref());
+                self.eventlog.acknowledge(batch.event_log.as_ref());
                 FlushOutcome::Sent { count }
             }
         }
@@ -998,6 +1108,7 @@ mod tests {
             docker_update_check: false,
             docker_max_containers: 200,
             commands: false,
+            actions: crate::remediation::ActionsConfig::default(),
             relay: false,
             site: None,
             probe: crate::collect::ProbeConfig::default(),
@@ -1011,6 +1122,7 @@ mod tests {
             ipsec: crate::collect::ipsec::IpsecConfig::default(),
             speedtest: crate::collect::speedtest::SpeedtestConfig::default(),
             inventory: false,
+            self_update: true,
             backup_repos: crate::collect::backup_repos::BackupReposConfig::default(),
             perf_counters: crate::collect::perf_counters::PerfCountersConfig::default(),
             max_buffered_samples: 1_000,

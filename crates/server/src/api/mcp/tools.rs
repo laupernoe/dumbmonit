@@ -53,7 +53,7 @@ named by id or by name. Times are UTC, RFC 3339.";
 
 /// Types de cibles qui surveillent un *service* : leur état vient du résultat de
 /// la sonde (`dumbmonit_probe_success`), pas de la dernière interrogation.
-const UPTIME_KINDS: [&str; 6] = ["http", "tcp", "dns", "ping", "tls", "push"];
+const UPTIME_KINDS: [&str; 7] = ["http", "tcp", "dns", "ping", "tls", "push", "provider"];
 
 /// Fenêtre de fraîcheur d'un résultat de sonde, alignée sur l'interface.
 const PROBE_WINDOW: &str = "10m";
@@ -1441,8 +1441,12 @@ fn alert_word(alert: &ActiveAlertView) -> &'static str {
 }
 
 async fn active_alerts(state: &AppState) -> Result<Vec<ActiveAlertView>, ToolError> {
-    let Json(alerts) =
-        alerts::list_active(State(state.clone()), Query(alerts::ActiveQuery::default())).await?;
+    let Json(alerts) = alerts::list_active(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+        Query(alerts::ActiveQuery::default()),
+    )
+    .await?;
     Ok(alerts)
 }
 
@@ -1621,6 +1625,45 @@ async fn get_status(state: &AppState) -> ToolResult {
             "firing": firing.iter().map(|a| alert_json(a, &parents)).collect::<Vec<_>>(),
         }),
     ))
+}
+
+/// Résumé plat de l'état de l'instance pour les tableaux de bord tiers
+/// (`GET /api/summary`, widget `customapi` de Homepage) : les compteurs de
+/// `get_status`, sans phrase ni liste, avec un verdict global.
+pub async fn dashboard_summary(state: &AppState) -> Result<Value, ToolError> {
+    let status = get_status(state).await?.structured.unwrap_or(Value::Null);
+    let count = |pointer: &str| status.pointer(pointer).and_then(Value::as_u64).unwrap_or(0);
+    let total = count("/devices/total");
+    let up = count("/devices/reporting");
+    let down = count("/devices/unreachable");
+    let waiting = count("/devices/waiting");
+    let disabled = count("/devices/disabled");
+    let critical = count("/alerts/warnings");
+    let warning = count("/alerts/advisories");
+    let info = count("/alerts/notices");
+    let firing = critical + warning + info;
+    // « ok » : rien à faire. « warning » : une alerte de moindre gravité.
+    // « critical » : une alerte critique ou un équipement injoignable.
+    let verdict = if critical > 0 || down > 0 {
+        "critical"
+    } else if warning > 0 || info > 0 {
+        "warning"
+    } else {
+        "ok"
+    };
+    Ok(json!({
+        "status": verdict,
+        "sentence": status.get("sentence").cloned().unwrap_or(Value::Null),
+        "devices": { "total": total, "up": up, "down": down, "waiting": waiting, "disabled": disabled },
+        "alerts": {
+            "firing": firing,
+            "critical": critical,
+            "warning": warning,
+            "info": info,
+            "building_up": count("/alerts/building_up"),
+            "suppressed": count("/alerts/suppressed"),
+        },
+    }))
 }
 
 async fn list_devices(state: &AppState, args: &Args) -> ToolResult {
@@ -1838,11 +1881,16 @@ async fn alert_history(state: &AppState, args: &Args) -> ToolResult {
     // large et on filtre ici, borné pour ne pas rapatrier des mois.
     let fetch = if only.is_some() { (limit * 10).min(5_000) } else { limit };
     let Json(entries) = alerts::history(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Query(HistoryQuery { since: Some(since.clone()), limit: Some(fetch), dismissed: None }),
     )
     .await?;
-    let Json(rules) = alerts::list_rules(State(state.clone())).await?;
+    let Json(rules) = alerts::list_rules(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let rule_names: HashMap<&str, &str> =
         rules.iter().map(|r| (r.uid.as_str(), r.name.as_str())).collect();
 
@@ -1928,6 +1976,7 @@ async fn query_metrics(state: &AppState, args: &Args) -> ToolResult {
     let step = args.i64("step_secs").filter(|s| *s > 0).map_or(floor, |s| (s as u64).max(floor));
 
     let Json(series) = metrics::query_range(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Query(RangeQuery { query: query.clone(), start, end, step: Some(step) }),
     )
@@ -2034,7 +2083,11 @@ fn zone_text(timezone: Option<&str>, utc_offset_minutes: i32) -> String {
 async fn list_silences(state: &AppState) -> ToolResult {
     let devices = load_devices(state).await?;
     let parents = parent_names(&devices);
-    let Json(silences) = alerts::list_silences(State(state.clone())).await?;
+    let Json(silences) = alerts::list_silences(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
 
     let text = if silences.is_empty() {
         "No maintenance window.".to_string()
@@ -2109,6 +2162,7 @@ async fn silence_device(state: &AppState, args: &Args) -> ToolResult {
     let ends_at = starts_at + TimeDelta::milliseconds((hours * 3_600_000.0) as i64);
 
     let (_, Json(silence)) = alerts::create_silence(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Json(SilencePayload {
             name: format!("{} — silenced by assistant", device.name()),
@@ -2266,7 +2320,11 @@ async fn set_device_enabled(state: &AppState, args: &Args) -> ToolResult {
 }
 
 async fn list_rules(state: &AppState) -> ToolResult {
-    let Json(rules) = alerts::list_rules(State(state.clone())).await?;
+    let Json(rules) = alerts::list_rules(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let text = if rules.is_empty() {
         "No alert rule.".to_string()
     } else {
@@ -2324,7 +2382,11 @@ async fn list_rules(state: &AppState) -> ToolResult {
 
 async fn set_rule_enabled(state: &AppState, args: &Args) -> ToolResult {
     let enabled = args.required_bool("enabled")?;
-    let Json(rules) = alerts::list_rules(State(state.clone())).await?;
+    let Json(rules) = alerts::list_rules(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let rule = if let Some(id) = args.i64("id") {
         rules.iter().find(|r| r.id == id)
     } else if let Some(uid) = args.str("uid") {
@@ -2629,7 +2691,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             Err(error) => (None, Some(error.to_string())),
         };
         let last_seen_ms = monitor.as_ref().and_then(|m| m.last_seen_ms);
-        let verdict = match (&monitor, settings) {
+        let verdict = match (&monitor, &settings) {
             (Some(m), Some(settings)) => {
                 push::evaluate(m.last_seen_ms, m.last_status, now_ms, settings)
             }
@@ -2643,7 +2705,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             device.id(),
             if device.target.enabled { verdict_word(verdict) } else { "disabled" }
         );
-        if let Some(settings) = settings {
+        if let Some(settings) = &settings {
             line.push_str(&format!(
                 "; expected every {} s (+{} s grace)",
                 settings.expected.as_secs(),
@@ -2673,8 +2735,8 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             "device": device.name(),
             "enabled": device.target.enabled,
             "verdict": verdict_word(verdict),
-            "expected_interval_secs": settings.map(|s| s.expected.as_secs()),
-            "grace_secs": settings.map(|s| s.grace.as_secs()),
+            "expected_interval_secs": settings.as_ref().map(|s| s.expected.as_secs()),
+            "grace_secs": settings.as_ref().map(|s| s.grace.as_secs()),
             "last_seen_at": monitor.as_ref().and_then(|m| m.last_seen_at.clone()),
             "last_seen_age_secs": age,
             "last_status": monitor.as_ref().map(|m| m.last_status.as_str()),
@@ -2703,7 +2765,11 @@ fn latest_update(view: &status_pages::IncidentView) -> Option<String> {
 }
 
 async fn list_status_pages(state: &AppState) -> ToolResult {
-    let Json(pages) = status_pages::list_pages(State(state.clone())).await?;
+    let Json(pages) = status_pages::list_pages(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let Json(incidents) = status_pages::list_incidents(State(state.clone())).await?;
 
     let mut lines = Vec::new();
@@ -2780,7 +2846,11 @@ async fn list_status_pages(state: &AppState) -> ToolResult {
 }
 
 async fn list_channels(state: &AppState) -> ToolResult {
-    let Json(channels) = channels::list(State(state.clone())).await?;
+    let Json(channels) = channels::list(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let text = if channels.is_empty() {
         "No notification channel: alerts are not sent anywhere yet.".to_string()
     } else {
@@ -2952,7 +3022,12 @@ async fn add_device(state: &AppState, args: &Args) -> ToolResult {
         ))
     })?;
 
-    let (_, Json(view)) = targets::create(State(state.clone()), Json(payload)).await?;
+    let (_, Json(view)) = targets::create(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+        Json(payload),
+    )
+    .await?;
     let mut text = format!(
         "Added **{}** (#{}, {}, {}); credential: {}. It will be polled every {} s",
         view.name, view.id, view.kind, view.address, view.credential_kind, view.interval_secs
@@ -3045,7 +3120,11 @@ async fn test_channel(state: &AppState, args: &Args) -> ToolResult {
         .or_else(|| args.i64("channel").map(|id| id.to_string()))
         .or_else(|| args.i64("id").map(|id| id.to_string()))
         .ok_or_else(|| failed("Name the channel: \"channel\" (id or name, see list_channels)."))?;
-    let Json(channels) = channels::list(State(state.clone())).await?;
+    let Json(channels) = channels::list(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let wanted = reference.to_lowercase();
     let by_id = reference.parse::<i64>().ok().and_then(|id| channels.iter().find(|c| c.id == id));
     let exact = channels.iter().find(|c| c.name.to_lowercase() == wanted);
@@ -3106,7 +3185,11 @@ async fn post_incident(state: &AppState, args: &Args) -> ToolResult {
         let page_id = match args.0.get("page") {
             None | Some(Value::Null) => None,
             Some(reference) => {
-                let Json(pages) = status_pages::list_pages(State(state.clone())).await?;
+                let Json(pages) = status_pages::list_pages(
+                    crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+                    State(state.clone()),
+                )
+                .await?;
                 let wanted = match reference {
                     Value::Number(n) => n.to_string(),
                     Value::String(s) => s.trim().to_string(),
@@ -3145,6 +3228,7 @@ async fn post_incident(state: &AppState, args: &Args) -> ToolResult {
             ends_at: None,
             body: Some(body.to_string()),
             updates: None,
+            components: None,
         };
         let (_, view) = status_pages::create_incident(State(state.clone()), Json(payload)).await?;
         (true, view)
@@ -3221,6 +3305,7 @@ async fn schedule_maintenance(state: &AppState, args: &Args) -> ToolResult {
         args.str("name").map(str::to_string).unwrap_or_else(|| format!("Maintenance — {scope}"));
 
     let (_, Json(silence)) = alerts::create_silence(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
         State(state.clone()),
         Json(SilencePayload {
             name: name.clone(),

@@ -10,7 +10,7 @@ configuration file to mount.
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Listen address of the API and the web UI, inside the container. |
 | `PUID` / `PGID` | `65532` | User and group the server runs as when the container starts as root (`user: "0:0"`, as in the shipped `docker-compose.yml`): the data directory is handed to them at startup, then root is dropped. `0` is refused. `DUMBMONIT_PUID` / `DUMBMONIT_PGID` take precedence. Ignored otherwise. See [Permissions](../install/docker.md#permissions). |
 | `DUMBMONIT_DATA_DIR` | `/data` | Persistent directory: `dumbmonit.db` (SQLite), `secret.key`, `vm/` (embedded VictoriaMetrics) and `webchange/` (screenshots of website changes). |
-| `DUMBMONIT_VM_URL` | *(unset)* | Base URL of an external VictoriaMetrics (`http://host:8428`). When set, the embedded one is not started; see [below](#embedded-victoriametrics). |
+| `DUMBMONIT_VM_URL` | *(unset)* | Base URL of an external VictoriaMetrics (`http://host:8428`). When set, the embedded one is not started; see [below](#embedded-victoriametrics) and [External VictoriaMetrics](external-victoriametrics.md). |
 | `DUMBMONIT_SECRET` | *(generated)* | Instance secret. If empty, read from `<data dir>/secret.key`, generated on first start. Encrypts monitor credentials, channel secrets and agent tokens with AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Maximum simultaneous probes, all collectors combined. |
 | `DUMBMONIT_WEBSITE_MAX_CONCURRENT` | `10` | Maximum simultaneous [website health](../devices/website.md#pacing-hundreds-of-sites) checks, 1 to 256, within the limit above. |
@@ -69,6 +69,7 @@ configuration file to mount.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups, 1 to 8760. The first one happens one interval after startup, not at startup. |
 | `DUMBMONIT_DEMO` | *(off)* | `1` for a public, read-only demo with a fixed fictional estate, sign-in `demo` / `demo`. **Recreates the database at every start**: never on a real data volume. See [Run a demo instance](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | How many backups are kept, 1 to 365. The oldest are removed with their `.key`. |
+| `DUMBMONIT_CONFIG_DIR` | empty | A folder of YAML files applied (with prune) at startup and on every change. See [Configuration files](../using/config-files.md). |
 | `DUMBMONIT_BROWSER_URL` | *(unset)* | Headless Chromium used for the screenshots of [website changes](../devices/webchange.md#screenshots), as `http://host:9222` (its DevTools port). Add a `chromedp/headless-shell` service to your Compose file, as shown in [Screenshots](../devices/webchange.md#screenshots). Unset: text comparison only. |
 
 Baseline retention (60 days) and the 14-day learning period are not
@@ -106,9 +107,66 @@ budget), `-search.maxConcurrentRequests=4` (one UI plus the alert engine) and
 `-dedup.minScrapeInterval=10s` (duplicate points closer than ten seconds are
 collapsed; nothing is lost at the 30 s cadence of the collectors).
 
+The raw retention can also be changed in **Settings → System → Data &
+retention**; a value saved there wins over `DUMBMONIT_VM_RETENTION`.
+
 With `DUMBMONIT_VM_URL` set, none of this applies: the server uses the
 instance you name and the embedded one is never started. `GET /api/health`
 says which case you are in (`victoria.embedded`).
+
+### Long-term history
+
+Besides the raw data, the server writes **5-minute aggregates** into a second
+VictoriaMetrics, started the same way, and answers queries whose range goes past
+the raw retention from it. See [Sizing](sizing.md) for what it costs.
+
+| Variable | Default | Role |
+|---|---|---|
+| `DUMBMONIT_VM_LONG_URL` | *(unset)* | URL of an external VictoriaMetrics for the aggregates. When set, the embedded long-term store is not started. Needed to have a long-term history next to an external `DUMBMONIT_VM_URL`. |
+| `DUMBMONIT_VM_LONG_LISTEN` | `127.0.0.1:8429` | Listen address of the embedded long-term store, inside the container. |
+| `DUMBMONIT_VM_LONG_MEMORY` | `64MB` | Memory budget of its caches (`-memory.allowedBytes`). |
+| `DUMBMONIT_VM_LONG_RETENTION` | `730d` | Retention of the aggregates, same syntax as `DUMBMONIT_VM_RETENTION`. Also set in **Settings → System**. |
+
+Its data lives in `<data dir>/vm-long`. It runs the same VictoriaMetrics binary
+(`DUMBMONIT_VM_BINARY`). Metric names are kept (average), with the suffixes
+`:5m_min`, `:5m_max` and, for availability metrics, `:5m_sum` and `:5m_count`.
+
+### Embedded VictoriaLogs
+
+Optional and **off by default**: turn it on in **Settings → System**. The server
+then starts VictoriaLogs, sends its own log lines to it, and the admin-only
+**Logs** page searches them with LogsQL.
+
+| Variable | Default | Role |
+|---|---|---|
+| `DUMBMONIT_VLOGS_BINARY` | `/victoria-logs-prod` | Path of the VictoriaLogs binary to start. |
+| `DUMBMONIT_VLOGS_LISTEN` | `127.0.0.1:9428` | Listen address, inside the container. |
+| `DUMBMONIT_VLOGS_MEMORY` | `64MB` | Memory budget of its caches. |
+
+Its data lives in `<data dir>/vlogs`; the retention is set in **Settings →
+System** (30 days by default).
+
+### Central logs: syslog server and SNMP traps
+
+Both receivers write into the embedded VictoriaLogs (turn the log store on
+first) and are **off by default**. They listen on unprivileged ports, since the
+container does not run as root; publish the ports you use in
+`docker-compose.yml` (the lines are commented there). See
+[Logs](../using/logs.md).
+
+| Variable | Default | Role |
+|---|---|---|
+| `DUMBMONIT_SYSLOG_ENABLED` | `false` | Start the syslog server. |
+| `DUMBMONIT_SYSLOG_PORT` | `5514` | UDP and TCP port. |
+| `DUMBMONIT_SYSLOG_BIND` | `0.0.0.0` | Listen address. |
+| `DUMBMONIT_SYSLOG_UDP` / `DUMBMONIT_SYSLOG_TCP` | `true` | Enable each transport. |
+| `DUMBMONIT_TRAPS_ENABLED` | `false` | Start the SNMP trap receiver (v1, v2c). |
+| `DUMBMONIT_TRAPS_PORT` | `1162` | UDP port. |
+| `DUMBMONIT_TRAPS_BIND` | `0.0.0.0` | Listen address. |
+| `DUMBMONIT_TRAPS_COMMUNITIES` | empty | Comma-separated communities to accept; empty accepts any. |
+
+On the machine of an agent, `DUMBMONIT_AGENT_LOGS=off` forbids log collection
+there whatever the server asks.
 
 ## Compose-level settings
 
@@ -123,6 +181,8 @@ The development overlay `docker-compose.dev.yml` reads `DUMBMONIT_VM_PORT`
 
 | Port | Container | Purpose |
 |---|---|---|
+| `5514/udp`, `5514/tcp` | `dumbmonit` | Syslog server, only when `DUMBMONIT_SYSLOG_ENABLED=true`. Commented out in the Compose file. |
+| `1162/udp` | `dumbmonit` | SNMP trap receiver, only when `DUMBMONIT_TRAPS_ENABLED=true`. Commented out in the Compose file. |
 | `8080/tcp` | `dumbmonit` | Web UI, API, agent installers and downloads, agent ingest. The only port to publish. |
 | `8428/tcp` | `dumbmonit` | Embedded VictoriaMetrics HTTP API, on the container's loopback. Published only by the development overlay. |
 
@@ -142,6 +202,8 @@ Compose file, whatever the project is called.
 | `/data/secret.key` | `dumbmonit-data` | The instance secret. **Back it up.** Without it, encrypted credentials are unrecoverable and the server refuses to start. |
 | `/data/backups/` | `dumbmonit-data` | Scheduled local backups: `dumbmonit-<timestamp>.db` (an online SQLite copy) and the matching `.key`. Daily by default, seven kept. |
 | `/data/vm/` | `dumbmonit-data` | Embedded VictoriaMetrics time series, 12 months by default. Empty when `DUMBMONIT_VM_URL` is set. |
+| `/data/vm-long/` | `dumbmonit-data` | 5-minute aggregates (long-term history), 730 days by default. Empty when `DUMBMONIT_VM_LONG_URL` is set. |
+| `/data/vlogs/` | `dumbmonit-data` | VictoriaLogs data, only when the log store is enabled. |
 | `/agents/` | image | Agent binaries. Mount another directory and set `DUMBMONIT_AGENT_DIR` to ship your own. |
 | `/etc/ssl/certs/ca-certificates.crt` | image | TLS roots for outbound HTTPS. Mount your own bundle here to trust a private authority. |
 

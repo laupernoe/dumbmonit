@@ -30,6 +30,11 @@ reqwest = { version = "0.13", default-features = false, features = [
     "json", "query", "form", "rustls", "gzip",
 ] }
 
+# Couche et service `tower` qui chronomètrent l'établissement des connexions de la
+# sonde HTTP (`connector_layer` de reqwest). Déjà dans l'arbre via reqwest.
+tower-layer = "0.3"
+tower-service = "0.3"
+
 # SNMP v1/v2c/v3 en asynchrone. Les fonctionnalités par défaut (`tokio` +
 # `crypto-rust`) couvrent v3 sans dépendance C ; `mibs` est volontairement écarté,
 # il exigerait libnetsnmp et casserait le binaire statique.
@@ -47,6 +52,10 @@ serde-saphyr = { version = "2", default-features = false, features = ["deseriali
 # dépendance, suffit pour les quelques balises lues.
 roxmltree = "0.20"
 ipnet = "2"
+# Filtres `keep` / `drop` du collecteur Prometheus et règles des profils de
+# sauvegarde réseau (`netconfig/`) : temps linéaire, donc sans risque
+# d'explosion sur une expression saisie par l'utilisateur.
+regex = "1"
 futures = "0.3"
 
 # --- Moniteurs de disponibilité (HTTP, TCP, DNS, ICMP, expiration TLS) ---
@@ -68,6 +77,27 @@ webpki-roots = "1"
 # déjà dans le verrou de dépendances par transitivité : rien de neuf n'entre.
 base64 = "0.23"
 sha1 = "0.10"
+
+# --- Sonde gRPC (`uptime/grpc/`) ---
+#
+# HTTP/2 pour le protocole `grpc.health.v1` : `h2` (client et serveur factice des
+# tests) et les types `http` / `bytes` qu'il expose. Le protobuf, minuscule, est
+# encodé à la main.
+h2 = "0.4"
+bytes = "1"
+http = "1"
+
+# --- Sonde RADIUS (`uptime/radius/`) ---
+#
+# MD5 de la RFC 2865 (mot de passe masqué, authentificateur de réponse) et HMAC-MD5
+# de la RFC 3579, fait à la main par-dessus.
+md-5 = "0.10"
+
+# --- Windows sans agent (`winrm/`) ---
+#
+# MD4 de l'empreinte NT (NTLMv2). HMAC-MD5 est écrit à la main par-dessus `md-5`,
+# comme pour RADIUS. MIT OR Apache-2.0, sans C.
+md4 = "0.11"
 
 # PostgreSQL et MySQL/MariaDB. `sqlx` est déjà la couche base du serveur ; ses
 # pilotes `postgres` et `mysql` sont en Rust pur, sans C, et passent donc le
@@ -100,6 +130,24 @@ stringprep = "0.1"
 # dans le verrou (reqwest) ; il ajoute le magasin du système aux racines.
 ldap3 = { version = "0.12", default-features = false, features = ["tls-rustls-ring"] }
 rustls-native-certs = "0.8"
+
+# --- SQL Server (`mssql/`) ---
+#
+# Protocole TDS en Rust pur (MIT OR Apache-2.0). `default-features = false`
+# écarte `native-tls` (OpenSSL) et l'authentification Windows ; TLS passe par
+# rustls (le fournisseur déjà présent dans l'arbre via reqwest), les racines par
+# le magasin du système. `tokio-util` fournit l'adaptateur entre les flux de
+# Tokio et les traits `futures` que le pilote attend.
+tiberius = { version = "0.13", default-features = false, features = ["rustls", "tds73"] }
+tokio-util = { version = "0.7", default-features = false, features = ["compat"] }
+# --- Sauvegarde des configurations réseau (`netconfig/`) ---
+#
+# Client SSH en Rust pur (Apache-2.0). Moteur `ring`, celui que rustls emploie
+# déjà ici : `aws-lc-rs` (par défaut) compliquerait la construction croisée de
+# l'agent. `rsa` : beaucoup d'équipements réseau n'ont qu'une clé d'hôte RSA ;
+# elle ne sert qu'à vérifier leur signature (opération publique), jamais à
+# déchiffrer ni signer avec une clé privée (voir `deny.toml`).
+russh = { version = "0.65", default-features = false, features = ["flate2", "ring", "rsa"] }
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }

@@ -29,7 +29,9 @@ use crate::api::channels;
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
+use crate::auth::clients;
 use crate::auth::middleware::OperatorIdentity;
+use crate::auth::teams::{Access, Level, TeamAccess};
 use crate::db;
 use crate::notify::policy_store;
 use crate::state::AppState;
@@ -226,6 +228,9 @@ pub struct ActiveAlertView {
     pub last_eval_at: Option<DateTime<Utc>>,
     pub last_notified_at: Option<DateTime<Utc>>,
     pub notify_count: u32,
+    /// Tickets ouverts pour cette alerte par les canaux Jira, GLPI, Zammad,
+    /// GitHub ou GitLab (vide sans canal de tickets).
+    pub tickets: Vec<crate::notify::tickets::TicketLink>,
 }
 
 impl ActiveAlertView {
@@ -263,6 +268,7 @@ impl ActiveAlertView {
             last_eval_at: alert.state.last_eval_at,
             last_notified_at: alert.state.last_notified_at,
             notify_count: alert.state.notify_count,
+            tickets: Vec::new(),
         }
     }
 }
@@ -397,6 +403,14 @@ struct AnomalyParamsPayload {
     mad_floor_abs: Option<f64>,
     mad_floor_rel: Option<f64>,
     min_samples: Option<u32>,
+    /// Règle « motif de journal » : fenêtre de comptage (secondes). L'alias est le
+    /// nom sous lequel la règle est renvoyée : un `PUT` qui la renvoie telle quelle
+    /// ne la remet pas à zéro.
+    #[serde(alias = "log_window_secs")]
+    window_secs: Option<u64>,
+    /// Règle « motif de journal » : une alerte par cible, ou une seule.
+    #[serde(alias = "log_per_target")]
+    per_target: Option<bool>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -543,20 +557,46 @@ pub struct HistoryQuery {
 // Règles
 // --------------------------------------------------------------------------
 
-pub async fn list_rules(State(state): State<AppState>) -> ApiResult<Json<Vec<RuleView>>> {
+pub async fn list_rules(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<RuleView>>> {
     let rules = db::alerts::list_rules(&state.pool).await?;
-    let views =
+    let mut views =
         with_overrides(&state.pool, rules.into_iter().map(RuleView::from).collect()).await?;
+    // Compte restreint par ses équipes : les règles restent lisibles (ce sont
+    // des réglages, pas des équipements), mais leurs références à des
+    // équipements hors de ses dossiers disparaissent, et une règle qui ne
+    // visait que ceux-là aussi.
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        views.retain_mut(|view| {
+            view.overrides.retain(|o| visible.contains(&o.target_id));
+            view.channels.clear();
+            match &mut view.selector {
+                TargetSelector::Ids { ids } => {
+                    ids.retain(|id| visible.contains(id));
+                    !ids.is_empty()
+                }
+                _ => true,
+            }
+        });
+    }
+    // Mode MSP : les règles de l'instance et celles de ses clients seulement.
+    clients::retain_visible(&state.pool, &access, clients::Kind::Rule, &mut views, |v| v.id, true)
+        .await?;
     Ok(Json(views))
 }
 
 pub async fn create_rule(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(payload): Json<RulePayload>,
 ) -> ApiResult<(StatusCode, Json<RuleView>)> {
     let existing = db::alerts::list_rules(&state.pool).await?;
     let mut rule = payload.validate(&state, None, &existing).await?;
     rule.id = db::alerts::upsert_rule(&state.pool, &rule).await?;
+    // Créée dans la vue d'un client : elle lui appartient.
+    clients::adopt(&state.pool, &access, clients::Kind::Rule, rule.id).await?;
     Ok((StatusCode::CREATED, Json(view_with_overrides(&state.pool, rule).await?)))
 }
 
@@ -828,6 +868,11 @@ impl RulePayload {
             "The escalation delay \"escalate_after_secs\"",
         )?;
 
+        if kind == RuleKind::LogPattern && crate::logs::central::has_pipe(&query) {
+            return Err(ApiError::BadRequest(
+                "A log pattern accepts filters only: remove the `|` pipes from the query.".into(),
+            ));
+        }
         let selector = parse_selector(self.selector)?;
         let params = parse_params(self.params)?;
         let channels = validate_channels(state, self.channels.unwrap_or_default()).await?;
@@ -864,8 +909,9 @@ fn parse_kind(raw: Option<&str>) -> ApiResult<RuleKind> {
         None | Some("") | Some("threshold") => Ok(RuleKind::Threshold),
         Some("anomaly") => Ok(RuleKind::Anomaly),
         Some("predict") => Ok(RuleKind::Predict),
+        Some("log_pattern") => Ok(RuleKind::LogPattern),
         Some(other) => Err(ApiError::BadRequest(format!(
-            "Unknown rule type \"{other}\" (expected: threshold, anomaly, predict)."
+            "Unknown rule type \"{other}\" (expected: threshold, anomaly, predict, log_pattern)."
         ))),
     }
 }
@@ -941,7 +987,18 @@ fn parse_params(raw: Option<Value>) -> ApiResult<AnomalyParams> {
         mad_floor_abs: payload.mad_floor_abs.unwrap_or(defaults.mad_floor_abs),
         mad_floor_rel: payload.mad_floor_rel.unwrap_or(defaults.mad_floor_rel),
         min_samples: payload.min_samples.unwrap_or(defaults.min_samples),
+        log_window_secs: payload.window_secs.unwrap_or(defaults.log_window_secs),
+        log_per_target: payload.per_target.unwrap_or(defaults.log_per_target),
     };
+    if !(crate::alerting::model::MIN_LOG_WINDOW_SECS..=crate::alerting::model::MAX_LOG_WINDOW_SECS)
+        .contains(&params.log_window_secs)
+    {
+        return Err(ApiError::BadRequest(format!(
+            "\"window_secs\" must be between {} and {} seconds.",
+            crate::alerting::model::MIN_LOG_WINDOW_SECS,
+            crate::alerting::model::MAX_LOG_WINDOW_SECS
+        )));
+    }
 
     if !(params.k.is_finite() && params.k > 0.0) {
         return Err(ApiError::BadRequest(
@@ -1135,10 +1192,14 @@ fn rule_not_found(id: i64) -> ApiError {
 // --------------------------------------------------------------------------
 
 pub async fn list_active(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(query): Query<ActiveQuery>,
 ) -> ApiResult<Json<Vec<ActiveAlertView>>> {
     let now = Utc::now();
+    // Compte restreint par ses équipes : seulement les alertes de ses
+    // équipements (une alerte sans équipement n'appartient à aucun dossier).
+    let visible = access.visible_targets(&state.pool).await?;
     let alerts = db::alerts::list_active(&state.pool).await?;
     let rules: HashMap<String, Rule> = db::alerts::list_rules(&state.pool)
         .await?
@@ -1155,6 +1216,11 @@ pub async fn list_active(
         .map(|node| node.id)
         .collect();
 
+    // Une lecture pour toutes les alertes. Un échec ne doit pas vider la liste :
+    // les liens de tickets sont un confort, pas l'objet de la page.
+    let mut tickets =
+        crate::notify::tickets::links_by_fingerprint(&state.pool).await.unwrap_or_default();
+
     Ok(Json(
         alerts
             .into_iter()
@@ -1165,10 +1231,16 @@ pub async fn list_active(
             // Le filtre `target_id` ne garde que les alertes de cet équipement
             // (une alerte sans équipement n'y répond jamais).
             .filter(|alert| query.target_id.is_none_or(|id| alert.target_id == Some(id)))
+            .filter(|alert| {
+                visible
+                    .as_ref()
+                    .is_none_or(|visible| alert.target_id.is_some_and(|id| visible.contains(&id)))
+            })
             .filter(|alert| alert.state.is_dismissed() == query.dismissed.unwrap_or(false))
             .map(|alert| {
                 let rule = rules.get(&alert.rule_uid);
-                ActiveAlertView::new(alert, rule, now)
+                let links = tickets.remove(&alert.fingerprint).unwrap_or_default();
+                ActiveAlertView { tickets: links, ..ActiveAlertView::new(alert, rule, now) }
             })
             .collect(),
     ))
@@ -1192,6 +1264,26 @@ pub async fn acknowledge(
     };
     if !db::alerts::set_ack(&state.pool, fingerprint, ack.as_ref()).await? {
         return Err(alert_not_found(fingerprint));
+    }
+    if let Some(ack) = &ack {
+        // Les tickets ouverts de l'alerte en gardent la trace, sans faire attendre
+        // l'utilisateur derrière un service de tickets lent.
+        let mut text =
+            format!("Acknowledged by {} until {}.", ack.by, ack.until.format("%Y-%m-%d %H:%M UTC"));
+        if let Some(note) = &ack.note {
+            text.push_str(&format!(" Note: {note}"));
+        }
+        let state = state.clone();
+        let fingerprint = fingerprint.to_string();
+        tokio::spawn(async move {
+            crate::notify::tickets::on_acknowledged(
+                &state.pool,
+                &state.cipher,
+                &fingerprint,
+                &text,
+            )
+            .await;
+        });
     }
     let alert = db::alerts::get_active(&state.pool, fingerprint)
         .await?
@@ -1295,6 +1387,7 @@ pub async fn unack_alert(
 /// La lecture est écrite ici et non dans [`crate::db::alerts`] : ce module n'expose
 /// que les accès dont le moteur a besoin, et l'historique n'est lu que par l'API.
 pub async fn history(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(params): Query<HistoryQuery>,
 ) -> ApiResult<Json<Vec<HistoryEntryView>>> {
@@ -1322,20 +1415,31 @@ pub async fn history(
 
     let include_dismissed = params.dismissed.unwrap_or(false);
 
-    let rows = sqlx::query(
+    // Compte restreint : le filtre est posé dans la requête, avant la limite,
+    // pour que la page reste pleine. Les identifiants sont des entiers lus en
+    // base, jamais une saisie.
+    let scope_clause = match access.visible_targets(&state.pool).await? {
+        None => String::new(),
+        Some(visible) => {
+            let ids = visible.iter().map(i64::to_string).collect::<Vec<_>>().join(",");
+            format!(" AND target_id IN ({ids})")
+        }
+    };
+    let sql = format!(
         "SELECT id, fingerprint, rule_uid, target_id, from_phase, to_phase, severity, value,
                 notified, reason, at, dismissed
          FROM alert_history
-         WHERE at >= ? AND (dismissed = 0 OR ?)
+         WHERE at >= ? AND (dismissed = 0 OR ?){scope_clause}
          ORDER BY at DESC, id DESC
-         LIMIT ?",
-    )
-    .bind(since.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
-    .bind(include_dismissed)
-    .bind(limit)
-    .fetch_all(&state.pool)
-    .await
-    .map_err(anyhow::Error::from)?;
+         LIMIT ?"
+    );
+    let rows = sqlx::query(sqlx::AssertSqlSafe(sql))
+        .bind(since.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
+        .bind(include_dismissed)
+        .bind(limit)
+        .fetch_all(&state.pool)
+        .await
+        .map_err(anyhow::Error::from)?;
 
     let entries = rows
         .iter()
@@ -1428,19 +1532,73 @@ pub async fn dismiss_resolved_history(
 // Silences
 // --------------------------------------------------------------------------
 
-pub async fn list_silences(State(state): State<AppState>) -> ApiResult<Json<Vec<SilenceView>>> {
+pub async fn list_silences(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<SilenceView>>> {
     let now = Utc::now();
-    let silences = db::alerts::list_silences(&state.pool).await?;
+    let mut silences = db::alerts::list_silences(&state.pool).await?;
+    // Compte restreint : seulement les silences posés sur ses équipements. La
+    // vue d'un client par l'administrateur montre aussi les silences sans
+    // équipement de ce client.
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        let owners = clients::owners(&state.pool, clients::Kind::Silence).await?;
+        let admin_view = !access.is_scoped();
+        silences.retain(|s| match s.target_id {
+            Some(id) => visible.contains(&id),
+            None => admin_view && owners.get(&s.id).is_some_and(|c| access.sees_client(*c)),
+        });
+    }
     Ok(Json(silences.into_iter().map(|s| SilenceView::new(s, now)).collect()))
 }
 
 pub async fn create_silence(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(payload): Json<SilencePayload>,
 ) -> ApiResult<(StatusCode, Json<SilenceView>)> {
+    // Avant la validation, qui dirait sinon si un équipement d'une autre
+    // équipe existe.
+    check_team_silence(&state, &access, payload.target_id).await?;
     let mut silence = payload.validate(&state).await?;
     silence.id = db::alerts::create_silence(&state.pool, &silence).await?;
+    // Mode MSP : un silence sur un équipement suit son client ; sans
+    // équipement, il appartient au client de la vue (sinon à l'instance).
+    match silence.target_id {
+        Some(target) => {
+            let client = clients::target_client(&state.pool, target).await?;
+            clients::assign(&state.pool, clients::Kind::Silence, &[silence.id], client)
+                .await
+                .map_err(super::clients::api_error)?;
+        }
+        None => clients::adopt(&state.pool, &access, clients::Kind::Silence, silence.id).await?,
+    }
     Ok((StatusCode::CREATED, Json(SilenceView::new(silence, Utc::now()))))
+}
+
+/// Un compte restreint par ses équipes ne pose un silence que sur un
+/// équipement qu'il peut traiter : jamais sur toute l'instance ni sur de
+/// simples étiquettes, qui couvriraient des équipements d'autres équipes.
+async fn check_team_silence(
+    state: &AppState,
+    access: &Access,
+    target_id: Option<i64>,
+) -> ApiResult<()> {
+    if !access.is_scoped() {
+        return Ok(());
+    }
+    let Some(target_id) = target_id else {
+        return Err(ApiError::Forbidden(
+            "Team-restricted accounts can only schedule maintenance for a single target.".into(),
+        ));
+    };
+    match access.target_level(&state.pool, target_id).await? {
+        None => Err(ApiError::NotFound("Target not found.".into())),
+        Some(level) if level >= Level::Operate => Ok(()),
+        Some(_) => Err(ApiError::Forbidden(
+            "Your teams only let you view this target, not schedule maintenance for it.".into(),
+        )),
+    }
 }
 
 pub async fn delete_silence(

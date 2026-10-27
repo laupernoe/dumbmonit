@@ -116,7 +116,9 @@ How they show up depends on the channel:
 | ntfy, Telegram, Web Push | Buttons under the notification |
 | Discord, Slack, email and every other channel | Links at the end of the message |
 | Custom webhook | Links in `{{message}}`, and the `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` variables |
-| PagerDuty, Opsgenie | Nothing: acknowledge in the service itself |
+| PagerDuty, Opsgenie, Grafana OnCall, SIGNL4 | Nothing: acknowledge in the service itself |
+| Jira, GLPI, Zammad, GitHub Issues, GitLab Issues | Nothing: the acknowledgement is added to the ticket as a comment |
+| Vonage, Telnyx, ASPSMS (SMS) | Nothing: a signed link would cost several SMS segments |
 
 Telegram only accepts buttons pointing to an `https` address with a domain name;
 with an IP address or a plain `http` URL, the actions stay as links in the text.
@@ -751,6 +753,78 @@ segments billed separately.
 
 > On a trial account, Twilio only sends to numbers you have verified.
 
+### WhatsApp (Cloud API)
+
+Uses the WhatsApp Business Cloud API from Meta. In the Meta developer console, create
+an app of type *Business*, add the **WhatsApp** product and note the **Phone number
+ID** under *API Setup*. Create a permanent token for a *system user* with the
+`whatsapp_business_messaging` permission.
+
+- **Settings** — `phone_number_id`, `to` (list of numbers in international format)
+- **Secrets** — `token`
+
+> Meta only allows free text **within 24 hours of the recipient's last message** to
+> your business number. Have each recipient write "hello" to the number first. Sending
+> outside that window needs an approved template, which this channel does not use.
+
+### WhatsApp (CallMeBot)
+
+A free gateway for notifying yourself, with no Meta account. Add the CallMeBot contact
+to your phone, send it `I allow callmebot to send me messages`, and it answers with an
+API key.
+
+- **Settings** — `phone` (your number in international format)
+- **Secrets** — `api_key`
+
+CallMeBot is a third-party service with no guarantee of availability: use the Cloud API
+for anything critical.
+
+### Threema Gateway
+
+On [gateway.threema.ch](https://gateway.threema.ch), create a *Basic* Gateway ID
+(eight characters starting with `*`) and note its secret.
+
+- **Settings** — `from` (the Gateway ID), `to` (list of eight-character Threema IDs)
+- **Secrets** — `secret`
+
+The message is encrypted by the Threema server (basic mode), which is enough for an
+alert and needs no key pair. Each message consumes a Gateway credit.
+
+### Webex
+
+On [developer.webex.com](https://developer.webex.com) create a **Bot** (*My Apps →
+Create a Bot*), copy its token, then add the bot to the space. The room ID is returned
+by the *List Rooms* API call.
+
+- **Settings** — `room_id`
+- **Secrets** — `token` (the bot token)
+
+The message is sent in Markdown.
+
+### SMS via Vonage
+
+The API key and secret are on the Vonage API dashboard.
+
+- **Settings** — `from` (a number or alphanumeric name), `to` (list)
+- **Secrets** — `api_key`, `api_secret`
+
+### SMS via Telnyx
+
+Create an API key (v2) in the Mission Control Portal and buy a number with SMS
+enabled.
+
+- **Settings** — `from` (the Telnyx number), `to` (list, E.164 format with the `+`)
+- **Secrets** — `api_key`
+
+### SMS via ASPSMS
+
+- **Settings** — `userkey`, `originator` (11 characters at most), `to` (list)
+- **Secrets** — `password` (the API password)
+
+The three SMS channels send at most 300 characters, without emoji, on a single line.
+They carry no acknowledge/snooze link — a signed link would cost several segments —
+use a chat channel for that.
+
 ### PagerDuty
 
 In PagerDuty: **Services → your service → Integrations → Add integration**, and
@@ -780,6 +854,128 @@ As with PagerDuty, a resolution closes the alert, identified by its alias.
 > Atlassian has set the **end of service for Opsgenie on 5 April 2027**. This
 > channel stays for existing installations; for a new one, prefer PagerDuty or a
 > custom channel pointing to Jira Service Management.
+
+### Grafana OnCall
+
+In Grafana OnCall: **Integrations → New integration → Webhook**, then copy the HTTP
+endpoint.
+
+- **Secrets** — `webhook_url`
+
+An alert opens an alert group (`state: alerting`) and its resolution resolves it
+(`state: ok`), matched on a `dumbmonit-` identifier per device. Acknowledge from
+OnCall itself.
+
+### SIGNL4
+
+In SIGNL4, copy the team webhook from **Teams → Team settings**: it is
+`https://connect.signl4.com/webhook/` followed by your team secret.
+
+- **Secrets** — `webhook_url`
+
+An alert reaches the team's phones (`X-S4-Status: new`) and its resolution closes it
+(`resolved`), matched on a per-device external ID.
+
+### DumbMonit on-call
+
+Pages the person on call, then escalates step by step until someone
+acknowledges. It has a single setting, the **escalation policy** to run, and no
+secret. Schedules, contacts and policies are described in
+[On-call](alerting/oncall.md); the channel goes through the usual routing
+(labels, minimum severity, channels chosen per rule).
+
+### Automatic tickets (Jira, GLPI, Zammad, GitHub, GitLab)
+
+These five channels do not send a message: they keep **one ticket per alert**.
+
+- When an alert opens, the ticket is created: title, description with a link to
+  the device in DumbMonit (set the public address in the notification policy), and
+  a priority taken from the severity.
+- The ticket reference is remembered per alert and per channel, so a reminder or a
+  retry never opens a second one while the first is open.
+- Notable events are added as comments: an escalation, an alert nobody acknowledged
+  in time, a new finding, and an acknowledgement by someone in DumbMonit.
+- When the alert resolves, DumbMonit comments and closes the ticket (transition,
+  status or state configured on the channel).
+- **Reopen if the alert returns within (hours)** — if the same alert comes back in
+  that delay, the closed ticket is reopened with a comment instead of opening a new
+  one. Empty or 0: a new ticket every time. If the ticket cannot be reopened (missing
+  transition, deleted), a new one is created.
+- The ticket link appears on the alert, in the alert details.
+- Failures show in the channel's "last error". A temporary failure (service down,
+  429) is retried with an increasing delay; a permanent one (bad token, unknown
+  project) is reported and not retried.
+- **Send test** creates a test ticket then closes it right away. If it cannot be
+  closed, the error says so and names the ticket to close by hand.
+- Acknowledge and snooze links are not added to these channels.
+
+Tokens are encrypted and never shown again. Create a dedicated account or token
+with only the rights it needs.
+
+### Jira
+
+Works with Jira Cloud and Jira Data Center.
+
+- **Cloud**: create an API token at <https://id.atlassian.com/manage-profile/security/api-tokens>
+  and give the account e-mail.
+- **Data Center**: **Profile → Personal Access Tokens**; no e-mail needed.
+
+- **Settings** — `server_url`, `email`
+  (Cloud only; leave empty on Data Center), `project` (the project key), `issue_type` (default `Task`), `labels`
+  (list), `priority` (`map` sets Highest, Medium or Low from the severity; `none` for
+  projects without a priority field), `close_transition` (default `Done`),
+  `reopen_transition` (default `Reopen`), `reopen_hours`
+- **Secrets** — `api_token`
+
+Transitions are matched by name (of the transition or of its target status, case
+insensitive) among those available from the issue's current status. If the name does
+not exist, the error lists the available ones.
+
+### GLPI
+
+Enable the REST API in **Setup → General → API**, create an API client, and copy the
+user's **API token** from *My settings → Remote access keys*.
+
+- **Settings** — `server_url` (the GLPI address; `/apirest.php` is added),
+  `entity_id`, `category_id` (numbers, optional), `close_status` (`solved` or
+  `closed`), `reopen_hours`
+- **Secrets** — `user_token`, `app_token` (the API client's application token, if it
+  requires one)
+
+The ticket is an incident; urgency, impact and priority follow the severity.
+Escalations are added as follow-ups. Reopening sets the status back to *New*.
+
+### Zammad
+
+Create an access token in **Profile → Token Access** with the `ticket.agent`
+permission.
+
+- **Settings** — `server_url`, `group`, `customer` (e-mail or login), `close_state`
+  (default `closed`), `reopen_state` (default `open`), `reopen_hours`
+- **Secrets** — `token`
+
+Tickets are created with an internal note; the priority is Low, Normal or High
+depending on the severity.
+
+### GitHub Issues
+
+Create a fine-grained token (**Settings → Developer settings**) limited to the
+repository, with the **Issues: read and write** permission.
+
+- **Settings** — `repository` (`owner/name`), `labels` (list; they must exist),
+  `api_url` (GitHub Enterprise Server only, for example `https://ghe.example.org/api/v3`),
+  `reopen_hours`
+- **Secrets** — `token`
+
+Resolution closes the issue as *completed*.
+
+### GitLab Issues
+
+Create a project access token (or a personal one) with the `api` scope.
+
+- **Settings** — `server_url`, `project` (numeric id or `group/project`), `labels`
+  (list), `reopen_hours`
+- **Secrets** — `token`
 
 ### Custom webhook
 

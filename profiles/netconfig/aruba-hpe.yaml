@@ -1,0 +1,27 @@
+# Sauvegarde des configurations : commutateurs Aruba / HPE (ArubaOS-Switch,
+# ProCurve, AOS-CX).
+id: aruba_hpe
+label: Aruba / HPE switches (ArubaOS-Switch, ProCurve, AOS-CX)
+transport: ssh_shell
+prompt: '^[\w.\-/:()@ ]+[>#] ?$'
+login_replies:
+  - expect: '(?i)press any key to continue'
+    send: "\n"
+enable:
+  command: enable
+  unprivileged: '>\s?$'
+  password_prompt: '(?i)password: ?$'
+setup:
+  - no page
+more:
+  expect: '-- MORE --'
+  send: " "
+commands:
+  - show running-config
+exit: exit
+strip:
+  - '^Running configuration:$'
+volatile: []
+secrets:
+  - '\b(?:key|sha1|sha256|plaintext|ciphertext|password|secret)\s+"?(?P<secret>[^"\s]+)'
+  - '^\s*snmp-server community "?(?P<secret>[^"\s]+)'

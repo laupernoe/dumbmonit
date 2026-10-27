@@ -130,6 +130,21 @@ pour votre ligne.
 | Débit montant Internet bas | Idem, pour `speedtest_min_upload_mbps`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 | Latence Internet élevée | Le dernier test a mesuré une latence au-dessus de `speedtest_max_latency_ms`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 
+### Journal d'événements Windows
+
+Déclenchées par les règles d'événements d'une machine Windows ; voir
+[Alertes du journal d'événements Windows](../devices/agent-windows-events.md).
+Aucune règle d'événements n'existe par défaut : ces règles restent muettes tant
+que vous n'en ajoutez pas. Une alerte par machine et par sévérité, qui cite le
+dernier événement ; elle reparle au plus toutes les 10 minutes tant que des
+événements arrivent, et se résout 15 minutes après le dernier.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Windows event (critical) | Un événement a répondu à une règle de sévérité Avertissement (`dumbmonit_agent_eventlog_matches_critical` : événements des 15 dernières minutes). | > 0 | 30 s | Avertissement (`critical`) | aucun |
+| Windows event (warning) | Idem, pour les règles de sévérité Avis (`dumbmonit_agent_eventlog_matches_warning`). | > 0 | 30 s | Avis (`warning`) | aucun |
+| Windows event (info) | Idem, pour les règles de sévérité Info (`dumbmonit_agent_eventlog_matches_info`). | > 0 | 30 s | Info (`info`) | aucun |
+
 ### Proxmox VE
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
@@ -363,6 +378,52 @@ de tourner.
 | Runners Forgejo/Gitea tous hors ligne | Chaque runner Actions est hors ligne, et au moins un est enregistré (`dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0`). | < 1 | 10 min | Avis (`warning`) | 6 h |
 | Tâche planifiée Forgejo/Gitea en retard | Une tâche planifiée (contrôle de dépôt, nettoyage, vérificateur de mise à jour) n'a pas tourné à son propre intervalle (`dumbmonit_forgejo_cron_task_overdue`). | > 0 | 30 min | Avis (`warning`) | 24 h |
 
+### Applications médias, identité et messagerie {#media-identity-and-mail-applications}
+
+Sonarr, Radarr, Lidarr, Prowlarr, qBittorrent, UniFi Protect, Frigate, Keycloak, authentik, Vaultwarden et mailcow ([surveillances](../devices/index.md)). Elles continuent de répondre alors que le service qu'elles rendent est cassé : un client de téléchargement tombé, une caméra décrochée, une base de données disparue derrière une page de connexion. Une application qui ne répond plus du tout est Surveillance inaccessible.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Sonarr health error | Sonarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_sonarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Sonarr queue has errors | Un élément de la file de téléchargement est en erreur (téléchargement échoué, import bloqué) depuis une demi-heure (`dumbmonit_sonarr_queue_has_errors`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Sonarr disk almost full | Un disque que Sonarr signale est plein à plus de 90 % (`dumbmonit_sonarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Sonarr update available | Une version plus récente de Sonarr existe (`dumbmonit_sonarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Radarr health error | Radarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_radarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Radarr queue has errors | Un élément de la file de téléchargement est en erreur (téléchargement échoué, import bloqué) depuis une demi-heure (`dumbmonit_radarr_queue_has_errors`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Radarr disk almost full | Un disque que Radarr signale est plein à plus de 90 % (`dumbmonit_radarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Radarr update available | Une version plus récente de Radarr existe (`dumbmonit_radarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Lidarr health error | Lidarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_lidarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Lidarr queue has errors | Un élément de la file de téléchargement est en erreur (téléchargement échoué, import bloqué) depuis une demi-heure (`dumbmonit_lidarr_queue_has_errors`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Lidarr disk almost full | Un disque que Lidarr signale est plein à plus de 90 % (`dumbmonit_lidarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Lidarr update available | Une version plus récente de Lidarr existe (`dumbmonit_lidarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr health error | Prowlarr signale une erreur sur sa page System → Status : client de téléchargement ou indexeur en échec, dossier racine manquant (`dumbmonit_prowlarr_health_errors`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Prowlarr disk almost full | Un disque que Prowlarr signale est plein à plus de 90 % (`dumbmonit_prowlarr_disk_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Prowlarr update available | Une version plus récente de Prowlarr existe (`dumbmonit_prowlarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr indexers disabled | Prowlarr a désactivé des indexeurs après des échecs répétés (`dumbmonit_prowlarr_indexers_disabled`) : Sonarr, Radarr et Lidarr ne trouvent plus de versions par eux. | > 0 | 1 h | Avis (`warning`) | 24 h |
+| qBittorrent torrents in error | Des torrents sont en erreur ou ont perdu leurs fichiers (`dumbmonit_qbittorrent_torrents_errored`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| qBittorrent disconnected | qBittorrent est « firewalled » ou déconnecté (`dumbmonit_qbittorrent_connected == bool 0`) : rien n'est téléchargé ni partagé. | > 0 | 15 min | Avis (`warning`) | 6 h |
+| qBittorrent free space low | Moins de 5 Gio libres dans le dossier de téléchargement (`dumbmonit_qbittorrent_free_space_bytes / 1073741824`) ; se rétablit au-dessus de 6 Gio. | < 5 GiB | 30 min | Avis (`warning`) | 24 h |
+| Protect camera offline | Une caméra UniFi Protect est déconnectée de son NVR (`dumbmonit_unifiprotect_camera_online == bool 0`). La notification nomme la caméra. | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Protect camera not recording | Une caméra est connectée et réglée pour enregistrer, mais n'enregistre pas (`dumbmonit_unifiprotect_cameras_not_recording`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Protect NVR disk unhealthy | Le NVR signale un disque défaillant (`dumbmonit_unifiprotect_disks_unhealthy`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Protect recording disabled | L'enregistrement est coupé sur le NVR (`dumbmonit_unifiprotect_recording_disabled`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Frigate camera offline | Une caméra ne livre aucune image à Frigate (`dumbmonit_frigate_camera_online == bool 0`). La notification nomme la caméra. | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Frigate detector stuck | Un détecteur est sur la même inférence depuis plus de 30 secondes (`dumbmonit_frigate_detector_busy_seconds`). | > 30 s | 2 min | Avis (`warning`) | 1 h |
+| Frigate storage almost full | Le disque des enregistrements est plein à plus de 90 % (`dumbmonit_frigate_storage_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| Frigate update available | Une version plus récente de Frigate existe (`dumbmonit_frigate_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Keycloak not ready | Keycloak répond mais son contrôle de disponibilité est DOWN, le plus souvent la base de données (`dumbmonit_keycloak_ready == bool 0`) : personne ne peut se connecter. | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Keycloak realm disabled | Un realm est désactivé (`dumbmonit_keycloak_realms_disabled`) : ses utilisateurs ne peuvent pas se connecter. | > 0 | 1 h | Info (`info`) | 7 d |
+| authentik not ready | authentik répond mais son contrôle de disponibilité échoue (`dumbmonit_authentik_ready == bool 0`) : base de données ou cache tombé. | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| authentik has no worker | Aucun worker ne répond (`dumbmonit_authentik_workers == bool 0`) : synchronisation, courriels et nettoyage s'arrêtent. | > 0 | 10 min | Avertissement (`critical`) | 1 h |
+| authentik task failed | Une tâche système a échoué à sa dernière exécution (`dumbmonit_authentik_tasks_failed`). La notification nomme la tâche. | > 0 | 1 h | Avis (`warning`) | 24 h |
+| authentik outpost disconnected | Un avant-poste qui sert des fournisseurs ne s'est pas manifesté depuis cinq minutes (`dumbmonit_authentik_outposts_disconnected`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| authentik update available | Une version plus récente d'authentik existe (`dumbmonit_authentik_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Vaultwarden sign-ups open | N'importe qui pouvant atteindre le coffre peut créer un compte (`dumbmonit_vaultwarden_signups_open`). | > 0 | 1 h | Info (`info`) | 7 d |
+| mailcow container down | Un conteneur mailcow ne tourne pas (`dumbmonit_mailcow_container_up == bool 0`). La notification nomme le conteneur. | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| mailcow mail queue stuck | Le plus ancien message de la file de Postfix attend depuis plus de quatre heures (`dumbmonit_mailcow_queue_oldest_seconds / 3600`). | > 4 h | 15 min | Avis (`warning`) | 6 h |
+| mailcow mail volume almost full | Le volume qui contient les boîtes est plein à plus de 90 % (`dumbmonit_mailcow_vmail_used_percent`) ; se rétablit sous 88 %. | > 90 % | 30 min | Avis (`warning`) | 24 h |
+| mailcow mailbox near quota | Une boîte est à 90 % de son quota ou plus (`dumbmonit_mailcow_mailboxes_near_quota`). | > 0 | 1 h | Info (`info`) | 24 h |
+
 ### Appareils clients {#client-devices}
 
 Une règle, partagée par chaque intégration qui suit des appareils qui
@@ -527,6 +588,37 @@ rien ne se déclenche donc sur la première mesure d'une surveillance.
 | Bouncer CrowdSec arrêté de récupérer | Les requêtes d'un bouncer n'ont pas changé en 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Avis (`warning`) | 6 h |
 | CrowdSec ne lit aucun log | Pas une seule ligne de log lue en six heures (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Avis (`warning`) | 24 h |
 
+### Autres bases de données et Kafka {#more-databases-and-kafka}
+
+SQL Server, Oracle, Elasticsearch / OpenSearch, InfluxDB et Kafka ([SQL Server](../devices/mssql.md), [Oracle](../devices/oracle.md), [Elasticsearch](../devices/elasticsearch.md), [InfluxDB](../devices/influxdb.md), [Kafka](../devices/kafka.md)). Les compteurs passent par `increase_prometheus`, rien ne se déclenche donc à la première mesure d'une surveillance.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Base SQL Server indisponible | Une base est SUSPECT, RECOVERY_PENDING, OFFLINE ou EMERGENCY (`dumbmonit_mssql_database_online`). | < 1 | 5 min | Avertissement (`critical`) | 1 h |
+| Requêtes SQL Server bloquées | Une requête attend un verrou depuis plus de 5 minutes : une transaction a probablement été laissée ouverte (`dumbmonit_mssql_longest_block_seconds`). | > 300 s | 5 min | Avis (`warning`) | 6 h |
+| Volume SQL Server presque plein | Un volume qui porte des fichiers de bases est plein à plus de 90 % ; revient sous 85 % (`dumbmonit_mssql_volume_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Travail de l'Agent SQL Server en échec | La dernière exécution d'un travail actif de l'Agent SQL Server a échoué (sauvegardes, maintenance) (`dumbmonit_mssql_agent_job_last_ok`). | < 1 | 5 min | Avis (`warning`) | 24 h |
+| Réplique AlwaysOn SQL Server dégradée | Une réplique d'un groupe de disponibilité ne se synchronise pas en bonne santé (`dumbmonit_mssql_alwayson_sync_health`). | < 2 | 10 min | Avertissement (`critical`) | 1 h |
+| Connexions SQL Server proches de la limite | Les sessions utilisateur dépassent 90 % de la limite de connexions configurée. Aucune série sans limite (`dumbmonit_mssql_sessions_used_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| Instance Oracle non ouverte | L'instance n'est pas OPEN (MOUNTED, STARTED...) : la base ne sert plus rien (`dumbmonit_oracle_instance_open`). | < 1 | 2 min | Avertissement (`critical`) | 1 h |
+| Tablespace Oracle presque plein | Un tablespace est plein à plus de 90 % de sa taille maximale ; revient sous 85 % (`dumbmonit_oracle_tablespace_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Sessions Oracle proches de la limite | Les sessions dépassent 90 % du paramètre sessions (ORA-00018 à la limite) (`dumbmonit_oracle_sessions_used_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| Retard d'application Oracle Data Guard | Un standby applique le redo avec plus de 10 minutes de retard sur le primaire (`dumbmonit_oracle_dataguard_apply_lag_seconds`). | > 600 s | 10 min | Avis (`warning`) | 6 h |
+| Zone de récupération Oracle presque pleine | La zone de récupération rapide est pleine à plus de 90 % : l'archivage peut se bloquer et figer la base (`dumbmonit_oracle_recovery_area_used_percent`). | > 90 % | 10 min | Avertissement (`critical`) | 1 h |
+| Travail du planificateur Oracle en échec | Au moins une exécution d'un travail du planificateur a échoué ces dernières 24 heures (`dumbmonit_oracle_scheduler_jobs_failed_24h`). | > 0 | 15 min | Avis (`warning`) | 24 h |
+| Cluster Elasticsearch rouge | Le cluster est rouge : au moins un shard primaire n'est pas alloué, une partie des données est indisponible (`dumbmonit_elasticsearch_cluster_status`). | > 1 | 2 min | Avertissement (`critical`) | 1 h |
+| Cluster Elasticsearch jaune | Le cluster est jaune depuis 30 minutes : des réplicas manquent et la prochaine panne d'un nœud perdra des données (`dumbmonit_elasticsearch_cluster_status == 1`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Shards Elasticsearch non alloués | Des shards restent non alloués depuis 15 minutes (`dumbmonit_elasticsearch_unassigned_shards`). | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Disque d'un nœud Elasticsearch presque plein | Le disque de données d'un nœud est plein à plus de 85 % (seuil haut à 90 %, lecture seule à 95 %) ; revient sous 80 % (`dumbmonit_elasticsearch_node_disk_used_percent`). | > 85 % | 10 min | Avis (`warning`) | 6 h |
+| Tas JVM Elasticsearch saturé | Le tas JVM d'un nœud reste au-dessus de 90 % pendant 15 minutes : le ramasse-miettes va ralentir le nœud (`dumbmonit_elasticsearch_node_heap_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| InfluxDB en mauvaise santé | InfluxDB répond à son contrôle de santé par un échec (`dumbmonit_influxdb_healthy`). | < 1 | 2 min | Avertissement (`critical`) | 1 h |
+| InfluxDB pas prêt | InfluxDB répond mais ne se déclare pas prêt pour les requêtes et les écritures (`dumbmonit_influxdb_ready`). | < 1 | 5 min | Avis (`warning`) | 6 h |
+| Erreurs serveur InfluxDB | Plus de 10 requêtes de l'API ont reçu une réponse 5xx ces 15 dernières minutes (`increase_prometheus(dumbmonit_influxdb_http_requests_5xx_total[15m])`). | > 10 | 5 min | Avis (`warning`) | 6 h |
+| Partitions Kafka hors ligne | Une partition n'a plus de leader : les lectures et les écritures échouent (`dumbmonit_kafka_offline_partitions`). | > 0 | 2 min | Avertissement (`critical`) | 1 h |
+| Partitions Kafka sous-répliquées | Des partitions ont moins de réplicas synchronisés que de réplicas depuis 10 minutes : un courtier est tombé ou en retard (`dumbmonit_kafka_under_replicated_partitions`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Kafka sans contrôleur | Le cluster ne signale aucun contrôleur : aucune élection de leader n'est possible (`dumbmonit_kafka_controller_present`). | < 1 | 2 min | Avertissement (`critical`) | 1 h |
+| Retard d'un groupe de consommateurs Kafka | Un groupe de consommateurs a plus de 10 000 messages de retard depuis 15 minutes. Ajustez le seuil au trafic de vos rubriques (`dumbmonit_kafka_consumer_group_lag_total`). | > 10000 | 15 min | Avis (`warning`) | 6 h |
+
 ### Reverse proxies et domaines {#reverse-proxies-and-domains}
 
 Traefik, Caddy, Nginx Proxy Manager et les enregistrements de domaine
@@ -574,6 +666,15 @@ la surveillance montre chaque changement avant et après.
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
 | Site web changé | Une vérification d'une page ou d'un site surveillé a trouvé des pages qui ont changé, sont apparues ou ont disparu (`dumbmonit_webchange_last_check_changes`). Chacune de ces vérifications est notifiée et nomme les pages, sous la même alerte tant qu'elle est active ; elle se résout à la première vérification qui ne trouve rien de nouveau. | > 0 | 30 s | Info (`info`) | aucun |
+
+### Sauvegardes des configurations réseau
+
+Voir [Sauvegarde des configurations réseau](../devices/netconfig.md). La page de l'équipement montre chaque version et le diff ligne à ligne, secrets masqués.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Configuration réseau modifiée | La dernière sauvegarde a trouvé une configuration différente de la version précédente, hors lignes volatiles (horodatages, compteurs) (`dumbmonit_netconfig_config_changed`). Elle se résout à la sauvegarde suivante qui ne trouve aucun changement. | > 0 | 30 s | Info (`info`) | aucun |
+| Clé d'hôte SSH modifiée | L'équipement a présenté une clé d'hôte SSH différente de celle mémorisée : la connexion a été coupée avant l'envoi de tout identifiant, et les sauvegardes s'arrêtent jusqu'à ce qu'un administrateur accepte la nouvelle clé (`dumbmonit_netconfig_host_key_changed`). | > 0 | aucun | Avertissement (`critical`) | 6 h |
 
 ### Kubernetes {#kubernetes}
 
@@ -649,6 +750,33 @@ Voir [Veeam Backup & Replication](../devices/veeam.md). Les jobs sont
 | Dépôt Veeam presque plein | Un dépôt de sauvegarde Veeam est plein à plus de 90 % : les prochains jobs échoueront par manque d'espace (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 j |
 | Licence Veeam arrivant à expiration | La licence Veeam expire dans moins de 30 jours : les jobs s'arrêtent à la fin de la période de grâce (`dumbmonit_veeam_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
 
+### Windows sans agent {#windows-sans-agent}
+
+Voir [Windows sans agent (WinRM)](../devices/winrm.md).
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Services Windows automatiques arrêtés | Au moins un service Windows en démarrage automatique est arrêté (`dumbmonit_windows_services_auto_stopped`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+
+### Kopia {#kopia}
+
+Voir [Kopia](../devices/kopia.md). Les sources sont étiquetées `source` (`utilisateur@machine:/chemin`). Bêta : pas encore testé sur un vrai serveur.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Instantané Kopia avec erreurs | Le dernier instantané d'une source Kopia s'est terminé avec des erreurs : certains fichiers n'ont pas été sauvegardés (`dumbmonit_kopia_source_last_snapshot_errors`). | > 0 | 5 min | Avis (`warning`) | 1 j |
+| Instantané Kopia trop ancien | Une source Kopia planifiée n'a pas d'instantané depuis plus de deux jours (`dumbmonit_kopia_source_last_snapshot_age_seconds`, sources planifiées seulement). | > 2 j | 30 min | Avis (`warning`) | 1 j |
+| Dépôt Kopia déconnecté | Le serveur Kopia n'est pas connecté à son dépôt : aucun instantané ne peut s'exécuter (`dumbmonit_kopia_repo_connected`). | < 1 | 10 min | Avertissement (`critical`) | 6 h |
+
+### Duplicati {#duplicati}
+
+Voir [Duplicati](../devices/duplicati.md). Les sauvegardes sont étiquetées `backup` et `backup_id`. Bêta : pas encore testé sur un vrai serveur.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Sauvegarde Duplicati en échec | La dernière exécution d'une sauvegarde Duplicati a échoué : ce qu'elle protège n'a pas de nouvelle version (`dumbmonit_duplicati_backup_failed`). | > 0 | 5 min | Avertissement (`critical`) | 1 j |
+| Sauvegarde Duplicati trop ancienne | Une sauvegarde Duplicati planifiée n'a pas réussi depuis plus de deux jours (`dumbmonit_duplicati_backup_last_success_age_seconds`, sauvegardes planifiées seulement). | > 2 j | 30 min | Avis (`warning`) | 1 j |
+
 ### Tailscale {#tailscale}
 
 Voir [Tailscale](../devices/tailscale.md). Les appareils sont étiquetés
@@ -660,6 +788,95 @@ Voir [Tailscale](../devices/tailscale.md). Les appareils sont étiquetés
 | Clé de nœud Tailscale arrivant à expiration | La clé de nœud d'un appareil Tailscale expire dans moins de 14 jours : il quittera le tailnet jusqu'à ce que quelqu'un le reconnecte (`dumbmonit_tailscale_device_key_expiry_seconds`). | < 14 j | 1 h | Avis (`warning`) | 1 j |
 | Appareil Tailscale en attente d'approbation | Un appareil a rejoint le tailnet et attend l'approbation : approuvez-le s'il est attendu, supprimez-le sinon (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Avis (`warning`) | 1 j |
 | Mise à jour client Tailscale | Un appareil Tailscale qui doit rester en ligne fait tourner un client avec une mise à jour disponible (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 j |
+
+### Microsoft 365 {#microsoft-365}
+
+Voir [Microsoft 365](../devices/m365.md). Règles pour les locataires Microsoft 365 lus via Microsoft Graph : santé des services, licences et utilisateurs à risque.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Service Microsoft 365 dégradé | Un service Microsoft 365 est dégradé, interrompu ou à l'étude d'après le tableau de bord de santé des services. (`dumbmonit_m365_services_degraded`) | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Licences Microsoft 365 épuisées | Toutes les unités d'une licence payante sont attribuées : le prochain utilisateur ne peut pas l'obtenir. (`dumbmonit_m365_license_used_percent`) | ≥ 100 % | 1 h | Avis (`warning`) | 1 j |
+| Licences Microsoft 365 presque épuisées | Plus de 95 % d'une licence payante est attribuée. (`dumbmonit_m365_license_used_percent < 99.99`) | > 95 % | 1 h | Info (`info`) | 7 j |
+| Utilisateurs Microsoft 365 à risque | Entra ID Protection signale au moins un utilisateur à risque. (`dumbmonit_m365_risky_users`) | > 0 | 15 min | Avis (`warning`) | 1 j |
+
+### Microsoft Entra ID {#microsoft-entra-id}
+
+Voir [Microsoft Entra ID](../devices/entra.md). Règles pour les locataires Microsoft Entra ID lus via Microsoft Graph : secrets d'application, synchronisation d'annuaire et MFA des administrateurs.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Secret d'application Entra bientôt expiré | Un secret ou un certificat d'une application Entra expire dans moins de 30 jours : l'application cesse de se connecter ce jour-là. (`dumbmonit_entra_credential_expiry_seconds > 0`) | < 30 d | 1 h | Avis (`warning`) | 1 j |
+| Secret d'application Entra expiré | Un secret ou un certificat d'une application Entra a expiré ces 30 derniers jours : supprimez-le, ou renouvelez-le si l'application en a encore besoin. (`dumbmonit_entra_credential_expiry_seconds`) | expired | 1 h | Avis (`warning`) | 1 j |
+| Synchronisation d'annuaire Entra en retard | La dernière synchronisation avec l'Active Directory local date de plus de 3 heures : vérifiez Entra Connect. (`dumbmonit_entra_ad_sync_age_seconds`) | > 3 h | 10 min | Avis (`warning`) | 6 h |
+| Administrateur Entra sans MFA | Au moins un administrateur n'a aucune méthode d'authentification multifacteur enregistrée. (`dumbmonit_entra_admin_without_mfa`) | > 0 | 1 h | Avis (`warning`) | 1 j |
+
+### Microsoft Azure {#microsoft-azure}
+
+Voir [Microsoft Azure](../devices/azure.md). Règles pour un abonnement Azure lu via Resource Health et les alertes Azure Monitor.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Ressource Azure indisponible | Resource Health signale une ressource de l'abonnement comme indisponible depuis 10 minutes (hors ressources arrêtées par leur propriétaire). (`dumbmonit_azure_resources_unavailable`) | > 0 | 10 min | Avertissement (`critical`) | 6 h |
+| Ressource Azure dégradée | Resource Health signale une ressource de l'abonnement comme dégradée depuis 15 minutes. (`dumbmonit_azure_resources_degraded`) | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Alerte Azure Monitor Sev0 ou Sev1 | Une alerte Azure Monitor de sévérité Sev0 (critique) ou Sev1 (erreur) est déclenchée et non fermée. (`dumbmonit_azure_alerts_high_active`) | > 0 | 5 min | Avis (`warning`) | 6 h |
+
+### AWS CloudWatch {#aws-cloudwatch}
+
+Voir [AWS (CloudWatch)](../devices/aws.md). Alarmes AWS, instances EC2 et bases RDS lues par CloudWatch.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Alarme CloudWatch AWS en ALARM | Une alarme CloudWatch est à l'état ALARM depuis 5 minutes. (`dumbmonit_aws_alarm_in_alarm`) | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Contrôle d'état EC2 AWS en échec | Une instance EC2 échoue à un contrôle d'état (instance ou système) depuis 10 minutes. (`dumbmonit_aws_ec2_status_check_failed`) | > 0 | 10 min | Avis (`warning`) | 6 h |
+| CPU EC2 AWS élevé | Une instance EC2 a un pic de CPU au-dessus de 90 % depuis 30 minutes. (`dumbmonit_aws_ec2_cpu_percent`) | > 90 % | 30 min | Avis (`warning`) | 6 h |
+| CPU RDS AWS élevé | Une base RDS a un pic de CPU au-dessus de 90 % depuis 30 minutes. (`dumbmonit_aws_rds_cpu_percent`) | > 90 % | 30 min | Avis (`warning`) | 6 h |
+| Stockage libre RDS AWS bas | Une base RDS a moins de 5 Gio de stockage libre depuis 15 minutes. (`dumbmonit_aws_rds_free_storage_bytes`) | < 5 GiB | 15 min | Avis (`warning`) | 6 h |
+
+### Cloudflare {#cloudflare}
+
+Voir [Cloudflare](../devices/cloudflare.md). Règles pour les zones, tunnels, certificats et pools de répartition de charge d'un compte Cloudflare.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Tunnel Cloudflare hors service | Un tunnel Cloudflare n'a plus aucune connexion et ne peut plus faire passer de trafic. (`dumbmonit_cloudflare_tunnel_down`) | > 0 | 5 min | Avertissement (`critical`) | 6 h |
+| Tunnel Cloudflare dégradé | Un tunnel Cloudflare a perdu une partie de ses connexions vers Cloudflare. (`dumbmonit_cloudflare_tunnel_degraded`) | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Certificat Cloudflare bientôt expiré | Un certificat actif d'une zone expire dans moins de 14 jours ; Cloudflare aurait dû l'avoir renouvelé. (`dumbmonit_cloudflare_certificate_expiry_seconds`) | < 14 d | 1 h | Avis (`warning`) | 1 j |
+| Zone Cloudflare non active | Une zone n'est pas active (changement de serveurs de noms en attente, déplacée ou désactivée). (`dumbmonit_cloudflare_zone_active`) | < 1 | 1 h | Avis (`warning`) | 1 j |
+| Taux de 5xx Cloudflare élevé | Plus de 5 % des réponses d'une zone sont des 5xx sur les une à deux dernières heures (zones d'au moins 100 requêtes). (`dumbmonit_cloudflare_zone_http_5xx_percent`) | > 5 % | 15 min | Avis (`warning`) | 6 h |
+| Pool de répartition Cloudflare en panne | Un pool de répartition de charge activé est en panne. (`dumbmonit_cloudflare_lb_pool_healthy`) | < 1 | 5 min | Avis (`warning`) | 6 h |
+
+### Hetzner Cloud {#hetzner-cloud}
+
+Voir [Hetzner Cloud](../devices/hetzner.md). Règles pour les serveurs, volumes et sauvegardes d'un projet Hetzner Cloud.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Serveur Hetzner arrêté | Un serveur Hetzner Cloud n'est pas à l'état running (éteint, en migration, démarrage bloqué). (`dumbmonit_hetzner_server_running`) | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Processeur d'un serveur Hetzner saturé | Un serveur Hetzner dépasse 90 % de processeur en moyenne sur dix minutes, depuis 30 minutes. (`dumbmonit_hetzner_server_cpu_percent`) | > 90 % | 30 min | Avis (`warning`) | 6 h |
+| Sauvegarde Hetzner trop ancienne | La sauvegarde la plus récente d'un serveur dont les sauvegardes sont activées a plus de 3 jours. (`dumbmonit_hetzner_server_backup_age_seconds`) | > 3 d | 1 h | Avis (`warning`) | 1 j |
+| Volume Hetzner non rattaché | Un volume n'est rattaché à aucun serveur, et est facturé quand même. (`dumbmonit_hetzner_volume_attached`) | < 1 | 1 h | Info (`info`) | 7 j |
+
+### OVHcloud {#ovhcloud}
+
+Voir [OVHcloud](../devices/ovh.md). Règles pour les VPS et les serveurs dédiés d'un compte OVHcloud.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| VPS OVHcloud à l'arrêt | Un VPS OVHcloud n'est plus à l'état running depuis 10 minutes. (`dumbmonit_ovh_vps_up`) | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Serveur dédié OVHcloud en erreur | La supervision d'OVHcloud signale un serveur dédié en erreur, ou éteint, depuis 5 minutes. (`dumbmonit_ovh_dedicated_up`) | < 1 | 5 min | Avertissement (`critical`) | 6 h |
+| Tâche OVHcloud en cours | Une ou plusieurs tâches (redémarrage, réinstallation, maintenance) sont en attente ou en cours sur les serveurs depuis une heure. (`dumbmonit_ovh_tasks_active`) | > 0 | 1 h | Info (`info`) | 1 j |
+
+### Infomaniak {#infomaniak}
+
+Voir [Infomaniak](../devices/infomaniak.md). Règles pour les produits d'un compte Infomaniak.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Produit Infomaniak bientôt expiré | Un produit (domaine, hébergement, messagerie) expire dans moins de 14 jours. (`dumbmonit_infomaniak_product_expiry_seconds`) | < 14 d | 1 h | Avis (`warning`) | 1 j |
+| Produit Infomaniak expiré | La date d'expiration d'un produit est dépassée. (`dumbmonit_infomaniak_product_expiry_seconds`) | < 0 | 1 h | Avertissement (`critical`) | 1 j |
+| Produit Infomaniak bloqué | Infomaniak signale un produit comme bloqué depuis une heure. (`dumbmonit_infomaniak_product_locked`) | > 0 | 1 h | Avis (`warning`) | 1 j |
+| Produit Infomaniak en maintenance | Infomaniak signale un produit en maintenance depuis une heure. (`dumbmonit_infomaniak_product_maintenance`) | > 0 | 1 h | Info (`info`) | 1 j |
 
 ### FortiGate {#fortigate}
 
@@ -685,6 +902,95 @@ Voir [Sophos Firewall](../devices/sophos.md).
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
 |---|---|---|---|---|---|
 | Interface Sophos sans lien | Une interface Sophos Firewall allumée et liée à une zone n'a pas de lien (`dumbmonit_sophos_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+
+### Cisco Meraki {#cisco-meraki}
+
+Voir [Cisco Meraki](../devices/meraki.md) (bêta). Les appareils sont étiquetés `device`, `serial`, `model` et `network`, les liaisons `interface`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Appareil Meraki hors ligne | Un appareil Cisco Meraki est hors ligne (injoignable par le dashboard cloud) depuis dix minutes. Les appareils dormants, non vus depuis longtemps, sont ignorés (`dumbmonit_meraki_device_offline`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Liaison Meraki en échec | Un routeur Meraki a perdu l'accès à Internet d'une liaison configurée (les prises filaires et cellulaires sans câble ne comptent pas) (`dumbmonit_meraki_uplink_failed`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Problème de licence Meraki | La licence Meraki n'est pas conforme (expirée, absente ou hors conformité) : le dashboard peut cesser de gérer les appareils (`dumbmonit_meraki_license_ok`). | < 1 | 1 h | Avis (`warning`) | 1 j |
+| Licence Meraki bientôt expirée | Une licence Meraki expire dans moins de 30 jours (`dumbmonit_meraki_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
+
+### TP-Link Omada {#tp-link-omada}
+
+Voir [TP-Link Omada](../devices/omada.md) (bêta). Les appareils sont étiquetés `device`, `mac`, `model` et `site`.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Appareil Omada hors ligne | Un point d'accès, commutateur ou passerelle Omada est déconnecté du contrôleur depuis dix minutes (`dumbmonit_omada_device_offline`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Processeur d'un appareil Omada élevé | Le processeur d'un appareil Omada est au-dessus de 90 % depuis quinze minutes (`dumbmonit_omada_device_cpu_usage_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mémoire d'un appareil Omada élevée | La mémoire d'un appareil Omada est au-dessus de 90 % depuis quinze minutes (`dumbmonit_omada_device_memory_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mise à jour du firmware Omada | Le contrôleur Omada propose une mise à jour du firmware pour un appareil (`dumbmonit_omada_device_upgrade_available`). | > 0 | 1 h | Info (`info`) | 7 j |
+### Aruba Central {#aruba-central}
+
+Voir [Aruba Central](../devices/arubacentral.md). Les appareils sont étiquetés `device`, `type`, `serial` et `site`.
+
+| Appareil Aruba Central hors ligne | Aruba Central signale un point d'accès, un commutateur ou une passerelle hors ligne (`dumbmonit_arubacentral_device_online`). | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Alerte critique Aruba Central | Aruba Central a au moins une alerte critique active (`dumbmonit_arubacentral_alerts_active_by_severity{severity="critical"}`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Appareils Aruba Central en mauvaise santé | Aruba Central classe au moins un appareil en mauvaise santé pendant une heure (`dumbmonit_arubacentral_devices_poor_health`). | > 0 | 1 h | Info (`info`) | 7 j |
+
+### Stormshield SNS {#stormshield-sns}
+
+Lu en SNMP par le profil Stormshield ; voir [Stormshield SNS](../devices/snmp.md#stormshield-sns).
+
+| Nœud HA Stormshield mort | Un nœud d'un cluster HA Stormshield est déclaré mort : il n'y a plus de secours (`dumbmonit_stormshield_ha_dead_nodes`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Lien HA Stormshield défaillant | Un lien entre les nœuds d'un cluster HA Stormshield est défaillant (`dumbmonit_stormshield_ha_faulty_links`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+### Palo Alto PAN-OS {#palo-alto-pan-os}
+
+Voir [Palo Alto PAN-OS](../devices/paloalto.md) (bêta). Les interfaces sont étiquetées `interface` et `zone`, les licences `license`.
+
+| Interface Palo Alto sans lien | Une interface de pare-feu Palo Alto rattachée à une zone n'a pas de lien : câble, transceiver ou l'appareil en face (`dumbmonit_paloalto_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Pair HA Palo Alto perdu | Le pair d'une paire HA Palo Alto n'est plus actif ni passif, ou le lien HA vers lui est coupé : il n'y a plus de secours (`dumbmonit_paloalto_ha_peer_up`). | < 1 | 2 min | Avertissement (`critical`) | 6 h |
+| HA Palo Alto désynchronisé | La configuration courante d'une paire HA Palo Alto n'est pas synchronisée : un basculement ferait tourner une autre configuration (`dumbmonit_paloalto_ha_in_sync`). | < 1 | 15 min | Avis (`warning`) | 6 h |
+| Membre HA Palo Alto non fonctionnel | Ce pare-feu Palo Alto indique un état HA suspendu ou non fonctionnel (`dumbmonit_paloalto_ha_local_functional`). | < 1 | 5 min | Avertissement (`critical`) | 6 h |
+| Table des sessions Palo Alto qui se remplit | La table des sessions d'un pare-feu Palo Alto est restée au-dessus de 90 % de sa capacité pendant dix minutes : les nouvelles sessions seront refusées quand elle sera pleine (`dumbmonit_paloalto_session_usage_percent`). | > 90 % | 10 min | Avis (`warning`) | 6 h |
+| CPU de gestion Palo Alto élevé | Le CPU du plan de gestion d'un pare-feu Palo Alto est resté au-dessus de 90 % pendant quinze minutes (`dumbmonit_paloalto_cpu_usage_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Mémoire de gestion Palo Alto élevée | La mémoire du plan de gestion d'un pare-feu Palo Alto est restée au-dessus de 90 % pendant quinze minutes (`dumbmonit_paloalto_memory_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 6 h |
+| Licence Palo Alto arrivant à expiration | Une licence ou un abonnement d'un pare-feu Palo Alto expire dans moins de 30 jours, ou a expiré (`dumbmonit_paloalto_license_expiry_seconds`). | < 30 j | 1 h | Avis (`warning`) | 1 j |
+| Validation Palo Alto en échec | La dernière validation de configuration d'un pare-feu Palo Alto a échoué : la configuration courante n'est pas celle qui a été enregistrée (`dumbmonit_paloalto_last_commit_ok`). | < 1 | 5 min | Info (`info`) | 1 j |
+
+### SonicWall SonicOS {#sonicwall-sonicos}
+
+Voir [SonicWall SonicOS](../devices/sonicwall.md) (bêta).
+
+| Interface SonicWall sans lien | Une interface SonicWall rattachée à une zone n'a pas de lien (`dumbmonit_sonicwall_interface_down`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+### QNAP QTS {#qnap-qts}
+
+Voir [QNAP QTS / QuTS hero](../devices/qnap.md). Les volumes portent le label `volume`, les disques `disk` et `model`.
+
+| Volume QNAP presque plein | Un volume QNAP est plein à plus de 90 % : partages, instantanés et applications ne peuvent plus écrire (`dumbmonit_qnap_volume_used_percent`). | > 90 % | 30 min | Avis (`warning`) | 1 d |
+| Santé d'un disque QNAP pas bonne | L'état SMART d'un disque QNAP n'est plus bon (avertissement ou anormal) : remplacez-le avant que le RAID perde sa redondance (`dumbmonit_qnap_disk_ok`). | < 1 | 15 min | Avis (`warning`) | 6 h |
+| Disque QNAP trop chaud | Un disque QNAP est resté au-dessus de 55 °C pendant quinze minutes (`dumbmonit_qnap_disk_temperature_celsius`). | > 55 °C | 15 min | Avis (`warning`) | 6 h |
+| Processeur QNAP trop chaud | Le processeur du QNAP est resté au-dessus de 90 °C pendant quinze minutes (`dumbmonit_qnap_cpu_temperature_celsius`). | > 90 °C | 15 min | Avis (`warning`) | 6 h |
+| Mise à jour QNAP | QNAP propose une version plus récente de QTS ou QuTS hero (`dumbmonit_qnap_firmware_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+
+### Ceph {#ceph}
+
+Voir [Ceph](../devices/ceph.md). Les OSD portent les labels `osd` et `host`, les pools `pool`.
+
+| Ceph en erreur | La grappe Ceph signale HEALTH_ERR : des données peuvent être indisponibles ou menacées (`dumbmonit_ceph_health_status`). | > 1 | 5 min | Avertissement (`critical`) | 1 h |
+| Ceph en avertissement | La grappe Ceph signale HEALTH_WARN depuis 30 minutes : voir ses contrôles de santé (`dumbmonit_ceph_health_status`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| OSD Ceph arrêté | Un ou plusieurs OSD Ceph sont arrêtés : la grappe reconstruit leurs données ailleurs et perd de la redondance en attendant (`dumbmonit_ceph_osds_down`). | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Groupes de placement Ceph pas propres | Des groupes de placement Ceph ne sont plus active+clean depuis 30 minutes : données dégradées, déplacées ou inactives (`dumbmonit_ceph_pgs_unclean`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Objets Ceph introuvables | Ceph signale des objets introuvables : aucune copie de certaines données n'est trouvée (`dumbmonit_ceph_objects_unfound`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Capacité Ceph élevée | La grappe Ceph est pleine à plus de 80 % : elle passe en lecture seule à 95 %, et la reconstruction après une panne demande de la place libre (`dumbmonit_ceph_capacity_used_percent`). | > 80 % | 30 min | Avis (`warning`) | 1 d |
+| OSD Ceph presque plein | Un OSD Ceph est plein à plus de 85 % (le ratio nearfull par défaut) : les écritures s'y arrêtent au ratio full (`dumbmonit_ceph_osd_used_percent`). | > 85 % | 15 min | Avis (`warning`) | 12 h |
+| Pool Ceph presque plein | Un pool Ceph est plein à plus de 90 % (`dumbmonit_ceph_pool_used_percent`). | > 90 % | 15 min | Avis (`warning`) | 12 h |
+| Moniteur Ceph hors quorum | Un moniteur Ceph est hors du quorum : une perte de plus et la grappe s'arrête (`dumbmonit_ceph_mons_out_of_quorum`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+
+### MinIO {#minio}
+
+Voir [MinIO](../devices/minio.md).
+
+| Nœud MinIO hors ligne | Un nœud MinIO est hors ligne : la grappe tourne avec moins de parité (`dumbmonit_minio_nodes_offline`). | > 0 | 5 min | Avertissement (`critical`) | 1 h |
+| Disque MinIO hors ligne | Un disque MinIO est hors ligne : les objets sont reconstruits à partir de la parité jusqu'à son retour (`dumbmonit_minio_drives_offline`). | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Capacité MinIO élevée | La capacité utilisable de la grappe MinIO est utilisée à plus de 85 % (`dumbmonit_minio_capacity_usable_used_percent`). | > 85 % | 30 min | Avis (`warning`) | 1 d |
+| Échecs de réparation MinIO | MinIO n'a pas pu réparer certains objets lors de son auto-réparation en cours (`dumbmonit_minio_heal_objects_failed`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Échecs de réplication MinIO | Des objets d'un bucket MinIO n'ont pas pu être répliqués vers le site distant (`dumbmonit_minio_replication_failed_objects`). | > 0 | 30 min | Avis (`warning`) | 6 h |
+| Erreurs serveur S3 MinIO | Plus de 5 % des requêtes S3 servies par MinIO ces 10 dernières minutes ont fini en erreur serveur (5xx) (`100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])`). | > 5 % | 10 min | Avis (`warning`) | 6 h |
 
 ### KVM (libvirt) {#kvm-libvirt}
 
@@ -739,6 +1045,15 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 |---|---|---|---|---|---|
 | Score de sécurité en baisse | Le score a chuté de 10 points ou plus par rapport à sa meilleure valeur des dernières 24 heures (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`) : un contrôle a commencé à échouer. | ≥ 10 pts | 30 min | Avis (`warning`) | 24 h |
 | Score de sécurité faible | Le score est sous 40, note F (`dumbmonit_security_score`). Montez ou descendez le seuil pour correspondre à votre propre barre. | < 40 | 1 h | Info (`info`) | 7 j |
+
+### Inventaire du réseau {#inventaire-du-reseau}
+
+Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les deux règles sont désactivées par défaut** et de gravité `info` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+| New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
 
 ### DumbMonit lui-même
 

@@ -61,7 +61,7 @@ pub async fn seed_builtin_rules(pool: &SqlitePool) -> Result<usize> {
                  (uid, name, description, kind, query, operator, threshold, clear_threshold,
                   for_secs, severity, selector, channels, params, unit, repeat_secs,
                   escalate_after_secs, enabled, builtin)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)",
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
         )
         .bind(&rule.uid)
         .bind(&rule.name)
@@ -79,6 +79,7 @@ pub async fn seed_builtin_rules(pool: &SqlitePool) -> Result<usize> {
         .bind(&rule.unit)
         .bind(rule.repeat_interval.map(|d| d.as_secs() as i64))
         .bind(rule.escalate_after.map(|d| d.as_secs() as i64))
+        .bind(rule.enabled)
         .execute(pool)
         .await
         .with_context(|| format!("insertion de la règle livrée « {} »", rule.uid))?;
@@ -276,7 +277,7 @@ pub async fn set_rule_enabled(pool: &SqlitePool, id: i64, enabled: bool) -> Resu
 /// Efface les alertes d'une règle et les notifications qui les attendaient.
 /// Avec `history`, les alertes actives laissent d'abord une résolution muette
 /// dans l'historique.
-async fn forget_rule_states(
+pub(crate) async fn forget_rule_states(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     uid: &str,
     history: Option<(&str, DateTime<Utc>)>,

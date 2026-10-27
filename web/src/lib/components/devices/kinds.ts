@@ -66,13 +66,32 @@ const kindPanelLoaders: Record<string, PanelLoader> = {
 	pfsense: () => import('./appliance/AppliancePanel.svelte'),
 	unraid: () => import('./appliance/AppliancePanel.svelte'),
 	veeam: () => import('./appliance/AppliancePanel.svelte'),
+	kopia: () => import('./appliance/AppliancePanel.svelte'),
+	duplicati: () => import('./appliance/AppliancePanel.svelte'),
 	tailscale: () => import('./appliance/AppliancePanel.svelte'),
+	m365: () => import('./appliance/AppliancePanel.svelte'),
+	entra: () => import('./appliance/AppliancePanel.svelte'),
+	azure: () => import('./appliance/AppliancePanel.svelte'),
+	aws: () => import('./appliance/AppliancePanel.svelte'),
+	cloudflare: () => import('./appliance/AppliancePanel.svelte'),
+	hetzner: () => import('./appliance/AppliancePanel.svelte'),
+	ovh: () => import('./appliance/AppliancePanel.svelte'),
+	infomaniak: () => import('./appliance/AppliancePanel.svelte'),
 	fortigate: () => import('./appliance/AppliancePanel.svelte'),
+	qnap: () => import('./appliance/AppliancePanel.svelte'),
+	ceph: () => import('./appliance/AppliancePanel.svelte'),
+	minio: () => import('./appliance/AppliancePanel.svelte'),
 	sophos: () => import('./appliance/AppliancePanel.svelte'),
+	meraki: () => import('./appliance/AppliancePanel.svelte'),
+	omada: () => import('./appliance/AppliancePanel.svelte'),
+	arubacentral: () => import('./appliance/AppliancePanel.svelte'),
+	paloalto: () => import('./appliance/AppliancePanel.svelte'),
+	sonicwall: () => import('./appliance/AppliancePanel.svelte'),
 	nginx: () => import('./appliance/AppliancePanel.svelte'),
 	apache: () => import('./appliance/AppliancePanel.svelte'),
 	openvpn: () => import('./appliance/AppliancePanel.svelte'),
-	webchange: () => import('./webchange/WebchangePanel.svelte')
+	webchange: () => import('./webchange/WebchangePanel.svelte'),
+	netconfig: () => import('./netconfig/NetconfigPanel.svelte')
 };
 
 /** Whether a kind has a dedicated panel, without loading it. */

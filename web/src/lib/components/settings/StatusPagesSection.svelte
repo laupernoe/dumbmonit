@@ -10,7 +10,9 @@
 	 * a long form and deserves the whole width. The public rendering lives at
 	 * `/s/<slug>`.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import FileManagedBadge from '#lib/components/settings/FileManagedBadge.svelte';
 	import { page as route } from '$app/state';
 	import { EllipsisVertical, ExternalLink, LayoutList, Plus } from 'lucide-svelte';
 	import {
@@ -130,6 +132,7 @@
 											<code class="rounded-md border border-line bg-canvas-deep px-1.5 py-0.5 font-mono text-[0.75rem] text-ink-2">/s/{item.slug}</code>
 											<Plate tone={item.published ? 'signal' : 'ghost'} label={item.published ? m.status_list_published() : m.status_list_draft()} />
 											{#if item.domain}<Plate tone="info" label={item.domain} />{/if}
+											<FileManagedBadge kind="status_page" id={item.slug} />
 										</div>
 										<p class="mt-1 text-sm text-ink-2">
 											{m.status_list_services({ count: item.items.length })}
@@ -142,6 +145,7 @@
 											<ExternalLink class="size-3.5" aria-hidden="true" />
 										</Button>
 										{#if auth.isAdmin}
+											<ClientAssign kind="status_page" id={item.id} />
 											<Button variant="ghost" size="sm" href={`/settings/status/${item.id}`}>{m.status_list_edit()}</Button>
 											<Menu label={m.status_list_more()}>
 												{#snippet trigger({ toggle, open })}

@@ -21,6 +21,7 @@
 	import { theme } from '#lib/stores/theme.svelte.js';
 	import { DecryptText, EmptyState, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
 	import Logo from '#lib/components/Logo.svelte';
+	import AccessGate from '#lib/components/status/AccessGate.svelte';
 	import IncidentCard from '#lib/components/status/IncidentCard.svelte';
 	import StatusUpdates from '#lib/components/status/StatusUpdates.svelte';
 	import CalendarHistory from '#lib/components/status/CalendarHistory.svelte';
@@ -95,6 +96,8 @@
 	});
 
 	const notFound = $derived(error !== null && toApiError(error).status === 404);
+	// A private page answers 401 and says what it wants: a password or a DumbMonit sign-in.
+	const gate = $derived(error !== null ? toApiError(error).access : null);
 	const banner = $derived(status ? overallBanner(status) : null);
 	const days = $derived(status?.page.history_days ?? 7);
 	const windowSecs = $derived(status?.page.window_secs ?? days * 86400);
@@ -150,6 +153,8 @@
 		return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([, group]) => group);
 	});
 
+	/** Services a subscriber may follow, by public key. */
+	const subscribeServices = $derived(status ? status.groups.flatMap((g) => g.items.map((item) => ({ key: item.key, label: item.label }))) : []);
 	const serviceCount = $derived(status ? status.groups.reduce((n, g) => n + g.items.length, 0) : 0);
 
 	// Banner scene: an empty (or unknown) list keeps the plain page.
@@ -362,9 +367,12 @@
 				<header class="flex flex-wrap items-center gap-x-4 gap-y-2">
 					<div class="flex min-w-0 items-center gap-3">
 						{#if status.page.logo_url}
-							<img src={status.page.logo_url} alt="" class="size-10 shrink-0 rounded-lg object-contain" />
+							<img src={status.page.logo_url} alt={status.page.brand_name ?? ''} class="size-10 shrink-0 rounded-lg object-contain" />
 						{/if}
 						<div class="min-w-0">
+							{#if status.page.brand_name && status.page.brand_name !== status.page.title}
+								<p class="text-xs font-semibold text-ink-2 [overflow-wrap:anywhere]">{status.page.brand_name}</p>
+							{/if}
 							<h1 class="text-lg leading-tight font-semibold tracking-tight break-words text-ink">{status.page.title}</h1>
 							{#if status.page.description}
 								<p class="max-w-prose text-xs text-ink-2">{status.page.description}</p>
@@ -410,13 +418,15 @@
 			{@render announcements()}
 			{@render services(true)}
 			{@render pastIncidents()}
-			<StatusUpdates slug={status.page.slug} subscribe={status.page.subscribe} />
+			<StatusUpdates slug={status.page.slug} kinds={status.page.subscribe_kinds ?? []} services={subscribeServices} />
 			{@render pageFooter()}
 		</main>
 	{:else}
 		<main class="mx-auto w-full max-w-3xl px-4 pt-8 pb-16 sm:px-6 sm:pt-12">
 			{#if error && notFound}
 				<EmptyState mascot="dizzy" title={m.status_public_not_found_title()} description={m.status_public_not_found_description()} />
+			{:else if error && gate}
+				<AccessGate {slug} access={gate} onunlocked={() => { error = null; loading = true; void load(); }} />
 			{:else if error}
 				<ErrorNotice {error} title={m.status_public_load_error()} onretry={() => void load()} />
 			{:else if loading || !status || !banner}
@@ -430,9 +440,12 @@
 				<header class="rise-in flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
 					<div class="flex min-w-0 items-center gap-4">
 						{#if status.page.logo_url}
-							<img src={status.page.logo_url} alt="" class="size-12 shrink-0 rounded-lg object-contain sm:size-14" />
+							<img src={status.page.logo_url} alt={status.page.brand_name ?? ''} class="size-12 shrink-0 rounded-lg object-contain sm:size-14" />
 						{/if}
 						<div class="min-w-0">
+							{#if status.page.brand_name && status.page.brand_name !== status.page.title}
+								<p class="text-sm font-semibold text-ink-2 [overflow-wrap:anywhere]">{status.page.brand_name}</p>
+							{/if}
 							<h1 class="display text-3xl break-words text-ink sm:text-4xl">{status.page.title}</h1>
 							{#if status.page.description}
 								<p class="mt-1.5 max-w-prose text-base text-ink-2">{status.page.description}</p>
@@ -487,7 +500,7 @@
 				{@render announcements()}
 				{@render services(false)}
 				{@render pastIncidents()}
-				<StatusUpdates slug={status.page.slug} subscribe={status.page.subscribe} />
+				<StatusUpdates slug={status.page.slug} kinds={status.page.subscribe_kinds ?? []} services={subscribeServices} />
 			{/if}
 
 			{@render pageFooter()}
