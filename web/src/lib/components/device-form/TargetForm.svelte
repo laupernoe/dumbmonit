@@ -70,9 +70,12 @@
 		prefill?: Prefill | null;
 		/** Add only: the relay agent picked beforehand ("Add a monitor through this relay"). */
 		viaAgentDefault?: number | null;
+		/** Location and folder a new device starts in (the site chosen before the form). */
+		locationDefault?: number | null;
+		folderDefault?: string;
 	}
 
-	let { collector, target, targets = [], onsaved, cancelHref, prefill = null, viaAgentDefault = null }: Props = $props();
+	let { collector, target, targets = [], onsaved, cancelHref, prefill = null, viaAgentDefault = null, locationDefault = null, folderDefault = '' }: Props = $props();
 
 	// The scan's findings, folded into this kind's fields. Seeds once, like the rest.
 	const seed = untrack(() => seedFromPrefill(target ? null : prefill, collector));
@@ -115,14 +118,14 @@
 	let msAgents = $state<number[]>(untrack(() => [...(target?.multisite?.agents ?? [])]));
 	let msQuorum = $state<number | null>(untrack(() => target?.multisite?.quorum ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
-	let groupName = $state(untrack(() => target?.group_name ?? ''));
+	let groupName = $state(untrack(() => target?.group_name ?? folderDefault));
 	// MSP mode: the client of the target. Offered when there is a choice; only
 	// the MSP administrator moves an existing target (its dependents follow).
 	const clientChoices = $derived(auth.mspOn ? (auth.msp?.clients ?? []) : []);
 	const showClient = $derived(clientChoices.length > 1 || (auth.msp?.admin === true && clientChoices.length > 0));
 	const clientLocked = $derived(!!target && auth.msp?.admin !== true);
 	let clientId = $state<number | null>(untrack(() => target?.client_id ?? auth.currentClient ?? null));
-	let locationId = $state<number | null>(untrack(() => target?.location_id ?? null));
+	let locationId = $state<number | null>(untrack(() => target ? (target.location_id ?? null) : locationDefault));
 	/** Locations of the world map; the field only shows once there is one. */
 	let locations = $state<MapLocation[]>([]);
 	$effect(() => {

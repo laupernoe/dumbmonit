@@ -145,17 +145,8 @@
 
 	let homepageError = $state<string | null>(null);
 
-	// The scene picker shows the chosen scenes; "Change" opens a searchable, paged grid.
-	const SCENES_PER_PAGE = 9;
+	// The scene picker shows the chosen scenes; "Change" opens the grid of the four scenes.
 	let scenePickerOpen = $state(false);
-	let sceneQuery = $state('');
-	let scenePage = $state(0);
-	const sceneMatches = $derived.by(() => {
-		const q = sceneQuery.trim().toLowerCase();
-		return q ? SCENE_CHOICES.filter((c) => c.label.toLowerCase().includes(q) || c.value.includes(q)) : SCENE_CHOICES;
-	});
-	const scenePages = $derived(Math.max(1, Math.ceil(sceneMatches.length / SCENES_PER_PAGE)));
-	const sceneShown = $derived(sceneMatches.slice(scenePage * SCENES_PER_PAGE, (scenePage + 1) * SCENES_PER_PAGE));
 	const chosenScenes = $derived(scenes.flatMap((id) => SCENE_CHOICES.filter((c) => c.value === id)));
 
 	function toggleScene(id: string, on: boolean) {
@@ -679,17 +670,8 @@
 						</Button>
 					</div>
 					{#if scenePickerOpen}
-						<input
-							type="search"
-							class="input"
-							bind:value={sceneQuery}
-							oninput={() => (scenePage = 0)}
-							placeholder={m.status_form_scene_search()}
-							aria-label={m.status_form_scene_search()}
-							autocomplete="off"
-						/>
-						<div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
-							{#each sceneShown as choice (choice.value)}
+						<div class="grid grid-cols-2 gap-3">
+							{#each SCENE_CHOICES as choice (choice.value)}
 								{@const Preview = SCENE_COMPONENTS[choice.value]}
 								{@const rank = scenes.indexOf(choice.value)}
 								<label
@@ -713,17 +695,8 @@
 										{/if}
 									</span>
 								</label>
-							{:else}
-								<p class="col-span-full text-sm text-ink-2">{m.status_form_scene_no_match()}</p>
 							{/each}
 						</div>
-						{#if scenePages > 1}
-							<div class="flex items-center justify-between gap-2">
-								<Button variant="ghost" size="sm" onclick={() => (scenePage -= 1)} disabled={scenePage === 0}>{m.status_form_scene_prev()}</Button>
-								<span class="text-sm text-ink-2" aria-live="polite">{m.status_form_scene_page({ page: scenePage + 1, pages: scenePages })}</span>
-								<Button variant="ghost" size="sm" onclick={() => (scenePage += 1)} disabled={scenePage >= scenePages - 1}>{m.status_form_scene_next()}</Button>
-							</div>
-						{/if}
 					{/if}
 					{#if scenes.length > 1}
 						<Field label={m.status_form_rotation()} for="{idPrefix}-rotation" help={m.status_form_rotation_help()}>

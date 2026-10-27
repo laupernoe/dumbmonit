@@ -5,11 +5,11 @@
  */
 import { m } from '#lib/paraglide/messages.js';
 
-export type SettingsTab = 'general' | 'account' | 'team' | 'monitoring' | 'notifications' | 'status' | 'wall' | 'system';
+export type SettingsTab = 'general' | 'account' | 'team' | 'monitoring' | 'notifications' | 'wall' | 'system';
 
 export const DEFAULT_TAB: SettingsTab = 'account';
 
-export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'monitoring', 'notifications', 'status', 'wall', 'system'];
+export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'monitoring', 'notifications', 'wall', 'system'];
 
 /** Which tab holds each section (by its anchor id). */
 export const SECTION_TAB: Record<string, SettingsTab> = {
@@ -35,10 +35,6 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 	'notifications-channels': 'notifications',
 	'notifications-policy': 'notifications',
 	'quiet-hours': 'notifications',
-	reports: 'notifications',
-	status: 'status',
-	'status-pages': 'status',
-	incidents: 'status',
 	wall: 'wall',
 	music: 'wall',
 	news: 'wall',
@@ -53,11 +49,17 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 };
 
 /**
- * Sections that used to live in Settings, and where they went. Empty since
- * October 2026: notification channels and status pages, which had left for
- * Alerts and Status in September, came back as tabs of their own.
+ * Sections that used to live in Settings, and where they went: status pages
+ * and announcements to `/status`, the SLA export and the scheduled reports to
+ * `/reports`. An old `/settings/...#anchor` link follows them.
  */
-export const MOVED: Record<string, string> = {};
+export const MOVED: Record<string, string> = {
+	status: '/status',
+	'status-pages': '/status',
+	incidents: '/status#incidents',
+	reports: '/reports',
+	'reports-sla': '/reports#reports-sla'
+};
 
 export function isTab(value: string | undefined): value is SettingsTab {
 	return !!value && (TAB_IDS as readonly string[]).includes(value);
@@ -75,8 +77,6 @@ export function tabLabel(tab: SettingsTab): string {
 			return m.settings_tab_monitoring();
 		case 'notifications':
 			return m.settings_tab_notifications();
-		case 'status':
-			return m.settings_tab_status();
 		case 'wall':
 			return m.settings_tab_wall();
 		case 'system':
@@ -120,9 +120,6 @@ export function searchIndex(): SearchEntry[] {
 		entry('locations', m.locations_title(), m.settings_search_kw_locations()),
 		entry('notifications-channels', m.notifications_channels_title(), m.settings_search_kw_notifications()),
 		entry('notifications-policy', m.notifications_policy_title(), m.settings_search_kw_policy()),
-		entry('reports', m['settings.section.reports'](), m.settings_search_kw_reports()),
-		entry('status-pages', m.settings_tab_status(), m.settings_search_kw_status()),
-		entry('incidents', m.status_incidents_heading(), m.settings_search_kw_incidents()),
 		entry('wall', m.settings_appearance_wall_title(), m.settings_search_kw_wall()),
 		entry('music', m['settings.section.music'](), m.settings_search_kw_music()),
 		entry('widgets', m.settings_widgets_title(), `${m.settings_search_kw_widgets()} ${m.settings_search_kw_news()}`),

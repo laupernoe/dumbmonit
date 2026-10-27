@@ -1510,6 +1510,10 @@ export interface AdKitPayload {
 	security_group?: string | null;
 	/** Also copy the agent binary into SYSVOL, for servers without outbound access. */
 	sysvol_binary?: boolean;
+	/** DNS name (FQDN) or IPv4 address of this server that agents contact, optional `:port`. */
+	server_host?: string | null;
+	/** IP address of a DNS server that resolves `server_host` on machines that cannot. */
+	dns_server?: string | null;
 }
 
 /** Response of `POST /api/agent/ad-kit`: the only chance to see the token and script. */
@@ -1523,6 +1527,10 @@ export interface CreatedAdKit {
 	/** `group_name` of the targets this deployment enrols. */
 	folder: string;
 	install_windows: string;
+	/** URL the agents contact, as written in the kit. */
+	server_url: string;
+	/** DNS server written in the kit, if any. */
+	dns_server: string | null;
 }
 
 /**
@@ -6341,6 +6349,68 @@ export interface DashboardPayload {
 	shared: boolean;
 	range_secs: number;
 	refresh_secs: number;
+	widgets: DashboardWidget[];
+}
+
+export interface DashboardTemplateName {
+	id: number;
+	name: string;
+}
+
+export interface DashboardTemplateKind {
+	kind: string;
+	count: number;
+}
+
+export interface DashboardTemplate {
+	id: string;
+	/** English, as served (like the collector catalogue). */
+	title: string;
+	description: string;
+	/** A lucide icon name; unknown names fall back to a default icon. */
+	icon: string;
+	/** Device types it reads; empty: every type. */
+	requires: string[];
+	/** A series a device must publish to count (Docker containers). */
+	needs_metric: string | null;
+	/** Types it reads that the account has, most numerous first. */
+	present_kinds: DashboardTemplateKind[];
+	/** Active devices that could feed it. */
+	target_count: number;
+	widget_count: number;
+	available: boolean;
+	/** Why it cannot be used (English); null when it can. */
+	reason: string | null;
+}
+
+export interface DashboardTemplateList {
+	filters: {
+		folders: string[];
+		sites: DashboardTemplateName[];
+		/** Empty unless multi-client mode is on. */
+		clients: DashboardTemplateName[];
+	};
+	templates: DashboardTemplate[];
+}
+
+/** What the template filter can narrow by; every field is optional. */
+export interface DashboardTemplateFilter {
+	kind?: string;
+	folder?: string;
+	site?: number;
+	client?: number;
+}
+
+export interface DashboardTemplatePreview {
+	id: string;
+	/** Suggested dashboard name. */
+	name: string;
+	range_secs: number;
+	refresh_secs: number;
+	matched_count: number;
+	matched: { id: number; name: string; kind: string }[];
+	/** More than 300 devices matched: the queries carry the first 300. */
+	truncated: boolean;
 	widgets: DashboardWidget[];
 }
 

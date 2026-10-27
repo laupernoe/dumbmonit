@@ -13,7 +13,7 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { scale } from 'svelte/transition';
-	import { Ellipsis, PanelRight, Plus, Search, X } from 'lucide-svelte';
+	import { BookOpen, Ellipsis, PanelRight, Plus, Search, X } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
@@ -24,12 +24,15 @@
 	import { Menu, calmMotion } from '#lib/ui/index.js';
 	import ContextPanel from '#lib/components/enterprise/ContextPanel.svelte';
 	import UserMenu from '#lib/components/UserMenu.svelte';
+	import GithubMark from '#lib/components/GithubMark.svelte';
 	import ClientSwitcher from '#lib/components/ClientSwitcher.svelte';
 	import { NAV, isActive, visible, type NavEntry } from './nav.js';
 
 	let { children }: { children: Snippet } = $props();
 
 	const WIDE = '(min-width: 80rem)';
+	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
+	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
 
 	$effect(() => {
 		void mode.loadSettings();
@@ -100,13 +103,24 @@
 
 <div class="flex min-h-dvh bg-canvas text-ink">
 	<nav aria-label={m.misc_nav_main()} class="sticky top-0 hidden h-dvh w-14 shrink-0 flex-col items-center gap-1 border-r border-line py-3 sm:flex">
-		<a href="/" class="mb-3 flex size-8 items-center justify-center rounded-[9px] border border-info/30 bg-surface-2" aria-label={m.misc_nav_home()}>
+		<a href="/" class="mb-3 flex size-8 shrink-0 items-center justify-center rounded-[9px] border border-info/30 bg-surface-2" aria-label={m.misc_nav_home()}>
 			<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M1 9h3l2-5 3 9 2-6 1 2h3" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="stroke-info" /></svg>
 		</a>
-		{#each railTop as entry (entry.href)}
-			{@render railItem(entry)}
-		{/each}
-		<div class="mt-auto flex flex-col items-center gap-1">
+		<!-- Short screens scroll the destinations; the foot (docs, account, Settings) stays put. -->
+		<div class="flex min-h-0 flex-1 flex-col items-center gap-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+			{#each railTop as entry (entry.href)}
+				{@render railItem(entry)}
+			{/each}
+		</div>
+		<div class="flex shrink-0 flex-col items-center gap-1 pt-2">
+			<a href={DOCS_URL} target="_blank" rel="noopener" class={railLink(false)} aria-label={m.misc_nav_docs_sr()} title={m.misc_nav_docs_title()}>
+				<BookOpen class="size-[18px]" strokeWidth={1.7} aria-hidden="true" />
+			</a>
+			<a href={GITHUB_URL} target="_blank" rel="noopener" class={railLink(false)} aria-label={m.misc_nav_github()} title={m.misc_nav_github_title()}>
+				<GithubMark class="size-[18px]" />
+			</a>
+			<!-- The account sits just above Settings, the last icon of the rail. -->
+			<UserMenu placement="rail" />
 			{#each railFoot as entry (entry.href)}
 				{@render railItem(entry)}
 			{/each}
@@ -180,7 +194,6 @@
 				>
 					<PanelRight class="size-4" aria-hidden="true" />
 				</button>
-				<div class="max-sm:hidden"><UserMenu /></div>
 			</div>
 		</header>
 
@@ -246,6 +259,12 @@
 								<entry.icon class="size-4 text-ink-2" aria-hidden="true" />{entry.label()}
 							</a>
 						{/each}
+						<a role="menuitem" href={DOCS_URL} target="_blank" rel="noopener" onclick={close} class="flex min-h-11 items-center gap-2.5 rounded-md px-2.5 text-sm text-ink hover:bg-surface-2" title={m.misc_nav_docs_title()}>
+							<BookOpen class="size-4 text-ink-2" aria-hidden="true" />{m.misc_nav_docs()}
+						</a>
+						<a role="menuitem" href={GITHUB_URL} target="_blank" rel="noopener" onclick={close} class="flex min-h-11 items-center gap-2.5 rounded-md px-2.5 text-sm text-ink hover:bg-surface-2" title={m.misc_nav_github_title()}>
+							<GithubMark class="size-4 text-ink-2" />GitHub
+						</a>
 						{#if auth.canSignOut}
 							<button type="button" role="menuitem" onclick={() => { close(); void auth.logout(); }} class="flex min-h-11 items-center gap-2.5 rounded-md px-2.5 text-left text-sm text-ink hover:bg-surface-2">{m.misc_nav_sign_out()}</button>
 						{/if}

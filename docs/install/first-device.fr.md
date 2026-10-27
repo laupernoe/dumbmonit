@@ -136,7 +136,7 @@ Quel que soit le type, le formulaire a :
   et ainsi de suite. Rien à configurer.
 - Pour être notifié, ajoutez un
   [canal de notification](../notifications.md) dans
-  **Réglages → Notifications et rapports**. Les règles intégrées notifient chaque canal
+  **Réglages → Notifications**. Les règles intégrées notifient chaque canal
   activé.
 
 !!! tip "Aucune donnée après une minute ?"

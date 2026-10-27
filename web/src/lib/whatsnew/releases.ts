@@ -21,6 +21,28 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.14.1',
+		date: '2026-10-28',
+		highlights: [
+			{
+				title: 'Dashboard templates',
+				text: 'New from a template on the Dashboards page: ten ready-made dashboards that fill themselves with your devices, narrowed to a type, folder, site or client, with a live preview.'
+			},
+			{
+				title: 'Add a monitor by site',
+				text: 'Pick the site first: what its network scans found is added in one click, and the monitor types come pre-filled with its relay agent, location and folder.'
+			},
+			{
+				title: 'A compact Security page',
+				text: 'CVEs as a dense gallery, by CVE or by machine, with quick filters for severity, state, exploited, fix available, folder and client.'
+			},
+			{
+				title: 'Status pages and Reports get their own pages',
+				text: 'Both left Settings. The Enterprise mode gains a wall of its own, and status pages and the Homelab wall keep four scenes each.'
+			}
+		]
+	},
+	{
 		version: '0.14.0',
 		date: '2026-10-28',
 		highlights: [

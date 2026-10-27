@@ -12,6 +12,11 @@ agent needs.
 
 ## Ports to open
 
+Every agent install page (install command, relay, Deploy with Active
+Directory) states the same thing: the agent talks to the server over the
+encrypted channel, TLS 1.3 with its own agent certificate (mutual TLS), and it
+only needs to reach the server on the agent port, also from another site.
+
 | Where | Port | Why |
 |-------|------|-----|
 | Server, inbound | **TCP 8443** | Encrypted agent channel. The only port agents on other networks need. |
