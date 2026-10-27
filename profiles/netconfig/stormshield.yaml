@@ -1,0 +1,10 @@
+# Sauvegarde des configurations : Stormshield SNS, fichiers de
+# `/usr/Firewall/ConfigFiles` lus par SSH (compte admin, accès SSH activé).
+id: stormshield
+label: Stormshield SNS
+transport: ssh_exec
+commands:
+  - "find /usr/Firewall/ConfigFiles -maxdepth 2 -type f ! -name '*.bak' | sort | while read f; do echo \"### $f\"; cat \"$f\"; done"
+volatile: []
+secrets:
+  - '(?i)^\s*(?:password|psk|secret|key|community|bindpw|presharedkey|privkey|passphrase)\s*=\s*"?(?P<secret>[^"\s]+)'

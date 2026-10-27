@@ -331,12 +331,36 @@ pub async fn execute(registry: &Registry, command: &AgentCommand) -> ProbeOutcom
                 error: Some(error),
                 samples: Vec::new(),
                 profile_id: None,
+                netconfig: None,
             };
         }
     };
     let timeout = Duration::from_secs(job.timeout_secs.max(1)).min(MAX_PROBE_TIMEOUT);
     let target = &job.target;
     debug!(id = command.id, target = target.id, kind = target.kind, "relayed probe started");
+
+    // Sauvegarde de configuration : le texte relevé repart vers le serveur,
+    // qui le chiffre et le range ; rien n'en est gardé ici. Le délai est
+    // celui des options de la cible, borné comme toute sonde relayée.
+    if !job.discover && target.kind == dumbmonit_collectors::netconfig::KIND {
+        let fetch = dumbmonit_collectors::netconfig::relay_capture(target);
+        let (error, capture) = match tokio::time::timeout(MAX_PROBE_TIMEOUT, fetch).await {
+            Ok(result) => result,
+            Err(_) => (
+                Some(format!("Timed out after {MAX_PROBE_TIMEOUT:?}")),
+                dumbmonit_proto::NetconfigCapture::default(),
+            ),
+        };
+        let duration_ms = started.elapsed().as_millis() as u64;
+        debug!(id = command.id, target = target.id, duration_ms, "relayed config fetch done");
+        return ProbeOutcome {
+            duration_ms,
+            error,
+            samples: Vec::new(),
+            profile_id: None,
+            netconfig: Some(capture),
+        };
+    }
 
     let (samples, profile_id, error) = if job.discover {
         match registry.discover(target, timeout).await {
@@ -362,7 +386,7 @@ pub async fn execute(registry: &Registry, command: &AgentCommand) -> ProbeOutcom
             debug!(id = command.id, target = target.id, %error, duration_ms, "relayed probe failed")
         }
     }
-    ProbeOutcome { duration_ms, error, samples, profile_id }
+    ProbeOutcome { duration_ms, error, samples, profile_id, netconfig: None }
 }
 
 #[cfg(test)]

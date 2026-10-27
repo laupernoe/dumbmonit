@@ -1,0 +1,1 @@
+[{"id":"6f1a","realm":"master","displayName":"Keycloak","enabled":true,"sslRequired":"external"},{"id":"7b2c","realm":"homelab","displayName":"Homelab","enabled":true,"sslRequired":"external"},{"id":"8c3d","realm":"old test","displayName":"Old test","enabled":false,"sslRequired":"external"}]

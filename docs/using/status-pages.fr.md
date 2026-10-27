@@ -245,6 +245,52 @@ l'**URL publique** de la [politique de notification](../alerting/notifications.m
 utilisée la dernière fois que vous avez enregistré la page — jamais
 depuis la requête d'un visiteur.
 
+### Abonnés SMS, webhook et Slack {#channel-subscribers}
+
+En plus de l'email, une page peut proposer trois autres façons de la suivre.
+Ouvrez-les dans le panneau des abonnés de l'éditeur (**Canaux d'abonnement**) ;
+la page publique affiche alors un onglet par canal.
+
+- **SMS.** Choisissez un canal Vonage, Telnyx ou ASPSMS parmi les
+  [Notifications](../alerting/notifications.md) ; ses identifiants et son
+  expéditeur sont réutilisés, pas ses destinataires. Le visiteur saisit un
+  numéro au format international (`+33612345678`) et le confirme avec un code à
+  six chiffres reçu par SMS (cinq essais, 15 minutes). Les annonces tiennent
+  en un court message avec un lien `Stop:`. Un SMS coûte de l'argent : les
+  inscriptions SMS ont des limites plus basses (trois requêtes par adresse
+  client et 25 en tout par 15 minutes).
+- **Webhook signé.** Le visiteur donne une URL `http(s)`. DumbMonit lui envoie
+  en POST une requête signée `subscription.confirm` portant un `confirm_url` ;
+  l'abonnement démarre quand le point d'arrivée (ou le visiteur) l'appelle. Le
+  secret de signature (`whsec_…`) est affiché une seule fois, sur la page,
+  juste après la demande. Chaque requête porte `X-DumbMonit-Timestamp` et
+  `X-DumbMonit-Signature: sha256=<hex>`, le HMAC-SHA256 de
+  `<horodatage>.<corps>` avec le secret. Le corps JSON contient `type`
+  (`incident` ou `maintenance`), `page`, `incident` (id, titre, statut,
+  gravité, dates), `message` et `unsubscribe_url`. L'URL passe par la même
+  garde sortante que les canaux de notification (les adresses du serveur
+  lui-même sont refusées).
+- **Slack.** Le visiteur colle l'URL du webhook entrant de son propre Slack
+  (`https://hooks.slack.com/services/…`). DumbMonit y publie un message de test
+  avec un lien de confirmation ; chaque annonce porte ensuite un lien de
+  désabonnement.
+- **Services suivis.** Un abonné peut cocher les services qui l'intéressent.
+  En créant une annonce pour une page, vous pouvez cocher les services
+  concernés (`components` dans l'API) : les abonnés qui ne suivent que
+  d'autres services ne sont pas prévenus. Une annonce sans service coché, et un
+  abonné sans service coché, signifient « tout ».
+- **Envoi.** Les messages SMS, webhook et Slack passent par une file : un échec
+  est repris après 1 minute, 5 minutes, 30 minutes, 2 heures, puis abandonné
+  après cinq essais ou un jour. Les envois sont espacés pour ne pas inonder un
+  fournisseur.
+- **Pages privées.** Sur une page protégée par mot de passe ou par connexion,
+  seul qui peut voir la page peut s'y abonner.
+- **Administration.** Le panneau liste les abonnés de tous les canaux (numéros
+  et URL masqués, filtre par canal), les exporte en CSV
+  (`GET /api/status-pages/{id}/subscribers.csv` ; les URL restent masquées) et
+  en supprime n'importe lequel. Les canaux ouverts par une page voyagent avec
+  les [sauvegardes](../install/backup.md) ; pas les abonnés eux-mêmes.
+
 ## 4. Partager le lien
 
 La page vit à `https://votre-serveur/s/<adresse>`. Tout sous `/s/` et

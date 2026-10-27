@@ -117,6 +117,7 @@ How they show up depends on the channel:
 | Discord, Slack, email and every other channel | Links at the end of the message |
 | Custom webhook | Links in `{{message}}`, and the `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` variables |
 | PagerDuty, Opsgenie, Grafana OnCall, SIGNL4 | Nothing: acknowledge in the service itself |
+| Jira, GLPI, Zammad, GitHub Issues, GitLab Issues | Nothing: the acknowledgement is added to the ticket as a comment |
 | Vonage, Telnyx, ASPSMS (SMS) | Nothing: a signed link would cost several SMS segments |
 
 Telegram only accepts buttons pointing to an `https` address with a domain name;
@@ -804,8 +805,8 @@ The message is sent in Markdown.
 
 The API key and secret are on the Vonage API dashboard.
 
-- **Settings** — `api_key`, `from` (a number or alphanumeric name), `to` (list)
-- **Secrets** — `api_secret`
+- **Settings** — `from` (a number or alphanumeric name), `to` (list)
+- **Secrets** — `api_key`, `api_secret`
 
 ### SMS via Telnyx
 
@@ -874,6 +875,107 @@ In SIGNL4, copy the team webhook from **Teams → Team settings**: it is
 
 An alert reaches the team's phones (`X-S4-Status: new`) and its resolution closes it
 (`resolved`), matched on a per-device external ID.
+
+### DumbMonit on-call
+
+Pages the person on call, then escalates step by step until someone
+acknowledges. It has a single setting, the **escalation policy** to run, and no
+secret. Schedules, contacts and policies are described in
+[On-call](alerting/oncall.md); the channel goes through the usual routing
+(labels, minimum severity, channels chosen per rule).
+
+### Automatic tickets (Jira, GLPI, Zammad, GitHub, GitLab)
+
+These five channels do not send a message: they keep **one ticket per alert**.
+
+- When an alert opens, the ticket is created: title, description with a link to
+  the device in DumbMonit (set the public address in the notification policy), and
+  a priority taken from the severity.
+- The ticket reference is remembered per alert and per channel, so a reminder or a
+  retry never opens a second one while the first is open.
+- Notable events are added as comments: an escalation, an alert nobody acknowledged
+  in time, a new finding, and an acknowledgement by someone in DumbMonit.
+- When the alert resolves, DumbMonit comments and closes the ticket (transition,
+  status or state configured on the channel).
+- **Reopen if the alert returns within (hours)** — if the same alert comes back in
+  that delay, the closed ticket is reopened with a comment instead of opening a new
+  one. Empty or 0: a new ticket every time. If the ticket cannot be reopened (missing
+  transition, deleted), a new one is created.
+- The ticket link appears on the alert, in the alert details.
+- Failures show in the channel's "last error". A temporary failure (service down,
+  429) is retried with an increasing delay; a permanent one (bad token, unknown
+  project) is reported and not retried.
+- **Send test** creates a test ticket then closes it right away. If it cannot be
+  closed, the error says so and names the ticket to close by hand.
+- Acknowledge and snooze links are not added to these channels.
+
+Tokens are encrypted and never shown again. Create a dedicated account or token
+with only the rights it needs.
+
+### Jira
+
+Works with Jira Cloud and Jira Data Center.
+
+- **Cloud**: create an API token at <https://id.atlassian.com/manage-profile/security/api-tokens>
+  and give the account e-mail.
+- **Data Center**: **Profile → Personal Access Tokens**; no e-mail needed.
+
+- **Settings** — `server_url`, `email`
+  (Cloud only; leave empty on Data Center), `project` (the project key), `issue_type` (default `Task`), `labels`
+  (list), `priority` (`map` sets Highest, Medium or Low from the severity; `none` for
+  projects without a priority field), `close_transition` (default `Done`),
+  `reopen_transition` (default `Reopen`), `reopen_hours`
+- **Secrets** — `api_token`
+
+Transitions are matched by name (of the transition or of its target status, case
+insensitive) among those available from the issue's current status. If the name does
+not exist, the error lists the available ones.
+
+### GLPI
+
+Enable the REST API in **Setup → General → API**, create an API client, and copy the
+user's **API token** from *My settings → Remote access keys*.
+
+- **Settings** — `server_url` (the GLPI address; `/apirest.php` is added),
+  `entity_id`, `category_id` (numbers, optional), `close_status` (`solved` or
+  `closed`), `reopen_hours`
+- **Secrets** — `user_token`, `app_token` (the API client's application token, if it
+  requires one)
+
+The ticket is an incident; urgency, impact and priority follow the severity.
+Escalations are added as follow-ups. Reopening sets the status back to *New*.
+
+### Zammad
+
+Create an access token in **Profile → Token Access** with the `ticket.agent`
+permission.
+
+- **Settings** — `server_url`, `group`, `customer` (e-mail or login), `close_state`
+  (default `closed`), `reopen_state` (default `open`), `reopen_hours`
+- **Secrets** — `token`
+
+Tickets are created with an internal note; the priority is Low, Normal or High
+depending on the severity.
+
+### GitHub Issues
+
+Create a fine-grained token (**Settings → Developer settings**) limited to the
+repository, with the **Issues: read and write** permission.
+
+- **Settings** — `repository` (`owner/name`), `labels` (list; they must exist),
+  `api_url` (GitHub Enterprise Server only, for example `https://ghe.example.org/api/v3`),
+  `reopen_hours`
+- **Secrets** — `token`
+
+Resolution closes the issue as *completed*.
+
+### GitLab Issues
+
+Create a project access token (or a personal one) with the `api` scope.
+
+- **Settings** — `server_url`, `project` (numeric id or `group/project`), `labels`
+  (list), `reopen_hours`
+- **Secrets** — `token`
 
 ### Custom webhook
 

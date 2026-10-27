@@ -17,6 +17,7 @@ use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{CurrentPrincipal, Principal};
 use crate::logs::Level;
+use crate::logs::central::has_pipe;
 use crate::state::AppState;
 use crate::storage::{self, StorageView, Update, UpdateError};
 
@@ -107,7 +108,10 @@ pub struct SearchQuery {
     pub end: Option<i64>,
     pub level: Option<String>,
     pub limit: Option<usize>,
+    /// `server` (défaut), `agent`, `syslog`, `trap` ou `all`.
     pub source: Option<String>,
+    /// Identifiant d'une cible : ses lignes d'agent, syslog et traps seulement.
+    pub target: Option<i64>,
 }
 
 #[derive(Debug, Serialize, PartialEq)]
@@ -117,6 +121,10 @@ pub struct LogSearchEntry {
     pub message: String,
     pub source: String,
     pub host: Option<String>,
+    /// Origine de la ligne : unité journald, fichier, canal, adresse de l'émetteur.
+    pub origin: Option<String>,
+    /// Nom de la cible rattachée à l'émetteur, quand il y en a une.
+    pub target_name: Option<String>,
     pub fields: BTreeMap<String, String>,
 }
 
@@ -124,33 +132,6 @@ pub struct LogSearchEntry {
 pub struct LogSearchResult {
     pub entries: Vec<LogSearchEntry>,
     pub truncated: bool,
-}
-
-/// Vrai si la requête contient un `|` hors des guillemets : un traitement
-/// (`| stats …`) changerait la forme des réponses, la page n'accepte que des
-/// filtres.
-fn has_pipe(query: &str) -> bool {
-    let mut quote: Option<char> = None;
-    let mut escaped = false;
-    for c in query.chars() {
-        match quote {
-            Some(q) => {
-                if escaped {
-                    escaped = false;
-                } else if c == '\\' && q != '`' {
-                    escaped = true;
-                } else if c == q {
-                    quote = None;
-                }
-            }
-            None => match c {
-                '"' | '\'' | '`' => quote = Some(c),
-                '|' => return true,
-                _ => {}
-            },
-        }
-    }
-    false
 }
 
 /// Niveaux affichés à partir d'un niveau minimal.
@@ -167,15 +148,29 @@ fn rfc3339(ms: i64) -> Option<String> {
         .map(|at| at.to_rfc3339_opts(chrono::SecondsFormat::Millis, true))
 }
 
-/// La requête LogsQL envoyée : période, flux du serveur, niveaux, puis le
-/// filtre de l'utilisateur entre parenthèses, triée du plus récent au plus
-/// ancien.
+/// Le filtre de flux d'une source : le serveur lui-même, ou ce que la collecte
+/// centrale y écrit (agents, syslog, traps) ; `all` : tous. `None` : inconnue.
+pub fn stream_filter(source: &str) -> Option<String> {
+    match source {
+        "server" => Some("{service=\"dumbmonit\"}".to_string()),
+        "agent" | "agents" => Some("{service=\"agent\"}".to_string()),
+        "syslog" => Some("{service=\"syslog\"}".to_string()),
+        "trap" | "traps" => Some("{service=\"trap\"}".to_string()),
+        "all" => Some("{service=~\"dumbmonit|agent|syslog|trap\"}".to_string()),
+        _ => None,
+    }
+}
+
+/// La requête LogsQL envoyée : période, flux, cible, niveaux, puis le filtre de
+/// l'utilisateur entre parenthèses, triée du plus récent au plus ancien.
 pub fn build_logsql(
     user: &str,
     start_ms: i64,
     end_ms: i64,
     min: Level,
     limit: usize,
+    source: &str,
+    target: Option<i64>,
 ) -> Result<String, String> {
     let user = user.trim();
     let user = if user.is_empty() { "*" } else { user };
@@ -185,17 +180,21 @@ pub fn build_logsql(
     let (Some(start), Some(end)) = (rfc3339(start_ms), rfc3339(end_ms)) else {
         return Err("The period is not valid.".into());
     };
+    let Some(stream) = stream_filter(source) else {
+        return Err(format!("Unknown log source `{source}`."));
+    };
     let levels: Vec<String> = levels_from(min).iter().map(|level| format!("\"{level}\"")).collect();
+    let target = target.map(|id| format!(" target:=\"{id}\"")).unwrap_or_default();
     Ok(format!(
-        "_time:[{start}, {end}] {{service=\"dumbmonit\"}} level:in({}) ({user}) \
+        "_time:[{start}, {end}] {stream}{target} level:in({}) ({user}) \
          | sort by (_time desc) | limit {limit}",
         levels.join(", ")
     ))
 }
 
 /// Champs rendus à part (ou sans intérêt), pas dans `fields`.
-const SHOWN_APART: [&str; 7] =
-    ["_time", "_msg", "_stream", "_stream_id", "level", "service", "host"];
+const SHOWN_APART: [&str; 9] =
+    ["_time", "_msg", "_stream", "_stream_id", "level", "service", "host", "origin", "target_name"];
 
 /// Une ligne de réponse de VictoriaLogs (un objet JSON aux valeurs texte).
 pub fn parse_line(line: &str) -> Option<LogSearchEntry> {
@@ -222,6 +221,8 @@ pub fn parse_line(line: &str) -> Option<LogSearchEntry> {
         message: text("_msg").unwrap_or_default(),
         source: text("service").unwrap_or_default(),
         host: text("host"),
+        origin: text("origin"),
+        target_name: text("target_name"),
         fields,
     })
 }
@@ -232,15 +233,9 @@ pub async fn search(
     Query(params): Query<SearchQuery>,
 ) -> ApiResult<Json<LogSearchResult>> {
     admin(&principal)?;
-    match params.source.as_deref().unwrap_or("server") {
-        "server" => {}
-        "agents" | "all" => {
-            return Err(ApiError::BadRequest(
-                "Agent logs are not collected yet: only the server's own logs can be searched."
-                    .into(),
-            ));
-        }
-        other => return Err(ApiError::BadRequest(format!("Unknown log source `{other}`."))),
+    let source = params.source.as_deref().unwrap_or("server");
+    if stream_filter(source).is_none() {
+        return Err(ApiError::BadRequest(format!("Unknown log source `{source}`.")));
     }
     let Some(base) = storage::logs_url(&state).await else {
         return Err(ApiError::Conflict(
@@ -259,8 +254,16 @@ pub async fn search(
             .ok_or_else(|| ApiError::BadRequest(format!("Unknown level `{raw}`.")))?,
     };
     let limit = params.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
-    let logsql = build_logsql(params.query.as_deref().unwrap_or("*"), start, end, min, limit + 1)
-        .map_err(ApiError::BadRequest)?;
+    let logsql = build_logsql(
+        params.query.as_deref().unwrap_or("*"),
+        start,
+        end,
+        min,
+        limit + 1,
+        source,
+        params.target,
+    )
+    .map_err(ApiError::BadRequest)?;
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))
@@ -312,14 +315,24 @@ mod tests {
 
     #[test]
     fn the_query_is_scoped_to_the_server_period_and_levels() {
-        let q = build_logsql("login failed", 0, 60_000, Level::Warn, 201).unwrap();
+        let q = build_logsql("login failed", 0, 60_000, Level::Warn, 201, "server", None).unwrap();
         assert_eq!(
             q,
             "_time:[1970-01-01T00:00:00.000Z, 1970-01-01T00:01:00.000Z] {service=\"dumbmonit\"} \
              level:in(\"error\", \"warn\") (login failed) | sort by (_time desc) | limit 201"
         );
-        assert!(build_logsql("", 0, 1, Level::Debug, 1).unwrap().contains("(*)"));
-        assert!(build_logsql("a | b", 0, 1, Level::Info, 1).is_err());
+        assert!(build_logsql("", 0, 1, Level::Debug, 1, "server", None).unwrap().contains("(*)"));
+        assert!(build_logsql("a | b", 0, 1, Level::Info, 1, "server", None).is_err());
+        assert!(build_logsql("a", 0, 1, Level::Info, 1, "nope", None).is_err());
+    }
+
+    #[test]
+    fn the_central_sources_and_the_target_narrow_the_query() {
+        let q = build_logsql("*", 0, 60_000, Level::Info, 10, "syslog", Some(12)).unwrap();
+        assert!(q.contains("{service=\"syslog\"} target:=\"12\" level:in("), "{q}");
+        let all = build_logsql("*", 0, 60_000, Level::Info, 10, "all", None).unwrap();
+        assert!(all.contains("{service=~\"dumbmonit|agent|syslog|trap\"}"), "{all}");
+        assert_eq!(stream_filter("agents"), stream_filter("agent"));
     }
 
     #[test]

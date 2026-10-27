@@ -43,6 +43,11 @@ impl Exposition {
         self.lines.is_empty()
     }
 
+    /// Toutes les lignes, dans l'ordre de la page.
+    pub fn lines(&self) -> &[Line] {
+        &self.lines
+    }
+
     /// Les lignes d'une famille.
     pub fn family<'a>(&'a self, name: &'a str) -> impl Iterator<Item = &'a Line> + 'a {
         self.lines.iter().filter(move |line| line.name == name)

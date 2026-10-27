@@ -22,6 +22,7 @@ fn batch() -> PushBatch {
         tags: Default::default(),
         binding_supported: true,
         self_update: None,
+        remediation: None,
     };
     PushBatch::new(identity, Vec::new(), 1_000)
 }
@@ -113,6 +114,7 @@ fn outcome() -> ProbeOutcome {
         error: Some("timeout".into()),
         samples: Vec::new(),
         profile_id: None,
+        netconfig: None,
     }
 }
 

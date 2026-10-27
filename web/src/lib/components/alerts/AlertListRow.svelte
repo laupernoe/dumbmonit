@@ -34,6 +34,7 @@
 	import AckControl from './AckControl.svelte';
 	import SnoozeControl from './SnoozeControl.svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
+	import AlertRemediation from '#lib/components/remediation/AlertRemediation.svelte';
 
 	interface Props {
 		folded: Folded;
@@ -85,6 +86,19 @@
 				} as unknown as Alert)
 			: null
 	);
+	/** Tickets opened for this alert (and the folded ones) by the ticket channels. */
+	const tickets = $derived.by(() => {
+		if (row.kind !== 'alert') return [];
+		const seen = new Set<string>();
+		return [row.alert, ...folded.extra]
+			.flatMap((a) => a.tickets ?? [])
+			.filter((t) => {
+				const key = `${t.channel_id}:${t.label}`;
+				if (seen.has(key)) return false;
+				seen.add(key);
+				return true;
+			});
+	});
 	const detailsId = $derived(`alert-details-${row.key.replace(/[^a-zA-Z0-9_-]/g, '_')}`);
 
 	/** What is wrong: the rule's name, or the device's state word. */
@@ -322,6 +336,31 @@
 						until: timeOf(snoozeUntil) ? m.alerts_row_until({ time: timeOf(snoozeUntil) }) : ''
 					})}
 				</p>
+			{/if}
+
+			{#if tickets.length > 0}
+				<p class="mt-2 text-ink-2">
+					{m.alerts_row_tickets()}
+					{#each tickets as ticket (`${ticket.channel_id}:${ticket.label}`)}
+						{#if /^https?:\/\//.test(ticket.url)}
+							<a
+								href={ticket.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink"
+								>{ticket.label}</a
+							>
+						{:else}
+							<span class="font-medium text-ink">{ticket.label}</span>
+						{/if}
+						<span class="mr-2">
+							({ticket.channel_name}{ticket.state === 'closed' ? `, ${m.alerts_row_ticket_closed()}` : ''})</span
+						>
+					{/each}
+				</p>
+			{/if}
+			{#if alert}
+				<AlertRemediation fingerprint={alert.fingerprint} />
 			{/if}
 
 			<div class="mt-3 flex flex-wrap items-start gap-2">

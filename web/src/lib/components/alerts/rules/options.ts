@@ -48,6 +48,16 @@ export const holdOptions = (): DurationOption[] => [
 	{ value: 3600, label: m.alerts_span_h({ hours: 1 }) }
 ];
 
+/** Counting windows of a log-pattern rule. */
+export const windowOptions = (): DurationOption[] => [
+	{ value: 60, label: m.alerts_span_min({ minutes: 1 }) },
+	{ value: 300, label: m.alerts_span_min({ minutes: 5 }) },
+	{ value: 900, label: m.alerts_span_min({ minutes: 15 }) },
+	{ value: 3600, label: m.alerts_span_h({ hours: 1 }) },
+	{ value: 21600, label: m.alerts_span_h({ hours: 6 }) },
+	{ value: 86400, label: m.alerts_span_h({ hours: 24 }) }
+];
+
 export const repeatOptions = (): DurationOption[] => [
 	{ value: 0, label: m.alerts_rules_off() },
 	{ value: 3600, label: m.alerts_rules_every_hour() },

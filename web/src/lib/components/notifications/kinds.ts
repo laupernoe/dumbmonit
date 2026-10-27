@@ -20,6 +20,7 @@ import {
 	MessageSquare,
 	Send,
 	Siren,
+	Ticket,
 	Smartphone,
 	Webhook
 } from 'lucide-svelte';
@@ -51,7 +52,8 @@ export function normalizeField(raw: Partial<ChannelField> & { key: string; shape
 		placeholder: typeof raw.placeholder === 'string' ? raw.placeholder : '',
 		options: Array.isArray(raw.options) ? raw.options.filter((o): o is string => typeof o === 'string') : [],
 		shape,
-		default: typeof raw.default === 'string' ? raw.default : ''
+		default: typeof raw.default === 'string' ? raw.default : '',
+		lookup: typeof raw.lookup === 'string' && raw.lookup ? raw.lookup : undefined
 	};
 }
 
@@ -103,7 +105,12 @@ const KIND_ICON: Record<string, typeof LucideIcon> = {
 	aspsms: Smartphone,
 	grafana_oncall: Siren,
 	signl4: Siren,
-	homeassistant: House
+	homeassistant: House,
+	jira: Ticket,
+	glpi: Ticket,
+	zammad: Ticket,
+	github_issues: Ticket,
+	gitlab_issues: Ticket
 };
 
 /** The icon for a channel kind; a bell for a kind this build does not know. */

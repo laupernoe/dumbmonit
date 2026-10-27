@@ -17,7 +17,7 @@
 	import { STATE_LABEL, type TargetState } from '#lib/format.js';
 	import { Box, Monitor, Server } from 'lucide-svelte';
 	import type { Frame, MapLayout, NodeState, PlacedEdge, PlacedNode } from './layout';
-	import { EDGE_DASH, guestLabel, sourceShort, zoneLabel } from './legend';
+	import { EDGE_DASH, guestLabel, portsText, sourceShort, zoneLabel } from './legend';
 
 	interface Props {
 		layout: MapLayout;
@@ -57,7 +57,9 @@
 
 	function edgeLabel(edge: PlacedEdge): string {
 		const kind = edge.source === 'wan' ? '' : sourceShort(edge.source);
-		return m.topology_edit_edge_label({ from: names.get(edge.from) ?? edge.from, to: names.get(edge.to) ?? edge.to, kind });
+		const label = m.topology_edit_edge_label({ from: names.get(edge.from) ?? edge.from, to: names.get(edge.to) ?? edge.to, kind });
+		const ports = portsText(edge.fromPort, edge.toPort);
+		return ports ? m.topology_edit_edge_ports_label({ label, ports }) : label;
 	}
 
 	function onedgekey(event: KeyboardEvent, key: string) {

@@ -138,7 +138,11 @@ async fn run(state: AppState) -> anyhow::Result<()> {
                 continue;
             }
 
-            if let Some(agent_id) = relays.get(&target.id) {
+            // Une sauvegarde de configuration relayée passe par sa propre tâche
+            // (`netconfig`) : la sonde périodique ne fait que relire la base.
+            if let Some(agent_id) = relays.get(&target.id)
+                && target.kind != crate::netconfig::KIND
+            {
                 delegate(&state, target, *agent_id, now);
                 continue;
             }

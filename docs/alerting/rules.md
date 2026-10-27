@@ -372,6 +372,52 @@ CI/CD runners, a scheduled task that stopped running.
 | Forgejo/Gitea runners all offline | Every Actions runner is offline, and at least one is registered (`dumbmonit_forgejo_runners_online and on (target) dumbmonit_forgejo_runners_total > 0`). | < 1 | 10 min | Advisory (`warning`) | 6 h |
 | Forgejo/Gitea scheduled task overdue | A scheduled task (repository check, cleanup, update checker) did not run at its own interval (`dumbmonit_forgejo_cron_task_overdue`). | > 0 | 30 min | Advisory (`warning`) | 24 h |
 
+### Media, identity and mail applications
+
+Sonarr, Radarr, Lidarr, Prowlarr, qBittorrent, UniFi Protect, Frigate, Keycloak, authentik, Vaultwarden and mailcow ([monitors](../devices/index.md)). These keep answering while the service they provide is broken: a download client down, a camera dropped, a database gone behind a login page. An application that does not answer at all is Monitor unreachable.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Sonarr health error | Sonarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_sonarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Sonarr queue has errors | An item of the download queue has an error (failed download, import blocked) for half an hour (`dumbmonit_sonarr_queue_has_errors`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Sonarr disk almost full | A disk Sonarr reports is more than 90 % full (`dumbmonit_sonarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Sonarr update available | A newer Sonarr release exists (`dumbmonit_sonarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Radarr health error | Radarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_radarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Radarr queue has errors | An item of the download queue has an error (failed download, import blocked) for half an hour (`dumbmonit_radarr_queue_has_errors`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Radarr disk almost full | A disk Radarr reports is more than 90 % full (`dumbmonit_radarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Radarr update available | A newer Radarr release exists (`dumbmonit_radarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Lidarr health error | Lidarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_lidarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Lidarr queue has errors | An item of the download queue has an error (failed download, import blocked) for half an hour (`dumbmonit_lidarr_queue_has_errors`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Lidarr disk almost full | A disk Lidarr reports is more than 90 % full (`dumbmonit_lidarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Lidarr update available | A newer Lidarr release exists (`dumbmonit_lidarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr health error | Prowlarr reports an error on its System → Status page: a failing download client or indexer, a missing root folder (`dumbmonit_prowlarr_health_errors`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Prowlarr disk almost full | A disk Prowlarr reports is more than 90 % full (`dumbmonit_prowlarr_disk_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Prowlarr update available | A newer Prowlarr release exists (`dumbmonit_prowlarr_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Prowlarr indexers disabled | Prowlarr disabled indexers after repeated failures (`dumbmonit_prowlarr_indexers_disabled`): Sonarr, Radarr and Lidarr stop finding releases through them. | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| qBittorrent torrents in error | Torrents are in error or have lost their files (`dumbmonit_qbittorrent_torrents_errored`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| qBittorrent disconnected | qBittorrent is firewalled or disconnected (`dumbmonit_qbittorrent_connected == bool 0`): nothing is downloaded or seeded. | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| qBittorrent free space low | Less than 5 GiB free in the download folder (`dumbmonit_qbittorrent_free_space_bytes / 1073741824`); clears above 6 GiB. | < 5 GiB | 30 min | Advisory (`warning`) | 24 h |
+| Protect camera offline | A UniFi Protect camera is disconnected from its NVR (`dumbmonit_unifiprotect_camera_online == bool 0`). The notification names the camera. | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Protect camera not recording | A camera is connected and set to record but does not (`dumbmonit_unifiprotect_cameras_not_recording`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Protect NVR disk unhealthy | The NVR reports a failing disk (`dumbmonit_unifiprotect_disks_unhealthy`). | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Protect recording disabled | Recording is switched off on the NVR (`dumbmonit_unifiprotect_recording_disabled`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Frigate camera offline | A camera delivers no frames to Frigate (`dumbmonit_frigate_camera_online == bool 0`). The notification names the camera. | > 0 | 5 min | Advisory (`warning`) | 6 h |
+| Frigate detector stuck | A detector has been on the same inference for more than 30 seconds (`dumbmonit_frigate_detector_busy_seconds`). | > 30 s | 2 min | Advisory (`warning`) | 1 h |
+| Frigate storage almost full | The disk holding the recordings is more than 90 % full (`dumbmonit_frigate_storage_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| Frigate update available | A newer Frigate release exists (`dumbmonit_frigate_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Keycloak not ready | Keycloak answers but its readiness check is DOWN, usually the database (`dumbmonit_keycloak_ready == bool 0`): nobody can log in. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| Keycloak realm disabled | A realm is disabled (`dumbmonit_keycloak_realms_disabled`): its users cannot log in. | > 0 | 1 h | Info (`info`) | 7 d |
+| authentik not ready | authentik answers but its readiness check fails (`dumbmonit_authentik_ready == bool 0`): database or cache down. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| authentik has no worker | No worker reports (`dumbmonit_authentik_workers == bool 0`): synchronisation, e-mails and clean-up stop. | > 0 | 10 min | Warning (`critical`) | 1 h |
+| authentik task failed | A system task failed on its last run (`dumbmonit_authentik_tasks_failed`). The notification names the task. | > 0 | 1 h | Advisory (`warning`) | 24 h |
+| authentik outpost disconnected | An outpost that serves providers has not reported for five minutes (`dumbmonit_authentik_outposts_disconnected`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| authentik update available | A newer authentik release exists (`dumbmonit_authentik_update_available`). | > 0 | 1 h | Info (`info`) | 7 d |
+| Vaultwarden sign-ups open | Anyone who can reach the vault can create an account (`dumbmonit_vaultwarden_signups_open`). | > 0 | 1 h | Info (`info`) | 7 d |
+| mailcow container down | A mailcow container is not running (`dumbmonit_mailcow_container_up == bool 0`). The notification names the container. | > 0 | 5 min | Warning (`critical`) | 1 h |
+| mailcow mail queue stuck | The oldest message in Postfix's queue has waited more than four hours (`dumbmonit_mailcow_queue_oldest_seconds / 3600`). | > 4 h | 15 min | Advisory (`warning`) | 6 h |
+| mailcow mail volume almost full | The volume holding the mailboxes is more than 90 % full (`dumbmonit_mailcow_vmail_used_percent`); clears below 88 %. | > 90 % | 30 min | Advisory (`warning`) | 24 h |
+| mailcow mailbox near quota | A mailbox is at 90 % of its quota or more (`dumbmonit_mailcow_mailboxes_near_quota`). | > 0 | 1 h | Info (`info`) | 24 h |
+
 ### Client devices
 
 One rule, shared by every integration that tracks client devices connecting and backing up — Immich's phones, tablets and desktops ([monitors](../devices/immich.md)), Proxmox Backup Server's backed-up machines, one per backup group ([monitors](../devices/pbs.md)), and Veeam's protected computers and VMs, one per object with a restore point ([monitors](../devices/veeam.md)), today; more to follow. Each integration computes the gap to its own target's staleness window (`device_stale_days`, 3 days by default) and publishes it as `dumbmonit_client_device_stale_seconds`, labelled `device`, `type`, `os`, `user`, `kind` and `signal` (`connection` or `backup`); this one rule then fires for any of them, naming the monitor in the notification. Synology Active Backup for Business tracks its own monitors separately, through a rhythm-aware mechanism (`synology_abb_device_*`) rather than this generic family — see [Synology](../devices/synology.md).
@@ -503,6 +549,37 @@ Redis / Valkey, MongoDB, RabbitMQ and CrowdSec ([Redis](../devices/redis.md), [M
 | CrowdSec bouncer stopped pulling | A bouncer's requests did not change in 30 minutes (`changes_prometheus(dumbmonit_crowdsec_bouncer_requests_total[30m])`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
 | CrowdSec reads no logs | Not a single log line read in six hours (`increase_prometheus(dumbmonit_crowdsec_lines_read_total[6h])`). | < 1 | 30 min | Advisory (`warning`) | 24 h |
 
+### More databases and Kafka
+
+SQL Server, Oracle, Elasticsearch / OpenSearch, InfluxDB and Kafka ([SQL Server](../devices/mssql.md), [Oracle](../devices/oracle.md), [Elasticsearch](../devices/elasticsearch.md), [InfluxDB](../devices/influxdb.md), [Kafka](../devices/kafka.md)). Counters go through `increase_prometheus`, so nothing fires on a monitor's first measurement.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| SQL Server database unavailable | A database is SUSPECT, RECOVERY_PENDING, OFFLINE or EMERGENCY (`dumbmonit_mssql_database_online`). | < 1 | 5 min | Warning (`critical`) | 1 h |
+| SQL Server blocked requests | A request has been waiting on a lock for more than 5 minutes: a transaction was probably left open (`dumbmonit_mssql_longest_block_seconds`). | > 300 s | 5 min | Advisory (`warning`) | 6 h |
+| SQL Server volume almost full | A volume holding database files is more than 90 % full; clears below 85 % (`dumbmonit_mssql_volume_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| SQL Server Agent job failed | The last run of an enabled SQL Server Agent job failed (backups, maintenance) (`dumbmonit_mssql_agent_job_last_ok`). | < 1 | 5 min | Advisory (`warning`) | 24 h |
+| SQL Server AlwaysOn replica unhealthy | A database replica of an availability group is not synchronizing in good health (`dumbmonit_mssql_alwayson_sync_health`). | < 2 | 10 min | Warning (`critical`) | 1 h |
+| SQL Server connections near the limit | User sessions use more than 90 % of the configured connection limit. No series without a limit (`dumbmonit_mssql_sessions_used_percent`). | > 90 % | 10 min | Advisory (`warning`) | 6 h |
+| Oracle instance not open | The instance status is not OPEN (MOUNTED, STARTED...): the database serves nothing (`dumbmonit_oracle_instance_open`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| Oracle tablespace almost full | A tablespace is more than 90 % full of its maximum size; clears below 85 % (`dumbmonit_oracle_tablespace_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| Oracle sessions near the limit | Sessions use more than 90 % of the sessions parameter (ORA-00018 when it is reached) (`dumbmonit_oracle_sessions_used_percent`). | > 90 % | 10 min | Advisory (`warning`) | 6 h |
+| Oracle Data Guard apply lag | A standby applies redo more than 10 minutes behind the primary (`dumbmonit_oracle_dataguard_apply_lag_seconds`). | > 600 s | 10 min | Advisory (`warning`) | 6 h |
+| Oracle recovery area almost full | The fast recovery area is more than 90 % full: archiving can stall and freeze the database (`dumbmonit_oracle_recovery_area_used_percent`). | > 90 % | 10 min | Warning (`critical`) | 1 h |
+| Oracle scheduler job failed | At least one scheduler job run failed in the last 24 hours (`dumbmonit_oracle_scheduler_jobs_failed_24h`). | > 0 | 15 min | Advisory (`warning`) | 24 h |
+| Elasticsearch cluster red | The cluster status is red: at least one primary shard is not allocated and part of the data is unavailable (`dumbmonit_elasticsearch_cluster_status`). | > 1 | 2 min | Warning (`critical`) | 1 h |
+| Elasticsearch cluster yellow | The cluster has been yellow for 30 minutes: replicas are missing and the next node failure will lose data (`dumbmonit_elasticsearch_cluster_status == 1`). | > 0 | 30 min | Advisory (`warning`) | 6 h |
+| Elasticsearch unassigned shards | Shards have stayed unassigned for 15 minutes (`dumbmonit_elasticsearch_unassigned_shards`). | > 0 | 15 min | Advisory (`warning`) | 6 h |
+| Elasticsearch node disk almost full | A node's data disk is more than 85 % full (the high watermark is 90 %, the read-only flood stage 95 %); clears below 80 % (`dumbmonit_elasticsearch_node_disk_used_percent`). | > 85 % | 10 min | Advisory (`warning`) | 6 h |
+| Elasticsearch JVM heap pressure | A node's JVM heap stays above 90 % for 15 minutes: garbage collection will slow the node (`dumbmonit_elasticsearch_node_heap_used_percent`). | > 90 % | 15 min | Advisory (`warning`) | 6 h |
+| InfluxDB unhealthy | InfluxDB answers its health check with a failure (`dumbmonit_influxdb_healthy`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| InfluxDB not ready | InfluxDB is up but does not report itself ready for queries and writes (`dumbmonit_influxdb_ready`). | < 1 | 5 min | Advisory (`warning`) | 6 h |
+| InfluxDB server errors | More than 10 API requests answered with a 5xx status in the last 15 minutes (`increase_prometheus(dumbmonit_influxdb_http_requests_5xx_total[15m])`). | > 10 | 5 min | Advisory (`warning`) | 6 h |
+| Kafka partitions offline | A partition has no leader: reads and writes to it fail (`dumbmonit_kafka_offline_partitions`). | > 0 | 2 min | Warning (`critical`) | 1 h |
+| Kafka under-replicated partitions | Partitions have fewer in-sync replicas than replicas for 10 minutes: a broker is down or lagging (`dumbmonit_kafka_under_replicated_partitions`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
+| Kafka without controller | The cluster reports no controller: no leader election is possible (`dumbmonit_kafka_controller_present`). | < 1 | 2 min | Warning (`critical`) | 1 h |
+| Kafka consumer group lag | A consumer group is more than 10 000 messages behind for 15 minutes. Adjust the threshold to the traffic of your topics (`dumbmonit_kafka_consumer_group_lag_total`). | > 10000 | 15 min | Advisory (`warning`) | 6 h |
+
 ### Reverse proxies and domains
 
 Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devices/traefik.md), [Caddy](../devices/caddy.md), [Nginx Proxy Manager](../devices/npm.md), [Domain expiry](../devices/domain.md)), and the DNS check's *Alert when the answer changes* option ([Services](../devices/services.md#alerting-when-the-answer-changes)). Series carry `router`, `service`, `server`, `upstream`, `proxy_host` or `cert`, so the notification names what failed.
@@ -542,6 +619,15 @@ See [Website changes](../devices/webchange.md). The monitor page shows each chan
 | Rule | What | Default threshold | Hold | Severity | Reminder |
 |---|---|---|---|---|---|
 | Website changed | A check of a watched page or site found pages that changed, appeared or disappeared (`dumbmonit_webchange_last_check_changes`). Each such check is notified and names the pages, under the same alert while it fires; it resolves at the first check that finds nothing new. | > 0 | 30 s | Info (`info`) | none |
+
+### Network configuration backups
+
+See [Network configuration backup](../devices/netconfig.md). The device page shows each version and the line diff, secrets masked.
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Network configuration changed | The last backup found a configuration different from the previous version, volatile lines (timestamps, counters) aside (`dumbmonit_netconfig_config_changed`). It resolves at the next backup that finds no change. | > 0 | 30 s | Info (`info`) | none |
+| SSH host key changed | The device presented an SSH host key other than the remembered one: the connection was cut before any credential was sent, and backups stop until an administrator accepts the new key (`dumbmonit_netconfig_host_key_changed`). | > 0 | none | Warning (`critical`) | 6 h |
 
 ### Kubernetes
 
@@ -610,6 +696,14 @@ See [Veeam Backup & Replication](../devices/veeam.md). Jobs are labelled `job` a
 | Veeam job ended with a warning | The last run of an enabled Veeam job ended with a warning: some objects may not be protected (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
 | Veeam repository nearly full | A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Veeam license expiring | The Veeam license expires in less than 30 days: jobs stop at the end of the grace period (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
+
+### Windows without an agent
+
+See [Windows without an agent (WinRM)](../devices/winrm.md).
+
+| Rule | What | Default threshold | Hold | Severity | Reminder |
+|---|---|---|---|---|---|
+| Windows automatic services stopped | One or more Windows services set to start automatically are stopped (`dumbmonit_windows_services_auto_stopped`). | > 0 | 10 min | Advisory (`warning`) | 6 h |
 
 ### Kopia
 

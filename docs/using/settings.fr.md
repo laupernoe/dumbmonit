@@ -6,7 +6,7 @@ Réglages contient ce qui est administratif : votre compte, qui peut se connecte
 
 | Onglet | Adresse | Contenu |
 |---|---|---|
-| Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push |
+| Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
 | Équipe et accès | `/settings/team` | Utilisateurs, Authentification unique |
 | Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md) |
 | Notifications et rapports | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)), Rapports |
@@ -202,6 +202,12 @@ est gardée telle quelle.
 Administrateurs seulement. Connexion avec les identifiants et mots de passe de
 l'annuaire sur l'écran habituel, rôles tirés des groupes, comptes créés à la
 première connexion. Voir [LDAP / Active Directory](ldap.md).
+
+## SAML, SCIM et équipes
+
+Administrateurs seulement. Connexion unique SAML 2.0, provisionnement SCIM, et
+équipes qui limitent chaque compte à certains dossiers d'équipements. Voir
+[SAML 2.0](saml.md), [SCIM](scim.md) et [Équipes et droits](teams.md).
 
 ## Agents
 

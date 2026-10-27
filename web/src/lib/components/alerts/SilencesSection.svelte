@@ -11,6 +11,7 @@
 	import { formatDateTime } from '#lib/format.js';
 	import { scheduleLabel, silenceScope } from './helpers';
 	import { m } from '#lib/paraglide/messages.js';
+	import FileManagedBadge from '#lib/components/settings/FileManagedBadge.svelte';
 
 	interface Props {
 		silences: Silence[];
@@ -50,6 +51,7 @@
 							<Plate tone="ghost" label={m.alerts_silences_scheduled()} />
 						{/if}
 						<span class="truncate font-semibold text-ink">{silence.name}</span>
+						<FileManagedBadge kind="silence" id={silence.name} />
 					</div>
 					<!-- Phones: scope and the one date that matters (until / next), no separators, no comment. -->
 					<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.8125rem] text-ink-2">
