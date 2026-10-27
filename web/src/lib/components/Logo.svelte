@@ -7,7 +7,7 @@
 </script>
 
 <svg viewBox="0 0 64 64" class={className} aria-hidden="true">
-	<rect width="64" height="64" rx="16" fill="#6f83a3" />
+	<rect width="64" height="64" rx="16" fill="#000000" />
 	<circle cx="24" cy="30" r="14" fill="#fff" stroke="#1e2640" stroke-width="4" />
 	<circle cx="45" cy="30" r="11" fill="#fff" stroke="#1e2640" stroke-width="4" />
 	<circle cx="20" cy="27" r="5" fill="#1e2640" />
