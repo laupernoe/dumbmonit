@@ -24,6 +24,18 @@ All notable changes to this project are documented here. The format follows
   that agents talk to the server over the encrypted channel with an agent
   certificate (mTLS, TLS 1.3), and which port to open (TCP 8443, agent to server,
   also from another site).
+### Changed
+
+- **Security page, compact.** CVEs now show as a dense gallery of short cards
+  instead of long per-device lists, with a one-line counter strip and foldable
+  group headers. A switch picks the pivot: **by CVE** (each CVE once, with the
+  machines it touches, severity, exploited or not, fix available or not) or
+  **by machine** (each machine once, with its CVEs). Click a CVE to filter the
+  machines, or a machine to filter its CVEs. Quick filters: severity, state,
+  exploited, fix available, ignored, folder, client (MSP mode) and a search
+  box (CVE ID, package, machine). Pivot, filters and focus live in the URL.
+- **Active Directory findings** use two columns on wide screens and fold long
+  descriptions behind "Show more".
 
 ## 0.14.0 — 2026-10-28
 
