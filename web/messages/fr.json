@@ -9110,5 +9110,246 @@
 	"wizard_sso_title": "Authentification unique et équipes",
 	"wizard_step_of": "Étape {current} sur {total}",
 	"wizard_steps_label": "Étapes de la configuration",
-	"wizard_title": "Configurer DumbMonit"
+	"wizard_title": "Configurer DumbMonit",
+	"deviceform_form_client_label": "Client",
+	"deviceform_form_client_help": "Le client auquel appartient cet équipement. Seuls ses membres le voient.",
+	"deviceform_form_client_help_edit": "Déplacer un équipement vers un autre client emporte les équipements qui en dépendent.",
+	"deviceform_form_client_default": "Par défaut pour cette vue",
+	"msp_assign_label": "Client",
+	"msp_assign_shared": "Tous les clients",
+	"msp_nav_clients": "Clients",
+	"msp_switcher_label": "Client affiché",
+	"msp_switcher_title": "Afficher les pages pour un client",
+	"msp_switcher_all": "Tous les clients",
+	"msp_overview_title": "Clients",
+	"msp_overview_description_admin": "Tous les clients d’un coup d’œil. Ouvrez-en un pour ne voir que ses équipements, alertes et pages.",
+	"msp_overview_description_member": "Les clients pour lesquels vous travaillez, et leur rapport de disponibilité du mois dernier.",
+	"msp_overview_empty_title": "Aucun client pour l’instant",
+	"msp_overview_empty_body": "Créez des clients dans les Réglages, puis donnez à chacun ses équipements et ses membres.",
+	"msp_overview_load_error": "Impossible de charger les clients.",
+	"msp_overview_none_title": "Vous n’appartenez à aucun client",
+	"msp_overview_none_body": "Demandez à votre administrateur MSP d’ajouter votre compte à un client.",
+	"msp_overview_off_title": "Le mode multi-clients est désactivé",
+	"msp_overview_off_body": "Activez-le dans les Réglages pour séparer les équipements, alertes et rapports de chaque client.",
+	"msp_overview_off_action": "Ouvrir les réglages des clients",
+	"msp_overview_open": "Ouvrir",
+	"msp_overview_report": "Mois dernier (PDF)",
+	"msp_overview_report_title": "Télécharger le rapport de disponibilité du mois dernier",
+	"msp_overview_report_error": "Impossible de produire le rapport.",
+	"msp_overview_quota_label": "Quota d’équipements utilisé",
+	"msp_overview_state_empty": "Aucun équipement pour l’instant",
+	"msp_overview_state_ok": "Tout va bien",
+	"settings_agents_client_badge": "Client : {name}",
+	"settings_clients_title": "Clients",
+	"settings_clients_description": "Mode multi-clients (MSP) : séparez les équipements, alertes, pages et rapports de chaque client.",
+	"settings_clients_search_kw": "msp locataire client isolation quota logo",
+	"settings_clients_add": "Ajouter un client",
+	"settings_clients_load_error": "Impossible de charger les clients.",
+	"settings_clients_save_error": "Impossible d’enregistrer.",
+	"settings_clients_delete_error": "Impossible de supprimer le client.",
+	"settings_clients_delete_confirm": "Supprimer ce client",
+	"settings_clients_mode": "Mode multi-clients",
+	"settings_clients_mode_off_help": "Désactivé : chaque compte voit ce que son rôle et ses équipes permettent, comme avant. À l’activation, les comptes existants restent dans le client par défaut.",
+	"settings_clients_mode_on_help": "Activé : un compte ne voit que les clients dont il est membre. Les administrateurs gèrent tous les clients et en choisissent un dans l’en-tête.",
+	"settings_clients_empty_title": "Aucun client pour l’instant",
+	"settings_clients_empty_body": "Ajoutez un client, puis déplacez-y ses équipements.",
+	"settings_clients_note": "Les équipements, pages de statut et jetons d’agent appartiennent toujours à un client. Canaux, règles d’alerte, maintenances et rapports peuvent être partagés par tous les clients. Un client qui a encore des équipements ne se supprime pas.",
+	"settings_clients_new_title": "Nouveau client",
+	"settings_clients_edit_title": "Modifier {name}",
+	"settings_clients_name": "Nom",
+	"settings_clients_description_label": "Description",
+	"settings_clients_err_name": "Saisissez un nom de client.",
+	"settings_clients_err_quota": "Saisissez un nombre entier, ou laissez vide pour ne rien limiter.",
+	"settings_clients_quota": "Quota d’équipements",
+	"settings_clients_quota_help": "Nombre maximal d’équipements du client, agents compris.",
+	"settings_clients_quota_none": "Sans limite",
+	"settings_clients_idp_groups": "Groupes du fournisseur d’identité",
+	"settings_clients_idp_groups_help": "Les membres de ces groupes SSO (OIDC, LDAP, SAML) rejoignent le client à la connexion. Séparez par des virgules.",
+	"settings_clients_contacts": "Contacts",
+	"settings_clients_contacts_help": "Adresses qui reçoivent le rapport de disponibilité mensuel, une par ligne.",
+	"settings_clients_report_legend": "Rapport de disponibilité mensuel",
+	"settings_clients_report_toggle": "L’envoyer aux contacts",
+	"settings_clients_report_help": "Le 1er à 8 h dans le fuseau du client, le PDF et les CSV du mois écoulé partent par courriel, au nom et au logo du client.",
+	"settings_clients_objective": "Objectif de disponibilité (%)",
+	"settings_clients_objective_help": "Facultatif. Chaque équipement est marqué comme le tenant ou non.",
+	"settings_clients_timezone": "Fuseau horaire",
+	"settings_clients_report_last": "Dernier rapport envoyé : {month}.",
+	"settings_clients_report_failing": "Rapport mensuel en échec",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo de {name}",
+	"settings_clients_logo_upload": "Déposer un logo",
+	"settings_clients_logo_replace": "Remplacer le logo",
+	"settings_clients_logo_remove": "Retirer",
+	"settings_clients_logo_help": "PNG, JPEG ou WebP, 256 Kio au plus. Affiché sur les rapports et pages de statut du client ; PNG et JPEG figurent aussi dans le PDF.",
+	"settings_clients_logo_too_big": "Ce fichier dépasse 256 Kio.",
+	"settings_clients_logo_error": "Impossible d’enregistrer le logo.",
+	"settings_clients_members": "Membres",
+	"settings_clients_members_help": "Les membres ne voient que ce client, dans les limites de leur rôle et de leurs équipes. Les administrateurs voient tous les clients.",
+	"settings_clients_save": "Enregistrer",
+	"settings_clients_create": "Créer le client",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement en état critique",
+				"countPlural=other": "{count} équipements en état critique"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement en alerte",
+				"countPlural=other": "{count} équipements en alerte"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} critique",
+				"countPlural=other": "{count} critiques"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} avertissement",
+				"countPlural=other": "{count} avertissements"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en pause",
+				"countPlural=other": "{count} en pause"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement",
+				"countPlural=other": "{count} équipements"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement sur {quota}",
+				"countPlural=other": "{count} équipements sur {quota}"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement",
+				"countPlural=other": "{count} équipements"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement sur {quota}",
+				"countPlural=other": "{count} équipements sur {quota}"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Rapport mensuel à {count} contact",
+				"countPlural=other": "Rapport mensuel à {count} contacts"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} compte sans client ne voit rien :",
+				"countPlural=other": "{count} comptes sans client ne voient rien :"
+			}
+		}
+	]
 }

@@ -22,6 +22,7 @@
 	import Logo from './Logo.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 	import UserMenu from './UserMenu.svelte';
+	import ClientSwitcher from './ClientSwitcher.svelte';
 
 	const DOCS_URL = 'https://dumbmonit.readthedocs.io/en/latest/';
 	const GITHUB_URL = 'https://github.com/laupernoe/dumbmonit';
@@ -37,6 +38,12 @@
 		}));
 	/** Everything else: one click away under "More", and in the command palette. */
 	const more = () => NAV.filter((entry) => !entry.essential && visible(entry));
+	const phoneLinks = $derived(links().filter((link) => link.phone));
+	/** MSP mode with something to pick: same rule as `ClientSwitcher`. */
+	const switchable = $derived.by(() => {
+		const count = auth.msp?.clients.length ?? 0;
+		return auth.mspOn && (auth.msp?.admin ? count > 0 : count > 1);
+	});
 
 	function isActive(href: string, exact: boolean): boolean {
 		const path = page.url.pathname;
@@ -96,6 +103,13 @@
 		return () => ro.disconnect();
 	});
 </script>
+
+<!-- Phones have no top bar: the client switcher gets a strip of its own. -->
+{#if switchable}
+	<div class="sticky top-0 z-30 border-b border-line bg-canvas px-4 pt-[var(--safe-top)] sm:hidden">
+		<div class="py-1.5"><ClientSwitcher wide id="client-switcher-phone" /></div>
+	</div>
+{/if}
 
 <header class="vt-nav-top sticky top-0 z-30 hidden border-b pt-[var(--safe-top)] border-line bg-canvas/85 backdrop-blur-md sm:block">
 	<div class="mx-auto flex h-14 max-w-7xl items-center gap-6 px-4 sm:px-6">
@@ -176,6 +190,7 @@
 		</Menu>
 
 		<div class="ml-auto flex items-center gap-1">
+			<ClientSwitcher />
 			<button
 				type="button"
 				class="inline-flex size-9 items-center justify-center rounded-lg text-ink-2 transition-colors hover:bg-surface-2 hover:text-ink"

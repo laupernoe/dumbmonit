@@ -30,7 +30,7 @@ use crate::db;
 
 pub(crate) mod access;
 mod badges;
-mod branding;
+pub(crate) mod branding;
 pub mod delivery;
 mod subscribers;
 mod timeline;
@@ -575,15 +575,28 @@ pub async fn list_pages(
         labels.entry(page_id).or_default().push(entry);
     }
     // Compte restreint par ses équipes : seulement les pages dont tous les
-    // composants sont des équipements qu'il voit.
+    // composants sont des équipements qu'il voit. Mode MSP : en plus, les pages
+    // de ses clients seulement (celles de l'instance pour une vue
+    // d'administrateur).
+    let owners = crate::auth::clients::owners(&state.pool, crate::auth::clients::Kind::StatusPage)
+        .await?;
+    let restricted = access.is_scoped();
     let pages: Vec<_> = pages
         .into_iter()
         .filter(|page| {
-            visible.as_ref().is_none_or(|visible| {
-                items.get(&page.id).is_some_and(|list| {
-                    !list.is_empty() && list.iter().all(|i| visible.contains(&i.target_id))
+            crate::auth::clients::visible_owner(
+                &access,
+                owners.get(&page.id).copied(),
+                !restricted,
+            )
+        })
+        .filter(|page| {
+            !restricted
+                || visible.as_ref().is_none_or(|visible| {
+                    items.get(&page.id).is_some_and(|list| {
+                        !list.is_empty() && list.iter().all(|i| visible.contains(&i.target_id))
+                    })
                 })
-            })
         })
         .collect();
     Ok(Json(
@@ -609,6 +622,7 @@ pub async fn get_page(
 }
 
 pub async fn create_page(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     origin: super::oidc::Origin,
     Json(payload): Json<StatusPagePayload>,
@@ -617,6 +631,10 @@ pub async fn create_page(
     let id = db::status_pages::create_page(&state.pool, &input)
         .await
         .map_err(duplicate_slug_to_conflict)?;
+    // Mode MSP : créée dans la vue d'un client, la page lui appartient ; sinon
+    // elle est à l'instance.
+    crate::auth::clients::adopt(&state.pool, &access, crate::auth::clients::Kind::StatusPage, id)
+        .await?;
     let page =
         db::status_pages::get_page(&state.pool, id).await?.ok_or_else(|| page_not_found(id))?;
     invalidate_cache();
@@ -716,6 +734,20 @@ pub async fn set_items(
             )));
         }
         items.push(PageItemInput { target_id: entry.target_id, label, group_name });
+    }
+
+    // Mode MSP : la page d'un client ne montre que des équipements de ce client.
+    if let Some(Some(client)) =
+        crate::auth::clients::owner_of(&state.pool, crate::auth::clients::Kind::StatusPage, id)
+            .await?
+    {
+        let own = crate::auth::clients::targets_of(&state.pool, client).await?;
+        if let Some(foreign) = items.iter().find(|item| !own.contains(&item.target_id)) {
+            return Err(ApiError::BadRequest(format!(
+                "Monitor {} belongs to another client than this status page.",
+                foreign.target_id
+            )));
+        }
     }
 
     db::status_pages::set_items(&state.pool, id, &items).await?;
@@ -1291,7 +1323,11 @@ struct PublicPage {
     /// Site de l'organisation, vide si la page n'en cite pas.
     homepage_url: String,
     /// Adresse relative du logo, versionnée pour les caches ; `None` sans logo.
+    /// Mode MSP : à défaut de logo propre, celui du client de la page.
     logo_url: Option<String>,
+    /// Mode MSP : nom du client de la page, pour la marque légère.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    brand_name: Option<String>,
     /// La page propose au moins un abonnement.
     subscribe: bool,
     /// Abonnements ouverts : `email`, `sms`, `webhook`, `slack`.
@@ -2246,6 +2282,18 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
     });
 
     let subscribe_kinds = subscribers::available_kinds(state, page).await;
+    let brand = crate::auth::clients::branding_of_page(&state.pool, page.id).await.ok().flatten();
+    let logo_url = match (&page.logo_type, &brand) {
+        (Some(_), _) => Some(format!(
+            "/api/public/status/{}/logo?v={}",
+            page.slug,
+            version_tag(&page.updated_at)
+        )),
+        (None, Some(client)) if client.has_logo => {
+            Some(format!("/api/public/status/{}/logo?v=c{}", page.slug, client.id))
+        }
+        _ => None,
+    };
     Ok(PublicStatus {
         page: PublicPage {
             slug: page.slug.clone(),
@@ -2265,9 +2313,8 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             show_latency: page.show_latency,
             footer_text: page.footer_text.clone(),
             homepage_url: page.homepage_url.clone(),
-            logo_url: page.logo_type.as_ref().map(|_| {
-                format!("/api/public/status/{}/logo?v={}", page.slug, version_tag(&page.updated_at))
-            }),
+            logo_url,
+            brand_name: brand.map(|client| client.name),
             subscribe: !subscribe_kinds.is_empty(),
             subscribe_kinds,
             seo: crate::status_seo::resolve(page),

@@ -9296,5 +9296,268 @@
 	"wizard_sso_title": "Единый вход и команды",
 	"wizard_step_of": "Шаг {current} из {total}",
 	"wizard_steps_label": "Шаги настройки",
-	"wizard_title": "Настройка DumbMonit"
+	"wizard_title": "Настройка DumbMonit",
+	"deviceform_form_client_label": "Клиент",
+	"deviceform_form_client_help": "Клиент, которому принадлежит устройство. Видят его только участники клиента.",
+	"deviceform_form_client_help_edit": "При переносе устройства к другому клиенту зависящие от него устройства переносятся вместе с ним.",
+	"deviceform_form_client_default": "По умолчанию для этого вида",
+	"msp_assign_label": "Клиент",
+	"msp_assign_shared": "Все клиенты",
+	"msp_nav_clients": "Клиенты",
+	"msp_switcher_label": "Показываемый клиент",
+	"msp_switcher_title": "Показать страницы одного клиента",
+	"msp_switcher_all": "Все клиенты",
+	"msp_overview_title": "Клиенты",
+	"msp_overview_description_admin": "Все клиенты с первого взгляда. Откройте клиента, чтобы видеть только его устройства, оповещения и страницы.",
+	"msp_overview_description_member": "Клиенты, с которыми вы работаете, и их отчёт о доступности за прошлый месяц.",
+	"msp_overview_empty_title": "Клиентов пока нет",
+	"msp_overview_empty_body": "Создайте клиентов в настройках и назначьте каждому устройства и участников.",
+	"msp_overview_load_error": "Не удалось загрузить клиентов.",
+	"msp_overview_none_title": "Вы не входите ни в одного клиента",
+	"msp_overview_none_body": "Попросите администратора MSP добавить вашу учётную запись к клиенту.",
+	"msp_overview_off_title": "Многоклиентский режим выключен",
+	"msp_overview_off_body": "Включите его в настройках, чтобы разделить устройства, оповещения и отчёты каждого клиента.",
+	"msp_overview_off_action": "Открыть настройки клиентов",
+	"msp_overview_open": "Открыть",
+	"msp_overview_report": "Прошлый месяц (PDF)",
+	"msp_overview_report_title": "Скачать отчёт о доступности за прошлый месяц",
+	"msp_overview_report_error": "Не удалось сформировать отчёт.",
+	"msp_overview_quota_label": "Использованная квота устройств",
+	"msp_overview_state_empty": "Устройств пока нет",
+	"msp_overview_state_ok": "Всё в порядке",
+	"settings_agents_client_badge": "Клиент: {name}",
+	"settings_clients_title": "Клиенты",
+	"settings_clients_description": "Многоклиентский режим (MSP): устройства, оповещения, страницы и отчёты каждого клиента раздельно.",
+	"settings_clients_search_kw": "msp арендатор клиент изоляция квота логотип",
+	"settings_clients_add": "Добавить клиента",
+	"settings_clients_load_error": "Не удалось загрузить клиентов.",
+	"settings_clients_save_error": "Не удалось сохранить.",
+	"settings_clients_delete_error": "Не удалось удалить клиента.",
+	"settings_clients_delete_confirm": "Удалить клиента",
+	"settings_clients_mode": "Многоклиентский режим",
+	"settings_clients_mode_off_help": "Выключен: каждая учётная запись видит то, что позволяют роль и команды, как раньше. При включении существующие учётные записи остаются в клиенте по умолчанию.",
+	"settings_clients_mode_on_help": "Включён: учётная запись видит только своих клиентов. Администраторы управляют всеми клиентами и выбирают клиента в заголовке.",
+	"settings_clients_empty_title": "Клиентов пока нет",
+	"settings_clients_empty_body": "Добавьте клиента и перенесите к нему его устройства.",
+	"settings_clients_note": "Устройства, страницы статуса и токены агентов всегда принадлежат клиенту. Каналы, правила оповещений, окна обслуживания и отчёты могут быть общими. Клиента с устройствами удалить нельзя.",
+	"settings_clients_new_title": "Новый клиент",
+	"settings_clients_edit_title": "Изменить {name}",
+	"settings_clients_name": "Название",
+	"settings_clients_description_label": "Описание",
+	"settings_clients_err_name": "Введите название клиента.",
+	"settings_clients_err_quota": "Введите целое число или оставьте пустым без ограничения.",
+	"settings_clients_quota": "Квота устройств",
+	"settings_clients_quota_help": "Максимум устройств клиента, включая агентов.",
+	"settings_clients_quota_none": "Без ограничения",
+	"settings_clients_idp_groups": "Группы поставщика удостоверений",
+	"settings_clients_idp_groups_help": "Участники этих групп SSO (OIDC, LDAP, SAML) входят в клиента при входе в систему. Разделяйте запятыми.",
+	"settings_clients_contacts": "Контакты",
+	"settings_clients_contacts_help": "Адреса, получающие ежемесячный отчёт о доступности, по одному в строке.",
+	"settings_clients_report_legend": "Ежемесячный отчёт о доступности",
+	"settings_clients_report_toggle": "Отправлять контактам",
+	"settings_clients_report_help": "1-го числа в 8:00 по часовому поясу клиента PDF и CSV за прошлый месяц уходят по почте с названием и логотипом клиента.",
+	"settings_clients_objective": "Цель доступности (%)",
+	"settings_clients_objective_help": "Необязательно. Каждое устройство отмечается как соответствующее или нет.",
+	"settings_clients_timezone": "Часовой пояс",
+	"settings_clients_report_last": "Последний отправленный отчёт: {month}.",
+	"settings_clients_report_failing": "Ошибка ежемесячного отчёта",
+	"settings_clients_logo": "Логотип",
+	"settings_clients_logo_alt": "Логотип {name}",
+	"settings_clients_logo_upload": "Загрузить логотип",
+	"settings_clients_logo_replace": "Заменить логотип",
+	"settings_clients_logo_remove": "Удалить",
+	"settings_clients_logo_help": "PNG, JPEG или WebP, не более 256 КиБ. Показывается в отчётах и на страницах статуса клиента; PNG и JPEG также в PDF.",
+	"settings_clients_logo_too_big": "Файл больше 256 КиБ.",
+	"settings_clients_logo_error": "Не удалось сохранить логотип.",
+	"settings_clients_members": "Участники",
+	"settings_clients_members_help": "Участники видят только этого клиента в пределах своей роли и команд. Администраторы видят всех клиентов.",
+	"settings_clients_save": "Сохранить",
+	"settings_clients_create": "Создать клиента",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство в критическом состоянии",
+				"countPlural=few": "{count} устройства в критическом состоянии",
+				"countPlural=many": "{count} устройств в критическом состоянии",
+				"countPlural=other": "{count} устройства в критическом состоянии"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство с оповещением",
+				"countPlural=few": "{count} устройства с оповещениями",
+				"countPlural=many": "{count} устройств с оповещениями",
+				"countPlural=other": "{count} устройства с оповещениями"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} критическое",
+				"countPlural=few": "{count} критических",
+				"countPlural=many": "{count} критических",
+				"countPlural=other": "{count} критических"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} предупреждение",
+				"countPlural=few": "{count} предупреждения",
+				"countPlural=many": "{count} предупреждений",
+				"countPlural=other": "{count} предупреждения"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} на паузе",
+				"countPlural=few": "{count} на паузе",
+				"countPlural=many": "{count} на паузе",
+				"countPlural=other": "{count} на паузе"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство",
+				"countPlural=few": "{count} устройства",
+				"countPlural=many": "{count} устройств",
+				"countPlural=other": "{count} устройства"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} из {quota} устройств",
+				"countPlural=few": "{count} из {quota} устройств",
+				"countPlural=many": "{count} из {quota} устройств",
+				"countPlural=other": "{count} из {quota} устройств"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} устройство",
+				"countPlural=few": "{count} устройства",
+				"countPlural=many": "{count} устройств",
+				"countPlural=other": "{count} устройства"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} из {quota} устройств",
+				"countPlural=few": "{count} из {quota} устройств",
+				"countPlural=many": "{count} из {quota} устройств",
+				"countPlural=other": "{count} из {quota} устройств"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Ежемесячный отчёт {count} контакту",
+				"countPlural=few": "Ежемесячный отчёт {count} контактам",
+				"countPlural=many": "Ежемесячный отчёт {count} контактам",
+				"countPlural=other": "Ежемесячный отчёт {count} контактам"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} учётная запись без клиента ничего не видит:",
+				"countPlural=few": "{count} учётные записи без клиента ничего не видят:",
+				"countPlural=many": "{count} учётных записей без клиента ничего не видят:",
+				"countPlural=other": "{count} учётные записи без клиента ничего не видят:"
+			}
+		}
+	]
 }

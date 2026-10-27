@@ -19,6 +19,8 @@ use crate::alerting::matcher::{ChannelMatcher, Condition};
 use crate::alerting::notify_policy::ChannelPolicy;
 use crate::alerting::silence::Schedule;
 use crate::api::{ApiError, ApiResult};
+use crate::auth::clients;
+use crate::auth::teams::TeamAccess;
 use crate::db;
 use crate::notify::policy_store;
 use crate::notify::{self, CHANNEL_KINDS, ChannelConfig, ChannelSummary, DeliveryReport};
@@ -118,8 +120,22 @@ pub async fn kinds() -> Json<Vec<notify::catalog::KindInfo>> {
     Json(notify::catalog::all())
 }
 
-pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<ChannelSummary>>> {
-    Ok(Json(summaries(&state.pool, None).await?))
+pub async fn list(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<ChannelSummary>>> {
+    let mut channels = summaries(&state.pool, None).await?;
+    // Vue d'un client (mode MSP) : ses canaux et ceux de l'instance.
+    clients::retain_visible(
+        &state.pool,
+        &access,
+        clients::Kind::Channel,
+        &mut channels,
+        |c| c.id,
+        true,
+    )
+    .await?;
+    Ok(Json(channels))
 }
 
 /// Identifiants des canaux existants, pour valider les destinataires d'une règle.
@@ -185,6 +201,7 @@ async fn summary(pool: &SqlitePool, id: i64) -> ApiResult<ChannelSummary> {
 // --------------------------------------------------------------------------
 
 pub async fn create(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(mut payload): Json<ChannelPayload>,
 ) -> ApiResult<(StatusCode, Json<ChannelSummary>)> {
@@ -197,6 +214,7 @@ pub async fn create(
         .await
         .map_err(duplicate_name_to_conflict)?;
     policy_store::save_channel_policy(&state.pool, id, &policy).await?;
+    clients::adopt(&state.pool, &access, clients::Kind::Channel, id).await?;
     Ok((StatusCode::CREATED, Json(summary(&state.pool, id).await?)))
 }
 
