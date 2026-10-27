@@ -50,6 +50,21 @@ pub const VM_SLOW_INSERTS_QUERY: &str = "(100 \
 pub const SERVICE_SLOW_QUERY: &str =
     "dumbmonit_probe_duration_seconds and dumbmonit_probe_success == 1";
 
+/// `uid` de la règle livrée de prévision de remplissage : la route
+/// `GET /api/targets/{id}/forecasts` reprend ses réglages (profondeur, paliers).
+pub const RULE_CAPACITY_FORECAST: &str = "capacity_forecast";
+
+/// Part de réponses 5xx, en pourcentage, des proxys (avec un plancher de
+/// cinquante requêtes sur dix minutes) et des zones Cloudflare.
+pub const HTTP_5XX_PERCENT: &str = "(100 \
+     * increase_prometheus(dumbmonit_traefik_requests_5xx_total[10m]) \
+     / increase_prometheus(dumbmonit_traefik_requests_total[10m]) \
+     and increase_prometheus(dumbmonit_traefik_requests_total[10m]) >= 50) \
+     or (100 * increase_prometheus(dumbmonit_caddy_requests_5xx_total[10m]) \
+     / increase_prometheus(dumbmonit_caddy_requests_total[10m]) \
+     and increase_prometheus(dumbmonit_caddy_requests_total[10m]) >= 50) \
+     or dumbmonit_cloudflare_zone_http_5xx_percent";
+
 /// Pod en boucle de redémarrage : le drapeau du collecteur, tenu par un compteur
 /// de redémarrages qui progresse encore (voir la règle `k8s_pod_crashlooping`).
 pub const K8S_CRASHLOOP_QUERY: &str = "max_over_time(dumbmonit_k8s_pod_crashlooping[10m]) \
@@ -197,6 +212,65 @@ pub fn builtin_rules() -> Vec<Rule> {
             severity: Severity::Info,
             unit: "%".to_string(),
             ..base("cpu_anomaly", "Unusual CPU", RuleKind::Anomaly, CPU_PERCENT)
+        },
+        // Prévision de remplissage, commune à toutes les intégrations : disques,
+        // datastores, pools, volumes, licences, autonomie des onduleurs (voir
+        // `capacity.rs`). Information sous trente jours, avertissement sous
+        // quatorze, critique sous sept : la sévérité monte d'elle-même avec les
+        // paliers et l'alerte reparle à chaque franchissement.
+        Rule {
+            description: "At the current growth rate, this storage (disk, datastore, pool, \
+                          volume, licences…) will be full within thirty days."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            unit: "d".to_string(),
+            repeat_interval: Some(Duration::from_secs(7 * 24 * 3600)),
+            ..base(RULE_CAPACITY_FORECAST, "Storage filling up", RuleKind::Forecast, "*")
+        },
+        // Dérive de la latence des sondes réussies (HTTP, ping, TCP, DNS…) par
+        // rapport à la même heure des quatre semaines précédentes. Trois fois la
+        // normale, pendant quinze minutes, et au moins 50 ms d'écart : une
+        // latence qui passe de 2 à 6 ms ne réveille personne.
+        Rule {
+            description: "Response time three times higher than usual for this time of day \
+                          and day of the week."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 3.0,
+            clear_threshold: Some(2.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "×".to_string(),
+            params: AnomalyParams {
+                drift_min_value: 0.05,
+                drift_min_delta: 0.05,
+                ..AnomalyParams::default()
+            },
+            ..base("latency_drift", "Response time drifting", RuleKind::Drift, SERVICE_SLOW_QUERY)
+        },
+        // Dérive du taux de réponses 5xx d'un proxy ou d'une zone Cloudflare :
+        // le seuil fixe de `proxy_5xx_rate` rate le site qui passe de 0,1 à 4 %.
+        // Au moins un point de pourcentage d'écart, et le plancher de cinquante
+        // requêtes de la requête elle-même.
+        Rule {
+            description: "The share of 5xx answers is three times higher than usual for this \
+                          time of day."
+                .to_string(),
+            operator: Operator::Ge,
+            threshold: 3.0,
+            clear_threshold: Some(2.0),
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "×".to_string(),
+            params: AnomalyParams {
+                drift_min_value: 1.0,
+                drift_min_delta: 1.0,
+                ..AnomalyParams::default()
+            },
+            ..base("http_5xx_drift", "5xx errors drifting", RuleKind::Drift, HTTP_5XX_PERCENT)
         },
         // Batterie d'onduleur en fin de vie ou déchargée. Distincte de « sur
         // batterie » : une coupure brève est normale, une batterie basse annonce un
@@ -8444,6 +8518,38 @@ pub(crate) const PRODUITES: &[&str] = &[
     "dumbmonit_service_up",
     "dumbmonit_synology_backup_last_success_age_seconds",
     "dumbmonit_unifi_internet_latency_seconds",
+    // Familles de capacité de la prévision de remplissage (`capacity.rs`).
+    "dumbmonit_filesystem_used_bytes",
+    "dumbmonit_filesystem_total_bytes",
+    "dumbmonit_agent_zfs_pool_used_percent",
+    "dumbmonit_agent_zfs_pool_used_bytes",
+    "dumbmonit_agent_zfs_pool_size_bytes",
+    "dumbmonit_proxmox_node_zfs_pool_used_percent",
+    "dumbmonit_proxmox_node_lvm_vg_used_percent",
+    "dumbmonit_proxmox_guest_fs_used_percent",
+    "dumbmonit_pbs_datastore_bytes_used",
+    "dumbmonit_pbs_datastore_bytes_total",
+    "dumbmonit_truenas_pool_size_bytes",
+    "dumbmonit_truenas_pool_free_bytes",
+    "dumbmonit_synology_volume_used_bytes",
+    "dumbmonit_synology_volume_total_bytes",
+    "dumbmonit_qnap_volume_size_bytes",
+    "dumbmonit_qnap_volume_free_bytes",
+    "dumbmonit_unraid_array_used_percent",
+    "dumbmonit_unraid_array_used_bytes",
+    "dumbmonit_unraid_array_size_bytes",
+    "dumbmonit_ceph_capacity_used_bytes",
+    "dumbmonit_ceph_capacity_bytes",
+    "dumbmonit_vsphere_datastore_capacity_bytes",
+    "dumbmonit_vsphere_datastore_free_bytes",
+    "dumbmonit_nutanix_storage_container_used_bytes",
+    "dumbmonit_nutanix_storage_container_capacity_bytes",
+    "dumbmonit_opnsense_disk_used_percent",
+    "dumbmonit_fortigate_disk_used_percent",
+    "dumbmonit_m365_license_used_percent",
+    "dumbmonit_m365_license_consumed",
+    "dumbmonit_m365_license_enabled",
+    "dumbmonit_nut_battery_runtime_low_seconds",
 ];
 
 #[cfg(test)]
@@ -9048,6 +9154,30 @@ mod tests {
             "predict_linear(dumbmonit_fs_used_percent[6h], 345600) \
              and deriv(dumbmonit_fs_used_percent[6h]) > 0"
         );
+    }
+
+    #[test]
+    fn les_regles_derivees_sont_livrees_avec_des_reglages_senses() {
+        let rules = builtin_rules();
+        let forecast = rules.iter().find(|r| r.uid == RULE_CAPACITY_FORECAST).unwrap();
+        assert_eq!(forecast.kind, RuleKind::Forecast);
+        assert_eq!(forecast.operator, Operator::Lt);
+        assert_eq!(forecast.threshold, 30.0);
+        assert_eq!(forecast.params.forecast_warning_days, 14.0);
+        assert_eq!(forecast.params.forecast_critical_days, 7.0);
+        assert!(matches!(
+            crate::alerting::capacity::select(&forecast.query),
+            crate::alerting::capacity::Selection::Families(ref all) if all.len() > 20
+        ));
+
+        for uid in ["latency_drift", "http_5xx_drift"] {
+            let drift = rules.iter().find(|r| r.uid == uid).unwrap();
+            assert_eq!(drift.kind, RuleKind::Drift);
+            assert_eq!(drift.operator, Operator::Ge);
+            assert!(drift.clear_threshold.is_some_and(|clear| clear < drift.threshold));
+            assert!(drift.params.drift_min_value > 0.0, "{uid}: tiny values must not alert");
+            assert!(drift.for_duration >= Duration::from_secs(600), "{uid}: minimal duration");
+        }
     }
 
     #[test]

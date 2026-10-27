@@ -8028,6 +8028,36 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/targets/{id}/forecasts:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getTargetForecasts
+      tags: [Alerts]
+      summary: Fill-up forecasts — disks, datastores, pools, volumes, licences
+      description: >-
+        One entry per capacity entity of the device (every family of the
+        capacity catalogue: agent filesystems, Proxmox and PBS datastores,
+        TrueNAS/Synology/QNAP/Unraid/Ceph pools and volumes, Microsoft 365
+        licences, UPS battery runtime…). The growth is a Theil–Sen fit over the
+        last days (7 by default), restarted after the last lasting drop (cleanup,
+        expansion, quota reset), so gaps and steps do not skew it. Uses the
+        settings of the built-in `capacity_forecast` rule; `severity` is what
+        that rule would raise today. Sorted by `days_to_full`, soonest first.
+      x-token-scope: read
+      responses:
+        "200":
+          description: Forecasts, soonest first.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/CapacityForecast" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { $ref: "#/components/responses/BadGateway" }
+
   # ---------------------------------------------------------------- sécurité
   /api/targets/{id}/security:
     parameters:
@@ -11979,6 +12009,17 @@ components:
         min_samples: { type: integer, default: 3 }
         log_window_secs: { type: integer, minimum: 60, maximum: 86400, default: 300, description: "`log_pattern` rules: counting window. Accepted on write as `window_secs` too." }
         log_per_target: { type: boolean, default: true, description: "`log_pattern` rules: one alert per device (the `target` field of the lines), or a single one. Accepted on write as `per_target` too." }
+        forecast_window_days: { type: integer, minimum: 2, maximum: 90, default: 7, description: "`forecast` rules: days of history fitted." }
+        forecast_warning_days: { type: number, default: 14, description: "`forecast` rules: at least warning below this many days." }
+        forecast_critical_days: { type: number, default: 7, description: "`forecast` rules: critical below this many days." }
+        forecast_min_confidence: { type: number, minimum: 0, maximum: 1, default: 0.5, description: "`forecast` rules: forecasts less sure than this never fire." }
+        forecast_limit: { type: number, default: 100, description: "`forecast` rules on a custom expression: the value at which it is full." }
+        drift_window_secs: { type: integer, minimum: 60, maximum: 86400, default: 900, description: "`drift` rules: window of the current measurement." }
+        drift_weeks: { type: integer, minimum: 0, maximum: 8, default: 4, description: "`drift` rules: previous weeks compared at the same hour; 0 uses the 7-day median only." }
+        drift_min_samples: { type: integer, default: 5, description: "`drift` rules: minimum points in the window." }
+        drift_min_value: { type: number, minimum: 0, default: 0, description: "`drift` rules: smaller values never count (the measurement going up, the usual value going down)." }
+        drift_min_delta: { type: number, minimum: 0, default: 0, description: "`drift` rules: minimum absolute gap to the usual value." }
+        drift_direction: { type: string, enum: [up, down, both], default: up }
     Operator:
       type: string
       enum: [">", ">=", "<", "<="]
@@ -11990,7 +12031,7 @@ components:
         uid: { type: string }
         name: { type: string }
         description: { type: string }
-        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`." }
+        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern, forecast, drift], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`. `forecast` compares the days before full to `threshold` (`query`: `*`, comma-separated capacity families, or a custom expression full at `params.forecast_limit`); the severity rises to warning and critical below `params.forecast_warning_days` and `params.forecast_critical_days`. `drift` compares how many times the usual value (same hour over the previous weeks, or the 7-day median) the measurement of `query` is to `threshold`, once its robust score reaches `params.k`." }
         query: { type: string }
         operator: { $ref: "#/components/schemas/Operator" }
         threshold: { type: number }
@@ -12018,7 +12059,7 @@ components:
         uid: { type: string, description: Derived from the name when absent. }
         name: { type: string }
         description: { type: string }
-        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`." }
+        kind: { type: string, enum: [threshold, anomaly, predict, log_pattern, forecast, drift], description: "`log_pattern` counts the log lines that match `query` (a LogsQL filter, no pipes) over `params.log_window_secs` and compares the count to `threshold`. `forecast` compares the days before full to `threshold` (`query`: `*`, comma-separated capacity families, or a custom expression full at `params.forecast_limit`); the severity rises to warning and critical below `params.forecast_warning_days` and `params.forecast_critical_days`. `drift` compares how many times the usual value (same hour over the previous weeks, or the 7-day median) the measurement of `query` is to `threshold`, once its robust score reaches `params.k`." }
         query: { type: string }
         operator: { $ref: "#/components/schemas/Operator" }
         threshold: { type: number }
@@ -14345,6 +14386,32 @@ components:
         addresses: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         auth: { type: [object, "null"], additionalProperties: true }
         providers: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    CapacityForecast:
+      type: object
+      required: [family, family_label, metric, entity, labels, used_percent, used, size, unit, growth_per_day, days_to_full, full_at, confidence, status, severity, window_days]
+      properties:
+        family: { type: string, examples: [filesystem, pbs_datastore, truenas_pool] }
+        family_label: { type: string }
+        metric: { type: string, description: Metric of the percentage, or the family for an expression. }
+        entity: { type: string, description: "Readable entity (`/srv`, `tank`…); empty for the whole device." }
+        labels:
+          type: object
+          additionalProperties: { type: string }
+        used_percent: { type: [number, "null"] }
+        used: { type: [number, "null"], description: Raw used amount in `unit`, when the integration publishes it. }
+        size: { type: [number, "null"], description: Raw total in `unit`. }
+        unit: { type: string, examples: [bytes, seats, ""] }
+        growth_per_day: { type: [number, "null"], description: Percentage points per day. }
+        days_to_full: { type: [number, "null"], description: "`null` without growth or without enough history; 0 when full." }
+        full_at: { type: [string, "null"], description: Estimated fill date, UTC without suffix. }
+        confidence: { type: number, minimum: 0, maximum: 1 }
+        status: { type: string, enum: [growing, stable, full, insufficient_data] }
+        severity:
+          description: Severity the forecast rule would raise today; `null` when it would not fire.
+          oneOf:
+            - $ref: "#/components/schemas/Severity"
+            - type: "null"
+        window_days: { type: integer }
     SynologyOverview:
       type: object
       additionalProperties: true

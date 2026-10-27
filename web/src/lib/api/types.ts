@@ -427,8 +427,15 @@ export type AlertPhase = 'ok' | 'pending' | 'firing' | 'resolved';
 /** What the user must read: `phase`, but with suppression made visible. */
 export type AlertEffectivePhase = AlertPhase | 'suppressed';
 
-/** How a rule watches its metric. */
-export type RuleKind = 'threshold' | 'anomaly' | 'predict' | 'log_pattern';
+/**
+ * How a rule watches its metric. `forecast`: days before full (capacity
+ * families or a custom expression) against `threshold`; `drift`: how many
+ * times the usual value the measurement is, against `threshold`.
+ */
+export type RuleKind = 'threshold' | 'anomaly' | 'predict' | 'log_pattern' | 'forecast' | 'drift';
+
+/** Direction a `drift` rule watches. */
+export type DriftDirection = 'up' | 'down' | 'both';
 
 /** Comparison operator of a threshold rule. */
 export type RuleOperator = '>' | '>=' | '<' | '<=';
@@ -450,6 +457,27 @@ export interface AnomalyParams {
 	log_window_secs: number;
 	/** `log_pattern`: one alert per device (true) or a single one. */
 	log_per_target: boolean;
+	/** `forecast`: days of history fitted (2…90, default 7). */
+	forecast_window_days?: number;
+	/** `forecast`: at least warning below this many days (default 14). */
+	forecast_warning_days?: number;
+	/** `forecast`: critical below this many days (default 7). */
+	forecast_critical_days?: number;
+	/** `forecast`: forecasts less sure than this (0…1) never fire. */
+	forecast_min_confidence?: number;
+	/** `forecast` on a custom expression: the value at which it is full. */
+	forecast_limit?: number;
+	/** `drift`: window of the current measurement, in seconds. */
+	drift_window_secs?: number;
+	/** `drift`: previous weeks compared at the same hour (0 = 7-day median only). */
+	drift_weeks?: number;
+	/** `drift`: minimum points in the window. */
+	drift_min_samples?: number;
+	/** `drift`: smaller values never count. */
+	drift_min_value?: number;
+	/** `drift`: minimum absolute gap to the usual value. */
+	drift_min_delta?: number;
+	drift_direction?: DriftDirection;
 }
 
 /**
@@ -602,6 +630,42 @@ export interface AlertRulePayload {
 	repeat_secs?: number | null;
 	escalate_after_secs?: number | null;
 	enabled?: boolean | null;
+}
+
+/** Where a capacity forecast stands. */
+export type ForecastStatus = 'growing' | 'stable' | 'full' | 'insufficient_data';
+
+/**
+ * Fill-up forecast of one capacity entity of a device (mountpoint, datastore,
+ * pool, volume, licence…), from `GET /api/targets/{id}/forecasts`. Mirrors
+ * `ForecastView` in `crates/server/src/api/forecasts.rs`.
+ */
+export interface CapacityForecast {
+	/** Capacity family: `filesystem`, `pbs_datastore`, `truenas_pool`… */
+	family: string;
+	family_label: string;
+	metric: string;
+	/** Readable entity (`/srv`, `tank`…); empty for the whole device. */
+	entity: string;
+	labels: Record<string, string>;
+	used_percent: number | null;
+	/** Raw used amount in `unit`, when the integration publishes it. */
+	used: number | null;
+	size: number | null;
+	/** `bytes`, `seats`… empty without raw amounts. */
+	unit: string;
+	/** Percentage points per day. */
+	growth_per_day: number | null;
+	/** `null` without growth or without enough history; 0 when full. */
+	days_to_full: number | null;
+	/** Estimated fill date, UTC without suffix (use `parseServerDate`). */
+	full_at: string | null;
+	/** 0…1. */
+	confidence: number;
+	status: ForecastStatus;
+	/** What the forecast rule would raise today; `null` when it would not fire. */
+	severity: AlertSeverity | null;
+	window_days: number;
 }
 
 /** "First Sunday", "last Friday": `nth` is 1…5, or -1 for the last one. */

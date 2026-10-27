@@ -49,6 +49,8 @@
 
 	const anomaly = $derived(rule.kind === 'anomaly');
 	const logPattern = $derived(rule.kind === 'log_pattern');
+	const forecast = $derived(rule.kind === 'forecast');
+	const drift = $derived(rule.kind === 'drift');
 	const prefix = $derived(`rule-${rule.id}`);
 
 	// Drafts snapshot the rule as the server held it when the editor opened;
@@ -68,6 +70,12 @@
 	let escalateSecs = $state(initial.escalate_after_secs ?? 0);
 	let logWindow = $state(initial.params.log_window_secs ?? 300);
 	let logPerTarget = $state(initial.params.log_per_target ?? true);
+	// Forecast tiers (days before full) and drift noise guards, as text so an
+	// emptied field stays distinct from 0.
+	let warningDays = $state(String(initial.params.forecast_warning_days ?? 14));
+	let criticalDays = $state(String(initial.params.forecast_critical_days ?? 7));
+	let driftK = $state(String(initial.params.k));
+	let driftMinValue = $state(String(initial.params.drift_min_value ?? 0));
 
 	let saving = $state(false);
 	let error = $state<string | null>(null);
@@ -131,6 +139,30 @@
 				return;
 			}
 		}
+		let params = rule.params;
+		if (logPattern) {
+			params = { ...rule.params, log_window_secs: logWindow, log_per_target: logPerTarget };
+		} else if (forecast) {
+			const warning = Number(warningDays);
+			const critical = Number(criticalDays);
+			if (!Number.isFinite(warning) || !Number.isFinite(critical) || critical <= 0 || warning < critical) {
+				error = m.alerts_rules_forecast_error_tiers();
+				return;
+			}
+			params = { ...rule.params, forecast_warning_days: warning, forecast_critical_days: critical };
+		} else if (drift) {
+			const k = Number(driftK);
+			const minValue = Number(driftMinValue);
+			if (!Number.isFinite(k) || k <= 0) {
+				error = m.alerts_rules_drift_error_k();
+				return;
+			}
+			if (!Number.isFinite(minValue) || minValue < 0) {
+				error = m.alerts_rules_drift_error_min_value();
+				return;
+			}
+			params = { ...rule.params, k, drift_min_value: minValue };
+		}
 		saving = true;
 		try {
 			const saved = await updateAlertRule(rule.id, {
@@ -144,7 +176,7 @@
 				for_secs: forSecs,
 				severity: fromSeverityWord(severity),
 				channels: selected,
-				params: logPattern ? { ...rule.params, log_window_secs: logWindow, log_per_target: logPerTarget } : rule.params,
+				params,
 				repeat_secs: repeatSecs > 0 ? repeatSecs : null,
 				escalate_after_secs: escalateSecs > 0 ? escalateSecs : null
 			});
@@ -243,6 +275,26 @@
 						<span class="label-tape pointer-events-none absolute top-1/2 right-3 -translate-y-1/2" aria-hidden="true">{rule.unit}</span>
 					{/if}
 				</div>
+			</Field>
+		</div>
+	{/if}
+
+	{#if forecast}
+		<div class="grid gap-4 sm:grid-cols-3">
+			<Field label={m.alerts_rules_forecast_warning()} for={`${prefix}-warning`} help={m.alerts_rules_forecast_tiers_help()}>
+				<input id={`${prefix}-warning`} type="number" step="any" min="0" class="input tnum" bind:value={warningDays} />
+			</Field>
+			<Field label={m.alerts_rules_forecast_critical()} for={`${prefix}-critical`}>
+				<input id={`${prefix}-critical`} type="number" step="any" min="0" class="input tnum" bind:value={criticalDays} />
+			</Field>
+		</div>
+	{:else if drift}
+		<div class="grid gap-4 sm:grid-cols-3">
+			<Field label={m.alerts_rules_drift_k()} for={`${prefix}-k`} help={m.alerts_rules_drift_k_help()}>
+				<input id={`${prefix}-k`} type="number" step="any" min="0" class="input tnum" bind:value={driftK} />
+			</Field>
+			<Field label={m.alerts_rules_drift_min_value()} for={`${prefix}-min-value`} help={m.alerts_rules_drift_min_value_help()}>
+				<input id={`${prefix}-min-value`} type="number" step="any" min="0" class="input tnum" bind:value={driftMinValue} />
 			</Field>
 		</div>
 	{/if}

@@ -16,7 +16,9 @@ use tracing::{debug, info, warn};
 
 use crate::alerting::baseline;
 use crate::alerting::cycle::{self, CycleInput, RuleObservations};
+use crate::alerting::derived;
 use crate::alerting::log_source;
+use crate::alerting::model::RuleKind;
 use crate::alerting::notify_policy::{self, Outgoing, Recipient};
 use crate::alerting::source::MetricSource;
 use crate::auth::clients;
@@ -295,17 +297,33 @@ pub async fn evaluate_once(
 
     let mut report = EvalReport::default();
     let mut observations = Vec::with_capacity(rules.len());
+    let mut annotations = HashMap::new();
 
     // Les requêtes sont séquentielles : un homelab a une poignée de règles, et
     // sérialiser garantit qu'on ne submerge jamais VictoriaMetrics au démarrage,
     // quand toutes les règles sont évaluées pour la première fois.
     for rule in rules {
-        let fetched = if rule.kind == crate::alerting::model::RuleKind::LogPattern {
-            source
-                .log_matches(&rule.query, rule.params.log_window_secs, rule.params.log_per_target)
-                .await
-        } else {
-            source.instant(&rule.query).await
+        let fetched = match rule.kind {
+            RuleKind::LogPattern => {
+                let params = &rule.params;
+                source.log_matches(&rule.query, params.log_window_secs, params.log_per_target).await
+            }
+            // Règles dérivées : l'historique est lu et calculé à part, la
+            // machine à états ne voit que des séries ordinaires.
+            RuleKind::Forecast | RuleKind::Drift => {
+                let result = if rule.kind == RuleKind::Forecast {
+                    derived::forecast_rule(source, &rule, now).await
+                } else {
+                    derived::drift_rule(source, &rule, now).await
+                };
+                result.map(|found| {
+                    annotations.extend(found.annotations);
+                    found.series
+                })
+            }
+            RuleKind::Threshold | RuleKind::Anomaly | RuleKind::Predict => {
+                source.instant(&rule.query).await
+            }
         };
         let series = match fetched {
             Ok(series) => {
@@ -340,6 +358,7 @@ pub async fn evaluate_once(
             unacked_after: global.escalation().map(|(after, _)| after.to_std().unwrap_or_default()),
             resolutions_during_silence: global.resolutions_during_silence,
             occurrences,
+            annotations,
         },
         &mut baselines,
     );
