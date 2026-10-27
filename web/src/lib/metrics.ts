@@ -9,6 +9,7 @@ import { queryInstant, queryRange, type MetricSeries, type TargetId } from '#lib
 import type { Serie } from '#lib/components/Chart.svelte';
 import type { ProbeStatus } from '#lib/format.js';
 import { m } from '#lib/paraglide/messages.js';
+import { unitFor } from '#lib/viz/infer.js';
 
 /** Ranges offered in the selector of a device's detail page. */
 export const RANGES = [
@@ -44,18 +45,6 @@ export interface MetricGroup {
  */
 function stepFor(seconds: number): number {
 	return Math.max(10, Math.round(seconds / 300));
-}
-
-/** Deduces the display unit from the metric name suffix, by Prometheus convention. */
-function unitFor(name: string): string {
-	if (name.endsWith('_percent')) return '%';
-	if (name.endsWith('_bytes')) return 'B';
-	if (name.endsWith('_bytes_per_second')) return 'B/s';
-	if (name.endsWith('_seconds')) return 's';
-	if (name.endsWith('_celsius')) return '°C';
-	if (name.endsWith('_volts')) return 'V';
-	if (name.endsWith('_watts')) return 'W';
-	return '';
 }
 
 /** Readable title: `dumbmonit_cpu_usage_percent` becomes "Cpu usage percent". */
@@ -113,7 +102,7 @@ function group(series: MetricSeries[]): MetricGroup[] {
 
 		let entry = groups.get(name);
 		if (!entry) {
-			entry = { name, title: titleFor(name), unit: unitFor(name), series: [] };
+			entry = { name, title: titleFor(name), unit: unitFor(name, { rated: false }), series: [] };
 			groups.set(name, entry);
 		}
 		entry.series.push({ label: labelFor(item.metric), points });
