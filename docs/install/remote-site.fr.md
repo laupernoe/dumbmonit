@@ -55,10 +55,11 @@ jusqu'à 25 secondes en attendant du travail (long polling).
 
 ## 2. Créer un jeton d'enrôlement
 
-Le plus simple : **Réglages → Agents → Surveiller un site distant** (ou cochez
-*Cet agent est un relais pour un site distant* en créant un jeton). Nommez le
-site, créez le jeton et lancez la commande d'installation affichée sur une
-machine du site. Le jeton porte lui-même le mode relais et le site : l'agent
+Le plus simple : **Ajouter une surveillance → Serveur avec l'agent**, cochez
+*Cet agent est un relais pour un site distant* (ou passez par l'entrée
+*Relais* de la page d'ajout). Nommez le site, créez le jeton et lancez la
+commande d'installation affichée sur une machine du site ; la page attend son
+premier envoi. Le jeton porte lui-même le mode relais et le site : l'agent
 devient relais dès son premier envoi, sans rien modifier sur la machine.
 
 **Un agent déjà installé** devient relais depuis sa page dans DumbMonit : dans
@@ -74,7 +75,7 @@ prime alors sur l'interrupteur de l'interface.
 ## 3. Démarrer le relais sur le site distant
 
 Sous Linux, macOS ou FreeBSD, l'installateur en une ligne avec `--relay` et le
-site (inutile avec un jeton de *Surveiller un site distant*) :
+site (inutile avec un jeton de relais créé depuis la page d'ajout) :
 
 ```sh
 curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
@@ -141,6 +142,73 @@ même façon ; repasser à *Direct* fait que le serveur les sonde à nouveau.
 - la page de l'agent montre *Relais pour N surveillances*, et
   `GET /api/relays` liste les relais avec leur site et leur compteur.
 
+## 5. Installer des agents derrière le relais
+
+Un site derrière un pare-feu a souvent des serveurs qui ne joignent pas du tout
+DumbMonit : seul le relais sort. Ces serveurs peuvent quand même faire tourner
+l'agent complet (système, disques, services, conteneurs, sauvegardes) : ils se
+connectent à la **passerelle** du relais, qui transporte leur connexion
+jusqu'au serveur.
+
+```
+ site distant (seul le relais sort)                        siège
+ ┌────────────┐  TLS 1.3, mTLS   ┌──────────────┐  tunnel dans la     ┌──────────────────┐
+ │ agent      │═════════════════▶│ agent relais │═ connexion mTLS  ══▶│ serveur DumbMonit│
+ │ (serveur A)│  vers le port    │  passerelle  │  du relais, TCP     │  port agents 8443│
+ └────────────┘  8443 du relais  └──────────────┘  8443 sortant       └──────────────────┘
+        └──────────── une seule session TLS, de bout en bout, agent ⇄ serveur ─┘
+```
+
+**Dans DumbMonit**, ajoutez une surveillance, choisissez **Serveur avec
+l'agent**, et sous *Comment la machine joint-elle ce serveur ?* choisissez
+**Via &lt;relais&gt; (site)**. Indiquez l'adresse par laquelle le site joint
+le relais (une IP ou un nom local). Les commandes affichées — Linux/macOS,
+Windows, Docker — visent alors la passerelle du relais
+(`--url=http://192.168.10.5:8443 --tls-url=https://192.168.10.5:8443`) et
+portent toujours l'empreinte de l'autorité **du serveur**. Le flux attend
+ensuite la première connexion et permet de nommer la machine, de la ranger
+dans un dossier et de la placer sur un site, sans quitter la page. Depuis un
+site dans *Ajouter par site*, **Serveur avec l'agent** présélectionne le
+relais de ce site ; la page du relais propose **Installer un agent à travers
+lui**.
+
+Choisir un relais pour une installation lui demande d'ouvrir sa passerelle
+(port 8443 par défaut) à son prochain envoi. Le panneau *Relais* de sa page
+montre la passerelle — *À l'écoute sur le port 8443 — 3 agents connectés* — et
+permet d'en changer le port et l'adresse, ou de la fermer. Ouvrez ce port sur
+le pare-feu du relais lui-même, **pour le réseau du site seulement**. Pour un
+relais Docker, publiez le port (`-p 8443:8443`, ou les `ports:` commentés de
+`docker-compose.agent.yml`). `gateway_listen: 0.0.0.0:9443` dans l'`agent.yaml`
+du relais (`DUMBMONIT_AGENT_GATEWAY_LISTEN`) prime sur le réglage de
+l'interface.
+
+Ce qui passe par le relais :
+
+- **Le canal chiffré de l'agent**, intact. Le relais reconnaît un ClientHello
+  TLS et recopie les octets, dans les deux sens, dans un tunnel qu'il ouvre
+  vers le port des agents du serveur sous *son propre* certificat client (une
+  mise à niveau HTTP sur `/api/agent/relay/tunnel`). Le serveur mène alors la
+  poignée de main TLS 1.3 avec l'agent du site comme s'il s'était connecté en
+  direct : certificat client de l'agent, autorité épinglée, jeton et secret de
+  liaison sont vérifiés par le serveur, de bout en bout. L'enrôlement suit le
+  même chemin.
+- **Le script d'installation et le binaire**, que le relais relit auprès du
+  serveur par son propre canal et sert sur le même port (`/install.sh`,
+  `/install.ps1`, `/download/<fichier>` seulement). La commande
+  d'installation porte le SHA-256 de chaque binaire : le script refuse tout
+  autre fichier.
+
+Le serveur retient, pour chaque agent, le relais par lequel il se connecte. La
+page de l'agent indique *Joint ce serveur via le relais …* ; la carte de
+topologie dessine le relais comme son parent ; et quand le relais tombe, les
+agents derrière lui sont montrés `suppressed` par le relais, pas comme autant
+de pannes séparées. Un agent qui se connecte ensuite en direct (ou par un
+autre relais) est mis à jour à son envoi suivant.
+
+Le kit Active Directory offre le même choix : sous **Chemin**, choisissez le
+relais, et les serveurs du domaine téléchargent l'agent depuis lui et
+remontent à travers lui.
+
 ## Alerter quand le relais est en panne
 
 Un relais qui devient silencieux emporte ses surveillances avec lui : leurs
@@ -160,8 +228,13 @@ Un moniteur n'a pas à choisir entre le serveur et un relais : il peut être son
 
 - Un relais par surveillance. Une surveillance sondée par le relais n'est pas aussi
   sondé par le serveur.
-- Les surveillances de type agent ne peuvent pas être relayées : elles envoient
-  leurs propres métriques.
+- Les surveillances de type agent ne sont jamais sondées par un relais (elles
+  envoient leurs propres métriques) ; un agent peut en revanche se *connecter*
+  par la passerelle d'un relais (voir plus haut). Un relais se connecte
+  toujours en direct : pas de relais derrière un relais.
+- La passerelle d'un relais accepte 64 connexions à la fois et 4 Mio/s par
+  tunnel et par sens par défaut (`gateway_max_connections`,
+  `gateway_rate_kib`) ; le serveur accepte 256 tunnels par relais.
 - Le relais fait tourner 8 sondes à la fois au plus ; une sonde est bornée
   par le délai de sonde du serveur (`DUMBMONIT_PROBE_TIMEOUT`), plafonné à
   120 s sur l'agent.

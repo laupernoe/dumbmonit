@@ -22,6 +22,7 @@ fn batch() -> PushBatch {
         tags: Default::default(),
         binding_supported: true,
         self_update: None,
+        relay_gateway: None,
         remediation: None,
     };
     PushBatch::new(identity, Vec::new(), 1_000)

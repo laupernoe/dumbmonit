@@ -397,7 +397,9 @@ async fn via_agent_is_validated_and_kept_when_omitted() {
         .await;
     assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
     assert!(reply.body["error"].as_str().unwrap().contains("relay itself"), "{}", reply.body);
-    // … et une machine à agent ne peut pas être relayée, même par un autre agent.
+    // … et le relais d'une machine à agent ne se saisit pas : c'est le serveur
+    // qui le constate quand elle passe par une passerelle. La valeur envoyée
+    // est ignorée, celle qui est rangée reste.
     let other_agent = register_relay(&app, &token, "machine-paris", true).await;
     let reply = app
         .put(
@@ -406,12 +408,8 @@ async fn via_agent_is_validated_and_kept_when_omitted() {
             Some(&admin),
         )
         .await;
-    assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{}", reply.body);
-    assert!(
-        reply.body["error"].as_str().unwrap().contains("pushes its own metrics"),
-        "{}",
-        reply.body
-    );
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["via_agent"], serde_json::Value::Null, "{}", reply.body);
 
     // Un relais qui n'a pas déclaré `relay: true` est accepté : l'interface le
     // signale, la liste le marque.

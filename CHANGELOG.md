@@ -5,6 +5,46 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Agents behind a relay.** At a site behind a firewall, where only the relay
+  agent goes out, servers can now run the full agent: they connect to the
+  relay's **gateway** (TCP 8443 by default, on the site's network), which
+  carries their connection to the server. The agent's TLS 1.3 session, client
+  certificate, pinned authority, token and binding secret stay end to end
+  between agent and server: the relay only copies ciphertext, through a tunnel
+  it opens under its own client certificate, and cannot read, alter or
+  impersonate anything. Enrolment, the install script and the binary (checked
+  against the SHA-256 in the command) go through the relay too. Bounded
+  connections and rate per tunnel, no open proxy, and a relay only carries
+  machines of its own client (MSP).
+- The server records the relay each agent connects through: shown on the
+  agent's page, drawn as its parent on the topology map, and used for alert
+  suppression (agents behind a relay that is down are `suppressed`, not down).
+- Install commands through a relay: choose **Directly** or **Through
+  &lt;relay&gt; (site)** when adding a server with the agent, in the Active
+  Directory kit (**Route**), from a site in *Add by site*, or from the relay's
+  page (**Install an agent through it**). `POST /api/agent/tokens`,
+  `GET /api/agent/install` and `POST /api/agent/ad-kit` take `relay_id` and
+  `relay_host`; the relay's *Relay* panel sets its gateway (port, address) and
+  shows the agents connected through it.
+- The add-an-agent flow does everything in place: token, Linux/macOS, Windows
+  and Docker commands, an option for several machines, the wait for the first
+  connection (`GET /api/agent/tokens/{id}/machines`), then naming, folder and
+  site. The Active Directory kit is offered there too.
+- Imports (Uptime Kuma, UptimeRobot, Gatus) can send the imported monitors
+  through a relay (`via_agent`), and monitors added from a relay's network scan
+  are probed through that relay. `GET /api/relays/kinds` lists the kinds a
+  relay can probe; forms only offer *Reached through* for those.
+
+### Changed
+
+- **Settings → Agents** keeps only instance settings: the encrypted channel
+  (with the agents still on the plain channel), automatic agent updates, and
+  the issued tokens with revocation. Adding agents, the agent list and the
+  Active Directory kit moved to the add flow; no add flow sends you to Settings
+  any more.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

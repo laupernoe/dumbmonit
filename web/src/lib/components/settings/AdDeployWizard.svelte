@@ -7,11 +7,16 @@
 	 * token and the script exist in clear only in this session (the server never
 	 * shows them again), so closing the dialog forgets them. Admin only: the
 	 * caller decides whether to render it.
+	 *
+	 * A domain at a site behind a firewall installs "through a relay": the
+	 * servers download the agent from the relay's gateway and report through
+	 * it, end-to-end encrypted to this server.
 	 */
 	import { tick } from 'svelte';
 	import { ArrowLeft, ArrowRight, Check, Download, KeyRound, Network, OctagonX, X } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
-	import { closeAgentToken, createAdKit, listAgentTokens, listTargets, type CreatedAdKit, type Target } from '#lib/api/index.js';
+	import { closeAgentToken, createAdKit, listAgentTokens, listTargets, type CreatedAdKit, type RelayAgent, type Target } from '#lib/api/index.js';
+	import { listRelays } from '#lib/api/relay.js';
 	import { adDeployDocsUrl } from '#lib/docs.js';
 	import AgentChannelNote from '#lib/components/device-form/AgentChannelNote.svelte';
 	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Field, Led, Plate } from '#lib/ui/index.js';
@@ -40,6 +45,20 @@
 	let securityGroup = $state('');
 	let sysvol = $state(false);
 	let serverHost = $state('');
+	/** Relay agents of a remote site the domain may install through. */
+	let relays = $state<RelayAgent[]>([]);
+	/** `''`: direct; otherwise the id of the relay, as the select gives it. */
+	let relayChoice = $state('');
+	let relayHost = $state('');
+	const relay = $derived(relays.find((r) => String(r.id) === relayChoice) ?? null);
+	$effect(() => {
+		if (!open) return;
+		const controller = new AbortController();
+		listRelays(controller.signal)
+			.then((list) => (relays = list.filter((r) => r.relay).sort((a, b) => a.name.localeCompare(b.name))))
+			.catch(() => (relays = []));
+		return () => controller.abort();
+	});
 	let dnsServer = $state('');
 	let serverHostError = $state<string | null>(null);
 	let dnsServerError = $state<string | null>(null);
@@ -126,7 +145,7 @@
 			domainError = m.settings_agents_ad_domain_required();
 			return;
 		}
-		if (serverHost.trim() && !validHost(serverHost)) {
+		if (!relay && serverHost.trim() && !validHost(serverHost)) {
 			serverHostError = m.settings_agents_ad_server_host_invalid();
 			return;
 		}
@@ -146,7 +165,8 @@
 				domain: domain.trim(),
 				// The address the servers will reach this one at.
 				base_url: location.origin,
-				server_host: serverHost.trim() || null,
+				server_host: relay ? null : serverHost.trim() || null,
+				...(relay ? { relay_id: relay.id, relay_host: relayHost.trim() || null } : {}),
 				dns_server: dnsServer.trim() || null,
 				max_uses: uses_,
 				expires_in_days: days_,
@@ -313,7 +333,27 @@
 							oninput={() => (domainError = null)}
 						/>
 					</Field>
+					{#if relays.length > 0}
+						<div class="flex flex-col gap-3 sm:flex-row">
+							<Field label={m.settings_agents_ad_route()} for="ad-route" class="flex-1" help={m.settings_agents_ad_route_help()}>
+								<select id="ad-route" class="input" bind:value={relayChoice} disabled={creating}>
+									<option value="">{m.deviceform_agentflow_route_direct()}</option>
+									{#each relays as option (option.id)}
+										<option value={String(option.id)}>
+											{option.site ? m.deviceform_agentflow_route_relay_site({ relay: option.name, site: option.site }) : m.deviceform_agentflow_route_relay({ relay: option.name })}
+										</option>
+									{/each}
+								</select>
+							</Field>
+							{#if relay}
+								<Field label={m.deviceform_agentflow_relay_host()} for="ad-relay-host" class="flex-1" help={m.deviceform_agentflow_relay_host_help({ port: String(relay.gateway_wanted ?? relay.gateway_port ?? 8443) })}>
+									<input id="ad-relay-host" type="text" class="input" bind:value={relayHost} placeholder={relay.gateway_host ?? '192.168.1.10'} autocomplete="off" spellcheck="false" disabled={creating} />
+								</Field>
+							{/if}
+						</div>
+					{/if}
 					<div class="flex flex-col gap-3 sm:flex-row">
+						{#if !relay}
 						<Field label={m.settings_agents_ad_server_host()} for="ad-server-host" class="flex-1" error={serverHostError} help={m.settings_agents_ad_server_host_help({ origin: location.host })}>
 							<input
 								id="ad-server-host"
@@ -329,6 +369,7 @@
 								oninput={() => (serverHostError = null)}
 							/>
 						</Field>
+						{/if}
 						<Field label={m.settings_agents_ad_dns_server()} for="ad-dns-server" class="flex-1" error={dnsServerError} help={m.settings_agents_ad_dns_server_help()}>
 							<input
 								id="ad-dns-server"

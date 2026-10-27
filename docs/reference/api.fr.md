@@ -816,7 +816,8 @@ changements. Voir [Rapports par email](../using/reports.md).
 | `POST` | `/api/agent/relay/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Résultat d'une sonde déléguée : `{"duration_ms", "error", "samples", "profile_id"}` (corps jusqu'à 16 Mo). `204` ; `404` quand la sonde a expiré ou appartient à un autre agent. |
 | `GET` | `/api/agent/commands?wait=N` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Commandes en file pour un agent (redémarrage ou mise à jour de conteneur), retenue jusqu'à `wait` secondes quand rien n'est en attente. Pas destiné à être appelé à la main. `key` seule ne prouve rien — elle est publique — une machine liée doit donc aussi présenter son secret de liaison ; `403` sinon, ce qui empêche une machine de prendre les commandes d'une autre. |
 | `POST` | `/api/agent/commands/{id}` | `Authorization: Bearer dmon_…` + `X-DumbMonit-Agent-Key` + `X-DumbMonit-Agent-Secret` | Progrès et résultat d'une commande, rapporté par l'agent. `result` est tronqué aux derniers 4 Ko, avec `[truncated by the server, beginning dropped]` au début quand ça arrive. |
-| `GET` | `/api/relays` | session | Chaque surveillance agent comme relais possible : `id`, `name`, `site`, `relay` (déclaré `relay: true`), `last_seen_at`, `relayed` (surveillances atteintes via lui). Les relais d'abord, puis par nom. |
+| `GET` | `/api/relays` | session | Chaque surveillance agent comme relais possible : `id`, `name`, `site`, `relay` (déclaré `relay: true`), `last_seen_at`, `relayed` (surveillances atteintes via lui), `gateway_wanted`, `gateway_port`, `gateway_host` (sa passerelle pour les agents de son site), `client_id`. Les relais d'abord, puis par nom. |
+| `GET` | `/api/relays/kinds` | session | Types qu'un agent relais sait sonder ; les formulaires ne proposent « Joint via » que pour eux. |
 
 ```json
 {
