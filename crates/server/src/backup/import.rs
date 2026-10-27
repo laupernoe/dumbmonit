@@ -2417,10 +2417,7 @@ async fn restore_clients(
                 .await
                 .context("recherche du client")?;
         let id: i64 = match existing {
-            Some(id) => {
-                report.count(RestoreOutcome::Updated);
-                id
-            }
+            Some(id) => id,
             None => {
                 report.count(RestoreOutcome::Created);
                 sqlx::query_scalar("INSERT INTO clients (name) VALUES (?) RETURNING id")
@@ -2430,11 +2427,14 @@ async fn restore_clients(
                     .context("création du client")?
             }
         };
-        sqlx::query(
-            "UPDATE clients SET description = ?, contacts = ?, monitor_quota = ?, idp_groups = ?,
-                    sla_report = ?, sla_objective = ?, report_timezone = ?,
-                    logo_type = ?, logo = ?
-             WHERE id = ?",
+        let changed = sqlx::query(
+            "UPDATE clients SET description = ?1, contacts = ?2, monitor_quota = ?3, idp_groups = ?4,
+                    sla_report = ?5, sla_objective = ?6, report_timezone = ?7,
+                    logo_type = ?8, logo = ?9
+             WHERE id = ?10
+               AND (description IS NOT ?1 OR contacts IS NOT ?2 OR monitor_quota IS NOT ?3
+                    OR idp_groups IS NOT ?4 OR sla_report IS NOT ?5 OR sla_objective IS NOT ?6
+                    OR report_timezone IS NOT ?7 OR logo_type IS NOT ?8 OR logo IS NOT ?9)",
         )
         .bind(&client.description)
         .bind(serde_json::to_string(&contacts)?)
@@ -2448,7 +2448,17 @@ async fn restore_clients(
         .bind(id)
         .execute(&mut **tx)
         .await
-        .context("mise à jour du client")?;
+        .context("mise à jour du client")?
+        .rows_affected();
+        // Un client déjà identique ne compte pas comme modifié : une seconde
+        // restauration du même lot ne change rien.
+        if existing.is_some() {
+            report.count(if changed > 0 {
+                RestoreOutcome::Updated
+            } else {
+                RestoreOutcome::Skipped
+            });
+        }
         for member in &client.members {
             let source = match member.source.as_str() {
                 "idp" | "scim" => member.source.as_str(),
