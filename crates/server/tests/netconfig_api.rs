@@ -297,7 +297,12 @@ async fn another_kind_is_not_a_configuration_backup() {
 async fn reading_a_version_needs_the_operate_level_on_its_folder() {
     let lab = lab().await;
     let users = lab.app.get("/api/users", Some(&lab.admin)).await;
-    let operator = users.body.as_array().expect("comptes").iter().find(|u| u["username"] == "ops")
+    let operator = users
+        .body
+        .as_array()
+        .expect("comptes")
+        .iter()
+        .find(|u| u["username"] == "ops")
         .and_then(|u| u["id"].as_i64())
         .expect("compte ops");
     let reply = lab
