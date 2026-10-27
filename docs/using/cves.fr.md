@@ -84,6 +84,31 @@ Debian la classe mineure) ; les CVE **corrigées** ne sont montrées que sur la
 dernière année. Les notes CVSS des CVE de distribution arrivent de la NVD
 progressivement, quelques centaines par heure sans clé.
 
+## Lire la page
+
+La page est une galerie dense de cartes courtes, avec une bande de compteurs en
+haut (vulnérables, exploitées, à vérifier, corrigées, ignorées).
+
+- **Par CVE** montre chaque CVE **une seule fois**, quel que soit le nombre de
+  machines touchées : sévérité et CVSS, **exploitée** ou non (CISA KEV),
+  **correctif disponible** ou non, et les machines concernées. Les cartes sont
+  regroupées sous un en-tête par sévérité.
+- **Par machine** montre chaque machine **une seule fois**, avec sa pire
+  sévérité, son nombre de CVE et combien sont corrigeables. Les cartes sont
+  regroupées sous un en-tête par dossier (par client en mode MSP).
+
+Les en-têtes se replient et se déplient (**Tout replier** / **Tout déplier**),
+et **Afficher le détail** sur une carte liste ses constats : paquet, versions
+installée et corrigée, raison du verdict, bouton pour ignorer.
+
+Cliquez une **CVE** pour voir les machines qui l'ont, ou une **machine** pour
+voir ses CVE ; la sélection apparaît sous forme de pastille à retirer. Les
+filtres rapides sont la sévérité, l'état (ouverts par défaut : vulnérable ou à
+vérifier), les ignorées, le dossier, le client (mode MSP), **Exploitée**,
+**Correctif disponible** et une recherche (ID de CVE, paquet, nom de machine).
+Le pivot, les filtres et la sélection sont conservés dans l'adresse de la page :
+une vue peut être mise en favori ou partagée.
+
 ## Alertes
 
 Deux règles livrées, réglables comme les autres :
