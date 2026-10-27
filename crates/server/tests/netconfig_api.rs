@@ -292,3 +292,51 @@ async fn another_kind_is_not_a_configuration_backup() {
         .await;
     assert_eq!(reply.status, StatusCode::NOT_FOUND);
 }
+
+#[tokio::test]
+async fn reading_a_version_needs_the_operate_level_on_its_folder() {
+    let lab = lab().await;
+    let users = lab.app.get("/api/users", Some(&lab.admin)).await;
+    let operator = users.body.as_array().expect("comptes").iter().find(|u| u["username"] == "ops")
+        .and_then(|u| u["id"].as_i64())
+        .expect("compte ops");
+    let reply = lab
+        .app
+        .post(
+            "/api/teams",
+            json!({ "name": "Read only", "members": [operator], "grants": [{ "folder": "*", "level": "read" }] }),
+            Some(&lab.admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+
+    // La liste des versions : la lecture suffit.
+    let base = format!("/api/targets/{}/netconfig", lab.target);
+    let reply = lab.app.get(&base, Some(&lab.operator)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    // Le contenu, même masqué, et le diff : « traiter » exigé.
+    for uri in [
+        format!("{base}/versions/{}", lab.second),
+        format!("{base}/diff?from={}&to={}", lab.first, lab.second),
+    ] {
+        let reply = lab.app.get(&uri, Some(&lab.operator)).await;
+        assert_eq!(reply.status, StatusCode::FORBIDDEN, "{uri}: {}", reply.body);
+        assert!(!text_of(&reply.body).contains("hostname sw1"), "{uri}");
+    }
+
+    // Le même compte au niveau « traiter » lit la version masquée.
+    let teams = lab.app.get("/api/teams", Some(&lab.admin)).await;
+    let team = teams.body["teams"][0]["id"].as_i64().expect("équipe");
+    let reply = lab
+        .app
+        .put(
+            &format!("/api/teams/{team}"),
+            json!({ "grants": [{ "folder": "*", "level": "operate" }] }),
+            Some(&lab.admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let reply = lab.app.get(&format!("{base}/versions/{}", lab.second), Some(&lab.operator)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert!(!text_of(&reply.body).contains(COMMUNITY));
+}

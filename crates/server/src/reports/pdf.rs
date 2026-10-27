@@ -267,16 +267,16 @@ impl Document {
         // Les images suivent les pages : chacune prend un objet, plus un pour
         // son masque alpha.
         let mut next = first_page + 2 * n;
-        let mut image_objects: Vec<(usize, Option<usize>)> = Vec::new();
-        for image in &self.images {
-            let main = next;
-            next += 1;
-            let mask = image.alpha.as_ref().map(|_| {
-                next += 1;
-                next - 1
-            });
-            image_objects.push((main, mask));
-        }
+        let image_objects: Vec<(usize, Option<usize>)> = self
+            .images
+            .iter()
+            .map(|image| {
+                let main = next;
+                let mask = image.alpha.as_ref().map(|_| main + 1);
+                next += 1 + usize::from(mask.is_some());
+                (main, mask)
+            })
+            .collect();
         let xobjects = if image_objects.is_empty() {
             String::new()
         } else {
