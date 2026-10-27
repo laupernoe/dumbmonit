@@ -9392,5 +9392,15 @@
 	"deviceform_site_more": "Mostrar {count} más",
 	"deviceform_site_added": "{name} añadido.",
 	"deviceform_site_open": "Abrir",
-	"deviceform_site_kinds": "Habituales aquí"
+	"deviceform_site_kinds": "Habituales aquí",
+	"devices_chart_label": "Gráfico",
+	"devices_chart_last_week_series": "Semana pasada: {label}",
+	"devices_chart_compare_week": "Comparar con la semana pasada",
+	"devices_chart_compare_failed": "No se pudo cargar la semana pasada",
+	"devices_chart_compare_empty": "Sin datos de la semana pasada",
+	"devices_chart_summary_series": "{label}: último {last}, mín. {min}, máx. {max}.",
+	"devices_chart_summary_mirror": "La segunda serie se dibuja bajo cero, en espejo.",
+	"devices_chart_summary_threshold": "Umbral {label}: {value}.",
+	"devices_chart_summary_event": "{when}: {label}.",
+	"devices_chart_event_label": "{when}, {label}"
 }
