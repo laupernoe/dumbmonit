@@ -281,6 +281,20 @@ pub struct BundleTarget {
     /// mode est coupé, ou le lot vient d'un serveur qui ne le connaissait pas.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub multisite: Option<BundleMultisite>,
+    /// Politiques automatiques des conteneurs de cette machine (migration
+    /// 0009) : redémarrage, mise à jour, réserve aux fenêtres de maintenance.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub container_policies: Vec<BundleContainerPolicy>,
+}
+
+/// Politique automatique d'un conteneur, par son nom.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BundleContainerPolicy {
+    pub container: String,
+    pub auto_restart: bool,
+    pub auto_update: bool,
+    pub prune_old_image: bool,
+    pub only_in_maintenance: bool,
 }
 
 /// Réglage multi-emplacements d'un moniteur, ses agents désignés par référence.
@@ -957,6 +971,7 @@ mod tests {
                 position: 3,
                 location: None,
                 multisite: None,
+                container_policies: Vec::new(),
             }],
             ..Bundle::default()
         }

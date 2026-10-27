@@ -212,6 +212,7 @@ pub fn ui_routes() -> Router<AppState> {
         .route("/targets/{id}/agent/modules", get(list_modules))
         .route("/targets/{id}/agent/modules/{module}", put(set_module))
         .route("/targets/{id}/containers", get(list_containers))
+        .route("/targets/{id}/containers/policy", put(set_policies))
         .route("/targets/{id}/containers/{name}/policy", put(set_policy))
         .route("/targets/{id}/containers/{name}/restart", post(restart))
         .route("/targets/{id}/containers/{name}/update", post(update))
@@ -539,6 +540,80 @@ async fn set_policy(
     let policy = patch.apply(current);
     commands::set_policy(&state.pool, host, &name, policy).await?;
     Ok(Json(policy))
+}
+
+/// Plus de conteneurs que cela d'un coup : borne le corps, pas l'usage réel.
+const MAX_BULK_CONTAINERS: usize = 500;
+
+/// Corps de `PUT /api/targets/{id}/containers/policy` : les conteneurs visés et
+/// les champs à changer (mêmes règles que [`PolicyPatch`] : omis, inchangé).
+#[derive(Debug, Default, Deserialize)]
+pub struct BulkPolicyBody {
+    #[serde(default)]
+    pub containers: Vec<String>,
+    #[serde(flatten)]
+    pub patch: PolicyPatch,
+}
+
+/// Résultat pour un conteneur d'une modification groupée.
+#[derive(Debug, Serialize)]
+pub struct BulkPolicyResult {
+    pub name: String,
+    pub ok: bool,
+    /// Politique complète après changement, quand `ok`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub policy: Option<ContainerPolicy>,
+    /// Pourquoi le nom a été refusé, quand `!ok`.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+/// Réponse : un résultat par nom demandé, dans l'ordre de la demande.
+#[derive(Debug, Serialize)]
+pub struct BulkPolicyReply {
+    pub results: Vec<BulkPolicyResult>,
+}
+
+/// Même droits que la route unitaire. Les noms valides sont écrits en une
+/// transaction ; un nom invalide est rapporté sans empêcher les autres.
+async fn set_policies(
+    State(state): State<AppState>,
+    Path(id): Path<TargetId>,
+    Json(body): Json<BulkPolicyBody>,
+) -> ApiResult<Json<BulkPolicyReply>> {
+    let host = docker_targets(&state, id).await?.host;
+    if body.containers.is_empty() {
+        return Err(ApiError::BadRequest("Select at least one container.".into()));
+    }
+    if body.containers.len() > MAX_BULK_CONTAINERS {
+        return Err(ApiError::BadRequest(format!(
+            "At most {MAX_BULK_CONTAINERS} containers per request."
+        )));
+    }
+    let mut valid: Vec<String> = Vec::new();
+    for name in &body.containers {
+        if validate_name(name).is_ok() && !valid.contains(name) {
+            valid.push(name.clone());
+        }
+    }
+    let applied: BTreeMap<String, ContainerPolicy> =
+        commands::update_policies(&state.pool, host, &valid, |current| body.patch.apply(current))
+            .await?
+            .into_iter()
+            .collect();
+    let results = body
+        .containers
+        .into_iter()
+        .map(|name| match validate_name(&name) {
+            Err(error) => BulkPolicyResult { name, ok: false, policy: None, error: Some(error) },
+            // Un doublon dans la demande répond comme son premier exemplaire.
+            Ok(()) => {
+                let policy = applied.get(&name).copied();
+                BulkPolicyResult { name, ok: true, policy, error: None }
+            }
+        })
+        .collect();
+    Ok(Json(BulkPolicyReply { results }))
 }
 
 /// Conteneurs connus d'une cible, d'après les dernières mesures de son agent.

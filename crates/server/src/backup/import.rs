@@ -300,6 +300,12 @@ async fn restore_targets(
             outcomes.insert(key.clone(), RestoreOutcome::Updated);
         }
 
+        if restore_container_policies(tx, *id, &target.container_policies).await?
+            && outcomes.get(&key) == Some(&RestoreOutcome::Skipped)
+        {
+            outcomes.insert(key.clone(), RestoreOutcome::Updated);
+        }
+
         let current = sqlx::query("SELECT parent_id, via_agent FROM targets WHERE id = ?")
             .bind(id)
             .fetch_one(&mut **tx)
@@ -327,6 +333,58 @@ async fn restore_targets(
         report.count(outcome);
     }
     Ok(report)
+}
+
+/// Rétablit les politiques automatiques des conteneurs d'une machine : chaque
+/// conteneur du lot est écrit, ceux que le lot ne cite pas restent tels quels.
+/// Rend `true` si quelque chose a changé.
+async fn restore_container_policies(
+    tx: &mut Transaction<'_, Sqlite>,
+    id: i64,
+    policies: &[BundleContainerPolicy],
+) -> Result<bool> {
+    let mut changed = false;
+    for policy in policies {
+        let current = sqlx::query(
+            "SELECT auto_restart, auto_update, prune_old_image, only_in_maintenance
+             FROM container_policies WHERE target_id = ? AND container = ?",
+        )
+        .bind(id)
+        .bind(&policy.container)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("lecture d'une politique de conteneur")?;
+        if let Some(row) = &current
+            && (row.try_get::<i64, _>("auto_restart")? != 0) == policy.auto_restart
+            && (row.try_get::<i64, _>("auto_update")? != 0) == policy.auto_update
+            && (row.try_get::<i64, _>("prune_old_image")? != 0) == policy.prune_old_image
+            && (row.try_get::<i64, _>("only_in_maintenance")? != 0) == policy.only_in_maintenance
+        {
+            continue;
+        }
+        sqlx::query(
+            "INSERT INTO container_policies
+                 (target_id, container, auto_restart, auto_update, prune_old_image,
+                  only_in_maintenance)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT (target_id, container) DO UPDATE SET
+                 auto_restart = excluded.auto_restart,
+                 auto_update = excluded.auto_update,
+                 prune_old_image = excluded.prune_old_image,
+                 only_in_maintenance = excluded.only_in_maintenance",
+        )
+        .bind(id)
+        .bind(&policy.container)
+        .bind(i64::from(policy.auto_restart))
+        .bind(i64::from(policy.auto_update))
+        .bind(i64::from(policy.prune_old_image))
+        .bind(i64::from(policy.only_in_maintenance))
+        .execute(&mut **tx)
+        .await
+        .context("restauration d'une politique de conteneur")?;
+        changed = true;
+    }
+    Ok(changed)
 }
 
 /// Rétablit le réglage multi-emplacements d'un moniteur. Un agent absent est

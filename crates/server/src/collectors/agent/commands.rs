@@ -430,6 +430,55 @@ pub async fn set_policy(
     Ok(())
 }
 
+/// Applique `change` à la politique de chaque conteneur de `containers`, en une
+/// seule transaction : tout est écrit, ou rien. Un conteneur sans politique
+/// enregistrée part des valeurs par défaut. Rend les politiques obtenues.
+pub async fn update_policies(
+    pool: &SqlitePool,
+    target_id: TargetId,
+    containers: &[String],
+    change: impl Fn(ContainerPolicy) -> ContainerPolicy,
+) -> Result<Vec<(String, ContainerPolicy)>> {
+    let mut tx = pool.begin().await.context("opening the policy transaction")?;
+    let mut out = Vec::with_capacity(containers.len());
+    for container in containers {
+        let row = sqlx::query(
+            "SELECT auto_restart, auto_update, prune_old_image, only_in_maintenance
+             FROM container_policies WHERE target_id = ? AND container = ?",
+        )
+        .bind(target_id)
+        .bind(container)
+        .fetch_optional(&mut *tx)
+        .await
+        .context("reading the container policy")?;
+        let current = row.map(|row| row_to_policy(&row)).transpose()?.unwrap_or_default();
+        let policy = change(current);
+        sqlx::query(
+            "INSERT INTO container_policies
+                 (target_id, container, auto_restart, auto_update, prune_old_image,
+                  only_in_maintenance)
+             VALUES (?, ?, ?, ?, ?, ?)
+             ON CONFLICT (target_id, container) DO UPDATE SET
+                 auto_restart = excluded.auto_restart,
+                 auto_update = excluded.auto_update,
+                 prune_old_image = excluded.prune_old_image,
+                 only_in_maintenance = excluded.only_in_maintenance",
+        )
+        .bind(target_id)
+        .bind(container)
+        .bind(policy.auto_restart)
+        .bind(policy.auto_update)
+        .bind(policy.prune_old_image)
+        .bind(policy.only_in_maintenance)
+        .execute(&mut *tx)
+        .await
+        .context("saving the container policy")?;
+        out.push((container.clone(), policy));
+    }
+    tx.commit().await.context("committing the policy transaction")?;
+    Ok(out)
+}
+
 /// Politiques d'une cible, par nom de conteneur.
 pub async fn list_policies(
     pool: &SqlitePool,
