@@ -6352,6 +6352,68 @@ export interface DashboardPayload {
 	widgets: DashboardWidget[];
 }
 
+export interface DashboardTemplateName {
+	id: number;
+	name: string;
+}
+
+export interface DashboardTemplateKind {
+	kind: string;
+	count: number;
+}
+
+export interface DashboardTemplate {
+	id: string;
+	/** English, as served (like the collector catalogue). */
+	title: string;
+	description: string;
+	/** A lucide icon name; unknown names fall back to a default icon. */
+	icon: string;
+	/** Device types it reads; empty: every type. */
+	requires: string[];
+	/** A series a device must publish to count (Docker containers). */
+	needs_metric: string | null;
+	/** Types it reads that the account has, most numerous first. */
+	present_kinds: DashboardTemplateKind[];
+	/** Active devices that could feed it. */
+	target_count: number;
+	widget_count: number;
+	available: boolean;
+	/** Why it cannot be used (English); null when it can. */
+	reason: string | null;
+}
+
+export interface DashboardTemplateList {
+	filters: {
+		folders: string[];
+		sites: DashboardTemplateName[];
+		/** Empty unless multi-client mode is on. */
+		clients: DashboardTemplateName[];
+	};
+	templates: DashboardTemplate[];
+}
+
+/** What the template filter can narrow by; every field is optional. */
+export interface DashboardTemplateFilter {
+	kind?: string;
+	folder?: string;
+	site?: number;
+	client?: number;
+}
+
+export interface DashboardTemplatePreview {
+	id: string;
+	/** Suggested dashboard name. */
+	name: string;
+	range_secs: number;
+	refresh_secs: number;
+	matched_count: number;
+	matched: { id: number; name: string; kind: string }[];
+	/** More than 300 devices matched: the queries carry the first 300. */
+	truncated: boolean;
+	widgets: DashboardWidget[];
+}
+
 export interface CatalogLabel {
 	name: string;
 	values: string[];

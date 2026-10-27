@@ -45,6 +45,16 @@ All notable changes to this project are documented here. The format follows
   and the monitor types that fit the site, all pre-filled with the site's relay
   agent, location and folder. The full list of types stays below. In MSP mode
   only the current client's sites are offered.
+### Added
+
+- **Dashboard templates.** **New from a template** on the Dashboards page offers ten
+  ready-made dashboards that fill themselves with your own devices: homelab overview,
+  Linux and Windows servers, network, Proxmox and virtualization, storage and backups,
+  websites and TLS, Active Directory, Kubernetes, Docker hosts, and SLA. Narrow one to a
+  device type, folder, site or client, check the live preview, and create it. A template
+  with no device to feed it is dimmed, with the reason. Templates are served by the server
+  (`GET /api/dashboards/templates` and `…/{id}/preview`), limited to the devices the
+  account can see.
 
 ## 0.14.0 — 2026-10-28
 
