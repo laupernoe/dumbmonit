@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Regroupement, heures calmes et rappels : qui est prévenu, et quand.",
 	"wizard_oncall_team": "Équipe et rôles",
 	"wizard_oncall_team_text": "Les comptes qui traitent les alertes : les opérateurs acquittent, les administrateurs configurent.",
-	"wizard_oncall_text": "Décidez qui est prévenu, et quand. Les deux s'ouvrent dans un nouvel onglet.",
+	"wizard_oncall_text": "Une première rotation hebdomadaire, et la politique d'escalade qui appelle la personne d'astreinte. Le reste se trouve dans Alertes → Astreinte.",
 	"wizard_oncall_title": "Astreinte",
 	"wizard_optional": "Facultatif",
 	"wizard_retention_text": "Combien de temps les métriques et les journaux sont gardés. Les valeurs par défaut conviennent à la plupart des équipes.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} comptes sans client ne voient rien :"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Quelqu'un",
+	"console_panel_oncall_until": "{schedule}, jusqu'à {time}",
+	"console_panel_oncall_open": "Ouvrir l'astreinte",
+	"console_panel_oncall_setup": "Configurer les plannings d'astreinte",
+	"wizard_oncall_default_name": "Principal",
+	"wizard_oncall_policy_name": "{name} : escalade",
+	"wizard_oncall_existing": "Plannings déjà configurés : {count}",
+	"wizard_oncall_now": "D'astreinte : {name}",
+	"wizard_oncall_nobody": "Personne d'astreinte en ce moment",
+	"wizard_oncall_name": "Nom du planning",
+	"wizard_oncall_people": "Qui se relaie",
+	"wizard_oncall_people_help": "Une semaine chacun, relève le lundi à 09:00 dans le fuseau de l'instance.",
+	"wizard_oncall_create": "Créer la rotation",
+	"wizard_oncall_open": "L'astreinte en détail",
+	"wizard_oncall_open_text": "Couches, remplacements, calendrier, et le canal Astreinte DumbMonit qui branche une politique sur le routage des alertes."
 }

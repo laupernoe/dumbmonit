@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Agrupamento, horas de silêncio e repetições: quem é avisado e quando.",
 	"wizard_oncall_team": "Equipa e funções",
 	"wizard_oncall_team_text": "As contas que tratam os alertas: os operadores reconhecem, os administradores configuram.",
-	"wizard_oncall_text": "Decida quem é avisado e quando. Ambos abrem num novo separador.",
+	"wizard_oncall_text": "Uma primeira rotação semanal e a política de escalonamento que chama quem está de prevenção. O resto está em Alertas → Prevenção.",
 	"wizard_oncall_title": "Prevenção",
 	"wizard_optional": "Opcional",
 	"wizard_retention_text": "Durante quanto tempo as métricas e os registos são guardados. Os valores predefinidos servem à maioria das equipas.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} contas sem cliente não veem nada:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Alguém",
+	"console_panel_oncall_until": "{schedule}, até {time}",
+	"console_panel_oncall_open": "Abrir prevenção",
+	"console_panel_oncall_setup": "Configurar escalas de prevenção",
+	"wizard_oncall_default_name": "Principal",
+	"wizard_oncall_policy_name": "{name}: escalonamento",
+	"wizard_oncall_existing": "Escalas já configuradas: {count}",
+	"wizard_oncall_now": "De prevenção agora: {name}",
+	"wizard_oncall_nobody": "Ninguém de prevenção neste momento",
+	"wizard_oncall_name": "Nome da escala",
+	"wizard_oncall_people": "Quem reveza",
+	"wizard_oncall_people_help": "Uma semana cada, passagem às segundas-feiras às 09:00 no fuso horário da instância.",
+	"wizard_oncall_create": "Criar a rotação",
+	"wizard_oncall_open": "A prevenção em detalhe",
+	"wizard_oncall_open_text": "Camadas, substituições, calendário e o canal Prevenção DumbMonit que liga uma política ao encaminhamento de alertas."
 }

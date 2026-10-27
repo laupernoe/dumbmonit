@@ -24,7 +24,8 @@
 	import { Menu, calmMotion } from '#lib/ui/index.js';
 	import ContextPanel from '#lib/components/enterprise/ContextPanel.svelte';
 	import UserMenu from '#lib/components/UserMenu.svelte';
-	import { NAV, isActive, type NavEntry } from './nav.js';
+	import ClientSwitcher from '#lib/components/ClientSwitcher.svelte';
+	import { NAV, isActive, visible, type NavEntry } from './nav.js';
 
 	let { children }: { children: Snippet } = $props();
 
@@ -34,7 +35,7 @@
 		void mode.loadSettings();
 	});
 
-	const entries = $derived(NAV.filter((entry) => !entry.admin || auth.isAdmin));
+	const entries = $derived(NAV.filter(visible));
 	const railTop = $derived(entries.filter((entry) => !entry.foot));
 	const railFoot = $derived(entries.filter((entry) => entry.foot));
 	const phoneTabs = $derived(entries.filter((entry) => entry.phone));
@@ -140,6 +141,8 @@
 			</button>
 
 			<div class="ml-auto flex min-w-0 items-center gap-2">
+				<!-- MSP mode: which client every page shows (hidden when there is nothing to pick). -->
+				<div class="empty:hidden max-sm:hidden"><ClientSwitcher id="client-switcher-console" /></div>
 				{#if onOverview}
 					<div role="group" aria-label={m.console_range()} class="flex h-8 overflow-hidden rounded-lg border border-line max-md:hidden">
 						{#each CONSOLE_RANGES as range (range)}
@@ -214,7 +217,7 @@
 
 <!-- Phones: the essentials as tabs, the rest under "More". -->
 <nav aria-label={m.misc_nav_main()} class="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas pr-[var(--safe-right)] pb-[var(--safe-bottom)] pl-[var(--safe-left)] sm:hidden">
-	<ul class="grid grid-cols-5">
+	<ul class="grid" style:grid-template-columns={`repeat(${phoneTabs.length + 1}, minmax(0, 1fr))`}>
 		{#each phoneTabs as entry (entry.href)}
 			{@const active = isActive(entry, path)}
 			<li class="min-w-0">
@@ -237,6 +240,7 @@
 				{/snippet}
 				{#snippet children({ close })}
 					<div class="grid min-w-52 p-1">
+						<div class="empty:hidden px-1 pb-1"><ClientSwitcher wide id="client-switcher-console-phone" /></div>
 						{#each phoneMore as entry (entry.href)}
 							<a role="menuitem" href={entry.href} onclick={close} class="flex min-h-11 items-center gap-2.5 rounded-md px-2.5 text-sm text-ink hover:bg-surface-2">
 								<entry.icon class="size-4 text-ink-2" aria-hidden="true" />{entry.label()}

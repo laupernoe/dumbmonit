@@ -9285,7 +9285,7 @@
 	"wizard_oncall_policy_text": "Группировка, тихие часы и повторы: кого и когда оповещать.",
 	"wizard_oncall_team": "Команда и роли",
 	"wizard_oncall_team_text": "Учётные записи, работающие с оповещениями: операторы подтверждают, администраторы настраивают.",
-	"wizard_oncall_text": "Решите, кого и когда оповещать. Оба раздела открываются в новой вкладке.",
+	"wizard_oncall_text": "Первая еженедельная ротация и политика эскалации, которая вызывает дежурного. Остальное — в разделе Оповещения → Дежурства.",
 	"wizard_oncall_title": "Дежурства",
 	"wizard_optional": "Необязательно",
 	"wizard_retention_text": "Сколько хранить метрики и журналы. Значения по умолчанию подходят большинству команд.",
@@ -9559,5 +9559,20 @@
 				"countPlural=other": "{count} учётные записи без клиента ничего не видят:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Кто-то",
+	"console_panel_oncall_until": "{schedule}, до {time}",
+	"console_panel_oncall_open": "Открыть дежурства",
+	"console_panel_oncall_setup": "Настроить графики дежурств",
+	"wizard_oncall_default_name": "Основной",
+	"wizard_oncall_policy_name": "{name}: эскалация",
+	"wizard_oncall_existing": "Уже настроено графиков: {count}",
+	"wizard_oncall_now": "Сейчас дежурит: {name}",
+	"wizard_oncall_nobody": "Сейчас никто не дежурит",
+	"wizard_oncall_name": "Название графика",
+	"wizard_oncall_people": "Кто дежурит по очереди",
+	"wizard_oncall_people_help": "По неделе каждому, смена по понедельникам в 09:00 по часовому поясу экземпляра.",
+	"wizard_oncall_create": "Создать ротацию",
+	"wizard_oncall_open": "Дежурства подробно",
+	"wizard_oncall_open_text": "Слои, замены, календарь и канал «Дежурство DumbMonit», который подключает политику к маршрутизации оповещений."
 }

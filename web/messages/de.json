@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Gruppierung, Ruhezeiten und Wiederholungen: wer wann benachrichtigt wird.",
 	"wizard_oncall_team": "Team und Rollen",
 	"wizard_oncall_team_text": "Die Konten, die Alarme bearbeiten: Operatoren bestätigen, Administratoren konfigurieren.",
-	"wizard_oncall_text": "Lege fest, wer wann benachrichtigt wird. Beides öffnet sich in einem neuen Tab.",
+	"wizard_oncall_text": "Eine erste wöchentliche Rotation und die Eskalationsrichtlinie, die die diensthabende Person anruft. Der Rest liegt unter Alarme → Bereitschaft.",
 	"wizard_oncall_title": "Bereitschaft",
 	"wizard_optional": "Optional",
 	"wizard_retention_text": "Wie lange Metriken und Logs aufbewahrt werden. Die Vorgaben passen für die meisten Teams.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} Konten ohne Kunde sehen nichts:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Jemand",
+	"console_panel_oncall_until": "{schedule}, bis {time}",
+	"console_panel_oncall_open": "Bereitschaft öffnen",
+	"console_panel_oncall_setup": "Bereitschaftspläne einrichten",
+	"wizard_oncall_default_name": "Primär",
+	"wizard_oncall_policy_name": "{name}: Eskalation",
+	"wizard_oncall_existing": "Bereits eingerichtete Pläne: {count}",
+	"wizard_oncall_now": "Jetzt in Bereitschaft: {name}",
+	"wizard_oncall_nobody": "Gerade niemand in Bereitschaft",
+	"wizard_oncall_name": "Name des Plans",
+	"wizard_oncall_people": "Wer sich abwechselt",
+	"wizard_oncall_people_help": "Je eine Woche, Übergabe montags um 09:00 in der Zeitzone der Instanz.",
+	"wizard_oncall_create": "Rotation erstellen",
+	"wizard_oncall_open": "Bereitschaft im Detail",
+	"wizard_oncall_open_text": "Ebenen, Vertretungen, Kalender und der Kanal DumbMonit-Bereitschaft, der eine Richtlinie in das Alarm-Routing einbindet."
 }

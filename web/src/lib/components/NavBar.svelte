@@ -16,7 +16,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Menu, RollingNumber, bump, calmMotion } from '#lib/ui/index.js';
-	import { NAV, isActive as entryActive } from './shell/nav.js';
+	import { NAV, isActive as entryActive, visible } from './shell/nav.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import Logo from './Logo.svelte';
