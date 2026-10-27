@@ -25,11 +25,11 @@ use dumbmonit_proto::{Target, TargetId};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
+use crate::auth::AuthError;
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{CurrentPrincipal, Principal};
 use crate::auth::teams::{Level, TeamAccess};
-use crate::auth::AuthError;
 use crate::db;
 use crate::netconfig::{self, store};
 use crate::state::AppState;
@@ -163,7 +163,11 @@ fn require_reader(principal: &Principal) -> ApiResult<()> {
 /// Le contenu d'une version, même masqué, décrit l'équipement en détail : il
 /// demande le niveau « traiter » (operate) sur son dossier, quand la seule liste
 /// des versions se contente de la lecture (vérifiée par le garde d'API).
-async fn require_operate(state: &AppState, access: &crate::auth::teams::Access, id: TargetId) -> ApiResult<()> {
+async fn require_operate(
+    state: &AppState,
+    access: &crate::auth::teams::Access,
+    id: TargetId,
+) -> ApiResult<()> {
     match access.require_target(&state.pool, id, Level::Operate).await {
         Ok(()) => Ok(()),
         Err(AuthError::NotFound(message)) => Err(ApiError::NotFound(message)),
