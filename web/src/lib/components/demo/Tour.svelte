@@ -72,7 +72,7 @@
 		{
 			title: m.demo_tour_s7_title(),
 			body: m.demo_tour_s7_body(),
-			href: '/settings/status',
+			href: '/status',
 			anchor: 'nav-settings'
 		},
 		{

@@ -9,12 +9,11 @@ Réglages contient ce qui est administratif : votre compte, qui peut se connecte
 | Mon compte | `/settings/account` | Apparence, Compte et sécurité (mot de passe, double authentification, journal de sécurité), Notifications push, Contacts d'astreinte et heures calmes ([Astreintes](../alerting/oncall.md)) |
 | Équipe et accès | `/settings/team` | Utilisateurs, Authentification unique |
 | Supervision | `/settings/monitoring` | Agents, Packs d'intégration, [Score de sécurité](security-score.md) |
-| Notifications et rapports | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)), Rapports |
-| Pages de statut | `/settings/status` | Pages d'état et annonces ([Pages d'état](status-pages.md)) |
+| Notifications | `/settings/notifications` | Canaux, Politique de notification, Heures de silence ([Canaux de notification](../notifications.md)) |
 | Mur | `/settings/wall` | Mode mural, Musique murale, Actualités murales ([Mode mural](overview.md#wall-mode)) |
 | Système | `/settings/system` | Données et rétention, Sauvegarde, DumbMonit lui-même, API et assistants, À propos |
 
-Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`, `/status`) redirigent aussi vers le nouvel emplacement.
+Chaque section garde son ancre : `/settings#agents` redirige vers `/settings/monitoring#agents`. Les anciens liens (`/alerts#notifications`) redirigent aussi vers le nouvel emplacement. Les pages de statut et les rapports ne sont plus dans les Réglages : ils ont leur propre page, **Pages de statut** (`/status`) et **Rapports** (`/reports`) ; `/settings/status` et `/settings/reports` y redirigent.
 
 ## Apparence
 
@@ -88,7 +87,7 @@ Notifications natives sur ce téléphone ou cet ordinateur, même avec
 DumbMonit fermé : **Activer sur cet appareil**, puis **Envoyer un test**.
 Chaque compte gère ses propres appareils ici (les lecteurs aussi) ;
 quelles alertes les atteignent est réglé par un canal **Web Push** dans
-Réglages → Notifications et rapports. Le bouton **i** résume les prérequis : HTTPS (ou
+Réglages → Notifications. Le bouton **i** résume les prérequis : HTTPS (ou
 localhost), installation sur l'écran d'accueil sur iPhone et iPad, et les
 domaines de service de push que le serveur doit atteindre. Guide
 complet : [Notifications push (PWA)](push-notifications.md).
@@ -232,12 +231,7 @@ Dans **Réglages → Supervision**, sous les agents : une note qui dit à quel p
 
 ## Rapports
 
-Dans **Réglages → Notifications et rapports**, sous la politique : emails de
-disponibilité périodiques pour l'équipe. Choisissez
-hebdomadaire, quotidien ou mensuel, le jour, l'heure et le fuseau
-horaire, les destinataires et le canal email, puis **Envoyer un aperçu**
-pour voir le résultat. Réservé aux administrateurs. Voir
-[Rapports par email](reports.md).
+Sur sa propre page **Rapports** (`/reports` ; elle était dans Réglages → Notifications) : l'export de disponibilité (SLA) d'une période, les emails de disponibilité périodiques pour l'équipe et l'historique de leurs envois. Réservé aux administrateurs. Voir [Rapports par email](reports.md).
 
 ## Données et rétention {#data-retention}
 

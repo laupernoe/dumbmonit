@@ -5,6 +5,17 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **Fewer, better themes.** Status pages keep four banner scenes (Paris, Tokyo, New York, the Matterhorn) and the Homelab wall four backdrops (Paris, New York, Tokyo, Zermatt). The others were retired and fold onto the nearest one: existing pages (migration 0200), backups, API calls and saved or linked `?city=` choices all land on a kept scene. The wall's **OLED** theme is gone (a saved `oled` reads as Night).
+- **Enterprise rail.** The account button (your initials) moved to the foot of the rail, just above Settings, and the documentation and GitHub buttons are back at the bottom.
+- **Status pages leave Settings.** They are a destination of their own, **Status pages** (`/status`, editor at `/status/<id>`) on the Enterprise rail and under **More** in Homelab. `/settings/status` and its anchors forward there.
+- **A Reports page.** The SLA export of a period (with the client in MSP mode), the scheduled reports and a sending history are together on **Reports** (`/reports`, Enterprise rail and **More**); they left Settings, and `/settings/reports` forwards. The Settings tab is now just **Notifications**.
+
+### Added
+
+- **Enterprise wall mode.** With the instance in Enterprise mode, `/wall` shows a very dark board in Geist: the verdict and the clock, the five fleet figures, the health river, open alerts and who is on call.
+
 ## 0.14.0 — 2026-10-28
 
 ### Added

@@ -9,12 +9,11 @@ Settings holds what is administrative: your account, who can sign in and how, th
 | My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
 | Team & access | `/settings/team` | Users, Single sign-on |
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
-| Notifications & reports | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)), Reports |
-| Status pages | `/settings/status` | Status pages and announcements ([Status pages](status-pages.md)) |
+| Notifications | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)) |
 | Wall display | `/settings/wall` | Wall mode, Wall music, Wall widgets, news included ([Wall mode](overview.md#wall-mode)) |
 | System | `/settings/system` | Data & retention, Backup, DumbMonit itself, API & assistants, About |
 
-Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`, `/status`) forward to the new place too.
+Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`) forward to the new place too. Status pages and reports are not in Settings any more: they have their own pages, **Status pages** (`/status`) and **Reports** (`/reports`); `/settings/status` and `/settings/reports` forward there.
 
 ## Appearance
 
@@ -75,7 +74,7 @@ address. It keeps the last 5 000 entries.
 Native notifications on this phone or computer, even with DumbMonit closed:
 **Enable on this device**, then **Send a test**. Every account manages its own
 devices here (viewers too); which alerts reach them is set by a **Web Push**
-channel in Settings → Notifications & reports. The **i** button sums up the requirements:
+channel in Settings → Notifications. The **i** button sums up the requirements:
 HTTPS (or localhost), Home Screen installation on iPhone and iPad, and the
 push service domains the server must reach. Full guide:
 [Push notifications (PWA)](push-notifications.md).
@@ -201,9 +200,7 @@ In **Settings → Monitoring**, below the agents: a score for how well the insta
 
 ## Reports
 
-In **Settings → Notifications & reports**, below the policy: periodic availability emails for the team. Pick weekly, daily or monthly, the
-day, hour and timezone, the recipients and the email channel, then **Send a
-preview** to see the result. Admin-only. See [Email reports](reports.md).
+On its own **Reports** page (`/reports`; it used to sit in Settings → Notifications): the availability (SLA) export of a period, the periodic availability emails for the team and the history of their sends. Admin-only. See [Email reports](reports.md).
 
 ## Data & retention {#data-retention}
 
