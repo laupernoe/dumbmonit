@@ -16,6 +16,7 @@ mod channels;
 pub(crate) mod clients;
 mod collectors;
 mod cves;
+mod dashboard_templates;
 pub mod dashboards;
 pub(crate) mod discovery;
 mod error;

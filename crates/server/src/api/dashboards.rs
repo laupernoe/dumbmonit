@@ -2,6 +2,8 @@
 //!
 //! - `GET /api/dashboards` : les tableaux partagés et ceux du compte ;
 //! - `POST /api/dashboards`, `GET|PUT|DELETE /api/dashboards/{id}` ;
+//! - `GET /api/dashboards/templates` et `…/{id}/preview` : les modèles prêts à
+//!   l'emploi (voir `dashboard_templates`) ;
 //!
 //! Un tableau est une grille de 12 colonnes de widgets (graphe, valeur
 //! unique, état d'un dossier, alertes, texte). Les droits suivent les rôles :
@@ -31,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use sqlx::{Row, SqlitePool};
 
-use crate::api::{ApiError, ApiResult};
+use crate::api::{ApiError, ApiResult, dashboard_templates};
 use crate::auth::clients;
 use crate::auth::middleware::{Identity, Principal};
 use crate::auth::teams::{Access, TeamAccess};
@@ -40,6 +42,9 @@ use crate::state::AppState;
 pub fn routes() -> Router<AppState> {
     Router::new()
         .route("/dashboards", get(list).post(create))
+        // Avant `{id}` : modèles prêts à l'emploi (`dashboard_templates`).
+        .route("/dashboards/templates", get(dashboard_templates::list))
+        .route("/dashboards/templates/{id}/preview", get(dashboard_templates::preview))
         .route("/dashboards/{id}", get(get_one).put(update).delete(remove))
 }
 
