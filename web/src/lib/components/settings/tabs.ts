@@ -37,6 +37,7 @@ export const SECTION_TAB: Record<string, SettingsTab> = {
 	'notifications-policy': 'notifications',
 	'quiet-hours': 'notifications',
 	wall: 'wall',
+	// Former anchors of the wall's music, news and widgets.
 	music: 'wall',
 	news: 'wall',
 	widgets: 'wall',
@@ -122,8 +123,6 @@ export function searchIndex(): SearchEntry[] {
 		entry('notifications-channels', m.notifications_channels_title(), m.settings_search_kw_notifications()),
 		entry('notifications-policy', m.notifications_policy_title(), m.settings_search_kw_policy()),
 		entry('wall', m.settings_appearance_wall_title(), m.settings_search_kw_wall()),
-		entry('music', m['settings.section.music'](), m.settings_search_kw_music()),
-		entry('widgets', m.settings_widgets_title(), `${m.settings_search_kw_widgets()} ${m.settings_search_kw_news()}`),
 		entry('backup', m['settings.section.backup'](), m.settings_search_kw_backup()),
 		entry('config-files', m.settings_config_title(), m.settings_config_search_kw()),
 		entry('self-monitoring', m.settings_selfmon_title(), m.settings_search_kw_selfmon()),
