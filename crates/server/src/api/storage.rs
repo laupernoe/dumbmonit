@@ -275,16 +275,8 @@ pub async fn search(
         }
         None => user.to_string(),
     };
-    let logsql = build_logsql(
-        &user,
-        start,
-        end,
-        min,
-        limit + 1,
-        source,
-        params.target,
-    )
-    .map_err(ApiError::BadRequest)?;
+    let logsql = build_logsql(&user, start, end, min, limit + 1, source, params.target)
+        .map_err(ApiError::BadRequest)?;
 
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(30))

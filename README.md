@@ -69,7 +69,7 @@ Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://g
 
 ## Status
 
-**Version 0.11.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
+**Version 0.14.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
 Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
 ## Support DumbMonit

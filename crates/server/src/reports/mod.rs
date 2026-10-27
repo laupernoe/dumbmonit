@@ -439,8 +439,8 @@ pub async fn run_client_reports(state: &AppState, now: DateTime<Utc>) -> anyhow:
         }
         served += 1;
         let contacts: Vec<String> = serde_json::from_str(&contacts).unwrap_or_default();
-        let outcome = send_client_report(state, id, &name, &contacts, objective, period, tz, now)
-            .await;
+        let outcome =
+            send_client_report(state, id, &name, &contacts, objective, period, tz, now).await;
         let error = match outcome {
             Ok(delivery) if delivery.failed > 0 => {
                 Some(format!("{} contact(s) could not be reached.", delivery.failed))

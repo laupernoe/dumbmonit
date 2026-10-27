@@ -2396,8 +2396,7 @@ async fn restore_clients(
         // Une sauvegarde éditée à la main ne contourne pas les contrôles de l'API.
         let contacts = crate::reports::normalise_recipients(&client.contacts).unwrap_or_default();
         let quota = client.monitor_quota.filter(|q| (0..=1_000_000).contains(q));
-        let objective =
-            client.sla_objective.filter(|v| v.is_finite() && *v > 0.0 && *v <= 100.0);
+        let objective = client.sla_objective.filter(|v| v.is_finite() && *v > 0.0 && *v <= 100.0);
         let valid_tz = crate::reports::schedule::parse_timezone(&client.report_timezone).is_some();
         let timezone =
             if valid_tz { client.report_timezone.trim().to_string() } else { "UTC".to_string() };
@@ -2548,14 +2547,12 @@ async fn restore_client_assignments(
                 .execute(&mut **tx)
                 .await?
                 .rows_affected(),
-            Kind::Report => {
-                sqlx::query("UPDATE report_schedules SET client_id = ? WHERE name = ?")
-                    .bind(client)
-                    .bind(&assignment.key)
-                    .execute(&mut **tx)
-                    .await?
-                    .rows_affected()
-            }
+            Kind::Report => sqlx::query("UPDATE report_schedules SET client_id = ? WHERE name = ?")
+                .bind(client)
+                .bind(&assignment.key)
+                .execute(&mut **tx)
+                .await?
+                .rows_affected(),
             Kind::Silence => {
                 let (name, target) =
                     assignment.key.split_once('\n').unwrap_or((assignment.key.as_str(), ""));

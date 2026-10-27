@@ -180,8 +180,7 @@ async fn raw(
     if let Some((name, value)) = extra {
         builder = builder.header(name, value);
     }
-    let response =
-        app.router.clone().oneshot(builder.body(Body::empty()).unwrap()).await.unwrap();
+    let response = app.router.clone().oneshot(builder.body(Body::empty()).unwrap()).await.unwrap();
     let status = response.status();
     let bytes = response.into_body().collect().await.unwrap().to_bytes();
     (status, String::from_utf8_lossy(&bytes).into_owned())
@@ -750,12 +749,11 @@ async fn an_agent_token_of_a_client_only_enrols_into_that_client() {
             .await
             .unwrap();
     assert_eq!(bound, None, "no agent bound to Beta's target");
-    let beta_targets: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM targets WHERE client_id = ?")
-            .bind(lab.beta)
-            .fetch_one(&lab.pool)
-            .await
-            .unwrap();
+    let beta_targets: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM targets WHERE client_id = ?")
+        .bind(lab.beta)
+        .fetch_one(&lab.pool)
+        .await
+        .unwrap();
     assert_eq!(beta_targets, 2, "Beta has its NAS and its declared host, nothing more");
 
     // Le quota d'Acme atteint : plus d'enrôlement.
@@ -908,9 +906,8 @@ async fn a_backup_carries_clients_and_what_belongs_to_them() {
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
 
     let cipher = db::init_cipher(&lab.pool, "secret-de-test-suffisamment-long").await.unwrap();
-    let bundle = backup::collect(&lab.pool, &cipher, backup::ExportOptions::default())
-        .await
-        .unwrap();
+    let bundle =
+        backup::collect(&lab.pool, &cipher, backup::ExportOptions::default()).await.unwrap();
     assert_eq!(bundle.summary()["clients"], 3);
 
     let dir = tempfile::tempdir().unwrap();
@@ -1057,9 +1054,7 @@ async fn shared_dashboards_belong_to_a_client() {
     let lab = lab().await;
     let (alice, cookie) = create_user(&lab.app, &lab.admin, "alice", "viewer").await;
     join(&lab, lab.acme, alice).await;
-    let board = |name: &str| {
-        json!({ "name": name, "shared": true, "range_secs": 3600, "refresh_secs": 30, "widgets": [] })
-    };
+    let board = |name: &str| json!({ "name": name, "shared": true, "range_secs": 3600, "refresh_secs": 30, "widgets": [] });
     let create = |name: &'static str, view: Option<i64>| {
         let body = board(name);
         let app = &lab.app;
@@ -1135,18 +1130,21 @@ async fn oncall_runbooks_and_actions_follow_the_client_view() {
             .await
             .unwrap();
         }
-        let runbook = sqlx::query("INSERT INTO runbooks (title, body, client_id) VALUES (?, '', ?)")
-            .bind(name)
-            .bind(client)
-            .execute(&lab.pool)
-            .await
-            .unwrap()
-            .last_insert_rowid();
-        sqlx::query("INSERT INTO runbook_links (runbook_id, scope, value) VALUES (?, 'rule', 'host_down')")
-            .bind(runbook)
-            .execute(&lab.pool)
-            .await
-            .unwrap();
+        let runbook =
+            sqlx::query("INSERT INTO runbooks (title, body, client_id) VALUES (?, '', ?)")
+                .bind(name)
+                .bind(client)
+                .execute(&lab.pool)
+                .await
+                .unwrap()
+                .last_insert_rowid();
+        sqlx::query(
+            "INSERT INTO runbook_links (runbook_id, scope, value) VALUES (?, 'rule', 'host_down')",
+        )
+        .bind(runbook)
+        .execute(&lab.pool)
+        .await
+        .unwrap();
         sqlx::query(
             "INSERT INTO remediation_actions (name, kind, params, client_id)
              VALUES (?, 'webhook', '{\"url\":\"https://example.org/hook\"}', ?)",
@@ -1178,8 +1176,13 @@ async fn oncall_runbooks_and_actions_follow_the_client_view() {
     assert_eq!(names(&reply.body["runbooks"], "title"), visible);
     let text = reply.body["actions"].to_string();
     assert!(!text.contains("beta-rota"), "{text}");
-    let reply =
-        lab.app.get(&format!("/api/runbooks/match?rule_uid=host_down&target_id={}", lab.a1), Some(&lab.admin)).await;
+    let reply = lab
+        .app
+        .get(
+            &format!("/api/runbooks/match?rule_uid=host_down&target_id={}", lab.a1),
+            Some(&lab.admin),
+        )
+        .await;
     assert_eq!(names(&reply.body, "title"), visible);
 
     // L'action de Beta ne se lance pas sur l'équipement d'Acme.
@@ -1223,7 +1226,11 @@ async fn scim_groups_drive_client_membership() {
     let token = reply.body["token"].as_str().unwrap().to_string();
     let reply = lab
         .app
-        .put(&format!("/api/clients/{}", lab.acme), json!({ "idp_groups": ["NOC Acme"] }), Some(&lab.admin))
+        .put(
+            &format!("/api/clients/{}", lab.acme),
+            json!({ "idp_groups": ["NOC Acme"] }),
+            Some(&lab.admin),
+        )
         .await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
 

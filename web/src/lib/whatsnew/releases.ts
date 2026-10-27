@@ -21,6 +21,32 @@ export interface Release {
 
 export const RELEASES: Release[] = [
 	{
+		version: '0.14.0',
+		date: '2026-10-28',
+		highlights: [
+			{
+				title: 'Homelab or Enterprise',
+				text: 'Pick how DumbMonit looks in Settings → General: the familiar interface made simpler, or a dark console with a context panel. A setup wizard walks a new instance through its first channel, monitors and agent.'
+			},
+			{
+				title: 'Teams, single sign-on and on-call',
+				text: 'Teams with rights per folder, SAML and SCIM, and built-in on-call schedules with escalation, replacements and quiet hours.'
+			},
+			{
+				title: 'Several clients on one instance',
+				text: 'MSP mode puts clients above teams: each sees only its monitors, alerts, dashboards and reports, with a monthly SLA report in its colours.'
+			},
+			{
+				title: 'Dashboards, logs and configuration as code',
+				text: 'Drag-and-drop dashboards and a metrics explorer, central logs with syslog and SNMP traps, and YAML files with a CLI and a Terraform provider.'
+			},
+			{
+				title: 'Many more integrations',
+				text: 'Cloud, network, storage, applications and databases, agentless Windows, OpenTelemetry, any Prometheus exporter, tickets and runbooks.'
+			}
+		]
+	},
+	{
 		version: '0.13.6',
 		date: '2026-10-25',
 		highlights: [
