@@ -9414,5 +9414,22 @@
 	"wizard_oncall_people_help": "One week each, handing off on Mondays at 09:00 in the instance's time zone.",
 	"wizard_oncall_create": "Create the rotation",
 	"wizard_oncall_open": "On-call in detail",
-	"wizard_oncall_open_text": "Layers, replacements, the calendar, and the DumbMonit on-call channel that plugs a policy into alert routing."
+	"wizard_oncall_open_text": "Layers, replacements, the calendar, and the DumbMonit on-call channel that plugs a policy into alert routing.",
+	"deviceform_site_title": "Where is it?",
+	"deviceform_site_hint": "Pick the site first. We suggest what to add there and fill in its relay, location and folder.",
+	"deviceform_site_none": "No site",
+	"deviceform_site_none_note": "Not tied to a place on the map.",
+	"deviceform_site_count": "Devices: {count}",
+	"deviceform_site_via": "Through {relay}",
+	"deviceform_site_folder": "Folder: {folder}",
+	"deviceform_site_found": "Found by a scan, not monitored yet",
+	"deviceform_site_add": "Add",
+	"deviceform_site_add_named": "Add {name}",
+	"deviceform_site_setup": "Set up",
+	"deviceform_site_setup_named": "Set up {name}",
+	"deviceform_site_fewer": "Show fewer",
+	"deviceform_site_more": "Show {count} more",
+	"deviceform_site_added": "{name} added.",
+	"deviceform_site_open": "Open",
+	"deviceform_site_kinds": "Common here"
 }

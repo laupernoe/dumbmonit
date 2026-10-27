@@ -9303,5 +9303,22 @@
 	"wizard_oncall_people_help": "每人一周，每周一 09:00（实例时区）交接。",
 	"wizard_oncall_create": "创建轮换",
 	"wizard_oncall_open": "值班详情",
-	"wizard_oncall_open_text": "层级、替班、日历，以及将策略接入告警路由的 DumbMonit 值班渠道。"
+	"wizard_oncall_open_text": "层级、替班、日历，以及将策略接入告警路由的 DumbMonit 值班渠道。",
+	"deviceform_site_title": "它在哪里？",
+	"deviceform_site_hint": "先选择站点。我们会建议要添加的内容，并预填该站点的中继、位置和文件夹。",
+	"deviceform_site_none": "无站点",
+	"deviceform_site_none_note": "未关联到地图上的位置。",
+	"deviceform_site_count": "设备：{count}",
+	"deviceform_site_via": "经由 {relay}",
+	"deviceform_site_folder": "文件夹：{folder}",
+	"deviceform_site_found": "扫描发现，尚未监控",
+	"deviceform_site_add": "添加",
+	"deviceform_site_add_named": "添加 {name}",
+	"deviceform_site_setup": "设置",
+	"deviceform_site_setup_named": "设置 {name}",
+	"deviceform_site_fewer": "收起",
+	"deviceform_site_more": "再显示 {count} 个",
+	"deviceform_site_added": "已添加 {name}。",
+	"deviceform_site_open": "打开",
+	"deviceform_site_kinds": "此处常用"
 }
