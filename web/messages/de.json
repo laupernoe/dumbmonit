@@ -9110,5 +9110,246 @@
 	"wizard_sso_title": "Single Sign-on und Teams",
 	"wizard_step_of": "Schritt {current} von {total}",
 	"wizard_steps_label": "Einrichtungsschritte",
-	"wizard_title": "DumbMonit einrichten"
+	"wizard_title": "DumbMonit einrichten",
+	"deviceform_form_client_label": "Kunde",
+	"deviceform_form_client_help": "Der Kunde, zu dem dieses Gerät gehört. Nur seine Mitglieder sehen es.",
+	"deviceform_form_client_help_edit": "Wird ein Gerät zu einem anderen Kunden verschoben, ziehen die abhängigen Geräte mit.",
+	"deviceform_form_client_default": "Standard dieser Ansicht",
+	"msp_assign_label": "Kunde",
+	"msp_assign_shared": "Alle Kunden",
+	"msp_nav_clients": "Kunden",
+	"msp_switcher_label": "Angezeigter Kunde",
+	"msp_switcher_title": "Seiten für einen Kunden anzeigen",
+	"msp_switcher_all": "Alle Kunden",
+	"msp_overview_title": "Kunden",
+	"msp_overview_description_admin": "Alle Kunden auf einen Blick. Öffnen Sie einen, um nur seine Geräte, Alarme und Seiten zu sehen.",
+	"msp_overview_description_member": "Die Kunden, für die Sie arbeiten, und ihr Verfügbarkeitsbericht des letzten Monats.",
+	"msp_overview_empty_title": "Noch kein Kunde",
+	"msp_overview_empty_body": "Legen Sie Kunden in den Einstellungen an und geben Sie jedem seine Geräte und Mitglieder.",
+	"msp_overview_load_error": "Die Kunden konnten nicht geladen werden.",
+	"msp_overview_none_title": "Sie gehören zu keinem Kunden",
+	"msp_overview_none_body": "Bitten Sie Ihren MSP-Administrator, Ihr Konto einem Kunden hinzuzufügen.",
+	"msp_overview_off_title": "Der Mehrkundenmodus ist aus",
+	"msp_overview_off_body": "Schalten Sie ihn in den Einstellungen ein, um Geräte, Alarme und Berichte jedes Kunden zu trennen.",
+	"msp_overview_off_action": "Kundeneinstellungen öffnen",
+	"msp_overview_open": "Öffnen",
+	"msp_overview_report": "Letzter Monat (PDF)",
+	"msp_overview_report_title": "Verfügbarkeitsbericht des letzten Monats herunterladen",
+	"msp_overview_report_error": "Der Bericht konnte nicht erstellt werden.",
+	"msp_overview_quota_label": "Genutztes Gerätekontingent",
+	"msp_overview_state_empty": "Noch kein Gerät",
+	"msp_overview_state_ok": "Alles in Ordnung",
+	"settings_agents_client_badge": "Kunde: {name}",
+	"settings_clients_title": "Kunden",
+	"settings_clients_description": "Mehrkundenmodus (MSP): Geräte, Alarme, Seiten und Berichte jedes Kunden getrennt halten.",
+	"settings_clients_search_kw": "msp mandant kunde isolation kontingent logo",
+	"settings_clients_add": "Kunde hinzufügen",
+	"settings_clients_load_error": "Die Kunden konnten nicht geladen werden.",
+	"settings_clients_save_error": "Speichern nicht möglich.",
+	"settings_clients_delete_error": "Der Kunde konnte nicht gelöscht werden.",
+	"settings_clients_delete_confirm": "Diesen Kunden löschen",
+	"settings_clients_mode": "Mehrkundenmodus",
+	"settings_clients_mode_off_help": "Aus: Jedes Konto sieht, was Rolle und Teams erlauben, wie bisher. Beim Einschalten bleiben bestehende Konten im Standardkunden.",
+	"settings_clients_mode_on_help": "An: Ein Konto sieht nur die Kunden, denen es angehört. Administratoren verwalten alle Kunden und wählen einen in der Kopfzeile.",
+	"settings_clients_empty_title": "Noch kein Kunde",
+	"settings_clients_empty_body": "Fügen Sie einen Kunden hinzu und verschieben Sie seine Geräte dorthin.",
+	"settings_clients_note": "Geräte, Statusseiten und Agent-Token gehören immer zu einem Kunden. Kanäle, Alarmregeln, Wartungsfenster und Berichte können allen Kunden gemeinsam sein. Ein Kunde mit Geräten kann nicht gelöscht werden.",
+	"settings_clients_new_title": "Neuer Kunde",
+	"settings_clients_edit_title": "{name} bearbeiten",
+	"settings_clients_name": "Name",
+	"settings_clients_description_label": "Beschreibung",
+	"settings_clients_err_name": "Geben Sie einen Kundennamen ein.",
+	"settings_clients_err_quota": "Geben Sie eine ganze Zahl ein oder lassen Sie das Feld für kein Limit leer.",
+	"settings_clients_quota": "Gerätekontingent",
+	"settings_clients_quota_help": "Höchstzahl an Geräten des Kunden, Agenten eingeschlossen.",
+	"settings_clients_quota_none": "Kein Limit",
+	"settings_clients_idp_groups": "Gruppen des Identitätsanbieters",
+	"settings_clients_idp_groups_help": "Mitglieder dieser SSO-Gruppen (OIDC, LDAP, SAML) treten dem Kunden bei der Anmeldung bei. Mit Kommas trennen.",
+	"settings_clients_contacts": "Kontakte",
+	"settings_clients_contacts_help": "E-Mail-Adressen, die den monatlichen Verfügbarkeitsbericht erhalten, eine pro Zeile.",
+	"settings_clients_report_legend": "Monatlicher Verfügbarkeitsbericht",
+	"settings_clients_report_toggle": "An die Kontakte senden",
+	"settings_clients_report_help": "Am 1. um 8:00 Uhr in der Zeitzone des Kunden gehen PDF und CSV des Vormonats per E-Mail raus, mit Name und Logo des Kunden.",
+	"settings_clients_objective": "Verfügbarkeitsziel (%)",
+	"settings_clients_objective_help": "Optional. Jedes Gerät wird als erfüllt oder nicht markiert.",
+	"settings_clients_timezone": "Zeitzone",
+	"settings_clients_report_last": "Letzter Bericht gesendet: {month}.",
+	"settings_clients_report_failing": "Monatsbericht fehlgeschlagen",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo von {name}",
+	"settings_clients_logo_upload": "Logo hochladen",
+	"settings_clients_logo_replace": "Logo ersetzen",
+	"settings_clients_logo_remove": "Entfernen",
+	"settings_clients_logo_help": "PNG, JPEG oder WebP, höchstens 256 KiB. Auf Berichten und Statusseiten des Kunden; PNG und JPEG auch im PDF.",
+	"settings_clients_logo_too_big": "Diese Datei ist größer als 256 KiB.",
+	"settings_clients_logo_error": "Das Logo konnte nicht gespeichert werden.",
+	"settings_clients_members": "Mitglieder",
+	"settings_clients_members_help": "Mitglieder sehen nur diesen Kunden, im Rahmen ihrer Rolle und Teams. Administratoren sehen alle Kunden.",
+	"settings_clients_save": "Speichern",
+	"settings_clients_create": "Kunden anlegen",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät kritisch",
+				"countPlural=other": "{count} Geräte kritisch"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät mit Alarm",
+				"countPlural=other": "{count} Geräte mit Alarm"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} kritisch",
+				"countPlural=other": "{count} kritisch"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Warnung",
+				"countPlural=other": "{count} Warnungen"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} pausiert",
+				"countPlural=other": "{count} pausiert"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät",
+				"countPlural=other": "{count} Geräte"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} von {quota} Geräten",
+				"countPlural=other": "{count} von {quota} Geräten"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Gerät",
+				"countPlural=other": "{count} Geräte"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} von {quota} Geräten",
+				"countPlural=other": "{count} von {quota} Geräten"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Monatsbericht an {count} Kontakt",
+				"countPlural=other": "Monatsbericht an {count} Kontakte"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Konto ohne Kunde sieht nichts:",
+				"countPlural=other": "{count} Konten ohne Kunde sehen nichts:"
+			}
+		}
+	]
 }

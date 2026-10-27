@@ -31,6 +31,23 @@ All notable changes to this project are documented here. The format follows
   - API: `GET /api/instance` (public: mode and whether setup is done),
     `GET`/`PUT /api/instance/settings`. The settings travel with the backup.
 
+- **Multi-client (MSP) mode, with per-client reports.** Settings → Team & access
+  → Clients puts clients above teams and folders. Every monitor, status page and
+  agent token belongs to a client; channels, alert rules, maintenance windows and
+  report schedules belong to a client or are shared by the instance. Off by
+  default: everything existing goes to a Default client and a single-customer
+  instance sees no change. On, admins become MSP administrators who pick a client
+  in the header and get an overview of every client (alerts, quota), and other
+  accounts only see the clients they belong to, enforced by the server like teams
+  (closed route list, lists, details, metrics, alerts, rules, status pages,
+  reports, logos, Web Push; everything else refused). A client's channel only
+  hears about its monitors, its rules and maintenance windows only touch them, an
+  agent token only enrols into its client, and moving a monitor takes its
+  dependents and cuts any link left between clients. Simple device quotas,
+  identity-provider group → client mapping, a logo shown on the client's status
+  pages and in its SLA report, and the monthly SLA report (PDF, CSV) emailed to
+  the client's contacts. Backups carry clients and what belongs to them.
+
 - **Cloud integrations.** Eight new monitor types read the cloud services a small
   team depends on, with read-only credentials and built-in alert rules grouped per
   product: **Microsoft 365** (service health and incidents, licences, risky users),

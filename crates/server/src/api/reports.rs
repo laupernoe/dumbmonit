@@ -12,7 +12,9 @@ use chrono::{DateTime, SecondsFormat, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
-use crate::auth::middleware::AdminIdentity;
+use crate::auth::clients;
+use crate::auth::middleware::{AdminIdentity, Identity};
+use crate::auth::teams::TeamAccess;
 use crate::db;
 use crate::reports::schedule::{self, Frequency, Period, parse_timezone};
 use crate::reports::store::{self, ScheduleInput, StoredSchedule};
@@ -218,9 +220,20 @@ fn not_found() -> ApiError {
 pub async fn list(
     State(state): State<AppState>,
     _admin: AdminIdentity,
+    TeamAccess(access): TeamAccess,
 ) -> ApiResult<Json<Vec<ScheduleView>>> {
     let now = Utc::now();
-    let schedules = store::list(&state.pool).await?;
+    let mut schedules = store::list(&state.pool).await?;
+    // Vue d'un client (mode MSP) : ses calendriers et ceux de l'instance.
+    clients::retain_visible(
+        &state.pool,
+        &access,
+        clients::Kind::Report,
+        &mut schedules,
+        |s| s.id,
+        true,
+    )
+    .await?;
     Ok(Json(schedules.iter().map(|stored| view(stored, now)).collect()))
 }
 
@@ -236,6 +249,7 @@ pub async fn get_one(
 pub async fn create(
     State(state): State<AppState>,
     _admin: AdminIdentity,
+    TeamAccess(access): TeamAccess,
     Json(payload): Json<SchedulePayload>,
 ) -> ApiResult<(StatusCode, Json<ScheduleView>)> {
     let input = payload.validate(&state).await?;
@@ -246,6 +260,8 @@ pub async fn create(
     }
     let now = Utc::now();
     let id = store::insert(&state.pool, &input, now).await?;
+    // Créé dans la vue d'un client : il ne rapporte que sur ce client.
+    clients::adopt(&state.pool, &access, clients::Kind::Report, id).await?;
     let stored = store::get(&state.pool, id).await?.ok_or_else(not_found)?;
     Ok((StatusCode::CREATED, Json(view(&stored, now))))
 }
@@ -318,6 +334,9 @@ pub struct SlaQuery {
     pub page: Option<i64>,
     /// Titre du rapport (nom affiché sous l'en-tête).
     pub title: Option<String>,
+    /// Mode MSP : le client dont on veut le rapport (ses équipements seuls, son
+    /// nom et son logo). Obligatoire pour un membre de plusieurs clients.
+    pub client: Option<i64>,
 }
 
 /// Plus longue période demandable : une année (bissextile comprise).
@@ -332,10 +351,44 @@ fn parse_day(label: &str, raw: &str) -> ApiResult<chrono::NaiveDate> {
 /// à la demande, en PDF ou en CSV.
 pub async fn download_sla(
     State(state): State<AppState>,
-    _admin: AdminIdentity,
+    Identity(who): Identity,
+    TeamAccess(access): TeamAccess,
     Query(query): Query<SlaQuery>,
 ) -> ApiResult<Response> {
     use crate::reports::{collect, sla};
+    // Mode MSP : un membre d'un client lit le rapport de ses clients, et de
+    // rien d'autre ; hors de ce cas, le rapport reste à l'administrateur.
+    let client = match (access.clients(), query.client) {
+        // L'administrateur MSP, même dans la vue d'un client, lit tout client.
+        (_, Some(client)) if who.is_admin() => {
+            if !clients::exists(&state.pool, client).await? {
+                return Err(ApiError::NotFound("Client not found.".into()));
+            }
+            Some(client)
+        }
+        (Some(allowed), Some(client)) if allowed.contains(&client) => Some(client),
+        (Some(_), Some(_)) => return Err(ApiError::NotFound("Client not found.".into())),
+        (Some([only]), None) => Some(*only),
+        (Some(_), None) => {
+            return Err(ApiError::BadRequest("Choose the client of the report.".into()));
+        }
+        (None, client) => {
+            if !who.is_admin() {
+                return Err(ApiError::Forbidden(
+                    "The availability report is reserved to administrators.".into(),
+                ));
+            }
+            if let Some(client) = client
+                && !clients::exists(&state.pool, client).await?
+            {
+                return Err(ApiError::NotFound("Client not found.".into()));
+            }
+            client
+        }
+    };
+    if query.page.is_some() && !who.is_admin() {
+        return Err(ApiError::Forbidden("Only an administrator can brand by status page.".into()));
+    }
     let tz_name = query.tz.as_deref().map(str::trim).filter(|t| !t.is_empty()).unwrap_or("UTC");
     let tz = parse_timezone(tz_name).ok_or_else(|| {
         ApiError::BadRequest("The timezone must be an IANA name such as \"Europe/Paris\".".into())
@@ -390,10 +443,10 @@ pub async fn download_sla(
         return Err(ApiError::BadRequest("The status page does not exist.".into()));
     }
 
-    let data = collect::collect_period(&state, name, Frequency::Monthly, period, now)
+    let data = collect::collect_period_for(&state, name, Frequency::Monthly, period, now, client)
         .await
         .map_err(|error| ApiError::Internal(error.context("collecte du rapport SLA")))?;
-    let options = reports::sla_options(&state, query.page, objective, now).await;
+    let options = reports::sla_options(&state, query.page, client, objective, now).await;
     let stem = sla::file_stem(&data, tz);
     let (body, content_type, filename) = match query.format.as_deref().unwrap_or("pdf") {
         "pdf" => (sla::pdf(&data, tz, &options), "application/pdf", format!("{stem}.pdf")),

@@ -367,9 +367,12 @@
 				<header class="flex flex-wrap items-center gap-x-4 gap-y-2">
 					<div class="flex min-w-0 items-center gap-3">
 						{#if status.page.logo_url}
-							<img src={status.page.logo_url} alt="" class="size-10 shrink-0 rounded-lg object-contain" />
+							<img src={status.page.logo_url} alt={status.page.brand_name ?? ''} class="size-10 shrink-0 rounded-lg object-contain" />
 						{/if}
 						<div class="min-w-0">
+							{#if status.page.brand_name && status.page.brand_name !== status.page.title}
+								<p class="text-xs font-semibold text-ink-2 [overflow-wrap:anywhere]">{status.page.brand_name}</p>
+							{/if}
 							<h1 class="text-lg leading-tight font-semibold tracking-tight break-words text-ink">{status.page.title}</h1>
 							{#if status.page.description}
 								<p class="max-w-prose text-xs text-ink-2">{status.page.description}</p>
@@ -437,9 +440,12 @@
 				<header class="rise-in flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
 					<div class="flex min-w-0 items-center gap-4">
 						{#if status.page.logo_url}
-							<img src={status.page.logo_url} alt="" class="size-12 shrink-0 rounded-lg object-contain sm:size-14" />
+							<img src={status.page.logo_url} alt={status.page.brand_name ?? ''} class="size-12 shrink-0 rounded-lg object-contain sm:size-14" />
 						{/if}
 						<div class="min-w-0">
+							{#if status.page.brand_name && status.page.brand_name !== status.page.title}
+								<p class="text-sm font-semibold text-ink-2 [overflow-wrap:anywhere]">{status.page.brand_name}</p>
+							{/if}
 							<h1 class="display text-3xl break-words text-ink sm:text-4xl">{status.page.title}</h1>
 							{#if status.page.description}
 								<p class="mt-1.5 max-w-prose text-base text-ink-2">{status.page.description}</p>

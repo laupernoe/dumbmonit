@@ -8,8 +8,9 @@
 //! d'un mot.
 //!
 //! Le PDF est écrit par [`super::pdf`] (texte et tableaux, polices standard,
-//! sans dépendance) ; le logo n'y est pas incorporé, le nom de l'organisation
-//! en tient lieu.
+//! sans dépendance). En mode MSP, le logo du client est incorporé en tête
+//! quand il est en JPEG ou en PNG (voir [`super::logo`]) ; sinon le nom du
+//! client en tient lieu.
 
 use chrono::{DateTime, Datelike, TimeDelta, Utc};
 use chrono_tz::Tz;
@@ -30,6 +31,8 @@ pub struct Options {
     pub objective: Option<f64>,
     /// Instant de génération, écrit dans le pied de page et les métadonnées.
     pub generated: DateTime<Utc>,
+    /// Mode MSP : logo du client, en tête à droite.
+    pub logo: Option<pdf::Image>,
 }
 
 // --------------------------------------------------------------------------
@@ -192,6 +195,9 @@ const RIGHT: f64 = PAGE_W - 40.0;
 const TOP: f64 = PAGE_H - 44.0;
 const BOTTOM: f64 = 56.0;
 const ROW: f64 = 15.0;
+/// Cadre du logo d'un client dans l'en-tête, en points.
+const LOGO_W: f64 = 140.0;
+const LOGO_H: f64 = 44.0;
 
 const INK: Rgb = Rgb(17, 24, 39);
 const MUTED: Rgb = Rgb(75, 85, 99);
@@ -317,12 +323,21 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
     let (word, _) = verdict(data.fleet_uptime);
     let incidents = data.incidents.len();
 
-    // En-tête.
+    // En-tête : le logo du client à droite (image n° 0 du document), le nom à
+    // gauche dans la place qui reste.
+    let mut brand_width = RIGHT - LEFT;
+    if let Some(logo) = &options.logo {
+        let (w, h) = (f64::from(logo.width), f64::from(logo.height));
+        let scale = (LOGO_W / w).min(LOGO_H / h);
+        let (dw, dh) = (w * scale, h * scale);
+        sheet.page.image(0, RIGHT - dw, TOP - dh, dw, dh);
+        brand_width -= LOGO_W + 12.0;
+    }
     sheet.y -= 18.0;
     sheet.page.text(
         LEFT,
         sheet.y,
-        &pdf::fit(&one_line(&options.brand), Font::Bold, 20.0, RIGHT - LEFT),
+        &pdf::fit(&one_line(&options.brand), Font::Bold, 20.0, brand_width),
         Font::Bold,
         20.0,
         INK,
@@ -530,6 +545,9 @@ pub fn pdf(data: &ReportData, tz: Tz, options: &Options) -> Vec<u8> {
         &format!("{} - availability report", one_line(&options.brand)),
         Some(options.generated.format("D:%Y%m%d%H%M%SZ").to_string()),
     );
+    if let Some(logo) = &options.logo {
+        doc.add_image(logo.clone());
+    }
     for (index, mut page) in pages.into_iter().enumerate() {
         page.line(LEFT, 44.0, RIGHT, 44.0, 0.4, RULE);
         page.text(LEFT, 32.0, &format!("DumbMonit - generated {stamp}"), Font::Regular, 8.0, MUTED);
@@ -648,6 +666,7 @@ mod tests {
             brand: "Acme (Ops)".into(),
             objective: Some(99.9),
             generated: at("2026-11-03T08:00:00Z"),
+            logo: None,
         }
     }
 

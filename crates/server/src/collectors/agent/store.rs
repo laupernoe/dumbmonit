@@ -83,6 +83,11 @@ pub enum EnrolmentDenied {
     /// Jeton de flotte Active Directory : la machine ne se présente pas sous
     /// un nom complet du domaine auquel il est limité.
     OutsideDomain,
+    /// Mode MSP : la machine est connue chez un autre client que celui du
+    /// jeton. Un jeton n'enrôle, n'adopte ni ne relie que chez son client.
+    OtherClient,
+    /// Mode MSP : le client du jeton a atteint son quota d'équipements.
+    QuotaReached,
 }
 
 impl EnrolmentDenied {
@@ -101,6 +106,14 @@ impl EnrolmentDenied {
                 "This enrollment token is limited to an Active Directory domain, and this \
                  machine does not report a fully qualified name in it. Install the agent \
                  with -HostName <name>.<domain>, or use another token."
+            }
+            Self::OtherClient => {
+                "This enrollment token belongs to another client than this machine. Use an \
+                 enrollment token of the machine's client."
+            }
+            Self::QuotaReached => {
+                "The client of this enrollment token has reached its target quota. Ask your \
+                 MSP administrator to raise it."
             }
         }
     }
@@ -498,17 +511,30 @@ pub async fn register(
         return Err(RegisterError::EnrolmentDenied(denied));
     }
 
+    // Mode MSP : la machine entre chez le client du jeton, et nulle part ailleurs.
+    let client = crate::auth::clients::token_client(pool, token_id).await?;
+
     // Une cible « agent » a pu être créée à la main dans l'interface avant
     // l'installation : on l'adopte plutôt que de buter sur `UNIQUE (kind, address)`
-    // et de laisser la machine dehors.
-    let existing = sqlx::query("SELECT id FROM targets WHERE kind = 'agent' AND address = ?")
-        .bind(&key)
-        .fetch_optional(pool)
-        .await
-        .context("looking up an existing agent target")?;
+    // et de laisser la machine dehors — chez le même client seulement.
+    let existing =
+        sqlx::query("SELECT id, client_id FROM targets WHERE kind = 'agent' AND address = ?")
+            .bind(&key)
+            .fetch_optional(pool)
+            .await
+            .context("looking up an existing agent target")?;
 
     let (target_id, created) = match existing {
-        Some(row) => (row.try_get::<TargetId, _>("id")?, false),
+        Some(row) => {
+            if row.try_get::<i64, _>("client_id")? != client {
+                tracing::warn!(
+                    hote = identity.hostname,
+                    "enrôlement refusé : machine d'un autre client"
+                );
+                return Err(RegisterError::EnrolmentDenied(EnrolmentDenied::OtherClient));
+            }
+            (row.try_get::<TargetId, _>("id")?, false)
+        }
         None => {
             // Jeton de flotte Active Directory : la machine est rangée d'office
             // dans le dossier de son domaine, avec l'étiquette `ad`. L'OU
@@ -539,7 +565,13 @@ pub async fn register(
                 credential: Some(Credential::None),
                 group_name,
             };
-            (db::targets::create(pool, cipher, &input).await?, true)
+            match db::targets::create_in(pool, cipher, &input, client).await {
+                Ok(id) => (id, true),
+                Err(error) if error.downcast_ref::<db::targets::QuotaReached>().is_some() => {
+                    return Err(RegisterError::EnrolmentDenied(EnrolmentDenied::QuotaReached));
+                }
+                Err(error) => return Err(error.into()),
+            }
         }
     };
 
@@ -581,6 +613,7 @@ async fn claim(
                 if let Err(denied) = enrolment_allowed_for(pool, token_id, identity).await? {
                     return Err(RegisterError::EnrolmentDenied(denied));
                 }
+                same_client(pool, target_id, token_id).await?;
                 let secret = token::generate_secret();
                 bind_host(pool, target_id, &secret, token_id).await?;
                 update_host(pool, target_id, identity).await?;
@@ -617,6 +650,7 @@ async fn claim(
             if !identity.binding_supported {
                 return Err(RegisterError::AgentTooOld);
             }
+            same_client(pool, target_id, token_id).await?;
             // Le jeton qui a enrôlé la machine l'a déjà comptée ; un autre doit
             // encore pouvoir enrôler.
             if host.token_id != Some(token_id)
@@ -635,6 +669,22 @@ async fn claim(
             Ok(Registration { target_id, created: false, bound: true, issued_secret: Some(secret) })
         }
     }
+}
+
+/// Mode MSP : une machine ne se relie qu'avec un jeton de son client. Une
+/// machine déjà liée, elle, est reconnue à son secret, quel que soit le jeton.
+async fn same_client(
+    pool: &SqlitePool,
+    target_id: TargetId,
+    token_id: i64,
+) -> Result<(), RegisterError> {
+    let target = crate::auth::clients::target_client(pool, target_id).await?;
+    let token = crate::auth::clients::token_client(pool, token_id).await?;
+    if target != Some(token) {
+        tracing::warn!(cible = target_id, "reliaison refusée : jeton d'un autre client");
+        return Err(RegisterError::EnrolmentDenied(EnrolmentDenied::OtherClient));
+    }
+    Ok(())
 }
 
 async fn find_host(pool: &SqlitePool, key: &str) -> Result<Option<HostRow>> {
