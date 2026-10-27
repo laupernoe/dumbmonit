@@ -564,10 +564,6 @@ fn eight() -> u32 {
     8
 }
 
-fn utc() -> String {
-    "UTC".to_string()
-}
-
 /// Canaux par lesquels les visiteurs d'une page peuvent s'abonner. Les canaux
 /// de notification (courriel, SMS) sont désignés par leur nom.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]

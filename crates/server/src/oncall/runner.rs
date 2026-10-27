@@ -218,6 +218,7 @@ fn alert_message(
         severity: item.severity,
         items: vec![item.clone()],
         channels: Vec::new(),
+        client_id: None,
         at: now,
     };
     let digest =
@@ -937,6 +938,7 @@ mod tests {
                 severity: item.severity,
                 items: vec![item],
                 channels: Vec::new(),
+                client_id: None,
                 at: at(0),
             }],
             resolved_meanwhile: Vec::new(),
