@@ -329,6 +329,12 @@ pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
         job.reply(result);
         return;
     }
+    // Relevé de configuration (`netconfig`) : son demandeur range le texte et
+    // le verdict lui-même ; rien ne part vers la base de séries.
+    if target.kind == crate::netconfig::KIND && !job.discover {
+        job.reply(result);
+        return;
+    }
     match &result {
         JobResult::Done(outcome) => {
             if job.discover {
@@ -476,6 +482,7 @@ mod tests {
             error: None,
             samples: Vec::new(),
             profile_id: None,
+            netconfig: None,
         }));
         assert!(matches!(rx.await, Ok(JobResult::Done(_))));
         assert_eq!(hub.pending(9), 0);

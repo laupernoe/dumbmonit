@@ -22,6 +22,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::AdminIdentity;
+use crate::auth::teams::TeamAccess;
 use crate::db;
 use crate::state::AppState;
 use crate::vulns::{self, store};
@@ -247,6 +248,7 @@ pub struct CveList {
 }
 
 async fn list(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(query): Query<ListQuery>,
 ) -> ApiResult<Json<CveList>> {
@@ -256,7 +258,13 @@ async fn list(
         return Err(ApiError::BadRequest(format!("Unknown state: {wanted}.")));
     }
     let enabled = vulns::enabled(&state.pool).await.map_err(internal)?;
-    let findings = all_findings(&state).await?.into_iter().filter(|f| query.keeps(f)).collect();
+    let visible = access.visible_targets(&state.pool).await?;
+    let findings = all_findings(&state)
+        .await?
+        .into_iter()
+        .filter(|f| query.keeps(f))
+        .filter(|f| visible.as_ref().is_none_or(|v| v.contains(&f.target_id)))
+        .collect();
     Ok(Json(CveList { enabled, findings }))
 }
 
@@ -315,21 +323,28 @@ pub struct TargetQuery {
 }
 
 async fn summary(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(query): Query<TargetQuery>,
 ) -> ApiResult<Json<CveSummary>> {
     let pool = &state.pool;
+    // Compte restreint par ses équipes : les décomptes ne portent que sur ses
+    // équipements.
+    let visible = access.visible_targets(pool).await?;
+    let keep = |id: TargetId| visible.as_ref().is_none_or(|v| v.contains(&id));
     let enabled = vulns::enabled(pool).await.map_err(internal)?;
     let findings: Vec<CveFinding> = all_findings(&state)
         .await?
         .into_iter()
         .filter(|f| query.target.is_none_or(|t| t == f.target_id))
+        .filter(|f| keep(f.target_id))
         .collect();
     let components: Vec<store::ComponentRow> = store::components(pool)
         .await
         .map_err(internal)?
         .into_iter()
         .filter(|c| query.target.is_none_or(|t| t == c.target_id))
+        .filter(|c| keep(c.target_id))
         .collect();
     let targets: HashSet<TargetId> = components.iter().map(|c| c.target_id).collect();
     let mut sources = Vec::new();
@@ -377,10 +392,12 @@ pub struct CveInventory {
 }
 
 async fn inventory(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Query(query): Query<TargetQuery>,
 ) -> ApiResult<Json<CveInventory>> {
     let pool = &state.pool;
+    let visible = access.visible_targets(pool).await?;
     let names: HashMap<TargetId, String> =
         db::targets::list(pool, &state.cipher).await?.into_iter().map(|t| (t.id, t.name)).collect();
     let mut per_component: HashMap<(TargetId, String), usize> = HashMap::new();
@@ -392,6 +409,7 @@ async fn inventory(
         .map_err(internal)?
         .into_iter()
         .filter(|c| query.target.is_none_or(|t| t == c.target_id))
+        .filter(|c| visible.as_ref().is_none_or(|v| v.contains(&c.target_id)))
         .filter_map(|c| {
             let target_name = names.get(&c.target_id)?.clone();
             let findings =

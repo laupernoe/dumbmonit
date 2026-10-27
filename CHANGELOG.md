@@ -19,6 +19,77 @@ All notable changes to this project are documented here. The format follows
   (VPS and dedicated servers, maintenance) and **Infomaniak** (products and expiry).
   Each has a page in the documentation (English and French) with the minimal rights
   and the ports to open.
+- **Custom dashboards and a metrics explorer.** Build dashboards from widgets on a 12-column grid: chart (MetricsQL), single value with warning and critical levels, state of a monitor folder, active alerts, and Markdown notes. Drag, resize and reorder with mouse, touch or keyboard; phones get a single column. Each dashboard saves its time range and refresh interval. Dashboards are personal (any account) or shared (administrators), and travel with backups. The new metrics explorer (`/explore`) lists the `dumbmonit_*` metrics and their labels, completes names in a MetricsQL box, draws the result and adds it to a dashboard. New API: `/api/dashboards` and `/api/metrics/catalog`.
+
+- **Application integrations (beta).** Eleven new monitor types, written from the vendors' API documentation and tested on realistic responses, not yet against live instances:
+  - **Sonarr, Radarr, Lidarr and Prowlarr** (API key): health errors and warnings (the System → Status page), failing download clients and indexers, download queue errors, disk space, updates, and, for Prowlarr, indexers disabled after failures.
+  - **qBittorrent** (WebUI session or allowed address): torrents in error or stalled, lost connectivity (firewalled, disconnected), speeds, free space, torrents by state.
+  - **UniFi Protect** (local user): cameras offline or connected but not recording, NVR disks in failure, storage in use, recording switched off.
+  - **Frigate** (internal API, optional bearer token): cameras that stopped delivering frames, detector speed and hangs, frame rates, recording storage, updates.
+  - **Keycloak** (health checks, then an optional service-account client): readiness and database health, realms, active sessions and users per realm.
+  - **authentik** (API token): readiness, workers, failed system tasks, disconnected outposts, updates, users.
+  - **Vaultwarden** (public checks, optional admin token): liveness, version, open sign-ups, account counts. The admin session is kept between probes because its login is rate-limited.
+  - **mailcow** (read-only API key): stopped containers, Postfix queue size and age, mail volume, mailboxes close to their quota.
+
+  Thirty-nine built-in alert rules cover them (health errors, offline cameras, stuck queues, full disks, updates); each type has a setup guide and a documentation page in English and French. A host that does not answer is Monitor unreachable; a refused key or password is shown as a configuration error and not notified.
+- **Five more integrations: SQL Server, Oracle, Elasticsearch / OpenSearch, InfluxDB and Kafka.**
+  - **SQL Server**: databases that are not online, blocked requests, sessions
+    against the limit, free space of the data volumes, SQL Server Agent jobs whose
+    last run failed, and AlwaysOn replica health. A SQL login with read-only
+    server rights; TDS over TLS in pure Rust (`tiberius`, no OpenSSL).
+  - **Oracle**: instance state, tablespaces, sessions and processes, Data Guard
+    lag, fast recovery area and failed scheduler jobs. Read through Oracle REST
+    Data Services (ORDS), because Oracle's native protocol has no open pure-Rust
+    client and OCI cannot ship in the static image.
+  - **Elasticsearch / OpenSearch**: cluster status, unassigned shards, disk and
+    JVM heap per node, with a user that only holds the `monitor` privilege.
+  - **InfluxDB 2 and 3**: health, readiness, uptime, memory, descriptors and 5xx
+    counters.
+  - **Kafka**: brokers, controller, offline and under-replicated partitions,
+    and the lag of the consumer groups, over a small hand-written client of the
+    Kafka protocol (SASL/PLAIN over TLS; no librdkafka in the image).
+  - Twenty-four default alert rules cover them, from a red cluster or an offline
+    database to a failed job, a full volume or a consumer group falling behind.
+
+- **Windows without an agent (WinRM).** A new `winrm` device type monitors a
+  Windows server or PC through WS-Management and read-only WQL queries: nothing
+  to install, nothing executed on the machine. HTTPS (5986) by default, NTLMv2 or
+  Basic over HTTPS; unencrypted HTTP (5985) only when ticked explicitly. It
+  reports the same `dumbmonit_*` metrics as the Windows agent (CPU, memory, swap,
+  disks, uptime, `service_up`), the services you choose plus every stopped
+  automatic service (with a built-in rule), and recent event log error counts per
+  log and Event ID. Unreachable means down, a refused login is a configuration
+  error. Works through a relay agent. Kerberos and pending updates are not
+  supported; the docs cover the server preparation, the least-privilege account,
+  ports and Group Policy.
+- **Automatic layer-2 topology.** The Ethernet switch SNMP profile now reads LLDP
+  and CDP neighbours, the bridge forwarding table, ARP and LAG membership; the map
+  draws `l2` links between switches (with the port on each side, on hover and in
+  the link panel) and from hosts to their access port, never on trunks or LAG
+  members. Manual corrections keep priority. See Using the map.
+
+- **Network configuration backup** (new `netconfig` device type, the way
+  Oxidized or RANCID do it): the configuration of a switch, router or firewall
+  is read over SSH or the device's API at a set interval, through a relay agent
+  if needed, and a new version is kept only when it really changed, volatile
+  lines (timestamps, counters, re-encrypted values) aside. Declarative profiles
+  in `profiles/netconfig/` for Cisco IOS/IOS-XE and NX-OS, Aruba/HPE, MikroTik
+  RouterOS (`/export`), Juniper Junos, FortiGate, pfSense and OPNsense
+  (`config.xml` over SSH, or the OPNsense API), Ubiquiti EdgeOS/USG and UniFi
+  devices, Stormshield SNS and Palo Alto PAN-OS (XML API), with prompt,
+  paging and `enable` handling. No command can be typed in the interface.
+  Versions are compressed and encrypted with the instance key, with a
+  configurable retention; the device page shows the line diff between any two
+  versions with `+`/`−` markers and secrets masked (passwords, SNMP
+  communities, pre-shared keys). Only an administrator signed in can reveal
+  secrets or download a version, both recorded in the audit log. The SSH host
+  key is trusted on first use and pinned: a different key cuts the connection
+  before any credential is sent, raises the **SSH host key changed** alert and
+  waits for an administrator to accept it. New built-in rule **Network
+  configuration changed**, new `ssh_login` credential (with an optional enable
+  password). The instance backup carries the pinned host keys, and the
+  configuration versions only when **Include network configuration versions**
+  is ticked (off by default).
 - **More service checks, scheduled jobs, Windows events and network inventory.**
   - Seven new service checks, each with its own form: **UDP** (send a datagram,
     optionally expect a reply), **SSH** (banner and version; an expected host key
@@ -48,6 +119,105 @@ All notable changes to this project are documented here. The format follows
     open ports. The first scan learns silently; later ones flag what is new until
     it is marked as known. The two built-in rules are off by default, at info
     severity.
+- **Teams, per-folder rights, SAML 2.0 and SCIM 2.0.** Settings → Team & access
+  groups accounts into teams and gives each team a level per folder of devices
+  (subfolders included): read, operate (acknowledge, dismiss, maintenance) or
+  manage (edit, add, delete devices). The global role stays the ceiling (viewer →
+  read, operator → manage) and admins see everything. An account in a team only
+  sees its folders, enforced by the server on every route: device lists and
+  details, metric queries (filtered per device in VictoriaMetrics), alerts,
+  history, silences, rules, map, locations, status pages, CVEs and Web Push;
+  everything else, raw Prometheus/federate and the MCP endpoint included, is
+  refused to team-restricted accounts and their API tokens. Teams can follow
+  OIDC, LDAP and SAML groups. DumbMonit is now a SAML 2.0 service provider
+  (metadata, SP- and optional IdP-initiated sign-in, a signed assertion or response required)
+  and accepts SCIM 2.0 provisioning of users and groups from Entra ID and Okta.
+  Teams travel in the backup. Guides for Entra ID, Okta, Keycloak and Authentik.
+- **On-call, built in and free.** Alerts → On-call holds rotation schedules
+  (daily, weekly or custom shifts, handoff time and time zone, DST-safe),
+  stacked layers such as working hours over nights and weekends, one-off
+  replacements ("X covers for Y from … to …", open to operators), a week and
+  month calendar and who is on call now. Escalation policies chain steps (the
+  person on call in a schedule, a named person or a channel), wait N minutes
+  without an acknowledgement before the next step and repeat the chain K
+  times; an acknowledgement by anyone, from the UI or a notification link,
+  stops it, and a per-alert log shows who was called, when, how and who
+  acknowledged. Policies plug into the existing routing through a new
+  "DumbMonit on-call" channel type, so tag filters, minimum severity and
+  per-rule channels apply unchanged. In Settings → My account each person adds
+  their own contacts (their own ntfy, Pushover, Telegram… or their address on
+  a team email, SMS, Signal or Telegram channel) and quiet hours (outside
+  on-call duty only critical alerts get through), gets optional shift start and
+  end notices, and an iCal link to subscribe to their shifts. Schedules,
+  policies, contacts and preferences are part of backups. See
+  [On-call](https://dumbmonit.readthedocs.io/en/latest/alerting/oncall/).
+- **Configuration in YAML files (GitOps), a command-line tool and a Terraform
+  provider.** One declarative file (`version: 1`) describes monitors and their
+  folders, alert rules and per-monitor overrides, notification channels,
+  maintenance windows and status pages, with the keys and references of the
+  backup format. `POST /api/config/plan` shows what would be created, updated or
+  deleted (field names only, never values), `POST /api/config/apply` does it in
+  one transaction (`prune` deletes what a file manages and no longer declares;
+  hand-made objects are never touched), `GET /api/config/export` writes the
+  instance with every secret replaced by a `${VARIABLE}` or `${file:/path}`
+  reference. Declared objects are marked *Managed by file* and refuse manual
+  edits, like monitors managed by Docker labels; Settings → System →
+  Configuration files exports, plans, applies and releases them.
+  `DUMBMONIT_CONFIG_DIR` applies a watched folder at startup and on every
+  change. New `dumbmonit-cli` binary (`login`, `export`, `plan`, `apply
+  [--prune]`, `targets list`, `silence create`, `--json`), and a Terraform
+  provider in `integrations/terraform-provider-dumbmonit` (monitors, channels,
+  rules, maintenance windows, status pages, plus lookups).
+- **Central logs: agents, syslog and SNMP traps, with alerts on patterns.** The
+  Logs page now searches, besides DumbMonit's own logs, lines collected by agents
+  (systemd journal, followed files with wildcards and rotation, Windows event log
+  channels; switched on per machine from its device page, minimum level, bounded
+  disk buffer, sent over the agent's usual channel), a built-in syslog server
+  (UDP and TCP, RFC 3164 and 5424, port 5514, off by default) and an SNMP trap
+  receiver (v1 and v2c, informs acknowledged, port 1162, off by default; OIDs
+  named from the SNMP profiles). Senders are attached to devices by IP. Filter by
+  source, device and level, open a device's logs from its page, and turn a search
+  into a new *log pattern* alert rule (LogsQL filter, sliding window, line-count
+  threshold, per device or overall) that goes through the normal alert engine and
+  backups. Settings: `DUMBMONIT_SYSLOG_*`, `DUMBMONIT_TRAPS_*`,
+  `DUMBMONIT_AGENT_LOGS=off` to forbid collection on a machine. SNMPv3 traps are
+  not supported.
+- **Any Prometheus exporter, and OpenTelemetry (OTLP/HTTP) reception.** A new
+  "Prometheus exporter" monitor reads the `/metrics` page of node_exporter,
+  windows_exporter, cAdvisor, blackbox_exporter or any other exporter, with
+  presets for the common ones, basic or bearer authentication, optional relay
+  agent, keep/ignore filters on metric names and a series limit; every series is
+  stored, graphed in the explorer and usable in threshold rules. A new
+  "OpenTelemetry source" monitor receives `POST /api/otlp/v1/metrics` (protobuf or
+  JSON, gzip) from an OpenTelemetry Collector or an SDK, with a `write` API token
+  and the `X-DumbMonit-Target` header: gauges, sums and histograms become series,
+  unsupported points are reported back as rejected. `POST /api/otlp/v1/logs` relays
+  logs to VictoriaLogs when it is enabled. OTLP over gRPC is not supported; the
+  `otlphttp` exporter does the same job.
+
+- **Status page subscribers by SMS, signed webhook or Slack.** Besides email,
+  visitors of a public status page can follow it by text message (code
+  confirmation, through a Vonage, Telnyx or ASPSMS channel you pick), by
+  HMAC-signed webhook (confirmation request, secret shown once, outbound
+  guard) or by Slack incoming webhook (test message with a confirmation link),
+  all with double opt-in, one-click unsubscribe and the choice of the services
+  to follow. Announcements can name the services they concern. Messages go
+  through a retrying queue; sign-ups are rate limited per client, per page and
+  globally (SMS more strictly) and need access to private pages. The editor
+  lists subscribers by channel with masked numbers and URLs, exports CSV and
+  removes subscribers; the channels a page opens are included in backups.
+- **Automatic tickets: Jira, GLPI, Zammad, GitHub Issues and GitLab Issues.** Five new
+  notification channels that keep one ticket per alert. An alert opening creates the
+  ticket (title, description with a link to DumbMonit, priority from the severity); the
+  external id is remembered per alert, so a reminder never opens a second ticket.
+  Escalations, unacknowledged alerts, new findings and acknowledgements are added as
+  comments; the resolution comments and closes the ticket (Jira transition name, GLPI
+  status, Zammad state, GitHub/GitLab close). An optional delay reopens the closed
+  ticket if the alert returns. Failures show in the channel's last error and transient
+  ones are retried with backoff. The ticket link is shown on the alert
+  (`tickets` in `GET /api/alerts`), and **Send test** creates then closes a test ticket.
+- **Runbooks and remediation.** Markdown runbooks (HTML always shown as text) linked to an alert rule, a folder or a device type, shown under the alert, on the device page and as a link in notifications. Remediation actions from a closed catalogue — restart a systemd/Windows service or a Docker container through the agent, run a script declared on the machine itself (`actions.d` manifests), call a webhook — run by hand from an alert (operator and up) or automatically by a policy (after N minutes firing, attempt limits per window, never during maintenance or while a parent is down, stopped after two failures, armed in two steps). The agent refuses everything unless `actions: true`, runs nothing through a shell, checks a nonce and an expiry on every request, and bounds time and output. Every run is in an audit log (Actions page, alert, device). Runbooks, actions and policies are in backups; policies come back disarmed.
+
 - **Network and storage integrations (beta).** New collectors written from the vendors' API documentation and not yet tested on real hardware: Cisco Meraki, TP-Link Omada, Aruba Central, Palo Alto PAN-OS, SonicWall SonicOS, QNAP, Ceph, MinIO, Kopia and Duplicati, each with built-in alert rules, a setup guide and a documentation page. WatchGuard Firebox, Stormshield SNS and HPE/Aruba switches are recognised through SNMP profiles and network discovery. Synology Active Backup was already covered by the Synology integration.
 
 - **Probes from several locations, confirmed before alerting.** An uptime monitor
@@ -159,6 +329,8 @@ All notable changes to this project are documented here. The format follows
 
 ### Fixed
 
+- **Vonage SMS channels** could not be saved: the API key is now entered with the
+  secrets (it was a plain setting the API refused to store in clear text).
 - **Alerts: unreachable monitors.** Their rows now carry the same two icon
   buttons as other alerts (acknowledge and snooze) instead of a text "Open"
   button; opening the monitor is an icon with a label too.

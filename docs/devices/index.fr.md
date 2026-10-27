@@ -48,9 +48,16 @@ que cette version peut surveiller.
 | [Redis / Valkey](redis.md) | `redis` | utilisateur ACL, mot de passe seul, ou aucun | Stockage en mémoire : mémoire par rapport à maxmemory, réplication, persistance, clés |
 | [MongoDB](mongodb.md) | `mongodb` | nom d'utilisateur/mot de passe (clusterMonitor) ou aucun | Base de données documents : replica set, retard, connexions, cache WiredTiger |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | nom d'utilisateur/mot de passe (étiquette monitoring) | Courtier de messages : alarmes de ressource, nœuds, partitions, files sans consommateur |
+| [SQL Server](mssql.md) | `mssql` | connexion SQL (nom d'utilisateur/mot de passe) | Bases hors ligne, blocages, connexions, espace des volumes, travaux de l'Agent, AlwaysOn |
+| [Oracle Database](oracle.md) | `oracle` | compte de la base (nom d'utilisateur/mot de passe), par ORDS | État de l'instance, tablespaces, sessions, retard Data Guard, zone de récupération, travaux du planificateur |
+| [Elasticsearch / OpenSearch](elasticsearch.md) | `elasticsearch` | nom d'utilisateur/mot de passe, jeton ou aucun | État du cluster, shards non alloués, disque et tas des nœuds |
+| [InfluxDB](influxdb.md) | `influxdb` | aucun ou jeton d'API | InfluxDB 2 et 3 : santé, disponibilité, temps de marche, mémoire, erreurs serveur |
+| [Apache Kafka](kafka.md) | `kafka` | aucun ou SASL/PLAIN sous TLS | Partitions hors ligne et sous-répliquées, contrôleur, retard des groupes de consommateurs |
 | [CrowdSec](crowdsec.md) | `crowdsec` | aucun, ou clé d'API bouncer | Moteur de sécurité : décisions, alertes, bouncers qui ont arrêté de récupérer, lecture de logs |
 | [Traefik](traefik.md) | `traefik` | aucun, ou utilisateur basicAuth | Reverse proxy : routeurs désactivés, serveurs backend en panne, certificats non obtenus ou non renouvelés, part de 5xx |
 | [Caddy](caddy.md) | `caddy` | utilisateur de vue en lecture seule, ou aucun | Serveur web et reverse proxy : santé des upstreams, rechargements échoués, erreurs de handler, part de 5xx |
+| [Exporter Prometheus](prometheus.md) | `prometheus` | aucun, authentification basique ou jeton bearer | N'importe quel exporter (node_exporter, windows_exporter, cAdvisor, blackbox…) : toutes les séries enregistrées, tracées et utilisables dans des règles |
+| [Source OpenTelemetry](otlp.md) | `otlp` | jeton d'API (portée write) | Récepteur OTLP/HTTP : métriques d'un OpenTelemetry Collector ou d'une application, journaux transmis à VictoriaLogs |
 | [Nginx](nginx.md) | `nginx` | aucun, ou authentification basique | Serveur web : connexions actives/en attente, débits accept/handled/request, santé des upstreams NGINX Plus |
 | [Apache httpd](apache.md) | `apache` | aucun, ou authentification basique | Serveur web : workers occupés/au repos, scoreboard par état, débits de requêtes et d'octets |
 | [Nginx Proxy Manager](npm.md) | `npm` | email et mot de passe utilisateur (vue seule) | Gestionnaire de proxy : hôtes refusés par nginx, hôtes désactivés, certificats servis |
@@ -61,6 +68,7 @@ que cette version peut surveiller.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | jeton de compte de service (ClusterRole en lecture seule) | Cluster : nœuds non prêts, pods en boucle de crash ou en attente, workloads avec répliques manquantes, demandes de volume bloquées |
 | [Active Directory](activedirectory.md) | `activedirectory` | nom d'utilisateur/mot de passe (utilisateur de domaine ordinaire) | Domaine Windows via LDAPS : contrôleurs de domaine et rôles FSMO, membres de groupes privilégiés, politique de mot de passe, constats de sécurité |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | nom d'utilisateur/mot de passe (Veeam Backup Viewer) | Serveur de sauvegarde : jobs en échec, sessions en échec, dépôts qui se remplissent, licence |
+| [Windows (WinRM)](winrm.md) | `winrm` | nom d'utilisateur/mot de passe (Remote Management Users) | Serveur Windows sans agent : CPU, mémoire, disques, services (dont les automatiques arrêtés), durée de fonctionnement, erreurs du journal d'événements |
 | [Kopia](kopia.md) (bêta) | `kopia` | nom d'utilisateur et mot de passe du serveur | Serveur de sauvegarde : dernier instantané de chaque source (âge, erreurs, taille), sources en retard sur leur planning, connexion au dépôt |
 | [Duplicati](duplicati.md) (bêta) | `duplicati` | mot de passe de l'interface web | Serveur de sauvegarde (2.1+) : dernière sauvegarde réussie de chaque tâche, dernier résultat, avertissements et erreurs, tâche en cours |
 | [Tailscale](tailscale.md) | `tailscale` | client OAuth (devices:core:read) ou jeton d'accès d'API | Tailnet : serveurs hors ligne, clés de nœud qui expirent, appareils en attente d'approbation |
@@ -79,6 +87,17 @@ que cette version peut surveiller.
 | [Plex Media Server](plex.md) | `plex` | X-Plex-Token, ou aucun depuis un réseau autorisé | Serveur multimédia : flux, transcodages, bibliothèques, mises à jour |
 | [GitLab (self-managed)](gitlab.md) | `gitlab` | jeton d'accès personnel | Forge : retard Sidekiq, runners CI, migrations en attente, réglages inscription/2FA, licence |
 | [Forgejo / Gitea](forgejo.md) | `forgejo` | jeton d'accès | Forge : contrôle de santé, tâches planifiées, runners Actions, compteurs de dépôts/comptes |
+| [Sonarr (bêta)](sonarr.md) | `sonarr` | clé d'API | Séries : santé, clients et indexeurs en échec, erreurs de file, disque, mises à jour |
+| [Radarr (bêta)](radarr.md) | `radarr` | clé d'API | Films : santé, clients et indexeurs en échec, erreurs de file, disque, mises à jour |
+| [Lidarr (bêta)](lidarr.md) | `lidarr` | clé d'API | Musique : santé, clients et indexeurs en échec, erreurs de file, disque, mises à jour |
+| [Prowlarr (bêta)](prowlarr.md) | `prowlarr` | clé d'API | Indexeurs : santé, indexeurs désactivés après des échecs, disque, mises à jour |
+| [qBittorrent (bêta)](qbittorrent.md) | `qbittorrent` | nom d'utilisateur et mot de passe, ou aucun | Client torrent : torrents en erreur, connectivité perdue, vitesses, espace libre |
+| [UniFi Protect (bêta)](unifiprotect.md) | `unifiprotect` | nom d'utilisateur et mot de passe locaux | Caméras : hors ligne ou sans enregistrement, disques et stockage du NVR |
+| [Frigate NVR (bêta)](frigate.md) | `frigate` | aucun ou jeton porteur | NVR : caméras sans images, détecteurs bloqués, débits, stockage des enregistrements |
+| [Keycloak (bêta)](keycloak.md) | `keycloak` | aucun, ou identifiant et secret de client | Identité : disponibilité et base de données, realms, sessions, utilisateurs |
+| [authentik (bêta)](authentik.md) | `authentik` | jeton d'API | Identité : disponibilité, workers, tâches en échec, avant-postes, mises à jour |
+| [Vaultwarden (bêta)](vaultwarden.md) | `vaultwarden` | aucun, ou jeton d'administration | Coffre de mots de passe : disponibilité, version, inscriptions ouvertes, comptes |
+| [mailcow (bêta)](mailcow.md) | `mailcow` | clé d'API en lecture seule | Serveur de messagerie : conteneurs arrêtés, file, volume des courriels, quotas |
 | [Serveur avec agent](agent.md) | `agent` | aucun (jeton d'enrôlement) | Linux, Windows, Raspberry Pi, [hôte Hyper-V](agent.md#hyper-v-hosts) |
 | [Site web ou API web](services.md#http) | `http` | aucun, nom d'utilisateur/mot de passe ou jeton | Page de santé, API REST |
 | [Port réseau](services.md#tcp) | `tcp` | aucun | SSH, SMB, base de données |

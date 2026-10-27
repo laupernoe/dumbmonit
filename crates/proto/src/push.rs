@@ -9,6 +9,7 @@ use std::collections::BTreeMap;
 
 use serde::{Deserialize, Serialize};
 
+use crate::logs::LogsSetting;
 use crate::selfupdate::{AgentUpdateOffer, SelfUpdateInfo};
 use crate::{EventLogReport, EventLogRule, Sample};
 
@@ -145,6 +146,11 @@ pub struct AgentIdentity {
     /// agent antérieur : l'interface dit alors de le mettre à jour à la main.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub self_update: Option<SelfUpdateInfo>,
+    /// Actions de remédiation que l'agent accepte : activées ou non, services
+    /// autorisés, scripts de son dossier local. Absent chez un agent antérieur :
+    /// le serveur n'y demande alors ni service ni script.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub remediation: Option<crate::RemediationInfo>,
 }
 
 impl AgentIdentity {
@@ -349,6 +355,10 @@ pub struct PushAck {
     /// machine (mise à jour automatique). Ignoré par un agent antérieur.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub agent_update: Option<AgentUpdateOffer>,
+    /// Collecte de journaux voulue depuis l'interface pour cette machine.
+    /// `None` chez un serveur antérieur : l'agent ne collecte alors rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub logs: Option<LogsSetting>,
 }
 
 /// Mode relais tel que l'interface le règle pour une machine.
@@ -389,6 +399,7 @@ mod tests {
             tags: BTreeMap::from([("salle".to_string(), "cave".to_string())]),
             binding_supported: true,
             self_update: None,
+            remediation: None,
         }
     }
 
@@ -483,6 +494,7 @@ mod tests {
             relay: None,
             event_rules: None,
             agent_update: None,
+            logs: None,
         };
         let json = serde_json::to_string(&issued).expect("sérialisation");
         assert!(json.contains(AGENT_SECRET_PREFIX));
@@ -540,6 +552,7 @@ mod tests {
                 regex: false,
             }]),
             agent_update: None,
+            logs: Some(LogsSetting { enabled: true, ..LogsSetting::default() }),
         };
         let decoded: PushAck =
             serde_json::from_str(&serde_json::to_string(&ack).unwrap()).expect("désérialisation");

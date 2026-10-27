@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
 use crate::auth::middleware::Identity;
+use crate::auth::teams::{Access, Level, TeamAccess};
 use crate::collectors::relay::{self, JobResult};
 use crate::db;
 use crate::db::multisite::MultisiteConfig;
@@ -314,11 +315,40 @@ impl TargetPayload {
     }
 }
 
+/// Pour un compte restreint par ses équipes : l'équipement doit rester dans un
+/// dossier qu'il gère, et ne peut dépendre (parent, relais) que d'équipements
+/// qu'il voit — sans quoi on pourrait sonder l'existence des autres.
+async fn check_team_placement(
+    state: &AppState,
+    access: &Access,
+    input: &db::targets::TargetInput,
+) -> ApiResult<()> {
+    if !access.is_scoped() {
+        return Ok(());
+    }
+    if access.folder_level(&input.group_name) < Some(Level::Manage) {
+        return Err(ApiError::Forbidden(
+            "Your teams do not let you put targets in this folder.".into(),
+        ));
+    }
+    for linked in [input.parent_id, input.via_agent].into_iter().flatten() {
+        if !access.can_see(&state.pool, linked).await? {
+            return Err(ApiError::BadRequest("The linked target does not exist.".into()));
+        }
+    }
+    Ok(())
+}
+
 pub async fn list(
     Identity(who): Identity,
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
 ) -> ApiResult<Json<Vec<TargetView>>> {
-    let targets = db::targets::list(&state.pool, &state.cipher).await?;
+    let visible = access.visible_targets(&state.pool).await?;
+    let mut targets = db::targets::list(&state.pool, &state.cipher).await?;
+    if let Some(visible) = &visible {
+        targets.retain(|target| visible.contains(&target.id));
+    }
     let mut statuses = db::targets::statuses(&state.pool).await?;
     let places = super::locations::assignments(&state.pool).await?;
     let mut multisite = db::multisite::all(&state.pool).await?;
@@ -415,12 +445,14 @@ pub fn redact_userinfo(text: &str) -> String {
 }
 
 pub async fn create(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(payload): Json<TargetPayload>,
 ) -> ApiResult<(StatusCode, Json<TargetView>)> {
     let location = payload.location_id.flatten();
     let multisite = payload.multisite.clone().flatten();
     let input = payload.validate(&state, None)?;
+    check_team_placement(&state, &access, &input).await?;
     super::locations::check_location(&state.pool, location).await?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
@@ -451,6 +483,7 @@ pub async fn create(
 }
 
 pub async fn update(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
     Json(payload): Json<TargetPayload>,
@@ -463,18 +496,16 @@ pub async fn update(
     let before = load(&state, id).await?;
     let multisite_before = db::multisite::get(&state.pool, id).await?;
     // Un moniteur géré ne change que par ses étiquettes, sauf la pause.
-    if db::targets::managed_get(&state.pool, id).await?.is_some()
+    if let Some(managed) = db::targets::managed_get(&state.pool, id).await?
         && !payload_only_toggles(&payload, &before)
     {
-        return Err(ApiError::Conflict(super::label_monitors::MANAGED_MESSAGE.into()));
+        return Err(ApiError::Conflict(super::label_monitors::managed_message(&managed).into()));
     }
     let (mut input, reused_secret) =
         payload.validate_with(&state, Some(id), Some(&before.credential))?;
     if let Some(location) = new_location {
         super::locations::check_location(&state.pool, location).await?;
     }
-    check_parent(&state, input.parent_id).await?;
-    check_relay(&state, input.via_agent).await?;
     let relay_before = db::targets::relay_of(&state.pool, id).await?;
     if keep_relay {
         input.via_agent = relay_before;
@@ -499,6 +530,11 @@ pub async fn update(
         input.profile_id = before.profile_id;
     }
     check_pack_relay(&input)?;
+    // Le garde a vérifié la gestion du dossier d'origine ; un déplacement exige
+    // aussi celle du dossier d'arrivée.
+    check_team_placement(&state, &access, &input).await?;
+    check_parent(&state, input.parent_id).await?;
+    check_relay(&state, input.via_agent).await?;
     let updated = db::targets::update(&state.pool, &state.cipher, id, &input)
         .await
         .map_err(duplicate_address_to_conflict)?;
@@ -1153,10 +1189,13 @@ fn server_time(at: chrono::DateTime<chrono::Utc>) -> String {
 /// `GET /api/targets/{id}/probe-locations` — état et latence par emplacement,
 /// et dernière décision de quorum.
 pub async fn probe_locations(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Path(id): Path<TargetId>,
 ) -> ApiResult<Json<ProbeLocationsReport>> {
     load(&state, id).await?;
+    // Un compte restreint ne lit pas le nom d'un agent relais hors de ses dossiers.
+    let visible = access.visible_targets(&state.pool).await?;
     let Some(config) = db::multisite::get(&state.pool, id).await? else {
         return Ok(Json(ProbeLocationsReport {
             decision: crate::multisite::Verdict::Unknown,
@@ -1182,6 +1221,9 @@ pub async fn probe_locations(
         .map(|(location, status)| {
             let agent_id = location.agent_id();
             let (name, site) = match agent_id {
+                Some(agent) if visible.as_ref().is_some_and(|v| !v.contains(&agent)) => {
+                    ("Relay agent".to_string(), None)
+                }
                 Some(agent) => {
                     hosts.get(&agent).cloned().unwrap_or_else(|| (format!("Agent {agent}"), None))
                 }

@@ -196,6 +196,17 @@ export function toCredential(view: CredentialView, draft: Draft, kept: string[] 
 			return keeps('password')
 				? { type: 'username_password', username: value(draft, 'username') }
 				: { type: 'username_password', username: value(draft, 'username'), password: draft.password ?? '' };
+		case 'ssh_login': {
+			// A blank enable password is left out: the server keeps the saved one
+			// (or the login password stands in for it).
+			const enable = draft.enable_secret ?? '';
+			return {
+				type: 'ssh_login',
+				username: value(draft, 'username'),
+				...(keeps('password') ? {} : { password: draft.password ?? '' }),
+				...(enable ? { enable_secret: enable } : {})
+			};
+		}
 		case 'radius':
 			return {
 				type: 'radius',

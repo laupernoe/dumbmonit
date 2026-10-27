@@ -35,6 +35,7 @@ const KIND_BY_LABEL: Record<string, CredentialKind> = {
 	'username / password': 'username_password',
 	'utilisateur / mot de passe': 'username_password',
 	radius: 'radius',
+	'ssh login': 'ssh_login',
 	none: 'none',
 	aucune: 'none'
 };

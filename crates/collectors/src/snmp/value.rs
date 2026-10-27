@@ -94,7 +94,10 @@ impl SnmpValue {
     /// ni casser le format d'export.
     pub fn as_label(&self) -> Option<String> {
         let raw = match self {
-            Self::Bytes(bytes) => sanitize(&String::from_utf8_lossy(bytes)),
+            Self::Bytes(bytes) => match mac_text(bytes) {
+                Some(mac) => mac,
+                None => sanitize(&String::from_utf8_lossy(bytes)),
+            },
             Self::Oid(oid) => oid.to_string(),
             Self::IpAddress([a, b, c, d]) => format!("{a}.{b}.{c}.{d}"),
             Self::Integer(number) => number.to_string(),
@@ -107,6 +110,16 @@ impl SnmpValue {
         };
         if raw.is_empty() { None } else { Some(raw) }
     }
+}
+
+/// Une adresse MAC (6 octets dont au moins un n'est pas du texte imprimable)
+/// est rendue en hexadécimal `aa:bb:cc:dd:ee:ff` plutôt qu'en caractères
+/// illisibles : c'est ainsi que LLDP, ARP et le pont donnent les adresses.
+fn mac_text(bytes: &[u8]) -> Option<String> {
+    if bytes.len() != 6 || bytes.iter().all(|b| (0x20..0x7f).contains(b)) {
+        return None;
+    }
+    Some(bytes.iter().map(|b| format!("{b:02x}")).collect::<Vec<_>>().join(":"))
 }
 
 /// Ne conserve que des caractères imprimables, compacte les espaces et tronque.
@@ -213,6 +226,17 @@ mod tests {
         let value = SnmpValue::from_wire(&snmp2::Value::ObjectIdentifier(oid)).unwrap();
         assert_eq!(value.as_label().as_deref(), Some("1.3.6.1.2.1.25.2.1.4"));
         assert_eq!(value.as_f64(), None);
+    }
+
+    #[test]
+    fn une_adresse_mac_devient_hexadecimale() {
+        let value =
+            SnmpValue::from_wire(&snmp2::Value::OctetString(&[0x00, 0x1a, 0x2b, 0x3c, 0x4d, 0xff]))
+                .unwrap();
+        assert_eq!(value.as_label().as_deref(), Some("00:1a:2b:3c:4d:ff"));
+        // Six caractères imprimables : c'est du texte.
+        let text = SnmpValue::from_wire(&snmp2::Value::OctetString(b"switch")).unwrap();
+        assert_eq!(text.as_label().as_deref(), Some("switch"));
     }
 
     #[test]

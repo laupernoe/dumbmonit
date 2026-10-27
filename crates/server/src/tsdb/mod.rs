@@ -228,6 +228,21 @@ impl Victoria {
         end_ms: i64,
         step_secs: u64,
     ) -> Result<Vec<RangeSeries>> {
+        self.query_range_filtered(query, start_ms, end_ms, step_secs, None).await
+    }
+
+    /// [`Self::query_range`], restreinte aux séries qui correspondent à
+    /// `filter` (`extra_filters[]` de VictoriaMetrics : appliqué à chaque
+    /// sélecteur de la requête, quelle que soit l'expression). Le filtre suit
+    /// la requête jusqu'aux agrégats.
+    pub async fn query_range_filtered(
+        &self,
+        query: &str,
+        start_ms: i64,
+        end_ms: i64,
+        step_secs: u64,
+        filter: Option<&str>,
+    ) -> Result<Vec<RangeSeries>> {
         if let Some(long) = self.active_long_term() {
             let step = step_secs.max(1) as i64;
             let (start, end) = (start_ms / 1000, end_ms / 1000);
@@ -236,7 +251,7 @@ impl Victoria {
                 rollup::RangePlan::Long { query: rewritten } => {
                     match long
                         .victoria
-                        .query_range_raw(&rewritten, start_ms, end_ms, step_secs)
+                        .query_range_raw_filtered(&rewritten, start_ms, end_ms, step_secs, filter)
                         .await
                     {
                         Ok(series) => return Ok(series),
@@ -246,8 +261,16 @@ impl Victoria {
                 rollup::RangePlan::Split { query: rewritten, split_secs } => {
                     let old_end_ms = (split_secs - step) * 1000;
                     let (old, recent) = tokio::join!(
-                        long.victoria.query_range_raw(&rewritten, start_ms, old_end_ms, step_secs),
-                        self.query_range_raw(query, split_secs * 1000, end_ms, step_secs),
+                        long.victoria.query_range_raw_filtered(
+                            &rewritten, start_ms, old_end_ms, step_secs, filter,
+                        ),
+                        self.query_range_raw_filtered(
+                            query,
+                            split_secs * 1000,
+                            end_ms,
+                            step_secs,
+                            filter,
+                        ),
                     );
                     match old {
                         Ok(old) => return Ok(rollup::stitch(old, recent?)),
@@ -256,7 +279,7 @@ impl Victoria {
                 }
             }
         }
-        self.query_range_raw(query, start_ms, end_ms, step_secs).await
+        self.query_range_raw_filtered(query, start_ms, end_ms, step_secs, filter).await
     }
 
     /// `query_range` sur cette instance seulement, sans aiguillage.
@@ -267,6 +290,21 @@ impl Victoria {
         end_ms: i64,
         step_secs: u64,
     ) -> Result<Vec<RangeSeries>> {
+        self.query_range_raw_filtered(query, start_ms, end_ms, step_secs, None).await
+    }
+
+    /// [`Self::query_range_raw`], restreinte par `filter` (voir
+    /// [`Self::query_range_filtered`]).
+    async fn query_range_raw_filtered(
+        &self,
+        query: &str,
+        start_ms: i64,
+        end_ms: i64,
+        step_secs: u64,
+        filter: Option<&str>,
+    ) -> Result<Vec<RangeSeries>> {
+        let extra: Vec<(&str, &str)> =
+            filter.map(|filter| ("extra_filters[]", filter)).into_iter().collect();
         let response = self
             .http
             .get(format!("{}/api/v1/query_range", self.base_url))
@@ -276,6 +314,7 @@ impl Victoria {
                 ("end", &(end_ms / 1000).to_string()),
                 ("step", &step_secs.to_string()),
             ])
+            .query(&extra)
             .send()
             .await
             .context("interrogation de VictoriaMetrics")?;
@@ -482,6 +521,25 @@ impl Victoria {
             return Ok(answer);
         }
         self.query_with(query, &[("latency_offset", FRESH_LATENCY_OFFSET)]).await
+    }
+
+    /// [`Self::query_fresh`], restreinte aux séries qui correspondent à
+    /// `filter` (voir [`Self::query_range_filtered`]).
+    pub async fn query_fresh_filtered(
+        &self,
+        query: &str,
+        filter: Option<&str>,
+    ) -> Result<Vec<InstantSeries>> {
+        match filter {
+            None => self.query_fresh(query).await,
+            Some(filter) => {
+                self.query_with(
+                    query,
+                    &[("latency_offset", FRESH_LATENCY_OFFSET), ("extra_filters[]", filter)],
+                )
+                .await
+            }
+        }
     }
 
     async fn query_with(&self, query: &str, extra: &[(&str, &str)]) -> Result<Vec<InstantSeries>> {

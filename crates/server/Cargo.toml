@@ -54,6 +54,11 @@ reqwest = { version = "0.13", default-features = false, features = [
 ipnet = "2"
 # Base IP → pays de DB-IP, livrée gzippée (`geoip.rs`).
 flate2 = "1.1"
+# Écriture du YAML de configuration (la lecture passe par `dumbmonit-collectors`).
+serde-saphyr = { version = "2", default-features = false, features = ["serialize"] }
+# Messages OTLP (réception OpenTelemetry) : seul le codec protobuf, sans le SDK ni
+# tonic. Apache-2.0.
+prost = "0.14"
 futures = "0.3"
 
 # `deterministic-timestamps` : sans lui, rust_embed inscrit dans le binaire la date
@@ -97,6 +102,16 @@ subtle = "2.6"
 jsonwebtoken = { version = "11", default-features = false, features = ["use_pem", "aws_lc_rs"] }
 # Encodage base64url du défi PKCE.
 base64 = "0.23"
+# Connexion SAML 2.0 (`auth::saml`), DumbMonit fournisseur de service. Rust pur,
+# sans libxml2 ni xmlsec1 : XML-DSig, canonicalisation exclusive et défenses
+# contre l'enveloppement de signature (XSW) par `bergshamra`, parseur borné qui
+# refuse le DOCTYPE. `crypto-aws-lc` : le moteur que rustls compile déjà (musl
+# statique compris) ; le moteur RustCrypto par défaut tirerait la crate `rsa`,
+# sujette à RUSTSEC-2023-0071 (Marvin) sans correctif amont. Alternatives
+# écartées : `samael` (libxml2 + xmlsec1 en C), `xml-sec` (déclarée non prête
+# pour la production par ses auteurs), une vérification XML-DSig maison
+# (canonicalisation et XSW sont précisément ce qu'il ne faut pas réécrire).
+saml-rs = { version = "0.6", default-features = false, features = ["crypto-aws-lc"] }
 # Connexion des utilisateurs par un annuaire LDAP / Active Directory
 # (`auth::ldap`). Le même client que la sonde Active Directory (MIT/Apache-2.0,
 # Rust pur), TLS par rustls avec `ring` : configuration TLS construite par

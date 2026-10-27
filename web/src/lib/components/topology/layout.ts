@@ -57,6 +57,9 @@ export interface MapEdge {
 	origin?: TopologyOrigin;
 	correctionId?: number | null;
 	ruleId?: number | null;
+	/** Switch ports at each end (`lldp` and `l2` links). */
+	fromPort?: string | null;
+	toPort?: string | null;
 }
 
 /** The key of a link, as the map and its panels name it. */
@@ -68,7 +71,7 @@ export function edgeKey(edge: { from: string; to: string }): string {
  * Declared links first: they are what alert suppression follows. A node
  * placed by hand (`manual`) hangs where it was put, before anything deduced.
  */
-const PRIORITY: Record<TopologySource, number> = { manual: -1, parent: 0, service: 1, hypervisor: 2, hosted: 3, relay: 4, samehost: 5, backup: 6, firewall: 7, lldp: 8 };
+const PRIORITY: Record<TopologySource, number> = { manual: -1, parent: 0, service: 1, hypervisor: 2, hosted: 3, relay: 4, samehost: 5, backup: 6, firewall: 7, lldp: 8, l2: 9 };
 
 /** Links an outage travels along (a service runs on its guest). LLDP says who is cabled to whom, not who depends on whom. */
 const PROPAGATES: ReadonlySet<TopologySource> = new Set(['parent', 'service', 'relay', 'hypervisor', 'hosted']);
@@ -333,6 +336,9 @@ export interface PlacedEdge {
 	/** Middle of the drawn path: where a link corrected by hand wears its mark. */
 	mid: { x: number; y: number };
 	origin: TopologyOrigin;
+	/** Switch ports at each end, shown on hover and in the link panel. */
+	fromPort?: string | null;
+	toPort?: string | null;
 }
 
 export interface Frame {
@@ -780,6 +786,8 @@ export function layoutMap(graph: Graph, options: { byGroup?: boolean; bySubnet?:
 				to: e.to,
 				source: e.source,
 				origin: e.origin ?? 'deduced',
+				fromPort: e.fromPort ?? null,
+				toPort: e.toPort ?? null,
 				style: dependency ? ('dependency' as const) : ('mesh' as const),
 				wan: islands && siteOf(e.from) !== siteOf(e.to),
 				impacted: PROPAGATES.has(e.source) && (graph.down.has(e.from) || graph.impacted.has(e.from)),

@@ -1,0 +1,18 @@
+# Sauvegarde des configurations : Fortinet FortiGate (FortiOS). Les valeurs
+# `ENC …` sont rechiffrées à chaque lecture : elles ne comptent pas comme un
+# changement.
+id: fortigate
+label: Fortinet FortiGate (FortiOS)
+transport: ssh_shell
+prompt: '^[\w.\-]+(?: \([\w.\-]+\))? [#$] ?$'
+more:
+  expect: '--More--'
+  send: " "
+commands:
+  - show
+exit: exit
+volatile:
+  - '^#conf_file_ver='
+  - '\bENC \S{16,}'
+secrets:
+  - '\bset (?:password|passwd|psksecret|secret|key|private-key|passphrase|community|auth-pwd|priv-pwd|sae-password|ppk-secret|auth-password|priv-password) (?:ENC )?(?P<secret>.+)$'

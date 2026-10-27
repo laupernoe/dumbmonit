@@ -277,7 +277,7 @@ pub async fn set_rule_enabled(pool: &SqlitePool, id: i64, enabled: bool) -> Resu
 /// Efface les alertes d'une règle et les notifications qui les attendaient.
 /// Avec `history`, les alertes actives laissent d'abord une résolution muette
 /// dans l'historique.
-async fn forget_rule_states(
+pub(crate) async fn forget_rule_states(
     tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     uid: &str,
     history: Option<(&str, DateTime<Utc>)>,

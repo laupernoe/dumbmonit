@@ -49,17 +49,19 @@ COPY crates/collectors/Cargo.toml crates/collectors/
 COPY crates/pack/Cargo.toml crates/pack/
 COPY crates/server/Cargo.toml crates/server/
 COPY crates/agent/Cargo.toml crates/agent/
+COPY crates/cli/Cargo.toml crates/cli/
 # Une source factice par cible déclarée dans les manifestes — bibliothèques
 # incluses, sans quoi cargo échoue avant même de compiler les dépendances.
 # L'agent n'est pas compilé ici (il l'est dans l'étape `agent`, pour trois
 # plateformes), mais son manifeste doit exister pour que le workspace se charge.
-RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src \
+RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src crates/cli/src \
  && echo '' > crates/proto/src/lib.rs \
  && echo '' > crates/collectors/src/lib.rs \
  && echo '' > crates/pack/src/lib.rs \
  && echo '' > crates/server/src/lib.rs \
  && echo 'fn main() {}' > crates/server/src/main.rs \
  && echo 'fn main() {}' > crates/agent/src/main.rs \
+ && echo 'fn main() {}' > crates/cli/src/main.rs \
  && cargo build --release --locked -p dumbmonit-server \
  && rm -rf crates/proto/src crates/collectors/src crates/pack/src crates/server/src
 
@@ -173,13 +175,15 @@ COPY crates/collectors/Cargo.toml crates/collectors/
 COPY crates/pack/Cargo.toml crates/pack/
 COPY crates/server/Cargo.toml crates/server/
 COPY crates/agent/Cargo.toml crates/agent/
-RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src \
+COPY crates/cli/Cargo.toml crates/cli/
+RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src crates/cli/src \
  && echo '' > crates/proto/src/lib.rs \
  && echo '' > crates/collectors/src/lib.rs \
  && echo '' > crates/pack/src/lib.rs \
  && echo '' > crates/server/src/lib.rs \
  && echo 'fn main() {}' > crates/server/src/main.rs \
  && echo 'fn main() {}' > crates/agent/src/main.rs \
+ && echo 'fn main() {}' > crates/cli/src/main.rs \
  && cargo zigbuild --release --locked -p dumbmonit-agent \
       $(for t in $AGENT_TARGETS; do echo "--target $t"; done) \
  && rm -rf crates/proto/src crates/collectors/src crates/agent/src

@@ -548,6 +548,17 @@ For an existing Prometheus or Grafana. Both take a `read` API token in
 `DUMBMONIT_METRICS_PUBLIC=true` serves the three without a token — only behind
 a firewall, since they carry every measurement of every monitor.
 
+## Receiving OpenTelemetry (outside `/api`)
+
+OTLP over HTTP, with a `write` API token in `Authorization: Bearer dmt_…` and the
+target named by the `X-DumbMonit-Target` header (or `?target=`). See
+[OpenTelemetry source](../devices/otlp.md).
+
+| Method | Route | Purpose |
+|---|---|---|
+| `POST` | `/api/otlp/v1/metrics` | OTLP metrics, protobuf or JSON, optionally gzip. `200` with `partialSuccess.rejectedDataPoints` when some points were not stored; `415` for another content type, `400` for an unreadable body. |
+| `POST` | `/api/otlp/v1/logs` | OTLP logs, relayed to VictoriaLogs; `503` while it is disabled. |
+
 ## Further routes
 
 Routes not detailed above; the OpenAPI document gives their parameters and

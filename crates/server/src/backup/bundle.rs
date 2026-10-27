@@ -146,12 +146,45 @@ pub struct Bundle {
     /// Emplacements de la carte du monde (migration 0059).
     #[serde(default)]
     pub locations: Vec<BundleLocation>,
+    /// Équipes, leurs membres et leurs droits par dossier (migration 0105).
+    #[serde(default)]
+    pub teams: Vec<BundleTeam>,
+    /// Réglages des équipes (clé `teams.access` de `settings`).
+    #[serde(default)]
+    pub teams_settings: Option<Value>,
+    /// Astreintes : plannings, remplacements, politiques, contacts et
+    /// préférences (migrations 0100 à 0102).
+    #[serde(default)]
+    pub oncall: crate::backup::oncall::BundleOncall,
     /// Corrections de la carte de topologie (migration 0072).
     #[serde(default)]
     pub topology_corrections: Vec<BundleTopologyCorrection>,
     /// Règles de la carte, acceptées ou refusées (migration 0072).
     #[serde(default)]
     pub topology_rules: Vec<BundleTopologyRule>,
+    /// Tableaux de bord, partagés et personnels (migration 0120).
+    #[serde(default)]
+    pub dashboards: Vec<BundleDashboard>,
+    /// Procédures et leurs rattachements (migration 0150).
+    #[serde(default)]
+    pub runbooks: Vec<BundleRunbook>,
+    /// Actions de remédiation, secrets compris (migration 0151).
+    #[serde(default)]
+    pub remediation_actions: Vec<BundleRemediationAction>,
+    /// Politiques automatiques. Toujours restaurées **désarmées** : armer une
+    /// action sur une machine se confirme en personne, pas en relisant un
+    /// fichier. Le journal des exécutions, lui, ne voyage pas.
+    #[serde(default)]
+    pub remediation_policies: Vec<BundleRemediationPolicy>,
+    /// Clés d'hôte SSH mémorisées des sauvegardes de configuration réseau
+    /// (migration 0175) : restaurer sans elles referait confiance à la
+    /// première clé venue.
+    #[serde(default)]
+    pub netconfig_host_keys: Vec<BundleNetconfigHostKey>,
+    /// Versions des configurations réseau, en clair dans le lot (lui-même
+    /// chiffré par la phrase de passe). Seulement sur demande à l'export.
+    #[serde(default)]
+    pub netconfig_versions: Vec<BundleNetconfigVersion>,
 }
 
 impl Bundle {
@@ -172,8 +205,16 @@ impl Bundle {
             ("push_monitors".to_string(), self.push_monitors.len()),
             ("packs".to_string(), self.packs.len()),
             ("locations".to_string(), self.locations.len()),
+            ("teams".to_string(), self.teams.len()),
+            ("oncall".to_string(), self.oncall.count()),
             ("topology_corrections".to_string(), self.topology_corrections.len()),
             ("topology_rules".to_string(), self.topology_rules.len()),
+            ("dashboards".to_string(), self.dashboards.len()),
+            ("runbooks".to_string(), self.runbooks.len()),
+            ("remediation_actions".to_string(), self.remediation_actions.len()),
+            ("remediation_policies".to_string(), self.remediation_policies.len()),
+            ("netconfig_host_keys".to_string(), self.netconfig_host_keys.len()),
+            ("netconfig_versions".to_string(), self.netconfig_versions.len()),
         ])
     }
 }
@@ -295,6 +336,42 @@ pub struct BundleTopologyRule {
     pub created_at: String,
 }
 
+/// Une équipe, désignée par son nom (unique sans casse). Les membres sont
+/// désignés par leur identifiant de compte, les droits par nom de dossier.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTeam {
+    pub name: String,
+    #[serde(default)]
+    pub description: String,
+    #[serde(default)]
+    pub idp_groups: Vec<String>,
+    #[serde(default)]
+    pub members: Vec<BundleTeamMember>,
+    #[serde(default)]
+    pub grants: Vec<crate::auth::teams::Grant>,
+    /// Rattachement au provisionnement SCIM, pour que le fournisseur retrouve
+    /// l'équipe après une restauration.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    /// Créée par SCIM (et non rattachée).
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub scim_created: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleTeamMember {
+    pub username: String,
+    /// `manual`, `idp` ou `scim`.
+    #[serde(default = "manual_source")]
+    pub source: String,
+}
+
+fn manual_source() -> String {
+    "manual".to_string()
+}
+
 /// Un emplacement de la carte du monde, désigné par son nom (unique sans casse).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BundleLocation {
@@ -307,6 +384,22 @@ pub struct BundleLocation {
     pub site: String,
     #[serde(default)]
     pub main_site: bool,
+}
+
+/// Un tableau de bord, désigné par son nom et son propriétaire (nom de
+/// compte ; `None` pour un tableau partagé).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleDashboard {
+    pub name: String,
+    #[serde(default)]
+    pub shared: bool,
+    #[serde(default)]
+    pub owner: Option<String>,
+    pub range_secs: i64,
+    pub refresh_secs: i64,
+    /// Grille de widgets telle que stockée ; revalidée à la restauration.
+    #[serde(default)]
+    pub widgets: serde_json::Value,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -418,6 +511,20 @@ fn utc() -> String {
     "UTC".to_string()
 }
 
+/// Canaux par lesquels les visiteurs d'une page peuvent s'abonner. Les canaux
+/// de notification (courriel, SMS) sont désignés par leur nom.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct BundleSubscriptions {
+    #[serde(default)]
+    pub email_channel: Option<String>,
+    #[serde(default)]
+    pub sms_channel: Option<String>,
+    #[serde(default)]
+    pub webhook: bool,
+    #[serde(default)]
+    pub slack: bool,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BundleStatusPage {
     pub slug: String,
@@ -468,6 +575,10 @@ pub struct BundleStatusPage {
     /// Noms publics des membres de ces groupes (migration 0067).
     #[serde(default)]
     pub group_labels: Vec<BundleGroupLabel>,
+    /// Canaux d'abonnement ouverts (migration 0140). Les abonnés eux-mêmes ne
+    /// voyagent pas. Absent d'une ancienne sauvegarde : réglages inchangés.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub subscriptions: Option<BundleSubscriptions>,
 }
 
 /// Nom public d'une surveillance arrivée par un groupe coché.
@@ -530,6 +641,11 @@ pub struct BundleUser {
     pub oidc_subject: Option<String>,
     #[serde(default)]
     pub oidc_issuer: Option<String>,
+    /// Identité SAML (`NameID` persistant et IdP émetteur).
+    #[serde(default)]
+    pub saml_subject: Option<String>,
+    #[serde(default)]
+    pub saml_issuer: Option<String>,
     #[serde(default)]
     pub created_at: Option<String>,
     /// Empreinte Argon2 du mot de passe, présente seulement si l'opérateur a
@@ -544,6 +660,18 @@ pub struct BundleUser {
     /// Empreintes des codes de secours restants, base64.
     #[serde(default)]
     pub recovery_codes: Vec<String>,
+    /// Rattachement au provisionnement SCIM : identifiant SCIM, identifiant
+    /// chez le fournisseur, courriel annoncé. Le jeton SCIM, lui, ne fait jamais
+    /// partie d'une sauvegarde.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_external_id: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scim_email: Option<String>,
+    /// Désactivé par le fournisseur (SCIM), pas par un administrateur.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub disabled_by_scim: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -574,6 +702,38 @@ pub struct BundleApiToken {
     /// Compte propriétaire, par nom d'utilisateur.
     #[serde(default)]
     pub user: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleNetconfigHostKey {
+    pub target: String,
+    /// Empreinte SHA-256 de la clé (`SHA256:…`).
+    pub host_key: String,
+}
+
+/// Une version de configuration réseau.
+///
+/// `Debug` est écrit à la main : le texte contient les secrets de
+/// l'équipement.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct BundleNetconfigVersion {
+    pub target: String,
+    pub fetched_at: String,
+    pub last_seen_at: String,
+    pub profile: String,
+    pub added: i64,
+    pub removed: i64,
+    pub content: String,
+}
+
+impl std::fmt::Debug for BundleNetconfigVersion {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BundleNetconfigVersion")
+            .field("target", &self.target)
+            .field("fetched_at", &self.fetched_at)
+            .field("bytes", &self.content.len())
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -851,4 +1011,41 @@ mod tests {
         envelope.kdf.t_cost = 16;
         assert!(open(&envelope, PHRASE).is_err());
     }
+}
+
+/// Une procédure : titre, texte Markdown et rattachements (règle par uid,
+/// dossier, type d'équipement — rien qui dépende des identifiants locaux).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRunbook {
+    pub title: String,
+    #[serde(default)]
+    pub body: String,
+    #[serde(default)]
+    pub links: Vec<crate::remediation::runbooks::RunbookLink>,
+}
+
+/// Une action de remédiation. L'équipement fixé est désigné par
+/// [`target_ref`] ; les secrets voyagent dans la charge chiffrée du lot.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRemediationAction {
+    pub name: String,
+    pub kind: String,
+    #[serde(default)]
+    pub params: Value,
+    #[serde(default)]
+    pub secrets: BTreeMap<String, String>,
+    #[serde(default)]
+    pub target: Option<String>,
+}
+
+/// Une politique automatique, désignée par le nom de son action.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct BundleRemediationPolicy {
+    pub action: String,
+    pub rule_uid: String,
+    #[serde(default)]
+    pub target: Option<String>,
+    pub after_minutes: i64,
+    pub max_attempts: i64,
+    pub window_minutes: i64,
 }

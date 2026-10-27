@@ -153,6 +153,8 @@
 		return [...groups.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1)).map(([, group]) => group);
 	});
 
+	/** Services a subscriber may follow, by public key. */
+	const subscribeServices = $derived(status ? status.groups.flatMap((g) => g.items.map((item) => ({ key: item.key, label: item.label }))) : []);
 	const serviceCount = $derived(status ? status.groups.reduce((n, g) => n + g.items.length, 0) : 0);
 
 	// Banner scene: an empty (or unknown) list keeps the plain page.
@@ -413,7 +415,7 @@
 			{@render announcements()}
 			{@render services(true)}
 			{@render pastIncidents()}
-			<StatusUpdates slug={status.page.slug} subscribe={status.page.subscribe} />
+			<StatusUpdates slug={status.page.slug} kinds={status.page.subscribe_kinds ?? []} services={subscribeServices} />
 			{@render pageFooter()}
 		</main>
 	{:else}
@@ -492,7 +494,7 @@
 				{@render announcements()}
 				{@render services(false)}
 				{@render pastIncidents()}
-				<StatusUpdates slug={status.page.slug} subscribe={status.page.subscribe} />
+				<StatusUpdates slug={status.page.slug} kinds={status.page.subscribe_kinds ?? []} services={subscribeServices} />
 			{/if}
 
 			{@render pageFooter()}

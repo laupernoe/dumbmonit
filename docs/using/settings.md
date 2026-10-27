@@ -6,7 +6,7 @@ Settings holds what is administrative: your account, who can sign in and how, th
 
 | Tab | Address | What it holds |
 |---|---|---|
-| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications |
+| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
 | Team & access | `/settings/team` | Users, Single sign-on |
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
 | Notifications & reports | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)), Reports |
@@ -173,6 +173,12 @@ default applies. A value you saved explicitly is kept as it is.
 Admins only. Sign-in with directory usernames and passwords on the usual
 sign-in screen, roles from the directory groups, accounts created at the first
 sign-in. See [LDAP / Active Directory](ldap.md).
+
+## SAML, SCIM and teams
+
+Admins only. SAML 2.0 single sign-on, SCIM provisioning, and teams that limit
+each account to some folders of monitors. See [SAML 2.0](saml.md),
+[SCIM provisioning](scim.md) and [Teams and permissions](teams.md).
 
 ## Agents
 

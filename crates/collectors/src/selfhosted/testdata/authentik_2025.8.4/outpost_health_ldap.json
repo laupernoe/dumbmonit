@@ -1,0 +1,1 @@
+[{"uid":"ldap-1","last_seen":"2026-10-25T22:00:00Z","version":"2025.8.4","version_should":"2025.8.4","version_outdated":false,"build_hash":"","golang_version":"go1.24.4","openssl_enabled":true,"fips_enabled":false,"hostname":"ldap-host"}]

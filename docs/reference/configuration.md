@@ -69,6 +69,7 @@ configuration file to mount.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Hours between two backups, 1 to 8760. The first one happens one interval after startup, not at startup. |
 | `DUMBMONIT_DEMO` | *(off)* | `1` for a public, read-only demo with a fixed fictional estate, sign-in `demo` / `demo`. **Recreates the database at every start**: never on a real data volume. See [Run a demo instance](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | How many backups are kept, 1 to 365. The oldest are removed with their `.key`. |
+| `DUMBMONIT_CONFIG_DIR` | empty | A folder of YAML files applied (with prune) at startup and on every change. See [Configuration files](../using/config-files.md). |
 | `DUMBMONIT_BROWSER_URL` | *(unset)* | Headless Chromium used for the screenshots of [website changes](../devices/webchange.md#screenshots), as `http://host:9222` (its DevTools port). Add a `chromedp/headless-shell` service to your Compose file, as shown in [Screenshots](../devices/webchange.md#screenshots). Unset: text comparison only. |
 
 Baseline retention (60 days) and the 14-day learning period are not
@@ -145,6 +146,28 @@ then starts VictoriaLogs, sends its own log lines to it, and the admin-only
 Its data lives in `<data dir>/vlogs`; the retention is set in **Settings →
 System** (30 days by default).
 
+### Central logs: syslog server and SNMP traps
+
+Both receivers write into the embedded VictoriaLogs (turn the log store on
+first) and are **off by default**. They listen on unprivileged ports, since the
+container does not run as root; publish the ports you use in
+`docker-compose.yml` (the lines are commented there). See
+[Logs](../using/logs.md).
+
+| Variable | Default | Role |
+|---|---|---|
+| `DUMBMONIT_SYSLOG_ENABLED` | `false` | Start the syslog server. |
+| `DUMBMONIT_SYSLOG_PORT` | `5514` | UDP and TCP port. |
+| `DUMBMONIT_SYSLOG_BIND` | `0.0.0.0` | Listen address. |
+| `DUMBMONIT_SYSLOG_UDP` / `DUMBMONIT_SYSLOG_TCP` | `true` | Enable each transport. |
+| `DUMBMONIT_TRAPS_ENABLED` | `false` | Start the SNMP trap receiver (v1, v2c). |
+| `DUMBMONIT_TRAPS_PORT` | `1162` | UDP port. |
+| `DUMBMONIT_TRAPS_BIND` | `0.0.0.0` | Listen address. |
+| `DUMBMONIT_TRAPS_COMMUNITIES` | empty | Comma-separated communities to accept; empty accepts any. |
+
+On the machine of an agent, `DUMBMONIT_AGENT_LOGS=off` forbids log collection
+there whatever the server asks.
+
 ## Compose-level settings
 
 The shipped `docker-compose.yml` reads no variable and needs no `.env` file.
@@ -158,6 +181,8 @@ The development overlay `docker-compose.dev.yml` reads `DUMBMONIT_VM_PORT`
 
 | Port | Container | Purpose |
 |---|---|---|
+| `5514/udp`, `5514/tcp` | `dumbmonit` | Syslog server, only when `DUMBMONIT_SYSLOG_ENABLED=true`. Commented out in the Compose file. |
+| `1162/udp` | `dumbmonit` | SNMP trap receiver, only when `DUMBMONIT_TRAPS_ENABLED=true`. Commented out in the Compose file. |
 | `8080/tcp` | `dumbmonit` | Web UI, API, agent installers and downloads, agent ingest. The only port to publish. |
 | `8428/tcp` | `dumbmonit` | Embedded VictoriaMetrics HTTP API, on the container's loopback. Published only by the development overlay. |
 

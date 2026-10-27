@@ -13,6 +13,7 @@
 	import ChannelForm from './ChannelForm.svelte';
 	import ChannelErrorDetail from './ChannelErrorDetail.svelte';
 	import { m } from '#lib/paraglide/messages.js';
+	import FileManagedBadge from '#lib/components/settings/FileManagedBadge.svelte';
 
 	let kinds = $state<KindInfo[]>([]);
 	let channels = $state<Channel[]>([]);
@@ -193,6 +194,7 @@
 								<div class="min-w-0 flex-[1_1_14rem]">
 									<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
 										<span class="truncate font-semibold text-ink">{channel.name}</span>
+										<FileManagedBadge kind="channel" id={channel.name} />
 										<span class="text-sm text-ink-2">{kindLabel(channel.kind)}</span>
 										{#if channel.enabled}
 											<Plate tone="signal" label={m.notifications_channels_enabled()} />

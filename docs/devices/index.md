@@ -47,9 +47,16 @@ form always matches what this version can monitor.
 | [Redis / Valkey](redis.md) | `redis` | ACL user, password only, or none | In-memory store: memory against maxmemory, replication, persistence, keys |
 | [MongoDB](mongodb.md) | `mongodb` | username/password (clusterMonitor) or none | Document database: replica set, lag, connections, WiredTiger cache |
 | [RabbitMQ](rabbitmq.md) | `rabbitmq` | username/password (monitoring tag) | Message broker: resource alarms, nodes, partitions, queues without consumer |
+| [SQL Server](mssql.md) | `mssql` | SQL login (username/password) | Databases not online, blocking, connections, volume space, Agent jobs, AlwaysOn |
+| [Oracle Database](oracle.md) | `oracle` | database account (username/password), through ORDS | Instance state, tablespaces, sessions, Data Guard lag, recovery area, scheduler jobs |
+| [Elasticsearch / OpenSearch](elasticsearch.md) | `elasticsearch` | username/password, token or none | Cluster status, unassigned shards, node disk and heap |
+| [InfluxDB](influxdb.md) | `influxdb` | none or API token | InfluxDB 2 and 3: health, readiness, uptime, memory, server errors |
+| [Apache Kafka](kafka.md) | `kafka` | none or SASL/PLAIN over TLS | Offline and under-replicated partitions, controller, consumer group lag |
 | [CrowdSec](crowdsec.md) | `crowdsec` | none, or bouncer API key | Security engine: decisions, alerts, bouncers that stopped pulling, log reading |
 | [Traefik](traefik.md) | `traefik` | none, or basicAuth user | Reverse proxy: disabled routers, backend servers down, certificates not obtained or not renewed, 5xx share |
 | [Caddy](caddy.md) | `caddy` | read-only view user, or none | Web server and reverse proxy: upstream health, failed reloads, handler errors, 5xx share |
+| [Prometheus exporter](prometheus.md) | `prometheus` | none, basic auth or bearer token | Any exporter (node_exporter, windows_exporter, cAdvisor, blackbox…): every series stored, graphed and usable in rules |
+| [OpenTelemetry source](otlp.md) | `otlp` | API token (write scope) | OTLP/HTTP receiver: metrics from an OpenTelemetry Collector or an application, logs relayed to VictoriaLogs |
 | [Nginx](nginx.md) | `nginx` | none, or basic auth | Web server: active/waiting connections, accept/handled/request rates, NGINX Plus upstream health |
 | [Apache httpd](apache.md) | `apache` | none, or basic auth | Web server: busy/idle workers, scoreboard by state, request and byte rates |
 | [Nginx Proxy Manager](npm.md) | `npm` | user email and password (view only) | Proxy manager: hosts nginx refused, disabled hosts, certificates served |
@@ -60,6 +67,7 @@ form always matches what this version can monitor.
 | [Kubernetes / k3s](kubernetes.md) | `kubernetes` | service account token (read-only ClusterRole) | Cluster: nodes not ready, pods crash looping or pending, workloads missing replicas, stuck volume claims |
 | [Active Directory](activedirectory.md) | `activedirectory` | username/password (plain domain user) | Windows domain over LDAPS: domain controllers and FSMO roles, privileged group members, password policy, security findings |
 | [Veeam Backup & Replication](veeam.md) | `veeam` | username/password (Veeam Backup Viewer) | Backup server: failed jobs, failed sessions, repositories filling up, license |
+| [Windows (WinRM)](winrm.md) | `winrm` | username/password (Remote Management Users) | Windows server without an agent: CPU, memory, disks, services (including stopped automatic ones), uptime, event log errors |
 | [Kopia](kopia.md) (beta) | `kopia` | server user name and password | Backup server: last snapshot of each source (age, errors, size), sources behind their schedule, repository connection |
 | [Duplicati](duplicati.md) (beta) | `duplicati` | web interface password | Backup server (2.1+): last successful backup of each task, last result, warnings and errors, task running |
 | [Tailscale](tailscale.md) | `tailscale` | OAuth client (devices:core:read) or API access token | Tailnet: servers offline, node keys expiring, devices awaiting approval |
@@ -78,6 +86,17 @@ form always matches what this version can monitor.
 | [Plex Media Server](plex.md) | `plex` | X-Plex-Token, or none from an allowed network | Media server: streams, transcodes, libraries, updates |
 | [GitLab (self-managed)](gitlab.md) | `gitlab` | personal access token | Forge: Sidekiq backlog, CI runners, pending migrations, sign-up/2FA settings, licence |
 | [Forgejo / Gitea](forgejo.md) | `forgejo` | access token | Forge: health check, scheduled tasks, Actions runners, repository/account counts |
+| [Sonarr (beta)](sonarr.md) | `sonarr` | API key | Series: health, failing clients and indexers, queue errors, disk, updates |
+| [Radarr (beta)](radarr.md) | `radarr` | API key | Movies: health, failing clients and indexers, queue errors, disk, updates |
+| [Lidarr (beta)](lidarr.md) | `lidarr` | API key | Music: health, failing clients and indexers, queue errors, disk, updates |
+| [Prowlarr (beta)](prowlarr.md) | `prowlarr` | API key | Indexers: health, indexers disabled after failures, disk, updates |
+| [qBittorrent (beta)](qbittorrent.md) | `qbittorrent` | user name and password, or none | Torrent client: torrents in error, lost connectivity, speeds, free space |
+| [UniFi Protect (beta)](unifiprotect.md) | `unifiprotect` | local user name and password | Cameras: offline or not recording, NVR disks and storage |
+| [Frigate NVR (beta)](frigate.md) | `frigate` | none or bearer token | NVR: cameras without frames, detector hangs, frame rates, recording storage |
+| [Keycloak (beta)](keycloak.md) | `keycloak` | none, or client ID and secret | Identity: readiness and database, realms, sessions, users |
+| [authentik (beta)](authentik.md) | `authentik` | API token | Identity: readiness, workers, failed tasks, outposts, updates |
+| [Vaultwarden (beta)](vaultwarden.md) | `vaultwarden` | none, or admin token | Password vault: liveness, version, open sign-ups, account counts |
+| [mailcow (beta)](mailcow.md) | `mailcow` | read-only API key | Mail server: stopped containers, queue, mail volume, mailbox quotas |
 | [Server with agent](agent.md) | `agent` | none (enrollment token) | Linux, Windows, Raspberry Pi, [Hyper-V host](agent.md#hyper-v-hosts) |
 | [Website or web API](services.md#http) | `http` | none, username/password or token | Health page, REST API |
 | [Network port](services.md#tcp) | `tcp` | none | SSH, SMB, database |
