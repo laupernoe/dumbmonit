@@ -79,7 +79,7 @@
 <NightScene {mood} {pulse} {frame} {focus} {paused} {sparkle} glow="#6a5232" seed={37}>
 	{#snippet children(uid)}
 		<defs>
-			<linearGradient id="{uid}-spine" x1="0" y1="1" x2="0" y2="0">
+			<linearGradient id="{uid}-spine" gradientUnits="userSpaceOnUse" x1="0" y1="860" x2="0" y2="300">
 				<stop offset="0" stop-color="#ffd890" stop-opacity=".9" />
 				<stop offset=".7" stop-color="#ffe9c0" stop-opacity=".7" />
 				<stop offset="1" stop-color="#ffffff" stop-opacity=".95" />
