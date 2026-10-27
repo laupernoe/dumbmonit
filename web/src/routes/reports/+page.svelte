@@ -2,12 +2,14 @@
 	/**
 	 * Reports: the availability (SLA) export of a period, the scheduled
 	 * reports and the history of their sends in one place. Administrators
-	 * only (the API refuses everyone else, reading included).
+	 * only (the API refuses everyone else, reading included). The deadlines
+	 * timeline below is readable by everyone.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { PageHeader, Plate } from '#lib/ui/index.js';
 	import ReportsContent from '#lib/components/reports/ReportsContent.svelte';
+	import DeadlinesSection from '#lib/components/deadlines/DeadlinesSection.svelte';
 </script>
 
 <svelte:head><title>{m.reports_page_title()} · DumbMonit</title></svelte:head>
@@ -20,3 +22,6 @@
 {:else}
 	<ReportsContent />
 {/if}
+
+<!-- Expiry dates across the instance; every signed-in user may read them. -->
+<DeadlinesSection class="mt-8" />
