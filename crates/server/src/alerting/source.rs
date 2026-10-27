@@ -23,6 +23,18 @@ pub struct SeriesPoint {
 pub trait MetricSource: Send + Sync {
     /// Exécute une requête MetricsQL instantanée.
     async fn instant(&self, query: &str) -> Result<Vec<SeriesPoint>>;
+
+    /// Compte les lignes de journal qui répondent à un filtre LogsQL sur la
+    /// fenêtre écoulée : un point par cible (`target`), ou un seul si `per_target`
+    /// est faux. Les sources sans magasin de journaux répondent par une erreur.
+    async fn log_matches(
+        &self,
+        _query: &str,
+        _window_secs: u64,
+        _per_target: bool,
+    ) -> Result<Vec<SeriesPoint>> {
+        anyhow::bail!("the log store is not available")
+    }
 }
 
 #[async_trait]

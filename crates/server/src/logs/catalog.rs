@@ -156,6 +156,7 @@ fn field(key: &'static str, label: &'static str, input: &'static str, help: &'st
         shape: "scalar",
         default: "",
         destination: false,
+        lookup: "",
     }
 }
 

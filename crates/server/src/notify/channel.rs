@@ -46,8 +46,16 @@ pub const CHANNEL_KINDS: &[&str] = &[
     // Astreinte
     "pagerduty",
     "opsgenie",
+    // Astreintes intégrées : déclenche une politique d'escalade (`crate::oncall`).
+    "oncall",
     "grafana_oncall",
     "signl4",
+    // Tickets automatiques
+    "jira",
+    "glpi",
+    "zammad",
+    "github_issues",
+    "gitlab_issues",
     // Sur mesure
     "webhook",
 ];

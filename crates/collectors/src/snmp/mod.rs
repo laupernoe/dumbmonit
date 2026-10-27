@@ -38,6 +38,39 @@ pub use profile::{Catalog, Profile};
 // Type d'un champ public de `ScanOptions` : il doit être nommable par l'appelant.
 pub use session::CommunityVersion;
 
+/// Nom lisible d'un OID, d'après les profils embarqués : la métrique ou
+/// l'étiquette dont l'OID est le plus long préfixe, suivie de l'index restant
+/// (`if_oper_status.3`). Sert à décrire les varbinds d'une trap reçue ;
+/// `None` quand aucun profil ne connaît ce sous-arbre.
+pub fn describe_oid(arcs: &[u64]) -> Option<String> {
+    use std::collections::HashMap;
+    use std::sync::OnceLock;
+
+    static NAMES: OnceLock<HashMap<Vec<u64>, String>> = OnceLock::new();
+    let names = NAMES.get_or_init(|| {
+        let mut names: HashMap<Vec<u64>, String> = HashMap::new();
+        for profile in profile::embedded().profiles() {
+            for metric in &profile.metrics {
+                names.entry(metric.oid.arcs().to_vec()).or_insert_with(|| metric.name.clone());
+                for (label, oid) in &metric.labels {
+                    names.entry(oid.arcs().to_vec()).or_insert_with(|| label.clone());
+                }
+            }
+        }
+        names
+    });
+    (1..=arcs.len()).rev().find_map(|length| {
+        names.get(&arcs[..length]).map(|name| {
+            if length == arcs.len() {
+                name.clone()
+            } else {
+                let index: Vec<String> = arcs[length..].iter().map(u64::to_string).collect();
+                format!("{name}.{}", index.join("."))
+            }
+        })
+    })
+}
+
 /// Les trois scalaires d'identification, lus à chaque auto-détection.
 static SYS_DESCR: LazyLock<ObjectId> =
     LazyLock::new(|| ObjectId::new(vec![1, 3, 6, 1, 2, 1, 1, 1, 0]));
@@ -348,11 +381,14 @@ mod tests {
         for profile in SnmpCollector::new().catalog().profiles() {
             assert!(!profile.name.trim().is_empty(), "profil « {} » sans nom", profile.id);
             for metric in &profile.metrics {
-                // LLDP-MIB est une MIB de l'IEEE, rangée sous iso.std.iso8802
-                // (1.0.8802) et non sous l'arbre Internet.
+                // LLDP-MIB et LAG-MIB sont des MIB de l'IEEE, rangées sous
+                // iso.std.iso8802 (1.0.8802) et iso.member-body (1.2.840.10006),
+                // et non sous l'arbre Internet.
                 assert!(
                     metric.oid.arcs().starts_with(&[1, 3, 6, 1])
-                        || metric.oid.arcs().starts_with(&[1, 0, 8802]),
+                        || metric.oid.arcs().starts_with(&[1, 0, 8802])
+                        // IEEE 802.3ad (LAG-MIB), sous iso.member-body.us.
+                        || metric.oid.arcs().starts_with(&[1, 2, 840, 10006]),
                     "profil « {} », métrique « {} » : OID hors de l'arbre Internet",
                     profile.id,
                     metric.name

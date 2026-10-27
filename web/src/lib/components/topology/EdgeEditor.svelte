@@ -10,7 +10,7 @@
 	import { Button } from '#lib/ui/index.js';
 	import type { TopologyCorrection, TopologyRule } from '#lib/api/index.js';
 	import { correctionBy, correctionText, ruleText } from './editText';
-	import { sourceLabel } from './legend';
+	import { portsText, sourceLabel } from './legend';
 	import type { MapEdge } from './layout';
 
 	interface Props {
@@ -58,6 +58,10 @@
 		<dd><button type="button" class={chip} onclick={() => onselect(edge.from)}><span class="truncate">{name(edge.from)}</span></button></dd>
 		<dt class="text-ink-3">{m.topology_edit_edge_to()}</dt>
 		<dd><button type="button" class={chip} onclick={() => onselect(edge.to)}><span class="truncate">{name(edge.to)}</span></button></dd>
+		{#if portsText(edge.fromPort, edge.toPort)}
+			<dt class="text-ink-3">{m.topology_edit_edge_ports()}</dt>
+			<dd class="text-ink">{portsText(edge.fromPort, edge.toPort)}</dd>
+		{/if}
 		<dt class="text-ink-3">{m.topology_edit_edge_origin()}</dt>
 		<dd class="text-ink">
 			{#if origin === 'manual'}

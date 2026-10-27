@@ -113,6 +113,7 @@ Leur présentation dépend du canal :
 | Discord, Slack, courriel et tous les autres canaux | Liens en fin de message |
 | Webhook personnalisé | Liens dans `{{message}}`, et les variables `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` |
 | PagerDuty, Opsgenie, Grafana OnCall, SIGNL4 | Rien : acquittez dans le service lui-même |
+| Jira, GLPI, Zammad, GitHub Issues, GitLab Issues | Rien : l'acquittement est ajouté au ticket en commentaire |
 | Vonage, Telnyx, ASPSMS (SMS) | Rien : un lien signé coûterait plusieurs segments de SMS |
 
 Telegram n'accepte de boutons que vers une adresse `https` avec un nom de domaine ;
@@ -836,8 +837,8 @@ Le message est envoyé en Markdown.
 
 La clé et le secret d'API sont sur le tableau de bord Vonage.
 
-- **Réglages** — `api_key`, `from` (un numéro ou un nom alphanumérique), `to` (liste)
-- **Secrets** — `api_secret`
+- **Réglages** — `from` (un numéro ou un nom alphanumérique), `to` (liste)
+- **Secrets** — `api_key`, `api_secret`
 
 ### SMS via Telnyx
 
@@ -912,6 +913,108 @@ Dans SIGNL4, copiez le webhook de l'équipe depuis **Teams → Team settings** :
 Une alerte arrive sur les téléphones de l'équipe (`X-S4-Status: new`) et sa
 résolution la ferme (`resolved`), rapprochées par un identifiant externe par
 équipement.
+
+### DumbMonit on-call
+
+Prévient la personne d'astreinte, puis escalade étape par étape jusqu'à ce que
+quelqu'un acquitte. Un seul réglage, la **politique d'escalade** à exécuter, et
+aucun secret. Plannings, contacts et politiques sont décrits dans
+[Astreintes](alerting/oncall.md) ; le canal passe par le routage habituel
+(étiquettes, sévérité minimale, canaux choisis par règle).
+
+### Tickets automatiques (Jira, GLPI, Zammad, GitHub, GitLab)
+
+Ces cinq canaux n'envoient pas de message : ils tiennent **un ticket par alerte**.
+
+- Quand une alerte s'ouvre, le ticket est créé : titre, description avec un lien
+  vers l'équipement dans DumbMonit (renseignez l'adresse publique dans la politique
+  de notification) et une priorité tirée de la sévérité.
+- La référence du ticket est mémorisée par alerte et par canal : un rappel ou une
+  nouvelle tentative n'en ouvre jamais un second tant que le premier est ouvert.
+- Les faits notables s'ajoutent en commentaire : une escalade, une alerte que
+  personne n'a acquittée à temps, une nouvelle constatation, et un acquittement
+  fait dans DumbMonit.
+- À la résolution, DumbMonit commente puis ferme le ticket (transition, statut ou
+  état réglé sur le canal).
+- **Rouvrir si l'alerte revient dans (heures)** — si la même alerte revient dans ce
+  délai, le ticket clos est rouvert avec un commentaire au lieu d'en ouvrir un
+  nouveau. Vide ou 0 : un nouveau ticket à chaque fois. Si le ticket ne peut pas
+  être rouvert (transition absente, ticket supprimé), un nouveau est créé.
+- Le lien du ticket apparaît sur l'alerte, dans ses détails.
+- Les échecs apparaissent dans la « dernière erreur » du canal. Une panne passagère
+  (service en panne, 429) est retentée avec un délai croissant ; une erreur
+  définitive (jeton refusé, projet inconnu) est signalée et non retentée.
+- **Envoyer un test** crée un ticket de test puis le ferme aussitôt. S'il ne peut
+  pas être fermé, l'erreur le dit et nomme le ticket à fermer à la main.
+- Les liens d'acquittement et de report ne sont pas ajoutés à ces canaux.
+
+Les jetons sont chiffrés et jamais remontrés. Créez un compte ou un jeton dédié,
+avec les seuls droits nécessaires.
+
+### Jira
+
+Fonctionne avec Jira Cloud et Jira Data Center.
+
+- **Cloud** : créez un jeton d'API sur <https://id.atlassian.com/manage-profile/security/api-tokens>
+  et indiquez l'e-mail du compte.
+- **Data Center** : **Profil → Personal Access Tokens** ; pas d'e-mail.
+
+- **Réglages** — `server_url`, `email`
+  (Cloud uniquement ; vide sur Data Center), `project` (la clé du projet), `issue_type` (défaut `Task`),
+  `labels` (liste), `priority` (`map` pose Highest, Medium ou Low selon la sévérité ;
+  `none` pour un projet sans champ priorité), `close_transition` (défaut `Done`),
+  `reopen_transition` (défaut `Reopen`), `reopen_hours`
+- **Secrets** — `api_token`
+
+Les transitions se choisissent par leur nom (celui de la transition ou du statut
+cible, sans tenir compte de la casse) parmi celles offertes depuis le statut actuel
+du ticket. Si le nom n'existe pas, l'erreur liste celles qui existent.
+
+### GLPI
+
+Activez l'API REST dans **Configuration → Générale → API**, créez un client d'API et
+copiez le **jeton d'API** de l'utilisateur (*Préférences → Clés d'accès distant*).
+
+- **Réglages** — `server_url` (l'adresse de GLPI ; `/apirest.php` est ajouté),
+  `entity_id`, `category_id` (nombres, optionnels), `close_status` (`solved` ou
+  `closed`), `reopen_hours`
+- **Secrets** — `user_token`, `app_token` (jeton d'application du client d'API, s'il
+  en exige un)
+
+Le ticket est un incident ; urgence, impact et priorité suivent la sévérité. Les
+escalades s'ajoutent en suivi. La réouverture remet le statut à *Nouveau*.
+
+### Zammad
+
+Créez un jeton d'accès dans **Profil → Accès par jeton** avec la permission
+`ticket.agent`.
+
+- **Réglages** — `server_url`, `group`, `customer` (e-mail ou identifiant),
+  `close_state` (défaut `closed`), `reopen_state` (défaut `open`), `reopen_hours`
+- **Secrets** — `token`
+
+Les tickets sont créés avec une note interne ; la priorité est basse, normale ou
+haute selon la sévérité.
+
+### GitHub Issues
+
+Créez un jeton à granularité fine (**Settings → Developer settings**) limité au
+dépôt, avec la permission **Issues : lecture et écriture**.
+
+- **Réglages** — `repository` (`owner/name`), `labels` (liste ; ils doivent exister),
+  `api_url` (GitHub Enterprise Server uniquement, par exemple
+  `https://ghe.example.org/api/v3`), `reopen_hours`
+- **Secrets** — `token`
+
+La résolution ferme l'issue comme *terminée*.
+
+### GitLab Issues
+
+Créez un jeton d'accès de projet (ou personnel) avec le périmètre `api`.
+
+- **Réglages** — `server_url`, `project` (identifiant numérique ou `groupe/projet`),
+  `labels` (liste), `reopen_hours`
+- **Secrets** — `token`
 
 ### Webhook personnalisé
 

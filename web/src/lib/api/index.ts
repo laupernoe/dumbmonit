@@ -24,6 +24,7 @@ import type {
 	AlertRulePayload,
 	Silence,
 	SilencePayload,
+	AccessInfo,
 	AuthState,
 	Channel,
 	ChannelKindInfo,
@@ -59,6 +60,9 @@ import type {
 	WebchangeChangeDetail,
 	WebchangeChangeKind,
 	WebchangePagesResponse,
+	NetconfigCompare,
+	NetconfigOverview,
+	NetconfigVersionContent,
 	ChannelMatcher,
 	MatchPreview,
 	NotificationPolicy,
@@ -78,11 +82,16 @@ import type {
 	PublicDayDetail,
 	PublicStatus,
 	StatusSubscriber,
+	StatusSubscribePayload,
+	StatusSubscribeReply,
+	StatusSubscriptionSettings,
 	TargetRules
 } from './types';
 
 export * from './types';
+export * from './oncall';
 export { onMutation } from './mutations';
+export * from './teams';
 export { ApiError, toApiError, setUnauthorizedHandler, setDemoRefusalHandler } from './client';
 
 // --- Health -----------------------------------------------------------------
@@ -197,6 +206,57 @@ export function webchangeScreenshotUrl(id: TargetId, snapshotId: number): string
 /** Asks for an immediate check of every page of this device. Fire-and-forget: 202. */
 export function checkWebchangeNow(id: TargetId): Promise<void> {
 	return request<void>(`/targets/${id}/webchange/check`, { method: 'POST' });
+}
+
+// --- Network configuration backups (netconfig) ------------------------------
+
+/** State, host key and version list of a `netconfig` device. */
+export function getNetconfig(id: TargetId, signal?: AbortSignal): Promise<NetconfigOverview> {
+	return request<NetconfigOverview>(`/targets/${id}/netconfig`, { signal });
+}
+
+/** One version's text, secrets masked unless `unmasked` (administrators only, audited). */
+export function getNetconfigVersion(
+	id: TargetId,
+	versionId: number,
+	unmasked = false,
+	signal?: AbortSignal
+): Promise<NetconfigVersionContent> {
+	return request<NetconfigVersionContent>(`/targets/${id}/netconfig/versions/${versionId}`, {
+		query: { unmasked: unmasked || undefined },
+		signal
+	});
+}
+
+/** Line diff between two versions; `from` defaults to the version before `to`. */
+export function compareNetconfig(
+	id: TargetId,
+	to: number,
+	options: { from?: number; unmasked?: boolean } = {},
+	signal?: AbortSignal
+): Promise<NetconfigCompare> {
+	return request<NetconfigCompare>(`/targets/${id}/netconfig/diff`, {
+		query: { to, from: options.from, unmasked: options.unmasked || undefined },
+		signal
+	});
+}
+
+/** Download link of a raw version (administrators signed in only, audited). */
+export function netconfigDownloadUrl(id: TargetId, versionId: number): string {
+	return `/api/targets/${id}/netconfig/versions/${versionId}/download`;
+}
+
+/** Reads the configuration now. Fire-and-forget: 202, `started` false if one is running. */
+export function fetchNetconfigNow(id: TargetId): Promise<{ started: boolean }> {
+	return request<{ started: boolean }>(`/targets/${id}/netconfig/fetch`, { method: 'POST' });
+}
+
+/** Accepts the new SSH host key the device presents, after checking its fingerprint. */
+export function acceptNetconfigHostKey(id: TargetId, fingerprint: string): Promise<void> {
+	return request<void>(`/targets/${id}/netconfig/host-key/accept`, {
+		method: 'POST',
+		body: { fingerprint }
+	});
 }
 
 // --- Metrics (anticipated) --------------------------------------------------
@@ -499,13 +559,14 @@ export async function getAuthStatus(signal?: AbortSignal): Promise<AuthState> {
 			user: status?.user ?? null,
 			oidc: status?.oidc ?? NO_OIDC,
 			ldap: { enabled: Boolean(status?.ldap?.enabled) },
+			saml: { enabled: Boolean(status?.saml?.enabled), label: status?.saml?.label || 'SAML' },
 			passkeys: Boolean(status?.passkeys),
 			demo: Boolean(status?.demo)
 		};
 	} catch (cause) {
 		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
 		if (cause instanceof ApiError && cause.missing) {
-			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, passkeys: false, demo: false };
+			return { available: false, configured: false, authenticated: true, user: null, oidc: NO_OIDC, ldap: { enabled: false }, saml: { enabled: false, label: 'SAML' }, passkeys: false, demo: false };
 		}
 		throw cause;
 	}
@@ -856,8 +917,21 @@ export function deleteStatusSubscriber(id: number, subscriber: number): Promise<
 }
 
 /** Public: asks for a confirmation email. Same answer whatever the address's state. */
-export function subscribeToStatus(slug: string, email: string): Promise<{ status: string; message: string }> {
-	return request(`/public/status/${encodeURIComponent(slug)}/subscribe`, { method: 'POST', body: { email } });
+export function subscribeToStatus(slug: string, payload: StatusSubscribePayload): Promise<StatusSubscribeReply> {
+	return request(`/public/status/${encodeURIComponent(slug)}/subscribe`, { method: 'POST', body: payload });
+}
+
+/** Public: confirms an SMS subscription with the code that was texted. */
+export function confirmStatusSmsCode(slug: string, phone: string, code: string): Promise<{ status: string }> {
+	return request(`/public/status/${encodeURIComponent(slug)}/confirm-code`, { method: 'POST', body: { phone, code } });
+}
+
+export function getStatusSubscriptionSettings(id: number, signal?: AbortSignal): Promise<StatusSubscriptionSettings> {
+	return request<StatusSubscriptionSettings>(`/status-pages/${id}/subscription`, { signal });
+}
+
+export function saveStatusSubscriptionSettings(id: number, settings: StatusSubscriptionSettings): Promise<StatusSubscriptionSettings> {
+	return request<StatusSubscriptionSettings>(`/status-pages/${id}/subscription`, { method: 'PUT', body: settings });
 }
 
 /** Public: confirms a subscription with the token from the email. */
@@ -936,6 +1010,20 @@ export function getOnboarding(signal?: AbortSignal): Promise<OnboardingState> {
 /** Dismisses a step, or the whole guide. Returns the state the server kept. */
 export function updateOnboarding(patch: OnboardingPatch): Promise<OnboardingState> {
 	return request<OnboardingState>('/onboarding', { method: 'PUT', body: patch });
+}
+
+/**
+ * Team rights of the current account. Older servers do not send `access`:
+ * the account is then treated as unrestricted. Never throws (but an abort).
+ */
+export async function getMyAccess(signal?: AbortSignal): Promise<AccessInfo | null> {
+	try {
+		const me = await request<{ access?: AccessInfo }>('/auth/me', { signal, anticipated: true });
+		return me?.access ?? null;
+	} catch (cause) {
+		if (cause instanceof DOMException && cause.name === 'AbortError') throw cause;
+		return null;
+	}
 }
 
 // --- Maintenance calendar (iCal) --------------------------------------------

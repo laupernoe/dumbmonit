@@ -14,6 +14,7 @@ export const EDGE_DASH: Record<TopologySource | 'wan', string> = {
 	hosted: '4 2',
 	relay: '10 4 2 4',
 	lldp: '1 4',
+	l2: '9 3 1 3 1 3',
 	samehost: '1 2',
 	backup: '14 4',
 	firewall: '5 3 1 3',
@@ -21,7 +22,7 @@ export const EDGE_DASH: Record<TopologySource | 'wan', string> = {
 	wan: '8 6'
 };
 
-export const SOURCES: readonly TopologySource[] = ['parent', 'service', 'hypervisor', 'hosted', 'relay', 'lldp', 'samehost', 'backup', 'firewall'];
+export const SOURCES: readonly TopologySource[] = ['parent', 'service', 'hypervisor', 'hosted', 'relay', 'lldp', 'l2', 'samehost', 'backup', 'firewall'];
 
 export function sourceLabel(source: TopologySource | 'wan'): string {
 	switch (source) {
@@ -37,6 +38,8 @@ export function sourceLabel(source: TopologySource | 'wan'): string {
 			return m.topology_legend_hosted();
 		case 'lldp':
 			return m.topology_legend_lldp();
+		case 'l2':
+			return m.topology_legend_l2();
 		case 'samehost':
 			return m.topology_legend_samehost();
 		case 'backup':
@@ -64,6 +67,8 @@ export function sourceShort(source: TopologySource): string {
 			return m.topology_source_hosted();
 		case 'lldp':
 			return m.topology_source_lldp();
+		case 'l2':
+			return m.topology_source_l2();
 		case 'samehost':
 			return m.topology_source_samehost();
 		case 'backup':
@@ -73,6 +78,12 @@ export function sourceShort(source: TopologySource): string {
 		case 'manual':
 			return m.topology_source_manual();
 	}
+}
+
+/** `Gi1/0/7 ↔ Gi1/0/24`, or the one known port; `null` when neither is known. */
+export function portsText(from: string | null | undefined, to: string | null | undefined): string | null {
+	if (from && to) return `${from} ↔ ${to}`;
+	return from || to || null;
 }
 
 /** What a node without a device of its own is: a guest, or a node of a Proxmox cluster. `null` for a device. */

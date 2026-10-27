@@ -101,7 +101,7 @@ impl OidcConfig {
 
 /// Une liste de groupes saisie à la main : éléments séparés par des virgules,
 /// espaces et entrées vides retirés.
-fn split_groups(groups: &[String]) -> Vec<String> {
+pub(crate) fn split_groups(groups: &[String]) -> Vec<String> {
     groups
         .iter()
         .flat_map(|group| group.split(','))

@@ -10,6 +10,7 @@
 	import { Field, Toggle } from '#lib/ui/index.js';
 	import type { KindField } from './kinds';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
+	import { listEscalationPolicies, type EscalationPolicy } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
 
 	interface Props {
@@ -30,6 +31,17 @@
 	const text = $derived(typeof value === 'string' ? value : '');
 	const help = $derived([field.help, note].filter(Boolean).join(' '));
 	const multiline = $derived(field.input === 'textarea' || field.shape !== 'scalar');
+	// A field with a lookup is a choice among things the server knows (the
+	// escalation policies); until they load, or if they cannot, the plain input stays.
+	let policies = $state<EscalationPolicy[] | null>(null);
+	$effect(() => {
+		if (field.lookup !== 'oncall_policies') return;
+		const controller = new AbortController();
+		listEscalationPolicies(controller.signal)
+			.then((list) => (policies = list))
+			.catch(() => (policies = null));
+		return () => controller.abort();
+	});
 	const shapeHint = $derived(
 		field.shape === 'list'
 			? m.notifications_field_list_hint()
@@ -45,7 +57,17 @@
 	</Field>
 {:else}
 	<Field label={field.label} for={id} help={[help, shapeHint].filter(Boolean).join(' ') || undefined} {error} required={field.required}>
-		{#if field.input === 'select'}
+		{#if field.lookup === 'oncall_policies' && policies}
+			<select {id} class="input" value={text} {disabled} aria-invalid={error ? 'true' : undefined} onchange={(e) => onchange(e.currentTarget.value)}>
+				<option value="">{policies.length === 0 ? m.oncall_policy_pick_none() : m.oncall_policy_pick_placeholder()}</option>
+				{#each policies as policy (policy.id)}
+					<option value={String(policy.id)}>{policy.name}</option>
+				{/each}
+				{#if text && !policies.some((p) => String(p.id) === text)}
+					<option value={text}>{text}</option>
+				{/if}
+			</select>
+		{:else if field.input === 'select'}
 			<select {id} class="input" value={text} {disabled} aria-invalid={error ? 'true' : undefined} onchange={(e) => onchange(e.currentTarget.value)}>
 				{#if !field.required || !text}
 					<option value="">{field.default ? m.notifications_field_default({ value: field.default }) : '—'}</option>

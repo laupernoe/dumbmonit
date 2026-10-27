@@ -16,6 +16,7 @@ use tracing::{debug, info, warn};
 
 use crate::alerting::baseline;
 use crate::alerting::cycle::{self, CycleInput, RuleObservations};
+use crate::alerting::log_source;
 use crate::alerting::notify_policy::{self, Outgoing, Recipient};
 use crate::alerting::source::MetricSource;
 use crate::crypto::Cipher;
@@ -126,7 +127,11 @@ async fn run(state: AppState, config: AlertingConfig) {
         let now = Utc::now();
 
         let started = std::time::Instant::now();
-        let outcome = evaluate_once(&state.pool, &state.cipher, &state.victoria, &http, now).await;
+        // Les règles « motif de journal » interrogent VictoriaLogs ; son adresse
+        // n'existe que tant que le magasin embarqué tourne.
+        let source =
+            log_source::EngineSource::new(&state.victoria, crate::storage::logs_url(&state).await);
+        let outcome = evaluate_once(&state.pool, &state.cipher, &source, &http, now).await;
         // Le cycle est publié sur `/metrics` même quand il échoue : sa durée et
         // le nombre de règles en échec sont précisément ce qu'on veut voir alors.
         let (evaluated, failed) = match &outcome {
@@ -176,6 +181,7 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
     let forgotten = db::alerts::purge_stale_baselines(pool, baseline_cutoff).await?;
 
     let expired = db::alerts::purge_expired_silences(pool, now).await?;
+    let escalations = crate::oncall::runner::maintenance(pool, now).await?;
 
     // Le registre des notifications ne sert qu'aux fenêtres glissantes du pipeline
     // (plafond horaire, battement, délai minimal) : au-delà, il ne vaut rien.
@@ -188,6 +194,7 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
         historique = removed,
         baselines = forgotten,
         silences = expired,
+        escalades = escalations,
         registre = ledger,
         "maintenance done"
     );
@@ -285,7 +292,14 @@ pub async fn evaluate_once(
     // sérialiser garantit qu'on ne submerge jamais VictoriaMetrics au démarrage,
     // quand toutes les règles sont évaluées pour la première fois.
     for rule in rules {
-        let series = match source.instant(&rule.query).await {
+        let fetched = if rule.kind == crate::alerting::model::RuleKind::LogPattern {
+            source
+                .log_matches(&rule.query, rule.params.log_window_secs, rule.params.log_per_target)
+                .await
+        } else {
+            source.instant(&rule.query).await
+        };
+        let series = match fetched {
             Ok(series) => {
                 report.rules_evaluated += 1;
                 Some(series)
@@ -380,6 +394,20 @@ pub async fn evaluate_once(
     )
     .await;
 
+    // Astreintes : les escalades en cours avancent (étape suivante, arrêt à
+    // l'acquittement), les relèves sont annoncées. Une erreur ici ne doit pas
+    // empêcher le cycle d'enregistrer ce qui précède.
+    let oncall = crate::oncall::runner::Ctx {
+        pool,
+        cipher,
+        http,
+        public_url: public_url.as_deref(),
+        action_key: action_key.as_ref(),
+    };
+    if let Err(error) = crate::oncall::runner::tick(&oncall, now).await {
+        warn!(?error, "on-call pass failed");
+    }
+
     // L'historique explique pourquoi une transition n'est pas partie : la raison
     // du cycle (suppression, maintenance, apprentissage) prime, sinon celle de la
     // politique (battement, filtre de canal, délai minimal).
@@ -442,12 +470,64 @@ async fn send_outgoing(
         let Some(config) = channels.iter().find(|channel| channel.id == out.channel_id) else {
             continue;
         };
+        // Canal d'astreinte : pas de message, une escalade s'ouvre (ou se
+        // referme) et `oncall::runner::tick` l'appellera dans la foulée.
+        if config.kind == crate::oncall::CHANNEL_KIND {
+            let ctx = crate::oncall::runner::Ctx {
+                pool,
+                cipher: store.cipher,
+                http,
+                public_url,
+                action_key,
+            };
+            let error = crate::oncall::runner::engage(&ctx, config, &out.digest, now)
+                .await
+                .err()
+                .map(|error| format!("{error:#}"));
+            let delivery = notify::DeliveryReport {
+                channel_id: config.id,
+                channel_name: config.name.clone(),
+                transient: false,
+                error,
+            };
+            stats().notification(&config.kind, !delivery.is_success());
+            if delivery.is_success() {
+                report.notifications_sent += 1;
+                if let Err(error) =
+                    policy_store::record_sent(pool, out.channel_id, &out.queue_ids, &out.sent, now)
+                        .await
+                {
+                    warn!(?error, "sent notification not recorded");
+                }
+            } else {
+                report.notifications_failed += 1;
+                warn!(channel = %config.name, "on-call escalation not started");
+            }
+            if let Err(error) = db::alerts::record_delivery(pool, &delivery, now).await {
+                warn!(?error, "delivery report not recorded");
+            }
+            continue;
+        }
         let mut message = notify::render_digest(&out.digest, public_url);
+        // Procédures des alertes qui sonnent : un lien, jamais leur texte.
+        if let Some(base) = public_url {
+            use crate::remediation::runbooks;
+            let done = runbooks::attach_to_message(pool, &mut message, &out.digest, base).await;
+            if let Err(error) = done {
+                warn!(?error, "runbook links not added to the notification");
+            }
+        }
         if let (Some(key), Some(base)) = (action_key, public_url) {
             let alerts = notify::message::actionable_alerts(&out.digest);
             message.actions = notify::action_link::build(key, base, &alerts, now);
         }
-        let delivery = notify::deliver_stored(store, http, config, &message).await;
+        // Un canal de tickets ne reçoit pas un message : il applique chaque alerte
+        // du résumé à son ticket (ouvrir, commenter, fermer).
+        let delivery = if notify::tickets::is_ticket_kind(&config.kind) {
+            notify::tickets::deliver(pool, http, config, &out.digest, public_url, now).await
+        } else {
+            notify::deliver_stored(store, http, config, &message).await
+        };
 
         stats().notification(&config.kind, !delivery.is_success());
         if delivery.is_success() {

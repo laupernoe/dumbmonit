@@ -116,6 +116,11 @@
 			}
 			return;
 		}
+		// An account limited by its teams has no overview or wall: devices first.
+		if (auth.scoped && (path === '/' || path.startsWith('/wall'))) {
+			void goto('/targets', { replace: true });
+			return;
+		}
 		if (isPublicRoute(path)) {
 			// `goto` rejects a path that matches no route since SvelteKit 3: land on `/` then.
 			void goto(safeDestination(page.url.searchParams.get('redirect')), { replace: true }).catch(

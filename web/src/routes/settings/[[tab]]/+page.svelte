@@ -34,12 +34,16 @@
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import LocationsSection from '#lib/components/settings/LocationsSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
+	import TeamsSection from '#lib/components/settings/TeamsSection.svelte';
+	import SamlSection from '#lib/components/settings/SamlSection.svelte';
+	import ScimSection from '#lib/components/settings/ScimSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import LdapSection from '#lib/components/settings/LdapSection.svelte';
 	import AgentsSection from '#lib/components/settings/AgentsSection.svelte';
 	import AssistantSection from '#lib/components/settings/AssistantSection.svelte';
 	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
 	import BackupSection from '#lib/components/settings/BackupSection.svelte';
+	import ConfigFilesSection from '#lib/components/settings/ConfigFilesSection.svelte';
 	import SelfMonitoringSection from '#lib/components/settings/SelfMonitoringSection.svelte';
 	import StorageSection from '#lib/components/settings/StorageSection.svelte';
 	import LogsSection from '#lib/components/settings/LogsSection.svelte';
@@ -49,6 +53,8 @@
 		import WallWidgetsSection from '#lib/components/settings/WallWidgetsSection.svelte';
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
+	import OnCallContactsSection from '#lib/components/settings/OnCallContactsSection.svelte';
+	import OnCallHoursSection from '#lib/components/settings/OnCallHoursSection.svelte';
 	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
 	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
@@ -67,19 +73,22 @@
 		system: HardDrive
 	};
 
-	const tabs = $derived(TAB_IDS.filter((id) => id !== 'team' || showAccounts));
+	// An account limited by its teams keeps its own preferences and the status pages.
+	const tabs = $derived(
+		TAB_IDS.filter((id) => (id !== 'team' || showAccounts) && (!auth.scoped || id === 'account' || id === 'status'))
+	);
 	const asked = $derived(page.params.tab);
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
-		account: [AppearanceSection, SecuritySection, PushSection],
-		team: [UsersSection, SsoSection, LdapSection],
+		account: [AppearanceSection, SecuritySection, PushSection, OnCallContactsSection, OnCallHoursSection],
+		team: [UsersSection, TeamsSection, SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallWidgetsSection] : [])],
-		system: [BackupSection, SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
+		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
 
 	// An unknown tab (or one this account cannot see) lands on the first one.

@@ -16,7 +16,9 @@ mod identity;
 // Le journal du service Windows ; compilé partout pour être testé sous Linux.
 #[cfg(any(windows, test))]
 mod logfile;
+mod logs;
 mod relay;
+mod remediation;
 mod run;
 mod selfupdate;
 mod shutdown;

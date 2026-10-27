@@ -221,7 +221,7 @@
 
 	const edges = $derived(
 		(topology?.edges ?? []).map(
-			(e): MapEdge => ({ from: e.from, to: e.to, source: e.source, origin: e.origin ?? 'deduced', correctionId: e.correction_id ?? null, ruleId: e.rule_id ?? null })
+			(e): MapEdge => ({ from: e.from, to: e.to, source: e.source, origin: e.origin ?? 'deduced', correctionId: e.correction_id ?? null, ruleId: e.rule_id ?? null, fromPort: e.from_port ?? null, toPort: e.to_port ?? null })
 		)
 	);
 	const graph = $derived(buildGraph(nodes, edges));

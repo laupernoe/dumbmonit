@@ -63,6 +63,8 @@ export type Credential =
 	| { type: 'username_password'; username: string; password?: string }
 	/** RADIUS: the server's shared secret and a test account; a blank secret keeps the saved one. */
 	| { type: 'radius'; username: string; password?: string; shared_secret?: string }
+	/** SSH login of a configuration backup; a blank password or enable secret keeps the saved one. */
+	| { type: 'ssh_login'; username: string; password?: string; enable_secret?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -73,6 +75,7 @@ export const CREDENTIAL_KINDS = [
 	{ value: 'api_token', label: 'API token' },
 	{ value: 'username_password', label: 'Username / password' },
 	{ value: 'radius', label: 'RADIUS' },
+	{ value: 'ssh_login', label: 'SSH login' },
 	{ value: 'none', label: 'No authentication' }
 ] as const;
 
@@ -201,7 +204,7 @@ export interface ProbeLocationsReport {
 
 /** Management of a monitor by Docker labels (`dumbmonit.*`). Mirrors `db::targets::Managed`. */
 export interface TargetManaged {
-	/** Origin: `docker-labels`. */
+	/** Origin: `docker-labels`, or `config-file` for a monitor a configuration file declares. */
 	by: string;
 	/** Agent whose containers declare the monitor. */
 	source: TargetId | null;
@@ -339,6 +342,68 @@ export interface WebchangeChangeDetail extends WebchangeChange {
 	diff: WebchangeDiffLine[];
 }
 
+// --- Network configuration backups (netconfig) ------------------------------
+
+/** One stored configuration version (`GET /targets/{id}/netconfig`), without its text. */
+export interface NetconfigVersion {
+	id: number;
+	fetched_at: string;
+	/** Last backup that found this same configuration. */
+	last_seen_at: string;
+	profile: string;
+	size_bytes: number;
+	lines: number;
+	added: number;
+	removed: number;
+}
+
+export interface NetconfigHostKey {
+	/** Remembered SHA-256 fingerprint (`SHA256:…`); null before the first SSH backup. */
+	pinned: string | null;
+	pinned_at: string | null;
+	/** A different key the device presented and that was refused, waiting for an administrator. */
+	changed_to: string | null;
+	changed_at: string | null;
+}
+
+export type NetconfigErrorKind = 'down' | 'auth' | 'config' | 'host_key';
+
+/** `GET /targets/{id}/netconfig`. */
+export interface NetconfigOverview {
+	profile: string | null;
+	profile_label: string | null;
+	transport: 'ssh_shell' | 'ssh_exec' | 'http' | null;
+	running: boolean;
+	last_attempt_at: string | null;
+	last_success_at: string | null;
+	last_error: string | null;
+	last_error_kind: NetconfigErrorKind | null;
+	host_key: NetconfigHostKey;
+	/** The viewer may read version contents, secrets masked (operator or admin). */
+	can_read: boolean;
+	/** The viewer may reveal secrets and download (admin signed in). */
+	can_reveal: boolean;
+	versions: NetconfigVersion[];
+}
+
+/** `GET /targets/{id}/netconfig/versions/{version_id}`. */
+export interface NetconfigVersionContent {
+	version: NetconfigVersion;
+	masked: boolean;
+	masked_values: number;
+	content: string;
+}
+
+/** `GET /targets/{id}/netconfig/diff`: same line format as website changes. */
+export interface NetconfigCompare {
+	from: NetconfigVersion | null;
+	to: NetconfigVersion;
+	masked: boolean;
+	added: number;
+	removed: number;
+	diff: WebchangeDiffLine[];
+}
+
 // --- Metrics ----------------------------------------------------------------
 
 /** A series in Prometheus format: `[timestamp_seconds, "value"]`. */
@@ -359,7 +424,7 @@ export type AlertPhase = 'ok' | 'pending' | 'firing' | 'resolved';
 export type AlertEffectivePhase = AlertPhase | 'suppressed';
 
 /** How a rule watches its metric. */
-export type RuleKind = 'threshold' | 'anomaly' | 'predict';
+export type RuleKind = 'threshold' | 'anomaly' | 'predict' | 'log_pattern';
 
 /** Comparison operator of a threshold rule. */
 export type RuleOperator = '>' | '>=' | '<' | '<=';
@@ -370,13 +435,17 @@ export type TargetSelector =
 	| { kind: 'ids'; ids: TargetId[] }
 	| { kind: 'labels'; labels: Record<string, string> };
 
-/** Anomaly-detection settings; only exposed for `kind === 'anomaly'` rules. */
+/** Anomaly-detection settings (`anomaly` rules) and log-pattern settings (`log_pattern` rules). */
 export interface AnomalyParams {
 	k: number;
 	alpha: number;
 	mad_floor_abs: number;
 	mad_floor_rel: number;
 	min_samples: number;
+	/** `log_pattern`: counting window, in seconds (60…86400). */
+	log_window_secs: number;
+	/** `log_pattern`: one alert per device (true) or a single one. */
+	log_per_target: boolean;
 }
 
 /**
@@ -388,6 +457,18 @@ export interface AnomalyParams {
  * the interface displays. There is no `target_name` here: resolve it from the
  * targets list via `target_id`.
  */
+/** A ticket a channel (Jira, GLPI, Zammad, GitHub, GitLab) opened for an alert. */
+export interface AlertTicket {
+	channel_id: number;
+	channel_name: string;
+	/** `jira`, `glpi`, `zammad`, `github_issues` or `gitlab_issues`. */
+	kind: string;
+	/** Reference shown to the user, like `OPS-12` or `#34`. */
+	label: string;
+	url: string;
+	state: 'open' | 'closed';
+}
+
 export interface Alert {
 	fingerprint: string;
 	rule_uid: string;
@@ -431,6 +512,8 @@ export interface Alert {
 	firing_since: string | null;
 	last_eval_at: string | null;
 	last_notified_at: string | null;
+	/** Tickets opened for this alert by the ticket channels (Jira, GLPI, Zammad, GitHub, GitLab). */
+	tickets?: AlertTicket[];
 	notify_count: number;
 }
 
@@ -965,6 +1048,17 @@ function fallbackCredentialView(kind: string): CredentialView {
 					credentialField('password', 'Test account password', 'password', true)
 				]
 			};
+		case 'ssh_login':
+			return {
+				kind,
+				label,
+				help: '',
+				fields: [
+					credentialField('username', 'User name', 'text', true),
+					credentialField('password', 'Password', 'password', true),
+					credentialField('enable_secret', 'Enable password', 'password', false)
+				]
+			};
 		default:
 			return { kind, label, help: '', fields: [] };
 	}
@@ -976,7 +1070,7 @@ function fallbackCredentialView(kind: string): CredentialView {
 export type Role = 'admin' | 'operator' | 'viewer';
 
 /** How an account signs in: a local password, the LDAP / AD directory, or the identity provider. */
-export type AuthMethod = 'password' | 'ldap' | 'oidc';
+export type AuthMethod = 'password' | 'ldap' | 'oidc' | 'saml';
 
 /** An account, as returned by `/api/users` and `/api/auth/me`. Never carries a hash. */
 export interface User {
@@ -990,6 +1084,20 @@ export interface User {
 	totp_enabled: boolean;
 	created_at: string;
 	last_login_at: string | null;
+	/** What the account may reach, when the server tells (`/api/auth/me`). */
+	access?: AccessInfo;
+}
+
+/** Team rights: `read` < `operate` < `manage`. */
+export type GrantLevel = 'read' | 'operate' | 'manage';
+
+/** `access` of `GET /api/auth/me`. `scoped` accounts only see the devices their teams grant. */
+export interface AccessInfo {
+	scoped: boolean;
+	teams: string[];
+	grants: TeamGrant[];
+	/** What the global role caps rights at (viewer: read, operator: manage); `null` for admins. */
+	ceiling: GrantLevel | null;
 }
 
 /** What the sign-in screen needs to know about single sign-on, without a session. */
@@ -999,6 +1107,12 @@ export interface OidcStatus {
 	provider_name: string;
 	/** Plain navigation target, not an API call. */
 	login_url: string;
+}
+
+/** SAML sign-in availability, read without a session for the sign-in screen. */
+export interface SamlStatus {
+	enabled: boolean;
+	label: string;
 }
 
 /** What the sign-in screen needs to know about the directory, without a session. */
@@ -1017,6 +1131,7 @@ export interface AuthStatus {
 	oidc?: OidcStatus;
 	/** LDAP / Active Directory sign-in: usernames without a local password go to the directory. */
 	ldap?: LdapStatus;
+	saml?: SamlStatus;
 	/** At least one passkey is registered: the sign-in screen offers to use one. */
 	passkeys?: boolean;
 	/** Public demo mode: sign in with demo / demo; every change answers 403 `{ demo: true }`. */
@@ -1193,6 +1308,7 @@ export interface AuthState {
 	user: User | null;
 	oidc: OidcStatus;
 	ldap: LdapStatus;
+	saml: SamlStatus;
 	/** At least one passkey is registered on the instance. */
 	passkeys: boolean;
 	/** Public demo mode (read-only, fictional data). */
@@ -1235,6 +1351,11 @@ export interface ChannelField {
 	 * send stored secrets to a new destination.
 	 */
 	destination?: boolean;
+	/**
+	 * Names a list the UI fetches to offer as choices instead of a free value
+	 * (`oncall_policies`: the escalation policies). Absent or empty otherwise.
+	 */
+	lookup?: string;
 }
 
 /** A channel type (Discord, Telegram...) and the fields it expects. */
@@ -1757,14 +1878,51 @@ export interface StatusPagePayload {
 	group_labels?: StatusPageGroupLabel[];
 }
 
-/** Email subscriber of a status page (admin view; the token never leaves the server). */
+export type StatusSubscriptionKind = 'email' | 'sms' | 'webhook' | 'slack';
+
+/** Subscriber of a status page (admin view; tokens and secrets never leave the server). */
 export interface StatusSubscriber {
 	id: number;
 	page_id: number;
-	email: string;
-	/** `null` until the address followed its confirmation link. */
+	kind: StatusSubscriptionKind;
+	/** Full address for an email; masked number or URL host otherwise. */
+	destination: string;
+	/** Address, email subscribers only. */
+	email: string | null;
+	/** Followed device ids; `null`: every service. */
+	components: number[] | null;
+	/** `null` until the destination was confirmed. */
 	confirmed_at: string | null;
 	created_at: string;
+}
+
+/** Subscription channels open on a page besides email. */
+export interface StatusSubscriptionSettings {
+	/** Vonage, Telnyx or ASPSMS channel texting the subscribers; `null`: no SMS. */
+	sms_channel_id: number | null;
+	webhook: boolean;
+	slack: boolean;
+}
+
+/** Public: what a visitor sends to subscribe. */
+export interface StatusSubscribePayload {
+	kind: StatusSubscriptionKind;
+	email?: string;
+	/** E.164, for SMS. */
+	phone?: string;
+	/** Webhook or Slack incoming webhook URL. */
+	url?: string;
+	/** Public keys of the followed services; omitted: all. */
+	components?: string[];
+}
+
+export interface StatusSubscribeReply {
+	status: 'pending';
+	/** How the destination confirms: a link, a code (SMS) or a signed request (webhook). */
+	confirm: 'link' | 'code' | 'signed_request';
+	message: string;
+	/** Webhook only, shown once: the HMAC-SHA256 signing key. */
+	secret?: string;
 }
 
 export interface StatusPageItemPayload {
@@ -1806,6 +1964,8 @@ export interface Incident {
 	created_at: string;
 	updated_at: string;
 	updates: IncidentUpdate[];
+	/** Device ids the announcement concerns; empty: the whole page. */
+	components: number[];
 }
 
 export interface IncidentPayload {
@@ -1824,6 +1984,11 @@ export interface IncidentPayload {
 	 * (or a closing update) it is created resolved and nobody is notified.
 	 */
 	updates?: IncidentNewUpdate[];
+	/**
+	 * Devices the announcement concerns, among the page's services: subscribers who follow
+	 * only other services are not notified. Omitted: unchanged (the whole page at creation).
+	 */
+	components?: number[];
 }
 
 export interface IncidentNewUpdate {
@@ -1954,8 +2119,10 @@ export interface PublicStatus {
 		homepage_url: string;
 		/** Versioned relative URL of the logo, `null` without one. */
 		logo_url: string | null;
-		/** The page offers email subscription (an SMTP channel is chosen). */
+		/** The page offers at least one subscription. */
 		subscribe: boolean;
+		/** Subscriptions offered. */
+		subscribe_kinds: StatusSubscriptionKind[];
 		/** Effective search-engine values (settings, or defaults built from the page name). */
 		seo?: {
 			indexable: boolean;
@@ -2329,7 +2496,7 @@ export interface RelayAgent {
 // --- Topology map -------------------------------------------------------------
 
 /** Where a link of the map comes from. */
-export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'samehost' | 'backup' | 'firewall' | 'manual';
+export type TopologySource = 'parent' | 'service' | 'relay' | 'hypervisor' | 'hosted' | 'lldp' | 'l2' | 'samehost' | 'backup' | 'firewall' | 'manual';
 
 /** Who drew a link: the server's deduction, a correction by hand, or a learned rule. */
 export type TopologyOrigin = 'deduced' | 'manual' | 'rule';
@@ -2377,6 +2544,9 @@ export interface TopologyEdge {
 	correction_id?: number | null;
 	/** The learned rule that drew it. */
 	rule_id?: number | null;
+	/** Switch port on the `from` / `to` side (`lldp` and `l2` links), read from the switch tables. */
+	from_port?: string | null;
+	to_port?: string | null;
 }
 
 export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
@@ -3322,6 +3492,55 @@ export type OnboardingStep = 'device' | 'channel' | 'test';
 export interface OnboardingPatch {
 	skipped?: boolean;
 	dismissed?: OnboardingStep[];
+}
+
+// --- Configuration files (GitOps) ---------------------------------------------
+
+/** One line of a configuration plan. Mirrors `Change` in `crates/server/src/gitops/plan.rs`. */
+export interface ConfigChange {
+	section: 'targets' | 'channels' | 'rules' | 'rule_overrides' | 'silences' | 'status_pages';
+	key: string;
+	action: 'create' | 'update' | 'delete';
+	/** Names of the fields that differ, never their values. */
+	fields: string[];
+}
+
+/** Response of `POST /api/config/plan` and `/api/config/apply`. */
+export interface ConfigPlan {
+	changes: ConfigChange[];
+	create: number;
+	update: number;
+	delete: number;
+	unchanged: number;
+	warnings: string[];
+	applied: boolean;
+	/** Objects whose secret references could not be resolved (plan only). */
+	unresolved: string[];
+}
+
+/** Response of `GET /api/config/export?format=json`. */
+export interface ConfigExport {
+	version: number;
+	yaml: string;
+	config: Record<string, unknown>;
+	/** Environment variables to define before applying the file. */
+	variables: string[];
+}
+
+/** Response of `GET /api/config/status`. */
+export interface ConfigStatus {
+	schema_version: number;
+	watch: {
+		directory: string | null;
+		files: string[];
+		last_applied_at: string | null;
+		last_error: string | null;
+		/** `[created, updated, deleted]` of the last application. */
+		last_changes: [number, number, number] | null;
+	};
+	managed: Record<string, number>;
+	/** Keys of the file-managed objects by kind: rule (uid), channel (name), silence, status_page (slug), override. */
+	keys: Record<string, string[]>;
 }
 
 // --- Backup and restore -----------------------------------------------------
@@ -5271,6 +5490,333 @@ export interface AgentEvent {
 	received_at: string | null;
 }
 
+// --- Teams, SAML, SCIM ---------------------------------------------------------
+
+/** Where a team member comes from: added by hand, by an IdP group, or by SCIM provisioning. */
+export type MemberSource = 'manual' | 'idp' | 'scim';
+
+export interface TeamMember {
+	user_id: number;
+	username: string;
+	display_name: string;
+	role: Role;
+	source: MemberSource;
+}
+
+/**
+ * A right on a folder of devices. `folder` is `"*"` (every device), `""` (devices
+ * without a folder) or a folder name (sub-folders `Paris/…` included).
+ */
+export interface TeamGrant {
+	folder: string;
+	level: GrantLevel;
+}
+
+export interface Team {
+	id: number;
+	name: string;
+	description: string;
+	idp_groups: string[];
+	members: TeamMember[];
+	grants: TeamGrant[];
+	created_at: string;
+}
+
+/** Absent fields stay unchanged on `PUT`. `members` lists the manual members only. */
+export interface TeamInput {
+	name?: string;
+	description?: string;
+	idp_groups?: string[];
+	members?: number[];
+	grants?: TeamGrant[];
+}
+
+export type UnassignedAccess = 'all' | 'none';
+
+export interface TeamsResponse {
+	teams: Team[];
+	folders: string[];
+	settings: { unassigned_access: UnassignedAccess };
+}
+
+/** `GET/PUT /api/auth/saml/config`. The two URLs are read-only. */
+export interface SamlConfig {
+	enabled: boolean;
+	idp_entity_id: string;
+	idp_sso_url: string;
+	/** PEM certificates of the identity provider. */
+	idp_certificates: string[];
+	sp_entity_id: string;
+	allow_idp_initiated: boolean;
+	auto_create: boolean;
+	button_label: string;
+	attr_email: string;
+	attr_name: string;
+	attr_groups: string;
+	admin_groups: string[];
+	operator_groups: string[];
+	sp_metadata_url: string;
+	acs_url: string;
+}
+
+/** `POST /api/auth/saml/metadata/import`: fills the form, nothing is saved. */
+export interface SamlMetadataImport {
+	idp_entity_id: string;
+	idp_sso_url: string;
+	idp_certificates: string[];
+}
+
+export type ScimDefaultRole = 'viewer' | 'operator';
+
+export interface ScimSettings {
+	enabled: boolean;
+	base_url: string;
+	token_set: boolean;
+	token_created_at: string | null;
+	default_role: ScimDefaultRole;
+}
+
+/** Answer of the token rotation: the bearer token is shown once. */
+export interface ScimTokenReply extends ScimSettings {
+	token: string;
+}
+
+// --- On-call (schedules, escalation, personal contacts) ------------------------
+// Mirrors `crates/server/src/api/oncall*.rs`. Times on the wire are RFC 3339
+// UTC with a `Z`; a rotation start is a naive local `YYYY-MM-DDTHH:MM` in the
+// schedule's own timezone.
+
+/** A person who can be put on a rotation. */
+export interface Person {
+	id: number;
+	display_name: string;
+	disabled: boolean;
+	/** On call right now on at least one schedule. */
+	on_call: boolean;
+	/** The fields below are only sent to administrators and to the person themselves. */
+	username?: string;
+	role?: Role;
+	/** Enabled contact methods. */
+	contacts?: number;
+}
+
+/** Hours a layer is active, 0 = Monday … 6 = Sunday. `end <= start` crosses midnight; both 0 = all day. */
+export interface Window {
+	days: number[];
+	start_minute: number;
+	end_minute: number;
+}
+
+export type RotationKind = 'daily' | 'weekly' | 'custom';
+export type RotationUnit = 'hours' | 'days' | 'weeks';
+
+export interface Layer {
+	name: string;
+	rotation: {
+		kind: RotationKind;
+		/** Local `YYYY-MM-DDTHH:MM`: first handoff (time = handoff time, weekday = weekly handoff day). */
+		start: string;
+		/** Custom only (>= 1). */
+		length: number;
+		unit: RotationUnit;
+	};
+	/** User ids in rotation order (repeats allowed). */
+	participants: number[];
+	/** Empty: active all the time. */
+	restrictions: Window[];
+}
+
+export interface OnCallNow {
+	user_id: number;
+	since: string | null;
+	until: string | null;
+	layer: number | null;
+	override_id: number | null;
+}
+
+export interface Schedule {
+	id: number;
+	name: string;
+	description: string;
+	/** IANA name. */
+	timezone: string;
+	handoff_notifications: boolean;
+	layers: Layer[];
+	now: OnCallNow | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface SchedulePayload {
+	name: string;
+	description?: string;
+	timezone: string;
+	handoff_notifications?: boolean;
+	layers: Layer[];
+}
+
+export interface Shift {
+	start: string;
+	end: string;
+	user_id: number;
+	layer: number | null;
+	override_id: number | null;
+}
+
+/** "X replaces Y from ... to ...". */
+export interface Override {
+	id: number;
+	schedule_id: number;
+	/** Who takes the shift. */
+	user_id: number;
+	/** Only when that person would be on call; `null`: whoever is. */
+	replaces: number | null;
+	starts_at: string;
+	ends_at: string;
+	note: string;
+	created_by: string;
+	created_at: string;
+}
+
+export interface OverridePayload {
+	user_id: number;
+	replaces?: number | null;
+	starts_at: string;
+	ends_at: string;
+	note?: string;
+}
+
+export interface ShiftsResponse {
+	final: Shift[];
+	/** One list per layer, same order as the schedule's layers. */
+	layers: Shift[][];
+	overrides: Override[];
+}
+
+export interface OnCallEntry {
+	schedule_id: number;
+	schedule_name: string;
+	user_id: number | null;
+	since: string | null;
+	until: string | null;
+	override_id: number | null;
+}
+
+export type StepTarget = { type: 'schedule'; id: number } | { type: 'user'; id: number } | { type: 'channel'; id: number };
+
+export interface Step {
+	/** 1..1440: wait after this step before the next one. */
+	delay_minutes: number;
+	targets: StepTarget[];
+}
+
+export interface EscalationPolicy {
+	id: number;
+	name: string;
+	description: string;
+	/** 0..9 extra rounds after the last step. */
+	repeat: number;
+	steps: Step[];
+	/** Ids of the "oncall" channels that use this policy. */
+	channels: number[];
+	created_at: string;
+	updated_at: string;
+}
+
+export interface EscalationPolicyPayload {
+	name: string;
+	description?: string;
+	repeat?: number;
+	steps: Step[];
+}
+
+export type EscalationStatus = 'active' | 'acked' | 'resolved' | 'exhausted' | 'cancelled';
+export type EscalationEventKind = 'started' | 'notified' | 'failed' | 'skipped' | 'acked' | 'resolved' | 'exhausted' | 'cancelled';
+
+export interface EscalationEvent {
+	at: string;
+	step: number | null;
+	round: number | null;
+	event: EscalationEventKind;
+	user_id: number | null;
+	user_name: string | null;
+	/** Contact label or channel name. */
+	via: string;
+	/** Channel kind. */
+	kind: string;
+	detail: string;
+}
+
+export interface Escalation {
+	id: number;
+	policy_id: number;
+	policy_name: string;
+	channel_id: number;
+	fingerprint: string;
+	target_id: number | null;
+	target_name: string;
+	rule_name: string;
+	severity: 'info' | 'warning' | 'critical';
+	status: EscalationStatus;
+	/** Next step index. */
+	step: number;
+	round: number;
+	next_at: string | null;
+	started_at: string;
+	ended_at: string | null;
+	acked_by: string | null;
+	events: EscalationEvent[];
+}
+
+/** A personal way to be reached: through a team channel, or a service of one's own. */
+export interface Contact {
+	id: number;
+	label: string;
+	kind: string;
+	via_channel_id: number | null;
+	via_channel_name: string | null;
+	address: string | null;
+	settings: Record<string, unknown>;
+	has_secret: boolean;
+	enabled: boolean;
+	min_severity: 'info' | 'warning' | 'critical';
+	last_error: string | null;
+	last_used_at: string | null;
+}
+
+/** Omitting `secrets` on an update keeps them; `{}` clears them. */
+export interface ContactPayload {
+	label: string;
+	kind?: string;
+	via_channel_id?: number | null;
+	address?: string | null;
+	settings?: Record<string, unknown>;
+	secrets?: Record<string, unknown>;
+	enabled?: boolean;
+	min_severity?: 'info' | 'warning' | 'critical';
+}
+
+export interface ContactOptions {
+	/** Channel kinds allowed for a personal service. */
+	kinds: string[];
+	team_channels: { id: number; name: string; kind: string; recipient: 'email' | 'phone' | 'chat_id' }[];
+}
+
+export interface OnCallProfile {
+	timezone: string;
+	quiet_hours: QuietHours | null;
+	/** An iCal link exists. */
+	calendar: boolean;
+	on_call: OnCallEntry[];
+	next_shift: { schedule_id: number; schedule_name: string; start: string; end: string } | null;
+}
+
+export interface OnCallProfilePayload {
+	timezone?: string;
+	/** `null` clears. */
+	quiet_hours?: QuietHours | null;
+}
+
 // --- Agent self-update (Settings → Agents → Agent updates) -------------------
 
 export type AgentUpdateWindow = 'any' | 'maintenance' | 'manual';
@@ -5402,8 +5948,13 @@ export interface LogSearchEntry {
 	time: string;
 	level: string;
 	message: string;
+	/** Stream: `dumbmonit` (the server), `agent`, `syslog` or `trap`. */
 	source: string;
 	host: string | null;
+	/** Unit, file, channel or sender address. */
+	origin: string | null;
+	/** Device the sender is attached to, when its address matches one. */
+	target_name: string | null;
 	fields: Record<string, string>;
 }
 
@@ -5419,5 +5970,287 @@ export interface LogSearchParams {
 	end?: number;
 	level?: 'error' | 'warn' | 'info' | 'debug';
 	limit?: number;
-	source?: 'server';
+	source?: LogSource;
+	/** Device id: its agent, syslog and trap lines only. */
+	target?: number;
+}
+
+export type LogSource = 'server' | 'agent' | 'syslog' | 'trap' | 'all';
+
+/** Log collection of one agent (`/api/logs/agents/{id}`). */
+export interface AgentLogsSetting {
+	enabled: boolean;
+	min_level: 'error' | 'warn' | 'info' | 'debug';
+	journald: boolean;
+	/** Followed files, absolute paths with `*` and `?` wildcards. */
+	files: string[];
+	/** Windows event log channels. */
+	eventlog: string[];
+}
+
+export interface AgentLogs extends AgentLogsSetting {
+	/** UTC without suffix. */
+	last_received_at: string | null;
+	received_total: number;
+	/** False when the embedded log store is off: received lines are lost. */
+	store_running: boolean;
+}
+
+/** State of one receiver (syslog or SNMP traps). */
+export interface LogInput {
+	enabled: boolean;
+	listening: string[];
+	received: number;
+	rejected: number;
+	/** Messages from a sender no device carries. */
+	unmatched: number;
+	last_at: string | null;
+	error: string | null;
+}
+
+export interface LogInputs {
+	store_running: boolean;
+	syslog: LogInput;
+	traps: LogInput;
+	written: number;
+	dropped: number;
+}
+
+// --- Dashboards and metrics explorer ----------------------------------------
+// Mirrors `crates/server/src/api/dashboards.rs` and `metrics.rs` (catalog).
+
+export type DashboardId = number;
+
+export type WidgetKind = 'chart' | 'stat' | 'group' | 'alerts' | 'text';
+
+export interface ChartConfig {
+	query: string;
+	unit: string;
+}
+
+export interface StatConfig {
+	query: string;
+	unit: string;
+	warn?: number;
+	crit?: number;
+	/** `above`: bad when the value is high; `below`: bad when it is low. */
+	direction: 'above' | 'below';
+}
+
+export interface GroupConfig {
+	/** Folder (`group_name`) of the monitors; empty: monitors without a folder. */
+	folder: string;
+}
+
+export interface AlertsConfig {
+	limit: number;
+}
+
+export interface TextConfig {
+	markdown: string;
+}
+
+export interface DashboardWidget {
+	/** Letters, digits, `-` and `_`; unique inside the dashboard. */
+	id: string;
+	type: WidgetKind;
+	title: string;
+	/** Column (0-11), row, width (1-12 columns) and height (rows) on the grid. */
+	x: number;
+	y: number;
+	w: number;
+	h: number;
+	/** Shape depends on `type`; see the `*Config` interfaces. */
+	config: Record<string, unknown>;
+}
+
+export interface Dashboard {
+	id: DashboardId;
+	name: string;
+	shared: boolean;
+	/** Owning account; `null` when a token made it. */
+	owner: string | null;
+	can_edit: boolean;
+	range_secs: number;
+	/** 0: no automatic refresh. */
+	refresh_secs: number;
+	widgets: DashboardWidget[];
+	created_at: string;
+	updated_at: string;
+}
+
+export interface DashboardPayload {
+	name: string;
+	shared: boolean;
+	range_secs: number;
+	refresh_secs: number;
+	widgets: DashboardWidget[];
+}
+
+export interface CatalogLabel {
+	name: string;
+	values: string[];
+	more: boolean;
+}
+
+export interface CatalogMetric {
+	name: string;
+	series: number;
+	labels: CatalogLabel[];
+}
+
+export interface MetricsCatalog {
+	metrics: CatalogMetric[];
+	truncated: boolean;
+}
+
+// --- Runbooks and remediation (`crates/server/src/api/remediation.rs`) -------
+
+export type RunbookScope = 'rule' | 'group' | 'kind';
+
+export interface RunbookLink {
+	scope: RunbookScope;
+	/** Rule uid, folder name or device kind. */
+	value: string;
+}
+
+export interface Runbook {
+	id: number;
+	title: string;
+	/** Markdown, rendered with HTML escaped (`#lib/markdown.ts`). */
+	body: string;
+	links: RunbookLink[];
+	created_at: string;
+	updated_at: string;
+	updated_by: string | null;
+}
+
+export interface RunbookInput {
+	title: string;
+	body: string;
+	links: RunbookLink[];
+}
+
+export type RemediationKindId = 'service.restart' | 'container.restart' | 'script.run' | 'webhook';
+
+export interface RemediationKindField {
+	key: string;
+	label: string;
+	input: 'text' | 'url' | 'secret' | 'params';
+	required: boolean;
+	help: string;
+}
+
+/** One kind of the closed catalogue, described by the server (English). */
+export interface RemediationKind {
+	kind: string;
+	label: string;
+	description: string;
+	needs_agent: boolean;
+	fields: RemediationKindField[];
+}
+
+export interface RemediationAction {
+	id: number;
+	name: string;
+	kind: string;
+	/** Non-secret parameters (`service`, `container`, `script` + `params`, `url`). */
+	params: Record<string, unknown>;
+	/** A secret (webhook token) is stored; it is never sent back. */
+	has_secret: boolean;
+	target_id: TargetId | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface RemediationActionInput {
+	name: string;
+	kind: string;
+	params: Record<string, unknown>;
+	target_id: TargetId | null;
+	/** Omitted: kept. `{}`: cleared. */
+	secrets?: Record<string, string>;
+}
+
+export interface RemediationPolicy {
+	id: number;
+	action_id: number;
+	action_name: string;
+	action_kind: string;
+	rule_uid: string;
+	target_id: TargetId | null;
+	after_minutes: number;
+	max_attempts: number;
+	window_minutes: number;
+	/** Armed (confirmed in two steps). */
+	enabled: boolean;
+	armed_by: string | null;
+	armed_at: string | null;
+	/** Set after two failed runs in a row. */
+	halted_at: string | null;
+	halt_reason: string | null;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface RemediationPolicyInput {
+	action_id: number;
+	rule_uid: string;
+	target_id: TargetId | null;
+	after_minutes: number;
+	max_attempts: number;
+	window_minutes: number;
+}
+
+export interface ArmChallenge {
+	token: string;
+	expires_in_secs: number;
+	summary: string;
+	policy: RemediationPolicy;
+}
+
+export type RemediationRunStatus = 'queued' | 'running' | 'done' | 'failed' | 'cancelled' | 'expired';
+
+export interface RemediationRun {
+	id: number;
+	action_id: number | null;
+	action_name: string;
+	kind: string;
+	params: Record<string, unknown>;
+	target_id: TargetId | null;
+	target_name: string | null;
+	fingerprint: string | null;
+	rule_uid: string | null;
+	policy_id: number | null;
+	trigger: 'manual' | 'auto';
+	requested_by: string;
+	status: RemediationRunStatus;
+	/** Truncated to 4 KiB, end kept. */
+	output: string | null;
+	created_at: string;
+	finished_at: string | null;
+}
+
+export interface AlertRemediation {
+	runbooks: Runbook[];
+	actions: RemediationAction[];
+	policies: RemediationPolicy[];
+	runs: RemediationRun[];
+}
+
+export interface DeclaredScript {
+	name: string;
+	description: string;
+	params: Record<string, string[]>;
+	timeout_secs: number;
+}
+
+export interface TargetRemediation {
+	runbooks: Runbook[];
+	agent: {
+		host_id: TargetId;
+		commands_enabled: boolean;
+		remediation: { enabled: boolean; services: string[]; scripts: DeclaredScript[] } | null;
+	} | null;
+	runs: RemediationRun[];
 }

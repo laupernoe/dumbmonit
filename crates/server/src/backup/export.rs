@@ -36,6 +36,13 @@ pub struct ExportOptions {
     /// longtemps qu'on veut. L'opérateur peut demander l'inverse quand il
     /// déménage une instance entière.
     pub include_account_secrets: bool,
+    /// Versions des configurations réseau sauvegardées (`netconfig`).
+    ///
+    /// Faux par défaut : chacune contient tous les secrets de son équipement
+    /// (mots de passe, communautés, clés partagées), et un lot est fait pour
+    /// voyager. Les équipements, leurs options et les clés d'hôte mémorisées
+    /// partent toujours.
+    pub include_netconfig_versions: bool,
 }
 
 /// Construit le lot complet à partir de la base.
@@ -57,7 +64,7 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         )
         .await?,
         silences: silences(pool, &refs).await?,
-        status_pages: status_pages(pool, &refs).await?,
+        status_pages: status_pages(pool, &refs, &channel_names).await?,
         report_schedules: report_schedules(pool, &channel_names).await?,
         incidents: incidents(pool).await?,
         users: users(pool, cipher, options).await?,
@@ -66,9 +73,103 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         push_monitors: push_monitors(pool, cipher, &refs).await?,
         packs: packs(pool).await?,
         locations: locations(pool).await?,
+        teams: teams(pool).await?,
+        teams_settings: crate::auth::settings::get::<Value>(pool, crate::auth::teams::SETTINGS_KEY)
+            .await?,
+        oncall: crate::backup::oncall::collect(pool, cipher).await?,
         topology_corrections: topology_corrections(pool, &refs).await?,
         topology_rules: topology_rules(pool, &refs).await?,
+        dashboards: dashboards(pool).await?,
+        runbooks: runbooks(pool).await?,
+        remediation_actions: remediation_actions(pool, cipher, &refs).await?,
+        remediation_policies: remediation_policies(pool, &refs).await?,
+        netconfig_host_keys: netconfig_host_keys(pool, &refs).await?,
+        netconfig_versions: if options.include_netconfig_versions {
+            netconfig_versions(pool, cipher, &refs).await?
+        } else {
+            Vec::new()
+        },
     })
+}
+
+async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
+    let teams = crate::auth::teams::list(pool).await?;
+    let mut out = Vec::with_capacity(teams.len());
+    for team in teams {
+        let scim: Option<(Option<String>, Option<String>, i64)> = sqlx::query_as(
+            "SELECT scim_id, scim_external_id, scim_created FROM teams WHERE id = ?",
+        )
+        .bind(team.id)
+        .fetch_optional(pool)
+        .await
+        .context("rattachement SCIM d'une équipe")?;
+        let (scim_id, scim_external_id, scim_created) = scim.unwrap_or_default();
+        out.push(BundleTeam {
+            name: team.name,
+            description: team.description,
+            idp_groups: team.idp_groups,
+            members: team
+                .members
+                .into_iter()
+                .map(|m| BundleTeamMember { username: m.username, source: m.source })
+                .collect(),
+            grants: team.grants,
+            scim_id,
+            scim_external_id,
+            scim_created: scim_created != 0,
+        });
+    }
+    Ok(out)
+}
+
+async fn netconfig_host_keys(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleNetconfigHostKey>> {
+    Ok(crate::netconfig::store::pinned_keys(pool)
+        .await?
+        .into_iter()
+        .filter_map(|(id, host_key)| {
+            Some(BundleNetconfigHostKey { target: refs.get(&id)?.clone(), host_key })
+        })
+        .collect())
+}
+
+async fn netconfig_versions(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleNetconfigVersion>> {
+    let rows = sqlx::query(
+        "SELECT target_id, fetched_at, last_seen_at, profile, added, removed, content_enc
+         FROM netconfig_versions ORDER BY target_id, id",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des versions de configuration")?;
+    let mut out = Vec::with_capacity(rows.len());
+    for row in &rows {
+        let target_id: i64 = row.try_get("target_id")?;
+        let Some(target) = refs.get(&target_id).cloned() else { continue };
+        let sealed: Vec<u8> = row.try_get("content_enc")?;
+        let content = match crate::netconfig::open(cipher, &sealed) {
+            Ok(content) => content,
+            Err(error) => {
+                tracing::warn!(target = target_id, %error, "version de configuration illisible");
+                continue;
+            }
+        };
+        out.push(BundleNetconfigVersion {
+            target,
+            fetched_at: row.try_get("fetched_at")?,
+            last_seen_at: row.try_get("last_seen_at")?,
+            profile: row.try_get("profile")?,
+            added: row.try_get("added")?,
+            removed: row.try_get("removed")?,
+            content,
+        });
+    }
+    Ok(out)
 }
 
 /// Un nœud de la carte, désigné hors de cette instance. `None` : son
@@ -132,6 +233,29 @@ async fn topology_rules(
             })
         })
         .collect())
+}
+
+async fn dashboards(pool: &SqlitePool) -> Result<Vec<BundleDashboard>> {
+    let rows = sqlx::query(
+        "SELECT d.name, d.shared, u.username AS owner, d.range_secs, d.refresh_secs, d.widgets
+         FROM dashboards d LEFT JOIN users u ON u.id = d.owner_id ORDER BY d.id",
+    )
+    .fetch_all(pool)
+    .await
+    .context("lecture des tableaux de bord")?;
+    rows.iter()
+        .map(|row| {
+            let widgets: String = row.try_get("widgets")?;
+            Ok(BundleDashboard {
+                name: row.try_get("name")?,
+                shared: row.try_get::<i64, _>("shared")? != 0,
+                owner: row.try_get("owner")?,
+                range_secs: row.try_get("range_secs")?,
+                refresh_secs: row.try_get("refresh_secs")?,
+                widgets: serde_json::from_str(&widgets).unwrap_or_default(),
+            })
+        })
+        .collect()
 }
 
 async fn locations(pool: &SqlitePool) -> Result<Vec<BundleLocation>> {
@@ -425,11 +549,13 @@ async fn report_schedules(
 async fn status_pages(
     pool: &SqlitePool,
     refs: &HashMap<i64, String>,
+    channel_names: &HashMap<i64, String>,
 ) -> Result<Vec<BundleStatusPage>> {
     let rows = sqlx::query(
         "SELECT id, slug, title, description, published, theme, show_uptime_days,
              accent, scenes, scene_rotation, simple, footer_text, homepage_url, domain, seo,
-             access_mode, access_password_hash
+             access_mode, access_password_hash, subscribe_channel_id,
+             subscribe_sms_channel_id, subscribe_webhook, subscribe_slack
          FROM status_pages ORDER BY id",
     )
     .fetch_all(pool)
@@ -504,6 +630,16 @@ async fn status_pages(
             access_password_hash: row.try_get("access_password_hash")?,
             groups: groups.into_iter().map(|(name,)| name).collect(),
             group_labels,
+            subscriptions: Some(BundleSubscriptions {
+                email_channel: row
+                    .try_get::<Option<i64>, _>("subscribe_channel_id")?
+                    .and_then(|id| channel_names.get(&id).cloned()),
+                sms_channel: row
+                    .try_get::<Option<i64>, _>("subscribe_sms_channel_id")?
+                    .and_then(|id| channel_names.get(&id).cloned()),
+                webhook: row.try_get::<i64, _>("subscribe_webhook")? != 0,
+                slack: row.try_get::<i64, _>("subscribe_slack")? != 0,
+            }),
         });
     }
     Ok(out)
@@ -568,7 +704,8 @@ async fn users(
 ) -> Result<Vec<BundleUser>> {
     let rows = sqlx::query(
         "SELECT id, username, display_name, role, password_hash, oidc_subject, oidc_issuer,
-                created_at, disabled, totp_secret, totp_enabled
+                saml_subject, saml_issuer, created_at, disabled, totp_secret, totp_enabled,
+                scim_id, scim_external_id, scim_email, disabled_by_scim
          FROM users ORDER BY id",
     )
     .fetch_all(pool)
@@ -585,11 +722,17 @@ async fn users(
             disabled: row.try_get::<i64, _>("disabled")? != 0,
             oidc_subject: row.try_get("oidc_subject")?,
             oidc_issuer: row.try_get("oidc_issuer")?,
+            saml_subject: row.try_get("saml_subject")?,
+            saml_issuer: row.try_get("saml_issuer")?,
             created_at: row.try_get("created_at")?,
             password_hash: None,
             totp_secret: None,
             totp_enabled: false,
             recovery_codes: Vec::new(),
+            scim_id: row.try_get("scim_id")?,
+            scim_external_id: row.try_get("scim_external_id")?,
+            scim_email: row.try_get("scim_email")?,
+            disabled_by_scim: row.try_get::<i64, _>("disabled_by_scim")? != 0,
         };
 
         if options.include_account_secrets {
@@ -704,5 +847,70 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
         ("api_tokens", "API tokens, as hashes: existing tokens keep working."),
         ("push_monitors", "Heartbeat tokens, so the URLs your cron jobs call stay the same."),
         ("packs", "Integration packs, so devices of a pack type are probed again."),
+        ("teams", "Teams, their members and their folder rights."),
+        (
+            "oncall",
+            "On-call schedules, replacements, escalation policies, and each account's contacts \
+             (with their secrets) and quiet hours.",
+        ),
+        (
+            "netconfig_host_keys",
+            "Remembered SSH host keys of configuration backups, so no device is trusted anew.",
+        ),
+        (
+            "netconfig_versions",
+            "Network configuration versions, only when you include them: they hold device secrets.",
+        ),
     ])
+}
+
+async fn runbooks(pool: &SqlitePool) -> Result<Vec<BundleRunbook>> {
+    let list = crate::remediation::runbooks::list(pool).await.context("lecture des procédures")?;
+    Ok(list
+        .into_iter()
+        .map(|runbook| BundleRunbook {
+            title: runbook.title,
+            body: runbook.body,
+            links: runbook.links,
+        })
+        .collect())
+}
+
+async fn remediation_actions(
+    pool: &SqlitePool,
+    cipher: &Cipher,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleRemediationAction>> {
+    use crate::remediation::store;
+    let mut out = Vec::new();
+    for action in store::list_actions(pool).await.context("lecture des actions")? {
+        let secrets = store::action_secrets(pool, cipher, action.id).await?;
+        out.push(BundleRemediationAction {
+            name: action.name,
+            kind: action.kind,
+            params: action.params,
+            secrets,
+            target: action.target_id.and_then(|id| refs.get(&id).cloned()),
+        });
+    }
+    Ok(out)
+}
+
+async fn remediation_policies(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleRemediationPolicy>> {
+    let list =
+        crate::remediation::store::list_policies(pool).await.context("lecture des politiques")?;
+    Ok(list
+        .into_iter()
+        .map(|policy| BundleRemediationPolicy {
+            action: policy.action_name,
+            rule_uid: policy.rule_uid,
+            target: policy.target_id.and_then(|id| refs.get(&id).cloned()),
+            after_minutes: policy.after_minutes,
+            max_attempts: policy.max_attempts,
+            window_minutes: policy.window_minutes,
+        })
+        .collect())
 }

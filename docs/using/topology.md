@@ -14,6 +14,7 @@ administrator can [correct the map](#correct-the-map) where it is wrong.
 | Hosted by a hypervisor | The guests Proxmox VE, XCP-ng, Nutanix, vSphere or a Linux agent's libvirt module reported in the last 30 minutes. | short dashes |
 | Runs on a guest | A monitor whose IP address is one the hypervisor reports for a VM or container (Proxmox guest agent, container interfaces or static configuration; VMware Tools on vSphere). | short dashes, tighter |
 | Cabled to (LLDP) | An **LLDP neighbour** an SNMP switch sees on one of its ports (the `ethernet-switch` profile). | dots |
+| Cabled to (switch ports) | A **layer-2 link** read from the switch tables: switch to switch (LLDP, or CDP on Cisco gear) and host to access port (bridge forwarding table matched to ARP). | dash-dot |
 
 A guest or an LLDP neighbour is linked to a monitor only when its name
 designates exactly one monitor (same name, or same host name in the address,
@@ -114,3 +115,26 @@ hypervisor reports). `/api/topology/corrections`, `/api/topology/rules` and
 `/api/topology/suggestions` hold the corrections, the learned rules and the
 suggestions (writes for administrators). See the
 [API reference](../reference/api.md).
+
+## Layer-2 links (LLDP, CDP, bridge table)
+
+The `ethernet-switch` SNMP profile (included by the Zyxel and HPE / Aruba
+profiles) also reads LLDP and CDP neighbours, the bridge forwarding table
+(FDB, `dot1d` and `dot1q`), the ARP table and 802.3ad link aggregations. The map
+turns them into `l2` links:
+
+- **Switch to switch**: a neighbour is matched to a monitor by its system name,
+  otherwise by its chassis MAC address (seen in an ARP table). The link shows the
+  port on each side when you hover it or open it. Parallel cables or an
+  aggregate between the same two switches draw a single link.
+- **Host to switch**: a MAC address learned on a port is matched, through ARP,
+  to the monitor at that IP address. Only access ports count: a port with an
+  LLDP/CDP neighbour, a member of an aggregate, or a port that learns more than
+  24 addresses is treated as an uplink and carries no host. An address seen on
+  several switches is attached where it is alone on its port.
+
+Links are re-read at every collection and disappear once their measurements are
+older than 30 minutes. They work through a relay agent like any SNMP monitor.
+Links you correct by hand always win, and an `l2` link does not carry an outage
+or suppress alerts by itself: attach the device to its switch from the map
+("also use for alerts") when you want that.

@@ -1427,6 +1427,89 @@ const PUSH_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Compte SSH d'une sauvegarde de configuration (`netconfig`).
+const SSH_LOGIN: CredentialView = CredentialView {
+    kind: "ssh_login",
+    label: "SSH login",
+    help: "A read-only account is enough on most devices. Stored encrypted, never shown again.",
+    fields: &[
+        cred_text("username", "User name", "", "backup"),
+        cred_secret("password", "Password", "", "", true),
+        cred_secret(
+            "enable_secret",
+            "Enable password",
+            "Only for a profile that enters privileged mode (Cisco IOS, Aruba) with another password than the login's. Empty: the login password, or the saved one.",
+            "",
+            false,
+        ),
+    ],
+};
+
+/// Clé et secret d'API (OPNsense) d'une sauvegarde de configuration.
+const NETCONFIG_API_KEY: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "API key and secret",
+    help: "OPNsense API profile: the key and secret of an API user allowed to download backups.",
+    fields: &[
+        cred_text("username", "API key", "", ""),
+        cred_secret("password", "API secret", "", "", true),
+    ],
+};
+
+/// Clé d'API (PAN-OS) d'une sauvegarde de configuration.
+const NETCONFIG_API_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "PAN-OS API profile: the API key of a read-only role, sent in the X-PAN-KEY header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
+/// Options lues par `netconfig/mod.rs` (`Schedule`) et
+/// `dumbmonit_collectors::netconfig` (`FetchOptions`).
+const NETCONFIG_OPTIONS: &[OptionView] = &[
+    OptionView {
+        required: true,
+        ..select(
+            "profile",
+            "Device model",
+            "How to talk to the device and which commands to send. Only the commands of the chosen profile are ever sent.",
+            "cisco_ios",
+            dumbmonit_collectors::netconfig::PROFILE_IDS,
+        )
+    },
+    number(
+        "fetch_interval_hours",
+        "Back up every (hours)",
+        "How often the configuration is read, from 1 to 168. A failed read is retried after 15 minutes.",
+        "24",
+        "24",
+    ),
+    number(
+        "keep_versions",
+        "Versions kept",
+        "Older versions beyond this number are deleted, from 1 to 1000. The latest one is always kept.",
+        "100",
+        "100",
+    ),
+    number(
+        "keep_days",
+        "Keep versions for (days)",
+        "Versions not seen for this many days are deleted, from 0 (no age limit) to 3650. The latest one is always kept.",
+        "365",
+        "365",
+    ),
+    number(
+        "fetch_timeout_seconds",
+        "Timeout per step (seconds)",
+        "Time allowed for the connection, each prompt and each command, from 10 to 110.",
+        "60",
+        "60",
+    ),
+    insecure_tls(
+        "API profiles only (OPNsense, PAN-OS): for a device of your own behind a self-signed certificate.",
+    ),
+];
+
 /// Options lues par `webchange/options.rs` (`Options::from_target`).
 const WEBCHANGE_OPTIONS: &[OptionView] = &[
     select(
@@ -2608,6 +2691,146 @@ const GITLAB_OPTIONS: &[OptionView] = &[
 const FORGEJO_OPTIONS: &[OptionView] =
     &[app_scheme("http"), app_port("3000"), APP_TLS, APP_TIMEOUT];
 
+const SONARR_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("8989"), APP_TLS, APP_TIMEOUT];
+const RADARR_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("7878"), APP_TLS, APP_TIMEOUT];
+const LIDARR_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("8686"), APP_TLS, APP_TIMEOUT];
+const PROWLARR_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("9696"), APP_TLS, APP_TIMEOUT];
+const QBITTORRENT_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("8080"), APP_TLS, APP_TIMEOUT];
+const UNIFIPROTECT_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+const FRIGATE_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("5000"), APP_TLS, APP_TIMEOUT];
+const KEYCLOAK_APP_OPTIONS: &[OptionView] = &[
+    app_scheme("http"),
+    app_port("8080"),
+    text(
+        "health_port",
+        "Health port",
+        "Port of the health checks. Keycloak 25 and later serve them on the management port (9000); type same for Keycloak 24 and earlier, which use the main port.",
+        "9000",
+        "9000",
+    ),
+    select(
+        "health_scheme",
+        "Health protocol",
+        "Protocol of the management port. It is plain HTTP unless Keycloak is configured otherwise.",
+        "http",
+        &["http", "https"],
+    ),
+    text(
+        "auth_realm",
+        "Realm of the client",
+        "The realm in which the service-account client was created.",
+        "master",
+        "master",
+    ),
+    text(
+        "realms",
+        "Realms to read (optional)",
+        "Comma-separated realm names whose sessions and users are counted; leave empty for every realm, up to 20.",
+        "homelab,staff",
+        "",
+    ),
+    APP_TLS,
+    APP_TIMEOUT,
+];
+const AUTHENTIK_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("http"), app_port("9000"), APP_TLS, APP_TIMEOUT];
+const VAULTWARDEN_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+const MAILCOW_APP_OPTIONS: &[OptionView] =
+    &[app_scheme("https"), app_port("443"), APP_TLS, APP_TIMEOUT];
+
+const ARR_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API key",
+    help: "The API key of Settings → General → Security, sent in the X-Api-Key header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
+const QBITTORRENT_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "User name / password",
+    help: "The WebUI account. DumbMonit opens a session and reuses its cookie for the probe.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const QBITTORRENT_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No authentication (allowed address)",
+    help: "For an address qBittorrent lets in without a login (whitelisted IP subnets).",
+    fields: &[],
+};
+
+const PROTECT_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Local user name / password",
+    help: "A local UniFi OS user with the View Only role on Protect. Ubiquiti cloud accounts are refused.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const KEYCLOAK_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "None (health checks only)",
+    help: "Nothing is sent: the health checks are public. Realms, sessions and users need a client below.",
+    fields: &[],
+};
+
+const KEYCLOAK_CLIENT: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Client ID / secret",
+    help: "A service-account client with read-only roles. DumbMonit asks for a token at each probe.",
+    fields: &[
+        cred_text("username", "Client ID", "", "dumbmonit"),
+        cred_secret("password", "Client secret", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const AUTHENTIK_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API token",
+    help: "The key of an API token created for a service account, sent as \"Authorization: Bearer …\".",
+    fields: &[cred_secret("token", "API token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const VAULTWARDEN_NO_ADMIN: CredentialView = CredentialView {
+    kind: "none",
+    label: "No admin token (public checks only)",
+    help: "Only /alive and /api/config are read, which Vaultwarden serves without any login.",
+    fields: &[],
+};
+
+const VAULTWARDEN_ADMIN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Admin token",
+    help: "The plain ADMIN_TOKEN of the admin page. It opens a session whose cookie DumbMonit keeps between probes; only counters are read.",
+    fields: &[cred_secret(
+        "token",
+        "Admin token",
+        "Stored encrypted, never shown again.",
+        "",
+        true,
+    )],
+};
+
+const MAILCOW_KEY: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Read-only API key",
+    help: "The read-only key of System → Configuration → Access → API, sent in the X-API-Key header.",
+    fields: &[cred_secret("token", "API key", "Stored encrypted, never shown again.", "", true)],
+};
+
 const NEXTCLOUD_TOKEN: CredentialView = CredentialView {
     kind: "api_token",
     label: "Monitoring token (NC-Token)",
@@ -3160,6 +3383,145 @@ const RABBITMQ_OPTIONS: &[OptionView] = &[
     ),
 ];
 
+/// Connexion SQL Server (authentification SQL, `collectors/mssql`).
+const MSSQL_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "SQL Server login",
+    help: "A SQL Server authentication login, not a Windows account. Sent in the TDS login packet over TLS.",
+    fields: &[
+        cred_text("username", "Login", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Compte de la base, envoyé en basic à ORDS (`collectors/oracle`).
+const ORACLE_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Username / password",
+    help: "The database account enabled for REST in ORDS, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const ELASTICSEARCH_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Username / password",
+    help: "A user holding only the cluster privilege monitor, sent as HTTP basic authentication.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+const ELASTICSEARCH_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Bearer token",
+    help: "A service account token, sent as a bearer token. Elasticsearch API keys use another scheme and are not supported.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const INFLUXDB_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "API token",
+    help: "Sent as a bearer token. InfluxDB 3 needs it on /health; InfluxDB 2 does not.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+const KAFKA_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "SASL/PLAIN",
+    help: "For a SASL_SSL listener only: the password is accepted over TLS and never sent in clear text.",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "Stored encrypted, never shown again.", "", true),
+    ],
+};
+
+/// Options lues par `collectors/mssql/mod.rs` et `collectors/uptime/tags.rs`.
+const MSSQL_OPTIONS: &[OptionView] = &[
+    socket_port("1433"),
+    text(
+        "database",
+        "Database",
+        "The database the session opens. master exists on every instance.",
+        "master",
+        "master",
+    ),
+    boolean(
+        "tls",
+        "Encrypt the connection",
+        "Untick only for an old server that cannot encrypt: the session is then sent in clear text, the login excepted.",
+        true,
+    ),
+    insecure_tls(
+        "A default installation presents a self-signed certificate: enable this if the connection is refused for that reason.",
+    ),
+    SOCKET_TIMEOUT,
+];
+
+/// Options lues par `collectors/oracle/mod.rs` et `observability/options.rs`.
+const ORACLE_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "ORDS listens over plain HTTP unless you configured TLS for it (usually on port 8443).",
+        "http",
+        &["http", "https"],
+    ),
+    observability_port("8080"),
+    text(
+        "ords_path",
+        "ORDS path prefix",
+        "The context path ORDS is served under, /ords by default.",
+        "/ords",
+        "/ords",
+    ),
+    text(
+        "schema",
+        "Schema alias",
+        "The REST alias of the schema the account is enabled for. Empty: the account name in lower case.",
+        "dumbmonit",
+        "",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Options lues par `collectors/elasticsearch/mod.rs` et `observability/options.rs`.
+const ELASTICSEARCH_OPTIONS: &[OptionView] = &[
+    select(
+        "scheme",
+        "Protocol",
+        "Elasticsearch 8 and later, and the OpenSearch security plugin, answer over HTTPS by default.",
+        "http",
+        &["http", "https"],
+    ),
+    observability_port("9200"),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Options lues par `collectors/influxdb/mod.rs` et `observability/options.rs`.
+const INFLUXDB_OPTIONS: &[OptionView] =
+    &[OBSERVABILITY_SCHEME, observability_port("8086"), OBSERVABILITY_TLS, OBSERVABILITY_TIMEOUT];
+
+/// Options lues par `collectors/kafka/mod.rs` et `collectors/socket.rs`.
+const KAFKA_OPTIONS: &[OptionView] = &[
+    socket_port("9092"),
+    SOCKET_TLS,
+    SOCKET_INSECURE_TLS,
+    SOCKET_TIMEOUT,
+    number(
+        "max_groups",
+        "Consumer groups measured",
+        "The lag is measured for this many groups, in name order (0 to 500, 0 to skip the lag). The cluster health is always read.",
+        "50",
+        "50",
+    ),
+];
+
 /// Options lues par `collectors/crowdsec/mod.rs` et `observability/options.rs`.
 const CROWDSEC_OPTIONS: &[OptionView] = &[
     OBSERVABILITY_SCHEME,
@@ -3394,6 +3756,99 @@ const CADDY_OPTIONS: &[OptionView] = &[
         "Used if the address does not give a port: 2019 for the admin API itself.",
         "2019",
         "2019",
+    ),
+    OBSERVABILITY_TLS,
+    OBSERVABILITY_TIMEOUT,
+];
+
+/// Un exporter Prometheus sans mot de passe, ou derrière un proxy qui en pose un.
+const PROMETHEUS_NO_AUTH: CredentialView = CredentialView {
+    kind: "none",
+    label: "No password",
+    help: "Most exporters answer without authentication on a filtered network.",
+    fields: &[],
+};
+
+const PROMETHEUS_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Basic auth",
+    help: "For an exporter behind basic authentication (web.config.file, or a reverse proxy).",
+    fields: &[
+        cred_text("username", "User name", "", "dumbmonit"),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const PROMETHEUS_TOKEN: CredentialView = CredentialView {
+    kind: "api_token",
+    label: "Bearer token",
+    help: "Sent as \"Authorization: Bearer …\" on every read.",
+    fields: &[cred_secret("token", "Token", "Stored encrypted, never shown again.", "", true)],
+};
+
+/// Options lues par `collectors/prometheus/mod.rs` et `observability/options.rs`.
+const PROMETHEUS_OPTIONS: &[OptionView] = &[
+    select(
+        "preset",
+        "Exporter",
+        "Fills in the usual port. Pick custom for any other exporter and give its port.",
+        "custom",
+        &[
+            "custom",
+            "node_exporter",
+            "windows_exporter",
+            "cadvisor",
+            "blackbox_exporter",
+            "snmp_exporter",
+            "smartctl_exporter",
+            "mysqld_exporter",
+            "postgres_exporter",
+            "redis_exporter",
+            "nginx_exporter",
+            "prometheus",
+        ],
+    ),
+    select(
+        "scheme",
+        "Protocol",
+        "HTTPS if the exporter is behind TLS.",
+        "http",
+        &["http", "https"],
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. Empty: the port of the exporter chosen above (9100 for custom).",
+        "9100",
+        "",
+    ),
+    text(
+        "path",
+        "Path",
+        "Page to read, with its query if any: /probe?target=example.org&module=http_2xx for the blackbox exporter.",
+        "/metrics",
+        "/metrics",
+    ),
+    text(
+        "keep",
+        "Keep only (regular expression)",
+        "Only the metrics whose name matches are stored, for example ^(node_cpu|node_memory). Empty: all.",
+        "^node_(cpu|memory|filesystem)",
+        "",
+    ),
+    text(
+        "drop",
+        "Ignore (regular expression)",
+        "The metrics whose name matches are not stored, for example ^go_|_bucket$.",
+        "^go_",
+        "",
+    ),
+    number(
+        "max_series",
+        "Series limit",
+        "At most this many series are stored per read, from 1 to 50000. The surplus is counted in dumbmonit_scrape_series_dropped.",
+        "5000",
+        "5000",
     ),
     OBSERVABILITY_TLS,
     OBSERVABILITY_TIMEOUT,
@@ -3814,6 +4269,75 @@ const VEEAM_OPTIONS: &[OptionView] = &[
     SELF_SIGNED_TLS,
     VENDOR_TIMEOUT,
     DEVICE_STALE_DAYS,
+];
+
+/// Compte Windows de WinRM (`collectors/winrm`) : NTLM par défaut, Basic en HTTPS.
+const WINRM_LOGIN: CredentialView = CredentialView {
+    kind: "username_password",
+    label: "Windows account",
+    help: "A local or domain account in the Remote Management Users group, as dumbmonit, DOMAIN\\dumbmonit or dumbmonit@domain.",
+    fields: &[
+        cred_text(
+            "username",
+            "User name",
+            "The account created on the server, as dumbmonit (local) or DOMAIN\\dumbmonit.",
+            "CORP\\dumbmonit",
+        ),
+        cred_secret("password", "Password", "", "", true),
+    ],
+};
+
+const WINRM_OPTIONS: &[OptionView] = &[
+    boolean(
+        "allow_unencrypted",
+        "Allow unencrypted traffic",
+        "Use HTTP on port 5985 instead of HTTPS on port 5986. Not recommended: the server must allow unencrypted WinRM, and everything that crosses the network, the login included, can be read. Leave it off whenever an HTTPS listener exists.",
+        false,
+    ),
+    number(
+        "port",
+        "Port",
+        "Used if the address does not give a port. 5986 for HTTPS, 5985 with unencrypted traffic.",
+        "5986",
+        "",
+    ),
+    select(
+        "auth",
+        "Authentication",
+        "NTLM works with local and domain accounts. Basic must be enabled on the server and is only accepted over HTTPS. Kerberos is not supported.",
+        "ntlm",
+        &["ntlm", "basic"],
+    ),
+    SELF_SIGNED_TLS,
+    VENDOR_TIMEOUT,
+    text(
+        "services",
+        "Services to follow",
+        "Service names separated by commas. Each gets an up/down series, and one missing from the server counts as stopped. Every automatic service that is stopped is reported anyway.",
+        "Spooler, W3SVC",
+        "",
+    ),
+    text(
+        "ignore_services",
+        "Stopped services to ignore",
+        "Automatic services allowed to be stopped, separated by commas; a * at the start or the end is a wildcard. Updaters and delayed-start services such as gupdate are already ignored.",
+        "MSSQL*, Backup*",
+        "",
+    ),
+    text(
+        "event_logs",
+        "Event logs to count",
+        "Classic logs whose recent errors are counted (audit failures for Security), separated by commas. Write none to turn it off.",
+        "System,Application",
+        "System,Application",
+    ),
+    number(
+        "event_minutes",
+        "Event window (minutes)",
+        "Errors logged during this many minutes are counted, from 1 to 1440.",
+        "60",
+        "60",
+    ),
 ];
 
 /// Identifiants du serveur Kopia (`--server-username` / `--server-password`),
@@ -5281,6 +5805,46 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: POP3_OPTIONS,
         },
+        // Sauvegarde des configurations réseau (`netconfig`) : relevé par SSH
+        // ou par API selon un profil livré, versions chiffrées sur le serveur.
+        "netconfig" => CollectorView {
+            kind: "netconfig",
+            label: "Network configuration backup",
+            summary: "Keep every version of a switch, router or firewall configuration, see what changed line by line, and be told when it changes.",
+            examples: &[
+                "Cisco switch or router",
+                "Juniper router",
+                "FortiGate or pfSense firewall",
+                "MikroTik router",
+                "Aruba switch",
+            ],
+            credential_types: &["ssh_login", "username_password", "api_token"],
+            credentials: &[SSH_LOGIN, NETCONFIG_API_KEY, NETCONFIG_API_TOKEN],
+            address_hint: "192.168.1.1",
+            default_port: 22,
+            setup: Setup {
+                title: "Back up a device configuration",
+                steps: &[
+                    "Choose the device model in \"Device model\": it decides the commands sent, and nothing else is ever run on the device.",
+                    "Create a read-only account on the device that may log in over SSH and show the running configuration.",
+                    "For OPNsense through its API, create an API key for a user allowed to download backups; for PAN-OS, generate the API key of a read-only role.",
+                    "The first SSH connection remembers the device's host key: if it ever changes, backups stop and an alert asks you to check it.",
+                ],
+                ports: &[
+                    to_device!(22, "tcp", "SSH (default port), for every profile but the API ones"),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with an API profile (OPNsense API, PAN-OS)"
+                    ),
+                ],
+                permissions: &[
+                    "A read-only account\nAllowed to log in over SSH and to show the configuration",
+                ],
+                warning: "Configurations hold secrets: they are stored encrypted, shown with their secrets masked, and only an administrator signed in can reveal or download them.",
+            },
+            options: NETCONFIG_OPTIONS,
+        },
         // Changements du contenu d'un site (`webchange`) : texte comparé page à
         // page, instantanés et captures gardés sur le serveur.
         "webchange" => CollectorView {
@@ -5384,6 +5948,38 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "Call the URL at the end of the job, after the part that matters: a call at the top would report a success even when the job fails.",
             },
             options: PUSH_OPTIONS,
+        },
+        "otlp" => CollectorView {
+            kind: "otlp",
+            label: "OpenTelemetry source",
+            summary: "Receives OpenTelemetry metrics (OTLP over HTTP) from a collector or an instrumented application: gauges, counters and histograms are stored and can be graphed and alerted on.",
+            examples: &[
+                "OpenTelemetry Collector",
+                "Instrumented application",
+                "Docker host with an OTel agent",
+            ],
+            credential_types: &["none"],
+            credentials: &[NO_AUTH],
+            address_hint: "otel-collector",
+            default_port: 0,
+            setup: Setup {
+                title: "Send OTLP/HTTP to DumbMonit",
+                steps: &[
+                    "In Settings, API & assistants, create a token with the write scope. Restrict it to the network of your collector.",
+                    "Save this source, then note its number: it ends the address of its page, /devices/<number>.",
+                    "In the otlphttp exporter of your collector, set the endpoint to this server followed by /api/otlp, then add two headers: Authorization with the token, and X-DumbMonit-Target with the number of this source.\nhttps://monit.example.com/api/otlp",
+                    "Make sure counters and histograms use cumulative temporality (the default); for delta, add the deltatocumulative processor.",
+                    "Optional: logs sent to /api/otlp/v1/logs are stored in VictoriaLogs when it is enabled in Settings, Storage.",
+                ],
+                ports: &[to_server!(
+                    8080,
+                    "tcp",
+                    "OTLP over HTTP (default port, 443 behind a proxy)",
+                )],
+                permissions: &[],
+                warning: "OTLP over gRPC is not supported: configure the otlphttp exporter, not otlp. The token can write to the whole API: keep it in the collector's secrets.",
+            },
+            options: &[],
         },
         "dummy" => CollectorView {
             kind: "dummy",
@@ -5561,6 +6157,325 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "Create the key from an account that can open Administration, or photo counts and job queues are skipped; \"last backup\" is the whole library's latest upload, the same for every device.",
             },
             options: IMMICH_OPTIONS,
+        },
+        "sonarr" => CollectorView {
+            kind: "sonarr",
+            label: "Sonarr (beta)",
+            summary: "Health warnings, failing download clients and indexers, download queue errors, library disk space, updates.",
+            examples: &["Sonarr v4"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "sonarr.lan",
+            default_port: 8989,
+            setup: Setup {
+                title: "Read the API key in Sonarr",
+                steps: &[
+                    "In Sonarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Sonarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(8989, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "A Sonarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: SONARR_APP_OPTIONS,
+        },
+        "radarr" => CollectorView {
+            kind: "radarr",
+            label: "Radarr (beta)",
+            summary: "Health warnings, failing download clients and indexers, download queue errors, library disk space, updates.",
+            examples: &["Radarr v5"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "radarr.lan",
+            default_port: 7878,
+            setup: Setup {
+                title: "Read the API key in Radarr",
+                steps: &[
+                    "In Radarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Radarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(7878, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "A Radarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: RADARR_APP_OPTIONS,
+        },
+        "lidarr" => CollectorView {
+            kind: "lidarr",
+            label: "Lidarr (beta)",
+            summary: "Health warnings, failing download clients and indexers, download queue errors, library disk space, updates.",
+            examples: &["Lidarr"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "lidarr.lan",
+            default_port: 8686,
+            setup: Setup {
+                title: "Read the API key in Lidarr",
+                steps: &[
+                    "In Lidarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Lidarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(8686, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "A Lidarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: LIDARR_APP_OPTIONS,
+        },
+        "prowlarr" => CollectorView {
+            kind: "prowlarr",
+            label: "Prowlarr (beta)",
+            summary: "Health warnings, indexers disabled after failures, disk space, updates.",
+            examples: &["Prowlarr"],
+            credential_types: &["api_token"],
+            credentials: &[ARR_KEY],
+            address_hint: "prowlarr.lan",
+            default_port: 9696,
+            setup: Setup {
+                title: "Read the API key in Prowlarr",
+                steps: &[
+                    "In Prowlarr, open Settings → General → Security and copy the API Key.",
+                    "In DumbMonit, enter Prowlarr's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(9696, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "A Prowlarr API key cannot be limited to reading: keep it only in DumbMonit, which sends GET requests and nothing else.",
+            },
+            options: PROWLARR_APP_OPTIONS,
+        },
+        "qbittorrent" => CollectorView {
+            kind: "qbittorrent",
+            label: "qBittorrent (beta)",
+            summary: "Torrents in error or stalled, lost connectivity, download and upload speed, free space, torrents by state.",
+            examples: &["qBittorrent 4.x and 5.x"],
+            credential_types: &["username_password", "none"],
+            credentials: &[QBITTORRENT_LOGIN, QBITTORRENT_NO_AUTH],
+            address_hint: "qbittorrent.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Give DumbMonit access to qBittorrent's WebUI",
+                steps: &[
+                    "In qBittorrent, open Tools → Options → Web UI and tick Web User Interface (Remote control).",
+                    "Under Authentication, set a user name and password named as follows, or allow DumbMonit's address in the whitelisted IP subnets bypass.\ndumbmonit",
+                    "In DumbMonit, enter qBittorrent's address and that user name and password, or choose No authentication for a bypassed address.",
+                ],
+                ports: &[
+                    to_device!(8080, "tcp", "WebUI (HTTP, default)",),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "qBittorrent bans an address for an hour after five failed logins (HTTP 403): fix the password before the next probe, or the probe stays refused.",
+            },
+            options: QBITTORRENT_APP_OPTIONS,
+        },
+        "unifiprotect" => CollectorView {
+            kind: "unifiprotect",
+            label: "UniFi Protect (beta)",
+            summary: "Cameras offline or not recording, NVR disks and storage, recording switched off.",
+            examples: &["UNVR", "Dream Machine Pro", "Cloud Key Gen2+"],
+            credential_types: &["username_password"],
+            credentials: &[PROTECT_LOGIN],
+            address_hint: "unvr.lan",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a local view-only user for Protect",
+                steps: &[
+                    "In UniFi OS, open Admins & Users → Create New and create a local user named as follows, with no cloud account.\ndumbmonit",
+                    "Give it access to the Protect application only, with the View Only role, and none to Network or other applications.",
+                    "In DumbMonit, enter the console's address and that user name and password.",
+                ],
+                ports: &[to_device!(443, "tcp", "UniFi OS (HTTPS, default)",)],
+                permissions: &[],
+                warning: "Use a local account: UniFi OS refuses Ubiquiti cloud accounts here. The console's certificate is usually self-signed: turn on the certificate option.",
+            },
+            options: UNIFIPROTECT_APP_OPTIONS,
+        },
+        "frigate" => CollectorView {
+            kind: "frigate",
+            label: "Frigate NVR (beta)",
+            summary: "Cameras that stopped delivering frames, detector speed and hangs, frame rates, recording storage, updates.",
+            examples: &["Frigate 0.14 and later"],
+            credential_types: &["none", "api_token"],
+            credentials: &[NO_AUTH, HTTP_TOKEN],
+            address_hint: "frigate.lan",
+            default_port: 5000,
+            setup: Setup {
+                title: "Let DumbMonit read Frigate's statistics",
+                steps: &[
+                    "Nothing to install: check from the DumbMonit host that Frigate's API answers on port 5000.\ncurl http://frigate.lan:5000/api/version",
+                    "If a proxy in front of Frigate expects a token (port 8971 requires a login), choose Bearer token below; otherwise choose No authentication.",
+                    "In DumbMonit, enter Frigate's address, for example \"frigate.lan\".",
+                ],
+                ports: &[
+                    to_device!(5000, "tcp", "API (HTTP, default, no login)",),
+                    to_device_optional!(
+                        8971,
+                        "tcp",
+                        "Only with the authenticated port behind a bearer-token proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "Port 5000 has no login and gives full control of Frigate: expose it only to DumbMonit, never to the internet. A camera you turned off in Frigate's settings also reads as offline.",
+            },
+            options: FRIGATE_APP_OPTIONS,
+        },
+        "keycloak" => CollectorView {
+            kind: "keycloak",
+            label: "Keycloak (beta)",
+            summary: "Readiness and database health, version, realms (disabled ones), active sessions and users per realm.",
+            examples: &["Keycloak 25 and later", "Keycloak 24 and earlier"],
+            credential_types: &["none", "username_password"],
+            credentials: &[KEYCLOAK_NO_AUTH, KEYCLOAK_CLIENT],
+            address_hint: "sso.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Let DumbMonit read Keycloak's health and realms",
+                steps: &[
+                    "Run Keycloak with health checks on, with the option below. From Keycloak 25 they answer on the management port 9000.\nKC_HEALTH_ENABLED=true",
+                    "Optional, for realms, sessions and users: in the master realm, create a client named as follows, with Client authentication and Service accounts roles on, and Standard flow off.\ndumbmonit",
+                    "On that client's Service accounts roles tab, assign the client roles listed below, then copy the secret from its Credentials tab.",
+                    "In DumbMonit, enter Keycloak's address and the client ID and secret, or choose None (health checks only).",
+                ],
+                ports: &[
+                    to_device!(8080, "tcp", "API (HTTP, default)",),
+                    to_device!(
+                        9000,
+                        "tcp",
+                        "Health checks on the management port (Keycloak 25 and later)",
+                    ),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[
+                    "view-realm\nMaster-realm client role: realms and their state",
+                    "view-users\nMaster-realm client role: user counts",
+                ],
+                warning: "Keycloak 24 and earlier serve the health checks on the main port: set the health port option to same. Health checks must be enabled on the server, or DumbMonit reports a missing /health/ready.",
+            },
+            options: KEYCLOAK_APP_OPTIONS,
+        },
+        "authentik" => CollectorView {
+            kind: "authentik",
+            label: "authentik (beta)",
+            summary: "Readiness, workers, failed system tasks, outpost connections, version updates, users.",
+            examples: &["authentik 2025.x"],
+            credential_types: &["api_token"],
+            credentials: &[AUTHENTIK_TOKEN],
+            address_hint: "auth.lan",
+            default_port: 9000,
+            setup: Setup {
+                title: "Create an API token in authentik",
+                steps: &[
+                    "In authentik, open Directory → Users → Create a service account and name it as follows, without a random password.\ndumbmonit",
+                    "Put that user in a group that can open the authentik interface, so it can read the system pages.",
+                    "Open Directory → Tokens and App passwords, create a token for that user with the intent API Token and no expiry, and copy its key.",
+                    "In DumbMonit, enter authentik's address and paste the key.",
+                ],
+                ports: &[
+                    to_device!(9000, "tcp", "API (HTTP, default)",),
+                    to_device_optional!(
+                        9443,
+                        "tcp",
+                        "Only with the https scheme on authentik's own HTTPS port",
+                    ),
+                    to_device_optional!(
+                        443,
+                        "tcp",
+                        "Only with the https scheme behind a reverse proxy",
+                    ),
+                ],
+                permissions: &[],
+                warning: "authentik has no read-only role for its system pages: the token's user must be allowed into the interface, so keep the key only in DumbMonit. Pages the token cannot read are skipped, not failed.",
+            },
+            options: AUTHENTIK_APP_OPTIONS,
+        },
+        "vaultwarden" => CollectorView {
+            kind: "vaultwarden",
+            label: "Vaultwarden (beta)",
+            summary: "Liveness, version, open sign-ups, and with the admin token disabled-account and two-step login counts.",
+            examples: &["Vaultwarden"],
+            credential_types: &["none", "api_token"],
+            credentials: &[VAULTWARDEN_NO_ADMIN, VAULTWARDEN_ADMIN],
+            address_hint: "vault.example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Check Vaultwarden, and optionally read its admin page",
+                steps: &[
+                    "Nothing to install: check from the DumbMonit host that Vaultwarden answers.\ncurl https://vault.example.com/alive",
+                    "Optional, for account counts: enable the admin page with an ADMIN_TOKEN on the server, and keep the plain token you type on the /admin page.",
+                    "In DumbMonit, enter Vaultwarden's address; paste the admin token, or choose No admin token for the public checks only.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "API (HTTPS, default)",),
+                    to_device_optional!(
+                        80,
+                        "tcp",
+                        "Only with the http scheme option, inside a trusted network",
+                    ),
+                ],
+                permissions: &[],
+                warning: "The admin token opens Vaultwarden's admin page and can change every setting: store it only in DumbMonit, or leave it out if you do not need the counts. DumbMonit reads counters only, never a name, e-mail address or vault item.",
+            },
+            options: VAULTWARDEN_APP_OPTIONS,
+        },
+        "mailcow" => CollectorView {
+            kind: "mailcow",
+            label: "mailcow (beta)",
+            summary: "Stopped containers, Postfix queue size and age, mail volume, mailboxes near their quota.",
+            examples: &["mailcow: dockerized"],
+            credential_types: &["api_token"],
+            credentials: &[MAILCOW_KEY],
+            address_hint: "mail.example.com",
+            default_port: 443,
+            setup: Setup {
+                title: "Create a read-only API key in mailcow",
+                steps: &[
+                    "In mailcow, open System → Configuration → Access → API and find the Read-only access section.",
+                    "Tick Activate API, add DumbMonit's IP address to the allowed addresses and save.",
+                    "Copy the read-only key, then enter mailcow's address in DumbMonit and paste it.",
+                ],
+                ports: &[
+                    to_device!(443, "tcp", "API (HTTPS, default)",),
+                    to_device_optional!(80, "tcp", "Only with the http scheme option",),
+                ],
+                permissions: &[],
+                warning: "mailcow only answers the addresses allowed on its API page: if DumbMonit reaches it through NAT or a relay agent, allow that address instead.",
+            },
+            options: MAILCOW_APP_OPTIONS,
         },
         "paperless" => CollectorView {
             kind: "paperless",
@@ -6050,6 +6965,164 @@ fn compiled(kind: &str) -> Option<CollectorView> {
             },
             options: RABBITMQ_OPTIONS,
         },
+        "mssql" => CollectorView {
+            kind: "mssql",
+            label: "SQL Server",
+            summary: "The database engine itself: databases that are not online, blocked requests, sessions against the limit, disk space of the data volumes, SQL Server Agent jobs and AlwaysOn availability groups.",
+            examples: &[
+                "SQL Server 2019 to 2025",
+                "SQL Server Express",
+                "Azure SQL Managed Instance",
+            ],
+            credential_types: &["username_password"],
+            credentials: &[MSSQL_LOGIN],
+            address_hint: "sql.lan",
+            default_port: 1433,
+            setup: Setup {
+                title: "Create a read-only SQL Server login",
+                steps: &[
+                    "Connect to the instance with SQL Server Management Studio or sqlcmd, with a login allowed to create logins, and create the login DumbMonit will use.\nCREATE LOGIN dumbmonit WITH PASSWORD = 'choose-a-long-password', CHECK_POLICY = ON;",
+                    "Give it the server-wide read rights it needs to see the state of the engine, and nothing else.\nGRANT VIEW SERVER STATE TO dumbmonit;\nGRANT VIEW ANY DEFINITION TO dumbmonit;",
+                    "Optional, for the SQL Server Agent jobs: let it read the job history in msdb.\nUSE msdb;\nCREATE USER dumbmonit FOR LOGIN dumbmonit;\nALTER ROLE SQLAgentReaderRole ADD MEMBER dumbmonit;",
+                    "Check that the instance accepts SQL Server authentication (mixed mode) and listens on a fixed TCP port: SQL Server Configuration Manager, Network Configuration, TCP/IP.",
+                    "In DumbMonit, enter the server address, for example sql.lan, or sql.lan:1444 for another port, then the login and its password.",
+                    "Tick Accept an unverifiable certificate while the server still presents its self-signed certificate.",
+                ],
+                ports: &[to_device!(1433, "tcp", "SQL Server (TDS, default port)")],
+                permissions: &[
+                    "VIEW SERVER STATE\nRead sessions, requests and volumes",
+                    "VIEW ANY DEFINITION\nList the databases and their files",
+                    "SQLAgentReaderRole (msdb)\nOptional: read the Agent job history",
+                ],
+                warning: "Windows authentication is not supported: use a SQL Server login, on an instance that allows SQL Server authentication (mixed mode). Named instances need their fixed TCP port in the address.",
+            },
+            options: MSSQL_OPTIONS,
+        },
+        "oracle" => CollectorView {
+            kind: "oracle",
+            label: "Oracle Database",
+            summary: "The database through Oracle REST Data Services: an instance that is not open, tablespaces filling up, sessions against the limit, Data Guard lag, the fast recovery area and failed scheduler jobs.",
+            examples: &["Oracle Database 19c, 21c, 23ai", "Oracle Database Free", "Oracle XE"],
+            credential_types: &["username_password"],
+            credentials: &[ORACLE_LOGIN],
+            address_hint: "ords.lan",
+            default_port: 8080,
+            setup: Setup {
+                title: "Let DumbMonit read Oracle through ORDS",
+                steps: &[
+                    "Make sure Oracle REST Data Services (ORDS) runs in front of the database with REST-enabled SQL switched on.\nords config set restEnabledSql.active true",
+                    "As a privileged user, create the account DumbMonit will use, with the two rights it needs.\nCREATE USER dumbmonit IDENTIFIED BY \"choose-a-long-password\";\nGRANT CREATE SESSION, SELECT_CATALOG_ROLE TO dumbmonit;",
+                    "Connected as that account, enable its schema for REST with the alias dumbmonit.\nEXEC ORDS.ENABLE_SCHEMA(p_enabled => TRUE, p_url_mapping_type => 'BASE_PATH', p_url_mapping_pattern => 'dumbmonit');",
+                    "In DumbMonit, enter the ORDS address, for example ords.lan:8080 or https://ords.lan:8443, then the account and its password.",
+                    "If the schema alias or the ORDS path differ from the defaults, set them in the options below.",
+                ],
+                ports: &[
+                    to_device!(8080, "tcp", "ORDS (HTTP, default)"),
+                    to_device_optional!(
+                        8443,
+                        "tcp",
+                        "Only if ORDS is served over TLS (HTTPS, default)"
+                    ),
+                ],
+                permissions: &[
+                    "CREATE SESSION\nLet the account log in",
+                    "SELECT_CATALOG_ROLE\nRead the V$ and DBA_ views, no data",
+                ],
+                warning: "There is no native Oracle client: DumbMonit reads the database through ORDS over HTTP, and never contacts the listener on port 1521. The REST-enabled SQL settings vary between ORDS versions: check the ORDS documentation of yours.",
+            },
+            options: ORACLE_OPTIONS,
+        },
+        "elasticsearch" => CollectorView {
+            kind: "elasticsearch",
+            label: "Elasticsearch / OpenSearch",
+            summary: "The search cluster: red or yellow status, unassigned shards, disk filling up on a node and JVM heap pressure.",
+            examples: &[
+                "Elasticsearch 7, 8, 9",
+                "OpenSearch 1, 2, 3",
+                "The index behind Graylog or Wazuh",
+            ],
+            credential_types: &["username_password", "api_token", "none"],
+            credentials: &[ELASTICSEARCH_LOGIN, ELASTICSEARCH_TOKEN, NO_AUTH],
+            address_hint: "es.lan",
+            default_port: 9200,
+            setup: Setup {
+                title: "Create a monitoring-only Elasticsearch user",
+                steps: &[
+                    "Create a role that only holds the cluster privilege monitor, from Kibana (Stack Management, Roles) or with the API.\ncurl -u elastic -X PUT \"https://es.lan:9200/_security/role/dumbmonit\" -H \"Content-Type: application/json\" -d '{\"cluster\":[\"monitor\"]}'",
+                    "Create the user with that role.\ncurl -u elastic -X PUT \"https://es.lan:9200/_security/user/dumbmonit\" -H \"Content-Type: application/json\" -d '{\"password\":\"choose-a-long-password\",\"roles\":[\"dumbmonit\"]}'",
+                    "OpenSearch: create a role with the cluster permission cluster_monitor in Security, Roles, and map the user to it.",
+                    "In DumbMonit, enter the address of one node, for example es.lan, then the user and its password.",
+                    "Elasticsearch 8 and later serve HTTPS with a generated certificate: pick HTTPS, and tick Accept an unverifiable certificate unless you installed your own.",
+                ],
+                ports: &[to_device!(9200, "tcp", "REST API (HTTP or HTTPS, default)")],
+                permissions: &[
+                    "monitor (cluster privilege)\nRead the cluster health and node statistics",
+                    "cluster_monitor (OpenSearch)\nThe same permission on OpenSearch",
+                ],
+                warning: "The account needs no index privilege: DumbMonit never reads a document. One node reports the whole cluster, so enter a node that is not the one you expect to fail.",
+            },
+            options: ELASTICSEARCH_OPTIONS,
+        },
+        "influxdb" => CollectorView {
+            kind: "influxdb",
+            label: "InfluxDB",
+            summary: "The time series database: health and readiness, uptime, memory, file descriptors and server errors, for InfluxDB 2 and 3.",
+            examples: &["InfluxDB 2.x", "InfluxDB 3 Core", "InfluxDB 3 Enterprise"],
+            credential_types: &["none", "api_token"],
+            credentials: &[NO_AUTH, INFLUXDB_TOKEN],
+            address_hint: "influx.lan",
+            default_port: 8086,
+            setup: Setup {
+                title: "Let DumbMonit read InfluxDB's health",
+                steps: &[
+                    "InfluxDB 2: nothing to create, /health, /ready and /metrics are open. Leave the credential on No authentication.",
+                    "InfluxDB 3 asks for a token on /health and /metrics by default: paste a token as API token, or start the server with --disable-authz health,ping,metrics.",
+                    "In DumbMonit, enter the server address, for example influx.lan, with the port 8086 for InfluxDB 2 or 8181 for InfluxDB 3.",
+                    "Tick HTTPS if the server, or the reverse proxy in front of it, serves TLS.",
+                ],
+                ports: &[
+                    to_device!(8086, "tcp", "InfluxDB 2 API (default port)"),
+                    to_device_optional!(
+                        8181,
+                        "tcp",
+                        "Only for InfluxDB 3, whose default port is 8181"
+                    ),
+                ],
+                permissions: &[],
+                warning: "InfluxDB 3 answers 401 on /health without a token unless it runs with --disable-authz. The token is only used to read health and metrics.",
+            },
+            options: INFLUXDB_OPTIONS,
+        },
+        "kafka" => CollectorView {
+            kind: "kafka",
+            label: "Apache Kafka",
+            summary: "The event streaming cluster: offline and under-replicated partitions, a missing controller, and the lag of the consumer groups.",
+            examples: &["Apache Kafka (KRaft or ZooKeeper)", "Redpanda", "Confluent Platform"],
+            credential_types: &["none", "username_password"],
+            credentials: &[NO_AUTH, KAFKA_LOGIN],
+            address_hint: "kafka.lan",
+            default_port: 9092,
+            setup: Setup {
+                title: "Give DumbMonit read-only access to Kafka",
+                steps: &[
+                    "Skip this step for a cluster without an authorizer. Otherwise give a dedicated principal read-only ACLs, from a host that can reach the brokers.\nkafka-acls.sh --bootstrap-server kafka.lan:9092 --add --allow-principal User:dumbmonit --operation Describe --cluster\nkafka-acls.sh --bootstrap-server kafka.lan:9092 --add --allow-principal User:dumbmonit --operation Describe --topic '*'\nkafka-acls.sh --bootstrap-server kafka.lan:9092 --add --allow-principal User:dumbmonit --operation Describe --group '*'",
+                    "In DumbMonit, enter the address of one broker, for example kafka.lan:9092: DumbMonit then contacts the other brokers at the addresses they advertise.",
+                    "Tick TLS if the listener is SSL or SASL_SSL, and enter the SASL/PLAIN user and password if the listener asks for them.",
+                ],
+                ports: &[to_device!(
+                    9092,
+                    "tcp",
+                    "Kafka protocol (default port, plain or TLS), every broker is contacted"
+                )],
+                permissions: &[
+                    "Describe on the cluster\nList the consumer groups",
+                    "Describe on topics\nRead partitions, leaders and end offsets",
+                    "Describe on groups\nRead the offsets each group committed",
+                ],
+                warning: "Each broker must be reachable at the address it advertises (advertised.listeners): a broker DumbMonit cannot reach leaves the consumer lag incomplete. SASL/PLAIN is accepted only over TLS; SCRAM and Kerberos are not supported.",
+            },
+            options: KAFKA_OPTIONS,
+        },
         "crowdsec" => CollectorView {
             kind: "crowdsec",
             label: "CrowdSec",
@@ -6139,6 +7212,29 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "Never expose the admin API itself: whoever reaches port 2019 can replace the configuration or stop Caddy.",
             },
             options: CADDY_OPTIONS,
+        },
+        "prometheus" => CollectorView {
+            kind: "prometheus",
+            label: "Prometheus exporter",
+            summary: "Any exporter that serves Prometheus metrics (node_exporter, windows_exporter, cAdvisor, blackbox_exporter…): every series is stored and can be graphed and used in threshold alerts.",
+            examples: &["node_exporter", "windows_exporter", "cAdvisor", "blackbox_exporter"],
+            credential_types: &["none", "username_password", "api_token"],
+            credentials: &[PROMETHEUS_NO_AUTH, PROMETHEUS_LOGIN, PROMETHEUS_TOKEN],
+            address_hint: "server.lan:9100",
+            default_port: 9100,
+            setup: Setup {
+                title: "Point DumbMonit at the exporter",
+                steps: &[
+                    "Check that the exporter answers from the DumbMonit host.\ncurl http://server.lan:9100/metrics",
+                    "In DumbMonit, enter the host and pick the exporter, or leave custom and give the port.",
+                    "Optional: restrict what is stored with Keep only or Ignore, to keep a large exporter within the series limit.",
+                    "Optional: if the exporter is on another site, choose a relay agent to read it from there.",
+                ],
+                ports: &[to_device!(9100, "tcp", "Metrics page (HTTP, default for node_exporter)")],
+                permissions: &[],
+                warning: "Metrics pages are usually unauthenticated: filter the port so that only the DumbMonit host reaches it.",
+            },
+            options: PROMETHEUS_OPTIONS,
         },
         "nginx" => CollectorView {
             kind: "nginx",
@@ -6488,6 +7584,42 @@ fn compiled(kind: &str) -> Option<CollectorView> {
                 warning: "Veeam keeps some REST API routes for the Backup Administrator role, the license among them on current versions: with the Viewer role DumbMonit shows the license as not readable and never asks for more.",
             },
             options: VEEAM_OPTIONS,
+        },
+        "winrm" => CollectorView {
+            kind: "winrm",
+            label: "Windows (WinRM, no agent)",
+            summary: "A Windows server or PC without installing anything, through WinRM and WMI queries: CPU, memory, disks, services (the chosen ones and every automatic service that is stopped), uptime and recent event log errors.",
+            examples: &["Windows Server 2019", "Windows Server 2022", "Windows 11 workstation"],
+            credential_types: &["username_password"],
+            credentials: &[WINRM_LOGIN],
+            address_hint: "srv01.corp.example.com",
+            default_port: 5986,
+            setup: Setup {
+                title: "Give DumbMonit a WinRM account on the Windows server",
+                steps: &[
+                    "On the server, in an elevated PowerShell, enable WinRM.\nEnable-PSRemoting -SkipNetworkProfileCheck -Force",
+                    "Create the HTTPS listener with a certificate named after the server (use your own certificate instead of this self-signed one if you have one), then open its port.\n$cert = New-SelfSignedCertificate -DnsName \"srv01.corp.example.com\" -CertStoreLocation Cert:\\LocalMachine\\My\nNew-Item -Path WSMan:\\LocalHost\\Listener -Transport HTTPS -Address * -CertificateThumbPrint $cert.Thumbprint -Force\nNew-NetFirewallRule -DisplayName \"WinRM HTTPS\" -Direction Inbound -Protocol TCP -LocalPort 5986 -Action Allow",
+                    "Create the account with a long random password, then add it to the groups listed below.\nnet user dumbmonit * /add\nnet localgroup \"Remote Management Users\" dumbmonit /add\nnet localgroup \"Performance Monitor Users\" dumbmonit /add\nnet localgroup \"Event Log Readers\" dumbmonit /add",
+                    "Give the account access to the WMI namespace: wmimgmt.msc → right-click WMI Control → Properties → Security → Root → CIMV2 → Security, add it and tick Enable Account and Remote Enable.",
+                    "In DumbMonit, enter the server name as its certificate names it (srv01.corp.example.com) and log in as dumbmonit, or DOMAIN\\dumbmonit for a domain account.",
+                ],
+                ports: &[
+                    to_device!(5986, "tcp", "WinRM over HTTPS (default)"),
+                    to_device_optional!(
+                        5985,
+                        "tcp",
+                        "Only with the Allow unencrypted traffic option"
+                    ),
+                ],
+                permissions: &[
+                    "Remote Management Users\nAllows the WinRM login",
+                    "Performance Monitor Users\nReads the CPU load per core",
+                    "Event Log Readers\nOnly for the event log counts",
+                    "WMI root/cimv2: Enable Account, Remote Enable\nReads the WMI classes",
+                ],
+                warning: "The account runs no command on the server, it only reads WMI. NTLM and Basic (HTTPS only) are supported, Kerberos is not. Pending Windows updates cannot be read this way. A self-signed certificate needs the option Accept an unverifiable certificate.",
+            },
+            options: WINRM_OPTIONS,
         },
         "kopia" => CollectorView {
             kind: "kopia",
@@ -6993,15 +8125,18 @@ fn guide_url(kind: &str) -> String {
         "postgres" => "services",
         "snmp" | "proxmox" | "pbs" | "pdm" | "pmg" | "synology" | "opnsense" | "truenas"
         | "redfish" | "loki" | "graylog" | "mdaemon" | "securitygateway" | "nextcloud"
-        | "immich" | "paperless" | "jellyfin" | "plex" | "gitlab" | "forgejo" | "pihole"
-        | "adguard" | "nut" | "mikrotik" | "unifi" | "homeassistant" | "vsphere" | "redis"
-        | "mongodb" | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache"
-        | "npm" | "domain" | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes"
-        | "activedirectory" | "pfsense" | "unraid" | "veeam" | "tailscale" | "fortigate"
-        | "sophos" | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap"
-        | "ceph" | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "push"
-        | "webchange" | "website" | "m365" | "entra" | "azure" | "aws" | "cloudflare"
-        | "hetzner" | "ovh" | "infomaniak" => kind,
+        | "immich" | "sonarr" | "radarr" | "lidarr" | "prowlarr" | "qbittorrent"
+        | "unifiprotect" | "frigate" | "keycloak" | "authentik" | "vaultwarden" | "mailcow"
+        | "paperless" | "jellyfin" | "plex" | "gitlab" | "forgejo" | "pihole" | "adguard"
+        | "nut" | "mikrotik" | "unifi" | "homeassistant" | "vsphere" | "redis" | "mongodb"
+        | "rabbitmq" | "crowdsec" | "traefik" | "caddy" | "nginx" | "apache" | "npm" | "domain"
+        | "provider" | "mail_blacklist" | "ip_blacklist" | "kubernetes" | "activedirectory"
+        | "pfsense" | "unraid" | "veeam" | "winrm" | "tailscale" | "fortigate" | "sophos"
+        | "meraki" | "omada" | "arubacentral" | "paloalto" | "sonicwall" | "qnap" | "ceph"
+        | "minio" | "kopia" | "duplicati" | "openvpn" | "xcpng" | "nutanix" | "mssql"
+        | "oracle" | "elasticsearch" | "influxdb" | "kafka" | "push" | "webchange" | "website"
+        | "netconfig" | "m365" | "entra" | "azure" | "aws" | "cloudflare" | "hetzner" | "ovh"
+        | "infomaniak" | "prometheus" | "otlp" => kind,
         _ => return String::new(),
     };
     let anchor = match kind {
@@ -7122,6 +8257,17 @@ mod tests {
         "plex",
         "gitlab",
         "forgejo",
+        "sonarr",
+        "radarr",
+        "lidarr",
+        "prowlarr",
+        "qbittorrent",
+        "unifiprotect",
+        "frigate",
+        "keycloak",
+        "authentik",
+        "vaultwarden",
+        "mailcow",
         "pihole",
         "adguard",
         "nut",
@@ -7132,6 +8278,11 @@ mod tests {
         "redis",
         "mongodb",
         "rabbitmq",
+        "mssql",
+        "oracle",
+        "elasticsearch",
+        "influxdb",
+        "kafka",
         "crowdsec",
         "traefik",
         "caddy",
@@ -7146,6 +8297,7 @@ mod tests {
         "pfsense",
         "unraid",
         "veeam",
+        "winrm",
         "kopia",
         "duplicati",
         "tailscale",
@@ -7191,6 +8343,7 @@ mod tests {
         "push",
         "webchange",
         "website",
+        "netconfig",
         "dummy",
         "snmp_oid",
         "radius",
@@ -7593,6 +8746,17 @@ mod tests {
                 ],
             ),
             (
+                "netconfig",
+                &[
+                    "profile",
+                    "fetch_interval_hours",
+                    "keep_versions",
+                    "keep_days",
+                    "fetch_timeout_seconds",
+                    "insecure_tls",
+                ],
+            ),
+            (
                 "website",
                 &[
                     "expect_text",
@@ -7696,6 +8860,29 @@ mod tests {
                 ],
             ),
             ("forgejo", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("sonarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("radarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("lidarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("prowlarr", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("qbittorrent", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("unifiprotect", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("frigate", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "keycloak",
+                &[
+                    "scheme",
+                    "port",
+                    "health_port",
+                    "health_scheme",
+                    "auth_realm",
+                    "realms",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                ],
+            ),
+            ("authentik", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("vaultwarden", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("mailcow", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
             (
                 "unifi",
                 &[
@@ -7727,6 +8914,21 @@ mod tests {
                 "rabbitmq",
                 &["scheme", "port", "insecure_tls", "request_timeout_seconds", "max_queues"],
             ),
+            ("mssql", &["port", "database", "tls", "insecure_tls", "request_timeout_seconds"]),
+            (
+                "oracle",
+                &[
+                    "scheme",
+                    "port",
+                    "ords_path",
+                    "schema",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                ],
+            ),
+            ("elasticsearch", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("influxdb", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
+            ("kafka", &["port", "tls", "insecure_tls", "request_timeout_seconds", "max_groups"]),
             (
                 "crowdsec",
                 &["scheme", "port", "lapi", "lapi_port", "insecure_tls", "request_timeout_seconds"],
@@ -7816,6 +9018,20 @@ mod tests {
                     "insecure_tls",
                     "request_timeout_seconds",
                     "device_stale_days",
+                ],
+            ),
+            (
+                "winrm",
+                &[
+                    "allow_unencrypted",
+                    "port",
+                    "auth",
+                    "insecure_tls",
+                    "request_timeout_seconds",
+                    "services",
+                    "ignore_services",
+                    "event_logs",
+                    "event_minutes",
                 ],
             ),
             ("kopia", &["scheme", "port", "insecure_tls", "request_timeout_seconds"]),
@@ -7969,6 +9185,17 @@ mod tests {
             ("plex", "http", selfhosted::plex::DEFAULT_PORT),
             ("gitlab", "https", selfhosted::gitlab::DEFAULT_PORT),
             ("forgejo", "http", selfhosted::forgejo::DEFAULT_PORT),
+            ("sonarr", "http", selfhosted::arr::SONARR.port),
+            ("radarr", "http", selfhosted::arr::RADARR.port),
+            ("lidarr", "http", selfhosted::arr::LIDARR.port),
+            ("prowlarr", "http", selfhosted::arr::PROWLARR.port),
+            ("qbittorrent", "http", selfhosted::qbittorrent::DEFAULT_PORT),
+            ("unifiprotect", "https", selfhosted::protect::DEFAULT_PORT),
+            ("frigate", "http", selfhosted::frigate::DEFAULT_PORT),
+            ("keycloak", "http", selfhosted::keycloak::DEFAULT_PORT),
+            ("authentik", "http", selfhosted::authentik::DEFAULT_PORT),
+            ("vaultwarden", "https", selfhosted::vaultwarden::DEFAULT_PORT),
+            ("mailcow", "https", selfhosted::mailcow::DEFAULT_PORT),
         ] {
             assert_eq!(defaut(kind, "scheme"), scheme, "« {kind} »");
             assert_eq!(defaut(kind, "port"), port.to_string(), "« {kind} »");
@@ -8001,6 +9228,27 @@ mod tests {
         assert_eq!(
             defaut("rabbitmq", "max_queues"),
             dumbmonit_collectors::rabbitmq::DEFAULT_MAX_QUEUES.to_string()
+        );
+        // `collectors/{mssql,oracle,elasticsearch,influxdb,kafka}`.
+        assert_eq!(defaut("mssql", "port"), dumbmonit_collectors::mssql::DEFAULT_PORT.to_string());
+        assert_eq!(defaut("mssql", "database"), dumbmonit_collectors::mssql::DEFAULT_DATABASE);
+        assert_eq!(
+            defaut("oracle", "port"),
+            dumbmonit_collectors::oracle::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(defaut("oracle", "ords_path"), dumbmonit_collectors::oracle::DEFAULT_ORDS_PATH);
+        assert_eq!(
+            defaut("elasticsearch", "port"),
+            dumbmonit_collectors::elasticsearch::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(
+            defaut("influxdb", "port"),
+            dumbmonit_collectors::influxdb::DEFAULT_PORT.to_string()
+        );
+        assert_eq!(defaut("kafka", "port"), dumbmonit_collectors::kafka::DEFAULT_PORT.to_string());
+        assert_eq!(
+            defaut("kafka", "max_groups"),
+            dumbmonit_collectors::kafka::DEFAULT_MAX_GROUPS.to_string()
         );
         assert_eq!(
             defaut("crowdsec", "port"),
@@ -8368,6 +9616,10 @@ mod tests {
             ("redis", "dumbmonit"),
             ("mongodb", "dumbmonit"),
             ("rabbitmq", "dumbmonit"),
+            ("mssql", "dumbmonit"),
+            ("oracle", "dumbmonit"),
+            ("elasticsearch", "dumbmonit"),
+            ("kafka", "dumbmonit"),
             ("crowdsec", "dumbmonit"),
             ("traefik", "dumbmonit"),
             ("caddy", "dumbmonit"),
@@ -8560,6 +9812,17 @@ mod tests {
             ("plex", include_str!("../../../../docs/devices/plex.md")),
             ("gitlab", include_str!("../../../../docs/devices/gitlab.md")),
             ("forgejo", include_str!("../../../../docs/devices/forgejo.md")),
+            ("sonarr", include_str!("../../../../docs/devices/sonarr.md")),
+            ("radarr", include_str!("../../../../docs/devices/radarr.md")),
+            ("lidarr", include_str!("../../../../docs/devices/lidarr.md")),
+            ("prowlarr", include_str!("../../../../docs/devices/prowlarr.md")),
+            ("qbittorrent", include_str!("../../../../docs/devices/qbittorrent.md")),
+            ("unifiprotect", include_str!("../../../../docs/devices/unifiprotect.md")),
+            ("frigate", include_str!("../../../../docs/devices/frigate.md")),
+            ("keycloak", include_str!("../../../../docs/devices/keycloak.md")),
+            ("authentik", include_str!("../../../../docs/devices/authentik.md")),
+            ("vaultwarden", include_str!("../../../../docs/devices/vaultwarden.md")),
+            ("mailcow", include_str!("../../../../docs/devices/mailcow.md")),
             ("pihole", include_str!("../../../../docs/devices/pihole.md")),
             ("adguard", include_str!("../../../../docs/devices/adguard.md")),
             ("nut", include_str!("../../../../docs/devices/nut.md")),
@@ -8570,6 +9833,11 @@ mod tests {
             ("redis", include_str!("../../../../docs/devices/redis.md")),
             ("mongodb", include_str!("../../../../docs/devices/mongodb.md")),
             ("rabbitmq", include_str!("../../../../docs/devices/rabbitmq.md")),
+            ("mssql", include_str!("../../../../docs/devices/mssql.md")),
+            ("oracle", include_str!("../../../../docs/devices/oracle.md")),
+            ("elasticsearch", include_str!("../../../../docs/devices/elasticsearch.md")),
+            ("influxdb", include_str!("../../../../docs/devices/influxdb.md")),
+            ("kafka", include_str!("../../../../docs/devices/kafka.md")),
             ("crowdsec", include_str!("../../../../docs/devices/crowdsec.md")),
             ("traefik", include_str!("../../../../docs/devices/traefik.md")),
             ("caddy", include_str!("../../../../docs/devices/caddy.md")),
@@ -8605,6 +9873,7 @@ mod tests {
             ("agent_service", include_str!("../../../../docs/devices/agent.md")),
             ("push", include_str!("../../../../docs/devices/push.md")),
             ("webchange", include_str!("../../../../docs/devices/webchange.md")),
+            ("netconfig", include_str!("../../../../docs/devices/netconfig.md")),
             ("website", include_str!("../../../../docs/devices/website.md")),
             ("smtp", include_str!("../../../../docs/devices/services.md")),
             ("postgres", include_str!("../../../../docs/devices/services.md")),

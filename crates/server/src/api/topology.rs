@@ -12,6 +12,9 @@
 //! - `hypervisor` : un hyperviseur et ses invités, lus dans les dernières
 //!   mesures (Proxmox, XCP-ng, Nutanix, vSphere, libvirt de l'agent) ;
 //! - `lldp` : un voisin LLDP qu'un commutateur SNMP a vu sur un port ;
+//! - `l2` : un lien de niveau 2 lu dans les tables des commutateurs (LLDP, CDP,
+//!   FDB, ARP, agrégats) : commutateur↔commutateur avec les ports des deux
+//!   côtés, ou hôte↔port d'accès. Voir [`super::topology_l2`] ;
 //! - `samehost` : une surveillance PBS et une surveillance Proxmox VE qui
 //!   visent la même machine (même hôte, ou même nom) ;
 //! - `backup` : un Proxmox VE qui sauvegarde vers un PBS surveillé, lu dans
@@ -76,6 +79,7 @@ use sqlx::Row;
 use tracing::warn;
 
 use crate::api::ApiResult;
+use crate::auth::teams::TeamAccess;
 use crate::collectors::agent;
 use crate::state::AppState;
 use crate::tsdb::InstantSeries;
@@ -160,8 +164,8 @@ pub struct EdgeView {
     /// Côté amont : parent, relais, hyperviseur, commutateur.
     pub from: String,
     pub to: String,
-    /// `parent`, `service`, `relay`, `hypervisor`, `hosted`, `lldp`, `samehost`,
-    /// `backup`, `firewall` ou `manual` (rattaché à la main, sur la carte seule).
+    /// `parent`, `service`, `relay`, `hypervisor`, `hosted`, `lldp`, `l2`,
+    /// `samehost`, `backup`, `firewall` ou `manual` (rattaché à la main, sur la carte seule).
     pub source: &'static str,
     /// `deduced`, `manual` (corrigé à la main) ou `rule` (règle apprise).
     pub origin: &'static str,
@@ -169,12 +173,25 @@ pub struct EdgeView {
     pub correction_id: Option<i64>,
     /// La règle apprise qui a posé ce lien.
     pub rule_id: Option<i64>,
+    /// Port du côté `from` / `to` (liens `lldp` et `l2`, d'après les tables des
+    /// commutateurs) ; affiché au survol.
+    pub from_port: Option<String>,
+    pub to_port: Option<String>,
 }
 
 impl EdgeView {
     /// Un lien déduit, tel que la carte le trouve seule.
     pub fn deduced(from: String, to: String, source: &'static str) -> Self {
-        Self { from, to, source, origin: "deduced", correction_id: None, rule_id: None }
+        Self {
+            from,
+            to,
+            source,
+            origin: "deduced",
+            correction_id: None,
+            rule_id: None,
+            from_port: None,
+            to_port: None,
+        }
     }
 }
 
@@ -322,8 +339,20 @@ pub struct Neighbor {
 /// `GET /api/topology` : lecture seule, ouverte à tous les rôles comme la
 /// liste des équipements. Les adresses des cibles n'y figurent pas ; seules y
 /// sont celles que l'hyperviseur rapporte pour ses invités (`ips`).
-pub async fn topology(State(state): State<AppState>) -> ApiResult<Json<TopologyView>> {
-    Ok(Json(compute(&state).await?))
+pub async fn topology(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<TopologyView>> {
+    let mut view = compute(&state).await?;
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        restrict(&mut view.nodes, &mut view.edges, &visible);
+        // Corrections, règles et suggestions citent des nœuds quelconques : un
+        // compte restreint n'en voit aucune (outil d'administrateur).
+        view.corrections.clear();
+        view.rules.clear();
+        view.suggestions.clear();
+    }
+    Ok(Json(view))
 }
 
 /// La carte complète : déduction, puis corrections et règles apprises.
@@ -333,12 +362,20 @@ pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
     let placed = placed_sites(state, &targets, &sites).await?;
 
     let ids: Vec<TargetId> = targets.iter().map(|t| t.id).collect();
-    let (guests, neighbors, facts, metrics_available) = if targets.is_empty() {
-        (Vec::new(), Vec::new(), ProxmoxFacts::default(), true)
+    let (guests, neighbors, facts, l2, metrics_available) = if targets.is_empty() {
+        (
+            Vec::new(),
+            Vec::new(),
+            ProxmoxFacts::default(),
+            super::topology_l2::L2Data::default(),
+            true,
+        )
     } else {
         let guests = state.victoria.query(&guests_query()).await;
         let neighbors = state.victoria.query(&lldp_query()).await;
         let facts = state.victoria.query(&facts_query()).await;
+        // Le niveau 2 est facultatif : sa panne n'éteint pas le reste de la carte.
+        let l2 = state.victoria.query(&l2_query()).await;
         let available = guests.is_ok() && neighbors.is_ok() && facts.is_ok();
         let failed = guests.as_ref().err().or(neighbors.as_ref().err()).or(facts.as_ref().err());
         if let Some(error) = failed {
@@ -348,11 +385,15 @@ pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
             guests.map(|s| parse_guests(&s, &ids)).unwrap_or_default(),
             neighbors.map(|s| parse_neighbors(&s, &ids)).unwrap_or_default(),
             facts.map(|s| parse_facts(&s, &ids)).unwrap_or_default(),
+            l2.map(|s| super::topology_l2::L2Data::parse(&s, &ids)).unwrap_or_default(),
             available,
         )
     };
 
     let (mut nodes, mut edges) = build_full(&targets, &sites, &placed, &guests, &neighbors, &facts);
+    // Liens de niveau 2, avant les corrections : elles gardent la priorité.
+    let l2_links = super::topology_l2::derive(&targets, &l2);
+    super::topology_l2::apply(&mut edges, &l2_links);
     let corrections = super::topology_edits::load_corrections(&state.pool).await?;
     let mut rules = super::topology_edits::load_rules(&state.pool).await?;
     let applied =
@@ -363,6 +404,23 @@ pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
     let suggestions =
         super::topology_edits::suggest(&targets, &nodes, &edges, &corrections, &rules);
     Ok(TopologyView { nodes, edges, metrics_available, corrections, rules, suggestions })
+}
+
+/// Carte d'un compte restreint par ses équipes : ses équipements, les invités
+/// et nœuds de ses hyperviseurs, et les liens entre eux seulement. Un nœud qui
+/// ne se rattache à aucun équipement visible disparaît.
+fn restrict(
+    nodes: &mut Vec<NodeView>,
+    edges: &mut Vec<EdgeView>,
+    visible: &std::collections::HashSet<TargetId>,
+) {
+    nodes.retain(|node| match (node.target_id, node.host_id) {
+        (Some(id), _) => visible.contains(&id),
+        (None, Some(host)) => visible.contains(&host),
+        (None, None) => false,
+    });
+    let kept: std::collections::HashSet<&str> = nodes.iter().map(|n| n.id.as_str()).collect();
+    edges.retain(|edge| kept.contains(edge.from.as_str()) && kept.contains(edge.to.as_str()));
 }
 
 /// Les cibles telles que la carte les lit.
@@ -508,6 +566,13 @@ fn facts_query() -> String {
 
 fn lldp_query() -> String {
     format!("last_over_time(dumbmonit_lldp_neighbor_info[{WINDOW}])")
+}
+
+fn l2_query() -> String {
+    format!(
+        "last_over_time({{__name__=~\"{}\"}}[{WINDOW}]) keep_metric_names",
+        super::topology_l2::L2_SERIES
+    )
 }
 
 fn target_label(series: &InstantSeries, known: &[TargetId]) -> Option<TargetId> {
@@ -665,14 +730,14 @@ pub fn host_key(text: &str) -> Option<String> {
 
 /// Index des cibles par nom, pour relier un invité ou un voisin à la cible qui
 /// le surveille.
-struct NameIndex {
+pub(super) struct NameIndex {
     exact: HashMap<String, Vec<TargetId>>,
     name_key: HashMap<String, Vec<TargetId>>,
     address_key: HashMap<String, Vec<TargetId>>,
 }
 
 impl NameIndex {
-    fn new(targets: &[TargetRow]) -> Self {
+    pub(super) fn new(targets: &[TargetRow]) -> Self {
         let mut index =
             Self { exact: HashMap::new(), name_key: HashMap::new(), address_key: HashMap::new() };
         // Un service d'agent porte l'adresse de sa machine (`hôte#module`) :
@@ -717,7 +782,7 @@ impl NameIndex {
     /// La cible désignée par `name`, autre que `except` : du plus sûr (nom
     /// identique) au plus large (même hôte dans l'adresse). Plusieurs candidats
     /// au premier palier qui en trouve : ambigu, aucun lien.
-    fn find(&self, name: &str, except: TargetId) -> Option<TargetId> {
+    pub(super) fn find(&self, name: &str, except: TargetId) -> Option<TargetId> {
         let key = host_key(name);
         let tiers = [
             self.exact.get(&name.trim().to_lowercase()),
@@ -766,7 +831,7 @@ fn is_loopback(key: Option<&str>) -> bool {
     key.is_some_and(|k| k == "localhost" || k.parse::<IpAddr>().is_ok_and(|ip| ip.is_loopback()))
 }
 
-fn node_id(id: TargetId) -> String {
+pub(super) fn node_id(id: TargetId) -> String {
     format!("t{id}")
 }
 

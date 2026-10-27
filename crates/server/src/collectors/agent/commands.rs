@@ -229,6 +229,9 @@ pub async fn expire_stale(pool: &SqlitePool, target_id: Option<TargetId>) -> Res
     .execute(pool)
     .await
     .context("expiring stale commands")?;
+    if result.rows_affected() > 0 {
+        crate::remediation::store::sync_runs(pool).await?;
+    }
     Ok(result.rows_affected())
 }
 
@@ -275,6 +278,7 @@ pub async fn cancel(
             "Command {id} was just picked up by the agent."
         )));
     }
+    crate::remediation::store::sync_runs(pool).await?;
     Ok(())
 }
 
@@ -376,6 +380,8 @@ pub async fn report(
         .await
         .context("updating the command")?;
     }
+    // Le journal de remédiation suit la commande qui l'exécute.
+    crate::remediation::store::sync_runs(pool).await?;
     Ok(true)
 }
 
@@ -537,6 +543,7 @@ mod tests {
             tags: BTreeMap::new(),
             binding_supported: true,
             self_update: None,
+            remediation: None,
         };
         let registration =
             store::register(&pool, &cipher, &identity, token.id, None).await.expect("machine");

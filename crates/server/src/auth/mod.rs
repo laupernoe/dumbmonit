@@ -26,9 +26,12 @@ pub mod oidc;
 pub mod passkeys;
 pub mod password;
 pub mod rate_limit;
+pub mod saml;
+pub mod scim;
 pub mod session;
 pub mod settings;
 pub mod setup_code;
+pub mod teams;
 pub mod token;
 pub mod totp;
 pub mod totp_login;
@@ -94,6 +97,9 @@ struct Inner {
     discovery: Mutex<Option<oidc::discovery::Cached>>,
     /// Connexions OIDC commencées et pas encore terminées, indexées par `state`.
     pending: Mutex<oidc::flow::PendingLogins>,
+    /// Connexions SAML en cours, tickets de fin de connexion et identifiants
+    /// d'assertions déjà acceptées (voir [`saml::flow`]).
+    saml: saml::flow::Memory,
     /// Code exigé par la création du premier administrateur (voir
     /// [`setup_code`]). En mémoire seulement : jamais écrit nulle part.
     setup_code: String,
@@ -143,6 +149,7 @@ impl AuthState {
             http,
             discovery: Mutex::new(None),
             pending: Mutex::new(oidc::flow::PendingLogins::default()),
+            saml: saml::flow::Memory::default(),
             // Un code que personne n'a vu ne sert à rien : `main` fixe celui
             // qu'il affiche dans `Config::setup_code`.
             setup_code: setup_code::generate(),
@@ -184,6 +191,10 @@ impl AuthState {
 
     pub fn pending_logins(&self) -> &Mutex<oidc::flow::PendingLogins> {
         &self.0.pending
+    }
+
+    pub fn saml(&self) -> &saml::flow::Memory {
+        &self.0.saml
     }
 
     /// Indique si au moins un compte existe, en interrogeant la base au plus une

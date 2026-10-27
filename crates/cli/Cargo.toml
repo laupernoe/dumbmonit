@@ -1,0 +1,22 @@
+[package]
+name = "dumbmonit-cli"
+description = "Outil en ligne de commande DumbMonit : configuration en fichiers (plan, apply, export), équipements, silences."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[[bin]]
+name = "dumbmonit-cli"
+path = "src/main.rs"
+
+# Dépendances au minimum : pas d'analyseur d'arguments ni de runtime asynchrone.
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+# Client HTTP bloquant, TLS rustls (Rust pur, racines Mozilla embarquées).
+ureq = "3.5"
+# Lecteur YAML en Rust pur, le même que le serveur.
+serde-saphyr = { version = "2", default-features = false, features = ["deserialize"] }
