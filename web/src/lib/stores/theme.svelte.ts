@@ -1,12 +1,19 @@
 /**
  * Light / dark theme.
  *
- * Three states: `auto` follows `prefers-color-scheme`, `light` and `dark`
- * force the user's choice and are remembered. The effective theme is applied
- * to `<html>` as a `dark` class, as Tailwind expects.
+ * The app itself is one dark console (the `obsidian` tokens in app.css): it is
+ * always dark. Only the public status pages (`/s/…`, or a status page's own
+ * domain) keep a light and a dark version; there `auto` follows
+ * `prefers-color-scheme`, and a visitor's `light` or `dark` is remembered.
+ * The effective theme is applied to `<html>` as a `dark` class, as Tailwind
+ * expects, and the console tokens as an `obsidian` class.
  */
 import { browser } from '$app/env';
-import { mode } from './mode.svelte.js';
+import { page } from '$app/state';
+import { hostedStatusSlug } from '#lib/status-host.js';
+
+/** Class of the console tokens on `<html>` (app.css). */
+export const CONSOLE_CLASS = 'obsidian';
 
 export type ThemePreference = 'auto' | 'light' | 'dark';
 
@@ -46,10 +53,16 @@ class Theme {
 		this.#systemDark = systemIsDark();
 	}
 
+	/** False on a public status page, which keeps its own light; the console everywhere else. */
+	get console(): boolean {
+		if (!browser) return true;
+		return !hostedStatusSlug && !page.url.pathname.startsWith('/s/');
+	}
+
 	/** Theme actually applied, once the preference is resolved. */
 	get resolved(): 'light' | 'dark' {
-		// The Enterprise console is dark by design: one palette, tuned for long shifts.
-		if (mode.enterprise) return 'dark';
+		// The console is dark by design: one palette, tuned for long shifts.
+		if (this.console) return 'dark';
 		if (this.preference === 'auto') return this.#systemDark ? 'dark' : 'light';
 		return this.preference;
 	}
@@ -71,6 +84,7 @@ class Theme {
 	/** Applies the theme to the document. Called by an effect in the root layout. */
 	apply() {
 		if (!browser) return;
+		document.documentElement.classList.toggle(CONSOLE_CLASS, this.console);
 		document.documentElement.classList.toggle('dark', this.resolved === 'dark');
 		document
 			.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')

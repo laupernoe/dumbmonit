@@ -61,6 +61,14 @@
 
 	--shadow-lift: 0 1px 2px rgb(22 33 58 / 0.06), 0 6px 18px -8px rgb(22 33 58 / 0.22);
 	--shadow-float: 0 2px 6px rgb(22 33 58 / 0.08), 0 18px 40px -16px rgb(22 33 58 / 0.32);
+
+	/* The Overview banner: a fixed night sky, the same in every theme. */
+	--c-banner-line: #1d2a45;
+	--c-banner-sky: linear-gradient(90deg, #0a1330 0%, #13244a 60%, #1c3160 100%);
+	--c-banner-ink: #eceef1;
+	--c-banner-ink-2: #b9c6e4;
+	--c-banner-star: #fbf9f4;
+	--c-banner-moon: #f1e6c8;
 }
 
 html.dark,
@@ -109,12 +117,13 @@ html.dark,
 }
 
 /* ---------------------------------------------------------------------------
-   Enterprise mode: Obsidian. A console for long shifts — near-black ground,
-   cool grey ink, status hues that read at a glance and nothing else in colour.
-   Always dark (the theme store forces `dark` alongside this class). Same token
-   names as the two lights, so every page and component follows unchanged.
+   The console: Obsidian. Built for long shifts — near-black ground, cool grey
+   ink, status hues that read at a glance and nothing else in colour. The whole
+   app wears it, always dark (the theme store puts `dark` alongside this class);
+   only the public status pages keep the two lights above. Same token names,
+   so every page and component follows unchanged.
    --------------------------------------------------------------------------- */
-html.mode-enterprise {
+html.obsidian {
 	color-scheme: dark;
 
 	--c-canvas: #07080a;
@@ -165,7 +174,7 @@ html.mode-enterprise {
 	--font-code: 'Geist Mono Variable', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
-html.mode-enterprise body {
+html.obsidian body {
 	font-family: var(--font-ui);
 	font-feature-settings: normal;
 	font-variation-settings: normal;
@@ -173,12 +182,12 @@ html.mode-enterprise body {
 }
 
 /* Bricolage's display voice belongs to the bulletin; the console speaks Geist. */
-html.mode-enterprise .display {
+html.obsidian .display {
 	font-variation-settings: normal;
 	letter-spacing: -0.02em;
 }
 
-html.mode-enterprise :where(code, kbd, pre, samp, .font-mono) {
+html.obsidian :where(code, kbd, pre, samp, .font-mono) {
 	font-family: var(--font-code);
 }
 
@@ -228,53 +237,6 @@ html.mode-enterprise :where(code, kbd, pre, samp, .font-mono) {
 }
 .ob-scan {
 	animation: ob-scan 6s linear infinite;
-}
-
-/* Miniatures of each mode (mode picker): their own palettes, whatever mode is on. */
-.mode-preview-homelab {
-	--pv-canvas: #f3efe6;
-	--pv-surface: #fbf9f4;
-	--pv-line: rgb(22 33 58 / 0.14);
-	--pv-ink: #16213a;
-	--pv-ink-2: #4a5a78;
-	--pv-up: #0f8f86;
-	--pv-warn: #b7791f;
-	--pv-down: #c8402f;
-	--pv-accent: #0f8f86;
-}
-html.dark .mode-preview-homelab {
-	--pv-canvas: #0a1020;
-	--pv-surface: #111a2e;
-	--pv-line: rgb(148 178 214 / 0.14);
-	--pv-ink: #e8eef8;
-	--pv-ink-2: #9fb0c8;
-	--pv-up: #22d3c5;
-	--pv-warn: #f5b542;
-	--pv-down: #ff6b5a;
-	--pv-accent: #22d3c5;
-}
-/* Enterprise mode is dark: its miniature shows the light Homelab regardless. */
-html.mode-enterprise .mode-preview-homelab {
-	--pv-canvas: #f3efe6;
-	--pv-surface: #fbf9f4;
-	--pv-line: rgb(22 33 58 / 0.14);
-	--pv-ink: #16213a;
-	--pv-ink-2: #4a5a78;
-	--pv-up: #0f8f86;
-	--pv-warn: #b7791f;
-	--pv-down: #c8402f;
-	--pv-accent: #0f8f86;
-}
-.mode-preview-enterprise {
-	--pv-canvas: #07080a;
-	--pv-surface: #0b0d10;
-	--pv-line: #16191e;
-	--pv-ink: #eceef1;
-	--pv-ink-2: #8a919c;
-	--pv-up: #2fd17c;
-	--pv-warn: #f2b033;
-	--pv-down: #ff5c5c;
-	--pv-accent: #7da9ff;
 }
 
 /* Tailwind utilities read the live variables, so `bg-surface` follows the theme. */
