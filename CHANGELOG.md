@@ -24,6 +24,11 @@ All notable changes to this project are documented here. The format follows
   accepted; the field is ignored and no longer written.
 - The Homelab overview (weather scene, briefing, last 7 days) and the Homelab
   wall (city scenes, music dock, widget zones).
+- Wall music (Spotify Connect, shared link), wall news and wall widgets, with
+  their Settings sections and API routes (`/api/music/*`, `/api/wall/news*`,
+  `/api/wall/widgets*`). Their stored settings are left in place and ignored;
+  the security policy no longer allows Spotify's player or any frame. Place
+  search for locations (`/api/locations/geocode`) stays.
 
 ## 0.14.1 — 2026-10-28
 

@@ -51,8 +51,6 @@
 	import LogsSection from '#lib/components/settings/LogsSection.svelte';
 	import PacksSection from '#lib/components/settings/PacksSection.svelte';
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
-	import MusicSection from '#lib/components/settings/MusicSection.svelte';
-		import WallWidgetsSection from '#lib/components/settings/WallWidgetsSection.svelte';
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import OnCallContactsSection from '#lib/components/settings/OnCallContactsSection.svelte';
@@ -95,7 +93,7 @@
 		team: [UsersSection, TeamsSection, ...(auth.isAdmin ? [ClientsSection] : []), SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection],
-		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallWidgetsSection] : [])],
+		wall: [WallModeSection],
 		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
 
@@ -152,7 +150,7 @@
 	let query = $state('');
 	const results = $derived(
 		searchSettings(searchIndex(), query).filter(
-			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'widgets' && entry.id !== 'locations' && entry.id !== 'logs' && entry.id !== 'storage'))
+			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'locations' && entry.id !== 'logs' && entry.id !== 'storage'))
 		)
 	);
 	const href = (entry: { tab: SettingsTab; id: string }) => `/settings/${entry.tab}#${entry.id}`;
