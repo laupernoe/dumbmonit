@@ -194,6 +194,23 @@ async fn client_assignments(
         let target = target.and_then(|id| refs.get(&id)).cloned().unwrap_or_default();
         push(Kind::Silence, format!("{name}\n{target}"), client);
     }
+    // Objets du lot 4, par nom (titre pour une procédure). Seuls les tableaux
+    // partagés ont un client.
+    for (kind, sql) in [
+        (Kind::Dashboard, "SELECT name, client_id FROM dashboards WHERE shared = 1 AND client_id IS NOT NULL"),
+        (Kind::Schedule, "SELECT name, client_id FROM oncall_schedules WHERE client_id IS NOT NULL"),
+        (Kind::EscalationPolicy, "SELECT name, client_id FROM oncall_policies WHERE client_id IS NOT NULL"),
+        (Kind::Runbook, "SELECT title, client_id FROM runbooks WHERE client_id IS NOT NULL"),
+        (
+            Kind::RemediationAction,
+            "SELECT name, client_id FROM remediation_actions WHERE client_id IS NOT NULL",
+        ),
+    ] {
+        let rows: Vec<(String, i64)> = sqlx::query_as(sql).fetch_all(pool).await?;
+        for (name, client) in rows {
+            push(kind, name, client);
+        }
+    }
     Ok(out)
 }
 

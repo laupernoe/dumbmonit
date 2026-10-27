@@ -5,6 +5,7 @@
 	 * device types; it then shows on matching alerts, in their notifications
 	 * (as a link) and on the device's page.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { onMount } from 'svelte';
 	import { Plus, X } from 'lucide-svelte';
 	import type { Runbook, RunbookLink, RunbookScope } from '#lib/api/index.js';
@@ -191,6 +192,7 @@
 					<a href={`/runbooks/${runbook.id}`} class="min-h-10 min-w-0 flex-1 py-2 font-medium text-ink hover:underline">
 						<span class="block truncate">{runbook.title}</span>
 					</a>
+					<ClientAssign kind="runbook" id={runbook.id} />
 					<span class="flex min-w-0 flex-wrap gap-1 text-[0.75rem] text-ink-2">
 						{#each runbook.links as link (link.scope + ':' + link.value)}
 							<span class="rounded-full border border-line px-2 py-0.5">{scopeLabel(link.scope)}: {link.value}</span>

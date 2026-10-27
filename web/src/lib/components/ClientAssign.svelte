@@ -26,7 +26,12 @@
 		channel: 'channels',
 		rule: 'rules',
 		silence: 'silences',
-		report: 'reports'
+		report: 'reports',
+		dashboard: 'dashboards',
+		schedule: 'oncall_schedules',
+		escalation_policy: 'oncall_policies',
+		runbook: 'runbooks',
+		remediation_action: 'remediation_actions'
 	};
 
 	const visible = $derived(auth.mspOn && auth.msp?.admin === true && (auth.msp?.clients.length ?? 0) > 0);

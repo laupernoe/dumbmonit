@@ -10569,7 +10569,7 @@ components:
         paused: { type: integer }
     ClientKind:
       type: string
-      enum: [target, status_page, agent_token, channel, rule, silence, report]
+      enum: [target, status_page, agent_token, channel, rule, silence, report, dashboard, schedule, escalation_policy, runbook, remediation_action]
     ClientAssign:
       type: object
       required: [kind, ids]

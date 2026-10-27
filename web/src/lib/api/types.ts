@@ -5586,14 +5586,40 @@ export interface ClientHealth {
 }
 
 /** What can belong to a client. */
-export type ClientKind = 'target' | 'status_page' | 'agent_token' | 'channel' | 'rule' | 'silence' | 'report';
+export type ClientKind =
+	| 'target'
+	| 'status_page'
+	| 'agent_token'
+	| 'channel'
+	| 'rule'
+	| 'silence'
+	| 'report'
+	| 'dashboard'
+	| 'schedule'
+	| 'escalation_policy'
+	| 'runbook'
+	| 'remediation_action';
 
 /**
  * `GET /api/clients/assignments`: per kind, object id → client id. An object
  * missing from its map is shared by the instance. JSON keys are strings.
  */
 export type ClientAssignments = Partial<
-	Record<'targets' | 'status_pages' | 'agent_tokens' | 'channels' | 'rules' | 'silences' | 'reports', Record<string, number>>
+	Record<
+		| 'targets'
+		| 'status_pages'
+		| 'agent_tokens'
+		| 'channels'
+		| 'rules'
+		| 'silences'
+		| 'reports'
+		| 'dashboards'
+		| 'oncall_schedules'
+		| 'oncall_policies'
+		| 'runbooks'
+		| 'remediation_actions',
+		Record<string, number>
+	>
 >;
 
 /** `GET/PUT /api/auth/saml/config`. The two URLs are read-only. */

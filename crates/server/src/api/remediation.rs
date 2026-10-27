@@ -9,6 +9,13 @@
 //! - armement d'une politique : administrateur, en personne (session, jamais un
 //!   jeton d'API), en deux étapes.
 //!
+//! Mode MSP : procédures et actions appartiennent à un client ou à l'instance.
+//! Sous une alerte ou sur la fiche d'un équipement, seules celles de son client
+//! (et de l'instance) apparaissent, et une action d'un client ne se lance pas
+//! sur l'équipement d'un autre. La vue d'un administrateur limitée à un client
+//! filtre les listes et le journal. Les comptes restreints n'atteignent pas ces
+//! routes (garde à liste fermée).
+//!
 //! Les jetons d'API n'ont pas accès à `/remediation` (`TOKEN_DENIED`) : agir sur
 //! une machine reste un geste humain, fait dans l'interface.
 
@@ -23,6 +30,8 @@ use serde::{Deserialize, Serialize};
 use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
+use crate::auth::clients::{self, Kind};
+use crate::auth::teams::TeamAccess;
 use crate::auth::middleware::{AdminIdentity, AdminUser, Identity, OperatorIdentity, Principal};
 use crate::db;
 use crate::remediation::exec::{self, ExecError, Trigger};
@@ -57,20 +66,50 @@ pub fn routes() -> Router<AppState> {
 
 // ---------------------------------------------------------------- runbooks
 
+/// Mode MSP : garde ce qui appartient au client `client` ou à l'instance.
+/// `client` : celui de l'équipement concerné (`None` sans équipement : seuls
+/// les objets de l'instance restent).
+async fn keep_for_client<T>(
+    state: &AppState,
+    kind: Kind,
+    items: &mut Vec<T>,
+    id_of: impl Fn(&T) -> i64,
+    client: Option<i64>,
+) -> ApiResult<()> {
+    let owners = clients::owners(&state.pool, kind).await?;
+    items.retain(|item| owners.get(&id_of(item)).is_none_or(|owner| Some(*owner) == client));
+    Ok(())
+}
+
+/// Le client d'un équipement, s'il y en a un.
+async fn client_of(state: &AppState, target: Option<i64>) -> ApiResult<Option<i64>> {
+    match target {
+        Some(id) => Ok(clients::target_client(&state.pool, id).await?),
+        None => Ok(None),
+    }
+}
+
 async fn list_runbooks(
     State(state): State<AppState>,
     Identity(_): Identity,
+    TeamAccess(access): TeamAccess,
 ) -> ApiResult<Json<Vec<Runbook>>> {
-    Ok(Json(runbooks::list(&state.pool).await?))
+    let mut list = runbooks::list(&state.pool).await?;
+    clients::retain_visible(&state.pool, &access, Kind::Runbook, &mut list, |r| r.id, true)
+        .await?;
+    Ok(Json(list))
 }
 
 async fn get_runbook(
     State(state): State<AppState>,
     Identity(_): Identity,
+    TeamAccess(access): TeamAccess,
     Path(id): Path<i64>,
 ) -> ApiResult<Json<Runbook>> {
+    let owner = clients::owner_of(&state.pool, Kind::Runbook, id).await?.flatten();
     runbooks::get(&state.pool, id)
         .await?
+        .filter(|_| clients::visible_owner(&access, owner, true))
         .map(Json)
         .ok_or_else(|| ApiError::NotFound(format!("Runbook {id} not found.")))
 }
@@ -88,18 +127,23 @@ async fn match_runbooks(
 ) -> ApiResult<Json<Vec<Runbook>>> {
     let mut context = MatchContext::for_target(&state.pool, query.target_id).await?;
     context.rule_uid = query.rule_uid.filter(|uid| !uid.is_empty());
-    Ok(Json(runbooks::matching(&state.pool, &context).await?))
+    let mut list = runbooks::matching(&state.pool, &context).await?;
+    let client = client_of(&state, query.target_id).await?;
+    keep_for_client(&state, Kind::Runbook, &mut list, |r| r.id, client).await?;
+    Ok(Json(list))
 }
 
 async fn create_runbook(
     State(state): State<AppState>,
     AdminIdentity(principal): AdminIdentity,
+    TeamAccess(access): TeamAccess,
     ClientIp(ip): ClientIp,
     Json(draft): Json<RunbookDraft>,
 ) -> ApiResult<(StatusCode, Json<Runbook>)> {
     let draft = draft.validate().map_err(ApiError::BadRequest)?;
     let actor = principal.label();
     let id = runbooks::create(&state.pool, &draft, &actor).await?;
+    clients::adopt(&state.pool, &access, Kind::Runbook, id).await?;
     audit::record(&state.pool, Some(&actor), "runbook.created", Some(&draft.title), ip).await;
     let runbook = runbooks::get(&state.pool, id).await?.ok_or_else(|| not_found("Runbook", id))?;
     Ok((StatusCode::CREATED, Json(runbook)))
@@ -150,8 +194,18 @@ async fn kinds(Identity(_): Identity) -> Json<Vec<KindInfo>> {
 async fn list_actions(
     State(state): State<AppState>,
     Identity(principal): Identity,
+    TeamAccess(access): TeamAccess,
 ) -> ApiResult<Json<Vec<ActionRecord>>> {
-    let actions = store::list_actions(&state.pool).await?;
+    let mut actions = store::list_actions(&state.pool).await?;
+    clients::retain_visible(
+        &state.pool,
+        &access,
+        Kind::RemediationAction,
+        &mut actions,
+        |a| a.id,
+        true,
+    )
+    .await?;
     Ok(Json(shown_to(&principal, actions)))
 }
 
@@ -223,6 +277,7 @@ fn unique_violation(error: &anyhow::Error) -> bool {
 async fn create_action(
     State(state): State<AppState>,
     AdminIdentity(principal): AdminIdentity,
+    TeamAccess(access): TeamAccess,
     ClientIp(ip): ClientIp,
     Json(payload): Json<ActionPayload>,
 ) -> ApiResult<(StatusCode, Json<ActionRecord>)> {
@@ -234,6 +289,18 @@ async fn create_action(
         }
         Err(error) => return Err(error.into()),
     };
+    // Une action fixée sur un équipement suit son client ; sinon celui de la vue.
+    match client_of(&state, draft.target_id).await? {
+        Some(client) => {
+            sqlx::query("UPDATE remediation_actions SET client_id = ? WHERE id = ?")
+                .bind(client)
+                .bind(id)
+                .execute(&state.pool)
+                .await
+                .map_err(anyhow::Error::from)?;
+        }
+        None => clients::adopt(&state.pool, &access, Kind::RemediationAction, id).await?,
+    }
     audit::record(&state.pool, Some(&principal.label()), "action.created", Some(&draft.name), ip)
         .await;
     let action =
@@ -265,6 +332,15 @@ async fn update_action(
             return Err(ApiError::Conflict(format!("An action named '{}' exists.", draft.name)));
         }
         Err(error) => return Err(error.into()),
+    }
+    // Fixée sur un équipement, l'action passe au client de cet équipement.
+    if let Some(client) = client_of(&state, draft.target_id).await? {
+        sqlx::query("UPDATE remediation_actions SET client_id = ? WHERE id = ?")
+            .bind(client)
+            .bind(id)
+            .execute(&state.pool)
+            .await
+            .map_err(anyhow::Error::from)?;
     }
     audit::record(&state.pool, Some(&principal.label()), "action.updated", Some(&draft.name), ip)
         .await;
@@ -336,6 +412,14 @@ async fn run_action(
             ));
         }
     };
+    // Mode MSP : l'action d'un client ne touche jamais l'équipement d'un autre.
+    if let Some(owner) = clients::owner_of(&state.pool, Kind::RemediationAction, id).await?.flatten()
+        && client_of(&state, target_id.or(action.target_id)).await? != Some(owner)
+    {
+        return Err(ApiError::Forbidden(
+            "This action belongs to another client than the device's.".to_string(),
+        ));
+    }
     let trigger = Trigger {
         kind: "manual",
         requested_by: principal.label(),
@@ -577,6 +661,7 @@ struct RunsQuery {
 async fn list_runs(
     State(state): State<AppState>,
     Identity(_): Identity,
+    TeamAccess(access): TeamAccess,
     Query(query): Query<RunsQuery>,
 ) -> ApiResult<Json<Vec<RunRecord>>> {
     let filter = RunFilter {
@@ -587,7 +672,13 @@ async fn list_runs(
         before_id: query.before,
         limit: query.limit.unwrap_or(50),
     };
-    Ok(Json(store::list_runs(&state.pool, &filter).await?))
+    let mut runs = store::list_runs(&state.pool, &filter).await?;
+    // Vue limitée à un client : les exécutions sur ses équipements, et celles
+    // sans équipement (webhooks de l'instance).
+    if let Some(visible) = access.visible_targets(&state.pool).await? {
+        runs.retain(|run| run.target_id.is_none_or(|target| visible.contains(&target)));
+    }
+    Ok(Json(runs))
 }
 
 /// Ce que l'interface montre sous une alerte.
@@ -610,8 +701,10 @@ async fn alert_context(
     })?;
     let mut context = MatchContext::for_target(&state.pool, alert.target_id).await?;
     context.rule_uid = Some(alert.rule_uid.clone());
-    let runbooks = runbooks::matching(&state.pool, &context).await?;
-    let actions = store::list_actions(&state.pool)
+    let client = client_of(&state, alert.target_id).await?;
+    let mut runbooks = runbooks::matching(&state.pool, &context).await?;
+    keep_for_client(&state, Kind::Runbook, &mut runbooks, |r| r.id, client).await?;
+    let mut actions: Vec<ActionRecord> = store::list_actions(&state.pool)
         .await?
         .into_iter()
         .filter(|action| match action.target_id {
@@ -623,6 +716,7 @@ async fn alert_context(
             }
         })
         .collect();
+    keep_for_client(&state, Kind::RemediationAction, &mut actions, |a| a.id, client).await?;
     let actions = shown_to(&principal, actions);
     let policies = store::list_policies(&state.pool)
         .await?
@@ -663,7 +757,9 @@ async fn target_context(
 ) -> ApiResult<Json<TargetContext>> {
     ensure_target(&state, id).await.map_err(|_| not_found("Monitor", id))?;
     let context = MatchContext::for_target(&state.pool, Some(id)).await?;
-    let runbooks = runbooks::matching(&state.pool, &context).await?;
+    let mut runbooks = runbooks::matching(&state.pool, &context).await?;
+    let client = client_of(&state, Some(id)).await?;
+    keep_for_client(&state, Kind::Runbook, &mut runbooks, |r| r.id, client).await?;
     let agent = match exec::agent_host(&state.pool, id).await? {
         Some(host) => exec::agent_capabilities(&state.pool, host).await?.map(
             |(commands_enabled, remediation)| AgentActions {
