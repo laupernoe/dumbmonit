@@ -56,6 +56,14 @@ export interface ContainerView {
 	image_age_seconds: number | null;
 	/** `null` when the registry could not be asked (private image, auth failure). */
 	update_available: boolean | null;
+	/** Percent of one core (100 = one full core); `null` without statistics, stopped, or first reading. */
+	cpu_percent?: number | null;
+	/** Memory in use, page cache excluded. */
+	memory_bytes?: number | null;
+	/** `null` when the container has no memory limit. */
+	memory_limit_bytes?: number | null;
+	/** Restarts over the last fifteen minutes. */
+	restarts_15m?: number | null;
 	policy: ContainerPolicy;
 	last_command: CommandView | null;
 }

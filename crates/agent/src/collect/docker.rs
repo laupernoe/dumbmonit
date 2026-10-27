@@ -23,6 +23,11 @@ use std::time::{Duration, Instant};
 use anyhow::{Context, Result, bail};
 use serde::Deserialize;
 
+pub use super::docker_stats::ContainerUsage;
+use super::docker_stats::{
+    CpuTracker, DF_REFRESH, DF_TIMEOUT, DiskUsage, parse_disk_usage, read_many,
+};
+
 /// État de santé d'un conteneur, tel que Docker le rapporte.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum Health {
@@ -74,6 +79,10 @@ pub struct ContainerStat {
     /// ponctuel terminé, jamais démarré, ou arrêté par `docker stop` sans
     /// politique de redémarrage. Un tel arrêt est voulu, pas une panne.
     pub stop_expected: bool,
+    /// Limite mémoire posée sur le conteneur ; `None` : aucune.
+    pub memory_limit_bytes: Option<u64>,
+    /// Consommation ; `None` : conteneur arrêté, ou lecture impossible.
+    pub usage: Option<ContainerUsage>,
     pub labels: BTreeMap<String, String>,
 }
 
@@ -87,9 +96,9 @@ const API_VERSION: &str = "/v1.41";
 const READ_TIMEOUT: Duration = Duration::from_secs(3);
 
 /// Plafond par défaut de conteneurs détaillés par cycle. Chaque conteneur
-/// vaut six séries et une inspection : au-delà de deux cents, le coût des
-/// inspections dépasserait celui du reste de la collecte, et les séries
-/// noieraient la base.
+/// vaut une vingtaine de séries, une inspection et (en marche) une lecture de
+/// statistiques : au-delà de deux cents, le coût des requêtes dépasserait celui
+/// du reste de la collecte, et les séries noieraient la base.
 pub const DEFAULT_MAX_CONTAINERS: usize = 200;
 
 /// Inventaire d'un cycle : les compteurs portent sur tous les conteneurs, le
@@ -106,6 +115,9 @@ pub struct ContainerInventory {
     /// conteneurs : lus avant le plafond, sans quoi un moniteur disparaîtrait
     /// (et serait archivé par le serveur) dès que son conteneur sort des deux cents.
     pub declared: Vec<dumbmonit_proto::DeclaredMonitor>,
+    /// Espace disque de Docker (`system/df`), rafraîchi toutes les dix minutes ;
+    /// `None` : pas encore lu, ou illisible.
+    pub disk: Option<DiskUsage>,
 }
 
 impl ContainerInventory {
@@ -119,7 +131,7 @@ impl ContainerInventory {
         let running = containers.iter().filter(|container| container.running).count();
         containers.sort_by(|a, b| b.running.cmp(&a.running).then_with(|| a.name.cmp(&b.name)));
         containers.truncate(max_detailed);
-        Self { total, running, detailed: containers, declared }
+        Self { total, running, detailed: containers, declared, disk: None }
     }
 
     /// Conteneurs présents mais non détaillés.
@@ -361,6 +373,8 @@ pub struct ContainerDetail {
     pub uptime_secs: u64,
     /// Voir [`ContainerStat::stop_expected`].
     pub stop_expected: bool,
+    /// Voir [`ContainerStat::memory_limit_bytes`].
+    pub memory_limit_bytes: Option<u64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -375,6 +389,9 @@ struct InspectContainer {
 
 #[derive(Debug, Deserialize, Default)]
 struct InspectHostConfig {
+    /// Limite mémoire en octets ; zéro : aucune.
+    #[serde(rename = "Memory", default)]
+    memory: i64,
     #[serde(rename = "RestartPolicy", default)]
     restart_policy: InspectRestartPolicy,
 }
@@ -478,6 +495,7 @@ pub fn parse_container_detail(body: &[u8], now_secs: i64) -> Result<ContainerDet
             raw.state.oom_killed,
             &raw.host_config.restart_policy.name,
         ),
+        memory_limit_bytes: u64::try_from(raw.host_config.memory).ok().filter(|limit| *limit > 0),
     })
 }
 
@@ -530,11 +548,23 @@ pub struct DockerProbe {
     images: HashMap<String, (Instant, ImageDetail)>,
     /// Plafond de conteneurs détaillés par cycle.
     max_containers: usize,
+    /// Derniers temps CPU, pour en tirer un pourcentage d'un cycle à l'autre.
+    cpu: CpuTracker,
+    /// Dernier relevé de `system/df` et moment de la dernière tentative.
+    disk: Option<DiskUsage>,
+    disk_tried: Option<Instant>,
 }
 
 impl DockerProbe {
     pub fn new(socket: &Path, max_containers: usize) -> Self {
-        Self { client: DockerClient::new(socket), images: HashMap::new(), max_containers }
+        Self {
+            client: DockerClient::new(socket),
+            images: HashMap::new(),
+            max_containers,
+            cpu: CpuTracker::default(),
+            disk: None,
+            disk_tried: None,
+        }
     }
 
     /// Liste les conteneurs, en marche ou non, avec leur détail.
@@ -593,6 +623,7 @@ impl DockerProbe {
                             container.restart_count = detail.restart_count;
                             container.uptime_secs = detail.uptime_secs;
                             container.stop_expected = detail.stop_expected;
+                            container.memory_limit_bytes = detail.memory_limit_bytes;
                         }
                         Err(error) => {
                             tracing::debug!(%error, name = container.name, "container detail skipped")
@@ -613,7 +644,43 @@ impl DockerProbe {
                     .map(|created| now_secs.saturating_sub(created).max(0) as u64);
             }
         }
+        self.read_usage(&mut inventory).await;
+        inventory.disk = self.disk_usage().await;
         Some(inventory)
+    }
+
+    /// Consommation des conteneurs en marche : une requête chacun, en parallèle
+    /// borné. Un conteneur dont la lecture échoue reste simplement sans valeur.
+    async fn read_usage(&mut self, inventory: &mut ContainerInventory) {
+        let ids: Vec<String> =
+            inventory.detailed.iter().filter(|c| c.running).map(|c| c.id.clone()).collect();
+        self.cpu.retain(&ids.iter().map(String::as_str).collect());
+        if ids.is_empty() {
+            return;
+        }
+        let mut readings = read_many(&self.client, &ids).await;
+        let now = Instant::now();
+        for container in inventory.detailed.iter_mut().filter(|c| c.running) {
+            if let Some(raw) = readings.remove(&container.id) {
+                let mut usage = raw.usage;
+                usage.cpu_centipercent = self.cpu.rate(&container.id, raw.cpu_total_ns, now);
+                container.usage = Some(usage);
+            }
+        }
+    }
+
+    /// `system/df`, relu au plus toutes les dix minutes. Une lecture ratée
+    /// n'est pas retentée avant le délai suivant, et l'ancienne valeur est
+    /// retirée plutôt que de mentir indéfiniment.
+    async fn disk_usage(&mut self) -> Option<DiskUsage> {
+        if self.disk_tried.is_none_or(|at| at.elapsed() >= DF_REFRESH) {
+            self.disk_tried = Some(Instant::now());
+            self.disk = match self.client.request("GET", "/system/df", None, DF_TIMEOUT).await {
+                Ok(response) if response.is_success() => parse_disk_usage(&response.body).ok(),
+                _ => None,
+            };
+        }
+        self.disk.clone()
     }
 
     /// Détail d'une image, depuis le cache ou le démon.
@@ -768,6 +835,7 @@ mod tests {
                 restart_count: 3,
                 uptime_secs: 3_600,
                 stop_expected: false,
+                memory_limit_bytes: None,
             }
         );
     }

@@ -51,6 +51,8 @@ export const COUNTER_PATTERNS: readonly string[] = [
 	'opnsense_(interface_(bytes|packets|errors)_(in|out)|interface_(drops|collisions)|vpn_bytes_(in|out)|mbuf_failures|unbound_queries)',
 	'openvpn_client_bytes_(sent|received)',
 	'agent_wireguard_peer_(rx|tx)_bytes|agent_ipsec_tunnel_bytes_(in|out)',
+	// Docker containers (agent): network and block I/O are cumulative.
+	'container_(net_(rx|tx)_bytes|block_(read|write)_bytes)',
 	// Orchestrators and hypervisors.
 	'k8s_pod_restarts',
 	'proxmox_guest_(network_(in|out)_bytes|disk_(read|write)_bytes|netdev_(in|out)_bytes)'
