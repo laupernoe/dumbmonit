@@ -10,8 +10,10 @@ import {
 	isPending,
 	listCommands,
 	listContainers,
+	setContainerPolicies,
 	setContainerPolicy,
 	type AgentHost,
+	type BulkPolicyResult,
 	type CommandView,
 	type ContainerPolicy,
 	type ContainerView
@@ -85,6 +87,25 @@ export class ContainerFleet {
 			return cause;
 		} finally {
 			this.saving = { ...this.saving, [c.name]: false };
+		}
+	}
+
+	/**
+	 * Applies one change to several containers in a single server transaction.
+	 * Containers the server accepted take their new policy; the others are left
+	 * as they were. Returns one result per name, or throws if the call itself failed.
+	 */
+	async setPolicies(names: string[], change: Partial<ContainerPolicy>): Promise<BulkPolicyResult[]> {
+		this.saving = { ...this.saving, ...Object.fromEntries(names.map((n) => [n, true])) };
+		try {
+			const { results } = await setContainerPolicies(this.#id, names, change);
+			for (const result of results) {
+				const container = this.containers.find((c) => c.name === result.name);
+				if (container && result.ok && result.policy) container.policy = result.policy;
+			}
+			return results;
+		} finally {
+			this.saving = { ...this.saving, ...Object.fromEntries(names.map((n) => [n, false])) };
 		}
 	}
 

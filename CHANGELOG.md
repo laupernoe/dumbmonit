@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Docker bulk actions**: tick containers (or use "select all" and the quick
+  filters "no auto-update" / "no auto-restart") to enable or disable
+  auto-update and auto-restart for all of them, or update them now. A failure
+  is reported per container. New `PUT /api/targets/{id}/containers/policy`.
+- Container auto-update/auto-restart policies are now part of the configuration
+  backup.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added
