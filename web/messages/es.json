@@ -9414,5 +9414,22 @@
 	"wizard_oncall_people_help": "Una semana cada uno, relevo los lunes a las 09:00 en la zona horaria de la instancia.",
 	"wizard_oncall_create": "Crear la rotación",
 	"wizard_oncall_open": "Guardias en detalle",
-	"wizard_oncall_open_text": "Capas, sustituciones, calendario y el canal Guardia de DumbMonit que conecta una política con el enrutamiento de alertas."
+	"wizard_oncall_open_text": "Capas, sustituciones, calendario y el canal Guardia de DumbMonit que conecta una política con el enrutamiento de alertas.",
+	"deviceform_site_title": "¿Dónde está?",
+	"deviceform_site_hint": "Elige primero el sitio. Proponemos qué añadir allí y rellenamos su relé, ubicación y carpeta.",
+	"deviceform_site_none": "Sin sitio",
+	"deviceform_site_none_note": "No asociado a un lugar del mapa.",
+	"deviceform_site_count": "Dispositivos: {count}",
+	"deviceform_site_via": "A través de {relay}",
+	"deviceform_site_folder": "Carpeta: {folder}",
+	"deviceform_site_found": "Encontrados por un escaneo, aún sin vigilar",
+	"deviceform_site_add": "Añadir",
+	"deviceform_site_add_named": "Añadir {name}",
+	"deviceform_site_setup": "Configurar",
+	"deviceform_site_setup_named": "Configurar {name}",
+	"deviceform_site_fewer": "Mostrar menos",
+	"deviceform_site_more": "Mostrar {count} más",
+	"deviceform_site_added": "{name} añadido.",
+	"deviceform_site_open": "Abrir",
+	"deviceform_site_kinds": "Habituales aquí"
 }

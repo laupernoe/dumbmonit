@@ -9414,5 +9414,22 @@
 	"wizard_oncall_people_help": "Uma semana cada, passagem às segundas-feiras às 09:00 no fuso horário da instância.",
 	"wizard_oncall_create": "Criar a rotação",
 	"wizard_oncall_open": "A prevenção em detalhe",
-	"wizard_oncall_open_text": "Camadas, substituições, calendário e o canal Prevenção DumbMonit que liga uma política ao encaminhamento de alertas."
+	"wizard_oncall_open_text": "Camadas, substituições, calendário e o canal Prevenção DumbMonit que liga uma política ao encaminhamento de alertas.",
+	"deviceform_site_title": "Onde está?",
+	"deviceform_site_hint": "Escolha primeiro o local. Sugerimos o que adicionar e preenchemos o relay, a localização e a pasta.",
+	"deviceform_site_none": "Sem local",
+	"deviceform_site_none_note": "Não associado a um lugar do mapa.",
+	"deviceform_site_count": "Dispositivos: {count}",
+	"deviceform_site_via": "Através de {relay}",
+	"deviceform_site_folder": "Pasta: {folder}",
+	"deviceform_site_found": "Encontrados por uma análise, ainda não monitorizados",
+	"deviceform_site_add": "Adicionar",
+	"deviceform_site_add_named": "Adicionar {name}",
+	"deviceform_site_setup": "Configurar",
+	"deviceform_site_setup_named": "Configurar {name}",
+	"deviceform_site_fewer": "Mostrar menos",
+	"deviceform_site_more": "Mostrar mais {count}",
+	"deviceform_site_added": "{name} adicionado.",
+	"deviceform_site_open": "Abrir",
+	"deviceform_site_kinds": "Comuns aqui"
 }

@@ -9414,5 +9414,22 @@
 	"wizard_oncall_people_help": "Je eine Woche, Übergabe montags um 09:00 in der Zeitzone der Instanz.",
 	"wizard_oncall_create": "Rotation erstellen",
 	"wizard_oncall_open": "Bereitschaft im Detail",
-	"wizard_oncall_open_text": "Ebenen, Vertretungen, Kalender und der Kanal DumbMonit-Bereitschaft, der eine Richtlinie in das Alarm-Routing einbindet."
+	"wizard_oncall_open_text": "Ebenen, Vertretungen, Kalender und der Kanal DumbMonit-Bereitschaft, der eine Richtlinie in das Alarm-Routing einbindet.",
+	"deviceform_site_title": "Wo steht es?",
+	"deviceform_site_hint": "Wählen Sie zuerst den Standort. Wir schlagen vor, was dort hinzugefügt werden kann, und füllen Relay, Standort und Ordner vor.",
+	"deviceform_site_none": "Kein Standort",
+	"deviceform_site_none_note": "Keinem Ort auf der Karte zugeordnet.",
+	"deviceform_site_count": "Geräte: {count}",
+	"deviceform_site_via": "Über {relay}",
+	"deviceform_site_folder": "Ordner: {folder}",
+	"deviceform_site_found": "Von einem Scan gefunden, noch nicht überwacht",
+	"deviceform_site_add": "Hinzufügen",
+	"deviceform_site_add_named": "{name} hinzufügen",
+	"deviceform_site_setup": "Einrichten",
+	"deviceform_site_setup_named": "{name} einrichten",
+	"deviceform_site_fewer": "Weniger anzeigen",
+	"deviceform_site_more": "{count} weitere anzeigen",
+	"deviceform_site_added": "{name} hinzugefügt.",
+	"deviceform_site_open": "Öffnen",
+	"deviceform_site_kinds": "Hier üblich"
 }
