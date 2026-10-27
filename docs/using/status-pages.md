@@ -15,10 +15,11 @@ an email.
 
 ## 1. Create a page
 
-**Settings → Status pages** → **New page**. That page lists your status pages
+**Status pages** (the Enterprise rail; **More** in Homelab) → **New page**. That page lists your status pages
 (open, edit, delete) with the announcements under them; the editor opens on
-its own route (`/settings/status/new`, `/settings/status/<id>`). The public rendering is at
-`/s/<address>`.
+its own route (`/status/new`, `/status/<id>`). The public rendering is at
+`/s/<address>`. Status pages used to sit in Settings: `/settings/status` and its
+links forward here.
 
 | Field | What it does |
 | --- | --- |
@@ -72,12 +73,7 @@ opening it to arbitrary code:
 
 The **Scene** setting draws a city skyline behind the banner. New pages start with Paris,
 and existing pages that had no scene now show it too; untick it for a plain
-banner, or turn on **Simple mode** to drop scenes altogether. Pick as many as you like, in the order you want them. Cities: Venice, Paris,
-Tokyo, New York, London, Rome, Sydney, Dubai, San Francisco, Barcelona,
-Amsterdam, Istanbul and Rio de Janeiro. The new seven wonders: Chichén Itzá,
-Machu Picchu, the Great Wall, Petra and the Taj Mahal (Rio's Christ the
-Redeemer is in the Rio scene). The ancient wonders: Giza, Babylon, Ephesus,
-Olympia, Halicarnassus, Rhodes and Alexandria, plus the Athens Acropolis. With more than one, **Rotation** decides when the page
+banner, or turn on **Simple mode** to drop scenes altogether. Pick as many as you like, in the order you want them. Four scenes ship: Paris, Tokyo, New York and the Matterhorn. Pages that used one of the retired scenes (the other cities, the wonders, the Swiss towns and the playful ones) were moved to the nearest of the four: European cities and the ancient world to Paris, Asia and the sea or space scenes to Tokyo, the Americas to New York, the Alps and the north to the Matterhorn; the same goes for backups and API calls that still name them. With more than one, **Rotation** decides when the page
 moves to the next: at every visit (default), every minute, every ten minutes or
 every hour. The scenes are a closed set of drawings shipped with DumbMonit —
 nothing is uploaded or interpreted.
@@ -173,7 +169,7 @@ downtime is its silent slots.
 
 ## 3. Announce incidents and maintenance
 
-On **Settings → Status pages**, under the list of pages, **Incidents and maintenance**
+On **Status pages**, under the list of pages, **Incidents and maintenance**
 → **New announcement** (also ++ctrl+k++ → *Announce an incident*).
 
 - An **incident** has a title, an impact (**minor** shows the page as

@@ -14,7 +14,7 @@ right, opens the form for a window from any tab.
 | **Rules** | Every rule with its severity, a *Built-in* mark and, if any monitor ignores it, *Ignored on N monitors*; enable, edit inline, delete your own, create a threshold rule. See [Rules](../alerting/rules.md). |
 
 Notification channels and the notification policy are under
-**Settings → Notifications & reports** (see [Notifications](#notifications)).
+**Settings → Notifications** (see [Notifications](#notifications)).
 
 The same truth model feeds the overview bulletin and this page, so the two
 always agree on what needs you.
@@ -90,7 +90,7 @@ hand, never produced an alert in the first place.
 
 ## Notifications
 
-Channels and the policy live in **Settings → Notifications & reports**
+Channels and the policy live in **Settings → Notifications**
 (`/settings/notifications`), followed by the [Reports](reports.md). Two panels:
 
 **Notification channels.** The list of channels, each with its kind, *Enabled* or

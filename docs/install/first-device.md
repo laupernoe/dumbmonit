@@ -126,7 +126,7 @@ Whatever the type, the form has:
 - The [built-in alert rules](../alerting/rules.md) apply immediately: monitor
   unreachable, CPU saturated, disk almost full, and so on. Nothing to configure.
 - To be notified, add a [notification channel](../notifications.md) in
-  **Settings → Notifications & reports**. Built-in rules notify every enabled channel.
+  **Settings → Notifications**. Built-in rules notify every enabled channel.
 
 !!! tip "No data after a minute?"
     Open the monitor page: a configuration error (wrong community, refused

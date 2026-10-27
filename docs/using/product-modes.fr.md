@@ -12,11 +12,11 @@ réglage.
 
 - La barre garde quatre destinations : **Vue d'ensemble**, **Moniteurs**,
   **Alertes** et **Réglages**. La sécurité, la carte de topologie, les journaux,
-  les pages de statut, le mode mur, la documentation et GitHub sont sous
+  les pages de statut, les rapports, le mode mur, la documentation et GitHub sont sous
   **Plus**, et chaque page est dans la palette de commandes (`Ctrl K` / `⌘K`).
 - Chaque onglet des Réglages montre les sections dont on a le plus besoin. Les
   autres (authentification unique, LDAP, paquets d'intégration, note de
-  sécurité, emplacements, politique de notification, rapports, musique, widgets
+  sécurité, emplacements, politique de notification, musique, widgets
   du mur, auto-surveillance, stockage, journaux, API et assistants) attendent
   derrière **Avancé**, en bas de l'onglet. Un lien vers l'une d'elles ouvre le
   pli tout seul.
@@ -31,8 +31,10 @@ réglage.
 Une console dense et très sombre, pour les équipes qui la gardent ouverte toute
 la journée.
 
-- Un **rail d'icônes** à gauche liste toutes les destinations ; sur téléphone,
-  une barre d'onglets garde l'essentiel et **Plus**.
+- Un **rail d'icônes** à gauche liste toutes les destinations, pages de statut
+  et rapports compris. Tout en bas : la documentation, GitHub, votre compte (le
+  bouton rond avec vos initiales) et les Réglages. Sur téléphone, une barre
+  d'onglets garde l'essentiel et **Plus**.
 - L'**en-tête** dit où vous êtes (nom de l'instance, page, moniteur), avec un
   interrupteur **DIRECT** qui met en pause les rafraîchissements de la console,
   la période sur la vue d'ensemble, la palette de commandes et **Nouveau
@@ -48,6 +50,9 @@ la journée.
   du pire au meilleur. Le tableau se filtre par état, type et texte, accepte des
   colonnes en plus (adresse, dossier) ou en moins, et se pilote au clavier :
   `j` / `k` pour se déplacer, `Entrée` pour sélectionner, `o` pour ouvrir.
+- Le **mode mur** a son propre tableau Entreprise : fond noir, la rivière de santé, les
+  cinq chiffres, les alertes ouvertes et qui est d'astreinte, sans décor. Le
+  Homelab garde sa scène de ville.
 - Autres raccourcis : `g m` carte de topologie, `g x` sécurité, `g l` journaux.
   `?` affiche la liste complète.
 - Les formulaires d'équipement ouvrent **Plus d'options** d'emblée et montrent

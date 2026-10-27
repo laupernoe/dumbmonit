@@ -307,16 +307,16 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
             &url,
             json!({
                 "title": "Skyline", "slug": "skyline", "published": true,
-                "scenes": ["tokyo", "venice", "rome"], "scene_rotation": "10m"
+                "scenes": ["tokyo", "paris", "newyork"], "scene_rotation": "10m"
             }),
             Some(&admin),
         )
         .await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(reply.body["scenes"], json!(["tokyo", "venice", "rome"]));
+    assert_eq!(reply.body["scenes"], json!(["tokyo", "paris", "newyork"]));
     assert_eq!(reply.body["scene_rotation"], "10m");
     let doc = public_skyline(&app).await;
-    assert_eq!(doc["page"]["scenes"], json!(["tokyo", "venice", "rome"]));
+    assert_eq!(doc["page"]["scenes"], json!(["tokyo", "paris", "newyork"]));
     assert_eq!(doc["page"]["scene_rotation"], "10m");
 
     // Un PUT qui n'en parle pas garde les deux réglages.
@@ -328,14 +328,14 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
         )
         .await;
     assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
-    assert_eq!(reply.body["scenes"], json!(["tokyo", "venice", "rome"]));
+    assert_eq!(reply.body["scenes"], json!(["tokyo", "paris", "newyork"]));
     assert_eq!(reply.body["scene_rotation"], "10m");
 
-    // Jeu fermé : inconnue, doublon, plus de six, rotation inconnue.
+    // Jeu fermé : inconnue, doublon, scène en double, rotation inconnue.
     for bad in [
         json!({ "scenes": ["atlantis"] }),
         json!({ "scenes": ["paris", "paris"] }),
-        json!({ "scenes": ["venice", "paris", "tokyo", "newyork", "london", "rome", "venice"] }),
+        json!({ "scenes": ["paris", "tokyo", "newyork", "matterhorn", "paris"] }),
         json!({ "scene_rotation": "5m" }),
     ] {
         let mut body = json!({ "title": "Skyline", "slug": "skyline" });
@@ -346,12 +346,24 @@ async fn banner_scenes_default_empty_round_trip_and_stay_closed() {
     let doc = public_skyline(&app).await;
     assert_eq!(
         doc["page"]["scenes"],
-        json!(["tokyo", "venice", "rome"]),
+        json!(["tokyo", "paris", "newyork"]),
         "refusals change nothing"
     );
 
-    // Les six villes passent ; `[]` vide la liste.
-    let all = json!(["venice", "paris", "tokyo", "newyork", "london", "rome"]);
+    // Une scène retirée se replie sur la plus proche, sans doublon.
+    let reply = app
+        .put(
+            &url,
+            json!({ "title": "Skyline", "slug": "skyline", "published": true,
+                    "scenes": ["venice", "kyoto", "london", "chalet"] }),
+            Some(&admin),
+        )
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["scenes"], json!(["paris", "tokyo", "matterhorn"]));
+
+    // Les quatre scènes passent ; `[]` vide la liste.
+    let all = json!(["paris", "tokyo", "newyork", "matterhorn"]);
     let reply = app
         .put(
             &url,

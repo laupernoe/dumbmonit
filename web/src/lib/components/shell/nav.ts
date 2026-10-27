@@ -6,7 +6,7 @@
  * Enterprise shows every entry on its icon rail. A new page is one line here.
  */
 import type { Icon as LucideIcon } from 'lucide-svelte';
-import { BellRing, Building2, Compass, Gauge, Globe, LayoutGrid, Network, ScrollText, Server, Settings2, ShieldAlert, Tv, Wrench } from 'lucide-svelte';
+import { BellRing, Building2, Compass, FileText, Gauge, Globe, LayoutGrid, Network, ScrollText, Server, Settings2, ShieldAlert, Tv, Wrench } from 'lucide-svelte';
 import { m } from '#lib/paraglide/messages.js';
 import { auth } from '#lib/stores/auth.svelte.js';
 
@@ -43,7 +43,8 @@ export const NAV: NavEntry[] = [
 	{ href: '/logs', label: () => m.logsearch_title(), icon: ScrollText, admin: true },
 	{ href: '/actions', label: () => m.remediation_page_title(), icon: Wrench, unscoped: true },
 	{ href: '/clients', label: () => m.msp_nav_clients(), icon: Building2, msp: true },
-	{ href: '/settings/status', label: () => m.misc_palette_status_pages(), icon: Globe },
+	{ href: '/status', label: () => m.misc_palette_status_pages(), icon: Globe },
+	{ href: '/reports', label: () => m.reports_page_title(), icon: FileText, admin: true },
 	{ href: '/wall', label: () => m.misc_nav_wall(), icon: Tv, unscoped: true },
 	{ href: '/settings', label: () => m.misc_nav_settings(), icon: Settings2, essential: true, phone: true, foot: true }
 ];
@@ -58,7 +59,5 @@ export function visible(entry: NavEntry): boolean {
 
 export function isActive(entry: NavEntry, pathname: string): boolean {
 	if (entry.exact) return pathname === entry.href;
-	// `/settings/status` is its own destination: Settings stays unlit there.
-	if (entry.href === '/settings' && pathname.startsWith('/settings/status')) return false;
 	return pathname === entry.href || pathname.startsWith(`${entry.href}/`);
 }

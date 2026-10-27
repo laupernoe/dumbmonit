@@ -16,10 +16,11 @@ serveur — ni dans la page, ni dans un badge, ni dans un email.
 
 ## 1. Créer une page
 
-**Réglages → Pages de statut** → **Nouvelle page**. Cette page liste vos
+**Pages de statut** (le rail Entreprise ; **Plus** en Homelab) → **Nouvelle page**. Cette page liste vos
 pages d'état (ouvrir, modifier, supprimer) avec les annonces en
-dessous ; l'éditeur s'ouvre sur sa propre route (`/settings/status/new`,
-`/settings/status/<id>`). Le rendu public est à `/s/<adresse>`.
+dessous ; l'éditeur s'ouvre sur sa propre route (`/status/new`,
+`/status/<id>`). Le rendu public est à `/s/<adresse>`. Les pages de statut étaient dans les
+Réglages : `/settings/status` et ses liens redirigent ici.
 
 | Champ | Ce qu'il fait |
 | --- | --- |
@@ -78,13 +79,7 @@ bannière. Les nouvelles pages démarrent avec Paris, et les pages
 existantes qui n'avaient pas de scène la montrent aussi maintenant ;
 décochez-la pour une bannière nue, ou activez **Mode simple** pour
 abandonner les scènes complètement. Choisissez-en autant que vous
-voulez, dans l'ordre que vous voulez. Villes : Venise, Paris, Tokyo, New
-York, Londres, Rome, Sydney, Dubaï, San Francisco, Barcelone, Amsterdam,
-Istanbul et Rio de Janeiro. Les sept nouvelles merveilles : Chichén
-Itzá, Machu Picchu, la Grande Muraille, Pétra et le Taj Mahal (le Christ
-Rédempteur de Rio est dans la scène Rio). Les merveilles antiques :
-Gizeh, Babylone, Éphèse, Olympie, Halicarnasse, Rhodes et Alexandrie,
-plus l'Acropole d'Athènes. Avec plus d'une, **Rotation** décide quand la
+voulez, dans l'ordre que vous voulez. Quatre scènes sont fournies : Paris, Tokyo, New York et le Cervin. Les pages qui utilisaient une scène retirée (les autres villes, les merveilles, les villes suisses et les scènes ludiques) ont été déplacées vers la plus proche des quatre : villes d'Europe et monde antique vers Paris, Asie et scènes marines ou spatiales vers Tokyo, les Amériques vers New York, les Alpes et le nord vers le Cervin ; il en va de même pour les sauvegardes et les appels d'API qui les nomment encore. Avec plus d'une, **Rotation** décide quand la
 page passe à la suivante : à chaque visite (défaut), chaque minute,
 toutes les dix minutes ou chaque heure. Les scènes sont un ensemble
 fermé de dessins fournis avec DumbMonit — rien n'est téléchargé ni
@@ -165,7 +160,7 @@ l'indisponibilité d'un jour est ses créneaux silencieux.
 
 ## 3. Annoncer des incidents et des maintenances
 
-Sur **Réglages → Pages de statut**, sous la liste des pages, **Incidents et
+Sur **Pages de statut**, sous la liste des pages, **Incidents et
 maintenance** → **Nouvelle annonce** (aussi ++ctrl+k++ → *Annoncer un
 incident*).
 

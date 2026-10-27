@@ -136,7 +136,7 @@ plain threshold on PBS's own forecast.
 
 Built-in rules have no channel attached, which means **every enabled channel**.
 A rule you edit can name specific channels. Channels are configured in
-Settings → Notifications & reports; see [Notification channels](../notifications.md).
+Settings → Notifications; see [Notification channels](../notifications.md).
 
 ## Smart notifications
 
@@ -172,5 +172,5 @@ gets spammed. The full path of one alert, in order:
 11. **Send** — with an "Open in DumbMonit" link per monitor when a public URL
     is known.
 
-Steps 6 to 10 are configured in Settings → Notifications & reports → Notification policy (global) and
+Steps 6 to 10 are configured in Settings → Notifications → Notification policy (global) and
 on each channel (Delivery options). See [Notification policy](notifications.md).
