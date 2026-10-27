@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"agent_channel_note_open": "Abra a porta TCP 8443 (a porta dos agentes) do agente para este servidor. O agente sempre se conecta para fora, então nada precisa alcançá-lo. O mesmo vale para monitorar a partir de outro local: só essa porta precisa estar acessível.",
+	"agent_channel_note_text": "O agente fala com este servidor em TLS 1.3 com o seu próprio certificado de cliente (mTLS), emitido no registro.",
+	"agent_channel_note_title": "Canal criptografado com certificado de agente",
 	"agent_events_add": "Adicionar uma regra",
 	"agent_events_any_id": "qualquer ID",
 	"agent_events_any_source": "qualquer origem",
@@ -6038,6 +6041,9 @@
 	"settings_agents_ad_days_help": "Depois desse prazo, nenhum servidor novo poderá se registrar.",
 	"settings_agents_ad_dcs": "Incluir os controladores de domínio",
 	"settings_agents_ad_description": "Instale o agente em todos os servidores Windows do seu domínio por meio de uma política de grupo (GPO).",
+	"settings_agents_ad_dns_server": "Servidor DNS (opcional)",
+	"settings_agents_ad_dns_server_help": "Endereço IP de um servidor DNS que resolve esse nome, usado pelos servidores que não conseguem.",
+	"settings_agents_ad_dns_server_invalid": "Informe o endereço IP de um servidor DNS, por exemplo 10.0.0.2.",
 	"settings_agents_ad_docs": "Ler o guia completo",
 	"settings_agents_ad_domain": "Domínio do Active Directory",
 	"settings_agents_ad_domain_help": "O nome DNS do seu domínio.",
@@ -6062,6 +6068,9 @@
 	"settings_agents_ad_run_preview": "1. Simular, não altera nada",
 	"settings_agents_ad_run_timing": "Os servidores instalam o agente na próxima atualização das políticas, em até 90 minutos. Para acelerar, execute gpupdate /force em um servidor.",
 	"settings_agents_ad_secret_warning": "Trate o script como uma senha: ele contém o token. Mantenha-o privado e exclua-o quando a implantação terminar.",
+	"settings_agents_ad_server_host": "Nome do servidor contatado pelos agentes",
+	"settings_agents_ad_server_host_help": "Nome DNS (FQDN) ou endereço deste servidor, com :porta opcional. Vazio: {origin}.",
+	"settings_agents_ad_server_host_invalid": "Informe um nome DNS ou um endereço IPv4, com :porta opcional, sem http:// nem caminho.",
 	"settings_agents_ad_step": "Etapa {n} de 4",
 	"settings_agents_ad_step1": "Criar o token",
 	"settings_agents_ad_step2": "Baixar o script",
@@ -6071,6 +6080,9 @@
 	"settings_agents_ad_stop_error": "Não foi possível parar os registros",
 	"settings_agents_ad_stop_help": "O token deixa de aceitar servidores novos. Os já registrados continuam reportando.",
 	"settings_agents_ad_stopped": "Registros parados",
+	"settings_agents_ad_summary_dns": "Servidor DNS:",
+	"settings_agents_ad_summary_dns_none": "o do sistema",
+	"settings_agents_ad_summary_server": "Os agentes contatam:",
 	"settings_agents_ad_sysvol": "Copiar o agente para o SYSVOL",
 	"settings_agents_ad_sysvol_help": "Para servidores sem acesso à internet nem a este servidor.",
 	"settings_agents_ad_title": "Implantar com o Active Directory",
@@ -8869,6 +8881,8 @@
 	"whatsnew_dialog_ok": "Entendi",
 	"whatsnew_dialog_title": "Novidades da v{version}",
 	"whatsnew_dialog_updated": "Atualizado · {date}",
+	"wizard_monitors_ad": "Active Directory",
+	"wizard_monitors_ad_text": "Instale o agente em cada servidor do domínio com uma política de grupo.",
 	"worldmap_cluster_label": [
 		{
 			"declarations": [
