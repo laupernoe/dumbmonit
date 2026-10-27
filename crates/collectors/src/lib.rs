@@ -12,21 +12,29 @@ pub mod adguard;
 pub mod apache;
 pub mod api_options;
 pub mod arubacentral;
+pub mod aws;
+pub mod azure;
 pub mod blacklist;
 pub mod caddy;
 pub mod ceph;
 pub mod client_devices;
+pub mod cloud;
+pub mod cloudflare;
 pub mod crowdsec;
 pub mod domain;
 pub mod dummy;
 pub mod duplicati;
+pub mod entra;
 pub mod fortigate;
+pub mod hetzner;
 pub mod homeassistant;
 pub mod http;
 pub mod ifaddr;
+pub mod infomaniak;
 pub mod kopia;
 pub mod kubernetes;
 pub mod log_gate;
+pub mod m365;
 pub mod mdaemon;
 pub mod meraki;
 pub mod mikrotik;
@@ -41,6 +49,7 @@ pub mod observability;
 pub mod omada;
 pub mod openvpn;
 pub mod opnsense;
+pub mod ovh;
 pub mod paloalto;
 pub mod pbs;
 pub mod pdm;
@@ -83,17 +92,24 @@ pub use activedirectory::ActiveDirectoryCollector;
 pub use adguard::AdguardCollector;
 pub use apache::ApacheCollector;
 pub use arubacentral::ArubaCentralCollector;
+pub use aws::AwsCollector;
+pub use azure::AzureCollector;
 pub use blacklist::{IpBlacklistCollector, MailBlacklistCollector};
 pub use caddy::CaddyCollector;
 pub use ceph::CephCollector;
+pub use cloudflare::CloudflareCollector;
 pub use crowdsec::CrowdsecCollector;
 pub use domain::DomainCollector;
 pub use dummy::DummyCollector;
 pub use duplicati::DuplicatiCollector;
+pub use entra::EntraCollector;
 pub use fortigate::FortigateCollector;
+pub use hetzner::HetznerCollector;
 pub use homeassistant::HomeAssistantCollector;
+pub use infomaniak::InfomaniakCollector;
 pub use kopia::KopiaCollector;
 pub use kubernetes::KubernetesCollector;
+pub use m365::M365Collector;
 pub use mdaemon::{MdaemonCollector, SecurityGatewayCollector};
 pub use meraki::MerakiCollector;
 pub use mikrotik::MikrotikCollector;
@@ -107,6 +123,7 @@ pub use observability::{GraylogCollector, LokiCollector, VictoriaCollector};
 pub use omada::OmadaCollector;
 pub use openvpn::OpenvpnCollector;
 pub use opnsense::OpnsenseCollector;
+pub use ovh::OvhCollector;
 pub use paloalto::PaloaltoCollector;
 pub use pbs::PbsCollector;
 pub use pdm::PdmCollector;
@@ -133,9 +150,10 @@ pub use truenas::TruenasCollector;
 pub use unifi::UnifiCollector;
 pub use unraid::UnraidCollector;
 pub use uptime::{
-    DnsCollector, HttpCollector, MqttCollector, MysqlCollector, NtpCollector, PingCollector,
-    PostgresCollector, ProviderCollector, SmtpCollector, TcpCollector, TlsCollector,
-    WebsocketCollector,
+    DnsCollector, GrpcCollector, HttpCollector, ImapCollector, MqttCollector, MysqlCollector,
+    NtpCollector, PingCollector, Pop3Collector, PostgresCollector, ProviderCollector,
+    RadiusCollector, SmtpCollector, SnmpOidCollector, SshCollector, TcpCollector, TlsCollector,
+    UdpCollector, WebsocketCollector,
 };
 pub use veeam::VeeamCollector;
 pub use vsphere::VsphereCollector;
@@ -219,6 +237,14 @@ impl Registry {
         registry.register(Arc::new(PfsenseCollector::new()));
         registry.register(Arc::new(UnraidCollector::new()));
         registry.register(Arc::new(VeeamCollector::new()));
+        registry.register(Arc::new(M365Collector::new()));
+        registry.register(Arc::new(EntraCollector::new()));
+        registry.register(Arc::new(AzureCollector::new()));
+        registry.register(Arc::new(AwsCollector::new()));
+        registry.register(Arc::new(CloudflareCollector::new()));
+        registry.register(Arc::new(HetznerCollector::new()));
+        registry.register(Arc::new(OvhCollector::new()));
+        registry.register(Arc::new(InfomaniakCollector::new()));
         registry.register(Arc::new(KopiaCollector::new()));
         registry.register(Arc::new(DuplicatiCollector::new()));
         registry.register(Arc::new(TailscaleCollector::new()));
@@ -244,9 +270,16 @@ impl Registry {
         registry.register(Arc::new(MqttCollector::new()));
         registry.register(Arc::new(WebsocketCollector::new()));
         registry.register(Arc::new(NtpCollector::new()));
+        registry.register(Arc::new(UdpCollector::new()));
+        registry.register(Arc::new(SshCollector::new()));
+        registry.register(Arc::new(ImapCollector::new()));
+        registry.register(Arc::new(Pop3Collector::new()));
         registry.register(Arc::new(NginxCollector::new()));
         registry.register(Arc::new(OpenvpnCollector::new()));
         registry.register(Arc::new(ApacheCollector::new()));
+        registry.register(Arc::new(SnmpOidCollector::new()));
+        registry.register(Arc::new(RadiusCollector::new()));
+        registry.register(Arc::new(GrpcCollector::new()));
         registry
     }
 

@@ -2691,7 +2691,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             Err(error) => (None, Some(error.to_string())),
         };
         let last_seen_ms = monitor.as_ref().and_then(|m| m.last_seen_ms);
-        let verdict = match (&monitor, settings) {
+        let verdict = match (&monitor, &settings) {
             (Some(m), Some(settings)) => {
                 push::evaluate(m.last_seen_ms, m.last_status, now_ms, settings)
             }
@@ -2705,7 +2705,7 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             device.id(),
             if device.target.enabled { verdict_word(verdict) } else { "disabled" }
         );
-        if let Some(settings) = settings {
+        if let Some(settings) = &settings {
             line.push_str(&format!(
                 "; expected every {} s (+{} s grace)",
                 settings.expected.as_secs(),
@@ -2735,8 +2735,8 @@ async fn list_heartbeats(state: &AppState) -> ToolResult {
             "device": device.name(),
             "enabled": device.target.enabled,
             "verdict": verdict_word(verdict),
-            "expected_interval_secs": settings.map(|s| s.expected.as_secs()),
-            "grace_secs": settings.map(|s| s.grace.as_secs()),
+            "expected_interval_secs": settings.as_ref().map(|s| s.expected.as_secs()),
+            "grace_secs": settings.as_ref().map(|s| s.grace.as_secs()),
             "last_seen_at": monitor.as_ref().and_then(|m| m.last_seen_at.clone()),
             "last_seen_age_secs": age,
             "last_status": monitor.as_ref().map(|m| m.last_status.as_str()),

@@ -1,0 +1,17 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#admin/serviceAnnouncement/issues",
+  "value": [
+    {
+      "id": "SP654321",
+      "title": "Slow document library loading",
+      "service": "SharePoint Online",
+      "classification": "advisory",
+      "status": "investigating",
+      "isResolved": false,
+      "startDateTime": "2026-10-25T18:00:00Z",
+      "lastModifiedDateTime": "2026-10-26T06:00:00Z",
+      "feature": "SharePoint Features",
+      "impactDescription": "Some users may see slow loading."
+    }
+  ]
+}

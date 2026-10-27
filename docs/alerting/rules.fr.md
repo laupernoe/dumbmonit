@@ -130,6 +130,21 @@ pour votre ligne.
 | Débit montant Internet bas | Idem, pour `speedtest_min_upload_mbps`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 | Latence Internet élevée | Le dernier test a mesuré une latence au-dessus de `speedtest_max_latency_ms`. | > 0 | 10 min | Avis (`warning`) | 24 h |
 
+### Journal d'événements Windows
+
+Déclenchées par les règles d'événements d'une machine Windows ; voir
+[Alertes du journal d'événements Windows](../devices/agent-windows-events.md).
+Aucune règle d'événements n'existe par défaut : ces règles restent muettes tant
+que vous n'en ajoutez pas. Une alerte par machine et par sévérité, qui cite le
+dernier événement ; elle reparle au plus toutes les 10 minutes tant que des
+événements arrivent, et se résout 15 minutes après le dernier.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Windows event (critical) | Un événement a répondu à une règle de sévérité Avertissement (`dumbmonit_agent_eventlog_matches_critical` : événements des 15 dernières minutes). | > 0 | 30 s | Avertissement (`critical`) | aucun |
+| Windows event (warning) | Idem, pour les règles de sévérité Avis (`dumbmonit_agent_eventlog_matches_warning`). | > 0 | 30 s | Avis (`warning`) | aucun |
+| Windows event (info) | Idem, pour les règles de sévérité Info (`dumbmonit_agent_eventlog_matches_info`). | > 0 | 30 s | Info (`info`) | aucun |
+
 ### Proxmox VE
 
 | Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
@@ -680,6 +695,95 @@ Voir [Tailscale](../devices/tailscale.md). Les appareils sont étiquetés
 | Appareil Tailscale en attente d'approbation | Un appareil a rejoint le tailnet et attend l'approbation : approuvez-le s'il est attendu, supprimez-le sinon (`dumbmonit_tailscale_device_authorized`). | < 1 | 5 min | Avis (`warning`) | 1 j |
 | Mise à jour client Tailscale | Un appareil Tailscale qui doit rester en ligne fait tourner un client avec une mise à jour disponible (`dumbmonit_tailscale_device_update_available and on (target, device) dumbmonit_tailscale_device_watched > 0`). | > 0 | 6 h | Info (`info`) | 7 j |
 
+### Microsoft 365 {#microsoft-365}
+
+Voir [Microsoft 365](../devices/m365.md). Règles pour les locataires Microsoft 365 lus via Microsoft Graph : santé des services, licences et utilisateurs à risque.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Service Microsoft 365 dégradé | Un service Microsoft 365 est dégradé, interrompu ou à l'étude d'après le tableau de bord de santé des services. (`dumbmonit_m365_services_degraded`) | > 0 | 10 min | Avis (`warning`) | 6 h |
+| Licences Microsoft 365 épuisées | Toutes les unités d'une licence payante sont attribuées : le prochain utilisateur ne peut pas l'obtenir. (`dumbmonit_m365_license_used_percent`) | ≥ 100 % | 1 h | Avis (`warning`) | 1 j |
+| Licences Microsoft 365 presque épuisées | Plus de 95 % d'une licence payante est attribuée. (`dumbmonit_m365_license_used_percent < 99.99`) | > 95 % | 1 h | Info (`info`) | 7 j |
+| Utilisateurs Microsoft 365 à risque | Entra ID Protection signale au moins un utilisateur à risque. (`dumbmonit_m365_risky_users`) | > 0 | 15 min | Avis (`warning`) | 1 j |
+
+### Microsoft Entra ID {#microsoft-entra-id}
+
+Voir [Microsoft Entra ID](../devices/entra.md). Règles pour les locataires Microsoft Entra ID lus via Microsoft Graph : secrets d'application, synchronisation d'annuaire et MFA des administrateurs.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Secret d'application Entra bientôt expiré | Un secret ou un certificat d'une application Entra expire dans moins de 30 jours : l'application cesse de se connecter ce jour-là. (`dumbmonit_entra_credential_expiry_seconds > 0`) | < 30 d | 1 h | Avis (`warning`) | 1 j |
+| Secret d'application Entra expiré | Un secret ou un certificat d'une application Entra a expiré ces 30 derniers jours : supprimez-le, ou renouvelez-le si l'application en a encore besoin. (`dumbmonit_entra_credential_expiry_seconds`) | expired | 1 h | Avis (`warning`) | 1 j |
+| Synchronisation d'annuaire Entra en retard | La dernière synchronisation avec l'Active Directory local date de plus de 3 heures : vérifiez Entra Connect. (`dumbmonit_entra_ad_sync_age_seconds`) | > 3 h | 10 min | Avis (`warning`) | 6 h |
+| Administrateur Entra sans MFA | Au moins un administrateur n'a aucune méthode d'authentification multifacteur enregistrée. (`dumbmonit_entra_admin_without_mfa`) | > 0 | 1 h | Avis (`warning`) | 1 j |
+
+### Microsoft Azure {#microsoft-azure}
+
+Voir [Microsoft Azure](../devices/azure.md). Règles pour un abonnement Azure lu via Resource Health et les alertes Azure Monitor.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Ressource Azure indisponible | Resource Health signale une ressource de l'abonnement comme indisponible depuis 10 minutes (hors ressources arrêtées par leur propriétaire). (`dumbmonit_azure_resources_unavailable`) | > 0 | 10 min | Avertissement (`critical`) | 6 h |
+| Ressource Azure dégradée | Resource Health signale une ressource de l'abonnement comme dégradée depuis 15 minutes. (`dumbmonit_azure_resources_degraded`) | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Alerte Azure Monitor Sev0 ou Sev1 | Une alerte Azure Monitor de sévérité Sev0 (critique) ou Sev1 (erreur) est déclenchée et non fermée. (`dumbmonit_azure_alerts_high_active`) | > 0 | 5 min | Avis (`warning`) | 6 h |
+
+### AWS CloudWatch {#aws-cloudwatch}
+
+Voir [AWS (CloudWatch)](../devices/aws.md). Alarmes AWS, instances EC2 et bases RDS lues par CloudWatch.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Alarme CloudWatch AWS en ALARM | Une alarme CloudWatch est à l'état ALARM depuis 5 minutes. (`dumbmonit_aws_alarm_in_alarm`) | > 0 | 5 min | Avis (`warning`) | 6 h |
+| Contrôle d'état EC2 AWS en échec | Une instance EC2 échoue à un contrôle d'état (instance ou système) depuis 10 minutes. (`dumbmonit_aws_ec2_status_check_failed`) | > 0 | 10 min | Avis (`warning`) | 6 h |
+| CPU EC2 AWS élevé | Une instance EC2 a un pic de CPU au-dessus de 90 % depuis 30 minutes. (`dumbmonit_aws_ec2_cpu_percent`) | > 90 % | 30 min | Avis (`warning`) | 6 h |
+| CPU RDS AWS élevé | Une base RDS a un pic de CPU au-dessus de 90 % depuis 30 minutes. (`dumbmonit_aws_rds_cpu_percent`) | > 90 % | 30 min | Avis (`warning`) | 6 h |
+| Stockage libre RDS AWS bas | Une base RDS a moins de 5 Gio de stockage libre depuis 15 minutes. (`dumbmonit_aws_rds_free_storage_bytes`) | < 5 GiB | 15 min | Avis (`warning`) | 6 h |
+
+### Cloudflare {#cloudflare}
+
+Voir [Cloudflare](../devices/cloudflare.md). Règles pour les zones, tunnels, certificats et pools de répartition de charge d'un compte Cloudflare.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Tunnel Cloudflare hors service | Un tunnel Cloudflare n'a plus aucune connexion et ne peut plus faire passer de trafic. (`dumbmonit_cloudflare_tunnel_down`) | > 0 | 5 min | Avertissement (`critical`) | 6 h |
+| Tunnel Cloudflare dégradé | Un tunnel Cloudflare a perdu une partie de ses connexions vers Cloudflare. (`dumbmonit_cloudflare_tunnel_degraded`) | > 0 | 15 min | Avis (`warning`) | 6 h |
+| Certificat Cloudflare bientôt expiré | Un certificat actif d'une zone expire dans moins de 14 jours ; Cloudflare aurait dû l'avoir renouvelé. (`dumbmonit_cloudflare_certificate_expiry_seconds`) | < 14 d | 1 h | Avis (`warning`) | 1 j |
+| Zone Cloudflare non active | Une zone n'est pas active (changement de serveurs de noms en attente, déplacée ou désactivée). (`dumbmonit_cloudflare_zone_active`) | < 1 | 1 h | Avis (`warning`) | 1 j |
+| Taux de 5xx Cloudflare élevé | Plus de 5 % des réponses d'une zone sont des 5xx sur les une à deux dernières heures (zones d'au moins 100 requêtes). (`dumbmonit_cloudflare_zone_http_5xx_percent`) | > 5 % | 15 min | Avis (`warning`) | 6 h |
+| Pool de répartition Cloudflare en panne | Un pool de répartition de charge activé est en panne. (`dumbmonit_cloudflare_lb_pool_healthy`) | < 1 | 5 min | Avis (`warning`) | 6 h |
+
+### Hetzner Cloud {#hetzner-cloud}
+
+Voir [Hetzner Cloud](../devices/hetzner.md). Règles pour les serveurs, volumes et sauvegardes d'un projet Hetzner Cloud.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Serveur Hetzner arrêté | Un serveur Hetzner Cloud n'est pas à l'état running (éteint, en migration, démarrage bloqué). (`dumbmonit_hetzner_server_running`) | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Processeur d'un serveur Hetzner saturé | Un serveur Hetzner dépasse 90 % de processeur en moyenne sur dix minutes, depuis 30 minutes. (`dumbmonit_hetzner_server_cpu_percent`) | > 90 % | 30 min | Avis (`warning`) | 6 h |
+| Sauvegarde Hetzner trop ancienne | La sauvegarde la plus récente d'un serveur dont les sauvegardes sont activées a plus de 3 jours. (`dumbmonit_hetzner_server_backup_age_seconds`) | > 3 d | 1 h | Avis (`warning`) | 1 j |
+| Volume Hetzner non rattaché | Un volume n'est rattaché à aucun serveur, et est facturé quand même. (`dumbmonit_hetzner_volume_attached`) | < 1 | 1 h | Info (`info`) | 7 j |
+
+### OVHcloud {#ovhcloud}
+
+Voir [OVHcloud](../devices/ovh.md). Règles pour les VPS et les serveurs dédiés d'un compte OVHcloud.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| VPS OVHcloud à l'arrêt | Un VPS OVHcloud n'est plus à l'état running depuis 10 minutes. (`dumbmonit_ovh_vps_up`) | < 1 | 10 min | Avis (`warning`) | 6 h |
+| Serveur dédié OVHcloud en erreur | La supervision d'OVHcloud signale un serveur dédié en erreur, ou éteint, depuis 5 minutes. (`dumbmonit_ovh_dedicated_up`) | < 1 | 5 min | Avertissement (`critical`) | 6 h |
+| Tâche OVHcloud en cours | Une ou plusieurs tâches (redémarrage, réinstallation, maintenance) sont en attente ou en cours sur les serveurs depuis une heure. (`dumbmonit_ovh_tasks_active`) | > 0 | 1 h | Info (`info`) | 1 j |
+
+### Infomaniak {#infomaniak}
+
+Voir [Infomaniak](../devices/infomaniak.md). Règles pour les produits d'un compte Infomaniak.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| Produit Infomaniak bientôt expiré | Un produit (domaine, hébergement, messagerie) expire dans moins de 14 jours. (`dumbmonit_infomaniak_product_expiry_seconds`) | < 14 d | 1 h | Avis (`warning`) | 1 j |
+| Produit Infomaniak expiré | La date d'expiration d'un produit est dépassée. (`dumbmonit_infomaniak_product_expiry_seconds`) | < 0 | 1 h | Avertissement (`critical`) | 1 j |
+| Produit Infomaniak bloqué | Infomaniak signale un produit comme bloqué depuis une heure. (`dumbmonit_infomaniak_product_locked`) | > 0 | 1 h | Avis (`warning`) | 1 j |
+| Produit Infomaniak en maintenance | Infomaniak signale un produit en maintenance depuis une heure. (`dumbmonit_infomaniak_product_maintenance`) | > 0 | 1 h | Info (`info`) | 1 j |
+
 ### FortiGate {#fortigate}
 
 Voir [FortiGate](../devices/fortigate.md). Les tunnels sont étiquetés
@@ -847,6 +951,15 @@ est activé dans les Paramètres (désactivé par défaut). Voir
 |---|---|---|---|---|---|
 | Score de sécurité en baisse | Le score a chuté de 10 points ou plus par rapport à sa meilleure valeur des dernières 24 heures (`max_over_time(dumbmonit_security_score[1d]) - dumbmonit_security_score`) : un contrôle a commencé à échouer. | ≥ 10 pts | 30 min | Avis (`warning`) | 24 h |
 | Score de sécurité faible | Le score est sous 40, note F (`dumbmonit_security_score`). Montez ou descendez le seuil pour correspondre à votre propre barre. | < 40 | 1 h | Info (`info`) | 7 j |
+
+### Inventaire du réseau {#inventaire-du-reseau}
+
+Déclenchées par les balayages réseau planifiés et leur inventaire (voir [Scans planifiés et inventaire](../using/discovery.fr.md#scans-planifies-et-inventaire)). **Les deux règles sont désactivées par défaut** et de gravité `info` : activez-les dans la liste des règles quand vous les voulez. Il y a une série, donc une alerte, par nouvel appareil ou port ; elle reste ouverte jusqu'à ce que l'élément soit marqué comme connu (la mesure s'arrête, l'alerte se résout en quelques minutes) et n'a pas de rappel. Le premier balayage d'un réseau ne déclenche jamais rien.
+
+| Règle | Quoi | Seuil par défaut | Maintien | Gravité | Rappel |
+|---|---|---|---|---|---|
+| New device on the network | Un balayage planifié a trouvé un appareil absent de l'inventaire (`dumbmonit_netscan_unknown_device`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
+| New open port on the network | Un balayage planifié a trouvé un nouveau port ouvert sur un appareil connu (`dumbmonit_netscan_unknown_port`). | > 0 | aucun | Info (`info`), **désactivée** | aucun |
 
 ### DumbMonit lui-même
 

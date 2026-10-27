@@ -1,0 +1,33 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#applications(id,appId,displayName,passwordCredentials,keyCredentials)",
+  "value": [
+    {
+      "id": "00000000-0000-0000-0000-0000000000a3",
+      "appId": "33333333-3333-3333-3333-333333333333",
+      "displayName": "Old App",
+      "passwordCredentials": [
+        {
+          "displayName": "legacy",
+          "endDateTime": "2025-01-01T00:00:00Z",
+          "keyId": "dddd4444-2222-3333-4444-555566667777",
+          "startDateTime": "2023-01-01T00:00:00Z"
+        }
+      ],
+      "keyCredentials": []
+    },
+    {
+      "id": "00000000-0000-0000-0000-0000000000a4",
+      "appId": "44444444-4444-4444-4444-444444444444",
+      "displayName": "Healthy",
+      "passwordCredentials": [
+        {
+          "displayName": "ci",
+          "endDateTime": "2028-01-01T00:00:00Z",
+          "keyId": "eeee5555-2222-3333-4444-555566667777",
+          "startDateTime": "2026-01-01T00:00:00Z"
+        }
+      ],
+      "keyCredentials": []
+    }
+  ]
+}

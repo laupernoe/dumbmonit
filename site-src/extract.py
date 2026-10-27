@@ -28,6 +28,7 @@ OUT = Path(__file__).resolve().parent / "data" / "devices.json"
 FAMILIES = [
     ("servers", ["agent", "redfish", "nut", "activedirectory"]),
     ("network", ["snmp", "mikrotik", "unifi", "tailscale", "openvpn", "meraki", "omada"]),
+    ("cloud", ["m365", "entra", "azure", "aws", "cloudflare", "hetzner", "ovh", "infomaniak"]),
     ("firewalls", ["opnsense", "pfsense", "fortigate", "sophos"]),
     ("hypervisors", ["proxmox", "pdm", "vsphere", "xcpng", "nutanix", "kubernetes"]),
     ("storage", ["synology", "truenas", "unraid", "pbs", "veeam"]),
@@ -94,7 +95,7 @@ def parse_index():
     """{kind: {page, anchor, typical, credential}} from the table of docs/devices/index.md."""
     out = {}
     for line in (ROOT / "docs/devices/index.md").read_text().splitlines():
-        m = re.match(r"\|\s*\[[^\]]+\]\(([a-z0-9_-]+)\.md(#[^)]*)?\)\s*\|\s*`([a-z_]+)`\s*\|([^|]*)\|(.*)\|\s*$", line)
+        m = re.match(r"\|\s*\[[^\]]+\]\(([a-z0-9_-]+)\.md(#[^)]*)?\)\s*\|\s*`([a-z0-9_]+)`\s*\|([^|]*)\|(.*)\|\s*$", line)
         if m:
             page, anchor, kind, cred, typical = m.groups()
             typical = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", typical).strip()

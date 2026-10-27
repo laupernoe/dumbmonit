@@ -64,6 +64,14 @@ que cette version peut surveiller.
 | [Kopia](kopia.md) (bêta) | `kopia` | nom d'utilisateur et mot de passe du serveur | Serveur de sauvegarde : dernier instantané de chaque source (âge, erreurs, taille), sources en retard sur leur planning, connexion au dépôt |
 | [Duplicati](duplicati.md) (bêta) | `duplicati` | mot de passe de l'interface web | Serveur de sauvegarde (2.1+) : dernière sauvegarde réussie de chaque tâche, dernier résultat, avertissements et erreurs, tâche en cours |
 | [Tailscale](tailscale.md) | `tailscale` | client OAuth (devices:core:read) ou jeton d'accès d'API | Tailnet : serveurs hors ligne, clés de nœud qui expirent, appareils en attente d'approbation |
+| [Microsoft 365](m365.md) | `m365` | Application Entra (ID client et secret) | Santé des services, incidents, licences, utilisateurs à risque |
+| [Microsoft Entra ID](entra.md) | `entra` | Application Entra (ID client et secret) | Expiration des secrets, synchronisation d'annuaire, MFA des administrateurs |
+| [Microsoft Azure](azure.md) | `azure` | Application Entra (ID client et secret) avec le rôle Reader sur l'abonnement | Resource Health de chaque ressource et alertes Azure Monitor actives par sévérité |
+| [AWS (CloudWatch)](aws.md) | `aws` | Identifiant de clé d'accès et secret (utilisateur IAM en lecture seule, rôle facultatif) | Alarmes CloudWatch en ALARM, contrôles d'état et CPU EC2, CPU et stockage libre RDS |
+| [Cloudflare](cloudflare.md) | `cloudflare` | jeton d'API (lecture seule) | Zones, tunnels, certificats, erreurs 5xx, pools de répartition de charge |
+| [Hetzner Cloud](hetzner.md) | `hetzner` | jeton d'API (lecture seule) | Serveurs, processeur, volumes, sauvegardes |
+| [OVHcloud](ovh.md) | `ovh` | Jeton d'API OVHcloud (clé d'application, secret d'application et clé de consommateur) avec GET /vps* et GET /dedicated/server* | État et tâches en cours des VPS et des serveurs dédiés |
+| [Infomaniak](infomaniak.md) | `infomaniak` | Jeton d'API Infomaniak avec la portée Products | Dates d'expiration, blocages et maintenance des domaines, hébergements et autres produits |
 | [Nextcloud](nextcloud.md) | `nextcloud` | jeton de surveillance (NC-Token) | Synchronisation de fichiers : mode maintenance, mise à jour en attente, mises à jour, utilisateurs actifs, OPcache |
 | [Immich](immich.md) | `immich` | clé d'API | Bibliothèque de photos : files de tâches, mises à jour, disque, nombre de photos |
 | [Paperless-ngx](paperless.md) | `paperless` | jeton d'API ou nom d'utilisateur/mot de passe | Documents : Redis, Celery, index, imports en échec, mises à jour |
@@ -78,6 +86,9 @@ que cette version peut surveiller.
 | [Hôte accessible](services.md#ping) | `ping` | aucun | Passerelle, point d'accès, imprimante |
 | [Certificat TLS](services.md#tls) | `tls` | aucun | IMAPS, LDAPS, reverse proxy |
 | [Serveur de temps NTP](services.md#ntp) | `ntp` | aucun | Routeur, NAS, serveur de temps interne, serveur de pool public |
+| [Valeur SNMP](services.md#snmp-oid) | `snmp_oid` | communauté SNMP ou utilisateur v3 | Un objet SNMP : sonde, état d'onduleur, chaîne de version, avec bornes ou texte attendu |
+| [Serveur RADIUS](services.md#radius) | `radius` | secret partagé et compte de test | FreeRADIUS, Windows NPS : une vraie authentification |
+| [Service gRPC](services.md#grpc) | `grpc` | aucun | Microservice, etcd : le contrôle de santé gRPC standard |
 | [Battement de cœur](push.md) | `push` | aucun (URL secrète) | Tâche cron, script de sauvegarde, automatisation qui doit appeler |
 | [Changements de site web](webchange.md) | `webchange` | aucun | Une page ou tout un site : changements de texte, pages ajoutées et supprimées, avant/après avec captures d'écran |
 | [Surveillance de démonstration](demo.md) | `dummy` | aucun | Explorer l'interface sans matériel |

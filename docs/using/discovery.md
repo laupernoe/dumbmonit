@@ -69,6 +69,74 @@ Host network mode:
   mapping in host mode). The embedded metrics database stays bound to the
   loopback and is not reachable from the LAN.
 
+## Scheduled scans and inventory
+
+A one-off scan tells you what is on the network today. To be told when something
+**new** shows up, schedule it: on the **Monitors** page, in the network scan view,
+the *Scheduled scans and inventory* panel keeps a list of the devices and open
+ports each scheduled network has shown, and flags what is new.
+
+For each schedule you choose:
+
+- the **network** (CIDR, 1024 addresses at most, like a manual scan);
+- **who scans**: the server, or a [relay agent](../devices/agent.md) on another site;
+- the **interval**, from 5 minutes to 30 days;
+- the **depth** (the same *Standard* or *Extended* port list as a manual scan);
+- whether it is **enabled**. *Scan now* runs it at the next cycle (a few seconds)
+  without waiting for the interval.
+
+A network is never scanned twice at once, and a server or a relay agent runs one
+discovery scan at a time: a scheduled scan that finds its scanner busy (a manual
+scan, another schedule) simply starts a little later.
+
+### The inventory
+
+Each scan that completes updates the inventory of its network:
+
+- a **device** is identified by its **MAC address** when it can be read (see
+  [MAC addresses](#mac-addresses-and-the-host-network)), otherwise by its IP
+  address. A device whose IP changes but keeps its MAC is the same device, not a
+  new one;
+- every **open port** found on a device is listed with its first and last
+  sighting. Only what the scan recognises is listed (the same services as a
+  manual scan);
+- nothing is ever removed: a device that is switched off stays in the list.
+
+The **first completed scan** of a network builds the inventory without reporting
+anything: everything it finds is known from the start. A first scan that finds no
+host at all (a relay cut off from its network, say) does not count, so that the
+next one does not flag a whole network as new. Changing the network or the
+scanner of a schedule starts again from an empty inventory.
+
+From the second scan on, a device or a port that is not in the inventory enters it
+as **new**: highlighted with a *New device* or *New port* label (not only a colour),
+and kept at the top of the list.
+
+### Alerts
+
+New devices and new ports raise alerts through two built-in
+[alert rules](../alerting/rules.md#network-inventory):
+
+| Rule | Raised when | Default |
+|---|---|---|
+| New device on the network | a scan finds a device that is not in the inventory | **disabled**, severity `info` |
+| New open port on the network | a scan finds a new open port on a known device | **disabled**, severity `info` |
+
+Both rules are **off by default**: on a network where guests come and go, they would
+be noise until you want them. Enable them in the alert rules, and choose which
+notification channels receive them like any other rule.
+
+There is **one alert per new item**, and it stays open as long as the item is not
+marked as known; it does not repeat and does not fire again at every scan. The ports
+of a new device are covered by the alert of the device itself.
+
+### Marking as known
+
+Use *Mark as known* on a device (its ports are marked with it), *Mark known* on a
+single port, or *Mark all as known* to accept everything at once. Marked items
+stop being flagged, and their alert resolves within a few minutes. This is also
+the way to accept a new port or device you expected.
+
 ## A word of caution
 
 A port sweep looks like an attack to an intrusion detection system (IDS/IPS).

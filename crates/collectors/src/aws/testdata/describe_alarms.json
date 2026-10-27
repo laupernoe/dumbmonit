@@ -1,0 +1,43 @@
+{
+  "CompositeAlarms": [
+    {
+      "ActionsEnabled": true,
+      "AlarmArn": "arn:aws:cloudwatch:eu-west-3:123456789012:alarm:prod-degraded",
+      "AlarmName": "prod-degraded",
+      "AlarmRule": "ALARM(web-5xx) OR ALARM(rds-prod-cpu-high)",
+      "StateReason": "arn:aws:cloudwatch:eu-west-3:123456789012:alarm:web-5xx transitioned to ALARM",
+      "StateUpdatedTimestamp": 1790000000.123,
+      "StateValue": "ALARM"
+    }
+  ],
+  "MetricAlarms": [
+    {
+      "AlarmArn": "arn:aws:cloudwatch:eu-west-3:123456789012:alarm:rds-prod-cpu-high",
+      "AlarmName": "rds-prod-cpu-high",
+      "ComparisonOperator": "GreaterThanThreshold",
+      "Dimensions": [{ "Name": "DBInstanceIdentifier", "Value": "prod-db" }],
+      "EvaluationPeriods": 3,
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/RDS",
+      "Period": 300,
+      "StateReason": "Threshold Crossed: 3 out of the last 3 datapoints were greater than 80.0",
+      "StateUpdatedTimestamp": 1789999000.5,
+      "StateValue": "ALARM",
+      "Statistic": "Average",
+      "Threshold": 80.0
+    },
+    {
+      "AlarmArn": "arn:aws:cloudwatch:eu-west-3:123456789012:alarm:web-5xx",
+      "AlarmName": "web-5xx",
+      "ComparisonOperator": "GreaterThanOrEqualToThreshold",
+      "EvaluationPeriods": 1,
+      "MetricName": "HTTPCode_Target_5XX_Count",
+      "Namespace": "AWS/ApplicationELB",
+      "Period": 60,
+      "StateUpdatedTimestamp": 1789999500.0,
+      "StateValue": "ALARM",
+      "Statistic": "Sum",
+      "Threshold": 10.0
+    }
+  ]
+}
