@@ -274,7 +274,6 @@
 	"alerts_needs_empty_quiet": "Ничего не требует вашего внимания.",
 	"alerts_needs_no_device": "Нет монитора",
 	"alerts_needs_quiet_all_reporting": "Все мониторы передают данные, ни одно правило не срабатывает.",
-	"alerts_needs_quiet_checked": "{text} Проверено: {when}.",
 	"alerts_needs_quiet_no_devices": "Добавьте монитор, и его первый отчёт появится здесь.",
 	"alerts_needs_quiet_waiting_many": [
 		{
@@ -4225,8 +4224,6 @@
 	"metrics_title_website_text_chars": "Символов текста",
 	"metrics_title_website_title_changed": "Заголовок изменён",
 	"metrics_title_website_up": "Сайт доступен",
-	"misc2_browser_on": "{browser} в {system}",
-	"misc2_browser_unknown": "Браузер",
 	"misc2_folds_container_stopped": [
 		{
 			"declarations": [
@@ -4611,7 +4608,6 @@
 	"misc_nav_more": "Ещё",
 	"misc_nav_overview": "Обзор",
 	"misc_nav_palette_open": "Открыть палитру команд",
-	"misc_nav_palette_title": "Палитра команд ({shortcut})",
 	"misc_nav_security": "Безопасность",
 	"misc_nav_settings": "Настройки",
 	"misc_nav_sign_out": "Выйти",
@@ -4656,7 +4652,6 @@
 	"misc_palette_status_detail": "Публичные страницы и объявления",
 	"misc_palette_status_page": "Новая страница статуса",
 	"misc_palette_status_pages": "Страницы статуса",
-	"misc_palette_theme": "Переключить тему",
 	"misc_palette_wall_detail": "Сводка на весь экран для настенного дисплея",
 	"misc_reason_auth": "Учётные данные отклонены",
 	"misc_reason_bad_secret": "Неверная подпись ответа: вероятно, неверный общий секрет",
@@ -4688,17 +4683,10 @@
 	"misc_shortcuts_go": "Перейти: {page}",
 	"misc_shortcuts_intro": "Буквенные сочетания работают, когда фокус не в текстовом поле. Нажимайте клавиши одну за другой.",
 	"misc_shortcuts_title": "Горячие клавиши",
-	"misc_speaker_download_failed": "Не удалось загрузить плеер Spotify (sdk.scdn.co недоступен).",
 	"misc_speaker_fix_auth": "Повторная попытка выполняется автоматически. Если не помогает, заново подключите Spotify в Настройки → Музыка на стене.",
 	"misc_speaker_fix_insecure": "Spotify воспроизводит звук только на защищённой странице: откройте DumbMonit по HTTPS (через обратный прокси) или как http://localhost на самом экране.",
 	"misc_speaker_fix_no_drm": "Используйте Chrome, Edge или Firefox на компьютере, подключённом к телевизору (Firefox: разрешите «Воспроизводить DRM-контент»; Chromium на Raspberry Pi: установите Widevine, пакет libwidevinecdm0). Браузеры большинства смарт-ТВ и киосков так не умеют. Иначе запускайте воспроизведение из приложения Spotify на телевизоре или через Chromecast: стена всё равно покажет, что играет.",
 	"misc_speaker_fix_premium": "Подключите учётную запись Premium в Настройки → Музыка на стене. Блок «Сейчас играет» по-прежнему показывает, что играет на ваших других устройствах.",
-	"misc_speaker_fix_reconnect": "Администратор может заново подключить Spotify в Настройки → Музыка на стене.",
-	"misc_speaker_no_token": "Нет токена Spotify.",
-	"misc_speaker_not_accepted": "Spotify не принял этот экран как колонку.",
-	"misc_speaker_not_ready": "Этот экран ещё не готов работать как колонка.",
-	"misc_speaker_not_started": "Плеер Spotify не запустился.",
-	"misc_speaker_playback_error": "Spotify не смог воспроизвести этот трек ({message}).",
 	"misc_speaker_problem_auth": "Spotify отклонил подключение стены{detail}.",
 	"misc_speaker_problem_init": "Этот браузер не может воспроизводить Spotify: его DRM (Widevine) не запустился{detail}.",
 	"misc_speaker_problem_premium": "Чтобы стена работала как колонка, нужен Spotify Premium.",
@@ -5168,293 +5156,6 @@
 	"oncall_window_overnight_hint": "Если конец раньше начала, интервал переходит через полночь на следующий день. С 00:00 до 00:00 — весь день.",
 	"oncall_window_remove": "Убрать",
 	"oncall_window_to": "До",
-	"overview_brief_a_rule": "Правило",
-	"overview_brief_also": "Оповещения также возникали и исчезали на: {names}.",
-	"overview_brief_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Оповещения также возникали и исчезали на: {names} и ещё {count}.",
-				"countPlural=few": "Оповещения также возникали и исчезали на: {names} и ещё {count}.",
-				"countPlural=many": "Оповещения также возникали и исчезали на: {names} и ещё {count}.",
-				"countPlural=other": "Оповещения также возникали и исчезали на: {names} и ещё {count}."
-			}
-		}
-	],
-	"overview_brief_device_n": "Монитор {id}",
-	"overview_brief_dissolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} оповещение возникло и исчезло, не успев сработать.",
-				"countPlural=few": "{count} оповещения возникли и исчезли, не успев сработать.",
-				"countPlural=many": "{count} оповещений возникли и исчезли, не успев сработать.",
-				"countPlural=other": "{count} оповещения возникли и исчезли, не успев сработать."
-			}
-		}
-	],
-	"overview_brief_dissolved_mostly": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} оповещение возникло и исчезло, не успев сработать (в основном {rule} на {device}).",
-				"countPlural=few": "{count} оповещения возникли и исчезли, не успев сработать (в основном {rule} на {device}).",
-				"countPlural=many": "{count} оповещений возникли и исчезли, не успев сработать (в основном {rule} на {device}).",
-				"countPlural=other": "{count} оповещения возникли и исчезли, не успев сработать (в основном {rule} на {device})."
-			}
-		}
-	],
-	"overview_brief_dropped": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} пропало и вернулось.",
-				"countPlural=few": "{name} пропадало {count} раза и вернулось.",
-				"countPlural=many": "{name} пропадало {count} раз и вернулось.",
-				"countPlural=other": "{name} пропадало {count} раз и вернулось."
-			}
-		}
-	],
-	"overview_brief_dropped_many": "{names} пропадали и вернулись.",
-	"overview_brief_head_first": "За последние 24 ч",
-	"overview_brief_head_since": "С {when}",
-	"overview_brief_kept_reporting": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} монитор продолжал отправлять данные.",
-				"countPlural=few": "{count} монитора продолжали отправлять данные.",
-				"countPlural=many": "{count} мониторов продолжали отправлять данные.",
-				"countPlural=other": "{count} мониторов продолжали отправлять данные."
-			}
-		}
-	],
-	"overview_brief_lead": "{head} — {parts}.",
-	"overview_brief_learning_many": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} ещё изучают базовый уровень: сработали бы один раз.",
-				"countPlural=few": "{names} ещё изучают базовый уровень: сработали бы {count} раза.",
-				"countPlural=many": "{names} ещё изучают базовый уровень: сработали бы {count} раз.",
-				"countPlural=other": "{names} ещё изучают базовый уровень: сработали бы {count} раз."
-			}
-		}
-	],
-	"overview_brief_learning_one": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} ещё изучает базовый уровень: сработало бы один раз.",
-				"countPlural=few": "{names} ещё изучает базовый уровень: сработало бы {count} раза.",
-				"countPlural=many": "{names} ещё изучает базовый уровень: сработало бы {count} раз.",
-				"countPlural=other": "{names} ещё изучает базовый уровень: сработало бы {count} раз."
-			}
-		}
-	],
-	"overview_brief_n_alerts_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} оповещение устранено само",
-				"countPlural=few": "{count} оповещения устранены сами",
-				"countPlural=many": "{count} оповещений устранены сами",
-				"countPlural=other": "{count} оповещения устранены сами"
-			}
-		}
-	],
-	"overview_brief_n_fired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "сработало {count} оповещение",
-				"countPlural=few": "сработало {count} оповещения",
-				"countPlural=many": "сработало {count} оповещений",
-				"countPlural=other": "сработало {count} оповещения"
-			}
-		}
-	],
-	"overview_brief_n_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} устранено само",
-				"countPlural=few": "{count} устранены сами",
-				"countPlural=many": "{count} устранены сами",
-				"countPlural=other": "{count} устранены сами"
-			}
-		}
-	],
-	"overview_brief_n_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} всё ещё активно",
-				"countPlural=few": "{count} всё ещё активны",
-				"countPlural=many": "{count} всё ещё активны",
-				"countPlural=other": "{count} всё ещё активны"
-			}
-		}
-	],
-	"overview_brief_n_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} монитор недоступен",
-				"countPlural=few": "{count} монитора недоступны",
-				"countPlural=many": "{count} мониторов недоступны",
-				"countPlural=other": "{count} мониторов недоступны"
-			}
-		}
-	],
-	"overview_brief_nothing_no_channel": "Ничего не отправлено: канал уведомлений ещё не настроен.",
-	"overview_brief_nothing_sent": "Ничего не отправлено.",
-	"overview_brief_nothing_to_channel": "В {channel} ничего не отправлено.",
-	"overview_brief_nothing_to_channels": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Ничего не отправлено в ваш канал.",
-				"countPlural=few": "Ничего не отправлено в ваши {count} канала.",
-				"countPlural=many": "Ничего не отправлено в ваши {count} каналов.",
-				"countPlural=other": "Ничего не отправлено в ваши {count} каналов."
-			}
-		}
-	],
-	"overview_brief_notified": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Отправлено {count} уведомление.",
-				"countPlural=few": "Отправлено {count} уведомления.",
-				"countPlural=many": "Отправлено {count} уведомлений.",
-				"countPlural=other": "Отправлено {count} уведомлений."
-			}
-		}
-	],
-	"overview_brief_notified_to": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Отправлено {count} уведомление в {channel}.",
-				"countPlural=few": "Отправлено {count} уведомления в {channel}.",
-				"countPlural=many": "Отправлено {count} уведомлений в {channel}.",
-				"countPlural=other": "Отправлено {count} уведомлений в {channel}."
-			}
-		}
-	],
-	"overview_brief_on_device": "{device}: {phrases}.",
-	"overview_brief_phrase_fired_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} сработало и устранилось само",
-				"countPlural=few": "{name} сработало {count} раза и устранилось само",
-				"countPlural=many": "{name} сработало {count} раз и устранилось само",
-				"countPlural=other": "{name} сработало {count} раз и устранилось само"
-			}
-		}
-	],
-	"overview_brief_phrase_resolved": "{name} устранилось само",
-	"overview_brief_quiet_away": "Пока вас не было, ничего не произошло.",
-	"overview_brief_quiet_first": "За последние 24 ч ничего не произошло.",
-	"overview_brief_the_server": "сервер",
 	"overview_first_all_done": "Все три шага выполнены. Это руководство больше не появится.",
 	"overview_first_channel_action": "Добавить канал",
 	"overview_first_channel_text": "Почта, ntfy, Discord, Telegram, PagerDuty — то, что вы и так читаете. Пока всё в порядке, ничего не отправляется.",
@@ -5478,41 +5179,15 @@
 	"overview_first_test_text": "Отправьте тест из канала. Шаг станет зелёным, когда сообщение действительно уйдёт.",
 	"overview_first_test_title": "Проверьте, что сообщение доходит",
 	"overview_first_title": "Ваши первые пять минут",
-	"overview_needs_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Ещё {count}",
-				"countPlural=few": "Ещё {count}",
-				"countPlural=many": "Ещё {count}",
-				"countPlural=other": "Ещё {count}"
-			}
-		}
-	],
-	"overview_page_checked": "Проверено {when}",
 	"overview_page_empty_text": "Добавьте коммутатор, NAS, гипервизор или сайт, и уже через минуту он начнёт присылать данные.",
 	"overview_page_empty_title": "Мониторов пока нет",
 	"overview_page_error_load": "Не удалось загрузить обзор",
 	"overview_page_error_refresh": "Не удалось обновить оповещения.",
 	"overview_page_history_note": "Данные из истории оповещений за прошедшую неделю.",
-	"overview_page_last_days": "Последние {days} дн.",
-	"overview_page_mark_read": "Отметить как прочитанное",
-	"overview_page_needs_you": "Требует вашего внимания",
 	"overview_page_or": "Или {agent}, или {relay} через один из них.",
 	"overview_page_or_agent": "установить агент на машине",
 	"overview_page_or_relay": "следить за удалённой площадкой",
-	"overview_page_since": "С вашего последнего визита",
 	"overview_page_title": "Обзор",
-	"overview_scene_asleep": "{label}, голубь спит",
-	"overview_scene_cloudy": "Небольшая облачность",
-	"overview_scene_overcast": "Пасмурно",
-	"overview_scene_storm": "Гроза",
 	"overview_sky_clear": "Ясное небо",
 	"overview_sky_n_acked": [
 		{
@@ -5712,111 +5387,11 @@
 	"overview_sky_plate_unreachable": "Недоступен",
 	"overview_sky_sentence": "{parts}.",
 	"overview_sky_waiting": "Ожидание первых данных",
-	"overview_streaks_d_h": "{days} дн. {hours} ч",
-	"overview_streaks_fewest": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "меньше всего оповещений: {count} событие за {days} дн.",
-				"countPlural=few": "меньше всего оповещений: {count} события за {days} дн.",
-				"countPlural=many": "меньше всего оповещений: {count} событий за {days} дн.",
-				"countPlural=other": "меньше всего оповещений: {count} события за {days} дн."
-			}
-		}
-	],
-	"overview_streaks_h_min": "{hours} ч {minutes} мин",
-	"overview_streaks_many_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} и ещё {count} недоступны",
-				"countPlural=few": "{name} и ещё {count} недоступны",
-				"countPlural=many": "{name} и ещё {count} недоступны",
-				"countPlural=other": "{name} и ещё {count} недоступны"
-			}
-		}
-	],
-	"overview_streaks_most": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} событие оповещения (начало, срабатывание или устранение) за {days} дн.",
-				"countPlural=few": "{count} события оповещения (начало, срабатывание или устранение) за {days} дн.",
-				"countPlural=many": "{count} событий оповещения (начало, срабатывание или устранение) за {days} дн.",
-				"countPlural=other": "{count} события оповещения (начало, срабатывание или устранение) за {days} дн."
-			}
-		}
-	],
-	"overview_streaks_no_alert": "ни одного оповещения за {days} дн.",
-	"overview_streaks_no_alert_like": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "ни одного оповещения за {days} дн., как и ещё у {count}",
-				"countPlural=few": "ни одного оповещения за {days} дн., как и ещё у {count}",
-				"countPlural=many": "ни одного оповещения за {days} дн., как и ещё у {count}",
-				"countPlural=other": "ни одного оповещения за {days} дн., как и ещё у {count}"
-			}
-		}
-	],
-	"overview_streaks_noisiest": "Больше всего оповещений",
-	"overview_streaks_none_down": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "ни один монитор не был недоступен за {count} день",
-				"countPlural=few": "ни один монитор не был недоступен за {count} дня",
-				"countPlural=many": "ни один монитор не был недоступен за {count} дней",
-				"countPlural=other": "ни один монитор не был недоступен за {count} дней"
-			}
-		}
-	],
-	"overview_streaks_not_now": "Неполно",
-	"overview_streaks_one_unreachable": "{name} недоступен",
-	"overview_streaks_over": "более {days} дн.",
-	"overview_streaks_quietest": "Самый спокойный монитор",
-	"overview_streaks_reporting": "Всё на связи",
-	"overview_streaks_reporting_for": "Всё на связи уже",
-	"overview_streaks_since_outage": "ни один монитор не был недоступен с последнего сбоя",
-	"overview_streaks_under_minute": "меньше минуты",
 	"overview_tips_another": "Другой совет",
 	"overview_tips_hide": "Скрыть эти советы",
 	"overview_tips_hide_title": "Скрыть эти советы (в этом браузере)",
 	"overview_tips_label": "Знаете ли вы?",
 	"overview_tips_prefix": "Знаете ли вы? {title}",
-	"overview_week_days_short": "{days} дн.",
-	"overview_when_dated": "{date} {time}",
-	"overview_when_yesterday": "вчера {time}",
 	"push_runs_description": "Каждый старт, успех и сбой, о которых сообщила задача, от новых к старым.",
 	"push_runs_duration": "заняло {duration}",
 	"push_runs_duration_unknown": "длительность неизвестна",
@@ -6494,13 +6069,6 @@
 	"settings_agentupdates_window_any": "В любое время",
 	"settings_agentupdates_window_maintenance": "Только в окно обслуживания (заглушение на устройстве)",
 	"settings_agentupdates_window_manual": "Только вручную",
-	"settings_appearance_day": "День",
-	"settings_appearance_day_hint": "Миллиметровка, тёмно-синие чернила.",
-	"settings_appearance_night": "Ночь",
-	"settings_appearance_night_hint": "Радарная картинка, бирюзовый сигнал.",
-	"settings_appearance_system": "Система",
-	"settings_appearance_system_hint": "Следует за устройством.",
-	"settings_appearance_theme": "Тема",
 	"settings_appearance_wall_description": "Только сводка на весь экран, для монитора в комнате. Esc — выйти; ⌘K / Ctrl K открывает режим откуда угодно.",
 	"settings_appearance_wall_open": "Открыть режим стены",
 	"settings_appearance_wall_title": "Режим стены",
@@ -6730,7 +6298,6 @@
 	"settings_config_yaml_label": "или вставьте YAML",
 	"settings_language_auto": "Автоматически (язык браузера)",
 	"settings_language_theme_description": "Сохраняются в этом браузере.",
-	"settings_language_theme_title": "Язык и тема",
 	"settings_ldap_access_denied": "Отказ: нет ни в одной из групп",
 	"settings_ldap_admin_groups": "Группы администраторов",
 	"settings_ldap_base_dn": "Базовый DN",
@@ -8846,117 +8413,18 @@
 	"ui_error_notice_help_network": "Убедитесь, что сервер запущен и сеть доступна.",
 	"ui_error_notice_help_server": "Проверьте журналы сервера и повторите попытку.",
 	"ui_error_notice_signin": "Войти снова",
-	"wall_back": "Назад к обзору",
-	"wall_city_dubai": "Дубай",
-	"wall_city_newyork": "Нью-Йорк",
-	"wall_city_paris": "Париж",
-	"wall_city_title": "Город",
-	"wall_city_tokyo": "Токио",
-	"wall_devices_aria": "Мониторы",
-	"wall_devices_more": "Ещё мониторов: {count}, все на связи",
-	"wall_devices_more_trouble": "Ещё мониторов: {count} (требуют внимания: {trouble})",
-	"wall_devices_reporting": "Передаёт данные",
-	"wall_dock_enable": "Коснитесь, чтобы включить звук",
-	"wall_dock_enable_hint": "Затем выберите «{name}» в разделе «Устройства» в Spotify",
-	"wall_dock_hide": "Скрыть",
-	"wall_dock_retrying": "Повторная попытка выполняется автоматически…",
-	"wall_dock_trouble_pill": "Здесь не колонка",
-	"wall_dock_trouble_title": "Spotify не может играть на этом экране",
-	"wall_dock_why": "Почему",
 	"wall_ent_oncall_none": "Никто не дежурит. Настройте график дежурств в разделе «Оповещения».",
 	"wall_exit": "Выход",
 	"wall_exit_aria": "Выйти из режима стены",
-	"wall_load_error": "Не удалось загрузить стену",
-	"wall_market_vs": "к {base}",
-	"wall_music_admin_only": "Изменить это может только администратор.",
-	"wall_music_button": "Музыка",
-	"wall_music_cancel": "Отмена",
-	"wall_music_dialog": "Музыка на стенах",
-	"wall_music_link_help": "Ссылка Spotify, Deezer или YouTube (Music) на трек, альбом, плейлист или видео. Каждая стена воспроизводит её в плеере сервиса. У Deezer и YouTube нет пульта вроде Spotify Connect, поэтому нужна ссылка.",
-	"wall_music_link_label": "Воспроизвести ссылку на стенах",
-	"wall_music_play_error": "Spotify не начал воспроизведение здесь.",
-	"wall_music_play_here": "Играть здесь",
-	"wall_music_play_wall": "Воспроизвести на стене",
-	"wall_music_retry": "Повторить",
-	"wall_music_send_error": "Не удалось отправить ссылку.",
-	"wall_music_settings": "Настройки → Музыка на стене",
-	"wall_music_speaker": "Колонка Spotify",
-	"wall_music_speaker_label": "Использовать этот экран как колонку Spotify",
-	"wall_music_state_disabled": "Выключено на этом экране",
-	"wall_music_state_disabled_detail": "Текущее воспроизведение по-прежнему отображается.",
-	"wall_music_state_error": "Остановлено",
-	"wall_music_state_expired": "Требуется переподключение",
-	"wall_music_state_locked": "Звук заблокирован",
-	"wall_music_state_locked_detail": "Один раз коснитесь любого места на стене, затем выберите её в Spotify.",
-	"wall_music_state_off": "Не подключено",
-	"wall_music_state_off_admin": "Подключите учётную запись Spotify в разделе «Настройки → Музыка на стене», чтобы играть с телефона.",
-	"wall_music_state_off_user": "Администратор может подключить учётную запись Spotify в разделе «Настройки → Музыка на стене».",
-	"wall_music_state_ready": "Готово",
-	"wall_music_state_ready_detail": "В Spotify на телефоне с той же учётной записью: Устройства → {name}. Или запустите воспроизведение здесь, из этой панели.",
-	"wall_music_state_starting": "Запуск…",
-	"wall_music_state_unlisted": "Пока не в списке",
-	"wall_music_state_unlisted_detail": "Spotify пока не показывает этот экран; он переподключится сам через минуту-две.",
-	"wall_music_state_unsupported": "Здесь недоступно",
-	"wall_music_stop": "Стоп",
-	"wall_music_stop_error": "Не удалось остановить музыку.",
-	"wall_now_aria": "Сейчас играет",
-	"wall_now_cover": "Обложка: {name}",
-	"wall_now_fold": "Свернуть карточку музыки",
-	"wall_now_on": "{verb}: {where}",
-	"wall_now_paused": "Пауза",
-	"wall_now_pill_aria": "{verb}: {track}. Показать карточку музыки",
-	"wall_now_playing": "Играет",
-	"wall_now_progress": "Ход воспроизведения",
-	"wall_now_progress_text": "{position} из {total}",
 	"wall_page_title": "Стена · DumbMonit",
-	"wall_player_fold": "Свернуть",
-	"wall_player_fold_aria": "Свернуть плеер",
-	"wall_player_show": "Показать",
-	"wall_player_stop_aria": "Остановить музыку на всех стенах",
-	"wall_player_title": "Плеер {label}",
-	"wall_problems_agent_silent": "Агент молчит {duration}",
-	"wall_problems_aria": "Проблемы",
-	"wall_problems_more": "Ещё проблем: {count}, см. «Оповещения»",
-	"wall_problems_no_data": "Нет данных {duration}",
-	"wall_problems_parent_down": "{rule} · {parent} недоступен",
-	"wall_problems_times": "×{count}",
-	"wall_refresh_failed": "Не удалось обновить данные, показано предыдущее состояние.",
-	"wall_scene_sign_problems": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} ПРОБЛЕМА",
-				"countPlural=few": "{count} ПРОБЛЕМЫ",
-				"countPlural=many": "{count} ПРОБЛЕМ",
-				"countPlural=other": "{count} ПРОБЛЕМЫ"
-			}
-		}
-	],
 	"wall_status_empty": "Пока нечего отслеживать",
 	"wall_status_ok": "Всё в порядке",
 	"wall_status_problem_one": "1 проблема",
 	"wall_status_problems": "Проблем: {count}",
 	"wall_status_waiting": "Ожидание данных",
-	"wall_theme_auto": "Авто",
-	"wall_theme_auto_hint": "Как в остальном DumbMonit.",
-	"wall_theme_button": "Тема",
-	"wall_theme_day": "День",
-	"wall_theme_day_hint": "Миллиметровка, тёмно-синие чернила.",
-	"wall_theme_dialog": "Тема этой стены",
-	"wall_theme_forced": "Сейчас тема задана ссылкой и здесь не сохраняется.",
-	"wall_theme_night": "Ночь",
-	"wall_theme_night_hint": "Радарная картинка, бирюзовый сигнал.",
-	"wall_theme_title": "Тема на этом экране",
 	"wall_updated_relative": "Обновлено: {when}",
 	"wall_updated_seconds": "Обновлено {seconds} с назад",
 	"wall_updated_waiting": "Ожидание первой проверки…",
-	"wall_weather_now": "{place}: {sky}, {temperature}",
 	"wall_widgets_ai_cost": "Стоимость",
 	"wall_widgets_ai_month": "Этот месяц",
 	"wall_widgets_ai_needs_key": "Нужен административный ключ API (Настройки → Режим стены).",
@@ -8964,40 +8432,19 @@
 	"wall_widgets_ai_people": "Больше всего токенов",
 	"wall_widgets_ai_people_note": "Только токены: стоимость по людям не разбивается.",
 	"wall_widgets_ai_today": "Сегодня",
-	"wall_widgets_ai_tokens": "{count} токенов",
-	"wall_widgets_ai_unattributed": "Не определено",
 	"wall_widgets_ai_week": "Последние 7 дней",
-	"wall_widgets_aria": "Виджеты",
 	"wall_widgets_claude": "Claude",
 	"wall_widgets_crypto": "Крипто",
 	"wall_widgets_crypto_note": "Изменение за 24 часа",
 	"wall_widgets_cve": "Критические уязвимости",
-	"wall_widgets_cve_exploited": "Эксплуатируется",
-	"wall_widgets_cve_none": "На этой неделе критических уязвимостей нет.",
-	"wall_widgets_cve_ransomware": "Шифровальщик",
-	"wall_widgets_cve_unscored": "н/о",
 	"wall_widgets_fx": "Курсы валют",
 	"wall_widgets_fx_note": "В {base}, курсы на {date}; изменение с предыдущего дня",
-	"wall_widgets_more": "+{count}",
 	"wall_widgets_needs_key": "Нужен бесплатный ключ API (Настройки → Экран стены).",
 	"wall_widgets_news": "Заголовки",
 	"wall_widgets_openai": "OpenAI",
-	"wall_widgets_sky_clear": "Ясно",
-	"wall_widgets_sky_cloudy": "Облачно",
-	"wall_widgets_sky_drizzle": "Морось",
-	"wall_widgets_sky_fog": "Туман",
-	"wall_widgets_sky_partly": "Переменная облачность",
-	"wall_widgets_sky_rain": "Дождь",
-	"wall_widgets_sky_snow": "Снег",
-	"wall_widgets_sky_storm": "Гроза",
-	"wall_widgets_source": "Источник: {source}",
-	"wall_widgets_stale": "Устарело: прочитано {when}",
 	"wall_widgets_stocks": "Акции",
 	"wall_widgets_stocks_unknown": "Неизвестные тикеры: {symbols}",
 	"wall_widgets_text": "Сообщение",
-	"wall_widgets_trend_down": "снижение на {change}",
-	"wall_widgets_trend_flat": "без изменений",
-	"wall_widgets_trend_up": "рост на {change}",
 	"wall_widgets_unavailable": "Сейчас недоступно.",
 	"wall_widgets_weather": "Погода",
 	"website_after": "Стало:",
@@ -9227,34 +8674,14 @@
 	"console_table_hint": "Сначала худшие. Выберите строку для просмотра.",
 	"console_table_keys": "j / k — перемещение, Enter — просмотр, o — открыть",
 	"console_table_title": "Мониторы",
-	"mode_enterprise_point_nav": "Панель значков, панель контекста и палитра команд везде",
-	"mode_enterprise_point_table": "Плотные таблицы с доп. столбцами, фильтрами и горячими клавишами",
-	"mode_enterprise_point_team": "Команды, единый вход, дежурства и журналы на виду",
-	"mode_enterprise_text": "Плотная, очень тёмная консоль для команд, все настройки на виду.",
-	"mode_enterprise_title": "Предприятие",
-	"mode_homelab_point_forms": "Короткие формы с разумными значениями, расширенные настройки свёрнуты",
-	"mode_homelab_point_nav": "Четыре раздела на виду, остальное в «Ещё»",
-	"mode_homelab_point_theme": "Сводка-погода и стойка, в светлой или тёмной теме",
-	"mode_homelab_text": "Спокойный интерфейс, всё главное на виду. Любая функция — в один клик.",
-	"mode_homelab_title": "Домашняя лаборатория",
-	"mode_picker_label": "Режим продукта",
-	"mode_picker_selected": "Выбрано",
-	"mode_switch_keeps": "Переключение меняет только интерфейс. Ничего не удаляется.",
-	"settings_advanced_summary": "Разделов: {count}",
-	"settings_advanced_title": "Дополнительно",
-	"settings_appearance_enterprise_dark": "Режим «Предприятие» всегда использует тёмную консоль. Для светлой и тёмной темы выберите «Домашняя лаборатория» в Настройки → Общие.",
 	"settings_general_instance_text": "Имя отображается в заголовке. Язык и часовой пояс — значения по умолчанию для новых браузеров и отчётов.",
 	"settings_general_instance_title": "Экземпляр",
-	"settings_general_mode_saving": "Переключение…",
-	"settings_general_mode_text": "«Домашняя лаборатория» — просто. «Предприятие» показывает все настройки в плотной тёмной консоли.",
-	"settings_general_mode_title": "Режим интерфейса",
 	"settings_general_readonly": "Изменять эти настройки могут только администраторы.",
 	"settings_general_save": "Сохранить",
 	"settings_general_saved": "Сохранено",
 	"settings_general_wizard_run": "Запустить мастер настройки",
 	"settings_general_wizard_text": "Пройдите шаги первого запуска заново: режим, имя, уведомления, мониторы, агент.",
 	"settings_general_wizard_title": "Мастер настройки",
-	"settings_search_kw_general": "режим домашняя лаборатория предприятие интерфейс имя язык часовой пояс мастер настройка",
 	"settings_tab_general": "Общие",
 	"wizard_agent_text": "Агент передаёт данные о процессоре, памяти, дисках, контейнерах и службах. Выполните команду на машине, за которой нужно следить.",
 	"wizard_agent_title": "Установить агент",
@@ -9276,8 +8703,6 @@
 	"wizard_instance_timezone": "Часовой пояс",
 	"wizard_instance_title": "Назовите экземпляр",
 	"wizard_intro": "Любой шаг можно пропустить и изменить позже в настройках.",
-	"wizard_mode_text": "Выберите интерфейс под тех, кто им пользуется. Его можно сменить в любой момент в Настройки → Общие.",
-	"wizard_mode_title": "Выберите вид DumbMonit",
 	"wizard_monitors_count": "Мониторов сейчас: {count}",
 	"wizard_monitors_import": "Импорт",
 	"wizard_monitors_import_text": "Из Uptime Kuma, UptimeRobot, Gatus, Healthchecks или списка сайтов.",
@@ -9600,5 +9025,152 @@
 	"deviceform_site_more": "Показать ещё: {count}",
 	"deviceform_site_added": "{name} добавлено.",
 	"deviceform_site_open": "Открыть",
-	"deviceform_site_kinds": "Обычные для площадки"
+	"deviceform_site_kinds": "Обычные для площадки",
+	"console_banner_label": "Состояние",
+	"console_banner_poke": "Ткнуть голубя",
+	"console_banner_egg": "Голубь сделал бочку. Аптайм не пострадал.",
+	"console_banner_empty": "Пока нечего отслеживать.",
+	"console_banner_down_one": "{name} не работает.",
+	"console_banner_down_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Не работает {count} монитор.",
+				"countPlural=few": "Не работают {count} монитора.",
+				"countPlural=many": "Не работают {count} мониторов.",
+				"countPlural=other": "Не работают {count} монитора."
+			}
+		}
+	],
+	"console_banner_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} гость придержан.",
+				"countPlural=few": "{count} гостя придержаны.",
+				"countPlural=many": "{count} гостей придержано.",
+				"countPlural=other": "{count} гостя придержаны."
+			}
+		}
+	],
+	"console_banner_held_sent": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} гость придержан, оповещение отправлено.",
+				"countPlural=few": "{count} гостя придержаны, оповещение отправлено.",
+				"countPlural=many": "{count} гостей придержано, оповещение отправлено.",
+				"countPlural=other": "{count} гостя придержаны, оповещение отправлено."
+			}
+		}
+	],
+	"console_banner_sent": "Оповещение отправлено.",
+	"console_banner_attention_one": "{name} требует внимания.",
+	"console_banner_attention_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} монитор требует внимания.",
+				"countPlural=few": "{count} монитора требуют внимания.",
+				"countPlural=many": "{count} мониторов требуют внимания.",
+				"countPlural=other": "{count} монитора требуют внимания."
+			}
+		}
+	],
+	"console_banner_alerts": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} открытое оповещение.",
+				"countPlural=few": "{count} открытых оповещения.",
+				"countPlural=many": "{count} открытых оповещений.",
+				"countPlural=other": "{count} открытых оповещения."
+			}
+		}
+	],
+	"console_banner_up_of": "Работают {up} из {total} мониторов.",
+	"console_banner_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ждёт первого отчёта.",
+				"countPlural=few": "{count} ждут первого отчёта.",
+				"countPlural=many": "{count} ждут первого отчёта.",
+				"countPlural=other": "{count} ждут первого отчёта."
+			}
+		}
+	],
+	"console_banner_all_up": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Все мониторы работают: {count}.",
+				"countPlural=few": "Все мониторы работают: {count}.",
+				"countPlural=many": "Все мониторы работают: {count}.",
+				"countPlural=other": "Все мониторы работают: {count}."
+			}
+		}
+	],
+	"console_banner_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} на паузе.",
+				"countPlural=few": "{count} на паузе.",
+				"countPlural=many": "{count} на паузе.",
+				"countPlural=other": "{count} на паузе."
+			}
+		}
+	],
+	"console_banner_all_paused": "Все мониторы на паузе.",
+	"settings_appearance_language_title": "Язык",
+	"settings_search_kw_instance": "экземпляр имя язык часовой пояс мастер настройка"
 }

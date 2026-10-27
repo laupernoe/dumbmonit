@@ -27,7 +27,6 @@
 	import { listTargets } from '#lib/api/index.js';
 	import type { CveComponent, CveFinding, CveReason, CveSeverity, CveSettings, CveSource, CveSummary } from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { mode } from '#lib/stores/mode.svelte.js';
 	import { formatRelative } from '#lib/format.js';
 	import { Button, Disclosure, EmptyState, ErrorNotice, Plate, Skeleton } from '#lib/ui/index.js';
 	import PasswordInput from '#lib/components/settings/PasswordInput.svelte';
@@ -93,7 +92,7 @@
 			.map((id) => ({ id, name: clientNames.get(id) ?? `#${id}` }))
 			.sort((a, b) => a.name.localeCompare(b.name))
 	);
-	const dense = $derived(mode.enterprise);
+	const dense = true;
 	const filtersOn = $derived(viewFiltersActive(view));
 
 	type Section<T> = { key: string; title: string; items: T[]; exploited: number };

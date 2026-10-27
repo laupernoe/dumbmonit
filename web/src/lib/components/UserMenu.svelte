@@ -2,7 +2,7 @@
 	/**
 	 * The signed-in account: a round avatar with the initials, and a small menu
 	 * (name and role, "My account", sign out). `placement="rail"` is for the
-	 * foot of the Enterprise rail: the menu opens beside the button, upwards. Opens on click or tap,
+	 * foot of the rail: the menu opens beside the button, upwards. Opens on click or tap,
 	 * on hover with a mouse, and from the keyboard (Enter, Space, ↓); arrows
 	 * move between items, Escape closes and gives the focus back.
 	 */

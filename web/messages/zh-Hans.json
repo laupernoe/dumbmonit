@@ -271,7 +271,6 @@
 	"alerts_needs_empty_quiet": "没有需要你处理的事项。",
 	"alerts_needs_no_device": "无监控项",
 	"alerts_needs_quiet_all_reporting": "所有监控项均在上报，没有规则被触发。",
-	"alerts_needs_quiet_checked": "{text} 检查于 {when}。",
 	"alerts_needs_quiet_no_devices": "添加监控项后，它的首次上报会显示在这里。",
 	"alerts_needs_quiet_waiting_many": [
 		{
@@ -4180,8 +4179,6 @@
 	"metrics_title_website_text_chars": "文本字符数",
 	"metrics_title_website_title_changed": "标题已更改",
 	"metrics_title_website_up": "网站可用",
-	"misc2_browser_on": "{system} 上的 {browser}",
-	"misc2_browser_unknown": "某个浏览器",
 	"misc2_folds_container_stopped": [
 		{
 			"declarations": [
@@ -4506,7 +4503,6 @@
 	"misc_nav_more": "更多",
 	"misc_nav_overview": "概览",
 	"misc_nav_palette_open": "打开命令面板",
-	"misc_nav_palette_title": "命令面板（{shortcut}）",
 	"misc_nav_security": "安全",
 	"misc_nav_settings": "设置",
 	"misc_nav_sign_out": "退出登录",
@@ -4551,7 +4547,6 @@
 	"misc_palette_status_detail": "公开页面和公告",
 	"misc_palette_status_page": "新建状态页",
 	"misc_palette_status_pages": "状态页",
-	"misc_palette_theme": "切换主题",
 	"misc_palette_wall_detail": "用于墙屏的全屏简报",
 	"misc_reason_auth": "凭据被拒绝",
 	"misc_reason_bad_secret": "响应签名无效：共享密钥可能有误",
@@ -4583,17 +4578,10 @@
 	"misc_shortcuts_go": "前往{page}",
 	"misc_shortcuts_intro": "当没有文本框获得焦点时，字母快捷键才有效。请依次按下各个键。",
 	"misc_shortcuts_title": "键盘快捷键",
-	"misc_speaker_download_failed": "无法下载 Spotify 播放器（sdk.scdn.co 无法访问）。",
 	"misc_speaker_fix_auth": "正在自动重试。若仍然失败，请在“设置 → 墙屏音乐”中重新连接 Spotify。",
 	"misc_speaker_fix_insecure": "Spotify 只能在安全页面中播放：请通过 HTTPS（反向代理）打开 DumbMonit，或在显示器本机上使用 http://localhost。",
 	"misc_speaker_fix_no_drm": "请在连接电视的电脑上使用 Chrome、Edge 或 Firefox（Firefox：允许“播放受 DRM 控制的内容”；树莓派上的 Chromium：安装 Widevine，即 libwidevinecdm0 软件包）。大多数智能电视和展示终端的浏览器无法做到。否则请从电视自带的 Spotify 应用或 Chromecast 播放：墙屏仍会显示正在播放的内容。",
 	"misc_speaker_fix_premium": "请在“设置 → 墙屏音乐”中连接 Premium 账户。“正在播放”仍会显示你其他设备上的播放内容。",
-	"misc_speaker_fix_reconnect": "管理员可以在“设置 → 墙屏音乐”中重新连接 Spotify。",
-	"misc_speaker_no_token": "没有 Spotify 令牌。",
-	"misc_speaker_not_accepted": "Spotify 未接受此显示器作为音箱。",
-	"misc_speaker_not_ready": "此显示器尚未准备好作为音箱。",
-	"misc_speaker_not_started": "Spotify 播放器未能启动。",
-	"misc_speaker_playback_error": "Spotify 无法播放此曲目（{message}）。",
 	"misc_speaker_problem_auth": "Spotify 拒绝了墙屏的连接{detail}。",
 	"misc_speaker_problem_init": "此浏览器无法播放 Spotify：其 DRM（Widevine）未能启动{detail}。",
 	"misc_speaker_problem_premium": "需要 Spotify Premium，墙屏才能作为音箱使用。",
@@ -5060,245 +5048,6 @@
 	"oncall_window_overnight_hint": "结束时间早于开始时间表示跨过午夜到次日;00:00 到 00:00 表示整天。",
 	"oncall_window_remove": "移除",
 	"oncall_window_to": "到",
-	"overview_brief_a_rule": "某条规则",
-	"overview_brief_also": "{names} 上也出现过告警并已消失。",
-	"overview_brief_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 等 {count} 个监控项上也出现过告警并已消失。"
-			}
-		}
-	],
-	"overview_brief_device_n": "监控项 {id}",
-	"overview_brief_dissolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警在触发前已自行消散。"
-			}
-		}
-	],
-	"overview_brief_dissolved_mostly": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警在触发前已自行消散（主要是 {device} 上的 {rule}）。"
-			}
-		}
-	],
-	"overview_brief_dropped": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 掉线 {count} 次后恢复。"
-			}
-		}
-	],
-	"overview_brief_dropped_many": "{names} 掉线后已恢复。",
-	"overview_brief_head_first": "过去 24 小时内",
-	"overview_brief_head_since": "自 {when} 起",
-	"overview_brief_kept_reporting": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个监控项持续上报数据。"
-			}
-		}
-	],
-	"overview_brief_lead": "{head}——{parts}。",
-	"overview_brief_learning_many": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 仍在学习基线：本来会触发 {count} 次。"
-			}
-		}
-	],
-	"overview_brief_learning_one": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{names} 仍在学习基线：本来会触发 {count} 次。"
-			}
-		}
-	],
-	"overview_brief_n_alerts_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警自行恢复"
-			}
-		}
-	],
-	"overview_brief_n_fired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条告警触发"
-			}
-		}
-	],
-	"overview_brief_n_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条自行恢复"
-			}
-		}
-	],
-	"overview_brief_n_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 条仍在触发"
-			}
-		}
-	],
-	"overview_brief_n_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个监控项无法访问"
-			}
-		}
-	],
-	"overview_brief_nothing_no_channel": "没有发送任何通知：尚未设置通知渠道。",
-	"overview_brief_nothing_sent": "没有发送任何通知。",
-	"overview_brief_nothing_to_channel": "没有向 {channel} 发送任何通知。",
-	"overview_brief_nothing_to_channels": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "没有向你的 {count} 个渠道发送任何通知。"
-			}
-		}
-	],
-	"overview_brief_notified": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "已发送 {count} 条通知。"
-			}
-		}
-	],
-	"overview_brief_notified_to": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "已向 {channel} 发送 {count} 条通知。"
-			}
-		}
-	],
-	"overview_brief_on_device": "{device}:{phrases}。",
-	"overview_brief_phrase_fired_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 触发了 {count} 次，均已自行恢复"
-			}
-		}
-	],
-	"overview_brief_phrase_resolved": "{name} 已自行恢复",
-	"overview_brief_quiet_away": "你不在期间没有发生任何事件。",
-	"overview_brief_quiet_first": "过去 24 小时内没有发生任何事件。",
-	"overview_brief_the_server": "服务器",
 	"overview_first_all_done": "三步全部完成，此向导不会再出现。",
 	"overview_first_channel_action": "添加通知渠道",
 	"overview_first_channel_text": "邮件、ntfy、Discord、Telegram、PagerDuty，用你平时看的就行。出问题之前不会发送任何内容。",
@@ -5322,38 +5071,15 @@
 	"overview_first_test_text": "在渠道里发送一条测试。消息真正发出后，此步骤会变绿。",
 	"overview_first_test_title": "确认能收到消息",
 	"overview_first_title": "最初的五分钟",
-	"overview_needs_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "还有 {count} 项"
-			}
-		}
-	],
-	"overview_page_checked": "检查于 {when}",
 	"overview_page_empty_text": "添加交换机、NAS、虚拟化主机或网站，一分钟内就会开始上报。",
 	"overview_page_empty_title": "还没有监控项",
 	"overview_page_error_load": "无法加载概览",
 	"overview_page_error_refresh": "无法刷新告警。",
 	"overview_page_history_note": "取自过去一周的告警历史。",
-	"overview_page_last_days": "最近 {days} 天",
-	"overview_page_mark_read": "标为已读",
-	"overview_page_needs_you": "需要你处理",
 	"overview_page_or": "或者{agent}，或者通过其中一台{relay}。",
 	"overview_page_or_agent": "在某台机器上安装代理",
 	"overview_page_or_relay": "监控远程站点",
-	"overview_page_since": "自你上次查看以来",
 	"overview_page_title": "概览",
-	"overview_scene_asleep": "{label}，鸽子睡着了",
-	"overview_scene_cloudy": "少云",
-	"overview_scene_overcast": "阴天",
-	"overview_scene_storm": "风暴",
 	"overview_sky_clear": "晴空万里",
 	"overview_sky_n_acked": [
 		{
@@ -5520,96 +5246,11 @@
 	"overview_sky_plate_unreachable": "无法访问",
 	"overview_sky_sentence": "{parts}。",
 	"overview_sky_waiting": "等待首批上报",
-	"overview_streaks_d_h": "{days} 天 {hours} 小时",
-	"overview_streaks_fewest": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "告警最少：{days} 天内 {count} 个告警事件"
-			}
-		}
-	],
-	"overview_streaks_h_min": "{hours} 小时 {minutes} 分钟",
-	"overview_streaks_many_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{name} 等另外 {count} 台无法访问"
-			}
-		}
-	],
-	"overview_streaks_most": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{days} 天内 {count} 个告警事件（开始、触发或恢复）"
-			}
-		}
-	],
-	"overview_streaks_no_alert": "{days} 天内没有告警",
-	"overview_streaks_no_alert_like": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{days} 天内没有告警，另有 {count} 台也是如此"
-			}
-		}
-	],
-	"overview_streaks_noisiest": "告警最多",
-	"overview_streaks_none_down": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 天内没有监控项无法访问"
-			}
-		}
-	],
-	"overview_streaks_not_now": "不完整",
-	"overview_streaks_one_unreachable": "{name} 无法访问",
-	"overview_streaks_over": "超过 {days} 天",
-	"overview_streaks_quietest": "最安静的监控项",
-	"overview_streaks_reporting": "全部正常上报",
-	"overview_streaks_reporting_for": "全部正常上报已持续",
-	"overview_streaks_since_outage": "自上次故障以来没有监控项无法访问",
-	"overview_streaks_under_minute": "不到一分钟",
 	"overview_tips_another": "换一条",
 	"overview_tips_hide": "隐藏这些提示",
 	"overview_tips_hide_title": "隐藏这些提示（仅限此浏览器）",
 	"overview_tips_label": "你知道吗？",
 	"overview_tips_prefix": "你知道吗？{title}",
-	"overview_week_days_short": "{days} 天",
-	"overview_when_dated": "{date} {time}",
-	"overview_when_yesterday": "昨天 {time}",
 	"push_runs_description": "任务报告的每次开始、成功和失败，最新的在前。",
 	"push_runs_duration": "耗时 {duration}",
 	"push_runs_duration_unknown": "时长未知",
@@ -6266,13 +5907,6 @@
 	"settings_agentupdates_window_any": "随时",
 	"settings_agentupdates_window_maintenance": "仅在维护窗口期间（设备上的静默）",
 	"settings_agentupdates_window_manual": "仅手动",
-	"settings_appearance_day": "白天",
-	"settings_appearance_day_hint": "图表纸，藏青墨水。",
-	"settings_appearance_night": "夜间",
-	"settings_appearance_night_hint": "雷达合成图，青色信号。",
-	"settings_appearance_system": "跟随系统",
-	"settings_appearance_system_hint": "跟随你的设备。",
-	"settings_appearance_theme": "主题",
 	"settings_appearance_wall_description": "仅显示全屏简报，适合放在房间里的显示器上。按 Esc 退出；⌘K / Ctrl K 可随时打开。",
 	"settings_appearance_wall_open": "打开墙屏模式",
 	"settings_appearance_wall_title": "墙屏模式",
@@ -6499,7 +6133,6 @@
 	"settings_config_yaml_label": "或粘贴 YAML",
 	"settings_language_auto": "自动（浏览器语言）",
 	"settings_language_theme_description": "保存在此浏览器中。",
-	"settings_language_theme_title": "语言与主题",
 	"settings_ldap_access_denied": "拒绝：不在任何所列组中",
 	"settings_ldap_admin_groups": "管理员组",
 	"settings_ldap_base_dn": "基础 DN",
@@ -8564,114 +8197,18 @@
 	"ui_error_notice_help_network": "请检查服务器是否正在运行以及网络是否正常。",
 	"ui_error_notice_help_server": "请查看服务器日志后重试。",
 	"ui_error_notice_signin": "重新登录",
-	"wall_back": "返回概览",
-	"wall_city_dubai": "迪拜",
-	"wall_city_newyork": "纽约",
-	"wall_city_paris": "巴黎",
-	"wall_city_title": "城市",
-	"wall_city_tokyo": "东京",
-	"wall_devices_aria": "监控项",
-	"wall_devices_more": "另有 {count} 个监控项，均正常上报",
-	"wall_devices_more_trouble": "另有 {count} 个监控（需关注：{trouble}）",
-	"wall_devices_reporting": "正常上报",
-	"wall_dock_enable": "点按以启用声音",
-	"wall_dock_enable_hint": "然后在 Spotify 的“设备”中选择“{name}”",
-	"wall_dock_hide": "隐藏",
-	"wall_dock_retrying": "正在自动重试…",
-	"wall_dock_trouble_pill": "此处不是音箱",
-	"wall_dock_trouble_title": "Spotify 无法在此显示器上播放",
-	"wall_dock_why": "原因",
 	"wall_ent_oncall_none": "当前无人值班。请在“告警”中设置值班计划。",
 	"wall_exit": "退出",
 	"wall_exit_aria": "退出墙屏模式",
-	"wall_load_error": "无法加载墙屏",
-	"wall_market_vs": "对 {base}",
-	"wall_music_admin_only": "只有管理员可以更改。",
-	"wall_music_button": "音乐",
-	"wall_music_cancel": "取消",
-	"wall_music_dialog": "墙屏音乐",
-	"wall_music_link_help": "Spotify、Deezer 或 YouTube（Music）的歌曲、专辑、播放列表或视频链接。每个墙屏都会在该服务自带的播放器中播放。Deezer 和 YouTube 没有类似 Spotify Connect 的遥控功能，只能使用链接。",
-	"wall_music_link_label": "在墙屏上播放链接",
-	"wall_music_play_error": "Spotify 未在此处开始播放。",
-	"wall_music_play_here": "在此播放",
-	"wall_music_play_wall": "在墙屏上播放",
-	"wall_music_retry": "重试",
-	"wall_music_send_error": "无法发送链接。",
-	"wall_music_settings": "设置 → 墙屏音乐",
-	"wall_music_speaker": "Spotify 音箱",
-	"wall_music_speaker_label": "将此显示器用作 Spotify 音箱",
-	"wall_music_state_disabled": "此显示器已关闭",
-	"wall_music_state_disabled_detail": "仍会显示正在播放的内容。",
-	"wall_music_state_error": "已停止",
-	"wall_music_state_expired": "需要重新连接",
-	"wall_music_state_locked": "声音已锁定",
-	"wall_music_state_locked_detail": "在墙屏任意位置点按一次，然后在 Spotify 中选择它。",
-	"wall_music_state_off": "未连接",
-	"wall_music_state_off_admin": "在“设置 → 墙屏音乐”中连接 Spotify 账户，即可用手机播放。",
-	"wall_music_state_off_user": "管理员可在“设置 → 墙屏音乐”中连接 Spotify 账户。",
-	"wall_music_state_ready": "就绪",
-	"wall_music_state_ready_detail": "在已登录同一账户的手机上打开 Spotify：设备 → {name}。也可在此面板中直接在此播放。",
-	"wall_music_state_starting": "正在启动…",
-	"wall_music_state_unlisted": "尚未列出",
-	"wall_music_state_unlisted_detail": "Spotify 尚未列出此显示器；它会在一两分钟内自动重新连接。",
-	"wall_music_state_unsupported": "此处不可用",
-	"wall_music_stop": "停止",
-	"wall_music_stop_error": "无法停止音乐。",
-	"wall_now_aria": "正在播放",
-	"wall_now_cover": "{name} 的封面",
-	"wall_now_fold": "收起音乐卡片",
-	"wall_now_on": "在 {where} 上{verb}",
-	"wall_now_paused": "已暂停",
-	"wall_now_pill_aria": "{verb}：{track}。显示音乐卡片",
-	"wall_now_playing": "播放中",
-	"wall_now_progress": "播放进度",
-	"wall_now_progress_text": "{position} / {total}",
 	"wall_page_title": "墙屏 · DumbMonit",
-	"wall_player_fold": "收起",
-	"wall_player_fold_aria": "收起播放器",
-	"wall_player_show": "显示",
-	"wall_player_stop_aria": "停止所有墙屏的音乐",
-	"wall_player_title": "{label} 播放器",
-	"wall_problems_agent_silent": "代理已 {duration} 未上报",
-	"wall_problems_aria": "问题",
-	"wall_problems_more": "另有 {count} 个问题：见告警页",
-	"wall_problems_no_data": "{duration} 无数据",
-	"wall_problems_parent_down": "{rule} · {parent} 已宕机",
-	"wall_problems_times": "×{count}",
-	"wall_refresh_failed": "上次刷新失败，正在显示之前的状态。",
-	"wall_scene_sign_problems": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=other": "{count} 个问题"
-			}
-		}
-	],
 	"wall_status_empty": "暂无可监控内容",
 	"wall_status_ok": "一切正常",
 	"wall_status_problem_one": "1 个问题",
 	"wall_status_problems": "{count} 个问题",
 	"wall_status_waiting": "等待上报",
-	"wall_theme_auto": "自动",
-	"wall_theme_auto_hint": "跟随 DumbMonit 其余部分。",
-	"wall_theme_button": "主题",
-	"wall_theme_day": "白天",
-	"wall_theme_day_hint": "海图纸，藏青墨水。",
-	"wall_theme_dialog": "此墙屏的主题",
-	"wall_theme_forced": "当前由链接指定，不会保存在此处。",
-	"wall_theme_night": "夜间",
-	"wall_theme_night_hint": "雷达合成图，青色信号。",
-	"wall_theme_title": "此显示器的主题",
 	"wall_updated_relative": "更新于 {when}",
 	"wall_updated_seconds": "{seconds} 秒前更新",
 	"wall_updated_waiting": "等待首次检查…",
-	"wall_weather_now": "{place}：{sky}，{temperature}",
 	"wall_widgets_ai_cost": "费用",
 	"wall_widgets_ai_month": "本月",
 	"wall_widgets_ai_needs_key": "需要管理员 API 密钥（设置 → 墙面显示）。",
@@ -8679,40 +8216,19 @@
 	"wall_widgets_ai_people": "令牌用量最多",
 	"wall_widgets_ai_people_note": "仅显示令牌：费用不按人员拆分。",
 	"wall_widgets_ai_today": "今天",
-	"wall_widgets_ai_tokens": "{count} 个令牌",
-	"wall_widgets_ai_unattributed": "未归属",
 	"wall_widgets_ai_week": "最近 7 天",
-	"wall_widgets_aria": "小组件",
 	"wall_widgets_claude": "Claude",
 	"wall_widgets_crypto": "加密货币",
 	"wall_widgets_crypto_note": "24 小时涨跌",
 	"wall_widgets_cve": "严重漏洞",
-	"wall_widgets_cve_exploited": "被利用",
-	"wall_widgets_cve_none": "本周没有严重漏洞。",
-	"wall_widgets_cve_ransomware": "勒索软件",
-	"wall_widgets_cve_unscored": "未评分",
 	"wall_widgets_fx": "汇率",
 	"wall_widgets_fx_note": "以 {base} 计，{date} 的汇率；较前一日的变化",
-	"wall_widgets_more": "+{count}",
 	"wall_widgets_needs_key": "需要免费的 API 密钥（设置 → 墙屏显示）。",
 	"wall_widgets_news": "新闻标题",
 	"wall_widgets_openai": "OpenAI",
-	"wall_widgets_sky_clear": "晴",
-	"wall_widgets_sky_cloudy": "多云",
-	"wall_widgets_sky_drizzle": "毛毛雨",
-	"wall_widgets_sky_fog": "雾",
-	"wall_widgets_sky_partly": "局部多云",
-	"wall_widgets_sky_rain": "雨",
-	"wall_widgets_sky_snow": "雪",
-	"wall_widgets_sky_storm": "雷暴",
-	"wall_widgets_source": "来源：{source}",
-	"wall_widgets_stale": "已过期：读取于 {when}",
 	"wall_widgets_stocks": "股票",
 	"wall_widgets_stocks_unknown": "未知代码：{symbols}",
 	"wall_widgets_text": "留言",
-	"wall_widgets_trend_down": "下跌 {change}",
-	"wall_widgets_trend_flat": "持平",
-	"wall_widgets_trend_up": "上涨 {change}",
 	"wall_widgets_unavailable": "暂时不可用。",
 	"wall_widgets_weather": "天气",
 	"website_after": "之后：",
@@ -8930,34 +8446,14 @@
 	"console_table_hint": "最差的排在前面。选择一行进行查看。",
 	"console_table_keys": "j / k 移动，Enter 查看，o 打开",
 	"console_table_title": "监控项",
-	"mode_enterprise_point_nav": "图标栏、上下文面板，随处可用的命令面板",
-	"mode_enterprise_point_table": "紧凑表格，更多列、筛选和键盘快捷键",
-	"mode_enterprise_point_team": "团队、单点登录、值班和日志一目了然",
-	"mode_enterprise_text": "面向团队的紧凑深色控制台，所有选项尽收眼底。",
-	"mode_enterprise_title": "企业",
-	"mode_homelab_point_forms": "简短表单，默认值合理，高级设置已折叠",
-	"mode_homelab_point_nav": "四个主入口，其余都在“更多”中",
-	"mode_homelab_point_theme": "天气简报和机架视图，浅色或深色",
-	"mode_homelab_text": "简洁的界面，只显示要点。所有功能一键可达。",
-	"mode_homelab_title": "家庭实验室",
-	"mode_picker_label": "产品模式",
-	"mode_picker_selected": "已选择",
-	"mode_switch_keeps": "切换只会改变界面，不会删除任何内容。",
-	"settings_advanced_summary": "部分：{count}",
-	"settings_advanced_title": "高级",
-	"settings_appearance_enterprise_dark": "企业模式始终使用深色控制台。如需浅色和深色主题，请在 设置 → 常规 中切换到家庭实验室。",
 	"settings_general_instance_text": "名称显示在页眉中。语言和时区是新浏览器和报告的默认值。",
 	"settings_general_instance_title": "实例",
-	"settings_general_mode_saving": "正在切换…",
-	"settings_general_mode_text": "家庭实验室保持简洁；企业模式在紧凑的深色控制台中显示所有选项。",
-	"settings_general_mode_title": "界面模式",
 	"settings_general_readonly": "只有管理员可以更改这些设置。",
 	"settings_general_save": "保存",
 	"settings_general_saved": "已保存",
 	"settings_general_wizard_run": "运行设置向导",
 	"settings_general_wizard_text": "重新完成首次启动步骤：模式、名称、通知、监控项、代理。",
 	"settings_general_wizard_title": "设置向导",
-	"settings_search_kw_general": "模式 家庭实验室 企业 界面 名称 语言 时区 向导 设置",
 	"settings_tab_general": "常规",
 	"wizard_agent_text": "代理会上报机器的 CPU、内存、磁盘、容器和服务。在要监控的机器上运行该命令。",
 	"wizard_agent_title": "安装代理",
@@ -8979,8 +8475,6 @@
 	"wizard_instance_timezone": "时区",
 	"wizard_instance_title": "为实例命名",
 	"wizard_intro": "每一步都可以跳过，之后可在设置中更改。",
-	"wizard_mode_text": "选择适合使用者的界面。你可以随时在 设置 → 常规 中切换。",
-	"wizard_mode_title": "选择 DumbMonit 的外观",
 	"wizard_monitors_count": "当前监控项：{count}",
 	"wizard_monitors_import": "导入",
 	"wizard_monitors_import_text": "从 Uptime Kuma、UptimeRobot、Gatus、Healthchecks 或站点列表导入。",
@@ -9281,5 +8775,128 @@
 	"deviceform_site_more": "再显示 {count} 个",
 	"deviceform_site_added": "已添加 {name}。",
 	"deviceform_site_open": "打开",
-	"deviceform_site_kinds": "此处常用"
+	"deviceform_site_kinds": "此处常用",
+	"console_banner_label": "状态",
+	"console_banner_poke": "戳一下鸽子",
+	"console_banner_egg": "鸽子转了个圈。可用性不受影响。",
+	"console_banner_empty": "暂无监控对象。",
+	"console_banner_down_one": "{name} 已宕机。",
+	"console_banner_down_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个监控项已宕机。"
+			}
+		}
+	],
+	"console_banner_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个子项已暂缓告警。"
+			}
+		}
+	],
+	"console_banner_held_sent": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个子项已暂缓告警，告警已发送。"
+			}
+		}
+	],
+	"console_banner_sent": "告警已发送。",
+	"console_banner_attention_one": "{name} 需要查看。",
+	"console_banner_attention_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个监控项需要查看。"
+			}
+		}
+	],
+	"console_banner_alerts": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 条未处理告警。"
+			}
+		}
+	],
+	"console_banner_up_of": "{total} 个监控项中 {up} 个正常。",
+	"console_banner_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个正在等待首次上报。"
+			}
+		}
+	],
+	"console_banner_all_up": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "全部 {count} 个监控项正常。"
+			}
+		}
+	],
+	"console_banner_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=other": "{count} 个已暂停。"
+			}
+		}
+	],
+	"console_banner_all_paused": "所有监控项均已暂停。",
+	"settings_appearance_language_title": "语言",
+	"settings_search_kw_instance": "实例 名称 语言 时区 向导 设置"
 }
