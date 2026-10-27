@@ -1,20 +1,16 @@
 <script lang="ts">
 	/**
 	 * "Theme" on the wall: a quiet button next to Music that opens a small
-	 * panel choosing Auto / Day / Night / OLED for this wall. Remembered per
+	 * panel choosing Auto / Day / Night for this wall, and the backdrop city
+	 * (the Homelab wall only: the Enterprise wall has no scene). Remembered per
 	 * browser, like the Spotify-speaker switch; a `?theme=` on a shared link
 	 * overrides it for that display without touching what is saved.
-	 *
-	 * OLED trades the day/night palette for true black with dimmed text, so a
-	 * display that never turns off does not burn its panel: the wall itself
-	 * (not this panel) nudges the whole layout a few pixels every few minutes
-	 * and can dim further at night.
 	 */
 	import { m } from '#lib/paraglide/messages.js';
 	import { tick } from 'svelte';
-	import { Sun, Moon, SunMoon, Contrast } from 'lucide-svelte';
+	import { Sun, Moon, SunMoon } from 'lucide-svelte';
 	import type { Icon as LucideIcon } from 'lucide-svelte';
-	import { Button, Toggle } from '#lib/ui/index.js';
+	import { Button } from '#lib/ui/index.js';
 	import type { WallThemeChoice } from '#lib/components/wall/wallTheme.js';
 	import { WALL_CITIES, type WallCityChoice } from '#lib/components/wall/wallCity.js';
 
@@ -22,23 +18,21 @@
 		value: WallThemeChoice;
 		/** The choice a `?theme=` link is forcing right now, if any. */
 		forced: WallThemeChoice | null;
-		nightDim: boolean;
 		open: boolean;
 		onchange: (value: WallThemeChoice) => void;
-		onnightdim: (value: boolean) => void;
-		city: WallCityChoice;
-		oncity: (value: WallCityChoice) => void;
+		/** Absent on the Enterprise wall: no backdrop to choose. */
+		city?: WallCityChoice;
+		oncity?: (value: WallCityChoice) => void;
 	}
 
-	let { value, forced, nightDim, open = $bindable(), onchange, onnightdim, city, oncity }: Props = $props();
+	let { value, forced, open = $bindable(), onchange, city, oncity }: Props = $props();
 
 	let root = $state<HTMLDivElement | null>(null);
 
 	const OPTIONS: { value: WallThemeChoice; readonly label: string; readonly hint: string; icon: typeof LucideIcon }[] = [
 		{ value: 'auto', get label() { return m.wall_theme_auto(); }, get hint() { return m.wall_theme_auto_hint(); }, icon: SunMoon },
 		{ value: 'light', get label() { return m.wall_theme_day(); }, get hint() { return m.wall_theme_day_hint(); }, icon: Sun },
-		{ value: 'dark', get label() { return m.wall_theme_night(); }, get hint() { return m.wall_theme_night_hint(); }, icon: Moon },
-		{ value: 'oled', get label() { return m.wall_theme_oled(); }, get hint() { return m.wall_theme_oled_hint(); }, icon: Contrast }
+		{ value: 'dark', get label() { return m.wall_theme_night(); }, get hint() { return m.wall_theme_night_hint(); }, icon: Moon }
 	];
 
 	const effective = $derived(forced ?? value);
@@ -104,7 +98,7 @@
 					{m.wall_theme_forced()}
 				</p>
 			{/if}
-			<div class="mt-3 grid grid-cols-2 gap-2" role="radiogroup" aria-label={m.wall_theme_button()}>
+			<div class="mt-3 grid grid-cols-3 gap-2" role="radiogroup" aria-label={m.wall_theme_button()}>
 				{#each OPTIONS as option, i (option.value)}
 					{@const selected = value === option.value}
 					{@const OptionIcon = option.icon}
@@ -126,6 +120,7 @@
 				{/each}
 			</div>
 
+			{#if city !== undefined && oncity}
 			<div class="mt-3 border-t border-line pt-3">
 				<p class="text-sm font-semibold text-ink">{m.wall_city_title()}</p>
 				<div class="mt-2 flex flex-wrap gap-1.5" role="radiogroup" aria-label={m.wall_city_title()}>
@@ -140,15 +135,6 @@
 					{/each}
 				</div>
 			</div>
-
-			{#if effective === 'oled'}
-				<div class="mt-3 flex items-start justify-between gap-3 border-t border-line pt-3">
-					<div class="min-w-0">
-						<p class="text-sm font-semibold text-ink">{m.wall_theme_dim()}</p>
-						<p class="mt-0.5 text-[0.75rem] text-ink-2">{m.wall_theme_dim_hint()}</p>
-					</div>
-					<Toggle checked={nightDim} onchange={onnightdim} label={m.wall_theme_dim_label()} />
-				</div>
 			{/if}
 		</div>
 	{/if}

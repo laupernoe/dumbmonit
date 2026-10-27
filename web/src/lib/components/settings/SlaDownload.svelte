@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Settings → Reports → "Availability report (SLA)": the report of a period
+	 * Reports → "Availability report (SLA)": the report of a period
 	 * you choose, built on the spot and downloaded as a PDF or as CSV files.
 	 * Dates are inclusive and read in the chosen timezone; the default is the
 	 * previous calendar month.
@@ -9,6 +9,7 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { toApiError, type StatusPage } from '#lib/api/index.js';
 	import { downloadSlaReport, type SlaFormat } from '#lib/api/reports.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ErrorNotice, Field } from '#lib/ui/index.js';
 
 	interface Props {
@@ -35,6 +36,12 @@
 	let format = $state<SlaFormat>('pdf');
 	let objective = $state('');
 	let pageId = $state('');
+	// MSP mode: the client the report is about. An administrator may leave it on
+	// "all clients"; a member of several clients has to pick one.
+	const clients = $derived(auth.mspOn ? (auth.msp?.clients ?? []) : []);
+	const mspAdmin = $derived(auth.msp?.admin === true);
+	let clientId = $state(auth.currentClient === null ? '' : String(auth.currentClient));
+	const clientValue = $derived(clientId !== '' ? clientId : mspAdmin ? '' : String(clients[0]?.id ?? ''));
 	let busy = $state(false);
 	let error = $state<unknown>(null);
 
@@ -66,7 +73,8 @@
 				tz: timezone.trim() || undefined,
 				format,
 				objective: objective.trim() !== '' && goal > 0 ? goal : undefined,
-				page: pageId === '' ? undefined : Number(pageId)
+				page: pageId === '' ? undefined : Number(pageId),
+				client: clientValue === '' ? undefined : Number(clientValue)
 			});
 			const url = URL.createObjectURL(blob);
 			const link = document.createElement('a');
@@ -116,6 +124,15 @@
 			{#each pages as statusPage (statusPage.id)}<option value={String(statusPage.id)}>{statusPage.title}</option>{/each}
 		</select>
 	</Field>
+
+	{#if clients.length > 0}
+		<Field label={m.reports_sla_client()} for="sla-client" help={m.reports_sla_client_help()}>
+			<select id="sla-client" class="input" bind:value={clientId} disabled={busy}>
+				{#if mspAdmin}<option value="">{m.reports_sla_client_all()}</option>{/if}
+				{#each clients as client (client.id)}<option value={String(client.id)}>{client.name}</option>{/each}
+			</select>
+		</Field>
+	{/if}
 
 	<div class="sm:col-span-2">
 		<Button type="submit" variant="primary" loading={busy} disabled={!from || !to}>

@@ -10,12 +10,12 @@ deletes anything.
 The default, and the mode every instance created before this setting keeps.
 
 - The bar holds four destinations: **Overview**, **Monitors**, **Alerts** and
-  **Settings**. Security, the topology map, logs, status pages, wall mode, the
+  **Settings**. Security, the topology map, logs, status pages, reports, wall mode, the
   documentation and GitHub sit under **More**, and every page is in the command
   palette (`Ctrl K` / `⌘K`).
 - Each Settings tab shows the sections most people need. The rest (single
   sign-on, LDAP, integration packs, security score, locations, notification
-  policy, reports, music, wall widgets, self-monitoring, storage, logs, API and
+  policy, music, wall widgets, self-monitoring, storage, logs, API and
   assistants) waits behind **Advanced** at the foot of the tab. A link to one of
   those sections opens the fold by itself.
 - Device forms show the required fields and the first setting; the others are
@@ -27,8 +27,10 @@ The default, and the mode every instance created before this setting keeps.
 
 A dense, very dark console for teams who keep it open all day.
 
-- An **icon rail** on the left lists every destination; a phone gets a tab bar
-  with the essentials and **More**.
+- An **icon rail** on the left lists every destination, status pages and reports
+  included. At its foot sit the documentation, GitHub, your account (the round
+  button with your initials) and Settings. A phone gets a tab bar with the
+  essentials and **More**.
 - The **header** shows where you are (instance name, page, monitor), a **LIVE**
   switch that pauses the console's own refreshes, the time range on the
   overview, the command palette and **New monitor**.
@@ -42,6 +44,9 @@ A dense, very dark console for teams who keep it open all day.
   and a **monitor table** sorted worst first. The table filters by state, type
   and text, lets you add columns (address, folder) and remove others, and is
   driven by the keyboard: `j` / `k` move, `Enter` selects, `o` opens.
+- **Wall mode** has its own Enterprise board: black ground, the health river, the five
+  figures, open alerts and who is on call, with no scenery. Homelab keeps its
+  city scene.
 - More shortcuts: `g m` topology map, `g x` security, `g l` logs. Press `?` for
   the full list.
 - Device forms open **More options** from the start and show more fields up
