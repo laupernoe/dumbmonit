@@ -162,6 +162,8 @@ pub async fn push_agent_batch(
         machine_id: Some("demo-docker01".to_string()),
         tags: BTreeMap::new(),
         binding_supported: true,
+        self_update: None,
+        remediation: None,
     };
     let batch = PushBatch {
         protocol: PUSH_PROTOCOL_VERSION,
@@ -169,6 +171,8 @@ pub async fn push_agent_batch(
         sent_at_ms: now,
         samples: synthetic::agent_samples(now),
         inventory: None,
+        event_log: None,
+        declared_monitors: None,
     };
     let bearer = format!("Bearer {token}");
     let ack = agent::ingest(pool, cipher, sink, Some(&bearer), secret, batch)

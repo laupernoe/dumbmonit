@@ -11,6 +11,8 @@ use crate::alerting::model::{
     AnomalyParams, Operator, RULE_HOST_DOWN, Rule, RuleKind, Severity, TargetSelector,
 };
 
+mod cloud;
+
 /// Taux d'occupation processeur, toutes sources confondues.
 ///
 /// Chaque collecteur nomme la sienne : `cpu_load_percent` pour SNMP
@@ -93,7 +95,7 @@ const CONTAINER_STOPPED_QUERY: &str = "dumbmonit_container_up == bool 0 \
      unless on(target, container) dumbmonit_container_stop_expected == 1";
 
 pub fn builtin_rules() -> Vec<Rule> {
-    vec![
+    let mut rules = vec![
         // Équipement injoignable.
         //
         // On ne cherche pas un `up == 0` : le planificateur n'écrit rien quand
@@ -529,7 +531,7 @@ pub fn builtin_rules() -> Vec<Rule> {
         // n'absorbe que le battement du planificateur : la tolérance est déjà
         // dans le verdict.
         Rule {
-            description: "The job has not called in within its expected interval plus grace period, or reported a failure itself."
+            description: "The job has not called in within its expected interval or cron schedule plus grace period, or reported a failure itself (status=down)."
                 .to_string(),
             operator: Operator::Gt,
             threshold: 0.0,
@@ -540,6 +542,44 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Heartbeat missed",
                 RuleKind::Threshold,
                 "dumbmonit_probe_success{probe=\"push\"} == bool 0",
+            )
+        },
+        // Exécution en échec : le travail a bien appelé (`/fail`, ou un code de
+        // sortie non nul), c'est donc une panne du travail et non un silence. Le
+        // moteur joint la sortie tronquée au message (`engine::occurrences`). La
+        // série reste à 1 jusqu'à la prochaine exécution réussie.
+        Rule {
+            description: "The job's last run failed: it called /fail or finished with a non-zero exit code."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // Un délai court, comme pour `webchange_detected` : il écarte un point isolé
+            // sans retarder l'annonce d'un échec réel.
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            ..base(
+                "push_failed",
+                "Job failed",
+                RuleKind::Threshold,
+                "dumbmonit_push_run_failed{probe=\"push\"}",
+            )
+        },
+        // Exécution trop longue : plus que la durée maximale réglée, ou, sans
+        // elle, un `/start` resté sans fin au-delà d'une période plus la tolérance.
+        Rule {
+            description: "A run lasts longer than the maximum duration, or started and never finished in time."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // Un délai court, comme pour `webchange_detected` : il écarte un point isolé
+            // sans retarder l'annonce d'un échec réel.
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            ..base(
+                "push_too_long",
+                "Job too long",
+                RuleKind::Threshold,
+                "dumbmonit_push_run_too_long{probe=\"push\"}",
             )
         },
         // Instabilité : un service qui alterne sans cesse n'est jamais « en panne »
@@ -886,6 +926,63 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Internet latency high",
                 RuleKind::Threshold,
                 "dumbmonit_agent_speedtest_latency_ms - dumbmonit_agent_speedtest_max_latency_ms",
+            )
+        },
+        // ------------------------------------------------------------------
+        // Journal d'événements Windows (`collectors/agent/eventlog.rs`).
+        //
+        // Une jauge par sévérité et par machine : le nombre d'événements reçus
+        // dans les quinze dernières minutes pour les règles d'événements de
+        // cette sévérité. Aucune règle d'événement n'existe par défaut, ces
+        // jauges n'existent donc que là où quelqu'un en a créé. Comme pour
+        // `webchange_detected`, l'alerte cite l'événement le plus récent et
+        // reparle au plus toutes les dix minutes tant que d'autres arrivent ;
+        // elle se résout quinze minutes après le dernier. Pas de rappel : un
+        // événement est un fait, pas une panne en cours.
+        // ------------------------------------------------------------------
+        Rule {
+            description: "A Windows event matched one of the machine's critical event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Critical,
+            repeat_interval: None,
+            ..base(
+                "windows_event_critical",
+                "Windows event (critical)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_critical",
+            )
+        },
+        Rule {
+            description: "A Windows event matched one of the machine's warning event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Warning,
+            repeat_interval: None,
+            ..base(
+                "windows_event_warning",
+                "Windows event (warning)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_warning",
+            )
+        },
+        Rule {
+            description: "A Windows event matched one of the machine's info event log rules."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base(
+                "windows_event_info",
+                "Windows event (info)",
+                RuleKind::Threshold,
+                "dumbmonit_agent_eventlog_matches_info",
             )
         },
         // ------------------------------------------------------------------
@@ -4773,6 +4870,263 @@ pub fn builtin_rules() -> Vec<Rule> {
             repeat_interval: Some(Duration::from_secs(6 * 3600)),
             ..base("rabbitmq_queue_not_running", "RabbitMQ queue unavailable", RuleKind::Threshold, "dumbmonit_rabbitmq_queue_running")
         },
+        // --- SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka ---
+        Rule {
+            description: "A database is SUSPECT, RECOVERY_PENDING, OFFLINE or EMERGENCY."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("mssql_database_unavailable", "SQL Server database unavailable", RuleKind::Threshold, "dumbmonit_mssql_database_online")
+        },
+        Rule {
+            description: "A request has been waiting on a lock for more than 5 minutes: a transaction was probably left open."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 300.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("mssql_blocking", "SQL Server blocked requests", RuleKind::Threshold, "dumbmonit_mssql_longest_block_seconds")
+        },
+        Rule {
+            description: "A volume holding database files is more than 90 % full; clears below 85 %."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("mssql_volume_almost_full", "SQL Server volume almost full", RuleKind::Threshold, "dumbmonit_mssql_volume_used_percent")
+        },
+        Rule {
+            description: "The last run of an enabled SQL Server Agent job failed (backups, maintenance)."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(86400)),
+            ..base("mssql_agent_job_failed", "SQL Server Agent job failed", RuleKind::Threshold, "dumbmonit_mssql_agent_job_last_ok")
+        },
+        Rule {
+            description: "A database replica of an availability group is not synchronizing in good health."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 2.0,
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("mssql_alwayson_unhealthy", "SQL Server AlwaysOn replica unhealthy", RuleKind::Threshold, "dumbmonit_mssql_alwayson_sync_health")
+        },
+        Rule {
+            description: "User sessions use more than 90 % of the configured connection limit. No series without a limit."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("mssql_sessions_high", "SQL Server connections near the limit", RuleKind::Threshold, "dumbmonit_mssql_sessions_used_percent")
+        },
+        Rule {
+            description: "The instance status is not OPEN (MOUNTED, STARTED...): the database serves nothing."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("oracle_instance_not_open", "Oracle instance not open", RuleKind::Threshold, "dumbmonit_oracle_instance_open")
+        },
+        Rule {
+            description: "A tablespace is more than 90 % full of its maximum size; clears below 85 %."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("oracle_tablespace_almost_full", "Oracle tablespace almost full", RuleKind::Threshold, "dumbmonit_oracle_tablespace_used_percent")
+        },
+        Rule {
+            description: "Sessions use more than 90 % of the sessions parameter (ORA-00018 when it is reached)."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("oracle_sessions_near_limit", "Oracle sessions near the limit", RuleKind::Threshold, "dumbmonit_oracle_sessions_used_percent")
+        },
+        Rule {
+            description: "A standby applies redo more than 10 minutes behind the primary."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 600.0,
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("oracle_dataguard_lag", "Oracle Data Guard apply lag", RuleKind::Threshold, "dumbmonit_oracle_dataguard_apply_lag_seconds")
+        },
+        Rule {
+            description: "The fast recovery area is more than 90 % full: archiving can stall and freeze the database."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Critical,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("oracle_recovery_area_full", "Oracle recovery area almost full", RuleKind::Threshold, "dumbmonit_oracle_recovery_area_used_percent")
+        },
+        Rule {
+            description: "At least one scheduler job run failed in the last 24 hours."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(86400)),
+            ..base("oracle_scheduler_job_failed", "Oracle scheduler job failed", RuleKind::Threshold, "dumbmonit_oracle_scheduler_jobs_failed_24h")
+        },
+        Rule {
+            description: "The cluster status is red: at least one primary shard is not allocated and part of the data is unavailable."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("elasticsearch_cluster_red", "Elasticsearch cluster red", RuleKind::Threshold, "dumbmonit_elasticsearch_cluster_status")
+        },
+        Rule {
+            description: "The cluster has been yellow for 30 minutes: replicas are missing and the next node failure will lose data."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(1800),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_cluster_yellow", "Elasticsearch cluster yellow", RuleKind::Threshold, "dumbmonit_elasticsearch_cluster_status == 1")
+        },
+        Rule {
+            description: "Shards have stayed unassigned for 15 minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_unassigned_shards", "Elasticsearch unassigned shards", RuleKind::Threshold, "dumbmonit_elasticsearch_unassigned_shards")
+        },
+        Rule {
+            description: "A node's data disk is more than 85 % full (the high watermark is 90 %, the read-only flood stage 95 %); clears below 80 %."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            clear_threshold: Some(80.0),
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_disk_almost_full", "Elasticsearch node disk almost full", RuleKind::Threshold, "dumbmonit_elasticsearch_node_disk_used_percent")
+        },
+        Rule {
+            description: "A node's JVM heap stays above 90 % for 15 minutes: garbage collection will slow the node."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            clear_threshold: Some(85.0),
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("elasticsearch_heap_high", "Elasticsearch JVM heap pressure", RuleKind::Threshold, "dumbmonit_elasticsearch_node_heap_used_percent")
+        },
+        Rule {
+            description: "InfluxDB answers its health check with a failure."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("influxdb_unhealthy", "InfluxDB unhealthy", RuleKind::Threshold, "dumbmonit_influxdb_healthy")
+        },
+        Rule {
+            description: "InfluxDB is up but does not report itself ready for queries and writes."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("influxdb_not_ready", "InfluxDB not ready", RuleKind::Threshold, "dumbmonit_influxdb_ready")
+        },
+        Rule {
+            description: "More than 10 API requests answered with a 5xx status in the last 15 minutes."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 10.0,
+            for_duration: Duration::from_secs(300),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("influxdb_request_errors", "InfluxDB server errors", RuleKind::Threshold, "increase_prometheus(dumbmonit_influxdb_http_requests_5xx_total[15m])")
+        },
+        Rule {
+            description: "A partition has no leader: reads and writes to it fail."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("kafka_offline_partitions", "Kafka partitions offline", RuleKind::Threshold, "dumbmonit_kafka_offline_partitions")
+        },
+        Rule {
+            description: "Partitions have fewer in-sync replicas than replicas for 10 minutes: a broker is down or lagging."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("kafka_under_replicated", "Kafka under-replicated partitions", RuleKind::Threshold, "dumbmonit_kafka_under_replicated_partitions")
+        },
+        Rule {
+            description: "The cluster reports no controller: no leader election is possible."
+                .to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(120),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base("kafka_no_controller", "Kafka without controller", RuleKind::Threshold, "dumbmonit_kafka_controller_present")
+        },
+        Rule {
+            description: "A consumer group is more than 10 000 messages behind for 15 minutes. Adjust the threshold to the traffic of your topics."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 10000.0,
+            for_duration: Duration::from_secs(900),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(21600)),
+            ..base("kafka_consumer_lag", "Kafka consumer group lag", RuleKind::Threshold, "dumbmonit_kafka_consumer_group_lag_total")
+        },
         // --- CrowdSec (`collectors/crowdsec`) ---
         Rule {
             description: "The CrowdSec Local API does not answer: no decision is taken or handed to the bouncers."
@@ -5039,6 +5393,36 @@ pub fn builtin_rules() -> Vec<Rule> {
             severity: Severity::Info,
             repeat_interval: None,
             ..base("webchange_detected", "Website changed", RuleKind::Threshold, "dumbmonit_webchange_last_check_changes")
+        },
+        // --- Sauvegarde des configurations réseau (`netconfig`) ---
+        //
+        // La jauge vaut 1 quand le dernier relevé réussi a produit une nouvelle
+        // version (jamais pour la toute première). Elle retombe au relevé
+        // suivant sans changement. Pas de rappel : un changement est un fait.
+        Rule {
+            description: "The configuration of a backed-up network device changed since the previous version. The device page shows the line diff, secrets masked."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30),
+            severity: Severity::Info,
+            repeat_interval: None,
+            ..base("netconfig_changed", "Network configuration changed", RuleKind::Threshold, "dumbmonit_netconfig_config_changed")
+        },
+        // Clé d'hôte SSH différente de celle mémorisée : la connexion est
+        // refusée avant toute authentification, plus aucune sauvegarde n'a lieu
+        // tant qu'un administrateur n'a pas accepté la nouvelle clé. Équipement
+        // remplacé ou réinstallé… ou interception : à vérifier, d'où le niveau.
+        Rule {
+            description: "A backed-up device presented an SSH host key other than the remembered one. Backups are stopped and no credential was sent; check the device, then accept the new key on its page."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // La jauge reste à 1 tant que la clé n'est pas acceptée : une minute
+            // de retenue écarte un relevé isolé sans retarder l'alerte.
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Critical,
+            ..base("netconfig_host_key_changed", "SSH host key changed", RuleKind::Threshold, "dumbmonit_netconfig_host_key_changed")
         },
         // --- Santé et référencement d'un site (`website`) ---
         //
@@ -5648,6 +6032,95 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_veeam_license_expiry_seconds",
             )
         },
+        // --- Windows sans agent (`collectors/winrm`) ---
+        Rule {
+            description: "One or more Windows services set to start automatically are stopped (reads WMI over WinRM, no agent).".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "winrm_services_auto_stopped",
+                "Windows automatic services stopped",
+                RuleKind::Threshold,
+                "dumbmonit_windows_services_auto_stopped",
+            )
+        },
+        Rule {
+            description: "The last snapshot of a Kopia source finished with errors: some files were not saved.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "kopia_snapshot_errors",
+                "Kopia snapshot with errors",
+                RuleKind::Threshold,
+                "dumbmonit_kopia_source_last_snapshot_errors",
+            )
+        },
+        // Seules les sources planifiées : une source manuelle n'a pas à être récente.
+        Rule {
+            description: "A scheduled Kopia source has no snapshot for more than two days: its schedule is not running or its snapshots fail.".to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "kopia_snapshot_old",
+                "Kopia snapshot too old",
+                RuleKind::Threshold,
+                "dumbmonit_kopia_source_last_snapshot_age_seconds and on (target, source) dumbmonit_kopia_source_scheduled > 0",
+            )
+        },
+        Rule {
+            description: "The Kopia server is not connected to its repository: no snapshot can run.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "kopia_repo_disconnected",
+                "Kopia repository disconnected",
+                RuleKind::Threshold,
+                "dumbmonit_kopia_repo_connected",
+            )
+        },
+        // --- Duplicati (`collectors/duplicati`) ---
+        Rule {
+            description: "The last run of a Duplicati backup failed: what it protects has no new version.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "duplicati_backup_failed",
+                "Duplicati backup failed",
+                RuleKind::Threshold,
+                "dumbmonit_duplicati_backup_failed",
+            )
+        },
+        Rule {
+            description: "A scheduled Duplicati backup has not succeeded for more than two days.".to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "duplicati_backup_old",
+                "Duplicati backup too old",
+                RuleKind::Threshold,
+                "dumbmonit_duplicati_backup_last_success_age_seconds and on (target, backup_id) dumbmonit_duplicati_backup_scheduled > 0",
+            )
+        },
         // --- Tailscale (`collectors/tailscale`) ---
         // Seuls les appareils surveillés : un téléphone éteint n'est pas une panne.
         Rule {
@@ -5838,6 +6311,628 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Sophos interface without link",
                 RuleKind::Threshold,
                 "dumbmonit_sophos_interface_down",
+            )
+        },
+        Rule {
+            description: "A Cisco Meraki device has been offline (out of reach of the cloud dashboard) for ten minutes. Dormant devices, unseen for a long time, are left out.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "meraki_device_offline",
+                "Meraki device offline",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_device_offline",
+            )
+        },
+        Rule {
+            description: "A Meraki router lost the Internet access of a configured uplink (the wired and cellular sockets without a cable are not counted).".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "meraki_uplink_failed",
+                "Meraki uplink failed",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_uplink_failed",
+            )
+        },
+        Rule {
+            description: "The Meraki license is not in compliance (expired, missing or out of compliance): the dashboard may stop managing the devices.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "meraki_license_problem",
+                "Meraki license problem",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_license_ok",
+            )
+        },
+        Rule {
+            description: "A Meraki license expires in less than 30 days.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "meraki_license_expiring",
+                "Meraki license expiring",
+                RuleKind::Threshold,
+                "dumbmonit_meraki_license_expiry_seconds",
+            )
+        },
+        // --- TP-Link Omada (`collectors/omada`) ---
+        Rule {
+            description: "An Omada access point, switch or gateway has been disconnected from the controller for ten minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "omada_device_offline",
+                "Omada device offline",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_offline",
+            )
+        },
+        Rule {
+            description: "An Omada device has had its CPU above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "omada_cpu_high",
+                "Omada device CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_cpu_usage_percent",
+            )
+        },
+        Rule {
+            description: "An Omada device has had its memory above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "omada_memory_high",
+                "Omada device memory high",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_memory_used_percent",
+            )
+        },
+        Rule {
+            description: "The Omada controller offers a firmware update for a device.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "omada_firmware_update",
+                "Omada firmware update",
+                RuleKind::Threshold,
+                "dumbmonit_omada_device_upgrade_available",
+            )
+        },
+        Rule {
+            description: "Aruba Central reports an access point, switch or gateway offline.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "arubacentral_device_offline",
+                "Aruba Central device offline",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_device_online",
+            )
+        },
+        Rule {
+            description: "Aruba Central has at least one active critical alert.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "arubacentral_critical_alert",
+                "Aruba Central critical alert",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_alerts_active_by_severity{severity=\"critical\"}",
+            )
+        },
+        Rule {
+            description: "Aruba Central rates at least one device in poor health for an hour.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "arubacentral_devices_poor_health",
+                "Aruba Central devices in poor health",
+                RuleKind::Threshold,
+                "dumbmonit_arubacentral_devices_poor_health",
+            )
+        },
+        // --- Stormshield SNS, par SNMP (`profiles/stormshield.yaml`) ---
+        Rule {
+            description: "A node of a Stormshield HA cluster is declared dead: there is no standby any more.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "stormshield_ha_node_dead",
+                "Stormshield HA node dead",
+                RuleKind::Threshold,
+                "dumbmonit_stormshield_ha_dead_nodes",
+            )
+        },
+        Rule {
+            description: "A link between the nodes of a Stormshield HA cluster is faulty.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "stormshield_ha_link_faulty",
+                "Stormshield HA link faulty",
+                RuleKind::Threshold,
+                "dumbmonit_stormshield_ha_faulty_links",
+            )
+        },
+        Rule {
+            description: "A Palo Alto firewall interface bound to a zone has no link: cable, transceiver or the device in front.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_interface_down",
+                "Palo Alto interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_interface_down",
+            )
+        },
+        Rule {
+            description: "The peer of a Palo Alto HA pair is no longer active or passive, or the HA link to it is down: there is no standby any more.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(2 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_peer_lost",
+                "Palo Alto HA peer lost",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_peer_up",
+            )
+        },
+        Rule {
+            description: "The running configuration of a Palo Alto HA pair is not synchronized: a failover would run another configuration.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_out_of_sync",
+                "Palo Alto HA out of sync",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_in_sync",
+            )
+        },
+        Rule {
+            description: "This Palo Alto firewall reports its HA state as suspended or non-functional.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_ha_not_functional",
+                "Palo Alto HA member not functional",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_ha_local_functional",
+            )
+        },
+        Rule {
+            description: "The session table of a Palo Alto firewall has stayed above 90 % of its capacity for ten minutes: new sessions will be refused when it is full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_session_table_full",
+                "Palo Alto session table filling up",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_session_usage_percent",
+            )
+        },
+        Rule {
+            description: "The management plane CPU of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_cpu_high",
+                "Palo Alto management CPU high",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_cpu_usage_percent",
+            )
+        },
+        Rule {
+            description: "The management plane memory of a Palo Alto firewall has stayed above 90 % for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "paloalto_memory_high",
+                "Palo Alto management memory high",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_memory_used_percent",
+            )
+        },
+        Rule {
+            description: "A licence or subscription of a Palo Alto firewall expires in less than 30 days, or has expired.".to_string(),
+            operator: Operator::Lt,
+            threshold: 30.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paloalto_license_expiring",
+                "Palo Alto licence expiring",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_license_expiry_seconds",
+            )
+        },
+        Rule {
+            description: "The last configuration commit of a Palo Alto firewall failed: the running configuration is not the one that was saved.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "paloalto_commit_failed",
+                "Palo Alto commit failed",
+                RuleKind::Threshold,
+                "dumbmonit_paloalto_last_commit_ok",
+            )
+        },
+        // --- SonicWall SonicOS (`collectors/sonicwall`, bêta) ---
+        Rule {
+            description: "A SonicWall interface bound to a zone has no link.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "sonicwall_interface_down",
+                "SonicWall interface without link",
+                RuleKind::Threshold,
+                "dumbmonit_sonicwall_interface_down",
+            )
+        },
+        Rule {
+            description: "A QNAP volume is more than 90 % full: shares, snapshots and apps stop being able to write.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "qnap_volume_full",
+                "QNAP volume nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_volume_used_percent",
+            )
+        },
+        Rule {
+            description: "The SMART health of a QNAP disk is no longer good (warning or abnormal): replace it before the RAID loses redundancy.".to_string(),
+            operator: Operator::Lt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "qnap_disk_unhealthy",
+                "QNAP disk health not good",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_disk_ok",
+            )
+        },
+        Rule {
+            description: "A QNAP disk has stayed above 55 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 55.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "qnap_disk_hot",
+                "QNAP disk too hot",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_disk_temperature_celsius",
+            )
+        },
+        Rule {
+            description: "The QNAP processor has stayed above 90 °C for fifteen minutes.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "°C".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "qnap_cpu_hot",
+                "QNAP processor too hot",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_cpu_temperature_celsius",
+            )
+        },
+        Rule {
+            description: "QNAP offers a newer QTS or QuTS hero release.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Info,
+            repeat_interval: Some(Duration::from_secs(168 * 3600)),
+            ..base(
+                "qnap_firmware_update",
+                "QNAP firmware update",
+                RuleKind::Threshold,
+                "dumbmonit_qnap_firmware_update_available",
+            )
+        },
+        // --- Ceph (`collectors/ceph`) ---
+        Rule {
+            description: "The Ceph cluster reports HEALTH_ERR: data may be unavailable or at risk.".to_string(),
+            operator: Operator::Gt,
+            threshold: 1.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "ceph_health_error",
+                "Ceph health error",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_health_status",
+            )
+        },
+        Rule {
+            description: "The Ceph cluster has reported HEALTH_WARN for 30 minutes: see its health checks.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ceph_health_warn",
+                "Ceph health warning",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_health_status",
+            )
+        },
+        Rule {
+            description: "One or more Ceph OSDs are down: the cluster rebuilds their data elsewhere and loses redundancy meanwhile.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ceph_osd_down",
+                "Ceph OSD down",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_osds_down",
+            )
+        },
+        Rule {
+            description: "Some Ceph placement groups have not been active+clean for 30 minutes: data is degraded, misplaced or inactive.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "ceph_pg_unclean",
+                "Ceph placement groups not clean",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_pgs_unclean",
+            )
+        },
+        Rule {
+            description: "Ceph reports unfound objects: no copy of some data can be found.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "ceph_objects_unfound",
+                "Ceph objects unfound",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_objects_unfound",
+            )
+        },
+        Rule {
+            description: "The Ceph cluster is more than 80 % full: it turns read-only at 95 %, and rebuilding after a failure needs free space.".to_string(),
+            operator: Operator::Gt,
+            threshold: 80.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "ceph_capacity_high",
+                "Ceph capacity high",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_capacity_used_percent",
+            )
+        },
+        Rule {
+            description: "A Ceph OSD is more than 85 % full (the default nearfull ratio): writes to it stop at the full ratio.".to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base(
+                "ceph_osd_nearly_full",
+                "Ceph OSD nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_osd_used_percent",
+            )
+        },
+        Rule {
+            description: "A Ceph pool is more than 90 % full.".to_string(),
+            operator: Operator::Gt,
+            threshold: 90.0,
+            for_duration: Duration::from_secs(15 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(12 * 3600)),
+            ..base(
+                "ceph_pool_nearly_full",
+                "Ceph pool nearly full",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_pool_used_percent",
+            )
+        },
+        Rule {
+            description: "A Ceph monitor is out of the quorum: one more loss and the cluster stops.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "ceph_mon_out_of_quorum",
+                "Ceph monitor out of quorum",
+                RuleKind::Threshold,
+                "dumbmonit_ceph_mons_out_of_quorum",
+            )
+        },
+        // --- MinIO (`collectors/minio`) ---
+        Rule {
+            description: "A MinIO node is offline: the cluster runs with less parity.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Critical,
+            repeat_interval: Some(Duration::from_secs(3600)),
+            ..base(
+                "minio_node_offline",
+                "MinIO node offline",
+                RuleKind::Threshold,
+                "dumbmonit_minio_nodes_offline",
+            )
+        },
+        Rule {
+            description: "A MinIO drive is offline: objects are rebuilt from parity until it is back.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(5 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_drive_offline",
+                "MinIO drive offline",
+                RuleKind::Threshold,
+                "dumbmonit_minio_drives_offline",
+            )
+        },
+        Rule {
+            description: "The usable capacity of the MinIO cluster is more than 85 % used.".to_string(),
+            operator: Operator::Gt,
+            threshold: 85.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "minio_capacity_high",
+                "MinIO capacity high",
+                RuleKind::Threshold,
+                "dumbmonit_minio_capacity_usable_used_percent",
+            )
+        },
+        Rule {
+            description: "MinIO could not heal some objects in its current self-healing run.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_heal_failures",
+                "MinIO heal failures",
+                RuleKind::Threshold,
+                "dumbmonit_minio_heal_objects_failed",
+            )
+        },
+        Rule {
+            description: "Objects of a MinIO bucket failed to replicate to the remote site.".to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            for_duration: Duration::from_secs(30 * 60),
+            severity: Severity::Warning,
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_replication_failed",
+                "MinIO replication failures",
+                RuleKind::Threshold,
+                "dumbmonit_minio_replication_failed_objects",
+            )
+        },
+        Rule {
+            description: "More than 5 % of the S3 requests MinIO served in the last 10 minutes failed with a server error (5xx).".to_string(),
+            operator: Operator::Gt,
+            threshold: 5.0,
+            for_duration: Duration::from_secs(10 * 60),
+            severity: Severity::Warning,
+            unit: "%".to_string(),
+            repeat_interval: Some(Duration::from_secs(6 * 3600)),
+            ..base(
+                "minio_s3_server_errors",
+                "MinIO S3 server errors",
+                RuleKind::Threshold,
+                "100 * rate(dumbmonit_minio_s3_requests_5xx_total[10m]) / rate(dumbmonit_minio_s3_requests_total[10m])",
             )
         },
         // --- KVM par l'agent, à travers libvirt (`agent/src/collect/libvirt.rs`) ---
@@ -6259,8 +7354,473 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "dumbmonit_cve_vulnerable",
             )
         },
-    ]
+        // Inventaire du réseau (`netinventory/`). Désactivées par défaut : sur un
+        // réseau qui bouge (invités, DHCP), elles ne servent qu'à qui veut les
+        // lire, et sévérité « info » pour ne jamais réveiller personne. Une
+        // mesure par élément inconnu : une alerte par nouvel appareil ou port,
+        // qui dure jusqu'à ce qu'il soit marqué connu. Pas de rappel.
+        Rule {
+            description: "A scheduled network scan found a device that is not in the \
+                          inventory. It stays reported until it is marked as known."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // La mesure est réécrite à chaque cycle : 60 s écartent un balayage
+            // interrompu sans retarder l'annonce.
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Info,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_NEW_DEVICE,
+                "New device on the network",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_unknown_device",
+            )
+        },
+        Rule {
+            description: "A scheduled network scan found a new open port on a known device. It \
+                          stays reported until it is marked as known."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 0.0,
+            // La mesure est réécrite à chaque cycle : 60 s écartent un balayage
+            // interrompu sans retarder l'annonce.
+            for_duration: Duration::from_secs(60),
+            severity: Severity::Info,
+            repeat_interval: None,
+            enabled: false,
+            ..base(
+                RULE_NETSCAN_NEW_PORT,
+                "New open port on the network",
+                RuleKind::Threshold,
+                "dumbmonit_netscan_unknown_port",
+            )
+        },
+    ];
+    // Intégrations en nuage, un fichier par produit (`rules/cloud/`).
+    rules.extend(cloud::rules());
+    rules.extend(apps_rules());
+    rules
 }
+
+/// Durée en minutes, pour les règles des applications.
+fn app_minutes(n: u64) -> Duration {
+    Duration::from_secs(n * 60)
+}
+
+/// Durée en heures, pour les règles des applications.
+fn app_hours(n: u64) -> Duration {
+    Duration::from_secs(n * 3600)
+}
+
+/// Une règle de seuil d'application : retenue, gravité et rappel.
+#[allow(clippy::too_many_arguments)]
+fn app_rule(
+    uid: &str,
+    name: &str,
+    description: &str,
+    query: &str,
+    operator: Operator,
+    threshold: f64,
+    hold: Duration,
+    severity: Severity,
+    repeat: Duration,
+) -> Rule {
+    Rule {
+        description: description.to_string(),
+        operator,
+        threshold,
+        for_duration: hold,
+        severity,
+        repeat_interval: Some(repeat),
+        ..base(uid, name, RuleKind::Threshold, query)
+    }
+}
+
+/// Règles des applications de `collectors/selfhosted` : Sonarr, Radarr, Lidarr,
+/// Prowlarr, qBittorrent, UniFi Protect, Frigate, Keycloak, authentik,
+/// Vaultwarden et mailcow. Une application qui ne répond plus du tout relève de
+/// la règle « injoignable » ; celles-ci surveillent ce qui continue de répondre
+/// pendant que le service est en panne.
+fn apps_rules() -> Vec<Rule> {
+    let mut rules = Vec::new();
+    // La famille *arr : mêmes métriques, préfixées par le produit.
+    for (kind, product, has_queue) in [
+        ("sonarr", "Sonarr", true),
+        ("radarr", "Radarr", true),
+        ("lidarr", "Lidarr", true),
+        ("prowlarr", "Prowlarr", false),
+    ] {
+        rules.push(app_rule(
+            &format!("{kind}_health_error"),
+            &format!("{product} health error"),
+            &format!(
+                "{product} reports an error on its System → Status page: a download client or \
+                 indexer that fails, a missing root folder."
+            ),
+            &format!("dumbmonit_{kind}_health_errors"),
+            Operator::Gt,
+            0.0,
+            app_minutes(15),
+            Severity::Warning,
+            app_hours(6),
+        ));
+        if has_queue {
+            rules.push(app_rule(
+                &format!("{kind}_queue_errors"),
+                &format!("{product} queue has errors"),
+                &format!(
+                    "An item in {product}'s download queue has an error (failed download, import \
+                     blocked) and nothing cleared it for half an hour."
+                ),
+                &format!("dumbmonit_{kind}_queue_has_errors"),
+                Operator::Gt,
+                0.0,
+                app_minutes(30),
+                Severity::Warning,
+                app_hours(6),
+            ));
+        }
+        rules.push(Rule {
+            clear_threshold: Some(88.0),
+            unit: "%".to_string(),
+            ..app_rule(
+                &format!("{kind}_disk_almost_full"),
+                &format!("{product} disk almost full"),
+                &format!("A disk {product} reports is more than 90% full."),
+                &format!("dumbmonit_{kind}_disk_used_percent"),
+                Operator::Gt,
+                90.0,
+                app_minutes(30),
+                Severity::Warning,
+                app_hours(24),
+            )
+        });
+        rules.push(app_rule(
+            &format!("{kind}_update_available"),
+            &format!("{product} update available"),
+            &format!("A newer {product} release is available."),
+            &format!("dumbmonit_{kind}_update_available"),
+            Operator::Gt,
+            0.0,
+            app_hours(1),
+            Severity::Info,
+            app_hours(7 * 24),
+        ));
+    }
+    rules.push(app_rule(
+        "prowlarr_indexers_disabled",
+        "Prowlarr indexers disabled",
+        "Prowlarr disabled indexers after repeated failures: Sonarr, Radarr and Lidarr stop \
+         finding releases through them.",
+        "dumbmonit_prowlarr_indexers_disabled",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Warning,
+        app_hours(24),
+    ));
+
+    // qBittorrent.
+    rules.push(app_rule(
+        "qbittorrent_torrents_errored",
+        "qBittorrent torrents in error",
+        "Torrents are in error or have lost their files (disk full, folder moved): they never \
+         resume by themselves.",
+        "dumbmonit_qbittorrent_torrents_errored",
+        Operator::Gt,
+        0.0,
+        app_minutes(15),
+        Severity::Warning,
+        app_hours(24),
+    ));
+    rules.push(app_rule(
+        "qbittorrent_disconnected",
+        "qBittorrent disconnected",
+        "qBittorrent is not connected to the network (closed port, VPN down): nothing is \
+         downloaded or seeded.",
+        "dumbmonit_qbittorrent_connected == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(15),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(Rule {
+        clear_threshold: Some(6.0),
+        unit: "GiB".to_string(),
+        ..app_rule(
+            "qbittorrent_free_space_low",
+            "qBittorrent free space low",
+            "Less than 5 GiB free in qBittorrent's download folder.",
+            "dumbmonit_qbittorrent_free_space_bytes / 1073741824",
+            Operator::Lt,
+            5.0,
+            app_minutes(30),
+            Severity::Warning,
+            app_hours(24),
+        )
+    });
+
+    // UniFi Protect.
+    rules.push(app_rule(
+        "unifiprotect_camera_offline",
+        "Protect camera offline",
+        "A UniFi Protect camera has been disconnected from its NVR for five minutes.",
+        "dumbmonit_unifiprotect_camera_online == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(app_rule(
+        "unifiprotect_camera_not_recording",
+        "Protect camera not recording",
+        "A camera is connected but not recording although it is set to (disk trouble, \
+         recording stopped).",
+        "dumbmonit_unifiprotect_cameras_not_recording",
+        Operator::Gt,
+        0.0,
+        app_minutes(15),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(app_rule(
+        "unifiprotect_disk_unhealthy",
+        "Protect NVR disk unhealthy",
+        "The NVR reports a failing disk.",
+        "dumbmonit_unifiprotect_disks_unhealthy",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "unifiprotect_recording_disabled",
+        "Protect recording disabled",
+        "Recording is switched off on the NVR: no camera is recording.",
+        "dumbmonit_unifiprotect_recording_disabled",
+        Operator::Gt,
+        0.0,
+        app_minutes(10),
+        Severity::Warning,
+        app_hours(6),
+    ));
+
+    // Frigate.
+    rules.push(app_rule(
+        "frigate_camera_offline",
+        "Frigate camera offline",
+        "A camera delivers no frames to Frigate (stream down, camera off): its recording and \
+         detection have stopped.",
+        "dumbmonit_frigate_camera_online == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(Rule {
+        unit: "s".to_string(),
+        ..app_rule(
+            "frigate_detector_stuck",
+            "Frigate detector stuck",
+            "A detector has been busy on the same inference for more than 30 seconds (Coral \
+             or GPU hung).",
+            "dumbmonit_frigate_detector_busy_seconds",
+            Operator::Gt,
+            30.0,
+            app_minutes(2),
+            Severity::Warning,
+            app_hours(1),
+        )
+    });
+    rules.push(Rule {
+        clear_threshold: Some(88.0),
+        unit: "%".to_string(),
+        ..app_rule(
+            "frigate_storage_almost_full",
+            "Frigate storage almost full",
+            "The disk holding Frigate's recordings is more than 90% full.",
+            "dumbmonit_frigate_storage_used_percent",
+            Operator::Gt,
+            90.0,
+            app_minutes(30),
+            Severity::Warning,
+            app_hours(24),
+        )
+    });
+    rules.push(app_rule(
+        "frigate_update_available",
+        "Frigate update available",
+        "A newer Frigate release is available.",
+        "dumbmonit_frigate_update_available",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // Keycloak.
+    rules.push(app_rule(
+        "keycloak_not_ready",
+        "Keycloak not ready",
+        "Keycloak answers but reports itself not ready (database down): nobody can log in.",
+        "dumbmonit_keycloak_ready == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "keycloak_realm_disabled",
+        "Keycloak realm disabled",
+        "A Keycloak realm is disabled: its users cannot log in.",
+        "dumbmonit_keycloak_realms_disabled",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // authentik.
+    rules.push(app_rule(
+        "authentik_not_ready",
+        "authentik not ready",
+        "authentik answers but reports itself not ready (database or cache down): logins fail.",
+        "dumbmonit_authentik_ready == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "authentik_no_worker",
+        "authentik has no worker",
+        "No authentik worker is running: source synchronisation, e-mails and clean-up tasks \
+         stop.",
+        "dumbmonit_authentik_workers == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(10),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(app_rule(
+        "authentik_tasks_failed",
+        "authentik task failed",
+        "A scheduled system task (a source synchronisation, a blueprint) failed on its last \
+         run.",
+        "dumbmonit_authentik_tasks_failed",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Warning,
+        app_hours(24),
+    ));
+    rules.push(app_rule(
+        "authentik_outpost_disconnected",
+        "authentik outpost disconnected",
+        "An outpost that serves providers has not reported for five minutes: the applications \
+         it protects do not answer.",
+        "dumbmonit_authentik_outposts_disconnected",
+        Operator::Gt,
+        0.0,
+        app_minutes(10),
+        Severity::Warning,
+        app_hours(6),
+    ));
+    rules.push(app_rule(
+        "authentik_update_available",
+        "authentik update available",
+        "A newer authentik release is available.",
+        "dumbmonit_authentik_update_available",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // Vaultwarden.
+    rules.push(app_rule(
+        "vaultwarden_signups_open",
+        "Vaultwarden sign-ups open",
+        "Anyone who can reach this Vaultwarden can create an account (SIGNUPS_ALLOWED).",
+        "dumbmonit_vaultwarden_signups_open",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(7 * 24),
+    ));
+
+    // mailcow.
+    rules.push(app_rule(
+        "mailcow_container_down",
+        "mailcow container down",
+        "A mailcow container is not running (Postfix, Dovecot, rspamd…): mail is not delivered, \
+         read or filtered.",
+        "dumbmonit_mailcow_container_up == bool 0",
+        Operator::Gt,
+        0.0,
+        app_minutes(5),
+        Severity::Critical,
+        app_hours(1),
+    ));
+    rules.push(Rule {
+        unit: "h".to_string(),
+        ..app_rule(
+            "mailcow_queue_stuck",
+            "mailcow mail queue stuck",
+            "The oldest message in Postfix's queue has waited more than four hours.",
+            "dumbmonit_mailcow_queue_oldest_seconds / 3600",
+            Operator::Gt,
+            4.0,
+            app_minutes(15),
+            Severity::Warning,
+            app_hours(6),
+        )
+    });
+    rules.push(Rule {
+        clear_threshold: Some(88.0),
+        unit: "%".to_string(),
+        ..app_rule(
+            "mailcow_vmail_almost_full",
+            "mailcow mail volume almost full",
+            "The volume holding mailcow's mailboxes is more than 90% full.",
+            "dumbmonit_mailcow_vmail_used_percent",
+            Operator::Gt,
+            90.0,
+            app_minutes(30),
+            Severity::Warning,
+            app_hours(24),
+        )
+    });
+    rules.push(app_rule(
+        "mailcow_mailbox_near_quota",
+        "mailcow mailbox near quota",
+        "A mailbox is at 90% or more of its quota: incoming mail will soon be refused.",
+        "dumbmonit_mailcow_mailboxes_near_quota",
+        Operator::Gt,
+        0.0,
+        app_hours(1),
+        Severity::Info,
+        app_hours(24),
+    ));
+    rules
+}
+
+/// `uid` des règles d'inventaire du réseau, livrées désactivées.
+pub const RULE_NETSCAN_NEW_DEVICE: &str = "netscan_new_device";
+pub const RULE_NETSCAN_NEW_PORT: &str = "netscan_new_port";
 
 /// Construit une requête prédictive « ce système de fichiers sera plein dans moins
 /// de `days` jours », pour l'assistant de création de règle de l'interface.
@@ -6307,6 +7867,8 @@ mod tests {
             "pbs_gc_too_old",
             "service_down",
             "push_missed",
+            "push_failed",
+            "push_too_long",
             "service_flapping",
             "service_slow",
             "tls_cert_expiring",
@@ -6456,6 +8018,47 @@ mod tests {
             "immich_queue_paused",
             "immich_storage_almost_full",
             "immich_update_available",
+            // Applications (`collectors/selfhosted/{arr,qbittorrent,protect,frigate,
+            // keycloak,authentik,vaultwarden,mailcow}.rs`).
+            "sonarr_health_error",
+            "sonarr_queue_errors",
+            "sonarr_disk_almost_full",
+            "sonarr_update_available",
+            "radarr_health_error",
+            "radarr_queue_errors",
+            "radarr_disk_almost_full",
+            "radarr_update_available",
+            "lidarr_health_error",
+            "lidarr_queue_errors",
+            "lidarr_disk_almost_full",
+            "lidarr_update_available",
+            "prowlarr_health_error",
+            "prowlarr_disk_almost_full",
+            "prowlarr_update_available",
+            "prowlarr_indexers_disabled",
+            "qbittorrent_torrents_errored",
+            "qbittorrent_disconnected",
+            "qbittorrent_free_space_low",
+            "unifiprotect_camera_offline",
+            "unifiprotect_camera_not_recording",
+            "unifiprotect_disk_unhealthy",
+            "unifiprotect_recording_disabled",
+            "frigate_camera_offline",
+            "frigate_detector_stuck",
+            "frigate_storage_almost_full",
+            "frigate_update_available",
+            "keycloak_not_ready",
+            "keycloak_realm_disabled",
+            "authentik_not_ready",
+            "authentik_no_worker",
+            "authentik_tasks_failed",
+            "authentik_outpost_disconnected",
+            "authentik_update_available",
+            "vaultwarden_signups_open",
+            "mailcow_container_down",
+            "mailcow_queue_stuck",
+            "mailcow_vmail_almost_full",
+            "mailcow_mailbox_near_quota",
             // Appareils clients, générique (`collectors/client_devices.rs`).
             "client_device_stale",
             "paperless_broker_down",
@@ -6541,6 +8144,31 @@ mod tests {
             "rabbitmq_partition",
             "rabbitmq_queue_no_consumer",
             "rabbitmq_queue_not_running",
+            // SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka.
+            "mssql_database_unavailable",
+            "mssql_blocking",
+            "mssql_volume_almost_full",
+            "mssql_agent_job_failed",
+            "mssql_alwayson_unhealthy",
+            "mssql_sessions_high",
+            "oracle_instance_not_open",
+            "oracle_tablespace_almost_full",
+            "oracle_sessions_near_limit",
+            "oracle_dataguard_lag",
+            "oracle_recovery_area_full",
+            "oracle_scheduler_job_failed",
+            "elasticsearch_cluster_red",
+            "elasticsearch_cluster_yellow",
+            "elasticsearch_unassigned_shards",
+            "elasticsearch_disk_almost_full",
+            "elasticsearch_heap_high",
+            "influxdb_unhealthy",
+            "influxdb_not_ready",
+            "influxdb_request_errors",
+            "kafka_offline_partitions",
+            "kafka_under_replicated",
+            "kafka_no_controller",
+            "kafka_consumer_lag",
             "crowdsec_lapi_down",
             "crowdsec_bouncer_stale",
             "crowdsec_no_logs_read",
@@ -6559,6 +8187,8 @@ mod tests {
             "domain_redemption",
             "dns_answer_changed",
             "webchange_detected",
+            "netconfig_changed",
+            "netconfig_host_key_changed",
             "website_down",
             "website_blank",
             "website_expected_text_missing",
@@ -6585,6 +8215,9 @@ mod tests {
             "speedtest_download_slow",
             "speedtest_upload_slow",
             "speedtest_latency_high",
+            "windows_event_critical",
+            "windows_event_warning",
+            "windows_event_info",
             "pfsense_gateway_down",
             "pfsense_gateway_loss",
             "pfsense_gateway_latency",
@@ -6603,6 +8236,7 @@ mod tests {
             "veeam_job_warning",
             "veeam_repository_full",
             "veeam_license_expiring",
+            "winrm_services_auto_stopped",
             "tailscale_device_offline",
             "tailscale_key_expiring",
             "tailscale_device_unapproved",
@@ -6616,6 +8250,49 @@ mod tests {
             "fortigate_license_expiring",
             "fortigate_firmware_update",
             "sophos_interface_down",
+            "meraki_device_offline",
+            "meraki_uplink_failed",
+            "meraki_license_problem",
+            "meraki_license_expiring",
+            "omada_device_offline",
+            "omada_cpu_high",
+            "omada_memory_high",
+            "omada_firmware_update",
+            "paloalto_interface_down",
+            "paloalto_ha_peer_lost",
+            "paloalto_ha_out_of_sync",
+            "paloalto_ha_not_functional",
+            "paloalto_session_table_full",
+            "paloalto_cpu_high",
+            "paloalto_memory_high",
+            "paloalto_license_expiring",
+            "paloalto_commit_failed",
+            "sonicwall_interface_down",
+            "qnap_volume_full",
+            "qnap_disk_unhealthy",
+            "qnap_disk_hot",
+            "qnap_cpu_hot",
+            "qnap_firmware_update",
+            "ceph_health_error",
+            "ceph_health_warn",
+            "ceph_osd_down",
+            "ceph_pg_unclean",
+            "ceph_objects_unfound",
+            "ceph_capacity_high",
+            "ceph_osd_nearly_full",
+            "ceph_pool_nearly_full",
+            "ceph_mon_out_of_quorum",
+            "minio_node_offline",
+            "minio_drive_offline",
+            "minio_capacity_high",
+            "minio_heal_failures",
+            "minio_replication_failed",
+            "minio_s3_server_errors",
+            "kopia_snapshot_errors",
+            "kopia_snapshot_old",
+            "kopia_repo_disconnected",
+            "duplicati_backup_failed",
+            "duplicati_backup_old",
             "libvirt_domain_crashed",
             "libvirt_pool_almost_full",
             "xcpng_host_offline",
@@ -6693,6 +8370,9 @@ mod tests {
             "dumbmonit_pbs_gc_last_success_age_seconds",
             // Moniteurs de disponibilité (`collectors/uptime/outcome.rs`, `tls/mod.rs`).
             "dumbmonit_probe_success",
+            // Exécutions des moniteurs en poussée (`collectors/push/mod.rs`).
+            "dumbmonit_push_run_failed",
+            "dumbmonit_push_run_too_long",
             "dumbmonit_probe_duration_seconds",
             "dumbmonit_probe_ssl_cert_expiry_days",
             // Agent : conteneurs Docker et sauvegardes Plakar (`crates/agent`).
@@ -6973,6 +8653,31 @@ mod tests {
             "dumbmonit_rabbitmq_queue_messages_ready",
             "dumbmonit_rabbitmq_queue_consumers",
             "dumbmonit_rabbitmq_queue_running",
+            // SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka (`collectors/{mssql,oracle,
+            // elasticsearch,influxdb,kafka}`).
+            "dumbmonit_mssql_database_online",
+            "dumbmonit_mssql_longest_block_seconds",
+            "dumbmonit_mssql_volume_used_percent",
+            "dumbmonit_mssql_agent_job_last_ok",
+            "dumbmonit_mssql_alwayson_sync_health",
+            "dumbmonit_mssql_sessions_used_percent",
+            "dumbmonit_oracle_instance_open",
+            "dumbmonit_oracle_tablespace_used_percent",
+            "dumbmonit_oracle_sessions_used_percent",
+            "dumbmonit_oracle_dataguard_apply_lag_seconds",
+            "dumbmonit_oracle_recovery_area_used_percent",
+            "dumbmonit_oracle_scheduler_jobs_failed_24h",
+            "dumbmonit_elasticsearch_cluster_status",
+            "dumbmonit_elasticsearch_unassigned_shards",
+            "dumbmonit_elasticsearch_node_disk_used_percent",
+            "dumbmonit_elasticsearch_node_heap_used_percent",
+            "dumbmonit_influxdb_healthy",
+            "dumbmonit_influxdb_ready",
+            "dumbmonit_influxdb_http_requests_5xx_total",
+            "dumbmonit_kafka_offline_partitions",
+            "dumbmonit_kafka_under_replicated_partitions",
+            "dumbmonit_kafka_controller_present",
+            "dumbmonit_kafka_consumer_group_lag_total",
             "dumbmonit_crowdsec_lapi_up",
             "dumbmonit_crowdsec_bouncer_requests_total",
             "dumbmonit_crowdsec_lines_read_total",
@@ -7002,6 +8707,9 @@ mod tests {
             "dumbmonit_probe_dns_answer_fingerprint",
             // Changements d'un site web (`webchange`).
             "dumbmonit_webchange_last_check_changes",
+            // Sauvegarde des configurations réseau (`netconfig/mod.rs`).
+            "dumbmonit_netconfig_config_changed",
+            "dumbmonit_netconfig_host_key_changed",
             // Santé et référencement d'un site (`website`).
             "dumbmonit_website_up",
             "dumbmonit_website_blank",
@@ -7051,8 +8759,13 @@ mod tests {
             "dumbmonit_agent_speedtest_upload_bytes_per_second",
             "dumbmonit_agent_speedtest_latency_ms",
             "dumbmonit_agent_speedtest_max_latency_ms",
-            // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos
-            // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos}`),
+            // Journal d'événements Windows, jauges écrites par le serveur à la
+            // réception des lots (`collectors/agent/eventlog.rs`).
+            "dumbmonit_agent_eventlog_matches_critical",
+            "dumbmonit_agent_eventlog_matches_warning",
+            "dumbmonit_agent_eventlog_matches_info",
+            // pfSense, Unraid, Veeam, Tailscale, FortiGate, Sophos, Meraki, Omada
+            // (`collectors/{pfsense,unraid,veeam,tailscale,fortigate,sophos,meraki,omada}`),
             // Hyper-V par l'agent Windows (`agent/src/collect/perf_counters.rs`).
             "dumbmonit_pfsense_gateway_up",
             "dumbmonit_pfsense_gateway_loss_percent",
@@ -7072,6 +8785,7 @@ mod tests {
             "dumbmonit_veeam_job_warning",
             "dumbmonit_veeam_repository_used_percent",
             "dumbmonit_veeam_license_expiry_seconds",
+            "dumbmonit_windows_services_auto_stopped",
             "dumbmonit_tailscale_device_offline_seconds",
             "dumbmonit_tailscale_device_watched",
             "dumbmonit_tailscale_device_key_expiry_seconds",
@@ -7086,6 +8800,29 @@ mod tests {
             "dumbmonit_fortigate_license_expiry_seconds",
             "dumbmonit_fortigate_firmware_update_available",
             "dumbmonit_sophos_interface_down",
+            "dumbmonit_meraki_device_offline",
+            "dumbmonit_meraki_uplink_failed",
+            "dumbmonit_meraki_license_ok",
+            "dumbmonit_meraki_license_expiry_seconds",
+            "dumbmonit_omada_device_offline",
+            "dumbmonit_omada_device_cpu_usage_percent",
+            "dumbmonit_omada_device_memory_used_percent",
+            "dumbmonit_omada_device_upgrade_available",
+            "dumbmonit_arubacentral_device_online",
+            "dumbmonit_arubacentral_alerts_active_by_severity",
+            "dumbmonit_arubacentral_devices_poor_health",
+            "dumbmonit_stormshield_ha_dead_nodes",
+            "dumbmonit_stormshield_ha_faulty_links",
+            "dumbmonit_paloalto_interface_down",
+            "dumbmonit_paloalto_ha_peer_up",
+            "dumbmonit_paloalto_ha_in_sync",
+            "dumbmonit_paloalto_ha_local_functional",
+            "dumbmonit_paloalto_session_usage_percent",
+            "dumbmonit_paloalto_cpu_usage_percent",
+            "dumbmonit_paloalto_memory_used_percent",
+            "dumbmonit_paloalto_license_expiry_seconds",
+            "dumbmonit_paloalto_last_commit_ok",
+            "dumbmonit_sonicwall_interface_down",
             "dumbmonit_agent_libvirt_domain_crashed",
             "dumbmonit_agent_libvirt_pool_used_percent",
             "dumbmonit_xcpng_host_live",
@@ -7098,13 +8835,84 @@ mod tests {
             "dumbmonit_hyperv_vms_health_critical",
             "dumbmonit_hyperv_host_cpu_percent",
             "dumbmonit_hyperv_vhd_errors_total",
+            // Inventaire du réseau (`netinventory/mod.rs`).
+            "dumbmonit_netscan_unknown_device",
+            "dumbmonit_netscan_unknown_port",
+            "dumbmonit_duplicati_backup_last_success_age_seconds",
+            "dumbmonit_duplicati_backup_scheduled",
+            "dumbmonit_kopia_source_last_snapshot_age_seconds",
+            "dumbmonit_kopia_source_scheduled",
+            "dumbmonit_minio_s3_requests_5xx_total",
+            "dumbmonit_minio_s3_requests_total",
+            "dumbmonit_ceph_capacity_used_percent",
+            "dumbmonit_ceph_health_status",
+            "dumbmonit_ceph_mons_out_of_quorum",
+            "dumbmonit_ceph_objects_unfound",
+            "dumbmonit_ceph_osd_used_percent",
+            "dumbmonit_ceph_osds_down",
+            "dumbmonit_ceph_pgs_unclean",
+            "dumbmonit_ceph_pool_used_percent",
+            "dumbmonit_duplicati_backup_failed",
+            "dumbmonit_kopia_repo_connected",
+            "dumbmonit_kopia_source_last_snapshot_errors",
+            "dumbmonit_minio_capacity_usable_used_percent",
+            "dumbmonit_minio_drives_offline",
+            "dumbmonit_minio_heal_objects_failed",
+            "dumbmonit_minio_nodes_offline",
+            "dumbmonit_minio_replication_failed_objects",
+            "dumbmonit_qnap_cpu_temperature_celsius",
+            "dumbmonit_qnap_disk_ok",
+            "dumbmonit_qnap_disk_temperature_celsius",
+            "dumbmonit_qnap_firmware_update_available",
+            "dumbmonit_qnap_volume_used_percent",
+            // Applications (`collectors/selfhosted/{arr,qbittorrent,protect,frigate,
+            // keycloak,authentik,vaultwarden,mailcow}.rs`).
+            "dumbmonit_sonarr_health_errors",
+            "dumbmonit_sonarr_disk_used_percent",
+            "dumbmonit_sonarr_update_available",
+            "dumbmonit_sonarr_queue_has_errors",
+            "dumbmonit_radarr_health_errors",
+            "dumbmonit_radarr_disk_used_percent",
+            "dumbmonit_radarr_update_available",
+            "dumbmonit_radarr_queue_has_errors",
+            "dumbmonit_lidarr_health_errors",
+            "dumbmonit_lidarr_disk_used_percent",
+            "dumbmonit_lidarr_update_available",
+            "dumbmonit_lidarr_queue_has_errors",
+            "dumbmonit_prowlarr_health_errors",
+            "dumbmonit_prowlarr_disk_used_percent",
+            "dumbmonit_prowlarr_update_available",
+            "dumbmonit_prowlarr_indexers_disabled",
+            "dumbmonit_qbittorrent_torrents_errored",
+            "dumbmonit_qbittorrent_connected",
+            "dumbmonit_qbittorrent_free_space_bytes",
+            "dumbmonit_unifiprotect_camera_online",
+            "dumbmonit_unifiprotect_cameras_not_recording",
+            "dumbmonit_unifiprotect_disks_unhealthy",
+            "dumbmonit_unifiprotect_recording_disabled",
+            "dumbmonit_frigate_camera_online",
+            "dumbmonit_frigate_detector_busy_seconds",
+            "dumbmonit_frigate_storage_used_percent",
+            "dumbmonit_frigate_update_available",
+            "dumbmonit_keycloak_ready",
+            "dumbmonit_keycloak_realms_disabled",
+            "dumbmonit_authentik_ready",
+            "dumbmonit_authentik_workers",
+            "dumbmonit_authentik_tasks_failed",
+            "dumbmonit_authentik_outposts_disconnected",
+            "dumbmonit_authentik_update_available",
+            "dumbmonit_vaultwarden_signups_open",
+            "dumbmonit_mailcow_container_up",
+            "dumbmonit_mailcow_queue_oldest_seconds",
+            "dumbmonit_mailcow_vmail_used_percent",
+            "dumbmonit_mailcow_mailboxes_near_quota",
         ];
 
         for rule in builtin_rules() {
             for mot in rule.query.split(|c: char| !c.is_alphanumeric() && c != '_') {
                 if mot.starts_with("dumbmonit_") {
                     assert!(
-                        PRODUITES.contains(&mot),
+                        PRODUITES.contains(&mot) || cloud::produced().contains(&mot),
                         "rule \"{}\" targets \"{mot}\", which no collector produces",
                         rule.uid
                     );
@@ -7126,7 +8934,9 @@ mod tests {
     #[test]
     fn les_regles_livrees_sont_actives_et_sans_canal_impose() {
         for rule in builtin_rules() {
-            assert!(rule.enabled, "{} should be enabled", rule.uid);
+            // Les règles d'inventaire du réseau sont les seules livrées éteintes.
+            let off = rule.uid == RULE_NETSCAN_NEW_DEVICE || rule.uid == RULE_NETSCAN_NEW_PORT;
+            assert_eq!(rule.enabled, !off, "{} enabled flag", rule.uid);
             assert!(rule.builtin);
             assert!(rule.channels.is_empty(), "{} must not impose any channel", rule.uid);
             assert!(matches!(rule.selector, TargetSelector::All));

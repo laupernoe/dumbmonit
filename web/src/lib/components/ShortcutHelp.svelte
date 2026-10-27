@@ -6,12 +6,16 @@
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { SHORTCUTS, type ShortcutId } from '#lib/palette/shortcuts.js';
 	import { shortcutKeys } from '#lib/palette/logic.js';
+	import { mode } from '#lib/stores/mode.svelte.js';
 
 	const LABEL: Record<ShortcutId, () => string> = {
 		overview: () => m.misc_shortcuts_go({ page: m.misc_nav_overview() }),
 		devices: () => m.misc_shortcuts_go({ page: m.misc_nav_devices() }),
 		alerts: () => m.misc_shortcuts_go({ page: m.misc_nav_alerts() }),
 		status: () => m.misc_shortcuts_go({ page: m.misc_palette_status_pages() }),
+		map: () => m.misc_shortcuts_go({ page: m.topology_title() }),
+		security: () => m.misc_shortcuts_go({ page: m.misc_nav_security() }),
+		logs: () => m.misc_shortcuts_go({ page: m.logsearch_title() }),
 		add: () => m.misc_palette_add_device(),
 		theme: () => m.misc_palette_theme(),
 		help: () => m.misc_shortcuts_title()
@@ -19,11 +23,19 @@
 
 	const rows = $derived([
 		{ label: m.misc_palette_label(), keys: [palette.isMac ? '⌘' : 'Ctrl', 'K'], sequence: false },
-		...SHORTCUTS.filter((s) => !s.admin || auth.isAdmin).map((s) => ({
+		...SHORTCUTS.filter((s) => (!s.admin || auth.isAdmin) && (!s.enterprise || mode.enterprise)).map((s) => ({
 			label: LABEL[s.id](),
 			keys: shortcutKeys(s.keys),
 			sequence: s.keys.includes(' ')
-		}))
+		})),
+		...(mode.enterprise
+			? [
+					{ label: m.console_shortcut_panel(), keys: ['i'], sequence: false },
+					{ label: m.console_shortcut_next(), keys: ['j'], sequence: false },
+					{ label: m.console_shortcut_prev(), keys: ['k'], sequence: false },
+					{ label: m.console_shortcut_open(), keys: ['o'], sequence: false }
+				]
+			: [])
 	]);
 
 	let closeButton = $state<HTMLButtonElement | null>(null);

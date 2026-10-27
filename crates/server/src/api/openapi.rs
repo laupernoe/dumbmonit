@@ -99,7 +99,8 @@ mod tests {
     ///   serveur, authentifié par un jeton d'enregistrement, que nul client n'a
     ///   à appeler ;
     /// - les redirections de la connexion OIDC (`/api/auth/oidc/start` et
-    ///   `/callback`), et le retour de Spotify (`/api/music/spotify/callback`) :
+    ///   `/callback`) et SAML (`/api/auth/saml/start`, `/acs`, `/complete`), et
+    ///   le retour de Spotify (`/api/music/spotify/callback`) :
     ///   des pages qu'un navigateur traverse, pas une API ;
     /// - la distribution de l'agent (`/install.sh`, `/install.ps1`,
     ///   `/download/{name}`) : des fichiers, pas du JSON ;
@@ -108,11 +109,16 @@ mod tests {
         "/api/ingest",
         "/api/agent/commands",
         "/api/agent/commands/{id}",
+        "/api/agent/logs",
         "/api/agent/relay",
         "/api/agent/relay/{id}",
         "/api/agent/relay/discovery/{id}",
+        "/api/agent/update/download/{name}",
         "/api/auth/oidc/start",
         "/api/auth/oidc/callback",
+        "/api/auth/saml/start",
+        "/api/auth/saml/acs",
+        "/api/auth/saml/complete",
         "/api/music/spotify/callback",
         "/install.sh",
         "/install.ps1",
@@ -136,25 +142,34 @@ mod tests {
                 | "/api/auth/setup"
                 | "/api/auth/login"
                 | "/api/auth/login/totp"
+                | "/api/auth/saml/metadata"
+                | "/api/auth/passkey/login/begin"
+                | "/api/auth/passkey/login/finish"
                 | "/api/push/{token}"
+                | "/api/push/{token}/{action}"
+                | "/api/calendar/maintenance.ics"
                 | "/api/openapi.json"
+                | "/api/instance"
         ) || path.starts_with("/api/public/")
             || (path == "/api/mcp" && method != "post")
     }
 
-    /// Routes fermées à tout jeton : celles du garde, plus les sauvegardes et la
-    /// connexion à Spotify et son jeton pour le mur (refusées par leur
-    /// gestionnaire, qui exige une session).
+    /// Routes fermées à tout jeton d'API : celles du garde, plus les sauvegardes
+    /// et la connexion à Spotify et son jeton pour le mur (refusées par leur
+    /// gestionnaire, qui exige une session), et le provisionnement SCIM, qui
+    /// n'accepte que le jeton dédié du fournisseur d'identité.
     fn is_session_only(path: &str) -> bool {
         let Some(rest) = path.strip_prefix("/api") else { return false };
         const BY_HANDLER: &[&str] = &[
             "/backup",
+            "/scim",
             "/logs",
             "/music/spotify/authorize",
             "/music/spotify/complete",
             "/music/spotify/token",
             "/music/speaker/report",
             "/music/speaker/play",
+            "/system/storage",
             "/webpush",
         ];
         TOKEN_DENIED.iter().chain(BY_HANDLER.iter()).any(|prefix| {

@@ -1,0 +1,13 @@
+# Sauvegarde des configurations : Palo Alto PAN-OS, configuration courante
+# lue par l'API XML (clé d'API d'un administrateur en lecture seule).
+id: paloalto_api
+label: Palo Alto PAN-OS (XML API)
+transport: http
+port: 443
+http:
+  path: /api/?type=op&cmd=%3Cshow%3E%3Cconfig%3E%3Crunning%3E%3C%2Frunning%3E%3C%2Fconfig%3E%3C%2Fshow%3E
+  auth: header
+  header: X-PAN-KEY
+volatile: []
+secrets:
+  - '<(?:phash|password|key|pre-shared-key|community|secret|auth-password|priv-password|private-key|authentication-key)>(?P<secret>[^<]+)</'

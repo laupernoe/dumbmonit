@@ -102,6 +102,10 @@ pub struct ContainerInventory {
     pub running: usize,
     /// Conteneurs détaillés — inspectés, et remontés avec leurs étiquettes.
     pub detailed: Vec<ContainerStat>,
+    /// Moniteurs déclarés par les étiquettes `dumbmonit.*` de *tous* les
+    /// conteneurs : lus avant le plafond, sans quoi un moniteur disparaîtrait
+    /// (et serait archivé par le serveur) dès que son conteneur sort des deux cents.
+    pub declared: Vec<dumbmonit_proto::DeclaredMonitor>,
 }
 
 impl ContainerInventory {
@@ -111,10 +115,11 @@ impl ContainerInventory {
     /// de l'ordre du démon — la pire des cardinalités.
     pub fn new(mut containers: Vec<ContainerStat>, max_detailed: usize) -> Self {
         let total = containers.len();
+        let declared = super::docker_labels::declared(&containers);
         let running = containers.iter().filter(|container| container.running).count();
         containers.sort_by(|a, b| b.running.cmp(&a.running).then_with(|| a.name.cmp(&b.name)));
         containers.truncate(max_detailed);
-        Self { total, running, detailed: containers }
+        Self { total, running, detailed: containers, declared }
     }
 
     /// Conteneurs présents mais non détaillés.

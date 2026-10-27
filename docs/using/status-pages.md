@@ -242,6 +242,49 @@ the **public URL** of the
 the address you used when you last saved the page — never from a visitor's
 request.
 
+### SMS, webhook and Slack subscribers {#channel-subscribers}
+
+Besides email, a page can offer three more ways to follow it. Open them in the
+subscriber panel of the page editor (**Subscription channels**); the public
+page then shows one tab per channel.
+
+- **SMS.** Pick a Vonage, Telnyx or ASPSMS channel from
+  [Notifications](../alerting/notifications.md); its credentials and sender are
+  reused, not its recipients. The visitor enters a number in international
+  format (`+33612345678`) and confirms it with a six-digit code sent by text
+  message (five tries, 15 minutes). Updates are one short message with a
+  `Stop:` link. Texts cost money, so SMS sign-ups have lower limits (three
+  requests per client address and 25 in all per 15 minutes).
+- **Signed webhook.** The visitor gives an `http(s)` URL. DumbMonit POSTs a
+  signed `subscription.confirm` request carrying a `confirm_url`; the
+  subscription starts when the endpoint (or the visitor) calls it. The signing
+  secret (`whsec_…`) is shown once, on the page, right after the request. Every
+  request carries `X-DumbMonit-Timestamp` and
+  `X-DumbMonit-Signature: sha256=<hex>`, the HMAC-SHA256 of
+  `<timestamp>.<body>` with the secret. The JSON body holds `type`
+  (`incident` or `maintenance`), `page`, `incident` (id, title, status,
+  severity, dates), `message` and `unsubscribe_url`. The URL goes through the
+  same outbound guard as notification channels (the server's own addresses are
+  refused).
+- **Slack.** The visitor pastes the incoming webhook URL of their own Slack
+  (`https://hooks.slack.com/services/…`). DumbMonit posts a test message with
+  a confirmation link; every update then carries an unsubscribe link.
+- **Services followed.** A subscriber can tick the services they care about.
+  When you create an announcement for a page you can tick the services it
+  concerns (`components` in the API): subscribers who follow only other
+  services are not told. An announcement with no service ticked, and a
+  subscriber with none ticked, mean "everything".
+- **Delivery.** SMS, webhook and Slack messages go through a queue: a failure
+  is retried after 1 minute, 5 minutes, 30 minutes, 2 hours, then dropped after
+  five tries or a day. Messages are spaced out so a provider is not flooded.
+- **Private pages.** On a page protected by a password or by sign-in, only
+  someone who can see the page can subscribe.
+- **Admin.** The panel lists subscribers of every channel (phone numbers and
+  URLs are masked, filter by channel), exports them as CSV
+  (`GET /api/status-pages/{id}/subscribers.csv`; URLs stay masked) and removes
+  any of them. The channels a page opens travel with
+  [backups](../install/backup.md); the subscribers themselves do not.
+
 ## 4. Share the link
 
 The page lives at `https://your-server/s/<address>`. Everything under `/s/` and
@@ -451,6 +494,61 @@ canonical, Open Graph, Twitter card, language and JSON-LD data. Crawlers and
 link previews do not run JavaScript, so they read them as is. A page that is a
 draft, unknown or not indexable never shows its title, and the `/embed`,
 `/confirm` and `/unsubscribe` variants are never indexed.
+
+### Private pages {#private}
+
+By default a page is open to anyone with the link. **Who can see this page**,
+in the editor, changes that:
+
+- **Anyone with the link**: the default.
+- **Anyone with the password**: visitors see a password form first. The
+  password (8 characters at least) is stored hashed with Argon2id and never
+  shown again; leave the field empty to keep the current one. A correct
+  password sets a signed access cookie, valid for 12 hours. Changing the
+  password ends every access already granted. Mistakes are counted per address
+  and per page: after five, the next attempts wait 30 seconds, doubling up to
+  five minutes.
+- **Signed-in DumbMonit users**: any account, local, LDAP or SSO, whatever its
+  role. Visitors without a session are sent to the sign-in screen and come back
+  to the page. The session cookie belongs to the main address, so this mode
+  does not work behind a [custom domain](#custom-domain): use a password there.
+
+A page that is not public is **never indexed**, whatever its SEO block says: it
+answers `noindex, nofollow`, stays out of `/sitemap.xml` and shows no title in
+the HTML. Everything that leaves the page by its address follows the same
+access: the JSON document, the badges, the RSS and [iCal](#ical) feeds, the logo,
+the day detail and email subscription. The responses carry `Cache-Control:
+private, no-store`. A badge is an image loaded by the reader's browser, so it
+only shows where that browser already holds access; on a README it stays broken.
+The embed and the [website banner](../integrations/website-banner.md) need the
+same access too.
+
+### Maintenance calendar (iCal) {#ical}
+
+Planned maintenance can be followed from a calendar app (Google Calendar,
+Outlook, Thunderbird, Apple Calendar) that subscribes to an iCalendar feed:
+
+- `GET /api/public/status/<address>/maintenance.ics`: the maintenance announced
+  on the page (and those for every page), from 90 days back to the far future.
+  It follows the page's access mode and is linked under **Get updates** on the
+  public page.
+- `GET /api/calendar/maintenance.ics?token=…`: every maintenance of the
+  instance. The token is in the address and is the only protection: share the
+  address like a password. Administrators read it, and replace it with **New
+  address**, under the page editor's **Maintenance calendar** block.
+
+Each maintenance is one event, with its title, its start, its end (one hour
+when none is set) and its latest message as description. Incidents are not
+listed.
+
+### Third-party providers {#providers}
+
+Your page can show a provider you depend on, next to your own services. Add a
+[**Third-party service status**](../devices/provider.md) monitor (Cloudflare,
+GitHub, Atlassian, AWS…) and put it on the page like any other monitor: it
+appears with an **External** tag, its own history and the usual states. The
+provider's page is read at most once a minute and shared between monitors and
+pages.
 
 ### Feed and document
 

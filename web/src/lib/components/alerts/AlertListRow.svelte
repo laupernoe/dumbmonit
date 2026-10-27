@@ -12,7 +12,7 @@
 	 *
 	 * In selection mode a click on the row picks it instead of unfolding it.
 	 */
-	import type { Silence } from '#lib/api/index.js';
+	import type { Alert, Silence } from '#lib/api/index.js';
 	import type { Tone } from '#lib/ui/index.js';
 	import { Button, Plate } from '#lib/ui/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
@@ -31,6 +31,10 @@
 		Unplug
 	} from 'lucide-svelte';
 	import AlertActions from './AlertActions.svelte';
+	import AckControl from './AckControl.svelte';
+	import SnoozeControl from './SnoozeControl.svelte';
+	import { auth } from '#lib/stores/auth.svelte.js';
+	import AlertRemediation from '#lib/components/remediation/AlertRemediation.svelte';
 
 	interface Props {
 		folded: Folded;
@@ -39,6 +43,8 @@
 		/** "Open" on the row itself (off when the group heading already links the monitor). */
 		showOpen?: boolean;
 		silences?: Silence[];
+		/** The pending or firing alert of an unreachable device, when one exists: gives the row a real acknowledgement. */
+		deviceAlert?: Alert;
 		expanded?: boolean;
 		ontoggle?: () => void;
 		selecting?: boolean;
@@ -52,6 +58,7 @@
 		showPlate = false,
 		showOpen = true,
 		silences = [],
+		deviceAlert,
 		expanded = false,
 		ontoggle,
 		selecting = false,
@@ -63,6 +70,35 @@
 	const row = $derived(folded.row);
 	const alert = $derived(row.kind === 'alert' ? row.alert : null);
 	const target = $derived(row.target);
+	/**
+	 * A stand-in alert for an unreachable device that no rule has noticed yet:
+	 * it has nothing to acknowledge, but a snooze scoped to the whole device
+	 * (no label matchers) quiets it and every rule of that device.
+	 */
+	const deviceStandIn = $derived(
+		row.kind === 'device'
+			? ({
+					fingerprint: `device:${row.target.id}`,
+					rule_uid: 'host_down',
+					rule_name: row.plate,
+					target_id: row.target.id,
+					labels: {}
+				} as unknown as Alert)
+			: null
+	);
+	/** Tickets opened for this alert (and the folded ones) by the ticket channels. */
+	const tickets = $derived.by(() => {
+		if (row.kind !== 'alert') return [];
+		const seen = new Set<string>();
+		return [row.alert, ...folded.extra]
+			.flatMap((a) => a.tickets ?? [])
+			.filter((t) => {
+				const key = `${t.channel_id}:${t.label}`;
+				if (seen.has(key)) return false;
+				seen.add(key);
+				return true;
+			});
+	});
 	const detailsId = $derived(`alert-details-${row.key.replace(/[^a-zA-Z0-9_-]/g, '_')}`);
 
 	/** What is wrong: the rule's name, or the device's state word. */
@@ -197,7 +233,7 @@
 		</button>
 
 		{#if !selecting}
-			<div class={`flex shrink-0 items-center gap-0.5 max-sm:-mt-1 max-sm:w-full max-sm:justify-end max-sm:pb-1 ${alert ? '' : 'max-sm:hidden'}`}>
+			<div class="flex shrink-0 items-center gap-0.5 max-sm:-mt-1 max-sm:w-full max-sm:justify-end max-sm:pb-1">
 				{#if alert}
 					<AlertActions
 						{alert}
@@ -208,9 +244,29 @@
 						onchanged={() => onchanged?.()}
 					/>
 				{/if}
+				{#if deviceStandIn && auth.canOperate}
+					<!-- Same two icons as an alert row: acknowledge (check) and snooze (bell). -->
+					{#if deviceAlert}
+						<AckControl alert={deviceAlert} iconOnly floating onchanged={() => onchanged?.()} />
+					{/if}
+					<SnoozeControl
+						alert={deviceStandIn}
+						target={row.kind === 'device' ? row.target : undefined}
+						{silences}
+						iconOnly
+						onchanged={() => onchanged?.()}
+					/>
+				{/if}
 				{#if target && showOpen}
-					<Button size="sm" variant="ghost" href={`/targets/${target.id}`} class="max-sm:hidden">
-						{m.alerts_list_open()}
+					<Button
+						size="sm"
+						variant="ghost"
+						href={`/targets/${target.id}`}
+						aria-label={m.alerts_list_open_named({ name: target.name })}
+						title={m.alerts_list_open_named({ name: target.name })}
+						class="!w-10 !px-0 sm:!w-8"
+					>
+						<ArrowUpRight class="size-4" aria-hidden="true" />
 					</Button>
 				{/if}
 				<button
@@ -280,6 +336,31 @@
 						until: timeOf(snoozeUntil) ? m.alerts_row_until({ time: timeOf(snoozeUntil) }) : ''
 					})}
 				</p>
+			{/if}
+
+			{#if tickets.length > 0}
+				<p class="mt-2 text-ink-2">
+					{m.alerts_row_tickets()}
+					{#each tickets as ticket (`${ticket.channel_id}:${ticket.label}`)}
+						{#if /^https?:\/\//.test(ticket.url)}
+							<a
+								href={ticket.url}
+								target="_blank"
+								rel="noopener noreferrer"
+								class="font-medium text-ink underline decoration-line-strong underline-offset-2 hover:decoration-ink"
+								>{ticket.label}</a
+							>
+						{:else}
+							<span class="font-medium text-ink">{ticket.label}</span>
+						{/if}
+						<span class="mr-2">
+							({ticket.channel_name}{ticket.state === 'closed' ? `, ${m.alerts_row_ticket_closed()}` : ''})</span
+						>
+					{/each}
+				</p>
+			{/if}
+			{#if alert}
+				<AlertRemediation fingerprint={alert.fingerprint} />
 			{/if}
 
 			<div class="mt-3 flex flex-wrap items-start gap-2">

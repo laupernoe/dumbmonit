@@ -49,17 +49,19 @@ COPY crates/collectors/Cargo.toml crates/collectors/
 COPY crates/pack/Cargo.toml crates/pack/
 COPY crates/server/Cargo.toml crates/server/
 COPY crates/agent/Cargo.toml crates/agent/
+COPY crates/cli/Cargo.toml crates/cli/
 # Une source factice par cible déclarée dans les manifestes — bibliothèques
 # incluses, sans quoi cargo échoue avant même de compiler les dépendances.
 # L'agent n'est pas compilé ici (il l'est dans l'étape `agent`, pour trois
 # plateformes), mais son manifeste doit exister pour que le workspace se charge.
-RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src \
+RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src crates/cli/src \
  && echo '' > crates/proto/src/lib.rs \
  && echo '' > crates/collectors/src/lib.rs \
  && echo '' > crates/pack/src/lib.rs \
  && echo '' > crates/server/src/lib.rs \
  && echo 'fn main() {}' > crates/server/src/main.rs \
  && echo 'fn main() {}' > crates/agent/src/main.rs \
+ && echo 'fn main() {}' > crates/cli/src/main.rs \
  && cargo build --release --locked -p dumbmonit-server \
  && rm -rf crates/proto/src crates/collectors/src crates/pack/src crates/server/src
 
@@ -173,13 +175,15 @@ COPY crates/collectors/Cargo.toml crates/collectors/
 COPY crates/pack/Cargo.toml crates/pack/
 COPY crates/server/Cargo.toml crates/server/
 COPY crates/agent/Cargo.toml crates/agent/
-RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src \
+COPY crates/cli/Cargo.toml crates/cli/
+RUN mkdir -p crates/proto/src crates/collectors/src crates/pack/src crates/server/src crates/agent/src crates/cli/src \
  && echo '' > crates/proto/src/lib.rs \
  && echo '' > crates/collectors/src/lib.rs \
  && echo '' > crates/pack/src/lib.rs \
  && echo '' > crates/server/src/lib.rs \
  && echo 'fn main() {}' > crates/server/src/main.rs \
  && echo 'fn main() {}' > crates/agent/src/main.rs \
+ && echo 'fn main() {}' > crates/cli/src/main.rs \
  && cargo zigbuild --release --locked -p dumbmonit-agent \
       $(for t in $AGENT_TARGETS; do echo "--target $t"; done) \
  && rm -rf crates/proto/src crates/collectors/src crates/agent/src
@@ -245,6 +249,9 @@ COPY --from=agent-pick /dumbmonit-agent /dumbmonit-agent
 # et, pour un relais, DUMBMONIT_AGENT_RELAY=true et DUMBMONIT_AGENT_SITE.
 # Un fichier de configuration monté sur /etc/dumbmonit/agent.yaml est lu aussi.
 # Sans socket Docker monté, la découverte des conteneurs est simplement ignorée.
+# L'agent en conteneur ne se met jamais à jour lui-même : c'est l'image qu'on
+# met à jour, et il le dit au serveur.
+ENV DUMBMONIT_AGENT_CONTAINER=1
 ENTRYPOINT ["/dumbmonit-agent"]
 
 # ---------------------------------------------------------------------------
@@ -256,7 +263,26 @@ ENTRYPOINT ["/dumbmonit-agent"]
 FROM victoriametrics/victoria-metrics:v1.154.0@sha256:4bd592341587d669b7f57d54bbb82bd21ac8675f4e24234b7703a7c0f85197d8 AS victoriametrics
 
 # ---------------------------------------------------------------------------
-# Image finale : les deux binaires et rien d'autre.
+# Signatures Ed25519 des binaires de l'agent (`<binaire>.sig`), que l'agent
+# vérifie avant de se mettre à jour. Vide ici : release.yml la remplace
+# (`--build-context agent-signatures=…`) par les signatures faites avec la clé
+# de publication, hors de la construction. La clé n'entre ainsi ni dans
+# l'image ni dans un cache, et les binaires restent exactement ceux,
+# reproductibles, de l'étape `agent` (docs/development/agent-signing.md).
+# ---------------------------------------------------------------------------
+FROM scratch AS agent-signatures
+
+# ---------------------------------------------------------------------------
+# VictoriaLogs, même principe : un binaire Go statique, lancé par le serveur
+# seulement quand l'administrateur active le stockage des journaux (désactivé
+# par défaut). Le même binaire VictoriaMetrics sert aussi de second magasin
+# pour l'historique long (/data/vm-long), il n'y a donc rien d'autre à ajouter.
+# Version épinglée par son condensé d'index multi-architecture.
+# ---------------------------------------------------------------------------
+FROM victoriametrics/victoria-logs:v1.53.0@sha256:251121fa882af99b95ba0c230a4a2f412ea602d2698c64a96c58dc9842bb755d AS victorialogs
+
+# ---------------------------------------------------------------------------
+# Image finale : le serveur, VictoriaMetrics, VictoriaLogs et rien d'autre.
 # ---------------------------------------------------------------------------
 FROM scratch
 
@@ -267,9 +293,14 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifi
 COPY --from=builder /build/target/release/dumbmonit /dumbmonit
 # VictoriaMetrics embarqué ; `DUMBMONIT_VM_BINARY` permet d'en désigner un autre.
 COPY --from=victoriametrics /victoria-metrics-prod /victoria-metrics-prod
+# VictoriaLogs embarqué (optionnel, activé dans Réglages → Système) ;
+# `DUMBMONIT_VLOGS_BINARY` permet d'en désigner un autre.
+COPY --from=victorialogs /victoria-logs-prod /victoria-logs-prod
 # Binaires de l'agent, servis sur /download/… aux machines qui s'installent.
 # `DUMBMONIT_AGENT_DIR` permet d'en monter d'autres à la place.
 COPY --from=agent /agents /agents
+# Et leurs signatures, quand la publication en a fait.
+COPY --from=agent-signatures / /agents/
 
 # Le serveur ne tourne pas en root : l'image est en 65532:65532 (numérique,
 # pas de `/etc/passwd`), et `/data` est créé ici à ce nom — Docker recopie le
@@ -285,7 +316,8 @@ COPY --from=builder --chmod=1777 /empty /tmp
 ENV DUMBMONIT_BIND=0.0.0.0:8080 \
     DUMBMONIT_DATA_DIR=/data \
     DUMBMONIT_AGENT_DIR=/agents \
-    DUMBMONIT_VM_BINARY=/victoria-metrics-prod
+    DUMBMONIT_VM_BINARY=/victoria-metrics-prod \
+    DUMBMONIT_VLOGS_BINARY=/victoria-logs-prod
 
 VOLUME ["/data"]
 # 8080 : interface web. 8443 : canal chiffré des agents (TLS 1.3, mTLS), le

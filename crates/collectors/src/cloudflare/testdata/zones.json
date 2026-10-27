@@ -1,0 +1,18 @@
+{
+  "result": [
+    {"id": "023e105f4ecef8ad9ca31a8372d0c353", "name": "example.com", "status": "active", "paused": false,
+     "type": "full", "account": {"id": "01a7362d577a6c3019a474fd6f485823", "name": "Example account"},
+     "plan": {"id": "94f3b7b768b0458b56d2cac4fe5ec0f9", "name": "Pro Website"}},
+    {"id": "2b6f1f0a1d3c4e5f60718293a4b5c6d7", "name": "shop.example.com", "status": "active", "paused": false,
+     "type": "full", "account": {"id": "01a7362d577a6c3019a474fd6f485823", "name": "Example account"},
+     "plan": {"id": "0feeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "name": "Free Website"}},
+    {"id": "3c7a2a1b2e4d5f6071829304b5c6d7e8", "name": "staging.example.net", "status": "pending", "paused": false,
+     "type": "full", "account": {"id": "01a7362d577a6c3019a474fd6f485823", "name": "Example account"},
+     "plan": {"id": "0feeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "name": "Free Website"}},
+    {"id": "4d8b3b2c3f5e6071829304a5b6c7d8e9", "name": "old.example.io", "status": "active", "paused": true,
+     "type": "full", "account": {"id": "01a7362d577a6c3019a474fd6f485823", "name": "Example account"},
+     "plan": {"id": "0feeeeeeeeeeeeeeeeeeeeeeeeeeeeee", "name": "Free Website"}}
+  ],
+  "result_info": {"page": 1, "per_page": 50, "count": 4, "total_count": 4, "total_pages": 1},
+  "success": true, "errors": [], "messages": []
+}

@@ -82,11 +82,12 @@ pub async fn create(
             Some(password::hash(password).await?)
         }
         None => {
-            // Sans mot de passe, le compte attend sa première connexion SSO ou
-            // LDAP : l'un des deux doit être actif.
+            // Sans mot de passe, le compte attend sa première connexion SSO
+            // (OIDC ou SAML) ou LDAP : l'un d'eux doit être actif.
             let sso = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
             let directory = ldap::resolve(&state.pool, &state.cipher, &state.config.ldap).await?;
-            if !sso.config.enabled() && !directory.config.enabled() {
+            let saml = crate::auth::saml::load(&state.pool).await?;
+            if !sso.config.enabled() && !directory.config.enabled() && !saml.usable() {
                 return Err(AuthError::Invalid(
                     "Set a password: neither single sign-on nor LDAP is enabled, so this user could not sign in otherwise."
                         .into(),

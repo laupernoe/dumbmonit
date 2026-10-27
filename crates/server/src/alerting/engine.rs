@@ -16,8 +16,10 @@ use tracing::{debug, info, warn};
 
 use crate::alerting::baseline;
 use crate::alerting::cycle::{self, CycleInput, RuleObservations};
+use crate::alerting::log_source;
 use crate::alerting::notify_policy::{self, Outgoing, Recipient};
 use crate::alerting::source::MetricSource;
+use crate::auth::clients;
 use crate::crypto::Cipher;
 use crate::db;
 use crate::notify;
@@ -126,7 +128,11 @@ async fn run(state: AppState, config: AlertingConfig) {
         let now = Utc::now();
 
         let started = std::time::Instant::now();
-        let outcome = evaluate_once(&state.pool, &state.cipher, &state.victoria, &http, now).await;
+        // Les règles « motif de journal » interrogent VictoriaLogs ; son adresse
+        // n'existe que tant que le magasin embarqué tourne.
+        let source =
+            log_source::EngineSource::new(&state.victoria, crate::storage::logs_url(&state).await);
+        let outcome = evaluate_once(&state.pool, &state.cipher, &source, &http, now).await;
         // Le cycle est publié sur `/metrics` même quand il échoue : sa durée et
         // le nombre de règles en échec sont précisément ce qu'on veut voir alors.
         let (evaluated, failed) = match &outcome {
@@ -176,6 +182,7 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
     let forgotten = db::alerts::purge_stale_baselines(pool, baseline_cutoff).await?;
 
     let expired = db::alerts::purge_expired_silences(pool, now).await?;
+    let escalations = crate::oncall::runner::maintenance(pool, now).await?;
 
     // Le registre des notifications ne sert qu'aux fenêtres glissantes du pipeline
     // (plafond horaire, battement, délai minimal) : au-delà, il ne vaut rien.
@@ -188,6 +195,7 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
         historique = removed,
         baselines = forgotten,
         silences = expired,
+        escalades = escalations,
         registre = ledger,
         "maintenance done"
     );
@@ -195,28 +203,61 @@ async fn maintenance(pool: &SqlitePool, config: &AlertingConfig, now: DateTime<U
 }
 
 /// Faits que les alertes « événement » annoncent un par un (voir
-/// [`cycle::Occurrence`]). Aujourd'hui une seule source : les vérifications
-/// de site qui trouvent des changements, pour la règle livrée
-/// [`crate::webchange::ALERT_RULE`]. Une lecture qui échoue n'empêche pas le
-/// cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
+/// [`cycle::Occurrence`]). Trois sources : les vérifications de site qui
+/// trouvent des changements, pour la règle livrée
+/// [`crate::webchange::ALERT_RULE`], la dernière exécution en échec d'un
+/// moniteur en poussée, dont le code et la sortie vont dans le message de la
+/// règle `push_failed`, et les événements du journal Windows remontés par les
+/// agents, pour les règles `windows_event_*`
+/// ([`crate::collectors::agent::eventlog`]). Une lecture qui échoue n'empêche
+/// pas le cycle : l'alerte se comporte alors comme une alerte d'état ordinaire.
 async fn occurrences(pool: &SqlitePool) -> HashMap<(String, i64), cycle::Occurrence> {
-    let checks = match crate::webchange::store::changed_checks(pool).await {
-        Ok(checks) => checks,
-        Err(error) => {
-            warn!(?error, "website checks not read for alerting");
-            return HashMap::new();
+    let mut found = HashMap::new();
+    match crate::webchange::store::changed_checks(pool).await {
+        Ok(checks) => {
+            for (target, at, changes, summary) in checks {
+                // `datetime('now')` de SQLite : UTC, sans fuseau.
+                let parsed = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S");
+                let Ok(at) = parsed else { continue };
+                let occurrence =
+                    cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
+                found.insert((crate::webchange::ALERT_RULE.to_string(), target), occurrence);
+            }
         }
-    };
-    checks
-        .into_iter()
-        .filter_map(|(target, at, changes, summary)| {
-            // `datetime('now')` de SQLite : UTC, sans fuseau.
-            let at = chrono::NaiveDateTime::parse_from_str(&at, "%Y-%m-%d %H:%M:%S").ok()?;
-            let occurrence =
-                cycle::Occurrence { at: at.and_utc(), value: changes as f64, detail: summary };
-            Some(((crate::webchange::ALERT_RULE.to_string(), target), occurrence))
-        })
-        .collect()
+        Err(error) => warn!(?error, "website checks not read for alerting"),
+    }
+    match crate::collectors::push::store::failed_last_runs(pool).await {
+        Ok(runs) => {
+            for run in runs {
+                let finished = run.finished_ms.and_then(DateTime::<Utc>::from_timestamp_millis);
+                let Some(at) = finished else { continue };
+                // La série `push_run_failed` vaut 1 tant que la dernière exécution
+                // terminée a échoué.
+                let occurrence = cycle::Occurrence {
+                    at,
+                    value: 1.0,
+                    detail: Some(crate::collectors::push::failure_detail(&run)),
+                };
+                found.insert(("push_failed".to_string(), run.target_id), occurrence);
+            }
+        }
+        Err(error) => warn!(?error, "push runs not read for alerting"),
+    }
+    match crate::collectors::agent::eventlog::occurrences(pool).await {
+        Ok(events) => {
+            found.extend(events.into_iter().filter_map(|event| {
+                let at = DateTime::from_timestamp_millis(event.announced_ms)?;
+                let occurrence = cycle::Occurrence {
+                    at,
+                    value: event.matches as f64,
+                    detail: Some(event.detail).filter(|d| !d.is_empty()),
+                };
+                Some(((event.rule_uid.to_string(), event.target_id), occurrence))
+            }));
+        }
+        Err(error) => warn!(?error, "agent event log not read for alerting"),
+    }
+    found
 }
 
 /// Exécute un cycle complet et renvoie son bilan.
@@ -241,7 +282,14 @@ pub async fn evaluate_once(
 
     let targets = db::alerts::list_target_nodes(pool).await?;
     let previous = db::alerts::load_states(pool).await?;
-    let silences = db::alerts::list_silences(pool).await?;
+    // Mode MSP : règles, silences et canaux d'un client ne concernent que les
+    // équipements de ce client (voir `scope_to_clients`).
+    let target_clients = clients::target_clients(pool).await?;
+    let silences = scope_silences(
+        db::alerts::list_silences(pool).await?,
+        &clients::owners(pool, clients::Kind::Silence).await?,
+        &target_clients,
+    );
     let overrides = policy_store::list_overrides(pool, None, None).await?;
     let mut baselines = db::alerts::load_baselines(pool, baseline::bucket_of(now)).await?;
 
@@ -252,7 +300,14 @@ pub async fn evaluate_once(
     // sérialiser garantit qu'on ne submerge jamais VictoriaMetrics au démarrage,
     // quand toutes les règles sont évaluées pour la première fois.
     for rule in rules {
-        let series = match source.instant(&rule.query).await {
+        let fetched = if rule.kind == crate::alerting::model::RuleKind::LogPattern {
+            source
+                .log_matches(&rule.query, rule.params.log_window_secs, rule.params.log_per_target)
+                .await
+        } else {
+            source.instant(&rule.query).await
+        };
+        let series = match fetched {
             Ok(series) => {
                 report.rules_evaluated += 1;
                 Some(series)
@@ -266,13 +321,15 @@ pub async fn evaluate_once(
         };
         observations.push(RuleObservations { rule, series });
     }
+    let rule_clients = clients::owners(pool, clients::Kind::Rule).await?;
+    scope_rules(&mut observations, &rule_clients, &target_clients);
 
     // La politique globale est chargée avant le cycle : son délai d'escalade
     // participe à la décision de notifier, au même titre que le rappel d'une
     // règle.
     let global = policy_store::load_global(pool).await?;
     let occurrences = occurrences(pool).await;
-    let outcome = cycle::plan_cycle(
+    let mut outcome = cycle::plan_cycle(
         CycleInput {
             now,
             observations,
@@ -286,6 +343,10 @@ pub async fn evaluate_once(
         },
         &mut baselines,
     );
+
+    for group in &mut outcome.groups {
+        group.client_id = group.target_id.and_then(|id| target_clients.get(&id).copied());
+    }
 
     report.alerts_tracked = outcome.alerts.len();
     for alert in &outcome.alerts {
@@ -312,6 +373,7 @@ pub async fn evaluate_once(
     // les filtres de canal, les heures calmes, la fenêtre de regroupement et le
     // plafond horaire avant de partir (voir `notify_policy`).
     let channels = db::alerts::list_channels(pool, cipher).await?;
+    let channel_clients = clients::owners(pool, clients::Kind::Channel).await?;
     let channel_policies = policy_store::load_channel_policies(pool).await?;
     let lookback = policy_store::lookback(&global, &channel_policies);
     let ledger = policy_store::load_ledger(pool, now, lookback).await?;
@@ -322,6 +384,7 @@ pub async fn evaluate_once(
             kind: channel.kind.clone(),
             enabled: channel.enabled,
             policy: channel_policies.get(&channel.id).cloned().unwrap_or_default(),
+            client: channel_clients.get(&channel.id).copied(),
         })
         .collect();
     let plan = notify_policy::plan(&outcome.groups, &recipients, &global, &ledger, now);
@@ -346,6 +409,20 @@ pub async fn evaluate_once(
         &mut report,
     )
     .await;
+
+    // Astreintes : les escalades en cours avancent (étape suivante, arrêt à
+    // l'acquittement), les relèves sont annoncées. Une erreur ici ne doit pas
+    // empêcher le cycle d'enregistrer ce qui précède.
+    let oncall = crate::oncall::runner::Ctx {
+        pool,
+        cipher,
+        http,
+        public_url: public_url.as_deref(),
+        action_key: action_key.as_ref(),
+    };
+    if let Err(error) = crate::oncall::runner::tick(&oncall, now).await {
+        warn!(?error, "on-call pass failed");
+    }
 
     // L'historique explique pourquoi une transition n'est pas partie : la raison
     // du cycle (suppression, maintenance, apprentissage) prime, sinon celle de la
@@ -388,6 +465,60 @@ pub async fn evaluate_once(
     Ok(report)
 }
 
+/// Client de l'équipement d'une série (étiquette `target`), s'il est connu.
+fn series_client(
+    labels: &std::collections::BTreeMap<String, String>,
+    target_clients: &HashMap<i64, i64>,
+) -> Option<i64> {
+    let id = labels.get("target")?.parse::<i64>().ok()?;
+    target_clients.get(&id).copied()
+}
+
+/// Une règle d'un client n'évalue que les séries des équipements de ce client :
+/// les autres sont retirées avant le cycle, comme si elles ne violaient rien.
+fn scope_rules(
+    observations: &mut [RuleObservations],
+    rule_clients: &HashMap<i64, i64>,
+    target_clients: &HashMap<i64, i64>,
+) {
+    for observation in observations {
+        let Some(client) = rule_clients.get(&observation.rule.id).copied() else { continue };
+        if let Some(series) = &mut observation.series {
+            series.retain(|point| series_client(&point.labels, target_clients) == Some(client));
+        }
+    }
+}
+
+/// Un silence d'un client sans équipement désigné (étiquettes, ou « tout ») ne
+/// couvre que les équipements de ce client : il est déplié en un silence par
+/// équipement. Sans équipement, il ne couvre rien.
+fn scope_silences(
+    silences: Vec<crate::alerting::silence::Silence>,
+    silence_clients: &HashMap<i64, i64>,
+    target_clients: &HashMap<i64, i64>,
+) -> Vec<crate::alerting::silence::Silence> {
+    let mut scoped = Vec::with_capacity(silences.len());
+    for silence in silences {
+        match (silence_clients.get(&silence.id), silence.target_id) {
+            (Some(client), None) => {
+                let mut targets: Vec<i64> = target_clients
+                    .iter()
+                    .filter(|(_, owner)| *owner == client)
+                    .map(|(id, _)| *id)
+                    .collect();
+                targets.sort_unstable();
+                for target in targets {
+                    let mut one = silence.clone();
+                    one.target_id = Some(target);
+                    scoped.push(one);
+                }
+            }
+            _ => scoped.push(silence),
+        }
+    }
+    scoped
+}
+
 /// Envoie les messages décidés par la politique et consigne le résultat.
 ///
 /// Un envoi raté remet ses lignes en file : le cycle suivant retente, exactement
@@ -409,12 +540,64 @@ async fn send_outgoing(
         let Some(config) = channels.iter().find(|channel| channel.id == out.channel_id) else {
             continue;
         };
+        // Canal d'astreinte : pas de message, une escalade s'ouvre (ou se
+        // referme) et `oncall::runner::tick` l'appellera dans la foulée.
+        if config.kind == crate::oncall::CHANNEL_KIND {
+            let ctx = crate::oncall::runner::Ctx {
+                pool,
+                cipher: store.cipher,
+                http,
+                public_url,
+                action_key,
+            };
+            let error = crate::oncall::runner::engage(&ctx, config, &out.digest, now)
+                .await
+                .err()
+                .map(|error| format!("{error:#}"));
+            let delivery = notify::DeliveryReport {
+                channel_id: config.id,
+                channel_name: config.name.clone(),
+                transient: false,
+                error,
+            };
+            stats().notification(&config.kind, !delivery.is_success());
+            if delivery.is_success() {
+                report.notifications_sent += 1;
+                if let Err(error) =
+                    policy_store::record_sent(pool, out.channel_id, &out.queue_ids, &out.sent, now)
+                        .await
+                {
+                    warn!(?error, "sent notification not recorded");
+                }
+            } else {
+                report.notifications_failed += 1;
+                warn!(channel = %config.name, "on-call escalation not started");
+            }
+            if let Err(error) = db::alerts::record_delivery(pool, &delivery, now).await {
+                warn!(?error, "delivery report not recorded");
+            }
+            continue;
+        }
         let mut message = notify::render_digest(&out.digest, public_url);
+        // Procédures des alertes qui sonnent : un lien, jamais leur texte.
+        if let Some(base) = public_url {
+            use crate::remediation::runbooks;
+            let done = runbooks::attach_to_message(pool, &mut message, &out.digest, base).await;
+            if let Err(error) = done {
+                warn!(?error, "runbook links not added to the notification");
+            }
+        }
         if let (Some(key), Some(base)) = (action_key, public_url) {
             let alerts = notify::message::actionable_alerts(&out.digest);
             message.actions = notify::action_link::build(key, base, &alerts, now);
         }
-        let delivery = notify::deliver_stored(store, http, config, &message).await;
+        // Un canal de tickets ne reçoit pas un message : il applique chaque alerte
+        // du résumé à son ticket (ouvrir, commenter, fermer).
+        let delivery = if notify::tickets::is_ticket_kind(&config.kind) {
+            notify::tickets::deliver(pool, http, config, &out.digest, public_url, now).await
+        } else {
+            notify::deliver_stored(store, http, config, &message).await
+        };
 
         stats().notification(&config.kind, !delivery.is_success());
         if delivery.is_success() {

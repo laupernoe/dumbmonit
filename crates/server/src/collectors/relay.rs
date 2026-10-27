@@ -53,6 +53,9 @@ pub struct Job {
     pub deadline: Instant,
     /// Renseigné une fois l'agent venu la chercher.
     pub taken_at: Option<Instant>,
+    /// Ronde multi-emplacements dont la sonde fait partie (voir
+    /// [`crate::multisite`]) : son compte rendu va à la ronde, pas à la cible.
+    pub round: Option<u64>,
     reply: Option<oneshot::Sender<JobResult>>,
 }
 
@@ -140,8 +143,37 @@ impl RelayHub {
         discover: bool,
         deadline: Instant,
     ) -> Result<oneshot::Receiver<JobResult>, EnqueueError> {
+        self.push(agent_id, target, timeout, discover, deadline, None)
+    }
+
+    /// Dépose la sonde d'une ronde multi-emplacements : même file, mais le
+    /// compte rendu est remis à la ronde `round`.
+    pub fn enqueue_round(
+        &self,
+        agent_id: TargetId,
+        target: Target,
+        timeout: Duration,
+        deadline: Instant,
+        round: u64,
+    ) -> Result<oneshot::Receiver<JobResult>, EnqueueError> {
+        self.push(agent_id, target, timeout, false, deadline, Some(round))
+    }
+
+    fn push(
+        &self,
+        agent_id: TargetId,
+        target: Target,
+        timeout: Duration,
+        discover: bool,
+        deadline: Instant,
+        round: Option<u64>,
+    ) -> Result<oneshot::Receiver<JobResult>, EnqueueError> {
         let mut inner = self.lock();
-        let same = |job: &Job| job.target.id == target.id && job.discover == discover;
+        // Une même cible peut être sondée par plusieurs agents à la fois (sonde
+        // multi-emplacements) : le doublon s'apprécie par agent.
+        let same = |job: &Job| {
+            job.agent_id == agent_id && job.target.id == target.id && job.discover == discover
+        };
         let queued_already = inner.queued.get(&agent_id).is_some_and(|q| q.iter().any(same));
         if queued_already || inner.in_flight.values().any(same) {
             return Err(EnqueueError::Busy);
@@ -157,6 +189,7 @@ impl RelayHub {
             discover,
             deadline,
             taken_at: None,
+            round,
             reply: Some(tx),
         });
         inner.waker(agent_id).notify_one();
@@ -282,6 +315,26 @@ pub fn expired_message(job: &Job) -> String {
 /// a été reconnu. Puis répond à qui attendait.
 pub async fn settle(state: &AppState, mut job: Job, result: JobResult) {
     let target = job.target.clone();
+    if let Some(round) = job.round {
+        let outcome = crate::multisite::from_relay(state, &job, &result);
+        crate::stats::stats().probe(&target.kind, !outcome.is_up());
+        crate::multisite::deliver(
+            state,
+            target.id,
+            round,
+            crate::multisite::Location::Agent(job.agent_id),
+            outcome,
+        )
+        .await;
+        job.reply(result);
+        return;
+    }
+    // Relevé de configuration (`netconfig`) : son demandeur range le texte et
+    // le verdict lui-même ; rien ne part vers la base de séries.
+    if target.kind == crate::netconfig::KIND && !job.discover {
+        job.reply(result);
+        return;
+    }
     match &result {
         JobResult::Done(outcome) => {
             if job.discover {
@@ -429,6 +482,7 @@ mod tests {
             error: None,
             samples: Vec::new(),
             profile_id: None,
+            netconfig: None,
         }));
         assert!(matches!(rx.await, Ok(JobResult::Done(_))));
         assert_eq!(hub.pending(9), 0);
@@ -470,6 +524,9 @@ mod tests {
         // Une autre cible aussi.
         hub.enqueue(9, target(2), Duration::from_secs(10), false, deadline).expect("autre cible");
         assert_eq!(hub.pending(9), 3);
+        // La même cible confiée à un autre agent (sonde multi-emplacements) aussi.
+        hub.enqueue_round(8, target(1), Duration::from_secs(10), deadline, 1).expect("autre agent");
+        assert_eq!(hub.pending(8), 1);
     }
 
     #[tokio::test]

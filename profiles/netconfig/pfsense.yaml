@@ -1,0 +1,9 @@
+# Sauvegarde des configurations : pfSense, fichier `config.xml` lu par SSH.
+id: pfsense
+label: pfSense (config.xml over SSH)
+transport: ssh_exec
+commands:
+  - cat /cf/conf/config.xml
+volatile: []
+secrets:
+  - '<(?:password|bcrypt-hash|sha512-hash|md5-hash|nt-hash|pre-shared-key|community|ldap_bindpw|radius_secret|apikey|api_key|authkey|prv|shared_key|tls|secret|ipsecpsk|passwordenc|psk|key)>(?P<secret>[^<]+)</'

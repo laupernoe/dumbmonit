@@ -87,6 +87,18 @@
 
 	const folded = $derived(fold(sky.needsYou));
 
+	/** The host-down alert of an unreachable device, if a rule has raised one (pending or not). */
+	function deviceAlertOf(item: Folded) {
+		if (item.row.kind !== 'device') return undefined;
+		const id = item.row.target.id;
+		for (const other of sky.needsYou) {
+			if (other.kind === 'alert' && other.alert.target_id === id && other.alert.rule_uid === 'host_down') {
+				return other.alert;
+			}
+		}
+		return undefined;
+	}
+
 	interface Group {
 		key: string;
 		label: string;
@@ -371,6 +383,7 @@
 								showPlate={item.row.plate !== group.label && !(groupBy === 'device' && SEVERITY_WORDS.has(item.row.plate))}
 								showOpen={groupBy === 'severity'}
 								{silences}
+								deviceAlert={deviceAlertOf(item)}
 								{onchanged}
 								{selecting}
 								selected={selected.has(item.row.key)}

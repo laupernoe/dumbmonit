@@ -112,7 +112,9 @@ Leur présentation dépend du canal :
 | ntfy, Telegram, Web Push | Boutons sous la notification |
 | Discord, Slack, courriel et tous les autres canaux | Liens en fin de message |
 | Webhook personnalisé | Liens dans `{{message}}`, et les variables `{{dismiss_url}}` / `{{ack_url}}` / `{{snooze_url}}` |
-| PagerDuty, Opsgenie | Rien : acquittez dans le service lui-même |
+| PagerDuty, Opsgenie, Grafana OnCall, SIGNL4 | Rien : acquittez dans le service lui-même |
+| Jira, GLPI, Zammad, GitHub Issues, GitLab Issues | Rien : l'acquittement est ajouté au ticket en commentaire |
+| Vonage, Telnyx, ASPSMS (SMS) | Rien : un lien signé coûterait plusieurs segments de SMS |
 
 Telegram n'accepte de boutons que vers une adresse `https` avec un nom de domaine ;
 avec une adresse IP ou une URL en `http`, les actions restent des liens dans le
@@ -782,6 +784,79 @@ en segments facturés séparément.
 > Sur un compte d'essai, Twilio n'envoie qu'aux numéros que vous avez
 > vérifiés.
 
+### WhatsApp (Cloud API)
+
+Utilise l'API Cloud WhatsApp Business de Meta. Dans la console développeur Meta,
+créez une application de type *Business*, ajoutez le produit **WhatsApp** et notez
+le **Phone number ID** sous *API Setup*. Créez un jeton permanent pour un
+*utilisateur système* avec la permission `whatsapp_business_messaging`.
+
+- **Réglages** — `phone_number_id`, `to` (liste de numéros au format international)
+- **Secrets** — `token`
+
+> Meta n'autorise le texte libre que **dans les 24 heures suivant le dernier message
+> du destinataire** à votre numéro. Faites écrire « bonjour » au numéro par chaque
+> destinataire. Hors de cette fenêtre il faut un modèle approuvé, que ce canal
+> n'utilise pas.
+
+### WhatsApp (CallMeBot)
+
+Une passerelle gratuite pour vous notifier vous-même, sans compte Meta. Ajoutez le
+contact CallMeBot, envoyez-lui `I allow callmebot to send me messages` : il répond
+avec une clé d'API.
+
+- **Réglages** — `phone` (votre numéro au format international)
+- **Secrets** — `api_key`
+
+CallMeBot est un service tiers sans garantie de disponibilité : pour ce qui est
+critique, préférez l'API Cloud.
+
+### Threema Gateway
+
+Sur [gateway.threema.ch](https://gateway.threema.ch), créez un ID Gateway *Basic*
+(huit caractères commençant par `*`) et notez son secret.
+
+- **Réglages** — `from` (l'ID Gateway), `to` (liste d'ID Threema de huit caractères)
+- **Secrets** — `secret`
+
+Le message est chiffré par le serveur Threema (mode basique), ce qui suffit pour une
+alerte et ne demande aucune paire de clés. Chaque message consomme un crédit Gateway.
+
+### Webex
+
+Sur [developer.webex.com](https://developer.webex.com), créez un **Bot** (*My Apps →
+Create a Bot*), copiez son jeton, puis ajoutez le bot à l'espace. L'identifiant de
+l'espace est renvoyé par l'appel d'API *List Rooms*.
+
+- **Réglages** — `room_id`
+- **Secrets** — `token` (le jeton du bot)
+
+Le message est envoyé en Markdown.
+
+### SMS via Vonage
+
+La clé et le secret d'API sont sur le tableau de bord Vonage.
+
+- **Réglages** — `from` (un numéro ou un nom alphanumérique), `to` (liste)
+- **Secrets** — `api_key`, `api_secret`
+
+### SMS via Telnyx
+
+Créez une clé d'API (v2) dans le Mission Control Portal et achetez un numéro avec
+SMS activé.
+
+- **Réglages** — `from` (le numéro Telnyx), `to` (liste, format E.164 avec le `+`)
+- **Secrets** — `api_key`
+
+### SMS via ASPSMS
+
+- **Réglages** — `userkey`, `originator` (11 caractères au plus), `to` (liste)
+- **Secrets** — `password` (le mot de passe d'API)
+
+Les trois canaux SMS envoient 300 caractères au plus, sans émoji, sur une seule
+ligne. Ils n'ont pas de lien d'acquittement ni de mise en pause — un lien signé
+coûterait plusieurs segments — : utilisez pour cela un canal de messagerie.
+
 ### PagerDuty
 
 Dans PagerDuty : **Services → votre service → Integrations → Add
@@ -816,6 +891,130 @@ alias.
 > canal reste pour les installations existantes ; pour une nouvelle,
 > préférez PagerDuty ou un canal personnalisé pointant vers Jira Service
 > Management.
+
+### Grafana OnCall
+
+Dans Grafana OnCall : **Integrations → New integration → Webhook**, puis copiez le
+point d'accès HTTP.
+
+- **Secrets** — `webhook_url`
+
+Une alerte ouvre un groupe d'alertes (`state: alerting`) et sa résolution le résout
+(`state: ok`), rapprochés par un identifiant `dumbmonit-` propre à chaque équipement.
+L'acquittement se fait dans OnCall.
+
+### SIGNL4
+
+Dans SIGNL4, copiez le webhook de l'équipe depuis **Teams → Team settings** : c'est
+`https://connect.signl4.com/webhook/` suivi du secret d'équipe.
+
+- **Secrets** — `webhook_url`
+
+Une alerte arrive sur les téléphones de l'équipe (`X-S4-Status: new`) et sa
+résolution la ferme (`resolved`), rapprochées par un identifiant externe par
+équipement.
+
+### DumbMonit on-call
+
+Prévient la personne d'astreinte, puis escalade étape par étape jusqu'à ce que
+quelqu'un acquitte. Un seul réglage, la **politique d'escalade** à exécuter, et
+aucun secret. Plannings, contacts et politiques sont décrits dans
+[Astreintes](alerting/oncall.md) ; le canal passe par le routage habituel
+(étiquettes, sévérité minimale, canaux choisis par règle).
+
+### Tickets automatiques (Jira, GLPI, Zammad, GitHub, GitLab)
+
+Ces cinq canaux n'envoient pas de message : ils tiennent **un ticket par alerte**.
+
+- Quand une alerte s'ouvre, le ticket est créé : titre, description avec un lien
+  vers l'équipement dans DumbMonit (renseignez l'adresse publique dans la politique
+  de notification) et une priorité tirée de la sévérité.
+- La référence du ticket est mémorisée par alerte et par canal : un rappel ou une
+  nouvelle tentative n'en ouvre jamais un second tant que le premier est ouvert.
+- Les faits notables s'ajoutent en commentaire : une escalade, une alerte que
+  personne n'a acquittée à temps, une nouvelle constatation, et un acquittement
+  fait dans DumbMonit.
+- À la résolution, DumbMonit commente puis ferme le ticket (transition, statut ou
+  état réglé sur le canal).
+- **Rouvrir si l'alerte revient dans (heures)** — si la même alerte revient dans ce
+  délai, le ticket clos est rouvert avec un commentaire au lieu d'en ouvrir un
+  nouveau. Vide ou 0 : un nouveau ticket à chaque fois. Si le ticket ne peut pas
+  être rouvert (transition absente, ticket supprimé), un nouveau est créé.
+- Le lien du ticket apparaît sur l'alerte, dans ses détails.
+- Les échecs apparaissent dans la « dernière erreur » du canal. Une panne passagère
+  (service en panne, 429) est retentée avec un délai croissant ; une erreur
+  définitive (jeton refusé, projet inconnu) est signalée et non retentée.
+- **Envoyer un test** crée un ticket de test puis le ferme aussitôt. S'il ne peut
+  pas être fermé, l'erreur le dit et nomme le ticket à fermer à la main.
+- Les liens d'acquittement et de report ne sont pas ajoutés à ces canaux.
+
+Les jetons sont chiffrés et jamais remontrés. Créez un compte ou un jeton dédié,
+avec les seuls droits nécessaires.
+
+### Jira
+
+Fonctionne avec Jira Cloud et Jira Data Center.
+
+- **Cloud** : créez un jeton d'API sur <https://id.atlassian.com/manage-profile/security/api-tokens>
+  et indiquez l'e-mail du compte.
+- **Data Center** : **Profil → Personal Access Tokens** ; pas d'e-mail.
+
+- **Réglages** — `server_url`, `email`
+  (Cloud uniquement ; vide sur Data Center), `project` (la clé du projet), `issue_type` (défaut `Task`),
+  `labels` (liste), `priority` (`map` pose Highest, Medium ou Low selon la sévérité ;
+  `none` pour un projet sans champ priorité), `close_transition` (défaut `Done`),
+  `reopen_transition` (défaut `Reopen`), `reopen_hours`
+- **Secrets** — `api_token`
+
+Les transitions se choisissent par leur nom (celui de la transition ou du statut
+cible, sans tenir compte de la casse) parmi celles offertes depuis le statut actuel
+du ticket. Si le nom n'existe pas, l'erreur liste celles qui existent.
+
+### GLPI
+
+Activez l'API REST dans **Configuration → Générale → API**, créez un client d'API et
+copiez le **jeton d'API** de l'utilisateur (*Préférences → Clés d'accès distant*).
+
+- **Réglages** — `server_url` (l'adresse de GLPI ; `/apirest.php` est ajouté),
+  `entity_id`, `category_id` (nombres, optionnels), `close_status` (`solved` ou
+  `closed`), `reopen_hours`
+- **Secrets** — `user_token`, `app_token` (jeton d'application du client d'API, s'il
+  en exige un)
+
+Le ticket est un incident ; urgence, impact et priorité suivent la sévérité. Les
+escalades s'ajoutent en suivi. La réouverture remet le statut à *Nouveau*.
+
+### Zammad
+
+Créez un jeton d'accès dans **Profil → Accès par jeton** avec la permission
+`ticket.agent`.
+
+- **Réglages** — `server_url`, `group`, `customer` (e-mail ou identifiant),
+  `close_state` (défaut `closed`), `reopen_state` (défaut `open`), `reopen_hours`
+- **Secrets** — `token`
+
+Les tickets sont créés avec une note interne ; la priorité est basse, normale ou
+haute selon la sévérité.
+
+### GitHub Issues
+
+Créez un jeton à granularité fine (**Settings → Developer settings**) limité au
+dépôt, avec la permission **Issues : lecture et écriture**.
+
+- **Réglages** — `repository` (`owner/name`), `labels` (liste ; ils doivent exister),
+  `api_url` (GitHub Enterprise Server uniquement, par exemple
+  `https://ghe.example.org/api/v3`), `reopen_hours`
+- **Secrets** — `token`
+
+La résolution ferme l'issue comme *terminée*.
+
+### GitLab Issues
+
+Créez un jeton d'accès de projet (ou personnel) avec le périmètre `api`.
+
+- **Réglages** — `server_url`, `project` (identifiant numérique ou `groupe/projet`),
+  `labels` (liste), `reopen_hours`
+- **Secrets** — `token`
 
 ### Webhook personnalisé
 

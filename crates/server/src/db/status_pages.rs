@@ -50,6 +50,17 @@ pub struct StatusPage {
     /// Réglages de référencement (migration 0065), servis en objet JSON.
     #[serde(serialize_with = "serialize_seo")]
     pub seo: String,
+    /// Mode d'accès (migration 0085) : `public`, `password` ou `users`.
+    pub access_mode: String,
+    /// Un mot de passe d'accès est enregistré (l'empreinte, elle, ne sort jamais).
+    pub has_password: bool,
+}
+
+impl StatusPage {
+    /// Vrai si tout le monde peut lire la page (aucun mot de passe, aucun compte).
+    pub fn is_public(&self) -> bool {
+        self.access_mode == "public"
+    }
 }
 
 /// Scènes de ville de la bannière. Le jeu est fermé : chaque identifiant a son
@@ -130,7 +141,8 @@ macro_rules! select_page {
         concat!(
             "SELECT id, slug, title, description, published, theme, show_uptime_days, ",
             "created_at, updated_at, accent, scenes, scene_rotation, simple, show_calendar, show_latency, footer_text, homepage_url, ",
-            "logo_type, subscribe_channel_id, link_origin, domain, seo FROM status_pages ",
+            "logo_type, subscribe_channel_id, link_origin, domain, seo, access_mode, ",
+            "(access_password_hash IS NOT NULL) AS has_password FROM status_pages ",
             $tail
         )
     };
@@ -290,6 +302,46 @@ pub async fn create_page(pool: &SqlitePool, input: &StatusPageInput) -> Result<i
         set_group_labels(pool, id, labels).await?;
     }
     Ok(id)
+}
+
+/// Empreinte Argon2id du mot de passe d'accès d'une page, si elle en a un.
+pub async fn access_password_hash(pool: &SqlitePool, id: i64) -> Result<Option<String>> {
+    let row: Option<(Option<String>,)> =
+        sqlx::query_as("SELECT access_password_hash FROM status_pages WHERE id = ?")
+            .bind(id)
+            .fetch_optional(pool)
+            .await
+            .context("lecture du mot de passe d'accès d'une page de statut")?;
+    Ok(row.and_then(|(hash,)| hash))
+}
+
+/// Fixe le mode d'accès d'une page. `hash` : `Some(Some(h))` remplace
+/// l'empreinte, `Some(None)` l'efface, `None` la laisse.
+pub async fn set_access(
+    pool: &SqlitePool,
+    id: i64,
+    mode: &str,
+    hash: Option<Option<&str>>,
+) -> Result<bool> {
+    let result = match hash {
+        Some(hash) => sqlx::query(
+            "UPDATE status_pages SET access_mode = ?, access_password_hash = ?,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+        )
+        .bind(mode)
+        .bind(hash)
+        .bind(id),
+        None => sqlx::query(
+            "UPDATE status_pages SET access_mode = ?,
+                 updated_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now') WHERE id = ?",
+        )
+        .bind(mode)
+        .bind(id),
+    }
+    .execute(pool)
+    .await
+    .context("mode d'accès de la page de statut")?;
+    Ok(result.rows_affected() > 0)
 }
 
 /// Date de création du plus ancien appareil montré par la page : l'âge de ses
@@ -870,19 +922,41 @@ pub async fn set_logo_type(pool: &SqlitePool, id: i64, logo_type: Option<&str>) 
 pub struct Subscriber {
     pub id: i64,
     pub page_id: i64,
+    /// Destination de l'abonné, quel que soit son canal : adresse, numéro E.164
+    /// ou URL (voir `kind`).
     pub email: String,
     /// Jamais renvoyé par l'API : il vaut désabonnement.
     #[serde(skip)]
     pub token: String,
     pub confirmed_at: Option<String>,
     pub created_at: String,
+    /// `email`, `sms`, `webhook` ou `slack`.
+    pub kind: String,
+    /// Identifiants d'équipement suivis (JSON) ; `None` : tous.
+    #[serde(skip)]
+    pub components: Option<String>,
+    /// Secret HMAC du webhook, chiffré.
+    #[serde(skip)]
+    pub secret: Option<Vec<u8>>,
+    #[serde(skip)]
+    pub code_hash: Option<String>,
+    #[serde(skip)]
+    pub code_attempts: i64,
+}
+
+impl Subscriber {
+    /// Services suivis ; `None` : tous.
+    pub fn component_ids(&self) -> Option<Vec<i64>> {
+        self.components.as_deref().and_then(|raw| serde_json::from_str(raw).ok())
+    }
 }
 
 /// Colonnes lues d'un abonné, dans l'ordre de [`Subscriber`].
 macro_rules! select_subscriber {
     ($tail:literal) => {
         concat!(
-            "SELECT id, page_id, email, token, confirmed_at, created_at FROM status_subscribers ",
+            "SELECT id, page_id, email, token, confirmed_at, created_at, kind, components, ",
+            "secret, code_hash, code_attempts FROM status_subscribers ",
             $tail
         )
     };
@@ -941,34 +1015,68 @@ pub async fn subscriber_by_token(
         .context("abonné par jeton")
 }
 
+/// Données d'une demande d'abonnement non confirmée.
+pub struct PendingSubscriber<'a> {
+    pub page_id: i64,
+    pub kind: &'a str,
+    pub destination: &'a str,
+    pub token: &'a str,
+    pub components: Option<&'a str>,
+    pub secret: Option<&'a [u8]>,
+    pub code_hash: Option<&'a str>,
+}
+
 /// Crée un abonné non confirmé, ou renouvelle le jeton et la date d'une demande
 /// restée sans confirmation.
 pub async fn upsert_pending_subscriber(
     pool: &SqlitePool,
-    page_id: i64,
-    email: &str,
-    token: &str,
+    pending: &PendingSubscriber<'_>,
 ) -> Result<()> {
     sqlx::query(
-        "INSERT INTO status_subscribers (page_id, email, token) VALUES (?, ?, ?)
+        "INSERT INTO status_subscribers
+             (page_id, email, token, kind, components, secret, code_hash)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT (page_id, email) DO UPDATE SET
              token = excluded.token,
+             kind = excluded.kind,
+             components = excluded.components,
+             secret = excluded.secret,
+             code_hash = excluded.code_hash,
+             code_attempts = 0,
              created_at = strftime('%Y-%m-%dT%H:%M:%SZ', 'now')
          WHERE status_subscribers.confirmed_at IS NULL",
     )
-    .bind(page_id)
-    .bind(email)
-    .bind(token)
+    .bind(pending.page_id)
+    .bind(pending.destination)
+    .bind(pending.token)
+    .bind(pending.kind)
+    .bind(pending.components)
+    .bind(pending.secret)
+    .bind(pending.code_hash)
     .execute(pool)
     .await
     .context("enregistrement d'un abonné")?;
     Ok(())
 }
 
+/// Compte un essai de code SMS et rend le nombre d'essais déjà faits avant lui.
+pub async fn bump_code_attempts(pool: &SqlitePool, id: i64) -> Result<i64> {
+    let (before,): (i64,) = sqlx::query_as(
+        "UPDATE status_subscribers SET code_attempts = code_attempts + 1 WHERE id = ?
+         RETURNING code_attempts - 1",
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await
+    .context("essais de code")?;
+    Ok(before)
+}
+
 pub async fn confirm_subscriber(pool: &SqlitePool, id: i64) -> Result<()> {
     sqlx::query(
         "UPDATE status_subscribers
-         SET confirmed_at = COALESCE(confirmed_at, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'))
+         SET confirmed_at = COALESCE(confirmed_at, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
+             code_hash = NULL
          WHERE id = ?",
     )
     .bind(id)
@@ -998,6 +1106,165 @@ pub async fn purge_unconfirmed(pool: &SqlitePool, before: &str) -> Result<u64> {
             .await
             .context("purge des abonnés non confirmés")?;
     Ok(result.rows_affected())
+}
+
+// --------------------------------------------------------------------------
+// Canaux d'abonnement d'une page, services d'une annonce, file d'envoi
+// --------------------------------------------------------------------------
+
+/// Canaux d'abonnement ouverts sur une page, hors courriel (réglé par
+/// `subscribe_channel_id`).
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct SubscriptionChannels {
+    pub sms_channel_id: Option<i64>,
+    pub webhook: bool,
+    pub slack: bool,
+}
+
+pub async fn subscription_channels(
+    pool: &SqlitePool,
+    page_id: i64,
+) -> Result<SubscriptionChannels> {
+    let row: Option<(Option<i64>, i64, i64)> = sqlx::query_as(
+        "SELECT subscribe_sms_channel_id, subscribe_webhook, subscribe_slack
+         FROM status_pages WHERE id = ?",
+    )
+    .bind(page_id)
+    .fetch_optional(pool)
+    .await
+    .context("canaux d'abonnement")?;
+    Ok(row
+        .map(|(sms_channel_id, webhook, slack)| SubscriptionChannels {
+            sms_channel_id,
+            webhook: webhook != 0,
+            slack: slack != 0,
+        })
+        .unwrap_or_default())
+}
+
+pub async fn set_subscription_channels(
+    pool: &SqlitePool,
+    page_id: i64,
+    channels: &SubscriptionChannels,
+) -> Result<()> {
+    sqlx::query(
+        "UPDATE status_pages SET subscribe_sms_channel_id = ?, subscribe_webhook = ?,
+             subscribe_slack = ? WHERE id = ?",
+    )
+    .bind(channels.sms_channel_id)
+    .bind(i64::from(channels.webhook))
+    .bind(i64::from(channels.slack))
+    .bind(page_id)
+    .execute(pool)
+    .await
+    .context("enregistrement des canaux d'abonnement")?;
+    Ok(())
+}
+
+/// Services touchés par une annonce ; vide : toute la page.
+pub async fn incident_components(pool: &SqlitePool, incident_id: i64) -> Result<Vec<i64>> {
+    sqlx::query_scalar(
+        "SELECT target_id FROM incident_components WHERE incident_id = ? ORDER BY target_id",
+    )
+    .bind(incident_id)
+    .fetch_all(pool)
+    .await
+    .context("services d'une annonce")
+}
+
+/// Toutes les liaisons annonce → équipement.
+pub async fn incident_component_rows(pool: &SqlitePool) -> Result<Vec<(i64, i64)>> {
+    sqlx::query_as("SELECT incident_id, target_id FROM incident_components ORDER BY target_id")
+        .fetch_all(pool)
+        .await
+        .context("services des annonces")
+}
+
+pub async fn set_incident_components(
+    pool: &SqlitePool,
+    incident_id: i64,
+    targets: &[i64],
+) -> Result<()> {
+    let mut tx = pool.begin().await.context("ouverture de la transaction")?;
+    sqlx::query("DELETE FROM incident_components WHERE incident_id = ?")
+        .bind(incident_id)
+        .execute(&mut *tx)
+        .await
+        .context("services d'une annonce")?;
+    for target in targets {
+        sqlx::query(
+            "INSERT OR IGNORE INTO incident_components (incident_id, target_id)
+             SELECT ?, id FROM targets WHERE id = ?",
+        )
+        .bind(incident_id)
+        .bind(target)
+        .execute(&mut *tx)
+        .await
+        .context("services d'une annonce")?;
+    }
+    tx.commit().await.context("validation des services d'une annonce")?;
+    Ok(())
+}
+
+/// Une ligne de la file d'envoi.
+#[derive(Debug, Clone, FromRow)]
+pub struct Delivery {
+    pub id: i64,
+    pub subscriber_id: i64,
+    pub payload: String,
+    pub attempts: i64,
+}
+
+pub async fn enqueue_delivery(pool: &SqlitePool, subscriber_id: i64, payload: &str) -> Result<()> {
+    sqlx::query("INSERT INTO status_deliveries (subscriber_id, payload) VALUES (?, ?)")
+        .bind(subscriber_id)
+        .bind(payload)
+        .execute(pool)
+        .await
+        .context("mise en file d'un envoi")?;
+    Ok(())
+}
+
+/// Envois à tenter maintenant, les plus anciens d'abord.
+pub async fn due_deliveries(pool: &SqlitePool, now: &str, limit: i64) -> Result<Vec<Delivery>> {
+    sqlx::query_as(
+        "SELECT id, subscriber_id, payload, attempts FROM status_deliveries
+         WHERE next_attempt_at <= ? ORDER BY id LIMIT ?",
+    )
+    .bind(now)
+    .bind(limit)
+    .fetch_all(pool)
+    .await
+    .context("file d'envoi")
+}
+
+pub async fn finish_delivery(pool: &SqlitePool, id: i64) -> Result<()> {
+    sqlx::query("DELETE FROM status_deliveries WHERE id = ?")
+        .bind(id)
+        .execute(pool)
+        .await
+        .context("fin d'un envoi")?;
+    Ok(())
+}
+
+pub async fn retry_delivery(pool: &SqlitePool, id: i64, next_attempt_at: &str) -> Result<()> {
+    sqlx::query(
+        "UPDATE status_deliveries SET attempts = attempts + 1, next_attempt_at = ? WHERE id = ?",
+    )
+    .bind(next_attempt_at)
+    .bind(id)
+    .execute(pool)
+    .await
+    .context("report d'un envoi")?;
+    Ok(())
+}
+
+pub async fn subscriber_by_id(pool: &SqlitePool, id: i64) -> Result<Option<Subscriber>> {
+    sqlx::query_as(select_subscriber!("WHERE id = ?"))
+        .bind(id)
+        .fetch_optional(pool)
+        .await
+        .context("lecture d'un abonné")
 }
 
 #[cfg(test)]

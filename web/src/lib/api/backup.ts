@@ -14,14 +14,23 @@ export function getBackupStatus(signal?: AbortSignal): Promise<BackupStatus> {
 	return request<BackupStatus>('/backup', { signal });
 }
 
-/** Produces the bundle. `includeAccountSecrets` also carries password hashes and 2FA secrets. */
+/**
+ * Produces the bundle. `includeAccountSecrets` also carries password hashes and
+ * 2FA secrets; `includeNetconfigVersions` the stored network configurations,
+ * which hold device secrets.
+ */
 export function exportBackup(
 	passphrase: string,
-	includeAccountSecrets = false
+	includeAccountSecrets = false,
+	includeNetconfigVersions = false
 ): Promise<BackupEnvelope> {
 	return request<BackupEnvelope>('/backup', {
 		method: 'POST',
-		body: { passphrase, include_account_secrets: includeAccountSecrets }
+		body: {
+			passphrase,
+			include_account_secrets: includeAccountSecrets,
+			include_netconfig_versions: includeNetconfigVersions
+		}
 	});
 }
 

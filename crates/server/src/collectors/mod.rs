@@ -15,6 +15,7 @@ pub mod activedirectory_history;
 pub mod agent;
 pub mod discovery;
 pub mod opnsense_history;
+pub mod otlp;
 pub mod pbs_history;
 pub mod pdm_history;
 pub mod pmg_history;
@@ -39,8 +40,20 @@ pub use dumbmonit_collectors::{
     pihole,
 };
 pub use dumbmonit_collectors::{
+    ArrCollector, AuthentikCollector, ForgejoCollector, FrigateCollector, GitlabCollector,
+    ImmichCollector, JellyfinCollector, KeycloakCollector, MailcowCollector, NextcloudCollector,
+    PaperlessCollector, PlexCollector, ProtectCollector, QbittorrentCollector,
+    VaultwardenCollector, selfhosted,
+};
+pub use dumbmonit_collectors::{
+    ArubaCentralCollector, FortigateCollector, PaloaltoCollector, PfsenseCollector,
+    SonicwallCollector, SophosCollector, TailscaleCollector, UnraidCollector, VeeamCollector,
+    arubacentral, fortigate, paloalto, pfsense, sonicwall, sophos, tailscale, unraid, veeam,
+};
+pub use dumbmonit_collectors::{
     CaddyCollector, DomainCollector, NpmCollector, TraefikCollector, caddy, domain, npm, traefik,
 };
+pub use dumbmonit_collectors::{CephCollector, MinioCollector, QnapCollector, ceph, minio, qnap};
 pub use dumbmonit_collectors::{
     CrowdsecCollector, MongodbCollector, RabbitmqCollector, RedisCollector, crowdsec, mongodb,
     rabbitmq, redis,
@@ -51,20 +64,14 @@ pub use dumbmonit_collectors::{
     TcpCollector, TlsCollector, TruenasCollector, dummy, http, opnsense, pbs, pdm, pmg, proxmox,
     snmp, synology, truenas, uptime,
 };
-pub use dumbmonit_collectors::{
-    ForgejoCollector, GitlabCollector, ImmichCollector, JellyfinCollector, NextcloudCollector,
-    PaperlessCollector, PlexCollector, selfhosted,
-};
-pub use dumbmonit_collectors::{
-    FortigateCollector, PfsenseCollector, SophosCollector, TailscaleCollector, UnraidCollector,
-    VeeamCollector, fortigate, pfsense, sophos, tailscale, unraid, veeam,
-};
+pub use dumbmonit_collectors::{DuplicatiCollector, KopiaCollector, duplicati, kopia};
 pub use dumbmonit_collectors::{GraylogCollector, LokiCollector, VictoriaCollector, observability};
 pub use dumbmonit_collectors::{
     HomeAssistantCollector, UnifiCollector, VsphereCollector, homeassistant, unifi, vsphere,
 };
 pub use dumbmonit_collectors::{KubernetesCollector, kubernetes};
 pub use dumbmonit_collectors::{MdaemonCollector, SecurityGatewayCollector, mdaemon};
+pub use dumbmonit_collectors::{MerakiCollector, OmadaCollector, meraki, omada};
 pub use dumbmonit_collectors::{
     MqttCollector, MysqlCollector, PostgresCollector, SmtpCollector, WebsocketCollector,
 };
@@ -145,6 +152,9 @@ pub fn builtin(
             browser_url: config.browser_url.clone(),
         },
     )));
+    // Sauvegarde des configurations réseau : le collecteur relit l'état en
+    // base, les relevés tournent en tâche de fond (`netconfig::spawn`).
+    registry.register(Arc::new(crate::netconfig::NetconfigCollector::new(pool.clone())));
     // Santé et référencement d'un site : référence des métadonnées et
     // historique des changements gardés en base.
     registry.register(Arc::new(
@@ -153,6 +163,7 @@ pub fn builtin(
     ));
     // Collecteur de démonstration : des graphes sans matériel, le temps de
     // configurer un premier équipement réel.
+    registry.register(Arc::new(otlp::OtlpCollector));
     registry.register(Arc::new(DummyCollector));
     declare_options(&mut registry);
     registry

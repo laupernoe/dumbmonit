@@ -1,0 +1,8 @@
+{
+  "result": [
+    {"id": "699d98642c564d2e855e9661899b7252", "name": "www.example.com", "enabled": true, "proxied": true,
+     "default_pools": ["17b5962d775c646f3f9725cbc7a53df4"], "fallback_pool": "28c6a73e886d757a4fa836dcd8b64ea5",
+     "steering_policy": "off"}
+  ],
+  "success": true, "errors": [], "messages": []
+}

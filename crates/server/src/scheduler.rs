@@ -41,6 +41,7 @@ pub fn spawn(state: AppState) {
 
 async fn run(state: AppState) -> anyhow::Result<()> {
     let permits = Arc::new(Semaphore::new(state.config.max_concurrent_probes));
+    state.multisite().set_permits(permits.clone());
     let websites = Arc::new(Throttle::new(state.config.website));
     let mut next_run: HashMap<TargetId, Instant> = HashMap::new();
     let mut ticker = interval(TICK);
@@ -49,6 +50,8 @@ async fn run(state: AppState) -> anyhow::Result<()> {
     let mut targets = Vec::new();
     // Cibles interrogées par un agent relais plutôt que par le serveur.
     let mut relays: HashMap<TargetId, TargetId> = HashMap::new();
+    // Cibles sondées depuis plusieurs emplacements (voir `crate::multisite`).
+    let mut multisite: HashMap<TargetId, db::multisite::MultisiteConfig> = HashMap::new();
 
     info!(
         max_concurrent = state.config.max_concurrent_probes,
@@ -78,6 +81,24 @@ async fn run(state: AppState) -> anyhow::Result<()> {
                 Ok(loaded) => relays = loaded,
                 Err(error) => warn!(?error, "cannot reload relay assignments"),
             }
+            match db::multisite::all(&state.pool).await {
+                Ok(loaded) => {
+                    let live = loaded.keys().copied().collect();
+                    state.multisite().retain(&live);
+                    multisite = loaded;
+                }
+                Err(error) => warn!(?error, "cannot reload multi-location probes"),
+            }
+            match crate::collectors::agent::list_hosts(&state.pool).await {
+                Ok(hosts) => state.multisite().set_relays(
+                    hosts
+                        .into_iter()
+                        .filter(|(_, _, info)| info.relay)
+                        .map(|(id, _, _)| id)
+                        .collect(),
+                ),
+                Err(error) => warn!(?error, "cannot reload relay agents"),
+            }
             last_reload = now;
         }
 
@@ -91,6 +112,10 @@ async fn run(state: AppState) -> anyhow::Result<()> {
         // longtemps est abandonné avec un message clair.
         state.discovery().expire_silent();
 
+        // Rondes multi-emplacements échues : les emplacements muets sont exclus
+        // et la décision tombe.
+        crate::multisite::expire(&state, now).await;
+
         for target in &targets {
             let due = next_run
                 .entry(target.id)
@@ -103,7 +128,21 @@ async fn run(state: AppState) -> anyhow::Result<()> {
             }
             *due = now + target.interval;
 
-            if let Some(agent_id) = relays.get(&target.id) {
+            if let Some(config) = multisite.get(&target.id)
+                && crate::multisite::supports(&target.kind)
+            {
+                // Une ronde encore en cours n'est pas doublée : le tour est sauté.
+                if crate::multisite::start(&state, target, config, false).is_none() {
+                    debug!(target = target.id, "multi-location round still running");
+                }
+                continue;
+            }
+
+            // Une sauvegarde de configuration relayée passe par sa propre tâche
+            // (`netconfig`) : la sonde périodique ne fait que relire la base.
+            if let Some(agent_id) = relays.get(&target.id)
+                && target.kind != crate::netconfig::KIND
+            {
                 delegate(&state, target, *agent_id, now);
                 continue;
             }

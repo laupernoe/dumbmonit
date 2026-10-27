@@ -16,7 +16,7 @@ use std::sync::{Arc, LazyLock, Mutex};
 use std::time::{Duration, Instant};
 
 use axum::extract::{Path, State};
-use axum::http::{HeaderName, StatusCode, header};
+use axum::http::{HeaderMap, HeaderName, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post, put};
 use axum::{Json, Router};
@@ -28,10 +28,13 @@ use serde_json::Value;
 use crate::api::{ApiError, ApiResult};
 use crate::db;
 
+pub(crate) mod access;
 mod badges;
-mod branding;
+pub(crate) mod branding;
+pub mod delivery;
 mod subscribers;
 mod timeline;
+use crate::auth::teams::TeamAccess;
 use crate::db::status_pages::{
     DEFAULT_SCENE, GroupLabel, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
     SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, split_scenes,
@@ -73,7 +76,7 @@ const SEVERITIES: [&str; 2] = ["minor", "major"];
 
 /// Types de cibles qui émettent `probe_success` : leur état vient de là, et non
 /// de la simple présence de mesures. Les heartbeats (`push`) en font partie.
-pub(crate) const PROBE_KINDS: [&str; 6] = ["http", "tcp", "dns", "ping", "tls", "push"];
+pub(crate) const PROBE_KINDS: [&str; 7] = ["http", "tcp", "dns", "ping", "tls", "push", "provider"];
 
 /// Fenêtre au-delà de laquelle une sonde sans mesure est d'état inconnu — la même
 /// que celle de l'interface.
@@ -102,8 +105,14 @@ pub fn routes() -> Router<AppState> {
             "/status-pages/{id}/logo",
             get(branding::admin_logo).put(branding::upload_logo).delete(branding::delete_logo),
         )
+        .route("/status-pages/{id}/access", put(access::set_access))
         .route("/status-pages/{id}/subscribers", get(subscribers::list))
         .route("/status-pages/{id}/subscribers/{subscriber}", delete(subscribers::remove))
+        .route("/status-pages/{id}/subscribers.csv", get(subscribers::export))
+        .route(
+            "/status-pages/{id}/subscription",
+            get(subscribers::get_settings).put(subscribers::put_settings),
+        )
         .route("/incidents", get(list_incidents).post(create_incident))
         .route("/incidents/{id}", put(update_incident).delete(delete_incident))
         .route("/incidents/{id}/updates", get(list_updates).post(add_update))
@@ -123,8 +132,14 @@ pub fn public_routes() -> Router<AppState> {
         .route("/public/status/{slug}/components/{key}/response.svg", get(badges::item_response))
         .route("/public/status/{slug}/day/{date}", get(timeline::public_day))
         .route("/public/status/{slug}/logo", get(branding::public_logo))
+        .route(
+            "/public/status/{slug}/access",
+            post(access::unlock)
+                .layer(axum::middleware::from_fn(crate::auth::cookie::secure_when_https)),
+        )
         .route("/public/status/{slug}/subscribe", post(subscribers::subscribe))
         .route("/public/status/{slug}/confirm", post(subscribers::confirm))
+        .route("/public/status/{slug}/confirm-code", post(subscribers::confirm_code))
         .route("/public/status/{slug}/unsubscribe", post(subscribers::unsubscribe))
 }
 
@@ -148,6 +163,8 @@ pub struct IncidentView {
     #[serde(flatten)]
     pub incident: Incident,
     pub updates: Vec<IncidentUpdate>,
+    /// Équipements touchés (ceux que suivent les abonnés) ; vide : toute la page.
+    pub components: Vec<i64>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -539,7 +556,11 @@ async fn page_view(state: &AppState, page: StatusPage) -> ApiResult<StatusPageVi
     Ok(StatusPageView { page, items, groups, group_labels })
 }
 
-pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<StatusPageView>>> {
+pub async fn list_pages(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<StatusPageView>>> {
+    let visible = access.visible_targets(&state.pool).await?;
     let pages = db::status_pages::list_pages(&state.pool).await?;
     let mut items: HashMap<i64, Vec<PageItem>> = HashMap::new();
     for item in db::status_pages::list_all_items(&state.pool).await? {
@@ -553,6 +574,27 @@ pub async fn list_pages(State(state): State<AppState>) -> ApiResult<Json<Vec<Sta
     for (page_id, entry) in db::status_pages::list_all_group_labels(&state.pool).await? {
         labels.entry(page_id).or_default().push(entry);
     }
+    // Compte restreint par ses équipes : seulement les pages dont tous les
+    // composants sont des équipements qu'il voit. Mode MSP : en plus, les pages
+    // de ses clients seulement (celles de l'instance pour une vue
+    // d'administrateur).
+    let owners =
+        crate::auth::clients::owners(&state.pool, crate::auth::clients::Kind::StatusPage).await?;
+    let restricted = access.is_scoped();
+    let pages: Vec<_> = pages
+        .into_iter()
+        .filter(|page| {
+            crate::auth::clients::visible_owner(&access, owners.get(&page.id).copied(), !restricted)
+        })
+        .filter(|page| {
+            !restricted
+                || visible.as_ref().is_none_or(|visible| {
+                    items.get(&page.id).is_some_and(|list| {
+                        !list.is_empty() && list.iter().all(|i| visible.contains(&i.target_id))
+                    })
+                })
+        })
+        .collect();
     Ok(Json(
         pages
             .into_iter()
@@ -576,6 +618,7 @@ pub async fn get_page(
 }
 
 pub async fn create_page(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     origin: super::oidc::Origin,
     Json(payload): Json<StatusPagePayload>,
@@ -584,6 +627,10 @@ pub async fn create_page(
     let id = db::status_pages::create_page(&state.pool, &input)
         .await
         .map_err(duplicate_slug_to_conflict)?;
+    // Mode MSP : créée dans la vue d'un client, la page lui appartient ; sinon
+    // elle est à l'instance.
+    crate::auth::clients::adopt(&state.pool, &access, crate::auth::clients::Kind::StatusPage, id)
+        .await?;
     let page =
         db::status_pages::get_page(&state.pool, id).await?.ok_or_else(|| page_not_found(id))?;
     invalidate_cache();
@@ -685,6 +732,20 @@ pub async fn set_items(
         items.push(PageItemInput { target_id: entry.target_id, label, group_name });
     }
 
+    // Mode MSP : la page d'un client ne montre que des équipements de ce client.
+    if let Some(Some(client)) =
+        crate::auth::clients::owner_of(&state.pool, crate::auth::clients::Kind::StatusPage, id)
+            .await?
+    {
+        let own = crate::auth::clients::targets_of(&state.pool, client).await?;
+        if let Some(foreign) = items.iter().find(|item| !own.contains(&item.target_id)) {
+            return Err(ApiError::BadRequest(format!(
+                "Monitor {} belongs to another client than this status page.",
+                foreign.target_id
+            )));
+        }
+    }
+
     db::status_pages::set_items(&state.pool, id, &items).await?;
     invalidate_cache();
     Ok(Json(db::status_pages::list_items(&state.pool, id).await?))
@@ -715,6 +776,11 @@ pub struct IncidentPayload {
     /// Messages datés du fil, à la création seulement : reprise d'un historique.
     #[serde(default)]
     pub updates: Option<Vec<NewUpdate>>,
+    /// Équipements touchés, parmi les services de la page : les abonnés qui ne
+    /// suivent que d'autres services ne sont pas prévenus. Absent : inchangé
+    /// (toute la page à la création).
+    #[serde(default)]
+    pub components: Option<Vec<i64>>,
 }
 
 /// Un message d'un fil saisi à la création d'une annonce.
@@ -769,7 +835,7 @@ fn format_timestamp(at: DateTime<Utc>) -> String {
     at.format(TIMESTAMP_FORMAT).to_string()
 }
 
-fn parse_stored(raw: &str) -> Option<DateTime<Utc>> {
+pub(crate) fn parse_stored(raw: &str) -> Option<DateTime<Utc>> {
     DateTime::parse_from_rfc3339(raw).map(|at| at.with_timezone(&Utc)).ok().or_else(|| {
         chrono::NaiveDateTime::parse_from_str(raw, "%Y-%m-%d %H:%M:%S")
             .ok()
@@ -899,11 +965,16 @@ async fn incident_views(
     for update in db::status_pages::list_updates_for(&state.pool, &ids).await? {
         updates.entry(update.incident_id).or_default().push(update);
     }
+    let mut components: HashMap<i64, Vec<i64>> = HashMap::new();
+    for (incident, target) in db::status_pages::incident_component_rows(&state.pool).await? {
+        components.entry(incident).or_default().push(target);
+    }
     Ok(incidents
         .into_iter()
         .map(|incident| {
             let updates = updates.remove(&incident.id).unwrap_or_default();
-            IncidentView { incident, updates }
+            let components = components.remove(&incident.id).unwrap_or_default();
+            IncidentView { incident, updates, components }
         })
         .collect())
 }
@@ -1016,6 +1087,7 @@ pub async fn create_incident(
 ) -> ApiResult<(StatusCode, Json<IncidentView>)> {
     let body = payload.body.clone().unwrap_or_default().trim().to_string();
     let drafts = payload.updates.take().unwrap_or_default();
+    let components = payload.components.take();
     let mut input = payload.validate(&state, None).await?;
     // Le premier message ouvre le fil avec le statut initial ; sans message,
     // le fil reste vide et l'annonce se résume à son titre.
@@ -1024,6 +1096,9 @@ pub async fn create_incident(
     input.ends_at = plan.ends_at.map(format_timestamp);
     let id =
         db::status_pages::create_incident_with_thread(&state.pool, &input, &plan.entries).await?;
+    if let Some(components) = components {
+        db::status_pages::set_incident_components(&state.pool, id, &components).await?;
+    }
     invalidate_cache();
     let incident = db::status_pages::get_incident(&state.pool, id)
         .await?
@@ -1040,8 +1115,9 @@ pub async fn create_incident(
 pub async fn update_incident(
     State(state): State<AppState>,
     Path(id): Path<i64>,
-    Json(payload): Json<IncidentPayload>,
+    Json(mut payload): Json<IncidentPayload>,
 ) -> ApiResult<Json<IncidentView>> {
+    let components = payload.components.take();
     let existing = db::status_pages::get_incident(&state.pool, id)
         .await?
         .ok_or_else(|| incident_not_found(id))?;
@@ -1071,6 +1147,9 @@ pub async fn update_incident(
     }
     if !db::status_pages::update_incident(&state.pool, id, &input).await? {
         return Err(incident_not_found(id));
+    }
+    if let Some(components) = components {
+        db::status_pages::set_incident_components(&state.pool, id, &components).await?;
     }
     invalidate_cache();
     let incident = db::status_pages::get_incident(&state.pool, id)
@@ -1240,9 +1319,15 @@ struct PublicPage {
     /// Site de l'organisation, vide si la page n'en cite pas.
     homepage_url: String,
     /// Adresse relative du logo, versionnée pour les caches ; `None` sans logo.
+    /// Mode MSP : à défaut de logo propre, celui du client de la page.
     logo_url: Option<String>,
-    /// La page propose l'abonnement par courriel (un canal SMTP actif est choisi).
+    /// Mode MSP : nom du client de la page, pour la marque légère.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    brand_name: Option<String>,
+    /// La page propose au moins un abonnement.
     subscribe: bool,
+    /// Abonnements ouverts : `email`, `sms`, `webhook`, `slack`.
+    subscribe_kinds: Vec<&'static str>,
     /// Valeurs de référencement effectives (réglages, ou défauts tirés du nom).
     seo: crate::status_seo::Resolved,
 }
@@ -1275,6 +1360,9 @@ struct PublicItem {
     #[serde(skip_serializing_if = "Option::is_none")]
     latency_series: Option<LatencySeries>,
     history: Vec<DayBucket>,
+    /// Fournisseur tiers (sonde `provider`) : la page l'affiche comme composant externe.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    external: bool,
 }
 
 /// Points `[horodatage (s), millisecondes]`, moyennés par tranche.
@@ -1356,8 +1444,14 @@ fn public_not_found() -> ApiError {
     ApiError::NotFound("This status page does not exist.".into())
 }
 
-/// Document public d'une page, depuis le cache ou recalculé.
-async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
+/// Document public d'une page, depuis le cache ou recalculé, après contrôle
+/// d'accès. Le booléen dit si la page est privée : ses réponses ne doivent
+/// alors se mettre en cache ni chez un intermédiaire ni chez un tiers.
+async fn load_public_checked(
+    state: &AppState,
+    slug: &str,
+    headers: &HeaderMap,
+) -> ApiResult<(Arc<Value>, bool)> {
     let page = db::status_pages::get_page_by_slug(&state.pool, slug).await?;
     // Une page non publiée est indiscernable d'une page absente : le public n'a
     // pas à savoir qu'elle se prépare.
@@ -1365,6 +1459,9 @@ async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
         Some(page) if page.published => page,
         _ => return Err(public_not_found()),
     };
+    // Le contrôle précède le cache : un document en mémoire ne se sert qu'à qui y a droit.
+    access::authorize(state, &page, headers).await?;
+    let private = !page.is_public();
 
     {
         let cache = CACHE.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
@@ -1372,7 +1469,7 @@ async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
             && entry.at.elapsed() < CACHE_TTL
             && entry.page_updated_at == page.updated_at
         {
-            return Ok(Arc::clone(&entry.body));
+            return Ok((Arc::clone(&entry.body), private));
         }
     }
 
@@ -1387,21 +1484,28 @@ async fn load_public(state: &AppState, slug: &str) -> ApiResult<Arc<Value>> {
             body: Arc::clone(&body),
         },
     );
-    Ok(body)
+    Ok((body, private))
 }
 
 pub async fn public_status(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let body = load_public(&state, &slug).await?;
+    let (body, private) = load_public_checked(&state, &slug, &headers).await?;
     // Document public et sans cookie : lisible depuis le site de n'importe qui
     // (bandeau d'état). Pas de `Allow-Credentials`, donc aucune session jointe.
-    Ok((
-        [(header::CACHE_CONTROL, "public, max-age=30"), (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*")],
-        Json(Value::clone(&body)),
-    )
-        .into_response())
+    Ok(access::seal(
+        (
+            [
+                (header::CACHE_CONTROL, "public, max-age=30"),
+                (header::ACCESS_CONTROL_ALLOW_ORIGIN, "*"),
+            ],
+            Json(Value::clone(&body)),
+        )
+            .into_response(),
+        private,
+    ))
 }
 
 /// Script du bandeau d'état, à inclure par un `<script>` sur un site tiers.
@@ -2101,6 +2205,7 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
                 }),
             },
             history,
+            external: target.kind == "provider",
         };
         match groups.iter_mut().find(|group| group.name == item.group_name) {
             Some(group) => group.items.push(public_item),
@@ -2172,6 +2277,19 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             .collect()
     });
 
+    let subscribe_kinds = subscribers::available_kinds(state, page).await;
+    let brand = crate::auth::clients::branding_of_page(&state.pool, page.id).await.ok().flatten();
+    let logo_url = match (&page.logo_type, &brand) {
+        (Some(_), _) => Some(format!(
+            "/api/public/status/{}/logo?v={}",
+            page.slug,
+            version_tag(&page.updated_at)
+        )),
+        (None, Some(client)) if client.has_logo => {
+            Some(format!("/api/public/status/{}/logo?v=c{}", page.slug, client.id))
+        }
+        _ => None,
+    };
     Ok(PublicStatus {
         page: PublicPage {
             slug: page.slug.clone(),
@@ -2191,10 +2309,10 @@ async fn build_public(state: &AppState, page: &StatusPage) -> ApiResult<PublicSt
             show_latency: page.show_latency,
             footer_text: page.footer_text.clone(),
             homepage_url: page.homepage_url.clone(),
-            logo_url: page.logo_type.as_ref().map(|_| {
-                format!("/api/public/status/{}/logo?v={}", page.slug, version_tag(&page.updated_at))
-            }),
-            subscribe: subscribers::offers_subscription(state, page).await,
+            logo_url,
+            brand_name: brand.map(|client| client.name),
+            subscribe: !subscribe_kinds.is_empty(),
+            subscribe_kinds,
             seo: crate::status_seo::resolve(page),
         },
         overall,
@@ -2234,17 +2352,21 @@ fn render_badge(overall: &str) -> String {
 pub async fn public_badge(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let body = load_public(&state, &slug).await?;
+    let (body, private) = load_public_checked(&state, &slug, &headers).await?;
     let overall = body.get("overall").and_then(Value::as_str).unwrap_or("unknown");
-    Ok((
-        [
-            (header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"),
-            (header::CACHE_CONTROL, "public, max-age=60"),
-        ],
-        render_badge(overall),
-    )
-        .into_response())
+    Ok(access::seal(
+        (
+            [
+                (header::CONTENT_TYPE, "image/svg+xml; charset=utf-8"),
+                (header::CACHE_CONTROL, "public, max-age=60"),
+            ],
+            render_badge(overall),
+        )
+            .into_response(),
+        private,
+    ))
 }
 
 // L'origine publique vient de `oidc::Origin` : les en-têtes `X-Forwarded-*` n'y
@@ -2259,9 +2381,10 @@ fn rfc2822(stored: &str) -> String {
 pub async fn public_rss(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
     origin: super::oidc::Origin,
 ) -> ApiResult<Response> {
-    let body = load_public(&state, &slug).await?;
+    let (body, private) = load_public_checked(&state, &slug, &headers).await?;
     // Le domaine public de la page s'il y en a un ; sinon l'origine de la requête.
     let domain =
         db::status_pages::get_page_by_slug(&state.pool, &slug).await?.and_then(|page| page.domain);
@@ -2308,14 +2431,17 @@ pub async fn public_rss(
         link = xml_escape(&link),
         description = xml_escape(description),
     );
-    Ok((
-        [
-            (header::CONTENT_TYPE, "application/rss+xml; charset=utf-8"),
-            (header::CACHE_CONTROL, "public, max-age=30"),
-        ],
-        feed,
-    )
-        .into_response())
+    Ok(access::seal(
+        (
+            [
+                (header::CONTENT_TYPE, "application/rss+xml; charset=utf-8"),
+                (header::CACHE_CONTROL, "public, max-age=30"),
+            ],
+            feed,
+        )
+            .into_response(),
+        private,
+    ))
 }
 
 #[cfg(test)]

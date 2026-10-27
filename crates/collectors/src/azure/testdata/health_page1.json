@@ -1,0 +1,72 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "global",
+      "properties": {
+        "availabilityState": "Available",
+        "title": "Available",
+        "summary": "There aren't any known Azure platform problems affecting this subscription.",
+        "reportedTime": "2026-10-26T08:00:00Z"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-web/providers/Microsoft.Compute/virtualMachines/vm-web/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "westeurope",
+      "properties": {
+        "availabilityState": "Available",
+        "title": "Available",
+        "summary": "There aren't any known Azure platform problems affecting this virtual machine.",
+        "reasonChronicity": "Persistent",
+        "reportedTime": "2026-10-26T08:00:00Z"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-data/providers/Microsoft.Compute/virtualMachines/vm-db/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "westeurope",
+      "properties": {
+        "availabilityState": "Unavailable",
+        "title": "Unavailable",
+        "summary": "We are sorry, your virtual machine is unavailable because of a platform issue.",
+        "reasonType": "Unplanned",
+        "reasonChronicity": "Persistent",
+        "occuredTime": "2026-10-26T07:40:00Z",
+        "reportedTime": "2026-10-26T07:45:00Z"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-batch/providers/Microsoft.Compute/virtualMachines/vm-batch/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "westeurope",
+      "properties": {
+        "availabilityState": "Unavailable",
+        "title": "Unavailable",
+        "summary": "This virtual machine is stopped and deallocated.",
+        "reasonType": "UserInitiated",
+        "reasonChronicity": "Persistent",
+        "reportedTime": "2026-10-25T20:00:00Z"
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-data/providers/Microsoft.Sql/servers/sql-prod/databases/orders/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "westeurope",
+      "properties": {
+        "availabilityState": "Degraded",
+        "title": "Degraded",
+        "summary": "Your database is degraded: a failover is in progress.",
+        "reasonType": "Unplanned",
+        "reportedTime": "2026-10-26T08:05:00Z"
+      }
+    }
+  ],
+  "nextLink": "https://management.azure.com/subscriptions/00000000-0000-0000-0000-0000000000a1/providers/Microsoft.ResourceHealth/availabilityStatuses?api-version=2022-10-01&$skiptoken=p2"
+}

@@ -10,7 +10,7 @@ n'y a pas de fichier de configuration à monter.
 | `DUMBMONIT_BIND` | `0.0.0.0:8080` | Adresse d'écoute de l'API et de l'interface web, à l'intérieur du conteneur. |
 | `PUID` / `PGID` | `65532` | Utilisateur et groupe sous lesquels le serveur s'exécute lorsque le conteneur démarre sous root (`user: "0:0"`, comme dans le `docker-compose.yml` fourni) : le répertoire de données leur est transféré au démarrage, puis root est abandonné. `0` est refusé. `DUMBMONIT_PUID` / `DUMBMONIT_PGID` ont la priorité. Ignorés dans les autres cas. Voir [Permissions](../install/docker.md#permissions). |
 | `DUMBMONIT_DATA_DIR` | `/data` | Répertoire persistant : `dumbmonit.db` (SQLite), `secret.key`, `vm/` (VictoriaMetrics embarqué) et `webchange/` (captures d'écran des changements de site). |
-| `DUMBMONIT_VM_URL` | *(non défini)* | URL de base d'un VictoriaMetrics externe (`http://host:8428`). Quand elle est définie, celui embarqué n'est pas démarré ; voir [ci-dessous](#embedded-victoriametrics). |
+| `DUMBMONIT_VM_URL` | *(non défini)* | URL de base d'un VictoriaMetrics externe (`http://host:8428`). Quand elle est définie, celui embarqué n'est pas démarré ; voir [ci-dessous](#embedded-victoriametrics) et [VictoriaMetrics externe](external-victoriametrics.md). |
 | `DUMBMONIT_SECRET` | *(généré)* | Secret de l'instance. Si vide, lu depuis `<répertoire de données>/secret.key`, généré au premier démarrage. Chiffre les identifiants de surveillance, les secrets de canal et les jetons d'agent avec AES-256-GCM. |
 | `DUMBMONIT_MAX_CONCURRENT_PROBES` | `64` | Sondes simultanées maximum, tous collecteurs confondus. |
 | `DUMBMONIT_PROBE_TIMEOUT_SECS` | `10` | Délai maximal d'une sonde. Les surveillances de service ont leur propre option `timeout_seconds`, plus courte. |
@@ -37,6 +37,7 @@ n'y a pas de fichier de configuration à monter.
 | `DUMBMONIT_BACKUP_INTERVAL_HOURS` | `24` | Heures entre deux sauvegardes, de 1 à 8760. La première a lieu un intervalle après le démarrage, pas au démarrage. |
 | `DUMBMONIT_DEMO` | *(désactivé)* | `1` pour une démo publique, en lecture seule, avec un parc fictif fixe, connexion `demo` / `demo`. **Recrée la base de données à chaque démarrage** : jamais sur un vrai volume de données. Voir [Lancer une instance de démonstration](../install/demo.md). |
 | `DUMBMONIT_BACKUP_KEEP` | `7` | Combien de sauvegardes sont conservées, de 1 à 365. Les plus anciennes sont supprimées avec leur `.key`. |
+| `DUMBMONIT_CONFIG_DIR` | vide | Un dossier de fichiers YAML appliqué (avec prune) au démarrage et à chaque changement. Voir [Fichiers de configuration](../using/config-files.md). |
 | `DUMBMONIT_BROWSER_URL` | *(non défini)* | Chromium headless utilisé pour les captures d'écran des [changements de site web](../devices/webchange.md#screenshots), sous la forme `http://host:9222` (son port DevTools). Ajoutez un service `chromedp/headless-shell` à votre fichier Compose, comme montré sous [Captures d'écran](../devices/webchange.md#screenshots). Non défini : comparaison de texte seulement. |
 
 La rétention de référence (60 jours) et la période d'apprentissage de 14
@@ -82,6 +83,65 @@ serveur utilise l'instance que vous nommez et celui embarqué n'est jamais
 démarré. `GET /api/health` dit dans quel cas vous êtes
 (`victoria.embedded`).
 
+La rétention brute se règle aussi dans **Réglages → Système → Données et
+rétention** ; une valeur enregistrée là l'emporte sur `DUMBMONIT_VM_RETENTION`.
+
+### Historique long
+
+En plus des données brutes, le serveur écrit des **agrégats de 5 minutes** dans
+un second VictoriaMetrics, démarré de la même façon, et lui fait répondre les
+requêtes dont la plage dépasse la rétention brute. Voir
+[Dimensionnement](sizing.md) pour son coût.
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `DUMBMONIT_VM_LONG_URL` | *(non défini)* | URL d'un VictoriaMetrics externe pour les agrégats. Quand elle est définie, le stockage longue durée embarqué n'est pas démarré. Nécessaire pour avoir un historique long à côté d'un `DUMBMONIT_VM_URL` externe. |
+| `DUMBMONIT_VM_LONG_LISTEN` | `127.0.0.1:8429` | Adresse d'écoute du stockage longue durée embarqué, à l'intérieur du conteneur. |
+| `DUMBMONIT_VM_LONG_MEMORY` | `64MB` | Budget de ses caches (`-memory.allowedBytes`). |
+| `DUMBMONIT_VM_LONG_RETENTION` | `730d` | Rétention des agrégats, même syntaxe que `DUMBMONIT_VM_RETENTION`. Se règle aussi dans **Réglages → Système**. |
+
+Ses données vivent dans `<répertoire de données>/vm-long`. Il utilise le même
+binaire VictoriaMetrics (`DUMBMONIT_VM_BINARY`). Les noms de métriques sont
+conservés (moyenne), avec les suffixes `:5m_min`, `:5m_max` et, pour les
+métriques de disponibilité, `:5m_sum` et `:5m_count`.
+
+### VictoriaLogs embarqué
+
+Facultatif et **désactivé par défaut** : activez-le dans **Réglages → Système**.
+Le serveur démarre alors VictoriaLogs, lui envoie ses propres lignes de journal,
+et la page **Logs**, réservée aux administrateurs, les cherche en LogsQL.
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `DUMBMONIT_VLOGS_BINARY` | `/victoria-logs-prod` | Chemin du binaire VictoriaLogs à démarrer. |
+| `DUMBMONIT_VLOGS_LISTEN` | `127.0.0.1:9428` | Adresse d'écoute, à l'intérieur du conteneur. |
+| `DUMBMONIT_VLOGS_MEMORY` | `64MB` | Budget de ses caches. |
+
+Ses données vivent dans `<répertoire de données>/vlogs` ; la rétention se règle
+dans **Réglages → Système** (30 jours par défaut).
+
+### Journaux centralisés : serveur syslog et traps SNMP
+
+Les deux récepteurs écrivent dans le VictoriaLogs embarqué (activez d'abord le
+stockage des journaux) et sont **désactivés par défaut**. Ils écoutent sur des
+ports non privilégiés, le conteneur ne tournant pas en root ; publiez ceux que
+vous utilisez dans `docker-compose.yml` (les lignes y sont commentées). Voir
+[Journaux](../using/logs.md).
+
+| Variable | Défaut | Rôle |
+|---|---|---|
+| `DUMBMONIT_SYSLOG_ENABLED` | `false` | Démarre le serveur syslog. |
+| `DUMBMONIT_SYSLOG_PORT` | `5514` | Port UDP et TCP. |
+| `DUMBMONIT_SYSLOG_BIND` | `0.0.0.0` | Adresse d'écoute. |
+| `DUMBMONIT_SYSLOG_UDP` / `DUMBMONIT_SYSLOG_TCP` | `true` | Active chaque transport. |
+| `DUMBMONIT_TRAPS_ENABLED` | `false` | Démarre le récepteur de traps SNMP (v1, v2c). |
+| `DUMBMONIT_TRAPS_PORT` | `1162` | Port UDP. |
+| `DUMBMONIT_TRAPS_BIND` | `0.0.0.0` | Adresse d'écoute. |
+| `DUMBMONIT_TRAPS_COMMUNITIES` | vide | Communautés acceptées, séparées par des virgules ; vide : toutes. |
+
+Sur la machine d'un agent, `DUMBMONIT_AGENT_LOGS=off` y interdit la collecte de
+journaux, quoi que demande le serveur.
+
 ## Réglages au niveau Compose
 
 Le `docker-compose.yml` fourni ne lit aucune variable et n'a besoin d'aucun
@@ -96,6 +156,8 @@ de l'hôte du VictoriaMetrics embarqué.
 
 | Port | Conteneur | Usage |
 |---|---|---|
+| `5514/udp`, `5514/tcp` | `dumbmonit` | Serveur syslog, seulement avec `DUMBMONIT_SYSLOG_ENABLED=true`. Commenté dans le fichier Compose. |
+| `1162/udp` | `dumbmonit` | Récepteur de traps SNMP, seulement avec `DUMBMONIT_TRAPS_ENABLED=true`. Commenté dans le fichier Compose. |
 | `8080/tcp` | `dumbmonit` | Interface web, API, installateurs et téléchargements d'agent, ingestion d'agent. Le seul port à publier. |
 | `8428/tcp` | `dumbmonit` | API HTTP du VictoriaMetrics embarqué, sur le loopback du conteneur. Publié seulement par la surcouche de développement. |
 
@@ -116,6 +178,8 @@ fichier Compose, quel que soit le nom du projet.
 | `/data/secret.key` | `dumbmonit-data` | Le secret de l'instance. **Sauvegardez-le.** Sans lui, les identifiants chiffrés sont irrécupérables et le serveur refuse de démarrer. |
 | `/data/backups/` | `dumbmonit-data` | Sauvegardes locales planifiées : `dumbmonit-<timestamp>.db` (une copie SQLite en ligne) et le `.key` correspondant. Quotidien par défaut, sept conservées. |
 | `/data/vm/` | `dumbmonit-data` | Séries temporelles de VictoriaMetrics embarqué, 12 mois par défaut. Vide quand `DUMBMONIT_VM_URL` est réglée. |
+| `/data/vm-long/` | `dumbmonit-data` | Agrégats de 5 minutes (historique long), 730 jours par défaut. Vide quand `DUMBMONIT_VM_LONG_URL` est réglée. |
+| `/data/vlogs/` | `dumbmonit-data` | Données de VictoriaLogs, seulement quand le stockage des journaux est activé. |
 | `/agents/` | image | Binaires d'agent. Montez un autre répertoire et réglez `DUMBMONIT_AGENT_DIR` pour fournir les vôtres. |
 | `/etc/ssl/certs/ca-certificates.crt` | image | Racines TLS pour le HTTPS sortant. Montez votre propre ensemble ici pour faire confiance à une autorité privée. |
 

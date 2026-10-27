@@ -15,9 +15,11 @@
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
-	import { BellRing, Globe, HardDrive, Search, Server, Tv, UserRound, Users } from 'lucide-svelte';
+	import { BellRing, Globe, HardDrive, Search, Server, SlidersHorizontal, Tv, UserRound, Users } from 'lucide-svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { PageHeader } from '#lib/ui/index.js';
+	import { Disclosure, PageHeader } from '#lib/ui/index.js';
+	import { mode } from '#lib/stores/mode.svelte.js';
+	import GeneralSection from '#lib/components/settings/GeneralSection.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import {
 		DEFAULT_TAB,
@@ -34,13 +36,19 @@
 	import SecurityScoreSection from '#lib/components/settings/SecurityScoreSection.svelte';
 	import LocationsSection from '#lib/components/settings/LocationsSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
+	import TeamsSection from '#lib/components/settings/TeamsSection.svelte';
+	import ClientsSection from '#lib/components/settings/ClientsSection.svelte';
+	import SamlSection from '#lib/components/settings/SamlSection.svelte';
+	import ScimSection from '#lib/components/settings/ScimSection.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import LdapSection from '#lib/components/settings/LdapSection.svelte';
 	import AgentsSection from '#lib/components/settings/AgentsSection.svelte';
 	import AssistantSection from '#lib/components/settings/AssistantSection.svelte';
 	import AppearanceSection from '#lib/components/settings/AppearanceSection.svelte';
 	import BackupSection from '#lib/components/settings/BackupSection.svelte';
+	import ConfigFilesSection from '#lib/components/settings/ConfigFilesSection.svelte';
 	import SelfMonitoringSection from '#lib/components/settings/SelfMonitoringSection.svelte';
+	import StorageSection from '#lib/components/settings/StorageSection.svelte';
 	import LogsSection from '#lib/components/settings/LogsSection.svelte';
 	import PacksSection from '#lib/components/settings/PacksSection.svelte';
 	import AboutSection from '#lib/components/settings/AboutSection.svelte';
@@ -48,6 +56,8 @@
 		import WallWidgetsSection from '#lib/components/settings/WallWidgetsSection.svelte';
 	import WallModeSection from '#lib/components/settings/WallModeSection.svelte';
 	import PushSection from '#lib/components/settings/PushSection.svelte';
+	import OnCallContactsSection from '#lib/components/settings/OnCallContactsSection.svelte';
+	import OnCallHoursSection from '#lib/components/settings/OnCallHoursSection.svelte';
 	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
 	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
@@ -57,6 +67,7 @@
 	const showAccounts = $derived(auth.available && auth.configured && auth.isAdmin);
 
 	const ICONS: Record<SettingsTab, typeof UserRound> = {
+		general: SlidersHorizontal,
 		account: UserRound,
 		team: Users,
 		monitoring: Server,
@@ -66,20 +77,57 @@
 		system: HardDrive
 	};
 
-	const tabs = $derived(TAB_IDS.filter((id) => id !== 'team' || showAccounts));
+	// An account limited by its teams keeps its own preferences and the status pages.
+	// General (product mode, instance name, setup wizard) is for administrators.
+	const tabs = $derived(
+		TAB_IDS.filter(
+			(id) =>
+				(id !== 'team' || showAccounts) &&
+				(id !== 'general' || auth.isAdmin) &&
+				(!auth.scoped || id === 'account' || id === 'status')
+		)
+	);
 	const asked = $derived(page.params.tab);
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */
 	const SECTIONS = $derived<Record<SettingsTab, Component[]>>({
-		account: [AppearanceSection, SecuritySection, PushSection],
-		team: [UsersSection, SsoSection, LdapSection],
+		general: [GeneralSection],
+		account: [AppearanceSection, SecuritySection, PushSection, OnCallContactsSection, OnCallHoursSection],
+		team: [UsersSection, TeamsSection, ...(auth.isAdmin ? [ClientsSection] : []), SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
 		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
 		status: [StatusPagesSection],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallWidgetsSection] : [])],
-		system: [BackupSection, SelfMonitoringSection, ...(auth.isAdmin ? [LogsSection] : []), AssistantSection, AboutSection]
+		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
+
+	// Homelab keeps each tab short: the sections most people never open wait
+	// behind one "Advanced" fold at the foot of the tab. Enterprise shows them all.
+	const ADVANCED = new Set<Component>([
+		SsoSection,
+		SamlSection,
+		ScimSection,
+		LdapSection,
+		PacksSection,
+		SecurityScoreSection,
+		LocationsSection,
+		NotificationPolicySection,
+		ReportsSection,
+		MusicSection,
+		WallWidgetsSection,
+		ConfigFilesSection,
+		SelfMonitoringSection,
+		StorageSection,
+		LogsSection,
+		AssistantSection
+	]);
+	/** Anchor ids inside those sections: a deep link opens the fold first. */
+	const ADVANCED_IDS = ['sso', 'saml', 'scim', 'ldap', 'packs', 'security-score', 'locations', 'notifications-policy', 'quiet-hours', 'reports', 'music', 'news', 'widgets', 'config-files', 'self-monitoring', 'storage', 'logs', 'assistant'];
+	const folded = $derived(mode.homelab);
+	const basic = $derived(folded ? SECTIONS[tab].filter((section) => !ADVANCED.has(section)) : SECTIONS[tab]);
+	const advanced = $derived(folded ? SECTIONS[tab].filter((section) => ADVANCED.has(section)) : []);
+	let advancedOpen = $state(false);
 
 	// An unknown tab (or one this account cannot see) lands on the first one.
 	$effect(() => {
@@ -96,6 +144,7 @@
 	$effect(() => {
 		const hash = page.url.hash.slice(1);
 		if (!hash || !column) return;
+		if (ADVANCED_IDS.includes(hash)) advancedOpen = true;
 		const moved = MOVED[hash];
 		if (moved) {
 			void goto(moved, { replace: true });
@@ -127,7 +176,7 @@
 	let query = $state('');
 	const results = $derived(
 		searchSettings(searchIndex(), query).filter(
-			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'widgets' && entry.id !== 'locations' && entry.id !== 'logs'))
+			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'widgets' && entry.id !== 'locations' && entry.id !== 'logs' && entry.id !== 'storage'))
 		)
 	);
 	const href = (entry: { tab: SettingsTab; id: string }) => `/settings/${entry.tab}#${entry.id}`;
@@ -245,9 +294,20 @@
 	<div bind:this={column} class="grid min-w-0 content-start gap-6 max-sm:gap-3 [&_section[id]]:scroll-mt-20 sm:[&_section[id]]:scroll-mt-32 lg:[&_section[id]]:scroll-mt-20">
 		<h2 class="sr-only">{tabLabel(tab)}</h2>
 		{#key tab}
-			{#each SECTIONS[tab] as Section, i (i)}
+			{#each basic as Section, i (i)}
 				<div class="min-w-0 rise-in" style={`--rise-delay: ${i * 40}ms`}><Section /></div>
 			{/each}
+			{#if advanced.length > 0}
+				<div class="min-w-0 rise-in" style={`--rise-delay: ${basic.length * 40}ms`}>
+					<Disclosure id="advanced" title={m.settings_advanced_title()} summary={m.settings_advanced_summary({ count: advanced.length })} bind:open={advancedOpen}>
+						<div class="grid min-w-0 gap-6 max-sm:gap-3">
+							{#each advanced as Section, i (i)}
+								<div class="min-w-0"><Section /></div>
+							{/each}
+						</div>
+					</Disclosure>
+				</div>
+			{/if}
 		{/key}
 	</div>
 </div>

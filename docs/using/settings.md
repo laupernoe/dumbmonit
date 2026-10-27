@@ -6,13 +6,13 @@ Settings holds what is administrative: your account, who can sign in and how, th
 
 | Tab | Address | What it holds |
 |---|---|---|
-| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications |
+| My account | `/settings/account` | Appearance, Account & security (password, two-factor, security log), Push notifications, On-call contacts and quiet hours ([On-call](../alerting/oncall.md)) |
 | Team & access | `/settings/team` | Users, Single sign-on |
 | Monitoring | `/settings/monitoring` | Agents, Integration packs, [Security score](security-score.md) |
 | Notifications & reports | `/settings/notifications` | Channels, Notification policy, Quiet hours ([Notification channels](../notifications.md)), Reports |
 | Status pages | `/settings/status` | Status pages and announcements ([Status pages](status-pages.md)) |
 | Wall display | `/settings/wall` | Wall mode, Wall music, Wall widgets, news included ([Wall mode](overview.md#wall-mode)) |
-| System | `/settings/system` | Backup, DumbMonit itself, API & assistants, About |
+| System | `/settings/system` | Data & retention, Backup, DumbMonit itself, API & assistants, About |
 
 Each section keeps its own anchor: `/settings#agents` forwards to `/settings/monitoring#agents`. The old links (`/alerts#notifications`, `/status`) forward to the new place too.
 
@@ -174,6 +174,12 @@ Admins only. Sign-in with directory usernames and passwords on the usual
 sign-in screen, roles from the directory groups, accounts created at the first
 sign-in. See [LDAP / Active Directory](ldap.md).
 
+## SAML, SCIM and teams
+
+Admins only. SAML 2.0 single sign-on, SCIM provisioning, and teams that limit
+each account to some folders of monitors. See [SAML 2.0](saml.md),
+[SCIM provisioning](scim.md) and [Teams and permissions](teams.md).
+
 ## Agents
 
 Enrollment tokens for the [Linux, macOS, FreeBSD and Windows agent](../devices/agent.md).
@@ -198,6 +204,27 @@ In **Settings → Monitoring**, below the agents: a score for how well the insta
 In **Settings → Notifications & reports**, below the policy: periodic availability emails for the team. Pick weekly, daily or monthly, the
 day, hour and timezone, the recipients and the email channel, then **Send a
 preview** to see the result. Admin-only. See [Email reports](reports.md).
+
+## Data & retention {#data-retention}
+
+Admin-only. Shows how much disk the metrics (`vm`), the 5-minute aggregates
+(`vm-long`), the log store (`vlogs`), the database and the backups take, the
+free space, and the growth per day with the number of days left before the
+volume is full.
+
+* **Raw metrics retention** (7 to 3650 days). Read-only when an external
+  VictoriaMetrics is used: set it there. Lowering it deletes the older raw data
+  at the next VictoriaMetrics retention cycle.
+* **Long-term history**: on or off, its retention (730 days by default) and its
+  state (last window written, history copy progress). Graphs, status pages and
+  reports reaching past the raw retention are answered from it.
+* **Log store**: off by default. Turning it on starts the embedded VictoriaLogs
+  and opens the admin-only **Logs** page, a LogsQL search over the server's
+  own logs.
+
+Saving a retention restarts the embedded process concerned for a few seconds;
+samples are buffered meanwhile. See [Sizing](../reference/sizing.md) and
+[External VictoriaMetrics](../reference/external-victoriametrics.md).
 
 ## Backup
 

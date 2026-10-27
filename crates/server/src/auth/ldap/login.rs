@@ -113,6 +113,8 @@ pub async fn provision(
     if user.disabled {
         info!(user = %user.username, "LDAP account re-enabled: it is back in an allowed group");
     }
+    crate::auth::teams::sync_idp_groups(pool, user.id, &entry.groups).await?;
+    crate::auth::clients::sync_idp_groups(pool, user.id, &entry.groups).await?;
     users::get(pool, user.id).await?.map(Ok).ok_or_else(|| anyhow!("account {} vanished", user.id))
 }
 
@@ -169,5 +171,7 @@ async fn create(pool: &SqlitePool, entry: &DirectoryUser, role: Role) -> Result<
     )
     .await?;
     info!(user = %entry.username, role = role.as_str(), "account created from LDAP login");
+    crate::auth::teams::sync_idp_groups(pool, id, &entry.groups).await?;
+    crate::auth::clients::sync_idp_groups(pool, id, &entry.groups).await?;
     users::get(pool, id).await?.ok_or_else(|| anyhow!("account {id} vanished after creation"))
 }

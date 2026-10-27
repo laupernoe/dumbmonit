@@ -68,6 +68,10 @@ pub struct Request<'a> {
     pub success: fn(u16) -> bool,
     /// Délai maximal de l'envoi, [`SEND_TIMEOUT`] par défaut.
     pub timeout: Duration,
+    /// Contrôle du corps d'une réponse *réussie* : certains services de SMS
+    /// répondent 200 et logent l'échec dans le corps (Vonage, ASPSMS). Renvoie
+    /// l'explication du refus, `None` si le corps est bon.
+    pub verify: Option<fn(&str) -> Option<String>>,
 }
 
 impl<'a> Request<'a> {
@@ -83,6 +87,7 @@ impl<'a> Request<'a> {
             explain: |_, _| None,
             success: |status| (200..300).contains(&status),
             timeout: SEND_TIMEOUT,
+            verify: None,
         }
     }
 
@@ -168,6 +173,12 @@ impl<'a> Request<'a> {
         self
     }
 
+    /// Voir [`Request::verify`].
+    pub fn verify(mut self, verify: fn(&str) -> Option<String>) -> Self {
+        self.verify = Some(verify);
+        self
+    }
+
     /// Délai plus court que celui des notifications (battement de cœur sortant).
     pub fn timeout(mut self, timeout: Duration) -> Self {
         self.timeout = timeout.min(SEND_TIMEOUT);
@@ -177,6 +188,20 @@ impl<'a> Request<'a> {
 
 /// Envoie une requête et transforme toute défaillance en [`NotifyError`] expurgée.
 pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), NotifyError> {
+    perform(http, request, false).await.map(|_| ())
+}
+
+/// Comme [`send`], mais renvoie le corps de la réponse : les canaux de tickets
+/// y lisent l'identifiant de ce qu'ils viennent de créer.
+pub async fn exchange(http: &reqwest::Client, request: Request<'_>) -> Result<String, NotifyError> {
+    perform(http, request, true).await
+}
+
+async fn perform(
+    http: &reqwest::Client,
+    request: Request<'_>,
+    want_body: bool,
+) -> Result<String, NotifyError> {
     // Jamais vers le serveur lui-même (VictoriaMetrics embarqué, API locale) :
     // l'URL est jugée ici après résolution, puis à nouveau par le résolveur du
     // client et à chaque redirection. Une URL illisible est laissée à reqwest,
@@ -241,7 +266,17 @@ pub async fn send(http: &reqwest::Client, request: Request<'_>) -> Result<(), No
 
     let status = response.status().as_u16();
     if (request.success)(status) {
-        return Ok(());
+        if request.verify.is_none() && !want_body {
+            return Ok(String::new());
+        }
+        let body = response.text().await.unwrap_or_default();
+        return match request.verify.and_then(|verify| verify(&body)) {
+            None => Ok(body),
+            Some(detail) => Err(NotifyError::Rejected {
+                status,
+                detail: secret::truncate(&secret::redact(&detail, &request.secrets), MAX_DETAIL),
+            }),
+        };
     }
 
     let body = response.text().await.unwrap_or_default();

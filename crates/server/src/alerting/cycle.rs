@@ -708,7 +708,7 @@ fn evaluate_point(
     match rule.kind {
         // Une règle prédictive n'est qu'un seuil sur une requête `predict_linear` :
         // c'est VictoriaMetrics qui extrapole, pas nous.
-        RuleKind::Threshold | RuleKind::Predict => (
+        RuleKind::Threshold | RuleKind::Predict | RuleKind::LogPattern => (
             rule.operator.holds(
                 point.value,
                 effective.threshold,

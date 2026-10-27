@@ -1,0 +1,26 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-data/providers/Microsoft.Storage/storageAccounts/stdata/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "westeurope",
+      "properties": {
+        "availabilityState": "Available",
+        "title": "Available",
+        "summary": "There aren't any known Azure platform problems affecting this storage account."
+      }
+    },
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-web/providers/Microsoft.Cache/Redis/cache-web/providers/Microsoft.ResourceHealth/availabilityStatuses/current",
+      "name": "current",
+      "type": "Microsoft.ResourceHealth/AvailabilityStatuses",
+      "location": "westeurope",
+      "properties": {
+        "availabilityState": "Unknown",
+        "title": "Unknown",
+        "summary": "We are currently unable to determine the health of this resource."
+      }
+    }
+  ]
+}

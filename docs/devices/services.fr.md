@@ -1,9 +1,9 @@
-# Services : HTTP, TCP, DNS, ping, TLS, NTP, SMTP, SQL, MQTT, WebSocket
+# Services : HTTP, TCP, DNS, ping, TLS, NTP, UDP, SSH, SMTP, IMAP, POP3, SQL, MQTT, WebSocket
 
-Onze types de surveillance couvrent des **services** plutôt que du matériel, à la
+Quinze types de surveillance couvrent des **services** plutôt que du matériel, à la
 façon d'Uptime Kuma : une page web, un port, un nom DNS, un hôte, un
-certificat, un serveur de temps, un relais mail, une base de données, un
-courtier MQTT, un point de terminaison WebSocket. Chaque service obtient
+certificat, un serveur de temps, un relais mail ou une boîte aux lettres, une base de données, un
+courtier MQTT, un point de terminaison WebSocket, un port UDP, un serveur SSH. Chaque service obtient
 une barre d'historique, un temps de réponse et un pourcentage de
 disponibilité sur sa page de surveillance.
 
@@ -84,10 +84,10 @@ Chaque surveillance a son propre délai (`timeout_seconds`, 5 s par défaut,
 serveur : interrompu par le planificateur, il ne pourrait pas écrire son
 zéro.
 
-Règles intégrées qui s'appliquent aux onze : Service en panne (3
+Règles intégrées qui s'appliquent aux quinze : Service en panne (3
 minutes), Service instable (plus de six changements d'état en trente
 minutes), Service lent (plus de 3 s pendant dix minutes). Pour chaque
-vérification qui lit un certificat — `http`, `tls`, `smtp`, `mqtt`,
+vérification qui lit un certificat — `http`, `tls`, `smtp`, `imap`, `pop3`, `mqtt`,
 `websocket` : Certificat arrivant à expiration (14 jours) et Certificat
 expiré.
 
@@ -97,24 +97,25 @@ enregistré comme `reason="auth"`, l'alerte dit donc quoi corriger.
 ### Métriques
 
 Toutes des jauges, toutes préfixées `dumbmonit_`, toutes étiquetées
-`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket"` en
+`probe="http|tcp|dns|ping|tls|smtp|postgres|mysql|mqtt|websocket|ntp|udp|ssh|imap|pop3|snmp_oid|radius|grpc"` en
 plus de `target`, `host` et `tag_*`.
 
 | Métrique | Surveillances | Signification |
 |---|---|---|
 | `probe_success` | tous | 1 si le service répond correctement, 0 sinon. |
 | `probe_duration_seconds` | tous | Durée totale de la vérification. |
-| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`. |
+| `probe_failure_info` | tous | Présence (1) avec un label `reason` : `dns`, `connect`, `timeout`, `tls`, `cert_expired`, `status`, `keyword`, `json`, `body`, `packet_loss`, `record`, `auth`, `protocol`, `query`, `payload`, `unsynchronized`, `clock_offset`, `host_key`, `threshold`, `not_found`, `bad_secret`, `unhealthy`. |
 | `probe_http_status_code` | http, websocket | Code de statut obtenu. |
 | `probe_http_first_byte_seconds` | http | Temps jusqu'aux en-têtes de réponse. |
+| `probe_http_phase_seconds{phase}` | http | Temps de la requête mesurée réparti en `dns`, `connect`, `tls`, `processing` et `transfer` ; les cinq somment toujours au temps de la requête (voir [Décomposition du temps de réponse](#decomposition-du-temps-de-reponse)). |
 | `probe_http_content_bytes` | http | Taille du corps. |
 | `probe_http_security_header{header}` | http | 0/1 par étiquette `header` (https seulement) : HSTS, nosniff, CSP, X-Frame-Options, frame-ancestors. |
-| `probe_connect_seconds` | tous sauf dns et ping | Établissement de connexion (connexion incluse pour les bases de données). |
-| `probe_tls_handshake_seconds` | tls, http, smtp, mqtt, websocket | Négociation TLS seule. |
-| `probe_tls_version_info` | tls, http, smtp, mqtt, websocket | Présence ; label `version`. |
-| `probe_ssl_cert_expiry_days` | tls, http, smtp, mqtt, websocket | Jours avant expiration, négatif si expiré. |
-| `probe_ssl_cert_valid` | tls, http, smtp, mqtt, websocket | 1 si la chaîne mène à une autorité connue. |
-| `probe_ssl_cert_issuer_info` | tls, http, smtp, mqtt, websocket | Présence ; label `issuer`. |
+| `probe_connect_seconds` | tous sauf dns, ping, ntp et udp | Établissement de connexion (connexion incluse pour les bases de données). |
+| `probe_tls_handshake_seconds` | tls, http, smtp, imap, pop3, mqtt, websocket | Négociation TLS seule. |
+| `probe_tls_version_info` | tls, http, smtp, imap, pop3, mqtt, websocket | Présence ; label `version`. |
+| `probe_ssl_cert_expiry_days` | tls, http, smtp, imap, pop3, mqtt, websocket | Jours avant expiration, négatif si expiré. |
+| `probe_ssl_cert_valid` | tls, http, smtp, imap, pop3, mqtt, websocket | 1 si la chaîne mène à une autorité connue. |
+| `probe_ssl_cert_issuer_info` | tls, http, smtp, imap, pop3, mqtt, websocket | Présence ; label `issuer`. |
 | `probe_dns_lookup_seconds` | dns | Temps de résolution. |
 | `probe_dns_answer_records` | dns | Enregistrements du type demandé. |
 | `probe_dns_answer_fingerprint` | dns | Avec « Alerter quand la réponse change » : une empreinte 32 bits de la réponse triée. Sa valeur ne signifie rien ; seuls ses changements comptent. |
@@ -133,7 +134,50 @@ plus de `target`, `host` et `tag_*`.
 | `probe_mqtt_message_bytes` | mqtt | Taille du message retenu. |
 | `probe_mqtt_message_value` | mqtt | Son contenu, quand c'est un nombre. |
 | `probe_ws_handshake_seconds` | websocket | Poignée de main d'ouverture. |
+| `probe_udp_response_seconds`, `probe_udp_response_bytes` | udp | Temps de réponse et taille de la réponse (seulement quand une réponse arrive). |
+| `probe_ssh_banner_seconds` | ssh | Temps jusqu'à la bannière `SSH-2.0-...`. |
+| `probe_ssh_protocol_info{version}` | ssh | Présence ; version du protocole dans le label `version`. |
+| `probe_ssh_software_info{software}` | ssh | Présence ; logiciel du serveur dans le label `software` (`OpenSSH_9.6p1`). |
+| `probe_ssh_kex_seconds` | ssh | Durée du début de l'échange de clés (seulement quand la clé d'hôte est lue). |
+| `probe_ssh_host_key_fingerprint` | ssh | Avec une clé d'hôte attendue ou « Alerter quand la clé d'hôte change » : une empreinte 32 bits de la clé d'hôte. Sa valeur ne signifie rien ; seuls ses changements comptent. |
+| `probe_ssh_host_key_info{fingerprint}` | ssh | Présence ; l'empreinte `SHA256:...`, telle que l'affiche `ssh-keygen -lf`. |
+| `probe_ssh_host_key_match` | ssh | 1 si la clé d'hôte est celle attendue, 0 sinon. Seulement avec une clé d'hôte attendue. |
+| `probe_imap_greeting_seconds`, `probe_imap_login_seconds` | imap | Temps jusqu'à la bannière `* OK`, et aller-retour de `LOGIN`. |
+| `probe_imap_authenticated` | imap | 1 quand `LOGIN` a réussi. |
+| `probe_pop3_greeting_seconds`, `probe_pop3_login_seconds` | pop3 | Temps jusqu'à la bannière `+OK`, et durée de `USER` + `PASS`. |
+| `probe_pop3_authenticated` | pop3 | 1 quand l'identification a réussi. |
 | `probe_ws_message_bytes` | websocket | Taille de la trame reçue. |
+| `probe_snmp_query_seconds` | snmp_oid | Aller-retour de la lecture. |
+| `probe_snmp_value` | snmp_oid | Valeur de l'objet, si elle est numérique. |
+| `probe_radius_response_seconds` | radius | Aller-retour de l'Access-Request. |
+| `probe_radius_response_code` | radius | Code de la réponse : 2 accepté, 3 refusé, 11 défi. |
+| `probe_grpc_check_seconds` | grpc | Durée de l'appel `Health/Check`. |
+| `probe_grpc_serving_status` | grpc | `ServingStatus` renvoyé : 1 SERVING, 2 NOT_SERVING, 3 SERVICE_UNKNOWN. |
+| `probe_grpc_status_code` | grpc | Code `grpc-status` de la réponse (0 : OK). |
+
+## Sonder depuis plusieurs emplacements {#sonder-depuis-plusieurs-emplacements}
+
+Un moniteur peut être sondé depuis plusieurs endroits à la fois, pour qu'un problème sur un seul réseau ne passe pas pour une panne. Dans le formulaire du moniteur, sous « Plus d'options », activez **Sonder depuis plusieurs emplacements** et cochez les emplacements : **Ce serveur** et les [agents relais](../install/remote-site.md) de votre choix. Il en faut au moins deux. Cela fonctionne pour les moniteurs HTTP, TCP, DNS, ping, TLS, SMTP, PostgreSQL, MySQL, MQTT, WebSocket et NTP, et ne se combine pas avec « Joint via » (un moniteur est sondé soit par un relais, soit par plusieurs emplacements).
+
+Chaque emplacement exécute la sonde à l'intervalle habituel. Le résultat est une **décision** :
+
+- **En panne** quand au moins *N* des *M* emplacements comptés échouent. *N* est le quorum : par défaut la majorité des emplacements (3 emplacements : 2 ; 2 emplacements : les deux), ou tout nombre de 1 au nombre d'emplacements.
+- **Dégradé** quand certains emplacements échouent, mais moins que le quorum. La page du moniteur affiche « Dégradé à un emplacement » et l'endroit en échec, mais aucune alerte `service_down` n'est levée et les pages de statut restent au vert.
+- **En ligne** quand aucun emplacement compté n'échoue.
+
+**Confirmation.** Quand un moniteur passe de « en ligne » à dégradé ou en panne, le serveur resonde aussitôt depuis tous les emplacements et ne publie que la décision de ce tour de confirmation. Un raté vu une seule fois n'alerte jamais.
+
+**Les emplacements silencieux sont écartés.** Un emplacement qui ne répond pas à temps (relais hors ligne), dont l'agent n'a pas activé le mode relais, qui a trop de sondes en attente, ou qui ne peut pas exécuter cette sonde, est exclu du décompte et affiché comme « Non compté » avec la raison ; le quorum s'adapte aux emplacements restants (il ne dépasse jamais leur nombre). Un agent relais garde au plus 32 sondes multi-emplacements à la fois ; au-delà, l'emplacement est exclu comme occupé. Un agent relais trop ancien pour connaître un type de moniteur répond par une erreur : l'emplacement est exclu et signalé, sans qu'il soit nécessaire de mettre l'agent à jour.
+
+La page du moniteur affiche une carte **Emplacements de sondage** : la décision, le nombre d'emplacements en échec face au quorum, et pour chacun son état, son temps de réponse, sa dernière vérification et la raison de son exclusion. Les emplacements placés sur la [carte du monde](../using/world-map.md) apparaissent aussi sur une petite carte.
+
+### Métriques par emplacement
+
+Par emplacement : `dumbmonit_probe_location_success{location}` et `dumbmonit_probe_location_duration_seconds{location}`, où `location` vaut `server` ou `agent-<id>`. La métrique habituelle `dumbmonit_probe_success` porte la décision de quorum : alertes, disponibilité et pages de statut la suivent. De plus, `dumbmonit_probe_degraded` vaut 1 tant qu'une minorité seulement d'emplacements échoue, et `dumbmonit_probe_locations_failing` et `dumbmonit_probe_locations_counted` donnent les chiffres derrière la décision. Voir [Métriques](../reference/metrics.md).
+
+### Être prévenu d'un emplacement dégradé
+
+Un moniteur dégradé ne lève jamais `service_down`. Pour en être tout de même informé, créez une règle d'alerte personnalisée (Alertes, Nouvelle règle) de sévérité **info**, avec la requête `dumbmonit_probe_degraded == bool 1`, l'opérateur `>` et le seuil `0`, pendant 5 minutes.
 
 ## HTTP {#http}
 
@@ -194,6 +238,36 @@ basique) ou jeton d'API (`Authorization: Bearer`).
 | `max_body_bytes` | Octets maximum lus | `524288` | Au-delà, le reste de la page n'est pas téléchargé. Le mot-clé et le chemin JSON ne sont recherchés que dans cette partie. |
 | `user_agent` | Identité annoncée (User-Agent) | `DumbMonit/<version>` | Nom que la vérification donne au serveur. Changez-le si le serveur filtre les robots. |
 | `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Décomposition du temps de réponse {#decomposition-du-temps-de-reponse}
+
+Sur la page du moniteur, le panneau **Décomposition du temps** montre où chaque
+contrôle passe son temps, en aires empilées sur la période choisie, avec une barre
+proportionnelle et une légende (nom, durée, part) pour le dernier contrôle. Les
+mêmes valeurs sont dans la métrique `probe_http_phase_seconds`, une série par
+étiquette `phase` :
+
+| Phase | Ce qu'elle couvre |
+|---|---|
+| `dns` | Résolution du nom d'hôte. Nulle pour une adresse IP. |
+| `connect` | Ouverture de la connexion TCP. |
+| `tls` | Négociation TLS (HTTPS seulement). |
+| `processing` | Attente du serveur : de la requête envoyée aux en-têtes de réponse. |
+| `transfer` | Lecture du corps de la réponse. Nulle sauf si un mot-clé ou un chemin JSON exige le corps. |
+
+Les cinq séries existent toujours et somment au temps écoulé entre l'envoi de la
+requête et la fin de la lecture du corps, pour la dernière requête du contrôle (le
+dernier saut quand les redirections sont suivies). Chaque contrôle ouvre une
+connexion neuve : `dns`, `connect` et `tls` sont donc mesurés à chaque fois, au
+lieu de rester à zéro sur une connexion réutilisée.
+
+Lire le graphique : une bande `dns` haute désigne le résolveur, `connect` le
+chemin réseau ou un pare-feu, `tls` la chaîne de certificats ou le coût de la
+négociation, `processing` l'application elle-même. La séparation TCP / TLS repose
+sur la durée de négociation relevée par la lecture du certificat juste avant la
+requête, plafonnée au temps de connexion observé ; si **Lire le certificat** est
+désactivé, la négociation TLS reste comprise dans `connect`. Un contrôle en échec
+ne publie pas de phases : le graphique montre alors un trou.
 
 ## TCP {#tcp}
 
@@ -772,10 +846,454 @@ Identifiants : aucun.
 | `unsynchronized` | Le serveur a répondu stratum 16 ou 0 (un « kiss-o'-death », qui nomme aussi la raison dans le journal), ou son indicateur de saut lit « non synchronisé ». |
 | `clock_offset` | Le décalage mesuré dépasse « Décalage toléré ». |
 
+## UDP {#udp}
+
+**Service UDP** — envoie un datagramme à un port UDP et vérifie la réponse, ou
+que personne ne le refuse. Exemples : un serveur de jeu ou de VoIP, un
+récepteur syslog ou SNMP, un point d'accès WireGuard, un service maison qui
+répond à un message de ping.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 161 | UDP | Le port UDP du service, tel qu'écrit dans l'adresse (161 n'est qu'un exemple) |
+
+### Configuration
+
+1. Dans l'adresse, écrivez l'hôte et le port UDP : « 192.168.1.20:5060 ». Le port est obligatoire.
+
+2. Pour vérifier que le service répond vraiment, renseignez « Datagramme à envoyer » et « Réponse attendue ».
+
+3. Sans réponse attendue, la vérification n'échoue que si l'hôte répond que le port est fermé.
+
+!!! warning
+    UDP n'a pas de connexion : sans réponse attendue, un pare-feu qui jette les datagrammes en silence paraît en bonne santé.
+
+Il n'y a pas de port par défaut. Avec une réponse attendue, la vérification
+attend un datagramme en retour pendant tout le délai et y cherche le texte ;
+sans, elle attend environ une seconde et demie que l'hôte réponde par un ICMP
+« port unreachable » (rapporté comme `connect`). Les datagrammes en texte et
+en hexadécimal sont pris en charge ; en texte, `\n`, `\r`, `\t`, `\0`, `\\` et
+`\xNN` sont lus comme des échappements. La réponse est cherchée comme du texte
+brut : il n'y a pas de forme en expression régulière.
+
+Identifiants : aucun.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `port` | Port | *(vide)* | Utilisé si l'adresse n'en donne pas. Il n'y a pas de défaut : UDP n'a pas de port standard. |
+| `payload` | Datagramme à envoyer | *(vide)* | Envoyé en un seul datagramme, 1400 octets au plus. En texte, \n \r \t \0 \\ et \xNN sont lus comme des échappements. Vide : un datagramme vide. |
+| `payload_encoding` | Codage du datagramme | `text` | Text envoie les caractères tels quels, Hex lit des paires de chiffres hexadécimaux (espaces permis). |
+| `expect_response` | Réponse attendue | *(vide)* | Texte que la réponse doit contenir. Vide : la vérification réussit sauf si l'hôte répond que le port est fermé, et le silence compte comme un succès. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `dns` | Le nom ne se résout pas. |
+| `connect` | L'hôte a répondu que le port est fermé (ICMP), ou la socket n'a pas pu être ouverte. |
+| `timeout` | Une réponse attendue n'est pas arrivée dans le délai. |
+| `payload` | Une réponse est arrivée mais ne contient pas le texte attendu. |
+
+## SSH {#ssh}
+
+**Serveur SSH** — lit la bannière SSH et, si vous le demandez, vérifie que la
+clé d'hôte est toujours celle que vous connaissez. Exemples : un serveur Linux
+ou un Raspberry Pi, un NAS ou un hyperviseur avec SSH activé, un bastion, un
+serveur Git en SSH.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 22 | TCP | SSH (port par défaut, celui de l'adresse) |
+
+### Configuration
+
+1. Dans l'adresse, écrivez le nom d'hôte ou l'adresse IP, avec le port s'il n'est pas 22 : « server.home.lan:2222 ».
+
+2. Pour être averti quand l'identité du serveur change, lisez son empreinte avec ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub.
+
+3. Collez cette empreinte (SHA256:...) dans « Clé d'hôte attendue », ou cochez « Alerter quand la clé d'hôte change » pour l'enregistrer sans en choisir une.
+
+!!! warning
+    La vérification ne se connecte jamais et ne contrôle pas la signature du serveur : elle lit la clé que le serveur montre, comme ssh-keyscan.
+
+La vérification lit toujours la bannière (`SSH-2.0-OpenSSH_9.6p1 ...`) : la
+version du protocole et le logiciel du serveur sont enregistrés en labels.
+Quand une clé d'hôte attendue est renseignée, ou que « Alerter quand la clé
+d'hôte change » est cochée, elle démarre aussi l'échange de clés
+(`curve25519-sha256`) assez loin pour que le serveur montre sa clé publique
+d'hôte, en calcule l'empreinte SHA-256 et raccroche. Aucun identifiant n'est
+jamais envoyé.
+
+Un serveur qui détient plusieurs clés d'hôte montre la première qu'il possède
+parmi `ssh-ed25519`, `ecdsa-sha2-nistp256`, `rsa-sha2-512` et `rsa-sha2-256`.
+L'empreinte attendue doit être celle de cette clé : utilisez « Type de clé
+d'hôte » pour choisir la famille quand vous la lisez dans un autre fichier que
+celui d'ed25519.
+
+Identifiants : aucun.
+
+### Alerter quand la clé d'hôte change
+
+Une clé d'hôte qui change sans que vous ayez réinstallé la machine mérite un
+coup d'œil : un serveur reconstruit puis restauré sans ses clés, ou quelque
+chose qui répond à sa place. Avec une clé d'hôte attendue, la vérification
+échoue avec `reason="host_key"` et la règle Service en panne se déclenche après
+trois minutes. Sans, cochez « Alerter quand la clé d'hôte change » et créez une
+règle sur l'empreinte, dans **Alertes > Règles** :
+
+```
+changes_prometheus(dumbmonit_probe_ssh_host_key_fingerprint[1h]) > 0
+```
+
+Elle se déclenche quand l'empreinte diffère de la précédente et se résout
+d'elle-même une heure plus tard, comme la règle intégrée de changement de
+réponse DNS. L'empreinte lisible est dans `probe_ssh_host_key_info`.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `port` | Port | `22` | Utilisé si l'adresse n'en donne pas. |
+| `expected_host_key` | Clé d'hôte attendue | *(vide)* | Empreinte SHA256 de la clé d'hôte du serveur, telle qu'affichée par ssh-keygen -lf. Si la clé diffère, le serveur est rapporté en panne avec la raison host_key. Vide : la clé n'est pas vérifiée. |
+| `alert_on_change` | Alerter quand la clé d'hôte change | `false` | Enregistre une empreinte de la clé d'hôte à chaque vérification, pour qu'une règle puisse se déclencher quand elle change. Implicite avec une clé d'hôte attendue. |
+| `host_key_type` | Type de clé d'hôte | `auto` | Un serveur peut détenir plusieurs clés d'hôte. Auto lit la première qu'il propose dans cet ordre : ed25519, ecdsa, rsa. Choisissez la famille de l'empreinte attendue. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `dns`, `connect`, `timeout` | Le nom ne se résout pas, le port est fermé, ou le serveur n'a pas répondu à temps. |
+| `protocol` | Quelque chose a répondu, mais pas du SSH 2.0 — ou le serveur ne propose pas `curve25519-sha256` ni aucun des types de clé d'hôte demandés, ou il s'est déconnecté pendant l'échange de clés. |
+| `host_key` | La clé d'hôte ne correspond pas à « Clé d'hôte attendue ». Le journal nomme le type de clé et les deux empreintes. |
+
+## IMAP {#imap}
+
+**Boîte aux lettres (IMAP)** — un serveur IMAP salue, propose TLS et accepte une
+connexion, comme un vrai client de messagerie. Exemples : Dovecot, le serveur
+IMAP de votre fournisseur, une boîte derrière Mailcow ou Mailu, l'hôte mail de
+Proxmox Mail Gateway.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 993 | TCP | IMAP sur TLS (par défaut) |
+| 143 | TCP | Seulement avec STARTTLS ou sans chiffrement |
+
+### Configuration
+
+1. Dans DumbMonit, saisissez le serveur de messagerie, par exemple imap.example.com:1993 (port 993 avec le chiffrement par défaut).
+
+2. Choisissez le chiffrement : TLS pour le port 993, STARTTLS pour le port 143, Aucun pour un serveur de votre propre réseau.
+
+3. Facultatif : renseignez un compte de boîte aux lettres, pour vérifier que le serveur accepte toujours les connexions (un mot de passe refusé n'est pas rapporté comme une panne).
+
+#### Droits requis
+
+- **Un compte de boîte aux lettres autorisé à se connecter** : seulement si vous renseignez un identifiant
+
+!!! warning
+    La vérification n'ouvre jamais de boîte : un serveur qui accepte la connexion mais ne sait plus lire son stockage répond parfaitement ici.
+
+La vérification lit la bannière `* OK`, chiffre la connexion si demandé
+(`STARTTLS`), envoie `LOGIN` si la cible a un identifiant, puis `LOGOUT`. Elle
+ne sélectionne jamais de boîte et ne lit aucun message.
+
+Identifiants : aucun, ou un nom d'utilisateur et un mot de passe envoyés avec
+`LOGIN`. Ils sont envoyés **après** le chiffrement de la connexion et le
+jugement du certificat : un serveur dont la chaîne ne peut pas être vérifiée ne
+les reçoit jamais. Seule exception, le chiffrement « Aucun », que vous devez
+choisir explicitement et qui les envoie en clair.
+
+En TLS ou STARTTLS, le certificat est lu comme le fait la vérification TLS : une
+boîte aux lettres est donc aussi un certificat dont vous êtes averti.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `security` | Chiffrement | `tls` | TLS chiffre dès le premier octet (port 993), STARTTLS démarre en clair puis passe en chiffré (port 143), Aucun ne chiffre jamais (port 143) et envoie le mot de passe en clair : seulement pour votre propre réseau. |
+| `port` | Port | *(vide)* | Utilisé si l'adresse n'en donne pas. Vide : 993 avec TLS, 143 avec STARTTLS ou sans chiffrement. |
+| `server_name` | Nom de serveur (SNI) | *(l'hôte)* | Nom de domaine annoncé au serveur et vérifié dans le certificat. Réglez-le quand l'adresse est une IP. |
+| `insecure_tls` | Accepter un certificat non vérifiable | `false` | Une chaîne non vérifiable ne compte plus comme un échec : la date d'expiration est quand même enregistrée. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | Le port est fermé ou le serveur est injoignable. |
+| `protocol` | Quelque chose a répondu, mais pas de l'IMAP — ou le serveur a raccroché, ou a répondu `BAD` ou `[UNAVAILABLE]` à la connexion. |
+| `auth` | Le compte a été refusé (`NO`). Le serveur va bien ; l'identifiant, non. |
+| `tls`, `cert_expired` | Même sens que pour la vérification TLS. Un `STARTTLS` refusé est rapporté comme `tls`. |
+
+## POP3 {#pop3}
+
+**Boîte aux lettres (POP3)** — un serveur POP3 salue, propose TLS et accepte une
+connexion, comme un vrai client de messagerie. Exemples : Dovecot, le serveur
+POP3 de votre fournisseur, un vieux serveur de messagerie qui ne parle que
+POP3.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 995 | TCP | POP3 sur TLS (par défaut) |
+| 110 | TCP | Seulement avec STARTTLS ou sans chiffrement |
+
+### Configuration
+
+1. Dans DumbMonit, saisissez le serveur de messagerie, par exemple pop.example.com:1995 (port 995 avec le chiffrement par défaut).
+
+2. Choisissez le chiffrement : TLS pour le port 995, STARTTLS pour le port 110 (commande STLS), Aucun pour un serveur de votre propre réseau.
+
+3. Facultatif : renseignez un compte de boîte aux lettres, pour vérifier que le serveur accepte toujours les connexions (un mot de passe refusé n'est pas rapporté comme une panne).
+
+#### Droits requis
+
+- **Un compte de boîte aux lettres autorisé à se connecter** : seulement si vous renseignez un identifiant
+
+!!! warning
+    La vérification ne liste ni ne lit jamais de messages : elle se connecte, puis prend congé.
+
+La vérification lit la bannière `+OK`, chiffre la connexion si demandé (`STLS`),
+envoie `USER` et `PASS` si la cible a un identifiant, puis `QUIT`. Ni `STAT` ni
+`RETR` ne sont jamais envoyés, et rien n'est supprimé.
+
+Identifiants : aucun, ou un nom d'utilisateur et un mot de passe. Même règle
+qu'en IMAP : ils sont envoyés après le chiffrement de la connexion et le
+jugement du certificat, sauf si vous avez explicitement choisi le chiffrement
+« Aucun ».
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `security` | Chiffrement | `tls` | TLS chiffre dès le premier octet (port 995), STARTTLS démarre en clair puis passe en chiffré avec STLS (port 110), Aucun ne chiffre jamais (port 110) et envoie le mot de passe en clair : seulement pour votre propre réseau. |
+| `port` | Port | *(vide)* | Utilisé si l'adresse n'en donne pas. Vide : 995 avec TLS, 110 avec STARTTLS ou sans chiffrement. |
+| `server_name` | Nom de serveur (SNI) | *(l'hôte)* | Nom de domaine annoncé au serveur et vérifié dans le certificat. Réglez-le quand l'adresse est une IP. |
+| `insecure_tls` | Accepter un certificat non vérifiable | `false` | Une chaîne non vérifiable ne compte plus comme un échec : la date d'expiration est quand même enregistrée. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | Le port est fermé ou le serveur est injoignable. |
+| `protocol` | Quelque chose a répondu, mais pas du POP3 — ou la boîte est verrouillée (`[IN-USE]`) ou le système est en difficulté (`[SYS/...]`). |
+| `auth` | `USER` ou `PASS` a été refusé (`-ERR`). Le serveur va bien ; l'identifiant, non. |
+| `tls`, `cert_expired` | Même sens que pour la vérification TLS. Un `STLS` refusé est rapporté comme `tls`. |
+
+## SNMP OID {#snmp-oid}
+
+**Valeur SNMP (OID unique)** — lit un objet SNMP et compare sa valeur à une
+plage ou à un texte. Exemples : une sonde de température ou d'humidité, l'état
+ou la charge d'un onduleur, une chaîne de version ou un indicateur de firmware,
+un compteur exposé par un script `extend` de Net-SNMP.
+
+Là où le type d'équipement SNMP décrit toute une machine par un profil, celui-ci
+pose une question étroite : cet objet contient-il ce que j'attends ?
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 161 | UDP | Requête SNMP (port par défaut) |
+
+### Configuration
+
+1. Sur l'équipement, activez SNMP et vérifiez que la communauté ou l'utilisateur v3 peut lire l'objet (la vue SNMP doit donner accès à sa branche).
+
+2. Dans DumbMonit, saisissez l'adresse de l'équipement, puis la communauté ou l'utilisateur v3.
+
+3. Renseignez l'objet (OID) avec son suffixe d'instance, par exemple 1.3.6.1.2.1.1.3.0.
+
+4. Facultatif : fixez un minimum et un maximum, ou un texte attendu, pour être averti quand la valeur dérive.
+
+#### Droits requis
+
+- **Accès en lecture à l'objet** : Une communauté ou un utilisateur v3 en lecture seule suffit
+
+!!! warning
+    Un objet que l'agent ne connaît pas, ou que sa vue SNMP masque, est rapporté en panne avec la raison not_found.
+
+#### À savoir
+
+La vérification réutilise la session SNMP du type d'équipement SNMP : mêmes communautés (v1/v2c) et utilisateurs v3, mêmes renvois. Sans borne ni texte attendu, elle réussit dès que l'objet existe. Une valeur numérique est tracée dans `probe_snmp_value` (un texte qui contient un nombre, comme `42,5`, compte aussi). Les bornes sont incluses ; une valeur qui n'est pas un nombre échoue dès qu'une borne est posée. Le texte attendu est cherché sans tenir compte de la casse dans la valeur lue comme du texte.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `oid` | Objet (OID) | *(vide)* | L'objet SNMP à lire, sous forme numérique. Ajoutez le suffixe d'instance, souvent .0 pour une valeur simple. |
+| `port` | Port | `161` | Utilisé si l'adresse n'en donne pas. |
+| `min` | Valeur minimale | *(vide)* | Une valeur numérique inférieure échoue. Vide : pas de borne basse. |
+| `max` | Valeur maximale | *(vide)* | Une valeur numérique supérieure échoue. Vide : pas de borne haute. |
+| `expect` | Texte attendu | *(vide)* | Texte que la valeur doit contenir, quelle que soit la casse. Vide : toute valeur est acceptée. |
+| `snmp_version` | Version SNMP | `2c` | Version utilisée avec une communauté. Choisissez 1 seulement pour un vieil agent qui ignore la 2c ; les utilisateurs SNMP v3 l'ignorent. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | L'équipement est injoignable. |
+| `timeout` | L'agent n'a pas répondu à temps : mauvaise adresse, mauvaise communauté (les agents restent muets) ou pare-feu. |
+| `auth` | L'agent a refusé la communauté ou les identifiants v3. |
+| `protocol` | L'agent a répondu autre chose qu'une réponse SNMP valide, ou a refusé la requête. |
+| `not_found` | L'agent ne connaît pas l'objet (`noSuchObject`, `noSuchInstance`) : vérifiez l'OID, son suffixe d'instance et la vue SNMP. |
+| `threshold` | La valeur numérique est hors de `min` / `max`. |
+| `payload` | La valeur n'est pas un nombre alors qu'une borne est posée, ou ne contient pas le texte attendu. |
+
+## RADIUS {#radius}
+
+**Serveur RADIUS** — authentifie un compte de test (Access-Request) et attend
+un Access-Accept : il détecte un serveur allumé qui n'accepte plus les
+connexions. Exemples : FreeRADIUS, Windows NPS, le RADIUS d'un Wi-Fi
+WPA-Enterprise, d'un VPN ou d'un switch 802.1X.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 1812 | UDP | Requêtes d'authentification (port par défaut) |
+
+### Configuration
+
+1. Sur le serveur RADIUS, déclarez l'hôte DumbMonit comme client, avec un secret partagé (clients.conf sur FreeRADIUS, RADIUS Clients sur Windows NPS).
+
+2. Créez un compte de test sans second facteur, et notez son nom et son mot de passe.
+
+3. Dans DumbMonit, saisissez le serveur (port UDP 1812 par défaut), le secret partagé et le compte de test.
+
+4. Facultatif : changez l'identifiant NAS si le serveur filtre les requêtes dessus.
+
+#### Droits requis
+
+- **Un compte de test autorisé à s'authentifier** : Aucun accès réseau ni droit d'administration n'est nécessaire
+
+!!! warning
+    Un secret partagé erroné, ou un hôte non déclaré comme client, rend généralement le serveur muet : la vérification signale alors un délai dépassé.
+
+#### À savoir
+
+La vérification envoie un Access-Request par passage, avec le nom du compte, son mot de passe masqué par le secret partagé (RFC 2865) et une signature (`Message-Authenticator`, RFC 3579, placée en premier comme le demande la parade à BlastRADIUS). Elle ne réessaie jamais : un datagramme perdu apparaît comme une panne.
+
+Le secret partagé et le mot de passe sont stockés chiffrés et ne ressortent jamais par l'API. Les laisser vides en modifiant la surveillance conserve ceux qui sont enregistrés ; changer le nom du compte redemande son mot de passe.
+
+La réponse est vérifiée avec le secret partagé. Un serveur dont la signature ne correspond pas est signalé `bad_secret` plutôt que comme une panne, pour que l'alerte dise quoi corriger. Un serveur qui ne connaît pas le secret ne répond en général pas du tout : voir les raisons d'échec.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `port` | Port | `1812` | Port UDP du service d'authentification. |
+| `nas_identifier` | Identifiant NAS | `dumbmonit` | Valeur de l'attribut NAS-Identifier envoyé avec la requête. Changez-la si le serveur filtre les requêtes par NAS. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `connect` | La socket UDP n'a pas pu être ouverte. |
+| `timeout` | Aucune réponse valide à temps : serveur arrêté, port filtré, secret partagé erroné ou hôte non déclaré comme client (les serveurs ignorent ces requêtes sans rien dire). |
+| `auth` | Access-Reject : le serveur fonctionne et refuse le compte de test (verrouillé, expiré, mot de passe erroné). Son Reply-Message, s'il y en a un, figure dans le journal. |
+| `bad_secret` | La signature de la réponse ne correspond pas : le secret partagé est probablement faux. |
+| `protocol` | Access-Challenge (le compte demande une seconde étape), un autre code inattendu, ou une réponse qui n'est pas du RADIUS valide. |
+
+## gRPC {#grpc}
+
+**Service gRPC** — appelle le contrôle de santé gRPC standard
+(`grpc.health.v1.Health/Check`) : il détecte un service allumé qui se déclare
+en mauvais état. Exemples : un microservice gRPC, etcd, un service derrière
+Envoy ou un maillage de services, tout serveur qui enregistre `grpc.health.v1`.
+
+Une vérification HTTP ne peut pas le faire : gRPC exige HTTP/2, souvent sans
+TLS (h2c), et la réponse est un message protobuf accompagné d'un `grpc-status`
+dans les trailers.
+
+### Ports réseau à ouvrir
+
+Du serveur DumbMonit (ou de son agent relais) vers l'équipement :
+
+| Port | Protocole | Usage |
+|---|---|---|
+| 50051 | TCP | gRPC sur HTTP/2 (port par défaut) |
+| 443 | TCP | Seulement avec l'option Connexion chiffrée (port par défaut) |
+
+### Configuration
+
+1. Vérifiez que le serveur enregistre le service de santé standard (grpc.health.v1.Health) : la plupart des frameworks gRPC offrent une fonction d'une ligne pour cela.
+
+2. Dans DumbMonit, saisissez le serveur avec son port, par exemple grpc.home.lan:50051.
+
+3. Cochez Connexion chiffrée (TLS) pour un serveur qui l'exige ; le port vaut alors 443 par défaut.
+
+4. Facultatif : nommez un Service, pour vérifier sa propre santé plutôt que celle du serveur entier.
+
+!!! warning
+    La vérification ne voit que ce que le service de santé déclare : un serveur qui répond toujours SERVING ne prouve rien sur les méthodes qu'il porte.
+
+#### À savoir
+
+Sans TLS, la vérification parle HTTP/2 en clair dès le premier octet (« prior knowledge »), ce qu'attendent les serveurs gRPC d'un réseau interne. Avec TLS, elle propose l'ALPN `h2` et échoue en `protocol` si le serveur ne l'accepte pas, et elle lit le certificat comme les autres vérifications chiffrées (expiration, émetteur, « Accepter un certificat invérifiable »).
+
+La réponse est jugée en deux temps. D'abord le `grpc-status`, lu dans les trailers ou, pour une réponse « Trailers-Only », dans les en-têtes : tout sauf `OK` échoue. Ensuite le champ `status` du message de santé : seul `SERVING` réussit.
+
+Identifiants : aucun.
+
+### Options
+
+| Clé | Libellé | Défaut | Aide |
+|---|---|---|---|
+| `service` | Service | *(vide)* | Nom du service dont on demande la santé, par exemple my.package.MyService. Vide : la santé du serveur dans son ensemble. |
+| `tls` | Connexion chiffrée (TLS) | `false` | Se connecter en TLS et HTTP/2 (ALPN h2). Décochée, la vérification parle HTTP/2 en clair (h2c), comme la plupart des services d'un réseau interne. |
+| `port` | Port | *(vide)* | Utilisé si l'adresse n'en donne pas. Vide : 50051, ou 443 avec TLS. |
+| `server_name` | Nom du serveur (SNI) | *(l'hôte)* | Nom de domaine annoncé au serveur et vérifié dans le certificat. À renseigner quand l'adresse est une IP. |
+| `insecure_tls` | Accepter un certificat invérifiable | `false` | Une chaîne invérifiable ne compte plus comme un échec : la date d'expiration reste enregistrée. |
+| `allow_private_targets` | Autoriser les cibles loopback et link-local | `false` | Voir « Adresses que les vérifications refusent » ci-dessous. |
+| `timeout_seconds` | Délai (secondes) | `5` | Temps après lequel le service est rapporté en panne s'il n'a pas répondu. Entre 1 et 60. |
+
+### Raisons d'échec
+
+| `reason` | Ce qui s'est passé |
+|---|---|
+| `dns`, `connect`, `timeout`, `tls`, `cert_expired` | Comme pour les autres vérifications : nom, port, délai, poignée de main TLS, certificat. |
+| `unhealthy` | Le serveur répond mais déclare `NOT_SERVING`, `UNKNOWN` ou `SERVICE_UNKNOWN`, ou répond `UNAVAILABLE`. `probe_grpc_serving_status` porte la valeur. |
+| `protocol` | Pas du HTTP/2, pas du gRPC, ou un `grpc-status` autre que ceux ci-dessous. `UNIMPLEMENTED` veut dire que le serveur n'expose pas le service de santé standard ; `NOT_FOUND`, qu'il ne connaît pas le nom donné dans `service`. |
+| `status` | Le point de terminaison a répondu un statut HTTP autre que 200 (un proxy, un autre service) ; `probe_http_status_code` le porte. |
+| `auth` | `UNAUTHENTICATED` ou `PERMISSION_DENIED` : le serveur, ou un proxy devant lui, veut des identifiants que le protocole de santé n'envoie pas. |
+
 ## Adresses que les vérifications refusent
 
 Les vérifications qui se connectent à une adresse que vous leur donnez —
-HTTP, TCP, TLS, NTP, SMTP, PostgreSQL, MySQL, MQTT, WebSocket —
+HTTP, TCP, TLS, NTP, UDP, SSH, SMTP, IMAP, POP3, PostgreSQL, MySQL, MQTT, WebSocket —
 rapportent ce qu'elles voient — ce qui est aussi, mot pour mot, ce qu'une
 falsification de requête côté serveur fait. Pour empêcher un
 administrateur de surveillance de lire des services que seul l'hôte

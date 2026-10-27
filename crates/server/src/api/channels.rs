@@ -19,6 +19,8 @@ use crate::alerting::matcher::{ChannelMatcher, Condition};
 use crate::alerting::notify_policy::ChannelPolicy;
 use crate::alerting::silence::Schedule;
 use crate::api::{ApiError, ApiResult};
+use crate::auth::clients;
+use crate::auth::teams::TeamAccess;
 use crate::db;
 use crate::notify::policy_store;
 use crate::notify::{self, CHANNEL_KINDS, ChannelConfig, ChannelSummary, DeliveryReport};
@@ -118,8 +120,22 @@ pub async fn kinds() -> Json<Vec<notify::catalog::KindInfo>> {
     Json(notify::catalog::all())
 }
 
-pub async fn list(State(state): State<AppState>) -> ApiResult<Json<Vec<ChannelSummary>>> {
-    Ok(Json(summaries(&state.pool, None).await?))
+pub async fn list(
+    TeamAccess(access): TeamAccess,
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<ChannelSummary>>> {
+    let mut channels = summaries(&state.pool, None).await?;
+    // Vue d'un client (mode MSP) : ses canaux et ceux de l'instance.
+    clients::retain_visible(
+        &state.pool,
+        &access,
+        clients::Kind::Channel,
+        &mut channels,
+        |c| c.id,
+        true,
+    )
+    .await?;
+    Ok(Json(channels))
 }
 
 /// Identifiants des canaux existants, pour valider les destinataires d'une règle.
@@ -185,15 +201,20 @@ async fn summary(pool: &SqlitePool, id: i64) -> ApiResult<ChannelSummary> {
 // --------------------------------------------------------------------------
 
 pub async fn create(
+    TeamAccess(access): TeamAccess,
     State(state): State<AppState>,
     Json(mut payload): Json<ChannelPayload>,
 ) -> ApiResult<(StatusCode, Json<ChannelSummary>)> {
     let policy = parse_policy(payload.policy.take(), &ChannelPolicy::default())?;
     let draft = payload.validate(None)?;
+    if draft.kind == crate::oncall::CHANNEL_KIND {
+        super::oncall::ensure_channel_policy(&state, &draft.settings).await?;
+    }
     let id = db::alerts::upsert_channel(&state.pool, &state.cipher, &draft)
         .await
         .map_err(duplicate_name_to_conflict)?;
     policy_store::save_channel_policy(&state.pool, id, &policy).await?;
+    clients::adopt(&state.pool, &access, clients::Kind::Channel, id).await?;
     Ok((StatusCode::CREATED, Json(summary(&state.pool, id).await?)))
 }
 
@@ -212,6 +233,9 @@ pub async fn update(
 
     let mut draft = payload.validate(Some(&current))?;
     draft.id = Some(id);
+    if draft.kind == crate::oncall::CHANNEL_KIND {
+        super::oncall::ensure_channel_policy(&state, &draft.settings).await?;
+    }
 
     db::alerts::upsert_channel(&state.pool, &state.cipher, &draft)
         .await
@@ -302,7 +326,10 @@ impl ChannelPayload {
     /// la configuration résultante est éprouvée par le constructeur du notificateur
     /// lui-même, ce qui évite de réécrire — et de laisser diverger — la liste des
     /// réglages obligatoires de chaque service.
-    fn validate(self, current: Option<&ChannelConfig>) -> ApiResult<db::alerts::ChannelDraft> {
+    pub(crate) fn validate(
+        self,
+        current: Option<&ChannelConfig>,
+    ) -> ApiResult<db::alerts::ChannelDraft> {
         let name = self.name.trim().to_string();
         if name.is_empty() {
             return Err(ApiError::BadRequest("Channel name is required.".into()));

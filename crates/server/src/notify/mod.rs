@@ -16,7 +16,9 @@ pub mod error;
 pub mod gateway;
 pub mod guard;
 pub mod http;
+pub mod incident;
 pub mod message;
+pub mod messaging;
 pub mod oncall;
 pub mod policy_store;
 pub mod push;
@@ -24,6 +26,7 @@ pub mod secret;
 pub mod services;
 pub mod smtp;
 pub mod template;
+pub mod tickets;
 pub mod webpush;
 
 use std::sync::Arc;
@@ -149,10 +152,21 @@ pub fn build(
         webpush::KIND => Arc::new(webpush::WebPush::new(config)?),
         "signal" => Arc::new(push::Signal::new(http.clone(), config)?),
         "twilio" => Arc::new(push::Twilio::new(http.clone(), config)?),
+        "whatsapp" => Arc::new(messaging::WhatsApp::new(http.clone(), config)?),
+        "callmebot" => Arc::new(messaging::CallMeBot::new(http.clone(), config)?),
+        "threema" => Arc::new(messaging::Threema::new(http.clone(), config)?),
+        "webex" => Arc::new(messaging::Webex::new(http.clone(), config)?),
+        "vonage" => Arc::new(messaging::Vonage::new(http.clone(), config)?),
+        "telnyx" => Arc::new(messaging::Telnyx::new(http.clone(), config)?),
+        "aspsms" => Arc::new(messaging::AspSms::new(http.clone(), config)?),
+        "grafana_oncall" => Arc::new(incident::GrafanaOnCall::new(http.clone(), config)?),
+        "signl4" => Arc::new(incident::Signl4::new(http.clone(), config)?),
         "apprise" => Arc::new(gateway::Apprise::new(http.clone(), config)?),
         "homeassistant" => Arc::new(gateway::HomeAssistant::new(http.clone(), config)?),
         "pagerduty" => Arc::new(oncall::PagerDuty::new(http.clone(), config)?),
         "opsgenie" => Arc::new(oncall::Opsgenie::new(http.clone(), config)?),
+        crate::oncall::CHANNEL_KIND => Arc::new(crate::oncall::OncallChannel::new(config)?),
+        kind if tickets::is_ticket_kind(kind) => Arc::new(tickets::Ticketing::new(http, config)?),
         "webhook" => Arc::new(custom::Webhook::new(http.clone(), config)?),
         "smtp" => Arc::new(smtp::Smtp::new(config)?),
         other => return Err(NotifyError::UnknownKind(other.to_string())),
@@ -288,6 +302,20 @@ pub async fn test_channel_stored(
     config: &ChannelConfig,
     public_url: Option<&str>,
 ) -> Result<(), NotifyError> {
+    if config.kind == crate::oncall::CHANNEL_KIND {
+        build(http, config)?;
+        if sending_disabled() {
+            return Ok(());
+        }
+        let ctx = crate::oncall::runner::Ctx {
+            pool: store.pool,
+            cipher: store.cipher,
+            http,
+            public_url,
+            action_key: None,
+        };
+        return crate::oncall::runner::test_channel(&ctx, config).await;
+    }
     if config.kind != webpush::KIND {
         return test_channel(http, config, public_url).await;
     }
@@ -336,6 +364,11 @@ pub async fn test_channel(
     config: &ChannelConfig,
     public_url: Option<&str>,
 ) -> Result<(), NotifyError> {
+    if tickets::is_ticket_kind(&config.kind) {
+        // Crée puis ferme un ticket de test : un simple message n'éprouverait ni
+        // le projet, ni les droits de fermeture.
+        return tickets::test_channel(http, config, public_url).await;
+    }
     let notifier = build(http, config)?;
     if sending_disabled() {
         return Ok(());

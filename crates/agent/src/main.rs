@@ -16,8 +16,11 @@ mod identity;
 // Le journal du service Windows ; compilé partout pour être testé sous Linux.
 #[cfg(any(windows, test))]
 mod logfile;
+mod logs;
 mod relay;
+mod remediation;
 mod run;
+mod selfupdate;
 mod shutdown;
 #[cfg(test)]
 mod testsupport;
@@ -43,11 +46,26 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+    // Assistant de mise à jour Windows, lancé par l'agent qui s'arrête.
+    if let Some(ledger) = args.update_helper.as_deref() {
+        return selfupdate::run_helper(ledger);
+    }
+
     // Lancé par le gestionnaire de services Windows : il faut lui répondre avant
     // toute autre chose, sinon il considère le démarrage comme échoué.
     #[cfg(windows)]
     if args.service {
         return winsvc::start(args.config_path());
+    }
+
+    // Nouveau binaire à l'essai après une mise à jour automatique : avant même
+    // la configuration, pour qu'un binaire qui s'arrête au démarrage soit
+    // remplacé par l'ancien.
+    if !args.once
+        && !args.dry_run
+        && let Some(action) = selfupdate::on_start()
+    {
+        return selfupdate::after_stop(action);
     }
 
     let config = Config::load(&args.config_path())?;
@@ -102,6 +120,8 @@ struct Args {
     service: bool,
     help: bool,
     version: bool,
+    /// Assistant de mise à jour Windows : chemin du registre des mises à jour.
+    update_helper: Option<PathBuf>,
 }
 
 impl Args {
@@ -118,6 +138,10 @@ impl Args {
                 "-c" | "--config" => {
                     let path = args.next().context("--config expects a file path")?;
                     parsed.config = Some(PathBuf::from(path));
+                }
+                "--update-helper" => {
+                    let path = args.next().context("--update-helper expects a file path")?;
+                    parsed.update_helper = Some(PathBuf::from(path));
                 }
                 other if other.starts_with("--config=") => {
                     parsed.config = Some(PathBuf::from(&other["--config=".len()..]));
@@ -186,6 +210,7 @@ ENVIRONMENT VARIABLES (override the file):
     DUMBMONIT_AGENT_RESTIC_BIN       Path to the restic binary (default: restic on PATH)
     DUMBMONIT_AGENT_BORG_BIN         Path to the borg binary (default: borg on PATH)
     DUMBMONIT_AGENT_BACKUP_REPOS_INTERVAL_SECS  Seconds between two restic/Borg readings
+    DUMBMONIT_AGENT_SELF_UPDATE      Accept agent updates from the server (true/false, default true)
     DUMBMONIT_AGENT_LOG              Log level (info, debug, ...)",
         version = env!("CARGO_PKG_VERSION"),
         default = Config::default_path().display(),
@@ -230,6 +255,17 @@ mod tests {
         // ferait tourner l'agent avec une configuration qui n'est pas la bonne.
         let error = parse(&["--interval=5"]).unwrap_err().to_string();
         assert!(error.contains("--interval=5"), "unexpected message: {error}");
+    }
+
+    #[test]
+    fn the_update_helper_takes_its_ledger() {
+        assert_eq!(
+            parse(&["--update-helper", r"C:\Program Files\DumbMonit\dumbmonit-agent.update.json"])
+                .unwrap()
+                .update_helper,
+            Some(PathBuf::from(r"C:\Program Files\DumbMonit\dumbmonit-agent.update.json"))
+        );
+        assert!(parse(&["--update-helper"]).is_err());
     }
 
     #[test]

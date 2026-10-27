@@ -7,12 +7,12 @@
 
 use axum::Json;
 use axum::extract::{Path, State};
-use axum::http::{StatusCode, header};
+use axum::http::{HeaderMap, StatusCode, header};
 use axum::response::{IntoResponse, Response};
 use base64::Engine;
 use serde::Deserialize;
 
-use super::{invalidate_cache, page_not_found, public_not_found};
+use super::{invalidate_cache, page_not_found};
 use crate::api::{ApiError, ApiResult};
 use crate::db;
 use crate::state::AppState;
@@ -43,7 +43,7 @@ pub fn sniff(bytes: &[u8]) -> Option<&'static str> {
     }
 }
 
-fn decode(raw: &str) -> ApiResult<Vec<u8>> {
+pub(crate) fn decode(raw: &str) -> ApiResult<Vec<u8>> {
     // `data:image/png;base64,…` tel que le produit un FileReader.
     let raw = raw.trim();
     let encoded = match raw.split_once(',') {
@@ -122,6 +122,12 @@ async fn serve(state: &AppState, id: i64, kind: &str, cache: &'static str) -> Ap
         }
         Err(error) => return Err(ApiError::Internal(error.into())),
     };
+    serve_bytes(bytes, kind, cache)
+}
+
+/// Des octets d'image avec les en-têtes qui empêchent de les interpréter
+/// autrement qu'en image (logo de page, ou de client en mode MSP).
+pub(crate) fn serve_bytes(bytes: Vec<u8>, kind: &str, cache: &'static str) -> ApiResult<Response> {
     // Le type annoncé est celui de la signature relue, jamais celui en base seul.
     let kind = match sniff(&bytes) {
         Some(sniffed) if sniffed == kind => sniffed,
@@ -142,12 +148,16 @@ async fn serve(state: &AppState, id: i64, kind: &str, cache: &'static str) -> Ap
 pub async fn public_logo(
     State(state): State<AppState>,
     Path(slug): Path<String>,
+    headers: HeaderMap,
 ) -> ApiResult<Response> {
-    let page = match db::status_pages::get_page_by_slug(&state.pool, &slug).await? {
-        Some(page) if page.published => page,
-        _ => return Err(public_not_found()),
-    };
+    let page = super::access::open_page(&state, &slug, &headers).await?;
     let Some(kind) = page.logo_type.as_deref() else {
+        // Mode MSP : à défaut de logo propre, celui du client de la page.
+        if let Some(client) = crate::auth::clients::branding_of_page(&state.pool, page.id).await?
+            && let Some((kind, bytes)) = crate::auth::clients::logo(&state.pool, client.id).await?
+        {
+            return serve_bytes(bytes, &kind, "public, max-age=3600");
+        }
         return Err(ApiError::NotFound("This page has no logo.".into()));
     };
     // L'adresse porte la version (`?v=`) : le logo peut rester en cache un jour.

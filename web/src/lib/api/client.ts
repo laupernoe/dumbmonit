@@ -18,6 +18,9 @@ export class ApiError extends Error {
 	/** True when the public demo refused a change (403 with `demo: true`). */
 	readonly demo: boolean;
 
+	/** Set on the 401 of a private status page: what the visitor has to provide. */
+	access: 'password' | 'users' | null = null;
+
 	constructor(message: string, status: number, missing = false, demo = false) {
 		super(message);
 		this.name = 'ApiError';
@@ -103,6 +106,26 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
 
 const BASE = '/api';
 
+/**
+ * MSP mode: the client picked in the header, sent with every request. The
+ * server narrows lists to it for the MSP administrator, and never widens
+ * anyone's access with it.
+ */
+let clientView: number | null = null;
+
+export function setClientView(id: number | null): void {
+	clientView = id;
+}
+
+export function getClientView(): number | null {
+	return clientView;
+}
+
+/** The header carrying the picked client, to spread into a `fetch` made by hand. */
+export function clientViewHeaders(): Record<string, string> {
+	return clientView === null ? {} : { 'x-dumbmonit-client': String(clientView) };
+}
+
 /** Builds the final URL, skipping query parameters that are not set. */
 function buildUrl(path: string, query?: RequestOptions['query']): string {
 	const url = `${BASE}${path}`;
@@ -131,16 +154,22 @@ export function setDemoRefusalHandler(handler: DemoRefusalHandler | null): void 
 }
 
 /** Extracts the error message from the `{ "error": "..." }` body returned by the server. */
-async function readError(response: Response): Promise<{ message: string; demo: boolean }> {
-	const fallback = { message: m.api_error_status({ status: response.status }), demo: false };
+async function readError(
+	response: Response
+): Promise<{ message: string; demo: boolean; access: 'password' | 'users' | null }> {
+	const fallback = { message: m.api_error_status({ status: response.status }), demo: false, access: null };
 	try {
 		const text = await response.text();
 		if (!text) return fallback;
 		const parsed: unknown = JSON.parse(text);
 		if (parsed && typeof parsed === 'object' && 'error' in parsed) {
-			const { error: message, demo } = parsed as { error: unknown; demo?: unknown };
+			const { error: message, demo, access } = parsed as { error: unknown; demo?: unknown; access?: unknown };
 			if (typeof message === 'string' && message.trim()) {
-				return { message, demo: demo === true };
+				return {
+					message,
+					demo: demo === true,
+					access: access === 'password' || access === 'users' ? access : null
+				};
 			}
 		}
 		return fallback;
@@ -173,6 +202,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 				// Proof of origin for cookie-authenticated writes (anti-CSRF): a
 				// third-party page cannot add this header without CORS consent.
 				'x-requested-with': 'DumbMonit',
+				...clientViewHeaders(),
 				...(body === undefined
 					? {}
 					: { 'content-type': body instanceof Blob ? 'application/octet-stream' : 'application/json' })
@@ -188,13 +218,15 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 	}
 
 	if (!response.ok) {
-		const { message, demo } = await readError(response);
+		const { message, demo, access } = await readError(response);
 		// The session has expired, or the instance has just been protected: notify
 		// once, at the client level, rather than screen by screen.
 		if (response.status === 401 && !allowUnauthorized) unauthorizedHandler?.();
 		const refusedByDemo = demo && response.status === 403;
 		if (refusedByDemo) demoRefusalHandler?.(message);
-		throw new ApiError(message, response.status, anticipated && response.status === 404, refusedByDemo);
+		const failure = new ApiError(message, response.status, anticipated && response.status === 404, refusedByDemo);
+		failure.access = access;
+		throw failure;
 	}
 
 	notifyMutation(path, method);

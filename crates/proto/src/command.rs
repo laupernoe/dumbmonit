@@ -96,6 +96,39 @@ pub struct ProbeOutcome {
     /// Profil reconnu, pour une demande d'identification.
     #[serde(default)]
     pub profile_id: Option<String>,
+    /// Configuration d'équipement relevée par le relais (type `netconfig`) :
+    /// le texte voyage une seule fois, vers le serveur qui le chiffre et le
+    /// range ; l'agent n'en garde rien.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub netconfig: Option<NetconfigCapture>,
+}
+
+/// Résultat d'un relevé de configuration fait par un agent relais.
+///
+/// `Debug` est écrit à la main : une configuration contient des secrets
+/// (communautés, clés partagées) et ne doit jamais finir dans un journal.
+#[derive(Clone, PartialEq, Default, Serialize, Deserialize)]
+pub struct NetconfigCapture {
+    /// Texte de la configuration, absent si le relevé a échoué.
+    #[serde(default)]
+    pub config: Option<String>,
+    /// Empreinte SHA-256 de la clé d'hôte SSH présentée (`SHA256:…`).
+    #[serde(default)]
+    pub host_key: Option<String>,
+    /// La clé présentée n'est pas celle qui était mémorisée : la connexion a
+    /// été coupée avant toute authentification.
+    #[serde(default)]
+    pub host_key_mismatch: bool,
+}
+
+impl std::fmt::Debug for NetconfigCapture {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("NetconfigCapture")
+            .field("config_bytes", &self.config.as_ref().map(String::len))
+            .field("host_key", &self.host_key)
+            .field("host_key_mismatch", &self.host_key_mismatch)
+            .finish()
+    }
 }
 
 /// Une commande en attente, telle que le serveur la remet à l'agent.
