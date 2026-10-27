@@ -7,14 +7,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>@@TITLE@@</title>
 <meta name="description" content="@@DESC@@">
-<meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f3efe6" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0a1020" media="(prefers-color-scheme: dark)">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#07080a">
 <link rel="canonical" href="@@URL@@">
 @@ALTERNATES@@
 <link rel="icon" href="@@ROOT@@favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="@@ROOT@@apple-touch-icon.png">
-<link rel="preload" href="@@ROOT@@assets/fonts/bricolage-grotesque-latin-opsz-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="@@ROOT@@assets/fonts/geist-latin-wght-normal.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="@@ROOT@@assets/site.css">
 <script src="@@ROOT@@assets/site.js" defer></script>
 
@@ -39,21 +38,47 @@
 <body>
 <a class="skip" href="#main">{{k002}}</a>
 
+<div class="shell">
+<!-- The console's rail, as in the app. It mirrors the header navigation, so it is hidden from assistive technology. -->
+<div class="rail" aria-hidden="true">
+	<a class="rail-logo" href="@@LINK:@@" tabindex="-1" title="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="32" height="32"></a>
+@@RAIL@@
+	<div class="rail-foot">
+		<a href="@@DOCS@@" tabindex="-1" title="{{k164}}">@@ICON:docs@@</a>
+		<a href="https://github.com/laupernoe/dumbmonit" tabindex="-1" title="{{k010}}">@@ICON:github@@</a>
+	</div>
+</div>
+
+<div class="page">
 <header class="topbar">
 	<div class="wrap">
-		<a class="brand" href="@@LINK:@@" aria-label="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="30" height="30">DumbMonit</a>
+		<a class="brand" href="@@LINK:@@" aria-label="{{k172}}"><img src="@@ROOT@@favicon.svg" alt="" width="26" height="26">DumbMonit</a>
+		<div class="crumb">@@CRUMB@@</div>
+		<a class="ver" href="https://github.com/laupernoe/dumbmonit/releases">v@@VERSION@@</a>
 		<nav class="nav" id="site-nav" aria-label="{{k173}}">
 @@NAV@@
 			<a class="nav-extra" href="https://demo.dumbmonit.app">{{k008}}</a>
+			<a class="nav-extra" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+			<a class="nav-extra" href="@@DOCS@@">{{k164}}</a>
 		</nav>
 		<div class="actions">
 @@SWITCHER@@
-			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">{{k008}}</a>
 			<a class="btn btn-secondary btn-sm gh" href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
+			<a class="btn btn-primary btn-sm" href="https://demo.dumbmonit.app">{{k008}}</a>
 			<button class="menu-btn" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="{{nav_menu}}"><span aria-hidden="true"></span></button>
 		</div>
 	</div>
 </header>
+<div class="band" aria-hidden="true">
+	<svg class="bird" viewBox="0 0 40 24" focusable="false">
+		<path d="M3 15.5 0 13l1 4.6z" fill="#56657f"/>
+		<path d="M3 15c4-4.6 12-6.6 21-5.6 4.6.5 8 2.3 9.4 4.4-3.2 2.4-8.8 3.6-15.2 3.6C11.8 17.4 6.6 16.6 3 15z" fill="#6f83a3"/>
+		<circle cx="33" cy="10.6" r="3.7" fill="#6f83a3"/>
+		<path d="m36.4 10 3.4 1.1-3.3 1z" fill="#e97b3a"/>
+		<circle cx="34.1" cy="9.8" r=".9" fill="#07080a"/>
+		<path class="wing" d="M13.5 12c2.4-6.4 7.6-10.6 13-11-1 4.6-4.4 8.8-9.8 11.6z" fill="#8a9bb8"/>
+	</svg>
+</div>
 
 <main id="main">
 @@BODY@@
@@ -61,13 +86,14 @@
 
 <footer>
 	<div class="wrap">
-		<p>{{k165}}</p>
+		<p class="foot-brand"><img src="@@ROOT@@favicon.svg" alt="" width="22" height="22">{{k165}}</p>
 		<nav aria-label="{{k182}}">
 			<a href="@@LINK:features/@@">{{nav_features}}</a>
 			<a href="@@LINK:devices/@@">{{nav_devices}}</a>
 			<a href="@@LINK:install/@@">{{nav_install}}</a>
 			<a href="@@LINK:roadmap/@@">{{nav_roadmap}}</a>
 			<a href="@@LINK:community/@@">{{nav_community}}</a>
+			<a href="@@LINK:community/#support@@">{{nav_support}}</a>
 			<a href="https://demo.dumbmonit.app">{{k008}}</a>
 			<a href="https://github.com/laupernoe/dumbmonit">{{k010}}</a>
 			<a href="@@DOCS@@">{{k164}}</a>
@@ -78,6 +104,8 @@
 		</nav>
 	</div>
 </footer>
+</div>
+</div>
 
 <script>
 @@SCRIPT@@

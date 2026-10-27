@@ -4,8 +4,10 @@ Sources in `site-src/` (templates, strings, `static/` files); `website/` is the 
 
 The static page published at **https://dumbmonit.app/**. Plain
 HTML and CSS, a few lines of JavaScript for the copy buttons, no build step,
-no analytics, no third-party requests. Fonts (Bricolage Grotesque, SIL OFL)
-are self-hosted in `assets/fonts/`.
+no analytics, no third-party requests. Fonts (Geist and Geist Mono, SIL OFL)
+are self-hosted in `assets/fonts/`. The look is the app's Enterprise console
+(`web/src/app.css`, `html.mode-enterprise`): always dark, the same tokens, a rail on wide
+screens, and diagrams drawn in HTML and CSS (`DIAGRAMS` in `build.py`) so their text wraps and translates.
 
 ## One-time setup
 
@@ -32,9 +34,9 @@ python3 -m http.server 4321 --directory /tmp/preview
 
 | Path | What |
 |---|---|
-| `index.html`, `features/`, `devices/`, `devices/<family>/`, `install/`, `roadmap/`, `community/` (and the same under `<lang>/`) | The pages in each language, **generated** by `site-src/build.py` (do not edit by hand). English is the root, the others live in `/fr/`, `/de/`, `/es/`, `/it/`, `/pt/`, `/pt-BR/`, `/ru/`, `/zh-Hans/`. Colours and type follow `web/src/app.css` (day and night via `prefers-color-scheme`). |
+| `index.html`, `features/`, `devices/`, `devices/<family>/`, `install/`, `roadmap/`, `community/` (and the same under `<lang>/`) | The pages in each language, **generated** by `site-src/build.py` (do not edit by hand). English is the root, the others live in `/fr/`, `/de/`, `/es/`, `/it/`, `/pt/`, `/pt-BR/`, `/ru/`, `/zh-Hans/`. Colours and type follow the Enterprise tokens of `web/src/app.css` (dark only). |
 | `static/assets/site.css` | Styles and design tokens. |
-| `static/assets/shots/` | Screenshots of the live demo (`DUMBMONIT_DEMO=1`): desktop 1440 x 900 at 2x (plus a 1x copy), phone 390 x 844 at 2x, light and dark, AVIF with a WebP fallback. |
+| `static/assets/shots/` | Screenshots of the live demo (not shown at the moment: the home page draws the console in HTML; recapture them in Enterprise mode before using `@@SHOT@@` again) (`DUMBMONIT_DEMO=1`): desktop 1440 x 900 at 2x (plus a 1x copy), phone 390 x 844 at 2x, light and dark, AVIF with a WebP fallback. |
 | `static/assets/og.png` | Social preview image, 1200 × 630. |
 | `404.html`, `robots.txt`, `sitemap.xml`, `.nojekyll` | Pages housekeeping. |
 

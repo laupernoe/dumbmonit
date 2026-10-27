@@ -2,14 +2,14 @@
 	<div class="wrap">
 		<div class="hero-grid">
 			<div>
-				<div class="status-row rise-in">
-					<span class="plate plate-advisory">{{k011}}</span>
+				<div class="status-row">
+					<span class="plate plate-info">{{k011}}</span>
 					<span class="plate plate-signal">{{k012}}</span>
 				</div>
-				<h1 class="rise-in">{{k013}}</h1>
-				<p class="lede rise-in">{{k014}}</p>
+				<h1>{{k013}}</h1>
+				<p class="lede">{{k014}}</p>
 
-				<div class="code rise-in">
+				<div class="code">
 					<pre id="quickstart"><code><span class="prompt">$ </span>mkdir dumbmonit &amp;&amp; cd dumbmonit
 <span class="prompt">$ </span>curl -fsSLO https://raw.githubusercontent.com/laupernoe/dumbmonit/main/docker-compose.yml
 <span class="prompt">$ </span>docker compose up -d</code></pre>
@@ -19,43 +19,46 @@
 
 				<div class="cta">
 					<a class="btn btn-primary" href="https://demo.dumbmonit.app">{{k017}}</a>
-					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit">{{k018}}</a>
 					<a class="btn btn-secondary" href="@@LINK:install/@@">{{k019}}</a>
+					<a class="btn btn-secondary" href="https://github.com/laupernoe/dumbmonit">{{k018}}</a>
 				</div>
 			</div>
-			<div class="mascot" id="mascot" role="img" aria-label="{{k174}}">
-				<svg viewBox="-30 -40 340 360" aria-hidden="true" focusable="false">
-					<ellipse class="m-shadow" cx="140" cy="304" rx="92" ry="10"/>
-					<text class="m-bang" x="246" y="36">!</text>
-					<g class="m-drop"><g class="m-hop"><g class="m-sway"><g class="m-breathe">
-						<path d="M96 266h30v20c0 8-6 14-14 14H86c-7 0-11-6-9-12 3-11 10-22 19-22zM184 266h-30v20c0 8 6 14 14 14h26c7 0 11-6 9-12-3-11-10-22-19-22z" class="m-feet"/>
-						<path d="M140 46c70 0 118 54 118 128 0 62-44 104-118 104S22 236 22 174C22 100 70 46 140 46z" class="m-body"/>
-						<path class="m-wing m-wing-l" d="M40 150c-14 40-10 90 18 118"/>
-						<path class="m-wing m-wing-r" d="M240 150c14 40 10 90-18 118"/>
-						<path d="M78 190c20 22 46 34 78 34 26 0 44-8 54-20-6 30-34 52-70 52-34 0-56-26-62-66z" class="m-chest"/>
-						<path d="M110 232c30 2 52-8 64-26" class="m-line"/>
-						<g class="m-cheeks"><ellipse cx="50" cy="186" rx="15" ry="8"/><ellipse cx="226" cy="184" rx="13" ry="7"/></g>
-						<circle cx="96" cy="118" r="52" class="m-eye"/>
-						<circle cx="184" cy="120" r="42" class="m-eye"/>
-						<g class="m-look"><g class="m-glance"><g class="m-dizzy">
-							<g class="m-pl"><circle cx="82" cy="124" r="19" class="m-pupil"/><circle cx="90" cy="116" r="6" class="m-glint"/></g>
-							<g class="m-pr"><circle cx="190" cy="114" r="15" class="m-pupil"/></g>
-						</g></g></g>
-						<circle cx="96" cy="118" r="52" class="m-lid"/>
-						<circle cx="184" cy="120" r="42" class="m-lid m-lid-r"/>
-						<path d="M114 150c8-10 44-10 52 0l-26 46z" class="m-beak"/>
-						<path d="M120 152c6-6 34-6 40 0" class="m-shine"/>
-					</g></g></g></g>
-				</svg>
-			</div>
-		</div>
 
-		<figure class="hero-shot">
-			<div class="shot">
-@@SHOT:overview:sh_ov_alt:hero@@
-			</div>
-			<figcaption>{{sh_ov_cap}}</figcaption>
-		</figure>
+			<figure class="console-fig">
+				<div class="console" role="img" aria-label="{{cm_alt}}">
+					<div class="c-bar"><span>DumbMonit</span><span aria-hidden="true">/</span><b>{{cm_crumb}}</b><span class="c-live">{{cm_live}}</span></div>
+					<div class="c-body">
+						<div class="c-kpis">
+							<div><span>{{cm_k_monitors}}</span><b>128</b></div>
+							<div><span>{{cm_k_down}}</span><b class="bad">1</b></div>
+							<div><span>{{cm_k_degraded}}</span><b class="warn">2</b></div>
+							<div><span>{{cm_k_alerts}}</span><b>3</b></div>
+							<div><span>{{cm_k_uptime}}</span><b>99.94%</b></div>
+						</div>
+						<div class="c-river">
+							<span class="c-h">{{cm_river}}</span>
+@@RIVER@@
+							<div class="c-axis"><span>{{cm_now}}</span></div>
+						</div>
+						<div class="c-table-wrap">
+							<table class="c-table">
+								<colgroup><col class="c-st"><col><col class="c-ty"><col class="c-la"><col class="c-up"></colgroup>
+								<thead><tr><th>{{cm_col_state}}</th><th>{{cm_col_name}}</th><th class="ty">{{cm_col_type}}</th><th class="n la">{{cm_col_lat}}</th><th class="n">{{cm_col_up}}</th></tr></thead>
+								<tbody>
+									<tr><td><span class="mk mk-down">{{cm_s_down}}</span></td><td class="nm">nas-02.home.arpa</td><td class="ty">Synology DSM</td><td class="n la">—</td><td class="n">97.81%</td></tr>
+									<tr><td><span class="mk mk-deg">{{cm_s_deg}}</span></td><td class="nm">pve-cluster</td><td class="ty">Proxmox VE</td><td class="n la">41 ms</td><td class="n">99.62%</td></tr>
+									<tr><td><span class="mk mk-deg">{{cm_s_deg}}</span></td><td class="nm">fw-edge</td><td class="ty">OPNsense</td><td class="n la">3 ms</td><td class="n">99.98%</td></tr>
+									<tr><td><span class="mk mk-up">{{cm_s_up}}</span></td><td class="nm">sw-core-01</td><td class="ty">SNMP</td><td class="n la">2 ms</td><td class="n">100%</td></tr>
+									<tr><td><span class="mk mk-up">{{cm_s_up}}</span></td><td class="nm">dc01.example.com</td><td class="ty">Active Directory</td><td class="n la">6 ms</td><td class="n">100%</td></tr>
+									<tr><td><span class="mk mk-up">{{cm_s_up}}</span></td><td class="nm">www.example.com</td><td class="ty">HTTP</td><td class="n la">118 ms</td><td class="n">99.99%</td></tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+				<figcaption>{{cm_cap}}</figcaption>
+			</figure>
+		</div>
 	</div>
 </section>
 
@@ -66,49 +69,85 @@
 	</div>
 </div>
 
-
-<section class="block" id="why" style="border-top:0">
+<section class="block" id="who">
 	<div class="wrap">
-		<ul class="cards cards-4">
-			<li class="card"><h2 class="card-h">{{hl1_t}}</h2><p>{{hl1_p}}</p></li>
-			<li class="card"><h2 class="card-h">{{hl2_t}}</h2><p>{{hl2_p}}</p></li>
-			<li class="card"><h2 class="card-h">{{hl3_t}}</h2><p>{{hl3_p}}</p></li>
-			<li class="card"><h2 class="card-h">{{hl4_t}}</h2><p>{{hl4_p}}</p></li>
+		<div class="section-head">
+			<p class="eyebrow">{{au_eyebrow}}</p>
+			<h2>{{au_h}}</h2>
+		</div>
+		<ul class="aud">
+			<li><p class="label-tape">{{au1_tag}}</p><h3>{{au1_t}}</h3><p>{{au1_p}}</p></li>
+			<li><p class="label-tape">{{au2_tag}}</p><h3>{{au2_t}}</h3><p>{{au2_p}}</p></li>
 		</ul>
-		<p style="margin-top:28px"><a class="more" href="@@LINK:features/@@">{{hl_more}}</a></p>
+	</div>
+</section>
+
+<section class="block" id="why">
+	<div class="wrap">
+		<div class="section-head">
+			<p class="eyebrow">{{hl_eyebrow}}</p>
+			<h2>{{hl_h}}</h2>
+		</div>
+		<ul class="cells cells-3">
+			<li><span class="icon" aria-hidden="true">@@ICON:box@@</span><h3>{{hl1_t}}</h3><p>{{hl1_p}}</p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:bell@@</span><h3>{{hl2_t}}</h3><p>{{hl2_p}}</p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:server@@</span><h3>{{hl3_t}}</h3><p>{{hl3_p}}</p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:users@@</span><h3>{{hl5_t}}</h3><p>{{hl5_p}}</p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:globe@@</span><h3>{{hl4_t}}</h3><p>{{hl4_p}}</p></li>
+			<li><span class="icon" aria-hidden="true">@@ICON:code@@</span><h3>{{hl6_t}}</h3><p>{{hl6_p}}</p></li>
+		</ul>
+		<p style="margin-top:16px"><a class="more" href="@@LINK:features/@@">{{hl_more}}</a></p>
+	</div>
+</section>
+
+<section class="block" id="how">
+	<div class="wrap">
+		<div class="section-head">
+			<p class="eyebrow">{{dg_eyebrow}}</p>
+			<h2>{{dg_h}}</h2>
+			<p>{{dg_p}}</p>
+		</div>
+		<div class="dg-grid">
+@@DIAGRAM:arch@@
+@@DIAGRAM:alert@@
+		</div>
 	</div>
 </section>
 
 <section class="block" id="devices">
 	<div class="wrap">
 		<div class="section-head">
+			<p class="eyebrow">{{nav_devices}}</p>
 			<h2>{{home_dev_h}}</h2>
 			<p>{{home_dev_p}}</p>
 		</div>
 		<ul class="cards cards-fam">
 @@FAMILY_CARDS@@
 		</ul>
-		<figure class="home-device">
-			<div class="shot">
-@@SHOT:device:sh_dev_alt:both@@
-			</div>
-			<figcaption>{{sh_dev_cap}}</figcaption>
-		</figure>
-		<p style="margin-top:28px"><a class="btn btn-secondary" href="@@LINK:devices/@@">{{home_dev_all}}</a></p>
+		<p style="margin-top:20px"><a class="btn btn-secondary" href="@@LINK:devices/@@">{{home_dev_all}}</a></p>
 	</div>
 </section>
 
 <section class="block" id="start">
 	<div class="wrap">
 		<div class="feedback">
-			<img src="@@ROOT@@assets/mascot.svg" alt="" width="96" height="110" loading="lazy">
 			<div>
-				<h2 style="font-size:clamp(1.6rem,1.2rem + 1.6vw,2.2rem)">{{home_cta_h}}</h2>
+				<h2>{{home_cta_h}}</h2>
 				<p>{{home_cta_p}}</p>
 			</div>
 			<div class="cta">
 				<a class="btn btn-primary" href="@@LINK:install/@@">{{nav_install}}</a>
 				<a class="btn btn-secondary" href="https://demo.dumbmonit.app">{{k008}}</a>
+			</div>
+		</div>
+		<div class="feedback">
+			<div>
+				<h2>{{sup_h}}</h2>
+				<p>{{sup_home}}</p>
+			</div>
+			<div class="cta">
+				<a class="btn btn-secondary" href="https://liberapay.com/laupernoe">{{sup_lp}}</a>
+				<a class="btn btn-secondary" href="@@LINK:community/#support@@">{{sup_more}}</a>
 			</div>
 		</div>
 	</div>
