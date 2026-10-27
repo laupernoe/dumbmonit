@@ -599,6 +599,9 @@ Traefik, Caddy, Nginx Proxy Manager and domain registrations ([Traefik](../devic
 | Domain about to expire | The domain expires in less than 7 days, or has expired (`dumbmonit_domain_expiry_days`). | < 7 d | 1 h | Warning (`critical`) | 12 h |
 | Domain on hold | The registry put the domain in `clientHold` or `serverHold`: it is out of the DNS (`dumbmonit_domain_on_hold`). | > 0 | 30 min | Warning (`critical`) | 6 h |
 | Domain in redemption | The domain is in `redemptionPeriod`, `pendingDelete` or `pendingRestore`: it has expired (`dumbmonit_domain_redemption`). | > 0 | 30 min | Warning (`critical`) | 12 h |
+| Domain name servers changed | The name servers of the delegation differ from the previous reading (`changes_prometheus(dumbmonit_domain_nameservers_fingerprint[1d])`). Resolves by itself a day later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Domain registrar changed | The registrar differs from the previous reading: a transfer happened (`changes_prometheus(dumbmonit_domain_registrar_fingerprint[1d])`). | > 0 | 1 min | Advisory (`warning`) | 24 h |
+| Domain DNSSEC lost | DNSSEC was signed in the last 7 days and is not any more (`dumbmonit_domain_dnssec`). | < 1 | 1 h | Advisory (`warning`) | 24 h |
 | DNS answer changed | The answer of a DNS check with *Alert when the answer changes* differs from the one before (`changes_prometheus(dumbmonit_probe_dns_answer_fingerprint[1h])`). Resolves by itself an hour later. | > 0 | 1 min | Advisory (`warning`) | 24 h |
 
 ### DNS blocklists

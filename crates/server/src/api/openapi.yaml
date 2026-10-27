@@ -7971,6 +7971,39 @@ paths:
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
 
+  /api/deadlines:
+    get:
+      operationId: listDeadlines
+      tags: [Integrations]
+      summary: Expiry dates across the instance, soonest first
+      description: >
+        Domains, certificates, application secrets (Entra), products
+        (Infomaniak), device keys (Tailscale) and licences, read from the last
+        point of each collected expiry series. Already expired items stay for
+        thirty days.
+      x-token-scope: read
+      parameters:
+        - name: target
+          in: query
+          required: false
+          description: Only this monitor.
+          schema: { type: integer }
+        - name: max_days
+          in: query
+          required: false
+          description: Horizon in days (default 366, at most 3650).
+          schema: { type: number }
+      responses:
+        "200":
+          description: The deadlines of the monitors the caller can see.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Deadline" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+
   /api/targets/{id}/blacklist:
     parameters:
       - $ref: "#/components/parameters/TargetId"
@@ -14325,6 +14358,19 @@ components:
         checks: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         figures: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
         breakdowns: { type: array, items: { $ref: "#/components/schemas/PanelObject" } }
+    Deadline:
+      type: object
+      required: [target, target_name, target_kind, kind, what, expires_at, days_left]
+      properties:
+        target: { type: integer }
+        target_name: { type: string }
+        target_kind: { type: string }
+        kind:
+          type: string
+          description: "`domain`, `certificate`, `credential`, `product`, `key` or `license`."
+        what: { type: string, description: The object that expires (host, application, device…). }
+        expires_at: { type: string, description: UTC, no suffix. }
+        days_left: { type: number, description: Negative once expired. }
     BlacklistOverview:
       type: object
       additionalProperties: true
