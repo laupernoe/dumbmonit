@@ -709,6 +709,63 @@
 	"auth_setup_title": "Создадим вашу учётную запись.",
 	"auth_setup_username_required": "Выберите имя пользователя.",
 	"auth_setup_username_spaces": "Имя пользователя не может содержать пробелы.",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} регион",
+				"countPlural=few": "{count} региона",
+				"countPlural=many": "{count} регионов",
+				"countPlural=other": "{count} региона"
+			}
+		}
+	],
+	"cloudregions_description": "Где работают ресурсы этой учётной записи.",
+	"cloudregions_map_label": "Карта регионов {name}",
+	"cloudregions_pin_down": "{region}: {resources}, не работают: {down}",
+	"cloudregions_pin_home": "{region}: регион учётной записи",
+	"cloudregions_pin_ok": "{region}: {resources}, все работают",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ресурс",
+				"countPlural=few": "{count} ресурса",
+				"countPlural=many": "{count} ресурсов",
+				"countPlural=other": "{count} ресурса"
+			}
+		}
+	],
+	"cloudregions_title": "Регионы",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} ресурс находится в регионе, которого нет на карте.",
+				"countPlural=few": "{count} ресурса находятся в регионах, которых нет на карте.",
+				"countPlural=many": "{count} ресурсов находятся в регионах, которых нет на карте.",
+				"countPlural=other": "{count} ресурса находятся в регионах, которых нет на карте."
+			}
+		}
+	],
 	"dash_add": "Добавить: {kind}",
 	"dash_add_group": "Добавить виджет",
 	"dash_alerts_more": "Все оповещения (+{count})",
@@ -9600,5 +9657,89 @@
 	"deviceform_site_more": "Показать ещё: {count}",
 	"deviceform_site_added": "{name} добавлено.",
 	"deviceform_site_open": "Открыть",
-	"deviceform_site_kinds": "Обычные для площадки"
+	"deviceform_site_kinds": "Обычные для площадки",
+	"geomap_country_none": "{country}: ничего",
+	"geomap_country_value": "{country}: {value}",
+	"geomap_legend": "Легенда",
+	"geomap_legend_fewer": "Меньше",
+	"geomap_legend_link_down": "Ретранслятор недоступен",
+	"geomap_legend_link_idle": "Ретранслятор не проверен",
+	"geomap_legend_link_ok": "Ретранслятор работает",
+	"geomap_legend_link_warn": "Ретранслятор требует внимания",
+	"geomap_legend_more": "Больше (до {max})",
+	"geomap_legend_step": "От {value}",
+	"geomap_list_countries": "Страны",
+	"geomap_list_links": "Связи",
+	"geomap_list_places": "Места",
+	"geomap_list_toggle": "Показать списком ({count})",
+	"geomap_relay_link": "Ретранслятор {relay} связывает {site} с {main}: {state}",
+	"threatmap_crowdsec_hint": "Выберите «Учётная запись машины» в качестве учётных данных этого монитора (cscli machines add), чтобы увидеть, откуда приходят его оповещения, по странам.",
+	"threatmap_description": "Откуда приходят атаки, остановленные вашей защитой, по странам.",
+	"threatmap_empty_body": "Дайте монитору CrowdSec учётную запись машины, откройте живую карту межсетевого экрана OPNsense или добавьте Cloudflare с аналитикой трафика: остановленные ими атаки появятся здесь, по странам.",
+	"threatmap_empty_title": "Пока ни один источник не питает карту угроз",
+	"threatmap_err_load": "Не удалось загрузить карту угроз",
+	"threatmap_map_label": "Карта мира остановленных атак по странам",
+	"threatmap_partial": "Хранилище метрик не ответило: учитываются только живые карты межсетевых экранов.",
+	"threatmap_privacy": "Только страны: ни один адрес не хранится и не показывается.",
+	"threatmap_quiet": "За охваченный период ничего не остановлено.",
+	"threatmap_source_cloudflare": "Угрозы Cloudflare",
+	"threatmap_source_crowdsec": "Оповещения CrowdSec",
+	"threatmap_source_firewall": "Блокировки межсетевых экранов (живая карта)",
+	"threatmap_sources": "Источники",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "Межсетевой экран {count}",
+	"threatmap_title": "Карта угроз",
+	"threatmap_top": "Самые активные страны",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{shown} атака остановлена",
+				"countPlural=few": "{shown} атаки остановлены",
+				"countPlural=many": "{shown} атак остановлено",
+				"countPlural=other": "{shown} атаки остановлено"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "За последний {count} час",
+				"countPlural=few": "За последние {count} часа",
+				"countPlural=many": "За последние {count} часов",
+				"countPlural=other": "За последние {count} часа"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "За последнюю {count} минуту",
+				"countPlural=few": "За последние {count} минуты",
+				"countPlural=many": "За последние {count} минут",
+				"countPlural=other": "За последние {count} минуты"
+			}
+		}
+	]
 }

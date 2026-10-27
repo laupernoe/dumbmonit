@@ -10,7 +10,9 @@
 //! * **les certificats** (`Zone → SSL and Certificates → Read`) : la date
 //!   d'expiration de chaque lot de certificats actif de chaque zone ;
 //! * **le trafic** (`Zone → Analytics → Read`, GraphQL) : requêtes et réponses
-//!   5xx de la dernière heure complète et de l'heure en cours, par zone ;
+//!   5xx de la dernière heure complète et de l'heure en cours, par zone, et les
+//!   menaces arrêtées par pays d'origine (`countryMap`), toutes zones réunies,
+//!   pour la carte des menaces ;
 //! * **les répartiteurs de charge** (`Account → Load Balancing: Monitors And
 //!   Pools → Read`) : santé de chaque groupe d'origines (« pool »).
 //!
@@ -60,7 +62,8 @@ const MIN_REQUESTS: f64 = 100.0;
 const TRAFFIC_QUERY: &str = "query ($zones: [string!], $since: Time!, $until: Time!) { \
 viewer { zones(filter: {zoneTag_in: $zones}) { zoneTag \
 httpRequests1hGroups(limit: 10, filter: {datetime_geq: $since, datetime_lt: $until}) { \
-sum { requests responseStatusMap { edgeResponseStatus requests } } } } } }";
+sum { requests responseStatusMap { edgeResponseStatus requests } \
+countryMap { clientCountryName threats } } } } } }";
 
 #[derive(Default)]
 pub struct CloudflareCollector;
@@ -357,6 +360,10 @@ pub fn traffic_samples(
             }
         }
         let named = |sample: Sample| sample.with_label("zone", name.as_str());
+        for (country, count) in country_threats(entry) {
+            let sample = gauge("cloudflare_country_threats", count, ts_ms);
+            out.push(sample.with_label("country", country));
+        }
         out.push(named(gauge("cloudflare_zone_http_requests", requests, ts_ms)));
         out.push(named(gauge("cloudflare_zone_http_5xx", errors, ts_ms)));
         if requests >= MIN_REQUESTS {
@@ -368,6 +375,45 @@ pub fn traffic_samples(
         }
     }
     Some(out)
+}
+
+/// Menaces d'une zone par pays d'origine (codes ISO alpha-2 ; `XX` inconnu et
+/// `T1` Tor laissés de côté), sur les groupes horaires lus.
+fn country_threats(entry: &Value) -> BTreeMap<String, f64> {
+    let mut by_country = BTreeMap::new();
+    let groups = entry.get("httpRequests1hGroups").and_then(Value::as_array).into_iter().flatten();
+    for group in groups {
+        let map = group.pointer("/sum/countryMap").and_then(Value::as_array).into_iter().flatten();
+        for row in map {
+            let code = text(row, "clientCountryName").unwrap_or_default().to_ascii_uppercase();
+            let threats = number(row.get("threats")).unwrap_or(0.0);
+            let valid = code.len() == 2 && code.bytes().all(|b| b.is_ascii_uppercase());
+            if valid && code != "XX" && threats > 0.0 {
+                *by_country.entry(code).or_default() += threats;
+            }
+        }
+    }
+    by_country
+}
+
+/// Additionne les menaces par pays de toutes les zones lues : une série par
+/// pays pour la cible, jamais une par zone et par pays.
+pub fn merge_country_threats(samples: Vec<Sample>) -> Vec<Sample> {
+    let mut threats: BTreeMap<String, (f64, i64)> = BTreeMap::new();
+    let mut out = Vec::with_capacity(samples.len());
+    for sample in samples {
+        if sample.metric == "cloudflare_country_threats" {
+            let country = sample.labels.get("country").cloned().unwrap_or_default();
+            let slot = threats.entry(country).or_insert((0.0, sample.ts_ms));
+            slot.0 += sample.value;
+        } else {
+            out.push(sample);
+        }
+    }
+    for (country, (count, ts_ms)) in threats {
+        out.push(gauge("cloudflare_country_threats", count, ts_ms).with_label("country", country));
+    }
+    out
 }
 
 /// Santé des pools d'origines (un pool désactivé n'est pas une panne).
@@ -561,6 +607,7 @@ async fn gather(
                 None => analytics_ok = false,
             }
         }
+        out = merge_country_threats(out);
         if analytics_ok {
             out.push(figure("cloudflare", "Requests", "", requests, ts_ms));
             out.push(figure("cloudflare", "5xx responses", "", errors, ts_ms));
@@ -734,6 +781,19 @@ mod tests {
             find(&s, "cloudflare_zone_http_5xx_percent", &[("zone", "shop.example.com")]).is_none(),
             "forty requests are too few for a percentage"
         );
+        // Menaces par pays : additionnées sur les zones, une série par pays.
+        let merged = merge_country_threats(s.clone());
+        assert_eq!(value(&merged, "cloudflare_country_threats", &[("country", "CN")]), 35.0);
+        assert_eq!(value(&merged, "cloudflare_country_threats", &[("country", "US")]), 12.0);
+        let countries: Vec<&str> = merged
+            .iter()
+            .filter(|s| s.metric == "cloudflare_country_threats")
+            .map(|s| s.labels["country"].as_str())
+            .collect();
+        assert_eq!(countries, ["CN", "US"], "no unknown, Tor or zero-threat country");
+        for sample in merged.iter().filter(|s| s.metric == "cloudflare_country_threats") {
+            assert!(!sample.labels.contains_key("zone"), "{:?}", sample.labels);
+        }
         let failed: Value =
             serde_json::from_str(r#"{"data":null,"errors":[{"message":"denied"}]}"#).unwrap();
         assert!(traffic_samples(&failed, &zones, now()).is_none());

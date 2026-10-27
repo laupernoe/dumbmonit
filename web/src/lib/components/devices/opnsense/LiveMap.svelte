@@ -9,6 +9,8 @@
 	 * count (dashed when most of it was blocked); new connections travel as
 	 * short arcs to the firewall's location, unless the reader asked for less
 	 * motion, in which case only the steady arcs of the busiest countries stay.
+	 * Discs and steady arcs are layers of the shared `GeoMap`; the travelling
+	 * arcs are this panel's own.
 	 */
 	import type * as Leaflet from 'leaflet';
 	import { m } from '#lib/paraglide/messages.js';
@@ -17,9 +19,10 @@
 	import type { OpnsenseLive, OpnsenseLiveEvent, Target } from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { ErrorNotice, Panel, Plate, Skeleton, reducedMotion } from '#lib/ui/index.js';
-	import WorldMap, { type WorldPin } from '#lib/components/worldmap/WorldMap.svelte';
+	import type { WorldPin } from '#lib/components/worldmap/WorldMap.svelte';
+	import GeoMap, { type GeoArc, type GeoDisc } from '#lib/components/geomap/GeoMap.svelte';
 	import type { LeafletModule, World } from '#lib/map/leaflet.js';
-	import { arcPoints, countryName, discRadius, dominant } from '#lib/map/live.js';
+	import { arcPoints, countryName, dominant } from '#lib/map/live.js';
 	import { getBasemap } from '#lib/api/locations.js';
 	import type { Basemap } from '#lib/api/types.js';
 
@@ -34,24 +37,15 @@
 	let basemap = $state<Basemap>({ mode: 'offline', url: '', attribution: '' });
 	let seq = 0;
 
-	let map: Leaflet.Map | null = null;
 	let L: LeafletModule | null = null;
 	let centroids = new Map<string, [number, number]>();
-	let discs: Leaflet.LayerGroup | null = null;
-	let steady: Leaflet.LayerGroup | null = null;
 	let flights: Leaflet.LayerGroup | null = null;
-	let ready = $state(false);
 
+	/** The travelling arcs get a layer of their own, above the map's. */
 	function onready(created: Leaflet.Map, lib: LeafletModule, world: World) {
-		map = created;
 		L = lib;
-		// The whole world: traffic comes from anywhere.
-		created.setView([30, 10], 1.5, { animate: false });
 		centroids = new Map(world.features.filter((f) => f.properties.iso).map((f) => [f.properties.iso, [f.properties.ly, f.properties.lx]]));
-		steady = lib.layerGroup().addTo(created);
-		discs = lib.layerGroup().addTo(created);
 		flights = lib.layerGroup().addTo(created);
-		ready = true;
 	}
 
 	async function poll(signal: AbortSignal) {
@@ -86,39 +80,32 @@
 
 	const firewall = $derived(live?.firewall ?? null);
 
-	/** Discs per country and the steady arcs of the busiest ones. */
-	$effect(() => {
-		const view = live;
-		if (!ready || !view || !L || !discs || !steady) return;
-		discs.clearLayers();
-		steady.clearLayers();
-		const names = new Intl.DisplayNames([getLocale()], { type: 'region' });
-		const top = view.countries.filter((c) => centroids.has(c.code)).slice(0, 8);
-		for (const country of view.countries) {
-			const at = centroids.get(country.code);
-			if (!at) continue;
-			const total = country.blocked + country.passed + country.other;
-			const kind = dominant(country);
-			const name = countryName(country.code, names);
-			L.circleMarker(at, {
-				radius: discRadius(total),
-				className: `lm-disc lm-disc--${kind}`,
-				weight: 2
-			})
-				.bindTooltip(m.livemap_country_tooltip({ country: name, blocked: country.blocked, passed: country.passed }))
-				.addTo(discs);
-		}
-		if (firewall) {
-			for (const country of top) {
-				const at = centroids.get(country.code)!;
-				L.polyline(arcPoints(at, [firewall.latitude, firewall.longitude]), {
-					className: `lm-arc lm-arc--${dominant(country)}`,
-					weight: 1.5,
-					interactive: false
-				}).addTo(steady);
-			}
-		}
-	});
+	/** Countries only (not `local` nor `unknown`): those have a place on the map. */
+	const placed = $derived((live?.countries ?? []).filter((c) => /^[A-Z]{2}$/.test(c.code)));
+
+	/** A disc per country, sized by its count. */
+	const discs = $derived<GeoDisc[]>(
+		placed.map((country) => ({
+			id: country.code,
+			at: country.code,
+			count: country.blocked + country.passed + country.other,
+			tone: dominant(country),
+			label: m.livemap_country_tooltip({ country: countryName(country.code, names), blocked: country.blocked, passed: country.passed })
+		}))
+	);
+
+	/** Steady arcs from the busiest countries to the firewall. */
+	const arcs = $derived<GeoArc[]>(
+		firewall
+			? placed.slice(0, 8).map((country) => ({
+					id: country.code,
+					from: country.code,
+					to: [firewall.latitude, firewall.longitude] as [number, number],
+					tone: dominant(country),
+					label: m.livemap_country_tooltip({ country: countryName(country.code, names), blocked: country.blocked, passed: country.passed })
+				}))
+			: []
+	);
 
 	/** New connections as short trips along their arc, a few at a time. */
 	function fly(events: OpnsenseLiveEvent[]) {
@@ -188,12 +175,13 @@
 	{:else}
 		<div class="grid gap-0 lg:grid-cols-[minmax(0,1fr)_19rem]">
 			<div class="p-3">
-				<WorldMap {pins} {basemap} {onready} fit={false} label={m.livemap_map_label({ name: target.name })} class="h-[52vh] min-h-[320px]" />
-				<ul class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-2" aria-label={m.livemap_legend()}>
-					<li class="inline-flex items-center gap-1.5"><span class="lm-key lm-key--block" aria-hidden="true"></span>{m.livemap_legend_block()}</li>
-					<li class="inline-flex items-center gap-1.5"><span class="lm-key lm-key--pass" aria-hidden="true"></span>{m.livemap_legend_pass()}</li>
-					{#if !firewall}<li class="text-ink-3">{m.livemap_no_location()}</li>{/if}
-				</ul>
+				<GeoMap {pins} {basemap} {discs} {arcs} {onready} world list={false} label={m.livemap_map_label({ name: target.name })} class="h-[52vh] min-h-[320px]">
+					{#snippet legend()}
+						<li class="inline-flex items-center gap-1.5"><span class="gm-key gm-key--disc gm-key--block" aria-hidden="true"></span>{m.livemap_legend_block()}</li>
+						<li class="inline-flex items-center gap-1.5"><span class="gm-key gm-key--disc gm-key--pass" aria-hidden="true"></span>{m.livemap_legend_pass()}</li>
+						{#if !firewall}<li class="text-ink-3">{m.livemap_no_location()}</li>{/if}
+					{/snippet}
+				</GeoMap>
 			</div>
 			<div class="space-y-4 border-t border-line px-4 py-3 text-sm lg:border-t-0 lg:border-l">
 				<dl class="grid grid-cols-3 gap-2 text-center">
@@ -284,29 +272,6 @@
 </Panel>
 
 <style>
-	:global(.lm-disc) {
-		fill-opacity: 0.28;
-	}
-	:global(.lm-disc--block) {
-		stroke: var(--c-warning);
-		fill: var(--c-warning);
-		stroke-dasharray: 3 2;
-	}
-	:global(.lm-disc--pass) {
-		stroke: var(--c-signal);
-		fill: var(--c-signal);
-	}
-	:global(.lm-arc) {
-		fill: none;
-		stroke-opacity: 0.35;
-	}
-	:global(.lm-arc--block) {
-		stroke: var(--c-warning);
-		stroke-dasharray: 4 3;
-	}
-	:global(.lm-arc--pass) {
-		stroke: var(--c-signal);
-	}
 	:global(.lm-flight) {
 		fill: none;
 		stroke-linecap: round;
@@ -330,21 +295,5 @@
 		:global(.lm-flight) {
 			display: none;
 		}
-	}
-	.lm-key {
-		display: inline-block;
-		width: 0.75rem;
-		height: 0.75rem;
-		border-radius: 9999px;
-		border: 2px solid;
-	}
-	.lm-key--block {
-		border-color: var(--c-warning);
-		border-style: dashed;
-		background: color-mix(in srgb, var(--c-warning) 28%, transparent);
-	}
-	.lm-key--pass {
-		border-color: var(--c-signal);
-		background: color-mix(in srgb, var(--c-signal) 28%, transparent);
 	}
 </style>
