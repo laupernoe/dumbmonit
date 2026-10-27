@@ -82,6 +82,30 @@ minor issue); **patched** CVEs only show for the last year. CVSS scores of
 distribution CVEs are fetched from NVD progressively, a few hundred per hour
 without a key.
 
+## Reading the page
+
+The page is a dense gallery of short cards, with a counter strip on top
+(vulnerable, exploited, to check, patched, ignored).
+
+- **By CVE** shows each CVE **once**, whatever the number of machines it
+  touches: severity and CVSS, whether it is **exploited** (CISA KEV), whether a
+  **fix is available**, and the machines affected. Cards are grouped under one
+  header per severity.
+- **By machine** shows each machine **once**, with its worst severity, how many
+  CVEs it has, and how many can be fixed. Cards are grouped under one header per
+  folder (per client in MSP mode).
+
+Headers fold and unfold (**Collapse all** / **Expand all**), and **Show details**
+on a card lists its individual findings: package, installed and fixed
+versions, the reason for the verdict, and the ignore button.
+
+Click a **CVE** to see the machines that have it, or a **machine** to see its
+CVEs; the focus shows as a chip you can remove. The quick filters are severity,
+state (open by default: vulnerable or to check), ignored, folder, client (MSP
+mode), **Exploited**, **Fix available**, and a search box (CVE ID, package,
+machine name). The pivot, filters and focus are kept in the address of the page,
+so a view can be bookmarked or shared.
+
 ## Alerts
 
 Two built-in rules, adjustable like any other:

@@ -16,7 +16,7 @@
 	 * from the picker still leaves for wherever the user came from. A page
 	 * opened straight on `?kind=` (depth 0) replaces its entry instead.
 	 */
-	import { tick } from 'svelte';
+	import { tick, untrack } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
 	import { ArrowLeft, BookOpen, CalendarClock, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
@@ -33,6 +33,8 @@
 	import { readPrefill } from '#lib/components/device-form/discovery-prefill.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
 	import DiscoveryInventory from '#lib/components/device-form/DiscoveryInventory.svelte';
+	import AddBySite from '#lib/components/device-form/AddBySite.svelte';
+	import { NO_DEFAULTS, defaultsParams, type SiteDefaults } from '#lib/components/device-form/add-by-site.js';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon, type ImportChoice } from '#lib/components/device-form/kinds.js';
@@ -97,6 +99,8 @@
 	const requestedKind = $derived(params.get('kind'));
 	/** Values from the network scan (`?prefill=`), for the kind's form only. */
 	const prefill = $derived(readPrefill(params));
+	/** A text from the URL (`?folder=`), or empty. */
+	const textParam = (key: string) => params.get(key)?.trim() ?? '';
 	/** A positive id from the URL (`?agent=`, `?via_agent=`), or `null`. */
 	function idParam(key: string): number | null {
 		const value = Number(params.get(key));
@@ -144,7 +148,21 @@
 	/** The last choice, so the picker puts the focus back on it. */
 	let lastChoice = $state<string | null>(null);
 
-	function select(kind: string, via: string | null = null) {
+	/** The site chosen in the picker (`?site=`), and what it pre-fills. */
+	let site = $state<string | null>(untrack(() => page.url.searchParams.get('site')));
+	let siteDefaults = $state<SiteDefaults>(NO_DEFAULTS);
+	/** Keeps the choice in the URL (rewritten, never a history step) so a reload or Back keeps it. */
+	$effect(() => {
+		const wanted = site;
+		untrack(() => {
+			if ((page.url.searchParams.get('site') ?? null) === wanted || view !== 'picker') return;
+			void navigate((p) => (wanted ? p.set('site', wanted) : p.delete('site')), { push: false });
+		});
+	});
+
+	function select(kind: string, via: string | null = null, defaults: SiteDefaults | null = null) {
+		// A kind picked from the full list still gets the site's defaults.
+		const withSite = defaults ?? (site === null ? null : siteDefaults);
 		void navigate(
 			(p) => {
 				p.delete('scan');
@@ -152,6 +170,10 @@
 				p.set('kind', kind);
 				if (via) p.set('via', via);
 				else p.delete('via');
+				if (withSite) {
+					for (const key of ['location', 'via_agent', 'folder']) p.delete(key);
+					for (const [key, value] of Object.entries(defaultsParams(withSite))) p.set(key, value);
+				}
 			},
 			{ push: true, scroll: true }
 		);
@@ -173,7 +195,7 @@
 	function toPicker() {
 		lastChoice = selectedId ?? (scanning ? 'scan' : null);
 		if (depth > 0) history.go(-depth);
-		else void navigate((p) => ['kind', 'via', 'scan', 'guide'].forEach((key) => p.delete(key)), { push: false });
+		else void navigate((p) => ['kind', 'via', 'scan', 'guide', 'location', 'folder'].forEach((key) => p.delete(key)), { push: false });
 	}
 
 	function openGuide() {
@@ -341,6 +363,7 @@
 				description={m.deviceform_new_none_desc()}
 			/>
 		{:else}
+			<AddBySite {collectors} bind:site bind:defaults={siteDefaults} onkind={(kind, d) => select(kind, null, d)} onadded={(t) => (targets = [...targets, t])} />
 			{#if requestedKind}
 				<p class="mb-4 rounded-lg border border-advisory/35 bg-advisory-soft px-3.5 py-2.5 text-sm text-ink">
 					{m.deviceform_new_unknown_kind({ kind: requestedKind })}
@@ -451,6 +474,8 @@
 								collector={selected}
 								{prefill}
 								viaAgentDefault={idParam('via_agent')}
+								locationDefault={idParam('location')}
+								folderDefault={textParam('folder')}
 								{targets}
 								cancelHref="/targets"
 								onsaved={(saved) =>

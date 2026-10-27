@@ -85,9 +85,6 @@
 	.storm--dark .dark {
 		background: linear-gradient(to bottom, rgb(2 4 12 / 0.45) 0%, rgb(2 4 12 / 0.28) 45%, transparent 85%);
 	}
-	.storm--oled .dark {
-		background: linear-gradient(to bottom, rgb(0 0 0 / 0.4) 0%, rgb(0 0 0 / 0.22) 45%, transparent 85%);
-	}
 	/* The clouds lit from inside: a wide soft glow around the strike. */
 	.flash {
 		position: absolute;
@@ -95,10 +92,6 @@
 		background: radial-gradient(ellipse 55% 60% at var(--x) 10%, rgb(235 240 255 / 0.7), rgb(200 215 255 / 0.25) 45%, transparent 75%);
 		opacity: 0;
 		animation: flash 1.1s linear both;
-	}
-	.storm--oled .flash {
-		opacity: 0;
-		background: radial-gradient(ellipse 45% 50% at var(--x) 10%, rgb(200 212 245 / 0.4), transparent 70%);
 	}
 	.bolt {
 		position: absolute;

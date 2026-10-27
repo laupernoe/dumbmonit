@@ -36,8 +36,9 @@ mod subscribers;
 mod timeline;
 use crate::auth::teams::TeamAccess;
 use crate::db::status_pages::{
-    DEFAULT_SCENE, GroupLabel, Incident, IncidentInput, IncidentUpdate, PageItem, PageItemInput,
-    SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, split_scenes,
+    DEFAULT_SCENE, GroupLabel, Incident, IncidentInput, IncidentUpdate, LEGACY_SCENES, PageItem,
+    PageItemInput, SCENE_ROTATIONS, SCENES, StatusPage, StatusPageInput, canonical_scene,
+    split_scenes,
 };
 use crate::db::targets::TargetStatus;
 use crate::state::AppState;
@@ -455,24 +456,29 @@ async fn check_not_admin_host(state: &AppState, domain: &str, origin: &str) -> A
     Ok(())
 }
 
-/// Valide la liste de scènes : jeu fermé [`SCENES`], sans doublon, au plus une
-/// par ville. Rend la liste enregistrable (séparée par des virgules).
+/// Valide la liste de scènes : jeu fermé [`SCENES`], sans doublon saisi. Une
+/// scène retirée (ancienne sauvegarde, ancien client) est repliée sur la plus
+/// proche conservée, sans doublon. Rend la liste enregistrable (virgules).
 fn validate_scenes(scenes: Vec<String>) -> ApiResult<String> {
-    if scenes.len() > SCENES.len() {
-        return Err(ApiError::BadRequest(format!("A page shows at most {} scenes.", SCENES.len())));
+    if scenes.len() > LEGACY_SCENES.len() + SCENES.len() {
+        return Err(ApiError::BadRequest("A page shows too many scenes.".into()));
     }
+    let mut kept: Vec<&'static str> = Vec::new();
     for (i, scene) in scenes.iter().enumerate() {
-        if !SCENES.contains(&scene.as_str()) {
+        let Some(canonical) = canonical_scene(scene) else {
             return Err(ApiError::BadRequest(format!(
                 "Unknown scene \"{scene}\" (expected: {}).",
                 SCENES.join(", ")
             )));
-        }
+        };
         if scenes[..i].contains(scene) {
             return Err(ApiError::BadRequest(format!("The scene \"{scene}\" is listed twice.")));
         }
+        if !kept.contains(&canonical) {
+            kept.push(canonical);
+        }
     }
-    Ok(scenes.join(","))
+    Ok(kept.join(","))
 }
 
 /// Lien vers le site de l'organisation : vide, ou une URL http(s) absolue sans

@@ -21,6 +21,24 @@ et seulement ensuite le reste se replie en *N autres problèmes*, au lieu de
 recouvrir les surveillances en dessous. Les pigeons, l'horloge et les panneaux
 de la scène s'effacent dès qu'ils passeraient sous le texte.
 
+## Thèmes et décors
+
+Le mur suit le thème de l'application, ou force **Jour** ou **Nuit** pour cet
+affichage (le bouton *Thème*, ou `?theme=`). Le thème OLED en noir pur a été
+retiré : un `oled` enregistré ou dans un lien se lit maintenant comme Nuit. Le
+mur Homelab dessine l'un de quatre décors : Paris, New York, Tokyo ou Zermatt
+(*Auto* choisit le plus proche du fuseau horaire du navigateur). Les autres
+décors ont été retirés, et un `?city=` enregistré ou lié qui en nomme un tombe
+sur le plus proche des quatre.
+
+## Mur Entreprise
+
+Quand l'instance est en mode Entreprise, `/wall` montre un autre tableau : fond
+noir, dans la typographie de la console, le verdict et l'horloge, les cinq
+chiffres de la flotte, la rivière de santé, les alertes ouvertes et qui est
+d'astreinte. Il n'a ni décor, ni musique, ni widgets ; ++esc++ ou **Quitter**
+retourne à la console.
+
 ## Actualités sur le mur
 
 Un administrateur peut ajouter des **titres** au mur dans **Réglages →

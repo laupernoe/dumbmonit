@@ -2,20 +2,20 @@
 	/**
 	 * Settings, in seven tabs, each its own URL: My account (language, theme,
 	 * password, two-factor, push), Team & access (users, single sign-on),
-	 * Monitoring (agents, packs), Notifications (channels, policy, reports),
-	 * Status pages (public pages and their announcements), Wall display and
+	 * Monitoring (agents, packs), Notifications (channels, policy), Wall display and
 	 * System (backup, DumbMonit itself, API & assistants, about). A rail on
 	 * wide screens, a strip of chips on narrow ones, and a search box over the
 	 * section names.
 	 *
 	 * Sections keep their old anchor ids: `/settings#agents` is sent to
-	 * `/settings/monitoring#agents`. The old `/alerts#notifications` and
-	 * `/status` links forward here too.
+	 * `/settings/monitoring#agents`. The old `/alerts#notifications` link forwards
+	 * here too; `/settings/status` and `/settings/reports` (and their anchors)
+	 * forward to the Status pages and Reports pages.
 	 */
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import type { Component } from 'svelte';
-	import { BellRing, Globe, HardDrive, Search, Server, SlidersHorizontal, Tv, UserRound, Users } from 'lucide-svelte';
+	import { BellRing, HardDrive, Search, Server, SlidersHorizontal, Tv, UserRound, Users } from 'lucide-svelte';
 	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Disclosure, PageHeader } from '#lib/ui/index.js';
 	import { mode } from '#lib/stores/mode.svelte.js';
@@ -58,10 +58,8 @@
 	import PushSection from '#lib/components/settings/PushSection.svelte';
 	import OnCallContactsSection from '#lib/components/settings/OnCallContactsSection.svelte';
 	import OnCallHoursSection from '#lib/components/settings/OnCallHoursSection.svelte';
-	import ReportsSection from '#lib/components/settings/ReportsSection.svelte';
 	import ChannelsSection from '#lib/components/notifications/ChannelsSection.svelte';
 	import NotificationPolicySection from '#lib/components/notifications/NotificationPolicySection.svelte';
-	import StatusPagesSection from '#lib/components/settings/StatusPagesSection.svelte';
 
 	// Accounts only exist once the instance is protected; viewers never see that tab.
 	const showAccounts = $derived(auth.available && auth.configured && auth.isAdmin);
@@ -72,22 +70,23 @@
 		team: Users,
 		monitoring: Server,
 		notifications: BellRing,
-		status: Globe,
 		wall: Tv,
 		system: HardDrive
 	};
 
-	// An account limited by its teams keeps its own preferences and the status pages.
+	// An account limited by its teams keeps its own preferences.
 	// General (product mode, instance name, setup wizard) is for administrators.
 	const tabs = $derived(
 		TAB_IDS.filter(
 			(id) =>
 				(id !== 'team' || showAccounts) &&
 				(id !== 'general' || auth.isAdmin) &&
-				(!auth.scoped || id === 'account' || id === 'status')
+				(!auth.scoped || id === 'account')
 		)
 	);
 	const asked = $derived(page.params.tab);
+	// Status pages and reports have their own pages now.
+	const MOVED_TABS: Record<string, string> = { status: '/status', reports: '/reports' };
 	const tab = $derived<SettingsTab>(isTab(asked) && tabs.includes(asked) ? asked : DEFAULT_TAB);
 
 	/** The sections of each tab, top to bottom. */
@@ -96,8 +95,7 @@
 		account: [AppearanceSection, SecuritySection, PushSection, OnCallContactsSection, OnCallHoursSection],
 		team: [UsersSection, TeamsSection, ...(auth.isAdmin ? [ClientsSection] : []), SsoSection, SamlSection, ScimSection, LdapSection],
 		monitoring: [AgentsSection, PacksSection, SecurityScoreSection, ...(auth.isAdmin ? [LocationsSection] : [])],
-		notifications: [ChannelsSection, NotificationPolicySection, ...(auth.isAdmin ? [ReportsSection] : [])],
-		status: [StatusPagesSection],
+		notifications: [ChannelsSection, NotificationPolicySection],
 		wall: [WallModeSection, MusicSection, ...(auth.isAdmin ? [WallWidgetsSection] : [])],
 		system: [BackupSection, ...(auth.isAdmin ? [ConfigFilesSection] : []), SelfMonitoringSection, ...(auth.isAdmin ? [StorageSection, LogsSection] : []), AssistantSection, AboutSection]
 	});
@@ -113,7 +111,6 @@
 		SecurityScoreSection,
 		LocationsSection,
 		NotificationPolicySection,
-		ReportsSection,
 		MusicSection,
 		WallWidgetsSection,
 		ConfigFilesSection,
@@ -123,7 +120,7 @@
 		AssistantSection
 	]);
 	/** Anchor ids inside those sections: a deep link opens the fold first. */
-	const ADVANCED_IDS = ['sso', 'saml', 'scim', 'ldap', 'packs', 'security-score', 'locations', 'notifications-policy', 'quiet-hours', 'reports', 'music', 'news', 'widgets', 'config-files', 'self-monitoring', 'storage', 'logs', 'assistant'];
+	const ADVANCED_IDS = ['sso', 'saml', 'scim', 'ldap', 'packs', 'security-score', 'locations', 'notifications-policy', 'quiet-hours', 'music', 'news', 'widgets', 'config-files', 'self-monitoring', 'storage', 'logs', 'assistant'];
 	const folded = $derived(mode.homelab);
 	const basic = $derived(folded ? SECTIONS[tab].filter((section) => !ADVANCED.has(section)) : SECTIONS[tab]);
 	const advanced = $derived(folded ? SECTIONS[tab].filter((section) => ADVANCED.has(section)) : []);
@@ -131,6 +128,11 @@
 
 	// An unknown tab (or one this account cannot see) lands on the first one.
 	$effect(() => {
+		const away = asked ? MOVED_TABS[asked] : undefined;
+		if (away) {
+			void goto(`${away}${page.url.search}${page.url.hash}`, { replace: true });
+			return;
+		}
 		if (asked !== undefined && asked !== tab) void goto(`/settings/${tab}${page.url.search}${page.url.hash}`, { replace: true });
 	});
 
@@ -176,7 +178,7 @@
 	let query = $state('');
 	const results = $derived(
 		searchSettings(searchIndex(), query).filter(
-			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'reports' && entry.id !== 'widgets' && entry.id !== 'locations' && entry.id !== 'logs' && entry.id !== 'storage'))
+			(entry) => tabs.includes(entry.tab) && (auth.isAdmin || (entry.id !== 'widgets' && entry.id !== 'locations' && entry.id !== 'logs' && entry.id !== 'storage'))
 		)
 	);
 	const href = (entry: { tab: SettingsTab; id: string }) => `/settings/${entry.tab}#${entry.id}`;

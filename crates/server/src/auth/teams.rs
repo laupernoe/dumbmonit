@@ -451,6 +451,8 @@ pub const SCOPED_ROUTES: &[(&str, &str, RouteRule)] = &[
     // ci-dessus. Le gestionnaire réserve les tableaux partagés aux administrateurs.
     ("*", "/dashboards", RouteRule::Open),
     ("*", "/dashboards/*", RouteRule::Open),
+    // Aperçu d'un modèle : le gestionnaire ne lit que les équipements visibles.
+    ("GET", "/dashboards/templates/*/preview", RouteRule::Open),
     ("GET", "/alerts", RouteRule::Open),
     ("GET", "/alerts/history", RouteRule::Open),
     ("GET", "/alerts/rules", RouteRule::Open),

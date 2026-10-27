@@ -17,6 +17,14 @@ surveiller.
  └──────────────────┘                     └──────────────────────────────┘
 ```
 
+!!! info "Canal chiffré avec certificat d'agent"
+    Le relais, comme tout agent, parle au serveur en TLS 1.3 avec son propre
+    certificat d'agent (TLS mutuel). Ouvrez le **port TCP 8443** (le port des
+    agents) du site distant vers le serveur : le relais se connecte toujours
+    vers l'extérieur, rien n'a besoin de l'atteindre. C'est le seul port
+    nécessaire pour surveiller depuis un autre site. Voir
+    [Sécurité du canal des agents](agent-security.md).
+
 ## 1. Publier le serveur sur HTTPS
 
 Le relais récupère ses tâches depuis le serveur : le serveur doit être
