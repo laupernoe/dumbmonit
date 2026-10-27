@@ -42,6 +42,10 @@ With the mode on:
 | Alert rules | A client, or the instance |
 | Maintenance windows | A client, or the instance (a window on one monitor follows that monitor) |
 | Report schedules | A client, or the instance |
+| Shared dashboards | A client, or the instance (a personal dashboard stays with its owner) |
+| On-call schedules and escalation policies | A client, or the instance |
+| Runbooks | A client, or the instance |
+| Remediation actions | A client, or the instance (an action bound to a monitor follows that monitor) |
 
 What the instance shares serves every client: an instance channel hears about
 every client, an instance rule watches every monitor. What a client owns only
@@ -52,11 +56,18 @@ concerns that client:
 - a client's **rule** only evaluates that client's monitors;
 - a client's **maintenance window** only silences that client's monitors;
 - a client's **status page** can only list that client's monitors;
-- a client's **report schedule** only reports on that client's monitors.
+- a client's **report schedule** only reports on that client's monitors;
+- a client's **runbooks and actions** only show under that client's alerts and
+  monitors, and a client's action never runs on another client's monitor, by
+  hand or through an automatic policy;
+- a client's **shared dashboard** is only shown to that client's members.
+  Instance dashboards are not shown to members at all: their widgets could name
+  other clients.
 
 Objects you create while a client is picked in the header belong to that
 client. To move an existing object, use the client menu next to it (status
-pages, channels, report schedules) or the **Client** field of a monitor.
+pages, channels, report schedules, shared dashboards, on-call schedules and
+policies, runbooks, actions) or the **Client** field of a monitor.
 Alert rules and maintenance windows are moved through the API
 (`PUT /api/clients/assign`).
 
@@ -95,6 +106,8 @@ them afterwards.
 Add members by hand, or list identity-provider groups (OIDC, LDAP, SAML): an
 account in one of those groups joins the client when it signs in, and leaves it
 when the group goes. Members added by hand are never removed by a sign-in.
+With SCIM provisioning, a SCIM group whose name is listed on a client brings
+its members into that client, and takes them out when they leave the group.
 
 ## Reports and branding
 
@@ -121,9 +134,19 @@ A member of a client is a restricted account, like a member of a team: the
 server only opens to it a closed list of pages — monitors, metrics, alerts,
 maintenance on its own monitors, the map, status pages, vulnerabilities, its
 clients' logos and reports — and refuses everything else (settings, logs,
-backups, tokens, the assistant endpoint, raw metrics). Every list is filtered
+backups, tokens, the assistant endpoint, raw metrics, log search, runbooks and
+remediation, on-call, configuration files, status page subscribers). Their own
+shared dashboards and the metrics explorer stay open, filtered to their
+monitors. Every list is filtered
 on the server; a monitor of another client answers *not found*, as if it did not
 exist. API tokens of a member inherit the same limits.
+
+When the MSP administrator picks a client in the header, lists follow that
+client: dashboards, on-call schedules and policies, runbooks, actions and their
+run log, and the log search, which then only shows lines of that client's
+monitors (DumbMonit's own logs belong to no client). Configuration files
+(GitOps export, plan and apply) always describe the whole instance and stay
+with the MSP administrator.
 
 !!! note "Known limit"
     Two monitors of the same kind and address cannot coexist, even in two

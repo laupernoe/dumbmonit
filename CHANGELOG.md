@@ -47,6 +47,12 @@ All notable changes to this project are documented here. The format follows
   identity-provider group → client mapping, a logo shown on the client's status
   pages and in its SLA report, and the monthly SLA report (PDF, CSV) emailed to
   the client's contacts. Backups carry clients and what belongs to them.
+  Shared dashboards, on-call schedules and escalation policies, runbooks and
+  remediation actions also belong to a client or to the instance; a client's
+  action never runs on another client's monitor. With a client picked, the MSP
+  administrator's lists, run log and log search follow that client. SCIM groups
+  named on a client bring their members into it. The client switcher sits in
+  the header of both product modes.
 
 - **Cloud integrations.** Eight new monitor types read the cloud services a small
   team depends on, with read-only credentials and built-in alert rules grouped per

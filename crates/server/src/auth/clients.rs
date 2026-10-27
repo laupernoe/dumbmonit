@@ -200,10 +200,20 @@ pub enum Kind {
     Rule,
     Silence,
     Report,
+    /// Tableau de bord partagé (un tableau personnel reste à son propriétaire).
+    Dashboard,
+    /// Planning d'astreinte.
+    Schedule,
+    /// Politique d'escalade d'astreinte.
+    EscalationPolicy,
+    /// Procédure (runbook).
+    Runbook,
+    /// Action de remédiation.
+    RemediationAction,
 }
 
 impl Kind {
-    pub const ALL: [Kind; 7] = [
+    pub const ALL: [Kind; 12] = [
         Kind::Target,
         Kind::StatusPage,
         Kind::AgentToken,
@@ -211,6 +221,11 @@ impl Kind {
         Kind::Rule,
         Kind::Silence,
         Kind::Report,
+        Kind::Dashboard,
+        Kind::Schedule,
+        Kind::EscalationPolicy,
+        Kind::Runbook,
+        Kind::RemediationAction,
     ];
 
     /// Table de l'objet. Valeurs fixes : jamais d'entrée utilisateur dans le SQL.
@@ -223,6 +238,11 @@ impl Kind {
             Self::Rule => "alert_rules",
             Self::Silence => "silences",
             Self::Report => "report_schedules",
+            Self::Dashboard => "dashboards",
+            Self::Schedule => "oncall_schedules",
+            Self::EscalationPolicy => "oncall_policies",
+            Self::Runbook => "runbooks",
+            Self::RemediationAction => "remediation_actions",
         }
     }
 
@@ -236,12 +256,17 @@ impl Kind {
             Self::Rule => "rules",
             Self::Silence => "silences",
             Self::Report => "reports",
+            Self::Dashboard => "dashboards",
+            Self::Schedule => "oncall_schedules",
+            Self::EscalationPolicy => "oncall_policies",
+            Self::Runbook => "runbooks",
+            Self::RemediationAction => "remediation_actions",
         }
     }
 
     /// Vrai si l'objet peut appartenir à l'instance (NULL).
     pub fn may_be_shared(self) -> bool {
-        matches!(self, Self::StatusPage | Self::Channel | Self::Rule | Self::Silence | Self::Report)
+        !matches!(self, Self::Target | Self::AgentToken)
     }
 }
 
@@ -436,7 +461,43 @@ pub async fn assign(
                 }
             }
         }
-        Kind::AgentToken | Kind::Channel | Kind::Rule | Kind::Report => {}
+        Kind::Dashboard => {
+            for id in ids {
+                let shared: bool = sqlx::query_scalar("SELECT shared = 1 FROM dashboards WHERE id = ?")
+                    .bind(id)
+                    .fetch_one(pool)
+                    .await?;
+                if !shared {
+                    return Err(ClientError::Conflict(
+                        "A personal dashboard stays with its owner: share it first.".into(),
+                    ));
+                }
+            }
+        }
+        Kind::RemediationAction => {
+            // Une action qui vise un équipement précis suit le client de cet équipement.
+            for id in ids {
+                let target: Option<i64> =
+                    sqlx::query_scalar("SELECT target_id FROM remediation_actions WHERE id = ?")
+                        .bind(id)
+                        .fetch_one(pool)
+                        .await?;
+                if let Some(target) = target
+                    && target_client(pool, target).await? != client
+                {
+                    return Err(ClientError::Conflict(
+                        "An action on a target belongs to the client of that target.".into(),
+                    ));
+                }
+            }
+        }
+        Kind::AgentToken
+        | Kind::Channel
+        | Kind::Rule
+        | Kind::Report
+        | Kind::Schedule
+        | Kind::EscalationPolicy
+        | Kind::Runbook => {}
     }
     let mut tx = pool.begin().await?;
     let sql = format!("UPDATE {} SET client_id = ? WHERE id = ?", kind.table());
@@ -1026,6 +1087,41 @@ pub async fn branding_of_page(pool: &SqlitePool, page_id: i64) -> Result<Option<
 /// fournisseur d'identité, à chaque connexion OIDC, LDAP ou SAML (comme
 /// [`crate::auth::teams::sync_idp_groups`]).
 pub async fn sync_idp_groups(pool: &SqlitePool, user_id: i64, groups: &[String]) -> Result<()> {
+    sync_groups(pool, user_id, groups, "idp").await
+}
+
+/// Provisionnement SCIM : un groupe SCIM est une équipe ; ses membres
+/// rejoignent les clients associés à ce nom de groupe (source `scim`, distincte
+/// de celle des connexions SSO pour qu'aucune ne défasse l'autre). Recalculé
+/// pour chaque compte concerné après toute écriture d'un groupe. Un
+/// administrateur n'est jamais touché, comme partout dans SCIM.
+pub async fn sync_scim_clients(pool: &SqlitePool) -> Result<()> {
+    let users: Vec<i64> = sqlx::query_scalar(
+        "SELECT u.id FROM users u
+          WHERE u.role <> 'admin'
+            AND (EXISTS (SELECT 1 FROM team_members m JOIN teams t ON t.id = m.team_id
+                          WHERE m.user_id = u.id AND t.scim_id IS NOT NULL)
+                 OR EXISTS (SELECT 1 FROM client_members c
+                             WHERE c.user_id = u.id AND c.source = 'scim'))",
+    )
+    .fetch_all(pool)
+    .await
+    .context("comptes provisionnés par SCIM")?;
+    for user in users {
+        let groups: Vec<String> = sqlx::query_scalar(
+            "SELECT t.name FROM team_members m JOIN teams t ON t.id = m.team_id
+              WHERE m.user_id = ? AND t.scim_id IS NOT NULL",
+        )
+        .bind(user)
+        .fetch_all(pool)
+        .await
+        .context("groupes SCIM d'un compte")?;
+        sync_groups(pool, user, &groups, "scim").await?;
+    }
+    Ok(())
+}
+
+async fn sync_groups(pool: &SqlitePool, user_id: i64, groups: &[String], source: &str) -> Result<()> {
     let rows = sqlx::query("SELECT id, idp_groups FROM clients WHERE idp_groups <> '[]'")
         .fetch_all(pool)
         .await
@@ -1041,19 +1137,21 @@ pub async fn sync_idp_groups(pool: &SqlitePool, user_id: i64, groups: &[String])
         let member = groups.iter().any(|g| wanted.iter().any(|w| group_matches(w, g)));
         if member {
             sqlx::query(
-                "INSERT INTO client_members (client_id, user_id, source) VALUES (?, ?, 'idp')
+                "INSERT INTO client_members (client_id, user_id, source) VALUES (?, ?, ?)
                  ON CONFLICT(client_id, user_id) DO NOTHING",
             )
             .bind(client_id)
             .bind(user_id)
+            .bind(source)
             .execute(&mut *tx)
             .await?;
         } else {
             sqlx::query(
-                "DELETE FROM client_members WHERE client_id = ? AND user_id = ? AND source = 'idp'",
+                "DELETE FROM client_members WHERE client_id = ? AND user_id = ? AND source = ?",
             )
             .bind(client_id)
             .bind(user_id)
+            .bind(source)
             .execute(&mut *tx)
             .await?;
         }

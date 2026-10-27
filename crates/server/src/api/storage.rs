@@ -230,9 +230,19 @@ pub fn parse_line(line: &str) -> Option<LogSearchEntry> {
 pub async fn search(
     State(state): State<AppState>,
     Extension(CurrentPrincipal(principal)): Extension<CurrentPrincipal>,
+    crate::auth::teams::TeamAccess(access): crate::auth::teams::TeamAccess,
     Query(params): Query<SearchQuery>,
 ) -> ApiResult<Json<LogSearchResult>> {
     admin(&principal)?;
+    // Mode MSP, vue limitée à un client : les lignes de ses équipements
+    // seulement (agents, syslog, traps). Les journaux de DumbMonit lui-même
+    // n'ont pas d'équipement et n'en font donc pas partie.
+    let restricted = access.visible_targets(&state.pool).await?;
+    if let Some(visible) = &restricted
+        && (visible.is_empty() || params.target.is_some_and(|target| !visible.contains(&target)))
+    {
+        return Ok(Json(LogSearchResult { entries: Vec::new(), truncated: false }));
+    }
     let source = params.source.as_deref().unwrap_or("server");
     if stream_filter(source).is_none() {
         return Err(ApiError::BadRequest(format!("Unknown log source `{source}`.")));
@@ -254,8 +264,19 @@ pub async fn search(
             .ok_or_else(|| ApiError::BadRequest(format!("Unknown level `{raw}`.")))?,
     };
     let limit = params.limit.unwrap_or(DEFAULT_LIMIT).clamp(1, MAX_LIMIT);
+    let user = params.query.as_deref().unwrap_or("*").trim();
+    let user = if user.is_empty() { "*" } else { user };
+    let user = match &restricted {
+        Some(visible) => {
+            let mut ids: Vec<i64> = visible.iter().copied().collect();
+            ids.sort_unstable();
+            let list: Vec<String> = ids.iter().map(|id| format!("\"{id}\"")).collect();
+            format!("target:in({}) ({user})", list.join(","))
+        }
+        None => user.to_string(),
+    };
     let logsql = build_logsql(
-        params.query.as_deref().unwrap_or("*"),
+        &user,
         start,
         end,
         min,

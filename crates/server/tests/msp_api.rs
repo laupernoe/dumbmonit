@@ -947,3 +947,338 @@ async fn a_backup_carries_clients_and_what_belongs_to_them() {
         .unwrap();
     assert!(String::from_utf8_lossy(&enabled).contains("true"));
 }
+
+// ---------------------------------------------------------------------------
+// Surfaces du lot 4 : tableaux de bord, explorateur, journaux, procédures et
+// actions, configuration réseau, astreintes, GitOps, abonnés, SCIM.
+// ---------------------------------------------------------------------------
+
+/// Requête avec corps JSON et, au choix, l'en-tête de vue d'un client.
+async fn send(
+    app: &TestApp,
+    method: &str,
+    uri: &str,
+    body: Value,
+    cookie: &str,
+    view: Option<i64>,
+) -> Reply {
+    let mut builder = Request::builder()
+        .method(method)
+        .uri(uri)
+        .header(header::COOKIE, cookie)
+        .header(header::CONTENT_TYPE, "application/json")
+        .header("x-requested-with", "DumbMonit");
+    if let Some(client) = view {
+        builder = builder.header(VIEW_HEADER, client.to_string());
+    }
+    let response = app
+        .router
+        .clone()
+        .oneshot(builder.body(Body::from(body.to_string())).unwrap())
+        .await
+        .unwrap();
+    let status = response.status();
+    let bytes = response.into_body().collect().await.unwrap().to_bytes();
+    Reply {
+        status,
+        body: serde_json::from_slice(&bytes).unwrap_or(Value::Null),
+        set_cookie: None,
+        location: None,
+    }
+}
+
+fn names(body: &Value, key: &str) -> Vec<String> {
+    let mut names: Vec<String> = body
+        .as_array()
+        .unwrap_or_else(|| panic!("liste attendue : {body}"))
+        .iter()
+        .filter_map(|item| item[key].as_str().map(str::to_string))
+        .collect();
+    names.sort();
+    names
+}
+
+#[tokio::test]
+async fn lot4_routes_outside_the_closed_list_are_refused_to_client_members() {
+    let lab = lab().await;
+    let (alice, cookie) = create_user(&lab.app, &lab.admin, "alice", "operator").await;
+    join(&lab, lab.acme, alice).await;
+    let b1 = lab.b1;
+    for uri in [
+        "/api/logs/search?source=all".to_string(),
+        format!("/api/logs/search?source=agent&target={b1}"),
+        "/api/logs/inputs".to_string(),
+        "/api/runbooks".to_string(),
+        "/api/runbooks/match?rule_uid=host_down".to_string(),
+        "/api/remediation/actions".to_string(),
+        "/api/remediation/policies".to_string(),
+        "/api/remediation/runs".to_string(),
+        "/api/remediation/alert/fp-beta".to_string(),
+        format!("/api/remediation/targets/{b1}"),
+        "/api/oncall/schedules".to_string(),
+        "/api/oncall/policies".to_string(),
+        "/api/oncall/now".to_string(),
+        "/api/oncall/people".to_string(),
+        "/api/oncall/escalations".to_string(),
+        "/api/config/export".to_string(),
+        "/api/config/status".to_string(),
+        "/api/status-pages/1/subscribers".to_string(),
+        "/api/status-pages/1/subscribers.csv".to_string(),
+        "/api/auth/scim".to_string(),
+    ] {
+        let reply = lab.app.get(&uri, Some(&cookie)).await;
+        assert_eq!(reply.status, StatusCode::FORBIDDEN, "GET {uri}: {}", reply.body);
+    }
+    // Les écritures aussi : GitOps, procédures, astreintes.
+    for (uri, body) in [
+        ("/api/config/plan", json!({ "yaml": "version: 1\n" })),
+        ("/api/config/apply", json!({ "yaml": "version: 1\n" })),
+        ("/api/runbooks", json!({ "title": "x", "body": "y" })),
+        ("/api/oncall/schedules", json!({ "name": "x", "timezone": "UTC", "layers": [] })),
+    ] {
+        let reply = send(&lab.app, "POST", uri, body, &cookie, None).await;
+        assert_eq!(reply.status, StatusCode::FORBIDDEN, "POST {uri}: {}", reply.body);
+    }
+    // La configuration réseau d'un équipement de Beta : le garde des équipements.
+    let reply = lab.app.get(&format!("/api/targets/{b1}/netconfig"), Some(&cookie)).await;
+    assert!(
+        matches!(reply.status, StatusCode::FORBIDDEN | StatusCode::NOT_FOUND),
+        "netconfig de Beta : {} {}",
+        reply.status,
+        reply.body
+    );
+    // SCIM ne s'ouvre jamais avec une session.
+    let reply = lab.app.get("/api/scim/v2/Users", Some(&cookie)).await;
+    assert_ne!(reply.status, StatusCode::OK, "{}", reply.body);
+}
+
+#[tokio::test]
+async fn shared_dashboards_belong_to_a_client() {
+    let lab = lab().await;
+    let (alice, cookie) = create_user(&lab.app, &lab.admin, "alice", "viewer").await;
+    join(&lab, lab.acme, alice).await;
+    let board = |name: &str| {
+        json!({ "name": name, "shared": true, "range_secs": 3600, "refresh_secs": 30, "widgets": [] })
+    };
+    let create = |name: &'static str, view: Option<i64>| {
+        let body = board(name);
+        let app = &lab.app;
+        let admin = lab.admin.clone();
+        async move {
+            let reply = send(app, "POST", "/api/dashboards", body, &admin, view).await;
+            assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+            reply.body["id"].as_i64().unwrap()
+        }
+    };
+    let acme_board = create("Acme board", Some(lab.acme)).await;
+    let beta_board = create("Beta board", Some(lab.beta)).await;
+    let _instance_board = create("Instance board", None).await;
+
+    // Le membre d'Acme : le tableau de son client, rien de Beta ni de l'instance.
+    let reply = lab.app.get("/api/dashboards", Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(names(&reply.body, "name"), vec!["Acme board"]);
+    let reply = lab.app.get(&format!("/api/dashboards/{beta_board}"), Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::NOT_FOUND, "{}", reply.body);
+    let reply = lab.app.get(&format!("/api/dashboards/{acme_board}"), Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+
+    // L'administrateur, vue Acme : Acme et l'instance ; sans vue : tout.
+    let reply = get_with_view(&lab.app, "/api/dashboards", &lab.admin, lab.acme).await;
+    assert_eq!(names(&reply.body, "name"), vec!["Acme board", "Instance board"]);
+    let reply = lab.app.get("/api/dashboards", Some(&lab.admin)).await;
+    assert_eq!(names(&reply.body, "name"), vec!["Acme board", "Beta board", "Instance board"]);
+
+    // Ranger un tableau dans un client passe par l'administrateur MSP ; un
+    // tableau personnel reste à son propriétaire.
+    let reply = send(
+        &lab.app,
+        "PUT",
+        "/api/clients/assign",
+        json!({ "kind": "dashboard", "ids": [beta_board], "client_id": lab.acme }),
+        &lab.admin,
+        None,
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::NO_CONTENT, "{}", reply.body);
+    let reply = lab.app.get(&format!("/api/dashboards/{beta_board}"), Some(&cookie)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let mine = json!({ "name": "Mine", "shared": false, "range_secs": 3600, "refresh_secs": 30, "widgets": [] });
+    let reply = send(&lab.app, "POST", "/api/dashboards", mine, &cookie, None).await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    let personal = reply.body["id"].as_i64().unwrap();
+    let reply = send(
+        &lab.app,
+        "PUT",
+        "/api/clients/assign",
+        json!({ "kind": "dashboard", "ids": [personal], "client_id": lab.beta }),
+        &lab.admin,
+        None,
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::CONFLICT, "{}", reply.body);
+}
+
+#[tokio::test]
+async fn oncall_runbooks_and_actions_follow_the_client_view() {
+    let lab = lab().await;
+    for (name, client) in
+        [("acme-rota", Some(lab.acme)), ("beta-rota", Some(lab.beta)), ("shared-rota", None)]
+    {
+        for table in ["oncall_schedules", "oncall_policies"] {
+            sqlx::query(sqlx::AssertSqlSafe(format!(
+                "INSERT INTO {table} (name, client_id) VALUES (?, ?)"
+            )))
+            .bind(name)
+            .bind(client)
+            .execute(&lab.pool)
+            .await
+            .unwrap();
+        }
+        let runbook = sqlx::query("INSERT INTO runbooks (title, body, client_id) VALUES (?, '', ?)")
+            .bind(name)
+            .bind(client)
+            .execute(&lab.pool)
+            .await
+            .unwrap()
+            .last_insert_rowid();
+        sqlx::query("INSERT INTO runbook_links (runbook_id, scope, value) VALUES (?, 'rule', 'host_down')")
+            .bind(runbook)
+            .execute(&lab.pool)
+            .await
+            .unwrap();
+        sqlx::query(
+            "INSERT INTO remediation_actions (name, kind, params, client_id)
+             VALUES (?, 'webhook', '{\"url\":\"https://example.org/hook\"}', ?)",
+        )
+        .bind(name)
+        .bind(client)
+        .execute(&lab.pool)
+        .await
+        .unwrap();
+    }
+    let visible = vec!["acme-rota".to_string(), "shared-rota".to_string()];
+    let all = vec!["acme-rota".to_string(), "beta-rota".to_string(), "shared-rota".to_string()];
+    for (uri, key) in [
+        ("/api/oncall/schedules", "name"),
+        ("/api/oncall/policies", "name"),
+        ("/api/runbooks", "title"),
+        ("/api/remediation/actions", "name"),
+    ] {
+        let reply = get_with_view(&lab.app, uri, &lab.admin, lab.acme).await;
+        assert_eq!(reply.status, StatusCode::OK, "{uri}: {}", reply.body);
+        assert_eq!(names(&reply.body, key), visible, "{uri} vue Acme");
+        let reply = lab.app.get(uri, Some(&lab.admin)).await;
+        assert_eq!(names(&reply.body, key), all, "{uri} sans vue");
+    }
+
+    // Sous l'alerte d'Acme, jamais la procédure ni l'action de Beta.
+    let reply = lab.app.get("/api/remediation/alert/fp-acme", Some(&lab.admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(names(&reply.body["runbooks"], "title"), visible);
+    let text = reply.body["actions"].to_string();
+    assert!(!text.contains("beta-rota"), "{text}");
+    let reply =
+        lab.app.get(&format!("/api/runbooks/match?rule_uid=host_down&target_id={}", lab.a1), Some(&lab.admin)).await;
+    assert_eq!(names(&reply.body, "title"), visible);
+
+    // L'action de Beta ne se lance pas sur l'équipement d'Acme.
+    let beta_action: i64 =
+        sqlx::query_scalar("SELECT id FROM remediation_actions WHERE name = 'beta-rota'")
+            .fetch_one(&lab.pool)
+            .await
+            .unwrap();
+    let reply = send(
+        &lab.app,
+        "POST",
+        &format!("/api/remediation/actions/{beta_action}/run"),
+        json!({ "fingerprint": "fp-acme" }),
+        &lab.admin,
+        None,
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::FORBIDDEN, "{}", reply.body);
+}
+
+#[tokio::test]
+async fn the_log_search_of_a_client_view_never_reaches_another_client() {
+    let lab = lab().await;
+    // Un équipement d'un autre client : vide d'emblée, sans même interroger le
+    // magasin de journaux (coupé ici, il répondrait 409).
+    let uri = format!("/api/logs/search?source=agent&target={}", lab.b1);
+    let reply = get_with_view(&lab.app, &uri, &lab.admin, lab.acme).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    assert_eq!(reply.body["entries"], json!([]));
+    let reply = lab.app.get(&uri, Some(&lab.admin)).await;
+    assert_eq!(reply.status, StatusCode::CONFLICT, "{}", reply.body);
+}
+
+#[tokio::test]
+async fn scim_groups_drive_client_membership() {
+    let lab = lab().await;
+    let reply = lab.app.put("/api/auth/scim", json!({ "enabled": true }), Some(&lab.admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let reply = lab.app.post("/api/auth/scim/token", json!({}), Some(&lab.admin)).await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+    let token = reply.body["token"].as_str().unwrap().to_string();
+    let reply = lab
+        .app
+        .put(&format!("/api/clients/{}", lab.acme), json!({ "idp_groups": ["NOC Acme"] }), Some(&lab.admin))
+        .await;
+    assert_eq!(reply.status, StatusCode::OK, "{}", reply.body);
+
+    let scim = |method: &'static str, uri: String, body: Value| {
+        let app = &lab.app;
+        let token = token.clone();
+        async move {
+            let request = Request::builder()
+                .method(method)
+                .uri(uri)
+                .header(header::AUTHORIZATION, format!("Bearer {token}"))
+                .header(header::CONTENT_TYPE, "application/scim+json")
+                .body(Body::from(body.to_string()))
+                .unwrap();
+            let response = app.router.clone().oneshot(request).await.unwrap();
+            let status = response.status();
+            let bytes = response.into_body().collect().await.unwrap().to_bytes();
+            (status, serde_json::from_slice::<Value>(&bytes).unwrap_or(Value::Null))
+        }
+    };
+    let (status, user) = scim(
+        "POST",
+        "/api/scim/v2/Users".into(),
+        json!({ "schemas": ["urn:ietf:params:scim:schemas:core:2.0:User"], "userName": "carol" }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{user}");
+    let scim_user = user["id"].as_str().unwrap().to_string();
+    let (status, group) = scim(
+        "POST",
+        "/api/scim/v2/Groups".into(),
+        json!({
+            "schemas": ["urn:ietf:params:scim:schemas:core:2.0:Group"],
+            "displayName": "NOC Acme",
+            "members": [{ "value": scim_user }],
+        }),
+    )
+    .await;
+    assert_eq!(status, StatusCode::CREATED, "{group}");
+    let member = |pool: sqlx::SqlitePool, client: i64| async move {
+        sqlx::query_scalar::<_, i64>(
+            "SELECT COUNT(*) FROM client_members m JOIN users u ON u.id = m.user_id
+             WHERE u.username = 'carol' AND m.client_id = ? AND m.source = 'scim'",
+        )
+        .bind(client)
+        .fetch_one(&pool)
+        .await
+        .unwrap()
+    };
+    assert_eq!(member(lab.pool.clone(), lab.acme).await, 1);
+    assert_eq!(member(lab.pool.clone(), lab.beta).await, 0);
+
+    // Le groupe retiré du fournisseur : le compte quitte le client.
+    let gid = group["id"].as_str().unwrap();
+    let (status, body) = scim("DELETE", format!("/api/scim/v2/Groups/{gid}"), Value::Null).await;
+    assert_eq!(status, StatusCode::NO_CONTENT, "{body}");
+    assert_eq!(member(lab.pool.clone(), lab.acme).await, 0);
+}

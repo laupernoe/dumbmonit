@@ -3,6 +3,7 @@
 	 * Schedules: the list (who is on call, how many layers), the editor and the
 	 * calendar of the one picked. Writing is for admins; everyone reads.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { CalendarRange, Pencil, Plus } from 'lucide-svelte';
 	import { deleteSchedule, type EscalationPolicy, type Person, type Schedule } from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
@@ -91,6 +92,7 @@
 									<div class="flex flex-wrap items-center gap-2">
 										<span class="font-semibold text-ink">{schedule.name}</span>
 										{#if isSelected}<Plate tone="info" label={m.oncall_schedule_shown()} bare />{/if}
+										<ClientAssign kind="schedule" id={schedule.id} />
 									</div>
 									{#if schedule.description}<p class="text-[0.8125rem] text-ink-2">{schedule.description}</p>{/if}
 									<p class="mt-1 text-[0.8125rem] text-ink-2">

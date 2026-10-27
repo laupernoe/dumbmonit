@@ -4,6 +4,7 @@
 	 * policy does nothing until an "on-call" notification channel points to it,
 	 * so each row says which channels use it and the help explains the hookup.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { ListOrdered, Plus } from 'lucide-svelte';
 	import { deleteEscalationPolicy, type Channel, type EscalationPolicy, type Person, type Schedule } from '#lib/api/index.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
@@ -96,6 +97,7 @@
 								<div class="flex flex-wrap items-center gap-2">
 									<span class="font-semibold text-ink">{policy.name}</span>
 									{#if policy.repeat > 0}<Plate tone="ghost" bare label={m.oncall_policy_repeats({ count: policy.repeat })} />{/if}
+									<ClientAssign kind="escalation_policy" id={policy.id} />
 								</div>
 								{#if policy.description}<p class="text-[0.8125rem] text-ink-2">{policy.description}</p>{/if}
 								<ol class="mt-1.5 grid gap-0.5 text-[0.8125rem] text-ink-2">

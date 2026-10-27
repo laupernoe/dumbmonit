@@ -2568,6 +2568,44 @@ async fn restore_client_assignments(
                     .await?
                     .rows_affected()
             }
+            Kind::Dashboard => sqlx::query(
+                "UPDATE dashboards SET client_id = ? WHERE shared = 1 AND name = ? COLLATE NOCASE",
+            )
+            .bind(client)
+            .bind(&assignment.key)
+            .execute(&mut **tx)
+            .await?
+            .rows_affected(),
+            Kind::Schedule => {
+                sqlx::query("UPDATE oncall_schedules SET client_id = ? WHERE name = ?")
+                    .bind(client)
+                    .bind(&assignment.key)
+                    .execute(&mut **tx)
+                    .await?
+                    .rows_affected()
+            }
+            Kind::EscalationPolicy => {
+                sqlx::query("UPDATE oncall_policies SET client_id = ? WHERE name = ?")
+                    .bind(client)
+                    .bind(&assignment.key)
+                    .execute(&mut **tx)
+                    .await?
+                    .rows_affected()
+            }
+            Kind::Runbook => sqlx::query("UPDATE runbooks SET client_id = ? WHERE title = ?")
+                .bind(client)
+                .bind(&assignment.key)
+                .execute(&mut **tx)
+                .await?
+                .rows_affected(),
+            Kind::RemediationAction => {
+                sqlx::query("UPDATE remediation_actions SET client_id = ? WHERE name = ?")
+                    .bind(client)
+                    .bind(&assignment.key)
+                    .execute(&mut **tx)
+                    .await?
+                    .rows_affected()
+            }
         };
         if done == 0 {
             report.notes.push(format!(
