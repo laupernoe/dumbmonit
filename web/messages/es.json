@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Agrupación, horas de silencio y repeticiones: a quién se avisa y cuándo.",
 	"wizard_oncall_team": "Equipo y roles",
 	"wizard_oncall_team_text": "Las cuentas que gestionan las alertas: los operadores reconocen, los administradores configuran.",
-	"wizard_oncall_text": "Decide a quién se avisa y cuándo. Ambos se abren en una pestaña nueva.",
+	"wizard_oncall_text": "Una primera rotación semanal y la política de escalado que llama a quien esté de guardia. El resto está en Alertas → Guardias.",
 	"wizard_oncall_title": "Guardias",
 	"wizard_optional": "Opcional",
 	"wizard_retention_text": "Cuánto tiempo se conservan las métricas y los registros. Los valores por defecto sirven a la mayoría de equipos.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} cuentas sin cliente no ven nada:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Alguien",
+	"console_panel_oncall_until": "{schedule}, hasta {time}",
+	"console_panel_oncall_open": "Abrir guardias",
+	"console_panel_oncall_setup": "Configurar los turnos de guardia",
+	"wizard_oncall_default_name": "Principal",
+	"wizard_oncall_policy_name": "{name}: escalado",
+	"wizard_oncall_existing": "Turnos ya configurados: {count}",
+	"wizard_oncall_now": "De guardia ahora: {name}",
+	"wizard_oncall_nobody": "Nadie de guardia ahora mismo",
+	"wizard_oncall_name": "Nombre del turno",
+	"wizard_oncall_people": "Quién se turna",
+	"wizard_oncall_people_help": "Una semana cada uno, relevo los lunes a las 09:00 en la zona horaria de la instancia.",
+	"wizard_oncall_create": "Crear la rotación",
+	"wizard_oncall_open": "Guardias en detalle",
+	"wizard_oncall_open_text": "Capas, sustituciones, calendario y el canal Guardia de DumbMonit que conecta una política con el enrutamiento de alertas."
 }

@@ -13,7 +13,7 @@
 	import { tick, untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { Check, ExternalLink } from 'lucide-svelte';
+	import { Check } from 'lucide-svelte';
 	import { getInstanceSettings, updateInstanceSettings } from '#lib/api/instance.js';
 	import { updateOnboarding, type ProductMode } from '#lib/api/index.js';
 	import { m } from '#lib/paraglide/messages.js';
@@ -27,6 +27,7 @@
 	import { browserTimeZone } from '#lib/components/modes/timezones.js';
 	import WizardChannel from '#lib/components/wizard/WizardChannel.svelte';
 	import WizardMonitors from '#lib/components/wizard/WizardMonitors.svelte';
+	import WizardOnCall from '#lib/components/wizard/WizardOnCall.svelte';
 	import AgentEnroll from '#lib/components/device-form/AgentEnroll.svelte';
 	import SsoSection from '#lib/components/settings/SsoSection.svelte';
 	import UsersSection from '#lib/components/settings/UsersSection.svelte';
@@ -214,16 +215,7 @@
 								<UsersSection />
 							</div>
 						{:else if step.id === 'oncall'}
-							<div class="grid gap-3 sm:grid-cols-2">
-								<a href="/settings/notifications#notifications-policy" target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
-									<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_oncall_policy()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
-									<span class="text-[0.8125rem] text-ink-2">{m.wizard_oncall_policy_text()}</span>
-								</a>
-								<a href="/settings/team" target="_blank" rel="noopener" class="flex min-h-24 flex-col gap-1.5 rounded-[var(--radius-card)] border border-line bg-surface p-4 hover:border-line-strong">
-									<span class="inline-flex items-center gap-1 font-semibold text-ink">{m.wizard_oncall_team()}<ExternalLink class="size-3.5 text-ink-3" aria-hidden="true" /></span>
-									<span class="text-[0.8125rem] text-ink-2">{m.wizard_oncall_team_text()}</span>
-								</a>
-							</div>
+							<WizardOnCall {timezone} />
 						{:else if step.id === 'retention'}
 							<StorageSection />
 						{/if}

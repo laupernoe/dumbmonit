@@ -7,11 +7,21 @@
 	 */
 	import { untrack } from 'svelte';
 	import { ArrowUpRight, Ellipsis } from 'lucide-svelte';
-	import { createSilence, listAlertRules, probeTarget, toApiError, type AlertRule } from '#lib/api/index.js';
+	import {
+		createSilence,
+		getOnCallNow,
+		listAlertRules,
+		listOnCallPeople,
+		probeTarget,
+		toApiError,
+		type AlertRule,
+		type OnCallEntry,
+		type Person
+	} from '#lib/api/index.js';
 	import { countAlertsByTarget } from '#lib/alerts-attention.js';
 	import { isForecast, quickSilencePayload, TONE_BAR } from '#lib/components/alerts/helpers.js';
 	import { isAckedRow, isSnoozedRow, readSky, type SkyRow } from '#lib/components/overview/sky.js';
-	import { formatPercent, formatRelative } from '#lib/format.js';
+	import { formatDateTime, formatPercent, formatRelative } from '#lib/format.js';
 	import { kindLabel } from '#lib/kind-label.js';
 	import { m } from '#lib/paraglide/messages.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
@@ -31,6 +41,32 @@
 			.catch(() => {});
 		return () => controller.abort();
 	});
+	// Who is on call now, from the built-in on-call schedules. Accounts limited
+	// by their teams or clients are refused that API: they keep the fallback.
+	let onCall = $state<OnCallEntry[]>([]);
+	let people = $state<Map<number, Person>>(new Map());
+	$effect(() => {
+		if (auth.scoped) return;
+		const controller = new AbortController();
+		Promise.all([getOnCallNow(controller.signal), listOnCallPeople(controller.signal)])
+			.then(([entries, list]) => {
+				onCall = entries;
+				people = new Map(list.map((person) => [person.id, person]));
+			})
+			.catch(() => {});
+		return () => controller.abort();
+	});
+	const onCallRows = $derived(
+		onCall
+			.filter((entry) => entry.user_id !== null)
+			.slice(0, 4)
+			.map((entry) => {
+				const person = people.get(entry.user_id as number);
+				const name = person?.display_name || person?.username || m.console_panel_oncall_unknown();
+				return { key: `${entry.schedule_id}:${entry.user_id}`, name, initial: name.charAt(0).toUpperCase(), entry };
+			})
+	);
+
 	// One subscription for the life of the view; the range is followed separately.
 	$effect(() => untrack(() => fleetStore.start()));
 
@@ -217,13 +253,35 @@
 
 	<section class="px-[18px] py-4" aria-labelledby="panel-oncall">
 		<h2 id="panel-oncall" class={heading}>{m.console_panel_oncall()}</h2>
-		<div class="mt-2.5 flex items-center gap-2.5">
-			<span aria-hidden="true" class="grid size-[30px] shrink-0 place-items-center rounded-full bg-info-soft text-xs font-semibold text-info-ink">{initial}</span>
-			<div class="min-w-0">
-				<div class="truncate font-medium text-ink">{auth.displayName || m.console_panel_oncall_you()}</div>
-				<a href="/settings/notifications" class="text-xs text-ink-2 hover:text-ink hover:underline">{m.console_panel_oncall_hint()}</a>
+		{#if onCallRows.length > 0}
+			<ul class="mt-2.5 grid gap-2.5">
+				{#each onCallRows as row (row.key)}
+					<li class="flex items-center gap-2.5">
+						<span aria-hidden="true" class="grid size-[30px] shrink-0 place-items-center rounded-full bg-info-soft text-xs font-semibold text-info-ink">{row.initial}</span>
+						<div class="min-w-0">
+							<div class="truncate font-medium text-ink">{row.name}</div>
+							<div class="truncate text-xs text-ink-2">
+								{row.entry.until
+									? m.console_panel_oncall_until({ schedule: row.entry.schedule_name, time: formatDateTime(row.entry.until) })
+									: row.entry.schedule_name}
+							</div>
+						</div>
+					</li>
+				{/each}
+			</ul>
+			<a href="/alerts#oncall" class="mt-1 inline-flex min-h-10 items-center text-xs text-info-ink hover:underline">{m.console_panel_oncall_open()}</a>
+		{:else}
+			<div class="mt-2.5 flex items-center gap-2.5">
+				<span aria-hidden="true" class="grid size-[30px] shrink-0 place-items-center rounded-full bg-info-soft text-xs font-semibold text-info-ink">{initial}</span>
+				<div class="min-w-0">
+					<div class="truncate font-medium text-ink">{auth.displayName || m.console_panel_oncall_you()}</div>
+					<a href="/settings/notifications" class="text-xs text-ink-2 hover:text-ink hover:underline">{m.console_panel_oncall_hint()}</a>
+				</div>
 			</div>
-		</div>
+			{#if !auth.scoped}
+				<a href="/alerts#oncall" class="mt-1 inline-flex min-h-10 items-center text-xs text-info-ink hover:underline">{m.console_panel_oncall_setup()}</a>
+			{/if}
+		{/if}
 		{#if consoleState.egg}
 			<p role="status" class="rise-in mt-3.5 font-mono text-[0.6875rem] text-signal-ink">{m.console_egg({ count: beats })}</p>
 		{/if}

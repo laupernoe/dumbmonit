@@ -41,7 +41,7 @@
 	/** Rows for a member: the clients `/api/auth/me` offers him. */
 	const mine = $derived<ClientRef[]>(admin ? [] : (auth.msp?.clients ?? []));
 
-	function state(row: ClientHealth): { tone: 'signal' | 'advisory' | 'warning' | 'ghost'; label: string } {
+	function healthOf(row: ClientHealth): { tone: 'signal' | 'advisory' | 'warning' | 'ghost'; label: string } {
 		if (row.targets === 0) return { tone: 'ghost', label: m.msp_overview_state_empty() };
 		if (row.critical > 0) return { tone: 'warning', label: m.msp_overview_state_critical({ count: row.alerting_targets }) };
 		if (row.warning > 0 || row.alerting_targets > 0)
@@ -110,7 +110,7 @@
 		{:else if health}
 			<ul class="grid gap-2">
 				{#each health as row (row.id)}
-					{@const status = state(row)}
+					{@const status = healthOf(row)}
 					{@const use = quotaUse(row)}
 					<li class="rounded-[var(--radius-card)] border border-line bg-canvas p-3">
 						<div class="flex flex-wrap items-center gap-x-4 gap-y-3">

@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Grouping, quiet hours and repeats: who is told, and when.",
 	"wizard_oncall_team": "Team and roles",
 	"wizard_oncall_team_text": "The accounts that handle alerts: operators acknowledge, administrators configure.",
-	"wizard_oncall_text": "Decide who is told, and when. Both open in a new tab.",
+	"wizard_oncall_text": "A first weekly rotation, and the escalation policy that calls whoever is on call. The rest lives in Alerts → On-call.",
 	"wizard_oncall_title": "On-call",
 	"wizard_optional": "Optional",
 	"wizard_retention_text": "How long metrics and logs are kept. The defaults suit most teams.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} accounts in no client see nothing:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Someone",
+	"console_panel_oncall_until": "{schedule}, until {time}",
+	"console_panel_oncall_open": "Open on-call",
+	"console_panel_oncall_setup": "Set up on-call schedules",
+	"wizard_oncall_default_name": "Primary",
+	"wizard_oncall_policy_name": "{name}: escalation",
+	"wizard_oncall_existing": "Schedules already set up: {count}",
+	"wizard_oncall_now": "On call now: {name}",
+	"wizard_oncall_nobody": "Nobody on call right now",
+	"wizard_oncall_name": "Schedule name",
+	"wizard_oncall_people": "Who takes turns",
+	"wizard_oncall_people_help": "One week each, handing off on Mondays at 09:00 in the instance's time zone.",
+	"wizard_oncall_create": "Create the rotation",
+	"wizard_oncall_open": "On-call in detail",
+	"wizard_oncall_open_text": "Layers, replacements, the calendar, and the DumbMonit on-call channel that plugs a policy into alert routing."
 }

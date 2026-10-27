@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Raggruppamento, ore di silenzio e ripetizioni: chi viene avvisato e quando.",
 	"wizard_oncall_team": "Team e ruoli",
 	"wizard_oncall_team_text": "Gli account che gestiscono gli avvisi: gli operatori confermano, gli amministratori configurano.",
-	"wizard_oncall_text": "Decidi chi viene avvisato e quando. Entrambi si aprono in una nuova scheda.",
+	"wizard_oncall_text": "Una prima rotazione settimanale e la politica di escalation che chiama chi è reperibile. Il resto è in Avvisi → Reperibilità.",
 	"wizard_oncall_title": "Reperibilità",
 	"wizard_optional": "Facoltativo",
 	"wizard_retention_text": "Per quanto tempo vengono conservati metriche e log. I valori predefiniti vanno bene per la maggior parte dei team.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} account senza cliente non vedono nulla:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Qualcuno",
+	"console_panel_oncall_until": "{schedule}, fino a {time}",
+	"console_panel_oncall_open": "Apri la reperibilità",
+	"console_panel_oncall_setup": "Configura i turni di reperibilità",
+	"wizard_oncall_default_name": "Principale",
+	"wizard_oncall_policy_name": "{name}: escalation",
+	"wizard_oncall_existing": "Turni già configurati: {count}",
+	"wizard_oncall_now": "Reperibile ora: {name}",
+	"wizard_oncall_nobody": "Nessun reperibile in questo momento",
+	"wizard_oncall_name": "Nome del turno",
+	"wizard_oncall_people": "Chi si alterna",
+	"wizard_oncall_people_help": "Una settimana ciascuno, cambio il lunedì alle 09:00 nel fuso orario dell'istanza.",
+	"wizard_oncall_create": "Crea la rotazione",
+	"wizard_oncall_open": "La reperibilità in dettaglio",
+	"wizard_oncall_open_text": "Livelli, sostituzioni, calendario e il canale Reperibilità DumbMonit che collega una politica all'instradamento degli avvisi."
 }

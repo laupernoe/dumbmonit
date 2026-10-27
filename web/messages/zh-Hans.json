@@ -8988,7 +8988,7 @@
 	"wizard_oncall_policy_text": "分组、静默时段和重复提醒：通知谁、何时通知。",
 	"wizard_oncall_team": "团队和角色",
 	"wizard_oncall_team_text": "处理告警的账户：操作员负责确认，管理员负责配置。",
-	"wizard_oncall_text": "决定通知谁以及何时通知。两者都会在新标签页中打开。",
+	"wizard_oncall_text": "第一个每周轮换，以及呼叫值班人员的升级策略。其余内容在“告警 → 值班”中。",
 	"wizard_oncall_title": "值班",
 	"wizard_optional": "可选",
 	"wizard_retention_text": "指标和日志的保留时长。默认值适合大多数团队。",
@@ -9240,5 +9240,20 @@
 				"countPlural=other": "{count} 个没有客户的账户什么也看不到："
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "某人",
+	"console_panel_oncall_until": "{schedule}，至 {time}",
+	"console_panel_oncall_open": "打开值班",
+	"console_panel_oncall_setup": "设置值班排班",
+	"wizard_oncall_default_name": "主值班",
+	"wizard_oncall_policy_name": "{name}：升级",
+	"wizard_oncall_existing": "已设置的排班：{count}",
+	"wizard_oncall_now": "当前值班：{name}",
+	"wizard_oncall_nobody": "当前无人值班",
+	"wizard_oncall_name": "排班名称",
+	"wizard_oncall_people": "轮流值班的人",
+	"wizard_oncall_people_help": "每人一周，每周一 09:00（实例时区）交接。",
+	"wizard_oncall_create": "创建轮换",
+	"wizard_oncall_open": "值班详情",
+	"wizard_oncall_open_text": "层级、替班、日历，以及将策略接入告警路由的 DumbMonit 值班渠道。"
 }

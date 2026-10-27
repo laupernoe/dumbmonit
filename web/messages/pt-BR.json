@@ -9099,7 +9099,7 @@
 	"wizard_oncall_policy_text": "Agrupamento, horários de silêncio e repetições: quem é avisado e quando.",
 	"wizard_oncall_team": "Equipe e funções",
 	"wizard_oncall_team_text": "As contas que tratam os alertas: operadores reconhecem, administradores configuram.",
-	"wizard_oncall_text": "Decida quem é avisado e quando. Ambos abrem em uma nova aba.",
+	"wizard_oncall_text": "Uma primeira rotação semanal e a política de escalonamento que chama quem está de plantão. O resto fica em Alertas → Plantão.",
 	"wizard_oncall_title": "Plantão",
 	"wizard_optional": "Opcional",
 	"wizard_retention_text": "Por quanto tempo métricas e logs são mantidos. Os padrões servem para a maioria das equipes.",
@@ -9351,5 +9351,20 @@
 				"countPlural=other": "{count} contas sem cliente não veem nada:"
 			}
 		}
-	]
+	],
+	"console_panel_oncall_unknown": "Alguém",
+	"console_panel_oncall_until": "{schedule}, até {time}",
+	"console_panel_oncall_open": "Abrir plantão",
+	"console_panel_oncall_setup": "Configurar escalas de plantão",
+	"wizard_oncall_default_name": "Principal",
+	"wizard_oncall_policy_name": "{name}: escalonamento",
+	"wizard_oncall_existing": "Escalas já configuradas: {count}",
+	"wizard_oncall_now": "De plantão agora: {name}",
+	"wizard_oncall_nobody": "Ninguém de plantão agora",
+	"wizard_oncall_name": "Nome da escala",
+	"wizard_oncall_people": "Quem reveza",
+	"wizard_oncall_people_help": "Uma semana cada, troca às segundas-feiras às 09:00 no fuso horário da instância.",
+	"wizard_oncall_create": "Criar a rotação",
+	"wizard_oncall_open": "Plantão em detalhe",
+	"wizard_oncall_open_text": "Camadas, substituições, calendário e o canal Plantão DumbMonit que conecta uma política ao roteamento de alertas."
 }
