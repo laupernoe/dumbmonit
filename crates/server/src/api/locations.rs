@@ -540,8 +540,8 @@ struct GeocodeQuery {
 async fn geocode(
     AdminIdentity(_): AdminIdentity,
     Query(query): Query<GeocodeQuery>,
-) -> ApiResult<Json<Vec<super::wall_widgets::Place>>> {
-    Ok(Json(super::wall_widgets::search_places(&query.q, query.lang.as_deref()).await?))
+) -> ApiResult<Json<Vec<super::geocode::Place>>> {
+    Ok(Json(super::geocode::search_places(&query.q, query.lang.as_deref()).await?))
 }
 
 // --------------------------------------------------------------- fond de carte
