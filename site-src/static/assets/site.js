@@ -65,6 +65,71 @@
 		}
 	});
 
+	// ---- hero: the word that turns, every 2.5 s ----
+	var rot = d.querySelector('.hero .rot');
+	if (rot && !still.matches) {
+		var words = rot.children, wi = 0;
+		setInterval(function () {
+			if (d.hidden) return;
+			var cur = words[wi];
+			wi = (wi + 1) % words.length;
+			cur.classList.remove('on');
+			cur.classList.add('off');
+			words[wi].classList.remove('off');
+			words[wi].classList.add('on');
+			setTimeout(function () { cur.classList.remove('off'); }, 500);
+		}, 2500);
+	}
+
+	// ---- hero: the scripted demo (15 s loop, pauses on hover and off screen) ----
+	var demo = d.getElementById('demo');
+	if (demo) {
+		var app = demo.querySelector('.demo-app');
+		var cursor = demo.querySelector('.d-cursor');
+		var row = demo.querySelector('.d-target');
+		var ack = demo.querySelector('.d-ack');
+		if (still.matches) {
+			// A still frame: the alert has arrived and its detail is open.
+			app.classList.add('s-down', 's-toast', 's-panel');
+		} else {
+			var LOOP = 15000, t = 0, last = 0, paused = false, onScreen = true;
+			var aim = function (el, dx, dy) {
+				var a = app.getBoundingClientRect(), r = el.getBoundingClientRect();
+				cursor.style.transform = 'translate(' + Math.round(r.left - a.left + r.width * dx) + 'px,' + Math.round(r.top - a.top + r.height * dy) + 'px)';
+			};
+			var rest = function () {
+				cursor.style.transform = 'translate(' + Math.round(app.clientWidth * 0.72) + 'px,' + Math.round(app.clientHeight - 40) + 'px)';
+			};
+			var set = function (c, on) { app.classList.toggle(c, on); };
+			var steps = [
+				[0, function () { app.className = 'demo-app'; void app.offsetWidth; set('s-run', true); rest(); }],
+				[2500, function () { set('s-down', true); }],
+				[3300, function () { set('s-toast', true); }],
+				[4800, function () { aim(row, 0.42, 0.55); }],
+				[5900, function () { set('s-click', true); set('s-panel', true); }],
+				[6200, function () { set('s-click', false); }],
+				[8300, function () { aim(ack, 0.5, 0.6); }],
+				[9300, function () { set('s-click', true); set('s-ack', true); set('s-toast', false); }],
+				[9600, function () { set('s-click', false); }],
+				[10800, function () { set('s-down', false); }],
+				[12300, function () { set('s-panel', false); rest(); }],
+				[14200, function () { set('s-run', false); }]
+			];
+			var next = 0;
+			var tick = function (now) {
+				if (last && !paused && onScreen && !d.hidden) t += now - last;
+				last = now;
+				if (t >= LOOP) { t = 0; next = 0; }
+				while (next < steps.length && t >= steps[next][0]) steps[next++][1]();
+				requestAnimationFrame(tick);
+			};
+			demo.addEventListener('mouseenter', function () { paused = true; });
+			demo.addEventListener('mouseleave', function () { paused = false; });
+			if (IO) new IntersectionObserver(function (es) { onScreen = es[0].isIntersecting; }).observe(demo);
+			requestAnimationFrame(tick);
+		}
+	}
+
 	if (!IO) return;
 
 	// ---- the alert path lights its steps only while it is on screen ----
