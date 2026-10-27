@@ -1,8 +1,8 @@
 /**
  * The sky: the one truth model behind "is everything fine?".
  *
- * The Overview bulletin and the Alerts "Now" tab both read from here, so the
- * two screens can never disagree. Alerts alone do not tell the whole story:
+ * The Alerts "Now" tab, the context panel and the wall all read from here, so
+ * the screens can never disagree. Alerts alone do not tell the whole story:
  * a rule only fires once it evaluates, and a device that sends no data never
  * evaluates anything. So the sky is composed from devices *and* alerts —
  * an unreachable device is a warning row even when no rule has noticed.
@@ -88,29 +88,6 @@ export interface Sky {
 		/** Firing or building-up alerts a maintenance window is quieting, unacked. */
 		snoozed: number;
 	};
-}
-
-/**
- * What the weather window shows. Mirrors `SkyScene`'s `condition` prop; kept
- * here so the mapping from network state to sky is part of the truth model.
- */
-export type SkyCondition = 'clear' | 'cloudy' | 'overcast' | 'storm' | 'waiting' | 'empty';
-
-/**
- * The sky as weather. Trouble wins over waiting: a rack with one device down
- * and the rest still pending is a storm, not a calm dawn. Advisories cloud the
- * sky by number; a single pending alert is a cloud building up.
- */
-export function skyCondition(sky: Sky): SkyCondition {
-	const { devices, reporting, unreachable, misconfigured, warnings, advisories, buildingUp } =
-		sky.counts;
-	if (devices === 0) return 'empty';
-	if (unreachable > 0 || warnings > 0) return 'storm';
-	if (reporting === 0) return 'waiting';
-	// A misconfigured device clouds the sky like an advisory: ours to fix, not a storm.
-	if (advisories + misconfigured >= 3) return 'overcast';
-	if (advisories > 0 || misconfigured > 0 || buildingUp > 0) return 'cloudy';
-	return 'clear';
 }
 
 // Counts are phrased by plural messages (m.overview_sky_*).

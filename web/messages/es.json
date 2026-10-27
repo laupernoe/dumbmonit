@@ -286,7 +286,6 @@
 	"alerts_needs_empty_quiet": "Nada requiere tu atención.",
 	"alerts_needs_no_device": "Sin monitor",
 	"alerts_needs_quiet_all_reporting": "Todos los monitores informan y ninguna regla está activa.",
-	"alerts_needs_quiet_checked": "{text} Comprobado {when}.",
 	"alerts_needs_quiet_no_devices": "Añade un monitor y su primer informe aparecerá aquí.",
 	"alerts_needs_quiet_waiting_many": [
 		{
@@ -4209,8 +4208,6 @@
 	"metrics_title_website_text_chars": "Caracteres de texto",
 	"metrics_title_website_title_changed": "Título cambiado",
 	"metrics_title_website_up": "Sitio disponible",
-	"misc2_browser_on": "{browser} en {system}",
-	"misc2_browser_unknown": "Un navegador",
 	"misc2_folds_container_stopped": [
 		{
 			"declarations": [
@@ -4555,7 +4552,6 @@
 	"misc_nav_more": "Más",
 	"misc_nav_overview": "Resumen",
 	"misc_nav_palette_open": "Abrir la paleta de comandos",
-	"misc_nav_palette_title": "Paleta de comandos ({shortcut})",
 	"misc_nav_security": "Seguridad",
 	"misc_nav_settings": "Ajustes",
 	"misc_nav_sign_out": "Cerrar sesión",
@@ -4600,7 +4596,6 @@
 	"misc_palette_status_detail": "Páginas públicas y anuncios",
 	"misc_palette_status_page": "Nueva página de estado",
 	"misc_palette_status_pages": "Páginas de estado",
-	"misc_palette_theme": "Cambiar de tema",
 	"misc_palette_wall_detail": "Boletín a pantalla completa para una pantalla de pared",
 	"misc_reason_auth": "Credenciales rechazadas",
 	"misc_reason_bad_secret": "Firma de la respuesta no válida: secreto compartido probablemente erróneo",
@@ -4632,17 +4627,10 @@
 	"misc_shortcuts_go": "Ir a {page}",
 	"misc_shortcuts_intro": "Los atajos de letras funcionan cuando ningún campo de texto tiene el foco. Pulsa las teclas una tras otra.",
 	"misc_shortcuts_title": "Atajos de teclado",
-	"misc_speaker_download_failed": "No se pudo descargar el reproductor de Spotify (sdk.scdn.co inaccesible).",
 	"misc_speaker_fix_auth": "Reintentando automáticamente. Si sigue fallando, vuelve a conectar Spotify en Ajustes → Música de la pared.",
 	"misc_speaker_fix_insecure": "Spotify solo reproduce en una página segura: abre DumbMonit por HTTPS (un proxy inverso) o como http://localhost en la propia pantalla.",
 	"misc_speaker_fix_no_drm": "Usa Chrome, Edge o Firefox en un ordenador conectado a la tele (Firefox: permite «Reproducir contenido controlado por DRM»; Chromium en una Raspberry Pi: instala Widevine, el paquete libwidevinecdm0). La mayoría de los navegadores de smart TV y quioscos no pueden. Si no, reproduce desde la app de Spotify de la tele o un Chromecast: la pared sigue mostrando lo que suena.",
 	"misc_speaker_fix_premium": "Conecta una cuenta Premium en Ajustes → Música de la pared. «Reproduciendo» sigue mostrando lo que suena en tus otros dispositivos.",
-	"misc_speaker_fix_reconnect": "Un administrador puede volver a conectar Spotify en Ajustes → Música de la pared.",
-	"misc_speaker_no_token": "Sin token de Spotify.",
-	"misc_speaker_not_accepted": "Spotify no aceptó esta pantalla como altavoz.",
-	"misc_speaker_not_ready": "Esta pantalla aún no está lista como altavoz.",
-	"misc_speaker_not_started": "El reproductor de Spotify no se inició.",
-	"misc_speaker_playback_error": "Spotify no pudo reproducir esta canción ({message}).",
 	"misc_speaker_problem_auth": "Spotify rechazó la conexión de la pared{detail}.",
 	"misc_speaker_problem_init": "Este navegador no puede reproducir Spotify: su DRM (Widevine) no se inició{detail}.",
 	"misc_speaker_problem_premium": "Se necesita Spotify Premium para que la pared funcione como altavoz.",
@@ -5110,261 +5098,6 @@
 	"oncall_window_overnight_hint": "Un fin anterior al inicio pasa de medianoche al día siguiente. De 00:00 a 00:00 es el día completo.",
 	"oncall_window_remove": "Quitar",
 	"oncall_window_to": "Hasta",
-	"overview_brief_a_rule": "Una regla",
-	"overview_brief_also": "También hubo alertas que fueron y vinieron en {names}.",
-	"overview_brief_also_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "También hubo alertas que fueron y vinieron en {names} y {count} más.",
-				"countPlural=other": "También hubo alertas que fueron y vinieron en {names} y {count} más."
-			}
-		}
-	],
-	"overview_brief_device_n": "Monitor {id}",
-	"overview_brief_dissolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alerta se formó y se disipó antes de activarse.",
-				"countPlural=other": "{count} alertas se formaron y se disiparon antes de activarse."
-			}
-		}
-	],
-	"overview_brief_dissolved_mostly": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alerta se formó y se disipó antes de activarse (sobre todo {rule} en {device}).",
-				"countPlural=other": "{count} alertas se formaron y se disiparon antes de activarse (sobre todo {rule} en {device})."
-			}
-		}
-	],
-	"overview_brief_dropped": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} se cayó y volvió.",
-				"countPlural=other": "{name} se cayó {count} veces y volvió."
-			}
-		}
-	],
-	"overview_brief_dropped_many": "{names} se cayeron y volvieron.",
-	"overview_brief_head_first": "En las últimas 24 h",
-	"overview_brief_head_since": "Desde {when}",
-	"overview_brief_kept_reporting": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} monitor siguió reportando.",
-				"countPlural=other": "{count} monitores siguieron reportando."
-			}
-		}
-	],
-	"overview_brief_lead": "{head} — {parts}.",
-	"overview_brief_learning_many": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} aún están aprendiendo la línea base: se habrían activado una vez.",
-				"countPlural=other": "{names} aún están aprendiendo la línea base: se habrían activado {count} veces."
-			}
-		}
-	],
-	"overview_brief_learning_one": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{names} aún está aprendiendo la línea base: se habría activado una vez.",
-				"countPlural=other": "{names} aún está aprendiendo la línea base: se habría activado {count} veces."
-			}
-		}
-	],
-	"overview_brief_n_alerts_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alerta se resolvió sola",
-				"countPlural=other": "{count} alertas se resolvieron solas"
-			}
-		}
-	],
-	"overview_brief_n_fired": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} alerta se activó",
-				"countPlural=other": "{count} alertas se activaron"
-			}
-		}
-	],
-	"overview_brief_n_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} se resolvió sola",
-				"countPlural=other": "{count} se resolvieron solas"
-			}
-		}
-	],
-	"overview_brief_n_still": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} sigue activa",
-				"countPlural=other": "{count} siguen activas"
-			}
-		}
-	],
-	"overview_brief_n_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} monitor inalcanzable",
-				"countPlural=other": "{count} monitores inalcanzables"
-			}
-		}
-	],
-	"overview_brief_nothing_no_channel": "No se envió nada: aún no hay ningún canal de notificación configurado.",
-	"overview_brief_nothing_sent": "No se envió nada.",
-	"overview_brief_nothing_to_channel": "No se envió nada a {channel}.",
-	"overview_brief_nothing_to_channels": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "No se envió nada a tu canal.",
-				"countPlural=other": "No se envió nada a tus {count} canales."
-			}
-		}
-	],
-	"overview_brief_notified": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Se envió {count} notificación.",
-				"countPlural=other": "Se enviaron {count} notificaciones."
-			}
-		}
-	],
-	"overview_brief_notified_to": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "Se envió {count} notificación a {channel}.",
-				"countPlural=other": "Se enviaron {count} notificaciones a {channel}."
-			}
-		}
-	],
-	"overview_brief_on_device": "En {device}: {phrases}.",
-	"overview_brief_phrase_fired_resolved": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} se activó y se resolvió sola",
-				"countPlural=other": "{name} se activó {count} veces y se resolvió sola"
-			}
-		}
-	],
-	"overview_brief_phrase_resolved": "{name} se resolvió sola",
-	"overview_brief_quiet_away": "No ha pasado nada mientras estabas fuera.",
-	"overview_brief_quiet_first": "No ha pasado nada en las últimas 24 h.",
-	"overview_brief_the_server": "el servidor",
 	"overview_first_all_done": "Los tres hechos. Esta guía no volverá.",
 	"overview_first_channel_action": "Añadir un canal",
 	"overview_first_channel_text": "Correo, ntfy, Discord, Telegram, PagerDuty — lo que ya lees. No se envía nada hasta que algo falle.",
@@ -5388,39 +5121,15 @@
 	"overview_first_test_text": "Envía una prueba desde el canal. Este paso se pone en verde cuando sale un mensaje de verdad.",
 	"overview_first_test_title": "Comprueba que llega un mensaje",
 	"overview_first_title": "Tus primeros cinco minutos",
-	"overview_needs_more": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "+{count} más",
-				"countPlural=other": "+{count} más"
-			}
-		}
-	],
-	"overview_page_checked": "Comprobado {when}",
 	"overview_page_empty_text": "Añade un switch, un NAS, un hipervisor o un sitio web y empezará a reportar en un minuto.",
 	"overview_page_empty_title": "Aún no hay monitores",
 	"overview_page_error_load": "No se pudo cargar el resumen",
 	"overview_page_error_refresh": "No se pudieron actualizar las alertas.",
 	"overview_page_history_note": "Leído del historial de alertas de la última semana.",
-	"overview_page_last_days": "Últimos {days} días",
-	"overview_page_mark_read": "Marcar como leído",
-	"overview_page_needs_you": "Requiere tu atención",
 	"overview_page_or": "O {agent}, o {relay} a través de uno.",
 	"overview_page_or_agent": "instalar el agente en una máquina",
 	"overview_page_or_relay": "vigilar un sitio remoto",
-	"overview_page_since": "Desde la última vez que miraste",
 	"overview_page_title": "Resumen",
-	"overview_scene_asleep": "{label}, la paloma duerme",
-	"overview_scene_cloudy": "Algunas nubes",
-	"overview_scene_overcast": "Nublado",
-	"overview_scene_storm": "Tormenta",
 	"overview_sky_clear": "Cielo despejado",
 	"overview_sky_n_acked": [
 		{
@@ -5598,101 +5307,11 @@
 	"overview_sky_plate_unreachable": "Inaccesible",
 	"overview_sky_sentence": "{parts}.",
 	"overview_sky_waiting": "Esperando los primeros informes",
-	"overview_streaks_d_h": "{days} d {hours} h",
-	"overview_streaks_fewest": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "menos alertas: {count} evento de alerta en {days} días",
-				"countPlural=other": "menos alertas: {count} eventos de alerta en {days} días"
-			}
-		}
-	],
-	"overview_streaks_h_min": "{hours} h {minutes} min",
-	"overview_streaks_many_unreachable": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{name} y {count} más están inalcanzables",
-				"countPlural=other": "{name} y {count} más están inalcanzables"
-			}
-		}
-	],
-	"overview_streaks_most": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} evento de alerta (iniciado, activado o resuelto) en {days} días",
-				"countPlural=other": "{count} eventos de alerta (iniciados, activados o resueltos) en {days} días"
-			}
-		}
-	],
-	"overview_streaks_no_alert": "ninguna alerta en {days} días",
-	"overview_streaks_no_alert_like": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "ninguna alerta en {days} días, como {count} más",
-				"countPlural=other": "ninguna alerta en {days} días, como {count} más"
-			}
-		}
-	],
-	"overview_streaks_noisiest": "Más alertas",
-	"overview_streaks_none_down": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "ningún monitor estuvo inalcanzable en {count} día",
-				"countPlural=other": "ningún monitor estuvo inalcanzable en {count} días"
-			}
-		}
-	],
-	"overview_streaks_not_now": "Incompleto",
-	"overview_streaks_one_unreachable": "{name} está inalcanzable",
-	"overview_streaks_over": "más de {days} d",
-	"overview_streaks_quietest": "Monitor más tranquilo",
-	"overview_streaks_reporting": "Todo informando",
-	"overview_streaks_reporting_for": "Todo informando desde hace",
-	"overview_streaks_since_outage": "ningún monitor inalcanzable desde la última caída",
-	"overview_streaks_under_minute": "menos de un minuto",
 	"overview_tips_another": "Otro consejo",
 	"overview_tips_hide": "Ocultar estos consejos",
 	"overview_tips_hide_title": "Ocultar estos consejos (en este navegador)",
 	"overview_tips_label": "¿Sabías que…?",
 	"overview_tips_prefix": "¿Sabías que…? {title}",
-	"overview_week_days_short": "{days} d",
-	"overview_when_dated": "{date} {time}",
-	"overview_when_yesterday": "ayer {time}",
 	"push_runs_description": "Cada inicio, éxito y fallo que informó el trabajo, de más reciente a más antiguo.",
 	"push_runs_duration": "duró {duration}",
 	"push_runs_duration_unknown": "duración desconocida",
@@ -6356,13 +5975,6 @@
 	"settings_agentupdates_window_any": "En cualquier momento",
 	"settings_agentupdates_window_maintenance": "Solo durante una ventana de mantenimiento (un silencio en el dispositivo)",
 	"settings_agentupdates_window_manual": "Solo manualmente",
-	"settings_appearance_day": "Día",
-	"settings_appearance_day_hint": "Papel de gráfico, tinta azul marino.",
-	"settings_appearance_night": "Noche",
-	"settings_appearance_night_hint": "Imagen de radar, señal cian.",
-	"settings_appearance_system": "Sistema",
-	"settings_appearance_system_hint": "Sigue tu dispositivo.",
-	"settings_appearance_theme": "Tema",
 	"settings_appearance_wall_description": "Solo el boletín, a pantalla completa, para un monitor en la sala. Esc para salir; ⌘K / Ctrl K lo abre desde cualquier sitio.",
 	"settings_appearance_wall_open": "Abrir modo pared",
 	"settings_appearance_wall_title": "Modo pared",
@@ -6590,7 +6202,6 @@
 	"settings_config_yaml_label": "o pegue el YAML",
 	"settings_language_auto": "Automático (idioma del navegador)",
 	"settings_language_theme_description": "Se guardan en este navegador.",
-	"settings_language_theme_title": "Idioma y tema",
 	"settings_ldap_access_denied": "Rechazado: en ningún grupo listado",
 	"settings_ldap_admin_groups": "Grupos de administradores",
 	"settings_ldap_base_dn": "DN base",
@@ -8670,115 +8281,18 @@
 	"ui_error_notice_help_network": "Comprueba que el servidor está en marcha y que la red funciona.",
 	"ui_error_notice_help_server": "Revisa los registros del servidor y vuelve a intentarlo.",
 	"ui_error_notice_signin": "Iniciar sesión de nuevo",
-	"wall_back": "Volver al resumen",
-	"wall_city_newyork": "Nueva York",
-	"wall_city_paris": "París",
-	"wall_city_title": "Ciudad",
-	"wall_city_tokyo": "Tokio",
-	"wall_city_zermatt": "Zermatt",
-	"wall_devices_aria": "Monitores",
-	"wall_devices_more": "{count} monitores más, todos informando",
-	"wall_devices_more_trouble": "{count} monitores más (a revisar: {trouble})",
-	"wall_devices_reporting": "Informando",
-	"wall_dock_enable": "Toca para activar el sonido",
-	"wall_dock_enable_hint": "Luego elige «{name}» en Dispositivos de Spotify",
-	"wall_dock_hide": "Ocultar",
-	"wall_dock_retrying": "Reintentando automáticamente…",
-	"wall_dock_trouble_pill": "Aquí no es un altavoz",
-	"wall_dock_trouble_title": "Spotify no puede reproducir en esta pantalla",
-	"wall_dock_why": "Por qué",
 	"wall_ent_oncall_none": "Nadie de guardia. Configura una guardia en Alertas.",
 	"wall_exit": "Salir",
 	"wall_exit_aria": "Salir del modo pared",
-	"wall_load_error": "No se pudo cargar la pared",
-	"wall_market_vs": "vs {base}",
-	"wall_music_admin_only": "Solo un administrador puede cambiarlo.",
-	"wall_music_button": "Música",
-	"wall_music_cancel": "Cancelar",
-	"wall_music_dialog": "Música en las paredes",
-	"wall_music_link_help": "Un enlace de Spotify, Deezer o YouTube (Music) a una canción, álbum, lista o vídeo. Cada pared lo reproduce en el reproductor del servicio. Deezer y YouTube no tienen mando como Spotify Connect: el enlace es el camino.",
-	"wall_music_link_label": "Reproducir un enlace en las paredes",
-	"wall_music_play_error": "Spotify no empezó a reproducir aquí.",
-	"wall_music_play_here": "Reproducir aquí",
-	"wall_music_play_wall": "Reproducir en la pared",
-	"wall_music_retry": "Reintentar",
-	"wall_music_send_error": "No se pudo enviar el enlace.",
-	"wall_music_settings": "Ajustes → Música de la pared",
-	"wall_music_speaker": "Altavoz de Spotify",
-	"wall_music_speaker_label": "Usar esta pantalla como altavoz de Spotify",
-	"wall_music_state_disabled": "Desactivado en esta pantalla",
-	"wall_music_state_disabled_detail": "Lo que suena ahora se sigue mostrando.",
-	"wall_music_state_error": "Detenido",
-	"wall_music_state_expired": "Hay que reconectar",
-	"wall_music_state_locked": "Sonido bloqueado",
-	"wall_music_state_locked_detail": "Toca una vez en cualquier parte de la pared y elígela en Spotify.",
-	"wall_music_state_off": "No conectado",
-	"wall_music_state_off_admin": "Conecta una cuenta de Spotify en Ajustes → Música de la pared para reproducir desde tu teléfono.",
-	"wall_music_state_off_user": "Un administrador puede conectar una cuenta de Spotify en Ajustes → Música de la pared.",
-	"wall_music_state_ready": "Listo",
-	"wall_music_state_ready_detail": "En Spotify, en un teléfono con la misma cuenta: Dispositivos → {name}. O reproduce aquí desde este panel.",
-	"wall_music_state_starting": "Iniciando…",
-	"wall_music_state_unlisted": "Aún no aparece",
-	"wall_music_state_unlisted_detail": "Spotify aún no muestra esta pantalla; se reconecta sola en uno o dos minutos.",
-	"wall_music_state_unsupported": "No disponible aquí",
-	"wall_music_stop": "Detener",
-	"wall_music_stop_error": "No se pudo detener la música.",
-	"wall_now_aria": "Reproduciendo ahora",
-	"wall_now_cover": "Portada de {name}",
-	"wall_now_fold": "Plegar la tarjeta de música",
-	"wall_now_on": "{verb} en {where}",
-	"wall_now_paused": "En pausa",
-	"wall_now_pill_aria": "{verb}: {track}. Mostrar la tarjeta de música",
-	"wall_now_playing": "Reproduciendo",
-	"wall_now_progress": "Progreso de la pista",
-	"wall_now_progress_text": "{position} de {total}",
 	"wall_page_title": "Pared · DumbMonit",
-	"wall_player_fold": "Plegar",
-	"wall_player_fold_aria": "Plegar el reproductor",
-	"wall_player_show": "Mostrar",
-	"wall_player_stop_aria": "Detener la música en todas las paredes",
-	"wall_player_title": "Reproductor de {label}",
-	"wall_problems_agent_silent": "Agente en silencio desde hace {duration}",
-	"wall_problems_aria": "Problemas",
-	"wall_problems_more": "{count} problemas más: ver Alertas",
-	"wall_problems_no_data": "Sin datos desde hace {duration}",
-	"wall_problems_parent_down": "{rule} · {parent} está caído",
-	"wall_problems_times": "×{count}",
-	"wall_refresh_failed": "Falló la última actualización; se muestra el estado anterior.",
-	"wall_scene_sign_problems": [
-		{
-			"declarations": [
-				"input count",
-				"local countPlural = count: plural"
-			],
-			"selectors": [
-				"countPlural"
-			],
-			"match": {
-				"countPlural=one": "{count} PROBLEMA",
-				"countPlural=other": "{count} PROBLEMAS"
-			}
-		}
-	],
 	"wall_status_empty": "Aún no hay nada que vigilar",
 	"wall_status_ok": "Todo bien",
 	"wall_status_problem_one": "1 problema",
 	"wall_status_problems": "{count} problemas",
 	"wall_status_waiting": "Esperando informes",
-	"wall_theme_auto": "Auto",
-	"wall_theme_auto_hint": "Sigue al resto de DumbMonit.",
-	"wall_theme_button": "Tema",
-	"wall_theme_day": "Día",
-	"wall_theme_day_hint": "Papel de carta, tinta azul marino.",
-	"wall_theme_dialog": "Tema de esta pared",
-	"wall_theme_forced": "Un enlace fijó este por ahora; no se guarda aquí.",
-	"wall_theme_night": "Noche",
-	"wall_theme_night_hint": "Compuesto de radar, señal cian.",
-	"wall_theme_title": "Tema en esta pantalla",
 	"wall_updated_relative": "Actualizado {when}",
 	"wall_updated_seconds": "Actualizado hace {seconds} s",
 	"wall_updated_waiting": "Esperando la primera comprobación…",
-	"wall_weather_now": "{place}: {sky}, {temperature}",
 	"wall_widgets_ai_cost": "Coste",
 	"wall_widgets_ai_month": "Este mes",
 	"wall_widgets_ai_needs_key": "Necesita una clave de API de administrador (Ajustes → Modo pared).",
@@ -8786,40 +8300,19 @@
 	"wall_widgets_ai_people": "Más tokens",
 	"wall_widgets_ai_people_note": "Solo tokens: los costes no se desglosan por persona.",
 	"wall_widgets_ai_today": "Hoy",
-	"wall_widgets_ai_tokens": "{count} tokens",
-	"wall_widgets_ai_unattributed": "Sin atribuir",
 	"wall_widgets_ai_week": "Últimos 7 días",
-	"wall_widgets_aria": "Widgets",
 	"wall_widgets_claude": "Claude",
 	"wall_widgets_crypto": "Cripto",
 	"wall_widgets_crypto_note": "Variación en 24 horas",
 	"wall_widgets_cve": "Vulnerabilidades críticas",
-	"wall_widgets_cve_exploited": "Explotada",
-	"wall_widgets_cve_none": "Ninguna vulnerabilidad crítica esta semana.",
-	"wall_widgets_cve_ransomware": "Ransomware",
-	"wall_widgets_cve_unscored": "s/p",
 	"wall_widgets_fx": "Tipos de cambio",
 	"wall_widgets_fx_note": "En {base}, tipos del {date}; variación desde el día anterior",
-	"wall_widgets_more": "+{count}",
 	"wall_widgets_needs_key": "Requiere una clave de API gratuita (Ajustes → Pantalla de pared).",
 	"wall_widgets_news": "Titulares",
 	"wall_widgets_openai": "OpenAI",
-	"wall_widgets_sky_clear": "Despejado",
-	"wall_widgets_sky_cloudy": "Nublado",
-	"wall_widgets_sky_drizzle": "Llovizna",
-	"wall_widgets_sky_fog": "Niebla",
-	"wall_widgets_sky_partly": "Parcialmente nublado",
-	"wall_widgets_sky_rain": "Lluvia",
-	"wall_widgets_sky_snow": "Nieve",
-	"wall_widgets_sky_storm": "Tormenta",
-	"wall_widgets_source": "Fuente: {source}",
-	"wall_widgets_stale": "Desactualizado: leído {when}",
 	"wall_widgets_stocks": "Acciones",
 	"wall_widgets_stocks_unknown": "Símbolos desconocidos: {symbols}",
 	"wall_widgets_text": "Mensaje",
-	"wall_widgets_trend_down": "baja {change}",
-	"wall_widgets_trend_flat": "sin cambios",
-	"wall_widgets_trend_up": "sube {change}",
 	"wall_widgets_unavailable": "No disponible por ahora.",
 	"wall_widgets_weather": "Tiempo",
 	"website_after": "Después:",
@@ -9041,34 +8534,14 @@
 	"console_table_hint": "Los peores primero. Selecciona una fila para inspeccionarla.",
 	"console_table_keys": "j / k para moverse, Intro para inspeccionar, o para abrir",
 	"console_table_title": "Monitores",
-	"mode_enterprise_point_nav": "Barra de iconos, panel de contexto y paleta de comandos en todas partes",
-	"mode_enterprise_point_table": "Tablas densas con columnas, filtros y atajos de teclado adicionales",
-	"mode_enterprise_point_team": "Equipos, inicio de sesión único, guardias y registros a la vista",
-	"mode_enterprise_text": "Una consola densa y muy oscura para equipos, con todas las opciones a la vista.",
-	"mode_enterprise_title": "Empresa",
-	"mode_homelab_point_forms": "Formularios cortos con valores por defecto sensatos, ajustes avanzados plegados",
-	"mode_homelab_point_nav": "Cuatro destinos a la vista, todo lo demás en Más",
-	"mode_homelab_point_theme": "El boletín meteorológico y el rack, en claro u oscuro",
-	"mode_homelab_text": "Una interfaz tranquila con lo esencial a la vista. Cada función queda a un clic.",
-	"mode_homelab_title": "Homelab",
-	"mode_picker_label": "Modo de producto",
-	"mode_picker_selected": "Elegido",
-	"mode_switch_keeps": "Cambiar solo cambia la interfaz. No se borra nada.",
-	"settings_advanced_summary": "Secciones: {count}",
-	"settings_advanced_title": "Avanzado",
-	"settings_appearance_enterprise_dark": "El modo Empresa usa siempre su consola oscura. Cambia a Homelab en Ajustes → General para los temas claro y oscuro.",
 	"settings_general_instance_text": "El nombre aparece en la cabecera. El idioma y la zona horaria son los valores por defecto de nuevos navegadores e informes.",
 	"settings_general_instance_title": "Instancia",
-	"settings_general_mode_saving": "Cambiando…",
-	"settings_general_mode_text": "Homelab lo mantiene sencillo. Empresa muestra todas las opciones en una consola oscura y densa.",
-	"settings_general_mode_title": "Modo de interfaz",
 	"settings_general_readonly": "Solo los administradores pueden cambiar estos ajustes.",
 	"settings_general_save": "Guardar",
 	"settings_general_saved": "Guardado",
 	"settings_general_wizard_run": "Abrir el asistente de configuración",
 	"settings_general_wizard_text": "Vuelve a recorrer los pasos del primer inicio: modo, nombre, notificaciones, monitores, agente.",
 	"settings_general_wizard_title": "Asistente de configuración",
-	"settings_search_kw_general": "modo homelab empresa interfaz nombre idioma zona horaria asistente configuración",
 	"settings_tab_general": "General",
 	"wizard_agent_text": "El agente informa de CPU, memoria, discos, contenedores y servicios de una máquina. Ejecuta el comando en la máquina que quieres vigilar.",
 	"wizard_agent_title": "Instalar un agente",
@@ -9090,8 +8563,6 @@
 	"wizard_instance_timezone": "Zona horaria",
 	"wizard_instance_title": "Nombra esta instancia",
 	"wizard_intro": "Cada paso se puede omitir y cambiar más tarde en Ajustes.",
-	"wizard_mode_text": "Elige la interfaz que encaja con quienes la usan. Puedes cambiar cuando quieras en Ajustes → General.",
-	"wizard_mode_title": "Elige el aspecto de DumbMonit",
 	"wizard_monitors_count": "Monitores hasta ahora: {count}",
 	"wizard_monitors_import": "Importar",
 	"wizard_monitors_import_text": "Desde Uptime Kuma, UptimeRobot, Gatus, Healthchecks o una lista de sitios.",
@@ -9392,5 +8863,136 @@
 	"deviceform_site_more": "Mostrar {count} más",
 	"deviceform_site_added": "{name} añadido.",
 	"deviceform_site_open": "Abrir",
-	"deviceform_site_kinds": "Habituales aquí"
+	"deviceform_site_kinds": "Habituales aquí",
+	"console_banner_label": "Estado",
+	"console_banner_poke": "Tocar a la paloma",
+	"console_banner_egg": "La paloma dio una voltereta. El uptime sigue intacto.",
+	"console_banner_empty": "Todavía no hay nada que vigilar.",
+	"console_banner_down_one": "{name} está caído.",
+	"console_banner_down_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} monitor está caído.",
+				"countPlural=other": "{count} monitores están caídos."
+			}
+		}
+	],
+	"console_banner_held": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} invitado en espera.",
+				"countPlural=other": "{count} invitados en espera."
+			}
+		}
+	],
+	"console_banner_held_sent": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} invitado en espera, alerta enviada.",
+				"countPlural=other": "{count} invitados en espera, alerta enviada."
+			}
+		}
+	],
+	"console_banner_sent": "Alerta enviada.",
+	"console_banner_attention_one": "{name} necesita una revisión.",
+	"console_banner_attention_many": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} monitor necesita una revisión.",
+				"countPlural=other": "{count} monitores necesitan una revisión."
+			}
+		}
+	],
+	"console_banner_alerts": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} alerta abierta.",
+				"countPlural=other": "{count} alertas abiertas."
+			}
+		}
+	],
+	"console_banner_up_of": "{up} de {total} monitores activos.",
+	"console_banner_waiting": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} espera un primer informe.",
+				"countPlural=other": "{count} esperan un primer informe."
+			}
+		}
+	],
+	"console_banner_all_up": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "El único monitor está activo.",
+				"countPlural=other": "Los {count} monitores están activos."
+			}
+		}
+	],
+	"console_banner_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en pausa.",
+				"countPlural=other": "{count} en pausa."
+			}
+		}
+	],
+	"console_banner_all_paused": "Todos los monitores están en pausa.",
+	"settings_appearance_language_title": "Idioma",
+	"settings_search_kw_instance": "instancia nombre idioma zona horaria asistente configuración"
 }
