@@ -1,0 +1,35 @@
+# Mesures et vues du type « prowlarr » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [prowlarr_]
+metrics:
+  - { name: prowlarr_queue_total, label: "Queue" }
+  - { name: prowlarr_queue_has_errors, label: "Queue has errors", better: "lower" }
+  - { name: prowlarr_queue_has_warnings, label: "Queue has warnings" }
+  - { name: prowlarr_queue_unknown, label: "Queue unknown" }
+  - { name: prowlarr_health_errors, label: "Health errors", better: "lower" }
+  - { name: prowlarr_health_warnings, label: "Health warnings" }
+  - { name: prowlarr_health_issue, label: "Health issue" }
+  - { name: prowlarr_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: prowlarr_disk_free_bytes, label: "Disk free", unit: "B", better: "higher" }
+  - { name: prowlarr_indexers_disabled, label: "Indexers disabled" }
+  - { name: prowlarr_update_available, label: "Update available", unit: "bool", better: "higher" }
+  - { name: prowlarr_version_info, label: "Version", kind: info }
+  - { name: prowlarr_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - prowlarr_queue_has_errors
+      - prowlarr_queue_has_warnings
+      - prowlarr_queue_unknown
+      - prowlarr_health_errors
+      - prowlarr_health_warnings
+      - prowlarr_health_issue
+      - prowlarr_disk_used_percent
+      - prowlarr_disk_free_bytes
+      - prowlarr_indexers_disabled
+      - prowlarr_update_available
+      - prowlarr_version_info
+  - view: timeseries
+    title: "Queue"
+    metrics: [prowlarr_queue_total]

@@ -1,0 +1,45 @@
+# Mesures et vues du type « ip_blacklist » (format : crates/collectors/src/catalog.rs).
+source: blacklist
+prefixes: [blacklist_]
+metrics:
+  - { name: blacklist_addresses_listed, label: "Addresses listed" }
+  - { name: blacklist_domain_listed, label: "Domain listed" }
+  - { name: blacklist_listed_lists, label: "Listed lists" }
+  - { name: blacklist_listed_major_lists, label: "Listed major lists" }
+  - { name: blacklist_list_listed, label: "List listed" }
+  - { name: blacklist_addresses_checked, label: "Addresses checked" }
+  - { name: blacklist_address_info, label: "Address", kind: info }
+  - { name: blacklist_check, label: "Check" }
+  - { name: blacklist_dmarc_policy_info, label: "DMARC policy", kind: info }
+  - { name: blacklist_dmarc_records, label: "DMARC records" }
+  - { name: blacklist_list_checked, label: "List checked" }
+  - { name: blacklist_list_unknown, label: "List unknown" }
+  - { name: blacklist_list_info, label: "List", kind: info }
+  - { name: blacklist_mail_auth_missing, label: "Mail auth missing" }
+  - { name: blacklist_mx_hosts, label: "MX hosts" }
+  - { name: blacklist_ptr_ok, label: "PTR ok", unit: "bool" }
+  - { name: blacklist_scan_age_seconds, label: "Scan age", unit: "s" }
+  - { name: blacklist_scan_duration_seconds, label: "Scan duration", unit: "s", better: "lower" }
+  - { name: blacklist_scan_running, label: "Scan running", unit: "bool" }
+  - { name: blacklist_spf_records, label: "SPF records" }
+  - { name: blacklist_unknown_checks, label: "Unknown checks" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - blacklist_addresses_checked
+      - blacklist_unknown_checks
+      - blacklist_address_info
+      - blacklist_check
+      - blacklist_dmarc_policy_info
+      - blacklist_dmarc_records
+      - blacklist_list_checked
+      - blacklist_list_unknown
+      - blacklist_mail_auth_missing
+      - blacklist_mx_hosts
+      - blacklist_ptr_ok
+      - blacklist_scan_duration_seconds
+      - blacklist_spf_records
+  - view: timeseries
+    title: "Listings"
+    metrics: [blacklist_addresses_listed, blacklist_domain_listed, blacklist_listed_lists, blacklist_listed_major_lists, blacklist_list_listed]

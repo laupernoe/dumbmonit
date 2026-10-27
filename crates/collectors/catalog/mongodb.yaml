@@ -1,0 +1,55 @@
+# Mesures et vues du type « mongodb » (format : crates/collectors/src/catalog.rs).
+source: mongodb
+prefixes: [mongodb_]
+metrics:
+  - { name: mongodb_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: mongodb_queued_operations, label: "Queued operations" }
+  - { name: mongodb_network_bytes_out_total, label: "Network bytes out", unit: "B", kind: counter }
+  - { name: mongodb_network_bytes_in_total, label: "Network bytes in", unit: "B", kind: counter }
+  - { name: mongodb_documents_deleted_total, label: "Documents deleted", kind: counter }
+  - { name: mongodb_cursors_timed_out_total, label: "Cursors timed out", kind: counter }
+  - { name: mongodb_cursors_open, label: "Cursors open" }
+  - { name: mongodb_connections_rejected_total, label: "Connections rejected", kind: counter, better: "lower" }
+  - { name: mongodb_connections_current, label: "Connections current" }
+  - { name: mongodb_connections_available, label: "Connections available", better: "higher" }
+  - { name: mongodb_connections_active, label: "Connections active" }
+  - { name: mongodb_connections_created_total, label: "Connections created", kind: counter }
+  - { name: mongodb_active_clients, label: "Active clients" }
+  - { name: mongodb_wiredtiger_cache_used_percent, label: "WiredTiger cache used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: mongodb_wiredtiger_cache_used_bytes, label: "WiredTiger cache used", unit: "B" }
+  - { name: mongodb_wiredtiger_cache_max_bytes, label: "WiredTiger cache max", unit: "B" }
+  - { name: mongodb_wiredtiger_cache_dirty_percent, label: "WiredTiger cache dirty", unit: "%", min: 0, max: 100 }
+  - { name: mongodb_wiredtiger_cache_dirty_bytes, label: "WiredTiger cache dirty", unit: "B" }
+  - { name: mongodb_wiredtiger_cache_read_bytes_total, label: "WiredTiger cache read bytes", unit: "B", kind: counter }
+  - { name: mongodb_memory_resident_bytes, label: "Memory resident", unit: "B" }
+  - { name: mongodb_version_info, label: "Version", kind: info }
+  - { name: mongodb_role_info, label: "Role", kind: info }
+  - { name: mongodb_replset_member_state, label: "Replset member state" }
+  - { name: mongodb_replset_member_lag_seconds, label: "Replset member lag", unit: "s", better: "lower" }
+  - { name: mongodb_replset_member_health, label: "Replset member health" }
+  - { name: mongodb_replset_info, label: "Replset", kind: info }
+  - { name: mongodb_operations_total, label: "Operations", kind: counter }
+  - { name: mongodb_asserts_total, label: "Asserts", kind: counter }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - mongodb_replset_member_state
+      - mongodb_queued_operations
+      - mongodb_connections_rejected_total
+      - mongodb_uptime_seconds
+      - mongodb_cursors_open
+      - mongodb_memory_resident_bytes
+      - mongodb_asserts_total
+  - view: timeseries
+    title: "Connections"
+    metrics: [mongodb_connections_current, mongodb_connections_available, mongodb_connections_active]
+  - view: timeseries
+    title: "WiredTiger cache"
+    metrics: [mongodb_wiredtiger_cache_used_percent, mongodb_wiredtiger_cache_dirty_percent]
+  - view: timeseries
+    title: "Replication lag"
+    metrics: [mongodb_replset_member_lag_seconds]
+  - view: timeseries
+    title: "Operations"
+    metrics: [mongodb_operations_total]

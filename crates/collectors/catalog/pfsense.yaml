@@ -1,0 +1,64 @@
+# Mesures et vues du type « pfsense » (format : crates/collectors/src/catalog.rs).
+source: pfsense
+prefixes: [pfsense_]
+metrics:
+  - { name: pfsense_version_info, label: "Version", kind: info }
+  - { name: pfsense_restapi_version_info, label: "Restapi version", kind: info }
+  - { name: pfsense_restapi_update_available, label: "Restapi update available", unit: "bool", better: "higher" }
+  - { name: pfsense_cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pfsense_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pfsense_load_average, label: "Load average" }
+  - { name: pfsense_swap_used_percent, label: "Swap used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pfsense_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pfsense_mbuf_used_percent, label: "Mbuf used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: pfsense_temperature_celsius, label: "Temperature", unit: "°C" }
+  - { name: pfsense_cpu_count, label: "CPU count" }
+  - { name: pfsense_gateway_up, label: "Gateway up", unit: "bool" }
+  - { name: pfsense_gateway_status_info, label: "Gateway status", kind: info }
+  - { name: pfsense_gateway_loss_percent, label: "Gateway loss", unit: "%", min: 0, max: 100 }
+  - { name: pfsense_gateway_delay_milliseconds, label: "Gateway delay milliseconds", unit: "ms", better: "lower" }
+  - { name: pfsense_gateway_stddev_milliseconds, label: "Gateway stddev milliseconds", unit: "ms" }
+  - { name: pfsense_gateways, label: "Gateways" }
+  - { name: pfsense_gateways_down, label: "Gateways down", better: "lower" }
+  - { name: pfsense_interface_enabled, label: "Interface enabled", unit: "bool" }
+  - { name: pfsense_interface_up, label: "Interface up", unit: "bool" }
+  - { name: pfsense_interface_down, label: "Interface down", better: "lower" }
+  - { name: pfsense_interface_errors_in_total, label: "Interface errors in", kind: counter }
+  - { name: pfsense_interface_errors_out_total, label: "Interface errors out", kind: counter }
+  - { name: pfsense_interface_bytes_in_total, label: "Interface bytes in", unit: "B", kind: counter }
+  - { name: pfsense_interface_bytes_out_total, label: "Interface bytes out", unit: "B", kind: counter }
+  - { name: pfsense_interface_address_info, label: "Interface address", kind: info }
+  - { name: pfsense_interfaces_down, label: "Interfaces down", better: "lower" }
+  - { name: pfsense_service_running, label: "Service running", unit: "bool" }
+  - { name: pfsense_service_enabled, label: "Service enabled", unit: "bool" }
+  - { name: pfsense_service_stopped, label: "Service stopped" }
+  - { name: pfsense_services_stopped, label: "Services stopped" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - pfsense_gateways_down
+      - pfsense_gateway_loss_percent
+      - pfsense_interfaces_down
+      - pfsense_services_stopped
+      - pfsense_load_average
+      - pfsense_restapi_update_available
+      - pfsense_swap_used_percent
+      - pfsense_disk_used_percent
+      - pfsense_mbuf_used_percent
+      - pfsense_temperature_celsius
+      - pfsense_gateway_up
+      - pfsense_gateways
+      - pfsense_interface_up
+      - pfsense_interface_errors_in_total
+      - pfsense_interface_errors_out_total
+      - pfsense_service_running
+  - view: timeseries
+    title: "CPU and memory"
+    metrics: [pfsense_cpu_usage_percent, pfsense_memory_used_percent]
+  - view: timeseries
+    title: "Gateway latency"
+    metrics: [pfsense_gateway_delay_milliseconds, pfsense_gateway_stddev_milliseconds]
+  - view: timeseries
+    title: "Interface throughput"
+    metrics: [pfsense_interface_bytes_in_total, pfsense_interface_bytes_out_total]

@@ -1,0 +1,45 @@
+# Mesures et vues du type « elasticsearch » (format : crates/collectors/src/catalog.rs).
+source: elasticsearch
+prefixes: [elasticsearch_]
+metrics:
+  - { name: elasticsearch_node_cpu_percent, label: "Node CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: elasticsearch_node_heap_used_percent, label: "Node heap used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: elasticsearch_node_disk_used_percent, label: "Node disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: elasticsearch_pending_tasks, label: "Pending tasks" }
+  - { name: elasticsearch_node_disk_free_bytes, label: "Node disk free", unit: "B", better: "higher" }
+  - { name: elasticsearch_node_disk_total_bytes, label: "Node disk total", unit: "B" }
+  - { name: elasticsearch_cluster_status, label: "Cluster status" }
+  - { name: elasticsearch_nodes, label: "Nodes" }
+  - { name: elasticsearch_data_nodes, label: "Data nodes" }
+  - { name: elasticsearch_active_primary_shards, label: "Active primary shards" }
+  - { name: elasticsearch_active_shards, label: "Active shards" }
+  - { name: elasticsearch_active_shards_percent, label: "Active shards", unit: "%", min: 0, max: 100 }
+  - { name: elasticsearch_relocating_shards, label: "Relocating shards" }
+  - { name: elasticsearch_initializing_shards, label: "Initializing shards" }
+  - { name: elasticsearch_unassigned_shards, label: "Unassigned shards" }
+  - { name: elasticsearch_delayed_unassigned_shards, label: "Delayed unassigned shards" }
+  - { name: elasticsearch_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - elasticsearch_cluster_status
+      - elasticsearch_unassigned_shards
+      - elasticsearch_nodes
+      - elasticsearch_data_nodes
+      - elasticsearch_active_primary_shards
+      - elasticsearch_active_shards
+      - elasticsearch_active_shards_percent
+      - elasticsearch_relocating_shards
+      - elasticsearch_initializing_shards
+      - elasticsearch_delayed_unassigned_shards
+      - elasticsearch_version_info
+  - view: timeseries
+    title: "Node CPU and heap"
+    metrics: [elasticsearch_node_cpu_percent, elasticsearch_node_heap_used_percent]
+  - view: timeseries
+    title: "Node disk used"
+    metrics: [elasticsearch_node_disk_used_percent]
+  - view: timeseries
+    title: "Pending tasks"
+    metrics: [elasticsearch_pending_tasks]

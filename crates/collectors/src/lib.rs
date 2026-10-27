@@ -16,6 +16,7 @@ pub mod aws;
 pub mod azure;
 pub mod blacklist;
 pub mod caddy;
+pub mod catalog;
 pub mod ceph;
 pub mod client_devices;
 pub mod cloud;
@@ -91,7 +92,7 @@ use std::collections::{BTreeMap, HashMap};
 use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, apply_identity};
+use dumbmonit_proto::{Collector, Measures, MetricKind, ProbeError, Sample, Target, apply_identity};
 
 /// Marge laissée à une sonde pour écrire son verdict après son propre délai.
 const PROBE_TIMEOUT_MARGIN: Duration = Duration::from_secs(2);
@@ -372,6 +373,15 @@ impl Registry {
             Some(collector) => Some(collector.clone()),
             None => self.runtime_read().get(kind).cloned(),
         }
+    }
+
+    /// Familles de mesures et vues du type `kind` : celles que son collecteur
+    /// déclare lui-même (les profils SNMP chargés), sinon celles du catalogue
+    /// embarqué (`catalog/`). `None` : l'interface garde son rendu générique.
+    pub fn measures(&self, kind: &str) -> Option<Measures> {
+        self.get(kind)
+            .and_then(|collector| collector.measures(kind))
+            .or_else(|| catalog::embedded(kind))
     }
 
     pub fn kinds(&self) -> Vec<Arc<str>> {

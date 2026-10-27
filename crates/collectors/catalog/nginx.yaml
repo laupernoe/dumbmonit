@@ -1,0 +1,19 @@
+# Mesures et vues du type « nginx » (format : crates/collectors/src/catalog.rs).
+source: nginx
+prefixes: [nginx_]
+metrics:
+  - { name: nginx_version_info, label: "Version", kind: info }
+  - { name: nginx_connections_active, label: "Connections active" }
+  - { name: nginx_connections_reading, label: "Connections reading" }
+  - { name: nginx_connections_writing, label: "Connections writing" }
+  - { name: nginx_connections_waiting, label: "Connections waiting" }
+  - { name: nginx_requests_total, label: "Requests", kind: counter }
+  - { name: nginx_accepts_total, label: "Accepts", kind: counter }
+  - { name: nginx_handled_total, label: "Handled", kind: counter }
+views:
+  - view: timeseries
+    title: "Connections"
+    metrics: [nginx_connections_active, nginx_connections_reading, nginx_connections_writing, nginx_connections_waiting]
+  - view: timeseries
+    title: "Requests"
+    metrics: [nginx_requests_total, nginx_accepts_total, nginx_handled_total]

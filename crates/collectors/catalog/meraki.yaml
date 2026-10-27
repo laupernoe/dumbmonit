@@ -1,0 +1,36 @@
+# Mesures et vues du type « meraki » (format : crates/collectors/src/catalog.rs).
+source: meraki
+prefixes: [meraki_]
+metrics:
+  - { name: meraki_organization_info, label: "Organization", kind: info }
+  - { name: meraki_license_ok, label: "License ok", unit: "bool" }
+  - { name: meraki_license_status_info, label: "License status", kind: info }
+  - { name: meraki_license_expiry_seconds, label: "License expiry", unit: "s" }
+  - { name: meraki_network_clients, label: "Network clients" }
+  - { name: meraki_clients, label: "Clients" }
+  - { name: meraki_device_online, label: "Device online", unit: "bool" }
+  - { name: meraki_device_offline, label: "Device offline", better: "lower" }
+  - { name: meraki_device_alerting, label: "Device alerting" }
+  - { name: meraki_device_last_report_age_seconds, label: "Device last report age", unit: "s" }
+  - { name: meraki_devices, label: "Devices" }
+  - { name: meraki_uplink_up, label: "Uplink up", unit: "bool" }
+  - { name: meraki_uplink_failed, label: "Uplink failed", better: "lower" }
+  - { name: meraki_uplink_failover, label: "Uplink failover" }
+  - { name: meraki_uplinks_failed, label: "Uplinks failed", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - meraki_device_offline
+      - meraki_uplinks_failed
+      - meraki_license_ok
+      - meraki_devices
+      - meraki_license_expiry_seconds
+      - meraki_device_alerting
+      - meraki_device_last_report_age_seconds
+      - meraki_uplink_up
+      - meraki_uplink_failed
+      - meraki_uplink_failover
+  - view: timeseries
+    title: "Clients"
+    metrics: [meraki_network_clients, meraki_clients]

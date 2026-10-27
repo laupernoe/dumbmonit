@@ -1,0 +1,75 @@
+# Mesures et vues du type « unraid » (format : crates/collectors/src/catalog.rs).
+source: unraid
+prefixes: [unraid_]
+metrics:
+  - { name: unraid_array_used_percent, label: "Array used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: unraid_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: unraid_disk_temperature_celsius, label: "Disk temperature", unit: "°C" }
+  - { name: unraid_array_size_bytes, label: "Array size", unit: "B" }
+  - { name: unraid_array_used_bytes, label: "Array used", unit: "B" }
+  - { name: unraid_array_free_bytes, label: "Array free", unit: "B", better: "higher" }
+  - { name: unraid_array_state_info, label: "Array state", kind: info }
+  - { name: unraid_array_started, label: "Array started", unit: "bool" }
+  - { name: unraid_disk_status_info, label: "Disk status", kind: info }
+  - { name: unraid_disk_errors, label: "Disk errors", kind: counter, better: "lower" }
+  - { name: unraid_disk_size_bytes, label: "Disk size", unit: "B" }
+  - { name: unraid_disk_fs_size_bytes, label: "Disk fs size", unit: "B" }
+  - { name: unraid_disks, label: "Disks" }
+  - { name: unraid_disks_problem, label: "Disks problem" }
+  - { name: unraid_disks_with_errors, label: "Disks with errors", better: "lower" }
+  - { name: unraid_disk_ok, label: "Disk ok", unit: "bool" }
+  - { name: unraid_disk_spinning, label: "Disk spinning", unit: "bool" }
+  - { name: unraid_parity_check_status_info, label: "Parity check status", kind: info }
+  - { name: unraid_parity_check_progress_percent, label: "Parity check progress", unit: "%", min: 0, max: 100 }
+  - { name: unraid_parity_check_errors, label: "Parity check errors", better: "lower" }
+  - { name: unraid_parity_check_age_seconds, label: "Parity check age", unit: "s" }
+  - { name: unraid_parity_check_duration_seconds, label: "Parity check duration", unit: "s", better: "lower" }
+  - { name: unraid_parity_check_ok, label: "Parity check ok", unit: "bool" }
+  - { name: unraid_parity_check_running, label: "Parity check running", unit: "bool" }
+  - { name: unraid_vms, label: "VMs" }
+  - { name: unraid_vms_running, label: "VMs running" }
+  - { name: unraid_vm_state_info, label: "VM state", kind: info }
+  - { name: unraid_vm_crashed, label: "VM crashed", unit: "bool" }
+  - { name: unraid_containers, label: "Containers" }
+  - { name: unraid_containers_running, label: "Containers running" }
+  - { name: unraid_containers_autostart_stopped, label: "Containers autostart stopped" }
+  - { name: unraid_container_running, label: "Container running", unit: "bool" }
+  - { name: unraid_container_autostart_stopped, label: "Container autostart stopped", unit: "bool" }
+  - { name: unraid_notifications_unread, label: "Notifications unread" }
+  - { name: unraid_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - unraid_array_started
+      - unraid_disks_problem
+      - unraid_parity_check_ok
+      - unraid_notifications_unread
+      - unraid_array_size_bytes
+      - unraid_array_free_bytes
+      - unraid_disk_errors
+      - unraid_disk_size_bytes
+      - unraid_disks
+      - unraid_disks_with_errors
+      - unraid_disk_ok
+      - unraid_disk_spinning
+      - unraid_parity_check_progress_percent
+      - unraid_parity_check_errors
+      - unraid_parity_check_age_seconds
+      - unraid_parity_check_duration_seconds
+      - unraid_parity_check_running
+      - unraid_vms
+      - unraid_vms_running
+      - unraid_vm_crashed
+      - unraid_containers
+      - unraid_containers_running
+      - unraid_containers_autostart_stopped
+      - unraid_container_running
+      - unraid_container_autostart_stopped
+      - unraid_version_info
+  - view: timeseries
+    title: "Storage used"
+    metrics: [unraid_array_used_percent, unraid_disk_used_percent]
+  - view: timeseries
+    title: "Disk temperatures"
+    metrics: [unraid_disk_temperature_celsius]

@@ -1,0 +1,45 @@
+# Mesures et vues du type « mssql » (format : crates/collectors/src/catalog.rs).
+source: mssql
+prefixes: [mssql_]
+metrics:
+  - { name: mssql_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: mssql_sessions, label: "Sessions" }
+  - { name: mssql_sessions_used_percent, label: "Sessions used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: mssql_blocked_requests, label: "Blocked requests" }
+  - { name: mssql_longest_block_seconds, label: "Longest block", unit: "s" }
+  - { name: mssql_version_info, label: "Version", kind: info }
+  - { name: mssql_volume_free_bytes, label: "Volume free", unit: "B", better: "higher" }
+  - { name: mssql_databases, label: "Databases" }
+  - { name: mssql_databases_offline, label: "Databases offline", better: "lower" }
+  - { name: mssql_database_online, label: "Database online", unit: "bool" }
+  - { name: mssql_database_read_only, label: "Database read only" }
+  - { name: mssql_database_size_bytes, label: "Database size", unit: "B" }
+  - { name: mssql_agent_jobs_failed, label: "Agent jobs failed", better: "lower" }
+  - { name: mssql_agent_job_last_ok, label: "Agent job last ok", unit: "bool" }
+  - { name: mssql_alwayson_sync_health, label: "Always On sync health" }
+  - { name: mssql_alwayson_suspended, label: "Always On suspended", unit: "bool" }
+  - { name: mssql_alwayson_unhealthy, label: "Always On unhealthy", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - mssql_databases_offline
+      - mssql_agent_jobs_failed
+      - mssql_alwayson_unhealthy
+      - mssql_databases
+      - mssql_uptime_seconds
+      - mssql_volume_free_bytes
+      - mssql_database_online
+      - mssql_database_read_only
+      - mssql_database_size_bytes
+      - mssql_agent_job_last_ok
+      - mssql_alwayson_sync_health
+      - mssql_alwayson_suspended
+      - mssql_sessions_used_percent
+      - mssql_longest_block_seconds
+  - view: timeseries
+    title: "Sessions"
+    metrics: [mssql_sessions]
+  - view: timeseries
+    title: "Blocked requests"
+    metrics: [mssql_blocked_requests]

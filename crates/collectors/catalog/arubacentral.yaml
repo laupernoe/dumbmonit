@@ -1,0 +1,36 @@
+# Mesures et vues du type « arubacentral » (format : crates/collectors/src/catalog.rs).
+source: arubacentral
+prefixes: [arubacentral_]
+metrics:
+  - { name: arubacentral_device_online, label: "Device online", unit: "bool" }
+  - { name: arubacentral_alerts_active, label: "Alerts active" }
+  - { name: arubacentral_alerts_active_by_severity, label: "Alerts active by severity" }
+  - { name: arubacentral_clients, label: "Clients" }
+  - { name: arubacentral_clients_by_health, label: "Clients by health" }
+  - { name: arubacentral_devices, label: "Devices" }
+  - { name: arubacentral_devices_by_health, label: "Devices by health" }
+  - { name: arubacentral_devices_by_type, label: "Devices by type" }
+  - { name: arubacentral_devices_offline, label: "Devices offline", better: "lower" }
+  - { name: arubacentral_devices_offline_by_type, label: "Devices offline by type" }
+  - { name: arubacentral_devices_poor_health, label: "Devices poor health" }
+  - { name: arubacentral_device_uptime_seconds, label: "Device uptime", unit: "s" }
+  - { name: arubacentral_device_info, label: "Device", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - arubacentral_devices
+      - arubacentral_alerts_active
+      - arubacentral_device_online
+      - arubacentral_alerts_active_by_severity
+      - arubacentral_devices_by_health
+      - arubacentral_devices_by_type
+      - arubacentral_devices_offline_by_type
+      - arubacentral_device_uptime_seconds
+      - arubacentral_device_info
+  - view: timeseries
+    title: "Clients"
+    metrics: [arubacentral_clients, arubacentral_clients_by_health]
+  - view: timeseries
+    title: "Offline and unhealthy devices"
+    metrics: [arubacentral_devices_offline, arubacentral_devices_poor_health]

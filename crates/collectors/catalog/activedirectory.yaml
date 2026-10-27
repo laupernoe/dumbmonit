@@ -1,0 +1,95 @@
+# Mesures et vues du type « activedirectory » (format : crates/collectors/src/catalog.rs).
+source: activedirectory
+prefixes: [activedirectory_]
+metrics:
+  - { name: ad_admincount_accounts, label: "AD admincount accounts" }
+  - { name: ad_bind_ok, label: "AD bind ok", unit: "bool" }
+  - { name: ad_bind_seconds, label: "AD bind", unit: "s" }
+  - { name: ad_clock_skew_seconds, label: "AD clock skew", unit: "s" }
+  - { name: ad_computers_enabled, label: "AD computers enabled" }
+  - { name: ad_computers_stale, label: "AD computers stale" }
+  - { name: ad_computers_total, label: "AD computers" }
+  - { name: ad_connect_seconds, label: "AD connect", unit: "s" }
+  - { name: ad_dc_count, label: "AD DC count" }
+  - { name: ad_dc_global_catalog_ready, label: "AD DC global catalog ready", unit: "bool" }
+  - { name: ad_dc_info, label: "AD DC", kind: info }
+  - { name: ad_dc_reachable, label: "AD DC reachable", unit: "bool" }
+  - { name: ad_dc_synchronized, label: "AD DC synchronized" }
+  - { name: ad_domain_functional_level, label: "AD domain functional level" }
+  - { name: ad_domain_info, label: "AD domain", kind: info }
+  - { name: ad_finding_count, label: "AD finding count" }
+  - { name: ad_forest_functional_level, label: "AD forest functional level" }
+  - { name: ad_fsmo_role, label: "AD FSMO role" }
+  - { name: ad_groups_total, label: "AD groups" }
+  - { name: ad_inventory_age_seconds, label: "AD inventory age", unit: "s" }
+  - { name: ad_krbtgt_password_age_seconds, label: "AD krbtgt password age", unit: "s" }
+  - { name: ad_laps_computers, label: "AD LAPS computers" }
+  - { name: ad_laps_eligible_computers, label: "AD LAPS eligible computers" }
+  - { name: ad_laps_schema, label: "AD LAPS schema", unit: "bool" }
+  - { name: ad_lockout_threshold, label: "AD lockout threshold" }
+  - { name: ad_machine_account_quota, label: "AD machine account quota" }
+  - { name: ad_password_complexity, label: "AD password complexity" }
+  - { name: ad_password_history_length, label: "AD password history length" }
+  - { name: ad_password_max_age_seconds, label: "AD password max age", unit: "s" }
+  - { name: ad_password_min_length, label: "AD password min length" }
+  - { name: ad_privileged_group_enabled_members, label: "AD privileged group enabled members" }
+  - { name: ad_privileged_group_fingerprint, label: "AD privileged group fingerprint" }
+  - { name: ad_privileged_group_members, label: "AD privileged group members" }
+  - { name: ad_recycle_bin_enabled, label: "AD recycle bin enabled", unit: "bool" }
+  - { name: ad_replication_consecutive_failures, label: "AD replication consecutive failures", better: "lower" }
+  - { name: ad_replication_last_success_age_seconds, label: "AD replication last success age", unit: "s" }
+  - { name: ad_replication_readable, label: "AD replication readable", unit: "bool" }
+  - { name: ad_scrape_errors, label: "AD scrape errors", better: "lower" }
+  - { name: ad_tls_verified, label: "AD TLS verified", unit: "bool" }
+  - { name: ad_users_disabled, label: "AD users disabled" }
+  - { name: ad_users_enabled, label: "AD users enabled" }
+  - { name: ad_users_locked_out, label: "AD users locked out" }
+  - { name: ad_users_password_never_expires, label: "AD users password never expires" }
+  - { name: ad_users_stale, label: "AD users stale" }
+  - { name: ad_users_total, label: "AD users" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - ad_users_locked_out
+      - ad_replication_consecutive_failures
+      - ad_dc_reachable
+      - ad_finding_count
+      - ad_users_total
+      - ad_computers_total
+      - ad_dc_count
+      - ad_admincount_accounts
+      - ad_clock_skew_seconds
+      - ad_computers_enabled
+      - ad_computers_stale
+      - ad_dc_global_catalog_ready
+      - ad_dc_info
+      - ad_dc_synchronized
+      - ad_domain_functional_level
+      - ad_domain_info
+      - ad_forest_functional_level
+      - ad_fsmo_role
+      - ad_groups_total
+      - ad_krbtgt_password_age_seconds
+      - ad_laps_computers
+      - ad_laps_eligible_computers
+      - ad_laps_schema
+      - ad_lockout_threshold
+      - ad_machine_account_quota
+      - ad_password_complexity
+      - ad_password_history_length
+      - ad_password_max_age_seconds
+      - ad_password_min_length
+      - ad_privileged_group_enabled_members
+      - ad_privileged_group_members
+      - ad_recycle_bin_enabled
+      - ad_replication_last_success_age_seconds
+      - ad_replication_readable
+      - ad_tls_verified
+      - ad_users_disabled
+      - ad_users_enabled
+      - ad_users_password_never_expires
+      - ad_users_stale
+  - view: timeseries
+    title: "LDAP latency"
+    metrics: [ad_bind_seconds, ad_connect_seconds]

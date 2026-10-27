@@ -1,0 +1,28 @@
+# Mesures et vues du type « ntp » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_ntp_offset_seconds, label: "Clock offset", unit: "s" }
+  - { name: probe_ntp_delay_seconds, label: "Network delay", unit: "s" }
+  - { name: probe_ntp_stratum, label: "Stratum" }
+  - { name: probe_ntp_leap_indicator, label: "Leap indicator", kind: state, states: [{ value: 0, label: "No warning", tone: ok }, { value: 1, label: "Last minute has 61 s", tone: neutral }, { value: 2, label: "Last minute has 59 s", tone: neutral }, { value: 3, label: "Not synchronised", tone: critical }] }
+  - { name: probe_ntp_root_delay_seconds, label: "Root delay", unit: "s" }
+  - { name: probe_ntp_root_dispersion_seconds, label: "Root dispersion", unit: "s" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_ntp_delay_seconds
+      - probe_ntp_stratum
+      - probe_ntp_leap_indicator
+      - probe_ntp_root_delay_seconds
+      - probe_ntp_root_dispersion_seconds
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds]
+  - view: timeseries
+    title: "Clock offset"
+    metrics: [probe_ntp_offset_seconds]

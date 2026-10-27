@@ -1,0 +1,20 @@
+# Mesures et vues du type « provider » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_provider_impact, label: "Impact" }
+  - { name: probe_provider_incidents, label: "Incidents" }
+  - { name: probe_provider_components_affected, label: "Components affected" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_provider_impact
+      - probe_provider_incidents
+      - probe_provider_components_affected
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds]

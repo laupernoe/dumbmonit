@@ -1,0 +1,38 @@
+# Mesures et vues du type « crowdsec » (format : crates/collectors/src/catalog.rs).
+source: crowdsec
+prefixes: [crowdsec_]
+metrics:
+  - { name: crowdsec_decisions, label: "Decisions" }
+  - { name: crowdsec_decisions_by_origin, label: "Decisions by origin" }
+  - { name: crowdsec_alerts, label: "Alerts" }
+  - { name: crowdsec_scenario_overflows_total, label: "Scenario overflows", kind: counter }
+  - { name: crowdsec_lapi_requests_total, label: "LAPI requests", kind: counter }
+  - { name: crowdsec_bouncer_requests_total, label: "Bouncer requests", kind: counter }
+  - { name: crowdsec_machine_requests_total, label: "Machine requests", kind: counter }
+  - { name: crowdsec_lines_read_total, label: "Lines read", kind: counter }
+  - { name: crowdsec_lines_unparsed_total, label: "Lines unparsed", kind: counter }
+  - { name: crowdsec_lines_parsed_total, label: "Lines parsed", kind: counter }
+  - { name: crowdsec_source_lines_total, label: "Source lines", kind: counter }
+  - { name: crowdsec_source_lines_unparsed_total, label: "Source lines unparsed", kind: counter }
+  - { name: crowdsec_bouncers_seen, label: "Bouncers seen" }
+  - { name: crowdsec_buckets, label: "Buckets" }
+  - { name: crowdsec_lapi_up, label: "LAPI up", unit: "bool" }
+  - { name: crowdsec_lapi_decisions_ok, label: "LAPI decisions ok" }
+  - { name: crowdsec_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - crowdsec_bouncers_seen
+      - crowdsec_buckets
+      - crowdsec_version_info
+      - crowdsec_scenario_overflows_total
+  - view: timeseries
+    title: "Decisions and alerts"
+    metrics: [crowdsec_decisions, crowdsec_decisions_by_origin, crowdsec_alerts]
+  - view: timeseries
+    title: "API requests"
+    metrics: [crowdsec_lapi_requests_total, crowdsec_bouncer_requests_total, crowdsec_machine_requests_total]
+  - view: timeseries
+    title: "Log lines read"
+    metrics: [crowdsec_lines_read_total, crowdsec_lines_unparsed_total]

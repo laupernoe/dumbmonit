@@ -1,0 +1,58 @@
+# Mesures et vues du type « veeam » (format : crates/collectors/src/catalog.rs).
+source: veeam
+prefixes: [veeam_]
+metrics:
+  - { name: veeam_sessions_24h, label: "Sessions 24 h" }
+  - { name: veeam_sessions_failed_24h, label: "Sessions failed 24 h" }
+  - { name: veeam_sessions_warning_24h, label: "Sessions warning 24 h" }
+  - { name: veeam_repository_used_percent, label: "Repository used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: veeam_jobs, label: "Jobs" }
+  - { name: veeam_jobs_failed, label: "Jobs failed", better: "lower" }
+  - { name: veeam_jobs_warning, label: "Jobs warning" }
+  - { name: veeam_jobs_running, label: "Jobs running" }
+  - { name: veeam_jobs_disabled, label: "Jobs disabled" }
+  - { name: veeam_job_enabled, label: "Job enabled", unit: "bool" }
+  - { name: veeam_job_failed, label: "Job failed", unit: "bool", better: "lower" }
+  - { name: veeam_job_running, label: "Job running", unit: "bool" }
+  - { name: veeam_job_warning, label: "Job warning", unit: "bool" }
+  - { name: veeam_job_progress_percent, label: "Job progress", unit: "%", min: 0, max: 100 }
+  - { name: veeam_job_last_run_age_seconds, label: "Job last run age", unit: "s" }
+  - { name: veeam_repository_capacity_bytes, label: "Repository capacity", unit: "B" }
+  - { name: veeam_repository_free_bytes, label: "Repository free", unit: "B", better: "higher" }
+  - { name: veeam_repository_used_bytes, label: "Repository used", unit: "B" }
+  - { name: veeam_license_expiry_seconds, label: "License expiry", unit: "s" }
+  - { name: veeam_support_expiry_seconds, label: "Support expiry", unit: "s" }
+  - { name: veeam_license_instances_licensed, label: "License instances licensed" }
+  - { name: veeam_license_instances_used, label: "License instances used" }
+  - { name: veeam_license_info, label: "License", kind: info }
+  - { name: veeam_section_readable, label: "Section readable", unit: "bool" }
+  - { name: veeam_job_result_info, label: "Job result", kind: info }
+  - { name: veeam_version_info, label: "Version", kind: info }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - veeam_jobs_failed
+      - veeam_jobs_warning
+      - veeam_jobs_running
+      - veeam_license_expiry_seconds
+      - veeam_jobs
+      - veeam_jobs_disabled
+      - veeam_job_enabled
+      - veeam_job_failed
+      - veeam_job_running
+      - veeam_job_warning
+      - veeam_job_progress_percent
+      - veeam_job_last_run_age_seconds
+      - veeam_repository_capacity_bytes
+      - veeam_support_expiry_seconds
+      - veeam_license_instances_licensed
+      - veeam_license_instances_used
+      - veeam_section_readable
+      - veeam_version_info
+  - view: timeseries
+    title: "Sessions (24 h)"
+    metrics: [veeam_sessions_24h, veeam_sessions_failed_24h, veeam_sessions_warning_24h]
+  - view: timeseries
+    title: "Repositories used"
+    metrics: [veeam_repository_used_percent]

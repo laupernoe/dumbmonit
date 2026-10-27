@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **Device pages show only the charts that matter.** Every integration now
+  declares its metrics (unit, counter or gauge) and its views in the catalogue
+  (`GET /api/collectors`, new `metrics` and `views` fields): a row of current
+  values, then at most four charts, with busiest-entity rankings where one curve
+  per guest, mailbox or port would be unreadable. Everything else stays one click
+  away under **All measurements**. SNMP profiles can declare `label`, `unit`,
+  `entity`, `view` and `view_title` per metric.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added
