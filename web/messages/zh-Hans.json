@@ -9281,5 +9281,15 @@
 	"deviceform_site_more": "再显示 {count} 个",
 	"deviceform_site_added": "已添加 {name}。",
 	"deviceform_site_open": "打开",
-	"deviceform_site_kinds": "此处常用"
+	"deviceform_site_kinds": "此处常用",
+	"devices_chart_label": "图表",
+	"devices_chart_last_week_series": "上周：{label}",
+	"devices_chart_compare_week": "与上周对比",
+	"devices_chart_compare_failed": "无法加载上周数据",
+	"devices_chart_compare_empty": "上周没有数据",
+	"devices_chart_summary_series": "{label}：最新 {last}，最小 {min}，最大 {max}。",
+	"devices_chart_summary_mirror": "第二个序列以镜像方式绘制在零线以下。",
+	"devices_chart_summary_threshold": "阈值 {label}：{value}。",
+	"devices_chart_summary_event": "{when}：{label}。",
+	"devices_chart_event_label": "{when}，{label}"
 }

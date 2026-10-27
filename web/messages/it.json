@@ -9392,5 +9392,15 @@
 	"deviceform_site_more": "Mostra altri {count}",
 	"deviceform_site_added": "{name} aggiunto.",
 	"deviceform_site_open": "Apri",
-	"deviceform_site_kinds": "Comuni qui"
+	"deviceform_site_kinds": "Comuni qui",
+	"devices_chart_label": "Grafico",
+	"devices_chart_last_week_series": "Settimana scorsa: {label}",
+	"devices_chart_compare_week": "Confronta con la settimana scorsa",
+	"devices_chart_compare_failed": "Impossibile caricare la settimana scorsa",
+	"devices_chart_compare_empty": "Nessun dato per la settimana scorsa",
+	"devices_chart_summary_series": "{label}: ultimo {last}, min {min}, max {max}.",
+	"devices_chart_summary_mirror": "La seconda serie è disegnata sotto lo zero, a specchio.",
+	"devices_chart_summary_threshold": "Soglia {label}: {value}.",
+	"devices_chart_summary_event": "{when}: {label}.",
+	"devices_chart_event_label": "{when}, {label}"
 }
