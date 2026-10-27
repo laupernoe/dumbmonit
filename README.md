@@ -71,6 +71,12 @@ Security issues: [SECURITY.md](SECURITY.md). Roadmap: [public project](https://g
 **Version 0.14.** It runs daily on the author's own network. Before 1.0 the HTTP API and the database schema can still change between minor versions (the [changelog](CHANGELOG.md) lists every change and how to upgrade), and some integrations have only met test instances, not years-old production hardware.
 Formerly called EzyMonit; the old `EZYMONIT_*` variables are still accepted.
 
+## License
+
+MIT, see [LICENSE](LICENSE). DumbMonit is free and will stay free.
+
+DumbMonit is provided "as is", without warranty of any kind. The author and contributors accept no liability for any damage, undetected failure or unsent alert; validating it in your own environment is up to you.
+
 ## Support DumbMonit
 
 DumbMonit is free and has no company behind it. If it saves you time, you can support its development:
@@ -81,9 +87,3 @@ DumbMonit is free and has no company behind it. If it saves you time, you can su
 - **Solana**: `63u8bhkf63HBcNYbRRyaHPtfRtSUmbugtwaauzAxHtb3`
 
 Bug reports, translations and device profiles help just as much.
-
-## License
-
-MIT, see [LICENSE](LICENSE). DumbMonit is free and will stay free.
-
-DumbMonit is provided "as is", without warranty of any kind. The author and contributors accept no liability for any damage, undetected failure or unsent alert; validating it in your own environment is up to you.
