@@ -120,15 +120,16 @@ port* (pas seulement une couleur), et gardé en tête de liste.
 
 ### Alertes
 
-Les nouveaux appareils et les nouveaux ports déclenchent des alertes par deux
+Les nouveaux appareils, les nouveaux ports et les changements d'adresse MAC déclenchent des alertes par trois
 [règles d'alerte](../alerting/rules.fr.md#inventaire-du-reseau) livrées :
 
 | Règle | Se déclenche quand | Par défaut |
 |---|---|---|
 | New device on the network | un balayage trouve un appareil absent de l'inventaire | **désactivée**, gravité `info` |
 | New open port on the network | un balayage trouve un nouveau port ouvert sur un appareil connu | **désactivée**, gravité `info` |
+| MAC address changed for an IP | un nouvel appareil apparaît sur l'adresse d'un appareil connu, avec une autre adresse MAC | **désactivée**, gravité `warning` |
 
-Les deux règles sont **désactivées par défaut** : sur un réseau où des invités vont
+Les trois règles sont **désactivées par défaut** : sur un réseau où des invités vont
 et viennent, elles ne seraient que du bruit tant que vous ne les voulez pas.
 Activez-les dans les règles d'alerte, et choisissez les canaux de notification qui
 les reçoivent comme pour n'importe quelle règle.
@@ -145,6 +146,27 @@ Utilisez *Marquer comme connu* sur un appareil (ses ports sont marqués avec lui
 d'un coup. Les éléments marqués ne sont plus signalés, et leur alerte se résout en
 quelques minutes. C'est aussi le moyen d'accepter un nouveau port ou appareil que
 vous attendiez.
+
+*Ignorer* va plus loin pour un appareil dont vous ne voulez plus entendre parler (le
+téléphone d'un invité, une imprimante de passage) : il compte comme connu, et ni lui
+ni ses ports ne déclenchent d'alerte. *Marquer comme connu* sur un appareil ignoré le
+remet dans l'inventaire.
+
+### Changements d'adresse MAC
+
+Quand un nouvel appareil apparaît sur l'adresse IP d'un appareil connu, mais avec une
+autre adresse MAC, l'inventaire le signale *MAC modifiée* et affiche la MAC
+précédente. Ce peut être une usurpation ARP, ou simplement un matériel remplacé (ou
+une adresse DHCP réattribuée pendant que l'ancien appareil était éteint) : vérifiez,
+puis marquez-le connu ou ignorez-le. La règle d'alerte `netscan_mac_change` le couvre.
+
+### La grille du sous-réseau
+
+Chaque réseau planifié a une grille d'une case par adresse (IPv4, jusqu'à 1024) :
+**nouveau**, **connu**, **ignoré**, **absent** (connu, mais pas vu au dernier
+balayage) ou **libre**. Chaque case porte un symbole et un mot, pas seulement une
+couleur. Filtrez par état, sélectionnez une case pour voir l'appareil, et utilisez
+*Ajouter comme moniteur* pour ouvrir le formulaire d'ajout avec son adresse.
 
 ## Un avertissement
 

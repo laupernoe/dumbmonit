@@ -5,7 +5,9 @@
 //! - `POST /api/discovery/schedules/{id}/run` : en lancer un sans attendre ;
 //! - `GET /api/discovery/inventory` : appareils et ports connus, inconnus d'abord ;
 //! - `POST /api/discovery/inventory/devices/{id}/known`,
-//!   `/inventory/ports/{id}/known`, `/inventory/known` : marquer connu.
+//!   `/inventory/ports/{id}/known`, `/inventory/known` : marquer connu ;
+//! - `POST /api/discovery/inventory/devices/{id}/ignore` : ignorer un appareil
+//!   (plus aucune alerte) ; `…/known` le remet dans l'inventaire.
 //!
 //! Tout est réservé aux administrateurs : c'est une carte du réseau.
 
@@ -69,6 +71,9 @@ pub struct ScheduleView {
     pub last_error: Option<String>,
     pub devices: i64,
     pub unknown_devices: i64,
+    pub ignored_devices: i64,
+    /// Changements de MAC pour une IP, en attente d'être marqués connus ou ignorés.
+    pub mac_changes: i64,
     pub unknown_ports: i64,
 }
 
@@ -110,6 +115,8 @@ fn view(schedule: Schedule, counts: Counts, agents: &HashMap<TargetId, String>) 
         last_error: schedule.last_error,
         devices: counts.devices,
         unknown_devices: counts.unknown_devices,
+        ignored_devices: counts.ignored_devices,
+        mac_changes: counts.mac_changes,
         unknown_ports: counts.unknown_ports,
     }
 }
@@ -255,6 +262,19 @@ pub async fn device_known(
     Path(id): Path<i64>,
 ) -> ApiResult<StatusCode> {
     if store::mark_device_known(&state.pool, id).await? {
+        Ok(StatusCode::NO_CONTENT)
+    } else {
+        Err(ApiError::NotFound("Unknown device.".to_string()))
+    }
+}
+
+/// `POST /api/discovery/inventory/devices/{id}/ignore`
+pub async fn device_ignore(
+    _: AdminIdentity,
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> ApiResult<StatusCode> {
+    if store::mark_device_ignored(&state.pool, id).await? {
         Ok(StatusCode::NO_CONTENT)
     } else {
         Err(ApiError::NotFound("Unknown device.".to_string()))

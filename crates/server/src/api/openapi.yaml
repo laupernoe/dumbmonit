@@ -2105,8 +2105,10 @@ paths:
       description: >-
         The inventory built by the scheduled scans, unknown devices first. An unknown
         device or port stays reported (see the `netscan_new_device` and
-        `netscan_new_port` alert rules) until it is marked as known. Administrators
-        only.
+        `netscan_new_port` alert rules) until it is marked as known. A new device that
+        takes the address of a known device under another MAC address carries
+        `mac_change_from` (spoofing or replaced hardware; `netscan_mac_change` alert
+        rule) until it is marked as known or ignored. Administrators only.
       x-token-scope: read
       parameters:
         - name: schedule_id
@@ -2167,6 +2169,26 @@ paths:
       x-token-scope: write
       responses:
         "204": { description: Marked. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/discovery/inventory/devices/{id}/ignore:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema: { type: integer, format: int64 }
+    post:
+      operationId: ignoreNetscanDevice
+      tags: [Discovery]
+      summary: Ignore a device
+      description: >-
+        The device and its ports count as known and never alert again (new device,
+        MAC change, new port). `markNetscanDeviceKnown` puts it back in the inventory.
+      x-token-scope: write
+      responses:
+        "204": { description: Ignored. }
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
@@ -11373,7 +11395,7 @@ components:
         enabled: { type: boolean, default: true }
     NetscanSchedule:
       type: object
-      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, unknown_ports]
+      required: [id, name, cidr, agent_id, agent_name, interval_secs, depth, enabled, initialized, running, last_run_at, last_status, last_error, devices, unknown_devices, ignored_devices, mac_changes, unknown_ports]
       properties:
         id: { type: integer, format: int64 }
         name: { type: string }
@@ -11390,6 +11412,8 @@ components:
         last_error: { type: [string, "null"] }
         devices: { type: integer }
         unknown_devices: { type: integer }
+        ignored_devices: { type: integer }
+        mac_changes: { type: integer, description: New devices on the address of a known device under another MAC, not yet marked known or ignored. }
         unknown_ports: { type: integer, description: Unknown ports of known devices. }
     NetscanPort:
       type: object
@@ -11404,15 +11428,17 @@ components:
         last_seen: { type: string }
     NetscanDevice:
       type: object
-      required: [id, schedule_id, ip, mac, hostname, vendor, known, first_seen, last_seen, ports]
+      required: [id, schedule_id, ip, mac, hostname, vendor, known, ignored, mac_change_from, first_seen, last_seen, ports]
       properties:
         id: { type: integer, format: int64 }
         schedule_id: { type: integer, format: int64 }
         ip: { type: string, description: Last address seen; a device is identified by its MAC when visible. }
         mac: { type: [string, "null"] }
         hostname: { type: [string, "null"] }
-        vendor: { type: [string, "null"] }
-        known: { type: boolean }
+        vendor: { type: [string, "null"], description: Manufacturer from the MAC prefix (OUI), when known. }
+        known: { type: boolean, description: Also true for an ignored device. }
+        ignored: { type: boolean }
+        mac_change_from: { type: [string, "null"], description: MAC address the IP had before this new device took it. }
         first_seen: { type: string }
         last_seen: { type: string }
         ports:

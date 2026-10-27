@@ -70,6 +70,11 @@ export function markNetscanDeviceKnown(id: number): Promise<void> {
 	return request<void>(`/discovery/inventory/devices/${id}/known`, { method: 'POST' });
 }
 
+/** Ignores a device: it counts as known and never alerts again. Marking it known puts it back. */
+export function ignoreNetscanDevice(id: number): Promise<void> {
+	return request<void>(`/discovery/inventory/devices/${id}/ignore`, { method: 'POST' });
+}
+
 export function markNetscanPortKnown(id: number): Promise<void> {
 	return request<void>(`/discovery/inventory/ports/${id}/known`, { method: 'POST' });
 }

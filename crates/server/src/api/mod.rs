@@ -191,6 +191,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/discovery/inventory", get(netinventory::inventory))
         .route("/discovery/inventory/known", post(netinventory::all_known))
         .route("/discovery/inventory/devices/{id}/known", post(netinventory::device_known))
+        .route("/discovery/inventory/devices/{id}/ignore", post(netinventory::device_ignore))
         .route("/discovery/inventory/ports/{id}/known", post(netinventory::port_known))
         .route("/onboarding", get(onboarding::get).put(onboarding::put))
         .route("/targets", get(targets::list).post(targets::create))

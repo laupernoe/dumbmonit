@@ -38,6 +38,9 @@ pub struct PlannedDevice {
     pub hostname: Option<String>,
     pub vendor: Option<String>,
     pub is_new: bool,
+    /// MAC que l'inventaire connaissait pour cette IP, quand un appareil
+    /// nouveau l'occupe avec une autre MAC (usurpation ou remplacement).
+    pub replaced_mac: Option<String>,
     pub ports: Vec<PlannedPort>,
 }
 
@@ -62,6 +65,11 @@ fn protocol_name(transport: Transport) -> &'static str {
     }
 }
 
+/// MAC (déjà normalisée) d'une ligne identifiée par MAC : `mac:aa:bb:…`.
+fn mac_of_ident(ident: &str) -> Option<&str> {
+    ident.strip_prefix("mac:")
+}
+
 /// Rapproche les hôtes d'un balayage de l'inventaire.
 ///
 /// - un hôte à MAC visible retrouve sa ligne par cette MAC, même si son IP a
@@ -70,7 +78,10 @@ fn protocol_name(transport: Transport) -> &'static str {
 /// - un hôte sans MAC retrouve la ligne qui a cette IP, que sa ligne soit
 ///   identifiée par MAC ou par IP (l'ARP peut manquer sans que l'appareil soit
 ///   nouveau) ;
-/// - une ligne ne sert qu'une fois par balayage.
+/// - une ligne ne sert qu'une fois par balayage ;
+/// - un appareil nouveau, à MAC visible, qui occupe l'IP d'une ligne connue sous
+///   une autre MAC est un changement de MAC (`replaced_mac`) : usurpation ARP,
+///   ou matériel remplacé.
 pub fn plan(known: &[KnownDevice], hosts: &[DiscoveredHost]) -> Vec<PlannedDevice> {
     let mut used: HashSet<i64> = HashSet::new();
     let mut idents: HashSet<String> = HashSet::new();
@@ -127,6 +138,16 @@ pub fn plan(known: &[KnownDevice], hosts: &[DiscoveredHost]) -> Vec<PlannedDevic
             }
         }
 
+        let replaced_mac = match (&mac, found) {
+            (Some(mac), None) => known
+                .iter()
+                .filter(|d| d.ip == ip)
+                .filter_map(|d| mac_of_ident(&d.ident))
+                .find(|old| *old != mac.as_str())
+                .map(str::to_string),
+            _ => None,
+        };
+
         out.push(PlannedDevice {
             existing_id: found.map(|d| d.id),
             ident,
@@ -135,6 +156,7 @@ pub fn plan(known: &[KnownDevice], hosts: &[DiscoveredHost]) -> Vec<PlannedDevic
             hostname: host.hostname.clone(),
             vendor: host.vendor.clone(),
             is_new: found.is_none(),
+            replaced_mac,
             ports,
         });
     }
@@ -252,5 +274,33 @@ mod tests {
         h.services.push(service(80, "autre"));
         let plan = plan(&[], &[h]);
         assert_eq!(plan[0].ports.len(), 1);
+    }
+
+    #[test]
+    fn une_autre_mac_sur_une_ip_connue_est_un_changement_de_mac() {
+        let known = [device(1, "mac:aa:aa:aa:aa:aa:aa", "10.0.0.2", &[22])];
+        let plan = plan(&known, &[host("10.0.0.2", Some("bb:bb:bb:bb:bb:bb"), &[22])]);
+        assert!(plan[0].is_new);
+        assert_eq!(plan[0].replaced_mac.as_deref(), Some("aa:aa:aa:aa:aa:aa"));
+    }
+
+    #[test]
+    fn un_appareil_nouveau_sur_une_ip_libre_n_est_pas_un_changement_de_mac() {
+        let known = [device(1, "mac:aa:aa:aa:aa:aa:aa", "10.0.0.2", &[])];
+        let plan = plan(&known, &[host("10.0.0.9", Some("bb:bb:bb:bb:bb:bb"), &[])]);
+        assert!(plan[0].is_new);
+        assert_eq!(plan[0].replaced_mac, None);
+    }
+
+    #[test]
+    fn une_ligne_identifiee_par_l_ip_ou_retrouvee_n_est_pas_un_changement_de_mac() {
+        // MAC qui apparait pour la première fois : promotion, pas usurpation.
+        let known = [device(3, "ip:10.0.0.4", "10.0.0.4", &[])];
+        let promoted = plan(&known, &[host("10.0.0.4", Some("cc:cc:cc:cc:cc:cc"), &[])]);
+        assert_eq!(promoted[0].replaced_mac, None);
+        // Même MAC qu'avant : rien.
+        let known = [device(3, "mac:cc:cc:cc:cc:cc:cc", "10.0.0.4", &[])];
+        let same = plan(&known, &[host("10.0.0.4", Some("CC:CC:CC:CC:CC:CC"), &[])]);
+        assert_eq!(same[0].replaced_mac, None);
     }
 }
