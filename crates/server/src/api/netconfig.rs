@@ -28,6 +28,8 @@ use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{CurrentPrincipal, Principal};
+use crate::auth::teams::{Level, TeamAccess};
+use crate::auth::AuthError;
 use crate::db;
 use crate::netconfig::{self, store};
 use crate::state::AppState;
@@ -158,6 +160,18 @@ fn require_reader(principal: &Principal) -> ApiResult<()> {
     }
 }
 
+/// Le contenu d'une version, même masqué, décrit l'équipement en détail : il
+/// demande le niveau « traiter » (operate) sur son dossier, quand la seule liste
+/// des versions se contente de la lecture (vérifiée par le garde d'API).
+async fn require_operate(state: &AppState, access: &crate::auth::teams::Access, id: TargetId) -> ApiResult<()> {
+    match access.require_target(&state.pool, id, Level::Operate).await {
+        Ok(()) => Ok(()),
+        Err(AuthError::NotFound(message)) => Err(ApiError::NotFound(message)),
+        Err(AuthError::Forbidden(message)) => Err(ApiError::Forbidden(message)),
+        Err(_) => Err(ApiError::Forbidden("Reading this configuration is not allowed.".into())),
+    }
+}
+
 /// Lever le masquage, télécharger, accepter une clé : un administrateur
 /// connecté, jamais un jeton.
 fn require_admin_session(principal: &Principal) -> ApiResult<String> {
@@ -235,11 +249,13 @@ async fn overview(
 async fn version(
     State(state): State<AppState>,
     Extension(CurrentPrincipal(principal)): Extension<CurrentPrincipal>,
+    TeamAccess(access): TeamAccess,
     ClientIp(ip): ClientIp,
     Path((id, version_id)): Path<(TargetId, i64)>,
     Query(query): Query<RevealQuery>,
 ) -> ApiResult<Json<VersionContent>> {
     require_reader(&principal)?;
+    require_operate(&state, &access, id).await?;
     let actor = if query.unmasked { Some(require_admin_session(&principal)?) } else { None };
     let target = load(&state, id).await?;
     let row = store::version(&state.pool, id, version_id)
@@ -262,11 +278,13 @@ async fn version(
 async fn compare(
     State(state): State<AppState>,
     Extension(CurrentPrincipal(principal)): Extension<CurrentPrincipal>,
+    TeamAccess(access): TeamAccess,
     ClientIp(ip): ClientIp,
     Path(id): Path<TargetId>,
     Query(query): Query<CompareQuery>,
 ) -> ApiResult<Json<CompareView>> {
     require_reader(&principal)?;
+    require_operate(&state, &access, id).await?;
     let actor = if query.unmasked { Some(require_admin_session(&principal)?) } else { None };
     let target = load(&state, id).await?;
     let missing = |version: i64| ApiError::NotFound(format!("Version {version} not found."));
