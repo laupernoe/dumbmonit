@@ -3,14 +3,13 @@
  * colours each wall theme paints it in.
  *
  * The theme decides how bright the scene may be (Day stays a light sky so
- * navy ink reads on it, Night stays a dark one so light ink does, OLED stays
- * black); the real local time decides the hue inside that band, where the sun
- * or the moon sits, and whether the windows and the tower are lit. So the
+ * navy ink reads on it, Night stays a dark one so light ink does); the real
+ * local time decides the hue inside that band, where the sun or the moon sits, and whether the windows and the tower are lit. So the
  * headline written on the sky is readable at every hour, in every theme.
  */
 
 export type ScenePhase = 'night' | 'dawn' | 'day' | 'golden' | 'dusk';
-export type SceneTheme = 'light' | 'dark' | 'oled';
+export type SceneTheme = 'light' | 'dark';
 /** How the network feels, as weather: calm, a few clouds, or rain. */
 export type SceneMood = 'calm' | 'clouded' | 'storm';
 
@@ -70,13 +69,6 @@ const SKIES: Record<SceneTheme, Record<ScenePhase, Sky>> = {
 		golden: ['#111b36', '#3f3443'],
 		dusk: ['#0b1329', '#2c2b47'],
 		night: ['#060b18', '#16213b']
-	},
-	oled: {
-		dawn: ['#000000', '#07060c'],
-		day: ['#000000', '#060a12'],
-		golden: ['#000000', '#09070a'],
-		dusk: ['#000000', '#06060c'],
-		night: ['#000000', '#04060b']
 	}
 };
 
@@ -139,70 +131,26 @@ const LAND: Record<SceneTheme, Record<string, string>> = {
 		'--sun-halo': 'rgb(233 201 138 / 0.22)',
 		'--moon': '#e8e4d6',
 		'--balloon': '#d9733a'
-	},
-	oled: {
-		'--far': '#07090e',
-		'--far-2': '#06080c',
-		'--dome': '#15120c',
-		'--tower': '#0c0f16',
-		'--tower-line': '#1a202d',
-		'--facade': '#040507',
-		'--facade-shade': '#030406',
-		'--roof': '#06070a',
-		'--window': '#0b0e15',
-		'--window-lit': '#7a5a1f',
-		'--near': '#030405',
-		'--near-top': '#0d1016',
-		'--seam': '#08090d',
-		'--brick': '#140d0b',
-		'--pot': '#190e08',
-		'--lamp': '#121722',
-		'--glow': 'rgb(160 110 40 / 0.18)',
-		'--cloud': 'rgb(22 26 36 / 0.8)',
-		'--cloud-storm': 'rgb(18 20 28 / 0.95)',
-		'--veil': 'rgb(0 0 0 / 0.3)',
-		'--rain': 'rgb(120 130 150 / 0.12)',
-		'--smoke': 'rgb(120 130 150 / 0.12)',
-		'--star': 'rgb(170 178 194 / 0.45)',
-		'--sun': '#5c4a2a',
-		'--sun-halo': 'rgb(92 74 42 / 0.2)',
-		'--moon': '#5d6170',
-		'--balloon': '#6e3a1e',
-		'--pastry': '#5e4524',
-		'--pastry-crust': '#47331a',
-		'--pg-umbrella': '#252c3c'
 	}
 };
 
 /** The tower once lit: golden lattice, warmer iron. */
 const TOWER_LIT: Record<SceneTheme, Record<string, string>> = {
 	light: { '--tower': '#8a7a66', '--tower-line': '#e2b76a' },
-	dark: { '--tower': '#3a3328', '--tower-line': '#d9a24a' },
-	oled: { '--tower': '#120f0a', '--tower-line': '#5a4219' }
+	dark: { '--tower': '#3a3328', '--tower-line': '#d9a24a' }
 };
 
-/** The pigeons, slightly dimmed at night and drawn as line art on OLED. */
+/** The pigeons, slightly dimmed at night. */
 const PIGEON: Record<SceneTheme, Record<string, string>> = {
 	light: {},
-	dark: { '--pg-body': '#62769a', '--pg-chest': '#3f8c62', '--pg-hat': '#4a5578' },
-	oled: {
-		'--pg-body': '#1f2838',
-		'--pg-line': '#5d6a84',
-		'--pg-chest': '#1f3f2f',
-		'--pg-beak': '#8a4b24',
-		'--pg-eye': '#9aa2b2',
-		'--pg-pupil': '#000000',
-		'--pg-hat': '#0d1018',
-		'--pg-sign': '#1a1d24',
-		'--pg-sign-ink': '#a9b2c2'
-	}
+	dark: { '--pg-body': '#62769a', '--pg-chest': '#3f8c62', '--pg-hat': '#4a5578' }
 };
 
 /** The scene's custom properties for this theme, hour and mood, as an inline style string. */
 export function sceneStyle(theme: SceneTheme, phase: ScenePhase, mood: SceneMood): string {
 	let [top, bottom] = SKIES[theme][phase];
 	// A storm takes the sky down a step: greyer, a little darker, never black.
-	if (mood === 'storm' && theme !== 'oled') {
+	if (mood === 'storm') {
 		top = theme === 'light' ? '#a9b2c4' : '#0a0f1c';
 		bottom = theme === 'light' ? '#d6d8de' : '#1b2233';
 	}

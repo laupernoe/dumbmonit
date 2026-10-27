@@ -1304,7 +1304,7 @@ checksum = "1aaf95b3e5c8f23aa320147307562d361db0ae0d51242340f558153b4eb2439b"
 
 [[package]]
 name = "dumbmonit-agent"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -1330,7 +1330,7 @@ dependencies = [
 
 [[package]]
 name = "dumbmonit-cli"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "serde",
  "serde-saphyr",
@@ -1340,7 +1340,7 @@ dependencies = [
 
 [[package]]
 name = "dumbmonit-collectors"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1386,7 +1386,7 @@ dependencies = [
 
 [[package]]
 name = "dumbmonit-pack"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "async-trait",
  "axum",
@@ -1406,7 +1406,7 @@ dependencies = [
 
 [[package]]
 name = "dumbmonit-proto"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -1419,7 +1419,7 @@ dependencies = [
 
 [[package]]
 name = "dumbmonit-server"
-version = "0.14.0"
+version = "0.14.1"
 dependencies = [
  "aes-gcm 0.11.1",
  "anyhow",

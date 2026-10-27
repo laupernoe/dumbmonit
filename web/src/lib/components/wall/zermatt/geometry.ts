@@ -112,13 +112,6 @@ const LAND: Record<SceneTheme, Land> = {
 		'--mh-roof': '#2c3350', '--mh-stone': '#5a6380', '--mh-spire': '#3b4766', '--mh-rail': '#3c4560',
 		'--mh-train': '#b8433e', '--mh-flag': '#a8352c', '--mh-flag-cross': '#cfd4e0', '--mh-wall': '#0c1323',
 		'--mh-wall-top': '#18223b', '--mh-plume': 'rgb(120 138 180 / 0.35)'
-	},
-	oled: {
-		'--mh-far': '#07090e', '--mh-rock': '#0d1018', '--mh-rock2': '#07090e', '--mh-meadow': '#070d0c',
-		'--mh-meadow2': '#050a09', '--mh-pine': '#04090a', '--mh-wood': '#120d0d', '--mh-wood2': '#0b0808',
-		'--mh-roof': '#0a0d16', '--mh-stone': '#161a24', '--mh-spire': '#10131c', '--mh-rail': '#1a202d',
-		'--mh-train': '#4a1f1d', '--mh-flag': '#3a1512', '--mh-flag-cross': '#5d6170', '--mh-wall': '#030405',
-		'--mh-wall-top': '#0d1016', '--mh-plume': 'rgb(80 90 110 / 0.2)'
 	}
 };
 
@@ -131,10 +124,6 @@ const SNOW_TINT: Record<SceneTheme, Record<ScenePhase, [lit: string, shade: stri
 	dark: {
 		dawn: ['#b99aa8', '#6d6585'], day: ['#a9b8d6', '#6b7a9f'], golden: ['#b9a08e', '#6f6580'],
 		dusk: ['#8c88ac', '#515a80'], night: ['#6f7ea6', '#434e72']
-	},
-	oled: {
-		dawn: ['#2a2230', '#14121c'], day: ['#2c3342', '#141824'], golden: ['#302820', '#16121a'],
-		dusk: ['#232238', '#101220'], night: ['#1e2434', '#0e111c']
 	}
 };
 

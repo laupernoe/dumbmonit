@@ -19,6 +19,7 @@
 	import { Button, Confirm, CopyBlock, Disclosure, EmptyState, ErrorNotice, Field, Led, Panel, Plate, Skeleton, Toggle } from '#lib/ui/index.js';
 	import AdDeployWizard from '#lib/components/settings/AdDeployWizard.svelte';
 	import AgentChecksums from '#lib/components/device-form/AgentChecksums.svelte';
+	import AgentChannelNote from '#lib/components/device-form/AgentChannelNote.svelte';
 	import AgentModules from '#lib/components/device-form/AgentModules.svelte';
 	import { withModules, type AgentModule } from '#lib/components/device-form/agent-modules.js';
 	import AgentChannel from '#lib/components/settings/AgentChannel.svelte';
@@ -410,6 +411,7 @@
 								<CopyBlock value={withModules(created.install_windows, modules, 'windows')} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
+						<AgentChannelNote port={channel ? channel.port : undefined} />
 						<AgentChecksums />
 					</div>
 				</div>

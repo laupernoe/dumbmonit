@@ -144,8 +144,7 @@
 	/** What this city adds to the shared palette: the cab, the pizza, the stack's stripes. */
 	const EXTRA: Record<SceneTheme, string> = {
 		light: '--cab:#f6c62b;--cheese:#f2b84b;--crust:#d9a35b;--pepperoni:#c0563f;--stripe:#e8793a',
-		dark: '--cab:#d9a521;--cheese:#c98f35;--crust:#a5763a;--pepperoni:#8f3f31;--stripe:#a8532b',
-		oled: '--cab:#5c4a14;--cheese:#5e4524;--crust:#47331a;--pepperoni:#3c1b14;--stripe:#3a1f12'
+		dark: '--cab:#d9a521;--cheese:#c98f35;--crust:#a5763a;--pepperoni:#8f3f31;--stripe:#a8532b'
 	};
 
 	// Re-read once a minute: nothing in the sky moves faster than that.
