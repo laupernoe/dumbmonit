@@ -423,12 +423,15 @@ async fn suggested_name(
     access: &Access,
     template: &Template,
     filter: &Filter,
+    rows: &[Row],
 ) -> ApiResult<String> {
     let mut parts = Vec::new();
     if let Some(folder) = filter.folder() {
         parts.push(folder);
     }
-    if let Some(site) = filter.site {
+    // Le nom d'un site n'est lu que s'il porte un équipement visible : un
+    // compte restreint ne découvre pas les emplacements d'un autre client.
+    if let Some(site) = filter.site.filter(|site| rows.iter().any(|row| row.site == Some(*site))) {
         let name: Option<String> = sqlx::query_scalar("SELECT name FROM locations WHERE id = ?")
             .bind(site)
             .fetch_optional(&state.pool)
@@ -477,7 +480,7 @@ pub async fn preview(
     let widgets = clean_widgets(widgets)?;
     Ok(Json(Preview {
         id: template.id,
-        name: suggested_name(&state, &access, template, &filter).await?,
+        name: suggested_name(&state, &access, template, &filter, &rows).await?,
         range_secs: template.range_secs,
         refresh_secs: template.refresh_secs,
         matched_count: targets.len(),
@@ -697,5 +700,25 @@ mod tests {
         let short = shorten(&long, 80);
         assert_eq!(short.chars().count(), 80);
         assert!(short.ends_with('…'));
+    }
+
+    /// Un widget qui lit une métrique que personne ne produit reste vide sans
+    /// rien dire : chaque nom doit figurer dans la liste des métriques produites.
+    #[test]
+    fn les_modeles_ne_lisent_que_des_metriques_produites() {
+        for template in catalog::TEMPLATES {
+            let bodies = template.widgets.iter().map(|spec| spec.body).chain(template.needs_metric);
+            for body in bodies {
+                for word in body.split(|c: char| !c.is_alphanumeric() && c != '_') {
+                    if word.starts_with("dumbmonit_") {
+                        assert!(
+                            crate::alerting::rules::PRODUITES.contains(&word),
+                            "template \"{}\" reads \"{word}\", which no collector produces",
+                            template.id
+                        );
+                    }
+                }
+            }
+        }
     }
 }

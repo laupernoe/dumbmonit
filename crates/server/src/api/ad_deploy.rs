@@ -221,6 +221,8 @@ pub struct KitParams<'a> {
     pub sysvol_binary: bool,
     /// Serveur DNS à utiliser pour résoudre l'hôte de `url` ; vide : aucun.
     pub dns_server: &'a str,
+    /// Port public du canal chiffré des agents ; vide : canal coupé.
+    pub agent_port: &'a str,
     pub generated: &'a str,
 }
 
@@ -258,6 +260,7 @@ pub fn render_deploy_script(params: &KitParams<'_>) -> String {
         .replace("__DM_DNS_SERVER__", params.dns_server)
         .replace("__DM_SHA256__", params.sha256)
         .replace("__DM_TOKEN_PREFIX__", params.token_prefix)
+        .replace("__DM_AGENT_PORT__", params.agent_port)
         .replace("__DM_GENERATED__", params.generated)
         .replace("__DM_INSTALLER_B64__", &b64(INSTALL_PS1))
         .replace("__DM_BOOTSTRAP_B64__", &b64(&bootstrap));
@@ -340,6 +343,7 @@ pub async fn create_kit(
         .unwrap_or_default();
     let generated = chrono::Utc::now().format("%Y-%m-%d %H:%M").to_string();
 
+    let agent_port = state.config.agent_port().map(|port| port.to_string()).unwrap_or_default();
     let script = render_deploy_script(&KitParams {
         domain: &domain,
         url: &url,
@@ -351,6 +355,7 @@ pub async fn create_kit(
         security_group: security_group.as_deref().unwrap_or(""),
         sysvol_binary: payload.sysvol_binary,
         dns_server: dns_server.as_deref().unwrap_or(""),
+        agent_port: &agent_port,
         generated: &generated,
     });
 
@@ -404,6 +409,7 @@ mod tests {
             security_group: "Serveurs l'équipe",
             sysvol_binary: false,
             dns_server: "10.0.0.2",
+            agent_port: "9443",
             generated: "2026-10-22 12:00",
         }
     }
@@ -456,6 +462,7 @@ mod tests {
         assert!(script.contains("$Domain         = 'corp.example.com'"));
         assert!(script.contains("$Url            = 'https://dm.example.com'"));
         assert!(script.contains("$DnsServer      = '10.0.0.2'"));
+        assert!(script.contains("$AgentPort      = '9443'"), "le vrai port du canal des agents");
         assert!(script.contains("[bool]::Parse('true')"), "contrôleurs de domaine inclus");
         assert!(script.contains("[bool]::Parse('false')"), "pas de binaire dans SYSVOL");
         // Le jeton n'apparaît pas en clair : il n'est que dans le script de la

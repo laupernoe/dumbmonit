@@ -411,7 +411,7 @@
 								<CopyBlock value={withModules(created.install_windows, modules, 'windows')} label={m.settings_agents_copy_command()} />
 							</div>
 						{/if}
-						<AgentChannelNote />
+						<AgentChannelNote port={channel ? channel.port : undefined} />
 						<AgentChecksums />
 					</div>
 				</div>
