@@ -9574,5 +9574,22 @@
 	"wizard_oncall_people_help": "По неделе каждому, смена по понедельникам в 09:00 по часовому поясу экземпляра.",
 	"wizard_oncall_create": "Создать ротацию",
 	"wizard_oncall_open": "Дежурства подробно",
-	"wizard_oncall_open_text": "Слои, замены, календарь и канал «Дежурство DumbMonit», который подключает политику к маршрутизации оповещений."
+	"wizard_oncall_open_text": "Слои, замены, календарь и канал «Дежурство DumbMonit», который подключает политику к маршрутизации оповещений.",
+	"deviceform_site_title": "Где это находится?",
+	"deviceform_site_hint": "Сначала выберите площадку. Мы предложим, что добавить, и заполним её ретранслятор, расположение и папку.",
+	"deviceform_site_none": "Без площадки",
+	"deviceform_site_none_note": "Не привязано к месту на карте.",
+	"deviceform_site_count": "Устройства: {count}",
+	"deviceform_site_via": "Через {relay}",
+	"deviceform_site_folder": "Папка: {folder}",
+	"deviceform_site_found": "Найдены сканированием, ещё не отслеживаются",
+	"deviceform_site_add": "Добавить",
+	"deviceform_site_add_named": "Добавить {name}",
+	"deviceform_site_setup": "Настроить",
+	"deviceform_site_setup_named": "Настроить {name}",
+	"deviceform_site_fewer": "Показать меньше",
+	"deviceform_site_more": "Показать ещё: {count}",
+	"deviceform_site_added": "{name} добавлено.",
+	"deviceform_site_open": "Открыть",
+	"deviceform_site_kinds": "Обычные для площадки"
 }

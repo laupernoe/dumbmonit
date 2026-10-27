@@ -5,6 +5,16 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Add a monitor by site.** *Add a monitor* (and the setup wizard's monitors
+  step) now asks where it is first: a location of the world map, or no site.
+  The page then proposes what to add there, namely devices a network scan found
+  through the site's relay agent that nobody monitors yet (one click creates them)
+  and the monitor types that fit the site, all pre-filled with the site's relay
+  agent, location and folder. The full list of types stays below. In MSP mode
+  only the current client's sites are offered.
+
 ## 0.14.0 — 2026-10-28
 
 ### Added

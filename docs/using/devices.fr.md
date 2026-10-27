@@ -90,6 +90,19 @@ Chaque interrupteur s'enregistre seul. Détails et règles de sécurité :
 
 ## Ajout et modification
 
+**Ajouter une surveillance** commence par le site : choisissez un emplacement de
+la [carte du monde](world-map.md), ou **Aucun site**. DumbMonit propose alors quoi
+y ajouter : les équipements qu'une [découverte réseau](discovery.md) a trouvés via
+le relais de ce site et que personne ne surveille encore (**Ajouter** les crée
+aussitôt, sauf les équipements SNMP, qui ouvrent le formulaire pour la
+communauté), et les types de surveillance qui conviennent au site (ceux que ses
+équipements utilisent déjà, puis les plus courants). Chaque proposition est
+préremplie avec le relais du site, son emplacement et son dossier habituel, et
+vous pouvez toujours les changer dans le formulaire. Sans aucun emplacement, la
+page reste la simple liste de types. En mode MSP, seuls les sites du client
+courant sont proposés. L'étape *Ajoutez vos premières surveillances* de
+l'assistant propose le même choix.
+
 Voir [Ajouter votre première surveillance](../install/first-device.md) pour le
 formulaire et les [types de surveillance](../devices/index.md) pour ce que chaque
 type demande. En modification, le formulaire ouvre **Plus d'options** de

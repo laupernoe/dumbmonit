@@ -9366,5 +9366,22 @@
 	"wizard_oncall_people_help": "Une semaine chacun, relève le lundi à 09:00 dans le fuseau de l'instance.",
 	"wizard_oncall_create": "Créer la rotation",
 	"wizard_oncall_open": "L'astreinte en détail",
-	"wizard_oncall_open_text": "Couches, remplacements, calendrier, et le canal Astreinte DumbMonit qui branche une politique sur le routage des alertes."
+	"wizard_oncall_open_text": "Couches, remplacements, calendrier, et le canal Astreinte DumbMonit qui branche une politique sur le routage des alertes.",
+	"deviceform_site_title": "Où se trouve-t-il ?",
+	"deviceform_site_hint": "Choisissez d’abord le site. Nous proposons quoi y ajouter et préremplissons son relais, son emplacement et son dossier.",
+	"deviceform_site_none": "Aucun site",
+	"deviceform_site_none_note": "Non rattaché à un lieu de la carte.",
+	"deviceform_site_count": "Équipements : {count}",
+	"deviceform_site_via": "Via {relay}",
+	"deviceform_site_folder": "Dossier : {folder}",
+	"deviceform_site_found": "Trouvés par un scan, pas encore surveillés",
+	"deviceform_site_add": "Ajouter",
+	"deviceform_site_add_named": "Ajouter {name}",
+	"deviceform_site_setup": "Configurer",
+	"deviceform_site_setup_named": "Configurer {name}",
+	"deviceform_site_fewer": "En voir moins",
+	"deviceform_site_more": "Voir {count} de plus",
+	"deviceform_site_added": "{name} ajouté.",
+	"deviceform_site_open": "Ouvrir",
+	"deviceform_site_kinds": "Courants ici"
 }
