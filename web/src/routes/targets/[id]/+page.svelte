@@ -17,12 +17,16 @@
 		ApiError,
 		deleteTarget,
 		getTarget,
+		listAlertHistory,
+		listAlertRules,
 		listAlerts,
 		listCollectors,
 		probeTarget,
 		queryInstant,
 		updateTarget,
 		type Alert,
+		type AlertRule,
+		type AlertHistoryEntry,
 		type CollectorInfo,
 		type ProbeReport,
 		type Target,
@@ -44,6 +48,7 @@
 	import {
 		HISTORY_SLOTS,
 		loadProbeStatuses,
+		loadResponseTimesWindow,
 		loadHttpPhases,
 		loadResponseTimes,
 		PHASE_TOKENS,
@@ -55,6 +60,7 @@
 		type UptimeSummary
 	} from '#lib/metrics.js';
 	import Chart, { type Serie } from '#lib/components/Chart.svelte';
+	import { eventsFromHistory, thresholdsFor } from '#lib/chart-context.js';
 	import Readout from '#lib/components/Readout.svelte';
 	import Figure from '#lib/components/devices/Figure.svelte';
 	import Segmented from '#lib/components/devices/Segmented.svelte';
@@ -78,6 +84,7 @@
 		isVirtualInterface,
 		lastValue,
 		loadDeviceMetrics,
+		loadDeviceMetricsWindow,
 		sectionize,
 		steadyValue,
 		type DeviceMetricGroup,
@@ -313,6 +320,45 @@
 	// --- Alerts on this device -----------------------------------------------
 
 	let alerts = $state<Alert[]>([]);
+
+	// Context laid over this page's charts: rule thresholds and alert transitions.
+	let chartRules = $state.raw<AlertRule[]>([]);
+	let chartHistory = $state.raw<AlertHistoryEntry[]>([]);
+	const chartEvents = $derived(eventsFromHistory(chartHistory, chartRules, id));
+	/** One cursor for every chart of this device page. */
+	const syncKey = $derived(`target-${id}`);
+	const thresholdsOf = (metric: string, unit: string, scale = 1) =>
+		thresholdsFor(chartRules, id, metric, unit, scale);
+	/** One query serves every chart that asks for last week's window (5 min buckets). */
+	let previousCache: { key: string; groups: Promise<DeviceMetricGroup[]> } | null = null;
+	const previousOf = (metric: string) => async (window: { start: number; end: number }) => {
+		const key = `${id}|${Math.floor(window.start / 300)}|${Math.floor(window.end / 300)}`;
+		if (previousCache?.key !== key) {
+			const groups = loadDeviceMetricsWindow(id, window);
+			groups.catch(() => {
+				if (previousCache?.groups === groups) previousCache = null;
+			});
+			previousCache = { key, groups };
+		}
+		return (await previousCache.groups).find((g) => g.name === metric)?.series ?? [];
+	};
+	const previousResponse = (window: { start: number; end: number }) => loadResponseTimesWindow(id, window);
+
+	$effect(() => {
+		const targetId = id;
+		const seconds = rangeSeconds;
+		const controller = new AbortController();
+		const since = new Date(Date.now() - seconds * 1000).toISOString();
+		void Promise.all([
+			listAlertRules(controller.signal).catch(() => null),
+			listAlertHistory({ since, limit: 500 }, controller.signal).catch(() => null)
+		]).then(([rules, history]) => {
+			if (controller.signal.aborted || targetId !== id) return;
+			if (rules) chartRules = rules;
+			if (history) chartHistory = history;
+		});
+		return () => controller.abort();
+	});
 	/** Bell in the header: this monitor's active alerts, counted like the list does. */
 	const headerAlertCounts = $derived(countAlertsByTarget(alerts).get(id));
 	/** Bumped on each 30 s refresh so the timeline and the silence plate follow. */
@@ -866,7 +912,7 @@
 				<Panel title={m.devices_target_response_time()} class="mt-4">
 					{#snippet aside()}<span class="label-tape label-tape-unit">ms</span>{/snippet}
 					{#if responseTimes.length > 0}
-						<Chart series={responseTimes} unit="ms" height={220} />
+						<Chart series={responseTimes} unit="ms" height={220} {syncKey} events={chartEvents} thresholds={thresholdsOf('dumbmonit_probe_duration_seconds', 'ms', 1000)} loadPrevious={previousResponse} />
 					{:else}
 						<EmptyState title={m.devices_target_no_check_title()} description={target.enabled ? m.devices_target_no_check_desc() : m.devices_target_disabled_empty()}>
 							{#snippet action()}
@@ -881,7 +927,7 @@
 				{#if phaseTimes.length > 0}
 					<Panel title={m.monitor_phases_title()} description={m.monitor_phases_desc()} class="mt-4">
 						{#snippet aside()}<span class="label-tape label-tape-unit">ms</span>{/snippet}
-						<Chart series={phaseTimes} unit="ms" height={220} stacked colorTokens={[...PHASE_TOKENS]} />
+						<Chart series={phaseTimes} unit="ms" height={220} stacked colorTokens={[...PHASE_TOKENS]} {syncKey} events={chartEvents} />
 						<div class="mt-4 border-t border-line pt-4">
 							<PhaseBreakdown series={phaseTimes} />
 						</div>
@@ -914,7 +960,7 @@
 										<h3 class="text-sm font-semibold text-ink">{group.title}</h3>
 										{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
 									</div>
-									<Chart series={group.series} unit={group.unit} height={200} />
+									<Chart series={group.series} unit={group.unit} height={200} {syncKey} events={chartEvents} thresholds={thresholdsOf(group.name, group.unit)} loadPrevious={previousOf(group.name)} />
 								</div>
 							{/each}
 						</div>
@@ -953,7 +999,7 @@
 													<span class="text-sm font-semibold text-ink">{chart.title}</span>
 													{#if chart.unit}<span class="label-tape label-tape-unit">{chart.unit}</span>{/if}
 												</div>
-												<Chart series={chart.series} unit={chart.unit} height={140} />
+												<Chart series={chart.series} unit={chart.unit} height={140} pair={chart.series.length === 2 && chart.series[0].label === m.devices_metrics_in() && chart.series[1].label === m.devices_metrics_out()} {syncKey} events={chartEvents} thresholds={thresholdsOf(chart.name, chart.unit)} />
 											</div>
 										{/each}
 									</div>
@@ -990,7 +1036,7 @@
 												<h3 class="text-sm font-semibold text-ink" title={group.name}>{group.title}</h3>
 												{#if group.unit}<span class="label-tape label-tape-unit">{group.unit}</span>{/if}
 											</div>
-											<Chart series={group.series} unit={group.unit} height={180} />
+											<Chart series={group.series} unit={group.unit} height={180} {syncKey} events={chartEvents} thresholds={thresholdsOf(group.name, group.unit)} loadPrevious={previousOf(group.name)} />
 										</div>
 									{/each}
 								</div>
