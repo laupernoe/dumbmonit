@@ -242,6 +242,49 @@ the **public URL** of the
 the address you used when you last saved the page — never from a visitor's
 request.
 
+### SMS, webhook and Slack subscribers {#channel-subscribers}
+
+Besides email, a page can offer three more ways to follow it. Open them in the
+subscriber panel of the page editor (**Subscription channels**); the public
+page then shows one tab per channel.
+
+- **SMS.** Pick a Vonage, Telnyx or ASPSMS channel from
+  [Notifications](../alerting/notifications.md); its credentials and sender are
+  reused, not its recipients. The visitor enters a number in international
+  format (`+33612345678`) and confirms it with a six-digit code sent by text
+  message (five tries, 15 minutes). Updates are one short message with a
+  `Stop:` link. Texts cost money, so SMS sign-ups have lower limits (three
+  requests per client address and 25 in all per 15 minutes).
+- **Signed webhook.** The visitor gives an `http(s)` URL. DumbMonit POSTs a
+  signed `subscription.confirm` request carrying a `confirm_url`; the
+  subscription starts when the endpoint (or the visitor) calls it. The signing
+  secret (`whsec_…`) is shown once, on the page, right after the request. Every
+  request carries `X-DumbMonit-Timestamp` and
+  `X-DumbMonit-Signature: sha256=<hex>`, the HMAC-SHA256 of
+  `<timestamp>.<body>` with the secret. The JSON body holds `type`
+  (`incident` or `maintenance`), `page`, `incident` (id, title, status,
+  severity, dates), `message` and `unsubscribe_url`. The URL goes through the
+  same outbound guard as notification channels (the server's own addresses are
+  refused).
+- **Slack.** The visitor pastes the incoming webhook URL of their own Slack
+  (`https://hooks.slack.com/services/…`). DumbMonit posts a test message with
+  a confirmation link; every update then carries an unsubscribe link.
+- **Services followed.** A subscriber can tick the services they care about.
+  When you create an announcement for a page you can tick the services it
+  concerns (`components` in the API): subscribers who follow only other
+  services are not told. An announcement with no service ticked, and a
+  subscriber with none ticked, mean "everything".
+- **Delivery.** SMS, webhook and Slack messages go through a queue: a failure
+  is retried after 1 minute, 5 minutes, 30 minutes, 2 hours, then dropped after
+  five tries or a day. Messages are spaced out so a provider is not flooded.
+- **Private pages.** On a page protected by a password or by sign-in, only
+  someone who can see the page can subscribe.
+- **Admin.** The panel lists subscribers of every channel (phone numbers and
+  URLs are masked, filter by channel), exports them as CSV
+  (`GET /api/status-pages/{id}/subscribers.csv`; URLs stay masked) and removes
+  any of them. The channels a page opens travel with
+  [backups](../install/backup.md); the subscribers themselves do not.
+
 ## 4. Share the link
 
 The page lives at `https://your-server/s/<address>`. Everything under `/s/` and

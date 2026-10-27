@@ -224,4 +224,4 @@ export function canUseForAlerts(child: string, parent: string): boolean {
 }
 
 /** Link types a correction can draw, in the order the editor offers them. */
-export const LINK_KINDS = ['manual', 'lldp', 'hosted', 'hypervisor', 'backup', 'samehost', 'relay', 'firewall'] as const;
+export const LINK_KINDS = ['manual', 'lldp', 'l2', 'hosted', 'hypervisor', 'backup', 'samehost', 'relay', 'firewall'] as const;

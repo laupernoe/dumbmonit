@@ -53,11 +53,11 @@ pub struct SectionReport {
 }
 
 impl SectionReport {
-    fn new(section: &str) -> Self {
+    pub(crate) fn new(section: &str) -> Self {
         Self { section: section.to_string(), ..Self::default() }
     }
 
-    fn count(&mut self, outcome: RestoreOutcome) {
+    pub(crate) fn count(&mut self, outcome: RestoreOutcome) {
         match outcome {
             RestoreOutcome::Created => self.created += 1,
             RestoreOutcome::Updated => self.updated += 1,
@@ -65,7 +65,7 @@ impl SectionReport {
         }
     }
 
-    fn refused(&mut self, what: &str, error: &anyhow::Error) {
+    pub(crate) fn refused(&mut self, what: &str, error: &anyhow::Error) {
         self.skipped += 1;
         self.notes.push(format!("{what} was refused by the database: {error}"));
     }
@@ -119,8 +119,10 @@ pub async fn restore(
 
     let refs = target_ids(&mut tx).await?;
     report.push(restore_locations(&mut tx, bundle, &refs).await?);
+    report.push(restore_teams(&mut tx, bundle).await?);
     report.push(restore_topology_corrections(&mut tx, bundle, &refs).await?);
     report.push(restore_topology_rules(&mut tx, bundle, &refs).await?);
+    report.push(restore_dashboards(&mut tx, bundle).await?);
 
     report.push(restore_channels(&mut tx, cipher, bundle).await?);
     let channels = channel_ids(&mut tx).await?;
@@ -135,6 +137,12 @@ pub async fn restore(
     report.push(restore_agent_tokens(&mut tx, bundle).await?);
     report.push(restore_api_tokens(&mut tx, bundle).await?);
     report.push(restore_push_monitors(&mut tx, cipher, bundle, &refs).await?);
+    report.push(crate::backup::oncall::restore(&mut tx, cipher, &bundle.oncall).await?);
+    report.push(restore_runbooks(&mut tx, bundle).await?);
+    report.push(restore_remediation_actions(&mut tx, cipher, bundle, &refs).await?);
+    report.push(restore_remediation_policies(&mut tx, bundle, &refs).await?);
+    report.push(restore_netconfig_host_keys(&mut tx, bundle, &refs).await?);
+    report.push(restore_netconfig_versions(&mut tx, cipher, bundle, &refs).await?);
 
     warnings(bundle, &mut report);
 
@@ -152,8 +160,40 @@ pub async fn restore(
     Ok(report)
 }
 
+/// Applique, dans la transaction de l'appelant, les sections qu'un fichier de
+/// configuration déclare (voir [`crate::gitops`]) : équipements, canaux, règles,
+/// surcharges, fenêtres de maintenance et pages de statut. La validation et
+/// l'annulation restent à l'appelant, qui doit aussi traiter les notes des
+/// sections comme des refus.
+pub(crate) async fn restore_config(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+) -> Result<Vec<SectionReport>> {
+    let mut sections = vec![restore_targets(tx, cipher, bundle).await?];
+    let refs = target_ids(tx).await?;
+    sections.push(restore_channels(tx, cipher, bundle).await?);
+    let channels = channel_ids(tx).await?;
+    sections.push(restore_rules(tx, bundle, &refs, &channels).await?);
+    sections.push(restore_overrides(tx, bundle, &refs).await?);
+    sections.push(restore_silences(tx, bundle, &refs).await?);
+    sections.push(restore_status_pages(tx, bundle, &refs).await?);
+    Ok(sections)
+}
+
 fn warnings(bundle: &Bundle, report: &mut RestoreReport) {
-    if bundle.users.iter().any(|u| u.password_hash.is_none() && u.oidc_subject.is_none()) {
+    if !bundle.remediation_policies.is_empty() {
+        report.warnings.push(
+            "Automatic remediation policies are restored disarmed: an administrator must arm \
+             each one again, in two steps."
+                .to_string(),
+        );
+    }
+    if bundle
+        .users
+        .iter()
+        .any(|u| u.password_hash.is_none() && u.oidc_subject.is_none() && u.saml_subject.is_none())
+    {
         report.warnings.push(
             "This backup holds no account passwords. Restored accounts cannot sign in until an \
              administrator sets a password for them, or until they sign in through SSO."
@@ -1193,6 +1233,41 @@ async fn restore_status_pages(
             }
         }
 
+        // Canaux d'abonnement : un canal de notification désigné par son nom
+        // qui n'existe pas ici laisse le réglage tel qu'il est.
+        if let Some(subscriptions) = &page.subscriptions {
+            let channels = channel_ids(tx).await?;
+            let named =
+                |name: &Option<String>| name.as_ref().and_then(|n| channels.get(n).copied());
+            let email = named(&subscriptions.email_channel);
+            let sms = named(&subscriptions.sms_channel);
+            for (wanted, got, label) in [
+                (&subscriptions.email_channel, email, "email"),
+                (&subscriptions.sms_channel, sms, "SMS"),
+            ] {
+                if wanted.is_some() && got.is_none() {
+                    report.notes.push(format!(
+                        "Status page \"{}\": the {label} subscription channel is not on this instance",
+                        page.slug
+                    ));
+                }
+            }
+            sqlx::query(
+                "UPDATE status_pages SET subscribe_webhook = ?, subscribe_slack = ?,
+                     subscribe_channel_id = COALESCE(?, subscribe_channel_id),
+                     subscribe_sms_channel_id = COALESCE(?, subscribe_sms_channel_id)
+                 WHERE id = ?",
+            )
+            .bind(i64::from(subscriptions.webhook))
+            .bind(i64::from(subscriptions.slack))
+            .bind(email)
+            .bind(sms)
+            .bind(id)
+            .execute(&mut **tx)
+            .await
+            .context("canaux d'abonnement de la page de statut")?;
+        }
+
         // Dossiers cochés : ajoutés ou remis à leur rang, jamais retirés.
         for (position, name) in page.groups.iter().enumerate() {
             let name = name.trim();
@@ -1405,6 +1480,46 @@ async fn restore_users(
             }
         }
 
+        // Même règle pour l'identité SAML, unique par IdP.
+        let mut saml = user.saml_subject.clone().zip(user.saml_issuer.clone());
+        if let Some((subject, issuer)) = &saml {
+            let taken =
+                sqlx::query("SELECT 1 FROM users WHERE saml_subject = ? AND saml_issuer = ?")
+                    .bind(subject)
+                    .bind(issuer)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("recherche du rattachement SAML")?;
+            if taken.is_some() {
+                report.notes.push(format!(
+                    "Account \"{}\": its SAML identity already belongs to another account here; \
+                     it was restored without the link.",
+                    user.username
+                ));
+                saml = None;
+            }
+        }
+        let (saml_subject, saml_issuer) = saml.unzip();
+
+        // `scim_id` est unique : déjà pris, le compte est restauré sans son
+        // rattachement SCIM, que le fournisseur refera.
+        let mut scim_id = user.scim_id.clone();
+        if let Some(value) = &scim_id {
+            let taken = sqlx::query("SELECT 1 FROM users WHERE scim_id = ?")
+                .bind(value)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche du rattachement SCIM")?;
+            if taken.is_some() {
+                report.notes.push(format!(
+                    "Account \"{}\": its SCIM identity already belongs to another account here; \
+                     it was restored without the link.",
+                    user.username
+                ));
+                scim_id = None;
+            }
+        }
+
         let totp_secret = user
             .totp_secret
             .as_ref()
@@ -1414,8 +1529,10 @@ async fn restore_users(
 
         let row = sqlx::query(
             "INSERT INTO users (username, display_name, role, password_hash, oidc_subject,
-                                oidc_issuer, disabled, totp_secret, totp_enabled)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
+                                oidc_issuer, saml_subject, saml_issuer, disabled, totp_secret,
+                                totp_enabled, scim_id, scim_external_id, scim_email,
+                                disabled_by_scim)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING id",
         )
         .bind(&user.username)
         .bind(&user.display_name)
@@ -1423,9 +1540,15 @@ async fn restore_users(
         .bind(&user.password_hash)
         .bind(&subject)
         .bind(&user.oidc_issuer)
+        .bind(&saml_subject)
+        .bind(&saml_issuer)
         .bind(i64::from(user.disabled))
         .bind(totp_secret.as_deref())
         .bind(i64::from(user.totp_enabled && totp_secret.is_some()))
+        .bind(&scim_id)
+        .bind(scim_id.as_ref().and(user.scim_external_id.as_ref()))
+        .bind(scim_id.as_ref().and(user.scim_email.as_ref()))
+        .bind(i64::from(user.disabled && user.disabled_by_scim))
         .fetch_one(&mut **tx)
         .await
         .context("création du compte")?;
@@ -1526,6 +1649,118 @@ async fn restore_api_tokens(
         {
             Ok(_) => report.created += 1,
             Err(error) => report.refused(&format!("API token \"{}\"", token.name), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Clés d'hôte mémorisées : identique, laissée ; différente, remplacée par
+/// celle du lot (c'est elle que l'opérateur a validée).
+async fn restore_netconfig_host_keys(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("netconfig_host_keys");
+    for entry in &bundle.netconfig_host_keys {
+        let Some(target_id) = refs.get(&entry.target).copied() else {
+            report.skipped += 1;
+            report.notes.push(format!(
+                "SSH host key: its device ({}) is not in this backup.",
+                entry.target
+            ));
+            continue;
+        };
+        let existing: Option<Option<String>> =
+            sqlx::query_scalar("SELECT host_key FROM netconfig_state WHERE target_id = ?")
+                .bind(target_id)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de la clé d'hôte")?;
+        if existing.as_ref().and_then(Option::as_deref) == Some(entry.host_key.as_str()) {
+            report.skipped += 1;
+            continue;
+        }
+        let outcome = sqlx::query(
+            "INSERT INTO netconfig_state (target_id, host_key, host_key_pinned_at)
+             VALUES (?, ?, datetime('now'))
+             ON CONFLICT (target_id) DO UPDATE
+             SET host_key = excluded.host_key, host_key_pinned_at = excluded.host_key_pinned_at,
+                 host_key_seen = NULL, host_key_seen_at = NULL",
+        )
+        .bind(target_id)
+        .bind(&entry.host_key)
+        .execute(&mut **tx)
+        .await
+        .map(|_| match existing {
+            Some(_) => RestoreOutcome::Updated,
+            None => RestoreOutcome::Created,
+        });
+        match outcome {
+            Ok(outcome) => report.count(outcome),
+            Err(error) => {
+                report.refused(&format!("SSH host key of {}", entry.target), &error.into())
+            }
+        }
+    }
+    Ok(report)
+}
+
+/// Versions des configurations réseau : rechiffrées avec la clé de cette
+/// instance, empreinte de comparaison recalculée. Une version déjà présente
+/// (même équipement, même date de relevé) est laissée.
+async fn restore_netconfig_versions(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("netconfig_versions");
+    for entry in &bundle.netconfig_versions {
+        let Some(target_id) = refs.get(&entry.target).copied() else {
+            report.skipped += 1;
+            continue;
+        };
+        let present: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM netconfig_versions WHERE target_id = ? AND fetched_at = ?",
+        )
+        .bind(target_id)
+        .bind(&entry.fetched_at)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche d'une version de configuration")?;
+        let too_large = entry.content.len() > dumbmonit_collectors::netconfig::MAX_CONFIG_BYTES;
+        if present.is_some() || too_large {
+            report.skipped += 1;
+            continue;
+        }
+        let sealed = crate::netconfig::seal(cipher, &entry.content)?;
+        let digest = crate::netconfig::digest_of(cipher, &entry.profile, &entry.content);
+        let outcome = sqlx::query(
+            "INSERT INTO netconfig_versions
+                 (target_id, fetched_at, last_seen_at, profile, digest, size_bytes, lines,
+                  added, removed, content_enc)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(target_id)
+        .bind(&entry.fetched_at)
+        .bind(&entry.last_seen_at)
+        .bind(&entry.profile)
+        .bind(&digest)
+        .bind(entry.content.len() as i64)
+        .bind(entry.content.lines().count() as i64)
+        .bind(entry.added)
+        .bind(entry.removed)
+        .bind(&sealed)
+        .execute(&mut **tx)
+        .await
+        .map(|_| RestoreOutcome::Created);
+        match outcome {
+            Ok(outcome) => report.count(outcome),
+            Err(error) => report.refused(
+                &format!("Configuration version of {} ({})", entry.target, entry.fetched_at),
+                &error.into(),
+            ),
         }
     }
     Ok(report)
@@ -1676,6 +1911,238 @@ async fn restore_locations(
         .execute(&mut **tx)
         .await
         .context("emplacement d'un équipement")?;
+    }
+    Ok(report)
+}
+
+/// Équipes : créées ou mises à jour par nom. Les droits sont remplacés par ceux
+/// du lot ; les membres du lot sont ajoutés (un compte absent est signalé), sans
+/// retirer ceux que l'instance a déjà.
+async fn restore_teams(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Result<SectionReport> {
+    let mut report = SectionReport::new("teams");
+    if let Some(settings) = &bundle.teams_settings
+        && serde_json::from_value::<crate::auth::teams::TeamSettings>(settings.clone()).is_ok()
+    {
+        sqlx::query(
+            "INSERT INTO settings (key, value) VALUES (?, ?)
+             ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        )
+        .bind(crate::auth::teams::SETTINGS_KEY)
+        .bind(serde_json::to_vec(settings)?)
+        .execute(&mut **tx)
+        .await
+        .context("réglages des équipes")?;
+    }
+    for team in &bundle.teams {
+        let Ok(name) = crate::auth::teams::validate_name(&team.name) else {
+            report.skipped += 1;
+            report.notes.push(format!("team \"{}\" has no valid name", team.name));
+            continue;
+        };
+        let existing: Option<i64> =
+            sqlx::query_scalar("SELECT id FROM teams WHERE name = ? COLLATE NOCASE")
+                .bind(&name)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de l'équipe")?;
+        let id: i64 = match existing {
+            Some(id) => {
+                sqlx::query("UPDATE teams SET description = ?, idp_groups = ? WHERE id = ?")
+                    .bind(&team.description)
+                    .bind(serde_json::to_string(&team.idp_groups)?)
+                    .bind(id)
+                    .execute(&mut **tx)
+                    .await
+                    .context("mise à jour de l'équipe")?;
+                report.count(RestoreOutcome::Updated);
+                id
+            }
+            None => {
+                let id = sqlx::query_scalar(
+                    "INSERT INTO teams (name, description, idp_groups) VALUES (?, ?, ?)
+                     RETURNING id",
+                )
+                .bind(&name)
+                .bind(&team.description)
+                .bind(serde_json::to_string(&team.idp_groups)?)
+                .fetch_one(&mut **tx)
+                .await
+                .context("création de l'équipe")?;
+                report.count(RestoreOutcome::Created);
+                id
+            }
+        };
+        // Rattachement SCIM : repris seulement sur une équipe qui n'en a pas, et
+        // si aucune autre ne porte déjà cet identifiant.
+        if let Some(scim_id) = &team.scim_id {
+            sqlx::query(
+                "UPDATE teams SET scim_id = ?, scim_external_id = ?, scim_created = ?
+                 WHERE id = ? AND scim_id IS NULL
+                   AND NOT EXISTS (SELECT 1 FROM teams WHERE scim_id = ?)",
+            )
+            .bind(scim_id)
+            .bind(&team.scim_external_id)
+            .bind(i64::from(team.scim_created))
+            .bind(id)
+            .bind(scim_id)
+            .execute(&mut **tx)
+            .await
+            .context("rattachement SCIM de l'équipe")?;
+        }
+        sqlx::query("DELETE FROM team_folder_grants WHERE team_id = ?")
+            .bind(id)
+            .execute(&mut **tx)
+            .await
+            .context("droits de l'équipe")?;
+        for grant in &team.grants {
+            sqlx::query(
+                "INSERT INTO team_folder_grants (team_id, folder, level) VALUES (?, ?, ?)
+                 ON CONFLICT(team_id, folder) DO UPDATE SET level = excluded.level",
+            )
+            .bind(id)
+            .bind(crate::auth::teams::normalize_folder(&grant.folder))
+            .bind(grant.level.as_str())
+            .execute(&mut **tx)
+            .await
+            .context("droit de l'équipe")?;
+        }
+        for member in &team.members {
+            let source = match member.source.as_str() {
+                "idp" | "scim" => member.source.as_str(),
+                _ => "manual",
+            };
+            let user: Option<i64> =
+                sqlx::query_scalar("SELECT id FROM users WHERE username = ? COLLATE NOCASE")
+                    .bind(&member.username)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("membre de l'équipe")?;
+            let Some(user) = user else {
+                report.notes.push(format!(
+                    "team \"{name}\": account \"{}\" not found, membership skipped",
+                    member.username
+                ));
+                continue;
+            };
+            sqlx::query(
+                "INSERT INTO team_members (team_id, user_id, source) VALUES (?, ?, ?)
+                 ON CONFLICT(team_id, user_id) DO NOTHING",
+            )
+            .bind(id)
+            .bind(user)
+            .bind(source)
+            .execute(&mut **tx)
+            .await
+            .context("membre de l'équipe")?;
+        }
+    }
+    Ok(report)
+}
+
+/// Tableaux de bord, par propriétaire et nom (sans casse) : identique, laissé ;
+/// différent, mis à jour. Un tableau personnel dont le compte n'existe pas ici
+/// est ignoré (les comptes sont restaurés avant).
+async fn restore_dashboards(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    use crate::api::dashboards::{DashboardPayload, validate};
+    let mut report = SectionReport::new("dashboards");
+    for entry in &bundle.dashboards {
+        let name = entry.name.trim();
+        let widgets = match serde_json::from_value(if entry.widgets.is_null() {
+            serde_json::json!([])
+        } else {
+            entry.widgets.clone()
+        }) {
+            Ok(widgets) => widgets,
+            Err(_) => {
+                report.skipped += 1;
+                report.notes.push(format!("dashboard \"{name}\" has an unreadable grid"));
+                continue;
+            }
+        };
+        let input = match validate(DashboardPayload {
+            name: name.to_string(),
+            shared: entry.shared,
+            range_secs: entry.range_secs,
+            refresh_secs: entry.refresh_secs,
+            widgets,
+        }) {
+            Ok(input) => input,
+            Err(_) => {
+                report.skipped += 1;
+                report.notes.push(format!("dashboard \"{name}\" is not valid"));
+                continue;
+            }
+        };
+        let owner_id: Option<i64> = match &entry.owner {
+            Some(owner) => {
+                sqlx::query_scalar("SELECT id FROM users WHERE username = ? COLLATE NOCASE")
+                    .bind(owner)
+                    .fetch_optional(&mut **tx)
+                    .await
+                    .context("propriétaire d'un tableau de bord")?
+            }
+            None => None,
+        };
+        if !entry.shared && owner_id.is_none() {
+            report.skipped += 1;
+            report.notes.push(format!("dashboard \"{name}\": its owner does not exist here"));
+            continue;
+        }
+        let widgets = serde_json::to_string(&input.widgets).context("grille d'un tableau")?;
+        let existing = sqlx::query(
+            "SELECT id, range_secs, refresh_secs, widgets FROM dashboards
+             WHERE name = ? COLLATE NOCASE AND shared = ? AND (shared = 1 OR owner_id = ?)",
+        )
+        .bind(&input.name)
+        .bind(input.shared)
+        .bind(owner_id)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche du tableau de bord")?;
+        if let Some(row) = &existing {
+            if row.try_get::<i64, _>("range_secs")? == input.range_secs
+                && row.try_get::<i64, _>("refresh_secs")? == input.refresh_secs
+                && row.try_get::<String, _>("widgets")? == widgets
+            {
+                report.skipped += 1;
+                continue;
+            }
+            let id: i64 = row.try_get("id")?;
+            let result = sqlx::query(
+                "UPDATE dashboards SET range_secs = ?, refresh_secs = ?, widgets = ?,
+                     updated_at = strftime('%Y-%m-%d %H:%M:%S', 'now') WHERE id = ?",
+            )
+            .bind(input.range_secs)
+            .bind(input.refresh_secs)
+            .bind(&widgets)
+            .bind(id)
+            .execute(&mut **tx)
+            .await;
+            match result {
+                Ok(_) => report.count(RestoreOutcome::Updated),
+                Err(error) => report.refused(&format!("dashboard \"{name}\""), &error.into()),
+            }
+            continue;
+        }
+        let result = sqlx::query(
+            "INSERT INTO dashboards (name, shared, owner_id, range_secs, refresh_secs, widgets)
+             VALUES (?, ?, ?, ?, ?, ?)",
+        )
+        .bind(&input.name)
+        .bind(input.shared)
+        .bind(owner_id)
+        .bind(input.range_secs)
+        .bind(input.refresh_secs)
+        .bind(&widgets)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused(&format!("dashboard \"{name}\""), &error.into()),
+        }
     }
     Ok(report)
 }
@@ -1887,6 +2354,268 @@ async fn restore_packs(tx: &mut Transaction<'_, Sqlite>, bundle: &Bundle) -> Res
             Ok(_) if existing.is_some() => report.count(RestoreOutcome::Updated),
             Ok(_) => report.count(RestoreOutcome::Created),
             Err(error) => report.refused(&format!("pack \"{}\"", entry.id), &error.into()),
+        }
+    }
+    Ok(report)
+}
+
+/// Procédures, par titre : même texte et mêmes rattachements, laissée ;
+/// sinon, remplacée.
+async fn restore_runbooks(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+) -> Result<SectionReport> {
+    use crate::remediation::runbooks::RunbookDraft;
+    let mut report = SectionReport::new("runbooks");
+    for entry in &bundle.runbooks {
+        let draft = RunbookDraft {
+            title: entry.title.clone(),
+            body: entry.body.clone(),
+            links: entry.links.clone(),
+        };
+        let draft = match draft.validate() {
+            Ok(draft) => draft,
+            Err(why) => {
+                report.skipped += 1;
+                report.notes.push(format!("runbook \"{}\": {why}", entry.title));
+                continue;
+            }
+        };
+        let existing: Option<(i64, String)> =
+            sqlx::query_as("SELECT id, body FROM runbooks WHERE title = ? ORDER BY id LIMIT 1")
+                .bind(&draft.title)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de la procédure")?;
+        let id = match &existing {
+            Some((id, body)) => {
+                let links: Vec<(String, String)> = sqlx::query_as(
+                    "SELECT scope, value FROM runbook_links WHERE runbook_id = ?
+                     ORDER BY scope, value",
+                )
+                .bind(id)
+                .fetch_all(&mut **tx)
+                .await
+                .context("lecture des rattachements")?;
+                let same_links = links.len() == draft.links.len()
+                    && links
+                        .iter()
+                        .zip(&draft.links)
+                        .all(|((scope, value), link)| *scope == link.scope && *value == link.value);
+                if *body == draft.body && same_links {
+                    report.skipped += 1;
+                    continue;
+                }
+                sqlx::query(
+                    "UPDATE runbooks SET body = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%S', 'now')
+                     WHERE id = ?",
+                )
+                .bind(&draft.body)
+                .bind(id)
+                .execute(&mut **tx)
+                .await
+                .context("mise à jour de la procédure")?;
+                *id
+            }
+            None => sqlx::query_scalar(
+                "INSERT INTO runbooks (title, body, updated_by) VALUES (?, ?, 'backup')
+                 RETURNING id",
+            )
+            .bind(&draft.title)
+            .bind(&draft.body)
+            .fetch_one(&mut **tx)
+            .await
+            .context("création de la procédure")?,
+        };
+        sqlx::query("DELETE FROM runbook_links WHERE runbook_id = ?")
+            .bind(id)
+            .execute(&mut **tx)
+            .await
+            .context("effacement des rattachements")?;
+        for link in &draft.links {
+            sqlx::query("INSERT INTO runbook_links (runbook_id, scope, value) VALUES (?, ?, ?)")
+                .bind(id)
+                .bind(&link.scope)
+                .bind(&link.value)
+                .execute(&mut **tx)
+                .await
+                .context("écriture d'un rattachement")?;
+        }
+        report.count(if existing.is_some() {
+            RestoreOutcome::Updated
+        } else {
+            RestoreOutcome::Created
+        });
+    }
+    Ok(report)
+}
+
+/// Actions, par nom. Une action revalidée par le catalogue de ce serveur ; une
+/// action modifiée désarme les politiques qui l'emploient.
+async fn restore_remediation_actions(
+    tx: &mut Transaction<'_, Sqlite>,
+    cipher: &Cipher,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("remediation_actions");
+    for entry in &bundle.remediation_actions {
+        let spec = match crate::remediation::ActionSpec::parse(&entry.kind, &entry.params) {
+            Ok(spec) => spec,
+            Err(why) => {
+                report.skipped += 1;
+                report.notes.push(format!("action \"{}\": {why}", entry.name));
+                continue;
+            }
+        };
+        if let Err(why) = crate::remediation::validate_secrets(spec.kind(), &entry.secrets) {
+            report.skipped += 1;
+            report.notes.push(format!("action \"{}\": {why}", entry.name));
+            continue;
+        }
+        let target = match &entry.target {
+            Some(reference) => match refs.get(reference) {
+                Some(id) => Some(*id),
+                None => {
+                    report.skipped += 1;
+                    report.notes.push(format!(
+                        "action \"{}\": the device \"{reference}\" is not in this instance",
+                        entry.name
+                    ));
+                    continue;
+                }
+            },
+            None => None,
+        };
+        let params = spec.to_params().to_string();
+        let secrets = if entry.secrets.values().any(|value| !value.is_empty()) {
+            Some(cipher.encrypt(&serde_json::to_vec(&entry.secrets)?)?)
+        } else {
+            None
+        };
+        let existing: Option<(i64, String, String, Option<i64>)> = sqlx::query_as(
+            "SELECT id, kind, params, target_id FROM remediation_actions WHERE name = ?",
+        )
+        .bind(&entry.name)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche de l'action")?;
+        match existing {
+            Some((_, kind, current, target_id))
+                if kind == spec.kind() && current == params && target_id == target =>
+            {
+                report.skipped += 1;
+            }
+            Some((id, ..)) => {
+                sqlx::query(
+                    "UPDATE remediation_actions SET kind = ?, params = ?, secrets = ?, target_id = ?,
+                         updated_at = strftime('%Y-%m-%dT%H:%M:%S', 'now')
+                     WHERE id = ?",
+                )
+                .bind(spec.kind())
+                .bind(&params)
+                .bind(&secrets)
+                .bind(target)
+                .bind(id)
+                .execute(&mut **tx)
+                .await
+                .context("mise à jour de l'action")?;
+                sqlx::query(
+                    "UPDATE remediation_policies SET enabled = 0, armed_by = NULL, armed_at = NULL
+                     WHERE action_id = ?",
+                )
+                .bind(id)
+                .execute(&mut **tx)
+                .await
+                .context("désarmement des politiques")?;
+                report.count(RestoreOutcome::Updated);
+            }
+            None => {
+                let result = sqlx::query(
+                    "INSERT INTO remediation_actions (name, kind, params, secrets, target_id)
+                     VALUES (?, ?, ?, ?, ?)",
+                )
+                .bind(&entry.name)
+                .bind(spec.kind())
+                .bind(&params)
+                .bind(&secrets)
+                .bind(target)
+                .execute(&mut **tx)
+                .await;
+                match result {
+                    Ok(_) => report.count(RestoreOutcome::Created),
+                    Err(error) => report.refused("action", &error.into()),
+                }
+            }
+        }
+    }
+    Ok(report)
+}
+
+/// Politiques : toujours créées désarmées, jamais en double (même action,
+/// même règle, même équipement).
+async fn restore_remediation_policies(
+    tx: &mut Transaction<'_, Sqlite>,
+    bundle: &Bundle,
+    refs: &HashMap<String, i64>,
+) -> Result<SectionReport> {
+    let mut report = SectionReport::new("remediation_policies");
+    for entry in &bundle.remediation_policies {
+        let action: Option<i64> =
+            sqlx::query_scalar("SELECT id FROM remediation_actions WHERE name = ?")
+                .bind(&entry.action)
+                .fetch_optional(&mut **tx)
+                .await
+                .context("recherche de l'action de la politique")?;
+        let Some(action) = action else {
+            report.skipped += 1;
+            report.notes.push(format!("policy: the action \"{}\" is missing", entry.action));
+            continue;
+        };
+        let target = match &entry.target {
+            Some(reference) => match refs.get(reference) {
+                Some(id) => Some(*id),
+                None => {
+                    report.skipped += 1;
+                    report.notes.push(format!(
+                        "policy: the device \"{reference}\" is not in this instance"
+                    ));
+                    continue;
+                }
+            },
+            None => None,
+        };
+        let exists: Option<i64> = sqlx::query_scalar(
+            "SELECT id FROM remediation_policies
+             WHERE action_id = ? AND rule_uid = ? AND target_id IS ?",
+        )
+        .bind(action)
+        .bind(&entry.rule_uid)
+        .bind(target)
+        .fetch_optional(&mut **tx)
+        .await
+        .context("recherche de la politique")?;
+        if exists.is_some() {
+            report.skipped += 1;
+            continue;
+        }
+        let result = sqlx::query(
+            "INSERT INTO remediation_policies
+                 (action_id, rule_uid, target_id, after_minutes, max_attempts, window_minutes,
+                  enabled)
+             VALUES (?, ?, ?, ?, ?, ?, 0)",
+        )
+        .bind(action)
+        .bind(&entry.rule_uid)
+        .bind(target)
+        .bind(entry.after_minutes)
+        .bind(entry.max_attempts)
+        .bind(entry.window_minutes)
+        .execute(&mut **tx)
+        .await;
+        match result {
+            Ok(_) => report.count(RestoreOutcome::Created),
+            Err(error) => report.refused("policy", &error.into()),
         }
     }
     Ok(report)

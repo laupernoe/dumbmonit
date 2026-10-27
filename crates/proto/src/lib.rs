@@ -11,7 +11,9 @@ mod description;
 mod discovery;
 pub mod env;
 mod eventlog;
+mod logs;
 mod push;
+pub mod remediation;
 mod sample;
 mod selfupdate;
 mod target;
@@ -22,7 +24,8 @@ pub use collector::{Collector, ProbeError};
 pub use command::{
     AgentCommand, CMD_CONTAINER_RESTART, CMD_CONTAINER_UPDATE, CMD_PROBE, COMMAND_MAX_AGE_SECS,
     COMMAND_RESULT_MAX_BYTES, COMMAND_RESULT_TRUNCATED, COMMANDS_PATH, CommandReport,
-    CommandStatus, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS, truncate_result,
+    CommandStatus, NetconfigCapture, ProbeJob, ProbeOutcome, RELAY_PATH, RELAY_POLL_HOLD_SECS,
+    truncate_result,
 };
 pub use credential::{
     Credential, CredentialInput, Resolved, SnmpV3Auth, SnmpV3AuthInput, SnmpV3AuthProtocol,
@@ -43,12 +46,17 @@ pub use eventlog::{
     EventLogReport, EventLogRule, MAX_EVENT_ID_RANGES, MAX_EVENT_LOG_ENTRIES,
     MAX_EVENT_MESSAGE_CHARS, format_event_ids, parse_event_ids, truncate_message,
 };
+
+pub use logs::{
+    LOGS_PATH, LogBatch, LogLine, LogsSetting, MAX_LOG_LINES, MAX_LOG_MESSAGE, level_rank,
+};
 pub use push::{
     AGENT_KEY_HEADER, AGENT_SECRET_HEADER, AGENT_SECRET_PREFIX, AgentIdentity, BINDING_MISMATCH,
     DeclaredMonitor, INGEST_PATH, InstalledPackage, MAX_BATCH_SAMPLES, MAX_DECLARED_MONITORS,
     MAX_INVENTORY_PACKAGES, PUSH_PROTOCOL_VERSION, PushAck, PushBatch, RelaySetting,
     SoftwareInventory, TOKEN_PREFIX,
 };
+pub use remediation::{CMD_SCRIPT_RUN, CMD_SERVICE_RESTART, DeclaredScript, RemediationInfo};
 pub use sample::{MetricKind, Sample};
 pub use selfupdate::{
     AGENT_FILE_PREFIX, AgentUpdateOffer, SIGNATURE_SUFFIX, SelfUpdateAbility, SelfUpdateInfo,

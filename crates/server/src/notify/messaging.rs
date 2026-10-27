@@ -354,7 +354,7 @@ impl Notifier for Webex {
 /// est dans le champ `status` de chaque élément de `messages`.
 pub struct Vonage {
     http: reqwest::Client,
-    api_key: String,
+    api_key: SecretString,
     api_secret: SecretString,
     from: String,
     to: Vec<String>,
@@ -367,7 +367,9 @@ impl Vonage {
         let to: Vec<String> =
             recipients(channel, "+33612345678")?.iter().map(|n| digits(n)).collect();
         Ok(Self {
-            api_key: channel.setting("api_key")?,
+            // La clé est rangée avec les secrets : l'API refuse `api_key` dans
+            // les réglages, qu'elle renvoie en clair.
+            api_key: channel.secret("api_key")?,
             api_secret: channel.secret("api_secret")?,
             from: channel.setting("from")?,
             to,
@@ -377,7 +379,7 @@ impl Vonage {
 
     fn form(&self, message: &Message, recipient: &str) -> Vec<(String, String)> {
         vec![
-            ("api_key".to_string(), self.api_key.clone()),
+            ("api_key".to_string(), self.api_key.expose().to_string()),
             ("api_secret".to_string(), self.api_secret.expose().to_string()),
             ("from".to_string(), self.from.clone()),
             ("to".to_string(), recipient.to_string()),
@@ -659,8 +661,8 @@ mod tests {
     fn vonage_produit_le_formulaire_et_lit_le_statut_du_corps() {
         let config = test_config(
             "vonage",
-            json!({"api_key": "ab12cd34", "from": "DumbMonit", "to": ["+33 6 12 34 56 78"]}),
-            json!({"api_secret": "shh"}),
+            json!({"from": "DumbMonit", "to": ["+33 6 12 34 56 78"]}),
+            json!({"api_key": "ab12cd34", "api_secret": "shh"}),
         );
         let notifier = Vonage::new(client(), &config).unwrap();
         assert_eq!(notifier.to, vec!["33612345678"]);

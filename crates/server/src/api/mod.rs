@@ -1,8 +1,9 @@
 mod activedirectory;
 mod ad_deploy;
-mod agent_commands;
+pub(crate) mod agent_commands;
 mod agent_events;
 pub(crate) mod agent_files;
+mod agent_logs;
 mod agent_tls;
 mod agent_updates;
 mod alert_actions;
@@ -14,8 +15,10 @@ mod blacklist;
 mod channels;
 mod collectors;
 mod cves;
+pub mod dashboards;
 pub(crate) mod discovery;
 mod error;
+mod gitops;
 mod health;
 mod ical;
 mod ingest;
@@ -30,14 +33,17 @@ mod mcp;
 mod metrics;
 mod monitor_imports;
 mod music;
+mod netconfig;
 mod netinventory;
 mod notify_policy;
 mod observability;
 mod oidc;
 mod onboarding;
+mod oncall;
 mod openapi;
 mod opnsense;
 mod opnsense_live;
+mod otlp;
 mod packs;
 mod passkeys;
 mod pbs;
@@ -49,22 +55,28 @@ mod proxmox;
 mod push;
 mod redfish;
 mod relay;
+mod remediation;
 mod reports;
+mod saml;
+mod scim;
 mod security;
 mod self_monitoring;
 mod seo_files;
 mod skipped_features;
 pub(crate) mod spa;
 pub(crate) mod status_pages;
+pub use status_pages::delivery::spawn as spawn_status_deliveries;
 mod storage;
 mod summary;
 mod synology;
 mod target_rules;
-mod targets;
+pub(crate) mod targets;
 mod targets_import;
+mod teams;
 mod tokens;
 mod topology;
 pub(crate) mod topology_edits;
+mod topology_l2;
 mod totp;
 mod truenas;
 mod update;
@@ -111,6 +123,8 @@ pub fn agent_routes(state: &AppState) -> Router<AppState> {
         .route("/ingest", post(ingest::receive))
         // Canal de commandes des agents : même jeton, même raison d'être ouvert.
         .merge(agent_commands::agent_routes())
+        // Lignes de journal collectées par les agents : même jeton, même canal.
+        .merge(agent_logs::agent_routes())
         // Sondes déléguées aux agents relais (`relay.rs`) : même canal, et un
         // compte rendu peut peser autant qu'un lot de mesures.
         .merge(relay::agent_routes())
@@ -152,6 +166,12 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
             get(ldap::get_config).put(ldap::put_config).delete(ldap::delete_config),
         )
         .route("/auth/ldap/test", post(ldap::test))
+        // Connexion SAML : réglages et lecture de métadonnées d'IdP (`saml.rs`).
+        .route("/auth/saml/config", get(saml::get_config).put(saml::put_config))
+        .route("/auth/saml/metadata/import", post(saml::import_metadata))
+        // Provisionnement SCIM : réglages et jeton du fournisseur (`scim.rs`).
+        .route("/auth/scim", get(scim::get_settings).put(scim::put_settings))
+        .route("/auth/scim/token", post(scim::create_token).delete(scim::delete_token))
         .route("/users", get(users::list).post(users::create))
         .route("/users/{id}", put(users::update).delete(users::delete))
         .route("/collectors", get(collectors::list))
@@ -199,6 +219,7 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .route("/targets/{id}/rules", get(target_rules::list))
         .route("/metrics/query", get(metrics::query))
         .route("/metrics/query_range", get(metrics::query_range))
+        .route("/metrics/catalog", get(metrics::catalog))
         .route("/alerts", get(alerts::list_active))
         .route("/alerts/history", get(alerts::history))
         .route("/alerts/history/dismiss-resolved", post(alerts::dismiss_resolved_history))
@@ -234,6 +255,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(agent_commands::ui_routes())
         // Journal d'événements Windows d'une machine : règles et événements (`agent_events.rs`).
         .merge(agent_events::routes())
+        // Collecte de journaux d'une machine et état des entrées (`agent_logs.rs`).
+        .merge(agent_logs::ui_routes())
         // Panneau Synology : vue d'ensemble et appareils Active Backup (`synology.rs`).
         .merge(synology::routes())
         // Agents relais proposés par le formulaire d'équipement (`relay.rs`).
@@ -244,12 +267,16 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(topology_edits::routes())
         // Emplacements et carte du monde (`locations.rs`).
         .merge(locations::routes())
+        // Tableaux de bord personnalisés (`dashboards.rs`).
+        .merge(dashboards::routes())
         // Tableau des invités d'un hyperviseur Proxmox VE (`proxmox.rs`).
         .merge(proxmox::routes())
         // Fonctionnalités facultatives sautées faute de droit (`skipped_features.rs`).
         .merge(skipped_features::routes())
         // Politique de notification et surcharges par équipement (`notify_policy.rs`).
         .merge(notify_policy::routes())
+        // Astreintes : plannings, escalades, contacts et heures de chacun (`oncall.rs`).
+        .merge(oncall::routes())
         // Rapports périodiques par courriel (`reports.rs`).
         .merge(reports::routes())
         // Pages de statut et incidents (`status_pages.rs`).
@@ -284,6 +311,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(push::ui_routes())
         // Sauvegarde et restauration de l'instance (`backup.rs`).
         .merge(backup::routes())
+        // Configuration en fichiers (GitOps) : plan, application, export (`gitops.rs`).
+        .merge(gitops::routes())
         // Journaux du serveur : stockage, export et destinations (`logs.rs`).
         .merge(logs::routes())
         // Stockage : rétentions, historique long terme, VictoriaLogs embarqué
@@ -295,6 +324,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(packs::routes())
         // Changements d'un site web : pages, diff et captures (`webchange.rs`).
         .merge(webchange::routes())
+        // Sauvegarde des configurations réseau : versions, diff, clé d'hôte (`netconfig.rs`).
+        .merge(netconfig::routes())
         // Santé et référencement d'un site : dernière lecture et changements (`website.rs`).
         .merge(website::routes())
         // Musique du mode mur : Spotify Connect et lien partagé (`music.rs`).
@@ -313,8 +344,16 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(integrations::routes())
         // Mise à jour guidée : dernière version publiée (`update.rs`).
         .merge(update::routes())
+        // Équipes et droits par dossier (`teams.rs`).
+        .merge(teams::routes())
+        // Procédures, actions de remédiation, politiques et journal (`remediation.rs`).
+        .merge(remediation::routes())
         // `route_layer` plutôt que `layer` : le garde ne s'applique qu'aux routes
         // effectivement déclarées ici, jamais au repli qui sert l'interface.
+        // Objets « gérés par fichier » : refus de les modifier à la main. Posé avant
+        // le garde de session pour s'exécuter après lui (`route_layer` : le dernier
+        // ajouté passe en premier).
+        .route_layer(middleware::from_fn_with_state(state.clone(), crate::gitops::guard::guard))
         .route_layer(middleware::from_fn_with_state(
             state.clone(),
             crate::auth::middleware::require_session,
@@ -336,6 +375,14 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(passkeys::public_routes())
         .route("/auth/oidc/start", get(oidc::start))
         .route("/auth/oidc/callback", get(oidc::callback))
+        // Connexion SAML : métadonnées du fournisseur de service, départ vers
+        // l'IdP, réception de sa réponse (un formulaire posté depuis le site de
+        // l'IdP, donc sans en-tête anti-CSRF : la signature de l'assertion fait
+        // foi) et ouverture de la session (`saml.rs`).
+        .route("/auth/saml/metadata", get(saml::metadata))
+        .route("/auth/saml/start", get(saml::start))
+        .route("/auth/saml/acs", post(saml::acs).layer(DefaultBodyLimit::max(saml::MAX_ACS_BYTES)))
+        .route("/auth/saml/complete", get(saml::complete))
         // Réception des mesures poussées par les agents. Volontairement hors du
         // routeur protégé : un agent est un programme installé sur une machine
         // distante, il n'ouvre pas de session et présente un jeton
@@ -360,12 +407,18 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // Liens d'action des notifications : le jeton signé est l'autorisation
         // (`alert_actions.rs`).
         .merge(alert_actions::public_routes())
+        // Calendrier iCal d'astreinte d'une personne : l'URL secrète est
+        // l'autorisation, une application de calendrier n'a pas de session.
+        .merge(oncall::public_routes())
         // Heartbeats : l'URL secrète qu'un cron ou un script appelle (`push.rs`).
         // Ouverte par nécessité — une crontab n'a ni session ni en-tête anti-CSRF.
         .merge(push::public_routes())
         // Retour de Spotify après l'approbation : une navigation, vérifiée par
         // son `state` et par la session qui revient (`music.rs`).
-        .merge(music::public_routes());
+        .merge(music::public_routes())
+        // Provisionnement SCIM 2.0 (Entra ID, Okta) : hors session, sous le jeton
+        // dédié du fournisseur, vérifié par sa propre garde (`scim.rs`).
+        .merge(scim::routes(&state));
 
     // Serveur MCP : authentifié par jeton d'API, pas par session — un assistant
     // n'a pas de navigateur. Le garde ne couvre que `POST` ; `GET` et `DELETE`
@@ -385,6 +438,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         // `/metrics` (santé de l'instance) et `/federate` (les mesures), sous
         // jeton `read` — voir `prometheus.rs`.
         .merge(prometheus::routes(state.clone()))
+        // Réception OpenTelemetry (OTLP/HTTP), sous jeton `write` — voir `otlp.rs`.
+        .merge(otlp::routes(state.clone()))
         // Distribution de l'agent, hors `/api` : ce sont les URL que les scripts
         // d'installation lisent, publiques par nécessité (voir `agent_files`).
         .route("/install.sh", get(agent_files::install_sh))

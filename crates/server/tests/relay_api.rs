@@ -136,8 +136,13 @@ async fn take_probe(app: &TestApp, token: &str, key: &str) -> (AgentCommand, Pro
                 probe = Some((command, job));
                 continue;
             }
-            let outcome =
-                ProbeOutcome { duration_ms: 1, error: None, samples: Vec::new(), profile_id: None };
+            let outcome = ProbeOutcome {
+                duration_ms: 1,
+                error: None,
+                samples: Vec::new(),
+                profile_id: None,
+                netconfig: None,
+            };
             let (status, body) = as_agent(
                 app,
                 "POST",
@@ -222,7 +227,8 @@ async fn an_http_probe_is_relayed_through_the_agent_and_recorded_on_the_target()
     assert!(samples.iter().any(|s| s.metric == "up"));
 
     // … et rend compte.
-    let outcome = ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None };
+    let outcome =
+        ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None, netconfig: None };
     let (status, body) = as_agent(
         &app,
         "POST",
@@ -288,6 +294,7 @@ async fn a_failed_relayed_probe_lands_in_last_error() {
         error: Some("Monitor unreachable: connection refused".into()),
         samples: Vec::new(),
         profile_id: None,
+        netconfig: None,
     };
     let (status, _) = as_agent(
         &app,
@@ -334,7 +341,13 @@ async fn the_relay_channel_requires_the_token_and_a_known_machine() {
     assert_eq!(jobs, json!([]));
 
     // Un compte rendu pour une sonde inexistante est refusé, pas accepté en silence.
-    let outcome = ProbeOutcome { duration_ms: 0, error: None, samples: vec![], profile_id: None };
+    let outcome = ProbeOutcome {
+        duration_ms: 0,
+        error: None,
+        samples: vec![],
+        profile_id: None,
+        netconfig: None,
+    };
     let (status, _) = as_agent(
         &app,
         "POST",
@@ -513,7 +526,8 @@ async fn an_uptime_monitor_is_probed_from_several_locations() {
         .probe(&job.target, Duration::from_secs(job.timeout_secs))
         .await
         .expect("sonde http locale");
-    let outcome = ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None };
+    let outcome =
+        ProbeOutcome { duration_ms: 12, error: None, samples, profile_id: None, netconfig: None };
     let (status, body) = as_agent(
         &app,
         "POST",

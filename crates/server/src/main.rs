@@ -193,6 +193,7 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     // Une vérification de site interrompue par un arrêt du serveur a laissé son
     // verrou : il est levé avant que le collecteur ne reprenne.
     dumbmonit_server::webchange::store::release_all(&pool).await?;
+    dumbmonit_server::netconfig::store::release_all(&pool).await?;
 
     // Liste unique, partagée avec l'agent relais (`collectors::builtin`).
     let mut registry = collectors::builtin(&pool, &config, &packs);
@@ -231,15 +232,29 @@ async fn run(mut config: Config, startup: Startup) -> Result<()> {
     state.storage().set_metrics(embedded_vm).await;
     dumbmonit_server::storage::start(&state).await;
 
+    // Journaux centralisés : écrivain vers VictoriaLogs, table des émetteurs,
+    // serveur syslog et récepteur de traps (chacun désactivé par défaut).
+    if !state.config.demo {
+        dumbmonit_server::logs::central::spawn(state.clone());
+        dumbmonit_server::logs::attach::spawn(state.pool.clone());
+        dumbmonit_server::logs::syslog::spawn();
+        dumbmonit_server::logs::traps::spawn();
+    }
+
     scheduler::spawn(state.clone());
+    // Configuration en fichiers : appliquée au démarrage puis à chaque changement.
+    dumbmonit_server::gitops::watch::spawn(state.clone());
     dumbmonit_server::reports::spawn(state.clone());
+    dumbmonit_server::api::spawn_status_deliveries(state.clone());
     alerting::spawn(state.clone());
+    dumbmonit_server::remediation::spawn(state.clone());
     dumbmonit_server::security::spawn(state.clone());
     dumbmonit_server::vulns::spawn(state.clone());
     // Mesures de l'instance elle-même et battement de cœur sortant (`selfmon`).
     dumbmonit_server::selfmon::spawn(state.clone());
     // Scans de découverte planifiés et inventaire du réseau.
     dumbmonit_server::netinventory::spawn(state.clone());
+    dumbmonit_server::netconfig::spawn(state.clone());
     collectors::agent::spawn_policy_scheduler(state.clone());
     match seeded {
         Some(seeded) => demo::spawn(state.clone(), seeded),

@@ -15,8 +15,11 @@ use serde::{Deserialize, Serialize};
 use crate::auth::client_ip::ClientIp;
 use crate::auth::middleware::{Authenticated, CurrentSession, current_session};
 use crate::auth::rate_limit::Key;
+use crate::auth::teams::TeamAccess;
 use crate::auth::users::{self, Role, User};
-use crate::auth::{AuthError, AuthResult, AuthState, audit, cookie, ldap, oidc, password, session};
+use crate::auth::{
+    AuthError, AuthResult, AuthState, audit, cookie, ldap, oidc, password, saml, session,
+};
 use crate::state::AppState;
 
 /// Un compte, tel que l'interface le voit. Jamais d'empreinte de mot de passe.
@@ -59,6 +62,14 @@ pub struct OidcStatus {
     pub login_url: &'static str,
 }
 
+/// Ce que l'écran de connexion a besoin de savoir de la connexion SAML : le
+/// bouton à montrer. Il mène à `/api/auth/saml/start`.
+#[derive(Debug, Serialize)]
+pub struct SamlStatus {
+    pub enabled: bool,
+    pub label: String,
+}
+
 /// Ce que l'écran de connexion a besoin de savoir de l'annuaire : seulement
 /// s'il est actif, pour le dire à côté du formulaire.
 #[derive(Debug, Serialize)]
@@ -78,6 +89,7 @@ pub struct StatusView {
     user: Option<UserView>,
     oidc: OidcStatus,
     ldap: LdapStatus,
+    saml: SamlStatus,
     /// Au moins une clé d'accès est enregistrée : l'écran de connexion propose
     /// de s'en servir.
     passkeys: bool,
@@ -173,6 +185,7 @@ pub async fn status(
     };
     let resolved = oidc::resolve(&state.pool, &state.cipher, &state.config.oidc).await?;
     let directory = ldap::resolve(&state.pool, &state.cipher, &state.config.ldap).await?;
+    let saml_config = saml::load(&state.pool).await?;
     Ok(Json(StatusView {
         configured,
         authenticated: user.is_some(),
@@ -183,14 +196,52 @@ pub async fn status(
             login_url: "/api/auth/oidc/start",
         },
         ldap: LdapStatus { enabled: directory.config.enabled() },
+        saml: SamlStatus { enabled: saml_config.usable(), label: saml_config.label().to_string() },
         passkeys: configured && crate::auth::passkeys::count(&state.pool, None).await? > 0,
         demo: state.config.demo,
     }))
 }
 
+/// Ce que les équipes ouvrent au compte, pour que l'interface masque ce qu'il
+/// ne peut pas ouvrir. Le serveur l'applique de toute façon.
+#[derive(Debug, Serialize)]
+pub struct AccessView {
+    /// Vrai si le compte est restreint par ses équipes.
+    pub scoped: bool,
+    pub teams: Vec<String>,
+    pub grants: Vec<crate::auth::teams::Grant>,
+    /// Plafond imposé par le rôle, `null` sans restriction.
+    pub ceiling: Option<crate::auth::teams::Level>,
+}
+
+impl From<&crate::auth::teams::Access> for AccessView {
+    fn from(access: &crate::auth::teams::Access) -> Self {
+        match access.scope() {
+            None => Self { scoped: false, teams: Vec::new(), grants: Vec::new(), ceiling: None },
+            Some(scope) => Self {
+                scoped: true,
+                teams: scope.teams.clone(),
+                grants: scope.grants.clone(),
+                ceiling: Some(scope.ceiling),
+            },
+        }
+    }
+}
+
+/// Réponse de `GET /api/auth/me` : le compte, et ses droits d'équipe.
+#[derive(Debug, Serialize)]
+pub struct MeView {
+    #[serde(flatten)]
+    pub user: UserView,
+    pub access: AccessView,
+}
+
 /// `GET /api/auth/me` — le compte de la session courante.
-pub async fn me(Authenticated(user): Authenticated) -> Json<UserView> {
-    Json(user.into())
+pub async fn me(
+    Authenticated(user): Authenticated,
+    TeamAccess(access): TeamAccess,
+) -> Json<MeView> {
+    Json(MeView { user: user.into(), access: AccessView::from(&access) })
 }
 
 /// `POST /api/auth/setup` — création du premier administrateur.

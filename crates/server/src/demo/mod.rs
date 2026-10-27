@@ -99,6 +99,7 @@ const ALLOWED_WRITES: &[&str] = &["/api/auth/login", "/api/auth/logout"];
 const DENIED_READS: &[&str] = &[
     "/api/auth/audit",
     "/api/auth/oidc",
+    "/api/auth/saml",
     "/api/push",
     "/api/agent/commands",
     "/api/agent/relay",
@@ -157,6 +158,7 @@ mod tests {
         assert!(!refused(&Method::GET, "/api/auth/status"));
         assert!(refused(&Method::GET, "/api/auth/audit"));
         assert!(refused(&Method::GET, "/api/auth/oidc/start"));
+        assert!(refused(&Method::GET, "/api/auth/saml/start"));
         assert!(refused(&Method::GET, "/api/push/abc"));
         assert!(refused(&Method::GET, "/api/agent/commands"));
         assert!(!refused(&Method::GET, "/api/pushover"), "préfixe exact seulement");

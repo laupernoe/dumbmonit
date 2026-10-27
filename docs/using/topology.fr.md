@@ -14,6 +14,7 @@ administrateur peut [corriger la carte](#corriger-la-carte) là où elle se trom
 | Hébergé par un hyperviseur | Les invités signalés dans les 30 dernières minutes par Proxmox VE, XCP-ng, Nutanix, vSphere ou le module libvirt d'un agent Linux. | tirets courts |
 | Tourne sur un invité | Une sonde dont l'adresse IP est l'une de celles que l'hyperviseur rapporte pour une VM ou un conteneur (agent invité Proxmox, interfaces du conteneur ou configuration statique ; VMware Tools sur vSphere). | tirets courts serrés |
 | Câblé à (LLDP) | Un **voisin LLDP** vu par un commutateur SNMP sur l'un de ses ports (profil `ethernet-switch`). | pointillés |
+| Câblé à (ports de commutateur) | Un **lien de niveau 2** lu dans les tables des commutateurs : commutateur à commutateur (LLDP, ou CDP sur du matériel Cisco) et hôte à port d'accès (table d'adresses du pont rapprochée de l'ARP). | tirets-points |
 
 Un invité ou un voisin LLDP n'est relié à une sonde que si son nom désigne une
 seule sonde (même nom, ou même nom d'hôte dans l'adresse, domaine ignoré). Un
@@ -121,3 +122,27 @@ que l'hyperviseur rapporte pour ses invités). `/api/topology/corrections`,
 les règles apprises et les suggestions (écriture réservée aux administrateurs).
 Voir la
 [référence de l'API](../reference/api.md).
+
+## Liens de niveau 2 (LLDP, CDP, table du pont)
+
+Le profil SNMP `ethernet-switch` (inclus par les profils Zyxel et HPE / Aruba)
+lit aussi les voisins LLDP et CDP, la table d'adresses du pont (FDB, `dot1d` et
+`dot1q`), la table ARP et les agrégats 802.3ad. La carte en tire des liens `l2` :
+
+- **Commutateur à commutateur** : un voisin est rapproché d'une sonde par son
+  nom système, à défaut par l'adresse MAC de son châssis (vue dans une table
+  ARP). Le lien indique le port de chaque côté au survol ou à l'ouverture. Des
+  câbles parallèles ou un agrégat entre les deux mêmes commutateurs ne font
+  qu'un lien.
+- **Hôte à commutateur** : une adresse MAC apprise sur un port est rapprochée,
+  par l'ARP, de la sonde qui a cette adresse IP. Seuls les ports d'accès
+  comptent : un port avec un voisin LLDP/CDP, membre d'un agrégat, ou qui
+  apprend plus de 24 adresses est une liaison montante et ne porte aucun hôte.
+  Une adresse vue sur plusieurs commutateurs est rattachée là où elle est seule
+  sur son port.
+
+Les liens sont relus à chaque collecte et disparaissent quand leurs mesures ont
+plus de 30 minutes. Ils fonctionnent via un agent relais comme toute sonde SNMP.
+Les corrections faites à la main l'emportent toujours, et un lien `l2` ne
+propage pas une panne et ne supprime pas d'alertes à lui seul : rattachez
+l'équipement à son commutateur depuis la carte (« aussi pour les alertes »).

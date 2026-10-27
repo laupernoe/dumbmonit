@@ -34,7 +34,7 @@ use sqlx::SqlitePool;
 use crate::auth::session::SessionToken;
 use crate::auth::token::{self, ApiToken, Scope};
 use crate::auth::users::{self, User};
-use crate::auth::{AuthError, AuthState, cookie, session};
+use crate::auth::{AuthError, AuthState, cookie, session, teams};
 use crate::state::AppState;
 
 /// Session validée, déposée dans la requête pour les gestionnaires qui en ont
@@ -49,7 +49,11 @@ pub struct CurrentSession(pub SessionToken);
 pub struct CurrentUser(pub User);
 
 /// Qui fait la requête : un compte connecté par session, ou un jeton d'API.
+///
+/// Une valeur par requête, posée dans ses extensions : la différence de taille
+/// entre les deux variantes ne coûte rien qui vaille une indirection.
 #[derive(Debug, Clone)]
+#[allow(clippy::large_enum_variant)]
 pub enum Principal {
     User(User),
     Token(ApiToken),
@@ -132,6 +136,13 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
     ("POST", "/alerts/history/*/dismiss"),
     ("PUT", "/alerts/rules/*/overrides/*"),
     ("DELETE", "/alerts/rules/*/overrides/*"),
+    // Remplacements d'astreinte : prendre la garde d'un collègue est un geste
+    // d'exploitation, pas de configuration (`api::oncall`).
+    ("POST", "/oncall/schedules/*/overrides"),
+    ("DELETE", "/oncall/schedules/*/overrides/*"),
+    // Lancer à la main une action de remédiation définie par un
+    // administrateur, depuis une alerte en cours (`api::remediation::run_action`).
+    ("POST", "/remediation/actions/*/run"),
 ];
 
 /// Préfixes de routes interdits aux jetons d'API, quelle que soit leur portée :
@@ -141,11 +152,15 @@ pub const OPERATOR_ROUTES: &[(&str, &str)] = &[
 pub const TOKEN_DENIED: &[&str] = &[
     "/auth",
     "/users",
+    "/teams",
     "/tokens",
     "/agent/tokens",
     "/agent/ad-kit",
     "/agent/tls",
     "/agent/updates",
+    "/account",
+    // Agir sur une machine (remédiation) reste un geste fait dans l'interface.
+    "/remediation",
 ];
 
 const TOKEN_DENIED_MESSAGE: &str = "API tokens cannot manage accounts, sessions, two-factor \
@@ -207,7 +222,18 @@ pub async fn require_session(
             Err(response) => return *response,
         };
         let api_token = checked.token.clone();
-        request.extensions_mut().insert(CurrentPrincipal(Principal::Token(checked.token)));
+        let principal = Principal::Token(checked.token.clone());
+        let access = match teams::access_for(&state.pool, &principal).await {
+            Ok(access) => access,
+            Err(error) => return AuthError::from(error).into_response(),
+        };
+        if let Err(error) = teams::guard(&state.pool, &access, &method, &path).await {
+            let mut response = error.into_response();
+            checked.rate.apply(response.headers_mut());
+            return response;
+        }
+        request.extensions_mut().insert(teams::CurrentAccess(access));
+        request.extensions_mut().insert(CurrentPrincipal(principal));
         let mut response = next.run(request).await;
         checked.rate.apply(response.headers_mut());
         if is_mutation(&method) {
@@ -235,18 +261,37 @@ pub async fn require_session(
         Err(error) => return error.into_response(),
     };
 
+    let access = match teams::access_for_user(&state.pool, &user).await {
+        Ok(access) => access,
+        Err(error) => return AuthError::from(error).into_response(),
+    };
+
     if is_mutation(request.method()) {
         if let Err(reason) = same_origin(request.headers()) {
             return AuthError::Forbidden(reason.into()).into_response();
         }
         let path = request.uri().path();
+        // Un opérateur restreint par ses équipes peut aussi modifier les
+        // équipements des dossiers qu'il gère : le niveau est vérifié juste
+        // après, par le garde des équipes.
         let allowed = user.role.is_admin()
             || is_self_service(path)
-            || (user.role.can_operate() && is_operator_route(request.method(), path));
+            || (user.role.can_operate() && is_operator_route(request.method(), path))
+            || (user.role.can_operate()
+                && access.is_scoped()
+                && teams::is_manage_route(request.method(), path));
         if !allowed {
             return AuthError::admin_required().into_response();
         }
     }
+
+    if let Err(error) =
+        teams::guard(&state.pool, &access, request.method(), request.uri().path()).await
+    {
+        return error.into_response();
+    }
+
+    request.extensions_mut().insert(teams::CurrentAccess(access));
 
     request.extensions_mut().insert(CurrentSession(token));
     request.extensions_mut().insert(CurrentPrincipal(Principal::User(user.clone())));
@@ -335,7 +380,34 @@ fn is_mutation(method: &Method) -> bool {
 /// le préfixe. On tolère les deux plutôt que de dépendre de ce détail.
 fn is_self_service(path: &str) -> bool {
     let path = path.strip_prefix("/api").unwrap_or(path);
-    SELF_SERVICE.contains(&path) || is_own_push_device(path) || is_own_passkey(path)
+    SELF_SERVICE.contains(&path)
+        || is_own_push_device(path)
+        || is_own_oncall_profile(path)
+        || is_own_passkey(path)
+        || is_dashboard_route(path)
+}
+
+/// Contacts, heures calmes et lien de calendrier d'astreinte : chacun gère les
+/// siens (`api::oncall`), en session seulement — les gestionnaires exigent un
+/// compte connecté et ne voient que ce compte.
+fn is_own_oncall_profile(path: &str) -> bool {
+    let digits = |id: &str| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit());
+    match path {
+        "/account/contacts" | "/account/oncall" | "/account/oncall/calendar" => true,
+        _ => path
+            .strip_prefix("/account/contacts/")
+            .is_some_and(|rest| digits(rest) || rest.strip_suffix("/test").is_some_and(digits)),
+    }
+}
+
+/// Tableaux de bord : chacun crée, modifie et supprime *les siens*. Les
+/// gestionnaires (`api::dashboards`) réservent les tableaux partagés aux
+/// administrateurs et cachent les tableaux personnels d'autrui.
+fn is_dashboard_route(path: &str) -> bool {
+    path == "/dashboards"
+        || path
+            .strip_prefix("/dashboards/")
+            .is_some_and(|id| !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit()))
 }
 
 /// Clés d'accès : chacun renomme et retire *les siennes* (`api::passkeys` filtre
@@ -492,10 +564,21 @@ mod tests {
         assert!(is_self_service("/webpush/test"));
         assert!(!is_self_service("/webpush/subscriptions/12/../../users"));
         assert!(!is_self_service("/webpush/subscriptions/"));
+        assert!(is_self_service("/api/account/contacts"));
+        assert!(is_self_service("/account/contacts/3"));
+        assert!(is_self_service("/account/contacts/3/test"));
+        assert!(is_self_service("/account/oncall/calendar"));
+        assert!(!is_self_service("/account/contacts/3/../../../users"));
+        assert!(!is_self_service("/account/contacts//test"));
+        assert!(!is_self_service("/oncall/schedules"));
         assert!(is_self_service("/api/auth/passkeys/register/begin"));
         assert!(is_self_service("/auth/passkeys/register/finish"));
         assert!(is_self_service("/api/auth/passkeys/3"));
         assert!(!is_self_service("/auth/passkeys/"));
+        assert!(is_self_service("/api/dashboards"));
+        assert!(is_self_service("/dashboards/12"));
+        assert!(!is_self_service("/dashboards/12/../../users"));
+        assert!(!is_self_service("/dashboards/"));
         assert!(!is_self_service("/auth/passkeys/3/../../users"));
     }
 
@@ -513,6 +596,7 @@ mod tests {
         yes(Method::POST, "/alerts/history/9/dismiss");
         yes(Method::PUT, "/alerts/rules/2/overrides/7");
         yes(Method::DELETE, "/alerts/rules/2/overrides/7");
+        yes(Method::POST, "/remediation/actions/3/run");
 
         no(Method::PUT, "/alerts/abc123/ack");
         no(Method::POST, "/alerts//ack");
@@ -535,6 +619,12 @@ mod tests {
         no(Method::PUT, "/settings");
         no(Method::POST, "/backup/restore");
         no(Method::POST, "/status-pages");
+        // La remédiation se lance, ne se configure pas, depuis un compte opérateur.
+        no(Method::POST, "/remediation/actions");
+        no(Method::PUT, "/remediation/actions/3");
+        no(Method::POST, "/remediation/policies/1/arm");
+        no(Method::POST, "/remediation/policies/1/confirm");
+        no(Method::POST, "/runbooks");
     }
 
     #[test]
@@ -548,6 +638,8 @@ mod tests {
         assert!(!is_token_denied("/targets"));
         assert!(!is_token_denied("/api/agent/relay"));
         assert!(!is_token_denied("/authors"), "un préfixe, pas une sous-chaîne");
+        assert!(is_token_denied("/api/remediation/actions/1/run"));
+        assert!(!is_token_denied("/runbooks"));
     }
 
     #[test]

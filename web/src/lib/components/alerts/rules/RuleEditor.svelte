@@ -16,6 +16,7 @@
 	import {
 		escalateOptions as escalateChoices,
 		holdOptions as holdChoices,
+		windowOptions as windowChoices,
 		repeatOptions as repeatChoices,
 		severityOptions,
 		anomalySummary,
@@ -47,6 +48,7 @@
 	]);
 
 	const anomaly = $derived(rule.kind === 'anomaly');
+	const logPattern = $derived(rule.kind === 'log_pattern');
 	const prefix = $derived(`rule-${rule.id}`);
 
 	// Drafts snapshot the rule as the server held it when the editor opened;
@@ -64,6 +66,8 @@
 	let selected = $state<number[]>([...initial.channels]);
 	let repeatSecs = $state(initial.repeat_secs ?? 0);
 	let escalateSecs = $state(initial.escalate_after_secs ?? 0);
+	let logWindow = $state(initial.params.log_window_secs ?? 300);
+	let logPerTarget = $state(initial.params.log_per_target ?? true);
 
 	let saving = $state(false);
 	let error = $state<string | null>(null);
@@ -72,6 +76,7 @@
 	const holdOptions = $derived(withCurrent(holdChoices(), rule.for_secs));
 	const repeatOptions = $derived(withCurrent(repeatChoices(), rule.repeat_secs ?? 0));
 	const escalateOptions = $derived(withCurrent(escalateChoices(), rule.escalate_after_secs ?? 0));
+	const windowOptions = $derived(withCurrent(windowChoices(), rule.params.log_window_secs ?? 300));
 
 	const enabledChannels = $derived(channels.filter((c) => c.enabled));
 	/** What "all" means today, in plain words. */
@@ -139,6 +144,7 @@
 				for_secs: forSecs,
 				severity: fromSeverityWord(severity),
 				channels: selected,
+				params: logPattern ? { ...rule.params, log_window_secs: logWindow, log_per_target: logPerTarget } : rule.params,
 				repeat_secs: repeatSecs > 0 ? repeatSecs : null,
 				escalate_after_secs: escalateSecs > 0 ? escalateSecs : null
 			});
@@ -238,6 +244,25 @@
 					{/if}
 				</div>
 			</Field>
+		</div>
+	{/if}
+
+	{#if logPattern}
+		<div class="grid gap-4 sm:grid-cols-3">
+			<Field label={m.logalert_window()} for={`${prefix}-window`}>
+				<select id={`${prefix}-window`} class="input" bind:value={logWindow}>
+					{#each windowOptions as option (option.value)}
+						<option value={option.value}>{option.label}</option>
+					{/each}
+				</select>
+			</Field>
+			<div class="self-end sm:col-span-2">
+				<label class="inline-flex min-h-10 items-center gap-2 text-sm text-ink">
+					<input type="checkbox" class="size-4 accent-[var(--c-signal)]" bind:checked={logPerTarget} />
+					{m.logalert_per_target()}
+				</label>
+				<p class="text-[0.8125rem] text-ink-2">{m.logalert_per_target_help()}</p>
+			</div>
 		</div>
 	{/if}
 

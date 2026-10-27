@@ -1,0 +1,1 @@
+[{"uid":"embedded-1","last_seen":"2026-10-26T09:11:30Z","version":"2025.8.4","version_should":"2025.8.4","version_outdated":false,"build_hash":"","golang_version":"go1.24.4","openssl_enabled":true,"openssl_version":"3.0.16","fips_enabled":false,"hostname":"authentik-server"}]
