@@ -26,7 +26,7 @@
    },
    "items": [
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Sondes UDP, SSH, IMAP/POP3, gRPC, RADIUS et OID SNMP précis",
       "en": "UDP, SSH, IMAP/POP3, gRPC and RADIUS probes, and checks on specific SNMP OIDs",
@@ -40,7 +40,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Temps détaillé par phase (DNS, TCP, TLS, premier octet)",
       "en": "Response time broken down by phase (DNS, TCP, TLS, first byte)",
@@ -54,7 +54,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Suivi des tâches cron (début, fin, durée, sortie)",
       "en": "Cron job tracking (start, end, duration, output)",
@@ -68,7 +68,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Pages de statut privées (mot de passe ou SSO)",
       "en": "Private status pages (password or SSO)",
@@ -82,7 +82,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Rapports SLA mensuels en PDF et export CSV",
       "en": "Monthly SLA reports as PDF, and CSV export",
@@ -96,7 +96,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Calendrier iCal des maintenances",
       "en": "iCal calendar of maintenance windows",
@@ -110,7 +110,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Alertes sur un Event ID Windows (agent)",
       "en": "Alerts on a Windows Event ID (agent)",
@@ -124,7 +124,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Alerte sur un nouvel appareil ou un nouveau port dans le réseau",
       "en": "Alert when a new device or a new open port shows up on the network",
@@ -138,7 +138,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Création automatique des moniteurs depuis les labels Docker",
       "en": "Monitors created automatically from Docker labels",
@@ -152,7 +152,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Imports depuis UptimeRobot, Gatus et Healthchecks.io",
       "en": "Imports from UptimeRobot, Gatus and Healthchecks.io",
@@ -166,7 +166,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Canaux : WhatsApp, Threema, Webex, Grafana OnCall, SIGNL4, SMS Vonage/Telnyx/ASPSMS",
       "en": "Channels: WhatsApp, Threema, Webex, Grafana OnCall, SIGNL4, SMS via Vonage/Telnyx/ASPSMS",
@@ -180,7 +180,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Widgets Homepage et Homarr",
       "en": "Homepage and Homarr widgets",
@@ -194,7 +194,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Passkeys (WebAuthn)",
       "en": "Passkeys (WebAuthn)",
@@ -208,7 +208,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "État des fournisseurs tiers (Microsoft 365, Cloudflare, AWS) sur les pages de statut",
       "en": "Third-party provider status (Microsoft 365, Cloudflare, AWS) on status pages",
@@ -249,7 +249,7 @@
    },
    "items": [
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Sondes depuis plusieurs sites, avec confirmation avant d'alerter",
       "en": "Probes from several locations, with confirmation before alerting",
@@ -263,7 +263,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Mise à jour automatique de l'agent depuis l'interface",
       "en": "Agent self-update from the interface",
@@ -304,7 +304,7 @@
    },
    "items": [
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Plannings d'astreinte, remplacements et escalade en plusieurs étapes par personne",
       "en": "On-call schedules, cover swaps and multi-step escalation per person",
@@ -318,7 +318,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Équipes et droits par dossier",
       "en": "Teams and permissions per folder",
@@ -332,7 +332,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Microsoft 365 et Entra ID (santé, licences, connexions suspectes)",
       "en": "Microsoft 365 and Entra ID (health, licences, suspicious sign-ins)",
@@ -373,7 +373,7 @@
    },
    "items": [
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Tableaux de bord personnalisés par glisser-déposer, explorateur de métriques",
       "en": "Custom drag-and-drop dashboards and a metrics explorer",
@@ -387,7 +387,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Configuration en fichiers YAML (GitOps), outil en ligne de commande, provider Terraform",
       "en": "Configuration as YAML files (GitOps), a command-line tool and a Terraform provider",
@@ -401,7 +401,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Rétention réglable et historique long des métriques",
       "en": "Adjustable retention and long-term metrics history",
@@ -415,7 +415,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Carte corrigeable à la main, qui apprend de vos corrections",
       "en": "Map you can correct by hand, learning from your corrections",
@@ -429,7 +429,7 @@
      }
     },
     {
-     "status": "progress",
+     "status": "delivered",
      "text": {
       "fr": "Collecte centrale des logs, recherche et alertes sur motifs",
       "en": "Central log collection, search and pattern alerts",
@@ -473,7 +473,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Mode multi-clients (MSP) avec rapports par client",
       "en": "Multi-client (MSP) mode with per-client reports",
@@ -503,7 +503,7 @@
    },
    "items": [
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Cloud : AWS, Azure, Cloudflare, Hetzner, OVHcloud, Infomaniak",
       "en": "Cloud: AWS, Azure, Cloudflare, Hetzner, OVHcloud, Infomaniak",
@@ -517,7 +517,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Réseau : Meraki, Omada, Aruba Instant On, Palo Alto, WatchGuard, SonicWall, Stormshield",
       "en": "Network: Meraki, Omada, Aruba Instant On, Palo Alto, WatchGuard, SonicWall, Stormshield",
@@ -531,7 +531,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Stockage : QNAP, Ceph, MinIO, Synology Active Backup, Kopia, Duplicati",
       "en": "Storage: QNAP, Ceph, MinIO, Synology Active Backup, Kopia, Duplicati",
@@ -545,7 +545,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Applications : Sonarr/Radarr…, qBittorrent, UniFi Protect, Frigate, Keycloak, Authentik, Vaultwarden, Mailcow",
       "en": "Applications: Sonarr/Radarr…, qBittorrent, UniFi Protect, Frigate, Keycloak, Authentik, Vaultwarden, Mailcow",
@@ -559,7 +559,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Bases : SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka",
       "en": "Databases: SQL Server, Oracle, Elasticsearch, InfluxDB, Kafka",
@@ -573,7 +573,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Traps SNMP et serveur syslog intégré",
       "en": "SNMP traps and a built-in syslog server",
@@ -587,7 +587,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Sauvegarde et comparaison des configurations réseau",
       "en": "Backup and comparison of network device configurations",
@@ -601,7 +601,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Topologie de niveau 2 automatique (LLDP/CDP)",
       "en": "Automatic layer 2 topology (LLDP/CDP)",
@@ -615,7 +615,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Abonnés aux pages de statut par SMS, Slack ou webhook",
       "en": "Status page subscribers by SMS, Slack or webhook",
@@ -629,7 +629,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Tickets automatiques : Jira, GLPI, Zammad, GitHub et GitLab Issues",
       "en": "Automatic tickets: Jira, GLPI, Zammad, GitHub and GitLab Issues",
@@ -643,7 +643,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Procédures liées aux alertes et remédiation automatique",
       "en": "Runbooks linked to alerts, and automatic remediation",
@@ -657,7 +657,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Réception OpenTelemetry et collecte de n'importe quel exporter Prometheus",
       "en": "OpenTelemetry ingestion and scraping of any Prometheus exporter",
@@ -671,7 +671,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "Windows sans agent (WMI / WinRM)",
       "en": "Agentless Windows (WMI / WinRM)",
@@ -685,7 +685,7 @@
      }
     },
     {
-     "status": "planned",
+     "status": "delivered",
      "text": {
       "fr": "SAML et SCIM",
       "en": "SAML and SCIM",
@@ -2145,6 +2145,21 @@
     "pt-BR": "Já entregue"
    },
    "items": [
+    {
+     "status": "delivered",
+     "version": "0.14.0",
+     "text": {
+      "fr": "modes Homelab et Entreprise avec assistant de démarrage ; mode multi-clients (MSP) avec rapports par client ; équipes, droits par dossier, SAML et SCIM ; astreinte et escalade ; tableaux de bord et explorateur de métriques ; GitOps, CLI et Terraform ; journaux centralisés, syslog et traps SNMP ; OpenTelemetry et exporteurs Prometheus ; sondes multisites ; tickets, procédures et remédiation ; intégrations cloud, réseau, stockage, applications et bases de données ; Windows sans agent ; topologie LLDP ; sauvegarde des configurations réseau",
+      "en": "Homelab and Enterprise modes with a setup wizard; multi-client (MSP) mode with per-client reports; teams, per-folder rights, SAML and SCIM; on-call and escalation; dashboards and a metrics explorer; GitOps, CLI and Terraform; central logs, syslog and SNMP traps; OpenTelemetry and Prometheus exporters; multi-location probes; tickets, runbooks and remediation; cloud, network, storage, application and database integrations; agentless Windows; LLDP topology; network configuration backups",
+      "de": "Modi Homelab und Enterprise mit Einrichtungsassistent; Mandantenmodus (MSP) mit Berichten pro Kunde; Teams, Rechte pro Ordner, SAML und SCIM; Bereitschaft und Eskalation; Dashboards und Metrik-Explorer; GitOps, CLI und Terraform; zentrale Logs, Syslog und SNMP-Traps; OpenTelemetry und Prometheus-Exporter; Prüfungen von mehreren Standorten; Tickets, Runbooks und Behebung; Cloud-, Netzwerk-, Speicher-, Anwendungs- und Datenbank-Integrationen; Windows ohne Agent; LLDP-Topologie; Sicherung von Netzwerkkonfigurationen",
+      "es": "modos Homelab y Empresa con asistente de configuración; modo multicliente (MSP) con informes por cliente; equipos, permisos por carpeta, SAML y SCIM; guardias y escalado; paneles y explorador de métricas; GitOps, CLI y Terraform; registros centralizados, syslog y traps SNMP; OpenTelemetry y exportadores de Prometheus; sondas desde varias ubicaciones; tickets, runbooks y remediación; integraciones de nube, red, almacenamiento, aplicaciones y bases de datos; Windows sin agente; topología LLDP; copia de seguridad de configuraciones de red",
+      "it": "modalità Homelab ed Enterprise con procedura guidata; modalità multi-cliente (MSP) con report per cliente; team, permessi per cartella, SAML e SCIM; reperibilità ed escalation; dashboard ed esploratore di metriche; GitOps, CLI e Terraform; log centralizzati, syslog e trap SNMP; OpenTelemetry ed exporter Prometheus; sonde da più sedi; ticket, runbook e remediation; integrazioni cloud, rete, storage, applicazioni e database; Windows senza agente; topologia LLDP; backup delle configurazioni di rete",
+      "pt": "modos Homelab e Empresa com assistente de configuração; modo multicliente (MSP) com relatórios por cliente; equipas, permissões por pasta, SAML e SCIM; prevenção e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; registos centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de cloud, rede, armazenamento, aplicações e bases de dados; Windows sem agente; topologia LLDP; cópia de segurança das configurações de rede",
+      "ru": "режимы Homelab и Enterprise с мастером настройки; мультиклиентский режим (MSP) с отчётами по клиентам; команды, права на папки, SAML и SCIM; дежурства и эскалация; дашборды и обозреватель метрик; GitOps, CLI и Terraform; централизованные журналы, syslog и SNMP-трапы; OpenTelemetry и экспортеры Prometheus; проверки из нескольких точек; тикеты, ранбуки и автоматическое устранение; интеграции облаков, сетей, хранилищ, приложений и баз данных; Windows без агента; топология LLDP; резервное копирование конфигураций сетевых устройств",
+      "zh-Hans": "家庭实验室与企业两种模式及设置向导；多客户（MSP）模式及按客户报告；团队、按文件夹权限、SAML 与 SCIM；值班与升级；仪表板与指标浏览器；GitOps、CLI 与 Terraform；集中日志、syslog 与 SNMP trap；OpenTelemetry 与 Prometheus exporter；多地点探测；工单、运行手册与自动修复；云、网络、存储、应用与数据库集成；无代理 Windows；LLDP 拓扑；网络设备配置备份",
+      "pt-BR": "modos Homelab e Empresa com assistente de configuração; modo multicliente (MSP) com relatórios por cliente; equipes, permissões por pasta, SAML e SCIM; plantão e escalonamento; painéis e explorador de métricas; GitOps, CLI e Terraform; logs centralizados, syslog e traps SNMP; OpenTelemetry e exportadores Prometheus; sondas a partir de vários locais; tickets, runbooks e remediação; integrações de nuvem, rede, armazenamento, aplicativos e bancos de dados; Windows sem agente; topologia LLDP; backup das configurações de rede"
+     }
+    },
     {
      "status": "delivered",
      "version": "0.13.6",

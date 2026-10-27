@@ -3,7 +3,7 @@
  * Administrators only, reading included: the list holds recipients' addresses.
  */
 import { m } from '#lib/paraglide/messages.js';
-import { ApiError, request } from './client';
+import { ApiError, clientViewHeaders, request } from './client';
 
 export type ReportFrequency = 'daily' | 'weekly' | 'monthly';
 
@@ -98,6 +98,8 @@ export interface SlaRequest {
 	objective?: number;
 	/** Status page whose title heads the report. */
 	page?: number;
+	/** MSP mode: the client reported on (its targets, name and logo). */
+	client?: number;
 }
 
 /**
@@ -111,7 +113,9 @@ export async function downloadSlaReport(request_: SlaRequest): Promise<{ blob: B
 	}
 	let response: Response;
 	try {
-		response = await fetch(`/api/reports/sla?${params}`, { headers: { 'x-requested-with': 'DumbMonit' } });
+		response = await fetch(`/api/reports/sla?${params}`, {
+			headers: { 'x-requested-with': 'DumbMonit', ...clientViewHeaders() }
+		});
 	} catch {
 		throw new ApiError(m.api_error_unreachable(), 0);
 	}

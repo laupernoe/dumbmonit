@@ -201,6 +201,7 @@ nav:
       - Runbooks and remediation: alerting/remediation.md
       - Notification channels: notifications.md
   - Using DumbMonit:
+      - Product modes and setup wizard: using/product-modes.md
       - Overview page: using/overview.md
       - Network discovery: using/discovery.md
       - Wall mode and music: using/wall.md
@@ -222,6 +223,7 @@ nav:
       - SAML 2.0: using/saml.md
       - SCIM provisioning: using/scim.md
       - Teams and permissions: using/teams.md
+      - Multi-client (MSP): using/msp.md
       - Passkeys: using/passkeys.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md

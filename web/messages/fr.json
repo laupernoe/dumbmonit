@@ -8947,5 +8947,424 @@
 	"worldmap_verdict_idle": "Non sondé",
 	"worldmap_verdict_ok": "Tout fonctionne",
 	"worldmap_verdict_warn": "À vérifier",
-	"worldmap_view_world": "Monde"
+	"worldmap_view_world": "Monde",
+	"console_breadcrumb": "Fil d'Ariane",
+	"console_col_address": "Adresse",
+	"console_col_checked": "Vérifié",
+	"console_col_folder": "Dossier",
+	"console_col_latency": "Latence · {range}",
+	"console_col_latency_short": "Latence",
+	"console_col_name": "Nom",
+	"console_col_p95": "p95",
+	"console_col_status": "État",
+	"console_col_type": "Type",
+	"console_col_uptime": "Dispo. 30 j",
+	"console_columns": "Colonnes",
+	"console_egg": "// {count} vérifications par minute. Va dormir, on s'en occupe.",
+	"console_filter_all": "Tous",
+	"console_filter_degraded": "Dégradés",
+	"console_filter_down": "En panne",
+	"console_filter_kind": "Type",
+	"console_filter_kind_all": "Tous les types",
+	"console_filter_label": "Filtrer par état",
+	"console_filter_paused": "En pause",
+	"console_filter_search": "Filtrer les moniteurs",
+	"console_kpi_alerts": "Alertes ouvertes",
+	"console_kpi_alerts_note": "Critiques : {critical}, avertissements : {warning}",
+	"console_kpi_availability": "Disponibilité 30 j",
+	"console_kpi_availability_note": "Moniteurs mesurés : {count}",
+	"console_kpi_mttr": "MTTR 30 j",
+	"console_kpi_mttr_note": "Résolues : {count}",
+	"console_kpi_none": "Pas encore de données",
+	"console_kpi_p95": "Réponse p95",
+	"console_kpi_p95_note": "Période : {range}",
+	"console_kpi_up": "Moniteurs actifs",
+	"console_kpi_up_note": "En panne : {down}, en pause : {paused}",
+	"console_kpi_up_unit": "/ {total}",
+	"console_live": "DIRECT",
+	"console_live_off": "Mises à jour en direct en pause. Sélectionnez pour reprendre.",
+	"console_live_on": "Mises à jour en direct actives. Sélectionnez pour mettre en pause.",
+	"console_new_monitor": "Nouveau moniteur",
+	"console_panel": "Contexte",
+	"console_panel_attention": "À traiter",
+	"console_panel_attention_all": "Tout voir ({count})",
+	"console_panel_attention_none": "Rien ne vous attend pour l'instant.",
+	"console_panel_check_now": "Vérifier",
+	"console_panel_checked": "Vérification demandée. Le résultat s'affiche au prochain rafraîchissement.",
+	"console_panel_close": "Fermer le panneau de contexte",
+	"console_panel_edit": "Modifier",
+	"console_panel_forecast": "Prévision",
+	"console_panel_forecast_none": "Aucune prévision ne franchit un seuil.",
+	"console_panel_forecast_open": "Voir les prévisions dans Alertes",
+	"console_panel_more": "Plus d'actions",
+	"console_panel_oncall": "Astreinte",
+	"console_panel_oncall_hint": "Qui est prévenu : réglages des notifications",
+	"console_panel_oncall_you": "Vous",
+	"console_panel_open": "Ouvrir",
+	"console_panel_picked": "Moniteur sélectionné",
+	"console_panel_picked_none": "Sélectionnez une ligne d'un tableau pour la voir ici.",
+	"console_panel_silence": "Silence 1 h",
+	"console_panel_silenced": "Mis en silence pour une heure.",
+	"console_panel_suppressed_by": "Masquée : {name} est en panne",
+	"console_panel_toggle": "Afficher ou masquer le panneau de contexte",
+	"console_panel_uptime": "Disponibilité",
+	"console_paused": "EN PAUSE",
+	"console_range": "Période",
+	"console_river_empty": "Aucune mesure sur cette période pour l'instant.",
+	"console_river_hint": "Chaque moniteur, une case par {slot}, sur {range}",
+	"console_river_legend": "Légende",
+	"console_river_more": "Autres moniteurs dans le tableau ci-dessous : {count}",
+	"console_river_no_data": "Pas de données",
+	"console_river_now": "maint.",
+	"console_river_title": "Rivière de santé",
+	"console_search_placeholder": "Rechercher ou lancer une commande",
+	"console_shortcut_next": "Ligne suivante d'un tableau",
+	"console_shortcut_open": "Ouvrir le moniteur actif",
+	"console_shortcut_panel": "Afficher ou masquer le panneau de contexte",
+	"console_shortcut_prev": "Ligne précédente d'un tableau",
+	"console_status_config": "Config",
+	"console_status_degraded": "Dégradé",
+	"console_status_down": "En panne",
+	"console_status_paused": "En pause",
+	"console_status_up": "Actif",
+	"console_status_waiting": "En attente",
+	"console_table_empty": "Aucun moniteur ne correspond à ces filtres.",
+	"console_table_hint": "Les pires en premier. Sélectionnez une ligne pour l'inspecter.",
+	"console_table_keys": "j / k pour se déplacer, Entrée pour inspecter, o pour ouvrir",
+	"console_table_title": "Moniteurs",
+	"mode_enterprise_point_nav": "Rail d'icônes, panneau de contexte et palette de commandes partout",
+	"mode_enterprise_point_table": "Tableaux denses avec colonnes, filtres et raccourcis clavier en plus",
+	"mode_enterprise_point_team": "Équipes, authentification unique, astreinte et journaux en avant",
+	"mode_enterprise_text": "Une console dense et très sombre pour les équipes, toutes les options en vue.",
+	"mode_enterprise_title": "Entreprise",
+	"mode_homelab_point_forms": "Formulaires courts avec de bonnes valeurs par défaut, réglages avancés repliés",
+	"mode_homelab_point_nav": "Quatre destinations en vue, tout le reste sous Plus",
+	"mode_homelab_point_theme": "Le bulletin météo et la baie, en clair ou en sombre",
+	"mode_homelab_text": "Une interface calme, l'essentiel en vue. Chaque fonction reste à un clic.",
+	"mode_homelab_title": "Homelab",
+	"mode_picker_label": "Mode produit",
+	"mode_picker_selected": "Choisi",
+	"mode_switch_keeps": "Changer de mode ne change que l'interface. Rien n'est supprimé.",
+	"settings_advanced_summary": "Sections : {count}",
+	"settings_advanced_title": "Avancé",
+	"settings_appearance_enterprise_dark": "Le mode Entreprise utilise toujours sa console sombre. Passez en Homelab dans Réglages → Général pour les thèmes clair et sombre.",
+	"settings_general_instance_text": "Le nom s'affiche dans l'en-tête. La langue et le fuseau sont les valeurs par défaut des nouveaux navigateurs et des rapports.",
+	"settings_general_instance_title": "Instance",
+	"settings_general_mode_saving": "Changement en cours…",
+	"settings_general_mode_text": "Homelab garde les choses simples. Entreprise montre toutes les options dans une console sombre et dense.",
+	"settings_general_mode_title": "Mode d'interface",
+	"settings_general_readonly": "Seuls les administrateurs peuvent modifier ces réglages.",
+	"settings_general_save": "Enregistrer",
+	"settings_general_saved": "Enregistré",
+	"settings_general_wizard_run": "Lancer l'assistant de démarrage",
+	"settings_general_wizard_text": "Repassez par les étapes du premier lancement : mode, nom, notifications, moniteurs, agent.",
+	"settings_general_wizard_title": "Assistant de démarrage",
+	"settings_search_kw_general": "mode homelab entreprise interface nom langue fuseau horaire assistant démarrage",
+	"settings_tab_general": "Général",
+	"wizard_agent_text": "L'agent remonte processeur, mémoire, disques, conteneurs et services d'une machine. Lancez la commande sur la machine à surveiller.",
+	"wizard_agent_title": "Installer un agent",
+	"wizard_back": "Retour",
+	"wizard_channel_add": "Ajouter un canal",
+	"wizard_channel_list": "Canaux de notification",
+	"wizard_channel_test": "Envoyer un test",
+	"wizard_channel_test_failed": "Le test n'est pas passé : {error}",
+	"wizard_channel_test_ok": "Test envoyé à {name}. Vérifiez qu'il est bien arrivé.",
+	"wizard_channel_text": "Branchez un moyen d'être prévenu quand quelque chose casse, puis envoyez un test pour vérifier qu'il arrive.",
+	"wizard_channel_title": "Être prévenu",
+	"wizard_finish": "Terminer",
+	"wizard_instance_language": "Langue",
+	"wizard_instance_language_auto": "Suivre le navigateur",
+	"wizard_instance_name": "Nom de l'instance",
+	"wizard_instance_name_help": "Affiché dans l'en-tête. Laissez vide pour DumbMonit.",
+	"wizard_instance_name_placeholder": "Labo maison",
+	"wizard_instance_text": "Le nom s'affiche dans l'en-tête. La langue et le fuseau sont les valeurs par défaut des nouveaux navigateurs et des rapports.",
+	"wizard_instance_timezone": "Fuseau horaire",
+	"wizard_instance_title": "Nommer cette instance",
+	"wizard_intro": "Chaque étape peut être passée et modifiée plus tard dans les Réglages.",
+	"wizard_mode_text": "Choisissez l'interface qui convient à ceux qui l'utilisent. Vous pourrez changer à tout moment dans Réglages → Général.",
+	"wizard_mode_title": "Choisir l'allure de DumbMonit",
+	"wizard_monitors_count": "Moniteurs pour l'instant : {count}",
+	"wizard_monitors_import": "Importer",
+	"wizard_monitors_import_text": "Depuis Uptime Kuma, UptimeRobot, Gatus, Healthchecks ou une liste de sites.",
+	"wizard_monitors_manual": "Ajouter à la main",
+	"wizard_monitors_manual_text": "Un site, un serveur, un NAS : n'importe quel type pris en charge.",
+	"wizard_monitors_new_tab": "Importer et ajouter à la main s'ouvrent dans un nouvel onglet. Revenez ici une fois terminé.",
+	"wizard_monitors_refresh": "Actualiser",
+	"wizard_monitors_scan": "Scanner mon réseau",
+	"wizard_monitors_scan_text": "Trouve les équipements qui répondent sur vos sous-réseaux.",
+	"wizard_monitors_text": "Scannez votre réseau, reprenez les moniteurs d'un autre outil ou ajoutez-en un à la main.",
+	"wizard_monitors_title": "Ajouter vos premiers moniteurs",
+	"wizard_next": "Continuer",
+	"wizard_oncall_policy": "Politique de notification",
+	"wizard_oncall_policy_text": "Regroupement, heures calmes et rappels : qui est prévenu, et quand.",
+	"wizard_oncall_team": "Équipe et rôles",
+	"wizard_oncall_team_text": "Les comptes qui traitent les alertes : les opérateurs acquittent, les administrateurs configurent.",
+	"wizard_oncall_text": "Une première rotation hebdomadaire, et la politique d'escalade qui appelle la personne d'astreinte. Le reste se trouve dans Alertes → Astreinte.",
+	"wizard_oncall_title": "Astreinte",
+	"wizard_optional": "Facultatif",
+	"wizard_retention_text": "Combien de temps les métriques et les journaux sont gardés. Les valeurs par défaut conviennent à la plupart des équipes.",
+	"wizard_retention_title": "Rétention",
+	"wizard_skip_all": "Passer la configuration",
+	"wizard_skip_step": "Passer cette étape",
+	"wizard_sso_text": "Laissez les gens se connecter avec votre fournisseur d'identité et donnez un rôle à chaque compte.",
+	"wizard_sso_title": "Authentification unique et équipes",
+	"wizard_step_of": "Étape {current} sur {total}",
+	"wizard_steps_label": "Étapes de la configuration",
+	"wizard_title": "Configurer DumbMonit",
+	"deviceform_form_client_label": "Client",
+	"deviceform_form_client_help": "Le client auquel appartient cet équipement. Seuls ses membres le voient.",
+	"deviceform_form_client_help_edit": "Déplacer un équipement vers un autre client emporte les équipements qui en dépendent.",
+	"deviceform_form_client_default": "Par défaut pour cette vue",
+	"msp_assign_label": "Client",
+	"msp_assign_shared": "Tous les clients",
+	"msp_nav_clients": "Clients",
+	"msp_switcher_label": "Client affiché",
+	"msp_switcher_title": "Afficher les pages pour un client",
+	"msp_switcher_all": "Tous les clients",
+	"msp_overview_title": "Clients",
+	"msp_overview_description_admin": "Tous les clients d’un coup d’œil. Ouvrez-en un pour ne voir que ses équipements, alertes et pages.",
+	"msp_overview_description_member": "Les clients pour lesquels vous travaillez, et leur rapport de disponibilité du mois dernier.",
+	"msp_overview_empty_title": "Aucun client pour l’instant",
+	"msp_overview_empty_body": "Créez des clients dans les Réglages, puis donnez à chacun ses équipements et ses membres.",
+	"msp_overview_load_error": "Impossible de charger les clients.",
+	"msp_overview_none_title": "Vous n’appartenez à aucun client",
+	"msp_overview_none_body": "Demandez à votre administrateur MSP d’ajouter votre compte à un client.",
+	"msp_overview_off_title": "Le mode multi-clients est désactivé",
+	"msp_overview_off_body": "Activez-le dans les Réglages pour séparer les équipements, alertes et rapports de chaque client.",
+	"msp_overview_off_action": "Ouvrir les réglages des clients",
+	"msp_overview_open": "Ouvrir",
+	"msp_overview_report": "Mois dernier (PDF)",
+	"msp_overview_report_title": "Télécharger le rapport de disponibilité du mois dernier",
+	"msp_overview_report_error": "Impossible de produire le rapport.",
+	"msp_overview_quota_label": "Quota d’équipements utilisé",
+	"msp_overview_state_empty": "Aucun équipement pour l’instant",
+	"msp_overview_state_ok": "Tout va bien",
+	"settings_agents_client_badge": "Client : {name}",
+	"settings_clients_title": "Clients",
+	"settings_clients_description": "Mode multi-clients (MSP) : séparez les équipements, alertes, pages et rapports de chaque client.",
+	"settings_clients_search_kw": "msp locataire client isolation quota logo",
+	"settings_clients_add": "Ajouter un client",
+	"settings_clients_load_error": "Impossible de charger les clients.",
+	"settings_clients_save_error": "Impossible d’enregistrer.",
+	"settings_clients_delete_error": "Impossible de supprimer le client.",
+	"settings_clients_delete_confirm": "Supprimer ce client",
+	"settings_clients_mode": "Mode multi-clients",
+	"settings_clients_mode_off_help": "Désactivé : chaque compte voit ce que son rôle et ses équipes permettent, comme avant. À l’activation, les comptes existants restent dans le client par défaut.",
+	"settings_clients_mode_on_help": "Activé : un compte ne voit que les clients dont il est membre. Les administrateurs gèrent tous les clients et en choisissent un dans l’en-tête.",
+	"settings_clients_empty_title": "Aucun client pour l’instant",
+	"settings_clients_empty_body": "Ajoutez un client, puis déplacez-y ses équipements.",
+	"settings_clients_note": "Les équipements, pages de statut et jetons d’agent appartiennent toujours à un client. Canaux, règles d’alerte, maintenances et rapports peuvent être partagés par tous les clients. Un client qui a encore des équipements ne se supprime pas.",
+	"settings_clients_new_title": "Nouveau client",
+	"settings_clients_edit_title": "Modifier {name}",
+	"settings_clients_name": "Nom",
+	"settings_clients_description_label": "Description",
+	"settings_clients_err_name": "Saisissez un nom de client.",
+	"settings_clients_err_quota": "Saisissez un nombre entier, ou laissez vide pour ne rien limiter.",
+	"settings_clients_quota": "Quota d’équipements",
+	"settings_clients_quota_help": "Nombre maximal d’équipements du client, agents compris.",
+	"settings_clients_quota_none": "Sans limite",
+	"settings_clients_idp_groups": "Groupes du fournisseur d’identité",
+	"settings_clients_idp_groups_help": "Les membres de ces groupes SSO (OIDC, LDAP, SAML) rejoignent le client à la connexion. Séparez par des virgules.",
+	"settings_clients_contacts": "Contacts",
+	"settings_clients_contacts_help": "Adresses qui reçoivent le rapport de disponibilité mensuel, une par ligne.",
+	"settings_clients_report_legend": "Rapport de disponibilité mensuel",
+	"settings_clients_report_toggle": "L’envoyer aux contacts",
+	"settings_clients_report_help": "Le 1er à 8 h dans le fuseau du client, le PDF et les CSV du mois écoulé partent par courriel, au nom et au logo du client.",
+	"settings_clients_objective": "Objectif de disponibilité (%)",
+	"settings_clients_objective_help": "Facultatif. Chaque équipement est marqué comme le tenant ou non.",
+	"settings_clients_timezone": "Fuseau horaire",
+	"settings_clients_report_last": "Dernier rapport envoyé : {month}.",
+	"settings_clients_report_failing": "Rapport mensuel en échec",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo de {name}",
+	"settings_clients_logo_upload": "Déposer un logo",
+	"settings_clients_logo_replace": "Remplacer le logo",
+	"settings_clients_logo_remove": "Retirer",
+	"settings_clients_logo_help": "PNG, JPEG ou WebP, 256 Kio au plus. Affiché sur les rapports et pages de statut du client ; PNG et JPEG figurent aussi dans le PDF.",
+	"settings_clients_logo_too_big": "Ce fichier dépasse 256 Kio.",
+	"settings_clients_logo_error": "Impossible d’enregistrer le logo.",
+	"settings_clients_members": "Membres",
+	"settings_clients_members_help": "Les membres ne voient que ce client, dans les limites de leur rôle et de leurs équipes. Les administrateurs voient tous les clients.",
+	"settings_clients_save": "Enregistrer",
+	"settings_clients_create": "Créer le client",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement en état critique",
+				"countPlural=other": "{count} équipements en état critique"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement en alerte",
+				"countPlural=other": "{count} équipements en alerte"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} critique",
+				"countPlural=other": "{count} critiques"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} avertissement",
+				"countPlural=other": "{count} avertissements"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en pause",
+				"countPlural=other": "{count} en pause"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement",
+				"countPlural=other": "{count} équipements"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement sur {quota}",
+				"countPlural=other": "{count} équipements sur {quota}"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement",
+				"countPlural=other": "{count} équipements"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} équipement sur {quota}",
+				"countPlural=other": "{count} équipements sur {quota}"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Rapport mensuel à {count} contact",
+				"countPlural=other": "Rapport mensuel à {count} contacts"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} compte sans client ne voit rien :",
+				"countPlural=other": "{count} comptes sans client ne voient rien :"
+			}
+		}
+	],
+	"console_panel_oncall_unknown": "Quelqu'un",
+	"console_panel_oncall_until": "{schedule}, jusqu'à {time}",
+	"console_panel_oncall_open": "Ouvrir l'astreinte",
+	"console_panel_oncall_setup": "Configurer les plannings d'astreinte",
+	"wizard_oncall_default_name": "Principal",
+	"wizard_oncall_policy_name": "{name} : escalade",
+	"wizard_oncall_existing": "Plannings déjà configurés : {count}",
+	"wizard_oncall_now": "D'astreinte : {name}",
+	"wizard_oncall_nobody": "Personne d'astreinte en ce moment",
+	"wizard_oncall_name": "Nom du planning",
+	"wizard_oncall_people": "Qui se relaie",
+	"wizard_oncall_people_help": "Une semaine chacun, relève le lundi à 09:00 dans le fuseau de l'instance.",
+	"wizard_oncall_create": "Créer la rotation",
+	"wizard_oncall_open": "L'astreinte en détail",
+	"wizard_oncall_open_text": "Couches, remplacements, calendrier, et le canal Astreinte DumbMonit qui branche une politique sur le routage des alertes."
 }

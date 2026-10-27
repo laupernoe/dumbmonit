@@ -56,6 +56,7 @@
 	import { DEFAULT_INTERVAL, INTERVALS, SNMP_KIND, suggestName } from './kinds';
 	import { firstReason, identitySummary, testBlocker } from './test-connection';
 	import { seedFromPrefill, type Prefill } from './discovery-prefill';
+	import { mode } from '#lib/stores/mode.svelte.js';
 
 	interface Props {
 		collector: CollectorInfo;
@@ -115,6 +116,12 @@
 	let msQuorum = $state<number | null>(untrack(() => target?.multisite?.quorum ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
 	let groupName = $state(untrack(() => target?.group_name ?? ''));
+	// MSP mode: the client of the target. Offered when there is a choice; only
+	// the MSP administrator moves an existing target (its dependents follow).
+	const clientChoices = $derived(auth.mspOn ? (auth.msp?.clients ?? []) : []);
+	const showClient = $derived(clientChoices.length > 1 || (auth.msp?.admin === true && clientChoices.length > 0));
+	const clientLocked = $derived(!!target && auth.msp?.admin !== true);
+	let clientId = $state<number | null>(untrack(() => target?.client_id ?? auth.currentClient ?? null));
 	let locationId = $state<number | null>(untrack(() => target?.location_id ?? null));
 	/** Locations of the world map; the field only shows once there is one. */
 	let locations = $state<MapLocation[]>([]);
@@ -150,11 +157,17 @@
 	let saving = $state(false);
 	let serverError = $state<unknown>(null);
 
+	// Homelab keeps the form short: required settings and the first one; the
+	// rest waits behind "More options". Enterprise shows three up front and
+	// opens "More options" from the start.
+	const PRIMARY_COUNT = untrack(() => (mode.enterprise ? 3 : 1));
+
 	// "More options" opens by itself when an edited device already uses one.
 	let more = $state(
 		untrack(
 			() =>
-				(!target && collector.options.some((o, i) => !(o.required || i < 3) && o.key in seed.tags)) ||
+				mode.enterprise ||
+				(!target && collector.options.some((o, i) => !(o.required || i < PRIMARY_COUNT) && o.key in seed.tags)) ||
 				(!!target &&
 				(target.parent_id !== null ||
 					target.via_agent !== null ||
@@ -178,7 +191,7 @@
 	/** The agent chosen for a mail server has its own box at the top of the form. */
 	const agentOption = $derived(options.find((o) => o.input === 'agent') ?? null);
 	const listed = $derived(options.filter((o) => o.input !== 'agent'));
-	const primaryOptions = $derived(listed.filter((o, i) => o.required || i < 3));
+	const primaryOptions = $derived(listed.filter((o, i) => o.required || i < PRIMARY_COUNT));
 	const moreOptions = $derived(listed.filter((o) => !primaryOptions.includes(o)));
 	const moreOptionGroups = $derived(groupOptions(moreOptions));
 	const optionValues = $derived(Object.fromEntries(Object.entries(tags).filter(([k]) => optionKeys.includes(k))));
@@ -358,6 +371,7 @@
 			enabled,
 			group_name: groupName.trim(),
 			location_id: locationId,
+			...(showClient && clientId !== null && !clientLocked ? { client_id: clientId } : {}),
 			// No empty tag: a blank setting means "server default".
 			tags: Object.fromEntries(Object.entries(tags).filter(([, v]) => v.trim()))
 		};
@@ -584,6 +598,17 @@
 						{/if}
 					</select>
 				</Field>
+
+				{#if showClient}
+					<Field label={m.deviceform_form_client_label()} for="target-client" help={target ? m.deviceform_form_client_help_edit() : m.deviceform_form_client_help()}>
+						<select id="target-client" class="input" bind:value={clientId} disabled={clientLocked}>
+							{#if clientId === null}<option value={null}>{m.deviceform_form_client_default()}</option>{/if}
+							{#each clientChoices as choice (choice.id)}
+								<option value={choice.id}>{choice.name}</option>
+							{/each}
+						</select>
+					</Field>
+				{/if}
 
 				<Field label={m.deviceform_form_folder_label()} for="target-group" help={m.deviceform_form_folder_help()}>
 					<input

@@ -5,6 +5,7 @@
 	 * personal ones belong to one account. The time range and the refresh
 	 * interval are saved with each dashboard and can be changed on the fly.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
@@ -345,6 +346,7 @@
 					</Field>
 					<Button onclick={() => (tick += 1)}><RefreshCw class="size-4" aria-hidden="true" />{m.dash_refresh_now()}</Button>
 					<Plate tone="ghost" label={ownerNote} bare class="self-center" />
+					{#if selected?.shared}<ClientAssign kind="dashboard" id={selected.id} />{/if}
 				</div>
 			{/if}
 

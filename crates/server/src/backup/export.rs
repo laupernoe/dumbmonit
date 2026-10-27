@@ -89,7 +89,135 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         } else {
             Vec::new()
         },
+        instance: crate::instance::stored(pool).await?,
+        clients: clients(pool).await?,
+        msp_settings: crate::auth::settings::get::<Value>(pool, crate::auth::clients::SETTINGS_KEY)
+            .await?,
+        client_assignments: client_assignments(pool, &refs).await?,
     })
+}
+
+async fn clients(pool: &SqlitePool) -> Result<Vec<BundleClient>> {
+    let mut out = Vec::new();
+    for client in crate::auth::clients::list(pool).await? {
+        let logo = crate::auth::clients::logo(pool, client.id).await?;
+        out.push(BundleClient {
+            name: client.name,
+            description: client.description,
+            contacts: client.contacts,
+            monitor_quota: client.monitor_quota,
+            idp_groups: client.idp_groups,
+            members: client
+                .members
+                .into_iter()
+                .map(|m| BundleTeamMember { username: m.username, source: m.source })
+                .collect(),
+            logo_type: logo.as_ref().map(|(kind, _)| kind.clone()),
+            logo: logo.map(|(_, bytes)| BASE64.encode(bytes)),
+            sla_report: client.sla_report,
+            sla_objective: client.sla_objective,
+            report_timezone: client.report_timezone,
+        });
+    }
+    Ok(out)
+}
+
+/// Le client de chaque objet qui en a un (et pas le client par défaut pour
+/// les objets qui y tombent d'office), par clé naturelle.
+async fn client_assignments(
+    pool: &SqlitePool,
+    refs: &HashMap<i64, String>,
+) -> Result<Vec<BundleAssignment>> {
+    use crate::auth::clients::Kind;
+    let names: Vec<(i64, String)> = sqlx::query_as("SELECT id, name FROM clients")
+        .fetch_all(pool)
+        .await
+        .context("lecture des clients")?;
+    let names: HashMap<i64, String> = names.into_iter().collect();
+    let mut out = Vec::new();
+    let mut push = |kind: Kind, key: String, client: i64| {
+        if let Some(name) = names.get(&client) {
+            out.push(BundleAssignment { kind, key, client: name.clone() });
+        }
+    };
+    for (id, client) in crate::auth::clients::target_clients(pool).await? {
+        if let Some(key) = refs.get(&id) {
+            push(Kind::Target, key.clone(), client);
+        }
+    }
+    let pages: Vec<(String, i64)> =
+        sqlx::query_as("SELECT slug, client_id FROM status_pages WHERE client_id IS NOT NULL")
+            .fetch_all(pool)
+            .await?;
+    for (slug, client) in pages {
+        push(Kind::StatusPage, slug, client);
+    }
+    let tokens: Vec<(String, i64)> = sqlx::query_as(
+        "SELECT token_hash, client_id FROM agent_tokens WHERE client_id IS NOT NULL",
+    )
+    .fetch_all(pool)
+    .await?;
+    for (hash, client) in tokens {
+        push(Kind::AgentToken, hash, client);
+    }
+    let channels: Vec<(String, i64)> = sqlx::query_as(
+        "SELECT name, client_id FROM notification_channels WHERE client_id IS NOT NULL",
+    )
+    .fetch_all(pool)
+    .await?;
+    for (name, client) in channels {
+        push(Kind::Channel, name, client);
+    }
+    let rules: Vec<(String, i64)> =
+        sqlx::query_as("SELECT uid, client_id FROM alert_rules WHERE client_id IS NOT NULL")
+            .fetch_all(pool)
+            .await?;
+    for (uid, client) in rules {
+        push(Kind::Rule, uid, client);
+    }
+    let reports: Vec<(String, i64)> =
+        sqlx::query_as("SELECT name, client_id FROM report_schedules WHERE client_id IS NOT NULL")
+            .fetch_all(pool)
+            .await?;
+    for (name, client) in reports {
+        push(Kind::Report, name, client);
+    }
+    let silences: Vec<(String, Option<i64>, i64)> = sqlx::query_as(
+        "SELECT name, target_id, client_id FROM silences WHERE client_id IS NOT NULL",
+    )
+    .fetch_all(pool)
+    .await?;
+    for (name, target, client) in silences {
+        let target = target.and_then(|id| refs.get(&id)).cloned().unwrap_or_default();
+        push(Kind::Silence, format!("{name}\n{target}"), client);
+    }
+    // Objets du lot 4, par nom (titre pour une procédure). Seuls les tableaux
+    // partagés ont un client.
+    for (kind, sql) in [
+        (
+            Kind::Dashboard,
+            "SELECT name, client_id FROM dashboards WHERE shared = 1 AND client_id IS NOT NULL",
+        ),
+        (
+            Kind::Schedule,
+            "SELECT name, client_id FROM oncall_schedules WHERE client_id IS NOT NULL",
+        ),
+        (
+            Kind::EscalationPolicy,
+            "SELECT name, client_id FROM oncall_policies WHERE client_id IS NOT NULL",
+        ),
+        (Kind::Runbook, "SELECT title, client_id FROM runbooks WHERE client_id IS NOT NULL"),
+        (
+            Kind::RemediationAction,
+            "SELECT name, client_id FROM remediation_actions WHERE client_id IS NOT NULL",
+        ),
+    ] {
+        let rows: Vec<(String, i64)> = sqlx::query_as(sql).fetch_all(pool).await?;
+        for (name, client) in rows {
+            push(kind, name, client);
+        }
+    }
+    Ok(out)
 }
 
 async fn teams(pool: &SqlitePool) -> Result<Vec<BundleTeam>> {
@@ -861,6 +989,8 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
             "netconfig_versions",
             "Network configuration versions, only when you include them: they hold device secrets.",
         ),
+        ("instance", "Instance name, language, time zone and product mode."),
+        ("clients", "MSP clients, their members, branding, and what belongs to each."),
     ])
 }
 

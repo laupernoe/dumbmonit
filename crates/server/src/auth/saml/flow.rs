@@ -590,6 +590,7 @@ pub async fn map_identity(
         }
     }
     teams::sync_idp_groups(pool, user.id, &identity.groups).await?;
+    crate::auth::clients::sync_idp_groups(pool, user.id, &identity.groups).await?;
     Ok(user)
 }
 

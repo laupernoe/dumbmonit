@@ -4,6 +4,7 @@
 	 * opens above it. The kind catalogue and the list load together: without
 	 * the catalogue we could neither name a kind nor build the form.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { BellRing, EllipsisVertical, Plus } from 'lucide-svelte';
 	import { deleteChannel, listChannelKinds, listChannels, testChannel, toApiError, type Channel } from '#lib/api/index.js';
 	import { formatDateTime, formatRelative } from '#lib/format.js';
@@ -214,6 +215,7 @@
 								</div>
 								{#if auth.isAdmin}
 									<div class="flex flex-wrap items-center gap-1.5">
+										<ClientAssign kind="channel" id={channel.id} />
 										<Button variant="ghost" size="sm" loading={current === 'test'} disabled={current !== null} onclick={() => void sendTest(channel)}>
 											{m.notifications_channels_send_test()}
 										</Button>

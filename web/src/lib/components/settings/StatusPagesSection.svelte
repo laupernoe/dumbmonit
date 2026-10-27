@@ -10,6 +10,7 @@
 	 * a long form and deserves the whole width. The public rendering lives at
 	 * `/s/<slug>`.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import FileManagedBadge from '#lib/components/settings/FileManagedBadge.svelte';
 	import { page as route } from '$app/state';
@@ -144,6 +145,7 @@
 											<ExternalLink class="size-3.5" aria-hidden="true" />
 										</Button>
 										{#if auth.isAdmin}
+											<ClientAssign kind="status_page" id={item.id} />
 											<Button variant="ghost" size="sm" href={`/settings/status/${item.id}`}>{m.status_list_edit()}</Button>
 											<Menu label={m.status_list_more()}>
 												{#snippet trigger({ toggle, open })}

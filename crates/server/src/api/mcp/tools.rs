@@ -2846,7 +2846,11 @@ async fn list_status_pages(state: &AppState) -> ToolResult {
 }
 
 async fn list_channels(state: &AppState) -> ToolResult {
-    let Json(channels) = channels::list(State(state.clone())).await?;
+    let Json(channels) = channels::list(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let text = if channels.is_empty() {
         "No notification channel: alerts are not sent anywhere yet.".to_string()
     } else {
@@ -3116,7 +3120,11 @@ async fn test_channel(state: &AppState, args: &Args) -> ToolResult {
         .or_else(|| args.i64("channel").map(|id| id.to_string()))
         .or_else(|| args.i64("id").map(|id| id.to_string()))
         .ok_or_else(|| failed("Name the channel: \"channel\" (id or name, see list_channels)."))?;
-    let Json(channels) = channels::list(State(state.clone())).await?;
+    let Json(channels) = channels::list(
+        crate::auth::teams::TeamAccess(crate::auth::teams::Access::All),
+        State(state.clone()),
+    )
+    .await?;
     let wanted = reference.to_lowercase();
     let by_id = reference.parse::<i64>().ok().and_then(|id| channels.iter().find(|c| c.id == id));
     let exact = channels.iter().find(|c| c.name.to_lowercase() == wanted);

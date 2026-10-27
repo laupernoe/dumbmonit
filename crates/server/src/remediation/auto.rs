@@ -107,7 +107,24 @@ async fn run_policy(
     let Some(action) = store::get_action(&state.pool, policy.action_id).await? else {
         return Ok(0);
     };
+    // Mode MSP : l'action d'un client ne se déclenche que sur ses équipements.
+    let owner = crate::auth::clients::owner_of(
+        &state.pool,
+        crate::auth::clients::Kind::RemediationAction,
+        action.id,
+    )
+    .await?
+    .flatten();
     for alert in alerts.iter().filter(|alert| eligible(policy, alert, now)) {
+        if let Some(owner) = owner {
+            let client = match alert.target_id {
+                Some(target) => crate::auth::clients::target_client(&state.pool, target).await?,
+                None => None,
+            };
+            if client != Some(owner) {
+                continue;
+            }
+        }
         let recent = store::policy_runs_since(
             &state.pool,
             policy.id,

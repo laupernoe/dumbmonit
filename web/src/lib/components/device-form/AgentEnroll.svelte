@@ -17,6 +17,7 @@
 	 */
 	import { untrack } from 'svelte';
 	import { createAgentToken, type CreatedAgentToken } from '#lib/api/index.js';
+	import { auth } from '#lib/stores/auth.svelte.js';
 	import { Button, ClickSpark, CopyBlock, ErrorNotice, Field, Plate } from '#lib/ui/index.js';
 	import AgentChecksums from './AgentChecksums.svelte';
 	import AgentModules from './AgentModules.svelte';
@@ -65,7 +66,9 @@
 			token = await createAgentToken({
 				name: name.trim(),
 				base_url: origin,
-				...(relay ? { relay: true, site: siteLabel } : {})
+				...(relay ? { relay: true, site: siteLabel } : {}),
+				// MSP mode: the machine enters the client picked in the header.
+				...(auth.mspOn && auth.currentClient !== null ? { client_id: auth.currentClient } : {})
 			});
 		} catch (cause) {
 			error = cause;

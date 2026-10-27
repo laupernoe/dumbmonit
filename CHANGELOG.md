@@ -5,7 +5,56 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+## 0.14.0 — 2026-10-28
+
 ### Added
+
+- **Two product modes, and a setup wizard.** An administrator picks how the
+  interface looks, at first launch or in **Settings → General**, and can switch
+  at any time without losing anything:
+  - **Homelab** (the default, and what existing instances keep) is the familiar
+    interface made simpler: four destinations in the bar and everything else
+    under **More** and the command palette, the rarely used sections of each
+    Settings tab folded behind **Advanced**, and device forms that show fewer
+    fields up front. Light and dark themes as before.
+  - **Enterprise** is a new, very dark console (Geist type): an icon rail, a
+    header with breadcrumb, **LIVE**, time range and the command palette, and a
+    context panel on the right that shows what needs attention, the monitor you
+    picked, the nearest forecast and who gets told. Its overview has a band of
+    five figures (monitors up, 30-day availability, p95, open alerts, MTTR), a
+    **health river** of every monitor over the range, and a dense monitor table
+    with state, type and text filters, optional columns and keyboard
+    navigation (`j` / `k`, `Enter`, `o`, `i` for the panel, `g m`, `g x`, `g l`).
+  - The **setup wizard** opens after the first administrator signs in, and again
+    from Settings → General: mode, instance name, language and time zone, a
+    first notification channel with a test, first monitors (network scan, import
+    or by hand), an agent; in Enterprise mode, optional steps for single sign-on
+    and teams, on-call and retention. Every step can be skipped.
+  - API: `GET /api/instance` (public: mode and whether setup is done),
+    `GET`/`PUT /api/instance/settings`. The settings travel with the backup.
+
+- **Multi-client (MSP) mode, with per-client reports.** Settings → Team & access
+  → Clients puts clients above teams and folders. Every monitor, status page and
+  agent token belongs to a client; channels, alert rules, maintenance windows and
+  report schedules belong to a client or are shared by the instance. Off by
+  default: everything existing goes to a Default client and a single-customer
+  instance sees no change. On, admins become MSP administrators who pick a client
+  in the header and get an overview of every client (alerts, quota), and other
+  accounts only see the clients they belong to, enforced by the server like teams
+  (closed route list, lists, details, metrics, alerts, rules, status pages,
+  reports, logos, Web Push; everything else refused). A client's channel only
+  hears about its monitors, its rules and maintenance windows only touch them, an
+  agent token only enrols into its client, and moving a monitor takes its
+  dependents and cuts any link left between clients. Simple device quotas,
+  identity-provider group → client mapping, a logo shown on the client's status
+  pages and in its SLA report, and the monthly SLA report (PDF, CSV) emailed to
+  the client's contacts. Backups carry clients and what belongs to them.
+  Shared dashboards, on-call schedules and escalation policies, runbooks and
+  remediation actions also belong to a client or to the instance; a client's
+  action never runs on another client's monitor. With a client picked, the MSP
+  administrator's lists, run log and log search follow that client. SCIM groups
+  named on a client bring their members into it. The client switcher sits in
+  the header of both product modes.
 
 - **Cloud integrations.** Eight new monitor types read the cloud services a small
   team depends on, with read-only credentials and built-in alert rules grouped per

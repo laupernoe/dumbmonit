@@ -8836,5 +8836,424 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界"
+	"worldmap_view_world": "世界",
+	"console_breadcrumb": "面包屑导航",
+	"console_col_address": "地址",
+	"console_col_checked": "检查时间",
+	"console_col_folder": "文件夹",
+	"console_col_latency": "延迟 · {range}",
+	"console_col_latency_short": "延迟",
+	"console_col_name": "名称",
+	"console_col_p95": "p95",
+	"console_col_status": "状态",
+	"console_col_type": "类型",
+	"console_col_uptime": "30 天可用率",
+	"console_columns": "列",
+	"console_egg": "// 每分钟 {count} 次检查。去睡吧，这里有我们。",
+	"console_filter_all": "全部",
+	"console_filter_degraded": "降级",
+	"console_filter_down": "宕机",
+	"console_filter_kind": "类型",
+	"console_filter_kind_all": "所有类型",
+	"console_filter_label": "按状态筛选",
+	"console_filter_paused": "已暂停",
+	"console_filter_search": "筛选监控项",
+	"console_kpi_alerts": "未处理告警",
+	"console_kpi_alerts_note": "严重：{critical}，警告：{warning}",
+	"console_kpi_availability": "30 天可用率",
+	"console_kpi_availability_note": "已测量监控项：{count}",
+	"console_kpi_mttr": "30 天 MTTR",
+	"console_kpi_mttr_note": "已解决：{count}",
+	"console_kpi_none": "暂无数据",
+	"console_kpi_p95": "p95 响应",
+	"console_kpi_p95_note": "范围：{range}",
+	"console_kpi_up": "正常监控项",
+	"console_kpi_up_note": "宕机：{down}，已暂停：{paused}",
+	"console_kpi_up_unit": "/ {total}",
+	"console_live": "实时",
+	"console_live_off": "实时更新已暂停。选择以恢复。",
+	"console_live_on": "实时更新已开启。选择以暂停。",
+	"console_new_monitor": "新建监控项",
+	"console_panel": "上下文",
+	"console_panel_attention": "需要关注",
+	"console_panel_attention_all": "查看全部（{count}）",
+	"console_panel_attention_none": "目前没有需要处理的事项。",
+	"console_panel_check_now": "立即检查",
+	"console_panel_checked": "已请求检查。结果将在下次刷新时显示。",
+	"console_panel_close": "关闭上下文面板",
+	"console_panel_edit": "编辑",
+	"console_panel_forecast": "预测",
+	"console_panel_forecast_none": "没有预测会越过阈值。",
+	"console_panel_forecast_open": "在告警中查看预测",
+	"console_panel_more": "更多操作",
+	"console_panel_oncall": "值班",
+	"console_panel_oncall_hint": "通知对象：通知设置",
+	"console_panel_oncall_you": "你",
+	"console_panel_open": "打开",
+	"console_panel_picked": "选中的监控项",
+	"console_panel_picked_none": "在表格中选择一行即可在此查看。",
+	"console_panel_silence": "静默 1 小时",
+	"console_panel_silenced": "已静默一小时。",
+	"console_panel_suppressed_by": "已屏蔽：{name} 宕机",
+	"console_panel_toggle": "显示或隐藏上下文面板",
+	"console_panel_uptime": "可用率",
+	"console_paused": "已暂停",
+	"console_range": "时间范围",
+	"console_river_empty": "此时间范围内暂无测量数据。",
+	"console_river_hint": "每个监控项，每格 {slot}，最近 {range}",
+	"console_river_legend": "图例",
+	"console_river_more": "下表中还有更多监控项：{count}",
+	"console_river_no_data": "无数据",
+	"console_river_now": "现在",
+	"console_river_title": "健康河流图",
+	"console_search_placeholder": "搜索或运行命令",
+	"console_shortcut_next": "表格中的下一行",
+	"console_shortcut_open": "打开当前监控项",
+	"console_shortcut_panel": "显示或隐藏上下文面板",
+	"console_shortcut_prev": "表格中的上一行",
+	"console_status_config": "配置",
+	"console_status_degraded": "降级",
+	"console_status_down": "宕机",
+	"console_status_paused": "已暂停",
+	"console_status_up": "正常",
+	"console_status_waiting": "等待中",
+	"console_table_empty": "没有符合这些筛选条件的监控项。",
+	"console_table_hint": "最差的排在前面。选择一行进行查看。",
+	"console_table_keys": "j / k 移动，Enter 查看，o 打开",
+	"console_table_title": "监控项",
+	"mode_enterprise_point_nav": "图标栏、上下文面板，随处可用的命令面板",
+	"mode_enterprise_point_table": "紧凑表格，更多列、筛选和键盘快捷键",
+	"mode_enterprise_point_team": "团队、单点登录、值班和日志一目了然",
+	"mode_enterprise_text": "面向团队的紧凑深色控制台，所有选项尽收眼底。",
+	"mode_enterprise_title": "企业",
+	"mode_homelab_point_forms": "简短表单，默认值合理，高级设置已折叠",
+	"mode_homelab_point_nav": "四个主入口，其余都在“更多”中",
+	"mode_homelab_point_theme": "天气简报和机架视图，浅色或深色",
+	"mode_homelab_text": "简洁的界面，只显示要点。所有功能一键可达。",
+	"mode_homelab_title": "家庭实验室",
+	"mode_picker_label": "产品模式",
+	"mode_picker_selected": "已选择",
+	"mode_switch_keeps": "切换只会改变界面，不会删除任何内容。",
+	"settings_advanced_summary": "部分：{count}",
+	"settings_advanced_title": "高级",
+	"settings_appearance_enterprise_dark": "企业模式始终使用深色控制台。如需浅色和深色主题，请在 设置 → 常规 中切换到家庭实验室。",
+	"settings_general_instance_text": "名称显示在页眉中。语言和时区是新浏览器和报告的默认值。",
+	"settings_general_instance_title": "实例",
+	"settings_general_mode_saving": "正在切换…",
+	"settings_general_mode_text": "家庭实验室保持简洁；企业模式在紧凑的深色控制台中显示所有选项。",
+	"settings_general_mode_title": "界面模式",
+	"settings_general_readonly": "只有管理员可以更改这些设置。",
+	"settings_general_save": "保存",
+	"settings_general_saved": "已保存",
+	"settings_general_wizard_run": "运行设置向导",
+	"settings_general_wizard_text": "重新完成首次启动步骤：模式、名称、通知、监控项、代理。",
+	"settings_general_wizard_title": "设置向导",
+	"settings_search_kw_general": "模式 家庭实验室 企业 界面 名称 语言 时区 向导 设置",
+	"settings_tab_general": "常规",
+	"wizard_agent_text": "代理会上报机器的 CPU、内存、磁盘、容器和服务。在要监控的机器上运行该命令。",
+	"wizard_agent_title": "安装代理",
+	"wizard_back": "上一步",
+	"wizard_channel_add": "添加渠道",
+	"wizard_channel_list": "通知渠道",
+	"wizard_channel_test": "发送测试",
+	"wizard_channel_test_failed": "测试未成功：{error}",
+	"wizard_channel_test_ok": "测试已发送到 {name}。请确认已收到。",
+	"wizard_channel_text": "连接一种在出现故障时通知你的方式，然后发送测试确认能收到。",
+	"wizard_channel_title": "接收通知",
+	"wizard_finish": "完成",
+	"wizard_instance_language": "语言",
+	"wizard_instance_language_auto": "跟随浏览器",
+	"wizard_instance_name": "实例名称",
+	"wizard_instance_name_help": "显示在页眉中。留空则显示 DumbMonit。",
+	"wizard_instance_name_placeholder": "家庭实验室",
+	"wizard_instance_text": "名称显示在页眉中。语言和时区是新浏览器和报告的默认值。",
+	"wizard_instance_timezone": "时区",
+	"wizard_instance_title": "为实例命名",
+	"wizard_intro": "每一步都可以跳过，之后可在设置中更改。",
+	"wizard_mode_text": "选择适合使用者的界面。你可以随时在 设置 → 常规 中切换。",
+	"wizard_mode_title": "选择 DumbMonit 的外观",
+	"wizard_monitors_count": "当前监控项：{count}",
+	"wizard_monitors_import": "导入",
+	"wizard_monitors_import_text": "从 Uptime Kuma、UptimeRobot、Gatus、Healthchecks 或站点列表导入。",
+	"wizard_monitors_manual": "手动添加",
+	"wizard_monitors_manual_text": "网站、服务器、NAS：任何受支持的类型。",
+	"wizard_monitors_new_tab": "导入和手动添加会在新标签页中打开。完成后回到这里。",
+	"wizard_monitors_refresh": "刷新",
+	"wizard_monitors_scan": "扫描我的网络",
+	"wizard_monitors_scan_text": "查找在你的子网中有响应的设备。",
+	"wizard_monitors_text": "扫描网络、从其他工具导入监控项，或手动添加。",
+	"wizard_monitors_title": "添加第一批监控项",
+	"wizard_next": "继续",
+	"wizard_oncall_policy": "通知策略",
+	"wizard_oncall_policy_text": "分组、静默时段和重复提醒：通知谁、何时通知。",
+	"wizard_oncall_team": "团队和角色",
+	"wizard_oncall_team_text": "处理告警的账户：操作员负责确认，管理员负责配置。",
+	"wizard_oncall_text": "第一个每周轮换，以及呼叫值班人员的升级策略。其余内容在“告警 → 值班”中。",
+	"wizard_oncall_title": "值班",
+	"wizard_optional": "可选",
+	"wizard_retention_text": "指标和日志的保留时长。默认值适合大多数团队。",
+	"wizard_retention_title": "数据保留",
+	"wizard_skip_all": "跳过设置",
+	"wizard_skip_step": "跳过此步",
+	"wizard_sso_text": "让用户通过你的身份提供商登录，并为每个账户分配角色。",
+	"wizard_sso_title": "单点登录和团队",
+	"wizard_step_of": "第 {current} 步，共 {total} 步",
+	"wizard_steps_label": "设置步骤",
+	"wizard_title": "设置 DumbMonit",
+	"deviceform_form_client_label": "客户",
+	"deviceform_form_client_help": "此设备所属的客户。只有该客户的成员能看到它。",
+	"deviceform_form_client_help_edit": "将设备移到另一个客户时，依赖它的设备也会一起移动。",
+	"deviceform_form_client_default": "此视图的默认值",
+	"msp_assign_label": "客户",
+	"msp_assign_shared": "所有客户",
+	"msp_nav_clients": "客户",
+	"msp_switcher_label": "显示的客户",
+	"msp_switcher_title": "只显示一个客户的页面",
+	"msp_switcher_all": "所有客户",
+	"msp_overview_title": "客户",
+	"msp_overview_description_admin": "一览所有客户。打开一个客户即可只看它的设备、告警和页面。",
+	"msp_overview_description_member": "你服务的客户，以及他们上个月的可用性报告。",
+	"msp_overview_empty_title": "还没有客户",
+	"msp_overview_empty_body": "在设置中创建客户，然后为每个客户分配设备和成员。",
+	"msp_overview_load_error": "无法加载客户。",
+	"msp_overview_none_title": "你不属于任何客户",
+	"msp_overview_none_body": "请让你的 MSP 管理员把你的账户加入某个客户。",
+	"msp_overview_off_title": "多客户模式已关闭",
+	"msp_overview_off_body": "在设置中开启，即可隔离每个客户的设备、告警和报告。",
+	"msp_overview_off_action": "打开客户设置",
+	"msp_overview_open": "打开",
+	"msp_overview_report": "上个月（PDF）",
+	"msp_overview_report_title": "下载上个月的可用性报告",
+	"msp_overview_report_error": "无法生成报告。",
+	"msp_overview_quota_label": "已用设备配额",
+	"msp_overview_state_empty": "还没有设备",
+	"msp_overview_state_ok": "一切正常",
+	"settings_agents_client_badge": "客户：{name}",
+	"settings_clients_title": "客户",
+	"settings_clients_description": "多客户（MSP）模式：隔离每个客户的设备、告警、页面和报告。",
+	"settings_clients_search_kw": "msp 租户 客户 隔离 配额 标志",
+	"settings_clients_add": "添加客户",
+	"settings_clients_load_error": "无法加载客户。",
+	"settings_clients_save_error": "无法保存。",
+	"settings_clients_delete_error": "无法删除客户。",
+	"settings_clients_delete_confirm": "删除此客户",
+	"settings_clients_mode": "多客户模式",
+	"settings_clients_mode_off_help": "关闭时：每个账户按其角色和团队查看，与之前相同。开启后，现有账户保留在默认客户中。",
+	"settings_clients_mode_on_help": "开启时：账户只能看到它所属的客户。管理员管理所有客户，并在页头选择客户。",
+	"settings_clients_empty_title": "还没有客户",
+	"settings_clients_empty_body": "添加客户，然后把它的设备移过去。",
+	"settings_clients_note": "设备、状态页和代理令牌始终属于某个客户。通知渠道、告警规则、维护窗口和报告可由所有客户共享。仍有设备的客户无法删除。",
+	"settings_clients_new_title": "新客户",
+	"settings_clients_edit_title": "编辑 {name}",
+	"settings_clients_name": "名称",
+	"settings_clients_description_label": "描述",
+	"settings_clients_err_name": "请输入客户名称。",
+	"settings_clients_err_quota": "请输入整数，留空表示不限。",
+	"settings_clients_quota": "设备配额",
+	"settings_clients_quota_help": "客户最多可拥有的设备数，包括代理。",
+	"settings_clients_quota_none": "不限",
+	"settings_clients_idp_groups": "身份提供方组",
+	"settings_clients_idp_groups_help": "这些 SSO 组（OIDC、LDAP、SAML）的成员登录时加入该客户。用逗号分隔。",
+	"settings_clients_contacts": "联系人",
+	"settings_clients_contacts_help": "接收每月可用性报告的邮箱地址，每行一个。",
+	"settings_clients_report_legend": "每月可用性报告",
+	"settings_clients_report_toggle": "发送给联系人",
+	"settings_clients_report_help": "每月 1 日按客户时区 8:00，上个月的 PDF 和 CSV 将通过邮件发出，带有客户名称和标志。",
+	"settings_clients_objective": "可用性目标（%）",
+	"settings_clients_objective_help": "可选。每台设备都会标注是否达标。",
+	"settings_clients_timezone": "时区",
+	"settings_clients_report_last": "最近发送的报告：{month}。",
+	"settings_clients_report_failing": "每月报告失败",
+	"settings_clients_logo": "标志",
+	"settings_clients_logo_alt": "{name} 的标志",
+	"settings_clients_logo_upload": "上传标志",
+	"settings_clients_logo_replace": "替换标志",
+	"settings_clients_logo_remove": "移除",
+	"settings_clients_logo_help": "PNG、JPEG 或 WebP，最大 256 KiB。显示在客户的报告和状态页上；PNG 和 JPEG 也会嵌入 PDF。",
+	"settings_clients_logo_too_big": "该文件超过 256 KiB。",
+	"settings_clients_logo_error": "无法保存标志。",
+	"settings_clients_members": "成员",
+	"settings_clients_members_help": "成员只能看到此客户，且受其角色和团队限制。管理员可看到所有客户。",
+	"settings_clients_save": "保存",
+	"settings_clients_create": "创建客户",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备处于严重状态",
+				"countPlural=other": "{count} 台设备处于严重状态"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备有告警",
+				"countPlural=other": "{count} 台设备有告警"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个严重",
+				"countPlural=other": "{count} 个严重"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个警告",
+				"countPlural=other": "{count} 个警告"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个已暂停",
+				"countPlural=other": "{count} 个已暂停"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备",
+				"countPlural=other": "{count} 台设备"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} / {quota} 台设备",
+				"countPlural=other": "{count} / {quota} 台设备"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备",
+				"countPlural=other": "{count} 台设备"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} / {quota} 台设备",
+				"countPlural=other": "{count} / {quota} 台设备"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "每月报告发送给 {count} 位联系人",
+				"countPlural=other": "每月报告发送给 {count} 位联系人"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个没有客户的账户什么也看不到：",
+				"countPlural=other": "{count} 个没有客户的账户什么也看不到："
+			}
+		}
+	],
+	"console_panel_oncall_unknown": "某人",
+	"console_panel_oncall_until": "{schedule}，至 {time}",
+	"console_panel_oncall_open": "打开值班",
+	"console_panel_oncall_setup": "设置值班排班",
+	"wizard_oncall_default_name": "主值班",
+	"wizard_oncall_policy_name": "{name}：升级",
+	"wizard_oncall_existing": "已设置的排班：{count}",
+	"wizard_oncall_now": "当前值班：{name}",
+	"wizard_oncall_nobody": "当前无人值班",
+	"wizard_oncall_name": "排班名称",
+	"wizard_oncall_people": "轮流值班的人",
+	"wizard_oncall_people_help": "每人一周，每周一 09:00（实例时区）交接。",
+	"wizard_oncall_create": "创建轮换",
+	"wizard_oncall_open": "值班详情",
+	"wizard_oncall_open_text": "层级、替班、日历，以及将策略接入告警路由的 DumbMonit 值班渠道。"
 }

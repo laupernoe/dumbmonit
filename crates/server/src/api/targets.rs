@@ -8,6 +8,7 @@ use dumbmonit_proto::{Credential, CredentialInput, Target, TargetId};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
+use crate::auth::clients;
 use crate::auth::middleware::Identity;
 use crate::auth::teams::{Access, Level, TeamAccess};
 use crate::collectors::relay::{self, JobResult};
@@ -71,6 +72,8 @@ pub struct TargetView {
     /// Emplacements multiples (serveur, agents relais) et quorum ; `None` :
     /// sondé d'un seul endroit (voir [`crate::multisite`]).
     pub multisite: Option<MultisiteConfig>,
+    /// Mode MSP : le client de l'équipement (client par défaut, `1`, sinon).
+    pub client_id: i64,
     pub last_probe_at: Option<String>,
     pub last_error: Option<String>,
     /// Nature de `last_error` : `down` (équipement injoignable) ou `config`
@@ -124,6 +127,7 @@ impl TargetView {
             managed,
             location_id: None,
             multisite: None,
+            client_id: crate::auth::clients::DEFAULT_CLIENT,
             last_probe_at,
             last_error,
             error_kind,
@@ -181,6 +185,12 @@ pub struct TargetPayload {
     /// `{"type": "none"}`.
     #[serde(default)]
     pub credential: Option<CredentialInput>,
+    /// Mode MSP : le client de l'équipement. Absent à la création : celui de la
+    /// vue de l'administrateur, ou le seul client du compte, sinon le client par
+    /// défaut. Absent à la modification : inchangé ; seul l'administrateur MSP
+    /// le change.
+    #[serde(default)]
+    pub client_id: Option<i64>,
 }
 
 impl TargetPayload {
@@ -352,6 +362,7 @@ pub async fn list(
     let mut statuses = db::targets::statuses(&state.pool).await?;
     let places = super::locations::assignments(&state.pool).await?;
     let mut multisite = db::multisite::all(&state.pool).await?;
+    let owners = clients::target_clients(&state.pool).await?;
     let admin = who.is_admin();
     Ok(Json(
         targets
@@ -360,7 +371,12 @@ pub async fn list(
                 let status = statuses.remove(&target.id);
                 let location = places.get(&target.id).copied();
                 let sites = multisite.remove(&target.id);
-                TargetView::new(target, status).at(location).sites(sites).for_reader(admin)
+                let client = owners.get(&target.id).copied();
+                TargetView::new(target, status)
+                    .at(location)
+                    .sites(sites)
+                    .client(client)
+                    .for_reader(admin)
             })
             .collect(),
     ))
@@ -375,7 +391,14 @@ pub async fn get_one(
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     let location = super::locations::location_of(&state.pool, id).await?;
     let sites = db::multisite::get(&state.pool, id).await?;
-    Ok(Json(TargetView::new(target, status).at(location).sites(sites).for_reader(who.is_admin())))
+    let client = clients::target_client(&state.pool, id).await?;
+    Ok(Json(
+        TargetView::new(target, status)
+            .at(location)
+            .sites(sites)
+            .client(client)
+            .for_reader(who.is_admin()),
+    ))
 }
 
 /// Valeur substituée à ce qui ressemble à un secret, pour qui n'administre pas.
@@ -389,6 +412,13 @@ impl TargetView {
 
     fn sites(mut self, multisite: Option<MultisiteConfig>) -> Self {
         self.multisite = multisite;
+        self
+    }
+
+    fn client(mut self, client: Option<i64>) -> Self {
+        if let Some(client) = client {
+            self.client_id = client;
+        }
         self
     }
 
@@ -451,14 +481,19 @@ pub async fn create(
 ) -> ApiResult<(StatusCode, Json<TargetView>)> {
     let location = payload.location_id.flatten();
     let multisite = payload.multisite.clone().flatten();
+    let wanted_client = payload.client_id;
     let input = payload.validate(&state, None)?;
+    let client = clients::target_client_for(&state.pool, &access, wanted_client)
+        .await
+        .map_err(super::clients::api_error)?;
     check_team_placement(&state, &access, &input).await?;
     super::locations::check_location(&state.pool, location).await?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
     check_pack_relay(&input)?;
     let multisite = check_multisite(&state, None, &input, multisite).await?;
-    let id = db::targets::create(&state.pool, &state.cipher, &input)
+    check_client_links(&state, client, &input, multisite.as_ref()).await?;
+    let id = db::targets::create_in(&state.pool, &state.cipher, &input, client)
         .await
         .map_err(duplicate_address_to_conflict)?;
     if location.is_some() {
@@ -479,7 +514,8 @@ pub async fn create(
     // Le relais fait partie du statut, pas de la cible : sans lui, la réponse
     // dirait `via_agent: null` alors qu'il vient d'être enregistré.
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
-    Ok((StatusCode::CREATED, Json(TargetView::new(target, status).at(location).sites(multisite))))
+    let view = TargetView::new(target, status).at(location).sites(multisite).client(Some(client));
+    Ok((StatusCode::CREATED, Json(view)))
 }
 
 pub async fn update(
@@ -493,7 +529,23 @@ pub async fn update(
     let keep_group = payload.group_name.is_none();
     let new_location = payload.location_id;
     let new_multisite = payload.multisite.clone();
+    let wanted_client = payload.client_id;
     let before = load(&state, id).await?;
+    let current_client =
+        clients::target_client(&state.pool, id).await?.ok_or_else(|| not_found(id))?;
+    let client = wanted_client.unwrap_or(current_client);
+    if client != current_client {
+        // Changer de client est un geste d'administrateur MSP : un compte
+        // restreint ne sort pas un équipement de chez son client.
+        if access.is_scoped() {
+            return Err(ApiError::Forbidden(
+                "Only an MSP administrator can move a target to another client.".into(),
+            ));
+        }
+        if !clients::exists(&state.pool, client).await? {
+            return Err(ApiError::BadRequest("This client does not exist.".into()));
+        }
+    }
     let multisite_before = db::multisite::get(&state.pool, id).await?;
     // Un moniteur géré ne change que par ses étiquettes, sauf la pause.
     if let Some(managed) = db::targets::managed_get(&state.pool, id).await?
@@ -535,11 +587,17 @@ pub async fn update(
     check_team_placement(&state, &access, &input).await?;
     check_parent(&state, input.parent_id).await?;
     check_relay(&state, input.via_agent).await?;
+    check_client_links(&state, client, &input, multisite.as_ref()).await?;
     let updated = db::targets::update(&state.pool, &state.cipher, id, &input)
         .await
         .map_err(duplicate_address_to_conflict)?;
     if !updated {
         return Err(not_found(id));
+    }
+    if client != current_client {
+        clients::move_targets(&state.pool, &[id], client)
+            .await
+            .map_err(super::clients::api_error)?;
     }
     if let Some(location) = new_location {
         super::locations::set_location(&state.pool, &[id], location).await?;
@@ -556,7 +614,32 @@ pub async fn update(
     crate::packs::apply_thresholds(&state.pool, &target).await;
     let status = db::targets::statuses(&state.pool).await?.remove(&id);
     let location = super::locations::location_of(&state.pool, id).await?;
-    Ok(Json(TargetView::new(target, status).at(location).sites(multisite)))
+    Ok(Json(TargetView::new(target, status).at(location).sites(multisite).client(Some(client))))
+}
+
+/// Mode MSP : un équipement ne dépend (parent, relais, emplacements de sonde)
+/// que d'équipements de son client. Un relais d'un autre client recevrait ses
+/// identifiants ; un parent d'un autre client lierait leurs alertes.
+async fn check_client_links(
+    state: &AppState,
+    client: i64,
+    input: &db::targets::TargetInput,
+    multisite: Option<&MultisiteConfig>,
+) -> ApiResult<()> {
+    let mut linked: Vec<TargetId> =
+        [input.parent_id, input.via_agent].into_iter().flatten().collect();
+    if let Some(config) = multisite {
+        linked.extend(config.agents.iter().copied());
+    }
+    for target in linked {
+        if clients::target_client(&state.pool, target).await?.is_some_and(|other| other != client) {
+            return Err(ApiError::BadRequest(
+                "A linked target (parent, relay or probe location) belongs to another client."
+                    .into(),
+            ));
+        }
+    }
+    Ok(())
 }
 
 /// Étiquettes qui changent l'endroit (ou la manière) dont le secret est envoyé.
@@ -1310,6 +1393,11 @@ fn not_found(id: TargetId) -> ApiError {
 /// La contrainte `UNIQUE (kind, address)` traduit une erreur d'utilisateur, pas une
 /// panne : on la présente comme telle plutôt qu'en erreur 500.
 fn duplicate_address_to_conflict(error: anyhow::Error) -> ApiError {
+    if error.downcast_ref::<db::targets::QuotaReached>().is_some() {
+        return ApiError::Conflict(
+            "This client has reached its target quota: ask your MSP administrator.".into(),
+        );
+    }
     let text = format!("{error:#}");
     if text.contains("UNIQUE constraint failed") {
         ApiError::Conflict("A monitor with this type and address already exists.".into())

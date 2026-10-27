@@ -8947,5 +8947,424 @@
 	"worldmap_verdict_idle": "Sin sondear",
 	"worldmap_verdict_ok": "Todo en marcha",
 	"worldmap_verdict_warn": "Revisar",
-	"worldmap_view_world": "Mundo"
+	"worldmap_view_world": "Mundo",
+	"console_breadcrumb": "Ruta de navegación",
+	"console_col_address": "Dirección",
+	"console_col_checked": "Comprobado",
+	"console_col_folder": "Carpeta",
+	"console_col_latency": "Latencia · {range}",
+	"console_col_latency_short": "Latencia",
+	"console_col_name": "Nombre",
+	"console_col_p95": "p95",
+	"console_col_status": "Estado",
+	"console_col_type": "Tipo",
+	"console_col_uptime": "Disponib. 30 d",
+	"console_columns": "Columnas",
+	"console_egg": "// {count} comprobaciones por minuto. Vete a dormir, nosotros vigilamos.",
+	"console_filter_all": "Todos",
+	"console_filter_degraded": "Degradados",
+	"console_filter_down": "Caídos",
+	"console_filter_kind": "Tipo",
+	"console_filter_kind_all": "Todos los tipos",
+	"console_filter_label": "Filtrar por estado",
+	"console_filter_paused": "En pausa",
+	"console_filter_search": "Filtrar monitores",
+	"console_kpi_alerts": "Alertas abiertas",
+	"console_kpi_alerts_note": "Críticas: {critical}, avisos: {warning}",
+	"console_kpi_availability": "Disponibilidad 30 d",
+	"console_kpi_availability_note": "Monitores medidos: {count}",
+	"console_kpi_mttr": "MTTR 30 d",
+	"console_kpi_mttr_note": "Resueltas: {count}",
+	"console_kpi_none": "Aún sin datos",
+	"console_kpi_p95": "Respuesta p95",
+	"console_kpi_p95_note": "Intervalo: {range}",
+	"console_kpi_up": "Monitores activos",
+	"console_kpi_up_note": "Caídos: {down}, en pausa: {paused}",
+	"console_kpi_up_unit": "/ {total}",
+	"console_live": "EN VIVO",
+	"console_live_off": "Actualización en vivo en pausa. Selecciona para reanudar.",
+	"console_live_on": "Actualización en vivo activa. Selecciona para pausar.",
+	"console_new_monitor": "Nuevo monitor",
+	"console_panel": "Contexto",
+	"console_panel_attention": "Requiere atención",
+	"console_panel_attention_all": "Ver todo ({count})",
+	"console_panel_attention_none": "Nada requiere tu atención ahora mismo.",
+	"console_panel_check_now": "Comprobar ahora",
+	"console_panel_checked": "Comprobación solicitada. El resultado aparece en la próxima actualización.",
+	"console_panel_close": "Cerrar el panel de contexto",
+	"console_panel_edit": "Editar",
+	"console_panel_forecast": "Previsión",
+	"console_panel_forecast_none": "Ninguna previsión supera un umbral.",
+	"console_panel_forecast_open": "Ver previsiones en Alertas",
+	"console_panel_more": "Más acciones",
+	"console_panel_oncall": "Guardia",
+	"console_panel_oncall_hint": "Quién recibe avisos: ajustes de notificaciones",
+	"console_panel_oncall_you": "Tú",
+	"console_panel_open": "Abrir",
+	"console_panel_picked": "Monitor seleccionado",
+	"console_panel_picked_none": "Selecciona una fila de una tabla para verla aquí.",
+	"console_panel_silence": "Silenciar 1 h",
+	"console_panel_silenced": "Silenciado durante una hora.",
+	"console_panel_suppressed_by": "Oculta: {name} está caído",
+	"console_panel_toggle": "Mostrar u ocultar el panel de contexto",
+	"console_panel_uptime": "Disponibilidad",
+	"console_paused": "EN PAUSA",
+	"console_range": "Intervalo de tiempo",
+	"console_river_empty": "Aún no hay mediciones en este intervalo.",
+	"console_river_hint": "Cada monitor, una celda por {slot}, últimas {range}",
+	"console_river_legend": "Leyenda",
+	"console_river_more": "Más monitores en la tabla de abajo: {count}",
+	"console_river_no_data": "Sin datos",
+	"console_river_now": "ahora",
+	"console_river_title": "Río de salud",
+	"console_search_placeholder": "Buscar o ejecutar un comando",
+	"console_shortcut_next": "Fila siguiente de una tabla",
+	"console_shortcut_open": "Abrir el monitor enfocado",
+	"console_shortcut_panel": "Mostrar u ocultar el panel de contexto",
+	"console_shortcut_prev": "Fila anterior de una tabla",
+	"console_status_config": "Config",
+	"console_status_degraded": "Degradado",
+	"console_status_down": "Caído",
+	"console_status_paused": "En pausa",
+	"console_status_up": "Activo",
+	"console_status_waiting": "En espera",
+	"console_table_empty": "Ningún monitor coincide con estos filtros.",
+	"console_table_hint": "Los peores primero. Selecciona una fila para inspeccionarla.",
+	"console_table_keys": "j / k para moverse, Intro para inspeccionar, o para abrir",
+	"console_table_title": "Monitores",
+	"mode_enterprise_point_nav": "Barra de iconos, panel de contexto y paleta de comandos en todas partes",
+	"mode_enterprise_point_table": "Tablas densas con columnas, filtros y atajos de teclado adicionales",
+	"mode_enterprise_point_team": "Equipos, inicio de sesión único, guardias y registros a la vista",
+	"mode_enterprise_text": "Una consola densa y muy oscura para equipos, con todas las opciones a la vista.",
+	"mode_enterprise_title": "Empresa",
+	"mode_homelab_point_forms": "Formularios cortos con valores por defecto sensatos, ajustes avanzados plegados",
+	"mode_homelab_point_nav": "Cuatro destinos a la vista, todo lo demás en Más",
+	"mode_homelab_point_theme": "El boletín meteorológico y el rack, en claro u oscuro",
+	"mode_homelab_text": "Una interfaz tranquila con lo esencial a la vista. Cada función queda a un clic.",
+	"mode_homelab_title": "Homelab",
+	"mode_picker_label": "Modo de producto",
+	"mode_picker_selected": "Elegido",
+	"mode_switch_keeps": "Cambiar solo cambia la interfaz. No se borra nada.",
+	"settings_advanced_summary": "Secciones: {count}",
+	"settings_advanced_title": "Avanzado",
+	"settings_appearance_enterprise_dark": "El modo Empresa usa siempre su consola oscura. Cambia a Homelab en Ajustes → General para los temas claro y oscuro.",
+	"settings_general_instance_text": "El nombre aparece en la cabecera. El idioma y la zona horaria son los valores por defecto de nuevos navegadores e informes.",
+	"settings_general_instance_title": "Instancia",
+	"settings_general_mode_saving": "Cambiando…",
+	"settings_general_mode_text": "Homelab lo mantiene sencillo. Empresa muestra todas las opciones en una consola oscura y densa.",
+	"settings_general_mode_title": "Modo de interfaz",
+	"settings_general_readonly": "Solo los administradores pueden cambiar estos ajustes.",
+	"settings_general_save": "Guardar",
+	"settings_general_saved": "Guardado",
+	"settings_general_wizard_run": "Abrir el asistente de configuración",
+	"settings_general_wizard_text": "Vuelve a recorrer los pasos del primer inicio: modo, nombre, notificaciones, monitores, agente.",
+	"settings_general_wizard_title": "Asistente de configuración",
+	"settings_search_kw_general": "modo homelab empresa interfaz nombre idioma zona horaria asistente configuración",
+	"settings_tab_general": "General",
+	"wizard_agent_text": "El agente informa de CPU, memoria, discos, contenedores y servicios de una máquina. Ejecuta el comando en la máquina que quieres vigilar.",
+	"wizard_agent_title": "Instalar un agente",
+	"wizard_back": "Atrás",
+	"wizard_channel_add": "Añadir un canal",
+	"wizard_channel_list": "Canales de notificación",
+	"wizard_channel_test": "Enviar una prueba",
+	"wizard_channel_test_failed": "La prueba no se pudo enviar: {error}",
+	"wizard_channel_test_ok": "Prueba enviada a {name}. Comprueba que ha llegado.",
+	"wizard_channel_text": "Conecta una forma de recibir avisos cuando algo falle y envía una prueba para comprobar que llega.",
+	"wizard_channel_title": "Recibir avisos",
+	"wizard_finish": "Terminar",
+	"wizard_instance_language": "Idioma",
+	"wizard_instance_language_auto": "Según el navegador",
+	"wizard_instance_name": "Nombre de la instancia",
+	"wizard_instance_name_help": "Se muestra en la cabecera. Déjalo vacío para DumbMonit.",
+	"wizard_instance_name_placeholder": "Laboratorio en casa",
+	"wizard_instance_text": "El nombre aparece en la cabecera. El idioma y la zona horaria son los valores por defecto de nuevos navegadores e informes.",
+	"wizard_instance_timezone": "Zona horaria",
+	"wizard_instance_title": "Nombra esta instancia",
+	"wizard_intro": "Cada paso se puede omitir y cambiar más tarde en Ajustes.",
+	"wizard_mode_text": "Elige la interfaz que encaja con quienes la usan. Puedes cambiar cuando quieras en Ajustes → General.",
+	"wizard_mode_title": "Elige el aspecto de DumbMonit",
+	"wizard_monitors_count": "Monitores hasta ahora: {count}",
+	"wizard_monitors_import": "Importar",
+	"wizard_monitors_import_text": "Desde Uptime Kuma, UptimeRobot, Gatus, Healthchecks o una lista de sitios.",
+	"wizard_monitors_manual": "Añadir a mano",
+	"wizard_monitors_manual_text": "Un sitio web, un servidor, un NAS: cualquier tipo compatible.",
+	"wizard_monitors_new_tab": "Importar y añadir a mano se abren en una pestaña nueva. Vuelve aquí cuando termines.",
+	"wizard_monitors_refresh": "Actualizar",
+	"wizard_monitors_scan": "Escanear mi red",
+	"wizard_monitors_scan_text": "Encuentra los dispositivos que responden en tus subredes.",
+	"wizard_monitors_text": "Escanea tu red, trae monitores de otra herramienta o añade uno a mano.",
+	"wizard_monitors_title": "Añade tus primeros monitores",
+	"wizard_next": "Continuar",
+	"wizard_oncall_policy": "Política de notificación",
+	"wizard_oncall_policy_text": "Agrupación, horas de silencio y repeticiones: a quién se avisa y cuándo.",
+	"wizard_oncall_team": "Equipo y roles",
+	"wizard_oncall_team_text": "Las cuentas que gestionan las alertas: los operadores reconocen, los administradores configuran.",
+	"wizard_oncall_text": "Una primera rotación semanal y la política de escalado que llama a quien esté de guardia. El resto está en Alertas → Guardias.",
+	"wizard_oncall_title": "Guardias",
+	"wizard_optional": "Opcional",
+	"wizard_retention_text": "Cuánto tiempo se conservan las métricas y los registros. Los valores por defecto sirven a la mayoría de equipos.",
+	"wizard_retention_title": "Retención",
+	"wizard_skip_all": "Omitir la configuración",
+	"wizard_skip_step": "Omitir este paso",
+	"wizard_sso_text": "Permite iniciar sesión con tu proveedor de identidad y asigna un rol a cada cuenta.",
+	"wizard_sso_title": "Inicio de sesión único y equipos",
+	"wizard_step_of": "Paso {current} de {total}",
+	"wizard_steps_label": "Pasos de la configuración",
+	"wizard_title": "Configurar DumbMonit",
+	"deviceform_form_client_label": "Cliente",
+	"deviceform_form_client_help": "El cliente al que pertenece este equipo. Solo sus miembros lo ven.",
+	"deviceform_form_client_help_edit": "Mover un equipo a otro cliente arrastra los equipos que dependen de él.",
+	"deviceform_form_client_default": "Predeterminado de esta vista",
+	"msp_assign_label": "Cliente",
+	"msp_assign_shared": "Todos los clientes",
+	"msp_nav_clients": "Clientes",
+	"msp_switcher_label": "Cliente mostrado",
+	"msp_switcher_title": "Mostrar las páginas de un cliente",
+	"msp_switcher_all": "Todos los clientes",
+	"msp_overview_title": "Clientes",
+	"msp_overview_description_admin": "Todos los clientes de un vistazo. Abra uno para ver solo sus equipos, alertas y páginas.",
+	"msp_overview_description_member": "Los clientes para los que trabaja y su informe de disponibilidad del mes pasado.",
+	"msp_overview_empty_title": "Aún no hay clientes",
+	"msp_overview_empty_body": "Cree clientes en Ajustes y asigne a cada uno sus equipos y miembros.",
+	"msp_overview_load_error": "No se pudieron cargar los clientes.",
+	"msp_overview_none_title": "No pertenece a ningún cliente",
+	"msp_overview_none_body": "Pida a su administrador MSP que añada su cuenta a un cliente.",
+	"msp_overview_off_title": "El modo multicliente está desactivado",
+	"msp_overview_off_body": "Actívelo en Ajustes para separar los equipos, alertas e informes de cada cliente.",
+	"msp_overview_off_action": "Abrir ajustes de clientes",
+	"msp_overview_open": "Abrir",
+	"msp_overview_report": "Mes pasado (PDF)",
+	"msp_overview_report_title": "Descargar el informe de disponibilidad del mes pasado",
+	"msp_overview_report_error": "No se pudo generar el informe.",
+	"msp_overview_quota_label": "Cuota de equipos usada",
+	"msp_overview_state_empty": "Aún sin equipos",
+	"msp_overview_state_ok": "Todo en orden",
+	"settings_agents_client_badge": "Cliente: {name}",
+	"settings_clients_title": "Clientes",
+	"settings_clients_description": "Modo multicliente (MSP): separe los equipos, alertas, páginas e informes de cada cliente.",
+	"settings_clients_search_kw": "msp inquilino cliente aislamiento cuota logo",
+	"settings_clients_add": "Añadir un cliente",
+	"settings_clients_load_error": "No se pudieron cargar los clientes.",
+	"settings_clients_save_error": "No se pudo guardar.",
+	"settings_clients_delete_error": "No se pudo eliminar el cliente.",
+	"settings_clients_delete_confirm": "Eliminar este cliente",
+	"settings_clients_mode": "Modo multicliente",
+	"settings_clients_mode_off_help": "Desactivado: cada cuenta ve lo que permiten su rol y sus equipos, como antes. Al activarlo, las cuentas existentes quedan en el cliente predeterminado.",
+	"settings_clients_mode_on_help": "Activado: una cuenta solo ve los clientes a los que pertenece. Los administradores gestionan todos y eligen uno en la cabecera.",
+	"settings_clients_empty_title": "Aún no hay clientes",
+	"settings_clients_empty_body": "Añada un cliente y mueva a él sus equipos.",
+	"settings_clients_note": "Los equipos, páginas de estado y tokens de agente siempre pertenecen a un cliente. Canales, reglas de alerta, mantenimientos e informes pueden compartirse entre todos. Un cliente con equipos no se puede eliminar.",
+	"settings_clients_new_title": "Nuevo cliente",
+	"settings_clients_edit_title": "Editar {name}",
+	"settings_clients_name": "Nombre",
+	"settings_clients_description_label": "Descripción",
+	"settings_clients_err_name": "Introduzca un nombre de cliente.",
+	"settings_clients_err_quota": "Introduzca un número entero o déjelo vacío para no limitar.",
+	"settings_clients_quota": "Cuota de equipos",
+	"settings_clients_quota_help": "Número máximo de equipos del cliente, agentes incluidos.",
+	"settings_clients_quota_none": "Sin límite",
+	"settings_clients_idp_groups": "Grupos del proveedor de identidad",
+	"settings_clients_idp_groups_help": "Los miembros de estos grupos SSO (OIDC, LDAP, SAML) se unen al cliente al iniciar sesión. Separe con comas.",
+	"settings_clients_contacts": "Contactos",
+	"settings_clients_contacts_help": "Direcciones que reciben el informe mensual de disponibilidad, una por línea.",
+	"settings_clients_report_legend": "Informe mensual de disponibilidad",
+	"settings_clients_report_toggle": "Enviarlo a los contactos",
+	"settings_clients_report_help": "El día 1 a las 8:00 en la zona horaria del cliente, el PDF y los CSV del mes pasado salen por correo, con su nombre y logo.",
+	"settings_clients_objective": "Objetivo de disponibilidad (%)",
+	"settings_clients_objective_help": "Opcional. Cada equipo se marca como cumplido o no.",
+	"settings_clients_timezone": "Zona horaria",
+	"settings_clients_report_last": "Último informe enviado: {month}.",
+	"settings_clients_report_failing": "Informe mensual fallido",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo de {name}",
+	"settings_clients_logo_upload": "Subir un logo",
+	"settings_clients_logo_replace": "Reemplazar el logo",
+	"settings_clients_logo_remove": "Quitar",
+	"settings_clients_logo_help": "PNG, JPEG o WebP, 256 KiB como máximo. Se muestra en los informes y páginas de estado del cliente; PNG y JPEG también en el PDF.",
+	"settings_clients_logo_too_big": "Este archivo supera 256 KiB.",
+	"settings_clients_logo_error": "No se pudo guardar el logo.",
+	"settings_clients_members": "Miembros",
+	"settings_clients_members_help": "Los miembros solo ven este cliente, dentro de su rol y equipos. Los administradores ven todos.",
+	"settings_clients_save": "Guardar",
+	"settings_clients_create": "Crear el cliente",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo en estado crítico",
+				"countPlural=other": "{count} equipos en estado crítico"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo con alerta",
+				"countPlural=other": "{count} equipos con alerta"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} crítica",
+				"countPlural=other": "{count} críticas"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} aviso",
+				"countPlural=other": "{count} avisos"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en pausa",
+				"countPlural=other": "{count} en pausa"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo",
+				"countPlural=other": "{count} equipos"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} de {quota} equipos",
+				"countPlural=other": "{count} de {quota} equipos"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo",
+				"countPlural=other": "{count} equipos"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} de {quota} equipos",
+				"countPlural=other": "{count} de {quota} equipos"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Informe mensual a {count} contacto",
+				"countPlural=other": "Informe mensual a {count} contactos"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} cuenta sin cliente no ve nada:",
+				"countPlural=other": "{count} cuentas sin cliente no ven nada:"
+			}
+		}
+	],
+	"console_panel_oncall_unknown": "Alguien",
+	"console_panel_oncall_until": "{schedule}, hasta {time}",
+	"console_panel_oncall_open": "Abrir guardias",
+	"console_panel_oncall_setup": "Configurar los turnos de guardia",
+	"wizard_oncall_default_name": "Principal",
+	"wizard_oncall_policy_name": "{name}: escalado",
+	"wizard_oncall_existing": "Turnos ya configurados: {count}",
+	"wizard_oncall_now": "De guardia ahora: {name}",
+	"wizard_oncall_nobody": "Nadie de guardia ahora mismo",
+	"wizard_oncall_name": "Nombre del turno",
+	"wizard_oncall_people": "Quién se turna",
+	"wizard_oncall_people_help": "Una semana cada uno, relevo los lunes a las 09:00 en la zona horaria de la instancia.",
+	"wizard_oncall_create": "Crear la rotación",
+	"wizard_oncall_open": "Guardias en detalle",
+	"wizard_oncall_open_text": "Capas, sustituciones, calendario y el canal Guardia de DumbMonit que conecta una política con el enrutamiento de alertas."
 }
