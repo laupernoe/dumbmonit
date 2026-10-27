@@ -3,7 +3,8 @@
 Install the agent on every Windows server of a domain with one group policy
 (GPO), instead of running the install command server by server.
 
-In **Settings → Agents**, **Deploy with Active Directory** creates a fleet
+When you add a monitor of type **Server with the agent** (or in the setup
+assistant), **Deploy with Active Directory** creates a fleet
 token limited to your domain (reusable, valid 30 days by default, with an
 optional maximum number of servers) and downloads `Deploy-DumbMonit.ps1`. You
 run that script once, as a Domain Admin, on a domain controller or on a machine
@@ -16,10 +17,14 @@ server installs the agent and enrols under its fully qualified name
 
 ## Steps
 
-1. In Settings → Agents, click **Deploy with Active Directory**. Enter the
-   domain, the name (FQDN) or address of the DumbMonit server the agents must
-   contact (by default the address you are using) and, optionally, a DNS
-   server that resolves that name, adjust the options if needed, create the
+1. Add a monitor, pick **Server with the agent**, and click **Deploy with
+   Active Directory**. Enter the domain, the name (FQDN) or address of the
+   DumbMonit server the agents must contact (by default the address you are
+   using) and, optionally, a DNS server that resolves that name — or, for a
+   domain at a site behind a firewall, pick a relay under **Route**: the
+   servers then download the agent from the relay's gateway and report through
+   it, end-to-end encrypted to the server (see
+   [Monitor a remote site](../install/remote-site.md#5-install-agents-behind-the-relay)) — adjust the options if needed, create the
    token and download `Deploy-DumbMonit.ps1`. The token is shown only now. The
    server name and the DNS server are checked for format, written into the
    script, and repeated in the summary of the next step.
@@ -176,8 +181,8 @@ added benefit of updating the agent and checking its SHA-256.
 
 ## Linux: Ansible or SSH
 
-There is no GPO equivalent on Linux, but a **reusable** token (tick *Reusable
-for a fleet* in Settings → Agents) makes the install command shown by the
+There is no GPO equivalent on Linux, but a **reusable** token (tick *Several
+machines with this command* when adding a server with the agent) makes the install command shown by the
 server work as is on any number of machines.
 
 Store the full command in a vault variable `dumbmonit_install_command`

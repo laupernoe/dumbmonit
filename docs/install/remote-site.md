@@ -47,10 +47,10 @@ relay request up to 25 seconds while waiting for work (long polling).
 
 ## 2. Create an enrollment token
 
-The simplest way: **Settings → Agents → Watch a remote site** (or tick *This
-agent is a relay for a remote site* when you create a token). Give the site a
-name, create the token, and run the install command shown on a machine at the
-site. The token itself carries relay mode and the site: the agent becomes a
+The simplest way: **Add monitor → Server with the agent**, tick *This agent is
+a relay for a remote site* (or open the *Relay* front door of the add page).
+Give the site a name, create the token, and run the install command shown on a
+machine at the site; the page waits for its first report. The token itself carries relay mode and the site: the agent becomes a
 relay at its first report, with nothing to edit on the machine.
 
 **An agent already installed** becomes a relay from its page in DumbMonit: in
@@ -65,7 +65,7 @@ the switch in the UI.
 ## 3. Start the relay at the remote site
 
 On Linux, macOS or FreeBSD, the one-line installer with `--relay` and the site
-(not needed with a token from *Watch a remote site*):
+(not needed with a relay token from the add page):
 
 ```sh
 curl -sSL https://monitor.example.org/install.sh | sudo sh -s -- \
@@ -131,6 +131,67 @@ From then on:
 - the agent's page shows *Relay for N monitors*, and `GET /api/relays` lists
   the relays with their site and count.
 
+## 5. Install agents behind the relay
+
+A site behind a firewall often has servers that cannot reach DumbMonit at all:
+only the relay goes out. Those servers can still run the full agent (system,
+disks, services, containers, backups): they connect to the relay's
+**gateway**, and the relay carries their connection to the server.
+
+```
+ remote site (only the relay goes out)                     head office
+ ┌────────────┐  TLS 1.3, mTLS   ┌──────────────┐  tunnel inside the  ┌──────────────────┐
+ │ agent      │═════════════════▶│ relay agent  │═ relay's own mTLS ═▶│ DumbMonit server │
+ │ (server A) │  to the relay's  │  gateway     │  connection, TCP    │  agent port 8443 │
+ └────────────┘  port 8443       └──────────────┘  8443 outbound      └──────────────────┘
+        └──────────── one TLS session, end to end, agent ⇄ server ─────────────┘
+```
+
+**In DumbMonit**, add a monitor, pick **Server with the agent**, and under
+*How does the machine reach this server?* choose **Through &lt;relay&gt;
+(site)**. Give the address the site reaches the relay at (an IP or a local
+name). The commands shown — Linux/macOS, Windows, Docker — then point at the
+relay's gateway (`--url=http://192.168.10.5:8443 --tls-url=https://192.168.10.5:8443`)
+and still carry the fingerprint of the **server's** certificate authority.
+The flow then waits for the first connection and lets you name the machine,
+file it in a folder and place it at a site, without leaving the page. From a
+site in *Add by site*, **Server with the agent** preselects that site's relay;
+the relay's own page has **Install an agent through it**.
+
+Choosing a relay for an install asks it to open its gateway (on port 8443 by
+default) at its next report. The *Relay* panel of the relay's page shows the
+gateway — *Listening on port 8443 — 3 agents connected* — and lets you change
+the port and the address, or close it. Open that port on the relay's own
+firewall, **to the site's network only**. On a Docker relay, publish the port
+(`-p 8443:8443`, or the commented `ports:` of `docker-compose.agent.yml`).
+`gateway_listen: 0.0.0.0:9443` in the relay's `agent.yaml`
+(`DUMBMONIT_AGENT_GATEWAY_LISTEN`) wins over the setting in the UI.
+
+What travels through the relay:
+
+- **The agent's encrypted channel**, untouched. The relay recognises a TLS
+  ClientHello and copies the bytes, in both directions, into a tunnel it opens
+  to the server's agent port under its *own* client certificate (an HTTP
+  upgrade on `/api/agent/relay/tunnel`). The server then runs the TLS 1.3
+  handshake with the site's agent as if it had connected directly: the
+  agent's client certificate, the pinned authority, the token and the binding
+  secret are checked by the server, end to end. Enrolment goes the same way.
+- **The installer and the binary**, which the relay fetches from the server
+  over its own channel and serves on the same port (`/install.sh`,
+  `/install.ps1`, `/download/<file>` only). The install command carries the
+  SHA-256 of each binary: the script refuses anything else.
+
+The server records, for each agent, the relay it connects through. The agent's
+page says *Reaches this server through the relay …*; the topology map draws the
+relay as its parent; and when the relay goes down, the agents behind it are
+shown as `suppressed` by the relay, not as many separate outages. An agent
+that later connects directly (or through another relay) is updated at its next
+report.
+
+The Active Directory kit offers the same choice: under **Route**, pick the
+relay, and the servers of the domain download the agent from it and report
+through it.
+
 ## Alerting when the relay is down
 
 A relay that goes silent takes its monitors with it: their probes stop, and
@@ -149,7 +210,12 @@ A monitor does not have to choose between the server and one relay: it can be pr
 
 - One relay per monitor. A monitor probed by the relay is not also probed by
   the server.
-- Agent monitors themselves cannot be relayed: they push their own metrics.
+- Agent monitors are never probed through a relay (they push their own
+  metrics); an agent can instead *connect* through a relay's gateway (see
+  above). A relay always connects directly: there is no relay behind a relay.
+- A relay's gateway accepts 64 connections at a time and 4 MiB/s per tunnel
+  and direction by default (`gateway_max_connections`, `gateway_rate_kib`);
+  the server accepts 256 tunnels per relay.
 - The relay runs at most 8 probes at a time; a probe is bounded by the
   server's probe timeout (`DUMBMONIT_PROBE_TIMEOUT_SECS`), capped at 120 s on the
   agent.

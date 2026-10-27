@@ -462,7 +462,15 @@
 								</p>
 							{/if}
 							{#key relaying}
-								<AgentEnroll cancelHref="/targets" relay={relaying} windows={windowsSetup} {afterKind} />
+								<AgentEnroll
+									cancelHref="/targets"
+									relay={relaying}
+									windows={windowsSetup}
+									{afterKind}
+									viaDefault={idParam('via_agent')}
+									locationDefault={idParam('location')}
+									folderDefault={textParam('folder')}
+								/>
 							{/key}
 						{:else}
 							{#if prefill}

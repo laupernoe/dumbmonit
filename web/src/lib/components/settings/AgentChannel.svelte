@@ -11,6 +11,7 @@
 	import { cancelAgentCaRotation, completeAgentCaRotation, getAgentChannel, setAgentChannelRequired, startAgentCaRotation } from '#lib/api/agent_tls.js';
 	import type { AgentChannelOverview } from '#lib/api/types.js';
 	import { formatDateTime } from '#lib/format.js';
+	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { Button, Confirm, CopyBlock, Disclosure, ErrorNotice, Toggle } from '#lib/ui/index.js';
 
 	interface Props {
@@ -20,6 +21,12 @@
 
 	const encrypted = $derived(overview.agents.filter((agent) => agent.channel === 'mtls').length);
 	const plain = $derived(overview.agents.filter((agent) => agent.channel === 'legacy').length);
+	/** Agents still on the plain channel, named from the shared store: the ones to update. */
+	const plainAgents = $derived(
+		overview.agents
+			.filter((agent) => agent.channel === 'legacy')
+			.map((agent) => ({ id: agent.id, name: alertsStore.targets.find((t) => t.id === agent.id)?.name ?? `#${agent.id}` }))
+	);
 
 	let busy = $state(false);
 	let error = $state<unknown>(null);
@@ -47,6 +54,14 @@
 				<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_agents_tls_summary({ port: overview.port, group: overview.key_exchange })}</p>
 				<p class="mt-1 max-w-prose text-sm text-ink-2">{m.settings_agents_tls_port_hint({ port: overview.port })}</p>
 				<p class="tnum mt-1 text-sm text-ink-2">{m.settings_agents_tls_counts({ encrypted, plain })}</p>
+				{#if plainAgents.length > 0}
+					<p class="mt-1 flex flex-wrap items-center gap-x-3 text-sm text-ink-2">
+						<span class="font-semibold text-ink">{m.settings_agents_tls_legacy()}</span>
+						{#each plainAgents as agent (agent.id)}
+							<a class="inline-flex min-h-10 items-center underline decoration-line underline-offset-2 hover:text-ink" href={`/targets/${agent.id}`}>{agent.name}</a>
+						{/each}
+					</p>
+				{/if}
 			{:else}
 				<p class="mt-1 max-w-prose text-sm text-advisory-ink">{m.settings_agents_tls_disabled()}</p>
 			{/if}

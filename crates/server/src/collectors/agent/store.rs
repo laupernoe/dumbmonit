@@ -159,6 +159,46 @@ pub async fn list_tokens(pool: &SqlitePool) -> Result<Vec<TokenRecord>> {
     rows.iter().map(row_to_token).collect()
 }
 
+/// Machine enrôlée par un jeton, telle que le flux d'ajout l'attend.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
+pub struct TokenMachine {
+    pub id: TargetId,
+    pub name: String,
+    pub hostname: String,
+    pub os: String,
+    pub last_seen_at: Option<String>,
+    /// Relais par lequel la machine joint le serveur, s'il y en a un.
+    pub via_agent: Option<TargetId>,
+}
+
+/// Machines enrôlées par un jeton, la plus récente d'abord : c'est ce que
+/// l'assistant d'ajout surveille pour constater la première connexion.
+pub async fn token_machines(pool: &SqlitePool, token_id: i64) -> Result<Vec<TokenMachine>> {
+    let rows = sqlx::query(
+        "SELECT t.id, t.name, t.via_agent, h.hostname, h.os, h.last_seen_at
+         FROM agent_hosts h JOIN targets t ON t.id = h.target_id
+         WHERE h.token_id = ?
+         ORDER BY t.id DESC
+         LIMIT 50",
+    )
+    .bind(token_id)
+    .fetch_all(pool)
+    .await
+    .context("listing the machines of a token")?;
+    rows.iter()
+        .map(|row| {
+            Ok(TokenMachine {
+                id: row.try_get("id")?,
+                name: row.try_get("name")?,
+                hostname: row.try_get("hostname")?,
+                os: row.try_get("os")?,
+                last_seen_at: row.try_get("last_seen_at")?,
+                via_agent: row.try_get("via_agent")?,
+            })
+        })
+        .collect()
+}
+
 /// Fait d'un jeton un jeton de relais : la machine qu'il enrôle (ou relie)
 /// devient relais pour `site`, sans rien éditer sur elle.
 pub async fn set_token_relay(pool: &SqlitePool, id: i64, site: Option<&str>) -> Result<()> {
@@ -314,19 +354,71 @@ pub async fn set_relay_wanted(
 
 /// Mode relais à transmettre à l'agent dans son accusé de réception.
 pub async fn relay_setting(pool: &SqlitePool, target_id: TargetId) -> Result<Option<RelaySetting>> {
-    let row =
-        sqlx::query("SELECT relay_wanted, relay_wanted_site FROM agent_hosts WHERE target_id = ?")
-            .bind(target_id)
-            .fetch_optional(pool)
-            .await
-            .context("reading the relay mode")?;
+    let row = sqlx::query(
+        "SELECT relay_wanted, relay_wanted_site, relay_gateway_wanted
+         FROM agent_hosts WHERE target_id = ?",
+    )
+    .bind(target_id)
+    .fetch_optional(pool)
+    .await
+    .context("reading the relay mode")?;
     row.map(|row| {
         Ok(RelaySetting {
             enabled: row.try_get::<i64, _>("relay_wanted")? != 0,
             site: row.try_get("relay_wanted_site")?,
+            gateway_port: port_of(row.try_get("relay_gateway_wanted")?),
         })
     })
     .transpose()
+}
+
+/// Port lu en base, écarté s'il n'en est pas un.
+fn port_of(raw: Option<i64>) -> Option<u16> {
+    raw.and_then(|port| u16::try_from(port).ok()).filter(|port| *port > 0)
+}
+
+/// Longueur maximale de l'adresse de passerelle d'un relais.
+pub const MAX_GATEWAY_HOST_LEN: usize = 253;
+
+/// Adresse de passerelle nettoyée : un nom d'hôte ou une IP, sans schéma, sans
+/// port, sans espace. `None` si vide ; `Err` si ce n'est pas une adresse.
+pub fn clean_gateway_host(raw: Option<&str>) -> Result<Option<String>, &'static str> {
+    let Some(host) = raw.map(str::trim).filter(|host| !host.is_empty()) else {
+        return Ok(None);
+    };
+    let bare = host.strip_prefix('[').and_then(|h| h.strip_suffix(']')).unwrap_or(host);
+    let valid = host.len() <= MAX_GATEWAY_HOST_LEN
+        && (bare.parse::<std::net::IpAddr>().is_ok()
+            || bare.bytes().all(|b| b.is_ascii_alphanumeric() || matches!(b, b'.' | b'-')));
+    if !valid {
+        return Err(
+            "The relay address must be a host name or an IP address, without scheme or port.",
+        );
+    }
+    // Une IPv6 s'écrit entre crochets dans une URL.
+    Ok(Some(if bare.contains(':') { format!("[{bare}]") } else { bare.to_string() }))
+}
+
+/// Règle depuis l'interface la passerelle d'un relais : port d'écoute (`None` :
+/// fermée) et adresse par laquelle les machines du site le joignent. Faux si
+/// aucune machine à agent ne porte cette cible.
+pub async fn set_relay_gateway(
+    pool: &SqlitePool,
+    target_id: TargetId,
+    port: Option<u16>,
+    host: Option<&str>,
+) -> Result<bool> {
+    let result = sqlx::query(
+        "UPDATE agent_hosts SET relay_gateway_wanted = ?, relay_gateway_host = ?
+         WHERE target_id = ?",
+    )
+    .bind(port.map(i64::from))
+    .bind(host)
+    .bind(target_id)
+    .execute(pool)
+    .await
+    .context("saving the relay gateway")?;
+    Ok(result.rows_affected() > 0)
 }
 
 /// Révoque un jeton. Idempotent : révoquer deux fois n'est pas une erreur, mais
@@ -855,7 +947,7 @@ async fn update_host(
         "UPDATE agent_hosts
          SET hostname = ?, os = ?, os_version = ?, kernel_version = ?, arch = ?,
              agent_version = ?, commands_enabled = ?, relay = ?, site = ?,
-             relay_control = ?, relay_local = ?, binding_supported = ?
+             relay_control = ?, relay_local = ?, binding_supported = ?, relay_gateway_port = ?
          WHERE target_id = ?",
     )
     .bind(&identity.hostname)
@@ -870,6 +962,7 @@ async fn update_host(
     .bind(i64::from(identity.relay_control))
     .bind(i64::from(identity.relay_local))
     .bind(i64::from(identity.binding_supported))
+    .bind(identity.relay_gateway.filter(|_| identity.relay).map(i64::from))
     .bind(target_id)
     .execute(pool)
     .await
@@ -952,6 +1045,12 @@ pub struct HostInfo {
     pub relay_control: bool,
     /// Vrai si `relay: true` est posé dans sa configuration locale, qui prime.
     pub relay_local: bool,
+    /// Port de passerelle demandé depuis l'interface (`None` : fermée).
+    pub relay_gateway_wanted: Option<u16>,
+    /// Port sur lequel la passerelle écoute, selon le dernier lot du relais.
+    pub relay_gateway_port: Option<u16>,
+    /// Adresse par laquelle les machines du site joignent le relais.
+    pub relay_gateway_host: Option<String>,
     pub last_seen_at: Option<String>,
     /// Vrai si la machine est liée à un secret connu d'elle seule.
     pub bound: bool,
@@ -984,7 +1083,8 @@ impl HostInfo {
 pub async fn host(pool: &SqlitePool, target_id: TargetId) -> Result<Option<HostInfo>> {
     let row = sqlx::query(
         "SELECT hostname, os, os_version, arch, agent_version, commands_enabled, relay, site,
-                relay_wanted, relay_wanted_site, relay_control, relay_local, last_seen_at, secret_hash, bound_at, binding_supported, rebind_until
+                relay_wanted, relay_wanted_site, relay_control, relay_local, last_seen_at, secret_hash, bound_at, binding_supported, rebind_until,
+                relay_gateway_wanted, relay_gateway_port, relay_gateway_host
          FROM agent_hosts WHERE target_id = ?",
     )
     .bind(target_id)
@@ -1001,7 +1101,8 @@ pub async fn list_hosts(pool: &SqlitePool) -> Result<Vec<(TargetId, String, Host
         "SELECT h.target_id, t.name, h.hostname, h.os, h.os_version, h.arch, h.agent_version,
                 h.commands_enabled, h.relay, h.site, h.relay_wanted, h.relay_wanted_site,
                 h.relay_control, h.relay_local, h.last_seen_at, h.secret_hash, h.bound_at,
-                h.binding_supported, h.rebind_until
+                h.binding_supported, h.rebind_until, h.relay_gateway_wanted, h.relay_gateway_port,
+                h.relay_gateway_host
          FROM agent_hosts h JOIN targets t ON t.id = h.target_id
          ORDER BY t.name",
     )
@@ -1027,6 +1128,9 @@ fn row_to_host(row: &sqlx::sqlite::SqliteRow) -> Result<HostInfo> {
         relay_wanted_site: row.try_get("relay_wanted_site")?,
         relay_control: row.try_get::<i64, _>("relay_control")? != 0,
         relay_local: row.try_get::<i64, _>("relay_local")? != 0,
+        relay_gateway_wanted: port_of(row.try_get("relay_gateway_wanted")?),
+        relay_gateway_port: port_of(row.try_get("relay_gateway_port")?),
+        relay_gateway_host: row.try_get("relay_gateway_host")?,
         last_seen_at: row.try_get("last_seen_at")?,
         bound: row.try_get::<Option<String>, _>("secret_hash")?.is_some(),
         bound_at: row.try_get("bound_at")?,
@@ -1122,6 +1226,7 @@ mod tests {
             tags: BTreeMap::new(),
             binding_supported: true,
             self_update: None,
+            relay_gateway: None,
             remediation: None,
         }
     }
