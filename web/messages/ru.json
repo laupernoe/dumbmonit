@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"agent_channel_note_open": "Откройте TCP-порт 8443 (порт агентов) от агента к этому серверу. Агент всегда подключается наружу, поэтому до него ничего не должно доходить. То же верно для мониторинга из другой площадки: достижим должен быть только этот порт.",
+	"agent_channel_note_text": "Агент общается с этим сервером по TLS 1.3 со своим клиентским сертификатом (mTLS), выданным при регистрации.",
+	"agent_channel_note_title": "Зашифрованный канал с сертификатом агента",
 	"agent_events_add": "Добавить правило",
 	"agent_events_any_id": "любой ID",
 	"agent_events_any_source": "любой источник",
@@ -6172,6 +6175,9 @@
 	"settings_agents_ad_days_help": "После этого срока новые серверы не смогут зарегистрироваться.",
 	"settings_agents_ad_dcs": "Включить контроллеры домена",
 	"settings_agents_ad_description": "Установите агент на все серверы Windows вашего домена с помощью групповой политики (GPO).",
+	"settings_agents_ad_dns_server": "DNS-сервер (необязательно)",
+	"settings_agents_ad_dns_server_help": "IP-адрес DNS-сервера, который разрешает это имя; его используют серверы, которые не могут сделать это сами.",
+	"settings_agents_ad_dns_server_invalid": "Введите IP-адрес DNS-сервера, например 10.0.0.2.",
 	"settings_agents_ad_docs": "Читать полное руководство",
 	"settings_agents_ad_domain": "Домен Active Directory",
 	"settings_agents_ad_domain_help": "DNS-имя вашего домена.",
@@ -6196,6 +6202,9 @@
 	"settings_agents_ad_run_preview": "1. Пробный запуск, ничего не меняет",
 	"settings_agents_ad_run_timing": "Серверы установят агент при следующем обновлении политик, в течение 90 минут. Чтобы ускорить, выполните gpupdate /force на сервере.",
 	"settings_agents_ad_secret_warning": "Относитесь к скрипту как к паролю: в нём лежит токен. Храните его в тайне и удалите после развёртывания.",
+	"settings_agents_ad_server_host": "Имя сервера, к которому подключаются агенты",
+	"settings_agents_ad_server_host_help": "DNS-имя (FQDN) или адрес этого сервера, при желании с :портом. Пусто: {origin}.",
+	"settings_agents_ad_server_host_invalid": "Введите DNS-имя или адрес IPv4, при желании с :портом, без http:// и пути.",
 	"settings_agents_ad_step": "Шаг {n} из 4",
 	"settings_agents_ad_step1": "Создание токена",
 	"settings_agents_ad_step2": "Скачивание скрипта",
@@ -6205,6 +6214,9 @@
 	"settings_agents_ad_stop_error": "Не удалось остановить регистрации",
 	"settings_agents_ad_stop_help": "Токен перестанет принимать новые серверы. Уже зарегистрированные продолжат отправлять данные.",
 	"settings_agents_ad_stopped": "Регистрации остановлены",
+	"settings_agents_ad_summary_dns": "DNS-сервер:",
+	"settings_agents_ad_summary_dns_none": "системный",
+	"settings_agents_ad_summary_server": "Агенты подключаются к:",
 	"settings_agents_ad_sysvol": "Скопировать агент в SYSVOL",
 	"settings_agents_ad_sysvol_help": "Для серверов без доступа в интернет и к этому серверу.",
 	"settings_agents_ad_title": "Развёртывание через Active Directory",
@@ -9047,6 +9059,8 @@
 	"whatsnew_dialog_ok": "Понятно",
 	"whatsnew_dialog_title": "Что нового в v{version}",
 	"whatsnew_dialog_updated": "Обновлено · {date}",
+	"wizard_monitors_ad": "Active Directory",
+	"wizard_monitors_ad_text": "Установите агент на каждый сервер домена с помощью групповой политики.",
 	"worldmap_cluster_label": [
 		{
 			"declarations": [

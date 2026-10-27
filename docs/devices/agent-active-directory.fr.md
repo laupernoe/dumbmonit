@@ -19,8 +19,13 @@ dossier **Active Directory &lt;domaine&gt;**, avec les tags `ad=<domaine>` et
 ## Étapes
 
 1. Dans Settings → Agents, cliquez sur **Deploy with Active Directory**.
-   Saisissez le domaine, ajustez les options si besoin, créez le jeton et
-   téléchargez `Deploy-DumbMonit.ps1`. Le jeton n'est affiché qu'à ce moment.
+   Saisissez le domaine, le nom (FQDN) ou l'adresse du serveur DumbMonit que
+   les agents doivent contacter (par défaut l'adresse que vous utilisez) et,
+   facultativement, un serveur DNS qui résout ce nom, ajustez les options si
+   besoin, créez le jeton et téléchargez `Deploy-DumbMonit.ps1`. Le jeton n'est
+   affiché qu'à ce moment. Le format du nom et du serveur DNS est vérifié, ils
+   sont écrits dans le script et rappelés dans le récapitulatif de l'étape
+   suivante.
 2. Copiez le script sur un contrôleur de domaine et ouvrez PowerShell en
    administrateur du domaine. Faites d'abord un essai à blanc, qui ne change
    rien :
@@ -43,6 +48,17 @@ dossier **Active Directory &lt;domaine&gt;**, avec les tags `ad=<domaine>` et
    enrolments** (voir [Sécurité](#securite)).
 
 Le script est idempotent : le relancer met la GPO à jour sur place.
+
+!!! info "Comment les agents parlent au serveur"
+    Une fois inscrit, chaque agent parle à DumbMonit par le canal chiffré, avec
+    son propre certificat d'agent (TLS mutuel, TLS 1.3). Les serveurs doivent
+    seulement joindre le serveur DumbMonit sur le **port TCP 8443** (sortant
+    depuis les serveurs vers DumbMonit, rien d'entrant), y compris depuis un
+    autre site. Le nom saisi doit être celui du certificat du serveur et
+    résolvable par les serveurs ; si leur résolveur ne le trouve pas, indiquez
+    un serveur DNS : le kit résout le nom par son intermédiaire et l'inscrit
+    dans le fichier `hosts` du serveur (lignes marquées `# DumbMonit`). Voir
+    [Sécurité du canal des agents](../install/agent-security.md).
 
 ## Paramètres du script
 

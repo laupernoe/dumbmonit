@@ -11104,9 +11104,11 @@ components:
         include_domain_controllers: { type: boolean, default: false }
         security_group: { type: [string, "null"], maxLength: 512, description: Only members of this group apply the group policy. }
         sysvol_binary: { type: boolean, default: false, description: Also copy the agent binary to SYSVOL for servers without outbound access. }
+        server_host: { type: [string, "null"], description: 'DNS name (FQDN) or IPv4 address of this server that agents contact, with an optional :port. Replaces the host of base_url.' }
+        dns_server: { type: [string, "null"], description: IP address of a DNS server used to resolve server_host on machines that cannot. }
     CreatedAgentAdKit:
       type: object
-      required: [token, secret, script, filename, folder, install_windows]
+      required: [token, secret, script, filename, folder, install_windows, server_url]
       properties:
         token: { $ref: "#/components/schemas/AgentToken" }
         secret: { type: string, description: Shown once. }
@@ -11114,6 +11116,8 @@ components:
         filename: { type: string }
         folder: { type: string, description: Folder the enrolled servers are filed in. }
         install_windows: { type: string }
+        server_url: { type: string, description: URL the agents contact, as written in the kit. }
+        dns_server: { type: [string, "null"], description: DNS server written in the kit, if any. }
 
     # -------------------------------------------------- types d'équipement
     KindDescription:
