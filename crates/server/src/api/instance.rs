@@ -144,7 +144,7 @@ mod tests {
     fn a_patch_keeps_what_it_does_not_name() {
         let mut value = InstanceSettings { name: "Lab".into(), ..InstanceSettings::default() };
         let patch = InstancePatch { product_mode: Some("enterprise".into()), ..Default::default() };
-        apply(&mut value, patch).unwrap();
+        assert!(apply(&mut value, patch).is_ok());
         assert_eq!(value.product_mode, ProductMode::Enterprise);
         assert_eq!(value.name, "Lab");
     }
@@ -167,10 +167,10 @@ mod tests {
     fn finishing_the_wizard_stamps_a_date_and_reopening_clears_it() {
         let mut value = InstanceSettings::default();
         let done = InstancePatch { setup_completed: Some(true), ..Default::default() };
-        apply(&mut value, done).unwrap();
+        assert!(apply(&mut value, done).is_ok());
         assert!(value.setup_completed_at.is_some());
         let reopen = InstancePatch { setup_completed: Some(false), ..Default::default() };
-        apply(&mut value, reopen).unwrap();
+        assert!(apply(&mut value, reopen).is_ok());
         assert!(value.setup_completed_at.is_none());
     }
 }
