@@ -547,13 +547,22 @@ mod tests {
     #[test]
     fn the_server_name_must_be_a_plain_dns_name_or_address() {
         assert_eq!(
-            clean_server_host(" DumbMonit.Corp.Example.com. ").unwrap(),
+            clean_server_host(" DumbMonit.Corp.Example.com. ").ok().unwrap(),
             "dumbmonit.corp.example.com"
         );
-        assert_eq!(clean_server_host("10.0.0.5:8443").unwrap(), "10.0.0.5:8443");
+        assert_eq!(clean_server_host("10.0.0.5:8443").ok().unwrap(), "10.0.0.5:8443");
         for bad in [
-            "", "https://dm", "dm/path", "dm name", "dm'x", "-dm.lan", "dm..lan", "dm:0",
-            "dm:99999", "dm:abc", "dm$x",
+            "",
+            "https://dm",
+            "dm/path",
+            "dm name",
+            "dm'x",
+            "-dm.lan",
+            "dm..lan",
+            "dm:0",
+            "dm:99999",
+            "dm:abc",
+            "dm$x",
         ] {
             assert!(clean_server_host(bad).is_err(), "{bad:?} doit être refusé");
         }
@@ -561,7 +570,7 @@ mod tests {
 
     #[test]
     fn the_dns_server_must_be_an_ip_address() {
-        assert_eq!(clean_dns_server(" 10.0.0.2 ").unwrap(), "10.0.0.2");
+        assert_eq!(clean_dns_server(" 10.0.0.2 ").ok().unwrap(), "10.0.0.2");
         assert!(clean_dns_server("::1").is_ok());
         assert!(clean_dns_server("dns.corp.lan").is_err());
         assert!(clean_dns_server("10.0.0.2'; calc").is_err());

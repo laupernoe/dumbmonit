@@ -228,7 +228,10 @@ async fn the_server_name_and_dns_server_reach_the_kit() {
     assert!(script.contains("$Url            = 'https://dumbmonit.corp.example.com'"));
     assert!(script.contains("$DnsServer      = '10.0.0.2'"));
     assert!(
-        reply.body["install_windows"].as_str().unwrap().contains("https://dumbmonit.corp.example.com")
+        reply.body["install_windows"]
+            .as_str()
+            .unwrap()
+            .contains("https://dumbmonit.corp.example.com")
     );
 
     // Sans saisie : l'URL publique, aucun serveur DNS.
