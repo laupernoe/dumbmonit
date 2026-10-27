@@ -5149,6 +5149,8 @@ paths:
         left out. Each device node carries the `subnet` it sits in (from its IP address and the
         networks the site's firewalls know, else its /24; none for a public address or a host
         name) and, when a firewall says so, that network's `vlan` and `vlan_name`.
+        A link with a known switch port also carries `traffic` (bit rates, utilization against
+        the port speed, errors) read from the interface counters already collected.
         Device addresses are not included; only the addresses a hypervisor reports for its guests
         are (`ips`). States are read from `GET /api/targets`.
         A node's `site` is found without configuration: the location the device is placed at
@@ -7951,6 +7953,36 @@ paths:
         "401": { $ref: "#/components/responses/Unauthorized" }
         "403": { $ref: "#/components/responses/Forbidden" }
         "404": { $ref: "#/components/responses/NotFound" }
+
+  /api/targets/{id}/port-traffic:
+    parameters:
+      - $ref: "#/components/parameters/TargetId"
+    get:
+      operationId: getPortTraffic
+      tags: [Devices]
+      summary: Traffic of switch ports over the last hour
+      description: |
+        Received and sent bit rate of one or more interfaces of the device, one point per
+        minute over the last hour (the curve shown when a link of the topology map is clicked).
+        Several ports are added up, as for a LAG.
+      x-token-scope: read
+      parameters:
+        - name: ports
+          in: query
+          required: true
+          description: "Interface names (`ifname`) separated by commas, at most 16."
+          schema: { type: string }
+      responses:
+        "200":
+          description: The curve.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/PortTraffic" }
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "403": { $ref: "#/components/responses/Forbidden" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "502": { description: The metrics store did not answer. }
 
   /api/targets/{id}/proxy:
     parameters:
@@ -13164,6 +13196,43 @@ components:
         rule_id: { type: [integer, "null"], format: int64, description: The learned rule that drew it. }
         from_port: { type: [string, "null"], description: "Switch port at the `from` end (`lldp` and `l2` links)." }
         to_port: { type: [string, "null"], description: "Switch port at the `to` end." }
+        traffic:
+          oneOf:
+            - $ref: "#/components/schemas/TopologyEdgeTraffic"
+            - type: "null"
+          description: |
+            Weathermap: traffic of the port this link goes through. Absent when no port of the
+            link has interface counters (`if_octets_*`) in the metrics store.
+    TopologyEdgeTraffic:
+      type: object
+      required: [measured_on, ports, bps_in, bps_out, errors_per_sec]
+      description: |
+        Rates over the last few minutes, read from the interface counters the SNMP IF-MIB
+        profile and the agent already collect. The measured side is the first of `from`, `to`
+        whose port has counters; several ports of one link (a LAG) are added up.
+      properties:
+        measured_on: { type: string, description: "Node (`t<id>`) whose counters were read." }
+        ports: { type: array, items: { type: string }, description: "Interface names measured (`ifname`)." }
+        bps_in: { type: number, description: "Bits per second received by `measured_on`." }
+        bps_out: { type: number, description: "Bits per second sent by `measured_on`." }
+        speed_bps: { type: [number, "null"], description: "Negotiated speed (sum of the ports), bits per second; null when a port does not report it." }
+        utilization_in: { type: [number, "null"], minimum: 0, maximum: 1, description: "`bps_in / speed_bps`; null without a speed." }
+        utilization_out: { type: [number, "null"], minimum: 0, maximum: 1, description: "`bps_out / speed_bps`; null without a speed." }
+        errors_per_sec: { type: number, description: "Errors and discards per second, both directions." }
+    PortTraffic:
+      type: object
+      required: [step_secs, points]
+      properties:
+        step_secs: { type: integer }
+        points:
+          type: array
+          items:
+            type: object
+            required: [t, bps_in, bps_out]
+            properties:
+              t: { type: integer, description: Unix time in seconds. }
+              bps_in: { type: number }
+              bps_out: { type: number }
     AgentHost:
       type: object
       required: [hostname, os, agent_version, commands_supported, relay, relayed, binding, bound]

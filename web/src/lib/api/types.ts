@@ -2565,6 +2565,32 @@ export interface TopologyEdge {
 	/** Switch port on the `from` / `to` side (`lldp` and `l2` links), read from the switch tables. */
 	from_port?: string | null;
 	to_port?: string | null;
+	/** Weathermap: traffic of the link's port, when its interface counters are known. */
+	traffic?: TopologyEdgeTraffic | null;
+}
+
+/** Traffic of a link, read from `if_octets_*` and `if_speed_bps`. Mirrors `EdgeTraffic` in `api/topology_traffic.rs`. */
+export interface TopologyEdgeTraffic {
+	/** Node (`t<id>`) whose counters were read: `from` or `to`. */
+	measured_on: string;
+	/** Interface names measured. */
+	ports: string[];
+	/** Bits per second received / sent by `measured_on`. */
+	bps_in: number;
+	bps_out: number;
+	/** Negotiated speed, bits per second; `null` when a port does not report it. */
+	speed_bps: number | null;
+	/** Rate over speed, 0 to 1; `null` without a speed. */
+	utilization_in: number | null;
+	utilization_out: number | null;
+	/** Errors and discards per second, both directions. */
+	errors_per_sec: number;
+}
+
+/** `GET /api/targets/{id}/port-traffic`: the last hour of a port's traffic. */
+export interface PortTraffic {
+	step_secs: number;
+	points: { t: number; bps_in: number; bps_out: number }[];
 }
 
 export type TopologyCorrectionKind = 'forbid' | 'link' | 'parent' | 'site' | 'group';
