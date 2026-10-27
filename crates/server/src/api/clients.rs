@@ -232,7 +232,7 @@ pub async fn upload_logo(
     let Some(kind) = branding::sniff(&bytes) else {
         return Err(ApiError::BadRequest("The logo must be a PNG, JPEG or WebP image.".into()));
     };
-    clients::set_logo(&state.pool, id, Some((kind, &bytes))).await?;
+    clients::set_logo(&state.pool, id, Some((kind, bytes.as_slice()))).await?;
     audit::record(&state.pool, Some(&me.username), "client.logo", Some(&client.name), ip).await;
     Ok(StatusCode::NO_CONTENT)
 }

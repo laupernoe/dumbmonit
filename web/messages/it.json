@@ -8119,5 +8119,246 @@
 	"worldmap_verdict_idle": "Non interrogato",
 	"worldmap_verdict_ok": "Tutto attivo",
 	"worldmap_verdict_warn": "Da controllare",
-	"worldmap_view_world": "Mondo"
+	"worldmap_view_world": "Mondo",
+	"deviceform_form_client_label": "Cliente",
+	"deviceform_form_client_help": "Il cliente a cui appartiene questo dispositivo. Solo i suoi membri lo vedono.",
+	"deviceform_form_client_help_edit": "Spostare un dispositivo verso un altro cliente porta con sé i dispositivi che ne dipendono.",
+	"deviceform_form_client_default": "Predefinito di questa vista",
+	"msp_assign_label": "Cliente",
+	"msp_assign_shared": "Tutti i clienti",
+	"msp_nav_clients": "Clienti",
+	"msp_switcher_label": "Cliente mostrato",
+	"msp_switcher_title": "Mostra le pagine di un cliente",
+	"msp_switcher_all": "Tutti i clienti",
+	"msp_overview_title": "Clienti",
+	"msp_overview_description_admin": "Tutti i clienti a colpo d’occhio. Aprine uno per vedere solo i suoi dispositivi, avvisi e pagine.",
+	"msp_overview_description_member": "I clienti per cui lavori e il loro rapporto di disponibilità del mese scorso.",
+	"msp_overview_empty_title": "Ancora nessun cliente",
+	"msp_overview_empty_body": "Crea i clienti nelle Impostazioni, poi assegna a ciascuno dispositivi e membri.",
+	"msp_overview_load_error": "Impossibile caricare i clienti.",
+	"msp_overview_none_title": "Non appartieni a nessun cliente",
+	"msp_overview_none_body": "Chiedi al tuo amministratore MSP di aggiungere il tuo account a un cliente.",
+	"msp_overview_off_title": "La modalità multi-cliente è disattivata",
+	"msp_overview_off_body": "Attivala nelle Impostazioni per separare dispositivi, avvisi e rapporti di ogni cliente.",
+	"msp_overview_off_action": "Apri le impostazioni dei clienti",
+	"msp_overview_open": "Apri",
+	"msp_overview_report": "Mese scorso (PDF)",
+	"msp_overview_report_title": "Scarica il rapporto di disponibilità del mese scorso",
+	"msp_overview_report_error": "Impossibile generare il rapporto.",
+	"msp_overview_quota_label": "Quota dispositivi usata",
+	"msp_overview_state_empty": "Ancora nessun dispositivo",
+	"msp_overview_state_ok": "Tutto a posto",
+	"settings_agents_client_badge": "Cliente: {name}",
+	"settings_clients_title": "Clienti",
+	"settings_clients_description": "Modalità multi-cliente (MSP): separa dispositivi, avvisi, pagine e rapporti di ogni cliente.",
+	"settings_clients_search_kw": "msp tenant cliente isolamento quota logo",
+	"settings_clients_add": "Aggiungi un cliente",
+	"settings_clients_load_error": "Impossibile caricare i clienti.",
+	"settings_clients_save_error": "Impossibile salvare.",
+	"settings_clients_delete_error": "Impossibile eliminare il cliente.",
+	"settings_clients_delete_confirm": "Elimina questo cliente",
+	"settings_clients_mode": "Modalità multi-cliente",
+	"settings_clients_mode_off_help": "Disattivata: ogni account vede ciò che ruolo e team consentono, come prima. All’attivazione gli account esistenti restano nel cliente predefinito.",
+	"settings_clients_mode_on_help": "Attivata: un account vede solo i clienti di cui fa parte. Gli amministratori gestiscono tutti i clienti e ne scelgono uno nell’intestazione.",
+	"settings_clients_empty_title": "Ancora nessun cliente",
+	"settings_clients_empty_body": "Aggiungi un cliente e spostavi i suoi dispositivi.",
+	"settings_clients_note": "Dispositivi, pagine di stato e token agente appartengono sempre a un cliente. Canali, regole di avviso, manutenzioni e rapporti possono essere condivisi da tutti. Un cliente con dispositivi non si può eliminare.",
+	"settings_clients_new_title": "Nuovo cliente",
+	"settings_clients_edit_title": "Modifica {name}",
+	"settings_clients_name": "Nome",
+	"settings_clients_description_label": "Descrizione",
+	"settings_clients_err_name": "Inserisci un nome cliente.",
+	"settings_clients_err_quota": "Inserisci un numero intero o lascia vuoto per nessun limite.",
+	"settings_clients_quota": "Quota dispositivi",
+	"settings_clients_quota_help": "Numero massimo di dispositivi del cliente, agenti inclusi.",
+	"settings_clients_quota_none": "Nessun limite",
+	"settings_clients_idp_groups": "Gruppi del provider di identità",
+	"settings_clients_idp_groups_help": "I membri di questi gruppi SSO (OIDC, LDAP, SAML) entrano nel cliente all’accesso. Separa con virgole.",
+	"settings_clients_contacts": "Contatti",
+	"settings_clients_contacts_help": "Indirizzi che ricevono il rapporto mensile di disponibilità, uno per riga.",
+	"settings_clients_report_legend": "Rapporto mensile di disponibilità",
+	"settings_clients_report_toggle": "Invialo ai contatti",
+	"settings_clients_report_help": "Il giorno 1 alle 8:00 nel fuso del cliente, PDF e CSV del mese passato partono via email, con nome e logo del cliente.",
+	"settings_clients_objective": "Obiettivo di disponibilità (%)",
+	"settings_clients_objective_help": "Facoltativo. Ogni dispositivo è segnato come conforme o no.",
+	"settings_clients_timezone": "Fuso orario",
+	"settings_clients_report_last": "Ultimo rapporto inviato: {month}.",
+	"settings_clients_report_failing": "Rapporto mensile non riuscito",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo di {name}",
+	"settings_clients_logo_upload": "Carica un logo",
+	"settings_clients_logo_replace": "Sostituisci il logo",
+	"settings_clients_logo_remove": "Rimuovi",
+	"settings_clients_logo_help": "PNG, JPEG o WebP, al massimo 256 KiB. Mostrato su rapporti e pagine di stato del cliente; PNG e JPEG anche nel PDF.",
+	"settings_clients_logo_too_big": "Questo file supera 256 KiB.",
+	"settings_clients_logo_error": "Impossibile salvare il logo.",
+	"settings_clients_members": "Membri",
+	"settings_clients_members_help": "I membri vedono solo questo cliente, nei limiti di ruolo e team. Gli amministratori vedono tutti i clienti.",
+	"settings_clients_save": "Salva",
+	"settings_clients_create": "Crea il cliente",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo in stato critico",
+				"countPlural=other": "{count} dispositivi in stato critico"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo in allarme",
+				"countPlural=other": "{count} dispositivi in allarme"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} critico",
+				"countPlural=other": "{count} critici"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} avviso",
+				"countPlural=other": "{count} avvisi"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} in pausa",
+				"countPlural=other": "{count} in pausa"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo",
+				"countPlural=other": "{count} dispositivi"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} di {quota} dispositivi",
+				"countPlural=other": "{count} di {quota} dispositivi"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} dispositivo",
+				"countPlural=other": "{count} dispositivi"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} di {quota} dispositivi",
+				"countPlural=other": "{count} di {quota} dispositivi"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Rapporto mensile a {count} contatto",
+				"countPlural=other": "Rapporto mensile a {count} contatti"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} account senza cliente non vede nulla:",
+				"countPlural=other": "{count} account senza cliente non vedono nulla:"
+			}
+		}
+	]
 }

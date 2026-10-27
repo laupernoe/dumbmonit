@@ -188,6 +188,7 @@ nav:
       - SAML 2.0: using/saml.md
       - SCIM provisioning: using/scim.md
       - Teams and permissions: using/teams.md
+      - Multi-client (MSP): using/msp.md
       - Passkeys: using/passkeys.md
       - Push notifications (PWA): using/push-notifications.md
       - Connect an assistant (MCP): using/assistant.md
