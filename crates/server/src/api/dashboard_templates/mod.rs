@@ -84,11 +84,7 @@ async fn publishing(state: &AppState, metric: &str) -> Option<HashSet<i64>> {
 }
 
 /// Les équipements qui peuvent alimenter le modèle, avant tout filtre.
-async fn candidates<'a>(
-    state: &AppState,
-    template: &Template,
-    rows: &'a [Row],
-) -> Vec<&'a Row> {
+async fn candidates<'a>(state: &AppState, template: &Template, rows: &'a [Row]) -> Vec<&'a Row> {
     let of_kind: Vec<&Row> = rows
         .iter()
         .filter(|row| template.kinds.is_empty() || template.kinds.contains(&row.kind.as_str()))
@@ -383,8 +379,7 @@ fn build(template: &Template, targets: &[&Row]) -> (Vec<Widget>, bool) {
                 }
             }
             Shape::Chart | Shape::Stat => {
-                let mut ids: Vec<i64> =
-                    targets.iter().filter(applies).map(|row| row.id).collect();
+                let mut ids: Vec<i64> = targets.iter().filter(applies).map(|row| row.id).collect();
                 if ids.is_empty() {
                     continue;
                 }
@@ -590,7 +585,7 @@ mod tests {
     #[test]
     fn a_widget_without_a_device_of_its_kind_is_left_out() {
         let template = catalog::find("network").expect("modèle réseau");
-        let rows = vec![Row {
+        let rows = [Row {
             id: 7,
             name: "fw".into(),
             kind: "fortigate".into(),

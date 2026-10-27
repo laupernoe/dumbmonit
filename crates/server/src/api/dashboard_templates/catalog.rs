@@ -211,10 +211,10 @@ pub static TEMPLATES: &[Template] = &[
             stat("disk", "Fullest disk", "max(dumbmonit_filesystem_used_percent{$T})")
                 .unit("%")
                 .above(85.0, 95.0),
-            chart("cpu", "CPU per server", "max by (target) (dumbmonit_cpu_usage_percent{$T})")
+            chart("cpu-per", "CPU per server", "max by (target) (dumbmonit_cpu_usage_percent{$T})")
                 .unit("%"),
             chart(
-                "mem",
+                "mem-per",
                 "Memory per server",
                 "max by (target) (dumbmonit_memory_used_percent{$T})",
             )
@@ -270,13 +270,9 @@ pub static TEMPLATES: &[Template] = &[
             .of(SNMP)
             .unit("err/s")
             .above(1.0, 10.0),
-            stat(
-                "gateways",
-                "Gateways down",
-                "sum(dumbmonit_opnsense_gateways_down{$T})",
-            )
-            .of(OPNSENSE)
-            .crit(1.0),
+            stat("gateways", "Gateways down", "sum(dumbmonit_opnsense_gateways_down{$T})")
+                .of(OPNSENSE)
+                .crit(1.0),
             chart(
                 "traffic-in",
                 "Inbound traffic, busiest interfaces",
@@ -360,11 +356,7 @@ pub static TEMPLATES: &[Template] = &[
         range_secs: 6 * 3600,
         refresh_secs: 60,
         widgets: &[
-            stat(
-                "running",
-                "Guests running",
-                "sum(dumbmonit_proxmox_cluster_guests_running{$T})",
-            ),
+            stat("running", "Guests running", "sum(dumbmonit_proxmox_cluster_guests_running{$T})"),
             stat("total", "Guests", "sum(dumbmonit_proxmox_cluster_guests_total{$T})"),
             stat(
                 "nodes-down",
@@ -687,11 +679,7 @@ pub static TEMPLATES: &[Template] = &[
                 "max by (target, namespace, workload) \
                  (dumbmonit_k8s_workload_unavailable{$T} > 0)",
             ),
-            chart(
-                "pending",
-                "Pending pods",
-                "max by (target) (dumbmonit_k8s_pods_pending{$T})",
-            ),
+            chart("pending", "Pending pods", "max by (target) (dumbmonit_k8s_pods_pending{$T})"),
         ],
     },
     Template {
@@ -747,13 +735,9 @@ pub static TEMPLATES: &[Template] = &[
             )
             .unit("%")
             .below(99.9, 99.0),
-            stat(
-                "sla-7",
-                "Availability, 7 days",
-                "avg(avg_over_time(dumbmonit_up{$T}[7d])) * 100",
-            )
-            .unit("%")
-            .below(99.9, 99.0),
+            stat("sla-7", "Availability, 7 days", "avg(avg_over_time(dumbmonit_up{$T}[7d])) * 100")
+                .unit("%")
+                .below(99.9, 99.0),
             stat(
                 "downtime",
                 "Estimated downtime, 30 days",

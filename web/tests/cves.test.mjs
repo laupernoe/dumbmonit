@@ -1,7 +1,7 @@
 // CVE views: grouping, ordering and filters. Run: npm test
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupByDevice, topFindings, severityTone, stateTone, filtersToQuery, EMPTY_FILTERS, filtersActive, parseTargetParam } from '../src/lib/cves.ts';
+import { groupByDevice, topFindings, severityTone, stateTone, EMPTY_VIEW, parseViewState, viewStateToParams, viewFiltersActive, filterFindings, aggregateByCve, parseTargetParam } from '../src/lib/cves.ts';
 
 const f = (target_id, cve_id, over = {}) => ({
 	target_id, target_name: `d${target_id}`, cve_id, state: 'vulnerable', exploited: false, ignored: false, ...over
@@ -42,12 +42,39 @@ test('tones never rely on colour alone but map predictably', () => {
 	assert.equal(stateTone('vulnerable', true), 'muted');
 });
 
-test('filters become a query', () => {
-	assert.deepEqual(filtersToQuery(EMPTY_FILTERS), { target: undefined, severity: undefined, state: undefined, exploited: undefined, ignored: undefined });
-	const q = filtersToQuery({ target: 3, severity: 'high', state: 'vulnerable', exploited: true, showIgnored: false });
-	assert.deepEqual(q, { target: 3, severity: 'high', state: 'vulnerable', exploited: true, ignored: false });
-	assert.equal(filtersActive(EMPTY_FILTERS), false);
-	assert.equal(filtersActive({ ...EMPTY_FILTERS, exploited: true }), true);
+test('the view state round-trips through the URL', () => {
+	assert.deepEqual(parseViewState(new URLSearchParams()), EMPTY_VIEW);
+	assert.equal(viewStateToParams(EMPTY_VIEW).toString(), '');
+	const v = { ...EMPTY_VIEW, pivot: 'machine', severity: 'high', kev: true, status: 'all', client: 4, machine: 7 };
+	const params = viewStateToParams(v, new URLSearchParams('keep=1&target=7'));
+	assert.equal(params.get('keep'), '1');
+	assert.equal(params.get('target'), null);
+	assert.deepEqual(parseViewState(params), v);
+	assert.equal(parseViewState(new URLSearchParams('target=12')).machine, 12, 'the device page link');
+	assert.equal(parseViewState(new URLSearchParams('sev=bogus&status=bogus')).severity, '');
+	assert.equal(viewFiltersActive(EMPTY_VIEW), false);
+	assert.equal(viewFiltersActive({ ...EMPTY_VIEW, kev: true }), true);
+	assert.equal(viewFiltersActive({ ...EMPTY_VIEW, pivot: 'machine' }), false, 'the pivot is not a filter');
+});
+
+test('filters and the CVE pivot', () => {
+	const findings = [
+		f(1, 'A', { severity: 'high', exploited: true, fixed_version: '2', component: 'openssl', summary: '' }),
+		f(2, 'A', { severity: 'critical', fixed_version: null, component: 'openssl', summary: '' }),
+		f(2, 'B', { severity: 'low', state: 'patched', fixed_version: '1', component: 'zlib', summary: '' })
+	];
+	const meta = new Map([[1, { folder: 'Paris', client: 1 }], [2, { folder: '', client: 2 }]]);
+	assert.equal(filterFindings(findings, EMPTY_VIEW, meta).length, 2, 'patched hidden by default');
+	assert.equal(filterFindings(findings, { ...EMPTY_VIEW, status: 'all' }, meta).length, 3);
+	assert.deepEqual(filterFindings(findings, { ...EMPTY_VIEW, kev: true }, meta).map((x) => x.target_id), [1]);
+	assert.deepEqual(filterFindings(findings, { ...EMPTY_VIEW, fix: true }, meta).map((x) => x.target_id), [1]);
+	assert.deepEqual(filterFindings(findings, { ...EMPTY_VIEW, client: 2 }, meta).map((x) => x.target_id), [2]);
+	assert.deepEqual(filterFindings(findings, { ...EMPTY_VIEW, folder: 'Paris' }, meta).map((x) => x.target_id), [1]);
+	const groups = aggregateByCve(findings);
+	assert.equal(groups[0].cve_id, 'A');
+	assert.equal(groups[0].severity, 'critical', 'the worst severity across machines');
+	assert.equal(groups[0].machines.length, 2);
+	assert.equal(groups[1].open, false);
 });
 
 test('target query param', () => {
