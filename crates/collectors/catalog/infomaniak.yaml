@@ -1,0 +1,26 @@
+# Mesures et vues du type « infomaniak » (format : crates/collectors/src/catalog.rs).
+source: infomaniak
+prefixes: [infomaniak_]
+metrics:
+  - { name: infomaniak_products, label: "Products" }
+  - { name: infomaniak_products_expired, label: "Products expired" }
+  - { name: infomaniak_products_expiring, label: "Products expiring" }
+  - { name: infomaniak_products_locked, label: "Products locked" }
+  - { name: infomaniak_products_maintenance, label: "Products maintenance" }
+  - { name: infomaniak_product_expiry_seconds, label: "Product expiry", unit: "s" }
+  - { name: infomaniak_product_locked, label: "Product locked", unit: "bool" }
+  - { name: infomaniak_product_maintenance, label: "Product maintenance", unit: "bool" }
+  - { name: infomaniak_product_operation_in_progress, label: "Product operation in progress", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - infomaniak_products_expired
+      - infomaniak_products_expiring
+      - infomaniak_products
+      - infomaniak_products_locked
+      - infomaniak_products_maintenance
+      - infomaniak_product_expiry_seconds
+      - infomaniak_product_locked
+      - infomaniak_product_maintenance
+      - infomaniak_product_operation_in_progress

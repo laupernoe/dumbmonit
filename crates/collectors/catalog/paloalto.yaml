@@ -1,0 +1,42 @@
+# Mesures et vues du type « paloalto » (format : crates/collectors/src/catalog.rs).
+source: paloalto
+prefixes: [paloalto_]
+metrics:
+  - { name: paloalto_version_info, label: "Version", kind: info }
+  - { name: paloalto_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: paloalto_cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: paloalto_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: paloalto_sessions, label: "Sessions" }
+  - { name: paloalto_session_usage_percent, label: "Session usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: paloalto_sessions_max, label: "Sessions max" }
+  - { name: paloalto_license_status_info, label: "License status", kind: info }
+  - { name: paloalto_license_expiry_seconds, label: "License expiry", unit: "s" }
+  - { name: paloalto_license_expired, label: "License expired", unit: "bool" }
+  - { name: paloalto_interface_speed_mbps, label: "Interface speed mbps", unit: "Mbit/s" }
+  - { name: paloalto_interface_link_up, label: "Interface link up", unit: "bool" }
+  - { name: paloalto_interface_down, label: "Interface down", better: "lower" }
+  - { name: paloalto_interfaces_down, label: "Interfaces down", better: "lower" }
+  - { name: paloalto_ha_state_info, label: "HA state", kind: info }
+  - { name: paloalto_ha_enabled, label: "HA enabled", unit: "bool" }
+  - { name: paloalto_ha_peer_up, label: "HA peer up", unit: "bool" }
+  - { name: paloalto_ha_in_sync, label: "HA in sync", unit: "bool" }
+  - { name: paloalto_last_commit_ok, label: "Last commit ok", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - paloalto_interfaces_down
+      - paloalto_ha_in_sync
+      - paloalto_license_expired
+      - paloalto_sessions
+      - paloalto_uptime_seconds
+      - paloalto_license_expiry_seconds
+      - paloalto_interface_link_up
+      - paloalto_ha_peer_up
+      - paloalto_last_commit_ok
+  - view: timeseries
+    title: "CPU and memory"
+    metrics: [paloalto_cpu_usage_percent, paloalto_memory_used_percent]
+  - view: timeseries
+    title: "Session table used"
+    metrics: [paloalto_session_usage_percent]

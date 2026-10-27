@@ -18,6 +18,7 @@
 //! équipement SNMP — c'est ce qui permet aux règles d'alerte, à l'anti-cascade et
 //! à l'interface de traiter les deux mondes sans distinction.
 
+pub mod catalog;
 pub mod commands;
 pub mod eventlog;
 pub mod logs;
@@ -33,7 +34,7 @@ use std::sync::Mutex;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use dumbmonit_proto::{Collector, MetricKind, ProbeError, Sample, Target, TargetId};
+use dumbmonit_proto::{Collector, Measures, MetricKind, ProbeError, Sample, Target, TargetId};
 use sqlx::SqlitePool;
 use tokio::sync::OnceCell;
 
@@ -182,6 +183,10 @@ fn human_duration(duration: Duration) -> String {
 impl Collector for AgentCollector {
     fn kind(&self) -> &'static str {
         "agent"
+    }
+
+    fn measures(&self, _kind: &str) -> Option<Measures> {
+        catalog::measures()
     }
 
     async fn probe(&self, target: &Target) -> Result<Vec<Sample>, ProbeError> {

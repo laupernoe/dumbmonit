@@ -1,0 +1,40 @@
+# Mesures et vues du type « mailcow » (format : crates/collectors/src/catalog.rs).
+source: selfhosted
+prefixes: [mailcow_]
+metrics:
+  - { name: mailcow_queue_messages, label: "Queue messages" }
+  - { name: mailcow_queue_oldest_seconds, label: "Queue oldest", unit: "s" }
+  - { name: mailcow_vmail_used_percent, label: "Vmail used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: mailcow_mailbox_quota_percent, label: "Mailbox quota", unit: "%", entity: "mailbox", min: 0, max: 100 }
+  - { name: mailcow_mailboxes_total, label: "Mailboxes" }
+  - { name: mailcow_mailboxes_inactive, label: "Mailboxes inactive" }
+  - { name: mailcow_mailboxes_near_quota, label: "Mailboxes near quota" }
+  - { name: mailcow_containers_total, label: "Containers" }
+  - { name: mailcow_containers_running, label: "Containers running" }
+  - { name: mailcow_container_up, label: "Container up", unit: "bool" }
+  - { name: mailcow_version_info, label: "Version", kind: info }
+  - { name: mailcow_scrape_errors, label: "Scrape errors", better: "lower" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - mailcow_mailboxes_total
+      - mailcow_mailboxes_inactive
+      - mailcow_mailboxes_near_quota
+      - mailcow_containers_total
+      - mailcow_containers_running
+      - mailcow_container_up
+      - mailcow_version_info
+      - mailcow_queue_oldest_seconds
+  - view: timeseries
+    title: "Mail queue"
+    metrics: [mailcow_queue_messages]
+  - view: timeseries
+    title: "Mail storage"
+    metrics: [mailcow_vmail_used_percent]
+  - view: topn
+    title: "Mailbox quota"
+    metrics: [mailcow_mailbox_quota_percent]
+    group_by: mailbox
+    options:
+      limit: "10"

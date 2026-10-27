@@ -25,32 +25,47 @@ metrics:
   - name: stormshield_ha_nodes
     oid: 1.3.6.1.4.1.11256.1.11.1.0
     kind: gauge
+    label: "HA nodes"
+    view: "stat"
 
   - name: stormshield_ha_dead_nodes
     oid: 1.3.6.1.4.1.11256.1.11.2.0
     kind: gauge
+    label: "HA nodes down"
+    view: "stat"
 
   - name: stormshield_ha_active_nodes
     oid: 1.3.6.1.4.1.11256.1.11.3.0
     kind: gauge
+    label: "HA nodes active"
+    view: "stat"
 
   - name: stormshield_ha_links
     oid: 1.3.6.1.4.1.11256.1.11.5.0
     kind: gauge
+    label: "HA links"
+    view: "stat"
 
   - name: stormshield_ha_faulty_links
     oid: 1.3.6.1.4.1.11256.1.11.6.0
     kind: gauge
+    label: "HA links faulty"
+    view: "stat"
 
   # snsHASyncStatus : code brut de la MIB.
   - name: stormshield_ha_sync_status
     oid: 1.3.6.1.4.1.11256.1.11.8.0
     kind: gauge
+    label: "HA sync"
+    view: "stat"
 
   # snsHAQuality de chaque nœud (snsNodeTable), repéré par son numéro de série.
   - name: stormshield_ha_node_quality
     oid: 1.3.6.1.4.1.11256.1.11.7.1.7
     kind: gauge
+    label: "HA node quality"
+    entity: "serial"
+    view: "stat"
     walk: true
     labels:
       serial: 1.3.6.1.4.1.11256.1.11.7.1.2
@@ -62,6 +77,11 @@ metrics:
   - name: stormshield_cpu_temperature_celsius
     oid: 1.3.6.1.4.1.11256.1.10.7.1.2
     kind: gauge
+    label: "CPU temperature"
+    unit: "°C"
+    entity: "cpu"
+    view: "timeseries"
+    view_title: "CPU temperature"
     walk: true
     labels:
       cpu: 1.3.6.1.4.1.11256.1.10.7.1.1
@@ -72,6 +92,9 @@ metrics:
   - name: stormshield_fan_rpm
     oid: 1.3.6.1.4.1.11256.1.10.9.1.4
     kind: gauge
+    label: "Fan speed"
+    unit: "rpm"
+    view: "stat"
     walk: true
     labels:
       fan: 1.3.6.1.4.1.11256.1.10.9.1.2

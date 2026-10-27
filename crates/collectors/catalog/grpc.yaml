@@ -1,0 +1,20 @@
+# Mesures et vues du type « grpc » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_connect_seconds, label: "Connect time", unit: "s", better: "lower" }
+  - { name: probe_grpc_check_seconds, label: "Health check time", unit: "s", better: "lower" }
+  - { name: probe_grpc_serving_status, label: "Serving status", kind: state, states: [{ value: 1, label: "Serving", tone: ok }, { value: 2, label: "Not serving", tone: critical }, { value: 3, label: "Unknown service", tone: warning }] }
+  - { name: probe_grpc_status_code, label: "gRPC status" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_grpc_serving_status
+      - probe_grpc_status_code
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_connect_seconds, probe_grpc_check_seconds]

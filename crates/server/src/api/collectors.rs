@@ -4899,6 +4899,15 @@ pub async fn list(State(state): State<AppState>) -> Json<Vec<KindDescription>> {
     let mut kinds = Vec::new();
     for kind in registry.kinds() {
         let mut description = describe(&kind, registry.get(&kind).and_then(|c| c.description()));
+        // Mesures et vues : celles du collecteur ou du catalogue embarqué, sauf pour
+        // un type né à l'exécution qui les a décrites lui-même.
+        if description.metrics.is_empty()
+            && description.views.is_empty()
+            && let Some(measures) = registry.measures(&kind)
+        {
+            description.metrics = measures.metrics;
+            description.views = measures.views;
+        }
         // Les prérequis ne concernent que les types compilés : un paquet
         // d'intégration ne peut pas en déclarer sous le nom d'un type du serveur.
         if compiled(&kind).is_some() {
@@ -8177,6 +8186,8 @@ impl CollectorView {
                 doc_url: guide_url(self.kind).into(),
             },
             options: self.options.iter().map(OptionView::description).collect(),
+            metrics: Vec::new(),
+            views: Vec::new(),
             requirements: Vec::new(),
         }
     }

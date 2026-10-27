@@ -1,0 +1,17 @@
+# Mesures et vues du type « udp » (format : crates/collectors/src/catalog.rs).
+source: uptime
+prefixes: [probe_]
+metrics:
+  - { name: probe_success, label: "Up", unit: "bool" }
+  - { name: probe_duration_seconds, label: "Probe duration", unit: "s", better: "lower" }
+  - { name: probe_failure_info, label: "Failure reason", kind: info }
+  - { name: probe_udp_response_seconds, label: "Response time", unit: "s", better: "lower" }
+  - { name: probe_udp_response_bytes, label: "Response size", unit: "B" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - probe_udp_response_bytes
+  - view: timeseries
+    title: "Response time"
+    metrics: [probe_duration_seconds, probe_udp_response_seconds]

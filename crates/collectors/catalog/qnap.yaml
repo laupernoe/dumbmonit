@@ -1,0 +1,48 @@
+# Mesures et vues du type « qnap » (format : crates/collectors/src/catalog.rs).
+source: qnap
+prefixes: [qnap_]
+metrics:
+  - { name: qnap_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: qnap_volume_used_percent, label: "Volume used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: qnap_disk_temperature_celsius, label: "Disk temperature", unit: "°C" }
+  - { name: qnap_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: qnap_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: qnap_version_info, label: "Version", kind: info }
+  - { name: qnap_firmware_update_available, label: "Firmware update available", unit: "bool", better: "higher" }
+  - { name: qnap_firmware_latest_info, label: "Firmware latest", kind: info }
+  - { name: qnap_volumes, label: "Volumes" }
+  - { name: qnap_volume_size_bytes, label: "Volume size", unit: "B" }
+  - { name: qnap_volume_free_bytes, label: "Volume free", unit: "B", better: "higher" }
+  - { name: qnap_disks, label: "Disks" }
+  - { name: qnap_disks_unhealthy, label: "Disks unhealthy", better: "lower" }
+  - { name: qnap_disk_ok, label: "Disk ok", unit: "bool" }
+  - { name: qnap_disk_warning, label: "Disk warning", unit: "bool" }
+  - { name: qnap_cpu_usage_percent, label: "CPU usage", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: qnap_cpu_temperature_celsius, label: "CPU temperature", unit: "°C" }
+  - { name: qnap_system_temperature_celsius, label: "System temperature", unit: "°C" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - qnap_disks_unhealthy
+      - qnap_memory_used_percent
+      - qnap_system_temperature_celsius
+      - qnap_cpu_temperature_celsius
+      - qnap_memory_total_bytes
+      - qnap_uptime_seconds
+      - qnap_version_info
+      - qnap_firmware_update_available
+      - qnap_volumes
+      - qnap_volume_size_bytes
+      - qnap_disks
+      - qnap_disk_ok
+      - qnap_disk_warning
+  - view: timeseries
+    title: "CPU"
+    metrics: [qnap_cpu_usage_percent]
+  - view: timeseries
+    title: "Volumes used"
+    metrics: [qnap_volume_used_percent]
+  - view: timeseries
+    title: "Disk temperatures"
+    metrics: [qnap_disk_temperature_celsius]

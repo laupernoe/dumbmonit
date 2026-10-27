@@ -1,0 +1,30 @@
+# Mesures et vues du type « entra » (format : crates/collectors/src/catalog.rs).
+source: entra
+prefixes: [entra_]
+metrics:
+  - { name: entra_credentials, label: "Credentials" }
+  - { name: entra_credentials_expired, label: "Credentials expired" }
+  - { name: entra_credentials_expiring_30d, label: "Credentials expiring 30d" }
+  - { name: entra_credential_expiry_seconds, label: "Credential expiry", unit: "s" }
+  - { name: entra_applications, label: "Applications" }
+  - { name: entra_admins, label: "Admins" }
+  - { name: entra_admin_without_mfa, label: "Admin without MFA" }
+  - { name: entra_admin_mfa_registered, label: "Admin MFA registered", unit: "bool" }
+  - { name: entra_ad_sync_enabled, label: "AD sync enabled", unit: "bool" }
+  - { name: entra_ad_sync_age_seconds, label: "AD sync age", unit: "s" }
+  - { name: entra_mfa_readable, label: "MFA readable", unit: "bool" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - entra_admin_without_mfa
+      - entra_credentials_expired
+      - entra_credentials_expiring_30d
+      - entra_credentials
+      - entra_credential_expiry_seconds
+      - entra_applications
+      - entra_admins
+      - entra_admin_mfa_registered
+      - entra_ad_sync_enabled
+      - entra_ad_sync_age_seconds
+      - entra_mfa_readable

@@ -1,0 +1,121 @@
+# Mesures et vues du type « opnsense » (format : crates/collectors/src/catalog.rs).
+source: opnsense
+prefixes: [opnsense_]
+metrics:
+  - { name: opnsense_version_info, label: "Version", kind: info }
+  - { name: opnsense_up, label: "Up", unit: "bool" }
+  - { name: opnsense_uptime_seconds, label: "Uptime", unit: "s" }
+  - { name: opnsense_cpu_percent, label: "CPU", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: opnsense_load1, label: "Load1" }
+  - { name: opnsense_load5, label: "Load5" }
+  - { name: opnsense_load15, label: "Load15" }
+  - { name: opnsense_cpu_count, label: "CPU count" }
+  - { name: opnsense_memory_used_bytes, label: "Memory used", unit: "B" }
+  - { name: opnsense_memory_total_bytes, label: "Memory total", unit: "B" }
+  - { name: opnsense_memory_used_percent, label: "Memory used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: opnsense_swap_used_bytes, label: "Swap used", unit: "B" }
+  - { name: opnsense_swap_total_bytes, label: "Swap total", unit: "B" }
+  - { name: opnsense_swap_used_percent, label: "Swap used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: opnsense_mbuf_used, label: "Mbuf used" }
+  - { name: opnsense_mbuf_total, label: "Mbuf" }
+  - { name: opnsense_mbuf_used_percent, label: "Mbuf used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: opnsense_mbuf_failures, label: "Mbuf failures", kind: counter, better: "lower" }
+  - { name: opnsense_disk_used_bytes, label: "Disk used", unit: "B" }
+  - { name: opnsense_disk_total_bytes, label: "Disk total", unit: "B" }
+  - { name: opnsense_disk_used_percent, label: "Disk used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: opnsense_temperature_celsius, label: "Temperature", unit: "°C" }
+  - { name: opnsense_gateway_up, label: "Gateway up", unit: "bool" }
+  - { name: opnsense_gateway_monitored, label: "Gateway monitored", unit: "bool" }
+  - { name: opnsense_gateway_delay_seconds, label: "Gateway delay", unit: "s", better: "lower" }
+  - { name: opnsense_gateway_stddev_seconds, label: "Gateway stddev", unit: "s" }
+  - { name: opnsense_gateway_loss_percent, label: "Gateway loss", unit: "%", min: 0, max: 100 }
+  - { name: opnsense_gateways_total, label: "Gateways" }
+  - { name: opnsense_gateways_down, label: "Gateways down", better: "lower" }
+  - { name: opnsense_interface_up, label: "Interface up", unit: "bool" }
+  - { name: opnsense_interface_bytes_in, label: "Interface bytes in", unit: "B", kind: counter, entity: "interface" }
+  - { name: opnsense_interface_bytes_out, label: "Interface bytes out", unit: "B", kind: counter, entity: "interface" }
+  - { name: opnsense_interface_packets_in, label: "Interface packets in", kind: counter }
+  - { name: opnsense_interface_packets_out, label: "Interface packets out", kind: counter }
+  - { name: opnsense_interface_errors_in, label: "Interface errors in", kind: counter }
+  - { name: opnsense_interface_errors_out, label: "Interface errors out", kind: counter }
+  - { name: opnsense_interface_drops, label: "Interface drops", kind: counter }
+  - { name: opnsense_interface_collisions, label: "Interface collisions", kind: counter }
+  - { name: opnsense_interface_address_info, label: "Interface address", kind: info }
+  - { name: opnsense_pf_states, label: "Pf states" }
+  - { name: opnsense_pf_states_used_percent, label: "Pf states used", unit: "%", better: "lower", min: 0, max: 100 }
+  - { name: opnsense_pf_state_limit, label: "Pf state limit" }
+  - { name: opnsense_pf_source_nodes, label: "Pf source nodes" }
+  - { name: opnsense_pf_enabled, label: "Pf enabled", unit: "bool" }
+  - { name: opnsense_dhcp_leases, label: "DHCP leases" }
+  - { name: opnsense_dhcp_leases_active, label: "DHCP leases active" }
+  - { name: opnsense_service_running, label: "Service running", unit: "bool" }
+  - { name: opnsense_vpn_tunnel_up, label: "VPN tunnel up", unit: "bool" }
+  - { name: opnsense_vpn_peers_total, label: "VPN peers" }
+  - { name: opnsense_vpn_peers_connected, label: "VPN peers connected" }
+  - { name: opnsense_vpn_handshake_age_seconds, label: "VPN handshake age", unit: "s" }
+  - { name: opnsense_vpn_bytes_in, label: "VPN bytes in", unit: "B", kind: counter }
+  - { name: opnsense_vpn_bytes_out, label: "VPN bytes out", unit: "B", kind: counter }
+  - { name: opnsense_carp_enabled, label: "CARP enabled", unit: "bool" }
+  - { name: opnsense_carp_maintenance_mode, label: "CARP maintenance mode", unit: "bool" }
+  - { name: opnsense_carp_vip_master, label: "CARP vip master" }
+  - { name: opnsense_firmware_checked, label: "Firmware checked", unit: "bool" }
+  - { name: opnsense_firmware_updates_pending, label: "Firmware updates pending" }
+  - { name: opnsense_firmware_upgrade_available, label: "Firmware upgrade available", unit: "bool", better: "higher" }
+  - { name: opnsense_firmware_reboot_required, label: "Firmware reboot required", unit: "bool" }
+  - { name: opnsense_firmware_connection_ok, label: "Firmware connection ok", unit: "bool" }
+  - { name: opnsense_unbound_running, label: "Unbound running", unit: "bool" }
+  - { name: opnsense_unbound_queries, label: "Unbound queries", kind: counter }
+  - { name: opnsense_unbound_cache_hit_percent, label: "Unbound cache hit", unit: "%", min: 0, max: 100 }
+  - { name: opnsense_unbound_blocklist_size, label: "Unbound blocklist size" }
+views:
+  - view: stat
+    title: "Current values"
+    metrics:
+      - opnsense_gateways_down
+      - opnsense_gateway_loss_percent
+      - opnsense_firmware_updates_pending
+      - opnsense_load1
+      - opnsense_pf_states
+      - opnsense_uptime_seconds
+      - opnsense_up
+      - opnsense_swap_used_percent
+      - opnsense_mbuf_used_percent
+      - opnsense_mbuf_failures
+      - opnsense_disk_used_percent
+      - opnsense_temperature_celsius
+      - opnsense_gateway_up
+      - opnsense_gateways_total
+      - opnsense_interface_up
+      - opnsense_interface_errors_in
+      - opnsense_interface_errors_out
+      - opnsense_interface_drops
+      - opnsense_pf_source_nodes
+      - opnsense_pf_enabled
+      - opnsense_dhcp_leases
+      - opnsense_dhcp_leases_active
+      - opnsense_service_running
+      - opnsense_vpn_tunnel_up
+      - opnsense_vpn_peers_total
+      - opnsense_vpn_peers_connected
+      - opnsense_vpn_handshake_age_seconds
+      - opnsense_carp_enabled
+      - opnsense_carp_maintenance_mode
+      - opnsense_carp_vip_master
+      - opnsense_firmware_upgrade_available
+      - opnsense_firmware_reboot_required
+      - opnsense_firmware_connection_ok
+      - opnsense_unbound_running
+      - opnsense_unbound_cache_hit_percent
+      - opnsense_unbound_blocklist_size
+  - view: timeseries
+    title: "CPU and memory"
+    metrics: [opnsense_cpu_percent, opnsense_memory_used_percent]
+  - view: timeseries
+    title: "Gateway latency"
+    metrics: [opnsense_gateway_delay_seconds, opnsense_gateway_stddev_seconds]
+  - view: timeseries
+    title: "Interface throughput"
+    metrics: [opnsense_interface_bytes_in, opnsense_interface_bytes_out]
+  - view: timeseries
+    title: "Firewall states"
+    metrics: [opnsense_pf_states_used_percent]
