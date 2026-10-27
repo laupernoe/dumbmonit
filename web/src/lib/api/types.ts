@@ -61,6 +61,8 @@ export type Credential =
 	 */
 	| { type: 'api_token'; token_id: string; secret?: string }
 	| { type: 'username_password'; username: string; password?: string }
+	/** RADIUS: the server's shared secret and a test account; a blank secret keeps the saved one. */
+	| { type: 'radius'; username: string; password?: string; shared_secret?: string }
 	/** A family this build does not know: sent as the server described it. */
 	| ({ type: string } & Record<string, string>);
 
@@ -70,6 +72,7 @@ export const CREDENTIAL_KINDS = [
 	{ value: 'snmp_v3', label: 'SNMP v3' },
 	{ value: 'api_token', label: 'API token' },
 	{ value: 'username_password', label: 'Username / password' },
+	{ value: 'radius', label: 'RADIUS' },
 	{ value: 'none', label: 'No authentication' }
 ] as const;
 
@@ -953,6 +956,17 @@ function fallbackCredentialView(kind: string): CredentialView {
 				fields: [
 					credentialField('username', 'User name', 'text', true),
 					credentialField('password', 'Password', 'password', true)
+				]
+			};
+		case 'radius':
+			return {
+				kind,
+				label,
+				help: '',
+				fields: [
+					credentialField('shared_secret', 'Shared secret', 'password', true),
+					credentialField('username', 'Test account', 'text', true),
+					credentialField('password', 'Test account password', 'password', true)
 				]
 			};
 		default:
@@ -2942,6 +2956,37 @@ export interface PushMonitor {
 	grace_secs: number | null;
 	settings_error: string | null;
 	verdict: 'waiting' | 'on_time' | 'missed' | 'reported_down';
+	/** Cron expression replacing the interval, and the IANA zone it is read in. */
+	schedule: string | null;
+	timezone: string | null;
+	/** Next run of a cron schedule, UTC without suffix. */
+	next_expected_at: string | null;
+	max_duration_secs: number | null;
+	/** The latest run, open or finished. */
+	last_run: PushRun | null;
+}
+
+/** One run of a heartbeat job. Mirrors `PushRunView`. */
+export interface PushRun {
+	id: number;
+	/** UTC without suffix; `null` when no `/start` preceded the end. */
+	started_at: string | null;
+	/** `null` while the run is open. */
+	finished_at: string | null;
+	/** `null` when the duration is unknown. */
+	duration_secs: number | null;
+	/** `lost`: started, then replaced by a new start without ever finishing. */
+	status: 'running' | 'success' | 'failed' | 'lost';
+	exit_code: number | null;
+	/** Output of the job, truncated server-side to its last 10 KiB. */
+	output: string;
+}
+
+/** `GET /api/targets/{id}/push/runs`. Mirrors `PushRunsPage`. */
+export interface PushRunsPage {
+	runs: PushRun[];
+	/** Pass as `before` to get the next page; `null` on the last one. */
+	next_before: number | null;
 }
 
 // --- Proxmox Datacenter Manager (crates/server/src/api/pdm.rs) --------------
@@ -4943,6 +4988,60 @@ export interface DiscoveryJob extends DiscoveryJobSummary {
 	hosts: DiscoveredHost[];
 }
 
+// --- Scheduled network scans and inventory -----------------------------------
+// Mirrors `api/netinventory.rs`. Dates are UTC without suffix.
+
+export type NetscanRunStatus = 'running' | 'done' | 'failed' | 'cancelled';
+
+export interface NetscanScheduleInput {
+	name: string;
+	cidr: string;
+	/** Id of the relay agent that scans, `null` for the server itself. */
+	agent_id: number | null;
+	/** 300 (5 min) to 2 592 000 (30 days). */
+	interval_secs: number;
+	depth: DiscoveryDepth;
+	enabled: boolean;
+}
+
+export interface NetscanSchedule extends NetscanScheduleInput {
+	id: number;
+	agent_name: string | null;
+	/** The first scan has built the inventory (nothing was reported). */
+	initialized: boolean;
+	running: boolean;
+	last_run_at: string | null;
+	last_status: NetscanRunStatus | null;
+	last_error: string | null;
+	devices: number;
+	unknown_devices: number;
+	/** Unknown ports of known devices. */
+	unknown_ports: number;
+}
+
+export interface NetscanPort {
+	id: number;
+	port: number;
+	protocol: 'tcp' | 'udp';
+	product: string;
+	known: boolean;
+	first_seen: string;
+	last_seen: string;
+}
+
+export interface NetscanDevice {
+	id: number;
+	schedule_id: number;
+	ip: string;
+	mac: string | null;
+	hostname: string | null;
+	vendor: string | null;
+	known: boolean;
+	first_seen: string;
+	last_seen: string;
+	ports: NetscanPort[];
+}
+
 // --- Server logs (Settings → System → Logs) -----------------------------------
 
 export type LogLevel = 'error' | 'warn' | 'info' | 'debug';
@@ -5303,6 +5402,89 @@ export interface ScimSettings {
 /** Answer of the token rotation: the bearer token is shown once. */
 export interface ScimTokenReply extends ScimSettings {
 	token: string;
+}
+
+// --- Windows event log rules of an agent machine (`collectors/agent/eventlog.rs`) ---
+
+/** Event Viewer level. `information` also covers level 0, the level of Security audit events. */
+export type AgentEventLevel = 'critical' | 'error' | 'warning' | 'information';
+
+/** What the API accepts to create or replace a rule. */
+export interface AgentEventRuleInput {
+	name: string;
+	/** `System`, `Application`, `Security` or a channel such as `Microsoft-Windows-TaskScheduler/Operational`. */
+	channel: string;
+	/** Event source (provider); empty or null for any. */
+	provider?: string | null;
+	/** `4625, 7000-7099`; empty for any. */
+	event_ids?: string;
+	/** Empty for any level. */
+	levels?: AgentEventLevel[];
+	/** Text the message must contain (case-insensitive), or a regular expression. */
+	pattern?: string | null;
+	pattern_regex?: boolean;
+	severity?: AlertSeverity;
+	enabled?: boolean;
+}
+
+export interface AgentEventRule {
+	id: number;
+	target_id: number;
+	name: string;
+	channel: string;
+	provider: string | null;
+	/** Canonical form; empty for any. */
+	event_ids: string;
+	levels: AgentEventLevel[];
+	pattern: string | null;
+	pattern_regex: boolean;
+	severity: AlertSeverity;
+	enabled: boolean;
+	matches_total: number;
+	/** Events the agent skipped because of the rate limit. */
+	dropped_total: number;
+	/** Last event received (UTC, no suffix). */
+	last_match_at: string | null;
+}
+
+/** An example offered when adding a rule; never created on its own. */
+export interface AgentEventRulePreset {
+	/** Stable key: `failed_logon`, `account_locked`, `unexpected_reboot`, `service_crashed`, `disk_errors`, `log_cleared`, `application_errors`. */
+	id: string;
+	name: string;
+	channel: string;
+	provider: string | null;
+	event_ids: string;
+	levels: AgentEventLevel[];
+	severity: AlertSeverity;
+}
+
+export interface AgentEventRules {
+	/** The machine runs Windows; elsewhere rules are kept but never sent. */
+	supported: boolean;
+	/** Events kept per rule and per minute. */
+	max_per_minute: number;
+	rules: AgentEventRule[];
+	presets: AgentEventRulePreset[];
+}
+
+/** A Windows event matched by one of the machine's rules. */
+export interface AgentEvent {
+	id: number;
+	/** Null once the rule is deleted. */
+	rule_id: number | null;
+	rule_name: string;
+	severity: AlertSeverity;
+	channel: string;
+	provider: string;
+	event_id: number;
+	/** Null for "Verbose". */
+	level: AgentEventLevel | null;
+	record_id: number;
+	computer: string;
+	message: string;
+	occurred_at: string | null;
+	received_at: string | null;
 }
 
 // --- Agent self-update (Settings → Agents → Agent updates) -------------------

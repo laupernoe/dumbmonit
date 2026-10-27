@@ -145,6 +145,7 @@ mod tests {
                 | "/api/auth/passkey/login/begin"
                 | "/api/auth/passkey/login/finish"
                 | "/api/push/{token}"
+                | "/api/push/{token}/{action}"
                 | "/api/calendar/maintenance.ics"
                 | "/api/openapi.json"
         ) || path.starts_with("/api/public/")

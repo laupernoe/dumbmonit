@@ -1,0 +1,14 @@
+{
+  "name": "ns200.ip-1-2-4.eu",
+  "serverId": 200,
+  "state": "error",
+  "powerState": "poweron",
+  "monitoring": true,
+  "datacenter": "gra2",
+  "commercialRange": "rise",
+  "os": "proxmox8_64",
+  "ip": "1.2.4.5",
+  "professionalUse": true,
+  "supportLevel": "pro",
+  "noIntervention": false
+}

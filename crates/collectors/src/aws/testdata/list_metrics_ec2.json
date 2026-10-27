@@ -1,0 +1,32 @@
+{
+  "Metrics": [
+    {
+      "Dimensions": [{ "Name": "InstanceId", "Value": "i-0fedcba9876543210" }],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/EC2"
+    },
+    {
+      "Dimensions": [{ "Name": "InstanceId", "Value": "i-0123456789abcdef0" }],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/EC2"
+    },
+    {
+      "Dimensions": [{ "Name": "AutoScalingGroupName", "Value": "web-asg" }],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/EC2"
+    },
+    {
+      "Dimensions": [
+        { "Name": "InstanceId", "Value": "i-0123456789abcdef0" },
+        { "Name": "ImageId", "Value": "ami-0abc" }
+      ],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/EC2"
+    },
+    {
+      "Dimensions": [],
+      "MetricName": "CPUUtilization",
+      "Namespace": "AWS/EC2"
+    }
+  ]
+}

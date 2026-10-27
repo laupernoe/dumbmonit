@@ -186,6 +186,8 @@
  "fam_servers_blurb": "Machines Linux, Windows, macOS et FreeBSD via l'agent, matériel serveur via son contrôleur de gestion, onduleurs et Active Directory.",
  "fam_network_name": "Équipements réseau",
  "fam_network_blurb": "Switchs, routeurs, bornes Wi-Fi et VPN : tout appareil SNMP, MikroTik, UniFi, Tailscale et OpenVPN.",
+ "fam_cloud_name": "Services cloud",
+ "fam_cloud_blurb": "Microsoft 365, Entra ID, Azure, AWS, Cloudflare, Hetzner, OVHcloud et Infomaniak : santé des services, licences, secrets qui expirent, tunnels, serveurs et alarmes.",
  "fam_firewalls_name": "Pare-feux",
  "fam_firewalls_blurb": "OPNsense, pfSense, FortiGate et Sophos : passerelles, tunnels, interfaces, haute disponibilité et licences.",
  "fam_hypervisors_name": "Hyperviseurs et clusters",

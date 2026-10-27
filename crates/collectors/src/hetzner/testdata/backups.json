@@ -1,0 +1,11 @@
+{
+  "images": [
+    {"id": 9002, "type": "backup", "status": "available", "name": null, "description": "web-1-backup-new",
+     "created": "2026-09-26T22:30:00+00:00", "created_from": {"id": 42, "name": "web-1"}, "bound_to": 42,
+     "image_size": 2.4, "disk_size": 40, "os_flavor": "debian", "protection": {"delete": false}},
+    {"id": 9001, "type": "backup", "status": "available", "name": null, "description": "web-1-backup-old",
+     "created": "2026-09-20T22:30:00+00:00", "created_from": {"id": 42, "name": "web-1"}, "bound_to": 42,
+     "image_size": 2.3, "disk_size": 40, "os_flavor": "debian", "protection": {"delete": false}}
+  ],
+  "meta": {"pagination": {"page": 1, "per_page": 50, "previous_page": null, "next_page": null, "last_page": 1, "total_entries": 2}}
+}

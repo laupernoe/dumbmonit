@@ -142,6 +142,14 @@ nav:
       - Kopia (beta): devices/kopia.md
       - Duplicati (beta): devices/duplicati.md
       - Tailscale: devices/tailscale.md
+      - Microsoft 365: devices/m365.md
+      - Microsoft Entra ID: devices/entra.md
+      - Microsoft Azure: devices/azure.md
+      - AWS CloudWatch: devices/aws.md
+      - Cloudflare: devices/cloudflare.md
+      - Hetzner Cloud: devices/hetzner.md
+      - OVHcloud: devices/ovh.md
+      - Infomaniak: devices/infomaniak.md
       - Nextcloud: devices/nextcloud.md
       - Immich: devices/immich.md
       - Paperless-ngx: devices/paperless.md
@@ -151,6 +159,7 @@ nav:
       - Forgejo / Gitea: devices/forgejo.md
       - Linux, macOS, FreeBSD and Windows agent: devices/agent.md
       - Deploy the agent with Active Directory: devices/agent-active-directory.md
+      - Windows event log alerts: devices/agent-windows-events.md
       - Services (HTTP, TCP, DNS, ping, TLS, NTP): devices/services.md
       - Heartbeat (push): devices/push.md
       - Website changes: devices/webchange.md

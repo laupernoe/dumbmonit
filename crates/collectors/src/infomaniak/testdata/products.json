@@ -1,0 +1,65 @@
+{
+  "result": "success",
+  "data": [
+    {
+      "id": 1001,
+      "account_id": 77,
+      "service_id": 1,
+      "service_name": "domain",
+      "customer_name": "acme.ch",
+      "internal_name": "acme.ch",
+      "created_at": 1600000000,
+      "expired_at": 1790432000,
+      "is_locked": false,
+      "has_maintenance": false,
+      "has_operation_in_progress": false,
+      "is_trial": false,
+      "is_free": false
+    },
+    {
+      "id": 1002,
+      "account_id": 77,
+      "service_id": 2,
+      "service_name": "hosting",
+      "customer_name": "Site web Acme",
+      "internal_name": "w1234",
+      "created_at": 1600000000,
+      "expired_at": 1807280000,
+      "is_locked": false,
+      "has_maintenance": true,
+      "has_operation_in_progress": false,
+      "is_trial": false,
+      "is_free": false
+    },
+    {
+      "id": 1003,
+      "account_id": 77,
+      "service_id": 1,
+      "service_name": "domain",
+      "customer_name": "old-acme.com",
+      "internal_name": "old-acme.com",
+      "created_at": 1500000000,
+      "expired_at": 1789913600,
+      "is_locked": true,
+      "has_maintenance": false,
+      "has_operation_in_progress": false,
+      "is_trial": false,
+      "is_free": false
+    },
+    {
+      "id": 1004,
+      "account_id": 77,
+      "service_id": 3,
+      "service_name": "email_hosting",
+      "customer_name": "",
+      "internal_name": "mail-acme",
+      "created_at": 1700000000,
+      "expired_at": null,
+      "is_locked": false,
+      "has_maintenance": false,
+      "has_operation_in_progress": true,
+      "is_trial": false,
+      "is_free": true
+    }
+  ]
+}

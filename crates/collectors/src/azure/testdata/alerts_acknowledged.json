@@ -1,0 +1,23 @@
+{
+  "value": [
+    {
+      "id": "/subscriptions/00000000-0000-0000-0000-0000000000a1/providers/Microsoft.AlertsManagement/alerts/11111111-aaaa-bbbb-cccc-000000000003",
+      "type": "Microsoft.AlertsManagement/alerts",
+      "name": "Gateway down",
+      "properties": {
+        "essentials": {
+          "severity": "Sev0",
+          "signalType": "Log",
+          "alertState": "Acknowledged",
+          "monitorCondition": "Fired",
+          "targetResourceName": "app-gateway",
+          "targetResourceGroup": "rg-web",
+          "targetResourceType": "microsoft.network/applicationgateways",
+          "monitorService": "Log Analytics",
+          "alertRule": "https://management.azure.com/subscriptions/00000000-0000-0000-0000-0000000000a1/resourceGroups/rg-web/providers/microsoft.insights/scheduledqueryrules/Gateway down",
+          "startDateTime": "2026-10-26T06:00:00.0000000Z"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "result": [
+    {"id": "3822ff90-ea29-44df-9e55-21300bb9419b", "type": "universal", "hosts": ["example.com", "*.example.com"],
+     "status": "active", "certificate_authority": "lets_encrypt", "validation_method": "txt", "validity_days": 90,
+     "certificates": [
+       {"id": "7e7b8deba8538af625850b7b2530034c", "hosts": ["example.com", "*.example.com"], "status": "active",
+        "issuer": "Let's Encrypt", "signature": "ECDSAWithSHA256", "expires_on": "2026-10-07T09:00:00Z",
+        "uploaded_on": "2026-07-09T09:00:00Z"}]},
+    {"id": "4933ff90-ea29-44df-9e55-21300bb9419c", "type": "advanced", "hosts": ["api.example.com"],
+     "status": "active", "certificate_authority": "google",
+     "certificates": [
+       {"id": "8f8c9efcb9649bf736961c8c3641145d", "hosts": ["api.example.com"], "status": "active",
+        "expires_on": "2027-01-20T09:00:00Z"},
+       {"id": "9a9d0f0dca75a0c847a72d9d4752256e", "hosts": ["api.example.com"], "status": "active",
+        "expires_on": "2026-12-20T09:00:00Z"}]},
+    {"id": "5a44ff90-ea29-44df-9e55-21300bb9419d", "type": "advanced", "hosts": ["new.example.com"],
+     "status": "pending_validation", "certificate_authority": "lets_encrypt", "certificates": []}
+  ],
+  "success": true, "errors": [], "messages": []
+}

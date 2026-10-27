@@ -1,0 +1,8 @@
+<ErrorResponse xmlns="https://sts.amazonaws.com/doc/2011-06-15/">
+  <Error>
+    <Type>Sender</Type>
+    <Code>AccessDenied</Code>
+    <Message>User: arn:aws:iam::123456789012:user/dumbmonit is not authorized to perform: sts:AssumeRole on resource: arn:aws:iam::123456789012:role/dumbmonit-read</Message>
+  </Error>
+  <RequestId>c6104cbe-af31-11e0-8154-cbc7ccf896c7</RequestId>
+</ErrorResponse>

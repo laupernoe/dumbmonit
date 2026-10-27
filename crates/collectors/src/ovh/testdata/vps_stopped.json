@@ -1,0 +1,11 @@
+{
+  "name": "vps-bbb222.vps.ovh.net",
+  "displayName": "db-1",
+  "state": "stopped",
+  "zone": "Region OpenStack: os-sbg5",
+  "offerType": "ssd",
+  "vcore": 4,
+  "memoryLimit": 8192,
+  "slaMonitoring": false,
+  "model": { "name": "vps-ssd-3", "offer": "VPS vps2020-comfort-4-8-160", "memory": 8192, "vcore": 4, "disk": 160, "version": "2019v1" }
+}

@@ -26,9 +26,25 @@
 		unit?: string;
 		/** Tone of the first series in compact mode (faceplate window). */
 		tone?: 'signal' | 'advisory' | 'warning' | 'ghost';
+		/** Stacked areas: each series sits on top of the previous ones. */
+		stacked?: boolean;
+		/** Colour token names (`info`, `ink-3`…) replacing the default palette. */
+		colorTokens?: string[];
 	}
 
-	let { series, height = 240, compact = false, unit = '', tone = 'signal' }: Props = $props();
+	let {
+		series,
+		height = 240,
+		compact = false,
+		unit = '',
+		tone = 'signal',
+		stacked = false,
+		colorTokens
+	}: Props = $props();
+
+	/** Individual values of each series, for the legend of a stacked chart whose
+	 *  plotted columns are cumulative. */
+	let rawColumns: (number | null)[][] = [];
 
 	let container = $state<HTMLDivElement | null>(null);
 	let plot: uPlot | null = null;
@@ -40,6 +56,7 @@
 
 	/** Readable on both themes; the first colour is always the signal teal. */
 	function palette(): string[] {
+		if (colorTokens && colorTokens.length > 0) return colorTokens.map((name) => cssVar(`--c-${name}`));
 		return [
 			cssVar('--c-signal'),
 			cssVar('--c-info'),
@@ -64,7 +81,18 @@
 			}
 			return column;
 		});
-		return [xs, ...columns] as unknown as uPlot.AlignedData;
+		rawColumns = columns;
+		if (!stacked) return [xs, ...columns] as unknown as uPlot.AlignedData;
+		// Cumulative columns: a point missing from any series breaks the stack there.
+		const running: (number | null)[] = new Array(xs.length).fill(0);
+		const cumulative = columns.map((column) =>
+			column.map((value, i) => {
+				const below = running[i];
+				if (below === null || value === null) return (running[i] = null);
+				return (running[i] = below + value);
+			})
+		);
+		return [xs, ...cumulative] as unknown as uPlot.AlignedData;
 	}
 
 	function formatValue(value: number | null | undefined): string {
@@ -137,11 +165,24 @@
 					label: serie.label,
 					stroke: colors[i % colors.length],
 					width: compact ? 1.5 : 2,
-					fill: compact ? withAlpha(colors[i % colors.length], '22') : undefined,
+					fill: compact
+						? withAlpha(colors[i % colors.length], '22')
+						: stacked && i === 0
+							? withAlpha(colors[0], '88')
+							: undefined,
 					points: { show: false },
-					value: (_u: uPlot, v: number | null) => formatValue(v)
+					value: stacked
+						? (_u: uPlot, _v: number | null, _s: number, idx: number | null) =>
+								idx === null ? '—' : formatValue(rawColumns[i]?.[idx])
+						: (_u: uPlot, v: number | null) => formatValue(v)
 				}))
-			]
+			],
+			bands: stacked
+				? series.slice(1).map((_, i) => ({
+						series: [i + 2, i + 1] as [number, number],
+						fill: withAlpha(colors[(i + 1) % colors.length], '88')
+					}))
+				: undefined
 		};
 	}
 
@@ -169,6 +210,8 @@
 		void compact;
 		void unit;
 		void tone;
+		void stacked;
+		void colorTokens;
 		if (!host || w === 0) return;
 		plot?.destroy();
 		plot = untrack(() => new uPlot(buildOptions(w), toUplotData(series), host));

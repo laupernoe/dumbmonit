@@ -19,7 +19,7 @@
 	import { tick } from 'svelte';
 	import { page } from '$app/state';
 	import { afterNavigate, goto } from '$app/navigation';
-	import { ArrowLeft, BookOpen, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
+	import { ArrowLeft, BookOpen, CalendarClock, ChevronRight, FileSpreadsheet, Globe, Plug, Radar, Upload } from 'lucide-svelte';
 	import { ApiError, listCollectors, listTargets, type CollectorInfo, type Target } from '#lib/api/index.js';
 	import { Button, EmptyState, ErrorNotice, PageHeader, Panel, Plate, Skeleton } from '#lib/ui/index.js';
 	import ImportWebsites from '#lib/components/device-form/ImportWebsites.svelte';
@@ -32,6 +32,7 @@
 	import { isMailKind } from '#lib/components/devices/mdaemon/agent-link.js';
 	import { readPrefill } from '#lib/components/device-form/discovery-prefill.js';
 	import Discovery from '#lib/components/device-form/Discovery.svelte';
+	import DiscoveryInventory from '#lib/components/device-form/DiscoveryInventory.svelte';
 	import SetupNotice from '#lib/components/device-form/SetupNotice.svelte';
 	import KindIcon from '#lib/components/KindIcon.svelte';
 	import { AGENT_KIND, SNMP_KIND, agentFeature, kindIcon, type ImportChoice } from '#lib/components/device-form/kinds.js';
@@ -397,13 +398,22 @@
 	<div class="grid items-start gap-6 lg:grid-cols-12">
 		<section aria-labelledby="view-title" class={`min-w-0 ${guideOpen ? 'lg:col-span-7' : 'lg:col-span-12'}`}>
 			{#if view === 'scan'}
-				<Panel>
-					<h2 id="view-title" tabindex="-1" class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink outline-none">
-						<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
-						{m.deviceform_new_scan()}
-					</h2>
-					<Discovery agent={idParam('agent')} />
-				</Panel>
+				<div class="grid gap-6">
+					<Panel>
+						<h2 id="view-title" tabindex="-1" class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink outline-none">
+							<Radar class="size-[1.125rem] text-ink-2" aria-hidden="true" />
+							{m.deviceform_new_scan()}
+						</h2>
+						<Discovery agent={idParam('agent')} />
+					</Panel>
+					<Panel>
+						<h2 class="mb-4 flex items-center gap-2 text-base font-semibold tracking-tight text-ink">
+							<CalendarClock class="size-[1.125rem] text-ink-2" aria-hidden="true" />
+							{m.discovery_inventory_title()}
+						</h2>
+						<DiscoveryInventory />
+					</Panel>
+				</div>
 			{:else if selected}
 				<Panel>
 					<div class="-mx-5 -mt-4 mb-4 flex items-start justify-between gap-4 border-b border-line px-5 py-4 max-sm:-mx-4 max-sm:-mt-3 max-sm:mb-3 max-sm:px-4 max-sm:py-3">

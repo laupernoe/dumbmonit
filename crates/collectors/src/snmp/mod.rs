@@ -15,13 +15,13 @@ mod collect;
 mod discovery;
 #[cfg(test)]
 mod fixture;
-mod oid;
+pub(crate) mod oid;
 mod pattern;
 mod profile;
-mod session;
+pub(crate) mod session;
 #[cfg(test)]
-mod testutil;
-mod value;
+pub(crate) mod testutil;
+pub(crate) mod value;
 
 use std::sync::{Arc, LazyLock};
 use std::time::Duration;

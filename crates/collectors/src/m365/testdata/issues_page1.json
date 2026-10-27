@@ -1,0 +1,18 @@
+{
+  "@odata.context": "https://graph.microsoft.com/v1.0/$metadata#admin/serviceAnnouncement/issues",
+  "@odata.nextLink": "{{base}}/v1.0/admin/serviceAnnouncement/issues?$filter=isResolved%20eq%20false&$top=100&$skiptoken=2",
+  "value": [
+    {
+      "id": "EX123456",
+      "title": "Users may be unable to send email",
+      "service": "Exchange Online",
+      "classification": "incident",
+      "status": "serviceDegradation",
+      "isResolved": false,
+      "startDateTime": "2026-10-26T07:12:00Z",
+      "lastModifiedDateTime": "2026-10-26T08:30:00Z",
+      "feature": "E-Mail and calendar access",
+      "impactDescription": "Some users may be unable to send messages."
+    }
+  ]
+}
