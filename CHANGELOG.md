@@ -5,6 +5,19 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Weathermap on the topology map.** Links between switches show their load: the
+  width and tint follow the port utilization (rate over port speed), the label
+  spells `412 Mb/s · 41 %` (always from 50 %, on hover or focus otherwise), a port
+  that loses frames is dashed, dots move along the link in the direction of the
+  busiest flow (still with reduced motion), and a link behind a down device is
+  greyed out. Clicking a link opens its rates each way, errors and the last hour.
+  A **Traffic** toggle sits next to **Group by subnet**; the list view shows the
+  load of each link; on a phone the map falls back to a list of the busiest links.
+  `GET /api/topology` links carry an optional `traffic` object, and
+  `GET /api/targets/{id}/port-traffic` returns the one-hour curve of a link's ports.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

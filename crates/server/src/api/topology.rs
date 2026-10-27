@@ -85,7 +85,9 @@ use crate::state::AppState;
 use crate::tsdb::InstantSeries;
 
 pub fn routes() -> Router<AppState> {
-    Router::new().route("/topology", get(topology))
+    Router::new()
+        .route("/topology", get(topology))
+        .route("/targets/{id}/port-traffic", get(super::topology_traffic::port_traffic))
 }
 
 /// Invités gardés par hyperviseur : au-delà, la carte n'est plus lisible et
@@ -159,7 +161,7 @@ pub struct NodeView {
     pub ips: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, PartialEq)]
 pub struct EdgeView {
     /// Côté amont : parent, relais, hyperviseur, commutateur.
     pub from: String,
@@ -177,6 +179,10 @@ pub struct EdgeView {
     /// commutateurs) ; affiché au survol.
     pub from_port: Option<String>,
     pub to_port: Option<String>,
+    /// Débit et utilisation du port de ce lien (weathermap), quand ses
+    /// compteurs d'interface sont connus. Voir [`super::topology_traffic`].
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub traffic: Option<super::topology_traffic::EdgeTraffic>,
 }
 
 impl EdgeView {
@@ -191,6 +197,7 @@ impl EdgeView {
             rule_id: None,
             from_port: None,
             to_port: None,
+            traffic: None,
         }
     }
 }
@@ -400,6 +407,12 @@ pub(crate) async fn compute(state: &AppState) -> ApiResult<TopologyView> {
         super::topology_edits::apply(&targets, &mut nodes, &mut edges, &corrections, &rules);
     for rule in &mut rules {
         rule.matches = applied.get(&rule.id).copied().unwrap_or(0);
+    }
+    // Weathermap : le trafic des ports, une fois les liens définitifs. Sans
+    // port connu ou sans mesure, les liens restent sans débit.
+    if edges.iter().any(|e| e.from_port.is_some() || e.to_port.is_some()) {
+        let data = super::topology_traffic::read(state, &ids).await;
+        super::topology_traffic::apply(&mut edges, &data);
     }
     let suggestions =
         super::topology_edits::suggest(&targets, &nodes, &edges, &corrections, &rules);
