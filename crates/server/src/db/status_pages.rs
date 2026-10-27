@@ -67,64 +67,50 @@ impl StatusPage {
 /// dessin dans `web/src/routes/s/`; validé par `api::status_pages`.
 /// Scène d'une page créée sans liste de scènes.
 pub const DEFAULT_SCENE: &str = "paris";
-pub const SCENES: &[&str] = &[
-    "venice",
-    "paris",
-    "tokyo",
-    "newyork",
-    "london",
-    "rome",
-    "sydney",
-    "dubai",
-    "sanfrancisco",
-    "barcelona",
-    "amsterdam",
-    "istanbul",
-    "rio",
-    "chichenitza",
-    "machupicchu",
-    "greatwall",
-    "petra",
-    "tajmahal",
-    "giza",
-    "babylon",
-    "artemis",
-    "zeus",
-    "halicarnassus",
-    "rhodes",
-    "alexandria",
-    "athens",
-    "geneva",
-    "matterhorn",
-    "bern",
-    "lucerne",
-    "chillon",
-    "hongkong",
-    "bosphorus",
-    "sugarloaf",
-    "marrakech",
-    "kyoto",
-    "reykjavik",
-    "cairo",
-    "orbit",
-    "aquarium",
-    "lighthouse",
-    "mars",
-    "chalet",
-    "train",
-    "zen",
-    "arcade",
-    "forest",
-    "desert",
-    "hamsters",
-    "cats",
-    "raclette",
+pub const SCENES: &[&str] = &["paris", "tokyo", "newyork", "matterhorn"];
+
+/// Anciennes scènes retirées → scène conservée la plus proche. Les pages et
+/// sauvegardes existantes y sont repliées (migration 0200, lecture, import, API).
+#[rustfmt::skip]
+pub const LEGACY_SCENES: &[(&str, &str)] = &[
+    ("venice", "paris"), ("london", "paris"), ("rome", "paris"), ("barcelona", "paris"),
+    ("amsterdam", "paris"), ("istanbul", "paris"), ("bosphorus", "paris"), ("athens", "paris"),
+    ("zeus", "paris"), ("artemis", "paris"), ("halicarnassus", "paris"), ("rhodes", "paris"),
+    ("alexandria", "paris"), ("babylon", "paris"), ("marrakech", "paris"), ("cairo", "paris"),
+    ("giza", "paris"), ("petra", "paris"), ("tajmahal", "paris"), ("desert", "paris"),
+    ("lighthouse", "paris"), ("train", "paris"), ("arcade", "paris"), ("hamsters", "paris"),
+    ("cats", "paris"),
+    ("sydney", "tokyo"), ("dubai", "tokyo"), ("hongkong", "tokyo"), ("kyoto", "tokyo"),
+    ("zen", "tokyo"), ("greatwall", "tokyo"), ("orbit", "tokyo"), ("aquarium", "tokyo"),
+    ("sanfrancisco", "newyork"), ("rio", "newyork"), ("sugarloaf", "newyork"),
+    ("chichenitza", "newyork"), ("machupicchu", "newyork"), ("mars", "newyork"),
+    ("geneva", "matterhorn"), ("bern", "matterhorn"), ("lucerne", "matterhorn"),
+    ("chillon", "matterhorn"), ("chalet", "matterhorn"), ("reykjavik", "matterhorn"),
+    ("forest", "matterhorn"), ("raclette", "matterhorn"),
 ];
+
+/// Identifiant de scène conservé pour `id` : lui-même, ou son remplaçant si la
+/// scène a été retirée ; `None` si l'identifiant est inconnu.
+pub fn canonical_scene(id: &str) -> Option<&'static str> {
+    if let Some(kept) = SCENES.iter().copied().find(|s| *s == id) {
+        return Some(kept);
+    }
+    LEGACY_SCENES.iter().find(|(old, _)| *old == id).map(|(_, kept)| *kept)
+}
+
 /// Rythmes de changement de scène (plusieurs scènes seulement).
 pub const SCENE_ROTATIONS: [&str; 4] = ["visit", "1m", "10m", "1h"];
-/// Sépare la liste enregistrée (`venice,paris`) en identifiants de scène.
+/// Sépare la liste enregistrée (`tokyo,paris`) en identifiants de scène, en
+/// repliant les scènes retirées sur la plus proche (sans doublon, ordre gardé).
 pub fn split_scenes(csv: &str) -> Vec<String> {
-    csv.split(',').map(str::trim).filter(|s| !s.is_empty()).map(str::to_string).collect()
+    let mut out: Vec<String> = Vec::new();
+    for id in csv.split(',').map(str::trim).filter(|s| !s.is_empty()) {
+        let id = canonical_scene(id).unwrap_or(id);
+        if !out.iter().any(|s| s == id) {
+            out.push(id.to_string());
+        }
+    }
+    out
 }
 
 fn serialize_seo<S: serde::Serializer>(json: &str, serializer: S) -> Result<S::Ok, S::Error> {
@@ -1324,5 +1310,27 @@ mod tests {
         // Le groupe n'a plus de membres : seul le choix individuel reste.
         assert_eq!(merge_items(7, vec![item(1, "NAS", "")], &groups, &[]).len(), 1);
         assert!(merge_items(7, vec![], &groups, &[]).is_empty());
+    }
+}
+
+#[cfg(test)]
+mod scene_tests {
+    use super::*;
+
+    #[test]
+    fn every_legacy_scene_folds_onto_a_kept_one() {
+        for (old, kept) in LEGACY_SCENES {
+            assert!(SCENES.contains(kept), "{old} -> {kept} is not a kept scene");
+            assert!(!SCENES.contains(old), "{old} is both kept and retired");
+            assert_eq!(canonical_scene(old), Some(*kept));
+        }
+        assert_eq!(canonical_scene("atlantis"), None);
+    }
+
+    #[test]
+    fn split_scenes_folds_and_drops_duplicates_keeping_order() {
+        assert_eq!(split_scenes("venice, tokyo,london,kyoto"), vec!["paris", "tokyo"]);
+        assert_eq!(split_scenes("chalet,newyork"), vec!["matterhorn", "newyork"]);
+        assert!(split_scenes("").is_empty());
     }
 }

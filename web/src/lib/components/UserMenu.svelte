@@ -1,13 +1,16 @@
 <script lang="ts">
 	/**
-	 * The signed-in account, top right: a round avatar with the initials, and a
-	 * small menu (name and role, "My account", sign out). Opens on click or tap,
+	 * The signed-in account: a round avatar with the initials, and a small menu
+	 * (name and role, "My account", sign out). `placement="rail"` is for the
+	 * foot of the Enterprise rail: the menu opens beside the button, upwards. Opens on click or tap,
 	 * on hover with a mouse, and from the keyboard (Enter, Space, ↓); arrows
 	 * move between items, Escape closes and gives the focus back.
 	 */
 	import { LogOut, UserRound } from 'lucide-svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
+
+	let { placement = 'bar' }: { placement?: 'bar' | 'rail' } = $props();
 
 	let open = $state(false);
 	/** Opened by the mouse passing over: closes again when it leaves. */
@@ -110,7 +113,7 @@
 {#if auth.user}
 	<!-- Hover only adds to the button: click, tap and keys open the menu too. -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="relative ml-1" bind:this={root} {onpointerenter} {onpointerleave}>
+	<div class={placement === 'rail' ? 'relative' : 'relative ml-1'} bind:this={root} {onpointerenter} {onpointerleave}>
 		<button
 			bind:this={button}
 			type="button"
@@ -134,7 +137,7 @@
 				role="menu"
 				tabindex="-1"
 				aria-label={m.misc_user_menu_label({ name })}
-				class="absolute top-full right-0 z-40 mt-1 w-64 rounded-[var(--radius-card)] border border-line bg-surface p-1.5 shadow-float"
+				class={`absolute z-40 w-64 rounded-[var(--radius-card)] border border-line bg-surface p-1.5 shadow-float ${placement === 'rail' ? 'bottom-0 left-full ml-2' : 'top-full right-0 mt-1'}`}
 				onkeydown={onmenukeydown}
 			>
 				<div class="border-b border-line px-3 pt-2 pb-2.5">

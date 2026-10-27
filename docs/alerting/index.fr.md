@@ -148,7 +148,7 @@ de PBS.
 
 Les règles intégrées n'ont aucun canal attaché, ce qui signifie **chaque
 canal activé**. Une règle que vous modifiez peut nommer des canaux
-spécifiques. Les canaux se configurent dans Réglages → Notifications et rapports ; voir
+spécifiques. Les canaux se configurent dans Réglages → Notifications ; voir
 [Canaux de notification](../notifications.md).
 
 ## Notifications intelligentes
@@ -193,6 +193,6 @@ personne ne soit spammé. Le chemin complet d'une alerte, dans l'ordre :
 11. **Envoyer** — avec un lien « Ouvrir dans DumbMonit » par surveillance
     quand une URL publique est connue.
 
-Les étapes 6 à 10 se configurent dans Réglages → Notifications et rapports → Politique
+Les étapes 6 à 10 se configurent dans Réglages → Notifications → Politique
 de notification (globale) et sur chaque canal (Options de livraison). Voir
 [Politique de notification](notifications.md).

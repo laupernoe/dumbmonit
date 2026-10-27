@@ -6,7 +6,7 @@ default; daily and monthly are one click away. Reports reuse an **email (SMTP)
 notification channel**, so set one up first (see
 [Notification channels](../notifications.md)).
 
-Open **Settings > Reports** to set them up. Everything here is admin-only,
+Open **Reports** (the Enterprise rail; **More** in Homelab) to set them up. The page holds the availability (SLA) export of a period, the scheduled reports and the history of their sends; it used to be in Settings, and `/settings/reports` forwards to it. Everything here is admin-only,
 reading included, because the page lists the recipients' addresses.
 
 ## What a report contains
@@ -69,11 +69,17 @@ number. The logo of a status page is not embedded; its name heads the report.
 
 ### Download a period
 
-Below the schedules, **Availability report (SLA)** builds the same report on
+At the top of the page, **Availability report (SLA)** builds the same report on
 demand, for any period of one year at most (both days included, in the timezone
 you choose, ending now if it has not ended). Choose the PDF, the monitors CSV or
-the incidents CSV. The default is the previous calendar month. Administrators
-only.
+the incidents CSV. The default is the previous calendar month. In MSP mode,
+choose the client the report is about. Administrators only.
+
+### Sending history
+
+At the foot of the page, **Sending history** lists each scheduled report with
+its last send, the next one due and whether the last attempt succeeded (a failed
+send shows its error until the next success).
 
 ## Send a preview
 
