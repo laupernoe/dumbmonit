@@ -14,6 +14,7 @@ export const TAB_IDS: readonly SettingsTab[] = ['general', 'account', 'team', 'm
 /** Which tab holds each section (by its anchor id). */
 export const SECTION_TAB: Record<string, SettingsTab> = {
 	general: 'general',
+	// Former anchor of the Homelab / Enterprise choice.
 	'product-mode': 'general',
 	'setup-wizard': 'general',
 	appearance: 'account',
@@ -102,7 +103,7 @@ export function searchIndex(): SearchEntry[] {
 		keywords
 	});
 	return [
-		entry('product-mode', m.settings_general_mode_title(), m.settings_search_kw_general()),
+		entry('general', m.settings_general_instance_title(), m.settings_search_kw_instance()),
 		entry('appearance', m['settings.section.appearance'](), m.settings_search_kw_appearance()),
 		entry('security', m['settings.section.security'](), m.settings_search_kw_security()),
 		entry('push', m.settings_nav_push(), m.settings_search_kw_push()),

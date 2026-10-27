@@ -26,7 +26,7 @@
 	import { getLocale } from '#lib/paraglide/runtime.js';
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { auth } from '#lib/stores/auth.svelte.js';
-	import { mode } from '#lib/stores/mode.svelte.js';
+	import { instanceStore } from '#lib/stores/instance.svelte.js';
 	import { consoleState } from '#lib/stores/console.svelte.js';
 	import { Button, calmMotion } from '#lib/ui/index.js';
 
@@ -265,7 +265,7 @@
 	<div class="mx-auto flex min-h-full w-full max-w-[120rem] flex-col gap-5 px-5 py-5 lg:gap-6 lg:px-10 lg:py-8">
 		<header class="flex flex-wrap items-start justify-between gap-x-10 gap-y-3">
 			<div class="min-w-0">
-				<p class="m-0 truncate text-sm text-ink-2 lg:text-base">{mode.displayName}</p>
+				<p class="m-0 truncate text-sm text-ink-2 lg:text-base">{instanceStore.displayName}</p>
 				<div class={`mt-2 flex items-center gap-3 lg:gap-5 ${VERDICT_TEXT[verdict.tone]}`} aria-live="polite">
 					<Icon class="size-9 shrink-0 lg:size-14" strokeWidth={1.6} aria-hidden="true" />
 					<h1 class="m-0 text-[2.25rem] leading-none font-semibold tracking-[-0.035em] lg:text-[4rem]">{verdict.text}</h1>

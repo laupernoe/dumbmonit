@@ -989,7 +989,7 @@ pub fn sections() -> BTreeMap<&'static str, &'static str> {
             "netconfig_versions",
             "Network configuration versions, only when you include them: they hold device secrets.",
         ),
-        ("instance", "Instance name, language, time zone and product mode."),
+        ("instance", "Instance name, language, time zone and setup state."),
         ("clients", "MSP clients, their members, branding, and what belongs to each."),
     ])
 }

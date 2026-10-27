@@ -1,5 +1,5 @@
 /**
- * State of the Enterprise console shared by its header, its pages and its
+ * State of the console shared by its header, its pages and its
  * context panel: the time range, live updates, the inspector, and the monitor
  * the reader picked in a table (shown in the panel on the right).
  *

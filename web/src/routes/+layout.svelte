@@ -8,9 +8,8 @@
 	import { alertsStore } from '#lib/stores/alerts.svelte.js';
 	import { palette } from '#lib/stores/palette.svelte.js';
 	import { auth, safeDestination, isPublicRoute, isStandaloneRoute } from '#lib/stores/auth.svelte.js';
-	import NavBar from '#lib/components/NavBar.svelte';
 	import EnterpriseShell from '#lib/components/shell/EnterpriseShell.svelte';
-	import { mode } from '#lib/stores/mode.svelte.js';
+	import { instanceStore } from '#lib/stores/instance.svelte.js';
 	import VersionTag from '#lib/components/VersionTag.svelte';
 	import Logo from '#lib/components/Logo.svelte';
 	import DemoBanner from '#lib/components/demo/DemoBanner.svelte';
@@ -69,36 +68,33 @@
 			}
 			const id = sequences.feed(event, Date.now());
 			const shortcut = SHORTCUTS.find((s) => s.id === id);
-			if (!shortcut || (shortcut.admin && !auth.isAdmin) || (shortcut.enterprise && !mode.enterprise)) return;
+			if (!shortcut || (shortcut.admin && !auth.isAdmin)) return;
 			event.preventDefault();
 			if (shortcut.href) void goto(shortcut.href);
-			else if (shortcut.id === 'theme') theme.toggle();
 			else if (shortcut.id === 'help') palette.openHelp();
 		}
 		window.addEventListener('keydown', onKeydown);
 		return () => window.removeEventListener('keydown', onKeydown);
 	});
 
-	// The system theme can flip during a session (evening switch).
+	// The system theme can flip during a session (public status pages only:
+	// the console is always dark). Applied again on every navigation.
 	$effect(() => theme.watchSystem());
 	$effect(() => {
 		theme.apply();
 	});
-	// The product mode picks the shell and the colour tokens; read before sign-in.
-	$effect(() => {
-		mode.apply();
-	});
+	// Whether the setup wizard is done; read before sign-in.
 	$effect(() => {
 		if (statusHost) return;
-		void mode.init();
+		void instanceStore.init();
 	});
-	// The setup wizard owns the whole screen, outside both shells.
+	// The setup wizard owns the whole screen, outside the shell.
 	const onWelcome = $derived(page.url.pathname.startsWith('/welcome'));
 	// First sign-in of an administrator on a fresh instance: the setup wizard.
 	// Asked once per page load; "Skip" or the last step marks it done on the server.
 	let wizardOffered = false;
 	$effect(() => {
-		if (!auth.canUseApi || !auth.isAdmin || auth.demo || mode.setupCompleted !== false) return;
+		if (!auth.canUseApi || !auth.isAdmin || auth.demo || instanceStore.setupCompleted !== false) return;
 		if (wizardOffered || onWelcome || onWall || isPublicRoute(page.url.pathname)) return;
 		wizardOffered = true;
 		void goto('/welcome', { replace: true });
@@ -218,13 +214,8 @@
 		{/if}
 		{#if onWelcome}
 			{@render children()}
-		{:else if mode.enterprise}
-			<EnterpriseShell>{@render children()}</EnterpriseShell>
 		{:else}
-			<NavBar />
-			<main class="mx-auto w-full max-w-7xl flex-1 px-4 pt-3 pb-[calc(var(--tabbar-h)+1rem+var(--safe-bottom))] sm:px-6 sm:pt-6 sm:pb-12">
-				{@render children()}
-			</main>
+			<EnterpriseShell>{@render children()}</EnterpriseShell>
 		{/if}
 		{#if CommandPalette && !onWall}
 			<CommandPalette />

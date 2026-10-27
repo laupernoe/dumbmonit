@@ -5,6 +5,26 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Changed
+
+- **One interface.** The Homelab interface is gone: everyone gets the console
+  (icon rail, header, context panel), with the pigeon logo. The overview opens on
+  a thin night-sky banner whose one line says how things stand ("pve-02 is down.
+  3 guests held back, alert sent." / "All 146 monitors up."), with a pigeon flying
+  across it (tap it). Wall mode moved to a screen icon in the header and always
+  shows the console's board. The setup wizard no longer asks for a mode and
+  always offers its three optional steps; Settings no longer has a mode picker,
+  a theme picker or an "Advanced" fold. Public status pages keep their light and
+  dark themes.
+
+### Removed
+
+- The product mode (`product_mode`) in `GET /api/instance` and
+  `/api/instance/settings`. Older clients and backups that still carry it are
+  accepted; the field is ignored and no longer written.
+- The Homelab overview (weather scene, briefing, last 7 days) and the Homelab
+  wall (city scenes, music dock, widget zones).
+
 ## 0.14.1 — 2026-10-28
 
 ### Added
