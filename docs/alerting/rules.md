@@ -694,6 +694,7 @@ See [Veeam Backup & Replication](../devices/veeam.md). Jobs are labelled `job` a
 |---|---|---|---|---|---|
 | Veeam job failed | The last run of an enabled Veeam job failed: what it protects has no new restore point (`dumbmonit_veeam_job_failed`). | > 0 | 5 min | Warning (`critical`) | 1 d |
 | Veeam job ended with a warning | The last run of an enabled Veeam job ended with a warning: some objects may not be protected (`dumbmonit_veeam_job_warning`). | > 0 | 5 min | Advisory (`warning`) | 1 d |
+| Veeam backup too old | No successful run of a job scheduled at least daily for more than two days (`dumbmonit_veeam_job_last_success_age_seconds`). | > 2 d | 1 h | Advisory (`warning`) | 1 d |
 | Veeam repository nearly full | A Veeam backup repository is more than 90 % full: the next jobs will fail for lack of space (`dumbmonit_veeam_repository_used_percent`). | > 90 % | 30 min | Advisory (`warning`) | 1 d |
 | Veeam license expiring | The Veeam license expires in less than 30 days: jobs stop at the end of the grace period (`dumbmonit_veeam_license_expiry_seconds`). | < 30 d | 1 h | Advisory (`warning`) | 1 d |
 
