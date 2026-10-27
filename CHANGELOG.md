@@ -5,6 +5,25 @@ All notable changes to this project are documented here. The format follows
 
 ## Unreleased
 
+### Added
+
+- **Threat map.** The Security page opens with a world map of the attacks your
+  defences stopped, shaded by country: CrowdSec alerts of the last 24 hours, the
+  inbound connections blocked by an OPNsense firewall's live map, and Cloudflare
+  threats by country. Countries only: no address leaves the server or is stored.
+  The CrowdSec panel shows its own share. New route `GET /api/security/threats`.
+- **CrowdSec machine login.** Besides the bouncer key, a CrowdSec monitor accepts
+  a machine login (`cscli machines add`): DumbMonit then reads the local alerts and
+  keeps their country of origin (`dumbmonit_crowdsec_alerts_by_country`).
+- **Cloudflare threats by country** (`dumbmonit_cloudflare_country_threats`), read
+  with the traffic analytics already collected.
+- **One world map for every page.** Sites, cloud regions, threats and a
+  firewall's live traffic share the same map: country shading, sized discs and
+  links, a legend and the same data as a text list under it. The World view of
+  the Map page links each relay agent's site to the main site, in the relay's
+  state. AWS, Hetzner and OVHcloud panels map their regions and datacenters from a
+  built-in table (AWS, Azure, Hetzner, OVHcloud, Infomaniak), with no request out.
+
 ## 0.14.1 — 2026-10-28
 
 ### Added

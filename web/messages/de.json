@@ -707,6 +707,57 @@
 	"auth_setup_title": "Erstellen wir Ihr Konto.",
 	"auth_setup_username_required": "Wählen Sie einen Benutzernamen.",
 	"auth_setup_username_spaces": "Der Benutzername darf keine Leerzeichen enthalten.",
+	"cloudregions_count": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Region",
+				"countPlural=other": "{count} Regionen"
+			}
+		}
+	],
+	"cloudregions_description": "Wo die Ressourcen dieses Kontos laufen.",
+	"cloudregions_map_label": "Karte der Regionen von {name}",
+	"cloudregions_pin_down": "{region}: {resources}, {down} laufen nicht",
+	"cloudregions_pin_home": "{region}: die Region des Kontos",
+	"cloudregions_pin_ok": "{region}: {resources}, alle laufen",
+	"cloudregions_resources": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Ressource",
+				"countPlural=other": "{count} Ressourcen"
+			}
+		}
+	],
+	"cloudregions_title": "Regionen",
+	"cloudregions_unknown": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} Ressource liegt in einer Region, die nicht auf der Karte ist.",
+				"countPlural=other": "{count} Ressourcen liegen in Regionen, die nicht auf der Karte sind."
+			}
+		}
+	],
 	"dash_add": "Hinzufügen: {kind}",
 	"dash_add_group": "Widget hinzufügen",
 	"dash_alerts_more": "Alle Warnungen ansehen (+{count})",
@@ -9392,5 +9443,83 @@
 	"deviceform_site_more": "{count} weitere anzeigen",
 	"deviceform_site_added": "{name} hinzugefügt.",
 	"deviceform_site_open": "Öffnen",
-	"deviceform_site_kinds": "Hier üblich"
+	"deviceform_site_kinds": "Hier üblich",
+	"geomap_country_none": "{country}: nichts",
+	"geomap_country_value": "{country}: {value}",
+	"geomap_legend": "Legende",
+	"geomap_legend_fewer": "Weniger",
+	"geomap_legend_link_down": "Relay ausgefallen",
+	"geomap_legend_link_idle": "Relay nicht geprüft",
+	"geomap_legend_link_ok": "Relay erreichbar",
+	"geomap_legend_link_warn": "Relay prüfen",
+	"geomap_legend_more": "Mehr (bis {max})",
+	"geomap_legend_step": "Ab {value}",
+	"geomap_list_countries": "Länder",
+	"geomap_list_links": "Verbindungen",
+	"geomap_list_places": "Orte",
+	"geomap_list_toggle": "Als Liste anzeigen ({count})",
+	"geomap_relay_link": "Relay {relay} verbindet {site} mit {main}: {state}",
+	"threatmap_crowdsec_hint": "Wählen Sie Maschinenkonto als Zugangsdaten dieses Monitors (cscli machines add), um zu sehen, woher seine Alarme kommen, nach Land.",
+	"threatmap_description": "Woher die von Ihren Schutzmaßnahmen gestoppten Angriffe kommen, nach Land.",
+	"threatmap_empty_body": "Geben Sie einem CrowdSec-Monitor ein Maschinenkonto, öffnen Sie die Live-Karte einer OPNsense-Firewall oder fügen Sie Cloudflare mit Traffic-Analyse hinzu: Die gestoppten Angriffe erscheinen hier, nach Land.",
+	"threatmap_empty_title": "Noch keine Quelle speist die Bedrohungskarte",
+	"threatmap_err_load": "Die Bedrohungskarte konnte nicht geladen werden",
+	"threatmap_map_label": "Weltkarte der gestoppten Angriffe, nach Land",
+	"threatmap_partial": "Der Metrikspeicher hat nicht geantwortet: Nur die Live-Karten der Firewalls werden gezählt.",
+	"threatmap_privacy": "Nur Länder: Keine Adresse wird gespeichert oder angezeigt.",
+	"threatmap_quiet": "Im abgedeckten Zeitraum wurde nichts gestoppt.",
+	"threatmap_source_cloudflare": "Cloudflare-Bedrohungen",
+	"threatmap_source_crowdsec": "CrowdSec-Alarme",
+	"threatmap_source_firewall": "Firewall-Sperren (Live-Karte)",
+	"threatmap_sources": "Quellen",
+	"threatmap_split_cloudflare": "Cloudflare {count}",
+	"threatmap_split_crowdsec": "CrowdSec {count}",
+	"threatmap_split_firewall": "Firewall {count}",
+	"threatmap_title": "Bedrohungskarte",
+	"threatmap_top": "Aktivste Länder",
+	"threatmap_value": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{shown} Angriff gestoppt",
+				"countPlural=other": "{shown} Angriffe gestoppt"
+			}
+		}
+	],
+	"threatmap_window_hours": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Letzte {count} Stunde",
+				"countPlural=other": "Letzte {count} Stunden"
+			}
+		}
+	],
+	"threatmap_window_minutes": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Letzte {count} Minute",
+				"countPlural=other": "Letzte {count} Minuten"
+			}
+		}
+	]
 }

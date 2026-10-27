@@ -76,6 +76,7 @@ mod target_rules;
 pub(crate) mod targets;
 mod targets_import;
 mod teams;
+mod threats;
 mod tokens;
 mod topology;
 pub(crate) mod topology_edits;
@@ -339,6 +340,8 @@ pub fn router_with(state: AppState, music_hub: crate::music::MusicHub) -> Router
         .merge(wall_widgets::routes())
         // Note de sécurité par équipement et vue du parc (`security.rs`).
         .merge(security::routes())
+        // Carte des menaces par pays, toutes sources réunies (`threats.rs`).
+        .merge(threats::routes())
         // Failles connues (CVE) de l'inventaire logiciel (`cves.rs`).
         .merge(cves::routes())
         // Notifications Web Push du compte connecté : appareils abonnés, test (`webpush.rs`).

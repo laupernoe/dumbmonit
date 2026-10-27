@@ -9,6 +9,12 @@
 //! n'est jamais créée ni supprimée, et la liste des adresses bannies n'est
 //! jamais téléchargée.
 //!
+//! Avec un compte de machine (`cscli machines add`) à la place de la clé, les
+//! alertes locales des dernières 24 heures sont lues (`GET /v1/alerts`) et
+//! réduites à leur pays (`source.cn`, renseigné par CrowdSec lui-même) : la
+//! carte des menaces de la page Sécurité. Seul le compte par pays est gardé ;
+//! aucune adresse n'est conservée ni publiée.
+//!
 //! Les pannes que ce module existe pour voir :
 //!
 //! * **un bouncer qui ne tire plus** : le pare-feu ou le proxy continue de
@@ -35,6 +41,7 @@ use std::collections::BTreeMap;
 
 use async_trait::async_trait;
 use dumbmonit_proto::{Collector, Credential, MetricKind, ProbeError, Sample, Target};
+use serde_json::Value;
 
 use crate::observability::client::{Auth, HttpClient};
 use crate::observability::options::Options;
@@ -49,6 +56,10 @@ const MAX_SOURCES: usize = 50;
 const MAX_CLIENTS: usize = 100;
 /// Adresse de documentation (RFC 5737) : aucune décision ne peut la viser.
 const PROBE_IP: &str = "192.0.2.1";
+/// Alertes lues au plus à chaque sonde pour la carte des pays.
+const MAX_ALERTS: usize = 500;
+/// Fenêtre des alertes comptées par pays.
+const ALERTS_SINCE: &str = "24h";
 
 #[derive(Default)]
 pub struct CrowdsecCollector;
@@ -63,18 +74,24 @@ struct Clients {
     metrics: HttpClient,
     lapi: Option<HttpClient>,
     bouncer_key: Option<String>,
+    /// Compte de machine (nom, mot de passe) : lit les alertes par pays.
+    machine: Option<(String, String)>,
 }
 
 fn clients(target: &Target) -> Result<Clients, ProbeError> {
     let options = Options::from_target(target, DEFAULT_PORT)?;
-    let bouncer_key = match &target.credential {
-        Credential::None => None,
+    let (bouncer_key, machine) = match &target.credential {
+        Credential::None => (None, None),
         Credential::ApiToken { token } if !token.trim().is_empty() => {
-            Some(token.trim().to_string())
+            (Some(token.trim().to_string()), None)
+        }
+        Credential::UsernamePassword { username, password } if !username.trim().is_empty() => {
+            (None, Some((username.trim().to_string(), password.clone())))
         }
         other => {
             return Err(ProbeError::Config(format!(
-                "CrowdSec expects no credential or a bouncer API key, configured: {other}"
+                "CrowdSec expects no credential, a bouncer API key or a machine login, \
+                 configured: {other}"
             )));
         }
     };
@@ -98,7 +115,7 @@ fn clients(target: &Target) -> Result<Clients, ProbeError> {
     };
     let metrics =
         HttpClient::new(http, options.base_url, Auth::None, options.request_timeout, "CrowdSec");
-    Ok(Clients { metrics, lapi, bouncer_key })
+    Ok(Clients { metrics, lapi, bouncer_key, machine })
 }
 
 #[async_trait]
@@ -113,7 +130,10 @@ impl Collector for CrowdsecCollector {
         let page = read_metrics(&clients.metrics).await?;
         let mut samples = samples(&page, ts_ms);
         if let Some(lapi) = &clients.lapi {
-            samples.extend(check_lapi(lapi, clients.bouncer_key.as_deref(), ts_ms).await?);
+            samples.extend(
+                check_lapi(lapi, clients.bouncer_key.as_deref(), clients.machine.as_ref(), ts_ms)
+                    .await?,
+            );
         }
         Ok(samples)
     }
@@ -137,11 +157,13 @@ async fn read_metrics(client: &HttpClient) -> Result<Exposition, ProbeError> {
 }
 
 /// `/health`, puis, avec une clé, une recherche de décisions qui ne peut rien
-/// rendre. Une LAPI arrêtée est une mesure (`lapi_up = 0`), pas une erreur :
-/// les métriques de l'agent restent lisibles et utiles.
+/// rendre ; avec un compte de machine, les alertes récentes comptées par pays.
+/// Une LAPI arrêtée est une mesure (`lapi_up = 0`), pas une erreur : les
+/// métriques de l'agent restent lisibles et utiles.
 async fn check_lapi(
     lapi: &HttpClient,
     bouncer_key: Option<&str>,
+    machine: Option<&(String, String)>,
     ts_ms: i64,
 ) -> Result<Vec<Sample>, ProbeError> {
     let gauge = |name: &str, value: f64| Sample::new(name, value, MetricKind::Gauge, ts_ms);
@@ -166,7 +188,86 @@ async fn check_lapi(
             _ => out.push(gauge("crowdsec_lapi_decisions_ok", 0.0)),
         }
     }
+    if let (true, Some((machine_id, password))) = (up, machine) {
+        out.extend(read_alert_countries(lapi, machine_id, password, ts_ms).await?);
+    }
     Ok(out)
+}
+
+fn machine_refused() -> ProbeError {
+    ProbeError::Auth(
+        "The CrowdSec LAPI refused the machine login. Check the machine name and password, or \
+         create them with: cscli machines add dumbmonit --password '…'"
+            .to_string(),
+    )
+}
+
+/// Connexion de la machine (`/v1/watchers/login`), puis les alertes locales
+/// des dernières 24 heures, sans celles de la liste communautaire. Seul le
+/// pays de chaque alerte est retenu.
+async fn read_alert_countries(
+    lapi: &HttpClient,
+    machine_id: &str,
+    password: &str,
+    ts_ms: i64,
+) -> Result<Vec<Sample>, ProbeError> {
+    const LOGIN: &str = "/v1/watchers/login";
+    let body =
+        serde_json::json!({ "machine_id": machine_id, "password": password, "scenarios": [] });
+    let reply = lapi.post_raw(LOGIN, &body).await?;
+    if matches!(reply.status.as_u16(), 401 | 403) {
+        return Err(machine_refused());
+    }
+    if !reply.status.is_success() {
+        return Err(lapi.status_error(reply.status, &reply.body, LOGIN));
+    }
+    let token = serde_json::from_str::<Value>(&reply.body)
+        .ok()
+        .and_then(|v| v.get("token").and_then(Value::as_str).map(str::to_string))
+        .filter(|t| !t.is_empty())
+        .ok_or_else(|| {
+            ProbeError::Protocol("The CrowdSec LAPI login answered without a token.".to_string())
+        })?;
+    let path = format!("/v1/alerts?since={ALERTS_SINCE}&include_capi=false&limit={MAX_ALERTS}");
+    let reply = lapi.get_with_header(&path, "Authorization", &format!("Bearer {token}")).await?;
+    if matches!(reply.status.as_u16(), 401 | 403) {
+        return Err(machine_refused());
+    }
+    if !reply.status.is_success() {
+        return Err(lapi.status_error(reply.status, &reply.body, "/v1/alerts"));
+    }
+    // Aucune alerte : la LAPI répond `null`.
+    let alerts = serde_json::from_str::<Option<Vec<Value>>>(&reply.body)
+        .map_err(|error| {
+            ProbeError::Protocol(format!("Unexpected response from /v1/alerts: {error}"))
+        })?
+        .unwrap_or_default();
+    Ok(alert_country_samples(&alerts, ts_ms))
+}
+
+/// Un code pays ISO 3166-1 alpha-2 utilisable sur la carte (`XX`, `ZZ` : inconnu).
+fn country_code(raw: &str) -> Option<String> {
+    let code = raw.trim().to_ascii_uppercase();
+    let valid = code.len() == 2 && code.bytes().all(|b| b.is_ascii_uppercase());
+    (valid && code != "XX" && code != "ZZ").then_some(code)
+}
+
+/// Alertes comptées par pays d'origine (`source.cn`). L'adresse de la source
+/// n'est jamais lue : seul son pays devient une étiquette.
+pub fn alert_country_samples(alerts: &[Value], ts_ms: i64) -> Vec<Sample> {
+    let gauge = |name: &str, value: f64| Sample::new(name, value, MetricKind::Gauge, ts_ms);
+    let mut by_country: BTreeMap<String, f64> = BTreeMap::new();
+    for alert in alerts {
+        let code = alert.pointer("/source/cn").and_then(Value::as_str).and_then(country_code);
+        if let Some(code) = code {
+            *by_country.entry(code).or_default() += 1.0;
+        }
+    }
+    let mut out = vec![gauge("crowdsec_alerts_recent", alerts.len() as f64)];
+    for (country, count) in by_country {
+        out.push(gauge("crowdsec_alerts_by_country", count).with_label("country", country));
+    }
+    out
 }
 
 pub fn samples(page: &Exposition, ts_ms: i64) -> Vec<Sample> {
@@ -351,6 +452,91 @@ mod tests {
         let target = cible("crowdsec", &metrics, &[("lapi", "false")]);
         let samples = CrowdsecCollector::new().probe(&target).await.unwrap();
         assert!(find(&samples, "crowdsec_lapi_up", &[]).is_none());
+    }
+
+    #[test]
+    fn les_alertes_sont_comptees_par_pays_sans_adresse() {
+        let alerts: Vec<Value> = serde_json::from_str(
+            r#"[
+                {"scenario": "crowdsecurity/ssh-bf", "source": {"ip": "203.0.113.7", "cn": "CN"}},
+                {"scenario": "crowdsecurity/ssh-bf", "source": {"ip": "203.0.113.8", "cn": "CN"}},
+                {"scenario": "http-probing", "source": {"ip": "198.51.100.1", "cn": "fr"}},
+                {"scenario": "manual", "source": {"scope": "ip", "value": "192.0.2.9"}},
+                {"scenario": "x", "source": {"cn": "XX"}},
+                {"scenario": "y", "source": {"cn": "T1"}}
+            ]"#,
+        )
+        .unwrap();
+        let samples = alert_country_samples(&alerts, 0);
+        assert_eq!(find(&samples, "crowdsec_alerts_recent", &[]).unwrap().value, 6.0);
+        let china = find(&samples, "crowdsec_alerts_by_country", &[("country", "CN")]).unwrap();
+        assert_eq!(china.value, 2.0);
+        let france = find(&samples, "crowdsec_alerts_by_country", &[("country", "FR")]).unwrap();
+        assert_eq!(france.value, 1.0);
+        let countries = samples.iter().filter(|s| s.metric == "crowdsec_alerts_by_country").count();
+        assert_eq!(countries, 2, "unknown and Tor codes are left out");
+        // Aucune adresse ne survit : seules les étiquettes `country` restent.
+        for sample in &samples {
+            assert!(sample.labels.keys().all(|k| k == "country"), "{:?}", sample.labels);
+            assert!(sample.labels.values().all(|v| !v.contains('.')), "{:?}", sample.labels);
+        }
+    }
+
+    #[tokio::test]
+    async fn un_compte_de_machine_lit_les_alertes_par_pays() {
+        use axum::Json;
+        use axum::extract::RawQuery;
+        use axum::routing::post;
+
+        let (metrics, _) = serve(Router::new().route("/metrics", get(|| async { METRICS }))).await;
+        let (_, lapi_port) = serve(
+            Router::new()
+                .route("/health", get(|| async { r#"{"status":"up"}"# }))
+                .route(
+                    "/v1/watchers/login",
+                    post(|Json(body): Json<Value>| async move {
+                        if body["machine_id"] == "dumbmonit" && body["password"] == "secret" {
+                            (StatusCode::OK, r#"{"code":200,"token":"jwt-token"}"#)
+                        } else {
+                            (StatusCode::UNAUTHORIZED, r#"{"code":401,"message":"incorrect"}"#)
+                        }
+                    }),
+                )
+                .route(
+                    "/v1/alerts",
+                    get(|headers: HeaderMap, RawQuery(query): RawQuery| async move {
+                        let query = query.unwrap_or_default();
+                        assert!(query.contains("include_capi=false"), "{query}");
+                        assert!(query.contains("since=24h"), "{query}");
+                        match headers.get("authorization").and_then(|v| v.to_str().ok()) {
+                            Some("Bearer jwt-token") => (
+                                StatusCode::OK,
+                                r#"[{"source":{"ip":"203.0.113.7","cn":"DE"}},
+                                    {"source":{"ip":"203.0.113.8","cn":"DE"}}]"#,
+                            ),
+                            _ => (StatusCode::UNAUTHORIZED, r#"{"message":"no token"}"#),
+                        }
+                    }),
+                ),
+        )
+        .await;
+        let port = lapi_port.to_string();
+        let mut target = cible("crowdsec", &metrics, &[("lapi_port", &port)]);
+        target.credential = Credential::UsernamePassword {
+            username: "dumbmonit".into(),
+            password: "secret".into(),
+        };
+        let samples = CrowdsecCollector::new().probe(&target).await.unwrap();
+        assert_eq!(find(&samples, "crowdsec_lapi_up", &[]).unwrap().value, 1.0);
+        assert_eq!(find(&samples, "crowdsec_alerts_recent", &[]).unwrap().value, 2.0);
+        let germany = find(&samples, "crowdsec_alerts_by_country", &[("country", "DE")]).unwrap();
+        assert_eq!(germany.value, 2.0);
+        assert!(find(&samples, "crowdsec_lapi_decisions_ok", &[]).is_none());
+
+        target.credential =
+            Credential::UsernamePassword { username: "dumbmonit".into(), password: "bad".into() };
+        let error = CrowdsecCollector::new().probe(&target).await.unwrap_err();
+        assert!(matches!(error, ProbeError::Auth(_)), "{error}");
     }
 
     #[tokio::test]
