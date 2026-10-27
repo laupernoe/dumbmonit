@@ -31,8 +31,8 @@ use crate::api::{ApiError, ApiResult};
 use crate::auth::audit;
 use crate::auth::client_ip::ClientIp;
 use crate::auth::clients::{self, Kind};
-use crate::auth::teams::TeamAccess;
 use crate::auth::middleware::{AdminIdentity, AdminUser, Identity, OperatorIdentity, Principal};
+use crate::auth::teams::TeamAccess;
 use crate::db;
 use crate::remediation::exec::{self, ExecError, Trigger};
 use crate::remediation::runbooks::{self, MatchContext, Runbook, RunbookDraft};
@@ -95,8 +95,7 @@ async fn list_runbooks(
     TeamAccess(access): TeamAccess,
 ) -> ApiResult<Json<Vec<Runbook>>> {
     let mut list = runbooks::list(&state.pool).await?;
-    clients::retain_visible(&state.pool, &access, Kind::Runbook, &mut list, |r| r.id, true)
-        .await?;
+    clients::retain_visible(&state.pool, &access, Kind::Runbook, &mut list, |r| r.id, true).await?;
     Ok(Json(list))
 }
 
@@ -413,7 +412,8 @@ async fn run_action(
         }
     };
     // Mode MSP : l'action d'un client ne touche jamais l'équipement d'un autre.
-    if let Some(owner) = clients::owner_of(&state.pool, Kind::RemediationAction, id).await?.flatten()
+    if let Some(owner) =
+        clients::owner_of(&state.pool, Kind::RemediationAction, id).await?.flatten()
         && client_of(&state, target_id.or(action.target_id)).await? != Some(owner)
     {
         return Err(ApiError::Forbidden(

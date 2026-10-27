@@ -922,7 +922,8 @@ mod tests {
         eight.client = Some(8);
         let channels = [seven, eight, recipient(3, ChannelPolicy::default())];
 
-        let mut acme = group(1, vec![item("disk", NotifyReason::Firing, Severity::Critical)], at(0));
+        let mut acme =
+            group(1, vec![item("disk", NotifyReason::Firing, Severity::Critical)], at(0));
         acme.client_id = Some(7);
         let acme_plan = plan(&[acme], &channels, &immediate(), &Ledger::default(), at(0));
         let recipients: Vec<i64> = acme_plan.outgoing.iter().map(|o| o.channel_id).collect();

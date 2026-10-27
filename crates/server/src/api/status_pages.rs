@@ -578,17 +578,13 @@ pub async fn list_pages(
     // composants sont des équipements qu'il voit. Mode MSP : en plus, les pages
     // de ses clients seulement (celles de l'instance pour une vue
     // d'administrateur).
-    let owners = crate::auth::clients::owners(&state.pool, crate::auth::clients::Kind::StatusPage)
-        .await?;
+    let owners =
+        crate::auth::clients::owners(&state.pool, crate::auth::clients::Kind::StatusPage).await?;
     let restricted = access.is_scoped();
     let pages: Vec<_> = pages
         .into_iter()
         .filter(|page| {
-            crate::auth::clients::visible_owner(
-                &access,
-                owners.get(&page.id).copied(),
-                !restricted,
-            )
+            crate::auth::clients::visible_owner(&access, owners.get(&page.id).copied(), !restricted)
         })
         .filter(|page| {
             !restricted

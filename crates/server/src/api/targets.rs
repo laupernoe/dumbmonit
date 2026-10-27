@@ -8,8 +8,8 @@ use dumbmonit_proto::{Credential, CredentialInput, Target, TargetId};
 use serde::{Deserialize, Serialize};
 
 use crate::api::{ApiError, ApiResult};
-use crate::auth::middleware::Identity;
 use crate::auth::clients;
+use crate::auth::middleware::Identity;
 use crate::auth::teams::{Access, Level, TeamAccess};
 use crate::collectors::relay::{self, JobResult};
 use crate::db;

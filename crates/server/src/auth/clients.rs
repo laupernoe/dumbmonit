@@ -463,10 +463,11 @@ pub async fn assign(
         }
         Kind::Dashboard => {
             for id in ids {
-                let shared: bool = sqlx::query_scalar("SELECT shared = 1 FROM dashboards WHERE id = ?")
-                    .bind(id)
-                    .fetch_one(pool)
-                    .await?;
+                let shared: bool =
+                    sqlx::query_scalar("SELECT shared = 1 FROM dashboards WHERE id = ?")
+                        .bind(id)
+                        .fetch_one(pool)
+                        .await?;
                 if !shared {
                     return Err(ClientError::Conflict(
                         "A personal dashboard stays with its owner: share it first.".into(),
@@ -999,10 +1000,12 @@ async fn apply(
             .await?;
         }
     }
-    sqlx::query("UPDATE clients SET updated_at = strftime('%Y-%m-%d %H:%M:%S', 'now') WHERE id = ?")
-        .bind(id)
-        .execute(&mut **tx)
-        .await?;
+    sqlx::query(
+        "UPDATE clients SET updated_at = strftime('%Y-%m-%d %H:%M:%S', 'now') WHERE id = ?",
+    )
+    .bind(id)
+    .execute(&mut **tx)
+    .await?;
     Ok(())
 }
 
@@ -1121,7 +1124,12 @@ pub async fn sync_scim_clients(pool: &SqlitePool) -> Result<()> {
     Ok(())
 }
 
-async fn sync_groups(pool: &SqlitePool, user_id: i64, groups: &[String], source: &str) -> Result<()> {
+async fn sync_groups(
+    pool: &SqlitePool,
+    user_id: i64,
+    groups: &[String],
+    source: &str,
+) -> Result<()> {
     let rows = sqlx::query("SELECT id, idp_groups FROM clients WHERE idp_groups <> '[]'")
         .fetch_all(pool)
         .await

@@ -91,11 +91,8 @@ pub async fn collect(pool: &SqlitePool, cipher: &Cipher, options: ExportOptions)
         },
         instance: crate::instance::stored(pool).await?,
         clients: clients(pool).await?,
-        msp_settings: crate::auth::settings::get::<Value>(
-            pool,
-            crate::auth::clients::SETTINGS_KEY,
-        )
-        .await?,
+        msp_settings: crate::auth::settings::get::<Value>(pool, crate::auth::clients::SETTINGS_KEY)
+            .await?,
         client_assignments: client_assignments(pool, &refs).await?,
     })
 }
@@ -197,9 +194,18 @@ async fn client_assignments(
     // Objets du lot 4, par nom (titre pour une procédure). Seuls les tableaux
     // partagés ont un client.
     for (kind, sql) in [
-        (Kind::Dashboard, "SELECT name, client_id FROM dashboards WHERE shared = 1 AND client_id IS NOT NULL"),
-        (Kind::Schedule, "SELECT name, client_id FROM oncall_schedules WHERE client_id IS NOT NULL"),
-        (Kind::EscalationPolicy, "SELECT name, client_id FROM oncall_policies WHERE client_id IS NOT NULL"),
+        (
+            Kind::Dashboard,
+            "SELECT name, client_id FROM dashboards WHERE shared = 1 AND client_id IS NOT NULL",
+        ),
+        (
+            Kind::Schedule,
+            "SELECT name, client_id FROM oncall_schedules WHERE client_id IS NOT NULL",
+        ),
+        (
+            Kind::EscalationPolicy,
+            "SELECT name, client_id FROM oncall_policies WHERE client_id IS NOT NULL",
+        ),
         (Kind::Runbook, "SELECT title, client_id FROM runbooks WHERE client_id IS NOT NULL"),
         (
             Kind::RemediationAction,

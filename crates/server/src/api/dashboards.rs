@@ -415,7 +415,8 @@ async fn list(
     .fetch_all(&state.pool)
     .await
     .map_err(anyhow::Error::from)?;
-    let records = rows.iter().map(row_of).collect::<Result<Vec<_>, _>>().map_err(anyhow::Error::from)?;
+    let records =
+        rows.iter().map(row_of).collect::<Result<Vec<_>, _>>().map_err(anyhow::Error::from)?;
     let views = records
         .into_iter()
         .filter(|row| row.visible_to(&who, &access))
