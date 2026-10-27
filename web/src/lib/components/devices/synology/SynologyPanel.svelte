@@ -17,6 +17,7 @@
 	import { ErrorNotice, Panel, Plate, Skeleton, type Tone } from '#lib/ui/index.js';
 	import Figure from '../Figure.svelte';
 	import { formatAgo, formatBytes, formatUnix } from '../pbs/format';
+	import BackupHistory from '../backup/BackupHistory.svelte';
 	import AbbDevices from './AbbDevices.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 
@@ -362,6 +363,7 @@
 
 		{#if abb}
 			<AbbDevices {abb} />
+			<BackupHistory {target} source="abb" />
 		{/if}
 	</div>
 {/if}

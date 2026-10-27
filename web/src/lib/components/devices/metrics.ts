@@ -189,6 +189,18 @@ function withSeries(
 }
 
 /**
+ * Backup integrations without a panel of their own curves: the one family each
+ * is read by, pinned in the essentials when the device has it (a Veeam repository
+ * filling up, the size of what Kopia and Duplicati keep).
+ */
+const PINNED_BACKUP: { name: string; title: () => string }[] = [
+	{ name: 'dumbmonit_veeam_repository_used_percent', title: () => m.devices_metrics_veeam_repositories() },
+	{ name: 'dumbmonit_kopia_source_last_snapshot_bytes', title: () => m.devices_metrics_kopia_snapshot_size() },
+	{ name: 'dumbmonit_duplicati_backup_target_bytes', title: () => m.devices_metrics_duplicati_target_size() },
+	{ name: 'dumbmonit_duplicati_backup_source_bytes', title: () => m.devices_metrics_duplicati_source_size() }
+];
+
+/**
  * The essentials: cpu, load, memory, filesystems, throughput. Each is built
  * from the families the device actually has; a family the device lacks simply
  * yields no chart, so an SNMP switch gets only its throughput here.
@@ -230,6 +242,11 @@ function essentialsOf(groups: DeviceMetricGroup[]): DeviceMetricGroup[] {
 			label: `${s.label} ${s.labels.__name__?.endsWith('_out') ? m.devices_metrics_out() : m.devices_metrics_in()}`
 		}));
 		charts.push({ name: 'dumbmonit_if_octets', title: m.devices_metrics_net(), unit: 'B/s', series });
+	}
+
+	for (const pinned of PINNED_BACKUP) {
+		const group = pick(groups, pinned.name);
+		if (group) charts.push(withSeries(group, group.series, { title: pinned.title() }));
 	}
 
 	return charts;
@@ -315,7 +332,8 @@ export function sectionize(groups: DeviceMetricGroup[]): MetricSections {
 		'dumbmonit_filesystem_used_percent',
 		'dumbmonit_load_average_1',
 		'dumbmonit_load_average_5',
-		'dumbmonit_load_average_15'
+		'dumbmonit_load_average_15',
+		...PINNED_BACKUP.map((p) => p.name)
 	]);
 	// `*_info` families carry their meaning in labels, not in the value 1.
 	const other = groups

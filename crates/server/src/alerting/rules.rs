@@ -6000,6 +6000,30 @@ pub fn builtin_rules() -> Vec<Rule> {
                 "Veeam job ended with a warning",
                 RuleKind::Threshold,
                 "dumbmonit_veeam_job_warning",
+    "dumbmonit_veeam_job_last_success_age_seconds",
+    "dumbmonit_veeam_job_next_run_seconds",
+            )
+        },
+        // Aucune sauvegarde réussie depuis deux jours. La série n'existe que pour un
+        // travail dont la dernière exécution a réussi (ou fini en avertissement) :
+        // un travail en échec dit déjà `veeam_job_failed`. Le filtre sur la
+        // prochaine exécution (moins de 36 h) écarte les travaux hebdomadaires ou
+        // mensuels, dont deux jours sans exécution sont normaux.
+        Rule {
+            description: "No successful Veeam run for this job for more than two days, \
+                          although it is scheduled at least daily."
+                .to_string(),
+            operator: Operator::Gt,
+            threshold: 2.0 * 24.0 * 3600.0,
+            for_duration: Duration::from_secs(3600),
+            severity: Severity::Warning,
+            unit: "s".to_string(),
+            repeat_interval: Some(Duration::from_secs(24 * 3600)),
+            ..base(
+                "veeam_job_old",
+                "Veeam backup too old",
+                RuleKind::Threshold,
+                "dumbmonit_veeam_job_last_success_age_seconds and on (target, job) dumbmonit_veeam_job_next_run_seconds < 129600",
             )
         },
         Rule {
@@ -8846,6 +8870,7 @@ mod tests {
             "unraid_container_stopped",
             "veeam_job_failed",
             "veeam_job_warning",
+            "veeam_job_old",
             "veeam_repository_full",
             "veeam_license_expiring",
             "winrm_services_auto_stopped",

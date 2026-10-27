@@ -15,12 +15,15 @@
 	import { untrack } from 'svelte';
 	import { queryInstant, type Target } from '#lib/api/index.js';
 	import { ErrorNotice, Panel, Plate } from '#lib/ui/index.js';
+	import BackupHistory from '../backup/BackupHistory.svelte';
 	import ClientDevicesTable from '../ClientDevicesTable.svelte';
 	import Figure from '../Figure.svelte';
 	import { FOLDS, type ApplianceView } from './folds';
 
 	/** Kinds whose devices page also shows the client-devices table. */
 	const WITH_DEVICES = new Set(['veeam', 'tailscale']);
+	/** Kinds that also get the jobs x days matrix, with the key of their `SOURCES` entry. */
+	const WITH_HISTORY = new Set(['veeam', 'kopia', 'duplicati']);
 
 	interface Props {
 		target: Target;
@@ -105,6 +108,10 @@
 			{/each}
 		{/if}
 	</Panel>
+{/if}
+
+{#if WITH_HISTORY.has(variant ?? target.kind)}
+	<BackupHistory {target} source={variant ?? target.kind} />
 {/if}
 
 {#if WITH_DEVICES.has(target.kind)}
