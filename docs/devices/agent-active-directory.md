@@ -17,8 +17,12 @@ server installs the agent and enrols under its fully qualified name
 ## Steps
 
 1. In Settings → Agents, click **Deploy with Active Directory**. Enter the
-   domain, adjust the options if needed, create the token and download
-   `Deploy-DumbMonit.ps1`. The token is shown only now.
+   domain, the name (FQDN) or address of the DumbMonit server the agents must
+   contact (by default the address you are using) and, optionally, a DNS
+   server that resolves that name, adjust the options if needed, create the
+   token and download `Deploy-DumbMonit.ps1`. The token is shown only now. The
+   server name and the DNS server are checked for format, written into the
+   script, and repeated in the summary of the next step.
 2. Copy the script to a domain controller and open PowerShell as a domain
    administrator. Preview first, which changes nothing:
 
@@ -39,6 +43,16 @@ server installs the agent and enrols under its fully qualified name
    enrolments** (see [Security](#security)).
 
 The script is idempotent: running it again updates the GPO in place.
+
+!!! info "How the agents talk to the server"
+    Once enrolled, each agent talks to DumbMonit over the encrypted channel,
+    with its own agent certificate (mutual TLS, TLS 1.3). The servers only need
+    to reach the DumbMonit server on **TCP 8443** (outbound from the servers
+    to DumbMonit, nothing inbound), also from another site. The name you entered
+    must be the one in the server's certificate and resolvable by the servers;
+    if their resolver cannot find it, enter a DNS server and the kit resolves
+    the name through it and records it in the server's `hosts` file (lines
+    marked `# DumbMonit`). See [Agent channel security](../install/agent-security.md).
 
 ## Script parameters
 

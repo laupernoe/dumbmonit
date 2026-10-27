@@ -1,5 +1,8 @@
 {
 	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"agent_channel_note_open": "Open TCP port 8443 (the agent port) from the agent to this server. The agent always connects out, so nothing has to reach it. The same applies when monitoring from another site: only that port must be reachable.",
+	"agent_channel_note_text": "The agent talks to this server over TLS 1.3 with its own client certificate (mTLS), issued when it enrols.",
+	"agent_channel_note_title": "Encrypted channel with an agent certificate",
 	"agent_events_add": "Add a rule",
 	"agent_events_any_id": "any ID",
 	"agent_events_any_source": "any source",
@@ -6038,6 +6041,9 @@
 	"settings_agents_ad_days_help": "After that, no new server can enrol.",
 	"settings_agents_ad_dcs": "Include domain controllers",
 	"settings_agents_ad_description": "Install the agent on every Windows server of your domain through a Group Policy (GPO).",
+	"settings_agents_ad_dns_server": "DNS server (optional)",
+	"settings_agents_ad_dns_server_help": "IP address of a DNS server that resolves that name, used by servers that cannot.",
+	"settings_agents_ad_dns_server_invalid": "Enter the IP address of a DNS server, for example 10.0.0.2.",
 	"settings_agents_ad_docs": "Read the full guide",
 	"settings_agents_ad_domain": "Active Directory domain",
 	"settings_agents_ad_domain_help": "The DNS name of your domain.",
@@ -6062,6 +6068,9 @@
 	"settings_agents_ad_run_preview": "1. Preview, changes nothing",
 	"settings_agents_ad_run_timing": "Servers install the agent at their next policy refresh, within 90 minutes. To go faster, run gpupdate /force on a server.",
 	"settings_agents_ad_secret_warning": "Treat the script like a password: it contains the token. Keep it private and delete it once the deployment is done.",
+	"settings_agents_ad_server_host": "Server name agents contact",
+	"settings_agents_ad_server_host_help": "DNS name (FQDN) or address of this server, with an optional :port. Left blank: {origin}.",
+	"settings_agents_ad_server_host_invalid": "Enter a DNS name or an IPv4 address, optionally followed by :port, with no http:// or path.",
 	"settings_agents_ad_step": "Step {n} of 4",
 	"settings_agents_ad_step1": "Create the token",
 	"settings_agents_ad_step2": "Download the script",
@@ -6071,6 +6080,9 @@
 	"settings_agents_ad_stop_error": "Could not stop enrolments",
 	"settings_agents_ad_stop_help": "The token stops accepting new servers. Servers already enrolled keep reporting.",
 	"settings_agents_ad_stopped": "Enrolments stopped",
+	"settings_agents_ad_summary_dns": "DNS server:",
+	"settings_agents_ad_summary_dns_none": "system default",
+	"settings_agents_ad_summary_server": "Agents contact:",
 	"settings_agents_ad_sysvol": "Copy the agent into SYSVOL",
 	"settings_agents_ad_sysvol_help": "For servers that cannot reach the internet or this server directly.",
 	"settings_agents_ad_title": "Deploy with Active Directory",
@@ -8869,6 +8881,8 @@
 	"whatsnew_dialog_ok": "Got it",
 	"whatsnew_dialog_title": "What's new in v{version}",
 	"whatsnew_dialog_updated": "Updated · {date}",
+	"wizard_monitors_ad": "Active Directory",
+	"wizard_monitors_ad_text": "Install the agent on every domain server with a group policy.",
 	"worldmap_cluster_label": [
 		{
 			"declarations": [

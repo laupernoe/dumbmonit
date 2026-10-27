@@ -209,3 +209,48 @@ async fn bad_input_and_non_administrators_are_refused() {
     assert!(anonymous.status.is_client_error(), "{}", anonymous.status);
     assert_ne!(anonymous.status, StatusCode::CREATED);
 }
+
+#[tokio::test]
+async fn the_server_name_and_dns_server_reach_the_kit() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+
+    let reply = kit(
+        &app,
+        &admin,
+        json!({ "server_host": "DumbMonit.Corp.Example.com", "dns_server": "10.0.0.2" }),
+    )
+    .await;
+    assert_eq!(reply.status, StatusCode::CREATED, "{}", reply.body);
+    assert_eq!(reply.body["server_url"], json!("https://dumbmonit.corp.example.com"));
+    assert_eq!(reply.body["dns_server"], json!("10.0.0.2"));
+    let script = reply.body["script"].as_str().expect("script");
+    assert!(script.contains("$Url            = 'https://dumbmonit.corp.example.com'"));
+    assert!(script.contains("$DnsServer      = '10.0.0.2'"));
+    assert!(
+        reply.body["install_windows"].as_str().unwrap().contains("https://dumbmonit.corp.example.com")
+    );
+
+    // Sans saisie : l'URL publique, aucun serveur DNS.
+    let plain = kit(&app, &admin, json!({})).await;
+    assert_eq!(plain.status, StatusCode::CREATED, "{}", plain.body);
+    assert_eq!(plain.body["server_url"], json!("https://dm.example.com"));
+    assert_eq!(plain.body["dns_server"], Value::Null);
+    assert!(plain.body["script"].as_str().unwrap().contains("$DnsServer      = ''"));
+}
+
+#[tokio::test]
+async fn a_malformed_server_name_or_dns_server_is_refused() {
+    let app = TestApp::configured().await;
+    let admin = app.admin_cookie().await;
+    for extra in [
+        json!({ "server_host": "https://dm.example.com" }),
+        json!({ "server_host": "dm'; calc" }),
+        json!({ "server_host": "dm:99999" }),
+        json!({ "dns_server": "dns.corp.lan" }),
+        json!({ "dns_server": "10.0.0.2'; calc" }),
+    ] {
+        let reply = kit(&app, &admin, extra.clone()).await;
+        assert_eq!(reply.status, StatusCode::BAD_REQUEST, "{extra}: {}", reply.body);
+    }
+}
