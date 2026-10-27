@@ -8008,5 +8008,246 @@
 	"worldmap_verdict_idle": "未探测",
 	"worldmap_verdict_ok": "全部正常",
 	"worldmap_verdict_warn": "需要检查",
-	"worldmap_view_world": "世界"
+	"worldmap_view_world": "世界",
+	"deviceform_form_client_label": "客户",
+	"deviceform_form_client_help": "此设备所属的客户。只有该客户的成员能看到它。",
+	"deviceform_form_client_help_edit": "将设备移到另一个客户时，依赖它的设备也会一起移动。",
+	"deviceform_form_client_default": "此视图的默认值",
+	"msp_assign_label": "客户",
+	"msp_assign_shared": "所有客户",
+	"msp_nav_clients": "客户",
+	"msp_switcher_label": "显示的客户",
+	"msp_switcher_title": "只显示一个客户的页面",
+	"msp_switcher_all": "所有客户",
+	"msp_overview_title": "客户",
+	"msp_overview_description_admin": "一览所有客户。打开一个客户即可只看它的设备、告警和页面。",
+	"msp_overview_description_member": "你服务的客户，以及他们上个月的可用性报告。",
+	"msp_overview_empty_title": "还没有客户",
+	"msp_overview_empty_body": "在设置中创建客户，然后为每个客户分配设备和成员。",
+	"msp_overview_load_error": "无法加载客户。",
+	"msp_overview_none_title": "你不属于任何客户",
+	"msp_overview_none_body": "请让你的 MSP 管理员把你的账户加入某个客户。",
+	"msp_overview_off_title": "多客户模式已关闭",
+	"msp_overview_off_body": "在设置中开启，即可隔离每个客户的设备、告警和报告。",
+	"msp_overview_off_action": "打开客户设置",
+	"msp_overview_open": "打开",
+	"msp_overview_report": "上个月（PDF）",
+	"msp_overview_report_title": "下载上个月的可用性报告",
+	"msp_overview_report_error": "无法生成报告。",
+	"msp_overview_quota_label": "已用设备配额",
+	"msp_overview_state_empty": "还没有设备",
+	"msp_overview_state_ok": "一切正常",
+	"settings_agents_client_badge": "客户：{name}",
+	"settings_clients_title": "客户",
+	"settings_clients_description": "多客户（MSP）模式：隔离每个客户的设备、告警、页面和报告。",
+	"settings_clients_search_kw": "msp 租户 客户 隔离 配额 标志",
+	"settings_clients_add": "添加客户",
+	"settings_clients_load_error": "无法加载客户。",
+	"settings_clients_save_error": "无法保存。",
+	"settings_clients_delete_error": "无法删除客户。",
+	"settings_clients_delete_confirm": "删除此客户",
+	"settings_clients_mode": "多客户模式",
+	"settings_clients_mode_off_help": "关闭时：每个账户按其角色和团队查看，与之前相同。开启后，现有账户保留在默认客户中。",
+	"settings_clients_mode_on_help": "开启时：账户只能看到它所属的客户。管理员管理所有客户，并在页头选择客户。",
+	"settings_clients_empty_title": "还没有客户",
+	"settings_clients_empty_body": "添加客户，然后把它的设备移过去。",
+	"settings_clients_note": "设备、状态页和代理令牌始终属于某个客户。通知渠道、告警规则、维护窗口和报告可由所有客户共享。仍有设备的客户无法删除。",
+	"settings_clients_new_title": "新客户",
+	"settings_clients_edit_title": "编辑 {name}",
+	"settings_clients_name": "名称",
+	"settings_clients_description_label": "描述",
+	"settings_clients_err_name": "请输入客户名称。",
+	"settings_clients_err_quota": "请输入整数，留空表示不限。",
+	"settings_clients_quota": "设备配额",
+	"settings_clients_quota_help": "客户最多可拥有的设备数，包括代理。",
+	"settings_clients_quota_none": "不限",
+	"settings_clients_idp_groups": "身份提供方组",
+	"settings_clients_idp_groups_help": "这些 SSO 组（OIDC、LDAP、SAML）的成员登录时加入该客户。用逗号分隔。",
+	"settings_clients_contacts": "联系人",
+	"settings_clients_contacts_help": "接收每月可用性报告的邮箱地址，每行一个。",
+	"settings_clients_report_legend": "每月可用性报告",
+	"settings_clients_report_toggle": "发送给联系人",
+	"settings_clients_report_help": "每月 1 日按客户时区 8:00，上个月的 PDF 和 CSV 将通过邮件发出，带有客户名称和标志。",
+	"settings_clients_objective": "可用性目标（%）",
+	"settings_clients_objective_help": "可选。每台设备都会标注是否达标。",
+	"settings_clients_timezone": "时区",
+	"settings_clients_report_last": "最近发送的报告：{month}。",
+	"settings_clients_report_failing": "每月报告失败",
+	"settings_clients_logo": "标志",
+	"settings_clients_logo_alt": "{name} 的标志",
+	"settings_clients_logo_upload": "上传标志",
+	"settings_clients_logo_replace": "替换标志",
+	"settings_clients_logo_remove": "移除",
+	"settings_clients_logo_help": "PNG、JPEG 或 WebP，最大 256 KiB。显示在客户的报告和状态页上；PNG 和 JPEG 也会嵌入 PDF。",
+	"settings_clients_logo_too_big": "该文件超过 256 KiB。",
+	"settings_clients_logo_error": "无法保存标志。",
+	"settings_clients_members": "成员",
+	"settings_clients_members_help": "成员只能看到此客户，且受其角色和团队限制。管理员可看到所有客户。",
+	"settings_clients_save": "保存",
+	"settings_clients_create": "创建客户",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备处于严重状态",
+				"countPlural=other": "{count} 台设备处于严重状态"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备有告警",
+				"countPlural=other": "{count} 台设备有告警"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个严重",
+				"countPlural=other": "{count} 个严重"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个警告",
+				"countPlural=other": "{count} 个警告"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个已暂停",
+				"countPlural=other": "{count} 个已暂停"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备",
+				"countPlural=other": "{count} 台设备"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} / {quota} 台设备",
+				"countPlural=other": "{count} / {quota} 台设备"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 台设备",
+				"countPlural=other": "{count} 台设备"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} / {quota} 台设备",
+				"countPlural=other": "{count} / {quota} 台设备"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "每月报告发送给 {count} 位联系人",
+				"countPlural=other": "每月报告发送给 {count} 位联系人"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} 个没有客户的账户什么也看不到：",
+				"countPlural=other": "{count} 个没有客户的账户什么也看不到："
+			}
+		}
+	]
 }

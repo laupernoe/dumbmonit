@@ -4,6 +4,7 @@
 	 * report (weekly by default), though a few may coexist, for instance a
 	 * daily one for the on-call and a monthly one for management.
 	 */
+	import ClientAssign from '#lib/components/ClientAssign.svelte';
 	import { m } from '#lib/paraglide/messages.js';
 	import { Info, Mail, Plus } from 'lucide-svelte';
 	import { listChannels, listStatusPages, type Channel, type StatusPage } from '#lib/api/index.js';
@@ -127,7 +128,8 @@
 
 		<div class="grid gap-6">
 			{#each schedules as schedule (schedule.id)}
-				<div class="border-t border-line pt-6 first:border-t-0 first:pt-0">
+				<div class="grid gap-3 border-t border-line pt-6 first:border-t-0 first:pt-0">
+					<ClientAssign kind="report" id={schedule.id} />
 					<ReportEditor {schedule} channels={emailChannels} {defaultTimezone} {timezones} {pages} onsaved={saved} ondeleted={removed} />
 				</div>
 			{/each}

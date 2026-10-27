@@ -359,6 +359,13 @@ pub async fn download_sla(
     // Mode MSP : un membre d'un client lit le rapport de ses clients, et de
     // rien d'autre ; hors de ce cas, le rapport reste à l'administrateur.
     let client = match (access.clients(), query.client) {
+        // L'administrateur MSP, même dans la vue d'un client, lit tout client.
+        (_, Some(client)) if who.is_admin() => {
+            if !clients::exists(&state.pool, client).await? {
+                return Err(ApiError::NotFound("Client not found.".into()));
+            }
+            Some(client)
+        }
         (Some(allowed), Some(client)) if allowed.contains(&client) => Some(client),
         (Some(_), Some(_)) => return Err(ApiError::NotFound("Client not found.".into())),
         (Some([only]), None) => Some(*only),

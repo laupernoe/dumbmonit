@@ -115,6 +115,12 @@
 	let msQuorum = $state<number | null>(untrack(() => target?.multisite?.quorum ?? null));
 	let enabled = $state(untrack(() => target?.enabled ?? true));
 	let groupName = $state(untrack(() => target?.group_name ?? ''));
+	// MSP mode: the client of the target. Offered when there is a choice; only
+	// the MSP administrator moves an existing target (its dependents follow).
+	const clientChoices = $derived(auth.mspOn ? (auth.msp?.clients ?? []) : []);
+	const showClient = $derived(clientChoices.length > 1 || (auth.msp?.admin === true && clientChoices.length > 0));
+	const clientLocked = $derived(!!target && auth.msp?.admin !== true);
+	let clientId = $state<number | null>(untrack(() => target?.client_id ?? auth.currentClient ?? null));
 	let locationId = $state<number | null>(untrack(() => target?.location_id ?? null));
 	/** Locations of the world map; the field only shows once there is one. */
 	let locations = $state<MapLocation[]>([]);
@@ -358,6 +364,7 @@
 			enabled,
 			group_name: groupName.trim(),
 			location_id: locationId,
+			...(showClient && clientId !== null && !clientLocked ? { client_id: clientId } : {}),
 			// No empty tag: a blank setting means "server default".
 			tags: Object.fromEntries(Object.entries(tags).filter(([, v]) => v.trim()))
 		};
@@ -584,6 +591,17 @@
 						{/if}
 					</select>
 				</Field>
+
+				{#if showClient}
+					<Field label={m.deviceform_form_client_label()} for="target-client" help={target ? m.deviceform_form_client_help_edit() : m.deviceform_form_client_help()}>
+						<select id="target-client" class="input" bind:value={clientId} disabled={clientLocked}>
+							{#if clientId === null}<option value={null}>{m.deviceform_form_client_default()}</option>{/if}
+							{#each clientChoices as choice (choice.id)}
+								<option value={choice.id}>{choice.name}</option>
+							{/each}
+						</select>
+					</Field>
+				{/if}
 
 				<Field label={m.deviceform_form_folder_label()} for="target-group" help={m.deviceform_form_folder_help()}>
 					<input

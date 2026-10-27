@@ -8119,5 +8119,246 @@
 	"worldmap_verdict_idle": "Sin sondear",
 	"worldmap_verdict_ok": "Todo en marcha",
 	"worldmap_verdict_warn": "Revisar",
-	"worldmap_view_world": "Mundo"
+	"worldmap_view_world": "Mundo",
+	"deviceform_form_client_label": "Cliente",
+	"deviceform_form_client_help": "El cliente al que pertenece este equipo. Solo sus miembros lo ven.",
+	"deviceform_form_client_help_edit": "Mover un equipo a otro cliente arrastra los equipos que dependen de él.",
+	"deviceform_form_client_default": "Predeterminado de esta vista",
+	"msp_assign_label": "Cliente",
+	"msp_assign_shared": "Todos los clientes",
+	"msp_nav_clients": "Clientes",
+	"msp_switcher_label": "Cliente mostrado",
+	"msp_switcher_title": "Mostrar las páginas de un cliente",
+	"msp_switcher_all": "Todos los clientes",
+	"msp_overview_title": "Clientes",
+	"msp_overview_description_admin": "Todos los clientes de un vistazo. Abra uno para ver solo sus equipos, alertas y páginas.",
+	"msp_overview_description_member": "Los clientes para los que trabaja y su informe de disponibilidad del mes pasado.",
+	"msp_overview_empty_title": "Aún no hay clientes",
+	"msp_overview_empty_body": "Cree clientes en Ajustes y asigne a cada uno sus equipos y miembros.",
+	"msp_overview_load_error": "No se pudieron cargar los clientes.",
+	"msp_overview_none_title": "No pertenece a ningún cliente",
+	"msp_overview_none_body": "Pida a su administrador MSP que añada su cuenta a un cliente.",
+	"msp_overview_off_title": "El modo multicliente está desactivado",
+	"msp_overview_off_body": "Actívelo en Ajustes para separar los equipos, alertas e informes de cada cliente.",
+	"msp_overview_off_action": "Abrir ajustes de clientes",
+	"msp_overview_open": "Abrir",
+	"msp_overview_report": "Mes pasado (PDF)",
+	"msp_overview_report_title": "Descargar el informe de disponibilidad del mes pasado",
+	"msp_overview_report_error": "No se pudo generar el informe.",
+	"msp_overview_quota_label": "Cuota de equipos usada",
+	"msp_overview_state_empty": "Aún sin equipos",
+	"msp_overview_state_ok": "Todo en orden",
+	"settings_agents_client_badge": "Cliente: {name}",
+	"settings_clients_title": "Clientes",
+	"settings_clients_description": "Modo multicliente (MSP): separe los equipos, alertas, páginas e informes de cada cliente.",
+	"settings_clients_search_kw": "msp inquilino cliente aislamiento cuota logo",
+	"settings_clients_add": "Añadir un cliente",
+	"settings_clients_load_error": "No se pudieron cargar los clientes.",
+	"settings_clients_save_error": "No se pudo guardar.",
+	"settings_clients_delete_error": "No se pudo eliminar el cliente.",
+	"settings_clients_delete_confirm": "Eliminar este cliente",
+	"settings_clients_mode": "Modo multicliente",
+	"settings_clients_mode_off_help": "Desactivado: cada cuenta ve lo que permiten su rol y sus equipos, como antes. Al activarlo, las cuentas existentes quedan en el cliente predeterminado.",
+	"settings_clients_mode_on_help": "Activado: una cuenta solo ve los clientes a los que pertenece. Los administradores gestionan todos y eligen uno en la cabecera.",
+	"settings_clients_empty_title": "Aún no hay clientes",
+	"settings_clients_empty_body": "Añada un cliente y mueva a él sus equipos.",
+	"settings_clients_note": "Los equipos, páginas de estado y tokens de agente siempre pertenecen a un cliente. Canales, reglas de alerta, mantenimientos e informes pueden compartirse entre todos. Un cliente con equipos no se puede eliminar.",
+	"settings_clients_new_title": "Nuevo cliente",
+	"settings_clients_edit_title": "Editar {name}",
+	"settings_clients_name": "Nombre",
+	"settings_clients_description_label": "Descripción",
+	"settings_clients_err_name": "Introduzca un nombre de cliente.",
+	"settings_clients_err_quota": "Introduzca un número entero o déjelo vacío para no limitar.",
+	"settings_clients_quota": "Cuota de equipos",
+	"settings_clients_quota_help": "Número máximo de equipos del cliente, agentes incluidos.",
+	"settings_clients_quota_none": "Sin límite",
+	"settings_clients_idp_groups": "Grupos del proveedor de identidad",
+	"settings_clients_idp_groups_help": "Los miembros de estos grupos SSO (OIDC, LDAP, SAML) se unen al cliente al iniciar sesión. Separe con comas.",
+	"settings_clients_contacts": "Contactos",
+	"settings_clients_contacts_help": "Direcciones que reciben el informe mensual de disponibilidad, una por línea.",
+	"settings_clients_report_legend": "Informe mensual de disponibilidad",
+	"settings_clients_report_toggle": "Enviarlo a los contactos",
+	"settings_clients_report_help": "El día 1 a las 8:00 en la zona horaria del cliente, el PDF y los CSV del mes pasado salen por correo, con su nombre y logo.",
+	"settings_clients_objective": "Objetivo de disponibilidad (%)",
+	"settings_clients_objective_help": "Opcional. Cada equipo se marca como cumplido o no.",
+	"settings_clients_timezone": "Zona horaria",
+	"settings_clients_report_last": "Último informe enviado: {month}.",
+	"settings_clients_report_failing": "Informe mensual fallido",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo de {name}",
+	"settings_clients_logo_upload": "Subir un logo",
+	"settings_clients_logo_replace": "Reemplazar el logo",
+	"settings_clients_logo_remove": "Quitar",
+	"settings_clients_logo_help": "PNG, JPEG o WebP, 256 KiB como máximo. Se muestra en los informes y páginas de estado del cliente; PNG y JPEG también en el PDF.",
+	"settings_clients_logo_too_big": "Este archivo supera 256 KiB.",
+	"settings_clients_logo_error": "No se pudo guardar el logo.",
+	"settings_clients_members": "Miembros",
+	"settings_clients_members_help": "Los miembros solo ven este cliente, dentro de su rol y equipos. Los administradores ven todos.",
+	"settings_clients_save": "Guardar",
+	"settings_clients_create": "Crear el cliente",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo en estado crítico",
+				"countPlural=other": "{count} equipos en estado crítico"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo con alerta",
+				"countPlural=other": "{count} equipos con alerta"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} crítica",
+				"countPlural=other": "{count} críticas"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} aviso",
+				"countPlural=other": "{count} avisos"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} en pausa",
+				"countPlural=other": "{count} en pausa"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo",
+				"countPlural=other": "{count} equipos"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} de {quota} equipos",
+				"countPlural=other": "{count} de {quota} equipos"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} equipo",
+				"countPlural=other": "{count} equipos"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} de {quota} equipos",
+				"countPlural=other": "{count} de {quota} equipos"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Informe mensual a {count} contacto",
+				"countPlural=other": "Informe mensual a {count} contactos"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} cuenta sin cliente no ve nada:",
+				"countPlural=other": "{count} cuentas sin cliente no ven nada:"
+			}
+		}
+	]
 }

@@ -8119,5 +8119,246 @@
 	"worldmap_verdict_idle": "Not probed",
 	"worldmap_verdict_ok": "All up",
 	"worldmap_verdict_warn": "Needs a look",
-	"worldmap_view_world": "World"
+	"worldmap_view_world": "World",
+	"deviceform_form_client_label": "Client",
+	"deviceform_form_client_help": "The client this device belongs to. Only its members see it.",
+	"deviceform_form_client_help_edit": "Moving a device to another client takes the devices that depend on it along.",
+	"deviceform_form_client_default": "Default for this view",
+	"msp_assign_label": "Client",
+	"msp_assign_shared": "Every client",
+	"msp_nav_clients": "Clients",
+	"msp_switcher_label": "Client shown",
+	"msp_switcher_title": "Show the pages for one client",
+	"msp_switcher_all": "All clients",
+	"msp_overview_title": "Clients",
+	"msp_overview_description_admin": "Every client at a glance. Open one to see only its devices, alerts and pages.",
+	"msp_overview_description_member": "The clients you work for, and their availability report of last month.",
+	"msp_overview_empty_title": "No client yet",
+	"msp_overview_empty_body": "Create clients in Settings, then give each its devices and members.",
+	"msp_overview_load_error": "Could not load the clients.",
+	"msp_overview_none_title": "You belong to no client",
+	"msp_overview_none_body": "Ask your MSP administrator to add your account to a client.",
+	"msp_overview_off_title": "Multi-client mode is off",
+	"msp_overview_off_body": "Turn it on in Settings to keep each customer’s devices, alerts and reports apart.",
+	"msp_overview_off_action": "Open client settings",
+	"msp_overview_open": "Open",
+	"msp_overview_report": "Last month (PDF)",
+	"msp_overview_report_title": "Download the availability report of last month",
+	"msp_overview_report_error": "Could not build the report.",
+	"msp_overview_quota_label": "Target quota used",
+	"msp_overview_state_empty": "No device yet",
+	"msp_overview_state_ok": "All clear",
+	"settings_agents_client_badge": "Client: {name}",
+	"settings_clients_title": "Clients",
+	"settings_clients_description": "Multi-client (MSP) mode: keep each customer’s devices, alerts, pages and reports apart.",
+	"settings_clients_search_kw": "msp tenant customer client isolation quota logo",
+	"settings_clients_add": "Add a client",
+	"settings_clients_load_error": "Could not load the clients.",
+	"settings_clients_save_error": "Could not save.",
+	"settings_clients_delete_error": "Could not delete the client.",
+	"settings_clients_delete_confirm": "Delete this client",
+	"settings_clients_mode": "Multi-client mode",
+	"settings_clients_mode_off_help": "Off: every account sees what its role and teams allow, as before. Turning it on keeps existing accounts in the default client.",
+	"settings_clients_mode_on_help": "On: an account only sees the clients it belongs to. Admins manage every client and pick one in the header.",
+	"settings_clients_empty_title": "No client yet",
+	"settings_clients_empty_body": "Add a client, then move its devices to it.",
+	"settings_clients_note": "Devices, status pages and agent tokens always belong to a client. Channels, alert rules, maintenance windows and reports may be shared by every client. A client with devices left cannot be deleted.",
+	"settings_clients_new_title": "New client",
+	"settings_clients_edit_title": "Edit {name}",
+	"settings_clients_name": "Name",
+	"settings_clients_description_label": "Description",
+	"settings_clients_err_name": "Enter a client name.",
+	"settings_clients_err_quota": "Enter a whole number, or leave empty for no limit.",
+	"settings_clients_quota": "Device quota",
+	"settings_clients_quota_help": "Most devices the client may have, agents included.",
+	"settings_clients_quota_none": "No limit",
+	"settings_clients_idp_groups": "Identity-provider groups",
+	"settings_clients_idp_groups_help": "Members of these SSO groups (OIDC, LDAP, SAML) join the client at sign-in. Separate with commas.",
+	"settings_clients_contacts": "Contacts",
+	"settings_clients_contacts_help": "Email addresses that receive the monthly availability report, one per line.",
+	"settings_clients_report_legend": "Monthly availability report",
+	"settings_clients_report_toggle": "Email it to the contacts",
+	"settings_clients_report_help": "On the 1st at 8:00 in the client’s timezone, the PDF and CSV of the past month leave by email, with the client’s name and logo.",
+	"settings_clients_objective": "Availability objective (%)",
+	"settings_clients_objective_help": "Optional. Each device is marked as meeting it or not.",
+	"settings_clients_timezone": "Timezone",
+	"settings_clients_report_last": "Last report sent: {month}.",
+	"settings_clients_report_failing": "Monthly report failing",
+	"settings_clients_logo": "Logo",
+	"settings_clients_logo_alt": "Logo of {name}",
+	"settings_clients_logo_upload": "Upload a logo",
+	"settings_clients_logo_replace": "Replace the logo",
+	"settings_clients_logo_remove": "Remove",
+	"settings_clients_logo_help": "PNG, JPEG or WebP, 256 KiB at most. Shown on the client’s reports and status pages; PNG and JPEG also go into the PDF.",
+	"settings_clients_logo_too_big": "This file is over 256 KiB.",
+	"settings_clients_logo_error": "Could not save the logo.",
+	"settings_clients_members": "Members",
+	"settings_clients_members_help": "Members see this client only, within the limits of their role and teams. Admins see every client.",
+	"settings_clients_save": "Save",
+	"settings_clients_create": "Create the client",
+	"msp_overview_state_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device in critical state",
+				"countPlural=other": "{count} devices in critical state"
+			}
+		}
+	],
+	"msp_overview_state_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device alerting",
+				"countPlural=other": "{count} devices alerting"
+			}
+		}
+	],
+	"msp_overview_critical": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} critical",
+				"countPlural=other": "{count} critical"
+			}
+		}
+	],
+	"msp_overview_warning": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} warning",
+				"countPlural=other": "{count} warnings"
+			}
+		}
+	],
+	"msp_overview_paused": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} paused",
+				"countPlural=other": "{count} paused"
+			}
+		}
+	],
+	"msp_overview_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device",
+				"countPlural=other": "{count} devices"
+			}
+		}
+	],
+	"msp_overview_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} of {quota} device",
+				"countPlural=other": "{count} of {quota} devices"
+			}
+		}
+	],
+	"settings_clients_targets": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} device",
+				"countPlural=other": "{count} devices"
+			}
+		}
+	],
+	"settings_clients_targets_quota": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} of {quota} device",
+				"countPlural=other": "{count} of {quota} devices"
+			}
+		}
+	],
+	"settings_clients_report_on": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "Monthly report to {count} contact",
+				"countPlural=other": "Monthly report to {count} contacts"
+			}
+		}
+	],
+	"settings_clients_unassigned": [
+		{
+			"declarations": [
+				"input count",
+				"local countPlural = count: plural"
+			],
+			"selectors": [
+				"countPlural"
+			],
+			"match": {
+				"countPlural=one": "{count} account in no client sees nothing:",
+				"countPlural=other": "{count} accounts in no client see nothing:"
+			}
+		}
+	]
 }

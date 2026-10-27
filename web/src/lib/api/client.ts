@@ -106,6 +106,26 @@ export function setUnauthorizedHandler(handler: UnauthorizedHandler | null): voi
 
 const BASE = '/api';
 
+/**
+ * MSP mode: the client picked in the header, sent with every request. The
+ * server narrows lists to it for the MSP administrator, and never widens
+ * anyone's access with it.
+ */
+let clientView: number | null = null;
+
+export function setClientView(id: number | null): void {
+	clientView = id;
+}
+
+export function getClientView(): number | null {
+	return clientView;
+}
+
+/** The header carrying the picked client, to spread into a `fetch` made by hand. */
+export function clientViewHeaders(): Record<string, string> {
+	return clientView === null ? {} : { 'x-dumbmonit-client': String(clientView) };
+}
+
 /** Builds the final URL, skipping query parameters that are not set. */
 function buildUrl(path: string, query?: RequestOptions['query']): string {
 	const url = `${BASE}${path}`;
@@ -182,6 +202,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 				// Proof of origin for cookie-authenticated writes (anti-CSRF): a
 				// third-party page cannot add this header without CORS consent.
 				'x-requested-with': 'DumbMonit',
+				...clientViewHeaders(),
 				...(body === undefined
 					? {}
 					: { 'content-type': body instanceof Blob ? 'application/octet-stream' : 'application/json' })
