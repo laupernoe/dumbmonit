@@ -19,6 +19,7 @@ pub mod filter;
 pub mod inventory;
 pub mod ipsec;
 pub mod libvirt;
+pub mod machine;
 pub mod mail_server;
 pub mod perf_counters;
 pub mod plakar;
@@ -46,6 +47,7 @@ use crate::collect::libvirt::LibvirtReport;
 use crate::collect::mail_server::MailServerReport;
 use crate::collect::perf_counters::PerfReport;
 use crate::collect::plakar::PlakarReport;
+use crate::collect::machine::MachineStat;
 use crate::collect::sensors::SensorsStat;
 use crate::collect::services::ServiceState;
 use crate::collect::smart::SmartReport;
@@ -269,6 +271,9 @@ pub struct Snapshot {
     /// Domaines KVM et pools libvirt. `None` : pas de `virsh` sur cette machine,
     /// ou première lecture en cours.
     pub libvirt: Option<LibvirtReport>,
+    /// Causes de lenteur : top processus, PSI, inodes, horloge, OOM kills (Linux
+    /// seulement). `None` : rien de lisible ici.
+    pub machine: Option<MachineStat>,
 }
 
 impl Snapshot {
@@ -291,6 +296,9 @@ impl Snapshot {
         }
         if let Some(health) = &self.system_health {
             samples.extend(system_health::samples(health, now_ms));
+        }
+        if let Some(machine) = &self.machine {
+            samples.extend(machine::samples(machine, now_ms));
         }
         if let Some(backups) = &self.backups {
             samples.extend(plakar::samples(backups, now_ms));
@@ -604,6 +612,7 @@ impl SystemProbe {
             speedtest: None,
             backup_repos: None,
             libvirt: None,
+            machine: None,
         }
     }
 
@@ -1224,6 +1233,7 @@ mod tests {
                     available_bytes: Some(60),
                 }],
             }),
+            machine: Some(MachineStat { oom_kills: Some(1), ..MachineStat::default() }),
         };
 
         let samples = snapshot.to_samples(1_700_000_000_000);
@@ -1259,6 +1269,7 @@ mod tests {
             "agent_libvirt_domains",
             "agent_libvirt_domain_running",
             "agent_libvirt_pool_active",
+            "agent_oom_kills_total",
         ] {
             assert!(samples.iter().any(|s| s.metric == family), "famille absente : {family}");
         }

@@ -71,6 +71,11 @@ regex = { version = "1", default-features = false, features = ["std", "unicode-p
 [target.'cfg(not(windows))'.dependencies]
 sysinfo = { version = "0.39", default-features = false, features = ["component"] }
 
+# Inodes (`statvfs`) et taille de page, sous Linux seulement : déjà dans l'arbre
+# de dépendances (serveur), donc sans poids ni licence de plus.
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
 [dev-dependencies]
 # Répertoires jetables pour les tests du secret de liaison : ils écrivent un
 # fichier et en vérifient les permissions, ce qui n'a de sens que sur un vrai
